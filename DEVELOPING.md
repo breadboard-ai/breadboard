@@ -91,7 +91,14 @@ cp -rf templates/blank seeds/awesome-ai-game
 }
 ```
 
-:four: Run `npm i` and `turbo build` and make sure that the new package shows up in the build log.
+:four: Verify that you have the right setup. Run `npm i` and `turbo build` and make sure that the new package shows up in the build log. Then try to run it:
+
+```bash
+cd seeds/awesome-ai-game
+node .
+```
+
+You should see `code goes here` as output. 
 
 :five: Build the awesome AI game or whatever it is you've dreamed up.
 

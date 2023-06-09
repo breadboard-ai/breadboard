@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.0.1",
   "description": "{{description}}",
+  "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
   "type": "module",
   "scripts": {
