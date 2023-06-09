@@ -1,8 +1,8 @@
 {
-  "name": "@google-labs-prototypes/name-here",
+  "name": "@google-labs-prototypes/{{name}}",
   "private": true,
   "version": "0.0.1",
-  "description": "Put description of the package here",
+  "description": "{{description}}",
   "exports": "./dist/src/index.js",
   "type": "module",
   "scripts": {
