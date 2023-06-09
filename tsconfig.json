@@ -1,0 +1,5 @@
+{
+  "extends": "@google-labs-prototypes/tsconfig/base.json",
+  "files": [],
+  "references": []
+}

@@ -1,0 +1,48 @@
+{
+  "name": "@google-labs-prototypes/name-here",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Put description of the package here",
+  "exports": "./dist/src/index.js",
+  "type": "module",
+  "scripts": {
+    "test": "FORCE_COLOR=1 ava",
+    "build": "FORCE_COLOR=1 tsc --b",
+    "watch": "FORCE_COLOR=1 tsc --b --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/google/labs-prototypes"
+  },
+  "files": [
+    "dist"
+  ],
+  "ava": {
+    "files": [
+      "tests/**/*.ts"
+    ],
+    "workerThreads": false,
+    "typescript": {
+      "rewritePaths": {
+        "./": "dist/"
+      },
+      "compile": false
+    }
+  },
+  "keywords": [],
+  "author": "Google Labs Team",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/google/labs-prototypes/issues"
+  },
+  "homepage": "https://github.com/google/labs-prototypes#readme",
+  "devDependencies": {
+    "@ava/typescript": "^4.0.0",
+    "@typescript-eslint/eslint-plugin": "^5.56.0",
+    "@typescript-eslint/parser": "^5.56.0",
+    "@types/node": "^18.16.3",
+    "ava": "^5.2.0",
+    "typescript": "^5.0.4",
+    "@google-labs-prototypes/tsconfig": "*"
+  }
+}

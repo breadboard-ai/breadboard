@@ -1,0 +1,6 @@
+{
+  "name": "@google-labs-prototypes/tsconfig",
+  "description": "Repo-specific configuration for all TypeScript projects",
+  "version": "0.0.1",
+  "private": true
+}
