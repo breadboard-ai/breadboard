@@ -1,5 +1,5 @@
 {
   "extends": "@google-labs-prototypes/tsconfig/base.json",
   "files": [],
-  "references": []
+  "references": [{ "path": "seeds/discovery-types" }]
 }
