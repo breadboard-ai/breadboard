@@ -5,6 +5,7 @@
   "description": "{{description}}",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
+  "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
     "test": "FORCE_COLOR=1 ava",
@@ -16,7 +17,7 @@
     "url": "https://github.com/google/labs-prototypes"
   },
   "files": [
-    "dist"
+    "dist/src"
   ],
   "ava": {
     "files": [
