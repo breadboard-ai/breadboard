@@ -4,17 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export type Enum = string[];
-
 export interface Schema {
   id: string;
   $ref: string;
   readonly: boolean;
   required: boolean;
   description: string;
-  enum: Enum;
+  enum?: string[];
+  enumDescriptions?: string[];
   type: string;
-  items: string[];
+  items: Schema;
   properties: Record<string, Schema>;
 }
 
@@ -32,7 +31,7 @@ export class Converter {
 
   convertType(schema: Schema): string {
     if (schema.$ref) return schema.$ref;
-    if (schema.enum) return this.convertEnum(schema.enum);
+    if (schema.enum) return this.convertEnum(schema);
     if (schema.type == "integer") return "number";
     if (schema.type == "array") return this.convertArray(schema.items);
     if (schema.type != "object") return schema.type;
@@ -49,12 +48,13 @@ export class Converter {
       .join("\n")}\n}`;
   }
 
-  convertArray(items: any): string {
-    return "array";
+  convertArray(items: Schema): string {
+    return `${this.convertType(items)}[]`;
   }
 
-  convertEnum(value: Enum): string {
-    return "enum";
+  convertEnum(schema: Schema): string {
+    const values = schema.enum || [];
+    return `${values.map((v) => `"${v}"`).join(" | ")}`;
   }
 
   asComment(value: string): string {
