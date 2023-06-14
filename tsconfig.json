@@ -3,6 +3,7 @@
   "files": [],
   "references": [
     { "path": "seeds/discovery-types" },
-    { "path": "seeds/palm-lite" }
+    { "path": "seeds/palm-lite" },
+    { "path": "seeds/graph-playgroud" }
   ]
 }
