@@ -12,11 +12,11 @@ It intentionally does not cover the actual fetching of requests or handling of r
 
 Because the library relies on `fetch`, you can only use it in Node.JS 18 and above. However, because it is zero-dependency, you can use it in the browser as well. Tradeoffs, right?
 
-## Installation
+<!-- ## Installation
 
 ```bash
 npm install palm-lite
-```
+``` -->
 
 ## Usage
 
