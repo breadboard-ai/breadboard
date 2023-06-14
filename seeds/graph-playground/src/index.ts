@@ -73,17 +73,27 @@ const graph: GraphDescriptor = {
   ],
 };
 
+const invoke = (edge: Edge) => {
+  console.log(
+    `invoke node: "${edge.from.node}", get "${edge.from.output}" output, feed to input "${edge.to.input}" of node "${edge.to.node}"`
+  );
+};
+
 /**
  * The dumbest possible edge follower.
  * @param graph graph to follow
  */
 const follow = (graph: GraphDescriptor) => {
   let edge = graph.edges.find((edge) => edge.entry);
+  let next: NodeIdentifier | null = null;
 
   while (edge) {
-    console.log(`from "${edge.from.node}: ${edge.from.output}"`);
-    console.log(`to "${edge.to.node}: ${edge.to.input}"`);
-    edge = graph.edges.find((edge) => edge.from.node == edge.to.node);
+    invoke(edge);
+    next = edge.to.node;
+    edge = graph.edges.find((edge) => edge.from.node == next);
+  }
+  if (next) {
+    console.log(`invoke node: ${next}`);
   }
 };
 
