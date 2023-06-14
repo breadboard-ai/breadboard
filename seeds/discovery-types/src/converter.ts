@@ -21,6 +21,12 @@ export interface DiscoveryDoc {
   schemas: Record<string, Schema>;
 }
 
+const sorted = (o: Record<string, Schema>): [string, Schema][] => {
+  const result = Object.entries(o);
+  result.sort();
+  return result;
+};
+
 export class Converter {
   convertSchema(schema: Schema): string {
     const name = schema.id;
@@ -36,7 +42,7 @@ export class Converter {
     if (schema.type == "array") return this.convertArray(schema.items);
     if (schema.type != "object") return schema.type;
 
-    return `{\n${Object.entries(schema.properties)
+    return `{\n${sorted(schema.properties)
       .map(([name, property]) => {
         const comment = this.asComment(property.description);
         const isRequired = comment && comment.startsWith("Required.");
@@ -65,7 +71,7 @@ export class Converter {
   }
 
   convertDoc(doc: DiscoveryDoc): string {
-    return Object.entries(doc.schemas)
+    return sorted(doc.schemas)
       .map(([_name, schema]) => this.convertSchema(schema))
       .join("\n");
   }

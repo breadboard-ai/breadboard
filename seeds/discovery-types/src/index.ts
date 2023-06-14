@@ -5,6 +5,7 @@
  */
 
 import { config } from "dotenv";
+import prettier from "prettier";
 
 import { Converter } from "./converter.js";
 
@@ -20,4 +21,13 @@ const doc = await response.json();
 
 const converter = new Converter();
 const types = converter.convertDoc(doc);
-console.log(types);
+const formatted = prettier.format(types, {
+  parser: "typescript",
+  arrowParens: "always",
+  printWidth: 80,
+  semi: true,
+  tabWidth: 2,
+  trailingComma: "es5",
+  useTabs: false,
+});
+console.log(formatted);
