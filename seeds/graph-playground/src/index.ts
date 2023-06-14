@@ -41,6 +41,10 @@ interface ToIdentifier {
 }
 
 interface Edge {
+  /**
+   * The designated first edge in the graph.
+   */
+  entry?: boolean;
   from: FromIdentifier;
   to: ToIdentifier;
 }
@@ -53,6 +57,7 @@ interface GraphDescriptor {
 const graph: GraphDescriptor = {
   edges: [
     {
+      entry: true,
       from: { node: "user-input", output: "output" },
       to: { node: "text-completion", input: "text" },
     },
@@ -68,4 +73,18 @@ const graph: GraphDescriptor = {
   ],
 };
 
-console.log(graph);
+/**
+ * The dumbest possible edge follower.
+ * @param graph graph to follow
+ */
+const follow = (graph: GraphDescriptor) => {
+  let edge = graph.edges.find((edge) => edge.entry);
+
+  while (edge) {
+    console.log(`from "${edge.from.node}: ${edge.from.output}"`);
+    console.log(`to "${edge.to.node}: ${edge.to.input}"`);
+    edge = graph.edges.find((edge) => edge.from.node == edge.to.node);
+  }
+};
+
+follow(graph);
