@@ -60,41 +60,34 @@ export interface GraphDescriptor {
   nodes: NodeDescriptor[];
 }
 
-const bullets = (items: string[]) =>
-  items.map((item) => `- ${item}`).join("\n");
+export type InputValues = Record<InputIdentifier, unknown>;
 
-const invokeNode = (
-  node: NodeDescriptor,
-  inputs: InputIdentifier[]
-): OutputIdentifier[] => {
-  console.log(
-    `invoke node "${node.id}" with ${
-      inputs.length ? `inputs:\n${bullets(inputs)}` : "no input"
-    }`
-  );
-  if (!node.outputs.length) {
-    console.log("node produces no further outputs");
-  } else {
-    console.log(`node produces outputs:\n${bullets(node.outputs)}`);
-  }
-  return node.outputs;
-};
+export type OutputValues = Record<OutputIdentifier, unknown>;
 
-const wire = (edge: Edge) => {
+export type NodeHandler = (inputs: InputValues) => OutputValues;
+
+export type NodeHandlers = Record<NodeTypeIdentifier, NodeHandler>;
+
+const wire = (edge: Edge, outputs: OutputValues): InputValues => {
   console.log(
     `wire "${edge.from.output}" output as input "${edge.to.input}" of node "${edge.to.node}"`
   );
+  return {
+    [edge.to.input]: outputs[edge.from.output],
+  };
 };
 
 /**
  * The dumbest possible edge follower.
  * @param graph graph to follow
  */
-export const follow = (graph: GraphDescriptor) => {
+export const follow = (graph: GraphDescriptor, nodeHandlers: NodeHandlers) => {
   let edge = graph.edges.find((edge) => edge.entry);
   let next: NodeIdentifier | null = null;
-  let inputs: InputIdentifier[] = [];
-  let outputs: OutputIdentifier[] | null = null;
+
+  // State of the graph traversal.
+  let inputs: InputValues | null = null;
+  let outputs: OutputValues | null = null;
 
   const nodes = graph.nodes.reduce((acc, node) => {
     acc[node.id] = node;
@@ -103,14 +96,15 @@ export const follow = (graph: GraphDescriptor) => {
 
   while (edge) {
     const current = nodes[edge.from.node];
-    outputs = invokeNode(current, inputs);
-    inputs = [edge.to.input];
-    wire(edge);
+    const nodeHandler = nodeHandlers[current.type];
+    outputs = nodeHandler?.(inputs ?? {});
+    inputs = wire(edge, outputs);
     next = edge.to.node;
     edge = graph.edges.find((edge) => edge.from.node == next);
   }
   if (next) {
     const last = nodes[next];
-    invokeNode(last, inputs);
+    const nodeHandler = nodeHandlers[last.type];
+    nodeHandler?.(inputs ?? {});
   }
 };

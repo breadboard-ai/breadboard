@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor, follow } from "./graph.js";
+import { GraphDescriptor, NodeHandlers, follow } from "./graph.js";
 
 const graph: GraphDescriptor = {
   edges: [
@@ -35,4 +35,23 @@ const graph: GraphDescriptor = {
   ],
 };
 
-follow(graph);
+const handlers: NodeHandlers = {
+  "user-input": (inputs) => {
+    console.log("User input handler invoked with inputs:", inputs);
+    return {
+      text: "this is a real user input",
+    };
+  },
+  "text-completion": (inputs) => {
+    console.log("Text completion handler invoked with inputs:", inputs);
+    return {
+      completion: "this is a real text completion",
+    };
+  },
+  "console-output": (inputs) => {
+    console.log("Console output handler invoked with inputs:", inputs);
+    return {};
+  },
+};
+
+follow(graph, handlers);
