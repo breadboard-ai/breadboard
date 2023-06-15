@@ -71,7 +71,17 @@ export type InputValues = Record<InputIdentifier, unknown>;
 
 export type OutputValues = Record<OutputIdentifier, unknown>;
 
-export type NodeHandler = (inputs?: InputValues) => Promise<OutputValues>;
+export enum ControlValue {
+  "stop",
+  "error",
+}
+
+export interface NodeHandlerResult {
+  outputs?: OutputValues;
+  control?: ControlValue;
+}
+
+export type NodeHandler = (inputs?: InputValues) => Promise<NodeHandlerResult>;
 
 export type NodeHandlers = Record<NodeTypeIdentifier, NodeHandler>;
 
@@ -108,7 +118,14 @@ export const follow = async (
   while (edge) {
     const current = nodes[edge.from.node];
     const nodeHandler = nodeHandlers[current.type];
-    outputs = await nodeHandler?.(inputs ?? {});
+    const handlerResult = await nodeHandler?.(inputs ?? {});
+    if (handlerResult?.control == ControlValue.stop) {
+      return;
+    }
+    if (handlerResult?.control == ControlValue.error) {
+      throw new Error("Error reported by the node handler");
+    }
+    outputs = handlerResult.outputs ?? {};
     inputs = wire(edge, outputs);
     next = edge.to.node;
     edge = graph.edges.find((edge) => edge.from.node == next);

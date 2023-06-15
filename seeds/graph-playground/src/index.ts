@@ -8,12 +8,16 @@ import { intro, outro, text, log, spinner } from "@clack/prompts";
 import {
   GenerateTextResponse,
   Text,
-  TextCompletion,
   palm,
 } from "@google-labs-prototypes/palm-lite";
 import { config } from "dotenv";
 
-import { GraphDescriptor, NodeHandlers, follow } from "./graph.js";
+import {
+  ControlValue,
+  GraphDescriptor,
+  NodeHandlers,
+  follow,
+} from "./graph.js";
 
 config();
 
@@ -44,12 +48,11 @@ const handlers: NodeHandlers = {
     const input = await text({
       message: "Enter some text",
     });
-    return {
-      text: input,
-    };
+    if (!input) return { control: ControlValue.stop };
+    return { outputs: { text: input } };
   },
   "text-completion": async (inputs) => {
-    if (!inputs) return {};
+    if (!inputs) return { control: ControlValue.error };
     const s = spinner();
     s.start("Generating text completion");
     const prompt = new Text().text(inputs["text"] as string);
@@ -57,12 +60,11 @@ const handlers: NodeHandlers = {
     const data = await fetch(request);
     const response = (await data.json()) as GenerateTextResponse;
     s.stop("Success!");
-    return {
-      completion: response?.candidates?.[0]?.output as string,
-    };
+    const completion = response?.candidates?.[0]?.output as string;
+    return { outputs: { completion } };
   },
   "console-output": async (inputs) => {
-    if (!inputs) return {};
+    if (!inputs) return { control: ControlValue.error };
     log.info(inputs["text"] as string);
     return {};
   },
