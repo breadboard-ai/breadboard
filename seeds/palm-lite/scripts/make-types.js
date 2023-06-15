@@ -9,7 +9,7 @@
  */
 
 import { config } from "dotenv";
-import { toTypes } from "@google-labs-prototypes/discovery-types";
+import { toTypes } from "@google-labs/discovery-types";
 import { writeFile } from "fs/promises";
 import process from "process";
 

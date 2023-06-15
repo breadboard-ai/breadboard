@@ -83,7 +83,7 @@ cp -rf templates/blank seeds/awesome-ai-game
 
 ```json
 {
-  "extends": "@google-labs-prototypes/tsconfig/base.json",
+  "extends": "@google-labs/tsconfig/base.json",
   "files": [],
   "references": [
     { "path": "seeds/awesome-ai-game" }
@@ -128,11 +128,11 @@ To add a new dependency for your package, just run `npm i <package-name>` in you
 
 When you need to refer to other packages in the monorepo, you will eed to do a bit of manual wiring.
 
-In your project's `package.json` edit the contents of `dependencies` (or `devDependencies`) to add the entry for the package on which you want this package to depend. For example, if we're adding a dependency on the package called `@google-labs-prototypes/ai-game-engine` that also resides in this monorepo, we will do:
+In your project's `package.json` edit the contents of `dependencies` (or `devDependencies`) to add the entry for the package on which you want this package to depend. For example, if we're adding a dependency on the package called `"@google-labs/ai-game-engine"` that also resides in this monorepo, we will do:
 
 ```json
 "dependencies": {
-  "@google-labs-prototypes/ai-game-engine": "*",
+  "@google-labs/ai-game-engine": "*",
 }
 ```
 

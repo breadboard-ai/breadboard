@@ -1,5 +1,5 @@
 {
-  "name": "@google-labs-prototypes/discovery-types",
+  "name": "@google-labs/discovery-types",
   "private": true,
   "version": "0.0.1",
   "description": "Simplest possible Discovery doc-to-TypeScript definitions converter",
@@ -40,7 +40,7 @@
   "homepage": "https://github.com/google/labs-prototypes#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
-    "@google-labs-prototypes/tsconfig": "*",
+    "@google-labs/tsconfig": "*",
     "@types/node": "^18.16.3",
     "@types/prettier": "^2.7.3",
     "@typescript-eslint/eslint-plugin": "^5.56.0",

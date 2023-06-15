@@ -9,7 +9,7 @@ import {
   GenerateTextResponse,
   Text,
   palm,
-} from "@google-labs-prototypes/palm-lite";
+} from "@google-labs/palm-lite";
 import { config } from "dotenv";
 
 import {

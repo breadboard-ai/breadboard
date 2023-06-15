@@ -1,5 +1,5 @@
 {
-  "name": "@google-labs-prototypes/palm-lite",
+  "name": "@google-labs/palm-lite",
   "private": true,
   "version": "0.0.1",
   "description": "A zero-dependency client for PaLM APIs",
@@ -47,7 +47,7 @@
     "@types/node": "^18.16.3",
     "ava": "^5.2.0",
     "typescript": "^5.0.4",
-    "@google-labs-prototypes/tsconfig": "*",
-    "@google-labs-prototypes/discovery-types": "*"
+    "@google-labs/tsconfig": "*",
+    "@google-labs/discovery-types": "*"
   }
 }

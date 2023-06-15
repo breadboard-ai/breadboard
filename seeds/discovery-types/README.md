@@ -7,7 +7,7 @@ To use:
 ```ts
 import { config } from "dotenv";
 
-import { toTypes } from "@google-labs-prototypes/discovery-types";
+import { toTypes } from "@google-labs/discovery-types";
 
 config();
 

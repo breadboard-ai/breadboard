@@ -1,5 +1,5 @@
 {
-  "name": "@google-labs-prototypes/graph-playground",
+  "name": "@google-labs/graph-playground",
   "private": true,
   "version": "0.0.1",
   "description": "Playing with graph structures",
@@ -40,7 +40,7 @@
   "homepage": "https://github.com/google/labs-prototypes#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
-    "@google-labs-prototypes/tsconfig": "*",
+    "@google-labs/tsconfig": "*",
     "@types/node": "^18.16.3",
     "@typescript-eslint/eslint-plugin": "^5.56.0",
     "@typescript-eslint/parser": "^5.56.0",
@@ -49,7 +49,7 @@
   },
   "dependencies": {
     "@clack/prompts": "^0.6.3",
-    "@google-labs-prototypes/palm-lite": "*",
+    "@google-labs/palm-lite": "*",
     "dotenv": "^16.1.4"
   }
 }
