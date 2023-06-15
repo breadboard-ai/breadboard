@@ -48,6 +48,8 @@
     "typescript": "^5.0.4"
   },
   "dependencies": {
-    "@clack/prompts": "^0.6.3"
+    "@clack/prompts": "^0.6.3",
+    "@google-labs-prototypes/palm-lite": "*",
+    "dotenv": "^16.1.4"
   }
 }

@@ -76,9 +76,9 @@ export type NodeHandler = (inputs?: InputValues) => Promise<OutputValues>;
 export type NodeHandlers = Record<NodeTypeIdentifier, NodeHandler>;
 
 const wire = (edge: Edge, outputs: OutputValues): InputValues => {
-  console.log(
-    `wire "${edge.from.output}" output as input "${edge.to.input}" of node "${edge.to.node}"`
-  );
+  // console.log(
+  //   `wire "${edge.from.output}" output as input "${edge.to.input}" of node "${edge.to.node}"`
+  // );
   return {
     [edge.to.input]: outputs[edge.from.output],
   };

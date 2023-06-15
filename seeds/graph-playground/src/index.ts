@@ -4,9 +4,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { intro, outro, text, log } from "@clack/prompts";
+import { intro, outro, text, log, spinner } from "@clack/prompts";
+import {
+  GenerateTextResponse,
+  Text,
+  TextCompletion,
+  palm,
+} from "@google-labs-prototypes/palm-lite";
+import { config } from "dotenv";
 
 import { GraphDescriptor, NodeHandlers, follow } from "./graph.js";
+
+config();
+
+const API_KEY = process.env.API_KEY;
+if (!API_KEY) throw new Error("API_KEY not set");
 
 const graph: GraphDescriptor = {
   edges: [
@@ -37,9 +49,16 @@ const handlers: NodeHandlers = {
     };
   },
   "text-completion": async (inputs) => {
-    console.log("Text completion handler invoked with inputs:", inputs);
+    if (!inputs) return {};
+    const s = spinner();
+    s.start("Generating text completion");
+    const prompt = new Text().text(inputs["text"] as string);
+    const request = palm(API_KEY).text(prompt);
+    const data = await fetch(request);
+    const response = (await data.json()) as GenerateTextResponse;
+    s.stop("Success!");
     return {
-      completion: "this is a real text completion",
+      completion: response?.candidates?.[0]?.output as string,
     };
   },
   "console-output": async (inputs) => {
