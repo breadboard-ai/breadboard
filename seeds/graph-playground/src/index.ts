@@ -45,15 +45,24 @@ const graph: GraphDescriptor = {
 
 const handlers: NodeHandlers = {
   "user-input": async () => {
+    // If this node is a service, why does it contain experience?
+    // It seems like there's some sort of "configuration store" or something
+    // that is provided by the experience, but delivered by the service.
     const input = await text({
       message: "Enter some text",
     });
+    // This is likely not a special control value, but rather a kind of output
+    // Like: `exit: boolean`
     if (!input) return { control: ControlValue.stop };
     return { outputs: { text: input } };
   },
   "text-completion": async (inputs) => {
     if (!inputs) return { control: ControlValue.error };
     const s = spinner();
+    // How to move these outside of the handler?
+    // These need to be part of the outer machinery, but also not in the actual
+    // follow logic.
+    // My guess is I am seeing some sort of lifecycle situation here?
     s.start("Generating text completion");
     const prompt = new Text().text(inputs["text"] as string);
     const request = palm(API_KEY).text(prompt);
