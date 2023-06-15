@@ -58,7 +58,7 @@ const graph: GraphDescriptor = {
   edges: [
     {
       entry: true,
-      from: { node: "user-input", output: "output" },
+      from: { node: "user-input", output: "text" },
       to: { node: "text-completion", input: "text" },
     },
     {
@@ -94,9 +94,9 @@ const invokeNode = (
   return node.outputs;
 };
 
-const invoke = (edge: Edge) => {
+const wire = (edge: Edge) => {
   console.log(
-    `[invoke node: "${edge.from.node}", get "${edge.from.output}" output, feed to input "${edge.to.input}" of node "${edge.to.node}"]`
+    `wire "${edge.from.output}" output as input "${edge.to.input}" of node "${edge.to.node}"]`
   );
 };
 
@@ -113,9 +113,8 @@ const follow = (graph: GraphDescriptor) => {
   while (edge) {
     const current = graph.nodes[edge.from.node];
     outputs = invokeNode(current, input);
-
     input = edge.to.input;
-    invoke(edge);
+    wire(edge);
     next = edge.to.node;
     edge = graph.edges.find((edge) => edge.from.node == next);
   }
