@@ -51,7 +51,7 @@ interface Edge {
 
 interface GraphDescriptor {
   edges: Edge[];
-  nodes: Record<NodeIdentifier, NodeDescriptor>;
+  nodes: NodeDescriptor[];
 }
 
 const graph: GraphDescriptor = {
@@ -66,15 +66,15 @@ const graph: GraphDescriptor = {
       to: { node: "console-output", input: "text" },
     },
   ],
-  nodes: {
-    "user-input": { id: "user-input", outputs: ["text"], inputs: [] },
-    "text-completion": {
+  nodes: [
+    { id: "user-input", outputs: ["text"], inputs: [] },
+    {
       id: "text-completion",
       inputs: ["text"],
       outputs: ["completion"],
     },
-    "console-output": { id: "console-output", inputs: ["text"], outputs: [] },
-  },
+    { id: "console-output", inputs: ["text"], outputs: [] },
+  ],
 };
 
 const invokeNode = (
@@ -110,8 +110,13 @@ const follow = (graph: GraphDescriptor) => {
   let input: InputIdentifier | null = null;
   let outputs: OutputIdentifier[] | null = null;
 
+  const nodes = graph.nodes.reduce((acc, node) => {
+    acc[node.id] = node;
+    return acc;
+  }, {} as Record<NodeIdentifier, NodeDescriptor>);
+
   while (edge) {
-    const current = graph.nodes[edge.from.node];
+    const current = nodes[edge.from.node];
     outputs = invokeNode(current, input);
     input = edge.to.input;
     wire(edge);
@@ -119,7 +124,7 @@ const follow = (graph: GraphDescriptor) => {
     edge = graph.edges.find((edge) => edge.from.node == next);
   }
   if (next) {
-    const last = graph.nodes[next];
+    const last = nodes[next];
     invokeNode(last, input);
   }
 };
