@@ -71,7 +71,7 @@ export type InputValues = Record<InputIdentifier, unknown>;
 
 export type OutputValues = Record<OutputIdentifier, unknown>;
 
-export type NodeHandler = (inputs: InputValues) => OutputValues;
+export type NodeHandler = (inputs?: InputValues) => Promise<OutputValues>;
 
 export type NodeHandlers = Record<NodeTypeIdentifier, NodeHandler>;
 
@@ -89,7 +89,10 @@ const wire = (edge: Edge, outputs: OutputValues): InputValues => {
  * @todo implement nicer traversal, something like a topology sort with feedback problem resolution.
  * @param graph graph to follow
  */
-export const follow = (graph: GraphDescriptor, nodeHandlers: NodeHandlers) => {
+export const follow = async (
+  graph: GraphDescriptor,
+  nodeHandlers: NodeHandlers
+) => {
   let edge = graph.edges.find((edge) => edge.entry);
   let next: NodeIdentifier | null = null;
 
@@ -105,14 +108,14 @@ export const follow = (graph: GraphDescriptor, nodeHandlers: NodeHandlers) => {
   while (edge) {
     const current = nodes[edge.from.node];
     const nodeHandler = nodeHandlers[current.type];
-    outputs = nodeHandler?.(inputs ?? {});
+    outputs = await nodeHandler?.(inputs ?? {});
     inputs = wire(edge, outputs);
     next = edge.to.node;
     edge = graph.edges.find((edge) => edge.from.node == next);
   }
   if (next) {
     const last = nodes[next];
-    const nodeHandler = nodeHandlers[last.type];
+    const nodeHandler = await nodeHandlers[last.type];
     nodeHandler?.(inputs ?? {});
   }
 };

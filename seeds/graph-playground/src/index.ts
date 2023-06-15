@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { intro, outro, text, log } from "@clack/prompts";
+
 import { GraphDescriptor, NodeHandlers, follow } from "./graph.js";
 
 const graph: GraphDescriptor = {
@@ -26,22 +28,27 @@ const graph: GraphDescriptor = {
 };
 
 const handlers: NodeHandlers = {
-  "user-input": (inputs) => {
-    console.log("User input handler invoked with inputs:", inputs);
+  "user-input": async () => {
+    const input = await text({
+      message: "Enter some text",
+    });
     return {
-      text: "this is a real user input",
+      text: input,
     };
   },
-  "text-completion": (inputs) => {
+  "text-completion": async (inputs) => {
     console.log("Text completion handler invoked with inputs:", inputs);
     return {
       completion: "this is a real text completion",
     };
   },
-  "console-output": (inputs) => {
-    console.log("Console output handler invoked with inputs:", inputs);
+  "console-output": async (inputs) => {
+    if (!inputs) return {};
+    log.info(inputs["text"] as string);
     return {};
   },
 };
 
-follow(graph, handlers);
+intro("Let's follow a graph!");
+await follow(graph, handlers);
+outro("Awesome work! Let's do this again sometime");
