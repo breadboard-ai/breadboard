@@ -22,16 +22,23 @@ export interface NodeDescriptor {
    */
   id: NodeIdentifier;
   /**
-   * Type of the node. What does node do?
+   * Type of the node. What does this node do?
    */
   type: NodeTypeIdentifier;
+}
+
+/**
+ * Describes a node type.
+ * @todo Currently, `inputs` and `outputs` are fixed. How do we handle flexible number of inputs/outputs?
+ */
+export interface NodeTypeDescriptor {
   /**
-   * A list of Node's declared outputs. Outputs are where graph edges
+   * A list of Node type's declared outputs. Outputs are where graph edges
    * originate from.
    */
   inputs: InputIdentifier[];
   /**
-   * A list of Node's declared inputs. Inputs are where graph edges arrive at.
+   * A list of Node type's declared inputs. Inputs are where graph edges arrive at.
    */
   outputs: OutputIdentifier[];
 }
@@ -79,6 +86,7 @@ const wire = (edge: Edge, outputs: OutputValues): InputValues => {
 
 /**
  * The dumbest possible edge follower.
+ * @todo implement nicer traversal, something like a topology sort with feedback problem resolution.
  * @param graph graph to follow
  */
 export const follow = (graph: GraphDescriptor, nodeHandlers: NodeHandlers) => {
