@@ -18,13 +18,13 @@ All packages within the monorepo have a similar structure:
 
 ├── package.json
 ├── src
-│   └── index.js
+│   └── index.ts
 ├────── <dir>
-│        ├── <file>.js
+│        ├── <file>.ts
 │
 │        ...
 ├── tests
-│   └── <file>.js
+│   └── <file>.ts
 │
 │   ...
 
