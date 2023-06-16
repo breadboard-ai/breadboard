@@ -80,9 +80,18 @@ export interface NodeHandlerResult {
   control?: ControlValue;
 }
 
-export type NodeHandler = (inputs?: InputValues) => Promise<NodeHandlerResult>;
+export type NodeConfiguration = Record<string, string>;
+
+export type NodeHandler = (
+  configuration: NodeConfiguration,
+  inputs?: InputValues
+) => Promise<NodeHandlerResult>;
 
 export type NodeHandlers = Record<NodeTypeIdentifier, NodeHandler>;
+
+export interface ConfigurationStore {
+  get: (id: NodeIdentifier) => Promise<NodeConfiguration>;
+}
 
 const wire = (edge: Edge, outputs: OutputValues): InputValues => {
   // console.log(
@@ -104,6 +113,17 @@ const getHandler = (
   return handler;
 };
 
+const handle = async (
+  descriptor: NodeDescriptor,
+  handler: NodeHandler,
+  configuration: ConfigurationStore,
+  inputs?: InputValues | null
+) => {
+  const nodeConfig = await configuration.get(descriptor.id);
+  const result = await handler(nodeConfig, inputs ?? {});
+  return result;
+};
+
 /**
  * The dumbest possible edge follower.
  * @todo implement nicer traversal, something like a topology sort with feedback problem resolution.
@@ -112,6 +132,7 @@ const getHandler = (
 export const follow = async (
   graph: GraphDescriptor,
   nodeHandlers: NodeHandlers,
+  configuration: ConfigurationStore,
   log: (s: string) => void
 ) => {
   log(`Let the graph traversal begin!`);
@@ -133,11 +154,16 @@ export const follow = async (
 
   while (edge) {
     const current = nodes[edge.from.node];
-    const nodeHandler = getHandler(nodeHandlers, current);
 
     log(`Visiting: "${current.id}", type: "${current.type}"`);
 
-    const handlerResult = await nodeHandler(inputs ?? {});
+    const nodeHandler = getHandler(nodeHandlers, current);
+    const handlerResult = await handle(
+      current,
+      nodeHandler,
+      configuration,
+      inputs
+    );
     if (handlerResult?.control == ControlValue.stop) {
       return;
     }
@@ -150,7 +176,7 @@ export const follow = async (
     const last = nodes[next];
     log(`Visiting final node "${last.id}", type "${last.type}"`);
     const nodeHandler = getHandler(nodeHandlers, last);
-    await nodeHandler(inputs ?? {});
+    await handle(last, nodeHandler, configuration, inputs);
   }
   log("Graph traversal complete.");
 };

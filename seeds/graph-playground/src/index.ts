@@ -10,9 +10,12 @@ import { config } from "dotenv";
 import { readFile } from "fs/promises";
 
 import {
+  ConfigurationStore,
   ControlValue,
   GraphDescriptor,
+  NodeConfiguration,
   NodeHandlers,
+  NodeIdentifier,
   follow,
 } from "./graph.js";
 
@@ -29,7 +32,7 @@ const substitute = (template: string, values: Record<string, string>) => {
 };
 
 const handlers: NodeHandlers = {
-  "user-input": async () => {
+  "user-input": async (_config) => {
     // If this node is a service, why does it contain experience?
     // It seems like there's some sort of "configuration store" or something
     // that is provided by the experience, but delivered by the service.
@@ -41,15 +44,14 @@ const handlers: NodeHandlers = {
     if (!input) return { control: ControlValue.stop };
     return { outputs: { text: input } };
   },
-  "prompt-template": async (inputs) => {
+  "prompt-template": async (config, inputs) => {
     if (!inputs) throw new Error("Prompt template requires inputs");
     const question = inputs["question"] as string;
-    const template =
-      "Analyze the following question and instead of answering, list out steps to take to answer the question: {{question}}";
+    const template = config["prompt"];
     const prompt = substitute(template, { question });
     return { outputs: { prompt } };
   },
-  "text-completion": async (inputs) => {
+  "text-completion": async (config, inputs) => {
     if (!inputs) throw new Error("Text completion requires inputs");
     const s = spinner();
     // How to move these outside of the handler?
@@ -65,12 +67,29 @@ const handlers: NodeHandlers = {
     const completion = response?.candidates?.[0]?.output as string;
     return { outputs: { completion } };
   },
-  "console-output": async (inputs) => {
+  "console-output": async (config, inputs) => {
     if (!inputs) return {};
     log.step(inputs["text"] as string);
     return {};
   },
 };
+
+/**
+ * This is a mocked out configuration store. Imagine a database or something.
+ */
+class NodeConfig implements ConfigurationStore {
+  async get(id: NodeIdentifier) {
+    if (id === "prompt-template-1") {
+      return {
+        prompt:
+          "Analyze the following question and instead of answering, list out steps to take to answer the question: {{question}}",
+      } as NodeConfiguration;
+    }
+    return {};
+  }
+}
+
+const configuration = new NodeConfig();
 
 const logger = (s: string) => {
   log.message(s, { symbol: "🤖" });
@@ -80,5 +99,5 @@ intro("Let's follow a graph!");
 const graph = JSON.parse(
   await readFile(process.argv[2], "utf-8")
 ) as GraphDescriptor;
-await follow(graph, handlers, logger);
+await follow(graph, handlers, configuration, logger);
 outro("Awesome work! Let's do this again sometime");
