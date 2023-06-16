@@ -19,5 +19,10 @@
     { "id": "text-completion-1", "type": "text-completion" },
     { "id": "console-output-1", "type": "console-output" },
     { "id": "prompt-template-1", "type": "prompt-template" }
-  ]
+  ],
+  "configuration": {
+    "prompt-template-1": {
+      "template": "Analyze the following question and instead of answering, list out steps to take to answer the question: {{question}}"
+    }
+  }
 }

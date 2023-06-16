@@ -65,6 +65,7 @@ export interface Edge {
 export interface GraphDescriptor {
   edges: Edge[];
   nodes: NodeDescriptor[];
+  configuration: Record<NodeIdentifier, NodeConfiguration>;
 }
 
 export type InputValues = Record<InputIdentifier, unknown>;
@@ -91,6 +92,25 @@ export type NodeHandlers = Record<NodeTypeIdentifier, NodeHandler>;
 
 export interface ConfigurationStore {
   get: (id: NodeIdentifier) => Promise<NodeConfiguration>;
+}
+
+/**
+ * This is a very simple configuration store that is based on a JSON object.
+ */
+class SimpleNodeConfig implements ConfigurationStore {
+  #configuration: Record<NodeIdentifier, NodeConfiguration>;
+
+  /**
+   * Create a simple configuration store.
+   * @param o JSON object that contains the configuration for each node.
+   */
+  constructor(o: object) {
+    this.#configuration = o as Record<NodeIdentifier, NodeConfiguration>;
+  }
+
+  async get(id: NodeIdentifier) {
+    return this.#configuration[id] || {};
+  }
 }
 
 const wire = (edge: Edge, outputs: OutputValues): InputValues => {
@@ -132,10 +152,11 @@ const handle = async (
 export const follow = async (
   graph: GraphDescriptor,
   nodeHandlers: NodeHandlers,
-  configuration: ConfigurationStore,
   log: (s: string) => void
 ) => {
   log(`Let the graph traversal begin!`);
+
+  const configuration = new SimpleNodeConfig(graph.configuration);
 
   let edge = graph.edges.find((edge) => edge.entry);
 

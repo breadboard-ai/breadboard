@@ -10,12 +10,9 @@ import { config } from "dotenv";
 import { readFile } from "fs/promises";
 
 import {
-  ConfigurationStore,
   ControlValue,
   GraphDescriptor,
-  NodeConfiguration,
   NodeHandlers,
-  NodeIdentifier,
   follow,
 } from "./graph.js";
 
@@ -47,7 +44,7 @@ const handlers: NodeHandlers = {
   "prompt-template": async (config, inputs) => {
     if (!inputs) throw new Error("Prompt template requires inputs");
     const question = inputs["question"] as string;
-    const template = config["prompt"];
+    const template = config["template"];
     const prompt = substitute(template, { question });
     return { outputs: { prompt } };
   },
@@ -74,23 +71,6 @@ const handlers: NodeHandlers = {
   },
 };
 
-/**
- * This is a mocked out configuration store. Imagine a database or something.
- */
-class NodeConfig implements ConfigurationStore {
-  async get(id: NodeIdentifier) {
-    if (id === "prompt-template-1") {
-      return {
-        prompt:
-          "Analyze the following question and instead of answering, list out steps to take to answer the question: {{question}}",
-      } as NodeConfiguration;
-    }
-    return {};
-  }
-}
-
-const configuration = new NodeConfig();
-
 const logger = (s: string) => {
   log.message(s, { symbol: "🤖" });
 };
@@ -99,5 +79,5 @@ intro("Let's follow a graph!");
 const graph = JSON.parse(
   await readFile(process.argv[2], "utf-8")
 ) as GraphDescriptor;
-await follow(graph, handlers, configuration, logger);
+await follow(graph, handlers, logger);
 outro("Awesome work! Let's do this again sometime");
