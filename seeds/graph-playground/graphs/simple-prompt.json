@@ -12,12 +12,17 @@
     {
       "from": { "node": "text-completion-1", "output": "completion" },
       "to": { "node": "console-output-1", "input": "text" }
+    },
+    {
+      "from": { "node": "configuration-1", "output": "template" },
+      "to": { "node": "prompt-template-1", "input": "template" }
     }
   ],
   "nodes": [
     { "id": "user-input-1", "type": "user-input" },
     { "id": "text-completion-1", "type": "text-completion" },
     { "id": "console-output-1", "type": "console-output" },
-    { "id": "prompt-template-1", "type": "prompt-template" }
+    { "id": "prompt-template-1", "type": "prompt-template" },
+    { "id": "configuration-1", "type": "configuration" }
   ]
 }
