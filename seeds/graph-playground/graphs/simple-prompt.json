@@ -1,0 +1,23 @@
+{
+  "edges": [
+    {
+      "entry": true,
+      "from": { "node": "user-input-1", "output": "text" },
+      "to": { "node": "prompt-template-1", "input": "input" }
+    },
+    {
+      "from": { "node": "prompt-template-1", "output": "prompt" },
+      "to": { "node": "text-completion-1", "input": "text" }
+    },
+    {
+      "from": { "node": "text-completion-1", "output": "completion" },
+      "to": { "node": "console-output-1", "input": "text" }
+    }
+  ],
+  "nodes": [
+    { "id": "user-input-1", "type": "user-input" },
+    { "id": "text-completion-1", "type": "text-completion" },
+    { "id": "console-output-1", "type": "console-output" },
+    { "id": "prompt-template-1", "type": "prompt-template" }
+  ]
+}
