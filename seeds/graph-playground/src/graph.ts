@@ -94,6 +94,17 @@ const wire = (edge: Edge, outputs: OutputValues): InputValues => {
   };
 };
 
+const getHandler = (
+  nodeHandlers: NodeHandlers,
+  node: NodeDescriptor
+): NodeHandler => {
+  const handler = nodeHandlers[node.type];
+  if (!handler) {
+    throw new Error(`No handler for node type "${node.type}"`);
+  }
+  return handler;
+};
+
 /**
  * The dumbest possible edge follower.
  * @todo implement nicer traversal, something like a topology sort with feedback problem resolution.
@@ -117,8 +128,8 @@ export const follow = async (
 
   while (edge) {
     const current = nodes[edge.from.node];
-    const nodeHandler = nodeHandlers[current.type];
-    const handlerResult = await nodeHandler?.(inputs ?? {});
+    const nodeHandler = getHandler(nodeHandlers, current);
+    const handlerResult = await nodeHandler(inputs ?? {});
     if (handlerResult?.control == ControlValue.stop) {
       return;
     }
@@ -132,7 +143,7 @@ export const follow = async (
   }
   if (next) {
     const last = nodes[next];
-    const nodeHandler = await nodeHandlers[last.type];
-    nodeHandler?.(inputs ?? {});
+    const nodeHandler = getHandler(nodeHandlers, last);
+    await nodeHandler(inputs ?? {});
   }
 };
