@@ -21,6 +21,13 @@ config();
 const API_KEY = process.env.API_KEY;
 if (!API_KEY) throw new Error("API_KEY not set");
 
+const substitute = (template: string, values: Record<string, string>) => {
+  return Object.entries(values).reduce(
+    (acc, [key, value]) => acc.replace(`{{${key}}}`, value),
+    template
+  );
+};
+
 const handlers: NodeHandlers = {
   "user-input": async () => {
     // If this node is a service, why does it contain experience?
@@ -36,8 +43,10 @@ const handlers: NodeHandlers = {
   },
   "prompt-template": async (inputs) => {
     if (!inputs) throw new Error("Prompt template requires inputs");
-    const input = inputs["input"] as string;
-    const prompt = `Analyze the following question and instead of answering, list out steps to take to answer the question: ${input}`;
+    const question = inputs["question"] as string;
+    const template =
+      "Analyze the following question and instead of answering, list out steps to take to answer the question: {{question}}";
+    const prompt = substitute(template, { question });
     return { outputs: { prompt } };
   },
   "text-completion": async (inputs) => {

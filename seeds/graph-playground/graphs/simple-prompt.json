@@ -3,7 +3,7 @@
     {
       "entry": true,
       "from": { "node": "user-input-1", "output": "text" },
-      "to": { "node": "prompt-template-1", "input": "input" }
+      "to": { "node": "prompt-template-1", "input": "question" }
     },
     {
       "from": { "node": "prompt-template-1", "output": "prompt" },
