@@ -34,6 +34,12 @@ const handlers: NodeHandlers = {
     if (!input) return { control: ControlValue.stop };
     return { outputs: { text: input } };
   },
+  "prompt-template": async (inputs) => {
+    if (!inputs) throw new Error("Prompt template requires inputs");
+    const input = inputs["input"] as string;
+    const prompt = `Analyze the following question and instead of answering, list out steps to take to answer the question: ${input}`;
+    return { outputs: { prompt } };
+  },
   "text-completion": async (inputs) => {
     if (!inputs) return { control: ControlValue.error };
     const s = spinner();
