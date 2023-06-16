@@ -112,9 +112,15 @@ const getHandler = (
  */
 export const follow = async (
   graph: GraphDescriptor,
-  nodeHandlers: NodeHandlers
+  nodeHandlers: NodeHandlers,
+  log: (s: string) => void
 ) => {
+  log(`Let the graph traversal begin!`);
+
   let edge = graph.edges.find((edge) => edge.entry);
+
+  log(`Starting at edge "${edge?.from.node}"`);
+
   let next: NodeIdentifier | null = null;
 
   // State of the graph traversal.
@@ -129,6 +135,9 @@ export const follow = async (
   while (edge) {
     const current = nodes[edge.from.node];
     const nodeHandler = getHandler(nodeHandlers, current);
+
+    log(`Visiting: "${current.id}", type: "${current.type}"`);
+
     const handlerResult = await nodeHandler(inputs ?? {});
     if (handlerResult?.control == ControlValue.stop) {
       return;
@@ -143,7 +152,9 @@ export const follow = async (
   }
   if (next) {
     const last = nodes[next];
+    log(`Visiting final node "${last.id}", type "${last.type}"`);
     const nodeHandler = getHandler(nodeHandlers, last);
     await nodeHandler(inputs ?? {});
   }
+  log("Graph traversal complete.");
 };

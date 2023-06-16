@@ -61,20 +61,24 @@ const handlers: NodeHandlers = {
     const request = palm(API_KEY).text(prompt);
     const data = await fetch(request);
     const response = (await data.json()) as GenerateTextResponse;
-    s.stop("Success!");
+    s.stop("Text completion generated");
     const completion = response?.candidates?.[0]?.output as string;
     return { outputs: { completion } };
   },
   "console-output": async (inputs) => {
     if (!inputs) return { control: ControlValue.error };
-    log.info(inputs["text"] as string);
+    log.step(inputs["text"] as string);
     return {};
   },
+};
+
+const logger = (s: string) => {
+  log.message(s, { symbol: "🤖" });
 };
 
 intro("Let's follow a graph!");
 const graph = JSON.parse(
   await readFile(process.argv[2], "utf-8")
 ) as GraphDescriptor;
-await follow(graph, handlers);
+await follow(graph, handlers, logger);
 outro("Awesome work! Let's do this again sometime");
