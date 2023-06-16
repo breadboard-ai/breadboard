@@ -50,7 +50,7 @@ const handlers: NodeHandlers = {
     return { outputs: { prompt } };
   },
   "text-completion": async (inputs) => {
-    if (!inputs) return { control: ControlValue.error };
+    if (!inputs) throw new Error("Text completion requires inputs");
     const s = spinner();
     // How to move these outside of the handler?
     // These need to be part of the outer machinery, but also not in the actual
@@ -66,7 +66,7 @@ const handlers: NodeHandlers = {
     return { outputs: { completion } };
   },
   "console-output": async (inputs) => {
-    if (!inputs) return { control: ControlValue.error };
+    if (!inputs) return {};
     log.step(inputs["text"] as string);
     return {};
   },

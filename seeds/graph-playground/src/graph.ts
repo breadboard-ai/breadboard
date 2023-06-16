@@ -73,7 +73,6 @@ export type OutputValues = Record<OutputIdentifier, unknown>;
 
 export enum ControlValue {
   "stop",
-  "error",
 }
 
 export interface NodeHandlerResult {
@@ -141,9 +140,6 @@ export const follow = async (
     const handlerResult = await nodeHandler(inputs ?? {});
     if (handlerResult?.control == ControlValue.stop) {
       return;
-    }
-    if (handlerResult?.control == ControlValue.error) {
-      throw new Error("Error reported by the node handler");
     }
     outputs = handlerResult.outputs ?? {};
     inputs = wire(edge, outputs);
