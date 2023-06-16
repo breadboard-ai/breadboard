@@ -1,0 +1,27 @@
+# Publish to npm when we run a workflow manually.
+on: [workflow_dispatch]
+name: publish-to-npm
+permissions: {}
+jobs:
+  release-please:
+    # TODO: read GitHub actions docs and lock down correct permissions.
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - run: npm install
+      - run: npm run build
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          registry-url: 'https://wombat-dressing-room.appspot.com/'
+      - name: npm publish
+        run: |
+          cd seeds/palm-lite/
+          npm publish --access=public
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
