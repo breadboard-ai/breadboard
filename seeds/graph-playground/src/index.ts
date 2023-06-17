@@ -23,6 +23,14 @@ const substitute = (template: string, values: Record<string, string>) => {
   );
 };
 
+const parametersFromTemplate = (template: string): string[] => {
+  const matches = template.matchAll(/{{(?<name>\w+)}}/g);
+  const parameters = Array.from(matches).map(
+    (match) => match.groups?.name || ""
+  );
+  return parameters;
+};
+
 const handlers: NodeHandlers = {
   "user-input": async () => {
     // If this node is a service, why does it contain experience?
@@ -36,9 +44,19 @@ const handlers: NodeHandlers = {
   },
   "prompt-template": async (inputs) => {
     if (!inputs) throw new Error("Prompt template requires inputs");
-    const question = inputs.question as string;
+
     const template = inputs.template as string;
-    const prompt = substitute(template, { question });
+    const parameters = parametersFromTemplate(template);
+    if (!parameters.length) return { prompt: template };
+
+    const substitutes = parameters.reduce((acc, parameter) => {
+      if (inputs[parameter] === undefined)
+        throw new Error(`Input is missing parameter "${parameter}"`);
+      return { ...acc, [parameter]: inputs[parameter] };
+    }, {});
+
+    const prompt = substitute(template, substitutes);
+    log.info(`Prompt: ${prompt}`);
     return { prompt };
   },
   "text-completion": async (inputs) => {
@@ -61,6 +79,12 @@ const handlers: NodeHandlers = {
     if (!inputs) return {};
     log.step(inputs["text"] as string);
     return {};
+  },
+  "accumulating-context": async (inputs) => {
+    if (!inputs) return {};
+    const text = inputs.text as string;
+    // TODO: Actually accumulate context.
+    return { context: text };
   },
 };
 

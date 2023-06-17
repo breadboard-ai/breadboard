@@ -136,6 +136,8 @@ export const follow = async (
   while (edge) {
     const current = nodes[edge.from.node];
 
+    if (!current) throw new Error(`No node found for id "${edge.from.node}"`);
+
     log(`Visiting: "${current.id}", type: "${current.type}"`);
 
     const handlerResult = await handle(nodeHandlers, current, inputs);

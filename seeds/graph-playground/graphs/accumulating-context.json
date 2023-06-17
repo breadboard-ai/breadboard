@@ -1,0 +1,46 @@
+{
+  "edges": [
+    {
+      "entry": true,
+      "from": { "node": "user-input-1", "output": "text" },
+      "to": { "node": "prompt-template-1", "input": "question" }
+    },
+    {
+      "from": { "node": "prompt-template-1", "output": "prompt" },
+      "to": { "node": "text-completion-1", "input": "text" }
+    },
+    {
+      "from": { "node": "text-completion-1", "output": "completion" },
+      "to": { "node": "console-output-1", "input": "text" }
+    },
+    {
+      "from": { "node": "console-output-1", "output": "text" },
+      "to": { "node": "accumulating-context-1", "input": "text" }
+    },
+    {
+      "from": { "node": "accumulating-context-1" },
+      "to": { "node": "user-input-1" }
+    },
+    {
+      "from": { "node": "accumulating-context-1", "output": "context" },
+      "to": { "node": "prompt-template-1", "input": "context" }
+    }
+  ],
+  "nodes": [
+    { "id": "user-input-1", "type": "user-input" },
+    { "id": "text-completion-1", "type": "text-completion" },
+    { "id": "console-output-1", "type": "console-output" },
+    {
+      "id": "prompt-template-1",
+      "type": "prompt-template",
+      "configuration": {
+        "template": "This is a conversation between a friendly chat bot and their user. You are the chat bot and your job is to try to be helpful, empathetic, and fun.\n\nConversation History:\n{{context}}\n\nUser's message:\n{{question}}\n\nYour response:",
+        "context": ""
+      }
+    },
+    {
+      "id": "accumulating-context-1",
+      "type": "accumulating-context"
+    }
+  ]
+}
