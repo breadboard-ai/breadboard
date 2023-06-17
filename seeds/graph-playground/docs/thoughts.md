@@ -24,3 +24,9 @@ Configuration shape is node type-specific, but configuration instance is node-sp
 Configuration and inputs are merged together. First, configuration, then inputs overlaid over it. This way, if the user provides a matching value in the configuration, it can be used as an input.
 
 There is no distinction with configuration and inputs for the node. They are both just inputs.
+
+Idea: each edge has an adapter. There is a "default" adapter that just outputs a string, but also, there can be other adapters that do more interesting things.
+
+I wonder if each handler has a pick at the incoming adapter. And if it fails to find one, it just goes "give me the string, then".
+
+I wonder if it's like `fetch`. Either text or JSON.
