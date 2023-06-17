@@ -99,22 +99,15 @@ const wire = (edge: Edge, outputs: OutputValues): InputValues => {
   };
 };
 
-const getHandler = (
-  nodeHandlers: NodeHandlers,
-  node: NodeDescriptor
-): NodeHandler => {
-  const handler = nodeHandlers[node.type];
-  if (!handler) {
-    throw new Error(`No handler for node type "${node.type}"`);
-  }
-  return handler;
-};
-
 const handle = async (
+  nodeHandlers: NodeHandlers,
   descriptor: NodeDescriptor,
-  handler: NodeHandler,
   inputs?: InputValues | null
 ) => {
+  const handler = nodeHandlers[descriptor.type];
+  if (!handler)
+    throw new Error(`No handler for node type "${descriptor.type}"`);
+
   const aggregate = { ...descriptor.configuration, ...inputs };
   const result = await handler(aggregate);
   return result;
@@ -152,9 +145,8 @@ export const follow = async (
 
     log(`Visiting: "${current.id}", type: "${current.type}"`);
 
-    const nodeHandler = getHandler(nodeHandlers, current);
-    const handlerResult = await handle(current, nodeHandler, inputs);
-    if (handlerResult?.control == ControlValue.stop) {
+    const handlerResult = await handle(nodeHandlers, current, inputs);
+    if (handlerResult.control == ControlValue.stop) {
       return;
     }
     outputs = handlerResult.outputs ?? {};
@@ -165,8 +157,7 @@ export const follow = async (
   if (next) {
     const last = nodes[next];
     log(`Visiting final node "${last.id}", type "${last.type}"`);
-    const nodeHandler = getHandler(nodeHandlers, last);
-    await handle(last, nodeHandler, inputs);
+    await handle(nodeHandlers, last, inputs);
   }
   log("Graph traversal complete.");
 };
