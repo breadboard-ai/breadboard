@@ -10,7 +10,7 @@ const TEMPLATE = `# {{title}}
 ---
 
 \`\`\`mermaid
-graph LR;
+graph TD;
 {{mermaid}}
 \`\`\``;
 
