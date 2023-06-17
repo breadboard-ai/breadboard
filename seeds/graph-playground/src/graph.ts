@@ -25,6 +25,10 @@ export interface NodeDescriptor {
    * Type of the node. What does this node do?
    */
   type: NodeTypeIdentifier;
+  /**
+   * Configuration of the node.
+   */
+  configuration: NodeConfiguration;
 }
 
 /**
@@ -65,7 +69,6 @@ export interface Edge {
 export interface GraphDescriptor {
   edges: Edge[];
   nodes: NodeDescriptor[];
-  configuration: Record<NodeIdentifier, NodeConfiguration>;
 }
 
 export type InputValues = Record<InputIdentifier, unknown>;
@@ -90,29 +93,6 @@ export type NodeHandler = (
 
 export type NodeHandlers = Record<NodeTypeIdentifier, NodeHandler>;
 
-export interface ConfigurationStore {
-  get: (id: NodeIdentifier) => Promise<NodeConfiguration>;
-}
-
-/**
- * This is a very simple configuration store that is based on a JSON object.
- */
-class SimpleNodeConfig implements ConfigurationStore {
-  #configuration: Record<NodeIdentifier, NodeConfiguration>;
-
-  /**
-   * Create a simple configuration store.
-   * @param o JSON object that contains the configuration for each node.
-   */
-  constructor(o: object) {
-    this.#configuration = o as Record<NodeIdentifier, NodeConfiguration>;
-  }
-
-  async get(id: NodeIdentifier) {
-    return this.#configuration[id] || {};
-  }
-}
-
 const wire = (edge: Edge, outputs: OutputValues): InputValues => {
   // console.log(
   //   `wire "${edge.from.output}" output as input "${edge.to.input}" of node "${edge.to.node}"`
@@ -136,10 +116,9 @@ const getHandler = (
 const handle = async (
   descriptor: NodeDescriptor,
   handler: NodeHandler,
-  configuration: ConfigurationStore,
   inputs?: InputValues | null
 ) => {
-  const nodeConfig = await configuration.get(descriptor.id);
+  const nodeConfig = descriptor.configuration;
   const result = await handler(nodeConfig, inputs ?? {});
   return result;
 };
@@ -155,8 +134,6 @@ export const follow = async (
   log: (s: string) => void
 ) => {
   log(`Let the graph traversal begin!`);
-
-  const configuration = new SimpleNodeConfig(graph.configuration);
 
   let edge = graph.edges.find((edge) => edge.entry);
 
@@ -179,12 +156,7 @@ export const follow = async (
     log(`Visiting: "${current.id}", type: "${current.type}"`);
 
     const nodeHandler = getHandler(nodeHandlers, current);
-    const handlerResult = await handle(
-      current,
-      nodeHandler,
-      configuration,
-      inputs
-    );
+    const handlerResult = await handle(current, nodeHandler, inputs);
     if (handlerResult?.control == ControlValue.stop) {
       return;
     }
@@ -197,7 +169,7 @@ export const follow = async (
     const last = nodes[next];
     log(`Visiting final node "${last.id}", type "${last.type}"`);
     const nodeHandler = getHandler(nodeHandlers, last);
-    await handle(last, nodeHandler, configuration, inputs);
+    await handle(last, nodeHandler, inputs);
   }
   log("Graph traversal complete.");
 };

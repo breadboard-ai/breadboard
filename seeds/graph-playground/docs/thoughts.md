@@ -18,3 +18,5 @@ There's some difference on the outside, like config seems more static and needs 
 For now, decided to go with configuration as something that's provided to a node.
 
 Interesting new observation: configuration travels with the graph.
+
+Configuration shape is node type-specific, but configuration instance is node-specific.
