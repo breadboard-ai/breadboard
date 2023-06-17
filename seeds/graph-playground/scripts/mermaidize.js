@@ -1,15 +1,10 @@
-import { readFile, writeFile, readdir } from "fs/promises";
+/**
+ * @license
+ * Copyright 2023 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-const graphs = (await readdir("./graphs/")).filter((file) =>
-  file.endsWith(".json")
-);
-
-const substitute = (template, values) => {
-  return Object.entries(values).reduce(
-    (acc, [key, value]) => acc.replace(`{{${key}}}`, value),
-    template
-  );
-};
+import { readFile, writeFile, readdir, mkdir } from "fs/promises";
 
 const TEMPLATE = `# {{title}}
 ---
@@ -18,6 +13,24 @@ const TEMPLATE = `# {{title}}
 graph LR;
 {{mermaid}}
 \`\`\``;
+
+const IN_DIR = "./graphs";
+const OUT_DIR = "./docs/graphs";
+
+const graphs = (await readdir(`${IN_DIR}/`)).filter((file) =>
+  file.endsWith(".json")
+);
+
+const ensureDir = async () => {
+  await mkdir(OUT_DIR, { recursive: true });
+};
+
+const substitute = (template, values) => {
+  return Object.entries(values).reduce(
+    (acc, [key, value]) => acc.replace(`{{${key}}}`, value),
+    template
+  );
+};
 
 const mermaidize = (file) => {
   const { nodes, edges } = JSON.parse(file);
@@ -30,15 +43,16 @@ const mermaidize = (file) => {
   return result.join("\n");
 };
 
+await ensureDir();
 await Promise.all(
   graphs.map(async (graph) => {
-    const file = await readFile(`./graphs/${graph}`, "utf-8");
+    const file = await readFile(`${IN_DIR}/${graph}`, "utf-8");
     const mermaid = mermaidize(file);
     const output = substitute(TEMPLATE, {
       title: graph.replace(".json", ""),
       mermaid,
     });
-    await writeFile(`./docs/${graph.replace(".json", ".md")}`, output);
+    await writeFile(`${OUT_DIR}/${graph.replace(".json", ".md")}`, output);
     return "";
   })
 );
