@@ -73,16 +73,9 @@ export interface GraphDescriptor {
 
 export type InputValues = Record<InputIdentifier, unknown>;
 
-export type OutputValues = Record<OutputIdentifier, unknown>;
+export type OutputValues = Partial<Record<OutputIdentifier, unknown>>;
 
-export enum ControlValue {
-  "stop",
-}
-
-export interface NodeHandlerResult {
-  outputs?: OutputValues;
-  control?: ControlValue;
-}
+export type NodeHandlerResult = OutputValues;
 
 export type NodeConfiguration = Record<string, string>;
 
@@ -146,10 +139,10 @@ export const follow = async (
     log(`Visiting: "${current.id}", type: "${current.type}"`);
 
     const handlerResult = await handle(nodeHandlers, current, inputs);
-    if (handlerResult.control == ControlValue.stop) {
-      return;
-    }
-    outputs = handlerResult.outputs ?? {};
+    // TODO: Make it not a special case.
+    const exit = handlerResult.exit as boolean;
+    if (exit) return;
+    outputs = handlerResult;
     inputs = wire(edge, outputs);
     next = edge.to.node;
     edge = graph.edges.find((edge) => edge.from.node == next);

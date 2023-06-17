@@ -9,12 +9,7 @@ import { GenerateTextResponse, Text, palm } from "@google-labs/palm-lite";
 import { config } from "dotenv";
 import { readFile } from "fs/promises";
 
-import {
-  ControlValue,
-  GraphDescriptor,
-  NodeHandlers,
-  follow,
-} from "./graph.js";
+import { GraphDescriptor, NodeHandlers, follow } from "./graph.js";
 
 config();
 
@@ -36,17 +31,15 @@ const handlers: NodeHandlers = {
     const input = await text({
       message: "Enter some text",
     });
-    // This is likely not a special control value, but rather a kind of output
-    // Like: `exit: boolean`
-    if (!input) return { control: ControlValue.stop };
-    return { outputs: { text: input } };
+    if (!input) return { exit: true };
+    return { text: input };
   },
   "prompt-template": async (inputs) => {
     if (!inputs) throw new Error("Prompt template requires inputs");
-    const question = inputs["question"] as string;
-    const template = inputs["template"] as string;
+    const question = inputs.question as string;
+    const template = inputs.template as string;
     const prompt = substitute(template, { question });
-    return { outputs: { prompt } };
+    return { prompt };
   },
   "text-completion": async (inputs) => {
     if (!inputs) throw new Error("Text completion requires inputs");
@@ -62,7 +55,7 @@ const handlers: NodeHandlers = {
     const response = (await data.json()) as GenerateTextResponse;
     s.stop("Text completion generated");
     const completion = response?.candidates?.[0]?.output as string;
-    return { outputs: { completion } };
+    return { completion };
   },
   "console-output": async (inputs) => {
     if (!inputs) return {};
