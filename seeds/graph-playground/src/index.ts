@@ -29,7 +29,7 @@ const substitute = (template: string, values: Record<string, string>) => {
 };
 
 const handlers: NodeHandlers = {
-  "user-input": async (_config) => {
+  "user-input": async () => {
     // If this node is a service, why does it contain experience?
     // It seems like there's some sort of "configuration store" or something
     // that is provided by the experience, but delivered by the service.
@@ -41,14 +41,14 @@ const handlers: NodeHandlers = {
     if (!input) return { control: ControlValue.stop };
     return { outputs: { text: input } };
   },
-  "prompt-template": async (config, inputs) => {
+  "prompt-template": async (inputs) => {
     if (!inputs) throw new Error("Prompt template requires inputs");
     const question = inputs["question"] as string;
-    const template = config["template"];
+    const template = inputs["template"] as string;
     const prompt = substitute(template, { question });
     return { outputs: { prompt } };
   },
-  "text-completion": async (config, inputs) => {
+  "text-completion": async (inputs) => {
     if (!inputs) throw new Error("Text completion requires inputs");
     const s = spinner();
     // How to move these outside of the handler?
@@ -64,7 +64,7 @@ const handlers: NodeHandlers = {
     const completion = response?.candidates?.[0]?.output as string;
     return { outputs: { completion } };
   },
-  "console-output": async (config, inputs) => {
+  "console-output": async (inputs) => {
     if (!inputs) return {};
     log.step(inputs["text"] as string);
     return {};

@@ -86,10 +86,7 @@ export interface NodeHandlerResult {
 
 export type NodeConfiguration = Record<string, string>;
 
-export type NodeHandler = (
-  configuration: NodeConfiguration,
-  inputs?: InputValues
-) => Promise<NodeHandlerResult>;
+export type NodeHandler = (inputs?: InputValues) => Promise<NodeHandlerResult>;
 
 export type NodeHandlers = Record<NodeTypeIdentifier, NodeHandler>;
 
@@ -118,8 +115,8 @@ const handle = async (
   handler: NodeHandler,
   inputs?: InputValues | null
 ) => {
-  const nodeConfig = descriptor.configuration;
-  const result = await handler(nodeConfig, inputs ?? {});
+  const aggregate = { ...descriptor.configuration, ...inputs };
+  const result = await handler(aggregate);
   return result;
 };
 

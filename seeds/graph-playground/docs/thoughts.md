@@ -20,3 +20,7 @@ For now, decided to go with configuration as something that's provided to a node
 Interesting new observation: configuration travels with the graph.
 
 Configuration shape is node type-specific, but configuration instance is node-specific.
+
+Configuration and inputs are merged together. First, configuration, then inputs overlaid over it. This way, if the user provides a matching value in the configuration, it can be used as an input.
+
+There is no distinction with configuration and inputs for the node. They are both just inputs.

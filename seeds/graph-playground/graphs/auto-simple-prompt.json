@@ -1,0 +1,25 @@
+{
+  "edges": [
+    {
+      "entry": true,
+      "from": { "node": "prompt-template-1", "output": "prompt" },
+      "to": { "node": "text-completion-1", "input": "text" }
+    },
+    {
+      "from": { "node": "text-completion-1", "output": "completion" },
+      "to": { "node": "console-output-1", "input": "text" }
+    }
+  ],
+  "nodes": [
+    { "id": "text-completion-1", "type": "text-completion" },
+    { "id": "console-output-1", "type": "console-output" },
+    {
+      "id": "prompt-template-1",
+      "type": "prompt-template",
+      "configuration": {
+        "question": "How is the weather?",
+        "template": "Analyze the following question and instead of answering, list out steps to take to answer the question: {{question}}"
+      }
+    }
+  ]
+}
