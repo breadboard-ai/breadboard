@@ -33,11 +33,14 @@ const substitute = (template, values) => {
 };
 
 const mermaidize = (file) => {
-  const { nodes, edges } = JSON.parse(file);
-  const result = edges.map(({ entry, from, to }) => {
+  const { edges } = JSON.parse(file);
+  const result = edges.map(({ entry, from, to, optional }) => {
     const fromNode = entry ? `${from.node}>${from.node}]` : from.node;
-    if (from.output && to.input)
+    if (from.output && to.input) {
+      if (optional)
+        return `${fromNode} -. ${from.output}:${to.input} .-> ${to.node}`;
       return `${fromNode} -- ${from.output}:${to.input} --> ${to.node}`;
+    }
     return `${from.node} --> ${to.node}`;
   });
   return result.join("\n");

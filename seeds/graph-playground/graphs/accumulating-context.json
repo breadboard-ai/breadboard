@@ -14,8 +14,20 @@
       "to": { "node": "console-output-1", "input": "text" }
     },
     {
+      "from": { "node": "user-input-1", "output": "text" },
+      "to": {
+        "node": "accumulating-context-1",
+        "input": "user"
+      },
+      "optional": true
+    },
+    {
       "from": { "node": "text-completion-1", "output": "completion" },
-      "to": { "node": "accumulating-context-1", "input": "text" }
+      "to": {
+        "node": "accumulating-context-1",
+        "input": "assistant"
+      },
+      "optional": true
     },
     {
       "from": { "node": "console-output-1" },
@@ -34,7 +46,7 @@
       "id": "prompt-template-1",
       "type": "prompt-template",
       "configuration": {
-        "template": "This is a conversation between a friendly chat bot and their user. You are the chat bot and your job is to try to be helpful, empathetic, and fun.\n\nConversation History:\n{{context}}\n\nUser's message:\n{{question}}\n\nYour response:",
+        "template": "This is a conversation between a friendly assistant and their user. You are the assistant and your job is to try to be helpful, empathetic, and fun.\n\n== Conversation History\n{{context}}\n\n== Current Conversation\nuser: {{question}}\nassistant:",
         "context": ""
       }
     },

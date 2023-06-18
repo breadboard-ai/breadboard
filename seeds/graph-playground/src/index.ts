@@ -31,6 +31,8 @@ const parametersFromTemplate = (template: string): string[] => {
   return parameters;
 };
 
+const context: string[] = [];
+
 const handlers: NodeHandlers = {
   "user-input": async () => {
     // If this node is a service, why does it contain experience?
@@ -82,9 +84,10 @@ const handlers: NodeHandlers = {
   },
   "accumulating-context": async (inputs) => {
     if (!inputs) return {};
-    const text = inputs.text as string;
-    // TODO: Actually accumulate context.
-    return { context: text };
+    Object.entries(inputs).forEach(([key, value]) => {
+      context.push(`${key}: ${value}`);
+    });
+    return { context: context.join("\n") };
   },
 };
 

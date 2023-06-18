@@ -73,6 +73,7 @@ export interface Edge {
   entry?: boolean;
   from: FromIdentifier;
   to: ToIdentifier;
+  optional?: boolean;
 }
 
 export interface GraphDescriptor {
@@ -139,7 +140,7 @@ class StateManager {
       }
       fromNodeMap.set(opportunity.from.node, outputs);
     });
-    // console.log("== State after update", this.#state);
+    console.log("== State after update", this.#state);
   }
 
   getAvailableOutputs(node: NodeIdentifier) {
@@ -160,9 +161,9 @@ const computeMissingInputs = (
   current: NodeDescriptor
 ) => {
   const requiredInputs: string[] = heads
-    .filter((edge: Edge) => !!edge.to.input)
+    .filter((edge: Edge) => !!edge.to.input && !edge.optional)
     .map((edge: Edge) => edge.to.input);
-  // console.log("== Required inputs:", requiredInputs);
+  console.log("== Required inputs:", requiredInputs);
   const inputsWithConfiguration = new Set();
   Object.keys(inputs).forEach((key) => inputsWithConfiguration.add(key));
   if (current.configuration) {
@@ -236,10 +237,8 @@ export const follow = async (
 
     log(`Visiting: "${current.id}", type: "${current.type}"`);
 
-    const incomingEdges = heads.get(toNode);
-
+    const incomingEdges = heads.get(toNode) || [];
     const inputs = wire(incomingEdges, state.getAvailableOutputs(toNode));
-
     Object.entries(inputs).forEach(([key, value]) => {
       log(`- Input "${key}": ${value}`);
     });
