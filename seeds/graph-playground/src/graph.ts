@@ -92,13 +92,13 @@ export type NodeHandler = (inputs?: InputValues) => Promise<NodeHandlerResult>;
 
 export type NodeHandlers = Record<NodeTypeIdentifier, NodeHandler>;
 
-const wire = (edge: Edge, outputs: OutputValues): InputValues => {
-  // console.log(
-  //   `wire "${edge.from.output}" output as input "${edge.to.input}" of node "${edge.to.node}"`
-  // );
-  return {
-    [edge.to.input]: outputs[edge.from.output],
-  };
+const wire = (heads: Edge[], outputs: OutputValues): InputValues => {
+  const result: InputValues = {};
+  heads.forEach((head) => {
+    const output = outputs[head.from.output];
+    if (output) result[head.to.input] = outputs[head.from.output];
+  });
+  return result;
 };
 
 const handle = async (
@@ -126,7 +126,7 @@ export type State = Map<NodeIdentifier, Map<NodeIdentifier, OutputValues>>;
 class StateManager {
   #state = new Map();
 
-  update(node: string, opportunities: Edge[], outputs: OutputValues) {
+  update(node: NodeIdentifier, opportunities: Edge[], outputs: OutputValues) {
     // 1. Clear entries for the current node.
     this.#state.delete(node);
     // 2. Add entries for each opportunity.
@@ -139,12 +139,23 @@ class StateManager {
       }
       fromNodeMap.set(opportunity.from.node, outputs);
     });
-    console.log(this.#state);
+    // console.log("== State after update", this.#state);
+  }
+
+  getAvailableOutputs(node: NodeIdentifier) {
+    const edges: Map<NodeIdentifier, OutputValues> = this.#state.get(node);
+    const result: OutputValues = {};
+    if (!edges) return result;
+    for (const outputs of edges.values()) {
+      Object.assign(result, outputs);
+    }
+    // console.log("== Available outputs:", result);
+    return result;
   }
 }
 
 /**
- * The dumbest possible edge follower.
+ * A slightly less dumb, but incredibly unkempt edge follower.
  * @todo implement nicer traversal, something like a topology sort with feedback problem resolution.
  * @param graph graph to follow
  */
@@ -153,13 +164,7 @@ export const follow = async (
   nodeHandlers: NodeHandlers,
   log: (s: string) => void
 ) => {
-  log(`Let the graph traversal begin!`);
-
   const state = new StateManager();
-
-  const entry = graph.edges.find((edge) => edge.entry);
-  if (!entry) throw new Error("No entry edge found in graph.");
-  log(`Starting at node "${entry.from.node}"`);
 
   /**
    * Tails: a map of all outgoing edges, keyed by node id.
@@ -171,12 +176,27 @@ export const follow = async (
   }, new Map());
 
   /**
+   * Heads: a map of all incoming edges, keyed by node id.
+   */
+  const heads = graph.edges.reduce((acc, edge) => {
+    const to = edge.to.node;
+    acc.has(to) ? acc.get(to)?.push(edge) : acc.set(to, [edge]);
+    return acc;
+  }, new Map());
+
+  /**
    * Nodes: a map of all nodes, keyed by node id.
    */
   const nodes = graph.nodes.reduce((acc, node) => {
     acc[node.id] = node;
     return acc;
   }, {} as Record<NodeIdentifier, NodeDescriptor>);
+
+  log(`Let the graph traversal begin!`);
+
+  const entry = graph.edges.find((edge) => edge.entry);
+  if (!entry) throw new Error("No entry edge found in graph.");
+  log(`Starting at node "${entry.from.node}"`);
 
   const entryNode = nodes[entry.from.node];
   const handlerResult = await handle(nodeHandlers, entryNode, {});
@@ -185,41 +205,63 @@ export const follow = async (
   if (exit) return;
 
   const opportunities = [entry];
-
-  // State of the graph traversal.
-  let outputs: OutputValues = handlerResult;
+  state.update(entry.from.node, opportunities, handlerResult);
 
   while (opportunities.length > 0) {
     const opportunity = opportunities.shift() as Edge;
 
     const toNode: NodeIdentifier = opportunity.to.node;
-    const inputs = wire(opportunity, outputs);
     const current = nodes[toNode];
 
     if (!current) throw new Error(`No node found for id "${toNode}"`);
 
     log(`Visiting: "${current.id}", type: "${current.type}"`);
+
+    const outputs = state.getAvailableOutputs(toNode);
+    const inputs = wire(heads.get(toNode), outputs);
+
     Object.entries(inputs).forEach(([key, value]) => {
       log(`- Input "${key}": ${value}`);
     });
+
+    const requiredInputs: string[] = heads
+      .get(toNode)
+      .filter((edge: Edge) => !!edge.to.input)
+      .map((edge: Edge) => edge.to.input);
+    // console.log("== Required inputs:", requiredInputs);
+    const inputsWithConfiguration = new Set();
+    Object.keys(inputs).forEach((key) => inputsWithConfiguration.add(key));
+    if (current.configuration) {
+      Object.keys(current.configuration).forEach((key) =>
+        inputsWithConfiguration.add(key)
+      );
+    }
+    const missingInputs = requiredInputs.filter(
+      (input) => !inputsWithConfiguration.has(input)
+    );
+    if (missingInputs.length > 0) {
+      log(
+        `Missing inputs: ${missingInputs.join(", ")}, Skipping node "${toNode}"`
+      );
+      continue;
+    }
 
     const handlerResult = await handle(nodeHandlers, current, inputs);
     // TODO: Make it not a special case.
     const exit = handlerResult.exit as boolean;
     if (exit) return;
 
-    outputs = handlerResult;
-
-    Object.entries(outputs).forEach(([key, value]) => {
+    Object.entries(handlerResult).forEach(([key, value]) => {
       log(`- Output "${key}": ${value}`);
     });
 
-    opportunities.push(...tails.get(toNode));
+    const newOpportunities = tails.get(toNode);
+    opportunities.push(...newOpportunities);
     opportunities.forEach((opportunity) => {
       log(`- Opportunity: "${opportunity.to.node}"`);
     });
 
-    state.update(toNode, opportunities, outputs);
+    state.update(toNode, newOpportunities, handlerResult);
   }
   log("Graph traversal complete.");
 };
