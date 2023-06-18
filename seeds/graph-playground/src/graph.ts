@@ -255,7 +255,7 @@ export const follow = async (
       log(`- Output "${key}": ${value}`);
     });
 
-    const newOpportunities = tails.get(toNode);
+    const newOpportunities = tails.get(toNode) || [];
     opportunities.push(...newOpportunities);
     opportunities.forEach((opportunity) => {
       log(`- Opportunity: "${opportunity.to.node}"`);
