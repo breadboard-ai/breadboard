@@ -140,7 +140,7 @@ class StateManager {
       }
       fromNodeMap.set(opportunity.from.node, outputs);
     });
-    console.log("== State after update", this.#state);
+    // console.log("== State after update", this.#state);
   }
 
   getAvailableOutputs(node: NodeIdentifier) {
@@ -163,7 +163,7 @@ const computeMissingInputs = (
   const requiredInputs: string[] = heads
     .filter((edge: Edge) => !!edge.to.input && !edge.optional)
     .map((edge: Edge) => edge.to.input);
-  console.log("== Required inputs:", requiredInputs);
+  // console.log("== Required inputs:", requiredInputs);
   const inputsWithConfiguration = new Set();
   Object.keys(inputs).forEach((key) => inputsWithConfiguration.add(key));
   if (current.configuration) {
