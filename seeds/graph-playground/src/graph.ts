@@ -123,7 +123,25 @@ const handle = async (
  */
 export type State = Map<NodeIdentifier, Map<NodeIdentifier, OutputValues>>;
 
-const state: State = new Map();
+class StateManager {
+  #state = new Map();
+
+  update(node: string, opportunities: Edge[], outputs: OutputValues) {
+    // 1. Clear entries for the current node.
+    this.#state.delete(node);
+    // 2. Add entries for each opportunity.
+    opportunities.forEach((opportunity) => {
+      const toNode = opportunity.to.node;
+      let fromNodeMap = this.#state.get(toNode);
+      if (!fromNodeMap) {
+        fromNodeMap = new Map();
+        this.#state.set(toNode, fromNodeMap);
+      }
+      fromNodeMap.set(opportunity.from.node, outputs);
+    });
+    console.log(this.#state);
+  }
+}
 
 /**
  * The dumbest possible edge follower.
@@ -136,6 +154,8 @@ export const follow = async (
   log: (s: string) => void
 ) => {
   log(`Let the graph traversal begin!`);
+
+  const state = new StateManager();
 
   const entry = graph.edges.find((edge) => edge.entry);
   if (!entry) throw new Error("No entry edge found in graph.");
@@ -164,22 +184,21 @@ export const follow = async (
   const exit = handlerResult.exit as boolean;
   if (exit) return;
 
-  let opportunities = [entry];
+  const opportunities = [entry];
 
   // State of the graph traversal.
   let outputs: OutputValues = handlerResult;
-  let inputs: InputValues = wire(entry, outputs);
 
-  while (opportunities && opportunities.length > 0) {
-    // Always take the first opportunity for now.
-    const edge = opportunities[0];
-    inputs = wire(edge, outputs);
-    const current = nodes[edge.to.node];
+  while (opportunities.length > 0) {
+    const opportunity = opportunities.shift() as Edge;
 
-    if (!current) throw new Error(`No node found for id "${edge.to.node}"`);
+    const toNode: NodeIdentifier = opportunity.to.node;
+    const inputs = wire(opportunity, outputs);
+    const current = nodes[toNode];
+
+    if (!current) throw new Error(`No node found for id "${toNode}"`);
 
     log(`Visiting: "${current.id}", type: "${current.type}"`);
-
     Object.entries(inputs).forEach(([key, value]) => {
       log(`- Input "${key}": ${value}`);
     });
@@ -190,20 +209,17 @@ export const follow = async (
     if (exit) return;
 
     outputs = handlerResult;
-    Object.entries(inputs).forEach(([key, value]) => {
+
+    Object.entries(outputs).forEach(([key, value]) => {
       log(`- Output "${key}": ${value}`);
     });
 
-    opportunities = tails.get(edge.to.node);
-
+    opportunities.push(...tails.get(toNode));
     opportunities.forEach((opportunity) => {
       log(`- Opportunity: "${opportunity.to.node}"`);
     });
+
+    state.update(toNode, opportunities, outputs);
   }
-  // if (next) {
-  //   const last = nodes[next];
-  //   log(`Visiting final node "${last.id}", type "${last.type}"`);
-  //   await handle(nodeHandlers, last, inputs);
-  // }
   log("Graph traversal complete.");
 };
