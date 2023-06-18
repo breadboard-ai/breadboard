@@ -4,10 +4,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/**
+ * Unique identifier of a node in a graph.
+ * @todo Should this be globally unique? Likely a URI.
+ */
 export type NodeIdentifier = string;
 
+/**
+ * Unique identifier of a node's output.
+ */
 export type OutputIdentifier = string;
 
+/**
+ * Unique identifier of a node's input.
+ */
 export type InputIdentifier = string;
 
 export type NodeTypeIdentifier = string;
@@ -18,7 +28,6 @@ export type NodeTypeIdentifier = string;
 export interface NodeDescriptor {
   /**
    * Unique id of the node in graph.
-   * @todo Should this be globally unique? Likely a URI.
    */
   id: NodeIdentifier;
   /**
@@ -107,6 +116,16 @@ const handle = async (
 };
 
 /**
+ * Additional concept: whether or not an output was consumed by the intended
+ * input.
+ * State stores all outputs that have not yet been consumed, organized as
+ * a map of maps:
+ */
+export type State = Map<NodeIdentifier, Map<NodeIdentifier, OutputValues>>;
+
+const state: State = new Map();
+
+/**
  * The dumbest possible edge follower.
  * @todo implement nicer traversal, something like a topology sort with feedback problem resolution.
  * @param graph graph to follow
@@ -118,41 +137,73 @@ export const follow = async (
 ) => {
   log(`Let the graph traversal begin!`);
 
-  let edge = graph.edges.find((edge) => edge.entry);
+  const entry = graph.edges.find((edge) => edge.entry);
+  if (!entry) throw new Error("No entry edge found in graph.");
+  log(`Starting at node "${entry.from.node}"`);
 
-  log(`Starting at edge "${edge?.from.node}"`);
+  /**
+   * Tails: a map of all outgoing edges, keyed by node id.
+   */
+  const tails = graph.edges.reduce((acc, edge) => {
+    const from = edge.from.node;
+    acc.has(from) ? acc.get(from)?.push(edge) : acc.set(from, [edge]);
+    return acc;
+  }, new Map());
 
-  let next: NodeIdentifier | null = null;
-
-  // State of the graph traversal.
-  let inputs: InputValues | null = null;
-  let outputs: OutputValues | null = null;
-
+  /**
+   * Nodes: a map of all nodes, keyed by node id.
+   */
   const nodes = graph.nodes.reduce((acc, node) => {
     acc[node.id] = node;
     return acc;
   }, {} as Record<NodeIdentifier, NodeDescriptor>);
 
-  while (edge) {
-    const current = nodes[edge.from.node];
+  const entryNode = nodes[entry.from.node];
+  const handlerResult = await handle(nodeHandlers, entryNode, {});
+  // TODO: Make it not a special case.
+  const exit = handlerResult.exit as boolean;
+  if (exit) return;
 
-    if (!current) throw new Error(`No node found for id "${edge.from.node}"`);
+  let opportunities = [entry];
+
+  // State of the graph traversal.
+  let outputs: OutputValues = handlerResult;
+  let inputs: InputValues = wire(entry, outputs);
+
+  while (opportunities && opportunities.length > 0) {
+    // Always take the first opportunity for now.
+    const edge = opportunities[0];
+    inputs = wire(edge, outputs);
+    const current = nodes[edge.to.node];
+
+    if (!current) throw new Error(`No node found for id "${edge.to.node}"`);
 
     log(`Visiting: "${current.id}", type: "${current.type}"`);
+
+    Object.entries(inputs).forEach(([key, value]) => {
+      log(`- Input "${key}": ${value}`);
+    });
 
     const handlerResult = await handle(nodeHandlers, current, inputs);
     // TODO: Make it not a special case.
     const exit = handlerResult.exit as boolean;
     if (exit) return;
+
     outputs = handlerResult;
-    inputs = wire(edge, outputs);
-    next = edge.to.node;
-    edge = graph.edges.find((edge) => edge.from.node == next);
+    Object.entries(inputs).forEach(([key, value]) => {
+      log(`- Output "${key}": ${value}`);
+    });
+
+    opportunities = tails.get(edge.to.node);
+
+    opportunities.forEach((opportunity) => {
+      log(`- Opportunity: "${opportunity.to.node}"`);
+    });
   }
-  if (next) {
-    const last = nodes[next];
-    log(`Visiting final node "${last.id}", type "${last.type}"`);
-    await handle(nodeHandlers, last, inputs);
-  }
+  // if (next) {
+  //   const last = nodes[next];
+  //   log(`Visiting final node "${last.id}", type "${last.type}"`);
+  //   await handle(nodeHandlers, last, inputs);
+  // }
   log("Graph traversal complete.");
 };
