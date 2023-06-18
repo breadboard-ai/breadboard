@@ -154,6 +154,25 @@ class StateManager {
   }
 }
 
+const computeMissingInputs = (
+  heads: Edge[],
+  inputs: InputValues,
+  current: NodeDescriptor
+) => {
+  const requiredInputs: string[] = heads
+    .filter((edge: Edge) => !!edge.to.input)
+    .map((edge: Edge) => edge.to.input);
+  // console.log("== Required inputs:", requiredInputs);
+  const inputsWithConfiguration = new Set();
+  Object.keys(inputs).forEach((key) => inputsWithConfiguration.add(key));
+  if (current.configuration) {
+    Object.keys(current.configuration).forEach((key) =>
+      inputsWithConfiguration.add(key)
+    );
+  }
+  return requiredInputs.filter((input) => !inputsWithConfiguration.has(input));
+};
+
 /**
  * A slightly less dumb, but incredibly unkempt edge follower.
  * @todo implement nicer traversal, something like a topology sort with feedback problem resolution.
@@ -217,28 +236,15 @@ export const follow = async (
 
     log(`Visiting: "${current.id}", type: "${current.type}"`);
 
-    const outputs = state.getAvailableOutputs(toNode);
-    const inputs = wire(heads.get(toNode), outputs);
+    const incomingEdges = heads.get(toNode);
+
+    const inputs = wire(incomingEdges, state.getAvailableOutputs(toNode));
 
     Object.entries(inputs).forEach(([key, value]) => {
       log(`- Input "${key}": ${value}`);
     });
 
-    const requiredInputs: string[] = heads
-      .get(toNode)
-      .filter((edge: Edge) => !!edge.to.input)
-      .map((edge: Edge) => edge.to.input);
-    // console.log("== Required inputs:", requiredInputs);
-    const inputsWithConfiguration = new Set();
-    Object.keys(inputs).forEach((key) => inputsWithConfiguration.add(key));
-    if (current.configuration) {
-      Object.keys(current.configuration).forEach((key) =>
-        inputsWithConfiguration.add(key)
-      );
-    }
-    const missingInputs = requiredInputs.filter(
-      (input) => !inputsWithConfiguration.has(input)
-    );
+    const missingInputs = computeMissingInputs(incomingEdges, inputs, current);
     if (missingInputs.length > 0) {
       log(
         `Missing inputs: ${missingInputs.join(", ")}, Skipping node "${toNode}"`
@@ -246,12 +252,12 @@ export const follow = async (
       continue;
     }
 
-    const handlerResult = await handle(nodeHandlers, current, inputs);
+    const outputs = await handle(nodeHandlers, current, inputs);
     // TODO: Make it not a special case.
-    const exit = handlerResult.exit as boolean;
+    const exit = outputs.exit as boolean;
     if (exit) return;
 
-    Object.entries(handlerResult).forEach(([key, value]) => {
+    Object.entries(outputs).forEach(([key, value]) => {
       log(`- Output "${key}": ${value}`);
     });
 
@@ -261,7 +267,7 @@ export const follow = async (
       log(`- Opportunity: "${opportunity.to.node}"`);
     });
 
-    state.update(toNode, newOpportunities, handlerResult);
+    state.update(toNode, newOpportunities, outputs);
   }
   log("Graph traversal complete.");
 };
