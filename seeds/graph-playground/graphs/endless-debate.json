@@ -1,0 +1,89 @@
+{
+  "edges": [
+    {
+      "entry": true,
+      "from": { "node": "debate-topic", "output": "text" },
+      "to": { "node": "accumulating-context-1", "input": "topic" }
+    },
+    {
+      "from": { "node": "accumulating-context-1", "output": "context" },
+      "to": { "node": "character-1", "input": "context" }
+    },
+    {
+      "from": { "node": "character-1", "output": "prompt" },
+      "to": { "node": "text-completion-1", "input": "text" }
+    },
+    {
+      "from": { "node": "text-completion-1", "output": "completion" },
+      "to": { "node": "console-output-1", "input": "text" }
+    },
+    {
+      "from": { "node": "text-completion-1", "output": "completion" },
+      "to": { "node": "accumulating-context-2", "input": "Albert" }
+    },
+    {
+      "from": { "node": "accumulating-context-2", "output": "context" },
+      "to": { "node": "character-2", "input": "context" }
+    },
+    {
+      "from": { "node": "character-2", "output": "prompt" },
+      "to": { "node": "text-completion-2", "input": "text" }
+    },
+    {
+      "from": { "node": "text-completion-2", "output": "completion" },
+      "to": { "node": "console-output-1", "input": "text" }
+    },
+    {
+      "from": { "node": "text-completion-2", "output": "completion" },
+      "to": { "node": "accumulating-context-3", "input": "Friedrich" }
+    },
+    {
+      "from": { "node": "accumulating-context-3", "output": "context" },
+      "to": { "node": "character-1", "input": "context" }
+    }
+  ],
+  "nodes": [
+    { "id": "debate-topic", "type": "user-input" },
+    {
+      "id": "text-completion-1",
+      "type": "text-completion",
+      "configuration": {
+        "stop-sequences": ["\nFriedrich", "\n**Friedrich"]
+      }
+    },
+    {
+      "id": "text-completion-2",
+      "type": "text-completion",
+      "configuration": {
+        "stop-sequences": ["\nAlbert", "\n**Albert"]
+      }
+    },
+    { "id": "console-output-1", "type": "console-output" },
+    {
+      "id": "character-1",
+      "type": "prompt-template",
+      "configuration": {
+        "template": "Add a single argument in a debate between a scientist named Albert and a philosopher named Friedrich. You are Albert, and you are warm, funny, inquisitve, and passionate about uncovering new insights with Friedrich.\n\n== Debate History\n{{context}}\n\nAlbert:"
+      }
+    },
+    {
+      "id": "character-2",
+      "type": "prompt-template",
+      "configuration": {
+        "template": "Add a single argument in a debate between a philosopher named Friedrich and a scientist named Albert. You are Friedrich, and you are disagreeable, brooding, skeptical, sarcastic, yet passionate about uncovering new insights with Albert.\n\n== Conversation Transcript\n{{context}}\nFriedrich:"
+      }
+    },
+    {
+      "id": "accumulating-context-1",
+      "type": "accumulating-context"
+    },
+    {
+      "id": "accumulating-context-2",
+      "type": "accumulating-context"
+    },
+    {
+      "id": "accumulating-context-3",
+      "type": "accumulating-context"
+    }
+  ]
+}
