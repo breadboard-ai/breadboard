@@ -1,0 +1,133 @@
+{
+  "edges": [
+    {
+      "entry": true,
+      "from": { "node": "debate-topic", "output": "text" },
+      "to": { "node": "accumulating-context-1", "input": "topic" }
+    },
+    {
+      "from": { "node": "accumulating-context-1", "output": "context" },
+      "to": { "node": "albert", "input": "context" }
+    },
+    {
+      "from": { "node": "albert", "output": "prompt" },
+      "to": { "node": "albert-completion", "input": "text" }
+    },
+    {
+      "from": { "node": "albert-completion", "output": "completion" },
+      "to": { "node": "albert-voice", "input": "context" }
+    },
+    {
+      "from": { "node": "albert-voice", "output": "prompt" },
+      "to": { "node": "albert-voice-completion", "input": "text" }
+    },
+    {
+      "from": { "node": "albert-voice-completion", "output": "completion" },
+      "to": { "node": "console-output-1", "input": "text" }
+    },
+    {
+      "from": { "node": "albert-completion", "output": "completion" },
+      "to": { "node": "accumulating-context-2", "input": "Albert" }
+    },
+    {
+      "from": { "node": "accumulating-context-2", "output": "context" },
+      "to": { "node": "friedrich", "input": "context" }
+    },
+    {
+      "from": { "node": "friedrich", "output": "prompt" },
+      "to": { "node": "friedrich-completion", "input": "text" }
+    },
+    {
+      "from": { "node": "friedrich-completion", "output": "completion" },
+      "to": { "node": "friedrich-voice", "input": "context" }
+    },
+    {
+      "from": { "node": "friedrich-voice", "output": "prompt" },
+      "to": { "node": "friedrich-voice-completion", "input": "text" }
+    },
+    {
+      "from": { "node": "friedrich-voice-completion", "output": "completion" },
+      "to": { "node": "console-output-1", "input": "text" }
+    },
+    {
+      "from": { "node": "friedrich-completion", "output": "completion" },
+      "to": { "node": "accumulating-context-3", "input": "Friedrich" }
+    },
+    {
+      "from": { "node": "accumulating-context-3", "output": "context" },
+      "to": { "node": "albert", "input": "context" }
+    }
+  ],
+  "nodes": [
+    {
+      "id": "debate-topic",
+      "type": "user-input",
+      "configuration": {
+        "message": "What is the topic of the debate?"
+      }
+    },
+    {
+      "id": "albert-completion",
+      "type": "text-completion",
+      "configuration": {
+        "stop-sequences": ["\nFriedrich", "\n**Friedrich"]
+      }
+    },
+    {
+      "id": "friedrich-completion",
+      "type": "text-completion",
+      "configuration": {
+        "stop-sequences": ["\nAlbert", "\n**Albert"]
+      }
+    },
+    {
+      "id": "friedrich-voice-completion",
+      "type": "text-completion"
+    },
+    {
+      "id": "albert-voice-completion",
+      "type": "text-completion"
+    },
+    { "id": "console-output-1", "type": "console-output" },
+    {
+      "id": "albert",
+      "type": "prompt-template",
+      "configuration": {
+        "template": "Add a single argument to a debate between a scientist named Albert and a philosopher named Friedrich. You are Albert, and you are warm, funny, inquisitve, and passionate about uncovering new insights with Friedrich. To keep the debate rich and satisfying, you vary your sentence patterns and keep them from repeating.\"\n\n== Debate History\n{{context}}\n\n==Additional Single Argument\n\nAlbert:"
+      }
+    },
+    {
+      "id": "friedrich",
+      "type": "prompt-template",
+      "configuration": {
+        "template": "Add a single argument to a debate between a philosopher named Friedrich and a scientist named Albert. You are Friedrich, and you are disagreeable, brooding, skeptical, sarcastic, yet passionate about uncovering new insights with Albert. To keep the debate rich and satisfying, you vary your sentence patterns and keep them from repeating.\n\n== Conversation Transcript\n{{context}}\n\n==Additional Single Argument\nFriedrich:"
+      }
+    },
+    {
+      "id": "friedrich-voice",
+      "type": "prompt-template",
+      "configuration": {
+        "template": "Restate the paragraph below in the voice of a 19th century philosopher. Change the structure of the sentences completely to mix things up.\n==Paragraph\n{{context}}\n\nRestatement:"
+      }
+    },
+    {
+      "id": "albert-voice",
+      "type": "prompt-template",
+      "configuration": {
+        "template": "Restate the paragraph below in the voice of a brillant 20th century scientist. Change the structure of the sentences completely to mix things up.\n==Paragraph\n{{context}}\n\nRestatement:"
+      }
+    },
+    {
+      "id": "accumulating-context-1",
+      "type": "accumulating-context"
+    },
+    {
+      "id": "accumulating-context-2",
+      "type": "accumulating-context"
+    },
+    {
+      "id": "accumulating-context-3",
+      "type": "accumulating-context"
+    }
+  ]
+}
