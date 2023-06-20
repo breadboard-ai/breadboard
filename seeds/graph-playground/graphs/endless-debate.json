@@ -3,10 +3,10 @@
     {
       "entry": true,
       "from": { "node": "debate-topic", "output": "text" },
-      "to": { "node": "accumulating-context-1", "input": "topic" }
+      "to": { "node": "local-memory-1", "input": "topic" }
     },
     {
-      "from": { "node": "accumulating-context-1", "output": "context" },
+      "from": { "node": "local-memory-1", "output": "context" },
       "to": { "node": "albert", "input": "context" }
     },
     {
@@ -19,10 +19,10 @@
     },
     {
       "from": { "node": "text-completion-1", "output": "completion" },
-      "to": { "node": "accumulating-context-2", "input": "Albert" }
+      "to": { "node": "local-memory-2", "input": "Albert" }
     },
     {
-      "from": { "node": "accumulating-context-2", "output": "context" },
+      "from": { "node": "local-memory-2", "output": "context" },
       "to": { "node": "friedrich", "input": "context" }
     },
     {
@@ -35,10 +35,10 @@
     },
     {
       "from": { "node": "text-completion-2", "output": "completion" },
-      "to": { "node": "accumulating-context-3", "input": "Friedrich" }
+      "to": { "node": "local-memory-3", "input": "Friedrich" }
     },
     {
-      "from": { "node": "accumulating-context-3", "output": "context" },
+      "from": { "node": "local-memory-3", "output": "context" },
       "to": { "node": "albert", "input": "context" }
     }
   ],
@@ -80,16 +80,16 @@
       }
     },
     {
-      "id": "accumulating-context-1",
-      "type": "accumulating-context"
+      "id": "local-memory-1",
+      "type": "local-memory"
     },
     {
-      "id": "accumulating-context-2",
-      "type": "accumulating-context"
+      "id": "local-memory-2",
+      "type": "local-memory"
     },
     {
-      "id": "accumulating-context-3",
-      "type": "accumulating-context"
+      "id": "local-memory-3",
+      "type": "local-memory"
     }
   ]
 }

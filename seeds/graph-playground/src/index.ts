@@ -24,7 +24,7 @@ const handlers: NodeHandlers = {
   "prompt-template": promptTemplate,
   "text-completion": textCompletion,
   "console-output": consoleOutput,
-  "accumulating-context": localMemory,
+  "local-memory": localMemory,
 };
 
 intro("Let's follow a graph!");

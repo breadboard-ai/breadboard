@@ -16,7 +16,7 @@
     {
       "from": { "node": "user-input-1", "output": "text" },
       "to": {
-        "node": "accumulating-context-1",
+        "node": "local-memory-1",
         "input": "user"
       },
       "optional": true
@@ -24,7 +24,7 @@
     {
       "from": { "node": "text-completion-1", "output": "completion" },
       "to": {
-        "node": "accumulating-context-1",
+        "node": "local-memory-1",
         "input": "assistant"
       },
       "optional": true
@@ -34,7 +34,7 @@
       "to": { "node": "user-input-1" }
     },
     {
-      "from": { "node": "accumulating-context-1", "output": "context" },
+      "from": { "node": "local-memory-1", "output": "context" },
       "to": { "node": "prompt-template-1", "input": "context" }
     }
   ],
@@ -51,8 +51,8 @@
       }
     },
     {
-      "id": "accumulating-context-1",
-      "type": "accumulating-context"
+      "id": "local-memory-1",
+      "type": "local-memory"
     }
   ]
 }
