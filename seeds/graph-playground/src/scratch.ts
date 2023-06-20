@@ -1,3 +1,9 @@
+/**
+ * @license
+ * Copyright 2023 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import type { NodeHandler } from "./graph.js";
 
 import userInput from "./nodes/user-input.js";
