@@ -4,14 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  Edge,
-  GraphDescriptor,
-  NodeConfiguration,
-  NodeDescriptor,
-  NodeHandler,
-  NodeHandlers,
-  NodeTypeIdentifier,
+import {
+  follow,
+  type Edge,
+  type GraphDescriptor,
+  type NodeConfiguration,
+  type NodeDescriptor,
+  type NodeHandler,
+  type NodeHandlers,
+  type NodeTypeIdentifier,
 } from "./graph.js";
 
 import userInput from "./nodes/user-input.js";
@@ -19,6 +20,8 @@ import promptTemplate from "./nodes/prompt-template.js";
 import textCompletion from "./nodes/text-completion.js";
 import consoleOutput from "./nodes/console-output.js";
 import localMemory from "./nodes/local-memory.js";
+import { Logger } from "./logger.js";
+import { log } from "console";
 
 class Node implements NodeDescriptor {
   #graph: Graph;
@@ -38,6 +41,7 @@ class Node implements NodeDescriptor {
     const { $id, ...rest } = configuration;
     this.id = graph.vendNodeId($id);
     this.configuration = rest;
+    this.#graph.addNode(this);
   }
 
   /**
@@ -65,15 +69,23 @@ class Node implements NodeDescriptor {
     };
 
     this.#graph.addEdge(edge);
-    this.#graph.addNode(destination);
     return this;
   }
 }
 
+const root = new URL("../../", import.meta.url);
+const logger = new Logger(`${root.pathname}/experiment.log`);
+
 class GraphRunner {
-  run(graph: Graph) {
-    // TODO: Implement actual running of the graph.
-    console.log(JSON.stringify(graph, null, 2));
+  async run(graph: Graph) {
+    try {
+      await follow(graph, graph.getHandlers(), (s: string) => {
+        logger.log(s);
+      });
+    } catch (e) {
+      logger.log((e as Error).message);
+    }
+    logger.save();
   }
 }
 
@@ -86,10 +98,10 @@ class Graph implements GraphDescriptor {
   #nodeHandlerCount = 0;
 
   constructor() {
-    this.makeNewNode = this.makeNewNode.bind(this);
+    this.newNode = this.newNode.bind(this);
   }
 
-  makeNewNode(handler: NodeHandler, configuration: Record<string, unknown>) {
+  newNode(handler: NodeHandler, configuration: Record<string, unknown>) {
     return new Node(this, this.addHandler(handler), configuration);
   }
 
@@ -136,7 +148,7 @@ class Graph implements GraphDescriptor {
 const graph = new Graph();
 
 // Nifty hack to save from typing characters.
-const node = graph.makeNewNode;
+const node = graph.newNode;
 
 const print = node(consoleOutput, { $id: "console-output-1" });
 const rememberAlbert = node(localMemory, { $id: "remember-albert" });
@@ -208,4 +220,4 @@ node(userInput, {
 );
 
 const runner = new GraphRunner();
-runner.run(graph);
+await runner.run(graph);
