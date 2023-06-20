@@ -12,7 +12,8 @@
     "merm": "node scripts/mermaidize.js",
     "build": "FORCE_COLOR=1 tsc --b",
     "watch": "FORCE_COLOR=1 tsc --b --watch",
-    "dev": "FORCE_COLOR=1 npm run build && node --enable-source-maps ."
+    "dev": "FORCE_COLOR=1 npm run build && node --enable-source-maps .",
+    "dev:imperative": "FORCE_COLOR=1 npm run build && node dist/src/imperative-api.js > graphs/imperative-test.json && npm run merm"
   },
   "repository": {
     "type": "git",

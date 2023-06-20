@@ -87,7 +87,7 @@ export type OutputValues = Partial<Record<OutputIdentifier, unknown>>;
 
 export type NodeHandlerResult = OutputValues;
 
-export type NodeConfiguration = Record<string, string>;
+export type NodeConfiguration = Record<string, unknown>;
 
 export type NodeHandler = (inputs?: InputValues) => Promise<NodeHandlerResult>;
 
