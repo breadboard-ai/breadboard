@@ -131,6 +131,7 @@
       }
     },
     {
+      "entry": true,
       "from": {
         "node": "debate-topic",
         "output": "text"
@@ -138,118 +139,87 @@
       "to": {
         "node": "remember-topic",
         "input": "topic"
-      },
-      "entry": true
+      }
     }
   ],
   "nodes": [
     {
-      "graph": {},
       "type": "node-type-0",
-      "configuration": {
-        "$id": "console-output-1"
-      },
-      "id": "console-output-1"
+      "id": "console-output-1",
+      "configuration": {}
     },
     {
-      "graph": {},
       "type": "node-type-3",
-      "configuration": {
-        "$id": "albert-voice-completion"
-      },
-      "id": "albert-voice-completion"
+      "id": "albert-voice-completion",
+      "configuration": {}
     },
     {
-      "graph": {},
       "type": "node-type-2",
+      "id": "albert-voice",
       "configuration": {
-        "$id": "albert-voice",
         "template": "Restate the paragraph below in the voice of a brillant 20th century scientist. Change the structure of the sentences completely to mix things up.\n==Paragraph\n{{context}}\n\nRestatement:"
-      },
-      "id": "albert-voice"
+      }
     },
     {
-      "graph": {},
       "type": "node-type-1",
-      "configuration": {
-        "$id": "remember-albert"
-      },
-      "id": "remember-albert"
+      "id": "remember-albert",
+      "configuration": {}
     },
     {
-      "graph": {},
       "type": "node-type-3",
+      "id": "albert-completion",
       "configuration": {
-        "$id": "albert-completion",
         "stop-sequences": [
           "\nFriedrich",
           "\n**Friedrich"
         ]
-      },
-      "id": "albert-completion"
+      }
     },
     {
-      "graph": {},
       "type": "node-type-3",
-      "configuration": {
-        "$id": "friedrich-voice-completion"
-      },
-      "id": "friedrich-voice-completion"
+      "id": "friedrich-voice-completion",
+      "configuration": {}
     },
     {
-      "graph": {},
       "type": "node-type-2",
+      "id": "friedrich-voice",
       "configuration": {
-        "$id": "friedrich-voice",
         "template": "Restate the paragraph below in the voice of a 19th century philosopher. Change the structure of the sentences completely to mix things up.\n==Paragraph\n{{context}}\n\nRestatement:"
-      },
-      "id": "friedrich-voice"
+      }
     },
     {
-      "graph": {},
       "type": "node-type-1",
-      "configuration": {
-        "$id": "remember-friedrich"
-      },
-      "id": "remember-friedrich"
+      "id": "remember-friedrich",
+      "configuration": {}
     },
     {
-      "graph": {},
       "type": "node-type-3",
+      "id": "friedrich-completion",
       "configuration": {
-        "$id": "friedrich-completion",
         "stop-sequences": [
           "\nAlbert",
           "\n**Albert"
         ]
-      },
-      "id": "friedrich-completion"
+      }
     },
     {
-      "graph": {},
       "type": "node-type-2",
+      "id": "albert",
       "configuration": {
-        "$id": "albert",
         "template": "Add a single argument to a debate between a scientist named Albert and a philosopher named Friedrich. You are Albert, and you are warm, funny, inquisitve, and passionate about uncovering new insights with Friedrich. To keep the debate rich and satisfying, you vary your sentence patterns and keep them from repeating.\"\n\n== Debate History\n{{context}}\n\n==Additional Single Argument\n\nAlbert:"
-      },
-      "id": "albert"
+      }
     },
     {
-      "graph": {},
       "type": "node-type-2",
+      "id": "friedrich",
       "configuration": {
-        "$id": "friedrich",
         "template": "Add a single argument to a debate between a philosopher named Friedrich and a scientist named Albert. You are Friedrich, and you are disagreeable, brooding, skeptical, sarcastic, yet passionate about uncovering new insights with Albert. To keep the debate rich and satisfying, you vary your sentence patterns and keep them from repeating.\n\n== Conversation Transcript\n{{context}}\n\n==Additional Single Argument\nFriedrich:"
-      },
-      "id": "friedrich"
+      }
     },
     {
-      "graph": {},
       "type": "node-type-1",
-      "configuration": {
-        "$id": "remember-topic"
-      },
-      "id": "remember-topic"
+      "id": "remember-topic",
+      "configuration": {}
     }
   ]
 }

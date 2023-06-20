@@ -7,8 +7,10 @@
 import type {
   Edge,
   GraphDescriptor,
+  NodeConfiguration,
   NodeDescriptor,
   NodeHandler,
+  NodeHandlers,
   NodeTypeIdentifier,
 } from "./graph.js";
 
@@ -19,18 +21,23 @@ import consoleOutput from "./nodes/console-output.js";
 import localMemory from "./nodes/local-memory.js";
 
 class Node implements NodeDescriptor {
+  #graph: Graph;
   id: string;
+  configuration: NodeConfiguration;
 
   /**
    *
    * @param configuration "$id" is special. It is the unique identifier of the node.
    */
   constructor(
-    private graph: Graph,
+    graph: Graph,
     public type: NodeTypeIdentifier,
-    public configuration: Record<string, unknown> = {}
+    configuration: Record<string, unknown> = {}
   ) {
-    this.id = graph.vendNodeId(configuration?.$id);
+    this.#graph = graph;
+    const { $id, ...rest } = configuration;
+    this.id = graph.vendNodeId($id);
+    this.configuration = rest;
   }
 
   /**
@@ -39,45 +46,52 @@ class Node implements NodeDescriptor {
    * @param destination The node to which the graph edge will be directed.
    * @returns
    */
-  to(routing: Record<string, string>, destination: Node): Node {
+  to(
+    routing: Record<"$entry" | string, string | boolean>,
+    destination: Node
+  ): Node {
+    const { $entry, ...rest } = routing;
+    const entry = $entry as boolean;
     const edge = {
+      entry,
       from: {
         node: this.id,
-        output: Object.keys(routing)[0],
+        output: Object.keys(rest)[0] as string,
       },
       to: {
         node: destination.id,
-        input: Object.values(routing)[0],
+        input: Object.values(rest)[0] as string,
       },
     };
 
-    this.graph.addEdge(edge);
-    this.graph.addNode(destination);
+    this.#graph.addEdge(edge);
+    this.#graph.addNode(destination);
     return this;
-  }
-
-  asGraph(): GraphDescriptor {
-    return this.graph.asDescriptor(this);
-  }
-
-  getHandlers() {
-    return this.graph.getHandlers();
   }
 }
 
 class GraphRunner {
-  run(node: Node) {
+  run(graph: Graph) {
     // TODO: Implement actual running of the graph.
-    console.log(JSON.stringify(node.asGraph(), null, 2));
+    console.log(JSON.stringify(graph, null, 2));
   }
 }
 
-class Graph {
+class Graph implements GraphDescriptor {
+  edges: Edge[] = [];
+
   #nodes: Set<Node> = new Set();
-  #edges: Edge[] = [];
   #handlers: Map<NodeHandler, NodeTypeIdentifier> = new Map();
   #nodeCount = 0;
   #nodeHandlerCount = 0;
+
+  constructor() {
+    this.makeNewNode = this.makeNewNode.bind(this);
+  }
+
+  makeNewNode(handler: NodeHandler, configuration: Record<string, unknown>) {
+    return new Node(this, this.addHandler(handler), configuration);
+  }
 
   vendNodeId(id?: unknown) {
     return (id as string) ?? `node-${this.#nodeCount++}`;
@@ -92,7 +106,7 @@ class Graph {
   }
 
   addEdge(edge: Edge) {
-    this.#edges.push(edge);
+    this.edges.push(edge);
   }
 
   addHandler(handler: NodeHandler): NodeTypeIdentifier {
@@ -103,37 +117,26 @@ class Graph {
     return id;
   }
 
-  asDescriptor(entry: Node): GraphDescriptor {
-    // TODO: It's weird that getting a graph descriptor also mutates the graph.
-    //       Find a way to avoid marking the entry edge in the inner
-    //       datastructure.
-    const entryEdge = this.#edges.find(
-      (edge) => edge.from.node === entry.id
-    ) as Edge;
-    if (!entryEdge) throw Error("Entry node has no edges");
-    entryEdge.entry = true;
-    return {
-      edges: this.#edges,
-      nodes: Array.from(this.#nodes),
-    };
+  get nodes() {
+    return Array.from(this.#nodes);
   }
 
-  getHandlers() {
+  getHandlers(): NodeHandlers {
     return Array.from(this.#handlers.entries()).reduce((acc, [handler, id]) => {
       acc[id] = handler;
       return acc;
-    }, {} as Record<NodeTypeIdentifier, NodeHandler>);
+    }, {} as NodeHandlers);
+  }
+
+  toJSON() {
+    return { edges: this.edges, nodes: this.nodes };
   }
 }
 
-const makeNode = () => {
-  const graph = new Graph();
-  return (handler: NodeHandler, configuration: Record<string, unknown>) => {
-    return new Node(graph, graph.addHandler(handler), configuration);
-  };
-};
+const graph = new Graph();
 
-const node = makeNode();
+// Nifty hack to save from typing characters.
+const node = graph.makeNewNode;
 
 const print = node(consoleOutput, { $id: "console-output-1" });
 const rememberAlbert = node(localMemory, { $id: "remember-albert" });
@@ -194,15 +197,15 @@ const friedrich = node(promptTemplate, {
 rememberFriedrich.to({ context: "context" }, albert);
 rememberAlbert.to({ context: "context" }, friedrich);
 
-const debateTopic = node(userInput, {
+node(userInput, {
   $id: "debate-topic",
   message: "What is the topic of the debate?",
 }).to(
-  { text: "topic" },
+  { $entry: true, text: "topic" },
   node(localMemory, {
     $id: "remember-topic",
   }).to({ context: "context" }, albert)
 );
 
-const graph = new GraphRunner();
-graph.run(debateTopic);
+const runner = new GraphRunner();
+runner.run(graph);
