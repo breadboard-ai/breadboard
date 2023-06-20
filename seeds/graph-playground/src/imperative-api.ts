@@ -9,6 +9,7 @@ import type {
   GraphDescriptor,
   NodeDescriptor,
   NodeHandler,
+  NodeTypeIdentifier,
 } from "./graph.js";
 
 import userInput from "./nodes/user-input.js";
@@ -17,14 +18,8 @@ import textCompletion from "./nodes/text-completion.js";
 import consoleOutput from "./nodes/console-output.js";
 import localMemory from "./nodes/local-memory.js";
 
-let nodeCount = 0;
-const vendNodeId = function (id?: unknown) {
-  return (id as string) ?? `node-${nodeCount++}`;
-};
-
 class Node implements NodeDescriptor {
   id: string;
-  type = "todo";
 
   /**
    *
@@ -32,10 +27,10 @@ class Node implements NodeDescriptor {
    */
   constructor(
     private graph: Graph,
-    private handler: NodeHandler,
+    public type: NodeTypeIdentifier,
     public configuration: Record<string, unknown> = {}
   ) {
-    this.id = vendNodeId(configuration?.$id);
+    this.id = graph.vendNodeId(configuration?.$id);
   }
 
   /**
@@ -64,6 +59,10 @@ class Node implements NodeDescriptor {
   asGraph(): GraphDescriptor {
     return this.graph.asDescriptor(this);
   }
+
+  getHandlers() {
+    return this.graph.getHandlers();
+  }
 }
 
 class GraphRunner {
@@ -76,7 +75,17 @@ class GraphRunner {
 class Graph {
   #nodes: Set<Node> = new Set();
   #edges: Edge[] = [];
-  #handlers: Set<NodeHandler> = new Set();
+  #handlers: Map<NodeHandler, NodeTypeIdentifier> = new Map();
+  #nodeCount = 0;
+  #nodeHandlerCount = 0;
+
+  vendNodeId(id?: unknown) {
+    return (id as string) ?? `node-${this.#nodeCount++}`;
+  }
+
+  vendNodeType() {
+    return `node-type-${this.#nodeHandlerCount++}`;
+  }
 
   addNode(node: Node) {
     this.#nodes.add(node);
@@ -86,8 +95,12 @@ class Graph {
     this.#edges.push(edge);
   }
 
-  addHandler(handler: NodeHandler) {
-    this.#handlers.add(handler);
+  addHandler(handler: NodeHandler): NodeTypeIdentifier {
+    let id = this.#handlers.get(handler);
+    if (id) return id;
+    id = this.vendNodeType();
+    this.#handlers.set(handler, id);
+    return id;
   }
 
   asDescriptor(entry: Node): GraphDescriptor {
@@ -104,13 +117,19 @@ class Graph {
       nodes: Array.from(this.#nodes),
     };
   }
+
+  getHandlers() {
+    return Array.from(this.#handlers.entries()).reduce((acc, [handler, id]) => {
+      acc[id] = handler;
+      return acc;
+    }, {} as Record<NodeTypeIdentifier, NodeHandler>);
+  }
 }
 
 const makeNode = () => {
   const graph = new Graph();
   return (handler: NodeHandler, configuration: Record<string, unknown>) => {
-    graph.addHandler(handler);
-    return new Node(graph, handler, configuration);
+    return new Node(graph, graph.addHandler(handler), configuration);
   };
 };
 
