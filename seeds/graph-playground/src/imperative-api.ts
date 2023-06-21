@@ -4,16 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  follow,
-  type Edge,
-  type GraphDescriptor,
-  type NodeConfiguration,
-  type NodeDescriptor,
-  type NodeHandler,
-  type NodeHandlers,
-  type NodeTypeIdentifier,
-} from "./graph.js";
+import { GraphRunner, Graph } from "./graph.js";
 
 import userInput from "./nodes/user-input.js";
 import promptTemplate from "./nodes/prompt-template.js";
@@ -22,127 +13,8 @@ import consoleOutput from "./nodes/console-output.js";
 import localMemory from "./nodes/local-memory.js";
 import { Logger } from "./logger.js";
 
-class Node implements NodeDescriptor {
-  #graph: Graph;
-  id: string;
-  configuration: NodeConfiguration;
-
-  /**
-   *
-   * @param configuration "$id" is special. It is the unique identifier of the node.
-   */
-  constructor(
-    graph: Graph,
-    public type: NodeTypeIdentifier,
-    configuration: Record<string, unknown> = {}
-  ) {
-    this.#graph = graph;
-    const { $id, ...rest } = configuration;
-    this.id = graph.vendNodeId($id);
-    this.configuration = rest;
-    this.#graph.addNode(this);
-  }
-
-  /**
-   * @todo Add support for multiple routes.
-   * @param routing A map of output to input. Currently, only one route is supported.
-   * @param destination The node to which the graph edge will be directed.
-   * @returns
-   */
-  to(
-    routing: Record<"$entry" | string, string | boolean>,
-    destination: Node
-  ): Node {
-    const { $entry, ...rest } = routing;
-    const entry = $entry as boolean;
-    const edge = {
-      entry,
-      from: {
-        node: this.id,
-        output: Object.keys(rest)[0] as string,
-      },
-      to: {
-        node: destination.id,
-        input: Object.values(rest)[0] as string,
-      },
-    };
-
-    this.#graph.addEdge(edge);
-    return this;
-  }
-}
-
 const root = new URL("../../", import.meta.url);
 const logger = new Logger(`${root.pathname}/experiment.log`);
-
-class GraphRunner {
-  async run(graph: Graph) {
-    try {
-      await follow(graph, graph.getHandlers(), (s: string) => {
-        logger.log(s);
-      });
-    } catch (e) {
-      logger.log((e as Error).message);
-    }
-    logger.save();
-  }
-}
-
-class Graph implements GraphDescriptor {
-  edges: Edge[] = [];
-
-  #nodes: Set<Node> = new Set();
-  #handlers: Map<NodeHandler, NodeTypeIdentifier> = new Map();
-  #nodeCount = 0;
-  #nodeHandlerCount = 0;
-
-  constructor() {
-    this.newNode = this.newNode.bind(this);
-  }
-
-  newNode(handler: NodeHandler, configuration: Record<string, unknown>) {
-    return new Node(this, this.addHandler(handler), configuration);
-  }
-
-  vendNodeId(id?: unknown) {
-    return (id as string) ?? `node-${this.#nodeCount++}`;
-  }
-
-  vendNodeType() {
-    return `node-type-${this.#nodeHandlerCount++}`;
-  }
-
-  addNode(node: Node) {
-    this.#nodes.add(node);
-  }
-
-  addEdge(edge: Edge) {
-    this.edges.push(edge);
-  }
-
-  addHandler(handler: NodeHandler): NodeTypeIdentifier {
-    let id = this.#handlers.get(handler);
-    if (id) return id;
-    id = this.vendNodeType();
-    this.#handlers.set(handler, id);
-    return id;
-  }
-
-  get nodes() {
-    return Array.from(this.#nodes);
-  }
-
-  getHandlers(): NodeHandlers {
-    return Array.from(this.#handlers.entries()).reduce((acc, [handler, id]) => {
-      acc[id] = handler;
-      return acc;
-    }, {} as NodeHandlers);
-  }
-
-  toJSON() {
-    return { edges: this.edges, nodes: this.nodes };
-  }
-}
 
 const graph = new Graph();
 
@@ -219,4 +91,12 @@ node(userInput, {
 );
 
 const runner = new GraphRunner();
-await runner.run(graph);
+try {
+  await runner.run(graph, (s: string) => {
+    logger.log(s);
+  });
+} catch (e) {
+  logger.log((e as Error).message);
+} finally {
+  logger.save();
+}
