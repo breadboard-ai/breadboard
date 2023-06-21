@@ -4,17 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Graph } from "./graph.js";
+import { Graph } from "../dist/src/graph.js";
+import { Logger } from "../dist/src/logger.js";
+import { Runner } from "../dist/src/runner.js";
 
-import userInput from "./nodes/user-input.js";
-import promptTemplate from "./nodes/prompt-template.js";
-import textCompletion from "./nodes/text-completion.js";
-import consoleOutput from "./nodes/console-output.js";
-import localMemory from "./nodes/local-memory.js";
-import { Logger } from "./logger.js";
-import { Runner } from "./runner.js";
+import userInput from "../dist/src/nodes/user-input.js";
+import promptTemplate from "../dist/src/nodes/prompt-template.js";
+import textCompletion from "../dist/src/nodes/text-completion.js";
+import consoleOutput from "../dist/src/nodes/console-output.js";
+import localMemory from "../dist/src/nodes/local-memory.js";
 
-const root = new URL("../../", import.meta.url);
+const root = new URL("..", import.meta.url);
 const logger = new Logger(`${root.pathname}/experiment.log`);
 
 const graph = new Graph();
@@ -74,11 +74,11 @@ node(userInput, { message: "What is the topic of the debate?" }).to(
 
 const runner = new Runner();
 try {
-  await runner.run(graph, (s: string) => {
+  await runner.run(graph, (s) => {
     logger.log(s);
   });
 } catch (e) {
-  logger.log((e as Error).message);
+  logger.log(e.message);
 } finally {
   logger.save();
 }
