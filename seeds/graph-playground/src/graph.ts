@@ -122,10 +122,14 @@ export class Node implements NodeDescriptor {
    */
   to(
     routing: Record<"$entry" | string, string | boolean>,
-    destination: Node
+    destination: Node | NodeHandler
   ): Node {
     const { $entry, ...rest } = routing;
     const entry = $entry as boolean;
+    const node =
+      destination instanceof Node
+        ? destination
+        : new Node(this.#graph, this.#graph.addHandler(destination));
     const edge = {
       entry,
       from: {
@@ -133,7 +137,7 @@ export class Node implements NodeDescriptor {
         output: Object.keys(rest)[0] as string,
       },
       to: {
-        node: destination.id,
+        node: node.id,
         input: Object.values(rest)[0] as string,
       },
     };
