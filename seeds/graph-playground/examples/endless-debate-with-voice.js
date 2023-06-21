@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// TODO: Make this API better.
+
 import { Graph } from "../dist/src/graph.js";
 import { Logger } from "../dist/src/logger.js";
 import { Runner } from "../dist/src/runner.js";
