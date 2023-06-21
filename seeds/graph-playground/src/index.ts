@@ -13,8 +13,9 @@ import textCompletion from "./nodes/text-completion.js";
 import consoleOutput from "./nodes/console-output.js";
 import localMemory from "./nodes/local-memory.js";
 
-import { GraphDescriptor, NodeHandlers, follow } from "./graph.js";
+import { GraphDescriptor, NodeHandlers } from "./graph.js";
 import { Logger } from "./logger.js";
+import { follow } from "./runner.js";
 
 const root = new URL("../../", import.meta.url);
 const logger = new Logger(`${root.pathname}/experiment.log`);

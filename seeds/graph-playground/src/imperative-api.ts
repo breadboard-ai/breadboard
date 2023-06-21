@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphRunner, Graph } from "./graph.js";
+import { Graph } from "./graph.js";
 
 import userInput from "./nodes/user-input.js";
 import promptTemplate from "./nodes/prompt-template.js";
@@ -12,6 +12,7 @@ import textCompletion from "./nodes/text-completion.js";
 import consoleOutput from "./nodes/console-output.js";
 import localMemory from "./nodes/local-memory.js";
 import { Logger } from "./logger.js";
+import { Runner } from "./runner.js";
 
 const root = new URL("../../", import.meta.url);
 const logger = new Logger(`${root.pathname}/experiment.log`);
@@ -71,7 +72,7 @@ node(userInput, { message: "What is the topic of the debate?" }).to(
   node(localMemory).to({ context: "context" }, albert)
 );
 
-const runner = new GraphRunner();
+const runner = new Runner();
 try {
   await runner.run(graph, (s: string) => {
     logger.log(s);
