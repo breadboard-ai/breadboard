@@ -155,7 +155,7 @@ export class Graph implements GraphDescriptor {
     this.newNode = this.newNode.bind(this);
   }
 
-  newNode(handler: NodeHandler, configuration: Record<string, unknown>) {
+  newNode(handler: NodeHandler, configuration?: Record<string, unknown>) {
     return new Node(this, this.addHandler(handler), configuration);
   }
 
