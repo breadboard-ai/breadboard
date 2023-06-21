@@ -21,7 +21,6 @@ import textCompletion from "./nodes/text-completion.js";
 import consoleOutput from "./nodes/console-output.js";
 import localMemory from "./nodes/local-memory.js";
 import { Logger } from "./logger.js";
-import { log } from "console";
 
 class Node implements NodeDescriptor {
   #graph: Graph;
