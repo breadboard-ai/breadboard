@@ -2,6 +2,10 @@
 
 To remember what the heck I was thinking while prototyping.
 
+## 2023-06-20
+
+Maybe this is actually about a wiring metaphor? Instead of using "node" as a word, maybe the word is "wire"?
+
 ## 2023-06-16
 
 Is "confiuration-store" a node type?
