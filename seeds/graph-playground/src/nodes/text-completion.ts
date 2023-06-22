@@ -1,3 +1,9 @@
+/**
+ * @license
+ * Copyright 2023 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import type { InputValues } from "../graph.js";
 import { GenerateTextResponse, Text, palm } from "@google-labs/palm-lite";
 import { config } from "dotenv";
