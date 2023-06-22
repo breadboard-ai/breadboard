@@ -1,61 +1,89 @@
 {
   "edges": [
     {
-      "entry": true,
-      "from": { "node": "debate-topic", "output": "text" },
-      "to": { "node": "local-memory-1", "input": "topic" }
+      "from": "debate-topic",
+      "out": "text",
+      "to": "local-memory-1",
+      "in": "topic",
+      "entry": true
     },
     {
-      "from": { "node": "local-memory-1", "output": "context" },
-      "to": { "node": "albert", "input": "context" }
+      "from": "local-memory-1",
+      "out": "context",
+      "to": "albert",
+      "in": "context"
     },
     {
-      "from": { "node": "albert", "output": "prompt" },
-      "to": { "node": "albert-completion", "input": "text" }
+      "from": "albert",
+      "out": "prompt",
+      "to": "albert-completion",
+      "in": "text"
     },
     {
-      "from": { "node": "albert-completion", "output": "completion" },
-      "to": { "node": "albert-voice", "input": "context" }
+      "from": "albert-completion",
+      "out": "completion",
+      "to": "albert-voice",
+      "in": "context"
     },
     {
-      "from": { "node": "albert-voice", "output": "prompt" },
-      "to": { "node": "albert-voice-completion", "input": "text" }
+      "from": "albert-voice",
+      "out": "prompt",
+      "to": "albert-voice-completion",
+      "in": "text"
     },
     {
-      "from": { "node": "albert-voice-completion", "output": "completion" },
-      "to": { "node": "console-output-1", "input": "text" }
+      "from": "albert-voice-completion",
+      "out": "completion",
+      "to": "console-output-1",
+      "in": "text"
     },
     {
-      "from": { "node": "albert-completion", "output": "completion" },
-      "to": { "node": "local-memory-2", "input": "Albert" }
+      "from": "albert-completion",
+      "out": "completion",
+      "to": "local-memory-2",
+      "in": "Albert"
     },
     {
-      "from": { "node": "local-memory-2", "output": "context" },
-      "to": { "node": "friedrich", "input": "context" }
+      "from": "local-memory-2",
+      "out": "context",
+      "to": "friedrich",
+      "in": "context"
     },
     {
-      "from": { "node": "friedrich", "output": "prompt" },
-      "to": { "node": "friedrich-completion", "input": "text" }
+      "from": "friedrich",
+      "out": "prompt",
+      "to": "friedrich-completion",
+      "in": "text"
     },
     {
-      "from": { "node": "friedrich-completion", "output": "completion" },
-      "to": { "node": "friedrich-voice", "input": "context" }
+      "from": "friedrich-completion",
+      "out": "completion",
+      "to": "friedrich-voice",
+      "in": "context"
     },
     {
-      "from": { "node": "friedrich-voice", "output": "prompt" },
-      "to": { "node": "friedrich-voice-completion", "input": "text" }
+      "from": "friedrich-voice",
+      "out": "prompt",
+      "to": "friedrich-voice-completion",
+      "in": "text"
     },
     {
-      "from": { "node": "friedrich-voice-completion", "output": "completion" },
-      "to": { "node": "console-output-1", "input": "text" }
+      "from": "friedrich-voice-completion",
+      "out": "completion",
+      "to": "console-output-1",
+      "in": "text"
     },
     {
-      "from": { "node": "friedrich-completion", "output": "completion" },
-      "to": { "node": "local-memory-3", "input": "Friedrich" }
+      "from": "friedrich-completion",
+      "out": "completion",
+      "to": "local-memory-3",
+      "in": "Friedrich"
     },
     {
-      "from": { "node": "local-memory-3", "output": "context" },
-      "to": { "node": "albert", "input": "context" }
+      "from": "local-memory-3",
+      "out": "context",
+      "to": "albert",
+      "in": "context"
     }
   ],
   "nodes": [
@@ -70,14 +98,20 @@
       "id": "albert-completion",
       "type": "text-completion",
       "configuration": {
-        "stop-sequences": ["\nFriedrich", "\n**Friedrich"]
+        "stop-sequences": [
+          "\nFriedrich",
+          "\n**Friedrich"
+        ]
       }
     },
     {
       "id": "friedrich-completion",
       "type": "text-completion",
       "configuration": {
-        "stop-sequences": ["\nAlbert", "\n**Albert"]
+        "stop-sequences": [
+          "\nAlbert",
+          "\n**Albert"
+        ]
       }
     },
     {
@@ -88,7 +122,10 @@
       "id": "albert-voice-completion",
       "type": "text-completion"
     },
-    { "id": "console-output-1", "type": "console-output" },
+    {
+      "id": "console-output-1",
+      "type": "console-output"
+    },
     {
       "id": "albert",
       "type": "prompt-template",

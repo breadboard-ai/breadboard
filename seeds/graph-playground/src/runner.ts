@@ -24,8 +24,8 @@ export class Runner {
 const wire = (heads: Edge[], outputs: OutputValues): InputValues => {
   const result: InputValues = {};
   heads.forEach((head) => {
-    const output = outputs[head.from.output];
-    if (output) result[head.to.input] = outputs[head.from.output];
+    const output = outputs[head.out];
+    if (output) result[head.in] = outputs[head.out];
   });
   return result;
 };
@@ -60,13 +60,13 @@ class StateManager {
     this.#state.delete(node);
     // 2. Add entries for each opportunity.
     opportunities.forEach((opportunity) => {
-      const toNode = opportunity.to.node;
+      const toNode = opportunity.to;
       let fromNodeMap = this.#state.get(toNode);
       if (!fromNodeMap) {
         fromNodeMap = new Map();
         this.#state.set(toNode, fromNodeMap);
       }
-      fromNodeMap.set(opportunity.from.node, outputs);
+      fromNodeMap.set(opportunity.from, outputs);
     });
     // console.log("== State after update", this.#state);
   }
@@ -89,8 +89,8 @@ const computeMissingInputs = (
   current: NodeDescriptor
 ) => {
   const requiredInputs: string[] = heads
-    .filter((edge: Edge) => !!edge.to.input && !edge.optional)
-    .map((edge: Edge) => edge.to.input);
+    .filter((edge: Edge) => !!edge.in && !edge.optional)
+    .map((edge: Edge) => edge.in);
   // console.log("== Required inputs:", requiredInputs);
   const inputsWithConfiguration = new Set();
   Object.keys(inputs).forEach((key) => inputsWithConfiguration.add(key));
@@ -118,7 +118,7 @@ export const follow = async (
    * Tails: a map of all outgoing edges, keyed by node id.
    */
   const tails = graph.edges.reduce((acc, edge) => {
-    const from = edge.from.node;
+    const from = edge.from;
     acc.has(from) ? acc.get(from)?.push(edge) : acc.set(from, [edge]);
     return acc;
   }, new Map());
@@ -127,7 +127,7 @@ export const follow = async (
    * Heads: a map of all incoming edges, keyed by node id.
    */
   const heads = graph.edges.reduce((acc, edge) => {
-    const to = edge.to.node;
+    const to = edge.to;
     acc.has(to) ? acc.get(to)?.push(edge) : acc.set(to, [edge]);
     return acc;
   }, new Map());
@@ -144,21 +144,21 @@ export const follow = async (
 
   const entry = graph.edges.find((edge) => edge.entry);
   if (!entry) throw new Error("No entry edge found in graph.");
-  log(`Starting at node "${entry.from.node}"`);
+  log(`Starting at node "${entry.from}"`);
 
-  const entryNode = nodes[entry.from.node];
+  const entryNode = nodes[entry.from];
   const handlerResult = await handle(nodeHandlers, entryNode, {});
   // TODO: Make it not a special case.
   const exit = handlerResult.exit as boolean;
   if (exit) return;
 
   const opportunities = [entry];
-  state.update(entry.from.node, opportunities, handlerResult);
+  state.update(entry.from, opportunities, handlerResult);
 
   while (opportunities.length > 0) {
     const opportunity = opportunities.shift() as Edge;
 
-    const toNode: NodeIdentifier = opportunity.to.node;
+    const toNode: NodeIdentifier = opportunity.to;
     const current = nodes[toNode];
 
     if (!current) throw new Error(`No node found for id "${toNode}"`);
@@ -191,7 +191,7 @@ export const follow = async (
     const newOpportunities = tails.get(toNode) || [];
     opportunities.push(...newOpportunities);
     opportunities.forEach((opportunity) => {
-      log(`- Opportunity: "${opportunity.to.node}"`);
+      log(`- Opportunity: "${opportunity.to}"`);
     });
 
     state.update(toNode, newOpportunities, outputs);

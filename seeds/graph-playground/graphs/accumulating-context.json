@@ -1,47 +1,62 @@
 {
   "edges": [
     {
-      "entry": true,
-      "from": { "node": "user-input-1", "output": "text" },
-      "to": { "node": "prompt-template-1", "input": "question" }
+      "from": "user-input-1",
+      "out": "text",
+      "to": "prompt-template-1",
+      "in": "question",
+      "entry": true
     },
     {
-      "from": { "node": "prompt-template-1", "output": "prompt" },
-      "to": { "node": "text-completion-1", "input": "text" }
+      "from": "prompt-template-1",
+      "out": "prompt",
+      "to": "text-completion-1",
+      "in": "text"
     },
     {
-      "from": { "node": "text-completion-1", "output": "completion" },
-      "to": { "node": "console-output-1", "input": "text" }
+      "from": "text-completion-1",
+      "out": "completion",
+      "to": "console-output-1",
+      "in": "text"
     },
     {
-      "from": { "node": "user-input-1", "output": "text" },
-      "to": {
-        "node": "local-memory-1",
-        "input": "user"
-      },
+      "from": "user-input-1",
+      "out": "text",
+      "to": "local-memory-1",
+      "in": "user",
       "optional": true
     },
     {
-      "from": { "node": "text-completion-1", "output": "completion" },
-      "to": {
-        "node": "local-memory-1",
-        "input": "assistant"
-      },
+      "from": "text-completion-1",
+      "out": "completion",
+      "to": "local-memory-1",
+      "in": "assistant",
       "optional": true
     },
     {
-      "from": { "node": "console-output-1" },
-      "to": { "node": "user-input-1" }
+      "from": "console-output-1",
+      "to": "user-input-1"
     },
     {
-      "from": { "node": "local-memory-1", "output": "context" },
-      "to": { "node": "prompt-template-1", "input": "context" }
+      "from": "local-memory-1",
+      "out": "context",
+      "to": "prompt-template-1",
+      "in": "context"
     }
   ],
   "nodes": [
-    { "id": "user-input-1", "type": "user-input" },
-    { "id": "text-completion-1", "type": "text-completion" },
-    { "id": "console-output-1", "type": "console-output" },
+    {
+      "id": "user-input-1",
+      "type": "user-input"
+    },
+    {
+      "id": "text-completion-1",
+      "type": "text-completion"
+    },
+    {
+      "id": "console-output-1",
+      "type": "console-output"
+    },
     {
       "id": "prompt-template-1",
       "type": "prompt-template",

@@ -2,16 +2,22 @@
   "edges": [
     {
       "entry": true,
-      "from": { "node": "user-input-1", "output": "text" },
-      "to": { "node": "prompt-template-1", "input": "question" }
+      "from": "user-input-1",
+      "out": "text",
+      "to": "prompt-template-1",
+      "in": "question"
     },
     {
-      "from": { "node": "prompt-template-1", "output": "prompt" },
-      "to": { "node": "text-completion-1", "input": "text" }
+      "from": "prompt-template-1",
+      "out": "prompt",
+      "to": "text-completion-1",
+      "in": "text"
     },
     {
-      "from": { "node": "text-completion-1", "output": "completion" },
-      "to": { "node": "console-output-1", "input": "text" }
+      "from": "text-completion-1",
+      "out": "completion",
+      "to": "console-output-1",
+      "in": "text"
     }
   ],
   "nodes": [

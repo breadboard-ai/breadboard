@@ -71,8 +71,10 @@ export interface Edge {
    * The designated first edge in the graph.
    */
   entry?: boolean;
-  from: FromIdentifier;
-  to: ToIdentifier;
+  from: NodeIdentifier;
+  to: NodeIdentifier;
+  in: InputIdentifier;
+  out: OutputIdentifier;
   optional?: boolean;
 }
 
@@ -132,14 +134,10 @@ export class Node implements NodeDescriptor {
         : new Node(this.#graph, this.#graph.addHandler(destination));
     const edge = {
       entry,
-      from: {
-        node: this.id,
-        output: Object.keys(rest)[0] as string,
-      },
-      to: {
-        node: node.id,
-        input: Object.values(rest)[0] as string,
-      },
+      from: this.id,
+      out: Object.keys(rest)[0] as string,
+      to: node.id,
+      in: Object.values(rest)[0] as string,
     };
 
     this.#graph.addEdge(edge);

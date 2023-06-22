@@ -1,18 +1,28 @@
 {
   "edges": [
     {
-      "entry": true,
-      "from": { "node": "prompt-template-1", "output": "prompt" },
-      "to": { "node": "text-completion-1", "input": "text" }
+      "from": "prompt-template-1",
+      "out": "prompt",
+      "to": "text-completion-1",
+      "in": "text",
+      "entry": true
     },
     {
-      "from": { "node": "text-completion-1", "output": "completion" },
-      "to": { "node": "console-output-1", "input": "text" }
+      "from": "text-completion-1",
+      "out": "completion",
+      "to": "console-output-1",
+      "in": "text"
     }
   ],
   "nodes": [
-    { "id": "text-completion-1", "type": "text-completion" },
-    { "id": "console-output-1", "type": "console-output" },
+    {
+      "id": "text-completion-1",
+      "type": "text-completion"
+    },
+    {
+      "id": "console-output-1",
+      "type": "console-output"
+    },
     {
       "id": "prompt-template-1",
       "type": "prompt-template",

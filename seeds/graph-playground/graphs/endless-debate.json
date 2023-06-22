@@ -1,45 +1,65 @@
 {
   "edges": [
     {
-      "entry": true,
-      "from": { "node": "debate-topic", "output": "text" },
-      "to": { "node": "local-memory-1", "input": "topic" }
+      "from": "debate-topic",
+      "out": "text",
+      "to": "local-memory-1",
+      "in": "topic",
+      "entry": true
     },
     {
-      "from": { "node": "local-memory-1", "output": "context" },
-      "to": { "node": "albert", "input": "context" }
+      "from": "local-memory-1",
+      "out": "context",
+      "to": "albert",
+      "in": "context"
     },
     {
-      "from": { "node": "albert", "output": "prompt" },
-      "to": { "node": "text-completion-1", "input": "text" }
+      "from": "albert",
+      "out": "prompt",
+      "to": "text-completion-1",
+      "in": "text"
     },
     {
-      "from": { "node": "text-completion-1", "output": "completion" },
-      "to": { "node": "console-output-1", "input": "text" }
+      "from": "text-completion-1",
+      "out": "completion",
+      "to": "console-output-1",
+      "in": "text"
     },
     {
-      "from": { "node": "text-completion-1", "output": "completion" },
-      "to": { "node": "local-memory-2", "input": "Albert" }
+      "from": "text-completion-1",
+      "out": "completion",
+      "to": "local-memory-2",
+      "in": "Albert"
     },
     {
-      "from": { "node": "local-memory-2", "output": "context" },
-      "to": { "node": "friedrich", "input": "context" }
+      "from": "local-memory-2",
+      "out": "context",
+      "to": "friedrich",
+      "in": "context"
     },
     {
-      "from": { "node": "friedrich", "output": "prompt" },
-      "to": { "node": "text-completion-2", "input": "text" }
+      "from": "friedrich",
+      "out": "prompt",
+      "to": "text-completion-2",
+      "in": "text"
     },
     {
-      "from": { "node": "text-completion-2", "output": "completion" },
-      "to": { "node": "console-output-1", "input": "text" }
+      "from": "text-completion-2",
+      "out": "completion",
+      "to": "console-output-1",
+      "in": "text"
     },
     {
-      "from": { "node": "text-completion-2", "output": "completion" },
-      "to": { "node": "local-memory-3", "input": "Friedrich" }
+      "from": "text-completion-2",
+      "out": "completion",
+      "to": "local-memory-3",
+      "in": "Friedrich"
     },
     {
-      "from": { "node": "local-memory-3", "output": "context" },
-      "to": { "node": "albert", "input": "context" }
+      "from": "local-memory-3",
+      "out": "context",
+      "to": "albert",
+      "in": "context"
     }
   ],
   "nodes": [
@@ -54,17 +74,26 @@
       "id": "text-completion-1",
       "type": "text-completion",
       "configuration": {
-        "stop-sequences": ["\nFriedrich", "\n**Friedrich"]
+        "stop-sequences": [
+          "\nFriedrich",
+          "\n**Friedrich"
+        ]
       }
     },
     {
       "id": "text-completion-2",
       "type": "text-completion",
       "configuration": {
-        "stop-sequences": ["\nAlbert", "\n**Albert"]
+        "stop-sequences": [
+          "\nAlbert",
+          "\n**Albert"
+        ]
       }
     },
-    { "id": "console-output-1", "type": "console-output" },
+    {
+      "id": "console-output-1",
+      "type": "console-output"
+    },
     {
       "id": "albert",
       "type": "prompt-template",
