@@ -40,32 +40,6 @@ export interface NodeDescriptor {
   configuration: NodeConfiguration;
 }
 
-/**
- * Describes a node type.
- * @todo Currently, `inputs` and `outputs` are fixed. How do we handle flexible number of inputs/outputs?
- */
-export interface NodeTypeDescriptor {
-  /**
-   * A list of Node type's declared outputs. Outputs are where graph edges
-   * originate from.
-   */
-  inputs: InputIdentifier[];
-  /**
-   * A list of Node type's declared inputs. Inputs are where graph edges arrive at.
-   */
-  outputs: OutputIdentifier[];
-}
-
-export interface FromIdentifier {
-  node: NodeIdentifier;
-  output: OutputIdentifier;
-}
-
-export interface ToIdentifier {
-  node: NodeIdentifier;
-  input: InputIdentifier;
-}
-
 export interface Edge {
   /**
    * The designated first edge in the graph.
