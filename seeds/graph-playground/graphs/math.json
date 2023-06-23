@@ -51,7 +51,10 @@
     },
     {
       "id": "compute",
-      "type": "run-javascript"
+      "type": "run-javascript",
+      "configuration": {
+        "name": "compute"
+      }
     }
   ]
 }
