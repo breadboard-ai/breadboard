@@ -48,14 +48,12 @@ export default async (inputs?: InputValues) => {
   const query = values.query;
   if (!query) throw new Error("Google search requires `query` input");
   const url = makeSearchUrl(query);
-  console.log(url);
   const data = await fetch(url, {
     headers: {
       Accept: "application/json",
     },
   });
   const response = await data.json();
-  console.log(response);
   const results = justSnippets(response).join("\n");
   return { results };
 };

@@ -1,0 +1,70 @@
+{
+  "edges": [
+    {
+      "from": "input",
+      "out": "text",
+      "to": "pass",
+      "in": "text",
+      "entry": true
+    },
+    {
+      "from": "pass",
+      "out": "text",
+      "to": "search",
+      "in": "query"
+    },
+    {
+      "from": "pass",
+      "out": "text",
+      "to": "summarize-results",
+      "in": "question"
+    },
+    {
+      "from": "search",
+      "out": "results",
+      "to": "summarize-results",
+      "in": "context"
+    },
+    {
+      "from": "summarize-results",
+      "out": "prompt",
+      "to": "text-completion-1",
+      "in": "text"
+    },
+    {
+      "from": "text-completion-1",
+      "out": "completion",
+      "to": "print",
+      "in": "text"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "input",
+      "type": "user-input",
+      "configuration": {
+        "message": "What do you want to search for?"
+      }
+    },
+    {
+      "id": "pass",
+      "type": "passthrough"
+    },
+    {
+      "id": "search",
+      "type": "google-search"
+    },
+    { "id": "text-completion-1", "type": "text-completion" },
+    {
+      "id": "summarize-results",
+      "type": "prompt-template",
+      "configuration": {
+        "template": "Use context below to answer this question:\n\n##Question:\n{{question}}\n\n## Context {{context}}\n\\n## Answer:\n"
+      }
+    },
+    {
+      "id": "print",
+      "type": "console-output"
+    }
+  ]
+}

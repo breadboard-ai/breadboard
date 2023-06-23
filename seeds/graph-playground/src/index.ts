@@ -14,6 +14,7 @@ import consoleOutput from "./nodes/console-output.js";
 import localMemory from "./nodes/local-memory.js";
 import javascript from "./nodes/run-javascript.js";
 import googleSearch from "./nodes/google-search.js";
+import passthrough from "./nodes/passthrough.js";
 
 import { GraphDescriptor, NodeHandlers } from "./graph.js";
 import { Logger } from "./logger.js";
@@ -30,6 +31,7 @@ const handlers: NodeHandlers = {
   "local-memory": localMemory,
   "run-javascript": javascript,
   "google-search": googleSearch,
+  passthrough: passthrough,
 };
 
 intro("Let's follow a graph!");
