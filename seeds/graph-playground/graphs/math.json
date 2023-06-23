@@ -1,0 +1,57 @@
+{
+  "edges": [
+    {
+      "from": "math-question",
+      "out": "text",
+      "to": "math-function",
+      "in": "question",
+      "entry": true
+    },
+    {
+      "from": "math-function",
+      "out": "prompt",
+      "to": "math-function-completion",
+      "in": "text"
+    },
+    {
+      "from": "math-function-completion",
+      "out": "completion",
+      "to": "compute",
+      "in": "code"
+    },
+    {
+      "from": "compute",
+      "out": "result",
+      "to": "print",
+      "in": "text"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "math-question",
+      "type": "user-input",
+      "configuration": {
+        "text": "Ask a math question"
+      }
+    },
+    {
+      "id": "math-function-completion",
+      "type": "text-completion"
+    },
+    {
+      "id": "math-function",
+      "type": "prompt-template",
+      "configuration": {
+        "template": "Translate the math problem below into a JavaScript function named `compute` that can be executed to provide the answer to the problem\nMath Problem: {{question}}"
+      }
+    },
+    {
+      "id": "print",
+      "type": "console-output"
+    },
+    {
+      "id": "compute",
+      "type": "run-javascript"
+    }
+  ]
+}
