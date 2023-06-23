@@ -13,6 +13,7 @@ import textCompletion from "./nodes/text-completion.js";
 import consoleOutput from "./nodes/console-output.js";
 import localMemory from "./nodes/local-memory.js";
 import javascript from "./nodes/run-javascript.js";
+import googleSearch from "./nodes/google-search.js";
 
 import { GraphDescriptor, NodeHandlers } from "./graph.js";
 import { Logger } from "./logger.js";
@@ -28,6 +29,7 @@ const handlers: NodeHandlers = {
   "console-output": consoleOutput,
   "local-memory": localMemory,
   "run-javascript": javascript,
+  "google-search": googleSearch,
 };
 
 intro("Let's follow a graph!");

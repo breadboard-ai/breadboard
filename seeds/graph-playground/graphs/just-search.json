@@ -1,0 +1,34 @@
+{
+  "edges": [
+    {
+      "from": "input",
+      "out": "text",
+      "to": "search",
+      "in": "query",
+      "entry": true
+    },
+    {
+      "from": "search",
+      "out": "results",
+      "to": "print",
+      "in": "text"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "input",
+      "type": "user-input",
+      "configuration": {
+        "message": "What do you want to search for?"
+      }
+    },
+    {
+      "id": "search",
+      "type": "google-search"
+    },
+    {
+      "id": "print",
+      "type": "console-output"
+    }
+  ]
+}

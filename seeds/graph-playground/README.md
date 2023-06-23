@@ -5,7 +5,8 @@ To join the fun:
 :one: create `.env` file with the following content:
 
 ```bash
-API_KEY=your_api_key
+API_KEY="your GCP API key"
+GOOGLE_CSE_ID="your Google custom search engine id"
 ```
 
 :two: start playing. Here are some examples:
