@@ -161,17 +161,17 @@
     },
     {
       "id": "get-tools",
-      "type": "custom-node",
+      "type": "react-helper",
       "configuration": { "method": "getTools" }
     },
     {
       "id": "get-tool-descriptions",
-      "type": "custom-node",
+      "type": "react-helper",
       "configuration": { "method": "getToolDescriptions" }
     },
     {
       "id": "parse-completion",
-      "type": "custom-node",
+      "type": "react-helper",
       "configuration": { "method": "parseCompletion", "args": ["completion"] }
     },
     {

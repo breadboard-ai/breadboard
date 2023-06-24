@@ -35,7 +35,7 @@ const handlers: NodeHandlers = {
   "run-javascript": javascript,
   "google-search": googleSearch,
   passthrough: passthrough,
-  "custom-node": customNode(new ReActHelper()),
+  "react-helper": customNode(new ReActHelper()),
 };
 
 intro("Let's follow a graph!");
