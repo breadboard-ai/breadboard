@@ -1,0 +1,186 @@
+{
+  "edges": [
+    {
+      "from": "get-tools",
+      "out": "tools",
+      "to": "react-template",
+      "in": "tools"
+    },
+    {
+      "from": "get-tool-descriptions",
+      "out": "descriptions",
+      "to": "react-template",
+      "in": "descriptions"
+    },
+    {
+      "from": "ask-user",
+      "out": "text",
+      "to": "pass",
+      "in": "text",
+      "entry": true,
+      "optional": true
+    },
+    {
+      "from": "pass",
+      "to": "get-tools"
+    },
+    {
+      "from": "pass",
+      "out": "text",
+      "to": "remember-question",
+      "in": "Question",
+      "optional": true
+    },
+    {
+      "from": "remember-question",
+      "out": "context",
+      "to": "react-template",
+      "in": "memory"
+    },
+    {
+      "from": "pass",
+      "to": "get-tool-descriptions"
+    },
+    {
+      "from": "react-template",
+      "out": "prompt",
+      "to": "react-completion",
+      "in": "text"
+    },
+    {
+      "from": "react-completion",
+      "out": "completion",
+      "to": "parse-completion",
+      "in": "completion"
+    },
+    {
+      "from": "react-completion",
+      "out": "completion",
+      "to": "remember-thought",
+      "in": "Thought"
+    },
+    {
+      "from": "parse-completion",
+      "out": "search",
+      "to": "search",
+      "in": "text"
+    },
+    {
+      "from": "parse-completion",
+      "out": "math",
+      "to": "math",
+      "in": "text"
+    },
+    {
+      "from": "math",
+      "out": "text",
+      "to": "remember-math",
+      "in": "Observation"
+    },
+    {
+      "from": "remember-math",
+      "out": "context",
+      "to": "print",
+      "in": "text"
+    },
+    {
+      "from": "search",
+      "out": "text",
+      "to": "remember-search",
+      "in": "Observation"
+    },
+    {
+      "from": "remember-search",
+      "out": "context",
+      "to": "print",
+      "in": "text"
+    },
+    {
+      "from": "print",
+      "to": "pass"
+    },
+    {
+      "from": "parse-completion",
+      "out": "answer",
+      "to": "last-print",
+      "in": "text"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "react-template",
+      "type": "prompt-template",
+      "configuration": {
+        "template": "Answer the following questions as best you can. You have access to the following tools:\n\n{{descriptions}}\n\nUse the following format:\n\nQuestion: the input question you must answer\nThought: you should always think about what to do\nAction: the action to take, should be one of: {{tools}}\nAction Input: the input to the action\nObservation: the result of the action\n... (this Thought/Action/Action Input/Observation can repeat N times)\nThought: I now know the final answer\nFinal Answer: the final answer to the original input question\n\nBegin!\n\n{{memory}}\nThought:",
+        "memory": ""
+      }
+    },
+    {
+      "id": "ask-user",
+      "type": "user-input",
+      "configuration": {
+        "message": "What is the question you want to answer?"
+      }
+    },
+    {
+      "id": "react-completion",
+      "type": "text-completion",
+      "configuration": {
+        "stop-sequences": ["\nObservation"]
+      }
+    },
+    {
+      "id": "get-tools",
+      "type": "react-helper",
+      "configuration": { "method": "getTools" }
+    },
+    {
+      "id": "get-tool-descriptions",
+      "type": "react-helper",
+      "configuration": { "method": "getToolDescriptions" }
+    },
+    {
+      "id": "parse-completion",
+      "type": "react-helper",
+      "configuration": { "method": "parseCompletion", "args": ["completion"] }
+    },
+    {
+      "id": "print",
+      "type": "console-output"
+    },
+    {
+      "id": "last-print",
+      "type": "console-output"
+    },
+    {
+      "id": "pass",
+      "type": "passthrough"
+    },
+    {
+      "id": "remember-question",
+      "type": "local-memory"
+    },
+    {
+      "id": "search",
+      "type": "include",
+      "configuration": { "path": "./graphs/search-summarize.json" }
+    },
+    {
+      "id": "math",
+      "type": "include",
+      "configuration": { "path": "./graphs/math.json" }
+    },
+    {
+      "id": "remember-math",
+      "type": "local-memory"
+    },
+    {
+      "id": "remember-search",
+      "type": "local-memory"
+    },
+    {
+      "id": "remember-thought",
+      "type": "local-memory"
+    }
+  ]
+}

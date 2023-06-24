@@ -22,6 +22,7 @@ import { Logger } from "./logger.js";
 import { follow } from "./runner.js";
 
 import { ReActHelper } from "./react.js";
+import include from "./nodes/include.js";
 
 const root = new URL("../../", import.meta.url);
 const logger = new Logger(`${root.pathname}/experiment.log`);
@@ -36,6 +37,7 @@ const handlers: NodeHandlers = {
   "google-search": googleSearch,
   passthrough: passthrough,
   "react-helper": customNode(new ReActHelper()),
+  include: include,
 };
 
 intro("Let's follow a graph!");

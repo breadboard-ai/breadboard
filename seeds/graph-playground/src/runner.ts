@@ -13,6 +13,7 @@ import {
   type NodeIdentifier,
   type OutputValues,
   type GraphDescriptor,
+  GraphContext,
 } from "./graph.js";
 
 export class Runner {
@@ -33,6 +34,7 @@ const wire = (heads: Edge[], outputs: OutputValues): InputValues => {
 const handle = async (
   nodeHandlers: NodeHandlers,
   descriptor: NodeDescriptor,
+  context: GraphContext,
   inputs?: InputValues | null
 ) => {
   const handler = nodeHandlers[descriptor.type];
@@ -40,7 +42,7 @@ const handle = async (
     throw new Error(`No handler for node type "${descriptor.type}"`);
 
   const aggregate = { ...descriptor.configuration, ...inputs };
-  const result = await handler(aggregate);
+  const result = await handler(aggregate, context);
   return result;
 };
 
@@ -113,6 +115,7 @@ export const follow = async (
   log: (s: string) => void
 ) => {
   const state = new StateManager();
+  const context = new FollowContext(nodeHandlers, log);
 
   /**
    * Tails: a map of all outgoing edges, keyed by node id.
@@ -147,7 +150,7 @@ export const follow = async (
   log(`Starting at node "${entry.from}"`);
 
   const entryNode = nodes[entry.from];
-  const handlerResult = await handle(nodeHandlers, entryNode, {});
+  const handlerResult = await handle(nodeHandlers, entryNode, context, {});
   // TODO: Make it not a special case.
   const exit = handlerResult.exit as boolean;
   if (exit) return;
@@ -179,7 +182,7 @@ export const follow = async (
       continue;
     }
 
-    const outputs = await handle(nodeHandlers, current, inputs);
+    const outputs = await handle(nodeHandlers, current, context, inputs);
     // TODO: Make it not a special case.
     const exit = outputs.exit as boolean;
     if (exit) return;
@@ -198,3 +201,14 @@ export const follow = async (
   }
   log("Graph traversal complete.");
 };
+
+class FollowContext implements GraphContext {
+  constructor(
+    public handlers: NodeHandlers,
+    private log: (s: string) => void
+  ) {}
+
+  async follow(graph: GraphDescriptor, handlers: NodeHandlers) {
+    await follow(graph, handlers, this.log);
+  }
+}
