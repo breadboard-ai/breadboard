@@ -39,11 +39,14 @@ const handlers: NodeHandlers = {
 };
 
 intro("Let's follow a graph!");
-const graph = JSON.parse(
-  await readFile(process.argv[2], "utf-8")
-) as GraphDescriptor;
-await follow(graph, handlers, (s: string) => {
-  logger.log(s);
-});
-outro("Awesome work! Let's do this again sometime");
-await logger.save();
+try {
+  const graph = JSON.parse(
+    await readFile(process.argv[2], "utf-8")
+  ) as GraphDescriptor;
+  await follow(graph, handlers, (s: string) => {
+    logger.log(s);
+  });
+  outro("Awesome work! Let's do this again sometime");
+} finally {
+  await logger.save();
+}

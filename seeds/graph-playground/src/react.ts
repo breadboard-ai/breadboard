@@ -4,10 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// https://regex101.com/r/1ULtj6/1
-const COMPLETION_REGEX =
-  /(?:.*)(?:\nAction:\W+)(.+)(?:\nAction Input\W+)(.*)/gms;
-
 export class ReActHelper {
   tools = {
     search:
@@ -25,18 +21,25 @@ export class ReActHelper {
     return {
       descriptions: Object.entries(this.tools)
         .map(([name, description]) => `${name}: ${description}`)
-        .join("\n"),
+        .join("\n\n"),
     };
   }
 
   async parseCompletion(completion: string) {
-    const matchAction = COMPLETION_REGEX.exec(completion);
-    // TODO: Match final answer, obvs.
-    if (!matchAction) throw new Error("No action found in completion");
-    const action = matchAction[1].trim();
-    const input = matchAction[2].trim();
-    return {
-      [action]: input,
-    };
+    const lines = completion.split("\n");
+    if (lines.length < 2) {
+      throw new Error(`Unparsable ReAct completion: ${completion}`);
+    }
+    if (lines[1].startsWith("Action:")) {
+      // action
+      const action = lines[1].replace("Action:", "").trim();
+      const input = lines[2].replace("Action Input:", "").trim();
+      return { [action]: input };
+    } else if (lines[1].startsWith("Final Answer:")) {
+      // answer
+      const answer = lines[1].replace("Final Answer:", "").trim();
+      return { answer };
+    }
+    throw new Error(`Unparsable ReAct completion: ${completion}`);
   }
 }
