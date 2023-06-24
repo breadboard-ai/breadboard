@@ -15,10 +15,13 @@ import localMemory from "./nodes/local-memory.js";
 import javascript from "./nodes/run-javascript.js";
 import googleSearch from "./nodes/google-search.js";
 import passthrough from "./nodes/passthrough.js";
+import { customNode } from "./nodes/custom-node.js";
 
 import { GraphDescriptor, NodeHandlers } from "./graph.js";
 import { Logger } from "./logger.js";
 import { follow } from "./runner.js";
+
+import { ReActHelper } from "./react.js";
 
 const root = new URL("../../", import.meta.url);
 const logger = new Logger(`${root.pathname}/experiment.log`);
@@ -32,6 +35,7 @@ const handlers: NodeHandlers = {
   "run-javascript": javascript,
   "google-search": googleSearch,
   passthrough: passthrough,
+  "custom-node": customNode(new ReActHelper()),
 };
 
 intro("Let's follow a graph!");

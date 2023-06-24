@@ -31,7 +31,7 @@
       "id": "math-question",
       "type": "user-input",
       "configuration": {
-        "text": "Ask a math question"
+        "message": "Ask a math question"
       }
     },
     {
