@@ -32,21 +32,37 @@ const substitute = (template, values) => {
   );
 };
 
+const shape = (node, nodeType) => {
+  switch (nodeType) {
+    case "include":
+      return `${node}[[${node}]]`;
+    case "passthrough":
+      return `${node}((${node}))`;
+    case "user-input":
+      return `${node}[/${node}/]`;
+    case "console-output":
+      return `${node}{{${node}}}`;
+    default:
+      return node;
+  }
+};
+
 const mermaidize = (file) => {
-  const { edges } = JSON.parse(file);
+  const { edges, nodes } = JSON.parse(file);
+  const nodeTypes = new Map(nodes.map((node) => [node.id, node.type]));
   const result = edges.map((edge) => {
     const from = edge.from;
+    const fromNode = shape(from, nodeTypes.get(from) || "");
     const to = edge.to;
-    const entry = edge.entry;
+    const toNode = shape(to, nodeTypes.get(to) || "");
     const input = edge.in;
     const output = edge.out;
     const optional = edge.optional;
-    const fromNode = entry ? `${from}>${from}]` : from;
     if (output && input) {
-      if (optional) return `${fromNode} -. ${output}:${input} .-> ${to}`;
-      return `${fromNode} -- ${output}:${input} --> ${to}`;
+      if (optional) return `${fromNode} -. ${output}:${input} .-> ${toNode}`;
+      return `${fromNode} -- ${output}:${input} --> ${toNode}`;
     }
-    return `${from} --> ${to}`;
+    return `${fromNode} --> ${toNode}`;
   });
   return result.join("\n");
 };
