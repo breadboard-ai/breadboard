@@ -7,10 +7,10 @@
 import { intro, log, outro, text } from "@clack/prompts";
 import { readFile } from "fs/promises";
 
-import userInput from "./nodes/user-input.js";
+import input from "./nodes/input.js";
 import promptTemplate from "./nodes/prompt-template.js";
 import textCompletion from "./nodes/text-completion.js";
-import consoleOutput from "./nodes/console-output.js";
+import output from "./nodes/output.js";
 import localMemory from "./nodes/local-memory.js";
 import javascript from "./nodes/run-javascript.js";
 import googleSearch from "./nodes/google-search.js";
@@ -29,10 +29,10 @@ class ConsoleContext extends BaseTraversalContext {
 
   constructor() {
     super({
-      input: userInput,
-      output: consoleOutput,
-      passthrough: passthrough,
-      include: include,
+      input,
+      output,
+      passthrough,
+      include,
       "prompt-template": promptTemplate,
       "text-completion": textCompletion,
       "local-memory": localMemory,
