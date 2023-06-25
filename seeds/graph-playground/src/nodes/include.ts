@@ -6,7 +6,7 @@
 
 import { readFile } from "fs/promises";
 import { GraphContext, InputValues, OutputValues } from "../graph.js";
-import { FollowContext } from "../runner.js";
+import { FollowContext } from "../follow.js";
 
 class IncludeContext extends FollowContext {
   log: (s: string) => void;

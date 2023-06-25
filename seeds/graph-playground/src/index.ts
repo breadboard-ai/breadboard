@@ -19,7 +19,7 @@ import { customNode } from "./nodes/custom-node.js";
 
 import { GraphDescriptor, InputValues, OutputValues } from "./graph.js";
 import { Logger } from "./logger.js";
-import { FollowContext, follow } from "./runner.js";
+import { FollowContext, follow } from "./follow.js";
 
 import { ReActHelper } from "./react.js";
 import include from "./nodes/include.js";
@@ -30,15 +30,15 @@ class ConsoleContext extends FollowContext {
   constructor() {
     super({
       input: userInput,
+      output: consoleOutput,
+      passthrough: passthrough,
+      include: include,
       "prompt-template": promptTemplate,
       "text-completion": textCompletion,
-      output: consoleOutput,
       "local-memory": localMemory,
       "run-javascript": javascript,
       "google-search": googleSearch,
-      passthrough: passthrough,
       "react-helper": customNode(new ReActHelper()),
-      include: include,
     });
     const root = new URL("../../", import.meta.url);
     this.logger = new Logger(`${root.pathname}/experiment.log`);
