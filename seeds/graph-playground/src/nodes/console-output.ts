@@ -6,9 +6,6 @@
 
 import type { GraphContext, InputValues } from "../graph.js";
 
-export default async (inputs?: InputValues, context?: GraphContext) => {
-  if (!inputs) throw new Error("To provide output, we need `inputs`");
-  if (!context) throw new Error("To provide output, we need `context`");
+export default async (context: GraphContext, inputs: InputValues) => {
   context.provideExternalOutput(inputs);
-  return {};
 };

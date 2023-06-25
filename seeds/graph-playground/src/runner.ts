@@ -43,7 +43,7 @@ const handle = async (
     throw new Error(`No handler for node type "${descriptor.type}"`);
 
   const aggregate = { ...descriptor.configuration, ...inputs };
-  const result = await handler(aggregate, context);
+  const result = await handler(context, aggregate);
   return result;
 };
 
@@ -178,7 +178,8 @@ export const follow = async (context: GraphContext, graph: GraphDescriptor) => {
       continue;
     }
 
-    const outputs = await handle(context.handlers, current, context, inputs);
+    const outputs =
+      (await handle(context.handlers, current, context, inputs)) || {};
     // TODO: Make it not a special case.
     const exit = outputs.exit as boolean;
     if (exit) return;

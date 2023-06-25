@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { InputValues } from "../graph.js";
+import type { GraphContext, InputValues } from "../graph.js";
 
 const substitute = (template: string, values: Record<string, string>) => {
   return Object.entries(values).reduce(
@@ -21,9 +21,7 @@ const parametersFromTemplate = (template: string): string[] => {
   return parameters;
 };
 
-export default async (inputs?: InputValues) => {
-  if (!inputs) throw new Error("Prompt template requires inputs");
-
+export default async (_cx: GraphContext, inputs: InputValues) => {
   const template = inputs.template as string;
   const parameters = parametersFromTemplate(template);
   if (!parameters.length) return { prompt: template };

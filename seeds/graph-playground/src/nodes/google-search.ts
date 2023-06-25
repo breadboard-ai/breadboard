@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { InputValues } from "../graph.js";
+import type { GraphContext, InputValues } from "../graph.js";
 
 import { config } from "dotenv";
 
@@ -42,8 +42,7 @@ const justSnippets = (response: GoogleSearchResponse) => {
   return response.items.map((item) => item.snippet).filter(Boolean) as string[];
 };
 
-export default async (inputs?: InputValues) => {
-  if (!inputs) throw new Error("Google search requires inputs");
+export default async (_cx: GraphContext, inputs: InputValues) => {
   const values = inputs as GoogleSearchInputs;
   const query = values.query;
   if (!query) throw new Error("Google search requires `query` input");

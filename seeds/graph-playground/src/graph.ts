@@ -60,14 +60,12 @@ export type InputValues = Record<InputIdentifier, unknown>;
 
 export type OutputValues = Partial<Record<OutputIdentifier, unknown>>;
 
-export type NodeHandlerResult = OutputValues;
-
 export type NodeConfiguration = Record<string, unknown>;
 
 export type NodeHandler = (
-  inputs?: InputValues,
-  context?: GraphContext
-) => Promise<NodeHandlerResult>;
+  context: GraphContext,
+  inputs: InputValues
+) => Promise<OutputValues | void>;
 
 export type NodeHandlers = Record<NodeTypeIdentifier, NodeHandler>;
 

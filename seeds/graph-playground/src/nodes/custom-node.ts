@@ -4,16 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { InputValues, OutputValues } from "../graph.js";
+import type { GraphContext, InputValues, OutputValues } from "../graph.js";
 
 export interface CustomNodeManager {
   [key: string]: (...args: string[]) => Promise<OutputValues>;
 }
 
 export const customNode =
-  (managerish: object) => async (inputs?: InputValues) => {
+  (managerish: object) => async (_cx: GraphContext, inputs: InputValues) => {
     const manager = managerish as CustomNodeManager;
-    if (!inputs) throw new Error("Custom node requires inputs");
     const method = inputs["method"] as string;
     if (!method) throw new Error("Custom node requires `method` input");
     const argNames = (inputs["args"] ?? []) as string[];

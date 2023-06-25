@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { InputValues } from "../graph.js";
+import type { GraphContext, InputValues } from "../graph.js";
 import vm from "node:vm";
 
 // https://regex101.com/r/PeEmEW/1
@@ -18,8 +18,7 @@ const runCode = async (code: string) => {
   return String(result);
 };
 
-export default async (inputs?: InputValues) => {
-  if (!inputs) throw new Error("Running JavaScript requires inputs");
+export default async (_cx: GraphContext, inputs: InputValues) => {
   const code = inputs["code"] as string;
   if (!code) throw new Error("Running JavaScript requires `code` input");
   const name = (inputs["name"] as string) || "run";

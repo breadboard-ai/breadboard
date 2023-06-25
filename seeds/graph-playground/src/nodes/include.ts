@@ -26,12 +26,7 @@ class IncludeContext extends FollowContext {
   }
 }
 
-export default async (
-  inputs?: InputValues,
-  context?: GraphContext
-): Promise<OutputValues> => {
-  if (!inputs) throw new Error("To include, we need inputs");
-  if (!context) throw new Error("To include, we need context");
+export default async (context: GraphContext, inputs: InputValues) => {
   const { path, ...args } = inputs;
   if (!path) throw new Error("To include, we need a path");
   const graph = JSON.parse(await readFile(path as string, "utf-8"));
