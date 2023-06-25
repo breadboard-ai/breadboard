@@ -1,7 +1,6 @@
 {
   "edges": [
     {
-      "entry": true,
       "from": "user-input-1",
       "out": "text",
       "to": "text-completion-1",

@@ -44,7 +44,6 @@ export interface Edge {
   /**
    * The designated first edge in the graph.
    */
-  entry?: boolean;
   from: NodeIdentifier;
   to: NodeIdentifier;
   in: InputIdentifier;

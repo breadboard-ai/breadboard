@@ -1,11 +1,14 @@
 {
   "edges": [
     {
+      "from": "start",
+      "to": "user-input-1"
+    },
+    {
       "from": "user-input-1",
       "out": "text",
       "to": "prompt-template-1",
-      "in": "question",
-      "entry": true
+      "in": "question"
     },
     {
       "from": "prompt-template-1",
@@ -45,6 +48,10 @@
     }
   ],
   "nodes": [
+    {
+      "id": "start",
+      "type": "passthrough"
+    },
     {
       "id": "user-input-1",
       "type": "user-input"

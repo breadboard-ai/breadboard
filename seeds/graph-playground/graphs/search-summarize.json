@@ -4,8 +4,7 @@
       "from": "input",
       "out": "text",
       "to": "pass",
-      "in": "text",
-      "entry": true
+      "in": "text"
     },
     {
       "from": "pass",

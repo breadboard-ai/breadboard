@@ -145,18 +145,17 @@ export const follow = async (
 
   log(`Let the graph traversal begin!`);
 
-  const entry = graph.edges.find((edge) => edge.entry);
-  if (!entry) throw new Error("No entry edge found in graph.");
-  log(`Starting at node "${entry.from}"`);
-
-  const entryNode = nodes[entry.from];
-  const handlerResult = await handle(nodeHandlers, entryNode, context, {});
-  // TODO: Make it not a special case.
-  const exit = handlerResult.exit as boolean;
-  if (exit) return;
-
-  const opportunities = [entry];
-  state.update(entry.from, opportunities, handlerResult);
+  const entries = Array.from(tails.keys()).filter(
+    (node) => !heads.has(node) || heads.get(node).length === 0
+  );
+  if (entries.length === 0) throw new Error("No entry node found in graph.");
+  // Create fake edges to represent entry points.
+  const opportunities = entries.map((entry) => ({
+    from: "$entry",
+    in: "",
+    to: entry,
+    out: "",
+  }));
 
   while (opportunities.length > 0) {
     const opportunity = opportunities.shift() as Edge;

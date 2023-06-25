@@ -17,7 +17,6 @@
       "out": "text",
       "to": "pass",
       "in": "text",
-      "entry": true,
       "optional": true
     },
     {

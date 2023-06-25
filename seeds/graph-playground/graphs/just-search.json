@@ -4,8 +4,7 @@
       "from": "input",
       "out": "text",
       "to": "search",
-      "in": "query",
-      "entry": true
+      "in": "query"
     },
     {
       "from": "search",

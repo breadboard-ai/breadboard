@@ -4,8 +4,7 @@
       "from": "prompt-template-1",
       "out": "prompt",
       "to": "text-completion-1",
-      "in": "text",
-      "entry": true
+      "in": "text"
     },
     {
       "from": "text-completion-1",

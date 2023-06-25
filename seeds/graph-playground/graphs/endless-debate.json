@@ -4,8 +4,7 @@
       "from": "debate-topic",
       "out": "text",
       "to": "local-memory-1",
-      "in": "topic",
-      "entry": true
+      "in": "topic"
     },
     {
       "from": "local-memory-1",
@@ -74,20 +73,14 @@
       "id": "text-completion-1",
       "type": "text-completion",
       "configuration": {
-        "stop-sequences": [
-          "\nFriedrich",
-          "\n**Friedrich"
-        ]
+        "stop-sequences": ["\nFriedrich", "\n**Friedrich"]
       }
     },
     {
       "id": "text-completion-2",
       "type": "text-completion",
       "configuration": {
-        "stop-sequences": [
-          "\nAlbert",
-          "\n**Albert"
-        ]
+        "stop-sequences": ["\nAlbert", "\n**Albert"]
       }
     },
     {

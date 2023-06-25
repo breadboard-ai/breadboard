@@ -4,8 +4,7 @@
       "from": "math-question",
       "out": "text",
       "to": "math-function",
-      "in": "question",
-      "entry": true
+      "in": "question"
     },
     {
       "from": "math-function",
