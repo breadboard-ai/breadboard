@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GraphContext, InputValues } from "../graph.js";
+import type { GraphTraversalContext, InputValues } from "../graph.js";
 import { GenerateTextResponse, Text, palm } from "@google-labs/palm-lite";
 import { config } from "dotenv";
 
@@ -13,7 +13,7 @@ config();
 const API_KEY = process.env.API_KEY;
 if (!API_KEY) throw new Error("API_KEY not set");
 
-export default async (_cx: GraphContext, inputs: InputValues) => {
+export default async (_cx: GraphTraversalContext, inputs: InputValues) => {
   const prompt = new Text().text(inputs["text"] as string);
   const stopSequences = (inputs["stop-sequences"] as string[]) || [];
   stopSequences.forEach((stopSequence) => prompt.addStopSequence(stopSequence));

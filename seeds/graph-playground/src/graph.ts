@@ -63,17 +63,16 @@ export type OutputValues = Partial<Record<OutputIdentifier, unknown>>;
 export type NodeConfiguration = Record<string, unknown>;
 
 export type NodeHandler = (
-  context: GraphContext,
+  context: GraphTraversalContext,
   inputs: InputValues
 ) => Promise<OutputValues | void>;
 
 export type NodeHandlers = Record<NodeTypeIdentifier, NodeHandler>;
 
-export interface GraphContext {
+export interface GraphTraversalContext {
   handlers: NodeHandlers;
   requestExternalInput: (inputs: InputValues) => Promise<OutputValues>;
   provideExternalOutput: (inputs: InputValues) => Promise<void>;
-  follow: (context: GraphContext, graph: GraphDescriptor) => Promise<void>;
   log: (s: string) => void;
 }
 

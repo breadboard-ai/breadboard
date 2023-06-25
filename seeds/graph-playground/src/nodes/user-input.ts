@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GraphContext, InputValues } from "../graph.js";
+import type { GraphTraversalContext, InputValues } from "../graph.js";
 
-export default async (context: GraphContext, inputs: InputValues) => {
+export default async (context: GraphTraversalContext, inputs: InputValues) => {
   return await context.requestExternalInput(inputs);
 };

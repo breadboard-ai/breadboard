@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GraphContext, InputValues } from "../graph.js";
+import type { GraphTraversalContext, InputValues } from "../graph.js";
 
 const context: string[] = [];
 
-export default async (_cx: GraphContext, inputs: InputValues) => {
+export default async (_cx: GraphTraversalContext, inputs: InputValues) => {
   Object.entries(inputs).forEach(([key, value]) => {
     context.push(`${key}: ${value}`);
   });

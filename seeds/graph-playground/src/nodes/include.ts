@@ -5,14 +5,14 @@
  */
 
 import { readFile } from "fs/promises";
-import { GraphContext, InputValues, OutputValues } from "../graph.js";
-import { FollowContext } from "../follow.js";
+import { GraphTraversalContext, InputValues, OutputValues } from "../graph.js";
+import { BaseTraversalContext, traverseGraph } from "../traversal.js";
 
-class IncludeContext extends FollowContext {
+class IncludeContext extends BaseTraversalContext {
   log: (s: string) => void;
   values: OutputValues = {};
 
-  constructor(private inputs: InputValues, context: GraphContext) {
+  constructor(private inputs: InputValues, context: GraphTraversalContext) {
     super(context.handlers);
     this.log = context.log;
   }
@@ -26,11 +26,11 @@ class IncludeContext extends FollowContext {
   }
 }
 
-export default async (context: GraphContext, inputs: InputValues) => {
+export default async (context: GraphTraversalContext, inputs: InputValues) => {
   const { path, ...args } = inputs;
   if (!path) throw new Error("To include, we need a path");
   const graph = JSON.parse(await readFile(path as string, "utf-8"));
   const includeContext = new IncludeContext(args, context);
-  await context.follow(includeContext, graph);
+  await traverseGraph(includeContext, graph);
   return includeContext.values;
 };

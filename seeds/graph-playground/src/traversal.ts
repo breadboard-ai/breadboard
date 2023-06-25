@@ -1,15 +1,21 @@
+/**
+ * @license
+ * Copyright 2023 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import {
   type Edge,
   type NodeDescriptor,
   type NodeIdentifier,
   type GraphDescriptor,
-  GraphContext,
+  GraphTraversalContext,
   InputValues,
   OutputValues,
   NodeHandlers,
 } from "./graph.js";
 
-export abstract class FollowContext implements GraphContext {
+export abstract class BaseTraversalContext implements GraphTraversalContext {
   handlers: NodeHandlers;
 
   constructor(handlers: NodeHandlers) {
@@ -21,10 +27,6 @@ export abstract class FollowContext implements GraphContext {
   abstract requestExternalInput(inputs: InputValues): Promise<OutputValues>;
 
   abstract provideExternalOutput(inputs: InputValues): Promise<void>;
-
-  async follow(context: GraphContext, graph: GraphDescriptor) {
-    await follow(context, graph);
-  }
 }
 
 const wire = (heads: Edge[], outputs: OutputValues): InputValues => {
@@ -39,7 +41,7 @@ const wire = (heads: Edge[], outputs: OutputValues): InputValues => {
 const handle = async (
   nodeHandlers: NodeHandlers,
   descriptor: NodeDescriptor,
-  context: GraphContext,
+  context: GraphTraversalContext,
   inputs?: InputValues | null
 ) => {
   const handler = nodeHandlers[descriptor.type];
@@ -113,7 +115,10 @@ const computeMissingInputs = (
  * @param graph graph to follow
  */
 
-export const follow = async (context: GraphContext, graph: GraphDescriptor) => {
+export const traverseGraph = async (
+  context: GraphTraversalContext,
+  graph: GraphDescriptor
+) => {
   const state = new StateManager();
   const log = context.log;
 

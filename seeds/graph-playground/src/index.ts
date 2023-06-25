@@ -19,12 +19,12 @@ import { customNode } from "./nodes/custom-node.js";
 
 import { GraphDescriptor, InputValues, OutputValues } from "./graph.js";
 import { Logger } from "./logger.js";
-import { FollowContext, follow } from "./follow.js";
+import { BaseTraversalContext, traverseGraph } from "./traversal.js";
 
 import { ReActHelper } from "./react.js";
 import include from "./nodes/include.js";
 
-class ConsoleContext extends FollowContext {
+class ConsoleContext extends BaseTraversalContext {
   logger: Logger;
 
   constructor() {
@@ -72,7 +72,7 @@ try {
   const graph = JSON.parse(
     await readFile(process.argv[2], "utf-8")
   ) as GraphDescriptor;
-  await follow(context, graph);
+  await traverseGraph(context, graph);
 } finally {
   await context.logger.save();
 }
