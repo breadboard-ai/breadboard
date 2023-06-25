@@ -9,13 +9,13 @@
     {
       "from": "text-completion-1",
       "out": "completion",
-      "to": "console-1",
+      "to": "output-1",
       "in": "text"
     }
   ],
   "nodes": [
     { "id": "input-1", "type": "input" },
     { "id": "text-completion-1", "type": "text-completion" },
-    { "id": "console-1", "type": "console" }
+    { "id": "output-1", "type": "output" }
   ]
 }

@@ -145,11 +145,11 @@
     },
     {
       "id": "print",
-      "type": "console"
+      "type": "output"
     },
     {
       "id": "last-print",
-      "type": "console"
+      "type": "output"
     },
     {
       "id": "pass",

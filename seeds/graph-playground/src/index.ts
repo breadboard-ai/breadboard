@@ -32,7 +32,7 @@ class ConsoleContext extends FollowContext {
       input: userInput,
       "prompt-template": promptTemplate,
       "text-completion": textCompletion,
-      console: consoleOutput,
+      output: consoleOutput,
       "local-memory": localMemory,
       "run-javascript": javascript,
       "google-search": googleSearch,

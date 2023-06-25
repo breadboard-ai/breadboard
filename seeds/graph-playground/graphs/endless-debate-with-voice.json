@@ -33,7 +33,7 @@
     {
       "from": "albert-voice-completion",
       "out": "completion",
-      "to": "console-1",
+      "to": "output-1",
       "in": "text"
     },
     {
@@ -69,7 +69,7 @@
     {
       "from": "friedrich-voice-completion",
       "out": "completion",
-      "to": "console-1",
+      "to": "output-1",
       "in": "text"
     },
     {
@@ -116,8 +116,8 @@
       "type": "text-completion"
     },
     {
-      "id": "console-1",
-      "type": "console"
+      "id": "output-1",
+      "type": "output"
     },
     {
       "id": "albert",

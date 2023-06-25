@@ -21,7 +21,7 @@
     {
       "from": "text-completion-1",
       "out": "completion",
-      "to": "console-1",
+      "to": "output-1",
       "in": "text"
     },
     {
@@ -45,7 +45,7 @@
     {
       "from": "text-completion-2",
       "out": "completion",
-      "to": "console-1",
+      "to": "output-1",
       "in": "text"
     },
     {
@@ -84,8 +84,8 @@
       }
     },
     {
-      "id": "console-1",
-      "type": "console"
+      "id": "output-1",
+      "type": "output"
     },
     {
       "id": "albert",

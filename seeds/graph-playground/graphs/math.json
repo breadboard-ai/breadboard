@@ -46,7 +46,7 @@
     },
     {
       "id": "print",
-      "type": "console"
+      "type": "output"
     },
     {
       "id": "compute",
