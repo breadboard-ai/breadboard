@@ -3,6 +3,6 @@
 
 ```mermaid
 graph TD;
-input -- text:query --> search
-search -- results:text --> print
+input[/input/] -- text:query --> search
+search -- results:text --> print{{print}}
 ```

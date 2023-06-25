@@ -38,9 +38,9 @@ const shape = (node, nodeType) => {
       return `${node}[[${node}]]`;
     case "passthrough":
       return `${node}((${node}))`;
-    case "user-input":
+    case "input":
       return `${node}[/${node}/]`;
-    case "console-output":
+    case "output":
       return `${node}{{${node}}}`;
     default:
       return node;

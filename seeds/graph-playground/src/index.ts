@@ -52,9 +52,6 @@ class ConsoleContext extends FollowContext {
   async requestExternalInput(inputs: InputValues): Promise<OutputValues> {
     const defaultValue = "<Exit>";
     const message = ((inputs && inputs.message) as string) || "Enter some text";
-    // If this node is a service, why does it contain experience?
-    // It seems like there's some sort of "configuration store" or something
-    // that is provided by the experience, but delivered by the service.
     const input = await text({
       message,
       defaultValue,
