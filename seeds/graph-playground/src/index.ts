@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { intro, log, outro, text } from "@clack/prompts";
+import { intro, log, outro, spinner, text } from "@clack/prompts";
 import { readFile } from "fs/promises";
 
 import input from "./nodes/input.js";
@@ -17,7 +17,12 @@ import googleSearch from "./nodes/google-search.js";
 import passthrough from "./nodes/passthrough.js";
 import { customNode } from "./nodes/custom-node.js";
 
-import { GraphDescriptor, InputValues, OutputValues } from "./graph.js";
+import {
+  GraphDescriptor,
+  InputValues,
+  NodeDescriptor,
+  OutputValues,
+} from "./graph.js";
 import { Logger } from "./logger.js";
 import { BaseTraversalContext, traverseGraph } from "./traversal.js";
 
@@ -47,6 +52,15 @@ class ConsoleContext extends BaseTraversalContext {
 
   log(s: string) {
     this.logger.log(s);
+  }
+
+  reportProgress(nodeDescriptor: NodeDescriptor): () => void {
+    const nodeType = nodeDescriptor.type;
+    if (nodeType === "input" || nodeType === "output") return () => ({});
+    const s = spinner();
+    const nodeId = nodeDescriptor.id;
+    s.start(`Traversing "${nodeId}"`);
+    return () => s.stop(`Finished traversing "${nodeId}"`);
   }
 
   async requestExternalInput(inputs: InputValues): Promise<OutputValues> {

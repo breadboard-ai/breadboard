@@ -5,16 +5,23 @@
  */
 
 import { readFile } from "fs/promises";
-import { GraphTraversalContext, InputValues, OutputValues } from "../graph.js";
+import {
+  GraphTraversalContext,
+  InputValues,
+  NodeDescriptor,
+  OutputValues,
+} from "../graph.js";
 import { BaseTraversalContext, traverseGraph } from "../traversal.js";
 
 class IncludeContext extends BaseTraversalContext {
   log: (s: string) => void;
+  reportProgress: (nodeDescriptor: NodeDescriptor) => () => void;
   values: OutputValues = {};
 
   constructor(private inputs: InputValues, context: GraphTraversalContext) {
     super(context.handlers);
     this.log = context.log;
+    this.reportProgress = context.reportProgress.bind(context);
   }
 
   async requestExternalInput(_inputs: InputValues): Promise<OutputValues> {

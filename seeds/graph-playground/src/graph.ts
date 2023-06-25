@@ -74,6 +74,7 @@ export interface GraphTraversalContext {
   requestExternalInput: (inputs: InputValues) => Promise<OutputValues>;
   provideExternalOutput: (inputs: InputValues) => Promise<void>;
   log: (s: string) => void;
+  reportProgress: (nodeDescriptor: NodeDescriptor) => () => void;
 }
 
 export class Node implements NodeDescriptor {

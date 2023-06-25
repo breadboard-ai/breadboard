@@ -7,6 +7,7 @@
 import { BaseTraversalContext, traverseGraph } from "./traversal.js";
 import {
   Graph,
+  NodeDescriptor,
   type InputValues,
   type NodeHandlers,
   type OutputValues,
@@ -38,5 +39,11 @@ class ImperativeRunnerContext extends BaseTraversalContext {
 
   async provideExternalOutput(_inputs: InputValues): Promise<void> {
     throw new Error("Not implemented");
+  }
+
+  reportProgress(nodeDescriptor: NodeDescriptor): () => void {
+    const nodeId = nodeDescriptor.id;
+    this.progress(`Running node ${nodeId}`);
+    return () => this.progress(`Finished running node ${nodeId}`);
   }
 }
