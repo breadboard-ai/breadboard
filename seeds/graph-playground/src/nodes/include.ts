@@ -5,44 +5,24 @@
  */
 
 import { readFile } from "fs/promises";
-import {
-  GraphContext,
-  InputValues,
-  NodeHandlers,
-  OutputValues,
-} from "../graph.js";
+import { GraphContext, InputValues, OutputValues } from "../graph.js";
+import { FollowContext } from "../runner.js";
 
-/**
- * Provides facilities to send inputs to the included graph
- * and receive outputs from it.
- */
-class InputOutputHelper {
-  public values: InputValues = {};
+class IncludeContext extends FollowContext {
+  log: (s: string) => void;
+  values: OutputValues = {};
 
-  constructor(private args: InputValues) {}
-  /**
-   * Substitution for the `user-input` handler.
-   * @param inputs
-   */
-  async input(_inputs?: InputValues): Promise<OutputValues> {
-    return this.args;
+  constructor(private inputs: InputValues, context: GraphContext) {
+    super(context.handlers);
+    this.log = context.log;
   }
 
-  /**
-   * Substitution for the `console-output` handler.
-   * @param inputs
-   */
-  async output(inputs?: InputValues): Promise<OutputValues> {
-    this.values = inputs || {};
-    return {};
+  async requestExternalInput(_inputs: InputValues): Promise<OutputValues> {
+    return this.inputs;
   }
 
-  interceptInputOutput(handlers: NodeHandlers): NodeHandlers {
-    return {
-      ...handlers,
-      "user-input": this.input.bind(this),
-      "console-output": this.output.bind(this),
-    };
+  async provideExternalOutput(outputs: OutputValues): Promise<void> {
+    this.values = outputs;
   }
 }
 
@@ -55,8 +35,7 @@ export default async (
   const { path, ...args } = inputs;
   if (!path) throw new Error("To include, we need a path");
   const graph = JSON.parse(await readFile(path as string, "utf-8"));
-  const helper = new InputOutputHelper(args);
-  const handlers = helper.interceptInputOutput(context.handlers);
-  await context.follow(graph, handlers);
-  return helper.values;
+  const includeContext = new IncludeContext(args, context);
+  await context.follow(includeContext, graph);
+  return includeContext.values;
 };

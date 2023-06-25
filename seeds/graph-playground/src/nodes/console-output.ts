@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { log } from "@clack/prompts";
-import type { InputValues } from "../graph.js";
+import type { GraphContext, InputValues } from "../graph.js";
 
-export default async (inputs?: InputValues) => {
-  if (!inputs) return {};
-  log.step(JSON.stringify(inputs["text"]));
+export default async (inputs?: InputValues, context?: GraphContext) => {
+  if (!inputs) throw new Error("To provide output, we need `inputs`");
+  if (!context) throw new Error("To provide output, we need `context`");
+  context.provideExternalOutput(inputs);
   return {};
 };

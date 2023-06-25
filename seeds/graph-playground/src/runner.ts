@@ -18,7 +18,8 @@ import {
 
 export class Runner {
   async run(graph: Graph, progress: (s: string) => void = console.log) {
-    await follow(graph, graph.getHandlers(), progress);
+    const context = new ImperativeRunnerContext(graph.getHandlers(), progress);
+    await follow(context, graph);
   }
 }
 
@@ -109,13 +110,9 @@ const computeMissingInputs = (
  * @todo implement nicer traversal, something like a topology sort with feedback problem resolution.
  * @param graph graph to follow
  */
-export const follow = async (
-  graph: GraphDescriptor,
-  nodeHandlers: NodeHandlers,
-  log: (s: string) => void
-) => {
+export const follow = async (context: GraphContext, graph: GraphDescriptor) => {
   const state = new StateManager();
-  const context = new FollowContext(nodeHandlers, log);
+  const log = context.log;
 
   /**
    * Tails: a map of all outgoing edges, keyed by node id.
@@ -181,7 +178,7 @@ export const follow = async (
       continue;
     }
 
-    const outputs = await handle(nodeHandlers, current, context, inputs);
+    const outputs = await handle(context.handlers, current, context, inputs);
     // TODO: Make it not a special case.
     const exit = outputs.exit as boolean;
     if (exit) return;
@@ -201,13 +198,38 @@ export const follow = async (
   log("Graph traversal complete.");
 };
 
-class FollowContext implements GraphContext {
-  constructor(
-    public handlers: NodeHandlers,
-    private log: (s: string) => void
-  ) {}
+export abstract class FollowContext implements GraphContext {
+  constructor(public handlers: NodeHandlers) {}
 
-  async follow(graph: GraphDescriptor, handlers: NodeHandlers) {
-    await follow(graph, handlers, this.log);
+  abstract log(s: string): void;
+
+  abstract requestExternalInput(inputs: InputValues): Promise<OutputValues>;
+
+  abstract provideExternalOutput(inputs: InputValues): Promise<void>;
+
+  async follow(context: GraphContext, graph: GraphDescriptor) {
+    await follow(context, graph);
+  }
+}
+
+// TODO: Make this not a special case.
+class ImperativeRunnerContext extends FollowContext {
+  constructor(
+    handlers: NodeHandlers,
+    private readonly progress: (s: string) => void = console.log
+  ) {
+    super(handlers);
+  }
+
+  log(s: string) {
+    this.progress(s);
+  }
+
+  async requestExternalInput(_inputs: InputValues): Promise<OutputValues> {
+    throw new Error("Not implemented");
+  }
+
+  async provideExternalOutput(_inputs: InputValues): Promise<void> {
+    throw new Error("Not implemented");
   }
 }

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { intro, outro } from "@clack/prompts";
+import { intro, log, outro, text } from "@clack/prompts";
 import { readFile } from "fs/promises";
 
 import userInput from "./nodes/user-input.js";
@@ -17,38 +17,66 @@ import googleSearch from "./nodes/google-search.js";
 import passthrough from "./nodes/passthrough.js";
 import { customNode } from "./nodes/custom-node.js";
 
-import { GraphDescriptor, NodeHandlers } from "./graph.js";
+import { GraphDescriptor, InputValues, OutputValues } from "./graph.js";
 import { Logger } from "./logger.js";
-import { follow } from "./runner.js";
+import { FollowContext, follow } from "./runner.js";
 
 import { ReActHelper } from "./react.js";
 import include from "./nodes/include.js";
 
-const root = new URL("../../", import.meta.url);
-const logger = new Logger(`${root.pathname}/experiment.log`);
+class ConsoleContext extends FollowContext {
+  logger: Logger;
 
-const handlers: NodeHandlers = {
-  "user-input": userInput,
-  "prompt-template": promptTemplate,
-  "text-completion": textCompletion,
-  "console-output": consoleOutput,
-  "local-memory": localMemory,
-  "run-javascript": javascript,
-  "google-search": googleSearch,
-  passthrough: passthrough,
-  "react-helper": customNode(new ReActHelper()),
-  include: include,
-};
+  constructor() {
+    super({
+      "user-input": userInput,
+      "prompt-template": promptTemplate,
+      "text-completion": textCompletion,
+      "console-output": consoleOutput,
+      "local-memory": localMemory,
+      "run-javascript": javascript,
+      "google-search": googleSearch,
+      passthrough: passthrough,
+      "react-helper": customNode(new ReActHelper()),
+      include: include,
+    });
+    const root = new URL("../../", import.meta.url);
+    this.logger = new Logger(`${root.pathname}/experiment.log`);
+    this.log = this.log.bind(this);
+  }
+
+  log(s: string) {
+    this.logger.log(s);
+  }
+
+  async requestExternalInput(inputs: InputValues): Promise<OutputValues> {
+    const defaultValue = "<Exit>";
+    const message = ((inputs && inputs.message) as string) || "Enter some text";
+    // If this node is a service, why does it contain experience?
+    // It seems like there's some sort of "configuration store" or something
+    // that is provided by the experience, but delivered by the service.
+    const input = await text({
+      message,
+      defaultValue,
+    });
+    if (input === defaultValue) return { exit: true };
+    return { text: input };
+  }
+
+  async provideExternalOutput(inputs: InputValues): Promise<void> {
+    if (!inputs) return;
+    log.step(JSON.stringify(inputs["text"]));
+  }
+}
 
 intro("Let's follow a graph!");
+const context = new ConsoleContext();
 try {
   const graph = JSON.parse(
     await readFile(process.argv[2], "utf-8")
   ) as GraphDescriptor;
-  await follow(graph, handlers, (s: string) => {
-    logger.log(s);
-  });
-  outro("Awesome work! Let's do this again sometime");
+  await follow(context, graph);
 } finally {
-  await logger.save();
+  await context.logger.save();
 }
+outro("Awesome work! Let's do this again sometime");

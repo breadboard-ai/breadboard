@@ -73,7 +73,10 @@ export type NodeHandlers = Record<NodeTypeIdentifier, NodeHandler>;
 
 export interface GraphContext {
   handlers: NodeHandlers;
-  follow: (graph: GraphDescriptor, handlers: NodeHandlers) => Promise<void>;
+  requestExternalInput: (inputs: InputValues) => Promise<OutputValues>;
+  provideExternalOutput: (inputs: InputValues) => Promise<void>;
+  follow: (context: GraphContext, graph: GraphDescriptor) => Promise<void>;
+  log: (s: string) => void;
 }
 
 export class Node implements NodeDescriptor {
