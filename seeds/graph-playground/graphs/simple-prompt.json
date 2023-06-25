@@ -1,7 +1,7 @@
 {
   "edges": [
     {
-      "from": "user-input-1",
+      "from": "input-1",
       "out": "text",
       "to": "prompt-template-1",
       "in": "question"
@@ -15,14 +15,14 @@
     {
       "from": "text-completion-1",
       "out": "completion",
-      "to": "console-output-1",
+      "to": "console-1",
       "in": "text"
     }
   ],
   "nodes": [
-    { "id": "user-input-1", "type": "user-input" },
+    { "id": "input-1", "type": "input" },
     { "id": "text-completion-1", "type": "text-completion" },
-    { "id": "console-output-1", "type": "console-output" },
+    { "id": "console-1", "type": "console" },
     {
       "id": "prompt-template-1",
       "type": "prompt-template",

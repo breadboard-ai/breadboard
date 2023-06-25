@@ -116,7 +116,7 @@
     },
     {
       "id": "ask-user",
-      "type": "user-input",
+      "type": "input",
       "configuration": {
         "message": "What is the question you want to answer?"
       }
@@ -145,11 +145,11 @@
     },
     {
       "id": "print",
-      "type": "console-output"
+      "type": "console"
     },
     {
       "id": "last-print",
-      "type": "console-output"
+      "type": "console"
     },
     {
       "id": "pass",

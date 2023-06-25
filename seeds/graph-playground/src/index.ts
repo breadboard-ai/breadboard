@@ -29,10 +29,10 @@ class ConsoleContext extends FollowContext {
 
   constructor() {
     super({
-      "user-input": userInput,
+      input: userInput,
       "prompt-template": promptTemplate,
       "text-completion": textCompletion,
-      "console-output": consoleOutput,
+      console: consoleOutput,
       "local-memory": localMemory,
       "run-javascript": javascript,
       "google-search": googleSearch,

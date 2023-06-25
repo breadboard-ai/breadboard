@@ -28,7 +28,7 @@
   "nodes": [
     {
       "id": "math-question",
-      "type": "user-input",
+      "type": "input",
       "configuration": {
         "message": "Ask a math question"
       }
@@ -46,7 +46,7 @@
     },
     {
       "id": "print",
-      "type": "console-output"
+      "type": "console"
     },
     {
       "id": "compute",

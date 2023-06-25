@@ -40,7 +40,7 @@
   "nodes": [
     {
       "id": "input",
-      "type": "user-input",
+      "type": "input",
       "configuration": {
         "message": "What do you want to search for?"
       }
@@ -63,7 +63,7 @@
     },
     {
       "id": "print",
-      "type": "console-output"
+      "type": "console"
     }
   ]
 }

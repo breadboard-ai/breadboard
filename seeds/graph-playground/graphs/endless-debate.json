@@ -21,7 +21,7 @@
     {
       "from": "text-completion-1",
       "out": "completion",
-      "to": "console-output-1",
+      "to": "console-1",
       "in": "text"
     },
     {
@@ -45,7 +45,7 @@
     {
       "from": "text-completion-2",
       "out": "completion",
-      "to": "console-output-1",
+      "to": "console-1",
       "in": "text"
     },
     {
@@ -64,7 +64,7 @@
   "nodes": [
     {
       "id": "debate-topic",
-      "type": "user-input",
+      "type": "input",
       "configuration": {
         "message": "What is the topic of the debate?"
       }
@@ -84,8 +84,8 @@
       }
     },
     {
-      "id": "console-output-1",
-      "type": "console-output"
+      "id": "console-1",
+      "type": "console"
     },
     {
       "id": "albert",

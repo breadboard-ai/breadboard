@@ -3,10 +3,10 @@
 
 ```mermaid
 graph TD;
-input[/input/] -- text:text --> pass((pass))
+input -- text:text --> pass((pass))
 pass((pass)) -- text:query --> search
 pass((pass)) -- text:question --> summarize-results
 search -- results:context --> summarize-results
 summarize-results -- prompt:text --> text-completion-1
-text-completion-1 -- completion:text --> print{{print}}
+text-completion-1 -- completion:text --> print
 ```
