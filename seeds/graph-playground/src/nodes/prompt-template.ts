@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GraphTraversalContext, InputValues } from "../graph.js";
+import type { GraphTraversalContext, InputValues } from "../types.js";
 
 const substitute = (template: string, values: Record<string, string>) => {
   return Object.entries(values).reduce(

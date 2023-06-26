@@ -5,7 +5,11 @@
  */
 
 import { readFile } from "fs/promises";
-import { GraphTraversalContext, InputValues, OutputValues } from "../graph.js";
+import type {
+  GraphTraversalContext,
+  InputValues,
+  OutputValues,
+} from "../types.js";
 import { BaseTraversalContext, traverseGraph } from "../traversal.js";
 
 class IncludeContext extends BaseTraversalContext {

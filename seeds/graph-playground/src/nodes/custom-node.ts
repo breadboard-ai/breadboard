@@ -8,7 +8,7 @@ import type {
   GraphTraversalContext,
   InputValues,
   OutputValues,
-} from "../graph.js";
+} from "../types.js";
 
 export interface CustomNodeManager {
   [key: string]: (...args: string[]) => Promise<OutputValues>;

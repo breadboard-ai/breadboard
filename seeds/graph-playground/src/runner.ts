@@ -4,13 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Graph } from "./graph.js";
 import { BaseTraversalContext, traverseGraph } from "./traversal.js";
-import {
-  Graph,
-  type InputValues,
-  type NodeHandlers,
-  type OutputValues,
-} from "./graph.js";
+import type { InputValues, NodeHandlers, OutputValues } from "./types.js";
 
 export class Runner {
   async run(graph: Graph, progress: (s: string) => void = console.log) {

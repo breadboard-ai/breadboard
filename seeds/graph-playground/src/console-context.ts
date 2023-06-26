@@ -1,6 +1,6 @@
 import { log, text } from "@clack/prompts";
 
-import { InputValues, NodeHandlers, OutputValues } from "./graph.js";
+import type { InputValues, NodeHandlers, OutputValues } from "./types.js";
 import { Logger } from "./logger.js";
 import { BaseTraversalContext } from "./traversal.js";
 

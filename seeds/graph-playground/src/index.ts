@@ -19,7 +19,7 @@ import include from "./nodes/include.js";
 import { customNode } from "./nodes/custom-node.js";
 import { ReActHelper } from "./react.js";
 
-import { GraphDescriptor } from "./graph.js";
+import { GraphDescriptor } from "./types.js";
 import { traverseGraph } from "./traversal.js";
 import { ConsoleContext } from "./console-context.js";
 

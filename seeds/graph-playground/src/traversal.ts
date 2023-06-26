@@ -4,16 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  type Edge,
-  type NodeDescriptor,
-  type NodeIdentifier,
-  type GraphDescriptor,
+import type {
+  Edge,
+  NodeDescriptor,
+  NodeIdentifier,
+  GraphDescriptor,
   GraphTraversalContext,
   InputValues,
   OutputValues,
   NodeHandlers,
-} from "./graph.js";
+} from "./types.js";
 
 export abstract class BaseTraversalContext implements GraphTraversalContext {
   handlers: NodeHandlers;

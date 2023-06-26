@@ -8,7 +8,7 @@ import type {
   GraphTraversalContext,
   InputValues,
   OutputValues,
-} from "../graph.js";
+} from "../types.js";
 
 export default async (_cx: GraphTraversalContext, inputs: InputValues) => {
   return inputs as OutputValues;
