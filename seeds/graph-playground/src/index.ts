@@ -4,70 +4,38 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { intro, log, outro, text } from "@clack/prompts";
+import { intro, outro } from "@clack/prompts";
 import { readFile } from "fs/promises";
 
-import input from "./nodes/input.js";
 import promptTemplate from "./nodes/prompt-template.js";
 import textCompletion from "./nodes/text-completion.js";
-import output from "./nodes/output.js";
 import localMemory from "./nodes/local-memory.js";
 import javascript from "./nodes/run-javascript.js";
 import googleSearch from "./nodes/google-search.js";
+import input from "./nodes/input.js";
+import output from "./nodes/output.js";
 import passthrough from "./nodes/passthrough.js";
-import { customNode } from "./nodes/custom-node.js";
-
-import { GraphDescriptor, InputValues, OutputValues } from "./graph.js";
-import { Logger } from "./logger.js";
-import { BaseTraversalContext, traverseGraph } from "./traversal.js";
-
-import { ReActHelper } from "./react.js";
 import include from "./nodes/include.js";
+import { customNode } from "./nodes/custom-node.js";
+import { ReActHelper } from "./react.js";
 
-class ConsoleContext extends BaseTraversalContext {
-  logger: Logger;
-
-  constructor() {
-    super({
-      input,
-      output,
-      passthrough,
-      include,
-      "prompt-template": promptTemplate,
-      "text-completion": textCompletion,
-      "local-memory": localMemory,
-      "run-javascript": javascript,
-      "google-search": googleSearch,
-      "react-helper": customNode(new ReActHelper()),
-    });
-    const root = new URL("../../", import.meta.url);
-    this.logger = new Logger(`${root.pathname}/experiment.log`);
-    this.log = this.log.bind(this);
-  }
-
-  log(s: string) {
-    this.logger.log(s);
-  }
-
-  async requestExternalInput(inputs: InputValues): Promise<OutputValues> {
-    const defaultValue = "<Exit>";
-    const message = ((inputs && inputs.message) as string) || "Enter some text";
-    const input = await text({
-      message,
-      defaultValue,
-    });
-    if (input === defaultValue) return { exit: true };
-    return { text: input };
-  }
-
-  async provideExternalOutput(inputs: InputValues): Promise<void> {
-    if (!inputs) return;
-    log.step(JSON.stringify(inputs["text"]));
-  }
-}
+import { GraphDescriptor } from "./graph.js";
+import { traverseGraph } from "./traversal.js";
+import { ConsoleContext } from "./console-context.js";
 
 intro("Let's follow a graph!");
-const context = new ConsoleContext();
+const context = new ConsoleContext({
+  input,
+  output,
+  passthrough,
+  include,
+  "prompt-template": promptTemplate,
+  "text-completion": textCompletion,
+  "local-memory": localMemory,
+  "run-javascript": javascript,
+  "google-search": googleSearch,
+  "react-helper": customNode(new ReActHelper()),
+});
 try {
   const graph = JSON.parse(
     await readFile(process.argv[2], "utf-8")
