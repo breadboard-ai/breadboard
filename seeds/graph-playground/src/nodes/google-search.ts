@@ -22,15 +22,11 @@ const makeSearchUrl = (query: string) => {
   return `https://customsearch.googleapis.com/customsearch/v1?cx=${GOOGLE_CSE_ID}&q=${encodedQuery}&key=${API_KEY}`;
 };
 
-export type GoogleSearchInputs = {
+type GoogleSearchInputs = {
   query: string;
 };
 
-export type GoogleSearchOutputs = {
-  results: string[];
-};
-
-export type GoogleSearchResponse = {
+type GoogleSearchResponse = {
   items: [
     {
       snippet?: string;
