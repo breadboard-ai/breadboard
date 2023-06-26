@@ -27,8 +27,6 @@ export abstract class BaseTraversalContext implements GraphTraversalContext {
   abstract requestExternalInput(inputs: InputValues): Promise<OutputValues>;
 
   abstract provideExternalOutput(inputs: InputValues): Promise<void>;
-
-  abstract reportProgress(nodeDescriptor: NodeDescriptor): () => void;
 }
 
 const wire = (heads: Edge[], outputs: OutputValues): InputValues => {
@@ -51,9 +49,7 @@ const handle = async (
     throw new Error(`No handler for node type "${descriptor.type}"`);
 
   const aggregate = { ...descriptor.configuration, ...inputs };
-  const progress = context.reportProgress(descriptor);
   const result = await handler(context, aggregate);
-  progress();
   return result;
 };
 
