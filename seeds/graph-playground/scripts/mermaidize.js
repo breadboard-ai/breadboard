@@ -33,17 +33,18 @@ const substitute = (template, values) => {
 };
 
 const shape = (node, nodeType) => {
+  const text = `"\`**${nodeType}**\n${node}\`"`;
   switch (nodeType) {
     case "include":
-      return `${node}[[${node}]]`;
+      return `${node}[[${text}]]:::include`;
     case "passthrough":
-      return `${node}((${node}))`;
+      return `${node}((${text})):::passthrough`;
     case "input":
-      return `${node}[/${node}/]`;
+      return `${node}[/${text}/]:::input`;
     case "output":
-      return `${node}{{${node}}}`;
+      return `${node}{{${text}}}:::output`;
     default:
-      return node;
+      return `${node}[${text}]`;
   }
 };
 
