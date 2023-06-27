@@ -1,14 +1,17 @@
 import { log, text } from "@clack/prompts";
 
-import type { InputValues, NodeHandlers, OutputValues } from "./types.js";
+import type {
+  InputValues,
+  NodeHandlers,
+  OutputValues,
+  GraphTraversalContext,
+} from "./types.js";
 import { Logger } from "./logger.js";
-import { BaseTraversalContext } from "./traversal.js";
 
-export class ConsoleContext extends BaseTraversalContext {
+export class ConsoleContext implements GraphTraversalContext {
   logger: Logger;
 
-  constructor(nodeHandles: NodeHandlers) {
-    super(nodeHandles);
+  constructor(public handlers: NodeHandlers) {
     const root = new URL("../../", import.meta.url);
     this.logger = new Logger(`${root.pathname}/experiment.log`);
     this.log = this.log.bind(this);

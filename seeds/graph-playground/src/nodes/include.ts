@@ -8,16 +8,18 @@ import { readFile } from "fs/promises";
 import type {
   GraphTraversalContext,
   InputValues,
+  NodeHandlers,
   OutputValues,
 } from "../types.js";
-import { BaseTraversalContext, traverseGraph } from "../traversal.js";
+import { traverseGraph } from "../traversal.js";
 
-class IncludeContext extends BaseTraversalContext {
+class IncludeContext implements GraphTraversalContext {
   log: (s: string) => void;
   values: OutputValues = {};
+  handlers: NodeHandlers;
 
   constructor(private inputs: InputValues, context: GraphTraversalContext) {
-    super(context.handlers);
+    this.handlers = context.handlers;
     this.log = context.log;
   }
 

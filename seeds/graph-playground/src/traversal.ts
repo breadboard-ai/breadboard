@@ -15,20 +15,6 @@ import type {
   NodeHandlers,
 } from "./types.js";
 
-export abstract class BaseTraversalContext implements GraphTraversalContext {
-  handlers: NodeHandlers;
-
-  constructor(handlers: NodeHandlers) {
-    this.handlers = handlers;
-  }
-
-  abstract log(s: string): void;
-
-  abstract requestExternalInput(inputs: InputValues): Promise<OutputValues>;
-
-  abstract provideExternalOutput(inputs: InputValues): Promise<void>;
-}
-
 const wire = (heads: Edge[], outputs: OutputValues): InputValues => {
   const result: InputValues = {};
   heads.forEach((head) => {

@@ -5,8 +5,13 @@
  */
 
 import { Graph } from "./graph.js";
-import { BaseTraversalContext, traverseGraph } from "./traversal.js";
-import type { InputValues, NodeHandlers, OutputValues } from "./types.js";
+import { traverseGraph } from "./traversal.js";
+import type {
+  GraphTraversalContext,
+  InputValues,
+  NodeHandlers,
+  OutputValues,
+} from "./types.js";
 
 export class Runner {
   async run(graph: Graph, progress: (s: string) => void = console.log) {
@@ -16,13 +21,11 @@ export class Runner {
 }
 
 // TODO: Make this not a special case.
-class ImperativeRunnerContext extends BaseTraversalContext {
+class ImperativeRunnerContext implements GraphTraversalContext {
   constructor(
-    handlers: NodeHandlers,
+    public handlers: NodeHandlers,
     private readonly progress: (s: string) => void = console.log
-  ) {
-    super(handlers);
-  }
+  ) {}
 
   log(s: string) {
     this.progress(s);
