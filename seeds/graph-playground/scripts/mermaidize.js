@@ -37,6 +37,8 @@ const shape = (node, nodeType) => {
   switch (nodeType) {
     case "include":
       return `${node}[[${text}]]:::include`;
+    case "slot":
+      return `${node}(((${text}))):::slot`;
     case "passthrough":
       return `${node}((${text})):::passthrough`;
     case "input":
