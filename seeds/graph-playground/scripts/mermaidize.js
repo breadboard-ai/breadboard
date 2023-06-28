@@ -33,7 +33,7 @@ const substitute = (template, values) => {
 };
 
 const shape = (node, nodeType) => {
-  const text = `"\`**${nodeType}**\n${node}\`"`;
+  const text = `"${nodeType}\nid='${node}'"`;
   switch (nodeType) {
     case "include":
       return `${node}[[${text}]]:::include`;
