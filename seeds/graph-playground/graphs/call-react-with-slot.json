@@ -1,0 +1,79 @@
+{
+  "edges": [
+    {
+      "from": "ask",
+      "out": "text",
+      "to": "react",
+      "in": "text"
+    },
+    {
+      "from": "react",
+      "out": "text",
+      "to": "print",
+      "in": "text"
+    },
+    {
+      "from": "tools-in",
+      "out": "search",
+      "to": "search",
+      "in": "text"
+    },
+    {
+      "from": "tools-in",
+      "out": "math",
+      "to": "math",
+      "in": "text"
+    },
+    {
+      "from": "math",
+      "out": "text",
+      "to": "tools-out",
+      "in": "Observation"
+    },
+    {
+      "from": "search",
+      "out": "text",
+      "to": "tools-out",
+      "in": "Observation"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "ask",
+      "type": "input",
+      "configuration": {
+        "message": "Ask ReAct"
+      }
+    },
+    {
+      "id": "react",
+      "type": "include",
+      "configuration": {
+        "path": "./graphs/react-with-slot.json"
+      }
+    },
+    { "id": "print", "type": "output" },
+    {
+      "id": "tools-in",
+      "type": "slot-input",
+      "configuration": {
+        "slot": "tools"
+      }
+    },
+    {
+      "id": "tools-out",
+      "type": "slot-output",
+      "configuration": { "slot": "tools" }
+    },
+    {
+      "id": "search",
+      "type": "include",
+      "configuration": { "path": "./graphs/search-summarize.json" }
+    },
+    {
+      "id": "math",
+      "type": "include",
+      "configuration": { "path": "./graphs/math.json" }
+    }
+  ]
+}

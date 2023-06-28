@@ -140,16 +140,6 @@
       "type": "local-memory"
     },
     {
-      "id": "search",
-      "type": "include",
-      "configuration": { "path": "./graphs/search-summarize.json" }
-    },
-    {
-      "id": "math",
-      "type": "include",
-      "configuration": { "path": "./graphs/math.json" }
-    },
-    {
       "id": "remember-observation",
       "type": "local-memory"
     },
