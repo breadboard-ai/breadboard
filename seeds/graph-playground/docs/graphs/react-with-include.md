@@ -40,16 +40,13 @@ parse-completion["react-helper
 id='parse-completion'"] -- math:text --> math[["include
 id='math'"]]:::include
 math[["include
-id='math'"]]:::include -- text:Observation --> remember-math["local-memory
-id='remember-math'"]
-remember-math["local-memory
-id='remember-math'"] -- context:text --> print{{"output
-id='print'"}}:::output
+id='math'"]]:::include -- text:Observation --> remember-observation["local-memory
+id='remember-observation'"]
 search[["include
-id='search'"]]:::include -- text:Observation --> remember-search["local-memory
-id='remember-search'"]
-remember-search["local-memory
-id='remember-search'"] -- context:text --> print{{"output
+id='search'"]]:::include -- text:Observation --> remember-observation["local-memory
+id='remember-observation'"]
+remember-observation["local-memory
+id='remember-observation'"] -- context:text --> print{{"output
 id='print'"}}:::output
 print{{"output
 id='print'"}}:::output --> pass(("passthrough

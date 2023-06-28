@@ -73,23 +73,17 @@
     {
       "from": "math",
       "out": "text",
-      "to": "remember-math",
+      "to": "remember-observation",
       "in": "Observation"
-    },
-    {
-      "from": "remember-math",
-      "out": "context",
-      "to": "print",
-      "in": "text"
     },
     {
       "from": "search",
       "out": "text",
-      "to": "remember-search",
+      "to": "remember-observation",
       "in": "Observation"
     },
     {
-      "from": "remember-search",
+      "from": "remember-observation",
       "out": "context",
       "to": "print",
       "in": "text"
@@ -170,11 +164,7 @@
       "configuration": { "path": "./graphs/math.json" }
     },
     {
-      "id": "remember-math",
-      "type": "local-memory"
-    },
-    {
-      "id": "remember-search",
+      "id": "remember-observation",
       "type": "local-memory"
     },
     {
