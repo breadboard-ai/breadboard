@@ -10,8 +10,13 @@ const TEMPLATE = `# {{title}}
 ---
 
 \`\`\`mermaid
+%%{init: {'theme':'default', 'themeVariables': { 'fontFamily': 'Fira Code, monospace', 'background': '#fff' }}}%%
 graph TD;
 {{mermaid}}
+classDef default stroke:#ffab40,fill:#fff2ccff
+classDef input stroke:#3c78d8,fill:#c9daf8ff
+classDef output stroke:#38761d,fill:#b6d7a8ff
+classDef passthrough stroke:#a64d79,fill:#ead1dcff
 \`\`\``;
 
 const IN_DIR = "./graphs";
