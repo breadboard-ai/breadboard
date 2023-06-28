@@ -16,6 +16,7 @@ import input from "./nodes/input.js";
 import output from "./nodes/output.js";
 import passthrough from "./nodes/passthrough.js";
 import include from "./nodes/include.js";
+import vars from "./nodes/vars.js";
 import { customNode } from "./nodes/custom-node.js";
 import { ReActHelper } from "./react.js";
 
@@ -29,6 +30,7 @@ const context = new ConsoleContext({
   output,
   passthrough,
   include,
+  vars,
   "prompt-template": promptTemplate,
   "text-completion": textCompletion,
   "local-memory": localMemory,
