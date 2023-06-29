@@ -8,32 +8,32 @@
     },
     {
       "from": "react",
-      "out": "text",
-      "to": "print",
-      "in": "text"
-    },
-    {
-      "from": "tools-in",
-      "out": "search",
-      "to": "search",
-      "in": "text"
-    },
-    {
-      "from": "tools-in",
-      "out": "math",
+      "out": "slot-input",
       "to": "math",
       "in": "text"
     },
     {
-      "from": "math",
-      "out": "text",
-      "to": "tools-out",
+      "from": "react",
+      "out": "slot-input",
+      "to": "search",
       "in": "text"
     },
     {
       "from": "search",
       "out": "text",
-      "to": "tools-out",
+      "to": "react",
+      "in": "slot-output"
+    },
+    {
+      "from": "math",
+      "out": "text",
+      "to": "react",
+      "in": "slot-output"
+    },
+    {
+      "from": "react",
+      "out": "text",
+      "to": "print",
       "in": "text"
     }
   ],
@@ -53,16 +53,6 @@
       }
     },
     { "id": "print", "type": "output" },
-    {
-      "id": "tools-in",
-      "type": "slot-input",
-      "configuration": { "slot": "tools" }
-    },
-    {
-      "id": "tools-out",
-      "type": "slot-output",
-      "configuration": { "slot": "tools" }
-    },
     {
       "id": "search",
       "type": "include",
