@@ -2,7 +2,7 @@
 ---
 
 ```mermaid
-%%{init: {'theme':'default', 'themeVariables': { 'fontFamily': 'Fira Code, monospace', 'background': '#fff' }}}%%
+%%{init: {'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}}%%
 graph TD;
 input-1[/"input
 id='input-1'"/]:::input -- text:text --> text-completion-1["text-completion
@@ -10,8 +10,9 @@ id='text-completion-1'"]
 text-completion-1["text-completion
 id='text-completion-1'"] -- completion:text --> output-1{{"output
 id='output-1'"}}:::output
-classDef default stroke:#ffab40,fill:#fff2ccff
-classDef input stroke:#3c78d8,fill:#c9daf8ff
-classDef output stroke:#38761d,fill:#b6d7a8ff
-classDef passthrough stroke:#a64d79,fill:#ead1dcff
+classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
+classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
+classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
+classDef passthrough stroke:#a64d79,fill:#ead1dcff,color:#000
+classDef slot stroke:#a64d79,fill:#ead1dcff,color:#000
 ```
