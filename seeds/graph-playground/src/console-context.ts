@@ -5,7 +5,7 @@ import type {
   NodeHandlers,
   OutputValues,
   GraphTraversalContext,
-} from "./types.js";
+} from "@google-labs/graph-runner";
 import { Logger } from "./logger.js";
 
 export class ConsoleContext implements GraphTraversalContext {

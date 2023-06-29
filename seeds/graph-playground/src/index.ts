@@ -7,19 +7,19 @@
 import { intro, outro } from "@clack/prompts";
 import { readFile } from "fs/promises";
 
-import googleSearch from "./nodes/google-search.js";
-import { ReActHelper } from "./react.js";
+import {
+  type GraphDescriptor,
+  traverseGraph,
+  coreHandlers,
+  customNode,
+  ReActHelper,
+} from "@google-labs/graph-runner";
 
-import { coreHandlers, customNode } from "./core.js";
-
-import { GraphDescriptor } from "./types.js";
-import { traverseGraph } from "./traversal.js";
 import { ConsoleContext } from "./console-context.js";
 
 intro("Let's follow a graph!");
 const context = new ConsoleContext({
   ...coreHandlers,
-  "google-search": googleSearch,
   "react-helper": customNode(new ReActHelper()),
 });
 try {

@@ -21,6 +21,7 @@ import promptTemplate from "./nodes/prompt-template.js";
 import textCompletion from "./nodes/text-completion.js";
 import localMemory from "./nodes/local-memory.js";
 import javascript from "./nodes/run-javascript.js";
+import googleSearch from "./nodes/google-search.js";
 
 /**
  * A node-producing wrapper to create custom nodes.
@@ -40,4 +41,5 @@ export const coreHandlers = {
   "text-completion": textCompletion,
   "local-memory": localMemory,
   "run-javascript": javascript,
+  "google-search": googleSearch,
 };
