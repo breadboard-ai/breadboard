@@ -56,9 +56,7 @@
     {
       "id": "tools-in",
       "type": "slot-input",
-      "configuration": {
-        "slot": "tools"
-      }
+      "configuration": { "slot": "tools" }
     },
     {
       "id": "tools-out",
