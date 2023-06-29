@@ -28,13 +28,13 @@
       "from": "math",
       "out": "text",
       "to": "tools-out",
-      "in": "Observation"
+      "in": "text"
     },
     {
       "from": "search",
       "out": "text",
       "to": "tools-out",
-      "in": "Observation"
+      "in": "text"
     }
   ],
   "nodes": [

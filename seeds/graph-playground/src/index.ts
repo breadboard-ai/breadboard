@@ -12,14 +12,10 @@ import textCompletion from "./nodes/text-completion.js";
 import localMemory from "./nodes/local-memory.js";
 import javascript from "./nodes/run-javascript.js";
 import googleSearch from "./nodes/google-search.js";
-import input from "./nodes/input.js";
-import output from "./nodes/output.js";
-import passthrough from "./nodes/passthrough.js";
-import include from "./nodes/include.js";
-import vars from "./nodes/vars.js";
-import slot from "./nodes/slot.js";
-import { customNode } from "./nodes/custom-node.js";
 import { ReActHelper } from "./react.js";
+import { customNode } from "./nodes/custom-node.js";
+
+import core from "./core.js";
 
 import { GraphDescriptor } from "./types.js";
 import { traverseGraph } from "./traversal.js";
@@ -27,12 +23,7 @@ import { ConsoleContext } from "./console-context.js";
 
 intro("Let's follow a graph!");
 const context = new ConsoleContext({
-  input,
-  output,
-  passthrough,
-  include,
-  vars,
-  slot,
+  ...core,
   "prompt-template": promptTemplate,
   "text-completion": textCompletion,
   "local-memory": localMemory,
