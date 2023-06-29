@@ -69,9 +69,41 @@ export type NodeHandler = (
 
 export type NodeHandlers = Record<NodeTypeIdentifier, NodeHandler>;
 
+/**
+ * This represents the context of a graph traversal, Supply an instance of a
+ * class that implements this interface to the `traverseGraph` function.
+ */
 export interface GraphTraversalContext {
+  /**
+   * Key-value pairs of NodeHandlers. Each `NodeHandler` is a function that
+   * represents a type of a node in the graph. The key is the type of the node,
+   * and the value is the function.
+   */
   handlers: NodeHandlers;
+
+  /**
+   * This is the means by which nodes request inputs outside of the graph.
+   * For example, for a command-line interface context, we might implement
+   * asking for user input in this function.
+   * @param inputs the inputs that the node is asking for
+   * @returns the outputs that we give to the graph
+   */
   requestExternalInput: (inputs: InputValues) => Promise<OutputValues>;
+
+  /**
+   * This is how the nodes provide output outside of the graph.
+   * For example, for a command-line interface context, we might be printing
+   * the values to the console.
+   * @param inputs the values that the node wants to output.
+   * @returns nothing.
+   */
   provideExternalOutput: (inputs: InputValues) => Promise<void>;
+
+  /**
+   * A logging facility. Currently, `traverseGraph` uses it to log
+   * various interesting events, and it's quite chatting. Good for
+   * "see details" logs and is very disorganized at the moment.
+   * @todo make logging more organized.
+   */
   log: (s: string) => void;
 }
