@@ -149,7 +149,8 @@
     },
     {
       "id": "tools-slot",
-      "type": "slot"
+      "type": "slot",
+      "configuration": { "slot": "tools" }
     }
   ]
 }

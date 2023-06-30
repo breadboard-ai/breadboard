@@ -8,30 +8,6 @@
     },
     {
       "from": "react",
-      "out": "slot-input",
-      "to": "math",
-      "in": "text"
-    },
-    {
-      "from": "react",
-      "out": "slot-input",
-      "to": "search",
-      "in": "text"
-    },
-    {
-      "from": "search",
-      "out": "text",
-      "to": "react",
-      "in": "slot-output"
-    },
-    {
-      "from": "math",
-      "out": "text",
-      "to": "react",
-      "in": "slot-output"
-    },
-    {
-      "from": "react",
       "out": "text",
       "to": "print",
       "in": "text"
@@ -41,17 +17,45 @@
     {
       "id": "ask",
       "type": "input",
-      "configuration": {
-        "message": "Ask ReAct"
-      }
+      "configuration": { "message": "Ask ReAct" }
     },
     {
       "id": "react",
       "type": "include",
       "configuration": {
-        "path": "./graphs/react-with-slot.json"
+        "path": "./graphs/react-with-slot.json",
+        "slotted": {
+          "tools": [
+            {
+              "from": "tools-input",
+              "out": "math",
+              "to": "math",
+              "in": "text"
+            },
+            {
+              "from": "tools-input",
+              "out": "search",
+              "to": "search",
+              "in": "text"
+            },
+            {
+              "from": "search",
+              "to": "tools-output"
+            },
+            {
+              "from": "math",
+              "to": "tools-output"
+            }
+          ]
+        }
       }
     },
+    {
+      "id": "tools-input",
+      "type": "input",
+      "configuration": { "slot": "tools" }
+    },
+    { "id": "tools-output", "type": "output" },
     { "id": "print", "type": "output" },
     {
       "id": "search",

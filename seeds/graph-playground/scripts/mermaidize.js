@@ -18,6 +18,7 @@ classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
 classDef passthrough stroke:#a64d79,fill:#ead1dcff,color:#000
 classDef slot stroke:#a64d79,fill:#ead1dcff,color:#000
+classDef slotted stroke:#a64d79
 \`\`\``;
 
 const IN_DIR = "./graphs";
@@ -38,13 +39,15 @@ const substitute = (template, values) => {
   );
 };
 
-const shape = (node, nodeType) => {
+const shape = (descriptor) => {
+  const node = descriptor.id;
+  const nodeType = descriptor.type;
   const text = `"${nodeType}\nid='${node}'"`;
   switch (nodeType) {
     case "include":
       return `${node}[[${text}]]:::include`;
     case "slot":
-      return `${node}(((${text}))):::slot`;
+      return `${node}((${text})):::slot`;
     case "passthrough":
       return `${node}((${text})):::passthrough`;
     case "input":
@@ -56,22 +59,44 @@ const shape = (node, nodeType) => {
   }
 };
 
+const describeEdge = (edge, nodeMap) => {
+  const from = edge.from;
+  const fromNode = shape(nodeMap.get(from) || "");
+  const to = edge.to;
+  const toNode = shape(nodeMap.get(to) || "");
+  const input = edge.in;
+  const output = edge.out;
+  const optional = edge.optional;
+  if (output && input) {
+    if (optional) return `${fromNode} -. ${output}:${input} .-> ${toNode}`;
+    return `${fromNode} -- ${output}:${input} --> ${toNode}`;
+  }
+  return `${fromNode} --> ${toNode}`;
+};
+
+const describeSubgraphs = (edge, nodeMap) => {
+  const fromNode = nodeMap.get(edge.from);
+  const type = fromNode.type;
+  if (type !== "include") return "";
+
+  const slotted = fromNode.configuration.slotted;
+  if (!slotted) return "";
+  const subgraphs = Object.entries(slotted).map(([name, edges]) => {
+    const subgraphEdges = edges.map((edge) => describeEdge(edge, nodeMap));
+    return `\nsubgraph ${name}\n${subgraphEdges.join(
+      "\n"
+    )}\nend\n${name}:::slotted --> ${fromNode.id}\n`;
+  });
+  return subgraphs.join("\n");
+};
+
 const mermaidize = (file) => {
   const { edges, nodes } = JSON.parse(file);
-  const nodeTypes = new Map(nodes.map((node) => [node.id, node.type]));
+  const nodeMap = new Map(nodes.map((node) => [node.id, node]));
   const result = edges.map((edge) => {
-    const from = edge.from;
-    const fromNode = shape(from, nodeTypes.get(from) || "");
-    const to = edge.to;
-    const toNode = shape(to, nodeTypes.get(to) || "");
-    const input = edge.in;
-    const output = edge.out;
-    const optional = edge.optional;
-    if (output && input) {
-      if (optional) return `${fromNode} -. ${output}:${input} .-> ${toNode}`;
-      return `${fromNode} -- ${output}:${input} --> ${toNode}`;
-    }
-    return `${fromNode} --> ${toNode}`;
+    const mermEdge = describeEdge(edge, nodeMap);
+    const mermSubgraphs = describeSubgraphs(edge, nodeMap);
+    return `${mermEdge}${mermSubgraphs}`;
   });
   return result.join("\n");
 };

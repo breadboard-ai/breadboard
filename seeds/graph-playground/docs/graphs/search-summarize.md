@@ -27,4 +27,5 @@ classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
 classDef passthrough stroke:#a64d79,fill:#ead1dcff,color:#000
 classDef slot stroke:#a64d79,fill:#ead1dcff,color:#000
+classDef slotted stroke:#a64d79
 ```

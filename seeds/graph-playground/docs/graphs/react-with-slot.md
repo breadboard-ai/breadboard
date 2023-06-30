@@ -35,10 +35,10 @@ react-completion["text-completion
 id='react-completion'"] -- completion:Thought --> remember-thought["local-memory
 id='remember-thought'"]
 parse-completion["react-helper
-id='parse-completion'"] --> tools-slot((("slot
-id='tools-slot'"))):::slot
-tools-slot((("slot
-id='tools-slot'"))):::slot -- text:Observation --> remember-observation["local-memory
+id='parse-completion'"] --> tools-slot(("slot
+id='tools-slot'")):::slot
+tools-slot(("slot
+id='tools-slot'")):::slot -- text:Observation --> remember-observation["local-memory
 id='remember-observation'"]
 remember-observation["local-memory
 id='remember-observation'"] -- context:text --> print{{"output
@@ -54,4 +54,5 @@ classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
 classDef passthrough stroke:#a64d79,fill:#ead1dcff,color:#000
 classDef slot stroke:#a64d79,fill:#ead1dcff,color:#000
+classDef slotted stroke:#a64d79
 ```
