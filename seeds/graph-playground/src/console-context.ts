@@ -41,6 +41,8 @@ export class ConsoleContext implements GraphTraversalContext {
     _slot: string,
     _args: InputValues
   ): Promise<OutputValues> {
-    throw new Error("Requesting slot outpu is not yet implemented");
+    throw new Error(
+      "Requesting slot output is not supported in the console context"
+    );
   }
 }

@@ -13,9 +13,8 @@ type SlotInput = {
 
 export default async (
   context: GraphTraversalContext,
-  inputs: InputValues
+  { slot, ...args }: SlotInput
 ): Promise<OutputValues> => {
-  const { slot, ...args } = inputs as SlotInput;
   if (!slot) throw new Error("To use a slot, we need to specify its name");
   return await context.requestSlotOutput(slot, args);
 };
