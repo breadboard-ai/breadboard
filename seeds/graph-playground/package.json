@@ -51,7 +51,6 @@
   },
   "dependencies": {
     "@clack/prompts": "^0.6.3",
-    "@google-labs/palm-lite": "*",
     "@google-labs/graph-runner": "*"
   }
 }

@@ -48,6 +48,7 @@
     "@google-labs/tsconfig": "*"
   },
   "dependencies": {
-    "dotenv": "^16.1.4"
+    "dotenv": "^16.1.4",
+    "@google-labs/palm-lite": "*"
   }
 }
