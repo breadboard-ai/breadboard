@@ -81,8 +81,13 @@ const describeSubgraphs = (edge, nodeMap) => {
 
   const slotted = fromNode.configuration.slotted;
   if (!slotted) return "";
-  const subgraphs = Object.entries(slotted).map(([name, edges]) => {
-    const subgraphEdges = edges.map((edge) => describeEdge(edge, nodeMap));
+  const subgraphs = Object.entries(slotted).map(([name, subgraph]) => {
+    const subgraphNodeMap = new Map(
+      subgraph.nodes.map((node) => [node.id, node])
+    );
+    const subgraphEdges = subgraph.edges.map((edge) =>
+      describeEdge(edge, subgraphNodeMap)
+    );
     return `\nsubgraph ${name}\n${subgraphEdges.join(
       "\n"
     )}\nend\n${name}:::slotted --> ${fromNode.id}\n`;

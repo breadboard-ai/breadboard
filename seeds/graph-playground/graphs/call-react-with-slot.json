@@ -25,47 +25,41 @@
       "configuration": {
         "path": "./graphs/react-with-slot.json",
         "slotted": {
-          "tools": [
-            {
-              "from": "tools-input",
-              "out": "math",
-              "to": "math",
-              "in": "text"
-            },
-            {
-              "from": "tools-input",
-              "out": "search",
-              "to": "search",
-              "in": "text"
-            },
-            {
-              "from": "search",
-              "to": "tools-output"
-            },
-            {
-              "from": "math",
-              "to": "tools-output"
-            }
-          ]
+          "tools": {
+            "edges": [
+              {
+                "from": "input",
+                "out": "math",
+                "to": "math",
+                "in": "text"
+              },
+              {
+                "from": "input",
+                "out": "search",
+                "to": "search",
+                "in": "text"
+              },
+              { "from": "search", "to": "output" },
+              { "from": "math", "to": "output" }
+            ],
+            "nodes": [
+              { "id": "input", "type": "input" },
+              { "id": "output", "type": "output" },
+              {
+                "id": "search",
+                "type": "include",
+                "configuration": { "path": "./graphs/search-summarize.json" }
+              },
+              {
+                "id": "math",
+                "type": "include",
+                "configuration": { "path": "./graphs/math.json" }
+              }
+            ]
+          }
         }
       }
     },
-    {
-      "id": "tools-input",
-      "type": "input",
-      "configuration": { "slot": "tools" }
-    },
-    { "id": "tools-output", "type": "output" },
-    { "id": "print", "type": "output" },
-    {
-      "id": "search",
-      "type": "include",
-      "configuration": { "path": "./graphs/search-summarize.json" }
-    },
-    {
-      "id": "math",
-      "type": "include",
-      "configuration": { "path": "./graphs/math.json" }
-    }
+    { "id": "print", "type": "output" }
   ]
 }

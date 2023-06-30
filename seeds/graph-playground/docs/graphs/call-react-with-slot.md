@@ -11,18 +11,18 @@ react[["include
 id='react'"]]:::include -- text:text --> print{{"output
 id='print'"}}:::output
 subgraph tools
-tools-input[/"input
-id='tools-input'"/]:::input -- math:text --> math[["include
+input[/"input
+id='input'"/]:::input -- math:text --> math[["include
 id='math'"]]:::include
-tools-input[/"input
-id='tools-input'"/]:::input -- search:text --> search[["include
+input[/"input
+id='input'"/]:::input -- search:text --> search[["include
 id='search'"]]:::include
 search[["include
-id='search'"]]:::include --> tools-output{{"output
-id='tools-output'"}}:::output
+id='search'"]]:::include --> output{{"output
+id='output'"}}:::output
 math[["include
-id='math'"]]:::include --> tools-output{{"output
-id='tools-output'"}}:::output
+id='math'"]]:::include --> output{{"output
+id='output'"}}:::output
 end
 tools:::slotted --> react
 
