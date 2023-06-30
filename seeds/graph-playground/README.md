@@ -14,7 +14,7 @@ There are three packages in this workspace:
 2. `seeds/graph-playground` -- this package, which is a kind of sample code for how to use `seeds/graph-runner`. Depends on `seeds/graph-runner`.
 3. `seeds/breadboard` -- a nascent helper library for making graphs. Depends on `seeds/graph-runner` and is mostly non-functional at the moment.
 
-:two: create `.env` file with the following content:
+:two: In `seeds/graph-playground`, create `.env` file with the following content:
 
 ```bash
 API_KEY="your GCP API key"
