@@ -12,7 +12,7 @@
     "merm": "node scripts/mermaidize.js",
     "build": "FORCE_COLOR=1 tsc --b",
     "watch": "FORCE_COLOR=1 tsc --b --watch",
-    "dev": "FORCE_COLOR=1 npm run build && node --enable-source-maps ."
+    "dev": "turbo build && node --enable-source-maps ."
   },
   "repository": {
     "type": "git",
