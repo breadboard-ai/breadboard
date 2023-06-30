@@ -5,13 +5,13 @@
  */
 
 import { Graph } from "./graph.js";
-import { traverseGraph } from "./traversal.js";
+import { traverseGraph } from "@google-labs/graph-runner";
 import type {
   GraphTraversalContext,
   InputValues,
   NodeHandlers,
   OutputValues,
-} from "./types.js";
+} from "@google-labs/graph-runner";
 
 export class Runner {
   async run(graph: Graph, progress: (s: string) => void = console.log) {
@@ -37,5 +37,12 @@ class ImperativeRunnerContext implements GraphTraversalContext {
 
   async provideExternalOutput(_inputs: InputValues): Promise<void> {
     throw new Error("Not implemented");
+  }
+
+  async requestSlotOutput(
+    _slot: string,
+    _args: InputValues
+  ): Promise<OutputValues> {
+    throw new Error("Requesting slot output is not implemented");
   }
 }

@@ -30,13 +30,29 @@ class IncludeContext implements GraphTraversalContext {
   async provideExternalOutput(outputs: OutputValues): Promise<void> {
     this.values = outputs;
   }
+
+  async requestSlotOutput(
+    _slot: string,
+    _args: InputValues
+  ): Promise<OutputValues> {
+    throw new Error("Not implemented yet");
+  }
 }
 
 export default async (context: GraphTraversalContext, inputs: InputValues) => {
-  const { path, ...args } = inputs;
+  const { path, slotted, ...args } = inputs;
   if (!path) throw new Error("To include, we need a path");
-  const graph = JSON.parse(await readFile(path as string, "utf-8"));
-  const includeContext = new IncludeContext(args, context);
-  await traverseGraph(includeContext, graph);
-  return includeContext.values;
+  const traverseSubgraph = async (path: string) => {
+    const graph = JSON.parse(await readFile(path, "utf-8"));
+    const includeContext = new IncludeContext(args, context);
+    await traverseGraph(includeContext, graph);
+    return includeContext.values;
+  };
+
+  if (slotted) {
+    // We have slotted subgraphs, so we need to traverse them in addition to
+    // the included graph.
+    // TODO: Implement handling slotted subgraphs.
+  }
+  return await traverseSubgraph(path as string);
 };

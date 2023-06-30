@@ -5,10 +5,15 @@
  */
 
 export type {
+  Edge,
   GraphDescriptor,
+  NodeConfiguration,
+  NodeDescriptor,
+  NodeHandler,
   InputValues,
   OutputValues,
   NodeHandlers,
+  NodeTypeIdentifier,
   GraphTraversalContext,
 } from "./types.js";
 export { coreHandlers, customNode } from "./core.js";

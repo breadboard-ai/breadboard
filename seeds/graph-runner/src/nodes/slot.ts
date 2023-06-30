@@ -6,23 +6,16 @@
 
 import { GraphTraversalContext, InputValues, OutputValues } from "../types.js";
 
-export const slot = async (
-  context: GraphTraversalContext,
-  inputs: InputValues
-): Promise<OutputValues> => {
-  throw new Error("Not implemented");
+type SlotInput = {
+  slot: string;
+  args: InputValues;
 };
 
-export const slotInput = async (
+export default async (
   context: GraphTraversalContext,
   inputs: InputValues
 ): Promise<OutputValues> => {
-  throw new Error("Not implemented");
-};
-
-export const slotOutput = async (
-  context: GraphTraversalContext,
-  inputs: InputValues
-): Promise<OutputValues> => {
-  throw new Error("Not implemented");
+  const { slot, ...args } = inputs as SlotInput;
+  if (!slot) throw new Error("To use a slot, we need to specify its name");
+  return await context.requestSlotOutput(slot, args);
 };

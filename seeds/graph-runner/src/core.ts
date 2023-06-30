@@ -12,7 +12,7 @@ import output from "./nodes/output.js";
 import passthrough from "./nodes/passthrough.js";
 import include from "./nodes/include.js";
 import vars from "./nodes/vars.js";
-import { slot, slotInput, slotOutput } from "./nodes/slot.js";
+import slot from "./nodes/slot.js";
 
 /**
  * Nodes that are commonly used in Generative Applications.
@@ -35,8 +35,6 @@ export const coreHandlers = {
   include,
   vars,
   slot,
-  "slot-input": slotInput,
-  "slot-output": slotOutput,
   "prompt-template": promptTemplate,
   "text-completion": textCompletion,
   "local-memory": localMemory,

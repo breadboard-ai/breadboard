@@ -36,4 +36,11 @@ export class ConsoleContext implements GraphTraversalContext {
     if (!inputs) return;
     log.step(JSON.stringify(inputs["text"]));
   }
+
+  async requestSlotOutput(
+    _slot: string,
+    _args: InputValues
+  ): Promise<OutputValues> {
+    throw new Error("Requesting slot outpu is not yet implemented");
+  }
 }

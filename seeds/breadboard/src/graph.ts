@@ -12,7 +12,7 @@ import type {
   NodeHandler,
   NodeHandlers,
   NodeTypeIdentifier,
-} from "./types.js";
+} from "@google-labs/graph-runner";
 
 export class Node implements NodeDescriptor {
   #graph: Graph;
