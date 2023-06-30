@@ -6,7 +6,7 @@ This is a prototyping ground for experimenting with representing generative AI a
 
 :zero: Follow instructions on the [DEVELOPING.md](../../DEVELOPING.md) to set up the repo for work.
 
-:one: Open [graphs.code-workspace](../../graphjs.code-workspace) in VSCode. This workspace brings all the relevant packages in the monorepo into one place, so you can easily navigate between them and not worry about other bits that aren't relevant to graphs.
+:one: Open [graphs.code-workspace](../../graphs.code-workspace) in VSCode. This workspace brings all the relevant packages in the monorepo into one place, so you can easily navigate between them and not worry about other bits that aren't relevant to graphs.
 
 There are three packages in this workspace:
 
@@ -36,7 +36,9 @@ Here's a quick lay of the land:
 
 - The meat of the implementation is the `console-context.ts`, which is a CLI-oriented implementation of the `GraphTraversalContext` interface. It's super-simple and is as close to "echo" as it gets. It uses [`@clack/prompts`](https://github.com/natemoo-re/clack/tree/main/packages/prompts#readme) to make CLI a bit prettier, but that's about it.
 
-- There are a few sample graphs in the `graphs` folder. For convenience, use `npm run dev` command. It will build the package and run the CLI with the given graph file.
+- The `console-context.ts` outputs logs into `./experiment.log`, which git-ignored. Graph traversal is very chatting currently, and the log file can get quite large. Use it to examine what the heck is going on and debug the graph.
+
+- There are a few sample graphs in the [`graphs`](./graphs/) folder. For convenience, use `npm run dev` command. It will build the package and run the CLI with the given graph file. Add your own graphs there.
 
 Here are some examples:
 
@@ -64,4 +66,4 @@ npm run dev graphs/react-with-include.json
 
 ```
 
-- To visualize graphs, there's is a `scripts/mermaidize.js` script that converts a graph file into a [Mermaid](https://mermaid-js.github.io/mermaid/#/) diagram, embedded into a Markdown file. For convenience, use `npm run merm` to run it. The script will generate files in the `docs/graphs` dir.
+- To visualize graphs, there's is a `scripts/mermaidize.js` script that converts a graph file into a [Mermaid](https://mermaid-js.github.io/mermaid/#/) diagram, embedded into a Markdown file. For convenience, use `npm run merm` to run it. The script will generate files in the [`docs/graphs`](docs/graphs/) dir, one for each file in the `graphs` dir.
