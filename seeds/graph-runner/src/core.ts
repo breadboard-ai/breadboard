@@ -13,6 +13,7 @@ import passthrough from "./nodes/passthrough.js";
 import include from "./nodes/include.js";
 import vars from "./nodes/vars.js";
 import slot from "./nodes/slot.js";
+import jsonata from "./nodes/jsonata.js";
 
 /**
  * Nodes that are commonly used in Generative Applications.
@@ -35,6 +36,7 @@ export const coreHandlers = {
   include,
   vars,
   slot,
+  jsonata,
   "prompt-template": promptTemplate,
   "text-completion": textCompletion,
   "local-memory": localMemory,

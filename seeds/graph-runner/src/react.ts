@@ -11,6 +11,12 @@ export class ReActHelper {
     math: "Useful for when you need to solve math problems. Input should be a math problem to be solved.",
   };
 
+  async getToolsObject() {
+    return {
+      tools: this.tools,
+    };
+  }
+
   async getTools() {
     return {
       tools: Object.keys(this.tools).join(", "),
