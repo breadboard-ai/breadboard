@@ -15,6 +15,7 @@ export type {
   NodeHandlers,
   NodeTypeIdentifier,
   GraphTraversalContext,
+  LogData,
 } from "./types.js";
 export { coreHandlers, customNode } from "./core.js";
 export { traverseGraph } from "./traversal.js";

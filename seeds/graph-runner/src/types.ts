@@ -69,6 +69,8 @@ export type NodeHandler = (
 
 export type NodeHandlers = Record<NodeTypeIdentifier, NodeHandler>;
 
+export type LogData = Record<string, string | number>;
+
 /**
  * This represents the context of a graph traversal, Supply an instance of a
  * class that implements this interface to the `traverseGraph` function.
@@ -117,5 +119,5 @@ export interface GraphTraversalContext {
    * "see details" logs and is very disorganized at the moment.
    * @todo make logging more organized.
    */
-  log: (s: string) => void;
+  log: (data: LogData) => Promise<void>;
 }

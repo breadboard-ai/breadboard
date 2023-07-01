@@ -111,6 +111,7 @@ export const traverseGraph = async (
   context: GraphTraversalContext,
   graph: GraphDescriptor
 ) => {
+  const source = "traverseGraph";
   const state = new StateManager();
   const log = context.log;
 
@@ -140,7 +141,11 @@ export const traverseGraph = async (
     return acc;
   }, {} as Record<NodeIdentifier, NodeDescriptor>);
 
-  log(`Let the graph traversal begin!`);
+  log({
+    source,
+    type: "traversal-start",
+    text: "Stargate traversal",
+  });
 
   const entries = Array.from(tails.keys()).filter(
     (node) => !heads.has(node) || heads.get(node).length === 0
@@ -162,19 +167,37 @@ export const traverseGraph = async (
 
     if (!current) throw new Error(`No node found for id "${toNode}"`);
 
-    log(`Visiting: "${current.id}", type: "${current.type}"`);
+    log({
+      source,
+      type: "node",
+      value: current.id,
+      nodeType: current.type,
+      text: `Visiting: "${current.id}", type: "${current.type}"`,
+    });
 
     const incomingEdges = heads.get(toNode) || [];
     const inputs = wire(incomingEdges, state.getAvailableOutputs(toNode));
     Object.entries(inputs).forEach(([key, value]) => {
-      log(`- Input "${key}": ${value}`);
+      log({
+        source,
+        type: "input",
+        key,
+        value: JSON.stringify(value),
+        text: `- Input "${key}": ${value}`,
+      });
     });
 
     const missingInputs = computeMissingInputs(incomingEdges, inputs, current);
     if (missingInputs.length > 0) {
-      log(
-        `Missing inputs: ${missingInputs.join(", ")}, Skipping node "${toNode}"`
-      );
+      log({
+        source,
+        type: "missing-inputs",
+        key: toNode,
+        value: JSON.stringify(missingInputs),
+        text: `Missing inputs: ${missingInputs.join(
+          ", "
+        )}, Skipping node "${toNode}"`,
+      });
       continue;
     }
 
@@ -185,16 +208,31 @@ export const traverseGraph = async (
     if (exit) return;
 
     Object.entries(outputs).forEach(([key, value]) => {
-      log(`- Output "${key}": ${value}`);
+      log({
+        source,
+        type: "output",
+        key,
+        value: JSON.stringify(value),
+        text: `- Output "${key}": ${value}`,
+      });
     });
 
     const newOpportunities = tails.get(toNode) || [];
     opportunities.push(...newOpportunities);
     opportunities.forEach((opportunity) => {
-      log(`- Opportunity: "${opportunity.to}"`);
+      log({
+        source,
+        type: "opportunity",
+        value: opportunity.to,
+        text: `- Opportunity: "${opportunity.to}"`,
+      });
     });
 
     state.update(toNode, newOpportunities, outputs);
   }
-  log("Graph traversal complete.");
+  log({
+    source,
+    type: "traversal-end",
+    text: "Traversal complete",
+  });
 };

@@ -9,6 +9,7 @@ import type {
   GraphDescriptor,
   GraphTraversalContext,
   InputValues,
+  LogData,
   NodeHandlers,
   OutputValues,
 } from "../types.js";
@@ -23,7 +24,7 @@ type IncludeInput = {
 };
 
 class IncludeContext implements GraphTraversalContext {
-  log: (s: string) => void;
+  log: (data: LogData) => Promise<void>;
   values: OutputValues = {};
   handlers: NodeHandlers;
   slotted: SlottedGraphs;
@@ -34,7 +35,13 @@ class IncludeContext implements GraphTraversalContext {
     slotted?: SlottedGraphs
   ) {
     this.handlers = context.handlers;
-    this.log = context.log;
+    this.log = async (data: LogData) => {
+      const nest = ((data.nest as number) || 0) + 1;
+      context.log({
+        ...data,
+        nest,
+      });
+    };
     this.slotted = slotted || {};
   }
 
@@ -54,6 +61,10 @@ class IncludeContext implements GraphTraversalContext {
     const graph = this.slotted[slot];
     if (!graph) throw new Error(`No graph found for slot "${slot}"`);
     const includeContext = new IncludeContext(args, this, {});
+    this.log({
+      source: "include",
+      text: `Traversing slotted graph for slot "${slot}"`,
+    });
     await traverseGraph(includeContext, graph);
     return includeContext.values;
   }
@@ -64,6 +75,10 @@ export default async (context: GraphTraversalContext, inputs: InputValues) => {
   if (!path) throw new Error("To include, we need a path");
   const graph = JSON.parse(await readFile(path, "utf-8"));
   const includeContext = new IncludeContext(args, context, slotted);
+  context.log({
+    source: "include",
+    text: `Including graph at "${path}"`,
+  });
   await traverseGraph(includeContext, graph);
   return includeContext.values;
 };

@@ -1,10 +1,11 @@
-import { log, text } from "@clack/prompts";
+import { log, text, note } from "@clack/prompts";
 
 import type {
   InputValues,
   NodeHandlers,
   OutputValues,
   GraphTraversalContext,
+  LogData,
 } from "@google-labs/graph-runner";
 import { Logger } from "./logger.js";
 
@@ -17,8 +18,14 @@ export class ConsoleContext implements GraphTraversalContext {
     this.log = this.log.bind(this);
   }
 
-  log(s: string) {
-    this.logger.log(s);
+  async log(data: LogData): Promise<void> {
+    // Let's get a bit clever with the logging here.
+    // When the data is an output from completion, we'll log it as a pretty
+    // @clack/prompts note.
+    if (data.type === "output" && data.key === "completion") {
+      note(JSON.parse(data.value as string));
+    }
+    this.logger.log(JSON.stringify(data, null, 2));
   }
 
   async requestExternalInput(inputs: InputValues): Promise<OutputValues> {
@@ -34,7 +41,9 @@ export class ConsoleContext implements GraphTraversalContext {
 
   async provideExternalOutput(inputs: InputValues): Promise<void> {
     if (!inputs) return;
-    log.step(JSON.stringify(inputs["text"]));
+    const { text } = inputs;
+    if (typeof text == "string") log.success(text);
+    else log.success(JSON.stringify(text));
   }
 
   async requestSlotOutput(
