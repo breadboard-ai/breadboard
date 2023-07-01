@@ -23,7 +23,7 @@ export class ConsoleContext implements GraphTraversalContext {
     // When the data is an output from completion, we'll log it as a pretty
     // @clack/prompts note.
     if (data.type === "output" && data.key === "completion") {
-      note(JSON.parse(data.value as string));
+      note(JSON.parse(data.value as string), "text completion");
     }
     this.logger.log(JSON.stringify(data, null, 2));
   }
