@@ -5,14 +5,11 @@
 %%{init: {'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}}%%
 graph TD;
 input[/"input
-id='input'"/]:::input -- text:text --> pass(("passthrough
-id='pass'")):::passthrough
-pass(("passthrough
-id='pass'")):::passthrough -- text:query --> search["google-search
-id='search'"]
-pass(("passthrough
-id='pass'")):::passthrough -- text:question --> summarize-results["prompt-template
+id='input'"/]:::input -- text:question --> summarize-results["prompt-template
 id='summarize-results'"]
+input[/"input
+id='input'"/]:::input -- text:query --> search["google-search
+id='search'"]
 search["google-search
 id='search'"] -- results:context --> summarize-results["prompt-template
 id='summarize-results'"]

@@ -3,20 +3,14 @@
     {
       "from": "input",
       "out": "text",
-      "to": "pass",
-      "in": "text"
+      "to": "summarize-results",
+      "in": "question"
     },
     {
-      "from": "pass",
+      "from": "input",
       "out": "text",
       "to": "search",
       "in": "query"
-    },
-    {
-      "from": "pass",
-      "out": "text",
-      "to": "summarize-results",
-      "in": "question"
     },
     {
       "from": "search",
@@ -44,10 +38,6 @@
       "configuration": {
         "message": "What do you want to search for?"
       }
-    },
-    {
-      "id": "pass",
-      "type": "passthrough"
     },
     {
       "id": "search",

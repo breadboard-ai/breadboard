@@ -18,10 +18,10 @@ input[/"input
 id='input'"/]:::input -- search:text --> search[["include
 id='search'"]]:::include
 search[["include
-id='search'"]]:::include --> output{{"output
+id='search'"]]:::include -- text:text --> output{{"output
 id='output'"}}:::output
 math[["include
-id='math'"]]:::include --> output{{"output
+id='math'"]]:::include -- text:text --> output{{"output
 id='output'"}}:::output
 end
 tools:::slotted --> react

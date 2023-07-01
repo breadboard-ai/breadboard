@@ -1,17 +1,7 @@
 {
   "edges": [
-    {
-      "from": "ask",
-      "out": "text",
-      "to": "react",
-      "in": "text"
-    },
-    {
-      "from": "react",
-      "out": "text",
-      "to": "print",
-      "in": "text"
-    }
+    { "from": "ask", "out": "text", "to": "react", "in": "text" },
+    { "from": "react", "out": "text", "to": "print", "in": "text" }
   ],
   "nodes": [
     {
