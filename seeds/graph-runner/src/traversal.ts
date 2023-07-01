@@ -18,6 +18,12 @@ import type {
 const wire = (heads: Edge[], outputs: OutputValues): InputValues => {
   const result: InputValues = {};
   heads.forEach((head) => {
+    const out = head.out;
+    if (!out) return;
+    if (out === "*") {
+      Object.assign(result, outputs);
+      return;
+    }
     const output = outputs[head.out];
     if (output) result[head.in] = outputs[head.out];
   });

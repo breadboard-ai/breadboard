@@ -39,8 +39,8 @@
                 "to": "search",
                 "in": "text"
               },
-              { "from": "search", "to": "output" },
-              { "from": "math", "to": "output" }
+              { "from": "search", "out": "text", "to": "output", "in": "text" },
+              { "from": "math", "out": "text", "to": "output", "in": "text" }
             ],
             "nodes": [
               { "id": "input", "type": "input" },
