@@ -9,6 +9,7 @@ import { traverseGraph } from "@google-labs/graph-runner";
 import type {
   GraphTraversalContext,
   InputValues,
+  LogData,
   NodeHandlers,
   OutputValues,
 } from "@google-labs/graph-runner";
@@ -27,8 +28,8 @@ class ImperativeRunnerContext implements GraphTraversalContext {
     private readonly progress: (s: string) => void = console.log
   ) {}
 
-  log(s: string) {
-    this.progress(s);
+  async log(data: LogData) {
+    this.progress(JSON.stringify(data));
   }
 
   async requestExternalInput(_inputs: InputValues): Promise<OutputValues> {

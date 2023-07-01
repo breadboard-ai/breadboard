@@ -16,7 +16,7 @@
     "@typescript-eslint/parser": "^5.56.0",
     "ava": "^5.2.0",
     "eslint": "^8.36.0",
-    "turbo": "^1.10.3",
+    "turbo": "^1.10.7",
     "typescript": "^5.0.4"
   },
   "workspaces": [
