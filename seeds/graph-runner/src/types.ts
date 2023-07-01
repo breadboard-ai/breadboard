@@ -100,8 +100,8 @@ export interface GraphTraversalContext {
   provideExternalOutput: (inputs: InputValues) => Promise<void>;
 
   /**
-   * This is the nodes are able to handle slotted content. Inovking this method
-   * will traverse the graph with the given slot name, supplying given inputs.
+   * This is how nodes are able to handle slotted content. Inovking this method
+   * will traverse the graph with the given slot name, with provided inputs.
    * @param slot the name of the slotted subgraph the node wants to traverse.
    * @param inputs the inputs supplied to the subgraph.
    * @returns results of the traversl.
@@ -113,7 +113,7 @@ export interface GraphTraversalContext {
 
   /**
    * A logging facility. Currently, `traverseGraph` uses it to log
-   * various interesting events, and it's quite chatting. Good for
+   * various interesting events, and it's quite chatty. Good for
    * "see details" logs and is very disorganized at the moment.
    * @todo make logging more organized.
    */
