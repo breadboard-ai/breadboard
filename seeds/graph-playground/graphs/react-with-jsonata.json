@@ -3,18 +3,12 @@
     {
       "from": "get-graph",
       "out": "graph",
-      "to": "get-tools-object",
-      "in": "json"
-    },
-    {
-      "from": "get-tools-object",
-      "out": "result",
       "to": "get-tools",
       "in": "json"
     },
     {
-      "from": "get-tools-object",
-      "out": "result",
+      "from": "get-graph",
+      "out": "graph",
       "to": "get-tool-descriptions",
       "in": "json"
     },
@@ -132,22 +126,17 @@
     },
     { "id": "get-graph", "type": "reflect" },
     {
-      "id": "get-tools-object",
-      "type": "jsonata",
-      "configuration": {
-        "expression": "nodes.configuration.description.%.%.{id: configuration.description} ~> $merge"
-      }
-    },
-    {
       "id": "get-tools",
       "type": "jsonata",
-      "configuration": { "expression": "$keys() ~> $join(', ')" }
+      "configuration": {
+        "expression": "nodes.configuration.description.%.%.[id] ~> $join(', ')"
+      }
     },
     {
       "id": "get-tool-descriptions",
       "type": "jsonata",
       "configuration": {
-        "expression": "$zip($keys(), $.*) ~> $map(function($v, $k) { $join($v, ': ') }) ~> $join('\n')"
+        "expression": "nodes.configuration.description.%.%.[id &  ': ' & configuration.description] ~> $join('\n')"
       }
     },
     {

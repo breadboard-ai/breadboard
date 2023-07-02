@@ -5,13 +5,10 @@
 %%{init: {'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}}%%
 graph TD;
 getgraph["reflect
-id='get-graph'"] -- graph:json --> gettoolsobject["jsonata
-id='get-tools-object'"]
-gettoolsobject["jsonata
-id='get-tools-object'"] -- result:json --> gettools["jsonata
+id='get-graph'"] -- graph:json --> gettools["jsonata
 id='get-tools'"]
-gettoolsobject["jsonata
-id='get-tools-object'"] -- result:json --> gettooldescriptions["jsonata
+getgraph["reflect
+id='get-graph'"] -- graph:json --> gettooldescriptions["jsonata
 id='get-tool-descriptions'"]
 gettools["jsonata
 id='get-tools'"] -- result:tools --> reacttemplate["prompt-template
