@@ -1,14 +1,26 @@
 {
   "edges": [
     {
+      "from": "get-graph",
+      "out": "graph",
+      "to": "get-tools",
+      "in": "json"
+    },
+    {
+      "from": "get-graph",
+      "out": "graph",
+      "to": "get-tool-descriptions",
+      "in": "json"
+    },
+    {
       "from": "get-tools",
-      "out": "tools",
+      "out": "result",
       "to": "react-template",
       "in": "tools"
     },
     {
       "from": "get-tool-descriptions",
-      "out": "descriptions",
+      "out": "result",
       "to": "react-template",
       "in": "descriptions"
     },
@@ -18,10 +30,6 @@
       "to": "pass",
       "in": "text",
       "optional": true
-    },
-    {
-      "from": "pass",
-      "to": "get-tools"
     },
     {
       "from": "pass",
@@ -38,7 +46,7 @@
     },
     {
       "from": "pass",
-      "to": "get-tool-descriptions"
+      "to": "get-graph"
     },
     {
       "from": "react-template",
@@ -50,7 +58,7 @@
       "from": "react-completion",
       "out": "completion",
       "to": "parse-completion",
-      "in": "completion"
+      "in": "json"
     },
     {
       "from": "react-completion",
@@ -71,12 +79,6 @@
     },
     {
       "from": "remember-observation",
-      "out": "context",
-      "to": "print",
-      "in": "text"
-    },
-    {
-      "from": "print",
       "to": "pass"
     },
     {
@@ -110,48 +112,37 @@
       }
     },
     {
+      "id": "get-graph",
+      "type": "slot",
+      "configuration": { "slot": "tools", "graph": true }
+    },
+    {
       "id": "get-tools",
-      "type": "react-helper",
-      "configuration": { "method": "getTools" }
+      "type": "jsonata",
+      "configuration": {
+        "expression": "nodes.configuration.description.%.%.[id] ~> $join(', ')"
+      }
     },
     {
       "id": "get-tool-descriptions",
-      "type": "react-helper",
-      "configuration": { "method": "getToolDescriptions" }
+      "type": "jsonata",
+      "configuration": {
+        "expression": "nodes.configuration.description.%.%.[id &  ': ' & configuration.description] ~> $join('\n')"
+      }
     },
     {
       "id": "parse-completion",
-      "type": "react-helper",
-      "configuration": { "method": "parseCompletion", "args": ["completion"] }
+      "type": "jsonata",
+      "configuration": {
+        "expression": "($f := function($line, $str) { $contains($line, $str) ? $substring($line, $length($str)) }; $merge(($split('\n')[[1..2]]) @ $line.$.{'action': $f($line, 'Action: '), 'input': $f($line, 'Action Input: '),'answer': $f($line, 'Final Answer: ') }).{ action: input,'answer': answer})",
+        "raw": true
+      }
     },
-    {
-      "id": "print",
-      "type": "output"
-    },
-    {
-      "id": "last-print",
-      "type": "output"
-    },
-    {
-      "id": "pass",
-      "type": "passthrough"
-    },
-    {
-      "id": "remember-question",
-      "type": "local-memory"
-    },
-    {
-      "id": "remember-observation",
-      "type": "local-memory"
-    },
-    {
-      "id": "remember-thought",
-      "type": "local-memory"
-    },
-    {
-      "id": "tools-slot",
-      "type": "slot",
-      "configuration": { "slot": "tools" }
-    }
+    { "id": "last-print", "type": "output" },
+    { "id": "pass", "type": "passthrough" },
+    { "id": "remember-question", "type": "local-memory" },
+    { "id": "remember-observation", "type": "local-memory" },
+    { "id": "remember-thought", "type": "local-memory" },
+    { "id": "tools-slot", "type": "slot", "configuration": { "slot": "tools" } }
   ]
 }

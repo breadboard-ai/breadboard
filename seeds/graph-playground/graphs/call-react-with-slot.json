@@ -25,6 +25,18 @@
               },
               {
                 "from": "input",
+                "out": "graph",
+                "to": "get-graph",
+                "in": "none"
+              },
+              {
+                "from": "get-graph",
+                "out": "graph",
+                "to": "graph-out",
+                "in": "graph"
+              },
+              {
+                "from": "input",
                 "out": "search",
                 "to": "search",
                 "in": "text"
@@ -35,16 +47,24 @@
             "nodes": [
               { "id": "input", "type": "input" },
               { "id": "output", "type": "output" },
+              { "id": "graph-out", "type": "output" },
               {
                 "id": "search",
                 "type": "include",
-                "configuration": { "path": "./graphs/search-summarize.json" }
+                "configuration": {
+                  "path": "./graphs/search-summarize.json",
+                  "description": "Useful for when you need to find facts. Input should be a search query."
+                }
               },
               {
                 "id": "math",
                 "type": "include",
-                "configuration": { "path": "./graphs/math.json" }
-              }
+                "configuration": {
+                  "path": "./graphs/math.json",
+                  "description": "Useful for when you need to solve math problems. Input should be a math problem to be solved."
+                }
+              },
+              { "id": "get-graph", "type": "reflect" }
             ]
           }
         }

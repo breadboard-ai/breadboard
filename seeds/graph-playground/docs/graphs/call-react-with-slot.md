@@ -15,6 +15,12 @@ input[/"input
 id='input'"/]:::input -- math:text --> math[["include
 id='math'"]]:::include
 input[/"input
+id='input'"/]:::input -- graph:none --> getgraph["reflect
+id='get-graph'"]
+getgraph["reflect
+id='get-graph'"] -- graph:graph --> graphout{{"output
+id='graph-out'"}}:::output
+input[/"input
 id='input'"/]:::input -- search:text --> search[["include
 id='search'"]]:::include
 search[["include

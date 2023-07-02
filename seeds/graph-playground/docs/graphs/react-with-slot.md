@@ -4,18 +4,21 @@
 ```mermaid
 %%{init: {'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}}%%
 graph TD;
-gettools["react-helper
-id='get-tools'"] -- tools:tools --> reacttemplate["prompt-template
+getgraph(("slot
+id='get-graph'")):::slot -- graph:json --> gettools["jsonata
+id='get-tools'"]
+getgraph(("slot
+id='get-graph'")):::slot -- graph:json --> gettooldescriptions["jsonata
+id='get-tool-descriptions'"]
+gettools["jsonata
+id='get-tools'"] -- result:tools --> reacttemplate["prompt-template
 id='react-template'"]
-gettooldescriptions["react-helper
-id='get-tool-descriptions'"] -- descriptions:descriptions --> reacttemplate["prompt-template
+gettooldescriptions["jsonata
+id='get-tool-descriptions'"] -- result:descriptions --> reacttemplate["prompt-template
 id='react-template'"]
 askuser[/"input
 id='ask-user'"/]:::input -. text:text .-> pass(("passthrough
 id='pass'")):::passthrough
-pass(("passthrough
-id='pass'")):::passthrough --> gettools["react-helper
-id='get-tools'"]
 pass(("passthrough
 id='pass'")):::passthrough -. text:Question .-> rememberquestion["local-memory
 id='remember-question'"]
@@ -23,30 +26,27 @@ rememberquestion["local-memory
 id='remember-question'"] -- context:memory --> reacttemplate["prompt-template
 id='react-template'"]
 pass(("passthrough
-id='pass'")):::passthrough --> gettooldescriptions["react-helper
-id='get-tool-descriptions'"]
+id='pass'")):::passthrough -- text:graph --> getgraph(("slot
+id='get-graph'")):::slot
 reacttemplate["prompt-template
 id='react-template'"] -- prompt:text --> reactcompletion["text-completion
 id='react-completion'"]
 reactcompletion["text-completion
-id='react-completion'"] -- completion:completion --> parsecompletion["react-helper
+id='react-completion'"] -- completion:json --> parsecompletion["jsonata
 id='parse-completion'"]
 reactcompletion["text-completion
 id='react-completion'"] -- completion:Thought --> rememberthought["local-memory
 id='remember-thought'"]
-parsecompletion["react-helper
+parsecompletion["jsonata
 id='parse-completion'"] --> toolsslot(("slot
 id='tools-slot'")):::slot
 toolsslot(("slot
 id='tools-slot'")):::slot -- text:Observation --> rememberobservation["local-memory
 id='remember-observation'"]
 rememberobservation["local-memory
-id='remember-observation'"] -- context:text --> print{{"output
-id='print'"}}:::output
-print{{"output
-id='print'"}}:::output --> pass(("passthrough
+id='remember-observation'"] --> pass(("passthrough
 id='pass'")):::passthrough
-parsecompletion["react-helper
+parsecompletion["jsonata
 id='parse-completion'"] -- answer:text --> lastprint{{"output
 id='last-print'"}}:::output
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
