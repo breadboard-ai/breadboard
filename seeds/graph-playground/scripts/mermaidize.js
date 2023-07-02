@@ -41,21 +41,25 @@ const substitute = (template, values) => {
 
 const shape = (descriptor) => {
   const node = descriptor.id;
+  // Mermaid gets confused by hyphens in node ids
+  // For example `get-graph` id will throw a syntax error, because it thinks
+  // that it sees the `graph` token.
+  const nodeId = node.replace(/-/g, "");
   const nodeType = descriptor.type;
   const text = `"${nodeType}\nid='${node}'"`;
   switch (nodeType) {
     case "include":
-      return `${node}[[${text}]]:::include`;
+      return `${nodeId}[[${text}]]:::include`;
     case "slot":
-      return `${node}((${text})):::slot`;
+      return `${nodeId}((${text})):::slot`;
     case "passthrough":
-      return `${node}((${text})):::passthrough`;
+      return `${nodeId}((${text})):::passthrough`;
     case "input":
-      return `${node}[/${text}/]:::input`;
+      return `${nodeId}[/${text}/]:::input`;
     case "output":
-      return `${node}{{${text}}}:::output`;
+      return `${nodeId}{{${text}}}:::output`;
     default:
-      return `${node}[${text}]`;
+      return `${nodeId}[${text}]`;
   }
 };
 

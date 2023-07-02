@@ -5,18 +5,18 @@
 %%{init: {'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}}%%
 graph TD;
 input[/"input
-id='input'"/]:::input -- text:question --> summarize-results["prompt-template
+id='input'"/]:::input -- text:question --> summarizeresults["prompt-template
 id='summarize-results'"]
 input[/"input
 id='input'"/]:::input -- text:query --> search["google-search
 id='search'"]
 search["google-search
-id='search'"] -- results:context --> summarize-results["prompt-template
+id='search'"] -- results:context --> summarizeresults["prompt-template
 id='summarize-results'"]
-summarize-results["prompt-template
-id='summarize-results'"] -- prompt:text --> text-completion-1["text-completion
+summarizeresults["prompt-template
+id='summarize-results'"] -- prompt:text --> textcompletion1["text-completion
 id='text-completion-1'"]
-text-completion-1["text-completion
+textcompletion1["text-completion
 id='text-completion-1'"] -- completion:text --> print{{"output
 id='print'"}}:::output
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000

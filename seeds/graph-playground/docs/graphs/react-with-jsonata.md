@@ -4,56 +4,59 @@
 ```mermaid
 %%{init: {'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}}%%
 graph TD;
-get-tools-object["react-helper
-id='get-tools-object'"] -- tools:json --> get-tools["jsonata
+getgraph["reflect
+id='get-graph'"] -- graph:json --> gettoolsobject["jsonata
+id='get-tools-object'"]
+gettoolsobject["jsonata
+id='get-tools-object'"] -- result:json --> gettools["jsonata
 id='get-tools'"]
-get-tools-object["react-helper
-id='get-tools-object'"] -- tools:json --> get-tool-descriptions["jsonata
+gettoolsobject["jsonata
+id='get-tools-object'"] -- result:json --> gettooldescriptions["jsonata
 id='get-tool-descriptions'"]
-get-tools["jsonata
-id='get-tools'"] -- result:tools --> react-template["prompt-template
+gettools["jsonata
+id='get-tools'"] -- result:tools --> reacttemplate["prompt-template
 id='react-template'"]
-get-tool-descriptions["jsonata
-id='get-tool-descriptions'"] -- result:descriptions --> react-template["prompt-template
+gettooldescriptions["jsonata
+id='get-tool-descriptions'"] -- result:descriptions --> reacttemplate["prompt-template
 id='react-template'"]
-ask-user[/"input
+askuser[/"input
 id='ask-user'"/]:::input -. text:text .-> pass(("passthrough
 id='pass'")):::passthrough
 pass(("passthrough
-id='pass'")):::passthrough -. text:Question .-> remember-question["local-memory
+id='pass'")):::passthrough -. text:Question .-> rememberquestion["local-memory
 id='remember-question'"]
-remember-question["local-memory
-id='remember-question'"] -- context:memory --> react-template["prompt-template
+rememberquestion["local-memory
+id='remember-question'"] -- context:memory --> reacttemplate["prompt-template
 id='react-template'"]
 pass(("passthrough
-id='pass'")):::passthrough --> get-tools-object["react-helper
-id='get-tools-object'"]
-react-template["prompt-template
-id='react-template'"] -- prompt:text --> react-completion["text-completion
+id='pass'")):::passthrough --> getgraph["reflect
+id='get-graph'"]
+reacttemplate["prompt-template
+id='react-template'"] -- prompt:text --> reactcompletion["text-completion
 id='react-completion'"]
-react-completion["text-completion
-id='react-completion'"] -- completion:completion --> parse-completion["react-helper
+reactcompletion["text-completion
+id='react-completion'"] -- completion:completion --> parsecompletion["react-helper
 id='parse-completion'"]
-react-completion["text-completion
-id='react-completion'"] -- completion:Thought --> remember-thought["local-memory
+reactcompletion["text-completion
+id='react-completion'"] -- completion:Thought --> rememberthought["local-memory
 id='remember-thought'"]
-parse-completion["react-helper
+parsecompletion["react-helper
 id='parse-completion'"] -- search:text --> search[["include
 id='search'"]]:::include
-parse-completion["react-helper
+parsecompletion["react-helper
 id='parse-completion'"] -- math:text --> math[["include
 id='math'"]]:::include
 math[["include
-id='math'"]]:::include -- text:Observation --> remember-observation["local-memory
+id='math'"]]:::include -- text:Observation --> rememberobservation["local-memory
 id='remember-observation'"]
 search[["include
-id='search'"]]:::include -- text:Observation --> remember-observation["local-memory
+id='search'"]]:::include -- text:Observation --> rememberobservation["local-memory
 id='remember-observation'"]
-remember-observation["local-memory
+rememberobservation["local-memory
 id='remember-observation'"] --> pass(("passthrough
 id='pass'")):::passthrough
-parse-completion["react-helper
-id='parse-completion'"] -- answer:text --> last-print{{"output
+parsecompletion["react-helper
+id='parse-completion'"] -- answer:text --> lastprint{{"output
 id='last-print'"}}:::output
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000

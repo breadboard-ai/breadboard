@@ -114,6 +114,21 @@ export interface GraphTraversalContext {
   ) => Promise<OutputValues>;
 
   /**
+   * This is only called by the `traverseGraph` function.
+   * @todo make this non-callable by other consumers of context.
+   * @param graph The graph to set as the current graph.
+   * @returns nothing
+   */
+  setCurrentGraph: (graph: GraphDescriptor) => Promise<void>;
+
+  /**
+   * This is how a node is able to see the graph that it is a part of.
+   * @returns the `GraphDescriptor` of the graph that is currently being
+   * traversed.
+   */
+  getCurrentGraph: () => Promise<GraphDescriptor>;
+
+  /**
    * A logging facility. Currently, `traverseGraph` uses it to log
    * various interesting events, and it's quite chatty. Good for
    * "see details" logs and is very disorganized at the moment.

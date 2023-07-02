@@ -101,6 +101,10 @@ const computeMissingInputs = (
   return requiredInputs.filter((input) => !inputsWithConfiguration.has(input));
 };
 
+const deepCopy = (graph: GraphDescriptor): GraphDescriptor => {
+  return JSON.parse(JSON.stringify(graph));
+};
+
 /**
  * A slightly less dumb, but incredibly unkempt edge follower.
  * @todo implement nicer traversal, something like a topology sort with feedback problem resolution.
@@ -114,6 +118,8 @@ export const traverseGraph = async (
   const source = "traverseGraph";
   const state = new StateManager();
   const log = context.log;
+
+  context.setCurrentGraph(deepCopy(graph));
 
   /**
    * Tails: a map of all outgoing edges, keyed by node id.

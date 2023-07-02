@@ -28,6 +28,7 @@ class IncludeContext implements GraphTraversalContext {
   values: OutputValues = {};
   handlers: NodeHandlers;
   slotted: SlottedGraphs;
+  #graph?: GraphDescriptor;
 
   constructor(
     private inputs: InputValues,
@@ -67,6 +68,14 @@ class IncludeContext implements GraphTraversalContext {
     });
     await traverseGraph(includeContext, graph);
     return includeContext.values;
+  }
+
+  async setCurrentGraph(graph: GraphDescriptor): Promise<void> {
+    this.#graph = graph;
+  }
+
+  async getCurrentGraph(): Promise<GraphDescriptor> {
+    return this.#graph as GraphDescriptor;
   }
 }
 

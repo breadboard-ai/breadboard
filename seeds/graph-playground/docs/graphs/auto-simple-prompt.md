@@ -4,11 +4,11 @@
 ```mermaid
 %%{init: {'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}}%%
 graph TD;
-prompt-template-1["prompt-template
-id='prompt-template-1'"] -- prompt:text --> text-completion-1["text-completion
+prompttemplate1["prompt-template
+id='prompt-template-1'"] -- prompt:text --> textcompletion1["text-completion
 id='text-completion-1'"]
-text-completion-1["text-completion
-id='text-completion-1'"] -- completion:text --> output-1{{"output
+textcompletion1["text-completion
+id='text-completion-1'"] -- completion:text --> output1{{"output
 id='output-1'"}}:::output
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000

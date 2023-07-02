@@ -4,46 +4,46 @@
 ```mermaid
 %%{init: {'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}}%%
 graph TD;
-debate-topic[/"input
-id='debate-topic'"/]:::input -- text:topic --> local-memory-1["local-memory
+debatetopic[/"input
+id='debate-topic'"/]:::input -- text:topic --> localmemory1["local-memory
 id='local-memory-1'"]
-local-memory-1["local-memory
+localmemory1["local-memory
 id='local-memory-1'"] -- context:context --> albert["prompt-template
 id='albert'"]
 albert["prompt-template
-id='albert'"] -- prompt:text --> albert-completion["text-completion
+id='albert'"] -- prompt:text --> albertcompletion["text-completion
 id='albert-completion'"]
-albert-completion["text-completion
-id='albert-completion'"] -- completion:context --> albert-voice["prompt-template
+albertcompletion["text-completion
+id='albert-completion'"] -- completion:context --> albertvoice["prompt-template
 id='albert-voice'"]
-albert-voice["prompt-template
-id='albert-voice'"] -- prompt:text --> albert-voice-completion["text-completion
+albertvoice["prompt-template
+id='albert-voice'"] -- prompt:text --> albertvoicecompletion["text-completion
 id='albert-voice-completion'"]
-albert-voice-completion["text-completion
-id='albert-voice-completion'"] -- completion:text --> output-1{{"output
+albertvoicecompletion["text-completion
+id='albert-voice-completion'"] -- completion:text --> output1{{"output
 id='output-1'"}}:::output
-albert-completion["text-completion
-id='albert-completion'"] -- completion:Albert --> local-memory-2["local-memory
+albertcompletion["text-completion
+id='albert-completion'"] -- completion:Albert --> localmemory2["local-memory
 id='local-memory-2'"]
-local-memory-2["local-memory
+localmemory2["local-memory
 id='local-memory-2'"] -- context:context --> friedrich["prompt-template
 id='friedrich'"]
 friedrich["prompt-template
-id='friedrich'"] -- prompt:text --> friedrich-completion["text-completion
+id='friedrich'"] -- prompt:text --> friedrichcompletion["text-completion
 id='friedrich-completion'"]
-friedrich-completion["text-completion
-id='friedrich-completion'"] -- completion:context --> friedrich-voice["prompt-template
+friedrichcompletion["text-completion
+id='friedrich-completion'"] -- completion:context --> friedrichvoice["prompt-template
 id='friedrich-voice'"]
-friedrich-voice["prompt-template
-id='friedrich-voice'"] -- prompt:text --> friedrich-voice-completion["text-completion
+friedrichvoice["prompt-template
+id='friedrich-voice'"] -- prompt:text --> friedrichvoicecompletion["text-completion
 id='friedrich-voice-completion'"]
-friedrich-voice-completion["text-completion
-id='friedrich-voice-completion'"] -- completion:text --> output-1{{"output
+friedrichvoicecompletion["text-completion
+id='friedrich-voice-completion'"] -- completion:text --> output1{{"output
 id='output-1'"}}:::output
-friedrich-completion["text-completion
-id='friedrich-completion'"] -- completion:Friedrich --> local-memory-3["local-memory
+friedrichcompletion["text-completion
+id='friedrich-completion'"] -- completion:Friedrich --> localmemory3["local-memory
 id='local-memory-3'"]
-local-memory-3["local-memory
+localmemory3["local-memory
 id='local-memory-3'"] -- context:context --> albert["prompt-template
 id='albert'"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000

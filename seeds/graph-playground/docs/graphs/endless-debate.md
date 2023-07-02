@@ -4,34 +4,34 @@
 ```mermaid
 %%{init: {'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}}%%
 graph TD;
-debate-topic[/"input
-id='debate-topic'"/]:::input -- text:topic --> local-memory-1["local-memory
+debatetopic[/"input
+id='debate-topic'"/]:::input -- text:topic --> localmemory1["local-memory
 id='local-memory-1'"]
-local-memory-1["local-memory
+localmemory1["local-memory
 id='local-memory-1'"] -- context:context --> albert["prompt-template
 id='albert'"]
 albert["prompt-template
-id='albert'"] -- prompt:text --> text-completion-1["text-completion
+id='albert'"] -- prompt:text --> textcompletion1["text-completion
 id='text-completion-1'"]
-text-completion-1["text-completion
-id='text-completion-1'"] -- completion:text --> output-1{{"output
+textcompletion1["text-completion
+id='text-completion-1'"] -- completion:text --> output1{{"output
 id='output-1'"}}:::output
-text-completion-1["text-completion
-id='text-completion-1'"] -- completion:Albert --> local-memory-2["local-memory
+textcompletion1["text-completion
+id='text-completion-1'"] -- completion:Albert --> localmemory2["local-memory
 id='local-memory-2'"]
-local-memory-2["local-memory
+localmemory2["local-memory
 id='local-memory-2'"] -- context:context --> friedrich["prompt-template
 id='friedrich'"]
 friedrich["prompt-template
-id='friedrich'"] -- prompt:text --> text-completion-2["text-completion
+id='friedrich'"] -- prompt:text --> textcompletion2["text-completion
 id='text-completion-2'"]
-text-completion-2["text-completion
-id='text-completion-2'"] -- completion:text --> output-1{{"output
+textcompletion2["text-completion
+id='text-completion-2'"] -- completion:text --> output1{{"output
 id='output-1'"}}:::output
-text-completion-2["text-completion
-id='text-completion-2'"] -- completion:Friedrich --> local-memory-3["local-memory
+textcompletion2["text-completion
+id='text-completion-2'"] -- completion:Friedrich --> localmemory3["local-memory
 id='local-memory-3'"]
-local-memory-3["local-memory
+localmemory3["local-memory
 id='local-memory-3'"] -- context:context --> albert["prompt-template
 id='albert'"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000

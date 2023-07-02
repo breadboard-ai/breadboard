@@ -23,6 +23,7 @@ import textCompletion from "./nodes/text-completion.js";
 import localMemory from "./nodes/local-memory.js";
 import javascript from "./nodes/run-javascript.js";
 import googleSearch from "./nodes/google-search.js";
+import reflect from "./nodes/reflect.js";
 
 /**
  * A node-producing wrapper to create custom nodes.
@@ -37,6 +38,7 @@ export const coreHandlers = {
   vars,
   slot,
   jsonata,
+  reflect,
   "prompt-template": promptTemplate,
   "text-completion": textCompletion,
   "local-memory": localMemory,

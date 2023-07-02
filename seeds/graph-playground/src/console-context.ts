@@ -6,11 +6,13 @@ import type {
   OutputValues,
   GraphTraversalContext,
   LogData,
+  GraphDescriptor,
 } from "@google-labs/graph-runner";
 import { Logger } from "./logger.js";
 
 export class ConsoleContext implements GraphTraversalContext {
   logger: Logger;
+  #graph?: GraphDescriptor;
 
   constructor(public handlers: NodeHandlers) {
     const root = new URL("../../", import.meta.url);
@@ -53,5 +55,13 @@ export class ConsoleContext implements GraphTraversalContext {
     throw new Error(
       "Requesting slot output is not supported in the console context"
     );
+  }
+
+  async setCurrentGraph(graph: GraphDescriptor): Promise<void> {
+    this.#graph = graph;
+  }
+
+  async getCurrentGraph(): Promise<GraphDescriptor> {
+    return this.#graph as GraphDescriptor;
   }
 }

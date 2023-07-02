@@ -1,14 +1,20 @@
 {
   "edges": [
     {
+      "from": "get-graph",
+      "out": "graph",
+      "to": "get-tools-object",
+      "in": "json"
+    },
+    {
       "from": "get-tools-object",
-      "out": "tools",
+      "out": "result",
       "to": "get-tools",
       "in": "json"
     },
     {
       "from": "get-tools-object",
-      "out": "tools",
+      "out": "result",
       "to": "get-tool-descriptions",
       "in": "json"
     },
@@ -46,7 +52,7 @@
     },
     {
       "from": "pass",
-      "to": "get-tools-object"
+      "to": "get-graph"
     },
     {
       "from": "react-template",
@@ -124,10 +130,13 @@
         "stop-sequences": ["\nObservation"]
       }
     },
+    { "id": "get-graph", "type": "reflect" },
     {
       "id": "get-tools-object",
-      "type": "react-helper",
-      "configuration": { "method": "getToolsObject" }
+      "type": "jsonata",
+      "configuration": {
+        "expression": "nodes.configuration.description.%.%.{id: configuration.description} ~> $merge"
+      }
     },
     {
       "id": "get-tools",
@@ -161,12 +170,18 @@
     {
       "id": "search",
       "type": "include",
-      "configuration": { "path": "./graphs/search-summarize.json" }
+      "configuration": {
+        "path": "./graphs/search-summarize.json",
+        "description": "Useful for when you need to find facts. Input should be a search query."
+      }
     },
     {
       "id": "math",
       "type": "include",
-      "configuration": { "path": "./graphs/math.json" }
+      "configuration": {
+        "path": "./graphs/math.json",
+        "description": "Useful for when you need to solve math problems. Input should be a math problem to be solved."
+      }
     },
     {
       "id": "remember-observation",
