@@ -32,15 +32,15 @@ reacttemplate["prompt-template
 id='react-template'"] -- prompt:text --> reactcompletion["text-completion
 id='react-completion'"]
 reactcompletion["text-completion
-id='react-completion'"] -- completion:completion --> parsecompletion["react-helper
+id='react-completion'"] -- completion:json --> parsecompletion["jsonata
 id='parse-completion'"]
 reactcompletion["text-completion
 id='react-completion'"] -- completion:Thought --> rememberthought["local-memory
 id='remember-thought'"]
-parsecompletion["react-helper
+parsecompletion["jsonata
 id='parse-completion'"] -- search:text --> search[["include
 id='search'"]]:::include
-parsecompletion["react-helper
+parsecompletion["jsonata
 id='parse-completion'"] -- math:text --> math[["include
 id='math'"]]:::include
 math[["include
@@ -52,7 +52,7 @@ id='remember-observation'"]
 rememberobservation["local-memory
 id='remember-observation'"] --> pass(("passthrough
 id='pass'")):::passthrough
-parsecompletion["react-helper
+parsecompletion["jsonata
 id='parse-completion'"] -- answer:text --> lastprint{{"output
 id='last-print'"}}:::output
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000

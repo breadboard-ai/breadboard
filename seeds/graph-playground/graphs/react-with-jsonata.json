@@ -58,7 +58,7 @@
       "from": "react-completion",
       "out": "completion",
       "to": "parse-completion",
-      "in": "completion"
+      "in": "json"
     },
     {
       "from": "react-completion",
@@ -141,8 +141,11 @@
     },
     {
       "id": "parse-completion",
-      "type": "react-helper",
-      "configuration": { "method": "parseCompletion", "args": ["completion"] }
+      "type": "jsonata",
+      "configuration": {
+        "expression": "($f := function($line, $str) { $contains($line, $str) ? $substring($line, $length($str)) }; $merge(($split('\n')[[1..2]]) @ $line.$.{'action': $f($line, 'Action: '), 'input': $f($line, 'Action Input: '),'answer': $f($line, 'Final Answer: ') }).{ action: input,'answer': answer})",
+        "raw": true
+      }
     },
     {
       "id": "last-print",
