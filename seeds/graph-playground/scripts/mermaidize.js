@@ -71,10 +71,10 @@ const describeEdge = (edge, nodeMap) => {
   const input = edge.in;
   const output = edge.out;
   const optional = edge.optional;
-  const once = edge.once;
+  const constant = edge.constant;
   if (output && input) {
     if (optional) return `${fromNode} -. ${output}:${input} .-> ${toNode}`;
-    if (once) return `${fromNode} -- ${output}:${input} --o ${toNode}`;
+    if (constant) return `${fromNode} -- ${output}:${input} --o ${toNode}`;
     return `${fromNode} -- ${output}:${input} --> ${toNode}`;
   }
   return `${fromNode} --> ${toNode}`;

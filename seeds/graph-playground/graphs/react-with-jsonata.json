@@ -17,14 +17,14 @@
       "out": "result",
       "to": "react-template",
       "in": "tools",
-      "once": true
+      "constant": true
     },
     {
       "from": "get-tool-descriptions",
       "out": "result",
       "to": "react-template",
       "in": "descriptions",
-      "once": true
+      "constant": true
     },
     {
       "from": "ask-user",

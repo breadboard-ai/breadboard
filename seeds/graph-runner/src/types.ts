@@ -41,15 +41,16 @@ export interface NodeDescriptor {
 }
 
 export interface Edge {
-  /**
-   * The designated first edge in the graph.
-   */
   from: NodeIdentifier;
   to: NodeIdentifier;
   in: InputIdentifier;
   out: OutputIdentifier;
   optional?: boolean;
-  once?: boolean;
+  /**
+   * If true, this edge acts as a constant: the data that passes through it
+   * remains available even after the node has consumed it.
+   */
+  constant?: boolean;
 }
 
 export interface GraphDescriptor {

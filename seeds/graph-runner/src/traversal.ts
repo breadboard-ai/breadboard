@@ -55,16 +55,16 @@ type StateMap = Map<string, Map<string, OutputValues>>;
 
 class StateManager {
   #state: StateMap = new Map();
-  #onces: StateMap = new Map();
+  #constants: StateMap = new Map();
 
-  #splitOutOnces(edges: Edge[]): [Edge[], Edge[]] {
-    const onces: Edge[] = [];
+  #splitOutConstants(edges: Edge[]): [Edge[], Edge[]] {
+    const constants: Edge[] = [];
     const rest: Edge[] = [];
     edges.forEach((edge) => {
-      if (edge.once) onces.push(edge);
+      if (edge.constant) constants.push(edge);
       else rest.push(edge);
     });
-    return [onces, rest];
+    return [constants, rest];
   }
 
   #addToState(state: StateMap, opportunities: Edge[], outputs: OutputValues) {
@@ -81,26 +81,26 @@ class StateManager {
 
   update(node: NodeIdentifier, opportunities: Edge[], outputs: OutputValues) {
     // 1. Clear entries for the current node.
-    // Notice, we're not clearing the "once" entries. Those are basically there
-    // forever -- or until the edge is traversed again.
+    // Notice, we're not clearing the "constants" entries. Those are basically
+    // there forever -- or until the edge is traversed again.
     this.#state.delete(node);
-    const [onces, state] = this.#splitOutOnces(opportunities);
+    const [constants, state] = this.#splitOutConstants(opportunities);
     // 2. Add entries for each opportunity.
     this.#addToState(this.#state, state, outputs);
-    this.#addToState(this.#onces, onces, outputs);
+    this.#addToState(this.#constants, constants, outputs);
   }
 
   getAvailableOutputs(node: NodeIdentifier) {
     type EdgeMap = Map<NodeIdentifier, OutputValues>;
-    const onceEdges: EdgeMap = this.#onces.get(node) || new Map();
+    const constantEdges: EdgeMap = this.#constants.get(node) || new Map();
     const stateEdges: EdgeMap = this.#state.get(node) || new Map();
     const result: OutputValues = {};
-    // 1. Assign all "once" outputs.
-    for (const outputs of onceEdges.values()) {
+    // 1. Assign all "constants" outputs.
+    for (const outputs of constantEdges.values()) {
       Object.assign(result, outputs);
     }
     // 2. Assign all other outputs.
-    // This allows other outputs to override "once" outputs.
+    // This allows other outputs to override "constants" outputs.
     for (const outputs of stateEdges.values()) {
       Object.assign(result, outputs);
     }
