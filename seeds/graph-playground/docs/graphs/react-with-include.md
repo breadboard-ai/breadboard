@@ -5,26 +5,17 @@
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}}%%
 graph TD;
 gettools["react-helper
-id='get-tools'"] -- tools:tools --> reacttemplate["prompt-template
+id='get-tools'"] -- tools:tools --o reacttemplate["prompt-template
 id='react-template'"]
 gettooldescriptions["react-helper
-id='get-tool-descriptions'"] -- descriptions:descriptions --> reacttemplate["prompt-template
+id='get-tool-descriptions'"] -- descriptions:descriptions --o reacttemplate["prompt-template
 id='react-template'"]
 askuser[/"input
-id='ask-user'"/]:::input -. text:text .-> pass(("passthrough
-id='pass'")):::passthrough
-pass(("passthrough
-id='pass'")):::passthrough --> gettools["react-helper
-id='get-tools'"]
-pass(("passthrough
-id='pass'")):::passthrough -. text:Question .-> rememberquestion["local-memory
+id='ask-user'"/]:::input -- text:Question --> rememberquestion["local-memory
 id='remember-question'"]
 rememberquestion["local-memory
-id='remember-question'"] -- context:memory --> reacttemplate["prompt-template
+id='remember-question'"] -- context:memory --o reacttemplate["prompt-template
 id='react-template'"]
-pass(("passthrough
-id='pass'")):::passthrough --> gettooldescriptions["react-helper
-id='get-tool-descriptions'"]
 reacttemplate["prompt-template
 id='react-template'"] -- prompt:text --> reactcompletion["text-completion
 id='react-completion'"]
@@ -47,11 +38,8 @@ search[["include
 id='search'"]]:::include -- text:Observation --> rememberobservation["local-memory
 id='remember-observation'"]
 rememberobservation["local-memory
-id='remember-observation'"] -- context:text --> print{{"output
-id='print'"}}:::output
-print{{"output
-id='print'"}}:::output --> pass(("passthrough
-id='pass'")):::passthrough
+id='remember-observation'"] -- context:memory --> reacttemplate["prompt-template
+id='react-template'"]
 parsecompletion["react-helper
 id='parse-completion'"] -- answer:text --> lastprint{{"output
 id='last-print'"}}:::output

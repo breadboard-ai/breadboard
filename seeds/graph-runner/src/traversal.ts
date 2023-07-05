@@ -113,10 +113,13 @@ const computeMissingInputs = (
   inputs: InputValues,
   current: NodeDescriptor
 ) => {
-  const requiredInputs: string[] = heads
-    .filter((edge: Edge) => !!edge.in && !edge.optional)
-    .map((edge: Edge) => edge.in);
-  // console.log("== Required inputs:", requiredInputs);
+  const requiredInputs: string[] = [
+    ...new Set(
+      heads
+        .filter((edge: Edge) => !!edge.in && !edge.optional)
+        .map((edge: Edge) => edge.in)
+    ),
+  ];
   const inputsWithConfiguration = new Set();
   Object.keys(inputs).forEach((key) => inputsWithConfiguration.add(key));
   if (current.configuration) {
