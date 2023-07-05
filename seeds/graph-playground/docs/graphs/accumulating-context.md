@@ -2,7 +2,7 @@
 ---
 
 ```mermaid
-%%{init: {'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}}%%
+%%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}}%%
 graph TD;
 start(("passthrough
 id='start'")):::passthrough --> input1[/"input

@@ -2,7 +2,7 @@
 ---
 
 ```mermaid
-%%{init: {'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}}%%
+%%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}}%%
 graph TD;
 input[/"input
 id='input'"/]:::input -- text:query --> search["google-search

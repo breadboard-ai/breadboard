@@ -2,7 +2,7 @@
 ---
 
 ```mermaid
-%%{init: {'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}}%%
+%%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}}%%
 graph TD;
 getgraph(("slot
 id='get-graph'")):::slot -- graph:json --> gettools["jsonata
@@ -11,10 +11,10 @@ getgraph(("slot
 id='get-graph'")):::slot -- graph:json --> gettooldescriptions["jsonata
 id='get-tool-descriptions'"]
 gettools["jsonata
-id='get-tools'"] -- result:tools --> reacttemplate["prompt-template
+id='get-tools'"] -- result:tools --o reacttemplate["prompt-template
 id='react-template'"]
 gettooldescriptions["jsonata
-id='get-tool-descriptions'"] -- result:descriptions --> reacttemplate["prompt-template
+id='get-tool-descriptions'"] -- result:descriptions --o reacttemplate["prompt-template
 id='react-template'"]
 askuser[/"input
 id='ask-user'"/]:::input -. text:text .-> pass(("passthrough
@@ -26,7 +26,7 @@ rememberquestion["local-memory
 id='remember-question'"] -- context:memory --> reacttemplate["prompt-template
 id='react-template'"]
 pass(("passthrough
-id='pass'")):::passthrough -- text:graph --> getgraph(("slot
+id='pass'")):::passthrough --> getgraph(("slot
 id='get-graph'")):::slot
 reacttemplate["prompt-template
 id='react-template'"] -- prompt:text --> reactcompletion["text-completion

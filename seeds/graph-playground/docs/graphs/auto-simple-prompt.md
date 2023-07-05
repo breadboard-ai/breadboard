@@ -2,7 +2,7 @@
 ---
 
 ```mermaid
-%%{init: {'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}}%%
+%%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}}%%
 graph TD;
 prompttemplate1["prompt-template
 id='prompt-template-1'"] -- prompt:text --> textcompletion1["text-completion

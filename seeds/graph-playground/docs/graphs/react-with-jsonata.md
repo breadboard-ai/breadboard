@@ -2,7 +2,7 @@
 ---
 
 ```mermaid
-%%{init: {'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}}%%
+%%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}}%%
 graph TD;
 getgraph["reflect
 id='get-graph'"] -- graph:json --> gettools["jsonata

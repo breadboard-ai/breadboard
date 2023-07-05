@@ -16,13 +16,15 @@
       "from": "get-tools",
       "out": "result",
       "to": "react-template",
-      "in": "tools"
+      "in": "tools",
+      "once": true
     },
     {
       "from": "get-tool-descriptions",
       "out": "result",
       "to": "react-template",
-      "in": "descriptions"
+      "in": "descriptions",
+      "once": true
     },
     {
       "from": "ask-user",
