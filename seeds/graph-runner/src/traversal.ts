@@ -49,35 +49,61 @@ const handle = async (
  * Additional concept: whether or not an output was consumed by the intended
  * input.
  * State stores all outputs that have not yet been consumed, organized as
- * a map of maps:
+ * a map of maps
  */
-class StateManager {
-  #state = new Map();
+type StateMap = Map<string, Map<string, OutputValues>>;
 
-  update(node: NodeIdentifier, opportunities: Edge[], outputs: OutputValues) {
-    // 1. Clear entries for the current node.
-    this.#state.delete(node);
-    // 2. Add entries for each opportunity.
+class StateManager {
+  #state: StateMap = new Map();
+  #onces: StateMap = new Map();
+
+  #splitOutOnces(edges: Edge[]): [Edge[], Edge[]] {
+    const onces: Edge[] = [];
+    const rest: Edge[] = [];
+    edges.forEach((edge) => {
+      if (edge.once) onces.push(edge);
+      else rest.push(edge);
+    });
+    return [onces, rest];
+  }
+
+  #addToState(state: StateMap, opportunities: Edge[], outputs: OutputValues) {
     opportunities.forEach((opportunity) => {
       const toNode = opportunity.to;
-      let fromNodeMap = this.#state.get(toNode);
+      let fromNodeMap = state.get(toNode);
       if (!fromNodeMap) {
         fromNodeMap = new Map();
-        this.#state.set(toNode, fromNodeMap);
+        state.set(toNode, fromNodeMap);
       }
       fromNodeMap.set(opportunity.from, outputs);
     });
-    // console.log("== State after update", this.#state);
+  }
+
+  update(node: NodeIdentifier, opportunities: Edge[], outputs: OutputValues) {
+    // 1. Clear entries for the current node.
+    // Notice, we're not clearing the "once" entries. Those are basically there
+    // forever -- or until the edge is traversed again.
+    this.#state.delete(node);
+    const [onces, state] = this.#splitOutOnces(opportunities);
+    // 2. Add entries for each opportunity.
+    this.#addToState(this.#state, state, outputs);
+    this.#addToState(this.#onces, onces, outputs);
   }
 
   getAvailableOutputs(node: NodeIdentifier) {
-    const edges: Map<NodeIdentifier, OutputValues> = this.#state.get(node);
+    type EdgeMap = Map<NodeIdentifier, OutputValues>;
+    const onceEdges: EdgeMap = this.#onces.get(node) || new Map();
+    const stateEdges: EdgeMap = this.#state.get(node) || new Map();
     const result: OutputValues = {};
-    if (!edges) return result;
-    for (const outputs of edges.values()) {
+    // 1. Assign all "once" outputs.
+    for (const outputs of onceEdges.values()) {
       Object.assign(result, outputs);
     }
-    // console.log("== Available outputs:", result);
+    // 2. Assign all other outputs.
+    // This allows other outputs to override "once" outputs.
+    for (const outputs of stateEdges.values()) {
+      Object.assign(result, outputs);
+    }
     return result;
   }
 }
@@ -150,7 +176,7 @@ export const traverseGraph = async (
   log({
     source,
     type: "traversal-start",
-    text: "Stargate traversal",
+    text: "Starting traversal",
   });
 
   const entries = Array.from(tails.keys()).filter(

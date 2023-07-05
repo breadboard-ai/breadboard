@@ -29,26 +29,19 @@
     {
       "from": "ask-user",
       "out": "text",
-      "to": "pass",
-      "in": "text",
-      "optional": true
+      "to": "remember-question",
+      "in": "Question"
     },
     {
-      "from": "pass",
-      "out": "text",
-      "to": "remember-question",
-      "in": "Question",
-      "optional": true
+      "from": "ask-user",
+      "to": "get-graph"
     },
     {
       "from": "remember-question",
       "out": "context",
       "to": "react-template",
-      "in": "memory"
-    },
-    {
-      "from": "pass",
-      "to": "get-graph"
+      "in": "memory",
+      "once": true
     },
     {
       "from": "react-template",
@@ -81,7 +74,9 @@
     },
     {
       "from": "remember-observation",
-      "to": "pass"
+      "out": "context",
+      "to": "react-template",
+      "in": "memory"
     },
     {
       "from": "parse-completion",
@@ -141,7 +136,6 @@
       }
     },
     { "id": "last-print", "type": "output" },
-    { "id": "pass", "type": "passthrough" },
     { "id": "remember-question", "type": "local-memory" },
     { "id": "remember-observation", "type": "local-memory" },
     { "id": "remember-thought", "type": "local-memory" },

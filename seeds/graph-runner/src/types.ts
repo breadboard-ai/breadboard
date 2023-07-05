@@ -49,6 +49,7 @@ export interface Edge {
   in: InputIdentifier;
   out: OutputIdentifier;
   optional?: boolean;
+  once?: boolean;
 }
 
 export interface GraphDescriptor {
