@@ -26,15 +26,13 @@
       "from": "input-1",
       "out": "text",
       "to": "local-memory-1",
-      "in": "user",
-      "optional": true
+      "in": "user"
     },
     {
       "from": "text-completion-1",
       "out": "completion",
       "to": "local-memory-1",
-      "in": "assistant",
-      "optional": true
+      "in": "assistant"
     },
     {
       "from": "output-1",

@@ -33,10 +33,6 @@
       "in": "Question"
     },
     {
-      "from": "ask-user",
-      "to": "get-graph"
-    },
-    {
       "from": "remember-question",
       "out": "context",
       "to": "react-template",

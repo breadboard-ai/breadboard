@@ -17,10 +17,10 @@ textcompletion1["text-completion
 id='text-completion-1'"] -- completion:text --> output1{{"output
 id='output-1'"}}:::output
 input1[/"input
-id='input-1'"/]:::input -. text:user .-> localmemory1["local-memory
+id='input-1'"/]:::input -- text:user --> localmemory1["local-memory
 id='local-memory-1'"]
 textcompletion1["text-completion
-id='text-completion-1'"] -. completion:assistant .-> localmemory1["local-memory
+id='text-completion-1'"] -- completion:assistant --> localmemory1["local-memory
 id='local-memory-1'"]
 output1{{"output
 id='output-1'"}}:::output --> input1[/"input

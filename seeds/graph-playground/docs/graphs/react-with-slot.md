@@ -19,9 +19,6 @@ id='react-template'"]
 askuser[/"input
 id='ask-user'"/]:::input -- text:Question --> rememberquestion["local-memory
 id='remember-question'"]
-askuser[/"input
-id='ask-user'"/]:::input --> getgraph(("slot
-id='get-graph'")):::slot
 rememberquestion["local-memory
 id='remember-question'"] -- context:memory --o reacttemplate["prompt-template
 id='react-template'"]
