@@ -20,32 +20,64 @@ export type OutputIdentifier = string;
  */
 export type InputIdentifier = string;
 
+/**
+ * Unique identifier of a node's type.
+ */
 export type NodeTypeIdentifier = string;
 
 /**
- * General node representation.
+ * Represents a node in a graph.
  */
 export interface NodeDescriptor {
   /**
    * Unique id of the node in graph.
    */
   id: NodeIdentifier;
+
   /**
-   * Type of the node. What does this node do?
+   * Type of the node. Used to look up the handler for the node.
    */
   type: NodeTypeIdentifier;
+
   /**
    * Configuration of the node.
    */
   configuration: NodeConfiguration;
 }
 
+/**
+ * Represents an edge in a graph.
+ */
 export interface Edge {
+  /**
+   * The node that the edge is coming from.
+   */
   from: NodeIdentifier;
+
+  /**
+   * The node that the edge is going to.
+   */
   to: NodeIdentifier;
-  in: InputIdentifier;
-  out: OutputIdentifier;
+
+  /**
+   * The input of the `to` node. If this value is undefined, then
+   * the then no data is passed as output of the `from` node.
+   */
+  in?: InputIdentifier;
+
+  /**
+   * The output of the `from` node. If this value is "*", then all outputs
+   * of the `from` node are passed to the `to` node. If this value is undefined,
+   * then no data is passed to any inputs of the `to` node.
+   */
+  out?: OutputIdentifier;
+
+  /**
+   * If true, this edge is optional: the data that passes through it is not
+   * considered a required input to the node.
+   */
   optional?: boolean;
+
   /**
    * If true, this edge acts as a constant: the data that passes through it
    * remains available even after the node has consumed it.
@@ -53,24 +85,60 @@ export interface Edge {
   constant?: boolean;
 }
 
+/**
+ * Represents a graph.
+ */
 export interface GraphDescriptor {
+  /**
+   * The collection of all edges in the graph.
+   */
   edges: Edge[];
+
+  /**
+   * The collection of all nodes in the graph.
+   */
   nodes: NodeDescriptor[];
 }
 
+/**
+ * Values that are supplied as inputs to the `NodeHandler`.
+ */
 export type InputValues = Record<InputIdentifier, unknown>;
 
+/**
+ * Values that the `NodeHandler` outputs.
+ */
 export type OutputValues = Partial<Record<OutputIdentifier, unknown>>;
 
+/**
+ * Values that are supplied as part of the graph. These values are merged with
+ * the `InputValues` and supplied as inputs to the `NodeHandler`.
+ */
 export type NodeConfiguration = Record<string, unknown>;
 
+/**
+ * A function that represents a type of a node in the graph.
+ */
 export type NodeHandler = (
+  /**
+   * The context of the graph traversal.
+   */
   context: GraphTraversalContext,
+
+  /**
+   * The inputs that are supplied to the node.
+   */
   inputs: InputValues
 ) => Promise<OutputValues | void>;
 
+/**
+ * All known node handlers.
+ */
 export type NodeHandlers = Record<NodeTypeIdentifier, NodeHandler>;
 
+/**
+ * Convenience type fo representing data to be logged.
+ */
 export type LogData = Record<string, string | number>;
 
 /**
@@ -92,7 +160,7 @@ export interface GraphTraversalContext {
    * @param inputs the inputs that the node is asking for
    * @returns the outputs that we give to the graph
    */
-  requestExternalInput: (inputs: InputValues) => Promise<OutputValues>;
+  requestExternalInput(inputs: InputValues): Promise<OutputValues>;
 
   /**
    * This is how the nodes provide output outside of the graph.
@@ -101,7 +169,7 @@ export interface GraphTraversalContext {
    * @param inputs the values that the node wants to output.
    * @returns nothing.
    */
-  provideExternalOutput: (inputs: InputValues) => Promise<void>;
+  provideExternalOutput(inputs: InputValues): Promise<void>;
 
   /**
    * This is how nodes are able to handle slotted content. Inovking this method
@@ -110,10 +178,7 @@ export interface GraphTraversalContext {
    * @param inputs the inputs supplied to the subgraph.
    * @returns results of the traversl.
    */
-  requestSlotOutput: (
-    slot: string,
-    inputs: InputValues
-  ) => Promise<OutputValues>;
+  requestSlotOutput(slot: string, inputs: InputValues): Promise<OutputValues>;
 
   /**
    * This is only called by the `traverseGraph` function.
@@ -121,14 +186,14 @@ export interface GraphTraversalContext {
    * @param graph The graph to set as the current graph.
    * @returns nothing
    */
-  setCurrentGraph: (graph: GraphDescriptor) => Promise<void>;
+  setCurrentGraph(graph: GraphDescriptor): Promise<void>;
 
   /**
    * This is how a node is able to see the graph that it is a part of.
    * @returns the `GraphDescriptor` of the graph that is currently being
    * traversed.
    */
-  getCurrentGraph: () => Promise<GraphDescriptor>;
+  getCurrentGraph(): Promise<GraphDescriptor>;
 
   /**
    * A logging facility. Currently, `traverseGraph` uses it to log
@@ -136,5 +201,5 @@ export interface GraphTraversalContext {
    * "see details" logs and is very disorganized at the moment.
    * @todo make logging more organized.
    */
-  log: (data: LogData) => Promise<void>;
+  log(data: LogData): Promise<void>;
 }

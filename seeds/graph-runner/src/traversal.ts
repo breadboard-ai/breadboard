@@ -24,8 +24,10 @@ const wire = (heads: Edge[], outputs: OutputValues): InputValues => {
       Object.assign(result, outputs);
       return;
     }
-    const output = outputs[head.out];
-    if (output) result[head.in] = outputs[head.out];
+    const output = outputs[out];
+    const input = head.in;
+    if (!input) return;
+    if (output) result[input] = outputs[out];
   });
   return result;
 };
@@ -117,7 +119,7 @@ const computeMissingInputs = (
     ...new Set(
       heads
         .filter((edge: Edge) => !!edge.in && !edge.optional)
-        .map((edge: Edge) => edge.in)
+        .map((edge: Edge) => edge.in || "")
     ),
   ];
   const inputsWithConfiguration = new Set();
