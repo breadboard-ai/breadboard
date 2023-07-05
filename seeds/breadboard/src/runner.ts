@@ -7,6 +7,7 @@
 import { Graph } from "./graph.js";
 import { traverseGraph } from "@google-labs/graph-runner";
 import type {
+  GraphDescriptor,
   GraphTraversalContext,
   InputValues,
   LogData,
@@ -45,5 +46,13 @@ class ImperativeRunnerContext implements GraphTraversalContext {
     _args: InputValues
   ): Promise<OutputValues> {
     throw new Error("Requesting slot output is not implemented");
+  }
+
+  async getCurrentGraph(): Promise<GraphDescriptor> {
+    throw new Error("Not implemented");
+  }
+
+  async setCurrentGraph(_graph: GraphDescriptor): Promise<void> {
+    throw new Error("Not implemented");
   }
 }
