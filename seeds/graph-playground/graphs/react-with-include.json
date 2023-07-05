@@ -24,8 +24,7 @@
       "from": "remember-question",
       "out": "context",
       "to": "react-template",
-      "in": "memory",
-      "once": true
+      "in": "memory"
     },
     {
       "from": "react-template",

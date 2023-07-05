@@ -5,26 +5,17 @@
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}}%%
 graph TD;
 gettools["react-helper
-id='get-tools'"] -- tools:tools --> reacttemplate["prompt-template
+id='get-tools'"] -- tools:tools --o reacttemplate["prompt-template
 id='react-template'"]
 gettooldescriptions["react-helper
-id='get-tool-descriptions'"] -- descriptions:descriptions --> reacttemplate["prompt-template
+id='get-tool-descriptions'"] -- descriptions:descriptions --o reacttemplate["prompt-template
 id='react-template'"]
 askuser[/"input
-id='ask-user'"/]:::input -. text:text .-> pass(("passthrough
-id='pass'")):::passthrough
-pass(("passthrough
-id='pass'")):::passthrough --> gettools["react-helper
-id='get-tools'"]
-pass(("passthrough
-id='pass'")):::passthrough -. text:Question .-> rememberquestion["local-memory
+id='ask-user'"/]:::input -- text:Question --> rememberquestion["local-memory
 id='remember-question'"]
 rememberquestion["local-memory
 id='remember-question'"] -- context:memory --> reacttemplate["prompt-template
 id='react-template'"]
-pass(("passthrough
-id='pass'")):::passthrough --> gettooldescriptions["react-helper
-id='get-tool-descriptions'"]
 reacttemplate["prompt-template
 id='react-template'"] -- prompt:text --> reactcompletion["text-completion
 id='react-completion'"]
@@ -56,20 +47,14 @@ mathfunctioncompletion["text-completion
 id='math-function-completion'"] -- completion:code --> compute["run-javascript
 id='compute'"]
 compute["run-javascript
-id='compute'"] -- result:Observation --> remembermath["local-memory
-id='remember-math'"]
-remembermath["local-memory
-id='remember-math'"] -- context:text --> print{{"output
-id='print'"}}:::output
+id='compute'"] -- result:Observation --> rememberobservation["local-memory
+id='remember-observation'"]
 summarizecompletion["text-completion
-id='summarize-completion'"] -- completion:Observation --> remembersearch["local-memory
-id='remember-search'"]
-remembersearch["local-memory
-id='remember-search'"] -- context:text --> print{{"output
-id='print'"}}:::output
-print{{"output
-id='print'"}}:::output --> pass(("passthrough
-id='pass'")):::passthrough
+id='summarize-completion'"] -- completion:Observation --> rememberobservation["local-memory
+id='remember-observation'"]
+rememberobservation["local-memory
+id='remember-observation'"] -- context:memory --> reacttemplate["prompt-template
+id='react-template'"]
 parsecompletion["react-helper
 id='parse-completion'"] -- answer:text --> lastprint{{"output
 id='last-print'"}}:::output

@@ -4,41 +4,27 @@
       "from": "get-tools",
       "out": "tools",
       "to": "react-template",
-      "in": "tools"
+      "in": "tools",
+      "once": true
     },
     {
       "from": "get-tool-descriptions",
       "out": "descriptions",
       "to": "react-template",
-      "in": "descriptions"
+      "in": "descriptions",
+      "once": true
     },
     {
       "from": "ask-user",
       "out": "text",
-      "to": "pass",
-      "in": "text",
-      "optional": true
-    },
-    {
-      "from": "pass",
-      "to": "get-tools"
-    },
-    {
-      "from": "pass",
-      "out": "text",
       "to": "remember-question",
-      "in": "Question",
-      "optional": true
+      "in": "Question"
     },
     {
       "from": "remember-question",
       "out": "context",
       "to": "react-template",
       "in": "memory"
-    },
-    {
-      "from": "pass",
-      "to": "get-tool-descriptions"
     },
     {
       "from": "react-template",
@@ -103,30 +89,20 @@
     {
       "from": "compute",
       "out": "result",
-      "to": "remember-math",
+      "to": "remember-observation",
       "in": "Observation"
-    },
-    {
-      "from": "remember-math",
-      "out": "context",
-      "to": "print",
-      "in": "text"
     },
     {
       "from": "summarize-completion",
       "out": "completion",
-      "to": "remember-search",
+      "to": "remember-observation",
       "in": "Observation"
     },
     {
-      "from": "remember-search",
+      "from": "remember-observation",
       "out": "context",
-      "to": "print",
-      "in": "text"
-    },
-    {
-      "from": "print",
-      "to": "pass"
+      "to": "react-template",
+      "in": "memory"
     },
     {
       "from": "parse-completion",
@@ -140,8 +116,7 @@
       "id": "react-template",
       "type": "prompt-template",
       "configuration": {
-        "template": "Answer the following questions as best you can. You have access to the following tools:\n\n{{descriptions}}\n\nUse the following format:\n\nQuestion: the input question you must answer\nThought: you should always think about what to do\nAction: the action to take, should be one of: {{tools}}\nAction Input: the input to the action\nObservation: the result of the action\n... (this Thought/Action/Action Input/Observation can repeat N times)\nThought: I now know the final answer\nFinal Answer: the final answer to the original input question\n\nBegin!\n\n{{memory}}\nThought:",
-        "memory": ""
+        "template": "Answer the following questions as best you can. You have access to the following tools:\n\n{{descriptions}}\n\nUse the following format:\n\nQuestion: the input question you must answer\nThought: you should always think about what to do\nAction: the action to take, should be one of: {{tools}}\nAction Input: the input to the action\nObservation: the result of the action\n... (this Thought/Action/Action Input/Observation can repeat N times)\nThought: I now know the final answer\nFinal Answer: the final answer to the original input question\n\nBegin!\n\n{{memory}}\nThought:"
       }
     },
     {
@@ -174,16 +149,8 @@
       "configuration": { "method": "parseCompletion", "args": ["completion"] }
     },
     {
-      "id": "print",
-      "type": "output"
-    },
-    {
       "id": "last-print",
       "type": "output"
-    },
-    {
-      "id": "pass",
-      "type": "passthrough"
     },
     {
       "id": "remember-question",
@@ -227,11 +194,7 @@
       }
     },
     {
-      "id": "remember-math",
-      "type": "local-memory"
-    },
-    {
-      "id": "remember-search",
+      "id": "remember-observation",
       "type": "local-memory"
     },
     {

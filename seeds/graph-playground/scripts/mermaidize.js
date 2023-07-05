@@ -44,7 +44,7 @@ const shape = (descriptor) => {
   // Mermaid gets confused by hyphens in node ids
   // For example `get-graph` id will throw a syntax error, because it thinks
   // that it sees the `graph` token.
-  const nodeId = node.replace(/-/g, "");
+  const nodeId = node && node.replace(/-/g, "");
   const nodeType = descriptor.type;
   const text = `"${nodeType}\nid='${node}'"`;
   switch (nodeType) {

@@ -14,7 +14,7 @@ askuser[/"input
 id='ask-user'"/]:::input -- text:Question --> rememberquestion["local-memory
 id='remember-question'"]
 rememberquestion["local-memory
-id='remember-question'"] -- context:memory --o reacttemplate["prompt-template
+id='remember-question'"] -- context:memory --> reacttemplate["prompt-template
 id='react-template'"]
 reacttemplate["prompt-template
 id='react-template'"] -- prompt:text --> reactcompletion["text-completion
