@@ -118,7 +118,7 @@ classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 
 What is the right order of invoking nodes here?
 
-To make sense of this, the traversal machinery looks at the incoming edges (the heads) of every opportunity and determines whether it has collected all properties for each edge. If it has, the machinery deeps the opportunity as ready to be visited. If it hasn't, the machinery skips this opportunity.
+To make sense of this, the traversal machinery looks at the incoming edges (the heads) of every opportunity and determines whether it has collected all properties for each edge. If it has, the machinery deems the opportunity as ready to be visited. If it hasn't, the machinery skips this opportunity.
 
 In the diagram above, `node A` will be the first opportunity (since it's the entry point). After visiting this node, the machinery will uncover two more opportunities: `node C` and `node B`.
 
@@ -177,7 +177,7 @@ Here, we have two entry points:
 1. `node A`, which provides `text` input to `node B`, and
 2. `some constant`, which provides `key` input to `node B`.
 
-There is also a loop that, via `node C` and `node D`, brings the `text` output of `node D` back to `node B`. Perhaps there's some refinement or accumulation going on.
+There is also a loop that, via `node C` and `node D`, brings the `text` value back to `node B`. Perhaps there's some refinement or accumulation going on along the loop.
 
 Unfortunately, for this loop to actually work, the `some constant` node needs to be revisited as well. If we are sure that the value of `key` will always be the same, we can mark the edge as "constant" as follows:
 
@@ -203,6 +203,8 @@ The name "constant" hints at the typical application of this flag: use it to rep
 ### And/or
 
 ### Loops
+
+## Format
 
 ## Core Node Handlers
 

@@ -18,6 +18,7 @@ classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
 classDef passthrough stroke:#a64d79,fill:#ead1dcff,color:#000
 classDef slot stroke:#a64d79,fill:#ead1dcff,color:#000
+classDef config stroke:#a64d79,fill:#ead1dcff,color:#000
 classDef slotted stroke:#a64d79
 \`\`\``;
 
@@ -39,12 +40,16 @@ const substitute = (template, values) => {
   );
 };
 
-const shape = (descriptor) => {
-  const node = descriptor.id;
+const properNodeId = (node) => {
   // Mermaid gets confused by hyphens in node ids
   // For example `get-graph` id will throw a syntax error, because it thinks
   // that it sees the `graph` token.
-  const nodeId = node && node.replace(/-/g, "");
+  return node && node.replace(/-/g, "");
+};
+
+const shape = (descriptor) => {
+  const node = descriptor.id;
+  const nodeId = properNodeId(node);
   const nodeType = descriptor.type;
   const text = `"${nodeType}\nid='${node}'"`;
   switch (nodeType) {
@@ -99,7 +104,7 @@ const describeSubgraphs = (edge, nodeMap) => {
     );
     return `\nsubgraph ${name}\n${subgraphEdges.join(
       "\n"
-    )}\nend\n${name}:::slotted --> ${fromNode.id}\n`;
+    )}\nend\n${name}:::slotted --o ${fromNode.id}\n`;
   });
   return subgraphs.join("\n");
 };
@@ -112,7 +117,17 @@ const mermaidize = (file) => {
     const mermSubgraphs = describeSubgraphs(edge, nodeMap);
     return `${mermEdge}${mermSubgraphs}`;
   });
-  return result.join("\n");
+  const constants = nodes
+    .map((node) => {
+      return Object.keys(node.configuration || {}).map((name) => {
+        if (name === "slotted") return "";
+        return `${properNodeId(
+          `${name}${node.id}`
+        )}[${name}]:::config --o ${properNodeId(node.id)}`;
+      });
+    })
+    .flat();
+  return [...result, ...constants].join("\n");
 };
 
 await ensureDir();

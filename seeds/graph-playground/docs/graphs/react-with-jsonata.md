@@ -49,10 +49,22 @@ id='react-template'"]
 parsecompletion["jsonata
 id='parse-completion'"] -- answer:text --> lastprint{{"output
 id='last-print'"}}:::output
+templatereacttemplate[template]:::config --o reacttemplate
+messageaskuser[message]:::config --o askuser
+stopsequencesreactcompletion[stop-sequences]:::config --o reactcompletion
+expressiongettools[expression]:::config --o gettools
+expressiongettooldescriptions[expression]:::config --o gettooldescriptions
+expressionparsecompletion[expression]:::config --o parsecompletion
+rawparsecompletion[raw]:::config --o parsecompletion
+pathsearch[path]:::config --o search
+descriptionsearch[description]:::config --o search
+pathmath[path]:::config --o math
+descriptionmath[description]:::config --o math
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
 classDef passthrough stroke:#a64d79,fill:#ead1dcff,color:#000
 classDef slot stroke:#a64d79,fill:#ead1dcff,color:#000
+classDef config stroke:#a64d79,fill:#ead1dcff,color:#000
 classDef slotted stroke:#a64d79
 ```

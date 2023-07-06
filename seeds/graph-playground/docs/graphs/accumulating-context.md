@@ -28,10 +28,13 @@ id='input-1'"/]:::input
 localmemory1["local-memory
 id='local-memory-1'"] -- context:context --> prompttemplate1["prompt-template
 id='prompt-template-1'"]
+templateprompttemplate1[template]:::config --o prompttemplate1
+contextprompttemplate1[context]:::config --o prompttemplate1
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
 classDef passthrough stroke:#a64d79,fill:#ead1dcff,color:#000
 classDef slot stroke:#a64d79,fill:#ead1dcff,color:#000
+classDef config stroke:#a64d79,fill:#ead1dcff,color:#000
 classDef slotted stroke:#a64d79
 ```
