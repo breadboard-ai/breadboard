@@ -6,7 +6,7 @@ The WIP bit of code that traverses the graph and invokes various node handlers.
 
 A graph is nothing without nodes. Graph nodes are also sometimes called vertices, but here, we'll stick with the term 'node'.
 
-In this world, each node is a function. When run, this function takes in a bag of properties (a `Record<string, unknown>` in TypeScript) and returns a bag of properties. The idea behind making nodes functions was that it should be very easy to write one, and the contract is very simple to implement.
+In this world, each node is a function. When run, this function takes in a bag of properties (a `Record<string, unknown>` in TypeScript) and returns a bag of properties. The idea behind making nodes functions was that it should be very easy to write one.
 
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
@@ -157,7 +157,7 @@ In this case, the `node C` will be visited twice: once with the `description` pr
 
 An interesting property of computing required edges is that the properties that are passed along the edges are being collected for future consumption for every node that could be visited. Once the node is visited, the properties are consumed, and need to be collected all over again for the node to be re-visited.
 
-This is not always desirable. Sometimes, we want to pass the same property to the same node every time the node is visited. In such cases, we can mark the edge as "constant".
+This is not always desirable. Sometimes, we want to pass the same value of the property to the same node every time the node is visited. In such cases, we can mark the edge as "constant".
 
 Consider this graph:
 
