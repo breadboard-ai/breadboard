@@ -6,13 +6,25 @@ The WIP bit of code that traverses the graph and invokes various node handlers.
 
 A graph is nothing without nodes. Graph nodes are also sometimes called vertices, but here, we'll stick with the term 'node'.
 
-In this world, each node is a function. When run, this function takes in a bag of properties (a `Record<string, unknown>` in TypeScript) and returns a bag of properties. The idea behind making nodes functions was that it should be very easy to write one.
-
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph LR;
 input1["A node"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
+```
+
+In this world, each node is a function. When run, this function takes in a bag of properties (a `Record<string, unknown>` in TypeScript) and returns a bag of properties. The idea behind making nodes functions was that it should be very easy to write one.
+
+```typescript
+// This is a node.
+const node = async (input: Record<string, unknown>) => {
+  // do something with input
+  // ...
+  const output: Record<string, unknown> = {
+    // ...
+  };
+  return output;
+};
 ```
 
 The whole point of graphs then is about establishing the order in which these functions run and what property bags they take and return. By arranging a small set of functions into various graphs, we can build pretty much anything -- very, very quickly.
@@ -213,8 +225,6 @@ Here are some node handlers that are seen as core to the process of graph traver
 ### `input`
 
 Use this node to ask for input from inside the graph. The input is supplied by an implementation of `GraphTraversalContext` that is being used for graph traversal, which is a fancy way of saying that it is up to the application that asked to traverse the graph to supply the input.
-
-This node accepts a property bag (a `Record<string, unknown>` in TypeScript) and passes it along, without any modification, as this node's output.
 
 ### `output`
 
