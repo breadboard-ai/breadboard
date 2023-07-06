@@ -2,7 +2,7 @@
 ---
 
 ```mermaid
-%%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}}%%
+%%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
 debatetopic[/"input
 id='debate-topic'"/]:::input -- text:topic --> localmemory1["local-memory

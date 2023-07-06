@@ -2,7 +2,7 @@
 ---
 
 ```mermaid
-%%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}}%%
+%%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
 getgraph(("slot
 id='get-graph'")):::slot -- graph:json --> gettools["jsonata
@@ -32,7 +32,7 @@ reactcompletion["text-completion
 id='react-completion'"] -- completion:Thought --> rememberthought["local-memory
 id='remember-thought'"]
 parsecompletion["jsonata
-id='parse-completion'"] --> toolsslot(("slot
+id='parse-completion'"] -- all --> toolsslot(("slot
 id='tools-slot'")):::slot
 toolsslot(("slot
 id='tools-slot'")):::slot -- text:Observation --> rememberobservation["local-memory

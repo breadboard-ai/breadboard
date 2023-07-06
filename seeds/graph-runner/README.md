@@ -2,6 +2,107 @@
 
 The WIP bit of code that traverses the graph and invokes various node handlers.
 
+## Nodes and Edges
+
+A graph is nothing without nodes. Graph nodes are also sometimes called vertices, but here, we'll stick with the term 'node'.
+
+In this world, each node is a function. When run, this function takes in a bag of properties (a `Record<string, unknown>` in TypeScript) and returns a bag of properties. The idea behind making nodes functions was that it should be very easy to write one, and the contract is very simple to implement.
+
+```mermaid
+%%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
+graph LR;
+input1["node
+id='node-id'"]
+classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
+classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
+classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
+classDef passthrough stroke:#a64d79,fill:#ead1dcff,color:#000
+classDef slot stroke:#a64d79,fill:#ead1dcff,color:#000
+classDef slotted stroke:#a64d79
+```
+
+The whole point of graphs then is about the order in which these functions run and what property bags they take and return. By arranging a small set of functions into various graphs, we can build pretty much anything -- very, very quickly.
+
+To achieve that, we need edges. Edges are also a necessary part of the graph. Each edge has a direction, and it connects a node to another node.
+
+The direction of the edge determines the direction of both control and data flow. The function that is the node at the head of the edge will be invoked after the node at the tail of the edge.
+
+As its input, the node at the head of the edge will receive the output of the node at the tail of the edge.
+
+```mermaid
+%%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
+graph LR;
+input1["One node"] -- data --> textcompletion1["Another node"]
+classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
+classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
+classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
+classDef passthrough stroke:#a64d79,fill:#ead1dcff,color:#000
+classDef slot stroke:#a64d79,fill:#ead1dcff,color:#000
+classDef slotted stroke:#a64d79
+```
+
+To clearly communicate what data actually flows through this edge, we need to specify which output property connects to which input property. For example, if I want to send the `description` property from the output of `node A` as a property `text` in the input of `node B`, I would mark the edge like this:
+
+```mermaid
+%%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
+graph LR;
+input1["node A"] -- description:text --> textcompletion1["node B"]
+classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
+classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
+classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
+classDef passthrough stroke:#a64d79,fill:#ead1dcff,color:#000
+classDef slot stroke:#a64d79,fill:#ead1dcff,color:#000
+classDef slotted stroke:#a64d79
+```
+
+The diagram above describes the following:
+
+- run function represented by `node A`
+- get its output
+- find the `description` property in the output
+- pass it as the `text` property to the function represented by `node B`
+- run function represented by `node B`
+
+If I want to send all properties from the output of `node A` as properties in the input of `node B`, I would mark the edge like this:
+
+```mermaid
+%%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
+graph LR;
+input1["node A"] -- all --> textcompletion1["node B"]
+classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
+classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
+classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
+classDef passthrough stroke:#a64d79,fill:#ead1dcff,color:#000
+classDef slot stroke:#a64d79,fill:#ead1dcff,color:#000
+classDef slotted stroke:#a64d79
+```
+
+This basically says:
+
+- run function represented by `node A`
+- get its output
+- pass all properties from the output as properties to the function represented by `node B`
+- run function represented by `node B`
+
+Finally, if I want to send nothing between the two nodes, I would leave the edge unmarked:
+
+```mermaid
+%%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
+graph LR;
+input1["node A"] ---> textcompletion1["node B"]
+classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
+classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
+classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
+classDef passthrough stroke:#a64d79,fill:#ead1dcff,color:#000
+classDef slot stroke:#a64d79,fill:#ead1dcff,color:#000
+classDef slotted stroke:#a64d79
+```
+
+In this case, we will have flow of control, but not data, resuling in this sequence:
+
+- run function represented by `node A`
+- run function represented by `node B`
+
 ## Core Node Handlers
 
 Here are some node handlers that are seen as core to the process of graph traversal.
@@ -93,4 +194,4 @@ This node requires two environment variables to be defined:
 
 The node takes one required property, `query`, which is a string that contains the query to be passed to the search API.
 
-The node will pass the result of the search as the `results` output property, formatted as a multi-line string, each line a `snippet` from the [Custom Search Engine response](https://developers.google.com/custom-search/v1/reference/rest/v1/cse/list#response).
+The node will pass the result of the search as the `results` output property, formatted as a multi-line string, each line a `snippet` from the [Custom Search Engine response](https://developers.google.com/custom-search/v1/reference/rest/v1/Search#Result).

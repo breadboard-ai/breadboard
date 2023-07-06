@@ -10,7 +10,7 @@ const TEMPLATE = `# {{title}}
 ---
 
 \`\`\`mermaid
-%%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}}%%
+%%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
 {{mermaid}}
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
@@ -72,6 +72,9 @@ const describeEdge = (edge, nodeMap) => {
   const output = edge.out;
   const optional = edge.optional;
   const constant = edge.constant;
+  if (output === "*") {
+    return `${fromNode} -- all --> ${toNode}`;
+  }
   if (output && input) {
     if (optional) return `${fromNode} -. ${output}:${input} .-> ${toNode}`;
     if (constant) return `${fromNode} -- ${output}:${input} --o ${toNode}`;
