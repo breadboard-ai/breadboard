@@ -11,8 +11,7 @@ In this world, each node is a function. When run, this function takes in a bag o
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph LR;
-input1["node
-id='node-id'"]
+input1["A node"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
@@ -21,9 +20,9 @@ classDef slot stroke:#a64d79,fill:#ead1dcff,color:#000
 classDef slotted stroke:#a64d79
 ```
 
-The whole point of graphs then is about the order in which these functions run and what property bags they take and return. By arranging a small set of functions into various graphs, we can build pretty much anything -- very, very quickly.
+The whole point of graphs then is about establishing the order in which these functions run and what property bags they take and return. By arranging a small set of functions into various graphs, we can build pretty much anything -- very, very quickly.
 
-To achieve that, we need edges. Edges are also a necessary part of the graph. Each edge has a direction, and it connects a node to another node.
+To achieve that, we need edges. Edges are also a necessary part of any graph. An edge has a direction, and it connects a node to another node.
 
 The direction of the edge determines the direction of both control and data flow. The function that is the node at the head of the edge will be invoked after the node at the tail of the edge.
 
@@ -55,7 +54,7 @@ classDef slot stroke:#a64d79,fill:#ead1dcff,color:#000
 classDef slotted stroke:#a64d79
 ```
 
-The diagram above describes the following:
+The diagram above describes the following sequence:
 
 - run function represented by `node A`
 - get its output
@@ -77,7 +76,7 @@ classDef slot stroke:#a64d79,fill:#ead1dcff,color:#000
 classDef slotted stroke:#a64d79
 ```
 
-This basically says:
+The above basically says:
 
 - run function represented by `node A`
 - get its output
@@ -102,6 +101,107 @@ In this case, we will have flow of control, but not data, resuling in this seque
 
 - run function represented by `node A`
 - run function represented by `node B`
+
+## Traversal
+
+Many edges can connect to the same node, and many edges can come out of the same node. This is how we can build complex graphs out of simple nodes.
+
+With so many edges and nodes, it might be tricky to figure out the actual sequence of events.
+
+Figuring this sequence out is the job of the graph traversal machinery. It figures out which nodes to start with and how and when to visit the next ones.
+
+### Entry points
+
+First, the traversal machinery finds the entry points into a graph. These are the nodes that have no incoming edges. In the diagram below, `node A` and `node B` are entry points, and `node C` is not.
+
+```mermaid
+%%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
+graph LR;
+input1["node A"] -- text:description --> textcompletion1["node C"]
+input2["node B"] --data:context--> textcompletion1["node C"]
+classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
+classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
+classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
+classDef passthrough stroke:#a64d79,fill:#ead1dcff,color:#000
+classDef slot stroke:#a64d79,fill:#ead1dcff,color:#000
+classDef slotted stroke:#a64d79
+```
+
+### Opportunities
+
+The traversal machinery thinks in terms of opportunities and maintains a list of them. As new opportunities for visiting nodes arise, they are added to the end of the list.
+
+For instance, `node A` and `node B` are the first two opportunities in the diagram above. After visiting `node A`, the traversal machinery will add `node C` as the next opportunity, because there's an edge connecting `node A` to `node C`.
+
+### Required edges
+
+In the last diagram, the order of invoking nodes is pretty easy to figure out: it's either `node A`, `node B`, `node C`, or `node B`, `node A`, `node C`. The structure of the graph tells us that the order of invoking `node A` or `node B` is not important, as long as `node C` goes last. But what if we have a graph like this?
+
+```mermaid
+%%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
+graph LR;
+input1["node A"] -- text:description --> textcompletion1["node C"]
+input1["node A"] --text:text--> input2["node B"]
+input2["node B"] --data:context--> textcompletion1["node C"]
+classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
+classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
+classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
+classDef passthrough stroke:#a64d79,fill:#ead1dcff,color:#000
+classDef slot stroke:#a64d79,fill:#ead1dcff,color:#000
+classDef slotted stroke:#a64d79
+```
+
+What is the right order of invoking nodes here?
+
+To make sense of this, the traversal machinery looks at the incoming edges (the heads) of every opportunity and determines whether it has collected all properties for each edge. If it has, the machinery deeps the opportunity as ready to be visited. If it hasn't, the machinery skips this opportunity.
+
+In the diagram above, `node A` will be the first opportunity (since it's the entry point). After visiting this node, the machinery will uncover two more opportunities: `node C` and `node B`.
+
+Let's suppose it first looks at the heads of the `node C` opportunity. There are two:
+
+1. `description`, supplied by the `text` output property of `node A`, and
+2. `context`, supplied by the `data` output property of `node B`.
+
+Since the traversal machinery hasn't visited `node B` yet, the output property `data` hasn't yet been produced, so the corresponding `context` property isn't yet available, either. This means that the `node C` opportunity is not ready to be visited yet. The `node C` opportunity will be skipped, and the machinery will proceed to visit `node B`.
+
+A different way to think of it is that all edges are marked as "required" by default. The traversal machinery will only visit a node if all required incoming edges are satisfied.
+
+### Optional edges
+
+In some cases, we might not want the machinery to presume that the edge is required. In such cases, we mark the edge as optional.
+
+For example, let's take the last diagram and mark the edges incoming into `node C` as optional:
+
+```mermaid
+%%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
+graph LR;
+input1["node A"] -. text:description .-> textcompletion1["node C"]
+input1["node A"] --text:text--> input2["node B"]
+input2["node B"] -.data:context.-> textcompletion1["node C"]
+classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
+classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
+classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
+classDef passthrough stroke:#a64d79,fill:#ead1dcff,color:#000
+classDef slot stroke:#a64d79,fill:#ead1dcff,color:#000
+classDef slotted stroke:#a64d79
+```
+
+In this case, the `node C` will be visited twice: once with the `description` property, and once with the `context` property. The sequence of node visits will look like this:
+
+1. node A
+2. node C (with description)
+3. node B
+4. node C (with context)
+
+### Constant edges
+
+## Graph composition techniques
+
+### Gates
+
+### And/or
+
+### Loops
 
 ## Core Node Handlers
 
