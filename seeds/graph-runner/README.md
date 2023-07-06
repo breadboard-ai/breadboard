@@ -13,11 +13,6 @@ In this world, each node is a function. When run, this function takes in a bag o
 graph LR;
 input1["A node"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
-classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
-classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
-classDef passthrough stroke:#a64d79,fill:#ead1dcff,color:#000
-classDef slot stroke:#a64d79,fill:#ead1dcff,color:#000
-classDef slotted stroke:#a64d79
 ```
 
 The whole point of graphs then is about establishing the order in which these functions run and what property bags they take and return. By arranging a small set of functions into various graphs, we can build pretty much anything -- very, very quickly.
@@ -33,11 +28,6 @@ As its input, the node at the head of the edge will receive the output of the no
 graph LR;
 input1["One node"] -- data --> textcompletion1["Another node"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
-classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
-classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
-classDef passthrough stroke:#a64d79,fill:#ead1dcff,color:#000
-classDef slot stroke:#a64d79,fill:#ead1dcff,color:#000
-classDef slotted stroke:#a64d79
 ```
 
 To clearly communicate what data actually flows through this edge, we need to specify which output property connects to which input property. For example, if I want to send the `description` property from the output of `node A` as a property `text` in the input of `node B`, I would mark the edge like this:
@@ -47,11 +37,6 @@ To clearly communicate what data actually flows through this edge, we need to sp
 graph LR;
 input1["node A"] -- description:text --> textcompletion1["node B"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
-classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
-classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
-classDef passthrough stroke:#a64d79,fill:#ead1dcff,color:#000
-classDef slot stroke:#a64d79,fill:#ead1dcff,color:#000
-classDef slotted stroke:#a64d79
 ```
 
 The diagram above describes the following sequence:
@@ -69,11 +54,6 @@ If I want to send all properties from the output of `node A` as properties in th
 graph LR;
 input1["node A"] -- all --> textcompletion1["node B"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
-classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
-classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
-classDef passthrough stroke:#a64d79,fill:#ead1dcff,color:#000
-classDef slot stroke:#a64d79,fill:#ead1dcff,color:#000
-classDef slotted stroke:#a64d79
 ```
 
 The above basically says:
@@ -90,11 +70,6 @@ Finally, if I want to send nothing between the two nodes, I would leave the edge
 graph LR;
 input1["node A"] ---> textcompletion1["node B"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
-classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
-classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
-classDef passthrough stroke:#a64d79,fill:#ead1dcff,color:#000
-classDef slot stroke:#a64d79,fill:#ead1dcff,color:#000
-classDef slotted stroke:#a64d79
 ```
 
 In this case, we will have flow of control, but not data, resuling in this sequence:
@@ -120,11 +95,6 @@ graph LR;
 input1["node A"] -- text:description --> textcompletion1["node C"]
 input2["node B"] --data:context--> textcompletion1["node C"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
-classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
-classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
-classDef passthrough stroke:#a64d79,fill:#ead1dcff,color:#000
-classDef slot stroke:#a64d79,fill:#ead1dcff,color:#000
-classDef slotted stroke:#a64d79
 ```
 
 ### Opportunities
@@ -144,11 +114,6 @@ input1["node A"] -- text:description --> textcompletion1["node C"]
 input1["node A"] --text:text--> input2["node B"]
 input2["node B"] --data:context--> textcompletion1["node C"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
-classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
-classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
-classDef passthrough stroke:#a64d79,fill:#ead1dcff,color:#000
-classDef slot stroke:#a64d79,fill:#ead1dcff,color:#000
-classDef slotted stroke:#a64d79
 ```
 
 What is the right order of invoking nodes here?
@@ -164,13 +129,13 @@ Let's suppose it first looks at the heads of the `node C` opportunity. There are
 
 Since the traversal machinery hasn't visited `node B` yet, the output property `data` hasn't yet been produced, so the corresponding `context` property isn't yet available, either. This means that the `node C` opportunity is not ready to be visited yet. The `node C` opportunity will be skipped, and the machinery will proceed to visit `node B`.
 
-A different way to think of it is that all edges are marked as "required" by default. The traversal machinery will only visit a node if all required incoming edges are satisfied.
+A different way to think of it is that all edges with property names are deemed "required" by default. The traversal machinery will only visit a node if all required incoming edges are satisfied.
 
 ### Optional edges
 
-In some cases, we might not want the machinery to presume that the edge is required. In such cases, we mark the edge as optional.
+In some cases, we might not want the machinery to presume that the edge is required. In such cases, we can mark an edge as "optional".
 
-For example, let's take the last diagram and mark the edges incoming into `node C` as optional:
+Let's take the previous diagram and mark the edges incoming into `node C` as optional:
 
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
@@ -179,21 +144,57 @@ input1["node A"] -. text:description .-> textcompletion1["node C"]
 input1["node A"] --text:text--> input2["node B"]
 input2["node B"] -.data:context.-> textcompletion1["node C"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
-classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
-classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
-classDef passthrough stroke:#a64d79,fill:#ead1dcff,color:#000
-classDef slot stroke:#a64d79,fill:#ead1dcff,color:#000
-classDef slotted stroke:#a64d79
 ```
 
 In this case, the `node C` will be visited twice: once with the `description` property, and once with the `context` property. The sequence of node visits will look like this:
 
-1. node A
-2. node C (with description)
-3. node B
-4. node C (with context)
+1. `node A`
+2. `node C` (with description)
+3. `node B`
+4. `node C` (with context)
 
 ### Constant edges
+
+An interesting property of computing required edges is that the properties that are passed along the edges are being collected for future consumption for every node that could be visited. Once the node is visited, the properties are consumed, and need to be collected all over again for the node to be re-visited.
+
+This is not always desirable. Sometimes, we want to pass the same property to the same node every time the node is visited. In such cases, we can mark the edge as "constant".
+
+Consider this graph:
+
+```mermaid
+%%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
+graph LR;
+a["node A"] --text:text--> b["node B"]
+constant["some constant"] --key:key--> b["node B"]
+b["node B"] --data:context--> c["node C"]
+c["node C"] --result:output--> d["node D"]
+d["node D"] --data:text--> b["node B"]
+classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
+```
+
+Here, we have two entry points:
+
+1. `node A`, which provides `text` input to `node B`, and
+2. `some constant`, which provides `key` input to `node B`.
+
+There is also a loop that, via `node C` and `node D`, brings the `text` output of `node D` back to `node B`. Perhaps there's some refinement or accumulation going on.
+
+Unfortunately, for this loop to actually work, the `some constant` node needs to be revisited as well. If we are sure that the value of `key` will always be the same, we can mark the edge as "constant" as follows:
+
+```mermaid
+%%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
+graph LR;
+a["node A"] --text:text--> b["node B"]
+constant["some constant"] --key:key--o b["node B"]
+b["node B"] --data:context--> c["node C"]
+c["node C"] --result:output--> d["node D"]
+d["node D"] --data:text--> b["node B"]
+classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
+```
+
+Once that is done, the `key` property will always be available for consumption, no matter how many iterations of the loop we go through.
+
+The name "constant" hints at the typical application of this flag: use it to represent and pass constant values within the graph.
 
 ## Graph composition techniques
 
