@@ -72,7 +72,7 @@ input1["node A"] ---> textcompletion1["node B"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 ```
 
-In this case, we will have flow of control, but not data, resuling in this sequence:
+In this case, we will have flow of control, but not data, resulting in this sequence:
 
 - run function represented by `node A`
 - run function represented by `node B`
