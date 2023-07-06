@@ -206,7 +206,7 @@ classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 
 Once that is done, the `key` property will always be available for consumption, no matter how many iterations of the loop we go through.
 
-The name "constant" hints at the typical application of this flag: use it to represent and pass constant values within the graph.
+The name "constant" hints at the typical application of this flag: use it to represent edges that pass constant values within the graph.
 
 ## Graph composition techniques
 
