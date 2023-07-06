@@ -104,7 +104,9 @@ const describeSubgraphs = (edge, nodeMap) => {
     );
     return `\nsubgraph ${name}\n${subgraphEdges.join(
       "\n"
-    )}\nend\n${name}:::slotted --o ${fromNode.id}\n`;
+    )}\nend\n${name}:::slotted --slotted:slotted--o ${properNodeId(
+      fromNode.id
+    )}\n`;
   });
   return subgraphs.join("\n");
 };
@@ -123,7 +125,7 @@ const mermaidize = (file) => {
         if (name === "slotted") return "";
         return `${properNodeId(
           `${name}${node.id}`
-        )}[${name}]:::config --o ${properNodeId(node.id)}`;
+        )}[${name}]:::config -- ${name}:${name} --o ${properNodeId(node.id)}`;
       });
     })
     .flat();

@@ -43,16 +43,16 @@ id='react-template'"]
 parsecompletion["jsonata
 id='parse-completion'"] -- answer:text --> lastprint{{"output
 id='last-print'"}}:::output
-templatereacttemplate[template]:::config --o reacttemplate
-messageaskuser[message]:::config --o askuser
-stopsequencesreactcompletion[stop-sequences]:::config --o reactcompletion
-slotgetgraph[slot]:::config --o getgraph
-graphgetgraph[graph]:::config --o getgraph
-expressiongettools[expression]:::config --o gettools
-expressiongettooldescriptions[expression]:::config --o gettooldescriptions
-expressionparsecompletion[expression]:::config --o parsecompletion
-rawparsecompletion[raw]:::config --o parsecompletion
-slottoolsslot[slot]:::config --o toolsslot
+templatereacttemplate[template]:::config -- template:template --o reacttemplate
+messageaskuser[message]:::config -- message:message --o askuser
+stopsequencesreactcompletion[stop-sequences]:::config -- stop-sequences:stop-sequences --o reactcompletion
+slotgetgraph[slot]:::config -- slot:slot --o getgraph
+graphgetgraph[graph]:::config -- graph:graph --o getgraph
+expressiongettools[expression]:::config -- expression:expression --o gettools
+expressiongettooldescriptions[expression]:::config -- expression:expression --o gettooldescriptions
+expressionparsecompletion[expression]:::config -- expression:expression --o parsecompletion
+rawparsecompletion[raw]:::config -- raw:raw --o parsecompletion
+slottoolsslot[slot]:::config -- slot:slot --o toolsslot
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

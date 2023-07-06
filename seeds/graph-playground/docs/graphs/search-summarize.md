@@ -19,8 +19,8 @@ id='text-completion-1'"]
 textcompletion1["text-completion
 id='text-completion-1'"] -- completion:text --> print{{"output
 id='print'"}}:::output
-messageinput[message]:::config --o input
-templatesummarizeresults[template]:::config --o summarizeresults
+messageinput[message]:::config -- message:message --o input
+templatesummarizeresults[template]:::config -- template:template --o summarizeresults
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

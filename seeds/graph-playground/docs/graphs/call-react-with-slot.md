@@ -30,10 +30,10 @@ math[["include
 id='math'"]]:::include -- text:text --> output{{"output
 id='output'"}}:::output
 end
-tools:::slotted --o react
+tools:::slotted --slotted:slotted--o react
 
-messageask[message]:::config --o ask
-pathreact[path]:::config --o react
+messageask[message]:::config -- message:message --o ask
+pathreact[path]:::config -- path:path --o react
 
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000

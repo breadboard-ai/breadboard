@@ -46,13 +46,13 @@ id='local-memory-3'"]
 localmemory3["local-memory
 id='local-memory-3'"] -- context:context --> albert["prompt-template
 id='albert'"]
-messagedebatetopic[message]:::config --o debatetopic
-stopsequencesalbertcompletion[stop-sequences]:::config --o albertcompletion
-stopsequencesfriedrichcompletion[stop-sequences]:::config --o friedrichcompletion
-templatealbert[template]:::config --o albert
-templatefriedrich[template]:::config --o friedrich
-templatefriedrichvoice[template]:::config --o friedrichvoice
-templatealbertvoice[template]:::config --o albertvoice
+messagedebatetopic[message]:::config -- message:message --o debatetopic
+stopsequencesalbertcompletion[stop-sequences]:::config -- stop-sequences:stop-sequences --o albertcompletion
+stopsequencesfriedrichcompletion[stop-sequences]:::config -- stop-sequences:stop-sequences --o friedrichcompletion
+templatealbert[template]:::config -- template:template --o albert
+templatefriedrich[template]:::config -- template:template --o friedrich
+templatefriedrichvoice[template]:::config -- template:template --o friedrichvoice
+templatealbertvoice[template]:::config -- template:template --o albertvoice
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
