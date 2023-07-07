@@ -33,7 +33,7 @@ interface TestGraphDescriptor extends GraphDescriptor {
 class MockContext implements GraphTraversalContext {
   handlers: NodeHandlers;
   inputs: InputValues;
-  outputs: Record<string, string> = {};
+  outputs: OutputValues = {};
   currentGraph: GraphDescriptor | null = null;
   sequence: string[] = [];
 
@@ -45,6 +45,9 @@ class MockContext implements GraphTraversalContext {
       },
       output: async (_cx, inputs) => {
         return this.provideExternalOutput(inputs);
+      },
+      noop: async (_cx, inputs) => {
+        return inputs;
       },
     };
     this.log = this.log.bind(this);
@@ -75,6 +78,7 @@ class MockContext implements GraphTraversalContext {
 
   async log(data: LogData): Promise<void> {
     if (data.type === "node") this.sequence.push(data.value as string);
+    console.log(data);
   }
 }
 

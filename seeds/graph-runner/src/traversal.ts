@@ -15,9 +15,13 @@ import type {
   NodeHandlers,
 } from "./types.js";
 
-const wire = (heads: Edge[], outputs: OutputValues): InputValues => {
+type EdgeMap = Map<NodeIdentifier, OutputValues>;
+
+const wire = (heads: Edge[], outputEdges: EdgeMap): InputValues => {
   const result: InputValues = {};
   heads.forEach((head) => {
+    const from = head.from;
+    const outputs = outputEdges.get(from) || {};
     const out = head.out;
     if (!out) return;
     if (out === "*") {
@@ -93,19 +97,9 @@ class StateManager {
   }
 
   getAvailableOutputs(node: NodeIdentifier) {
-    type EdgeMap = Map<NodeIdentifier, OutputValues>;
     const constantEdges: EdgeMap = this.#constants.get(node) || new Map();
     const stateEdges: EdgeMap = this.#state.get(node) || new Map();
-    const result: OutputValues = {};
-    // 1. Assign all "constants" outputs.
-    for (const outputs of constantEdges.values()) {
-      Object.assign(result, outputs);
-    }
-    // 2. Assign all other outputs.
-    // This allows other outputs to override "constants" outputs.
-    for (const outputs of stateEdges.values()) {
-      Object.assign(result, outputs);
-    }
+    const result: EdgeMap = new Map([...constantEdges, ...stateEdges]);
     return result;
   }
 }
