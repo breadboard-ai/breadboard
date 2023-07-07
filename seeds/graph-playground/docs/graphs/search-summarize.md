@@ -7,12 +7,21 @@ graph TD;
 input[/"input
 id='input'"/]:::input -- text:question --> summarizeresults["prompt-template
 id='summarize-results'"]
+secrets["secrets
+id='secrets'"] -- API_KEY:API_KEY --> search["google-search
+id='search'"]
+secrets["secrets
+id='secrets'"] -- GOOGLE_CSE_ID:GOOGLE_CSE_ID --> search["google-search
+id='search'"]
 input[/"input
 id='input'"/]:::input -- text:query --> search["google-search
 id='search'"]
 search["google-search
 id='search'"] -- results:context --> summarizeresults["prompt-template
 id='summarize-results'"]
+secrets["secrets
+id='secrets'"] -- API_KEY:API_KEY --> textcompletion1["text-completion
+id='text-completion-1'"]
 summarizeresults["prompt-template
 id='summarize-results'"] -- prompt:text --> textcompletion1["text-completion
 id='text-completion-1'"]

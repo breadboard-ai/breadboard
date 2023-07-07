@@ -13,6 +13,9 @@ id='albert'"]
 albert["prompt-template
 id='albert'"] -- prompt:text --> textcompletion1["text-completion
 id='text-completion-1'"]
+secrets["secrets
+id='secrets'"] -- API_KEY:API_KEY --o textcompletion1["text-completion
+id='text-completion-1'"]
 textcompletion1["text-completion
 id='text-completion-1'"] -- completion:text --> output1{{"output
 id='output-1'"}}:::output
@@ -24,6 +27,9 @@ id='local-memory-2'"] -- context:context --> friedrich["prompt-template
 id='friedrich'"]
 friedrich["prompt-template
 id='friedrich'"] -- prompt:text --> textcompletion2["text-completion
+id='text-completion-2'"]
+secrets["secrets
+id='secrets'"] -- API_KEY:API_KEY --o textcompletion2["text-completion
 id='text-completion-2'"]
 textcompletion2["text-completion
 id='text-completion-2'"] -- completion:text --> output1{{"output

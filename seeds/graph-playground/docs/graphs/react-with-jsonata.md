@@ -13,6 +13,9 @@ id='get-tool-descriptions'"]
 gettools["jsonata
 id='get-tools'"] -- result:tools --o reacttemplate["prompt-template
 id='react-template'"]
+secrets["secrets
+id='secrets'"] -- API_KEY:API_KEY --o reactcompletion["text-completion
+id='react-completion'"]
 gettooldescriptions["jsonata
 id='get-tool-descriptions'"] -- result:descriptions --o reacttemplate["prompt-template
 id='react-template'"]

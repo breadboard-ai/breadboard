@@ -10,6 +10,9 @@ id='math-function'"]
 mathfunction["prompt-template
 id='math-function'"] -- prompt:text --> mathfunctioncompletion["text-completion
 id='math-function-completion'"]
+secrets["secrets
+id='secrets'"] -- API_KEY:API_KEY --o mathfunctioncompletion["text-completion
+id='math-function-completion'"]
 mathfunctioncompletion["text-completion
 id='math-function-completion'"] -- completion:code --> compute["run-javascript
 id='compute'"]

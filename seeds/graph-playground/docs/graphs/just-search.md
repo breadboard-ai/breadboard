@@ -7,6 +7,12 @@ graph TD;
 input[/"input
 id='input'"/]:::input -- text:query --> search["google-search
 id='search'"]
+secrets["secrets
+id='secrets'"] -- API_KEY:API_KEY --> search["google-search
+id='search'"]
+secrets["secrets
+id='secrets'"] -- GOOGLE_CSE_ID:GOOGLE_CSE_ID --> search["google-search
+id='search'"]
 search["google-search
 id='search'"] -- results:text --> print{{"output
 id='print'"}}:::output

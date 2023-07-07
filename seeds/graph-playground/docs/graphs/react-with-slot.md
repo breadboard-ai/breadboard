@@ -22,6 +22,9 @@ id='remember-question'"]
 rememberquestion["local-memory
 id='remember-question'"] -- context:memory --> reacttemplate["prompt-template
 id='react-template'"]
+secrets["secrets
+id='secrets'"] -- API_KEY:API_KEY --o reactcompletion["text-completion
+id='react-completion'"]
 reacttemplate["prompt-template
 id='react-template'"] -- prompt:text --> reactcompletion["text-completion
 id='react-completion'"]

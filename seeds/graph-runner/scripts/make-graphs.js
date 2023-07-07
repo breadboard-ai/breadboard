@@ -13,7 +13,7 @@
 
 import { readFile, writeFile, readdir, mkdir } from "fs/promises";
 
-import { toMermaid } from "../dist/src/mermaid.js";
+import { toMermaid } from "@google-labs/graph-runner";
 
 const IN_DIRS = ["tests/data"];
 const OUT_DIR = "./docs/graphs";

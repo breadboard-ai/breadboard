@@ -13,6 +13,9 @@ id='prompt-template-1'"]
 prompttemplate1["prompt-template
 id='prompt-template-1'"] -- prompt:text --> textcompletion1["text-completion
 id='text-completion-1'"]
+secrets["secrets
+id='secrets'"] -- API_KEY:API_KEY --o textcompletion1["text-completion
+id='text-completion-1'"]
 textcompletion1["text-completion
 id='text-completion-1'"] -- completion:text --> output1{{"output
 id='output-1'"}}:::output
