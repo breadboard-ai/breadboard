@@ -13,8 +13,9 @@ import {
   traverseGraph,
   coreHandlers,
   customNode,
-  ReActHelper,
 } from "@google-labs/graph-runner";
+
+import { ReActHelper } from "./react.js";
 
 import { ConsoleContext } from "./console-context.js";
 

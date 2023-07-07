@@ -19,5 +19,4 @@ export type {
 } from "./types.js";
 export { coreHandlers, customNode } from "./core.js";
 export { traverseGraph } from "./traversal.js";
-export { ReActHelper } from "./react.js";
 export { toMermaid } from "./mermaid.js";
