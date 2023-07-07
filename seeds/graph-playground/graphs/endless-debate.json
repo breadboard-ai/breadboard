@@ -19,6 +19,13 @@
       "in": "text"
     },
     {
+      "from": "secrets",
+      "out": "API_KEY",
+      "to": "text-completion-1",
+      "in": "API_KEY",
+      "constant": true
+    },
+    {
       "from": "text-completion-1",
       "out": "completion",
       "to": "output-1",
@@ -41,6 +48,13 @@
       "out": "prompt",
       "to": "text-completion-2",
       "in": "text"
+    },
+    {
+      "from": "secrets",
+      "out": "API_KEY",
+      "to": "text-completion-2",
+      "in": "API_KEY",
+      "constant": true
     },
     {
       "from": "text-completion-2",
@@ -69,6 +83,7 @@
         "message": "What is the topic of the debate?"
       }
     },
+    { "id": "secrets", "type": "secrets" },
     {
       "id": "text-completion-1",
       "type": "text-completion",

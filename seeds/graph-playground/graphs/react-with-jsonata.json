@@ -20,6 +20,13 @@
       "constant": true
     },
     {
+      "from": "secrets",
+      "out": "API_KEY",
+      "to": "react-completion",
+      "in": "API_KEY",
+      "constant": true
+    },
+    {
       "from": "get-tool-descriptions",
       "out": "result",
       "to": "react-template",
@@ -108,6 +115,7 @@
         "message": "What is the question you want to answer?"
       }
     },
+    { "id": "secrets", "type": "secrets" },
     {
       "id": "react-completion",
       "type": "text-completion",

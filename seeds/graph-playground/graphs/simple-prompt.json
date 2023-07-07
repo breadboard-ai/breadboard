@@ -13,6 +13,12 @@
       "in": "text"
     },
     {
+      "from": "secrets",
+      "out": "API_KEY",
+      "to": "text-completion-1",
+      "in": "API_KEY"
+    },
+    {
       "from": "text-completion-1",
       "out": "completion",
       "to": "output-1",
@@ -21,6 +27,7 @@
   ],
   "nodes": [
     { "id": "input-1", "type": "input" },
+    { "id": "secrets", "type": "secrets" },
     { "id": "text-completion-1", "type": "text-completion" },
     { "id": "output-1", "type": "output" },
     {

@@ -24,6 +24,7 @@ import localMemory from "./nodes/local-memory.js";
 import javascript from "./nodes/run-javascript.js";
 import googleSearch from "./nodes/google-search.js";
 import reflect from "./nodes/reflect.js";
+import secrets from "./nodes/secrets.js";
 
 /**
  * A node-producing wrapper to create custom nodes.
@@ -39,6 +40,7 @@ export const coreHandlers = {
   slot,
   jsonata,
   reflect,
+  secrets,
   "prompt-template": promptTemplate,
   "text-completion": textCompletion,
   "local-memory": localMemory,

@@ -6,6 +6,7 @@
 
 import { intro, outro } from "@clack/prompts";
 import { readFile } from "fs/promises";
+import { config } from "dotenv";
 
 import {
   type GraphDescriptor,
@@ -16,6 +17,10 @@ import {
 } from "@google-labs/graph-runner";
 
 import { ConsoleContext } from "./console-context.js";
+
+// Load the environment variables from `.env` file.
+// This is how the `secrets` node gets ahold of the keys.
+config();
 
 intro("Let's follow a graph!");
 const context = new ConsoleContext({

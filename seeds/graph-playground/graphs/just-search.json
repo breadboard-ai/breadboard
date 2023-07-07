@@ -7,6 +7,18 @@
       "in": "query"
     },
     {
+      "from": "secrets",
+      "out": "API_KEY",
+      "to": "search",
+      "in": "API_KEY"
+    },
+    {
+      "from": "secrets",
+      "out": "GOOGLE_CSE_ID",
+      "to": "search",
+      "in": "GOOGLE_CSE_ID"
+    },
+    {
       "from": "search",
       "out": "results",
       "to": "print",
@@ -21,13 +33,8 @@
         "message": "What do you want to search for?"
       }
     },
-    {
-      "id": "search",
-      "type": "google-search"
-    },
-    {
-      "id": "print",
-      "type": "output"
-    }
+    { "id": "search", "type": "google-search" },
+    { "id": "secrets", "type": "secrets" },
+    { "id": "print", "type": "output" }
   ]
 }

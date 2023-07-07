@@ -27,6 +27,13 @@
       "in": "memory"
     },
     {
+      "from": "secrets",
+      "out": "API_KEY",
+      "to": "react-completion",
+      "in": "API_KEY",
+      "constant": true
+    },
+    {
       "from": "react-template",
       "out": "prompt",
       "to": "react-completion",
@@ -96,6 +103,7 @@
         "message": "What is the question you want to answer?"
       }
     },
+    { "id": "secrets", "type": "secrets" },
     {
       "id": "react-completion",
       "type": "text-completion",

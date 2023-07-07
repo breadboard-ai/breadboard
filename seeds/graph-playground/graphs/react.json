@@ -27,6 +27,13 @@
       "in": "memory"
     },
     {
+      "from": "secrets",
+      "out": "API_KEY",
+      "to": "react-completion",
+      "in": "API_KEY",
+      "constant": true
+    },
+    {
       "from": "react-template",
       "out": "prompt",
       "to": "react-completion",
@@ -49,6 +56,20 @@
       "out": "search",
       "to": "search",
       "in": "query"
+    },
+    {
+      "from": "secrets",
+      "out": "API_KEY",
+      "to": "search",
+      "in": "API_KEY",
+      "constant": true
+    },
+    {
+      "from": "secrets",
+      "out": "GOOGLE_CSE_ID",
+      "to": "search",
+      "in": "GOOGLE_CSE_ID",
+      "constant": true
     },
     {
       "from": "parse-completion",
@@ -81,6 +102,12 @@
       "in": "text"
     },
     {
+      "from": "secrets",
+      "out": "API_KEY",
+      "to": "math-function-completion",
+      "in": "API_KEY"
+    },
+    {
       "from": "math-function-completion",
       "out": "completion",
       "to": "compute",
@@ -91,6 +118,12 @@
       "out": "result",
       "to": "remember-observation",
       "in": "Observation"
+    },
+    {
+      "from": "secrets",
+      "out": "API_KEY",
+      "to": "summarize-completion",
+      "in": "API_KEY"
     },
     {
       "from": "summarize-completion",
@@ -148,6 +181,7 @@
       "type": "react-helper",
       "configuration": { "method": "parseCompletion", "args": ["completion"] }
     },
+    { "id": "secrets", "type": "secrets" },
     {
       "id": "last-print",
       "type": "output"

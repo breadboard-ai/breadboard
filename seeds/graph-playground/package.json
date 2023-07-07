@@ -51,6 +51,7 @@
   },
   "dependencies": {
     "@clack/prompts": "^0.6.3",
-    "@google-labs/graph-runner": "*"
+    "@google-labs/graph-runner": "*",
+    "dotenv": "^16.3.1"
   }
 }

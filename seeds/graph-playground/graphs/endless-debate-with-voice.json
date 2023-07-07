@@ -19,6 +19,13 @@
       "in": "text"
     },
     {
+      "from": "secrets",
+      "out": "API_KEY",
+      "to": "albert-completion",
+      "in": "API_KEY",
+      "constant": true
+    },
+    {
       "from": "albert-completion",
       "out": "completion",
       "to": "albert-voice",
@@ -29,6 +36,13 @@
       "out": "prompt",
       "to": "albert-voice-completion",
       "in": "text"
+    },
+    {
+      "from": "secrets",
+      "out": "API_KEY",
+      "to": "albert-voice-completion",
+      "in": "API_KEY",
+      "constant": true
     },
     {
       "from": "albert-voice-completion",
@@ -55,6 +69,13 @@
       "in": "text"
     },
     {
+      "from": "secrets",
+      "out": "API_KEY",
+      "to": "friedrich-completion",
+      "in": "API_KEY",
+      "constant": true
+    },
+    {
       "from": "friedrich-completion",
       "out": "completion",
       "to": "friedrich-voice",
@@ -65,6 +86,13 @@
       "out": "prompt",
       "to": "friedrich-voice-completion",
       "in": "text"
+    },
+    {
+      "from": "secrets",
+      "out": "API_KEY",
+      "to": "friedrich-voice-completion",
+      "in": "API_KEY",
+      "constant": true
     },
     {
       "from": "friedrich-voice-completion",
@@ -93,6 +121,7 @@
         "message": "What is the topic of the debate?"
       }
     },
+    { "id": "secrets", "type": "secrets" },
     {
       "id": "albert-completion",
       "type": "text-completion",

@@ -7,6 +7,18 @@
       "in": "question"
     },
     {
+      "from": "secrets",
+      "out": "API_KEY",
+      "to": "search",
+      "in": "API_KEY"
+    },
+    {
+      "from": "secrets",
+      "out": "GOOGLE_CSE_ID",
+      "to": "search",
+      "in": "GOOGLE_CSE_ID"
+    },
+    {
       "from": "input",
       "out": "text",
       "to": "search",
@@ -17,6 +29,12 @@
       "out": "results",
       "to": "summarize-results",
       "in": "context"
+    },
+    {
+      "from": "secrets",
+      "out": "API_KEY",
+      "to": "text-completion-1",
+      "in": "API_KEY"
     },
     {
       "from": "summarize-results",
@@ -43,6 +61,7 @@
       "id": "search",
       "type": "google-search"
     },
+    { "id": "secrets", "type": "secrets" },
     { "id": "text-completion-1", "type": "text-completion" },
     {
       "id": "summarize-results",

@@ -6,18 +6,32 @@
 
 import type { GraphTraversalContext, InputValues } from "../types.js";
 import { GenerateTextResponse, Text, palm } from "@google-labs/palm-lite";
-import { config } from "dotenv";
 
-config();
-
-const API_KEY = process.env.API_KEY;
-if (!API_KEY) throw new Error("API_KEY not set");
+type TextCompletionInputs = {
+  /**
+   * Prompt for text completion.
+   */
+  text: string;
+  /**
+   * The Google Cloud Platform API key
+   */
+  API_KEY: string;
+  /**
+   * Stop sequences
+   */
+  "stop-sequences": string[];
+};
 
 export default async (_cx: GraphTraversalContext, inputs: InputValues) => {
-  const prompt = new Text().text(inputs["text"] as string);
-  const stopSequences = (inputs["stop-sequences"] as string[]) || [];
+  const values = inputs as TextCompletionInputs;
+  if (!values.API_KEY)
+    throw new Error("Text completion requires `API_KEY` input");
+  if (!values.text) throw new Error("Text completion requires `text` input");
+
+  const prompt = new Text().text(values.text);
+  const stopSequences = values["stop-sequences"] || [];
   stopSequences.forEach((stopSequence) => prompt.addStopSequence(stopSequence));
-  const request = palm(API_KEY).text(prompt);
+  const request = palm(values.API_KEY).text(prompt);
   const data = await fetch(request);
   const response = (await data.json()) as GenerateTextResponse;
   const completion = response?.candidates?.[0]?.output as string;
