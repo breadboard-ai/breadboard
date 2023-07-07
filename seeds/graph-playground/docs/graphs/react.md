@@ -16,8 +16,8 @@ id='remember-question'"]
 rememberquestion["local-memory
 id='remember-question'"] -- context:memory --> reacttemplate["prompt-template
 id='react-template'"]
-secrets["secrets
-id='secrets'"] -- API_KEY:API_KEY --o reactcompletion["text-completion
+secrets("secrets
+id='secrets'"):::secrets -- API_KEY:API_KEY --o reactcompletion["text-completion
 id='react-completion'"]
 reacttemplate["prompt-template
 id='react-template'"] -- prompt:text --> reactcompletion["text-completion
@@ -31,11 +31,11 @@ id='remember-thought'"]
 parsecompletion["react-helper
 id='parse-completion'"] -- search:query --> search["google-search
 id='search'"]
-secrets["secrets
-id='secrets'"] -- API_KEY:API_KEY --o search["google-search
+secrets("secrets
+id='secrets'"):::secrets -- API_KEY:API_KEY --o search["google-search
 id='search'"]
-secrets["secrets
-id='secrets'"] -- GOOGLE_CSE_ID:GOOGLE_CSE_ID --o search["google-search
+secrets("secrets
+id='secrets'"):::secrets -- GOOGLE_CSE_ID:GOOGLE_CSE_ID --o search["google-search
 id='search'"]
 parsecompletion["react-helper
 id='parse-completion'"] -- math:question --> mathfunction["prompt-template
@@ -52,8 +52,8 @@ id='summarize-completion'"]
 mathfunction["prompt-template
 id='math-function'"] -- prompt:text --> mathfunctioncompletion["text-completion
 id='math-function-completion'"]
-secrets["secrets
-id='secrets'"] -- API_KEY:API_KEY --> mathfunctioncompletion["text-completion
+secrets("secrets
+id='secrets'"):::secrets -- API_KEY:API_KEY --> mathfunctioncompletion["text-completion
 id='math-function-completion'"]
 mathfunctioncompletion["text-completion
 id='math-function-completion'"] -- completion:code --> compute["run-javascript
@@ -61,8 +61,8 @@ id='compute'"]
 compute["run-javascript
 id='compute'"] -- result:Observation --> rememberobservation["local-memory
 id='remember-observation'"]
-secrets["secrets
-id='secrets'"] -- API_KEY:API_KEY --> summarizecompletion["text-completion
+secrets("secrets
+id='secrets'"):::secrets -- API_KEY:API_KEY --> summarizecompletion["text-completion
 id='summarize-completion'"]
 summarizecompletion["text-completion
 id='summarize-completion'"] -- completion:Observation --> rememberobservation["local-memory
@@ -90,5 +90,6 @@ classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
 classDef passthrough stroke:#a64d79,fill:#ead1dcff,color:#000
 classDef slot stroke:#a64d79,fill:#ead1dcff,color:#000
 classDef config stroke:#a64d79,fill:#ead1dcff,color:#000
+classDef secrets stroke:#db4437,fill:#f4cccc,color:#000
 classDef slotted stroke:#a64d79
 ```

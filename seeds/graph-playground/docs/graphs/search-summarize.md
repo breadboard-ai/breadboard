@@ -7,11 +7,11 @@ graph TD;
 input[/"input
 id='input'"/]:::input -- text:question --> summarizeresults["prompt-template
 id='summarize-results'"]
-secrets["secrets
-id='secrets'"] -- API_KEY:API_KEY --> search["google-search
+secrets("secrets
+id='secrets'"):::secrets -- API_KEY:API_KEY --> search["google-search
 id='search'"]
-secrets["secrets
-id='secrets'"] -- GOOGLE_CSE_ID:GOOGLE_CSE_ID --> search["google-search
+secrets("secrets
+id='secrets'"):::secrets -- GOOGLE_CSE_ID:GOOGLE_CSE_ID --> search["google-search
 id='search'"]
 input[/"input
 id='input'"/]:::input -- text:query --> search["google-search
@@ -19,8 +19,8 @@ id='search'"]
 search["google-search
 id='search'"] -- results:context --> summarizeresults["prompt-template
 id='summarize-results'"]
-secrets["secrets
-id='secrets'"] -- API_KEY:API_KEY --> textcompletion1["text-completion
+secrets("secrets
+id='secrets'"):::secrets -- API_KEY:API_KEY --> textcompletion1["text-completion
 id='text-completion-1'"]
 summarizeresults["prompt-template
 id='summarize-results'"] -- prompt:text --> textcompletion1["text-completion
@@ -36,5 +36,6 @@ classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
 classDef passthrough stroke:#a64d79,fill:#ead1dcff,color:#000
 classDef slot stroke:#a64d79,fill:#ead1dcff,color:#000
 classDef config stroke:#a64d79,fill:#ead1dcff,color:#000
+classDef secrets stroke:#db4437,fill:#f4cccc,color:#000
 classDef slotted stroke:#a64d79
 ```

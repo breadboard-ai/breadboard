@@ -13,8 +13,8 @@ id='albert'"]
 albert["prompt-template
 id='albert'"] -- prompt:text --> albertcompletion["text-completion
 id='albert-completion'"]
-secrets["secrets
-id='secrets'"] -- API_KEY:API_KEY --o albertcompletion["text-completion
+secrets("secrets
+id='secrets'"):::secrets -- API_KEY:API_KEY --o albertcompletion["text-completion
 id='albert-completion'"]
 albertcompletion["text-completion
 id='albert-completion'"] -- completion:context --> albertvoice["prompt-template
@@ -22,8 +22,8 @@ id='albert-voice'"]
 albertvoice["prompt-template
 id='albert-voice'"] -- prompt:text --> albertvoicecompletion["text-completion
 id='albert-voice-completion'"]
-secrets["secrets
-id='secrets'"] -- API_KEY:API_KEY --o albertvoicecompletion["text-completion
+secrets("secrets
+id='secrets'"):::secrets -- API_KEY:API_KEY --o albertvoicecompletion["text-completion
 id='albert-voice-completion'"]
 albertvoicecompletion["text-completion
 id='albert-voice-completion'"] -- completion:text --> output1{{"output
@@ -37,8 +37,8 @@ id='friedrich'"]
 friedrich["prompt-template
 id='friedrich'"] -- prompt:text --> friedrichcompletion["text-completion
 id='friedrich-completion'"]
-secrets["secrets
-id='secrets'"] -- API_KEY:API_KEY --o friedrichcompletion["text-completion
+secrets("secrets
+id='secrets'"):::secrets -- API_KEY:API_KEY --o friedrichcompletion["text-completion
 id='friedrich-completion'"]
 friedrichcompletion["text-completion
 id='friedrich-completion'"] -- completion:context --> friedrichvoice["prompt-template
@@ -46,8 +46,8 @@ id='friedrich-voice'"]
 friedrichvoice["prompt-template
 id='friedrich-voice'"] -- prompt:text --> friedrichvoicecompletion["text-completion
 id='friedrich-voice-completion'"]
-secrets["secrets
-id='secrets'"] -- API_KEY:API_KEY --o friedrichvoicecompletion["text-completion
+secrets("secrets
+id='secrets'"):::secrets -- API_KEY:API_KEY --o friedrichvoicecompletion["text-completion
 id='friedrich-voice-completion'"]
 friedrichvoicecompletion["text-completion
 id='friedrich-voice-completion'"] -- completion:text --> output1{{"output
@@ -71,5 +71,6 @@ classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
 classDef passthrough stroke:#a64d79,fill:#ead1dcff,color:#000
 classDef slot stroke:#a64d79,fill:#ead1dcff,color:#000
 classDef config stroke:#a64d79,fill:#ead1dcff,color:#000
+classDef secrets stroke:#db4437,fill:#f4cccc,color:#000
 classDef slotted stroke:#a64d79
 ```

@@ -13,8 +13,8 @@ id='get-tool-descriptions'"]
 gettools["jsonata
 id='get-tools'"] -- result:tools --o reacttemplate["prompt-template
 id='react-template'"]
-secrets["secrets
-id='secrets'"] -- API_KEY:API_KEY --o reactcompletion["text-completion
+secrets("secrets
+id='secrets'"):::secrets -- API_KEY:API_KEY --o reactcompletion["text-completion
 id='react-completion'"]
 gettooldescriptions["jsonata
 id='get-tool-descriptions'"] -- result:descriptions --o reacttemplate["prompt-template
@@ -69,5 +69,6 @@ classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
 classDef passthrough stroke:#a64d79,fill:#ead1dcff,color:#000
 classDef slot stroke:#a64d79,fill:#ead1dcff,color:#000
 classDef config stroke:#a64d79,fill:#ead1dcff,color:#000
+classDef secrets stroke:#db4437,fill:#f4cccc,color:#000
 classDef slotted stroke:#a64d79
 ```

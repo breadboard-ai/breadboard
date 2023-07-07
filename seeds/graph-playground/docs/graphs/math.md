@@ -10,8 +10,8 @@ id='math-function'"]
 mathfunction["prompt-template
 id='math-function'"] -- prompt:text --> mathfunctioncompletion["text-completion
 id='math-function-completion'"]
-secrets["secrets
-id='secrets'"] -- API_KEY:API_KEY --o mathfunctioncompletion["text-completion
+secrets("secrets
+id='secrets'"):::secrets -- API_KEY:API_KEY --o mathfunctioncompletion["text-completion
 id='math-function-completion'"]
 mathfunctioncompletion["text-completion
 id='math-function-completion'"] -- completion:code --> compute["run-javascript
@@ -28,5 +28,6 @@ classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
 classDef passthrough stroke:#a64d79,fill:#ead1dcff,color:#000
 classDef slot stroke:#a64d79,fill:#ead1dcff,color:#000
 classDef config stroke:#a64d79,fill:#ead1dcff,color:#000
+classDef secrets stroke:#db4437,fill:#f4cccc,color:#000
 classDef slotted stroke:#a64d79
 ```
