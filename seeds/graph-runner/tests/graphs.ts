@@ -40,11 +40,12 @@ class MockContext implements GraphTraversalContext {
   constructor(inputs: InputValues) {
     this.inputs = inputs;
     this.handlers = {
-      input: async (_cx, inputs) => {
-        return this.requestExternalInput(inputs);
+      input: async (_cx, _inputs) => {
+        return this.inputs;
       },
       output: async (_cx, inputs) => {
-        return this.provideExternalOutput(inputs);
+        Object.assign(this.outputs, inputs);
+        return {};
       },
       noop: async (_cx, inputs) => {
         return inputs;
@@ -54,11 +55,11 @@ class MockContext implements GraphTraversalContext {
   }
 
   async requestExternalInput(_inputs: InputValues): Promise<OutputValues> {
-    return this.inputs;
+    throw new Error("If this method is called, something bad happened.");
   }
 
-  async provideExternalOutput(inputs: InputValues): Promise<void> {
-    Object.assign(this.outputs, inputs);
+  async provideExternalOutput(_inputs: InputValues): Promise<void> {
+    throw new Error("If this method is called, something bad happened.");
   }
 
   async requestSlotOutput(
