@@ -291,13 +291,24 @@ Use this node to execute [JSONata](https://jsonata.org/) expressions. The node t
 
 The node will pass the result of the execution as the `result` output property, unless the `raw` property is set to `true`.
 
+### `secrets`
+
+Use this node to access secrets, such as API keys or other valuable bits of information that you might not want to store in the graph itself. The node needs no inputs and currently simply returns the `process.env` object as output. This enables connecting edges directly from environment variables. For example, use this node to pass the `API_KEY` environment variable to the `text-completion` node.
+
 ### `text-completion`
 
-This is a PaLM API text completion node. It requires an `API_KEY` environment variable to be defined, containing the Google Cloud Platform API key for the project has the "Generative Language API" API enabled.
+This is a PaLM API text completion node. It has two required input properties:
 
-The node takes `text` input property, which is used as the prompt for the completion. The node will pass the result of the completion as the `completion` output property.
+- `API_KEY` string, which must contain the Google Cloud Platform API key for the project has the "Generative Language API" API enabled.
+- `text` string, which is used as the prompt for the completion.
 
-You can also specify the `stop-sequences` property as an array of strings. These will be passed as the stop sequences to the completion API.
+The node has the following optional input properties:
+
+- `stop-sequences` array of strings. These will be passed as the stop sequences to the completion API.
+
+The node will produce the following output properties:
+
+- `completion` as pass the result of the PaLM API text completion.
 
 ### `google-search`
 
