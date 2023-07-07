@@ -2,6 +2,10 @@
 
 The WIP bit of code that traverses the graph and invokes various node handlers.
 
+This is the nascent docs and specs on the design of the graph and their traversal machinery.
+
+To actually play with various graphs, see the [README.md](../graph-playground/README.md) in the `graph-playground` package.
+
 ## Nodes and Edges
 
 A graph is nothing without nodes. Graph nodes are also sometimes called vertices, but here, we'll stick with the term 'node'.

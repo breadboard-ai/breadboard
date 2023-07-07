@@ -67,3 +67,5 @@ npm run dev graphs/react-with-include.json
 ```
 
 - To visualize graphs, there's is a `scripts/mermaidize.js` script that converts a graph file into a [Mermaid](https://mermaid-js.github.io/mermaid/#/) diagram, embedded into a Markdown file. For convenience, use `npm run merm` to run it. The script will generate files in the [`docs/graphs`](docs/graphs/) dir, one for each file in the `graphs` dir.
+
+For a more detailed explanation of how graphs work, see [README.md](../graph-runner/README.md) in the `graph-runner` package.
