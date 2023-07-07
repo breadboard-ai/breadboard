@@ -204,14 +204,6 @@ export const traverseGraph = async (
 
     if (!current) throw new Error(`No node found for id "${toNode}"`);
 
-    log({
-      source,
-      type: "node",
-      value: current.id,
-      nodeType: current.type,
-      text: `Visiting: "${current.id}", type: "${current.type}"`,
-    });
-
     const incomingEdges = heads.get(toNode) || [];
     const inputs = wire(incomingEdges, state.getAvailableOutputs(toNode));
     Object.entries(inputs).forEach(([key, value]) => {
@@ -237,6 +229,14 @@ export const traverseGraph = async (
       });
       continue;
     }
+
+    log({
+      source,
+      type: "node",
+      value: current.id,
+      nodeType: current.type,
+      text: `Handling: "${current.id}", type: "${current.type}"`,
+    });
 
     const outputs =
       (await handle(context.handlers, current, context, inputs)) || {};

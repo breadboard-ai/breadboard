@@ -8,7 +8,7 @@
  * A simple graph test harness
  */
 
-import test, { ExecutionContext } from "ava";
+import test from "ava";
 
 import { readFile, readdir } from "fs/promises";
 
@@ -26,16 +26,19 @@ const IN_DIR = "./tests/data/";
 
 interface TestGraphDescriptor extends GraphDescriptor {
   sequence: string[];
-  outputs: string[];
+  inputs: InputValues;
+  outputs: OutputValues;
 }
 
 class MockContext implements GraphTraversalContext {
   handlers: NodeHandlers;
-  outputs: string[] = [];
+  inputs: InputValues;
+  outputs: Record<string, string> = {};
   currentGraph: GraphDescriptor | null = null;
   sequence: string[] = [];
 
-  constructor() {
+  constructor(inputs: InputValues) {
+    this.inputs = inputs;
     this.handlers = {
       input: async (_cx, inputs) => {
         return this.requestExternalInput(inputs);
@@ -48,16 +51,16 @@ class MockContext implements GraphTraversalContext {
   }
 
   async requestExternalInput(_inputs: InputValues): Promise<OutputValues> {
-    return { text: "foo" };
+    return this.inputs;
   }
 
   async provideExternalOutput(inputs: InputValues): Promise<void> {
-    this.outputs.push(inputs.text as string);
+    Object.assign(this.outputs, inputs);
   }
 
   async requestSlotOutput(
-    slot: string,
-    inputs: InputValues
+    _slot: string,
+    _inputs: InputValues
   ): Promise<OutputValues> {
     throw new Error("Method not implemented.");
   }
@@ -84,7 +87,7 @@ await Promise.all(
     test(filename, async (t) => {
       const data = await readFile(`${IN_DIR}${filename}`, "utf-8");
       const graph = JSON.parse(data) as TestGraphDescriptor;
-      const context = new MockContext();
+      const context = new MockContext(graph.inputs);
       await traverseGraph(context, graph);
       t.deepEqual(context.outputs, graph.outputs);
       t.deepEqual(context.sequence, graph.sequence);

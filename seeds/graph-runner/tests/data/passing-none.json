@@ -2,9 +2,7 @@
   "edges": [
     {
       "from": "input-1",
-      "out": "text",
-      "to": "output-1",
-      "in": "text"
+      "to": "output-1"
     }
   ],
   "nodes": [
@@ -12,6 +10,6 @@
     { "id": "output-1", "type": "output" }
   ],
   "inputs": { "text": "foo" },
-  "outputs": { "text": "foo" },
+  "outputs": {},
   "sequence": ["input-1", "output-1"]
 }

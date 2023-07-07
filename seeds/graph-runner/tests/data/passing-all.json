@@ -2,9 +2,8 @@
   "edges": [
     {
       "from": "input-1",
-      "out": "text",
-      "to": "output-1",
-      "in": "text"
+      "out": "*",
+      "to": "output-1"
     }
   ],
   "nodes": [
