@@ -1,0 +1,32 @@
+{
+  "edges": [
+    {
+      "from": "node-a",
+      "out": "text",
+      "to": "node-b",
+      "in": "text"
+    },
+    {
+      "from": "node-a",
+      "out": "text",
+      "to": "node-c",
+      "in": "description",
+      "optional": true
+    },
+    {
+      "from": "node-b",
+      "out": "text",
+      "to": "node-c",
+      "in": "context",
+      "optional": true
+    }
+  ],
+  "nodes": [
+    { "id": "node-a", "type": "input" },
+    { "id": "node-b", "type": "noop" },
+    { "id": "node-c", "type": "output" }
+  ],
+  "inputs": { "text": "foo" },
+  "outputs": { "context": "foo", "description": "foo" },
+  "sequence": ["node-a", "node-b", "node-c", "node-c"]
+}

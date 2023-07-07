@@ -78,7 +78,6 @@ class MockContext implements GraphTraversalContext {
 
   async log(data: LogData): Promise<void> {
     if (data.type === "node") this.sequence.push(data.value as string);
-    console.log(data);
   }
 }
 
