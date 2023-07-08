@@ -20,7 +20,7 @@ search_url["url_template
 id='search_url'"] -- url:url --> fetch["fetch
 id='fetch'"]
 fetch["fetch
-id='fetch'"] -- items:json --> snippettizer["jsonata
+id='fetch'"] -- response:json --> snippettizer["jsonata
 id='snippettizer'"]
 snippettizer["jsonata
 id='snippettizer'"] -- result:context --> summarizeresults["prompt-template
