@@ -110,3 +110,4 @@ dist
 
 # Ignore Turbobuild cache files
 .turbo
+.DS_Store
