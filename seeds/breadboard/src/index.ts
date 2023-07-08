@@ -4,4 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-console.log("code goes here");
+export { Breadboard } from "./breadboard.js";
+export { Core } from "./core.js";
+export { Node } from "./node.js";

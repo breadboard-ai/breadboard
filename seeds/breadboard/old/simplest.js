@@ -6,9 +6,9 @@
 
 // TODO: Make this API better.
 
-import { Graph } from "../dist/src/graph.js";
+import { Graph } from "../dist/old/graph.js";
 import { Logger } from "../dist/src/logger.js";
-import { Runner } from "../dist/src/runner.js";
+import { Runner } from "../dist/old/runner.js";
 
 import userInput from "../dist/src/nodes/user-input.js";
 import textCompletion from "../dist/src/nodes/text-completion.js";
