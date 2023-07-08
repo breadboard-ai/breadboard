@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { writeFile } from "fs/promises";
 import type { GraphTraversalContext, InputValues } from "../types.js";
 import {
   XmlCdata,
