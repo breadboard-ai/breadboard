@@ -1,0 +1,101 @@
+{
+  "edges": [
+    {
+      "from": "input",
+      "out": "text",
+      "to": "summarize-results",
+      "in": "question"
+    },
+    {
+      "from": "secrets",
+      "out": "API_KEY",
+      "to": "search_url",
+      "in": "API_KEY"
+    },
+    {
+      "from": "secrets",
+      "out": "GOOGLE_CSE_ID",
+      "to": "search_url",
+      "in": "GOOGLE_CSE_ID"
+    },
+    {
+      "from": "input",
+      "out": "text",
+      "to": "search_url",
+      "in": "query"
+    },
+    {
+      "from": "search_url",
+      "out": "url",
+      "to": "fetch",
+      "in": "url"
+    },
+    {
+      "from": "fetch",
+      "out": "response",
+      "to": "snippettizer",
+      "in": "json"
+    },
+    {
+      "from": "snippettizer",
+      "out": "result",
+      "to": "summarize-results",
+      "in": "context"
+    },
+    {
+      "from": "secrets",
+      "out": "API_KEY",
+      "to": "text-completion-1",
+      "in": "API_KEY"
+    },
+    {
+      "from": "summarize-results",
+      "out": "prompt",
+      "to": "text-completion-1",
+      "in": "text"
+    },
+    {
+      "from": "text-completion-1",
+      "out": "completion",
+      "to": "print",
+      "in": "text"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "configuration": {
+        "message": "What do you want to search for?"
+      }
+    },
+    { "id": "secrets", "type": "secrets" },
+    { "id": "text-completion-1", "type": "text-completion" },
+    { "id": "fetch", "type": "fetch" },
+    {
+      "id": "search_url",
+      "type": "url_template",
+      "configuration": {
+        "template": "https://www.googleapis.com/customsearch/v1?key={{API_KEY}}&cx={{GOOGLE_CSE_ID}}&q={{query}}"
+      }
+    },
+    {
+      "id": "snippettizer",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "$join(items.snippet, '\n')"
+      }
+    },
+    {
+      "id": "summarize-results",
+      "type": "prompt-template",
+      "configuration": {
+        "template": "Use context below to answer this question:\n\n##Question:\n{{question}}\n\n## Context {{context}}\n\\n## Answer:\n"
+      }
+    },
+    {
+      "id": "print",
+      "type": "output"
+    }
+  ]
+}

@@ -25,6 +25,10 @@ import javascript from "./nodes/run-javascript.js";
 import googleSearch from "./nodes/google-search.js";
 import reflect from "./nodes/reflect.js";
 import secrets from "./nodes/secrets.js";
+import fetch from "./nodes/fetch.js";
+// intentionally breaking convention here.
+// See https://github.com/google/labs-prototypes/issues/22
+import url_template from "./nodes/url-template.js";
 
 /**
  * A node-producing wrapper to create custom nodes.
@@ -41,6 +45,8 @@ export const coreHandlers = {
   jsonata,
   reflect,
   secrets,
+  fetch,
+  url_template,
   "prompt-template": promptTemplate,
   "text-completion": textCompletion,
   "local-memory": localMemory,

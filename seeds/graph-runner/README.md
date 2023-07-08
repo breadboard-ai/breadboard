@@ -295,6 +295,22 @@ The node will pass the result of the execution as the `result` output property, 
 
 Use this node to access secrets, such as API keys or other valuable bits of information that you might not want to store in the graph itself. The node needs no inputs and currently simply returns the `process.env` object as output. This enables connecting edges directly from environment variables. For example, use this node to pass the `API_KEY` environment variable to the `text-completion` node.
 
+### `url-template`
+
+Use this node to safely construct URLs. The node takes one required input property:
+
+- `template` string, which is a template for the URL. It can contain zero or more placeholders that will be replaced with values from the input property bag. Specify placeholders as `{{propertyName}}` in the template.
+
+The node will pas the result of replacing placeholders as the `url` output property.
+
+### `fetch`
+
+Use this node to fetch data from the Internet. The node takes one required input property:
+
+- `url` string, which is the URL to fetch. For now, this node can only make a GET request with `Accept: application/json` header.
+
+The node will fetch data from the specified URL, parse it as JSON, and pass the result of the fetch as a `response` output property.
+
 ### `text-completion`
 
 This is a PaLM API text completion node. It has two required input properties:
