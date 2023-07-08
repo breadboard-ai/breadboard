@@ -50,6 +50,7 @@
   },
   "dependencies": {
     "@google-labs/palm-lite": "*",
+    "@rgrove/parse-xml": "^4.1.0",
     "jsonata": "^2.0.3"
   }
 }

@@ -1,0 +1,102 @@
+{
+  "edges": [
+    {
+      "from": "input",
+      "out": "text",
+      "to": "summarize-results",
+      "in": "topic"
+    },
+    {
+      "from": "input",
+      "out": "text",
+      "to": "news_url",
+      "in": "query"
+    },
+    {
+      "from": "news_url",
+      "out": "url",
+      "to": "fetch",
+      "in": "url"
+    },
+    {
+      "from": "fetch",
+      "out": "response",
+      "to": "xml-to-json",
+      "in": "xml"
+    },
+    {
+      "from": "xml-to-json",
+      "out": "json",
+      "to": "headlines",
+      "in": "json"
+    },
+    {
+      "from": "headlines",
+      "out": "result",
+      "to": "summarize-results",
+      "in": "headlines"
+    },
+    {
+      "from": "secrets",
+      "out": "API_KEY",
+      "to": "text-completion-1",
+      "in": "API_KEY"
+    },
+    {
+      "from": "summarize-results",
+      "out": "prompt",
+      "to": "text-completion-1",
+      "in": "text"
+    },
+    {
+      "from": "text-completion-1",
+      "out": "completion",
+      "to": "print",
+      "in": "text"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "configuration": {
+        "message": "What do you want to search for?"
+      }
+    },
+    { "id": "secrets", "type": "secrets" },
+    { "id": "text-completion-1", "type": "text-completion" },
+    {
+      "id": "fetch",
+      "type": "fetch",
+      "configuration": {
+        "raw": true
+      }
+    },
+    {
+      "id": "news_url",
+      "type": "url_template",
+      "configuration": {
+        "template": "https://news.google.com/rss/search?q={{query}}&hl=en-US&gl=US&ceid=US:en"
+      }
+    },
+    {
+      "id": "headlines",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "$join((rss.channel.item.title.`$t`)[[1..20]], `\n`)"
+      }
+    },
+    { "id": "xml-to-json", "type": "xml_to_json" },
+    {
+      "id": "summarize-results",
+      "type": "prompt-template",
+      "configuration": {
+        "template": "Use the news headlines below to write a few sentences to summarize the latest news on this topic:\n\n##Topic:\n{{topic}}\n\n## Headlines {{headlines}}\n\\n## Summary:\n"
+      }
+    },
+    {
+      "id": "print",
+      "type": "output"
+    }
+  ]
+}

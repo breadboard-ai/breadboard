@@ -29,6 +29,7 @@ import fetch from "./nodes/fetch.js";
 // intentionally breaking convention here.
 // See https://github.com/google/labs-prototypes/issues/22
 import url_template from "./nodes/url-template.js";
+import xml_to_json from "./nodes/xml-to-json.js";
 
 /**
  * A node-producing wrapper to create custom nodes.
@@ -47,6 +48,7 @@ export const coreHandlers = {
   secrets,
   fetch,
   url_template,
+  xml_to_json,
   "prompt-template": promptTemplate,
   "text-completion": textCompletion,
   "local-memory": localMemory,

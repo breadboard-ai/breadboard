@@ -303,11 +303,23 @@ Use this node to safely construct URLs. The node takes one required input proper
 
 The node will pas the result of replacing placeholders as the `url` output property.
 
+### `xml-to-json`
+
+Use this node to convert XML to JSON. The node takes one required input property:
+
+- `xml` string, which is a string that contains the XML to be converted.
+
+The node will pass the result of the conversion as the `json` output property. The format of JSON follows the `alt-json` convention that is described in https://developers.google.com/gdata/docs/json.
+
 ### `fetch`
 
-Use this node to fetch data from the Internet. The node takes one required input property:
+Use this node to fetch data from the Internet. The node takes the following input properties:
 
-- `url` string, which is the URL to fetch. For now, this node can only make a GET request with `Accept: application/json` header.
+- `url` string (required), which is the URL to fetch. For now, this node can only make a GET request.
+
+- `headers` object (optional), which is a set of headers to be passed to the request.
+
+- `raw` boolean (optional), which specifies whether or not to return raw text (`true`) or parse the response as JSON (`false`). The default value is `false`.
 
 The node will fetch data from the specified URL, parse it as JSON, and pass the result of the fetch as a `response` output property.
 
