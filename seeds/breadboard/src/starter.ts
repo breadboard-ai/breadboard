@@ -4,9 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NodeConfiguration } from "@google-labs/graph-runner";
+import {
+  NodeConfiguration,
+  NodeHandlers,
+  coreHandlers,
+} from "@google-labs/graph-runner";
 import { Node } from "./node.js";
-import { IBreadboard } from "./types.js";
+import { IBreadboard, ILibrary } from "./types.js";
 
 export type TextTemplateArgs = {
   template: string;
@@ -32,11 +36,17 @@ export type SecretsArgs = {
   keys: string[];
 };
 
-export class Starter {
+/**
+ * Syntactic sugar around the `coreHandlers` library.
+ */
+export class Starter implements ILibrary {
+  handlers: NodeHandlers;
   #breadboard: IBreadboard;
 
   constructor(breadboard: IBreadboard) {
     this.#breadboard = breadboard;
+    this.handlers = coreHandlers;
+    this.#breadboard.addLibrary(this);
   }
 
   textTemplate({ template }: TextTemplateArgs): Node {

@@ -60,7 +60,7 @@
       "id": "prompt-template-1",
       "type": "prompt-template",
       "configuration": {
-        "template": "Use the news headlines below to write a few sentences to summarize the latest news on this topic:\n\n##Topic:\n{{topic}}\n\n## Headlines {{headlines}}\n\\n## Summary:\n"
+        "template": "Use the news headlines below to write one or two sentences to summarize the latest news on this topic:\n\n##Topic:\n{{topic}}\n\n## Headlines {{headlines}}\n\\n## Summary:\n"
       }
     },
     {

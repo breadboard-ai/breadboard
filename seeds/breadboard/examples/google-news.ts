@@ -8,6 +8,10 @@ import { Breadboard, Starter } from "@google-labs/breadboard";
 import { toMermaid } from "@google-labs/graph-runner";
 import { writeFile } from "fs/promises";
 
+import { config } from "dotenv";
+
+config();
+
 /** Just playing with the API for now */
 
 // Instance of a graph.
@@ -17,7 +21,7 @@ const n = new Starter(breadboard);
 
 const summarizeResults = n.textTemplate({
   template:
-    "Use the news headlines below to write a few sentences to summarize the latest news on this topic:\n\n##Topic:\n{{topic}}\n\n## Headlines {{headlines}}\n\\n## Summary:\n",
+    "Use the news headlines below to write one or two sentences to summarize the latest news on this topic:\n\n##Topic:\n{{topic}}\n\n## Headlines {{headlines}}\n\\n## Summary:\n",
 });
 
 const newsUrl = n.urlTemplate({
@@ -64,13 +68,12 @@ await writeFile(
   `# Google News Diagram\n\n\`\`\`mermaid\n${toMermaid(breadboard)}\n\`\`\``
 );
 
-breadboard.on("input", async () => {
-  // supply input
-});
-
-breadboard.on("output", async () => {
-  // process output
-});
-
 // Run breadboard
+breadboard.addInputs({ text: "Breadboards" });
+
+breadboard.on("output", (event) => {
+  const customEvent = event as CustomEvent;
+  console.log(customEvent.detail.text);
+});
+
 await breadboard.run();

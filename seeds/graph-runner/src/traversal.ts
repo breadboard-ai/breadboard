@@ -142,7 +142,7 @@ export const traverseGraph = async (
 ) => {
   const source = "traverseGraph";
   const state = new StateManager();
-  const log = context.log;
+  const log = context.log.bind(context);
 
   context.setCurrentGraph(deepCopy(graph));
 
