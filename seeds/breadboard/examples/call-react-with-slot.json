@@ -1,0 +1,118 @@
+{
+  "edges": [
+    {
+      "from": "include-9",
+      "to": "output-10",
+      "out": "text",
+      "in": "text"
+    },
+    {
+      "from": "input-1",
+      "to": "include-9",
+      "out": "text",
+      "in": "text"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "message": "Ask ReAct"
+      }
+    },
+    {
+      "id": "include-9",
+      "type": "include",
+      "configuration": {
+        "$ref": "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/react-with-slot.json",
+        "slotted": {
+          "tools": {
+            "edges": [
+              {
+                "from": "reflect-5",
+                "to": "output-6",
+                "out": "graph",
+                "in": "graph"
+              },
+              {
+                "from": "input-4",
+                "to": "reflect-5",
+                "out": "graph",
+                "in": "graph"
+              },
+              {
+                "from": "include-3",
+                "to": "output-7",
+                "out": "text",
+                "in": "text"
+              },
+              {
+                "from": "input-4",
+                "to": "include-3",
+                "out": "math",
+                "in": "text"
+              },
+              {
+                "from": "include-2",
+                "to": "output-8",
+                "out": "text",
+                "in": "text"
+              },
+              {
+                "from": "input-4",
+                "to": "include-2",
+                "out": "search",
+                "in": "text"
+              }
+            ],
+            "nodes": [
+              {
+                "id": "include-2",
+                "type": "include",
+                "configuration": {
+                  "$ref": "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/search-summarize.json",
+                  "description": "Useful for when you need to find facts. Input should be a search query."
+                }
+              },
+              {
+                "id": "include-3",
+                "type": "include",
+                "configuration": {
+                  "$ref": "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/math.json",
+                  "description": "Useful for when you need to solve math problems. Input should be a math problem to be solved."
+                }
+              },
+              {
+                "id": "input-4",
+                "type": "input",
+                "configuration": {}
+              },
+              {
+                "id": "reflect-5",
+                "type": "reflect",
+                "configuration": {}
+              },
+              {
+                "id": "output-6",
+                "type": "output"
+              },
+              {
+                "id": "output-7",
+                "type": "output"
+              },
+              {
+                "id": "output-8",
+                "type": "output"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "output-10",
+      "type": "output"
+    }
+  ]
+}

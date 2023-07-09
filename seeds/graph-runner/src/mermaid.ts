@@ -83,7 +83,7 @@ const describeSubgraphs = (edge: Edge, nodeMap: NodeMap) => {
   const type = fromNode.type;
   if (type !== "include") return "";
 
-  const slotted = fromNode.configuration.slotted;
+  const slotted = fromNode.configuration?.slotted;
   if (!slotted) return "";
   const subgraphs = Object.entries(slotted).map(([name, subgraph]) => {
     const subgraphNodeMap: NodeMap = new Map(

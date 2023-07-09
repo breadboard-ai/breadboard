@@ -5,6 +5,7 @@
  */
 
 import { Breadboard, Starter } from "@google-labs/breadboard";
+import { toMermaid } from "@google-labs/graph-runner";
 import { writeFile } from "fs/promises";
 
 /** Just playing with the API for now */
@@ -25,21 +26,19 @@ const newsUrl = n.urlTemplate({
 });
 
 n.input({
-  message: "What do you want to search for?",
+  message: "What news topic woul you like to have summarized?",
 })
   .wire("text->topic", summarizeResults)
   .wire("text->query", newsUrl);
 
 const fetchHeadlines = n.fetch({ raw: true });
 
-// "url" --> "url:url"
 newsUrl.wire("url", fetchHeadlines);
 
 const parseHeadlines = n.jsonata({
   expression: "$join((rss.channel.item.title.`$t`)[[1..20]], `\n`)",
 });
 
-// "json" --> "json:json"
 fetchHeadlines.wire(
   "response->xml",
   n
@@ -54,7 +53,16 @@ n.secrets({ keys: ["API_KEY"] }).wire("API_KEY", textCompletion);
 summarizeResults.wire("prompt->text", textCompletion);
 
 // Save breadboard
-await writeFile("examples/google-news-2.json", JSON.stringify(breadboard));
+await writeFile(
+  "examples/google-news.json",
+  JSON.stringify(breadboard, null, 2)
+);
+
+// Make it into a diagram
+await writeFile(
+  "examples/google-news.md",
+  `# Google News Diagram\n\n\`\`\`mermaid\n${toMermaid(breadboard)}\n\`\`\``
+);
 
 breadboard.on("input", async () => {
   // supply input

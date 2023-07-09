@@ -42,7 +42,7 @@ export interface NodeDescriptor {
   /**
    * Configuration of the node.
    */
-  configuration: NodeConfiguration;
+  configuration?: NodeConfiguration;
 }
 
 /**
