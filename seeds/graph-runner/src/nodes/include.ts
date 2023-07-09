@@ -18,7 +18,8 @@ import { traverseGraph } from "../traversal.js";
 type SlottedGraphs = Record<string, GraphDescriptor>;
 
 type IncludeInput = {
-  path: string;
+  path?: string;
+  $ref?: string;
   slotted?: SlottedGraphs;
   args: InputValues;
 };
@@ -79,10 +80,16 @@ class IncludeContext implements GraphTraversalContext {
   }
 }
 
+const getGraph = async (path?: string, ref?: string) => {
+  if (path) return JSON.parse(await readFile(path, "utf-8"));
+  if (!ref) throw new Error("To include, we need a path or a $ref");
+  const response = await fetch(ref);
+  return await response.json();
+};
+
 export default async (context: GraphTraversalContext, inputs: InputValues) => {
-  const { path, slotted, ...args } = inputs as IncludeInput;
-  if (!path) throw new Error("To include, we need a path");
-  const graph = JSON.parse(await readFile(path, "utf-8"));
+  const { path, $ref, slotted, ...args } = inputs as IncludeInput;
+  const graph = await getGraph(path, $ref);
   const includeContext = new IncludeContext(args, context, slotted);
   context.log({
     source: "include",

@@ -8,32 +8,39 @@ import { Breadboard, Starter } from "@google-labs/breadboard";
 import { toMermaid } from "@google-labs/graph-runner";
 import { writeFile } from "fs/promises";
 
-const searchTool = {
-  $ref: "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/search-summarize.json",
-};
+import { config } from "dotenv";
 
-const mathTool = {
-  $ref: "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/math.json",
-};
+config();
 
-const reActRecipe = {
-  $ref: "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/react-with-slot.json",
-};
+const REPO_URL =
+  "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/";
+
+const searchTool = { $ref: `${REPO_URL}/search-summarize.json` };
+
+const mathTool = { $ref: `${REPO_URL}/math.json` };
+
+const reActRecipe = { $ref: `${REPO_URL}/react-with-slot.json` };
 
 const getTools = () => {
   const tools = new Breadboard();
   const kit = new Starter(tools);
 
-  const search = kit.include({
-    ...searchTool,
-    description:
-      "Useful for when you need to find facts. Input should be a search query.",
-  });
-  const math = kit.include({
-    ...mathTool,
-    description:
-      "Useful for when you need to solve math problems. Input should be a math problem to be solved.",
-  });
+  const search = kit.include(
+    {
+      ...searchTool,
+      description:
+        "Useful for when you need to find facts. Input should be a search query.",
+    },
+    "search"
+  );
+  const math = kit.include(
+    {
+      ...mathTool,
+      description:
+        "Useful for when you need to solve math problems. Input should be a math problem to be solved.",
+    },
+    "math"
+  );
 
   kit
     .input()
@@ -67,3 +74,15 @@ await writeFile(
   "examples/call-react-with-slot.md",
   `# Google News Diagram\n\n\`\`\`mermaid\n${toMermaid(main)}\n\`\`\``
 );
+
+// Run breadboard
+main.addInputs({
+  text: "What's the square root of the number of holes on a typical breadboard?",
+});
+
+main.on("output", (event) => {
+  const { detail } = event as CustomEvent;
+  console.log(detail.text);
+});
+
+await main.run();

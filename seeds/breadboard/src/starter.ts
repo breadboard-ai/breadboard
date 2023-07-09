@@ -49,47 +49,47 @@ export class Starter implements ILibrary {
     this.#breadboard.addLibrary(this);
   }
 
-  textTemplate({ template }: TextTemplateArgs): Node {
-    return new Node(this.#breadboard, "prompt-template", { template });
+  textTemplate({ template }: TextTemplateArgs, id?: string): Node {
+    return new Node(this.#breadboard, "prompt-template", { template }, id);
   }
 
-  urlTemplate({ template }: UrlTemplateArgs): Node {
-    return new Node(this.#breadboard, "url_template", { template });
+  urlTemplate({ template }: UrlTemplateArgs, id?: string): Node {
+    return new Node(this.#breadboard, "url_template", { template }, id);
   }
 
-  input({ message }: InputArgs = {}): Node {
-    return new Node(this.#breadboard, "input", { message });
+  input({ message }: InputArgs = {}, id?: string): Node {
+    return new Node(this.#breadboard, "input", { message }, id);
   }
 
-  fetch({ raw }: FetchArgs): Node {
-    return new Node(this.#breadboard, "fetch", { raw });
+  fetch({ raw }: FetchArgs, id?: string): Node {
+    return new Node(this.#breadboard, "fetch", { raw }, id);
   }
 
-  jsonata({ expression }: JsonataArgs): Node {
-    return new Node(this.#breadboard, "jsonata", { expression });
+  jsonata({ expression }: JsonataArgs, id?: string): Node {
+    return new Node(this.#breadboard, "jsonata", { expression }, id);
   }
 
-  xmlToJson(): Node {
-    return new Node(this.#breadboard, "xml_to_json");
+  xmlToJson(id?: string): Node {
+    return new Node(this.#breadboard, "xml_to_json", undefined, id);
   }
 
-  textCompletion(): Node {
-    return new Node(this.#breadboard, "text-completion");
+  textCompletion(id?: string): Node {
+    return new Node(this.#breadboard, "text-completion", undefined, id);
   }
 
-  secrets({ keys }: SecretsArgs): Node {
-    return new Node(this.#breadboard, "secrets", { keys });
+  secrets({ keys }: SecretsArgs, id?: string): Node {
+    return new Node(this.#breadboard, "secrets", { keys }, id);
   }
 
-  output(): Node {
-    return new Node(this.#breadboard, "output");
+  output(id?: string): Node {
+    return new Node(this.#breadboard, "output", undefined, id);
   }
 
-  include(config: NodeConfiguration): Node {
-    return new Node(this.#breadboard, "include", config);
+  include(config: NodeConfiguration, id?: string): Node {
+    return new Node(this.#breadboard, "include", config, id);
   }
 
-  reflect(): Node {
-    return new Node(this.#breadboard, "reflect", {});
+  reflect(id?: string): Node {
+    return new Node(this.#breadboard, "reflect", undefined, id);
   }
 }

@@ -60,10 +60,11 @@ export class Node implements NodeDescriptor {
   constructor(
     breadboard: IBreadboard,
     type: NodeTypeIdentifier,
-    configuration?: NodeConfiguration
+    configuration?: NodeConfiguration,
+    id?: string
   ) {
     this.#breadboard = breadboard;
-    this.id = vendNodeId(type);
+    this.id = id ?? vendNodeId(type);
     if (configuration) this.configuration = configuration;
     this.type = type;
     this.#breadboard.addNode(this);
