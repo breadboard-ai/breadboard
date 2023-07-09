@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Breadboard, Core } from "@google-labs/breadboard";
+import { Breadboard, Starter } from "@google-labs/breadboard";
 import { writeFile } from "fs/promises";
 
 /** Just playing with the API for now */
@@ -12,7 +12,7 @@ import { writeFile } from "fs/promises";
 // Instance of a graph.
 const breadboard = new Breadboard();
 // Core handlers.
-const n = new Core(breadboard);
+const n = new Starter(breadboard);
 
 const summarizeResults = n.textTemplate({
   template:

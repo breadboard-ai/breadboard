@@ -10,6 +10,8 @@ import type {
   NodeDescriptor,
 } from "@google-labs/graph-runner";
 
+import { Node } from "./node.js";
+
 export class Breadboard implements GraphDescriptor {
   edges: Edge[] = [];
   nodes: NodeDescriptor[] = [];

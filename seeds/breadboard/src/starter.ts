@@ -16,7 +16,7 @@ export type UrlTemplateArgs = {
 };
 
 export type InputArgs = {
-  message: string;
+  message?: string;
 };
 
 export type FetchArgs = {
@@ -31,7 +31,7 @@ export type SecretsArgs = {
   keys: string[];
 };
 
-export class Core {
+export class Starter {
   #breadboard: Breadboard;
 
   constructor(breadboard: Breadboard) {
@@ -46,7 +46,7 @@ export class Core {
     return new Node();
   }
 
-  input({ message }: InputArgs): Node {
+  input({ message }: InputArgs = {}): Node {
     return new Node();
   }
 
@@ -71,6 +71,14 @@ export class Core {
   }
 
   output(): Node {
+    return new Node();
+  }
+
+  include(o: unknown): Node {
+    return new Node();
+  }
+
+  reflect(): Node {
     return new Node();
   }
 }

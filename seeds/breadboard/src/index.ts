@@ -5,5 +5,5 @@
  */
 
 export { Breadboard } from "./breadboard.js";
-export { Core } from "./core.js";
+export { Starter } from "./starter.js";
 export { Node } from "./node.js";
