@@ -51,6 +51,10 @@ const vendNodeId = (type: string) => {
   return `${type}-${++nodeCount}`;
 };
 
+const hasValues = (configuration: NodeConfiguration) => {
+  return Object.values(configuration).filter(Boolean).length > 0;
+};
+
 export class Node implements NodeDescriptor {
   id: string;
   type: NodeTypeIdentifier;
@@ -65,7 +69,10 @@ export class Node implements NodeDescriptor {
   ) {
     this.#breadboard = breadboard;
     this.id = id ?? vendNodeId(type);
-    if (configuration) this.configuration = configuration;
+
+    if (configuration && hasValues(configuration))
+      this.configuration = configuration;
+
     this.type = type;
     this.#breadboard.addNode(this);
   }

@@ -19,29 +19,25 @@ const breadboard = new Breadboard();
 // Core handlers.
 const n = new Starter(breadboard);
 
-const summarizeResults = n.textTemplate({
-  template:
-    "Use the news headlines below to write one or two sentences to summarize the latest news on this topic:\n\n##Topic:\n{{topic}}\n\n## Headlines {{headlines}}\n\\n## Summary:\n",
-});
+const summarizeResults = n.textTemplate(
+  "Use the news headlines below to write one or two sentences to summarize the latest news on this topic:\n\n##Topic:\n{{topic}}\n\n## Headlines {{headlines}}\n\\n## Summary:\n"
+);
 
-const newsUrl = n.urlTemplate({
-  template:
-    "https://news.google.com/rss/search?q={{query}}&hl=en-US&gl=US&ceid=US:en",
-});
+const newsUrl = n.urlTemplate(
+  "https://news.google.com/rss/search?q={{query}}&hl=en-US&gl=US&ceid=US:en"
+);
 
-n.input({
-  message: "What news topic woul you like to have summarized?",
-})
+n.input("What news topic would you like to have summarized?")
   .wire("text->topic", summarizeResults)
   .wire("text->query", newsUrl);
 
-const fetchHeadlines = n.fetch({ raw: true });
+const fetchHeadlines = n.fetch();
 
 newsUrl.wire("url", fetchHeadlines);
 
-const parseHeadlines = n.jsonata({
-  expression: "$join((rss.channel.item.title.`$t`)[[1..20]], `\n`)",
-});
+const parseHeadlines = n.jsonata(
+  "$join((rss.channel.item.title.`$t`)[[1..20]], `\n`)"
+);
 
 fetchHeadlines.wire(
   "response->xml",
@@ -52,7 +48,7 @@ fetchHeadlines.wire(
 
 const textCompletion = n.textCompletion().wire("completion->text", n.output());
 
-n.secrets({ keys: ["API_KEY"] }).wire("API_KEY", textCompletion);
+n.secrets(["API_KEY"]).wire("API_KEY", textCompletion);
 
 summarizeResults.wire("prompt->text", textCompletion);
 

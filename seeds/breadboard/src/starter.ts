@@ -12,29 +12,7 @@ import {
 import { Node } from "./node.js";
 import { IBreadboard, ILibrary } from "./types.js";
 
-export type TextTemplateArgs = {
-  template: string;
-};
-
-export type UrlTemplateArgs = {
-  template: string;
-};
-
-export type InputArgs = {
-  message?: string;
-};
-
-export type FetchArgs = {
-  raw: boolean;
-};
-
-export type JsonataArgs = {
-  expression: string;
-};
-
-export type SecretsArgs = {
-  keys: string[];
-};
+export type OptionalIdConfiguration = { $id?: string } & NodeConfiguration;
 
 /**
  * Syntactic sugar around the `coreHandlers` library.
@@ -49,47 +27,68 @@ export class Starter implements ILibrary {
     this.#breadboard.addLibrary(this);
   }
 
-  textTemplate({ template }: TextTemplateArgs, id?: string): Node {
-    return new Node(this.#breadboard, "prompt-template", { template }, id);
+  textTemplate(template: string, config: OptionalIdConfiguration = {}): Node {
+    const { $id, ...rest } = config;
+    return new Node(
+      this.#breadboard,
+      "prompt-template",
+      { template, ...rest },
+      $id
+    );
   }
 
-  urlTemplate({ template }: UrlTemplateArgs, id?: string): Node {
-    return new Node(this.#breadboard, "url_template", { template }, id);
+  urlTemplate(template: string, config: OptionalIdConfiguration = {}): Node {
+    const { $id, ...rest } = config;
+    return new Node(
+      this.#breadboard,
+      "url_template",
+      { template, ...rest },
+      $id
+    );
   }
 
-  input({ message }: InputArgs = {}, id?: string): Node {
-    return new Node(this.#breadboard, "input", { message }, id);
+  input(message?: string, config: OptionalIdConfiguration = {}): Node {
+    const { $id, ...rest } = config;
+    return new Node(this.#breadboard, "input", { message, ...rest }, $id);
   }
 
-  fetch({ raw }: FetchArgs, id?: string): Node {
-    return new Node(this.#breadboard, "fetch", { raw }, id);
+  fetch(raw?: boolean, config: OptionalIdConfiguration = {}): Node {
+    const { $id, ...rest } = config;
+    return new Node(this.#breadboard, "fetch", { raw, ...rest }, $id);
   }
 
-  jsonata({ expression }: JsonataArgs, id?: string): Node {
-    return new Node(this.#breadboard, "jsonata", { expression }, id);
+  jsonata(expression: string, config: OptionalIdConfiguration = {}): Node {
+    const { $id, ...rest } = config;
+    return new Node(this.#breadboard, "jsonata", { expression, ...rest }, $id);
   }
 
-  xmlToJson(id?: string): Node {
-    return new Node(this.#breadboard, "xml_to_json", undefined, id);
+  xmlToJson(config: OptionalIdConfiguration = {}): Node {
+    const { $id, ...rest } = config;
+    return new Node(this.#breadboard, "xml_to_json", { ...rest }, $id);
   }
 
-  textCompletion(id?: string): Node {
-    return new Node(this.#breadboard, "text-completion", undefined, id);
+  textCompletion(config: OptionalIdConfiguration = {}): Node {
+    const { $id, ...rest } = config;
+    return new Node(this.#breadboard, "text-completion", { ...rest }, $id);
   }
 
-  secrets({ keys }: SecretsArgs, id?: string): Node {
-    return new Node(this.#breadboard, "secrets", { keys }, id);
+  secrets(keys: string[], config: OptionalIdConfiguration = {}): Node {
+    const { $id, ...rest } = config;
+    return new Node(this.#breadboard, "secrets", { keys, ...rest }, $id);
   }
 
-  output(id?: string): Node {
-    return new Node(this.#breadboard, "output", undefined, id);
+  output(config: OptionalIdConfiguration = {}): Node {
+    const { $id, ...rest } = config;
+    return new Node(this.#breadboard, "output", { ...rest }, $id);
   }
 
-  include(config: NodeConfiguration, id?: string): Node {
-    return new Node(this.#breadboard, "include", config, id);
+  include($ref: string, config: OptionalIdConfiguration = {}): Node {
+    const { $id, ...rest } = config;
+    return new Node(this.#breadboard, "include", { $ref, ...rest }, $id);
   }
 
-  reflect(id?: string): Node {
-    return new Node(this.#breadboard, "reflect", undefined, id);
+  reflect(config: OptionalIdConfiguration = {}): Node {
+    const { $id, ...rest } = config;
+    return new Node(this.#breadboard, "reflect", { ...rest }, $id);
   }
 }

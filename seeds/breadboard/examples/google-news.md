@@ -33,7 +33,6 @@ id='text-completion-7'"]
 templateprompttemplate1[template]:::config -- template:template --o prompttemplate1
 templateurl_template2[template]:::config -- template:template --o url_template2
 messageinput3[message]:::config -- message:message --o input3
-rawfetch4[raw]:::config -- raw:raw --o fetch4
 expressionjsonata5[expression]:::config -- expression:expression --o jsonata5
 keyssecrets9[keys]:::config -- keys:keys --o secrets9
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000

@@ -85,8 +85,7 @@
               },
               {
                 "id": "input-2",
-                "type": "input",
-                "configuration": {}
+                "type": "input"
               },
               {
                 "id": "reflect-3",

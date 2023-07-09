@@ -15,32 +15,20 @@ config();
 const REPO_URL =
   "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/";
 
-const searchTool = { $ref: `${REPO_URL}/search-summarize.json` };
-
-const mathTool = { $ref: `${REPO_URL}/math.json` };
-
-const reActRecipe = { $ref: `${REPO_URL}/react-with-slot.json` };
-
 const getTools = () => {
   const tools = new Breadboard();
   const kit = new Starter(tools);
 
-  const search = kit.include(
-    {
-      ...searchTool,
-      description:
-        "Useful for when you need to find facts. Input should be a search query.",
-    },
-    "search"
-  );
-  const math = kit.include(
-    {
-      ...mathTool,
-      description:
-        "Useful for when you need to solve math problems. Input should be a math problem to be solved.",
-    },
-    "math"
-  );
+  const search = kit.include(`${REPO_URL}/search-summarize.json`, {
+    $id: "search",
+    description:
+      "Useful for when you need to find facts. Input should be a search query.",
+  });
+  const math = kit.include(`${REPO_URL}/math.json`, {
+    $id: "math",
+    description:
+      "Useful for when you need to solve math problems. Input should be a math problem to be solved.",
+  });
 
   kit
     .input()
@@ -53,11 +41,10 @@ const getTools = () => {
 const main = new Breadboard();
 const kit = new Starter(main);
 
-kit.input({ message: "Ask ReAct" }).wire(
+kit.input("Ask ReAct").wire(
   "text",
   kit
-    .include({
-      ...reActRecipe,
+    .include(`${REPO_URL}/react-with-slot.json`, {
       slotted: { tools: getTools() },
     })
     .wire("text", kit.output())

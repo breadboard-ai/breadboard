@@ -74,15 +74,12 @@
       "id": "input-3",
       "type": "input",
       "configuration": {
-        "message": "What news topic woul you like to have summarized?"
+        "message": "What news topic would you like to have summarized?"
       }
     },
     {
       "id": "fetch-4",
-      "type": "fetch",
-      "configuration": {
-        "raw": true
-      }
+      "type": "fetch"
     },
     {
       "id": "jsonata-5",
