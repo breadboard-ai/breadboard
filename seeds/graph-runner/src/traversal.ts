@@ -250,13 +250,12 @@ export const traverseGraph = async (
 
     const newOpportunities = tails.get(toNode) || [];
     opportunities.push(...newOpportunities);
-    opportunities.forEach((opportunity) => {
-      log({
-        source,
-        type: "opportunity",
-        value: opportunity.to,
-        text: `- Opportunity: "${opportunity.to}"`,
-      });
+    const opportunitiesTo = opportunities.map((opportunity) => opportunity.to);
+    log({
+      source,
+      type: "opportunities",
+      value: opportunitiesTo,
+      text: `Opportunities: ${opportunitiesTo.join(", ")}`,
     });
 
     state.update(toNode, newOpportunities, outputs);

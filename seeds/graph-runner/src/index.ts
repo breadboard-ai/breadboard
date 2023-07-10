@@ -20,3 +20,4 @@ export type {
 export { coreHandlers, customNode } from "./core.js";
 export { traverseGraph } from "./traversal.js";
 export { toMermaid } from "./mermaid.js";
+export { loadGraph } from "./nodes/include.js";

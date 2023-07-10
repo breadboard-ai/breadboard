@@ -80,7 +80,13 @@ class IncludeContext implements GraphTraversalContext {
   }
 }
 
-const getGraph = async (path?: string, ref?: string) => {
+/**
+ * @todo Make this just take a $ref and figure out when it's a path or a URL.
+ * @param path
+ * @param ref
+ * @returns
+ */
+export const loadGraph = async (path?: string, ref?: string) => {
   if (path) return JSON.parse(await readFile(path, "utf-8"));
   if (!ref) throw new Error("To include, we need a path or a $ref");
   const response = await fetch(ref);
@@ -89,7 +95,7 @@ const getGraph = async (path?: string, ref?: string) => {
 
 export default async (context: GraphTraversalContext, inputs: InputValues) => {
   const { path, $ref, slotted, ...args } = inputs as IncludeInput;
-  const graph = await getGraph(path, $ref);
+  const graph = await loadGraph(path, $ref);
   const includeContext = new IncludeContext(args, context, slotted);
   context.log({
     source: "include",

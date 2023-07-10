@@ -14,19 +14,23 @@ import {
   OutputValues,
   GraphDescriptor,
   LogData,
+  loadGraph,
 } from "@google-labs/graph-runner";
 
 import { IBreadboard, ILibrary } from "./types.js";
+import { Starter } from "./starter.js";
 
 export interface ContextProvider {
   getInputs(): InputValues;
   getHandlers(): NodeHandlers;
+  getSlotted(): Record<string, GraphDescriptor>;
 }
 
 class BreadboardExecutionContext implements GraphTraversalContext {
   #breadboard: IBreadboard;
   #contextProvider: ContextProvider;
   #graph?: GraphDescriptor;
+  #outputs: OutputValues = {};
 
   constructor(breadboard: IBreadboard, contextProvider: ContextProvider) {
     this.#breadboard = breadboard;
@@ -47,19 +51,37 @@ class BreadboardExecutionContext implements GraphTraversalContext {
     return this.#contextProvider.getInputs() as OutputValues;
   }
 
-  async provideExternalOutput(inputs: InputValues): Promise<void> {
+  async provideExternalOutput(outputs: OutputValues): Promise<void> {
     this.#breadboard.dispatchEvent(
       new CustomEvent("output", {
-        detail: inputs,
+        detail: outputs,
       })
     );
+    this.#outputs = outputs;
   }
 
   async requestSlotOutput(
-    _slot: string,
-    _inputs: InputValues
+    slot: string,
+    args: InputValues
   ): Promise<OutputValues> {
-    throw new Error("Method not implemented.");
+    const graph = this.#contextProvider.getSlotted()[slot];
+    if (!graph) throw new Error(`No graph found for slot ${slot}`);
+    const slottedBreadboard =
+      graph instanceof Breadboard
+        ? graph
+        : Breadboard.fromGraphDescriptor(graph);
+    slottedBreadboard.addInputs(args);
+    let outputs: OutputValues = {};
+    slottedBreadboard.on("output", (event) => {
+      const { detail } = event as CustomEvent;
+      outputs = detail;
+    });
+    slottedBreadboard.on("log", (event) => {
+      const { detail } = event as CustomEvent;
+      console.log("slotted log", detail);
+    });
+    await slottedBreadboard.run();
+    return outputs;
   }
 
   async setCurrentGraph(graph: GraphDescriptor): Promise<void> {
@@ -84,6 +106,7 @@ export class Breadboard extends EventTarget implements IBreadboard {
   nodes: NodeDescriptor[] = [];
   #libraries: ILibrary[] = [];
   #inputs: InputValues = {};
+  #slots: Record<string, GraphDescriptor> = {};
 
   async run() {
     const context = new BreadboardExecutionContext(this, {
@@ -92,8 +115,9 @@ export class Breadboard extends EventTarget implements IBreadboard {
         this.#libraries.reduce((acc, lib) => {
           return { ...acc, ...lib.handlers };
         }, {}),
+      getSlotted: () => this.#slots,
     });
-    traverseGraph(context, this);
+    await traverseGraph(context, this);
   }
 
   addInputs(inputs: InputValues): void {
@@ -114,5 +138,25 @@ export class Breadboard extends EventTarget implements IBreadboard {
 
   on(eventName: string, handler: EventListenerOrEventListenerObject) {
     this.addEventListener(eventName, handler);
+  }
+
+  slot(name: string, graph: GraphDescriptor): void {
+    this.#slots[name] = graph;
+  }
+
+  static fromGraphDescriptor(graph: GraphDescriptor): Breadboard {
+    const breadboard = new Breadboard();
+    breadboard.edges = graph.edges;
+    breadboard.nodes = graph.nodes;
+    // This registers a library. Maybe there's a more elegant way to do this?
+    new Starter(breadboard);
+    return breadboard;
+  }
+
+  static async load($ref: string): Promise<Breadboard> {
+    const url = new URL($ref, new URL(import.meta.url));
+    const path = url.protocol === "file:" ? $ref : undefined;
+    const graph = await loadGraph(path, $ref);
+    return Breadboard.fromGraphDescriptor(graph);
   }
 }
