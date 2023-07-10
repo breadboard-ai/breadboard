@@ -105,6 +105,8 @@ export interface GraphDescriptor {
  */
 export type InputValues = Record<InputIdentifier, unknown>;
 
+export type EdgeMap = Map<NodeIdentifier, OutputValues>;
+
 /**
  * Values that the `NodeHandler` outputs.
  */

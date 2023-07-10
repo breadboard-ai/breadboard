@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { TraversalStateManager } from "./traversal/state.js";
 import type {
   Edge,
   NodeDescriptor,
@@ -11,11 +12,9 @@ import type {
   GraphDescriptor,
   GraphTraversalContext,
   InputValues,
-  OutputValues,
   NodeHandlers,
+  EdgeMap,
 } from "./types.js";
-
-type EdgeMap = Map<NodeIdentifier, OutputValues>;
 
 const wire = (heads: Edge[], outputEdges: EdgeMap): InputValues => {
   const result: InputValues = {};
@@ -50,59 +49,6 @@ const handle = async (
   const result = await handler(context, aggregate);
   return result;
 };
-
-/**
- * Additional concept: whether or not an output was consumed by the intended
- * input.
- * State stores all outputs that have not yet been consumed, organized as
- * a map of maps
- */
-type StateMap = Map<string, Map<string, OutputValues>>;
-
-class StateManager {
-  #state: StateMap = new Map();
-  #constants: StateMap = new Map();
-
-  #splitOutConstants(edges: Edge[]): [Edge[], Edge[]] {
-    const constants: Edge[] = [];
-    const rest: Edge[] = [];
-    edges.forEach((edge) => {
-      if (edge.constant) constants.push(edge);
-      else rest.push(edge);
-    });
-    return [constants, rest];
-  }
-
-  #addToState(state: StateMap, opportunities: Edge[], outputs: OutputValues) {
-    opportunities.forEach((opportunity) => {
-      const toNode = opportunity.to;
-      let fromNodeMap = state.get(toNode);
-      if (!fromNodeMap) {
-        fromNodeMap = new Map();
-        state.set(toNode, fromNodeMap);
-      }
-      fromNodeMap.set(opportunity.from, outputs);
-    });
-  }
-
-  update(node: NodeIdentifier, opportunities: Edge[], outputs: OutputValues) {
-    // 1. Clear entries for the current node.
-    // Notice, we're not clearing the "constants" entries. Those are basically
-    // there forever -- or until the edge is traversed again.
-    this.#state.delete(node);
-    const [constants, state] = this.#splitOutConstants(opportunities);
-    // 2. Add entries for each opportunity.
-    this.#addToState(this.#state, state, outputs);
-    this.#addToState(this.#constants, constants, outputs);
-  }
-
-  getAvailableOutputs(node: NodeIdentifier) {
-    const constantEdges: EdgeMap = this.#constants.get(node) || new Map();
-    const stateEdges: EdgeMap = this.#state.get(node) || new Map();
-    const result: EdgeMap = new Map([...constantEdges, ...stateEdges]);
-    return result;
-  }
-}
 
 const computeMissingInputs = (
   heads: Edge[],
@@ -141,7 +87,7 @@ export const traverseGraph = async (
   graph: GraphDescriptor
 ) => {
   const source = "traverseGraph";
-  const state = new StateManager();
+  const state = new TraversalStateManager();
   const log = context.log.bind(context);
 
   context.setCurrentGraph(deepCopy(graph));
@@ -190,6 +136,10 @@ export const traverseGraph = async (
     out: "",
   }));
 
+  // "entry" stage: entry opportunities are populated.
+  // available for inspection:
+  // - opportunities -- current list of opportunities.
+
   while (opportunities.length > 0) {
     const opportunity = opportunities.shift() as Edge;
 
@@ -211,6 +161,17 @@ export const traverseGraph = async (
     });
 
     const missingInputs = computeMissingInputs(incomingEdges, inputs, current);
+
+    // "pre-handle" stage: current oportunity identified, inputs are wired,
+    // missing inputs are computed.
+    // available for inspection:
+    // - opportunity -- current node.
+    // - incomingEdges -- incoming edges for the opportunity.
+    // - availableOutputs -- available outputs for the opportunity.
+    // - inputs -- inputs for the opportunity (as wired from availableOutputs).
+    // - missingInputs -- inputs that are missing for the opportunity.
+    // - decision -- decision whether the opportunity will be skipped.
+
     if (missingInputs.length > 0) {
       log({
         source,
@@ -258,8 +219,21 @@ export const traverseGraph = async (
       text: `Opportunities: ${opportunitiesTo.join(", ")}`,
     });
 
+    // "post-handle" stage: opportunity handler called, new opportunities
+    // identified, outputs are produced.
+    // available for inspection:
+    // - opportunity -- current node.
+    // - outgoingEdges -- outgoing edges for the taken opportunity
+    //   (new opportunities)
+    // - outputs -- outputs produced by the opportunity handler.
+
     state.update(toNode, newOpportunities, outputs);
   }
+
+  // "exit" stage: no more opportunities.
+  // available for inspection:
+  // none.
+
   log({
     source,
     type: "traversal-end",
