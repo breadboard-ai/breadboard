@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { TraversalStateManager } from "./traversal/state.js";
+import { TraversalMachine } from "./traversal/machine.js";
 import type {
   Edge,
   NodeDescriptor,
@@ -87,36 +87,16 @@ export const traverseGraph = async (
   graph: GraphDescriptor
 ) => {
   const source = "traverseGraph";
-  const state = new TraversalStateManager();
   const log = context.log.bind(context);
 
   context.setCurrentGraph(deepCopy(graph));
 
-  /**
-   * Tails: a map of all outgoing edges, keyed by node id.
-   */
-  const tails = graph.edges.reduce((acc, edge) => {
-    const from = edge.from;
-    acc.has(from) ? acc.get(from)?.push(edge) : acc.set(from, [edge]);
-    return acc;
-  }, new Map());
+  const machine = new TraversalMachine(graph);
 
-  /**
-   * Heads: a map of all incoming edges, keyed by node id.
-   */
-  const heads = graph.edges.reduce((acc, edge) => {
-    const to = edge.to;
-    acc.has(to) ? acc.get(to)?.push(edge) : acc.set(to, [edge]);
-    return acc;
-  }, new Map());
-
-  /**
-   * Nodes: a map of all nodes, keyed by node id.
-   */
-  const nodes = graph.nodes.reduce((acc, node) => {
-    acc[node.id] = node;
-    return acc;
-  }, {} as Record<NodeIdentifier, NodeDescriptor>);
+  const {
+    state,
+    graph: { heads, tails, nodes, entries },
+  } = machine;
 
   log({
     source,
@@ -124,12 +104,9 @@ export const traverseGraph = async (
     text: "Starting traversal",
   });
 
-  const entries = Array.from(tails.keys()).filter(
-    (node) => !heads.has(node) || heads.get(node).length === 0
-  );
   if (entries.length === 0) throw new Error("No entry node found in graph.");
   // Create fake edges to represent entry points.
-  const opportunities = entries.map((entry) => ({
+  const opportunities: Edge[] = entries.map((entry) => ({
     from: "$entry",
     in: "",
     to: entry,
@@ -144,7 +121,7 @@ export const traverseGraph = async (
     const opportunity = opportunities.shift() as Edge;
 
     const toNode: NodeIdentifier = opportunity.to;
-    const current = nodes[toNode];
+    const current = nodes.get(toNode);
 
     if (!current) throw new Error(`No node found for id "${toNode}"`);
 
