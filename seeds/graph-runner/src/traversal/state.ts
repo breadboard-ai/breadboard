@@ -14,7 +14,7 @@ import { Edge, EdgeMap, NodeIdentifier, OutputValues } from "../types.js";
  */
 type StateMap = Map<string, Map<string, OutputValues>>;
 
-export class TraversalStateManager {
+export class TraversalState {
   #state: StateMap = new Map();
   #constants: StateMap = new Map();
 

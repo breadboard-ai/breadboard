@@ -13,20 +13,20 @@ import type {
 } from "../types.js";
 import { GraphRepresentation } from "./representation.js";
 import { MachineResult } from "./result.js";
-import { TraversalStateManager } from "./state.js";
+import { TraversalState } from "./state.js";
 
 export class TraversalMachine
   implements AsyncIterable<MachineResult>, AsyncIterator<MachineResult>
 {
   descriptor: GraphDescriptor;
-  state: TraversalStateManager;
+  state: TraversalState;
   graph: GraphRepresentation;
   opportunities: Edge[] = [];
   #current: MachineResult = MachineResult.empty;
 
   constructor(descriptor: GraphDescriptor) {
     this.descriptor = descriptor;
-    this.state = new TraversalStateManager();
+    this.state = new TraversalState();
     this.graph = new GraphRepresentation(descriptor);
   }
 
