@@ -4,6 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export { Breadboard } from "./breadboard.js";
+export { Board } from "./board.js";
 export { Starter } from "./starter.js";
 export { Node } from "./node.js";

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Breadboard, Starter } from "@google-labs/breadboard";
+import { Board, Starter } from "@google-labs/breadboard";
 import { toMermaid } from "@google-labs/graph-runner";
 import { writeFile } from "fs/promises";
 
@@ -13,7 +13,7 @@ import { config } from "dotenv";
 config();
 
 // Create an new breadboard.
-const breadboard = new Breadboard();
+const breadboard = new Board();
 
 // Get a starter kit.
 // Starter kit contains helper methods to create useful nodes.

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Breadboard, Starter } from "@google-labs/breadboard";
+import { Board, Starter } from "@google-labs/breadboard";
 import { toMermaid } from "@google-labs/graph-runner";
 import { writeFile } from "fs/promises";
 
@@ -12,7 +12,7 @@ import { writeFile } from "fs/promises";
 const REPO_URL =
   "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs";
 
-const tools = new Breadboard();
+const tools = new Board();
 const kit = new Starter(tools);
 
 // Include a a `search-summarize` breadboard from a URL.

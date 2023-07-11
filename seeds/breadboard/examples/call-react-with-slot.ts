@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Breadboard, Starter } from "@google-labs/breadboard";
+import { Board, Starter } from "@google-labs/breadboard";
 import { toMermaid } from "@google-labs/graph-runner";
 import { writeFile } from "fs/promises";
 
@@ -25,7 +25,7 @@ const REPO_URL =
  * @returns a `tools` breadboard
  */
 const getTools = () => {
-  const tools = new Breadboard();
+  const tools = new Board();
   const kit = new Starter(tools);
 
   // Include a a `search-summarize` breadboard from a URL.
@@ -61,7 +61,7 @@ const getTools = () => {
 };
 
 // This is the main breadboard that controls the rest of the breadboards.
-const main = new Breadboard();
+const main = new Board();
 const kit = new Starter(main);
 
 // Include the `react-with-slot` breadboard from a URL, wiring input to it.

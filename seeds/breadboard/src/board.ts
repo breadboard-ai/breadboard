@@ -66,7 +66,7 @@ class BreadboardExecutionContext implements GraphTraversalContext {
   ): Promise<OutputValues> {
     const graph = this.#contextProvider.getSlotted()[slot];
     if (!graph) throw new Error(`No graph found for slot ${slot}`);
-    const slottedBreadboard = Breadboard.fromGraphDescriptor(graph);
+    const slottedBreadboard = Board.fromGraphDescriptor(graph);
     let outputs: OutputValues = {};
     slottedBreadboard.addInputs(args);
     slottedBreadboard.on("output", (event) => {
@@ -96,7 +96,7 @@ class BreadboardExecutionContext implements GraphTraversalContext {
 
 export type BreadboardSlotSpec = Record<string, GraphDescriptor>;
 
-export class Breadboard extends EventTarget implements IBreadboard {
+export class Board extends EventTarget implements IBreadboard {
   edges: Edge[] = [];
   nodes: NodeDescriptor[] = [];
   #libraries: ILibrary[] = [];
@@ -149,8 +149,8 @@ export class Breadboard extends EventTarget implements IBreadboard {
     this.addEventListener(eventName, handler);
   }
 
-  static fromGraphDescriptor(graph: GraphDescriptor): Breadboard {
-    const breadboard = new Breadboard();
+  static fromGraphDescriptor(graph: GraphDescriptor): Board {
+    const breadboard = new Board();
     breadboard.edges = graph.edges;
     breadboard.nodes = graph.nodes;
     // This registers a library. Maybe there's a more elegant way to do this?
@@ -158,14 +158,11 @@ export class Breadboard extends EventTarget implements IBreadboard {
     return breadboard;
   }
 
-  static async load(
-    $ref: string,
-    slots?: BreadboardSlotSpec
-  ): Promise<Breadboard> {
+  static async load($ref: string, slots?: BreadboardSlotSpec): Promise<Board> {
     const url = new URL($ref, new URL(import.meta.url));
     const path = url.protocol === "file:" ? $ref : undefined;
     const graph = await loadGraph(path, $ref);
-    const board = Breadboard.fromGraphDescriptor(graph);
+    const board = Board.fromGraphDescriptor(graph);
     board.#slots = slots || {};
     return board;
   }
