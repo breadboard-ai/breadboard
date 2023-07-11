@@ -5,7 +5,6 @@
  */
 
 import {
-  traverseGraph,
   type Edge,
   type NodeDescriptor,
   GraphTraversalContext,
@@ -15,6 +14,7 @@ import {
   GraphDescriptor,
   LogData,
   loadGraph,
+  TraversalMachine,
 } from "@google-labs/graph-runner";
 
 import { IBreadboard, ILibrary } from "./types.js";
@@ -66,19 +66,12 @@ class BreadboardExecutionContext implements GraphTraversalContext {
   ): Promise<OutputValues> {
     const graph = this.#contextProvider.getSlotted()[slot];
     if (!graph) throw new Error(`No graph found for slot ${slot}`);
-    const slottedBreadboard =
-      graph instanceof Breadboard
-        ? graph
-        : Breadboard.fromGraphDescriptor(graph);
-    slottedBreadboard.addInputs(args);
+    const slottedBreadboard = Breadboard.fromGraphDescriptor(graph);
     let outputs: OutputValues = {};
+    slottedBreadboard.addInputs(args);
     slottedBreadboard.on("output", (event) => {
       const { detail } = event as CustomEvent;
       outputs = detail;
-    });
-    slottedBreadboard.on("log", (event) => {
-      const { detail } = event as CustomEvent;
-      console.log("slotted log", detail);
     });
     await slottedBreadboard.run();
     return outputs;
@@ -117,7 +110,21 @@ export class Breadboard extends EventTarget implements IBreadboard {
         }, {}),
       getSlotted: () => this.#slots,
     });
-    await traverseGraph(context, this);
+
+    context.setCurrentGraph(this);
+    const machine = new TraversalMachine(this);
+
+    for await (const result of machine) {
+      const { inputs, descriptor } = result;
+
+      if (result.skip) continue;
+      const handler = context.handlers[descriptor.type];
+      if (!handler)
+        throw new Error(`No handler for node type "${descriptor.type}"`);
+
+      const outputs = (await handler(context, inputs)) || {};
+      result.outputs = outputs;
+    }
   }
 
   addInputs(inputs: InputValues): void {

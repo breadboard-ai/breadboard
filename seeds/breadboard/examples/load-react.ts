@@ -28,10 +28,5 @@ breadboard.on("output", (event) => {
   console.log("output", detail.text);
 });
 
-breadboard.on("log", (event) => {
-  const { detail } = event as CustomEvent;
-  console.log("log", detail);
-});
-
 // Run the breadboard.
 await breadboard.run();
