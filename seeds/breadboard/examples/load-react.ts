@@ -14,8 +14,9 @@ config();
 const REPO_URL =
   "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs";
 
-const breadboard = await Breadboard.load(`${REPO_URL}/react-with-slot.json`);
-breadboard.slot("tools", await Breadboard.load("./examples/tools.json"));
+const breadboard = await Breadboard.load(`${REPO_URL}/react-with-slot.json`, {
+  tools: await Breadboard.load("./examples/tools.json"),
+});
 
 // Add the inputs.
 breadboard.addInputs({

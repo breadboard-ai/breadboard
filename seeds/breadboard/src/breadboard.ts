@@ -94,12 +94,14 @@ class BreadboardExecutionContext implements GraphTraversalContext {
   }
 }
 
+export type BreadboardSlotSpec = Record<string, GraphDescriptor>;
+
 export class Breadboard extends EventTarget implements IBreadboard {
   edges: Edge[] = [];
   nodes: NodeDescriptor[] = [];
   #libraries: ILibrary[] = [];
   #inputs: InputValues = {};
-  #slots: Record<string, GraphDescriptor> = {};
+  #slots: BreadboardSlotSpec = {};
 
   async run() {
     const context = new BreadboardExecutionContext(this, {
@@ -147,10 +149,6 @@ export class Breadboard extends EventTarget implements IBreadboard {
     this.addEventListener(eventName, handler);
   }
 
-  slot(name: string, graph: GraphDescriptor): void {
-    this.#slots[name] = graph;
-  }
-
   static fromGraphDescriptor(graph: GraphDescriptor): Breadboard {
     const breadboard = new Breadboard();
     breadboard.edges = graph.edges;
@@ -160,10 +158,15 @@ export class Breadboard extends EventTarget implements IBreadboard {
     return breadboard;
   }
 
-  static async load($ref: string): Promise<Breadboard> {
+  static async load(
+    $ref: string,
+    slots?: BreadboardSlotSpec
+  ): Promise<Breadboard> {
     const url = new URL($ref, new URL(import.meta.url));
     const path = url.protocol === "file:" ? $ref : undefined;
     const graph = await loadGraph(path, $ref);
-    return Breadboard.fromGraphDescriptor(graph);
+    const board = Breadboard.fromGraphDescriptor(graph);
+    board.#slots = slots || {};
+    return board;
   }
 }
