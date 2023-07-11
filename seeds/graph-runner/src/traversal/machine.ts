@@ -47,15 +47,13 @@ export class TraversalMachine
     // Only do so when there are no missing inputs.
     if (this.#current !== MachineResult.empty && !this.#current.skip) {
       const { outputs, newOpportunities, descriptor } = this.#current;
-      // Throw if the outputs weren't provided.
-      if (!outputs)
-        throw new Error("No outputs provided. Next iteration is impossible.");
 
       this.opportunities.push(...newOpportunities);
       this.state.update(descriptor.id, newOpportunities, outputs);
     }
 
     // Now, we're ready to start the next iteration.
+
     // If there are no more opportunities, we're done.
     if (this.opportunities.length === 0) {
       this.#current = MachineResult.empty;

@@ -28,6 +28,7 @@ interface TestGraphDescriptor extends GraphDescriptor {
   sequence: string[];
   inputs: InputValues;
   outputs: OutputValues;
+  throws: boolean;
 }
 
 class MockContext implements GraphTraversalContext {
@@ -92,7 +93,9 @@ await Promise.all(
       const data = await readFile(`${IN_DIR}${filename}`, "utf-8");
       const graph = JSON.parse(data) as TestGraphDescriptor;
       const context = new MockContext(graph.inputs);
-      await traverseGraph(context, graph);
+      if (graph.throws)
+        await t.throwsAsync(() => traverseGraph(context, graph));
+      else await traverseGraph(context, graph);
       t.deepEqual(context.outputs, graph.outputs);
       t.deepEqual(context.sequence, graph.sequence);
     });

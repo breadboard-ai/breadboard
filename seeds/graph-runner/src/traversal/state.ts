@@ -40,11 +40,12 @@ export class TraversalStateManager {
     });
   }
 
-  update(node: NodeIdentifier, opportunities: Edge[], outputs: OutputValues) {
+  update(node: NodeIdentifier, opportunities: Edge[], outputs?: OutputValues) {
     // 1. Clear entries for the current node.
     // Notice, we're not clearing the "constants" entries. Those are basically
     // there forever -- or until the edge is traversed again.
     this.#state.delete(node);
+    if (!outputs) outputs = {};
     const [constants, state] = this.#splitOutConstants(opportunities);
     // 2. Add entries for each opportunity.
     this.#addToState(this.#state, state, outputs);
