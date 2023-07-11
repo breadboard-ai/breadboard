@@ -5,39 +5,17 @@
  */
 
 import { TraversalMachine } from "./traversal/machine.js";
-import type {
-  NodeDescriptor,
-  GraphDescriptor,
-  GraphTraversalContext,
-  InputValues,
-  NodeHandlers,
-} from "./types.js";
-
-const handle = async (
-  nodeHandlers: NodeHandlers,
-  descriptor: NodeDescriptor,
-  context: GraphTraversalContext,
-  inputs?: InputValues | null
-) => {
-  const handler = nodeHandlers[descriptor.type];
-  if (!handler)
-    throw new Error(`No handler for node type "${descriptor.type}"`);
-
-  const aggregate = { ...descriptor.configuration, ...inputs };
-  const result = await handler(context, aggregate);
-  return result;
-};
+import type { GraphDescriptor, GraphTraversalContext } from "./types.js";
 
 const deepCopy = (graph: GraphDescriptor): GraphDescriptor => {
   return JSON.parse(JSON.stringify(graph));
 };
 
 /**
- * A slightly less dumb, but incredibly unkempt edge follower.
- * @todo implement nicer traversal, something like a topology sort with feedback problem resolution.
+ * An entry point into a graph traversal machine. This is a legacy endpoint.
+ * Use `TraversalMachine` directly instead.
  * @param graph graph to follow
  */
-
 export const traverseGraph = async (
   context: GraphTraversalContext,
   graph: GraphDescriptor
@@ -77,34 +55,38 @@ export const traverseGraph = async (
         descriptor.id
       }"`,
     });
-    if (!result.skip) {
+
+    if (result.skip) continue;
+
+    log({
+      source,
+      type: "node",
+      value: descriptor.id,
+      nodeType: descriptor.type,
+      text: `Handling: "${descriptor.id}", type: "${descriptor.type}"`,
+    });
+
+    const handler = context.handlers[descriptor.type];
+    if (!handler)
+      throw new Error(`No handler for node type "${descriptor.type}"`);
+
+    const outputs = (await handler(context, inputs)) || {};
+
+    // TODO: Make it not a special case.
+    const exit = outputs.exit as boolean;
+    if (exit) return;
+
+    result.outputs = outputs;
+
+    Object.entries(outputs).forEach(([key, value]) => {
       log({
         source,
-        type: "node",
-        value: descriptor.id,
-        nodeType: descriptor.type,
-        text: `Handling: "${descriptor.id}", type: "${descriptor.type}"`,
+        type: "output",
+        key,
+        value: JSON.stringify(value),
+        text: `- Output "${key}": ${value}`,
       });
-
-      const outputs =
-        (await handle(context.handlers, descriptor, context, inputs)) || {};
-
-      // TODO: Make it not a special case.
-      const exit = outputs.exit as boolean;
-      if (exit) return;
-
-      result.outputs = outputs;
-
-      Object.entries(outputs).forEach(([key, value]) => {
-        log({
-          source,
-          type: "output",
-          key,
-          value: JSON.stringify(value),
-          text: `- Output "${key}": ${value}`,
-        });
-      });
-    }
+    });
 
     const opportunitiesTo = machine.opportunities.map(
       (opportunity) => opportunity.to

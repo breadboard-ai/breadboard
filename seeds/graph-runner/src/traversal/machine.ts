@@ -126,10 +126,6 @@ export class TraversalMachine
       // Throw if the outputs weren't provided.
       if (!outputs)
         throw new Error("No outputs provided. Next iteration is impossible.");
-      if (!descriptor)
-        throw new Error(
-          "The descriptor is missing. Did you mean to delete it?"
-        );
 
       this.opportunities.push(...newOpportunities);
       this.state.update(descriptor.id, newOpportunities, outputs);
@@ -147,7 +143,7 @@ export class TraversalMachine
 
     const { heads, nodes, tails } = this.graph;
 
-    const toNode: NodeIdentifier = opportunity.to;
+    const toNode = opportunity.to;
     const currentDescriptor = nodes.get(toNode);
     if (!currentDescriptor) throw new Error(`No node found for id "${toNode}"`);
 
@@ -156,6 +152,7 @@ export class TraversalMachine
       incomingEdges,
       this.state.getAvailableOutputs(toNode)
     );
+
     const missingInputs = TraversalMachine.computeMissingInputs(
       incomingEdges,
       inputs,
@@ -164,9 +161,16 @@ export class TraversalMachine
 
     const newOpportunities = tails.get(toNode) || [];
 
+    // Pour configuration values into inputs. These are effectively like
+    // constants.
+    const inputsWithConfiguration = {
+      ...currentDescriptor.configuration,
+      ...inputs,
+    };
+
     this.#current = new MachineResult(
       currentDescriptor,
-      inputs,
+      inputsWithConfiguration,
       missingInputs,
       newOpportunities
     );
