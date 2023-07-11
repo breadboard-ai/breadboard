@@ -10,7 +10,7 @@ import type {
   NodeDescriptor,
   NodeTypeIdentifier,
 } from "@google-labs/graph-runner";
-import { IBreadboard } from "./types.js";
+import { Breadboard } from "./types.js";
 
 export type PartialEdge = {
   out?: string;
@@ -59,10 +59,10 @@ export class Node implements NodeDescriptor {
   id: string;
   type: NodeTypeIdentifier;
   configuration?: NodeConfiguration;
-  #breadboard: IBreadboard;
+  #breadboard: Breadboard;
 
   constructor(
-    breadboard: IBreadboard,
+    breadboard: Breadboard,
     type: NodeTypeIdentifier,
     configuration?: NodeConfiguration,
     id?: string

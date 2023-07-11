@@ -10,7 +10,7 @@ import {
   coreHandlers,
 } from "@google-labs/graph-runner";
 import { Node } from "./node.js";
-import { IBreadboard, ILibrary } from "./types.js";
+import { Breadboard, ILibrary } from "./types.js";
 
 export type OptionalIdConfiguration = { $id?: string } & NodeConfiguration;
 
@@ -19,9 +19,9 @@ export type OptionalIdConfiguration = { $id?: string } & NodeConfiguration;
  */
 export class Starter implements ILibrary {
   handlers: NodeHandlers;
-  #breadboard: IBreadboard;
+  #breadboard: Breadboard;
 
-  constructor(breadboard: IBreadboard) {
+  constructor(breadboard: Breadboard) {
     this.#breadboard = breadboard;
     this.handlers = coreHandlers;
     this.#breadboard.addLibrary(this);

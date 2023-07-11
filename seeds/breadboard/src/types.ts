@@ -12,7 +12,7 @@ import type {
   NodeHandlers,
 } from "@google-labs/graph-runner";
 
-export interface IBreadboard extends GraphDescriptor, EventTarget {
+export interface Breadboard extends GraphDescriptor, EventTarget {
   addInputs(inputs: InputValues): void;
   addEdge(edge: Edge): void;
   addNode(node: NodeDescriptor): void;

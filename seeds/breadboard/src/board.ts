@@ -17,7 +17,7 @@ import {
   TraversalMachine,
 } from "@google-labs/graph-runner";
 
-import { IBreadboard, ILibrary } from "./types.js";
+import { Breadboard, ILibrary } from "./types.js";
 import { Starter } from "./starter.js";
 
 export interface ContextProvider {
@@ -27,12 +27,12 @@ export interface ContextProvider {
 }
 
 class BreadboardExecutionContext implements GraphTraversalContext {
-  #breadboard: IBreadboard;
+  #breadboard: Breadboard;
   #contextProvider: ContextProvider;
   #graph?: GraphDescriptor;
   #outputs: OutputValues = {};
 
-  constructor(breadboard: IBreadboard, contextProvider: ContextProvider) {
+  constructor(breadboard: Breadboard, contextProvider: ContextProvider) {
     this.#breadboard = breadboard;
     this.#contextProvider = contextProvider;
   }
@@ -96,7 +96,7 @@ class BreadboardExecutionContext implements GraphTraversalContext {
 
 export type BreadboardSlotSpec = Record<string, GraphDescriptor>;
 
-export class Board extends EventTarget implements IBreadboard {
+export class Board extends EventTarget implements Breadboard {
   edges: Edge[] = [];
   nodes: NodeDescriptor[] = [];
   #libraries: ILibrary[] = [];
