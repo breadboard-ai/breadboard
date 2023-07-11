@@ -6,34 +6,12 @@
 
 import { TraversalMachine } from "./traversal/machine.js";
 import type {
-  Edge,
   NodeDescriptor,
-  NodeIdentifier,
   GraphDescriptor,
   GraphTraversalContext,
   InputValues,
   NodeHandlers,
-  EdgeMap,
 } from "./types.js";
-
-const wire = (heads: Edge[], outputEdges: EdgeMap): InputValues => {
-  const result: InputValues = {};
-  heads.forEach((head) => {
-    const from = head.from;
-    const outputs = outputEdges.get(from) || {};
-    const out = head.out;
-    if (!out) return;
-    if (out === "*") {
-      Object.assign(result, outputs);
-      return;
-    }
-    const output = outputs[out];
-    const input = head.in;
-    if (!input) return;
-    if (output) result[input] = outputs[out];
-  });
-  return result;
-};
 
 const handle = async (
   nodeHandlers: NodeHandlers,
@@ -48,28 +26,6 @@ const handle = async (
   const aggregate = { ...descriptor.configuration, ...inputs };
   const result = await handler(context, aggregate);
   return result;
-};
-
-const computeMissingInputs = (
-  heads: Edge[],
-  inputs: InputValues,
-  current: NodeDescriptor
-) => {
-  const requiredInputs: string[] = [
-    ...new Set(
-      heads
-        .filter((edge: Edge) => !!edge.in && !edge.optional)
-        .map((edge: Edge) => edge.in || "")
-    ),
-  ];
-  const inputsWithConfiguration = new Set();
-  Object.keys(inputs).forEach((key) => inputsWithConfiguration.add(key));
-  if (current.configuration) {
-    Object.keys(current.configuration).forEach((key) =>
-      inputsWithConfiguration.add(key)
-    );
-  }
-  return requiredInputs.filter((input) => !inputsWithConfiguration.has(input));
 };
 
 const deepCopy = (graph: GraphDescriptor): GraphDescriptor => {
@@ -93,40 +49,15 @@ export const traverseGraph = async (
 
   const machine = new TraversalMachine(graph);
 
-  const {
-    state,
-    graph: { heads, tails, nodes, entries },
-  } = machine;
-
   log({
     source,
     type: "traversal-start",
     text: "Starting traversal",
   });
 
-  if (entries.length === 0) throw new Error("No entry node found in graph.");
-  // Create fake edges to represent entry points.
-  const opportunities: Edge[] = entries.map((entry) => ({
-    from: "$entry",
-    in: "",
-    to: entry,
-    out: "",
-  }));
+  for await (const result of machine) {
+    const { inputs, missingInputs, descriptor } = result;
 
-  // "entry" stage: entry opportunities are populated.
-  // available for inspection:
-  // - opportunities -- current list of opportunities.
-
-  while (opportunities.length > 0) {
-    const opportunity = opportunities.shift() as Edge;
-
-    const toNode: NodeIdentifier = opportunity.to;
-    const current = nodes.get(toNode);
-
-    if (!current) throw new Error(`No node found for id "${toNode}"`);
-
-    const incomingEdges = heads.get(toNode) || [];
-    const inputs = wire(incomingEdges, state.getAvailableOutputs(toNode));
     Object.entries(inputs).forEach(([key, value]) => {
       log({
         source,
@@ -137,79 +68,54 @@ export const traverseGraph = async (
       });
     });
 
-    const missingInputs = computeMissingInputs(incomingEdges, inputs, current);
-
-    // "pre-handle" stage: current oportunity identified, inputs are wired,
-    // missing inputs are computed.
-    // available for inspection:
-    // - opportunity -- current node.
-    // - incomingEdges -- incoming edges for the opportunity.
-    // - availableOutputs -- available outputs for the opportunity.
-    // - inputs -- inputs for the opportunity (as wired from availableOutputs).
-    // - missingInputs -- inputs that are missing for the opportunity.
-    // - decision -- decision whether the opportunity will be skipped.
-
-    if (missingInputs.length > 0) {
-      log({
-        source,
-        type: "missing-inputs",
-        key: toNode,
-        value: JSON.stringify(missingInputs),
-        text: `Missing inputs: ${missingInputs.join(
-          ", "
-        )}, Skipping node "${toNode}"`,
-      });
-      continue;
-    }
-
     log({
       source,
-      type: "node",
-      value: current.id,
-      nodeType: current.type,
-      text: `Handling: "${current.id}", type: "${current.type}"`,
+      type: "missing-inputs",
+      key: descriptor.id,
+      value: JSON.stringify(missingInputs),
+      text: `Missing inputs: ${missingInputs.join(", ")}, Skipping node "${
+        descriptor.id
+      }"`,
     });
-
-    const outputs =
-      (await handle(context.handlers, current, context, inputs)) || {};
-    // TODO: Make it not a special case.
-    const exit = outputs.exit as boolean;
-    if (exit) return;
-
-    Object.entries(outputs).forEach(([key, value]) => {
+    if (!result.skip) {
       log({
         source,
-        type: "output",
-        key,
-        value: JSON.stringify(value),
-        text: `- Output "${key}": ${value}`,
+        type: "node",
+        value: descriptor.id,
+        nodeType: descriptor.type,
+        text: `Handling: "${descriptor.id}", type: "${descriptor.type}"`,
       });
-    });
 
-    const newOpportunities = tails.get(toNode) || [];
-    opportunities.push(...newOpportunities);
-    const opportunitiesTo = opportunities.map((opportunity) => opportunity.to);
+      const outputs =
+        (await handle(context.handlers, descriptor, context, inputs)) || {};
+
+      // TODO: Make it not a special case.
+      const exit = outputs.exit as boolean;
+      if (exit) return;
+
+      result.outputs = outputs;
+
+      Object.entries(outputs).forEach(([key, value]) => {
+        log({
+          source,
+          type: "output",
+          key,
+          value: JSON.stringify(value),
+          text: `- Output "${key}": ${value}`,
+        });
+      });
+    }
+
+    const opportunitiesTo = machine.opportunities.map(
+      (opportunity) => opportunity.to
+    );
     log({
       source,
       type: "opportunities",
       value: opportunitiesTo,
       text: `Opportunities: ${opportunitiesTo.join(", ")}`,
     });
-
-    // "post-handle" stage: opportunity handler called, new opportunities
-    // identified, outputs are produced.
-    // available for inspection:
-    // - opportunity -- current node.
-    // - outgoingEdges -- outgoing edges for the taken opportunity
-    //   (new opportunities)
-    // - outputs -- outputs produced by the opportunity handler.
-
-    state.update(toNode, newOpportunities, outputs);
   }
-
-  // "exit" stage: no more opportunities.
-  // available for inspection:
-  // none.
 
   log({
     source,

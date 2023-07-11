@@ -61,19 +61,22 @@ class GraphRepresentation {
 }
 
 class MachineResult {
-  outputs?: OutputValues;
-  descriptor?: NodeDescriptor | undefined;
+  descriptor: NodeDescriptor;
+  inputs: InputValues;
   missingInputs: string[] = [];
   newOpportunities: Edge[] = [];
+  outputs?: OutputValues;
 
   constructor(
-    descriptor?: NodeDescriptor,
-    missingInputs?: string[],
-    newOpportunities?: Edge[]
+    descriptor: NodeDescriptor,
+    inputs: InputValues,
+    missingInputs: string[],
+    newOpportunities: Edge[]
   ) {
     this.descriptor = descriptor;
-    this.missingInputs = missingInputs || [];
-    this.newOpportunities = newOpportunities || [];
+    this.inputs = inputs;
+    this.missingInputs = missingInputs;
+    this.newOpportunities = newOpportunities;
   }
 
   get skip(): boolean {
@@ -81,7 +84,12 @@ class MachineResult {
   }
 }
 
-const emptyResult = new MachineResult();
+const emptyResult = new MachineResult(
+  { id: "$empty", type: "$empty" },
+  {},
+  [],
+  []
+);
 
 export class TraversalMachine
   implements AsyncIterable<MachineResult>, AsyncIterator<MachineResult>
@@ -103,7 +111,7 @@ export class TraversalMachine
   }
 
   get done(): boolean {
-    return this.opportunities.length === 0;
+    return this.#current === emptyResult;
   }
 
   get value(): MachineResult {
@@ -129,7 +137,10 @@ export class TraversalMachine
 
     // Now, we're ready to start the next iteration.
     // If there are no more opportunities, we're done.
-    if (this.opportunities.length === 0) return this;
+    if (this.opportunities.length === 0) {
+      this.#current = emptyResult;
+      return this;
+    }
 
     // Otherwise, let's pop the next opportunity from the queue.
     const opportunity = this.opportunities.shift() as Edge;
@@ -155,6 +166,7 @@ export class TraversalMachine
 
     this.#current = new MachineResult(
       currentDescriptor,
+      inputs,
       missingInputs,
       newOpportunities
     );
