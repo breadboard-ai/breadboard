@@ -125,6 +125,16 @@ export class Board extends EventTarget implements IBreadboard {
         throw new Error(`No handler for node type "${descriptor.type}"`);
 
       const outputs = (await handler(context, inputs)) || {};
+      this.dispatchEvent(
+        new CustomEvent("log", {
+          detail: {
+            descriptor,
+            inputs,
+            outputs,
+          },
+        })
+      );
+
       result.outputs = outputs;
     }
   }
