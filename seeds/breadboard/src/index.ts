@@ -4,4 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-console.log("code goes here");
+export { Board } from "./board.js";
+export { Starter } from "./starter.js";
+export { Node } from "./node.js";

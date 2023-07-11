@@ -1,0 +1,113 @@
+{
+  "edges": [
+    {
+      "from": "input-3",
+      "to": "prompt-template-1",
+      "out": "text",
+      "in": "topic"
+    },
+    {
+      "from": "input-3",
+      "to": "url_template-2",
+      "out": "text",
+      "in": "query"
+    },
+    {
+      "from": "url_template-2",
+      "to": "fetch-4",
+      "out": "url",
+      "in": "url"
+    },
+    {
+      "from": "jsonata-5",
+      "to": "prompt-template-1",
+      "out": "result",
+      "in": "headlines"
+    },
+    {
+      "from": "xml_to_json-6",
+      "to": "jsonata-5",
+      "out": "json",
+      "in": "json"
+    },
+    {
+      "from": "fetch-4",
+      "to": "xml_to_json-6",
+      "out": "response",
+      "in": "xml"
+    },
+    {
+      "from": "text-completion-7",
+      "to": "output-8",
+      "out": "completion",
+      "in": "text"
+    },
+    {
+      "from": "secrets-9",
+      "to": "text-completion-7",
+      "out": "API_KEY",
+      "in": "API_KEY"
+    },
+    {
+      "from": "prompt-template-1",
+      "to": "text-completion-7",
+      "out": "prompt",
+      "in": "text"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "prompt-template-1",
+      "type": "prompt-template",
+      "configuration": {
+        "template": "Use the news headlines below to write one or two sentences to summarize the latest news on this topic:\n\n##Topic:\n{{topic}}\n\n## Headlines {{headlines}}\n\\n## Summary:\n"
+      }
+    },
+    {
+      "id": "url_template-2",
+      "type": "url_template",
+      "configuration": {
+        "template": "https://news.google.com/rss/search?q={{query}}&hl=en-US&gl=US&ceid=US:en"
+      }
+    },
+    {
+      "id": "input-3",
+      "type": "input",
+      "configuration": {
+        "message": "What news topic would you like to have summarized?"
+      }
+    },
+    {
+      "id": "fetch-4",
+      "type": "fetch"
+    },
+    {
+      "id": "jsonata-5",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "$join((rss.channel.item.title.`$t`)[[1..20]], `\n`)"
+      }
+    },
+    {
+      "id": "xml_to_json-6",
+      "type": "xml_to_json"
+    },
+    {
+      "id": "text-completion-7",
+      "type": "text-completion"
+    },
+    {
+      "id": "output-8",
+      "type": "output"
+    },
+    {
+      "id": "secrets-9",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "API_KEY"
+        ]
+      }
+    }
+  ]
+}

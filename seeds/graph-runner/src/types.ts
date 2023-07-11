@@ -42,7 +42,7 @@ export interface NodeDescriptor {
   /**
    * Configuration of the node.
    */
-  configuration: NodeConfiguration;
+  configuration?: NodeConfiguration;
 }
 
 /**
@@ -105,6 +105,8 @@ export interface GraphDescriptor {
  */
 export type InputValues = Record<InputIdentifier, unknown>;
 
+export type EdgeMap = Map<NodeIdentifier, OutputValues>;
+
 /**
  * Values that the `NodeHandler` outputs.
  */
@@ -139,7 +141,7 @@ export type NodeHandlers = Record<NodeTypeIdentifier, NodeHandler>;
 /**
  * Convenience type fo representing data to be logged.
  */
-export type LogData = Record<string, string | number>;
+export type LogData = Record<string, string | number | string[]>;
 
 /**
  * This represents the context of a graph traversal, Supply an instance of a
