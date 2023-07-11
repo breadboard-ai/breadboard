@@ -10,86 +10,10 @@ import type {
   GraphDescriptor,
   InputValues,
   NodeDescriptor,
-  NodeIdentifier,
-  OutputValues,
 } from "../types.js";
+import { GraphRepresentation } from "./representation.js";
+import { MachineResult } from "./result.js";
 import { TraversalStateManager } from "./state.js";
-
-class GraphRepresentation {
-  /**
-   * Tails: a map of all outgoing edges, keyed by node id.
-   */
-  tails: Map<NodeIdentifier, Edge[]> = new Map();
-
-  /**
-   * Heads: a map of all incoming edges, keyed by node id.
-   */
-  heads: Map<NodeIdentifier, Edge[]> = new Map();
-
-  /**
-   * Nodes: a map of all nodes, keyed by node id.
-   */
-  nodes: Map<NodeIdentifier, NodeDescriptor> = new Map();
-
-  /**
-   * Entries: a list of all nodes that have no incoming edges.
-   */
-  entries: NodeIdentifier[] = [];
-
-  constructor(descriptor: GraphDescriptor) {
-    this.tails = descriptor.edges.reduce((acc, edge) => {
-      const from = edge.from;
-      acc.has(from) ? acc.get(from)?.push(edge) : acc.set(from, [edge]);
-      return acc;
-    }, new Map());
-
-    this.heads = descriptor.edges.reduce((acc, edge) => {
-      const to = edge.to;
-      acc.has(to) ? acc.get(to)?.push(edge) : acc.set(to, [edge]);
-      return acc;
-    }, new Map());
-
-    this.nodes = descriptor.nodes.reduce((acc, node) => {
-      acc.set(node.id, node);
-      return acc;
-    }, new Map());
-
-    this.entries = Array.from(this.tails.keys()).filter(
-      (node) => !this.heads.has(node) || this.heads.get(node)?.length === 0
-    );
-  }
-}
-
-class MachineResult {
-  descriptor: NodeDescriptor;
-  inputs: InputValues;
-  missingInputs: string[] = [];
-  newOpportunities: Edge[] = [];
-  outputs?: OutputValues;
-
-  constructor(
-    descriptor: NodeDescriptor,
-    inputs: InputValues,
-    missingInputs: string[],
-    newOpportunities: Edge[]
-  ) {
-    this.descriptor = descriptor;
-    this.inputs = inputs;
-    this.missingInputs = missingInputs;
-    this.newOpportunities = newOpportunities;
-  }
-
-  get skip(): boolean {
-    return this.missingInputs.length > 0;
-  }
-}
-
-const emptyResult = new MachineResult(
-  { id: "$empty", type: "$empty" },
-  {},
-  [],
-  []
-);
 
 export class TraversalMachine
   implements AsyncIterable<MachineResult>, AsyncIterator<MachineResult>
@@ -98,7 +22,7 @@ export class TraversalMachine
   state: TraversalStateManager;
   graph: GraphRepresentation;
   opportunities: Edge[] = [];
-  #current: MachineResult = emptyResult;
+  #current: MachineResult = MachineResult.empty;
 
   constructor(descriptor: GraphDescriptor) {
     this.descriptor = descriptor;
@@ -111,7 +35,7 @@ export class TraversalMachine
   }
 
   get done(): boolean {
-    return this.#current === emptyResult;
+    return this.#current === MachineResult.empty;
   }
 
   get value(): MachineResult {
@@ -121,7 +45,7 @@ export class TraversalMachine
   async next(): Promise<IteratorResult<MachineResult>> {
     // If this is not the first iteration, let's consume the outputs.
     // Only do so when there are no missing inputs.
-    if (this.#current !== emptyResult && !this.#current.skip) {
+    if (this.#current !== MachineResult.empty && !this.#current.skip) {
       const { outputs, newOpportunities, descriptor } = this.#current;
       // Throw if the outputs weren't provided.
       if (!outputs)
@@ -134,7 +58,7 @@ export class TraversalMachine
     // Now, we're ready to start the next iteration.
     // If there are no more opportunities, we're done.
     if (this.opportunities.length === 0) {
-      this.#current = emptyResult;
+      this.#current = MachineResult.empty;
       return this;
     }
 
