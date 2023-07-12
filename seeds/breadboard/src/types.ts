@@ -43,12 +43,18 @@ export interface KitConstructor<T extends Kit> {
   new (nodeFactory: NodeFactory): T;
 }
 
-export interface ContextProvider {
-  getInputs(): InputValues;
+export interface InspectorDetails {
+  descriptor: NodeDescriptor;
+  inputs: InputValues;
+  missingInputs?: string[];
+  outputs?: OutputValues;
+  nesting?: number;
+  sources?: string[];
 }
 
-export interface Breadboard extends GraphDescriptor, EventTarget {
-  addInputs(inputs: InputValues): void;
+export type InspectorEvent = CustomEvent<InspectorDetails>;
+
+export interface Breadboard extends GraphDescriptor {
   addEdge(edge: Edge): void;
   addNode(node: NodeDescriptor): void;
   addKit<T extends Kit>(ctr: KitConstructor<T>): T;

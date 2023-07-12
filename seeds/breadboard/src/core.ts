@@ -12,11 +12,7 @@ import type {
   NodeHandlers,
   OutputValues,
 } from "@google-labs/graph-runner";
-import {
-  type Breadboard,
-  type ContextProvider,
-  type BreadboardSlotSpec,
-} from "./types.js";
+import type { BreadboardSlotSpec, InspectorDetails } from "./types.js";
 import { Board } from "./board.js";
 
 export const CORE_HANDLERS = ["include", "reflect", "slot"];
@@ -30,21 +26,54 @@ const deepCopy = (graph: GraphDescriptor): GraphDescriptor => {
   return JSON.parse(JSON.stringify(graph));
 };
 
+type EventTransform = (event: Event) => Event;
+
+class NestedInspector extends EventTarget {
+  #inspector: EventTarget;
+  #transform: EventTransform;
+
+  constructor(inspector: EventTarget, transform: EventTransform) {
+    super();
+    this.#inspector = inspector;
+    this.#transform = transform;
+  }
+
+  dispatchEvent(event: Event): boolean {
+    return this.#inspector.dispatchEvent(this.#transform(event));
+  }
+
+  static create(
+    inspector?: EventTarget,
+    source?: string
+  ): EventTarget | undefined {
+    if (!inspector) return undefined;
+    return new NestedInspector(inspector, (e) => {
+      const inspectorEvent = e as CustomEvent<InspectorDetails>;
+      return new CustomEvent(inspectorEvent.type, {
+        detail: {
+          ...inspectorEvent.detail,
+          nesting: (inspectorEvent.detail.nesting || 0) + 1,
+          sources: [...(inspectorEvent.detail.sources || []), source],
+        },
+      });
+    });
+  }
+}
+
 export class Core {
-  #board: Breadboard;
+  #graph: GraphDescriptor;
   #slots: BreadboardSlotSpec;
-  #contextProvider: ContextProvider;
+  #inspector?: EventTarget;
   handlers: NodeHandlers;
-  #outputs: OutputValues = {};
 
   constructor(
-    board: Breadboard,
+    graph: GraphDescriptor,
     slots: BreadboardSlotSpec,
-    contextProvider: ContextProvider
+    inspector?: EventTarget
   ) {
-    this.#board = board;
+    this.#graph = graph;
     this.#slots = slots;
-    this.#contextProvider = contextProvider;
+    this.#inspector = inspector;
     this.handlers = CORE_HANDLERS.reduce((handlers, type) => {
       const that = this as unknown as Record<string, NodeHandler>;
       handlers[type] = that[type].bind(this);
@@ -63,15 +92,19 @@ export class Core {
       args: InputValues;
     };
     // TODO: Please fix the $ref/path mess.
-    const board = await Board.load(path || $ref || "", slotted);
-    return await board.runOnce(args);
+    const source = path || $ref || "";
+    const board = await Board.load(source, slotted);
+    return await board.runOnce(
+      args,
+      NestedInspector.create(this.#inspector, source)
+    );
   }
 
   async reflect(
     _ctx: GraphTraversalContext,
     _inputs: InputValues
   ): Promise<OutputValues> {
-    const graph = deepCopy(this.#board as GraphDescriptor);
+    const graph = deepCopy(this.#graph);
     return { graph };
   }
 
@@ -84,6 +117,9 @@ export class Core {
     const graph = this.#slots[slot];
     if (!graph) throw new Error(`No graph found for slot ${slot}`);
     const slottedBreadboard = Board.fromGraphDescriptor(graph);
-    return await slottedBreadboard.runOnce(args);
+    return await slottedBreadboard.runOnce(
+      args,
+      NestedInspector.create(this.#inspector, slot)
+    );
   }
 }

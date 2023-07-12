@@ -22,6 +22,7 @@ import {
   type Kit,
   type KitConstructor,
   type OptionalIdConfiguration,
+  InspectorDetails,
 } from "./types.js";
 
 import { loadGraph, TraversalMachine } from "@google-labs/graph-runner";
@@ -30,17 +31,20 @@ import { Starter } from "./starter.js";
 import { Core } from "./core.js";
 import { InputStageResult, OutputStageResult } from "./run.js";
 
-export class Board extends EventTarget implements Breadboard {
+class InspectorEvent extends CustomEvent<InspectorDetails> {
+  constructor(type: string, detail: InspectorDetails) {
+    super(type, { detail });
+  }
+}
+
+export class Board implements Breadboard {
   edges: Edge[] = [];
   nodes: NodeDescriptor[] = [];
   #kits: Kit[] = [];
-  #inputs: InputValues = {};
   #slots: BreadboardSlotSpec = {};
 
-  async *run(): AsyncGenerator<BreadbordRunResult> {
-    const core = new Core(this, this.#slots, {
-      getInputs: () => this.#inputs,
-    });
+  async *run(inspector?: EventTarget): AsyncGenerator<BreadbordRunResult> {
+    const core = new Core(this, this.#slots, inspector);
     const kits = [core, ...this.#kits];
     const handlers = kits.reduce((handlers, kit) => {
       return { ...handlers, ...kit.handlers };
@@ -52,19 +56,34 @@ export class Board extends EventTarget implements Breadboard {
     const dummyContext = null as unknown as GraphTraversalContext;
 
     for await (const result of machine) {
-      const { inputs, descriptor } = result;
+      const { inputs, descriptor, missingInputs } = result;
 
-      if (result.skip) continue;
+      if (result.skip) {
+        inspector?.dispatchEvent(
+          new InspectorEvent("skip", { descriptor, inputs, missingInputs })
+        );
+        continue;
+      }
 
       if (descriptor.type === "input") {
         const inputStage = new InputStageResult(inputs);
         yield inputStage;
         result.outputs = inputStage.inputs;
+        inspector?.dispatchEvent(
+          new InspectorEvent("input", {
+            descriptor,
+            inputs,
+            outputs: result.outputs,
+          })
+        );
         continue;
       }
 
       if (descriptor.type === "output") {
         yield new OutputStageResult(inputs);
+        inspector?.dispatchEvent(
+          new InspectorEvent("output", { descriptor, inputs })
+        );
         continue;
       }
 
@@ -73,23 +92,20 @@ export class Board extends EventTarget implements Breadboard {
         throw new Error(`No handler for node type "${descriptor.type}"`);
 
       const outputs = (await handler(dummyContext, inputs)) || {};
-      this.dispatchEvent(
-        new CustomEvent("log", {
-          detail: {
-            descriptor,
-            inputs,
-            outputs,
-          },
-        })
+      inspector?.dispatchEvent(
+        new InspectorEvent("node", { descriptor, inputs, outputs })
       );
 
       result.outputs = outputs;
     }
   }
 
-  async runOnce(inputs: InputValues): Promise<OutputValues> {
+  async runOnce(
+    inputs: InputValues,
+    inspector?: EventTarget
+  ): Promise<OutputValues> {
     let outputs: OutputValues = {};
-    for await (const result of this.run()) {
+    for await (const result of this.run(inspector)) {
       if (result.stage === BreadboardRunStage.Input) {
         result.inputs = inputs;
       } else {
@@ -131,10 +147,6 @@ export class Board extends EventTarget implements Breadboard {
     return new Node(this, "slot", { ...rest }, $id);
   }
 
-  addInputs(inputs: InputValues): void {
-    this.#inputs = { ...this.#inputs, ...inputs };
-  }
-
   addEdge(edge: Edge) {
     this.edges.push(edge);
   }
@@ -149,10 +161,6 @@ export class Board extends EventTarget implements Breadboard {
     });
     this.#kits.push(kit);
     return kit;
-  }
-
-  on(eventName: string, handler: EventListenerOrEventListenerObject) {
-    this.addEventListener(eventName, handler);
   }
 
   static fromGraphDescriptor(graph: GraphDescriptor): Board {
