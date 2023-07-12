@@ -4,91 +4,70 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { NodeHandlers, coreHandlers } from "@google-labs/graph-runner";
 import {
-  NodeConfiguration,
-  NodeHandlers,
-  coreHandlers,
-} from "@google-labs/graph-runner";
-import { Node } from "./node.js";
-import { Breadboard, ILibrary } from "./types.js";
-
-export type OptionalIdConfiguration = { $id?: string } & NodeConfiguration;
+  BreadboardNode,
+  Kit,
+  NodeFactory,
+  OptionalIdConfiguration,
+} from "./types.js";
 
 /**
  * Syntactic sugar around the `coreHandlers` library.
  */
-export class Starter implements ILibrary {
+export class Starter implements Kit {
+  #nodeFactory: NodeFactory;
   handlers: NodeHandlers;
-  #breadboard: Breadboard;
 
-  constructor(breadboard: Breadboard) {
-    this.#breadboard = breadboard;
+  constructor(nodeFactory: NodeFactory) {
+    this.#nodeFactory = nodeFactory;
     this.handlers = coreHandlers;
-    this.#breadboard.addLibrary(this);
   }
 
-  textTemplate(template: string, config: OptionalIdConfiguration = {}): Node {
+  textTemplate(
+    template: string,
+    config: OptionalIdConfiguration = {}
+  ): BreadboardNode {
     const { $id, ...rest } = config;
-    return new Node(
-      this.#breadboard,
-      "prompt-template",
-      { template, ...rest },
-      $id
-    );
+    return this.#nodeFactory("prompt-template", { template, ...rest }, $id);
   }
 
-  urlTemplate(template: string, config: OptionalIdConfiguration = {}): Node {
+  urlTemplate(
+    template: string,
+    config: OptionalIdConfiguration = {}
+  ): BreadboardNode {
     const { $id, ...rest } = config;
-    return new Node(
-      this.#breadboard,
-      "url_template",
-      { template, ...rest },
-      $id
-    );
+    return this.#nodeFactory("url_template", { template, ...rest }, $id);
   }
 
-  input(message?: string, config: OptionalIdConfiguration = {}): Node {
+  fetch(raw?: boolean, config: OptionalIdConfiguration = {}): BreadboardNode {
     const { $id, ...rest } = config;
-    return new Node(this.#breadboard, "input", { message, ...rest }, $id);
+    return this.#nodeFactory("fetch", { raw, ...rest }, $id);
   }
 
-  fetch(raw?: boolean, config: OptionalIdConfiguration = {}): Node {
+  jsonata(
+    expression: string,
+    config: OptionalIdConfiguration = {}
+  ): BreadboardNode {
     const { $id, ...rest } = config;
-    return new Node(this.#breadboard, "fetch", { raw, ...rest }, $id);
+    return this.#nodeFactory("jsonata", { expression, ...rest }, $id);
   }
 
-  jsonata(expression: string, config: OptionalIdConfiguration = {}): Node {
+  xmlToJson(config: OptionalIdConfiguration = {}): BreadboardNode {
     const { $id, ...rest } = config;
-    return new Node(this.#breadboard, "jsonata", { expression, ...rest }, $id);
+    return this.#nodeFactory("xml_to_json", { ...rest }, $id);
   }
 
-  xmlToJson(config: OptionalIdConfiguration = {}): Node {
+  textCompletion(config: OptionalIdConfiguration = {}): BreadboardNode {
     const { $id, ...rest } = config;
-    return new Node(this.#breadboard, "xml_to_json", { ...rest }, $id);
+    return this.#nodeFactory("text-completion", { ...rest }, $id);
   }
 
-  textCompletion(config: OptionalIdConfiguration = {}): Node {
+  secrets(
+    keys: string[],
+    config: OptionalIdConfiguration = {}
+  ): BreadboardNode {
     const { $id, ...rest } = config;
-    return new Node(this.#breadboard, "text-completion", { ...rest }, $id);
-  }
-
-  secrets(keys: string[], config: OptionalIdConfiguration = {}): Node {
-    const { $id, ...rest } = config;
-    return new Node(this.#breadboard, "secrets", { keys, ...rest }, $id);
-  }
-
-  output(config: OptionalIdConfiguration = {}): Node {
-    const { $id, ...rest } = config;
-    return new Node(this.#breadboard, "output", { ...rest }, $id);
-  }
-
-  include($ref: string, config: OptionalIdConfiguration = {}): Node {
-    const { $id, ...rest } = config;
-    return new Node(this.#breadboard, "include", { $ref, ...rest }, $id);
-  }
-
-  reflect(config: OptionalIdConfiguration = {}): Node {
-    const { $id, ...rest } = config;
-    return new Node(this.#breadboard, "reflect", { ...rest }, $id);
+    return this.#nodeFactory("secrets", { keys, ...rest }, $id);
   }
 }

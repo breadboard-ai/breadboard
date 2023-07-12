@@ -17,7 +17,13 @@ import {
   TraversalMachine,
 } from "@google-labs/graph-runner";
 
-import { Breadboard, ILibrary } from "./types.js";
+import {
+  Breadboard,
+  Kit,
+  KitConstructor,
+  OptionalIdConfiguration,
+} from "./types.js";
+import { Node } from "./node.js";
 import { Starter } from "./starter.js";
 
 export interface ContextProvider {
@@ -99,7 +105,7 @@ export type BreadboardSlotSpec = Record<string, GraphDescriptor>;
 export class Board extends EventTarget implements Breadboard {
   edges: Edge[] = [];
   nodes: NodeDescriptor[] = [];
-  #libraries: ILibrary[] = [];
+  #kits: Kit[] = [];
   #inputs: InputValues = {};
   #slots: BreadboardSlotSpec = {};
 
@@ -107,7 +113,7 @@ export class Board extends EventTarget implements Breadboard {
     const context = new BreadboardExecutionContext(this, {
       getInputs: () => this.#inputs,
       getHandlers: () =>
-        this.#libraries.reduce((acc, lib) => {
+        this.#kits.reduce((acc, lib) => {
           return { ...acc, ...lib.handlers };
         }, {}),
       getSlotted: () => this.#slots,
@@ -139,6 +145,31 @@ export class Board extends EventTarget implements Breadboard {
     }
   }
 
+  /**
+   * Core nodes. Breadboard won't function without these.
+   * These are always included.
+   */
+
+  input(message?: string, config: OptionalIdConfiguration = {}): Node {
+    const { $id, ...rest } = config;
+    return new Node(this, "input", { message, ...rest }, $id);
+  }
+
+  output(config: OptionalIdConfiguration = {}): Node {
+    const { $id, ...rest } = config;
+    return new Node(this, "output", { ...rest }, $id);
+  }
+
+  include($ref: string, config: OptionalIdConfiguration = {}): Node {
+    const { $id, ...rest } = config;
+    return new Node(this, "include", { $ref, ...rest }, $id);
+  }
+
+  reflect(config: OptionalIdConfiguration = {}): Node {
+    const { $id, ...rest } = config;
+    return new Node(this, "reflect", { ...rest }, $id);
+  }
+
   addInputs(inputs: InputValues): void {
     this.#inputs = { ...this.#inputs, ...inputs };
   }
@@ -151,8 +182,12 @@ export class Board extends EventTarget implements Breadboard {
     this.nodes.push(node);
   }
 
-  addLibrary(library: ILibrary): void {
-    this.#libraries.push(library);
+  addKit<T extends Kit>(ctr: KitConstructor<T>): T {
+    const kit = new ctr((...args) => {
+      return new Node(this, ...args);
+    });
+    this.#kits.push(kit);
+    return kit;
   }
 
   on(eventName: string, handler: EventListenerOrEventListenerObject) {
@@ -163,8 +198,9 @@ export class Board extends EventTarget implements Breadboard {
     const breadboard = new Board();
     breadboard.edges = graph.edges;
     breadboard.nodes = graph.nodes;
-    // This registers a library. Maybe there's a more elegant way to do this?
-    new Starter(breadboard);
+    // Later, we'll want to make this more flexible.
+    // Currently, since there's only one kit, we just register it here.
+    breadboard.addKit(Starter);
     return breadboard;
   }
 
