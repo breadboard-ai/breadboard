@@ -4,25 +4,25 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  type Edge,
-  type NodeDescriptor,
+import type {
+  Edge,
+  NodeDescriptor,
   GraphTraversalContext,
   NodeHandlers,
   InputValues,
   OutputValues,
   GraphDescriptor,
   LogData,
-  loadGraph,
-  TraversalMachine,
 } from "@google-labs/graph-runner";
 
-import {
+import type {
   Breadboard,
   Kit,
   KitConstructor,
   OptionalIdConfiguration,
 } from "./types.js";
+
+import { loadGraph, TraversalMachine } from "@google-labs/graph-runner";
 import { Node } from "./node.js";
 import { Starter } from "./starter.js";
 

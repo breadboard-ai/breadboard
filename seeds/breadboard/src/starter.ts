@@ -5,7 +5,7 @@
  */
 
 import { NodeHandlers, coreHandlers } from "@google-labs/graph-runner";
-import {
+import type {
   BreadboardNode,
   Kit,
   NodeFactory,
