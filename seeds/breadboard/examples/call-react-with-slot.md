@@ -1,4 +1,4 @@
-# Google News Diagram
+# Call React With Slot Diagram
 
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%

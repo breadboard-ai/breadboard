@@ -13,13 +13,13 @@ import { config } from "dotenv";
 config();
 
 // Create an new breadboard.
-const breadboard = new Board();
+const board = new Board();
 
 // Get a starter kit.
 // Starter kit contains helper methods to create useful nodes.
 // To work, a starter kit needs to be associated with the instance of
 // the breadboard on which we're wiring the nodes.
-const kit = new Starter(breadboard);
+const kit = board.addKit(Starter);
 
 // Create a new text template node.
 const summarizeResults = kit.textTemplate(
@@ -32,7 +32,7 @@ const newsUrl = kit.urlTemplate(
 );
 
 // Wire input to the text template and the url template.
-kit
+board
   .input("What news topic would you like to have summarized?")
   .wire("text->topic", summarizeResults)
   .wire("text->query", newsUrl);
@@ -62,7 +62,7 @@ fetchHeadlines.wire(
 // Create a new text completion node and wire it to the output.
 const textCompletion = kit
   .textCompletion()
-  .wire("completion->text", kit.output());
+  .wire("completion->text", board.output());
 
 // Wire secrets node (containing API_KEY) to the text completion node.
 kit.secrets(["API_KEY"]).wire("API_KEY", textCompletion);
@@ -71,27 +71,24 @@ kit.secrets(["API_KEY"]).wire("API_KEY", textCompletion);
 summarizeResults.wire("prompt->text", textCompletion);
 
 // Save resulting breadboard
-await writeFile(
-  "examples/google-news.json",
-  JSON.stringify(breadboard, null, 2)
-);
+await writeFile("examples/google-news.json", JSON.stringify(board, null, 2));
 
 // .. or turn it into a diagram
 await writeFile(
   "examples/google-news.md",
-  `# Google News Diagram\n\n\`\`\`mermaid\n${toMermaid(breadboard)}\n\`\`\``
+  `# Google News Diagram\n\n\`\`\`mermaid\n${toMermaid(board)}\n\`\`\``
 );
 
 // Run the breadboard:
 
 // Add the inputs.
-breadboard.addInputs({ text: "Breadboards" });
+board.addInputs({ text: "Breadboards" });
 
 // Add the output event handler
-breadboard.on("output", (event) => {
+board.on("output", (event) => {
   const { detail } = event as CustomEvent;
   console.log(detail.text);
 });
 
 // ... and run!
-await breadboard.run();
+await board.run();

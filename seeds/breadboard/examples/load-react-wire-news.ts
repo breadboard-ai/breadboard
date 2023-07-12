@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board, Starter } from "@google-labs/breadboard";
+import { Board } from "@google-labs/breadboard";
 
 import { config } from "dotenv";
 
@@ -18,9 +18,7 @@ const REPO_URL =
 const tools = await Board.load("./examples/tools.json");
 
 // Next, we'll wire in another tool right into it.
-const kit = new Starter(tools);
-
-const news = kit.include(
+const news = tools.include(
   `${REPO_URL}/seeds/breadboard/examples/google-news.json`,
   {
     $id: "news",
@@ -29,7 +27,7 @@ const news = kit.include(
   }
 );
 
-kit.input().wire("news->text", news.wire("text", kit.output()));
+tools.input().wire("news->text", news.wire("text", tools.output()));
 
 const board = await Board.load(
   `${REPO_URL}/seeds/graph-playground/graphs/react-with-slot.json`,

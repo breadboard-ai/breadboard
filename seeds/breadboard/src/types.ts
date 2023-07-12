@@ -8,17 +8,40 @@ import type {
   Edge,
   GraphDescriptor,
   InputValues,
+  NodeConfiguration,
   NodeDescriptor,
   NodeHandlers,
+  NodeTypeIdentifier,
 } from "@google-labs/graph-runner";
 
-export interface IBreadboard extends GraphDescriptor, EventTarget {
+export interface Kit {
+  handlers: NodeHandlers;
+}
+
+export type NodeFactory = (
+  type: NodeTypeIdentifier,
+  configuration?: NodeConfiguration,
+  id?: string
+) => BreadboardNode;
+
+export interface KitConstructor<T extends Kit> {
+  new (nodeFactory: NodeFactory): T;
+}
+
+export interface ContextProvider {
+  getInputs(): InputValues;
+  getSlotted(): Record<string, GraphDescriptor>;
+}
+
+export interface Breadboard extends GraphDescriptor, EventTarget {
   addInputs(inputs: InputValues): void;
   addEdge(edge: Edge): void;
   addNode(node: NodeDescriptor): void;
-  addLibrary(library: ILibrary): void;
+  addKit<T extends Kit>(ctr: KitConstructor<T>): T;
 }
 
-export interface ILibrary {
-  handlers: NodeHandlers;
+export interface BreadboardNode extends NodeDescriptor {
+  wire(spec: string, to: BreadboardNode): BreadboardNode;
 }
+
+export type OptionalIdConfiguration = { $id?: string } & NodeConfiguration;

@@ -7,10 +7,9 @@
 import type {
   Edge,
   NodeConfiguration,
-  NodeDescriptor,
   NodeTypeIdentifier,
 } from "@google-labs/graph-runner";
-import { IBreadboard } from "./types.js";
+import { Breadboard, BreadboardNode } from "./types.js";
 
 export type PartialEdge = {
   out?: string;
@@ -55,14 +54,14 @@ const hasValues = (configuration: NodeConfiguration) => {
   return Object.values(configuration).filter(Boolean).length > 0;
 };
 
-export class Node implements NodeDescriptor {
+export class Node implements BreadboardNode {
   id: string;
   type: NodeTypeIdentifier;
   configuration?: NodeConfiguration;
-  #breadboard: IBreadboard;
+  #breadboard: Breadboard;
 
   constructor(
-    breadboard: IBreadboard,
+    breadboard: Breadboard,
     type: NodeTypeIdentifier,
     configuration?: NodeConfiguration,
     id?: string
@@ -77,7 +76,7 @@ export class Node implements NodeDescriptor {
     this.#breadboard.addNode(this);
   }
 
-  wire(spec: string, to: Node): Node {
+  wire(spec: string, to: BreadboardNode): BreadboardNode {
     const edge: Edge = {
       from: this.id,
       to: to.id,
