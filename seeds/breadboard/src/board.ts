@@ -17,6 +17,7 @@ import type {
 
 import type {
   Breadboard,
+  ContextProvider,
   Kit,
   KitConstructor,
   OptionalIdConfiguration,
@@ -25,12 +26,6 @@ import type {
 import { loadGraph, TraversalMachine } from "@google-labs/graph-runner";
 import { Node } from "./node.js";
 import { Starter } from "./starter.js";
-
-export interface ContextProvider {
-  getInputs(): InputValues;
-  getHandlers(): NodeHandlers;
-  getSlotted(): Record<string, GraphDescriptor>;
-}
 
 class BreadboardExecutionContext implements GraphTraversalContext {
   #breadboard: Breadboard;

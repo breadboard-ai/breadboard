@@ -28,6 +28,12 @@ export interface KitConstructor<T extends Kit> {
   new (nodeFactory: NodeFactory): T;
 }
 
+export interface ContextProvider {
+  getInputs(): InputValues;
+  getHandlers(): NodeHandlers;
+  getSlotted(): Record<string, GraphDescriptor>;
+}
+
 export interface Breadboard extends GraphDescriptor, EventTarget {
   addInputs(inputs: InputValues): void;
   addEdge(edge: Edge): void;
