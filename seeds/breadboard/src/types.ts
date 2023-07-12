@@ -30,7 +30,6 @@ export interface KitConstructor<T extends Kit> {
 
 export interface ContextProvider {
   getInputs(): InputValues;
-  getHandlers(): NodeHandlers;
   getSlotted(): Record<string, GraphDescriptor>;
 }
 

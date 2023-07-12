@@ -4,15 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  type GraphDescriptor,
-  type GraphTraversalContext,
-  type InputValues,
-  type NodeHandler,
-  type NodeHandlers,
-  type OutputValues,
+import type {
+  GraphDescriptor,
+  GraphTraversalContext,
+  InputValues,
+  NodeHandler,
+  NodeHandlers,
+  OutputValues,
 } from "@google-labs/graph-runner";
-import type { Breadboard, ContextProvider, Kit, NodeFactory } from "./types.js";
+import type { Breadboard, ContextProvider } from "./types.js";
 import { Board, BreadboardSlotSpec } from "./board.js";
 
 export const CORE_HANDLERS = ["input", "output", "include", "reflect", "slot"];
@@ -26,23 +26,20 @@ const deepCopy = (graph: GraphDescriptor): GraphDescriptor => {
   return JSON.parse(JSON.stringify(graph));
 };
 
-export class Core implements Kit {
+export class Core {
   #board?: Breadboard;
   #contextProvider?: ContextProvider;
   handlers: NodeHandlers;
   #outputs: OutputValues = {};
 
-  constructor(_nodeFactory: NodeFactory) {
+  constructor(board: Breadboard, contextProvider: ContextProvider) {
+    this.#board = board;
+    this.#contextProvider = contextProvider;
     this.handlers = CORE_HANDLERS.reduce((handlers, type) => {
       const that = this as unknown as Record<string, NodeHandler>;
       handlers[type] = that[type].bind(this);
       return handlers;
     }, {} as NodeHandlers);
-  }
-
-  init(board: Breadboard, contextProvider: ContextProvider) {
-    this.#board = board;
-    this.#contextProvider = contextProvider;
   }
 
   async input(
