@@ -12,6 +12,8 @@ import type {
   OptionalIdConfiguration,
 } from "./types.js";
 
+import { CORE_HANDLERS } from "./core.js";
+
 /**
  * Syntactic sugar around the `coreHandlers` library.
  */
@@ -21,7 +23,11 @@ export class Starter implements Kit {
 
   constructor(nodeFactory: NodeFactory) {
     this.#nodeFactory = nodeFactory;
-    this.handlers = coreHandlers;
+    this.handlers = Object.fromEntries(
+      Object.entries(coreHandlers).filter(
+        ([key, _value]) => !CORE_HANDLERS.includes(key)
+      )
+    );
   }
 
   textTemplate(

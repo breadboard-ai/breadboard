@@ -15,7 +15,7 @@ import {
 import type { Breadboard, ContextProvider, Kit, NodeFactory } from "./types.js";
 import { Board, BreadboardSlotSpec } from "./board.js";
 
-const CORE_HANDLERS = ["input", "output", "include", "reflect", "slot"];
+export const CORE_HANDLERS = ["input", "output", "include", "reflect", "slot"];
 
 type SlotInput = {
   slot: string;
