@@ -170,6 +170,11 @@ export class Board extends EventTarget implements Breadboard {
     return new Node(this, "reflect", { ...rest }, $id);
   }
 
+  slot(config: OptionalIdConfiguration = {}): Node {
+    const { $id, ...rest } = config;
+    return new Node(this, "slot", { ...rest }, $id);
+  }
+
   addInputs(inputs: InputValues): void {
     this.#inputs = { ...this.#inputs, ...inputs };
   }
