@@ -80,15 +80,5 @@ await writeFile(
 );
 
 // Run the breadboard:
-
-// Add the inputs.
-board.addInputs({ text: "Breadboards" });
-
-// Add the output event handler
-board.on("output", (event) => {
-  const { detail } = event as CustomEvent;
-  console.log(detail.text);
-});
-
-// ... and run!
-await board.run();
+const outputs = await board.runOnce({ text: "Breadboards" });
+console.log("output", outputs.text);

@@ -11,21 +11,24 @@ import type {
   NodeHandlers,
   InputValues,
   GraphDescriptor,
+  OutputValues,
 } from "@google-labs/graph-runner";
 
-import type {
-  Breadboard,
-  Kit,
-  KitConstructor,
-  OptionalIdConfiguration,
+import {
+  BreadboardRunStage,
+  type Breadboard,
+  type BreadboardSlotSpec,
+  type BreadbordRunResult,
+  type Kit,
+  type KitConstructor,
+  type OptionalIdConfiguration,
 } from "./types.js";
 
 import { loadGraph, TraversalMachine } from "@google-labs/graph-runner";
 import { Node } from "./node.js";
 import { Starter } from "./starter.js";
 import { Core } from "./core.js";
-
-export type BreadboardSlotSpec = Record<string, GraphDescriptor>;
+import { InputStageResult, OutputStageResult } from "./run.js";
 
 export class Board extends EventTarget implements Breadboard {
   edges: Edge[] = [];
@@ -34,7 +37,7 @@ export class Board extends EventTarget implements Breadboard {
   #inputs: InputValues = {};
   #slots: BreadboardSlotSpec = {};
 
-  async run() {
+  async *run(): AsyncGenerator<BreadbordRunResult> {
     const core = new Core(this, this.#slots, {
       getInputs: () => this.#inputs,
     });
@@ -52,6 +55,19 @@ export class Board extends EventTarget implements Breadboard {
       const { inputs, descriptor } = result;
 
       if (result.skip) continue;
+
+      if (descriptor.type === "input") {
+        const inputStage = new InputStageResult(inputs);
+        yield inputStage;
+        result.outputs = inputStage.inputs;
+        continue;
+      }
+
+      if (descriptor.type === "output") {
+        yield new OutputStageResult(inputs);
+        continue;
+      }
+
       const handler = handlers[descriptor.type];
       if (!handler)
         throw new Error(`No handler for node type "${descriptor.type}"`);
@@ -69,6 +85,20 @@ export class Board extends EventTarget implements Breadboard {
 
       result.outputs = outputs;
     }
+  }
+
+  async runOnce(inputs: InputValues): Promise<OutputValues> {
+    let outputs: OutputValues = {};
+    for await (const result of this.run()) {
+      if (result.stage === BreadboardRunStage.Input) {
+        result.inputs = inputs;
+      } else {
+        outputs = result.outputs;
+        // Exit once we receive the first output.
+        break;
+      }
+    }
+    return outputs;
   }
 
   /**

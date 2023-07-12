@@ -89,18 +89,8 @@ await writeFile(
   `# Call React With Slot Diagram\n\n\`\`\`mermaid\n${toMermaid(main)}\n\`\`\``
 );
 
-// To run the whole thing:
-
-// Add the inputs.
-main.addInputs({
+// Run the breadboard.
+const output = await main.runOnce({
   text: "What's the square root of the number of holes on a typical breadboard?",
 });
-
-// Add the output event handler.
-main.on("output", (event) => {
-  const { detail } = event as CustomEvent;
-  console.log(detail.text);
-});
-
-// Run the breadboard.
-await main.run();
+console.log("output", output.text);

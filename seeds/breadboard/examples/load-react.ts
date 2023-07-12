@@ -18,16 +18,8 @@ const board = await Board.load(`${REPO_URL}/react-with-slot.json`, {
   tools: await Board.load("./examples/tools.json"),
 });
 
-// Add the inputs.
-board.addInputs({
+// Run the breadboard.
+const outputs = await board.runOnce({
   text: "What's the square root of the number of holes on a typical breadboard?",
 });
-
-// Add the output event handler.
-board.on("output", (event) => {
-  const { detail } = event as CustomEvent;
-  console.log("output", detail.text);
-});
-
-// Run the breadboard.
-await board.run();
+console.log("output", outputs.text);

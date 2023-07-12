@@ -12,10 +12,14 @@ import type {
   NodeHandlers,
   OutputValues,
 } from "@google-labs/graph-runner";
-import type { Breadboard, ContextProvider } from "./types.js";
-import { Board, BreadboardSlotSpec } from "./board.js";
+import {
+  type Breadboard,
+  type ContextProvider,
+  type BreadboardSlotSpec,
+} from "./types.js";
+import { Board } from "./board.js";
 
-export const CORE_HANDLERS = ["input", "output", "include", "reflect", "slot"];
+export const CORE_HANDLERS = ["include", "reflect", "slot"];
 
 type SlotInput = {
   slot: string;
@@ -48,31 +52,6 @@ export class Core {
     }, {} as NodeHandlers);
   }
 
-  async input(
-    _ctx: GraphTraversalContext,
-    inputs: InputValues
-  ): Promise<OutputValues> {
-    const { message } = inputs as { message: string };
-    this.#board.dispatchEvent(
-      new CustomEvent("input", {
-        detail: message,
-      })
-    );
-    return this.#contextProvider.getInputs() as OutputValues;
-  }
-
-  async output(
-    _ctx: GraphTraversalContext,
-    inputs: InputValues
-  ): Promise<void> {
-    this.#board.dispatchEvent(
-      new CustomEvent("output", {
-        detail: inputs,
-      })
-    );
-    this.#outputs = inputs;
-  }
-
   async include(
     _ctx: GraphTraversalContext,
     inputs: InputValues
@@ -85,14 +64,7 @@ export class Core {
     };
     // TODO: Please fix the $ref/path mess.
     const board = await Board.load(path || $ref || "", slotted);
-    let outputs: OutputValues = {};
-    board.addInputs(args);
-    board.on("output", (event) => {
-      const { detail } = event as CustomEvent;
-      outputs = detail;
-    });
-    await board.run();
-    return outputs;
+    return await board.runOnce(args);
   }
 
   async reflect(
@@ -112,13 +84,6 @@ export class Core {
     const graph = this.#slots[slot];
     if (!graph) throw new Error(`No graph found for slot ${slot}`);
     const slottedBreadboard = Board.fromGraphDescriptor(graph);
-    let outputs: OutputValues = {};
-    slottedBreadboard.addInputs(args);
-    slottedBreadboard.on("output", (event) => {
-      const { detail } = event as CustomEvent;
-      outputs = detail;
-    });
-    await slottedBreadboard.run();
-    return outputs;
+    return await slottedBreadboard.runOnce(args);
   }
 }

@@ -12,10 +12,25 @@ import type {
   NodeDescriptor,
   NodeHandlers,
   NodeTypeIdentifier,
+  OutputValues,
 } from "@google-labs/graph-runner";
 
 export interface Kit {
   handlers: NodeHandlers;
+}
+
+export type BreadboardSlotSpec = Record<string, GraphDescriptor>;
+
+export enum BreadboardRunStage {
+  Input,
+  Output,
+}
+
+export interface BreadbordRunResult {
+  stage: BreadboardRunStage;
+  get inputArguments(): InputValues;
+  set inputs(input: InputValues);
+  get outputs(): OutputValues;
 }
 
 export type NodeFactory = (
