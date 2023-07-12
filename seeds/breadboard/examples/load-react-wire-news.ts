@@ -36,6 +36,6 @@ const board = await Board.load(
 
 // Run the breadboard.
 const outputs = await board.runOnce({
-  text: "What's the latest news with breadboards?",
+  text: "What's the latest news on breadboards?",
 });
 console.log("output", outputs.text);
