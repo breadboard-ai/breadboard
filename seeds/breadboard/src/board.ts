@@ -35,9 +35,8 @@ export class Board extends EventTarget implements Breadboard {
   #slots: BreadboardSlotSpec = {};
 
   async run() {
-    const core = new Core(this, {
+    const core = new Core(this, this.#slots, {
       getInputs: () => this.#inputs,
-      getSlotted: () => this.#slots,
     });
     const kits = [core, ...this.#kits];
     const handlers = kits.reduce((handlers, kit) => {

@@ -27,13 +27,19 @@ const deepCopy = (graph: GraphDescriptor): GraphDescriptor => {
 };
 
 export class Core {
-  #board?: Breadboard;
-  #contextProvider?: ContextProvider;
+  #board: Breadboard;
+  #slots: BreadboardSlotSpec;
+  #contextProvider: ContextProvider;
   handlers: NodeHandlers;
   #outputs: OutputValues = {};
 
-  constructor(board: Breadboard, contextProvider: ContextProvider) {
+  constructor(
+    board: Breadboard,
+    slots: BreadboardSlotSpec,
+    contextProvider: ContextProvider
+  ) {
     this.#board = board;
+    this.#slots = slots;
     this.#contextProvider = contextProvider;
     this.handlers = CORE_HANDLERS.reduce((handlers, type) => {
       const that = this as unknown as Record<string, NodeHandler>;
@@ -47,19 +53,19 @@ export class Core {
     inputs: InputValues
   ): Promise<OutputValues> {
     const { message } = inputs as { message: string };
-    this.#board?.dispatchEvent(
+    this.#board.dispatchEvent(
       new CustomEvent("input", {
         detail: message,
       })
     );
-    return this.#contextProvider?.getInputs() as OutputValues;
+    return this.#contextProvider.getInputs() as OutputValues;
   }
 
   async output(
     _ctx: GraphTraversalContext,
     inputs: InputValues
   ): Promise<void> {
-    this.#board?.dispatchEvent(
+    this.#board.dispatchEvent(
       new CustomEvent("output", {
         detail: inputs,
       })
@@ -103,7 +109,7 @@ export class Core {
   ): Promise<OutputValues> {
     const { slot, ...args } = inputs as SlotInput;
     if (!slot) throw new Error("To use a slot, we need to specify its name");
-    const graph = this.#contextProvider?.getSlotted()[slot];
+    const graph = this.#slots[slot];
     if (!graph) throw new Error(`No graph found for slot ${slot}`);
     const slottedBreadboard = Board.fromGraphDescriptor(graph);
     let outputs: OutputValues = {};

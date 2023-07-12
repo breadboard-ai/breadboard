@@ -30,7 +30,6 @@ export interface KitConstructor<T extends Kit> {
 
 export interface ContextProvider {
   getInputs(): InputValues;
-  getSlotted(): Record<string, GraphDescriptor>;
 }
 
 export interface Breadboard extends GraphDescriptor, EventTarget {
