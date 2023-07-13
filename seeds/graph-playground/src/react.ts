@@ -4,7 +4,35 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export class ReActHelper {
+import { Kit, NodeFactory } from "@google-labs/breadboard";
+import {
+  GraphTraversalContext,
+  InputValues,
+  NodeHandlers,
+  OutputValues,
+} from "@google-labs/graph-runner";
+
+type Helper = Record<string, (...args: string[]) => Promise<OutputValues>>;
+
+export class ReActHelper implements Kit {
+  handlers: NodeHandlers;
+
+  constructor(_nodeFactory: NodeFactory) {
+    this.handlers = {
+      "react-helper": async (
+        _cx: GraphTraversalContext,
+        inputs: InputValues
+      ) => {
+        const manager = this as unknown as Helper;
+        const method = inputs["method"] as string;
+        if (!method) throw new Error("Custom node requires `method` input");
+        const argNames = (inputs["args"] ?? []) as string[];
+        const args = argNames.map((argName) => inputs[argName] as string);
+        return await manager[method](...args);
+      },
+    };
+  }
+
   tools = {
     search:
       "Useful for when you need to find facts. Input should be a search query.",

@@ -7,4 +7,9 @@
 export { Board } from "./board.js";
 export { Starter } from "./starter.js";
 export { Node } from "./node.js";
-export type { InspectorEvent } from "./types.js";
+export {
+  type InspectorEvent,
+  type Kit,
+  type NodeFactory,
+  BreadboardRunStage,
+} from "./types.js";
