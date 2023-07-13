@@ -14,7 +14,7 @@ import type {
 import type { BreadboardSlotSpec, InspectorDetails } from "./types.js";
 import { Board } from "./board.js";
 
-export const CORE_HANDLERS = ["include", "reflect", "slot"];
+export const CORE_HANDLERS = ["include", "reflect", "slot", "passthrough"];
 
 type SlotInput = {
   slot: string;
@@ -111,5 +111,9 @@ export class Core {
       args,
       NestedInspector.create(this.#inspector, slot)
     );
+  }
+
+  async passthrough(inputs: InputValues): Promise<OutputValues> {
+    return inputs;
   }
 }

@@ -7,7 +7,6 @@
 /**
  * Nodes that are commonly used in Generative Applications.
  */
-import passthrough from "./nodes/passthrough.js";
 import vars from "./nodes/vars.js";
 import jsonata from "./nodes/jsonata.js";
 import promptTemplate from "./nodes/prompt-template.js";
@@ -23,7 +22,6 @@ import url_template from "./nodes/url-template.js";
 import xml_to_json from "./nodes/xml-to-json.js";
 
 export const coreHandlers = {
-  passthrough,
   vars,
   jsonata,
   secrets,
