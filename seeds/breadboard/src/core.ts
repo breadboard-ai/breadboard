@@ -14,7 +14,7 @@ import type {
 import type { BreadboardSlotSpec, InspectorDetails } from "./types.js";
 import { Board } from "./board.js";
 
-export const CORE_HANDLERS = ["include", "reflect", "slot", "passthrough"];
+const CORE_HANDLERS = ["include", "reflect", "slot", "passthrough"];
 
 type SlotInput = {
   slot: string;
