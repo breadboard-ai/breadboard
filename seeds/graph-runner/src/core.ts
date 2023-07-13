@@ -31,11 +31,6 @@ import fetch from "./nodes/fetch.js";
 import url_template from "./nodes/url-template.js";
 import xml_to_json from "./nodes/xml-to-json.js";
 
-/**
- * A node-producing wrapper to create custom nodes.
- */
-export { customNode } from "./nodes/custom-node.js";
-
 export const coreHandlers = {
   input,
   output,
