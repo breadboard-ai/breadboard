@@ -5,10 +5,10 @@
  */
 
 import type { InputValues, OutputValues } from "@google-labs/graph-runner";
-import { BreadboardRunStage, type BreadbordRunResult } from "./types.js";
+import type { BreadbordRunResult } from "./types.js";
 
 export class InputStageResult implements BreadbordRunResult {
-  stage = BreadboardRunStage.Input;
+  seeksInputs = true;
   #args: InputValues = {};
   #inputs: InputValues = {};
 
@@ -34,7 +34,7 @@ export class InputStageResult implements BreadbordRunResult {
 }
 
 export class OutputStageResult implements BreadbordRunResult {
-  stage = BreadboardRunStage.Output;
+  seeksInputs = false;
   #outputs: OutputValues = {};
 
   constructor(outputs: OutputValues) {

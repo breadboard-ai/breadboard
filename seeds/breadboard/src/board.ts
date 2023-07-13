@@ -14,7 +14,6 @@ import type {
 } from "@google-labs/graph-runner";
 
 import {
-  BreadboardRunStage,
   type Breadboard,
   type BreadboardSlotSpec,
   type BreadbordRunResult,
@@ -116,7 +115,7 @@ export class Board implements Breadboard {
   ): Promise<OutputValues> {
     let outputs: OutputValues = {};
     for await (const result of this.run(inspector)) {
-      if (result.stage === BreadboardRunStage.Input) {
+      if (result.seeksInputs) {
         result.inputs = inputs;
       } else {
         outputs = result.outputs;

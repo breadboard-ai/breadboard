@@ -21,13 +21,8 @@ export interface Kit {
 
 export type BreadboardSlotSpec = Record<string, GraphDescriptor>;
 
-export enum BreadboardRunStage {
-  Input,
-  Output,
-}
-
 export interface BreadbordRunResult {
-  stage: BreadboardRunStage;
+  get seeksInputs(): boolean;
   get inputArguments(): InputValues;
   set inputs(input: InputValues);
   get outputs(): OutputValues;

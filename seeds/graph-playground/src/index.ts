@@ -8,11 +8,7 @@ import { intro, log, note, outro, text } from "@clack/prompts";
 import { config } from "dotenv";
 
 import { OutputValues, InputValues } from "@google-labs/graph-runner";
-import {
-  Board,
-  type InspectorEvent,
-  BreadboardRunStage,
-} from "@google-labs/breadboard";
+import { Board, type InspectorEvent } from "@google-labs/breadboard";
 
 import { ReActHelper } from "./react.js";
 
@@ -57,7 +53,7 @@ board.addKit(ReActHelper);
 
 // Run the board until it finishes. This may run forever.
 for await (const result of board.run(inspector)) {
-  if (result.stage === BreadboardRunStage.Input) {
+  if (result.seeksInputs) {
     result.inputs = await ask(result.inputArguments);
   } else {
     show(result.outputs);
