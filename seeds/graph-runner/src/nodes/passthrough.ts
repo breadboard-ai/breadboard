@@ -4,12 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  GraphTraversalContext,
-  InputValues,
-  OutputValues,
-} from "../types.js";
+import type { InputValues, OutputValues } from "../types.js";
 
-export default async (_cx: GraphTraversalContext, inputs: InputValues) => {
+export default async (inputs: InputValues) => {
   return inputs as OutputValues;
 };

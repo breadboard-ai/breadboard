@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GraphTraversalContext, InputValues } from "../types.js";
+import type { InputValues } from "../types.js";
 import { GenerateTextResponse, Text, palm } from "@google-labs/palm-lite";
 
 type TextCompletionInputs = {
@@ -22,7 +22,7 @@ type TextCompletionInputs = {
   "stop-sequences": string[];
 };
 
-export default async (_cx: GraphTraversalContext, inputs: InputValues) => {
+export default async (inputs: InputValues) => {
   const values = inputs as TextCompletionInputs;
   if (!values.API_KEY)
     throw new Error("Text completion requires `API_KEY` input");

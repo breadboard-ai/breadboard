@@ -6,7 +6,6 @@
 
 import type {
   GraphDescriptor,
-  GraphTraversalContext,
   InputValues,
   NodeHandler,
   NodeHandlers,
@@ -81,10 +80,7 @@ export class Core {
     }, {} as NodeHandlers);
   }
 
-  async include(
-    _ctx: GraphTraversalContext,
-    inputs: InputValues
-  ): Promise<OutputValues> {
+  async include(inputs: InputValues): Promise<OutputValues> {
     const { path, $ref, slotted, ...args } = inputs as {
       path?: string;
       $ref?: string;
@@ -100,18 +96,12 @@ export class Core {
     );
   }
 
-  async reflect(
-    _ctx: GraphTraversalContext,
-    _inputs: InputValues
-  ): Promise<OutputValues> {
+  async reflect(_inputs: InputValues): Promise<OutputValues> {
     const graph = deepCopy(this.#graph);
     return { graph };
   }
 
-  async slot(
-    _ctx: GraphTraversalContext,
-    inputs: InputValues
-  ): Promise<OutputValues> {
+  async slot(inputs: InputValues): Promise<OutputValues> {
     const { slot, ...args } = inputs as SlotInput;
     if (!slot) throw new Error("To use a slot, we need to specify its name");
     const graph = this.#slots[slot];

@@ -6,7 +6,6 @@
 
 import { Kit, NodeFactory } from "@google-labs/breadboard";
 import {
-  GraphTraversalContext,
   InputValues,
   NodeHandlers,
   OutputValues,
@@ -19,10 +18,7 @@ export class ReActHelper implements Kit {
 
   constructor(_nodeFactory: NodeFactory) {
     this.handlers = {
-      "react-helper": async (
-        _cx: GraphTraversalContext,
-        inputs: InputValues
-      ) => {
+      "react-helper": async (inputs: InputValues) => {
         const manager = this as unknown as Helper;
         const method = inputs["method"] as string;
         if (!method) throw new Error("Custom node requires `method` input");

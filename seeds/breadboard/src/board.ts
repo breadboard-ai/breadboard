@@ -7,7 +7,6 @@
 import type {
   Edge,
   NodeDescriptor,
-  GraphTraversalContext,
   NodeHandlers,
   InputValues,
   GraphDescriptor,
@@ -25,17 +24,31 @@ import {
   InspectorDetails,
 } from "./types.js";
 
-import { loadGraph, TraversalMachine } from "@google-labs/graph-runner";
+import { TraversalMachine } from "@google-labs/graph-runner";
 import { Node } from "./node.js";
 import { Starter } from "./starter.js";
 import { Core } from "./core.js";
 import { InputStageResult, OutputStageResult } from "./run.js";
+import { readFile } from "fs/promises";
 
 class InspectorEvent extends CustomEvent<InspectorDetails> {
   constructor(type: string, detail: InspectorDetails) {
     super(type, { detail });
   }
 }
+
+/**
+ * @todo Make this just take a $ref and figure out when it's a path or a URL.
+ * @param path
+ * @param ref
+ * @returns
+ */
+export const loadGraph = async (path?: string, ref?: string) => {
+  if (path) return JSON.parse(await readFile(path, "utf-8"));
+  if (!ref) throw new Error("To include, we need a path or a $ref");
+  const response = await fetch(ref);
+  return await response.json();
+};
 
 export class Board implements Breadboard {
   edges: Edge[] = [];
@@ -51,9 +64,6 @@ export class Board implements Breadboard {
     }, {} as NodeHandlers);
 
     const machine = new TraversalMachine(this);
-
-    // TODO: Remove this after GraphTraversalContext is gone.
-    const dummyContext = null as unknown as GraphTraversalContext;
 
     for await (const result of machine) {
       const { inputs, descriptor, missingInputs } = result;
@@ -91,7 +101,7 @@ export class Board implements Breadboard {
       if (!handler)
         throw new Error(`No handler for node type "${descriptor.type}"`);
 
-      const outputs = (await handler(dummyContext, inputs)) || {};
+      const outputs = (await handler(inputs)) || {};
       inspector?.dispatchEvent(
         new InspectorEvent("node", { descriptor, inputs, outputs })
       );

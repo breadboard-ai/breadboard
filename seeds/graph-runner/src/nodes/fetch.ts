@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GraphTraversalContext, InputValues } from "../types.js";
+import type { InputValues } from "../types.js";
 
 /**
  * For now, we can only make a GET request. Let's start small.
@@ -24,7 +24,7 @@ type FetchInputValues = {
   raw?: boolean;
 };
 
-export default async (_cx: GraphTraversalContext, inputs: InputValues) => {
+export default async (inputs: InputValues) => {
   const { url, headers, raw } = inputs as FetchInputValues;
   if (!url) throw new Error("Fetch requires `url` input");
   const init = headers ? { headers } : {};

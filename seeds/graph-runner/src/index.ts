@@ -14,11 +14,8 @@ export type {
   OutputValues,
   NodeHandlers,
   NodeTypeIdentifier,
-  GraphTraversalContext,
   LogData,
 } from "./types.js";
 export { coreHandlers } from "./core.js";
-export { traverseGraph } from "./traversal.js";
 export { toMermaid } from "./mermaid.js";
-export { loadGraph } from "./nodes/include.js";
 export { TraversalMachine } from "./traversal/machine.js";

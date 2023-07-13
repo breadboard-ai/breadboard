@@ -9,12 +9,8 @@
  * Currently, it simply reads them from environment.
  */
 
-import type {
-  GraphTraversalContext,
-  InputValues,
-  OutputValues,
-} from "../types.js";
+import type { InputValues, OutputValues } from "../types.js";
 
-export default async (_cx: GraphTraversalContext, _inputs: InputValues) => {
+export default async (_inputs: InputValues) => {
   return process.env as OutputValues;
 };

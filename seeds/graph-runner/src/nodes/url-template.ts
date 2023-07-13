@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GraphTraversalContext, InputValues } from "../types.js";
+import type { InputValues } from "../types.js";
 
 /**
  * A simple node for making valid URLs out of templates.
@@ -25,7 +25,7 @@ const substitute = (template: string, values: Record<string, string>) => {
   );
 };
 
-export default async (_cx: GraphTraversalContext, inputs: InputValues) => {
+export default async (inputs: InputValues) => {
   const { template, ...values } = inputs as UrlTemplateInputValues;
   const url = substitute(template, values);
   return { url };

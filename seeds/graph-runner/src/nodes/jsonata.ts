@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphTraversalContext, InputValues } from "../types.js";
+import { InputValues } from "../types.js";
 
 import jsonata from "jsonata";
 
@@ -14,7 +14,7 @@ type JsonataInput = {
   raw: boolean;
 };
 
-export default async (context: GraphTraversalContext, inputs: InputValues) => {
+export default async (inputs: InputValues) => {
   const { expression, json, raw } = inputs as JsonataInput;
   if (!expression) throw new Error("Jsonata node requires `expression` input");
   if (!json) throw new Error("Jsonata node requires `json` input");

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GraphTraversalContext, InputValues } from "../types.js";
+import type { InputValues } from "../types.js";
 import {
   XmlCdata,
   XmlComment,
@@ -59,7 +59,7 @@ const toAltJson = (
   return ["$c", ""];
 };
 
-export default async (_cx: GraphTraversalContext, inputs: InputValues) => {
+export default async (inputs: InputValues) => {
   const { xml } = inputs as XmlToJsonInputValues;
   if (!xml) throw new Error("XmlToJson requires `xml` input");
   const json = toAltJson(parseXml(xml));

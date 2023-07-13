@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GraphTraversalContext, InputValues } from "../types.js";
+import type { InputValues } from "../types.js";
 
 type GoogleSearchInputs = {
   /**
@@ -46,7 +46,7 @@ const justSnippets = (response: GoogleSearchResponse) => {
   return response.items.map((item) => item.snippet).filter(Boolean) as string[];
 };
 
-export default async (_cx: GraphTraversalContext, inputs: InputValues) => {
+export default async (inputs: InputValues) => {
   const values = inputs as GoogleSearchInputs;
   const url = makeSearchUrl(values);
   const data = await fetch(url, {
