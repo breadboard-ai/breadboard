@@ -1,14 +1,17 @@
 {
   "folders": [
-	{
-		"path": "seeds/graph-playground"
-	},
-	{
-		"path": "seeds/graph-runner"
-	},
-	{
-		"path": "seeds/breadboard"
-	}
-],
+    {
+      "path": "seeds/graph-playground"
+    },
+    {
+      "path": "seeds/graph-runner"
+    },
+    {
+      "path": "seeds/breadboard"
+    },
+    {
+      "path": "seeds/llm-starter"
+    }
+  ],
   "settings": {}
 }
