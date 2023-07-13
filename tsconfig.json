@@ -5,7 +5,7 @@
     { "path": "seeds/discovery-types" },
     { "path": "seeds/palm-lite" },
     { "path": "seeds/graph-playground" },
-    { "path": "seeds/graph-runner " },
+    { "path": "seeds/graph-runner" },
     { "path": "seeds/breadboard" }
   ]
 }
