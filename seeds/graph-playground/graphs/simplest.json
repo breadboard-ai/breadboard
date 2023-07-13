@@ -24,5 +24,10 @@
     { "id": "text-completion-1", "type": "text-completion" },
     { "id": "output-1", "type": "output" },
     { "id": "secrets", "type": "secrets" }
+  ],
+  "kits": [
+    {
+      "url": "npm:@google-labs/llm-starter"
+    }
   ]
 }

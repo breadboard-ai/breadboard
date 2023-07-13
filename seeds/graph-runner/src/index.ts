@@ -15,6 +15,7 @@ export type {
   NodeHandlers,
   NodeTypeIdentifier,
   LogData,
+  KitDescriptor,
 } from "./types.js";
 export { coreHandlers } from "./core.js";
 export { toMermaid } from "./mermaid.js";

@@ -37,5 +37,10 @@
         "template": "Analyze the following question and instead of answering, list out steps to take to answer the question: {{question}}"
       }
     }
+  ],
+  "kits": [
+    {
+      "url": "npm:@google-labs/llm-starter"
+    }
   ]
 }

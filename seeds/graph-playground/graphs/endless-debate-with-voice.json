@@ -188,5 +188,10 @@
       "id": "local-memory-3",
       "type": "local-memory"
     }
+  ],
+  "kits": [
+    {
+      "url": "npm:@google-labs/llm-starter"
+    }
   ]
 }

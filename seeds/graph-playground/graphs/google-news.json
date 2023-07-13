@@ -98,5 +98,10 @@
       "id": "print",
       "type": "output"
     }
+  ],
+  "kits": [
+    {
+      "url": "npm:@google-labs/llm-starter"
+    }
   ]
 }

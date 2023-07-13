@@ -85,6 +85,19 @@ export interface Edge {
   constant?: boolean;
 }
 
+export interface KitDescriptor {
+  /**
+   * The URL pointing to the location of the kit.
+   */
+  url: string;
+
+  /**
+   * The list of node types in this kit that are used by the graph.
+   * If left blank or omitted, all node types are assumed to be used.
+   */
+  using?: string[];
+}
+
 /**
  * Represents a graph.
  */
@@ -98,6 +111,11 @@ export interface GraphDescriptor {
    * The collection of all nodes in the graph.
    */
   nodes: NodeDescriptor[];
+
+  /**
+   * All the kits (collections of node handlers) that are used by the graph.
+   */
+  kits?: KitDescriptor[];
 }
 
 /**

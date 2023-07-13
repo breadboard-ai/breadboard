@@ -106,7 +106,7 @@ export class Core {
     if (!slot) throw new Error("To use a slot, we need to specify its name");
     const graph = this.#slots[slot];
     if (!graph) throw new Error(`No graph found for slot ${slot}`);
-    const slottedBreadboard = Board.fromGraphDescriptor(graph);
+    const slottedBreadboard = await Board.fromGraphDescriptor(graph);
     return await slottedBreadboard.runOnce(
       args,
       NestedInspector.create(this.#inspector, slot)

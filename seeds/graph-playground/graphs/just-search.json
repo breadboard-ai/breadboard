@@ -36,5 +36,10 @@
     { "id": "search", "type": "google-search" },
     { "id": "secrets", "type": "secrets" },
     { "id": "print", "type": "output" }
+  ],
+  "kits": [
+    {
+      "url": "npm:@google-labs/llm-starter"
+    }
   ]
 }

@@ -142,5 +142,10 @@
     { "id": "remember-observation", "type": "local-memory" },
     { "id": "remember-thought", "type": "local-memory" },
     { "id": "tools-slot", "type": "slot", "configuration": { "slot": "tools" } }
+  ],
+  "kits": [
+    {
+      "url": "npm:@google-labs/llm-starter"
+    }
   ]
 }

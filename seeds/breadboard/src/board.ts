@@ -25,10 +25,10 @@ import {
 
 import { TraversalMachine } from "@google-labs/graph-runner";
 import { Node } from "./node.js";
-import { Starter } from "./starter.js";
 import { Core } from "./core.js";
 import { InputStageResult, OutputStageResult } from "./run.js";
 import { readFile } from "fs/promises";
+import { KitLoader } from "./kit.js";
 
 class InspectorEvent extends CustomEvent<InspectorDetails> {
   constructor(type: string, detail: InspectorDetails) {
@@ -172,13 +172,12 @@ export class Board implements Breadboard {
     return kit;
   }
 
-  static fromGraphDescriptor(graph: GraphDescriptor): Board {
+  static async fromGraphDescriptor(graph: GraphDescriptor): Promise<Board> {
     const breadboard = new Board();
     breadboard.edges = graph.edges;
     breadboard.nodes = graph.nodes;
-    // Later, we'll want to make this more flexible.
-    // Currently, since there's only one kit, we just register it here.
-    breadboard.addKit(Starter);
+    const loader = new KitLoader(graph.kits);
+    (await loader.load()).forEach((kit) => breadboard.#kits.push(kit));
     return breadboard;
   }
 
@@ -186,7 +185,7 @@ export class Board implements Breadboard {
     const url = new URL($ref, new URL(import.meta.url));
     const path = url.protocol === "file:" ? $ref : undefined;
     const graph = await loadGraph(path, $ref);
-    const board = Board.fromGraphDescriptor(graph);
+    const board = await Board.fromGraphDescriptor(graph);
     board.#slots = slots || {};
     return board;
   }

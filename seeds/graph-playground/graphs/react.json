@@ -235,5 +235,10 @@
       "id": "remember-thought",
       "type": "local-memory"
     }
+  ],
+  "kits": [
+    {
+      "url": "npm:@google-labs/llm-starter"
+    }
   ]
 }
