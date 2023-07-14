@@ -9,7 +9,7 @@
  * Currently, it simply reads them from environment.
  */
 
-import type { InputValues, OutputValues } from "../types.js";
+import type { InputValues, OutputValues } from "@google-labs/graph-runner";
 
 export default async (_inputs: InputValues) => {
   return process.env as OutputValues;

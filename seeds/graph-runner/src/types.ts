@@ -150,8 +150,3 @@ export type NodeHandler = (
  * All known node handlers.
  */
 export type NodeHandlers = Record<NodeTypeIdentifier, NodeHandler>;
-
-/**
- * Convenience type fo representing data to be logged.
- */
-export type LogData = Record<string, string | number | string[]>;

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { InputValues } from "../types.js";
+import { InputValues } from "@google-labs/graph-runner";
 
 import jsonata from "jsonata";
 

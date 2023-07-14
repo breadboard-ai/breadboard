@@ -14,9 +14,7 @@ export type {
   OutputValues,
   NodeHandlers,
   NodeTypeIdentifier,
-  LogData,
   KitDescriptor,
 } from "./types.js";
-export { coreHandlers } from "./core.js";
 export { toMermaid } from "./mermaid.js";
 export { TraversalMachine } from "./traversal/machine.js";

@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NodeHandlers, coreHandlers } from "@google-labs/graph-runner";
+import { NodeHandlers } from "@google-labs/graph-runner";
+import { coreHandlers } from "./core.js";
 import type {
   BreadboardNode,
   Kit,

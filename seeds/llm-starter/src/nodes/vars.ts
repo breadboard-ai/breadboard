@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { InputValues, OutputValues } from "../types.js";
+import { InputValues, OutputValues } from "@google-labs/graph-runner";
 
 const store = new Map<string, unknown>();
 

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { InputValues } from "../types.js";
+import type { InputValues } from "@google-labs/graph-runner";
 
 type GoogleSearchInputs = {
   /**
