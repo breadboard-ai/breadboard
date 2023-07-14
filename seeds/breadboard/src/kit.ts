@@ -5,7 +5,7 @@
  */
 
 import { KitDescriptor } from "@google-labs/graph-runner";
-import { Kit } from "./types.js";
+import { Kit, KitConstructor } from "./types.js";
 
 const urlToNpmSpec = (url: string): string => {
   const urlObj = new URL(url);
@@ -21,17 +21,15 @@ export class KitLoader {
     this.#kits = kits ?? [];
   }
 
-  async load(): Promise<Kit[]> {
+  async load(): Promise<KitConstructor<Kit>[]> {
     return Promise.all(
       this.#kits.map(async (kit) => {
         // TODO: Support `using` property.
         const { url } = kit;
         // TODO: Support protocols other than `npm:`.
         const spec = urlToNpmSpec(url);
-        console.log("SPEC", spec);
-        const module = await import(spec);
+        const { default: module } = await import(spec);
         // TODO: Check to see if this import is actually a Kit class.
-        console.log("MODULE", module);
         return module;
       })
     );

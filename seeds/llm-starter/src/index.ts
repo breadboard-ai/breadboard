@@ -4,4 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-console.log("code goes here");
+import { Starter } from "./starter.js";
+export default Starter;
+export { Starter };

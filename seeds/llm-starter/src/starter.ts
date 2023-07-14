@@ -10,7 +10,7 @@ import type {
   Kit,
   NodeFactory,
   OptionalIdConfiguration,
-} from "./types.js";
+} from "@google-labs/breadboard";
 
 /**
  * Syntactic sugar around the `coreHandlers` library.
