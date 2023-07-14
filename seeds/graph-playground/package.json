@@ -52,6 +52,7 @@
   "dependencies": {
     "@clack/prompts": "^0.6.3",
     "@google-labs/breadboard": "*",
+    "@google-labs/llm-starter": "*",
     "dotenv": "^16.3.1"
   }
 }

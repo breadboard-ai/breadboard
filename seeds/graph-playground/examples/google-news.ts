@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board, Starter } from "@google-labs/breadboard";
+import { Board } from "@google-labs/breadboard";
+import { Starter } from "@google-labs/llm-starter";
 import { toMermaid } from "@google-labs/graph-runner";
 import { writeFile } from "fs/promises";
 
@@ -16,7 +17,7 @@ config();
 const board = new Board();
 
 // Get a starter kit.
-// Starter kit contains helper methods to create useful nodes.
+// LLM Starter kit contains helper methods to create useful nodes.
 // To work, a starter kit needs to be associated with the instance of
 // the breadboard on which we're wiring the nodes.
 const kit = board.addKit(Starter);

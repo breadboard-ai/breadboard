@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board, Starter } from "@google-labs/breadboard";
+import { Board } from "@google-labs/breadboard";
+import { Starter } from "@google-labs/llm-starter";
 import { toMermaid } from "@google-labs/graph-runner";
 import { writeFile } from "fs/promises";
 
