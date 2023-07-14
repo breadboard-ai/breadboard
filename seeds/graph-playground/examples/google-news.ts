@@ -6,7 +6,6 @@
 
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
-import { toMermaid } from "@google-labs/graph-runner";
 import { writeFile } from "fs/promises";
 
 import { config } from "dotenv";
@@ -77,7 +76,7 @@ await writeFile("examples/google-news.json", JSON.stringify(board, null, 2));
 // .. or turn it into a diagram
 await writeFile(
   "examples/google-news.md",
-  `# Google News Diagram\n\n\`\`\`mermaid\n${toMermaid(board)}\n\`\`\``
+  `# Google News Diagram\n\n\`\`\`mermaid\n${board.mermaid()}\n\`\`\``
 );
 
 // Run the breadboard:

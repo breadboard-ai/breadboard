@@ -23,7 +23,7 @@ import {
   InspectorDetails,
 } from "./types.js";
 
-import { TraversalMachine } from "@google-labs/graph-runner";
+import { TraversalMachine, toMermaid } from "@google-labs/graph-runner";
 import { Node } from "./node.js";
 import { Core } from "./core.js";
 import { InputStageResult, OutputStageResult } from "./run.js";
@@ -170,6 +170,10 @@ export class Board implements Breadboard {
     });
     this.#kits.push(kit);
     return kit;
+  }
+
+  mermaid(): string {
+    return toMermaid(this);
   }
 
   static async fromGraphDescriptor(graph: GraphDescriptor): Promise<Board> {

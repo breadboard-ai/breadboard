@@ -5,7 +5,6 @@
  */
 
 import { Board } from "@google-labs/breadboard";
-import { toMermaid } from "@google-labs/graph-runner";
 import { writeFile } from "fs/promises";
 
 // A URL to a repository containing various saved breadboard layouts.
@@ -49,5 +48,5 @@ await writeFile("examples/tools.json", JSON.stringify(tools, null, 2));
 // .. and turn it into a diagram.
 await writeFile(
   "examples/tools.md",
-  `# Tools Diagram\n\n\`\`\`mermaid\n${toMermaid(tools)}\n\`\`\``
+  `# Tools Diagram\n\n\`\`\`mermaid\n${tools.mermaid()}\n\`\`\``
 );

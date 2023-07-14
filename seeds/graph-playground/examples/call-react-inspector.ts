@@ -6,7 +6,6 @@
 
 import { Board, type InspectorEvent } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
-import { toMermaid } from "@google-labs/graph-runner";
 import { writeFile } from "fs/promises";
 
 import { config } from "dotenv";
@@ -87,7 +86,7 @@ await writeFile(
 // .. or turn it into a diagram.
 await writeFile(
   "examples/call-react-with-slot.md",
-  `# Call React With Slot Diagram\n\n\`\`\`mermaid\n${toMermaid(main)}\n\`\`\``
+  `# Call React With Slot Diagram\n\n\`\`\`mermaid\n${main.mermaid()}\n\`\`\``
 );
 
 // Let's create an inspector to help us see what's going on.

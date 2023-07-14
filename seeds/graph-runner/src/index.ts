@@ -16,5 +16,5 @@ export type {
   NodeTypeIdentifier,
   KitDescriptor,
 } from "./types.js";
-export { toMermaid } from "./mermaid.js";
 export { TraversalMachine } from "./traversal/machine.js";
+export { toMermaid } from "./mermaid.js";
