@@ -44,10 +44,14 @@ export const parseSpec = (spec: string): PartialEdge => {
   return { out: outSpec, in: inSpec, ...result };
 };
 
-let nodeCount = 0;
+// Count nodes scoped to their breadboard.
+const nodeCounts = new Map<object, number>();
 
-const vendNodeId = (type: string) => {
-  return `${type}-${++nodeCount}`;
+const vendNodeId = (breadboard: Breadboard, type: string) => {
+  let nodeCount = nodeCounts.get(breadboard) || 0;
+  nodeCount++;
+  nodeCounts.set(breadboard, nodeCount);
+  return `${type}-${nodeCount}`;
 };
 
 const hasValues = (configuration: NodeConfiguration) => {
@@ -67,7 +71,7 @@ export class Node implements BreadboardNode {
     id?: string
   ) {
     this.#breadboard = breadboard;
-    this.id = id ?? vendNodeId(type);
+    this.id = id ?? vendNodeId(breadboard, type);
 
     if (configuration && hasValues(configuration))
       this.configuration = configuration;

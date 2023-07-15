@@ -1,22 +1,21 @@
 {
   "edges": [
     {
-      "from": "prompt-template-1",
-      "out": "prompt",
+      "from": "secrets-2",
       "to": "text-completion-1",
-      "in": "text"
-    },
-    {
-      "from": "secrets",
       "out": "API_KEY",
-      "to": "text-completion-1",
-      "in": "API_KEY",
-      "constant": true
+      "in": "API_KEY"
     },
     {
       "from": "text-completion-1",
+      "to": "output-3",
       "out": "completion",
-      "to": "output-1",
+      "in": "text"
+    },
+    {
+      "from": "analyze-this",
+      "to": "text-completion-1",
+      "out": "prompt",
       "in": "text"
     }
   ],
@@ -25,18 +24,26 @@
       "id": "text-completion-1",
       "type": "text-completion"
     },
-    { "id": "secrets", "type": "secrets" },
     {
-      "id": "output-1",
-      "type": "output"
+      "id": "secrets-2",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "API_KEY"
+        ]
+      }
     },
     {
-      "id": "prompt-template-1",
+      "id": "analyze-this",
       "type": "prompt-template",
       "configuration": {
-        "question": "How is the weather?",
-        "template": "Analyze the following question and instead of answering, list out steps to take to answer the question: {{question}}"
+        "template": "Analyze the following question and instead of answering, list out steps to take to answer the question: {{question}}",
+        "question": "How is the weather?"
       }
+    },
+    {
+      "id": "output-3",
+      "type": "output"
     }
   ],
   "kits": [
