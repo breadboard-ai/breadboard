@@ -103,6 +103,11 @@
                 "id": "output-6",
                 "type": "output"
               }
+            ],
+            "kits": [
+              {
+                "url": "npm:@google-labs/llm-starter"
+              }
             ]
           }
         }
@@ -111,6 +116,11 @@
     {
       "id": "output-8",
       "type": "output"
+    }
+  ],
+  "kits": [
+    {
+      "url": "npm:@google-labs/llm-starter"
     }
   ]
 }

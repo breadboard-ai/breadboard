@@ -8,6 +8,7 @@ import type {
   Edge,
   GraphDescriptor,
   InputValues,
+  KitDescriptor,
   NodeConfiguration,
   NodeDescriptor,
   NodeHandlers,
@@ -15,8 +16,8 @@ import type {
   OutputValues,
 } from "@google-labs/graph-runner";
 
-export interface Kit {
-  handlers: NodeHandlers;
+export interface Kit extends KitDescriptor {
+  get handlers(): NodeHandlers;
 }
 
 export type BreadboardSlotSpec = Record<string, GraphDescriptor>;

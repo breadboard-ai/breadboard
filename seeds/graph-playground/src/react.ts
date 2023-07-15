@@ -14,10 +14,15 @@ import {
 type Helper = Record<string, (...args: string[]) => Promise<OutputValues>>;
 
 export class ReActHelper implements Kit {
-  handlers: NodeHandlers;
+  // It's a local module, so report "." as Kit's url.
+  // TODO: Remove the need to do so manually. Every kit without a URL is a
+  // local Kit.
+  url = ".";
+
+  #handlers: NodeHandlers;
 
   constructor(_nodeFactory: NodeFactory) {
-    this.handlers = {
+    this.#handlers = {
       "react-helper": async (inputs: InputValues) => {
         const manager = this as unknown as Helper;
         const method = inputs["method"] as string;
@@ -27,6 +32,10 @@ export class ReActHelper implements Kit {
         return await manager[method](...args);
       },
     };
+  }
+
+  get handlers() {
+    return this.#handlers;
   }
 
   tools = {

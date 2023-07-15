@@ -52,12 +52,12 @@ export const loadGraph = async (path?: string, ref?: string) => {
 export class Board implements Breadboard {
   edges: Edge[] = [];
   nodes: NodeDescriptor[] = [];
-  #kits: Kit[] = [];
+  kits: Kit[] = [];
   #slots: BreadboardSlotSpec = {};
 
   async *run(inspector?: EventTarget): AsyncGenerator<BreadbordRunResult> {
     const core = new Core(this, this.#slots, inspector);
-    const kits = [core, ...this.#kits];
+    const kits = [core, ...this.kits];
     const handlers = kits.reduce((handlers, kit) => {
       return { ...handlers, ...kit.handlers };
     }, {} as NodeHandlers);
@@ -168,7 +168,7 @@ export class Board implements Breadboard {
     const kit = new ctr((...args) => {
       return new Node(this, ...args);
     });
-    this.#kits.push(kit);
+    this.kits.push(kit);
     return kit;
   }
 

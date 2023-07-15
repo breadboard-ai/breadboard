@@ -109,5 +109,10 @@
         ]
       }
     }
+  ],
+  "kits": [
+    {
+      "url": "@google-labs/llm-starter"
+    }
   ]
 }

@@ -17,12 +17,17 @@ import type {
  * Syntactic sugar around the `coreHandlers` library.
  */
 export class Starter implements Kit {
+  url = "npm:@google-labs/llm-starter";
   #nodeFactory: NodeFactory;
-  handlers: NodeHandlers;
+  #handlers: NodeHandlers;
+
+  get handlers() {
+    return this.#handlers;
+  }
 
   constructor(nodeFactory: NodeFactory) {
     this.#nodeFactory = nodeFactory;
-    this.handlers = coreHandlers;
+    this.#handlers = coreHandlers;
   }
 
   textTemplate(

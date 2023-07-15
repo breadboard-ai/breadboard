@@ -74,5 +74,10 @@
       "id": "output-5",
       "type": "output"
     }
+  ],
+  "kits": [
+    {
+      "url": "npm:@google-labs/llm-starter"
+    }
   ]
 }
