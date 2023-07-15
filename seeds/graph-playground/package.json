@@ -10,6 +10,7 @@
   "scripts": {
     "test": "FORCE_COLOR=1 ava",
     "merm": "turbo build && node scripts/mermaidize.js",
+    "prepare": "turbo build && node scripts/prepare.js",
     "build": "FORCE_COLOR=1 tsc --b",
     "watch": "FORCE_COLOR=1 tsc --b --watch",
     "dev": "turbo build && node --enable-source-maps ."
