@@ -6,7 +6,6 @@
 
 /**
  * Unique identifier of a node in a graph.
- * @todo Should this be globally unique? Likely a URI.
  */
 export type NodeIdentifier = string;
 
@@ -85,6 +84,12 @@ export interface Edge {
   constant?: boolean;
 }
 
+/**
+ * Represents a "kit": a collection of `NodeHandlers`. The basic permise here
+ * is that people can publish kits with interesting handlers, and then
+ * graphs can specify which ones they use.
+ * The `@google-labs/llm-starter` package is an example of kit.
+ */
 export interface KitDescriptor {
   /**
    * The URL pointing to the location of the kit.
@@ -119,7 +124,7 @@ export interface GraphDescriptor {
 }
 
 /**
- * Values that are supplied as inputs to the `NodeHandler`.
+ * Values that are supplied as inputs to the ` ndler`.
  */
 export type InputValues = Record<InputIdentifier, unknown>;
 
