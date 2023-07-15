@@ -112,7 +112,7 @@
   ],
   "kits": [
     {
-      "url": "@google-labs/llm-starter"
+      "url": "npm:@google-labs/llm-starter"
     }
   ]
 }
