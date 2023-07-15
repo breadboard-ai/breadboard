@@ -1,41 +1,58 @@
 {
   "edges": [
     {
-      "from": "input-1",
-      "out": "text",
-      "to": "prompt-template-1",
-      "in": "question"
-    },
-    {
-      "from": "prompt-template-1",
-      "out": "prompt",
+      "from": "secrets-2",
       "to": "text-completion-1",
-      "in": "text"
-    },
-    {
-      "from": "secrets",
       "out": "API_KEY",
-      "to": "text-completion-1",
       "in": "API_KEY"
     },
     {
       "from": "text-completion-1",
+      "to": "output-4",
       "out": "completion",
-      "to": "output-1",
       "in": "text"
+    },
+    {
+      "from": "analyze-this",
+      "to": "text-completion-1",
+      "out": "prompt",
+      "in": "text"
+    },
+    {
+      "from": "input-3",
+      "to": "analyze-this",
+      "out": "text",
+      "in": "question"
     }
   ],
   "nodes": [
-    { "id": "input-1", "type": "input" },
-    { "id": "secrets", "type": "secrets" },
-    { "id": "text-completion-1", "type": "text-completion" },
-    { "id": "output-1", "type": "output" },
     {
-      "id": "prompt-template-1",
+      "id": "text-completion-1",
+      "type": "text-completion"
+    },
+    {
+      "id": "secrets-2",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "API_KEY"
+        ]
+      }
+    },
+    {
+      "id": "input-3",
+      "type": "input"
+    },
+    {
+      "id": "analyze-this",
       "type": "prompt-template",
       "configuration": {
         "template": "Analyze the following question and instead of answering, list out steps to take to answer the question: {{question}}"
       }
+    },
+    {
+      "id": "output-4",
+      "type": "output"
     }
   ],
   "kits": [

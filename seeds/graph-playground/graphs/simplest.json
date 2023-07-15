@@ -1,31 +1,31 @@
 {
   "edges": [
     {
-      "from": "secrets-2",
-      "to": "text-completion-1",
+      "from": "secrets-6",
+      "to": "text-completion-5",
       "out": "API_KEY",
       "in": "API_KEY"
     },
     {
-      "from": "text-completion-1",
-      "to": "output-4",
+      "from": "text-completion-5",
+      "to": "output-8",
       "out": "completion",
       "in": "text"
     },
     {
-      "from": "input-3",
-      "to": "text-completion-1",
+      "from": "input-7",
+      "to": "text-completion-5",
       "out": "text",
       "in": "text"
     }
   ],
   "nodes": [
     {
-      "id": "text-completion-1",
+      "id": "text-completion-5",
       "type": "text-completion"
     },
     {
-      "id": "secrets-2",
+      "id": "secrets-6",
       "type": "secrets",
       "configuration": {
         "keys": [
@@ -34,11 +34,11 @@
       }
     },
     {
-      "id": "input-3",
+      "id": "input-7",
       "type": "input"
     },
     {
-      "id": "output-4",
+      "id": "output-8",
       "type": "output"
     }
   ],
