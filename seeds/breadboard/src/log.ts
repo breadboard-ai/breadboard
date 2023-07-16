@@ -6,6 +6,10 @@
 
 import { ProbeEvent } from "./types.js";
 
+type Receiver = {
+  log: (...args: unknown[]) => void;
+};
+
 /**
  * A convenience probe for easily logging events from the Board.
  * Usage:
@@ -16,8 +20,17 @@ import { ProbeEvent } from "./types.js";
  * }
  */
 export class LogProbe extends EventTarget {
-  constructor() {
+  #receiver: Receiver;
+
+  /**
+   * Creates a new LogProbe instance. If no receiver is provided, the
+   * console will be used.
+   * @param receiver Optional. An object with a `log` method that accepts
+   * any number of arguments.
+   */
+  constructor(receiver?: Receiver) {
     super();
+    this.#receiver = receiver || console;
     const eventHandler = this.#eventHandler.bind(this);
     this.addEventListener("input", eventHandler);
     this.addEventListener("skip", eventHandler);
@@ -27,6 +40,6 @@ export class LogProbe extends EventTarget {
 
   #eventHandler = (event: Event) => {
     const e = event as ProbeEvent;
-    console.log(e.type, e.detail);
+    this.#receiver.log(e.type, e.detail);
   };
 }
