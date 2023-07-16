@@ -46,6 +46,14 @@ export class Starter implements Kit {
     return this.#nodeFactory("url_template", { template, ...rest }, $id);
   }
 
+  runJavascript(
+    name: string,
+    config: OptionalIdConfiguration = {}
+  ): BreadboardNode {
+    const { $id, ...rest } = config;
+    return this.#nodeFactory("run-javascript", { name, ...rest }, $id);
+  }
+
   fetch(raw?: boolean, config: OptionalIdConfiguration = {}): BreadboardNode {
     const { $id, ...rest } = config;
     return this.#nodeFactory("fetch", { raw, ...rest }, $id);

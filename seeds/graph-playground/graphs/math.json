@@ -1,46 +1,37 @@
 {
   "edges": [
     {
-      "from": "math-question",
-      "out": "text",
-      "to": "math-function",
-      "in": "question"
-    },
-    {
-      "from": "math-function",
-      "out": "prompt",
+      "from": "secrets-1",
       "to": "math-function-completion",
-      "in": "text"
-    },
-    {
-      "from": "secrets",
       "out": "API_KEY",
-      "to": "math-function-completion",
-      "in": "API_KEY",
-      "constant": true
-    },
-    {
-      "from": "math-function-completion",
-      "out": "completion",
-      "to": "compute",
-      "in": "code"
+      "in": "API_KEY"
     },
     {
       "from": "compute",
-      "out": "result",
       "to": "print",
+      "out": "result",
       "in": "text"
+    },
+    {
+      "from": "math-function-completion",
+      "to": "compute",
+      "out": "completion",
+      "in": "code"
+    },
+    {
+      "from": "math-function",
+      "to": "math-function-completion",
+      "out": "prompt",
+      "in": "text"
+    },
+    {
+      "from": "math-question",
+      "to": "math-function",
+      "out": "text",
+      "in": "question"
     }
   ],
   "nodes": [
-    {
-      "id": "math-question",
-      "type": "input",
-      "configuration": {
-        "message": "Ask a math question"
-      }
-    },
-    { "id": "secrets", "type": "secrets" },
     {
       "id": "math-function-completion",
       "type": "text-completion"
@@ -53,8 +44,20 @@
       }
     },
     {
-      "id": "print",
-      "type": "output"
+      "id": "secrets-1",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "API_KEY"
+        ]
+      }
+    },
+    {
+      "id": "math-question",
+      "type": "input",
+      "configuration": {
+        "message": "Ask a math question"
+      }
     },
     {
       "id": "compute",
@@ -62,6 +65,10 @@
       "configuration": {
         "name": "compute"
       }
+    },
+    {
+      "id": "print",
+      "type": "output"
     }
   ],
   "kits": [
