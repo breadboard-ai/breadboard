@@ -29,6 +29,6 @@ export default async (inputs: InputValues) => {
   if (!url) throw new Error("Fetch requires `url` input");
   const init = headers ? { headers } : {};
   const data = await fetch(url, init);
-  const response = raw ? await data.text() : await data.text();
+  const response = raw ? await data.text() : await data.json();
   return { response };
 };
