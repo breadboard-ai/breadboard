@@ -18,6 +18,20 @@ export type PartialEdge = {
   constant?: boolean;
 };
 
+type ParsedSpec = {
+  ltr: boolean;
+  edge?: PartialEdge;
+};
+
+const specRegex = /^((?<a>.*)(?<dir><-|->))?(?<b>[^(.|?)]*)(?<q>\.|\?)?$/m;
+
+type RegexGroups = {
+  a?: string;
+  b?: string;
+  dir?: string;
+  q?: string;
+};
+
 /**
  * Parses a given string according to the following grammar:
  * *|[{out}[->{in}][?|.]]
@@ -30,18 +44,41 @@ export type PartialEdge = {
  * - if "?" is specified, this is an optional edge.
  * - if "." is specified, this is a constant edge.
  */
-export const parseSpec = (spec: string): PartialEdge => {
-  if (!spec) return {};
-  if (spec === "*") return { out: "*" };
-  const optional = spec.endsWith("?");
-  const constant = spec.endsWith(".");
-  if (constant || optional) spec = spec.slice(0, -1);
-  const result: PartialEdge = {};
-  if (constant) result.constant = true;
-  if (optional) result.optional = true;
-  const [outSpec, inSpec] = spec.split("->");
-  if (!inSpec) return { out: outSpec, in: outSpec, ...result };
-  return { out: outSpec, in: inSpec, ...result };
+export const parseSpec = (spec: string): ParsedSpec => {
+  const result: ParsedSpec = { ltr: true };
+  const match = spec.match(specRegex);
+  if (!match) throw new Error(`Invalid edge spec: ${spec}`);
+  const { a, b, dir, q } = match?.groups as RegexGroups;
+  const ltr = dir !== "<-";
+  result.ltr = ltr;
+  const optional = q === "?";
+  const constant = q === ".";
+  result.edge = {};
+  if (constant) result.edge.constant = true;
+  if (optional) result.edge.optional = true;
+  if (!a && !b) return result;
+  if (a === "*" || b === "*") {
+    result.edge.out = "*";
+    return result;
+  }
+  if (!a) {
+    result.edge.out = b;
+    result.edge.in = b;
+    return result;
+  }
+  if (!b) {
+    result.edge.out = a;
+    result.edge.in = a;
+    return result;
+  }
+  if (ltr) {
+    result.edge.out = a;
+    result.edge.in = b;
+  } else {
+    result.edge.out = b;
+    result.edge.in = a;
+  }
+  return result;
 };
 
 // Count nodes scoped to their breadboard.
@@ -81,12 +118,13 @@ export class Node implements BreadboardNode {
   }
 
   wire(spec: string, to: BreadboardNode): BreadboardNode {
-    const edge: Edge = {
-      from: this.id,
-      to: to.id,
-      ...parseSpec(spec),
+    const { ltr, edge } = parseSpec(spec);
+    const result: Edge = {
+      from: ltr ? this.id : to.id,
+      to: ltr ? to.id : this.id,
+      ...edge,
     };
-    this.#breadboard.addEdge(edge);
+    this.#breadboard.addEdge(result);
     return this;
   }
 }
