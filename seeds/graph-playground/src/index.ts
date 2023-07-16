@@ -27,9 +27,20 @@ const ask = async (inputs: InputValues): Promise<OutputValues> => {
   return { text: input };
 };
 
+// Line-wrapping magic courtesy of
+// https://stackoverflow.com/questions/14484787/wrap-text-in-javascript
+// Wrap lines neatly for clack.
+const wrap = (s: string) => {
+  const cols = (process.stdout.columns || 80) - 5;
+  return s.replace(
+    new RegExp(`(?![^\\n]{1,${cols}}$)([^\\n]{1,${cols}})\\s`, "g"),
+    "$1\n"
+  );
+};
+
 const show = (outputs: OutputValues) => {
   const { text } = outputs;
-  if (typeof text == "string") log.success(text);
+  if (typeof text == "string") log.success(wrap(text));
   else log.success(JSON.stringify(text));
 };
 
@@ -40,7 +51,7 @@ inspector.addEventListener("node", (event: Event) => {
   const { detail } = event as InspectorEvent;
   if (detail.descriptor.type !== "text-completion") return;
   const value = (detail?.outputs?.completion as string) || "empty response";
-  note(value, "text completion");
+  note(wrap(value), "text completion");
 });
 
 intro("Let's traverse a graph!");
