@@ -8,7 +8,7 @@ import { intro, log, note, outro, text } from "@clack/prompts";
 import { config } from "dotenv";
 
 import { OutputValues, InputValues } from "@google-labs/graph-runner";
-import { Board, type InspectorEvent } from "@google-labs/breadboard";
+import { Board, type ProbeEvent } from "@google-labs/breadboard";
 
 import { ReActHelper } from "./react.js";
 
@@ -44,11 +44,11 @@ const show = (outputs: OutputValues) => {
   else log.success(JSON.stringify(text));
 };
 
-// Use Breadboard inspector feature to create a nice note in CLI for
+// Use Breadboard probe feature to create a nice note in CLI for
 // every text completion.
-const inspector = new EventTarget();
-inspector.addEventListener("node", (event: Event) => {
-  const { detail } = event as InspectorEvent;
+const probe = new EventTarget();
+probe.addEventListener("node", (event: Event) => {
+  const { detail } = event as ProbeEvent;
   if (detail.descriptor.type !== "text-completion") return;
   const value = (detail?.outputs?.completion as string) || "empty response";
   note(wrap(value), "text completion");
@@ -63,7 +63,7 @@ const board = await Board.load(process.argv[2]);
 board.addKit(ReActHelper);
 
 // Run the board until it finishes. This may run forever.
-for await (const result of board.run(inspector)) {
+for await (const result of board.run(probe)) {
   if (result.seeksInputs) {
     result.inputs = await ask(result.inputArguments);
   } else {

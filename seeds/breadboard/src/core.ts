@@ -11,7 +11,7 @@ import type {
   NodeHandlers,
   OutputValues,
 } from "@google-labs/graph-runner";
-import type { BreadboardSlotSpec, InspectorDetails } from "./types.js";
+import type { BreadboardSlotSpec, ProbeDetails } from "./types.js";
 import { Board } from "./board.js";
 
 const CORE_HANDLERS = ["include", "reflect", "slot", "passthrough"];
@@ -27,32 +27,29 @@ const deepCopy = (graph: GraphDescriptor): GraphDescriptor => {
 
 type EventTransform = (event: Event) => Event;
 
-class NestedInspector extends EventTarget {
-  #inspector: EventTarget;
+class NestedProbe extends EventTarget {
+  #probe: EventTarget;
   #transform: EventTransform;
 
-  constructor(inspector: EventTarget, transform: EventTransform) {
+  constructor(probe: EventTarget, transform: EventTransform) {
     super();
-    this.#inspector = inspector;
+    this.#probe = probe;
     this.#transform = transform;
   }
 
   dispatchEvent(event: Event): boolean {
-    return this.#inspector.dispatchEvent(this.#transform(event));
+    return this.#probe.dispatchEvent(this.#transform(event));
   }
 
-  static create(
-    inspector?: EventTarget,
-    source?: string
-  ): EventTarget | undefined {
-    if (!inspector) return undefined;
-    return new NestedInspector(inspector, (e) => {
-      const inspectorEvent = e as CustomEvent<InspectorDetails>;
-      return new CustomEvent(inspectorEvent.type, {
+  static create(probe?: EventTarget, source?: string): EventTarget | undefined {
+    if (!probe) return undefined;
+    return new NestedProbe(probe, (e) => {
+      const probeEvent = e as CustomEvent<ProbeDetails>;
+      return new CustomEvent(probeEvent.type, {
         detail: {
-          ...inspectorEvent.detail,
-          nesting: (inspectorEvent.detail.nesting || 0) + 1,
-          sources: [...(inspectorEvent.detail.sources || []), source],
+          ...probeEvent.detail,
+          nesting: (probeEvent.detail.nesting || 0) + 1,
+          sources: [...(probeEvent.detail.sources || []), source],
         },
       });
     });
@@ -62,17 +59,17 @@ class NestedInspector extends EventTarget {
 export class Core {
   #graph: GraphDescriptor;
   #slots: BreadboardSlotSpec;
-  #inspector?: EventTarget;
+  #probe?: EventTarget;
   handlers: NodeHandlers;
 
   constructor(
     graph: GraphDescriptor,
     slots: BreadboardSlotSpec,
-    inspector?: EventTarget
+    probe?: EventTarget
   ) {
     this.#graph = graph;
     this.#slots = slots;
-    this.#inspector = inspector;
+    this.#probe = probe;
     this.handlers = CORE_HANDLERS.reduce((handlers, type) => {
       const that = this as unknown as Record<string, NodeHandler>;
       handlers[type] = that[type].bind(this);
@@ -90,10 +87,7 @@ export class Core {
     // TODO: Please fix the $ref/path mess.
     const source = path || $ref || "";
     const board = await Board.load(source, slotted);
-    return await board.runOnce(
-      args,
-      NestedInspector.create(this.#inspector, source)
-    );
+    return await board.runOnce(args, NestedProbe.create(this.#probe, source));
   }
 
   async reflect(_inputs: InputValues): Promise<OutputValues> {
@@ -109,7 +103,7 @@ export class Core {
     const slottedBreadboard = await Board.fromGraphDescriptor(graph);
     return await slottedBreadboard.runOnce(
       args,
-      NestedInspector.create(this.#inspector, slot)
+      NestedProbe.create(this.#probe, slot)
     );
   }
 

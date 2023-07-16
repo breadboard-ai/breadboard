@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board, type InspectorEvent } from "@google-labs/breadboard";
+import { Board, type ProbeEvent } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 import { writeFile } from "fs/promises";
 
@@ -89,28 +89,30 @@ await writeFile(
   `# Call React With Slot Diagram\n\n\`\`\`mermaid\n${main.mermaid()}\n\`\`\``
 );
 
-// Let's create an inspector to help us see what's going on.
-// An inspector is just an `EventTarget` instance. You can use the
+// Let's create a probe to help us see what's going on.
+// A probe is just an `EventTarget` instance. You can use the
 // `EventTarget` class itself or implement the `EventTarget` interface.
-const inspector = new EventTarget();
+const probe = new EventTarget();
 
-// We'll have a simple event handler for the inspector:
+// We'll have a simple event handler for the probe:
 // just print things to console.
 const eventHandler = (event: Event) => {
-  const e = event as InspectorEvent;
+  const e = event as ProbeEvent;
   console.log(e.type, e.detail);
 };
 // Listen to ALL THE EVENTS.
-inspector.addEventListener("input", eventHandler);
-inspector.addEventListener("skip", eventHandler);
-inspector.addEventListener("node", eventHandler);
-inspector.addEventListener("output", eventHandler);
+probe.addEventListener("input", eventHandler);
+probe.addEventListener("skip", eventHandler);
+probe.addEventListener("node", eventHandler);
+probe.addEventListener("output", eventHandler);
 
-// Run the breadboard, supplying our inspector as an extra argument.
+// Alternatively, we can use a `LogProbe` that does the same thing.
+
+// Run the breadboard, supplying our probe as an extra argument.
 const output = await main.runOnce(
   {
     text: "What's the square root of the number of holes on a typical breadboard?",
   },
-  inspector
+  probe
 );
 console.log("output", output.text);

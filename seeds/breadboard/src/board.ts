@@ -20,7 +20,7 @@ import {
   type Kit,
   type KitConstructor,
   type OptionalIdConfiguration,
-  InspectorDetails,
+  ProbeDetails,
 } from "./types.js";
 
 import { TraversalMachine, toMermaid } from "@google-labs/graph-runner";
@@ -30,8 +30,8 @@ import { InputStageResult, OutputStageResult } from "./run.js";
 import { readFile } from "fs/promises";
 import { KitLoader } from "./kit.js";
 
-class InspectorEvent extends CustomEvent<InspectorDetails> {
-  constructor(type: string, detail: InspectorDetails) {
+class ProbeEvent extends CustomEvent<ProbeDetails> {
+  constructor(type: string, detail: ProbeDetails) {
     super(type, { detail });
   }
 }
@@ -55,8 +55,8 @@ export class Board implements Breadboard {
   kits: Kit[] = [];
   #slots: BreadboardSlotSpec = {};
 
-  async *run(inspector?: EventTarget): AsyncGenerator<BreadbordRunResult> {
-    const core = new Core(this, this.#slots, inspector);
+  async *run(probe?: EventTarget): AsyncGenerator<BreadbordRunResult> {
+    const core = new Core(this, this.#slots, probe);
     const kits = [core, ...this.kits];
     const handlers = kits.reduce((handlers, kit) => {
       return { ...handlers, ...kit.handlers };
@@ -68,8 +68,8 @@ export class Board implements Breadboard {
       const { inputs, descriptor, missingInputs } = result;
 
       if (result.skip) {
-        inspector?.dispatchEvent(
-          new InspectorEvent("skip", { descriptor, inputs, missingInputs })
+        probe?.dispatchEvent(
+          new ProbeEvent("skip", { descriptor, inputs, missingInputs })
         );
         continue;
       }
@@ -78,8 +78,8 @@ export class Board implements Breadboard {
         const inputStage = new InputStageResult(inputs);
         yield inputStage;
         result.outputs = inputStage.inputs;
-        inspector?.dispatchEvent(
-          new InspectorEvent("input", {
+        probe?.dispatchEvent(
+          new ProbeEvent("input", {
             descriptor,
             inputs,
             outputs: result.outputs,
@@ -90,9 +90,7 @@ export class Board implements Breadboard {
 
       if (descriptor.type === "output") {
         yield new OutputStageResult(inputs);
-        inspector?.dispatchEvent(
-          new InspectorEvent("output", { descriptor, inputs })
-        );
+        probe?.dispatchEvent(new ProbeEvent("output", { descriptor, inputs }));
         continue;
       }
 
@@ -101,8 +99,8 @@ export class Board implements Breadboard {
         throw new Error(`No handler for node type "${descriptor.type}"`);
 
       const outputs = (await handler(inputs)) || {};
-      inspector?.dispatchEvent(
-        new InspectorEvent("node", { descriptor, inputs, outputs })
+      probe?.dispatchEvent(
+        new ProbeEvent("node", { descriptor, inputs, outputs })
       );
 
       result.outputs = outputs;
@@ -111,10 +109,10 @@ export class Board implements Breadboard {
 
   async runOnce(
     inputs: InputValues,
-    inspector?: EventTarget
+    probe?: EventTarget
   ): Promise<OutputValues> {
     let outputs: OutputValues = {};
-    for await (const result of this.run(inspector)) {
+    for await (const result of this.run(probe)) {
       if (result.seeksInputs) {
         result.inputs = inputs;
       } else {

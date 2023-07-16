@@ -39,7 +39,7 @@ export interface KitConstructor<T extends Kit> {
   new (nodeFactory: NodeFactory): T;
 }
 
-export interface InspectorDetails {
+export interface ProbeDetails {
   descriptor: NodeDescriptor;
   inputs: InputValues;
   missingInputs?: string[];
@@ -48,7 +48,7 @@ export interface InspectorDetails {
   sources?: string[];
 }
 
-export type InspectorEvent = CustomEvent<InspectorDetails>;
+export type ProbeEvent = CustomEvent<ProbeDetails>;
 
 export interface Breadboard extends GraphDescriptor {
   addEdge(edge: Edge): void;
