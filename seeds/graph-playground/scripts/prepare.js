@@ -22,7 +22,6 @@ const writeMermaid = async (file, mermaid) => {
   const graphName = file.replace(".js", ".json");
   const graphURL = `../.${GRAPH_DIR}/${graphName}`;
   const output = `# ${title}
-  ---
   - Original: [\`${boardName}\`](${boardURL})
   - Graph: [\`${graphName}\`](${graphURL})
   

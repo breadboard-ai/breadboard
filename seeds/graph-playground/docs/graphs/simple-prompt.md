@@ -1,5 +1,4 @@
 # simple-prompt
-  ---
   - Original: [`simple-prompt.ts`](../../src/boards/simple-prompt.ts)
   - Graph: [`simple-prompt.json`](../../graphs/simple-prompt.json)
   
@@ -7,19 +6,19 @@
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
 secrets2("secrets
-id='secrets-2'"):::secrets -- API_KEY:API_KEY --> textcompletion1["text-completion
+id='secrets-2'"):::secrets -- "API_KEY->API_KEY" --> textcompletion1["text-completion
 id='text-completion-1'"]
 textcompletion1["text-completion
-id='text-completion-1'"] -- completion:text --> output4{{"output
+id='text-completion-1'"] -- "completion->text" --> output4{{"output
 id='output-4'"}}:::output
 analyzethis["prompt-template
-id='analyze-this'"] -- prompt:text --> textcompletion1["text-completion
+id='analyze-this'"] -- "prompt->text" --> textcompletion1["text-completion
 id='text-completion-1'"]
 input3[/"input
-id='input-3'"/]:::input -- text:question --> analyzethis["prompt-template
+id='input-3'"/]:::input -- "text->question" --> analyzethis["prompt-template
 id='analyze-this'"]
-keyssecrets2[keys]:::config -- keys:keys --o secrets2
-templateanalyzethis[template]:::config -- template:template --o analyzethis
+keyssecrets2[keys]:::config -- "keys->keys" --o secrets2
+templateanalyzethis[template]:::config -- "template->template" --o analyzethis
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

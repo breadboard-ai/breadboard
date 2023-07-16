@@ -129,6 +129,11 @@ export class Board implements Breadboard {
    * These are always included.
    */
 
+  passthrough(config: OptionalIdConfiguration = {}): Node {
+    const { $id, ...rest } = config;
+    return new Node(this, "passthrough", { ...rest }, $id);
+  }
+
   input(message?: string, config: OptionalIdConfiguration = {}): Node {
     const { $id, ...rest } = config;
     return new Node(this, "input", { message, ...rest }, $id);

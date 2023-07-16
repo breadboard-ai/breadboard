@@ -1,77 +1,64 @@
 {
   "edges": [
     {
-      "from": "start",
-      "to": "input-1"
-    },
-    {
-      "from": "input-1",
-      "out": "text",
-      "to": "prompt-template-1",
-      "in": "question"
-    },
-    {
-      "from": "prompt-template-1",
-      "out": "prompt",
-      "to": "text-completion-1",
-      "in": "text"
-    },
-    {
-      "from": "secrets",
+      "from": "secrets-5",
+      "to": "text-completion-4",
+      "constant": true,
       "out": "API_KEY",
-      "to": "text-completion-1",
-      "in": "API_KEY",
-      "constant": true
+      "in": "API_KEY"
     },
     {
-      "from": "text-completion-1",
+      "from": "local-memory-3",
+      "to": "prompt-template-2",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "text-completion-4",
+      "to": "local-memory-3",
       "out": "completion",
-      "to": "output-1",
-      "in": "text"
-    },
-    {
-      "from": "input-1",
-      "out": "text",
-      "to": "local-memory-1",
-      "in": "user"
-    },
-    {
-      "from": "text-completion-1",
-      "out": "completion",
-      "to": "local-memory-1",
       "in": "assistant"
     },
     {
-      "from": "output-1",
+      "from": "output-6",
       "to": "input-1"
     },
     {
-      "from": "local-memory-1",
-      "out": "context",
-      "to": "prompt-template-1",
-      "in": "context"
+      "from": "text-completion-4",
+      "to": "output-6",
+      "out": "completion",
+      "in": "text"
+    },
+    {
+      "from": "prompt-template-2",
+      "to": "text-completion-4",
+      "out": "prompt",
+      "in": "text"
+    },
+    {
+      "from": "input-1",
+      "to": "prompt-template-2",
+      "out": "text",
+      "in": "question"
+    },
+    {
+      "from": "input-1",
+      "to": "local-memory-3",
+      "out": "text",
+      "in": "user"
+    },
+    {
+      "from": "start",
+      "to": "input-1"
     }
   ],
   "nodes": [
     {
-      "id": "start",
-      "type": "passthrough"
-    },
-    {
       "id": "input-1",
       "type": "input"
     },
-    { "id": "secrets", "type": "secrets" },
     {
-      "id": "text-completion-1",
-      "type": "text-completion"
-    },
-    {
-      "id": "output-1",
-      "type": "output"
-    },
-    {
-      "id": "prompt-template-1",
+      "id": "prompt-template-2",
       "type": "prompt-template",
       "configuration": {
         "template": "This is a conversation between a friendly assistant and their user. You are the assistant and your job is to try to be helpful, empathetic, and fun.\n\n== Conversation History\n{{context}}\n\n== Current Conversation\nuser: {{question}}\nassistant:",
@@ -79,8 +66,29 @@
       }
     },
     {
-      "id": "local-memory-1",
+      "id": "local-memory-3",
       "type": "local-memory"
+    },
+    {
+      "id": "start",
+      "type": "passthrough"
+    },
+    {
+      "id": "text-completion-4",
+      "type": "text-completion"
+    },
+    {
+      "id": "secrets-5",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "API_KEY"
+        ]
+      }
+    },
+    {
+      "id": "output-6",
+      "type": "output"
     }
   ],
   "kits": [

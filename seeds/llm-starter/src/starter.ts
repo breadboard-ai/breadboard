@@ -72,6 +72,11 @@ export class Starter implements Kit {
     return this.#nodeFactory("xml_to_json", { ...rest }, $id);
   }
 
+  localMemory(config: OptionalIdConfiguration = {}): BreadboardNode {
+    const { $id, ...rest } = config;
+    return this.#nodeFactory("local-memory", { ...rest }, $id);
+  }
+
   textCompletion(config: OptionalIdConfiguration = {}): BreadboardNode {
     const { $id, ...rest } = config;
     return this.#nodeFactory("text-completion", { ...rest }, $id);

@@ -70,9 +70,9 @@ const describeEdge = (edge: Edge, nodeMap: NodeMap) => {
     return `${fromNode} -- all --> ${toNode}`;
   }
   if (output && input) {
-    if (optional) return `${fromNode} -. ${output}:${input} .-> ${toNode}`;
-    if (constant) return `${fromNode} -- ${output}:${input} --o ${toNode}`;
-    return `${fromNode} -- ${output}:${input} --> ${toNode}`;
+    if (optional) return `${fromNode} -. "${output}->${input}" .-> ${toNode}`;
+    if (constant) return `${fromNode} -- "${output}->${input}" --o ${toNode}`;
+    return `${fromNode} -- "${output}->${input}" --> ${toNode}`;
   }
   return `${fromNode} --> ${toNode}`;
 };
@@ -94,7 +94,7 @@ const describeSubgraphs = (edge: Edge, nodeMap: NodeMap) => {
     );
     return `\nsubgraph ${name}\n${subgraphEdges.join(
       "\n"
-    )}\nend\n${name}:::slotted --slotted:slotted--o ${properNodeId(
+    )}\nend\n${name}:::slotted -- "slotted->slotted" --o ${properNodeId(
       fromNode.id
     )}\n`;
   });
@@ -115,7 +115,9 @@ const describeGraph = (graph: GraphDescriptor) => {
         if (name === "slotted") return "";
         return `${properNodeId(
           `${name}${node.id}`
-        )}[${name}]:::config -- ${name}:${name} --o ${properNodeId(node.id)}`;
+        )}[${name}]:::config -- "${name}->${name}" --o ${properNodeId(
+          node.id
+        )}`;
       });
     })
     .flat();
