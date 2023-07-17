@@ -1,41 +1,84 @@
 {
   "edges": [
     {
-      "from": "input",
-      "out": "text",
-      "to": "search",
-      "in": "query"
-    },
-    {
-      "from": "secrets",
+      "from": "secrets-1",
+      "to": "url_template-3",
+      "constant": true,
       "out": "API_KEY",
-      "to": "search",
       "in": "API_KEY"
     },
     {
-      "from": "secrets",
+      "from": "secrets-1",
+      "to": "url_template-3",
+      "constant": true,
       "out": "GOOGLE_CSE_ID",
-      "to": "search",
       "in": "GOOGLE_CSE_ID"
     },
     {
-      "from": "search",
-      "out": "results",
-      "to": "print",
+      "from": "jsonata-5",
+      "to": "output-6",
+      "out": "result",
       "in": "text"
+    },
+    {
+      "from": "fetch-4",
+      "to": "jsonata-5",
+      "out": "response",
+      "in": "json"
+    },
+    {
+      "from": "url_template-3",
+      "to": "fetch-4",
+      "out": "url",
+      "in": "url"
+    },
+    {
+      "from": "input-2",
+      "to": "url_template-3",
+      "out": "text",
+      "in": "query"
     }
   ],
   "nodes": [
     {
-      "id": "input",
-      "type": "input",
+      "id": "secrets-1",
+      "type": "secrets",
       "configuration": {
-        "message": "What do you want to search for?"
+        "keys": [
+          "API_KEY",
+          "GOOGLE_CSE_ID"
+        ]
       }
     },
-    { "id": "search", "type": "google-search" },
-    { "id": "secrets", "type": "secrets" },
-    { "id": "print", "type": "output" }
+    {
+      "id": "input-2",
+      "type": "input",
+      "configuration": {
+        "message": "What would you like to search for?"
+      }
+    },
+    {
+      "id": "url_template-3",
+      "type": "url_template",
+      "configuration": {
+        "template": "https://www.googleapis.com/customsearch/v1?key={{API_KEY}}&cx={{GOOGLE_CSE_ID}}&q={{query}}"
+      }
+    },
+    {
+      "id": "fetch-4",
+      "type": "fetch"
+    },
+    {
+      "id": "jsonata-5",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "$join(items.snippet, '\n')"
+      }
+    },
+    {
+      "id": "output-6",
+      "type": "output"
+    }
   ],
   "kits": [
     {
