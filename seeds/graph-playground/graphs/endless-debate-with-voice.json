@@ -1,152 +1,138 @@
 {
   "edges": [
     {
-      "from": "debate-topic",
-      "out": "text",
-      "to": "local-memory-1",
-      "in": "topic"
-    },
-    {
-      "from": "local-memory-1",
+      "from": "local-memory-5",
+      "to": "prompt-template-3",
       "out": "context",
-      "to": "albert",
       "in": "context"
     },
     {
-      "from": "albert",
-      "out": "prompt",
-      "to": "albert-completion",
-      "in": "text"
-    },
-    {
-      "from": "secrets",
-      "out": "API_KEY",
-      "to": "albert-completion",
-      "in": "API_KEY",
-      "constant": true
-    },
-    {
-      "from": "albert-completion",
+      "from": "text-completion-4",
+      "to": "local-memory-5",
       "out": "completion",
-      "to": "albert-voice",
-      "in": "context"
-    },
-    {
-      "from": "albert-voice",
-      "out": "prompt",
-      "to": "albert-voice-completion",
-      "in": "text"
-    },
-    {
-      "from": "secrets",
-      "out": "API_KEY",
-      "to": "albert-voice-completion",
-      "in": "API_KEY",
-      "constant": true
-    },
-    {
-      "from": "albert-voice-completion",
-      "out": "completion",
-      "to": "output-1",
-      "in": "text"
-    },
-    {
-      "from": "albert-completion",
-      "out": "completion",
-      "to": "local-memory-2",
       "in": "Albert"
     },
     {
-      "from": "local-memory-2",
+      "from": "secrets-2",
+      "to": "text-completion-6",
+      "constant": true,
+      "out": "API_KEY",
+      "in": "API_KEY"
+    },
+    {
+      "from": "text-completion-6",
+      "to": "output-7",
+      "out": "completion",
+      "in": "text"
+    },
+    {
+      "from": "albert-voice",
+      "to": "text-completion-6",
+      "out": "prompt",
+      "in": "text"
+    },
+    {
+      "from": "text-completion-4",
+      "to": "albert-voice",
+      "out": "completion",
+      "in": "context"
+    },
+    {
+      "from": "secrets-2",
+      "to": "text-completion-4",
+      "constant": true,
+      "out": "API_KEY",
+      "in": "API_KEY"
+    },
+    {
+      "from": "albert",
+      "to": "text-completion-4",
+      "out": "prompt",
+      "in": "text"
+    },
+    {
+      "from": "local-memory-9",
+      "to": "albert",
       "out": "context",
-      "to": "friedrich",
       "in": "context"
     },
     {
-      "from": "friedrich",
-      "out": "prompt",
-      "to": "friedrich-completion",
-      "in": "text"
-    },
-    {
-      "from": "secrets",
-      "out": "API_KEY",
-      "to": "friedrich-completion",
-      "in": "API_KEY",
-      "constant": true
-    },
-    {
-      "from": "friedrich-completion",
+      "from": "text-completion-8",
+      "to": "local-memory-9",
       "out": "completion",
-      "to": "friedrich-voice",
-      "in": "context"
-    },
-    {
-      "from": "friedrich-voice",
-      "out": "prompt",
-      "to": "friedrich-voice-completion",
-      "in": "text"
-    },
-    {
-      "from": "secrets",
-      "out": "API_KEY",
-      "to": "friedrich-voice-completion",
-      "in": "API_KEY",
-      "constant": true
-    },
-    {
-      "from": "friedrich-voice-completion",
-      "out": "completion",
-      "to": "output-1",
-      "in": "text"
-    },
-    {
-      "from": "friedrich-completion",
-      "out": "completion",
-      "to": "local-memory-3",
       "in": "Friedrich"
     },
     {
-      "from": "local-memory-3",
-      "out": "context",
-      "to": "albert",
+      "from": "secrets-2",
+      "to": "text-completion-10",
+      "constant": true,
+      "out": "API_KEY",
+      "in": "API_KEY"
+    },
+    {
+      "from": "text-completion-10",
+      "to": "output-11",
+      "out": "completion",
+      "in": "text"
+    },
+    {
+      "from": "friedrich-voice",
+      "to": "text-completion-10",
+      "out": "prompt",
+      "in": "text"
+    },
+    {
+      "from": "text-completion-8",
+      "to": "friedrich-voice",
+      "out": "completion",
       "in": "context"
+    },
+    {
+      "from": "secrets-2",
+      "to": "text-completion-8",
+      "constant": true,
+      "out": "API_KEY",
+      "in": "API_KEY"
+    },
+    {
+      "from": "prompt-template-3",
+      "to": "text-completion-8",
+      "out": "prompt",
+      "in": "text"
+    },
+    {
+      "from": "local-memory-1",
+      "to": "albert",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "input-12",
+      "to": "local-memory-1",
+      "out": "text",
+      "in": "topic"
     }
   ],
   "nodes": [
     {
-      "id": "debate-topic",
-      "type": "input",
-      "configuration": {
-        "message": "What is the topic of the debate?"
-      }
-    },
-    { "id": "secrets", "type": "secrets" },
-    {
-      "id": "albert-completion",
-      "type": "text-completion",
-      "configuration": {
-        "stop-sequences": ["\nFriedrich", "\n**Friedrich"]
-      }
+      "id": "local-memory-1",
+      "type": "local-memory"
     },
     {
-      "id": "friedrich-completion",
-      "type": "text-completion",
+      "id": "secrets-2",
+      "type": "secrets",
       "configuration": {
-        "stop-sequences": ["\nAlbert", "\n**Albert"]
+        "keys": [
+          "API_KEY"
+        ]
       }
     },
     {
-      "id": "friedrich-voice-completion",
-      "type": "text-completion"
-    },
-    {
-      "id": "albert-voice-completion",
-      "type": "text-completion"
-    },
-    {
-      "id": "output-1",
-      "type": "output"
+      "id": "prompt-template-3",
+      "type": "prompt-template",
+      "configuration": {
+        "template": "Add a single argument to a debate between a philosopher named Friedrich and a scientist named Albert. You are Friedrich, and you are disagreeable, brooding, skeptical, sarcastic, yet passionate about uncovering new insights with Albert. To keep the debate rich and satisfying, you vary your sentence patterns and keep them from repeating.\n\n== Conversation Transcript\n{{context}}\n\n==Additional Single Argument\nFriedrich:"
+      }
     },
     {
       "id": "albert",
@@ -156,18 +142,18 @@
       }
     },
     {
-      "id": "friedrich",
-      "type": "prompt-template",
+      "id": "text-completion-4",
+      "type": "text-completion",
       "configuration": {
-        "template": "Add a single argument to a debate between a philosopher named Friedrich and a scientist named Albert. You are Friedrich, and you are disagreeable, brooding, skeptical, sarcastic, yet passionate about uncovering new insights with Albert. To keep the debate rich and satisfying, you vary your sentence patterns and keep them from repeating.\n\n== Conversation Transcript\n{{context}}\n\n==Additional Single Argument\nFriedrich:"
+        "stop-sequences": [
+          "\nFriedrich",
+          "\n**Friedrich"
+        ]
       }
     },
     {
-      "id": "friedrich-voice",
-      "type": "prompt-template",
-      "configuration": {
-        "template": "Restate the paragraph below in the voice of a 19th century philosopher. Change the structure of the sentences completely to mix things up.\n==Paragraph\n{{context}}\n\nRestatement:"
-      }
+      "id": "local-memory-5",
+      "type": "local-memory"
     },
     {
       "id": "albert-voice",
@@ -177,16 +163,48 @@
       }
     },
     {
-      "id": "local-memory-1",
+      "id": "text-completion-6",
+      "type": "text-completion"
+    },
+    {
+      "id": "output-7",
+      "type": "output"
+    },
+    {
+      "id": "text-completion-8",
+      "type": "text-completion",
+      "configuration": {
+        "stop-sequences": [
+          "\nAlbert",
+          "\n**Albert"
+        ]
+      }
+    },
+    {
+      "id": "local-memory-9",
       "type": "local-memory"
     },
     {
-      "id": "local-memory-2",
-      "type": "local-memory"
+      "id": "friedrich-voice",
+      "type": "prompt-template",
+      "configuration": {
+        "template": "Restate the paragraph below in the voice of a 19th century philosopher. Change the structure of the sentences completely to mix things up.\n==Paragraph\n{{context}}\n\nRestatement:"
+      }
     },
     {
-      "id": "local-memory-3",
-      "type": "local-memory"
+      "id": "text-completion-10",
+      "type": "text-completion"
+    },
+    {
+      "id": "output-11",
+      "type": "output"
+    },
+    {
+      "id": "input-12",
+      "type": "input",
+      "configuration": {
+        "message": "What is the topic of the debate?"
+      }
     }
   ],
   "kits": [
