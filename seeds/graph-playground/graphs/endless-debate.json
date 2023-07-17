@@ -1,106 +1,100 @@
 {
   "edges": [
     {
-      "from": "debate-topic",
-      "out": "text",
-      "to": "local-memory-1",
-      "in": "topic"
-    },
-    {
-      "from": "local-memory-1",
+      "from": "local-memory-5",
+      "to": "prompt-template-3",
       "out": "context",
-      "to": "albert",
       "in": "context"
     },
     {
-      "from": "albert",
-      "out": "prompt",
-      "to": "text-completion-1",
-      "in": "text"
-    },
-    {
-      "from": "secrets",
-      "out": "API_KEY",
-      "to": "text-completion-1",
-      "in": "API_KEY",
-      "constant": true
-    },
-    {
-      "from": "text-completion-1",
+      "from": "text-completion-4",
+      "to": "local-memory-5",
       "out": "completion",
-      "to": "output-1",
-      "in": "text"
-    },
-    {
-      "from": "text-completion-1",
-      "out": "completion",
-      "to": "local-memory-2",
       "in": "Albert"
     },
     {
-      "from": "local-memory-2",
+      "from": "text-completion-4",
+      "to": "output-6",
+      "out": "completion",
+      "in": "text"
+    },
+    {
+      "from": "secrets-2",
+      "to": "text-completion-4",
+      "constant": true,
+      "out": "API_KEY",
+      "in": "API_KEY"
+    },
+    {
+      "from": "albert",
+      "to": "text-completion-4",
+      "out": "prompt",
+      "in": "text"
+    },
+    {
+      "from": "local-memory-8",
+      "to": "albert",
       "out": "context",
-      "to": "friedrich",
       "in": "context"
     },
     {
-      "from": "friedrich",
-      "out": "prompt",
-      "to": "text-completion-2",
-      "in": "text"
-    },
-    {
-      "from": "secrets",
-      "out": "API_KEY",
-      "to": "text-completion-2",
-      "in": "API_KEY",
-      "constant": true
-    },
-    {
-      "from": "text-completion-2",
+      "from": "text-completion-7",
+      "to": "local-memory-8",
       "out": "completion",
-      "to": "output-1",
-      "in": "text"
-    },
-    {
-      "from": "text-completion-2",
-      "out": "completion",
-      "to": "local-memory-3",
       "in": "Friedrich"
     },
     {
-      "from": "local-memory-3",
-      "out": "context",
+      "from": "text-completion-7",
+      "to": "output-9",
+      "out": "completion",
+      "in": "text"
+    },
+    {
+      "from": "secrets-2",
+      "to": "text-completion-7",
+      "constant": true,
+      "out": "API_KEY",
+      "in": "API_KEY"
+    },
+    {
+      "from": "prompt-template-3",
+      "to": "text-completion-7",
+      "out": "prompt",
+      "in": "text"
+    },
+    {
+      "from": "local-memory-1",
       "to": "albert",
+      "out": "context",
       "in": "context"
+    },
+    {
+      "from": "input-10",
+      "to": "local-memory-1",
+      "out": "text",
+      "in": "topic"
     }
   ],
   "nodes": [
     {
-      "id": "debate-topic",
-      "type": "input",
-      "configuration": {
-        "message": "What is the topic of the debate?"
-      }
-    },
-    { "id": "secrets", "type": "secrets" },
-    {
-      "id": "text-completion-1",
-      "type": "text-completion",
-      "configuration": {
-        "stop-sequences": ["\nFriedrich", "\n**Friedrich"]
-      }
+      "id": "local-memory-1",
+      "type": "local-memory"
     },
     {
-      "id": "text-completion-2",
-      "type": "text-completion",
+      "id": "secrets-2",
+      "type": "secrets",
       "configuration": {
-        "stop-sequences": ["\nAlbert", "\n**Albert"]
+        "keys": [
+          "API_KEY"
+        ]
       }
     },
     {
-      "id": "output-1",
-      "type": "output"
+      "id": "prompt-template-3",
+      "type": "prompt-template",
+      "configuration": {
+        "template": "Add a single argument to a debate between a philosopher named Friedrich and a scientist named Albert. You are Friedrich, and you are disagreeable, brooding, skeptical, sarcastic, yet passionate about uncovering new insights with Albert. To keep the debate rich and satisfying, you vary your sentence patterns and keep them from repeating.\n\n== Conversation Transcript\n{{context}}\n\n==Additional Single Argument\nFriedrich:"
+      }
     },
     {
       "id": "albert",
@@ -110,23 +104,47 @@
       }
     },
     {
-      "id": "friedrich",
-      "type": "prompt-template",
+      "id": "text-completion-4",
+      "type": "text-completion",
       "configuration": {
-        "template": "Add a single argument to a debate between a philosopher named Friedrich and a scientist named Albert. You are Friedrich, and you are disagreeable, brooding, skeptical, sarcastic, yet passionate about uncovering new insights with Albert. To keep the debate rich and satisfying, you vary your sentence patterns and keep them from repeating.\n\n== Conversation Transcript\n{{context}}\n\n==Additional Single Argument\nFriedrich:"
+        "stop-sequences": [
+          "\nFriedrich",
+          "\n**Friedrich"
+        ]
       }
     },
     {
-      "id": "local-memory-1",
+      "id": "local-memory-5",
       "type": "local-memory"
     },
     {
-      "id": "local-memory-2",
+      "id": "output-6",
+      "type": "output"
+    },
+    {
+      "id": "text-completion-7",
+      "type": "text-completion",
+      "configuration": {
+        "stop-sequences": [
+          "\nAlbert",
+          "\n**Albert"
+        ]
+      }
+    },
+    {
+      "id": "local-memory-8",
       "type": "local-memory"
     },
     {
-      "id": "local-memory-3",
-      "type": "local-memory"
+      "id": "output-9",
+      "type": "output"
+    },
+    {
+      "id": "input-10",
+      "type": "input",
+      "configuration": {
+        "message": "What is the topic of the debate?"
+      }
     }
   ],
   "kits": [

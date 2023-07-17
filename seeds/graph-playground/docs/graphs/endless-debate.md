@@ -1,50 +1,52 @@
 # endless-debate
----
-
-```mermaid
-%%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
+  - Original: [`endless-debate.ts`](../../src/boards/endless-debate.ts)
+  - Graph: [`endless-debate.json`](../../graphs/endless-debate.json)
+  
+  ```mermaid
+  %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-debatetopic[/"input
-id='debate-topic'"/]:::input -- text:topic --> localmemory1["local-memory
-id='local-memory-1'"]
-localmemory1["local-memory
-id='local-memory-1'"] -- context:context --> albert["prompt-template
-id='albert'"]
+localmemory5["local-memory
+id='local-memory-5'"] -- "context->context" --> prompttemplate3["prompt-template
+id='prompt-template-3'"]
+textcompletion4["text-completion
+id='text-completion-4'"] -- "completion->Albert" --> localmemory5["local-memory
+id='local-memory-5'"]
+textcompletion4["text-completion
+id='text-completion-4'"] -- "completion->text" --> output6{{"output
+id='output-6'"}}:::output
+secrets2("secrets
+id='secrets-2'"):::secrets -- "API_KEY->API_KEY" --o textcompletion4["text-completion
+id='text-completion-4'"]
 albert["prompt-template
-id='albert'"] -- prompt:text --> textcompletion1["text-completion
-id='text-completion-1'"]
-secrets("secrets
-id='secrets'"):::secrets -- API_KEY:API_KEY --o textcompletion1["text-completion
-id='text-completion-1'"]
-textcompletion1["text-completion
-id='text-completion-1'"] -- completion:text --> output1{{"output
-id='output-1'"}}:::output
-textcompletion1["text-completion
-id='text-completion-1'"] -- completion:Albert --> localmemory2["local-memory
-id='local-memory-2'"]
-localmemory2["local-memory
-id='local-memory-2'"] -- context:context --> friedrich["prompt-template
-id='friedrich'"]
-friedrich["prompt-template
-id='friedrich'"] -- prompt:text --> textcompletion2["text-completion
-id='text-completion-2'"]
-secrets("secrets
-id='secrets'"):::secrets -- API_KEY:API_KEY --o textcompletion2["text-completion
-id='text-completion-2'"]
-textcompletion2["text-completion
-id='text-completion-2'"] -- completion:text --> output1{{"output
-id='output-1'"}}:::output
-textcompletion2["text-completion
-id='text-completion-2'"] -- completion:Friedrich --> localmemory3["local-memory
-id='local-memory-3'"]
-localmemory3["local-memory
-id='local-memory-3'"] -- context:context --> albert["prompt-template
+id='albert'"] -- "prompt->text" --> textcompletion4["text-completion
+id='text-completion-4'"]
+localmemory8["local-memory
+id='local-memory-8'"] -- "context->context" --> albert["prompt-template
 id='albert'"]
-messagedebatetopic[message]:::config -- message:message --o debatetopic
-stopsequencestextcompletion1[stop-sequences]:::config -- stop-sequences:stop-sequences --o textcompletion1
-stopsequencestextcompletion2[stop-sequences]:::config -- stop-sequences:stop-sequences --o textcompletion2
-templatealbert[template]:::config -- template:template --o albert
-templatefriedrich[template]:::config -- template:template --o friedrich
+textcompletion7["text-completion
+id='text-completion-7'"] -- "completion->Friedrich" --> localmemory8["local-memory
+id='local-memory-8'"]
+textcompletion7["text-completion
+id='text-completion-7'"] -- "completion->text" --> output9{{"output
+id='output-9'"}}:::output
+secrets2("secrets
+id='secrets-2'"):::secrets -- "API_KEY->API_KEY" --o textcompletion7["text-completion
+id='text-completion-7'"]
+prompttemplate3["prompt-template
+id='prompt-template-3'"] -- "prompt->text" --> textcompletion7["text-completion
+id='text-completion-7'"]
+localmemory1["local-memory
+id='local-memory-1'"] -- "context->context" --> albert["prompt-template
+id='albert'"]
+input10[/"input
+id='input-10'"/]:::input -- "text->topic" --> localmemory1["local-memory
+id='local-memory-1'"]
+keyssecrets2[keys]:::config -- "keys->keys" --o secrets2
+templateprompttemplate3[template]:::config -- "template->template" --o prompttemplate3
+templatealbert[template]:::config -- "template->template" --o albert
+stopsequencestextcompletion4[stop-sequences]:::config -- "stop-sequences->stop-sequences" --o textcompletion4
+stopsequencestextcompletion7[stop-sequences]:::config -- "stop-sequences->stop-sequences" --o textcompletion7
+messageinput10[message]:::config -- "message->message" --o input10
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
@@ -53,4 +55,4 @@ classDef slot stroke:#a64d79,fill:#ead1dcff,color:#000
 classDef config stroke:#a64d79,fill:#ead1dcff,color:#000
 classDef secrets stroke:#db4437,fill:#f4cccc,color:#000
 classDef slotted stroke:#a64d79
-```
+  ```

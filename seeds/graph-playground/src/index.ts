@@ -31,7 +31,7 @@ const ask = async (inputs: InputValues): Promise<OutputValues> => {
 // https://stackoverflow.com/questions/14484787/wrap-text-in-javascript
 // Wrap lines neatly for clack.
 const wrap = (s: string) => {
-  const cols = (process.stdout.columns || 80) - 5;
+  const cols = (process.stdout.columns || 80) - 10;
   return s.replace(
     new RegExp(`(?![^\\n]{1,${cols}}$)([^\\n]{1,${cols}})\\s`, "g"),
     "$1\n"
