@@ -1,101 +1,116 @@
 {
   "edges": [
     {
-      "from": "input",
+      "from": "input-1",
+      "to": "prompt-template-6",
       "out": "text",
-      "to": "summarize-results",
       "in": "topic"
     },
     {
-      "from": "input",
-      "out": "text",
-      "to": "news_url",
-      "in": "query"
-    },
-    {
-      "from": "news_url",
-      "out": "url",
-      "to": "fetch",
-      "in": "url"
-    },
-    {
-      "from": "fetch",
-      "out": "response",
-      "to": "xml-to-json",
-      "in": "xml"
-    },
-    {
-      "from": "xml-to-json",
-      "out": "json",
-      "to": "headlines",
-      "in": "json"
-    },
-    {
-      "from": "headlines",
-      "out": "result",
-      "to": "summarize-results",
-      "in": "headlines"
-    },
-    {
-      "from": "secrets",
+      "from": "secrets-8",
+      "to": "text-completion-7",
+      "constant": true,
       "out": "API_KEY",
-      "to": "text-completion-1",
       "in": "API_KEY"
     },
     {
-      "from": "summarize-results",
-      "out": "prompt",
-      "to": "text-completion-1",
+      "from": "text-completion-7",
+      "to": "output-9",
+      "out": "completion",
       "in": "text"
     },
     {
-      "from": "text-completion-1",
-      "out": "completion",
-      "to": "print",
+      "from": "prompt-template-6",
+      "to": "text-completion-7",
+      "out": "prompt",
       "in": "text"
+    },
+    {
+      "from": "jsonata-5",
+      "to": "prompt-template-6",
+      "out": "result",
+      "in": "headlines"
+    },
+    {
+      "from": "xml_to_json-4",
+      "to": "jsonata-5",
+      "out": "json",
+      "in": "json"
+    },
+    {
+      "from": "fetch-3",
+      "to": "xml_to_json-4",
+      "out": "response",
+      "in": "xml"
+    },
+    {
+      "from": "url_template-2",
+      "to": "fetch-3",
+      "out": "url",
+      "in": "url"
+    },
+    {
+      "from": "input-1",
+      "to": "url_template-2",
+      "out": "text",
+      "in": "query"
     }
   ],
   "nodes": [
     {
-      "id": "input",
+      "id": "input-1",
       "type": "input",
       "configuration": {
-        "message": "What do you want to search for?"
-      }
-    },
-    { "id": "secrets", "type": "secrets" },
-    { "id": "text-completion-1", "type": "text-completion" },
-    {
-      "id": "fetch",
-      "type": "fetch",
-      "configuration": {
-        "raw": true
+        "message": "What would you like to search for?"
       }
     },
     {
-      "id": "news_url",
+      "id": "url_template-2",
       "type": "url_template",
       "configuration": {
         "template": "https://news.google.com/rss/search?q={{query}}&hl=en-US&gl=US&ceid=US:en"
       }
     },
     {
-      "id": "headlines",
+      "id": "fetch-3",
+      "type": "fetch",
+      "configuration": {
+        "raw": true
+      }
+    },
+    {
+      "id": "xml_to_json-4",
+      "type": "xml_to_json"
+    },
+    {
+      "id": "jsonata-5",
       "type": "jsonata",
       "configuration": {
         "expression": "$join((rss.channel.item.title.`$t`)[[1..20]], `\n`)"
       }
     },
-    { "id": "xml-to-json", "type": "xml_to_json" },
     {
-      "id": "summarize-results",
+      "id": "prompt-template-6",
       "type": "prompt-template",
       "configuration": {
         "template": "Use the news headlines below to write a few sentences to summarize the latest news on this topic:\n\n##Topic:\n{{topic}}\n\n## Headlines {{headlines}}\n\\n## Summary:\n"
       }
     },
     {
-      "id": "print",
+      "id": "text-completion-7",
+      "type": "text-completion"
+    },
+    {
+      "id": "secrets-8",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "API_KEY"
+        ]
+      }
+    },
+    {
+      "id": "output-9",
       "type": "output"
     }
   ],
