@@ -30,7 +30,9 @@ input.wire(
               "result->headlines",
               kit
                 .textTemplate(
-                  "Use the news headlines below to write a few sentences to summarize the latest news on this topic:\n\n##Topic:\n{{topic}}\n\n## Headlines {{headlines}}\n\\n## Summary:\n"
+                  "Use the news headlines below to write a few sentences to" +
+                    "summarize the latest news on this topic:\n\n##Topic:\n" +
+                    "{{topic}}\n\n## Headlines {{headlines}}\n\\n## Summary:\n"
                 )
                 .wire("topic<-text", input)
                 .wire(
