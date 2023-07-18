@@ -22,16 +22,19 @@ export class KitLoader {
   }
 
   async load(): Promise<KitConstructor<Kit>[]> {
-    return Promise.all(
-      this.#kits.map(async (kit) => {
-        // TODO: Support `using` property.
-        const { url } = kit;
-        // TODO: Support protocols other than `npm:`.
-        const spec = urlToNpmSpec(url);
-        const { default: module } = await import(spec);
-        // TODO: Check to see if this import is actually a Kit class.
-        return module;
-      })
-    );
+    return (
+      await Promise.all(
+        this.#kits.map(async (kit) => {
+          // TODO: Support `using` property.
+          const { url } = kit;
+          // TODO: Support protocols other than `npm:`.
+          if (url === ".") return null;
+          const spec = urlToNpmSpec(url);
+          const { default: module } = await import(spec);
+          // TODO: Check to see if this import is actually a Kit class.
+          return module;
+        })
+      )
+    ).filter(Boolean);
   }
 }
