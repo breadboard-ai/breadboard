@@ -12,7 +12,6 @@ import { GraphDescriptor, NodeDescriptor } from "@google-labs/graph-runner";
 import { GraphSafetyValidator } from "../src/validator.js";
 import { SafetyLabel } from "../src/label.js";
 import { SafetyLabelValue } from "../src/types.js";
-import { isUndefined } from "util";
 
 const IN_DIR = "./tests/data/";
 
