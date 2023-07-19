@@ -17,9 +17,13 @@ const IN_DIR = "./tests/data/";
 
 // Copied and modified from graph-runner/tests/machines.ts
 
+// In the JSON file, for now note expected labels like this:
+// ["node-id", 1] for TRUSTED
+// ["node-id", 0] for UNTRUSTED
+// ["node-id"] for undefined (not the omission of the second element)
 interface TestGraphDescriptor extends GraphDescriptor {
   safe: boolean;
-  expectedLabels: Array<[NodeDescriptor['id'], SafetyLabelValue]>;
+  expectedLabels?: Array<[NodeDescriptor['id'], SafetyLabelValue]>;
 }
 
 const graphs = (await readdir(`${IN_DIR}/`)).filter((file) =>
@@ -36,7 +40,7 @@ await Promise.all(
 
       if (graph.safe) {
         validator.computeLabelsForFullGraph();
-        for (const [nodeId, expectedLabel] of graph.expectedLabels) {
+        for (const [nodeId, expectedLabel] of graph.expectedLabels || []) {
           const derivedLabel = validator.getSafetyLabel(nodeId);
           t.true(derivedLabel.equalsTo(new SafetyLabel(expectedLabel)));
         }
