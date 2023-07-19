@@ -20,8 +20,8 @@
   ],
   "safe": true,
   "expectedLabels": [
-    ["fetch-1", 0],
-    ["output-1", 0]
+    ["fetch-1", "UNTRUSTED"],
+    ["output-1", "UNTRUSTED"]
   ],
   "explanation": "Fetch output is untrusted -> output has to be untrusted"
 }

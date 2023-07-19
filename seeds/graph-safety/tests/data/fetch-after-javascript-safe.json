@@ -27,10 +27,10 @@
   ],
   "safe": true,
   "expectedLabels": [
-    ["input-1", 1],
-    ["javascript-1", 1],
-    ["fetch-1", 0],
-    ["output-1", 0]
+    ["input-1", "TRUSTED"],
+    ["javascript-1", "TRUSTED"],
+    ["fetch-1", "UNTRUSTED"],
+    ["output-1", "UNTRUSTED"]
   ],
   "explanation": "Fetch output is untrusted, but only goes to output. Javascript requires trusted input, so input nodes needs to be trusted."
 }

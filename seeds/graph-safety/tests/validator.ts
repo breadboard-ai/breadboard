@@ -12,23 +12,26 @@ import { GraphDescriptor, NodeDescriptor } from "@google-labs/graph-runner";
 import { GraphSafetyValidator } from "../src/validator.js";
 import { SafetyLabel } from "../src/label.js";
 import { SafetyLabelValue } from "../src/types.js";
+import { isUndefined } from "util";
 
 const IN_DIR = "./tests/data/";
 
-// Copied and modified from graph-runner/tests/machines.ts
+// JSON test data pattern copied and modified from graph-runner/tests/machines.ts
 
-// In the JSON file, for now note expected labels like this:
-// ["node-id", 1] for TRUSTED
-// ["node-id", 0] for UNTRUSTED
-// ["node-id"] for undefined (not the omission of the second element)
 interface TestGraphDescriptor extends GraphDescriptor {
   safe: boolean;
-  expectedLabels?: Array<[NodeDescriptor['id'], SafetyLabelValue]>;
+  expectedLabels?: Array<[NodeDescriptor['id'], string]>;
 }
 
 const graphs = (await readdir(`${IN_DIR}/`)).filter((file) =>
   file.endsWith(".json")
 );
+
+const mapNameToSafetyLabel: {[key: string]: SafetyLabel} = {
+  "TRUSTED": new SafetyLabel(SafetyLabelValue.TRUSTED),
+  "UNTRUSTED": new SafetyLabel(SafetyLabelValue.UNTRUSTED),
+  "UNDEFINED": new SafetyLabel(undefined),
+};
 
 await Promise.all(
   graphs.map(async (filename) => {
@@ -40,9 +43,10 @@ await Promise.all(
 
       if (graph.safe) {
         validator.computeLabelsForFullGraph();
-        for (const [nodeId, expectedLabel] of graph.expectedLabels || []) {
+        for (const [nodeId, expectedLabelName] of graph.expectedLabels || []) {
+          const expectedLabel = mapNameToSafetyLabel[expectedLabelName];
           const derivedLabel = validator.getSafetyLabel(nodeId);
-          t.true(derivedLabel.equalsTo(new SafetyLabel(expectedLabel)));
+          t.true(derivedLabel.equalsTo(expectedLabel));
         }
       } else {
         t.throws(() => validator.computeLabelsForFullGraph());
