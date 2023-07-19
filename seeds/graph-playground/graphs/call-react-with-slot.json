@@ -1,58 +1,77 @@
 {
   "edges": [
-    { "from": "ask", "out": "text", "to": "react", "in": "text" },
-    { "from": "react", "out": "text", "to": "print", "in": "text" }
+    {
+      "from": "include-2",
+      "to": "output-3",
+      "out": "text",
+      "in": "text"
+    },
+    {
+      "from": "input-1",
+      "to": "include-2",
+      "out": "text",
+      "in": "text"
+    }
   ],
   "nodes": [
     {
-      "id": "ask",
+      "id": "input-1",
       "type": "input",
-      "configuration": { "message": "Ask ReAct" }
+      "configuration": {
+        "message": "Ask ReAct"
+      }
     },
     {
-      "id": "react",
+      "id": "include-2",
       "type": "include",
       "configuration": {
-        "path": "./graphs/react-with-slot.json",
+        "$ref": "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/react-with-slot.json",
         "slotted": {
           "tools": {
             "edges": [
               {
-                "from": "input",
-                "out": "math",
-                "to": "math",
-                "in": "text"
-              },
-              {
-                "from": "input",
+                "from": "reflect-2",
+                "to": "output-3",
                 "out": "graph",
-                "to": "get-graph",
-                "in": "none"
-              },
-              {
-                "from": "get-graph",
-                "out": "graph",
-                "to": "graph-out",
                 "in": "graph"
               },
               {
-                "from": "input",
-                "out": "search",
-                "to": "search",
+                "from": "input-1",
+                "to": "reflect-2",
+                "out": "graph",
+                "in": "graph"
+              },
+              {
+                "from": "math",
+                "to": "output-4",
+                "out": "text",
                 "in": "text"
               },
-              { "from": "search", "out": "text", "to": "output", "in": "text" },
-              { "from": "math", "out": "text", "to": "output", "in": "text" }
+              {
+                "from": "input-1",
+                "to": "math",
+                "out": "math",
+                "in": "text"
+              },
+              {
+                "from": "search",
+                "to": "output-5",
+                "out": "text",
+                "in": "text"
+              },
+              {
+                "from": "input-1",
+                "to": "search",
+                "out": "search",
+                "in": "text"
+              }
             ],
             "nodes": [
-              { "id": "input", "type": "input" },
-              { "id": "output", "type": "output" },
-              { "id": "graph-out", "type": "output" },
               {
                 "id": "search",
                 "type": "include",
                 "configuration": {
-                  "path": "./graphs/search-summarize.json",
+                  "$ref": "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/search-summarize.json",
                   "description": "Useful for when you need to find facts. Input should be a search query."
                 }
               },
@@ -60,17 +79,44 @@
                 "id": "math",
                 "type": "include",
                 "configuration": {
-                  "path": "./graphs/math.json",
+                  "$ref": "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/math.json",
                   "description": "Useful for when you need to solve math problems. Input should be a math problem to be solved."
                 }
               },
-              { "id": "get-graph", "type": "reflect" }
+              {
+                "id": "input-1",
+                "type": "input"
+              },
+              {
+                "id": "reflect-2",
+                "type": "reflect"
+              },
+              {
+                "id": "output-3",
+                "type": "output"
+              },
+              {
+                "id": "output-4",
+                "type": "output"
+              },
+              {
+                "id": "output-5",
+                "type": "output"
+              }
+            ],
+            "kits": [
+              {
+                "url": "npm:@google-labs/llm-starter"
+              }
             ]
           }
         }
       }
     },
-    { "id": "print", "type": "output" }
+    {
+      "id": "output-3",
+      "type": "output"
+    }
   ],
   "kits": [
     {

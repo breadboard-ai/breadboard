@@ -1,39 +1,40 @@
 # call-react-with-slot
----
-
-```mermaid
-%%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
+  - Original: [`call-react-with-slot.ts`](../../src/boards/call-react-with-slot.ts)
+  - Graph: [`call-react-with-slot.json`](../../graphs/call-react-with-slot.json)
+  
+  ```mermaid
+  %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-ask[/"input
-id='ask'"/]:::input -- text:text --> react[["include
-id='react'"]]:::include
-react[["include
-id='react'"]]:::include -- text:text --> print{{"output
-id='print'"}}:::output
+include2[["include
+id='include-2'"]]:::include -- "text->text" --> output3{{"output
+id='output-3'"}}:::output
 subgraph tools
-input[/"input
-id='input'"/]:::input -- math:text --> math[["include
-id='math'"]]:::include
-input[/"input
-id='input'"/]:::input -- graph:none --> getgraph["reflect
-id='get-graph'"]
-getgraph["reflect
-id='get-graph'"] -- graph:graph --> graphout{{"output
-id='graph-out'"}}:::output
-input[/"input
-id='input'"/]:::input -- search:text --> search[["include
-id='search'"]]:::include
-search[["include
-id='search'"]]:::include -- text:text --> output{{"output
-id='output'"}}:::output
+reflect2["reflect
+id='reflect-2'"] -- "graph->graph" --> output3{{"output
+id='output-3'"}}:::output
+input1[/"input
+id='input-1'"/]:::input -- "graph->graph" --> reflect2["reflect
+id='reflect-2'"]
 math[["include
-id='math'"]]:::include -- text:text --> output{{"output
-id='output'"}}:::output
+id='math'"]]:::include -- "text->text" --> output4{{"output
+id='output-4'"}}:::output
+input1[/"input
+id='input-1'"/]:::input -- "math->text" --> math[["include
+id='math'"]]:::include
+search[["include
+id='search'"]]:::include -- "text->text" --> output5{{"output
+id='output-5'"}}:::output
+input1[/"input
+id='input-1'"/]:::input -- "search->text" --> search[["include
+id='search'"]]:::include
 end
-tools:::slotted --slotted:slotted--o react
+tools:::slotted -- "slotted->slotted" --o include2
 
-messageask[message]:::config -- message:message --o ask
-pathreact[path]:::config -- path:path --o react
+input1[/"input
+id='input-1'"/]:::input -- "text->text" --> include2[["include
+id='include-2'"]]:::include
+messageinput1[message]:::config -- "message->message" --o input1
+$refinclude2[$ref]:::config -- "$ref->$ref" --o include2
 
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
@@ -43,4 +44,4 @@ classDef slot stroke:#a64d79,fill:#ead1dcff,color:#000
 classDef config stroke:#a64d79,fill:#ead1dcff,color:#000
 classDef secrets stroke:#db4437,fill:#f4cccc,color:#000
 classDef slotted stroke:#a64d79
-```
+  ```
