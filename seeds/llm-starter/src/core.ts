@@ -7,6 +7,7 @@
 /**
  * Nodes that are commonly used in Generative Applications.
  */
+import textAsset from "./nodes/text-asset.js";
 import vars from "./nodes/vars.js";
 import jsonata from "./nodes/jsonata.js";
 import promptTemplate from "./nodes/prompt-template.js";
@@ -33,4 +34,5 @@ export const coreHandlers = {
   "local-memory": localMemory,
   "run-javascript": javascript,
   "google-search": googleSearch,
+  "text-asset": textAsset,
 };
