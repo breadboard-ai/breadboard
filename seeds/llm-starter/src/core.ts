@@ -14,7 +14,6 @@ import promptTemplate from "./nodes/prompt-template.js";
 import textCompletion from "./nodes/text-completion.js";
 import localMemory from "./nodes/local-memory.js";
 import javascript from "./nodes/run-javascript.js";
-import googleSearch from "./nodes/google-search.js";
 import secrets from "./nodes/secrets.js";
 import fetch from "./nodes/fetch.js";
 // intentionally breaking convention here.
@@ -33,6 +32,5 @@ export const coreHandlers = {
   "text-completion": textCompletion,
   "local-memory": localMemory,
   "run-javascript": javascript,
-  "google-search": googleSearch,
   "text-asset": textAsset,
 };
