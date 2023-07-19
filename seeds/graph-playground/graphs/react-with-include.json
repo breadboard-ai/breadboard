@@ -137,7 +137,7 @@
       "id": "include-7",
       "type": "include",
       "configuration": {
-        "$ref": "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/search-summarize-fetch.json"
+        "$ref": "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/search-summarize.json"
       }
     },
     {

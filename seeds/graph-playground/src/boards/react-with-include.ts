@@ -60,9 +60,9 @@ const math = board
   .include(`${REPO_URL}/math.json`)
   .wire("text->Observation", context);
 
-// Wire up the search tool by including the `search-summarize-fetch.ts` graph.
+// Wire up the search tool by including the `search-summarize.ts` graph.
 const search = board
-  .include(`${REPO_URL}/search-summarize-fetch.json`)
+  .include(`${REPO_URL}/search-summarize.json`)
   .wire("text->Observation", context);
 
 board

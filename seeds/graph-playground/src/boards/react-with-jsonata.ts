@@ -84,11 +84,11 @@ const math = board
   })
   .wire("text->Observation", context);
 
-// Wire up the search tool by including the `search-summarize-fetch.ts` graph.
+// Wire up the search tool by including the `search-summarize.ts` graph.
 // Similarly to above, the `$id` and `description` fields are added to
 // communicate the purpose of this node.
 const search = board
-  .include(`${REPO_URL}/search-summarize-fetch.json`, {
+  .include(`${REPO_URL}/search-summarize.json`, {
     $id: "search",
     description:
       "Useful for when you need to find facts. Input should be a search query.",

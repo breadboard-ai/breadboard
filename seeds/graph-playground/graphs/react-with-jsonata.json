@@ -160,7 +160,7 @@
       "id": "search",
       "type": "include",
       "configuration": {
-        "$ref": "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/search-summarize-fetch.json",
+        "$ref": "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/search-summarize.json",
         "description": "Useful for when you need to find facts. Input should be a search query."
       }
     },

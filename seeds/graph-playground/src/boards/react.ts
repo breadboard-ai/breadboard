@@ -73,7 +73,7 @@ const math = kit
   );
 
 // Wire up the search tool. This code is mostly the same as in
-// `search-summarize-fetch.ts`, with tweaks to play nice in the ReAct board.
+// `search-summarize.ts`, with tweaks to play nice in the ReAct board.
 const search = () => {
   const completion = kit
     .textCompletion()
