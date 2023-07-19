@@ -1,0 +1,27 @@
+{
+  "edges": [
+    {
+      "from": "input-1",
+      "out": "text",
+      "to": "fetch-1",
+      "in": "url"
+    },
+    {
+      "from": "fetch-1",
+      "out": "response",
+      "to": "output-1",
+      "in": "text"
+    }
+  ],
+  "nodes": [
+    { "id": "input-1", "type": "input" },
+    { "id": "fetch-1", "type": "fetch" },
+    { "id": "output-1", "type": "output" }
+  ],
+  "safe": true,
+  "expectedLabels": [
+    ["fetch-1", 0],
+    ["output-1", 0]
+  ],
+  "explanation": "Fetch output is untrusted -> output has to be untrusted"
+}

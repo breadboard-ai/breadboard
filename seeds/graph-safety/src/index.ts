@@ -4,4 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-console.log("code goes here");
+export { GraphSafetyValidator } from "./validator.js";
+export { SafetyLabel } from "./label.js";
+export type { SafetyLabelValue } from "./types.js";
