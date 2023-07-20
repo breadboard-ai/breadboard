@@ -94,7 +94,8 @@
       "type": "secrets",
       "configuration": {
         "keys": [
-          "API_KEY, GOOGLE_CSE_ID"
+          "API_KEY",
+          "GOOGLE_CSE_ID"
         ]
       }
     },

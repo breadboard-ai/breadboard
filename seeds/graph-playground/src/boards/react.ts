@@ -21,7 +21,7 @@ const reAct = board.addKit(ReActHelper);
  */
 
 // The single node where all the important keys come from.
-const secrets = kit.secrets(["API_KEY, GOOGLE_CSE_ID"]);
+const secrets = kit.secrets(["API_KEY", "GOOGLE_CSE_ID"]);
 
 // This is the context that ReAct algo accumulates.
 const context = kit.localMemory();
