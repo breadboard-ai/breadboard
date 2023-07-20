@@ -11,11 +11,29 @@ import vm from "node:vm";
 const stripCodeBlock = (code: string) =>
   code.replace(/(?:```(?:js|javascript)?\n+)(.*)(?:\n+```)/gms, "$1");
 
-const runCode = async (code: string) => {
+const runInNode = async (code: string, functionName: string) => {
+  const codeToRun = `${code}\n${functionName}();`;
   const context = vm.createContext({ console });
-  const script = new vm.Script(code);
+  const script = new vm.Script(codeToRun);
   const result = await script.runInNewContext(context);
   return String(result);
+};
+
+const runInBrowser = async (code: string, functionName: string) => {
+  const runner = (code: string, functionName: string) => {
+    return `${code}\nself.onmessage = () => self.postMessage(${functionName}())`;
+  };
+
+  const blob = new Blob([runner(code, functionName)], {
+    type: "text/javascript",
+  });
+
+  const worker = new Worker(URL.createObjectURL(blob));
+  const result = new Promise((resolve) => {
+    worker.onmessage = (e) => resolve(e.data);
+  });
+  worker.postMessage("please");
+  return result;
 };
 
 export default async (inputs: InputValues) => {
@@ -23,6 +41,11 @@ export default async (inputs: InputValues) => {
   if (!code) throw new Error("Running JavaScript requires `code` input");
   const name = (inputs["name"] as string) || "run";
   const clean = stripCodeBlock(code);
-  const result = await runCode(`${clean}\n${name}();`);
+  // A smart helper that senses the environment (browser or node) and uses
+  // the appropriate method to run the code.
+  const result =
+    typeof window === "undefined"
+      ? await runInNode(clean, name)
+      : await runInBrowser(clean, name);
   return { result };
 };
