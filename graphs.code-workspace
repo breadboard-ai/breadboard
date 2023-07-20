@@ -11,6 +11,9 @@
     },
     {
       "path": "seeds/llm-starter"
+    },
+    {
+      "path": "seeds/graph-safety"
     }
   ],
   "settings": {}
