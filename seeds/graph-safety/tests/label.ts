@@ -108,3 +108,12 @@ test("SafetyLabel: canFlowTo", (t) => {
   t.throws(() => undetermined.canFlowTo(untrusted));
 });
 
+test('SafetyLabel: toString', (t) => {
+  const trusted = new SafetyLabel(SafetyLabelValue.TRUSTED);
+  const untrusted = new SafetyLabel(SafetyLabelValue.UNTRUSTED);
+  const undetermined = new SafetyLabel(undefined);
+
+  t.is(trusted.toString(), 'TRUSTED');
+  t.is(untrusted.toString(), 'UNTRUSTED');
+  t.is(undetermined.toString(), 'UNDETERMINED');
+});

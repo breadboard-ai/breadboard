@@ -6,6 +6,11 @@
 
 import { SafetyLabelValue } from './types.js';
 
+const mapLabelToString = new Map<SafetyLabelValue, string>([
+  [SafetyLabelValue.TRUSTED, "TRUSTED"],
+  [SafetyLabelValue.UNTRUSTED, "UNTRUSTED"],
+]);
+
 /**
  * Information flow control label.
  */
@@ -67,5 +72,15 @@ export class SafetyLabel {
   canFlowTo(destinationLabel: SafetyLabel): boolean {
     if (this.value === undefined || destinationLabel.value === undefined) throw new Error("Can't decide flow with undetermined label");
     return this.equalsTo(SafetyLabel.computeJoinOfLabels([this, destinationLabel]));
+  }
+
+  /**
+   * Convert label to human-readable string.
+   * 
+   * @param {SafetyLabel} label
+   * @returns {String} human-readable string
+   */
+  toString(): string|undefined {
+    return this.value === undefined ? "UNDETERMINED" : mapLabelToString.get(this.value);
   }
 }
