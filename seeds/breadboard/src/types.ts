@@ -46,6 +46,7 @@ export interface ProbeDetails {
   outputs?: OutputValues;
   nesting?: number;
   sources?: string[];
+  safetyLabel?: string;
 }
 
 export type ProbeEvent = CustomEvent<ProbeDetails>;

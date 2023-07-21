@@ -24,6 +24,7 @@ import {
 } from "./types.js";
 
 import { TraversalMachine, toMermaid } from "@google-labs/graph-runner";
+import { GraphSafetyValidator } from "@google-labs/graph-safety";
 import { Node } from "./node.js";
 import { Core } from "./core.js";
 import { InputStageResult, OutputStageResult } from "./run.js";
@@ -55,12 +56,15 @@ export class Board implements Breadboard {
   kits: Kit[] = [];
   #slots: BreadboardSlotSpec = {};
 
-  async *run(probe?: EventTarget): AsyncGenerator<BreadbordRunResult> {
+  async *run(probe?: EventTarget, validateSafety = false): AsyncGenerator<BreadbordRunResult> {
     const core = new Core(this, this.#slots, probe);
     const kits = [core, ...this.kits];
     const handlers = kits.reduce((handlers, kit) => {
       return { ...handlers, ...kit.handlers };
     }, {} as NodeHandlers);
+
+    const validator = validateSafety ? new GraphSafetyValidator(this) : undefined;
+    validator?.computeLabelsForFullGraph();
 
     const machine = new TraversalMachine(this);
 
@@ -100,7 +104,9 @@ export class Board implements Breadboard {
 
       const outputs = (await handler(inputs)) || {};
       probe?.dispatchEvent(
-        new ProbeEvent("node", { descriptor, inputs, outputs })
+        new ProbeEvent("node", {
+          descriptor, inputs, outputs,
+          safetyLabel: validator?.getSafetyLabel(descriptor.id)?.toString() })
       );
 
       result.outputs = outputs;

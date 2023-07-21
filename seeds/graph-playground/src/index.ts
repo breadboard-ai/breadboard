@@ -12,6 +12,13 @@ import { Board, type ProbeEvent } from "@google-labs/breadboard";
 
 import { ReActHelper } from "./react.js";
 
+// Parse arguments. This should probably be done with a library once it gets more complex.
+// Example: npm run dev graphs/simplest.json -- --validate-safety --log-safety-labels
+const args = process.argv.slice(2);
+const graph = args[0];
+const validateSafety = args.includes("--validate-safety");
+const logSafetyLabels = args.includes("--log-safety-labels");
+
 // Load the environment variables from `.env` file.
 // This is how the `secrets` node gets ahold of the keys.
 config();
@@ -49,6 +56,7 @@ const show = (outputs: OutputValues) => {
 const probe = new EventTarget();
 probe.addEventListener("node", (event: Event) => {
   const { detail } = event as ProbeEvent;
+  if (logSafetyLabels && detail.safetyLabel) note(`Safety label for ${detail.descriptor.id}: ${detail.safetyLabel}`, "safety" );
   if (detail.descriptor.type !== "text-completion") return;
   const value = (detail?.outputs?.completion as string) || "empty response";
   note(wrap(value), "text completion");
@@ -57,18 +65,23 @@ probe.addEventListener("node", (event: Event) => {
 intro("Let's traverse a graph!");
 
 // Load the board, specified in the command line.
-const board = await Board.load(process.argv[2]);
+const board = await Board.load(graph);
 
 // Add a custom kit.
 board.addKit(ReActHelper);
 
-// Run the board until it finishes. This may run forever.
-for await (const result of board.run(probe)) {
-  if (result.seeksInputs) {
-    result.inputs = await ask(result.inputArguments);
-  } else {
-    show(result.outputs);
+try {
+  // Run the board until it finishes. This may run forever.
+  for await (const result of board.run(probe, validateSafety)) {
+    if (result.seeksInputs) {
+      result.inputs = await ask(result.inputArguments);
+    } else {
+      show(result.outputs);
+    }
   }
-}
 
-outro("Awesome work! Let's do this again sometime.");
+  outro("Awesome work! Let's do this again sometime.");
+} catch (e) {
+  if (e instanceof Error) log.error(e.message);
+  outro("Oh no! Something went wrong.");
+}
