@@ -1,6 +1,6 @@
-# Your README goes here
+# LLM Starter Kit
 
-## LLM Starter Kit Node Types
+## Node Types
 
 Here are all node handlers that are included in the LLM Starter Kit.
 
@@ -114,73 +114,228 @@ We will get this output:
 
 - [src/nodes/run-javascript.ts](src/nodes/run-javascript.ts)
 
-### `jsonata`
-
-Use this node to execute [JSONata](https://jsonata.org/) expressions. The node takes the following properties:
-
-- `expression` input property, which is a string that contains the expression to be executed. This is a required property.
-- `json` input property, which is a JSON object that will be used as the context for the expression. This is a required property.
-- `raw` input property, which is a boolean that specifies whether the result of the expression should be passed as-is (`true`), or it should be passed as the `result` output property (`false`). This is an optional property, and its default value is `false`.
-
-The node will pass the result of the execution as the `result` output property, unless the `raw` property is set to `true`.
-
 ### `secrets`
 
-Use this node to access secrets, such as API keys or other valuable bits of information that you might not want to store in the graph itself. The node needs no inputs and currently simply returns the `process.env` object as output. This enables connecting edges directly from environment variables. For example, use this node to pass the `API_KEY` environment variable to the `text-completion` node.
+Use this node to access secrets, such as API keys or other valuable bits of information that you might not want to store in the graph itself. The node takes in an array of strings named `keys`, matches the process environment values, and returns them as outputs. This enables connecting edges from environment variables.
 
-### `url-template`
+#### Example:
 
-Use this node to safely construct URLs. The node takes one required input property:
+Use this node to pass the `API_KEY` environment variable to the `text-completion` node. The input:
 
-- `template` string, which is a template for the URL. It can contain zero or more placeholders that will be replaced with values from the input property bag. Specify placeholders as `{{propertyName}}` in the template.
+```json
+{
+  "keys": ["API_KEY"]
+}
+```
 
-The node will pas the result of replacing placeholders as the `url` output property.
+Will produce this output:
 
-### `xml-to-json`
+```json
+{
+  "API_KEY": "<value of the API key from the environment>"
+}
+```
 
-Use this node to convert XML to JSON. The node takes one required input property:
+#### Inputs:
 
-- `xml` string, which is a string that contains the XML to be converted.
+- `keys` - required, must contain an array of strings that represent the keys to look up in the environment. If not supplied, empty output is returned.
 
-The node will pass the result of the conversion as the `json` output property. The format of JSON follows the `alt-json` convention that is described in https://developers.google.com/gdata/docs/json.
+#### Outputs:
 
-### `fetch`
+- one output for each key that was found in the environment.
 
-Use this node to fetch data from the Internet. The node takes the following input properties:
+#### Implementation:
 
-- `url` string (required), which is the URL to fetch. For now, this node can only make a GET request.
-
-- `headers` object (optional), which is a set of headers to be passed to the request.
-
-- `raw` boolean (optional), which specifies whether or not to return raw text (`true`) or parse the response as JSON (`false`). The default value is `false`.
-
-The node will fetch data from the specified URL, parse it as JSON, and pass the result of the fetch as a `response` output property.
+- [src/nodes/secrets.ts](src/nodes/secrets.ts)
 
 ### `text-completion`
 
-This is a PaLM API text completion node. It has two required input properties:
+This is a [PaLM API](https://developers.generativeai.google/) text completion node. This node is probably the main reason this starter kit exists. To produce useful output, the node needs an `API_KEY` input and the `text` input.
 
-- `API_KEY` string, which must contain the Google Cloud Platform API key for the project has the "Generative Language API" API enabled.
-- `text` string, which is used as the prompt for the completion.
+#### Example:
 
-The node has the following optional input properties:
+Given this input:
 
-- `stop-sequences` array of strings. These will be passed as the stop sequences to the completion API.
+```json
+{
+  "API_KEY": "<your API key>",
+  "text": "How old is planet Earth?"
+}
+```
 
-The node will produce the following output properties:
+The node will produce this output:
 
-- `completion` as pass the result of the PaLM API text completion.
+```json
+{
+  "completion": "It is about 4.5 billion years old."
+}
+```
 
-### `google-search`
+#### Inputs:
 
-Use this node to invoke the Google Custom Search API.
+- `API_KEY` required, must contain the Google Cloud Platform API key for the project has the "Generative Language API" API enabled.
+- `text` required, sent as the prompt for the completion.
+- `stop-sequences` optional array of strings. These will be passed as the stop sequences to the completion API.
 
-This node requires two environment variables to be defined:
+#### Outputs:
 
-1. The `API_KEY` environment variable, containing the Google Cloud Platform API key for the project has the "Custom Search API" API enabled.
+- `completion` - result of the PaLM API text completion.
 
-2. The `GOOGLE_CSE_ID` enviornment variable to be defined. The `GOOGLE_CSE_ID` is the Programmable Search Engine ID. You can create one [here](https://programmablesearchengine.google.com/). When configuring the search engine, make sure to enable the `Search the entire Web` option.
+### `url-template`
 
-The node takes one required property, `query`, which is a string that contains the query to be passed to the search API.
+Use this node to safely construct URLs. It's similar in spirit to the `prompt-template` node, except it ensures that the handlebar parameters are properly encoded as part of the URL.
 
-The node will pass the result of the search as the `results` output property, formatted as a multi-line string, each line a `snippet` from the [Custom Search Engine response](https://developers.google.com/custom-search/v1/reference/rest/v1/Search#Result).
+#### Example:
+
+If we send the following inputs to `url-template`:
+
+```json
+{
+  "template": "https://example.com?question={{question}}",
+  "question": "How old is planet Earth?"
+}
+```
+
+We will get this output:
+
+```json
+{
+  "url": "https://example.com?question=How%20old%20is%20planet%20Earth%3F"
+}
+```
+
+#### Inputs:
+
+- `template` -- required, a template for the URL. It can contain zero or more placeholders that will be replaced with values from the input property bag. Specify placeholders as `{{propertyName}}` in the template.
+- zero or more inputs that will be used to replace placeholders in the template.
+
+#### Outputs:
+
+- `url` a string that contains the result of replacing placeholders in the template with values from the inputs.
+
+#### Implementation:
+
+- [src/nodes/url-template.ts](src/nodes/url-template.ts)
+
+### `fetch`
+
+Use this node to fetch data from the Internet. Practically, this is a wrapper around [`fetch`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)
+
+#### Example:
+
+If we would like to fetch data from `https://example.com`, we would send the following inputs to `fetch`:
+
+```json
+{
+  "url": "https://example.com"
+}
+```
+
+And receive this output:
+
+```json
+{
+  "response": "<response from https://example.com>"
+}
+```
+
+#### Inputs:
+
+- `url` -- required, URL to fetch. For now, this node can only make a GET request.
+- `headers` -- object (optional), a set of headers to be passed to the request.
+- `raw` boolean (optional), specifies whether or not to return raw text (`true`) or parse the response as JSON (`false`). The default value is `false`.
+
+#### Outputs:
+
+- `response` -- the response from the server. If `raw` is `false`, the response will be parsed as JSON.
+
+#### Implementation:
+
+- [src/nodes/fetch.ts](src/nodes/fetch.ts)
+
+### `jsonata`
+
+Use this node to execute [JSONata](https://jsonata.org/) expressions. JSONata is a versatile JSON query language.
+
+#### Example:
+
+If we send the following inputs to `jsonata`:
+
+```json
+{
+  "expression": "$join(items.snippet, '\n')",
+  "json": {
+    "items": [
+      {
+        "snippet": "Question: How old is planet Earth?"
+      },
+      {
+        "snippet": "Thought: I wonder how old planet Earth is?"
+      }
+    ]
+  }
+}
+```
+
+We will get this output:
+
+```json
+{
+  "result": "Question: How old is planet Earth?\nThought: I wonder how old planet Earth is?"
+}
+```
+
+#### Inputs:
+
+- `expression` -- required, a string that contains the JSONata expression to be executed.
+- `json` -- a required JSON object that will be used as the context for the expression.
+- `raw` -- an optional boolean that specifies whether the result of the expression should be passed as-is (`true`), or it should be passed as the `result` output property (`false`, default).
+
+#### Outputs:
+
+- `result` -- the result of the expression, unless `raw` is `true`. In the latter case, the result is passed as-is.
+
+#### Implementation:
+
+- [src/nodes/jsonata.ts](src/nodes/jsonata.ts)
+
+### `xml-to-json`
+
+Use this node to convert XML to JSON. Most nodes in the starter kit are designed to work with JSON, so this node is useful when you have XML data.
+
+This nodes takes one required `xml` property, which it treats as XML and converts to it to JSON as the `json` output property. The format of JSON follows the `alt-json` convention that is described in https://developers.google.com/gdata/docs/json.
+
+#### Example:
+
+If we send the following inputs to `xml-to-json`:
+
+```json
+{
+  "xml": "<root><question>How old is planet Earth?</question><thought>I wonder how old planet Earth is?</thought></root>"
+}
+```
+
+We will get this output:
+
+```json
+{
+  "json": {
+    "root": {
+      "question": { "$t": "How old is planet Earth?" },
+      "thought": { "$t": "I wonder how old planet Earth is?" }
+    }
+  }
+}
+```
+
+#### Inputs:
+
+- `xml` - required, must contain a string that represents XML.
+
+#### Outputs:
+
+- `json` - the result of converting XML to JSON.
+
+#### Implementation:
+
+- [src/nodes/xml-to-json.ts](src/nodes/xml-to-json.ts)
