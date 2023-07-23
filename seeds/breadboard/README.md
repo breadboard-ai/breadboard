@@ -1,8 +1,8 @@
 # Breadboard
 
-A library for wiring making generative AI applications.
+A library for prototyping generative AI applications.
 
-This library was inspired by the hardware maker community and their boundless creativity. The authors of this library were inspired by the way people just wire stuff together and make amazing things with off-the-shelf parts and a [breadboard](https://learn.sparkfun.com/tutorials/how-to-use-a-breadboard/all).
+This library was inspired by the hardware maker community and their boundless creativity, how makers just wire stuff together and make amazing things with off-the-shelf parts and a [breadboard](https://learn.sparkfun.com/tutorials/how-to-use-a-breadboard/all).
 
 This library is an attempt to bring the same spirit of creativity and simplicity to making generative AI applications.
 
@@ -12,6 +12,12 @@ To install the library, run:
 
 ```sh
 npm install @google-labs/breadboard
+```
+
+You will also likely need the LLM Starter Kit:
+
+```sh
+npm install @google-labs/llm-starter
 ```
 
 ## A quick start
@@ -43,10 +49,10 @@ const output = board.output();
 Now we have two nodes on the board. Let's wire them together:
 
 ```js
-input.wire("ask->receive", output);
+input.wire("say->hear", output);
 ```
 
-The statement above says: "take the `ask` output of the `input` node and wire it to the ` receive` input of the `output` node".
+The statement above says: "take the `say` output of the `input` node and wire it to the `hear` input of the `output` node".
 
 Every node has the `wire` method. It always takes two parameters:
 
@@ -57,7 +63,7 @@ Now that we've wired our nodes, we can ask our breadboard to run:
 
 ```js
 const result = await board.runOnce({
-  ask: "Hello, world?",
+  say: "Hello, world?",
 });
 console.log("result", result);
 ```
@@ -65,20 +71,20 @@ console.log("result", result);
 When run, our tiny program will produce the following output:
 
 ```sh
-result { receive: 'Hello, world?' }
+result { hear: 'Hello, world?' }
 ```
 
-What happened here? The outcome should be fairly intuitive, but let's go through the process step by step:
-
-1. The `runOnce` method of the board takes a property bag (a JS object) as its argument.
-2. This bag of properties is then handed to the `input` node.
-3. The `input` node is very simple-minded: it just passes the property bag along to the next node.
-4. This is where the wiring comes in. When we described our single wire as `text->text`, we basically said:
-   1. reach into the property bag,
-   2. fish out the `text` property, then
-   3. pass it along to the next node as `text` property.
-5. Since the next node is the `output` node, that's the node that receives the `text` property.
-6. The `output` node is also pretty simple. It takes the property bag it received and returns it as the of the `runOnce` method.
+> [!NOTE] What happened here? The outcome should be fairly intuitive, but let's go through the process step by step:
+>
+> 1. The `runOnce` method of the board takes a property bag (a JS object) as its argument.
+> 2. This bag of properties is then handed to the `input` node.
+> 3. The `input` node is very simple-minded: it just passes the property bag along to the next node.
+> 4. This is where the wiring comes in. When we described our single wire as `text->text`, we basically said:
+>    1. reach into the property bag,
+>    2. fish out the `text` property, then
+>    3. pass it along to the next node as `text` property.
+> 5. Since the next node is the `output` node, that's the node that receives the `text` property.
+> 6. The `output` node is also pretty simple. It takes the property bag it received and returns it as the of the `runOnce` method.
 
 You can see the source of this program [here](./examples/quick-start-1.js).
 

@@ -12,9 +12,9 @@ const input = board.input();
 
 const output = board.output();
 
-input.wire("ask->receive", output);
+input.wire("say->hear", output);
 
 const result = await board.runOnce({
-  ask: "Hello, world?",
+  say: "Hello, world?",
 });
 console.log("result", result);
