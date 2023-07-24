@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { SafetyLabelValue } from './types.js';
+import { SafetyLabelValue } from "./types.js";
 
 const mapLabelToString = new Map<SafetyLabelValue, string>([
   [SafetyLabelValue.TRUSTED, "TRUSTED"],
@@ -15,12 +15,13 @@ const mapLabelToString = new Map<SafetyLabelValue, string>([
  * Information flow control label.
  */
 export class SafetyLabel {
-  public readonly value: SafetyLabelValue|undefined;
+  public readonly value: SafetyLabelValue | undefined;
 
   /**
-   * @param {SafetyLabelValues|SafetyLabel} value SafetyLabel to copy or SafetyLabelValues to create a new label
+   * @param {SafetyLabelValues|SafetyLabel} value SafetyLabel to copy
+   *   or SafetyLabelValues to create a new label
    */
-  constructor(value: SafetyLabel|SafetyLabelValue|undefined = undefined) {
+  constructor(value: SafetyLabel | SafetyLabelValue | undefined = undefined) {
     this.value = value instanceof SafetyLabel ? value.value : value;
   }
 
@@ -31,11 +32,16 @@ export class SafetyLabel {
    * That is, if a node reads from an UNTRUSTED node, it has to be UNTRUSTED.
    */
   static computeMeetOfLabels(labels: (SafetyLabel | undefined)[]): SafetyLabel {
-    const definedLabels = labels.filter((label) => label !== undefined && label.value !== undefined) as SafetyLabel[];
+    const definedLabels = labels.filter(
+      (label) => label !== undefined && label.value !== undefined
+    ) as SafetyLabel[];
     if (definedLabels.length === 0) return new SafetyLabel(undefined);
-    return definedLabels.reduce((a, b) => a.value === SafetyLabelValue.TRUSTED && b.value === SafetyLabelValue.TRUSTED
+    return definedLabels.reduce((a, b) =>
+      a.value === SafetyLabelValue.TRUSTED &&
+      b.value === SafetyLabelValue.TRUSTED
         ? new SafetyLabel(SafetyLabelValue.TRUSTED)
-        : new SafetyLabel(SafetyLabelValue.UNTRUSTED));
+        : new SafetyLabel(SafetyLabelValue.UNTRUSTED)
+    );
   }
 
   /**
@@ -45,16 +51,21 @@ export class SafetyLabel {
    * That is, if a node writes to a TRUSTED node, it has to be TRUSTED.
    */
   static computeJoinOfLabels(labels: (SafetyLabel | undefined)[]): SafetyLabel {
-    const definedLabels = labels.filter((label) => label !== undefined && label.value !== undefined) as SafetyLabel[];
+    const definedLabels = labels.filter(
+      (label) => label !== undefined && label.value !== undefined
+    ) as SafetyLabel[];
     if (definedLabels.length === 0) return new SafetyLabel(undefined);
-    return definedLabels.reduce((a, b) => a.value === SafetyLabelValue.TRUSTED || b.value === SafetyLabelValue.TRUSTED
+    return definedLabels.reduce((a, b) =>
+      a.value === SafetyLabelValue.TRUSTED ||
+      b.value === SafetyLabelValue.TRUSTED
         ? new SafetyLabel(SafetyLabelValue.TRUSTED)
-        : new SafetyLabel(SafetyLabelValue.UNTRUSTED));
+        : new SafetyLabel(SafetyLabelValue.UNTRUSTED)
+    );
   }
 
   /**
    * Compare with other label.
-   * 
+   *
    * @param {SafetyLabel} other label
    * @returns {Boolean} true if the labels are equal
    */
@@ -64,23 +75,28 @@ export class SafetyLabel {
 
   /**
    * Checks whether the label can flow to the destination label.
-   * 
+   *
    * @param {SafetyLabel} destinationLabel label to flow to
    * @returns {Boolean} true if the label can flow to the destination label
    * @throws {Error} if the label or the destination label is undetermined
    */
   canFlowTo(destinationLabel: SafetyLabel): boolean {
-    if (this.value === undefined || destinationLabel.value === undefined) throw new Error("Can't decide flow with undetermined label");
-    return this.equalsTo(SafetyLabel.computeJoinOfLabels([this, destinationLabel]));
+    if (this.value === undefined || destinationLabel.value === undefined)
+      throw new Error("Can't decide flow with undetermined label");
+    return this.equalsTo(
+      SafetyLabel.computeJoinOfLabels([this, destinationLabel])
+    );
   }
 
   /**
    * Convert label to human-readable string.
-   * 
+   *
    * @param {SafetyLabel} label
    * @returns {String} human-readable string
    */
-  toString(): string|undefined {
-    return this.value === undefined ? "UNDETERMINED" : mapLabelToString.get(this.value);
+  toString(): string | undefined {
+    return this.value === undefined
+      ? "UNDETERMINED"
+      : mapLabelToString.get(this.value);
   }
 }

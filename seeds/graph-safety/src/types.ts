@@ -6,8 +6,12 @@
 
 /**
  * Information flow control label values, i.e. levels of trust.
- * 
+ *
  * This will become more complex over time, but for now, just a simple enum.
- * Flow is allowed from TRUSTED to TRUSTED, from either to UNTRUSTED, but not from UNTRUSTED to TRUSTED.
+ * Flow is allowed from TRUSTED to TRUSTED, from either to UNTRUSTED,
+ * but not from UNTRUSTED to TRUSTED.
  */
-export enum SafetyLabelValue { UNTRUSTED, TRUSTED }
+export enum SafetyLabelValue {
+  UNTRUSTED,
+  TRUSTED,
+}

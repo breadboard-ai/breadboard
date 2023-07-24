@@ -12,8 +12,8 @@ import { Board, type ProbeEvent } from "@google-labs/breadboard";
 
 import { ReActHelper } from "./react.js";
 
-// Parse arguments. This should probably be done with a library once it gets more complex.
-// Example: npm run dev graphs/simplest.json -- --validate-safety --log-safety-labels
+// Parse arguments. Redo with a library once it gets more complex. Example:
+// npm run dev graphs/simplest.json -- --validate-safety --log-safety-labels
 const args = process.argv.slice(2);
 const graph = args[0];
 const validateSafety = args.includes("--validate-safety");
@@ -56,7 +56,11 @@ const show = (outputs: OutputValues) => {
 const probe = new EventTarget();
 probe.addEventListener("node", (event: Event) => {
   const { detail } = event as ProbeEvent;
-  if (logSafetyLabels && detail.safetyLabel) note(`Safety label for ${detail.descriptor.id}: ${detail.safetyLabel}`, "safety" );
+  if (logSafetyLabels && detail.safetyLabel)
+    note(
+      `Safety label for ${detail.descriptor.id}: ${detail.safetyLabel}`,
+      "safety"
+    );
   if (detail.descriptor.type !== "text-completion") return;
   const value = (detail?.outputs?.completion as string) || "empty response";
   note(wrap(value), "text completion");

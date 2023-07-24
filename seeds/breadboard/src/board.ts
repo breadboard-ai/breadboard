@@ -56,14 +56,19 @@ export class Board implements Breadboard {
   kits: Kit[] = [];
   #slots: BreadboardSlotSpec = {};
 
-  async *run(probe?: EventTarget, validateSafety = false): AsyncGenerator<BreadbordRunResult> {
+  async *run(
+    probe?: EventTarget,
+    validateSafety = false
+  ): AsyncGenerator<BreadbordRunResult> {
     const core = new Core(this, this.#slots, probe);
     const kits = [core, ...this.kits];
     const handlers = kits.reduce((handlers, kit) => {
       return { ...handlers, ...kit.handlers };
     }, {} as NodeHandlers);
 
-    const validator = validateSafety ? new GraphSafetyValidator(this) : undefined;
+    const validator = validateSafety
+      ? new GraphSafetyValidator(this)
+      : undefined;
     validator?.computeLabelsForFullGraph();
 
     const machine = new TraversalMachine(this);
@@ -105,8 +110,11 @@ export class Board implements Breadboard {
       const outputs = (await handler(inputs)) || {};
       probe?.dispatchEvent(
         new ProbeEvent("node", {
-          descriptor, inputs, outputs,
-          safetyLabel: validator?.getSafetyLabel(descriptor.id)?.toString() })
+          descriptor,
+          inputs,
+          outputs,
+          safetyLabel: validator?.getSafetyLabel(descriptor.id)?.toString(),
+        })
       );
 
       result.outputs = outputs;

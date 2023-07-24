@@ -15,21 +15,22 @@ import { SafetyLabelValue } from "../src/types.js";
 
 const IN_DIR = "./tests/data/";
 
-// JSON test data pattern copied and modified from graph-runner/tests/machines.ts
+// JSON test data pattern copied and modified from
+// graph-runner/tests/machines.ts
 
 interface TestGraphDescriptor extends GraphDescriptor {
   safe: boolean;
-  expectedLabels?: Array<[NodeDescriptor['id'], string]>;
+  expectedLabels?: Array<[NodeDescriptor["id"], string]>;
 }
 
 const graphs = (await readdir(`${IN_DIR}/`)).filter((file) =>
   file.endsWith(".json")
 );
 
-const mapNameToSafetyLabel: {[key: string]: SafetyLabel} = {
-  "TRUSTED": new SafetyLabel(SafetyLabelValue.TRUSTED),
-  "UNTRUSTED": new SafetyLabel(SafetyLabelValue.UNTRUSTED),
-  "UNDEFINED": new SafetyLabel(undefined),
+const mapNameToSafetyLabel: { [key: string]: SafetyLabel } = {
+  TRUSTED: new SafetyLabel(SafetyLabelValue.TRUSTED),
+  UNTRUSTED: new SafetyLabel(SafetyLabelValue.UNTRUSTED),
+  UNDEFINED: new SafetyLabel(undefined),
 };
 
 await Promise.all(
@@ -57,9 +58,7 @@ await Promise.all(
 test("GraphSafetyValidator: no labels before computation", (t) => {
   const v = new GraphSafetyValidator({
     edges: [],
-    nodes: [
-      { id: "a", type: "input" }
-    ]
+    nodes: [{ id: "a", type: "input" }],
   });
 
   t.throws(() => v.getSafetyLabel("a"));
