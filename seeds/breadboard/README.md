@@ -74,7 +74,7 @@ When run, our tiny program will produce the following output:
 result { hear: 'Hello, world?' }
 ```
 
-> [!NOTE] What happened here? The outcome should be fairly intuitive, but let's go through the process step by step:
+> **🔍✨ What happened here?** The outcome should be fairly intuitive, but let's go through the process step by step:
 >
 > 1. The `runOnce` method of the board takes a property bag (a JS object) as its argument.
 > 2. This bag of properties is then handed to the `input` node.
@@ -90,9 +90,9 @@ You can see the source of this program [here](./examples/quick-start-1.js).
 
 ## Wiring another node
 
-This is definitely a fun little program, but it's not very useful. Let's add another node to the board. This time, we need to reach for a kit: a collection of nodes that are bundled together for a specific purpose.
+This is definitely a fun little program, but it's not very useful. Let's add another node to the board. This time, we need a kit: a collection of nodes that are bundled together for a specific purpose.
 
-Because we're here to make generative AI applications, we'll reach for the LLM Starter Kit:
+Because we're here to make generative AI applications, we'll get the [LLM Starter Kit](https://github.com/google/labs-prototypes/tree/main/seeds/llm-starter):
 
 ```js
 import { Board } from "@google-labs/breadboard";
@@ -103,20 +103,94 @@ const board = new Board();
 const kit = board.addKit(Starter);
 ```
 
-The last line of the code snippet above is signficant: it adds the kit to the board. Calling the `addKit` method creates a new instance of the kit that is connected to our board.
+The last line of the code snippet above is signficant: it adds a kit to the board. Calling the `addKit` method creates a new instance of the LLM Starter kit that is connected to our board.
 
-Now that we have the kit on the board, we can use it to add nodes to the board:
+Now that we've added the kit, we can use it to add nodes from it:
 
 ```js
 const input = board.input();
 const output = board.output();
-const completion = kit.textCompletion();
-
-input.wire("ask->text", completion);
-completion.wire("completion->receive", output);
+const textCompletion = kit.textCompletion();
 ```
 
-The `textCompletion` node that we've added is a node that uses the [PaLM API]() to generate text. It takes a `text` property and returns a `completion` property.
+The `textCompletion` node that we've added is a node that uses the [PaLM API](https://developers.generativeai.google/) to generate text. This node takes a `text` property as an input and returns a `completion` property.
+
+All we need to do is wire these properties to `say` and `hear` from before:
+
+```js
+input.wire("say->text", textCompletion);
+textCompletion.wire("completion->hear", output);
+```
+
+Now, we have not one, but two wires on the board, connecting our three nodes. There's the `say->text` wire that connects the `input` and `textCompletion` nodes, and there's the `completion->hear` wire that connects the `textCompletion` and `output` nodes.
+
+To make this program go, we need another node and a wire. The PaLM API behind the `textCompletion` node requires an API key, so we'll add a `secrets` node to the board:
+
+```js
+const secrets = kit.secrets(["API_KEY"]);
+```
+
+The `secrets` node reaches into our program's environment and gets the environment variable that is named `API_KEY`, as we specified in its argument. A `secrets` node could look for any other environment variables, we just need to specify which ones. For now, we only need the `API_KEY`.
+
+Let's also import and use the `dotenv` package that conveniently reads environment variables from a `.env` file:
+
+```js
+import { config } from "dotenv";
+
+config();
+```
+
+Let's also not forget to create a `.env` file and put our API key there:
+
+```sh
+API_KEY="your API key goes here"
+```
+
+With this bit of prep work out of the way, we're ready to wire the `secrets` node:
+
+```js
+secrets.wire("API_KEY->", textCompletion);
+```
+
+The statement above says: "wire `secret`'s output named `API_KEY` to the `textCompletion` input named `API_KEY`". Because we're wiring output to the input by the same name, we don't have to repeat ourselves.
+
+Our second program is ready as soon as we add the `runOnce` call:
+
+```js
+const result = await board.runOnce({
+  say: "Hi, how are you?",
+});
+console.log("result", result);
+```
+
+When run, our second program will produce output that might look something like this:
+
+```sh
+result { hear: 'Doing okay.' }
+```
+
+Oh hey! Our program is generating text using PaLM API.
+
+You can see its source code here: [examples/quick-start-2.js](./examples/quick-start-2.js).
+
+## Templates and memory
+
+Let's see if we can teach our breadboard to act like a chat bot. To get there, it needs two new skills: the ability to remember the conversation and some sense of its role.
+
+Let's start with the last bit first. To teach our program to act in a certain way, we'll need a `textTemplate` node.
+
+```js
+const textTemplate = kit.textTemplate(
+  "This is a conversation between a friendly assistant and their user." +
+    "You are the assistant and your job is to try to be helpful, empathetic," +
+    "and fun.\n\n" +
+    "== Conversation History\n" +
+    "{{context}}\n\n" +
+    "== Current Conversation" +
+    "\nuser: {{question}}\n" +
+    "assistant:"
+);
+```
 
 ... to be continued.
 
