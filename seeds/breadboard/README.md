@@ -215,14 +215,14 @@ Applying these newly learned techniques, we can rewrite our program like this:
 const output = board.output();
 board
   .input()
+  .wire("say->", output)
   .wire(
     "say->text",
     kit
       .textCompletion()
       .wire("completion->hear", output)
       .wire("<-API_KEY", kit.secrets(["API_KEY"]))
-  )
-  .wire("say->", output);
+  );
 ```
 
 It is more compact, but can be harder to read for those who are just starting to learn Breadboard. It's up to you to decide which style you prefer.
@@ -245,6 +245,13 @@ const textTemplate = kit.textTemplate(
     "assistant:"
 );
 ```
+
+The `textTemplate` node takes a template string as its argument. The template string is a string that can contain placeholders. The placeholders are enclosed in double curly braces, like this: `{{placeholder}}`. The node replaces placholders with the values of the properties that are passed to it.
+
+So, in the code snippet above, this node needs to have these two properties wired into it:
+
+- `context`, which will contain conversation history so far, and
+- `question`, the latest question the user asked.
 
 ... to be continued.
 

@@ -17,14 +17,14 @@ const kit = board.addKit(Starter);
 const output = board.output();
 board
   .input()
+  .wire("say->", output)
   .wire(
     "say->text",
     kit
       .textCompletion()
       .wire("completion->hear", output)
       .wire("<-API_KEY", kit.secrets(["API_KEY"]))
-  )
-  .wire("say->", output);
+  );
 
 const result = await board.runOnce({
   say: "Hi, how are you?",
