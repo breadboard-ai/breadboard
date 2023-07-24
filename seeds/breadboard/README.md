@@ -88,7 +88,7 @@ result { hear: 'Hello, world?' }
 
 You can see the source of this program [here](./examples/quick-start-1.js).
 
-## Wiring another node
+## Wiring more nodes
 
 This is definitely a fun little program, but it's not very useful. Let's add another node to the board. This time, we need a kit: a collection of nodes that are bundled together for a specific purpose.
 
@@ -173,9 +173,63 @@ Oh hey! Our program is generating text using PaLM API.
 
 You can see its source code here: [examples/quick-start-2.js](./examples/quick-start-2.js).
 
+## Fun with wires
+
+So far, we've build a fairly simple board. Let's use this board to learn a bit more about convenient shortcuts and ways to wire nodes together.
+
+First, the `wire` method returns the node itself, allowing us to wire the same node to multiple other nodes in a chain:
+
+```js
+const input = board.input();
+const output = board.output();
+const textCompletion = kit.textCompletion();
+const secrets = kit.secrets(["API_KEY"]);
+
+input.wire("say->text", textCompletion).wire("say->", output);
+textCompletion.wire("completion->hear", output);
+```
+
+As you can see, we've used the chaining to add an extra wire to the `input` node. It goes straight to the `output` node, adding the `say` property to the output property bag. When we run this board, we'll see the following output:
+
+```sh
+result { say: 'Hi, how are you?', hear: 'doing okay' }
+```
+
+Second, we don't always need to create a new variable for each node. We can just create nodes as we wire them:
+
+```js
+board.input().wire("say->text", kit.textCompletion()).wire("say->", output);
+```
+
+Finally, we can we can wire in both directions. For example, we can wire the `secrets` node to the `textCompletion` node like this:
+
+```js
+textCompletion.wire("<-API_KEY", kit.secrets(["API_KEY"]));
+```
+
+Here, the arrow points in a different direction, and asks the board to wire the `API_KEY` output of the `secrets` node to the same input of the `textCompletion` node. It's equivalent to the wiring we had above.
+
+Applying these newly learned techniques, we can rewrite our program like this:
+
+```js
+const output = board.output();
+board
+  .input()
+  .wire(
+    "say->text",
+    kit
+      .textCompletion()
+      .wire("completion->hear", output)
+      .wire("<-API_KEY", kit.secrets(["API_KEY"]))
+  )
+  .wire("say->", output);
+```
+
+It is more compact, but can be harder to read for those who are just starting to learn Breadboard. It's up to you to decide which style you prefer.
+
 ## Templates and memory
 
-Let's see if we can teach our breadboard to act like a chat bot. To get there, it needs two new skills: the ability to remember the conversation and some sense of its role.
+Let's see if we can teach this board to act like a chat bot. To get there, it needs to learn two new skills: the ability to remember the conversation and have some sense of its role in a conversation.
 
 Let's start with the last bit first. To teach our program to act in a certain way, we'll need a `textTemplate` node.
 
