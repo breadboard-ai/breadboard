@@ -75,9 +75,9 @@ export class GraphSafetyValidator {
         const constraintSafetyLabel = constraintSafetyLabels.get(nodeId);
 
         const incomingNodes =
-          this.graph.heads.get(nodeId)?.map((edge) => edge.from) || [];
+          this.graph.heads.get(nodeId)?.map((edge) => edge.from) ?? [];
         const outgoingNodes =
-          this.graph.tails.get(nodeId)?.map((edge) => edge.to) || [];
+          this.graph.tails.get(nodeId)?.map((edge) => edge.to) ?? [];
 
         // Compute the meet (lowest label) of all incoming edges. Add the
         // constraint label for this node. This can lower the label, but not

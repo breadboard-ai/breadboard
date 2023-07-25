@@ -43,7 +43,7 @@ await Promise.all(
 
       if (graph.safe) {
         validator.computeLabelsForFullGraph();
-        for (const [nodeId, expectedLabelName] of graph.expectedLabels || []) {
+        for (const [nodeId, expectedLabelName] of graph.expectedLabels ?? []) {
           const expectedLabel = mapNameToSafetyLabel[expectedLabelName];
           const derivedLabel = validator.getSafetyLabel(nodeId);
           t.true(derivedLabel.equalsTo(expectedLabel));
