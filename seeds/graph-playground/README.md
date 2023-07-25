@@ -8,11 +8,12 @@ This is a prototyping ground for experimenting with representing generative AI a
 
 :one: Open [graphs.code-workspace](../../graphs.code-workspace) in VSCode. This workspace brings all the relevant packages in the monorepo into one place, so you can easily navigate between them and not worry about other bits that aren't relevant to graphs.
 
-There are three packages in this workspace:
+There are five packages in this workspace:
 
-1. `seeds/graph-runner` -- a very basic implementation of a graph traversal engine
-2. `seeds/graph-playground` -- this package, which is a kind of sample code for how to use `seeds/graph-runner`. Depends on `seeds/graph-runner`.
-3. `seeds/breadboard` -- a nascent helper library for making graphs. Depends on `seeds/graph-runner` and is mostly non-functional at the moment.
+1. `seeds/graph-runner` -- an implementation of the graph traversal machine.
+2. `seeds/breadboard` -- a nascent helper library for making graphs.
+3. `seeds/llm-starter` -- the nascent LLM Starter Kit, a collection of nodes that are useful for making generative AI apps.
+4. `seeds/graph-playground` -- this package, which a collection of sample code for how to use `seeds/breadboard` and `seeds/llm-starter` to make graphs.
 
 :two: In `seeds/graph-playground`, create `.env` file with the following content:
 
@@ -32,13 +33,9 @@ The `GOOGLE_CSE_ID` is the Programmable Search Engine ID. You can create one [he
 
 Here's a quick lay of the land:
 
-- This package's entry point, `index.ts` is basically a simple CLI that takes a path to a graph file and runs it. The graph is defined in a primordial JSON format which is most definitely going to change.
+- This package's entry point, `index.ts` is basically a simple CLI that takes a path to a graph file and runs it. The graph is defined in a JSON format which is not yet fully baked. The CLI app uses [`@clack/prompts`](https://github.com/natemoo-re/clack/tree/main/packages/prompts#readme) to make CLI a bit prettier. To invoke the CLI, use `npm run dev` command. It will build the package and run the CLI with the given graph file.
 
-- The meat of the implementation is the `console-context.ts`, which is a CLI-oriented implementation of the `GraphTraversalContext` interface. It's super-simple and is as close to "echo" as it gets. It uses [`@clack/prompts`](https://github.com/natemoo-re/clack/tree/main/packages/prompts#readme) to make CLI a bit prettier, but that's about it.
-
-- The `console-context.ts` outputs logs into `./experiment.log`, which git-ignored. Graph traversal is very chatting currently, and the log file can get quite large. Use it to examine what the heck is going on and debug the graph.
-
-- There are a few sample graphs in the [`graphs`](./graphs/) folder. For convenience, use `npm run dev` command. It will build the package and run the CLI with the given graph file. Add your own graphs there.
+- There are a few sample boards in the [`boards`](./src/boards/) dir. These boards are used to generate graphs. To generate graphs from these boards, use `npm run prepare` command. It will generate JSON files in the [`graphs`](./graphs/) dir and Markdown files with [Mermaid](https://mermaid-js.github.io/mermaid/#/) diagrams in [`docs/graphs`](./docs/graphs/) dir.
 
 Here are some examples:
 
@@ -66,6 +63,8 @@ npm run dev graphs/react-with-include.json
 
 ```
 
-- To visualize graphs, there's is a `scripts/mermaidize.js` script that converts a graph file into a [Mermaid](https://mermaid-js.github.io/mermaid/#/) diagram, embedded into a Markdown file. For convenience, use `npm run merm` to run it. The script will generate files in the [`docs/graphs`](docs/graphs/) dir, one for each file in the `graphs` dir.
+For a more detailed explanation of how graph traversal machine works, see [README.md](../graph-runner/README.md) in the `graph-runner` package.
 
-For a more detailed explanation of how graphs work, see [README.md](../graph-runner/README.md) in the `graph-runner` package.
+For documentation on the Breadboard library, see [README.md](../breadboard/README.md) in the `seeds/breadboard` package.
+
+For documentation on the LLM Starter Kit, see [README.md](../llm-starter/README.md) in the `seeds/llm-starter` package.
