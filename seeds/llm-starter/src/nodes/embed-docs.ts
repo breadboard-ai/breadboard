@@ -43,7 +43,7 @@ export default async (inputs: InputValues) => {
     const response = (await data.json()) as EmbedTextResponse;
     const embedding = response?.embedding?.value;
 
-    if (!embedding) throw new Error("No embedding returned");
+    if (!embedding) throw new Error(`No embedding returned in ${response}`);
 
     const result = { ...doc } as VectorDocument;
     result.embedding = embedding;

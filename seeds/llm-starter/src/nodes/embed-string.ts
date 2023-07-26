@@ -27,5 +27,8 @@ export default async (inputs: InputValues) => {
   const data = await fetch(request);
   const response = (await data.json()) as EmbedTextResponse;
   const embedding = response?.embedding?.value;
+
+  if (!embedding) throw new Error(`No embedding returned in ${response}`);
+
   return { embedding };
 };
