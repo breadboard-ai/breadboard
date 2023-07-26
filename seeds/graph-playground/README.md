@@ -35,7 +35,7 @@ Here's a quick lay of the land:
 
 - This package's entry point, `index.ts` is basically a simple CLI that takes a path to a graph file and runs it. The graph is defined in a JSON format which is not yet fully baked. The CLI app uses [`@clack/prompts`](https://github.com/natemoo-re/clack/tree/main/packages/prompts#readme) to make CLI a bit prettier. To invoke the CLI, use `npm run dev` command. It will build the package and run the CLI with the given graph file.
 
-- There are a few sample boards in the [`boards`](./src/boards/) dir. These boards are used to generate graphs. To generate graphs from these boards, use `npm run prepare` command. It will generate JSON files in the [`graphs`](./graphs/) dir and Markdown files with [Mermaid](https://mermaid-js.github.io/mermaid/#/) diagrams in [`docs/graphs`](./docs/graphs/) dir.
+- There are a few sample boards in the [`boards`](./src/boards/) dir. These boards are used to generate graphs. To generate graphs from these boards, use `npm run prepare-graphs` command. It will generate JSON files in the [`graphs`](./graphs/) dir and Markdown files with [Mermaid](https://mermaid-js.github.io/mermaid/#/) diagrams in [`docs/graphs`](./docs/graphs/) dir.
 
 Here are some examples:
 

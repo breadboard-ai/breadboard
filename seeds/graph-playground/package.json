@@ -9,7 +9,7 @@
   "type": "module",
   "scripts": {
     "test": "FORCE_COLOR=1 ava",
-    "prepare": "turbo build && node scripts/prepare.js",
+    "prepare-graphs": "turbo build && node scripts/prepare.js",
     "build": "FORCE_COLOR=1 tsc --b",
     "watch": "FORCE_COLOR=1 tsc --b --watch",
     "dev": "turbo build && node --enable-source-maps ."
