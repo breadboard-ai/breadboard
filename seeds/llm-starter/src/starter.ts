@@ -99,7 +99,7 @@ export class Starter implements Kit {
 
   embedDocs(config: OptionalIdConfiguration = {}): BreadboardNode {
     const { $id, ...rest } = config;
-    return this.#nodeFactory("embed_docs", { expression, ...rest }, $id);
+    return this.#nodeFactory("embed_docs", { ...rest }, $id);
   }
 
   embedString(config: OptionalIdConfiguration = {}): BreadboardNode {
