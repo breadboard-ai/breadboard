@@ -82,6 +82,21 @@ export class Starter implements Kit {
     return this.#nodeFactory("text-completion", { ...rest }, $id);
   }
 
+  createVectorDatabase(config: OptionalIdConfiguration = {}): BreadboardNode {
+    const { $id, ...rest } = config;
+    return this.#nodeFactory("create_vector_database", { ...rest }, $id);
+  }
+
+  addToVectorDatabase(config: OptionalIdConfiguration = {}): BreadboardNode {
+    const { $id, ...rest } = config;
+    return this.#nodeFactory("add_to_vector_database", { ...rest }, $id);
+  }
+
+  queryVectorDatabase(config: OptionalIdConfiguration = {}): BreadboardNode {
+    const { $id, ...rest } = config;
+    return this.#nodeFactory("query_vector_database", { ...rest }, $id);
+  }
+
   secrets(
     keys: string[],
     config: OptionalIdConfiguration = {}
