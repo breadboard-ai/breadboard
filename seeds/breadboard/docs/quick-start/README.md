@@ -216,7 +216,7 @@ Once the board is created, it can be used by the program that made it. But what 
 Conveniently, boards are serializable as JSON:
 
 ```js
-
+const json = JSON.stringify(board, null, 2);
 ```
 
 ## Chapter 5: Including other boards

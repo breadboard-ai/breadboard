@@ -24,5 +24,5 @@ npm install @google-labs/llm-starter
 
 ## Links to WIP docs
 
-- [Breadboard Quick Start](./docs/quick-start/README.md)
-- [Node Types Reference](./docs/nodes.md)
+- [Breadboard Quick Start](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/quick-start/README.md)
+- [Node Types Reference](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/nodes.md)
