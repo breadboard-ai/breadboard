@@ -97,10 +97,7 @@ export class Starter implements Kit {
     return this.#nodeFactory("query_vector_database", { ...rest }, $id);
   }
 
-  embedDocs(
-    expression: string,
-    config: OptionalIdConfiguration = {}
-  ): BreadboardNode {
+  embedDocs(config: OptionalIdConfiguration = {}): BreadboardNode {
     const { $id, ...rest } = config;
     return this.#nodeFactory("embed_docs", { expression, ...rest }, $id);
   }
