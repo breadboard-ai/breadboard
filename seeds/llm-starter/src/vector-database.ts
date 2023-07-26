@@ -1,0 +1,95 @@
+/**
+ * @license
+ * Copyright 2023 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import { similarity } from "ml-distance";
+
+/**
+ * Entry into a vector database.
+ * Client can add as many other fields as they like.
+ *
+ * The only required field is @field embedding, which is a vector of numbers.
+ *
+ * Some databases, e.g. Pinecone, will also required a @field id field.
+ */
+export interface VectorDocument {
+  embedding: number[];
+  id?: string | number | symbol;
+}
+
+export interface VectorDatabase {
+  add(documents: VectorDocument[]): Promise<void>;
+  remove(ids: VectorDocument["id"][]): Promise<void>;
+  findNearest(
+    embedding: VectorDocument["embedding"],
+    topK?: number
+  ): Promise<VectorDocument[]>;
+}
+
+export class MemoryVectorDatabase implements VectorDatabase {
+  private entries: Map<VectorDocument["id"], VectorDocument> = new Map();
+  private similarity: (typeof similarity)["cosine"];
+
+  /**
+   * Creates a new in-memory vector database.
+   *
+   * @param similarityFunction The name of the similarity function to use.
+   *                           Defaults to cosine.
+   */
+  constructor(similarityFunction = "cosine") {
+    if (similarityFunction in similarity) {
+      this.similarity =
+        similarity[similarityFunction as keyof typeof similarity];
+    } else {
+      throw Error("Can't find similarity function: " + similarityFunction);
+    }
+  }
+
+  /**
+   * Adds documents to the database.
+   * If a document with the same id already exists, it will be overwritten.
+   *
+   * @param documents Documents to be added to the database.
+   */
+  async add(documents: VectorDocument[]): Promise<void> {
+    for (const document of documents) {
+      // Symbol() gives us non-colliding default ids where none are provided.
+      this.entries.set(document.id ?? Symbol(), document);
+    }
+    return Promise.resolve();
+  }
+
+  /**
+   * Removes documents from the database.
+   *
+   * @param ids List of ids to be removed from the database.
+   */
+  async remove(ids: VectorDocument["id"][]): Promise<void> {
+    for (const id of ids) {
+      this.entries.delete(id);
+    }
+    return Promise.resolve();
+  }
+
+  /**
+   * Finds the nearest neighbors to a given embedding.
+   *
+   * @param embedding Embedding to find nearest neighbors for.
+   * @param topK Number of documents to return. Defaults to 10.
+   * @returns Array of the topK nearest neighbors.
+   */
+  async findNearest(
+    embedding: VectorDocument["embedding"],
+    topK = 10
+  ): Promise<VectorDocument[]> {
+    return Array.from(this.entries.values())
+      .sort(
+        (a, b) =>
+          this.similarity(b.embedding, embedding) -
+          this.similarity(a.embedding, embedding)
+      )
+      .splice(0, topK);
+  }
+}
