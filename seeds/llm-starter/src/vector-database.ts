@@ -55,6 +55,8 @@ export class MemoryVectorDatabase implements VectorDatabase {
    */
   async add(documents: VectorDocument[]): Promise<void> {
     for (const document of documents) {
+      if (!document.embedding) throw Error("Document has no embedding");
+
       // Symbol() gives us non-colliding default ids where none are provided.
       this.entries.set(document.id ?? Symbol(), document);
     }
