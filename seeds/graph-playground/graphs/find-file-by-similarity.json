@@ -1,0 +1,144 @@
+{
+  "edges": [
+    {
+      "from": "secrets-6",
+      "to": "embed_docs-5",
+      "out": "API_KEY",
+      "in": "API_KEY"
+    },
+    {
+      "from": "create_vector_database-1",
+      "to": "add_to_vector_database-7",
+      "out": "db",
+      "in": "db"
+    },
+    {
+      "from": "add_to_vector_database-7",
+      "to": "query_vector_database-2",
+      "out": "db",
+      "in": "db"
+    },
+    {
+      "from": "embed_docs-5",
+      "to": "add_to_vector_database-7",
+      "out": "documents",
+      "in": "documents"
+    },
+    {
+      "from": "text-assets-from-path-4",
+      "to": "embed_docs-5",
+      "out": "documents",
+      "in": "documents"
+    },
+    {
+      "from": "input-3",
+      "to": "text-assets-from-path-4",
+      "out": "text",
+      "in": "path"
+    },
+    {
+      "from": "secrets-10",
+      "to": "embed_string-9",
+      "out": "API_KEY",
+      "in": "API_KEY"
+    },
+    {
+      "from": "jsonata-11",
+      "to": "output-12",
+      "out": "result",
+      "in": "text"
+    },
+    {
+      "from": "query_vector_database-2",
+      "to": "jsonata-11",
+      "out": "results",
+      "in": "json"
+    },
+    {
+      "from": "embed_string-9",
+      "to": "query_vector_database-2",
+      "out": "embedding",
+      "in": "embedding"
+    },
+    {
+      "from": "input-8",
+      "to": "embed_string-9",
+      "out": "text",
+      "in": "text"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "create_vector_database-1",
+      "type": "create_vector_database"
+    },
+    {
+      "id": "query_vector_database-2",
+      "type": "query_vector_database"
+    },
+    {
+      "id": "input-3",
+      "type": "input",
+      "configuration": {
+        "message": "Provide a path to a directory to search"
+      }
+    },
+    {
+      "id": "text-assets-from-path-4",
+      "type": "text-assets-from-path"
+    },
+    {
+      "id": "embed_docs-5",
+      "type": "embed_docs"
+    },
+    {
+      "id": "secrets-6",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "API_KEY"
+        ]
+      }
+    },
+    {
+      "id": "add_to_vector_database-7",
+      "type": "add_to_vector_database"
+    },
+    {
+      "id": "input-8",
+      "type": "input",
+      "configuration": {
+        "message": "What do you want to search for?"
+      }
+    },
+    {
+      "id": "embed_string-9",
+      "type": "embed_string"
+    },
+    {
+      "id": "secrets-10",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "API_KEY"
+        ]
+      }
+    },
+    {
+      "id": "jsonata-11",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "$join($$.id, \"\n\")"
+      }
+    },
+    {
+      "id": "output-12",
+      "type": "output"
+    }
+  ],
+  "kits": [
+    {
+      "url": "npm:@google-labs/llm-starter"
+    }
+  ]
+}
