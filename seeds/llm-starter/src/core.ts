@@ -8,6 +8,7 @@
  * Nodes that are commonly used in Generative Applications.
  */
 import textAsset from "./nodes/text-asset.js";
+import textAssetsFromPath from "./nodes/text-assets-from-path.js";
 import vars from "./nodes/vars.js";
 import jsonata from "./nodes/jsonata.js";
 import promptTemplate from "./nodes/prompt-template.js";
@@ -43,4 +44,5 @@ export const coreHandlers = {
   "local-memory": localMemory,
   "run-javascript": javascript,
   "text-asset": textAsset,
+  "text-assets-from-path": textAssetsFromPath,
 };

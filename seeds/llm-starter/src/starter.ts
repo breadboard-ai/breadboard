@@ -110,6 +110,16 @@ export class Starter implements Kit {
     return this.#nodeFactory("embed_string", { ...rest }, $id);
   }
 
+  textAsset(config: OptionalIdConfiguration = {}): BreadboardNode {
+    const { $id, ...rest } = config;
+    return this.#nodeFactory("text-asset", { ...rest }, $id);
+  }
+
+  textAssetsFromPath(config: OptionalIdConfiguration = {}): BreadboardNode {
+    const { $id, ...rest } = config;
+    return this.#nodeFactory("text-assets-from-path", { ...rest }, $id);
+  }
+
   secrets(
     keys: string[],
     config: OptionalIdConfiguration = {}
