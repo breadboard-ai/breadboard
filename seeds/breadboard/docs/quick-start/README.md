@@ -209,6 +209,8 @@ board
 
 It is more compact, but can be harder to read for those who are just starting to learn Breadboard. It's up to you to decide which style you prefer.
 
+You can see the source code from this chapter here: [examples/quick-start-3.js](./examples/quick-start-3.js).
+
 ## Chapter 4: Loading, saving, and visualizing boards
 
 Once the board is created, it can be used by the program that made it. But what if we want to reuse the board we made?
@@ -216,8 +218,48 @@ Once the board is created, it can be used by the program that made it. But what 
 Conveniently, boards are serializable as JSON:
 
 ```js
+const json = JSON.stringify(board);
+```
+
+Or, with better formatting:
+
+```js
 const json = JSON.stringify(board, null, 2);
 ```
+
+The resulting JSON string can be trivially saved into a file:
+
+```js
+import { writeFile } from "fs/promises";
+
+await writeFile("quick-start-4.json", json);
+```
+
+... and loaded from file with `Board.load`:
+
+```js
+const board2 = await Board.load("./quick-start-4.json");
+```
+
+Once we have the new board loaded, we can run it:
+
+```js
+const result = await board2.runOnce({
+  say: "Hi, how are you?",
+});
+
+console.log("result", result);
+```
+
+And get the output like:
+
+```sh
+result { say: 'Hi, how are you?', hear: 'Doing alright.' }
+```
+
+Saving and loading boards means that we can now share the boards with others outside of the programs we wrote, and that creates all kind of interesting possibilities.
+
+You can see this chapter's source code here: [examples/quick-start-4.js](./examples/quick-start-4.js).
 
 ## Chapter 5: Including other boards
 
