@@ -40,7 +40,16 @@ findFileBySimilarity.input("What do you want to search for?").wire(
       queryVectorDatabase.wire(
         "results->json",
         kit
-          .jsonata('$join($$.id, "\n")')
+          .jsonata(
+            `
+              $join(
+                $map(*, function($v, $i, $a) {
+                  $v.document.id & ": " & $string($v.similarity)
+                }),
+                "\n"
+              )
+            `
+          )
           .wire("result->text", findFileBySimilarity.output())
       )
     )

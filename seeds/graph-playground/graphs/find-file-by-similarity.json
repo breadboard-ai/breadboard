@@ -128,7 +128,7 @@
       "id": "jsonata-11",
       "type": "jsonata",
       "configuration": {
-        "expression": "$join($$.id, \"\n\")"
+        "expression": "\n              $join(\n                $map(*, function($v, $i, $a) {\n                  $v.document.id & \": \" & $string($v.similarity)\n                }),\n                \"\n\"\n              )\n            "
       }
     },
     {

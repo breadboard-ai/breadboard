@@ -31,12 +31,13 @@ test("memory-vector-database", async (t) => {
   await db.add(exampleDocs);
 
   const result1 = await db.findNearest([Math.sqrt(2), Math.sqrt(2), 0]);
-  t.is(result1[0].id, "1");
-  t.is(result1[1].id, "2");
+  t.is(result1[0].document.id, "1");
+  t.is(result1[1].document.id, "2");
+  t.is(result1[0].similarity.toFixed(6), (1 / Math.sqrt(2)).toFixed(6));
   t.is(result1.length, 2);
 
   const result2 = await db.findNearest([0, Math.sqrt(2), Math.sqrt(2)], 1);
-  t.is(result2[0].id, "2");
+  t.is(result2[0].document.id, "2");
   t.is(result2.length, 1);
 });
 
@@ -54,8 +55,8 @@ test("vector-database nodes", async (t) => {
     db,
     embedding: [Math.sqrt(2), Math.sqrt(2), 0],
   });
-  t.is(results[0].id, "1");
-  t.is(results[1].id, "2");
+  t.is(results[0].document.id, "1");
+  t.is(results[1].document.id, "2");
   t.is(results.length, 2);
 
   const { results: results2 } = await query_vector_database({
@@ -63,6 +64,6 @@ test("vector-database nodes", async (t) => {
     embedding: [0, Math.sqrt(2), Math.sqrt(2)],
     topK: 1,
   });
-  t.is(results2[0].id, "2");
+  t.is(results2[0].document.id, "2");
   t.is(results2.length, 1);
 });

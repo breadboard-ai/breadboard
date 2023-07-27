@@ -19,13 +19,18 @@ export interface VectorDocument {
   id?: string | number | symbol;
 }
 
+export interface VectorQueryResult {
+  document: VectorDocument;
+  similarity: number;
+}
+
 export interface VectorDatabase {
   add(documents: VectorDocument[]): Promise<void>;
   remove(ids: VectorDocument["id"][]): Promise<void>;
   findNearest(
     embedding: VectorDocument["embedding"],
     topK?: number
-  ): Promise<VectorDocument[]>;
+  ): Promise<VectorQueryResult[]>;
 }
 
 export class MemoryVectorDatabase implements VectorDatabase {
@@ -85,13 +90,16 @@ export class MemoryVectorDatabase implements VectorDatabase {
   async findNearest(
     embedding: VectorDocument["embedding"],
     topK = 10
-  ): Promise<VectorDocument[]> {
+  ): Promise<VectorQueryResult[]> {
     return Array.from(this.entries.values())
-      .sort(
-        (a, b) =>
-          this.similarity(b.embedding, embedding) -
-          this.similarity(a.embedding, embedding)
+      .map(
+        (document) =>
+          ({
+            document,
+            similarity: this.similarity(document.embedding, embedding),
+          } as VectorQueryResult)
       )
+      .sort((a, b) => b.similarity - a.similarity)
       .splice(0, topK);
   }
 }
