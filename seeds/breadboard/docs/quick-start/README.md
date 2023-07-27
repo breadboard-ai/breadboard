@@ -259,6 +259,72 @@ result { say: 'Hi, how are you?', hear: 'Doing alright.' }
 
 Saving and loading boards means that we can now share the boards with others outside of the programs we wrote, and that creates all kind of interesting possibilities.
 
+As the capstone for this chapter, let's draw some diagrams. Every board can be turned into a [Mermaid](https://mermaid.js.org/) diagram. All we need to do is call the `mermaid` method:
+
+Running the program produces this:
+
+```
+%%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
+graph TD;
+input2[/"input
+id='input-2'"/]:::input -- "say->say" --> output1{{"output
+id='output-1'"}}:::output
+textcompletion3["text-completion
+id='text-completion-3'"] -- "completion->hear" --> output1{{"output
+id='output-1'"}}:::output
+secrets4("secrets
+id='secrets-4'"):::secrets -- "API_KEY->API_KEY" --> textcompletion3["text-completion
+id='text-completion-3'"]
+input2[/"input
+id='input-2'"/]:::input -- "say->text" --> textcompletion3["text-completion
+id='text-completion-3'"]
+keyssecrets4[keys]:::config -- "keys->keys" --o secrets4
+classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
+classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
+classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
+classDef passthrough stroke:#a64d79,fill:#ead1dcff,color:#000
+classDef slot stroke:#a64d79,fill:#ead1dcff,color:#000
+classDef config stroke:#a64d79,fill:#ead1dcff,color:#000
+classDef secrets stroke:#db4437,fill:#f4cccc,color:#000
+classDef slotted stroke:#a64d79
+```
+
+Which when viewed with Mermaid, looks like this:
+
+```mermaid
+%%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
+graph TD;
+input2[/"input
+id='input-2'"/]:::input -- "say->say" --> output1{{"output
+id='output-1'"}}:::output
+textcompletion3["text-completion
+id='text-completion-3'"] -- "completion->hear" --> output1{{"output
+id='output-1'"}}:::output
+secrets4("secrets
+id='secrets-4'"):::secrets -- "API_KEY->API_KEY" --> textcompletion3["text-completion
+id='text-completion-3'"]
+input2[/"input
+id='input-2'"/]:::input -- "say->text" --> textcompletion3["text-completion
+id='text-completion-3'"]
+keyssecrets4[keys]:::config -- "keys->keys" --o secrets4
+classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
+classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
+classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
+classDef passthrough stroke:#a64d79,fill:#ead1dcff,color:#000
+classDef slot stroke:#a64d79,fill:#ead1dcff,color:#000
+classDef config stroke:#a64d79,fill:#ead1dcff,color:#000
+classDef secrets stroke:#db4437,fill:#f4cccc,color:#000
+classDef slotted stroke:#a64d79
+```
+
+Coincidentally, Github Markdown has great support for Mermaid. Just paste the Mermaid output as code into the doc as source code marked as `mermaid`:
+
+````markdown
+```mermaid
+<put code here>
+```
+````
+
 You can see this chapter's source code here: [examples/quick-start-4.js](./examples/quick-start-4.js).
 
 ## Chapter 5: Including other boards

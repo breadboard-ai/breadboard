@@ -39,3 +39,7 @@ const result = await board2.runOnce({
 });
 
 console.log("result", result);
+
+const diagram = board2.mermaid();
+
+console.log(diagram);
