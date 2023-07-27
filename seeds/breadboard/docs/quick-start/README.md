@@ -261,6 +261,9 @@ Saving and loading boards means that we can now share the boards with others out
 
 As the capstone for this chapter, let's draw some diagrams. Every board can be turned into a [Mermaid](https://mermaid.js.org/) diagram. All we need to do is call the `mermaid` method:
 
+const diagram = board2.mermaid();
+console.log(diagram);
+
 Running the program produces this:
 
 ```
@@ -321,13 +324,53 @@ Coincidentally, Github Markdown has great support for Mermaid. Just paste the Me
 
 ````markdown
 ```mermaid
-<put code here>
+<put Mermaid code here>
 ```
 ````
 
 You can see this chapter's source code here: [examples/quick-start-4.js](./examples/quick-start-4.js).
 
 ## Chapter 5: Including other boards
+
+In addition to loading saved boards, we can also include them into our board. For this, we need the `include` node, which acts as a sort of instance graph-to-node converter: just give it the URL of the graph to load and it will pretend as if this whole graph is a node.
+
+For example, let's suppose our friend built this really neat graph that summarizes latest news on a topic. We supply the topic as input, and get summary as output. The graph takes in an input of `text`, and when run, also outputs `text`.
+
+Our friend published this graph at this URL:
+
+```js
+const NEWS_URL =
+  "https://gist.githubusercontent.com/dglazkov/6f122553b4c08f0674187f79b19c01f4/raw/google-news.json";
+```
+
+Using the `include` node, including this node into our graph is trivial:
+
+```js
+board
+  .input()
+  .wire(
+    "say->text",
+    board.include(NEWS_URL).wire("text->hear", board.output())
+  );
+```
+
+So when we run our program, we'll get a response that looks something like this:
+
+```sh
+result {
+  hear: 'The latest news on breadboards include:\n' +
+    '- A new Arduino Nano ESP32 dev board that is IoT-friendly and low-cost\n' +
+    '- A new 32-bit Uno R4 version of the Arduino board that is based on the Renesas chip\n' +
+    '- A breadboard computer that is based on a 486 CPU\n' +
+    '- A breadboard console that recreates the classic ColecoVision game console\n' +
+    '- A new jumperless breadboard that makes it easier to create circuits\n' +
+    '- A new method for building circuits that is more flexible\n' +
+    '- A study that shows that breadboards can be used to create micro mercury trapped ion clocks\n' +
+    '- A blog post about a 98-year-old retired mechanic who now spends his time woodworking'
+}
+```
+
+You can see the source code for this chapter here: [examples/quick-start-5.js](./examples/quick-start-5.js).
 
 ## Chapter 6: Boards with slots
 

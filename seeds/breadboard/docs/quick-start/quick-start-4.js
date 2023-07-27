@@ -37,9 +37,7 @@ const board2 = await Board.load("./quick-start-4.json");
 const result = await board2.runOnce({
   say: "Hi, how are you?",
 });
-
 console.log("result", result);
 
 const diagram = board2.mermaid();
-
 console.log(diagram);
