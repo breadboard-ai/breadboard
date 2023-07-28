@@ -68,7 +68,7 @@ result { hear: 'Hello, world?' }
 > 5. Since the next node is the `output` node, that's the node that receives the `text` property.
 > 6. The `output` node is also pretty simple. It takes the property bag it received and returns it as the of the `runOnce` method.
 
-You can see the source of this program [here](./examples/quick-start-1.js).
+You can see the source of this program [here](./quick-start-1.js).
 
 ## Chapter 2: Wiring more nodes
 
@@ -153,7 +153,7 @@ result { hear: 'Doing okay.' }
 
 Oh hey! Our program is generating text using PaLM API.
 
-You can see its source code here: [examples/quick-start-2.js](./examples/quick-start-2.js).
+You can see its source code here: [quick-start-2.js](./quick-start-2.js).
 
 ## Chatper 3: Fun with wires
 
@@ -209,7 +209,7 @@ board
 
 It is more compact, but can be harder to read for those who are just starting to learn Breadboard. It's up to you to decide which style you prefer.
 
-You can see the source code from this chapter here: [examples/quick-start-3.js](./examples/quick-start-3.js).
+You can see the source code from this chapter here: [quick-start-3.js](./quick-start-3.js).
 
 ## Chapter 4: Loading, saving, and visualizing boards
 
@@ -292,7 +292,7 @@ classDef secrets stroke:#db4437,fill:#f4cccc,color:#000
 classDef slotted stroke:#a64d79
 ```
 
-Which when viewed with Mermaid, looks like this:
+Which, when viewed with Mermaid looks like this:
 
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
@@ -328,7 +328,7 @@ Coincidentally, Github Markdown has great support for Mermaid. Just paste the Me
 ```
 ````
 
-You can see this chapter's source code here: [examples/quick-start-4.js](./examples/quick-start-4.js).
+You can see this chapter's source code here: [quick-start-4.js](./quick-start-4.js).
 
 ## Chapter 5: Including other boards
 
@@ -354,7 +354,14 @@ board
   );
 ```
 
-So when we run our program, we'll get a response that looks something like this:
+So when we run our board:
+
+```js
+const result = await board.runOnce({ say: "Latest news on breadboards" });
+console.log("result", result);
+```
+
+... we'll get a response that looks something like this:
 
 ```sh
 result {
@@ -370,7 +377,7 @@ result {
 }
 ```
 
-You can see the source code for this chapter here: [examples/quick-start-5.js](./examples/quick-start-5.js).
+You can see the source code for this chapter here: [./quick-start-5.js](./quick-start-5.js).
 
 ## Chapter 6: Boards with slots
 

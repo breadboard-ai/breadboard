@@ -22,5 +22,4 @@ board
   );
 
 const result = await board.runOnce({ say: "Latest news on breadboards" });
-
 console.log("result", result);
