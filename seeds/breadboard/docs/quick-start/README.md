@@ -334,18 +334,18 @@ You can see this chapter's source code here: [quick-start-4.js](./quick-start-4.
 
 ## Chapter 5: Including other boards
 
-In addition to loading saved boards, we can also include them into our board. For this, we need the `include` node, which acts as a sort of instance graph-to-node converter: just give it the URL of the graph to load and it will pretend as if this whole graph is a node.
+In addition to loading saved boards, we can also include them into our board. For this, we need the `include` node, which acts as a sort of instance board-to-node converter: just give it the URL of the serialized boar, and it will pretend as if this whole board is just one node.
 
-For example, let's suppose our friend built this really neat graph that summarizes latest news on a topic. We supply the topic as input, and get summary as output. The graph takes in an input of `text`, and when run, also outputs `text`.
+For example, let's suppose our friend built this really neat board that summarizes latest news on a topic. We supply the topic as input, and get summary as output. The board takes in an input of `topic`, and when run, outputs `headlines`.
 
-Our friend published this graph at this URL:
+Our friend published their board's JSON at this URL:
 
 ```js
 const NEWS_BOARD_URL =
   "https://gist.githubusercontent.com/dglazkov/55db9bb36acd5ba5cfbd82d2901e7ced/raw/google-news-headlines.json";
 ```
 
-Using the `include` node, including this node into our graph is trivial:
+Using the `include` node, placing it into our board is trivial:
 
 ```js
 board
@@ -392,7 +392,7 @@ result {
 
 Let's add a few more nodes to make the board that summarizes news on a given topic.
 
-First, we'll need a prompt that combines the topic we've provided, the headlines produced by our friend's graph, and some instructions on what to do with them. To do that, we'll use the `textTemplate` node from the [LLM Starter Kit](https://github.com/google/labs-prototypes/tree/main/seeds/llm-starter):
+First, we'll need a prompt that combines the topic we've provided, the headlines produced by our friend's board, and some instructions on what to do with them. To do that, we'll use the `textTemplate` node from the [LLM Starter Kit](https://github.com/google/labs-prototypes/tree/main/seeds/llm-starter):
 
 ```js
 const template = kit.textTemplate(
@@ -436,5 +436,13 @@ result {
 You can see the source code for this chapter here: [quick-start-5.js](./quick-start-5.js).
 
 ## Chapter 6: Boards with slots
+
+Including other boards is nifty, since it allows us to build modular boards. However, sometimes we wish could leave a place in the board where anyone could insert other boards. Programmers call it "dependency injection".
+
+In Breadboard, these places are called "slots", and there's a special node (helpfully called `slot`) that we can use to create slots.
+
+For instance, let's take our example from Chapter 5 and imagine that we showed the resulting board to our friend and they really liked the summarizer bit. Awesome! However, they are still playing with the different ways to get the news headlines and have a few different boards they'd like to use with this summarizer.
+
+In this case, what we need is a board with a slot: instead of including our friend's board like we did in a previous example, we need to leave room to insert any board -- so that our friend could experiemnt with all the cool news source-gathering boards that they're tinkering with.
 
 ## Chapter 7: Probes and continuous runs
