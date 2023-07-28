@@ -342,7 +342,7 @@ Our friend published this graph at this URL:
 
 ```js
 const NEWS_BOARD_URL =
-  "https://gist.githubusercontent.com/dglazkov/6f122553b4c08f0674187f79b19c01f4/raw/google-news.json";
+  "https://gist.githubusercontent.com/dglazkov/55db9bb36acd5ba5cfbd82d2901e7ced/raw/google-news-headlines.json";
 ```
 
 Using the `include` node, including this node into our graph is trivial:
@@ -437,32 +437,4 @@ You can see the source code for this chapter here: [quick-start-5.js](./quick-st
 
 ## Chapter 6: Boards with slots
 
-<!--
-
-## Templates and memory
-
-Let's see if we can teach this board to act like a chat bot. To get there, it needs to learn two new skills: the ability to remember the conversation and have some sense of its role in a conversation.
-
-Let's start with the last bit first. To teach our program to act in a certain way, we'll need a `textTemplate` node.
-
-```js
-const textTemplate = kit.textTemplate(
-  "This is a conversation between a friendly assistant and their user." +
-    "You are the assistant and your job is to try to be helpful, empathetic," +
-    "and fun.\n\n" +
-    "== Conversation History\n" +
-    "{{context}}\n\n" +
-    "== Current Conversation" +
-    "\nuser: {{question}}\n" +
-    "assistant:"
-);
-```
-
-The `textTemplate` node takes a template string as its argument. The template string is a string that can contain placeholders. The placeholders are enclosed in double curly braces, like this: `{{placeholder}}`. The node replaces placholders with the values of the properties that are passed to it.
-
-So, in the code snippet above, this node needs to have these two properties wired into it:
-
-- `context`, which will contain conversation history so far, and
-- `question`, the latest question the user asked. -->
-
-## Chapter 7: Let's go make something!
+## Chapter 7: Probes and continuous runs
