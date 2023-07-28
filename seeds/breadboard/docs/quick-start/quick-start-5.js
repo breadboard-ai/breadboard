@@ -5,21 +5,38 @@
  */
 
 import { Board } from "@google-labs/breadboard";
+import { Starter } from "@google-labs/llm-starter";
+
 import { config } from "dotenv";
 
 config();
 
 const board = new Board();
+const kit = board.addKit(Starter);
 
-const NEWS_URL =
-  "https://gist.githubusercontent.com/dglazkov/6f122553b4c08f0674187f79b19c01f4/raw/google-news.json";
+const NEWS_BOARD_URL =
+  "https://gist.githubusercontent.com/dglazkov/55db9bb36acd5ba5cfbd82d2901e7ced/raw/google-news-headlines.json";
 
-board
-  .input()
-  .wire(
-    "say->text",
-    board.include(NEWS_URL).wire("text->hear", board.output())
-  );
+const template = kit.textTemplate(
+  "Use the news headlines below to write a few sentences to" +
+    "summarize the latest news on this topic:\n\n##Topic:\n" +
+    "{{topic}}\n\n## Headlines {{headlines}}\n\\n## Summary:\n"
+);
+
+const input = board.input();
+input.wire(
+  "say->topic",
+  board.include(NEWS_BOARD_URL).wire(
+    "headlines->",
+    template.wire("topic<-say", input).wire(
+      "prompt->text",
+      kit
+        .textCompletion()
+        .wire("<-API_KEY.", kit.secrets(["API_KEY"]))
+        .wire("completion->say", board.output())
+    )
+  )
+);
 
 const result = await board.runOnce({ say: "Latest news on breadboards" });
 console.log("result", result);

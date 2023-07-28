@@ -261,8 +261,10 @@ Saving and loading boards means that we can now share the boards with others out
 
 As the capstone for this chapter, let's draw some diagrams. Every board can be turned into a [Mermaid](https://mermaid.js.org/) diagram. All we need to do is call the `mermaid` method:
 
+```js
 const diagram = board2.mermaid();
 console.log(diagram);
+```
 
 Running the program produces this:
 
@@ -339,7 +341,7 @@ For example, let's suppose our friend built this really neat graph that summariz
 Our friend published this graph at this URL:
 
 ```js
-const NEWS_URL =
+const NEWS_BOARD_URL =
   "https://gist.githubusercontent.com/dglazkov/6f122553b4c08f0674187f79b19c01f4/raw/google-news.json";
 ```
 
@@ -350,7 +352,7 @@ board
   .input()
   .wire(
     "say->text",
-    board.include(NEWS_URL).wire("text->hear", board.output())
+    board.include(NEWS_BOARD_URL).wire("text->hear", board.output())
   );
 ```
 
@@ -363,21 +365,75 @@ console.log("result", result);
 
 ... we'll get a response that looks something like this:
 
-```sh
+```js
 result {
-  hear: 'The latest news on breadboards include:\n' +
-    '- A new Arduino Nano ESP32 dev board that is IoT-friendly and low-cost\n' +
-    '- A new 32-bit Uno R4 version of the Arduino board that is based on the Renesas chip\n' +
-    '- A breadboard computer that is based on a 486 CPU\n' +
-    '- A breadboard console that recreates the classic ColecoVision game console\n' +
-    '- A new jumperless breadboard that makes it easier to create circuits\n' +
-    '- A new method for building circuits that is more flexible\n' +
-    '- A study that shows that breadboards can be used to create micro mercury trapped ion clocks\n' +
-    '- A blog post about a 98-year-old retired mechanic who now spends his time woodworking'
+  hear: 'Jumperless Breadboard Offers New Spin on Old Tech - Hackster.io\n' +
+    '> U.S - Department of Defense\n' +
+    '‘The photos are wowing all of us’: NASA reflects on one year of James Webb Telescope discoveries - KXAN.com\n' +
+    'Transistor Controlled Switching of an LED Display: A Radio Shack ... - All About Circuits\n' +
+    '10 hostess hacks to make your food look better than it is - The Mercury News\n' +
+    'Toward more flexible and rapid prototyping of electronic devices - MIT News\n' +
+    'Creatures of habit | Opinion | minicassia.com - Weekly News Journal\n' +
+    'Arduino and Espressif Partner Up for the Low-Cost IoT-Friendly Nano ESP32 Dev Board - Hackster.io\n' +
+    'Great Eastern FX launches silicon version of its Focus Fuzz – the ... - MusicRadar\n' +
+    'SAGE Journey program ignites interest in STEM - Symmetry magazine\n' +
+    'Precision Agriculture Takes Flight: Enhancing Farming Efficiency ... - EMSNow\n' +
+    'Arduino evolves with Renesas-based 32-bit Uno R4 versions - Electronics Weekly\n' +
+    'Podcast 220: Transparent Ice, Fake Aliens, And Bendy Breadboards ... - Hackaday\n' +
+    'Brand New Colecovision Console – On A Breadboard - Hackaday\n' +
+    "Teaching Method Increases Students' Interest in Programming and ... - University of Arkansas Newswire\n" +
+    '98-year-old retired mechanic now spends time woodworking - Bluefield Daily Telegraph\n' +
+    'Look Ma, No Wires: This Jumperless Breadboard Is a Magical Take on the Solderless Breadboard - Hackster.io\n' +
+    'Building Circuits Flexibly - Hackaday\n' +
+    "It's A 486 Computer, On A Breadboard - Hackaday\n" +
+    'Micro mercury trapped ion clock prototypes with 10 $$^{-14 ... - Nature.com'
 }
 ```
 
-You can see the source code for this chapter here: [./quick-start-5.js](./quick-start-5.js).
+Let's add a few more nodes to make the board that summarizes news on a given topic.
+
+First, we'll need a prompt that combines the topic we've provided, the headlines produced by our friend's graph, and some instructions on what to do with them. To do that, we'll use the `textTemplate` node from the [LLM Starter Kit](https://github.com/google/labs-prototypes/tree/main/seeds/llm-starter):
+
+```js
+const template = kit.textTemplate(
+  "Use the news headlines below to write a few sentences to" +
+    "summarize the latest news on this topic:\n\n##Topic:\n" +
+    "{{topic}}\n\n## Headlines {{headlines}}\n\\n## Summary:\n"
+);
+```
+
+The `textTemplate` node takes a template string as its argument. The template string is a string that can contain placeholders. The placeholders are enclosed in double curly braces, like this: `{{placeholder}}`. The node replaces placholders with the values of the properties that are passed to it.
+
+So, in the code snippet above, this node needs to have these two properties wired into it: `topic` and `headlines`.
+
+Additionally, we'll wire up the `textCompletion` node that we've learned about in Chapter 2:
+
+```js
+const input = board.input();
+input.wire(
+  "say->topic",
+  board.include(NEWS_BOARD_URL).wire(
+    "headlines->",
+    template.wire("topic<-say", input).wire(
+      "prompt->text",
+      kit
+        .textCompletion()
+        .wire("<-API_KEY.", kit.secrets(["API_KEY"]))
+        .wire("completion->say", board.output())
+    )
+  )
+);
+```
+
+After these changes, running our board produces a nice, concise summary:
+
+```sh
+result {
+  say: 'The latest news on breadboards include a new jumperless breadboard, a 486 computer built on a breadboard, and micro mercury trapped ion clock prototypes.'
+}
+```
+
+You can see the source code for this chapter here: [quick-start-5.js](./quick-start-5.js).
 
 ## Chapter 6: Boards with slots
 
