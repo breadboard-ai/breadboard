@@ -532,4 +532,105 @@ You can see the source code for this chapter here:
 - [quick-start-6a.js](./quick-start-6a.js) -- setting up a board with a slot
 - [quick-start-6b.js](./quick-start-6b.js) -- calling a slotted board.
 
-## Chapter 7: Probes and continuous runs
+## Chapter 7: Probes
+
+Let's explore another useful tool that is available in Breadboard. The `LogProbe` is a simple way to peek into what's happening in the Breadboard.
+
+Using `LogProbe` is fairly simple. Just add it as an extra parameter to `runOnce`:
+
+```js
+const result = await board.runOnce(
+  {
+    say: "Hi, how are you?",
+  },
+  new LogProbe()
+);
+console.log("result", result);
+```
+
+Now, in addition to printing the results, we will see a bunch of extra text in the console. Like this:
+
+```sh
+input {
+  descriptor: Node { id: 'input-2', type: 'input', configuration: undefined },
+  inputs: {},
+  outputs: { say: 'Hi, how are you?' }
+}
+node {
+  descriptor: Node {
+    id: 'secrets-4',
+    type: 'secrets',
+    configuration: { keys: [Array] }
+  },
+  inputs: { keys: [ 'API_KEY' ] },
+  outputs: { API_KEY: '<key here>' },
+}
+skip {
+  descriptor: Node { id: 'output-1', type: 'output', configuration: undefined },
+  inputs: { say: 'Hi, how are you?' },
+  missingInputs: [ 'hear' ]
+}
+```
+
+This text represents the actual steps that the board is taking to run. Each step has the same format:
+
+```sh
+event {
+  data
+}
+```
+
+There are four different kinds of events:
+
+- `input` -- this is printed when the node encounters an `input` node. As data, the probe will print out the internal representation of the node known as `descriptor`, as well as `inputs` and `outputs` for the input node.
+- `output` -- same, but for the `output` node.
+- `node` -- same, but for all other kinds of nodes.
+- `skip` -- this event happens when a node does not yet have the data for all its inputs. As data, the probe will supply `missingInputs`, which is a list of inputs that haven't yet been supplied by other nodes to successfully run this node.
+
+These events give us a pretty good way to see what's happening. By studying `inputs` and `outputs` fields of each event, we can see what is being passed. Very commonly, this shows us our mistakes of passing the wrong data or passing data to the wrong node.
+
+By itself, `skip` event is not a bad thing. It's just an indicator that the boards is looking at possible candidates for the next node to run, and this candidate isn't yet ready to run. However, the `skip` event can be very handy when troubleshooting boards that return nothing. Usually, the last statement in such a board will be a `skip` event indicating which inputs were missing. This is a decent way to find typos in our wiring.
+
+The `LogProbe` is just one kind of a probe that can be inserted into the board. You can make your own. To make your own probe, just use a built-in `EventTarget` class (available in both Node 19+ and as a Web API):
+
+```js
+const probe = new EventTarget();
+```
+
+Then, listen to any of the events above. For instance, let's make a simple probe that picks out the output of `textCompletion` node and prints it every time that node is run:
+
+```js
+probe.addEventListener("node", (event) => {
+  const data = event.detail;
+  if (data.descriptor.type == "text-completion") {
+    console.log("completion:", data.outputs.completion);
+  }
+});
+```
+
+Now, when we use this probe and run our board:
+
+```js
+const result = await board.runOnce(
+  {
+    say: "Hi, how are you?",
+  },
+  probe
+);
+console.log("result", result);
+```
+
+We will get this result:
+
+```sh
+completion: Hello, I am doing well. How are you?
+result {
+  say: 'Hi, how are you?',
+  hear: 'Hello, I am doing well. How are you?'
+}
+```
+
+You can see the source code for this chapter here:
+
+- [quick-start-7a.js](./quick-start-7a.js) -- using `LogProbe`
+- [quick-start-7b.js](./quick-start-7b.js) -- using custom probe.

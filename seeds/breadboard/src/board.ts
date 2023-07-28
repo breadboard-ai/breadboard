@@ -98,8 +98,8 @@ export class Board implements Breadboard {
       }
 
       if (descriptor.type === "output") {
-        yield new OutputStageResult(inputs);
         probe?.dispatchEvent(new ProbeEvent("output", { descriptor, inputs }));
+        yield new OutputStageResult(inputs);
         continue;
       }
 
