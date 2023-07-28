@@ -441,8 +441,95 @@ Including other boards is nifty, since it allows us to build modular boards. How
 
 In Breadboard, these places are called "slots", and there's a special node (helpfully called `slot`) that we can use to create slots.
 
-For instance, let's take our example from Chapter 5 and imagine that we showed the resulting board to our friend and they really liked the summarizer bit. Awesome! However, they are still playing with the different ways to get the news headlines and have a few different boards they'd like to use with this summarizer.
+For instance, let's take our example from Chapter 5 and imagine that we showed the resulting board to our friend and they really liked the summarizer bit. Awesome! However, they are still playing with the different ways to get the news headlines. They have a few different boards they'd like to use with this summarizer.
 
-In this case, what we need is a board with a slot: instead of including our friend's board like we did in a previous example, we need to leave room to insert any board -- so that our friend could experiemnt with all the cool news source-gathering boards that they're tinkering with.
+In this case, what we need is a board with a slot: instead of including our friend's board like we did in a previous example, we need to leave room to insert any board -- so that our friend could experiment with all the cool news source-gathering boards that they're tinkering with.
+
+Let's see if we can make something like that. First, we'll need to prepare the board with a slot. This part is fairly straightforward. Instead of using the `include` node, we replace it with the `slot` node:
+
+```diff
+-   board.include(NEWS_BOARD_URL).wire(
++   board.slot("news").wire(
+```
+
+We will end up with the board that looks like something like this:
+
+```js
+const input = board.input();
+input.wire(
+  "topic->",
+  board.slot("news").wire(
+    "headlines->",
+    template.wire("topic<-", input).wire(
+      "prompt->text",
+      kit
+        .textCompletion()
+        .wire("<-API_KEY.", kit.secrets(["API_KEY"]))
+        .wire("completion->summary", board.output())
+    )
+  )
+);
+```
+
+Note that we've tweaked the input and output to make them more descriptive. It's a nice thing to do when handing our own boards to our friends. The board now takes `topic` as the input and returns `summary` as the output.
+
+If we try to run this board now, we'll get an error:
+
+```
+Error: No graph found for slot "news"
+```
+
+This is expected. Our board has an empty slot. Without a board being slotted into it, this board can't run.
+
+As the next step, we share the board with our friend. The best way to do this is to save it as a file and then put it somewhere our friend can access:
+
+```js
+const json = JSON.stringify(board, null, 2);
+await writeFile("./docs/quick-start/news-summarizer.json", json);
+```
+
+Suppose we published it at this URL:
+
+```js
+const NEWS_SUMMARIZER_URL =
+  "https://gist.githubusercontent.com/dglazkov/dd3f071260a1c3b97aa81beac6045da3/raw/news-summarizer.json";
+```
+
+Now, when our friend wants to use this board, they need to do something like this. Load their newsboard:
+
+```js
+const NEWS_BOARD_URL =
+  "https://gist.githubusercontent.com/dglazkov/55db9bb36acd5ba5cfbd82d2901e7ced/raw/google-news-headlines.json";
+
+const news = await Board.load(NEWS_BOARD_URL);
+```
+
+Then load our summarizer board, with the newsboard slotted in:
+
+```js
+const board = await Board.load(NEWS_SUMMARIZER_URL, { news });
+```
+
+When run, the board will now produce expected results! These lines:
+
+```js
+const result = await board.runOnce({ topic: "Latest news on breadboards" });
+console.log("result", result);
+```
+
+Will give us output like this:
+
+```sh
+result {
+  summary: 'The latest news on breadboards include a new jumperless breadboard, a programmable precision resistor, and a 486 computer built on a breadboard. In addition, there are new developments in the field of flexible and rapid prototyping of electronic devices.'
+}
+```
+
+Our friend is thrilled! To try a different board, all they need to do is supply a different `NEWS_BOARD_URL`. What's even cooler is that our workflows are decoupled. We can keep improving the summarizer and publishing better iterations. As long as the URL stays the same and input/outputs stay the same, our friend's contraption will keep on working.
+
+You can see the source code for this chapter here:
+
+- [quick-start-6a.js](./quick-start-6a.js) -- setting up a board with a slot
+- [quick-start-6b.js](./quick-start-6b.js) -- calling a slotted board.
 
 ## Chapter 7: Probes and continuous runs

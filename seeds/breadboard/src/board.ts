@@ -168,9 +168,9 @@ export class Board implements Breadboard {
     return new Node(this, "reflect", { ...rest }, $id);
   }
 
-  slot(config: OptionalIdConfiguration = {}): Node {
+  slot(slot: string, config: OptionalIdConfiguration = {}): Node {
     const { $id, ...rest } = config;
-    return new Node(this, "slot", { ...rest }, $id);
+    return new Node(this, "slot", { slot, ...rest }, $id);
   }
 
   addEdge(edge: Edge) {

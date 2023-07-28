@@ -99,7 +99,7 @@ export class Core {
     const { slot, ...args } = inputs as SlotInput;
     if (!slot) throw new Error("To use a slot, we need to specify its name");
     const graph = this.#slots[slot];
-    if (!graph) throw new Error(`No graph found for slot ${slot}`);
+    if (!graph) throw new Error(`No graph found for slot "${slot}"`);
     const slottedBreadboard = await Board.fromGraphDescriptor(graph);
     return await slottedBreadboard.runOnce(
       args,

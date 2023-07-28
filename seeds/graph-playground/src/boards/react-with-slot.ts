@@ -30,9 +30,8 @@ const secrets = kit.secrets(["API_KEY", "GOOGLE_CSE_ID"]);
 // This is the context that ReAct algo accumulates.
 const context = kit.localMemory();
 
-const reflectionSlot = board.slot({
+const reflectionSlot = board.slot("tools", {
   $id: "get-slot",
-  slot: "tools",
   graph: true,
 });
 
@@ -96,9 +95,8 @@ board.input("Ask ReAct a question").wire(
             .wire(
               "*->",
               board
-                .slot({
+                .slot("tools", {
                   $id: "tools-slot",
-                  slot: "tools",
                 })
                 .wire("text->Observation", context)
             )
