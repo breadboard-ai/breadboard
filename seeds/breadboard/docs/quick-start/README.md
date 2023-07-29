@@ -582,14 +582,14 @@ event {
 
 There are four different kinds of events:
 
-- `input` -- this is printed when the node encounters an `input` node. As data, the probe will print out the internal representation of the node known as `descriptor`, as well as `inputs` and `outputs` for the input node.
+- `input` -- this is printed when an `input` node is visited. As data, the probe will print out the internal representation of the node known as `descriptor`, as well as `inputs` and `outputs` for the input node.
 - `output` -- same, but for the `output` node.
 - `node` -- same, but for all other kinds of nodes.
-- `skip` -- this event happens when a node does not yet have the data for all its inputs. As data, the probe will supply `missingInputs`, which is a list of inputs that haven't yet been supplied by other nodes to successfully run this node.
+- `skip` -- this event happens when a node does not yet have the data for all its inputs. As data, the probe will supply `missingInputs`, which is a list of inputs that haven't yet been supplied by other nodes to visit this node.
 
 These events give us a pretty good way to see what's happening. By studying `inputs` and `outputs` fields of each event, we can see what is being passed. Very commonly, this shows us our mistakes of passing the wrong data or passing data to the wrong node.
 
-By itself, `skip` event is not a bad thing. It's just an indicator that the boards is looking at possible candidates for the next node to run, and this candidate isn't yet ready to run. However, the `skip` event can be very handy when troubleshooting boards that return nothing. Usually, the last statement in such a board will be a `skip` event indicating which inputs were missing. This is a decent way to find typos in our wiring.
+By itself, `skip` event is not a bad thing. It's just an indicator that the boards is looking at possible candidates for the next node to visit, and this candidate isn't yet ready to run. However, the `skip` event can be very handy when troubleshooting boards that return nothing. Usually, the last statement in such a board will be a `skip` event indicating which inputs were missing. This is a decent way to find typos in our wiring.
 
 The `LogProbe` is just one kind of a probe that can be inserted into the board. You can make your own. To make your own probe, just use a built-in `EventTarget` class (available in both Node 19+ and as a Web API):
 
@@ -634,3 +634,19 @@ You can see the source code for this chapter here:
 
 - [quick-start-7a.js](./quick-start-7a.js) -- using `LogProbe`
 - [quick-start-7b.js](./quick-start-7b.js) -- using custom probe.
+
+## Chapter 8: Continuous runs
+
+If all the while you were wondering why the method to run a board is called `runOnce`, this chapter has the answers.
+
+Boards can have multiple `input` and `output` nodes, and these nodes can be visited more than once. For example, we might have a chat bot that carries a multi-turn conversation with the user or another bot. To enable such scenarios, boards have the `run` method. This method is what's called an [asynchronous generator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncGenerator). It's typically used like this:
+
+```js
+for await (const result of board.run()) {
+  // do something with result
+}
+```
+
+A good way to think of what the code above describes is that when we ask the board to run, it will occasionally pause and give us a chance to interact with it.
+
+The board pauses for two particular occasions: to ask for inputs and to provide outputs.
