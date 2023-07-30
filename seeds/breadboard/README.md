@@ -26,3 +26,4 @@ npm install @google-labs/llm-starter
 
 - [Breadboard Tutorial](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/tutorial/README.md)
 - [Node Types Reference](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/nodes.md)
+- [Wiring spec](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/wires.md)
