@@ -23,7 +23,7 @@ In its long form, it has the following format:
 {property}{direction}{property}{qualifier}
 ```
 
-Here's an example of a wire spec where in the long form:
+Here's an example of the long-form spec:
 
 ```sh
 "foo->bar."
