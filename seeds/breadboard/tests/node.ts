@@ -10,6 +10,7 @@ import { parseSpec } from "../src/node.js";
 
 test("parseSpec: control-only", (t) => {
   t.deepEqual(parseSpec(""), { ltr: true, edge: {} });
+  t.deepEqual(parseSpec("->"), { ltr: true, edge: {} });
   t.deepEqual(parseSpec("<-"), { ltr: false, edge: {} });
 });
 
