@@ -35,10 +35,5 @@ probe.addEventListener("node", (event) => {
   }
 });
 
-const result = await board.runOnce(
-  {
-    say: "Hi, how are you?",
-  },
-  probe
-);
+const result = await board.runOnce({ say: "Hi, how are you?" }, probe);
 console.log("result", result);

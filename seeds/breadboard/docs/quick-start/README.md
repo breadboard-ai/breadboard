@@ -539,6 +539,10 @@ Let's explore another useful tool that is available in Breadboard. The `LogProbe
 Using `LogProbe` is fairly simple. Just add it as an extra parameter to `runOnce`:
 
 ```js
+import { Board, LogProbe } from "@google-labs/breadboard";
+
+// ...
+
 const result = await board.runOnce(
   {
     say: "Hi, how are you?",
@@ -589,7 +593,7 @@ There are four different kinds of events:
 
 These events give us a pretty good way to see what's happening. By studying `inputs` and `outputs` fields of each event, we can see what is being passed. Very commonly, this shows us our mistakes of passing the wrong data or passing data to the wrong node.
 
-By itself, `skip` event is not a bad thing. It's just an indicator that the boards is looking at possible candidates for the next node to visit, and this candidate isn't yet ready to run. However, the `skip` event can be very handy when troubleshooting boards that return nothing. Usually, the last statement in such a board will be a `skip` event indicating which inputs were missing. This is a decent way to find typos in our wiring.
+By itself, `skip` event is not a bad thing. It's just an indicator that the boards is looking at possible candidates for the next node to visit, and this candidate isn't yet ready (`missingInputs` will tell you why). However, the `skip` event can be very handy when troubleshooting boards that return nothing. Usually, the last statement in such a board will be a `skip` event indicating which inputs were missing. This is a decent way to find typos in our wiring.
 
 The `LogProbe` is just one kind of a probe that can be inserted into the board. You can make your own. To make your own probe, just use a built-in `EventTarget` class (available in both Node 19+ and as a Web API):
 
@@ -611,12 +615,7 @@ probe.addEventListener("node", (event) => {
 Now, when we use this probe and run our board:
 
 ```js
-const result = await board.runOnce(
-  {
-    say: "Hi, how are you?",
-  },
-  probe
-);
+const result = await board.runOnce({ say: "Hi, how are you?" }, probe);
 console.log("result", result);
 ```
 
@@ -637,16 +636,220 @@ You can see the source code for this chapter here:
 
 ## Chapter 8: Continuous runs
 
-If all the while you were wondering why the method to run a board is called `runOnce`, this chapter has the answers.
+If all the while you were wondering why the method to run a board is called `runOnce` ("once"? why just once?!), this chapter has the answers.
 
 Boards can have multiple `input` and `output` nodes, and these nodes can be visited more than once. For example, we might have a chat bot that carries a multi-turn conversation with the user or another bot. To enable such scenarios, boards have the `run` method. This method is what's called an [asynchronous generator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncGenerator). It's typically used like this:
 
 ```js
-for await (const result of board.run()) {
-  // do something with result
+for await (const stop of board.run()) {
+  // do something with `stop`
 }
 ```
 
 A good way to think of what the code above describes is that when we ask the board to run, it will occasionally pause and give us a chance to interact with it.
 
-The board pauses for two particular occasions: to ask for inputs and to provide outputs.
+The board pauses for two particular occasions: to ask for inputs and to provide outputs. These two occasions are called "stages": namely, the input stage and the output stage.
+
+To find out which stage the board stopped for, we check for `seeksInput` property on `stop`:
+
+```js
+for await (const stop of board.run()) {
+  if (stop.seeksInput) {
+    // board is asking us to provide input
+  } else {
+    // board is providing output
+  }
+}
+```
+
+For example, if we take this simple board:
+
+```js
+const output = board.output();
+board.input().wire(
+  "say->text",
+  kit
+    .textCompletion()
+    .wire("completion->hear", output)
+    .wire("<-API_KEY", kit.secrets(["API_KEY"]))
+);
+```
+
+We can make run using the `run` method like so:
+
+```js
+for await (const stop of board.run()) {
+  if (stop.seeksInputs) {
+    stop.inputs = { say: "Hi, how are you?" };
+  } else {
+    console.log("result", stop.outputs);
+  }
+}
+```
+
+If our board only has outputs that are visited once, we don't need to write all this code. This is why `runOnce` method exists. It exits after receiving the first output.
+
+See the source code for this chapter: [quick-start-8.js](./quick-start-8.js).
+
+## Chapter 9: Let's build a chat bot.
+
+However, what if we want to keep going? Let's build a very, very simple chat bot. Unlike in previous chapters, here we'll make a tiny, yet full-fledged program, so we'll need a few more Javascript imports than usual:
+
+```js
+import readline from "node:readline/promises";
+import { stdin, stdout } from "node:process";
+
+import { config } from "dotenv";
+
+import { Board } from "@google-labs/breadboard";
+import { Starter } from "@google-labs/llm-starter";
+```
+
+The first two lines give us just enough bits to add the simplest possible interactivity: asking program user for input.
+
+Now, let's create a new board, add the [LLM Starter Kit](https://github.com/google/labs-prototypes/tree/main/seeds/llm-starter) and load the `.env` variables, just like we did in Chapter 2.
+
+```js
+config();
+
+const board = new Board();
+const kit = board.addKit(Starter);
+```
+
+We are ready to place some nodes on the board. Let's start with `input` and `output`. Since we already know that we're building a chat bot that looks for input right after producing the output, we'll go ahead and wire `output` right back to `input`:
+
+```js
+const input = board.input();
+const output = board.output();
+output.wire("->", input);
+```
+
+This wiring above is new to this tutorial, since it doesn't have the familiar property name in it. It's a control-only wire. It does not pass any data, just tells the board to visit `input` after `output`.
+
+Next, let's add some way to store the history of the conversation between the user and our chat bot. To do this, we'll need the `localMemory` node from the [LLM Starter Kit](https://github.com/google/labs-prototypes/tree/main/seeds/llm-starter):
+
+```js
+const history = kit.localMemory();
+input.wire("say->user", history);
+```
+
+The `localMemory` node is super-simple. It accumulates lines of text. If you give it a property as input, it will append it as another line of text, formatting the line as `{{property_name}}: {{proprety_value}}` and, as output, return all accumulated lines so far as `context` property.
+
+This allows us to create a running list of the interactions between the user and the chat bot. The last line in the code snippet above says: "append the value of the `say` property to the end of your list as `user: {{value}}`.
+
+As the next step, let's place and wire the `textCompletion` node:
+
+```js
+const completion = kit
+  .textCompletion()
+  .wire("completion->hear", output)
+  .wire("completion->assistant", history)
+  .wire("<-API_KEY.", kit.secrets(["API_KEY"]));
+```
+
+Let's look at this node's wiring. The first two make sense. We want the result of text completion to go to output, and we want it in the conversation history. The third one is also familiar, but it has a weird dot (`.`) at the end. What is that?
+
+The dot signifies that this wire is a constant. It remembers the last value passed through it and makes it always available to the receiving node. It's important here, because otherwise, we'd have to find ways to visit the `secrets` node with on every cycle of the loop.
+
+So we have the `textCompletion` all set up. But what's the prompt that goes into it? To create a prompt, we need a `textTemplate` node. Let's place and wire it:
+
+```js
+kit
+  .textTemplate(
+    "This is a conversation between a friendly assistant and their user.\n" +
+      "You are the assistant and your job is to try to be helpful,\n" +
+      "empathetic, and fun.\n\n" +
+      "{{context}}\n\n" +
+      "== Current Conversation\n" +
+      "user: {{question}}\n" +
+      "assistant:"
+  )
+  .wire("prompt->text", completion)
+  .wire("question<-say", input)
+  .wire("<-context", history)
+  .wire("<-context", board.passthrough({ context: "== Conversation History" }));
+```
+
+Let's see what's going on with the wires. The first two are easy-peasy: we just wire the template to completion and the input to template.
+
+But... why the heck do we have two `<-context` wires?! The first one makes sense. It wires our conversation history to the template, the output of the `localMemory` node as `context` template placeholder.
+
+The second `<-context` wire is necessary for the very first time. When we are just starting the conversation, and there's no history, we must put something into the `context` placeholder. Otherwise, our board will complain of the missing inputs.
+
+To do that, we employ a handy node called `passthrough`. The `passthrough` node is the simplest of them all. It literally just passes its inputs to its outputs. Every computing machine needs a no-op node, and Breadboard is no exception.
+
+Here, we supply property `context` as its configuration, so that when this node is visited, `context` will show up as the output, and provide the very first value for the `{{context}}` placeholder in the template. This node will not be revisited again in the following iterations -- instead, the `localMemory` node that holds the conversation history will supply the value.
+
+Whew. That was a lot. Are we ready to run the board? Not quite yet.
+
+If we try to run the board now, it will simply exit without doing anything. We're missing one more piece of the puzzle: the entry point that leads to the initial `input` node.
+
+Here's how to think about that. Prior to running, a board collects entry nodes. These are the nodes that have no wires coming into them. These are the nodes that the board begins visiting first.
+
+In all of the previous chapters, the `input` node was the natural entry point. There were no wires coming into it. This changed when we added the wire that connected the `output` back to `input`. With this addition, the `input` node is no longer considered to be an entry node -- it has a wire from `output` coming into it.
+
+How do we fix that? It's actually fairly easy. All we need to do is place another `passthrough` node on the board and wire it to the input:
+
+```js
+board.passthrough().wire("->", input);
+```
+
+Now, when the board runs, it will see this `passthrough` node as the entry, and will make its way to the `input`, starting the chat bot cycle.
+
+Okay. We have a working board. Let's noew write a few more lines of plumbing to turn it into a chat bot program.
+
+Prepare the `readline` interface so that the program can ask the user questions, and print out a welcoming preamble:
+
+```js
+const ask = readline.createInterface({ input: stdin, output: stdout });
+console.log("Hello! I'm your friendly assistant. How can I help you today?");
+console.log("Type 'exit' to end conversation.");
+```
+
+Use the continuous run pattern we've learned in the previous chapter:
+
+```js
+for await (const stop of board.run()) {
+  if (stop.seeksInputs) {
+    const say = await ask.question("> ");
+    if (say === "exit") break;
+    stop.inputs = { say };
+  } else {
+    console.log(stop.outputs.hear);
+  }
+}
+```
+
+Note that because the board stops for us, we have the power to break out of the cycle. Here, we simply check for `exit` as the input, but I hope this gives you ideas on how to make continuously-run boards where you retain control of when to stop a run.
+
+Finally, close the `readline` interface.
+
+```js
+ask.close();
+```
+
+Now, when we run the program we wrote, we'll see something like this:
+
+```
+Hello! I'm your friendly assistant. How can I help you today?
+Type 'exit' to end conversation.
+> I am hungry
+Where would you like to eat?
+> Somewhere cozy
+What about The Cozy Cafe?
+> ooh, that sounds great!
+Great! What would you like to order?
+> a burger with fries
+Got it. And what would you like to drink?
+> ginger ale
+Perfect. And what size would you like?
+> extra large
+Okay, so a large burger with fries and a large ginger ale. Anything else?
+> that's it, thank you
+```
+
+Congrats! We made us a bot.
+
+See the source code for it here: [quick-start-9.js](./quick-start-9.js).
+
+Hopefully, this tutorial inspired you to make things with Breadboard. Go get out those wires and start placing nodes. And don't forget to have fun.

@@ -43,7 +43,7 @@ We will get this output:
 
 ### `local-memory`
 
-Use this node as a simple text line-based accumulator. Every input is added to the list as a line, and the list is passed the `context` output property. Every time the node is visited by the graph, the list keeps growing.
+Use this node as a simple text line-based accumulator. Every input is added to the list as another line of text, formatted as `{{property_name}}: {{proprety_value}}` and the list is passed the `context` output property. Every time the node is visited by the graph, the list keeps growing.
 
 #### Example:
 
