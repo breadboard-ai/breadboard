@@ -30,9 +30,9 @@ const json = JSON.stringify(board, null, 2);
 
 import { writeFile } from "fs/promises";
 
-await writeFile("./quick-start-4.json", json);
+await writeFile("./docs/tutorial/tutorial-4.json", json);
 
-const board2 = await Board.load("./quick-start-4.json");
+const board2 = await Board.load("./docs/tutorial/tutorial-4.json");
 
 const result = await board2.runOnce({
   say: "Hi, how are you?",

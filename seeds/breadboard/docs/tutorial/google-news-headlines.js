@@ -41,4 +41,4 @@ const result = await board.runOnce({ topic: "Latest news on breadboards" });
 console.log("result", result);
 
 const json = JSON.stringify(board, null, 2);
-await writeFile("./docs/quick-start/google-news-headlines.json", json);
+await writeFile("./docs/tutorial/google-news-headlines.json", json);

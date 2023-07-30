@@ -37,4 +37,4 @@ input.wire(
 );
 
 const json = JSON.stringify(board, null, 2);
-await writeFile("./docs/quick-start/news-summarizer.json", json);
+await writeFile("./docs/tutorial/news-summarizer.json", json);

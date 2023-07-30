@@ -1,4 +1,4 @@
-# Breadboard quick start
+# Breadboard Tutorial
 
 If you like learning by starting with simple examples that get more complex with each chapter, this guide might be a good fit.
 
@@ -68,7 +68,7 @@ result { hear: 'Hello, world?' }
 > 5. Since the next node is the `output` node, that's the node that receives the `text` property.
 > 6. The `output` node is also pretty simple. It takes the property bag it received and returns it as the of the `runOnce` method.
 
-You can see the source of this program [here](./quick-start-1.js).
+You can see the source of this program here: [tutorial-1.js](./tutorial-1.js).
 
 ## Chapter 2: Wiring more nodes
 
@@ -153,7 +153,7 @@ result { hear: 'Doing okay.' }
 
 Oh hey! Our program is generating text using PaLM API.
 
-You can see its source code here: [quick-start-2.js](./quick-start-2.js).
+You can see its source code here: [tutorial-2.js](./tutorial-2.js).
 
 ## Chatper 3: Fun with wires
 
@@ -209,7 +209,7 @@ board
 
 It is more compact, but can be harder to read for those who are just starting to learn Breadboard. It's up to you to decide which style you prefer.
 
-You can see the source code from this chapter here: [quick-start-3.js](./quick-start-3.js).
+You can see the source code from this chapter here: [tutorial-3.js](./tutorial-3.js).
 
 ## Chapter 4: Loading, saving, and visualizing boards
 
@@ -232,13 +232,13 @@ The resulting JSON string can be trivially saved into a file:
 ```js
 import { writeFile } from "fs/promises";
 
-await writeFile("quick-start-4.json", json);
+await writeFile("./docs/tutorial/tutorial-4.json", json);
 ```
 
 ... and loaded from file with `Board.load`:
 
 ```js
-const board2 = await Board.load("./quick-start-4.json");
+const board2 = await Board.load("./docs/tutorial/tutorial-4.json");
 ```
 
 Once we have the new board loaded, we can run it:
@@ -330,7 +330,7 @@ Coincidentally, Github Markdown has great support for Mermaid. Just paste the Me
 ```
 ````
 
-You can see this chapter's source code here: [quick-start-4.js](./quick-start-4.js).
+You can see this chapter's source code here: [tutorial-4.js](./tutorial-4.js).
 
 ## Chapter 5: Including other boards
 
@@ -433,7 +433,7 @@ result {
 }
 ```
 
-You can see the source code for this chapter here: [quick-start-5.js](./quick-start-5.js).
+You can see the source code for this chapter here: [tutorial-5.js](./tutorial-5.js).
 
 ## Chapter 6: Boards with slots
 
@@ -485,7 +485,7 @@ As the next step, we share the board with our friend. The best way to do this is
 
 ```js
 const json = JSON.stringify(board, null, 2);
-await writeFile("./docs/quick-start/news-summarizer.json", json);
+await writeFile("./docs/tutorial/news-summarizer.json", json);
 ```
 
 Suppose we published it at this URL:
@@ -529,8 +529,8 @@ Our friend is thrilled! To try a different board, all they need to do is supply 
 
 You can see the source code for this chapter here:
 
-- [quick-start-6a.js](./quick-start-6a.js) -- setting up a board with a slot
-- [quick-start-6b.js](./quick-start-6b.js) -- calling a slotted board.
+- [tutorial-6a.js](./tutorial-6a.js) -- setting up a board with a slot
+- [tutorial-6b.js](./tutorial-6b.js) -- calling a slotted board.
 
 ## Chapter 7: Probes
 
@@ -631,8 +631,8 @@ result {
 
 You can see the source code for this chapter here:
 
-- [quick-start-7a.js](./quick-start-7a.js) -- using `LogProbe`
-- [quick-start-7b.js](./quick-start-7b.js) -- using custom probe.
+- [tutorial-7a.js](./tutorial-7a.js) -- using `LogProbe`
+- [tutorial-7b.js](./tutorial-7b.js) -- using custom probe.
 
 ## Chapter 8: Continuous runs
 
@@ -689,7 +689,7 @@ for await (const stop of board.run()) {
 
 If our board only has outputs that are visited once, we don't need to write all this code. This is why `runOnce` method exists. It exits after receiving the first output.
 
-See the source code for this chapter: [quick-start-8.js](./quick-start-8.js).
+See the source code for this chapter: [tutorial-8.js](./tutorial-8.js).
 
 ## Chapter 9: Let's build a chat bot.
 
@@ -850,6 +850,6 @@ Okay, so a large burger with fries and a large ginger ale. Anything else?
 
 Congrats! We made us a bot.
 
-See the source code for it here: [quick-start-9.js](./quick-start-9.js).
+See the source code for it here: [tutorial-9.js](./tutorial-9.js).
 
-Hopefully, this tutorial inspired you to make things with Breadboard. Go get out those wires and start placing nodes. And don't forget to have fun.
+Hopefully, this tutorial inspired you to make things with Breadboard. Get out those wires and start placing nodes. And don't forget to have fun.
