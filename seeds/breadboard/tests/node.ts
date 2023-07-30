@@ -16,6 +16,7 @@ test("parseSpec: control-only", (t) => {
 
 test("parseSpec: all-value", (t) => {
   t.deepEqual(parseSpec("*"), { ltr: true, edge: { out: "*" } });
+  t.deepEqual(parseSpec("*->"), { ltr: true, edge: { out: "*" } });
   t.deepEqual(parseSpec("->*"), { ltr: true, edge: { out: "*" } });
   t.deepEqual(parseSpec("<-*"), { ltr: false, edge: { out: "*" } });
   t.deepEqual(parseSpec("*<-"), { ltr: false, edge: { out: "*" } });
