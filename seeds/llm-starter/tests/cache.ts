@@ -23,6 +23,13 @@ test("should return the value for a key that has been set", async (t) => {
   t.is(result, "value");
 });
 
+test("should return the value for a structured key that has been set", async (t) => {
+  const cache = cacheManager.getCache({ version: "1.0.1" });
+  await cache.set({ key: 0 }, "value");
+  const result = await cache.get({ key: 0 });
+  t.is(result, "value");
+});
+
 test("should overwrite the value for a key that has been set", async (t) => {
   const cache = cacheManager.getCache({ version: "1.0.2" });
   await cache.set("key", "value");

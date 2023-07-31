@@ -10,8 +10,8 @@ import { open, Database } from "sqlite";
 import sqlite3 from "sqlite3";
 
 export interface Cache {
-  get(key: string): Promise<string | null>;
-  set(key: string, value: string): Promise<void>;
+  get(key: string | object): Promise<string | null>;
+  set(key: string | object, value: string): Promise<void>;
   clear(): Promise<void>;
 }
 
@@ -19,14 +19,18 @@ export interface CacheManager {
   getCache(model: object): Cache;
 }
 
+function getCacheKey(key: object | string): string {
+  const hash = createHash("md5");
+  hash.update(stringify(key));
+  return hash.digest("hex");
+}
+
 export class SQLiteCache implements Cache {
   private dbPromise: Promise<Database>;
   private tableName: string;
 
-  constructor(model: object, dbPromise: Promise<Database>) {
-    const hash = createHash("md5");
-    hash.update(stringify(model));
-    this.tableName = "cache_" + hash.digest("hex");
+  constructor(model: string | object, dbPromise: Promise<Database>) {
+    this.tableName = "cache_" + getCacheKey(model);
 
     this.dbPromise = this.createTable(dbPromise);
   }
@@ -39,20 +43,20 @@ export class SQLiteCache implements Cache {
     return db;
   }
 
-  async get(key: string): Promise<string | null> {
+  async get(key: string | object): Promise<string | null> {
     const db = await this.dbPromise;
     const row = await db.all(
       `SELECT value FROM ${this.tableName} WHERE key = ?`,
-      [key]
+      [getCacheKey(key)]
     );
     return row.length ? row[0].value : null;
   }
 
-  async set(key: string, value: string): Promise<void> {
+  async set(key: string | object, value: string): Promise<void> {
     const db = await this.dbPromise;
     await db.run(
       `INSERT OR REPLACE INTO ${this.tableName}(key, value) VALUES (?, ?)`,
-      [key, value]
+      [getCacheKey(key), value]
     );
   }
 
