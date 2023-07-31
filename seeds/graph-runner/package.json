@@ -1,8 +1,7 @@
 {
   "name": "@google-labs/graph-runner",
-  "private": true,
   "version": "0.0.1",
-  "description": "Reference implementation of the generative app composition graph traversal",
+  "description": "Reference implementation of generative app composition graph traversal",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
   "types": "dist/src/index.d.ts",
