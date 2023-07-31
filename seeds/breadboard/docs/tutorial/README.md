@@ -334,7 +334,7 @@ You can see this chapter's source code here: [tutorial-4.js](./tutorial-4.js).
 
 ## Chapter 5: Including other boards
 
-In addition to loading saved boards, we can also include them into our board. For this, we need the `include` node, which acts as a sort of instance board-to-node converter: just give it the URL of the serialized boar, and it will pretend as if this whole board is just one node.
+In addition to loading saved boards, we can also include them into our board. For this, we need the `include` node, which acts as a sort of instant board-to-node converter: just give it the URL of a serialized board, and it will pretend as if that whole board is just one node.
 
 For example, let's suppose our friend built this really neat board that summarizes latest news on a topic. We supply the topic as input, and get summary as output. The board takes in an input of `topic`, and when run, outputs `headlines`.
 
