@@ -123,7 +123,7 @@ b.wire("*<-", a);
 
 ## Constant qualifier
 
-Adding a dot (`.`) at the end of the spec marks the wire as "constant". Constant wires remember the last value that passed through the and make it always available for consumption by the receiving node.
+Adding a dot (`.`) at the end of the spec marks the wire as "constant". Constant wires remember the last value that passed through them and make it always available for consumption by the receiving node.
 
 ```js
 // This is a constant wire:
