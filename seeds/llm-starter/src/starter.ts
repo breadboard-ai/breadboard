@@ -117,6 +117,11 @@ export class Starter implements Kit {
     return this.#nodeFactory("text-assets-from-path", { ...rest }, $id);
   }
 
+  cache(config: OptionalIdConfiguration = {}): BreadboardNode {
+    const { $id, ...rest } = config;
+    return this.#nodeFactory("cache", { ...rest }, $id);
+  }
+
   secrets(
     keys: string[],
     config: OptionalIdConfiguration = {}

@@ -5,11 +5,16 @@
  */
 
 import type { InputValues } from "@google-labs/graph-runner";
-import { EmbedTextResponse, palm } from "@google-labs/palm-lite";
+import {
+  EmbedTextResponse,
+  PalmModelMethod,
+  palm,
+} from "@google-labs/palm-lite";
 
 import jsonata from "jsonata";
 
 import type { VectorDocument } from "../vector-database.js";
+import { CacheManager } from "../cache.js";
 
 type EmbedStringInputs = {
   /**
@@ -26,6 +31,10 @@ type EmbedStringInputs = {
    * The Google Cloud Platform API key
    */
   API_KEY: string;
+  /**
+   * Cache to use for storing results. Optional.
+   */
+  cache?: CacheManager;
 };
 
 export default async (inputs: InputValues) => {
@@ -35,15 +44,28 @@ export default async (inputs: InputValues) => {
     throw new Error("Embedding requires `documents` input");
 
   const expression = jsonata(values.expression ?? "text");
+  const cache = values.cache?.getCache({
+    palm: palm(values.API_KEY).getModelId(PalmModelMethod.EmbedText),
+  });
 
   const results = values.documents.map(async (doc) => {
     const text = await expression.evaluate(doc);
-    const request = palm(values.API_KEY).embedding({ text });
-    const data = await fetch(request);
-    const response = (await data.json()) as EmbedTextResponse;
-    const embedding = response?.embedding?.value;
+    const query = { text };
 
-    if (!embedding) throw new Error(`No embedding returned in ${response}`);
+    let embedding = (await cache?.get(query)) as
+      | VectorDocument["embedding"]
+      | undefined;
+
+    if (!embedding) {
+      const request = palm(values.API_KEY).embedding(query);
+      const data = await fetch(request);
+      const response = (await data.json()) as EmbedTextResponse;
+      embedding = response?.embedding?.value;
+
+      if (!embedding) throw new Error(`No embedding returned in ${response}`);
+
+      cache?.set(query, embedding);
+    }
 
     const result = { ...doc } as VectorDocument;
     result.embedding = embedding;

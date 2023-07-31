@@ -26,6 +26,7 @@ import add_to_vector_database from "./nodes/add-to-vector-database.js";
 import query_vector_database from "./nodes/query-vector-database.js";
 import embed_docs from "./nodes/embed-docs.js";
 import embed_string from "./nodes/embed-string.js";
+import cache from "./nodes/cache.js";
 
 export const coreHandlers = {
   vars,
@@ -39,6 +40,7 @@ export const coreHandlers = {
   query_vector_database,
   embed_docs,
   embed_string,
+  cache,
   "prompt-template": promptTemplate,
   "text-completion": textCompletion,
   "local-memory": localMemory,

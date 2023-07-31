@@ -21,6 +21,10 @@ findFileBySimilarity.input("Provide a path to a directory to search").wire(
       .embedDocs()
       .wire("<-API_KEY", kit.secrets(["API_KEY"]))
       .wire(
+        "<-cache",
+        kit.cache().wire("path<-CACHE_DB", kit.secrets(["CACHE_DB"]))
+      )
+      .wire(
         "documents",
         kit
           .addToVectorDatabase()
