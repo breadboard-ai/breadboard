@@ -117,15 +117,6 @@ export class Node implements BreadboardNode {
     this.#breadboard.addNode(this);
   }
 
-  /**
-   * Wires the current node to another node.
-   *
-   * Use this method to wire nodes together.
-   *
-   * @param spec - the wiring spec. See the [wiring spec](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/wires.md) for more details.
-   * @param to - the node to wire this node with.
-   * @returns - the current node, to enable chaining.
-   */
   wire(spec: string, to: BreadboardNode): BreadboardNode {
     const { ltr, edge } = parseSpec(spec);
     const result: Edge = {

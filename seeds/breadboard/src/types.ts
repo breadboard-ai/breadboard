@@ -59,16 +59,42 @@ export interface KitConstructor<T extends Kit> {
   new (nodeFactory: NodeFactory): T;
 }
 
+/**
+ * Details of the `ProbeEvent` event.
+ */
 export interface ProbeDetails {
+  /**
+   * Internal representation of the node that is placed on the board.
+   */
   descriptor: NodeDescriptor;
+  /**
+   * The input values the node was passed.
+   */
   inputs: InputValues;
+  /**
+   * Any missing inputs that the node was expecting.
+   * This property is only populated for `skip` event.
+   */
   missingInputs?: string[];
+  /**
+   * The output values the node provided.
+   */
   outputs?: OutputValues;
+  /**
+   * The nesting level of the node.
+   * When a board contains included or slotted boards, this level will
+   * increment for each level of nesting.
+   */
   nesting?: number;
   sources?: string[];
   safetyLabel?: string;
 }
 
+/**
+ * A probe event that is distpached during board run.
+ *
+ * See [Chapter 7: Probes](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-7-probes) for more information.
+ */
 export type ProbeEvent = CustomEvent<ProbeDetails>;
 
 export interface Breadboard extends GraphDescriptor {
@@ -78,7 +104,22 @@ export interface Breadboard extends GraphDescriptor {
 }
 
 export interface BreadboardNode extends NodeDescriptor {
+  /**
+   * Wires the current node to another node.
+   *
+   * Use this method to wire nodes together.
+   *
+   * @param spec - the wiring spec. See the [wiring spec](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/wires.md) for more details.
+   * @param to - the node to wire this node with.
+   * @returns - the current node, to enable chaining.
+   */
   wire(spec: string, to: BreadboardNode): BreadboardNode;
 }
 
+/**
+ * A node configuration that can optionally have an `$id` property.
+ *
+ * The `$id` property is used to identify the node in the board and is not
+ * passed to the node itself.
+ */
 export type OptionalIdConfiguration = { $id?: string } & NodeConfiguration;
