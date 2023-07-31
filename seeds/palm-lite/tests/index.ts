@@ -6,7 +6,7 @@
 
 import test from "ava";
 
-import { palm } from "../src/index.js";
+import { PalmModelMethod, palm } from "../src/index.js";
 
 test("palm() produces a PaLM instance", (t) => {
   const instance = palm("API_KEY");
@@ -68,4 +68,19 @@ test("palm().embedding() produces a valid Request", async (t) => {
   );
   const body = await request.json();
   t.deepEqual(body, { text: "Hello there!" });
+});
+
+test("palm().getModelId() returns the right default model ids", (t) => {
+  t.is(
+    palm("API_KEY").getModelId(PalmModelMethod.GenerateMessage),
+    "chat-bison-001"
+  );
+  t.is(
+    palm("API_KEY").getModelId(PalmModelMethod.GenerateText),
+    "text-bison-001"
+  );
+  t.is(
+    palm("API_KEY").getModelId(PalmModelMethod.EmbedText),
+    "embedding-gecko-001"
+  );
 });

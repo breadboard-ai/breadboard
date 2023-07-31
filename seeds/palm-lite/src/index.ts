@@ -22,13 +22,23 @@ type PaLMRequest =
 
 type ModelInfo = Record<string, Array<{ name: string }>>;
 
+export enum PalmModelMethod {
+  GenerateMessage = "generateMessage",
+  GenerateText = "generateText",
+  EmbedText = "embedText",
+}
+
+const getModelId = (method: string): string => {
+  return (models as ModelInfo)[method][0].name;
+};
+
 const prepareRequest = (
   key: PalmApiKey,
   method: string,
   request: PaLMRequest,
   model?: string
 ): Request => {
-  if (!model) model = (models as ModelInfo)[method][0].name;
+  if (!model) model = getModelId(method);
   const url = `${ENDPOINT_URL}/${model}:${method}?key=${key}`;
   return new Request(url, {
     method: "POST",
@@ -74,6 +84,15 @@ class PaLM {
    */
   embedding(request: EmbedTextRequest, model?: string): Request {
     return prepareRequest(this.key, "embedText", request, model);
+  }
+
+  /**
+   * Returns the id, including name and version, of the model used.
+   * @param method PaLM API method, from @enum ModelMethod.
+   * @returns a string representing the model id.
+   */
+  getModelId(method: PalmModelMethod): string {
+    return getModelId(method);
   }
 }
 
