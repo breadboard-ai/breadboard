@@ -23,9 +23,29 @@ export interface Kit extends KitDescriptor {
 export type BreadboardSlotSpec = Record<string, GraphDescriptor>;
 
 export interface BreadbordRunResult {
+  /**
+   * Returns `true` if the board is waiting for
+   * input values. Returns `false` if the board is providing outputs.
+   */
   get seeksInputs(): boolean;
+  /**
+   * Any arguments that were passed to the `input` node that triggered this
+   * stage.
+   * Usually contains `message` property, which is a friendly message
+   * to the user about what input is expected.
+   * This property is only available when `seeksInputs` is `true`.
+   */
   get inputArguments(): InputValues;
+  /**
+   * The input values the board is waiting for.
+   * Set this property to provide input values.
+   * This property is only available when `seeksInputs` is `true`.
+   */
   set inputs(input: InputValues);
+  /**
+   * the output values the board is providing.
+   * This property is only available when `seeksInputs` is `false`.
+   */
   get outputs(): OutputValues;
 }
 
