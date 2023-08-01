@@ -2,6 +2,12 @@
 
 If you like learning by starting with simple examples that get more complex with each chapter, this guide might be a good fit.
 
+Pre-requisites:
+
+- familiarity with Javascript and Node.
+- `@google-labs/breadboard` npm package installed locally
+- spirit of adventure
+
 ## Chapter 1: Hello, world?
 
 At the heart of the library is the concept of a `Board`. Just like for hardware makers, the `Board` is the place where wiring of a prototype happens.
