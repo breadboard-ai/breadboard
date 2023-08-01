@@ -70,7 +70,7 @@ result { say: 'Hello, world!' }
 
 - none.
 
-## `passthrough`
+## The `passthrough` node
 
 This is a no-op node. It takes the input property bag and passes it along as output, unmodified. This node can be useful when the board needs an entry point, but the rest of the board forms a cycle.
 
@@ -102,7 +102,7 @@ See [Chapter 9: Let's build a chatbot](https://github.com/google/labs-prototypes
 
 - the properties that were passed as inputs
 
-## `include`
+## The `include` node
 
 Use this node to include other board into the current board. It recognizes `path` or `$ref` properties that specify, respectively, file path or URL to the serialized-as-JSON board to be included. It also accepts the `slotted` property that must contain the serialized-as-JSON boards that will be slotted into the included board.
 
@@ -125,7 +125,7 @@ For an example of how to use the `include` property, see [Chapter 5: Including o
 
 - the outputs of the included board
 
-## `slot`
+## The `slot` node
 
 Use this node to make a slot in a board. Adding a `slot` node turns a board into a sort of a template: each slot represents a placeholder that must be filled in when the node is included into another board.
 
@@ -144,7 +144,7 @@ For an example of how to use the `slot` node, see [Chapter 6: Boards with slots]
 
 - the outputs of the included board
 
-## `reflect`
+## The `reflect` node
 
 This node is used to reflect the board itself. It has no required inputs and provides a JSON representation of the board as a `graph` output property. This node can be used for getting information that might be stored in the structure of the board.
 
