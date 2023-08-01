@@ -16,8 +16,9 @@ type Receiver = {
  * ```ts
  * const log = new LogProbe();
  * for await (const result of this.run(log)) {
- * // ...
+ *  // ...
  * }
+ * ```
  */
 export class LogProbe extends EventTarget {
   #receiver: Receiver;
