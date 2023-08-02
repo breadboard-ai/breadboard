@@ -9,16 +9,16 @@ import { config } from "dotenv";
 
 import { OutputValues, InputValues } from "@google-labs/graph-runner";
 import { Board, type ProbeEvent } from "@google-labs/breadboard";
-import { GraphSafetyValidator } from "@google-labs/graph-safety";
+import { GraphIntegrityValidator } from "@google-labs/graph-integrity";
 
 import { ReActHelper } from "./react.js";
 
 // Parse arguments. Redo with a library once it gets more complex. Example:
-// npm run dev graphs/simplest.json -- --validate-safety --log-safety-labels
+// npm run dev graphs/simplest.json -- --validate-integrity --log-integrity-labels
 const args = process.argv.slice(2);
 const graph = args[0];
-const validateSafety = args.includes("--validate-safety");
-const logSafetyLabels = args.includes("--log-safety-labels");
+const validateIntegrity = args.includes("--validate-integrity");
+const logIntegrityLabels = args.includes("--log-integrity-labels");
 
 // Load the environment variables from `.env` file.
 // This is how the `secrets` node gets ahold of the keys.
@@ -57,9 +57,9 @@ const show = (outputs: OutputValues) => {
 const probe = new EventTarget();
 probe.addEventListener("node", (event: Event) => {
   const { detail } = event as ProbeEvent;
-  if (logSafetyLabels && detail.validatorMetadata?.length) {
+  if (logIntegrityLabels && detail.validatorMetadata?.length) {
     const label = detail.validatorMetadata.map((m) => m.description).join(", ");
-    note(`Safety label for ${detail.descriptor.id}: ${label}`, "safety");
+    note(`Integrity label for ${detail.descriptor.id}: ${label}`, "integrity");
   }
   if (detail.descriptor.type !== "text-completion") return;
   const value = (detail?.outputs?.completion as string) || "empty response";
@@ -74,7 +74,7 @@ const board = await Board.load(graph);
 // Add a custom kit.
 board.addKit(ReActHelper);
 
-if (validateSafety) board.addValidator(new GraphSafetyValidator());
+if (validateIntegrity) board.addValidator(new GraphIntegrityValidator());
 
 try {
   // Run the board until it finishes. This may run forever.

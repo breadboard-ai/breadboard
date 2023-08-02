@@ -16,18 +16,18 @@ import {
 import { SafetyLabel } from "./label.js";
 import { trustedLabels } from "./trusted-labels.js";
 
-export interface GraphSafetyValidatorMetadata
+export interface GraphIntegrityValidatorMetadata
   extends BreadboardValidatorMetadata {
   label: SafetyLabel;
 }
 
 /**
- * @class GraphSafetyValidator
+ * @class GraphIntegrityValidator
  *
- * A validator for the safety of a graph.
+ * A validator for the integrity of a graph in terms of safety.
  * Call @method {computeLabelsForFullGraph} to validate the full graph.
  */
-export class GraphSafetyValidator implements BreadboardValidator {
+export class GraphIntegrityValidator implements BreadboardValidator {
   protected nodeSafetyLabels: Map<NodeDescriptor["id"], SafetyLabel> =
     new Map();
   protected graph: GraphRepresentation | undefined = undefined;
@@ -52,7 +52,7 @@ export class GraphSafetyValidator implements BreadboardValidator {
    *          Note that the safety label's value can be undefined, meaning that
    *          there were no constraints on it.
    */
-  getValidatorMetadata(node: NodeDescriptor): GraphSafetyValidatorMetadata {
+  getValidatorMetadata(node: NodeDescriptor): GraphIntegrityValidatorMetadata {
     const label = this.nodeSafetyLabels.get(node.id);
     if (!label) throw Error(`Safety label for node ${node.id} not computed.`);
     return {

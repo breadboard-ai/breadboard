@@ -6,6 +6,7 @@
     { "path": "seeds/palm-lite" },
     { "path": "seeds/graph-playground" },
     { "path": "seeds/graph-runner" },
+    { "path": "seeds/graph-integrity" }, 
     { "path": "seeds/breadboard" },
     { "path": "seeds/llm-starter" }
   ]

@@ -9,7 +9,7 @@ import test from "ava";
 import { readFile, readdir } from "fs/promises";
 
 import { GraphDescriptor, NodeDescriptor } from "@google-labs/graph-runner";
-import { GraphSafetyValidator } from "../src/validator.js";
+import { GraphIntegrityValidator } from "../src/validator.js";
 import { SafetyLabel } from "../src/label.js";
 import { SafetyLabelValue } from "../src/types.js";
 
@@ -39,7 +39,7 @@ await Promise.all(
       const data = await readFile(`${IN_DIR}${filename}`, "utf-8");
       const graph = JSON.parse(data) as TestGraphDescriptor;
 
-      const validator = new GraphSafetyValidator();
+      const validator = new GraphIntegrityValidator();
 
       if (graph.safe) {
         validator.addGraph(graph);
@@ -59,7 +59,7 @@ await Promise.all(
 );
 
 test("GraphSafetyValidator: Getting unknown labels throws", (t) => {
-  const v = new GraphSafetyValidator();
+  const v = new GraphIntegrityValidator();
 
   t.throws(() => v.getValidatorMetadata({ id: "a", type: "input" }));
 

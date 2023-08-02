@@ -1,8 +1,8 @@
 {
-  "name": "@google-labs/graph-safety",
+  "name": "@google-labs/graph-integrity",
   "private": true,
   "version": "0.0.1",
-  "description": "A library for analyzing the safety of a graph",
+  "description": "A library for analyzing the integrity of a graph",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -48,6 +48,7 @@
     "@google-labs/tsconfig": "*"
   },
   "dependencies": {
-    "@google-labs/graph-runner": "*"
+    "@google-labs/graph-runner": "*",
+    "@google-labs/breadboard": "*"
   }
 }
