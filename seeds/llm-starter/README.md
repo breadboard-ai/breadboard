@@ -1,5 +1,9 @@
 # LLM Starter Kit
 
+![Milestone](https://img.shields.io/badge/milestone-M0-red) ![Stability](https://img.shields.io/badge/stability-wip-green)
+
+The LLM Starter Kit is a collection of [Breadboard](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard) nodes that are helpful for building LLM-based (Generative AI) applications.
+
 ## Node Types
 
 Here are all node handlers that are included in the LLM Starter Kit.
