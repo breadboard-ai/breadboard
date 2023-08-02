@@ -9,6 +9,7 @@ import { config } from "dotenv";
 
 import { OutputValues, InputValues } from "@google-labs/graph-runner";
 import { Board, type ProbeEvent } from "@google-labs/breadboard";
+import { GraphSafetyValidator } from "@google-labs/graph-safety";
 
 import { ReActHelper } from "./react.js";
 
@@ -56,11 +57,10 @@ const show = (outputs: OutputValues) => {
 const probe = new EventTarget();
 probe.addEventListener("node", (event: Event) => {
   const { detail } = event as ProbeEvent;
-  if (logSafetyLabels && detail.safetyLabel)
-    note(
-      `Safety label for ${detail.descriptor.id}: ${detail.safetyLabel}`,
-      "safety"
-    );
+  if (logSafetyLabels && detail.validatorMetadata?.length) {
+    const label = detail.validatorMetadata.map((m) => m.description).join(", ");
+    note(`Safety label for ${detail.descriptor.id}: ${label}`, "safety");
+  }
   if (detail.descriptor.type !== "text-completion") return;
   const value = (detail?.outputs?.completion as string) || "empty response";
   note(wrap(value), "text completion");
@@ -74,9 +74,11 @@ const board = await Board.load(graph);
 // Add a custom kit.
 board.addKit(ReActHelper);
 
+if (validateSafety) board.addValidator(new GraphSafetyValidator());
+
 try {
   // Run the board until it finishes. This may run forever.
-  for await (const result of board.run(probe, validateSafety)) {
+  for await (const result of board.run(probe)) {
     if (result.seeksInputs) {
       result.inputs = await ask(result.inputArguments);
     } else {

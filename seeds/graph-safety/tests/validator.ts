@@ -39,27 +39,38 @@ await Promise.all(
       const data = await readFile(`${IN_DIR}${filename}`, "utf-8");
       const graph = JSON.parse(data) as TestGraphDescriptor;
 
-      const validator = new GraphSafetyValidator(graph);
+      const validator = new GraphSafetyValidator();
 
       if (graph.safe) {
-        validator.computeLabelsForFullGraph();
+        validator.addGraph(graph);
         for (const [nodeId, expectedLabelName] of graph.expectedLabels ?? []) {
           const expectedLabel = mapNameToSafetyLabel[expectedLabelName];
-          const derivedLabel = validator.getSafetyLabel(nodeId);
+          const derivedLabel = validator.getValidatorMetadata({
+            id: nodeId,
+            type: "undefined",
+          }).label;
           t.true(derivedLabel.equalsTo(expectedLabel));
         }
       } else {
-        t.throws(() => validator.computeLabelsForFullGraph());
+        t.throws(() => validator.addGraph(graph));
       }
     });
   })
 );
 
-test("GraphSafetyValidator: no labels before computation", (t) => {
-  const v = new GraphSafetyValidator({
+test("GraphSafetyValidator: Getting unknown labels throws", (t) => {
+  const v = new GraphSafetyValidator();
+
+  t.throws(() => v.getValidatorMetadata({ id: "a", type: "input" }));
+
+  v.addGraph({
     edges: [],
     nodes: [{ id: "a", type: "input" }],
   });
 
-  t.throws(() => v.getSafetyLabel("a"));
+  t.deepEqual(v.getValidatorMetadata({ id: "a", type: "input" }), {
+    description: "UNDETERMINED",
+    label: new SafetyLabel(undefined),
+  });
+  t.throws(() => v.getValidatorMetadata({ id: "b", type: "input" }));
 });

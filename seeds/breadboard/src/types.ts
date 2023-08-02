@@ -60,6 +60,35 @@ export interface KitConstructor<T extends Kit> {
 }
 
 /**
+ * Validator metadata for a node.
+ * Used e.g. in ProbeDetails.
+ */
+export interface BreadboardValidatorMetadata {
+  description: string;
+}
+
+/**
+ * A validator for a breadboard.
+ * For example to check integrity using information flow control.
+ */
+export interface BreadboardValidator {
+  /**
+   * Add a graph and validate it.
+   *
+   * @param graph The graph to validate.
+   * @throws Error if the graph is invalid.
+   */
+  addGraph(graph: GraphDescriptor): void;
+
+  /**
+   * Gets the validation metadata for a node.
+   *
+   * @param node Node to get metadata for.
+   */
+  getValidatorMetadata(node: NodeDescriptor): BreadboardValidatorMetadata;
+}
+
+/**
  * Details of the `ProbeEvent` event.
  */
 export interface ProbeDetails {
@@ -87,7 +116,7 @@ export interface ProbeDetails {
    */
   nesting?: number;
   sources?: string[];
-  safetyLabel?: string;
+  validatorMetadata?: BreadboardValidatorMetadata[];
 }
 
 /**

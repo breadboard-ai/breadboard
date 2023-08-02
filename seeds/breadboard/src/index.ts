@@ -11,6 +11,8 @@ export type {
   ProbeEvent,
   Kit,
   NodeFactory,
+  BreadboardValidator,
+  BreadboardValidatorMetadata,
   BreadboardNode,
   OptionalIdConfiguration,
 } from "./types.js";

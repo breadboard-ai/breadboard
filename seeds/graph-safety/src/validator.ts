@@ -9,8 +9,17 @@ import {
   GraphRepresentation,
   NodeDescriptor,
 } from "@google-labs/graph-runner";
+import {
+  type BreadboardValidator,
+  type BreadboardValidatorMetadata,
+} from "@google-labs/breadboard";
 import { SafetyLabel } from "./label.js";
 import { trustedLabels } from "./trusted-labels.js";
+
+export interface GraphSafetyValidatorMetadata
+  extends BreadboardValidatorMetadata {
+  label: SafetyLabel;
+}
 
 /**
  * @class GraphSafetyValidator
@@ -18,13 +27,38 @@ import { trustedLabels } from "./trusted-labels.js";
  * A validator for the safety of a graph.
  * Call @method {computeLabelsForFullGraph} to validate the full graph.
  */
-export class GraphSafetyValidator {
+export class GraphSafetyValidator implements BreadboardValidator {
   protected nodeSafetyLabels: Map<NodeDescriptor["id"], SafetyLabel> =
     new Map();
-  protected graph: GraphRepresentation;
+  protected graph: GraphRepresentation | undefined = undefined;
 
-  constructor(graph: GraphDescriptor) {
+  /**
+   * Add graph to the validator, and validate it.
+   *
+   * @param graph Graph to validate.
+   * @throws {Error} if the graph is not safe.
+   */
+  addGraph(graph: GraphDescriptor) {
     this.graph = new GraphRepresentation(graph);
+    this.computeLabelsForFullGraph();
+  }
+
+  /**
+   * Get the safety label of a node. This is only valid after calling @method
+   * {computeLabelsForFullGraph}.
+   *
+   * @param nodeId The id of the node to get the label for.
+   * @returns The safety label of the node, or undefined if it wasn't computed.
+   *          Note that the safety label's value can be undefined, meaning that
+   *          there were no constraints on it.
+   */
+  getValidatorMetadata(node: NodeDescriptor): GraphSafetyValidatorMetadata {
+    const label = this.nodeSafetyLabels.get(node.id);
+    if (!label) throw Error(`Safety label for node ${node.id} not computed.`);
+    return {
+      description: label.toString() ?? "Unknown label",
+      label,
+    };
   }
 
   /**
@@ -43,6 +77,8 @@ export class GraphSafetyValidator {
    * incrementally. TODO: Implement that.
    */
   computeLabelsForFullGraph(): void {
+    if (this.graph === undefined) throw Error("No graph to validate.");
+
     // This method recomputes all labels from scratch.
     // Initialize with the initial constraints.
     this.nodeSafetyLabels = new Map();
@@ -130,20 +166,5 @@ export class GraphSafetyValidator {
         }
       }
     } while (change);
-  }
-
-  /**
-   * Get the safety label of a node. This is only valid after calling @method
-   * {computeLabelsForFullGraph}.
-   *
-   * @param nodeId The id of the node to get the label for.
-   * @returns The safety label of the node, or undefined if it wasn't computed.
-   *          Note that the safety label's value can be undefined, meaning that
-   *          there were no constraints on it.
-   */
-  getSafetyLabel(nodeId: NodeDescriptor["id"]): SafetyLabel {
-    if (!this.nodeSafetyLabels.has(nodeId))
-      throw Error(`Safety label for node ${nodeId} not computed.`);
-    return this.nodeSafetyLabels.get(nodeId) as SafetyLabel;
   }
 }

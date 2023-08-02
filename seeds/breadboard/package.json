@@ -48,7 +48,6 @@
     "typescript": "^5.0.4"
   },
   "dependencies": {
-    "@google-labs/graph-runner": "*",
-    "@google-labs/graph-safety": "*"
+    "@google-labs/graph-runner": "*"
   }
 }

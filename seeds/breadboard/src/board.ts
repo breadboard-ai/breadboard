@@ -20,11 +20,12 @@ import {
   type Kit,
   type KitConstructor,
   type OptionalIdConfiguration,
+  type BreadboardValidator,
+  type BreadboardValidatorMetadata,
   ProbeDetails,
 } from "./types.js";
 
 import { TraversalMachine, toMermaid } from "@google-labs/graph-runner";
-import { GraphSafetyValidator } from "@google-labs/graph-safety";
 import { Node } from "./node.js";
 import { Core } from "./core.js";
 import { InputStageResult, OutputStageResult } from "./run.js";
@@ -68,6 +69,7 @@ export class Board implements Breadboard {
   nodes: NodeDescriptor[] = [];
   kits: Kit[] = [];
   #slots: BreadboardSlotSpec = {};
+  #validators: BreadboardValidator[] = [];
 
   /**
    * Runs the board. This method is an async generator that
@@ -97,20 +99,14 @@ export class Board implements Breadboard {
    * @param probe - an optional probe. If provided, the board will dispatch
    * events to it. See [Chapter 7: Probes](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-7-probes) of the Breadboard tutorial for more information.
    */
-  async *run(
-    probe?: EventTarget,
-    validateSafety = false
-  ): AsyncGenerator<BreadbordRunResult> {
+  async *run(probe?: EventTarget): AsyncGenerator<BreadbordRunResult> {
     const core = new Core(this, this.#slots, probe);
     const kits = [core, ...this.kits];
     const handlers = kits.reduce((handlers, kit) => {
       return { ...handlers, ...kit.handlers };
     }, {} as NodeHandlers);
 
-    const validator = validateSafety
-      ? new GraphSafetyValidator(this)
-      : undefined;
-    validator?.computeLabelsForFullGraph();
+    this.#validators.forEach((validator) => validator.addGraph(this));
 
     const machine = new TraversalMachine(this);
 
@@ -154,7 +150,9 @@ export class Board implements Breadboard {
           descriptor,
           inputs,
           outputs,
-          safetyLabel: validator?.getSafetyLabel(descriptor.id)?.toString(),
+          validatorMetadata: this.#validators.map((validator) =>
+            validator.getValidatorMetadata(descriptor)
+          ),
         })
       );
 
@@ -189,6 +187,16 @@ export class Board implements Breadboard {
       }
     }
     return outputs;
+  }
+
+  /**
+   * Add validator to the board.
+   * Will call .addGraph() on the validator before executing a graph.
+   *
+   * @param validator - a validator to add to the board.
+   */
+  addValidator(validator: BreadboardValidator) {
+    this.#validators.push(validator);
   }
 
   /**
