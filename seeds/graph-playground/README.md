@@ -18,7 +18,7 @@ There are five packages in this workspace:
 :two: In `seeds/graph-playground`, create `.env` file with the following content:
 
 ```bash
-API_KEY="your GCP API key"
+PALM_KEY="your GCP API key"
 GOOGLE_CSE_ID="your Google custom search engine id"
 ```
 

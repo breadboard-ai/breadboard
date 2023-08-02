@@ -33,14 +33,14 @@
     {
       "from": "secrets-6",
       "to": "text-completion-1",
-      "out": "API_KEY",
-      "in": "API_KEY"
+      "out": "PALM_KEY",
+      "in": "PALM_KEY"
     },
     {
       "from": "secrets-6",
       "to": "url_template-3",
-      "out": "API_KEY",
-      "in": "API_KEY"
+      "out": "PALM_KEY",
+      "in": "PALM_KEY"
     },
     {
       "from": "secrets-6",
@@ -81,7 +81,7 @@
       "id": "url_template-3",
       "type": "url_template",
       "configuration": {
-        "template": "https://www.googleapis.com/customsearch/v1?key={{API_KEY}}&cx={{GOOGLE_CSE_ID}}&q={{query}}"
+        "template": "https://www.googleapis.com/customsearch/v1?key={{PALM_KEY}}&cx={{GOOGLE_CSE_ID}}&q={{query}}"
       }
     },
     {
@@ -100,7 +100,7 @@
       "type": "secrets",
       "configuration": {
         "keys": [
-          "API_KEY",
+          "PALM_KEY",
           "GOOGLE_CSE_ID"
         ]
       }

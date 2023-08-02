@@ -15,7 +15,7 @@ type TextCompletionInputs = {
   /**
    * The Google Cloud Platform API key
    */
-  API_KEY: string;
+  PALM_KEY: string;
   /**
    * Stop sequences
    */
@@ -24,14 +24,14 @@ type TextCompletionInputs = {
 
 export default async (inputs: InputValues) => {
   const values = inputs as TextCompletionInputs;
-  if (!values.API_KEY)
-    throw new Error("Text completion requires `API_KEY` input");
+  if (!values.PALM_KEY)
+    throw new Error("Text completion requires `PALM_KEY` input");
   if (!values.text) throw new Error("Text completion requires `text` input");
 
   const prompt = new Text().text(values.text);
   const stopSequences = values["stop-sequences"] || [];
   stopSequences.forEach((stopSequence) => prompt.addStopSequence(stopSequence));
-  const request = palm(values.API_KEY).text(prompt);
+  const request = palm(values.PALM_KEY).text(prompt);
   const data = await fetch(request);
   const response = (await data.json()) as GenerateTextResponse;
   const completion = response?.candidates?.[0]?.output as string;

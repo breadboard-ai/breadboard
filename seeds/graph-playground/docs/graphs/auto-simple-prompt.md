@@ -6,7 +6,7 @@
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
 secrets2("secrets
-id='secrets-2'"):::secrets -- "API_KEY->API_KEY" --> textcompletion1["text-completion
+id='secrets-2'"):::secrets -- "PALM_KEY->PALM_KEY" --> textcompletion1["text-completion
 id='text-completion-1'"]
 textcompletion1["text-completion
 id='text-completion-1'"] -- "completion->text" --> output3{{"output

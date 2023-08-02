@@ -64,8 +64,8 @@ const textCompletion = kit
   .textCompletion()
   .wire("completion->text", board.output());
 
-// Wire secrets node (containing API_KEY) to the text completion node.
-kit.secrets(["API_KEY"]).wire("API_KEY", textCompletion);
+// Wire secrets node (containing PALM_KEY) to the text completion node.
+kit.secrets(["PALM_KEY"]).wire("PALM_KEY", textCompletion);
 
 // Wire the text template node to the text completion node.
 summarizeResults.wire("prompt->text", textCompletion);

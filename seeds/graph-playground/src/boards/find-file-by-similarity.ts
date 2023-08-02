@@ -19,7 +19,7 @@ findFileBySimilarity.input("Provide a path to a directory to search").wire(
     "documents",
     kit
       .embedDocs()
-      .wire("<-API_KEY", kit.secrets(["API_KEY"]))
+      .wire("<-PALM_KEY", kit.secrets(["PALM_KEY"]))
       .wire(
         "<-cache",
         kit.cache().wire("path<-CACHE_DB", kit.secrets(["CACHE_DB"]))
@@ -38,7 +38,7 @@ findFileBySimilarity.input("What do you want to search for?").wire(
   "text",
   kit
     .embedString()
-    .wire("<-API_KEY", kit.secrets(["API_KEY"]))
+    .wire("<-PALM_KEY", kit.secrets(["PALM_KEY"]))
     .wire(
       "embedding",
       queryVectorDatabase.wire(

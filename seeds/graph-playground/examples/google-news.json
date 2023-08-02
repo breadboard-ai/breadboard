@@ -45,8 +45,8 @@
     {
       "from": "secrets-9",
       "to": "text-completion-7",
-      "out": "API_KEY",
-      "in": "API_KEY"
+      "out": "PALM_KEY",
+      "in": "PALM_KEY"
     },
     {
       "from": "prompt-template-1",
@@ -105,7 +105,7 @@
       "type": "secrets",
       "configuration": {
         "keys": [
-          "API_KEY"
+          "PALM_KEY"
         ]
       }
     }

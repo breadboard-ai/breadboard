@@ -21,9 +21,9 @@ const textCompletion = kit.textCompletion();
 input.wire("say->text", textCompletion);
 textCompletion.wire("completion->hear", output);
 
-const secrets = kit.secrets(["API_KEY"]);
+const secrets = kit.secrets(["PALM_KEY"]);
 
-secrets.wire("API_KEY->", textCompletion);
+secrets.wire("PALM_KEY->", textCompletion);
 
 const result = await board.runOnce({
   say: "Hi, how are you?",

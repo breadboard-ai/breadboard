@@ -24,7 +24,7 @@ const REPO_URL =
   "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs";
 
 // The single node where all the important keys come from.
-const secrets = kit.secrets(["API_KEY", "GOOGLE_CSE_ID"]);
+const secrets = kit.secrets(["PALM_KEY", "GOOGLE_CSE_ID"]);
 
 // This is the context that ReAct algo accumulates.
 const context = kit.localMemory();
@@ -53,7 +53,7 @@ const reActCompletion = kit
     "stop-sequences": ["\nObservation"],
     $id: "react-completion",
   })
-  .wire("<-API_KEY.", secrets);
+  .wire("<-PALM_KEY.", secrets);
 
 // Wire up the math tool by including the `math.json` graph.
 const math = board

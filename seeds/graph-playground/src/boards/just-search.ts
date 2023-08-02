@@ -10,15 +10,15 @@ import { Starter } from "@google-labs/llm-starter";
 const board = new Board();
 const kit = board.addKit(Starter);
 
-const secrets = kit.secrets(["API_KEY", "GOOGLE_CSE_ID"]);
+const secrets = kit.secrets(["PALM_KEY", "GOOGLE_CSE_ID"]);
 
 board.input("What would you like to search for?").wire(
   "text->query",
   kit
     .urlTemplate(
-      "https://www.googleapis.com/customsearch/v1?key={{API_KEY}}&cx={{GOOGLE_CSE_ID}}&q={{query}}"
+      "https://www.googleapis.com/customsearch/v1?key={{PALM_KEY}}&cx={{GOOGLE_CSE_ID}}&q={{query}}"
     )
-    .wire("<-API_KEY.", secrets)
+    .wire("<-PALM_KEY.", secrets)
     .wire("<-GOOGLE_CSE_ID.", secrets)
     .wire(
       "url",

@@ -12,7 +12,7 @@ mathfunctioncompletion["text-completion
 id='math-function-completion'"] -- "completion->code" --> compute["run-javascript
 id='compute'"]
 secrets1("secrets
-id='secrets-1'"):::secrets -- "API_KEY->API_KEY" --> mathfunctioncompletion["text-completion
+id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --> mathfunctioncompletion["text-completion
 id='math-function-completion'"]
 mathfunction["prompt-template
 id='math-function'"] -- "prompt->text" --> mathfunctioncompletion["text-completion

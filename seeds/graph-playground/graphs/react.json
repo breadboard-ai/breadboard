@@ -24,8 +24,8 @@
       "from": "secrets-1",
       "to": "react-completion",
       "constant": true,
-      "out": "API_KEY",
-      "in": "API_KEY"
+      "out": "PALM_KEY",
+      "in": "PALM_KEY"
     },
     {
       "from": "compute",
@@ -43,8 +43,8 @@
       "from": "secrets-1",
       "to": "math-function-completion",
       "constant": true,
-      "out": "API_KEY",
-      "in": "API_KEY"
+      "out": "PALM_KEY",
+      "in": "PALM_KEY"
     },
     {
       "from": "math-function",
@@ -62,8 +62,8 @@
       "from": "secrets-1",
       "to": "text-completion-8",
       "constant": true,
-      "out": "API_KEY",
-      "in": "API_KEY"
+      "out": "PALM_KEY",
+      "in": "PALM_KEY"
     },
     {
       "from": "summarizing-template",
@@ -75,8 +75,8 @@
       "from": "secrets-1",
       "to": "url_template-9",
       "constant": true,
-      "out": "API_KEY",
-      "in": "API_KEY"
+      "out": "PALM_KEY",
+      "in": "PALM_KEY"
     },
     {
       "from": "secrets-1",
@@ -170,7 +170,7 @@
       "type": "secrets",
       "configuration": {
         "keys": [
-          "API_KEY",
+          "PALM_KEY",
           "GOOGLE_CSE_ID"
         ]
       }
@@ -257,7 +257,7 @@
       "id": "url_template-9",
       "type": "url_template",
       "configuration": {
-        "template": "https://www.googleapis.com/customsearch/v1?key={{API_KEY}}&cx={{GOOGLE_CSE_ID}}&q={{query}}"
+        "template": "https://www.googleapis.com/customsearch/v1?key={{PALM_KEY}}&cx={{GOOGLE_CSE_ID}}&q={{query}}"
       }
     },
     {

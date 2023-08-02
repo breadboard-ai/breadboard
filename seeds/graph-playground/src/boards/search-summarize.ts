@@ -23,7 +23,7 @@ const summarizingTemplate = kit
 
 const searchURLTemplate = kit
   .urlTemplate(
-    "https://www.googleapis.com/customsearch/v1?key={{API_KEY}}&cx={{GOOGLE_CSE_ID}}&q={{query}}"
+    "https://www.googleapis.com/customsearch/v1?key={{PALM_KEY}}&cx={{GOOGLE_CSE_ID}}&q={{query}}"
   )
   .wire(
     "url",
@@ -38,9 +38,9 @@ const searchURLTemplate = kit
   );
 
 kit
-  .secrets(["API_KEY", "GOOGLE_CSE_ID"])
-  .wire("API_KEY", completion)
-  .wire("API_KEY", searchURLTemplate)
+  .secrets(["PALM_KEY", "GOOGLE_CSE_ID"])
+  .wire("PALM_KEY", completion)
+  .wire("PALM_KEY", searchURLTemplate)
   .wire("GOOGLE_CSE_ID", searchURLTemplate);
 
 searchSummarize

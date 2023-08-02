@@ -20,7 +20,7 @@ board.input().wire(
   kit
     .textCompletion()
     .wire("completion->hear", output)
-    .wire("<-API_KEY", kit.secrets(["API_KEY"]))
+    .wire("<-PALM_KEY", kit.secrets(["PALM_KEY"]))
 );
 
 for await (const stop of board.run()) {

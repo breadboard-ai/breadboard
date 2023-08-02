@@ -12,7 +12,7 @@ const kit = board.addKit(Starter);
 
 const memory = kit.localMemory();
 
-const api_key = kit.secrets(["API_KEY"]);
+const palm_key = kit.secrets(["PALM_KEY"]);
 
 // Store Friedrich's template so that we can refer back to it to create a
 // conversation loop.
@@ -33,7 +33,7 @@ const albert = kit
       })
       .wire("completion->Albert", kit.localMemory().wire("context", friedrich))
       .wire("completion->text", board.output())
-      .wire("<-API_KEY.", api_key)
+      .wire("<-PALM_KEY.", palm_key)
   );
 
 friedrich.wire(
@@ -44,7 +44,7 @@ friedrich.wire(
     })
     .wire("completion->Friedrich", kit.localMemory().wire("context", albert))
     .wire("completion->text", board.output())
-    .wire("<-API_KEY.", api_key)
+    .wire("<-PALM_KEY.", palm_key)
 );
 
 board

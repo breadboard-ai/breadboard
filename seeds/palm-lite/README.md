@@ -29,11 +29,11 @@ The `palm` function is the main entry point to the library. It takes an API key 
 ```js
 import { palm } from "palm-lite";
 
-// Grab the API_KEY somehow. In this example, we're using an environment variable.
-const API_KEY = process.env.API_KEY;
+// Grab the PALM_KEY somehow. In this example, we're using an environment variable.
+const PALM_KEY = process.env.PALM_KEY;
 
 // Create a `Request` object.
-const request = palm(API_KEY).message({
+const request = palm(PALM_KEY).message({
   prompt: {
     messages: [{ content: "Hello there!" }],
   },
@@ -72,13 +72,13 @@ const text = new Text({ temperature: 0.5 })
   .addStopSequence("==");
 
 // Feed it to the `text` function
-const request = palm(API_KEY).text(text);
+const request = palm(PALM_KEY).text(text);
 
 // ... Later in code
 // Change the prompt
 text.text("Hello there! How are you?");
 // Feed it to the `text` function again
-const request2 = palm(API_KEY).text(text);
+const request2 = palm(PALM_KEY).text(text);
 ```
 
 Here's a full example of using most of the bits. This example uses the `dotenv` package to load the API key from an environment variable.
@@ -93,7 +93,7 @@ config();
   const text = new Text();
   text.text("Repeat after me: one, two, three... ");
 
-  const request = palm(process.env.API_KEY).text(text);
+  const request = palm(process.env.PALM_KEY).text(text);
   const data = await fetch(request);
   const response = await data.json();
 
@@ -105,14 +105,14 @@ config();
     .context("You are a pirate. Reply in a distinct pirate voice.")
     .addMessage("Hello, how are you?");
 
-  const request = palm(process.env.API_KEY).message(chat);
+  const request = palm(process.env.PALM_KEY).message(chat);
   const data = await fetch(request);
   const response = await data.json();
   console.log("MESSAGE", response.candidates[0].content);
 }
 
 {
-  const request = palm(process.env.API_KEY).embedding({
+  const request = palm(process.env.PALM_KEY).embedding({
     text: "I love you",
   });
   const data = await fetch(request);

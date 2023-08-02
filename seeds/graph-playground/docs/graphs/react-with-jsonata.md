@@ -21,7 +21,7 @@ localmemory2["local-memory
 id='local-memory-2'"] -- "context->memory" --> prompttemplate6["prompt-template
 id='prompt-template-6'"]
 secrets1("secrets
-id='secrets-1'"):::secrets -- "API_KEY->API_KEY" --o reactcompletion["text-completion
+id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o reactcompletion["text-completion
 id='react-completion'"]
 math[["include
 id='math'"]]:::include -- "text->Observation" --> localmemory2["local-memory

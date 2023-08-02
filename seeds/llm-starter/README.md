@@ -124,11 +124,11 @@ Use this node to access secrets, such as API keys or other valuable bits of info
 
 #### Example:
 
-Use this node to pass the `API_KEY` environment variable to the `text-completion` node. The input:
+Use this node to pass the `PALM_KEY` environment variable to the `text-completion` node. The input:
 
 ```json
 {
-  "keys": ["API_KEY"]
+  "keys": ["PALM_KEY"]
 }
 ```
 
@@ -136,7 +136,7 @@ Will produce this output:
 
 ```json
 {
-  "API_KEY": "<value of the API key from the environment>"
+  "PALM_KEY": "<value of the API key from the environment>"
 }
 ```
 
@@ -154,7 +154,7 @@ Will produce this output:
 
 ### `text-completion`
 
-This is a [PaLM API](https://developers.generativeai.google/) text completion node. This node is probably the main reason this starter kit exists. To produce useful output, the node needs an `API_KEY` input and the `text` input.
+This is a [PaLM API](https://developers.generativeai.google/) text completion node. This node is probably the main reason this starter kit exists. To produce useful output, the node needs an `PALM_KEY` input and the `text` input.
 
 #### Example:
 
@@ -162,7 +162,7 @@ Given this input:
 
 ```json
 {
-  "API_KEY": "<your API key>",
+  "PALM_KEY": "<your API key>",
   "text": "How old is planet Earth?"
 }
 ```
@@ -177,7 +177,7 @@ The node will produce this output:
 
 #### Inputs:
 
-- `API_KEY` required, must contain the Google Cloud Platform API key for the project has the "Generative Language API" API enabled.
+- `PALM_KEY` required, must contain the Google Cloud Platform API key for the project has the "Generative Language API" API enabled.
 - `text` required, sent as the prompt for the completion.
 - `stop-sequences` optional array of strings. These will be passed as the stop sequences to the completion API.
 

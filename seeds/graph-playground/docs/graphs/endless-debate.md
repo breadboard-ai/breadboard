@@ -15,7 +15,7 @@ textcompletion4["text-completion
 id='text-completion-4'"] -- "completion->text" --> output6{{"output
 id='output-6'"}}:::output
 secrets2("secrets
-id='secrets-2'"):::secrets -- "API_KEY->API_KEY" --o textcompletion4["text-completion
+id='secrets-2'"):::secrets -- "PALM_KEY->PALM_KEY" --o textcompletion4["text-completion
 id='text-completion-4'"]
 albert["prompt-template
 id='albert'"] -- "prompt->text" --> textcompletion4["text-completion
@@ -30,7 +30,7 @@ textcompletion7["text-completion
 id='text-completion-7'"] -- "completion->text" --> output9{{"output
 id='output-9'"}}:::output
 secrets2("secrets
-id='secrets-2'"):::secrets -- "API_KEY->API_KEY" --o textcompletion7["text-completion
+id='secrets-2'"):::secrets -- "PALM_KEY->PALM_KEY" --o textcompletion7["text-completion
 id='text-completion-7'"]
 prompttemplate3["prompt-template
 id='prompt-template-3'"] -- "prompt->text" --> textcompletion7["text-completion

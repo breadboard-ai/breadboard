@@ -39,7 +39,7 @@ export interface PartialGenerateTextRequest
  * ```typescript
  * const text = new Text();
  * text.text("Hello there!");
- * const data = await fetch(palm(API_KEY).text(text));
+ * const data = await fetch(palm(PALM_KEY).text(text));
  * const response = await data.json();
  * ```
  */
@@ -62,7 +62,7 @@ export class Text implements GenerateTextRequest {
    * .text("Hello there!").
    * .addSafetySetting("HARM_CATEGORY_DEROGATORY", "BLOCK_LOW_AND_ABOVE")
    * .addStopSequence("==");
-   * const data = await fetch(palm(API_KEY).text(text));
+   * const data = await fetch(palm(PALM_KEY).text(text));
    * const response = await data.json();
    * ```
    * @param request A partial request object. Just put things like `temperature` and `candidateCount` into it and they will be used in the built instance.

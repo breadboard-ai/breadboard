@@ -115,10 +115,10 @@ Now, we have not one, but two wires on the board, connecting our three nodes. Th
 To make this program go, we need another node and a wire. The PaLM API behind the `textCompletion` node requires an API key, so we'll add a `secrets` node to the board:
 
 ```js
-const secrets = kit.secrets(["API_KEY"]);
+const secrets = kit.secrets(["PALM_KEY"]);
 ```
 
-The `secrets` node reaches into our program's environment and gets the environment variable that is named `API_KEY`, as we specified in its argument. A `secrets` node could look for any other environment variables, we just need to specify which ones. For now, we only need the `API_KEY`.
+The `secrets` node reaches into our program's environment and gets the environment variable that is named `PALM_KEY`, as we specified in its argument. A `secrets` node could look for any other environment variables, we just need to specify which ones. For now, we only need the `PALM_KEY`.
 
 Let's also import and use the `dotenv` package that conveniently reads environment variables from a `.env` file:
 
@@ -131,16 +131,16 @@ config();
 Let's also not forget to create a `.env` file and put our API key there:
 
 ```sh
-API_KEY="your API key goes here"
+PALM_KEY="your API key goes here"
 ```
 
 With this bit of prep work out of the way, we're ready to wire the `secrets` node:
 
 ```js
-secrets.wire("API_KEY->", textCompletion);
+secrets.wire("PALM_KEY->", textCompletion);
 ```
 
-The statement above says: "wire `secret`'s output named `API_KEY` to the `textCompletion` input named `API_KEY`". Because we're wiring output to the input by the same name, we don't have to repeat ourselves.
+The statement above says: "wire `secret`'s output named `PALM_KEY` to the `textCompletion` input named `PALM_KEY`". Because we're wiring output to the input by the same name, we don't have to repeat ourselves.
 
 Our second program is ready as soon as we add the `runOnce` call:
 
@@ -171,7 +171,7 @@ First, the `wire` method returns the node itself, allowing us to wire the same n
 const input = board.input();
 const output = board.output();
 const textCompletion = kit.textCompletion();
-const secrets = kit.secrets(["API_KEY"]);
+const secrets = kit.secrets(["PALM_KEY"]);
 
 input.wire("say->text", textCompletion).wire("say->", output);
 textCompletion.wire("completion->hear", output);
@@ -192,10 +192,10 @@ board.input().wire("say->text", kit.textCompletion()).wire("say->", output);
 Finally, we can we can wire in both directions. For example, we can wire the `secrets` node to the `textCompletion` node like this:
 
 ```js
-textCompletion.wire("<-API_KEY", kit.secrets(["API_KEY"]));
+textCompletion.wire("<-PALM_KEY", kit.secrets(["PALM_KEY"]));
 ```
 
-Here, the arrow points in a different direction, and asks the board to wire the `API_KEY` output of the `secrets` node to the same input of the `textCompletion` node. It's equivalent to the wiring we had in the previous chapter.
+Here, the arrow points in a different direction, and asks the board to wire the `PALM_KEY` output of the `secrets` node to the same input of the `textCompletion` node. It's equivalent to the wiring we had in the previous chapter.
 
 Applying these newly learned techniques, we can rewrite our program like this:
 
@@ -209,7 +209,7 @@ board
     kit
       .textCompletion()
       .wire("completion->hear", output)
-      .wire("<-API_KEY", kit.secrets(["API_KEY"]))
+      .wire("<-PALM_KEY", kit.secrets(["PALM_KEY"]))
   );
 ```
 
@@ -284,7 +284,7 @@ textcompletion3["text-completion
 id='text-completion-3'"] -- "completion->hear" --> output1{{"output
 id='output-1'"}}:::output
 secrets4("secrets
-id='secrets-4'"):::secrets -- "API_KEY->API_KEY" --> textcompletion3["text-completion
+id='secrets-4'"):::secrets -- "PALM_KEY->PALM_KEY" --> textcompletion3["text-completion
 id='text-completion-3'"]
 input2[/"input
 id='input-2'"/]:::input -- "say->text" --> textcompletion3["text-completion
@@ -312,7 +312,7 @@ textcompletion3["text-completion
 id='text-completion-3'"] -- "completion->hear" --> output1{{"output
 id='output-1'"}}:::output
 secrets4("secrets
-id='secrets-4'"):::secrets -- "API_KEY->API_KEY" --> textcompletion3["text-completion
+id='secrets-4'"):::secrets -- "PALM_KEY->PALM_KEY" --> textcompletion3["text-completion
 id='text-completion-3'"]
 input2[/"input
 id='input-2'"/]:::input -- "say->text" --> textcompletion3["text-completion
@@ -424,7 +424,7 @@ input.wire(
       "prompt->text",
       kit
         .textCompletion()
-        .wire("<-API_KEY.", kit.secrets(["API_KEY"]))
+        .wire("<-PALM_KEY.", kit.secrets(["PALM_KEY"]))
         .wire("completion->say", board.output())
     )
   )
@@ -470,7 +470,7 @@ input.wire(
       "prompt->text",
       kit
         .textCompletion()
-        .wire("<-API_KEY.", kit.secrets(["API_KEY"]))
+        .wire("<-PALM_KEY.", kit.secrets(["PALM_KEY"]))
         .wire("completion->summary", board.output())
     )
   )
@@ -572,8 +572,8 @@ node {
     type: 'secrets',
     configuration: { keys: [Array] }
   },
-  inputs: { keys: [ 'API_KEY' ] },
-  outputs: { API_KEY: '<key here>' },
+  inputs: { keys: [ 'PALM_KEY' ] },
+  outputs: { PALM_KEY: '<key here>' },
 }
 skip {
   descriptor: Node { id: 'output-1', type: 'output', configuration: undefined },
@@ -677,7 +677,7 @@ board.input().wire(
   kit
     .textCompletion()
     .wire("completion->hear", output)
-    .wire("<-API_KEY", kit.secrets(["API_KEY"]))
+    .wire("<-PALM_KEY", kit.secrets(["PALM_KEY"]))
 );
 ```
 
@@ -750,7 +750,7 @@ const completion = kit
   .textCompletion()
   .wire("completion->hear", output)
   .wire("completion->assistant", history)
-  .wire("<-API_KEY.", kit.secrets(["API_KEY"]));
+  .wire("<-PALM_KEY.", kit.secrets(["PALM_KEY"]));
 ```
 
 Let's look at this node's wiring. The first two make sense. We want the result of text completion to go to output, and we want it in the conversation history. The third one is also familiar, but it has a weird dot (`.`) at the end. What is that?

@@ -25,7 +25,7 @@ export interface PartialGenerateMessageRequest
  * ```typescript
  * const chat = new Chat();
  * chat.addMessage("Hello there!");
- * const data = await fetch(palm(API_KEY).message(chat));
+ * const data = await fetch(palm(PALM_KEY).message(chat));
  * const response = await data.json();
  * ```
  */
@@ -47,7 +47,7 @@ export class Chat implements GenerateMessageRequest {
         input: "Pull up! All craft pull up!",
         output: "It's a trap!",
    *  });
-   * const data = await fetch(palm(API_KEY).message(chat));
+   * const data = await fetch(palm(PALM_KEY).message(chat));
    * const response = await data.json();
    * ```
    * @param request A partial request object. Just put things like `temperature` and `candidateCount` into it and they will be used in the built instance.

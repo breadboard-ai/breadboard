@@ -39,7 +39,7 @@ input.wire(
                   "prompt->text",
                   kit
                     .textCompletion()
-                    .wire("<-API_KEY.", kit.secrets(["API_KEY"]))
+                    .wire("<-PALM_KEY.", kit.secrets(["PALM_KEY"]))
                     .wire("completion->text", board.output())
                 )
             )

@@ -15,7 +15,7 @@ localmemory2["local-memory
 id='local-memory-2'"] -- "context->memory" --> prompttemplate3["prompt-template
 id='prompt-template-3'"]
 secrets1("secrets
-id='secrets-1'"):::secrets -- "API_KEY->API_KEY" --o reactcompletion["text-completion
+id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o reactcompletion["text-completion
 id='react-completion'"]
 compute["run-javascript
 id='compute'"] -- "result->Observation" --> localmemory2["local-memory
@@ -24,7 +24,7 @@ mathfunctioncompletion["text-completion
 id='math-function-completion'"] -- "completion->code" --> compute["run-javascript
 id='compute'"]
 secrets1("secrets
-id='secrets-1'"):::secrets -- "API_KEY->API_KEY" --o mathfunctioncompletion["text-completion
+id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o mathfunctioncompletion["text-completion
 id='math-function-completion'"]
 mathfunction["prompt-template
 id='math-function'"] -- "prompt->text" --> mathfunctioncompletion["text-completion
@@ -33,13 +33,13 @@ textcompletion8["text-completion
 id='text-completion-8'"] -- "completion->Observation" --> localmemory2["local-memory
 id='local-memory-2'"]
 secrets1("secrets
-id='secrets-1'"):::secrets -- "API_KEY->API_KEY" --o textcompletion8["text-completion
+id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o textcompletion8["text-completion
 id='text-completion-8'"]
 summarizingtemplate["prompt-template
 id='summarizing-template'"] -- "prompt->text" --> textcompletion8["text-completion
 id='text-completion-8'"]
 secrets1("secrets
-id='secrets-1'"):::secrets -- "API_KEY->API_KEY" --o url_template9["url_template
+id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o url_template9["url_template
 id='url_template-9'"]
 secrets1("secrets
 id='secrets-1'"):::secrets -- "GOOGLE_CSE_ID->GOOGLE_CSE_ID" --o url_template9["url_template

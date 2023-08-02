@@ -10,8 +10,8 @@
       "from": "secrets-8",
       "to": "text-completion-7",
       "constant": true,
-      "out": "API_KEY",
-      "in": "API_KEY"
+      "out": "PALM_KEY",
+      "in": "PALM_KEY"
     },
     {
       "from": "text-completion-7",
@@ -105,7 +105,7 @@
       "type": "secrets",
       "configuration": {
         "keys": [
-          "API_KEY"
+          "PALM_KEY"
         ]
       }
     },

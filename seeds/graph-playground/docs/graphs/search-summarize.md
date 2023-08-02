@@ -21,10 +21,10 @@ url_template3["url_template
 id='url_template-3'"] -- "url->url" --> fetch4["fetch
 id='fetch-4'"]
 secrets6("secrets
-id='secrets-6'"):::secrets -- "API_KEY->API_KEY" --> textcompletion1["text-completion
+id='secrets-6'"):::secrets -- "PALM_KEY->PALM_KEY" --> textcompletion1["text-completion
 id='text-completion-1'"]
 secrets6("secrets
-id='secrets-6'"):::secrets -- "API_KEY->API_KEY" --> url_template3["url_template
+id='secrets-6'"):::secrets -- "PALM_KEY->PALM_KEY" --> url_template3["url_template
 id='url_template-3'"]
 secrets6("secrets
 id='secrets-6'"):::secrets -- "GOOGLE_CSE_ID->GOOGLE_CSE_ID" --> url_template3["url_template

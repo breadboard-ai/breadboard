@@ -21,7 +21,7 @@ localmemory2["local-memory
 id='local-memory-2'"] -- "context->memory" --> prompttemplate5["prompt-template
 id='prompt-template-5'"]
 secrets1("secrets
-id='secrets-1'"):::secrets -- "API_KEY->API_KEY" --o reactcompletion["text-completion
+id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o reactcompletion["text-completion
 id='react-completion'"]
 toolsslot(("slot
 id='tools-slot'")):::slot -- "text->Observation" --> localmemory2["local-memory

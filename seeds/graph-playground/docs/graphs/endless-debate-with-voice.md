@@ -12,7 +12,7 @@ textcompletion4["text-completion
 id='text-completion-4'"] -- "completion->Albert" --> localmemory5["local-memory
 id='local-memory-5'"]
 secrets2("secrets
-id='secrets-2'"):::secrets -- "API_KEY->API_KEY" --o textcompletion6["text-completion
+id='secrets-2'"):::secrets -- "PALM_KEY->PALM_KEY" --o textcompletion6["text-completion
 id='text-completion-6'"]
 textcompletion6["text-completion
 id='text-completion-6'"] -- "completion->text" --> output7{{"output
@@ -24,7 +24,7 @@ textcompletion4["text-completion
 id='text-completion-4'"] -- "completion->context" --> albertvoice["prompt-template
 id='albert-voice'"]
 secrets2("secrets
-id='secrets-2'"):::secrets -- "API_KEY->API_KEY" --o textcompletion4["text-completion
+id='secrets-2'"):::secrets -- "PALM_KEY->PALM_KEY" --o textcompletion4["text-completion
 id='text-completion-4'"]
 albert["prompt-template
 id='albert'"] -- "prompt->text" --> textcompletion4["text-completion
@@ -36,7 +36,7 @@ textcompletion8["text-completion
 id='text-completion-8'"] -- "completion->Friedrich" --> localmemory9["local-memory
 id='local-memory-9'"]
 secrets2("secrets
-id='secrets-2'"):::secrets -- "API_KEY->API_KEY" --o textcompletion10["text-completion
+id='secrets-2'"):::secrets -- "PALM_KEY->PALM_KEY" --o textcompletion10["text-completion
 id='text-completion-10'"]
 textcompletion10["text-completion
 id='text-completion-10'"] -- "completion->text" --> output11{{"output
@@ -48,7 +48,7 @@ textcompletion8["text-completion
 id='text-completion-8'"] -- "completion->context" --> friedrichvoice["prompt-template
 id='friedrich-voice'"]
 secrets2("secrets
-id='secrets-2'"):::secrets -- "API_KEY->API_KEY" --o textcompletion8["text-completion
+id='secrets-2'"):::secrets -- "PALM_KEY->PALM_KEY" --o textcompletion8["text-completion
 id='text-completion-8'"]
 prompttemplate3["prompt-template
 id='prompt-template-3'"] -- "prompt->text" --> textcompletion8["text-completion

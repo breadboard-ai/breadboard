@@ -27,7 +27,7 @@ math.input("Ask a math question", { $id: "math-question" }).wire(
             .runJavascript("compute", { $id: "compute" })
             .wire("result->text", math.output({ $id: "print" }))
         )
-        .wire("<-API_KEY", kit.secrets(["API_KEY"]))
+        .wire("<-PALM_KEY", kit.secrets(["PALM_KEY"]))
     )
 );
 

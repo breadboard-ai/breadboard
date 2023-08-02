@@ -6,7 +6,7 @@
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
 secrets1("secrets
-id='secrets-1'"):::secrets -- "API_KEY->API_KEY" --o url_template3["url_template
+id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o url_template3["url_template
 id='url_template-3'"]
 secrets1("secrets
 id='secrets-1'"):::secrets -- "GOOGLE_CSE_ID->GOOGLE_CSE_ID" --o url_template3["url_template

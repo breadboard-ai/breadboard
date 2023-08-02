@@ -16,8 +16,8 @@
       "from": "secrets-2",
       "to": "text-completion-6",
       "constant": true,
-      "out": "API_KEY",
-      "in": "API_KEY"
+      "out": "PALM_KEY",
+      "in": "PALM_KEY"
     },
     {
       "from": "text-completion-6",
@@ -41,8 +41,8 @@
       "from": "secrets-2",
       "to": "text-completion-4",
       "constant": true,
-      "out": "API_KEY",
-      "in": "API_KEY"
+      "out": "PALM_KEY",
+      "in": "PALM_KEY"
     },
     {
       "from": "albert",
@@ -66,8 +66,8 @@
       "from": "secrets-2",
       "to": "text-completion-10",
       "constant": true,
-      "out": "API_KEY",
-      "in": "API_KEY"
+      "out": "PALM_KEY",
+      "in": "PALM_KEY"
     },
     {
       "from": "text-completion-10",
@@ -91,8 +91,8 @@
       "from": "secrets-2",
       "to": "text-completion-8",
       "constant": true,
-      "out": "API_KEY",
-      "in": "API_KEY"
+      "out": "PALM_KEY",
+      "in": "PALM_KEY"
     },
     {
       "from": "prompt-template-3",
@@ -123,7 +123,7 @@
       "type": "secrets",
       "configuration": {
         "keys": [
-          "API_KEY"
+          "PALM_KEY"
         ]
       }
     },

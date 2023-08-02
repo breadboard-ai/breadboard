@@ -6,7 +6,7 @@
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
 secrets5("secrets
-id='secrets-5'"):::secrets -- "API_KEY->API_KEY" --o textcompletion4["text-completion
+id='secrets-5'"):::secrets -- "PALM_KEY->PALM_KEY" --o textcompletion4["text-completion
 id='text-completion-4'"]
 localmemory3["local-memory
 id='local-memory-3'"] -- "context->context" --> prompttemplate2["prompt-template

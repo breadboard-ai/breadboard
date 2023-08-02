@@ -21,7 +21,7 @@ const reAct = board.addKit(ReActHelper);
  */
 
 // The single node where all the important keys come from.
-const secrets = kit.secrets(["API_KEY", "GOOGLE_CSE_ID"]);
+const secrets = kit.secrets(["PALM_KEY", "GOOGLE_CSE_ID"]);
 
 // This is the context that ReAct algo accumulates.
 const context = kit.localMemory();
@@ -50,7 +50,7 @@ const reActCompletion = kit
     "stop-sequences": ["\nObservation"],
     $id: "react-completion",
   })
-  .wire("<-API_KEY.", secrets);
+  .wire("<-PALM_KEY.", secrets);
 
 // Wire up the math tool. This code mostly matches what is in
 // `math.ts`, but is now participating in the larger ReAct board.
@@ -69,7 +69,7 @@ const math = kit
           .runJavascript("compute", { $id: "compute" })
           .wire("result->Observation", context)
       )
-      .wire("<-API_KEY.", secrets)
+      .wire("<-PALM_KEY.", secrets)
   );
 
 // Wire up the search tool. This code is mostly the same as in
@@ -78,7 +78,7 @@ const search = () => {
   const completion = kit
     .textCompletion()
     .wire("completion->Observation", context)
-    .wire("<-API_KEY.", secrets);
+    .wire("<-PALM_KEY.", secrets);
 
   const summarizingTemplate = kit
     .textTemplate(
@@ -88,9 +88,9 @@ const search = () => {
     .wire("prompt->text", completion);
   const searchURLTemplate = kit
     .urlTemplate(
-      "https://www.googleapis.com/customsearch/v1?key={{API_KEY}}&cx={{GOOGLE_CSE_ID}}&q={{query}}"
+      "https://www.googleapis.com/customsearch/v1?key={{PALM_KEY}}&cx={{GOOGLE_CSE_ID}}&q={{query}}"
     )
-    .wire("<-API_KEY.", secrets)
+    .wire("<-PALM_KEY.", secrets)
     .wire("<-GOOGLE_CSE_ID.", secrets)
     .wire(
       "url",

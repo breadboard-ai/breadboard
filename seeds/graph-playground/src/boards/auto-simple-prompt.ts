@@ -11,7 +11,7 @@ const autoSimplePrompt = new Board();
 const kit = autoSimplePrompt.addKit(Starter);
 
 const completion = kit.textCompletion();
-kit.secrets(["API_KEY"]).wire("API_KEY", completion);
+kit.secrets(["PALM_KEY"]).wire("PALM_KEY", completion);
 kit
   .textTemplate(
     "Analyze the following question and instead of answering, list out steps to take to answer the question: {{question}}",

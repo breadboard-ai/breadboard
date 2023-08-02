@@ -3,8 +3,8 @@
     {
       "from": "secrets-6",
       "to": "embed_docs-5",
-      "out": "API_KEY",
-      "in": "API_KEY"
+      "out": "PALM_KEY",
+      "in": "PALM_KEY"
     },
     {
       "from": "secrets-8",
@@ -51,8 +51,8 @@
     {
       "from": "secrets-12",
       "to": "embed_string-11",
-      "out": "API_KEY",
-      "in": "API_KEY"
+      "out": "PALM_KEY",
+      "in": "PALM_KEY"
     },
     {
       "from": "jsonata-13",
@@ -108,7 +108,7 @@
       "type": "secrets",
       "configuration": {
         "keys": [
-          "API_KEY"
+          "PALM_KEY"
         ]
       }
     },
@@ -145,7 +145,7 @@
       "type": "secrets",
       "configuration": {
         "keys": [
-          "API_KEY"
+          "PALM_KEY"
         ]
       }
     },

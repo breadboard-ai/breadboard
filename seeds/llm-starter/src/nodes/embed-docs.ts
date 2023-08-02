@@ -30,7 +30,7 @@ type EmbedStringInputs = {
   /**
    * The Google Cloud Platform API key
    */
-  API_KEY: string;
+  PALM_KEY: string;
   /**
    * Cache to use for storing results. Optional.
    */
@@ -39,13 +39,13 @@ type EmbedStringInputs = {
 
 export default async (inputs: InputValues) => {
   const values = inputs as EmbedStringInputs;
-  if (!values.API_KEY) throw new Error("Embedding requires `API_KEY` input");
+  if (!values.PALM_KEY) throw new Error("Embedding requires `PALM_KEY` input");
   if (!values.documents)
     throw new Error("Embedding requires `documents` input");
 
   const expression = jsonata(values.expression ?? "text");
   const cache = values.cache?.getCache({
-    palm: palm(values.API_KEY).getModelId(PalmModelMethod.EmbedText),
+    palm: palm(values.PALM_KEY).getModelId(PalmModelMethod.EmbedText),
   });
 
   const results = values.documents.map(async (doc) => {
@@ -57,7 +57,7 @@ export default async (inputs: InputValues) => {
       | undefined;
 
     if (!embedding) {
-      const request = palm(values.API_KEY).embedding(query);
+      const request = palm(values.PALM_KEY).embedding(query);
       const data = await fetch(request);
       const response = (await data.json()) as EmbedTextResponse;
       embedding = response?.embedding?.value;

@@ -11,7 +11,7 @@ const simplePrompt = new Board();
 const kit = simplePrompt.addKit(Starter);
 
 const completion = kit.textCompletion();
-kit.secrets(["API_KEY"]).wire("API_KEY", completion);
+kit.secrets(["PALM_KEY"]).wire("PALM_KEY", completion);
 simplePrompt
   .input()
   .wire(

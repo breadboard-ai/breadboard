@@ -36,8 +36,8 @@
       "from": "secrets-1",
       "to": "react-completion",
       "constant": true,
-      "out": "API_KEY",
-      "in": "API_KEY"
+      "out": "PALM_KEY",
+      "in": "PALM_KEY"
     },
     {
       "from": "tools-slot",
@@ -93,7 +93,7 @@
       "type": "secrets",
       "configuration": {
         "keys": [
-          "API_KEY",
+          "PALM_KEY",
           "GOOGLE_CSE_ID"
         ]
       }

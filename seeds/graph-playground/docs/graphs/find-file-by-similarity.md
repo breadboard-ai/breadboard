@@ -6,7 +6,7 @@
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
 secrets6("secrets
-id='secrets-6'"):::secrets -- "API_KEY->API_KEY" --> embed_docs5["embed_docs
+id='secrets-6'"):::secrets -- "PALM_KEY->PALM_KEY" --> embed_docs5["embed_docs
 id='embed_docs-5'"]
 secrets8("secrets
 id='secrets-8'"):::secrets -- "CACHE_DB->path" --> cache7["cache
@@ -30,7 +30,7 @@ input3[/"input
 id='input-3'"/]:::input -- "text->path" --> textassetsfrompath4["text-assets-from-path
 id='text-assets-from-path-4'"]
 secrets12("secrets
-id='secrets-12'"):::secrets -- "API_KEY->API_KEY" --> embed_string11["embed_string
+id='secrets-12'"):::secrets -- "PALM_KEY->PALM_KEY" --> embed_string11["embed_string
 id='embed_string-11'"]
 jsonata13["jsonata
 id='jsonata-13'"] -- "result->text" --> output14{{"output

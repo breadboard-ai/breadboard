@@ -11,7 +11,7 @@ const simplest = new Board();
 const kit = simplest.addKit(Starter);
 
 const completion = kit.textCompletion();
-kit.secrets(["API_KEY"]).wire("API_KEY", completion);
+kit.secrets(["PALM_KEY"]).wire("PALM_KEY", completion);
 simplest
   .input()
   .wire("text", completion.wire("completion->text", simplest.output()));

@@ -52,8 +52,8 @@ const prepareRequest = (
 class PaLM {
   private key: PalmApiKey;
 
-  constructor(API_KEY: PalmApiKey) {
-    this.key = API_KEY;
+  constructor(PALM_KEY: PalmApiKey) {
+    this.key = PALM_KEY;
   }
 
   /**
@@ -101,9 +101,9 @@ class PaLM {
  * ```typescript
  * import { palm } from "palm-lite";
  *
- * // Make sure to set the API_KEY environment variable.
- * const API_KEY = process.env.API_KEY;
- * const request = palm(API_KEY).message({
+ * // Make sure to set the PALM_KEY environment variable.
+ * const PALM_KEY = process.env.PALM_KEY;
+ * const request = palm(PALM_KEY).message({
  *   prompt: {
  *     messages: [ { content: "Hello there!" } ],
  *   },

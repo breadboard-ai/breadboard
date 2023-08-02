@@ -27,7 +27,7 @@ const completion = kit
   .textCompletion()
   .wire("completion->hear", output)
   .wire("completion->assistant", history)
-  .wire("<-API_KEY.", kit.secrets(["API_KEY"]));
+  .wire("<-PALM_KEY.", kit.secrets(["PALM_KEY"]));
 
 kit
   .textTemplate(

@@ -9,7 +9,7 @@ input1[/"input
 id='input-1'"/]:::input -- "text->topic" --> prompttemplate6["prompt-template
 id='prompt-template-6'"]
 secrets8("secrets
-id='secrets-8'"):::secrets -- "API_KEY->API_KEY" --o textcompletion7["text-completion
+id='secrets-8'"):::secrets -- "PALM_KEY->PALM_KEY" --o textcompletion7["text-completion
 id='text-completion-7'"]
 textcompletion7["text-completion
 id='text-completion-7'"] -- "completion->text" --> output9{{"output

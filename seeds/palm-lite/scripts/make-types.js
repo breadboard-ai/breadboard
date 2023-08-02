@@ -17,10 +17,10 @@ config();
 
 const DISCOVER_DOC_URL =
   "https://generativelanguage.googleapis.com/$discovery/rest?version=v1beta2";
-const { API_KEY } = process.env;
-if (!API_KEY) throw new Error("API_KEY is not defined");
+const { PALM_KEY } = process.env;
+if (!PALM_KEY) throw new Error("PALM_KEY is not defined");
 
-const response = await fetch(`${DISCOVER_DOC_URL}&key=${API_KEY}`);
+const response = await fetch(`${DISCOVER_DOC_URL}&key=${PALM_KEY}`);
 const doc = await response.json();
 const types = toTypes(doc);
 const preamble = `/**
