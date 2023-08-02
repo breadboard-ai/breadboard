@@ -21,7 +21,6 @@ import {
   type KitConstructor,
   type OptionalIdConfiguration,
   type BreadboardValidator,
-  type BreadboardValidatorMetadata,
   ProbeDetails,
 } from "./types.js";
 
