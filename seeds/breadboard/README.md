@@ -1,5 +1,7 @@
 # Breadboard
 
+![Milestone](https://img.shields.io/badge/milestone-M0-red) ![Stability](https://img.shields.io/badge/stability-wip-green)
+
 A library for prototyping generative AI applications.
 
 This library was inspired by the hardware maker community and their boundless creativity. They make amazing things with off-the-shelf parts and a [breadboard](https://learn.sparkfun.com/tutorials/how-to-use-a-breadboard/all), just wiring things together and trying this and that until it works.
