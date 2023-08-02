@@ -28,7 +28,7 @@ npm install @google-labs/llm-starter
 
 ## Using breadboard
 
-Just like for hardware makers, the `Board` class with which the wiring of a prototype begins.
+Just like for hardware makers, the wiring of a prototype begins with the `Board`.
 
 ```js
 import { Board } from "@google-labs/breadboard";
@@ -36,9 +36,9 @@ import { Board } from "@google-labs/breadboard";
 const board = new Board();
 ```
 
-Breadboards consist of nodes and wires. Nodes do useful things, and wires flow control and data between them.
+Breadboards are all nodes and wires. Nodes do useful things, and wires flow control and data between them.
 
-Placing things on the board is exceedingly simple. Here's a line that places an `input` node on the board:
+Placing things on the board is exceedingly simple. Here's a line that places an `input` and an `output` node on the board:
 
 ```js
 const input = board.input();
