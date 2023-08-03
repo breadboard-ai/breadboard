@@ -1,8 +1,8 @@
 {
-  "name": "@google-labs/llm-starter",
+  "name": "@google-labs/node-nursery",
   "private": true,
   "version": "0.0.1",
-  "description": "LLM Starter Kit for Breadboard",
+  "description": "Nursery for new nodes. Move to other kits to publish.",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -42,19 +42,17 @@
     "@ava/typescript": "^4.0.0",
     "@google-labs/tsconfig": "*",
     "@types/node": "^18.16.3",
+    "@types/json-stable-stringify": "^1.0.34",
+    "@types/sqlite3": "^3.1.8",
     "@typescript-eslint/eslint-plugin": "^5.56.0",
     "@typescript-eslint/parser": "^5.56.0",
     "ava": "^5.2.0",
     "typescript": "^5.0.4"
   },
   "dependencies": {
-    "@google-labs/breadboard": "*",
-    "@google-labs/graph-runner": "*",
-    "@google-labs/palm-lite": "*",
-    "@rgrove/parse-xml": "^4.1.0",
-    "jsonata": "^2.0.3"
-  },
-  "engines": {
-    "node": ">=19.0.0"
+    "json-stable-stringify": "^1.0.2",
+    "ml-distance": "^4.0.1",
+    "sqlite": "^5.0.1",
+    "sqlite3": "^5.1.6"
   }
 }

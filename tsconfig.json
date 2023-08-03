@@ -8,6 +8,7 @@
     { "path": "seeds/graph-runner" },
     { "path": "seeds/graph-integrity" }, 
     { "path": "seeds/breadboard" },
-    { "path": "seeds/llm-starter" }
+    { "path": "seeds/llm-starter" },
+    { "path": "seeds/node-nursery" }
   ]
 }

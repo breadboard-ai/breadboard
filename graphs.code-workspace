@@ -19,7 +19,7 @@
       "path": "seeds/palm-lite"
     },
     {
-      "path": "seeds/graph-integrity"
+      "path": "seeds/node-nursery"
     }
   ],
   "settings": {}

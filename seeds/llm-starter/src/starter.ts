@@ -82,46 +82,6 @@ export class Starter implements Kit {
     return this.#nodeFactory("text-completion", { ...rest }, $id);
   }
 
-  createVectorDatabase(config: OptionalIdConfiguration = {}): BreadboardNode {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory("create_vector_database", { ...rest }, $id);
-  }
-
-  addToVectorDatabase(config: OptionalIdConfiguration = {}): BreadboardNode {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory("add_to_vector_database", { ...rest }, $id);
-  }
-
-  queryVectorDatabase(config: OptionalIdConfiguration = {}): BreadboardNode {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory("query_vector_database", { ...rest }, $id);
-  }
-
-  embedDocs(config: OptionalIdConfiguration = {}): BreadboardNode {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory("embed_docs", { ...rest }, $id);
-  }
-
-  embedString(config: OptionalIdConfiguration = {}): BreadboardNode {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory("embed_string", { ...rest }, $id);
-  }
-
-  textAsset(config: OptionalIdConfiguration = {}): BreadboardNode {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory("text-asset", { ...rest }, $id);
-  }
-
-  textAssetsFromPath(config: OptionalIdConfiguration = {}): BreadboardNode {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory("text-assets-from-path", { ...rest }, $id);
-  }
-
-  cache(config: OptionalIdConfiguration = {}): BreadboardNode {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory("cache", { ...rest }, $id);
-  }
-
   secrets(
     keys: string[],
     config: OptionalIdConfiguration = {}

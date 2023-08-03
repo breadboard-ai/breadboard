@@ -6,27 +6,29 @@
 
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
+import { Nursery } from "@google-labs/node-nursery";
 
 const findFileBySimilarity = new Board();
 const kit = findFileBySimilarity.addKit(Starter);
+const nursery = findFileBySimilarity.addKit(Nursery);
 
-const vectorDatabase = kit.createVectorDatabase();
-const queryVectorDatabase = kit.queryVectorDatabase();
+const vectorDatabase = nursery.createVectorDatabase();
+const queryVectorDatabase = nursery.queryVectorDatabase();
 
 findFileBySimilarity.input("Provide a path to a directory to search").wire(
   "text->path",
-  kit.textAssetsFromPath().wire(
+  nursery.textAssetsFromPath().wire(
     "documents",
-    kit
+    nursery
       .embedDocs()
       .wire("<-PALM_KEY", kit.secrets(["PALM_KEY"]))
       .wire(
         "<-cache",
-        kit.cache().wire("path<-CACHE_DB", kit.secrets(["CACHE_DB"]))
+        nursery.cache().wire("path<-CACHE_DB", kit.secrets(["CACHE_DB"]))
       )
       .wire(
         "documents",
-        kit
+        nursery
           .addToVectorDatabase()
           .wire("<-db", vectorDatabase)
           .wire("db", queryVectorDatabase) // Ensure query runs after indexing
@@ -36,7 +38,7 @@ findFileBySimilarity.input("Provide a path to a directory to search").wire(
 
 findFileBySimilarity.input("What do you want to search for?").wire(
   "text",
-  kit
+  nursery
     .embedString()
     .wire("<-PALM_KEY", kit.secrets(["PALM_KEY"]))
     .wire(
