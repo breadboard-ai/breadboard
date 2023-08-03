@@ -1,14 +1,14 @@
 {
   "edges": [
     {
-      "from": "get-descriptions-4",
+      "from": "getDescriptions-4",
       "to": "promptTemplate-3",
       "constant": true,
       "out": "descriptions",
       "in": "descriptions"
     },
     {
-      "from": "get-tools-5",
+      "from": "getTools-5",
       "to": "promptTemplate-3",
       "constant": true,
       "out": "tools",
@@ -116,26 +116,26 @@
       "in": "query"
     },
     {
-      "from": "parse-completion-7",
+      "from": "parseCompletion-7",
       "to": "passthrough-12",
       "out": "search",
       "in": "search"
     },
     {
-      "from": "parse-completion-7",
+      "from": "parseCompletion-7",
       "to": "math-function",
       "out": "math",
       "in": "question"
     },
     {
-      "from": "parse-completion-7",
+      "from": "parseCompletion-7",
       "to": "output-13",
       "out": "answer",
       "in": "text"
     },
     {
       "from": "react-completion",
-      "to": "parse-completion-7",
+      "to": "parseCompletion-7",
       "out": "completion",
       "in": "completion"
     },
@@ -187,12 +187,12 @@
       }
     },
     {
-      "id": "get-descriptions-4",
-      "type": "get-descriptions"
+      "id": "getDescriptions-4",
+      "type": "getDescriptions"
     },
     {
-      "id": "get-tools-5",
-      "type": "get-tools"
+      "id": "getTools-5",
+      "type": "getTools"
     },
     {
       "id": "react-completion",
@@ -233,8 +233,8 @@
       "type": "localMemory"
     },
     {
-      "id": "parse-completion-7",
-      "type": "parse-completion",
+      "id": "parseCompletion-7",
+      "type": "parseCompletion",
       "configuration": {
         "args": [
           "completion"
