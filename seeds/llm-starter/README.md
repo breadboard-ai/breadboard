@@ -4,6 +4,14 @@
 
 The LLM Starter Kit is a collection of [Breadboard](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard) nodes that are helpful for building LLM-based (Generative AI) applications.
 
+## Installing
+
+LLM Starter Kit requires Node version >=v19.0.0. To install:
+
+```sh
+npm install @google-labs/llm-starter
+```
+
 ## Node Types
 
 Here are all node handlers that are included in the LLM Starter Kit.

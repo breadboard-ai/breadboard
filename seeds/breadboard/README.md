@@ -16,7 +16,7 @@ This library's design emphasizes two key properties:
 
 ## Installing the library
 
-To install the library, run:
+Breadboard requires Node version >=v19.0.0. To install the library, run:
 
 ```sh
 npm install @google-labs/breadboard

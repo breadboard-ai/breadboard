@@ -49,5 +49,8 @@
   },
   "dependencies": {
     "@google-labs/graph-runner": "*"
+  },
+  "engines": {
+    "node": ">=19.0.0"
   }
 }

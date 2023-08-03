@@ -59,5 +59,8 @@
     "ml-distance": "^4.0.1",
     "sqlite": "^5.0.1",
     "sqlite3": "^5.1.6"
+  },
+  "engines": {
+    "node": ">=19.0.0"
   }
 }
