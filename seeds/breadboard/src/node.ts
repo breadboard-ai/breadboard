@@ -10,6 +10,7 @@ import type {
   NodeTypeIdentifier,
 } from "@google-labs/graph-runner";
 import { Breadboard, BreadboardNode } from "./types.js";
+import { IdVendor } from "./id.js";
 
 export type PartialEdge = {
   out?: string;
@@ -81,15 +82,7 @@ export const parseSpec = (spec: string): ParsedSpec => {
   return result;
 };
 
-// Count nodes scoped to their breadboard.
-const nodeCounts = new Map<object, number>();
-
-const vendNodeId = (breadboard: Breadboard, type: string) => {
-  let nodeCount = nodeCounts.get(breadboard) || 0;
-  nodeCount++;
-  nodeCounts.set(breadboard, nodeCount);
-  return `${type}-${nodeCount}`;
-};
+const nodeIdVendor = new IdVendor();
 
 const hasValues = (configuration: NodeConfiguration) => {
   return Object.values(configuration).filter(Boolean).length > 0;
@@ -108,7 +101,7 @@ export class Node implements BreadboardNode {
     id?: string
   ) {
     this.#breadboard = breadboard;
-    this.id = id ?? vendNodeId(breadboard, type);
+    this.id = id ?? nodeIdVendor.vendId(breadboard, type);
 
     if (configuration && hasValues(configuration))
       this.configuration = configuration;

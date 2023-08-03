@@ -11,6 +11,7 @@ import type {
   InputValues,
   GraphDescriptor,
   OutputValues,
+  NodeHandler,
 } from "@google-labs/graph-runner";
 
 import {
@@ -30,6 +31,7 @@ import { Core } from "./core.js";
 import { InputStageResult, OutputStageResult } from "./run.js";
 import { readFile } from "fs/promises";
 import { KitLoader } from "./kit.js";
+import { IdVendor } from "./id.js";
 
 class ProbeEvent extends CustomEvent<ProbeDetails> {
   constructor(type: string, detail: ProbeDetails) {
@@ -50,6 +52,25 @@ export const loadGraph = async (path?: string, ref?: string) => {
   return await response.json();
 };
 
+const nodeTypeVendor = new IdVendor();
+
+class LocalKit implements Kit {
+  /**
+   * The "." signifies local.
+   */
+  url = ".";
+
+  #handlers: NodeHandlers = {};
+
+  addHandler(type: string, handler: NodeHandler) {
+    this.#handlers[type] = handler;
+  }
+
+  get handlers() {
+    return this.#handlers;
+  }
+}
+
 /**
  * This is the heart of the Breadboard library.
  * Just like for hardware makers, the `Board` is the place where wiring of
@@ -67,6 +88,7 @@ export class Board implements Breadboard {
   edges: Edge[] = [];
   nodes: NodeDescriptor[] = [];
   kits: Kit[] = [];
+  #localKit?: LocalKit;
   #slots: BreadboardSlotSpec = {};
   #validators: BreadboardValidator[] = [];
 
@@ -307,6 +329,17 @@ export class Board implements Breadboard {
   slot(slot: string, config: OptionalIdConfiguration = {}): Node {
     const { $id, ...rest } = config;
     return new Node(this, "slot", { slot, ...rest }, $id);
+  }
+
+  node(handler: NodeHandler, config: OptionalIdConfiguration = {}): Node {
+    const { $id, ...rest } = config;
+    const type = nodeTypeVendor.vendId(this, "node");
+    if (!this.#localKit) {
+      this.#localKit = new LocalKit();
+      this.kits.push(this.#localKit);
+    }
+    this.#localKit.addHandler(type, handler);
+    return new Node(this, type, { ...rest }, $id);
   }
 
   addEdge(edge: Edge) {
