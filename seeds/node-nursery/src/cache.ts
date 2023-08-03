@@ -10,16 +10,16 @@ import { open, Database } from "sqlite";
 import sqlite3 from "sqlite3";
 
 export interface Cache {
-  get(key: string | object): Promise<object | string | null>;
-  set(key: string | object, value: object | string): Promise<void>;
+  get(key: unknown): Promise<unknown | null>;
+  set(key: unknown, value: unknown): Promise<void>;
   clear(): Promise<void>;
 }
 
 export interface CacheManager {
-  getCache(model: object): Cache;
+  getCache(model: unknown): Cache;
 }
 
-function getCacheKey(key: object | string): string {
+function getCacheKey(key: unknown): string {
   const hash = createHash("md5");
   hash.update(stringify(key));
   return hash.digest("hex");
@@ -29,7 +29,7 @@ export class SQLiteCache implements Cache {
   private dbPromise: Promise<Database>;
   private tableName: string;
 
-  constructor(model: object | string, dbPromise: Promise<Database>) {
+  constructor(model: unknown, dbPromise: Promise<Database>) {
     this.tableName = "cache_" + getCacheKey(model);
 
     this.dbPromise = this.createTable(dbPromise);
@@ -43,7 +43,7 @@ export class SQLiteCache implements Cache {
     return db;
   }
 
-  async get(key: object | string): Promise<object | string | null> {
+  async get(key: unknown): Promise<unknown | null> {
     const db = await this.dbPromise;
     const row = await db.all(
       `SELECT value FROM ${this.tableName} WHERE key = ?`,
@@ -52,7 +52,7 @@ export class SQLiteCache implements Cache {
     return row.length ? JSON.parse(row[0].value) : null;
   }
 
-  async set(key: object | string, value: object | string): Promise<void> {
+  async set(key: unknown, value: unknown): Promise<void> {
     const db = await this.dbPromise;
     await db.run(
       `INSERT OR REPLACE INTO ${this.tableName}(key, value) VALUES (?, ?)`,
@@ -76,7 +76,7 @@ export class SQLiteCacheManager implements CacheManager {
     });
   }
 
-  getCache(model: object): Cache {
+  getCache(model: unknown): Cache {
     return new SQLiteCache(model, this.dbPromise);
   }
 }
