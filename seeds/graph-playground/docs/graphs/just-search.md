@@ -5,24 +5,12 @@
   ```mermaid
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-secrets1("secrets
-id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o urlTemplate3["urlTemplate
-id='urlTemplate-3'"]
-secrets1("secrets
-id='secrets-1'"):::secrets -- "GOOGLE_CSE_ID->GOOGLE_CSE_ID" --o urlTemplate3["urlTemplate
-id='urlTemplate-3'"]
-jsonata5["jsonata
-id='jsonata-5'"] -- "result->text" --> output6{{"output
-id='output-6'"}}:::output
-fetch4["fetch
-id='fetch-4'"] -- "response->json" --> jsonata5["jsonata
-id='jsonata-5'"]
-urlTemplate3["urlTemplate
-id='urlTemplate-3'"] -- "url->url" --> fetch4["fetch
-id='fetch-4'"]
-input2[/"input
-id='input-2'"/]:::input -- "text->query" --> urlTemplate3["urlTemplate
-id='urlTemplate-3'"]
+secrets1("secrets id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o urlTemplate3["urlTemplate id='urlTemplate-3'"]
+secrets1("secrets id='secrets-1'"):::secrets -- "GOOGLE_CSE_ID->GOOGLE_CSE_ID" --o urlTemplate3["urlTemplate id='urlTemplate-3'"]
+jsonata5["jsonata id='jsonata-5'"] -- "result->text" --> output6{{"output id='output-6'"}}:::output
+fetch4["fetch id='fetch-4'"] -- "response->json" --> jsonata5["jsonata id='jsonata-5'"]
+urlTemplate3["urlTemplate id='urlTemplate-3'"] -- "url->url" --> fetch4["fetch id='fetch-4'"]
+input2[/"input id='input-2'"/]:::input -- "text->query" --> urlTemplate3["urlTemplate id='urlTemplate-3'"]
 keyssecrets1[keys]:::config -- "keys->keys" --o secrets1
 messageinput2[message]:::config -- "message->message" --o input2
 templateurlTemplate3[template]:::config -- "template->template" --o urlTemplate3

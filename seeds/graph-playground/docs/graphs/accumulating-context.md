@@ -5,33 +5,15 @@
   ```mermaid
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-secrets5("secrets
-id='secrets-5'"):::secrets -- "PALM_KEY->PALM_KEY" --o textCompletion4["textCompletion
-id='textCompletion-4'"]
-localMemory3["localMemory
-id='localMemory-3'"] -- "context->context" --> promptTemplate2["promptTemplate
-id='promptTemplate-2'"]
-textCompletion4["textCompletion
-id='textCompletion-4'"] -- "completion->assistant" --> localMemory3["localMemory
-id='localMemory-3'"]
-output6{{"output
-id='output-6'"}}:::output --> input1[/"input
-id='input-1'"/]:::input
-textCompletion4["textCompletion
-id='textCompletion-4'"] -- "completion->text" --> output6{{"output
-id='output-6'"}}:::output
-promptTemplate2["promptTemplate
-id='promptTemplate-2'"] -- "prompt->text" --> textCompletion4["textCompletion
-id='textCompletion-4'"]
-input1[/"input
-id='input-1'"/]:::input -- "text->question" --> promptTemplate2["promptTemplate
-id='promptTemplate-2'"]
-input1[/"input
-id='input-1'"/]:::input -- "text->user" --> localMemory3["localMemory
-id='localMemory-3'"]
-start(("passthrough
-id='start'")):::passthrough --> input1[/"input
-id='input-1'"/]:::input
+secrets5("secrets id='secrets-5'"):::secrets -- "PALM_KEY->PALM_KEY" --o textCompletion4["textCompletion id='textCompletion-4'"]
+localMemory3["localMemory id='localMemory-3'"] -- "context->context" --> promptTemplate2["promptTemplate id='promptTemplate-2'"]
+textCompletion4["textCompletion id='textCompletion-4'"] -- "completion->assistant" --> localMemory3["localMemory id='localMemory-3'"]
+output6{{"output id='output-6'"}}:::output --> input1[/"input id='input-1'"/]:::input
+textCompletion4["textCompletion id='textCompletion-4'"] -- "completion->text" --> output6{{"output id='output-6'"}}:::output
+promptTemplate2["promptTemplate id='promptTemplate-2'"] -- "prompt->text" --> textCompletion4["textCompletion id='textCompletion-4'"]
+input1[/"input id='input-1'"/]:::input -- "text->question" --> promptTemplate2["promptTemplate id='promptTemplate-2'"]
+input1[/"input id='input-1'"/]:::input -- "text->user" --> localMemory3["localMemory id='localMemory-3'"]
+start(("passthrough id='start'")):::passthrough --> input1[/"input id='input-1'"/]:::input
 templatepromptTemplate2[template]:::config -- "template->template" --o promptTemplate2
 contextpromptTemplate2[context]:::config -- "context->context" --o promptTemplate2
 keyssecrets5[keys]:::config -- "keys->keys" --o secrets5

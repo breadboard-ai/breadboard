@@ -5,18 +5,10 @@
   ```mermaid
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-secrets2("secrets
-id='secrets-2'"):::secrets -- "PALM_KEY->PALM_KEY" --> textCompletion1["textCompletion
-id='textCompletion-1'"]
-textCompletion1["textCompletion
-id='textCompletion-1'"] -- "completion->text" --> output4{{"output
-id='output-4'"}}:::output
-analyzethis["promptTemplate
-id='analyze-this'"] -- "prompt->text" --> textCompletion1["textCompletion
-id='textCompletion-1'"]
-input3[/"input
-id='input-3'"/]:::input -- "text->question" --> analyzethis["promptTemplate
-id='analyze-this'"]
+secrets2("secrets id='secrets-2'"):::secrets -- "PALM_KEY->PALM_KEY" --> textCompletion1["textCompletion id='textCompletion-1'"]
+textCompletion1["textCompletion id='textCompletion-1'"] -- "completion->text" --> output4{{"output id='output-4'"}}:::output
+analyzethis["promptTemplate id='analyze-this'"] -- "prompt->text" --> textCompletion1["textCompletion id='textCompletion-1'"]
+input3[/"input id='input-3'"/]:::input -- "text->question" --> analyzethis["promptTemplate id='analyze-this'"]
 keyssecrets2[keys]:::config -- "keys->keys" --o secrets2
 templateanalyzethis[template]:::config -- "template->template" --o analyzethis
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000

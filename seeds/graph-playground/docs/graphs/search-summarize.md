@@ -5,36 +5,16 @@
   ```mermaid
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-textCompletion1["textCompletion
-id='textCompletion-1'"] -- "completion->text" --> output2{{"output
-id='output-2'"}}:::output
-summarizingtemplate["promptTemplate
-id='summarizing-template'"] -- "prompt->text" --> textCompletion1["textCompletion
-id='textCompletion-1'"]
-jsonata5["jsonata
-id='jsonata-5'"] -- "result->context" --> summarizingtemplate["promptTemplate
-id='summarizing-template'"]
-fetch4["fetch
-id='fetch-4'"] -- "response->json" --> jsonata5["jsonata
-id='jsonata-5'"]
-urlTemplate3["urlTemplate
-id='urlTemplate-3'"] -- "url->url" --> fetch4["fetch
-id='fetch-4'"]
-secrets6("secrets
-id='secrets-6'"):::secrets -- "PALM_KEY->PALM_KEY" --> textCompletion1["textCompletion
-id='textCompletion-1'"]
-secrets6("secrets
-id='secrets-6'"):::secrets -- "PALM_KEY->PALM_KEY" --> urlTemplate3["urlTemplate
-id='urlTemplate-3'"]
-secrets6("secrets
-id='secrets-6'"):::secrets -- "GOOGLE_CSE_ID->GOOGLE_CSE_ID" --> urlTemplate3["urlTemplate
-id='urlTemplate-3'"]
-input[/"input
-id='input'"/]:::input -- "text->question" --> summarizingtemplate["promptTemplate
-id='summarizing-template'"]
-input[/"input
-id='input'"/]:::input -- "text->query" --> urlTemplate3["urlTemplate
-id='urlTemplate-3'"]
+textCompletion1["textCompletion id='textCompletion-1'"] -- "completion->text" --> output2{{"output id='output-2'"}}:::output
+summarizingtemplate["promptTemplate id='summarizing-template'"] -- "prompt->text" --> textCompletion1["textCompletion id='textCompletion-1'"]
+jsonata5["jsonata id='jsonata-5'"] -- "result->context" --> summarizingtemplate["promptTemplate id='summarizing-template'"]
+fetch4["fetch id='fetch-4'"] -- "response->json" --> jsonata5["jsonata id='jsonata-5'"]
+urlTemplate3["urlTemplate id='urlTemplate-3'"] -- "url->url" --> fetch4["fetch id='fetch-4'"]
+secrets6("secrets id='secrets-6'"):::secrets -- "PALM_KEY->PALM_KEY" --> textCompletion1["textCompletion id='textCompletion-1'"]
+secrets6("secrets id='secrets-6'"):::secrets -- "PALM_KEY->PALM_KEY" --> urlTemplate3["urlTemplate id='urlTemplate-3'"]
+secrets6("secrets id='secrets-6'"):::secrets -- "GOOGLE_CSE_ID->GOOGLE_CSE_ID" --> urlTemplate3["urlTemplate id='urlTemplate-3'"]
+input[/"input id='input'"/]:::input -- "text->question" --> summarizingtemplate["promptTemplate id='summarizing-template'"]
+input[/"input id='input'"/]:::input -- "text->query" --> urlTemplate3["urlTemplate id='urlTemplate-3'"]
 templatesummarizingtemplate[template]:::config -- "template->template" --o summarizingtemplate
 templateurlTemplate3[template]:::config -- "template->template" --o urlTemplate3
 expressionjsonata5[expression]:::config -- "expression->expression" --o jsonata5

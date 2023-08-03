@@ -5,54 +5,22 @@
   ```mermaid
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-reflect5["reflect
-id='reflect-5'"] -- "graph->json" --> jsonata3["jsonata
-id='jsonata-3'"]
-reflect5["reflect
-id='reflect-5'"] -- "graph->json" --> jsonata4["jsonata
-id='jsonata-4'"]
-jsonata4["jsonata
-id='jsonata-4'"] -- "result->descriptions" --o promptTemplate6["promptTemplate
-id='promptTemplate-6'"]
-jsonata3["jsonata
-id='jsonata-3'"] -- "result->tools" --o promptTemplate6["promptTemplate
-id='promptTemplate-6'"]
-localMemory2["localMemory
-id='localMemory-2'"] -- "context->memory" --> promptTemplate6["promptTemplate
-id='promptTemplate-6'"]
-secrets1("secrets
-id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o reactcompletion["textCompletion
-id='react-completion'"]
-math[["include
-id='math'"]]:::include -- "text->Observation" --> localMemory2["localMemory
-id='localMemory-2'"]
-search[["include
-id='search'"]]:::include -- "text->Observation" --> localMemory2["localMemory
-id='localMemory-2'"]
-jsonata8["jsonata
-id='jsonata-8'"] -- "search->text" --> search[["include
-id='search'"]]:::include
-jsonata8["jsonata
-id='jsonata-8'"] -- "math->text" --> math[["include
-id='math'"]]:::include
-jsonata8["jsonata
-id='jsonata-8'"] -- "answer->text" --> output9{{"output
-id='output-9'"}}:::output
-reactcompletion["textCompletion
-id='react-completion'"] -- "completion->json" --> jsonata8["jsonata
-id='jsonata-8'"]
-reactcompletion["textCompletion
-id='react-completion'"] -- "completion->Thought" --> rememberthought["localMemory
-id='remember-thought'"]
-promptTemplate6["promptTemplate
-id='promptTemplate-6'"] -- "prompt->text" --> reactcompletion["textCompletion
-id='react-completion'"]
-rememberquestion["localMemory
-id='remember-question'"] -- "context->memory" --> promptTemplate6["promptTemplate
-id='promptTemplate-6'"]
-input7[/"input
-id='input-7'"/]:::input -- "text->Question" --> rememberquestion["localMemory
-id='remember-question'"]
+reflect5["reflect id='reflect-5'"] -- "graph->json" --> jsonata3["jsonata id='jsonata-3'"]
+reflect5["reflect id='reflect-5'"] -- "graph->json" --> jsonata4["jsonata id='jsonata-4'"]
+jsonata4["jsonata id='jsonata-4'"] -- "result->descriptions" --o promptTemplate6["promptTemplate id='promptTemplate-6'"]
+jsonata3["jsonata id='jsonata-3'"] -- "result->tools" --o promptTemplate6["promptTemplate id='promptTemplate-6'"]
+localMemory2["localMemory id='localMemory-2'"] -- "context->memory" --> promptTemplate6["promptTemplate id='promptTemplate-6'"]
+secrets1("secrets id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o reactcompletion["textCompletion id='react-completion'"]
+math[["include id='math'"]]:::include -- "text->Observation" --> localMemory2["localMemory id='localMemory-2'"]
+search[["include id='search'"]]:::include -- "text->Observation" --> localMemory2["localMemory id='localMemory-2'"]
+jsonata8["jsonata id='jsonata-8'"] -- "search->text" --> search[["include id='search'"]]:::include
+jsonata8["jsonata id='jsonata-8'"] -- "math->text" --> math[["include id='math'"]]:::include
+jsonata8["jsonata id='jsonata-8'"] -- "answer->text" --> output9{{"output id='output-9'"}}:::output
+reactcompletion["textCompletion id='react-completion'"] -- "completion->json" --> jsonata8["jsonata id='jsonata-8'"]
+reactcompletion["textCompletion id='react-completion'"] -- "completion->Thought" --> rememberthought["localMemory id='remember-thought'"]
+promptTemplate6["promptTemplate id='promptTemplate-6'"] -- "prompt->text" --> reactcompletion["textCompletion id='react-completion'"]
+rememberquestion["localMemory id='remember-question'"] -- "context->memory" --> promptTemplate6["promptTemplate id='promptTemplate-6'"]
+input7[/"input id='input-7'"/]:::input -- "text->Question" --> rememberquestion["localMemory id='remember-question'"]
 keyssecrets1[keys]:::config -- "keys->keys" --o secrets1
 expressionjsonata3[expression]:::config -- "expression->expression" --o jsonata3
 expressionjsonata4[expression]:::config -- "expression->expression" --o jsonata4

@@ -36,7 +36,7 @@ const shape = (descriptor?: NodeDescriptor) => {
   const node = descriptor.id;
   const nodeId = properNodeId(node);
   const nodeType = descriptor.type;
-  const text = `"${nodeType}\nid='${node}'"`;
+  const text = `"${nodeType} id='${node}'"`;
   switch (nodeType) {
     case "include":
       return `${nodeId}[[${text}]]:::include`;

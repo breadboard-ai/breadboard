@@ -5,15 +5,9 @@
   ```mermaid
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-secrets2("secrets
-id='secrets-2'"):::secrets -- "PALM_KEY->PALM_KEY" --> textCompletion1["textCompletion
-id='textCompletion-1'"]
-textCompletion1["textCompletion
-id='textCompletion-1'"] -- "completion->text" --> output4{{"output
-id='output-4'"}}:::output
-input3[/"input
-id='input-3'"/]:::input -- "text->text" --> textCompletion1["textCompletion
-id='textCompletion-1'"]
+secrets2("secrets id='secrets-2'"):::secrets -- "PALM_KEY->PALM_KEY" --> textCompletion1["textCompletion id='textCompletion-1'"]
+textCompletion1["textCompletion id='textCompletion-1'"] -- "completion->text" --> output4{{"output id='output-4'"}}:::output
+input3[/"input id='input-3'"/]:::input -- "text->text" --> textCompletion1["textCompletion id='textCompletion-1'"]
 keyssecrets2[keys]:::config -- "keys->keys" --o secrets2
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
