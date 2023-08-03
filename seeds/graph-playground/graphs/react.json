@@ -2,21 +2,21 @@
   "edges": [
     {
       "from": "get-descriptions-4",
-      "to": "prompt-template-3",
+      "to": "promptTemplate-3",
       "constant": true,
       "out": "descriptions",
       "in": "descriptions"
     },
     {
       "from": "get-tools-5",
-      "to": "prompt-template-3",
+      "to": "promptTemplate-3",
       "constant": true,
       "out": "tools",
       "in": "tools"
     },
     {
-      "from": "local-memory-2",
-      "to": "prompt-template-3",
+      "from": "localMemory-2",
+      "to": "promptTemplate-3",
       "out": "context",
       "in": "memory"
     },
@@ -29,7 +29,7 @@
     },
     {
       "from": "compute",
-      "to": "local-memory-2",
+      "to": "localMemory-2",
       "out": "result",
       "in": "Observation"
     },
@@ -53,34 +53,34 @@
       "in": "text"
     },
     {
-      "from": "text-completion-8",
-      "to": "local-memory-2",
+      "from": "textCompletion-8",
+      "to": "localMemory-2",
       "out": "completion",
       "in": "Observation"
     },
     {
       "from": "secrets-1",
-      "to": "text-completion-8",
+      "to": "textCompletion-8",
       "constant": true,
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
       "from": "summarizing-template",
-      "to": "text-completion-8",
+      "to": "textCompletion-8",
       "out": "prompt",
       "in": "text"
     },
     {
       "from": "secrets-1",
-      "to": "url_template-9",
+      "to": "urlTemplate-9",
       "constant": true,
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
       "from": "secrets-1",
-      "to": "url_template-9",
+      "to": "urlTemplate-9",
       "constant": true,
       "out": "GOOGLE_CSE_ID",
       "in": "GOOGLE_CSE_ID"
@@ -98,7 +98,7 @@
       "in": "json"
     },
     {
-      "from": "url_template-9",
+      "from": "urlTemplate-9",
       "to": "fetch-10",
       "out": "url",
       "in": "url"
@@ -111,7 +111,7 @@
     },
     {
       "from": "passthrough-12",
-      "to": "url_template-9",
+      "to": "urlTemplate-9",
       "out": "search",
       "in": "query"
     },
@@ -146,14 +146,14 @@
       "in": "Thought"
     },
     {
-      "from": "prompt-template-3",
+      "from": "promptTemplate-3",
       "to": "react-completion",
       "out": "prompt",
       "in": "text"
     },
     {
       "from": "remember-question",
-      "to": "prompt-template-3",
+      "to": "promptTemplate-3",
       "out": "context",
       "in": "memory"
     },
@@ -176,12 +176,12 @@
       }
     },
     {
-      "id": "local-memory-2",
-      "type": "local-memory"
+      "id": "localMemory-2",
+      "type": "localMemory"
     },
     {
-      "id": "prompt-template-3",
-      "type": "prompt-template",
+      "id": "promptTemplate-3",
+      "type": "promptTemplate",
       "configuration": {
         "template": "Answer the following questions as best you can. You have access to the following tools:\n\n{{descriptions}}\n\nUse the following format:\n\nQuestion: the input question you must answer\nThought: you should always think about what to do\nAction: the action to take, should be one of: {{tools}}\nAction Input: the input to the action\nObservation: the result of the action\n... (this Thought/Action/Action Input/Observation can repeat N times)\nThought: I now know the final answer\nFinal Answer: the final answer to the original input question\n\nBegin!\n\n{{memory}}\nThought:"
       }
@@ -196,7 +196,7 @@
     },
     {
       "id": "react-completion",
-      "type": "text-completion",
+      "type": "textCompletion",
       "configuration": {
         "stop-sequences": [
           "\nObservation"
@@ -205,18 +205,18 @@
     },
     {
       "id": "math-function",
-      "type": "prompt-template",
+      "type": "promptTemplate",
       "configuration": {
         "template": "Translate the math problem below into a JavaScript function named `compute` that can be executed to provide the answer to the problem\nMath Problem: {{question}}\nSolution:"
       }
     },
     {
       "id": "math-function-completion",
-      "type": "text-completion"
+      "type": "textCompletion"
     },
     {
       "id": "compute",
-      "type": "run-javascript",
+      "type": "runJavascript",
       "configuration": {
         "name": "compute"
       }
@@ -230,7 +230,7 @@
     },
     {
       "id": "remember-question",
-      "type": "local-memory"
+      "type": "localMemory"
     },
     {
       "id": "parse-completion-7",
@@ -243,19 +243,19 @@
       }
     },
     {
-      "id": "text-completion-8",
-      "type": "text-completion"
+      "id": "textCompletion-8",
+      "type": "textCompletion"
     },
     {
       "id": "summarizing-template",
-      "type": "prompt-template",
+      "type": "promptTemplate",
       "configuration": {
         "template": "Use context below to answer this question:\n\n##Question:\n{{question}}\n\n## Context {{context}}\n\\n## Answer:\n"
       }
     },
     {
-      "id": "url_template-9",
-      "type": "url_template",
+      "id": "urlTemplate-9",
+      "type": "urlTemplate",
       "configuration": {
         "template": "https://www.googleapis.com/customsearch/v1?key={{PALM_KEY}}&cx={{GOOGLE_CSE_ID}}&q={{query}}"
       }
@@ -281,7 +281,7 @@
     },
     {
       "id": "remember-thought",
-      "type": "local-memory"
+      "type": "localMemory"
     }
   ],
   "kits": [

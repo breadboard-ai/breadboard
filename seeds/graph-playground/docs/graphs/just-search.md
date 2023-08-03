@@ -6,26 +6,26 @@
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
 secrets1("secrets
-id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o url_template3["url_template
-id='url_template-3'"]
+id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o urlTemplate3["urlTemplate
+id='urlTemplate-3'"]
 secrets1("secrets
-id='secrets-1'"):::secrets -- "GOOGLE_CSE_ID->GOOGLE_CSE_ID" --o url_template3["url_template
-id='url_template-3'"]
+id='secrets-1'"):::secrets -- "GOOGLE_CSE_ID->GOOGLE_CSE_ID" --o urlTemplate3["urlTemplate
+id='urlTemplate-3'"]
 jsonata5["jsonata
 id='jsonata-5'"] -- "result->text" --> output6{{"output
 id='output-6'"}}:::output
 fetch4["fetch
 id='fetch-4'"] -- "response->json" --> jsonata5["jsonata
 id='jsonata-5'"]
-url_template3["url_template
-id='url_template-3'"] -- "url->url" --> fetch4["fetch
+urlTemplate3["urlTemplate
+id='urlTemplate-3'"] -- "url->url" --> fetch4["fetch
 id='fetch-4'"]
 input2[/"input
-id='input-2'"/]:::input -- "text->query" --> url_template3["url_template
-id='url_template-3'"]
+id='input-2'"/]:::input -- "text->query" --> urlTemplate3["urlTemplate
+id='urlTemplate-3'"]
 keyssecrets1[keys]:::config -- "keys->keys" --o secrets1
 messageinput2[message]:::config -- "message->message" --o input2
-templateurl_template3[template]:::config -- "template->template" --o url_template3
+templateurlTemplate3[template]:::config -- "template->template" --o urlTemplate3
 expressionjsonata5[expression]:::config -- "expression->expression" --o jsonata5
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000

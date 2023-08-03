@@ -6,85 +6,85 @@
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
 getdescriptions4["get-descriptions
-id='get-descriptions-4'"] -- "descriptions->descriptions" --o prompttemplate3["prompt-template
-id='prompt-template-3'"]
+id='get-descriptions-4'"] -- "descriptions->descriptions" --o promptTemplate3["promptTemplate
+id='promptTemplate-3'"]
 gettools5["get-tools
-id='get-tools-5'"] -- "tools->tools" --o prompttemplate3["prompt-template
-id='prompt-template-3'"]
-localmemory2["local-memory
-id='local-memory-2'"] -- "context->memory" --> prompttemplate3["prompt-template
-id='prompt-template-3'"]
+id='get-tools-5'"] -- "tools->tools" --o promptTemplate3["promptTemplate
+id='promptTemplate-3'"]
+localMemory2["localMemory
+id='localMemory-2'"] -- "context->memory" --> promptTemplate3["promptTemplate
+id='promptTemplate-3'"]
 secrets1("secrets
-id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o reactcompletion["text-completion
+id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o reactcompletion["textCompletion
 id='react-completion'"]
-compute["run-javascript
-id='compute'"] -- "result->Observation" --> localmemory2["local-memory
-id='local-memory-2'"]
-mathfunctioncompletion["text-completion
-id='math-function-completion'"] -- "completion->code" --> compute["run-javascript
+compute["runJavascript
+id='compute'"] -- "result->Observation" --> localMemory2["localMemory
+id='localMemory-2'"]
+mathfunctioncompletion["textCompletion
+id='math-function-completion'"] -- "completion->code" --> compute["runJavascript
 id='compute'"]
 secrets1("secrets
-id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o mathfunctioncompletion["text-completion
+id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o mathfunctioncompletion["textCompletion
 id='math-function-completion'"]
-mathfunction["prompt-template
-id='math-function'"] -- "prompt->text" --> mathfunctioncompletion["text-completion
+mathfunction["promptTemplate
+id='math-function'"] -- "prompt->text" --> mathfunctioncompletion["textCompletion
 id='math-function-completion'"]
-textcompletion8["text-completion
-id='text-completion-8'"] -- "completion->Observation" --> localmemory2["local-memory
-id='local-memory-2'"]
+textCompletion8["textCompletion
+id='textCompletion-8'"] -- "completion->Observation" --> localMemory2["localMemory
+id='localMemory-2'"]
 secrets1("secrets
-id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o textcompletion8["text-completion
-id='text-completion-8'"]
-summarizingtemplate["prompt-template
-id='summarizing-template'"] -- "prompt->text" --> textcompletion8["text-completion
-id='text-completion-8'"]
+id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o textCompletion8["textCompletion
+id='textCompletion-8'"]
+summarizingtemplate["promptTemplate
+id='summarizing-template'"] -- "prompt->text" --> textCompletion8["textCompletion
+id='textCompletion-8'"]
 secrets1("secrets
-id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o url_template9["url_template
-id='url_template-9'"]
+id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o urlTemplate9["urlTemplate
+id='urlTemplate-9'"]
 secrets1("secrets
-id='secrets-1'"):::secrets -- "GOOGLE_CSE_ID->GOOGLE_CSE_ID" --o url_template9["url_template
-id='url_template-9'"]
+id='secrets-1'"):::secrets -- "GOOGLE_CSE_ID->GOOGLE_CSE_ID" --o urlTemplate9["urlTemplate
+id='urlTemplate-9'"]
 jsonata11["jsonata
-id='jsonata-11'"] -- "result->context" --> summarizingtemplate["prompt-template
+id='jsonata-11'"] -- "result->context" --> summarizingtemplate["promptTemplate
 id='summarizing-template'"]
 fetch10["fetch
 id='fetch-10'"] -- "response->json" --> jsonata11["jsonata
 id='jsonata-11'"]
-url_template9["url_template
-id='url_template-9'"] -- "url->url" --> fetch10["fetch
+urlTemplate9["urlTemplate
+id='urlTemplate-9'"] -- "url->url" --> fetch10["fetch
 id='fetch-10'"]
 passthrough12(("passthrough
-id='passthrough-12'")):::passthrough -- "search->question" --> summarizingtemplate["prompt-template
+id='passthrough-12'")):::passthrough -- "search->question" --> summarizingtemplate["promptTemplate
 id='summarizing-template'"]
 passthrough12(("passthrough
-id='passthrough-12'")):::passthrough -- "search->query" --> url_template9["url_template
-id='url_template-9'"]
+id='passthrough-12'")):::passthrough -- "search->query" --> urlTemplate9["urlTemplate
+id='urlTemplate-9'"]
 parsecompletion7["parse-completion
 id='parse-completion-7'"] -- "search->search" --> passthrough12(("passthrough
 id='passthrough-12'")):::passthrough
 parsecompletion7["parse-completion
-id='parse-completion-7'"] -- "math->question" --> mathfunction["prompt-template
+id='parse-completion-7'"] -- "math->question" --> mathfunction["promptTemplate
 id='math-function'"]
 parsecompletion7["parse-completion
 id='parse-completion-7'"] -- "answer->text" --> output13{{"output
 id='output-13'"}}:::output
-reactcompletion["text-completion
+reactcompletion["textCompletion
 id='react-completion'"] -- "completion->completion" --> parsecompletion7["parse-completion
 id='parse-completion-7'"]
-reactcompletion["text-completion
-id='react-completion'"] -- "completion->Thought" --> rememberthought["local-memory
+reactcompletion["textCompletion
+id='react-completion'"] -- "completion->Thought" --> rememberthought["localMemory
 id='remember-thought'"]
-prompttemplate3["prompt-template
-id='prompt-template-3'"] -- "prompt->text" --> reactcompletion["text-completion
+promptTemplate3["promptTemplate
+id='promptTemplate-3'"] -- "prompt->text" --> reactcompletion["textCompletion
 id='react-completion'"]
-rememberquestion["local-memory
-id='remember-question'"] -- "context->memory" --> prompttemplate3["prompt-template
-id='prompt-template-3'"]
+rememberquestion["localMemory
+id='remember-question'"] -- "context->memory" --> promptTemplate3["promptTemplate
+id='promptTemplate-3'"]
 input6[/"input
-id='input-6'"/]:::input -- "text->Question" --> rememberquestion["local-memory
+id='input-6'"/]:::input -- "text->Question" --> rememberquestion["localMemory
 id='remember-question'"]
 keyssecrets1[keys]:::config -- "keys->keys" --o secrets1
-templateprompttemplate3[template]:::config -- "template->template" --o prompttemplate3
+templatepromptTemplate3[template]:::config -- "template->template" --o promptTemplate3
 stopsequencesreactcompletion[stop-sequences]:::config -- "stop-sequences->stop-sequences" --o reactcompletion
 templatemathfunction[template]:::config -- "template->template" --o mathfunction
 namecompute[name]:::config -- "name->name" --o compute
@@ -92,7 +92,7 @@ messageinput6[message]:::config -- "message->message" --o input6
 argsparsecompletion7[args]:::config -- "args->args" --o parsecompletion7
 restparsecompletion7[rest]:::config -- "rest->rest" --o parsecompletion7
 templatesummarizingtemplate[template]:::config -- "template->template" --o summarizingtemplate
-templateurl_template9[template]:::config -- "template->template" --o url_template9
+templateurlTemplate9[template]:::config -- "template->template" --o urlTemplate9
 expressionjsonata11[expression]:::config -- "expression->expression" --o jsonata11
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000

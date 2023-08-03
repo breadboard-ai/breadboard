@@ -14,21 +14,21 @@
     },
     {
       "from": "jsonata-4",
-      "to": "prompt-template-5",
+      "to": "promptTemplate-5",
       "constant": true,
       "out": "result",
       "in": "descriptions"
     },
     {
       "from": "jsonata-3",
-      "to": "prompt-template-5",
+      "to": "promptTemplate-5",
       "constant": true,
       "out": "result",
       "in": "tools"
     },
     {
-      "from": "local-memory-2",
-      "to": "prompt-template-5",
+      "from": "localMemory-2",
+      "to": "promptTemplate-5",
       "out": "context",
       "in": "memory"
     },
@@ -41,7 +41,7 @@
     },
     {
       "from": "tools-slot",
-      "to": "local-memory-2",
+      "to": "localMemory-2",
       "out": "text",
       "in": "Observation"
     },
@@ -69,14 +69,14 @@
       "in": "Thought"
     },
     {
-      "from": "prompt-template-5",
+      "from": "promptTemplate-5",
       "to": "react-completion",
       "out": "prompt",
       "in": "text"
     },
     {
       "from": "remember-question",
-      "to": "prompt-template-5",
+      "to": "promptTemplate-5",
       "out": "context",
       "in": "memory"
     },
@@ -99,8 +99,8 @@
       }
     },
     {
-      "id": "local-memory-2",
-      "type": "local-memory"
+      "id": "localMemory-2",
+      "type": "localMemory"
     },
     {
       "id": "get-slot",
@@ -125,15 +125,15 @@
       }
     },
     {
-      "id": "prompt-template-5",
-      "type": "prompt-template",
+      "id": "promptTemplate-5",
+      "type": "promptTemplate",
       "configuration": {
         "template": "Answer the following questions as best you can. You have access to the following tools:\n\n{{descriptions}}\n\nUse the following format:\n\nQuestion: the input question you must answer\nThought: you should always think about what to do\nAction: the action to take, should be one of: {{tools}}\nAction Input: the input to the action\nObservation: the result of the action\n... (this Thought/Action/Action Input/Observation can repeat N times)\nThought: I now know the final answer\nFinal Answer: the final answer to the original input question\n\nBegin!\n\n{{memory}}\nThought:"
       }
     },
     {
       "id": "react-completion",
-      "type": "text-completion",
+      "type": "textCompletion",
       "configuration": {
         "stop-sequences": [
           "\nObservation"
@@ -149,7 +149,7 @@
     },
     {
       "id": "remember-question",
-      "type": "local-memory"
+      "type": "localMemory"
     },
     {
       "id": "jsonata-7",
@@ -172,7 +172,7 @@
     },
     {
       "id": "remember-thought",
-      "type": "local-memory"
+      "type": "localMemory"
     }
   ],
   "kits": [

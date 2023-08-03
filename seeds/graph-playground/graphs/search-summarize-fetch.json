@@ -1,14 +1,14 @@
 {
   "edges": [
     {
-      "from": "text-completion-1",
+      "from": "textCompletion-1",
       "to": "output-2",
       "out": "completion",
       "in": "text"
     },
     {
       "from": "summarizing-template",
-      "to": "text-completion-1",
+      "to": "textCompletion-1",
       "out": "prompt",
       "in": "text"
     },
@@ -25,26 +25,26 @@
       "in": "json"
     },
     {
-      "from": "url_template-3",
+      "from": "urlTemplate-3",
       "to": "fetch-4",
       "out": "url",
       "in": "url"
     },
     {
       "from": "secrets-6",
-      "to": "text-completion-1",
+      "to": "textCompletion-1",
       "out": "API_KEY",
       "in": "API_KEY"
     },
     {
       "from": "secrets-6",
-      "to": "url_template-3",
+      "to": "urlTemplate-3",
       "out": "API_KEY",
       "in": "API_KEY"
     },
     {
       "from": "secrets-6",
-      "to": "url_template-3",
+      "to": "urlTemplate-3",
       "out": "GOOGLE_CSE_ID",
       "in": "GOOGLE_CSE_ID"
     },
@@ -56,15 +56,15 @@
     },
     {
       "from": "input",
-      "to": "url_template-3",
+      "to": "urlTemplate-3",
       "out": "text",
       "in": "query"
     }
   ],
   "nodes": [
     {
-      "id": "text-completion-1",
-      "type": "text-completion"
+      "id": "textCompletion-1",
+      "type": "textCompletion"
     },
     {
       "id": "output-2",
@@ -72,14 +72,14 @@
     },
     {
       "id": "summarizing-template",
-      "type": "prompt-template",
+      "type": "promptTemplate",
       "configuration": {
         "template": "Use context below to answer this question:\n\n##Question:\n{{question}}\n\n## Context {{context}}\n\\n## Answer:\n"
       }
     },
     {
-      "id": "url_template-3",
-      "type": "url_template",
+      "id": "urlTemplate-3",
+      "type": "urlTemplate",
       "configuration": {
         "template": "https://www.googleapis.com/customsearch/v1?key={{API_KEY}}&cx={{GOOGLE_CSE_ID}}&q={{query}}"
       }

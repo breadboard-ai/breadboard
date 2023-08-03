@@ -1,122 +1,122 @@
 {
   "edges": [
     {
-      "from": "local-memory-5",
-      "to": "prompt-template-3",
+      "from": "localMemory-5",
+      "to": "promptTemplate-3",
       "out": "context",
       "in": "context"
     },
     {
-      "from": "text-completion-4",
-      "to": "local-memory-5",
+      "from": "textCompletion-4",
+      "to": "localMemory-5",
       "out": "completion",
       "in": "Albert"
     },
     {
       "from": "secrets-2",
-      "to": "text-completion-6",
+      "to": "textCompletion-6",
       "constant": true,
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
-      "from": "text-completion-6",
+      "from": "textCompletion-6",
       "to": "output-7",
       "out": "completion",
       "in": "text"
     },
     {
       "from": "albert-voice",
-      "to": "text-completion-6",
+      "to": "textCompletion-6",
       "out": "prompt",
       "in": "text"
     },
     {
-      "from": "text-completion-4",
+      "from": "textCompletion-4",
       "to": "albert-voice",
       "out": "completion",
       "in": "context"
     },
     {
       "from": "secrets-2",
-      "to": "text-completion-4",
+      "to": "textCompletion-4",
       "constant": true,
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
       "from": "albert",
-      "to": "text-completion-4",
+      "to": "textCompletion-4",
       "out": "prompt",
       "in": "text"
     },
     {
-      "from": "local-memory-9",
+      "from": "localMemory-9",
       "to": "albert",
       "out": "context",
       "in": "context"
     },
     {
-      "from": "text-completion-8",
-      "to": "local-memory-9",
+      "from": "textCompletion-8",
+      "to": "localMemory-9",
       "out": "completion",
       "in": "Friedrich"
     },
     {
       "from": "secrets-2",
-      "to": "text-completion-10",
+      "to": "textCompletion-10",
       "constant": true,
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
-      "from": "text-completion-10",
+      "from": "textCompletion-10",
       "to": "output-11",
       "out": "completion",
       "in": "text"
     },
     {
       "from": "friedrich-voice",
-      "to": "text-completion-10",
+      "to": "textCompletion-10",
       "out": "prompt",
       "in": "text"
     },
     {
-      "from": "text-completion-8",
+      "from": "textCompletion-8",
       "to": "friedrich-voice",
       "out": "completion",
       "in": "context"
     },
     {
       "from": "secrets-2",
-      "to": "text-completion-8",
+      "to": "textCompletion-8",
       "constant": true,
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
-      "from": "prompt-template-3",
-      "to": "text-completion-8",
+      "from": "promptTemplate-3",
+      "to": "textCompletion-8",
       "out": "prompt",
       "in": "text"
     },
     {
-      "from": "local-memory-1",
+      "from": "localMemory-1",
       "to": "albert",
       "out": "context",
       "in": "context"
     },
     {
       "from": "input-12",
-      "to": "local-memory-1",
+      "to": "localMemory-1",
       "out": "text",
       "in": "topic"
     }
   ],
   "nodes": [
     {
-      "id": "local-memory-1",
-      "type": "local-memory"
+      "id": "localMemory-1",
+      "type": "localMemory"
     },
     {
       "id": "secrets-2",
@@ -128,22 +128,22 @@
       }
     },
     {
-      "id": "prompt-template-3",
-      "type": "prompt-template",
+      "id": "promptTemplate-3",
+      "type": "promptTemplate",
       "configuration": {
         "template": "Add a single argument to a debate between a philosopher named Friedrich and a scientist named Albert. You are Friedrich, and you are disagreeable, brooding, skeptical, sarcastic, yet passionate about uncovering new insights with Albert. To keep the debate rich and satisfying, you vary your sentence patterns and keep them from repeating.\n\n== Conversation Transcript\n{{context}}\n\n==Additional Single Argument\nFriedrich:"
       }
     },
     {
       "id": "albert",
-      "type": "prompt-template",
+      "type": "promptTemplate",
       "configuration": {
         "template": "Add a single argument to a debate between a scientist named Albert and a philosopher named Friedrich. You are Albert, and you are warm, funny, inquisitve, and passionate about uncovering new insights with Friedrich. To keep the debate rich and satisfying, you vary your sentence patterns and keep them from repeating.\"\n\n== Debate History\n{{context}}\n\n==Additional Single Argument\n\nAlbert:"
       }
     },
     {
-      "id": "text-completion-4",
-      "type": "text-completion",
+      "id": "textCompletion-4",
+      "type": "textCompletion",
       "configuration": {
         "stop-sequences": [
           "\nFriedrich",
@@ -152,27 +152,27 @@
       }
     },
     {
-      "id": "local-memory-5",
-      "type": "local-memory"
+      "id": "localMemory-5",
+      "type": "localMemory"
     },
     {
       "id": "albert-voice",
-      "type": "prompt-template",
+      "type": "promptTemplate",
       "configuration": {
         "template": "Restate the paragraph below in the voice of a brillant 20th century scientist. Change the structure of the sentences completely to mix things up.\n==Paragraph\n{{context}}\n\nRestatement:"
       }
     },
     {
-      "id": "text-completion-6",
-      "type": "text-completion"
+      "id": "textCompletion-6",
+      "type": "textCompletion"
     },
     {
       "id": "output-7",
       "type": "output"
     },
     {
-      "id": "text-completion-8",
-      "type": "text-completion",
+      "id": "textCompletion-8",
+      "type": "textCompletion",
       "configuration": {
         "stop-sequences": [
           "\nAlbert",
@@ -181,19 +181,19 @@
       }
     },
     {
-      "id": "local-memory-9",
-      "type": "local-memory"
+      "id": "localMemory-9",
+      "type": "localMemory"
     },
     {
       "id": "friedrich-voice",
-      "type": "prompt-template",
+      "type": "promptTemplate",
       "configuration": {
         "template": "Restate the paragraph below in the voice of a 19th century philosopher. Change the structure of the sentences completely to mix things up.\n==Paragraph\n{{context}}\n\nRestatement:"
       }
     },
     {
-      "id": "text-completion-10",
-      "type": "text-completion"
+      "id": "textCompletion-10",
+      "type": "textCompletion"
     },
     {
       "id": "output-11",

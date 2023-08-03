@@ -2,27 +2,27 @@
   "edges": [
     {
       "from": "secrets-2",
-      "to": "text-completion-1",
+      "to": "textCompletion-1",
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
-      "from": "text-completion-1",
+      "from": "textCompletion-1",
       "to": "output-4",
       "out": "completion",
       "in": "text"
     },
     {
       "from": "input-3",
-      "to": "text-completion-1",
+      "to": "textCompletion-1",
       "out": "text",
       "in": "text"
     }
   ],
   "nodes": [
     {
-      "id": "text-completion-1",
-      "type": "text-completion"
+      "id": "textCompletion-1",
+      "type": "textCompletion"
     },
     {
       "id": "secrets-2",

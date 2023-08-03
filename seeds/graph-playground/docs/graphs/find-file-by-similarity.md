@@ -6,44 +6,44 @@
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
 secrets6("secrets
-id='secrets-6'"):::secrets -- "PALM_KEY->PALM_KEY" --> embed_docs5["embed_docs
-id='embed_docs-5'"]
+id='secrets-6'"):::secrets -- "PALM_KEY->PALM_KEY" --> embedDocs5["embedDocs
+id='embedDocs-5'"]
 secrets8("secrets
 id='secrets-8'"):::secrets -- "CACHE_DB->path" --> cache7["cache
 id='cache-7'"]
 cache7["cache
-id='cache-7'"] -- "cache->cache" --> embed_docs5["embed_docs
-id='embed_docs-5'"]
-create_vector_database1["create_vector_database
-id='create_vector_database-1'"] -- "db->db" --> add_to_vector_database9["add_to_vector_database
-id='add_to_vector_database-9'"]
-add_to_vector_database9["add_to_vector_database
-id='add_to_vector_database-9'"] -- "db->db" --> query_vector_database2["query_vector_database
-id='query_vector_database-2'"]
-embed_docs5["embed_docs
-id='embed_docs-5'"] -- "documents->documents" --> add_to_vector_database9["add_to_vector_database
-id='add_to_vector_database-9'"]
-textassetsfrompath4["text-assets-from-path
-id='text-assets-from-path-4'"] -- "documents->documents" --> embed_docs5["embed_docs
-id='embed_docs-5'"]
+id='cache-7'"] -- "cache->cache" --> embedDocs5["embedDocs
+id='embedDocs-5'"]
+createVectorDatabase1["createVectorDatabase
+id='createVectorDatabase-1'"] -- "db->db" --> addToVectorDatabase9["addToVectorDatabase
+id='addToVectorDatabase-9'"]
+addToVectorDatabase9["addToVectorDatabase
+id='addToVectorDatabase-9'"] -- "db->db" --> queryVectorDatabase2["queryVectorDatabase
+id='queryVectorDatabase-2'"]
+embedDocs5["embedDocs
+id='embedDocs-5'"] -- "documents->documents" --> addToVectorDatabase9["addToVectorDatabase
+id='addToVectorDatabase-9'"]
+textAssetsFromPath4["textAssetsFromPath
+id='textAssetsFromPath-4'"] -- "documents->documents" --> embedDocs5["embedDocs
+id='embedDocs-5'"]
 input3[/"input
-id='input-3'"/]:::input -- "text->path" --> textassetsfrompath4["text-assets-from-path
-id='text-assets-from-path-4'"]
+id='input-3'"/]:::input -- "text->path" --> textAssetsFromPath4["textAssetsFromPath
+id='textAssetsFromPath-4'"]
 secrets12("secrets
-id='secrets-12'"):::secrets -- "PALM_KEY->PALM_KEY" --> embed_string11["embed_string
-id='embed_string-11'"]
+id='secrets-12'"):::secrets -- "PALM_KEY->PALM_KEY" --> embedString11["embedString
+id='embedString-11'"]
 jsonata13["jsonata
 id='jsonata-13'"] -- "result->text" --> output14{{"output
 id='output-14'"}}:::output
-query_vector_database2["query_vector_database
-id='query_vector_database-2'"] -- "results->json" --> jsonata13["jsonata
+queryVectorDatabase2["queryVectorDatabase
+id='queryVectorDatabase-2'"] -- "results->json" --> jsonata13["jsonata
 id='jsonata-13'"]
-embed_string11["embed_string
-id='embed_string-11'"] -- "embedding->embedding" --> query_vector_database2["query_vector_database
-id='query_vector_database-2'"]
+embedString11["embedString
+id='embedString-11'"] -- "embedding->embedding" --> queryVectorDatabase2["queryVectorDatabase
+id='queryVectorDatabase-2'"]
 input10[/"input
-id='input-10'"/]:::input -- "text->text" --> embed_string11["embed_string
-id='embed_string-11'"]
+id='input-10'"/]:::input -- "text->text" --> embedString11["embedString
+id='embedString-11'"]
 messageinput3[message]:::config -- "message->message" --o input3
 keyssecrets6[keys]:::config -- "keys->keys" --o secrets6
 keyssecrets8[keys]:::config -- "keys->keys" --o secrets8

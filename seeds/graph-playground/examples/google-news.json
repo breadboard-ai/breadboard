@@ -2,70 +2,70 @@
   "edges": [
     {
       "from": "input-3",
-      "to": "prompt-template-1",
+      "to": "promptTemplate-1",
       "out": "text",
       "in": "topic"
     },
     {
       "from": "input-3",
-      "to": "url_template-2",
+      "to": "urlTemplate-2",
       "out": "text",
       "in": "query"
     },
     {
-      "from": "url_template-2",
+      "from": "urlTemplate-2",
       "to": "fetch-4",
       "out": "url",
       "in": "url"
     },
     {
       "from": "jsonata-5",
-      "to": "prompt-template-1",
+      "to": "promptTemplate-1",
       "out": "result",
       "in": "headlines"
     },
     {
-      "from": "xml_to_json-6",
+      "from": "xmlToJson-6",
       "to": "jsonata-5",
       "out": "json",
       "in": "json"
     },
     {
       "from": "fetch-4",
-      "to": "xml_to_json-6",
+      "to": "xmlToJson-6",
       "out": "response",
       "in": "xml"
     },
     {
-      "from": "text-completion-7",
+      "from": "textCompletion-7",
       "to": "output-8",
       "out": "completion",
       "in": "text"
     },
     {
       "from": "secrets-9",
-      "to": "text-completion-7",
+      "to": "textCompletion-7",
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
-      "from": "prompt-template-1",
-      "to": "text-completion-7",
+      "from": "promptTemplate-1",
+      "to": "textCompletion-7",
       "out": "prompt",
       "in": "text"
     }
   ],
   "nodes": [
     {
-      "id": "prompt-template-1",
-      "type": "prompt-template",
+      "id": "promptTemplate-1",
+      "type": "promptTemplate",
       "configuration": {
         "template": "Use the news headlines below to write one or two sentences to summarize the latest news on this topic:\n\n##Topic:\n{{topic}}\n\n## Headlines {{headlines}}\n\\n## Summary:\n"
       }
     },
     {
-      "id": "url_template-2",
-      "type": "url_template",
+      "id": "urlTemplate-2",
+      "type": "urlTemplate",
       "configuration": {
         "template": "https://news.google.com/rss/search?q={{query}}&hl=en-US&gl=US&ceid=US:en"
       }
@@ -89,12 +89,12 @@
       }
     },
     {
-      "id": "xml_to_json-6",
-      "type": "xml_to_json"
+      "id": "xmlToJson-6",
+      "type": "xmlToJson"
     },
     {
-      "id": "text-completion-7",
-      "type": "text-completion"
+      "id": "textCompletion-7",
+      "type": "textCompletion"
     },
     {
       "id": "output-8",

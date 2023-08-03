@@ -1,84 +1,84 @@
 {
   "edges": [
     {
-      "from": "local-memory-5",
-      "to": "prompt-template-3",
+      "from": "localMemory-5",
+      "to": "promptTemplate-3",
       "out": "context",
       "in": "context"
     },
     {
-      "from": "text-completion-4",
-      "to": "local-memory-5",
+      "from": "textCompletion-4",
+      "to": "localMemory-5",
       "out": "completion",
       "in": "Albert"
     },
     {
-      "from": "text-completion-4",
+      "from": "textCompletion-4",
       "to": "output-6",
       "out": "completion",
       "in": "text"
     },
     {
       "from": "secrets-2",
-      "to": "text-completion-4",
+      "to": "textCompletion-4",
       "constant": true,
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
       "from": "albert",
-      "to": "text-completion-4",
+      "to": "textCompletion-4",
       "out": "prompt",
       "in": "text"
     },
     {
-      "from": "local-memory-8",
+      "from": "localMemory-8",
       "to": "albert",
       "out": "context",
       "in": "context"
     },
     {
-      "from": "text-completion-7",
-      "to": "local-memory-8",
+      "from": "textCompletion-7",
+      "to": "localMemory-8",
       "out": "completion",
       "in": "Friedrich"
     },
     {
-      "from": "text-completion-7",
+      "from": "textCompletion-7",
       "to": "output-9",
       "out": "completion",
       "in": "text"
     },
     {
       "from": "secrets-2",
-      "to": "text-completion-7",
+      "to": "textCompletion-7",
       "constant": true,
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
-      "from": "prompt-template-3",
-      "to": "text-completion-7",
+      "from": "promptTemplate-3",
+      "to": "textCompletion-7",
       "out": "prompt",
       "in": "text"
     },
     {
-      "from": "local-memory-1",
+      "from": "localMemory-1",
       "to": "albert",
       "out": "context",
       "in": "context"
     },
     {
       "from": "input-10",
-      "to": "local-memory-1",
+      "to": "localMemory-1",
       "out": "text",
       "in": "topic"
     }
   ],
   "nodes": [
     {
-      "id": "local-memory-1",
-      "type": "local-memory"
+      "id": "localMemory-1",
+      "type": "localMemory"
     },
     {
       "id": "secrets-2",
@@ -90,22 +90,22 @@
       }
     },
     {
-      "id": "prompt-template-3",
-      "type": "prompt-template",
+      "id": "promptTemplate-3",
+      "type": "promptTemplate",
       "configuration": {
         "template": "Add a single argument to a debate between a philosopher named Friedrich and a scientist named Albert. You are Friedrich, and you are disagreeable, brooding, skeptical, sarcastic, yet passionate about uncovering new insights with Albert. To keep the debate rich and satisfying, you vary your sentence patterns and keep them from repeating.\n\n== Conversation Transcript\n{{context}}\n\n==Additional Single Argument\nFriedrich:"
       }
     },
     {
       "id": "albert",
-      "type": "prompt-template",
+      "type": "promptTemplate",
       "configuration": {
         "template": "Add a single argument to a debate between a scientist named Albert and a philosopher named Friedrich. You are Albert, and you are warm, funny, inquisitve, and passionate about uncovering new insights with Friedrich. To keep the debate rich and satisfying, you vary your sentence patterns and keep them from repeating.\"\n\n== Debate History\n{{context}}\n\n==Additional Single Argument\n\nAlbert:"
       }
     },
     {
-      "id": "text-completion-4",
-      "type": "text-completion",
+      "id": "textCompletion-4",
+      "type": "textCompletion",
       "configuration": {
         "stop-sequences": [
           "\nFriedrich",
@@ -114,16 +114,16 @@
       }
     },
     {
-      "id": "local-memory-5",
-      "type": "local-memory"
+      "id": "localMemory-5",
+      "type": "localMemory"
     },
     {
       "id": "output-6",
       "type": "output"
     },
     {
-      "id": "text-completion-7",
-      "type": "text-completion",
+      "id": "textCompletion-7",
+      "type": "textCompletion",
       "configuration": {
         "stop-sequences": [
           "\nAlbert",
@@ -132,8 +132,8 @@
       }
     },
     {
-      "id": "local-memory-8",
-      "type": "local-memory"
+      "id": "localMemory-8",
+      "type": "localMemory"
     },
     {
       "id": "output-9",

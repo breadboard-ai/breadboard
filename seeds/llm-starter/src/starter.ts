@@ -35,7 +35,7 @@ export class Starter implements Kit {
     config: OptionalIdConfiguration = {}
   ): BreadboardNode {
     const { $id, ...rest } = config;
-    return this.#nodeFactory("prompt-template", { template, ...rest }, $id);
+    return this.#nodeFactory("promptTemplate", { template, ...rest }, $id);
   }
 
   urlTemplate(
@@ -43,7 +43,7 @@ export class Starter implements Kit {
     config: OptionalIdConfiguration = {}
   ): BreadboardNode {
     const { $id, ...rest } = config;
-    return this.#nodeFactory("url_template", { template, ...rest }, $id);
+    return this.#nodeFactory("urlTemplate", { template, ...rest }, $id);
   }
 
   runJavascript(
@@ -51,7 +51,7 @@ export class Starter implements Kit {
     config: OptionalIdConfiguration = {}
   ): BreadboardNode {
     const { $id, ...rest } = config;
-    return this.#nodeFactory("run-javascript", { name, ...rest }, $id);
+    return this.#nodeFactory("runJavascript", { name, ...rest }, $id);
   }
 
   fetch(raw?: boolean, config: OptionalIdConfiguration = {}): BreadboardNode {
@@ -69,17 +69,17 @@ export class Starter implements Kit {
 
   xmlToJson(config: OptionalIdConfiguration = {}): BreadboardNode {
     const { $id, ...rest } = config;
-    return this.#nodeFactory("xml_to_json", { ...rest }, $id);
+    return this.#nodeFactory("xmlToJson", { ...rest }, $id);
   }
 
   localMemory(config: OptionalIdConfiguration = {}): BreadboardNode {
     const { $id, ...rest } = config;
-    return this.#nodeFactory("local-memory", { ...rest }, $id);
+    return this.#nodeFactory("localMemory", { ...rest }, $id);
   }
 
   textCompletion(config: OptionalIdConfiguration = {}): BreadboardNode {
     const { $id, ...rest } = config;
-    return this.#nodeFactory("text-completion", { ...rest }, $id);
+    return this.#nodeFactory("textCompletion", { ...rest }, $id);
   }
 
   secrets(

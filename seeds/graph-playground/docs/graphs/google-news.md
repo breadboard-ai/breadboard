@@ -6,37 +6,37 @@
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
 input1[/"input
-id='input-1'"/]:::input -- "text->topic" --> prompttemplate6["prompt-template
-id='prompt-template-6'"]
+id='input-1'"/]:::input -- "text->topic" --> promptTemplate6["promptTemplate
+id='promptTemplate-6'"]
 secrets8("secrets
-id='secrets-8'"):::secrets -- "PALM_KEY->PALM_KEY" --o textcompletion7["text-completion
-id='text-completion-7'"]
-textcompletion7["text-completion
-id='text-completion-7'"] -- "completion->text" --> output9{{"output
+id='secrets-8'"):::secrets -- "PALM_KEY->PALM_KEY" --o textCompletion7["textCompletion
+id='textCompletion-7'"]
+textCompletion7["textCompletion
+id='textCompletion-7'"] -- "completion->text" --> output9{{"output
 id='output-9'"}}:::output
-prompttemplate6["prompt-template
-id='prompt-template-6'"] -- "prompt->text" --> textcompletion7["text-completion
-id='text-completion-7'"]
+promptTemplate6["promptTemplate
+id='promptTemplate-6'"] -- "prompt->text" --> textCompletion7["textCompletion
+id='textCompletion-7'"]
 jsonata5["jsonata
-id='jsonata-5'"] -- "result->headlines" --> prompttemplate6["prompt-template
-id='prompt-template-6'"]
-xml_to_json4["xml_to_json
-id='xml_to_json-4'"] -- "json->json" --> jsonata5["jsonata
+id='jsonata-5'"] -- "result->headlines" --> promptTemplate6["promptTemplate
+id='promptTemplate-6'"]
+xmlToJson4["xmlToJson
+id='xmlToJson-4'"] -- "json->json" --> jsonata5["jsonata
 id='jsonata-5'"]
 fetch3["fetch
-id='fetch-3'"] -- "response->xml" --> xml_to_json4["xml_to_json
-id='xml_to_json-4'"]
-url_template2["url_template
-id='url_template-2'"] -- "url->url" --> fetch3["fetch
+id='fetch-3'"] -- "response->xml" --> xmlToJson4["xmlToJson
+id='xmlToJson-4'"]
+urlTemplate2["urlTemplate
+id='urlTemplate-2'"] -- "url->url" --> fetch3["fetch
 id='fetch-3'"]
 input1[/"input
-id='input-1'"/]:::input -- "text->query" --> url_template2["url_template
-id='url_template-2'"]
+id='input-1'"/]:::input -- "text->query" --> urlTemplate2["urlTemplate
+id='urlTemplate-2'"]
 messageinput1[message]:::config -- "message->message" --o input1
-templateurl_template2[template]:::config -- "template->template" --o url_template2
+templateurlTemplate2[template]:::config -- "template->template" --o urlTemplate2
 rawfetch3[raw]:::config -- "raw->raw" --o fetch3
 expressionjsonata5[expression]:::config -- "expression->expression" --o jsonata5
-templateprompttemplate6[template]:::config -- "template->template" --o prompttemplate6
+templatepromptTemplate6[template]:::config -- "template->template" --o promptTemplate6
 keyssecrets8[keys]:::config -- "keys->keys" --o secrets8
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000

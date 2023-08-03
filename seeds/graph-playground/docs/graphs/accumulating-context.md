@@ -6,34 +6,34 @@
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
 secrets5("secrets
-id='secrets-5'"):::secrets -- "PALM_KEY->PALM_KEY" --o textcompletion4["text-completion
-id='text-completion-4'"]
-localmemory3["local-memory
-id='local-memory-3'"] -- "context->context" --> prompttemplate2["prompt-template
-id='prompt-template-2'"]
-textcompletion4["text-completion
-id='text-completion-4'"] -- "completion->assistant" --> localmemory3["local-memory
-id='local-memory-3'"]
+id='secrets-5'"):::secrets -- "PALM_KEY->PALM_KEY" --o textCompletion4["textCompletion
+id='textCompletion-4'"]
+localMemory3["localMemory
+id='localMemory-3'"] -- "context->context" --> promptTemplate2["promptTemplate
+id='promptTemplate-2'"]
+textCompletion4["textCompletion
+id='textCompletion-4'"] -- "completion->assistant" --> localMemory3["localMemory
+id='localMemory-3'"]
 output6{{"output
 id='output-6'"}}:::output --> input1[/"input
 id='input-1'"/]:::input
-textcompletion4["text-completion
-id='text-completion-4'"] -- "completion->text" --> output6{{"output
+textCompletion4["textCompletion
+id='textCompletion-4'"] -- "completion->text" --> output6{{"output
 id='output-6'"}}:::output
-prompttemplate2["prompt-template
-id='prompt-template-2'"] -- "prompt->text" --> textcompletion4["text-completion
-id='text-completion-4'"]
+promptTemplate2["promptTemplate
+id='promptTemplate-2'"] -- "prompt->text" --> textCompletion4["textCompletion
+id='textCompletion-4'"]
 input1[/"input
-id='input-1'"/]:::input -- "text->question" --> prompttemplate2["prompt-template
-id='prompt-template-2'"]
+id='input-1'"/]:::input -- "text->question" --> promptTemplate2["promptTemplate
+id='promptTemplate-2'"]
 input1[/"input
-id='input-1'"/]:::input -- "text->user" --> localmemory3["local-memory
-id='local-memory-3'"]
+id='input-1'"/]:::input -- "text->user" --> localMemory3["localMemory
+id='localMemory-3'"]
 start(("passthrough
 id='start'")):::passthrough --> input1[/"input
 id='input-1'"/]:::input
-templateprompttemplate2[template]:::config -- "template->template" --o prompttemplate2
-contextprompttemplate2[context]:::config -- "context->context" --o prompttemplate2
+templatepromptTemplate2[template]:::config -- "template->template" --o promptTemplate2
+contextpromptTemplate2[context]:::config -- "context->context" --o promptTemplate2
 keyssecrets5[keys]:::config -- "keys->keys" --o secrets5
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000

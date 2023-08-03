@@ -12,47 +12,47 @@ getslot(("slot
 id='get-slot'")):::slot -- "graph->json" --> jsonata4["jsonata
 id='jsonata-4'"]
 jsonata4["jsonata
-id='jsonata-4'"] -- "result->descriptions" --o prompttemplate5["prompt-template
-id='prompt-template-5'"]
+id='jsonata-4'"] -- "result->descriptions" --o promptTemplate5["promptTemplate
+id='promptTemplate-5'"]
 jsonata3["jsonata
-id='jsonata-3'"] -- "result->tools" --o prompttemplate5["prompt-template
-id='prompt-template-5'"]
-localmemory2["local-memory
-id='local-memory-2'"] -- "context->memory" --> prompttemplate5["prompt-template
-id='prompt-template-5'"]
+id='jsonata-3'"] -- "result->tools" --o promptTemplate5["promptTemplate
+id='promptTemplate-5'"]
+localMemory2["localMemory
+id='localMemory-2'"] -- "context->memory" --> promptTemplate5["promptTemplate
+id='promptTemplate-5'"]
 secrets1("secrets
-id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o reactcompletion["text-completion
+id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o reactcompletion["textCompletion
 id='react-completion'"]
 toolsslot(("slot
-id='tools-slot'")):::slot -- "text->Observation" --> localmemory2["local-memory
-id='local-memory-2'"]
+id='tools-slot'")):::slot -- "text->Observation" --> localMemory2["localMemory
+id='localMemory-2'"]
 jsonata7["jsonata
 id='jsonata-7'"] -- all --> toolsslot(("slot
 id='tools-slot'")):::slot
 jsonata7["jsonata
 id='jsonata-7'"] -- "answer->text" --> output8{{"output
 id='output-8'"}}:::output
-reactcompletion["text-completion
+reactcompletion["textCompletion
 id='react-completion'"] -- "completion->json" --> jsonata7["jsonata
 id='jsonata-7'"]
-reactcompletion["text-completion
-id='react-completion'"] -- "completion->Thought" --> rememberthought["local-memory
+reactcompletion["textCompletion
+id='react-completion'"] -- "completion->Thought" --> rememberthought["localMemory
 id='remember-thought'"]
-prompttemplate5["prompt-template
-id='prompt-template-5'"] -- "prompt->text" --> reactcompletion["text-completion
+promptTemplate5["promptTemplate
+id='promptTemplate-5'"] -- "prompt->text" --> reactcompletion["textCompletion
 id='react-completion'"]
-rememberquestion["local-memory
-id='remember-question'"] -- "context->memory" --> prompttemplate5["prompt-template
-id='prompt-template-5'"]
+rememberquestion["localMemory
+id='remember-question'"] -- "context->memory" --> promptTemplate5["promptTemplate
+id='promptTemplate-5'"]
 input6[/"input
-id='input-6'"/]:::input -- "text->Question" --> rememberquestion["local-memory
+id='input-6'"/]:::input -- "text->Question" --> rememberquestion["localMemory
 id='remember-question'"]
 keyssecrets1[keys]:::config -- "keys->keys" --o secrets1
 slotgetslot[slot]:::config -- "slot->slot" --o getslot
 graphgetslot[graph]:::config -- "graph->graph" --o getslot
 expressionjsonata3[expression]:::config -- "expression->expression" --o jsonata3
 expressionjsonata4[expression]:::config -- "expression->expression" --o jsonata4
-templateprompttemplate5[template]:::config -- "template->template" --o prompttemplate5
+templatepromptTemplate5[template]:::config -- "template->template" --o promptTemplate5
 stopsequencesreactcompletion[stop-sequences]:::config -- "stop-sequences->stop-sequences" --o reactcompletion
 messageinput6[message]:::config -- "message->message" --o input6
 expressionjsonata7[expression]:::config -- "expression->expression" --o jsonata7

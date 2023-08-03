@@ -12,23 +12,21 @@ import jsonata from "./nodes/jsonata.js";
 import promptTemplate from "./nodes/prompt-template.js";
 import textCompletion from "./nodes/text-completion.js";
 import localMemory from "./nodes/local-memory.js";
-import javascript from "./nodes/run-javascript.js";
+import runJavascript from "./nodes/run-javascript.js";
 import secrets from "./nodes/secrets.js";
 import fetch from "./nodes/fetch.js";
-// intentionally breaking convention here.
-// See https://github.com/google/labs-prototypes/issues/22
-import url_template from "./nodes/url-template.js";
-import xml_to_json from "./nodes/xml-to-json.js";
+import urlTemplate from "./nodes/url-template.js";
+import xmlToJson from "./nodes/xml-to-json.js";
 
 export const coreHandlers = {
   vars,
   jsonata,
   secrets,
   fetch,
-  url_template,
-  xml_to_json,
-  "prompt-template": promptTemplate,
-  "text-completion": textCompletion,
-  "local-memory": localMemory,
-  "run-javascript": javascript,
+  urlTemplate,
+  xmlToJson,
+  promptTemplate,
+  textCompletion,
+  localMemory,
+  runJavascript,
 };

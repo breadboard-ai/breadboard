@@ -5,66 +5,66 @@
   ```mermaid
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-localmemory5["local-memory
-id='local-memory-5'"] -- "context->context" --> prompttemplate3["prompt-template
-id='prompt-template-3'"]
-textcompletion4["text-completion
-id='text-completion-4'"] -- "completion->Albert" --> localmemory5["local-memory
-id='local-memory-5'"]
+localMemory5["localMemory
+id='localMemory-5'"] -- "context->context" --> promptTemplate3["promptTemplate
+id='promptTemplate-3'"]
+textCompletion4["textCompletion
+id='textCompletion-4'"] -- "completion->Albert" --> localMemory5["localMemory
+id='localMemory-5'"]
 secrets2("secrets
-id='secrets-2'"):::secrets -- "PALM_KEY->PALM_KEY" --o textcompletion6["text-completion
-id='text-completion-6'"]
-textcompletion6["text-completion
-id='text-completion-6'"] -- "completion->text" --> output7{{"output
+id='secrets-2'"):::secrets -- "PALM_KEY->PALM_KEY" --o textCompletion6["textCompletion
+id='textCompletion-6'"]
+textCompletion6["textCompletion
+id='textCompletion-6'"] -- "completion->text" --> output7{{"output
 id='output-7'"}}:::output
-albertvoice["prompt-template
-id='albert-voice'"] -- "prompt->text" --> textcompletion6["text-completion
-id='text-completion-6'"]
-textcompletion4["text-completion
-id='text-completion-4'"] -- "completion->context" --> albertvoice["prompt-template
+albertvoice["promptTemplate
+id='albert-voice'"] -- "prompt->text" --> textCompletion6["textCompletion
+id='textCompletion-6'"]
+textCompletion4["textCompletion
+id='textCompletion-4'"] -- "completion->context" --> albertvoice["promptTemplate
 id='albert-voice'"]
 secrets2("secrets
-id='secrets-2'"):::secrets -- "PALM_KEY->PALM_KEY" --o textcompletion4["text-completion
-id='text-completion-4'"]
-albert["prompt-template
-id='albert'"] -- "prompt->text" --> textcompletion4["text-completion
-id='text-completion-4'"]
-localmemory9["local-memory
-id='local-memory-9'"] -- "context->context" --> albert["prompt-template
+id='secrets-2'"):::secrets -- "PALM_KEY->PALM_KEY" --o textCompletion4["textCompletion
+id='textCompletion-4'"]
+albert["promptTemplate
+id='albert'"] -- "prompt->text" --> textCompletion4["textCompletion
+id='textCompletion-4'"]
+localMemory9["localMemory
+id='localMemory-9'"] -- "context->context" --> albert["promptTemplate
 id='albert'"]
-textcompletion8["text-completion
-id='text-completion-8'"] -- "completion->Friedrich" --> localmemory9["local-memory
-id='local-memory-9'"]
+textCompletion8["textCompletion
+id='textCompletion-8'"] -- "completion->Friedrich" --> localMemory9["localMemory
+id='localMemory-9'"]
 secrets2("secrets
-id='secrets-2'"):::secrets -- "PALM_KEY->PALM_KEY" --o textcompletion10["text-completion
-id='text-completion-10'"]
-textcompletion10["text-completion
-id='text-completion-10'"] -- "completion->text" --> output11{{"output
+id='secrets-2'"):::secrets -- "PALM_KEY->PALM_KEY" --o textCompletion10["textCompletion
+id='textCompletion-10'"]
+textCompletion10["textCompletion
+id='textCompletion-10'"] -- "completion->text" --> output11{{"output
 id='output-11'"}}:::output
-friedrichvoice["prompt-template
-id='friedrich-voice'"] -- "prompt->text" --> textcompletion10["text-completion
-id='text-completion-10'"]
-textcompletion8["text-completion
-id='text-completion-8'"] -- "completion->context" --> friedrichvoice["prompt-template
+friedrichvoice["promptTemplate
+id='friedrich-voice'"] -- "prompt->text" --> textCompletion10["textCompletion
+id='textCompletion-10'"]
+textCompletion8["textCompletion
+id='textCompletion-8'"] -- "completion->context" --> friedrichvoice["promptTemplate
 id='friedrich-voice'"]
 secrets2("secrets
-id='secrets-2'"):::secrets -- "PALM_KEY->PALM_KEY" --o textcompletion8["text-completion
-id='text-completion-8'"]
-prompttemplate3["prompt-template
-id='prompt-template-3'"] -- "prompt->text" --> textcompletion8["text-completion
-id='text-completion-8'"]
-localmemory1["local-memory
-id='local-memory-1'"] -- "context->context" --> albert["prompt-template
+id='secrets-2'"):::secrets -- "PALM_KEY->PALM_KEY" --o textCompletion8["textCompletion
+id='textCompletion-8'"]
+promptTemplate3["promptTemplate
+id='promptTemplate-3'"] -- "prompt->text" --> textCompletion8["textCompletion
+id='textCompletion-8'"]
+localMemory1["localMemory
+id='localMemory-1'"] -- "context->context" --> albert["promptTemplate
 id='albert'"]
 input12[/"input
-id='input-12'"/]:::input -- "text->topic" --> localmemory1["local-memory
-id='local-memory-1'"]
+id='input-12'"/]:::input -- "text->topic" --> localMemory1["localMemory
+id='localMemory-1'"]
 keyssecrets2[keys]:::config -- "keys->keys" --o secrets2
-templateprompttemplate3[template]:::config -- "template->template" --o prompttemplate3
+templatepromptTemplate3[template]:::config -- "template->template" --o promptTemplate3
 templatealbert[template]:::config -- "template->template" --o albert
-stopsequencestextcompletion4[stop-sequences]:::config -- "stop-sequences->stop-sequences" --o textcompletion4
+stopsequencestextCompletion4[stop-sequences]:::config -- "stop-sequences->stop-sequences" --o textCompletion4
 templatealbertvoice[template]:::config -- "template->template" --o albertvoice
-stopsequencestextcompletion8[stop-sequences]:::config -- "stop-sequences->stop-sequences" --o textcompletion8
+stopsequencestextCompletion8[stop-sequences]:::config -- "stop-sequences->stop-sequences" --o textCompletion8
 templatefriedrichvoice[template]:::config -- "template->template" --o friedrichvoice
 messageinput12[message]:::config -- "message->message" --o input12
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000

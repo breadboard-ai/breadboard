@@ -14,22 +14,22 @@ import type {
 
 import textAsset from "./nodes/text-asset.js";
 import textAssetsFromPath from "./nodes/text-assets-from-path.js";
-import create_vector_database from "./nodes/create-vector-database.js";
-import add_to_vector_database from "./nodes/add-to-vector-database.js";
-import query_vector_database from "./nodes/query-vector-database.js";
-import embed_docs from "./nodes/embed-docs.js";
-import embed_string from "./nodes/embed-string.js";
+import createVectorDatabase from "./nodes/create-vector-database.js";
+import addToVectorDatabase from "./nodes/add-to-vector-database.js";
+import queryVectorDatabase from "./nodes/query-vector-database.js";
+import embedDocs from "./nodes/embed-docs.js";
+import embedString from "./nodes/embed-string.js";
 import cache from "./nodes/cache.js";
 
 const handlers = {
-  create_vector_database,
-  add_to_vector_database,
-  query_vector_database,
-  embed_docs,
-  embed_string,
+  createVectorDatabase,
+  addToVectorDatabase,
+  queryVectorDatabase,
+  embedDocs,
+  embedString,
   cache,
-  "text-asset": textAsset,
-  "text-assets-from-path": textAssetsFromPath,
+  textAsset,
+  textAssetsFromPath,
 };
 
 /**
@@ -51,37 +51,37 @@ export class Nursery implements Kit {
 
   createVectorDatabase(config: OptionalIdConfiguration = {}): BreadboardNode {
     const { $id, ...rest } = config;
-    return this.#nodeFactory("create_vector_database", { ...rest }, $id);
+    return this.#nodeFactory("createVectorDatabase", { ...rest }, $id);
   }
 
   addToVectorDatabase(config: OptionalIdConfiguration = {}): BreadboardNode {
     const { $id, ...rest } = config;
-    return this.#nodeFactory("add_to_vector_database", { ...rest }, $id);
+    return this.#nodeFactory("addToVectorDatabase", { ...rest }, $id);
   }
 
   queryVectorDatabase(config: OptionalIdConfiguration = {}): BreadboardNode {
     const { $id, ...rest } = config;
-    return this.#nodeFactory("query_vector_database", { ...rest }, $id);
+    return this.#nodeFactory("queryVectorDatabase", { ...rest }, $id);
   }
 
   embedDocs(config: OptionalIdConfiguration = {}): BreadboardNode {
     const { $id, ...rest } = config;
-    return this.#nodeFactory("embed_docs", { ...rest }, $id);
+    return this.#nodeFactory("embedDocs", { ...rest }, $id);
   }
 
   embedString(config: OptionalIdConfiguration = {}): BreadboardNode {
     const { $id, ...rest } = config;
-    return this.#nodeFactory("embed_string", { ...rest }, $id);
+    return this.#nodeFactory("embedString", { ...rest }, $id);
   }
 
   textAsset(config: OptionalIdConfiguration = {}): BreadboardNode {
     const { $id, ...rest } = config;
-    return this.#nodeFactory("text-asset", { ...rest }, $id);
+    return this.#nodeFactory("textAsset", { ...rest }, $id);
   }
 
   textAssetsFromPath(config: OptionalIdConfiguration = {}): BreadboardNode {
     const { $id, ...rest } = config;
-    return this.#nodeFactory("text-assets-from-path", { ...rest }, $id);
+    return this.#nodeFactory("textAssetsFromPath", { ...rest }, $id);
   }
 
   cache(config: OptionalIdConfiguration = {}): BreadboardNode {

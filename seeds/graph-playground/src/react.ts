@@ -22,15 +22,15 @@ type ParseCompletionInputs = {
 };
 
 const handlers = {
-  "get-tools": async () => ({
+  getTools: async () => ({
     tools: Object.keys(tools).join(", "),
   }),
-  "get-descriptions": async () => ({
+  getDescriptions: async () => ({
     descriptions: Object.entries(tools)
       .map(([name, description]) => `${name}: ${description}`)
       .join("\n\n"),
   }),
-  "parse-completion": async (inputs: InputValues) => {
+  parseCompletion: async (inputs: InputValues) => {
     const { completion } = inputs as ParseCompletionInputs;
     const lines = completion.split("\n");
     if (lines.length < 2) {
@@ -70,16 +70,16 @@ export class ReActHelper implements Kit {
 
   getTools(config: OptionalIdConfiguration = {}) {
     const { $id, ...rest } = config;
-    return this.#nodeFactory("get-tools", rest, $id);
+    return this.#nodeFactory("getTools", rest, $id);
   }
 
   getDescriptions(config: OptionalIdConfiguration = {}) {
     const { $id, ...rest } = config;
-    return this.#nodeFactory("get-descriptions", rest, $id);
+    return this.#nodeFactory("getDescriptions", rest, $id);
   }
 
   parseCompletion(args: string[], config: OptionalIdConfiguration = {}) {
     const { $id, ...rest } = config;
-    return this.#nodeFactory("parse-completion", { args, rest }, $id);
+    return this.#nodeFactory("parseCompletion", { args, rest }, $id);
   }
 }

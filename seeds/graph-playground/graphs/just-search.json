@@ -2,14 +2,14 @@
   "edges": [
     {
       "from": "secrets-1",
-      "to": "url_template-3",
+      "to": "urlTemplate-3",
       "constant": true,
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
       "from": "secrets-1",
-      "to": "url_template-3",
+      "to": "urlTemplate-3",
       "constant": true,
       "out": "GOOGLE_CSE_ID",
       "in": "GOOGLE_CSE_ID"
@@ -27,14 +27,14 @@
       "in": "json"
     },
     {
-      "from": "url_template-3",
+      "from": "urlTemplate-3",
       "to": "fetch-4",
       "out": "url",
       "in": "url"
     },
     {
       "from": "input-2",
-      "to": "url_template-3",
+      "to": "urlTemplate-3",
       "out": "text",
       "in": "query"
     }
@@ -58,8 +58,8 @@
       }
     },
     {
-      "id": "url_template-3",
-      "type": "url_template",
+      "id": "urlTemplate-3",
+      "type": "urlTemplate",
       "configuration": {
         "template": "https://www.googleapis.com/customsearch/v1?key={{PALM_KEY}}&cx={{GOOGLE_CSE_ID}}&q={{query}}"
       }

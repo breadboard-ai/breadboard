@@ -5,20 +5,20 @@
   ```mermaid
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-compute["run-javascript
+compute["runJavascript
 id='compute'"] -- "result->text" --> print{{"output
 id='print'"}}:::output
-mathfunctioncompletion["text-completion
-id='math-function-completion'"] -- "completion->code" --> compute["run-javascript
+mathfunctioncompletion["textCompletion
+id='math-function-completion'"] -- "completion->code" --> compute["runJavascript
 id='compute'"]
 secrets1("secrets
-id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --> mathfunctioncompletion["text-completion
+id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --> mathfunctioncompletion["textCompletion
 id='math-function-completion'"]
-mathfunction["prompt-template
-id='math-function'"] -- "prompt->text" --> mathfunctioncompletion["text-completion
+mathfunction["promptTemplate
+id='math-function'"] -- "prompt->text" --> mathfunctioncompletion["textCompletion
 id='math-function-completion'"]
 mathquestion[/"input
-id='math-question'"/]:::input -- "text->question" --> mathfunction["prompt-template
+id='math-question'"/]:::input -- "text->question" --> mathfunction["promptTemplate
 id='math-function'"]
 messagemathquestion[message]:::config -- "message->message" --o mathquestion
 templatemathfunction[template]:::config -- "template->template" --o mathfunction

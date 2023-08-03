@@ -41,18 +41,18 @@
     },
     {
       "id": "math-function",
-      "type": "prompt-template",
+      "type": "promptTemplate",
       "configuration": {
         "template": "Translate the math problem below into a JavaScript function named `compute` that can be executed to provide the answer to the problem\nMath Problem: {{question}}\nSolution:"
       }
     },
     {
       "id": "math-function-completion",
-      "type": "text-completion"
+      "type": "textCompletion"
     },
     {
       "id": "compute",
-      "type": "run-javascript",
+      "type": "runJavascript",
       "configuration": {
         "name": "compute"
       }

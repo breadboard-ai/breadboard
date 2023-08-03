@@ -2,7 +2,7 @@
   "edges": [
     {
       "from": "secrets-6",
-      "to": "embed_docs-5",
+      "to": "embedDocs-5",
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
@@ -14,43 +14,43 @@
     },
     {
       "from": "cache-7",
-      "to": "embed_docs-5",
+      "to": "embedDocs-5",
       "out": "cache",
       "in": "cache"
     },
     {
-      "from": "create_vector_database-1",
-      "to": "add_to_vector_database-9",
+      "from": "createVectorDatabase-1",
+      "to": "addToVectorDatabase-9",
       "out": "db",
       "in": "db"
     },
     {
-      "from": "add_to_vector_database-9",
-      "to": "query_vector_database-2",
+      "from": "addToVectorDatabase-9",
+      "to": "queryVectorDatabase-2",
       "out": "db",
       "in": "db"
     },
     {
-      "from": "embed_docs-5",
-      "to": "add_to_vector_database-9",
+      "from": "embedDocs-5",
+      "to": "addToVectorDatabase-9",
       "out": "documents",
       "in": "documents"
     },
     {
-      "from": "text-assets-from-path-4",
-      "to": "embed_docs-5",
+      "from": "textAssetsFromPath-4",
+      "to": "embedDocs-5",
       "out": "documents",
       "in": "documents"
     },
     {
       "from": "input-3",
-      "to": "text-assets-from-path-4",
+      "to": "textAssetsFromPath-4",
       "out": "text",
       "in": "path"
     },
     {
       "from": "secrets-12",
-      "to": "embed_string-11",
+      "to": "embedString-11",
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
@@ -61,32 +61,32 @@
       "in": "text"
     },
     {
-      "from": "query_vector_database-2",
+      "from": "queryVectorDatabase-2",
       "to": "jsonata-13",
       "out": "results",
       "in": "json"
     },
     {
-      "from": "embed_string-11",
-      "to": "query_vector_database-2",
+      "from": "embedString-11",
+      "to": "queryVectorDatabase-2",
       "out": "embedding",
       "in": "embedding"
     },
     {
       "from": "input-10",
-      "to": "embed_string-11",
+      "to": "embedString-11",
       "out": "text",
       "in": "text"
     }
   ],
   "nodes": [
     {
-      "id": "create_vector_database-1",
-      "type": "create_vector_database"
+      "id": "createVectorDatabase-1",
+      "type": "createVectorDatabase"
     },
     {
-      "id": "query_vector_database-2",
-      "type": "query_vector_database"
+      "id": "queryVectorDatabase-2",
+      "type": "queryVectorDatabase"
     },
     {
       "id": "input-3",
@@ -96,12 +96,12 @@
       }
     },
     {
-      "id": "text-assets-from-path-4",
-      "type": "text-assets-from-path"
+      "id": "textAssetsFromPath-4",
+      "type": "textAssetsFromPath"
     },
     {
-      "id": "embed_docs-5",
-      "type": "embed_docs"
+      "id": "embedDocs-5",
+      "type": "embedDocs"
     },
     {
       "id": "secrets-6",
@@ -126,8 +126,8 @@
       }
     },
     {
-      "id": "add_to_vector_database-9",
-      "type": "add_to_vector_database"
+      "id": "addToVectorDatabase-9",
+      "type": "addToVectorDatabase"
     },
     {
       "id": "input-10",
@@ -137,8 +137,8 @@
       }
     },
     {
-      "id": "embed_string-11",
-      "type": "embed_string"
+      "id": "embedString-11",
+      "type": "embedString"
     },
     {
       "id": "secrets-12",
