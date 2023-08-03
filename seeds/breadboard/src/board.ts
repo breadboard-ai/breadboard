@@ -331,6 +331,35 @@ export class Board implements Breadboard {
     return new Node(this, "slot", { slot, ...rest }, $id);
   }
 
+  /**
+   * This method is a work in progress. Once finished, it will allow
+   * placing a `node` node on the board.
+   *
+   * This node can be used to add your own JS functions to the board.
+   * If you can't find the node in a kit that suits your needs, this might
+   * be a good fit.
+   *
+   * Downside: it makes your board non-portable. The serialized JSON of the
+   * board will **not** contain the code of the function, which means that
+   * your friends and colleagues won't be able to re-use it.
+   *
+   * @param handler -- the function that will be called when the node is visited. It must take an object with input values and return an object with output values. The function can be sync or async. For example:
+   *
+   * ```js
+   * const board = new Board();
+   * board
+   *   .input()
+   *   .wire(
+   *     "say->",
+   *     board
+   *       .node(({ say }) => ({ say: `I said: ${say}` }))
+   *       .wire("say->", board.output())
+   *   );
+   * ```
+   *
+   * @param config -- optional configuration for the node.
+   * @returns - a `Node` object that represents the placed node.
+   */
   node(handler: NodeHandler, config: OptionalIdConfiguration = {}): Node {
     const { $id, ...rest } = config;
     const type = nodeTypeVendor.vendId(this, "node");

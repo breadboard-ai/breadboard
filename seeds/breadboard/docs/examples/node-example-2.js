@@ -5,18 +5,27 @@
  */
 
 import { Board } from "@google-labs/breadboard";
+import { Starter } from "@google-labs/llm-starter";
 import { config } from "dotenv";
 
 config();
 
 const board = new Board();
+const kit = board.addKit(Starter);
+
+const output = board.output();
 board
   .input()
   .wire(
     "say->",
-    board
-      .node(({ say }) => ({ say: `I said: ${say}` }))
-      .wire("say->", board.output())
+    board.node(({ say }) => ({ say: `I said: ${say}` })).wire("say->", output)
+  )
+  .wire(
+    "say->text",
+    kit
+      .textCompletion()
+      .wire("completion->hear", output)
+      .wire("<-PALM_KEY", kit.secrets(["PALM_KEY"]))
   );
 
 const result = await board.runOnce({
