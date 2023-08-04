@@ -12,6 +12,7 @@ import type {
   OptionalIdConfiguration,
 } from "@google-labs/breadboard";
 
+import vars from "./nodes/vars.js";
 import textAsset from "./nodes/text-asset.js";
 import textAssetsFromPath from "./nodes/text-assets-from-path.js";
 import createVectorDatabase from "./nodes/create-vector-database.js";
@@ -30,6 +31,7 @@ const handlers = {
   cache,
   textAsset,
   textAssetsFromPath,
+  vars,
 };
 
 /**
