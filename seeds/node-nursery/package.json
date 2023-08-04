@@ -50,6 +50,7 @@
     "typescript": "^5.0.4"
   },
   "dependencies": {
+    "@google-labs/palm-lite": "*",
     "json-stable-stringify": "^1.0.2",
     "ml-distance": "^4.0.1",
     "sqlite": "^5.0.1",
