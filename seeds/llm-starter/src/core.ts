@@ -7,6 +7,7 @@
 /**
  * Nodes that are commonly used in Generative Applications.
  */
+import append from "./nodes/append.js";
 import jsonata from "./nodes/jsonata.js";
 import promptTemplate from "./nodes/prompt-template.js";
 import textCompletion from "./nodes/text-completion.js";
@@ -18,6 +19,7 @@ import urlTemplate from "./nodes/url-template.js";
 import xmlToJson from "./nodes/xml-to-json.js";
 
 export const coreHandlers = {
+  append,
   jsonata,
   secrets,
   fetch,

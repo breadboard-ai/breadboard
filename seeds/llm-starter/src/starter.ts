@@ -30,6 +30,11 @@ export class Starter implements Kit {
     this.#handlers = coreHandlers;
   }
 
+  append(config: OptionalIdConfiguration = {}): BreadboardNode {
+    const { $id, ...rest } = config;
+    return this.#nodeFactory("append", { ...rest }, $id);
+  }
+
   textTemplate(
     template: string,
     config: OptionalIdConfiguration = {}
