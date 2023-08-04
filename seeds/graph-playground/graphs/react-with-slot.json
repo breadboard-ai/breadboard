@@ -8,12 +8,6 @@
     },
     {
       "from": "get-slot",
-      "to": "jsonata-2",
-      "out": "graph",
-      "in": "json"
-    },
-    {
-      "from": "get-slot",
       "to": "jsonata-3",
       "out": "graph",
       "in": "json"
@@ -116,7 +110,10 @@
       "id": "secrets-1",
       "type": "secrets",
       "configuration": {
-        "keys": ["PALM_KEY", "GOOGLE_CSE_ID"]
+        "keys": [
+          "PALM_KEY",
+          "GOOGLE_CSE_ID"
+        ]
       }
     },
     {
@@ -171,7 +168,9 @@
       "id": "react-completion",
       "type": "textCompletion",
       "configuration": {
-        "stop-sequences": ["\nObservation"]
+        "stop-sequences": [
+          "\nObservation"
+        ]
       }
     },
     {
