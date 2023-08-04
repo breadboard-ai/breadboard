@@ -16,13 +16,13 @@ npm install @google-labs/llm-starter
 
 Here are all node handlers that are included in the LLM Starter Kit.
 
-### `prompt-template`
+### The `promptTemplate` node
 
 Use this node to populate simple handlebar-style templates. A reuired input is `template`, which is a string that contains the template prompt template. The template can contain zero or more placeholders that will be replaced with values from inputs. Specify placeholders as `{{inputName}}` in the template. The placeholders in the template must match the inputs wired into this node. The node will replace all placeholders with values from the input property bag and pass the result along as the `prompt` output property.
 
 #### Example:
 
-If we send the following inputs to `prompt-template`:
+If we send the following inputs to `promptTemplate`:
 
 ```json
 {
@@ -53,7 +53,7 @@ We will get this output:
 
 - [src/nodes/prompt-template.ts](src/nodes/prompt-template.ts)
 
-### `local-memory`
+### The `localMemory` node
 
 Use this node as a simple text line-based accumulator. Every input is added to the list as another line of text, formatted as `{{property_name}}: {{proprety_value}}` and the list is passed the `context` output property. Every time the node is visited by the graph, the list keeps growing.
 
@@ -87,7 +87,7 @@ If we visit this node again with the input `Thought` and the value of `I wonder 
 
 - [src/nodes/local-memory.ts](src/nodes/local-memory.ts)
 
-### `run-javascript`
+### The `runJavascript` node
 
 Use this node to execute JavaScript code. The node takes a required `code` input property, which is a string that contains the code to be executed. It also takes an `name` input property, which is a string that specifies the name of the function that will be invoked to execute the code. If not supplied, the `run` function name will be used.
 
@@ -97,7 +97,7 @@ The node will pass the result of the execution as the `result` output property.
 
 #### Example:
 
-If we send the following inputs to `run-javascript`:
+If we send the following inputs to `runJavascript`:
 
 ```json
 {
@@ -126,7 +126,7 @@ We will get this output:
 
 - [src/nodes/run-javascript.ts](src/nodes/run-javascript.ts)
 
-### `secrets`
+### The `secrets` node
 
 Use this node to access secrets, such as API keys or other valuable bits of information that you might not want to store in the graph itself. The node takes in an array of strings named `keys`, matches the process environment values, and returns them as outputs. This enables connecting edges from environment variables.
 
@@ -160,7 +160,7 @@ Will produce this output:
 
 - [src/nodes/secrets.ts](src/nodes/secrets.ts)
 
-### `text-completion`
+### The `textCompletion` node
 
 This is a [PaLM API](https://developers.generativeai.google/) text completion node. This node is probably the main reason this starter kit exists. To produce useful output, the node needs an `PALM_KEY` input and the `text` input.
 
@@ -193,13 +193,13 @@ The node will produce this output:
 
 - `completion` - result of the PaLM API text completion.
 
-### `url-template`
+### The `urlTemplate` node
 
-Use this node to safely construct URLs. It's similar in spirit to the `prompt-template` node, except it ensures that the handlebar parameters are properly encoded as part of the URL.
+Use this node to safely construct URLs. It's similar in spirit to the `promptTemplate` node, except it ensures that the handlebar parameters are properly encoded as part of the URL.
 
 #### Example:
 
-If we send the following inputs to `url-template`:
+If we send the following inputs to `urlTemplate`:
 
 ```json
 {
@@ -229,7 +229,7 @@ We will get this output:
 
 - [src/nodes/url-template.ts](src/nodes/url-template.ts)
 
-### `fetch`
+### The `fetch` node
 
 Use this node to fetch data from the Internet. Practically, this is a wrapper around [`fetch`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)
 
@@ -265,7 +265,7 @@ And receive this output:
 
 - [src/nodes/fetch.ts](src/nodes/fetch.ts)
 
-### `jsonata`
+### The `jsonata` node
 
 Use this node to execute [JSONata](https://jsonata.org/) expressions. JSONata is a versatile JSON query language.
 
@@ -311,7 +311,7 @@ We will get this output:
 
 - [src/nodes/jsonata.ts](src/nodes/jsonata.ts)
 
-### `xml-to-json`
+### The `xmlToJson` node
 
 Use this node to convert XML to JSON. Most nodes in the starter kit are designed to work with JSON, so this node is useful when you have XML data.
 
