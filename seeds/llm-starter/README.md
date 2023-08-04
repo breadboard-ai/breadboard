@@ -53,39 +53,78 @@ We will get this output:
 
 - [src/nodes/prompt-template.ts](src/nodes/prompt-template.ts)
 
-### The `localMemory` node
+## The `append` node
 
-Use this node as a simple text line-based accumulator. Every input is added to the list as another line of text, formatted as `{{property_name}}: {{proprety_value}}` and the list is passed the `context` output property. Every time the node is visited by the graph, the list keeps growing.
+Use this node to accumulate local state, like context in a prompt.
 
-#### Example:
+The node looks for property called `accumulator` in its input. All other properties are appended to this property, and returned as `accumulator` output property.
 
-if we send it an input of `Question` with the value of `How old is planet Earth?`, we will see the following output from the node:
+The way the properties are appended depends on the type of the `accumulator` input property.
+
+If the `accumulator` property is "string-ey" (that is, it's a `string`, `number`, `boolean`, `bigint`, `null` or `undefined`), the properties will be appended as strings, formatted as `{{property_name}}: {{proprety_value}}` and joined with "`\n`".
+
+If the `accumulator` property is an array, the properties will be appended as array items, formatted as `{{property_name}}: {{proprety_value}}`,
+
+Otherwise, the `accumulator` property will be treated as an object and the properties will be added as properties on this object.
+
+### Example
+
+If we send the `append` node an input of `Question` with the value of `How old is planet Earth?` and the `accumulator` value of `\n`:
 
 ```json
 {
-  "context": "Question: How old is planet Earth?"
+  "accumulator": "\n",
+  "Question": "How old is planet Earth?"
 }
 ```
 
-If we visit this node again with the input `Thought` and the value of `I wonder how old planet Earth is?`, we will see the following output from the node:
+We will see the following output:
 
 ```json
 {
-  "context": "Question: How old is planet Earth?\nThought: I wonder how old planet Earth is?"
+  "accumulator": "\n\nQuestion: How old is planet Earth?"
 }
 ```
 
-#### Inputs:
+If we send the node an input of `Question` with the value of `How old is planet Earth?` and the `accumulator` value of `[]`:
 
-- any input
+```json
+{
+  "accumulator": [],
+  "Question": "How old is planet Earth?"
+}
+```
 
-#### Outputs:
+We will get the output:
 
-- `context` a string that contains the result of accumulating all inputs as lines.
+```json
+{
+  "accumulator": ["Question: How old is planet Earth?"]
+}
+```
+
+If we send the node an input of `Question` with the value of `How old is planet Earth?` and the `accumulator` value of `{}`:
+
+```json
+{
+  "accumulator": {},
+  "Question": "How old is planet Earth?"
+}
+```
+
+We'll get the output of:
+
+```json
+{
+  "accumulator": {
+    "Question": "How old is planet Earth?"
+  }
+}
+```
 
 #### Implementation:
 
-- [src/nodes/local-memory.ts](src/nodes/local-memory.ts)
+- [src/nodes/append.ts](src/nodes/append.ts)
 
 ### The `runJavascript` node
 
