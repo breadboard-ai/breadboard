@@ -25,7 +25,7 @@
       "id": "include-2",
       "type": "include",
       "configuration": {
-        "$ref": "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/react-with-slot.json",
+        "$ref": "./graphs/react-with-slot.json",
         "slotted": {
           "tools": {
             "edges": [

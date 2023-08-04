@@ -41,3 +41,15 @@ test("`append` correctly appends to various object types", async (t) => {
     }
   );
 });
+
+test("`append` doesn't append when there are no values", async (t) => {
+  t.deepEqual(await append({ accumulator: "string" }), {
+    accumulator: "string",
+  });
+  t.deepEqual(await append({ accumulator: [] }), {
+    accumulator: [],
+  });
+  t.deepEqual(await append({ accumulator: {} }), {
+    accumulator: {},
+  });
+});

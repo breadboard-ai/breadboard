@@ -30,7 +30,7 @@ const probe = new EventTarget();
 
 probe.addEventListener("node", (event) => {
   const data = event.detail;
-  if (data.descriptor.type == "text-completion") {
+  if (data.descriptor.type == "textCompletion") {
     console.log("completion:", data.outputs.completion);
   }
 });

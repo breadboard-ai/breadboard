@@ -61,7 +61,7 @@ probe.addEventListener("node", (event: Event) => {
     const label = detail.validatorMetadata.map((m) => m.description).join(", ");
     note(`Integrity label for ${detail.descriptor.id}: ${label}`, "integrity");
   }
-  if (detail.descriptor.type !== "text-completion") return;
+  if (detail.descriptor.type !== "textCompletion") return;
   const value = (detail?.outputs?.completion as string) || "empty response";
   note(wrap(value), "text completion");
 });

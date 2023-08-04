@@ -612,7 +612,7 @@ Then, listen to any of the events above. For instance, let's make a simple probe
 ```js
 probe.addEventListener("node", (event) => {
   const data = event.detail;
-  if (data.descriptor.type == "text-completion") {
+  if (data.descriptor.type == "textCompletion") {
     console.log("completion:", data.outputs.completion);
   }
 });

@@ -20,6 +20,8 @@ const prompt = kit.textTemplate(
   { context: "" }
 );
 
+// Use the `append` node to accumulate the conversation history.
+// Populate it with initial context.
 const conversationMemory = kit.append({
   accumulator: "\n== Conversation History",
 });

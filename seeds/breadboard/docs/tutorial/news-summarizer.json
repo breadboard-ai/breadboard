@@ -59,7 +59,7 @@
     },
     {
       "id": "text-completion-4",
-      "type": "text-completion"
+      "type": "textCompletion"
     },
     {
       "id": "secrets-5",

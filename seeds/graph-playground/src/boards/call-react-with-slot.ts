@@ -69,7 +69,7 @@ board.addKit(Starter);
 board.input("Ask ReAct").wire(
   "text",
   board
-    .include(`${REPO_URL}/react-with-slot.json`, {
+    .include(`./graphs/react-with-slot.json`, {
       slotted: { tools: tools() },
     })
     .wire("text", board.output())

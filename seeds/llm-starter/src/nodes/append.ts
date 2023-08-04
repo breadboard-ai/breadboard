@@ -38,6 +38,7 @@ const asString = (values: ValueType): string => {
 
 export default async (inputs: InputValues) => {
   const { accumulator, ...values } = inputs as AppendInputValues;
+  if (Object.keys(values).length === 0) return { accumulator };
   const type = getObjectType(accumulator);
   switch (type) {
     case ObjectType.string:
