@@ -1,10 +1,10 @@
 {
   "edges": [
     {
-      "from": "append-2",
-      "to": "append-2",
-      "out": "accumulator",
-      "in": "accumulator"
+      "from": "get-slot",
+      "to": "jsonata-2",
+      "out": "graph",
+      "in": "json"
     },
     {
       "from": "get-slot",
@@ -74,13 +74,6 @@
       "constant": true,
       "out": "PALM_KEY",
       "in": "PALM_KEY"
-    },
-    {
-      "from": "input-6",
-      "to": "append-2",
-      "optional": true,
-      "out": "text",
-      "in": "Question"
     },
     {
       "from": "tools-slot",

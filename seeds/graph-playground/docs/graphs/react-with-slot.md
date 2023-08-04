@@ -24,7 +24,6 @@ reactcompletion["textCompletion id='react-completion'"] -- "completion->json" --
 reactcompletion["textCompletion id='react-completion'"] -- "completion->Thought" --> rememberThought["append id='rememberThought'"]
 promptTemplate4["promptTemplate id='promptTemplate-4'"] -- "prompt->text" --> reactcompletion["textCompletion id='react-completion'"]
 keyssecrets1[keys]:::config -- "keys->keys" --o secrets1
-accumulatorappend2[accumulator]:::config -- "accumulator->accumulator" --o append2
 slotgetslot[slot]:::config -- "slot->slot" --o getslot
 graphgetslot[graph]:::config -- "graph->graph" --o getslot
 expressionjsonata2[expression]:::config -- "expression->expression" --o jsonata2
