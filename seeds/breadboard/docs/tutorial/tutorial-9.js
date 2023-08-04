@@ -8,7 +8,7 @@ import readline from "node:readline/promises";
 import { stdin, stdout } from "node:process";
 import { config } from "dotenv";
 
-import { Board } from "@google-labs/breadboard";
+import { Board, LogProbe } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 
 config();
@@ -20,8 +20,8 @@ const input = board.input();
 const output = board.output();
 output.wire("->", input);
 
-const history = kit.localMemory();
-input.wire("say->user", history);
+const history = kit.append();
+history.wire("user<-say", input).wire("accumulator->?", history);
 
 const completion = kit
   .textCompletion()
@@ -34,22 +34,23 @@ kit
     "This is a conversation between a friendly assistant and their user.\n" +
       "You are the assistant and your job is to try to be helpful,\n" +
       "empathetic, and fun.\n\n" +
+      "== Conversation History\n" +
       "{{context}}\n\n" +
       "== Current Conversation\n" +
       "user: {{question}}\n" +
-      "assistant:"
+      "assistant:",
+    { context: "" }
   )
   .wire("prompt->text", completion)
   .wire("question<-say", input)
-  .wire("<-context", history)
-  .wire("<-context", board.passthrough({ context: "== Conversation History" }));
+  .wire("context<-accumulator", history);
 
 board.passthrough().wire("->", input);
 
 const ask = readline.createInterface({ input: stdin, output: stdout });
 console.log("Hello! I'm your friendly assistant. How can I help you today?");
 console.log("Type 'exit' to end conversation.");
-for await (const stop of board.run()) {
+for await (const stop of board.run(new LogProbe())) {
   if (stop.seeksInputs) {
     const say = await ask.question("> ");
     if (say === "exit") break;
