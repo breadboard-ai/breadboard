@@ -1,9 +1,10 @@
 # react-with-slot
-  - Original: [`react-with-slot.ts`](../../src/boards/react-with-slot.ts)
-  - Graph: [`react-with-slot.json`](../../graphs/react-with-slot.json)
-  
-  ```mermaid
-  %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
+
+- Original: [`react-with-slot.ts`](../../src/boards/react-with-slot.ts)
+- Graph: [`react-with-slot.json`](../../graphs/react-with-slot.json)
+
+```mermaid
+%%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
 getslot(("slot id='get-slot'")):::slot -- "graph->json" --> jsonata2["jsonata id='jsonata-2'"]
 getslot(("slot id='get-slot'")):::slot -- "graph->json" --> jsonata3["jsonata id='jsonata-3'"]
@@ -23,6 +24,7 @@ reactcompletion["textCompletion id='react-completion'"] -- "completion->json" --
 reactcompletion["textCompletion id='react-completion'"] -- "completion->Thought" --> rememberThought["append id='rememberThought'"]
 promptTemplate4["promptTemplate id='promptTemplate-4'"] -- "prompt->text" --> reactcompletion["textCompletion id='react-completion'"]
 keyssecrets1[keys]:::config -- "keys->keys" --o secrets1
+accumulatorappend2[accumulator]:::config -- "accumulator->accumulator" --o append2
 slotgetslot[slot]:::config -- "slot->slot" --o getslot
 graphgetslot[graph]:::config -- "graph->graph" --o getslot
 expressionjsonata2[expression]:::config -- "expression->expression" --o jsonata2
@@ -42,4 +44,4 @@ classDef slot stroke:#a64d79,fill:#ead1dcff,color:#000
 classDef config stroke:#a64d79,fill:#ead1dcff,color:#000
 classDef secrets stroke:#db4437,fill:#f4cccc,color:#000
 classDef slotted stroke:#a64d79
-  ```
+```

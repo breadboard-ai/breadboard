@@ -1,6 +1,12 @@
 {
   "edges": [
     {
+      "from": "append-2",
+      "to": "append-2",
+      "out": "accumulator",
+      "in": "accumulator"
+    },
+    {
       "from": "get-slot",
       "to": "jsonata-2",
       "out": "graph",
@@ -70,6 +76,13 @@
       "in": "PALM_KEY"
     },
     {
+      "from": "input-6",
+      "to": "append-2",
+      "optional": true,
+      "out": "text",
+      "in": "Question"
+    },
+    {
       "from": "tools-slot",
       "to": "rememberObservation",
       "out": "text",
@@ -110,10 +123,7 @@
       "id": "secrets-1",
       "type": "secrets",
       "configuration": {
-        "keys": [
-          "PALM_KEY",
-          "GOOGLE_CSE_ID"
-        ]
+        "keys": ["PALM_KEY", "GOOGLE_CSE_ID"]
       }
     },
     {
@@ -171,9 +181,7 @@
       "id": "react-completion",
       "type": "textCompletion",
       "configuration": {
-        "stop-sequences": [
-          "\nObservation"
-        ]
+        "stop-sequences": ["\nObservation"]
       }
     },
     {
