@@ -57,7 +57,7 @@ const reActTemplate = kit
       "Observation: the result of the action\n... " +
       "(this Thought/Action/Action Input/Observation can repeat N times)\n" +
       "Thought: I now know the final answer\nFinal Answer: the final answer to " +
-      "the original input question\n\nBegin!\n{{memory}}\nThought:"
+      "the original input question\n\nBegin!\n\n{{memory}}\nThought:"
   )
   .wire("descriptions<-result.", descriptions)
   .wire("tools<-result.", tools);
@@ -103,7 +103,7 @@ const rememberThought = kit
 // reason: when the first iteration starts, there aren't any thoughts or
 // observations yet.
 const rememberQuestion = kit
-  .append({ $id: "rememberQuestion", accumulator: "\n" })
+  .append({ $id: "rememberQuestion" })
   .wire("accumulator->", rememberThought)
   .wire("accumulator->memory", reActTemplate);
 

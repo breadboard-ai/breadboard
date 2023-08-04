@@ -16,6 +16,7 @@ test("getObjectType correctly recognizes various object types", (t) => {
   t.is(getObjectType(true), ObjectType.string);
   t.is(getObjectType(BigInt(1)), ObjectType.string);
   t.is(getObjectType(null), ObjectType.string);
+  t.is(getObjectType(undefined), ObjectType.string);
 });
 
 test("`append` correctly appends to various object types", async (t) => {

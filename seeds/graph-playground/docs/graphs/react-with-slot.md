@@ -29,7 +29,6 @@ graphgetslot[graph]:::config -- "graph->graph" --o getslot
 expressionjsonata2[expression]:::config -- "expression->expression" --o jsonata2
 expressionjsonata3[expression]:::config -- "expression->expression" --o jsonata3
 templatepromptTemplate4[template]:::config -- "template->template" --o promptTemplate4
-accumulatorrememberQuestion[accumulator]:::config -- "accumulator->accumulator" --o rememberQuestion
 messageinput5[message]:::config -- "message->message" --o input5
 stopsequencesreactcompletion[stop-sequences]:::config -- "stop-sequences->stop-sequences" --o reactcompletion
 expressionjsonata6[expression]:::config -- "expression->expression" --o jsonata6

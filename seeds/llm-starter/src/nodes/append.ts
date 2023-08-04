@@ -20,7 +20,7 @@ type AppendInputValues = Record<string, unknown> & {
 };
 
 export const getObjectType = (value: unknown): ObjectType => {
-  if (value === null) return ObjectType.string;
+  if (value === null || value === undefined) return ObjectType.string;
   const type = typeof value;
   if (["string", "number", "boolean", "bigint"].includes(type))
     return ObjectType.string;
