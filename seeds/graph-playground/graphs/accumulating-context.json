@@ -1,6 +1,12 @@
 {
   "edges": [
     {
+      "from": "append-3",
+      "to": "append-3",
+      "out": "accumulator",
+      "in": "accumulator"
+    },
+    {
       "from": "secrets-5",
       "to": "textCompletion-4",
       "constant": true,
@@ -8,14 +14,14 @@
       "in": "PALM_KEY"
     },
     {
-      "from": "localMemory-3",
+      "from": "append-3",
       "to": "promptTemplate-2",
-      "out": "context",
+      "out": "accumulator",
       "in": "context"
     },
     {
       "from": "textCompletion-4",
-      "to": "localMemory-3",
+      "to": "append-3",
       "out": "completion",
       "in": "assistant"
     },
@@ -43,7 +49,7 @@
     },
     {
       "from": "input-1",
-      "to": "localMemory-3",
+      "to": "append-3",
       "out": "text",
       "in": "user"
     },
@@ -61,13 +67,16 @@
       "id": "promptTemplate-2",
       "type": "promptTemplate",
       "configuration": {
-        "template": "This is a conversation between a friendly assistant and their user. You are the assistant and your job is to try to be helpful, empathetic, and fun.\n\n== Conversation History\n{{context}}\n\n== Current Conversation\nuser: {{question}}\nassistant:",
+        "template": "This is a conversation between a friendly assistant and their user. You are the assistant and your job is to try to be helpful, empathetic, and fun.\n{{context}}\n\n== Current Conversation\nuser: {{question}}\nassistant:",
         "context": ""
       }
     },
     {
-      "id": "localMemory-3",
-      "type": "localMemory"
+      "id": "append-3",
+      "type": "append",
+      "configuration": {
+        "accumulator": "\n== Conversation History"
+      }
     },
     {
       "id": "start",

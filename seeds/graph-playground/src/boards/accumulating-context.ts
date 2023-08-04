@@ -16,11 +16,15 @@ const input = board.input();
 
 // Store prompt node for the same reason.
 const prompt = kit.textTemplate(
-  "This is a conversation between a friendly assistant and their user. You are the assistant and your job is to try to be helpful, empathetic, and fun.\n\n== Conversation History\n{{context}}\n\n== Current Conversation\nuser: {{question}}\nassistant:",
+  "This is a conversation between a friendly assistant and their user. You are the assistant and your job is to try to be helpful, empathetic, and fun.\n{{context}}\n\n== Current Conversation\nuser: {{question}}\nassistant:",
   { context: "" }
 );
 
-const conversationMemory = kit.localMemory();
+const conversationMemory = kit.append({
+  accumulator: "\n== Conversation History",
+});
+// Wire memory to accumulate: loop it to itself.
+conversationMemory.wire("accumulator->", conversationMemory);
 
 board.passthrough({ $id: "start" }).wire(
   "->",
@@ -34,7 +38,7 @@ board.passthrough({ $id: "start" }).wire(
           .wire("<-PALM_KEY.", kit.secrets(["PALM_KEY"]))
           .wire(
             "completion->assistant",
-            conversationMemory.wire("context", prompt)
+            conversationMemory.wire("accumulator->context", prompt)
           )
           .wire("completion->text", board.output().wire("->", input))
       )
