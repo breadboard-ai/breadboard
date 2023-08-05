@@ -199,7 +199,7 @@ Will produce this output:
 
 - [src/nodes/secrets.ts](src/nodes/secrets.ts)
 
-### The `textCompletion` node
+### The `generateText` node
 
 This is a [PaLM API](https://developers.generativeai.google/) text completion node. This node is probably the main reason this starter kit exists. To produce useful output, the node needs an `PALM_KEY` input and the `text` input.
 

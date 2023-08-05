@@ -34,7 +34,7 @@ const albert = kit
   .wire(
     "prompt->text",
     kit
-      .textCompletion({
+      .generateText({
         "stop-sequences": ["\nFriedrich", "\n**Friedrich"],
       })
       .wire(
@@ -48,7 +48,7 @@ const albert = kit
 friedrich.wire(
   "prompt->text",
   kit
-    .textCompletion({
+    .generateText({
       "stop-sequences": ["\nAlbert", "\n**Albert"],
     })
     .wire(

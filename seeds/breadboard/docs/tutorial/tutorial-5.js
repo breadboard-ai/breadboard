@@ -31,7 +31,7 @@ input.wire(
     template.wire("topic<-say", input).wire(
       "prompt->text",
       kit
-        .textCompletion()
+        .generateText()
         .wire("<-PALM_KEY.", kit.secrets(["PALM_KEY"]))
         .wire("completion->say", board.output())
     )

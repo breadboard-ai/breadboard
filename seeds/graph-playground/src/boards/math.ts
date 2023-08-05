@@ -20,7 +20,7 @@ math.input("Ask a math question", { $id: "math-question" }).wire(
     .wire(
       "prompt->text",
       kit
-        .textCompletion({ $id: "math-function-completion" })
+        .generateText({ $id: "math-function-completion" })
         .wire(
           "completion->code",
           kit

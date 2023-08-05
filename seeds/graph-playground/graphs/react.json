@@ -83,21 +83,21 @@
       "in": "text"
     },
     {
-      "from": "textCompletion-7",
+      "from": "generateText-7",
       "to": "rememberObservation",
       "out": "completion",
       "in": "Observation"
     },
     {
       "from": "secrets-1",
-      "to": "textCompletion-7",
+      "to": "generateText-7",
       "constant": true,
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
       "from": "summarizing-template",
-      "to": "textCompletion-7",
+      "to": "generateText-7",
       "out": "prompt",
       "in": "text"
     },
@@ -229,7 +229,7 @@
     },
     {
       "id": "react-completion",
-      "type": "textCompletion",
+      "type": "generateText",
       "configuration": {
         "stop-sequences": [
           "\nObservation"
@@ -245,7 +245,7 @@
     },
     {
       "id": "math-function-completion",
-      "type": "textCompletion"
+      "type": "generateText"
     },
     {
       "id": "compute",
@@ -265,8 +265,8 @@
       }
     },
     {
-      "id": "textCompletion-7",
-      "type": "textCompletion"
+      "id": "generateText-7",
+      "type": "generateText"
     },
     {
       "id": "summarizing-template",

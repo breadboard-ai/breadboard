@@ -11,7 +11,7 @@ const searchSummarize = new Board();
 const kit = searchSummarize.addKit(Starter);
 
 const completion = kit
-  .textCompletion()
+  .generateText()
   .wire("completion->text", searchSummarize.output());
 
 const summarizingTemplate = kit

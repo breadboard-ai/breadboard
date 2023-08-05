@@ -5,9 +5,9 @@
   ```mermaid
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-secrets2("secrets id='secrets-2'"):::secrets -- "PALM_KEY->PALM_KEY" --> textCompletion1["textCompletion id='textCompletion-1'"]
-textCompletion1["textCompletion id='textCompletion-1'"] -- "completion->text" --> output3{{"output id='output-3'"}}:::output
-analyzethis["promptTemplate id='analyze-this'"] -- "prompt->text" --> textCompletion1["textCompletion id='textCompletion-1'"]
+secrets2("secrets id='secrets-2'"):::secrets -- "PALM_KEY->PALM_KEY" --> generateText1["generateText id='generateText-1'"]
+generateText1["generateText id='generateText-1'"] -- "completion->text" --> output3{{"output id='output-3'"}}:::output
+analyzethis["promptTemplate id='analyze-this'"] -- "prompt->text" --> generateText1["generateText id='generateText-1'"]
 keyssecrets2[keys]:::config -- "keys->keys" --o secrets2
 templateanalyzethis[template]:::config -- "template->template" --o analyzethis
 questionanalyzethis[question]:::config -- "question->question" --o analyzethis

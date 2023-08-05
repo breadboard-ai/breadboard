@@ -98,21 +98,21 @@ Now that we've added the kit, we can use it to add nodes from it:
 ```js
 const input = board.input();
 const output = board.output();
-const textCompletion = kit.textCompletion();
+const generateText = kit.generateText();
 ```
 
-The `textCompletion` node that we've added is a node that uses the [PaLM API](https://developers.generativeai.google/) to generate text. This node takes a `text` property as an input and returns a `completion` property.
+The `generateText` node that we've added is a node that uses the [PaLM API](https://developers.generativeai.google/) to generate text. This node takes a `text` property as an input and returns a `completion` property.
 
 All we need to do is wire these properties to `say` and `hear` from before:
 
 ```js
-input.wire("say->text", textCompletion);
-textCompletion.wire("completion->hear", output);
+input.wire("say->text", generateText);
+generateText.wire("completion->hear", output);
 ```
 
-Now, we have not one, but two wires on the board, connecting our three nodes. There's the `say->text` wire that connects the `input` and `textCompletion` nodes, and there's the `completion->hear` wire that connects the `textCompletion` and `output` nodes.
+Now, we have not one, but two wires on the board, connecting our three nodes. There's the `say->text` wire that connects the `input` and `generateText` nodes, and there's the `completion->hear` wire that connects the `generateText` and `output` nodes.
 
-To make this program go, we need another node and a wire. The PaLM API behind the `textCompletion` node requires an API key, so we'll add a `secrets` node to the board:
+To make this program go, we need another node and a wire. The PaLM API behind the `generateText` node requires an API key, so we'll add a `secrets` node to the board:
 
 ```js
 const secrets = kit.secrets(["PALM_KEY"]);
@@ -137,10 +137,10 @@ PALM_KEY="your API key goes here"
 With this bit of prep work out of the way, we're ready to wire the `secrets` node:
 
 ```js
-secrets.wire("PALM_KEY->", textCompletion);
+secrets.wire("PALM_KEY->", generateText);
 ```
 
-The statement above says: "wire `secret`'s output named `PALM_KEY` to the `textCompletion` input named `PALM_KEY`". Because we're wiring output to the input by the same name, we don't have to repeat ourselves.
+The statement above says: "wire `secret`'s output named `PALM_KEY` to the `generateText` input named `PALM_KEY`". Because we're wiring output to the input by the same name, we don't have to repeat ourselves.
 
 Our second program is ready as soon as we add the `runOnce` call:
 
@@ -170,11 +170,11 @@ First, the `wire` method returns the node itself, allowing us to wire the same n
 ```js
 const input = board.input();
 const output = board.output();
-const textCompletion = kit.textCompletion();
+const generateText = kit.generateText();
 const secrets = kit.secrets(["PALM_KEY"]);
 
-input.wire("say->text", textCompletion).wire("say->", output);
-textCompletion.wire("completion->hear", output);
+input.wire("say->text", generateText).wire("say->", output);
+generateText.wire("completion->hear", output);
 ```
 
 As you can see, we've used the chaining to add an extra wire to the `input` node. It goes straight to the `output` node, adding the `say` property to the output property bag. When we run this board, we'll see the following output:
@@ -186,16 +186,16 @@ result { say: 'Hi, how are you?', hear: 'doing okay' }
 Second, we don't always need to create a new variable for each node. We can just create nodes as we wire them:
 
 ```js
-board.input().wire("say->text", kit.textCompletion()).wire("say->", output);
+board.input().wire("say->text", kit.generateText()).wire("say->", output);
 ```
 
-Finally, we can we can wire in both directions. For example, we can wire the `secrets` node to the `textCompletion` node like this:
+Finally, we can we can wire in both directions. For example, we can wire the `secrets` node to the `generateText` node like this:
 
 ```js
-textCompletion.wire("<-PALM_KEY", kit.secrets(["PALM_KEY"]));
+generateText.wire("<-PALM_KEY", kit.secrets(["PALM_KEY"]));
 ```
 
-Here, the arrow points in a different direction, and asks the board to wire the `PALM_KEY` output of the `secrets` node to the same input of the `textCompletion` node. It's equivalent to the wiring we had in the previous chapter.
+Here, the arrow points in a different direction, and asks the board to wire the `PALM_KEY` output of the `secrets` node to the same input of the `generateText` node. It's equivalent to the wiring we had in the previous chapter.
 
 Applying these newly learned techniques, we can rewrite our program like this:
 
@@ -207,7 +207,7 @@ board
   .wire(
     "say->text",
     kit
-      .textCompletion()
+      .generateText()
       .wire("completion->hear", output)
       .wire("<-PALM_KEY", kit.secrets(["PALM_KEY"]))
   );
@@ -280,14 +280,14 @@ graph TD;
 input2[/"input
 id='input-2'"/]:::input -- "say->say" --> output1{{"output
 id='output-1'"}}:::output
-textcompletion3["text-completion
+generateText3["text-completion
 id='text-completion-3'"] -- "completion->hear" --> output1{{"output
 id='output-1'"}}:::output
 secrets4("secrets
-id='secrets-4'"):::secrets -- "PALM_KEY->PALM_KEY" --> textcompletion3["text-completion
+id='secrets-4'"):::secrets -- "PALM_KEY->PALM_KEY" --> generateText3["text-completion
 id='text-completion-3'"]
 input2[/"input
-id='input-2'"/]:::input -- "say->text" --> textcompletion3["text-completion
+id='input-2'"/]:::input -- "say->text" --> generateText3["text-completion
 id='text-completion-3'"]
 keyssecrets4[keys]:::config -- "keys->keys" --o secrets4
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
@@ -308,14 +308,14 @@ graph TD;
 input2[/"input
 id='input-2'"/]:::input -- "say->say" --> output1{{"output
 id='output-1'"}}:::output
-textcompletion3["text-completion
+generateText3["text-completion
 id='text-completion-3'"] -- "completion->hear" --> output1{{"output
 id='output-1'"}}:::output
 secrets4("secrets
-id='secrets-4'"):::secrets -- "PALM_KEY->PALM_KEY" --> textcompletion3["text-completion
+id='secrets-4'"):::secrets -- "PALM_KEY->PALM_KEY" --> generateText3["text-completion
 id='text-completion-3'"]
 input2[/"input
-id='input-2'"/]:::input -- "say->text" --> textcompletion3["text-completion
+id='input-2'"/]:::input -- "say->text" --> generateText3["text-completion
 id='text-completion-3'"]
 keyssecrets4[keys]:::config -- "keys->keys" --o secrets4
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
@@ -412,7 +412,7 @@ The `promptTemplate` node takes a template string as its argument. The template 
 
 So, in the code snippet above, this node needs to have these two properties wired into it: `topic` and `headlines`.
 
-Additionally, we'll wire up the `textCompletion` node that we've learned about in Chapter 2:
+Additionally, we'll wire up the `generateText` node that we've learned about in Chapter 2:
 
 ```js
 const input = board.input();
@@ -423,7 +423,7 @@ input.wire(
     template.wire("topic<-say", input).wire(
       "prompt->text",
       kit
-        .textCompletion()
+        .generateText()
         .wire("<-PALM_KEY.", kit.secrets(["PALM_KEY"]))
         .wire("completion->say", board.output())
     )
@@ -469,7 +469,7 @@ input.wire(
     template.wire("topic<-", input).wire(
       "prompt->text",
       kit
-        .textCompletion()
+        .generateText()
         .wire("<-PALM_KEY.", kit.secrets(["PALM_KEY"]))
         .wire("completion->summary", board.output())
     )
@@ -607,12 +607,12 @@ The `LogProbe` is just one kind of a probe that can be inserted into the board. 
 const probe = new EventTarget();
 ```
 
-Then, listen to any of the events above. For instance, let's make a simple probe that picks out the output of `textCompletion` node and prints it every time that node is run:
+Then, listen to any of the events above. For instance, let's make a simple probe that picks out the output of `generateText` node and prints it every time that node is run:
 
 ```js
 probe.addEventListener("node", (event) => {
   const data = event.detail;
-  if (data.descriptor.type == "textCompletion") {
+  if (data.descriptor.type == "generateText") {
     console.log("completion:", data.outputs.completion);
   }
 });
@@ -675,7 +675,7 @@ const output = board.output();
 board.input().wire(
   "say->text",
   kit
-    .textCompletion()
+    .generateText()
     .wire("completion->hear", output)
     .wire("<-PALM_KEY", kit.secrets(["PALM_KEY"]))
 );
@@ -762,11 +762,11 @@ This is where the "`?`" modifier comes in. It tells Breadboard to treat the wire
 
 Such wiring allows us to create a running list of the interactions between the user and the chat bot. The last line in the code snippet above says: "append the value of the `say` property to the end of your list as `user: {{value}}`.
 
-As the next step, let's place and wire the `textCompletion` node:
+As the next step, let's place and wire the `generateText` node:
 
 ```js
 const completion = kit
-  .textCompletion()
+  .generateText()
   .wire("completion->hear", output)
   .wire("completion->assistant", history)
   .wire("<-PALM_KEY.", kit.secrets(["PALM_KEY"]));
@@ -776,7 +776,7 @@ Let's look at this node's wiring. The first two make sense. We want the result o
 
 The dot signifies that this wire is a constant. It remembers the last value passed through it and makes it always available to the receiving node. It's important here, because otherwise, we'd have to find ways to visit the `secrets` node with on every cycle of the loop.
 
-So we have the `textCompletion` all set up. But what's the prompt that goes into it? To create a prompt, we need a `promptTemplate` node. Let's place and wire it:
+So we have the `generateText` all set up. But what's the prompt that goes into it? To create a prompt, we need a `promptTemplate` node. Let's place and wire it:
 
 ```js
 kit

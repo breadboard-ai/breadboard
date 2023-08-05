@@ -34,7 +34,7 @@ As its input, the node at the head of the edge will receive the output of the no
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph LR;
-input1["One node"] -- data --> textcompletion1["Another node"]
+input1["One node"] -- data --> generateText1["Another node"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 ```
 
@@ -43,7 +43,7 @@ To clearly communicate what data actually flows through this edge, we need to sp
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph LR;
-input1["node A"] -- description:text --> textcompletion1["node B"]
+input1["node A"] -- description:text --> generateText1["node B"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 ```
 
@@ -60,7 +60,7 @@ If I want to send all properties from the output of `node A` as properties in th
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph LR;
-input1["node A"] -- all --> textcompletion1["node B"]
+input1["node A"] -- all --> generateText1["node B"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 ```
 
@@ -76,7 +76,7 @@ Finally, if I want to send nothing between the two nodes, I would leave the edge
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph LR;
-input1["node A"] ---> textcompletion1["node B"]
+input1["node A"] ---> generateText1["node B"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 ```
 
@@ -100,8 +100,8 @@ First, the traversal machinery finds the entry points into a graph. These are th
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph LR;
-input1["node A"] -- text:description --> textcompletion1["node C"]
-input2["node B"] --data:context--> textcompletion1["node C"]
+input1["node A"] -- text:description --> generateText1["node C"]
+input2["node B"] --data:context--> generateText1["node C"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 ```
 
@@ -118,9 +118,9 @@ In the last diagram, the order of invoking nodes is pretty easy to figure out: i
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph LR;
-input1["node A"] -- text:description --> textcompletion1["node C"]
+input1["node A"] -- text:description --> generateText1["node C"]
 input1["node A"] --text:text--> input2["node B"]
-input2["node B"] --data:context--> textcompletion1["node C"]
+input2["node B"] --data:context--> generateText1["node C"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 ```
 
@@ -148,9 +148,9 @@ Let's take the previous diagram and mark the edges incoming into `node C` as opt
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph LR;
-input1["node A"] -. text:description .-> textcompletion1["node C"]
+input1["node A"] -. text:description .-> generateText1["node C"]
 input1["node A"] --text:text--> input2["node B"]
-input2["node B"] -.data:context.-> textcompletion1["node C"]
+input2["node B"] -.data:context.-> generateText1["node C"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 ```
 

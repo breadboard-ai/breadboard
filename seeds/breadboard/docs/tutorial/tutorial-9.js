@@ -25,7 +25,7 @@ history.wire("accumulator->?", history);
 input.wire("say->user", history);
 
 const completion = kit
-  .textCompletion()
+  .generateText()
   .wire("completion->hear", output)
   .wire("completion->assistant", history)
   .wire("<-PALM_KEY.", kit.secrets(["PALM_KEY"]));

@@ -21,15 +21,15 @@ id='jsonata-5'"]
 fetch4["fetch
 id='fetch-4'"] -- "response->xml" --> xmlToJson6["xmlToJson
 id='xmlToJson-6'"]
-textCompletion7["textCompletion
-id='textCompletion-7'"] -- "completion->text" --> output8{{"output
+generateText7["generateText
+id='generateText-7'"] -- "completion->text" --> output8{{"output
 id='output-8'"}}:::output
 secrets9("secrets
-id='secrets-9'"):::secrets -- "PALM_KEY->PALM_KEY" --> textCompletion7["textCompletion
-id='textCompletion-7'"]
+id='secrets-9'"):::secrets -- "PALM_KEY->PALM_KEY" --> generateText7["generateText
+id='generateText-7'"]
 promptTemplate1["promptTemplate
-id='promptTemplate-1'"] -- "prompt->text" --> textCompletion7["textCompletion
-id='textCompletion-7'"]
+id='promptTemplate-1'"] -- "prompt->text" --> generateText7["generateText
+id='generateText-7'"]
 templatepromptTemplate1[template]:::config -- "template->template" --o promptTemplate1
 templateurlTemplate2[template]:::config -- "template->template" --o urlTemplate2
 messageinput3[message]:::config -- "message->message" --o input3

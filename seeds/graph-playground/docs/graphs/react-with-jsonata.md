@@ -15,15 +15,15 @@ rememberObservation["append id='rememberObservation'"] -- "accumulator->accumula
 rememberQuestion["append id='rememberQuestion'"] -- "accumulator->accumulator" --> rememberThought["append id='rememberThought'"]
 rememberQuestion["append id='rememberQuestion'"] -- "accumulator->memory" --> promptTemplate5["promptTemplate id='promptTemplate-5'"]
 input6[/"input id='input-6'"/]:::input -- "text->Question" --> rememberQuestion["append id='rememberQuestion'"]
-secrets1("secrets id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o reactcompletion["textCompletion id='react-completion'"]
+secrets1("secrets id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o reactcompletion["generateText id='react-completion'"]
 math[["include id='math'"]]:::include -- "text->Observation" --> rememberObservation["append id='rememberObservation'"]
 search[["include id='search'"]]:::include -- "text->Observation" --> rememberObservation["append id='rememberObservation'"]
 jsonata7["jsonata id='jsonata-7'"] -- "search->text" --> search[["include id='search'"]]:::include
 jsonata7["jsonata id='jsonata-7'"] -- "math->text" --> math[["include id='math'"]]:::include
 jsonata7["jsonata id='jsonata-7'"] -- "answer->text" --> output8{{"output id='output-8'"}}:::output
-reactcompletion["textCompletion id='react-completion'"] -- "completion->json" --> jsonata7["jsonata id='jsonata-7'"]
-reactcompletion["textCompletion id='react-completion'"] -- "completion->Thought" --> rememberThought["append id='rememberThought'"]
-promptTemplate5["promptTemplate id='promptTemplate-5'"] -- "prompt->text" --> reactcompletion["textCompletion id='react-completion'"]
+reactcompletion["generateText id='react-completion'"] -- "completion->json" --> jsonata7["jsonata id='jsonata-7'"]
+reactcompletion["generateText id='react-completion'"] -- "completion->Thought" --> rememberThought["append id='rememberThought'"]
+promptTemplate5["promptTemplate id='promptTemplate-5'"] -- "prompt->text" --> reactcompletion["generateText id='react-completion'"]
 keyssecrets1[keys]:::config -- "keys->keys" --o secrets1
 expressionjsonata2[expression]:::config -- "expression->expression" --o jsonata2
 expressionjsonata3[expression]:::config -- "expression->expression" --o jsonata3

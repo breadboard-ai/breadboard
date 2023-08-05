@@ -175,7 +175,7 @@
     },
     {
       "id": "react-completion",
-      "type": "textCompletion",
+      "type": "generateText",
       "configuration": {
         "stop-sequences": [
           "\nObservation"

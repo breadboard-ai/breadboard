@@ -1,14 +1,14 @@
 {
   "edges": [
     {
-      "from": "textCompletion-1",
+      "from": "generateText-1",
       "to": "output-2",
       "out": "completion",
       "in": "text"
     },
     {
       "from": "summarizing-template",
-      "to": "textCompletion-1",
+      "to": "generateText-1",
       "out": "prompt",
       "in": "text"
     },
@@ -32,7 +32,7 @@
     },
     {
       "from": "secrets-6",
-      "to": "textCompletion-1",
+      "to": "generateText-1",
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
@@ -63,8 +63,8 @@
   ],
   "nodes": [
     {
-      "id": "textCompletion-1",
-      "type": "textCompletion"
+      "id": "generateText-1",
+      "type": "generateText"
     },
     {
       "id": "output-2",

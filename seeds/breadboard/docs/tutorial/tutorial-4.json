@@ -7,20 +7,20 @@
       "in": "say"
     },
     {
-      "from": "textCompletion-3",
+      "from": "generateText-3",
       "to": "output-1",
       "out": "completion",
       "in": "hear"
     },
     {
       "from": "secrets-4",
-      "to": "textCompletion-3",
+      "to": "generateText-3",
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
       "from": "input-2",
-      "to": "textCompletion-3",
+      "to": "generateText-3",
       "out": "say",
       "in": "text"
     }
@@ -35,8 +35,8 @@
       "type": "input"
     },
     {
-      "id": "textCompletion-3",
-      "type": "textCompletion"
+      "id": "generateText-3",
+      "type": "generateText"
     },
     {
       "id": "secrets-4",

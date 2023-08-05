@@ -60,15 +60,15 @@ fetchHeadlines.wire(
 );
 
 // Create a new text completion node and wire it to the output.
-const textCompletion = kit
-  .textCompletion()
+const generateText = kit
+  .generateText()
   .wire("completion->text", board.output());
 
 // Wire secrets node (containing PALM_KEY) to the text completion node.
-kit.secrets(["PALM_KEY"]).wire("PALM_KEY", textCompletion);
+kit.secrets(["PALM_KEY"]).wire("PALM_KEY", generateText);
 
 // Wire the text template node to the text completion node.
-summarizeResults.wire("prompt->text", textCompletion);
+summarizeResults.wire("prompt->text", generateText);
 
 // Save resulting breadboard
 await writeFile("examples/google-news.json", JSON.stringify(board, null, 2));

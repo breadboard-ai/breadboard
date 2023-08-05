@@ -91,7 +91,7 @@ board.input("Ask ReAct a question").wire("text->Question", rememberQuestion);
 // The completion must include stop sentences, to prevent LLM form hallucinating
 // all answers.
 const reActCompletion = kit
-  .textCompletion({
+  .generateText({
     "stop-sequences": ["\nObservation"],
     $id: "react-completion",
   })
@@ -107,7 +107,7 @@ const math = kit
   .wire(
     "prompt->text",
     kit
-      .textCompletion({ $id: "math-function-completion" })
+      .generateText({ $id: "math-function-completion" })
       .wire(
         "completion->code",
         kit
@@ -121,7 +121,7 @@ const math = kit
 // `search-summarize.ts`, with tweaks to play nice in the ReAct board.
 const search = () => {
   const completion = kit
-    .textCompletion()
+    .generateText()
     .wire("completion->Observation", rememberObservation)
     .wire("<-PALM_KEY.", secrets);
 

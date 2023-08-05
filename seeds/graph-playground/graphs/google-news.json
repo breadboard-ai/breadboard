@@ -8,20 +8,20 @@
     },
     {
       "from": "secrets-8",
-      "to": "textCompletion-7",
+      "to": "generateText-7",
       "constant": true,
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
-      "from": "textCompletion-7",
+      "from": "generateText-7",
       "to": "output-9",
       "out": "completion",
       "in": "text"
     },
     {
       "from": "promptTemplate-6",
-      "to": "textCompletion-7",
+      "to": "generateText-7",
       "out": "prompt",
       "in": "text"
     },
@@ -97,8 +97,8 @@
       }
     },
     {
-      "id": "textCompletion-7",
-      "type": "textCompletion"
+      "id": "generateText-7",
+      "type": "generateText"
     },
     {
       "id": "secrets-8",

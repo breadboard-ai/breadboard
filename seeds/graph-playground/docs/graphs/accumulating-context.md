@@ -6,12 +6,12 @@
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
 append3["append id='append-3'"] -- "accumulator->accumulator" --> append3["append id='append-3'"]
-secrets5("secrets id='secrets-5'"):::secrets -- "PALM_KEY->PALM_KEY" --o textCompletion4["textCompletion id='textCompletion-4'"]
+secrets5("secrets id='secrets-5'"):::secrets -- "PALM_KEY->PALM_KEY" --o generateText4["generateText id='generateText-4'"]
 append3["append id='append-3'"] -- "accumulator->context" --> promptTemplate2["promptTemplate id='promptTemplate-2'"]
-textCompletion4["textCompletion id='textCompletion-4'"] -- "completion->assistant" --> append3["append id='append-3'"]
+generateText4["generateText id='generateText-4'"] -- "completion->assistant" --> append3["append id='append-3'"]
 output6{{"output id='output-6'"}}:::output --> input1[/"input id='input-1'"/]:::input
-textCompletion4["textCompletion id='textCompletion-4'"] -- "completion->text" --> output6{{"output id='output-6'"}}:::output
-promptTemplate2["promptTemplate id='promptTemplate-2'"] -- "prompt->text" --> textCompletion4["textCompletion id='textCompletion-4'"]
+generateText4["generateText id='generateText-4'"] -- "completion->text" --> output6{{"output id='output-6'"}}:::output
+promptTemplate2["promptTemplate id='promptTemplate-2'"] -- "prompt->text" --> generateText4["generateText id='generateText-4'"]
 input1[/"input id='input-1'"/]:::input -- "text->question" --> promptTemplate2["promptTemplate id='promptTemplate-2'"]
 input1[/"input id='input-1'"/]:::input -- "text->user" --> append3["append id='append-3'"]
 start(("passthrough id='start'")):::passthrough --> input1[/"input id='input-1'"/]:::input

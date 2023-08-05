@@ -10,7 +10,7 @@
 import append from "./nodes/append.js";
 import jsonata from "./nodes/jsonata.js";
 import promptTemplate from "./nodes/prompt-template.js";
-import textCompletion from "./nodes/text-completion.js";
+import generateText from "./nodes/text-completion.js";
 import runJavascript from "./nodes/run-javascript.js";
 import secrets from "./nodes/secrets.js";
 import fetch from "./nodes/fetch.js";
@@ -25,6 +25,6 @@ export const coreHandlers = {
   urlTemplate,
   xmlToJson,
   promptTemplate,
-  textCompletion,
+  generateText,
   runJavascript,
 };

@@ -36,7 +36,7 @@ board.passthrough({ $id: "start" }).wire(
       prompt.wire(
         "prompt->text",
         kit
-          .textCompletion()
+          .generateText()
           .wire("<-PALM_KEY.", kit.secrets(["PALM_KEY"]))
           .wire(
             "completion->assistant",

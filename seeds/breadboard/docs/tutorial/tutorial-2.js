@@ -16,14 +16,14 @@ const kit = board.addKit(Starter);
 
 const input = board.input();
 const output = board.output();
-const textCompletion = kit.textCompletion();
+const generateText = kit.generateText();
 
-input.wire("say->text", textCompletion);
-textCompletion.wire("completion->hear", output);
+input.wire("say->text", generateText);
+generateText.wire("completion->hear", output);
 
 const secrets = kit.secrets(["PALM_KEY"]);
 
-secrets.wire("PALM_KEY->", textCompletion);
+secrets.wire("PALM_KEY->", generateText);
 
 const result = await board.runOnce({
   say: "Hi, how are you?",

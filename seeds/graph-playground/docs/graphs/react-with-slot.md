@@ -15,13 +15,13 @@ rememberObservation["append id='rememberObservation'"] -- "accumulator->accumula
 rememberQuestion["append id='rememberQuestion'"] -- "accumulator->accumulator" --> rememberThought["append id='rememberThought'"]
 rememberQuestion["append id='rememberQuestion'"] -- "accumulator->memory" --> promptTemplate4["promptTemplate id='promptTemplate-4'"]
 input5[/"input id='input-5'"/]:::input -- "text->Question" --> rememberQuestion["append id='rememberQuestion'"]
-secrets1("secrets id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o reactcompletion["textCompletion id='react-completion'"]
+secrets1("secrets id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o reactcompletion["generateText id='react-completion'"]
 toolsslot(("slot id='tools-slot'")):::slot -- "text->Observation" --> rememberObservation["append id='rememberObservation'"]
 jsonata6["jsonata id='jsonata-6'"] -- all --> toolsslot(("slot id='tools-slot'")):::slot
 jsonata6["jsonata id='jsonata-6'"] -- "answer->text" --> output7{{"output id='output-7'"}}:::output
-reactcompletion["textCompletion id='react-completion'"] -- "completion->json" --> jsonata6["jsonata id='jsonata-6'"]
-reactcompletion["textCompletion id='react-completion'"] -- "completion->Thought" --> rememberThought["append id='rememberThought'"]
-promptTemplate4["promptTemplate id='promptTemplate-4'"] -- "prompt->text" --> reactcompletion["textCompletion id='react-completion'"]
+reactcompletion["generateText id='react-completion'"] -- "completion->json" --> jsonata6["jsonata id='jsonata-6'"]
+reactcompletion["generateText id='react-completion'"] -- "completion->Thought" --> rememberThought["append id='rememberThought'"]
+promptTemplate4["promptTemplate id='promptTemplate-4'"] -- "prompt->text" --> reactcompletion["generateText id='react-completion'"]
 keyssecrets1[keys]:::config -- "keys->keys" --o secrets1
 slotgetslot[slot]:::config -- "slot->slot" --o getslot
 graphgetslot[graph]:::config -- "graph->graph" --o getslot

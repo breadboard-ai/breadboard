@@ -7,7 +7,7 @@
 import type { InputValues } from "@google-labs/graph-runner";
 import { GenerateTextResponse, Text, palm } from "@google-labs/palm-lite";
 
-type TextCompletionInputs = {
+type generateTextInputs = {
   /**
    * Prompt for text completion.
    */
@@ -23,7 +23,7 @@ type TextCompletionInputs = {
 };
 
 export default async (inputs: InputValues) => {
-  const values = inputs as TextCompletionInputs;
+  const values = inputs as generateTextInputs;
   if (!values.PALM_KEY)
     throw new Error("Text completion requires `PALM_KEY` input");
   if (!values.text) throw new Error("Text completion requires `text` input");

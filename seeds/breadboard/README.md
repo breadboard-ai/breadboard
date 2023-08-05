@@ -67,7 +67,7 @@ board
   .wire(
     "say->text",
     kit
-      .textCompletion()
+      .generateText()
       .wire("completion->hear", output)
       .wire("<-PALM_KEY", kit.secrets(["PALM_KEY"]))
   );
@@ -127,7 +127,7 @@ input.wire(
     template.wire("topic<-", input).wire(
       "prompt->text",
       kit
-        .textCompletion()
+        .generateText()
         .wire("<-PALM_KEY.", kit.secrets(["PALM_KEY"]))
         .wire("completion->summary", board.output())
     )

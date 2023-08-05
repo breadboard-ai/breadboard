@@ -6,9 +6,9 @@
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
 input1[/"input id='input-1'"/]:::input -- "text->topic" --> promptTemplate6["promptTemplate id='promptTemplate-6'"]
-secrets8("secrets id='secrets-8'"):::secrets -- "PALM_KEY->PALM_KEY" --o textCompletion7["textCompletion id='textCompletion-7'"]
-textCompletion7["textCompletion id='textCompletion-7'"] -- "completion->text" --> output9{{"output id='output-9'"}}:::output
-promptTemplate6["promptTemplate id='promptTemplate-6'"] -- "prompt->text" --> textCompletion7["textCompletion id='textCompletion-7'"]
+secrets8("secrets id='secrets-8'"):::secrets -- "PALM_KEY->PALM_KEY" --o generateText7["generateText id='generateText-7'"]
+generateText7["generateText id='generateText-7'"] -- "completion->text" --> output9{{"output id='output-9'"}}:::output
+promptTemplate6["promptTemplate id='promptTemplate-6'"] -- "prompt->text" --> generateText7["generateText id='generateText-7'"]
 jsonata5["jsonata id='jsonata-5'"] -- "result->headlines" --> promptTemplate6["promptTemplate id='promptTemplate-6'"]
 xmlToJson4["xmlToJson id='xmlToJson-4'"] -- "json->json" --> jsonata5["jsonata id='jsonata-5'"]
 fetch3["fetch id='fetch-3'"] -- "response->xml" --> xmlToJson4["xmlToJson id='xmlToJson-4'"]

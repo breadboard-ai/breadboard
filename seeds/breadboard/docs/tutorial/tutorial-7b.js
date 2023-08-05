@@ -21,7 +21,7 @@ board
   .wire(
     "say->text",
     kit
-      .textCompletion()
+      .generateText()
       .wire("completion->hear", output)
       .wire("<-PALM_KEY", kit.secrets(["PALM_KEY"]))
   );
@@ -30,7 +30,7 @@ const probe = new EventTarget();
 
 probe.addEventListener("node", (event) => {
   const data = event.detail;
-  if (data.descriptor.type == "textCompletion") {
+  if (data.descriptor.type == "generateText") {
     console.log("completion:", data.outputs.completion);
   }
 });

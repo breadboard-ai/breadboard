@@ -10,7 +10,7 @@ import { Starter } from "@google-labs/llm-starter";
 const autoSimplePrompt = new Board();
 const kit = autoSimplePrompt.addKit(Starter);
 
-const completion = kit.textCompletion();
+const completion = kit.generateText();
 kit.secrets(["PALM_KEY"]).wire("PALM_KEY", completion);
 kit
   .promptTemplate(

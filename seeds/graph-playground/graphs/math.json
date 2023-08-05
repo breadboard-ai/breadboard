@@ -48,7 +48,7 @@
     },
     {
       "id": "math-function-completion",
-      "type": "textCompletion"
+      "type": "generateText"
     },
     {
       "id": "compute",

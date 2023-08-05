@@ -25,27 +25,27 @@
       "in": "context"
     },
     {
-      "from": "textCompletion-3",
+      "from": "generateText-3",
       "to": "rememberAlbert",
       "out": "completion",
       "in": "Albert"
     },
     {
-      "from": "textCompletion-3",
+      "from": "generateText-3",
       "to": "output-4",
       "out": "completion",
       "in": "text"
     },
     {
       "from": "secrets-1",
-      "to": "textCompletion-3",
+      "to": "generateText-3",
       "constant": true,
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
       "from": "albert",
-      "to": "textCompletion-3",
+      "to": "generateText-3",
       "out": "prompt",
       "in": "text"
     },
@@ -56,27 +56,27 @@
       "in": "context"
     },
     {
-      "from": "textCompletion-5",
+      "from": "generateText-5",
       "to": "rememberFriedrich",
       "out": "completion",
       "in": "Friedrich"
     },
     {
-      "from": "textCompletion-5",
+      "from": "generateText-5",
       "to": "output-6",
       "out": "completion",
       "in": "text"
     },
     {
       "from": "secrets-1",
-      "to": "textCompletion-5",
+      "to": "generateText-5",
       "constant": true,
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
       "from": "promptTemplate-2",
-      "to": "textCompletion-5",
+      "to": "generateText-5",
       "out": "prompt",
       "in": "text"
     },
@@ -130,8 +130,8 @@
       }
     },
     {
-      "id": "textCompletion-3",
-      "type": "textCompletion",
+      "id": "generateText-3",
+      "type": "generateText",
       "configuration": {
         "stop-sequences": [
           "\nFriedrich",
@@ -144,8 +144,8 @@
       "type": "output"
     },
     {
-      "id": "textCompletion-5",
-      "type": "textCompletion",
+      "id": "generateText-5",
+      "type": "generateText",
       "configuration": {
         "stop-sequences": [
           "\nAlbert",

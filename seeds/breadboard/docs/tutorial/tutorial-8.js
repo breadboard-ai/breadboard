@@ -18,7 +18,7 @@ const output = board.output();
 board.input().wire(
   "say->text",
   kit
-    .textCompletion()
+    .generateText()
     .wire("completion->hear", output)
     .wire("<-PALM_KEY", kit.secrets(["PALM_KEY"]))
 );

@@ -2,19 +2,19 @@
   "edges": [
     {
       "from": "secrets-2",
-      "to": "textCompletion-1",
+      "to": "generateText-1",
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
-      "from": "textCompletion-1",
+      "from": "generateText-1",
       "to": "output-4",
       "out": "completion",
       "in": "text"
     },
     {
       "from": "analyze-this",
-      "to": "textCompletion-1",
+      "to": "generateText-1",
       "out": "prompt",
       "in": "text"
     },
@@ -27,8 +27,8 @@
   ],
   "nodes": [
     {
-      "id": "textCompletion-1",
-      "type": "textCompletion"
+      "id": "generateText-1",
+      "type": "generateText"
     },
     {
       "id": "secrets-2",

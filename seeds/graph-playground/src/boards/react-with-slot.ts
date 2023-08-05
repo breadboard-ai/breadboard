@@ -114,7 +114,7 @@ board.input("Ask ReAct a question").wire("text->Question", rememberQuestion);
 // The completion must include stop sentences, to prevent LLM form hallucinating
 // all answers.
 const reActCompletion = kit
-  .textCompletion({
+  .generateText({
     "stop-sequences": ["\nObservation"],
     $id: "react-completion",
   })

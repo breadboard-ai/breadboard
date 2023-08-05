@@ -77,9 +77,9 @@ export class Starter implements Kit {
     return this.#nodeFactory("xmlToJson", { ...rest }, $id);
   }
 
-  textCompletion(config: OptionalIdConfiguration = {}): BreadboardNode {
+  generateText(config: OptionalIdConfiguration = {}): BreadboardNode {
     const { $id, ...rest } = config;
-    return this.#nodeFactory("textCompletion", { ...rest }, $id);
+    return this.#nodeFactory("generateText", { ...rest }, $id);
   }
 
   secrets(

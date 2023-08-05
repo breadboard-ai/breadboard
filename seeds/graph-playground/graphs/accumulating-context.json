@@ -8,7 +8,7 @@
     },
     {
       "from": "secrets-5",
-      "to": "textCompletion-4",
+      "to": "generateText-4",
       "constant": true,
       "out": "PALM_KEY",
       "in": "PALM_KEY"
@@ -20,7 +20,7 @@
       "in": "context"
     },
     {
-      "from": "textCompletion-4",
+      "from": "generateText-4",
       "to": "append-3",
       "out": "completion",
       "in": "assistant"
@@ -30,14 +30,14 @@
       "to": "input-1"
     },
     {
-      "from": "textCompletion-4",
+      "from": "generateText-4",
       "to": "output-6",
       "out": "completion",
       "in": "text"
     },
     {
       "from": "promptTemplate-2",
-      "to": "textCompletion-4",
+      "to": "generateText-4",
       "out": "prompt",
       "in": "text"
     },
@@ -83,8 +83,8 @@
       "type": "passthrough"
     },
     {
-      "id": "textCompletion-4",
-      "type": "textCompletion"
+      "id": "generateText-4",
+      "type": "generateText"
     },
     {
       "id": "secrets-5",

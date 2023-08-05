@@ -37,20 +37,20 @@
       "in": "xml"
     },
     {
-      "from": "textCompletion-7",
+      "from": "generateText-7",
       "to": "output-8",
       "out": "completion",
       "in": "text"
     },
     {
       "from": "secrets-9",
-      "to": "textCompletion-7",
+      "to": "generateText-7",
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
       "from": "promptTemplate-1",
-      "to": "textCompletion-7",
+      "to": "generateText-7",
       "out": "prompt",
       "in": "text"
     }
@@ -93,8 +93,8 @@
       "type": "xmlToJson"
     },
     {
-      "id": "textCompletion-7",
-      "type": "textCompletion"
+      "id": "generateText-7",
+      "type": "generateText"
     },
     {
       "id": "output-8",
@@ -104,9 +104,7 @@
       "id": "secrets-9",
       "type": "secrets",
       "configuration": {
-        "keys": [
-          "PALM_KEY"
-        ]
+        "keys": ["PALM_KEY"]
       }
     }
   ],

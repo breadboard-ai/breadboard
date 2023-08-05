@@ -13,14 +13,14 @@ rememberObservation["append id='rememberObservation'"] -- "accumulator->accumula
 rememberQuestion["append id='rememberQuestion'"] -- "accumulator->accumulator" --> rememberThought["append id='rememberThought'"]
 rememberQuestion["append id='rememberQuestion'"] -- "accumulator->memory" --> promptTemplate2["promptTemplate id='promptTemplate-2'"]
 input5[/"input id='input-5'"/]:::input -- "text->Question" --> rememberQuestion["append id='rememberQuestion'"]
-secrets1("secrets id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o reactcompletion["textCompletion id='react-completion'"]
+secrets1("secrets id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o reactcompletion["generateText id='react-completion'"]
 compute["runJavascript id='compute'"] -- "result->Observation" --> rememberObservation["append id='rememberObservation'"]
-mathfunctioncompletion["textCompletion id='math-function-completion'"] -- "completion->code" --> compute["runJavascript id='compute'"]
-secrets1("secrets id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o mathfunctioncompletion["textCompletion id='math-function-completion'"]
-mathfunction["promptTemplate id='math-function'"] -- "prompt->text" --> mathfunctioncompletion["textCompletion id='math-function-completion'"]
-textCompletion7["textCompletion id='textCompletion-7'"] -- "completion->Observation" --> rememberObservation["append id='rememberObservation'"]
-secrets1("secrets id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o textCompletion7["textCompletion id='textCompletion-7'"]
-summarizingtemplate["promptTemplate id='summarizing-template'"] -- "prompt->text" --> textCompletion7["textCompletion id='textCompletion-7'"]
+mathfunctioncompletion["generateText id='math-function-completion'"] -- "completion->code" --> compute["runJavascript id='compute'"]
+secrets1("secrets id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o mathfunctioncompletion["generateText id='math-function-completion'"]
+mathfunction["promptTemplate id='math-function'"] -- "prompt->text" --> mathfunctioncompletion["generateText id='math-function-completion'"]
+generateText7["generateText id='generateText-7'"] -- "completion->Observation" --> rememberObservation["append id='rememberObservation'"]
+secrets1("secrets id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o generateText7["generateText id='generateText-7'"]
+summarizingtemplate["promptTemplate id='summarizing-template'"] -- "prompt->text" --> generateText7["generateText id='generateText-7'"]
 secrets1("secrets id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o urlTemplate8["urlTemplate id='urlTemplate-8'"]
 secrets1("secrets id='secrets-1'"):::secrets -- "GOOGLE_CSE_ID->GOOGLE_CSE_ID" --o urlTemplate8["urlTemplate id='urlTemplate-8'"]
 jsonata10["jsonata id='jsonata-10'"] -- "result->context" --> summarizingtemplate["promptTemplate id='summarizing-template'"]
@@ -31,9 +31,9 @@ passthrough11(("passthrough id='passthrough-11'")):::passthrough -- "search->que
 parseCompletion6["parseCompletion id='parseCompletion-6'"] -- "search->search" --> passthrough11(("passthrough id='passthrough-11'")):::passthrough
 parseCompletion6["parseCompletion id='parseCompletion-6'"] -- "math->question" --> mathfunction["promptTemplate id='math-function'"]
 parseCompletion6["parseCompletion id='parseCompletion-6'"] -- "answer->text" --> output12{{"output id='output-12'"}}:::output
-reactcompletion["textCompletion id='react-completion'"] -- "completion->completion" --> parseCompletion6["parseCompletion id='parseCompletion-6'"]
-reactcompletion["textCompletion id='react-completion'"] -- "completion->Thought" --> rememberThought["append id='rememberThought'"]
-promptTemplate2["promptTemplate id='promptTemplate-2'"] -- "prompt->text" --> reactcompletion["textCompletion id='react-completion'"]
+reactcompletion["generateText id='react-completion'"] -- "completion->completion" --> parseCompletion6["parseCompletion id='parseCompletion-6'"]
+reactcompletion["generateText id='react-completion'"] -- "completion->Thought" --> rememberThought["append id='rememberThought'"]
+promptTemplate2["promptTemplate id='promptTemplate-2'"] -- "prompt->text" --> reactcompletion["generateText id='react-completion'"]
 keyssecrets1[keys]:::config -- "keys->keys" --o secrets1
 templatepromptTemplate2[template]:::config -- "template->template" --o promptTemplate2
 messageinput5[message]:::config -- "message->message" --o input5
