@@ -9,7 +9,7 @@ Pre-requisites:
 - PaLM API key (go [here](https://developers.generativeai.google/tutorials/setup) to obtain one)
 - spirit of adventure
 
-Each chapter is also as a [replit](https://replit.com/). Look for the "run in replit" link at the end of each chapter.
+Each chapter is also available as a [Replit](https://replit.com/) project. Look for the "run in replit" link at the end of each chapter.
 
 ## Chapter 1: Hello, world?
 
