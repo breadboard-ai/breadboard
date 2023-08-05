@@ -10,7 +10,13 @@ import { Starter } from "@google-labs/llm-starter";
 const board = new Board();
 const kit = board.addKit(Starter);
 
-const memory = kit.localMemory();
+const rememberFriedrich = kit.append({ $id: "rememberFriedrich" });
+const rememberAlbert = kit.append({ $id: "rememberAlbert" });
+const rememberQuestion = kit.append({ $id: "rememberQuestion" });
+
+rememberQuestion.wire("accumulator->", rememberAlbert);
+rememberAlbert.wire("accumulator->", rememberFriedrich);
+rememberFriedrich.wire("accumulator->", rememberAlbert);
 
 const palm_key = kit.secrets(["PALM_KEY"]);
 
@@ -31,7 +37,10 @@ const albert = kit
       .textCompletion({
         "stop-sequences": ["\nFriedrich", "\n**Friedrich"],
       })
-      .wire("completion->Albert", kit.localMemory().wire("context", friedrich))
+      .wire(
+        "completion->Albert",
+        rememberAlbert.wire("accumulator->context", friedrich)
+      )
       .wire("completion->text", board.output())
       .wire("<-PALM_KEY.", palm_key)
   );
@@ -42,13 +51,16 @@ friedrich.wire(
     .textCompletion({
       "stop-sequences": ["\nAlbert", "\n**Albert"],
     })
-    .wire("completion->Friedrich", kit.localMemory().wire("context", albert))
+    .wire(
+      "completion->Friedrich",
+      rememberFriedrich.wire("accumulator->context", albert)
+    )
     .wire("completion->text", board.output())
     .wire("<-PALM_KEY.", palm_key)
 );
 
 board
   .input("What is the topic of the debate?")
-  .wire("text->topic", memory.wire("context->", albert));
+  .wire("text->topic", rememberQuestion.wire("accumulator->context", albert));
 
 export default board;

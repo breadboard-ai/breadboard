@@ -19,6 +19,24 @@ test("getObjectType correctly recognizes various object types", (t) => {
   t.is(getObjectType(undefined), ObjectType.stringy);
 });
 
+test("`append` correctly recognizes empty accumulator", async (t) => {
+  t.deepEqual(await append({ value: "string" }), {
+    accumulator: "value: string",
+  });
+  t.deepEqual(await append({ accumulator: null, value: "string" }), {
+    accumulator: "value: string",
+  });
+  t.deepEqual(await append({ accumulator: 0, value: "string" }), {
+    accumulator: "0\nvalue: string",
+  });
+  t.deepEqual(await append({ accumulator: false, value: "string" }), {
+    accumulator: "false\nvalue: string",
+  });
+  t.deepEqual(await append({ accumulator: "", value: "string" }), {
+    accumulator: "\nvalue: string",
+  });
+});
+
 test("`append` correctly appends to various object types", async (t) => {
   t.deepEqual(await append({ accumulator: "string", value: "string" }), {
     accumulator: "string\nvalue: string",

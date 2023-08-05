@@ -1,87 +1,113 @@
 {
   "edges": [
     {
-      "from": "localMemory-5",
-      "to": "promptTemplate-3",
-      "out": "context",
+      "from": "rememberQuestion",
+      "to": "rememberAlbert",
+      "out": "accumulator",
+      "in": "accumulator"
+    },
+    {
+      "from": "rememberAlbert",
+      "to": "rememberFriedrich",
+      "out": "accumulator",
+      "in": "accumulator"
+    },
+    {
+      "from": "rememberFriedrich",
+      "to": "rememberAlbert",
+      "out": "accumulator",
+      "in": "accumulator"
+    },
+    {
+      "from": "rememberAlbert",
+      "to": "promptTemplate-2",
+      "out": "accumulator",
       "in": "context"
     },
     {
-      "from": "textCompletion-4",
-      "to": "localMemory-5",
+      "from": "textCompletion-3",
+      "to": "rememberAlbert",
       "out": "completion",
       "in": "Albert"
     },
     {
-      "from": "textCompletion-4",
-      "to": "output-6",
+      "from": "textCompletion-3",
+      "to": "output-4",
       "out": "completion",
       "in": "text"
     },
     {
-      "from": "secrets-2",
-      "to": "textCompletion-4",
+      "from": "secrets-1",
+      "to": "textCompletion-3",
       "constant": true,
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
       "from": "albert",
-      "to": "textCompletion-4",
+      "to": "textCompletion-3",
       "out": "prompt",
       "in": "text"
     },
     {
-      "from": "localMemory-8",
+      "from": "rememberFriedrich",
       "to": "albert",
-      "out": "context",
+      "out": "accumulator",
       "in": "context"
     },
     {
-      "from": "textCompletion-7",
-      "to": "localMemory-8",
+      "from": "textCompletion-5",
+      "to": "rememberFriedrich",
       "out": "completion",
       "in": "Friedrich"
     },
     {
-      "from": "textCompletion-7",
-      "to": "output-9",
+      "from": "textCompletion-5",
+      "to": "output-6",
       "out": "completion",
       "in": "text"
     },
     {
-      "from": "secrets-2",
-      "to": "textCompletion-7",
+      "from": "secrets-1",
+      "to": "textCompletion-5",
       "constant": true,
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
-      "from": "promptTemplate-3",
-      "to": "textCompletion-7",
+      "from": "promptTemplate-2",
+      "to": "textCompletion-5",
       "out": "prompt",
       "in": "text"
     },
     {
-      "from": "localMemory-1",
+      "from": "rememberQuestion",
       "to": "albert",
-      "out": "context",
+      "out": "accumulator",
       "in": "context"
     },
     {
-      "from": "input-10",
-      "to": "localMemory-1",
+      "from": "input-7",
+      "to": "rememberQuestion",
       "out": "text",
       "in": "topic"
     }
   ],
   "nodes": [
     {
-      "id": "localMemory-1",
-      "type": "localMemory"
+      "id": "rememberFriedrich",
+      "type": "append"
     },
     {
-      "id": "secrets-2",
+      "id": "rememberAlbert",
+      "type": "append"
+    },
+    {
+      "id": "rememberQuestion",
+      "type": "append"
+    },
+    {
+      "id": "secrets-1",
       "type": "secrets",
       "configuration": {
         "keys": [
@@ -90,7 +116,7 @@
       }
     },
     {
-      "id": "promptTemplate-3",
+      "id": "promptTemplate-2",
       "type": "promptTemplate",
       "configuration": {
         "template": "Add a single argument to a debate between a philosopher named Friedrich and a scientist named Albert. You are Friedrich, and you are disagreeable, brooding, skeptical, sarcastic, yet passionate about uncovering new insights with Albert. To keep the debate rich and satisfying, you vary your sentence patterns and keep them from repeating.\n\n== Conversation Transcript\n{{context}}\n\n==Additional Single Argument\nFriedrich:"
@@ -104,7 +130,7 @@
       }
     },
     {
-      "id": "textCompletion-4",
+      "id": "textCompletion-3",
       "type": "textCompletion",
       "configuration": {
         "stop-sequences": [
@@ -114,15 +140,11 @@
       }
     },
     {
-      "id": "localMemory-5",
-      "type": "localMemory"
-    },
-    {
-      "id": "output-6",
+      "id": "output-4",
       "type": "output"
     },
     {
-      "id": "textCompletion-7",
+      "id": "textCompletion-5",
       "type": "textCompletion",
       "configuration": {
         "stop-sequences": [
@@ -132,15 +154,11 @@
       }
     },
     {
-      "id": "localMemory-8",
-      "type": "localMemory"
-    },
-    {
-      "id": "output-9",
+      "id": "output-6",
       "type": "output"
     },
     {
-      "id": "input-10",
+      "id": "input-7",
       "type": "input",
       "configuration": {
         "message": "What is the topic of the debate?"

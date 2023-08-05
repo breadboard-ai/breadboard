@@ -5,28 +5,31 @@
   ```mermaid
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-getDescriptions4["getDescriptions id='getDescriptions-4'"] -- "descriptions->descriptions" --o promptTemplate3["promptTemplate id='promptTemplate-3'"]
-getTools5["getTools id='getTools-5'"] -- "tools->tools" --o promptTemplate3["promptTemplate id='promptTemplate-3'"]
-localMemory2["localMemory id='localMemory-2'"] -- "context->memory" --> promptTemplate3["promptTemplate id='promptTemplate-3'"]
+getDescriptions3["getDescriptions id='getDescriptions-3'"] -- "descriptions->descriptions" --o promptTemplate2["promptTemplate id='promptTemplate-2'"]
+getTools4["getTools id='getTools-4'"] -- "tools->tools" --o promptTemplate2["promptTemplate id='promptTemplate-2'"]
+rememberObservation["append id='rememberObservation'"] -- "accumulator->memory" --> promptTemplate2["promptTemplate id='promptTemplate-2'"]
+rememberThought["append id='rememberThought'"] -- "accumulator->accumulator" --> rememberObservation["append id='rememberObservation'"]
+rememberObservation["append id='rememberObservation'"] -- "accumulator->accumulator" --> rememberThought["append id='rememberThought'"]
+rememberQuestion["append id='rememberQuestion'"] -- "accumulator->accumulator" --> rememberThought["append id='rememberThought'"]
+rememberQuestion["append id='rememberQuestion'"] -- "accumulator->memory" --> promptTemplate2["promptTemplate id='promptTemplate-2'"]
+input5[/"input id='input-5'"/]:::input -- "text->Question" --> rememberQuestion["append id='rememberQuestion'"]
 secrets1("secrets id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o reactcompletion["textCompletion id='react-completion'"]
-include6[["include id='include-6'"]]:::include -- "text->Observation" --> localMemory2["localMemory id='localMemory-2'"]
-include7[["include id='include-7'"]]:::include -- "text->Observation" --> localMemory2["localMemory id='localMemory-2'"]
-parseCompletion9["parseCompletion id='parseCompletion-9'"] -- "search->text" --> include7[["include id='include-7'"]]:::include
-parseCompletion9["parseCompletion id='parseCompletion-9'"] -- "math->text" --> include6[["include id='include-6'"]]:::include
-parseCompletion9["parseCompletion id='parseCompletion-9'"] -- "answer->text" --> output10{{"output id='output-10'"}}:::output
-reactcompletion["textCompletion id='react-completion'"] -- "completion->completion" --> parseCompletion9["parseCompletion id='parseCompletion-9'"]
-reactcompletion["textCompletion id='react-completion'"] -- "completion->Thought" --> rememberthought["localMemory id='remember-thought'"]
-promptTemplate3["promptTemplate id='promptTemplate-3'"] -- "prompt->text" --> reactcompletion["textCompletion id='react-completion'"]
-rememberquestion["localMemory id='remember-question'"] -- "context->memory" --> promptTemplate3["promptTemplate id='promptTemplate-3'"]
-input8[/"input id='input-8'"/]:::input -- "text->Question" --> rememberquestion["localMemory id='remember-question'"]
+include6[["include id='include-6'"]]:::include -- "text->Observation" --> rememberObservation["append id='rememberObservation'"]
+include7[["include id='include-7'"]]:::include -- "text->Observation" --> rememberObservation["append id='rememberObservation'"]
+parseCompletion8["parseCompletion id='parseCompletion-8'"] -- "search->text" --> include7[["include id='include-7'"]]:::include
+parseCompletion8["parseCompletion id='parseCompletion-8'"] -- "math->text" --> include6[["include id='include-6'"]]:::include
+parseCompletion8["parseCompletion id='parseCompletion-8'"] -- "answer->text" --> output9{{"output id='output-9'"}}:::output
+reactcompletion["textCompletion id='react-completion'"] -- "completion->completion" --> parseCompletion8["parseCompletion id='parseCompletion-8'"]
+reactcompletion["textCompletion id='react-completion'"] -- "completion->Thought" --> rememberThought["append id='rememberThought'"]
+promptTemplate2["promptTemplate id='promptTemplate-2'"] -- "prompt->text" --> reactcompletion["textCompletion id='react-completion'"]
 keyssecrets1[keys]:::config -- "keys->keys" --o secrets1
-templatepromptTemplate3[template]:::config -- "template->template" --o promptTemplate3
+templatepromptTemplate2[template]:::config -- "template->template" --o promptTemplate2
+messageinput5[message]:::config -- "message->message" --o input5
 stopsequencesreactcompletion[stop-sequences]:::config -- "stop-sequences->stop-sequences" --o reactcompletion
 $refinclude6[$ref]:::config -- "$ref->$ref" --o include6
 $refinclude7[$ref]:::config -- "$ref->$ref" --o include7
-messageinput8[message]:::config -- "message->message" --o input8
-argsparseCompletion9[args]:::config -- "args->args" --o parseCompletion9
-restparseCompletion9[rest]:::config -- "rest->rest" --o parseCompletion9
+argsparseCompletion8[args]:::config -- "args->args" --o parseCompletion8
+restparseCompletion8[rest]:::config -- "rest->rest" --o parseCompletion8
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

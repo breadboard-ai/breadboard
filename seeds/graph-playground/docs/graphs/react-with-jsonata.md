@@ -5,34 +5,37 @@
   ```mermaid
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-reflect5["reflect id='reflect-5'"] -- "graph->json" --> jsonata3["jsonata id='jsonata-3'"]
-reflect5["reflect id='reflect-5'"] -- "graph->json" --> jsonata4["jsonata id='jsonata-4'"]
-jsonata4["jsonata id='jsonata-4'"] -- "result->descriptions" --o promptTemplate6["promptTemplate id='promptTemplate-6'"]
-jsonata3["jsonata id='jsonata-3'"] -- "result->tools" --o promptTemplate6["promptTemplate id='promptTemplate-6'"]
-localMemory2["localMemory id='localMemory-2'"] -- "context->memory" --> promptTemplate6["promptTemplate id='promptTemplate-6'"]
+reflect4["reflect id='reflect-4'"] -- "graph->json" --> jsonata2["jsonata id='jsonata-2'"]
+reflect4["reflect id='reflect-4'"] -- "graph->json" --> jsonata3["jsonata id='jsonata-3'"]
+jsonata3["jsonata id='jsonata-3'"] -- "result->descriptions" --o promptTemplate5["promptTemplate id='promptTemplate-5'"]
+jsonata2["jsonata id='jsonata-2'"] -- "result->tools" --o promptTemplate5["promptTemplate id='promptTemplate-5'"]
+rememberObservation["append id='rememberObservation'"] -- "accumulator->memory" --> promptTemplate5["promptTemplate id='promptTemplate-5'"]
+rememberThought["append id='rememberThought'"] -- "accumulator->accumulator" --> rememberObservation["append id='rememberObservation'"]
+rememberObservation["append id='rememberObservation'"] -- "accumulator->accumulator" --> rememberThought["append id='rememberThought'"]
+rememberQuestion["append id='rememberQuestion'"] -- "accumulator->accumulator" --> rememberThought["append id='rememberThought'"]
+rememberQuestion["append id='rememberQuestion'"] -- "accumulator->memory" --> promptTemplate5["promptTemplate id='promptTemplate-5'"]
+input6[/"input id='input-6'"/]:::input -- "text->Question" --> rememberQuestion["append id='rememberQuestion'"]
 secrets1("secrets id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o reactcompletion["textCompletion id='react-completion'"]
-math[["include id='math'"]]:::include -- "text->Observation" --> localMemory2["localMemory id='localMemory-2'"]
-search[["include id='search'"]]:::include -- "text->Observation" --> localMemory2["localMemory id='localMemory-2'"]
-jsonata8["jsonata id='jsonata-8'"] -- "search->text" --> search[["include id='search'"]]:::include
-jsonata8["jsonata id='jsonata-8'"] -- "math->text" --> math[["include id='math'"]]:::include
-jsonata8["jsonata id='jsonata-8'"] -- "answer->text" --> output9{{"output id='output-9'"}}:::output
-reactcompletion["textCompletion id='react-completion'"] -- "completion->json" --> jsonata8["jsonata id='jsonata-8'"]
-reactcompletion["textCompletion id='react-completion'"] -- "completion->Thought" --> rememberthought["localMemory id='remember-thought'"]
-promptTemplate6["promptTemplate id='promptTemplate-6'"] -- "prompt->text" --> reactcompletion["textCompletion id='react-completion'"]
-rememberquestion["localMemory id='remember-question'"] -- "context->memory" --> promptTemplate6["promptTemplate id='promptTemplate-6'"]
-input7[/"input id='input-7'"/]:::input -- "text->Question" --> rememberquestion["localMemory id='remember-question'"]
+math[["include id='math'"]]:::include -- "text->Observation" --> rememberObservation["append id='rememberObservation'"]
+search[["include id='search'"]]:::include -- "text->Observation" --> rememberObservation["append id='rememberObservation'"]
+jsonata7["jsonata id='jsonata-7'"] -- "search->text" --> search[["include id='search'"]]:::include
+jsonata7["jsonata id='jsonata-7'"] -- "math->text" --> math[["include id='math'"]]:::include
+jsonata7["jsonata id='jsonata-7'"] -- "answer->text" --> output8{{"output id='output-8'"}}:::output
+reactcompletion["textCompletion id='react-completion'"] -- "completion->json" --> jsonata7["jsonata id='jsonata-7'"]
+reactcompletion["textCompletion id='react-completion'"] -- "completion->Thought" --> rememberThought["append id='rememberThought'"]
+promptTemplate5["promptTemplate id='promptTemplate-5'"] -- "prompt->text" --> reactcompletion["textCompletion id='react-completion'"]
 keyssecrets1[keys]:::config -- "keys->keys" --o secrets1
+expressionjsonata2[expression]:::config -- "expression->expression" --o jsonata2
 expressionjsonata3[expression]:::config -- "expression->expression" --o jsonata3
-expressionjsonata4[expression]:::config -- "expression->expression" --o jsonata4
-templatepromptTemplate6[template]:::config -- "template->template" --o promptTemplate6
+templatepromptTemplate5[template]:::config -- "template->template" --o promptTemplate5
+messageinput6[message]:::config -- "message->message" --o input6
 stopsequencesreactcompletion[stop-sequences]:::config -- "stop-sequences->stop-sequences" --o reactcompletion
 $refmath[$ref]:::config -- "$ref->$ref" --o math
 descriptionmath[description]:::config -- "description->description" --o math
 $refsearch[$ref]:::config -- "$ref->$ref" --o search
 descriptionsearch[description]:::config -- "description->description" --o search
-messageinput7[message]:::config -- "message->message" --o input7
-expressionjsonata8[expression]:::config -- "expression->expression" --o jsonata8
-rawjsonata8[raw]:::config -- "raw->raw" --o jsonata8
+expressionjsonata7[expression]:::config -- "expression->expression" --o jsonata7
+rawjsonata7[raw]:::config -- "raw->raw" --o jsonata7
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

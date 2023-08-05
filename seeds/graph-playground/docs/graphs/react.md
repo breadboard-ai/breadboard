@@ -5,43 +5,46 @@
   ```mermaid
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-getDescriptions4["getDescriptions id='getDescriptions-4'"] -- "descriptions->descriptions" --o promptTemplate3["promptTemplate id='promptTemplate-3'"]
-getTools5["getTools id='getTools-5'"] -- "tools->tools" --o promptTemplate3["promptTemplate id='promptTemplate-3'"]
-localMemory2["localMemory id='localMemory-2'"] -- "context->memory" --> promptTemplate3["promptTemplate id='promptTemplate-3'"]
+getDescriptions3["getDescriptions id='getDescriptions-3'"] -- "descriptions->descriptions" --o promptTemplate2["promptTemplate id='promptTemplate-2'"]
+getTools4["getTools id='getTools-4'"] -- "tools->tools" --o promptTemplate2["promptTemplate id='promptTemplate-2'"]
+rememberObservation["append id='rememberObservation'"] -- "accumulator->memory" --> promptTemplate2["promptTemplate id='promptTemplate-2'"]
+rememberThought["append id='rememberThought'"] -- "accumulator->accumulator" --> rememberObservation["append id='rememberObservation'"]
+rememberObservation["append id='rememberObservation'"] -- "accumulator->accumulator" --> rememberThought["append id='rememberThought'"]
+rememberQuestion["append id='rememberQuestion'"] -- "accumulator->accumulator" --> rememberThought["append id='rememberThought'"]
+rememberQuestion["append id='rememberQuestion'"] -- "accumulator->memory" --> promptTemplate2["promptTemplate id='promptTemplate-2'"]
+input5[/"input id='input-5'"/]:::input -- "text->Question" --> rememberQuestion["append id='rememberQuestion'"]
 secrets1("secrets id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o reactcompletion["textCompletion id='react-completion'"]
-compute["runJavascript id='compute'"] -- "result->Observation" --> localMemory2["localMemory id='localMemory-2'"]
+compute["runJavascript id='compute'"] -- "result->Observation" --> rememberObservation["append id='rememberObservation'"]
 mathfunctioncompletion["textCompletion id='math-function-completion'"] -- "completion->code" --> compute["runJavascript id='compute'"]
 secrets1("secrets id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o mathfunctioncompletion["textCompletion id='math-function-completion'"]
 mathfunction["promptTemplate id='math-function'"] -- "prompt->text" --> mathfunctioncompletion["textCompletion id='math-function-completion'"]
-textCompletion8["textCompletion id='textCompletion-8'"] -- "completion->Observation" --> localMemory2["localMemory id='localMemory-2'"]
-secrets1("secrets id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o textCompletion8["textCompletion id='textCompletion-8'"]
-summarizingtemplate["promptTemplate id='summarizing-template'"] -- "prompt->text" --> textCompletion8["textCompletion id='textCompletion-8'"]
-secrets1("secrets id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o urlTemplate9["urlTemplate id='urlTemplate-9'"]
-secrets1("secrets id='secrets-1'"):::secrets -- "GOOGLE_CSE_ID->GOOGLE_CSE_ID" --o urlTemplate9["urlTemplate id='urlTemplate-9'"]
-jsonata11["jsonata id='jsonata-11'"] -- "result->context" --> summarizingtemplate["promptTemplate id='summarizing-template'"]
-fetch10["fetch id='fetch-10'"] -- "response->json" --> jsonata11["jsonata id='jsonata-11'"]
-urlTemplate9["urlTemplate id='urlTemplate-9'"] -- "url->url" --> fetch10["fetch id='fetch-10'"]
-passthrough12(("passthrough id='passthrough-12'")):::passthrough -- "search->question" --> summarizingtemplate["promptTemplate id='summarizing-template'"]
-passthrough12(("passthrough id='passthrough-12'")):::passthrough -- "search->query" --> urlTemplate9["urlTemplate id='urlTemplate-9'"]
-parseCompletion7["parseCompletion id='parseCompletion-7'"] -- "search->search" --> passthrough12(("passthrough id='passthrough-12'")):::passthrough
-parseCompletion7["parseCompletion id='parseCompletion-7'"] -- "math->question" --> mathfunction["promptTemplate id='math-function'"]
-parseCompletion7["parseCompletion id='parseCompletion-7'"] -- "answer->text" --> output13{{"output id='output-13'"}}:::output
-reactcompletion["textCompletion id='react-completion'"] -- "completion->completion" --> parseCompletion7["parseCompletion id='parseCompletion-7'"]
-reactcompletion["textCompletion id='react-completion'"] -- "completion->Thought" --> rememberthought["localMemory id='remember-thought'"]
-promptTemplate3["promptTemplate id='promptTemplate-3'"] -- "prompt->text" --> reactcompletion["textCompletion id='react-completion'"]
-rememberquestion["localMemory id='remember-question'"] -- "context->memory" --> promptTemplate3["promptTemplate id='promptTemplate-3'"]
-input6[/"input id='input-6'"/]:::input -- "text->Question" --> rememberquestion["localMemory id='remember-question'"]
+textCompletion7["textCompletion id='textCompletion-7'"] -- "completion->Observation" --> rememberObservation["append id='rememberObservation'"]
+secrets1("secrets id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o textCompletion7["textCompletion id='textCompletion-7'"]
+summarizingtemplate["promptTemplate id='summarizing-template'"] -- "prompt->text" --> textCompletion7["textCompletion id='textCompletion-7'"]
+secrets1("secrets id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o urlTemplate8["urlTemplate id='urlTemplate-8'"]
+secrets1("secrets id='secrets-1'"):::secrets -- "GOOGLE_CSE_ID->GOOGLE_CSE_ID" --o urlTemplate8["urlTemplate id='urlTemplate-8'"]
+jsonata10["jsonata id='jsonata-10'"] -- "result->context" --> summarizingtemplate["promptTemplate id='summarizing-template'"]
+fetch9["fetch id='fetch-9'"] -- "response->json" --> jsonata10["jsonata id='jsonata-10'"]
+urlTemplate8["urlTemplate id='urlTemplate-8'"] -- "url->url" --> fetch9["fetch id='fetch-9'"]
+passthrough11(("passthrough id='passthrough-11'")):::passthrough -- "search->question" --> summarizingtemplate["promptTemplate id='summarizing-template'"]
+passthrough11(("passthrough id='passthrough-11'")):::passthrough -- "search->query" --> urlTemplate8["urlTemplate id='urlTemplate-8'"]
+parseCompletion6["parseCompletion id='parseCompletion-6'"] -- "search->search" --> passthrough11(("passthrough id='passthrough-11'")):::passthrough
+parseCompletion6["parseCompletion id='parseCompletion-6'"] -- "math->question" --> mathfunction["promptTemplate id='math-function'"]
+parseCompletion6["parseCompletion id='parseCompletion-6'"] -- "answer->text" --> output12{{"output id='output-12'"}}:::output
+reactcompletion["textCompletion id='react-completion'"] -- "completion->completion" --> parseCompletion6["parseCompletion id='parseCompletion-6'"]
+reactcompletion["textCompletion id='react-completion'"] -- "completion->Thought" --> rememberThought["append id='rememberThought'"]
+promptTemplate2["promptTemplate id='promptTemplate-2'"] -- "prompt->text" --> reactcompletion["textCompletion id='react-completion'"]
 keyssecrets1[keys]:::config -- "keys->keys" --o secrets1
-templatepromptTemplate3[template]:::config -- "template->template" --o promptTemplate3
+templatepromptTemplate2[template]:::config -- "template->template" --o promptTemplate2
+messageinput5[message]:::config -- "message->message" --o input5
 stopsequencesreactcompletion[stop-sequences]:::config -- "stop-sequences->stop-sequences" --o reactcompletion
 templatemathfunction[template]:::config -- "template->template" --o mathfunction
 namecompute[name]:::config -- "name->name" --o compute
-messageinput6[message]:::config -- "message->message" --o input6
-argsparseCompletion7[args]:::config -- "args->args" --o parseCompletion7
-restparseCompletion7[rest]:::config -- "rest->rest" --o parseCompletion7
+argsparseCompletion6[args]:::config -- "args->args" --o parseCompletion6
+restparseCompletion6[rest]:::config -- "rest->rest" --o parseCompletion6
 templatesummarizingtemplate[template]:::config -- "template->template" --o summarizingtemplate
-templateurlTemplate9[template]:::config -- "template->template" --o urlTemplate9
-expressionjsonata11[expression]:::config -- "expression->expression" --o jsonata11
+templateurlTemplate8[template]:::config -- "template->template" --o urlTemplate8
+expressionjsonata10[expression]:::config -- "expression->expression" --o jsonata10
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

@@ -41,8 +41,13 @@ export default async (inputs: InputValues) => {
   if (Object.keys(values).length === 0) return { accumulator };
   const type = getObjectType(accumulator);
   switch (type) {
-    case ObjectType.stringy:
-      return { accumulator: `${accumulator}\n${asString(values)}` };
+    case ObjectType.stringy: {
+      const stringy =
+        accumulator === null || accumulator === undefined
+          ? ""
+          : `${accumulator}\n`;
+      return { accumulator: `${stringy}${asString(values)}` };
+    }
     case ObjectType.array:
       return {
         accumulator: [...(accumulator as string[]), ...asArray(values)],
