@@ -8,15 +8,15 @@ import test from "ava";
 import append, { ObjectType, getObjectType } from "../../src/nodes/append.js";
 
 test("getObjectType correctly recognizes various object types", (t) => {
-  t.is(getObjectType("string"), ObjectType.string);
+  t.is(getObjectType("string"), ObjectType.stringy);
   t.is(getObjectType(["array"]), ObjectType.array);
   t.is(getObjectType({ object: true }), ObjectType.object);
-  t.is(getObjectType(1), ObjectType.string);
-  t.is(getObjectType(1.1), ObjectType.string);
-  t.is(getObjectType(true), ObjectType.string);
-  t.is(getObjectType(BigInt(1)), ObjectType.string);
-  t.is(getObjectType(null), ObjectType.string);
-  t.is(getObjectType(undefined), ObjectType.string);
+  t.is(getObjectType(1), ObjectType.stringy);
+  t.is(getObjectType(1.1), ObjectType.stringy);
+  t.is(getObjectType(true), ObjectType.stringy);
+  t.is(getObjectType(BigInt(1)), ObjectType.stringy);
+  t.is(getObjectType(null), ObjectType.stringy);
+  t.is(getObjectType(undefined), ObjectType.stringy);
 });
 
 test("`append` correctly appends to various object types", async (t) => {

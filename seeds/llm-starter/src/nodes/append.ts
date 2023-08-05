@@ -7,7 +7,7 @@
 import { InputValues } from "@google-labs/graph-runner";
 
 export enum ObjectType {
-  string,
+  stringy,
   array,
   object,
 }
@@ -20,10 +20,10 @@ type AppendInputValues = Record<string, unknown> & {
 };
 
 export const getObjectType = (value: unknown): ObjectType => {
-  if (value === null || value === undefined) return ObjectType.string;
+  if (value === null || value === undefined) return ObjectType.stringy;
   const type = typeof value;
   if (["string", "number", "boolean", "bigint"].includes(type))
-    return ObjectType.string;
+    return ObjectType.stringy;
   if (Array.isArray(value)) return ObjectType.array;
   return ObjectType.object;
 };
@@ -41,7 +41,7 @@ export default async (inputs: InputValues) => {
   if (Object.keys(values).length === 0) return { accumulator };
   const type = getObjectType(accumulator);
   switch (type) {
-    case ObjectType.string:
+    case ObjectType.stringy:
       return { accumulator: `${accumulator}\n${asString(values)}` };
     case ObjectType.array:
       return {
