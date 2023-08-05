@@ -854,7 +854,7 @@ ask.close();
 
 Now, when we run the program we wrote, we'll see something like this:
 
-```
+```diff
 Hello! I'm your friendly assistant. How can I help you today?
 Type 'exit' to end conversation.
 > I am hungry
