@@ -1,6 +1,6 @@
 {
   "name": "@google-labs/palm-lite",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A zero-dependency client for PaLM APIs",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
@@ -38,7 +38,7 @@
   "bugs": {
     "url": "https://github.com/google/labs-prototypes/issues"
   },
-  "homepage": "https://github.com/google/labs-prototypes#readme",
+  "homepage": "https://github.com/google/labs-prototypes/seeds/palm-lite#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
     "@typescript-eslint/eslint-plugin": "^5.56.0",

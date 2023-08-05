@@ -37,7 +37,7 @@
   "bugs": {
     "url": "https://github.com/google/labs-prototypes/issues"
   },
-  "homepage": "https://github.com/google/labs-prototypes#readme",
+  "homepage": "https://github.com/google/labs-prototypes/seeds/llm-starter#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
     "@google-labs/tsconfig": "*",
