@@ -5,8 +5,11 @@ If you like learning by starting with simple examples that get more complex with
 Pre-requisites:
 
 - familiarity with Javascript and Node.
-- `@google-labs/breadboard` npm package installed locally
+- `@google-labs/breadboard` and `@google-labs/llm-starter` npm packages installed locally
+- PaLM API key (go [here](https://developers.generativeai.google/tutorials/setup) to obtain one)
 - spirit of adventure
+
+Each chapter is also as a [replit](https://replit.com/). Look for the "run in replit" link at the end of each chapter.
 
 ## Chapter 1: Hello, world?
 
@@ -76,7 +79,7 @@ result { hear: 'Hello, world?' }
 
 You can see the source of this program here: [tutorial-1.js](./tutorial-1.js).
 
-[![Static Badge](https://img.shields.io/badge/run%20in%20replit-chapter_1-orange?logo=replit)](https://replit.com/@dglazkov/Breadboard-Tutorial-Chapter-1)
+[![Static Badge](https://img.shields.io/badge/run%20in%20replit-chapter_1-orange?logo=replit "run in replit: chapter 1")](https://replit.com/@dglazkov/Breadboard-Tutorial-Chapter-1)
 
 ## Chapter 2: Wiring more nodes
 
@@ -163,7 +166,7 @@ Oh hey! Our program is generating text using PaLM API.
 
 You can see its source code here: [tutorial-2.js](./tutorial-2.js).
 
-[![Static Badge](https://img.shields.io/badge/run%20in%20replit-chapter_2-orange?logo=replit)](https://replit.com/@dglazkov/Breadboard-Tutorial-Chapter-2)
+[![Static Badge](https://img.shields.io/badge/run%20in%20replit-chapter_2-orange?logo=replit "run in replit: chapter 2")](https://replit.com/@dglazkov/Breadboard-Tutorial-Chapter-2)
 
 ## Chatper 3: Fun with wires
 
@@ -221,7 +224,7 @@ It is more compact, but can be harder to read for those who are just starting to
 
 You can see the source code from this chapter here: [tutorial-3.js](./tutorial-3.js).
 
-[![Static Badge](https://img.shields.io/badge/run%20in%20replit-chapter_3-orange?logo=replit)](https://replit.com/@dglazkov/Breadboard-Tutorial-Chapter-3)
+[![Static Badge](https://img.shields.io/badge/run%20in%20replit-chapter_3-orange?logo=replit "run in replit: chapter 3")](https://replit.com/@dglazkov/Breadboard-Tutorial-Chapter-3)
 
 ## Chapter 4: Loading, saving, and visualizing boards
 
@@ -344,7 +347,7 @@ Coincidentally, Github Markdown has great support for Mermaid. Just paste the Me
 
 You can see this chapter's source code here: [tutorial-4.js](./tutorial-4.js).
 
-[![Static Badge](https://img.shields.io/badge/run%20in%20replit-chapter_4-orange?logo=replit)](https://replit.com/@dglazkov/Breadboard-Tutorial-Chapter-4)
+[![Static Badge](https://img.shields.io/badge/run%20in%20replit-chapter_4-orange?logo=replit "run in replit: chapter 4")](https://replit.com/@dglazkov/Breadboard-Tutorial-Chapter-4)
 
 ## Chapter 5: Including other boards
 
@@ -449,7 +452,7 @@ result {
 
 You can see the source code for this chapter here: [tutorial-5.js](./tutorial-5.js).
 
-[![Static Badge](https://img.shields.io/badge/run%20in%20replit-chapter_5-orange?logo=replit)](https://replit.com/@dglazkov/Breadboard-Tutorial-Chapter-5)
+[![Static Badge](https://img.shields.io/badge/run%20in%20replit-chapter_5-orange?logo=replit "run in replit: chapter 5")](https://replit.com/@dglazkov/Breadboard-Tutorial-Chapter-5)
 
 ## Chapter 6: Boards with slots
 
@@ -548,9 +551,9 @@ You can see the source code for this chapter here:
 - [tutorial-6a.js](./tutorial-6a.js) -- setting up a board with a slot
 - [tutorial-6b.js](./tutorial-6b.js) -- calling a slotted board.
 
-[![Static Badge](https://img.shields.io/badge/run%20in%20replit-chapter_6a-orange?logo=replit)](https://replit.com/@dglazkov/Breadboard-Tutorial-Chapter-6-a)
+[![Static Badge](https://img.shields.io/badge/run%20in%20replit-chapter_6a-orange?logo=replit "run in replit: chapter 6a")](https://replit.com/@dglazkov/Breadboard-Tutorial-Chapter-6-a)
 
-[![Static Badge](https://img.shields.io/badge/run%20in%20replit-chapter_6b-orange?logo=replit)](https://replit.com/@dglazkov/Breadboard-Tutorial-Chapter-6-b)
+[![Static Badge](https://img.shields.io/badge/run%20in%20replit-chapter_6b-orange?logo=replit "run in replit: chapter 6b")](https://replit.com/@dglazkov/Breadboard-Tutorial-Chapter-6-b)
 
 ## Chapter 7: Probes
 
@@ -654,9 +657,9 @@ You can see the source code for this chapter here:
 - [tutorial-7a.js](./tutorial-7a.js) -- using `LogProbe`
 - [tutorial-7b.js](./tutorial-7b.js) -- using custom probe.
 
-[![Static Badge](https://img.shields.io/badge/run%20in%20replit-chapter_7a-orange?logo=replit)](https://replit.com/@dglazkov/Breadboard-Tutorial-Chapter-7-a)
+[![Static Badge](https://img.shields.io/badge/run%20in%20replit-chapter_7a-orange?logo=replit "run in replit: chapter 7a")](https://replit.com/@dglazkov/Breadboard-Tutorial-Chapter-7-a)
 
-[![Static Badge](https://img.shields.io/badge/run%20in%20replit-chapter_7b-orange?logo=replit)](https://replit.com/@dglazkov/Breadboard-Tutorial-Chapter-7-b)
+[![Static Badge](https://img.shields.io/badge/run%20in%20replit-chapter_7b-orange?logo=replit "run in replit: chapter 7b")](https://replit.com/@dglazkov/Breadboard-Tutorial-Chapter-7-b)
 
 ## Chapter 8: Continuous runs
 
@@ -715,7 +718,7 @@ If our board only has outputs that are visited once, we don't need to write all 
 
 See the source code for this chapter: [tutorial-8.js](./tutorial-8.js).
 
-[![Static Badge](https://img.shields.io/badge/run%20in%20replit-chapter_8-orange?logo=replit)](https://replit.com/@dglazkov/Breadboard-Tutorial-Chapter-8)
+[![Static Badge](https://img.shields.io/badge/run%20in%20replit-chapter_8-orange?logo=replit "run in replit: chapter 8")](https://replit.com/@dglazkov/Breadboard-Tutorial-Chapter-8)
 
 ## Chapter 9: Let's build a chat bot.
 
@@ -896,6 +899,6 @@ Congrats! We made us a bot.
 
 See the source code for it here: [tutorial-9.js](./tutorial-9.js).
 
-[![Static Badge](https://img.shields.io/badge/run%20in%20replit-chapter_9-orange?logo=replit)](https://replit.com/@dglazkov/Breadboard-Tutorial-Chapter-9)
+[![Static Badge](https://img.shields.io/badge/run%20in%20replit-chapter_9-orange?logo=replit "run in replit: chapter 9")](https://replit.com/@dglazkov/Breadboard-Tutorial-Chapter-9)
 
 Hopefully, this tutorial inspired you to make things with Breadboard. Get out those wires and start placing nodes. And don't forget to have fun.
