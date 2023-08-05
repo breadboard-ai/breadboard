@@ -13,6 +13,7 @@ import type {
 } from "@google-labs/breadboard";
 
 import vars from "./nodes/vars.js";
+import localMemory from "./nodes/local-memory.js";
 import textAsset from "./nodes/text-asset.js";
 import textAssetsFromPath from "./nodes/text-assets-from-path.js";
 import createVectorDatabase from "./nodes/create-vector-database.js";
@@ -32,6 +33,7 @@ const handlers = {
   textAsset,
   textAssetsFromPath,
   vars,
+  localMemory,
 };
 
 /**
@@ -89,5 +91,10 @@ export class Nursery implements Kit {
   cache(config: OptionalIdConfiguration = {}): BreadboardNode {
     const { $id, ...rest } = config;
     return this.#nodeFactory("cache", { ...rest }, $id);
+  }
+
+  localMemory(config: OptionalIdConfiguration = {}): BreadboardNode {
+    const { $id, ...rest } = config;
+    return this.#nodeFactory("localMemory", { ...rest }, $id);
   }
 }
