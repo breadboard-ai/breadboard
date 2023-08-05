@@ -732,16 +732,35 @@ output.wire("->", input);
 
 This wiring above is new to this tutorial, since it doesn't have the familiar property name in it. It's a control-only wire. It does not pass any data, just tells the board to visit `input` after `output`.
 
-Next, let's add some way to store the history of the conversation between the user and our chat bot. To do this, we'll need the `localMemory` node from the [LLM Starter Kit](https://github.com/google/labs-prototypes/tree/main/seeds/llm-starter):
+Next, let's add some way to store the history of the conversation between the user and our chat bot. To do this, we'll need the `append` node from the [LLM Starter Kit](https://github.com/google/labs-prototypes/tree/main/seeds/llm-starter):
 
 ```js
-const history = kit.localMemory();
+const history = kit.append();
+history.wire("accumulator->?", history);
 input.wire("say->user", history);
 ```
 
-The `localMemory` node is super-simple. It accumulates lines of text. If you give it a property as input, it will append it as another line of text, formatting the line as `{{property_name}}: {{proprety_value}}` and, as output, return all accumulated lines so far as `context` property.
+There's a lot of power stuffed into this little snippet. Let's unpack it.
 
-This allows us to create a running list of the interactions between the user and the chat bot. The last line in the code snippet above says: "append the value of the `say` property to the end of your list as `user: {{value}}`.
+Though introduced so late in the tutorial, the `append` node is probably the most versatile power tool in the [LLM Starter Kit](https://github.com/google/labs-prototypes/tree/main/seeds/llm-starter).
+
+What it does is deceptively simple: the `append` node looks for an input property named `accumulator`, then appends the rest of the input properties to it, and then returns the result as the output property named `accumulator`. It _accumulates_, get it?
+
+In its simplest for, the append node accumulates values as multi-line text, formatting each input property as `{{property_name}}: {{proprety_value}}`. For example, if we wire the `append` node like this:
+
+This accumulation bit can go a very long way. For example, consider this line:
+
+```js
+history.wire("accumulator->", history);
+```
+
+When we wire the `accumulator` back into itself, it will just keep on growing every time this node is visited, with all additional inputs added as a list.
+
+However, what happens when we try to visit it for the first time and there's no `accumulator` property yet? We need a way to somehow signal to Breadboard that it's okay to visit the node.
+
+This is where the "`?`" modifier comes in. It tells Breadboard to treat the wire as **optional** and feel free to visit this node even if the `accumulator` property hasn't yet been provided as input. Use this modifier with caution, since it can lead to unintended arbitrary node visits.
+
+Such wiring allows us to create a running list of the interactions between the user and the chat bot. The last line in the code snippet above says: "append the value of the `say` property to the end of your list as `user: {{value}}`.
 
 As the next step, let's place and wire the `textCompletion` node:
 
@@ -765,36 +784,35 @@ kit
     "This is a conversation between a friendly assistant and their user.\n" +
       "You are the assistant and your job is to try to be helpful,\n" +
       "empathetic, and fun.\n\n" +
+      "== Conversation History\n" +
       "{{context}}\n\n" +
       "== Current Conversation\n" +
       "user: {{question}}\n" +
-      "assistant:"
+      "assistant:",
+    { context: "" }
   )
   .wire("prompt->text", completion)
   .wire("question<-say", input)
-  .wire("<-context", history)
-  .wire("<-context", board.passthrough({ context: "== Conversation History" }));
+  .wire("context<-accumulator", history);
 ```
 
-Let's see what's going on with the wires. The first two are easy-peasy: we just wire the template to completion and the input to template.
+The first two wires connect the template to completion and the input to template.
 
-But... why the heck do we have two `<-context` wires?! The first one makes sense. It wires our conversation history to the template, the output of the `localMemory` node as `context` template placeholder.
+The third one wires the `accumulator` input to the `context` template placeholder, so that the history we accumulated with the `append` node shows up in the template.
 
-The second `<-context` wire is necessary for the very first time. When we are just starting the conversation, and there's no history, we must put something into the `context` placeholder. Otherwise, our board will complain of the missing inputs.
+There's also a little trick here in how we configure the `textTemplate` node. See how we pass an object with a single property `context` as the second argument to the `textTemplate` constructor? This is how we provide the inital value for the `context` palceholder. When this node is visited the first time, it won't yet have any of the conversation history, so we'll need something (an empty string in this case) to put into the placeholder.
 
-To do that, we employ a handy node called `passthrough`. The `passthrough` node is the simplest of them all. It literally just passes its inputs to its outputs. Every computing machine needs a no-op node, and Breadboard is no exception.
-
-Here, we supply property `context` as its configuration, so that when this node is visited, `context` will show up as the output, and provide the very first value for the `{{context}}` placeholder in the template. This node will not be revisited again in the following iterations -- instead, the `localMemory` node that holds the conversation history will supply the value.
-
-Whew. That was a lot. Are we ready to run the board? Not quite yet.
+Alright! Do we have everything we need?
 
 If we try to run the board now, it will simply exit without doing anything. We're missing one more piece of the puzzle: the entry point that leads to the initial `input` node.
 
-Here's how to think about that. Prior to running, a board collects entry nodes. These are the nodes that have no wires coming into them. These are the nodes that the board begins visiting first.
+Here's how to think about it. Prior to running, a board collects entry nodes. These are the nodes that have no wires coming into them. These are the nodes that the board begins visiting first.
 
 In all of the previous chapters, the `input` node was the natural entry point. There were no wires coming into it. This changed when we added the wire that connected the `output` back to `input`. With this addition, the `input` node is no longer considered to be an entry node -- it has a wire from `output` coming into it.
 
-How do we fix that? It's actually fairly easy. All we need to do is place another `passthrough` node on the board and wire it to the input:
+How do we fix that? It's actually fairly easy. We employ a handy node called `passthrough`. The `passthrough` node is the simplest of them all. It literally just passes its inputs to its outputs. Every computer needs a no-op node, and Breadboard is no exception.
+
+All we need to do is place this `passthrough` node on the board and wire it to the input:
 
 ```js
 board.passthrough().wire("->", input);
@@ -802,7 +820,7 @@ board.passthrough().wire("->", input);
 
 Now, when the board runs, it will see this `passthrough` node as the entry, and will make its way to the `input`, starting the chat bot cycle.
 
-Okay. We have a working board. Let's noew write a few more lines of plumbing to turn it into a chat bot program.
+Okay. We have a working board. We'll still need to write a few more lines of plumbing to turn it into a chat bot program.
 
 Prepare the `readline` interface so that the program can ask the user questions, and print out a welcoming preamble:
 

@@ -8,7 +8,7 @@ import readline from "node:readline/promises";
 import { stdin, stdout } from "node:process";
 import { config } from "dotenv";
 
-import { Board, LogProbe } from "@google-labs/breadboard";
+import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 
 config();
@@ -21,7 +21,8 @@ const output = board.output();
 output.wire("->", input);
 
 const history = kit.append();
-history.wire("user<-say", input).wire("accumulator->?", history);
+history.wire("accumulator->?", history);
+input.wire("say->user", history);
 
 const completion = kit
   .textCompletion()
@@ -50,7 +51,7 @@ board.passthrough().wire("->", input);
 const ask = readline.createInterface({ input: stdin, output: stdout });
 console.log("Hello! I'm your friendly assistant. How can I help you today?");
 console.log("Type 'exit' to end conversation.");
-for await (const stop of board.run(new LogProbe())) {
+for await (const stop of board.run()) {
   if (stop.seeksInputs) {
     const say = await ask.question("> ");
     if (say === "exit") break;
