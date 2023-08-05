@@ -25,7 +25,7 @@ const secrets = kit.secrets(["PALM_KEY", "GOOGLE_CSE_ID"]);
 
 // This is the main ingredient: the template that makes the algo tick.
 const reActTemplate = kit
-  .textTemplate(
+  .promptTemplate(
     "Answer the following questions as best you can. You have access to the " +
       "following tools:\n\n{{descriptions}}\n\nUse the following " +
       "format:\n\nQuestion: the input question you must answer\nThought: you " +
@@ -100,7 +100,7 @@ const reActCompletion = kit
 // Wire up the math tool. This code mostly matches what is in
 // `math.ts`, but is now participating in the larger ReAct board.
 const math = kit
-  .textTemplate(
+  .promptTemplate(
     "Translate the math problem below into a JavaScript function named `compute` that can be executed to provide the answer to the problem\nMath Problem: {{question}}\nSolution:",
     { $id: "math-function" }
   )
@@ -126,7 +126,7 @@ const search = () => {
     .wire("<-PALM_KEY.", secrets);
 
   const summarizingTemplate = kit
-    .textTemplate(
+    .promptTemplate(
       "Use context below to answer this question:\n\n##Question:\n{{question}}\n\n## Context {{context}}\n\\n## Answer:\n",
       { $id: "summarizing-template" }
     )

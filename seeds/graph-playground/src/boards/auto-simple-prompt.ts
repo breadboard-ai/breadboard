@@ -13,7 +13,7 @@ const kit = autoSimplePrompt.addKit(Starter);
 const completion = kit.textCompletion();
 kit.secrets(["PALM_KEY"]).wire("PALM_KEY", completion);
 kit
-  .textTemplate(
+  .promptTemplate(
     "Analyze the following question and instead of answering, list out steps to take to answer the question: {{question}}",
     { $id: "analyze-this", question: "How is the weather?" }
   )

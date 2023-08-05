@@ -7,26 +7,26 @@
       "in": "headlines"
     },
     {
-      "from": "xml_to_json-4",
+      "from": "xmlToJson-4",
       "to": "jsonata-5",
       "out": "json",
       "in": "json"
     },
     {
       "from": "fetch-3",
-      "to": "xml_to_json-4",
+      "to": "xmlToJson-4",
       "out": "response",
       "in": "xml"
     },
     {
-      "from": "url_template-2",
+      "from": "urlTemplate-2",
       "to": "fetch-3",
       "out": "url",
       "in": "url"
     },
     {
       "from": "input-1",
-      "to": "url_template-2",
+      "to": "urlTemplate-2",
       "out": "topic",
       "in": "query"
     }
@@ -40,8 +40,8 @@
       }
     },
     {
-      "id": "url_template-2",
-      "type": "url_template",
+      "id": "urlTemplate-2",
+      "type": "urlTemplate",
       "configuration": {
         "template": "https://news.google.com/rss/search?q={{query}}&hl=en-US&gl=US&ceid=US:en"
       }
@@ -54,8 +54,8 @@
       }
     },
     {
-      "id": "xml_to_json-4",
-      "type": "xml_to_json"
+      "id": "xmlToJson-4",
+      "type": "xmlToJson"
     },
     {
       "id": "jsonata-5",

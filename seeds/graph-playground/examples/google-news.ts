@@ -22,7 +22,7 @@ const board = new Board();
 const kit = board.addKit(Starter);
 
 // Create a new text template node.
-const summarizeResults = kit.textTemplate(
+const summarizeResults = kit.promptTemplate(
   "Use the news headlines below to write one or two sentences to summarize the latest news on this topic:\n\n##Topic:\n{{topic}}\n\n## Headlines {{headlines}}\n\\n## Summary:\n"
 );
 

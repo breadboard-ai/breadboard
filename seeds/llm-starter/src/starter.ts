@@ -35,7 +35,7 @@ export class Starter implements Kit {
     return this.#nodeFactory("append", { ...rest }, $id);
   }
 
-  textTemplate(
+  promptTemplate(
     template: string,
     config: OptionalIdConfiguration = {}
   ): BreadboardNode {

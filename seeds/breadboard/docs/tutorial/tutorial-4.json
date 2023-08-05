@@ -1,0 +1,56 @@
+{
+  "edges": [
+    {
+      "from": "input-2",
+      "to": "output-1",
+      "out": "say",
+      "in": "say"
+    },
+    {
+      "from": "textCompletion-3",
+      "to": "output-1",
+      "out": "completion",
+      "in": "hear"
+    },
+    {
+      "from": "secrets-4",
+      "to": "textCompletion-3",
+      "out": "PALM_KEY",
+      "in": "PALM_KEY"
+    },
+    {
+      "from": "input-2",
+      "to": "textCompletion-3",
+      "out": "say",
+      "in": "text"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-1",
+      "type": "output"
+    },
+    {
+      "id": "input-2",
+      "type": "input"
+    },
+    {
+      "id": "textCompletion-3",
+      "type": "textCompletion"
+    },
+    {
+      "id": "secrets-4",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "PALM_KEY"
+        ]
+      }
+    }
+  ],
+  "kits": [
+    {
+      "url": "npm:@google-labs/llm-starter"
+    }
+  ]
+}

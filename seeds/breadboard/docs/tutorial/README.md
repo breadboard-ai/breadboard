@@ -398,17 +398,17 @@ result {
 
 Let's add a few more nodes to make the board that summarizes news on a given topic.
 
-First, we'll need a prompt that combines the topic we've provided, the headlines produced by our friend's board, and some instructions on what to do with them. To do that, we'll use the `textTemplate` node from the [LLM Starter Kit](https://github.com/google/labs-prototypes/tree/main/seeds/llm-starter):
+First, we'll need a prompt that combines the topic we've provided, the headlines produced by our friend's board, and some instructions on what to do with them. To do that, we'll use the `promptTemplate` node from the [LLM Starter Kit](https://github.com/google/labs-prototypes/tree/main/seeds/llm-starter):
 
 ```js
-const template = kit.textTemplate(
+const template = kit.promptTemplate(
   "Use the news headlines below to write a few sentences to" +
     "summarize the latest news on this topic:\n\n##Topic:\n" +
     "{{topic}}\n\n## Headlines {{headlines}}\n\\n## Summary:\n"
 );
 ```
 
-The `textTemplate` node takes a template string as its argument. The template string is a string that can contain placeholders. The placeholders are enclosed in double curly braces, like this: `{{placeholder}}`. The node replaces placholders with the values of the properties that are passed to it.
+The `promptTemplate` node takes a template string as its argument. The template string is a string that can contain placeholders. The placeholders are enclosed in double curly braces, like this: `{{placeholder}}`. The node replaces placholders with the values of the properties that are passed to it.
 
 So, in the code snippet above, this node needs to have these two properties wired into it: `topic` and `headlines`.
 
@@ -776,11 +776,11 @@ Let's look at this node's wiring. The first two make sense. We want the result o
 
 The dot signifies that this wire is a constant. It remembers the last value passed through it and makes it always available to the receiving node. It's important here, because otherwise, we'd have to find ways to visit the `secrets` node with on every cycle of the loop.
 
-So we have the `textCompletion` all set up. But what's the prompt that goes into it? To create a prompt, we need a `textTemplate` node. Let's place and wire it:
+So we have the `textCompletion` all set up. But what's the prompt that goes into it? To create a prompt, we need a `promptTemplate` node. Let's place and wire it:
 
 ```js
 kit
-  .textTemplate(
+  .promptTemplate(
     "This is a conversation between a friendly assistant and their user.\n" +
       "You are the assistant and your job is to try to be helpful,\n" +
       "empathetic, and fun.\n\n" +
@@ -800,7 +800,7 @@ The first two wires connect the template to completion and the input to template
 
 The third one wires the `accumulator` input to the `context` template placeholder, so that the history we accumulated with the `append` node shows up in the template.
 
-There's also a little trick here in how we configure the `textTemplate` node. See how we pass an object with a single property `context` as the second argument to the `textTemplate` constructor? This is how we provide the inital value for the `context` palceholder. When this node is visited the first time, it won't yet have any of the conversation history, so we'll need something (an empty string in this case) to put into the placeholder.
+There's also a little trick here in how we configure the `promptTemplate` node. See how we pass an object with a single property `context` as the second argument to the `promptTemplate` constructor? This is how we provide the inital value for the `context` palceholder. When this node is visited the first time, it won't yet have any of the conversation history, so we'll need something (an empty string in this case) to put into the placeholder.
 
 Alright! Do we have everything we need?
 

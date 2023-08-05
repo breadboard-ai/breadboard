@@ -31,7 +31,7 @@ const completion = kit
   .wire("<-PALM_KEY.", kit.secrets(["PALM_KEY"]));
 
 kit
-  .textTemplate(
+  .promptTemplate(
     "This is a conversation between a friendly assistant and their user.\n" +
       "You are the assistant and your job is to try to be helpful,\n" +
       "empathetic, and fun.\n\n" +

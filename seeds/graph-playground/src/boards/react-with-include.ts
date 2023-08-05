@@ -28,7 +28,7 @@ const secrets = kit.secrets(["PALM_KEY", "GOOGLE_CSE_ID"]);
 
 // This is the main ingredient: the template that makes the algo tick.
 const reActTemplate = kit
-  .textTemplate(
+  .promptTemplate(
     "Answer the following questions as best you can. You have access to the " +
       "following tools:\n\n{{descriptions}}\n\nUse the following " +
       "format:\n\nQuestion: the input question you must answer\nThought: you " +

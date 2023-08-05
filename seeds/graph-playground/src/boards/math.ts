@@ -13,7 +13,7 @@ const kit = math.addKit(Starter);
 math.input("Ask a math question", { $id: "math-question" }).wire(
   "text->question",
   kit
-    .textTemplate(
+    .promptTemplate(
       "Translate the math problem below into a JavaScript function named `compute` that can be executed to provide the answer to the problem\nMath Problem: {{question}}\nSolution:",
       { $id: "math-function" }
     )

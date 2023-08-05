@@ -15,7 +15,7 @@ const completion = kit
   .wire("completion->text", searchSummarize.output());
 
 const summarizingTemplate = kit
-  .textTemplate(
+  .promptTemplate(
     "Use context below to answer this question:\n\n##Question:\n{{question}}\n\n## Context {{context}}\n\\n## Answer:\n",
     { $id: "summarizing-template" }
   )

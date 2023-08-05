@@ -2,32 +2,32 @@
   "edges": [
     {
       "from": "input-2",
-      "to": "prompt-template-1",
+      "to": "promptTemplate-1",
       "out": "topic",
       "in": "topic"
     },
     {
       "from": "secrets-5",
-      "to": "text-completion-4",
+      "to": "textCompletion-4",
       "constant": true,
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
-      "from": "text-completion-4",
+      "from": "textCompletion-4",
       "to": "output-6",
       "out": "completion",
       "in": "summary"
     },
     {
-      "from": "prompt-template-1",
-      "to": "text-completion-4",
+      "from": "promptTemplate-1",
+      "to": "textCompletion-4",
       "out": "prompt",
       "in": "text"
     },
     {
       "from": "slot-3",
-      "to": "prompt-template-1",
+      "to": "promptTemplate-1",
       "out": "headlines",
       "in": "headlines"
     },
@@ -40,8 +40,8 @@
   ],
   "nodes": [
     {
-      "id": "prompt-template-1",
-      "type": "prompt-template",
+      "id": "promptTemplate-1",
+      "type": "promptTemplate",
       "configuration": {
         "template": "Use the news headlines below to write a few sentences tosummarize the latest news on this topic:\n\n##Topic:\n{{topic}}\n\n## Headlines {{headlines}}\n\\n## Summary:\n"
       }
@@ -58,14 +58,16 @@
       }
     },
     {
-      "id": "text-completion-4",
+      "id": "textCompletion-4",
       "type": "textCompletion"
     },
     {
       "id": "secrets-5",
       "type": "secrets",
       "configuration": {
-        "keys": ["PALM_KEY"]
+        "keys": [
+          "PALM_KEY"
+        ]
       }
     },
     {

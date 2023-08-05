@@ -15,7 +15,7 @@ const kit = board.addKit(Starter);
 const input = board.input();
 
 // Store prompt node for the same reason.
-const prompt = kit.textTemplate(
+const prompt = kit.promptTemplate(
   "This is a conversation between a friendly assistant and their user. You are the assistant and your job is to try to be helpful, empathetic, and fun.\n{{context}}\n\n== Current Conversation\nuser: {{question}}\nassistant:",
   { context: "" }
 );

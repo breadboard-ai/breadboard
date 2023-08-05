@@ -15,7 +15,7 @@ config();
 const board = new Board();
 const kit = board.addKit(Starter);
 
-const template = kit.textTemplate(
+const template = kit.promptTemplate(
   "Use the news headlines below to write a few sentences to" +
     "summarize the latest news on this topic:\n\n##Topic:\n" +
     "{{topic}}\n\n## Headlines {{headlines}}\n\\n## Summary:\n"

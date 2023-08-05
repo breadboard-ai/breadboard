@@ -17,7 +17,7 @@ const kit = board.addKit(Starter);
 const NEWS_BOARD_URL =
   "https://gist.githubusercontent.com/dglazkov/55db9bb36acd5ba5cfbd82d2901e7ced/raw/google-news-headlines.json";
 
-const template = kit.textTemplate(
+const template = kit.promptTemplate(
   "Use the news headlines below to write a few sentences to" +
     "summarize the latest news on this topic:\n\n##Topic:\n" +
     "{{topic}}\n\n## Headlines {{headlines}}\n\\n## Summary:\n"

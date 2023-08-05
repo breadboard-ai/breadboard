@@ -17,7 +17,7 @@ simplePrompt
   .wire(
     "text->question",
     kit
-      .textTemplate(
+      .promptTemplate(
         "Analyze the following question and instead of answering, list out steps to take to answer the question: {{question}}",
         { $id: "analyze-this" }
       )
