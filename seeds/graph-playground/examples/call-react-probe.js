@@ -89,8 +89,29 @@ await writeFile(
   `# Call React With Slot Diagram\n\n\`\`\`mermaid\n${main.mermaid()}\n\`\`\``
 );
 
-// Run the breadboard.
-const output = await main.runOnce({
-  text: "What's the square root of the number of holes on a typical breadboard?",
-});
+// Let's create a probe to help us see what's going on.
+// A probe is just an `EventTarget` instance. You can use the
+// `EventTarget` class itself or implement the `EventTarget` interface.
+const probe = new EventTarget();
+
+// We'll have a simple event handler for the probe:
+// just print things to console.
+const eventHandler = (e) => {
+  console.log(e.type, e.detail);
+};
+// Listen to ALL THE EVENTS.
+probe.addEventListener("input", eventHandler);
+probe.addEventListener("skip", eventHandler);
+probe.addEventListener("node", eventHandler);
+probe.addEventListener("output", eventHandler);
+
+// Alternatively, we can use a `LogProbe` that does the same thing.
+
+// Run the breadboard, supplying our probe as an extra argument.
+const output = await main.runOnce(
+  {
+    text: "What's the square root of the number of holes on a typical breadboard?",
+  },
+  probe
+);
 console.log("output", output.text);

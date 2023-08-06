@@ -3,24 +3,12 @@
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-reflect2["reflect
-id='reflect-2'"] -- "graph->graph" --> output3{{"output
-id='output-3'"}}:::output
-input1[/"input
-id='input-1'"/]:::input -- "graph->graph" --> reflect2["reflect
-id='reflect-2'"]
-math[["include
-id='math'"]]:::include -- "text->text" --> output4{{"output
-id='output-4'"}}:::output
-input1[/"input
-id='input-1'"/]:::input -- "math->text" --> math[["include
-id='math'"]]:::include
-search[["include
-id='search'"]]:::include -- "text->text" --> output5{{"output
-id='output-5'"}}:::output
-input1[/"input
-id='input-1'"/]:::input -- "search->text" --> search[["include
-id='search'"]]:::include
+reflect2["reflect id='reflect-2'"] -- "graph->graph" --> output3{{"output id='output-3'"}}:::output
+input1[/"input id='input-1'"/]:::input -- "graph->graph" --> reflect2["reflect id='reflect-2'"]
+math[["include id='math'"]]:::include -- "text->text" --> output4{{"output id='output-4'"}}:::output
+input1[/"input id='input-1'"/]:::input -- "math->text" --> math[["include id='math'"]]:::include
+search[["include id='search'"]]:::include -- "text->text" --> output5{{"output id='output-5'"}}:::output
+input1[/"input id='input-1'"/]:::input -- "search->text" --> search[["include id='search'"]]:::include
 $refsearch[$ref]:::config -- "$ref->$ref" --o search
 descriptionsearch[description]:::config -- "description->description" --o search
 $refmath[$ref]:::config -- "$ref->$ref" --o math

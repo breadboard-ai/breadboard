@@ -19,7 +19,7 @@ const tools = await Board.load("./examples/tools.json");
 
 // Next, we'll wire in another tool right into it.
 const news = tools.include(
-  `${REPO_URL}/seeds/graph-playground/examples/google-news.json`,
+  `${REPO_URL}/seeds/graph-playground/graphs/google-news.json`,
   {
     $id: "news",
     description:
