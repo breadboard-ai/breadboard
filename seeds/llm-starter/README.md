@@ -128,7 +128,9 @@ We'll get the output of:
 
 ### The `runJavascript` node
 
-Use this node to execute JavaScript code. The node takes a required `code` input property, which is a string that contains the code to be executed. It also takes an `name` input property, which is a string that specifies the name of the function that will be invoked to execute the code. If not supplied, the `run` function name will be used.
+Use this node to execute JavaScript code. The node recognizes a required `code` input property, which is a string that contains the code to be executed. It also recognizes a `name` input property, which is a string that specifies the name of the function that will be invoked to execute the code. If not supplied, the `run` function name will be used.
+
+All other input properties will be passed as arguments to the function.
 
 The code is executed in a new V8 context in Node or a Web Worker in the browser, which means that it cannot access any variables or functions from the outside.
 
@@ -152,10 +154,28 @@ We will get this output:
 }
 ```
 
+If we send:
+
+```json
+{
+  "code": "function run({ what }) { return `hello ${what}`; }",
+  "what": "world"
+}
+```
+
+We will get:
+
+```json
+{
+  "result": "hello world"
+}
+```
+
 #### Inputs:
 
 - `code` - required, must contain the code to execute
 - `name` - optional, must contain the name of the function to invoke (default: `run`)
+- zero or more inputs that will be passed as arguments to the function.
 
 #### Outputs:
 
