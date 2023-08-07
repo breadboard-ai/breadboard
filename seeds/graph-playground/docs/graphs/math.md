@@ -5,11 +5,11 @@
   ```mermaid
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-compute["runJavascript id='compute'"] -- "result->text" --> print{{"output id='print'"}}:::output
-mathfunctioncompletion["generateText id='math-function-completion'"] -- "completion->code" --> compute["runJavascript id='compute'"]
-secrets1("secrets id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --> mathfunctioncompletion["generateText id='math-function-completion'"]
-mathfunction["promptTemplate id='math-function'"] -- "prompt->text" --> mathfunctioncompletion["generateText id='math-function-completion'"]
-mathquestion[/"input id='math-question'"/]:::input -- "text->question" --> mathfunction["promptTemplate id='math-function'"]
+compute["runJavascript <br> id='compute'"] -- "result->text" --> print{{"output <br> id='print'"}}:::output
+mathfunctioncompletion["generateText <br> id='math-function-completion'"] -- "completion->code" --> compute["runJavascript <br> id='compute'"]
+secrets1("secrets <br> id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --> mathfunctioncompletion["generateText <br> id='math-function-completion'"]
+mathfunction["promptTemplate <br> id='math-function'"] -- "prompt->text" --> mathfunctioncompletion["generateText <br> id='math-function-completion'"]
+mathquestion[/"input <br> id='math-question'"/]:::input -- "text->question" --> mathfunction["promptTemplate <br> id='math-function'"]
 messagemathquestion[message]:::config -- "message->message" --o mathquestion
 templatemathfunction[template]:::config -- "template->template" --o mathfunction
 namecompute[name]:::config -- "name->name" --o compute

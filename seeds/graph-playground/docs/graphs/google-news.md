@@ -5,15 +5,15 @@
   ```mermaid
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-input1[/"input id='input-1'"/]:::input -- "text->topic" --> promptTemplate6["promptTemplate id='promptTemplate-6'"]
-secrets8("secrets id='secrets-8'"):::secrets -- "PALM_KEY->PALM_KEY" --o generateText7["generateText id='generateText-7'"]
-generateText7["generateText id='generateText-7'"] -- "completion->text" --> output9{{"output id='output-9'"}}:::output
-promptTemplate6["promptTemplate id='promptTemplate-6'"] -- "prompt->text" --> generateText7["generateText id='generateText-7'"]
-jsonata5["jsonata id='jsonata-5'"] -- "result->headlines" --> promptTemplate6["promptTemplate id='promptTemplate-6'"]
-xmlToJson4["xmlToJson id='xmlToJson-4'"] -- "json->json" --> jsonata5["jsonata id='jsonata-5'"]
-fetch3["fetch id='fetch-3'"] -- "response->xml" --> xmlToJson4["xmlToJson id='xmlToJson-4'"]
-urlTemplate2["urlTemplate id='urlTemplate-2'"] -- "url->url" --> fetch3["fetch id='fetch-3'"]
-input1[/"input id='input-1'"/]:::input -- "text->query" --> urlTemplate2["urlTemplate id='urlTemplate-2'"]
+input1[/"input <br> id='input-1'"/]:::input -- "text->topic" --> promptTemplate6["promptTemplate <br> id='promptTemplate-6'"]
+secrets8("secrets <br> id='secrets-8'"):::secrets -- "PALM_KEY->PALM_KEY" --o generateText7["generateText <br> id='generateText-7'"]
+generateText7["generateText <br> id='generateText-7'"] -- "completion->text" --> output9{{"output <br> id='output-9'"}}:::output
+promptTemplate6["promptTemplate <br> id='promptTemplate-6'"] -- "prompt->text" --> generateText7["generateText <br> id='generateText-7'"]
+jsonata5["jsonata <br> id='jsonata-5'"] -- "result->headlines" --> promptTemplate6["promptTemplate <br> id='promptTemplate-6'"]
+xmlToJson4["xmlToJson <br> id='xmlToJson-4'"] -- "json->json" --> jsonata5["jsonata <br> id='jsonata-5'"]
+fetch3["fetch <br> id='fetch-3'"] -- "response->xml" --> xmlToJson4["xmlToJson <br> id='xmlToJson-4'"]
+urlTemplate2["urlTemplate <br> id='urlTemplate-2'"] -- "url->url" --> fetch3["fetch <br> id='fetch-3'"]
+input1[/"input <br> id='input-1'"/]:::input -- "text->query" --> urlTemplate2["urlTemplate <br> id='urlTemplate-2'"]
 messageinput1[message]:::config -- "message->message" --o input1
 templateurlTemplate2[template]:::config -- "template->template" --o urlTemplate2
 rawfetch3[raw]:::config -- "raw->raw" --o fetch3

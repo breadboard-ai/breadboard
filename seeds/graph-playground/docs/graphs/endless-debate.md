@@ -5,21 +5,21 @@
   ```mermaid
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-rememberQuestion["append id='rememberQuestion'"] -- "accumulator->accumulator" --> rememberAlbert["append id='rememberAlbert'"]
-rememberAlbert["append id='rememberAlbert'"] -- "accumulator->accumulator" --> rememberFriedrich["append id='rememberFriedrich'"]
-rememberFriedrich["append id='rememberFriedrich'"] -- "accumulator->accumulator" --> rememberAlbert["append id='rememberAlbert'"]
-rememberAlbert["append id='rememberAlbert'"] -- "accumulator->context" --> promptTemplate2["promptTemplate id='promptTemplate-2'"]
-generateText3["generateText id='generateText-3'"] -- "completion->Albert" --> rememberAlbert["append id='rememberAlbert'"]
-generateText3["generateText id='generateText-3'"] -- "completion->text" --> output4{{"output id='output-4'"}}:::output
-secrets1("secrets id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o generateText3["generateText id='generateText-3'"]
-albert["promptTemplate id='albert'"] -- "prompt->text" --> generateText3["generateText id='generateText-3'"]
-rememberFriedrich["append id='rememberFriedrich'"] -- "accumulator->context" --> albert["promptTemplate id='albert'"]
-generateText5["generateText id='generateText-5'"] -- "completion->Friedrich" --> rememberFriedrich["append id='rememberFriedrich'"]
-generateText5["generateText id='generateText-5'"] -- "completion->text" --> output6{{"output id='output-6'"}}:::output
-secrets1("secrets id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o generateText5["generateText id='generateText-5'"]
-promptTemplate2["promptTemplate id='promptTemplate-2'"] -- "prompt->text" --> generateText5["generateText id='generateText-5'"]
-rememberQuestion["append id='rememberQuestion'"] -- "accumulator->context" --> albert["promptTemplate id='albert'"]
-input7[/"input id='input-7'"/]:::input -- "text->topic" --> rememberQuestion["append id='rememberQuestion'"]
+rememberQuestion["append <br> id='rememberQuestion'"] -- "accumulator->accumulator" --> rememberAlbert["append <br> id='rememberAlbert'"]
+rememberAlbert["append <br> id='rememberAlbert'"] -- "accumulator->accumulator" --> rememberFriedrich["append <br> id='rememberFriedrich'"]
+rememberFriedrich["append <br> id='rememberFriedrich'"] -- "accumulator->accumulator" --> rememberAlbert["append <br> id='rememberAlbert'"]
+rememberAlbert["append <br> id='rememberAlbert'"] -- "accumulator->context" --> promptTemplate2["promptTemplate <br> id='promptTemplate-2'"]
+generateText3["generateText <br> id='generateText-3'"] -- "completion->Albert" --> rememberAlbert["append <br> id='rememberAlbert'"]
+generateText3["generateText <br> id='generateText-3'"] -- "completion->text" --> output4{{"output <br> id='output-4'"}}:::output
+secrets1("secrets <br> id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o generateText3["generateText <br> id='generateText-3'"]
+albert["promptTemplate <br> id='albert'"] -- "prompt->text" --> generateText3["generateText <br> id='generateText-3'"]
+rememberFriedrich["append <br> id='rememberFriedrich'"] -- "accumulator->context" --> albert["promptTemplate <br> id='albert'"]
+generateText5["generateText <br> id='generateText-5'"] -- "completion->Friedrich" --> rememberFriedrich["append <br> id='rememberFriedrich'"]
+generateText5["generateText <br> id='generateText-5'"] -- "completion->text" --> output6{{"output <br> id='output-6'"}}:::output
+secrets1("secrets <br> id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o generateText5["generateText <br> id='generateText-5'"]
+promptTemplate2["promptTemplate <br> id='promptTemplate-2'"] -- "prompt->text" --> generateText5["generateText <br> id='generateText-5'"]
+rememberQuestion["append <br> id='rememberQuestion'"] -- "accumulator->context" --> albert["promptTemplate <br> id='albert'"]
+input7[/"input <br> id='input-7'"/]:::input -- "text->topic" --> rememberQuestion["append <br> id='rememberQuestion'"]
 keyssecrets1[keys]:::config -- "keys->keys" --o secrets1
 templatepromptTemplate2[template]:::config -- "template->template" --o promptTemplate2
 templatealbert[template]:::config -- "template->template" --o albert

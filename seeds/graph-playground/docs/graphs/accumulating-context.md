@@ -5,16 +5,16 @@
   ```mermaid
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-append3["append id='append-3'"] -- "accumulator->accumulator" --> append3["append id='append-3'"]
-secrets5("secrets id='secrets-5'"):::secrets -- "PALM_KEY->PALM_KEY" --o generateText4["generateText id='generateText-4'"]
-append3["append id='append-3'"] -- "accumulator->context" --> promptTemplate2["promptTemplate id='promptTemplate-2'"]
-generateText4["generateText id='generateText-4'"] -- "completion->assistant" --> append3["append id='append-3'"]
-output6{{"output id='output-6'"}}:::output --> input1[/"input id='input-1'"/]:::input
-generateText4["generateText id='generateText-4'"] -- "completion->text" --> output6{{"output id='output-6'"}}:::output
-promptTemplate2["promptTemplate id='promptTemplate-2'"] -- "prompt->text" --> generateText4["generateText id='generateText-4'"]
-input1[/"input id='input-1'"/]:::input -- "text->question" --> promptTemplate2["promptTemplate id='promptTemplate-2'"]
-input1[/"input id='input-1'"/]:::input -- "text->user" --> append3["append id='append-3'"]
-start(("passthrough id='start'")):::passthrough --> input1[/"input id='input-1'"/]:::input
+append3["append <br> id='append-3'"] -- "accumulator->accumulator" --> append3["append <br> id='append-3'"]
+secrets5("secrets <br> id='secrets-5'"):::secrets -- "PALM_KEY->PALM_KEY" --o generateText4["generateText <br> id='generateText-4'"]
+append3["append <br> id='append-3'"] -- "accumulator->context" --> promptTemplate2["promptTemplate <br> id='promptTemplate-2'"]
+generateText4["generateText <br> id='generateText-4'"] -- "completion->assistant" --> append3["append <br> id='append-3'"]
+output6{{"output <br> id='output-6'"}}:::output --> input1[/"input <br> id='input-1'"/]:::input
+generateText4["generateText <br> id='generateText-4'"] -- "completion->text" --> output6{{"output <br> id='output-6'"}}:::output
+promptTemplate2["promptTemplate <br> id='promptTemplate-2'"] -- "prompt->text" --> generateText4["generateText <br> id='generateText-4'"]
+input1[/"input <br> id='input-1'"/]:::input -- "text->question" --> promptTemplate2["promptTemplate <br> id='promptTemplate-2'"]
+input1[/"input <br> id='input-1'"/]:::input -- "text->user" --> append3["append <br> id='append-3'"]
+start(("passthrough <br> id='start'")):::passthrough --> input1[/"input <br> id='input-1'"/]:::input
 templatepromptTemplate2[template]:::config -- "template->template" --o promptTemplate2
 contextpromptTemplate2[context]:::config -- "context->context" --o promptTemplate2
 accumulatorappend3[accumulator]:::config -- "accumulator->accumulator" --o append3

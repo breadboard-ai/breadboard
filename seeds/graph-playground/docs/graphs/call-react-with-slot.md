@@ -5,18 +5,18 @@
   ```mermaid
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-include2[["include id='include-2'"]]:::include -- "text->text" --> output3{{"output id='output-3'"}}:::output
+include2[["include <br> id='include-2'"]]:::include -- "text->text" --> output3{{"output <br> id='output-3'"}}:::output
 subgraph tools
-reflect2["reflect id='reflect-2'"] -- "graph->graph" --> output3{{"output id='output-3'"}}:::output
-input1[/"input id='input-1'"/]:::input -- "graph->graph" --> reflect2["reflect id='reflect-2'"]
-math[["include id='math'"]]:::include -- "text->text" --> output4{{"output id='output-4'"}}:::output
-input1[/"input id='input-1'"/]:::input -- "math->text" --> math[["include id='math'"]]:::include
-search[["include id='search'"]]:::include -- "text->text" --> output5{{"output id='output-5'"}}:::output
-input1[/"input id='input-1'"/]:::input -- "search->text" --> search[["include id='search'"]]:::include
+reflect2["reflect <br> id='reflect-2'"] -- "graph->graph" --> output3{{"output <br> id='output-3'"}}:::output
+input1[/"input <br> id='input-1'"/]:::input -- "graph->graph" --> reflect2["reflect <br> id='reflect-2'"]
+math[["include <br> id='math'"]]:::include -- "text->text" --> output4{{"output <br> id='output-4'"}}:::output
+input1[/"input <br> id='input-1'"/]:::input -- "math->text" --> math[["include <br> id='math'"]]:::include
+search[["include <br> id='search'"]]:::include -- "text->text" --> output5{{"output <br> id='output-5'"}}:::output
+input1[/"input <br> id='input-1'"/]:::input -- "search->text" --> search[["include <br> id='search'"]]:::include
 end
 tools:::slotted -- "slotted->slotted" --o include2
 
-input1[/"input id='input-1'"/]:::input -- "text->text" --> include2[["include id='include-2'"]]:::include
+input1[/"input <br> id='input-1'"/]:::input -- "text->text" --> include2[["include <br> id='include-2'"]]:::include
 messageinput1[message]:::config -- "message->message" --o input1
 $refinclude2[$ref]:::config -- "$ref->$ref" --o include2
 

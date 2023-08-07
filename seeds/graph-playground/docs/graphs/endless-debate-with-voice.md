@@ -5,27 +5,27 @@
   ```mermaid
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-rememberQuestion["append id='rememberQuestion'"] -- "accumulator->accumulator" --> rememberAlbert["append id='rememberAlbert'"]
-rememberAlbert["append id='rememberAlbert'"] -- "accumulator->accumulator" --> rememberFriedrich["append id='rememberFriedrich'"]
-rememberFriedrich["append id='rememberFriedrich'"] -- "accumulator->accumulator" --> rememberAlbert["append id='rememberAlbert'"]
-rememberAlbert["append id='rememberAlbert'"] -- "accumulator->context" --> promptTemplate2["promptTemplate id='promptTemplate-2'"]
-generateText3["generateText id='generateText-3'"] -- "completion->Albert" --> rememberAlbert["append id='rememberAlbert'"]
-secrets1("secrets id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o generateText4["generateText id='generateText-4'"]
-generateText4["generateText id='generateText-4'"] -- "completion->text" --> output5{{"output id='output-5'"}}:::output
-albertvoice["promptTemplate id='albert-voice'"] -- "prompt->text" --> generateText4["generateText id='generateText-4'"]
-generateText3["generateText id='generateText-3'"] -- "completion->context" --> albertvoice["promptTemplate id='albert-voice'"]
-secrets1("secrets id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o generateText3["generateText id='generateText-3'"]
-albert["promptTemplate id='albert'"] -- "prompt->text" --> generateText3["generateText id='generateText-3'"]
-rememberFriedrich["append id='rememberFriedrich'"] -- "accumulator->context" --> albert["promptTemplate id='albert'"]
-generateText6["generateText id='generateText-6'"] -- "completion->Friedrich" --> rememberFriedrich["append id='rememberFriedrich'"]
-secrets1("secrets id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o generateText7["generateText id='generateText-7'"]
-generateText7["generateText id='generateText-7'"] -- "completion->text" --> output8{{"output id='output-8'"}}:::output
-friedrichvoice["promptTemplate id='friedrich-voice'"] -- "prompt->text" --> generateText7["generateText id='generateText-7'"]
-generateText6["generateText id='generateText-6'"] -- "completion->context" --> friedrichvoice["promptTemplate id='friedrich-voice'"]
-secrets1("secrets id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o generateText6["generateText id='generateText-6'"]
-promptTemplate2["promptTemplate id='promptTemplate-2'"] -- "prompt->text" --> generateText6["generateText id='generateText-6'"]
-rememberQuestion["append id='rememberQuestion'"] -- "accumulator->context" --> albert["promptTemplate id='albert'"]
-input9[/"input id='input-9'"/]:::input -- "text->topic" --> rememberQuestion["append id='rememberQuestion'"]
+rememberQuestion["append <br> id='rememberQuestion'"] -- "accumulator->accumulator" --> rememberAlbert["append <br> id='rememberAlbert'"]
+rememberAlbert["append <br> id='rememberAlbert'"] -- "accumulator->accumulator" --> rememberFriedrich["append <br> id='rememberFriedrich'"]
+rememberFriedrich["append <br> id='rememberFriedrich'"] -- "accumulator->accumulator" --> rememberAlbert["append <br> id='rememberAlbert'"]
+rememberAlbert["append <br> id='rememberAlbert'"] -- "accumulator->context" --> promptTemplate2["promptTemplate <br> id='promptTemplate-2'"]
+generateText3["generateText <br> id='generateText-3'"] -- "completion->Albert" --> rememberAlbert["append <br> id='rememberAlbert'"]
+secrets1("secrets <br> id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o generateText4["generateText <br> id='generateText-4'"]
+generateText4["generateText <br> id='generateText-4'"] -- "completion->text" --> output5{{"output <br> id='output-5'"}}:::output
+albertvoice["promptTemplate <br> id='albert-voice'"] -- "prompt->text" --> generateText4["generateText <br> id='generateText-4'"]
+generateText3["generateText <br> id='generateText-3'"] -- "completion->context" --> albertvoice["promptTemplate <br> id='albert-voice'"]
+secrets1("secrets <br> id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o generateText3["generateText <br> id='generateText-3'"]
+albert["promptTemplate <br> id='albert'"] -- "prompt->text" --> generateText3["generateText <br> id='generateText-3'"]
+rememberFriedrich["append <br> id='rememberFriedrich'"] -- "accumulator->context" --> albert["promptTemplate <br> id='albert'"]
+generateText6["generateText <br> id='generateText-6'"] -- "completion->Friedrich" --> rememberFriedrich["append <br> id='rememberFriedrich'"]
+secrets1("secrets <br> id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o generateText7["generateText <br> id='generateText-7'"]
+generateText7["generateText <br> id='generateText-7'"] -- "completion->text" --> output8{{"output <br> id='output-8'"}}:::output
+friedrichvoice["promptTemplate <br> id='friedrich-voice'"] -- "prompt->text" --> generateText7["generateText <br> id='generateText-7'"]
+generateText6["generateText <br> id='generateText-6'"] -- "completion->context" --> friedrichvoice["promptTemplate <br> id='friedrich-voice'"]
+secrets1("secrets <br> id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o generateText6["generateText <br> id='generateText-6'"]
+promptTemplate2["promptTemplate <br> id='promptTemplate-2'"] -- "prompt->text" --> generateText6["generateText <br> id='generateText-6'"]
+rememberQuestion["append <br> id='rememberQuestion'"] -- "accumulator->context" --> albert["promptTemplate <br> id='albert'"]
+input9[/"input <br> id='input-9'"/]:::input -- "text->topic" --> rememberQuestion["append <br> id='rememberQuestion'"]
 keyssecrets1[keys]:::config -- "keys->keys" --o secrets1
 templatepromptTemplate2[template]:::config -- "template->template" --o promptTemplate2
 templatealbert[template]:::config -- "template->template" --o albert
