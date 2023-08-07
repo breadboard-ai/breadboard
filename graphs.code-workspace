@@ -20,6 +20,9 @@
     },
     {
       "path": "seeds/node-nursery"
+    },
+    {
+      "path": "seeds/coffe-bot-board"
     }
   ],
   "settings": {}
