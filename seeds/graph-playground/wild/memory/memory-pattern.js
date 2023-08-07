@@ -40,6 +40,10 @@ export const memoryPatternOne = (kit, output) => {
 
   // "first" is the user who asks the question in ReAct algo.
   // It's usually captured as "Question" in memory.
+  // IMPORTANT: There is no actual accumulation going on here.
+  // The only reason why we're using `append` is to format output.
+  // It takes empty accumulator and produces `Question: <question>` output,
+  // which is then sent to another `append` as accumulator.
   const first = kit
     .append()
     .wire("accumulator->", second)
