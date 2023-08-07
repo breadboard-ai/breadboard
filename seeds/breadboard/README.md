@@ -139,7 +139,7 @@ input.wire(
 
 To learn more about Breadboard, here are a couple of resources:
 
-- [Breadboard Tutorial](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/tutorial/README.md) -- this one is great if learning step-by-step, from easy to more complex is your style.
+- [Breadboard Tutorial](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/tutorial/README.md) -- learn how to use breadboard step-by-step, from easy to more complex.
 - [Node Types Reference](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/nodes.md) - learn about the nodes that come built-in with Breadboard.
 - [Wiring spec](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/wires.md) -- all the different ways to wire nodes.
 - Sample boards, helpfully visualized with [Mermaid](https://mermaid.js.org/) (click on the the link next to "Original:" heading to see the board code):
