@@ -40,20 +40,20 @@ const board = new Board();
 
 Breadboards are all nodes and wires. Nodes do useful things, and wires flow control and data between them.
 
-Placing things on the board is exceedingly simple. Here's a line that places an `input` and an `output` node on the board:
+Placing things on the board is simple. This example places an `input` and an `output` node on the board:
 
 ```js
 const input = board.input();
 const output = board.output();
 ```
 
-Wiring things is also pretty easy:
+Wiring things is also simple:
 
 ```js
 input.wire("say->hear", output);
 ```
 
-The statement above wires the `say` property of the `input` node to the `hear` property the `output` node".
+The statement above wires the `say` property of the `input` node to the `hear` property of the `output` node.
 
 The `wire` method is chainable, so you can wire multiple wires at once. Wiring can also happen in both directions, allowing for more expressivity and flexibility.
 
@@ -73,7 +73,7 @@ board
   );
 ```
 
-You can run boards using `runOnce` and `run` methods. The `runOnce` is the simplest. It just takes inputs and produces a set of outputs:
+You can run boards using `runOnce` and `run` methods. The `runOnce` is the simplest; it takes inputs and produces a set of outputs:
 
 ```js
 const result = await board.runOnce({
@@ -82,7 +82,7 @@ const result = await board.runOnce({
 console.log("result", result);
 ```
 
-When run like that, the output of the sample board above will look something like this:
+When run, the output of the sample board above will look something like this:
 
 ```sh
 result { say: 'Hi, how are you?', hear: 'Doing alright.' }
@@ -105,7 +105,7 @@ const NEWS_BOARD_URL =
 const board = Board.load(NEWS_BOARD_URL);
 ```
 
-You can include them into your own boards, kind of like JS modules, and then treat them as nodes in your graph:
+You can include them into your own boards, similar to JS modules, and then treat them as nodes in your graph:
 
 ```js
 board
