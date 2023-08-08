@@ -29,7 +29,7 @@ expressionjsonata2[expression]:::config -- "expression->expression" --o jsonata2
 expressionjsonata3[expression]:::config -- "expression->expression" --o jsonata3
 templatepromptTemplate4[template]:::config -- "template->template" --o promptTemplate4
 messageinput5[message]:::config -- "message->message" --o input5
-stopsequencesreactcompletion[stop-sequences]:::config -- "stop-sequences->stop-sequences" --o reactcompletion
+stopSequencesreactcompletion[stopSequences]:::config -- "stopSequences->stopSequences" --o reactcompletion
 expressionjsonata6[expression]:::config -- "expression->expression" --o jsonata6
 rawjsonata6[raw]:::config -- "raw->raw" --o jsonata6
 slottoolsslot[slot]:::config -- "slot->slot" --o toolsslot

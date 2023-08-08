@@ -155,7 +155,7 @@
       "id": "react-completion",
       "type": "generateText",
       "configuration": {
-        "stop-sequences": [
+        "stopSequences": [
           "\nObservation"
         ]
       }

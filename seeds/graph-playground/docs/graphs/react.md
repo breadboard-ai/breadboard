@@ -37,7 +37,7 @@ promptTemplate2["promptTemplate <br> id='promptTemplate-2'"] -- "prompt->text" -
 keyssecrets1[keys]:::config -- "keys->keys" --o secrets1
 templatepromptTemplate2[template]:::config -- "template->template" --o promptTemplate2
 messageinput5[message]:::config -- "message->message" --o input5
-stopsequencesreactcompletion[stop-sequences]:::config -- "stop-sequences->stop-sequences" --o reactcompletion
+stopSequencesreactcompletion[stopSequences]:::config -- "stopSequences->stopSequences" --o reactcompletion
 templatemathfunction[template]:::config -- "template->template" --o mathfunction
 namecompute[name]:::config -- "name->name" --o compute
 argsparseCompletion6[args]:::config -- "args->args" --o parseCompletion6
