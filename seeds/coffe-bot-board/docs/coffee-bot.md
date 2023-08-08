@@ -4,11 +4,12 @@
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
 modifier_list(("passthrough <br> id='modifier_list'")):::passthrough -- "modifier_list->modifier_list" --> botprompt["promptTemplate <br> id='bot-prompt'"]
+menu(("passthrough <br> id='menu'")):::passthrough -- "menu->menu" --> botprompt["promptTemplate <br> id='bot-prompt'"]
 prices(("passthrough <br> id='prices'")):::passthrough -- "prices->prices" --> botprompt["promptTemplate <br> id='bot-prompt'"]
+moves(("passthrough <br> id='moves'")):::passthrough -- "moves->moves" --> botprompt["promptTemplate <br> id='bot-prompt'"]
 hours(("passthrough <br> id='hours'")):::passthrough -- "hours->hours" --> botprompt["promptTemplate <br> id='bot-prompt'"]
 modifiers(("passthrough <br> id='modifiers'")):::passthrough -- "modifiers->modifiers" --> botprompt["promptTemplate <br> id='bot-prompt'"]
-menu(("passthrough <br> id='menu'")):::passthrough -- "menu->menu" --> botprompt["promptTemplate <br> id='bot-prompt'"]
-moves(("passthrough <br> id='moves'")):::passthrough -- "moves->moves" --> botprompt["promptTemplate <br> id='bot-prompt'"]
+format(("passthrough <br> id='format'")):::passthrough -- "format->format" --> botprompt["promptTemplate <br> id='bot-prompt'"]
 generateText2["generateText <br> id='generateText-2'"] -- "completion->completion" --> completion{{"output <br> id='completion'"}}:::output
 generateText2["generateText <br> id='generateText-2'"] -- "filters->filters" --> blocked{{"output <br> id='blocked'"}}:::output
 secrets3("secrets <br> id='secrets-3'"):::secrets -- "PALM_KEY->PALM_KEY" --> generateText2["generateText <br> id='generateText-2'"]
@@ -16,11 +17,12 @@ botprompt["promptTemplate <br> id='bot-prompt'"] -- "prompt->text" --> generateT
 input1[/"input <br> id='input-1'"/]:::input -- "user->user" --> botprompt["promptTemplate <br> id='bot-prompt'"]
 templatebotprompt[template]:::config -- "template->template" --o botprompt
 modifier_listmodifier_list[modifier_list]:::config -- "modifier_list->modifier_list" --o modifier_list
+menumenu[menu]:::config -- "menu->menu" --o menu
 pricesprices[prices]:::config -- "prices->prices" --o prices
+movesmoves[moves]:::config -- "moves->moves" --o moves
 hourshours[hours]:::config -- "hours->hours" --o hours
 modifiersmodifiers[modifiers]:::config -- "modifiers->modifiers" --o modifiers
-menumenu[menu]:::config -- "menu->menu" --o menu
-movesmoves[moves]:::config -- "moves->moves" --o moves
+formatformat[format]:::config -- "format->format" --o format
 safetySettingsgenerateText2[safetySettings]:::config -- "safetySettings->safetySettings" --o generateText2
 keyssecrets3[keys]:::config -- "keys->keys" --o secrets3
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000

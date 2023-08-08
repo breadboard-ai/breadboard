@@ -24,16 +24,18 @@ const makeTemplate = async (
   const template = kit.promptTemplate(text, { $id: "bot-prompt" });
 
   // For now, just read them as static files.
-  const readPart = async (name: string) => {
-    const part = await readFile(`./prompts/${name}.txt`, "utf-8");
+  const readPart = async (name: string, extension: string) => {
+    const part = await readFile(`./prompts/${name}.${extension}`, "utf-8");
     template.wire(`<-${name}`, board.passthrough({ [name]: part, $id: name }));
   };
 
   await Promise.all(
     ["modifier_list", "hours", "menu", "prices", "modifiers", "moves"].map(
-      (name) => readPart(name)
+      (name) => readPart(name, "txt")
     )
   );
+
+  await Promise.all(["format"].map((name) => readPart(name, "json")));
 
   return template;
 };

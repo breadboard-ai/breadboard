@@ -1,0 +1,19 @@
+{
+  "thought": "starting with a summary of order state (what's been done), a string describing how the coffeebot decides on a move given the previous customer turns.",
+  "move1": "a string with one or more of the following values: checkMenu|addToOrder|summarizeAndConfirm|finishOrder|changeItem|removeItem|changeModifier|removeModifier|cancelOrder|greet|close|thanks|redirect|describe|recover",
+  "move2": "a string with one or more of the following values: checkMenu|addToOrder|summarizeAndConfirm|finishOrder|changeItem|removeItem|changeModifier|removeModifier|cancelOrder|greet|close|thanks|redirect|describe|recover",
+  "move3": "a string with one or more of the following values: checkMenu|addToOrder|summarizeAndConfirm|finishOrder|changeItem|removeItem|changeModifier|removeModifier|cancelOrder|greet|close|thanks|redirect|describe|recover",
+  "move4": "a string with one or more of the following values: checkMenu|addToOrder|summarizeAndConfirm|finishOrder|changeItem|removeItem|changeModifier|removeModifier|cancelOrder|greet|close|thanks|redirect|describe|recover",
+  "orderType": "string to be included after summarizeOrder: here|to go",
+  "response": "a string with the response spoken by the coffeebot to the customer",
+  "currentOrder": [
+    {
+      "drink": "drinkName",
+      "modifiers": [{ "mod": "modifier" }, { "mod": "modifier" }]
+    },
+    {
+      "drink": "drinkName",
+      "modifiers": [{ "mod": "modifier" }, { "mod": "modifier" }]
+    }
+  ]
+}
