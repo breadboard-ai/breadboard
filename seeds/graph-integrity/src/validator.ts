@@ -185,36 +185,46 @@ function insertGraph(
     const inputNodes = newNodes.filter((node) => node.node.type === "input");
     const outputNodes = newNodes.filter((node) => node.node.type === "output");
 
-    // Rewire nodes sending data to the parent node to send dat to the
+    // Rewire nodes sending data to the parent node to send data to the
     // corresponding input node instead.
     parentNode.incoming.forEach((incoming) => {
       const newEdges: EdgeFromBreadboard[] = [];
 
-      incoming.from.outgoing.forEach((outgoing) => {
-        if (outgoing.to === parentNode)
-          inputNodes.forEach((input) => {
-            newEdges.push({ ...outgoing, to: input });
-          });
+      // Find the input nodes that correspond to the wire to the parent
+      // node. *-> matches all input nodes.
+      inputNodes.forEach((input) => {
+        if (
+          incoming.edge.out === "*" ||
+          input.outgoing.find((edge) => edge.edge.out === incoming.edge.in)
+        )
+          newEdges.push({ ...incoming, to: input });
       });
-      incoming.from.outgoing.push(...newEdges);
 
-      inputNodes.forEach((input) => input.incoming.push(incoming));
+      // Add the new edges to the graph, connecting the node originally wired to
+      // the parent node with the corresponding input nodes.
+      incoming.from.outgoing.push(...newEdges);
+      newEdges.forEach((edge) => edge.to.incoming.push(edge));
     });
 
+    // Same for output nodes.
     parentNode.outgoing.forEach((outgoing) => {
       const newEdges: EdgeFromBreadboard[] = [];
 
-      outgoing.to.incoming.forEach((incoming) => {
-        if (incoming.from === parentNode)
-          outputNodes.forEach((output) =>
-            newEdges.push({ ...incoming, from: output })
-          );
+      // Same as above. *-> matches all output nodes.
+      outputNodes.forEach((output) => {
+        if (
+          outgoing.edge.out === "*" ||
+          output.incoming.find((edge) => edge.edge.in === outgoing.edge.out)
+        )
+          newEdges.push({ ...outgoing, from: output });
       });
-      outgoing.to.incoming.push(...newEdges);
 
-      outputNodes.forEach((output) => output.outgoing.push(outgoing));
+      outgoing.to.incoming.push(...newEdges);
+      newEdges.forEach((edge) => edge.from.outgoing.push(edge));
     });
 
+    // Mark input and output nodes as passthrough nodes, as that's how included
+    // input and output nodes behave like in the runtime.
     inputNodes.forEach((input) => (input.role = NodeRoles.passthrough));
     outputNodes.forEach((output) => (output.role = NodeRoles.passthrough));
   }

@@ -80,8 +80,9 @@ test("GraphSafetyValidator: Getting labels for nodes in subgraphs", (t) => {
 
   v.addGraph({
     edges: [
-      { from: "in", to: "include", in: "x", out: "x" },
-      { from: "include", to: "out", in: "y", out: "y" },
+      { from: "in", to: "include", out: "x", in: "x" },
+      { from: "include", to: "out", out: "y", in: "y" },
+      { from: "include", to: "out", out: "z", in: "z" },
     ],
     nodes: [
       { id: "in", type: "input" },
@@ -93,13 +94,18 @@ test("GraphSafetyValidator: Getting labels for nodes in subgraphs", (t) => {
   const v2 = v.getSubgraphValidator({ id: "include", type: "include" });
   v2.addGraph({
     edges: [
-      { from: "in", to: "compute", in: "x", out: "compute" },
-      { from: "compute", to: "out", in: "result", out: "y" },
+      { from: "in1", to: "fetch", out: "x", in: "url" },
+      { from: "fetch", to: "out1", out: "result", in: "y" },
+      { from: "in2", to: "compute", out: "x", in: "compute" },
+      { from: "compute", to: "out2", out: "result", in: "z" },
     ],
     nodes: [
-      { id: "in", type: "input" },
+      { id: "in1", type: "input" },
+      { id: "in2", type: "input" },
       { id: "compute", type: "runJavascript" },
-      { id: "out", type: "output" },
+      { id: "fetch", type: "fetch" },
+      { id: "out1", type: "output" },
+      { id: "out2", type: "output" },
     ],
   });
 
@@ -108,6 +114,76 @@ test("GraphSafetyValidator: Getting labels for nodes in subgraphs", (t) => {
     label: new SafetyLabel(SafetyLabelValue.TRUSTED),
   });
   t.deepEqual(v.getValidatorMetadata({ id: "out", type: "output" }), {
+    description: "UNTRUSTED",
+    label: new SafetyLabel(SafetyLabelValue.UNTRUSTED),
+  });
+  t.deepEqual(v2.getValidatorMetadata({ id: "in1", type: "input" }), {
+    description: "TRUSTED",
+    label: new SafetyLabel(SafetyLabelValue.TRUSTED),
+  });
+  t.deepEqual(v2.getValidatorMetadata({ id: "in2", type: "input" }), {
+    description: "TRUSTED",
+    label: new SafetyLabel(SafetyLabelValue.TRUSTED),
+  });
+  t.deepEqual(v2.getValidatorMetadata({ id: "out1", type: "output" }), {
+    description: "UNTRUSTED",
+    label: new SafetyLabel(SafetyLabelValue.UNTRUSTED),
+  });
+  t.deepEqual(v2.getValidatorMetadata({ id: "out2", type: "output" }), {
+    description: "TRUSTED",
+    label: new SafetyLabel(SafetyLabelValue.TRUSTED),
+  });
+});
+
+test("GraphSafetyValidator: Subgraphs with * wires", (t) => {
+  const v = new GraphIntegrityValidator();
+
+  v.addGraph({
+    edges: [
+      { from: "in", to: "include", out: "*" },
+      { from: "include", to: "out", out: "*" },
+      { from: "include", to: "outz", out: "z" },
+    ],
+    nodes: [
+      { id: "in", type: "input" },
+      { id: "include", type: "include" },
+      { id: "out", type: "output" },
+      { id: "outz", type: "output" },
+    ],
+  });
+
+  const v2 = v.getSubgraphValidator({ id: "include", type: "include" });
+  v2.addGraph({
+    edges: [
+      { from: "in1", to: "fetch", out: "x", in: "url" },
+      { from: "fetch", to: "out1", out: "result", in: "y" },
+      { from: "in2", to: "compute", out: "x", in: "compute" },
+      { from: "compute", to: "out2", out: "result", in: "z" },
+    ],
+    nodes: [
+      { id: "in1", type: "input" },
+      { id: "in2", type: "input" },
+      { id: "compute", type: "runJavascript" },
+      { id: "fetch", type: "fetch" },
+      { id: "out1", type: "output" },
+      { id: "out2", type: "output" },
+    ],
+  });
+
+  t.deepEqual(v.getValidatorMetadata({ id: "in", type: "input" }), {
+    description: "TRUSTED",
+    label: new SafetyLabel(SafetyLabelValue.TRUSTED),
+  });
+
+  // We expect the * wire to be UNTRUSTED, because it is not connected to both
+  // fetch and compute.
+  t.deepEqual(v.getValidatorMetadata({ id: "out", type: "output" }), {
+    description: "UNTRUSTED",
+    label: new SafetyLabel(SafetyLabelValue.UNTRUSTED),
+  });
+
+  // But this doesn't clobber the single z wire out!
+  t.deepEqual(v.getValidatorMetadata({ id: "outz", type: "output" }), {
     description: "TRUSTED",
     label: new SafetyLabel(SafetyLabelValue.TRUSTED),
   });
