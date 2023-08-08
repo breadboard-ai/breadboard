@@ -34,14 +34,17 @@ export interface GraphIntegrityValidatorMetadata
 
 interface IncomingEdgeFromBreadboard extends IncomingEdge {
   edge: Edge;
+  from: NodeFromBreadboard;
 }
 
 interface OutgoingEdgeFromBreadboard extends OutgoingEdge {
   edge: Edge;
+  to: NodeFromBreadboard;
 }
 
 interface NodeFromBreadboard extends Node {
   node: NodeDescriptor;
+  insertionNumber: number;
   incoming: IncomingEdgeFromBreadboard[];
   outgoing: OutgoingEdgeFromBreadboard[];
 }
@@ -57,6 +60,7 @@ const typeToRole = new Map<string, NodeRoles>([
 ]);
 
 type IdMap = Map<string, NodeFromBreadboard>;
+let insertionCount = 0;
 
 /**
  * @class Breadboard GraphIntegrityValidator
@@ -92,6 +96,7 @@ export class GraphIntegrityValidator implements BreadboardValidator {
   addGraph(newGraph: GraphDescriptor) {
     insertGraph(this.wholeGraph, newGraph, this.idMap, this.parentNode);
     computeLabelsForGraph(this.wholeGraph);
+    insertionCount++;
   }
 
   /**
@@ -125,6 +130,10 @@ export class GraphIntegrityValidator implements BreadboardValidator {
     return new GraphIntegrityValidator(this.wholeGraph, parentNode);
   }
 
+  toMermaid(): string {
+    return toMermaid(this.wholeGraph);
+  }
+
   protected getNodeById(node: NodeDescriptor): NodeFromBreadboard | undefined {
     return this.idMap.get(node.id);
   }
@@ -147,6 +156,7 @@ function insertGraph(
   const newNodes = newGraph.nodes.map((node) => {
     const internalNode = {
       node,
+      insertionNumber: insertionCount,
       incoming: [],
       outgoing: [],
       label: new SafetyLabel(),
@@ -188,7 +198,7 @@ function insertGraph(
       );
 
     parentNode.incoming.forEach((incoming) => {
-      const newEdges: OutgoingEdge[] = [];
+      const newEdges: OutgoingEdgeFromBreadboard[] = [];
 
       incoming.from.outgoing.forEach((outgoing) => {
         if (outgoing.to === parentNode)
@@ -202,7 +212,7 @@ function insertGraph(
     });
 
     parentNode.outgoing.forEach((outgoing) => {
-      const newEdges: IncomingEdge[] = [];
+      const newEdges: IncomingEdgeFromBreadboard[] = [];
 
       outgoing.to.incoming.forEach((incoming) => {
         if (incoming.from === parentNode)
@@ -218,4 +228,30 @@ function insertGraph(
     inputNodes.forEach((input) => (input.role = NodeRoles.passthrough));
     outputNodes.forEach((output) => (output.role = NodeRoles.passthrough));
   }
+}
+
+function getMermaidId(node: NodeFromBreadboard) {
+  return `${node.node.id.replace(/-/g, "_")}_${node.insertionNumber}`;
+}
+
+function toMermaid(graph: GraphFromBreadboard) {
+  const edges = [];
+  const nodes = [];
+
+  for (const node of graph.nodes) {
+    const fromId = getMermaidId(node);
+    for (const edge of node.outgoing) {
+      const toId = getMermaidId(edge.to);
+      edges.push(`${fromId} --> ${toId}`);
+    }
+
+    nodes.push(`${fromId}[${fromId} <br> ${node.label.toString()}]`);
+  }
+
+  return `
+    %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
+    graph TD;
+    ${edges.join("\n")}
+    ${nodes.join("\n")}
+    classDef default stroke:#ffab40,fill:#fff2ccff,color:#000;`;
 }
