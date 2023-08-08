@@ -17,5 +17,5 @@ import { SafetyLabelValue } from "./types.js";
  */
 export const trustedLabels: Map<NodeTypeIdentifier, SafetyLabel> = new Map([
   ["fetch", new SafetyLabel(SafetyLabelValue.UNTRUSTED)],
-  ["run-javascript", new SafetyLabel(SafetyLabelValue.TRUSTED)],
+  ["runJavascript", new SafetyLabel(SafetyLabelValue.TRUSTED)],
 ]);
