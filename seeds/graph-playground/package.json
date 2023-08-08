@@ -53,6 +53,7 @@
     "@clack/prompts": "^0.6.3",
     "@google-labs/breadboard": "*",
     "@google-labs/llm-starter": "*",
+    "@google-labs/graph-integrity": "*",
     "dotenv": "^16.3.1"
   },
   "engines": {
