@@ -31,7 +31,8 @@ MOVES:
 Respond in valid JSON of the following format:
 {{format}}
 
-Examples
+EXAMPLES:
+{{examples}}
 ==
 Customer: Show the menu.
 {

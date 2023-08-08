@@ -4,41 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { readFile, writeFile } from "fs/promises";
+import { writeFile } from "fs/promises";
 
-import { Board, BreadboardNode } from "@google-labs/breadboard";
+import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 
 import { config } from "dotenv";
+import { makeTemplate } from "./make-template.js";
 
 config();
 
 const board = new Board();
 const kit = board.addKit(Starter);
-
-const makeTemplate = async (
-  board: Board,
-  kit: Starter
-): Promise<BreadboardNode> => {
-  const text = await readFile("./prompts/prompt-template.txt", "utf-8");
-  const template = kit.promptTemplate(text, { $id: "bot-prompt" });
-
-  // For now, just read them as static files.
-  const readPart = async (name: string, extension: string) => {
-    const part = await readFile(`./prompts/${name}.${extension}`, "utf-8");
-    template.wire(`<-${name}`, board.passthrough({ [name]: part, $id: name }));
-  };
-
-  await Promise.all(
-    ["modifier_list", "hours", "menu", "prices", "modifiers", "moves"].map(
-      (name) => readPart(name, "txt")
-    )
-  );
-
-  await Promise.all(["format"].map((name) => readPart(name, "json")));
-
-  return template;
-};
 
 const template = await makeTemplate(board, kit);
 board.input().wire(
