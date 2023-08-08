@@ -44,9 +44,16 @@ board.input().wire(
   template.wire(
     "prompt->text",
     kit
-      .generateText()
+      .generateText({
+        safetySettings: [
+          {
+            category: "HARM_CATEGORY_DEROGATORY",
+            threshold: "BLOCK_MEDIUM_AND_ABOVE",
+          },
+        ],
+      })
       .wire("completion->", board.output({ $id: "completion" }))
-      .wire("error->", board.output({ $id: "error" }))
+      .wire("filters->", board.output({ $id: "blocked" }))
       .wire("<-PALM_KEY", kit.secrets(["PALM_KEY"]))
   )
 );
