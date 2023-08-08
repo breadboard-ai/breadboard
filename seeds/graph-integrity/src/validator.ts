@@ -188,14 +188,7 @@ function insertGraph(
   // the same point.
   if (parentNode) {
     const inputNodes = newNodes.filter((node) => node.node.type === "input");
-    const outputNodes = newNodes.filter((node) => node.node.type === "input");
-
-    // TODO: Support multiple input and output nodes, which probably means
-    // matching up attached wires accordingly.
-    if (inputNodes.length !== 1 || outputNodes.length !== 1)
-      throw new Error(
-        "Invalid graph: Included graphs must have exactly one input and one output node."
-      );
+    const outputNodes = newNodes.filter((node) => node.node.type === "output");
 
     parentNode.incoming.forEach((incoming) => {
       const newEdges: OutgoingEdgeFromBreadboard[] = [];
