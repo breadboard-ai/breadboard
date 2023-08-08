@@ -7,16 +7,16 @@
       "in": "modifier_list"
     },
     {
-      "from": "menu",
-      "to": "bot-prompt",
-      "out": "menu",
-      "in": "menu"
-    },
-    {
       "from": "hours",
       "to": "bot-prompt",
       "out": "hours",
       "in": "hours"
+    },
+    {
+      "from": "menu",
+      "to": "bot-prompt",
+      "out": "menu",
+      "in": "menu"
     },
     {
       "from": "prices",
@@ -95,17 +95,17 @@
       }
     },
     {
-      "id": "menu",
-      "type": "passthrough",
-      "configuration": {
-        "menu": "Coffee Drinks:\nEspresso\nAmericano\nCold Brew\n\nCoffee Drinks with Milk:\nLatte\nCappuccino\nCortado\nMacchiato\nMocha\nFlat White\n\nTea Drinks with Milk:\nChai Latte\nMatcha Latte\n\nHerbal Teas:\nPeppermint Rose herbal tea\nTangerine Rooibos herbal tea\n\nGreen Teas:\nCloud and Mist green tea\nWild Strawberry green tea\nGinger Green Cold Steep Tea\n\nBlack Teas:\nThree Cultivar Red black tea\nLavender Earl Grey black tea\nEnglish Breakfast black tea\n\nOolong Tea:\nJin Xuan oolong tea\n\nOther Drinks:\nSteamer\nHot Chocolate\n\n"
-      }
-    },
-    {
       "id": "hours",
       "type": "passthrough",
       "configuration": {
         "hours": "Tues, Wed, Thurs, 10am to 2pm\n"
+      }
+    },
+    {
+      "id": "menu",
+      "type": "passthrough",
+      "configuration": {
+        "menu": "Coffee Drinks:\nEspresso\nAmericano\nCold Brew\n\nCoffee Drinks with Milk:\nLatte\nCappuccino\nCortado\nMacchiato\nMocha\nFlat White\n\nTea Drinks with Milk:\nChai Latte\nMatcha Latte\n\nHerbal Teas:\nPeppermint Rose herbal tea\nTangerine Rooibos herbal tea\n\nGreen Teas:\nCloud and Mist green tea\nWild Strawberry green tea\nGinger Green Cold Steep Tea\n\nBlack Teas:\nThree Cultivar Red black tea\nLavender Earl Grey black tea\nEnglish Breakfast black tea\n\nOolong Tea:\nJin Xuan oolong tea\n\nOther Drinks:\nSteamer\nHot Chocolate\n\n"
       }
     },
     {
