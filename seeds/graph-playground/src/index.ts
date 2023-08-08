@@ -59,7 +59,15 @@ probe.addEventListener("node", (event: Event) => {
   const { detail } = event as ProbeEvent;
   if (logIntegrityLabels && detail.validatorMetadata?.length) {
     const label = detail.validatorMetadata.map((m) => m.description).join(", ");
-    note(`Integrity label for ${detail.descriptor.id}: ${label}`, "integrity");
+    note(
+      `Integrity label for ${detail.descriptor.id} in ${[
+        ...(detail.sources || []),
+        "root",
+      ]
+        .reverse()
+        .join("->")}: ${label}`,
+      "integrity"
+    );
   }
   if (detail.descriptor.type !== "generateText") return;
   const value = (detail?.outputs?.completion as string) || "empty response";

@@ -121,7 +121,7 @@ export class Board implements Breadboard {
    * events to it. See [Chapter 7: Probes](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-7-probes) of the Breadboard tutorial for more information.
    */
   async *run(probe?: EventTarget): AsyncGenerator<BreadbordRunResult> {
-    const core = new Core(this, this.#slots, probe);
+    const core = new Core(this, this.#slots, this.#validators, probe);
     const kits = [core, ...this.kits];
     const handlers = kits.reduce((handlers, kit) => {
       return { ...handlers, ...kit.handlers };
@@ -160,6 +160,11 @@ export class Board implements Breadboard {
         yield new OutputStageResult(inputs);
         continue;
       }
+
+      // The include and slot handlers require a reference to themselves to
+      // create subgraph validators at the right location in the graph.
+      if (["include", "slot"].includes(descriptor.type))
+        inputs["parent"] = descriptor;
 
       const handler = handlers[descriptor.type];
       if (!handler)

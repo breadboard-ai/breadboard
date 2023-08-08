@@ -86,6 +86,15 @@ export interface BreadboardValidator {
    * @param node Node to get metadata for.
    */
   getValidatorMetadata(node: NodeDescriptor): BreadboardValidatorMetadata;
+
+  /**
+   * Generate a validator for a subgraph, replacing a given node. Call
+   * .addGraph() on the returned validator to add and validate the subgraph.
+   *
+   * @param node The node to replace.
+   * @returns A validator for the subgraph.
+   */
+  getSubgraphValidator(node: NodeDescriptor): BreadboardValidator;
 }
 
 /**
