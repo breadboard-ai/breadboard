@@ -246,7 +246,7 @@ The node will produce this output:
 
 - `PALM_KEY` required, must contain the Google Cloud Platform API key for the project has the "Generative Language API" API enabled.
 - `text` required, sent as the prompt for the completion.
-- `stop-sequences` optional array of strings. These will be passed as the stop sequences to the completion API.
+- `stopSequences` optional array of strings. These will be passed as the stop sequences to the completion API.
 
 #### Outputs:
 

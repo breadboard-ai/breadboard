@@ -4,10 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { readFile, writeFile } from "fs/promises";
+
 import { Board, BreadboardNode } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 
-import { readFile, writeFile } from "fs/promises";
+import { config } from "dotenv";
+
+config();
 
 const board = new Board();
 const kit = board.addKit(Starter);
@@ -35,7 +39,17 @@ const makeTemplate = async (
 };
 
 const template = await makeTemplate(board, kit);
-board.input().wire("user->", template.wire("prompt->", board.output()));
+board.input().wire(
+  "user->",
+  template.wire(
+    "prompt->text",
+    kit
+      .generateText()
+      .wire("completion->", board.output({ $id: "completion" }))
+      .wire("error->", board.output({ $id: "error" }))
+      .wire("<-PALM_KEY", kit.secrets(["PALM_KEY"]))
+  )
+);
 
 await writeFile("./graphs/coffee-bot.json", JSON.stringify(board, null, 2));
 

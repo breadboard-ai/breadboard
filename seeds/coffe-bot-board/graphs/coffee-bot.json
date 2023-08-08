@@ -7,6 +7,12 @@
       "in": "modifier_list"
     },
     {
+      "from": "menu",
+      "to": "bot-prompt",
+      "out": "menu",
+      "in": "menu"
+    },
+    {
       "from": "hours",
       "to": "bot-prompt",
       "out": "hours",
@@ -25,22 +31,34 @@
       "in": "modifiers"
     },
     {
-      "from": "menu",
-      "to": "bot-prompt",
-      "out": "menu",
-      "in": "menu"
-    },
-    {
       "from": "moves",
       "to": "bot-prompt",
       "out": "moves",
       "in": "moves"
     },
     {
+      "from": "generateText-2",
+      "to": "completion",
+      "out": "completion",
+      "in": "completion"
+    },
+    {
+      "from": "generateText-2",
+      "to": "error",
+      "out": "error",
+      "in": "error"
+    },
+    {
+      "from": "secrets-3",
+      "to": "generateText-2",
+      "out": "PALM_KEY",
+      "in": "PALM_KEY"
+    },
+    {
       "from": "bot-prompt",
-      "to": "output-2",
+      "to": "generateText-2",
       "out": "prompt",
-      "in": "prompt"
+      "in": "text"
     },
     {
       "from": "input-1",
@@ -65,6 +83,13 @@
       }
     },
     {
+      "id": "menu",
+      "type": "passthrough",
+      "configuration": {
+        "menu": "Coffee Drinks:\nEspresso\nAmericano\nCold Brew\n\nCoffee Drinks with Milk:\nLatte\nCappuccino\nCortado\nMacchiato\nMocha\nFlat White\n\nTea Drinks with Milk:\nChai Latte\nMatcha Latte\n\nHerbal Teas:\nPeppermint Rose herbal tea\nTangerine Rooibos herbal tea\n\nGreen Teas:\nCloud and Mist green tea\nWild Strawberry green tea\nGinger Green Cold Steep Tea\n\nBlack Teas:\nThree Cultivar Red black tea\nLavender Earl Grey black tea\nEnglish Breakfast black tea\n\nOolong Tea:\nJin Xuan oolong tea\n\nOther Drinks:\nSteamer\nHot Chocolate\n\n"
+      }
+    },
+    {
       "id": "hours",
       "type": "passthrough",
       "configuration": {
@@ -86,13 +111,6 @@
       }
     },
     {
-      "id": "menu",
-      "type": "passthrough",
-      "configuration": {
-        "menu": "Coffee Drinks:\nEspresso\nAmericano\nCold Brew\n\nCoffee Drinks with Milk:\nLatte\nCappuccino\nCortado\nMacchiato\nMocha\nFlat White\n\nTea Drinks with Milk:\nChai Latte\nMatcha Latte\n\nHerbal Teas:\nPeppermint Rose herbal tea\nTangerine Rooibos herbal tea\n\nGreen Teas:\nCloud and Mist green tea\nWild Strawberry green tea\nGinger Green Cold Steep Tea\n\nBlack Teas:\nThree Cultivar Red black tea\nLavender Earl Grey black tea\nEnglish Breakfast black tea\n\nOolong Tea:\nJin Xuan oolong tea\n\nOther Drinks:\nSteamer\nHot Chocolate\n\n"
-      }
-    },
-    {
       "id": "moves",
       "type": "passthrough",
       "configuration": {
@@ -104,8 +122,25 @@
       "type": "input"
     },
     {
-      "id": "output-2",
+      "id": "generateText-2",
+      "type": "generateText"
+    },
+    {
+      "id": "completion",
       "type": "output"
+    },
+    {
+      "id": "error",
+      "type": "output"
+    },
+    {
+      "id": "secrets-3",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "PALM_KEY"
+        ]
+      }
     }
   ],
   "kits": [

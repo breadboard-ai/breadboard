@@ -38,7 +38,7 @@ albert.wire(
   "prompt->text",
   kit
     .generateText({
-      "stop-sequences": ["\nFriedrich", "\n**Friedrich"],
+      stopSequences: ["\nFriedrich", "\n**Friedrich"],
     })
     .wire("completion->Albert", rememberAlbert)
     .wire("completion->text", board.output())
@@ -49,7 +49,7 @@ friedrich.wire(
   "prompt->text",
   kit
     .generateText({
-      "stop-sequences": ["\nAlbert", "\n**Albert"],
+      stopSequences: ["\nAlbert", "\n**Albert"],
     })
     .wire("completion->Friedrich", rememberFriedrich)
     .wire("completion->text", board.output())

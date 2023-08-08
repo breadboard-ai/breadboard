@@ -95,7 +95,7 @@ board.input("Ask ReAct a question").wire("text->Question", rememberQuestion);
 // all answers.
 const reActCompletion = kit
   .generateText({
-    "stop-sequences": ["\nObservation"],
+    stopSequences: ["\nObservation"],
     $id: "react-completion",
   })
   .wire("<-PALM_KEY.", secrets);

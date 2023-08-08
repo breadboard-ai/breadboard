@@ -19,21 +19,31 @@ type generateTextInputs = {
   /**
    * Stop sequences
    */
-  "stop-sequences": string[];
+  stopSequences: string[];
 };
 
-export default async (inputs: InputValues) => {
+export const prepareRequest = (inputs: InputValues) => {
   const values = inputs as generateTextInputs;
   if (!values.PALM_KEY)
     throw new Error("Text completion requires `PALM_KEY` input");
   if (!values.text) throw new Error("Text completion requires `text` input");
 
   const prompt = new Text().text(values.text);
-  const stopSequences = values["stop-sequences"] || [];
+  const stopSequences = values.stopSequences || [];
   stopSequences.forEach((stopSequence) => prompt.addStopSequence(stopSequence));
-  const request = palm(values.PALM_KEY).text(prompt);
-  const data = await fetch(request);
+  return palm(values.PALM_KEY).text(prompt);
+};
+
+export const prepareResponse = async (data: Response) => {
   const response = (await data.json()) as GenerateTextResponse;
+
+  if (response.filters?.[0]?.reason)
+    return { error: { reason: response.filters[0].reason } };
+
   const completion = response?.candidates?.[0]?.output as string;
   return { completion };
+};
+
+export default async (inputs: InputValues) => {
+  return await prepareResponse(await fetch(prepareRequest(inputs)));
 };
