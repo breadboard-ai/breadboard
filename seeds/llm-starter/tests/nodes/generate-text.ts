@@ -33,7 +33,7 @@ test("prepareRequest returns a valid request", async (t) => {
   t.is(await request.text(), JSON.stringify({ prompt: { text: "foo" } }));
 });
 
-test("prepareRequest knows hoow to handle stop sequences", async (t) => {
+test("prepareRequest knows how to handle stop sequences", async (t) => {
   const request = prepareRequest({
     text: "foo",
     PALM_KEY: "bar",
@@ -50,6 +50,37 @@ test("prepareRequest knows hoow to handle stop sequences", async (t) => {
     JSON.stringify({
       prompt: { text: "foo" },
       stopSequences: ["baz"],
+    })
+  );
+});
+
+test("prepareRequest knows how to handle safety settings", async (t) => {
+  const request = prepareRequest({
+    text: "foo",
+    PALM_KEY: "bar",
+    safetySettings: [
+      {
+        category: "HARM_CATEGORY_DEROGATORY",
+        threshold: "BLOCK_LOW_AND_ABOVE",
+      },
+    ],
+  });
+  t.is(
+    request.url,
+    "https://generativelanguage.googleapis.com/v1beta2/models/text-bison-001:generateText?key=bar"
+  );
+  t.is(request.method, "POST");
+  t.is(request.headers.get("Content-Type"), "application/json");
+  t.is(
+    await request.text(),
+    JSON.stringify({
+      prompt: { text: "foo" },
+      safetySettings: [
+        {
+          category: "HARM_CATEGORY_DEROGATORY",
+          threshold: "BLOCK_LOW_AND_ABOVE",
+        },
+      ],
     })
   );
 });

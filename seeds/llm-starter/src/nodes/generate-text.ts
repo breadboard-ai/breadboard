@@ -5,7 +5,12 @@
  */
 
 import type { InputValues, OutputValues } from "@google-labs/graph-runner";
-import { GenerateTextResponse, Text, palm } from "@google-labs/palm-lite";
+import {
+  GenerateTextResponse,
+  SafetySetting,
+  Text,
+  palm,
+} from "@google-labs/palm-lite";
 
 type generateTextInputs = {
   /**
@@ -20,6 +25,10 @@ type generateTextInputs = {
    * Stop sequences
    */
   stopSequences: string[];
+  /**
+   * Safety settings
+   */
+  safetySettings: SafetySetting[];
 };
 
 export const prepareRequest = (inputs: InputValues) => {
@@ -31,6 +40,10 @@ export const prepareRequest = (inputs: InputValues) => {
   const prompt = new Text().text(values.text);
   const stopSequences = values.stopSequences || [];
   stopSequences.forEach((stopSequence) => prompt.addStopSequence(stopSequence));
+  const safetySettings = values.safetySettings || [];
+  safetySettings.forEach((safetySetting) =>
+    prompt.addSafetySetting(safetySetting.category, safetySetting.threshold)
+  );
   return palm(values.PALM_KEY).text(prompt);
 };
 
