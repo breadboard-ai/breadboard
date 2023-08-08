@@ -20,11 +20,8 @@ export enum SafetyLabelValue {
 
 // TODO: Add labels (and constraints) to edges
 
-export interface IncomingEdge {
+export interface Edge {
   from: Node;
-}
-
-export interface OutgoingEdge {
   to: Node;
 }
 
@@ -35,8 +32,8 @@ export enum NodeRoles {
 
 export interface Node {
   node: { id: string };
-  incoming: IncomingEdge[];
-  outgoing: OutgoingEdge[];
+  incoming: Edge[];
+  outgoing: Edge[];
   label: SafetyLabel;
   constraint?: SafetyLabel;
   role?: NodeRoles;

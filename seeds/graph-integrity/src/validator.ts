@@ -14,7 +14,7 @@
 
 import {
   GraphDescriptor,
-  Edge,
+  Edge as EdgeDescriptor,
   NodeDescriptor,
 } from "@google-labs/graph-runner";
 import {
@@ -22,7 +22,7 @@ import {
   type BreadboardValidatorMetadata,
 } from "@google-labs/breadboard";
 
-import { Graph, Node, IncomingEdge, OutgoingEdge, NodeRoles } from "./types.js";
+import { Graph, Node, Edge, NodeRoles } from "./types.js";
 import { computeLabelsForGraph } from "./compute-labels.js";
 import { SafetyLabel } from "./label.js";
 import { trustedLabels } from "./trusted-labels.js";
@@ -32,21 +32,17 @@ export interface GraphIntegrityValidatorMetadata
   label: SafetyLabel;
 }
 
-interface IncomingEdgeFromBreadboard extends IncomingEdge {
-  edge: Edge;
+interface EdgeFromBreadboard extends Edge {
+  edge: EdgeDescriptor;
   from: NodeFromBreadboard;
-}
-
-interface OutgoingEdgeFromBreadboard extends OutgoingEdge {
-  edge: Edge;
   to: NodeFromBreadboard;
 }
 
 interface NodeFromBreadboard extends Node {
   node: NodeDescriptor;
   insertionNumber: number;
-  incoming: IncomingEdgeFromBreadboard[];
-  outgoing: OutgoingEdgeFromBreadboard[];
+  incoming: EdgeFromBreadboard[];
+  outgoing: EdgeFromBreadboard[];
 }
 
 interface GraphFromBreadboard extends Graph {
@@ -175,11 +171,10 @@ function insertGraph(
     if (!from) throw new Error(`Invalid graph: Can't find node ${edge.from}`);
     if (!to) throw new Error(`Invalid graph: Can't find node ${edge.from}`);
 
-    const incoming = { edge, from } as IncomingEdgeFromBreadboard;
-    const outgoing = { edge, to } as OutgoingEdgeFromBreadboard;
+    const newEdge = { edge, from, to } as EdgeFromBreadboard;
 
-    from.outgoing.push(outgoing);
-    to.incoming.push(incoming);
+    from.outgoing.push(newEdge);
+    to.incoming.push(newEdge);
   });
 
   // If this is an included graph, we need to connect the input and output
@@ -190,14 +185,16 @@ function insertGraph(
     const inputNodes = newNodes.filter((node) => node.node.type === "input");
     const outputNodes = newNodes.filter((node) => node.node.type === "output");
 
+    // Rewire nodes sending data to the parent node to send dat to the
+    // corresponding input node instead.
     parentNode.incoming.forEach((incoming) => {
-      const newEdges: OutgoingEdgeFromBreadboard[] = [];
+      const newEdges: EdgeFromBreadboard[] = [];
 
       incoming.from.outgoing.forEach((outgoing) => {
         if (outgoing.to === parentNode)
-          inputNodes.forEach((input) =>
-            newEdges.push({ ...outgoing, to: input })
-          );
+          inputNodes.forEach((input) => {
+            newEdges.push({ ...outgoing, to: input });
+          });
       });
       incoming.from.outgoing.push(...newEdges);
 
@@ -205,7 +202,7 @@ function insertGraph(
     });
 
     parentNode.outgoing.forEach((outgoing) => {
-      const newEdges: IncomingEdgeFromBreadboard[] = [];
+      const newEdges: EdgeFromBreadboard[] = [];
 
       outgoing.to.incoming.forEach((incoming) => {
         if (incoming.from === parentNode)
