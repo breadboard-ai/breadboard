@@ -74,3 +74,41 @@ test("GraphSafetyValidator: Getting unknown labels throws", (t) => {
   });
   t.throws(() => v.getValidatorMetadata({ id: "b", type: "input" }));
 });
+
+test("GraphSafetyValidator: Getting labels for nodes in subgraphs", (t) => {
+  const v = new GraphIntegrityValidator();
+
+  v.addGraph({
+    edges: [
+      { from: "in", to: "include", in: "x", out: "x" },
+      { from: "include", to: "out", in: "y", out: "y" },
+    ],
+    nodes: [
+      { id: "in", type: "input" },
+      { id: "include", type: "include" },
+      { id: "out", type: "output" },
+    ],
+  });
+
+  const v2 = v.getSubgraphValidator({ id: "include", type: "include" });
+  v2.addGraph({
+    edges: [
+      { from: "in", to: "compute", in: "x", out: "compute" },
+      { from: "compute", to: "out", in: "result", out: "y" },
+    ],
+    nodes: [
+      { id: "in", type: "input" },
+      { id: "compute", type: "runJavascript" },
+      { id: "out", type: "output" },
+    ],
+  });
+
+  t.deepEqual(v.getValidatorMetadata({ id: "in", type: "input" }), {
+    description: "TRUSTED",
+    label: new SafetyLabel(SafetyLabelValue.TRUSTED),
+  });
+  t.deepEqual(v.getValidatorMetadata({ id: "out", type: "output" }), {
+    description: "TRUSTED",
+    label: new SafetyLabel(SafetyLabelValue.TRUSTED),
+  });
+});

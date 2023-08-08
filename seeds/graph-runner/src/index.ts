@@ -17,5 +17,4 @@ export type {
   KitDescriptor,
 } from "./types.js";
 export { TraversalMachine } from "./traversal/machine.js";
-export { GraphRepresentation } from "./traversal/representation.js";
 export { toMermaid } from "./mermaid.js";

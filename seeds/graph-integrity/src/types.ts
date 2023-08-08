@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { SafetyLabel } from "./label.js";
+
 /**
  * Information flow control label values, i.e. levels of trust.
  *
@@ -14,4 +16,32 @@
 export enum SafetyLabelValue {
   UNTRUSTED,
   TRUSTED,
+}
+
+// TODO: Add labels (and constraints) to edges
+
+export interface IncomingEdge {
+  from: Node;
+}
+
+export interface OutgoingEdge {
+  to: Node;
+}
+
+export enum NodeRoles {
+  placeHolder,
+  passthrough,
+}
+
+export interface Node {
+  node: { id: string };
+  incoming: IncomingEdge[];
+  outgoing: OutgoingEdge[];
+  label: SafetyLabel;
+  constraint?: SafetyLabel;
+  role?: NodeRoles;
+}
+
+export interface Graph {
+  nodes: Node[];
 }

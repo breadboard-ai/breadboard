@@ -4,15 +4,26 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/*
+ * This file bridges between Breadboard and the rest of the integrity code.
+ *
+ * It exports a BreadboardValidator, it translates a GraphDescriptor into the
+ * local graph notation, implements semantics for include/slot with input/output
+ * and applies the trusted labels.
+ */
+
 import {
   GraphDescriptor,
-  GraphRepresentation,
+  Edge,
   NodeDescriptor,
 } from "@google-labs/graph-runner";
 import {
   type BreadboardValidator,
   type BreadboardValidatorMetadata,
 } from "@google-labs/breadboard";
+
+import { Graph, Node, IncomingEdge, OutgoingEdge, NodeRoles } from "./types.js";
+import { computeLabelsForGraph } from "./compute-labels.js";
 import { SafetyLabel } from "./label.js";
 import { trustedLabels } from "./trusted-labels.js";
 
@@ -21,31 +32,70 @@ export interface GraphIntegrityValidatorMetadata
   label: SafetyLabel;
 }
 
+interface IncomingEdgeFromBreadboard extends IncomingEdge {
+  edge: Edge;
+}
+
+interface OutgoingEdgeFromBreadboard extends OutgoingEdge {
+  edge: Edge;
+}
+
+interface NodeFromBreadboard extends Node {
+  node: NodeDescriptor;
+  incoming: IncomingEdgeFromBreadboard[];
+  outgoing: OutgoingEdgeFromBreadboard[];
+}
+
+interface GraphFromBreadboard extends Graph {
+  nodes: NodeFromBreadboard[];
+}
+
+const typeToRole = new Map<string, NodeRoles>([
+  ["passthrough", NodeRoles.passthrough],
+  ["include", NodeRoles.placeHolder],
+  ["slot", NodeRoles.placeHolder],
+]);
+
+type IdMap = Map<string, NodeFromBreadboard>;
+
 /**
- * @class GraphIntegrityValidator
+ * @class Breadboard GraphIntegrityValidator
  *
- * A validator for the integrity of a graph in terms of safety.
- * Call @method {computeLabelsForFullGraph} to validate the full graph.
+ * @implements {BreadboardValidator} and validates the integrity of a graph in
+ * terms of safety.
+ *
+ * Use one instance per id namespace. Call @method {addGraph} to add nodes to
+ * the validator. And call @method {getSubgraphValidator} to get a new validator
+ * for new namespaces, such as include and slot nodes
+ *
+ * Acts as bridge between Breadboard and the generic graph validation code.
  */
 export class GraphIntegrityValidator implements BreadboardValidator {
-  protected nodeSafetyLabels: Map<NodeDescriptor["id"], SafetyLabel> =
-    new Map();
-  protected graph: GraphRepresentation | undefined = undefined;
+  protected wholeGraph: GraphFromBreadboard;
+  protected idMap: IdMap = new Map();
+  protected parentNode: NodeFromBreadboard | undefined;
+
+  constructor(
+    wholeGraph?: GraphFromBreadboard,
+    parentNode?: NodeFromBreadboard
+  ) {
+    this.wholeGraph = wholeGraph ?? ({ nodes: [] } as GraphFromBreadboard);
+    this.parentNode = parentNode;
+  }
 
   /**
-   * Add graph to the validator, and validate it.
+   * Add nodes to the validator and validate the full graph.
    *
    * @param graph Graph to validate.
    * @throws {Error} if the graph is not safe.
    */
-  addGraph(graph: GraphDescriptor) {
-    this.graph = new GraphRepresentation(graph);
-    this.computeLabelsForFullGraph();
+  addGraph(newGraph: GraphDescriptor) {
+    insertGraph(this.wholeGraph, newGraph, this.idMap, this.parentNode);
+    computeLabelsForGraph(this.wholeGraph);
   }
 
   /**
-   * Get the safety label of a node. This is only valid after calling @method
-   * {computeLabelsForFullGraph}.
+   * Get the safety label of a node.
    *
    * @param nodeId The id of the node to get the label for.
    * @returns The safety label of the node, or undefined if it wasn't computed.
@@ -53,7 +103,7 @@ export class GraphIntegrityValidator implements BreadboardValidator {
    *          there were no constraints on it.
    */
   getValidatorMetadata(node: NodeDescriptor): GraphIntegrityValidatorMetadata {
-    const label = this.nodeSafetyLabels.get(node.id);
+    const label = this.getNodeById(node)?.label;
     if (!label) throw Error(`Safety label for node ${node.id} not computed.`);
     return {
       description: label.toString() ?? "Unknown label",
@@ -62,109 +112,110 @@ export class GraphIntegrityValidator implements BreadboardValidator {
   }
 
   /**
-   * Compute labels and hence validate the safety of the graph as whole.
-   * @throws {Error} if the graph is not safe.
-   * After this you can use @method {getNodeSafetyLabel} to get the label of
-   * any node. For input nodes, this means the minimum expected trust, and it's
-   * up to the callee to ensure that. A safety label of undefined means that
-   * there were no constraints on it either way.
+   * Generate a validator for a subgraph, replacing a given node. Call
+   * .addGraph() on the returned validator to add and validate the subgraph.
    *
-   * Validating the full graph before running it is ideal, but can also be
-   * overly strict. Once we have enough of the tools to create safe graphs, this
-   * is the only method that should be used.
-   *
-   * Until then it might be desirable to instead validate the graph
-   * incrementally. TODO: Implement that.
+   * @param node The node to replace.
+   * @returns A validator for the subgraph.
    */
-  computeLabelsForFullGraph(): void {
-    if (this.graph === undefined) throw Error("No graph to validate.");
+  getSubgraphValidator(node: NodeDescriptor): BreadboardValidator {
+    const parentNode = this.getNodeById(node);
+    if (!parentNode) throw Error(`Node ${node.id} not found.`);
 
-    // This method recomputes all labels from scratch.
-    // Initialize with the initial constraints.
-    this.nodeSafetyLabels = new Map();
+    return new GraphIntegrityValidator(this.wholeGraph, parentNode);
+  }
 
-    // Find all nodes with a constraint label via node types
-    const constraintSafetyLabels: Map<NodeDescriptor["id"], SafetyLabel> =
-      new Map();
-    for (const [nodeId, nodeDescription] of this.graph.nodes) {
-      if (trustedLabels.has(nodeDescription.type)) {
-        constraintSafetyLabels.set(
-          nodeId,
-          trustedLabels.get(nodeDescription.type) as SafetyLabel
-        );
-      }
-    }
+  protected getNodeById(node: NodeDescriptor): NodeFromBreadboard | undefined {
+    return this.idMap.get(node.id);
+  }
+}
 
-    // Compute all labels with an embarrassingly simple and slow fixed-point
-    // algorithm. This should be replaced by a more efficient constraint solver,
-    // but that's a lot of work and fiddly. This should be good enough for now
-    // and should even cover some of the next steps.
-    //
-    // Picture raising the trust levels where necessary to enable flow until it
-    // stops changing. That is, this will propagate labels through the graph
-    // until it reaches a fixed point. If it encounters a contradiction with a
-    // constraint, it will throw an error, as the graph is not safe.
-    let change: boolean;
-    do {
-      change = false;
-      for (const [nodeId] of this.graph.nodes) {
-        const constraintSafetyLabel = constraintSafetyLabels.get(nodeId);
+/**
+ * Insert a new graph into this graph.
+ *
+ * @param graph Graph that will receive new graph
+ * @param newGraph Graph to be inserted
+ * @param idMap Id map to be updated, namespaced to the inserted graph
+ * @param parentNode Optional parent node to which this graph will be wired
+ */
+function insertGraph(
+  graph: Graph,
+  newGraph: GraphDescriptor,
+  idMap: IdMap,
+  parentNode?: NodeFromBreadboard
+): void {
+  const newNodes = newGraph.nodes.map((node) => {
+    const internalNode = {
+      node,
+      incoming: [],
+      outgoing: [],
+      label: new SafetyLabel(),
+      constraint: trustedLabels.get(node.type),
+      role: typeToRole.get(node.type),
+    } as NodeFromBreadboard;
+    idMap.set(node.id, internalNode);
+    return internalNode;
+  });
 
-        const incomingNodes =
-          this.graph.heads.get(nodeId)?.map((edge) => edge.from) ?? [];
-        const outgoingNodes =
-          this.graph.tails.get(nodeId)?.map((edge) => edge.to) ?? [];
+  graph.nodes.push(...newNodes);
 
-        // Compute the meet (lowest label) of all incoming edges. Add the
-        // constraint label for this node. This can lower the label, but not
-        // raise it.
-        const incomingSafetyLabels = incomingNodes.map((nodeId) =>
-          this.nodeSafetyLabels.get(nodeId)
-        );
-        const incomingSafetyLabel = SafetyLabel.computeMeetOfLabels([
-          ...incomingSafetyLabels,
-          constraintSafetyLabel,
-        ]);
+  newGraph.edges.forEach((edge) => {
+    const from = idMap.get(edge.from);
+    const to = idMap.get(edge.to);
+    if (!from) throw new Error(`Invalid graph: Can't find node ${edge.from}`);
+    if (!to) throw new Error(`Invalid graph: Can't find node ${edge.from}`);
 
-        // Compute the join (highest label) of all outgoing edges.
-        // Add the constraint label for this node. This can raise the label.
-        const outgoingSafetyLabels = outgoingNodes.map((nodeId) =>
-          this.nodeSafetyLabels.get(nodeId)
-        );
-        const outgoingSafetyLabel = SafetyLabel.computeJoinOfLabels([
-          ...outgoingSafetyLabels,
-          constraintSafetyLabel,
-        ]);
+    const incoming = { edge, from } as IncomingEdgeFromBreadboard;
+    const outgoing = { edge, to } as OutgoingEdgeFromBreadboard;
 
-        // Graph is not safe if a constraint has to be violated, i.e. here a
-        // node has to be upgraded.
-        if (
-          constraintSafetyLabel &&
-          !outgoingSafetyLabel.equalsTo(constraintSafetyLabel)
-        ) {
-          throw Error(
-            `Graph is not safe. E.g. node ${nodeId} requires to write to ${outgoingSafetyLabel} but can only be ${constraintSafetyLabel}`
+    from.outgoing.push(outgoing);
+    to.incoming.push(incoming);
+  });
+
+  // If this is an included graph, we need to connect the input and output
+  // nodes. The parent node acts as placeholder. We need to keep the original
+  // wires to the place holder node, so that we can include multiple graphs at
+  // the same point.
+  if (parentNode) {
+    const inputNodes = newNodes.filter((node) => node.node.type === "input");
+    const outputNodes = newNodes.filter((node) => node.node.type === "input");
+
+    // TODO: Support multiple input and output nodes, which probably means
+    // matching up attached wires accordingly.
+    if (inputNodes.length !== 1 || outputNodes.length !== 1)
+      throw new Error(
+        "Invalid graph: Included graphs must have exactly one input and one output node."
+      );
+
+    parentNode.incoming.forEach((incoming) => {
+      const newEdges: OutgoingEdge[] = [];
+
+      incoming.from.outgoing.forEach((outgoing) => {
+        if (outgoing.to === parentNode)
+          inputNodes.forEach((input) =>
+            newEdges.push({ ...outgoing, to: input })
           );
-        }
+      });
+      incoming.from.outgoing.push(...newEdges);
 
-        // Compute the new safety label as the join (highest of) of (lowest)
-        // incoming and (highest) outgoing edges. Note that if this increases
-        // the trust of this node, the next iteration will backpropagate that.
-        const newSafetyLabel = SafetyLabel.computeJoinOfLabels([
-          incomingSafetyLabel,
-          outgoingSafetyLabel,
-        ]);
-        const currentSafetyLabel = this.nodeSafetyLabels.get(nodeId);
+      inputNodes.forEach((input) => input.incoming.push(incoming));
+    });
 
-        // If the new safety label is different from the current one, update it.
-        if (
-          !currentSafetyLabel ||
-          !newSafetyLabel.equalsTo(currentSafetyLabel)
-        ) {
-          this.nodeSafetyLabels.set(nodeId, newSafetyLabel);
-          change = true;
-        }
-      }
-    } while (change);
+    parentNode.outgoing.forEach((outgoing) => {
+      const newEdges: IncomingEdge[] = [];
+
+      outgoing.to.incoming.forEach((incoming) => {
+        if (incoming.from === parentNode)
+          outputNodes.forEach((output) =>
+            newEdges.push({ ...incoming, from: output })
+          );
+      });
+      outgoing.to.incoming.push(...newEdges);
+
+      outputNodes.forEach((output) => output.outgoing.push(outgoing));
+    });
+
+    inputNodes.forEach((input) => (input.role = NodeRoles.passthrough));
+    outputNodes.forEach((output) => (output.role = NodeRoles.passthrough));
   }
 }
