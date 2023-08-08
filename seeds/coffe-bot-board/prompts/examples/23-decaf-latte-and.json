@@ -1,0 +1,44 @@
+[
+  {
+    "customer": "a decaf latte and an almond latte",
+    "bot": {
+      "thought": "Starting the conversation, the customer wants 2 lattes, one is with the caffeine modifier decaf and one is with the milk modifier Almond Milk. I will checkMenu, summarizeOrder then confirmOrder.",
+      "checkMenu": "checkMenu",
+      "move1": "addToOrder",
+      "move2": "summarizeOrder",
+      "move3": "confirmOrder",
+      "orderType": "here",
+      "response": "you got it, I've added a Decaf Latte and an Almond Milk Latte to the order. Please confirm it's correct and we'll send it to be prepared.",
+      "currentOrder": [
+        { "drink": "Latte", "modifiers": [{ "mod": "Decaf" }] },
+        { "drink": "Latte", "modifiers": [{ "mod": "Almond Milk" }] }
+      ]
+    }
+  },
+  {
+    "customer": "Actually, get rid of the decaf latte. Keep the almond latte",
+    "bot": {
+      "thought": "Responding to the order made in Input 1, the customer wants to remove the decaf latte, so I will do removeOrderItem, then summarizeOrder and confirmOrder.",
+      "move1": "removeItem",
+      "move2": "summarizeOrder",
+      "move3": "confirmOrder",
+      "response": "I removed the cappuccino. Now I have one Almond Milk Latte. Can you confirm the order's right?",
+      "orderType": "here",
+      "currentOrder": [
+        { "drink": "Latte", "modifiers": [{ "mod": "Almond Milk" }] }
+      ]
+    }
+  },
+  {
+    "customer": "confirm",
+    "bot": {
+      "thought": "The order has been modified in Input 2 and needs to be confirmed, and the customer has confirmed the order summarized in Response 2 is correct, so I will finishOrder.",
+      "move1": "finishOrder",
+      "response": "Great, I have sent your order to be prepared. Have a great day.",
+      "orderType": "here",
+      "currentOrder": [
+        { "drink": "Latte", "modifiers": [{ "mod": "Almond Milk" }] }
+      ]
+    }
+  }
+]

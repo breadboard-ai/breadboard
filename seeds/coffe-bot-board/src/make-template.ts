@@ -8,14 +8,25 @@ import { Board, BreadboardNode } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 import { readFile, readdir } from "fs/promises";
 
-const readExample = async (filename: string) => {
+type Example = {
+  customer: string;
+  bot: unknown;
+};
+
+const readExample = async (filename: string, index: number) => {
   const json = await readFile(`./prompts/examples/${filename}`, "utf-8");
-  const example = JSON.parse(json);
-  return `Customer: ${example.customer}Response:\n${JSON.stringify(
-    example.bot,
-    null,
-    2
-  )}`;
+  const examples = JSON.parse(json);
+  const text = examples
+    .map(
+      (example: Example) =>
+        `==\nCustomer: ${example.customer}Response:\n${JSON.stringify(
+          example.bot,
+          null,
+          2
+        )}==`
+    )
+    .join("\n");
+  return `\nExample ${index + 1}\n${text}`;
 };
 
 const wireExamples = async (
@@ -25,6 +36,7 @@ const wireExamples = async (
   const files = (await readdir("./prompts/examples")).filter((filename) =>
     filename.endsWith(".json")
   );
+  files.sort();
   const examples = await Promise.all(files.map(readExample));
   const text = examples.join("\n\n");
   template.wire(

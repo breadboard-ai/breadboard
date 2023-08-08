@@ -1,0 +1,35 @@
+[
+  {
+    "customer": "I'll take a black tea",
+    "bot": {
+      "thought": "Starting the conversation the customer orders 'black tea'. I will check menu and clarify to list the options",
+      "move1": "checkMenu",
+      "move2": "clarify",
+      "orderType": "here",
+      "response": "Sure. We have Three Cultivar Red, Lavender Earl Grey, and English Breakfast. Which would you like?",
+      "currentOrder": []
+    }
+  },
+  {
+    "customer": "The Cultivar Red please, to go",
+    "bot": {
+      "thought": "In input 1 the customer was given a choice of three black teas. The customer chooses 'Cultivar Red' which matches 'Three Cultivar Red'. I will addToOrder, then summarizeOrder and confirmOrder. The customer specifies the orderType to 'to go'",
+      "move1": "addToOrder",
+      "move2": "summarizeOrder",
+      "move3": "confirmOrder",
+      "response": "Got it. I'll add a Three Cultivar Red to the order. Please confirm it's right and I'll send it off to the coffe bar.",
+      "orderType": "to go",
+      "currentOrder": [{ "drink": "Three cultivar Red tea", "modifiers": [] }]
+    }
+  },
+  {
+    "customer": "That's right.",
+    "bot": {
+      "thought": "The customer confirms the order repeated in input 2 is correct, so I will finishOrder and respond.",
+      "move1": "finishOrder",
+      "response": "OK. I've sent your order off to be prepared. Have a great day.",
+      "orderType": "to go",
+      "currentOrder": [{ "drink": "Three cultivar Red tea", "modifiers": [] }]
+    }
+  }
+]

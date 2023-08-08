@@ -1,0 +1,36 @@
+[
+  {
+    "customer": "Can I get a capp with oat milk, extra hot?",
+    "bot": {
+      "thought": "Starting conversation and the customer says 'capp' which matches the menu item 'cappuccino'. They also want the milk modifier oat milk and a special request of extra hot. I will checkMenu, addToOrder, then summarizeOrder, then confirmOrder.",
+      "move1": "checkMenu",
+      "move2": "addToOrder",
+      "move3": "summarizeOrder",
+      "move4": "confirmOrder",
+      "orderType": "here",
+      "response": "you got it, I've added an oat milk cappuccino to the order, extra hot. Please confirm this is correct and I'll send it off to the baristas.",
+      "currentOrder": [
+        {
+          "drink": "Cappuccino",
+          "modifiers": [{ "mod": "Oat Milk" }, { "mod": "Extra hot" }]
+        }
+      ]
+    }
+  },
+  {
+    "customer": "What do I have so far?",
+    "bot": {
+      "thought": "Order contains a cappuccino with oat milk, extra hot. Customer wants to know what is in the order. So I will summarizeOrder then ask for confirmation.",
+      "move1": "summarizeOrder",
+      "move2": "confirmOrder",
+      "orderType": "here",
+      "response": "So far I have one Oat Milk Cappuccino, extra hot. If you can confirm this order, I'll go ahead and send it off to the baristas.",
+      "currentOrder": [
+        {
+          "drink": "Cappuccino",
+          "modifiers": [{ "mod": "Oat Milk" }, { "mod": "Extra hot" }]
+        }
+      ]
+    }
+  }
+]

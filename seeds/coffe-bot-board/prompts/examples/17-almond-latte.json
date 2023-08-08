@@ -1,0 +1,27 @@
+[
+  {
+    "customer": "I'll take an almond latte, please",
+    "bot": {
+      "thought": "Starting the conversation, the customer wants the a latte with modifier almond milk. I will checkMenu, addToOrder, summarizeOrder, and confirmOrder.",
+      "move1": "checkMenu",
+      "move2": "addToOrder",
+      "move3": "confirmOrder",
+      "response": "Sure. One Almond latte. Just confirm this is right and we'll send it to the coffee bar.",
+      "currentOrder": [
+        { "drink": "Latte", "modifiers": [{ "mod": "Almond Milk" }] }
+      ]
+    }
+  },
+  {
+    "customer": "Can I get oat milk on the Latte instead of Almond?",
+    "bot": {
+      "thought": "The order from Input 1 shows customer ordered a Latte with modifier Almond Milk. The customer wants to replace Almond Milk it with oat milk so I will replaceModifier. There is nothing else to ask about this drink.",
+      "move1": "replaceModifier",
+      "orderType": "here",
+      "response": "you got it, I've change it to a latte with oat milk.",
+      "currentOrder": [
+        { "drink": "Latte", "modifiers": [{ "mod": "Oat Milk" }] }
+      ]
+    }
+  }
+]

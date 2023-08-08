@@ -1,0 +1,12 @@
+[
+  {
+    "customer": "I'd like a green tea",
+    "bot": {
+      "thought": "Starting the conversation the customer orders 'green tea'. I will check menu and clarify to list the options",
+      "move1": "checkMenu",
+      "move2": "clarify",
+      "response": "Sure. We have Cloud and Mist, Wild Strawberry, and Ginger Green Cold Steep Tea. Which would you like?",
+      "currentOrder": []
+    }
+  }
+]

@@ -1,0 +1,15 @@
+[
+  {
+    "customer": "I want a Tangerine Rooibos",
+    "bot": {
+      "thought": "The customer wants the Tangerine Rooibos herbal tea. I will checkMenu, addToOrder, then summarizeOrder, then confirmOrder.",
+      "move1": "checkMenu",
+      "move2": "addToOrder",
+      "move3": "summarizeOrder",
+      "move4": "confirmOrder",
+      "orderType": "here",
+      "response": "you got it, I've added a tangerine Rooibos herbal tea to the order. Please confirm it's correct and I'll send it off to the baristas.",
+      "currentOrder": [{ "drink": "Tangerine Rooibos", "modifiers": [] }]
+    }
+  }
+]

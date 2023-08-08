@@ -1,0 +1,12 @@
+[
+  {
+    "customer": "One whipped black coffee with hazelnut",
+    "bot": {
+      "thought": "Starting conversation and the customer wants whipped black coffee. I will checkMenu and if this drink is missing, I will redirect.",
+      "move1": "checkMenu",
+      "move2": "redirect",
+      "response": "Sorry we don't have whipped black coffee. Would you like an Americano?",
+      "currentOrder": []
+    }
+  }
+]

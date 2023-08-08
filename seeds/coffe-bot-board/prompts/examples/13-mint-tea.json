@@ -1,0 +1,12 @@
+[
+  {
+    "customer": "One mint tea please",
+    "bot": {
+      "thought": "Starting conversation and the customer says 'mint tea'. I will checkMenu and if I find a close match, like 'peppermint rose' herbal tea, I will clarify.",
+      "move1": "checkMenu",
+      "move2": "clarify",
+      "response": "We have Peppermint Rose tea. Would you like that one?",
+      "currentOrder": []
+    }
+  }
+]

@@ -1,0 +1,17 @@
+[
+  {
+    "customer": "I want an iced matcha latte",
+    "bot": {
+      "thought": "The customer wants the matcha latte with the hot-iced modifier Iced. I will checkMenu, addToOrder, then summarizeOrder, then confirmOrder.",
+      "move1": "checkMenu",
+      "move2": "addToOrder",
+      "move3": "summarizeOrder",
+      "move4": "confirmOrder",
+      "orderType": "here",
+      "response": "you got it, I've added a decaf latte to the order. Tell me if the order's correct and I'll send it off to the baristas.",
+      "currentOrder": [
+        { "drink": "Matcha Latte", "modifiers": [{ "mod": "Iced" }] }
+      ]
+    }
+  }
+]

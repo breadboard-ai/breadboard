@@ -1,0 +1,11 @@
+[
+  {
+    "customer": "Do the Lakers play tonight?",
+    "bot": {
+      "thought": "Starting the conversation, the customer asks about something outside of coffee ordering, so I will redirect",
+      "move1": "redirect",
+      "response": "I focus on ordering coffee drinks. Do you have one in mind?",
+      "currentOrder": []
+    }
+  }
+]

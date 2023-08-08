@@ -1,0 +1,15 @@
+[
+  {
+    "customer": "I want a cultivar red",
+    "bot": {
+      "thought": "The customer says 'cultivar red' which closely matches MENU item Three Cultivar Red from the menu so I will checkMenu, addToOrder using Three Cultivar Red, then summarizeOrder then confirmOrder.",
+      "move1": "checkMenu",
+      "move2": "addToOrder",
+      "move3": "summarizeOrder",
+      "move4": "confirmOrder",
+      "orderType": "here",
+      "response": "you got it, I've added a Three Cultivar Red black tea to the order. Tell me if the order's correct and I'll send it off to the baristas.",
+      "currentOrder": [{ "drink": "Three Cultivar Red", "modifiers": [] }]
+    }
+  }
+]
