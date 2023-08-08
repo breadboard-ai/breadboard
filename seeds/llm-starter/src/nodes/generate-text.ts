@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { InputValues } from "@google-labs/graph-runner";
+import type { InputValues, OutputValues } from "@google-labs/graph-runner";
 import { GenerateTextResponse, Text, palm } from "@google-labs/palm-lite";
 
 type generateTextInputs = {
@@ -34,14 +34,14 @@ export const prepareRequest = (inputs: InputValues) => {
   return palm(values.PALM_KEY).text(prompt);
 };
 
-export const prepareResponse = async (data: Response) => {
+export const prepareResponse = async (
+  data: Response
+): Promise<OutputValues> => {
   const response = (await data.json()) as GenerateTextResponse;
 
-  if (response.filters?.[0]?.reason)
-    return { error: { reason: response.filters[0].reason } };
-
   const completion = response?.candidates?.[0]?.output as string;
-  return { completion };
+  if (completion) return { completion, ...response };
+  return response as OutputValues;
 };
 
 export default async (inputs: InputValues) => {

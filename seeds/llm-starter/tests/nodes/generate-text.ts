@@ -61,7 +61,7 @@ test("prepareResponse returns a valid response", async (t) => {
     })
   );
   const response = await prepareResponse(data);
-  t.deepEqual(response, { completion: "foo" });
+  t.deepEqual(response, { completion: "foo", candidates: [{ output: "foo" }] });
 });
 
 test("prepareResponse returns an error response is blocked", async (t) => {
@@ -71,5 +71,5 @@ test("prepareResponse returns an error response is blocked", async (t) => {
     })
   );
   const response = await prepareResponse(data);
-  t.deepEqual(response, { error: { reason: "foo" } });
+  t.deepEqual(response, { filters: [{ reason: "foo" }] });
 });
