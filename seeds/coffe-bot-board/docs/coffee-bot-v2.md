@@ -5,21 +5,26 @@
 graph TD;
 tools(("passthrough <br> id='tools'")):::passthrough -- "tools->tools" --> botprompt["promptTemplate <br> id='bot-prompt'"]
 format(("passthrough <br> id='format'")):::passthrough -- "format->format" --> botprompt["promptTemplate <br> id='bot-prompt'"]
-runJavascript1["runJavascript <br> id='runJavascript-1'"] -- "customer->customer" --> output2{{"output <br> id='output-2'"}}:::output
-generateText4["generateText <br> id='generateText-4'"] -- "completion->completion" --> runJavascript1["runJavascript <br> id='runJavascript-1'"]
-generateText4["generateText <br> id='generateText-4'"] -- "filters->filters" --> blocked{{"output <br> id='blocked'"}}:::output
-secrets5("secrets <br> id='secrets-5'"):::secrets -- "PALM_KEY->PALM_KEY" --> generateText4["generateText <br> id='generateText-4'"]
-botprompt["promptTemplate <br> id='bot-prompt'"] -- "prompt->text" --> generateText4["generateText <br> id='generateText-4'"]
-input3[/"input <br> id='input-3'"/]:::input -- "customer->customer" --> botprompt["promptTemplate <br> id='bot-prompt'"]
+append2["append <br> id='append-2'"] -- "accumulator->bot" --> output3{{"output <br> id='output-3'"}}:::output
+runJavascript1["runJavascript <br> id='runJavascript-1'"] -- "result->Tool" --> append2["append <br> id='append-2'"]
+runJavascript4["runJavascript <br> id='runJavascript-4'"] -- "customer->bot" --> output5{{"output <br> id='output-5'"}}:::output
+runJavascript4["runJavascript <br> id='runJavascript-4'"] -- "checkMenu->checkMenu" --> runJavascript1["runJavascript <br> id='runJavascript-1'"]
+generateText7["generateText <br> id='generateText-7'"] -- "completion->completion" --> runJavascript4["runJavascript <br> id='runJavascript-4'"]
+generateText7["generateText <br> id='generateText-7'"] -- "filters->filters" --> blocked{{"output <br> id='blocked'"}}:::output
+secrets8("secrets <br> id='secrets-8'"):::secrets -- "PALM_KEY->PALM_KEY" --> generateText7["generateText <br> id='generateText-7'"]
+botprompt["promptTemplate <br> id='bot-prompt'"] -- "prompt->text" --> generateText7["generateText <br> id='generateText-7'"]
+input6[/"input <br> id='input-6'"/]:::input -- "customer->customer" --> botprompt["promptTemplate <br> id='bot-prompt'"]
 templatebotprompt[template]:::config -- "template->template" --o botprompt
 toolstools[tools]:::config -- "tools->tools" --o tools
 formatformat[format]:::config -- "format->format" --o format
 namerunJavascript1[name]:::config -- "name->name" --o runJavascript1
 coderunJavascript1[code]:::config -- "code->code" --o runJavascript1
-rawrunJavascript1[raw]:::config -- "raw->raw" --o runJavascript1
-stopSequencesgenerateText4[stopSequences]:::config -- "stopSequences->stopSequences" --o generateText4
-safetySettingsgenerateText4[safetySettings]:::config -- "safetySettings->safetySettings" --o generateText4
-keyssecrets5[keys]:::config -- "keys->keys" --o secrets5
+namerunJavascript4[name]:::config -- "name->name" --o runJavascript4
+coderunJavascript4[code]:::config -- "code->code" --o runJavascript4
+rawrunJavascript4[raw]:::config -- "raw->raw" --o runJavascript4
+stopSequencesgenerateText7[stopSequences]:::config -- "stopSequences->stopSequences" --o generateText7
+safetySettingsgenerateText7[safetySettings]:::config -- "safetySettings->safetySettings" --o generateText7
+keyssecrets8[keys]:::config -- "keys->keys" --o secrets8
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

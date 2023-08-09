@@ -6,10 +6,12 @@
 
 import { writeFile } from "fs/promises";
 
-import { Board } from "@google-labs/breadboard";
+import { intro, log, text, outro } from "@clack/prompts";
+import { config } from "dotenv";
+
+import { Board, LogProbe } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 
-import { config } from "dotenv";
 import { Template } from "./template.js";
 
 config();
@@ -22,8 +24,26 @@ const prompt = await template.loadTemplate("order-agent.txt");
 await template.wirePart("tools", "json");
 await template.wirePart("format", "json");
 
+function checkMenu({ actionInput }: { actionInput: string }) {
+  // Hard-code the output for now.
+  return {
+    name: "checkMenu",
+    result: {
+      item: "Chai Latte",
+      modifiers: [],
+    },
+  };
+}
+
+const checkMenuTool = kit
+  .runJavascript("checkMenu", {
+    code: checkMenu.toString(),
+  })
+  .wire("result->Tool", kit.append().wire("accumulator->bot", board.output()));
+
 function route({ completion }: { completion: string }) {
   const data = JSON.parse(completion);
+  console.log("data", data);
   return { [data.action]: data };
 }
 
@@ -32,7 +52,8 @@ const toolRouter = kit
     code: route.toString(),
     raw: true,
   })
-  .wire("customer->", board.output());
+  .wire("customer->bot", board.output())
+  .wire("checkMenu->", checkMenuTool);
 
 board.input().wire(
   "customer->",
@@ -61,8 +82,38 @@ await writeFile(
   `# Coffee Bot\n\n\`\`\`mermaid\n${board.mermaid()}\n\`\`\``
 );
 
-const result = await board.runOnce({
-  customer: "I'd like a chai latte",
-});
+intro("Hi! I am coffee bot! What would you like to have today?");
 
-console.log(result);
+const probe = process.argv.includes("-v") ? new LogProbe() : undefined;
+
+const ask = async (inputs: Record<string, unknown>) => {
+  const defaultValue = "<Exit>";
+  const message = ((inputs && inputs.message) as string) || "Enter some text";
+  const input = await text({
+    message,
+    defaultValue,
+  });
+  if (input === defaultValue) return { exit: true };
+  return { customer: input };
+};
+const show = (outputs: Record<string, unknown>) => {
+  const { bot } = outputs;
+  if (typeof bot == "string") log.success(bot);
+  else log.success(JSON.stringify(bot));
+};
+
+try {
+  // Run the board until it finishes. This may run forever.
+  for await (const stop of board.run(probe)) {
+    if (stop.seeksInputs) {
+      stop.inputs = await ask(stop.inputArguments);
+    } else {
+      show(stop.outputs);
+    }
+  }
+
+  outro("Awesome work! Let's do this again sometime.");
+} catch (e) {
+  if (e instanceof Error) log.error(e.message);
+  outro("Oh no! Something went wrong.");
+}

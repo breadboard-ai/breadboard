@@ -29,7 +29,11 @@ export const getObjectType = (value: unknown): ObjectType => {
 };
 
 const asArray = (values: ValueType): string[] => {
-  return Object.entries(values).map(([k, v]) => `${k}: ${v}`);
+  return Object.entries(values).map(([k, v]) => {
+    const value =
+      getObjectType(v) === ObjectType.stringy ? v : JSON.stringify(v);
+    return `${k}: ${value}`;
+  });
 };
 
 const asString = (values: ValueType): string => {

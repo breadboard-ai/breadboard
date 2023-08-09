@@ -72,3 +72,15 @@ test("`append` doesn't append when there are no values", async (t) => {
     accumulator: {},
   });
 });
+
+test("`append` correctly stringifies non-stringy values", async (t) => {
+  t.deepEqual(await append({ accumulator: "string", value: ["string"] }), {
+    accumulator: 'string\nvalue: ["string"]',
+  });
+  t.deepEqual(
+    await append({ accumulator: "string", value: { key: "string" } }),
+    {
+      accumulator: 'string\nvalue: {"key":"string"}',
+    }
+  );
+});

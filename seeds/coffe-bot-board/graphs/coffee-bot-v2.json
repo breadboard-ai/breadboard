@@ -13,37 +13,55 @@
       "in": "format"
     },
     {
-      "from": "runJavascript-1",
-      "to": "output-2",
-      "out": "customer",
-      "in": "customer"
+      "from": "append-2",
+      "to": "output-3",
+      "out": "accumulator",
+      "in": "bot"
     },
     {
-      "from": "generateText-4",
+      "from": "runJavascript-1",
+      "to": "append-2",
+      "out": "result",
+      "in": "Tool"
+    },
+    {
+      "from": "runJavascript-4",
+      "to": "output-5",
+      "out": "customer",
+      "in": "bot"
+    },
+    {
+      "from": "runJavascript-4",
       "to": "runJavascript-1",
+      "out": "checkMenu",
+      "in": "checkMenu"
+    },
+    {
+      "from": "generateText-7",
+      "to": "runJavascript-4",
       "out": "completion",
       "in": "completion"
     },
     {
-      "from": "generateText-4",
+      "from": "generateText-7",
       "to": "blocked",
       "out": "filters",
       "in": "filters"
     },
     {
-      "from": "secrets-5",
-      "to": "generateText-4",
+      "from": "secrets-8",
+      "to": "generateText-7",
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
       "from": "bot-prompt",
-      "to": "generateText-4",
+      "to": "generateText-7",
       "out": "prompt",
       "in": "text"
     },
     {
-      "from": "input-3",
+      "from": "input-6",
       "to": "bot-prompt",
       "out": "customer",
       "in": "customer"
@@ -54,7 +72,7 @@
       "id": "bot-prompt",
       "type": "promptTemplate",
       "configuration": {
-        "template": "You are the ordering agent and your job is to assist customers with ordering items on the menu.\n\nYou have access to the following tools:\n{{tools}}\n\nIt is your responsibility to manage the state of the current order. Add, remove, and change items as you use tools and interact with the customer.\n\nYour conversation with the customer will follow this pattern:\n\nCustomer: the customer request with which you must assist \nAgent: your response\nTool: response from the tool that was invoked\nAgent: your next action\nCustomer: possible reply for the customer\n\nThis pattern may repeat several times until the customer's request is finalized.\n\nYour response must be a valid JSON of the following format:\n{{format}}\n\nBegin!\n\nCustomer: {{customer}}\nAgent:\n{\n  \"thought\": \"Customer has requested a chai latte.\",\n  \"action\": \"checkMenu\",\n  \"actionInput\": \"chai latte\",\n  \"orderType\": \"here\",\n  \"currentOrder\": []\n}\nTool:\n{\n  \"name\": \"checkMenu\",\n  \"result\": {\n      \"item\": \"Chai Latte\",\n      \"modifiers\": []\n    }\n}\nAgent:\n{\n  \"thought\": \"The chai latte is on the menu.\",\n  action\": \"customer\",\n  \"actionInput\": \"Great, a chai latte. Anything else for you today?\",\n  \"orderType\": \"here\",\n  \"currentOrder\": [\n    {\n      \"item\": \"Chai Latte\",\n      \"modifiers\": []\n    }\n  ]\n}\nCustomer: Can you make it large?\nAgent:"
+        "template": "You are the ordering agent and your job is to assist customers with ordering items on the menu.\n\nYou have access to the following tools:\n{{tools}}\n\nIt is your responsibility to manage the state of the current order. Add, remove, and change items as you use tools and interact with the customer.\n\nYour conversation with the customer will follow this pattern:\n\nCustomer: the customer request with which you must assist \nAgent: your response\nTool: response from the tool that was invoked\nAgent: your next action\nCustomer: possible reply for the customer\n\nThis pattern may repeat several times until the customer's request is finalized.\n\nYour response must be a valid JSON of the following format:\n{{format}}\n\nBegin!\n\nCustomer: {{customer}}\nAgent:"
       }
     },
     {
@@ -75,21 +93,37 @@
       "id": "runJavascript-1",
       "type": "runJavascript",
       "configuration": {
+        "name": "checkMenu",
+        "code": "function checkMenu({ actionInput }) {\n    // Hard-code the output for now.\n    return {\n        name: \"checkMenu\",\n        result: {\n            item: \"Chai Latte\",\n            modifiers: [],\n        },\n    };\n}"
+      }
+    },
+    {
+      "id": "append-2",
+      "type": "append"
+    },
+    {
+      "id": "output-3",
+      "type": "output"
+    },
+    {
+      "id": "runJavascript-4",
+      "type": "runJavascript",
+      "configuration": {
         "name": "route",
-        "code": "function route({ completion }) {\n    const data = JSON.parse(completion);\n    return { [data.action]: data };\n}",
+        "code": "function route({ completion }) {\n    const data = JSON.parse(completion);\n    console.log(\"data\", data);\n    return { [data.action]: data };\n}",
         "raw": true
       }
     },
     {
-      "id": "output-2",
+      "id": "output-5",
       "type": "output"
     },
     {
-      "id": "input-3",
+      "id": "input-6",
       "type": "input"
     },
     {
-      "id": "generateText-4",
+      "id": "generateText-7",
       "type": "generateText",
       "configuration": {
         "stopSequences": [
@@ -109,7 +143,7 @@
       "type": "output"
     },
     {
-      "id": "secrets-5",
+      "id": "secrets-8",
       "type": "secrets",
       "configuration": {
         "keys": [

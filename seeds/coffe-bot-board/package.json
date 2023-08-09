@@ -41,14 +41,15 @@
   "homepage": "https://github.com/google/labs-prototypes#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
+    "@google-labs/tsconfig": "*",
+    "@types/node": "^18.16.3",
     "@typescript-eslint/eslint-plugin": "^5.56.0",
     "@typescript-eslint/parser": "^5.56.0",
-    "@types/node": "^18.16.3",
     "ava": "^5.2.0",
-    "typescript": "^5.0.4",
-    "@google-labs/tsconfig": "*"
+    "typescript": "^5.0.4"
   },
   "dependencies": {
+    "@clack/prompts": "^0.6.3",
     "@google-labs/breadboard": "*",
     "@google-labs/llm-starter": "*",
     "dotenv": "^16.3.1"
