@@ -5,5 +5,3 @@
  */
 
 export { GraphIntegrityValidator } from "./validator.js";
-export { SafetyLabel } from "./label.js";
-export type { SafetyLabelValue } from "./types.js";
