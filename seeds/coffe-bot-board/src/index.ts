@@ -37,6 +37,7 @@ function checkMenu({ actionInput }: { actionInput: string }) {
 
 const checkMenuTool = kit
   .runJavascript("checkMenu", {
+    $id: "checkMenu",
     code: checkMenu.toString(),
   })
   .wire("result->Tool", kit.append().wire("accumulator->bot", board.output()));
@@ -49,6 +50,7 @@ function route({ completion }: { completion: string }) {
 
 const toolRouter = kit
   .runJavascript("route", {
+    $id: "toolRouter",
     code: route.toString(),
     raw: true,
   })
