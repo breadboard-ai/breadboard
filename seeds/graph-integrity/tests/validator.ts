@@ -10,8 +10,7 @@ import { readFile, readdir } from "fs/promises";
 
 import { GraphDescriptor, NodeDescriptor } from "@google-labs/graph-runner";
 import { GraphIntegrityValidator } from "../src/validator.js";
-import { SafetyLabel } from "../src/label.js";
-import { SafetyLabelValue } from "../src/types.js";
+import { SafetyLabel, SafetyLabelValue } from "../src/label.js";
 
 const IN_DIR = "./tests/data/";
 

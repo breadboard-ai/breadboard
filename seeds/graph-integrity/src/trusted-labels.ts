@@ -5,8 +5,7 @@
  */
 
 import type { NodeTypeIdentifier } from "@google-labs/graph-runner";
-import { SafetyLabel } from "./label.js";
-import { SafetyLabelValue } from "./types.js";
+import { SafetyLabel, SafetyLabelValue } from "./label.js";
 
 /**
  * Manual assignment of labels to node types.

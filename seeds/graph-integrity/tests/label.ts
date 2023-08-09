@@ -6,8 +6,7 @@
 
 import test from "ava";
 
-import { SafetyLabel } from "../src/label.js";
-import { SafetyLabelValue } from "../src/types.js";
+import { SafetyLabel, SafetyLabelValue } from "../src/label.js";
 
 test("SafetyLabel: constructor", (t) => {
   const trusted = new SafetyLabel(SafetyLabelValue.TRUSTED);
