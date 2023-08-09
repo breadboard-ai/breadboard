@@ -15,6 +15,7 @@ type Example = {
 
 export class Template {
   path: string;
+  textPrompt?: BreadboardNode;
 
   constructor(version: string, public board: Board, public kit: Starter) {
     this.path = `./prompts/${version}`;
@@ -50,27 +51,33 @@ export class Template {
     return template;
   }
 
+  async loadTemplate(filename: string) {
+    const { kit } = this;
+    const text = await readFile(`${this.path}/${filename}`, "utf-8");
+    this.textPrompt = kit.promptTemplate(text, { $id: "bot-prompt" });
+    return this.textPrompt;
+  }
+
+  async wirePart(name: string, extension: string) {
+    if (!this.textPrompt) throw new Error("Must load template first");
+    const part = await readFile(`${this.path}/${name}.${extension}`, "utf-8");
+    this.textPrompt.wire(
+      `<-${name}`,
+      this.board.passthrough({ [name]: part, $id: name })
+    );
+  }
+
   async make(): Promise<BreadboardNode> {
-    const { board, kit } = this;
-    const text = await readFile(`${this.path}/prompt-template.txt`, "utf-8");
-    const template = kit.promptTemplate(text, { $id: "bot-prompt" });
+    const template = await this.loadTemplate("prompt-template.txt");
 
     // For now, just read them as static files.
-    const wirePart = async (name: string, extension: string) => {
-      const part = await readFile(`${this.path}/${name}.${extension}`, "utf-8");
-      template.wire(
-        `<-${name}`,
-        board.passthrough({ [name]: part, $id: name })
-      );
-    };
-
     await Promise.all(
       ["modifier_list", "hours", "menu", "prices", "modifiers", "moves"].map(
-        (name) => wirePart(name, "txt")
+        (name) => this.wirePart(name, "txt")
       )
     );
 
-    await Promise.all(["format"].map((name) => wirePart(name, "json")));
+    await Promise.all(["format"].map((name) => this.wirePart(name, "json")));
 
     await this.wireExamples(template);
 

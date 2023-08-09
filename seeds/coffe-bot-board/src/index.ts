@@ -17,35 +17,42 @@ config();
 const board = new Board();
 const kit = board.addKit(Starter);
 
-const template = await new Template("v1-multi-move", board, kit).make();
+const template = new Template("v2-multi-agent", board, kit);
+const prompt = await template.loadTemplate("order-agent.txt");
+await template.wirePart("tools", "json");
+await template.wirePart("format", "json");
+
 board.input().wire(
-  "user->",
-  template.wire(
-    "prompt->text",
-    kit
-      .generateText({
-        safetySettings: [
-          {
-            category: "HARM_CATEGORY_DEROGATORY",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE",
-          },
-        ],
-      })
-      .wire("completion->", board.output({ $id: "completion" }))
-      .wire("filters->", board.output({ $id: "blocked" }))
-      .wire("<-PALM_KEY", kit.secrets(["PALM_KEY"]))
-  )
+  "customer->",
+  prompt
+    .wire(
+      "prompt->text",
+      kit
+        .generateText({
+          stopSequences: ["\nTool"],
+          safetySettings: [
+            {
+              category: "HARM_CATEGORY_DEROGATORY",
+              threshold: "BLOCK_MEDIUM_AND_ABOVE",
+            },
+          ],
+        })
+        .wire("completion->", board.output({ $id: "completion" }))
+        .wire("filters->", board.output({ $id: "blocked" }))
+        .wire("<-PALM_KEY", kit.secrets(["PALM_KEY"]))
+    )
+    .wire("<-memory", board.passthrough({ memory: " " }))
 );
 
-await writeFile("./graphs/coffee-bot.json", JSON.stringify(board, null, 2));
+await writeFile("./graphs/coffee-bot-v2.json", JSON.stringify(board, null, 2));
 
 await writeFile(
-  "./docs/coffee-bot.md",
+  "./docs/coffee-bot-v2.md",
   `# Coffee Bot\n\n\`\`\`mermaid\n${board.mermaid()}\n\`\`\``
 );
 
 const result = await board.runOnce({
-  user: "I'd like a latte",
+  customer: "I'd like a chai latte",
 });
 
 console.log(result);

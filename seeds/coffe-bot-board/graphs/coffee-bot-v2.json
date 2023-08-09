@@ -1,0 +1,123 @@
+{
+  "edges": [
+    {
+      "from": "tools",
+      "to": "bot-prompt",
+      "out": "tools",
+      "in": "tools"
+    },
+    {
+      "from": "format",
+      "to": "bot-prompt",
+      "out": "format",
+      "in": "format"
+    },
+    {
+      "from": "generateText-2",
+      "to": "completion",
+      "out": "completion",
+      "in": "completion"
+    },
+    {
+      "from": "generateText-2",
+      "to": "blocked",
+      "out": "filters",
+      "in": "filters"
+    },
+    {
+      "from": "secrets-3",
+      "to": "generateText-2",
+      "out": "PALM_KEY",
+      "in": "PALM_KEY"
+    },
+    {
+      "from": "bot-prompt",
+      "to": "generateText-2",
+      "out": "prompt",
+      "in": "text"
+    },
+    {
+      "from": "passthrough-4",
+      "to": "bot-prompt",
+      "out": "memory",
+      "in": "memory"
+    },
+    {
+      "from": "input-1",
+      "to": "bot-prompt",
+      "out": "customer",
+      "in": "customer"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "bot-prompt",
+      "type": "promptTemplate",
+      "configuration": {
+        "template": "You are the ordering agent and your job is to assist customers with ordering items on the menu.\n\nYou have access to the following tools:\n{{tools}}\n\nYour conversation with the customer will follow this pattern:\n\nCustomer: the customer request with which you must assist \nBarrista: your response\nTool: response from the tool that was invoked\nCustomer: ...\n\nThis pattern may repeat several times until the customer's request is finalized.\n\nYour response must be a valid JSON of the following format:\n{{format}}\n\nBegin!\n\nCustomer: {{customer}}\n"
+      }
+    },
+    {
+      "id": "tools",
+      "type": "passthrough",
+      "configuration": {
+        "tools": "[\n  {\n    \"name\": \"checkMenu\",\n    \"description\": \"Check to see if the item requested match items on the menu\",\n    \"input\": \"Name of the item that the customer requested\"\n  },\n  {\n    \"name\": \"finalizeOrder\",\n    \"description\": \"Finalize the order and send it for fulfillment\",\n    \"input\": \"none\"\n  }\n]\n"
+      }
+    },
+    {
+      "id": "format",
+      "type": "passthrough",
+      "configuration": {
+        "format": "{\n  \"thought\": \"starting with a summary of order state (what's been done), a string describing how you decide on the next action, given the previous customer replies.\",\n  \"action\": \"a string with one of the following values: checkMenu, finishOrder\",\n  \"orderType\": \"string to be included after summarizeOrder: here|to go\",\n  \"response\": \"a string with the response spoken by you to the customer\",\n  \"currentOrder\": [\n    {\n      \"drink\": \"drinkName\",\n      \"modifiers\": [{ \"mod\": \"modifier\" }, { \"mod\": \"modifier\" }]\n    },\n    {\n      \"drink\": \"drinkName\",\n      \"modifiers\": [{ \"mod\": \"modifier\" }, { \"mod\": \"modifier\" }]\n    }\n  ]\n}\n"
+      }
+    },
+    {
+      "id": "input-1",
+      "type": "input"
+    },
+    {
+      "id": "generateText-2",
+      "type": "generateText",
+      "configuration": {
+        "stopSequences": [
+          "\nTool"
+        ],
+        "safetySettings": [
+          {
+            "category": "HARM_CATEGORY_DEROGATORY",
+            "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+          }
+        ]
+      }
+    },
+    {
+      "id": "completion",
+      "type": "output"
+    },
+    {
+      "id": "blocked",
+      "type": "output"
+    },
+    {
+      "id": "secrets-3",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "PALM_KEY"
+        ]
+      }
+    },
+    {
+      "id": "passthrough-4",
+      "type": "passthrough",
+      "configuration": {
+        "memory": " "
+      }
+    }
+  ],
+  "kits": [
+    {
+      "url": "npm:@google-labs/llm-starter"
+    }
+  ]
+}

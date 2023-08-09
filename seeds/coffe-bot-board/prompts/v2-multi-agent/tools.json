@@ -1,0 +1,12 @@
+[
+  {
+    "name": "checkMenu",
+    "description": "Check to see if the item requested match items on the menu",
+    "input": "Name of the item that the customer requested"
+  },
+  {
+    "name": "finalizeOrder",
+    "description": "Finalize the order and send it for fulfillment",
+    "input": "none"
+  }
+]
