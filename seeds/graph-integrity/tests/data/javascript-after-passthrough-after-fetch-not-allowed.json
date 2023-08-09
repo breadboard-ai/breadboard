@@ -3,18 +3,24 @@
     {
       "from": "input-1",
       "out": "text",
-      "to": "javascript-1",
-      "in": "compute"
-    },
-    {
-      "from": "javascript-1",
-      "out": "result",
       "to": "fetch-1",
       "in": "url"
     },
     {
       "from": "fetch-1",
       "out": "response",
+      "to": "passthrough-1",
+      "in": "response"
+    },
+    {
+      "from": "passthrough-1",
+      "out": "response",
+      "to": "javascript-1",
+      "in": "compute"
+    },
+    {
+      "from": "javascript-1",
+      "out": "result",
       "to": "output-1",
       "in": "text"
     }
@@ -22,6 +28,7 @@
   "nodes": [
     { "id": "input-1", "type": "input" },
     { "id": "fetch-1", "type": "fetch" },
+    { "id": "passthrough-1", "type": "passthrough" },
     {
       "id": "javascript-1",
       "type": "runJavascript",
@@ -29,12 +36,6 @@
     },
     { "id": "output-1", "type": "output" }
   ],
-  "safe": true,
-  "expectedLabels": [
-    ["input-1", "TRUSTED"],
-    ["javascript-1", "TRUSTED"],
-    ["fetch-1", "TRUSTED"],
-    ["output-1", "UNTRUSTED"]
-  ],
-  "explanation": "Fetch output is untrusted, but only goes to output. Javascript requires trusted input, so input nodes needs to be trusted."
+  "safe": false,
+  "explanation": "Fetch output is untrusted, Javascript requires trusted input, so this is unsafe."
 }

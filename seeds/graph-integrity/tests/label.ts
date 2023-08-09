@@ -207,15 +207,15 @@ test("SafetyLabel: canFlowTo", (t) => {
 
   t.true(trusted.canFlowTo(trusted));
   t.true(trusted.canFlowTo(untrusted));
-  t.throws(() => trusted.canFlowTo(undetermined));
+  t.true(trusted.canFlowTo(undetermined));
 
   t.true(untrusted.canFlowTo(untrusted));
-  t.throws(() => untrusted.canFlowTo(undetermined));
+  t.true(untrusted.canFlowTo(undetermined));
   t.false(untrusted.canFlowTo(trusted));
 
-  t.throws(() => undetermined.canFlowTo(undetermined));
-  t.throws(() => undetermined.canFlowTo(trusted));
-  t.throws(() => undetermined.canFlowTo(untrusted));
+  t.true(undetermined.canFlowTo(undetermined));
+  t.true(undetermined.canFlowTo(trusted));
+  t.true(undetermined.canFlowTo(untrusted));
 });
 
 test("SafetyLabel: toString", (t) => {

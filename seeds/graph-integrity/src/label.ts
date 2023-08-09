@@ -75,14 +75,13 @@ export class SafetyLabel {
 
   /**
    * Checks whether the label can flow to the destination label.
+   * Flow between undetermined labels is always allowed.
    *
    * @param {SafetyLabel} destinationLabel label to flow to
    * @returns {Boolean} true if the label can flow to the destination label
-   * @throws {Error} if the label or the destination label is undetermined
    */
-  canFlowTo(destinationLabel: SafetyLabel): boolean {
-    if (this.value === undefined || destinationLabel.value === undefined)
-      throw new Error("Can't decide flow with undetermined label");
+  canFlowTo(destinationLabel: SafetyLabel | undefined): boolean {
+    if (this.value === undefined) return true;
     return this.equalsTo(
       SafetyLabel.computeJoinOfLabels([this, destinationLabel])
     );

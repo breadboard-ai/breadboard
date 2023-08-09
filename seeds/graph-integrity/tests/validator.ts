@@ -49,10 +49,18 @@ await Promise.all(
             id: nodeId,
             type: "undefined",
           }).label;
-          t.true(derivedLabel.equalsTo(expectedLabel));
+          t.true(
+            derivedLabel.equalsTo(expectedLabel),
+            `${nodeId}: ${derivedLabel.toString()} vs ${expectedLabel.toString()}`
+          );
         }
       } else {
-        t.throws(() => validator.addGraph(graph));
+        try {
+          validator.addGraph(graph);
+          t.fail(`Graph should be unsafe, but got: ${validator.toMermaid()}`);
+        } catch (e) {
+          t.pass();
+        }
       }
     });
   })
@@ -95,7 +103,7 @@ test("GraphSafetyValidator: Getting labels for nodes in subgraphs", (t) => {
   v2.addGraph({
     edges: [
       { from: "in1", to: "fetch", out: "x", in: "url" },
-      { from: "fetch", to: "out1", out: "result", in: "y" },
+      { from: "fetch", to: "out1", out: "response", in: "y" },
       { from: "in2", to: "compute", out: "x", in: "compute" },
       { from: "compute", to: "out2", out: "result", in: "z" },
     ],
@@ -156,7 +164,7 @@ test("GraphSafetyValidator: Subgraphs with * wires", (t) => {
   v2.addGraph({
     edges: [
       { from: "in1", to: "fetch", out: "x", in: "url" },
-      { from: "fetch", to: "out1", out: "result", in: "y" },
+      { from: "fetch", to: "out1", out: "response", in: "y" },
       { from: "in2", to: "compute", out: "x", in: "compute" },
       { from: "compute", to: "out2", out: "result", in: "z" },
     ],

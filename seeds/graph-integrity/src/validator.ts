@@ -156,7 +156,7 @@ function insertGraph(
       incoming: [],
       outgoing: [],
       label: new SafetyLabel(),
-      constraint: trustedLabels.get(node.type),
+      constraint: trustedLabels[node.type]?.node,
       role: typeToRole.get(node.type),
     } as NodeFromBreadboard;
     idMap.set(node.id, internalNode);
@@ -172,6 +172,22 @@ function insertGraph(
     if (!to) throw new Error(`Invalid graph: Can't find node ${edge.from}`);
 
     const newEdge = { edge, from, to } as EdgeFromBreadboard;
+
+    const fromConstraintDef = trustedLabels[from.node.type];
+    newEdge.fromConstraint =
+      (edge.out &&
+        fromConstraintDef &&
+        fromConstraintDef.outgoing &&
+        fromConstraintDef.outgoing[edge.out]) ||
+      undefined;
+
+    const toConstraintDef = trustedLabels[to.node.type];
+    newEdge.toConstraint =
+      (edge.in &&
+        toConstraintDef &&
+        toConstraintDef.incoming &&
+        toConstraintDef.incoming[edge.in]) ||
+      undefined;
 
     from.outgoing.push(newEdge);
     to.incoming.push(newEdge);

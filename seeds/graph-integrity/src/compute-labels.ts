@@ -54,46 +54,63 @@ export function computeLabelsForGraph(graph: Graph): void {
 
         // Assume untrusted node, and hence that all inputs taint all outputs.
         default: {
-          // Compute the meet (lowest label) of all incoming edges. Add the
-          // constraint label for this node. This can lower the label, but not
-          // raise it.
-          const incomingSafetyLabels = node.incoming.map(
-            (edge) => edge.from.label
+          // Compute the meet (lowest label) of all incoming edge constraints.
+          const incomingConstraint = SafetyLabel.computeMeetOfLabels(
+            node.incoming.map((edge) => edge.fromConstraint)
           );
+
+          // Compute the meet (lowest label) of all incoming edges. Add the
+          // constraint labels for this edge and node. This can lower the label,
+          // but not raise it.
           const incomingSafetyLabel = SafetyLabel.computeMeetOfLabels([
-            ...incomingSafetyLabels,
+            ...node.incoming.map((edge) => edge.from.label),
+            incomingConstraint,
             node.constraint,
           ]);
 
-          // Compute the join (highest label) of all outgoing edges.
-          // Add the constraint label for this node. This can raise the label.
-          const outgoingSafetyLabels = node.outgoing.map(
-            (edge) => edge.to.label
-          );
+          // Compute the join (highest label) of all outgoing edges. Add the
+          // constraint label for this edge and node. This can raise the label.
           const outgoingSafetyLabel = SafetyLabel.computeJoinOfLabels([
-            ...outgoingSafetyLabels,
+            ...node.outgoing.map((edge) => edge.to.label),
+            ...node.outgoing.map((edge) => edge.toConstraint),
             node.constraint,
           ]);
+
+          // Graph is not safe if the incoming constraint is higher than the
+          // node's constraint or the labels of the outgoing edges.
+          if (!incomingConstraint.canFlowTo(node.constraint))
+            throw Error(
+              `Graph is not safe. Node ${node.node.id} is reading` +
+                `from ${incomingConstraint.toString()} but can only be` +
+                `${node.constraint?.toString()}.`
+            );
+
+          if (!incomingConstraint.canFlowTo(outgoingSafetyLabel))
+            throw Error(
+              `Graph is not safe. Node ${node.node.id} is reading` +
+                `from ${incomingConstraint.toString()} but can only be` +
+                `${outgoingSafetyLabel.toString()}.`
+            );
 
           // Graph is not safe if a constraint has to be violated, i.e. here a
           // node has to be upgraded.
-          if (
-            node.constraint &&
-            !outgoingSafetyLabel.equalsTo(node.constraint)
-          ) {
+          if (node.constraint && !node.constraint.equalsTo(outgoingSafetyLabel))
             throw Error(
               `Graph is not safe. E.g. node ${node.node.id} ` +
                 `requires to write to ${outgoingSafetyLabel.toString()} ` +
-                `but can only be ${node.constraint.toString()}`
+                `but can only be ${node.constraint.toString()}.`
             );
-          }
 
           // Compute the new safety label as the join (highest of) of (lowest)
-          // incoming and (highest) outgoing edges. Note that if this increases
+          // incoming and (highest) outgoing edges, but not higher than the
+          // lowest constraint on incoming edges. Note that if this increases
           // the trust of this node, the next iteration will backpropagate that.
-          const newSafetyLabel = SafetyLabel.computeJoinOfLabels([
-            incomingSafetyLabel,
-            outgoingSafetyLabel,
+          const newSafetyLabel = SafetyLabel.computeMeetOfLabels([
+            incomingConstraint,
+            SafetyLabel.computeJoinOfLabels([
+              incomingSafetyLabel,
+              outgoingSafetyLabel,
+            ]),
           ]);
 
           // If the new safety label is different from the current one, update it.

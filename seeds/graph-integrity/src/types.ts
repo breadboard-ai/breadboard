@@ -23,6 +23,8 @@ export enum SafetyLabelValue {
 export interface Edge {
   from: Node;
   to: Node;
+  fromConstraint?: SafetyLabel;
+  toConstraint?: SafetyLabel;
 }
 
 export enum NodeRoles {
