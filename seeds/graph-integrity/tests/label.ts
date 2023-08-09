@@ -9,28 +9,48 @@ import test from "ava";
 import { SafetyLabel, SafetyLabelValue } from "../src/label.js";
 
 test("SafetyLabel: constructor", (t) => {
-  const trusted = new SafetyLabel(SafetyLabelValue.TRUSTED);
-  t.is(trusted.value, SafetyLabelValue.TRUSTED);
+  const combined = new SafetyLabel({
+    confidentiality: SafetyLabelValue.TRUSTED,
+    integrity: SafetyLabelValue.UNTRUSTED,
+  });
+  t.is(combined.confidentiality, SafetyLabelValue.TRUSTED);
+  t.is(combined.integrity, SafetyLabelValue.UNTRUSTED);
 
-  const untrusted = new SafetyLabel(SafetyLabelValue.UNTRUSTED);
-  t.is(untrusted.value, SafetyLabelValue.UNTRUSTED);
+  const combinedCopy = new SafetyLabel(combined);
+  t.is(combinedCopy.confidentiality, SafetyLabelValue.TRUSTED);
+  t.is(combinedCopy.integrity, SafetyLabelValue.UNTRUSTED);
+
+  const untrustedAndUndetermined = new SafetyLabel({
+    confidentiality: SafetyLabelValue.UNTRUSTED,
+  });
+  t.is(untrustedAndUndetermined.confidentiality, SafetyLabelValue.UNTRUSTED);
+  t.is(untrustedAndUndetermined.integrity, undefined);
+
+  const untrustedAndUndeterminedCopy = new SafetyLabel(
+    untrustedAndUndetermined
+  );
+  t.is(
+    untrustedAndUndeterminedCopy.confidentiality,
+    SafetyLabelValue.UNTRUSTED
+  );
+  t.is(untrustedAndUndeterminedCopy.integrity, undefined);
 
   const undetermined = new SafetyLabel(undefined);
-  t.is(undetermined.value, undefined);
+  t.is(undetermined.confidentiality, undefined);
+  t.is(undetermined.integrity, undefined);
 
-  const trustedCopy = new SafetyLabel(trusted);
-  t.is(trustedCopy.value, SafetyLabelValue.TRUSTED);
-
-  const untrustedCopy = new SafetyLabel(untrusted);
-  t.is(untrustedCopy.value, SafetyLabelValue.UNTRUSTED);
+  const undetermined2 = new SafetyLabel({});
+  t.is(undetermined2.confidentiality, undefined);
+  t.is(undetermined2.integrity, undefined);
 
   const undeterminedCopy = new SafetyLabel(undetermined);
-  t.is(undeterminedCopy.value, undefined);
+  t.is(undeterminedCopy.confidentiality, undefined);
+  t.is(undeterminedCopy.integrity, undefined);
 });
 
 test("SafetyLabel: equalsTo", (t) => {
-  const trusted = new SafetyLabel(SafetyLabelValue.TRUSTED);
-  const untrusted = new SafetyLabel(SafetyLabelValue.UNTRUSTED);
+  const trusted = new SafetyLabel({ integrity: SafetyLabelValue.TRUSTED });
+  const untrusted = new SafetyLabel({ integrity: SafetyLabelValue.UNTRUSTED });
   const undetermined = new SafetyLabel(undefined);
 
   t.true(trusted.equalsTo(trusted));
@@ -46,8 +66,8 @@ test("SafetyLabel: equalsTo", (t) => {
 });
 
 test("SafetyLabel: meet and join", (t) => {
-  const trusted = new SafetyLabel(SafetyLabelValue.TRUSTED);
-  const untrusted = new SafetyLabel(SafetyLabelValue.UNTRUSTED);
+  const trusted = new SafetyLabel({ integrity: SafetyLabelValue.TRUSTED });
+  const untrusted = new SafetyLabel({ integrity: SafetyLabelValue.UNTRUSTED });
   const undetermined = new SafetyLabel(undefined);
 
   t.true(SafetyLabel.computeMeetOfLabels([trusted]).equalsTo(trusted));
@@ -200,8 +220,8 @@ test("SafetyLabel: meet and join", (t) => {
 });
 
 test("SafetyLabel: canFlowTo", (t) => {
-  const trusted = new SafetyLabel(SafetyLabelValue.TRUSTED);
-  const untrusted = new SafetyLabel(SafetyLabelValue.UNTRUSTED);
+  const trusted = new SafetyLabel({ integrity: SafetyLabelValue.TRUSTED });
+  const untrusted = new SafetyLabel({ integrity: SafetyLabelValue.UNTRUSTED });
   const undetermined = new SafetyLabel(undefined);
 
   t.true(trusted.canFlowTo(trusted));
@@ -218,11 +238,16 @@ test("SafetyLabel: canFlowTo", (t) => {
 });
 
 test("SafetyLabel: toString", (t) => {
-  const trusted = new SafetyLabel(SafetyLabelValue.TRUSTED);
-  const untrusted = new SafetyLabel(SafetyLabelValue.UNTRUSTED);
+  const combined = new SafetyLabel({
+    confidentiality: SafetyLabelValue.UNTRUSTED,
+    integrity: SafetyLabelValue.TRUSTED,
+  });
+  const partUndetermined = new SafetyLabel({
+    integrity: SafetyLabelValue.UNTRUSTED,
+  });
   const undetermined = new SafetyLabel(undefined);
 
-  t.is(trusted.toString(), "TRUSTED");
-  t.is(untrusted.toString(), "UNTRUSTED");
-  t.is(undetermined.toString(), "UNDETERMINED");
+  t.is(combined.toString(), "[UNTRUSTED, TRUSTED]");
+  t.is(partUndetermined.toString(), "[UNDETERMINED, UNTRUSTED]");
+  t.is(undetermined.toString(), "[UNDETERMINED, UNDETERMINED]");
 });

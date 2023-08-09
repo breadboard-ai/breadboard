@@ -23,7 +23,11 @@ interface TrustedLabels {
 
 export const trustedLabels: Record<NodeTypeIdentifier, TrustedLabels> = {
   fetch: {
-    outgoing: { response: new SafetyLabel(SafetyLabelValue.UNTRUSTED) },
+    outgoing: {
+      response: new SafetyLabel({ integrity: SafetyLabelValue.UNTRUSTED }),
+    },
   },
-  runJavascript: { node: new SafetyLabel(SafetyLabelValue.TRUSTED) },
+  runJavascript: {
+    node: new SafetyLabel({ integrity: SafetyLabelValue.TRUSTED }),
+  },
 };

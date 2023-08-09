@@ -24,8 +24,8 @@
   ],
   "safe": true,
   "expectedLabels": [
-    ["javascript-1", "TRUSTED"],
-    ["output-1", "TRUSTED"]
+    ["javascript-1", "UNDETERMINED", "TRUSTED"],
+    ["output-1", "UNDETERMINED", "TRUSTED"]
   ],
   "explanation": "Javascript requires trusted inputs -> input has to be trusted"
 }

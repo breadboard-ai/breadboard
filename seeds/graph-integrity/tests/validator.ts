@@ -19,18 +19,26 @@ const IN_DIR = "./tests/data/";
 
 interface TestGraphDescriptor extends GraphDescriptor {
   safe: boolean;
-  expectedLabels?: Array<[NodeDescriptor["id"], string]>;
+  expectedLabels?: Array<[NodeDescriptor["id"], string, string]>;
 }
 
 const graphs = (await readdir(`${IN_DIR}/`)).filter((file) =>
   file.endsWith(".json")
 );
 
-const mapNameToSafetyLabel: { [key: string]: SafetyLabel } = {
-  TRUSTED: new SafetyLabel(SafetyLabelValue.TRUSTED),
-  UNTRUSTED: new SafetyLabel(SafetyLabelValue.UNTRUSTED),
-  UNDEFINED: new SafetyLabel(undefined),
+const mapNameToSafetyLabel: { [key: string]: SafetyLabelValue | undefined } = {
+  TRUSTED: SafetyLabelValue.TRUSTED,
+  UNTRUSTED: SafetyLabelValue.UNTRUSTED,
+  UNDETERMINED: undefined,
 };
+
+const trustedIntegrity = new SafetyLabel({
+  integrity: SafetyLabelValue.TRUSTED,
+});
+
+const untrustedIntegrity = new SafetyLabel({
+  integrity: SafetyLabelValue.UNTRUSTED,
+});
 
 await Promise.all(
   graphs.map(async (filename) => {
@@ -42,8 +50,15 @@ await Promise.all(
 
       if (graph.safe) {
         t.notThrows(() => validator.addGraph(graph));
-        for (const [nodeId, expectedLabelName] of graph.expectedLabels ?? []) {
-          const expectedLabel = mapNameToSafetyLabel[expectedLabelName];
+        for (const [
+          nodeId,
+          confidentiality,
+          integrity,
+        ] of graph.expectedLabels ?? []) {
+          const expectedLabel = new SafetyLabel({
+            confidentiality: mapNameToSafetyLabel[confidentiality],
+            integrity: mapNameToSafetyLabel[integrity],
+          });
           const derivedLabel = validator.getValidatorMetadata({
             id: nodeId,
             type: "undefined",
@@ -76,7 +91,7 @@ test("GraphSafetyValidator: Getting unknown labels throws", (t) => {
   });
 
   t.deepEqual(v.getValidatorMetadata({ id: "a", type: "input" }), {
-    description: "UNDETERMINED",
+    description: "[UNDETERMINED, UNDETERMINED]",
     label: new SafetyLabel(undefined),
   });
   t.throws(() => v.getValidatorMetadata({ id: "b", type: "input" }));
@@ -109,36 +124,36 @@ test("GraphSafetyValidator: Getting labels for nodes in subgraphs", (t) => {
     nodes: [
       { id: "in1", type: "input" },
       { id: "in2", type: "input" },
-      { id: "compute", type: "runJavascript" },
       { id: "fetch", type: "fetch" },
+      { id: "compute", type: "runJavascript" },
       { id: "out1", type: "output" },
       { id: "out2", type: "output" },
     ],
   });
 
   t.deepEqual(v.getValidatorMetadata({ id: "in", type: "input" }), {
-    description: "TRUSTED",
-    label: new SafetyLabel(SafetyLabelValue.TRUSTED),
+    description: "[UNDETERMINED, TRUSTED]",
+    label: trustedIntegrity,
   });
   t.deepEqual(v.getValidatorMetadata({ id: "out", type: "output" }), {
-    description: "UNTRUSTED",
-    label: new SafetyLabel(SafetyLabelValue.UNTRUSTED),
+    description: "[UNDETERMINED, UNTRUSTED]",
+    label: untrustedIntegrity,
   });
   t.deepEqual(v2.getValidatorMetadata({ id: "in1", type: "input" }), {
-    description: "TRUSTED",
-    label: new SafetyLabel(SafetyLabelValue.TRUSTED),
+    description: "[UNDETERMINED, TRUSTED]",
+    label: trustedIntegrity,
   });
   t.deepEqual(v2.getValidatorMetadata({ id: "in2", type: "input" }), {
-    description: "TRUSTED",
-    label: new SafetyLabel(SafetyLabelValue.TRUSTED),
+    description: "[UNDETERMINED, TRUSTED]",
+    label: trustedIntegrity,
   });
   t.deepEqual(v2.getValidatorMetadata({ id: "out1", type: "output" }), {
-    description: "UNTRUSTED",
-    label: new SafetyLabel(SafetyLabelValue.UNTRUSTED),
+    description: "[UNDETERMINED, UNTRUSTED]",
+    label: untrustedIntegrity,
   });
   t.deepEqual(v2.getValidatorMetadata({ id: "out2", type: "output" }), {
-    description: "TRUSTED",
-    label: new SafetyLabel(SafetyLabelValue.TRUSTED),
+    description: "[UNDETERMINED, TRUSTED]",
+    label: trustedIntegrity,
   });
 });
 
@@ -178,20 +193,20 @@ test("GraphSafetyValidator: Subgraphs with * wires", (t) => {
   });
 
   t.deepEqual(v.getValidatorMetadata({ id: "in", type: "input" }), {
-    description: "TRUSTED",
-    label: new SafetyLabel(SafetyLabelValue.TRUSTED),
+    description: "[UNDETERMINED, TRUSTED]",
+    label: trustedIntegrity,
   });
 
   // We expect the * wire to be UNTRUSTED, because it is not connected to both
   // fetch and compute.
   t.deepEqual(v.getValidatorMetadata({ id: "out", type: "output" }), {
-    description: "UNTRUSTED",
-    label: new SafetyLabel(SafetyLabelValue.UNTRUSTED),
+    description: "[UNDETERMINED, UNTRUSTED]",
+    label: untrustedIntegrity,
   });
 
   // But this doesn't clobber the single z wire out!
   t.deepEqual(v.getValidatorMetadata({ id: "outz", type: "output" }), {
-    description: "TRUSTED",
-    label: new SafetyLabel(SafetyLabelValue.TRUSTED),
+    description: "[UNDETERMINED, TRUSTED]",
+    label: trustedIntegrity,
   });
 });

@@ -13,8 +13,8 @@
   ],
   "safe": true,
   "expectedLabels": [
-    ["input-1", "UNDEFINED"],
-    ["output-1", "UNDEFINED"]
+    ["input-1", "UNDETERMINED", "UNDETERMINED"],
+    ["output-1", "UNDETERMINED", "UNDETERMINED"]
   ],
   "explanation": "No constraints -> undefined labels"
 }
