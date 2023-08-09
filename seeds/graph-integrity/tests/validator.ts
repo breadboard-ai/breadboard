@@ -42,7 +42,7 @@ await Promise.all(
       const validator = new GraphIntegrityValidator();
 
       if (graph.safe) {
-        validator.addGraph(graph);
+        t.notThrows(() => validator.addGraph(graph));
         for (const [nodeId, expectedLabelName] of graph.expectedLabels ?? []) {
           const expectedLabel = mapNameToSafetyLabel[expectedLabelName];
           const derivedLabel = validator.getValidatorMetadata({
