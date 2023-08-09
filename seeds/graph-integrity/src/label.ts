@@ -11,32 +11,31 @@
  * Flow is allowed from TRUSTED to TRUSTED, from either to UNTRUSTED,
  * but not from UNTRUSTED to TRUSTED.
  */
-export enum SafetyLabelValue {
+export enum LabelValue {
   UNTRUSTED,
   TRUSTED,
 }
 
-const mapLabelToString = new Map<SafetyLabelValue, string>([
-  [SafetyLabelValue.TRUSTED, "TRUSTED"],
-  [SafetyLabelValue.UNTRUSTED, "UNTRUSTED"],
+const mapLabelToString = new Map<LabelValue, string>([
+  [LabelValue.TRUSTED, "TRUSTED"],
+  [LabelValue.UNTRUSTED, "UNTRUSTED"],
 ]);
 
 /**
  * Information flow control label.
  */
-export class SafetyLabel {
-  public readonly confidentiality?: SafetyLabelValue;
-  public readonly integrity?: SafetyLabelValue;
+export class Label {
+  public readonly confidentiality?: LabelValue;
+  public readonly integrity?: LabelValue;
 
   /**
-   * @param {{ confidentiality: SafetyLabelValue; integrity: SafetyLabelValue }
-   *   | SafetyLabel} label SafetyLabel to copy or pair of SafetyLabelValues to
-   *   create a new label from.
+   * @param {{ confidentiality: LabelValue; integrity: LabelValue } | Label}
+   *   label Label to copy or pair of LabelValues to create a new label from.
    */
   constructor(
     label:
-      | SafetyLabel
-      | { confidentiality?: SafetyLabelValue; integrity?: SafetyLabelValue }
+      | Label
+      | { confidentiality?: LabelValue; integrity?: LabelValue }
       | undefined = undefined
   ) {
     if (label) {
@@ -46,9 +45,9 @@ export class SafetyLabel {
   }
 
   /**
-   * Meet (⊓): @returns {SafetyLabel} that is equal or more restrictive than any
-   * of the passed @param {[SafetyLabel | undefined]} labels. Undefined labels
-   * are ignored. If all labels are undefined, the result is also undefined.
+   * Meet (⊓): @returns {Label} that is equal or more restrictive than any of
+   * the passed @param {[Label | undefined]} labels. Undefined labels are
+   * ignored. If all labels are undefined, the result is also undefined.
    *
    * For the confidentiality component, the meet is defined as the least higher
    * bound, e.g. taking the higher of the two confidentiality levels (since
@@ -62,20 +61,20 @@ export class SafetyLabel {
    * compute a label of a node based on its incoming edges. That is, if a node
    * reads from an UNTRUSTED node, it has to be UNTRUSTED.
    */
-  static computeMeetOfLabels(labels: (SafetyLabel | undefined)[]): SafetyLabel {
+  static computeMeetOfLabels(labels: (Label | undefined)[]): Label {
     const { confidentialityLabels, integrityLabels } =
-      SafetyLabel.getLabelComponents(labels);
+      Label.getLabelComponents(labels);
 
-    const confidentiality = SafetyLabel.leastUpperBound(confidentialityLabels);
-    const integrity = SafetyLabel.greatestLowerBound(integrityLabels);
+    const confidentiality = Label.leastUpperBound(confidentialityLabels);
+    const integrity = Label.greatestLowerBound(integrityLabels);
 
-    return new SafetyLabel({ confidentiality, integrity });
+    return new Label({ confidentiality, integrity });
   }
 
   /**
-   * Join (⊔): @returns {SafetyLabel} that is equal or less restrictive than any
-   * of the passed @param {[SafetyLabel | undefined]} labels. Undefined labels
-   * are ignored. If all labels are undefined, the result is also undefined.
+   * Join (⊔): @returns {Label} that is equal or less restrictive than any of
+   * the passed @param {[Label | undefined]} labels. Undefined labels are
+   * ignored. If all labels are undefined, the result is also undefined.
    *
    * For the confidentiality component, the join is defined as the greatest
    * lower bound, e.g. taking the lower of the two confidentiality levels (since
@@ -89,34 +88,32 @@ export class SafetyLabel {
    * compute a label of a node based on its outgoing edges. That is, if a node
    * writes to a TRUSTED node, it has to be TRUSTED.
    */
-  static computeJoinOfLabels(labels: (SafetyLabel | undefined)[]): SafetyLabel {
+  static computeJoinOfLabels(labels: (Label | undefined)[]): Label {
     const { confidentialityLabels, integrityLabels } =
-      SafetyLabel.getLabelComponents(labels);
+      Label.getLabelComponents(labels);
 
-    const confidentiality = SafetyLabel.greatestLowerBound(
-      confidentialityLabels
-    );
-    const integrity = SafetyLabel.leastUpperBound(integrityLabels);
+    const confidentiality = Label.greatestLowerBound(confidentialityLabels);
+    const integrity = Label.leastUpperBound(integrityLabels);
 
-    return new SafetyLabel({ confidentiality, integrity });
+    return new Label({ confidentiality, integrity });
   }
 
   /**
    * Extract label components, throwing a away all undefined ones.
    * Might return empty lists if there are no defined label components.
    */
-  private static getLabelComponents(labels: (SafetyLabel | undefined)[]): {
-    confidentialityLabels: SafetyLabelValue[];
-    integrityLabels: SafetyLabelValue[];
+  private static getLabelComponents(labels: (Label | undefined)[]): {
+    confidentialityLabels: LabelValue[];
+    integrityLabels: LabelValue[];
   } {
     const confidentialityLabels = labels
       .filter(
         (label) => label !== undefined && label.confidentiality !== undefined
       )
-      .map((label) => label?.confidentiality) as SafetyLabelValue[];
+      .map((label) => label?.confidentiality) as LabelValue[];
     const integrityLabels = labels
       .filter((label) => label !== undefined && label.integrity !== undefined)
-      .map((label) => label?.integrity) as SafetyLabelValue[];
+      .map((label) => label?.integrity) as LabelValue[];
     return { confidentialityLabels, integrityLabels };
   }
 
@@ -126,14 +123,12 @@ export class SafetyLabel {
    *
    * Returns undefined for an empty list.
    */
-  private static leastUpperBound(
-    values: SafetyLabelValue[]
-  ): SafetyLabelValue | undefined {
+  private static leastUpperBound(values: LabelValue[]): LabelValue | undefined {
     if (values.length === 0) return undefined;
     return values.reduce((a, b) => {
-      return a === SafetyLabelValue.TRUSTED || b === SafetyLabelValue.TRUSTED
-        ? SafetyLabelValue.TRUSTED
-        : SafetyLabelValue.UNTRUSTED;
+      return a === LabelValue.TRUSTED || b === LabelValue.TRUSTED
+        ? LabelValue.TRUSTED
+        : LabelValue.UNTRUSTED;
     });
   }
 
@@ -144,23 +139,23 @@ export class SafetyLabel {
    * Returns undefined for an empty list.
    */
   private static greatestLowerBound(
-    values: SafetyLabelValue[]
-  ): SafetyLabelValue | undefined {
+    values: LabelValue[]
+  ): LabelValue | undefined {
     if (values.length === 0) return undefined;
     return values.reduce((a, b) => {
-      return a === SafetyLabelValue.TRUSTED && b === SafetyLabelValue.TRUSTED
-        ? SafetyLabelValue.TRUSTED
-        : SafetyLabelValue.UNTRUSTED;
+      return a === LabelValue.TRUSTED && b === LabelValue.TRUSTED
+        ? LabelValue.TRUSTED
+        : LabelValue.UNTRUSTED;
     });
   }
 
   /**
    * Compare with other label.
    *
-   * @param {SafetyLabel} other label
+   * @param {Label} other label
    * @returns {Boolean} true if the labels are equal
    */
-  equalsTo(other: SafetyLabel): boolean {
+  equalsTo(other: Label): boolean {
     return (
       this.confidentiality === other.confidentiality &&
       this.integrity === other.integrity
@@ -171,11 +166,11 @@ export class SafetyLabel {
    * Checks whether the label can flow to the destination label.
    * Flow between undetermined labels is always allowed.
    *
-   * @param {SafetyLabel} destinationLabel label to flow to
+   * @param {Label} destinationLabel label to flow to
    * @returns {Boolean} true if the label can flow to the destination label
    */
-  canFlowTo(destinationLabel: SafetyLabel | undefined): boolean {
-    const join = SafetyLabel.computeJoinOfLabels([this, destinationLabel]);
+  canFlowTo(destinationLabel: Label | undefined): boolean {
+    const join = Label.computeJoinOfLabels([this, destinationLabel]);
     return (
       (this.confidentiality === undefined ||
         this.confidentiality === join.confidentiality) &&
@@ -186,7 +181,7 @@ export class SafetyLabel {
   /**
    * Convert label to human-readable string.
    *
-   * @param {SafetyLabel} label
+   * @param {Label} label
    * @returns {String} human-readable string
    */
   toString(): string | undefined {

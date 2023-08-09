@@ -10,7 +10,7 @@ import { readFile, readdir } from "fs/promises";
 
 import { GraphDescriptor, NodeDescriptor } from "@google-labs/graph-runner";
 import { GraphIntegrityValidator } from "../src/validator.js";
-import { SafetyLabel, SafetyLabelValue } from "../src/label.js";
+import { Label, LabelValue } from "../src/label.js";
 
 const IN_DIR = "./tests/data/";
 
@@ -26,18 +26,18 @@ const graphs = (await readdir(`${IN_DIR}/`)).filter((file) =>
   file.endsWith(".json")
 );
 
-const mapNameToSafetyLabel: { [key: string]: SafetyLabelValue | undefined } = {
-  TRUSTED: SafetyLabelValue.TRUSTED,
-  UNTRUSTED: SafetyLabelValue.UNTRUSTED,
+const mapNameToLabel: { [key: string]: LabelValue | undefined } = {
+  TRUSTED: LabelValue.TRUSTED,
+  UNTRUSTED: LabelValue.UNTRUSTED,
   UNDETERMINED: undefined,
 };
 
-const trustedIntegrity = new SafetyLabel({
-  integrity: SafetyLabelValue.TRUSTED,
+const trustedIntegrity = new Label({
+  integrity: LabelValue.TRUSTED,
 });
 
-const untrustedIntegrity = new SafetyLabel({
-  integrity: SafetyLabelValue.UNTRUSTED,
+const untrustedIntegrity = new Label({
+  integrity: LabelValue.UNTRUSTED,
 });
 
 await Promise.all(
@@ -55,9 +55,9 @@ await Promise.all(
           confidentiality,
           integrity,
         ] of graph.expectedLabels ?? []) {
-          const expectedLabel = new SafetyLabel({
-            confidentiality: mapNameToSafetyLabel[confidentiality],
-            integrity: mapNameToSafetyLabel[integrity],
+          const expectedLabel = new Label({
+            confidentiality: mapNameToLabel[confidentiality],
+            integrity: mapNameToLabel[integrity],
           });
           const derivedLabel = validator.getValidatorMetadata({
             id: nodeId,
@@ -92,7 +92,7 @@ test("GraphSafetyValidator: Getting unknown labels throws", (t) => {
 
   t.deepEqual(v.getValidatorMetadata({ id: "a", type: "input" }), {
     description: "[UNDETERMINED, UNDETERMINED]",
-    label: new SafetyLabel(undefined),
+    label: new Label(undefined),
   });
   t.throws(() => v.getValidatorMetadata({ id: "b", type: "input" }));
 });

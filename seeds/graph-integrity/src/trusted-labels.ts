@@ -5,7 +5,7 @@
  */
 
 import type { NodeTypeIdentifier } from "@google-labs/graph-runner";
-import { SafetyLabel, SafetyLabelValue } from "./label.js";
+import { Label, LabelValue } from "./label.js";
 
 /**
  * Manual assignment of labels to node types.
@@ -16,18 +16,18 @@ import { SafetyLabel, SafetyLabelValue } from "./label.js";
  */
 
 interface TrustedLabels {
-  node?: SafetyLabel;
-  incoming?: Record<string, SafetyLabel>;
-  outgoing?: Record<string, SafetyLabel>;
+  node?: Label;
+  incoming?: Record<string, Label>;
+  outgoing?: Record<string, Label>;
 }
 
 export const trustedLabels: Record<NodeTypeIdentifier, TrustedLabels> = {
   fetch: {
     outgoing: {
-      response: new SafetyLabel({ integrity: SafetyLabelValue.UNTRUSTED }),
+      response: new Label({ integrity: LabelValue.UNTRUSTED }),
     },
   },
   runJavascript: {
-    node: new SafetyLabel({ integrity: SafetyLabelValue.TRUSTED }),
+    node: new Label({ integrity: LabelValue.TRUSTED }),
   },
 };

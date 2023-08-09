@@ -24,12 +24,12 @@ import {
 
 import { Graph, Node, Edge, NodeRoles } from "./types.js";
 import { computeLabelsForGraph } from "./compute-labels.js";
-import { SafetyLabel } from "./label.js";
+import { Label } from "./label.js";
 import { trustedLabels } from "./trusted-labels.js";
 
 export interface GraphIntegrityValidatorMetadata
   extends BreadboardValidatorMetadata {
-  label: SafetyLabel;
+  label: Label;
 }
 
 interface EdgeFromBreadboard extends Edge {
@@ -64,9 +64,9 @@ let insertionCount = 0;
  * @implements {BreadboardValidator} and validates the integrity of a graph in
  * terms of safety.
  *
- * Use one instance per id namespace. Call @method {addGraph} to add nodes to
- * the validator. And call @method {getSubgraphValidator} to get a new validator
- * for new namespaces, such as include and slot nodes
+ * Use one instance per id namespace. Call @method addGraph to add nodes to the
+ * validator. And call @method getSubgraphValidator to get a new validator for
+ * new namespaces, such as include and slot nodes
  *
  * Acts as bridge between Breadboard and the generic graph validation code.
  */
@@ -155,7 +155,7 @@ function insertGraph(
       insertionNumber: insertionCount,
       incoming: [],
       outgoing: [],
-      label: new SafetyLabel(),
+      label: new Label(),
       constraint: trustedLabels[node.type]?.node,
       role: typeToRole.get(node.type),
     } as NodeFromBreadboard;
