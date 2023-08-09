@@ -25,16 +25,16 @@
       "in": "prices"
     },
     {
-      "from": "modifiers",
-      "to": "bot-prompt",
-      "out": "modifiers",
-      "in": "modifiers"
-    },
-    {
       "from": "moves",
       "to": "bot-prompt",
       "out": "moves",
       "in": "moves"
+    },
+    {
+      "from": "modifiers",
+      "to": "bot-prompt",
+      "out": "modifiers",
+      "in": "modifiers"
     },
     {
       "from": "format",
@@ -116,17 +116,17 @@
       }
     },
     {
-      "id": "modifiers",
-      "type": "passthrough",
-      "configuration": {
-        "modifiers": "Milk options: Whole, 2%, Oat, Almond, 2% Lactose Free; Default option: whole\nEspresso shots: Single, Double, Triple, Quadruple; default: Double\nCaffeine: Decaf, Regular; default: Regular\nHot-Iced: Hot, Iced; Default: Hot\nSweeteners (option to add one or more): vanilla sweetener, hazelnut sweetener, caramel sauce, chocolate sauce, sugar free vanilla sweetener\nSpecial requests: anything the user asks for that's not listed above, for example: 'extra hot', 'one pump', 'half caff', 'extra foam', etc.\n\"dirty\" means add a shot of espresso to a drink that doesn't usually have it, like \"Dirty Chai Latte\".\n\n\"Regular milk\" is the same as 'whole milk'.\n\"sweetened\" means add some regular sugar, not sweetener.\nCustomer cannot order soy.\n"
-      }
-    },
-    {
       "id": "moves",
       "type": "passthrough",
       "configuration": {
         "moves": "checkMenu: Check that any drink or modifier names match something on the menu.\naddToOrder: If the drink and modifiers are on the menu, do addToOrder, then summarizeOrder, then confirmOrder.\nsummarizeOrder: If the customer has added to the order, list each menu item and modifier added to the order. If there has been nothing ordered, redirect.\nconfirmOrder: Ask the customer to confirm the order details are correct.\nfinishOrder: tell the user the order has been sent to the barista\nchangeItem: for this order replace one menu item and its modifiers with another\nremoveItem: for this order remove one menu item and its modifiers\nchangeModifier: for a menu item, replace a modifier with another.\nremoveModifier: for a menu item, remove a modifier\ncancelOrder: Delete and forget all items in the order so far and ask what the customer would like to do next.\ngreet: If the customer says a greeting, like \"hi\", \"what's up\", \"how are you\", etc., respond naturally, then ask what they would like to order.\nclose: If the customer says \"goodbye\" or something similar, respond naturally.\nthanks: If the customer says \"thank you\", response naturally.\nclarify: If the customer says something that you want make sure you understand, like a menu item or modifier name, ask a question to clarify, like \"Do you mean ...?\"\nredirect: If the customer's question does not make sense in the context, or if they talk about anything besides menu items, do not engage in conversation about that topic. Instead, help them order correctly.\ndescribe: if the customer asks about a drink or a modifier, explain what it is.\nrecover: if you don't know what to do, summarize what you think the order consists of and ask the customer if they are ready to finish the order."
+      }
+    },
+    {
+      "id": "modifiers",
+      "type": "passthrough",
+      "configuration": {
+        "modifiers": "Milk options: Whole, 2%, Oat, Almond, 2% Lactose Free; Default option: whole\nEspresso shots: Single, Double, Triple, Quadruple; default: Double\nCaffeine: Decaf, Regular; default: Regular\nHot-Iced: Hot, Iced; Default: Hot\nSweeteners (option to add one or more): vanilla sweetener, hazelnut sweetener, caramel sauce, chocolate sauce, sugar free vanilla sweetener\nSpecial requests: anything the user asks for that's not listed above, for example: 'extra hot', 'one pump', 'half caff', 'extra foam', etc.\n\"dirty\" means add a shot of espresso to a drink that doesn't usually have it, like \"Dirty Chai Latte\".\n\n\"Regular milk\" is the same as 'whole milk'.\n\"sweetened\" means add some regular sugar, not sweetener.\nCustomer cannot order soy.\n"
       }
     },
     {
