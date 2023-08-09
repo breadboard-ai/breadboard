@@ -13,37 +13,37 @@
       "in": "format"
     },
     {
-      "from": "generateText-2",
-      "to": "completion",
+      "from": "runJavascript-1",
+      "to": "output-2",
+      "out": "customer",
+      "in": "customer"
+    },
+    {
+      "from": "generateText-4",
+      "to": "runJavascript-1",
       "out": "completion",
       "in": "completion"
     },
     {
-      "from": "generateText-2",
+      "from": "generateText-4",
       "to": "blocked",
       "out": "filters",
       "in": "filters"
     },
     {
-      "from": "secrets-3",
-      "to": "generateText-2",
+      "from": "secrets-5",
+      "to": "generateText-4",
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
       "from": "bot-prompt",
-      "to": "generateText-2",
+      "to": "generateText-4",
       "out": "prompt",
       "in": "text"
     },
     {
-      "from": "passthrough-4",
-      "to": "bot-prompt",
-      "out": "memory",
-      "in": "memory"
-    },
-    {
-      "from": "input-1",
+      "from": "input-3",
       "to": "bot-prompt",
       "out": "customer",
       "in": "customer"
@@ -72,16 +72,29 @@
       }
     },
     {
-      "id": "input-1",
+      "id": "runJavascript-1",
+      "type": "runJavascript",
+      "configuration": {
+        "name": "route",
+        "code": "function route({ completion }) {\n    const data = JSON.parse(completion);\n    return { [data.action]: data };\n}",
+        "raw": true
+      }
+    },
+    {
+      "id": "output-2",
+      "type": "output"
+    },
+    {
+      "id": "input-3",
       "type": "input"
     },
     {
-      "id": "generateText-2",
+      "id": "generateText-4",
       "type": "generateText",
       "configuration": {
         "stopSequences": [
           "\nTool",
-          "\nCustomer:"
+          "\nCustomer"
         ],
         "safetySettings": [
           {
@@ -92,27 +105,16 @@
       }
     },
     {
-      "id": "completion",
-      "type": "output"
-    },
-    {
       "id": "blocked",
       "type": "output"
     },
     {
-      "id": "secrets-3",
+      "id": "secrets-5",
       "type": "secrets",
       "configuration": {
         "keys": [
           "PALM_KEY"
         ]
-      }
-    },
-    {
-      "id": "passthrough-4",
-      "type": "passthrough",
-      "configuration": {
-        "memory": " "
       }
     }
   ],

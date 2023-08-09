@@ -45,3 +45,12 @@ test("runJavascript runs code with arguments", async (t) => {
   });
   t.is(result, "hello world");
 });
+
+test("runJavascript understands `raw` input", async (t) => {
+  const result = await runJavascript({
+    code: 'function compute() { return { hello: "world" }; }',
+    name: "compute",
+    raw: true,
+  });
+  t.deepEqual(result, { hello: "world" });
+});

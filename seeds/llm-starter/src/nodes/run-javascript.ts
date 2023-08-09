@@ -11,21 +11,25 @@ import vm from "node:vm";
 const stripCodeBlock = (code: string) =>
   code.replace(/(?:```(?:js|javascript)?\n+)(.*)(?:\n+```)/gms, "$1");
 
-const runInNode = async (code: string, functionName: string, args: string) => {
+const runInNode = async (
+  code: string,
+  functionName: string,
+  args: string
+): Promise<string> => {
   const codeToRun = `${code}\n${functionName}(${args});`;
   const context = vm.createContext({ console });
   const script = new vm.Script(codeToRun);
   const result = await script.runInNewContext(context);
-  return String(result);
+  return JSON.stringify(result);
 };
 
 const runInBrowser = async (
   code: string,
   functionName: string,
   args: string
-) => {
+): Promise<string> => {
   const runner = (code: string, functionName: string) => {
-    return `${code}\nself.onmessage = () => self.postMessage(${functionName}({${args}}))`;
+    return `${code}\nself.onmessage = () => self.postMessage(JSON.stringify(${functionName}({${args}})))`;
   };
 
   const blob = new Blob([runner(code, functionName)], {
@@ -37,25 +41,27 @@ const runInBrowser = async (
     worker.onmessage = (e) => resolve(e.data);
   });
   worker.postMessage("please");
-  return result;
+  return String(result);
 };
 
 type RunJavaScriptInputs = InputValues & {
   code?: string;
   name?: string;
+  raw?: boolean;
 };
 
 export default async (inputs: InputValues) => {
-  const { code, name, ...args } = inputs as RunJavaScriptInputs;
+  const { code, name, raw, ...args } = inputs as RunJavaScriptInputs;
   if (!code) throw new Error("Running JavaScript requires `code` input");
   const clean = stripCodeBlock(code);
   // A smart helper that senses the environment (browser or node) and uses
   // the appropriate method to run the code.
   const functionName = name || "run";
   const argsString = JSON.stringify(args);
-  const result =
+  const result = JSON.parse(
     typeof window === "undefined"
       ? await runInNode(clean, functionName, argsString)
-      : await runInBrowser(clean, functionName, argsString);
-  return { result };
+      : await runInBrowser(clean, functionName, argsString)
+  );
+  return raw ? result : { result };
 };

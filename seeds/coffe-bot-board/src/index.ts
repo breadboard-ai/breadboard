@@ -22,26 +22,36 @@ const prompt = await template.loadTemplate("order-agent.txt");
 await template.wirePart("tools", "json");
 await template.wirePart("format", "json");
 
+function route({ completion }: { completion: string }) {
+  const data = JSON.parse(completion);
+  return { [data.action]: data };
+}
+
+const toolRouter = kit
+  .runJavascript("route", {
+    code: route.toString(),
+    raw: true,
+  })
+  .wire("customer->", board.output());
+
 board.input().wire(
   "customer->",
-  prompt
-    .wire(
-      "prompt->text",
-      kit
-        .generateText({
-          stopSequences: ["\nTool", "\nCustomer"],
-          safetySettings: [
-            {
-              category: "HARM_CATEGORY_DEROGATORY",
-              threshold: "BLOCK_MEDIUM_AND_ABOVE",
-            },
-          ],
-        })
-        .wire("completion->", board.output({ $id: "completion" }))
-        .wire("filters->", board.output({ $id: "blocked" }))
-        .wire("<-PALM_KEY", kit.secrets(["PALM_KEY"]))
-    )
-    .wire("<-memory", board.passthrough({ memory: " " }))
+  prompt.wire(
+    "prompt->text",
+    kit
+      .generateText({
+        stopSequences: ["\nTool", "\nCustomer"],
+        safetySettings: [
+          {
+            category: "HARM_CATEGORY_DEROGATORY",
+            threshold: "BLOCK_MEDIUM_AND_ABOVE",
+          },
+        ],
+      })
+      .wire("completion->", toolRouter)
+      .wire("filters->", board.output({ $id: "blocked" }))
+      .wire("<-PALM_KEY", kit.secrets(["PALM_KEY"]))
+  )
 );
 
 await writeFile("./graphs/coffee-bot-v2.json", JSON.stringify(board, null, 2));
