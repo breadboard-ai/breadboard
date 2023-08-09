@@ -65,7 +65,7 @@ test("SafetyLabel: equalsTo", (t) => {
   t.false(undetermined.equalsTo(untrusted));
 });
 
-test("SafetyLabel: meet and join", (t) => {
+test("SafetyLabel: meet and join (integrity only)", (t) => {
   const trusted = new SafetyLabel({ integrity: SafetyLabelValue.TRUSTED });
   const untrusted = new SafetyLabel({ integrity: SafetyLabelValue.UNTRUSTED });
   const undetermined = new SafetyLabel(undefined);
@@ -219,7 +219,35 @@ test("SafetyLabel: meet and join", (t) => {
   );
 });
 
-test("SafetyLabel: canFlowTo", (t) => {
+test("SafetyLabel: meet and join with both confidentiality and integrity", (t) => {
+  const low = new SafetyLabel({
+    confidentiality: SafetyLabelValue.UNTRUSTED,
+    integrity: SafetyLabelValue.TRUSTED,
+  });
+
+  const high = new SafetyLabel({
+    confidentiality: SafetyLabelValue.TRUSTED,
+    integrity: SafetyLabelValue.UNTRUSTED,
+  });
+
+  t.true(SafetyLabel.computeJoinOfLabels([low, high]).equalsTo(low));
+  t.true(SafetyLabel.computeMeetOfLabels([low, high]).equalsTo(high));
+
+  const lowHigh = new SafetyLabel({
+    confidentiality: SafetyLabelValue.UNTRUSTED,
+    integrity: SafetyLabelValue.UNTRUSTED,
+  });
+
+  const highLow = new SafetyLabel({
+    confidentiality: SafetyLabelValue.TRUSTED,
+    integrity: SafetyLabelValue.TRUSTED,
+  });
+
+  t.true(SafetyLabel.computeJoinOfLabels([lowHigh, highLow]).equalsTo(low));
+  t.true(SafetyLabel.computeMeetOfLabels([lowHigh, highLow]).equalsTo(high));
+});
+
+test("SafetyLabel: canFlowTo (integrity only)", (t) => {
   const trusted = new SafetyLabel({ integrity: SafetyLabelValue.TRUSTED });
   const untrusted = new SafetyLabel({ integrity: SafetyLabelValue.UNTRUSTED });
   const undetermined = new SafetyLabel(undefined);
@@ -235,6 +263,20 @@ test("SafetyLabel: canFlowTo", (t) => {
   t.true(undetermined.canFlowTo(undetermined));
   t.true(undetermined.canFlowTo(trusted));
   t.true(undetermined.canFlowTo(untrusted));
+});
+
+test("SafetyLabel: canFlowTo with both confidentiality and integrity", (t) => {
+  const low = new SafetyLabel({
+    confidentiality: SafetyLabelValue.UNTRUSTED,
+    integrity: SafetyLabelValue.TRUSTED,
+  });
+
+  const high = new SafetyLabel({
+    confidentiality: SafetyLabelValue.TRUSTED,
+    integrity: SafetyLabelValue.UNTRUSTED,
+  });
+
+  t.true(low.canFlowTo(high));
 });
 
 test("SafetyLabel: toString", (t) => {
