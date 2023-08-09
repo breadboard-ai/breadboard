@@ -29,7 +29,7 @@ board.input().wire(
       "prompt->text",
       kit
         .generateText({
-          stopSequences: ["\nTool"],
+          stopSequences: ["\nTool", "\nCustomer"],
           safetySettings: [
             {
               category: "HARM_CATEGORY_DEROGATORY",

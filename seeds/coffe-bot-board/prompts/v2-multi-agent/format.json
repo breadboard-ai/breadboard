@@ -1,15 +1,15 @@
 {
   "thought": "starting with a summary of order state (what's been done), a string describing how you decide on the next action, given the previous customer replies.",
-  "action": "a string with one of the following values: checkMenu, finishOrder",
+  "action": "a string with one of the following values: checkMenu, finishOrder, customer",
+  "actionInput": "a string with the input for the action",
   "orderType": "string to be included after summarizeOrder: here|to go",
-  "response": "a string with the response spoken by you to the customer",
   "currentOrder": [
     {
-      "drink": "drinkName",
+      "item": "name",
       "modifiers": [{ "mod": "modifier" }, { "mod": "modifier" }]
     },
     {
-      "drink": "drinkName",
+      "item": "name",
       "modifiers": [{ "mod": "modifier" }, { "mod": "modifier" }]
     }
   ]

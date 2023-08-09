@@ -54,21 +54,21 @@
       "id": "bot-prompt",
       "type": "promptTemplate",
       "configuration": {
-        "template": "You are the ordering agent and your job is to assist customers with ordering items on the menu.\n\nYou have access to the following tools:\n{{tools}}\n\nYour conversation with the customer will follow this pattern:\n\nCustomer: the customer request with which you must assist \nBarrista: your response\nTool: response from the tool that was invoked\nCustomer: ...\n\nThis pattern may repeat several times until the customer's request is finalized.\n\nYour response must be a valid JSON of the following format:\n{{format}}\n\nBegin!\n\nCustomer: {{customer}}\n"
+        "template": "You are the ordering agent and your job is to assist customers with ordering items on the menu.\n\nYou have access to the following tools:\n{{tools}}\n\nIt is your responsibility to manage the state of the current order. Add, remove, and change items as you use tools and interact with the customer.\n\nYour conversation with the customer will follow this pattern:\n\nCustomer: the customer request with which you must assist \nAgent: your response\nTool: response from the tool that was invoked\nAgent: your next action\nCustomer: possible reply for the customer\n\nThis pattern may repeat several times until the customer's request is finalized.\n\nYour response must be a valid JSON of the following format:\n{{format}}\n\nBegin!\n\nCustomer: {{customer}}\nAgent:\n{\n  \"thought\": \"Customer has requested a chai latte.\",\n  \"action\": \"checkMenu\",\n  \"actionInput\": \"chai latte\",\n  \"orderType\": \"here\",\n  \"currentOrder\": []\n}\nTool:\n{\n  \"name\": \"checkMenu\",\n  \"result\": {\n      \"item\": \"Chai Latte\",\n      \"modifiers\": []\n    }\n}\nAgent:\n{\n  \"thought\": \"The chai latte is on the menu.\",\n  action\": \"customer\",\n  \"actionInput\": \"Great, a chai latte. Anything else for you today?\",\n  \"orderType\": \"here\",\n  \"currentOrder\": [\n    {\n      \"item\": \"Chai Latte\",\n      \"modifiers\": []\n    }\n  ]\n}\nCustomer: Can you make it large?\nAgent:"
       }
     },
     {
       "id": "tools",
       "type": "passthrough",
       "configuration": {
-        "tools": "[\n  {\n    \"name\": \"checkMenu\",\n    \"description\": \"Check to see if the item requested match items on the menu\",\n    \"input\": \"Name of the item that the customer requested\"\n  },\n  {\n    \"name\": \"finalizeOrder\",\n    \"description\": \"Finalize the order and send it for fulfillment\",\n    \"input\": \"none\"\n  }\n]\n"
+        "tools": "[\n  {\n    \"name\": \"checkMenu\",\n    \"description\": \"Check to see if the item requested match items on the menu\",\n    \"input\": \"Name of the item that the customer requested\"\n  },\n  {\n    \"name\": \"finalizeOrder\",\n    \"description\": \"Finalize the order and send it for fulfillment\",\n    \"input\": \"none\"\n  },\n  {\n    \"name\": \"customer\",\n    \"description\": \"Interact with the customer to continue assisting with the order\",\n    \"input\": \"the message to send to the customer\"\n  }\n]\n"
       }
     },
     {
       "id": "format",
       "type": "passthrough",
       "configuration": {
-        "format": "{\n  \"thought\": \"starting with a summary of order state (what's been done), a string describing how you decide on the next action, given the previous customer replies.\",\n  \"action\": \"a string with one of the following values: checkMenu, finishOrder\",\n  \"orderType\": \"string to be included after summarizeOrder: here|to go\",\n  \"response\": \"a string with the response spoken by you to the customer\",\n  \"currentOrder\": [\n    {\n      \"drink\": \"drinkName\",\n      \"modifiers\": [{ \"mod\": \"modifier\" }, { \"mod\": \"modifier\" }]\n    },\n    {\n      \"drink\": \"drinkName\",\n      \"modifiers\": [{ \"mod\": \"modifier\" }, { \"mod\": \"modifier\" }]\n    }\n  ]\n}\n"
+        "format": "{\n  \"thought\": \"starting with a summary of order state (what's been done), a string describing how you decide on the next action, given the previous customer replies.\",\n  \"action\": \"a string with one of the following values: checkMenu, finishOrder, customer\",\n  \"actionInput\": \"a string with the input for the action\",\n  \"orderType\": \"string to be included after summarizeOrder: here|to go\",\n  \"currentOrder\": [\n    {\n      \"item\": \"name\",\n      \"modifiers\": [{ \"mod\": \"modifier\" }, { \"mod\": \"modifier\" }]\n    },\n    {\n      \"item\": \"name\",\n      \"modifiers\": [{ \"mod\": \"modifier\" }, { \"mod\": \"modifier\" }]\n    }\n  ]\n}\n"
       }
     },
     {
@@ -80,7 +80,8 @@
       "type": "generateText",
       "configuration": {
         "stopSequences": [
-          "\nTool"
+          "\nTool",
+          "\nCustomer:"
         ],
         "safetySettings": [
           {

@@ -8,5 +8,10 @@
     "name": "finalizeOrder",
     "description": "Finalize the order and send it for fulfillment",
     "input": "none"
+  },
+  {
+    "name": "customer",
+    "description": "Interact with the customer to continue assisting with the order",
+    "input": "the message to send to the customer"
   }
 ]
