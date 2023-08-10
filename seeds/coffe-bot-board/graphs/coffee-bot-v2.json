@@ -3,24 +3,62 @@
     {
       "from": "tools",
       "to": "bot-prompt",
+      "constant": true,
       "out": "tools",
       "in": "tools"
     },
     {
       "from": "format",
       "to": "bot-prompt",
+      "constant": true,
       "out": "format",
       "in": "format"
     },
     {
-      "from": "append-1",
-      "to": "output-2",
+      "from": "toolMemory",
+      "to": "output-1",
       "out": "accumulator",
       "in": "bot"
     },
     {
+      "from": "agentMemory",
+      "to": "toolMemory",
+      "out": "accumulator",
+      "in": "accumulator"
+    },
+    {
+      "from": "passthrough-2",
+      "to": "customerMemory",
+      "out": "accumulator",
+      "in": "accumulator"
+    },
+    {
+      "from": "customerMemory",
+      "to": "agentMemory",
+      "out": "accumulator",
+      "in": "accumulator"
+    },
+    {
+      "from": "toolMemory",
+      "to": "customerMemory",
+      "out": "accumulator",
+      "in": "accumulator"
+    },
+    {
+      "from": "customerMemory",
+      "to": "bot-prompt",
+      "out": "accumulator",
+      "in": "memory"
+    },
+    {
+      "from": "toolMemory",
+      "to": "bot-prompt",
+      "out": "accumulator",
+      "in": "memory"
+    },
+    {
       "from": "checkMenu",
-      "to": "append-1",
+      "to": "toolMemory",
       "out": "result",
       "in": "Tool"
     },
@@ -31,40 +69,65 @@
       "in": "bot"
     },
     {
+      "from": "input-5",
+      "to": "customerMemory",
+      "out": "customer",
+      "in": "Customer"
+    },
+    {
+      "from": "jsonata-4",
+      "to": "input-5",
+      "out": "result",
+      "in": "message"
+    },
+    {
+      "from": "toolRouter",
+      "to": "jsonata-4",
+      "out": "customer",
+      "in": "json"
+    },
+    {
       "from": "toolRouter",
       "to": "checkMenu",
       "out": "checkMenu",
       "in": "checkMenu"
     },
     {
-      "from": "generateText-5",
+      "from": "input-6",
+      "to": "customerMemory",
+      "out": "customer",
+      "in": "Customer"
+    },
+    {
+      "from": "generateText-7",
       "to": "toolRouter",
       "out": "completion",
       "in": "completion"
     },
     {
-      "from": "generateText-5",
+      "from": "generateText-7",
+      "to": "agentMemory",
+      "out": "completion",
+      "in": "Agent"
+    },
+    {
+      "from": "generateText-7",
       "to": "blocked",
       "out": "filters",
       "in": "filters"
     },
     {
-      "from": "secrets-6",
-      "to": "generateText-5",
+      "from": "secrets-8",
+      "to": "generateText-7",
+      "constant": true,
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
       "from": "bot-prompt",
-      "to": "generateText-5",
+      "to": "generateText-7",
       "out": "prompt",
       "in": "text"
-    },
-    {
-      "from": "input-4",
-      "to": "bot-prompt",
-      "out": "customer",
-      "in": "customer"
     }
   ],
   "nodes": [
@@ -72,7 +135,7 @@
       "id": "bot-prompt",
       "type": "promptTemplate",
       "configuration": {
-        "template": "You are the ordering agent and your job is to assist customers with ordering items on the menu.\n\nYou have access to the following tools:\n{{tools}}\n\nIt is your responsibility to manage the state of the current order. Add, remove, and change items as you use tools and interact with the customer.\n\nYour conversation with the customer will follow this pattern:\n\nCustomer: the customer request with which you must assist \nAgent: your response\nTool: response from the tool that was invoked\nAgent: your next action\nCustomer: possible reply for the customer\n\nThis pattern may repeat several times until the customer's request is finalized.\n\nYour response must be a valid JSON of the following format:\n{{format}}\n\nBegin!\n\nCustomer: {{customer}}\nAgent:"
+        "template": "You are the ordering agent and your job is to assist customers with ordering items on the menu.\n\nYou have access to the following tools:\n{{tools}}\n\nIt is your responsibility to manage the state of the currentOrder. Add, remove, and change items as you use tools and interact with the customer.\n\nYour conversation with the customer will follow the pattern of \"Customer\", \"Agent\" and \"Tool\" interleaving, like this:\n\nCustomer: the customer request with which you must assist \nAgent: your response\nTool: response from the tool that was invoked\nAgent: your next action\nCustomer: possible reply for the customer\n... and so on ...\n\nThis pattern may repeat several times until the customer's request is finalized.\n\nYour response must be a valid JSON of the following format:\n{{format}}\n\nBegin!\n{{memory}}\nAgent: "
       }
     },
     {
@@ -90,20 +153,35 @@
       }
     },
     {
+      "id": "toolMemory",
+      "type": "append"
+    },
+    {
+      "id": "output-1",
+      "type": "output"
+    },
+    {
+      "id": "agentMemory",
+      "type": "append"
+    },
+    {
+      "id": "customerMemory",
+      "type": "append"
+    },
+    {
+      "id": "passthrough-2",
+      "type": "passthrough",
+      "configuration": {
+        "accumulator": "\n"
+      }
+    },
+    {
       "id": "checkMenu",
       "type": "runJavascript",
       "configuration": {
         "name": "checkMenu",
         "code": "function checkMenu({ actionInput }) {\n    // Hard-code the output for now.\n    return {\n        name: \"checkMenu\",\n        result: {\n            item: \"Chai Latte\",\n            modifiers: [],\n        },\n    };\n}"
       }
-    },
-    {
-      "id": "append-1",
-      "type": "append"
-    },
-    {
-      "id": "output-2",
-      "type": "output"
     },
     {
       "id": "toolRouter",
@@ -119,11 +197,22 @@
       "type": "output"
     },
     {
-      "id": "input-4",
+      "id": "jsonata-4",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "actionInput"
+      }
+    },
+    {
+      "id": "input-5",
       "type": "input"
     },
     {
-      "id": "generateText-5",
+      "id": "input-6",
+      "type": "input"
+    },
+    {
+      "id": "generateText-7",
       "type": "generateText",
       "configuration": {
         "stopSequences": [
@@ -143,7 +232,7 @@
       "type": "output"
     },
     {
-      "id": "secrets-6",
+      "id": "secrets-8",
       "type": "secrets",
       "configuration": {
         "keys": [

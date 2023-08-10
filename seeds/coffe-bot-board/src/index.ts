@@ -24,6 +24,22 @@ const prompt = await template.loadTemplate("order-agent.txt");
 await template.wirePart("tools", "json");
 await template.wirePart("format", "json");
 
+const toolMemory = kit
+  .append({ $id: "toolMemory" })
+  .wire("accumulator->bot", board.output());
+const agentMemory = kit
+  .append({ $id: "agentMemory" })
+  .wire("accumulator->", toolMemory);
+const customerMemory = kit
+  .append({ $id: "customerMemory" })
+  .wire("<-accumulator", board.passthrough({ accumulator: "\n" }))
+  .wire("accumulator->", agentMemory)
+  .wire("<-accumulator", toolMemory);
+
+prompt
+  .wire("memory<-accumulator", customerMemory)
+  .wire("memory<-accumulator", toolMemory);
+
 function checkMenu({ actionInput }: { actionInput: string }) {
   // Hard-code the output for now.
   return {
@@ -40,7 +56,7 @@ const checkMenuTool = kit
     $id: "checkMenu",
     code: checkMenu.toString(),
   })
-  .wire("result->Tool", kit.append().wire("accumulator->bot", board.output()));
+  .wire("result->Tool", toolMemory);
 
 function route({ completion }: { completion: string }) {
   const data = JSON.parse(completion);
@@ -55,26 +71,35 @@ const toolRouter = kit
     raw: true,
   })
   .wire("customer->bot", board.output())
+  .wire(
+    "customer->json",
+    kit
+      .jsonata("actionInput")
+      .wire(
+        "result->message",
+        board.input().wire("customer->Customer", customerMemory)
+      )
+  )
   .wire("checkMenu->", checkMenuTool);
 
-board.input().wire(
-  "customer->",
-  prompt.wire(
-    "prompt->text",
-    kit
-      .generateText({
-        stopSequences: ["\nTool", "\nCustomer"],
-        safetySettings: [
-          {
-            category: "HARM_CATEGORY_DEROGATORY",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE",
-          },
-        ],
-      })
-      .wire("completion->", toolRouter)
-      .wire("filters->", board.output({ $id: "blocked" }))
-      .wire("<-PALM_KEY", kit.secrets(["PALM_KEY"]))
-  )
+board.input().wire("customer->Customer", customerMemory);
+
+prompt.wire(
+  "prompt->text",
+  kit
+    .generateText({
+      stopSequences: ["\nTool", "\nCustomer"],
+      safetySettings: [
+        {
+          category: "HARM_CATEGORY_DEROGATORY",
+          threshold: "BLOCK_MEDIUM_AND_ABOVE",
+        },
+      ],
+    })
+    .wire("completion->", toolRouter)
+    .wire("completion->Agent", agentMemory)
+    .wire("filters->", board.output({ $id: "blocked" }))
+    .wire("<-PALM_KEY.", kit.secrets(["PALM_KEY"]))
 );
 
 await writeFile("./graphs/coffee-bot-v2.json", JSON.stringify(board, null, 2));
@@ -116,6 +141,7 @@ try {
 
   outro("Awesome work! Let's do this again sometime.");
 } catch (e) {
+  console.log(e);
   if (e instanceof Error) log.error(e.message);
   outro("Oh no! Something went wrong.");
 }

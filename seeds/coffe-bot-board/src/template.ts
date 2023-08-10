@@ -62,7 +62,7 @@ export class Template {
     if (!this.textPrompt) throw new Error("Must load template first");
     const part = await readFile(`${this.path}/${name}.${extension}`, "utf-8");
     this.textPrompt.wire(
-      `<-${name}`,
+      `<-${name}.`,
       this.board.passthrough({ [name]: part, $id: name })
     );
   }

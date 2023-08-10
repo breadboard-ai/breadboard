@@ -3,28 +3,40 @@
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-tools(("passthrough <br> id='tools'")):::passthrough -- "tools->tools" --> botprompt["promptTemplate <br> id='bot-prompt'"]
-format(("passthrough <br> id='format'")):::passthrough -- "format->format" --> botprompt["promptTemplate <br> id='bot-prompt'"]
-append1["append <br> id='append-1'"] -- "accumulator->bot" --> output2{{"output <br> id='output-2'"}}:::output
-checkMenu["runJavascript <br> id='checkMenu'"] -- "result->Tool" --> append1["append <br> id='append-1'"]
+tools(("passthrough <br> id='tools'")):::passthrough -- "tools->tools" --o botprompt["promptTemplate <br> id='bot-prompt'"]
+format(("passthrough <br> id='format'")):::passthrough -- "format->format" --o botprompt["promptTemplate <br> id='bot-prompt'"]
+toolMemory["append <br> id='toolMemory'"] -- "accumulator->bot" --> output1{{"output <br> id='output-1'"}}:::output
+agentMemory["append <br> id='agentMemory'"] -- "accumulator->accumulator" --> toolMemory["append <br> id='toolMemory'"]
+passthrough2(("passthrough <br> id='passthrough-2'")):::passthrough -- "accumulator->accumulator" --> customerMemory["append <br> id='customerMemory'"]
+customerMemory["append <br> id='customerMemory'"] -- "accumulator->accumulator" --> agentMemory["append <br> id='agentMemory'"]
+toolMemory["append <br> id='toolMemory'"] -- "accumulator->accumulator" --> customerMemory["append <br> id='customerMemory'"]
+customerMemory["append <br> id='customerMemory'"] -- "accumulator->memory" --> botprompt["promptTemplate <br> id='bot-prompt'"]
+toolMemory["append <br> id='toolMemory'"] -- "accumulator->memory" --> botprompt["promptTemplate <br> id='bot-prompt'"]
+checkMenu["runJavascript <br> id='checkMenu'"] -- "result->Tool" --> toolMemory["append <br> id='toolMemory'"]
 toolRouter["runJavascript <br> id='toolRouter'"] -- "customer->bot" --> output3{{"output <br> id='output-3'"}}:::output
+input5[/"input <br> id='input-5'"/]:::input -- "customer->Customer" --> customerMemory["append <br> id='customerMemory'"]
+jsonata4["jsonata <br> id='jsonata-4'"] -- "result->message" --> input5[/"input <br> id='input-5'"/]:::input
+toolRouter["runJavascript <br> id='toolRouter'"] -- "customer->json" --> jsonata4["jsonata <br> id='jsonata-4'"]
 toolRouter["runJavascript <br> id='toolRouter'"] -- "checkMenu->checkMenu" --> checkMenu["runJavascript <br> id='checkMenu'"]
-generateText5["generateText <br> id='generateText-5'"] -- "completion->completion" --> toolRouter["runJavascript <br> id='toolRouter'"]
-generateText5["generateText <br> id='generateText-5'"] -- "filters->filters" --> blocked{{"output <br> id='blocked'"}}:::output
-secrets6("secrets <br> id='secrets-6'"):::secrets -- "PALM_KEY->PALM_KEY" --> generateText5["generateText <br> id='generateText-5'"]
-botprompt["promptTemplate <br> id='bot-prompt'"] -- "prompt->text" --> generateText5["generateText <br> id='generateText-5'"]
-input4[/"input <br> id='input-4'"/]:::input -- "customer->customer" --> botprompt["promptTemplate <br> id='bot-prompt'"]
+input6[/"input <br> id='input-6'"/]:::input -- "customer->Customer" --> customerMemory["append <br> id='customerMemory'"]
+generateText7["generateText <br> id='generateText-7'"] -- "completion->completion" --> toolRouter["runJavascript <br> id='toolRouter'"]
+generateText7["generateText <br> id='generateText-7'"] -- "completion->Agent" --> agentMemory["append <br> id='agentMemory'"]
+generateText7["generateText <br> id='generateText-7'"] -- "filters->filters" --> blocked{{"output <br> id='blocked'"}}:::output
+secrets8("secrets <br> id='secrets-8'"):::secrets -- "PALM_KEY->PALM_KEY" --o generateText7["generateText <br> id='generateText-7'"]
+botprompt["promptTemplate <br> id='bot-prompt'"] -- "prompt->text" --> generateText7["generateText <br> id='generateText-7'"]
 templatebotprompt[template]:::config -- "template->template" --o botprompt
 toolstools[tools]:::config -- "tools->tools" --o tools
 formatformat[format]:::config -- "format->format" --o format
+accumulatorpassthrough2[accumulator]:::config -- "accumulator->accumulator" --o passthrough2
 namecheckMenu[name]:::config -- "name->name" --o checkMenu
 codecheckMenu[code]:::config -- "code->code" --o checkMenu
 nametoolRouter[name]:::config -- "name->name" --o toolRouter
 codetoolRouter[code]:::config -- "code->code" --o toolRouter
 rawtoolRouter[raw]:::config -- "raw->raw" --o toolRouter
-stopSequencesgenerateText5[stopSequences]:::config -- "stopSequences->stopSequences" --o generateText5
-safetySettingsgenerateText5[safetySettings]:::config -- "safetySettings->safetySettings" --o generateText5
-keyssecrets6[keys]:::config -- "keys->keys" --o secrets6
+expressionjsonata4[expression]:::config -- "expression->expression" --o jsonata4
+stopSequencesgenerateText7[stopSequences]:::config -- "stopSequences->stopSequences" --o generateText7
+safetySettingsgenerateText7[safetySettings]:::config -- "safetySettings->safetySettings" --o generateText7
+keyssecrets8[keys]:::config -- "keys->keys" --o secrets8
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
