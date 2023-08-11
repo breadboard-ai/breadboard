@@ -8,11 +8,11 @@
       "in": "tools"
     },
     {
-      "from": "format",
+      "from": "order-format",
       "to": "bot-prompt",
       "constant": true,
-      "out": "format",
-      "in": "format"
+      "out": "order-format",
+      "in": "order-format"
     },
     {
       "from": "passthrough-1",
@@ -45,12 +45,6 @@
       "in": "accumulator"
     },
     {
-      "from": "toolMemory",
-      "to": "output-2",
-      "out": "accumulator",
-      "in": "bot"
-    },
-    {
       "from": "customerMemory",
       "to": "bot-prompt",
       "out": "accumulator",
@@ -70,25 +64,25 @@
     },
     {
       "from": "toolRouter",
-      "to": "output-3",
+      "to": "output-2",
       "out": "customer",
       "in": "bot"
     },
     {
-      "from": "input-5",
+      "from": "input-4",
       "to": "customerMemory",
       "out": "customer",
       "in": "Customer"
     },
     {
-      "from": "jsonata-4",
-      "to": "input-5",
+      "from": "jsonata-3",
+      "to": "input-4",
       "out": "result",
       "in": "message"
     },
     {
       "from": "toolRouter",
-      "to": "jsonata-4",
+      "to": "jsonata-3",
       "out": "customer",
       "in": "json"
     },
@@ -99,39 +93,39 @@
       "in": "checkMenu"
     },
     {
-      "from": "input-6",
+      "from": "input-5",
       "to": "customerMemory",
       "out": "customer",
       "in": "Customer"
     },
     {
-      "from": "generateText-7",
+      "from": "generateText-6",
       "to": "toolRouter",
       "out": "completion",
       "in": "completion"
     },
     {
-      "from": "generateText-7",
+      "from": "generateText-6",
       "to": "agentMemory",
       "out": "completion",
       "in": "Agent"
     },
     {
-      "from": "generateText-7",
+      "from": "generateText-6",
       "to": "blocked",
       "out": "filters",
       "in": "filters"
     },
     {
-      "from": "secrets-8",
-      "to": "generateText-7",
+      "from": "secrets-7",
+      "to": "generateText-6",
       "constant": true,
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
       "from": "bot-prompt",
-      "to": "generateText-7",
+      "to": "generateText-6",
       "out": "prompt",
       "in": "text"
     }
@@ -141,7 +135,7 @@
       "id": "bot-prompt",
       "type": "promptTemplate",
       "configuration": {
-        "template": "You are the ordering agent and your job is to assist customers with ordering items on the menu.\n\nYou have access to the following tools:\n{{tools}}\n\nIt is your responsibility to manage the state of the currentOrder. Add, remove, and change items as you use tools and interact with the customer.\n\nYour conversation with the customer will follow the pattern of \"Customer\", \"Agent\" and \"Tool\" interleaving, like this:\n\nCustomer: the customer request with which you must assist \nAgent: your response\nTool: response from the tool that was invoked\nAgent: your next action\nCustomer: possible reply for the customer\n... and so on ...\n\nThis pattern may repeat several times until the customer's request is finalized.\n\nYour response must be a valid JSON of the following format:\n{{format}}\n\nBegin!\n{{memory}}\nAgent: "
+        "template": "You are the ordering agent and your job is to assist customers with ordering items on the menu.\n\nYou have access to the following tools:\n{{tools}}\n\nIt is your responsibility to manage the state of the currentOrder. Add, remove, and change items as you use tools and interact with the customer.\n\nYour conversation with the customer will follow the pattern of \"Customer\", \"Agent\" and \"Tool\" interleaving, like this:\n\nCustomer: the customer request with which you must assist \nAgent: your response\nTool: response from the tool that was invoked\nAgent: your next action\nCustomer: possible reply for the customer\n... and so on ...\n\nThis pattern may repeat several times until the customer's request is finalized.\n\nYour response must be a valid JSON of the following format:\n{{order-format}}\n\nBegin!\n{{memory}}\nAgent: "
       }
     },
     {
@@ -152,10 +146,10 @@
       }
     },
     {
-      "id": "format",
+      "id": "order-format",
       "type": "passthrough",
       "configuration": {
-        "format": "{\n  \"thought\": \"starting with a summary of order state (what's been done), a string describing how you decide on the next action, given the previous customer replies.\",\n  \"action\": \"a string with one of the following values: checkMenu, finishOrder, customer\",\n  \"actionInput\": \"a string with the input for the action\",\n  \"orderType\": \"string to be included after summarizeOrder: here|to go\",\n  \"currentOrder\": [\n    {\n      \"item\": \"name\",\n      \"modifiers\": [{ \"mod\": \"modifier\" }, { \"mod\": \"modifier\" }]\n    },\n    {\n      \"item\": \"name\",\n      \"modifiers\": [{ \"mod\": \"modifier\" }, { \"mod\": \"modifier\" }]\n    }\n  ]\n}\n"
+        "order-format": "{\n  \"thought\": \"starting with a summary of order state (what's been done), a string describing how you decide on the next action, given the previous customer replies.\",\n  \"action\": \"a string with one of the following values: checkMenu, finishOrder, customer\",\n  \"actionInput\": \"a string with the input for the action\",\n  \"orderType\": \"string to be included after summarizeOrder: here|to go\",\n  \"currentOrder\": [\n    {\n      \"item\": \"name\",\n      \"extras\": [\"list\", \"of\", \"extras\"]\n    },\n    {\n      \"item\": \"name\",\n      \"extras\": [\"list\", \"of\", \"extras\"]\n    }\n  ]\n}\n"
       }
     },
     {
@@ -178,15 +172,11 @@
       }
     },
     {
-      "id": "output-2",
-      "type": "output"
-    },
-    {
       "id": "checkMenu",
       "type": "runJavascript",
       "configuration": {
         "name": "checkMenu",
-        "code": "function checkMenu({ actionInput }) {\n    // Hard-code the output for now.\n    return {\n        name: \"checkMenu\",\n        result: {\n            item: \"Chai Latte\",\n            modifiers: [],\n        },\n    };\n}"
+        "code": "function checkMenu({ actionInput }) {\n    // Hard-code the output for now.\n    return {\n        name: \"checkMenu\",\n        result: {\n            item: \"Chai Latte\",\n            extras: [],\n            availableExtras: [\"Soy Milk\", \"Almond Milk\", \"Oat Milk\", \"Honey\"],\n        },\n    };\n}"
       }
     },
     {
@@ -194,36 +184,37 @@
       "type": "runJavascript",
       "configuration": {
         "name": "route",
-        "code": "function route({ completion }) {\n    const data = JSON.parse(completion);\n    console.log(\"data\", data);\n    return { [data.action]: data };\n}",
+        "code": "function route({ completion }) {\n    const data = JSON.parse(completion);\n    return { [data.action]: data };\n}",
         "raw": true
       }
     },
     {
-      "id": "output-3",
+      "id": "output-2",
       "type": "output"
     },
     {
-      "id": "jsonata-4",
+      "id": "jsonata-3",
       "type": "jsonata",
       "configuration": {
         "expression": "actionInput"
       }
     },
     {
+      "id": "input-4",
+      "type": "input"
+    },
+    {
       "id": "input-5",
       "type": "input"
     },
     {
-      "id": "input-6",
-      "type": "input"
-    },
-    {
-      "id": "generateText-7",
+      "id": "generateText-6",
       "type": "generateText",
       "configuration": {
         "stopSequences": [
-          "\nTool",
-          "\nCustomer"
+          "Tool:",
+          "Customer:",
+          "\n\n"
         ],
         "safetySettings": [
           {
@@ -238,7 +229,7 @@
       "type": "output"
     },
     {
-      "id": "secrets-8",
+      "id": "secrets-7",
       "type": "secrets",
       "configuration": {
         "keys": [

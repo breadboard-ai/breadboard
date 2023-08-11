@@ -6,11 +6,11 @@
   "currentOrder": [
     {
       "item": "name",
-      "modifiers": [{ "mod": "modifier" }, { "mod": "modifier" }]
+      "extras": ["list", "of", "extras"]
     },
     {
       "item": "name",
-      "modifiers": [{ "mod": "modifier" }, { "mod": "modifier" }]
+      "extras": ["list", "of", "extras"]
     }
   ]
 }

@@ -13,12 +13,13 @@ const substitute = (template: string, values: Record<string, string>) => {
   );
 };
 
-const parametersFromTemplate = (template: string): string[] => {
-  const matches = template.matchAll(/{{(?<name>\w+)}}/g);
+export const parametersFromTemplate = (template: string): string[] => {
+  const matches = template.matchAll(/{{(?<name>[\w-]+)}}/g);
   const parameters = Array.from(matches).map(
     (match) => match.groups?.name || ""
   );
-  return parameters;
+  const unique = Array.from(new Set(parameters));
+  return unique;
 };
 
 export default async (inputs: InputValues) => {

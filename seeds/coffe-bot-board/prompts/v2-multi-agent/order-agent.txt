@@ -17,7 +17,7 @@ Customer: possible reply for the customer
 This pattern may repeat several times until the customer's request is finalized.
 
 Your response must be a valid JSON of the following format:
-{{format}}
+{{order-format}}
 
 Begin!
 {{memory}}
