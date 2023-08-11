@@ -15,19 +15,7 @@
       "in": "format"
     },
     {
-      "from": "toolMemory",
-      "to": "output-1",
-      "out": "accumulator",
-      "in": "bot"
-    },
-    {
-      "from": "agentMemory",
-      "to": "toolMemory",
-      "out": "accumulator",
-      "in": "accumulator"
-    },
-    {
-      "from": "passthrough-2",
+      "from": "passthrough-1",
       "to": "customerMemory",
       "out": "accumulator",
       "in": "accumulator"
@@ -39,10 +27,28 @@
       "in": "accumulator"
     },
     {
-      "from": "toolMemory",
+      "from": "agentMemory",
+      "to": "toolMemory",
+      "out": "accumulator",
+      "in": "accumulator"
+    },
+    {
+      "from": "agentMemory",
       "to": "customerMemory",
       "out": "accumulator",
       "in": "accumulator"
+    },
+    {
+      "from": "toolMemory",
+      "to": "agentMemory",
+      "out": "accumulator",
+      "in": "accumulator"
+    },
+    {
+      "from": "toolMemory",
+      "to": "output-2",
+      "out": "accumulator",
+      "in": "bot"
     },
     {
       "from": "customerMemory",
@@ -153,27 +159,27 @@
       }
     },
     {
-      "id": "toolMemory",
+      "id": "customerMemory",
       "type": "append"
-    },
-    {
-      "id": "output-1",
-      "type": "output"
     },
     {
       "id": "agentMemory",
       "type": "append"
     },
     {
-      "id": "customerMemory",
+      "id": "toolMemory",
       "type": "append"
     },
     {
-      "id": "passthrough-2",
+      "id": "passthrough-1",
       "type": "passthrough",
       "configuration": {
         "accumulator": "\n"
       }
+    },
+    {
+      "id": "output-2",
+      "type": "output"
     },
     {
       "id": "checkMenu",

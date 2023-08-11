@@ -24,17 +24,17 @@ const prompt = await template.loadTemplate("order-agent.txt");
 await template.wirePart("tools", "json");
 await template.wirePart("format", "json");
 
-const toolMemory = kit
-  .append({ $id: "toolMemory" })
-  .wire("accumulator->bot", board.output());
-const agentMemory = kit
-  .append({ $id: "agentMemory" })
-  .wire("accumulator->", toolMemory);
-const customerMemory = kit
-  .append({ $id: "customerMemory" })
-  .wire("<-accumulator", board.passthrough({ accumulator: "\n" }))
-  .wire("accumulator->", agentMemory)
-  .wire("<-accumulator", toolMemory);
+const customerMemory = kit.append({ $id: "customerMemory" });
+const agentMemory = kit.append({ $id: "agentMemory" });
+const toolMemory = kit.append({ $id: "toolMemory" });
+
+board.passthrough({ accumulator: "\n" }).wire("accumulator->", customerMemory);
+customerMemory.wire("accumulator->", agentMemory);
+agentMemory.wire("accumulator->", toolMemory);
+agentMemory.wire("accumulator->", customerMemory);
+toolMemory.wire("accumulator->", agentMemory);
+
+toolMemory.wire("accumulator->bot", board.output());
 
 prompt
   .wire("memory<-accumulator", customerMemory)

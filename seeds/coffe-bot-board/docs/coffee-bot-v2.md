@@ -5,11 +5,12 @@
 graph TD;
 tools(("passthrough <br> id='tools'")):::passthrough -- "tools->tools" --o botprompt["promptTemplate <br> id='bot-prompt'"]
 format(("passthrough <br> id='format'")):::passthrough -- "format->format" --o botprompt["promptTemplate <br> id='bot-prompt'"]
-toolMemory["append <br> id='toolMemory'"] -- "accumulator->bot" --> output1{{"output <br> id='output-1'"}}:::output
-agentMemory["append <br> id='agentMemory'"] -- "accumulator->accumulator" --> toolMemory["append <br> id='toolMemory'"]
-passthrough2(("passthrough <br> id='passthrough-2'")):::passthrough -- "accumulator->accumulator" --> customerMemory["append <br> id='customerMemory'"]
+passthrough1(("passthrough <br> id='passthrough-1'")):::passthrough -- "accumulator->accumulator" --> customerMemory["append <br> id='customerMemory'"]
 customerMemory["append <br> id='customerMemory'"] -- "accumulator->accumulator" --> agentMemory["append <br> id='agentMemory'"]
-toolMemory["append <br> id='toolMemory'"] -- "accumulator->accumulator" --> customerMemory["append <br> id='customerMemory'"]
+agentMemory["append <br> id='agentMemory'"] -- "accumulator->accumulator" --> toolMemory["append <br> id='toolMemory'"]
+agentMemory["append <br> id='agentMemory'"] -- "accumulator->accumulator" --> customerMemory["append <br> id='customerMemory'"]
+toolMemory["append <br> id='toolMemory'"] -- "accumulator->accumulator" --> agentMemory["append <br> id='agentMemory'"]
+toolMemory["append <br> id='toolMemory'"] -- "accumulator->bot" --> output2{{"output <br> id='output-2'"}}:::output
 customerMemory["append <br> id='customerMemory'"] -- "accumulator->memory" --> botprompt["promptTemplate <br> id='bot-prompt'"]
 toolMemory["append <br> id='toolMemory'"] -- "accumulator->memory" --> botprompt["promptTemplate <br> id='bot-prompt'"]
 checkMenu["runJavascript <br> id='checkMenu'"] -- "result->Tool" --> toolMemory["append <br> id='toolMemory'"]
@@ -27,7 +28,7 @@ botprompt["promptTemplate <br> id='bot-prompt'"] -- "prompt->text" --> generateT
 templatebotprompt[template]:::config -- "template->template" --o botprompt
 toolstools[tools]:::config -- "tools->tools" --o tools
 formatformat[format]:::config -- "format->format" --o format
-accumulatorpassthrough2[accumulator]:::config -- "accumulator->accumulator" --o passthrough2
+accumulatorpassthrough1[accumulator]:::config -- "accumulator->accumulator" --o passthrough1
 namecheckMenu[name]:::config -- "name->name" --o checkMenu
 codecheckMenu[code]:::config -- "code->code" --o checkMenu
 nametoolRouter[name]:::config -- "name->name" --o toolRouter
