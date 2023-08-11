@@ -1,0 +1,99 @@
+@import 'https://unpkg.com/open-props';
+@import 'https://unpkg.com/open-props/normalize.min.css';
+@import 'https://unpkg.com/open-props/buttons.min.css';
+
+:root {
+  color-scheme: light dark;
+}
+
+button {
+  background: white;
+  color: var(--indigo-8);
+  font-size: var(--font-size-3);
+  padding-inline: var(--size-8);
+  padding-block: var(--size-3);
+  border-radius: var(--radius-2);
+  box-shadow: var(--shadow-2);
+  text-shadow: none;
+}
+
+button.primary {
+  background: var(--indigo-8);
+  text-shadow: 0 1px 0 var(--indigo-9);
+  color: white;
+}
+
+button.primary:hover {
+  background: var(--indigo-7);
+}
+
+nav {
+  display: flex;
+  justify-content: space-between;
+}
+
+nav a {
+  padding: 1em;
+  border-radius: 1em;
+}
+
+footer {
+  margin-top: auto;
+  padding: 1em;
+  text-align: center;
+  font-size: 0.8em;
+  color: #aaa;
+}
+
+header {
+  position: sticky;
+  top: 0px;
+  background-color: var(--surface-1);
+}
+
+body {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+#app p {
+  text-align: left;
+}
+
+.card {
+  padding: 2em 0;
+  display: block;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+details {
+  text-align: left;
+}
+
+details pre {
+  overflow-x: auto;
+}
+
+div.output {
+  margin: 1em 0;
+  padding: 1em;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #f8f8f8;
+  font-family: monospace;
+  font-size: 1.2em;
+  text-align: left;
+  color: darkslategrey;
+}
+
+div.output.results pre {
+  overflow-x: auto;
+  text-wrap: balance;
+}

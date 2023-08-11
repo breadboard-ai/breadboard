@@ -10,6 +10,7 @@
     { "path": "seeds/breadboard" },
     { "path": "seeds/llm-starter" },
     { "path": "seeds/node-nursery" },
-    { "path": "seeds/coffe-bot-board" }
+    { "path": "seeds/coffe-bot-board" },
+    { "path": "seeds/web-demo" }
   ]
 }

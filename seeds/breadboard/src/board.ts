@@ -29,7 +29,6 @@ import { TraversalMachine, toMermaid } from "@google-labs/graph-runner";
 import { Node } from "./node.js";
 import { Core } from "./core.js";
 import { InputStageResult, OutputStageResult } from "./run.js";
-import { readFile } from "fs/promises";
 import { KitLoader } from "./kit.js";
 import { IdVendor } from "./id.js";
 
@@ -46,7 +45,11 @@ class ProbeEvent extends CustomEvent<ProbeDetails> {
  * @returns
  */
 export const loadGraph = async (path?: string, ref?: string) => {
-  if (path) return JSON.parse(await readFile(path, "utf-8"));
+  if (path && typeof process !== "undefined") throw new Error("Unable to use `path` when not running in node");
+  if (path) {
+    const { readFile } = await import("node:fs/promises");
+    return JSON.parse(await readFile(path, "utf-8"));
+  }
   if (!ref) throw new Error("To include, we need a path or a $ref");
   const response = await fetch(ref);
   return await response.json();

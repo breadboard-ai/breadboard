@@ -30,7 +30,7 @@ export class KitLoader {
           // TODO: Support protocols other than `npm:`.
           if (url === ".") return null;
           const spec = urlToNpmSpec(url);
-          const { default: module } = await import(spec);
+          const { default: module } = await import(/* @vite-ignore */ spec);
           // TODO: Check to see if this import is actually a Kit class.
           return module;
         })
