@@ -6,6 +6,6 @@
 
 import test from "ava";
 
-test("coffe-bot-board", async (t) => {
+test("coffee-bot-board", async (t) => {
   t.pass();
 });
