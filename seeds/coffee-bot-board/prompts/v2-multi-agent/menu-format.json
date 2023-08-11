@@ -1,0 +1,15 @@
+{
+  "name": "checkMenu",
+  "result": [
+    {
+      "item": "name of the item on the menu",
+      "extras": "array extras and options that were specified in customer's request",
+      "availableExtras": "array of all available extras and options for this item"
+    },
+    {
+      "item": "name of another item on the menu",
+      "extras": "array extras and options that were specified in customer's request",
+      "availableExtras": "array of all available extras and options for this item"
+    }
+  ]
+}

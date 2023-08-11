@@ -1,0 +1,246 @@
+{
+  "edges": [
+    {
+      "from": "tools",
+      "to": "bot-prompt",
+      "constant": true,
+      "out": "tools",
+      "in": "tools"
+    },
+    {
+      "from": "order-format",
+      "to": "bot-prompt",
+      "constant": true,
+      "out": "order-format",
+      "in": "order-format"
+    },
+    {
+      "from": "passthrough-1",
+      "to": "customerMemory",
+      "out": "accumulator",
+      "in": "accumulator"
+    },
+    {
+      "from": "customerMemory",
+      "to": "agentMemory",
+      "out": "accumulator",
+      "in": "accumulator"
+    },
+    {
+      "from": "agentMemory",
+      "to": "toolMemory",
+      "out": "accumulator",
+      "in": "accumulator"
+    },
+    {
+      "from": "agentMemory",
+      "to": "customerMemory",
+      "out": "accumulator",
+      "in": "accumulator"
+    },
+    {
+      "from": "toolMemory",
+      "to": "agentMemory",
+      "out": "accumulator",
+      "in": "accumulator"
+    },
+    {
+      "from": "customerMemory",
+      "to": "bot-prompt",
+      "out": "accumulator",
+      "in": "memory"
+    },
+    {
+      "from": "toolMemory",
+      "to": "bot-prompt",
+      "out": "accumulator",
+      "in": "memory"
+    },
+    {
+      "from": "checkMenu",
+      "to": "toolMemory",
+      "out": "result",
+      "in": "Tool"
+    },
+    {
+      "from": "toolRouter",
+      "to": "output-2",
+      "out": "customer",
+      "in": "bot"
+    },
+    {
+      "from": "input-4",
+      "to": "customerMemory",
+      "out": "customer",
+      "in": "Customer"
+    },
+    {
+      "from": "jsonata-3",
+      "to": "input-4",
+      "out": "result",
+      "in": "message"
+    },
+    {
+      "from": "toolRouter",
+      "to": "jsonata-3",
+      "out": "customer",
+      "in": "json"
+    },
+    {
+      "from": "toolRouter",
+      "to": "checkMenu",
+      "out": "checkMenu",
+      "in": "checkMenu"
+    },
+    {
+      "from": "input-5",
+      "to": "customerMemory",
+      "out": "customer",
+      "in": "Customer"
+    },
+    {
+      "from": "generateText-6",
+      "to": "toolRouter",
+      "out": "completion",
+      "in": "completion"
+    },
+    {
+      "from": "generateText-6",
+      "to": "agentMemory",
+      "out": "completion",
+      "in": "Agent"
+    },
+    {
+      "from": "generateText-6",
+      "to": "blocked",
+      "out": "filters",
+      "in": "filters"
+    },
+    {
+      "from": "secrets-7",
+      "to": "generateText-6",
+      "constant": true,
+      "out": "PALM_KEY",
+      "in": "PALM_KEY"
+    },
+    {
+      "from": "bot-prompt",
+      "to": "generateText-6",
+      "out": "prompt",
+      "in": "text"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "bot-prompt",
+      "type": "promptTemplate",
+      "configuration": {
+        "template": "You are the ordering agent and your job is to assist customers with ordering items on the menu.\n\nYou have access to the following tools:\n{{tools}}\n\nIt is your responsibility to manage the state of the currentOrder. Add, remove, and change items as you use tools and interact with the customer.\n\nYour conversation with the customer will follow the pattern of \"Customer\", \"Agent\" and \"Tool\" interleaving, like this:\n\nCustomer: the customer request with which you must assist \nAgent: your response\nTool: response from the tool that was invoked\nAgent: your next action\nCustomer: possible reply for the customer\n... and so on ...\n\nThis pattern may repeat several times until the customer's request is finalized.\n\nYour response must be a valid JSON of the following format:\n{{order-format}}\n\nBegin!\n{{memory}}\nAgent: "
+      }
+    },
+    {
+      "id": "tools",
+      "type": "passthrough",
+      "configuration": {
+        "tools": "[\n  {\n    \"name\": \"checkMenu\",\n    \"description\": \"Check to see if the item requested match items on the menu\",\n    \"input\": \"Name of the item that the customer requested\"\n  },\n  {\n    \"name\": \"finalizeOrder\",\n    \"description\": \"Finalize the order and send it for fulfillment\",\n    \"input\": \"none\"\n  },\n  {\n    \"name\": \"customer\",\n    \"description\": \"Interact with the customer to continue assisting with the order\",\n    \"input\": \"the message to send to the customer\"\n  }\n]\n"
+      }
+    },
+    {
+      "id": "order-format",
+      "type": "passthrough",
+      "configuration": {
+        "order-format": "{\n  \"thought\": \"starting with a summary of order state (what's been done), a string describing how you decide on the next action, given the previous customer replies.\",\n  \"action\": \"a string with one of the following values: checkMenu, finishOrder, customer\",\n  \"actionInput\": \"a string with the input for the action\",\n  \"orderType\": \"string to be included after summarizeOrder: here|to go\",\n  \"currentOrder\": [\n    {\n      \"item\": \"name\",\n      \"extras\": [\"list\", \"of\", \"extras\"]\n    },\n    {\n      \"item\": \"name\",\n      \"extras\": [\"list\", \"of\", \"extras\"]\n    }\n  ]\n}\n"
+      }
+    },
+    {
+      "id": "customerMemory",
+      "type": "append"
+    },
+    {
+      "id": "agentMemory",
+      "type": "append"
+    },
+    {
+      "id": "toolMemory",
+      "type": "append"
+    },
+    {
+      "id": "passthrough-1",
+      "type": "passthrough",
+      "configuration": {
+        "accumulator": "\n"
+      }
+    },
+    {
+      "id": "checkMenu",
+      "type": "runJavascript",
+      "configuration": {
+        "name": "checkMenu",
+        "code": "function checkMenu({ actionInput }) {\n    // Hard-code the output for now.\n    return {\n        name: \"checkMenu\",\n        result: {\n            item: \"Chai Latte\",\n            extras: [],\n            availableExtras: [\"Soy Milk\", \"Almond Milk\", \"Oat Milk\", \"Honey\"],\n        },\n    };\n}"
+      }
+    },
+    {
+      "id": "toolRouter",
+      "type": "runJavascript",
+      "configuration": {
+        "name": "route",
+        "code": "function route({ completion }) {\n    const data = JSON.parse(completion);\n    return { [data.action]: data };\n}",
+        "raw": true
+      }
+    },
+    {
+      "id": "output-2",
+      "type": "output"
+    },
+    {
+      "id": "jsonata-3",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "actionInput"
+      }
+    },
+    {
+      "id": "input-4",
+      "type": "input"
+    },
+    {
+      "id": "input-5",
+      "type": "input"
+    },
+    {
+      "id": "generateText-6",
+      "type": "generateText",
+      "configuration": {
+        "stopSequences": [
+          "Tool:",
+          "Customer:",
+          "\n\n"
+        ],
+        "safetySettings": [
+          {
+            "category": "HARM_CATEGORY_DEROGATORY",
+            "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+          }
+        ]
+      }
+    },
+    {
+      "id": "blocked",
+      "type": "output"
+    },
+    {
+      "id": "secrets-7",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "PALM_KEY"
+        ]
+      }
+    }
+  ],
+  "kits": [
+    {
+      "url": "npm:@google-labs/llm-starter"
+    }
+  ]
+}
