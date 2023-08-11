@@ -179,7 +179,7 @@
       "id": "order-format",
       "type": "passthrough",
       "configuration": {
-        "order-format": "{\n  \"thought\": \"starting with a summary of order state (what's been done), a string describing how you decide on the next action, given the previous customer replies.\",\n  \"action\": \"a string with one of the following values: checkMenu, finalizeOrder, customer\",\n  \"actionInput\": \"a string with the input for the action\",\n  \"orderType\": \"string to be included after summarizeOrder: here|to go\",\n  \"currentOrder\": [\n    {\n      \"item\": \"name\",\n      \"extras\": \"array of extras and options for the item\"\n    },\n    {\n      \"item\": \"name\",\n      \"extras\": \"array of extras and options for the item\"\n    }\n  ]\n}\n"
+        "order-format": "{\n  \"thought\": \"starting with a summary of order state (what's been done), a string describing how you decide on the next action, given the previous customer replies.\",\n  \"action\": \"a string with one of the following values: checkMenu, finalizeOrder, customer\",\n  \"actionInput\": \"a string with the input for the action\",\n  \"orderType\": \"string of either \\\"here\\\" (default) or \\\"to go\\\"\",\n  \"currentOrder\": [\n    {\n      \"item\": \"name\",\n      \"extras\": \"array of extras and options for the item\",\n      \"quantity\": \"a number of items\"\n    },\n    {\n      \"item\": \"name\",\n      \"extras\": \"array of extras and options for the item\",\n      \"quantity\": \"a number of items\"\n    }\n  ]\n}\n"
       }
     },
     {
