@@ -13,6 +13,7 @@ export type {
   NodeFactory,
   BreadboardValidator,
   BreadboardValidatorMetadata,
+  BreadboardSlotSpec,
   BreadboardNode,
   OptionalIdConfiguration,
 } from "./types.js";

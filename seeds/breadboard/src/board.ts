@@ -45,7 +45,8 @@ class ProbeEvent extends CustomEvent<ProbeDetails> {
  * @returns
  */
 export const loadGraph = async (path?: string, ref?: string) => {
-  if (path && typeof process !== "undefined") throw new Error("Unable to use `path` when not running in node");
+  if (path && typeof process === "undefined")
+    throw new Error("Unable to use `path` when not running in node");
   if (path) {
     const { readFile } = await import("node:fs/promises");
     return JSON.parse(await readFile(path, "utf-8"));
@@ -122,9 +123,18 @@ export class Board implements Breadboard {
    *
    * @param probe - an optional probe. If provided, the board will dispatch
    * events to it. See [Chapter 7: Probes](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-7-probes) of the Breadboard tutorial for more information.
+   * @param slots - an optional map of slotted graphs. See [Chapter 6: Boards with slots](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-6-boards-with-slots) of the Breadboard tutorial for more information.
    */
-  async *run(probe?: EventTarget): AsyncGenerator<BreadbordRunResult> {
-    const core = new Core(this, this.#slots, this.#validators, probe);
+  async *run(
+    probe?: EventTarget,
+    slots?: BreadboardSlotSpec
+  ): AsyncGenerator<BreadbordRunResult> {
+    const core = new Core(
+      this,
+      { ...this.#slots, ...slots },
+      this.#validators,
+      probe
+    );
     const kits = [core, ...this.kits];
     const handlers = kits.reduce((handlers, kit) => {
       return { ...handlers, ...kit.handlers };
@@ -199,14 +209,16 @@ export class Board implements Breadboard {
    * @param inputs - the input values to provide to the board.
    * @param probe - an optional probe. If provided, the board will dispatch
    * events to it. See [Chapter 7: Probes](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-7-probes) of the Breadboard tutorial for more information.
+   * @param slots - an optional map of slotted graphs. See [Chapter 6: Boards with slots](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-6-boards-with-slots) of the Breadboard tutorial for more information.
    * @returns - outputs provided by the board.
    */
   async runOnce(
     inputs: InputValues,
-    probe?: EventTarget
+    probe?: EventTarget,
+    slots?: BreadboardSlotSpec
   ): Promise<OutputValues> {
     let outputs: OutputValues = {};
-    for await (const result of this.run(probe)) {
+    for await (const result of this.run(probe, slots)) {
       if (result.seeksInputs) {
         result.inputs = inputs;
       } else {

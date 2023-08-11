@@ -57,75 +57,93 @@
       "in": "memory"
     },
     {
-      "from": "checkMenu",
+      "from": "slot-4",
       "to": "toolMemory",
-      "out": "result",
+      "out": "bot",
       "in": "Tool"
     },
     {
+      "from": "slot-4",
+      "to": "output-5",
+      "out": "bot",
+      "in": "bot"
+    },
+    {
+      "from": "jsonata-3",
+      "to": "slot-4",
+      "out": "result",
+      "in": "customer"
+    },
+    {
+      "from": "passthrough-2",
+      "to": "jsonata-3",
+      "out": "checkMenu",
+      "in": "json"
+    },
+    {
       "from": "toolRouter",
-      "to": "output-2",
+      "to": "output-6",
       "out": "customer",
       "in": "bot"
     },
     {
-      "from": "input-4",
+      "from": "input-8",
       "to": "customerMemory",
       "out": "customer",
       "in": "Customer"
     },
     {
-      "from": "jsonata-3",
-      "to": "input-4",
+      "from": "jsonata-7",
+      "to": "input-8",
       "out": "result",
       "in": "message"
     },
     {
       "from": "toolRouter",
-      "to": "jsonata-3",
+      "to": "jsonata-7",
       "out": "customer",
       "in": "json"
     },
     {
       "from": "toolRouter",
-      "to": "checkMenu",
+      "to": "passthrough-2",
       "out": "checkMenu",
       "in": "checkMenu"
     },
     {
-      "from": "input-5",
+      "from": "input-9",
       "to": "customerMemory",
       "out": "customer",
       "in": "Customer"
     },
     {
-      "from": "generateText-6",
+      "from": "generateText-10",
       "to": "toolRouter",
       "out": "completion",
       "in": "completion"
     },
     {
-      "from": "generateText-6",
+      "from": "generateText-10",
       "to": "agentMemory",
       "out": "completion",
       "in": "Agent"
     },
     {
-      "from": "generateText-6",
+      "from": "generateText-10",
       "to": "blocked",
       "out": "filters",
       "in": "filters"
     },
     {
-      "from": "secrets-7",
-      "to": "generateText-6",
+      "from": "secrets-11",
+      "to": "generateText-10",
       "constant": true,
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
       "from": "bot-prompt",
-      "to": "generateText-6",
+      "to": "generateText-10",
       "out": "prompt",
       "in": "text"
     }
@@ -172,12 +190,26 @@
       }
     },
     {
-      "id": "checkMenu",
-      "type": "runJavascript",
+      "id": "passthrough-2",
+      "type": "passthrough"
+    },
+    {
+      "id": "jsonata-3",
+      "type": "jsonata",
       "configuration": {
-        "name": "checkMenu",
-        "code": "function checkMenu({ actionInput }) {\n    // Hard-code the output for now.\n    return {\n        name: \"checkMenu\",\n        result: {\n            item: \"Chai Latte\",\n            extras: [],\n            availableExtras: [\"Soy Milk\", \"Almond Milk\", \"Oat Milk\", \"Honey\"],\n        },\n    };\n}"
+        "expression": "actionInput"
       }
+    },
+    {
+      "id": "slot-4",
+      "type": "slot",
+      "configuration": {
+        "slot": "checkMenu"
+      }
+    },
+    {
+      "id": "output-5",
+      "type": "output"
     },
     {
       "id": "toolRouter",
@@ -189,26 +221,26 @@
       }
     },
     {
-      "id": "output-2",
+      "id": "output-6",
       "type": "output"
     },
     {
-      "id": "jsonata-3",
+      "id": "jsonata-7",
       "type": "jsonata",
       "configuration": {
         "expression": "actionInput"
       }
     },
     {
-      "id": "input-4",
+      "id": "input-8",
       "type": "input"
     },
     {
-      "id": "input-5",
+      "id": "input-9",
       "type": "input"
     },
     {
-      "id": "generateText-6",
+      "id": "generateText-10",
       "type": "generateText",
       "configuration": {
         "stopSequences": [
@@ -229,7 +261,7 @@
       "type": "output"
     },
     {
-      "id": "secrets-7",
+      "id": "secrets-11",
       "type": "secrets",
       "configuration": {
         "keys": [

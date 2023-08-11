@@ -26,6 +26,7 @@ const writeGraphs = async (board: Board, filename: string) => {
   );
 };
 
-writeGraphs(orderAgent, "order-agent");
-writeGraphs(menuAgent, "menu-agent");
-run(menuAgent);
+await writeGraphs(orderAgent, "order-agent");
+await writeGraphs(menuAgent, "menu-agent");
+
+await run(orderAgent, { checkMenu: menuAgent });

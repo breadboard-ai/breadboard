@@ -84,7 +84,7 @@
       "id": "menu-not-found",
       "type": "passthrough",
       "configuration": {
-        "menu-not-found": "{\n  \"name\": \"checkMenu\",\n  \"error\": \"Item is not on the menu\",\n  \"suggestion\": {\n    \"item\": \"name of the item that is on the menu that could work for the customer instead\",\n    \"extras\": \"array extras and options could work to make the item on the menu work for the customer\",\n    \"availableExtras\": \"array of all available extras and options for this item\"\n  }\n}\n"
+        "menu-not-found": "{\n  \"name\": \"checkMenu\",\n  \"error\": \"Item is not on the menu\",\n  \"suggestion\": {\n    \"item\": \"name of the item that is on the menu that could work for the customer instead\",\n    \"extras\": \"array extras and options to make the item on the menu work for the customer\",\n    \"availableExtras\": \"array of all available extras and options for this item\"\n  }\n}\n"
       }
     },
     {

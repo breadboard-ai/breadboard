@@ -32,24 +32,20 @@ prompt
   .wire("memory<-accumulator", customerMemory)
   .wire("memory<-accumulator", toolMemory);
 
-function checkMenu({ actionInput }: { actionInput: string }) {
-  // Hard-code the output for now.
-  return {
-    name: "checkMenu",
-    result: {
-      item: "Chai Latte",
-      extras: [],
-      availableExtras: ["Soy Milk", "Almond Milk", "Oat Milk", "Honey"],
-    },
-  };
-}
-
-const checkMenuTool = kit
-  .runJavascript("checkMenu", {
-    $id: "checkMenu",
-    code: checkMenu.toString(),
-  })
-  .wire("result->Tool", toolMemory);
+const checkMenuTool = board
+  .passthrough()
+  .wire(
+    "checkMenu->json",
+    kit
+      .jsonata("actionInput")
+      .wire(
+        "result->customer",
+        board
+          .slot("checkMenu")
+          .wire("bot->Tool", toolMemory)
+          .wire("bot->", board.output())
+      )
+  );
 
 function route({ completion }: { completion: string }) {
   const data = JSON.parse(completion);

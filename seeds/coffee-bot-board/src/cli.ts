@@ -1,8 +1,12 @@
 import { intro, log, text, outro } from "@clack/prompts";
 
-import { Board, LogProbe } from "@google-labs/breadboard";
+import {
+  Board,
+  LogProbe,
+  type BreadboardSlotSpec,
+} from "@google-labs/breadboard";
 
-export const run = async (board: Board) => {
+export const run = async (board: Board, slots: BreadboardSlotSpec) => {
   intro("Hi! I am coffee bot! What would you like to have today?");
 
   const probe = process.argv.includes("-v") ? new LogProbe() : undefined;
@@ -25,7 +29,7 @@ export const run = async (board: Board) => {
 
   try {
     // Run the board until it finishes. This may run forever.
-    for await (const stop of board.run(probe)) {
+    for await (const stop of board.run(probe, slots)) {
       if (stop.seeksInputs) {
         stop.inputs = await ask(stop.inputArguments);
       } else {
@@ -33,7 +37,7 @@ export const run = async (board: Board) => {
       }
     }
 
-    outro("Awesome work! Let's do this again sometime.");
+    outro("It was a delight be your coffee bot. See you soon!");
   } catch (e) {
     console.log(e);
     if (e instanceof Error) log.error(e.message);
