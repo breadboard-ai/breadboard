@@ -21,10 +21,16 @@ export const run = async (board: Board, slots: BreadboardSlotSpec) => {
     if (input === defaultValue) return { exit: true };
     return { customer: input };
   };
+
+  const stringify = (o: unknown): string => {
+    if (typeof o == "string") return o;
+    return JSON.stringify(o);
+  };
+
   const show = (outputs: Record<string, unknown>) => {
-    const { bot } = outputs;
-    if (typeof bot == "string") log.success(bot);
-    else log.success(JSON.stringify(bot));
+    const { bot, error } = outputs;
+    if (error) log.error(stringify(error));
+    else log.success(stringify(bot));
   };
 
   try {

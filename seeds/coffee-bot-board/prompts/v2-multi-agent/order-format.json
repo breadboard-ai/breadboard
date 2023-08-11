@@ -1,16 +1,16 @@
 {
   "thought": "starting with a summary of order state (what's been done), a string describing how you decide on the next action, given the previous customer replies.",
-  "action": "a string with one of the following values: checkMenu, finishOrder, customer",
+  "action": "a string with one of the following values: checkMenu, finalizeOrder, customer",
   "actionInput": "a string with the input for the action",
   "orderType": "string to be included after summarizeOrder: here|to go",
   "currentOrder": [
     {
       "item": "name",
-      "extras": ["list", "of", "extras"]
+      "extras": "array of extras and options for the item"
     },
     {
       "item": "name",
-      "extras": ["list", "of", "extras"]
+      "extras": "array of extras and options for the item"
     }
   ]
 }

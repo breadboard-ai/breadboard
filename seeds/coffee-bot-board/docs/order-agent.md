@@ -14,6 +14,7 @@ customerMemory["append <br> id='customerMemory'"] -- "accumulator->memory" --> b
 toolMemory["append <br> id='toolMemory'"] -- "accumulator->memory" --> botprompt["promptTemplate <br> id='bot-prompt'"]
 slot4(("slot <br> id='slot-4'")):::slot -- "bot->Tool" --> toolMemory["append <br> id='toolMemory'"]
 slot4(("slot <br> id='slot-4'")):::slot -- "bot->bot" --> output5{{"output <br> id='output-5'"}}:::output
+slot4(("slot <br> id='slot-4'")):::slot -- "error->error" --> error{{"output <br> id='error'"}}:::output
 jsonata3["jsonata <br> id='jsonata-3'"] -- "result->customer" --> slot4(("slot <br> id='slot-4'")):::slot
 passthrough2(("passthrough <br> id='passthrough-2'")):::passthrough -- "checkMenu->json" --> jsonata3["jsonata <br> id='jsonata-3'"]
 toolRouter["runJavascript <br> id='toolRouter'"] -- "customer->bot" --> output6{{"output <br> id='output-6'"}}:::output
@@ -21,6 +22,7 @@ input8[/"input <br> id='input-8'"/]:::input -- "customer->Customer" --> customer
 jsonata7["jsonata <br> id='jsonata-7'"] -- "result->message" --> input8[/"input <br> id='input-8'"/]:::input
 toolRouter["runJavascript <br> id='toolRouter'"] -- "customer->json" --> jsonata7["jsonata <br> id='jsonata-7'"]
 toolRouter["runJavascript <br> id='toolRouter'"] -- "checkMenu->checkMenu" --> passthrough2(("passthrough <br> id='passthrough-2'")):::passthrough
+toolRouter["runJavascript <br> id='toolRouter'"] -- "finalizeOrder->bot" --> finalizeOrder{{"output <br> id='finalizeOrder'"}}:::output
 input9[/"input <br> id='input-9'"/]:::input -- "customer->Customer" --> customerMemory["append <br> id='customerMemory'"]
 generateText10["generateText <br> id='generateText-10'"] -- "completion->completion" --> toolRouter["runJavascript <br> id='toolRouter'"]
 generateText10["generateText <br> id='generateText-10'"] -- "completion->Agent" --> agentMemory["append <br> id='agentMemory'"]

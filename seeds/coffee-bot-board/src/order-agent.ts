@@ -32,20 +32,17 @@ prompt
   .wire("memory<-accumulator", customerMemory)
   .wire("memory<-accumulator", toolMemory);
 
-const checkMenuTool = board
-  .passthrough()
-  .wire(
-    "checkMenu->json",
-    kit
-      .jsonata("actionInput")
-      .wire(
-        "result->customer",
-        board
-          .slot("checkMenu")
-          .wire("bot->Tool", toolMemory)
-          .wire("bot->", board.output())
-      )
-  );
+const checkMenuTool = board.passthrough().wire(
+  "checkMenu->json",
+  kit.jsonata("actionInput").wire(
+    "result->customer",
+    board
+      .slot("checkMenu")
+      .wire("bot->Tool", toolMemory)
+      .wire("bot->", board.output())
+      .wire("error->", board.output({ $id: "error" }))
+  )
+);
 
 function route({ completion }: { completion: string }) {
   const data = JSON.parse(completion);
@@ -68,7 +65,8 @@ const toolRouter = kit
         board.input().wire("customer->Customer", customerMemory)
       )
   )
-  .wire("checkMenu->", checkMenuTool);
+  .wire("checkMenu->", checkMenuTool)
+  .wire("finalizeOrder->bot", board.output({ $id: "finalizeOrder" }));
 
 board.input().wire("customer->Customer", customerMemory);
 

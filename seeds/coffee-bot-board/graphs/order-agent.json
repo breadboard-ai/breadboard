@@ -69,6 +69,12 @@
       "in": "bot"
     },
     {
+      "from": "slot-4",
+      "to": "error",
+      "out": "error",
+      "in": "error"
+    },
+    {
       "from": "jsonata-3",
       "to": "slot-4",
       "out": "result",
@@ -109,6 +115,12 @@
       "to": "passthrough-2",
       "out": "checkMenu",
       "in": "checkMenu"
+    },
+    {
+      "from": "toolRouter",
+      "to": "finalizeOrder",
+      "out": "finalizeOrder",
+      "in": "bot"
     },
     {
       "from": "input-9",
@@ -167,7 +179,7 @@
       "id": "order-format",
       "type": "passthrough",
       "configuration": {
-        "order-format": "{\n  \"thought\": \"starting with a summary of order state (what's been done), a string describing how you decide on the next action, given the previous customer replies.\",\n  \"action\": \"a string with one of the following values: checkMenu, finishOrder, customer\",\n  \"actionInput\": \"a string with the input for the action\",\n  \"orderType\": \"string to be included after summarizeOrder: here|to go\",\n  \"currentOrder\": [\n    {\n      \"item\": \"name\",\n      \"extras\": [\"list\", \"of\", \"extras\"]\n    },\n    {\n      \"item\": \"name\",\n      \"extras\": [\"list\", \"of\", \"extras\"]\n    }\n  ]\n}\n"
+        "order-format": "{\n  \"thought\": \"starting with a summary of order state (what's been done), a string describing how you decide on the next action, given the previous customer replies.\",\n  \"action\": \"a string with one of the following values: checkMenu, finalizeOrder, customer\",\n  \"actionInput\": \"a string with the input for the action\",\n  \"orderType\": \"string to be included after summarizeOrder: here|to go\",\n  \"currentOrder\": [\n    {\n      \"item\": \"name\",\n      \"extras\": \"array of extras and options for the item\"\n    },\n    {\n      \"item\": \"name\",\n      \"extras\": \"array of extras and options for the item\"\n    }\n  ]\n}\n"
       }
     },
     {
@@ -212,6 +224,10 @@
       "type": "output"
     },
     {
+      "id": "error",
+      "type": "output"
+    },
+    {
       "id": "toolRouter",
       "type": "runJavascript",
       "configuration": {
@@ -234,6 +250,10 @@
     {
       "id": "input-8",
       "type": "input"
+    },
+    {
+      "id": "finalizeOrder",
+      "type": "output"
     },
     {
       "id": "input-9",
