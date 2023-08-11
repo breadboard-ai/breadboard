@@ -23,6 +23,9 @@
     },
     {
       "path": "seeds/coffe-bot-board"
+    },
+    {
+      "path": "seeds/web-demo"
     }
   ],
   "settings": {}

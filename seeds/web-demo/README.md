@@ -2,8 +2,17 @@
 
 This is a simple test harness for a number of components in the breadboard project
 
-+ To run so that you can debug: `npm run dev`
-+ To run as if it's production and all of the minification: `npm run preview`
+If the board you're running is asking for `secrets`, they will need to be set in the local storage. To do this:
+
+1. Open the dev tools
+2. Go to the Application tab
+3. Select Local Storage
+4. Add keys and values as needed
+
+For example, for `PALM_KEY`, you will need to add a key of `PALM_KEY` and a value of the key that you want to use.
+
+- To run so that you can debug: `npm run dev`
+- To run as if it's production and all of the minification: `npm run preview`
 
 ## How to add a Kit?
 
