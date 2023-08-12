@@ -14,7 +14,7 @@ export type UrlTemplateOutputs = {
   url: string;
 };
 
-type UrlTemplateInputs = {
+export type UrlTemplateInputs = {
   /**
    * The URL template to use
    * @example https://example.com/{{path}}

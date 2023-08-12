@@ -15,16 +15,16 @@ import type {
 import type {
   BreadboardSlotSpec,
   BreadboardValidator,
+  IncludeNodeInputs,
   ProbeDetails,
 } from "./types.js";
 import { Board } from "./board.js";
 
 const CORE_HANDLERS = ["include", "reflect", "slot", "passthrough"];
 
-type SlotInput = {
+export type SlotInputs = {
   slot: string;
   parent: NodeDescriptor;
-  args: InputValues;
 };
 
 const deepCopy = (graph: GraphDescriptor): GraphDescriptor => {
@@ -87,13 +87,8 @@ export class Core {
   }
 
   async include(inputs: InputValues): Promise<OutputValues> {
-    const { path, $ref, slotted, parent, ...args } = inputs as {
-      path?: string;
-      $ref?: string;
-      slotted?: BreadboardSlotSpec;
-      parent: NodeDescriptor;
-      args: InputValues;
-    };
+    const { path, $ref, slotted, parent, ...args } =
+      inputs as IncludeNodeInputs;
     // TODO: Please fix the $ref/path mess.
     const source = path || $ref || "";
     const board = await Board.load(source, slotted);
@@ -108,7 +103,7 @@ export class Core {
   }
 
   async slot(inputs: InputValues): Promise<OutputValues> {
-    const { slot, parent, ...args } = inputs as SlotInput;
+    const { slot, parent, ...args } = inputs as SlotInputs;
     if (!slot) throw new Error("To use a slot, we need to specify its name");
     const graph = this.#slots[slot];
     if (!graph) throw new Error(`No graph found for slot "${slot}"`);

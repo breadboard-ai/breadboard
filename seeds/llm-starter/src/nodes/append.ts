@@ -15,7 +15,7 @@ export enum ObjectType {
 type AccumulatorType = string | string[] | Record<string, unknown>;
 type ValueType = string | Record<string, unknown>;
 
-type AppendInputs = Record<string, unknown> & {
+export type AppendInputs = Record<string, unknown> & {
   accumulator: AccumulatorType;
 };
 

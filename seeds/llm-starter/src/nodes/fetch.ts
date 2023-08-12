@@ -13,7 +13,7 @@ export type FetchOutputs = {
 /**
  * For now, we can only make a GET request. Let's start small.
  */
-type FetchInputs = {
+export type FetchInputs = {
   /**
    * The URL to fetch
    */

@@ -10,6 +10,10 @@ export type PropmtTemplateOutputs = {
   prompt: string;
 };
 
+export type PromptTemplateInputs = {
+  tempalte: string;
+};
+
 const substitute = (template: string, values: Record<string, string>) => {
   return Object.entries(values).reduce(
     (acc, [key, value]) => acc.replace(`{{${key}}}`, value),

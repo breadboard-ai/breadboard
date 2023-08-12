@@ -25,11 +25,12 @@ import {
   ProbeDetails,
   BreadboardNode,
   ReflectNodeOutputs,
+  IncludeNodeInputs,
 } from "./types.js";
 
 import { TraversalMachine, toMermaid } from "@google-labs/graph-runner";
 import { Node } from "./node.js";
-import { Core } from "./core.js";
+import { Core, SlotInputs } from "./core.js";
 import { InputStageResult, OutputStageResult } from "./run.js";
 import { KitLoader } from "./kit.js";
 import { IdVendor } from "./id.js";
@@ -259,11 +260,11 @@ export class Board implements Breadboard {
    * @param config - optional configuration for the node.
    * @returns - a `Node` object that represents the placed node.
    */
-  passthrough<Out = OutputValues>(
+  passthrough<In = InputValues, Out = OutputValues>(
     config: OptionalIdConfiguration = {}
-  ): BreadboardNode<Out> {
+  ): BreadboardNode<In, Out> {
     const { $id, ...rest } = config;
-    return new Node<object>(this, "passthrough", { ...rest }, $id);
+    return new Node(this, "passthrough", { ...rest }, $id);
   }
 
   /**
@@ -277,10 +278,10 @@ export class Board implements Breadboard {
    * @param config - optional configuration for the node.
    * @returns - a `Node` object that represents the placed node.
    */
-  input<Out = OutputValues>(
+  input<In = InputValues, Out = OutputValues>(
     message?: string,
     config: OptionalIdConfiguration = {}
-  ): Node<Out> {
+  ): Node<In, Out> {
     const { $id, ...rest } = config;
     return new Node(this, "input", { message, ...rest }, $id);
   }
@@ -295,11 +296,11 @@ export class Board implements Breadboard {
    * @param config - optional configuration for the node.
    * @returns - a `Node` object that represents the placed node.
    */
-  output<Out = OutputValues>(
+  output<In = InputValues, Out = OutputValues>(
     config: OptionalIdConfiguration = {}
-  ): BreadboardNode<Out> {
+  ): BreadboardNode<In, Out> {
     const { $id, ...rest } = config;
-    return new Node<object>(this, "output", { ...rest }, $id);
+    return new Node(this, "output", { ...rest }, $id);
   }
 
   /**
@@ -317,10 +318,10 @@ export class Board implements Breadboard {
    * @param config - optional configuration for the node.
    * @returns - a `Node` object that represents the placed node.
    */
-  include<Out = OutputValues>(
+  include<In = InputValues, Out = OutputValues>(
     $ref: string,
     config: OptionalIdConfiguration = {}
-  ): BreadboardNode<Out> {
+  ): BreadboardNode<IncludeNodeInputs & In, Out> {
     const { $id, ...rest } = config;
     return new Node(this, "include", { $ref, ...rest }, $id);
   }
@@ -339,7 +340,7 @@ export class Board implements Breadboard {
    */
   reflect(
     config: OptionalIdConfiguration = {}
-  ): BreadboardNode<ReflectNodeOutputs> {
+  ): BreadboardNode<never, ReflectNodeOutputs> {
     const { $id, ...rest } = config;
     return new Node(this, "reflect", { ...rest }, $id);
   }
@@ -360,10 +361,10 @@ export class Board implements Breadboard {
    * @param config - optional configuration for the node.
    * @returns - a `Node` object that represents the placed node.
    */
-  slot<Out = OutputValues>(
+  slot<In = InputValues, Out = OutputValues>(
     slot: string,
     config: OptionalIdConfiguration = {}
-  ): BreadboardNode<Out> {
+  ): BreadboardNode<SlotInputs & In, Out> {
     const { $id, ...rest } = config;
     return new Node(this, "slot", { slot, ...rest }, $id);
   }
@@ -397,10 +398,10 @@ export class Board implements Breadboard {
    * @param config -- optional configuration for the node.
    * @returns - a `Node` object that represents the placed node.
    */
-  node<Out = OutputValues>(
+  node<In = InputValues, Out = OutputValues>(
     handler: NodeHandler,
     config: OptionalIdConfiguration = {}
-  ): BreadboardNode<Out> {
+  ): BreadboardNode<In, Out> {
     const { $id, ...rest } = config;
     const type = nodeTypeVendor.vendId(this, "node");
     if (!this.#localKit) {

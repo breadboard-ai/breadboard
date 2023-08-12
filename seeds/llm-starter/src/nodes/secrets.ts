@@ -12,11 +12,13 @@
 import type { InputValues, OutputValues } from "@google-labs/graph-runner";
 
 type Environment = "node" | "browser";
-type SecretInputs = {
+
+export type SecretInputs = {
   keys: string[];
 };
 
-const environment = (): Environment => (typeof window !== "undefined") ? "browser" : "node";
+const environment = (): Environment =>
+  typeof window !== "undefined" ? "browser" : "node";
 
 const getEnvironmentValue = (key: string) => {
   const env = environment();
@@ -26,9 +28,11 @@ const getEnvironmentValue = (key: string) => {
     // How do we avoid namespace clashes?
     return globalThis.localStorage.getItem(key);
   }
-}
+};
 
 export default async (inputs: InputValues) => {
   const { keys = [] } = inputs as SecretInputs;
-  return Object.fromEntries(keys.map((key) => [key, getEnvironmentValue(key)])) as OutputValues;
+  return Object.fromEntries(
+    keys.map((key) => [key, getEnvironmentValue(key)])
+  ) as OutputValues;
 };

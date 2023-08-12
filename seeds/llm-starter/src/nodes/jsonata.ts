@@ -12,7 +12,7 @@ export type JsonataOutputs = Record<string, unknown> & {
   result: unknown;
 };
 
-type JsonataInputs = {
+export type JsonataInputs = {
   expression: string;
   json: unknown;
   raw: boolean;

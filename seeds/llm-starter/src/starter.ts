@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NodeHandlers, OutputValues } from "@google-labs/graph-runner";
+import {
+  InputValues,
+  NodeHandlers,
+  OutputValues,
+} from "@google-labs/graph-runner";
 import { coreHandlers } from "./core.js";
 import type {
   BreadboardNode,
@@ -12,14 +16,24 @@ import type {
   NodeFactory,
   OptionalIdConfiguration,
 } from "@google-labs/breadboard";
-import { GenerateTextOutputs } from "./nodes/generate-text.js";
-import { XmlToJsonOutputs } from "./nodes/xml-to-json.js";
-import { JsonataOutputs } from "./nodes/jsonata.js";
-import { FetchOutputs } from "./nodes/fetch.js";
-import { PropmtTemplateOutputs } from "./nodes/prompt-template.js";
-import { UrlTemplateOutputs } from "./nodes/url-template.js";
-import { RunJavascriptOutputs } from "./nodes/run-javascript.js";
-import { AppendOutputs } from "./nodes/append.js";
+import {
+  GenerateTextInputs,
+  GenerateTextOutputs,
+} from "./nodes/generate-text.js";
+import { XmlToJsonInputs, XmlToJsonOutputs } from "./nodes/xml-to-json.js";
+import { JsonataInputs, JsonataOutputs } from "./nodes/jsonata.js";
+import { FetchInputs, FetchOutputs } from "./nodes/fetch.js";
+import {
+  PromptTemplateInputs,
+  PropmtTemplateOutputs,
+} from "./nodes/prompt-template.js";
+import { UrlTemplateInputs, UrlTemplateOutputs } from "./nodes/url-template.js";
+import {
+  RunJavascriptInputs,
+  RunJavascriptOutputs,
+} from "./nodes/run-javascript.js";
+import { AppendInputs, AppendOutputs } from "./nodes/append.js";
+import { SecretInputs } from "./nodes/secrets.js";
 
 /**
  * Syntactic sugar around the `coreHandlers` library.
@@ -38,15 +52,17 @@ export class Starter implements Kit {
     this.#handlers = coreHandlers;
   }
 
-  append(config: OptionalIdConfiguration = {}): BreadboardNode<AppendOutputs> {
+  append<In = AppendInputs>(
+    config: OptionalIdConfiguration = {}
+  ): BreadboardNode<In, AppendOutputs> {
     const { $id, ...rest } = config;
     return this.#nodeFactory.create("append", { ...rest }, $id);
   }
 
-  promptTemplate(
+  promptTemplate<In = InputValues>(
     template: string,
     config: OptionalIdConfiguration = {}
-  ): BreadboardNode<PropmtTemplateOutputs> {
+  ): BreadboardNode<In & PromptTemplateInputs, PropmtTemplateOutputs> {
     const { $id, ...rest } = config;
     return this.#nodeFactory.create(
       "promptTemplate",
@@ -55,18 +71,18 @@ export class Starter implements Kit {
     );
   }
 
-  urlTemplate(
+  urlTemplate<In = InputValues>(
     template: string,
     config: OptionalIdConfiguration = {}
-  ): BreadboardNode<UrlTemplateOutputs> {
+  ): BreadboardNode<In & UrlTemplateInputs, UrlTemplateOutputs> {
     const { $id, ...rest } = config;
     return this.#nodeFactory.create("urlTemplate", { template, ...rest }, $id);
   }
 
-  runJavascript<Out = RunJavascriptOutputs>(
+  runJavascript<In = InputValues, Out = RunJavascriptOutputs>(
     name: string,
     config: OptionalIdConfiguration = {}
-  ): BreadboardNode<Out> {
+  ): BreadboardNode<In & RunJavascriptInputs, Out> {
     const { $id, ...rest } = config;
     return this.#nodeFactory.create("runJavascript", { name, ...rest }, $id);
   }
@@ -74,29 +90,29 @@ export class Starter implements Kit {
   fetch(
     raw?: boolean,
     config: OptionalIdConfiguration = {}
-  ): BreadboardNode<FetchOutputs> {
+  ): BreadboardNode<FetchInputs, FetchOutputs> {
     const { $id, ...rest } = config;
     return this.#nodeFactory.create("fetch", { raw, ...rest }, $id);
   }
 
-  jsonata<Out = JsonataOutputs>(
+  jsonata<Out = OutputValues>(
     expression: string,
     config: OptionalIdConfiguration = {}
-  ): BreadboardNode<Out> {
+  ): BreadboardNode<JsonataInputs, Out & JsonataOutputs> {
     const { $id, ...rest } = config;
     return this.#nodeFactory.create("jsonata", { expression, ...rest }, $id);
   }
 
   xmlToJson(
     config: OptionalIdConfiguration = {}
-  ): BreadboardNode<XmlToJsonOutputs> {
+  ): BreadboardNode<XmlToJsonInputs, XmlToJsonOutputs> {
     const { $id, ...rest } = config;
     return this.#nodeFactory.create("xmlToJson", { ...rest }, $id);
   }
 
   generateText(
     config: OptionalIdConfiguration = {}
-  ): BreadboardNode<GenerateTextOutputs> {
+  ): BreadboardNode<GenerateTextInputs, GenerateTextOutputs> {
     const { $id, ...rest } = config;
     return this.#nodeFactory.create("generateText", { ...rest }, $id);
   }
@@ -104,7 +120,7 @@ export class Starter implements Kit {
   secrets<Out = OutputValues>(
     keys: string[],
     config: OptionalIdConfiguration = {}
-  ): BreadboardNode<Out> {
+  ): BreadboardNode<SecretInputs, Out> {
     const { $id, ...rest } = config;
     return this.#nodeFactory.create("secrets", { keys, ...rest }, $id);
   }

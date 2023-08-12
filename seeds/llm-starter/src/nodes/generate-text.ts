@@ -16,7 +16,7 @@ export type GenerateTextOutputs = GenerateTextResponse & {
   completion: string;
 };
 
-type generateTextInputs = {
+export type GenerateTextInputs = {
   /**
    * Prompt for text completion.
    */
@@ -36,7 +36,7 @@ type generateTextInputs = {
 };
 
 export const prepareRequest = (inputs: InputValues) => {
-  const values = inputs as generateTextInputs;
+  const values = inputs as GenerateTextInputs;
   if (!values.PALM_KEY)
     throw new Error("Text completion requires `PALM_KEY` input");
   if (!values.text) throw new Error("Text completion requires `text` input");

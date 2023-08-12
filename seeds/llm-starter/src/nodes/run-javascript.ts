@@ -48,14 +48,14 @@ export type RunJavascriptOutputs = Record<string, unknown> & {
   result: unknown;
 };
 
-type RunJavaScriptInputs = InputValues & {
+export type RunJavascriptInputs = InputValues & {
   code?: string;
   name?: string;
   raw?: boolean;
 };
 
 export default async (inputs: InputValues) => {
-  const { code, name, raw, ...args } = inputs as RunJavaScriptInputs;
+  const { code, name, raw, ...args } = inputs as RunJavascriptInputs;
   if (!code) throw new Error("Running JavaScript requires `code` input");
   const clean = stripCodeBlock(code);
   // A smart helper that senses the environment (browser or node) and uses

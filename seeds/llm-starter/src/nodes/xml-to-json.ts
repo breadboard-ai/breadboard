@@ -18,7 +18,7 @@ export type XmlToJsonOutputs = {
   json: unknown;
 };
 
-type XmlToJsonInputValues = {
+export type XmlToJsonInputs = {
   /**
    * The string that contains the XML to convert to JSON
    * @example `<foo><bar>baz</bar></foo>`
@@ -64,7 +64,7 @@ const toAltJson = (
 };
 
 export default async (inputs: InputValues) => {
-  const { xml } = inputs as XmlToJsonInputValues;
+  const { xml } = inputs as XmlToJsonInputs;
   if (!xml) throw new Error("XmlToJson requires `xml` input");
   const json = toAltJson(parseXml(xml));
   return { json };
