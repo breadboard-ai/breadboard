@@ -5,6 +5,11 @@
     "input": "Name of the item that the customer requested"
   },
   {
+    "name": "summarizeMenu",
+    "description": "Get a summary of what is on the menu",
+    "input": "Any sort of additional hint that might help with the summary"
+  },
+  {
     "name": "finalizeOrder",
     "description": "Finalize the order and send it for fulfillment",
     "input": "none"

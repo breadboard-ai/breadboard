@@ -87,26 +87,56 @@
       "in": "json"
     },
     {
+      "from": "slot-8",
+      "to": "toolMemory",
+      "out": "bot",
+      "in": "Tool"
+    },
+    {
+      "from": "slot-8",
+      "to": "output-9",
+      "out": "bot",
+      "in": "bot"
+    },
+    {
+      "from": "slot-8",
+      "to": "error",
+      "out": "error",
+      "in": "error"
+    },
+    {
+      "from": "jsonata-7",
+      "to": "slot-8",
+      "out": "result",
+      "in": "customer"
+    },
+    {
+      "from": "passthrough-6",
+      "to": "jsonata-7",
+      "out": "summarizeMenu",
+      "in": "json"
+    },
+    {
       "from": "toolRouter",
-      "to": "output-6",
+      "to": "output-10",
       "out": "customer",
       "in": "bot"
     },
     {
-      "from": "input-8",
+      "from": "input-12",
       "to": "customerMemory",
       "out": "customer",
       "in": "Customer"
     },
     {
-      "from": "jsonata-7",
-      "to": "input-8",
+      "from": "jsonata-11",
+      "to": "input-12",
       "out": "result",
       "in": "message"
     },
     {
       "from": "toolRouter",
-      "to": "jsonata-7",
+      "to": "jsonata-11",
       "out": "customer",
       "in": "json"
     },
@@ -118,44 +148,50 @@
     },
     {
       "from": "toolRouter",
+      "to": "passthrough-6",
+      "out": "summarizeMenu",
+      "in": "summarizeMenu"
+    },
+    {
+      "from": "toolRouter",
       "to": "finalizeOrder",
       "out": "finalizeOrder",
       "in": "bot"
     },
     {
-      "from": "input-9",
+      "from": "input-13",
       "to": "customerMemory",
       "out": "customer",
       "in": "Customer"
     },
     {
-      "from": "generateText-10",
+      "from": "generateText-14",
       "to": "toolRouter",
       "out": "completion",
       "in": "completion"
     },
     {
-      "from": "generateText-10",
+      "from": "generateText-14",
       "to": "agentMemory",
       "out": "completion",
       "in": "Agent"
     },
     {
-      "from": "generateText-10",
+      "from": "generateText-14",
       "to": "blocked",
       "out": "filters",
       "in": "filters"
     },
     {
-      "from": "secrets-11",
-      "to": "generateText-10",
+      "from": "secrets-15",
+      "to": "generateText-14",
       "constant": true,
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
       "from": "bot-prompt",
-      "to": "generateText-10",
+      "to": "generateText-14",
       "out": "prompt",
       "in": "text"
     }
@@ -172,7 +208,7 @@
       "id": "tools",
       "type": "passthrough",
       "configuration": {
-        "tools": "[\n  {\n    \"name\": \"checkMenu\",\n    \"description\": \"Check to see if the item requested match items on the menu\",\n    \"input\": \"Name of the item that the customer requested\"\n  },\n  {\n    \"name\": \"finalizeOrder\",\n    \"description\": \"Finalize the order and send it for fulfillment\",\n    \"input\": \"none\"\n  },\n  {\n    \"name\": \"customer\",\n    \"description\": \"Interact with the customer to continue assisting with the order\",\n    \"input\": \"the message to send to the customer\"\n  }\n]\n"
+        "tools": "[\n  {\n    \"name\": \"checkMenu\",\n    \"description\": \"Check to see if the item requested match items on the menu\",\n    \"input\": \"Name of the item that the customer requested\"\n  },\n  {\n    \"name\": \"summarizeMenu\",\n    \"description\": \"Get a summary of what is on the menu\",\n    \"input\": \"Any sort of additional hint that might help with the summary\"\n  },\n  {\n    \"name\": \"finalizeOrder\",\n    \"description\": \"Finalize the order and send it for fulfillment\",\n    \"input\": \"none\"\n  },\n  {\n    \"name\": \"customer\",\n    \"description\": \"Interact with the customer to continue assisting with the order\",\n    \"input\": \"the message to send to the customer\"\n  }\n]\n"
       }
     },
     {
@@ -228,17 +264,8 @@
       "type": "output"
     },
     {
-      "id": "toolRouter",
-      "type": "runJavascript",
-      "configuration": {
-        "name": "route",
-        "code": "function route({ completion }) {\n    const data = JSON.parse(completion);\n    return { [data.action]: data };\n}",
-        "raw": true
-      }
-    },
-    {
-      "id": "output-6",
-      "type": "output"
+      "id": "passthrough-6",
+      "type": "passthrough"
     },
     {
       "id": "jsonata-7",
@@ -248,7 +275,42 @@
       }
     },
     {
-      "id": "input-8",
+      "id": "slot-8",
+      "type": "slot",
+      "configuration": {
+        "slot": "summarizeMenu"
+      }
+    },
+    {
+      "id": "output-9",
+      "type": "output"
+    },
+    {
+      "id": "error",
+      "type": "output"
+    },
+    {
+      "id": "toolRouter",
+      "type": "runJavascript",
+      "configuration": {
+        "name": "route",
+        "code": "function route({ completion }) {\n    const data = JSON.parse(completion);\n    return { [data.action]: data };\n}",
+        "raw": true
+      }
+    },
+    {
+      "id": "output-10",
+      "type": "output"
+    },
+    {
+      "id": "jsonata-11",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "actionInput"
+      }
+    },
+    {
+      "id": "input-12",
       "type": "input"
     },
     {
@@ -256,11 +318,11 @@
       "type": "output"
     },
     {
-      "id": "input-9",
+      "id": "input-13",
       "type": "input"
     },
     {
-      "id": "generateText-10",
+      "id": "generateText-14",
       "type": "generateText",
       "configuration": {
         "stopSequences": [
@@ -281,7 +343,7 @@
       "type": "output"
     },
     {
-      "id": "secrets-11",
+      "id": "secrets-15",
       "type": "secrets",
       "configuration": {
         "keys": [

@@ -124,7 +124,7 @@ export class TraversalMachine
       const output = outputs[out];
       const input = head.in;
       if (!input) return;
-      if (output) result[input] = outputs[out];
+      if (output != null && output != undefined) result[input] = output;
     });
     return result;
   }
