@@ -141,6 +141,36 @@ export interface Breadboard extends GraphDescriptor {
   addKit<T extends Kit>(ctr: KitConstructor<T>): T;
 }
 
+export type WireSpec<From, To> =
+  | `${string & keyof From}->${string & keyof To}`
+  | `${string & keyof From}->`
+  | `->${string & keyof From}`
+  | `${string & keyof From}`
+  | `${string & keyof From}->${string & keyof To}?`
+  | `${string & keyof From}->?`
+  | `->${string & keyof From}?`
+  | `${string & keyof From}?`
+  | `${string & keyof From}->${string & keyof To}.`
+  | `${string & keyof From}->.`
+  | `->${string & keyof From}.`
+  | `${string & keyof From}.`;
+
+export type WireInSpec<From, To> =
+  | `${string & keyof To}<-${string & keyof From}`
+  | `${string & keyof To}<-`
+  | `<-${string & keyof To}`
+  | `${string & keyof To}<-${string & keyof From}?`
+  | `${string & keyof To}<-?`
+  | `${string & keyof To}?`
+  | `${string & keyof To}<-${string & keyof From}.`
+  | `${string & keyof To}<-.`
+  | `<-${string & keyof To}.`;
+
+export interface Wireable<From> {
+  wire<To>(spec: WireSpec<From, To>, to: Wireable<To>): From;
+  wireIn<To>(spec: WireInSpec<From, To>, to: Wireable<From>): From;
+}
+
 export interface BreadboardNode extends NodeDescriptor {
   /**
    * Wires the current node to another node.
