@@ -19,6 +19,7 @@ import { FetchOutputs } from "./nodes/fetch.js";
 import { PropmtTemplateOutputs } from "./nodes/prompt-template.js";
 import { UrlTemplateOutputs } from "./nodes/url-template.js";
 import { RunJavascriptOutputs } from "./nodes/run-javascript.js";
+import { AppendOutputs } from "./nodes/append.js";
 
 /**
  * Syntactic sugar around the `coreHandlers` library.
@@ -37,7 +38,7 @@ export class Starter implements Kit {
     this.#handlers = coreHandlers;
   }
 
-  append(config: OptionalIdConfiguration = {}): BreadboardNode<OutputValues> {
+  append(config: OptionalIdConfiguration = {}): BreadboardNode<AppendOutputs> {
     const { $id, ...rest } = config;
     return this.#nodeFactory.create("append", { ...rest }, $id);
   }
@@ -62,10 +63,10 @@ export class Starter implements Kit {
     return this.#nodeFactory.create("urlTemplate", { template, ...rest }, $id);
   }
 
-  runJavascript(
+  runJavascript<Out = RunJavascriptOutputs>(
     name: string,
     config: OptionalIdConfiguration = {}
-  ): BreadboardNode<RunJavascriptOutputs> {
+  ): BreadboardNode<Out> {
     const { $id, ...rest } = config;
     return this.#nodeFactory.create("runJavascript", { name, ...rest }, $id);
   }
@@ -78,10 +79,10 @@ export class Starter implements Kit {
     return this.#nodeFactory.create("fetch", { raw, ...rest }, $id);
   }
 
-  jsonata(
+  jsonata<Out = JsonataOutputs>(
     expression: string,
     config: OptionalIdConfiguration = {}
-  ): BreadboardNode<JsonataOutputs> {
+  ): BreadboardNode<Out> {
     const { $id, ...rest } = config;
     return this.#nodeFactory.create("jsonata", { expression, ...rest }, $id);
   }
@@ -100,10 +101,10 @@ export class Starter implements Kit {
     return this.#nodeFactory.create("generateText", { ...rest }, $id);
   }
 
-  secrets(
+  secrets<Out = OutputValues>(
     keys: string[],
     config: OptionalIdConfiguration = {}
-  ): BreadboardNode<OutputValues> {
+  ): BreadboardNode<Out> {
     const { $id, ...rest } = config;
     return this.#nodeFactory.create("secrets", { keys, ...rest }, $id);
   }

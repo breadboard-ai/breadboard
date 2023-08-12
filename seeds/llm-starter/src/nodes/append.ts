@@ -15,7 +15,11 @@ export enum ObjectType {
 type AccumulatorType = string | string[] | Record<string, unknown>;
 type ValueType = string | Record<string, unknown>;
 
-type AppendInputValues = Record<string, unknown> & {
+type AppendInputs = Record<string, unknown> & {
+  accumulator: AccumulatorType;
+};
+
+export type AppendOutputs = {
   accumulator: AccumulatorType;
 };
 
@@ -41,7 +45,7 @@ const asString = (values: ValueType): string => {
 };
 
 export default async (inputs: InputValues) => {
-  const { accumulator, ...values } = inputs as AppendInputValues;
+  const { accumulator, ...values } = inputs as AppendInputs;
   if (Object.keys(values).length === 0) return { accumulator };
   const type = getObjectType(accumulator);
   switch (type) {
