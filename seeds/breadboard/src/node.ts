@@ -7,6 +7,7 @@
 import type {
   Edge,
   NodeConfiguration,
+  NodeDescriptor,
   NodeTypeIdentifier,
 } from "@google-labs/graph-runner";
 import { Breadboard, BreadboardNode } from "./types.js";
@@ -89,9 +90,7 @@ const hasValues = (configuration: NodeConfiguration) => {
 };
 
 export class Node implements BreadboardNode {
-  id: string;
-  type: NodeTypeIdentifier;
-  configuration?: NodeConfiguration;
+  #descriptor: NodeDescriptor;
   #breadboard: Breadboard;
 
   constructor(
@@ -101,20 +100,23 @@ export class Node implements BreadboardNode {
     id?: string
   ) {
     this.#breadboard = breadboard;
-    this.id = id ?? nodeIdVendor.vendId(breadboard, type);
+    this.#descriptor = {
+      id: id ?? nodeIdVendor.vendId(breadboard, type),
+      type,
+    };
 
     if (configuration && hasValues(configuration))
-      this.configuration = configuration;
+      this.#descriptor.configuration = configuration;
 
-    this.type = type;
-    this.#breadboard.addNode(this);
+    this.#breadboard.addNode(this.#descriptor);
   }
 
   wire(spec: string, to: BreadboardNode): BreadboardNode {
     const { ltr, edge } = parseSpec(spec);
+    const toNode = to as Node;
     const result: Edge = {
-      from: ltr ? this.id : to.id,
-      to: ltr ? to.id : this.id,
+      from: ltr ? this.#descriptor.id : toNode.#descriptor.id,
+      to: ltr ? toNode.#descriptor.id : this.#descriptor.id,
       ...edge,
     };
     this.#breadboard.addEdge(result);

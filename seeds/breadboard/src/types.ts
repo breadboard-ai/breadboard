@@ -171,7 +171,7 @@ export interface Wireable<From> {
   wireIn<To>(spec: WireInSpec<From, To>, to: Wireable<From>): From;
 }
 
-export interface BreadboardNode extends NodeDescriptor {
+export interface BreadboardNode {
   /**
    * Wires the current node to another node.
    *
