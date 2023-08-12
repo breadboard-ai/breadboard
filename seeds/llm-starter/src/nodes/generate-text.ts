@@ -12,6 +12,10 @@ import {
   palm,
 } from "@google-labs/palm-lite";
 
+export type GenerateTextOutputs = GenerateTextResponse & {
+  completion: string;
+};
+
 type generateTextInputs = {
   /**
    * Prompt for text completion.

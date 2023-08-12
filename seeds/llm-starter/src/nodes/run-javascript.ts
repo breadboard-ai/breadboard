@@ -15,7 +15,6 @@ const runInNode = async (
   functionName: string,
   args: string
 ): Promise<string> => {
-
   const vm = await import("node:vm");
   const codeToRun = `${code}\n${functionName}(${args});`;
   const context = vm.createContext({ console });
@@ -43,6 +42,10 @@ const runInBrowser = async (
   });
   worker.postMessage("please");
   return String(result);
+};
+
+export type RunJavascriptOutputs = Record<string, unknown> & {
+  result: unknown;
 };
 
 type RunJavaScriptInputs = InputValues & {

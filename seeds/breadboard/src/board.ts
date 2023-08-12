@@ -23,6 +23,8 @@ import {
   type OptionalIdConfiguration,
   type BreadboardValidator,
   ProbeDetails,
+  BreadboardNode,
+  ReflectNodeOutputs,
 } from "./types.js";
 
 import { TraversalMachine, toMermaid } from "@google-labs/graph-runner";
@@ -257,9 +259,11 @@ export class Board implements Breadboard {
    * @param config - optional configuration for the node.
    * @returns - a `Node` object that represents the placed node.
    */
-  passthrough(config: OptionalIdConfiguration = {}): Node {
+  passthrough<Out = OutputValues>(
+    config: OptionalIdConfiguration = {}
+  ): BreadboardNode<Out> {
     const { $id, ...rest } = config;
-    return new Node(this, "passthrough", { ...rest }, $id);
+    return new Node<object>(this, "passthrough", { ...rest }, $id);
   }
 
   /**
@@ -273,7 +277,10 @@ export class Board implements Breadboard {
    * @param config - optional configuration for the node.
    * @returns - a `Node` object that represents the placed node.
    */
-  input(message?: string, config: OptionalIdConfiguration = {}): Node {
+  input<Out = OutputValues>(
+    message?: string,
+    config: OptionalIdConfiguration = {}
+  ): Node<Out> {
     const { $id, ...rest } = config;
     return new Node(this, "input", { message, ...rest }, $id);
   }
@@ -288,9 +295,11 @@ export class Board implements Breadboard {
    * @param config - optional configuration for the node.
    * @returns - a `Node` object that represents the placed node.
    */
-  output(config: OptionalIdConfiguration = {}): Node {
+  output<Out = OutputValues>(
+    config: OptionalIdConfiguration = {}
+  ): BreadboardNode<Out> {
     const { $id, ...rest } = config;
-    return new Node(this, "output", { ...rest }, $id);
+    return new Node<object>(this, "output", { ...rest }, $id);
   }
 
   /**
@@ -308,7 +317,10 @@ export class Board implements Breadboard {
    * @param config - optional configuration for the node.
    * @returns - a `Node` object that represents the placed node.
    */
-  include($ref: string, config: OptionalIdConfiguration = {}): Node {
+  include<Out = OutputValues>(
+    $ref: string,
+    config: OptionalIdConfiguration = {}
+  ): BreadboardNode<Out> {
     const { $id, ...rest } = config;
     return new Node(this, "include", { $ref, ...rest }, $id);
   }
@@ -325,7 +337,9 @@ export class Board implements Breadboard {
    * @param config - optional configuration for the node.
    * @returns - a `Node` object that represents the placed node.
    */
-  reflect(config: OptionalIdConfiguration = {}): Node {
+  reflect(
+    config: OptionalIdConfiguration = {}
+  ): BreadboardNode<ReflectNodeOutputs> {
     const { $id, ...rest } = config;
     return new Node(this, "reflect", { ...rest }, $id);
   }
@@ -346,7 +360,10 @@ export class Board implements Breadboard {
    * @param config - optional configuration for the node.
    * @returns - a `Node` object that represents the placed node.
    */
-  slot(slot: string, config: OptionalIdConfiguration = {}): Node {
+  slot<Out = OutputValues>(
+    slot: string,
+    config: OptionalIdConfiguration = {}
+  ): BreadboardNode<Out> {
     const { $id, ...rest } = config;
     return new Node(this, "slot", { slot, ...rest }, $id);
   }
@@ -380,7 +397,10 @@ export class Board implements Breadboard {
    * @param config -- optional configuration for the node.
    * @returns - a `Node` object that represents the placed node.
    */
-  node(handler: NodeHandler, config: OptionalIdConfiguration = {}): Node {
+  node<Out = OutputValues>(
+    handler: NodeHandler,
+    config: OptionalIdConfiguration = {}
+  ): BreadboardNode<Out> {
     const { $id, ...rest } = config;
     const type = nodeTypeVendor.vendId(this, "node");
     if (!this.#localKit) {
@@ -422,8 +442,10 @@ export class Board implements Breadboard {
    * the board and can be used to place nodes on that board.
    */
   addKit<T extends Kit>(ctr: KitConstructor<T>): T {
-    const kit = new ctr((...args) => {
-      return new Node(this, ...args);
+    const kit = new ctr({
+      create: (...args) => {
+        return new Node(this, ...args);
+      },
     });
     this.kits.push(kit);
     return kit;

@@ -89,7 +89,7 @@ const hasValues = (configuration: NodeConfiguration) => {
   return Object.values(configuration).filter(Boolean).length > 0;
 };
 
-export class Node implements BreadboardNode {
+export class Node<Outputs> implements BreadboardNode<Outputs> {
   #descriptor: NodeDescriptor;
   #breadboard: Breadboard;
 
@@ -111,9 +111,9 @@ export class Node implements BreadboardNode {
     this.#breadboard.addNode(this.#descriptor);
   }
 
-  wire(spec: string, to: BreadboardNode): BreadboardNode {
+  wire<To>(spec: string, to: BreadboardNode<To>): BreadboardNode<Outputs> {
     const { ltr, edge } = parseSpec(spec);
-    const toNode = to as Node;
+    const toNode = to as Node<To>;
     const result: Edge = {
       from: ltr ? this.#descriptor.id : toNode.#descriptor.id,
       to: ltr ? toNode.#descriptor.id : this.#descriptor.id,

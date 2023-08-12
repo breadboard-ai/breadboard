@@ -49,11 +49,13 @@ export interface BreadbordRunResult {
   get outputs(): OutputValues;
 }
 
-export type NodeFactory = (
-  type: NodeTypeIdentifier,
-  configuration?: NodeConfiguration,
-  id?: string
-) => BreadboardNode;
+export interface NodeFactory {
+  create<Outputs>(
+    type: NodeTypeIdentifier,
+    configuration?: NodeConfiguration,
+    id?: string
+  ): BreadboardNode<Outputs>;
+}
 
 export interface KitConstructor<T extends Kit> {
   new (nodeFactory: NodeFactory): T;
@@ -171,7 +173,7 @@ export interface Wireable<From> {
   wireIn<To>(spec: WireInSpec<From, To>, to: Wireable<From>): From;
 }
 
-export interface BreadboardNode {
+export interface BreadboardNode<Outputs> {
   /**
    * Wires the current node to another node.
    *
@@ -181,7 +183,7 @@ export interface BreadboardNode {
    * @param to - the node to wire this node with.
    * @returns - the current node, to enable chaining.
    */
-  wire(spec: string, to: BreadboardNode): BreadboardNode;
+  wire<To>(spec: string, to: BreadboardNode<To>): BreadboardNode<Outputs>;
 }
 
 /**
@@ -191,3 +193,7 @@ export interface BreadboardNode {
  * passed to the node itself.
  */
 export type OptionalIdConfiguration = { $id?: string } & NodeConfiguration;
+
+export type ReflectNodeOutputs = {
+  graph: GraphDescriptor;
+};

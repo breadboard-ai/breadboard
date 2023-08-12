@@ -14,6 +14,10 @@ import {
   parseXml,
 } from "@rgrove/parse-xml";
 
+export type XmlToJsonOutputs = {
+  json: unknown;
+};
+
 type XmlToJsonInputValues = {
   /**
    * The string that contains the XML to convert to JSON

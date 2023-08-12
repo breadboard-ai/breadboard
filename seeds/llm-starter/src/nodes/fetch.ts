@@ -6,10 +6,14 @@
 
 import type { InputValues } from "@google-labs/graph-runner";
 
+export type FetchOutputs = {
+  response: string | object;
+};
+
 /**
  * For now, we can only make a GET request. Let's start small.
  */
-type FetchInputValues = {
+type FetchInputs = {
   /**
    * The URL to fetch
    */
@@ -25,7 +29,7 @@ type FetchInputValues = {
 };
 
 export default async (inputs: InputValues) => {
-  const { url, headers, raw } = inputs as FetchInputValues;
+  const { url, headers, raw } = inputs as FetchInputs;
   if (!url) throw new Error("Fetch requires `url` input");
   const init = headers ? { headers } : {};
   const data = await fetch(url, init);

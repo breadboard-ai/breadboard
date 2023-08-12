@@ -10,7 +10,11 @@ import type { InputValues } from "@google-labs/graph-runner";
  * A simple node for making valid URLs out of templates.
  */
 
-type UrlTemplateInputValues = {
+export type UrlTemplateOutputs = {
+  url: string;
+};
+
+type UrlTemplateInputs = {
   /**
    * The URL template to use
    * @example https://example.com/{{path}}
@@ -26,7 +30,7 @@ const substitute = (template: string, values: Record<string, string>) => {
 };
 
 export default async (inputs: InputValues) => {
-  const { template, ...values } = inputs as UrlTemplateInputValues;
+  const { template, ...values } = inputs as UrlTemplateInputs;
   const url = substitute(template, values);
   return { url };
 };

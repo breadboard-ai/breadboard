@@ -6,6 +6,10 @@
 
 import type { InputValues } from "@google-labs/graph-runner";
 
+export type PropmtTemplateOutputs = {
+  prompt: string;
+};
+
 const substitute = (template: string, values: Record<string, string>) => {
   return Object.entries(values).reduce(
     (acc, [key, value]) => acc.replace(`{{${key}}}`, value),
