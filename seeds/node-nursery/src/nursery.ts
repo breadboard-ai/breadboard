@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NodeHandlers } from "@google-labs/graph-runner";
+import {
+  InputValues,
+  NodeHandlers,
+  OutputValues,
+} from "@google-labs/graph-runner";
 import type {
   BreadboardNode,
   Kit,
@@ -53,48 +57,66 @@ export class Nursery implements Kit {
     this.#handlers = handlers;
   }
 
-  createVectorDatabase(config: OptionalIdConfiguration = {}): BreadboardNode {
+  createVectorDatabase(
+    config: OptionalIdConfiguration = {}
+  ): BreadboardNode<InputValues, OutputValues> {
     const { $id, ...rest } = config;
-    return this.#nodeFactory("createVectorDatabase", { ...rest }, $id);
+    return this.#nodeFactory.create("createVectorDatabase", { ...rest }, $id);
   }
 
-  addToVectorDatabase(config: OptionalIdConfiguration = {}): BreadboardNode {
+  addToVectorDatabase(
+    config: OptionalIdConfiguration = {}
+  ): BreadboardNode<InputValues, OutputValues> {
     const { $id, ...rest } = config;
-    return this.#nodeFactory("addToVectorDatabase", { ...rest }, $id);
+    return this.#nodeFactory.create("addToVectorDatabase", { ...rest }, $id);
   }
 
-  queryVectorDatabase(config: OptionalIdConfiguration = {}): BreadboardNode {
+  queryVectorDatabase(
+    config: OptionalIdConfiguration = {}
+  ): BreadboardNode<InputValues, OutputValues> {
     const { $id, ...rest } = config;
-    return this.#nodeFactory("queryVectorDatabase", { ...rest }, $id);
+    return this.#nodeFactory.create("queryVectorDatabase", { ...rest }, $id);
   }
 
-  embedDocs(config: OptionalIdConfiguration = {}): BreadboardNode {
+  embedDocs(
+    config: OptionalIdConfiguration = {}
+  ): BreadboardNode<InputValues, OutputValues> {
     const { $id, ...rest } = config;
-    return this.#nodeFactory("embedDocs", { ...rest }, $id);
+    return this.#nodeFactory.create("embedDocs", { ...rest }, $id);
   }
 
-  embedString(config: OptionalIdConfiguration = {}): BreadboardNode {
+  embedString(
+    config: OptionalIdConfiguration = {}
+  ): BreadboardNode<InputValues, OutputValues> {
     const { $id, ...rest } = config;
-    return this.#nodeFactory("embedString", { ...rest }, $id);
+    return this.#nodeFactory.create("embedString", { ...rest }, $id);
   }
 
-  textAsset(config: OptionalIdConfiguration = {}): BreadboardNode {
+  textAsset(
+    config: OptionalIdConfiguration = {}
+  ): BreadboardNode<InputValues, OutputValues> {
     const { $id, ...rest } = config;
-    return this.#nodeFactory("textAsset", { ...rest }, $id);
+    return this.#nodeFactory.create("textAsset", { ...rest }, $id);
   }
 
-  textAssetsFromPath(config: OptionalIdConfiguration = {}): BreadboardNode {
+  textAssetsFromPath(
+    config: OptionalIdConfiguration = {}
+  ): BreadboardNode<InputValues, OutputValues> {
     const { $id, ...rest } = config;
-    return this.#nodeFactory("textAssetsFromPath", { ...rest }, $id);
+    return this.#nodeFactory.create("textAssetsFromPath", { ...rest }, $id);
   }
 
-  cache(config: OptionalIdConfiguration = {}): BreadboardNode {
+  cache(
+    config: OptionalIdConfiguration = {}
+  ): BreadboardNode<InputValues, OutputValues> {
     const { $id, ...rest } = config;
-    return this.#nodeFactory("cache", { ...rest }, $id);
+    return this.#nodeFactory.create("cache", { ...rest }, $id);
   }
 
-  localMemory(config: OptionalIdConfiguration = {}): BreadboardNode {
+  localMemory(
+    config: OptionalIdConfiguration = {}
+  ): BreadboardNode<InputValues, OutputValues> {
     const { $id, ...rest } = config;
-    return this.#nodeFactory("localMemory", { ...rest }, $id);
+    return this.#nodeFactory.create("localMemory", { ...rest }, $id);
   }
 }
