@@ -5,15 +5,13 @@
  */
 
 import { Board } from "@google-labs/breadboard";
-import { Starter } from "@google-labs/llm-starter";
+import { Starter, TemplateNodeType } from "@google-labs/llm-starter";
 import { readFile, readdir } from "fs/promises";
 
 type Example = {
   customer: string;
   bot: unknown;
 };
-
-type TemplateNodeType = ReturnType<Starter["promptTemplate"]>;
 
 export class Template {
   path: string;

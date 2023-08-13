@@ -142,3 +142,13 @@ export class Starter implements Kit {
     return this.#nodeFactory.create("secrets", { keys, ...rest }, $id);
   }
 }
+
+export type AppendNodeType = ReturnType<Starter["append"]>;
+export type TemplateNodeType = ReturnType<Starter["promptTemplate"]>;
+export type UrlTemplateNodeType = ReturnType<Starter["urlTemplate"]>;
+export type RunJavascriptNodeType = ReturnType<Starter["runJavascript"]>;
+export type FetchNodeType = ReturnType<Starter["fetch"]>;
+export type JsonataNodeType = ReturnType<Starter["jsonata"]>;
+export type XmlToJsonNodeType = ReturnType<Starter["xmlToJson"]>;
+export type GenerateTextNodeType = ReturnType<Starter["generateText"]>;
+export type SecretsNodeType = ReturnType<Starter["secrets"]>;
