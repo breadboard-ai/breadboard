@@ -85,9 +85,7 @@ cp -rf templates/blank seeds/awesome-ai-game
 {
   "extends": "@google-labs/tsconfig/base.json",
   "files": [],
-  "references": [
-    { "path": "seeds/awesome-ai-game" }
-  ]
+  "references": [{ "path": "seeds/awesome-ai-game" }]
 }
 ```
 
@@ -98,7 +96,7 @@ cd seeds/awesome-ai-game
 node .
 ```
 
-You should see `code goes here` as output. 
+You should see `code goes here` as output.
 
 :five: Build the awesome AI game or whatever it is you've dreamed up.
 
@@ -106,7 +104,7 @@ The new package is configured as a private package by default. If you would like
 
 ## Working on your project
 
-If everything is set up well, you will spend most of your time tinkering inside of your package. 
+If everything is set up well, you will spend most of your time tinkering inside of your package.
 
 We recommend opening [VSCode](https://code.visualstudio.com/) in the package directory to reduce the amount of clutter. When you run `turbo` inside of your package directory, it will automatically scope the build to only dependencies in your package.
 
@@ -139,6 +137,14 @@ In your project's `package.json` edit the contents of `dependencies` (or `devDep
 ## Testing
 
 Out of the box, the project template is configured to use [ava](https://github.com/avajs/ava) for testing. You can pick a different test framework. Just make sure to configure your `package.json` to point to it, so that `turbo` can run it.
+
+## Cleaning stuff
+
+Sometimes, TypeScript Compiler or Turbo (or both!) gets confused, and the only way forward is to clean up the build artifacts and start over. To do that, run:
+
+```bash
+npm run clean
+```
 
 ## Source Code Headers
 
