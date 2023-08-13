@@ -40,7 +40,7 @@ import runJavascript, {
 import append, { AppendInputs, AppendOutputs } from "./nodes/append.js";
 import secrets, { SecretInputs } from "./nodes/secrets.js";
 
-export const coreHandlers = {
+const coreHandlers = {
   append,
   jsonata,
   secrets,

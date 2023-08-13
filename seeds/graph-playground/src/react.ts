@@ -70,16 +70,16 @@ export class ReActHelper implements Kit {
 
   getTools(config: OptionalIdConfiguration = {}) {
     const { $id, ...rest } = config;
-    return this.#nodeFactory("getTools", rest, $id);
+    return this.#nodeFactory.create("getTools", rest, $id);
   }
 
   getDescriptions(config: OptionalIdConfiguration = {}) {
     const { $id, ...rest } = config;
-    return this.#nodeFactory("getDescriptions", rest, $id);
+    return this.#nodeFactory.create("getDescriptions", rest, $id);
   }
 
   parseCompletion(args: string[], config: OptionalIdConfiguration = {}) {
     const { $id, ...rest } = config;
-    return this.#nodeFactory("parseCompletion", { args, rest }, $id);
+    return this.#nodeFactory.create("parseCompletion", { args, rest }, $id);
   }
 }

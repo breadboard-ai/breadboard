@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board, BreadboardNode } from "@google-labs/breadboard";
+import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 import { readFile, readdir } from "fs/promises";
 
@@ -13,9 +13,11 @@ type Example = {
   bot: unknown;
 };
 
+type TemplateNodeType = ReturnType<Starter["promptTemplate"]>;
+
 export class Template {
   path: string;
-  textPrompt?: BreadboardNode;
+  textPrompt?: TemplateNodeType;
 
   constructor(version: string, public board: Board, public kit: Starter) {
     this.path = `./prompts/${version}`;
@@ -37,7 +39,7 @@ export class Template {
     return `\nExample ${index + 1}\n${text}`;
   }
 
-  async wireExamples(template: BreadboardNode): Promise<BreadboardNode> {
+  async wireExamples(template: TemplateNodeType): Promise<TemplateNodeType> {
     const files = (await readdir(`${this.path}/examples`)).filter((filename) =>
       filename.endsWith(".json")
     );
@@ -51,7 +53,7 @@ export class Template {
     return template;
   }
 
-  async loadTemplate(filename: string) {
+  async loadTemplate(filename: string): Promise<TemplateNodeType> {
     const { kit } = this;
     const text = await readFile(`${this.path}/${filename}`, "utf-8");
     this.textPrompt = kit.promptTemplate(text, { $id: "bot-prompt" });
@@ -67,7 +69,7 @@ export class Template {
     );
   }
 
-  async make(): Promise<BreadboardNode> {
+  async make(): Promise<TemplateNodeType> {
     const template = await this.loadTemplate("prompt-template.txt");
 
     // For now, just read them as static files.
