@@ -51,6 +51,8 @@
   },
   "dependencies": {
     "@google-labs/palm-lite": "*",
+    "@google-labs/breadboard": "*",
+    "@google-labs/graph-runner": "*",
     "json-stable-stringify": "^1.0.2",
     "ml-distance": "^4.0.1",
     "sqlite": "^5.0.1",
