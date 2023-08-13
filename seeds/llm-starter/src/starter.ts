@@ -9,31 +9,48 @@ import {
   NodeHandlers,
   OutputValues,
 } from "@google-labs/graph-runner";
-import { coreHandlers } from "./core.js";
 import type {
   BreadboardNode,
   Kit,
   NodeFactory,
   OptionalIdConfiguration,
 } from "@google-labs/breadboard";
-import {
+import generateText, {
   GenerateTextInputs,
   GenerateTextOutputs,
 } from "./nodes/generate-text.js";
-import { XmlToJsonInputs, XmlToJsonOutputs } from "./nodes/xml-to-json.js";
-import { JsonataInputs, JsonataOutputs } from "./nodes/jsonata.js";
-import { FetchInputs, FetchOutputs } from "./nodes/fetch.js";
-import {
+import xmlToJson, {
+  XmlToJsonInputs,
+  XmlToJsonOutputs,
+} from "./nodes/xml-to-json.js";
+import jsonata, { JsonataInputs, JsonataOutputs } from "./nodes/jsonata.js";
+import fetch, { FetchInputs, FetchOutputs } from "./nodes/fetch.js";
+import promptTemplate, {
   PromptTemplateInputs,
   PropmtTemplateOutputs,
 } from "./nodes/prompt-template.js";
-import { UrlTemplateInputs, UrlTemplateOutputs } from "./nodes/url-template.js";
-import {
+import urlTemplate, {
+  UrlTemplateInputs,
+  UrlTemplateOutputs,
+} from "./nodes/url-template.js";
+import runJavascript, {
   RunJavascriptInputs,
   RunJavascriptOutputs,
 } from "./nodes/run-javascript.js";
-import { AppendInputs, AppendOutputs } from "./nodes/append.js";
-import { SecretInputs } from "./nodes/secrets.js";
+import append, { AppendInputs, AppendOutputs } from "./nodes/append.js";
+import secrets, { SecretInputs } from "./nodes/secrets.js";
+
+export const coreHandlers = {
+  append,
+  jsonata,
+  secrets,
+  fetch,
+  urlTemplate,
+  xmlToJson,
+  promptTemplate,
+  generateText,
+  runJavascript,
+};
 
 /**
  * Syntactic sugar around the `coreHandlers` library.
