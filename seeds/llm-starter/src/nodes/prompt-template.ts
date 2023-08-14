@@ -11,7 +11,7 @@ export type PropmtTemplateOutputs = {
 };
 
 export type PromptTemplateInputs = {
-  tempalte: string;
+  template: string;
 };
 
 const substitute = (template: string, values: Record<string, string>) => {

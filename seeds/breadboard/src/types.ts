@@ -143,7 +143,7 @@ export interface Breadboard extends GraphDescriptor {
   addKit<T extends Kit>(ctr: KitConstructor<T>): T;
 }
 
-export type WireSpec<From, To> =
+export type WireOutSpec<From, To> =
   | `${string & keyof From}->${string & keyof To}`
   | `${string & keyof From}->`
   | `->${string & keyof From}`
@@ -158,20 +158,19 @@ export type WireSpec<From, To> =
   | `${string & keyof From}.`;
 
 export type WireInSpec<From, To> =
-  | `${string & keyof To}<-${string & keyof From}`
-  | `${string & keyof To}<-`
-  | `<-${string & keyof To}`
-  | `${string & keyof To}<-${string & keyof From}?`
-  | `${string & keyof To}<-?`
-  | `${string & keyof To}?`
-  | `${string & keyof To}<-${string & keyof From}.`
-  | `${string & keyof To}<-.`
-  | `<-${string & keyof To}.`;
+  | `${string & keyof From}<-${string & keyof To}`
+  | `${string & keyof From}<-`
+  | `<-${string & keyof From}`
+  | `${string & keyof From}<-${string & keyof To}?`
+  | `${string & keyof From}<-?`
+  | `${string & keyof From}?`
+  | `${string & keyof From}<-${string & keyof To}.`
+  | `${string & keyof From}<-.`
+  | `<-${string & keyof From}.`;
 
-export interface Wireable<From> {
-  wire<To>(spec: WireSpec<From, To>, to: Wireable<To>): From;
-  wireIn<To>(spec: WireInSpec<From, To>, to: Wireable<From>): From;
-}
+export type WireSpec<FromIn, FromOut, ToIn, ToOut> =
+  | WireOutSpec<FromOut, ToIn>
+  | WireInSpec<ToOut, FromIn>;
 
 export interface BreadboardNode<Inputs, Outputs> {
   /**
