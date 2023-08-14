@@ -2,14 +2,14 @@
   "edges": [
     {
       "from": "tools",
-      "to": "bot-prompt",
+      "to": "orderAgent",
       "constant": true,
       "out": "tools",
       "in": "tools"
     },
     {
       "from": "order-format",
-      "to": "bot-prompt",
+      "to": "orderAgent",
       "constant": true,
       "out": "order-format",
       "in": "order-format"
@@ -46,13 +46,13 @@
     },
     {
       "from": "customerMemory",
-      "to": "bot-prompt",
+      "to": "orderAgent",
       "out": "accumulator",
       "in": "memory"
     },
     {
       "from": "toolMemory",
-      "to": "bot-prompt",
+      "to": "orderAgent",
       "out": "accumulator",
       "in": "memory"
     },
@@ -190,7 +190,7 @@
       "in": "PALM_KEY"
     },
     {
-      "from": "bot-prompt",
+      "from": "orderAgent",
       "to": "generateText-14",
       "out": "prompt",
       "in": "text"
@@ -198,7 +198,7 @@
   ],
   "nodes": [
     {
-      "id": "bot-prompt",
+      "id": "orderAgent",
       "type": "promptTemplate",
       "configuration": {
         "template": "You are the ordering agent and your job is to assist customers with ordering items on the menu.\n\nYou have access to the following tools:\n{{tools}}\n\nIt is your responsibility to manage the state of the currentOrder. Add, remove, and change items as you use tools and interact with the customer.\n\nYour conversation with the customer will follow the pattern of \"Customer\", \"Agent\" and \"Tool\" interleaving, like this:\n\nCustomer: the customer request with which you must assist \nAgent: your response\nTool: response from the tool that was invoked\nAgent: your next action\nCustomer: possible reply for the customer\n... and so on ...\n\nThis pattern may repeat several times until the customer's request is finalized.\n\nYour response must be a valid JSON of the following format:\n{{order-format}}\n\nBegin!\n{{memory}}\nAgent: "
@@ -215,7 +215,7 @@
       "id": "order-format",
       "type": "passthrough",
       "configuration": {
-        "order-format": "{\n  \"thought\": \"starting with a summary of order state (what's been done), a string describing how you decide on the next action, given the previous customer replies.\",\n  \"action\": \"a string with one of the following values: checkMenu, finalizeOrder, customer\",\n  \"actionInput\": \"a string with the input for the action\",\n  \"orderType\": \"string of either \\\"here\\\" (default) or \\\"to go\\\"\",\n  \"currentOrder\": [\n    {\n      \"item\": \"name\",\n      \"extras\": \"array of extras and options for the item\",\n      \"quantity\": \"a number of items\"\n    },\n    {\n      \"item\": \"name\",\n      \"extras\": \"array of extras and options for the item\",\n      \"quantity\": \"a number of items\"\n    }\n  ]\n}\n"
+        "order-format": "{\n  \"thought\": \"starting with a summary of order state (what's been done), a string describing how you decide on the next action, given the previous customer replies.\",\n  \"action\": \"the name of the tool to be used for this action\",\n  \"actionInput\": \"a string with the input for the action\",\n  \"orderType\": \"string of either \\\"here\\\" (default) or \\\"to go\\\"\",\n  \"currentOrder\": [\n    {\n      \"item\": \"name\",\n      \"extras\": \"array of extras and options for the item\",\n      \"quantity\": \"a number of items\"\n    },\n    {\n      \"item\": \"name\",\n      \"extras\": \"array of extras and options for the item\",\n      \"quantity\": \"a number of items\"\n    }\n  ]\n}\n"
       }
     },
     {

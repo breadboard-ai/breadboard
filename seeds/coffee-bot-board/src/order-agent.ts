@@ -7,15 +7,22 @@
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 
-import { Template } from "./template.js";
+import { PromptMaker } from "./template.js";
 
+const BASE = "v2-multi-agent";
+
+const maker = new PromptMaker(BASE);
 const board = new Board();
 const kit = board.addKit(Starter);
 
-const orderAgentTemplate = new Template("v2-multi-agent", board, kit);
-const prompt = await orderAgentTemplate.loadTemplate("order-agent.txt");
-await orderAgentTemplate.wirePart("tools", "json");
-await orderAgentTemplate.wirePart("order-format", "json");
+const prompt = kit.promptTemplate(
+  ...(await maker.prompt("order-agent", "orderAgent"))
+);
+prompt.wire("<-tools.", board.passthrough(await maker.part("tools", "json")));
+prompt.wire(
+  "<-order-format.",
+  board.passthrough(await maker.part("order-format", "json"))
+);
 
 const customerMemory = kit.append({ $id: "customerMemory" });
 const agentMemory = kit.append({ $id: "agentMemory" });

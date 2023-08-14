@@ -9,18 +9,26 @@ import { config } from "dotenv";
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 
-import { Template } from "./template.js";
+import { PromptMaker } from "./template.js";
 
 config();
 
+const maker = new PromptMaker("v2-multi-agent");
 const board = new Board();
 const kit = board.addKit(Starter);
 
-const menuAgentTemplate = new Template("v2-multi-agent", board, kit);
-const menu = await menuAgentTemplate.loadTemplate("menu-agent.txt");
-await menuAgentTemplate.wirePart("menu", "txt");
-await menuAgentTemplate.wirePart("menu-format", "json");
-await menuAgentTemplate.wirePart("menu-not-found", "json");
+const menu = kit.promptTemplate(
+  ...(await maker.prompt("menu-agent", "menuAgent"))
+);
+menu.wire("<-menu.", board.passthrough(await maker.part("menu", "txt")));
+menu.wire(
+  "<-menu-format.",
+  board.passthrough(await maker.part("menu-format", "json"))
+);
+menu.wire(
+  "<-menu-not-found.",
+  board.passthrough(await maker.part("menu-not-found", "json"))
+);
 
 function parseResponse({ completion }: { completion: string }) {
   return { bot: JSON.parse(completion) };

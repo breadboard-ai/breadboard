@@ -3,15 +3,15 @@
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-tools(("passthrough <br> id='tools'")):::passthrough -- "tools->tools" --o botprompt["promptTemplate <br> id='bot-prompt'"]
-orderformat(("passthrough <br> id='order-format'")):::passthrough -- "order-format->order-format" --o botprompt["promptTemplate <br> id='bot-prompt'"]
+tools(("passthrough <br> id='tools'")):::passthrough -- "tools->tools" --o orderAgent["promptTemplate <br> id='orderAgent'"]
+orderformat(("passthrough <br> id='order-format'")):::passthrough -- "order-format->order-format" --o orderAgent["promptTemplate <br> id='orderAgent'"]
 passthrough1(("passthrough <br> id='passthrough-1'")):::passthrough -- "accumulator->accumulator" --> customerMemory["append <br> id='customerMemory'"]
 customerMemory["append <br> id='customerMemory'"] -- "accumulator->accumulator" --> agentMemory["append <br> id='agentMemory'"]
 agentMemory["append <br> id='agentMemory'"] -- "accumulator->accumulator" --> toolMemory["append <br> id='toolMemory'"]
 agentMemory["append <br> id='agentMemory'"] -- "accumulator->accumulator" --> customerMemory["append <br> id='customerMemory'"]
 toolMemory["append <br> id='toolMemory'"] -- "accumulator->accumulator" --> agentMemory["append <br> id='agentMemory'"]
-customerMemory["append <br> id='customerMemory'"] -- "accumulator->memory" --> botprompt["promptTemplate <br> id='bot-prompt'"]
-toolMemory["append <br> id='toolMemory'"] -- "accumulator->memory" --> botprompt["promptTemplate <br> id='bot-prompt'"]
+customerMemory["append <br> id='customerMemory'"] -- "accumulator->memory" --> orderAgent["promptTemplate <br> id='orderAgent'"]
+toolMemory["append <br> id='toolMemory'"] -- "accumulator->memory" --> orderAgent["promptTemplate <br> id='orderAgent'"]
 slot4(("slot <br> id='slot-4'")):::slot -- "bot->Tool" --> toolMemory["append <br> id='toolMemory'"]
 slot4(("slot <br> id='slot-4'")):::slot -- "bot->bot" --> output5{{"output <br> id='output-5'"}}:::output
 slot4(("slot <br> id='slot-4'")):::slot -- "error->error" --> error{{"output <br> id='error'"}}:::output
@@ -34,8 +34,8 @@ generateText14["generateText <br> id='generateText-14'"] -- "completion->complet
 generateText14["generateText <br> id='generateText-14'"] -- "completion->Agent" --> agentMemory["append <br> id='agentMemory'"]
 generateText14["generateText <br> id='generateText-14'"] -- "filters->filters" --> blocked{{"output <br> id='blocked'"}}:::output
 secrets15("secrets <br> id='secrets-15'"):::secrets -- "PALM_KEY->PALM_KEY" --o generateText14["generateText <br> id='generateText-14'"]
-botprompt["promptTemplate <br> id='bot-prompt'"] -- "prompt->text" --> generateText14["generateText <br> id='generateText-14'"]
-templatebotprompt[template]:::config -- "template->template" --o botprompt
+orderAgent["promptTemplate <br> id='orderAgent'"] -- "prompt->text" --> generateText14["generateText <br> id='generateText-14'"]
+templateorderAgent[template]:::config -- "template->template" --o orderAgent
 toolstools[tools]:::config -- "tools->tools" --o tools
 orderformatorderformat[order-format]:::config -- "order-format->order-format" --o orderformat
 accumulatorpassthrough1[accumulator]:::config -- "accumulator->accumulator" --o passthrough1

@@ -3,16 +3,16 @@
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-menu(("passthrough <br> id='menu'")):::passthrough -- "menu->menu" --o botprompt["promptTemplate <br> id='bot-prompt'"]
-menuformat(("passthrough <br> id='menu-format'")):::passthrough -- "menu-format->menu-format" --o botprompt["promptTemplate <br> id='bot-prompt'"]
-menunotfound(("passthrough <br> id='menu-not-found'")):::passthrough -- "menu-not-found->menu-not-found" --o botprompt["promptTemplate <br> id='bot-prompt'"]
+menu(("passthrough <br> id='menu'")):::passthrough -- "menu->menu" --o menuAgent["promptTemplate <br> id='menuAgent'"]
+menuformat(("passthrough <br> id='menu-format'")):::passthrough -- "menu-format->menu-format" --o menuAgent["promptTemplate <br> id='menuAgent'"]
+menunotfound(("passthrough <br> id='menu-not-found'")):::passthrough -- "menu-not-found->menu-not-found" --o menuAgent["promptTemplate <br> id='menuAgent'"]
 generateText2["generateText <br> id='generateText-2'"] -- "filters->error" --> error{{"output <br> id='error'"}}:::output
 secrets3("secrets <br> id='secrets-3'"):::secrets -- "PALM_KEY->PALM_KEY" --> generateText2["generateText <br> id='generateText-2'"]
 parseResponse["runJavascript <br> id='parseResponse'"] -- "bot->bot" --> bot{{"output <br> id='bot'"}}:::output
 generateText2["generateText <br> id='generateText-2'"] -- "completion->completion" --> parseResponse["runJavascript <br> id='parseResponse'"]
-botprompt["promptTemplate <br> id='bot-prompt'"] -- "prompt->text" --> generateText2["generateText <br> id='generateText-2'"]
-input1[/"input <br> id='input-1'"/]:::input -- "customer->customer" --> botprompt["promptTemplate <br> id='bot-prompt'"]
-templatebotprompt[template]:::config -- "template->template" --o botprompt
+menuAgent["promptTemplate <br> id='menuAgent'"] -- "prompt->text" --> generateText2["generateText <br> id='generateText-2'"]
+input1[/"input <br> id='input-1'"/]:::input -- "customer->customer" --> menuAgent["promptTemplate <br> id='menuAgent'"]
+templatemenuAgent[template]:::config -- "template->template" --o menuAgent
 menumenu[menu]:::config -- "menu->menu" --o menu
 menuformatmenuformat[menu-format]:::config -- "menu-format->menu-format" --o menuformat
 menunotfoundmenunotfound[menu-not-found]:::config -- "menu-not-found->menu-not-found" --o menunotfound

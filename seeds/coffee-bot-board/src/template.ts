@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board } from "@google-labs/breadboard";
+import { Board, OptionalIdConfiguration } from "@google-labs/breadboard";
 import { Starter, TemplateNodeType } from "@google-labs/llm-starter";
 import { readFile, readdir } from "fs/promises";
 
@@ -13,6 +13,40 @@ type Example = {
   bot: unknown;
 };
 
+export class PromptLoader {
+  path: string;
+  constructor(base: string) {
+    this.path = `./prompts/${base}`;
+  }
+
+  async load(filename: string, extension: string) {
+    return await readFile(`${this.path}/${filename}.${extension}`, "utf-8");
+  }
+}
+
+export class PromptMaker {
+  loader: PromptLoader;
+
+  constructor(base: string) {
+    this.loader = new PromptLoader(base);
+  }
+
+  async prompt(
+    filename: string,
+    id: string
+  ): Promise<[string, OptionalIdConfiguration]> {
+    return [await this.loader.load(filename, "txt"), { $id: id }];
+  }
+
+  async part(name: string, extension: string) {
+    const text = await this.loader.load(name, extension);
+    return { [name]: text, $id: name };
+  }
+}
+
+/**
+ * @deprecated don't use this class, use PromptMaker instead
+ */
 export class Template {
   path: string;
   textPrompt?: TemplateNodeType;
