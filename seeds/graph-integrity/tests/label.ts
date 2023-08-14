@@ -8,6 +8,74 @@ import test from "ava";
 
 import { Label, LabelValue } from "../src/label.js";
 
+test("LabelValue: Empty lattice", (t) => {
+  t.is(LabelValue.TOP.name, "⊤");
+  t.is(LabelValue.BOTTOM.name, "⊥");
+
+  t.true(LabelValue.TOP.isAbove(LabelValue.BOTTOM));
+  t.true(LabelValue.BOTTOM.isBelow(LabelValue.TOP));
+});
+
+test("LabelValue: Single label", (t) => {
+  const label = new LabelValue("test");
+  t.is(label.name, "test");
+  t.is(label.below.length, 0);
+  t.is(label.above.length, 0);
+
+  // Default is to insert between TOP and BOTTOM
+  label.insert();
+
+  t.true(label.isAbove(LabelValue.BOTTOM));
+  t.true(label.isBelow(LabelValue.TOP));
+
+  // Inserting didn't mess up relationship between TOP and BOTTOM
+  t.true(LabelValue.TOP.isAbove(LabelValue.BOTTOM));
+  t.true(LabelValue.BOTTOM.isBelow(LabelValue.TOP));
+
+  // But they no longer directly reference each other
+  t.false(LabelValue.TOP.above.includes(LabelValue.BOTTOM));
+  t.false(LabelValue.BOTTOM.below.includes(LabelValue.TOP));
+});
+
+test("LabelValue: Diamond shape", (t) => {
+  const leftBottom = new LabelValue("left");
+  const rightBottom = new LabelValue("right");
+
+  leftBottom.insert();
+  rightBottom.insert();
+
+  t.true(leftBottom.isAbove(LabelValue.BOTTOM));
+  t.true(leftBottom.isBelow(LabelValue.TOP));
+  t.true(rightBottom.isAbove(LabelValue.BOTTOM));
+  t.true(rightBottom.isBelow(LabelValue.TOP));
+
+  // Now add more labels
+  const leftTop = new LabelValue("leftTop");
+  const rightTop = new LabelValue("rightTop");
+
+  // Insert above the existing labels
+  leftTop.insert(leftBottom);
+  rightTop.insert(rightBottom);
+
+  const leftMiddle = new LabelValue("leftMiddle");
+  const rightMiddle = new LabelValue("rightMiddle");
+
+  // Insert between the existing labels
+  leftMiddle.insert(leftBottom, leftTop);
+  rightMiddle.insert(rightBottom, rightTop);
+
+  t.true(leftTop.isAbove(leftMiddle));
+  t.true(leftMiddle.isAbove(leftBottom));
+  t.true(leftTop.isAbove(leftBottom));
+
+  t.false(leftBottom.isAbove(leftMiddle));
+  t.false(leftBottom.isAbove(leftTop));
+
+  // Comparing across branches is always false
+  t.false(leftMiddle.isAbove(rightBottom));
+  t.false(leftMiddle.isBelow(rightBottom));
+});
+
 test("Label: constructor", (t) => {
   const combined = new Label({
     confidentiality: LabelValue.TRUSTED,
@@ -252,7 +320,7 @@ test("Label: toString", (t) => {
   });
   const undetermined = new Label(undefined);
 
-  t.is(combined.toString(), "[UNTRUSTED, TRUSTED]");
+  t.is(combined.toString(), "[PRIVATE, TRUSTED]");
   t.is(partUndetermined.toString(), "[UNDETERMINED, UNTRUSTED]");
   t.is(undetermined.toString(), "[UNDETERMINED, UNDETERMINED]");
 });

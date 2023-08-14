@@ -6,20 +6,91 @@
 
 /**
  * Information flow control label values, i.e. levels of trust.
- *
- * This will become more complex over time, but for now, just a simple enum.
- * Flow is allowed from TRUSTED to TRUSTED, from either to UNTRUSTED,
- * but not from UNTRUSTED to TRUSTED.
+ * Defines a lattice, with TOP being the most restrictive and BOTTOM being the
+ * least restrictive values.
  */
-export enum LabelValue {
-  UNTRUSTED,
-  TRUSTED,
+export class LabelValue {
+  below: LabelValue[];
+  above: LabelValue[];
+  name: string;
+
+  static readonly TOP = new LabelValue("⊤");
+  static readonly BOTTOM = new LabelValue("⊥");
+
+  static readonly PRIVATE = LabelValue.TOP;
+  static readonly PUBLIC = LabelValue.BOTTOM;
+
+  // Yes, that is correct: UNTRUSTED is more restrictive than TRUSTED
+  static readonly UNTRUSTED = LabelValue.TOP;
+  static readonly TRUSTED = LabelValue.BOTTOM;
+
+  /**
+   * Create new label. Must be @method {insert}ed into the semi-lattice.
+   *
+   * @param name {string} Name of the label value
+   */
+  constructor(name: string) {
+    this.below = [];
+    this.above = [];
+    this.name = name;
+  }
+
+  /**
+   * Insert a new label value between two existing label values.
+   *
+   * @param below {LabelValue} LabelValue below the new label value
+   * @param above {LabelValue} LabelValue above the new label value
+   */
+  insert(
+    below: LabelValue = LabelValue.BOTTOM,
+    above: LabelValue = LabelValue.TOP
+  ) {
+    this.below.push(below);
+    this.above.push(above);
+
+    // Insert between the above and below nodes
+    below.above = below.above.filter((n) => n !== above);
+    below.above.push(this);
+    above.below = above.below.filter((n) => n !== below);
+    above.below.push(this);
+  }
+
+  /**
+   * Test whether this label is below another in the semi-lattice.
+   *
+   * @param other {LabelValue} LabelValue to compare with
+   * @returns {Boolean} true if this label is above the other
+   */
+  isBelow(other: LabelValue): boolean {
+    let nodes = [this as LabelValue];
+    let node: LabelValue | undefined;
+    while ((node = nodes.pop()) !== undefined) {
+      if (node.above.includes(other)) return true;
+      nodes = [...nodes, ...node.above];
+    }
+    return false;
+  }
+
+  /**
+   * Test whether this label is above another in the semi-lattice.
+   *
+   * @param other {LabelValue} LabelValue to compare with
+   * @returns {Boolean} true if this label is above the other
+   */
+  isAbove(other: LabelValue): boolean {
+    let nodes = [this as LabelValue];
+    let node: LabelValue | undefined;
+    while ((node = nodes.pop()) !== undefined) {
+      if (node.below.includes(other)) return true;
+      nodes = [...nodes, ...node.below];
+    }
+    return false;
+  }
 }
 
-const mapLabelToString = new Map<LabelValue, string>([
-  [LabelValue.TRUSTED, "TRUSTED"],
-  [LabelValue.UNTRUSTED, "UNTRUSTED"],
-]);
+// Initialize empty lattice.
+LabelValue.TOP.below = [LabelValue.BOTTOM];
+LabelValue.BOTTOM.above = [LabelValue.TOP];
 
 /**
  * Information flow control label.
@@ -189,11 +260,19 @@ export class Label {
       "[" +
       (this.confidentiality === undefined
         ? "UNDETERMINED"
-        : mapLabelToString.get(this.confidentiality)) +
+        : this.confidentiality === LabelValue.TOP
+        ? "PRIVATE"
+        : this.confidentiality === LabelValue.BOTTOM
+        ? "PUBLIC"
+        : this.confidentiality.name) +
       ", " +
       (this.integrity === undefined
         ? "UNDETERMINED"
-        : mapLabelToString.get(this.integrity)) +
+        : this.integrity === LabelValue.TOP
+        ? "UNTRUSTED"
+        : this.integrity === LabelValue.BOTTOM
+        ? "TRUSTED"
+        : this.integrity.name) +
       "]"
     );
   }

@@ -81,14 +81,14 @@ export function computeLabelsForGraph(graph: Graph): void {
           if (!incomingConstraint.canFlowTo(node.constraint))
             throw Error(
               `Graph is not safe. Node ${node.node.id} is reading` +
-                `from ${incomingConstraint.toString()} but can only be` +
+                `from ${incomingConstraint.toString()} but can only be ` +
                 `${node.constraint?.toString()}.`
             );
 
           if (!incomingConstraint.canFlowTo(outgoingLabel))
             throw Error(
               `Graph is not safe. Node ${node.node.id} is reading` +
-                `from ${incomingConstraint.toString()} but can only be` +
+                `from ${incomingConstraint.toString()} but can only be ` +
                 `${outgoingLabel.toString()}.`
             );
 
