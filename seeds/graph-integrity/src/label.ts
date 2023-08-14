@@ -62,11 +62,11 @@ export class LabelValue {
    * @returns {Boolean} true if this label is above the other
    */
   isBelow(other: LabelValue): boolean {
-    let nodes = [this as LabelValue];
-    let node: LabelValue | undefined;
-    while ((node = nodes.pop()) !== undefined) {
-      if (node.above.includes(other)) return true;
-      nodes = [...nodes, ...node.above];
+    let aboves = [this as LabelValue];
+    let above: LabelValue | undefined;
+    while ((above = aboves.pop()) !== undefined) {
+      if (above.above.includes(other)) return true;
+      aboves = [...aboves, ...above.above];
     }
     return false;
   }
@@ -78,13 +78,79 @@ export class LabelValue {
    * @returns {Boolean} true if this label is above the other
    */
   isAbove(other: LabelValue): boolean {
-    let nodes = [this as LabelValue];
-    let node: LabelValue | undefined;
-    while ((node = nodes.pop()) !== undefined) {
-      if (node.below.includes(other)) return true;
-      nodes = [...nodes, ...node.below];
+    let belows = [this as LabelValue];
+    let below: LabelValue | undefined;
+    while ((below = belows.pop()) !== undefined) {
+      if (below.below.includes(other)) return true;
+      belows = [...belows, ...below.below];
     }
     return false;
+  }
+
+  /**
+   * Upper bound of TRUSTED and UNTRUSTED is TRUSTED.
+   * Only UNTRUSTED and UNTRUSTED is UNTRUSTED.
+   *
+   * Returns undefined for an empty list.
+   */
+  static leastUpperBound(values: LabelValue[]): LabelValue | undefined {
+    if (values.length === 0) return undefined;
+
+    // Map each value to itself and all values above it.
+    // The order is partially sorted, with lowest first.
+    const allAbove = values.map((value) => {
+      const all: LabelValue[] = [];
+      let aboves = [value];
+      let above: LabelValue | undefined;
+      while ((above = aboves.pop()) !== undefined) {
+        all.push(above);
+        aboves = [...aboves, ...above.above];
+      }
+      return all;
+    });
+
+    const intersection = allAbove.reduce((a, b) =>
+      a.filter((value) => b.includes(value))
+    );
+
+    if (intersection.length === 0)
+      throw Error("Lattice appears broken, ⊤ should always be the upper bound");
+
+    // Return the lowest value in the intersection.
+    return intersection[0];
+  }
+
+  /**
+   * Lower bound of TRUSTED and UNTRUSTED is UNTRUSTED.
+   * Only TRUSTED and TRUSTED is TRUSTED.
+   *
+   * Returns undefined for an empty list.
+   */
+  static greatestLowerBound(values: LabelValue[]): LabelValue | undefined {
+    if (values.length === 0) return undefined;
+
+    // Map each value to itself and all values below it.
+    // The order is partially sorted, with highest first.
+    const allBelow = values.map((value) => {
+      const all: LabelValue[] = [];
+      let belows = [value];
+      let below: LabelValue | undefined;
+      while ((below = belows.pop()) !== undefined) {
+        all.push(below);
+        belows = [...belows, ...below.below];
+      }
+      return all;
+    });
+
+    const intersection = allBelow.reduce((a, b) =>
+      a.filter((value) => b.includes(value))
+    );
+
+    if (intersection.length === 0)
+      throw Error("Lattice appears broken, ⊥ should always be the lower bound");
+
+    // Return the first value in the intersection, which is the highest label
+    return intersection[0];
   }
 }
 
@@ -120,14 +186,6 @@ export class Label {
    * the passed @param {[Label | undefined]} labels. Undefined labels are
    * ignored. If all labels are undefined, the result is also undefined.
    *
-   * For the confidentiality component, the meet is defined as the least higher
-   * bound, e.g. taking the higher of the two confidentiality levels (since
-   * higher levels are more restrictive).
-   *
-   * For the integrity component, the meet is defined as the greatest lower
-   * bound, e.g. taking the lower of the two integrity levels (since lower
-   * integrity levels are more restrictive).
-   *
    * Flow from any of the input labels to the meet is allowed. Use this to
    * compute a label of a node based on its incoming edges. That is, if a node
    * reads from an UNTRUSTED node, it has to be UNTRUSTED.
@@ -136,8 +194,8 @@ export class Label {
     const { confidentialityLabels, integrityLabels } =
       Label.getLabelComponents(labels);
 
-    const confidentiality = Label.leastUpperBound(confidentialityLabels);
-    const integrity = Label.greatestLowerBound(integrityLabels);
+    const confidentiality = LabelValue.leastUpperBound(confidentialityLabels);
+    const integrity = LabelValue.leastUpperBound(integrityLabels);
 
     return new Label({ confidentiality, integrity });
   }
@@ -147,14 +205,6 @@ export class Label {
    * the passed @param {[Label | undefined]} labels. Undefined labels are
    * ignored. If all labels are undefined, the result is also undefined.
    *
-   * For the confidentiality component, the join is defined as the greatest
-   * lower bound, e.g. taking the lower of the two confidentiality levels (since
-   * lower levels are less restrictive).
-   *
-   * For the integrity component, the join is defined as the least upper bound,
-   * e.g. taking the higher of the two integrity levels (since higher integrity
-   * levels are less restrictive).
-   *
    * Flow to any of the input labels from the join is allowed. Use this to
    * compute a label of a node based on its outgoing edges. That is, if a node
    * writes to a TRUSTED node, it has to be TRUSTED.
@@ -163,8 +213,10 @@ export class Label {
     const { confidentialityLabels, integrityLabels } =
       Label.getLabelComponents(labels);
 
-    const confidentiality = Label.greatestLowerBound(confidentialityLabels);
-    const integrity = Label.leastUpperBound(integrityLabels);
+    const confidentiality = LabelValue.greatestLowerBound(
+      confidentialityLabels
+    );
+    const integrity = LabelValue.greatestLowerBound(integrityLabels);
 
     return new Label({ confidentiality, integrity });
   }
@@ -186,38 +238,6 @@ export class Label {
       .filter((label) => label !== undefined && label.integrity !== undefined)
       .map((label) => label?.integrity) as LabelValue[];
     return { confidentialityLabels, integrityLabels };
-  }
-
-  /**
-   * Upper bound of TRUSTED and UNTRUSTED is TRUSTED.
-   * Only UNTRUSTED and UNTRUSTED is UNTRUSTED.
-   *
-   * Returns undefined for an empty list.
-   */
-  private static leastUpperBound(values: LabelValue[]): LabelValue | undefined {
-    if (values.length === 0) return undefined;
-    return values.reduce((a, b) => {
-      return a === LabelValue.TRUSTED || b === LabelValue.TRUSTED
-        ? LabelValue.TRUSTED
-        : LabelValue.UNTRUSTED;
-    });
-  }
-
-  /**
-   * Lower bound of TRUSTED and UNTRUSTED is UNTRUSTED.
-   * Only TRUSTED and TRUSTED is TRUSTED.
-   *
-   * Returns undefined for an empty list.
-   */
-  private static greatestLowerBound(
-    values: LabelValue[]
-  ): LabelValue | undefined {
-    if (values.length === 0) return undefined;
-    return values.reduce((a, b) => {
-      return a === LabelValue.TRUSTED && b === LabelValue.TRUSTED
-        ? LabelValue.TRUSTED
-        : LabelValue.UNTRUSTED;
-    });
   }
 
   /**

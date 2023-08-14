@@ -192,12 +192,14 @@ test("GraphSafetyValidator: Subgraphs with * wires", (t) => {
     ],
   });
 
+  // We expect input to be TRUSTED, because it feeds into a node that requires
+  // trusted inputs.
   t.deepEqual(v.getValidatorMetadata({ id: "in", type: "input" }), {
     description: "[UNDETERMINED, TRUSTED]",
     label: trustedIntegrity,
   });
 
-  // We expect the * wire to be UNTRUSTED, because it is not connected to both
+  // We expect the * wire to be UNTRUSTED, because it is now connected to both
   // fetch and compute.
   t.deepEqual(v.getValidatorMetadata({ id: "out", type: "output" }), {
     description: "[UNDETERMINED, UNTRUSTED]",

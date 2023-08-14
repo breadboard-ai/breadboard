@@ -14,6 +14,22 @@ test("LabelValue: Empty lattice", (t) => {
 
   t.true(LabelValue.TOP.isAbove(LabelValue.BOTTOM));
   t.true(LabelValue.BOTTOM.isBelow(LabelValue.TOP));
+
+  t.is(LabelValue.leastUpperBound([]), undefined);
+  t.is(LabelValue.leastUpperBound([LabelValue.TOP]), LabelValue.TOP);
+  t.is(LabelValue.leastUpperBound([LabelValue.BOTTOM]), LabelValue.BOTTOM);
+  t.is(
+    LabelValue.leastUpperBound([LabelValue.TOP, LabelValue.BOTTOM]),
+    LabelValue.TOP
+  );
+
+  t.is(LabelValue.greatestLowerBound([]), undefined);
+  t.is(LabelValue.greatestLowerBound([LabelValue.TOP]), LabelValue.TOP);
+  t.is(LabelValue.greatestLowerBound([LabelValue.BOTTOM]), LabelValue.BOTTOM);
+  t.is(
+    LabelValue.greatestLowerBound([LabelValue.TOP, LabelValue.BOTTOM]),
+    LabelValue.BOTTOM
+  );
 });
 
 test("LabelValue: Single label", (t) => {
@@ -27,6 +43,18 @@ test("LabelValue: Single label", (t) => {
 
   t.true(label.isAbove(LabelValue.BOTTOM));
   t.true(label.isBelow(LabelValue.TOP));
+
+  t.is(LabelValue.leastUpperBound([label]), label);
+  t.is(LabelValue.greatestLowerBound([label]), label);
+
+  t.is(LabelValue.leastUpperBound([label, LabelValue.TOP]), LabelValue.TOP);
+  t.is(
+    LabelValue.greatestLowerBound([label, LabelValue.BOTTOM]),
+    LabelValue.BOTTOM
+  );
+
+  t.is(LabelValue.leastUpperBound([label, LabelValue.BOTTOM]), label);
+  t.is(LabelValue.greatestLowerBound([label, LabelValue.TOP]), label);
 
   // Inserting didn't mess up relationship between TOP and BOTTOM
   t.true(LabelValue.TOP.isAbove(LabelValue.BOTTOM));
@@ -68,12 +96,22 @@ test("LabelValue: Diamond shape", (t) => {
   t.true(leftMiddle.isAbove(leftBottom));
   t.true(leftTop.isAbove(leftBottom));
 
+  t.is(LabelValue.leastUpperBound([leftTop, leftMiddle]), leftTop);
+  t.is(LabelValue.greatestLowerBound([leftTop, leftBottom]), leftBottom);
+
   t.false(leftBottom.isAbove(leftMiddle));
   t.false(leftBottom.isAbove(leftTop));
 
   // Comparing across branches is always false
   t.false(leftMiddle.isAbove(rightBottom));
   t.false(leftMiddle.isBelow(rightBottom));
+
+  // Upper and lower bounds hence always TOP or BOTTOM
+  t.is(LabelValue.leastUpperBound([leftMiddle, rightMiddle]), LabelValue.TOP);
+  t.is(
+    LabelValue.greatestLowerBound([leftMiddle, rightMiddle]),
+    LabelValue.BOTTOM
+  );
 });
 
 test("Label: constructor", (t) => {
@@ -136,8 +174,8 @@ test("Label: meet and join (integrity only)", (t) => {
   t.true(Label.computeMeetOfLabels([trusted]).equalsTo(trusted));
   t.true(Label.computeMeetOfLabels([trusted, trusted]).equalsTo(trusted));
   t.true(Label.computeMeetOfLabels([untrusted, untrusted]).equalsTo(untrusted));
+  console.log(Label.computeMeetOfLabels([trusted, untrusted]), "=?", untrusted);
   t.true(Label.computeMeetOfLabels([trusted, untrusted]).equalsTo(untrusted));
-
   t.true(Label.computeMeetOfLabels([undetermined]).equalsTo(undetermined));
   t.true(Label.computeMeetOfLabels([undetermined, trusted]).equalsTo(trusted));
   t.true(
@@ -252,12 +290,12 @@ test("Label: meet and join (integrity only)", (t) => {
 
 test("Label: meet and join with both confidentiality and integrity", (t) => {
   const low = new Label({
-    confidentiality: LabelValue.UNTRUSTED,
+    confidentiality: LabelValue.PUBLIC,
     integrity: LabelValue.TRUSTED,
   });
 
   const high = new Label({
-    confidentiality: LabelValue.TRUSTED,
+    confidentiality: LabelValue.PRIVATE,
     integrity: LabelValue.UNTRUSTED,
   });
 
@@ -265,12 +303,12 @@ test("Label: meet and join with both confidentiality and integrity", (t) => {
   t.true(Label.computeMeetOfLabels([low, high]).equalsTo(high));
 
   const lowHigh = new Label({
-    confidentiality: LabelValue.UNTRUSTED,
+    confidentiality: LabelValue.PUBLIC,
     integrity: LabelValue.UNTRUSTED,
   });
 
   const highLow = new Label({
-    confidentiality: LabelValue.TRUSTED,
+    confidentiality: LabelValue.PRIVATE,
     integrity: LabelValue.TRUSTED,
   });
 
@@ -298,12 +336,12 @@ test("Label: canFlowTo (integrity only)", (t) => {
 
 test("Label: canFlowTo with both confidentiality and integrity", (t) => {
   const low = new Label({
-    confidentiality: LabelValue.UNTRUSTED,
+    confidentiality: LabelValue.PUBLIC,
     integrity: LabelValue.TRUSTED,
   });
 
   const high = new Label({
-    confidentiality: LabelValue.TRUSTED,
+    confidentiality: LabelValue.PRIVATE,
     integrity: LabelValue.UNTRUSTED,
   });
 
