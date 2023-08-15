@@ -143,30 +143,33 @@ export interface Breadboard extends GraphDescriptor {
   addKit<T extends Kit>(ctr: KitConstructor<T>): T;
 }
 
-export type WireOutSpec<From, To> =
-  | `${string & keyof From}->${string & keyof To}`
-  | `${string & keyof From}->`
-  | `->${string & keyof From}`
-  | `${string & keyof From}`
-  | `${string & keyof From}->${string & keyof To}?`
-  | `${string & keyof From}->?`
-  | `->${string & keyof From}?`
-  | `${string & keyof From}?`
-  | `${string & keyof From}->${string & keyof To}.`
-  | `${string & keyof From}->.`
-  | `->${string & keyof From}.`
-  | `${string & keyof From}.`;
+type Common<From, To> = Pick<To, keyof (From | To)>;
 
-export type WireInSpec<From, To> =
+type LongOutSpec<From, To> =
+  | `${string & keyof From}->${string & keyof To}`
+  | `${string & keyof From}->${string & keyof To}.`
+  | `${string & keyof From}->${string & keyof To}?`;
+
+type LongInSpec<From, To> =
   | `${string & keyof From}<-${string & keyof To}`
-  | `${string & keyof From}<-`
-  | `<-${string & keyof From}`
-  | `${string & keyof From}<-${string & keyof To}?`
-  | `${string & keyof From}<-?`
-  | `${string & keyof From}?`
   | `${string & keyof From}<-${string & keyof To}.`
-  | `${string & keyof From}<-.`
-  | `<-${string & keyof From}.`;
+  | `${string & keyof From}<-${string & keyof To}?`;
+
+type ShortOutSpec<From, To> =
+  | `${string & keyof Common<From, To>}->`
+  | `${string & keyof Common<From, To>}->.`
+  | `${string & keyof Common<From, To>}->?`;
+
+type ShortInSpec<From, To> =
+  | `<-${string & keyof Common<From, To>}`
+  | `<-${string & keyof Common<From, To>}.`
+  | `<-${string & keyof Common<From, To>}?`;
+
+export type WireOutSpec<From, To> =
+  | LongOutSpec<From, To>
+  | ShortOutSpec<From, To>;
+
+export type WireInSpec<From, To> = LongInSpec<From, To> | ShortInSpec<From, To>;
 
 export type WireSpec<FromIn, FromOut, ToIn, ToOut> =
   | WireOutSpec<FromOut, ToIn>
