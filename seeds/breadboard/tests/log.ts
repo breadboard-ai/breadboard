@@ -26,6 +26,17 @@ class OutputCapture {
   }
 }
 
+class CustomEvent extends Event {
+  constructor(message, data) {
+    super(message, data)
+    this.detail = data.detail
+  }
+}
+
+const et = new EventTarget()
+et.addEventListener('message', ev => console.log(ev.detail))
+et.dispatchEvent(new CustomEvent('message', { detail: 'foo' }))
+
 import { LogProbe } from "../src/log.js";
 
 test("LogProbe listens to events", (t) => {
