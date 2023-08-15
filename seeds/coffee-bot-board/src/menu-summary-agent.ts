@@ -9,22 +9,21 @@ import { config } from "dotenv";
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 
-import { Template } from "./template.js";
+import { PromptMaker } from "./template.js";
 
 config();
 
+const maker = new PromptMaker("v2-multi-agent");
 export const menuSummaryAgent = new Board();
 const kit = menuSummaryAgent.addKit(Starter);
 
-const menuSummaryAgentTemplate = new Template(
-  "v2-multi-agent",
-  menuSummaryAgent,
-  kit
+const menu = kit.promptTemplate(
+  ...(await maker.prompt("menu-summary-agent", "menuSummaryAgent"))
 );
-const menu = await menuSummaryAgentTemplate.loadTemplate(
-  "menu-summary-agent.txt"
+menu.wire(
+  "<-menu.",
+  menuSummaryAgent.passthrough(await maker.part("menu", "txt"))
 );
-await menuSummaryAgentTemplate.wirePart("menu", "txt");
 
 function formatOutput({ completion }: { completion: string }) {
   const output = {
