@@ -26,16 +26,20 @@ class OutputCapture {
   }
 }
 
+type CustomEventInit = EventInit & { detail: unknown };
+
 class CustomEvent extends Event {
-  constructor(message, data) {
-    super(message, data)
-    this.detail = data.detail
+  detail: unknown;
+
+  constructor(message: string, data: CustomEventInit) {
+    super(message, data);
+    this.detail = data.detail;
   }
 }
 
-const et = new EventTarget()
-et.addEventListener('message', ev => console.log(ev.detail))
-et.dispatchEvent(new CustomEvent('message', { detail: 'foo' }))
+const et = new EventTarget();
+et.addEventListener("message", (ev) => console.log((ev as CustomEvent).detail));
+et.dispatchEvent(new CustomEvent("message", { detail: "foo" }));
 
 import { LogProbe } from "../src/log.js";
 
