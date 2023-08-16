@@ -8,8 +8,8 @@ import { Graph, NodeRoles } from "./types.js";
 import { Label } from "./label.js";
 
 /**
- * Compute labels and hence validate the safety of the graph as whole. Can be
- * run multiple times, but if so won't relax constraints.
+ * Compute labels and hence validate the safety of the graph as whole.
+ * Recomputes from scratch every time.
  *
  * Compute all labels with an embarrassingly simple and slow fixed-point
  * algorithm. This should be replaced by a more efficient constraint solver, but
@@ -27,6 +27,9 @@ import { Label } from "./label.js";
  * @throws {Error} if the graph is not safe.
  */
 export function computeLabelsForGraph(graph: Graph): void {
+  // Clear prior labels.
+  graph.nodes.forEach((node) => (node.label = new Label()));
+
   let change: boolean;
   do {
     change = false;
@@ -80,14 +83,14 @@ export function computeLabelsForGraph(graph: Graph): void {
           // node's constraint or the labels of the outgoing edges.
           if (!incomingConstraint.canFlowTo(node.constraint))
             throw Error(
-              `Graph is not safe. Node ${node.node.id} is reading` +
+              `Graph is not safe. Node ${node.node.id} is reading ` +
                 `from ${incomingConstraint.toString()} but can only be ` +
-                `${node.constraint?.toString()}.`
+                `${node.constraint?.toString()} due to constraint on node.`
             );
 
           if (!incomingConstraint.canFlowTo(outgoingLabel))
             throw Error(
-              `Graph is not safe. Node ${node.node.id} is reading` +
+              `Graph is not safe. Node ${node.node.id} is reading ` +
                 `from ${incomingConstraint.toString()} but can only be ` +
                 `${outgoingLabel.toString()}.`
             );

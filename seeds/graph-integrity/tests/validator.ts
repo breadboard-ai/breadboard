@@ -160,27 +160,26 @@ test("GraphSafetyValidator: Getting labels for nodes in subgraphs", (t) => {
 test("GraphSafetyValidator: Subgraphs with * wires", (t) => {
   const v = new GraphIntegrityValidator();
 
-  v.addGraph({
+  const graph1 = {
     edges: [
       { from: "in", to: "include", out: "*" },
       { from: "include", to: "out", out: "*" },
-      { from: "include", to: "outz", out: "z" },
+      { from: "include", to: "out_result", out: "result" },
     ],
     nodes: [
       { id: "in", type: "input" },
       { id: "include", type: "include" },
       { id: "out", type: "output" },
-      { id: "outz", type: "output" },
+      { id: "out_result", type: "output" },
     ],
-  });
+  };
 
-  const v2 = v.getSubgraphValidator({ id: "include", type: "include" });
-  v2.addGraph({
+  const graph2 = {
     edges: [
-      { from: "in1", to: "fetch", out: "x", in: "url" },
-      { from: "fetch", to: "out1", out: "response", in: "y" },
-      { from: "in2", to: "compute", out: "x", in: "compute" },
-      { from: "compute", to: "out2", out: "result", in: "z" },
+      { from: "in1", to: "fetch", out: "url", in: "url" },
+      { from: "fetch", to: "out1", out: "response", in: "response" },
+      { from: "in2", to: "compute", out: "compute", in: "code" },
+      { from: "compute", to: "out2", out: "result", in: "result" },
     ],
     nodes: [
       { id: "in1", type: "input" },
@@ -190,7 +189,16 @@ test("GraphSafetyValidator: Subgraphs with * wires", (t) => {
       { id: "out1", type: "output" },
       { id: "out2", type: "output" },
     ],
-  });
+  };
+
+  v.addGraph(graph1);
+
+  // Add second graph, but only the compute input was provided. This means the
+  // fetch parts should be ignored.
+  const v2 = v.getSubgraphValidator({ id: "include", type: "include" }, [
+    "compute",
+  ]);
+  v2.addGraph(graph2);
 
   // We expect input to be TRUSTED, because it feeds into a node that requires
   // trusted inputs.
@@ -199,15 +207,32 @@ test("GraphSafetyValidator: Subgraphs with * wires", (t) => {
     label: trustedIntegrity,
   });
 
-  // We expect the * wire to be UNTRUSTED, because it is now connected to both
-  // fetch and compute.
+  // We expect the * wire to be TRUSTED, because we only connected to compute
+  // leg of the graph.
+  t.deepEqual(v.getValidatorMetadata({ id: "out", type: "output" }), {
+    description: "[UNDETERMINED, TRUSTED]",
+    label: trustedIntegrity,
+  });
+
+  // And so is of course the result wire.
+  t.deepEqual(v.getValidatorMetadata({ id: "out_result", type: "output" }), {
+    description: "[UNDETERMINED, TRUSTED]",
+    label: trustedIntegrity,
+  });
+
+  // Add the second graph again, but now the fetch parts.
+  const v3 = v.getSubgraphValidator({ id: "include", type: "url" }, ["url"]);
+  v3.addGraph(graph2);
+
+  // Now we expect the * wire to be UNTRUSTED, because it is now connected to
+  // both fetch and compute.
   t.deepEqual(v.getValidatorMetadata({ id: "out", type: "output" }), {
     description: "[UNDETERMINED, UNTRUSTED]",
     label: untrustedIntegrity,
   });
 
-  // But this doesn't clobber the single z wire out!
-  t.deepEqual(v.getValidatorMetadata({ id: "outz", type: "output" }), {
+  // But this doesn't clobber the single result wire out!
+  t.deepEqual(v.getValidatorMetadata({ id: "out_result", type: "output" }), {
     description: "[UNDETERMINED, TRUSTED]",
     label: trustedIntegrity,
   });

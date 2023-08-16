@@ -16,8 +16,8 @@ export interface Edge {
 }
 
 export enum NodeRoles {
-  placeHolder,
-  passthrough,
+  placeHolder = "placeHolder",
+  passthrough = "passthrough",
 }
 
 export interface Node {
