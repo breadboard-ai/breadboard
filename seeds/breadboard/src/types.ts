@@ -143,7 +143,11 @@ export interface Breadboard extends GraphDescriptor {
   addKit<T extends Kit>(ctr: KitConstructor<T>): T;
 }
 
-type Common<From, To> = Pick<To, keyof (From | To)>;
+type Common<To, From> = {
+  [P in keyof (From | To) as From[P] extends To[P] ? P : never]?:
+    | To[P]
+    | undefined;
+};
 
 type LongOutSpec<From, To> =
   | `${string & keyof From}->${string & keyof To}`
@@ -156,6 +160,7 @@ type LongInSpec<From, To> =
   | `${string & keyof From}<-${string & keyof To}?`;
 
 type ShortOutSpec<From, To> =
+  | `${string & keyof Common<From, To>}`
   | `${string & keyof Common<From, To>}->`
   | `${string & keyof Common<From, To>}->.`
   | `${string & keyof Common<From, To>}->?`;
@@ -186,6 +191,7 @@ export interface BreadboardNode<Inputs, Outputs> {
    * @returns - the current node, to enable chaining.
    */
   wire<ToInputs, ToOutputs>(
+    // spec: WireSpec<Inputs, Outputs, ToInputs, ToOutputs>,
     spec: string,
     to: BreadboardNode<ToInputs, ToOutputs>
   ): BreadboardNode<Inputs, Outputs>;
