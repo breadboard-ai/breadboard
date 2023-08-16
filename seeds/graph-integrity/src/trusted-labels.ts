@@ -28,6 +28,9 @@ export const trustedLabels: Record<NodeTypeIdentifier, TrustedLabels> = {
     },
   },
   runJavascript: {
-    node: new Label({ integrity: LabelValue.TRUSTED }),
+    incoming: {
+      code: new Label({ integrity: LabelValue.TRUSTED }),
+      name: new Label({ integrity: LabelValue.TRUSTED }),
+    },
   },
 };

@@ -118,7 +118,7 @@ test("GraphSafetyValidator: Getting labels for nodes in subgraphs", (t) => {
     edges: [
       { from: "in1", to: "fetch", out: "x", in: "url" },
       { from: "fetch", to: "out1", out: "response", in: "y" },
-      { from: "in2", to: "compute", out: "x", in: "compute" },
+      { from: "in2", to: "compute", out: "x", in: "code" },
       { from: "compute", to: "out2", out: "result", in: "z" },
     ],
     nodes: [

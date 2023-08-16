@@ -16,7 +16,7 @@
       "from": "passthrough-1",
       "out": "response",
       "to": "javascript-1",
-      "in": "compute"
+      "in": "code"
     },
     {
       "from": "javascript-1",

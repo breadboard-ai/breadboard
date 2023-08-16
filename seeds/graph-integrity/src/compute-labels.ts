@@ -79,6 +79,22 @@ export function computeLabelsForGraph(graph: Graph): void {
             node.constraint,
           ]);
 
+          // Graph is not safe if there are two constraints on an edge and flow
+          // isn't possible.
+          const edgeContradiction = node.incoming.find(
+            (edge) =>
+              edge.fromConstraint &&
+              edge.toConstraint &&
+              !edge.fromConstraint.canFlowTo(edge.toConstraint)
+          );
+          if (edgeContradiction)
+            throw Error(
+              `Graph is not safe. Node ${node.node.id} has an ` +
+                `incoming edge with incompatible constraints: ` +
+                `${edgeContradiction.fromConstraint?.toString()} -> ` +
+                `${edgeContradiction.toConstraint?.toString()}.`
+            );
+
           // Graph is not safe if the incoming constraint is higher than the
           // node's constraint or the labels of the outgoing edges.
           if (!incomingConstraint.canFlowTo(node.constraint))

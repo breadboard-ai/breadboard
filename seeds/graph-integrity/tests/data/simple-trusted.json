@@ -4,7 +4,7 @@
       "from": "input-1",
       "out": "text",
       "to": "javascript-1",
-      "in": "compute"
+      "in": "code"
     },
     {
       "from": "javascript-1",

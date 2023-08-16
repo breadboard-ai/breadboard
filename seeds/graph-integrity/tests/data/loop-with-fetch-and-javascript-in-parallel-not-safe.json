@@ -10,7 +10,7 @@
       "from": "do-1",
       "out": "execute",
       "to": "javascript-1",
-      "in": "compute"
+      "in": "code"
     },
     {
       "from": "javascript-1",
