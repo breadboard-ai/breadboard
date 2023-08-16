@@ -93,7 +93,9 @@ export class Core {
     const source = path || $ref || "";
     const board = await Board.load(source, slotted);
     for (const validator of this.#validators)
-      board.addValidator(validator.getSubgraphValidator(parent));
+      board.addValidator(
+        validator.getSubgraphValidator(parent, Object.keys(args))
+      );
     return await board.runOnce(args, NestedProbe.create(this.#probe, source));
   }
 

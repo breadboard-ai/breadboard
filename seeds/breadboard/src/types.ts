@@ -94,9 +94,14 @@ export interface BreadboardValidator {
    * .addGraph() on the returned validator to add and validate the subgraph.
    *
    * @param node The node to replace.
+   * @param actualInputs Actual inputs to the node (as opposed to assuming all
+   * inputs with * or that optional ones are present)
    * @returns A validator for the subgraph.
    */
-  getSubgraphValidator(node: NodeDescriptor): BreadboardValidator;
+  getSubgraphValidator(
+    node: NodeDescriptor,
+    actualInputs?: string[]
+  ): BreadboardValidator;
 }
 
 /**
