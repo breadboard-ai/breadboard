@@ -1,36 +1,44 @@
 // framework code
 
-const board = {
-  input: <T>(): T => {
-    // input node
-    return {} as T;
-  },
-  output: <T>(): T => {
-    // output node
-    return {} as T;
-  },
+interface WireableOut<T> {
+  constantWireTo: (output: WireableIn<T>) => void;
+  optionalWireTo: (output: WireableIn<T>) => void;
+  wireTo: (output: WireableIn<T>) => void;
+}
+
+interface WireableIn<T> {
+  wireFrom: (input: WireableOut<T>) => void;
+  constantWireFrom: (input: WireableOut<T>) => void;
+  optionalWireFrom: (input: WireableOut<T>) => void;
+}
+
+type NodeInput<T> = {
+  [P in keyof T as `$${string & P}`]: WireableIn<T>;
 };
 
-interface WireOut<T> {
-  constantWireTo: (output: WireIn<T>) => void;
-  optionalWireTo: (output: WireIn<T>) => void;
-  wireTo: (output: WireIn<T>) => void;
-}
+type NodeOutput<T> = {
+  [P in keyof T]: WireableOut<T>;
+};
 
-interface WireIn<T> {
-  wireFrom: (input: WireOut<T>) => void;
-  constantWireFrom: (input: WireOut<T>) => void;
-  optionalWireFrom: (input: WireOut<T>) => void;
-}
+const board = {
+  input: <Out>() => {
+    // input node
+    return {} as NodeOutput<Out>;
+  },
+  output: <In>() => {
+    // output node
+    return {} as NodeInput<In>;
+  },
+};
 
 // userland code
 
 type Input = {
-  say: WireOut<string>;
+  say: string;
 };
 
 type Output = {
-  $hear: WireIn<string>;
+  hear: string;
 };
 
 const input = board.input<Input>();
