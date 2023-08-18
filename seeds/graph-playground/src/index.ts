@@ -32,7 +32,7 @@ const ask = async (inputs: InputValues): Promise<OutputValues> => {
     defaultValue,
   });
   if (input === defaultValue) return { exit: true };
-  return { text: input };
+  return { text: input } as OutputValues;
 };
 
 // Line-wrapping magic courtesy of

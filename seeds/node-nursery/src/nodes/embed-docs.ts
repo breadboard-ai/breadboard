@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { InputValues } from "@google-labs/graph-runner";
+import type {
+  InputValues,
+  NodeValue,
+  OutputValues,
+} from "@google-labs/graph-runner";
 import {
   EmbedTextResponse,
   PalmModelMethod,
@@ -16,7 +20,7 @@ import jsonata from "jsonata";
 import type { VectorDocument } from "../vector-database.js";
 import { CacheManager } from "../cache.js";
 
-type EmbedStringInputs = {
+type EmbedStringInputs = NodeValue & {
   /**
    * Documents to embed.
    * Returns that last as "documents", with an "embedding" property added.
@@ -37,7 +41,7 @@ type EmbedStringInputs = {
   cache?: CacheManager;
 };
 
-export default async (inputs: InputValues) => {
+export default async (inputs: InputValues): Promise<OutputValues> => {
   const values = inputs as EmbedStringInputs;
   if (!values.PALM_KEY) throw new Error("Embedding requires `PALM_KEY` input");
   if (!values.documents)

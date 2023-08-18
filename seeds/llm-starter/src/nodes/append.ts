@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { InputValues } from "@google-labs/graph-runner";
+import {
+  InputValues,
+  NodeValue,
+  OutputValues,
+} from "@google-labs/graph-runner";
 
 export enum ObjectType {
   stringy,
@@ -12,10 +16,10 @@ export enum ObjectType {
   object,
 }
 
-type AccumulatorType = string | string[] | Record<string, unknown>;
-type ValueType = string | Record<string, unknown>;
+type AccumulatorType = string | string[] | Record<string, NodeValue>;
+type ValueType = string | Record<string, NodeValue>;
 
-export type AppendInputs = Record<string, unknown> & {
+export type AppendInputs = Record<string, NodeValue> & {
   accumulator: AccumulatorType;
 };
 
@@ -44,7 +48,7 @@ const asString = (values: ValueType): string => {
   return asArray(values).join("\n");
 };
 
-export default async (inputs: InputValues) => {
+export default async (inputs: InputValues): Promise<OutputValues> => {
   const { accumulator, ...values } = inputs as AppendInputs;
   if (Object.keys(values).length === 0) return { accumulator };
   const type = getObjectType(accumulator);

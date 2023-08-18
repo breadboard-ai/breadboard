@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { InputValues } from "@google-labs/graph-runner";
+import type {
+  InputValues,
+  NodeValue,
+  OutputValues,
+} from "@google-labs/graph-runner";
 import {
   XmlCdata,
   XmlComment,
@@ -38,7 +42,7 @@ const properName = (name: string) => {
  */
 const toAltJson = (
   node: XmlElement | XmlDocument | XmlText | XmlCdata | XmlComment
-): [string, unknown] => {
+): [string, NodeValue] => {
   if (node.type === "document") {
     const doc = node as XmlDocument;
     const element = doc.children[0] as XmlElement;
@@ -63,7 +67,7 @@ const toAltJson = (
   return ["$c", ""];
 };
 
-export default async (inputs: InputValues) => {
+export default async (inputs: InputValues): Promise<OutputValues> => {
   const { xml } = inputs as XmlToJsonInputs;
   if (!xml) throw new Error("XmlToJson requires `xml` input");
   const json = toAltJson(parseXml(xml));

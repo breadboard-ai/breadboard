@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { InputValues } from "@google-labs/graph-runner";
+import type {
+  InputValues,
+  NodeValue,
+  OutputValues,
+} from "@google-labs/graph-runner";
 import {
   EmbedTextResponse,
   PalmModelMethod,
@@ -13,7 +17,7 @@ import {
 
 import { CacheManager } from "../cache.js";
 
-type EmbedStringInputs = {
+type EmbedStringInputs = NodeValue & {
   /**
    * Prompt for text completion.
    */
@@ -28,7 +32,7 @@ type EmbedStringInputs = {
   cache?: CacheManager;
 };
 
-export default async (inputs: InputValues) => {
+export default async (inputs: InputValues): Promise<OutputValues> => {
   const values = inputs as EmbedStringInputs;
   if (!values.PALM_KEY) throw new Error("Embedding requires `PALM_KEY` input");
   if (!values.text) throw new Error("Embedding requires `text` input");
@@ -41,7 +45,8 @@ export default async (inputs: InputValues) => {
 
   if (cache) {
     const cachedEmbedding = await cache.get(query);
-    if (cachedEmbedding) return { embedding: cachedEmbedding };
+    if (cachedEmbedding)
+      return { embedding: cachedEmbedding } as unknown as OutputValues;
   }
 
   const request = palm(values.PALM_KEY).embedding(query);
@@ -52,5 +57,5 @@ export default async (inputs: InputValues) => {
 
   cache?.set(query, embedding);
 
-  return { embedding };
+  return { embedding } as unknown as OutputValues;
 };

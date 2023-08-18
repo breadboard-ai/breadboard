@@ -210,11 +210,11 @@ export interface BreadboardNode<Inputs, Outputs> {
  */
 export type OptionalIdConfiguration = { $id?: string } & NodeConfiguration;
 
-export type ReflectNodeOutputs = {
+export type ReflectNodeOutputs = OutputValues & {
   graph: GraphDescriptor;
 };
 
-export type IncludeNodeInputs = {
+export type IncludeNodeInputs = InputValues & {
   path?: string;
   $ref?: string;
   slotted?: BreadboardSlotSpec;

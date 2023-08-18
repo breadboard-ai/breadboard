@@ -5,6 +5,7 @@
  */
 
 import { Board } from "@google-labs/breadboard";
+import { NodeValue } from "@google-labs/graph-runner";
 import { Starter } from "@google-labs/llm-starter";
 
 /**
@@ -70,7 +71,7 @@ board.input("Ask ReAct").wire(
   "text",
   board
     .include(`./graphs/react-with-slot.json`, {
-      slotted: { tools: tools() },
+      slotted: { tools: tools() as unknown as NodeValue },
     })
     .wire("text", board.output())
 );

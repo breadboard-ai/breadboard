@@ -5,6 +5,7 @@
  */
 
 import { similarity } from "ml-distance";
+import { Capability } from "@google-labs/graph-runner";
 
 /**
  * Entry into a vector database.
@@ -14,17 +15,17 @@ import { similarity } from "ml-distance";
  *
  * Some databases, e.g. Pinecone, will also required a @field id field.
  */
-export interface VectorDocument {
+export interface VectorDocument extends Capability {
   embedding: number[];
   id?: string | number | symbol;
 }
 
-export interface VectorQueryResult {
+export interface VectorQueryResult extends Capability {
   document: VectorDocument;
   similarity: number;
 }
 
-export interface VectorDatabase {
+export interface VectorDatabase extends Capability {
   add(documents: VectorDocument[]): Promise<void>;
   remove(ids: VectorDocument["id"][]): Promise<void>;
   findNearest(
@@ -34,6 +35,7 @@ export interface VectorDatabase {
 }
 
 export class MemoryVectorDatabase implements VectorDatabase {
+  readonly kind = "VectorDatabase";
   private entries: Map<VectorDocument["id"], VectorDocument> = new Map();
   private similarity: (typeof similarity)["cosine"];
 

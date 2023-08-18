@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { InputValues, OutputValues } from "@google-labs/graph-runner";
+import type {
+  InputValues,
+  NodeValue,
+  OutputValues,
+} from "@google-labs/graph-runner";
 import {
   GenerateTextResponse,
   SafetySetting,
@@ -16,7 +20,7 @@ export type GenerateTextOutputs = GenerateTextResponse & {
   completion: string;
 };
 
-export type GenerateTextInputs = {
+export type GenerateTextInputs = NodeValue & {
   /**
    * Prompt for text completion.
    */
@@ -54,10 +58,11 @@ export const prepareRequest = (inputs: InputValues) => {
 export const prepareResponse = async (
   data: Response
 ): Promise<OutputValues> => {
-  const response = (await data.json()) as GenerateTextResponse;
+  const json = await data.json();
+  const response = json as GenerateTextResponse;
 
   const completion = response?.candidates?.[0]?.output as string;
-  if (completion) return { completion, ...response };
+  if (completion) return { completion, ...json };
   return response as OutputValues;
 };
 

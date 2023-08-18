@@ -4,6 +4,23 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+export interface Capability {
+  readonly kind: string;
+}
+
+/**
+ * A type representing a valid JSON value.
+ */
+export type NodeValue =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | NodeValue[]
+  | Capability
+  | { [key: string]: NodeValue };
+
 /**
  * Unique identifier of a node in a graph.
  */
@@ -27,7 +44,7 @@ export type NodeTypeIdentifier = string;
 /**
  * Represents a node in a graph.
  */
-export interface NodeDescriptor {
+export type NodeDescriptor = {
   /**
    * Unique id of the node in graph.
    */
@@ -42,12 +59,12 @@ export interface NodeDescriptor {
    * Configuration of the node.
    */
   configuration?: NodeConfiguration;
-}
+};
 
 /**
  * Represents an edge in a graph.
  */
-export interface Edge {
+export type Edge = {
   /**
    * The node that the edge is coming from.
    */
@@ -82,7 +99,7 @@ export interface Edge {
    * remains available even after the node has consumed it.
    */
   constant?: boolean;
-}
+};
 
 /**
  * Represents a "kit": a collection of `NodeHandlers`. The basic permise here
@@ -90,7 +107,7 @@ export interface Edge {
  * graphs can specify which ones they use.
  * The `@google-labs/llm-starter` package is an example of kit.
  */
-export interface KitDescriptor {
+export type KitDescriptor = {
   /**
    * The URL pointing to the location of the kit.
    */
@@ -101,12 +118,12 @@ export interface KitDescriptor {
    * If left blank or omitted, all node types are assumed to be used.
    */
   using?: string[];
-}
+};
 
 /**
  * Represents a graph.
  */
-export interface GraphDescriptor {
+export type GraphDescriptor = {
   /**
    * The collection of all edges in the graph.
    */
@@ -121,25 +138,25 @@ export interface GraphDescriptor {
    * All the kits (collections of node handlers) that are used by the graph.
    */
   kits?: KitDescriptor[];
-}
-
-/**
- * Values that are supplied as inputs to the ` ndler`.
- */
-export type InputValues = Record<InputIdentifier, unknown>;
+};
 
 export type EdgeMap = Map<NodeIdentifier, OutputValues>;
 
 /**
+ * Values that are supplied as inputs to the `NodeHandler`.
+ */
+export type InputValues = Record<InputIdentifier, NodeValue>;
+
+/**
  * Values that the `NodeHandler` outputs.
  */
-export type OutputValues = Partial<Record<OutputIdentifier, unknown>>;
+export type OutputValues = Partial<Record<OutputIdentifier, NodeValue>>;
 
 /**
  * Values that are supplied as part of the graph. These values are merged with
  * the `InputValues` and supplied as inputs to the `NodeHandler`.
  */
-export type NodeConfiguration = Record<string, unknown>;
+export type NodeConfiguration = Record<string, NodeValue>;
 
 /**
  * A function that represents a type of a node in the graph.
