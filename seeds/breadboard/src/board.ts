@@ -26,11 +26,12 @@ import {
   BreadboardNode,
   ReflectNodeOutputs,
   IncludeNodeInputs,
+  SlotNodeInputs,
 } from "./types.js";
 
 import { TraversalMachine, toMermaid } from "@google-labs/graph-runner";
 import { Node } from "./node.js";
-import { Core, SlotInputs } from "./core.js";
+import { Core } from "./core.js";
 import { InputStageResult, OutputStageResult } from "./run.js";
 import { KitLoader } from "./kit.js";
 import { IdVendor } from "./id.js";
@@ -364,7 +365,7 @@ export class Board implements Breadboard {
   slot<In = InputValues, Out = OutputValues>(
     slot: string,
     config: OptionalIdConfiguration = {}
-  ): BreadboardNode<SlotInputs & In, Out> {
+  ): BreadboardNode<SlotNodeInputs & In, Out> {
     const { $id, ...rest } = config;
     return new Node(this, "slot", { slot, ...rest }, $id);
   }

@@ -221,3 +221,8 @@ export type IncludeNodeInputs = InputValues & {
   parent: NodeDescriptor;
   args: InputValues;
 };
+
+export type SlotNodeInputs = {
+  slot: string;
+  parent: NodeDescriptor;
+};

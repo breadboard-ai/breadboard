@@ -7,7 +7,6 @@
 import type {
   GraphDescriptor,
   InputValues,
-  NodeDescriptor,
   NodeHandler,
   NodeHandlers,
   OutputValues,
@@ -16,16 +15,12 @@ import type {
   BreadboardSlotSpec,
   BreadboardValidator,
   IncludeNodeInputs,
+  SlotNodeInputs,
 } from "./types.js";
 import { Board } from "./board.js";
 import { NestedProbe } from "./nested-probe.js";
 
 const CORE_HANDLERS = ["include", "reflect", "slot", "passthrough"];
-
-export type SlotInputs = {
-  slot: string;
-  parent: NodeDescriptor;
-};
 
 const deepCopy = (graph: GraphDescriptor): GraphDescriptor => {
   return JSON.parse(JSON.stringify(graph));
@@ -74,7 +69,7 @@ export class Core {
   }
 
   async slot(inputs: InputValues): Promise<OutputValues> {
-    const { slot, parent, ...args } = inputs as SlotInputs;
+    const { slot, parent, ...args } = inputs as SlotNodeInputs;
     if (!slot) throw new Error("To use a slot, we need to specify its name");
     const graph = this.#slots[slot];
     if (!graph) throw new Error(`No graph found for slot "${slot}"`);
