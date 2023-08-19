@@ -46,7 +46,7 @@ const checkMenuTool = board.passthrough().wire(
     board
       .slot("checkMenu")
       .wire("bot->Tool", toolMemory)
-      .wire("bot->", board.output())
+      .wire("bot->", board.output({ $id: "checkMenu-tool-output" }))
       .wire("error->", board.output({ $id: "error" }))
   )
 );
@@ -58,7 +58,7 @@ const summarizeMenuTool = board.passthrough().wire(
     board
       .slot("summarizeMenu")
       .wire("bot->Tool", toolMemory)
-      .wire("bot->", board.output())
+      .wire("bot->", board.output({ $id: "summarizeMenu-tool-output" }))
       .wire("error->", board.output({ $id: "error" }))
   )
 );
@@ -74,21 +74,25 @@ const toolRouter = kit
     code: route.toString(),
     raw: true,
   })
-  .wire("customer->bot", board.output())
+  .wire("customer->bot", board.output({ $id: "customer-tool-output" }))
   .wire(
     "customer->json",
     kit
       .jsonata("actionInput")
       .wire(
         "result->message",
-        board.input().wire("customer->Customer", customerMemory)
+        board
+          .input("", { $id: "ask-customer-tool" })
+          .wire("customer->Customer", customerMemory)
       )
   )
   .wire("checkMenu->", checkMenuTool)
   .wire("summarizeMenu->", summarizeMenuTool)
   .wire("finalizeOrder->bot", board.output({ $id: "finalizeOrder" }));
 
-board.input().wire("customer->Customer", customerMemory);
+board
+  .input("", { $id: "first-ask-customer" })
+  .wire("customer->Customer", customerMemory);
 
 prompt.wire(
   "prompt->text",

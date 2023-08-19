@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { InputValues, OutputValues } from "@google-labs/graph-runner";
+import type {
+  InputValues,
+  NodeDescriptor,
+  OutputValues,
+} from "@google-labs/graph-runner";
 import type { BreadbordRunResult } from "./types.js";
 
 export class InputStageResult implements BreadbordRunResult {
@@ -12,7 +16,7 @@ export class InputStageResult implements BreadbordRunResult {
   #args: InputValues = {};
   #inputs: InputValues = {};
 
-  constructor(args: InputValues) {
+  constructor(public node: NodeDescriptor, args: InputValues) {
     this.#args = args;
   }
 
@@ -37,7 +41,7 @@ export class OutputStageResult implements BreadbordRunResult {
   seeksInputs = false;
   #outputs: OutputValues = {};
 
-  constructor(outputs: OutputValues) {
+  constructor(public node: NodeDescriptor, outputs: OutputValues) {
     this.#outputs = outputs;
   }
 

@@ -28,8 +28,9 @@ export const run = async (board: Board, slots: BreadboardSlotSpec) => {
     return JSON.stringify(o);
   };
 
-  const show = (outputs: Record<string, NodeValue>) => {
+  const show = (id: string, outputs: Record<string, NodeValue>) => {
     const { bot, error } = outputs;
+    log.info(`output: ${id}`);
     if (error) log.error(stringify(error));
     else log.success(stringify(bot));
   };
@@ -40,7 +41,7 @@ export const run = async (board: Board, slots: BreadboardSlotSpec) => {
       if (stop.seeksInputs) {
         stop.inputs = await ask(stop.inputArguments);
       } else {
-        show(stop.outputs);
+        show(stop.node.id, stop.outputs);
       }
     }
 

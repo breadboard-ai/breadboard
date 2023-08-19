@@ -24,6 +24,12 @@ export type BreadboardSlotSpec = Record<string, GraphDescriptor>;
 
 export interface BreadbordRunResult {
   /**
+   * The current node that is being visited. This property can be used to get
+   * information about the current node, such as its id, type, and
+   * configuration.
+   */
+  node: NodeDescriptor;
+  /**
    * Returns `true` if the board is waiting for
    * input values. Returns `false` if the board is providing outputs.
    */

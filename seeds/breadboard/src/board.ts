@@ -159,7 +159,7 @@ export class Board implements Breadboard {
       }
 
       if (descriptor.type === "input") {
-        const inputStage = new InputStageResult(inputs);
+        const inputStage = new InputStageResult(descriptor, inputs);
         yield inputStage;
         result.outputs = inputStage.inputs;
         probe?.dispatchEvent(
@@ -174,7 +174,7 @@ export class Board implements Breadboard {
 
       if (descriptor.type === "output") {
         probe?.dispatchEvent(new ProbeEvent("output", { descriptor, inputs }));
-        yield new OutputStageResult(inputs);
+        yield new OutputStageResult(descriptor, inputs);
         continue;
       }
 
