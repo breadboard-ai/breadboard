@@ -16,9 +16,9 @@ import type {
   BreadboardSlotSpec,
   BreadboardValidator,
   IncludeNodeInputs,
-  ProbeDetails,
 } from "./types.js";
 import { Board } from "./board.js";
+import { NestedProbe } from "./nested-probe.js";
 
 const CORE_HANDLERS = ["include", "reflect", "slot", "passthrough"];
 
@@ -30,37 +30,6 @@ export type SlotInputs = {
 const deepCopy = (graph: GraphDescriptor): GraphDescriptor => {
   return JSON.parse(JSON.stringify(graph));
 };
-
-type EventTransform = (event: Event) => Event;
-
-class NestedProbe extends EventTarget {
-  #probe: EventTarget;
-  #transform: EventTransform;
-
-  constructor(probe: EventTarget, transform: EventTransform) {
-    super();
-    this.#probe = probe;
-    this.#transform = transform;
-  }
-
-  dispatchEvent(event: Event): boolean {
-    return this.#probe.dispatchEvent(this.#transform(event));
-  }
-
-  static create(probe?: EventTarget, source?: string): EventTarget | undefined {
-    if (!probe) return undefined;
-    return new NestedProbe(probe, (e) => {
-      const probeEvent = e as CustomEvent<ProbeDetails>;
-      return new CustomEvent(probeEvent.type, {
-        detail: {
-          ...probeEvent.detail,
-          nesting: (probeEvent.detail.nesting || 0) + 1,
-          sources: [...(probeEvent.detail.sources || []), source],
-        },
-      });
-    });
-  }
-}
 
 export class Core {
   #graph: GraphDescriptor;
