@@ -117,28 +117,34 @@
       "in": "json"
     },
     {
-      "from": "toolRouter",
-      "to": "customer-tool-output",
-      "out": "customer",
-      "in": "bot"
-    },
-    {
       "from": "ask-customer-tool",
       "to": "customerMemory",
       "out": "customer",
       "in": "Customer"
     },
     {
-      "from": "jsonata-8",
+      "from": "jsonata-9",
       "to": "ask-customer-tool",
       "out": "result",
       "in": "message"
     },
     {
-      "from": "toolRouter",
-      "to": "jsonata-8",
+      "from": "passthrough-8",
+      "to": "jsonata-9",
       "out": "customer",
       "in": "json"
+    },
+    {
+      "from": "toolRouter",
+      "to": "customer-tool-output",
+      "out": "customer",
+      "in": "bot"
+    },
+    {
+      "from": "toolRouter",
+      "to": "passthrough-8",
+      "out": "customer",
+      "in": "customer"
     },
     {
       "from": "toolRouter",
@@ -165,33 +171,33 @@
       "in": "Customer"
     },
     {
-      "from": "generateText-9",
+      "from": "generateText-10",
       "to": "toolRouter",
       "out": "completion",
       "in": "completion"
     },
     {
-      "from": "generateText-9",
+      "from": "generateText-10",
       "to": "agentMemory",
       "out": "completion",
       "in": "Agent"
     },
     {
-      "from": "generateText-9",
+      "from": "generateText-10",
       "to": "blocked",
       "out": "filters",
       "in": "filters"
     },
     {
-      "from": "secrets-10",
-      "to": "generateText-9",
+      "from": "secrets-11",
+      "to": "generateText-10",
       "constant": true,
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
       "from": "orderAgent",
-      "to": "generateText-9",
+      "to": "generateText-10",
       "out": "prompt",
       "in": "text"
     }
@@ -290,6 +296,21 @@
       "type": "output"
     },
     {
+      "id": "passthrough-8",
+      "type": "passthrough"
+    },
+    {
+      "id": "jsonata-9",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "actionInput"
+      }
+    },
+    {
+      "id": "ask-customer-tool",
+      "type": "input"
+    },
+    {
       "id": "toolRouter",
       "type": "runJavascript",
       "configuration": {
@@ -303,17 +324,6 @@
       "type": "output"
     },
     {
-      "id": "jsonata-8",
-      "type": "jsonata",
-      "configuration": {
-        "expression": "actionInput"
-      }
-    },
-    {
-      "id": "ask-customer-tool",
-      "type": "input"
-    },
-    {
       "id": "finalizeOrder",
       "type": "output"
     },
@@ -322,7 +332,7 @@
       "type": "input"
     },
     {
-      "id": "generateText-9",
+      "id": "generateText-10",
       "type": "generateText",
       "configuration": {
         "stopSequences": [
@@ -343,7 +353,7 @@
       "type": "output"
     },
     {
-      "id": "secrets-10",
+      "id": "secrets-11",
       "type": "secrets",
       "configuration": {
         "keys": [

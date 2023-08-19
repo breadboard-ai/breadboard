@@ -63,6 +63,20 @@ const summarizeMenuTool = board.passthrough().wire(
   )
 );
 
+const customerTool = board
+  .passthrough()
+  .wire(
+    "customer->json",
+    kit
+      .jsonata("actionInput")
+      .wire(
+        "result->message",
+        board
+          .input("", { $id: "ask-customer-tool" })
+          .wire("customer->Customer", customerMemory)
+      )
+  );
+
 function route({ completion }: { completion: string }) {
   const data = JSON.parse(completion);
   return { [data.action]: data };
@@ -74,18 +88,7 @@ const toolRouter = kit
     code: route.toString(),
     raw: true,
   })
-  .wire("customer->bot", board.output({ $id: "customer-tool-output" }))
-  .wire(
-    "customer->json",
-    kit
-      .jsonata("actionInput")
-      .wire(
-        "result->message",
-        board
-          .input("", { $id: "ask-customer-tool" })
-          .wire("customer->Customer", customerMemory)
-      )
-  )
+  .wire("customer->", customerTool)
   .wire("checkMenu->", checkMenuTool)
   .wire("summarizeMenu->", summarizeMenuTool)
   .wire("finalizeOrder->bot", board.output({ $id: "finalizeOrder" }));
@@ -106,10 +109,10 @@ prompt.wire(
         },
       ],
     })
+    .wire("<-PALM_KEY.", kit.secrets(["PALM_KEY"]))
     .wire("completion->", toolRouter)
     .wire("completion->Agent", agentMemory)
     .wire("filters->", board.output({ $id: "blocked" }))
-    .wire("<-PALM_KEY.", kit.secrets(["PALM_KEY"]))
 );
 
 export const orderAgent = board;

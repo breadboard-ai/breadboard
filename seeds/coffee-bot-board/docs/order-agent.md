@@ -22,19 +22,20 @@ slot7(("slot <br> id='slot-7'")):::slot -- "bot->bot" --> summarizeMenutooloutpu
 slot7(("slot <br> id='slot-7'")):::slot -- "error->error" --> error{{"output <br> id='error'"}}:::output
 jsonata6["jsonata <br> id='jsonata-6'"] -- "result->customer" --> slot7(("slot <br> id='slot-7'")):::slot
 passthrough5(("passthrough <br> id='passthrough-5'")):::passthrough -- "summarizeMenu->json" --> jsonata6["jsonata <br> id='jsonata-6'"]
-toolRouter["runJavascript <br> id='toolRouter'"] -- "customer->bot" --> customertooloutput{{"output <br> id='customer-tool-output'"}}:::output
 askcustomertool[/"input <br> id='ask-customer-tool'"/]:::input -- "customer->Customer" --> customerMemory["append <br> id='customerMemory'"]
-jsonata8["jsonata <br> id='jsonata-8'"] -- "result->message" --> askcustomertool[/"input <br> id='ask-customer-tool'"/]:::input
-toolRouter["runJavascript <br> id='toolRouter'"] -- "customer->json" --> jsonata8["jsonata <br> id='jsonata-8'"]
+jsonata9["jsonata <br> id='jsonata-9'"] -- "result->message" --> askcustomertool[/"input <br> id='ask-customer-tool'"/]:::input
+passthrough8(("passthrough <br> id='passthrough-8'")):::passthrough -- "customer->json" --> jsonata9["jsonata <br> id='jsonata-9'"]
+toolRouter["runJavascript <br> id='toolRouter'"] -- "customer->bot" --> customertooloutput{{"output <br> id='customer-tool-output'"}}:::output
+toolRouter["runJavascript <br> id='toolRouter'"] -- "customer->customer" --> passthrough8(("passthrough <br> id='passthrough-8'")):::passthrough
 toolRouter["runJavascript <br> id='toolRouter'"] -- "checkMenu->checkMenu" --> passthrough2(("passthrough <br> id='passthrough-2'")):::passthrough
 toolRouter["runJavascript <br> id='toolRouter'"] -- "summarizeMenu->summarizeMenu" --> passthrough5(("passthrough <br> id='passthrough-5'")):::passthrough
 toolRouter["runJavascript <br> id='toolRouter'"] -- "finalizeOrder->bot" --> finalizeOrder{{"output <br> id='finalizeOrder'"}}:::output
 firstaskcustomer[/"input <br> id='first-ask-customer'"/]:::input -- "customer->Customer" --> customerMemory["append <br> id='customerMemory'"]
-generateText9["generateText <br> id='generateText-9'"] -- "completion->completion" --> toolRouter["runJavascript <br> id='toolRouter'"]
-generateText9["generateText <br> id='generateText-9'"] -- "completion->Agent" --> agentMemory["append <br> id='agentMemory'"]
-generateText9["generateText <br> id='generateText-9'"] -- "filters->filters" --> blocked{{"output <br> id='blocked'"}}:::output
-secrets10("secrets <br> id='secrets-10'"):::secrets -- "PALM_KEY->PALM_KEY" --o generateText9["generateText <br> id='generateText-9'"]
-orderAgent["promptTemplate <br> id='orderAgent'"] -- "prompt->text" --> generateText9["generateText <br> id='generateText-9'"]
+generateText10["generateText <br> id='generateText-10'"] -- "completion->completion" --> toolRouter["runJavascript <br> id='toolRouter'"]
+generateText10["generateText <br> id='generateText-10'"] -- "completion->Agent" --> agentMemory["append <br> id='agentMemory'"]
+generateText10["generateText <br> id='generateText-10'"] -- "filters->filters" --> blocked{{"output <br> id='blocked'"}}:::output
+secrets11("secrets <br> id='secrets-11'"):::secrets -- "PALM_KEY->PALM_KEY" --o generateText10["generateText <br> id='generateText-10'"]
+orderAgent["promptTemplate <br> id='orderAgent'"] -- "prompt->text" --> generateText10["generateText <br> id='generateText-10'"]
 templateorderAgent[template]:::config -- "template->template" --o orderAgent
 toolstools[tools]:::config -- "tools->tools" --o tools
 orderformatorderformat[order-format]:::config -- "order-format->order-format" --o orderformat
@@ -43,13 +44,13 @@ expressionjsonata3[expression]:::config -- "expression->expression" --o jsonata3
 slotslot4[slot]:::config -- "slot->slot" --o slot4
 expressionjsonata6[expression]:::config -- "expression->expression" --o jsonata6
 slotslot7[slot]:::config -- "slot->slot" --o slot7
+expressionjsonata9[expression]:::config -- "expression->expression" --o jsonata9
 nametoolRouter[name]:::config -- "name->name" --o toolRouter
 codetoolRouter[code]:::config -- "code->code" --o toolRouter
 rawtoolRouter[raw]:::config -- "raw->raw" --o toolRouter
-expressionjsonata8[expression]:::config -- "expression->expression" --o jsonata8
-stopSequencesgenerateText9[stopSequences]:::config -- "stopSequences->stopSequences" --o generateText9
-safetySettingsgenerateText9[safetySettings]:::config -- "safetySettings->safetySettings" --o generateText9
-keyssecrets10[keys]:::config -- "keys->keys" --o secrets10
+stopSequencesgenerateText10[stopSequences]:::config -- "stopSequences->stopSequences" --o generateText10
+safetySettingsgenerateText10[safetySettings]:::config -- "safetySettings->safetySettings" --o generateText10
+keyssecrets11[keys]:::config -- "keys->keys" --o secrets11
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
