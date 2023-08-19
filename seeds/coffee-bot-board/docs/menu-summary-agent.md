@@ -1,4 +1,4 @@
-# Coffee Bot
+# Coffee Bot graph for menu-summary-agent.json
 
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%

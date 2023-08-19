@@ -22,7 +22,7 @@ const writeGraphs = async (board: Board, filename: string) => {
 
   await writeFile(
     `./docs/${filename}.md`,
-    `# Coffee Bot\n\n\`\`\`mermaid\n${board.mermaid()}\n\`\`\``
+    `# Coffee Bot graph for ${filename}.json\n\n\`\`\`mermaid\n${board.mermaid()}\n\`\`\``
   );
 };
 
