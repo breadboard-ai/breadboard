@@ -77,9 +77,13 @@ const customerTool = board
       )
   );
 
+const finalizeOrderTool = board
+  .passthrough()
+  .wire("finalizeOrder->bot", board.output({ $id: "finalizeOrder" }));
+
 function route({ completion }: { completion: string }) {
   const data = JSON.parse(completion);
-  return { [data.action]: data };
+  return { [data.action]: data, tool: data.action };
 }
 
 const toolRouter = kit
@@ -88,10 +92,11 @@ const toolRouter = kit
     code: route.toString(),
     raw: true,
   })
+  .wire("tool->bot", board.output({ $id: "selected-tool" }))
   .wire("customer->", customerTool)
   .wire("checkMenu->", checkMenuTool)
   .wire("summarizeMenu->", summarizeMenuTool)
-  .wire("finalizeOrder->bot", board.output({ $id: "finalizeOrder" }));
+  .wire("finalizeOrder->", finalizeOrderTool);
 
 board
   .input("", { $id: "first-ask-customer" })

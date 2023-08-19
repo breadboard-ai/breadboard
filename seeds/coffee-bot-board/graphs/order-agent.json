@@ -135,9 +135,15 @@
       "in": "json"
     },
     {
+      "from": "passthrough-10",
+      "to": "finalizeOrder",
+      "out": "finalizeOrder",
+      "in": "bot"
+    },
+    {
       "from": "toolRouter",
-      "to": "customer-tool-output",
-      "out": "customer",
+      "to": "selected-tool",
+      "out": "tool",
       "in": "bot"
     },
     {
@@ -160,9 +166,9 @@
     },
     {
       "from": "toolRouter",
-      "to": "finalizeOrder",
+      "to": "passthrough-10",
       "out": "finalizeOrder",
-      "in": "bot"
+      "in": "finalizeOrder"
     },
     {
       "from": "first-ask-customer",
@@ -171,33 +177,33 @@
       "in": "Customer"
     },
     {
-      "from": "generateText-10",
-      "to": "toolRouter",
-      "out": "completion",
-      "in": "completion"
-    },
-    {
-      "from": "generateText-10",
-      "to": "agentMemory",
-      "out": "completion",
-      "in": "Agent"
-    },
-    {
-      "from": "generateText-10",
-      "to": "blocked",
-      "out": "filters",
-      "in": "filters"
-    },
-    {
-      "from": "secrets-11",
-      "to": "generateText-10",
+      "from": "secrets-12",
+      "to": "generateText-11",
       "constant": true,
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
+      "from": "generateText-11",
+      "to": "toolRouter",
+      "out": "completion",
+      "in": "completion"
+    },
+    {
+      "from": "generateText-11",
+      "to": "agentMemory",
+      "out": "completion",
+      "in": "Agent"
+    },
+    {
+      "from": "generateText-11",
+      "to": "blocked",
+      "out": "filters",
+      "in": "filters"
+    },
+    {
       "from": "orderAgent",
-      "to": "generateText-10",
+      "to": "generateText-11",
       "out": "prompt",
       "in": "text"
     }
@@ -311,20 +317,24 @@
       "type": "input"
     },
     {
+      "id": "passthrough-10",
+      "type": "passthrough"
+    },
+    {
+      "id": "finalizeOrder",
+      "type": "output"
+    },
+    {
       "id": "toolRouter",
       "type": "runJavascript",
       "configuration": {
         "name": "route",
-        "code": "function route({ completion }) {\n    const data = JSON.parse(completion);\n    return { [data.action]: data };\n}",
+        "code": "function route({ completion }) {\n    const data = JSON.parse(completion);\n    return { [data.action]: data, tool: data.action };\n}",
         "raw": true
       }
     },
     {
-      "id": "customer-tool-output",
-      "type": "output"
-    },
-    {
-      "id": "finalizeOrder",
+      "id": "selected-tool",
       "type": "output"
     },
     {
@@ -332,7 +342,7 @@
       "type": "input"
     },
     {
-      "id": "generateText-10",
+      "id": "generateText-11",
       "type": "generateText",
       "configuration": {
         "stopSequences": [
@@ -349,17 +359,17 @@
       }
     },
     {
-      "id": "blocked",
-      "type": "output"
-    },
-    {
-      "id": "secrets-11",
+      "id": "secrets-12",
       "type": "secrets",
       "configuration": {
         "keys": [
           "PALM_KEY"
         ]
       }
+    },
+    {
+      "id": "blocked",
+      "type": "output"
     }
   ],
   "kits": [
