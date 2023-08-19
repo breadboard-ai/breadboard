@@ -5,3 +5,5 @@
  */
 
 export { GraphIntegrityValidator } from "./validator.js";
+export type { Policy as GraphIntegrityPolicy } from "./policy.js";
+export { Label, LabelValue, LabelLattice } from "./label.js";

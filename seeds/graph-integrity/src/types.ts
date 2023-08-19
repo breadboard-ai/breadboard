@@ -6,8 +6,10 @@
 
 import type { Label } from "./label.js";
 
-// TODO: Add labels (and constraints) to edges
-
+/**
+ * Describing a graph as a list of nodes and edges.
+ * This is the integrity-internal representation.
+ */
 export interface Edge {
   from: Node;
   to: Node;

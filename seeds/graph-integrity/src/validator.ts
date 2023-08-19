@@ -25,7 +25,7 @@ import {
 import { Graph, Node, Edge, NodeRoles } from "./types.js";
 import { computeLabelsForGraph } from "./compute-labels.js";
 import { Label } from "./label.js";
-import { trustedLabels } from "./trusted-labels.js";
+import { Policy } from "./policy.js";
 
 export interface GraphIntegrityValidatorMetadata
   extends BreadboardValidatorMetadata {
@@ -56,7 +56,7 @@ const typeToRole = new Map<string, NodeRoles>([
 ]);
 
 type IdMap = Map<string, NodeFromBreadboard>;
-let insertionCount = 0;
+let insertionCount = 0; // Only used for mermaid ids
 
 /**
  * @class Breadboard GraphIntegrityValidator
@@ -75,15 +75,31 @@ export class GraphIntegrityValidator implements BreadboardValidator {
   protected idMap: IdMap = new Map();
   protected parentNode: NodeFromBreadboard | undefined;
   protected parentInputs: string[] | undefined;
+  protected policy: Policy;
 
   constructor(
-    wholeGraph?: GraphFromBreadboard,
+    parentValidator?: GraphIntegrityValidator,
     parentNode?: NodeFromBreadboard,
     parentInputs?: string[]
   ) {
-    this.wholeGraph = wholeGraph ?? ({ nodes: [] } as GraphFromBreadboard);
+    if (parentValidator) {
+      this.wholeGraph = parentValidator.wholeGraph;
+      this.policy = parentValidator.policy;
+    } else {
+      this.wholeGraph = { nodes: [] } as GraphFromBreadboard;
+      this.policy = {};
+    }
     this.parentNode = parentNode;
     this.parentInputs = parentInputs;
+  }
+
+  /**
+   * Add a policy to validate graphs against.
+   *
+   * @param policy The policy to validate against.
+   */
+  addPolicy(policy: Policy) {
+    this.policy = policy;
   }
 
   /**
@@ -93,13 +109,7 @@ export class GraphIntegrityValidator implements BreadboardValidator {
    * @throws {Error} if the graph is not safe.
    */
   addGraph(newGraph: GraphDescriptor) {
-    insertGraph(
-      this.wholeGraph,
-      newGraph,
-      this.idMap,
-      this.parentNode,
-      this.parentInputs
-    );
+    this.insertGraph(newGraph);
     computeLabelsForGraph(this.wholeGraph);
     insertionCount++;
   }
@@ -137,210 +147,201 @@ export class GraphIntegrityValidator implements BreadboardValidator {
     const parentNode = this.getNodeById(node);
     if (!parentNode) throw Error(`Node ${node.id} not found.`);
 
-    return new GraphIntegrityValidator(
-      this.wholeGraph,
-      parentNode,
-      actualInputs
-    );
-  }
-
-  toMermaid(): string {
-    return toMermaid(this.wholeGraph);
+    return new GraphIntegrityValidator(this, parentNode, actualInputs);
   }
 
   protected getNodeById(node: NodeDescriptor): NodeFromBreadboard | undefined {
     return this.idMap.get(node.id);
   }
-}
 
-/**
- * Insert a new graph into this graph.
- *
- * @param graph Graph that will receive new graph
- * @param newGraph Graph to be inserted
- * @param idMap Id map to be updated, namespaced to the inserted graph
- * @param parentNode Optional parent node to which this graph will be wired
- */
-function insertGraph(
-  graph: Graph,
-  newGraph: GraphDescriptor,
-  idMap: IdMap,
-  parentNode?: NodeFromBreadboard,
-  parentInputs?: string[]
-): void {
-  const newNodes = newGraph.nodes.map((node) => {
-    const internalNode = {
-      node,
-      insertionNumber: insertionCount,
-      incoming: [],
-      outgoing: [],
-      label: new Label(),
-      constraint: trustedLabels[node.type]?.node,
-      role: typeToRole.get(node.type),
-    } as NodeFromBreadboard;
-    idMap.set(node.id, internalNode);
-    return internalNode;
-  });
-
-  graph.nodes.push(...newNodes);
-
-  newGraph.edges.forEach((edge) => {
-    const from = idMap.get(edge.from);
-    const to = idMap.get(edge.to);
-    if (!from) throw new Error(`Invalid graph: Can't find node ${edge.from}`);
-    if (!to) throw new Error(`Invalid graph: Can't find node ${edge.from}`);
-
-    const newEdge = { edge, from, to } as EdgeFromBreadboard;
-
-    const fromConstraintDef = trustedLabels[from.node.type];
-    newEdge.fromConstraint =
-      (edge.out &&
-        fromConstraintDef &&
-        fromConstraintDef.outgoing &&
-        fromConstraintDef.outgoing[edge.out]) ||
-      undefined;
-
-    const toConstraintDef = trustedLabels[to.node.type];
-    newEdge.toConstraint =
-      (edge.in &&
-        toConstraintDef &&
-        toConstraintDef.incoming &&
-        toConstraintDef.incoming[edge.in]) ||
-      undefined;
-
-    from.outgoing.push(newEdge);
-    to.incoming.push(newEdge);
-  });
-
-  // If this is an included graph, we need to connect the input and output
-  // nodes. The parent node acts as placeholder. We need to keep the original
-  // wires to the place holder node, so that we can include multiple graphs at
-  // the same point.
-  if (parentNode) {
-    const inputNodes = newNodes.filter((node) => node.node.type === "input");
-    const outputNodes = newNodes.filter((node) => node.node.type === "output");
-
-    // Keep track of which input and output nodes were connected.
-    const usedInputs = new Set<NodeFromBreadboard>();
-    const usedOutputs = new Set<NodeFromBreadboard>();
-
-    // Rewire nodes sending data to the parent node to send data to the
-    // corresponding input node instead.
-    parentNode.incoming.forEach((incoming) => {
-      const newEdges: EdgeFromBreadboard[] = [];
-
-      // Find the input nodes that correspond to the wire to the parent
-      // node. *-> matches all input nodes.
-      inputNodes.forEach((input) => {
-        const edgeNames = input.outgoing.map((edge) => edge.edge.out);
-
-        // If parentInputs was provided and this input node doesn't match any
-        // of them, then ignore it. *-> still matches all input nodes.
-        if (
-          parentInputs &&
-          !parentInputs.filter((name) => edgeNames.includes(name)).length &&
-          !edgeNames.includes("*")
-        )
-          return;
-
-        if (incoming.edge.out === "*" || edgeNames.includes(incoming.edge.in))
-          newEdges.push({ ...incoming, to: input });
-      });
-
-      // Add the new edges to the graph, connecting the node originally wired to
-      // the parent node with the corresponding input nodes.
-      incoming.from.outgoing.push(...newEdges);
-      newEdges.forEach((edge) => {
-        edge.to.incoming.push(edge);
-        usedInputs.add(edge.to);
-      });
+  /**
+   * Insert a new graph into this graph.
+   *
+   * @param graph Graph that will receive new graph
+   * @param newGraph Graph to be inserted
+   * @param idMap Id map to be updated, namespaced to the inserted graph
+   * @param parentNode Optional parent node to which this graph will be wired
+   */
+  protected insertGraph(newGraph: GraphDescriptor): void {
+    const newNodes = newGraph.nodes.map((node) => {
+      const internalNode = {
+        node,
+        insertionNumber: insertionCount,
+        incoming: [],
+        outgoing: [],
+        label: new Label(),
+        constraint: this.policy[node.type]?.node,
+        role: typeToRole.get(node.type),
+      } as NodeFromBreadboard;
+      this.idMap.set(node.id, internalNode);
+      return internalNode;
     });
 
-    // Same for output nodes.
-    parentNode.outgoing.forEach((outgoing) => {
-      const newEdges: EdgeFromBreadboard[] = [];
+    this.wholeGraph.nodes.push(...newNodes);
 
-      // Same as above. *-> matches all output nodes.
+    newGraph.edges.forEach((edge) => {
+      const from = this.idMap.get(edge.from);
+      const to = this.idMap.get(edge.to);
+      if (!from) throw new Error(`Invalid graph: Can't find node ${edge.from}`);
+      if (!to) throw new Error(`Invalid graph: Can't find node ${edge.from}`);
+
+      const newEdge = { edge, from, to } as EdgeFromBreadboard;
+
+      const fromConstraintDef = this.policy[from.node.type];
+      newEdge.fromConstraint =
+        (edge.out &&
+          fromConstraintDef &&
+          fromConstraintDef.outgoing &&
+          fromConstraintDef.outgoing[edge.out]) ||
+        undefined;
+
+      const toConstraintDef = this.policy[to.node.type];
+      newEdge.toConstraint =
+        (edge.in &&
+          toConstraintDef &&
+          toConstraintDef.incoming &&
+          toConstraintDef.incoming[edge.in]) ||
+        undefined;
+
+      from.outgoing.push(newEdge);
+      to.incoming.push(newEdge);
+    });
+
+    // If this is an included graph, we need to connect the input and output
+    // nodes. The parent node acts as placeholder. We need to keep the original
+    // wires to the place holder node, so that we can include multiple graphs at
+    // the same point.
+    if (this.parentNode) {
+      const inputNodes = newNodes.filter((node) => node.node.type === "input");
+      const outputNodes = newNodes.filter(
+        (node) => node.node.type === "output"
+      );
+
+      // Keep track of which input and output nodes were connected.
+      const usedInputs = new Set<NodeFromBreadboard>();
+      const usedOutputs = new Set<NodeFromBreadboard>();
+
+      // Rewire nodes sending data to the parent node to send data to the
+      // corresponding input node instead.
+      this.parentNode.incoming.forEach((incoming) => {
+        const newEdges: EdgeFromBreadboard[] = [];
+
+        // Find the input nodes that correspond to the wire to the parent
+        // node. *-> matches all input nodes.
+        inputNodes.forEach((input) => {
+          const edgeNames = input.outgoing.map((edge) => edge.edge.out);
+
+          // If parentInputs was provided and this input node doesn't match any
+          // of them, then ignore it. *-> still matches all input nodes.
+          if (
+            this.parentInputs &&
+            !this.parentInputs.filter((name) => edgeNames.includes(name))
+              .length &&
+            !edgeNames.includes("*")
+          )
+            return;
+
+          if (incoming.edge.out === "*" || edgeNames.includes(incoming.edge.in))
+            newEdges.push({ ...incoming, to: input });
+        });
+
+        // Add the new edges to the graph, connecting the node originally wired to
+        // the parent node with the corresponding input nodes.
+        incoming.from.outgoing.push(...newEdges);
+        newEdges.forEach((edge) => {
+          edge.to.incoming.push(edge);
+          usedInputs.add(edge.to);
+        });
+      });
+
+      // Same for output nodes.
+      this.parentNode.outgoing.forEach((outgoing) => {
+        const newEdges: EdgeFromBreadboard[] = [];
+
+        // Same as above. *-> matches all output nodes.
+        outputNodes.forEach((output) => {
+          const edgeNames = output.incoming.map((edge) => edge.edge.in);
+
+          if (
+            outgoing.edge.out === "*" ||
+            edgeNames.includes(outgoing.edge.out)
+          )
+            newEdges.push({ ...outgoing, from: output });
+        });
+
+        outgoing.to.incoming.push(...newEdges);
+        newEdges.forEach((edge) => {
+          edge.from.outgoing.push(edge);
+          usedOutputs.add(edge.from);
+        });
+      });
+
+      // Mark used input nodes as passthrough as this is how data flows through
+      // them. All other ones are marked as placeholders.
+      inputNodes.forEach(
+        (input) =>
+          (input.role = usedInputs.has(input)
+            ? NodeRoles.passthrough
+            : NodeRoles.placeHolder)
+      );
+
+      // For output nodes we also have to filter those that don't have any used
+      // upstream inputs.
       outputNodes.forEach((output) => {
-        const edgeNames = output.incoming.map((edge) => edge.edge.in);
-
-        if (outgoing.edge.out === "*" || edgeNames.includes(outgoing.edge.out))
-          newEdges.push({ ...outgoing, from: output });
-      });
-
-      outgoing.to.incoming.push(...newEdges);
-      newEdges.forEach((edge) => {
-        edge.from.outgoing.push(edge);
-        usedOutputs.add(edge.from);
-      });
-    });
-
-    // Mark used input nodes as passthrough as this is how data flows through
-    // them. All other ones are marked as placeholders.
-    inputNodes.forEach(
-      (input) =>
-        (input.role = usedInputs.has(input)
-          ? NodeRoles.passthrough
-          : NodeRoles.placeHolder)
-    );
-
-    // For output nodes we also have to filter those that don't have any used
-    // upstream inputs.
-    outputNodes.forEach((output) => {
-      if (!usedOutputs.has(output)) {
-        output.role = NodeRoles.placeHolder;
-        return;
-      }
-
-      const seen = new Set<NodeFromBreadboard>();
-      let hasUsedInput = false;
-
-      const visit = (node: NodeFromBreadboard) => {
-        if (seen.has(node)) return;
-        seen.add(node);
-
-        if (usedInputs.has(node)) {
-          hasUsedInput = true;
+        if (!usedOutputs.has(output)) {
+          output.role = NodeRoles.placeHolder;
           return;
         }
 
-        node.incoming.forEach((edge) => visit(edge.from));
-      };
+        const seen = new Set<NodeFromBreadboard>();
+        let hasUsedInput = false;
 
-      visit(output);
+        const visit = (node: NodeFromBreadboard) => {
+          if (seen.has(node)) return;
+          seen.add(node);
 
-      output.role = hasUsedInput
-        ? NodeRoles.passthrough
-        : NodeRoles.placeHolder;
-    });
+          if (usedInputs.has(node)) {
+            hasUsedInput = true;
+            return;
+          }
+
+          node.incoming.forEach((edge) => visit(edge.from));
+        };
+
+        visit(output);
+
+        output.role = hasUsedInput
+          ? NodeRoles.passthrough
+          : NodeRoles.placeHolder;
+      });
+    }
   }
-}
 
-function getMermaidId(node: NodeFromBreadboard) {
-  return `${node.node.id.replace(/-/g, "_")}_${node.insertionNumber}`;
-}
+  toMermaid(): string {
+    const edges = [];
+    const nodes = [];
 
-function toMermaid(graph: GraphFromBreadboard) {
-  const edges = [];
-  const nodes = [];
+    const getMermaidId = (node: NodeFromBreadboard) =>
+      `${node.node.id.replace(/-/g, "_")}_${node.insertionNumber}`;
 
-  for (const node of graph.nodes) {
-    const fromId = getMermaidId(node);
-    for (const edge of node.outgoing) {
-      const toId = getMermaidId(edge.to);
-      edges.push(`${fromId} --> ${toId}`);
+    for (const node of this.wholeGraph.nodes) {
+      const fromId = getMermaidId(node);
+      for (const edge of node.outgoing) {
+        const toId = getMermaidId(edge.to);
+        edges.push(`${fromId} --> ${toId}`);
+      }
+
+      nodes.push(
+        `${fromId}[${fromId} <br> ${node.label
+          .toString()
+          ?.replaceAll(/[[\]]/g, "")} ${node.role}]`
+      );
     }
 
-    nodes.push(
-      `${fromId}[${fromId} <br> ${node.label
-        .toString()
-        ?.replaceAll(/[[\]]/g, "")} ${node.role}]`
-    );
+    return `
+        %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
+        graph TD;
+        ${edges.join("; ")}; ${nodes.join("; ")}
+        classDef default stroke:#ffab40,fill:#fff2ccff,color:#000;`;
   }
-
-  return `
-    %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
-    graph TD;
-    ${edges.join("; ")}; ${nodes.join("; ")}
-    classDef default stroke:#ffab40,fill:#fff2ccff,color:#000;`;
 }

@@ -9,7 +9,12 @@ import { config } from "dotenv";
 
 import { OutputValues, InputValues } from "@google-labs/graph-runner";
 import { Board, type ProbeEvent } from "@google-labs/breadboard";
-import { GraphIntegrityValidator } from "@google-labs/graph-integrity";
+import {
+  GraphIntegrityValidator,
+  GraphIntegrityPolicy,
+  Label,
+  LabelLattice,
+} from "@google-labs/graph-integrity";
 
 import { ReActHelper } from "./react.js";
 
@@ -82,7 +87,27 @@ const board = await Board.load(graph);
 // Add a custom kit.
 board.addKit(ReActHelper);
 
-if (validateIntegrity) board.addValidator(new GraphIntegrityValidator());
+if (validateIntegrity) {
+  const lattice = new LabelLattice();
+  const policy = {
+    fetch: {
+      outgoing: {
+        response: new Label({ integrity: lattice.UNTRUSTED }),
+      },
+    },
+    runJavascript: {
+      incoming: {
+        code: new Label({ integrity: lattice.TRUSTED }),
+        name: new Label({ integrity: lattice.TRUSTED }),
+      },
+    },
+  } as GraphIntegrityPolicy;
+
+  const validator = new GraphIntegrityValidator();
+  validator.addPolicy(policy);
+
+  board.addValidator(validator);
+}
 
 try {
   // Run the board until it finishes. This may run forever.

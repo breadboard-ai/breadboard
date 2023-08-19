@@ -6,23 +6,11 @@
 
 /**
  * Information flow control label values, i.e. levels of trust.
- * Defines a lattice, with TOP being the most restrictive and BOTTOM being the
- * least restrictive values.
  */
 export class LabelValue {
   below: LabelValue[];
   above: LabelValue[];
   name: string;
-
-  static readonly TOP = new LabelValue("⊤");
-  static readonly BOTTOM = new LabelValue("⊥");
-
-  static readonly PRIVATE = LabelValue.TOP;
-  static readonly PUBLIC = LabelValue.BOTTOM;
-
-  // Yes, that is correct: UNTRUSTED is more restrictive than TRUSTED
-  static readonly UNTRUSTED = LabelValue.TOP;
-  static readonly TRUSTED = LabelValue.BOTTOM;
 
   /**
    * Create new label. Must be @method {insert}ed into the semi-lattice.
@@ -33,26 +21,6 @@ export class LabelValue {
     this.below = [];
     this.above = [];
     this.name = name;
-  }
-
-  /**
-   * Insert a new label value between two existing label values.
-   *
-   * @param below {LabelValue} LabelValue below the new label value
-   * @param above {LabelValue} LabelValue above the new label value
-   */
-  insert(
-    below: LabelValue = LabelValue.BOTTOM,
-    above: LabelValue = LabelValue.TOP
-  ) {
-    this.below.push(below);
-    this.above.push(above);
-
-    // Insert between the above and below nodes
-    below.above = below.above.filter((n) => n !== above);
-    below.above.push(this);
-    above.below = above.below.filter((n) => n !== below);
-    above.below.push(this);
   }
 
   /**
@@ -154,9 +122,77 @@ export class LabelValue {
   }
 }
 
-// Initialize empty lattice.
-LabelValue.TOP.below = [LabelValue.BOTTOM];
-LabelValue.BOTTOM.above = [LabelValue.TOP];
+/**
+ * Information flow control label lattice.
+ *
+ * Defines a lattice, with TOP being the most restrictive and BOTTOM being the
+ * least restrictive values.
+ */
+export class LabelLattice {
+  readonly TOP = new LabelValue("⊤");
+  readonly BOTTOM = new LabelValue("⊥");
+
+  readonly PRIVATE = this.TOP;
+  readonly PUBLIC = this.BOTTOM;
+
+  // Yes, that is correct: UNTRUSTED is more restrictive than TRUSTED
+  readonly UNTRUSTED = this.TOP;
+  readonly TRUSTED = this.BOTTOM;
+
+  readonly labels = new Map<string, LabelValue | undefined>([
+    ["⊤", this.TOP],
+    ["⊥", this.BOTTOM],
+    ["TOP", this.TOP],
+    ["BOTTOM", this.BOTTOM],
+    ["PRIVATE", this.TOP],
+    ["PUBLIC", this.TOP],
+    ["UNTRUSTED", this.TOP],
+    ["TRUSTED", this.BOTTOM],
+    ["UNDETERMINED", undefined],
+  ]);
+
+  constructor() {
+    // Connect TOP and BOTTOM in anotherwise empty lattice.
+    this.TOP.below = [this.BOTTOM];
+    this.BOTTOM.above = [this.TOP];
+  }
+
+  /**
+   * Insert a new label value between two existing label values.
+   *
+   * @param below {LabelValue} LabelValue below the new label value
+   * @param above {LabelValue} LabelValue above the new label value
+   */
+  insert(
+    label: LabelValue,
+    below: LabelValue = this.BOTTOM,
+    above: LabelValue = this.TOP
+  ) {
+    if (this.labels.has(label.name))
+      throw Error(`Can't insert label named "${label.name}" twice.`);
+
+    this.labels.set(label.name, label);
+
+    label.below.push(below);
+    label.above.push(above);
+
+    // Insert between the above and below nodes
+    below.above = below.above.filter((n) => n !== above);
+    below.above.push(label);
+    above.below = above.below.filter((n) => n !== below);
+    above.below.push(label);
+  }
+
+  /**
+   *
+   *
+   * @param name Name of label to find
+   * @returns {LabelValue} label or undefined
+   */
+  get(name: string): LabelValue | undefined {
+    return this.labels.get(name);
+  }
+}
 
 /**
  * Information flow control label.
@@ -280,17 +316,17 @@ export class Label {
       "[" +
       (this.confidentiality === undefined
         ? "UNDETERMINED"
-        : this.confidentiality === LabelValue.TOP
+        : this.confidentiality.above.length === 0 // === TOP
         ? "PRIVATE"
-        : this.confidentiality === LabelValue.BOTTOM
+        : this.confidentiality.below.length === 0 // === BOTTOM
         ? "PUBLIC"
         : this.confidentiality.name) +
       ", " +
       (this.integrity === undefined
         ? "UNDETERMINED"
-        : this.integrity === LabelValue.TOP
+        : this.integrity.above.length === 0 // === TOP
         ? "UNTRUSTED"
-        : this.integrity === LabelValue.BOTTOM
+        : this.integrity.below.length === 0 // === BOTTOM
         ? "TRUSTED"
         : this.integrity.name) +
       "]"

@@ -10,7 +10,8 @@ import { readFile, readdir } from "fs/promises";
 
 import { GraphDescriptor, NodeDescriptor } from "@google-labs/graph-runner";
 import { GraphIntegrityValidator } from "../src/validator.js";
-import { Label, LabelValue } from "../src/label.js";
+import { Label, LabelLattice } from "../src/label.js";
+import { Policy } from "../src/policy.js";
 
 const IN_DIR = "./tests/data/";
 
@@ -26,19 +27,29 @@ const graphs = (await readdir(`${IN_DIR}/`)).filter((file) =>
   file.endsWith(".json")
 );
 
-const mapNameToLabel: { [key: string]: LabelValue | undefined } = {
-  TRUSTED: LabelValue.TRUSTED,
-  UNTRUSTED: LabelValue.UNTRUSTED,
-  UNDETERMINED: undefined,
-};
+const lattice = new LabelLattice();
 
 const trustedIntegrity = new Label({
-  integrity: LabelValue.TRUSTED,
+  integrity: lattice.TRUSTED,
 });
 
 const untrustedIntegrity = new Label({
-  integrity: LabelValue.UNTRUSTED,
+  integrity: lattice.UNTRUSTED,
 });
+
+const policy: Policy = {
+  fetch: {
+    outgoing: {
+      response: untrustedIntegrity,
+    },
+  },
+  runJavascript: {
+    incoming: {
+      code: trustedIntegrity,
+      name: trustedIntegrity,
+    },
+  },
+};
 
 await Promise.all(
   graphs.map(async (filename) => {
@@ -47,6 +58,7 @@ await Promise.all(
       const graph = JSON.parse(data) as TestGraphDescriptor;
 
       const validator = new GraphIntegrityValidator();
+      validator.addPolicy(policy);
 
       if (graph.safe) {
         t.notThrows(() => validator.addGraph(graph));
@@ -55,17 +67,18 @@ await Promise.all(
           confidentiality,
           integrity,
         ] of graph.expectedLabels ?? []) {
-          const expectedLabel = new Label({
-            confidentiality: mapNameToLabel[confidentiality],
-            integrity: mapNameToLabel[integrity],
-          });
           const derivedLabel = validator.getValidatorMetadata({
             id: nodeId,
             type: "undefined",
           }).label;
+          const expectedLabel = new Label({
+            confidentiality: lattice.get(confidentiality),
+            integrity: lattice.get(integrity),
+          });
           t.true(
             derivedLabel.equalsTo(expectedLabel),
-            `${nodeId}: ${derivedLabel.toString()} vs ${expectedLabel.toString()}`
+            `${nodeId}: ${derivedLabel.toString()} vs ` +
+              `[${confidentiality}, ${integrity}]`
           );
         }
       } else {
@@ -99,6 +112,7 @@ test("GraphSafetyValidator: Getting unknown labels throws", (t) => {
 
 test("GraphSafetyValidator: Getting labels for nodes in subgraphs", (t) => {
   const v = new GraphIntegrityValidator();
+  v.addPolicy(policy);
 
   v.addGraph({
     edges: [
@@ -159,6 +173,7 @@ test("GraphSafetyValidator: Getting labels for nodes in subgraphs", (t) => {
 
 test("GraphSafetyValidator: Subgraphs with * wires", (t) => {
   const v = new GraphIntegrityValidator();
+  v.addPolicy(policy);
 
   const graph1 = {
     edges: [

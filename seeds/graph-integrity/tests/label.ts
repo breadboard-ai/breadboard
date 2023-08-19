@@ -6,91 +6,96 @@
 
 import test from "ava";
 
-import { Label, LabelValue } from "../src/label.js";
+import { Label, LabelValue, LabelLattice } from "../src/label.js";
 
 test("LabelValue: Empty lattice", (t) => {
-  t.is(LabelValue.TOP.name, "⊤");
-  t.is(LabelValue.BOTTOM.name, "⊥");
+  const lattice = new LabelLattice();
 
-  t.true(LabelValue.TOP.isAbove(LabelValue.BOTTOM));
-  t.true(LabelValue.BOTTOM.isBelow(LabelValue.TOP));
+  t.is(lattice.TOP.name, "⊤");
+  t.is(lattice.BOTTOM.name, "⊥");
+
+  t.true(lattice.TOP.isAbove(lattice.BOTTOM));
+  t.true(lattice.BOTTOM.isBelow(lattice.TOP));
 
   t.is(LabelValue.leastUpperBound([]), undefined);
-  t.is(LabelValue.leastUpperBound([LabelValue.TOP]), LabelValue.TOP);
-  t.is(LabelValue.leastUpperBound([LabelValue.BOTTOM]), LabelValue.BOTTOM);
-  t.is(
-    LabelValue.leastUpperBound([LabelValue.TOP, LabelValue.BOTTOM]),
-    LabelValue.TOP
-  );
+  t.is(LabelValue.leastUpperBound([lattice.TOP]), lattice.TOP);
+  t.is(LabelValue.leastUpperBound([lattice.BOTTOM]), lattice.BOTTOM);
+  t.is(LabelValue.leastUpperBound([lattice.TOP, lattice.BOTTOM]), lattice.TOP);
 
   t.is(LabelValue.greatestLowerBound([]), undefined);
-  t.is(LabelValue.greatestLowerBound([LabelValue.TOP]), LabelValue.TOP);
-  t.is(LabelValue.greatestLowerBound([LabelValue.BOTTOM]), LabelValue.BOTTOM);
+  t.is(LabelValue.greatestLowerBound([lattice.TOP]), lattice.TOP);
+  t.is(LabelValue.greatestLowerBound([lattice.BOTTOM]), lattice.BOTTOM);
   t.is(
-    LabelValue.greatestLowerBound([LabelValue.TOP, LabelValue.BOTTOM]),
-    LabelValue.BOTTOM
+    LabelValue.greatestLowerBound([lattice.TOP, lattice.BOTTOM]),
+    lattice.BOTTOM
   );
+
+  t.true(lattice.get("TOP") === lattice.TOP);
+  t.true(lattice.get("UNDETERMINED") === undefined);
 });
 
 test("LabelValue: Single label", (t) => {
+  const lattice = new LabelLattice();
+
   const label = new LabelValue("test");
   t.is(label.name, "test");
   t.is(label.below.length, 0);
   t.is(label.above.length, 0);
 
   // Default is to insert between TOP and BOTTOM
-  label.insert();
+  lattice.insert(label);
 
-  t.true(label.isAbove(LabelValue.BOTTOM));
-  t.true(label.isBelow(LabelValue.TOP));
+  t.true(lattice.get("test") === label);
+
+  t.true(label.isAbove(lattice.BOTTOM));
+  t.true(label.isBelow(lattice.TOP));
 
   t.is(LabelValue.leastUpperBound([label]), label);
   t.is(LabelValue.greatestLowerBound([label]), label);
 
-  t.is(LabelValue.leastUpperBound([label, LabelValue.TOP]), LabelValue.TOP);
-  t.is(
-    LabelValue.greatestLowerBound([label, LabelValue.BOTTOM]),
-    LabelValue.BOTTOM
-  );
+  t.is(LabelValue.leastUpperBound([label, lattice.TOP]), lattice.TOP);
+  t.is(LabelValue.greatestLowerBound([label, lattice.BOTTOM]), lattice.BOTTOM);
 
-  t.is(LabelValue.leastUpperBound([label, LabelValue.BOTTOM]), label);
-  t.is(LabelValue.greatestLowerBound([label, LabelValue.TOP]), label);
+  t.is(LabelValue.leastUpperBound([label, lattice.BOTTOM]), label);
+  t.is(LabelValue.greatestLowerBound([label, lattice.TOP]), label);
 
   // Inserting didn't mess up relationship between TOP and BOTTOM
-  t.true(LabelValue.TOP.isAbove(LabelValue.BOTTOM));
-  t.true(LabelValue.BOTTOM.isBelow(LabelValue.TOP));
+  t.true(lattice.TOP.isAbove(lattice.BOTTOM));
+  t.true(lattice.BOTTOM.isBelow(lattice.TOP));
 
   // But they no longer directly reference each other
-  t.false(LabelValue.TOP.above.includes(LabelValue.BOTTOM));
-  t.false(LabelValue.BOTTOM.below.includes(LabelValue.TOP));
+  t.false(lattice.TOP.above.includes(lattice.BOTTOM));
+  t.false(lattice.BOTTOM.below.includes(lattice.TOP));
 });
 
 test("LabelValue: Diamond shape", (t) => {
+  const lattice = new LabelLattice();
+
   const leftBottom = new LabelValue("left");
   const rightBottom = new LabelValue("right");
 
-  leftBottom.insert();
-  rightBottom.insert();
+  lattice.insert(leftBottom);
+  lattice.insert(rightBottom);
 
-  t.true(leftBottom.isAbove(LabelValue.BOTTOM));
-  t.true(leftBottom.isBelow(LabelValue.TOP));
-  t.true(rightBottom.isAbove(LabelValue.BOTTOM));
-  t.true(rightBottom.isBelow(LabelValue.TOP));
+  t.true(leftBottom.isAbove(lattice.BOTTOM));
+  t.true(leftBottom.isBelow(lattice.TOP));
+  t.true(rightBottom.isAbove(lattice.BOTTOM));
+  t.true(rightBottom.isBelow(lattice.TOP));
 
   // Now add more labels
   const leftTop = new LabelValue("leftTop");
   const rightTop = new LabelValue("rightTop");
 
   // Insert above the existing labels
-  leftTop.insert(leftBottom);
-  rightTop.insert(rightBottom);
+  lattice.insert(leftTop, leftBottom);
+  lattice.insert(rightTop, rightBottom);
 
   const leftMiddle = new LabelValue("leftMiddle");
   const rightMiddle = new LabelValue("rightMiddle");
 
   // Insert between the existing labels
-  leftMiddle.insert(leftBottom, leftTop);
-  rightMiddle.insert(rightBottom, rightTop);
+  lattice.insert(leftMiddle, leftBottom, leftTop);
+  lattice.insert(rightMiddle, rightBottom, rightTop);
 
   t.true(leftTop.isAbove(leftMiddle));
   t.true(leftMiddle.isAbove(leftBottom));
@@ -107,33 +112,35 @@ test("LabelValue: Diamond shape", (t) => {
   t.false(leftMiddle.isBelow(rightBottom));
 
   // Upper and lower bounds hence always TOP or BOTTOM
-  t.is(LabelValue.leastUpperBound([leftMiddle, rightMiddle]), LabelValue.TOP);
+  t.is(LabelValue.leastUpperBound([leftMiddle, rightMiddle]), lattice.TOP);
   t.is(
     LabelValue.greatestLowerBound([leftMiddle, rightMiddle]),
-    LabelValue.BOTTOM
+    lattice.BOTTOM
   );
 });
 
 test("Label: constructor", (t) => {
+  const lattice = new LabelLattice();
+
   const combined = new Label({
-    confidentiality: LabelValue.TRUSTED,
-    integrity: LabelValue.UNTRUSTED,
+    confidentiality: lattice.TRUSTED,
+    integrity: lattice.UNTRUSTED,
   });
-  t.is(combined.confidentiality, LabelValue.TRUSTED);
-  t.is(combined.integrity, LabelValue.UNTRUSTED);
+  t.is(combined.confidentiality, lattice.TRUSTED);
+  t.is(combined.integrity, lattice.UNTRUSTED);
 
   const combinedCopy = new Label(combined);
-  t.is(combinedCopy.confidentiality, LabelValue.TRUSTED);
-  t.is(combinedCopy.integrity, LabelValue.UNTRUSTED);
+  t.is(combinedCopy.confidentiality, lattice.TRUSTED);
+  t.is(combinedCopy.integrity, lattice.UNTRUSTED);
 
   const untrustedAndUndetermined = new Label({
-    confidentiality: LabelValue.UNTRUSTED,
+    confidentiality: lattice.UNTRUSTED,
   });
-  t.is(untrustedAndUndetermined.confidentiality, LabelValue.UNTRUSTED);
+  t.is(untrustedAndUndetermined.confidentiality, lattice.UNTRUSTED);
   t.is(untrustedAndUndetermined.integrity, undefined);
 
   const untrustedAndUndeterminedCopy = new Label(untrustedAndUndetermined);
-  t.is(untrustedAndUndeterminedCopy.confidentiality, LabelValue.UNTRUSTED);
+  t.is(untrustedAndUndeterminedCopy.confidentiality, lattice.UNTRUSTED);
   t.is(untrustedAndUndeterminedCopy.integrity, undefined);
 
   const undetermined = new Label(undefined);
@@ -150,8 +157,10 @@ test("Label: constructor", (t) => {
 });
 
 test("Label: equalsTo", (t) => {
-  const trusted = new Label({ integrity: LabelValue.TRUSTED });
-  const untrusted = new Label({ integrity: LabelValue.UNTRUSTED });
+  const lattice = new LabelLattice();
+
+  const trusted = new Label({ integrity: lattice.TRUSTED });
+  const untrusted = new Label({ integrity: lattice.UNTRUSTED });
   const undetermined = new Label(undefined);
 
   t.true(trusted.equalsTo(trusted));
@@ -167,14 +176,15 @@ test("Label: equalsTo", (t) => {
 });
 
 test("Label: meet and join (integrity only)", (t) => {
-  const trusted = new Label({ integrity: LabelValue.TRUSTED });
-  const untrusted = new Label({ integrity: LabelValue.UNTRUSTED });
+  const lattice = new LabelLattice();
+
+  const trusted = new Label({ integrity: lattice.TRUSTED });
+  const untrusted = new Label({ integrity: lattice.UNTRUSTED });
   const undetermined = new Label(undefined);
 
   t.true(Label.computeMeetOfLabels([trusted]).equalsTo(trusted));
   t.true(Label.computeMeetOfLabels([trusted, trusted]).equalsTo(trusted));
   t.true(Label.computeMeetOfLabels([untrusted, untrusted]).equalsTo(untrusted));
-  console.log(Label.computeMeetOfLabels([trusted, untrusted]), "=?", untrusted);
   t.true(Label.computeMeetOfLabels([trusted, untrusted]).equalsTo(untrusted));
   t.true(Label.computeMeetOfLabels([undetermined]).equalsTo(undetermined));
   t.true(Label.computeMeetOfLabels([undetermined, trusted]).equalsTo(trusted));
@@ -289,27 +299,29 @@ test("Label: meet and join (integrity only)", (t) => {
 });
 
 test("Label: meet and join with both confidentiality and integrity", (t) => {
+  const lattice = new LabelLattice();
+
   const low = new Label({
-    confidentiality: LabelValue.PUBLIC,
-    integrity: LabelValue.TRUSTED,
+    confidentiality: lattice.PUBLIC,
+    integrity: lattice.TRUSTED,
   });
 
   const high = new Label({
-    confidentiality: LabelValue.PRIVATE,
-    integrity: LabelValue.UNTRUSTED,
+    confidentiality: lattice.PRIVATE,
+    integrity: lattice.UNTRUSTED,
   });
 
   t.true(Label.computeJoinOfLabels([low, high]).equalsTo(low));
   t.true(Label.computeMeetOfLabels([low, high]).equalsTo(high));
 
   const lowHigh = new Label({
-    confidentiality: LabelValue.PUBLIC,
-    integrity: LabelValue.UNTRUSTED,
+    confidentiality: lattice.PUBLIC,
+    integrity: lattice.UNTRUSTED,
   });
 
   const highLow = new Label({
-    confidentiality: LabelValue.PRIVATE,
-    integrity: LabelValue.TRUSTED,
+    confidentiality: lattice.PRIVATE,
+    integrity: lattice.TRUSTED,
   });
 
   t.true(Label.computeJoinOfLabels([lowHigh, highLow]).equalsTo(low));
@@ -317,8 +329,10 @@ test("Label: meet and join with both confidentiality and integrity", (t) => {
 });
 
 test("Label: canFlowTo (integrity only)", (t) => {
-  const trusted = new Label({ integrity: LabelValue.TRUSTED });
-  const untrusted = new Label({ integrity: LabelValue.UNTRUSTED });
+  const lattice = new LabelLattice();
+
+  const trusted = new Label({ integrity: lattice.TRUSTED });
+  const untrusted = new Label({ integrity: lattice.UNTRUSTED });
   const undetermined = new Label(undefined);
 
   t.true(trusted.canFlowTo(trusted));
@@ -335,26 +349,30 @@ test("Label: canFlowTo (integrity only)", (t) => {
 });
 
 test("Label: canFlowTo with both confidentiality and integrity", (t) => {
+  const lattice = new LabelLattice();
+
   const low = new Label({
-    confidentiality: LabelValue.PUBLIC,
-    integrity: LabelValue.TRUSTED,
+    confidentiality: lattice.PUBLIC,
+    integrity: lattice.TRUSTED,
   });
 
   const high = new Label({
-    confidentiality: LabelValue.PRIVATE,
-    integrity: LabelValue.UNTRUSTED,
+    confidentiality: lattice.PRIVATE,
+    integrity: lattice.UNTRUSTED,
   });
 
   t.true(low.canFlowTo(high));
 });
 
 test("Label: toString", (t) => {
+  const lattice = new LabelLattice();
+
   const combined = new Label({
-    confidentiality: LabelValue.UNTRUSTED,
-    integrity: LabelValue.TRUSTED,
+    confidentiality: lattice.UNTRUSTED,
+    integrity: lattice.TRUSTED,
   });
   const partUndetermined = new Label({
-    integrity: LabelValue.UNTRUSTED,
+    integrity: lattice.UNTRUSTED,
   });
   const undetermined = new Label(undefined);
 
