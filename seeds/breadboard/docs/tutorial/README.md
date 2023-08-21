@@ -226,7 +226,7 @@ You can see the source code from this chapter here: [tutorial-3.js](./tutorial-3
 
 [![Static Badge](https://img.shields.io/badge/run%20in%20replit-chapter_3-orange?logo=replit "run in replit: chapter 3")](https://replit.com/@dglazkov/Breadboard-Tutorial-Chapter-3)
 
-## Chapter 4: Loading, saving, and visualizing boards
+## Chapter 4: Saving, loading, and visualizing boards
 
 Once the board is created, it can be used by the program that made it. But what if we want to reuse the board we made?
 
@@ -769,7 +769,7 @@ Though introduced so late in the tutorial, the `append` node is probably the mos
 
 What it does is deceptively simple: the `append` node looks for an input property named `accumulator`, then appends the rest of the input properties to it, and then returns the result as the output property named `accumulator`. It _accumulates_, get it?
 
-In its simplest for, the append node accumulates values as multi-line text, formatting each input property as `{{property_name}}: {{proprety_value}}`. For example, if we wire the `append` node like this:
+In its simplest form, the append node accumulates values as multi-line text, formatting each input property as `{{property_name}}: {{proprety_value}}`.
 
 This accumulation bit can go a very long way. For example, consider this line:
 
@@ -797,7 +797,7 @@ const completion = kit
 
 Let's look at this node's wiring. The first two make sense. We want the result of text completion to go to output, and we want it in the conversation history. The third one is also familiar, but it has a weird dot (`.`) at the end. What is that?
 
-The dot signifies that this wire is a constant. It remembers the last value passed through it and makes it always available to the receiving node. It's important here, because otherwise, we'd have to find ways to visit the `secrets` node with on every cycle of the loop.
+The dot signifies that this wire is a constant. It remembers the last value passed through it and makes it always available to the receiving node. It's important here, because otherwise, we'd have to find ways to visit the `secrets` node on every cycle of the loop.
 
 So we have the `generateText` all set up. But what's the prompt that goes into it? To create a prompt, we need a `promptTemplate` node. Let's place and wire it:
 
