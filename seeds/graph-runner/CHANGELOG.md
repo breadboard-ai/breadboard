@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.0.2] - 2023-08-23
+
+- Bug fixes
+- Integrity-related changes
+
 ## [0.0.1] - 2023-07-31
 
 - First release

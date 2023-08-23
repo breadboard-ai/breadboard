@@ -1,6 +1,6 @@
 {
   "name": "@google-labs/graph-runner",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Reference implementation of generative app composition graph traversal",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
@@ -37,7 +37,7 @@
   "bugs": {
     "url": "https://github.com/google/labs-prototypes/issues"
   },
-  "homepage": "https://github.com/google/labs-prototypes/seeds/graph-runner#readme",
+  "homepage": "https://github.com/google/labs-prototypes/tree/main/seeds/graph-runner#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
     "@google-labs/tsconfig": "*",
