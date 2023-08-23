@@ -1,6 +1,6 @@
 {
   "name": "@google-labs/llm-starter",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "LLM Starter Kit for the Breadboard library",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
@@ -36,7 +36,7 @@
   "bugs": {
     "url": "https://github.com/google/labs-prototypes/issues"
   },
-  "homepage": "https://github.com/google/labs-prototypes/seeds/llm-starter#readme",
+  "homepage": "https://github.com/google/labs-prototypes/tree/main/seeds/llm-starter#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
     "@google-labs/tsconfig": "*",
