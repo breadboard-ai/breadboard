@@ -47,7 +47,7 @@
     "typescript": "^5.0.4"
   },
   "dependencies": {
-    "@google-labs/graph-runner": "^0.0.1"
+    "@google-labs/graph-runner": "^0.0.2"
   },
   "engines": {
     "node": ">=19.0.0"
