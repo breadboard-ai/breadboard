@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { InputValues, NodeValue } from "@google-labs/graph-runner";
-import { type } from "os";
+import type { InputValues } from "@google-labs/graph-runner";
 
 export type PropmtTemplateOutputs = {
   prompt: string;
