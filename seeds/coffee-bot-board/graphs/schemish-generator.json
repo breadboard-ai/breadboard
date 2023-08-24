@@ -1,0 +1,180 @@
+{
+  "edges": [
+    {
+      "from": "input-1",
+      "to": "prologue",
+      "out": "prologue",
+      "in": "prologue"
+    },
+    {
+      "from": "input-1",
+      "to": "epilogue",
+      "out": "epilogue",
+      "in": "epilogue"
+    },
+    {
+      "from": "input-1",
+      "to": "schema",
+      "out": "schema",
+      "in": "schema"
+    },
+    {
+      "from": "error",
+      "to": "output-2",
+      "out": "error",
+      "in": "error"
+    },
+    {
+      "from": "completion",
+      "to": "output-2",
+      "out": "completion",
+      "in": "completion"
+    },
+    {
+      "from": "schema",
+      "to": "schemish",
+      "out": "schema",
+      "in": "schema"
+    },
+    {
+      "from": "validateJSON",
+      "to": "completion",
+      "out": "json",
+      "in": "json"
+    },
+    {
+      "from": "validateJSON",
+      "to": "error",
+      "out": "error",
+      "in": "error"
+    },
+    {
+      "from": "schema",
+      "to": "validateJSON",
+      "out": "schema",
+      "in": "schema"
+    },
+    {
+      "from": "secrets-4",
+      "to": "generateText-3",
+      "constant": true,
+      "out": "PALM_KEY",
+      "in": "PALM_KEY"
+    },
+    {
+      "from": "generateText-3",
+      "to": "validateJSON",
+      "out": "completion",
+      "in": "completion"
+    },
+    {
+      "from": "generateText-3",
+      "to": "error",
+      "out": "filters",
+      "in": "error"
+    },
+    {
+      "from": "prologue",
+      "to": "schemishGenerator",
+      "out": "prologue",
+      "in": "prologue"
+    },
+    {
+      "from": "epilogue",
+      "to": "schemishGenerator",
+      "out": "epilogue",
+      "in": "epilogue"
+    },
+    {
+      "from": "schemish",
+      "to": "schemishGenerator",
+      "out": "schemish",
+      "in": "schemish"
+    },
+    {
+      "from": "schemishGenerator",
+      "to": "generateText-3",
+      "out": "prompt",
+      "in": "text"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "prologue",
+      "type": "passthrough"
+    },
+    {
+      "id": "epilogue",
+      "type": "passthrough"
+    },
+    {
+      "id": "schema",
+      "type": "passthrough"
+    },
+    {
+      "id": "error",
+      "type": "passthrough"
+    },
+    {
+      "id": "completion",
+      "type": "passthrough"
+    },
+    {
+      "id": "input-1",
+      "type": "input"
+    },
+    {
+      "id": "output-2",
+      "type": "output"
+    },
+    {
+      "id": "schemish",
+      "type": "passthrough"
+    },
+    {
+      "id": "validateJSON",
+      "type": "validateJson"
+    },
+    {
+      "id": "generateText-3",
+      "type": "generateText",
+      "configuration": {
+        "stopSequences": [
+          "Tool:",
+          "Customer:",
+          "\n\n"
+        ],
+        "safetySettings": [
+          {
+            "category": "HARM_CATEGORY_DEROGATORY",
+            "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+          }
+        ]
+      }
+    },
+    {
+      "id": "secrets-4",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "PALM_KEY"
+        ]
+      }
+    },
+    {
+      "id": "schemishGenerator",
+      "type": "promptTemplate",
+      "configuration": {
+        "template": "{{prologue}}\n\nYour response must be a valid JSON of the following format:\n{{schemish}}\n\n{{epilogue}}"
+      }
+    }
+  ],
+  "kits": [
+    {
+      "url": "npm:@google-labs/llm-starter"
+    },
+    {
+      "url": "npm:@google-labs/node-nursery"
+    }
+  ]
+}

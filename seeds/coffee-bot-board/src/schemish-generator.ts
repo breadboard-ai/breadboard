@@ -70,4 +70,6 @@ const prompt = kit
   .wire("<-epilogue", epilogue)
   .wire("<-schemish", convertToSchemish);
 
+prompt.wire("prompt->text", generator);
+
 export const schemishGenerator = board;

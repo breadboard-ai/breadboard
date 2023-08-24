@@ -14,6 +14,7 @@ import { run } from "./cli.js";
 import { orderAgent } from "./order-agent.js";
 import { menuAgent } from "./menu-agent.js";
 import { menuSummaryAgent } from "./menu-summary-agent.js";
+import { schemishGenerator } from "./schemish-generator.js";
 
 config();
 
@@ -29,6 +30,7 @@ const writeGraphs = async (board: Board, filename: string) => {
 await writeGraphs(orderAgent, "order-agent");
 await writeGraphs(menuAgent, "menu-agent");
 await writeGraphs(menuSummaryAgent, "menu-summary-agent");
+await writeGraphs(schemishGenerator, "schemish-generator");
 
 await run(orderAgent, {
   checkMenu: menuAgent,
