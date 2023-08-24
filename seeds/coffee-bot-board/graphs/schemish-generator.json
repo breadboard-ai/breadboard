@@ -19,18 +19,6 @@
       "in": "schema"
     },
     {
-      "from": "error",
-      "to": "output-2",
-      "out": "error",
-      "in": "error"
-    },
-    {
-      "from": "completion",
-      "to": "output-2",
-      "out": "completion",
-      "in": "completion"
-    },
-    {
       "from": "schema",
       "to": "schemish",
       "out": "schema",
@@ -40,7 +28,7 @@
       "from": "validateJSON",
       "to": "completion",
       "out": "json",
-      "in": "json"
+      "in": "completion"
     },
     {
       "from": "validateJSON",
@@ -55,20 +43,20 @@
       "in": "schema"
     },
     {
-      "from": "secrets-4",
-      "to": "generateText-3",
+      "from": "secrets-3",
+      "to": "generateText-2",
       "constant": true,
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
-      "from": "generateText-3",
+      "from": "generateText-2",
       "to": "validateJSON",
       "out": "completion",
       "in": "json"
     },
     {
-      "from": "generateText-3",
+      "from": "generateText-2",
       "to": "error",
       "out": "filters",
       "in": "error"
@@ -93,7 +81,7 @@
     },
     {
       "from": "schemishGenerator",
-      "to": "generateText-3",
+      "to": "generateText-2",
       "out": "prompt",
       "in": "text"
     }
@@ -113,19 +101,15 @@
     },
     {
       "id": "error",
-      "type": "passthrough"
+      "type": "output"
     },
     {
       "id": "completion",
-      "type": "passthrough"
+      "type": "output"
     },
     {
       "id": "input-1",
       "type": "input"
-    },
-    {
-      "id": "output-2",
-      "type": "output"
     },
     {
       "id": "schemish",
@@ -136,7 +120,7 @@
       "type": "validateJson"
     },
     {
-      "id": "generateText-3",
+      "id": "generateText-2",
       "type": "generateText",
       "configuration": {
         "stopSequences": [
@@ -153,7 +137,7 @@
       }
     },
     {
-      "id": "secrets-4",
+      "id": "secrets-3",
       "type": "secrets",
       "configuration": {
         "keys": [

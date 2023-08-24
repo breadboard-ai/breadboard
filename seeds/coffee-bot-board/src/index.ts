@@ -39,7 +39,7 @@ if (experiment) {
     {
       prologue:
         "You are the ordering agent and your job is to listen to the customer and record their order in a specified format.",
-      epilogue: "Begin!",
+      epilogue: "Begin!\nCustomer: I'd like to order a chai latte",
       schema: {
         type: "object",
         properties: {

@@ -24,8 +24,8 @@ const epilogue = board.passthrough({ $id: "epilogue" });
 const schema = board.passthrough({ $id: "schema" });
 
 // Outputs
-const $error = board.passthrough({ $id: "error" });
-const $completion = board.passthrough({ $id: "completion" });
+const $error = board.output({ $id: "error" });
+const $completion = board.output({ $id: "completion" });
 
 // Template
 const template = await maker.prompt("schemish-generator", "schemishGenerator");
@@ -37,17 +37,11 @@ board
   .wire("epilogue->", epilogue)
   .wire("schema->", schema);
 
-// Wire outputs.
-board.output().wire("<-error", $error).wire("<-completion", $completion);
-
-// TODO: Construct schemish converter.
-// For now, this will be a passthrough.
 const convertToSchemish = nursery.schemish({ $id: "schemish" });
 schema.wire("schema->", convertToSchemish);
 
-// TODO: Construct JSON Schema validator.
 const validateJson = nursery.validateJson({ $id: "validateJSON" });
-validateJson.wire("json->", $completion).wire("error->", $error);
+validateJson.wire("json->completion", $completion).wire("error->", $error);
 schema.wire("schema->", validateJson);
 
 const generator = kit
