@@ -11,7 +11,7 @@ import type {
 } from "@google-labs/graph-runner";
 import { Schema, Validator } from "jsonschema";
 
-export type ValidateJSONInputs = InputValues & {
+export type ValidateJsonInputs = InputValues & {
   /**
    * The string to validate as JSON.
    */
@@ -80,7 +80,7 @@ export const validateJson = (
 };
 
 export default async (inputs: InputValues): Promise<OutputValues> => {
-  const { json, schema } = inputs as ValidateJSONInputs;
+  const { json, schema } = inputs as ValidateJsonInputs;
   if (!json) throw new Error("The `json` input is required.");
 
   // First, let's try to parse JSON.

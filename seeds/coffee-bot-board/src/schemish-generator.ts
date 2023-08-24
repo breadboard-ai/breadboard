@@ -42,7 +42,7 @@ board.output().wire("<-error", $error).wire("<-completion", $completion);
 
 // TODO: Construct schemish converter.
 // For now, this will be a passthrough.
-const convertToSchemish = board.passthrough({ $id: "schemish" });
+const convertToSchemish = nursery.schemish({ $id: "schemish" });
 schema.wire("schema->", convertToSchemish);
 
 // TODO: Construct JSON Schema validator.
@@ -61,7 +61,7 @@ const generator = kit
     ],
   })
   .wire("<-PALM_KEY.", kit.secrets(["PALM_KEY"]))
-  .wire("completion->", validateJson)
+  .wire("completion->json", validateJson)
   .wire("filters->error", $error);
 
 const prompt = kit

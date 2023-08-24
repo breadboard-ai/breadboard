@@ -26,7 +26,11 @@ import queryVectorDatabase from "./nodes/query-vector-database.js";
 import embedDocs from "./nodes/embed-docs.js";
 import embedString from "./nodes/embed-string.js";
 import cache from "./nodes/cache.js";
-import validateJson from "./nodes/validate-json.js";
+import validateJson, {
+  ValidateJsonInputs,
+  ValidateJsonOutputs,
+} from "./nodes/validate-json.js";
+import schemish, { SchemishInputs, SchemishOutputs } from "./nodes/schemish.js";
 
 const handlers = {
   createVectorDatabase,
@@ -40,6 +44,7 @@ const handlers = {
   vars,
   localMemory,
   validateJson,
+  schemish,
 };
 
 /**
@@ -126,6 +131,22 @@ export class Nursery implements Kit {
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<InputValues, OutputValues> {
     const { $id, ...rest } = config;
-    return this.#nodeFactory.create("validateJson", { ...rest }, $id);
+    return this.#nodeFactory.create<ValidateJsonInputs, ValidateJsonOutputs>(
+      "validateJson",
+      { ...rest },
+      $id
+    );
+  }
+
+  schemish(
+    config: OptionalIdConfiguration = {}
+  ): BreadboardNode<InputValues, OutputValues> {
+    const { $id, ...rest } = config;
+    const node = this.#nodeFactory.create<SchemishInputs, SchemishOutputs>(
+      "schemish",
+      { ...rest },
+      $id
+    );
+    return node;
   }
 }
