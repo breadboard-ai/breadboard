@@ -49,9 +49,12 @@ export type ValidatedJsonOutputs = OutputValues & {
 
 export type ValidateJsonOutputs = InvalidJsonOutputs | ValidatedJsonOutputs;
 
+export const stripCodeBlock = (code: string) =>
+  code.replace(/(?:```(?:json)?\n+)(.*)(?:\n+```)/gms, "$1");
+
 export const tryParseJson = (json: string): InvalidJsonOutputs | NodeValue => {
   try {
-    return JSON.parse(json);
+    return JSON.parse(stripCodeBlock(json));
   } catch (e) {
     const error = e as Error;
     return { error: { type: "parsing", message: error.message } };

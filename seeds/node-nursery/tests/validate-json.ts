@@ -6,7 +6,11 @@
 
 import test from "ava";
 
-import { tryParseJson, validateJson } from "../src/nodes/validate-json.js";
+import {
+  tryParseJson,
+  validateJson,
+  stripCodeBlock,
+} from "../src/nodes/validate-json.js";
 
 test("tryParseJson correctly parses JSON", (t) => {
   const json = `{"foo": "bar"}`;
@@ -48,4 +52,16 @@ test("validateJson correctly returns an error for invalid JSON", (t) => {
       message: "0: instance.foo is not of a type(s) number\n",
     },
   });
+});
+
+test("stripCodeBlock correctly strips Markdown only if present", (t) => {
+  t.is(stripCodeBlock('```json\n"json"\n```'), '"json"');
+  t.is(stripCodeBlock('```\n"json"\n```'), '"json"');
+  t.is(stripCodeBlock('"json"'), '"json"');
+});
+
+test("tryParseJson correctly parses JSON with Markdown code block", (t) => {
+  const json = '```json\n{"foo": "bar"}\n```';
+  const result = tryParseJson(json);
+  t.deepEqual(result, { foo: "bar" });
 });
