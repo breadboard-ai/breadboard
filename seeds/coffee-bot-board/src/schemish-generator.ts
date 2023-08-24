@@ -45,9 +45,10 @@ board.output().wire("<-error", $error).wire("<-completion", $completion);
 const convertToSchemish = board.passthrough({ $id: "schemish" });
 schema.wire("schema->", convertToSchemish);
 
-// TODO: Construst JSON Schema validator.
+// TODO: Construct JSON Schema validator.
 const validateJson = nursery.validateJson({ $id: "validateJSON" });
 validateJson.wire("json->", $completion).wire("error->", $error);
+schema.wire("schema->", validateJson);
 
 const generator = kit
   .generateText({
