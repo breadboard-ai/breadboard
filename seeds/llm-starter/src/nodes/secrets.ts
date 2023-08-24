@@ -30,9 +30,17 @@ const getEnvironmentValue = (key: string) => {
   }
 };
 
+export const requireNonEmpty = (key: string, value?: string | null) => {
+  if (!value)
+    throw new Error(
+      `Key "${key}" was not specified. Please check your environment and make sure it is set.`
+    );
+  return value;
+};
+
 export default async (inputs: InputValues) => {
   const { keys = [] } = inputs as SecretInputs;
   return Object.fromEntries(
-    keys.map((key) => [key, getEnvironmentValue(key)])
+    keys.map((key) => [key, requireNonEmpty(key, getEnvironmentValue(key))])
   ) as OutputValues;
 };
