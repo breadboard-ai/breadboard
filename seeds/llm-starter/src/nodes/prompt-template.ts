@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { InputValues } from "@google-labs/graph-runner";
+import type { InputValues, NodeValue } from "@google-labs/graph-runner";
+import { type } from "os";
 
 export type PropmtTemplateOutputs = {
   prompt: string;
@@ -14,9 +15,15 @@ export type PromptTemplateInputs = {
   template: string;
 };
 
-const substitute = (template: string, values: Record<string, string>) => {
+export const stringify = (value: unknown): string => {
+  if (typeof value === "string") return value;
+  if (value === undefined) return "undefined";
+  return JSON.stringify(value, null, 2);
+};
+
+export const substitute = (template: string, values: InputValues) => {
   return Object.entries(values).reduce(
-    (acc, [key, value]) => acc.replace(`{{${key}}}`, value),
+    (acc, [key, value]) => acc.replace(`{{${key}}}`, stringify(value)),
     template
   );
 };
