@@ -7,7 +7,7 @@ import {
 } from "@google-labs/breadboard";
 import { NodeValue } from "@google-labs/graph-runner";
 
-export const run = async (board: Board, slots: BreadboardSlotSpec) => {
+export const run = async (board: Board, slots?: BreadboardSlotSpec) => {
   intro("Hi! I am coffee bot! What would you like to have today?");
 
   const probe = process.argv.includes("-v") ? new LogProbe() : undefined;
