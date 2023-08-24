@@ -37,19 +37,18 @@ await writeGraphs(schemishGenerator, "schemish-generator");
 if (experiment) {
   const outputs = await schemishGenerator.runOnce(
     {
-      prologue: "Hi! I am coffee bot! What would you like to have today?",
-      epilogue: "It was a delight be your coffee bot. See you soon!",
+      prologue:
+        "You are the ordering agent and your job is to listen to the customer and record their order in a specified format.",
+      epilogue: "Begin!",
       schema: {
         type: "object",
         properties: {
-          customer: {
-            type: "string",
-          },
           order: {
             type: "string",
+            description: "The current order of a customer.",
           },
         },
-        required: ["customer", "order"],
+        required: ["order"],
       },
     },
     new LogProbe()
