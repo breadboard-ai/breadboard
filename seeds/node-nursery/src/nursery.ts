@@ -26,6 +26,7 @@ import queryVectorDatabase from "./nodes/query-vector-database.js";
 import embedDocs from "./nodes/embed-docs.js";
 import embedString from "./nodes/embed-string.js";
 import cache from "./nodes/cache.js";
+import validateJson from "./nodes/validate-json.js";
 
 const handlers = {
   createVectorDatabase,
@@ -38,6 +39,7 @@ const handlers = {
   textAssetsFromPath,
   vars,
   localMemory,
+  validateJson,
 };
 
 /**
@@ -118,5 +120,12 @@ export class Nursery implements Kit {
   ): BreadboardNode<InputValues, OutputValues> {
     const { $id, ...rest } = config;
     return this.#nodeFactory.create("localMemory", { ...rest }, $id);
+  }
+
+  validateJson(
+    config: OptionalIdConfiguration = {}
+  ): BreadboardNode<InputValues, OutputValues> {
+    const { $id, ...rest } = config;
+    return this.#nodeFactory.create("validateJson", { ...rest }, $id);
   }
 }

@@ -6,6 +6,7 @@
 
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
+import { Nursery } from "@google-labs/node-nursery";
 
 import { PromptMaker } from "./template.js";
 
@@ -15,6 +16,7 @@ const maker = new PromptMaker(BASE);
 
 const board = new Board();
 const kit = board.addKit(Starter);
+const nursery = board.addKit(Nursery);
 
 // Inputs
 const prologue = board.passthrough({ $id: "prologue" });
@@ -44,8 +46,8 @@ const convertToSchemish = board.passthrough({ $id: "schemish" });
 schema.wire("schema->", convertToSchemish);
 
 // TODO: Construst JSON Schema validator.
-const validateJSON = board.passthrough({ $id: "validateJSON" });
-validateJSON.wire("json->", $completion).wire("error->", $error);
+const validateJson = nursery.validateJson({ $id: "validateJSON" });
+validateJson.wire("json->", $completion).wire("error->", $error);
 
 const generator = kit
   .generateText({
@@ -58,7 +60,7 @@ const generator = kit
     ],
   })
   .wire("<-PALM_KEY.", kit.secrets(["PALM_KEY"]))
-  .wire("completion->", validateJSON)
+  .wire("completion->", validateJson)
   .wire("filters->error", $error);
 
 const prompt = kit
