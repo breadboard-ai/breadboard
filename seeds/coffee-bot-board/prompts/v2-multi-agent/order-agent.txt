@@ -14,7 +14,7 @@ Agent: your next action
 Customer: possible reply for the customer
 ... and so on ...
 
-This pattern may repeat several times until the customer's request is finalized.
+This pattern may repeat several times until the customer's order is finalized.
 
 Your response must be a valid JSON of the following format:
 {{order-format}}

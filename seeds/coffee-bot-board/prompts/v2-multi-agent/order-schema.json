@@ -11,7 +11,8 @@
     },
     "action": {
       "description": "The name of the tool to be used for this action. Must be one of the tools listed above.",
-      "type": "string"
+      "type": "string",
+      "enum": ["checkMenu", "summarizeMenu", "finalizeOrder", "customer"]
     },
     "actionInput": {
       "description": "the input for the tool to help fulfill the action",
