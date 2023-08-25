@@ -51,11 +51,13 @@ export class Core {
   }
 
   async include(inputs: InputValues): Promise<OutputValues> {
-    const { path, $ref, slotted, parent, ...args } =
+    const { path, $ref, graph, slotted, parent, ...args } =
       inputs as IncludeNodeInputs;
     // TODO: Please fix the $ref/path mess.
     const source = path || $ref || "";
-    const board = await Board.load(source, slotted);
+    const board = graph
+      ? await Board.fromGraphDescriptor(graph)
+      : await Board.load(source, slotted);
     for (const validator of this.#validators)
       board.addValidator(
         validator.getSubgraphValidator(parent, Object.keys(args))

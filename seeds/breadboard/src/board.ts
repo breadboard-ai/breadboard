@@ -327,11 +327,14 @@ export class Board implements Breadboard {
    * @returns - a `Node` object that represents the placed node.
    */
   include<In = InputValues, Out = OutputValues>(
-    $ref: string,
+    $ref: string | GraphDescriptor,
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<IncludeNodeInputs & In, Out> {
     const { $id, ...rest } = config;
-    return new Node(this, "include", { $ref, ...rest }, $id);
+    if (typeof $ref === "string") {
+      return new Node(this, "include", { $ref, ...rest }, $id);
+    }
+    return new Node(this, "include", { graph: $ref, ...rest }, $id);
   }
 
   /**

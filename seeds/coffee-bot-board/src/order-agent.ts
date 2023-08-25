@@ -9,19 +9,29 @@ import { Starter } from "@google-labs/llm-starter";
 
 import { PromptMaker } from "./template.js";
 
+import { schemishGenerator } from "./schemish-generator.js";
+import { NodeValue } from "@google-labs/graph-runner";
+
 const BASE = "v2-multi-agent";
 
 const maker = new PromptMaker(BASE);
 const board = new Board();
 const kit = board.addKit(Starter);
 
-const prompt = kit.promptTemplate(
-  ...(await maker.prompt("order-agent", "orderAgent"))
-);
-prompt.wire("<-tools.", board.passthrough(await maker.part("tools", "json")));
-prompt.wire(
-  "<-order-format.",
-  board.passthrough(await maker.part("order-format", "json"))
+const prologuePrompt = kit
+  .promptTemplate(
+    ...(await maker.prompt("order-agent-prologue", "orderAgentPrologue"))
+  )
+  .wire("<-tools.", board.passthrough(await maker.part("tools", "json")));
+
+const schemaText = await maker.loader.load("order-schema", "json");
+const schema = board.passthrough({
+  $id: "schema",
+  schema: JSON.parse(schemaText),
+});
+
+const epiloguePrompt = kit.promptTemplate(
+  ...(await maker.prompt("order-agent-epilogue", "orderAgentEpilogue"))
 );
 
 const customerMemory = kit.append({ $id: "customerMemory" });
@@ -35,7 +45,7 @@ agentMemory
   .wire("accumulator->", customerMemory);
 toolMemory.wire("accumulator->", agentMemory);
 
-prompt
+epiloguePrompt
   .wire("memory<-accumulator", customerMemory)
   .wire("memory<-accumulator", toolMemory);
 
@@ -81,8 +91,8 @@ const finalizeOrderTool = board
   .passthrough()
   .wire("finalizeOrder->bot", board.output({ $id: "finalizeOrder" }));
 
-function route({ completion }: { completion: string }) {
-  const data = JSON.parse(completion);
+function route({ completion }: { completion: NodeValue }) {
+  const data = completion as NodeValue & { action: string };
   return { [data.action]: data, tool: data.action };
 }
 
@@ -102,22 +112,13 @@ board
   .input("", { $id: "first-ask-customer" })
   .wire("customer->Customer", customerMemory);
 
-prompt.wire(
-  "prompt->text",
-  kit
-    .generateText({
-      stopSequences: ["Tool:", "Customer:", "\n\n"],
-      safetySettings: [
-        {
-          category: "HARM_CATEGORY_DEROGATORY",
-          threshold: "BLOCK_MEDIUM_AND_ABOVE",
-        },
-      ],
-    })
-    .wire("<-PALM_KEY.", kit.secrets(["PALM_KEY"]))
-    .wire("completion->", toolRouter)
-    .wire("completion->Agent", agentMemory)
-    .wire("filters->", board.output({ $id: "blocked" }))
-);
+board
+  .include(schemishGenerator, { $id: "generator" })
+  .wire("prologue<-prompt.", prologuePrompt)
+  .wire("epilogue<-prompt.", epiloguePrompt)
+  .wire("<-schema.", schema)
+  .wire("completion->", toolRouter)
+  .wire("completion->Agent", agentMemory)
+  .wire("error->", board.output({ $id: "error" }));
 
 export const orderAgent = board;

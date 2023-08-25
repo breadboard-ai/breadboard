@@ -223,6 +223,7 @@ export type ReflectNodeOutputs = OutputValues & {
 export type IncludeNodeInputs = InputValues & {
   path?: string;
   $ref?: string;
+  graph?: GraphDescriptor;
   slotted?: BreadboardSlotSpec;
   parent: NodeDescriptor;
   args: InputValues;

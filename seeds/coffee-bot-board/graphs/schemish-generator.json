@@ -25,20 +25,20 @@
       "in": "schema"
     },
     {
-      "from": "validateJSON",
+      "from": "validate-json",
       "to": "completion",
       "out": "json",
       "in": "completion"
     },
     {
-      "from": "validateJSON",
+      "from": "validate-json",
       "to": "error",
       "out": "error",
       "in": "error"
     },
     {
       "from": "schema",
-      "to": "validateJSON",
+      "to": "validate-json",
       "out": "schema",
       "in": "schema"
     },
@@ -51,7 +51,7 @@
     },
     {
       "from": "generateText-2",
-      "to": "validateJSON",
+      "to": "validate-json",
       "out": "completion",
       "in": "json"
     },
@@ -116,7 +116,7 @@
       "type": "schemish"
     },
     {
-      "id": "validateJSON",
+      "id": "validate-json",
       "type": "validateJson"
     },
     {

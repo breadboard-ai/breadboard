@@ -2,17 +2,10 @@
   "edges": [
     {
       "from": "tools",
-      "to": "orderAgent",
+      "to": "orderAgentPrologue",
       "constant": true,
       "out": "tools",
       "in": "tools"
-    },
-    {
-      "from": "order-format",
-      "to": "orderAgent",
-      "constant": true,
-      "out": "order-format",
-      "in": "order-format"
     },
     {
       "from": "passthrough-1",
@@ -46,13 +39,13 @@
     },
     {
       "from": "customerMemory",
-      "to": "orderAgent",
+      "to": "orderAgentEpilogue",
       "out": "accumulator",
       "in": "memory"
     },
     {
       "from": "toolMemory",
-      "to": "orderAgent",
+      "to": "orderAgentEpilogue",
       "out": "accumulator",
       "in": "memory"
     },
@@ -177,43 +170,51 @@
       "in": "Customer"
     },
     {
-      "from": "secrets-12",
-      "to": "generateText-11",
+      "from": "orderAgentPrologue",
+      "to": "generator",
       "constant": true,
-      "out": "PALM_KEY",
-      "in": "PALM_KEY"
+      "out": "prompt",
+      "in": "prologue"
     },
     {
-      "from": "generateText-11",
+      "from": "orderAgentEpilogue",
+      "to": "generator",
+      "constant": true,
+      "out": "prompt",
+      "in": "epilogue"
+    },
+    {
+      "from": "schema",
+      "to": "generator",
+      "constant": true,
+      "out": "schema",
+      "in": "schema"
+    },
+    {
+      "from": "generator",
       "to": "toolRouter",
       "out": "completion",
       "in": "completion"
     },
     {
-      "from": "generateText-11",
+      "from": "generator",
       "to": "agentMemory",
       "out": "completion",
       "in": "Agent"
     },
     {
-      "from": "generateText-11",
-      "to": "blocked",
-      "out": "filters",
-      "in": "filters"
-    },
-    {
-      "from": "orderAgent",
-      "to": "generateText-11",
-      "out": "prompt",
-      "in": "text"
+      "from": "generator",
+      "to": "error",
+      "out": "error",
+      "in": "error"
     }
   ],
   "nodes": [
     {
-      "id": "orderAgent",
+      "id": "orderAgentPrologue",
       "type": "promptTemplate",
       "configuration": {
-        "template": "You are the ordering agent and your job is to assist customers with ordering items on the menu.\n\nYou have access to the following tools:\n{{tools}}\n\nIt is your responsibility to manage the state of the currentOrder. Add, remove, and change items as you use tools and interact with the customer.\n\nYour conversation with the customer will follow the pattern of \"Customer\", \"Agent\" and \"Tool\" interleaving, like this:\n\nCustomer: the customer request with which you must assist \nAgent: your response\nTool: response from the tool that was invoked\nAgent: your next action\nCustomer: possible reply for the customer\n... and so on ...\n\nThis pattern may repeat several times until the customer's request is finalized.\n\nYour response must be a valid JSON of the following format:\n{{order-format}}\n\nBegin!\n{{memory}}\nAgent: "
+        "template": "You are the ordering agent and your job is to assist customers with ordering items on the menu.\n\nYou have access to the following tools:\n{{tools}}\n\nIt is your responsibility to manage the state of the currentOrder. Add, remove, and change items as you use tools and interact with the customer.\n\nYour conversation with the customer will follow the pattern of \"Customer\", \"Agent\" and \"Tool\" interleaving, like this:\n\nCustomer: the customer request with which you must assist \nAgent: your response\nTool: response from the tool that was invoked\nAgent: your next action\nCustomer: possible reply for the customer\n... and so on ...\n\nThis pattern may repeat several times until the customer's order is finalized.\n"
       }
     },
     {
@@ -224,10 +225,85 @@
       }
     },
     {
-      "id": "order-format",
+      "id": "schema",
       "type": "passthrough",
       "configuration": {
-        "order-format": "{\n  \"thought\": \"starting with a summary of order state (what's been done), a string describing how you decide on the next action, given the previous customer replies.\",\n  \"action\": \"the name of the tool to be used for this action\",\n  \"actionInput\": \"a string with the input for the action\",\n  \"orderType\": \"string of either \\\"here\\\" (default) or \\\"to go\\\"\",\n  \"currentOrder\": [\n    {\n      \"item\": \"name\",\n      \"extras\": \"array of extras and options for the item\",\n      \"quantity\": \"a number of items\"\n    },\n    {\n      \"item\": \"name\",\n      \"extras\": \"array of extras and options for the item\",\n      \"quantity\": \"a number of items\"\n    }\n  ]\n}\n"
+        "schema": {
+          "$schema": "https://json-schema.org/draft-07/schema",
+          "title": "Menu Order Schema",
+          "type": "object",
+          "default": {},
+          "required": [
+            "thought",
+            "action",
+            "actionInput",
+            "orderType",
+            "currentOrder"
+          ],
+          "properties": {
+            "thought": {
+              "description": "Starting with a summary of order state (what's been done), describe how you decide on the next action, given the previous customer replies.",
+              "type": "string"
+            },
+            "action": {
+              "description": "The name of the tool to be used for this action. Must be one of the tools listed above.",
+              "type": "string",
+              "enum": [
+                "checkMenu",
+                "summarizeMenu",
+                "finalizeOrder",
+                "customer"
+              ]
+            },
+            "actionInput": {
+              "description": "the input for the tool to help fulfill the action",
+              "type": "string"
+            },
+            "orderType": {
+              "description": "Either \"here\" or \"to go\"",
+              "type": "string",
+              "default": "here"
+            },
+            "currentOrder": {
+              "description": "The current order",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "item",
+                  "extras"
+                ],
+                "properties": {
+                  "item": {
+                    "description": "name of the item in the order",
+                    "type": "string"
+                  },
+                  "extras": {
+                    "description": "array of extras and options for the item",
+                    "type": "array",
+                    "default": [],
+                    "items": {
+                      "type": "string",
+                      "description": "The name of the extra or option"
+                    }
+                  },
+                  "quantity": {
+                    "description": "The number of items",
+                    "type": "number",
+                    "default": 1
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "orderAgentEpilogue",
+      "type": "promptTemplate",
+      "configuration": {
+        "template": "Begin!\n{{memory}}\nAgent: "
       }
     },
     {
@@ -329,7 +405,7 @@
       "type": "runJavascript",
       "configuration": {
         "name": "route",
-        "code": "function route({ completion }) {\n    const data = JSON.parse(completion);\n    return { [data.action]: data, tool: data.action };\n}",
+        "code": "function route({ completion }) {\n    const data = completion;\n    return { [data.action]: data, tool: data.action };\n}",
         "raw": true
       }
     },
@@ -342,33 +418,177 @@
       "type": "input"
     },
     {
-      "id": "generateText-11",
-      "type": "generateText",
+      "id": "generator",
+      "type": "include",
       "configuration": {
-        "stopSequences": [
-          "Tool:",
-          "Customer:",
-          "\n\n"
-        ],
-        "safetySettings": [
-          {
-            "category": "HARM_CATEGORY_DEROGATORY",
-            "threshold": "BLOCK_MEDIUM_AND_ABOVE"
-          }
-        ]
+        "graph": {
+          "edges": [
+            {
+              "from": "input-1",
+              "to": "prologue",
+              "out": "prologue",
+              "in": "prologue"
+            },
+            {
+              "from": "input-1",
+              "to": "epilogue",
+              "out": "epilogue",
+              "in": "epilogue"
+            },
+            {
+              "from": "input-1",
+              "to": "schema",
+              "out": "schema",
+              "in": "schema"
+            },
+            {
+              "from": "schema",
+              "to": "schemish",
+              "out": "schema",
+              "in": "schema"
+            },
+            {
+              "from": "validate-json",
+              "to": "completion",
+              "out": "json",
+              "in": "completion"
+            },
+            {
+              "from": "validate-json",
+              "to": "error",
+              "out": "error",
+              "in": "error"
+            },
+            {
+              "from": "schema",
+              "to": "validate-json",
+              "out": "schema",
+              "in": "schema"
+            },
+            {
+              "from": "secrets-3",
+              "to": "generateText-2",
+              "constant": true,
+              "out": "PALM_KEY",
+              "in": "PALM_KEY"
+            },
+            {
+              "from": "generateText-2",
+              "to": "validate-json",
+              "out": "completion",
+              "in": "json"
+            },
+            {
+              "from": "generateText-2",
+              "to": "error",
+              "out": "filters",
+              "in": "error"
+            },
+            {
+              "from": "prologue",
+              "to": "schemishGenerator",
+              "out": "prologue",
+              "in": "prologue"
+            },
+            {
+              "from": "epilogue",
+              "to": "schemishGenerator",
+              "out": "epilogue",
+              "in": "epilogue"
+            },
+            {
+              "from": "schemish",
+              "to": "schemishGenerator",
+              "out": "schemish",
+              "in": "schemish"
+            },
+            {
+              "from": "schemishGenerator",
+              "to": "generateText-2",
+              "out": "prompt",
+              "in": "text"
+            }
+          ],
+          "nodes": [
+            {
+              "id": "prologue",
+              "type": "passthrough"
+            },
+            {
+              "id": "epilogue",
+              "type": "passthrough"
+            },
+            {
+              "id": "schema",
+              "type": "passthrough"
+            },
+            {
+              "id": "error",
+              "type": "output"
+            },
+            {
+              "id": "completion",
+              "type": "output"
+            },
+            {
+              "id": "input-1",
+              "type": "input"
+            },
+            {
+              "id": "schemish",
+              "type": "schemish"
+            },
+            {
+              "id": "validate-json",
+              "type": "validateJson"
+            },
+            {
+              "id": "generateText-2",
+              "type": "generateText",
+              "configuration": {
+                "stopSequences": [
+                  "Tool:",
+                  "Customer:",
+                  "\n\n"
+                ],
+                "safetySettings": [
+                  {
+                    "category": "HARM_CATEGORY_DEROGATORY",
+                    "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "secrets-3",
+              "type": "secrets",
+              "configuration": {
+                "keys": [
+                  "PALM_KEY"
+                ]
+              }
+            },
+            {
+              "id": "schemishGenerator",
+              "type": "promptTemplate",
+              "configuration": {
+                "template": "{{prologue}}\n\nYour response must be a valid JSON of the following format:\n{{schemish}}\n\n{{epilogue}}"
+              }
+            }
+          ],
+          "kits": [
+            {
+              "url": "npm:@google-labs/llm-starter"
+            },
+            {
+              "url": "npm:@google-labs/node-nursery"
+            }
+          ]
+        }
       }
     },
     {
-      "id": "secrets-12",
-      "type": "secrets",
-      "configuration": {
-        "keys": [
-          "PALM_KEY"
-        ]
-      }
-    },
-    {
-      "id": "blocked",
+      "id": "error",
       "type": "output"
     }
   ],

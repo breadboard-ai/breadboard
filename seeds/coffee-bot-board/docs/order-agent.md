@@ -3,15 +3,14 @@
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-tools(("passthrough <br> id='tools'")):::passthrough -- "tools->tools" --o orderAgent["promptTemplate <br> id='orderAgent'"]
-orderformat(("passthrough <br> id='order-format'")):::passthrough -- "order-format->order-format" --o orderAgent["promptTemplate <br> id='orderAgent'"]
+tools(("passthrough <br> id='tools'")):::passthrough -- "tools->tools" --o orderAgentPrologue["promptTemplate <br> id='orderAgentPrologue'"]
 passthrough1(("passthrough <br> id='passthrough-1'")):::passthrough -- "accumulator->accumulator" --> customerMemory["append <br> id='customerMemory'"]
 customerMemory["append <br> id='customerMemory'"] -- "accumulator->accumulator" --> agentMemory["append <br> id='agentMemory'"]
 agentMemory["append <br> id='agentMemory'"] -- "accumulator->accumulator" --> toolMemory["append <br> id='toolMemory'"]
 agentMemory["append <br> id='agentMemory'"] -- "accumulator->accumulator" --> customerMemory["append <br> id='customerMemory'"]
 toolMemory["append <br> id='toolMemory'"] -- "accumulator->accumulator" --> agentMemory["append <br> id='agentMemory'"]
-customerMemory["append <br> id='customerMemory'"] -- "accumulator->memory" --> orderAgent["promptTemplate <br> id='orderAgent'"]
-toolMemory["append <br> id='toolMemory'"] -- "accumulator->memory" --> orderAgent["promptTemplate <br> id='orderAgent'"]
+customerMemory["append <br> id='customerMemory'"] -- "accumulator->memory" --> orderAgentEpilogue["promptTemplate <br> id='orderAgentEpilogue'"]
+toolMemory["append <br> id='toolMemory'"] -- "accumulator->memory" --> orderAgentEpilogue["promptTemplate <br> id='orderAgentEpilogue'"]
 slot4(("slot <br> id='slot-4'")):::slot -- "bot->Tool" --> toolMemory["append <br> id='toolMemory'"]
 slot4(("slot <br> id='slot-4'")):::slot -- "bot->bot" --> checkMenutooloutput{{"output <br> id='checkMenu-tool-output'"}}:::output
 slot4(("slot <br> id='slot-4'")):::slot -- "error->error" --> error{{"output <br> id='error'"}}:::output
@@ -32,14 +31,16 @@ toolRouter["runJavascript <br> id='toolRouter'"] -- "checkMenu->checkMenu" --> p
 toolRouter["runJavascript <br> id='toolRouter'"] -- "summarizeMenu->summarizeMenu" --> passthrough5(("passthrough <br> id='passthrough-5'")):::passthrough
 toolRouter["runJavascript <br> id='toolRouter'"] -- "finalizeOrder->finalizeOrder" --> passthrough10(("passthrough <br> id='passthrough-10'")):::passthrough
 firstaskcustomer[/"input <br> id='first-ask-customer'"/]:::input -- "customer->Customer" --> customerMemory["append <br> id='customerMemory'"]
-secrets12("secrets <br> id='secrets-12'"):::secrets -- "PALM_KEY->PALM_KEY" --o generateText11["generateText <br> id='generateText-11'"]
-generateText11["generateText <br> id='generateText-11'"] -- "completion->completion" --> toolRouter["runJavascript <br> id='toolRouter'"]
-generateText11["generateText <br> id='generateText-11'"] -- "completion->Agent" --> agentMemory["append <br> id='agentMemory'"]
-generateText11["generateText <br> id='generateText-11'"] -- "filters->filters" --> blocked{{"output <br> id='blocked'"}}:::output
-orderAgent["promptTemplate <br> id='orderAgent'"] -- "prompt->text" --> generateText11["generateText <br> id='generateText-11'"]
-templateorderAgent[template]:::config -- "template->template" --o orderAgent
+orderAgentPrologue["promptTemplate <br> id='orderAgentPrologue'"] -- "prompt->prologue" --o generator[["include <br> id='generator'"]]:::include
+orderAgentEpilogue["promptTemplate <br> id='orderAgentEpilogue'"] -- "prompt->epilogue" --o generator[["include <br> id='generator'"]]:::include
+schema(("passthrough <br> id='schema'")):::passthrough -- "schema->schema" --o generator[["include <br> id='generator'"]]:::include
+generator[["include <br> id='generator'"]]:::include -- "completion->completion" --> toolRouter["runJavascript <br> id='toolRouter'"]
+generator[["include <br> id='generator'"]]:::include -- "completion->Agent" --> agentMemory["append <br> id='agentMemory'"]
+generator[["include <br> id='generator'"]]:::include -- "error->error" --> error{{"output <br> id='error'"}}:::output
+templateorderAgentPrologue[template]:::config -- "template->template" --o orderAgentPrologue
 toolstools[tools]:::config -- "tools->tools" --o tools
-orderformatorderformat[order-format]:::config -- "order-format->order-format" --o orderformat
+schemaschema[schema]:::config -- "schema->schema" --o schema
+templateorderAgentEpilogue[template]:::config -- "template->template" --o orderAgentEpilogue
 accumulatorpassthrough1[accumulator]:::config -- "accumulator->accumulator" --o passthrough1
 expressionjsonata3[expression]:::config -- "expression->expression" --o jsonata3
 slotslot4[slot]:::config -- "slot->slot" --o slot4
@@ -49,9 +50,7 @@ expressionjsonata9[expression]:::config -- "expression->expression" --o jsonata9
 nametoolRouter[name]:::config -- "name->name" --o toolRouter
 codetoolRouter[code]:::config -- "code->code" --o toolRouter
 rawtoolRouter[raw]:::config -- "raw->raw" --o toolRouter
-stopSequencesgenerateText11[stopSequences]:::config -- "stopSequences->stopSequences" --o generateText11
-safetySettingsgenerateText11[safetySettings]:::config -- "safetySettings->safetySettings" --o generateText11
-keyssecrets12[keys]:::config -- "keys->keys" --o secrets12
+graphgenerator[graph]:::config -- "graph->graph" --o generator
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
