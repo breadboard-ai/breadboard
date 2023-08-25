@@ -11,7 +11,7 @@
     "test": "FORCE_COLOR=1 ava",
     "build": "FORCE_COLOR=1 vite build",
     "watch": "FORCE_COLOR=1 tsc --b --watch && vite build",
-    "dev": "vite",
+    "dev": "vite --host",
     "preview": "vite preview",
     "serve": "npx serve dist"
   },

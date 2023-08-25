@@ -1,6 +1,5 @@
 import { signal } from '@preact/signals';
 import { useRef } from 'preact/hooks';
-
 import { palm, Chat, Text } from "@google-labs/palm-lite";
 
 const promptOutput = signal("");
