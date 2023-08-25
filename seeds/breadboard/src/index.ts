@@ -7,6 +7,7 @@
 export { Board } from "./board.js";
 export { Node } from "./node.js";
 export { LogProbe } from "./log.js";
+export { DebugProbe } from "./debug.js";
 export type {
   ProbeEvent,
   Kit,

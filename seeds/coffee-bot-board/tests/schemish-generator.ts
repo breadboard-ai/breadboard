@@ -9,7 +9,7 @@ import test, { ExecutionContext } from "ava";
 import { config } from "dotenv";
 
 import { schemishGenerator } from "../src/schemish-generator.js";
-import { DebugProbe } from "../src/debug.js";
+import { DebugProbe } from "@google-labs/breadboard";
 
 config();
 
@@ -72,7 +72,7 @@ test("schemish-generator with invalid JSON", async (t) => {
 
   const debugProbe = new DebugProbe();
 
-  debugProbe.addDebugPin("validate-json", "json", (_) => {
+  debugProbe.addInputPin("validate-json", "json", (_) => {
     return '{ "type": "automobile" }';
   });
 
