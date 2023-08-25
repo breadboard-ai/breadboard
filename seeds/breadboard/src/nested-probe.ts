@@ -20,13 +20,10 @@ export class NestedProbe extends EventTarget {
     if (!probe) return undefined;
     return new NestedProbe(probe, (e) => {
       const probeEvent = e as CustomEvent<ProbeDetails>;
-      return new CustomEvent(probeEvent.type, {
-        detail: {
-          ...probeEvent.detail,
-          nesting: (probeEvent.detail.nesting || 0) + 1,
-          sources: [...(probeEvent.detail.sources || []), source],
-        },
-      });
+      const detail = probeEvent.detail;
+      detail.nesting = (detail.nesting || 0) + 1;
+      detail.sources = [...(detail.sources || []), source || ""];
+      return new CustomEvent(probeEvent.type, { detail, cancelable: true });
     });
   }
 }

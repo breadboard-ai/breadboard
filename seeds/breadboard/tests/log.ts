@@ -38,7 +38,6 @@ class CustomEvent extends Event {
 }
 
 const et = new EventTarget();
-et.addEventListener("message", (ev) => console.log((ev as CustomEvent).detail));
 et.dispatchEvent(new CustomEvent("message", { detail: "foo" }));
 
 import { LogProbe } from "../src/log.js";

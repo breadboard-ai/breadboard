@@ -38,7 +38,7 @@ import { IdVendor } from "./id.js";
 
 class ProbeEvent extends CustomEvent<ProbeDetails> {
   constructor(type: string, detail: ProbeDetails) {
-    super(type, { detail });
+    super(type, { detail, cancelable: true });
   }
 }
 
@@ -187,18 +187,22 @@ export class Board implements Breadboard {
       if (!handler)
         throw new Error(`No handler for node type "${descriptor.type}"`);
 
-      const beforehandlerParameters = {
+      const beforehandlerDetail = {
         descriptor,
         inputs,
         outputs: {},
       };
 
+      const shouldInvokeHandler =
+        !probe ||
+        probe.dispatchEvent(
+          new ProbeEvent("beforehandler", beforehandlerDetail)
+        );
+
       const outputs = (
-        !probe?.dispatchEvent(
-          new ProbeEvent("beforehandler", beforehandlerParameters)
-        )
+        shouldInvokeHandler
           ? await handler(inputs)
-          : beforehandlerParameters.outputs
+          : beforehandlerDetail.outputs
       ) as OutputValues;
 
       probe?.dispatchEvent(
