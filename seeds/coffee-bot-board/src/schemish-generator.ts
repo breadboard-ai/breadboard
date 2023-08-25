@@ -40,7 +40,7 @@ board
 const convertToSchemish = nursery.schemish({ $id: "schemish" });
 schema.wire("schema->", convertToSchemish);
 
-const validateJson = nursery.validateJson({ $id: "validateJSON" });
+const validateJson = nursery.validateJson({ $id: "validate-json" });
 validateJson.wire("json->completion", $completion).wire("error->", $error);
 schema.wire("schema->", validateJson);
 
