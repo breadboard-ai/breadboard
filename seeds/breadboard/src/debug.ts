@@ -4,15 +4,22 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NodeValue } from "@google-labs/graph-runner";
+import type {
+  InputValues,
+  NodeValue,
+  OutputValues,
+} from "@google-labs/graph-runner";
 import { ProbeEvent } from "./types.js";
 
 export type DebugPin = (value: NodeValue) => NodeValue | undefined;
+
+export type DebugNodePin = (inputs: InputValues) => OutputValues;
 
 type NodePins = Map<string, DebugPin>;
 
 export class DebugProbe extends EventTarget {
   #inputPins = new Map<string, NodePins>();
+  #nodePins = new Map<string, DebugNodePin>();
 
   /**
    * Creates a new DebugProbe.
@@ -42,7 +49,9 @@ export class DebugProbe extends EventTarget {
   }
 
   /**
-   * Adds a pin to a node's input. The pin function will be called before the
+   * Add a debug pin to a node's input.
+   *
+   * Debug pin is a function that will be called before the
    * node's handler is called. If the pin function returns a value, that value
    * will be used as the input value. If the pin function returns undefined,
    * the input value will not be modified.
@@ -56,6 +65,21 @@ export class DebugProbe extends EventTarget {
     this.#getInputPins(nodeId).set(inputName, debugPin);
   }
 
+  /**
+   * Replacing a node's handler with a custom function.
+   *
+   * This can be useful when you want to avoid running a node's handler in
+   * tests or other conditions. For example, replace a `generateText` node from
+   * `llm-starter` kit with a function that returns a constant value.
+   *
+   * @param nodeId - id of the node whose handler to replace
+   * @param pin - the new handler function. Unlike the handler function,
+   * this one must be synchronous.
+   */
+  replaceNode(nodeId: string, pin: DebugNodePin) {
+    this.#nodePins.set(nodeId, pin);
+  }
+
   #onBeforeHandler(event: Event) {
     const e = event as ProbeEvent;
     const { descriptor, inputs } = e.detail;
@@ -66,5 +90,10 @@ export class DebugProbe extends EventTarget {
         inputs[key] = result;
       }
     });
+    const nodePin = this.#nodePins.get(descriptor.id);
+    if (nodePin) {
+      e.detail.outputs = nodePin(inputs);
+      e.preventDefault();
+    }
   }
 }

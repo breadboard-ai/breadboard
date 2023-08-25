@@ -187,14 +187,20 @@ export class Board implements Breadboard {
       if (!handler)
         throw new Error(`No handler for node type "${descriptor.type}"`);
 
-      probe?.dispatchEvent(
-        new ProbeEvent("beforehandler", {
-          descriptor,
-          inputs,
-        })
-      );
+      const beforehandlerParameters = {
+        descriptor,
+        inputs,
+        outputs: {},
+      };
 
-      const outputs = (await handler(inputs)) || {};
+      const outputs = (
+        !probe?.dispatchEvent(
+          new ProbeEvent("beforehandler", beforehandlerParameters)
+        )
+          ? await handler(inputs)
+          : beforehandlerParameters.outputs
+      ) as OutputValues;
+
       probe?.dispatchEvent(
         new ProbeEvent("node", {
           descriptor,

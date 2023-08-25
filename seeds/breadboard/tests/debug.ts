@@ -38,3 +38,20 @@ test("DebugProbe correctly handles input pins that return undefined", (t) => {
   probe.dispatchEvent(event);
   t.deepEqual(event.detail.inputs, { test: 1 });
 });
+
+test("DebugProbe can replace nodes", (t) => {
+  const probe = new DebugProbe();
+  const pin = (_: NodeValue) => ({ foo: "bar" });
+  const node = { id: "test" };
+  probe.replaceNode(node.id, pin);
+  const event = new CustomEvent("beforehandler", {
+    detail: {
+      descriptor: node,
+      inputs: {},
+      outputs: { test: "test" },
+    },
+  });
+  const dispatchResult = probe.dispatchEvent(event);
+  t.true(dispatchResult);
+  t.deepEqual(event.detail.outputs, { foo: "bar" });
+});
