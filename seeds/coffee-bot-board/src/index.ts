@@ -43,12 +43,17 @@ if (experiment) {
       schema: {
         type: "object",
         properties: {
+          type: {
+            type: "string",
+            description: "The type of order.",
+            enum: ["drink", "food"],
+          },
           order: {
             type: "string",
             description: "The current order of a customer.",
           },
         },
-        required: ["order"],
+        required: ["type", "order"],
       },
     },
     new LogProbe()

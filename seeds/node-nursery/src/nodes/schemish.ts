@@ -13,7 +13,14 @@ import { Schema } from "jsonschema";
 
 export const convert = (schema: Schema): NodeValue => {
   if (schema.type === "string" || schema.type === "number") {
-    return `${schema.type}, ${schema.description}`;
+    const result = `${schema.type}, ${schema.description}`;
+    const { enum: validValues } = schema;
+    if (validValues) {
+      return `${result} (one of: ${validValues
+        .map((value) => `"${value}"`)
+        .join(", ")})`;
+    }
+    return result;
   }
   if (schema.type === "object") {
     const result: NodeValue = {};

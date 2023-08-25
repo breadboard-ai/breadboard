@@ -79,3 +79,13 @@ test("converts a schema with arrays", (t) => {
     favoriteNumbers: ["number, A favorite number."],
   });
 });
+
+test("converts a schema with enums", (t) => {
+  const schema = {
+    type: "string",
+    description: "The type of order.",
+    enum: ["drink", "food"],
+  };
+  const result = convert(schema);
+  t.deepEqual(result, `string, The type of order. (one of: "drink", "food")`);
+});
