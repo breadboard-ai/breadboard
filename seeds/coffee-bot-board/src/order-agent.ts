@@ -24,11 +24,7 @@ const prologuePrompt = kit
   )
   .wire("<-tools.", board.passthrough(await maker.part("tools", "json")));
 
-const schemaText = await maker.loader.load("order-schema", "json");
-const schema = board.passthrough({
-  $id: "schema",
-  schema: JSON.parse(schemaText),
-});
+const schema = board.passthrough(await maker.jsonPart("order-schema"));
 
 const epiloguePrompt = kit.promptTemplate(
   ...(await maker.prompt("order-agent-epilogue", "orderAgentEpilogue"))

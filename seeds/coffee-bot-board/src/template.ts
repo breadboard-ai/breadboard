@@ -42,6 +42,11 @@ export class PromptMaker {
     const text = await this.loader.load(name, extension);
     return { [name]: text, $id: name };
   }
+
+  async jsonPart(name: string) {
+    const text = await this.loader.load(name, "json");
+    return { [name]: JSON.parse(text), $id: name };
+  }
 }
 
 /**
