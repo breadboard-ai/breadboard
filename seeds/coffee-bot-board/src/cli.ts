@@ -30,9 +30,8 @@ export const run = async (board: Board, slots?: BreadboardSlotSpec) => {
 
   const show = (id: string, outputs: Record<string, NodeValue>) => {
     const { bot, error } = outputs;
-    log.info(`output: ${id}`);
     if (error) log.error(stringify(error));
-    else log.success(stringify(bot));
+    else log.success(`${id}: ${stringify(bot)}`);
   };
 
   try {
