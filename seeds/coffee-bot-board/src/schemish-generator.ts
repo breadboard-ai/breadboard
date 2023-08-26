@@ -46,6 +46,7 @@ schema.wire("schema->", validateJson);
 
 const generator = kit
   .generateText({
+    $id: "generator",
     stopSequences: ["Tool:", "Customer:", "\n\n"],
     safetySettings: [
       {

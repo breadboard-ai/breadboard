@@ -72,8 +72,8 @@ test("schemish-generator with invalid JSON", async (t) => {
 
   const debugProbe = new DebugProbe();
 
-  debugProbe.addInputPin("validate-json", "json", (_) => {
-    return '{ "type": "automobile" }';
+  debugProbe.replaceNode("generator", (_inputs) => {
+    return { completion: '{ "type": "automobile"}' };
   });
 
   const outputs = await schemishGenerator.runOnce(inputs, debugProbe);
