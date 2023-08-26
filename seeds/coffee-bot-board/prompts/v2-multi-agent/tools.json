@@ -1,8 +1,8 @@
 [
   {
     "name": "checkMenu",
-    "description": "Check to see if the item requested match items on the menu",
-    "input": "Name of the item that the customer requested"
+    "description": "Check to see if the item, option, or extra requested match items on the menu",
+    "input": "Name of the item, option, or extra that the customer requested"
   },
   {
     "name": "summarizeMenu",

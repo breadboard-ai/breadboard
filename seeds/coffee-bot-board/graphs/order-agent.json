@@ -228,7 +228,7 @@
       "id": "tools",
       "type": "passthrough",
       "configuration": {
-        "tools": "[\n  {\n    \"name\": \"checkMenu\",\n    \"description\": \"Check to see if the item requested match items on the menu\",\n    \"input\": \"Name of the item that the customer requested\"\n  },\n  {\n    \"name\": \"summarizeMenu\",\n    \"description\": \"Get a summary of what is on the menu\",\n    \"input\": \"Any sort of additional hint that might help with the summary\"\n  },\n  {\n    \"name\": \"finalizeOrder\",\n    \"description\": \"Finalize the order and send it for fulfillment\",\n    \"input\": \"none\"\n  },\n  {\n    \"name\": \"customer\",\n    \"description\": \"Interact with the customer to continue assisting with the order\",\n    \"input\": \"the message to send to the customer\"\n  }\n]\n"
+        "tools": "[\n  {\n    \"name\": \"checkMenu\",\n    \"description\": \"Check to see if the item, option, or extra requested match items on the menu\",\n    \"input\": \"Name of the item, option, or extra that the customer requested\"\n  },\n  {\n    \"name\": \"summarizeMenu\",\n    \"description\": \"Get a summary of what is on the menu\",\n    \"input\": \"Any sort of additional hint that might help with the summary\"\n  },\n  {\n    \"name\": \"finalizeOrder\",\n    \"description\": \"Finalize the order and send it for fulfillment\",\n    \"input\": \"none\"\n  },\n  {\n    \"name\": \"customer\",\n    \"description\": \"Interact with the customer to continue assisting with the order\",\n    \"input\": \"the message to send to the customer\"\n  }\n]\n"
       }
     },
     {
