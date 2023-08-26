@@ -33,7 +33,8 @@ toolRouter["runJavascript <br> id='toolRouter'"] -- "finalizeOrder->finalizeOrde
 firstaskcustomer[/"input <br> id='first-ask-customer'"/]:::input -- "customer->Customer" --> customerMemory["append <br> id='customerMemory'"]
 orderAgentPrologue["promptTemplate <br> id='orderAgentPrologue'"] -- "prompt->prologue" --o generator[["include <br> id='generator'"]]:::include
 orderAgentEpilogue["promptTemplate <br> id='orderAgentEpilogue'"] -- "prompt->epilogue" --o generator[["include <br> id='generator'"]]:::include
-orderschema(("passthrough <br> id='order-schema'")):::passthrough -- "schema->schema" --o generator[["include <br> id='generator'"]]:::include
+orderschema(("passthrough <br> id='order-schema'")):::passthrough -- "order-schema->schema" --o generator[["include <br> id='generator'"]]:::include
+passthrough11(("passthrough <br> id='passthrough-11'")):::passthrough -- "recover->recover" --o generator[["include <br> id='generator'"]]:::include
 generator[["include <br> id='generator'"]]:::include -- "completion->completion" --> toolRouter["runJavascript <br> id='toolRouter'"]
 generator[["include <br> id='generator'"]]:::include -- "completion->Agent" --> agentMemory["append <br> id='agentMemory'"]
 generator[["include <br> id='generator'"]]:::include -- "error->error" --> error{{"output <br> id='error'"}}:::output
@@ -51,6 +52,7 @@ nametoolRouter[name]:::config -- "name->name" --o toolRouter
 codetoolRouter[code]:::config -- "code->code" --o toolRouter
 rawtoolRouter[raw]:::config -- "raw->raw" --o toolRouter
 graphgenerator[graph]:::config -- "graph->graph" --o generator
+recoverpassthrough11[recover]:::config -- "recover->recover" --o passthrough11
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

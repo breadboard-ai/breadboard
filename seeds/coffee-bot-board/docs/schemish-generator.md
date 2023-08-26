@@ -3,20 +3,29 @@
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-input1[/"input <br> id='input-1'"/]:::input -- "prologue->prologue" --> prologue(("passthrough <br> id='prologue'")):::passthrough
-input1[/"input <br> id='input-1'"/]:::input -- "epilogue->epilogue" --> epilogue(("passthrough <br> id='epilogue'")):::passthrough
-input1[/"input <br> id='input-1'"/]:::input -- "schema->schema" --> schema(("passthrough <br> id='schema'")):::passthrough
+input1[/"input <br> id='input-1'"/]:::input -- "prologue->prologue" --o prologue(("passthrough <br> id='prologue'")):::passthrough
+input1[/"input <br> id='input-1'"/]:::input -- "epilogue->epilogue" --o epilogue(("passthrough <br> id='epilogue'")):::passthrough
+input1[/"input <br> id='input-1'"/]:::input -- "schema->schema" --o schema(("passthrough <br> id='schema'")):::passthrough
+input1[/"input <br> id='input-1'"/]:::input -- "recover->allow" --o shouldRecover["runJavascript <br> id='shouldRecover'"]
+shouldRecover["runJavascript <br> id='shouldRecover'"] -- "value->value" --> willRecover(("passthrough <br> id='willRecover'")):::passthrough
+shouldRecover["runJavascript <br> id='shouldRecover'"] -- "error->error" --> error{{"output <br> id='error'"}}:::output
+willRecover(("passthrough <br> id='willRecover'")):::passthrough --> prologue(("passthrough <br> id='prologue'")):::passthrough
+willRecover(("passthrough <br> id='willRecover'")):::passthrough --> epilogue(("passthrough <br> id='epilogue'")):::passthrough
+willRecover(("passthrough <br> id='willRecover'")):::passthrough --> schema(("passthrough <br> id='schema'")):::passthrough
 schema(("passthrough <br> id='schema'")):::passthrough -- "schema->schema" --> schemish["schemish <br> id='schemish'"]
-validatejson["validateJson <br> id='validate-json'"] -- "json->completion" --> completion{{"output <br> id='completion'"}}:::output
-validatejson["validateJson <br> id='validate-json'"] -- "error->error" --> error{{"output <br> id='error'"}}:::output
 schema(("passthrough <br> id='schema'")):::passthrough -- "schema->schema" --> validatejson["validateJson <br> id='validate-json'"]
+validatejson["validateJson <br> id='validate-json'"] -- "json->completion" --> completion{{"output <br> id='completion'"}}:::output
+validatejson["validateJson <br> id='validate-json'"] -- "error->value" --> shouldRecover["runJavascript <br> id='shouldRecover'"]
 secrets2("secrets <br> id='secrets-2'"):::secrets -- "PALM_KEY->PALM_KEY" --o generator["generateText <br> id='generator'"]
 generator["generateText <br> id='generator'"] -- "completion->json" --> validatejson["validateJson <br> id='validate-json'"]
-generator["generateText <br> id='generator'"] -- "filters->error" --> error{{"output <br> id='error'"}}:::output
+generator["generateText <br> id='generator'"] -- "filters->value" --> shouldRecover["runJavascript <br> id='shouldRecover'"]
 prologue(("passthrough <br> id='prologue'")):::passthrough -- "prologue->prologue" --> schemishGenerator["promptTemplate <br> id='schemishGenerator'"]
 epilogue(("passthrough <br> id='epilogue'")):::passthrough -- "epilogue->epilogue" --> schemishGenerator["promptTemplate <br> id='schemishGenerator'"]
 schemish["schemish <br> id='schemish'"] -- "schemish->schemish" --> schemishGenerator["promptTemplate <br> id='schemishGenerator'"]
 schemishGenerator["promptTemplate <br> id='schemishGenerator'"] -- "prompt->text" --> generator["generateText <br> id='generator'"]
+nameshouldRecover[name]:::config -- "name->name" --o shouldRecover
+codeshouldRecover[code]:::config -- "code->code" --o shouldRecover
+rawshouldRecover[raw]:::config -- "raw->raw" --o shouldRecover
 stopSequencesgenerator[stopSequences]:::config -- "stopSequences->stopSequences" --o generator
 safetySettingsgenerator[safetySettings]:::config -- "safetySettings->safetySettings" --o generator
 keyssecrets2[keys]:::config -- "keys->keys" --o secrets2

@@ -112,7 +112,8 @@ board
   .include(schemishGenerator, { $id: "generator" })
   .wire("prologue<-prompt.", prologuePrompt)
   .wire("epilogue<-prompt.", epiloguePrompt)
-  .wire("<-schema.", schema)
+  .wire("schema<-order-schema.", schema)
+  .wire("<-recover.", board.passthrough({ recover: true }))
   .wire("completion->", toolRouter)
   .wire("completion->Agent", agentMemory)
   .wire("error->", board.output({ $id: "error" }));

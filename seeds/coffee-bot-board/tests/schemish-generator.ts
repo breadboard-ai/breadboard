@@ -91,6 +91,7 @@ test("schemish-generator with unparseable JSON", async (t) => {
     prologue:
       "You are the ordering agent and your job is to listen to the customer and record their order in a specified format.",
     epilogue: "Begin!\nCustomer: I'd like to order a chai latte",
+    recover: false,
     schema: {
       type: "object",
       properties: {
@@ -106,16 +107,62 @@ test("schemish-generator with unparseable JSON", async (t) => {
 
   const debugProbe = new DebugProbe();
 
+  let count = 0;
+
   debugProbe.replaceNode("generator", (_inputs) => {
-    return { completion: '{ type: "automobile"}' };
+    count++;
+    if (count > 2) return { completion: '{ "type": "drink" }' };
+    return { completion: '{ type: "drink"}' };
   });
 
   const outputs = await schemishGenerator.runOnce(inputs, debugProbe);
 
+  t.is(count, 1);
   t.deepEqual(outputs, {
     error: {
       message: "Expected property name or '}' in JSON at position 2",
       type: "parsing",
+    },
+  });
+});
+
+test("schemish-generator with unparseable JSON and recovery", async (t) => {
+  if (noPalmKey(t)) return;
+
+  const inputs = {
+    prologue:
+      "You are the ordering agent and your job is to listen to the customer and record their order in a specified format.",
+    epilogue: "Begin!\nCustomer: I'd like to order a chai latte",
+    recover: true,
+    schema: {
+      type: "object",
+      properties: {
+        type: {
+          type: "string",
+          description: "The type of order.",
+          enum: ["drink", "food"],
+        },
+      },
+      required: ["type"],
+    },
+  };
+
+  const debugProbe = new DebugProbe();
+
+  let count = 0;
+
+  debugProbe.replaceNode("generator", (_inputs) => {
+    count++;
+    if (count > 2) return { completion: '{ "type": "drink" }' };
+    return { completion: '{ type: "drink"}' };
+  });
+
+  const outputs = await schemishGenerator.runOnce(inputs, debugProbe);
+
+  t.is(count, 3);
+  t.deepEqual(outputs, {
+    completion: {
+      type: "drink",
     },
   });
 });
@@ -127,6 +174,7 @@ test("schemish-generator with invalid JSON", async (t) => {
     prologue:
       "You are the ordering agent and your job is to listen to the customer and record their order in a specified format.",
     epilogue: "Begin!\nCustomer: I'd like to order a chai latte",
+    recover: false,
     schema: {
       type: "object",
       properties: {
@@ -142,16 +190,62 @@ test("schemish-generator with invalid JSON", async (t) => {
 
   const debugProbe = new DebugProbe();
 
+  let count = 0;
+
   debugProbe.replaceNode("generator", (_inputs) => {
+    count++;
+    if (count > 2) return { completion: '{ "type": "drink" }' };
     return { completion: '{ "type": "automobile"}' };
   });
 
   const outputs = await schemishGenerator.runOnce(inputs, debugProbe);
 
+  t.is(count, 1);
   t.deepEqual(outputs, {
     error: {
       message: "0: instance.type is not one of enum values: drink,food\n",
       type: "validation",
+    },
+  });
+});
+
+test("schemish-generator with invalid JSON and recovery", async (t) => {
+  if (noPalmKey(t)) return;
+
+  const inputs = {
+    prologue:
+      "You are the ordering agent and your job is to listen to the customer and record their order in a specified format.",
+    epilogue: "Begin!\nCustomer: I'd like to order a chai latte",
+    recover: true,
+    schema: {
+      type: "object",
+      properties: {
+        type: {
+          type: "string",
+          description: "The type of order.",
+          enum: ["drink", "food"],
+        },
+      },
+      required: ["type"],
+    },
+  };
+
+  const debugProbe = new DebugProbe();
+
+  let count = 0;
+
+  debugProbe.replaceNode("generator", (_inputs) => {
+    count++;
+    if (count > 2) return { completion: '{ "type": "drink" }' };
+    return { completion: '{ "type": "automobile"}' };
+  });
+
+  const outputs = await schemishGenerator.runOnce(inputs, debugProbe);
+
+  t.is(count, 3);
+  t.deepEqual(outputs, {
+    completion: {
+      type: "drink",
     },
   });
 });

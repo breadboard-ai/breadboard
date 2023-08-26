@@ -187,8 +187,15 @@
       "from": "order-schema",
       "to": "generator",
       "constant": true,
-      "out": "schema",
+      "out": "order-schema",
       "in": "schema"
+    },
+    {
+      "from": "passthrough-11",
+      "to": "generator",
+      "constant": true,
+      "out": "recover",
+      "in": "recover"
     },
     {
       "from": "generator",
@@ -426,24 +433,64 @@
             {
               "from": "input-1",
               "to": "prologue",
+              "constant": true,
               "out": "prologue",
               "in": "prologue"
             },
             {
               "from": "input-1",
               "to": "epilogue",
+              "constant": true,
               "out": "epilogue",
               "in": "epilogue"
             },
             {
               "from": "input-1",
               "to": "schema",
+              "constant": true,
+              "out": "schema",
+              "in": "schema"
+            },
+            {
+              "from": "input-1",
+              "to": "shouldRecover",
+              "constant": true,
+              "out": "recover",
+              "in": "allow"
+            },
+            {
+              "from": "shouldRecover",
+              "to": "willRecover",
+              "out": "value",
+              "in": "value"
+            },
+            {
+              "from": "shouldRecover",
+              "to": "error",
+              "out": "error",
+              "in": "error"
+            },
+            {
+              "from": "willRecover",
+              "to": "prologue"
+            },
+            {
+              "from": "willRecover",
+              "to": "epilogue"
+            },
+            {
+              "from": "willRecover",
+              "to": "schema"
+            },
+            {
+              "from": "schema",
+              "to": "schemish",
               "out": "schema",
               "in": "schema"
             },
             {
               "from": "schema",
-              "to": "schemish",
+              "to": "validate-json",
               "out": "schema",
               "in": "schema"
             },
@@ -455,15 +502,9 @@
             },
             {
               "from": "validate-json",
-              "to": "error",
+              "to": "shouldRecover",
               "out": "error",
-              "in": "error"
-            },
-            {
-              "from": "schema",
-              "to": "validate-json",
-              "out": "schema",
-              "in": "schema"
+              "in": "value"
             },
             {
               "from": "secrets-2",
@@ -480,9 +521,9 @@
             },
             {
               "from": "generator",
-              "to": "error",
+              "to": "shouldRecover",
               "out": "filters",
-              "in": "error"
+              "in": "value"
             },
             {
               "from": "prologue",
@@ -520,6 +561,19 @@
             },
             {
               "id": "schema",
+              "type": "passthrough"
+            },
+            {
+              "id": "shouldRecover",
+              "type": "runJavascript",
+              "configuration": {
+                "name": "gate",
+                "code": "function gate({ allow, value }) {\n    if (allow)\n        return { value };\n    return { error: value };\n}",
+                "raw": true
+              }
+            },
+            {
+              "id": "willRecover",
               "type": "passthrough"
             },
             {
@@ -585,6 +639,13 @@
             }
           ]
         }
+      }
+    },
+    {
+      "id": "passthrough-11",
+      "type": "passthrough",
+      "configuration": {
+        "recover": true
       }
     },
     {
