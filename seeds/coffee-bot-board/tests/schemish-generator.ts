@@ -21,7 +21,7 @@ const noPalmKey = (t: ExecutionContext) => {
   return true;
 };
 
-test("schemish-generator end-to-end", async (t) => {
+test.skip("schemish-generator end-to-end", async (t) => {
   if (noPalmKey(t)) return;
 
   const inputs = {
@@ -46,6 +46,40 @@ test("schemish-generator end-to-end", async (t) => {
   };
 
   const outputs = await schemishGenerator.runOnce(inputs);
+
+  t.deepEqual(outputs, { completion: { type: "drink", order: "chai latte" } });
+});
+
+test("schemish-generator valid", async (t) => {
+  if (noPalmKey(t)) return;
+
+  const inputs = {
+    prologue: "not interesting, since we're replacing the generator",
+    epilogue: "same",
+    schema: {
+      type: "object",
+      properties: {
+        type: {
+          type: "string",
+          description: "The type of order.",
+          enum: ["drink", "food"],
+        },
+        order: {
+          type: "string",
+          description: "The current order of a customer.",
+        },
+      },
+      required: ["type", "order"],
+    },
+  };
+
+  const debugProbe = new DebugProbe();
+
+  debugProbe.replaceNode("generator", (_inputs) => {
+    return { completion: '{ "type": "drink", "order": "chai latte"}' };
+  });
+
+  const outputs = await schemishGenerator.runOnce(inputs, debugProbe);
 
   t.deepEqual(outputs, { completion: { type: "drink", order: "chai latte" } });
 });
