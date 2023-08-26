@@ -184,7 +184,7 @@
       "in": "epilogue"
     },
     {
-      "from": "schema",
+      "from": "order-schema",
       "to": "generator",
       "constant": true,
       "out": "schema",
@@ -225,10 +225,10 @@
       }
     },
     {
-      "id": "schema",
+      "id": "order-schema",
       "type": "passthrough",
       "configuration": {
-        "schema": {
+        "order-schema": {
           "$schema": "https://json-schema.org/draft-07/schema",
           "title": "Menu Order Schema",
           "type": "object",
@@ -466,20 +466,20 @@
               "in": "schema"
             },
             {
-              "from": "secrets-3",
-              "to": "generateText-2",
+              "from": "secrets-2",
+              "to": "generator",
               "constant": true,
               "out": "PALM_KEY",
               "in": "PALM_KEY"
             },
             {
-              "from": "generateText-2",
+              "from": "generator",
               "to": "validate-json",
               "out": "completion",
               "in": "json"
             },
             {
-              "from": "generateText-2",
+              "from": "generator",
               "to": "error",
               "out": "filters",
               "in": "error"
@@ -504,7 +504,7 @@
             },
             {
               "from": "schemishGenerator",
-              "to": "generateText-2",
+              "to": "generator",
               "out": "prompt",
               "in": "text"
             }
@@ -543,7 +543,7 @@
               "type": "validateJson"
             },
             {
-              "id": "generateText-2",
+              "id": "generator",
               "type": "generateText",
               "configuration": {
                 "stopSequences": [
@@ -560,7 +560,7 @@
               }
             },
             {
-              "id": "secrets-3",
+              "id": "secrets-2",
               "type": "secrets",
               "configuration": {
                 "keys": [

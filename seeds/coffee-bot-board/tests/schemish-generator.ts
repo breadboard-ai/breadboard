@@ -84,6 +84,42 @@ test("schemish-generator valid", async (t) => {
   t.deepEqual(outputs, { completion: { type: "drink", order: "chai latte" } });
 });
 
+test("schemish-generator with unparseable JSON", async (t) => {
+  if (noPalmKey(t)) return;
+
+  const inputs = {
+    prologue:
+      "You are the ordering agent and your job is to listen to the customer and record their order in a specified format.",
+    epilogue: "Begin!\nCustomer: I'd like to order a chai latte",
+    schema: {
+      type: "object",
+      properties: {
+        type: {
+          type: "string",
+          description: "The type of order.",
+          enum: ["drink", "food"],
+        },
+      },
+      required: ["type"],
+    },
+  };
+
+  const debugProbe = new DebugProbe();
+
+  debugProbe.replaceNode("generator", (_inputs) => {
+    return { completion: '{ type: "automobile"}' };
+  });
+
+  const outputs = await schemishGenerator.runOnce(inputs, debugProbe);
+
+  t.deepEqual(outputs, {
+    error: {
+      message: "Expected property name or '}' in JSON at position 2",
+      type: "parsing",
+    },
+  });
+});
+
 test("schemish-generator with invalid JSON", async (t) => {
   if (noPalmKey(t)) return;
 

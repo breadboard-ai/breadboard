@@ -33,13 +33,13 @@ toolRouter["runJavascript <br> id='toolRouter'"] -- "finalizeOrder->finalizeOrde
 firstaskcustomer[/"input <br> id='first-ask-customer'"/]:::input -- "customer->Customer" --> customerMemory["append <br> id='customerMemory'"]
 orderAgentPrologue["promptTemplate <br> id='orderAgentPrologue'"] -- "prompt->prologue" --o generator[["include <br> id='generator'"]]:::include
 orderAgentEpilogue["promptTemplate <br> id='orderAgentEpilogue'"] -- "prompt->epilogue" --o generator[["include <br> id='generator'"]]:::include
-schema(("passthrough <br> id='schema'")):::passthrough -- "schema->schema" --o generator[["include <br> id='generator'"]]:::include
+orderschema(("passthrough <br> id='order-schema'")):::passthrough -- "schema->schema" --o generator[["include <br> id='generator'"]]:::include
 generator[["include <br> id='generator'"]]:::include -- "completion->completion" --> toolRouter["runJavascript <br> id='toolRouter'"]
 generator[["include <br> id='generator'"]]:::include -- "completion->Agent" --> agentMemory["append <br> id='agentMemory'"]
 generator[["include <br> id='generator'"]]:::include -- "error->error" --> error{{"output <br> id='error'"}}:::output
 templateorderAgentPrologue[template]:::config -- "template->template" --o orderAgentPrologue
 toolstools[tools]:::config -- "tools->tools" --o tools
-schemaschema[schema]:::config -- "schema->schema" --o schema
+orderschemaorderschema[order-schema]:::config -- "order-schema->order-schema" --o orderschema
 templateorderAgentEpilogue[template]:::config -- "template->template" --o orderAgentEpilogue
 accumulatorpassthrough1[accumulator]:::config -- "accumulator->accumulator" --o passthrough1
 expressionjsonata3[expression]:::config -- "expression->expression" --o jsonata3

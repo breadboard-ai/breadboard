@@ -37,12 +37,15 @@ board
   .wire("epilogue->", epilogue)
   .wire("schema->", schema);
 
-const convertToSchemish = nursery.schemish({ $id: "schemish" });
-schema.wire("schema->", convertToSchemish);
+const convertToSchemish = nursery
+  .schemish({ $id: "schemish" })
+  .wire("<-schema", schema);
 
-const validateJson = nursery.validateJson({ $id: "validate-json" });
-validateJson.wire("json->completion", $completion).wire("error->", $error);
-schema.wire("schema->", validateJson);
+const validateJson = nursery
+  .validateJson({ $id: "validate-json" })
+  .wire("json->completion", $completion)
+  .wire("error->", $error)
+  .wire("<-schema", schema);
 
 const generator = kit
   .generateText({
@@ -59,12 +62,11 @@ const generator = kit
   .wire("completion->json", validateJson)
   .wire("filters->error", $error);
 
-const prompt = kit
+kit
   .promptTemplate(...template)
   .wire("<-prologue", prologue)
   .wire("<-epilogue", epilogue)
-  .wire("<-schemish", convertToSchemish);
-
-prompt.wire("prompt->text", generator);
+  .wire("<-schemish", convertToSchemish)
+  .wire("prompt->text", generator);
 
 export const schemishGenerator = board;
