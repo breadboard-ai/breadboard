@@ -61,7 +61,7 @@ export class DebugProbe extends EventTarget {
    * @param debugPin - the pin function. It takes in the input value as its
    * only argument and returns a new value or undefined.
    */
-  addInputPin(nodeId: string, inputName: string, debugPin: DebugPin) {
+  watchInput(nodeId: string, inputName: string, debugPin: DebugPin) {
     this.#getInputPins(nodeId).set(inputName, debugPin);
   }
 
