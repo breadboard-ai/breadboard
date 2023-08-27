@@ -3,15 +3,11 @@
   "private": true,
   "version": "0.0.1",
   "description": "Experimenting with Breadboard and Cloud Functions",
-  "main": "./dist/src/index.js",
-  "exports": "./dist/src/index.js",
-  "types": "dist/src/index.d.ts",
+  "main": "./src/index.js",
   "type": "module",
   "scripts": {
     "deploy": "./scripts/deploy.sh",
-    "test": "FORCE_COLOR=1 ava",
-    "build": "FORCE_COLOR=1 tsc --b",
-    "watch": "FORCE_COLOR=1 tsc --b --watch"
+    "test": "FORCE_COLOR=1 ava"
   },
   "repository": {
     "type": "git",
@@ -40,14 +36,12 @@
   },
   "homepage": "https://github.com/google/labs-prototypes#readme",
   "devDependencies": {
-    "@ava/typescript": "^4.0.0",
-    "@types/node": "^18.16.3",
-    "@typescript-eslint/eslint-plugin": "^5.56.0",
-    "@typescript-eslint/parser": "^5.56.0",
-    "ava": "^5.2.0",
-    "typescript": "^5.0.4"
+    "ava": "^5.2.0"
   },
   "dependencies": {
-    "@google-cloud/functions-framework": "^3.3.0"
+    "@google-cloud/functions-framework": "^3.3.0",
+    "@google-labs/breadboard": "0.1.1",
+    "@google-labs/llm-starter": "0.1.0",
+    "dotenv": "^16.3.1"
   }
 }

@@ -11,7 +11,6 @@
     { "path": "seeds/llm-starter" },
     { "path": "seeds/node-nursery" },
     { "path": "seeds/coffee-bot-board" },
-    { "path": "seeds/web-demo" },
-    { "path": "seeeds/cloud-function" }
+    { "path": "seeds/web-demo" }
   ]
 }
