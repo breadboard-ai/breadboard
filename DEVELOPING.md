@@ -44,21 +44,7 @@ After cloning the repo:
 npm i
 ```
 
-:two: Install Turborepo:
-
-```bash
-npm i -g turbo
-```
-
-If you would prefer not to install `turbo` globally on your machine, you can also invoke it via `npx`. Just don't forget to prefix every turbo command with `npx `.
-
-:three: build the project:
-
-```bash
-turbo build
-```
-
-or, using `npx`:
+:two: build the project:
 
 ```bash
 npx turbo build
@@ -89,7 +75,7 @@ cp -rf templates/blank seeds/awesome-ai-game
 }
 ```
 
-:four: Verify that you have the right setup. Run `npm i` and `turbo build` and make sure that the new package shows up in the build log. Then try to run it:
+:four: Verify that you have the right setup. Run `npm i` and `npx turbo build` and make sure that the new package shows up in the build log. Then try to run it:
 
 ```bash
 cd seeds/awesome-ai-game
@@ -106,21 +92,21 @@ The new package is configured as a private package by default. If you would like
 
 If everything is set up well, you will spend most of your time tinkering inside of your package.
 
-We recommend opening [VSCode](https://code.visualstudio.com/) in the package directory to reduce the amount of clutter. When you run `turbo` inside of your package directory, it will automatically scope the build to only dependencies in your package.
+We recommend opening [VSCode](https://code.visualstudio.com/) in the package directory to reduce the amount of clutter. When you run `npx turbo` inside of your package directory, it will automatically scope the build to only dependencies in your package.
 
 To build your package:
 
 ```bash
-turbo build
+npx turbo build
 ```
 
 To test your package:
 
 ```bash
-turbo test
+npx turbo test
 ```
 
-You can add more commands to `package.json` and invoke them either using `turbo <command>` or if you don't want to use `turbo`, you can get the same results (with more typing and checking) by using `npm` directly.
+You can add more commands to `package.json` and invoke them either using `npx turbo <command>` or if you don't want to use `npx turbo`, you can get the same results (with more typing and checking) by using `npm` directly.
 
 To add a new dependency for your package, just run `npm i <package-name>` in your package working directory.
 
