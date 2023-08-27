@@ -8,6 +8,7 @@
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
+    "deploy": "./scripts/deploy.sh",
     "test": "FORCE_COLOR=1 ava",
     "build": "FORCE_COLOR=1 tsc --b",
     "watch": "FORCE_COLOR=1 tsc --b --watch"
@@ -40,11 +41,13 @@
   "homepage": "https://github.com/google/labs-prototypes#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
+    "@types/node": "^18.16.3",
     "@typescript-eslint/eslint-plugin": "^5.56.0",
     "@typescript-eslint/parser": "^5.56.0",
-    "@types/node": "^18.16.3",
     "ava": "^5.2.0",
-    "typescript": "^5.0.4",
-    "@google-labs/tsconfig": "*"
+    "typescript": "^5.0.4"
+  },
+  "dependencies": {
+    "@google-cloud/functions-framework": "^3.3.0"
   }
 }
