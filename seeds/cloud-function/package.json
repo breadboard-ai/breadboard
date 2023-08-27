@@ -7,6 +7,7 @@
   "type": "module",
   "scripts": {
     "deploy": "./scripts/deploy.sh",
+    "start": "functions-framework --target=math",
     "test": "FORCE_COLOR=1 ava"
   },
   "repository": {

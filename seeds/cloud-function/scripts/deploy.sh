@@ -7,4 +7,5 @@ gcloud functions deploy math \
 --source=. \
 --entry-point=math \
 --trigger-http \
---allow-unauthenticated
+--allow-unauthenticated \
+--set-secrets 'PALM_KEY=PALM_KEY:latest'
