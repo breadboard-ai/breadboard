@@ -26,6 +26,9 @@
     },
     {
       "path": "seeds/web-demo"
+    },
+    {
+      "path": "seeds/cloud-function"
     }
   ],
   "settings": {}
