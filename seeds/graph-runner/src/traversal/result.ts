@@ -10,24 +10,28 @@ import type {
   NodeDescriptor,
   OutputValues,
 } from "../types.js";
+import { TraversalState } from "./state.js";
 
 export class MachineResult {
   descriptor: NodeDescriptor;
   inputs: InputValues;
   missingInputs: string[];
   newOpportunities: Edge[];
+  state: TraversalState;
   outputs?: OutputValues;
 
   constructor(
     descriptor: NodeDescriptor,
     inputs: InputValues,
     missingInputs: string[],
-    newOpportunities: Edge[]
+    newOpportunities: Edge[],
+    state?: TraversalState
   ) {
     this.descriptor = descriptor;
     this.inputs = inputs;
     this.missingInputs = missingInputs;
     this.newOpportunities = newOpportunities;
+    this.state = state ?? new TraversalState();
   }
 
   /**

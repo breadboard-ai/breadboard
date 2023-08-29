@@ -94,7 +94,8 @@ export class TraversalMachine
       currentDescriptor,
       inputsWithConfiguration,
       missingInputs,
-      newOpportunities
+      newOpportunities,
+      this.state
     );
     return this;
   }
