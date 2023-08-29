@@ -12,7 +12,8 @@
     "prepare-graphs": "turbo build && node scripts/prepare.js",
     "build": "FORCE_COLOR=1 tsc --b",
     "watch": "FORCE_COLOR=1 tsc --b --watch",
-    "dev": "turbo build && node --enable-source-maps ."
+    "dev": "turbo build && node --enable-source-maps .",
+    "lint": "FORCE_COLOR=1 eslint . --ext .ts"
   },
   "repository": {
     "type": "git",

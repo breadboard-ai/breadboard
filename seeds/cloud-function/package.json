@@ -19,15 +19,9 @@
   ],
   "ava": {
     "files": [
-      "tests/**/*.ts"
+      "tests/**/*.js"
     ],
-    "workerThreads": false,
-    "typescript": {
-      "rewritePaths": {
-        "./": "dist/"
-      },
-      "compile": false
-    }
+    "workerThreads": false
   },
   "keywords": [],
   "author": "Google Labs Team",

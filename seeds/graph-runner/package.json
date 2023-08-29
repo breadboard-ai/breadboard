@@ -10,6 +10,7 @@
     "test": "FORCE_COLOR=1 ava",
     "build": "FORCE_COLOR=1 tsc --b",
     "watch": "FORCE_COLOR=1 tsc --b --watch",
+    "lint": "FORCE_COLOR=1 eslint . --ext .ts",
     "merm": "npm run build && node scripts/make-graphs.js"
   },
   "repository": {

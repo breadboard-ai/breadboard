@@ -11,7 +11,8 @@
     "dev": "turbo build && node . --enable-source-maps",
     "test": "FORCE_COLOR=1 ava",
     "build": "FORCE_COLOR=1 tsc --b",
-    "watch": "FORCE_COLOR=1 tsc --b --watch"
+    "watch": "FORCE_COLOR=1 tsc --b --watch",
+    "lint": "FORCE_COLOR=1 eslint . --ext .ts"
   },
   "repository": {
     "type": "git",

@@ -4,9 +4,13 @@
   "description": "Google Labs repo for rapid prototyping",
   "type": "module",
   "scripts": {
-    "test": "echo use 'turbo test' instead",
+    "test": "turbo test",
     "build": "turbo build",
-    "clean": "rimraf -g seeds/*/dist seeds/*/.turbo"
+    "lint": "turbo lint",
+    "clean:build": "rimraf -g seeds/*/dist seeds/*/.turbo",
+    "ci": "npm ci",
+    "check:format": "prettier --check --config .prettierrc seeds/**/*.ts",
+    "ci:local": "npm run clean:build && turbo build && turbo lint && npm run check:format && turbo test"
   },
   "keywords": [],
   "author": "Google Labs Team",
@@ -17,6 +21,7 @@
     "@typescript-eslint/parser": "^5.56.0",
     "ava": "^5.2.0",
     "eslint": "^8.36.0",
+    "npm-ci": "^0.0.2",
     "rimraf": "^5.0.1",
     "turbo": "^1.10.13",
     "typescript": "^5.0.4"

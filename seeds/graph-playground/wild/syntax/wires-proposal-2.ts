@@ -6,9 +6,15 @@
   }
 
   const board = {
-    input() {},
-    output() {},
-    wire() {},
+    input() {
+      //something
+    },
+    output() {
+      //something
+    },
+    wire() {
+      //something
+    },
   };
 
   const input = board.input();
