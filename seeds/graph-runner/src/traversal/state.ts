@@ -15,8 +15,8 @@ import { Edge, EdgeMap, NodeIdentifier, OutputValues } from "../types.js";
 type StateMap = Map<string, Map<string, OutputValues>>;
 
 export class TraversalState {
-  #state: StateMap = new Map();
-  #constants: StateMap = new Map();
+  state: StateMap = new Map();
+  constants: StateMap = new Map();
 
   #splitOutConstants(edges: Edge[]): [Edge[], Edge[]] {
     const constants: Edge[] = [];
@@ -44,18 +44,49 @@ export class TraversalState {
     // 1. Clear entries for the current node.
     // Notice, we're not clearing the "constants" entries. Those are basically
     // there forever -- or until the edge is traversed again.
-    this.#state.delete(node);
+    this.state.delete(node);
     if (!outputs) outputs = {};
     const [constants, state] = this.#splitOutConstants(opportunities);
     // 2. Add entries for each opportunity.
-    this.#addToState(this.#state, state, outputs);
-    this.#addToState(this.#constants, constants, outputs);
+    this.#addToState(this.state, state, outputs);
+    this.#addToState(this.constants, constants, outputs);
   }
 
   getAvailableOutputs(node: NodeIdentifier) {
-    const constantEdges: EdgeMap = this.#constants.get(node) || new Map();
-    const stateEdges: EdgeMap = this.#state.get(node) || new Map();
+    const constantEdges: EdgeMap = this.constants.get(node) || new Map();
+    const stateEdges: EdgeMap = this.state.get(node) || new Map();
     const result: EdgeMap = new Map([...constantEdges, ...stateEdges]);
     return result;
+  }
+
+  static replacer(key: string, value: unknown) {
+    if (!(value instanceof Map)) return value;
+
+    return {
+      $type: "Map",
+      value: Array.from(value.entries()),
+    };
+  }
+
+  static reviver(
+    key: string,
+    value: unknown & {
+      $type?: string;
+      value: Iterable<readonly [string, unknown]>;
+    }
+  ) {
+    const { $type } = (value || {}) as { $type?: string };
+    return $type == "Map" && value.value
+      ? new Map<string, unknown>(value.value)
+      : value;
+  }
+
+  serialize(): string {
+    return JSON.stringify(this, TraversalState.replacer);
+  }
+
+  static deserialize(json: string): TraversalState {
+    const data = JSON.parse(json, TraversalState.reviver);
+    return Object.assign(new TraversalState(), data);
   }
 }
