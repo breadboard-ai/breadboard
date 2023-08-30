@@ -146,3 +146,62 @@ doesn't comply with the license.)
  * SPDX-License-Identifier: Apache-2.0
  */
 ```
+
+## TypeScript Developer Happy Path
+
+This section describes that I ([dglazkov](https://github.com/dglazkov)) use and it's probably what will give you the most comfortable developer experience in this repo.
+
+### VSCode
+
+Get [VSCode](https://code.visualstudio.com/). There are tons of other editors, but VSCode has likely the most seamless TypeScript integration.
+
+Install “ESLint” and “Prettier” extensions. TypeScript support is built-in by default.
+
+- “ESLint” – provides live commentary on the quality of your code.
+- “Prettier” – will make your code look pretty automatically.
+
+If you are playing with graphs, install the “Markdown Preview Mermaid Support” extension.
+
+(Optional) Install Fira Code (the font you’re reading right now)
+
+Tweak the settings to your liking. The most important one is to format-on-save, so that you never need to worry about formatting TypeScript ever again. Here is what I have:
+
+```
+"editor.rulers": [80] <-- Draws a nice ruler at 80 columns
+"editor.fontFamily": "Fira Code", <-- Fira Code support
+"editor.fontLigatures": true, <-- make pretty arrows with Fira Code
+"editor.defaultFormatter": "esbenp.prettier-vscode"
+"editor.formatOnSave": true, <-- format with Prettier on save
+```
+
+Use the built-in terminal (Ctrl+`). For convenience, split the TERMINAL and PROBLEMS tabs horizontally.
+
+This setup creates a really nice separation of the workspace: the top part is where I write code, and the bottom part is where I see if it works. As I type, the problems come and go in the bottom-right window. When I am ready to try running my code, I switch to the terminal and run it from there.
+
+Because TypeScript is built-in, TypeScript errors will show up live in the PROBLEMS window as well, which is super-convenient.
+Learn keyboard shortcuts. Ctrl+P (Cmd+P) and Ctrl+Shift+P (Cmd+Shift+P) are likely the most important ones.
+
+Occasionally, VSCode’s built-in TypeScript machinery gets into a confused state. For this purpose, there’s a “TypeScript: Restart TS Server“ command available via Ctrl+Shift+P. You can also use the “Developer: Reload Windows“ command to flush out the gremlins.
+
+### Workflow
+
+The dev cycle is:
+
+- Open the directory of the package (or several of them) in VSCode
+- Write some code
+- Make ESLint and TypeScript live-compiler happy (no errors show up in the PROBLEMS window)
+- Run `npx turbo build` to build the code.
+- Run your code with `node .` or whatever is the right way to run it. For convenience, create an [npm script](https://docs.npmjs.com/cli/v9/using-npm/scripts) to combine building and running. See example here.
+- Go to the “Write some code” step.
+
+### Build system
+
+This is a monorepo, which in Node.js vernacular means that it is a flat list of npm packages that are all hosted in the same git repository.
+
+The main reason we need to run `npx turbo build` is because in the monorepo, we need to compute the dependency graph before compiling TypeScript to Javascript, and that is not something that comes standard with the TypeScript compiler.
+
+There are other ways to do it, and turbo is likely an overkill. There are more elegant setups with ts-node that make it possible to avoid the build steps altogether, but I haven’t put it together yet. If you have a better/neater way to build, please let me know.
+
+#### Front-end
+
+[Vite](https://vitejs.dev/) is currently brought up in the `web-demo` dir. Use it as a template for other front-end TypeScript packages.
