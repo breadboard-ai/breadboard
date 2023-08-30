@@ -25,7 +25,7 @@ input.wire(
         kit.xmlToJson().wire(
           "json->",
           kit
-            .jsonata("$join((rss.channel.item.title.`$t`)[[1..20]], `\n`)")
+            .jsonata("$join((rss.channel.item.title.`$t`)[[1..20]], '\n')")
             .wire(
               "result->headlines",
               kit

@@ -86,7 +86,7 @@
       "id": "jsonata-5",
       "type": "jsonata",
       "configuration": {
-        "expression": "$join((rss.channel.item.title.`$t`)[[1..20]], `\n`)"
+        "expression": "$join((rss.channel.item.title.`$t`)[[1..20]], '\n')"
       }
     },
     {
