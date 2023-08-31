@@ -16,6 +16,7 @@ export class MachineResult {
   descriptor: NodeDescriptor;
   inputs: InputValues;
   missingInputs: string[];
+  opportunities: Edge[];
   newOpportunities: Edge[];
   state: TraversalState;
   outputs?: OutputValues;
@@ -24,12 +25,14 @@ export class MachineResult {
     descriptor: NodeDescriptor,
     inputs: InputValues,
     missingInputs: string[],
+    opportunities: Edge[],
     newOpportunities: Edge[],
     state?: TraversalState
   ) {
     this.descriptor = descriptor;
     this.inputs = inputs;
     this.missingInputs = missingInputs;
+    this.opportunities = opportunities;
     this.newOpportunities = newOpportunities;
     this.state = state ?? new TraversalState();
   }
@@ -48,6 +51,7 @@ export class MachineResult {
   static empty = new MachineResult(
     { id: "$empty", type: "$empty" },
     {},
+    [],
     [],
     []
   );

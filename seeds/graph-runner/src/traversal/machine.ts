@@ -21,13 +21,15 @@ export class TraversalMachine
   descriptor: GraphDescriptor;
   state: TraversalState;
   graph: GraphRepresentation;
-  opportunities: Edge[] = [];
-  #current: MachineResult = MachineResult.empty;
+  opportunities: Edge[];
+  #current: MachineResult;
 
-  constructor(descriptor: GraphDescriptor) {
+  constructor(descriptor: GraphDescriptor, result?: MachineResult) {
     this.descriptor = descriptor;
-    this.state = new TraversalState();
+    this.state = result?.state ?? new TraversalState();
+    this.opportunities = result?.opportunities ?? [];
     this.graph = new GraphRepresentation(descriptor);
+    this.#current = result ?? MachineResult.empty;
   }
 
   [Symbol.asyncIterator](): AsyncIterator<MachineResult> {
@@ -94,6 +96,7 @@ export class TraversalMachine
       currentDescriptor,
       inputsWithConfiguration,
       missingInputs,
+      this.opportunities,
       newOpportunities,
       this.state
     );
@@ -101,6 +104,8 @@ export class TraversalMachine
   }
 
   start(): TraversalMachine {
+    if (this.#current !== MachineResult.empty) return this;
+
     const { entries } = this.graph;
     if (entries.length === 0) throw new Error("No entry node found in graph.");
     // Create fake edges to represent entry points.

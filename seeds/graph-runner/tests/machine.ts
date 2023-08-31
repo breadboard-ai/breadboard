@@ -11,6 +11,7 @@ import { readFile, readdir } from "fs/promises";
 import { TraversalMachine } from "../src/index.js";
 
 import { GraphDescriptor, InputValues, OutputValues } from "../src/types.js";
+import { MachineResult } from "../src/traversal/result.js";
 
 const IN_DIR = "./tests/data/";
 
@@ -60,3 +61,65 @@ await Promise.all(
     });
   })
 );
+
+test("Can be interrupted and resumed", async (t) => {
+  const data = await readFile(`${IN_DIR}one-entry.json`, "utf-8");
+  const graph = JSON.parse(data) as TestGraphDescriptor;
+  let result: MachineResult = MachineResult.empty;
+
+  // First iteration.
+  {
+    const machine = new TraversalMachine(graph);
+    const iterator = machine.start();
+    const iteratorResult = await iterator.next();
+    result = iteratorResult.value;
+    const { descriptor, skip } = iteratorResult.value;
+    t.false(skip);
+    t.false(iteratorResult.done);
+    t.like(descriptor, {
+      id: "node-a",
+      type: "input",
+    });
+    result.outputs = graph.inputs;
+  }
+
+  // Second iteration.
+  {
+    const machine = new TraversalMachine(graph, result);
+    const iterator = machine.start();
+    const iteratorResult = await iterator.next();
+    result = iteratorResult.value;
+    const { skip } = iteratorResult.value;
+    t.true(skip);
+  }
+
+  // Third iteration.
+  {
+    const machine = new TraversalMachine(graph, result);
+    const iterator = machine.start();
+    const iteratorResult = await iterator.next();
+    result = iteratorResult.value;
+    const { descriptor, skip } = iteratorResult.value;
+    t.false(skip);
+    t.like(descriptor, {
+      id: "node-b",
+      type: "noop",
+    });
+    result.outputs = result.inputs;
+  }
+
+  // Fourth iteration.
+  {
+    const machine = new TraversalMachine(graph, result);
+    const iterator = machine.start();
+    const iteratorResult = await iterator.next();
+    result = iteratorResult.value;
+    const { descriptor } = iteratorResult.value;
+    t.like(descriptor, {
+      id: "node-c",
+      type: "output",
+    });
+  }
+
+  t.deepEqual(result.inputs, graph.outputs);
+});
