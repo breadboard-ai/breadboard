@@ -13,21 +13,14 @@ import type {
 } from "../types.js";
 import { GraphRepresentation } from "./representation.js";
 import { MachineResult } from "./result.js";
-import { TraversalState } from "./state.js";
 
 export class TraversalMachineIterator implements AsyncIterator<MachineResult> {
   graph: GraphRepresentation;
   #current: MachineResult;
-  state: TraversalState;
 
-  constructor(
-    graph: GraphRepresentation,
-    result: MachineResult,
-    state: TraversalState
-  ) {
+  constructor(graph: GraphRepresentation, result: MachineResult) {
     this.graph = graph;
     this.#current = result;
-    this.state = state;
   }
 
   get done(): boolean {
@@ -45,7 +38,7 @@ export class TraversalMachineIterator implements AsyncIterator<MachineResult> {
       const { outputs, newOpportunities, descriptor } = this.#current;
 
       this.#current.opportunities.push(...newOpportunities);
-      this.state.update(descriptor.id, newOpportunities, outputs);
+      this.#current.state.update(descriptor.id, newOpportunities, outputs);
     }
 
     // Now, we're ready to start the next iteration.
@@ -68,7 +61,7 @@ export class TraversalMachineIterator implements AsyncIterator<MachineResult> {
     const incomingEdges = heads.get(toNode) || [];
     const inputs = TraversalMachine.wire(
       incomingEdges,
-      this.state.getAvailableOutputs(toNode)
+      this.#current.state.getAvailableOutputs(toNode)
     );
 
     const missingInputs = TraversalMachine.computeMissingInputs(
@@ -92,7 +85,7 @@ export class TraversalMachineIterator implements AsyncIterator<MachineResult> {
       missingInputs,
       this.#current.opportunities,
       newOpportunities,
-      this.state
+      this.#current.state
     );
     return this;
   }
@@ -100,13 +93,11 @@ export class TraversalMachineIterator implements AsyncIterator<MachineResult> {
 
 export class TraversalMachine implements AsyncIterable<MachineResult> {
   descriptor: GraphDescriptor;
-  state: TraversalState;
   graph: GraphRepresentation;
   previousResult?: MachineResult;
 
   constructor(descriptor: GraphDescriptor, result?: MachineResult) {
     this.descriptor = descriptor;
-    this.state = result?.state ?? new TraversalState();
     this.graph = new GraphRepresentation(descriptor);
     this.previousResult = result;
   }
@@ -117,11 +108,7 @@ export class TraversalMachine implements AsyncIterable<MachineResult> {
 
   start(): TraversalMachineIterator {
     if (this.previousResult)
-      return new TraversalMachineIterator(
-        this.graph,
-        this.previousResult,
-        this.state
-      );
+      return new TraversalMachineIterator(this.graph, this.previousResult);
 
     const { entries } = this.graph;
     if (entries.length === 0) throw new Error("No entry node found in graph.");
@@ -137,7 +124,7 @@ export class TraversalMachine implements AsyncIterable<MachineResult> {
       opportunities,
       []
     );
-    return new TraversalMachineIterator(this.graph, entryResult, this.state);
+    return new TraversalMachineIterator(this.graph, entryResult);
   }
 
   static wire(heads: Edge[], outputEdges: EdgeMap): InputValues {
