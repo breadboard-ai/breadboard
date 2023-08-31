@@ -140,7 +140,7 @@ The constant values become useful when boards are wired to have loops. They can 
 
 ## Optional qualifier
 
-When there is a question mark (`?`) at the end of the spec, the wire is considered "optional". The optional wire signals to the board that the receiving node does need the input from this value to be visited.
+When there is a question mark (`?`) at the end of the spec, the wire is considered "optional". The optional wire signals to the board that the receiving node does not need the input from this value to be visited.
 
 ```js
 // optional wire:
