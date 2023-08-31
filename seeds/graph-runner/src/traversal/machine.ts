@@ -15,23 +15,19 @@ import { GraphRepresentation } from "./representation.js";
 import { MachineResult } from "./result.js";
 import { TraversalState } from "./state.js";
 
-export class TraversalMachine
-  implements AsyncIterable<MachineResult>, AsyncIterator<MachineResult>
-{
-  descriptor: GraphDescriptor;
-  state: TraversalState;
+export class TraversalMachineIterator implements AsyncIterator<MachineResult> {
   graph: GraphRepresentation;
   #current: MachineResult;
+  state: TraversalState;
 
-  constructor(descriptor: GraphDescriptor, result?: MachineResult) {
-    this.descriptor = descriptor;
-    this.state = result?.state ?? new TraversalState();
-    this.graph = new GraphRepresentation(descriptor);
-    this.#current = result ?? MachineResult.empty;
-  }
-
-  [Symbol.asyncIterator](): AsyncIterator<MachineResult> {
-    return this.start();
+  constructor(
+    graph: GraphRepresentation,
+    result: MachineResult,
+    state: TraversalState
+  ) {
+    this.graph = graph;
+    this.#current = result;
+    this.state = state;
   }
 
   get done(): boolean {
@@ -100,18 +96,48 @@ export class TraversalMachine
     );
     return this;
   }
+}
 
-  start(): TraversalMachine {
-    if (this.#current !== MachineResult.empty) return this;
+export class TraversalMachine implements AsyncIterable<MachineResult> {
+  descriptor: GraphDescriptor;
+  state: TraversalState;
+  graph: GraphRepresentation;
+  previousResult?: MachineResult;
+
+  constructor(descriptor: GraphDescriptor, result?: MachineResult) {
+    this.descriptor = descriptor;
+    this.state = result?.state ?? new TraversalState();
+    this.graph = new GraphRepresentation(descriptor);
+    this.previousResult = result;
+  }
+
+  [Symbol.asyncIterator](): AsyncIterator<MachineResult> {
+    return this.start();
+  }
+
+  start(): TraversalMachineIterator {
+    if (this.previousResult)
+      return new TraversalMachineIterator(
+        this.graph,
+        this.previousResult,
+        this.state
+      );
 
     const { entries } = this.graph;
     if (entries.length === 0) throw new Error("No entry node found in graph.");
     // Create fake edges to represent entry points.
-    this.#current.opportunities = entries.map((entry) => ({
+    const opportunities = entries.map((entry) => ({
       from: "$entry",
       to: entry,
     }));
-    return this;
+    const entryResult = new MachineResult(
+      { id: "$empty", type: "$empty" },
+      {},
+      [],
+      opportunities,
+      []
+    );
+    return new TraversalMachineIterator(this.graph, entryResult, this.state);
   }
 
   static wire(heads: Edge[], outputEdges: EdgeMap): InputValues {
