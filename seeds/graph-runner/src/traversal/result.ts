@@ -39,20 +39,9 @@ export class MachineResult {
 
   /**
    * `true` if the machine decided that the node should be skipped, rather than
-   * run.
+   * visited.
    */
   get skip(): boolean {
     return this.missingInputs.length > 0;
   }
-
-  /**
-   * Sentinel value for when the machine is done.
-   */
-  static empty = new MachineResult(
-    { id: "$empty", type: "$empty" },
-    {},
-    [],
-    [],
-    []
-  );
 }

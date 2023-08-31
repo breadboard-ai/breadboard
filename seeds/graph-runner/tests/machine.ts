@@ -65,7 +65,7 @@ await Promise.all(
 test("Can be interrupted and resumed", async (t) => {
   const data = await readFile(`${IN_DIR}one-entry.json`, "utf-8");
   const graph = JSON.parse(data) as TestGraphDescriptor;
-  let result: MachineResult = MachineResult.empty;
+  let result: MachineResult;
 
   // First iteration.
   {

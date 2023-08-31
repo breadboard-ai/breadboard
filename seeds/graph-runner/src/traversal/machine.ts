@@ -23,18 +23,9 @@ export class TraversalMachineIterator implements AsyncIterator<MachineResult> {
     this.#current = result;
   }
 
-  get done(): boolean {
-    return this.#current === MachineResult.empty;
-  }
-
-  get value(): MachineResult {
-    return this.#current;
-  }
-
   async next(): Promise<IteratorResult<MachineResult>> {
-    // If this is not the first iteration, let's consume the outputs.
-    // Only do so when there are no missing inputs.
-    if (this.#current !== MachineResult.empty && !this.#current.skip) {
+    // If there are no missing inputs, let's consume the outputs
+    if (!this.#current.skip) {
       const { outputs, newOpportunities, descriptor } = this.#current;
 
       this.#current.opportunities.push(...newOpportunities);
@@ -44,10 +35,8 @@ export class TraversalMachineIterator implements AsyncIterator<MachineResult> {
     // Now, we're ready to start the next iteration.
 
     // If there are no more opportunities, we're done.
-    if (this.#current.opportunities.length === 0) {
-      this.#current = MachineResult.empty;
-      return this;
-    }
+    if (this.#current.opportunities.length === 0)
+      return { done: true, value: null };
 
     // Otherwise, let's pop the next opportunity from the queue.
     const opportunity = this.#current.opportunities.shift() as Edge;
@@ -87,7 +76,7 @@ export class TraversalMachineIterator implements AsyncIterator<MachineResult> {
       newOpportunities,
       this.#current.state
     );
-    return this;
+    return { done: false, value: this.#current };
   }
 }
 
