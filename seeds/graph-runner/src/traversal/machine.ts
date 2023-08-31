@@ -21,13 +21,11 @@ export class TraversalMachine
   descriptor: GraphDescriptor;
   state: TraversalState;
   graph: GraphRepresentation;
-  opportunities: Edge[];
   #current: MachineResult;
 
   constructor(descriptor: GraphDescriptor, result?: MachineResult) {
     this.descriptor = descriptor;
     this.state = result?.state ?? new TraversalState();
-    this.opportunities = result?.opportunities ?? [];
     this.graph = new GraphRepresentation(descriptor);
     this.#current = result ?? MachineResult.empty;
   }
@@ -50,20 +48,20 @@ export class TraversalMachine
     if (this.#current !== MachineResult.empty && !this.#current.skip) {
       const { outputs, newOpportunities, descriptor } = this.#current;
 
-      this.opportunities.push(...newOpportunities);
+      this.#current.opportunities.push(...newOpportunities);
       this.state.update(descriptor.id, newOpportunities, outputs);
     }
 
     // Now, we're ready to start the next iteration.
 
     // If there are no more opportunities, we're done.
-    if (this.opportunities.length === 0) {
+    if (this.#current.opportunities.length === 0) {
       this.#current = MachineResult.empty;
       return this;
     }
 
     // Otherwise, let's pop the next opportunity from the queue.
-    const opportunity = this.opportunities.shift() as Edge;
+    const opportunity = this.#current.opportunities.shift() as Edge;
 
     const { heads, nodes, tails } = this.graph;
 
@@ -96,7 +94,7 @@ export class TraversalMachine
       currentDescriptor,
       inputsWithConfiguration,
       missingInputs,
-      this.opportunities,
+      this.#current.opportunities,
       newOpportunities,
       this.state
     );
@@ -109,7 +107,7 @@ export class TraversalMachine
     const { entries } = this.graph;
     if (entries.length === 0) throw new Error("No entry node found in graph.");
     // Create fake edges to represent entry points.
-    this.opportunities = entries.map((entry) => ({
+    this.#current.opportunities = entries.map((entry) => ({
       from: "$entry",
       to: entry,
     }));
