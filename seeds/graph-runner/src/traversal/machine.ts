@@ -8,6 +8,7 @@ import type { GraphDescriptor } from "../types.js";
 import { TraversalMachineIterator } from "./iterator.js";
 import { GraphRepresentation } from "./representation.js";
 import { MachineResult } from "./result.js";
+import { TraversalState } from "./state.js";
 
 export class TraversalMachine implements AsyncIterable<MachineResult> {
   graph: GraphRepresentation;
@@ -38,7 +39,8 @@ export class TraversalMachine implements AsyncIterable<MachineResult> {
       {},
       [],
       opportunities,
-      []
+      [],
+      new TraversalState()
     );
     return new TraversalMachineIterator(this.graph, entryResult);
   }

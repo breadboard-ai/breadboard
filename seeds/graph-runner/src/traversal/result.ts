@@ -27,14 +27,14 @@ export class MachineResult {
     missingInputs: string[],
     opportunities: Edge[],
     newOpportunities: Edge[],
-    state?: TraversalState
+    state: TraversalState
   ) {
     this.descriptor = descriptor;
     this.inputs = inputs;
     this.missingInputs = missingInputs;
     this.opportunities = opportunities;
     this.newOpportunities = newOpportunities;
-    this.state = state ?? new TraversalState();
+    this.state = state;
   }
 
   /**
