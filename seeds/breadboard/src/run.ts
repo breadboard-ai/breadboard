@@ -14,7 +14,6 @@ import type { BreadbordRunResult } from "./types.js";
 
 export class InputStageResult implements BreadbordRunResult {
   seeksInputs = true;
-  #inputs: InputValues = {};
   #state: TraversalResult;
 
   constructor(state: TraversalResult) {
@@ -30,11 +29,11 @@ export class InputStageResult implements BreadbordRunResult {
   }
 
   set inputs(inputs: InputValues) {
-    this.#inputs = inputs;
+    this.#state.outputs = inputs;
   }
 
   get inputs(): InputValues {
-    return this.#inputs;
+    return this.#state.outputs || {};
   }
 
   get outputs(): OutputValues {

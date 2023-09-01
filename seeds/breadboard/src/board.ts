@@ -162,7 +162,6 @@ export class Board implements Breadboard {
       if (descriptor.type === "input") {
         const inputStage = new InputStageResult(result);
         yield inputStage;
-        result.outputs = inputStage.inputs;
         probe?.dispatchEvent(
           new ProbeEvent("input", {
             descriptor,
