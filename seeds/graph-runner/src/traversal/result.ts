@@ -44,4 +44,28 @@ export class MachineResult {
   get skip(): boolean {
     return this.missingInputs.length > 0;
   }
+
+  toJSON() {
+    const { descriptor, inputs, missingInputs, opportunities } = this;
+    return {
+      descriptor,
+      inputs,
+      missingInputs,
+      opportunities,
+      state: this.state.serialize(),
+    };
+  }
+
+  static fromJSON(json: string) {
+    const data = JSON.parse(json);
+    const { descriptor, inputs, missingInputs, opportunities, state } = data;
+    return new MachineResult(
+      descriptor,
+      inputs,
+      missingInputs,
+      opportunities,
+      [],
+      TraversalState.deserialize(state)
+    );
+  }
 }
