@@ -10,12 +10,10 @@ import { GraphRepresentation } from "./representation.js";
 import { MachineResult } from "./result.js";
 
 export class TraversalMachine implements AsyncIterable<MachineResult> {
-  descriptor: GraphDescriptor;
   graph: GraphRepresentation;
   previousResult?: MachineResult;
 
   constructor(descriptor: GraphDescriptor, result?: MachineResult) {
-    this.descriptor = descriptor;
     this.graph = new GraphRepresentation(descriptor);
     this.previousResult = result;
   }
