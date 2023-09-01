@@ -14,6 +14,7 @@ import type {
   NodeHandlers,
   NodeTypeIdentifier,
   OutputValues,
+  TraversalResult,
 } from "@google-labs/graph-runner";
 
 export interface Kit extends KitDescriptor {
@@ -53,6 +54,12 @@ export interface BreadbordRunResult {
    * This property is only available when `seeksInputs` is `false`.
    */
   get outputs(): OutputValues;
+  /**
+   * Current state of the underlying graph traversal.
+   * This property is useful for saving and restoring the state of
+   * graph traversal.
+   */
+  get state(): TraversalResult;
 }
 
 export interface NodeFactory {

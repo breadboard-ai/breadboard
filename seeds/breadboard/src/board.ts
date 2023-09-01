@@ -12,6 +12,7 @@ import type {
   GraphDescriptor,
   OutputValues,
   NodeHandler,
+  TraversalResult,
 } from "@google-labs/graph-runner";
 
 import {
@@ -131,7 +132,8 @@ export class Board implements Breadboard {
    */
   async *run(
     probe?: EventTarget,
-    slots?: BreadboardSlotSpec
+    slots?: BreadboardSlotSpec,
+    result?: TraversalResult
   ): AsyncGenerator<BreadbordRunResult> {
     const core = new Core(
       this,
@@ -146,7 +148,7 @@ export class Board implements Breadboard {
 
     this.#validators.forEach((validator) => validator.addGraph(this));
 
-    const machine = new TraversalMachine(this);
+    const machine = new TraversalMachine(this, result);
 
     for await (const result of machine) {
       const { inputs, descriptor, missingInputs } = result;
@@ -159,7 +161,7 @@ export class Board implements Breadboard {
       }
 
       if (descriptor.type === "input") {
-        const inputStage = new InputStageResult(descriptor, inputs);
+        const inputStage = new InputStageResult(result);
         yield inputStage;
         result.outputs = inputStage.inputs;
         probe?.dispatchEvent(
@@ -174,7 +176,7 @@ export class Board implements Breadboard {
 
       if (descriptor.type === "output") {
         probe?.dispatchEvent(new ProbeEvent("output", { descriptor, inputs }));
-        yield new OutputStageResult(descriptor, inputs);
+        yield new OutputStageResult(result);
         continue;
       }
 

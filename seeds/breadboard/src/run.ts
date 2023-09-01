@@ -8,20 +8,23 @@ import type {
   InputValues,
   NodeDescriptor,
   OutputValues,
+  TraversalResult,
 } from "@google-labs/graph-runner";
 import type { BreadbordRunResult } from "./types.js";
 
 export class InputStageResult implements BreadbordRunResult {
+  node: NodeDescriptor;
   seeksInputs = true;
-  #args: InputValues = {};
   #inputs: InputValues = {};
+  #state: TraversalResult;
 
-  constructor(public node: NodeDescriptor, args: InputValues) {
-    this.#args = args;
+  constructor(state: TraversalResult) {
+    this.node = state.descriptor;
+    this.#state = state;
   }
 
   get inputArguments(): InputValues {
-    return this.#args;
+    return this.#state.inputs;
   }
 
   set inputs(inputs: InputValues) {
@@ -35,14 +38,20 @@ export class InputStageResult implements BreadbordRunResult {
   get outputs(): OutputValues {
     throw new Error("Outputs are not available in the input stage");
   }
+
+  get state(): TraversalResult {
+    return this.#state;
+  }
 }
 
 export class OutputStageResult implements BreadbordRunResult {
+  node: NodeDescriptor;
   seeksInputs = false;
-  #outputs: OutputValues = {};
+  #state: TraversalResult;
 
-  constructor(public node: NodeDescriptor, outputs: OutputValues) {
-    this.#outputs = outputs;
+  constructor(state: TraversalResult) {
+    this.node = state.descriptor;
+    this.#state = state;
   }
 
   get inputArguments(): InputValues {
@@ -54,6 +63,10 @@ export class OutputStageResult implements BreadbordRunResult {
   }
 
   get outputs(): OutputValues {
-    return this.#outputs;
+    return this.#state.inputs;
+  }
+
+  get state(): TraversalResult {
+    return this.#state;
   }
 }
