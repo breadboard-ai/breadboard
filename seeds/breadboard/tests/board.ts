@@ -105,3 +105,38 @@ test("correctly skips nodes in nested boards", async (t) => {
   const result = await board.runOnce({ hello: "world" }, skipper);
   t.deepEqual(result, { instead: "this" });
 });
+
+test("allows pausing and resuming the board", async (t) => {
+  let result;
+  const board = new Board();
+  const input = board.input();
+  input.wire("<-", board.passthrough());
+  input.wire(
+    "*->",
+    board.passthrough().wire("*->", board.output().wire("*->", input))
+  );
+  {
+    const firstBoard = await Board.fromGraphDescriptor(board);
+    for await (const stop of firstBoard.run()) {
+      t.true(stop.seeksInputs);
+      result = stop.state;
+      break;
+    }
+  }
+  {
+    const secondBoard = await Board.fromGraphDescriptor(board);
+    for await (const stop of secondBoard.run(undefined, undefined, result)) {
+      t.false(stop.seeksInputs);
+      result = stop.state;
+      break;
+    }
+  }
+  {
+    const secondBoard = await Board.fromGraphDescriptor(board);
+    for await (const stop of secondBoard.run(undefined, undefined, result)) {
+      t.true(stop.seeksInputs);
+      result = stop.state;
+      break;
+    }
+  }
+});
