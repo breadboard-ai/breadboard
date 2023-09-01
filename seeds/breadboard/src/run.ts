@@ -12,8 +12,7 @@ import type {
 } from "@google-labs/graph-runner";
 import type { BreadbordRunResult } from "./types.js";
 
-export class InputStageResult implements BreadbordRunResult {
-  seeksInputs = true;
+export class TraversalResultContainer {
   #state: TraversalResult;
 
   constructor(state: TraversalResult) {
@@ -37,7 +36,7 @@ export class InputStageResult implements BreadbordRunResult {
   }
 
   get outputs(): OutputValues {
-    throw new Error("Outputs are not available in the input stage");
+    return this.#state.inputs;
   }
 
   get state(): TraversalResult {
@@ -45,16 +44,29 @@ export class InputStageResult implements BreadbordRunResult {
   }
 }
 
-export class OutputStageResult implements BreadbordRunResult {
-  seeksInputs = false;
-  #state: TraversalResult;
+export class InputStageResult
+  extends TraversalResultContainer
+  implements BreadbordRunResult
+{
+  seeksInputs = true;
 
   constructor(state: TraversalResult) {
-    this.#state = state;
+    super(state);
   }
 
-  get node(): NodeDescriptor {
-    return this.#state.descriptor;
+  get outputs(): OutputValues {
+    throw new Error("Outputs are not available in the input stage");
+  }
+}
+
+export class OutputStageResult
+  extends TraversalResultContainer
+  implements BreadbordRunResult
+{
+  seeksInputs = false;
+
+  constructor(state: TraversalResult) {
+    super(state);
   }
 
   get inputArguments(): InputValues {
@@ -63,13 +75,5 @@ export class OutputStageResult implements BreadbordRunResult {
 
   set inputs(inputs: InputValues) {
     throw new Error("Setting inputs is not available in the output stage");
-  }
-
-  get outputs(): OutputValues {
-    return this.#state.inputs;
-  }
-
-  get state(): TraversalResult {
-    return this.#state;
   }
 }
