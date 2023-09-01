@@ -119,7 +119,7 @@ test("allows pausing and resuming the board", async (t) => {
     const firstBoard = await Board.fromGraphDescriptor(board);
     for await (const stop of firstBoard.run()) {
       t.true(stop.seeksInputs);
-      result = stop.state;
+      result = stop;
       break;
     }
   }
@@ -127,7 +127,7 @@ test("allows pausing and resuming the board", async (t) => {
     const secondBoard = await Board.fromGraphDescriptor(board);
     for await (const stop of secondBoard.run(undefined, undefined, result)) {
       t.false(stop.seeksInputs);
-      result = stop.state;
+      result = stop;
       break;
     }
   }
@@ -135,7 +135,7 @@ test("allows pausing and resuming the board", async (t) => {
     const secondBoard = await Board.fromGraphDescriptor(board);
     for await (const stop of secondBoard.run(undefined, undefined, result)) {
       t.true(stop.seeksInputs);
-      result = stop.state;
+      result = stop;
       break;
     }
   }

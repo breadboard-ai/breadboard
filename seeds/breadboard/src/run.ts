@@ -13,14 +13,16 @@ import type {
 import type { BreadbordRunResult } from "./types.js";
 
 export class InputStageResult implements BreadbordRunResult {
-  node: NodeDescriptor;
   seeksInputs = true;
   #inputs: InputValues = {};
   #state: TraversalResult;
 
   constructor(state: TraversalResult) {
-    this.node = state.descriptor;
     this.#state = state;
+  }
+
+  get node(): NodeDescriptor {
+    return this.#state.descriptor;
   }
 
   get inputArguments(): InputValues {
@@ -45,13 +47,15 @@ export class InputStageResult implements BreadbordRunResult {
 }
 
 export class OutputStageResult implements BreadbordRunResult {
-  node: NodeDescriptor;
   seeksInputs = false;
   #state: TraversalResult;
 
   constructor(state: TraversalResult) {
-    this.node = state.descriptor;
     this.#state = state;
+  }
+
+  get node(): NodeDescriptor {
+    return this.#state.descriptor;
   }
 
   get inputArguments(): InputValues {
