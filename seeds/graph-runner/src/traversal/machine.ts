@@ -4,22 +4,22 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GraphDescriptor } from "../types.js";
+import type { GraphDescriptor, TraversalResult } from "../types.js";
 import { TraversalMachineIterator } from "./iterator.js";
 import { GraphRepresentation } from "./representation.js";
 import { MachineResult } from "./result.js";
 import { MachineEdgeState } from "./state.js";
 
-export class TraversalMachine implements AsyncIterable<MachineResult> {
+export class TraversalMachine implements AsyncIterable<TraversalResult> {
   graph: GraphRepresentation;
-  previousResult?: MachineResult;
+  previousResult?: TraversalResult;
 
-  constructor(descriptor: GraphDescriptor, result?: MachineResult) {
+  constructor(descriptor: GraphDescriptor, result?: TraversalResult) {
     this.graph = new GraphRepresentation(descriptor);
     this.previousResult = result;
   }
 
-  [Symbol.asyncIterator](): AsyncIterator<MachineResult> {
+  [Symbol.asyncIterator](): AsyncIterator<TraversalResult> {
     return this.start();
   }
 

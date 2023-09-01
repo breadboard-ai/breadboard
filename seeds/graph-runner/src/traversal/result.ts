@@ -10,10 +10,11 @@ import type {
   InputValues,
   NodeDescriptor,
   OutputValues,
+  TraversalResult,
 } from "../types.js";
 import { MachineEdgeState } from "./state.js";
 
-export class MachineResult {
+export class MachineResult implements TraversalResult {
   descriptor: NodeDescriptor;
   inputs: InputValues;
   missingInputs: string[];

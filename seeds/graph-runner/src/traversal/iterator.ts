@@ -4,21 +4,23 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Edge } from "../types.js";
+import type { Edge, TraversalResult } from "../types.js";
 import { Traversal } from "./index.js";
 import { GraphRepresentation } from "./representation.js";
 import { MachineResult } from "./result.js";
 
-export class TraversalMachineIterator implements AsyncIterator<MachineResult> {
+export class TraversalMachineIterator
+  implements AsyncIterator<TraversalResult>
+{
   graph: GraphRepresentation;
-  #current: MachineResult;
+  #current: TraversalResult;
 
-  constructor(graph: GraphRepresentation, result: MachineResult) {
+  constructor(graph: GraphRepresentation, result: TraversalResult) {
     this.graph = graph;
     this.#current = result;
   }
 
-  async next(): Promise<IteratorResult<MachineResult>> {
+  async next(): Promise<IteratorResult<TraversalResult>> {
     // If there are no missing inputs, let's consume the outputs
     if (!this.#current.skip) {
       const { outputs, newOpportunities, descriptor } = this.#current;

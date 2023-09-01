@@ -162,6 +162,17 @@ export interface EdgeState {
 
 export type EdgeMap = Map<NodeIdentifier, OutputValues>;
 
+export interface TraversalResult {
+  descriptor: NodeDescriptor;
+  inputs: InputValues;
+  missingInputs: string[];
+  opportunities: Edge[];
+  newOpportunities: Edge[];
+  state: EdgeState;
+  outputs?: OutputValues;
+  skip: boolean;
+}
+
 /**
  * Values that are supplied as inputs to the `NodeHandler`.
  */
