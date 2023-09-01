@@ -6,11 +6,12 @@
 
 import type {
   Edge,
+  EdgeState,
   InputValues,
   NodeDescriptor,
   OutputValues,
 } from "../types.js";
-import { TraversalState } from "./state.js";
+import { MachineEdgeState } from "./state.js";
 
 export class MachineResult {
   descriptor: NodeDescriptor;
@@ -18,7 +19,7 @@ export class MachineResult {
   missingInputs: string[];
   opportunities: Edge[];
   newOpportunities: Edge[];
-  state: TraversalState;
+  state: EdgeState;
   outputs?: OutputValues;
 
   constructor(
@@ -27,7 +28,7 @@ export class MachineResult {
     missingInputs: string[],
     opportunities: Edge[],
     newOpportunities: Edge[],
-    state: TraversalState
+    state: EdgeState
   ) {
     this.descriptor = descriptor;
     this.inputs = inputs;
@@ -65,7 +66,7 @@ export class MachineResult {
       missingInputs,
       opportunities,
       [],
-      TraversalState.deserialize(state)
+      MachineEdgeState.deserialize(state)
     );
   }
 }

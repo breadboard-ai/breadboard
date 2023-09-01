@@ -4,19 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Edge, EdgeMap, NodeIdentifier, OutputValues } from "../types.js";
+import type {
+  Edge,
+  EdgeMap,
+  EdgeState,
+  EdgeStateMap,
+  NodeIdentifier,
+  OutputValues,
+} from "../types.js";
 
-/**
- * Additional concept: whether or not an output was consumed by the intended
- * input.
- * State stores all outputs that have not yet been consumed, organized as
- * a map of maps
- */
-type StateMap = Map<string, Map<string, OutputValues>>;
-
-export class TraversalState {
-  state: StateMap = new Map();
-  constants: StateMap = new Map();
+export class MachineEdgeState implements EdgeState {
+  state: EdgeStateMap = new Map();
+  constants: EdgeStateMap = new Map();
 
   #splitOutConstants(edges: Edge[]): [Edge[], Edge[]] {
     const constants: Edge[] = [];
@@ -28,7 +27,11 @@ export class TraversalState {
     return [constants, rest];
   }
 
-  #addToState(state: StateMap, opportunities: Edge[], outputs: OutputValues) {
+  #addToState(
+    state: EdgeStateMap,
+    opportunities: Edge[],
+    outputs: OutputValues
+  ) {
     opportunities.forEach((opportunity) => {
       const toNode = opportunity.to;
       let fromNodeMap = state.get(toNode);
@@ -52,7 +55,7 @@ export class TraversalState {
     this.#addToState(this.constants, constants, outputs);
   }
 
-  getAvailableOutputs(node: NodeIdentifier) {
+  getAvailableOutputs(node: NodeIdentifier): EdgeMap {
     const constantEdges: EdgeMap = this.constants.get(node) || new Map();
     const stateEdges: EdgeMap = this.state.get(node) || new Map();
     const result: EdgeMap = new Map([...constantEdges, ...stateEdges]);
@@ -82,11 +85,11 @@ export class TraversalState {
   }
 
   serialize(): string {
-    return JSON.stringify(this, TraversalState.replacer);
+    return JSON.stringify(this, MachineEdgeState.replacer);
   }
 
-  static deserialize(json: string): TraversalState {
-    const data = JSON.parse(json, TraversalState.reviver);
-    return Object.assign(new TraversalState(), data);
+  static deserialize(json: string): EdgeState {
+    const data = JSON.parse(json, MachineEdgeState.reviver);
+    return Object.assign(new MachineEdgeState(), data);
   }
 }

@@ -5,47 +5,47 @@
  */
 
 import test from "ava";
-import { TraversalState } from "../src/traversal/state.js";
+import { MachineEdgeState } from "../src/traversal/state.js";
 
-test("TraversalState.replacer correctly serializes Maps", async (t) => {
-  t.is(JSON.stringify({}, TraversalState.replacer), "{}");
-  t.is(JSON.stringify("string", TraversalState.replacer), '"string"');
-  t.is(JSON.stringify(42, TraversalState.replacer), "42");
+test("EdgeState.replacer correctly serializes Maps", async (t) => {
+  t.is(JSON.stringify({}, MachineEdgeState.replacer), "{}");
+  t.is(JSON.stringify("string", MachineEdgeState.replacer), '"string"');
+  t.is(JSON.stringify(42, MachineEdgeState.replacer), "42");
   t.is(
-    JSON.stringify(new Map([["foo", "bar"]]), TraversalState.replacer),
+    JSON.stringify(new Map([["foo", "bar"]]), MachineEdgeState.replacer),
     '{"$type":"Map","value":[["foo","bar"]]}'
   );
   t.is(
     JSON.stringify(
       new Map([["foo", new Map([["bar", "baz"]])]]),
-      TraversalState.replacer
+      MachineEdgeState.replacer
     ),
     '{"$type":"Map","value":[["foo",{"$type":"Map","value":[["bar","baz"]]}]]}'
   );
 });
 
-test("TraversalState.reviver correctly deserializes maps", async (t) => {
-  t.deepEqual(JSON.parse("{}", TraversalState.reviver), {});
-  t.deepEqual(JSON.parse('"string"', TraversalState.reviver), "string");
-  t.deepEqual(JSON.parse("42", TraversalState.reviver), 42);
+test("EdgeState.reviver correctly deserializes maps", async (t) => {
+  t.deepEqual(JSON.parse("{}", MachineEdgeState.reviver), {});
+  t.deepEqual(JSON.parse('"string"', MachineEdgeState.reviver), "string");
+  t.deepEqual(JSON.parse("42", MachineEdgeState.reviver), 42);
   t.deepEqual(
     JSON.parse(
       '{"$type":"Map","value":[["foo","bar"]]}',
-      TraversalState.reviver
+      MachineEdgeState.reviver
     ),
     new Map([["foo", "bar"]])
   );
   t.deepEqual(
     JSON.parse(
       '{"$type":"Map","value":[["foo",{"$type":"Map","value":[["bar","baz"]]}]]}',
-      TraversalState.reviver
+      MachineEdgeState.reviver
     ),
     new Map([["foo", new Map([["bar", "baz"]])]])
   );
 });
 
 test("serializes fully into JSON", async (t) => {
-  const state = new TraversalState();
+  const state = new MachineEdgeState();
 
   t.is(
     state.serialize(),
@@ -95,11 +95,11 @@ test("serializes fully into JSON", async (t) => {
 });
 
 test("deserializes nicely back from JSON", async (t) => {
-  const state = new TraversalState();
+  const state = new MachineEdgeState();
   {
     const json =
       '{"state":{"$type":"Map","value":[]},"constants":{"$type":"Map","value":[]}}';
-    const deserializedState = TraversalState.deserialize(json);
+    const deserializedState = MachineEdgeState.deserialize(json);
     t.deepEqual(deserializedState, state);
   }
 
@@ -121,7 +121,7 @@ test("deserializes nicely back from JSON", async (t) => {
   {
     const json =
       '{"state":{"$type":"Map","value":[["generateText-1",{"$type":"Map","value":[["secrets-2",{"PALM_KEY":"key"}]]}]]},"constants":{"$type":"Map","value":[]}}';
-    const deserializedState = TraversalState.deserialize(json);
+    const deserializedState = MachineEdgeState.deserialize(json);
     t.deepEqual(deserializedState, state);
   }
 
@@ -144,7 +144,7 @@ test("deserializes nicely back from JSON", async (t) => {
   {
     const json =
       '{"state":{"$type":"Map","value":[["generateText-1",{"$type":"Map","value":[["secrets-2",{"PALM_KEY":"key"}]]}]]},"constants":{"$type":"Map","value":[["generateText-1",{"$type":"Map","value":[["secrets-2",{"PALM_KEY":"key"}]]}]]}}';
-    const deserializedState = TraversalState.deserialize(json);
+    const deserializedState = MachineEdgeState.deserialize(json);
     t.deepEqual(deserializedState, state);
   }
 });

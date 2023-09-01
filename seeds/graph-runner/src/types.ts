@@ -140,6 +140,26 @@ export type GraphDescriptor = {
   kits?: KitDescriptor[];
 };
 
+/**
+ * Additional concept: whether or not an output was consumed by the intended
+ * input.
+ * State stores all outputs that have not yet been consumed, organized as
+ * a map of maps
+ */
+export type EdgeStateMap = Map<string, Map<string, OutputValues>>;
+
+export interface EdgeState {
+  state: EdgeStateMap;
+  constants: EdgeStateMap;
+  serialize(): string;
+  update(
+    node: NodeIdentifier,
+    opportunities: Edge[],
+    outputs?: OutputValues
+  ): void;
+  getAvailableOutputs(node: NodeIdentifier): EdgeMap;
+}
+
 export type EdgeMap = Map<NodeIdentifier, OutputValues>;
 
 /**

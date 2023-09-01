@@ -7,7 +7,7 @@
 import test from "ava";
 
 import { MachineResult } from "../src/traversal/result.js";
-import { TraversalState } from "../src/traversal/state.js";
+import { MachineEdgeState } from "../src/traversal/state.js";
 
 test("MachineResult#skip", (t) => {
   {
@@ -17,7 +17,7 @@ test("MachineResult#skip", (t) => {
       ["input"],
       [],
       [],
-      new TraversalState()
+      new MachineEdgeState()
     );
     t.true(result.skip);
   }
@@ -28,7 +28,7 @@ test("MachineResult#skip", (t) => {
       [],
       [],
       [],
-      new TraversalState()
+      new MachineEdgeState()
     );
     t.false(result.skip);
   }
@@ -41,7 +41,7 @@ test("MachineResult#toJSON", (t) => {
     ["input"],
     [],
     [],
-    new TraversalState()
+    new MachineEdgeState()
   );
   t.is(
     JSON.stringify(result),
@@ -56,7 +56,7 @@ test("MachineResult JSON roundtrip", (t) => {
     ["input"],
     [],
     [],
-    new TraversalState()
+    new MachineEdgeState()
   );
   t.deepEqual(MachineResult.fromJSON(JSON.stringify(result)), result);
 });
