@@ -6,9 +6,27 @@
 
 import { config } from "dotenv";
 
-import { Board } from "@google-labs/breadboard";
+import process from "process";
+import { Board, RunResult } from "@google-labs/breadboard";
 
 config();
+
+const runResultLoop = async (board, inputs, runResult) => {
+  let outputs;
+
+  for (;;) {
+    for await (const stop of board.run(undefined, undefined, runResult)) {
+      if (stop.seeksInputs) {
+        stop.inputs = inputs;
+      } else {
+        outputs = stop.outputs;
+        outputs.$state = stop.save();
+        return outputs;
+      }
+    }
+    runResult = undefined;
+  }
+};
 
 const makeCloudFunction = (boardUrl) => {
   return async (req, res) => {
@@ -19,14 +37,14 @@ const makeCloudFunction = (boardUrl) => {
 
     const board = await Board.load(boardUrl);
 
-    const text = req.body.text;
+    const { $state, ...inputs } = req.body;
 
-    const outputs = await board.runOnce({ text });
+    let runResult = $state ? RunResult.load($state) : undefined;
+
+    const outputs = await runResultLoop(board, inputs, runResult);
 
     res.type("application/json").send(JSON.stringify(outputs, null, 2));
   };
 };
 
-export const math = makeCloudFunction(
-  "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/math.json"
-);
+export const board = makeCloudFunction(process.env.BOARD_URL);

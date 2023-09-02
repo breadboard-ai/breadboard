@@ -1,7 +1,37 @@
 <!DOCTYPE html>
-<form method="post">
-  <input name="text" placeholder="ask me a math question" /><input
+<style>
+  #log,
+  input {
+    white-space: pre-wrap;
+    font-family: Fira Code, monospace;
+    font-size: 1.1rem;
+  }
+</style>
+<form>
+  <input name="text" placeholder="enter text" /><input
     type="submit"
     value="Ask"
   />
 </form>
+<div id="log"></div>
+<script type="module">
+  const log = document.querySelector("#log");
+  const form = document.querySelector("form");
+  let $state = undefined;
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const text = form.text.value;
+    log.append(`user: ${text}\n`);
+    const url = new URL(window.location);
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ text, $state }),
+    });
+    const data = await response.json();
+    $state = data.$state;
+    log.append(`board: ${data.text}\n`);
+  });
+</script>
