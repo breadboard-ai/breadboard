@@ -6,7 +6,8 @@
 
 import test from "ava";
 
-import { replacer, reviver } from "../src/run.js";
+import { RunResult, replacer, reviver } from "../src/run.js";
+import { Board } from "../src/board.js";
 
 test("replacer correctly serializes Maps", async (t) => {
   t.is(JSON.stringify({}, replacer), "{}");
@@ -36,5 +37,52 @@ test("reviver correctly deserializes maps", async (t) => {
       reviver
     ),
     new Map([["foo", new Map([["bar", "baz"]])]])
+  );
+});
+
+test("correctly saves and loads", async (t) => {
+  let runResult = "";
+  const board = new Board();
+  const input = board.input();
+  input.wire("<-", board.passthrough());
+  input.wire(
+    "*->",
+    board.passthrough().wire("*->", board.output().wire("*->", input))
+  );
+  {
+    const firstBoard = await Board.fromGraphDescriptor(board);
+    for await (const stop of firstBoard.run()) {
+      t.true(stop.seeksInputs);
+      runResult = stop.save();
+      break;
+    }
+  }
+  {
+    const secondBoard = await Board.fromGraphDescriptor(board);
+    for await (const stop of secondBoard.run(
+      undefined,
+      undefined,
+      RunResult.load(runResult)
+    )) {
+      t.false(stop.seeksInputs);
+      runResult = stop.save();
+      break;
+    }
+  }
+  {
+    const secondBoard = await Board.fromGraphDescriptor(board);
+    for await (const stop of secondBoard.run(
+      undefined,
+      undefined,
+      RunResult.load(runResult)
+    )) {
+      t.true(stop.seeksInputs);
+      runResult = stop.save();
+      break;
+    }
+  }
+  t.is(
+    runResult,
+    '{"state":{"descriptor":{"id":"input-1","type":"input"},"inputs":{},"missingInputs":[],"opportunities":[],"newOpportunities":[{"from":"input-1","to":"passthrough-3","out":"*"}],"state":{"state":{"$type":"Map","value":[["input-1",{"$type":"Map","value":[["output-4",{}]]}]]},"constants":{"$type":"Map","value":[]}}},"seeksInputs":true}'
   );
 });
