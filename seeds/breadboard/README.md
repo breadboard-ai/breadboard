@@ -1,6 +1,6 @@
 # Breadboard
 
-![Milestone](https://img.shields.io/badge/milestone-M0-red) ![Stability](https://img.shields.io/badge/stability-wip-green)
+![Milestone](https://img.shields.io/badge/milestone-M0-red) ![Stability](https://img.shields.io/badge/stability-wip-green) [![Discord](https://img.shields.io/discord/1138546999872999556?logo=discord)](https://discord.gg/breadboard)
 
 A library for prototyping generative AI applications.
 
