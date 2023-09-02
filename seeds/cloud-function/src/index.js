@@ -44,10 +44,10 @@ const getBoardState = async (db, ticket) => {
   return doc.data().state;
 };
 
-const saveBoardState = async (db, state) => {
+const saveBoardState = async (db, previousTicket, state) => {
   const docRef = await db.collection("states").doc();
   const expires = new Date(Date.now() + ONE_DAY);
-  await docRef.set({ state, expires });
+  await docRef.set({ state, previousTicket, expires });
   return docRef.id;
 };
 
@@ -72,7 +72,7 @@ const makeCloudFunction = (boardUrl) => {
 
     const { state, outputs } = await runResultLoop(board, inputs, runResult);
 
-    const ticket = await saveBoardState(firestore, state);
+    const ticket = await saveBoardState(firestore, $ticket || "", state);
 
     res.type("application/json").send(
       JSON.stringify(
