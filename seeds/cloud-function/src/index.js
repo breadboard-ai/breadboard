@@ -14,7 +14,8 @@ config();
 const runResultLoop = async (board, inputs, runResult) => {
   let outputs;
 
-  for (;;) {
+  let repeat = 2;
+  while (repeat--) {
     for await (const stop of board.run(undefined, undefined, runResult)) {
       if (stop.seeksInputs) {
         stop.inputs = inputs;
