@@ -17,7 +17,6 @@ import type {
 import {
   type Breadboard,
   type BreadboardSlotSpec,
-  type BreadbordRunResult,
   type Kit,
   type KitConstructor,
   type OptionalIdConfiguration,
@@ -32,7 +31,7 @@ import {
 import { TraversalMachine, toMermaid } from "@google-labs/graph-runner";
 import { Node } from "./node.js";
 import { Core } from "./core.js";
-import { InputStageResult, OutputStageResult } from "./run.js";
+import { InputStageResult, OutputStageResult, RunResult } from "./run.js";
 import { KitLoader } from "./kit.js";
 import { IdVendor } from "./id.js";
 
@@ -132,8 +131,8 @@ export class Board implements Breadboard {
   async *run(
     probe?: EventTarget,
     slots?: BreadboardSlotSpec,
-    result?: BreadbordRunResult
-  ): AsyncGenerator<BreadbordRunResult> {
+    result?: RunResult
+  ): AsyncGenerator<RunResult> {
     const core = new Core(
       this,
       { ...this.#slots, ...slots },

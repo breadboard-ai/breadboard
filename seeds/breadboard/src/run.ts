@@ -4,19 +4,48 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  InputValues,
-  NodeDescriptor,
-  OutputValues,
-  TraversalResult,
+import {
+  MachineResult,
+  type InputValues,
+  type NodeDescriptor,
+  type OutputValues,
+  type TraversalResult,
 } from "@google-labs/graph-runner";
-import type { BreadbordRunResult } from "./types.js";
+import type { BreadbordRunResult as BreadboardRunResult } from "./types.js";
 
-export class TraversalResultContainer {
+export const replacer = (key: string, value: unknown) => {
+  if (!(value instanceof Map)) return value;
+
+  return {
+    $type: "Map",
+    value: Array.from(value.entries()),
+  };
+};
+
+export const reviver = (
+  key: string,
+  value: unknown & {
+    $type?: string;
+    value: Iterable<readonly [string, unknown]>;
+  }
+) => {
+  const { $type } = (value || {}) as { $type?: string };
+  return $type == "Map" && value.value
+    ? new Map<string, unknown>(value.value)
+    : value;
+};
+
+export class RunResult implements BreadboardRunResult {
+  #seeksInputs: boolean;
   #state: TraversalResult;
 
-  constructor(state: TraversalResult) {
+  constructor(state: TraversalResult, seeksInputs: boolean) {
     this.#state = state;
+    this.#seeksInputs = seeksInputs;
+  }
+
+  get seeksInputs(): boolean {
+    return this.#seeksInputs;
   }
 
   get node(): NodeDescriptor {
@@ -42,16 +71,24 @@ export class TraversalResultContainer {
   get state(): TraversalResult {
     return this.#state;
   }
+
+  save() {
+    return JSON.stringify(
+      { state: this.#state, seeksInputs: this.#seeksInputs },
+      replacer
+    );
+  }
+
+  static load(stringifiedResult: string): RunResult {
+    const { state, seeksInputs } = JSON.parse(stringifiedResult, reviver);
+    const machineResult = MachineResult.fromObject(state);
+    return new RunResult(machineResult, seeksInputs);
+  }
 }
 
-export class InputStageResult
-  extends TraversalResultContainer
-  implements BreadbordRunResult
-{
-  seeksInputs = true;
-
+export class InputStageResult extends RunResult {
   constructor(state: TraversalResult) {
-    super(state);
+    super(state, true);
   }
 
   get outputs(): OutputValues {
@@ -59,14 +96,9 @@ export class InputStageResult
   }
 }
 
-export class OutputStageResult
-  extends TraversalResultContainer
-  implements BreadbordRunResult
-{
-  seeksInputs = false;
-
+export class OutputStageResult extends RunResult {
   constructor(state: TraversalResult) {
-    super(state);
+    super(state, false);
   }
 
   get inputArguments(): InputValues {

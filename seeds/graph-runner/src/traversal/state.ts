@@ -61,35 +61,4 @@ export class MachineEdgeState implements EdgeState {
     const result: EdgeMap = new Map([...constantEdges, ...stateEdges]);
     return result;
   }
-
-  static replacer(key: string, value: unknown) {
-    if (!(value instanceof Map)) return value;
-
-    return {
-      $type: "Map",
-      value: Array.from(value.entries()),
-    };
-  }
-
-  static reviver(
-    key: string,
-    value: unknown & {
-      $type?: string;
-      value: Iterable<readonly [string, unknown]>;
-    }
-  ) {
-    const { $type } = (value || {}) as { $type?: string };
-    return $type == "Map" && value.value
-      ? new Map<string, unknown>(value.value)
-      : value;
-  }
-
-  serialize(): string {
-    return JSON.stringify(this, MachineEdgeState.replacer);
-  }
-
-  static deserialize(json: string): EdgeState {
-    const data = JSON.parse(json, MachineEdgeState.reviver);
-    return Object.assign(new MachineEdgeState(), data);
-  }
 }

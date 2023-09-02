@@ -33,30 +33,3 @@ test("MachineResult#skip", (t) => {
     t.false(result.skip);
   }
 });
-
-test("MachineResult#toJSON", (t) => {
-  const result = new MachineResult(
-    { id: "test", type: "test" },
-    {},
-    ["input"],
-    [],
-    [],
-    new MachineEdgeState()
-  );
-  t.is(
-    JSON.stringify(result),
-    '{"descriptor":{"id":"test","type":"test"},"inputs":{},"missingInputs":["input"],"opportunities":[],"state":"{\\"state\\":{\\"$type\\":\\"Map\\",\\"value\\":[]},\\"constants\\":{\\"$type\\":\\"Map\\",\\"value\\":[]}}"}'
-  );
-});
-
-test("MachineResult JSON roundtrip", (t) => {
-  const result = new MachineResult(
-    { id: "test", type: "test" },
-    {},
-    ["input"],
-    [],
-    [],
-    new MachineEdgeState()
-  );
-  t.deepEqual(MachineResult.fromJSON(JSON.stringify(result)), result);
-});

@@ -151,7 +151,6 @@ export type EdgeStateMap = Map<string, Map<string, OutputValues>>;
 export interface EdgeState {
   state: EdgeStateMap;
   constants: EdgeStateMap;
-  serialize(): string;
   update(
     node: NodeIdentifier,
     opportunities: Edge[],

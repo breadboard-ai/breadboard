@@ -47,27 +47,17 @@ export class MachineResult implements TraversalResult {
     return this.missingInputs.length > 0;
   }
 
-  toJSON() {
-    const { descriptor, inputs, missingInputs, opportunities } = this;
-    return {
-      descriptor,
-      inputs,
-      missingInputs,
-      opportunities,
-      state: this.state.serialize(),
-    };
-  }
-
-  static fromJSON(json: string) {
-    const data = JSON.parse(json);
-    const { descriptor, inputs, missingInputs, opportunities, state } = data;
+  static fromObject(o: TraversalResult): MachineResult {
+    const edgeState = new MachineEdgeState();
+    edgeState.constants = o.state.constants;
+    edgeState.state = o.state.state;
     return new MachineResult(
-      descriptor,
-      inputs,
-      missingInputs,
-      opportunities,
-      [],
-      MachineEdgeState.deserialize(state)
+      o.descriptor,
+      o.inputs,
+      o.missingInputs,
+      o.opportunities,
+      o.newOpportunities,
+      edgeState
     );
   }
 }
