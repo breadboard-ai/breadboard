@@ -17,7 +17,7 @@
 <script type="module">
   const log = document.querySelector("#log");
   const form = document.querySelector("form");
-  let $state = undefined;
+  let $ticket = undefined;
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const text = form.text.value;
@@ -28,10 +28,10 @@
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ text, $state }),
+      body: JSON.stringify({ text, $ticket }),
     });
     const data = await response.json();
-    $state = data.$state;
+    $ticket = data.$ticket;
     log.append(`board: ${data.text}\n`);
   });
 </script>

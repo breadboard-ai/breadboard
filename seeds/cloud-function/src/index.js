@@ -8,8 +8,11 @@ import { config } from "dotenv";
 
 import process from "process";
 import { Board, RunResult } from "@google-labs/breadboard";
+import { Firestore } from "@google-cloud/firestore";
 
 config();
+
+const ONE_DAY = 24 * 60 * 60 * 1000;
 
 const runResultLoop = async (board, inputs, runResult) => {
   let outputs;
@@ -21,12 +24,31 @@ const runResultLoop = async (board, inputs, runResult) => {
         stop.inputs = inputs;
       } else {
         outputs = stop.outputs;
-        outputs.$state = stop.save();
-        return outputs;
+        return {
+          outputs,
+          state: stop.save(),
+        };
       }
     }
     runResult = undefined;
   }
+};
+
+const getBoardState = async (db, ticket) => {
+  if (!ticket) return undefined;
+
+  const docRef = await db.collection("states").doc(ticket);
+  const doc = await docRef.get();
+  if (!doc.exists) return undefined;
+
+  return doc.data().state;
+};
+
+const saveBoardState = async (db, state) => {
+  const docRef = await db.collection("states").doc();
+  const expires = new Date(Date.now() + ONE_DAY);
+  await docRef.set({ state, expires });
+  return docRef.id;
 };
 
 const makeCloudFunction = (boardUrl) => {
@@ -38,13 +60,30 @@ const makeCloudFunction = (boardUrl) => {
 
     const board = await Board.load(boardUrl);
 
-    const { $state, ...inputs } = req.body;
+    const firestore = new Firestore({
+      databaseId: "breadboard-state",
+    });
 
-    let runResult = $state ? RunResult.load($state) : undefined;
+    const { $ticket, ...inputs } = req.body;
 
-    const outputs = await runResultLoop(board, inputs, runResult);
+    const savedState = await getBoardState(firestore, $ticket);
 
-    res.type("application/json").send(JSON.stringify(outputs, null, 2));
+    let runResult = savedState ? RunResult.load(savedState) : undefined;
+
+    const { state, outputs } = await runResultLoop(board, inputs, runResult);
+
+    const ticket = await saveBoardState(firestore, state);
+
+    res.type("application/json").send(
+      JSON.stringify(
+        {
+          ...outputs,
+          $ticket: ticket,
+        },
+        null,
+        2
+      )
+    );
   };
 };
 
