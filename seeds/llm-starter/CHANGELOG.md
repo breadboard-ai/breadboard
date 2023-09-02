@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.1] - 2023-09-02
+
+- `secrets` node now throws on missing keys
+- `promptTemplate` node now correctly serializes inputs as JSON.
+
 ## [0.1.0] - 2023-08-23
 
 - strong typing plumbing
