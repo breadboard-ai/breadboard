@@ -36,8 +36,8 @@
   "dependencies": {
     "@google-cloud/firestore": "^6.7.0",
     "@google-cloud/functions-framework": "^3.3.0",
-    "@google-labs/breadboard": "0.1.1",
-    "@google-labs/llm-starter": "0.1.0",
+    "@google-labs/breadboard": "^0.2.0",
+    "@google-labs/llm-starter": "^0.1.1",
     "dotenv": "^16.3.1"
   }
 }
