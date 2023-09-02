@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.0] - 2023-09-02
+
+- Ability to save and restore traversal state.
+- Bug fixes
+
 ## [0.0.2] - 2023-08-23
 
 - Bug fixes
