@@ -1,6 +1,6 @@
 {
   "name": "@google-labs/breadboard",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "A library for rapid generative AI application prototyping",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
@@ -48,7 +48,7 @@
     "typescript": "^5.0.4"
   },
   "dependencies": {
-    "@google-labs/graph-runner": "^0.0.2"
+    "@google-labs/graph-runner": "^0.1.0"
   },
   "engines": {
     "node": ">=19.0.0"

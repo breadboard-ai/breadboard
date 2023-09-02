@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.0] - 2023-09-02
+
+- New `beforehandler` event
+- New `DebugProbe` that is useful for debugging boards
+- New `RunResult` class with `load` and `save` methods to support multi-turn and continuous runs.
+
 ## [0.1.1] - 2023-08-23
 
 - updated the homepage URL (oops).
