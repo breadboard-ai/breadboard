@@ -8,11 +8,9 @@ import { config } from "dotenv";
 
 import process from "process";
 import { Board, RunResult } from "@google-labs/breadboard";
-import { Firestore } from "@google-cloud/firestore";
+import { Store } from "./store.js";
 
 config();
-
-const ONE_DAY = 24 * 60 * 60 * 1000;
 
 const runResultLoop = async (board, inputs, runResult) => {
   let outputs;
@@ -34,45 +32,34 @@ const runResultLoop = async (board, inputs, runResult) => {
   }
 };
 
-const getBoardState = async (db, ticket) => {
-  if (!ticket) return undefined;
-
-  const docRef = await db.collection("states").doc(ticket);
-  const doc = await docRef.get();
-  if (!doc.exists) return undefined;
-
-  return doc.data().state;
-};
-
-const saveBoardState = async (db, previousTicket, state) => {
-  const docRef = await db.collection("states").doc();
-  const expires = new Date(Date.now() + ONE_DAY);
-  await docRef.set({ state, previousTicket, expires });
-  return docRef.id;
-};
-
-const makeCloudFunction = (boardUrl) => {
+const makeCloudFunction = (url) => {
   return async (req, res) => {
     if (req.method !== "POST") {
-      res.sendFile(new URL("../public/index.html", import.meta.url).pathname);
+      if (req.path === "/") {
+        res.sendFile(new URL("../public/index.html", import.meta.url).pathname);
+      } else if (req.path === "/info") {
+        res.type("application/json").send({
+          url,
+        });
+      } else {
+        res.status(404).send("Not found");
+      }
       return;
     }
 
-    const board = await Board.load(boardUrl);
+    const board = await Board.load(url);
 
-    const firestore = new Firestore({
-      databaseId: "breadboard-state",
-    });
+    const store = new Store("breadboard-state");
 
     const { $ticket, ...inputs } = req.body;
 
-    const savedState = await getBoardState(firestore, $ticket);
+    const savedState = await store.loadBoardState($ticket);
 
     let runResult = savedState ? RunResult.load(savedState) : undefined;
 
     const { state, outputs } = await runResultLoop(board, inputs, runResult);
 
-    const ticket = await saveBoardState(firestore, $ticket || "", state);
+    const ticket = await store.saveBoardState($ticket || "", state);
 
     res.type("application/json").send(
       JSON.stringify(

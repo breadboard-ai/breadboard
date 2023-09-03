@@ -1,12 +1,19 @@
 <!DOCTYPE html>
 <style>
   #log,
+  #url,
   input {
     white-space: pre-wrap;
     font-family: Fira Code, monospace;
     font-size: 1.1rem;
   }
+
+  div,
+  form {
+    padding-bottom: 1rem;
+  }
 </style>
+<div id="url"></div>
 <form>
   <input name="text" placeholder="enter text" /><input
     type="submit"
@@ -34,4 +41,13 @@
     $ticket = data.$ticket;
     log.append(`board: ${data.text}\n`);
   });
+
+  {
+    const response = await fetch("/info");
+    const data = await response.json();
+    const a = document.createElement("a");
+    a.href = data.url;
+    a.textContent = "Board URL";
+    document.querySelector("#url").append(a);
+  }
 </script>
