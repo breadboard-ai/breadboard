@@ -1,70 +1,86 @@
 {
   "edges": [
     {
-      "from": "append-3",
-      "to": "append-3",
+      "from": "conversationMemory",
+      "to": "conversationMemory",
       "out": "accumulator",
       "in": "accumulator"
     },
     {
-      "from": "secrets-5",
-      "to": "generateText-4",
+      "from": "secrets-1",
+      "to": "generator",
       "constant": true,
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
-      "from": "append-3",
-      "to": "promptTemplate-2",
+      "from": "conversationMemory",
+      "to": "assistant",
       "out": "accumulator",
       "in": "context"
     },
     {
-      "from": "generateText-4",
-      "to": "append-3",
+      "from": "generator",
+      "to": "conversationMemory",
       "out": "completion",
       "in": "assistant"
     },
     {
-      "from": "output-6",
-      "to": "input-1"
+      "from": "assistantResponse",
+      "to": "userRequest"
     },
     {
-      "from": "generateText-4",
-      "to": "output-6",
+      "from": "generator",
+      "to": "assistantResponse",
       "out": "completion",
       "in": "text"
     },
     {
-      "from": "promptTemplate-2",
-      "to": "generateText-4",
+      "from": "assistant",
+      "to": "generator",
       "out": "prompt",
       "in": "text"
     },
     {
-      "from": "input-1",
-      "to": "promptTemplate-2",
+      "from": "userRequest",
+      "to": "assistant",
       "out": "text",
       "in": "question"
     },
     {
-      "from": "input-1",
-      "to": "append-3",
+      "from": "userRequest",
+      "to": "conversationMemory",
       "out": "text",
       "in": "user"
     },
     {
       "from": "start",
-      "to": "input-1"
+      "to": "userRequest"
     }
   ],
   "nodes": [
     {
-      "id": "input-1",
-      "type": "input"
+      "id": "userRequest",
+      "type": "input",
+      "configuration": {
+        "message": "Chat with me",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Chat with me",
+              "description": "User's request in the conversation with the assistant"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
     },
     {
-      "id": "promptTemplate-2",
+      "id": "assistant",
       "type": "promptTemplate",
       "configuration": {
         "template": "This is a conversation between a friendly assistant and their user. You are the assistant and your job is to try to be helpful, empathetic, and fun.\n{{context}}\n\n== Current Conversation\nuser: {{question}}\nassistant:",
@@ -72,7 +88,7 @@
       }
     },
     {
-      "id": "append-3",
+      "id": "conversationMemory",
       "type": "append",
       "configuration": {
         "accumulator": "\n== Conversation History"
@@ -83,11 +99,11 @@
       "type": "passthrough"
     },
     {
-      "id": "generateText-4",
+      "id": "generator",
       "type": "generateText"
     },
     {
-      "id": "secrets-5",
+      "id": "secrets-1",
       "type": "secrets",
       "configuration": {
         "keys": [
@@ -96,8 +112,23 @@
       }
     },
     {
-      "id": "output-6",
-      "type": "output"
+      "id": "assistantResponse",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Assistant",
+              "description": "Assistant's response in the conversation with the user"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
     }
   ],
   "kits": [

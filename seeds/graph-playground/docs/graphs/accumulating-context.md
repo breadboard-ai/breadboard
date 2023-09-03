@@ -5,20 +5,23 @@
   ```mermaid
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-append3["append <br> id='append-3'"] -- "accumulator->accumulator" --> append3["append <br> id='append-3'"]
-secrets5("secrets <br> id='secrets-5'"):::secrets -- "PALM_KEY->PALM_KEY" --o generateText4["generateText <br> id='generateText-4'"]
-append3["append <br> id='append-3'"] -- "accumulator->context" --> promptTemplate2["promptTemplate <br> id='promptTemplate-2'"]
-generateText4["generateText <br> id='generateText-4'"] -- "completion->assistant" --> append3["append <br> id='append-3'"]
-output6{{"output <br> id='output-6'"}}:::output --> input1[/"input <br> id='input-1'"/]:::input
-generateText4["generateText <br> id='generateText-4'"] -- "completion->text" --> output6{{"output <br> id='output-6'"}}:::output
-promptTemplate2["promptTemplate <br> id='promptTemplate-2'"] -- "prompt->text" --> generateText4["generateText <br> id='generateText-4'"]
-input1[/"input <br> id='input-1'"/]:::input -- "text->question" --> promptTemplate2["promptTemplate <br> id='promptTemplate-2'"]
-input1[/"input <br> id='input-1'"/]:::input -- "text->user" --> append3["append <br> id='append-3'"]
-start(("passthrough <br> id='start'")):::passthrough --> input1[/"input <br> id='input-1'"/]:::input
-templatepromptTemplate2[template]:::config -- "template->template" --o promptTemplate2
-contextpromptTemplate2[context]:::config -- "context->context" --o promptTemplate2
-accumulatorappend3[accumulator]:::config -- "accumulator->accumulator" --o append3
-keyssecrets5[keys]:::config -- "keys->keys" --o secrets5
+conversationMemory["append <br> id='conversationMemory'"] -- "accumulator->accumulator" --> conversationMemory["append <br> id='conversationMemory'"]
+secrets1("secrets <br> id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o generator["generateText <br> id='generator'"]
+conversationMemory["append <br> id='conversationMemory'"] -- "accumulator->context" --> assistant["promptTemplate <br> id='assistant'"]
+generator["generateText <br> id='generator'"] -- "completion->assistant" --> conversationMemory["append <br> id='conversationMemory'"]
+assistantResponse{{"output <br> id='assistantResponse'"}}:::output --> userRequest[/"input <br> id='userRequest'"/]:::input
+generator["generateText <br> id='generator'"] -- "completion->text" --> assistantResponse{{"output <br> id='assistantResponse'"}}:::output
+assistant["promptTemplate <br> id='assistant'"] -- "prompt->text" --> generator["generateText <br> id='generator'"]
+userRequest[/"input <br> id='userRequest'"/]:::input -- "text->question" --> assistant["promptTemplate <br> id='assistant'"]
+userRequest[/"input <br> id='userRequest'"/]:::input -- "text->user" --> conversationMemory["append <br> id='conversationMemory'"]
+start(("passthrough <br> id='start'")):::passthrough --> userRequest[/"input <br> id='userRequest'"/]:::input
+messageuserRequest[message]:::config -- "message->message" --o userRequest
+schemauserRequest[schema]:::config -- "schema->schema" --o userRequest
+templateassistant[template]:::config -- "template->template" --o assistant
+contextassistant[context]:::config -- "context->context" --o assistant
+accumulatorconversationMemory[accumulator]:::config -- "accumulator->accumulator" --o conversationMemory
+keyssecrets1[keys]:::config -- "keys->keys" --o secrets1
+schemaassistantResponse[schema]:::config -- "schema->schema" --o assistantResponse
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
