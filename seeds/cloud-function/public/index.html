@@ -12,6 +12,10 @@
   form {
     padding-bottom: 1rem;
   }
+
+  #progress {
+    color: lightgray;
+  }
 </style>
 <div id="url"></div>
 <form>
@@ -22,6 +26,64 @@
 </form>
 <div id="log"></div>
 <script type="module">
+  // Polyfill to make ReadbableStream async iterable
+  // See https://bugs.chromium.org/p/chromium/issues/detail?id=929585
+  ReadableStream.prototype[Symbol.asyncIterator] = async function* () {
+    const reader = this.getReader();
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) return;
+        yield value;
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  };
+
+  const splitAtFirstColon = (s) => {
+    const pos = s.indexOf(":");
+    return [s.substring(0, pos), s.substring(pos + 1).trim()];
+  };
+
+  class BoardStreamer {
+    writable;
+    readable;
+    controller = null;
+
+    constructor() {
+      this.writable = new WritableStream({
+        write: (chunk) => this.write(chunk),
+      });
+      this.readable = new ReadableStream({
+        start: (controller) => {
+          this.controller = controller;
+        },
+      });
+    }
+
+    write(chunk) {
+      const decoder = new TextDecoder();
+      const s = decoder.decode(chunk);
+      s.split("\n")
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0)
+        .forEach((line) => {
+          if (line === "done") {
+            this.controller?.close();
+            return;
+          }
+          try {
+            const [type, payload] = splitAtFirstColon(line);
+            const data = JSON.parse(payload);
+            this.controller?.enqueue({ type, data });
+          } catch (e) {
+            console.error(e);
+          }
+        });
+    }
+  }
+
   const log = document.querySelector("#log");
   const form = document.querySelector("form");
   let $ticket = undefined;
@@ -32,14 +94,26 @@
     const url = new URL(window.location);
     const response = await fetch(url, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text, $ticket }),
     });
-    const data = await response.json();
-    $ticket = data.$ticket;
-    log.append(`board: ${data.text}\n`);
+    const stream = response.body?.pipeThrough(new BoardStreamer());
+    for await (const result of stream) {
+      if (result.type === "output") {
+        $ticket = result.data.$ticket;
+        log.querySelector("#progress")?.remove();
+        log.append(`board: ${result.data.text}\n`);
+      }
+      if (result.type === "progress") {
+        let progress = log.querySelector("#progress");
+        if (!progress) {
+          progress = document.createElement("div");
+          progress.id = "progress";
+          log.append(progress);
+        }
+        progress.textContent = `Running ${result.data.id} ...`;
+      }
+    }
   });
 
   {

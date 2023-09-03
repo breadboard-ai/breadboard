@@ -12,12 +12,17 @@ import { Store } from "./store.js";
 
 config();
 
-const runResultLoop = async (board, inputs, runResult) => {
+const runResultLoop = async (board, inputs, runResult, res) => {
   let outputs;
+
+  const progress = new EventTarget();
+  progress.addEventListener("beforehandler", (e) => {
+    res.write(`progress:${JSON.stringify(e.detail.descriptor)}\n`);
+  });
 
   let repeat = 2;
   while (repeat--) {
-    for await (const stop of board.run(undefined, undefined, runResult)) {
+    for await (const stop of board.run(progress, undefined, runResult)) {
       if (stop.seeksInputs) {
         stop.inputs = inputs;
       } else {
@@ -57,20 +62,22 @@ const makeCloudFunction = (url) => {
 
     let runResult = savedState ? RunResult.load(savedState) : undefined;
 
-    const { state, outputs } = await runResultLoop(board, inputs, runResult);
+    res.type("application/json");
+
+    const { state, outputs } = await runResultLoop(
+      board,
+      inputs,
+      runResult,
+      res
+    );
 
     const ticket = await store.saveBoardState($ticket || "", state);
 
-    res.type("application/json").send(
-      JSON.stringify(
-        {
-          ...outputs,
-          $ticket: ticket,
-        },
-        null,
-        2
-      )
-    );
+    res.write(`output:${JSON.stringify({ ...outputs, $ticket: ticket })}\n`);
+
+    res.write("done");
+
+    res.end();
   };
 };
 
