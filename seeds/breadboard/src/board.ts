@@ -507,6 +507,8 @@ export class Board implements Breadboard {
    */
   static async fromGraphDescriptor(graph: GraphDescriptor): Promise<Board> {
     const breadboard = new Board(graph);
+    breadboard.edges = graph.edges;
+    breadboard.nodes = graph.nodes;
     const loader = new KitLoader(graph.kits);
     (await loader.load()).forEach((kit) => breadboard.addKit(kit));
     return breadboard;
