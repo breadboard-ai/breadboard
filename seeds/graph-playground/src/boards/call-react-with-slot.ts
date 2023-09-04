@@ -67,13 +67,44 @@ board.addKit(Starter);
 // Slot the `tools` board into the `tools` slot.
 // This is how the ReAct recipe will consume the `tools` board we created
 // above.
-board.input("Ask ReAct").wire(
-  "text",
-  board
-    .include(`./graphs/react-with-slot.json`, {
-      slotted: { tools: tools() as unknown as NodeValue },
-    })
-    .wire("text", board.output())
-);
+board
+  .input("Ask ReAct", {
+    $id: "userRequest",
+    schema: {
+      type: "object",
+      properties: {
+        text: {
+          type: "string",
+          title: "Problem",
+          description: "A problem to be solved",
+        },
+      },
+      required: ["text"],
+    },
+  })
+  .wire(
+    "text",
+    board
+      .include(`./graphs/react-with-slot.json`, {
+        slotted: { tools: tools() as unknown as NodeValue },
+      })
+      .wire(
+        "text",
+        board.output({
+          $id: "reactResponse",
+          schema: {
+            type: "object",
+            properties: {
+              text: {
+                type: "string",
+                title: "ReAct",
+                description: "ReAct's response to the user's problem",
+              },
+            },
+            required: ["text"],
+          },
+        })
+      )
+  );
 
 export default board;

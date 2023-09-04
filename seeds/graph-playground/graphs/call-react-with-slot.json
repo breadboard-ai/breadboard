@@ -1,28 +1,41 @@
 {
   "edges": [
     {
-      "from": "include-2",
-      "to": "output-3",
+      "from": "include-1",
+      "to": "reactResponse",
       "out": "text",
       "in": "text"
     },
     {
-      "from": "input-1",
-      "to": "include-2",
+      "from": "userRequest",
+      "to": "include-1",
       "out": "text",
       "in": "text"
     }
   ],
   "nodes": [
     {
-      "id": "input-1",
+      "id": "userRequest",
       "type": "input",
       "configuration": {
-        "message": "Ask ReAct"
+        "message": "Ask ReAct",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Problem",
+              "description": "A problem to be solved"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
       }
     },
     {
-      "id": "include-2",
+      "id": "include-1",
       "type": "include",
       "configuration": {
         "$ref": "./graphs/react-with-slot.json",
@@ -114,8 +127,23 @@
       }
     },
     {
-      "id": "output-3",
-      "type": "output"
+      "id": "reactResponse",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "ReAct",
+              "description": "ReAct's response to the user's problem"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
     }
   ],
   "kits": [
