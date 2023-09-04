@@ -172,6 +172,11 @@
         }
         progress.textContent = `Running "${result.data.id}" ...`;
       }
+      if (result.type === "error") {
+        log.querySelector("#progress")?.remove();
+        log.append(`Error: ${result.data}\n`);
+        return { type: "done" };
+      }
     }
     return { type: "done" };
   };

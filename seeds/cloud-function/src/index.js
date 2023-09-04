@@ -69,22 +69,26 @@ const makeCloudFunction = (url) => {
 
     const { $ticket, inputs } = req.body;
 
-    const savedState = await store.loadBoardState($ticket);
-
-    let runResult = savedState ? RunResult.load(savedState) : undefined;
-
     res.type("application/json");
 
-    const { type, state, data } = await runResultLoop(
-      board,
-      inputs,
-      runResult,
-      res
-    );
+    try {
+      const savedState = await store.loadBoardState($ticket);
 
-    const ticket = await store.saveBoardState($ticket || "", state);
+      let runResult = savedState ? RunResult.load(savedState) : undefined;
 
-    res.write(`${type}:${JSON.stringify({ ...data, $ticket: ticket })}\n`);
+      const { type, state, data } = await runResultLoop(
+        board,
+        inputs,
+        runResult,
+        res
+      );
+
+      const ticket = await store.saveBoardState($ticket || "", state);
+
+      res.write(`${type}:${JSON.stringify({ ...data, $ticket: ticket })}\n`);
+    } catch (e) {
+      res.write(`error:${JSON.stringify(e.message)}\n`);
+    }
 
     res.write("done");
 
