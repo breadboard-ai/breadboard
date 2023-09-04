@@ -18,14 +18,10 @@
   }
 </style>
 <div id="url"></div>
-<form>
-  <input name="text" placeholder="enter text" /><input
-    type="submit"
-    value="Ask"
-  />
-</form>
 <div id="log"></div>
 <script type="module">
+  const log = document.querySelector("#log");
+
   // Polyfill to make ReadbableStream async iterable
   // See https://bugs.chromium.org/p/chromium/issues/detail?id=929585
   ReadableStream.prototype[Symbol.asyncIterator] = async function* () {
@@ -84,13 +80,35 @@
     }
   }
 
-  const log = document.querySelector("#log");
-  const form = document.querySelector("form");
-  let $ticket = undefined;
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const text = form.text.value;
-    log.append(`user: ${text}\n`);
+  const createInputFromSchema = (schema, ticket) => {
+    const input = document.createElement("div");
+    input.id = "input";
+    const form = input.appendChild(document.createElement("form"));
+    Object.entries(schema.properties).forEach(([key, property]) => {
+      const label = form.appendChild(document.createElement("label"));
+      label.textContent = `${property.title}: `;
+      const input = label.appendChild(document.createElement("input"));
+      input.name = key;
+      input.placeholder = property.description;
+      input.autofocus = true;
+    });
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const text = form.text.value;
+      log.append(`user: ${text}\n`);
+      input.remove();
+      await runLoop(text, ticket);
+    });
+    return input;
+  };
+
+  const writeOutput = (output) => {
+    Object.entries(output.schema.properties).forEach(([key, property]) => {
+      log.append(`${property.title}: ${output[key]}\n`);
+    });
+  };
+
+  const post = async (text, $ticket) => {
     const url = new URL(window.location);
     const response = await fetch(url, {
       method: "POST",
@@ -100,9 +118,19 @@
     const stream = response.body?.pipeThrough(new BoardStreamer());
     for await (const result of stream) {
       if (result.type === "output") {
-        $ticket = result.data.$ticket;
         log.querySelector("#progress")?.remove();
-        log.append(`board: ${result.data.text}\n`);
+        const output = result.data;
+        writeOutput(output);
+        return { type: result.type, ticket: output.$ticket };
+      }
+      if (result.type === "input") {
+        log.querySelector("#progress")?.remove();
+        const input = createInputFromSchema(
+          result.data.schema,
+          result.data.$ticket
+        );
+        log.append(input);
+        return { type: result.type, ticket: result.data.$ticket };
       }
       if (result.type === "progress") {
         let progress = log.querySelector("#progress");
@@ -111,10 +139,27 @@
           progress.id = "progress";
           log.append(progress);
         }
-        progress.textContent = `Running ${result.data.id} ...`;
+        progress.textContent = `Running "${result.data.id}" ...`;
       }
     }
-  });
+    return { type: "done" };
+  };
+
+  const runLoop = async (input, ticket) => {
+    let counter = 5;
+    for (;;) {
+      let reply = await post(input, ticket);
+      if (reply.type === "input" || reply.type === "done") {
+        break;
+      }
+      ticket = reply.ticket;
+      input = undefined;
+      counter--;
+      if (counter === 0) {
+        break;
+      }
+    }
+  };
 
   {
     const response = await fetch("/info");
@@ -124,4 +169,6 @@
     a.textContent = "Board URL";
     document.querySelector("#url").append(a);
   }
+
+  await runLoop();
 </script>

@@ -13,8 +13,6 @@ import { Store } from "./store.js";
 config();
 
 const runResultLoop = async (board, inputs, runResult, res) => {
-  let outputs;
-
   const progress = new EventTarget();
   progress.addEventListener("beforehandler", (e) => {
     res.write(`progress:${JSON.stringify(e.detail.descriptor)}\n`);
@@ -24,17 +22,31 @@ const runResultLoop = async (board, inputs, runResult, res) => {
   while (repeat--) {
     for await (const stop of board.run(progress, undefined, runResult)) {
       if (stop.seeksInputs) {
-        stop.inputs = inputs;
-      } else {
-        outputs = stop.outputs;
+        if (Object.keys(inputs).length > 0) {
+          stop.inputs = inputs;
+          continue;
+        }
         return {
-          outputs,
+          type: "input",
+          data: stop.inputArguments,
+          state: stop.save(),
+        };
+      } else {
+        return {
+          type: "output",
+          data: stop.outputs,
           state: stop.save(),
         };
       }
     }
     runResult = undefined;
   }
+  // TODO: Remove this?
+  return {
+    type: "done",
+    data: {},
+    state: undefined,
+  };
 };
 
 const makeCloudFunction = (url) => {
@@ -64,7 +76,7 @@ const makeCloudFunction = (url) => {
 
     res.type("application/json");
 
-    const { state, outputs } = await runResultLoop(
+    const { type, state, data } = await runResultLoop(
       board,
       inputs,
       runResult,
@@ -73,7 +85,7 @@ const makeCloudFunction = (url) => {
 
     const ticket = await store.saveBoardState($ticket || "", state);
 
-    res.write(`output:${JSON.stringify({ ...outputs, $ticket: ticket })}\n`);
+    res.write(`${type}:${JSON.stringify({ ...data, $ticket: ticket })}\n`);
 
     res.write("done");
 
