@@ -57,7 +57,7 @@ export class Core {
     const source = path || $ref || "";
     const board = graph
       ? await Board.fromGraphDescriptor(graph)
-      : await Board.load(source, slotted);
+      : await Board.load(source, { slotted, base: this.#graph.url });
     for (const validator of this.#validators)
       board.addValidator(
         validator.getSubgraphValidator(parent, Object.keys(args))

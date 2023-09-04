@@ -87,6 +87,7 @@ const makeCloudFunction = (url) => {
 
       res.write(`${type}:${JSON.stringify({ ...data, $ticket: ticket })}\n`);
     } catch (e) {
+      console.error(e);
       res.write(`error:${JSON.stringify(e.message)}\n`);
     }
 

@@ -13,11 +13,6 @@ import { Starter } from "@google-labs/llm-starter";
  * It fills the empty slot with tools.
  */
 
-// A URL to a repository containing the saved `react-with-slot` board,
-// as well as all the tool boards.
-const REPO_URL =
-  "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs";
-
 /**
  * Creates a breadboard that wires up a bunch of useful tools for ReAct recipe
  * to use.
@@ -30,14 +25,14 @@ const tools = () => {
   // Include a a `search-summarize` breadboard from a URL.
   // The `$id` and `description` are important, because they help ReAct recipe
   // figure out the purpose of each tool.
-  const search = tools.include(`${REPO_URL}/search-summarize.json`, {
+  const search = tools.include("search-summarize.json", {
     $id: "search",
     description:
       "Useful for when you need to find facts. Input should be a search query.",
   });
 
   // Include `math` breadboard from a URL.
-  const math = tools.include(`${REPO_URL}/math.json`, {
+  const math = tools.include("math.json", {
     $id: "math",
     description:
       "Useful for when you need to solve math problems. Input should be a math problem to be solved.",
@@ -85,7 +80,7 @@ board
   .wire(
     "text",
     board
-      .include(`./graphs/react-with-slot.json`, {
+      .include(`react-with-slot.json`, {
         slotted: { tools: tools() as unknown as NodeValue },
       })
       .wire(

@@ -35,30 +35,13 @@ import { Core } from "./core.js";
 import { InputStageResult, OutputStageResult, RunResult } from "./run.js";
 import { KitLoader } from "./kit.js";
 import { IdVendor } from "./id.js";
+import { BoardLoader } from "./loader.js";
 
 class ProbeEvent extends CustomEvent<ProbeDetails> {
   constructor(type: string, detail: ProbeDetails) {
     super(type, { detail, cancelable: true });
   }
 }
-
-/**
- * @todo Make this just take a $ref and figure out when it's a path or a URL.
- * @param path
- * @param ref
- * @returns
- */
-export const loadGraph = async (path?: string, ref?: string) => {
-  if (path && typeof process === "undefined")
-    throw new Error("Unable to use `path` when not running in node");
-  if (path) {
-    const { readFile } = await import("node:fs/promises");
-    return JSON.parse(await readFile(path, "utf-8"));
-  }
-  if (!ref) throw new Error("To include, we need a path or a $ref");
-  const response = await fetch(ref);
-  return await response.json();
-};
 
 const nodeTypeVendor = new IdVendor();
 
@@ -517,16 +500,19 @@ export class Board implements Breadboard {
   /**
    * Loads a board from a URL or a file path.
    *
-   * @param $ref - the URL or a file path to the board.
+   * @param url - the URL or a file path to the board.
    * @param slots - optional slots to provide to the board.
    * @returns - a new `Board` instance.
    */
-  static async load($ref: string, slots?: BreadboardSlotSpec): Promise<Board> {
-    const url = new URL($ref, new URL(import.meta.url));
-    const path = url.protocol === "file:" ? $ref : undefined;
-    const graph = await loadGraph(path, $ref);
+  static async load(
+    url: string,
+    options?: { slotted?: BreadboardSlotSpec; base?: string }
+  ): Promise<Board> {
+    const { base, slotted } = options || {};
+    const loader = new BoardLoader(base);
+    const graph = await loader.load(url);
     const board = await Board.fromGraphDescriptor(graph);
-    board.#slots = slots || {};
+    board.#slots = slotted || {};
     return board;
   }
 }

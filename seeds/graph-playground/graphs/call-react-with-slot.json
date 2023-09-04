@@ -38,7 +38,7 @@
       "id": "include-1",
       "type": "include",
       "configuration": {
-        "$ref": "./graphs/react-with-slot.json",
+        "$ref": "react-with-slot.json",
         "slotted": {
           "tools": {
             "edges": [

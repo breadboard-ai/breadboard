@@ -17,6 +17,7 @@ import {
 } from "@google-labs/graph-integrity";
 
 import { ReActHelper } from "./react.js";
+import { pathToFileURL } from "url";
 
 // buffer for input from an external source.
 let input_buffer: string | null = null;
@@ -28,7 +29,7 @@ function pass_in_input(value: string) {
 }
 
 function delay(ms: number) {
-  return new Promise( resolve => setTimeout(resolve, ms) );
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 const wait_for_input = async (message: string) => {
@@ -46,6 +47,9 @@ async function main(args: string[], use_input_handler = false) {
   // Parse arguments. Redo with a library once it gets more complex. Example:
   // npm run dev graphs/simplest.json -- --validate-integrity --log-integrity-labels
   const graph = args[0];
+  // Determine base URL for loading graphs, relative to the current working
+  // directory.
+  const base = `${pathToFileURL(process.cwd()).href}/`;
   const validateIntegrity = args.includes("--validate-integrity");
   const logIntegrityLabels = args.includes("--log-integrity-labels");
 
@@ -56,11 +60,12 @@ async function main(args: string[], use_input_handler = false) {
   const ask = async (inputs: InputValues): Promise<OutputValues> => {
     const defaultValue = "<Exit>";
     const message = ((inputs && inputs.message) as string) || "Enter some text";
-    const input = (use_input_handler) ? await wait_for_input(message) :
-    await text({
-      message,
-      defaultValue,
-    });
+    const input = use_input_handler
+      ? await wait_for_input(message)
+      : await text({
+          message,
+          defaultValue,
+        });
     if (input === defaultValue) return { exit: true };
     return { text: input } as OutputValues;
   };
@@ -88,7 +93,9 @@ async function main(args: string[], use_input_handler = false) {
   probe.addEventListener("node", (event: Event) => {
     const { detail } = event as ProbeEvent;
     if (logIntegrityLabels && detail.validatorMetadata?.length) {
-      const label = detail.validatorMetadata.map((m) => m.description).join(", ");
+      const label = detail.validatorMetadata
+        .map((m) => m.description)
+        .join(", ");
       note(
         `Integrity label for ${detail.descriptor.id} in ${[
           ...(detail.sources || []),
@@ -107,7 +114,7 @@ async function main(args: string[], use_input_handler = false) {
   intro("Let's traverse a graph!");
 
   // Load the board, specified in the command line.
-  const board = await Board.load(graph);
+  const board = await Board.load(graph, { base });
 
   // Add a custom kit.
   board.addKit(ReActHelper);
@@ -152,8 +159,8 @@ async function main(args: string[], use_input_handler = false) {
 }
 
 // Run if not imported from bridge.
-if ((process.argv[1]) && !((process.argv[1]).includes("bridge.js"))) {
+if (process.argv[1] && !process.argv[1].includes("bridge.js")) {
   const args = process.argv.slice(2);
   main(args);
 }
-export {main, pass_in_input};
+export { main, pass_in_input };
