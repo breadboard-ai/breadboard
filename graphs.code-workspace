@@ -29,6 +29,9 @@
     },
     {
       "path": "seeds/cloud-function"
+    },
+    {
+      "path": "seeds/breadboard-server"
     }
   ],
   "settings": {}
