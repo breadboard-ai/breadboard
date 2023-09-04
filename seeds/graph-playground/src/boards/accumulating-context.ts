@@ -19,8 +19,8 @@ const input = board.input("Chat with me", {
     properties: {
       text: {
         type: "string",
-        title: "Chat with me",
-        description: "User's request in the conversation with the assistant",
+        title: "User",
+        description: "Type here to chat with the assistant",
       },
     },
     required: ["text"],
