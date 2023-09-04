@@ -12,6 +12,7 @@ import type {
   GraphDescriptor,
   OutputValues,
   NodeHandler,
+  GraphMetadata,
 } from "@google-labs/graph-runner";
 
 import {
@@ -106,12 +107,11 @@ export class Board implements Breadboard {
   /**
    *
    * @param metadata - optional metadata for the board. Use this parameter
-   * to provide title, description, and URL for the board.
+   * to provide title, description, version, and URL for the board.
    */
-  constructor(
-    metadata?: Pick<GraphDescriptor, "title" | "description" | "url">
-  ) {
-    Object.assign(this, metadata);
+  constructor(metadata?: GraphMetadata) {
+    const { url, title, description, version } = metadata || {};
+    Object.assign(this, { url, title, description, version });
   }
 
   /**
