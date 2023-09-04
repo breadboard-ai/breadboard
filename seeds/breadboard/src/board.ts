@@ -92,12 +92,27 @@ class LocalKit implements Kit {
  * For more information on how to use Breadboard, start with [Chapter 1: Hello, world?](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-7-probes) of the tutorial.
  */
 export class Board implements Breadboard {
+  url?: string;
+  title?: string;
+  description?: string;
+  version?: string;
   edges: Edge[] = [];
   nodes: NodeDescriptor[] = [];
   kits: Kit[] = [];
   #localKit?: LocalKit;
   #slots: BreadboardSlotSpec = {};
   #validators: BreadboardValidator[] = [];
+
+  /**
+   *
+   * @param metadata - optional metadata for the board. Use this parameter
+   * to provide title, description, and URL for the board.
+   */
+  constructor(
+    metadata?: Pick<GraphDescriptor, "title" | "description" | "url">
+  ) {
+    Object.assign(this, metadata);
+  }
 
   /**
    * Runs the board. This method is an async generator that
@@ -491,9 +506,7 @@ export class Board implements Breadboard {
    * @returns - a new `Board` instance.
    */
   static async fromGraphDescriptor(graph: GraphDescriptor): Promise<Board> {
-    const breadboard = new Board();
-    breadboard.edges = graph.edges;
-    breadboard.nodes = graph.nodes;
+    const breadboard = new Board(graph);
     const loader = new KitLoader(graph.kits);
     (await loader.load()).forEach((kit) => breadboard.addKit(kit));
     return breadboard;
