@@ -7,20 +7,20 @@
       "in": "text"
     },
     {
-      "from": "math-function-completion",
+      "from": "math-function-generator",
       "to": "compute",
       "out": "completion",
       "in": "code"
     },
     {
       "from": "secrets-1",
-      "to": "math-function-completion",
+      "to": "math-function-generator",
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
       "from": "math-function",
-      "to": "math-function-completion",
+      "to": "math-function-generator",
       "out": "prompt",
       "in": "text"
     },
@@ -36,7 +36,20 @@
       "id": "math-question",
       "type": "input",
       "configuration": {
-        "message": "Ask a math question"
+        "message": "Ask a math question",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Math problem",
+              "description": "Ask a math question"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
       }
     },
     {
@@ -47,7 +60,7 @@
       }
     },
     {
-      "id": "math-function-completion",
+      "id": "math-function-generator",
       "type": "generateText"
     },
     {
@@ -59,7 +72,22 @@
     },
     {
       "id": "print",
-      "type": "output"
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Answer",
+              "description": "The answer to the math problem"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
     },
     {
       "id": "secrets-1",

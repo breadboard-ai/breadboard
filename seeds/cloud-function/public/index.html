@@ -83,6 +83,11 @@
   const createInputFromSchema = (schema, ticket) => {
     const input = document.createElement("div");
     input.id = "input";
+    if (!schema) {
+      input.textContent =
+        "No input schema detected, unable to provide useful interaction.";
+      return input;
+    }
     const form = input.appendChild(document.createElement("form"));
     Object.entries(schema.properties).forEach(([key, property]) => {
       const label = form.appendChild(document.createElement("label"));
