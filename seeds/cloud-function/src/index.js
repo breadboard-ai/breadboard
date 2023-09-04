@@ -18,30 +18,29 @@ const runResultLoop = async (board, inputs, runResult, res) => {
     res.write(`progress:${JSON.stringify(e.detail.descriptor)}\n`);
   });
 
-  let repeat = 2;
-  while (repeat--) {
-    for await (const stop of board.run(progress, undefined, runResult)) {
-      if (stop.seeksInputs) {
-        if (Object.keys(inputs).length > 0) {
-          stop.inputs = inputs;
-          continue;
-        }
-        return {
-          type: "input",
-          data: stop.inputArguments,
-          state: stop.save(),
-        };
-      } else {
-        return {
-          type: "output",
-          data: stop.outputs,
-          state: stop.save(),
-        };
-      }
-    }
-    runResult = undefined;
+  if (runResult && runResult.seeksInputs) {
+    runResult.inputs = inputs;
   }
-  // TODO: Remove this?
+  for await (const stop of board.run(progress, undefined, runResult)) {
+    if (stop.seeksInputs) {
+      if (inputs && Object.keys(inputs).length > 0) {
+        stop.inputs = inputs;
+        continue;
+      }
+      return {
+        type: "input",
+        data: stop.inputArguments,
+        state: stop.save(),
+      };
+    } else {
+      return {
+        type: "output",
+        data: stop.outputs,
+        state: stop.save(),
+      };
+    }
+  }
+
   return {
     type: "done",
     data: {},
@@ -68,7 +67,7 @@ const makeCloudFunction = (url) => {
 
     const store = new Store("breadboard-state");
 
-    const { $ticket, ...inputs } = req.body;
+    const { $ticket, inputs } = req.body;
 
     const savedState = await store.loadBoardState($ticket);
 

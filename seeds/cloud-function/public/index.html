@@ -99,10 +99,16 @@
     });
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const text = form.text.value;
-      log.append(`user: ${text}\n`);
+      let data = {};
+      Object.entries(schema.properties).forEach(([key, property]) => {
+        const input = form[key];
+        if (input.value) {
+          data[key] = input.value;
+          log.append(`${property.title}: ${input.value}\n`);
+        }
+      });
       input.remove();
-      await runLoop(text, ticket);
+      await runLoop(data, ticket);
     });
     return input;
   };
@@ -113,12 +119,12 @@
     });
   };
 
-  const post = async (text, $ticket) => {
+  const post = async (inputs, $ticket) => {
     const url = new URL(window.location);
     const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, $ticket }),
+      body: JSON.stringify({ inputs, $ticket }),
     });
     const stream = response.body?.pipeThrough(new BoardStreamer());
     for await (const result of stream) {
@@ -150,15 +156,15 @@
     return { type: "done" };
   };
 
-  const runLoop = async (input, ticket) => {
+  const runLoop = async (inputs, ticket) => {
     let counter = 5;
     for (;;) {
-      let reply = await post(input, ticket);
+      let reply = await post(inputs, ticket);
       if (reply.type === "input" || reply.type === "done") {
         break;
       }
       ticket = reply.ticket;
-      input = undefined;
+      inputs = undefined;
       counter--;
       if (counter === 0) {
         break;
