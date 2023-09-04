@@ -1,11 +1,16 @@
 <!DOCTYPE html>
 <style>
-  #log,
-  #url,
+  body {
+    padding: 1rem;
+  }
+  body,
   input {
-    white-space: pre-wrap;
     font-family: Fira Code, monospace;
     font-size: 1.1rem;
+  }
+
+  #log {
+    white-space: pre-wrap;
   }
 
   input {
@@ -21,12 +26,23 @@
     color: lightgray;
   }
 </style>
+<div id="intro">
+  This is a Breadboard API endpoint. This page provides a simple way to query
+  the API. For more information on how to use the API endpoint, see
+  <a
+    href="https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/endpoint-api.md"
+    >Breadboard API Endpoint Reference</a
+  >
+</div>
 <div id="url"></div>
-<div id="log"></div>
+
+<div id="log">
+  <div id="progress">Initializing ...</div>
+</div>
 <script type="module">
   const log = document.querySelector("#log");
 
-  // Polyfill to make ReadbableStream async iterable
+  // Polyfill to make ReadableStream async iterable
   // See https://bugs.chromium.org/p/chromium/issues/detail?id=929585
   ReadableStream.prototype[Symbol.asyncIterator] = async function* () {
     const reader = this.getReader();
