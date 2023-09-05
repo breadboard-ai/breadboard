@@ -118,22 +118,38 @@ test("allows pausing and resuming the board", async (t) => {
   {
     const firstBoard = await Board.fromGraphDescriptor(board);
     for await (const stop of firstBoard.run()) {
+      t.is(stop.type, "beforehandler");
+      result = stop;
+      break;
+    }
+  }
+  {
+    const secondBoard = await Board.fromGraphDescriptor(board);
+    for await (const stop of secondBoard.run(undefined, undefined, result)) {
       t.is(stop.type, "input");
       result = stop;
       break;
     }
   }
   {
-    const secondBoard = await Board.fromGraphDescriptor(board);
-    for await (const stop of secondBoard.run(undefined, undefined, result)) {
+    const thirdBoard = await Board.fromGraphDescriptor(board);
+    for await (const stop of thirdBoard.run(undefined, undefined, result)) {
+      t.is(stop.type, "beforehandler");
+      result = stop;
+      break;
+    }
+  }
+  {
+    const fourthBoard = await Board.fromGraphDescriptor(board);
+    for await (const stop of fourthBoard.run(undefined, undefined, result)) {
       t.is(stop.type, "output");
       result = stop;
       break;
     }
   }
   {
-    const secondBoard = await Board.fromGraphDescriptor(board);
-    for await (const stop of secondBoard.run(undefined, undefined, result)) {
+    const fifthBoard = await Board.fromGraphDescriptor(board);
+    for await (const stop of fifthBoard.run(undefined, undefined, result)) {
       t.is(stop.type, "input");
       result = stop;
       break;

@@ -89,7 +89,7 @@ export class InputStageResult extends RunResult {
   }
 
   get outputs(): OutputValues {
-    throw new Error("Outputs are not available in the input stage");
+    throw new Error('Outputs are not available in the "input" stage');
   }
 }
 
@@ -99,7 +99,23 @@ export class OutputStageResult extends RunResult {
   }
 
   get inputArguments(): InputValues {
-    throw new Error("Input arguments are not available in the output stage");
+    throw new Error('Input arguments are not available in the "output" stage');
+  }
+
+  set inputs(inputs: InputValues) {
+    throw new Error('Setting inputs is not available in the "output" stage');
+  }
+}
+
+export class BeforeHandlerStageResult extends RunResult {
+  constructor(state: TraversalResult) {
+    super(state, "beforehandler");
+  }
+
+  get inputArguments(): InputValues {
+    throw new Error(
+      'Input arguments are not available in the "befoerhandler" stage'
+    );
   }
 
   set inputs(inputs: InputValues) {

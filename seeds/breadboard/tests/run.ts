@@ -52,7 +52,7 @@ test("correctly saves and loads", async (t) => {
   {
     const firstBoard = await Board.fromGraphDescriptor(board);
     for await (const stop of firstBoard.run()) {
-      t.is(stop.type, "input");
+      t.is(stop.type, "beforehandler");
       runResult = stop.save();
       break;
     }
@@ -64,14 +64,38 @@ test("correctly saves and loads", async (t) => {
       undefined,
       RunResult.load(runResult)
     )) {
+      t.is(stop.type, "input");
+      runResult = stop.save();
+      break;
+    }
+  }
+  {
+    const thirdBoard = await Board.fromGraphDescriptor(board);
+    for await (const stop of thirdBoard.run(
+      undefined,
+      undefined,
+      RunResult.load(runResult)
+    )) {
+      t.is(stop.type, "beforehandler");
+      runResult = stop.save();
+      break;
+    }
+  }
+  {
+    const fourthBoard = await Board.fromGraphDescriptor(board);
+    for await (const stop of fourthBoard.run(
+      undefined,
+      undefined,
+      RunResult.load(runResult)
+    )) {
       t.is(stop.type, "output");
       runResult = stop.save();
       break;
     }
   }
   {
-    const secondBoard = await Board.fromGraphDescriptor(board);
-    for await (const stop of secondBoard.run(
+    const fifthBoard = await Board.fromGraphDescriptor(board);
+    for await (const stop of fifthBoard.run(
       undefined,
       undefined,
       RunResult.load(runResult)

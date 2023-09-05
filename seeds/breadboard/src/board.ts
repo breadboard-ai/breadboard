@@ -32,7 +32,12 @@ import {
 import { TraversalMachine, toMermaid } from "@google-labs/graph-runner";
 import { Node } from "./node.js";
 import { Core } from "./core.js";
-import { InputStageResult, OutputStageResult, RunResult } from "./run.js";
+import {
+  BeforeHandlerStageResult,
+  InputStageResult,
+  OutputStageResult,
+  RunResult,
+} from "./run.js";
 import { KitLoader } from "./kit.js";
 import { IdVendor } from "./id.js";
 import { BoardLoader } from "./loader.js";
@@ -191,6 +196,8 @@ export class Board implements Breadboard {
         inputs,
         outputs: {},
       };
+
+      yield new BeforeHandlerStageResult(result);
 
       const shouldInvokeHandler =
         !probe ||

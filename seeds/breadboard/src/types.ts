@@ -23,7 +23,7 @@ export interface Kit extends KitDescriptor {
 
 export type BreadboardSlotSpec = Record<string, GraphDescriptor>;
 
-export type RunResultType = "input" | "output";
+export type RunResultType = "input" | "output" | "beforehandler";
 
 export interface BreadboardRunResult {
   /**
