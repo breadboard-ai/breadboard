@@ -4,4 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export { makeCloudFunction } from "./server.js";
+import test from "ava";
+
+test("test", (t) => {
+  t.pass();
+});

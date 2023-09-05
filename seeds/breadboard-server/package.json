@@ -17,6 +17,7 @@
     "url": "https://github.com/google/labs-prototypes"
   },
   "files": [
+    "public",
     "dist/src"
   ],
   "ava": {
@@ -40,11 +41,16 @@
   "homepage": "https://github.com/google/labs-prototypes/tree/main/seeds/breadboard-server#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
+    "@google-labs/tsconfig": "*",
+    "@types/node": "^18.16.3",
     "@typescript-eslint/eslint-plugin": "^5.56.0",
     "@typescript-eslint/parser": "^5.56.0",
-    "@types/node": "^18.16.3",
     "ava": "^5.2.0",
     "typescript": "^5.0.4",
-    "@google-labs/tsconfig": "*"
+    "@types/express": "^4.17.17"
+  },
+  "dependencies": {
+    "@google-labs/breadboard": "^0.2.0",
+    "@google-cloud/firestore": "^6.7.0"
   }
 }
