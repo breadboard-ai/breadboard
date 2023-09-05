@@ -36,16 +36,16 @@ export const reviver = (
 };
 
 export class RunResult implements BreadboardRunResult {
-  #seeksInputs: boolean;
+  #type: RunResultType;
   #state: TraversalResult;
 
-  constructor(state: TraversalResult, seeksInputs: boolean) {
+  constructor(state: TraversalResult, type: RunResultType) {
     this.#state = state;
-    this.#seeksInputs = seeksInputs;
+    this.#type = type;
   }
 
   get type(): RunResultType {
-    return this.#seeksInputs ? "input" : "output";
+    return this.#type;
   }
 
   get node(): NodeDescriptor {
@@ -73,10 +73,7 @@ export class RunResult implements BreadboardRunResult {
   }
 
   save() {
-    return JSON.stringify(
-      { state: this.#state, seeksInputs: this.#seeksInputs },
-      replacer
-    );
+    return JSON.stringify({ state: this.#state, type: this.#type }, replacer);
   }
 
   static load(stringifiedResult: string): RunResult {
@@ -88,7 +85,7 @@ export class RunResult implements BreadboardRunResult {
 
 export class InputStageResult extends RunResult {
   constructor(state: TraversalResult) {
-    super(state, true);
+    super(state, "input");
   }
 
   get outputs(): OutputValues {
@@ -98,7 +95,7 @@ export class InputStageResult extends RunResult {
 
 export class OutputStageResult extends RunResult {
   constructor(state: TraversalResult) {
-    super(state, false);
+    super(state, "output");
   }
 
   get inputArguments(): InputValues {
