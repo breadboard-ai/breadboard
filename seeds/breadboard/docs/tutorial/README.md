@@ -675,15 +675,13 @@ for await (const stop of board.run()) {
 
 A good way to think of what the code above describes is that when we ask the board to run, it will occasionally pause and give us a chance to interact with it.
 
-The board pauses for two particular occasions: to ask for inputs and to provide outputs. These two occasions are called "stages": namely, the input stage and the output stage.
-
-To find out which stage the board stopped for, we check for `seeksInput` property on `stop`:
+The two particular occasions that the board pauses for are to ask for inputs and to provide outputs. To find out why the board stopped, we check for `type` property on `stop`:
 
 ```js
 for await (const stop of board.run()) {
-  if (stop.seeksInput) {
+  if (stop.type === "input") {
     // board is asking us to provide input
-  } else {
+  } else if (stop.type === "output") {
     // board is providing output
   }
 }
@@ -706,9 +704,9 @@ We can make run using the `run` method like so:
 
 ```js
 for await (const stop of board.run()) {
-  if (stop.seeksInputs) {
+  if (stop.type === "input") {
     stop.inputs = { say: "Hi, how are you?" };
-  } else {
+  } else if (stop.type === "output") {
     console.log("result", stop.outputs);
   }
 }
@@ -857,11 +855,11 @@ Use the continuous run pattern we've learned in the previous chapter:
 
 ```js
 for await (const stop of board.run()) {
-  if (stop.seeksInputs) {
+  if (stop.type === "input") {
     const say = await ask.question("> ");
     if (say === "exit") break;
     stop.inputs = { say };
-  } else {
+  } else if (stop.type === "output") {
     console.log(stop.outputs.hear);
   }
 }

@@ -65,10 +65,10 @@ export function REPLApp() {
       dialogRef.current.showModal();
 
       for await (const result of currentBoard.run(probe)) {
-        if (result.seeksInputs) {
+        if (result.type === "input") {
           result.inputs = await ask(result.inputArguments);
         }
-        else {
+        else if (result.type === "output") {
           resultsRef.current.innerText += `${JSON.stringify(result.outputs, null, 2)}\n`
         }
       }

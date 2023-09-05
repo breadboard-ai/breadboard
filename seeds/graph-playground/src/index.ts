@@ -144,9 +144,9 @@ async function main(args: string[], use_input_handler = false) {
   try {
     // Run the board until it finishes. This may run forever.
     for await (const result of board.run(probe)) {
-      if (result.seeksInputs) {
+      if (result.type === "input") {
         result.inputs = await ask(result.inputArguments);
-      } else {
+      } else if (result.type === "output") {
         show(result.outputs);
       }
     }

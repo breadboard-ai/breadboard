@@ -24,9 +24,9 @@ board.input().wire(
 );
 
 for await (const stop of board.run()) {
-  if (stop.seeksInputs) {
+  if (stop.type === "input") {
     stop.inputs = { say: "Hi, how are you?" };
-  } else {
+  } else if (stop.type === "output") {
     console.log("result", stop.outputs);
   }
 }

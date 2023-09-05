@@ -52,11 +52,11 @@ const ask = readline.createInterface({ input: stdin, output: stdout });
 console.log("Hello! I'm your friendly assistant. How can I help you today?");
 console.log("Type 'exit' to end conversation.");
 for await (const stop of board.run()) {
-  if (stop.seeksInputs) {
+  if (stop.type === "input") {
     const say = await ask.question("> ");
     if (say === "exit") break;
     stop.inputs = { say };
-  } else {
+  } else if (stop.type === "output") {
     console.log(stop.outputs.hear);
   }
 }

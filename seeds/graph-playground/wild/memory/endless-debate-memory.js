@@ -61,9 +61,9 @@ board
   .wire("text->topic", rememberQuestion);
 
 for await (const stop of board.run()) {
-  if (stop.seeksInputs) {
+  if (stop.type === "input") {
     stop.inputs = { text: "Weather in California" };
-  } else {
+  } else if (stop.type === "output") {
     console.log(stop.outputs.text);
   }
 }

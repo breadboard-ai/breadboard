@@ -23,7 +23,14 @@ export interface Kit extends KitDescriptor {
 
 export type BreadboardSlotSpec = Record<string, GraphDescriptor>;
 
+export type RunResultType = "input" | "output";
+
 export interface BreadboardRunResult {
+  /**
+   * Type of the run result. This property indicates where the board
+   * currently is in the `run` process.
+   */
+  type: RunResultType;
   /**
    * The current node that is being visited. This property can be used to get
    * information about the current node, such as its id, type, and
@@ -31,27 +38,22 @@ export interface BreadboardRunResult {
    */
   node: NodeDescriptor;
   /**
-   * Returns `true` if the board is waiting for
-   * input values. Returns `false` if the board is providing outputs.
-   */
-  get seeksInputs(): boolean;
-  /**
    * Any arguments that were passed to the `input` node that triggered this
    * stage.
    * Usually contains `message` property, which is a friendly message
    * to the user about what input is expected.
-   * This property is only available when `seeksInputs` is `true`.
+   * This property is only available when `ResultRunType` is `input`.
    */
   get inputArguments(): InputValues;
   /**
    * The input values the board is waiting for.
    * Set this property to provide input values.
-   * This property is only available when `seeksInputs` is `true`.
+   * This property is only available when `ResultRunType` is `input`.
    */
   set inputs(input: InputValues);
   /**
    * the output values the board is providing.
-   * This property is only available when `seeksInputs` is `false`.
+   * This property is only available when `ResultRunType` is `output`.
    */
   get outputs(): OutputValues;
   /**

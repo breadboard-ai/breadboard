@@ -40,10 +40,10 @@ export function BreadboardViewerApp() {
       board.value = currentBoard;
 
       for await (const result of currentBoard.run()) {
-        if (result.seeksInputs) {
+        if (result.type === "input") {
           result.inputs = await ask(result.inputArguments);
         }
-        else {
+        else if (result.type === "output") {
           outputs.push(result.outputs);
         }
       }

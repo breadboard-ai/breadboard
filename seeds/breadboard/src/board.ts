@@ -112,13 +112,16 @@ export class Board implements Breadboard {
    * }
    * ```
    *
-   * The `stop` iterator result will have the following properties:
+   * The `stop` iterator result will be a `RunResult` and provide ability
+   * to influence running of the board.
    *
-   * - `seeksInputs`: boolean - returns `true` if the board is waiting for
-   *  input values. Returns `false` if the board is providing outputs.
-   * - `inputs`: InputValues - the input values the board is waiting for. Set this property to provide input values. This property is only available when `seeksInputs` is `true`.
-   * - `inputArguments`: InputValues - any arguments that were passed to the `input` node that triggered this stage. Usually contains `message` property, which is a friendly message to the user about what input is expected. This property is only available when `seeksInputs` is `true`.
-   * - `outputs`: OutputValues - the output values the board is providing. This property is only available when `seeksInputs` is `false`.
+   * The two key use cases are providing input and receiving output.
+   *
+   * If `stop.type` is `input`, the board is waiting for input values.
+   * When that is the case, use `stop.inputs` to provide input values.
+   *
+   * If `stop.type` is `output`, the board is providing output values.
+   * When that is the case, use `stop.outputs` to receive output values.
    *
    * See [Chapter 8: Continuous runs](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-8-continuous-runs) of Breadboard tutorial for an example of how to use this method.
    *
@@ -236,9 +239,9 @@ export class Board implements Breadboard {
   ): Promise<OutputValues> {
     let outputs: OutputValues = {};
     for await (const result of this.run(probe, slots)) {
-      if (result.seeksInputs) {
+      if (result.type === "input") {
         result.inputs = inputs;
-      } else {
+      } else if (result.type === "output") {
         outputs = result.outputs;
         // Exit once we receive the first output.
         break;

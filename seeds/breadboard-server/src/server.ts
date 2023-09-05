@@ -27,11 +27,11 @@ const runResultLoop = async (
     res.write(`progress:${JSON.stringify(event.detail.descriptor)}\n`);
   });
 
-  if (runResult && runResult.seeksInputs) {
+  if (runResult && runResult.type === "input") {
     runResult.inputs = inputs;
   }
   for await (const stop of board.run(progress, undefined, runResult)) {
-    if (stop.seeksInputs) {
+    if (stop.type === "input") {
       if (inputs && Object.keys(inputs).length > 0) {
         stop.inputs = inputs;
         continue;
@@ -41,7 +41,8 @@ const runResultLoop = async (
         data: stop.inputArguments,
         state: stop.save(),
       };
-    } else {
+    }
+    if (stop.type === "output") {
       return {
         type: "output",
         data: stop.outputs,
