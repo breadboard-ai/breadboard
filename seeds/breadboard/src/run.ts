@@ -11,7 +11,7 @@ import {
   type OutputValues,
   type TraversalResult,
 } from "@google-labs/graph-runner";
-import type { BreadbordRunResult as BreadboardRunResult } from "./types.js";
+import type { BreadboardRunResult } from "./types.js";
 
 export const replacer = (key: string, value: unknown) => {
   if (!(value instanceof Map)) return value;

@@ -23,7 +23,7 @@ export interface Kit extends KitDescriptor {
 
 export type BreadboardSlotSpec = Record<string, GraphDescriptor>;
 
-export interface BreadbordRunResult {
+export interface BreadboardRunResult {
   /**
    * The current node that is being visited. This property can be used to get
    * information about the current node, such as its id, type, and
