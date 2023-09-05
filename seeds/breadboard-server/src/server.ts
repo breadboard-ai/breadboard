@@ -7,14 +7,20 @@
 import { Board, ProbeEvent, RunResult } from "@google-labs/breadboard";
 import { Request, Response } from "express";
 import { Store } from "./store.js";
-import { InputValues } from "@google-labs/graph-runner";
+import { InputValues, OutputValues } from "@google-labs/graph-runner";
+
+type RunResultLoopResult = {
+  type: "input" | "output" | "done";
+  data: InputValues | OutputValues;
+  state: string | undefined;
+};
 
 const runResultLoop = async (
   board: Board,
   inputs: InputValues,
   runResult: RunResult | undefined,
   res: Response
-) => {
+): Promise<RunResultLoopResult> => {
   const progress = new EventTarget();
   progress.addEventListener("beforehandler", (e) => {
     const event = e as ProbeEvent;
