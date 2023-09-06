@@ -157,7 +157,7 @@
         log.querySelector("#progress")?.remove();
         const input = createInputFromSchema(result.data.schema, result.state);
         log.append(input);
-        return { type: result.type, state: result.data.state };
+        return { type: result.type, state: result.state };
       }
       if (result.type === "beforehandler") {
         let progress = log.querySelector("#progress");
