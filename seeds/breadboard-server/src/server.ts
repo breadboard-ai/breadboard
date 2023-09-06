@@ -4,59 +4,44 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board, ProbeEvent, RunResult } from "@google-labs/breadboard";
+import { Board, RunResult } from "@google-labs/breadboard";
 import { Request, Response } from "express";
 import { Store } from "./store.js";
-import { InputValues, OutputValues } from "@google-labs/graph-runner";
+import { InputValues } from "@google-labs/graph-runner";
+import { Writer } from "./writer.js";
 
-type RunResultLoopResult = {
-  type: "input" | "output" | "done";
-  data: InputValues | OutputValues;
-  state: string | undefined;
-};
-
-const runResultLoop = async (
+export async function runResultLoop(
+  writer: Writer,
   board: Board,
   inputs: InputValues,
-  runResult: RunResult | undefined,
-  res: Response
-): Promise<RunResultLoopResult> => {
-  const progress = new EventTarget();
-  progress.addEventListener("beforehandler", (e) => {
-    const event = e as ProbeEvent;
-    res.write(`progress:${JSON.stringify(event.detail.descriptor)}\n`);
-  });
-
+  runResult: RunResult | undefined
+) {
   if (runResult && runResult.type === "input") {
     runResult.inputs = inputs;
   }
-  for await (const stop of board.run(progress, undefined, runResult)) {
+  for await (const stop of board.run(undefined, undefined, runResult)) {
+    if (stop.type === "beforehandler") {
+      writer.writeBeforeHandler(stop);
+      continue;
+    }
     if (stop.type === "input") {
+      // TODO: This case is for the "runOnce" invocation, where the board
+      // isn't expected to stream outputs and inputs.
       if (inputs && Object.keys(inputs).length > 0) {
         stop.inputs = inputs;
         continue;
       }
-      return {
-        type: "input",
-        data: stop.inputArguments,
-        state: stop.save(),
-      };
+      await writer.writeInput(stop);
+      return;
     }
     if (stop.type === "output") {
-      return {
-        type: "output",
-        data: stop.outputs,
-        state: stop.save(),
-      };
+      await writer.writeOutput(stop);
+      return;
     }
   }
 
-  return {
-    type: "done",
-    data: {},
-    state: undefined,
-  };
-};
+  writer.writeDone();
+}
 
 export const makeCloudFunction = (url: string) => {
   return async (req: Request, res: Response) => {
@@ -79,32 +64,24 @@ export const makeCloudFunction = (url: string) => {
 
     const store = new Store("breadboard-state");
 
-    const { $ticket, inputs } = req.body;
+    const { state, inputs } = req.body;
+
+    const writer = new Writer(res, async (newState) =>
+      store.saveBoardState(state || "", newState)
+    );
 
     res.type("application/json");
 
     try {
-      const savedState = await store.loadBoardState($ticket);
-
+      const savedState = await store.loadBoardState(state);
       const runResult = savedState ? RunResult.load(savedState) : undefined;
 
-      const { type, state, data } = await runResultLoop(
-        board,
-        inputs,
-        runResult,
-        res
-      );
-
-      const ticket = await store.saveBoardState($ticket || "", state);
-
-      res.write(`${type}:${JSON.stringify({ ...data, $ticket: ticket })}\n`);
+      await runResultLoop(writer, board, inputs, runResult);
     } catch (e) {
       console.error(e);
       const error = e as Error;
-      res.write(`error:${JSON.stringify(error.message)}\n`);
+      writer.writeError(error);
     }
-
-    res.write("done");
 
     res.end();
   };

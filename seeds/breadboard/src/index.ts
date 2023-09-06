@@ -18,4 +18,5 @@ export type {
   BreadboardSlotSpec,
   BreadboardNode,
   OptionalIdConfiguration,
+  RunResultType,
 } from "./types.js";

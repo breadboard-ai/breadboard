@@ -28,7 +28,6 @@ export class Store {
   }
 
   async saveBoardState(previousTicket: string, state: unknown) {
-    if (!state) return undefined;
     const docRef = this.#db.collection("states").doc();
     const expires = new Date(Date.now() + ONE_DAY);
     await docRef.set({ state, previousTicket, expires });

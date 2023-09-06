@@ -77,9 +77,9 @@ export class RunResult implements BreadboardRunResult {
   }
 
   static load(stringifiedResult: string): RunResult {
-    const { state, seeksInputs } = JSON.parse(stringifiedResult, reviver);
+    const { state, type } = JSON.parse(stringifiedResult, reviver);
     const machineResult = MachineResult.fromObject(state);
-    return new RunResult(machineResult, seeksInputs);
+    return new RunResult(machineResult, type);
   }
 }
 
