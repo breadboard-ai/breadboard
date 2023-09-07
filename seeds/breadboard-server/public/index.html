@@ -57,11 +57,6 @@
     }
   };
 
-  const splitAtFirstColon = (s) => {
-    const pos = s.indexOf(":");
-    return [s.substring(0, pos), s.substring(pos + 1).trim()];
-  };
-
   class BoardStreamer {
     writable;
     readable;
