@@ -22,11 +22,14 @@ Breadboard requires Node version >=v19.0.0. To install the library, run:
 npm install @google-labs/breadboard
 ```
 
-You will also likely need the [LLM Starter Kit](https://github.com/google/labs-prototypes/tree/main/seeds/llm-starter):
+You will also need the [LLM Starter Kit](https://github.com/google/labs-prototypes/tree/main/seeds/llm-starter):
 
 ```sh
 npm install @google-labs/llm-starter
 ```
+
+The LLM Starter Kit comes with Breadboard nodes helpful for building LLM-based applications including the
+[promptTemplate node](https://github.com/google/labs-prototypes/tree/main/seeds/llm-starter#the-prompttemplate-node), [append node](https://github.com/google/labs-prototypes/tree/main/seeds/llm-starter#the-append-node), [generateText node](https://github.com/google/labs-prototypes/tree/main/seeds/llm-starter#the-generatetext-node), and more.
 
 ## Using breadboard
 
