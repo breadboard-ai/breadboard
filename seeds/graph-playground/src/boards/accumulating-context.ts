@@ -7,7 +7,12 @@
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 
-const board = new Board();
+const board = new Board({
+  title: "Accumulating Context",
+  description:
+    'An example of a board that implements a multi-turn experience: a very simple chat bot that accumulates context of the conversations. Tell it "I am hungry" or something like this and then give simple replies, like "bbq". It should be able to infer what you\'re asking for based on the conversation context. All replies are pure hallucinations, but should give you a sense of how a Breadboard API endpoint for a bord with cycles looks like.',
+  version: "0.0.1",
+});
 const kit = board.addKit(Starter);
 
 // Store input node so that we can refer back to it to create a conversation

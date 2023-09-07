@@ -7,7 +7,12 @@
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 
-const math = new Board();
+const math = new Board({
+  title: "The Calculator Recipe",
+  description:
+    "A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.",
+  version: "0.0.1",
+});
 const kit = math.addKit(Starter);
 
 math

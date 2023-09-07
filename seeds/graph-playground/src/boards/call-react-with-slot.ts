@@ -55,7 +55,12 @@ const tools = () => {
 };
 
 // This is the main board that controls the rest of the board.
-const board = new Board();
+const board = new Board({
+  title: "Calling ReAct with slots",
+  description:
+    "An implementation of the [ReAct](https://react-lm.github.io/) AI pattern that relies on Breadboard [slots](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/nodes.md#the-slot-node) to supply tools to ReAct. The slots are currently populated by two boards: `search-summarize` and `math`.",
+  version: "0.0.1",
+});
 board.addKit(Starter);
 
 // Include the `react-with-slot` board from a URL, wiring input to it.

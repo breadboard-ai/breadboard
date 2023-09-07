@@ -1,4 +1,7 @@
 {
+  "title": "The Calculator Recipe",
+  "description": "A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.",
+  "version": "0.0.1",
   "edges": [
     {
       "from": "compute",
