@@ -49,7 +49,7 @@ test("writes input", async (t) => {
       },
       inputs: {},
       missingInputs: [],
-      opportunities: [],
+      opportunities: [{ from: "test", to: "test", out: "*" }],
       state: new MockEdgeState(),
       outputs: {},
       skip: false,
@@ -60,7 +60,7 @@ test("writes input", async (t) => {
   await writer.writeInput(stop);
   t.is(
     mockResponse.written,
-    '{"type":"input","data":{},"state":"{\\"state\\":{\\"descriptor\\":{\\"id\\":\\"test\\",\\"type\\":\\"test\\"},\\"inputs\\":{},\\"missingInputs\\":[],\\"opportunities\\":[],\\"state\\":{\\"state\\":{\\"$type\\":\\"Map\\",\\"value\\":[]},\\"constants\\":{\\"$type\\":\\"Map\\",\\"value\\":[]}},\\"outputs\\":{},\\"skip\\":false,\\"newOpportunities\\":[]},\\"type\\":\\"input\\"}"}\n'
+    '{"type":"input","data":{},"state":"{\\"state\\":{\\"descriptor\\":{\\"id\\":\\"test\\",\\"type\\":\\"test\\"},\\"inputs\\":{},\\"missingInputs\\":[],\\"opportunities\\":[{\\"from\\":\\"test\\",\\"to\\":\\"test\\",\\"out\\":\\"*\\"}],\\"state\\":{\\"state\\":{\\"$type\\":\\"Map\\",\\"value\\":[]},\\"constants\\":{\\"$type\\":\\"Map\\",\\"value\\":[]}},\\"outputs\\":{},\\"skip\\":false,\\"newOpportunities\\":[]},\\"type\\":\\"input\\"}"}\n'
   );
 });
 
@@ -75,7 +75,7 @@ test("writes output", async (t) => {
       },
       inputs: {},
       missingInputs: [],
-      opportunities: [],
+      opportunities: [{ from: "test", to: "test", out: "*" }],
       state: new MockEdgeState(),
       outputs: {},
       skip: false,
@@ -86,7 +86,7 @@ test("writes output", async (t) => {
   await writer.writeOutput(stop);
   t.is(
     mockResponse.written,
-    '{"type":"output","data":{},"state":"{\\"state\\":{\\"descriptor\\":{\\"id\\":\\"test\\",\\"type\\":\\"test\\"},\\"inputs\\":{},\\"missingInputs\\":[],\\"opportunities\\":[],\\"state\\":{\\"state\\":{\\"$type\\":\\"Map\\",\\"value\\":[]},\\"constants\\":{\\"$type\\":\\"Map\\",\\"value\\":[]}},\\"outputs\\":{},\\"skip\\":false,\\"newOpportunities\\":[]},\\"type\\":\\"output\\"}"}\n'
+    '{"type":"output","data":{},"state":"{\\"state\\":{\\"descriptor\\":{\\"id\\":\\"test\\",\\"type\\":\\"test\\"},\\"inputs\\":{},\\"missingInputs\\":[],\\"opportunities\\":[{\\"from\\":\\"test\\",\\"to\\":\\"test\\",\\"out\\":\\"*\\"}],\\"state\\":{\\"state\\":{\\"$type\\":\\"Map\\",\\"value\\":[]},\\"constants\\":{\\"$type\\":\\"Map\\",\\"value\\":[]}},\\"outputs\\":{},\\"skip\\":false,\\"newOpportunities\\":[]},\\"type\\":\\"output\\"}"}\n'
   );
 });
 
@@ -101,7 +101,7 @@ test("writes beforehandler", async (t) => {
       },
       inputs: {},
       missingInputs: [],
-      opportunities: [],
+      opportunities: [{ from: "test", to: "test", out: "*" }],
       state: new MockEdgeState(),
       outputs: {},
       skip: false,
@@ -141,7 +141,7 @@ test("transforms state", async (t) => {
       },
       inputs: {},
       missingInputs: [],
-      opportunities: [],
+      opportunities: [{ from: "test", to: "test", out: "*" }],
       state: new MockEdgeState(),
       outputs: {},
       skip: false,

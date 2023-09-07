@@ -196,6 +196,7 @@
       }
       console.assert(states.length === 1);
       ticket = states[0];
+      if (ticket === undefined) break;
       inputs = undefined;
       counter--;
       if (counter === 0) {

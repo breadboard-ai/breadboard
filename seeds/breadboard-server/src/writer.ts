@@ -28,18 +28,24 @@ export class Writer {
   }
 
   async writeInput(stop: RunResult) {
+    const state = stop.isAtExitNode()
+      ? undefined
+      : await this.#stateTransformer(stop.save());
     this.write({
       type: "input",
       data: stop.inputArguments,
-      state: await this.#stateTransformer(stop.save()),
+      state,
     });
   }
 
   async writeOutput(stop: RunResult) {
+    const state = stop.isAtExitNode()
+      ? undefined
+      : await this.#stateTransformer(stop.save());
     this.write({
       type: "output",
       data: stop.outputs,
-      state: await this.#stateTransformer(stop.save()),
+      state,
     });
   }
 

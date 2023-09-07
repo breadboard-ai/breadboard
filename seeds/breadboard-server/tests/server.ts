@@ -58,24 +58,8 @@ test("runResultLoop correctly handles finite graph", async (t) => {
     await runResultLoop(writer, board, { text: "hello" }, restoredState);
     t.is(
       response.written,
-      '{"type":"beforehandler","data":{"id":"noop","type":"passthrough"}}\n{"type":"output","data":{"text":"hello"},"state":"1"}\nstop\n'
+      '{"type":"beforehandler","data":{"id":"noop","type":"passthrough"}}\n{"type":"output","data":{"text":"hello"}}\nstop\n'
     );
-    t.is(
-      intermediateState,
-      '{"state":{"descriptor":{"id":"out","type":"output"},"inputs":{"text":"hello"},"missingInputs":[],"opportunities":[],"newOpportunities":[],"state":{"state":{"$type":"Map","value":[["out",{"$type":"Map","value":[["noop",{"text":"hello"}]]}]]},"constants":{"$type":"Map","value":[]}}},"type":"output"}'
-    );
-    t.is(count, 2);
-  }
-
-  {
-    response.written = "";
-    const restoredState = RunResult.load(intermediateState);
-    await runResultLoop(writer, board, { text: "hello" }, restoredState);
-    t.is(response.written, '{"type":"done","data":{}}\nstop\n');
-    t.is(
-      intermediateState,
-      '{"state":{"descriptor":{"id":"out","type":"output"},"inputs":{"text":"hello"},"missingInputs":[],"opportunities":[],"newOpportunities":[],"state":{"state":{"$type":"Map","value":[["out",{"$type":"Map","value":[["noop",{"text":"hello"}]]}]]},"constants":{"$type":"Map","value":[]}}},"type":"output"}'
-    );
-    t.is(count, 2);
+    t.is(count, 1);
   }
 });
