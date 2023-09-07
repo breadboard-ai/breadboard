@@ -32,15 +32,18 @@ export async function runResultLoop(
         continue;
       }
       await writer.writeInput(stop);
+      writer.writeStop();
       return;
     }
     if (stop.type === "output") {
       await writer.writeOutput(stop);
+      writer.writeStop();
       return;
     }
   }
 
   writer.writeDone();
+  writer.writeStop();
 }
 
 export const makeCloudFunction = (url: string) => {

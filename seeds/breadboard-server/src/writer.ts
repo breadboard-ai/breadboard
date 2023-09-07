@@ -67,6 +67,10 @@ export class Writer {
     });
   }
 
+  writeStop() {
+    this.#res.write("stop\n");
+  }
+
   write(data: ToWrite) {
     this.#res.write(`${JSON.stringify(data)}\n`);
   }

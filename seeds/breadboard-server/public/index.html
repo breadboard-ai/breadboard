@@ -86,11 +86,11 @@
         .filter((line) => line.length > 0)
         .forEach((line) => {
           try {
-            const data = JSON.parse(line);
-            if (data.type === "done") {
+            if (line === "stop") {
               this.controller?.close();
               return;
             }
+            const data = JSON.parse(line);
             this.controller?.enqueue(data);
           } catch (e) {
             console.error(e);
@@ -146,20 +146,19 @@
       body: JSON.stringify({ inputs, state: $ticket }),
     });
     const stream = response.body?.pipeThrough(new BoardStreamer());
+    const results = [];
     for await (const result of stream) {
       if (result.type === "output") {
         log.querySelector("#progress")?.remove();
         const output = result.data;
         writeOutput(output);
-        return { type: result.type, state: result.state };
-      }
-      if (result.type === "input") {
+        results.push({ type: result.type, state: result.state });
+      } else if (result.type === "input") {
         log.querySelector("#progress")?.remove();
         const input = createInputFromSchema(result.data.schema, result.state);
         log.append(input);
-        return { type: result.type, state: result.state };
-      }
-      if (result.type === "beforehandler") {
+        results.push({ type: result.type, state: result.state });
+      } else if (result.type === "beforehandler") {
         let progress = log.querySelector("#progress");
         if (!progress) {
           progress = document.createElement("div");
@@ -167,25 +166,36 @@
           log.append(progress);
         }
         progress.textContent = `Running "${result.data.id}" ...`;
-      }
-      if (result.type === "error") {
+        continue;
+      } else if (result.type === "error") {
         log.querySelector("#progress")?.remove();
         log.append(`Error: ${result.data}\n`);
-        return { type: "done" };
+        results.push({ type: "done" });
+        continue;
+      } else if (result.type === "done") {
+        log.querySelector("#progress")?.remove();
+        results.push({ type: result.type });
       }
     }
-    return { type: "done" };
+    return results;
   };
 
   const runLoop = async (inputs, ticket) => {
     let counter = 5;
     for (;;) {
-      let reply = await post(inputs, ticket);
-      if (reply.type === "input" || reply.type === "done") {
+      let results = await post(inputs, ticket);
+      console.log(results);
+      let types = results.map((r) => r.type);
+      let states = results.map((r) => r.state).filter(Boolean);
+      if (
+        types.includes("input") ||
+        types.includes("done") ||
+        types.includes("error")
+      ) {
         break;
       }
-      console.log(reply);
-      ticket = reply.state;
+      console.assert(states.length === 1);
+      ticket = states[0];
       inputs = undefined;
       counter--;
       if (counter === 0) {
