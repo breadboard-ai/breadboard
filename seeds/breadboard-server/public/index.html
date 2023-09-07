@@ -99,7 +99,7 @@
     }
   }
 
-  const createInputFromSchema = (schema, ticket) => {
+  const createInputFromSchema = (schema, previousState) => {
     const input = document.createElement("div");
     input.id = "input";
     if (!schema) {
@@ -127,7 +127,7 @@
         }
       });
       input.remove();
-      await runLoop(data, ticket);
+      await runLoop(data, previousState);
     });
     return input;
   };
@@ -138,26 +138,25 @@
     });
   };
 
-  const post = async (inputs, $ticket) => {
+  const post = async (inputs, state) => {
     const url = new URL(window.location);
     const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ inputs, state: $ticket }),
+      body: JSON.stringify({ inputs, state }),
     });
     const stream = response.body?.pipeThrough(new BoardStreamer());
-    const results = [];
     for await (const result of stream) {
       if (result.type === "output") {
         log.querySelector("#progress")?.remove();
         const output = result.data;
         writeOutput(output);
-        results.push({ type: result.type, state: result.state });
+        return result;
       } else if (result.type === "input") {
         log.querySelector("#progress")?.remove();
         const input = createInputFromSchema(result.data.schema, result.state);
         log.append(input);
-        results.push({ type: result.type, state: result.state });
+        return result;
       } else if (result.type === "beforehandler") {
         let progress = log.querySelector("#progress");
         if (!progress) {
@@ -166,42 +165,27 @@
           log.append(progress);
         }
         progress.textContent = `Running "${result.data.id}" ...`;
-        continue;
       } else if (result.type === "error") {
         log.querySelector("#progress")?.remove();
-        log.append(`Error: ${result.data}\n`);
-        results.push({ type: "done" });
-        continue;
+        log.append(`Error: ${result.data.message}\n`);
+        return result;
       } else if (result.type === "done") {
         log.querySelector("#progress")?.remove();
-        results.push({ type: result.type });
+        return result;
       }
     }
     return results;
   };
 
-  const runLoop = async (inputs, ticket) => {
-    let counter = 5;
+  const runLoop = async (inputs, state) => {
     for (;;) {
-      let results = await post(inputs, ticket);
-      console.log(results);
-      let types = results.map((r) => r.type);
-      let states = results.map((r) => r.state).filter(Boolean);
-      if (
-        types.includes("input") ||
-        types.includes("done") ||
-        types.includes("error")
-      ) {
+      let result = await post(inputs, state);
+      console.log(result);
+      if (result.type !== "output" || result.state === undefined) {
         break;
       }
-      console.assert(states.length === 1);
-      ticket = states[0];
-      if (ticket === undefined) break;
+      state = result.state;
       inputs = undefined;
-      counter--;
-      if (counter === 0) {
-        break;
-      }
     }
   };
 
