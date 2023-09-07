@@ -110,3 +110,29 @@ test("correctly saves and loads", async (t) => {
     '{"state":{"descriptor":{"id":"input-1","type":"input"},"inputs":{},"missingInputs":[],"opportunities":[],"newOpportunities":[{"from":"input-1","to":"passthrough-3","out":"*"}],"state":{"state":{"$type":"Map","value":[["input-1",{"$type":"Map","value":[["output-4",{}]]}]]},"constants":{"$type":"Map","value":[]}}},"type":"input"}'
   );
 });
+
+test("correctly detects exit node", async (t) => {
+  const board = new Board();
+  const input = board.input();
+  input.wire("*->", board.passthrough().wire("*->", board.output()));
+
+  const generator = board.run();
+
+  {
+    const stop = await generator.next();
+    t.is(stop.value.type, "input");
+    t.false(stop.value.isAtExitNode());
+  }
+
+  {
+    const stop = await generator.next();
+    t.is(stop.value.type, "beforehandler");
+    t.false(stop.value.isAtExitNode());
+  }
+
+  {
+    const stop = await generator.next();
+    t.is(stop.value.type, "output");
+    t.true(stop.value.isAtExitNode());
+  }
+});

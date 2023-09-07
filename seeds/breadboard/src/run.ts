@@ -76,6 +76,13 @@ export class RunResult implements BreadboardRunResult {
     return JSON.stringify({ state: this.#state, type: this.#type }, replacer);
   }
 
+  isAtExitNode(): boolean {
+    return (
+      this.#state.newOpportunities.length === 0 &&
+      this.#state.opportunities.length === 0
+    );
+  }
+
   static load(stringifiedResult: string): RunResult {
     const { state, type } = JSON.parse(stringifiedResult, reviver);
     const machineResult = MachineResult.fromObject(state);
