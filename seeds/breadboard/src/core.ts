@@ -53,11 +53,24 @@ export class Core {
   async include(inputs: InputValues): Promise<OutputValues> {
     const { path, $ref, graph, slotted, parent, ...args } =
       inputs as IncludeNodeInputs;
+
+    // Add the current graph's URL as the url of the slotted graph,
+    // if there isn't an URL already.
+    const slottedWithUrls: BreadboardSlotSpec = {};
+    if (slotted) {
+      for (const key in slotted) {
+        slottedWithUrls[key] = { url: this.#graph.url, ...slotted[key] };
+      }
+    }
+
     // TODO: Please fix the $ref/path mess.
     const source = path || $ref || "";
     const board = graph
       ? await Board.fromGraphDescriptor(graph)
-      : await Board.load(source, { slotted, base: this.#graph.url });
+      : await Board.load(source, {
+          slotted: slottedWithUrls,
+          base: this.#graph.url,
+        });
     for (const validator of this.#validators)
       board.addValidator(
         validator.getSubgraphValidator(parent, Object.keys(args))
