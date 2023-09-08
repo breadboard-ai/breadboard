@@ -13,6 +13,7 @@ import {
   GraphIntegrityValidator,
   GraphIntegrityPolicy,
   Label,
+  Principal,
   PrincipalLattice,
 } from "@google-labs/graph-integrity";
 
@@ -115,22 +116,27 @@ async function main(args: string[], use_input_handler = false) {
 
   // Load the board, specified in the command line.
   const board = await Board.load(graph, { base });
-
   // Add a custom kit.
   board.addKit(ReActHelper);
 
   if (validateIntegrity) {
     const lattice = new PrincipalLattice();
+
+    const possiblePromptInjection = new Principal("possiblePromptInjection");
+    const noPromptInjection = new Principal("noPromptInjection");
+    lattice.insert(possiblePromptInjection, lattice.TRUSTED, lattice.UNTRUSTED);
+    lattice.insert(noPromptInjection, lattice.TRUSTED, possiblePromptInjection);
+
     const policy = {
       fetch: {
         outgoing: {
-          response: new Label({ integrity: lattice.UNTRUSTED }),
+          response: new Label({ integrity: possiblePromptInjection }),
         },
       },
       runJavascript: {
         incoming: {
-          code: new Label({ integrity: lattice.TRUSTED }),
-          name: new Label({ integrity: lattice.TRUSTED }),
+          code: new Label({ integrity: noPromptInjection }),
+          name: new Label({ integrity: noPromptInjection }),
         },
       },
     } as GraphIntegrityPolicy;
