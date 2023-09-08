@@ -19,7 +19,7 @@ You can supply `message` property as input to provide a helpful message alongsid
 ```js
 board.input().wire("say->", board.output());
 
-board.runOnce({
+const result = await board.runOnce({
   say: "Hello, world!",
 });
 
