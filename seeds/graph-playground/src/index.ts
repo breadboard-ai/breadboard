@@ -13,7 +13,7 @@ import {
   GraphIntegrityValidator,
   GraphIntegrityPolicy,
   Label,
-  LabelLattice,
+  PrincipalLattice,
 } from "@google-labs/graph-integrity";
 
 import { ReActHelper } from "./react.js";
@@ -120,7 +120,7 @@ async function main(args: string[], use_input_handler = false) {
   board.addKit(ReActHelper);
 
   if (validateIntegrity) {
-    const lattice = new LabelLattice();
+    const lattice = new PrincipalLattice();
     const policy = {
       fetch: {
         outgoing: {

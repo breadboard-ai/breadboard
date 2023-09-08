@@ -10,7 +10,7 @@ import { readFile, readdir } from "fs/promises";
 
 import { GraphDescriptor, NodeDescriptor } from "@google-labs/graph-runner";
 import { GraphIntegrityValidator } from "../src/validator.js";
-import { Label, LabelLattice } from "../src/label.js";
+import { Label, PrincipalLattice } from "../src/label.js";
 import { Policy } from "../src/policy.js";
 
 const IN_DIR = "./tests/data/";
@@ -27,7 +27,7 @@ const graphs = (await readdir(`${IN_DIR}/`)).filter((file) =>
   file.endsWith(".json")
 );
 
-const lattice = new LabelLattice();
+const lattice = new PrincipalLattice();
 
 const trustedIntegrity = new Label({
   integrity: lattice.TRUSTED,

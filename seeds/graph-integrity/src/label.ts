@@ -7,9 +7,9 @@
 /**
  * Information flow control label values, i.e. levels of trust.
  */
-export class LabelValue {
-  below: LabelValue[];
-  above: LabelValue[];
+export class Principal {
+  below: Principal[];
+  above: Principal[];
   name: string;
 
   /**
@@ -26,12 +26,12 @@ export class LabelValue {
   /**
    * Test whether this label is below another in the semi-lattice.
    *
-   * @param other {LabelValue} LabelValue to compare with
+   * @param other {Principal} Principal to compare with
    * @returns {Boolean} true if this label is above the other
    */
-  isBelow(other: LabelValue): boolean {
-    let aboves = [this as LabelValue];
-    let above: LabelValue | undefined;
+  isBelow(other: Principal): boolean {
+    let aboves = [this as Principal];
+    let above: Principal | undefined;
     while ((above = aboves.pop()) !== undefined) {
       if (above.above.includes(other)) return true;
       aboves = [...aboves, ...above.above];
@@ -42,12 +42,12 @@ export class LabelValue {
   /**
    * Test whether this label is above another in the semi-lattice.
    *
-   * @param other {LabelValue} LabelValue to compare with
+   * @param other {Principal} Principal to compare with
    * @returns {Boolean} true if this label is above the other
    */
-  isAbove(other: LabelValue): boolean {
-    let belows = [this as LabelValue];
-    let below: LabelValue | undefined;
+  isAbove(other: Principal): boolean {
+    let belows = [this as Principal];
+    let below: Principal | undefined;
     while ((below = belows.pop()) !== undefined) {
       if (below.below.includes(other)) return true;
       belows = [...belows, ...below.below];
@@ -61,15 +61,15 @@ export class LabelValue {
    *
    * Returns undefined for an empty list.
    */
-  static leastUpperBound(values: LabelValue[]): LabelValue | undefined {
+  static leastUpperBound(values: Principal[]): Principal | undefined {
     if (values.length === 0) return undefined;
 
     // Map each value to itself and all values above it.
     // The order is partially sorted, with lowest first.
     const allAbove = values.map((value) => {
-      const all: LabelValue[] = [];
+      const all: Principal[] = [];
       let aboves = [value];
-      let above: LabelValue | undefined;
+      let above: Principal | undefined;
       while ((above = aboves.pop()) !== undefined) {
         all.push(above);
         aboves = [...aboves, ...above.above];
@@ -94,15 +94,15 @@ export class LabelValue {
    *
    * Returns undefined for an empty list.
    */
-  static greatestLowerBound(values: LabelValue[]): LabelValue | undefined {
+  static greatestLowerBound(values: Principal[]): Principal | undefined {
     if (values.length === 0) return undefined;
 
     // Map each value to itself and all values below it.
     // The order is partially sorted, with highest first.
     const allBelow = values.map((value) => {
-      const all: LabelValue[] = [];
+      const all: Principal[] = [];
       let belows = [value];
-      let below: LabelValue | undefined;
+      let below: Principal | undefined;
       while ((below = belows.pop()) !== undefined) {
         all.push(below);
         belows = [...belows, ...below.below];
@@ -123,14 +123,14 @@ export class LabelValue {
 }
 
 /**
- * Information flow control label lattice.
+ * Information flow control principal lattice.
  *
  * Defines a lattice, with TOP being the most restrictive and BOTTOM being the
  * least restrictive values.
  */
-export class LabelLattice {
-  readonly TOP = new LabelValue("⊤");
-  readonly BOTTOM = new LabelValue("⊥");
+export class PrincipalLattice {
+  readonly TOP = new Principal("⊤");
+  readonly BOTTOM = new Principal("⊥");
 
   readonly PRIVATE = this.TOP;
   readonly PUBLIC = this.BOTTOM;
@@ -139,7 +139,7 @@ export class LabelLattice {
   readonly UNTRUSTED = this.TOP;
   readonly TRUSTED = this.BOTTOM;
 
-  readonly labels = new Map<string, LabelValue | undefined>([
+  readonly labels = new Map<string, Principal | undefined>([
     ["⊤", this.TOP],
     ["⊥", this.BOTTOM],
     ["TOP", this.TOP],
@@ -158,15 +158,15 @@ export class LabelLattice {
   }
 
   /**
-   * Insert a new label value between two existing label values.
+   * Insert a new principal between two existing label values.
    *
-   * @param below {LabelValue} LabelValue below the new label value
-   * @param above {LabelValue} LabelValue above the new label value
+   * @param below {Principal} Principal below the new label value
+   * @param above {Principal} Principal above the new label value
    */
   insert(
-    label: LabelValue,
-    below: LabelValue = this.BOTTOM,
-    above: LabelValue = this.TOP
+    label: Principal,
+    below: Principal = this.BOTTOM,
+    above: Principal = this.TOP
   ) {
     if (this.labels.has(label.name))
       throw Error(`Can't insert label named "${label.name}" twice.`);
@@ -184,12 +184,12 @@ export class LabelLattice {
   }
 
   /**
+   * Get principal by name.
    *
-   *
-   * @param name Name of label to find
-   * @returns {LabelValue} label or undefined
+   * @param name Name of principal to find
+   * @returns {Principal} principal or undefined
    */
-  get(name: string): LabelValue | undefined {
+  get(name: string): Principal | undefined {
     return this.labels.get(name);
   }
 }
@@ -198,17 +198,17 @@ export class LabelLattice {
  * Information flow control label.
  */
 export class Label {
-  public readonly confidentiality?: LabelValue;
-  public readonly integrity?: LabelValue;
+  public readonly confidentiality?: Principal;
+  public readonly integrity?: Principal;
 
   /**
-   * @param {{ confidentiality: LabelValue; integrity: LabelValue } | Label}
-   *   label Label to copy or pair of LabelValues to create a new label from.
+   * @param {{ confidentiality: Principal; integrity: Principal } | Label}
+   *   label Label to copy or pair of Principals to create a new label from.
    */
   constructor(
     label:
       | Label
-      | { confidentiality?: LabelValue; integrity?: LabelValue }
+      | { confidentiality?: Principal; integrity?: Principal }
       | undefined = undefined
   ) {
     if (label) {
@@ -230,8 +230,8 @@ export class Label {
     const { confidentialityLabels, integrityLabels } =
       Label.getLabelComponents(labels);
 
-    const confidentiality = LabelValue.leastUpperBound(confidentialityLabels);
-    const integrity = LabelValue.leastUpperBound(integrityLabels);
+    const confidentiality = Principal.leastUpperBound(confidentialityLabels);
+    const integrity = Principal.leastUpperBound(integrityLabels);
 
     return new Label({ confidentiality, integrity });
   }
@@ -249,10 +249,8 @@ export class Label {
     const { confidentialityLabels, integrityLabels } =
       Label.getLabelComponents(labels);
 
-    const confidentiality = LabelValue.greatestLowerBound(
-      confidentialityLabels
-    );
-    const integrity = LabelValue.greatestLowerBound(integrityLabels);
+    const confidentiality = Principal.greatestLowerBound(confidentialityLabels);
+    const integrity = Principal.greatestLowerBound(integrityLabels);
 
     return new Label({ confidentiality, integrity });
   }
@@ -262,17 +260,17 @@ export class Label {
    * Might return empty lists if there are no defined label components.
    */
   private static getLabelComponents(labels: (Label | undefined)[]): {
-    confidentialityLabels: LabelValue[];
-    integrityLabels: LabelValue[];
+    confidentialityLabels: Principal[];
+    integrityLabels: Principal[];
   } {
     const confidentialityLabels = labels
       .filter(
         (label) => label !== undefined && label.confidentiality !== undefined
       )
-      .map((label) => label?.confidentiality) as LabelValue[];
+      .map((label) => label?.confidentiality) as Principal[];
     const integrityLabels = labels
       .filter((label) => label !== undefined && label.integrity !== undefined)
-      .map((label) => label?.integrity) as LabelValue[];
+      .map((label) => label?.integrity) as Principal[];
     return { confidentialityLabels, integrityLabels };
   }
 
