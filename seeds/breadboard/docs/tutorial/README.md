@@ -170,7 +170,7 @@ You can see its source code here: [tutorial-2.js](./tutorial-2.js).
 
 ## Chatper 3: Fun with wires
 
-So far, we've build a fairly simple board. Let's use this board to learn a bit more about convenient shortcuts and ways to wire nodes together.
+So far, we've built a fairly simple board. Let's use this board to learn a bit more about convenient shortcuts and ways to wire nodes together.
 
 First, the `wire` method returns the node itself, allowing us to wire the same node to multiple other nodes in a chain:
 
