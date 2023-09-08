@@ -2,6 +2,22 @@
 
 This is likely to change dramatically, but we have to start somewhere.
 
+## Setup
+
+Install gcloud CLI: https://cloud.google.com/sdk/docs/install
+
+Login with Application-default credentials (ADC):
+
+```bash
+gcloud auth application-default login
+```
+
+Select the project you want to use:
+
+```bash
+gcloud config set project ${PROJECT_ID}
+```
+
 This project is currently in Javascript, not Typescript, so it does not need to be built.
 
 ```bash

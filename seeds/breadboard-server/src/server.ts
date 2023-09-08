@@ -45,6 +45,9 @@ export async function runResultLoop(
 
 export const makeCloudFunction = (url: string) => {
   return async (req: Request, res: Response) => {
+    // TODO: Handle loading errors here.
+    const board = await Board.load(url);
+
     if (req.method !== "POST") {
       if (req.path === "/") {
         res.sendFile(
@@ -53,14 +56,15 @@ export const makeCloudFunction = (url: string) => {
       } else if (req.path === "/info") {
         res.type("application/json").send({
           url,
+          title: board.title,
+          description: board.description,
+          version: board.version,
         });
       } else {
         res.status(404).send("Not found");
       }
       return;
     }
-
-    const board = await Board.load(url);
 
     const store = new Store("breadboard-state");
 
