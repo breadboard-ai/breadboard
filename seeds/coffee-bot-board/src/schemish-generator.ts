@@ -43,8 +43,33 @@ const shouldRecover = kit.runJavascript("gate", {
 const willRecover = board.passthrough({ $id: "willRecover" });
 
 // Outputs
-const $error = board.output({ $id: "error" });
-const $completion = board.output({ $id: "completion" });
+const $error = board.output({
+  $id: "error",
+  schema: {
+    type: "object",
+    properties: {
+      error: {
+        type: "object",
+        title: "Error",
+        description: "The error reported during generation",
+      },
+    },
+  },
+});
+const $completion = board.output({
+  $id: "completion",
+  schema: {
+    type: "object",
+    properties: {
+      completion: {
+        type: "string",
+        title: "Completion",
+        description:
+          "Generated text that conforms to the specified output schema",
+      },
+    },
+  },
+});
 
 // Wire all useful parts of the input.
 board
@@ -53,10 +78,29 @@ board
     schema: {
       type: "object",
       properties: {
-        prologue: { type: "string" },
-        epilogue: { type: "string" },
-        schema: { type: "object" },
-        recover: { type: "boolean" },
+        prologue: {
+          type: "string",
+          title: "Template prologue",
+          description:
+            "The part of the template that preceeds the place where output schema is mentioned",
+        },
+        epilogue: {
+          type: "string",
+          title: "Template epilogue",
+          description:
+            "The part of the template that follows the place where output schema is mentioned",
+        },
+        schema: {
+          type: "object",
+          title: "Output schema",
+          description: "The JSON schema object that describes desired output",
+        },
+        recover: {
+          type: "boolean",
+          title: "Error recovery",
+          description:
+            "Whether to try to recover from errors or just report failure",
+        },
       },
       required: ["prologue", "epilogue", "schema", "recover"],
       additionalProperties: false,

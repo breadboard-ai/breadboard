@@ -26,6 +26,8 @@ schemishGenerator["promptTemplate <br> id='schemishGenerator'"] -- "prompt->text
 nameshouldRecover[name]:::config -- "name->name" --o shouldRecover
 codeshouldRecover[code]:::config -- "code->code" --o shouldRecover
 rawshouldRecover[raw]:::config -- "raw->raw" --o shouldRecover
+schemaerror[schema]:::config -- "schema->schema" --o error
+schemacompletion[schema]:::config -- "schema->schema" --o completion
 messageinput[message]:::config -- "message->message" --o input
 schemainput[schema]:::config -- "schema->schema" --o input
 stopSequencesgenerator[stopSequences]:::config -- "stopSequences->stopSequences" --o generator

@@ -151,11 +151,35 @@
     },
     {
       "id": "error",
-      "type": "output"
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "error": {
+              "type": "object",
+              "title": "Error",
+              "description": "The error reported during generation"
+            }
+          }
+        }
+      }
     },
     {
       "id": "completion",
-      "type": "output"
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "completion": {
+              "type": "string",
+              "title": "Completion",
+              "description": "Generated text that conforms to the specified output schema"
+            }
+          }
+        }
+      }
     },
     {
       "id": "input",
@@ -166,16 +190,24 @@
           "type": "object",
           "properties": {
             "prologue": {
-              "type": "string"
+              "type": "string",
+              "title": "Template prologue",
+              "description": "The part of the template that preceeds the place where output schema is mentioned"
             },
             "epilogue": {
-              "type": "string"
+              "type": "string",
+              "title": "Template epilogue",
+              "description": "The part of the template that follows the place where output schema is mentioned"
             },
             "schema": {
-              "type": "object"
+              "type": "object",
+              "title": "Output schema",
+              "description": "The JSON schema object that describes desired output"
             },
             "recover": {
-              "type": "boolean"
+              "type": "boolean",
+              "title": "Error recovery",
+              "description": "Whether to try to recover from errors or just report failure"
             }
           },
           "required": [
