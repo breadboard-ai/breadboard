@@ -44,7 +44,20 @@ kit
   .wire("GOOGLE_CSE_ID", searchURLTemplate);
 
 searchSummarize
-  .input("What would you like to search for?", { $id: "input" })
+  .input({
+    $id: "input",
+    schema: {
+      type: "object",
+      properties: {
+        text: {
+          type: "string",
+          title: "Query",
+          description: "What would you like to search for?",
+        },
+      },
+      required: ["text"],
+    },
+  })
   .wire("text->question", summarizingTemplate)
   .wire("text->query", searchURLTemplate);
 

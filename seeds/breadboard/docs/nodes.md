@@ -12,8 +12,6 @@ Use this node to ask for input. The program that asked to run the board needs to
 
 The node takes a property bag as its input and passes it along to the next node, unmodified.
 
-You can supply `message` property as input to provide a helpful message alongside the input request.
-
 ### Example:
 
 ```js
@@ -34,7 +32,7 @@ result { say: 'Hello, world!' }
 
 ### Inputs:
 
-- `message` -- a helpful message to pass along with the input. See [Chapter 9: Let's build a chat bot](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-9-lets-build-a-chat-bot) of Breadboard tutorial for an example.
+- none
 
 ### Outputs:
 

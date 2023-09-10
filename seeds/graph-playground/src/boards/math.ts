@@ -16,7 +16,7 @@ const math = new Board({
 const kit = math.addKit(Starter);
 
 math
-  .input("Ask a math question", {
+  .input({
     $id: "math-question",
     schema: {
       type: "object",

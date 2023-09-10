@@ -68,7 +68,7 @@ board.addKit(Starter);
 // This is how the ReAct recipe will consume the `tools` board we created
 // above.
 board
-  .input("Ask ReAct", {
+  .input({
     $id: "userRequest",
     schema: {
       type: "object",

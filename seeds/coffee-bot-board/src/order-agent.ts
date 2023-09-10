@@ -78,7 +78,7 @@ const customerTool = board
       .wire(
         "result->message",
         board
-          .input("", { $id: "ask-customer-tool" })
+          .input({ $id: "ask-customer-tool" })
           .wire("customer->Customer", customerMemory)
       )
   );
@@ -105,7 +105,7 @@ const toolRouter = kit
   .wire("finalizeOrder->", finalizeOrderTool);
 
 board
-  .input("", { $id: "first-ask-customer" })
+  .input({ $id: "first-ask-customer" })
   .wire("customer->Customer", customerMemory);
 
 board

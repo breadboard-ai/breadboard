@@ -89,7 +89,21 @@ const rememberQuestion = kit
 
 // Wire input to the `rememberQuestion` node, to provide the question to
 // remember.
-board.input("Ask ReAct a question").wire("text->Question", rememberQuestion);
+board
+  .input({
+    schema: {
+      type: "object",
+      properties: {
+        text: {
+          type: "string",
+          title: "Question",
+          description: "Ask ReAct a question",
+        },
+      },
+      required: ["text"],
+    },
+  })
+  .wire("text->Question", rememberQuestion);
 
 // The completion must include stop sentences, to prevent LLM form hallucinating
 // all answers.

@@ -17,7 +17,7 @@ const kit = board.addKit(Starter);
 
 // Store input node so that we can refer back to it to create a conversation
 // loop.
-const input = board.input("Chat with me", {
+const input = board.input({
   $id: "userRequest",
   schema: {
     type: "object",

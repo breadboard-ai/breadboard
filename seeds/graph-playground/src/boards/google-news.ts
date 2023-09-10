@@ -10,7 +10,19 @@ import { Starter } from "@google-labs/llm-starter";
 const board = new Board();
 const kit = board.addKit(Starter);
 
-const input = board.input("What would you like to search for?");
+const input = board.input({
+  schema: {
+    type: "object",
+    properties: {
+      text: {
+        type: "string",
+        title: "Query",
+        description: "What would you like to search for?",
+      },
+    },
+    required: ["text"],
+  },
+});
 
 input.wire(
   "text->query",

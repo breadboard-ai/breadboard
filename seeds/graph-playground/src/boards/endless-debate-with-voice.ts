@@ -88,7 +88,19 @@ friedrich.wire(
 );
 
 board
-  .input("What is the topic of the debate?")
+  .input({
+    schema: {
+      type: "object",
+      properties: {
+        text: {
+          type: "string",
+          title: "Topic",
+          description: "What is the topic of the debate?",
+        },
+      },
+      required: ["text"],
+    },
+  })
   .wire("text->topic", rememberQuestion.wire("accumulator->context", albert));
 
 export default board;

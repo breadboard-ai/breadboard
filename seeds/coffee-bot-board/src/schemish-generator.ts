@@ -73,7 +73,7 @@ const $completion = board.output({
 
 // Wire all useful parts of the input.
 board
-  .input("Input", {
+  .input({
     $id: "input",
     schema: {
       type: "object",

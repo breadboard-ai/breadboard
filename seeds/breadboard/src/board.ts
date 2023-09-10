@@ -298,16 +298,14 @@ export class Board implements Breadboard {
    *
    * See [`input` node reference](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/nodes.md#input) for more information.
    *
-   * @param message - a friendly message to the user about what input is expected. For example, "What is the question you'd like to have answered?".
    * @param config - optional configuration for the node.
    * @returns - a `Node` object that represents the placed node.
    */
   input<In = InputValues, Out = OutputValues>(
-    message?: string,
     config: OptionalIdConfiguration = {}
   ): Node<In, Out> {
     const { $id, ...rest } = config;
-    return new Node(this, "input", { message, ...rest }, $id);
+    return new Node(this, "input", { ...rest }, $id);
   }
 
   /**

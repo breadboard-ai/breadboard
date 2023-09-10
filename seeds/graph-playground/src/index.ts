@@ -44,6 +44,10 @@ const wait_for_input = async (message: string) => {
   return output;
 };
 
+type InputSchema = {
+  properties?: Record<string, { description?: string }>;
+};
+
 async function main(args: string[], use_input_handler = false) {
   // Parse arguments. Redo with a library once it gets more complex. Example:
   // npm run dev graphs/simplest.json -- --validate-integrity --log-integrity-labels
@@ -58,9 +62,19 @@ async function main(args: string[], use_input_handler = false) {
   // This is how the `secrets` node gets ahold of the keys.
   config();
 
+  const get_intro = (schema?: InputSchema) => {
+    const defaultIntro = "Enter some text";
+    if (!schema) return defaultIntro;
+    if (!schema.properties) return defaultIntro;
+    const properties = Object.entries(schema.properties) || [];
+    if (!properties.length) return defaultIntro;
+    return properties[0][1].description || defaultIntro;
+  };
+
   const ask = async (inputs: InputValues): Promise<OutputValues> => {
     const defaultValue = "<Exit>";
-    const message = ((inputs && inputs.message) as string) || "Enter some text";
+    // TODO: This currently implies a single input node. Make it not so.
+    const message = get_intro(inputs?.schema as InputSchema);
     const input = use_input_handler
       ? await wait_for_input(message)
       : await text({
