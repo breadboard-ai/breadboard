@@ -41,13 +41,10 @@ test("runResultLoop correctly handles finite graph", async (t) => {
   {
     response.written = "";
     await runResultLoop(writer, board, {}, undefined);
-    t.is(
-      response.written,
-      '{"type":"input","data":{"message":"in"},"state":"0"}\n'
-    );
+    t.is(response.written, '{"type":"input","data":{},"state":"0"}\n');
     t.is(
       intermediateState,
-      '{"state":{"descriptor":{"id":"in","type":"input","configuration":{"message":"in"}},"inputs":{"message":"in"},"missingInputs":[],"opportunities":[],"newOpportunities":[{"from":"in","to":"noop","out":"*"}],"state":{"state":{"$type":"Map","value":[]},"constants":{"$type":"Map","value":[]}}},"type":"input"}'
+      '{"state":{"descriptor":{"id":"in","type":"input"},"inputs":{},"missingInputs":[],"opportunities":[],"newOpportunities":[{"from":"in","to":"noop","out":"*"}],"state":{"state":{"$type":"Map","value":[]},"constants":{"$type":"Map","value":[]}}},"type":"input"}'
     );
     t.is(count, 1);
   }
