@@ -31,6 +31,10 @@ import validateJson, {
   ValidateJsonOutputs,
 } from "./nodes/validate-json.js";
 import schemish, { SchemishInputs, SchemishOutputs } from "./nodes/schemish.js";
+import templateParser, {
+  TemplateParserInputs,
+  TemplateParserOutputs,
+} from "./nodes/template-parser.js";
 
 const handlers = {
   createVectorDatabase,
@@ -45,6 +49,7 @@ const handlers = {
   localMemory,
   validateJson,
   schemish,
+  templateParser,
 };
 
 /**
@@ -147,6 +152,20 @@ export class Nursery implements Kit {
       { ...rest },
       $id
     );
+    return node;
+  }
+
+  /**
+   * Parses a template and returns a JSON schema of placeholders.
+   */
+  templateParser(
+    config: OptionalIdConfiguration = {}
+  ): BreadboardNode<InputValues, OutputValues> {
+    const { $id, ...rest } = config;
+    const node = this.#nodeFactory.create<
+      TemplateParserInputs,
+      TemplateParserOutputs
+    >("templateParser", { ...rest }, $id);
     return node;
   }
 }
