@@ -131,6 +131,7 @@
       input.name = key;
       input.placeholder = property.description;
       input.autofocus = true;
+      form.append("\n");
     });
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
