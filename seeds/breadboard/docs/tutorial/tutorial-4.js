@@ -8,6 +8,10 @@ import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 import { config } from "dotenv";
 
+import * as path from 'path';
+import { fileURLToPath } from 'url';
+const __dir = path.dirname(fileURLToPath(import.meta.url));
+
 config();
 
 const board = new Board();
@@ -30,9 +34,9 @@ const json = JSON.stringify(board, null, 2);
 
 import { writeFile } from "fs/promises";
 
-await writeFile("./docs/tutorial/tutorial-4.json", json);
+await writeFile(path.join(__dir, "tutorial-4.json"), json);
 
-const board2 = await Board.load("./docs/tutorial/tutorial-4.json");
+const board2 = await Board.load(path.join(__dir, "tutorial-4.json"));
 
 const result = await board2.runOnce({
   say: "Hi, how are you?",

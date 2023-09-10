@@ -10,6 +10,10 @@ import { writeFile } from "fs/promises";
 
 import { config } from "dotenv";
 
+import * as path from 'path';
+import { fileURLToPath } from 'url';
+const __dir = path.dirname(fileURLToPath(import.meta.url));
+
 config();
 
 const board = new Board();
@@ -37,4 +41,4 @@ input.wire(
 );
 
 const json = JSON.stringify(board, null, 2);
-await writeFile("./docs/tutorial/news-summarizer.json", json);
+await writeFile(path.join(__dir, "news-summarizer.json"), json);
