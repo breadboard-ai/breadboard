@@ -18,7 +18,7 @@ const maker = new PromptMaker(BASE);
 const board = new Board({
   title: "Schemish Generator",
   description:
-    "A wrapper for PaLM API `generateText` to ensure that its output conforms to a given schema. The wrapper utilizes [Schemish](https://glazkov.com/2023/05/06/schemish/), which is a compat JSON dialect to express JSON Schemas.",
+    "A wrapper for PaLM API `generateText` to ensure that its output conforms to a given schema. The wrapper utilizes [Schemish](https://glazkov.com/2023/05/06/schemish/), which is a compact JSON dialect that is used express JSON Schemas.",
   version: "0.0.1",
 });
 const kit = board.addKit(Starter);
