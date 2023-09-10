@@ -22,7 +22,7 @@ class MockResponse implements WriterResponse {
 test("runResultLoop correctly handles finite graph", async (t) => {
   const board = new Board();
   board
-    .input("in", { $id: "in" })
+    .input({ $id: "in" })
     .wire(
       "*->",
       board
