@@ -15,7 +15,12 @@ const BASE = "v2-multi-agent";
 
 const maker = new PromptMaker(BASE);
 
-const board = new Board();
+const board = new Board({
+  title: "Schemish Generator",
+  description:
+    "A wrapper for PaLM API `generateText` to ensure that its output conforms to a given schema. The wrapper utilizes [Schemish](https://glazkov.com/2023/05/06/schemish/), which is a compat JSON dialect to express JSON Schemas.",
+  version: "0.0.1",
+});
 const kit = board.addKit(Starter);
 const nursery = board.addKit(Nursery);
 
@@ -43,7 +48,20 @@ const $completion = board.output({ $id: "completion" });
 
 // Wire all useful parts of the input.
 board
-  .input()
+  .input("Input", {
+    $id: "input",
+    schema: {
+      type: "object",
+      properties: {
+        prologue: { type: "string" },
+        epilogue: { type: "string" },
+        schema: { type: "object" },
+        recover: { type: "boolean" },
+      },
+      required: ["prologue", "epilogue", "schema", "recover"],
+      additionalProperties: false,
+    },
+  })
   .wire("prologue->.", prologue)
   .wire("epilogue->.", epilogue)
   .wire("schema->.", schema)

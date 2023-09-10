@@ -3,10 +3,10 @@
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-input1[/"input <br> id='input-1'"/]:::input -- "prologue->prologue" --o prologue(("passthrough <br> id='prologue'")):::passthrough
-input1[/"input <br> id='input-1'"/]:::input -- "epilogue->epilogue" --o epilogue(("passthrough <br> id='epilogue'")):::passthrough
-input1[/"input <br> id='input-1'"/]:::input -- "schema->schema" --o schema(("passthrough <br> id='schema'")):::passthrough
-input1[/"input <br> id='input-1'"/]:::input -- "recover->allow" --o shouldRecover["runJavascript <br> id='shouldRecover'"]
+input[/"input <br> id='input'"/]:::input -- "prologue->prologue" --o prologue(("passthrough <br> id='prologue'")):::passthrough
+input[/"input <br> id='input'"/]:::input -- "epilogue->epilogue" --o epilogue(("passthrough <br> id='epilogue'")):::passthrough
+input[/"input <br> id='input'"/]:::input -- "schema->schema" --o schema(("passthrough <br> id='schema'")):::passthrough
+input[/"input <br> id='input'"/]:::input -- "recover->allow" --o shouldRecover["runJavascript <br> id='shouldRecover'"]
 shouldRecover["runJavascript <br> id='shouldRecover'"] -- "value->value" --> willRecover(("passthrough <br> id='willRecover'")):::passthrough
 shouldRecover["runJavascript <br> id='shouldRecover'"] -- "error->error" --> error{{"output <br> id='error'"}}:::output
 willRecover(("passthrough <br> id='willRecover'")):::passthrough --> prologue(("passthrough <br> id='prologue'")):::passthrough
@@ -16,7 +16,7 @@ schema(("passthrough <br> id='schema'")):::passthrough -- "schema->schema" --> s
 schema(("passthrough <br> id='schema'")):::passthrough -- "schema->schema" --> validatejson["validateJson <br> id='validate-json'"]
 validatejson["validateJson <br> id='validate-json'"] -- "json->completion" --> completion{{"output <br> id='completion'"}}:::output
 validatejson["validateJson <br> id='validate-json'"] -- "error->value" --> shouldRecover["runJavascript <br> id='shouldRecover'"]
-secrets2("secrets <br> id='secrets-2'"):::secrets -- "PALM_KEY->PALM_KEY" --o generator["generateText <br> id='generator'"]
+secrets1("secrets <br> id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o generator["generateText <br> id='generator'"]
 generator["generateText <br> id='generator'"] -- "completion->json" --> validatejson["validateJson <br> id='validate-json'"]
 generator["generateText <br> id='generator'"] -- "filters->value" --> shouldRecover["runJavascript <br> id='shouldRecover'"]
 prologue(("passthrough <br> id='prologue'")):::passthrough -- "prologue->prologue" --> schemishGenerator["promptTemplate <br> id='schemishGenerator'"]
@@ -26,9 +26,11 @@ schemishGenerator["promptTemplate <br> id='schemishGenerator'"] -- "prompt->text
 nameshouldRecover[name]:::config -- "name->name" --o shouldRecover
 codeshouldRecover[code]:::config -- "code->code" --o shouldRecover
 rawshouldRecover[raw]:::config -- "raw->raw" --o shouldRecover
+messageinput[message]:::config -- "message->message" --o input
+schemainput[schema]:::config -- "schema->schema" --o input
 stopSequencesgenerator[stopSequences]:::config -- "stopSequences->stopSequences" --o generator
 safetySettingsgenerator[safetySettings]:::config -- "safetySettings->safetySettings" --o generator
-keyssecrets2[keys]:::config -- "keys->keys" --o secrets2
+keyssecrets1[keys]:::config -- "keys->keys" --o secrets1
 templateschemishGenerator[template]:::config -- "template->template" --o schemishGenerator
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000

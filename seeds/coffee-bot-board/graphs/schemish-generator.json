@@ -1,28 +1,31 @@
 {
+  "title": "Schemish Generator",
+  "description": "A wrapper for PaLM API `generateText` to ensure that its output conforms to a given schema. The wrapper utilizes [Schemish](https://glazkov.com/2023/05/06/schemish/), which is a compat JSON dialect to express JSON Schemas.",
+  "version": "0.0.1",
   "edges": [
     {
-      "from": "input-1",
+      "from": "input",
       "to": "prologue",
       "constant": true,
       "out": "prologue",
       "in": "prologue"
     },
     {
-      "from": "input-1",
+      "from": "input",
       "to": "epilogue",
       "constant": true,
       "out": "epilogue",
       "in": "epilogue"
     },
     {
-      "from": "input-1",
+      "from": "input",
       "to": "schema",
       "constant": true,
       "out": "schema",
       "in": "schema"
     },
     {
-      "from": "input-1",
+      "from": "input",
       "to": "shouldRecover",
       "constant": true,
       "out": "recover",
@@ -77,7 +80,7 @@
       "in": "value"
     },
     {
-      "from": "secrets-2",
+      "from": "secrets-1",
       "to": "generator",
       "constant": true,
       "out": "PALM_KEY",
@@ -155,8 +158,35 @@
       "type": "output"
     },
     {
-      "id": "input-1",
-      "type": "input"
+      "id": "input",
+      "type": "input",
+      "configuration": {
+        "message": "Input",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "prologue": {
+              "type": "string"
+            },
+            "epilogue": {
+              "type": "string"
+            },
+            "schema": {
+              "type": "object"
+            },
+            "recover": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "prologue",
+            "epilogue",
+            "schema",
+            "recover"
+          ],
+          "additionalProperties": false
+        }
+      }
     },
     {
       "id": "schemish",
@@ -184,7 +214,7 @@
       }
     },
     {
-      "id": "secrets-2",
+      "id": "secrets-1",
       "type": "secrets",
       "configuration": {
         "keys": [
