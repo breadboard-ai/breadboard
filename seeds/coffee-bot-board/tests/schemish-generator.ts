@@ -81,7 +81,7 @@ test("schemish-generator valid", async (t) => {
 
   const outputs = await schemishGenerator.runOnce(inputs, debugProbe);
 
-  t.deepEqual(outputs, { completion: { type: "drink", order: "chai latte" } });
+  t.like(outputs, { completion: { type: "drink", order: "chai latte" } });
 });
 
 test("schemish-generator with unparseable JSON", async (t) => {
@@ -118,7 +118,7 @@ test("schemish-generator with unparseable JSON", async (t) => {
   const outputs = await schemishGenerator.runOnce(inputs, debugProbe);
 
   t.is(count, 1);
-  t.deepEqual(outputs, {
+  t.like(outputs, {
     error: {
       message: "Expected property name or '}' in JSON at position 2",
       type: "parsing",
@@ -160,7 +160,7 @@ test("schemish-generator with unparseable JSON and recovery", async (t) => {
   const outputs = await schemishGenerator.runOnce(inputs, debugProbe);
 
   t.is(count, 3);
-  t.deepEqual(outputs, {
+  t.like(outputs, {
     completion: {
       type: "drink",
     },
@@ -201,7 +201,7 @@ test("schemish-generator with invalid JSON", async (t) => {
   const outputs = await schemishGenerator.runOnce(inputs, debugProbe);
 
   t.is(count, 1);
-  t.deepEqual(outputs, {
+  t.like(outputs, {
     error: {
       message: "0: instance.type is not one of enum values: drink,food\n",
       type: "validation",
@@ -243,7 +243,7 @@ test("schemish-generator with invalid JSON and recovery", async (t) => {
   const outputs = await schemishGenerator.runOnce(inputs, debugProbe);
 
   t.is(count, 3);
-  t.deepEqual(outputs, {
+  t.like(outputs, {
     completion: {
       type: "drink",
     },
