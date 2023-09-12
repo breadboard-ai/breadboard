@@ -63,20 +63,70 @@
 <script type="module">
   const log = document.querySelector("#log");
 
+  const getInputs = async (schema, previousState) => {
+    const input = document.createElement("div");
+    input.id = "input";
+    log.append(input);
+
+    if (!schema) {
+      input.textContent =
+        "No input schema detected, unable to provide useful interaction.";
+
+      return {};
+    }
+    const form = input.appendChild(document.createElement("form"));
+    Object.entries(schema.properties).forEach(([key, property]) => {
+      const label = form.appendChild(document.createElement("label"));
+      label.textContent = `${property.title}: `;
+      const input = label.appendChild(document.createElement("input"));
+      input.name = key;
+      input.placeholder = property.description;
+      input.autofocus = true;
+      form.append("\n");
+    });
+    return new Promise((resolve) => {
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        let data = {};
+        Object.entries(schema.properties).forEach(([key, property]) => {
+          const input = form[key];
+          if (input.value) {
+            data[key] = input.value;
+            log.append(`${property.title}: ${input.value}\n`);
+          }
+        });
+        input.remove();
+        resolve(data);
+      });
+    });
+  };
+
+  const writeOutput = (output) => {
+    const schema = output.schema;
+    if (!schema) {
+      log.append(JSON.stringify(output, null, 2) + "\n");
+      return;
+    }
+    Object.entries(schema.properties).forEach(([key, property]) => {
+      log.append(`${property.title}: ${output[key]}\n`);
+    });
+  };
+
   // Polyfill to make ReadableStream async iterable
   // See https://bugs.chromium.org/p/chromium/issues/detail?id=929585
-  ReadableStream.prototype[Symbol.asyncIterator] = async function* () {
-    const reader = this.getReader();
-    try {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) return;
-        yield value;
+  ReadableStream.prototype[Symbol.asyncIterator] ||
+    (ReadableStream.prototype[Symbol.asyncIterator] = async function* () {
+      const reader = this.getReader();
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) return;
+          yield value;
+        }
+      } finally {
+        reader.releaseLock();
       }
-    } finally {
-      reader.releaseLock();
-    }
-  };
+    });
 
   class BoardStreamer {
     writable;
@@ -115,101 +165,31 @@
     }
   }
 
-  const createInputFromSchema = (schema, previousState) => {
-    const input = document.createElement("div");
-    input.id = "input";
-    if (!schema) {
-      input.textContent =
-        "No input schema detected, unable to provide useful interaction.";
-      return input;
-    }
-    const form = input.appendChild(document.createElement("form"));
-    Object.entries(schema.properties).forEach(([key, property]) => {
-      const label = form.appendChild(document.createElement("label"));
-      label.textContent = `${property.title}: `;
-      const input = label.appendChild(document.createElement("input"));
-      input.name = key;
-      input.placeholder = property.description;
-      input.autofocus = true;
-      form.append("\n");
-    });
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      let data = {};
-      Object.entries(schema.properties).forEach(([key, property]) => {
-        const input = form[key];
-        if (input.value) {
-          data[key] = input.value;
-          log.append(`${property.title}: ${input.value}\n`);
-        }
-      });
-      input.remove();
-      await runLoop(data, previousState);
-    });
-    return input;
-  };
-
-  const writeOutput = (output) => {
-    const schema = output.schema;
-    if (!schema) {
-      log.append(JSON.stringify(output, null, 2) + "\n");
-      return;
-    }
-    Object.entries(schema.properties).forEach(([key, property]) => {
-      log.append(`${property.title}: ${output[key]}\n`);
-    });
-  };
-
-  const post = async (inputs, state) => {
-    const url = new URL(window.location);
+  /**
+   * Posts the inputs to the breadboard-server and returns a stream of results.
+   */
+  const post = async (url, inputs, state) => {
     const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ inputs, state }),
     });
-    const stream = response.body?.pipeThrough(new BoardStreamer());
-    for await (const result of stream) {
-      if (result.type === "output") {
-        log.querySelector("#progress")?.remove();
-        const output = result.data;
-        writeOutput(output);
-        return result;
-      } else if (result.type === "input") {
-        log.querySelector("#progress")?.remove();
-        const input = createInputFromSchema(result.data.schema, result.state);
-        log.append(input);
-        return result;
-      } else if (result.type === "beforehandler") {
-        let progress = log.querySelector("#progress");
-        if (!progress) {
-          progress = document.createElement("div");
-          progress.id = "progress";
-          log.append(progress);
-        }
-        progress.textContent = `Running "${result.data.id}" ...`;
-      } else if (result.type === "error") {
-        log.querySelector("#progress")?.remove();
-        log.append(`Error: ${result.data.message}\n`);
-        return result;
-      } else if (result.type === "done") {
-        log.querySelector("#progress")?.remove();
-        return result;
-      }
-    }
-    return results;
+    return response.body?.pipeThrough(new BoardStreamer());
   };
 
-  const runLoop = async (inputs, state) => {
+  async function* runRemote(url) {
+    let inputs = undefined;
+    let state = undefined;
     for (;;) {
-      let result = await post(inputs, state);
-      console.log(result);
-      if (result.type !== "output" || result.state === undefined) {
-        break;
+      const stream = await post(url, inputs, state);
+      for await (const result of stream) {
+        state = result.state;
+        yield await result;
+        inputs = result.inputs;
       }
-      state = result.state;
-      inputs = undefined;
+      if (!state) break;
     }
-  };
+  }
 
   {
     const response = await fetch("/info");
@@ -240,5 +220,28 @@
     document.querySelector("#url").append(a);
   }
 
-  await runLoop();
+  const url = new URL(window.location);
+  for await (const result of runRemote(url)) {
+    if (result.type === "output") {
+      log.querySelector("#progress")?.remove();
+      const output = result.data;
+      writeOutput(output);
+    } else if (result.type === "input") {
+      log.querySelector("#progress")?.remove();
+      result.inputs = await getInputs(result.data.schema, result.state);
+    } else if (result.type === "beforehandler") {
+      let progress = log.querySelector("#progress");
+      if (!progress) {
+        progress = document.createElement("div");
+        progress.id = "progress";
+        log.append(progress);
+      }
+      progress.textContent = `Running "${result.data.id}" ...`;
+    } else if (result.type === "error") {
+      log.querySelector("#progress")?.remove();
+      log.append(`Error: ${result.data.message}\n`);
+    } else if (result.type === "done") {
+      log.querySelector("#progress")?.remove();
+    }
+  }
 </script>
