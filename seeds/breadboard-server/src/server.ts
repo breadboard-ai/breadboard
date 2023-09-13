@@ -8,7 +8,14 @@ import { Board, RunResult } from "@google-labs/breadboard";
 import { Request, Response } from "express";
 import { Store } from "./store.js";
 import { InputValues } from "@google-labs/graph-runner";
-import { Writer } from "./writer.js";
+import { Writer, WriterResponse } from "./writer.js";
+
+export type ServerRequest = Pick<Request, "path" | "method" | "body">;
+export type ServerResponse = Pick<
+  Response,
+  "send" | "status" | "type" | "sendFile" | "end"
+> &
+  WriterResponse;
 
 export async function runResultLoop(
   writer: Writer,
@@ -43,28 +50,41 @@ export async function runResultLoop(
   writer.writeDone();
 }
 
+export const handleNonPostRequest = (
+  board: Board,
+  req: ServerRequest,
+  res: ServerResponse
+): boolean => {
+  if (req.method === "POST") return false;
+  if (req.method !== "GET") {
+    res.status(405);
+    res.send("Method not allowed");
+    return true;
+  }
+  if (req.path === "/") {
+    res.sendFile(new URL("../../public/index.html", import.meta.url).pathname);
+  } else if (req.path === "/info") {
+    const { url, title, description, version } = board;
+    res.type("application/json");
+    res.send({
+      url,
+      title,
+      description,
+      version,
+    });
+  } else {
+    res.status(404);
+    res.send("Not found");
+  }
+  return true;
+};
+
 export const makeCloudFunction = (url: string) => {
-  return async (req: Request, res: Response) => {
+  return async (req: ServerRequest, res: ServerResponse) => {
     // TODO: Handle loading errors here.
     const board = await Board.load(url);
 
-    if (req.method !== "POST") {
-      if (req.path === "/") {
-        res.sendFile(
-          new URL("../../public/index.html", import.meta.url).pathname
-        );
-      } else if (req.path === "/info") {
-        res.type("application/json").send({
-          url,
-          title: board.title,
-          description: board.description,
-          version: board.version,
-        });
-      } else {
-        res.status(404).send("Not found");
-      }
-      return;
-    }
+    if (handleNonPostRequest(board, req, res)) return;
 
     const store = new Store("breadboard-state");
 
