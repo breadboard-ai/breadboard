@@ -7,7 +7,7 @@
 import { Board, RunResult } from "@google-labs/breadboard";
 import { Request, Response } from "express";
 import { Store } from "./store.js";
-import { InputValues } from "@google-labs/graph-runner";
+import { GraphMetadata, InputValues } from "@google-labs/graph-runner";
 import { Writer, WriterResponse } from "./writer.js";
 
 export type ServerRequest = Pick<Request, "path" | "method" | "body">;
@@ -51,7 +51,7 @@ export async function runResultLoop(
 }
 
 export const handleNonPostRequest = (
-  board: Board,
+  { url, title, description, version }: GraphMetadata,
   req: ServerRequest,
   res: ServerResponse
 ): boolean => {
@@ -64,14 +64,8 @@ export const handleNonPostRequest = (
   if (req.path === "/") {
     res.sendFile(new URL("../../public/index.html", import.meta.url).pathname);
   } else if (req.path === "/info") {
-    const { url, title, description, version } = board;
     res.type("application/json");
-    res.send({
-      url,
-      title,
-      description,
-      version,
-    });
+    res.send({ url, title, description, version });
   } else {
     res.status(404);
     res.send("Not found");
