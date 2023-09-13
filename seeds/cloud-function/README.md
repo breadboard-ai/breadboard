@@ -6,6 +6,12 @@ This is likely to change dramatically, but we have to start somewhere.
 
 Install gcloud CLI: https://cloud.google.com/sdk/docs/install
 
+Login as yourself (so that current project can be set)
+
+```bash
+gcloud auth login
+```
+
 Login with Application-default credentials (ADC):
 
 ```bash

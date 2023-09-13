@@ -9,6 +9,7 @@ import { Request, Response } from "express";
 import { Store } from "./store.js";
 import { GraphMetadata, InputValues } from "@google-labs/graph-runner";
 import { Writer, WriterResponse } from "./writer.js";
+import { createRequire } from "module";
 
 export type ServerRequest = Pick<Request, "path" | "method" | "body">;
 export type ServerResponse = Pick<
@@ -50,6 +51,26 @@ export async function runResultLoop(
   writer.writeDone();
 }
 
+const BREADBOARD_PATH = "/breadboard/";
+const BREADBOARD_ENTRY_SUFFIX = "/index.js";
+
+export const resolveModulePath = (path: string): string => {
+  // This is intentionally hacky. It will be replaced with just serving
+  // Breadboard from jsdelivr.
+  const subPath = path.substring(BREADBOARD_PATH.length);
+  const require = createRequire(import.meta.url);
+  const breadboardEntry = require.resolve("@google-labs/breadboard");
+  if (!breadboardEntry.endsWith(BREADBOARD_ENTRY_SUFFIX))
+    throw new Error(
+      "Could not correctly resolve @google-labs/breadboard entry"
+    );
+  const basePath = breadboardEntry.substring(
+    0,
+    breadboardEntry.length - BREADBOARD_ENTRY_SUFFIX.length
+  );
+  return `${basePath}/${subPath}`;
+};
+
 export const handleNonPostRequest = (
   { url, title, description, version }: GraphMetadata,
   req: ServerRequest,
@@ -63,13 +84,18 @@ export const handleNonPostRequest = (
   }
   if (req.path === "/") {
     res.sendFile(new URL("../../public/index.html", import.meta.url).pathname);
+    return true;
   } else if (req.path === "/info") {
     res.type("application/json");
     res.send({ url, title, description, version });
-  } else {
-    res.status(404);
-    res.send("Not found");
+    return true;
+  } else if (req.path.startsWith(BREADBOARD_PATH)) {
+    res.sendFile(resolveModulePath(req.path));
+    return true;
   }
+
+  res.status(404);
+  res.send("Not found");
   return true;
 };
 

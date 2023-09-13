@@ -60,7 +60,18 @@
 <div id="log">
   <div id="progress">Initializing ...</div>
 </div>
+<script type="importmap">
+  {
+    "imports": {
+      "@google-labs/graph-runner": "./graph-runner/index.js"
+    }
+  }
+</script>
 <script type="module">
+  import { Board } from "/breadboard/index.js";
+
+  console.log(Board);
+
   const log = document.querySelector("#log");
 
   const getInputs = async (schema, previousState) => {

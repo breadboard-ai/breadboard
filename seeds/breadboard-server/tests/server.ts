@@ -10,6 +10,7 @@ import {
   ServerRequest,
   ServerResponse,
   handleNonPostRequest,
+  resolveModulePath,
   runResultLoop,
 } from "../src/server.js";
 import { Board, RunResult } from "@google-labs/breadboard";
@@ -135,4 +136,15 @@ test("handleNonPostRequest correctly handles non-GET requests", (t) => {
       handleNonPostRequest(new Board(), req, res as unknown as ServerResponse)
     );
   }
+});
+
+test("resolveModulePath correctly resolves URL paths", (t) => {
+  t.regex(
+    resolveModulePath("/breadboard/index.js") || "",
+    /dist\/src\/index.js/
+  );
+  t.regex(
+    resolveModulePath("/breadboard/board.js") || "",
+    /dist\/src\/board.js/
+  );
 });
