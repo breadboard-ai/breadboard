@@ -140,11 +140,15 @@ test("handleNonPostRequest correctly handles non-GET requests", (t) => {
 
 test("resolveModulePath correctly resolves URL paths", (t) => {
   t.regex(
-    resolveModulePath("/breadboard/index.js") || "",
-    /dist\/src\/index.js/
+    resolveModulePath("/node_modules/@google-labs/breadboard/index.js") || "",
+    /breadboard\/dist\/src\/index.js/
   );
   t.regex(
-    resolveModulePath("/breadboard/board.js") || "",
-    /dist\/src\/board.js/
+    resolveModulePath("/node_modules/@google-labs/breadboard/board.js") || "",
+    /breadboard\/dist\/src\/board.js/
+  );
+  t.regex(
+    resolveModulePath("/node_modules/@google-labs/graph-runner/index.js") || "",
+    /graph-runner\/dist\/src\/index.js/
   );
 });

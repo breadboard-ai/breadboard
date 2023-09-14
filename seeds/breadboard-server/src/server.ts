@@ -51,24 +51,27 @@ export async function runResultLoop(
   writer.writeDone();
 }
 
-const BREADBOARD_PATH = "/breadboard/";
+const IMPORTS_PREFIX = "/node_modules/@google-labs/";
+
 const BREADBOARD_ENTRY_SUFFIX = "/index.js";
 
 export const resolveModulePath = (path: string): string => {
   // This is intentionally hacky. It will be replaced with just serving
   // Breadboard from jsdelivr.
-  const subPath = path.substring(BREADBOARD_PATH.length);
+  const [, , project, name, ...rest] = path.split("/");
+
+  // Get the package.
+  const packageName = `${project}/${name}`;
   const require = createRequire(import.meta.url);
-  const breadboardEntry = require.resolve("@google-labs/breadboard");
+  const breadboardEntry = require.resolve(packageName);
+
   if (!breadboardEntry.endsWith(BREADBOARD_ENTRY_SUFFIX))
-    throw new Error(
-      "Could not correctly resolve @google-labs/breadboard entry"
-    );
+    throw new Error(`Could not correctly resolve "${packageName}" entry`);
   const basePath = breadboardEntry.substring(
     0,
     breadboardEntry.length - BREADBOARD_ENTRY_SUFFIX.length
   );
-  return `${basePath}/${subPath}`;
+  return `${basePath}/${rest.join("/")}`;
 };
 
 export const handleNonPostRequest = (
@@ -89,7 +92,7 @@ export const handleNonPostRequest = (
     res.type("application/json");
     res.send({ url, title, description, version });
     return true;
-  } else if (req.path.startsWith(BREADBOARD_PATH)) {
+  } else if (req.path.startsWith(IMPORTS_PREFIX)) {
     res.sendFile(resolveModulePath(req.path));
     return true;
   }

@@ -63,12 +63,13 @@
 <script type="importmap">
   {
     "imports": {
-      "@google-labs/graph-runner": "./graph-runner/index.js"
+      "@google-labs/graph-runner": "./node_modules/@google-labs/graph-runner/index.js",
+      "@google-labs/breadboard": "./node_modules/@google-labs/breadboard/index.js"
     }
   }
 </script>
 <script type="module">
-  import { Board } from "/breadboard/index.js";
+  import { Board } from "@google-labs/breadboard";
 
   console.log(Board);
 
