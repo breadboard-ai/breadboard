@@ -41,6 +41,7 @@ import {
 import { KitLoader } from "./kit.js";
 import { IdVendor } from "./id.js";
 import { BoardLoader } from "./loader.js";
+import { runRemote } from "./remote.js";
 
 class ProbeEvent extends CustomEvent<ProbeDetails> {
   constructor(type: string, detail: ProbeDetails) {
@@ -523,4 +524,6 @@ export class Board implements Breadboard {
     board.#slots = slotted || {};
     return board;
   }
+
+  static runRemote = runRemote;
 }

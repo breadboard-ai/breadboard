@@ -71,8 +71,6 @@
 <script type="module">
   import { Board } from "@google-labs/breadboard";
 
-  console.log(Board);
-
   const log = document.querySelector("#log");
 
   const getInputs = async (schema, previousState) => {
@@ -124,85 +122,6 @@
     });
   };
 
-  // Polyfill to make ReadableStream async iterable
-  // See https://bugs.chromium.org/p/chromium/issues/detail?id=929585
-  ReadableStream.prototype[Symbol.asyncIterator] ||
-    (ReadableStream.prototype[Symbol.asyncIterator] = async function* () {
-      const reader = this.getReader();
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) return;
-          yield value;
-        }
-      } finally {
-        reader.releaseLock();
-      }
-    });
-
-  class BoardStreamer {
-    writable;
-    readable;
-    controller = null;
-
-    constructor() {
-      this.writable = new WritableStream({
-        write: (chunk) => this.write(chunk),
-      });
-      this.readable = new ReadableStream({
-        start: (controller) => {
-          this.controller = controller;
-        },
-      });
-    }
-
-    write(chunk) {
-      const decoder = new TextDecoder();
-      const s = decoder.decode(chunk);
-      s.split("\n")
-        .map((line) => line.trim())
-        .filter((line) => line.length > 0)
-        .forEach((line) => {
-          try {
-            if (line === "stop") {
-              this.controller?.close();
-              return;
-            }
-            const data = JSON.parse(line);
-            this.controller?.enqueue(data);
-          } catch (e) {
-            console.error(e);
-          }
-        });
-    }
-  }
-
-  /**
-   * Posts the inputs to the breadboard-server and returns a stream of results.
-   */
-  const post = async (url, inputs, state) => {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ inputs, state }),
-    });
-    return response.body?.pipeThrough(new BoardStreamer());
-  };
-
-  async function* runRemote(url) {
-    let inputs = undefined;
-    let state = undefined;
-    for (;;) {
-      const stream = await post(url, inputs, state);
-      for await (const result of stream) {
-        state = result.state;
-        yield await result;
-        inputs = result.inputs;
-      }
-      if (!state) break;
-    }
-  }
-
   {
     const response = await fetch("/info");
     const { url, title, description, version } = await response.json();
@@ -233,7 +152,7 @@
   }
 
   const url = new URL(window.location);
-  for await (const result of runRemote(url)) {
+  for await (const result of Board.runRemote(url)) {
     if (result.type === "output") {
       log.querySelector("#progress")?.remove();
       const output = result.data;
