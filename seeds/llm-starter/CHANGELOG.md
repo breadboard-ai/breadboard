@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.2] - 2023-09-15
+
+- dependency changes.
+- [M1 Release](https://github.com/google/labs-prototypes/milestone/4)
+
 ## [0.1.1] - 2023-09-02
 
 - `secrets` node now throws on missing keys

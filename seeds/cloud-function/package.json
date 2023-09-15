@@ -36,7 +36,7 @@
   },
   "dependencies": {
     "@google-labs/breadboard-server": "^0.0.1",
-    "@google-labs/llm-starter": "^0.1.1",
+    "@google-labs/llm-starter": "^0.1.2",
     "dotenv": "^16.3.1"
   }
 }
