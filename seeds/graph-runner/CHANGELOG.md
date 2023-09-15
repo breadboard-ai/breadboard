@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.0] - 2023-09-15
+
+- bug fixes
+- Addition of `GraphMetadata` to store various metadata about the graph.
+
 ## [0.1.0] - 2023-09-02
 
 - Ability to save and restore traversal state.
