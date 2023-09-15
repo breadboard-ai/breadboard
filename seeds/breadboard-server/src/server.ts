@@ -9,7 +9,6 @@ import { Request, Response } from "express";
 import { Store } from "./store.js";
 import { GraphMetadata, InputValues } from "@google-labs/graph-runner";
 import { Writer, WriterResponse } from "./writer.js";
-import { createRequire } from "module";
 
 export type ServerRequest = Pick<Request, "path" | "method" | "body">;
 export type ServerResponse = Pick<
@@ -51,29 +50,6 @@ export async function runResultLoop(
   writer.writeDone();
 }
 
-const IMPORTS_PREFIX = "/node_modules/@google-labs/";
-
-const BREADBOARD_ENTRY_SUFFIX = "/index.js";
-
-export const resolveModulePath = (path: string): string => {
-  // This is intentionally hacky. It will be replaced with just serving
-  // Breadboard from jsdelivr.
-  const [, , project, name, ...rest] = path.split("/");
-
-  // Get the package.
-  const packageName = `${project}/${name}`;
-  const require = createRequire(import.meta.url);
-  const breadboardEntry = require.resolve(packageName);
-
-  if (!breadboardEntry.endsWith(BREADBOARD_ENTRY_SUFFIX))
-    throw new Error(`Could not correctly resolve "${packageName}" entry`);
-  const basePath = breadboardEntry.substring(
-    0,
-    breadboardEntry.length - BREADBOARD_ENTRY_SUFFIX.length
-  );
-  return `${basePath}/${rest.join("/")}`;
-};
-
 export const handleNonPostRequest = (
   { url, title, description, version }: GraphMetadata,
   req: ServerRequest,
@@ -92,14 +68,11 @@ export const handleNonPostRequest = (
     res.type("application/json");
     res.send({ url, title, description, version });
     return true;
-  } else if (req.path.startsWith(IMPORTS_PREFIX)) {
-    res.sendFile(resolveModulePath(req.path));
+  } else {
+    res.status(404);
+    res.send("Not found");
     return true;
   }
-
-  res.status(404);
-  res.send("Not found");
-  return true;
 };
 
 export const makeCloudFunction = (url: string) => {

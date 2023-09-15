@@ -60,16 +60,11 @@
 <div id="log">
   <div id="progress">Initializing ...</div>
 </div>
-<script type="importmap">
-  {
-    "imports": {
-      "@google-labs/graph-runner": "./node_modules/@google-labs/graph-runner/index.js",
-      "@google-labs/breadboard": "./node_modules/@google-labs/breadboard/index.js"
-    }
-  }
-</script>
 <script type="module">
-  import { Board } from "@google-labs/breadboard";
+  import { Board } from "https://esm.run/@google-labs/breadboard@0.3.1";
+
+  const markdownToHTML = (markdown) =>
+    DOMPurify.sanitize(marked.parseInline(markdown));
 
   const log = document.querySelector("#log");
 
@@ -118,7 +113,9 @@
       return;
     }
     Object.entries(schema.properties).forEach(([key, property]) => {
-      log.append(`${property.title}: ${output[key]}\n`);
+      const html = document.createElement("span");
+      html.innerHTML = markdownToHTML(output[key]);
+      log.append(`${property.title}:`, html, "\n");
     });
   };
 
@@ -135,7 +132,7 @@
     }
     if (description) {
       const div = document.createElement("div");
-      div.innerHTML = DOMPurify.sanitize(marked.parse(description));
+      div.innerHTML = markdownToHTML(description);
       div.id = "description";
       at.before(div);
     }
