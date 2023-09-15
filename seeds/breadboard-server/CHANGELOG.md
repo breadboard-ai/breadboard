@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.2] - 2023-09-15
+
+- Minor style improvements.
+
 ## [0.1.1] - 2023-09-15
 
 - Serve `@google-labs/breadboard` library from CDN for the frontend.
