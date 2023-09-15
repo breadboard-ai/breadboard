@@ -172,7 +172,10 @@ export type GraphDescriptor = GraphMetadata & {
  * State stores all outputs that have not yet been consumed, organized as
  * a map of maps
  */
-export type EdgeStateMap = Map<string, Map<string, OutputValues>>;
+export type EdgeStateMap = Map<
+  NodeIdentifier,
+  Map<NodeIdentifier, OutputValues>
+>;
 
 export interface EdgeState {
   state: EdgeStateMap;
