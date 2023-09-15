@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.3] - 2023-09-15
+
+- Fixed a bug in frontend, where numbers might be sent to `markdownToHtml` instead of strings.
+
 ## [0.1.2] - 2023-09-15
 
 - Minor style improvements.
