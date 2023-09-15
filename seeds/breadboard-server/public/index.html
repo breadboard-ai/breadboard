@@ -115,7 +115,7 @@
     Object.entries(schema.properties).forEach(([key, property]) => {
       const html = document.createElement("span");
       html.innerHTML = markdownToHTML(output[key]);
-      log.append(`${property.title}:`, html, "\n");
+      log.append(`${property.title}: `, html, "\n");
     });
   };
 
