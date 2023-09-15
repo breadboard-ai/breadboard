@@ -205,3 +205,42 @@ There are other ways to do it, and turbo is likely an overkill. There are more e
 #### Front-end
 
 [Vite](https://vitejs.dev/) is currently brought up in the `web-demo` dir. Use it as a template for other front-end TypeScript packages.
+
+## Publishing NPM packages
+
+Currently, to publish an NPM package, you have to be a Googler. This is unlikely to change in the future. Having said that, here are the steps to publish a package
+
+1. At the root of the repository, run:
+
+```bash
+git pull
+npm run clean:build
+npm i
+npx turbo build
+```
+
+2. Change directory to the package to be published. For example:
+
+```
+cd seeds/graph-runner
+```
+
+3. Update `package.json` of this package with the version bump. Follow the [semver](https://semver.org/) guidance. Basically, minor fixes increment the patch version (third number) and everything else increments the minor version (second number).
+
+4. Update `CHANGELOG.md` file to summarize the changes since the last release. You can see the list of changes by looking at the packge directory commit history on Github. For example, for `seeds/graph-runner`, commit history is at [https://github.com/google/labs-prototypes/commits/main/seeds/graph-runner](commits/main/seeds/graph-runner). Follow the convention in the changelog doc. It is loosely inspired by [keepachangelog.com](https://keepachangelog.com/en/1.1.0/)
+
+5. If there are version dependencies on the newly-published package in this monorepo, update their respective `package.json` entries to point to the new version and re-run `npm i`.
+
+6. Commit changes with the title: `` [<package-name>] Publish  `<version>`. `` and push them to Github.
+
+7. Log into the [wombat NPM proxy](https://opensource.googleblog.com/2020/01/wombat-dressing-room-npm-publication_10.html):
+
+```bash
+npm login --registry https://wombat-dressing-room.appspot.com
+```
+
+8. Publish to npm:
+
+```bash
+npm publish --registry https://wombat-dressing-room.appspot.com
+```
