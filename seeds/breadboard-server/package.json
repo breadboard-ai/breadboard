@@ -1,7 +1,7 @@
 {
   "name": "@google-labs/breadboard-server",
-  "version": "0.0.1",
-  "description": "Scaffolding for running breadboard as a server",
+  "version": "0.1.0",
+  "description": "Scaffolding for running Breadboard as a server",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
   "types": "dist/src/index.d.ts",
