@@ -50,7 +50,7 @@
     "typescript": "^5.0.4"
   },
   "dependencies": {
-    "@google-labs/breadboard": "^0.3.0",
+    "@google-labs/breadboard": "^0.3.1",
     "@google-labs/graph-runner": "^0.2.0",
     "@google-labs/palm-lite": "^0.0.2",
     "@rgrove/parse-xml": "^4.1.0",

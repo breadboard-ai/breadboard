@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.3.1] - 2023-09-15
+
+- Updated milestone shield.
+
 ## [0.3.0] - 2023-09-15
 
 - There is no more `seeksInput` property on `RunResult`. Instead, the `type` property will tell us why the board paused. Currently, three valid results are `input`, `output`, and `beforehandler`. The first two existed before. The third one now interrupts before running every node.

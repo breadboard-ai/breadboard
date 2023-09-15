@@ -231,15 +231,31 @@ cd seeds/graph-runner
 
 5. If there are version dependencies on the newly-published package in this monorepo, update their respective `package.json` entries to point to the new version and re-run `npm i`.
 
-6. Commit changes with the title: `` [<package-name>] Publish  `<version>`. `` and push them to Github.
+6. If this publication corresponds to a change in milestone, change the milestone value of the shield in the `README.md` of the package. Some packages might not have a shield. Consider adding it.
 
-7. Log into the [wombat NPM proxy](https://opensource.googleblog.com/2020/01/wombat-dressing-room-npm-publication_10.html):
+7. Commit changes with the title: `` [<package-name>] Publish  `<version>`. `` and push them to Github.
+
+8. If new milestone tag was added:
+
+Tag the milestone:
+
+```bash
+git tag <package>-<milestone> # example: breadboard-m1
+```
+
+Push tags
+
+```bash
+git push <remote> --tags
+```
+
+9. Log into the [wombat NPM proxy](https://opensource.googleblog.com/2020/01/wombat-dressing-room-npm-publication_10.html):
 
 ```bash
 npm login --registry https://wombat-dressing-room.appspot.com
 ```
 
-8. Publish to npm:
+10. Publish to npm:
 
 ```bash
 npm publish --registry https://wombat-dressing-room.appspot.com
