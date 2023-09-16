@@ -25,6 +25,6 @@
     { "id": "node-c", "type": "output" }
   ],
   "inputs": { "text": "foo" },
-  "outputs": { "context": "foo", "description": "foo" },
+  "outputs": [{ "context": "foo", "description": "foo" }],
   "sequence": ["node-a", "node-b", "node-c"]
 }

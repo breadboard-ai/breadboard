@@ -12,7 +12,7 @@
     { "id": "output-1", "type": "output" }
   ],
   "inputs": { "text": "foo" },
-  "outputs": {},
+  "outputs": [],
   "sequence": [],
   "throws": true
 }

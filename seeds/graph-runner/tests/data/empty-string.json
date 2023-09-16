@@ -12,6 +12,6 @@
     { "id": "output-1", "type": "output" }
   ],
   "inputs": { "text": "" },
-  "outputs": { "text": "" },
+  "outputs": [{ "text": "" }],
   "sequence": ["input-1", "output-1"]
 }
