@@ -24,6 +24,30 @@ export const peek = (map?: SendingNodeMap): EdgeMap => {
   return result;
 };
 
+export class EdgeQueuer {
+  map: EdgeStateMap;
+
+  constructor(map: EdgeStateMap) {
+    this.map = map;
+  }
+
+  push(edge: Edge, values?: OutputValues): void {
+    if (!values) return;
+    const toNode = edge.to;
+    let fromNodeMap = this.map.get(toNode);
+    if (!fromNodeMap) {
+      fromNodeMap = new Map() as SendingNodeMap;
+      this.map.set(toNode, fromNodeMap);
+    }
+    let queue = fromNodeMap.get(edge.from);
+    if (!queue) {
+      queue = [];
+      fromNodeMap.set(edge.from, queue);
+    }
+    queue.push(values);
+  }
+}
+
 export class MachineEdgeState implements EdgeState {
   state: EdgeStateMap = new Map();
   constants: EdgeStateMap = new Map();
@@ -44,32 +68,21 @@ export class MachineEdgeState implements EdgeState {
     outputs: OutputValues
   ) {
     opportunities.forEach((opportunity) => {
-      const toNode = opportunity.to;
-      let fromNodeMap = state.get(toNode);
-      if (!fromNodeMap) {
-        fromNodeMap = new Map() as SendingNodeMap;
-        state.set(toNode, fromNodeMap);
-      }
-      let queue = fromNodeMap.get(opportunity.from);
-      if (!queue) {
-        queue = [];
-        fromNodeMap.set(opportunity.from, queue);
-      }
-      // TODO: Clean this up and make coherent with Traversal.wire.
-      const toRemember: OutputValues = {};
+      // TODO: Clean this up and make coherent with Traversal.wireEdge.
+      let values: OutputValues | undefined = undefined;
       if (opportunity.out) {
         if (opportunity.out === "*") {
-          Object.assign(toRemember, outputs);
+          values = Object.assign({}, outputs);
         } else {
           const output = outputs[opportunity.out];
           if (output != null && output != undefined) {
-            toRemember[opportunity.out] = output;
+            values = { [opportunity.out]: output };
           }
         }
-        if (Object.keys(toRemember).length > 0) queue.push(toRemember);
       } else {
-        queue.push({});
+        values = {};
       }
+      new EdgeQueuer(state).push(opportunity, values);
     });
   }
 

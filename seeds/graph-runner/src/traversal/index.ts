@@ -4,12 +4,30 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Edge, EdgeMap, InputValues, NodeDescriptor } from "../types.js";
+import {
+  Edge,
+  EdgeMap,
+  InputValues,
+  NodeDescriptor,
+  OutputValues,
+} from "../types.js";
 
 /**
  * This class holds important parts of the graph traversal algorithm.
  */
 export class Traversal {
+  static wireEdge(edge: Edge, outputs: OutputValues): InputValues {
+    const out = edge.out;
+    if (!out) return {};
+    if (out === "*") {
+      return Object.assign({}, outputs);
+    }
+    const output = outputs[out];
+    const input = edge.in;
+    if (!input || output === null || output === undefined) return {};
+    return { [input]: output };
+  }
+
   /**
    * Wires the outputs of of a set of edges to the inputs of a node.
    * @param heads All the edges that point to the node.
@@ -20,17 +38,8 @@ export class Traversal {
     const result: InputValues = {};
     heads.forEach((head) => {
       const from = head.from;
-      const outputs = outputEdges.get(from) || {};
-      const out = head.out;
-      if (!out) return;
-      if (out === "*") {
-        Object.assign(result, outputs);
-        return;
-      }
-      const output = outputs[out];
-      const input = head.in;
-      if (!input) return;
-      if (output != null && output != undefined) result[input] = output;
+      const inputs = this.wireEdge(head, outputEdges.get(from) || {});
+      Object.assign(result, inputs);
     });
     return result;
   }

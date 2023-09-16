@@ -6,7 +6,7 @@
 
 import test from "ava";
 
-import { peek } from "../src/traversal/state.js";
+import { EdgeQueuer, peek } from "../src/traversal/state.js";
 
 test("peek correctly peeks", (t) => {
   {
@@ -39,4 +39,31 @@ test("peek correctly peeks", (t) => {
       ])
     );
   }
+});
+
+test("EdgeQueuer correctly manages state", (t) => {
+  const manager = new EdgeQueuer(new Map());
+  manager.push({ from: "a", to: "b" }, { a: 1 });
+  t.deepEqual(manager.map, new Map([["b", new Map([["a", [{ a: 1 }]]])]]));
+  manager.push({ from: "a", to: "b" }, { b: 2 });
+  t.deepEqual(
+    manager.map,
+    new Map([["b", new Map([["a", [{ a: 1 }, { b: 2 }]]])]])
+  );
+  manager.push({ from: "b", to: "c" }, { b: 3 });
+  t.deepEqual(
+    manager.map,
+    new Map([
+      ["b", new Map([["a", [{ a: 1 }, { b: 2 }]]])],
+      ["c", new Map([["b", [{ b: 3 }]]])],
+    ])
+  );
+  manager.push({ from: "b", to: "c" }, undefined);
+  t.deepEqual(
+    manager.map,
+    new Map([
+      ["b", new Map([["a", [{ a: 1 }, { b: 2 }]]])],
+      ["c", new Map([["b", [{ b: 3 }]]])],
+    ])
+  );
 });
