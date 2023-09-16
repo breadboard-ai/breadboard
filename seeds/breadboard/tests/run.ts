@@ -107,7 +107,7 @@ test("correctly saves and loads", async (t) => {
   }
   t.is(
     runResult,
-    '{"state":{"descriptor":{"id":"input-1","type":"input"},"inputs":{},"missingInputs":[],"opportunities":[],"newOpportunities":[{"from":"input-1","to":"passthrough-3","out":"*"}],"state":{"state":{"$type":"Map","value":[["input-1",{"$type":"Map","value":[["output-4",{}]]}]]},"constants":{"$type":"Map","value":[]}}},"type":"input"}'
+    '{"state":{"descriptor":{"id":"input-1","type":"input"},"inputs":{},"missingInputs":[],"opportunities":[],"newOpportunities":[{"from":"input-1","to":"passthrough-3","out":"*"}],"state":{"state":{"$type":"Map","value":[["input-1",{"$type":"Map","value":[["output-4",[]]]}]]},"constants":{"$type":"Map","value":[]}}},"type":"input"}'
   );
 });
 

@@ -167,15 +167,23 @@ export type GraphDescriptor = GraphMetadata & {
 };
 
 /**
+ * Represents the `OutputValues` that are passed from one node to
+ * another, accumulating until they are consumed by the receiving node.
+ */
+export type OutputValuesQueue = OutputValues[];
+
+/**
+ * The Map of all outputs that were sent from a given node.
+ */
+export type SendingNodeMap = Map<NodeIdentifier, OutputValuesQueue>;
+
+/**
  * Additional concept: whether or not an output was consumed by the intended
  * input.
  * State stores all outputs that have not yet been consumed, organized as
  * a map of maps
  */
-export type EdgeStateMap = Map<
-  NodeIdentifier,
-  Map<NodeIdentifier, OutputValues>
->;
+export type EdgeStateMap = Map<NodeIdentifier, SendingNodeMap>;
 
 export interface EdgeState {
   state: EdgeStateMap;

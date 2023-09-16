@@ -11,7 +11,18 @@ import type {
   EdgeStateMap,
   NodeIdentifier,
   OutputValues,
+  SendingNodeMap,
 } from "../types.js";
+
+export const peek = (map?: SendingNodeMap): EdgeMap => {
+  map = map || new Map();
+  const result: EdgeMap = new Map();
+  for (const [from, queue] of map.entries()) {
+    const outputs = queue[0];
+    if (outputs) result.set(from, outputs);
+  }
+  return result;
+};
 
 export class MachineEdgeState implements EdgeState {
   state: EdgeStateMap = new Map();
@@ -36,10 +47,29 @@ export class MachineEdgeState implements EdgeState {
       const toNode = opportunity.to;
       let fromNodeMap = state.get(toNode);
       if (!fromNodeMap) {
-        fromNodeMap = new Map();
+        fromNodeMap = new Map() as SendingNodeMap;
         state.set(toNode, fromNodeMap);
       }
-      fromNodeMap.set(opportunity.from, outputs);
+      let queue = fromNodeMap.get(opportunity.from);
+      if (!queue) {
+        queue = [];
+        fromNodeMap.set(opportunity.from, queue);
+      }
+      // TODO: Clean this up and make coherent with Traversal.wire.
+      const toRemember: OutputValues = {};
+      if (opportunity.out) {
+        if (opportunity.out === "*") {
+          Object.assign(toRemember, outputs);
+        } else {
+          const output = outputs[opportunity.out];
+          if (output != null && output != undefined) {
+            toRemember[opportunity.out] = output;
+          }
+        }
+        if (Object.keys(toRemember).length > 0) queue.push(toRemember);
+      } else {
+        queue.push({});
+      }
     });
   }
 
@@ -56,8 +86,8 @@ export class MachineEdgeState implements EdgeState {
   }
 
   getAvailableOutputs(node: NodeIdentifier): EdgeMap {
-    const constantEdges: EdgeMap = this.constants.get(node) || new Map();
-    const stateEdges: EdgeMap = this.state.get(node) || new Map();
+    const constantEdges = peek(this.constants.get(node));
+    const stateEdges = peek(this.state.get(node));
     const result: EdgeMap = new Map([...constantEdges, ...stateEdges]);
     return result;
   }
