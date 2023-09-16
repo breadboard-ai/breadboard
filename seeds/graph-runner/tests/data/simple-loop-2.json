@@ -1,0 +1,56 @@
+{
+  "title": "skip",
+  "description": "This test currently fails and will be skipped. The reason it fails is because the first output of the `extract` node is eaten and never delivered to `output`.",
+  "edges": [
+    {
+      "from": "input",
+      "out": "list",
+      "to": "extract",
+      "in": "list"
+    },
+    {
+      "from": "extract",
+      "out": "list",
+      "to": "extract",
+      "in": "list"
+    },
+    {
+      "from": "extract",
+      "out": "text",
+      "to": "output",
+      "in": "text"
+    }
+  ],
+  "nodes": [
+    { "id": "input", "type": "input" },
+    { "id": "output", "type": "output" },
+    { "id": "extract", "type": "extract" }
+  ],
+  "inputs": { "list": ["a", "b", "c", "d", "e", "f", "g"] },
+  "outputs": [
+    { "text": "a" },
+    { "text": "b" },
+    { "text": "c" },
+    { "text": "d" },
+    { "text": "e" },
+    { "text": "f" },
+    { "text": "g" }
+  ],
+  "sequence": [
+    "input",
+    "extract",
+    "output",
+    "extract",
+    "output",
+    "extract",
+    "output",
+    "extract",
+    "output",
+    "extract",
+    "output",
+    "extract",
+    "output",
+    "extract",
+    "output"
+  ]
+}

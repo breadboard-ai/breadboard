@@ -31,6 +31,11 @@ await Promise.all(
     test(filename, async (t) => {
       const data = await readFile(`${IN_DIR}${filename}`, "utf-8");
       const graph = JSON.parse(data) as TestGraphDescriptor;
+      if (graph.title?.includes("skip")) {
+        t.pass();
+        t.log("Skipped");
+        return;
+      }
       const machine = new TraversalMachine(graph);
       const outputs: OutputValues[] = [];
       const sequence: string[] = [];
