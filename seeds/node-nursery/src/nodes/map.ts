@@ -47,6 +47,7 @@ export type BoardCapability = Capability & {
 };
 
 export type LamdbdaFunction<In, Out> = (
+  board: Board,
   input: BreadboardNode<In, Out>,
   output: BreadboardNode<In, Out>
 ) => Promise<void>;
@@ -57,7 +58,7 @@ export const lambda = async <In = InputValues, Out = OutputValues>(
   const board = new Board();
   const input = board.input<In>();
   const output = board.output<Out>();
-  await fun(input, output);
+  await fun(board, input, output);
   return {
     board: {
       kind: "board",

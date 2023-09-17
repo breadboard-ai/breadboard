@@ -97,7 +97,7 @@ test("using lambda syntactic sugar", async (t) => {
   const nursery = board.addKit(Nursery);
   const input = board.input();
   const map = nursery.map(
-    await lambda(async (input, output) => {
+    await lambda(async (board, input, output) => {
       input.wire("*->", output);
     })
   );
