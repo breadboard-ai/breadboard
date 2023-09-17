@@ -35,6 +35,7 @@ import templateParser, {
   TemplateParserInputs,
   TemplateParserOutputs,
 } from "./nodes/template-parser.js";
+import map, { MapInputs, MapOutputs } from "./nodes/map.js";
 
 const handlers = {
   createVectorDatabase,
@@ -50,6 +51,7 @@ const handlers = {
   validateJson,
   schemish,
   templateParser,
+  map,
 };
 
 /**
@@ -166,6 +168,24 @@ export class Nursery implements Kit {
       TemplateParserInputs,
       TemplateParserOutputs
     >("templateParser", { ...rest }, $id);
+    return node;
+  }
+
+  /**
+   * Work in progress implementation of a `map` node as part of work on
+   * issue #110.
+   * @param config
+   * @returns
+   */
+  map(
+    config: OptionalIdConfiguration = {}
+  ): BreadboardNode<MapInputs, MapOutputs> {
+    const { $id, ...rest } = config;
+    const node = this.#nodeFactory.create<MapInputs, MapOutputs>(
+      "map",
+      { ...rest },
+      $id
+    );
     return node;
   }
 }
