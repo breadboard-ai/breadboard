@@ -18,22 +18,54 @@ export type MapInputs = InputValues & {
   list: NodeValue[];
 
   /**
-   * The graph to run for each element of the list.
+   * The board to run for each element of the list.
    */
-  graph?: Capability;
+  board?: Capability;
 };
 
 export type MapOutputs = OutputValues & {
   /**
-   * The list of outputs from the graph.
+   * The list of outputs from the board.
    */
   list: NodeValue[];
 };
 
+// TODO: This likely lives elsewhere, in breadboard perhaps?
+export type RunnableBoard = {
+  // TODO: Match Board.runOnce
+  runOnce: (inputs: InputValues) => Promise<OutputValues>;
+};
+
+// TODO: This likely lives elsewehere, in breadboard perhaps?
+export const fromCapability = (board: Capability): RunnableBoard => {
+  if (board.kind !== "board") {
+    throw new Error(`Expected a "board" Capability, but got ${board}`);
+  }
+  // Waving hands: a runnable board is retrieved from "board" Capability
+  // and returned here.
+  // Maybe Capability is actually a runnable board?
+  return {
+    runOnce: async (inputs: InputValues) => {
+      // TODO: Actually do something interesting here.
+      // Simply return the inputs for now.
+      return inputs;
+    },
+  };
+};
+
 export default async (inputs: InputValues): Promise<OutputValues> => {
-  const { list } = inputs as MapInputs;
+  const { list, board } = inputs as MapInputs;
   if (!Array.isArray(list)) {
     throw new Error(`Expected list to be an array, but got ${list}`);
   }
-  return { list };
+  if (!board) return { list };
+  const runnableBoard = fromCapability(board);
+  const result = await Promise.all(
+    list.map(async (item, index) => {
+      // TODO: Express as a multi-turn `run`.
+      const outputs = await runnableBoard.runOnce({ item, index, list });
+      return outputs;
+    })
+  );
+  return { list: result };
 };
