@@ -66,4 +66,36 @@ test("EdgeQueuer correctly manages state", (t) => {
       ["c", new Map([["b", [{ b: 3 }]]])],
     ])
   );
+  manager.shift("b");
+  t.deepEqual(
+    manager.map,
+    new Map([
+      ["b", new Map([["a", [{ b: 2 }]]])],
+      ["c", new Map([["b", [{ b: 3 }]]])],
+    ])
+  );
+  manager.shift("c");
+  t.deepEqual(
+    manager.map,
+    new Map([
+      ["b", new Map([["a", [{ b: 2 }]]])],
+      ["c", new Map([["b", []]])],
+    ])
+  );
+  manager.shift("c");
+  t.deepEqual(
+    manager.map,
+    new Map([
+      ["b", new Map([["a", [{ b: 2 }]]])],
+      ["c", new Map([["b", []]])],
+    ])
+  );
+  manager.shift("b");
+  t.deepEqual(
+    manager.map,
+    new Map([
+      ["b", new Map([["a", []]])],
+      ["c", new Map([["b", []]])],
+    ])
+  );
 });

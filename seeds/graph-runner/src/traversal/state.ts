@@ -46,6 +46,14 @@ export class EdgeQueuer {
     }
     queue.push(values);
   }
+
+  shift(node: NodeIdentifier) {
+    const fromNodeMap = this.map.get(node);
+    if (!fromNodeMap) return;
+    for (const queue of fromNodeMap.values()) {
+      queue.shift();
+    }
+  }
 }
 
 export class MachineEdgeState implements EdgeState {
@@ -90,7 +98,7 @@ export class MachineEdgeState implements EdgeState {
     // 1. Clear entries for the current node.
     // Notice, we're not clearing the "constants" entries. Those are basically
     // there forever -- or until the edge is traversed again.
-    this.state.delete(node);
+    new EdgeQueuer(this.state).shift(node);
     if (!outputs) outputs = {};
     const [constants, state] = this.#splitOutConstants(opportunities);
     // 2. Add entries for each opportunity.

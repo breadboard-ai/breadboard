@@ -1,5 +1,4 @@
 {
-  "title": "skip",
   "description": "This test currently fails and will be skipped. The reason it fails is because the first output of the `extract` node is eaten and never delivered to `output`.",
   "edges": [
     {
@@ -39,7 +38,6 @@
   "sequence": [
     "input",
     "extract",
-    "output",
     "extract",
     "output",
     "extract",
@@ -51,6 +49,7 @@
     "extract",
     "output",
     "extract",
+    "output",
     "output"
   ]
 }
