@@ -132,3 +132,24 @@ test("using lambda with promptTemplate", async (t) => {
     list: [{ prompt: "item: 1" }, { prompt: "item: 2" }, { prompt: "item: 3" }],
   });
 });
+
+test.skip("using lambda with promptTemplate from outer board", async (t) => {
+  const board = new Board();
+  const nursery = board.addKit(Nursery);
+  const llm = board.addKit(Starter);
+
+  const input = board.input();
+  const template = llm.promptTemplate("item: {{item}}");
+
+  const map = nursery.map(
+    await lambda(async (board, input, output) => {
+      input.wire("item->", template.wire("prompt->", output));
+    })
+  );
+  input.wire("list->", map);
+  map.wire("list->", board.output());
+  const outputs = await board.runOnce({ list: [1, 2, 3] });
+  t.deepEqual(outputs, {
+    list: [{ prompt: "item: 1" }, { prompt: "item: 2" }, { prompt: "item: 3" }],
+  });
+});
