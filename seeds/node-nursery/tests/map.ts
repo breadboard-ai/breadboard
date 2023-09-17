@@ -66,3 +66,28 @@ test("using map as part of a board", async (t) => {
     ],
   });
 });
+
+test("sending a real board to a map", async (t) => {
+  const fun = new Board();
+  fun.input().wire("*->", fun.output());
+
+  const board = new Board();
+  const nursery = board.addKit(Nursery);
+  const input = board.input();
+  const map = nursery.map({
+    board: {
+      kind: "board",
+      board: fun,
+    } as NodeValue, // TODO: Fix types.
+  });
+  input.wire("list->", map);
+  map.wire("list->", board.output());
+  const outputs = await board.runOnce({ list: [1, 2, 3] });
+  t.deepEqual(outputs, {
+    list: [
+      { index: 0, item: 1, list: [1, 2, 3] },
+      { index: 1, item: 2, list: [1, 2, 3] },
+      { index: 2, item: 3, list: [1, 2, 3] },
+    ],
+  });
+});
