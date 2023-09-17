@@ -5,6 +5,11 @@
  */
 
 import {
+  Board,
+  BreadboardNode,
+  OptionalIdConfiguration,
+} from "@google-labs/breadboard";
+import {
   Capability,
   InputValues,
   NodeValue,
@@ -39,6 +44,26 @@ export type RunnableBoard = {
 export type BoardCapability = Capability & {
   kind: "board";
   board: RunnableBoard;
+};
+
+export type LamdbdaFunction<In, Out> = (
+  input: BreadboardNode<In, Out>,
+  output: BreadboardNode<In, Out>
+) => Promise<void>;
+
+export const lambda = async <In = InputValues, Out = OutputValues>(
+  fun: LamdbdaFunction<In, Out>
+): Promise<OptionalIdConfiguration> => {
+  const board = new Board();
+  const input = board.input<In>();
+  const output = board.output<Out>();
+  await fun(input, output);
+  return {
+    board: {
+      kind: "board",
+      board,
+    } as Capability, // TODO: Fix types.
+  };
 };
 
 // TODO: This likely lives elsewehere, in breadboard perhaps?
