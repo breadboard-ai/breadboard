@@ -52,6 +52,7 @@
   },
   "dependencies": {
     "@google-labs/breadboard": "*",
+    "@google-labs/llm-starter": "*",
     "@google-labs/graph-runner": "*",
     "@google-labs/palm-lite": "*",
     "json-stable-stringify": "^1.0.2",

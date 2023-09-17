@@ -10,6 +10,7 @@ import map, { MapInputs, lambda } from "../src/nodes/map.js";
 import { Capability, InputValues } from "@google-labs/graph-runner";
 import { Board } from "@google-labs/breadboard";
 import { Nursery } from "../src/nursery.js";
+import Starter from "@google-labs/llm-starter";
 
 test("map with no board just outputs list", async (t) => {
   const inputs = {
@@ -110,5 +111,24 @@ test("using lambda syntactic sugar", async (t) => {
       { index: 1, item: 2, list: [1, 2, 3] },
       { index: 2, item: 3, list: [1, 2, 3] },
     ],
+  });
+});
+
+test("using lambda with promptTemplate", async (t) => {
+  const board = new Board();
+  const nursery = board.addKit(Nursery);
+  const input = board.input();
+  const map = nursery.map(
+    await lambda(async (board, input, output) => {
+      const llm = board.addKit(Starter);
+      const template = llm.promptTemplate("item: {{item}}");
+      input.wire("item->", template.wire("prompt->", output));
+    })
+  );
+  input.wire("list->", map);
+  map.wire("list->", board.output());
+  const outputs = await board.runOnce({ list: [1, 2, 3] });
+  t.deepEqual(outputs, {
+    list: [{ prompt: "item: 1" }, { prompt: "item: 2" }, { prompt: "item: 3" }],
   });
 });
