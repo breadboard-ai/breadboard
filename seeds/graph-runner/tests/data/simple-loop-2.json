@@ -1,5 +1,5 @@
 {
-  "description": "This tests for the fun ordering case of `simple-loop.json` that Paul Kinlan discovered in his adventures. Thank you, Paul. Edge queuing was implemented as a result of this discovery.",
+  "description": "This tests for the fun ordering case of `simple-loop.json` that Paul Kinlan discovered in his adventures. Thank you, Paul. Edge queueing was implemented as a result of this discovery.",
   "edges": [
     {
       "from": "input",
