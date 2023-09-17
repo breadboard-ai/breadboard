@@ -36,21 +36,17 @@ export type RunnableBoard = {
   runOnce: (inputs: InputValues) => Promise<OutputValues>;
 };
 
+export type BoardCapability = Capability & {
+  kind: "board";
+  board: RunnableBoard;
+};
+
 // TODO: This likely lives elsewehere, in breadboard perhaps?
 export const fromCapability = (board: Capability): RunnableBoard => {
   if (board.kind !== "board") {
     throw new Error(`Expected a "board" Capability, but got ${board}`);
   }
-  // Waving hands: a runnable board is retrieved from "board" Capability
-  // and returned here.
-  // Maybe Capability is actually a runnable board?
-  return {
-    runOnce: async (inputs: InputValues) => {
-      // TODO: Actually do something interesting here.
-      // Simply return the inputs for now.
-      return inputs;
-    },
-  };
+  return (board as BoardCapability).board;
 };
 
 export default async (inputs: InputValues): Promise<OutputValues> => {

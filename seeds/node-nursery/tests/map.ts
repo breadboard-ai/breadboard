@@ -7,6 +7,7 @@
 import test from "ava";
 
 import map, { MapInputs } from "../src/nodes/map.js";
+import { InputValues } from "@google-labs/graph-runner";
 
 test("map with no board just outputs list", async (t) => {
   const inputs = {
@@ -21,6 +22,11 @@ test("map with board wip", async (t) => {
     list: [1, 2, 3],
     board: {
       kind: "board",
+      board: {
+        runOnce: async (inputs: InputValues) => {
+          return inputs;
+        },
+      },
     },
   } as MapInputs;
   const outputs = await map(inputs);
