@@ -117,6 +117,9 @@ export class Node<Inputs, Outputs> implements BreadboardNode<Inputs, Outputs> {
   ): BreadboardNode<Inputs, Outputs> {
     const { ltr, edge } = parseSpec(spec);
     const toNode = to as Node<ToInputs, ToOutputs>;
+    if (this.#breadboard !== toNode.#breadboard) {
+      throw new Error("Cannot wire nodes from different boards.");
+    }
     const result: Edge = {
       from: ltr ? this.#descriptor.id : toNode.#descriptor.id,
       to: ltr ? toNode.#descriptor.id : this.#descriptor.id,
