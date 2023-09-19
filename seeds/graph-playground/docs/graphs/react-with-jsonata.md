@@ -28,7 +28,7 @@ keyssecrets1[keys]:::config -- "keys->keys" --o secrets1
 expressionjsonata2[expression]:::config -- "expression->expression" --o jsonata2
 expressionjsonata3[expression]:::config -- "expression->expression" --o jsonata3
 templatepromptTemplate5[template]:::config -- "template->template" --o promptTemplate5
-messageinput6[message]:::config -- "message->message" --o input6
+schemainput6[schema]:::config -- "schema->schema" --o input6
 stopSequencesreactcompletion[stopSequences]:::config -- "stopSequences->stopSequences" --o reactcompletion
 $refmath[$ref]:::config -- "$ref->$ref" --o math
 descriptionmath[description]:::config -- "description->description" --o math

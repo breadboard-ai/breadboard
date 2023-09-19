@@ -17,7 +17,6 @@ end
 tools:::slotted -- "slotted->slotted" --o include1
 
 userRequest[/"input <br> id='userRequest'"/]:::input -- "text->text" --> include1[["include <br> id='include-1'"]]:::include
-messageuserRequest[message]:::config -- "message->message" --o userRequest
 schemauserRequest[schema]:::config -- "schema->schema" --o userRequest
 $refinclude1[$ref]:::config -- "$ref->$ref" --o include1
 

@@ -170,7 +170,19 @@
       "id": "input-6",
       "type": "input",
       "configuration": {
-        "message": "Ask ReAct a question"
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Question",
+              "description": "Ask ReAct a question"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
       }
     },
     {

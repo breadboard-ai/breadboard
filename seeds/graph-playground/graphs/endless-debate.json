@@ -161,7 +161,19 @@
       "id": "input-7",
       "type": "input",
       "configuration": {
-        "message": "What is the topic of the debate?"
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Topic",
+              "description": "What is the topic of the debate?"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
       }
     }
   ],

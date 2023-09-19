@@ -10,7 +10,6 @@ mathfunctiongenerator["generateText <br> id='math-function-generator'"] -- "comp
 secrets1("secrets <br> id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --> mathfunctiongenerator["generateText <br> id='math-function-generator'"]
 mathfunction["promptTemplate <br> id='math-function'"] -- "prompt->text" --> mathfunctiongenerator["generateText <br> id='math-function-generator'"]
 mathquestion[/"input <br> id='math-question'"/]:::input -- "text->question" --> mathfunction["promptTemplate <br> id='math-function'"]
-messagemathquestion[message]:::config -- "message->message" --o mathquestion
 schemamathquestion[schema]:::config -- "schema->schema" --o mathquestion
 templatemathfunction[template]:::config -- "template->template" --o mathfunction
 namecompute[name]:::config -- "name->name" --o compute

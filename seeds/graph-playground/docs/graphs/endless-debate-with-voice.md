@@ -33,7 +33,7 @@ stopsequencesgenerateText3[stop-sequences]:::config -- "stop-sequences->stop-seq
 templatealbertvoice[template]:::config -- "template->template" --o albertvoice
 stopsequencesgenerateText6[stop-sequences]:::config -- "stop-sequences->stop-sequences" --o generateText6
 templatefriedrichvoice[template]:::config -- "template->template" --o friedrichvoice
-messageinput9[message]:::config -- "message->message" --o input9
+schemainput9[schema]:::config -- "schema->schema" --o input9
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

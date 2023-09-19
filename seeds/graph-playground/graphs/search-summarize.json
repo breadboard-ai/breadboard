@@ -109,7 +109,19 @@
       "id": "input",
       "type": "input",
       "configuration": {
-        "message": "What would you like to search for?"
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Query",
+              "description": "What would you like to search for?"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
       }
     }
   ],

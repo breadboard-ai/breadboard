@@ -14,7 +14,7 @@ xmlToJson4["xmlToJson <br> id='xmlToJson-4'"] -- "json->json" --> jsonata5["json
 fetch3["fetch <br> id='fetch-3'"] -- "response->xml" --> xmlToJson4["xmlToJson <br> id='xmlToJson-4'"]
 urlTemplate2["urlTemplate <br> id='urlTemplate-2'"] -- "url->url" --> fetch3["fetch <br> id='fetch-3'"]
 input1[/"input <br> id='input-1'"/]:::input -- "text->query" --> urlTemplate2["urlTemplate <br> id='urlTemplate-2'"]
-messageinput1[message]:::config -- "message->message" --o input1
+schemainput1[schema]:::config -- "schema->schema" --o input1
 templateurlTemplate2[template]:::config -- "template->template" --o urlTemplate2
 rawfetch3[raw]:::config -- "raw->raw" --o fetch3
 expressionjsonata5[expression]:::config -- "expression->expression" --o jsonata5

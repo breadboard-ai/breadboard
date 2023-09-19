@@ -92,7 +92,19 @@
       "id": "input-3",
       "type": "input",
       "configuration": {
-        "message": "Provide a path to a directory to search"
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Path",
+              "description": "Provide a path to a directory to search"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
       }
     },
     {
@@ -133,7 +145,19 @@
       "id": "input-10",
       "type": "input",
       "configuration": {
-        "message": "What do you want to search for?"
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Query",
+              "description": "What do you want to search for?"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
       }
     },
     {

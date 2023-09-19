@@ -36,7 +36,7 @@ reactcompletion["generateText <br> id='react-completion'"] -- "completion->Thoug
 promptTemplate2["promptTemplate <br> id='promptTemplate-2'"] -- "prompt->text" --> reactcompletion["generateText <br> id='react-completion'"]
 keyssecrets1[keys]:::config -- "keys->keys" --o secrets1
 templatepromptTemplate2[template]:::config -- "template->template" --o promptTemplate2
-messageinput5[message]:::config -- "message->message" --o input5
+schemainput5[schema]:::config -- "schema->schema" --o input5
 stopSequencesreactcompletion[stopSequences]:::config -- "stopSequences->stopSequences" --o reactcompletion
 templatemathfunction[template]:::config -- "template->template" --o mathfunction
 namecompute[name]:::config -- "name->name" --o compute

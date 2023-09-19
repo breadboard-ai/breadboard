@@ -21,7 +21,6 @@
       "id": "userRequest",
       "type": "input",
       "configuration": {
-        "message": "Ask ReAct",
         "schema": {
           "type": "object",
           "properties": {

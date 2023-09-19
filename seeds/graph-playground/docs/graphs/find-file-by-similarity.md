@@ -18,10 +18,10 @@ jsonata13["jsonata <br> id='jsonata-13'"] -- "result->text" --> output14{{"outpu
 queryVectorDatabase2["queryVectorDatabase <br> id='queryVectorDatabase-2'"] -- "results->json" --> jsonata13["jsonata <br> id='jsonata-13'"]
 embedString11["embedString <br> id='embedString-11'"] -- "embedding->embedding" --> queryVectorDatabase2["queryVectorDatabase <br> id='queryVectorDatabase-2'"]
 input10[/"input <br> id='input-10'"/]:::input -- "text->text" --> embedString11["embedString <br> id='embedString-11'"]
-messageinput3[message]:::config -- "message->message" --o input3
+schemainput3[schema]:::config -- "schema->schema" --o input3
 keyssecrets6[keys]:::config -- "keys->keys" --o secrets6
 keyssecrets8[keys]:::config -- "keys->keys" --o secrets8
-messageinput10[message]:::config -- "message->message" --o input10
+schemainput10[schema]:::config -- "schema->schema" --o input10
 keyssecrets12[keys]:::config -- "keys->keys" --o secrets12
 expressionjsonata13[expression]:::config -- "expression->expression" --o jsonata13
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000

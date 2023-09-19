@@ -12,7 +12,7 @@ fetch4["fetch <br> id='fetch-4'"] -- "response->json" --> jsonata5["jsonata <br>
 urlTemplate3["urlTemplate <br> id='urlTemplate-3'"] -- "url->url" --> fetch4["fetch <br> id='fetch-4'"]
 input2[/"input <br> id='input-2'"/]:::input -- "text->query" --> urlTemplate3["urlTemplate <br> id='urlTemplate-3'"]
 keyssecrets1[keys]:::config -- "keys->keys" --o secrets1
-messageinput2[message]:::config -- "message->message" --o input2
+schemainput2[schema]:::config -- "schema->schema" --o input2
 templateurlTemplate3[template]:::config -- "template->template" --o urlTemplate3
 expressionjsonata5[expression]:::config -- "expression->expression" --o jsonata5
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000

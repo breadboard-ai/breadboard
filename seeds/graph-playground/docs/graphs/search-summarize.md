@@ -19,7 +19,7 @@ templatesummarizingtemplate[template]:::config -- "template->template" --o summa
 templateurlTemplate3[template]:::config -- "template->template" --o urlTemplate3
 expressionjsonata5[expression]:::config -- "expression->expression" --o jsonata5
 keyssecrets6[keys]:::config -- "keys->keys" --o secrets6
-messageinput[message]:::config -- "message->message" --o input
+schemainput[schema]:::config -- "schema->schema" --o input
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

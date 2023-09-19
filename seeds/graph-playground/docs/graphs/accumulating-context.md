@@ -15,7 +15,6 @@ assistant["promptTemplate <br> id='assistant'"] -- "prompt->text" --> generator[
 userRequest[/"input <br> id='userRequest'"/]:::input -- "text->question" --> assistant["promptTemplate <br> id='assistant'"]
 userRequest[/"input <br> id='userRequest'"/]:::input -- "text->user" --> conversationMemory["append <br> id='conversationMemory'"]
 start(("passthrough <br> id='start'")):::passthrough --> userRequest[/"input <br> id='userRequest'"/]:::input
-messageuserRequest[message]:::config -- "message->message" --o userRequest
 schemauserRequest[schema]:::config -- "schema->schema" --o userRequest
 templateassistant[template]:::config -- "template->template" --o assistant
 contextassistant[context]:::config -- "context->context" --o assistant

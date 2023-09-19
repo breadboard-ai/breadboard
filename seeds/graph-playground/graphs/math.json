@@ -39,7 +39,6 @@
       "id": "math-question",
       "type": "input",
       "configuration": {
-        "message": "Ask a math question",
         "schema": {
           "type": "object",
           "properties": {
