@@ -42,7 +42,6 @@ export default async (inputs: InputValues): Promise<OutputValues> => {
   });
 
   const query = { text: values.text };
-
   if (cache) {
     const cachedEmbedding = await cache.get(query);
     if (cachedEmbedding)

@@ -26,6 +26,9 @@ test("map with board", async (t) => {
     board: {
       kind: "board",
       board: {
+        kits: [],
+        edges: [],
+        nodes: [],
         runOnce: async (inputs: InputValues) => {
           return inputs;
         },
@@ -50,6 +53,9 @@ test("using map as part of a board", async (t) => {
     board: {
       kind: "board",
       board: {
+        kits: [],
+        edges: [],
+        nodes: [],
         runOnce: async (inputs: InputValues) => {
           return inputs;
         },

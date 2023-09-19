@@ -11,6 +11,7 @@ import {
 } from "@google-labs/breadboard";
 import {
   Capability,
+  GraphDescriptor,
   InputValues,
   NodeValue,
   OutputValues,
@@ -36,7 +37,7 @@ export type MapOutputs = OutputValues & {
 };
 
 // TODO: This likely lives elsewhere, in breadboard perhaps?
-export type RunnableBoard = {
+export type RunnableBoard = GraphDescriptor & {
   // TODO: Match Board.runOnce
   runOnce: (inputs: InputValues) => Promise<OutputValues>;
 };
@@ -68,11 +69,25 @@ export const lambda = async <In = InputValues, Out = OutputValues>(
 };
 
 // TODO: This likely lives elsewehere, in breadboard perhaps?
-export const fromCapability = (board: Capability): RunnableBoard => {
+export const fromCapability = async (
+  board: Capability
+): Promise<RunnableBoard> => {
   if (board.kind !== "board") {
     throw new Error(`Expected a "board" Capability, but got ${board}`);
   }
-  return (board as BoardCapability).board;
+  // TODO: Use JSON schema to validate rather than this hack.
+  const boardish = (board as BoardCapability)
+    .board as unknown as GraphDescriptor;
+  if (!(boardish.edges && boardish.kits && boardish.nodes)) {
+    throw new Error(
+      'Supplied "board" Capability argument is not actuall a board'
+    );
+  }
+  let runnableBoard = (board as BoardCapability).board;
+  if (!runnableBoard.runOnce) {
+    runnableBoard = await Board.fromGraphDescriptor(boardish);
+  }
+  return runnableBoard;
 };
 
 export default async (inputs: InputValues): Promise<OutputValues> => {
@@ -81,7 +96,7 @@ export default async (inputs: InputValues): Promise<OutputValues> => {
     throw new Error(`Expected list to be an array, but got ${list}`);
   }
   if (!board) return { list };
-  const runnableBoard = fromCapability(board);
+  const runnableBoard = await fromCapability(board);
   const result = await Promise.all(
     list.map(async (item, index) => {
       // TODO: Express as a multi-turn `run`.
