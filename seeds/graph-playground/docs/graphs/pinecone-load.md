@@ -33,9 +33,9 @@ getcontent["jsonata <br> id='get-content'"] -- "result->list" --> generateembedd
 loadchunks["fetch <br> id='load-chunks'"] -- "response->json" --> getcontent["jsonata <br> id='get-content'"]
 url[/"input <br> id='url'"/]:::input -- "text->url" --> loadchunks["fetch <br> id='load-chunks'"]
 expressiongetcontent[expression]:::config -- "expression->expression" --o getcontent
-boardgenerateembeddings[board]:::config -- "board->board" --o generateembeddings
+
 sizebatcher1[size]:::config -- "size->size" --o batcher1
-boardpineconeupsert[board]:::config -- "board->board" --o pineconeupsert
+
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

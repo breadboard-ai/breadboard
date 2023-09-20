@@ -139,6 +139,7 @@ const describeGraph = (graph: GraphDescriptor) => {
     .map((node) => {
       return Object.keys(node.configuration || {}).map((name) => {
         if (name === "slotted") return "";
+        if (name === "board") return "";
         return `${properNodeId(
           `${name}${node.id}`
         )}[${name}]:::config -- "${name}->${name}" --o ${properNodeId(
