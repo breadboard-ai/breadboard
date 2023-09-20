@@ -53,7 +53,7 @@
       "id": "get-content",
       "type": "jsonata",
       "configuration": {
-        "expression": "content.$zip($keys(),*)[[7..8]].{\"id\": $[0],\"text\": text,\"metadata\": info}"
+        "expression": "content.$zip($keys(),*)[[1..100]].{\"id\": $[0],\"text\": text,\"metadata\": {\"url\": info.url,\"title\": info.title,\"description\":info.description}}"
       }
     },
     {
