@@ -57,11 +57,7 @@ export class RunResult implements BreadboardRunResult {
   }
 
   set inputs(inputs: InputValues) {
-    this.#state.outputs = inputs;
-  }
-
-  get inputs(): InputValues {
-    return this.#state.outputs || {};
+    this.#state.outputsPromise = Promise.resolve(inputs);
   }
 
   get outputs(): OutputValues {

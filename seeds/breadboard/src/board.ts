@@ -171,7 +171,7 @@ export class Board implements Breadboard {
           new ProbeEvent("input", {
             descriptor,
             inputs,
-            outputs: result.outputs,
+            outputs: await result.outputsPromise,
           })
         );
         continue;
@@ -206,24 +206,26 @@ export class Board implements Breadboard {
           new ProbeEvent("beforehandler", beforehandlerDetail)
         );
 
-      const outputs = (
+      const outputsPromise = (
         shouldInvokeHandler
-          ? await handler(inputs)
-          : beforehandlerDetail.outputs
-      ) as OutputValues;
+          ? handler(inputs)
+          : Promise.resolve(beforehandlerDetail.outputs)
+      ) as Promise<OutputValues>;
 
-      probe?.dispatchEvent(
-        new ProbeEvent("node", {
-          descriptor,
-          inputs,
-          outputs,
-          validatorMetadata: this.#validators.map((validator) =>
-            validator.getValidatorMetadata(descriptor)
-          ),
-        })
-      );
+      outputsPromise.then((outputs) => {
+        probe?.dispatchEvent(
+          new ProbeEvent("node", {
+            descriptor,
+            inputs,
+            outputs,
+            validatorMetadata: this.#validators.map((validator) =>
+              validator.getValidatorMetadata(descriptor)
+            ),
+          })
+        );
+      });
 
-      result.outputs = outputs;
+      result.outputsPromise = outputsPromise;
     }
   }
 

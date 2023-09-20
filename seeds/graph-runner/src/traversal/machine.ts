@@ -40,7 +40,8 @@ export class TraversalMachine implements AsyncIterable<TraversalResult> {
       [],
       opportunities,
       [],
-      new MachineEdgeState()
+      new MachineEdgeState(),
+      new Map()
     );
     return new TraversalMachineIterator(this.graph, entryResult);
   }

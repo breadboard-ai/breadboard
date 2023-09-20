@@ -198,6 +198,9 @@ export interface EdgeState {
 
 export type EdgeMap = Map<NodeIdentifier, OutputValues>;
 
+export type pendingOutputPromise = Promise<
+  [symbol, OutputValues, Edge[], NodeDescriptor]
+>;
 export interface TraversalResult {
   descriptor: NodeDescriptor;
   inputs: InputValues;
@@ -205,7 +208,8 @@ export interface TraversalResult {
   opportunities: Edge[];
   newOpportunities: Edge[];
   state: EdgeState;
-  outputs?: OutputValues;
+  outputsPromise?: Promise<OutputValues>;
+  pendingOutputs: Map<symbol, pendingOutputPromise>;
   skip: boolean;
 }
 

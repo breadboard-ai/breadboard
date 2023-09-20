@@ -46,19 +46,21 @@ await Promise.all(
           sequence.push(descriptor.id);
           switch (descriptor.type) {
             case "input":
-              result.outputs = graph.inputs;
+              result.outputsPromise = Promise.resolve(graph.inputs);
               break;
             case "output":
-              outputs.push(inputs);
+              outputs.push({ ...inputs });
               break;
             case "extract": {
               const list = result.inputs.list as string[];
               const text = list.shift();
-              result.outputs = list.length ? { list, text } : { text };
+              result.outputsPromise = Promise.resolve(
+                list.length ? { list, text } : { text }
+              );
               break;
             }
             case "noop":
-              result.outputs = inputs;
+              result.outputsPromise = Promise.resolve({ ...inputs });
               break;
             default:
               throw new Error(`Unknown node: ${descriptor.id}`);
@@ -91,7 +93,7 @@ test("Can be interrupted and resumed", async (t) => {
       id: "node-a",
       type: "input",
     });
-    result.outputs = graph.inputs;
+    result.outputsPromise = Promise.resolve(graph.inputs);
   }
 
   // Second iteration.
@@ -116,7 +118,7 @@ test("Can be interrupted and resumed", async (t) => {
       id: "node-b",
       type: "noop",
     });
-    result.outputs = result.inputs;
+    result.outputsPromise = Promise.resolve(result.inputs);
   }
 
   // Fourth iteration.
