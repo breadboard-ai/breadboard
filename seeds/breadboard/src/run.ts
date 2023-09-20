@@ -117,7 +117,7 @@ export class BeforeHandlerStageResult extends RunResult {
 
   get inputArguments(): InputValues {
     throw new Error(
-      'Input arguments are not available in the "befoerhandler" stage'
+      'Input arguments are not available in the "beforehandler" stage'
     );
   }
 
