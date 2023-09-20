@@ -31,10 +31,11 @@ const properNodeId = (node: string) => {
   return node && node.replace(/-/g, "");
 };
 
-const shape = (descriptor?: NodeDescriptor) => {
+const shape = (descriptor?: NodeDescriptor, idPrefix = "") => {
   if (!descriptor) return "";
   const node = descriptor.id;
-  const nodeId = properNodeId(node);
+  const prefix = idPrefix ? `${properNodeId(idPrefix)}_` : "";
+  const nodeId = `${prefix}${properNodeId(node)}`;
   const nodeType = descriptor.type;
   const text = `"${nodeType} <br> id='${node}'"`;
   switch (nodeType) {
@@ -57,11 +58,11 @@ const shape = (descriptor?: NodeDescriptor) => {
 
 type NodeMap = Map<string, NodeDescriptor>;
 
-const describeEdge = (edge: Edge, nodeMap: NodeMap) => {
+const describeEdge = (edge: Edge, nodeMap: NodeMap, idPrefix = "") => {
   const from = edge.from;
-  const fromNode = shape(nodeMap.get(from));
+  const fromNode = shape(nodeMap.get(from), idPrefix);
   const to = edge.to;
-  const toNode = shape(nodeMap.get(to));
+  const toNode = shape(nodeMap.get(to), idPrefix);
   const input = edge.in;
   const output = edge.out;
   const optional = edge.optional;
@@ -77,28 +78,53 @@ const describeEdge = (edge: Edge, nodeMap: NodeMap) => {
   return `${fromNode} --> ${toNode}`;
 };
 
+function describeSubgraph(
+  subgraph: GraphDescriptor,
+  name: string,
+  edgeName: string,
+  fromNode: NodeDescriptor,
+  idPrefix: string
+) {
+  const subgraphNodeMap: NodeMap = new Map(
+    subgraph.nodes.map((node: NodeDescriptor) => [node.id, node])
+  );
+  const subgraphEdges = subgraph.edges.map((edge: Edge) =>
+    describeEdge(edge, subgraphNodeMap, idPrefix)
+  );
+  return `\nsubgraph ${name}\n${subgraphEdges.join(
+    "\n"
+  )}\nend\n${name}:::slotted -- "${edgeName}->${edgeName}" --o ${properNodeId(
+    fromNode.id
+  )}\n`;
+}
+
+const handleSlotted = (fromNode: NodeDescriptor) => {
+  const type = fromNode.type;
+  if (type !== "include") return "";
+  const slotted = fromNode.configuration?.slotted;
+  if (!slotted) return "";
+  const subgraphs = Object.entries(slotted).map(([name, subgraph]) =>
+    describeSubgraph(subgraph, name, "slotted", fromNode, fromNode.id)
+  );
+  return subgraphs.join("\n");
+};
+
+const handleLambda = (fromNode: NodeDescriptor) => {
+  const board = fromNode.configuration?.board;
+  if (!board) return "";
+  type BoardCapability = { kind: "board"; board: GraphDescriptor };
+  const capability = board as BoardCapability;
+  if (capability.kind !== "board") return "";
+  const graph = capability.board;
+  return describeSubgraph(graph, fromNode.id, "lamdba", fromNode, fromNode.id);
+};
+
 const describeSubgraphs = (edge: Edge, nodeMap: NodeMap) => {
   const fromNode = nodeMap.get(edge.from);
   if (!fromNode) return "";
-  const type = fromNode.type;
-  if (type !== "include") return "";
-
-  const slotted = fromNode.configuration?.slotted;
-  if (!slotted) return "";
-  const subgraphs = Object.entries(slotted).map(([name, subgraph]) => {
-    const subgraphNodeMap: NodeMap = new Map(
-      subgraph.nodes.map((node: NodeDescriptor) => [node.id, node])
-    );
-    const subgraphEdges = subgraph.edges.map((edge: Edge) =>
-      describeEdge(edge, subgraphNodeMap)
-    );
-    return `\nsubgraph ${name}\n${subgraphEdges.join(
-      "\n"
-    )}\nend\n${name}:::slotted -- "slotted->slotted" --o ${properNodeId(
-      fromNode.id
-    )}\n`;
-  });
-  return subgraphs.join("\n");
+  const lamdba = handleLambda(fromNode);
+  const slotted = handleSlotted(fromNode);
+  return `${slotted}${lamdba}`;
 };
 
 const describeGraph = (graph: GraphDescriptor) => {

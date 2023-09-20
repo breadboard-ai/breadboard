@@ -37,7 +37,8 @@ const pineconeUpsert = lambda(
 
     const headers = starter
       .jsonata(
-        '{ "Api-Key": $, "Accept": "application/json", "Content-Type": "application/json" }'
+        '{ "Api-Key": $, "Accept": "application/json", "Content-Type": "application/json" }',
+        { $id: "make-headers" }
       )
       .wire("json<-PINECONE_API_KEY", starter.secrets(["PINECONE_API_KEY"]));
 
@@ -50,7 +51,9 @@ const pineconeUpsert = lambda(
       .wire(
         "url<-prompt",
         starter
-          .promptTemplate("{{PINECONE_URL}}/vectors/upsert")
+          .promptTemplate("{{PINECONE_URL}}/vectors/upsert", {
+            $id: "make-pinecone-url",
+          })
           .wire("<-PINECONE_URL", starter.secrets(["PINECONE_URL"]))
       );
 

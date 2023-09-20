@@ -163,25 +163,25 @@
           "board": {
             "edges": [
               {
-                "from": "secrets-4",
-                "to": "jsonata-3",
+                "from": "secrets-3",
+                "to": "make-headers",
                 "out": "PINECONE_API_KEY",
                 "in": "json"
               },
               {
-                "from": "jsonata-3",
+                "from": "make-headers",
                 "to": "pinecone-upsert-api",
                 "out": "result",
                 "in": "headers"
               },
               {
-                "from": "secrets-6",
-                "to": "promptTemplate-5",
+                "from": "secrets-4",
+                "to": "make-pinecone-url",
                 "out": "PINECONE_URL",
                 "in": "PINECONE_URL"
               },
               {
-                "from": "promptTemplate-5",
+                "from": "make-pinecone-url",
                 "to": "pinecone-upsert-api",
                 "out": "prompt",
                 "in": "url"
@@ -215,14 +215,14 @@
                 "type": "output"
               },
               {
-                "id": "jsonata-3",
+                "id": "make-headers",
                 "type": "jsonata",
                 "configuration": {
                   "expression": "{ \"Api-Key\": $, \"Accept\": \"application/json\", \"Content-Type\": \"application/json\" }"
                 }
               },
               {
-                "id": "secrets-4",
+                "id": "secrets-3",
                 "type": "secrets",
                 "configuration": {
                   "keys": [
@@ -239,14 +239,14 @@
                 }
               },
               {
-                "id": "promptTemplate-5",
+                "id": "make-pinecone-url",
                 "type": "promptTemplate",
                 "configuration": {
                   "template": "{{PINECONE_URL}}/vectors/upsert"
                 }
               },
               {
-                "id": "secrets-6",
+                "id": "secrets-4",
                 "type": "secrets",
                 "configuration": {
                   "keys": [

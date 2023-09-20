@@ -7,12 +7,12 @@
 graph TD;
 include1[["include <br> id='include-1'"]]:::include -- "text->text" --> reactResponse{{"output <br> id='reactResponse'"}}:::output
 subgraph tools
-reflect2["reflect <br> id='reflect-2'"] -- "graph->graph" --> output3{{"output <br> id='output-3'"}}:::output
-input1[/"input <br> id='input-1'"/]:::input -- "graph->graph" --> reflect2["reflect <br> id='reflect-2'"]
-math[["include <br> id='math'"]]:::include -- "text->text" --> output4{{"output <br> id='output-4'"}}:::output
-input1[/"input <br> id='input-1'"/]:::input -- "math->text" --> math[["include <br> id='math'"]]:::include
-search[["include <br> id='search'"]]:::include -- "text->text" --> output5{{"output <br> id='output-5'"}}:::output
-input1[/"input <br> id='input-1'"/]:::input -- "search->text" --> search[["include <br> id='search'"]]:::include
+include1_reflect2["reflect <br> id='reflect-2'"] -- "graph->graph" --> include1_output3{{"output <br> id='output-3'"}}:::output
+include1_input1[/"input <br> id='input-1'"/]:::input -- "graph->graph" --> include1_reflect2["reflect <br> id='reflect-2'"]
+include1_math[["include <br> id='math'"]]:::include -- "text->text" --> include1_output4{{"output <br> id='output-4'"}}:::output
+include1_input1[/"input <br> id='input-1'"/]:::input -- "math->text" --> include1_math[["include <br> id='math'"]]:::include
+include1_search[["include <br> id='search'"]]:::include -- "text->text" --> include1_output5{{"output <br> id='output-5'"}}:::output
+include1_input1[/"input <br> id='input-1'"/]:::input -- "search->text" --> include1_search[["include <br> id='search'"]]:::include
 end
 tools:::slotted -- "slotted->slotted" --o include1
 
