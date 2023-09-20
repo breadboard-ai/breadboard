@@ -47,7 +47,7 @@
 
 #### Defined in
 
-[seeds/breadboard/src/run.ts:42](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/run.ts#L42)
+[seeds/breadboard/src/run.ts:42](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/run.ts#L42)
 
 ## Properties
 
@@ -57,7 +57,7 @@
 
 #### Defined in
 
-[seeds/breadboard/src/run.ts:40](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/run.ts#L40)
+[seeds/breadboard/src/run.ts:40](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/run.ts#L40)
 
 ___
 
@@ -67,7 +67,7 @@ ___
 
 #### Defined in
 
-[seeds/breadboard/src/run.ts:39](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/run.ts#L39)
+[seeds/breadboard/src/run.ts:39](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/run.ts#L39)
 
 ## Accessors
 
@@ -85,7 +85,7 @@ BreadboardRunResult.inputArguments
 
 #### Defined in
 
-[seeds/breadboard/src/run.ts:55](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/run.ts#L55)
+[seeds/breadboard/src/run.ts:55](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/run.ts#L55)
 
 ___
 
@@ -103,7 +103,7 @@ BreadboardRunResult.inputs
 
 #### Defined in
 
-[seeds/breadboard/src/run.ts:63](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/run.ts#L63)
+[seeds/breadboard/src/run.ts:63](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/run.ts#L63)
 
 • `set` **inputs**(`inputs`): `void`
 
@@ -123,7 +123,7 @@ BreadboardRunResult.inputs
 
 #### Defined in
 
-[seeds/breadboard/src/run.ts:59](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/run.ts#L59)
+[seeds/breadboard/src/run.ts:59](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/run.ts#L59)
 
 ___
 
@@ -141,7 +141,7 @@ BreadboardRunResult.node
 
 #### Defined in
 
-[seeds/breadboard/src/run.ts:51](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/run.ts#L51)
+[seeds/breadboard/src/run.ts:51](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/run.ts#L51)
 
 ___
 
@@ -159,7 +159,7 @@ BreadboardRunResult.outputs
 
 #### Defined in
 
-[seeds/breadboard/src/run.ts:67](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/run.ts#L67)
+[seeds/breadboard/src/run.ts:67](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/run.ts#L67)
 
 ___
 
@@ -177,7 +177,7 @@ BreadboardRunResult.state
 
 #### Defined in
 
-[seeds/breadboard/src/run.ts:71](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/run.ts#L71)
+[seeds/breadboard/src/run.ts:71](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/run.ts#L71)
 
 ___
 
@@ -195,7 +195,7 @@ BreadboardRunResult.type
 
 #### Defined in
 
-[seeds/breadboard/src/run.ts:47](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/run.ts#L47)
+[seeds/breadboard/src/run.ts:47](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/run.ts#L47)
 
 ## Methods
 
@@ -209,7 +209,7 @@ BreadboardRunResult.type
 
 #### Defined in
 
-[seeds/breadboard/src/run.ts:79](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/run.ts#L79)
+[seeds/breadboard/src/run.ts:79](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/run.ts#L79)
 
 ___
 
@@ -223,7 +223,7 @@ ___
 
 #### Defined in
 
-[seeds/breadboard/src/run.ts:75](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/run.ts#L75)
+[seeds/breadboard/src/run.ts:75](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/run.ts#L75)
 
 ___
 
@@ -243,4 +243,4 @@ ___
 
 #### Defined in
 
-[seeds/breadboard/src/run.ts:86](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/run.ts#L86)
+[seeds/breadboard/src/run.ts:86](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/run.ts#L86)

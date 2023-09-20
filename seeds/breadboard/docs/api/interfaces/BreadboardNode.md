@@ -51,4 +51,4 @@ Use this method to wire nodes together.
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:213](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/types.ts#L213)
+[seeds/breadboard/src/types.ts:213](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/types.ts#L213)

@@ -19,4 +19,4 @@ Used e.g. in ProbeDetails.
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:84](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/types.ts#L84)
+[seeds/breadboard/src/types.ts:84](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/types.ts#L84)

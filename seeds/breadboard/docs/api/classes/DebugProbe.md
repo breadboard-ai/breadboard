@@ -56,7 +56,7 @@ EventTarget.constructor
 
 #### Defined in
 
-[seeds/breadboard/src/debug.ts:39](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/debug.ts#L39)
+[seeds/breadboard/src/debug.ts:39](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/debug.ts#L39)
 
 ## Properties
 
@@ -66,7 +66,7 @@ EventTarget.constructor
 
 #### Defined in
 
-[seeds/breadboard/src/debug.ts:21](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/debug.ts#L21)
+[seeds/breadboard/src/debug.ts:21](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/debug.ts#L21)
 
 ___
 
@@ -76,7 +76,7 @@ ___
 
 #### Defined in
 
-[seeds/breadboard/src/debug.ts:22](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/debug.ts#L22)
+[seeds/breadboard/src/debug.ts:22](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/debug.ts#L22)
 
 ## Methods
 
@@ -96,7 +96,7 @@ ___
 
 #### Defined in
 
-[seeds/breadboard/src/debug.ts:44](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/debug.ts#L44)
+[seeds/breadboard/src/debug.ts:44](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/debug.ts#L44)
 
 ___
 
@@ -116,7 +116,7 @@ ___
 
 #### Defined in
 
-[seeds/breadboard/src/debug.ts:83](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/debug.ts#L83)
+[seeds/breadboard/src/debug.ts:83](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/debug.ts#L83)
 
 ___
 
@@ -243,7 +243,7 @@ tests or other conditions. For example, replace a `generateText` node from
 
 #### Defined in
 
-[seeds/breadboard/src/debug.ts:79](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/debug.ts#L79)
+[seeds/breadboard/src/debug.ts:79](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/debug.ts#L79)
 
 ___
 
@@ -272,4 +272,4 @@ the input value will not be modified.
 
 #### Defined in
 
-[seeds/breadboard/src/debug.ts:64](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/debug.ts#L64)
+[seeds/breadboard/src/debug.ts:64](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/debug.ts#L64)

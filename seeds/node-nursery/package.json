@@ -8,6 +8,7 @@
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
+    "generate:docs": "typedoc --plugin typedoc-plugin-markdown",
     "test": "FORCE_COLOR=1 ava",
     "build": "FORCE_COLOR=1 tsc --b",
     "watch": "FORCE_COLOR=1 tsc --b --watch",
@@ -48,12 +49,13 @@
     "@typescript-eslint/eslint-plugin": "^5.56.0",
     "@typescript-eslint/parser": "^5.56.0",
     "ava": "^5.2.0",
+    "typedoc": "^0.25.1",
     "typescript": "^5.0.4"
   },
   "dependencies": {
     "@google-labs/breadboard": "*",
-    "@google-labs/llm-starter": "*",
     "@google-labs/graph-runner": "*",
+    "@google-labs/llm-starter": "*",
     "@google-labs/palm-lite": "*",
     "json-stable-stringify": "^1.0.2",
     "jsonschema": "^1.4.1",

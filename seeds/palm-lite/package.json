@@ -7,6 +7,7 @@
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
+    "generate:docs": "typedoc --plugin typedoc-plugin-markdown",
     "test": "FORCE_COLOR=1 ava",
     "build": "FORCE_COLOR=1 tsc --b",
     "make-types": "node ./scripts/make-types.js",
@@ -42,12 +43,13 @@
   "homepage": "https://github.com/google/labs-prototypes/seeds/palm-lite#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
+    "@google-labs/discovery-types": "*",
+    "@google-labs/tsconfig": "*",
+    "@types/node": "^18.16.3",
     "@typescript-eslint/eslint-plugin": "^5.56.0",
     "@typescript-eslint/parser": "^5.56.0",
-    "@types/node": "^18.16.3",
     "ava": "^5.2.0",
-    "typescript": "^5.0.4",
-    "@google-labs/tsconfig": "*",
-    "@google-labs/discovery-types": "*"
+    "typedoc": "^0.25.1",
+    "typescript": "^5.0.4"
   }
 }

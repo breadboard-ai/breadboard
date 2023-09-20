@@ -52,7 +52,7 @@
 
 #### Defined in
 
-[seeds/breadboard/src/node.ts:96](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/node.ts#L96)
+[seeds/breadboard/src/node.ts:96](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/node.ts#L96)
 
 ## Properties
 
@@ -62,7 +62,7 @@
 
 #### Defined in
 
-[seeds/breadboard/src/node.ts:94](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/node.ts#L94)
+[seeds/breadboard/src/node.ts:94](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/node.ts#L94)
 
 ___
 
@@ -72,7 +72,7 @@ ___
 
 #### Defined in
 
-[seeds/breadboard/src/node.ts:93](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/node.ts#L93)
+[seeds/breadboard/src/node.ts:93](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/node.ts#L93)
 
 ## Methods
 
@@ -110,4 +110,4 @@ Use this method to wire nodes together.
 
 #### Defined in
 
-[seeds/breadboard/src/node.ts:114](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/node.ts#L114)
+[seeds/breadboard/src/node.ts:114](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/node.ts#L114)

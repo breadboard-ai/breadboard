@@ -37,7 +37,7 @@ Error if the graph is invalid.
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:98](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/types.ts#L98)
+[seeds/breadboard/src/types.ts:98](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/types.ts#L98)
 
 ___
 
@@ -63,7 +63,7 @@ A validator for the subgraph.
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:116](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/types.ts#L116)
+[seeds/breadboard/src/types.ts:116](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/types.ts#L116)
 
 ___
 
@@ -85,4 +85,4 @@ Gets the validation metadata for a node.
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:105](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/types.ts#L105)
+[seeds/breadboard/src/types.ts:105](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/types.ts#L105)

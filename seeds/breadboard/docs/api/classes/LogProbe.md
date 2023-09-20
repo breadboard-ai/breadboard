@@ -55,7 +55,7 @@ EventTarget.constructor
 
 #### Defined in
 
-[seeds/breadboard/src/log.ts:32](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/log.ts#L32)
+[seeds/breadboard/src/log.ts:32](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/log.ts#L32)
 
 ## Properties
 
@@ -65,7 +65,7 @@ EventTarget.constructor
 
 #### Defined in
 
-[seeds/breadboard/src/log.ts:24](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/log.ts#L24)
+[seeds/breadboard/src/log.ts:24](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/log.ts#L24)
 
 ## Methods
 
@@ -85,7 +85,7 @@ EventTarget.constructor
 
 #### Defined in
 
-[seeds/breadboard/src/log.ts:42](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/log.ts#L42)
+[seeds/breadboard/src/log.ts:42](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/log.ts#L42)
 
 ___
 

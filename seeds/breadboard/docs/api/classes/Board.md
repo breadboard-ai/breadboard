@@ -71,7 +71,7 @@ For more information on how to use Breadboard, start with [Chapter 1: Hello, wor
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:101](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/board.ts#L101)
+[seeds/breadboard/src/board.ts:101](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L101)
 
 ## Properties
 
@@ -81,7 +81,7 @@ For more information on how to use Breadboard, start with [Chapter 1: Hello, wor
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:92](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/board.ts#L92)
+[seeds/breadboard/src/board.ts:92](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L92)
 
 ___
 
@@ -91,7 +91,7 @@ ___
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:93](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/board.ts#L93)
+[seeds/breadboard/src/board.ts:93](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L93)
 
 ___
 
@@ -101,7 +101,7 @@ ___
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:94](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/board.ts#L94)
+[seeds/breadboard/src/board.ts:94](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L94)
 
 ___
 
@@ -115,7 +115,7 @@ Breadboard.description
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:87](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/board.ts#L87)
+[seeds/breadboard/src/board.ts:87](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L87)
 
 ___
 
@@ -129,7 +129,7 @@ Breadboard.edges
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:89](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/board.ts#L89)
+[seeds/breadboard/src/board.ts:89](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L89)
 
 ___
 
@@ -143,7 +143,7 @@ Breadboard.kits
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:91](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/board.ts#L91)
+[seeds/breadboard/src/board.ts:91](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L91)
 
 ___
 
@@ -157,7 +157,7 @@ Breadboard.nodes
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:90](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/board.ts#L90)
+[seeds/breadboard/src/board.ts:90](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L90)
 
 ___
 
@@ -171,7 +171,7 @@ Breadboard.title
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:86](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/board.ts#L86)
+[seeds/breadboard/src/board.ts:86](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L86)
 
 ___
 
@@ -185,7 +185,7 @@ Breadboard.url
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:85](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/board.ts#L85)
+[seeds/breadboard/src/board.ts:85](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L85)
 
 ___
 
@@ -199,7 +199,7 @@ Breadboard.version
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:88](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/board.ts#L88)
+[seeds/breadboard/src/board.ts:88](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L88)
 
 ___
 
@@ -223,7 +223,7 @@ ___
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:528](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/board.ts#L528)
+[seeds/breadboard/src/board.ts:528](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L528)
 
 ## Methods
 
@@ -247,7 +247,7 @@ Breadboard.addEdge
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:441](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/board.ts#L441)
+[seeds/breadboard/src/board.ts:441](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L441)
 
 ___
 
@@ -297,7 +297,7 @@ Breadboard.addKit
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:471](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/board.ts#L471)
+[seeds/breadboard/src/board.ts:471](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L471)
 
 ___
 
@@ -321,7 +321,7 @@ Breadboard.addNode
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:445](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/board.ts#L445)
+[seeds/breadboard/src/board.ts:445](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L445)
 
 ___
 
@@ -344,7 +344,7 @@ Will call .addGraph() on the validator before executing a graph.
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:267](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/board.ts#L267)
+[seeds/breadboard/src/board.ts:267](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L267)
 
 ___
 
@@ -384,7 +384,7 @@ See [`include` node reference](https://github.com/google/labs-prototypes/blob/ma
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:344](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/board.ts#L344)
+[seeds/breadboard/src/board.ts:344](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L344)
 
 ___
 
@@ -419,7 +419,7 @@ See [`input` node reference](https://github.com/google/labs-prototypes/blob/main
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:305](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/board.ts#L305)
+[seeds/breadboard/src/board.ts:305](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L305)
 
 ___
 
@@ -440,7 +440,7 @@ This is useful for visualizing the board.
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:489](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/board.ts#L489)
+[seeds/breadboard/src/board.ts:489](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L489)
 
 ___
 
@@ -481,7 +481,7 @@ your friends and colleagues won't be able to re-use it.
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:427](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/board.ts#L427)
+[seeds/breadboard/src/board.ts:427](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L427)
 
 ___
 
@@ -516,7 +516,7 @@ See [`output` node reference](https://github.com/google/labs-prototypes/blob/mai
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:322](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/board.ts#L322)
+[seeds/breadboard/src/board.ts:322](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L322)
 
 ___
 
@@ -553,7 +553,7 @@ See [`passthrough` node reference](https://github.com/google/labs-prototypes/blo
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:288](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/board.ts#L288)
+[seeds/breadboard/src/board.ts:288](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L288)
 
 ___
 
@@ -583,7 +583,7 @@ See [`reflect` node reference](https://github.com/google/labs-prototypes/blob/ma
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:367](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/board.ts#L367)
+[seeds/breadboard/src/board.ts:367](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L367)
 
 ___
 
@@ -632,7 +632,7 @@ See [Chapter 8: Continuous runs](https://github.com/google/labs-prototypes/tree/
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:138](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/board.ts#L138)
+[seeds/breadboard/src/board.ts:138](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L138)
 
 ___
 
@@ -662,7 +662,7 @@ or the the outputs are only expected to be visited once.
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:243](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/board.ts#L243)
+[seeds/breadboard/src/board.ts:243](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L243)
 
 ___
 
@@ -703,7 +703,7 @@ See [`slot` node reference](https://github.com/google/labs-prototypes/blob/main/
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:390](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/board.ts#L390)
+[seeds/breadboard/src/board.ts:390](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L390)
 
 ___
 
@@ -728,7 +728,7 @@ use this method to turn it into into a new Board instance.
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:500](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/board.ts#L500)
+[seeds/breadboard/src/board.ts:500](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L500)
 
 ___
 
@@ -755,4 +755,4 @@ Loads a board from a URL or a file path.
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:516](https://github.com/Chizobaonorh/labs-prototypes/blob/c454773/seeds/breadboard/src/board.ts#L516)
+[seeds/breadboard/src/board.ts:516](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L516)

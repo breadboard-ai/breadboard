@@ -8,6 +8,7 @@
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
+    "generate:docs": "typedoc --plugin typedoc-plugin-markdown",
     "test": "FORCE_COLOR=1 ava",
     "prepare-graphs": "turbo build && node scripts/prepare.js",
     "build": "FORCE_COLOR=1 tsc --b",
@@ -48,13 +49,14 @@
     "@typescript-eslint/eslint-plugin": "^5.56.0",
     "@typescript-eslint/parser": "^5.56.0",
     "ava": "^5.2.0",
+    "typedoc": "^0.25.1",
     "typescript": "^5.0.4"
   },
   "dependencies": {
     "@clack/prompts": "^0.6.3",
     "@google-labs/breadboard": "*",
-    "@google-labs/llm-starter": "*",
     "@google-labs/graph-integrity": "*",
+    "@google-labs/llm-starter": "*",
     "@google-labs/node-nursery": "*",
     "dotenv": "^16.3.1"
   },

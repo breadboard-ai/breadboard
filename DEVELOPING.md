@@ -260,3 +260,12 @@ npm login --registry https://wombat-dressing-room.appspot.com
 ```bash
 npm publish --registry https://wombat-dressing-room.appspot.com
 ```
+## Updating Generated API Docs
+As more development takes place and more features are added, the documentation requires update to stay in sync with these developments. <br> <br>
+The TSDoc tool provides a command that when run automatically updates the generated docs and inserts it into the workflow. The modules/packages have been configured with a ready TSDoc command that gets triggered when a certain command is specified. <br> <br>
+:one: Navigate to your working directory where the change was made. <br> <br>
+:two: Run this command in your terminal:
+  ```
+  npm run generate:docs
+  ```
+This command successfully regenerates the docs.
