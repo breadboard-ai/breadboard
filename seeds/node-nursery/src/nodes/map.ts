@@ -54,7 +54,8 @@ export type LamdbdaFunction<In, Out> = (
 ) => Promise<void>;
 
 export const lambda = async <In = InputValues, Out = OutputValues>(
-  fun: LamdbdaFunction<In, Out>
+  fun: LamdbdaFunction<In, Out>,
+  config: OptionalIdConfiguration = {}
 ): Promise<OptionalIdConfiguration> => {
   const board = new Board();
   const input = board.input<In>();
@@ -65,6 +66,7 @@ export const lambda = async <In = InputValues, Out = OutputValues>(
       kind: "board",
       board,
     } as Capability, // TODO: Fix types.
+    ...config,
   };
 };
 

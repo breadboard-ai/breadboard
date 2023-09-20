@@ -4,26 +4,26 @@
   "version": "0.0.1",
   "edges": [
     {
-      "from": "map-3",
-      "to": "output-4",
+      "from": "pinecone-upsert",
+      "to": "output-2",
       "out": "list",
       "in": "text"
     },
     {
-      "from": "batcher-2",
-      "to": "map-3",
+      "from": "batcher-1",
+      "to": "pinecone-upsert",
       "out": "list",
       "in": "list"
     },
     {
-      "from": "map-1",
-      "to": "batcher-2",
+      "from": "generate-embeddings",
+      "to": "batcher-1",
       "out": "list",
       "in": "list"
     },
     {
       "from": "get-content",
-      "to": "map-1",
+      "to": "generate-embeddings",
       "out": "result",
       "in": "list"
     },
@@ -53,11 +53,11 @@
       "id": "get-content",
       "type": "jsonata",
       "configuration": {
-        "expression": "content.$zip($keys(),*)[[0..3]].{\"id\": $[0],\"text\": text,\"metadata\": info}"
+        "expression": "content.$zip($keys(),*)[[7..8]].{\"id\": $[0],\"text\": text,\"metadata\": info}"
       }
     },
     {
-      "id": "map-1",
+      "id": "generate-embeddings",
       "type": "map",
       "configuration": {
         "board": {
@@ -148,14 +148,14 @@
       }
     },
     {
-      "id": "batcher-2",
+      "id": "batcher-1",
       "type": "batcher",
       "configuration": {
-        "size": 2
+        "size": 40
       }
     },
     {
-      "id": "map-3",
+      "id": "pinecone-upsert",
       "type": "map",
       "configuration": {
         "board": {
@@ -163,14 +163,44 @@
           "board": {
             "edges": [
               {
+                "from": "secrets-4",
+                "to": "jsonata-3",
+                "out": "PINECONE_API_KEY",
+                "in": "json"
+              },
+              {
                 "from": "jsonata-3",
-                "to": "output-2",
+                "to": "pinecone-upsert-api",
                 "out": "result",
+                "in": "headers"
+              },
+              {
+                "from": "secrets-6",
+                "to": "promptTemplate-5",
+                "out": "PINECONE_URL",
+                "in": "PINECONE_URL"
+              },
+              {
+                "from": "promptTemplate-5",
+                "to": "pinecone-upsert-api",
+                "out": "prompt",
+                "in": "url"
+              },
+              {
+                "from": "pinecone-upsert-api",
+                "to": "output-2",
+                "out": "response",
                 "in": "item"
               },
               {
+                "from": "format-to-api",
+                "to": "pinecone-upsert-api",
+                "out": "result",
+                "in": "body"
+              },
+              {
                 "from": "input-1",
-                "to": "jsonata-3",
+                "to": "format-to-api",
                 "out": "item",
                 "in": "json"
               }
@@ -188,6 +218,46 @@
                 "id": "jsonata-3",
                 "type": "jsonata",
                 "configuration": {
+                  "expression": "{ \"Api-Key\": $, \"Accept\": \"application/json\", \"Content-Type\": \"application/json\" }"
+                }
+              },
+              {
+                "id": "secrets-4",
+                "type": "secrets",
+                "configuration": {
+                  "keys": [
+                    "PINECONE_API_KEY"
+                  ]
+                }
+              },
+              {
+                "id": "pinecone-upsert-api",
+                "type": "fetch",
+                "configuration": {
+                  "raw": false,
+                  "method": "POST"
+                }
+              },
+              {
+                "id": "promptTemplate-5",
+                "type": "promptTemplate",
+                "configuration": {
+                  "template": "{{PINECONE_URL}}/vectors/upsert"
+                }
+              },
+              {
+                "id": "secrets-6",
+                "type": "secrets",
+                "configuration": {
+                  "keys": [
+                    "PINECONE_URL"
+                  ]
+                }
+              },
+              {
+                "id": "format-to-api",
+                "type": "jsonata",
+                "configuration": {
                   "expression": "{ \"vectors\": item.[ { \"id\": id, \"values\": embedding, \"metadata\": metadata } ]}"
                 }
               }
@@ -202,7 +272,7 @@
       }
     },
     {
-      "id": "output-4",
+      "id": "output-2",
       "type": "output"
     }
   ],
