@@ -21,33 +21,38 @@ board.input({ $id: "url" }).wire(
   "text->url",
   kit.fetch(false, { $id: "load-chunks" }).wire(
     "response->json",
-    kit.jsonata("content.*[[1..2]]", { $id: "get-content" }).wire(
-      "result->list",
-      nursery
-        .map(
-          await lambda(async (board, input, output) => {
-            const nursery = board.addKit(Nursery);
-            const starter = board.addKit(Starter);
-            const merge = starter.append({ $id: "merge" });
-            input
-              .wire(
-                "item->json",
-                starter.jsonata("text").wire(
-                  "result->text",
-                  nursery
-                    .embedString()
-                    .wire("embedding->", merge)
-                    .wire("<-PALM_KEY", starter.secrets(["PALM_KEY"]))
+    kit
+      .jsonata(
+        'content.$zip($keys(),*)[[0..3]].{"id": $[0],"text": text,"metadata": info}',
+        { $id: "get-content" }
+      )
+      .wire(
+        "result->list",
+        nursery
+          .map(
+            await lambda(async (board, input, output) => {
+              const nursery = board.addKit(Nursery);
+              const starter = board.addKit(Starter);
+              const merge = starter.append({ $id: "merge" });
+              input
+                .wire(
+                  "item->json",
+                  starter.jsonata("text").wire(
+                    "result->text",
+                    nursery
+                      .embedString()
+                      .wire("embedding->", merge)
+                      .wire("<-PALM_KEY", starter.secrets(["PALM_KEY"]))
+                  )
                 )
-              )
-              .wire(
-                "item->accumulator",
-                merge.wire("accumulator->item", output)
-              );
-          })
-        )
-        .wire("list->text", board.output())
-    )
+                .wire(
+                  "item->accumulator",
+                  merge.wire("accumulator->item", output)
+                );
+            })
+          )
+          .wire("list->text", board.output())
+      )
   )
 );
 
