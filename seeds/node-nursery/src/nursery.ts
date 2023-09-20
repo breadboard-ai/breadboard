@@ -36,6 +36,7 @@ import templateParser, {
   TemplateParserOutputs,
 } from "./nodes/template-parser.js";
 import map, { MapInputs, MapOutputs } from "./nodes/map.js";
+import batcher, { BatcherInputs, BatcherOutputs } from "./nodes/batcher.js";
 
 const handlers = {
   createVectorDatabase,
@@ -52,6 +53,7 @@ const handlers = {
   schemish,
   templateParser,
   map,
+  batcher,
 };
 
 /**
@@ -183,6 +185,18 @@ export class Nursery implements Kit {
     const { $id, ...rest } = config;
     const node = this.#nodeFactory.create<MapInputs, MapOutputs>(
       "map",
+      { ...rest },
+      $id
+    );
+    return node;
+  }
+
+  batcher(
+    config: OptionalIdConfiguration = {}
+  ): BreadboardNode<BatcherInputs, BatcherOutputs> {
+    const { $id, ...rest } = config;
+    const node = this.#nodeFactory.create<BatcherInputs, BatcherOutputs>(
+      "batcher",
       { ...rest },
       $id
     );

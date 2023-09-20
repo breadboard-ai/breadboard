@@ -51,7 +51,27 @@ board.input({ $id: "url" }).wire(
                 );
             })
           )
-          .wire("list->text", board.output())
+          .wire(
+            "list->",
+            nursery.batcher({ size: 2 }).wire(
+              "list->",
+              nursery
+                .map(
+                  await lambda(async (board, input, output) => {
+                    const starter = board.addKit(Starter);
+                    input.wire(
+                      "item->json",
+                      starter
+                        .jsonata(
+                          '{ "vectors": item.[ { "id": id, "values": embedding, "metadata": metadata } ]}'
+                        )
+                        .wire("result->item", output)
+                    );
+                  })
+                )
+                .wire("list->text", board.output())
+            )
+          )
       )
   )
 );

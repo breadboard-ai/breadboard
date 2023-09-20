@@ -4,10 +4,22 @@
   "version": "0.0.1",
   "edges": [
     {
-      "from": "map-1",
-      "to": "output-2",
+      "from": "map-3",
+      "to": "output-4",
       "out": "list",
       "in": "text"
+    },
+    {
+      "from": "batcher-2",
+      "to": "map-3",
+      "out": "list",
+      "in": "list"
+    },
+    {
+      "from": "map-1",
+      "to": "batcher-2",
+      "out": "list",
+      "in": "list"
     },
     {
       "from": "get-content",
@@ -136,7 +148,61 @@
       }
     },
     {
-      "id": "output-2",
+      "id": "batcher-2",
+      "type": "batcher",
+      "configuration": {
+        "size": 2
+      }
+    },
+    {
+      "id": "map-3",
+      "type": "map",
+      "configuration": {
+        "board": {
+          "kind": "board",
+          "board": {
+            "edges": [
+              {
+                "from": "jsonata-3",
+                "to": "output-2",
+                "out": "result",
+                "in": "item"
+              },
+              {
+                "from": "input-1",
+                "to": "jsonata-3",
+                "out": "item",
+                "in": "json"
+              }
+            ],
+            "nodes": [
+              {
+                "id": "input-1",
+                "type": "input"
+              },
+              {
+                "id": "output-2",
+                "type": "output"
+              },
+              {
+                "id": "jsonata-3",
+                "type": "jsonata",
+                "configuration": {
+                  "expression": "{ \"vectors\": item.[ { \"id\": id, \"values\": embedding, \"metadata\": metadata } ]}"
+                }
+              }
+            ],
+            "kits": [
+              {
+                "url": "npm:@google-labs/llm-starter"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "output-4",
       "type": "output"
     }
   ],
