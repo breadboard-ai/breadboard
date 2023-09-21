@@ -47,7 +47,7 @@
       "id": "get-content",
       "type": "jsonata",
       "configuration": {
-        "expression": "content.$zip($keys(),*).{\"id\": $[0],\"text\": text,\"metadata\": {\"url\": info.url,\"title\": info.title,\"description\":info.description}}"
+        "expression": "content.$zip($keys(),*).{\"id\": $[0],\"metadata\": {\"text\": text,\"url\": info.url,\"title\": info.title,\"description\":info.description}}"
       }
     },
     {
@@ -225,7 +225,7 @@
                           "id": "jsonata-3",
                           "type": "jsonata",
                           "configuration": {
-                            "expression": "text"
+                            "expression": "metadata.text"
                           }
                         },
                         {

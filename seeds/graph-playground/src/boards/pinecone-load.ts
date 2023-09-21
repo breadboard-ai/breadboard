@@ -18,7 +18,7 @@ const generateEmebeddings = lambda(
     input
       .wire(
         "item->json",
-        starter.jsonata("text").wire(
+        starter.jsonata("metadata.text").wire(
           "result->text",
           nursery
             .embedString()
@@ -92,7 +92,7 @@ board
         "response->json",
         kit
           .jsonata(
-            'content.$zip($keys(),*).{"id": $[0],"text": text,"metadata": {"url": info.url,"title": info.title,"description":info.description}}',
+            'content.$zip($keys(),*).{"id": $[0],"metadata": {"text": text,"url": info.url,"title": info.title,"description":info.description}}',
             { $id: "get-content" }
           )
           .wire(
