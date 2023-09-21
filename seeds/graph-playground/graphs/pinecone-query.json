@@ -140,7 +140,7 @@
       "id": "promptTemplate-3",
       "type": "promptTemplate",
       "configuration": {
-        "template": "You are a helpful and informative bot that answers questions using text from the knowledge base below.\n\nAnalyze the question and the knowledge base and produce a comprehensive summary that answers the question using only the information from the knowledge base.\n\nIf the knowledge base does not contain the answer, tell the user that you do not possess this information and direct the user to Google search.\n\n\n# Question:\n\n{{query}}\n\n# Knowledge Base:\n{{context}}\n\n\n# Answer\n"
+        "template": "Analyze the question and the knowledge base.\n  \nIf the knowledge base does not contain the information to produce the answer, tell the user that you don't know.\n\nOtherwise, write a comprehensive answer to the question using only the information from the knowledge base.\n\n# Question:\n\n{{query}}\n\n# Knowledge Base:\n{{context}}\n\n\n# Answer\n"
       }
     },
     {

@@ -60,12 +60,11 @@ const body = starter.jsonata(
 // ANSWER:`
 
 const template =
-  starter.promptTemplate(`You are a helpful and informative bot that answers questions using text from the knowledge base below.
+  starter.promptTemplate(`Analyze the question and the knowledge base.
+  
+If the knowledge base does not contain the information to produce the answer, tell the user that you don't know.
 
-Analyze the question and the knowledge base and produce a comprehensive summary that answers the question using only the information from the knowledge base.
-
-If the knowledge base does not contain the answer, tell the user that you do not possess this information and direct the user to Google search.
-
+Otherwise, write a comprehensive answer to the question using only the information from the knowledge base.
 
 # Question:
 
@@ -73,7 +72,6 @@ If the knowledge base does not contain the answer, tell the user that you do not
 
 # Knowledge Base:
 {{context}}
-
 
 # Answer
 `);
