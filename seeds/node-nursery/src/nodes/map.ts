@@ -53,10 +53,14 @@ export type LamdbdaFunction<In, Out> = (
   output: BreadboardNode<In, Out>
 ) => Promise<void>;
 
+export type LambdaResult = OptionalIdConfiguration & {
+  board: BoardCapability;
+};
+
 export const lambda = async <In = InputValues, Out = OutputValues>(
   fun: LamdbdaFunction<In, Out>,
   config: OptionalIdConfiguration = {}
-): Promise<OptionalIdConfiguration> => {
+): Promise<LambdaResult> => {
   const board = new Board();
   const input = board.input<In>();
   const output = board.output<Out>();
@@ -65,7 +69,7 @@ export const lambda = async <In = InputValues, Out = OutputValues>(
     board: {
       kind: "board",
       board,
-    } as Capability, // TODO: Fix types.
+    } as BoardCapability, // TODO: Fix types.
     ...config,
   };
 };

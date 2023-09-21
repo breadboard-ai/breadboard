@@ -4,26 +4,20 @@
   "version": "0.0.1",
   "edges": [
     {
-      "from": "pinecone-upsert",
-      "to": "output-2",
+      "from": "map-2",
+      "to": "output-3",
       "out": "list",
       "in": "text"
     },
     {
       "from": "batcher-1",
-      "to": "pinecone-upsert",
-      "out": "list",
-      "in": "list"
-    },
-    {
-      "from": "generate-embeddings",
-      "to": "batcher-1",
+      "to": "map-2",
       "out": "list",
       "in": "list"
     },
     {
       "from": "get-content",
-      "to": "generate-embeddings",
+      "to": "batcher-1",
       "out": "result",
       "in": "list"
     },
@@ -57,97 +51,6 @@
       }
     },
     {
-      "id": "generate-embeddings",
-      "type": "map",
-      "configuration": {
-        "board": {
-          "kind": "board",
-          "board": {
-            "edges": [
-              {
-                "from": "embedString-4",
-                "to": "merge",
-                "out": "embedding",
-                "in": "embedding"
-              },
-              {
-                "from": "secrets-5",
-                "to": "embedString-4",
-                "out": "PALM_KEY",
-                "in": "PALM_KEY"
-              },
-              {
-                "from": "jsonata-3",
-                "to": "embedString-4",
-                "out": "result",
-                "in": "text"
-              },
-              {
-                "from": "input-1",
-                "to": "jsonata-3",
-                "out": "item",
-                "in": "json"
-              },
-              {
-                "from": "merge",
-                "to": "output-2",
-                "out": "accumulator",
-                "in": "item"
-              },
-              {
-                "from": "input-1",
-                "to": "merge",
-                "out": "item",
-                "in": "accumulator"
-              }
-            ],
-            "nodes": [
-              {
-                "id": "input-1",
-                "type": "input"
-              },
-              {
-                "id": "output-2",
-                "type": "output"
-              },
-              {
-                "id": "merge",
-                "type": "append"
-              },
-              {
-                "id": "jsonata-3",
-                "type": "jsonata",
-                "configuration": {
-                  "expression": "text"
-                }
-              },
-              {
-                "id": "embedString-4",
-                "type": "embedString"
-              },
-              {
-                "id": "secrets-5",
-                "type": "secrets",
-                "configuration": {
-                  "keys": [
-                    "PALM_KEY"
-                  ]
-                }
-              }
-            ],
-            "kits": [
-              {
-                "url": "npm:@google-labs/node-nursery"
-              },
-              {
-                "url": "npm:@google-labs/llm-starter"
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
       "id": "batcher-1",
       "type": "batcher",
       "configuration": {
@@ -155,7 +58,7 @@
       }
     },
     {
-      "id": "pinecone-upsert",
+      "id": "map-2",
       "type": "map",
       "configuration": {
         "board": {
@@ -199,10 +102,16 @@
                 "in": "body"
               },
               {
-                "from": "input-1",
+                "from": "generate-embeddings",
                 "to": "format-to-api",
-                "out": "item",
+                "out": "list",
                 "in": "json"
+              },
+              {
+                "from": "input-1",
+                "to": "generate-embeddings",
+                "out": "item",
+                "in": "list"
               }
             ],
             "nodes": [
@@ -255,6 +164,97 @@
                 }
               },
               {
+                "id": "generate-embeddings",
+                "type": "map",
+                "configuration": {
+                  "board": {
+                    "kind": "board",
+                    "board": {
+                      "edges": [
+                        {
+                          "from": "embedString-4",
+                          "to": "merge",
+                          "out": "embedding",
+                          "in": "embedding"
+                        },
+                        {
+                          "from": "secrets-5",
+                          "to": "embedString-4",
+                          "out": "PALM_KEY",
+                          "in": "PALM_KEY"
+                        },
+                        {
+                          "from": "jsonata-3",
+                          "to": "embedString-4",
+                          "out": "result",
+                          "in": "text"
+                        },
+                        {
+                          "from": "input-1",
+                          "to": "jsonata-3",
+                          "out": "item",
+                          "in": "json"
+                        },
+                        {
+                          "from": "merge",
+                          "to": "output-2",
+                          "out": "accumulator",
+                          "in": "item"
+                        },
+                        {
+                          "from": "input-1",
+                          "to": "merge",
+                          "out": "item",
+                          "in": "accumulator"
+                        }
+                      ],
+                      "nodes": [
+                        {
+                          "id": "input-1",
+                          "type": "input"
+                        },
+                        {
+                          "id": "output-2",
+                          "type": "output"
+                        },
+                        {
+                          "id": "merge",
+                          "type": "append"
+                        },
+                        {
+                          "id": "jsonata-3",
+                          "type": "jsonata",
+                          "configuration": {
+                            "expression": "text"
+                          }
+                        },
+                        {
+                          "id": "embedString-4",
+                          "type": "embedString"
+                        },
+                        {
+                          "id": "secrets-5",
+                          "type": "secrets",
+                          "configuration": {
+                            "keys": [
+                              "PALM_KEY"
+                            ]
+                          }
+                        }
+                      ],
+                      "kits": [
+                        {
+                          "url": "npm:@google-labs/node-nursery"
+                        },
+                        {
+                          "url": "npm:@google-labs/llm-starter"
+                        }
+                      ]
+                    }
+                  }
+                }
+              },
+              {
                 "id": "format-to-api",
                 "type": "jsonata",
                 "configuration": {
@@ -265,6 +265,9 @@
             "kits": [
               {
                 "url": "npm:@google-labs/llm-starter"
+              },
+              {
+                "url": "npm:@google-labs/node-nursery"
               }
             ]
           }
@@ -272,7 +275,7 @@
       }
     },
     {
-      "id": "output-2",
+      "id": "output-3",
       "type": "output"
     }
   ],

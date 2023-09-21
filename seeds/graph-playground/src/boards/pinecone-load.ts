@@ -31,44 +31,47 @@ const generateEmebeddings = lambda(
   { $id: "generate-embeddings" }
 );
 
-const pineconeUpsert = lambda(
-  async (board, input, output) => {
-    const starter = board.addKit(Starter);
+const processBatch = lambda(async (board, input, output) => {
+  const starter = board.addKit(Starter);
+  const nursery = board.addKit(Nursery);
 
-    const headers = starter
-      .jsonata(
-        '{ "Api-Key": $, "Accept": "application/json", "Content-Type": "application/json" }',
-        { $id: "make-headers" }
-      )
-      .wire("json<-PINECONE_API_KEY", starter.secrets(["PINECONE_API_KEY"]));
+  const headers = starter
+    .jsonata(
+      '{ "Api-Key": $, "Accept": "application/json", "Content-Type": "application/json" }',
+      { $id: "make-headers" }
+    )
+    .wire("json<-PINECONE_API_KEY", starter.secrets(["PINECONE_API_KEY"]));
 
-    const apiCall = starter
-      .fetch(false, {
-        $id: "pinecone-upsert-api",
-        method: "POST",
-      })
-      .wire("headers<-result", headers)
-      .wire(
-        "url<-prompt",
-        starter
-          .promptTemplate("{{PINECONE_URL}}/vectors/upsert", {
-            $id: "make-pinecone-url",
-          })
-          .wire("<-PINECONE_URL", starter.secrets(["PINECONE_URL"]))
-      );
-
-    input.wire(
-      "item->json",
+  const apiCall = starter
+    .fetch(false, {
+      $id: "pinecone-upsert-api",
+      method: "POST",
+    })
+    .wire("headers<-result", headers)
+    .wire(
+      "url<-prompt",
       starter
-        .jsonata(
-          '{ "vectors": item.[ { "id": id, "values": embedding, "metadata": metadata } ]}',
-          { $id: "format-to-api" }
-        )
-        .wire("result->body", apiCall.wire("response->item", output))
+        .promptTemplate("{{PINECONE_URL}}/vectors/upsert", {
+          $id: "make-pinecone-url",
+        })
+        .wire("<-PINECONE_URL", starter.secrets(["PINECONE_URL"]))
     );
-  },
-  { $id: "pinecone-upsert" }
-);
+
+  input.wire(
+    "item->list",
+    nursery
+      .map(await generateEmebeddings)
+      .wire(
+        "list->json",
+        starter
+          .jsonata(
+            '{ "vectors": item.[ { "id": id, "values": embedding, "metadata": metadata } ]}',
+            { $id: "format-to-api" }
+          )
+          .wire("result->body", apiCall.wire("response->item", output))
+      )
+  );
+});
 
 const board = new Board({
   title: "Loading Chunks into Pinecone",
@@ -95,17 +98,12 @@ board
           .wire(
             "result->list",
             nursery
-              .map(await generateEmebeddings)
+              .batcher({ size: PINECONE_BATCH_SIZE })
               .wire(
                 "list->",
                 nursery
-                  .batcher({ size: PINECONE_BATCH_SIZE })
-                  .wire(
-                    "list->",
-                    nursery
-                      .map(await pineconeUpsert)
-                      .wire("list->text", board.output())
-                  )
+                  .map(await processBatch)
+                  .wire("list->text", board.output())
               )
           )
       )
