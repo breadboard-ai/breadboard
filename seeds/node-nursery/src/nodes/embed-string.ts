@@ -48,11 +48,20 @@ export default async (inputs: InputValues): Promise<OutputValues> => {
       return { embedding: cachedEmbedding } as unknown as OutputValues;
   }
 
-  const request = palm(values.PALM_KEY).embedding(query);
-  const data = await fetch(request);
-  const response = (await data.json()) as EmbedTextResponse;
-  const embedding = response?.embedding?.value;
-  if (!embedding) throw new Error(`No embedding returned in ${response}`);
+  let embedding: number[] | undefined;
+  // Because Embedding API is a bit flaky, we try a few times before giving up.
+  let tries = 3;
+  while (!embedding && tries-- > 0) {
+    try {
+      const request = palm(values.PALM_KEY).embedding(query);
+      const data = await fetch(request);
+      const response = (await data.json()) as EmbedTextResponse;
+      embedding = response?.embedding?.value;
+    } catch (e) {
+      // TODO: Implement proper error handling.
+    }
+  }
+  if (!embedding) throw new Error(`No embedding returned for "${values.text}"`);
 
   cache?.set(query, embedding);
 

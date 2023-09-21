@@ -92,7 +92,7 @@ board
         "response->json",
         kit
           .jsonata(
-            'content.$zip($keys(),*)[[1..100]].{"id": $[0],"text": text,"metadata": {"url": info.url,"title": info.title,"description":info.description}}',
+            'content.$zip($keys(),*).{"id": $[0],"text": text,"metadata": {"url": info.url,"title": info.title,"description":info.description}}',
             { $id: "get-content" }
           )
           .wire(
