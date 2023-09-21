@@ -167,47 +167,33 @@ export type GraphDescriptor = GraphMetadata & {
 };
 
 /**
- * Represents the `OutputValues` that are passed from one node to
- * another, accumulating until they are consumed by the receiving node.
+ * The Map of queues of all outputs that were sent to a given node,
+ * and a map of these for all nodes.
  */
-export type OutputValuesQueue = OutputValues[];
+export type NodeValuesQueues = Map<string, NodeValue[]>;
+export type NodeValuesQueuesMap = Map<NodeIdentifier, NodeValuesQueues>;
 
-/**
- * The Map of all outputs that were sent from a given node.
- */
-export type SendingNodeMap = Map<NodeIdentifier, OutputValuesQueue>;
-
-/**
- * Additional concept: whether or not an output was consumed by the intended
- * input.
- * State stores all outputs that have not yet been consumed, organized as
- * a map of maps
- */
-export type EdgeStateMap = Map<NodeIdentifier, SendingNodeMap>;
-
-export interface EdgeState {
-  state: EdgeStateMap;
-  constants: EdgeStateMap;
-  update(
-    node: NodeIdentifier,
-    opportunities: Edge[],
-    outputs?: OutputValues
-  ): void;
-  getAvailableOutputs(node: NodeIdentifier): EdgeMap;
+export interface QueuedNodeValuesState {
+  state: NodeValuesQueuesMap;
+  constants: NodeValuesQueuesMap;
+  wireOutputs(opportunites: Edge[], outputs: OutputValues): void;
+  getAvailableInputs(nodeId: NodeIdentifier): InputValues;
+  useInputs(node: NodeIdentifier, inputs: InputValues): void;
 }
 
-export type EdgeMap = Map<NodeIdentifier, OutputValues>;
+export type pendingOutputPromise = Promise<{
+  promiseId: symbol;
+  outputs: OutputValues;
+  newOpportunities: Edge[];
+}>;
 
-export type pendingOutputPromise = Promise<
-  [symbol, OutputValues, Edge[], NodeDescriptor]
->;
 export interface TraversalResult {
   descriptor: NodeDescriptor;
   inputs: InputValues;
   missingInputs: string[];
   opportunities: Edge[];
   newOpportunities: Edge[];
-  state: EdgeState;
+  state: QueuedNodeValuesState;
   outputsPromise?: Promise<OutputValues>;
   pendingOutputs: Map<symbol, pendingOutputPromise>;
   skip: boolean;

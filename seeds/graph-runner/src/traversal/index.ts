@@ -4,46 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  Edge,
-  EdgeMap,
-  InputValues,
-  NodeDescriptor,
-  OutputValues,
-} from "../types.js";
+import { Edge, InputValues, NodeDescriptor } from "../types.js";
 
 /**
  * This class holds important parts of the graph traversal algorithm.
  */
 export class Traversal {
-  static wireEdge(edge: Edge, outputs: OutputValues): InputValues {
-    const out = edge.out;
-    if (!out) return {};
-    if (out === "*") {
-      return Object.assign({}, outputs);
-    }
-    const output = outputs[out];
-    const input = edge.in;
-    if (!input || output === null || output === undefined) return {};
-    return { [input]: output };
-  }
-
-  /**
-   * Wires the outputs of of a set of edges to the inputs of a node.
-   * @param heads All the edges that point to the node.
-   * @param outputEdges Outputs that are available from the node.
-   * @returns The input values that will be passed to the node.
-   */
-  static wire(heads: Edge[], outputEdges: EdgeMap): InputValues {
-    const result: InputValues = {};
-    heads.forEach((head) => {
-      const from = head.from;
-      const inputs = this.wireEdge(head, outputEdges.get(from) || {});
-      Object.assign(result, inputs);
-    });
-    return result;
-  }
-
   /**
    * Computes the missing inputs for a node. A missing input is an input that is
    * required by the node, but is not (yet) available in the current state.

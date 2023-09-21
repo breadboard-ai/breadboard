@@ -31,11 +31,14 @@ export class TraversalMachineIterator
     if (!this.#current.skip) {
       const { outputsPromise, newOpportunities, descriptor } = this.#current;
 
+      // Mark inputs as used, i.e. shift inputs queues.
+      this.#current.state.useInputs(descriptor.id, this.#current.inputs);
+
       const promiseId = Symbol();
       const promise = new Promise((resolve, reject) => {
         (outputsPromise || Promise.resolve({}))
           .then((outputs) => {
-            resolve([promiseId, outputs, newOpportunities, descriptor]);
+            resolve({ promiseId, outputs, newOpportunities });
           })
           .catch(reject);
       }) as pendingOutputPromise;
@@ -54,13 +57,14 @@ export class TraversalMachineIterator
       // await it.
       //
       // TODO: Change this to a `$error` output and throw if it isn't handled.
-      const [promiseId, outputs, newOpportunities, descriptor] =
-        await Promise.race(this.#current.pendingOutputs.values());
+      const { promiseId, outputs, newOpportunities } = await Promise.race(
+        this.#current.pendingOutputs.values()
+      );
       this.#current.pendingOutputs.delete(promiseId);
 
       // Process outputs.
       this.#current.opportunities.push(...newOpportunities);
-      this.#current.state.update(descriptor.id, newOpportunities, outputs);
+      this.#current.state.wireOutputs(newOpportunities, outputs);
     }
 
     // If there are no more opportunities and none are pending, we're done.
@@ -79,10 +83,7 @@ export class TraversalMachineIterator
     if (!currentDescriptor) throw new Error(`No node found for id "${toNode}"`);
 
     const incomingEdges = heads.get(toNode) || [];
-    const inputs = Traversal.wire(
-      incomingEdges,
-      this.#current.state.getAvailableOutputs(toNode)
-    );
+    const inputs = this.#current.state.getAvailableInputs(toNode);
 
     const missingInputs = Traversal.computeMissingInputs(
       incomingEdges,
@@ -91,7 +92,6 @@ export class TraversalMachineIterator
     );
 
     const newOpportunities = tails.get(toNode) || [];
-
     // Pour configuration values into inputs. These are effectively like
     // constants.
     const inputsWithConfiguration = {

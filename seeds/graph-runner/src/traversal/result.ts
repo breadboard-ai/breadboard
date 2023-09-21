@@ -6,7 +6,7 @@
 
 import type {
   Edge,
-  EdgeState,
+  QueuedNodeValuesState,
   InputValues,
   NodeDescriptor,
   OutputValues,
@@ -21,12 +21,9 @@ export class MachineResult implements TraversalResult {
   missingInputs: string[];
   opportunities: Edge[];
   newOpportunities: Edge[];
-  state: EdgeState;
+  state: QueuedNodeValuesState;
   outputsPromise?: Promise<OutputValues>;
-  pendingOutputs: Map<
-    symbol,
-    Promise<[symbol, OutputValues, Edge[], NodeDescriptor]>
-  >;
+  pendingOutputs: Map<symbol, pendingOutputPromise>;
 
   constructor(
     descriptor: NodeDescriptor,
@@ -34,7 +31,7 @@ export class MachineResult implements TraversalResult {
     missingInputs: string[],
     opportunities: Edge[],
     newOpportunities: Edge[],
-    state: EdgeState,
+    state: QueuedNodeValuesState,
     pendingOutputs: Map<symbol, pendingOutputPromise>
   ) {
     this.descriptor = descriptor;

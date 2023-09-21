@@ -22,10 +22,15 @@ class MockResponse implements WriterResponse {
 class MockEdgeState {
   state = new Map();
   constants = new Map();
-  update = () => {
+  wireOutputs = () => {
     return;
   };
-  getAvailableOutputs = () => new Map();
+  useInputs = () => {
+    return;
+  };
+  getAvailableInputs = () => {
+    return {};
+  };
 }
 
 test("writes raw response", (t) => {
