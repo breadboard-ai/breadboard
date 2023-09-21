@@ -46,19 +46,6 @@ const body = starter.jsonata(
   }
 );
 
-// "You are a helpful and informative bot that answers questions using text from the knowledge base below.
-// Be sure to respond in a complete sentence, being comprehensive, including all relevant background information.
-
-// If the knowledge base does not contain the answer, tell the user that you do not possess this information and direct the user to Google search.
-
-// QUESTION: {query}
-
-// KNOWLEDGE BASE:
-
-// {context}
-
-// ANSWER:`
-
 const template =
   starter.promptTemplate(`Analyze the question and the knowledge base.
   
