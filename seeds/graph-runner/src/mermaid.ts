@@ -78,80 +78,108 @@ const describeEdge = (edge: Edge, nodeMap: NodeMap, idPrefix = "") => {
   return `${fromNode} --> ${toNode}`;
 };
 
-function describeSubgraph(
-  subgraph: GraphDescriptor,
-  name: string,
-  edgeName: string,
-  fromNode: NodeDescriptor,
-  idPrefix: string
-) {
-  const subgraphNodeMap: NodeMap = new Map(
-    subgraph.nodes.map((node: NodeDescriptor) => [node.id, node])
-  );
-  const subgraphEdges = subgraph.edges.map((edge: Edge) =>
-    describeEdge(edge, subgraphNodeMap, idPrefix)
-  );
-  return `\nsubgraph ${name}\n${subgraphEdges.join(
-    "\n"
-  )}\nend\n${name}:::slotted -- "${edgeName}->${edgeName}" --o ${properNodeId(
-    fromNode.id
-  )}\n`;
+class MermaidGenerator {
+  nodeMap: NodeMap;
+  edges: Edge[];
+  nodes: NodeDescriptor[];
+  idPrefix: string;
+
+  constructor(graph: GraphDescriptor, idPrefix = "") {
+    const { edges, nodes } = graph;
+    this.nodeMap = new Map(nodes.map((node) => [node.id, node]));
+    this.edges = edges;
+    this.nodes = nodes;
+    this.idPrefix = idPrefix;
+  }
+
+  handleSlotted(fromNode: NodeDescriptor, idPrefix: string) {
+    const prefix = idPrefix ? `${properNodeId(idPrefix)}_` : "";
+    const type = fromNode.type;
+    if (type !== "include") return "";
+    const slotted = fromNode.configuration?.slotted;
+    if (!slotted) return "";
+    const subgraphs = Object.entries(slotted).map(([name, subgraph]) =>
+      this.describeSubgraph(
+        subgraph,
+        name,
+        "slotted",
+        fromNode,
+        `${prefix}${fromNode.id}`
+      )
+    );
+    return subgraphs.join("\n");
+  }
+
+  handleLambda(fromNode: NodeDescriptor, idPrefix: string) {
+    const prefix = idPrefix ? `${properNodeId(idPrefix)}_` : "";
+    const board = fromNode.configuration?.board;
+    if (!board) return "";
+    type BoardCapability = { kind: "board"; board: GraphDescriptor };
+    const capability = board as BoardCapability;
+    if (capability.kind !== "board") return "";
+    const graph = capability.board;
+    return this.describeSubgraph(
+      graph,
+      fromNode.id,
+      "lamdba",
+      fromNode,
+      `${prefix}${fromNode.id}`
+    );
+  }
+
+  describeSubgraphs(edge: Edge, idPrefix = ""): string {
+    const fromNode = this.nodeMap.get(edge.from);
+    if (!fromNode) return "";
+    const lamdba = this.handleLambda(fromNode, idPrefix);
+    const slotted = this.handleSlotted(fromNode, idPrefix);
+    return `${slotted}${lamdba}`;
+  }
+
+  describeSubgraph(
+    subgraph: GraphDescriptor,
+    name: string,
+    edgeName: string,
+    fromNode: NodeDescriptor,
+    idPrefix: string
+  ) {
+    const subgraphGenerator = new MermaidGenerator(subgraph, idPrefix);
+    const edges = subgraphGenerator.describeGraph();
+    const prefix = this.idPrefix ? `${properNodeId(this.idPrefix)}_` : "";
+    return `\nsubgraph sg_${properNodeId(
+      name
+    )} [${name}]\n${edges}\nend\nsg_${properNodeId(
+      name
+    )}:::slotted -- "${edgeName}->${edgeName}" --o ${prefix}${properNodeId(
+      fromNode.id
+    )}\n`;
+  }
+
+  describeGraph() {
+    const result = this.edges.map((edge) => {
+      const mermEdge = describeEdge(edge, this.nodeMap, this.idPrefix);
+      const mermSubgraphs = this.describeSubgraphs(edge, this.idPrefix);
+      return `${mermEdge}${mermSubgraphs}`;
+    });
+    const constants = this.nodes
+      .map((node) => {
+        return Object.keys(node.configuration || {}).map((name) => {
+          if (name === "slotted") return "";
+          if (name === "board") return "";
+          if (this.idPrefix) return "";
+          return `${properNodeId(
+            `${name}${node.id}`
+          )}[${name}]:::config -- "${name}->${name}" --o ${properNodeId(
+            node.id
+          )}`;
+        });
+      })
+      .flat();
+    return [...result, ...constants].join("\n");
+  }
 }
 
-const handleSlotted = (fromNode: NodeDescriptor) => {
-  const type = fromNode.type;
-  if (type !== "include") return "";
-  const slotted = fromNode.configuration?.slotted;
-  if (!slotted) return "";
-  const subgraphs = Object.entries(slotted).map(([name, subgraph]) =>
-    describeSubgraph(subgraph, name, "slotted", fromNode, fromNode.id)
-  );
-  return subgraphs.join("\n");
-};
-
-const handleLambda = (fromNode: NodeDescriptor) => {
-  const board = fromNode.configuration?.board;
-  if (!board) return "";
-  type BoardCapability = { kind: "board"; board: GraphDescriptor };
-  const capability = board as BoardCapability;
-  if (capability.kind !== "board") return "";
-  const graph = capability.board;
-  return describeSubgraph(graph, fromNode.id, "lamdba", fromNode, fromNode.id);
-};
-
-const describeSubgraphs = (edge: Edge, nodeMap: NodeMap) => {
-  const fromNode = nodeMap.get(edge.from);
-  if (!fromNode) return "";
-  const lamdba = handleLambda(fromNode);
-  const slotted = handleSlotted(fromNode);
-  return `${slotted}${lamdba}`;
-};
-
-const describeGraph = (graph: GraphDescriptor) => {
-  const { edges, nodes } = graph;
-  const nodeMap = new Map(nodes.map((node) => [node.id, node]));
-  const result = edges.map((edge) => {
-    const mermEdge = describeEdge(edge, nodeMap);
-    const mermSubgraphs = describeSubgraphs(edge, nodeMap);
-    return `${mermEdge}${mermSubgraphs}`;
-  });
-  const constants = nodes
-    .map((node) => {
-      return Object.keys(node.configuration || {}).map((name) => {
-        if (name === "slotted") return "";
-        if (name === "board") return "";
-        return `${properNodeId(
-          `${name}${node.id}`
-        )}[${name}]:::config -- "${name}->${name}" --o ${properNodeId(
-          node.id
-        )}`;
-      });
-    })
-    .flat();
-  return [...result, ...constants].join("\n");
-};
-
 export const toMermaid = (graph: GraphDescriptor, direction = "TD") => {
-  const edges = describeGraph(graph);
+  const generator = new MermaidGenerator(graph);
+  const edges = generator.describeGraph();
   return template(edges, direction);
 };

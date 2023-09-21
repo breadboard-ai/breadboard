@@ -6,7 +6,7 @@
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
 map2["map <br> id='map-2'"] -- "list->text" --> output3{{"output <br> id='output-3'"}}:::output
-subgraph map-2
+subgraph sg_map2 [map-2]
 map2_secrets3("secrets <br> id='secrets-3'"):::secrets -- "PINECONE_API_KEY->json" --> map2_makeheaders["jsonata <br> id='make-headers'"]
 map2_makeheaders["jsonata <br> id='make-headers'"] -- "result->headers" --> map2_pineconeupsertapi["fetch <br> id='pinecone-upsert-api'"]
 map2_secrets4("secrets <br> id='secrets-4'"):::secrets -- "PINECONE_URL->PINECONE_URL" --> map2_makepineconeurl["promptTemplate <br> id='make-pinecone-url'"]
@@ -14,9 +14,29 @@ map2_makepineconeurl["promptTemplate <br> id='make-pinecone-url'"] -- "prompt->u
 map2_pineconeupsertapi["fetch <br> id='pinecone-upsert-api'"] -- "response->item" --> map2_output2{{"output <br> id='output-2'"}}:::output
 map2_formattoapi["jsonata <br> id='format-to-api'"] -- "result->body" --> map2_pineconeupsertapi["fetch <br> id='pinecone-upsert-api'"]
 map2_generateembeddings["map <br> id='generate-embeddings'"] -- "list->json" --> map2_formattoapi["jsonata <br> id='format-to-api'"]
-map2_input1[/"input <br> id='input-1'"/]:::input -- "item->list" --> map2_generateembeddings["map <br> id='generate-embeddings'"]
+subgraph sg_generateembeddings [generate-embeddings]
+map2_generateembeddings_embedString4["embedString <br> id='embedString-4'"] -- "embedding->embedding" --> map2_generateembeddings_merge["append <br> id='merge'"]
+map2_generateembeddings_secrets5("secrets <br> id='secrets-5'"):::secrets -- "PALM_KEY->PALM_KEY" --> map2_generateembeddings_embedString4["embedString <br> id='embedString-4'"]
+map2_generateembeddings_jsonata3["jsonata <br> id='jsonata-3'"] -- "result->text" --> map2_generateembeddings_embedString4["embedString <br> id='embedString-4'"]
+map2_generateembeddings_input1[/"input <br> id='input-1'"/]:::input -- "item->json" --> map2_generateembeddings_jsonata3["jsonata <br> id='jsonata-3'"]
+map2_generateembeddings_merge["append <br> id='merge'"] -- "accumulator->item" --> map2_generateembeddings_output2{{"output <br> id='output-2'"}}:::output
+map2_generateembeddings_input1[/"input <br> id='input-1'"/]:::input -- "item->accumulator" --> map2_generateembeddings_merge["append <br> id='merge'"]
+
+
 end
-map-2:::slotted -- "lamdba->lamdba" --o map2
+sg_generateembeddings:::slotted -- "lamdba->lamdba" --o map2_generateembeddings
+
+map2_input1[/"input <br> id='input-1'"/]:::input -- "item->list" --> map2_generateembeddings["map <br> id='generate-embeddings'"]
+
+
+
+
+
+
+
+
+end
+sg_map2:::slotted -- "lamdba->lamdba" --o map2
 
 batcher1["batcher <br> id='batcher-1'"] -- "list->list" --> map2["map <br> id='map-2'"]
 getcontent["jsonata <br> id='get-content'"] -- "result->list" --> batcher1["batcher <br> id='batcher-1'"]
