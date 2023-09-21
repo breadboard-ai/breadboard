@@ -1,4 +1,5 @@
 {
+  "title": "Optional edges; skip for now as behavior is underdefined",
   "edges": [
     {
       "from": "node-a",
