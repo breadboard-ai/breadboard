@@ -47,7 +47,7 @@ const body = starter.jsonata(
 );
 
 const template =
-  starter.promptTemplate(`Analyze the question and the knowledge base.
+  starter.promptTemplate(`Analyze the question and the knowledge base, provided below.
   
 If the knowledge base does not contain the information to produce the answer, tell the user that you don't know.
 

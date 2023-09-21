@@ -11,7 +11,7 @@
     },
     {
       "from": "make-headers",
-      "to": "pinecone-upsert-api",
+      "to": "pinecone-query-api",
       "out": "result",
       "in": "headers"
     },
@@ -23,7 +23,7 @@
     },
     {
       "from": "make-pinecone-url",
-      "to": "pinecone-upsert-api",
+      "to": "pinecone-query-api",
       "out": "prompt",
       "in": "url"
     },
@@ -40,14 +40,14 @@
       "in": "context"
     },
     {
-      "from": "pinecone-upsert-api",
+      "from": "pinecone-query-api",
       "to": "jsonata-6",
       "out": "response",
       "in": "json"
     },
     {
       "from": "make-body",
-      "to": "pinecone-upsert-api",
+      "to": "pinecone-query-api",
       "out": "result",
       "in": "body"
     },
@@ -77,7 +77,7 @@
     },
     {
       "from": "generateText-7",
-      "to": "output-9",
+      "to": "rag",
       "out": "completion",
       "in": "text"
     },
@@ -106,7 +106,7 @@
       }
     },
     {
-      "id": "pinecone-upsert-api",
+      "id": "pinecone-query-api",
       "type": "fetch",
       "configuration": {
         "raw": false,
@@ -140,7 +140,7 @@
       "id": "promptTemplate-3",
       "type": "promptTemplate",
       "configuration": {
-        "template": "Analyze the question and the knowledge base.\n  \nIf the knowledge base does not contain the information to produce the answer, tell the user that you don't know.\n\nOtherwise, write a comprehensive answer to the question using only the information from the knowledge base.\n\n# Question:\n\n{{query}}\n\n# Knowledge Base:\n{{context}}\n\n\n# Answer\n"
+        "template": "Analyze the question and the knowledge base, provided below.\n  \nIf the knowledge base does not contain the information to produce the answer, tell the user that you don't know.\n\nOtherwise, write a comprehensive answer to the question using only the information from the knowledge base.\n\n# Question:\n\n{{query}}\n\n# Knowledge Base:\n{{context}}\n\n# Answer\n"
       }
     },
     {
@@ -181,7 +181,7 @@
       }
     },
     {
-      "id": "output-9",
+      "id": "rag",
       "type": "output"
     }
   ],

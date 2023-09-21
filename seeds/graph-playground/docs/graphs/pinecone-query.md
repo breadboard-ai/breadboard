@@ -6,23 +6,23 @@
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
 secrets1("secrets <br> id='secrets-1'"):::secrets -- "PINECONE_API_KEY->json" --> makeheaders["jsonata <br> id='make-headers'"]
-makeheaders["jsonata <br> id='make-headers'"] -- "result->headers" --> pineconeupsertapi["fetch <br> id='pinecone-upsert-api'"]
+makeheaders["jsonata <br> id='make-headers'"] -- "result->headers" --> pineconequeryapi["fetch <br> id='pinecone-query-api'"]
 secrets2("secrets <br> id='secrets-2'"):::secrets -- "PINECONE_URL->PINECONE_URL" --> makepineconeurl["promptTemplate <br> id='make-pinecone-url'"]
-makepineconeurl["promptTemplate <br> id='make-pinecone-url'"] -- "prompt->url" --> pineconeupsertapi["fetch <br> id='pinecone-upsert-api'"]
+makepineconeurl["promptTemplate <br> id='make-pinecone-url'"] -- "prompt->url" --> pineconequeryapi["fetch <br> id='pinecone-query-api'"]
 secrets5("secrets <br> id='secrets-5'"):::secrets -- "PALM_KEY->PALM_KEY" --> embedString4["embedString <br> id='embedString-4'"]
 jsonata6["jsonata <br> id='jsonata-6'"] -- "result->context" --> promptTemplate3["promptTemplate <br> id='promptTemplate-3'"]
-pineconeupsertapi["fetch <br> id='pinecone-upsert-api'"] -- "response->json" --> jsonata6["jsonata <br> id='jsonata-6'"]
-makebody["jsonata <br> id='make-body'"] -- "result->body" --> pineconeupsertapi["fetch <br> id='pinecone-upsert-api'"]
+pineconequeryapi["fetch <br> id='pinecone-query-api'"] -- "response->json" --> jsonata6["jsonata <br> id='jsonata-6'"]
+makebody["jsonata <br> id='make-body'"] -- "result->body" --> pineconequeryapi["fetch <br> id='pinecone-query-api'"]
 embedString4["embedString <br> id='embedString-4'"] -- "embedding->json" --> makebody["jsonata <br> id='make-body'"]
 query[/"input <br> id='query'"/]:::input -- "text->text" --> embedString4["embedString <br> id='embedString-4'"]
 query[/"input <br> id='query'"/]:::input -- "text->query" --> promptTemplate3["promptTemplate <br> id='promptTemplate-3'"]
 secrets8("secrets <br> id='secrets-8'"):::secrets -- "PALM_KEY->PALM_KEY" --> generateText7["generateText <br> id='generateText-7'"]
-generateText7["generateText <br> id='generateText-7'"] -- "completion->text" --> output9{{"output <br> id='output-9'"}}:::output
+generateText7["generateText <br> id='generateText-7'"] -- "completion->text" --> rag{{"output <br> id='rag'"}}:::output
 promptTemplate3["promptTemplate <br> id='promptTemplate-3'"] -- "prompt->text" --> generateText7["generateText <br> id='generateText-7'"]
 expressionmakeheaders[expression]:::config -- "expression->expression" --o makeheaders
 keyssecrets1[keys]:::config -- "keys->keys" --o secrets1
-rawpineconeupsertapi[raw]:::config -- "raw->raw" --o pineconeupsertapi
-methodpineconeupsertapi[method]:::config -- "method->method" --o pineconeupsertapi
+rawpineconequeryapi[raw]:::config -- "raw->raw" --o pineconequeryapi
+methodpineconequeryapi[method]:::config -- "method->method" --o pineconequeryapi
 templatemakepineconeurl[template]:::config -- "template->template" --o makepineconeurl
 keyssecrets2[keys]:::config -- "keys->keys" --o secrets2
 expressionmakebody[expression]:::config -- "expression->expression" --o makebody
