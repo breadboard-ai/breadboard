@@ -41,9 +41,7 @@ export class TraversalMachineIterator
   static async processAllPendingNodes(
     result: TraversalResult
   ): Promise<TraversalResult> {
-    console.log(result.pendingOutputs.values());
     const completed = await Promise.all(result.pendingOutputs.values());
-    console.log(completed);
     completed.forEach((completedNodeOutput) => {
       TraversalMachineIterator.#processCompletedNode(
         result,
