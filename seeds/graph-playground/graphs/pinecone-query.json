@@ -1,0 +1,152 @@
+{
+  "title": "Retrieval-augmented generation with Pinecone",
+  "description": "This board implements the simples possible retrieval-augmented generation system using Pinecone store. The store was generated with [pinecone-load](https://github.com/google/labs-prototypes/blob/main/seeds/graph-playground/graphs/pinecone-load.json).",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "secrets-1",
+      "to": "make-headers",
+      "out": "PINECONE_API_KEY",
+      "in": "json"
+    },
+    {
+      "from": "make-headers",
+      "to": "pinecone-upsert-api",
+      "out": "result",
+      "in": "headers"
+    },
+    {
+      "from": "secrets-2",
+      "to": "make-pinecone-url",
+      "out": "PINECONE_URL",
+      "in": "PINECONE_URL"
+    },
+    {
+      "from": "make-pinecone-url",
+      "to": "pinecone-upsert-api",
+      "out": "prompt",
+      "in": "url"
+    },
+    {
+      "from": "secrets-4",
+      "to": "embedString-3",
+      "out": "PALM_KEY",
+      "in": "PALM_KEY"
+    },
+    {
+      "from": "jsonata-5",
+      "to": "rag",
+      "out": "result",
+      "in": "text"
+    },
+    {
+      "from": "pinecone-upsert-api",
+      "to": "jsonata-5",
+      "out": "response",
+      "in": "json"
+    },
+    {
+      "from": "make-body",
+      "to": "pinecone-upsert-api",
+      "out": "result",
+      "in": "body"
+    },
+    {
+      "from": "embedString-3",
+      "to": "make-body",
+      "out": "embedding",
+      "in": "json"
+    },
+    {
+      "from": "query",
+      "to": "embedString-3",
+      "out": "text",
+      "in": "text"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "make-headers",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "{ \"Api-Key\": $, \"Accept\": \"application/json\", \"Content-Type\": \"application/json\" }"
+      }
+    },
+    {
+      "id": "secrets-1",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "PINECONE_API_KEY"
+        ]
+      }
+    },
+    {
+      "id": "pinecone-upsert-api",
+      "type": "fetch",
+      "configuration": {
+        "raw": false,
+        "method": "POST"
+      }
+    },
+    {
+      "id": "make-pinecone-url",
+      "type": "promptTemplate",
+      "configuration": {
+        "template": "{{PINECONE_URL}}/query"
+      }
+    },
+    {
+      "id": "secrets-2",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "PINECONE_URL"
+        ]
+      }
+    },
+    {
+      "id": "make-body",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "{ \"vector\": $, \"topK\": 10, \"includeMetadata\": true }"
+      }
+    },
+    {
+      "id": "query",
+      "type": "input"
+    },
+    {
+      "id": "embedString-3",
+      "type": "embedString"
+    },
+    {
+      "id": "secrets-4",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "PALM_KEY"
+        ]
+      }
+    },
+    {
+      "id": "jsonata-5",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "$join(matches.metadata.text, '\n')"
+      }
+    },
+    {
+      "id": "rag",
+      "type": "output"
+    }
+  ],
+  "kits": [
+    {
+      "url": "npm:@google-labs/llm-starter"
+    },
+    {
+      "url": "npm:@google-labs/node-nursery"
+    }
+  ]
+}
