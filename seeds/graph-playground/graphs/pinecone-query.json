@@ -28,20 +28,20 @@
       "in": "url"
     },
     {
-      "from": "secrets-4",
-      "to": "embedString-3",
+      "from": "secrets-5",
+      "to": "embedString-4",
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
-      "from": "jsonata-5",
-      "to": "rag",
+      "from": "jsonata-6",
+      "to": "promptTemplate-3",
       "out": "result",
-      "in": "text"
+      "in": "context"
     },
     {
       "from": "pinecone-upsert-api",
-      "to": "jsonata-5",
+      "to": "jsonata-6",
       "out": "response",
       "in": "json"
     },
@@ -52,15 +52,39 @@
       "in": "body"
     },
     {
-      "from": "embedString-3",
+      "from": "embedString-4",
       "to": "make-body",
       "out": "embedding",
       "in": "json"
     },
     {
       "from": "query",
-      "to": "embedString-3",
+      "to": "embedString-4",
       "out": "text",
+      "in": "text"
+    },
+    {
+      "from": "query",
+      "to": "promptTemplate-3",
+      "out": "text",
+      "in": "query"
+    },
+    {
+      "from": "secrets-8",
+      "to": "generateText-7",
+      "out": "PALM_KEY",
+      "in": "PALM_KEY"
+    },
+    {
+      "from": "generateText-7",
+      "to": "output-9",
+      "out": "completion",
+      "in": "text"
+    },
+    {
+      "from": "promptTemplate-3",
+      "to": "generateText-7",
+      "out": "prompt",
       "in": "text"
     }
   ],
@@ -113,15 +137,22 @@
       }
     },
     {
+      "id": "promptTemplate-3",
+      "type": "promptTemplate",
+      "configuration": {
+        "template": "You are a helpful and informative bot that answers questions using text from the knowledge base below.\n\nAnalyze the question and the knowledge base and produce a comprehensive summary that answers the question using only the information from the knowledge base.\n\nIf the knowledge base does not contain the answer, tell the user that you do not possess this information and direct the user to Google search.\n\n\n# Question:\n\n{{query}}\n\n# Knowledge Base:\n{{context}}\n\n\n# Answer\n"
+      }
+    },
+    {
       "id": "query",
       "type": "input"
     },
     {
-      "id": "embedString-3",
+      "id": "embedString-4",
       "type": "embedString"
     },
     {
-      "id": "secrets-4",
+      "id": "secrets-5",
       "type": "secrets",
       "configuration": {
         "keys": [
@@ -130,14 +161,27 @@
       }
     },
     {
-      "id": "jsonata-5",
+      "id": "jsonata-6",
       "type": "jsonata",
       "configuration": {
-        "expression": "$join(matches.metadata.text, '\n')"
+        "expression": "$join(matches.metadata.text, '\n\n')"
       }
     },
     {
-      "id": "rag",
+      "id": "generateText-7",
+      "type": "generateText"
+    },
+    {
+      "id": "secrets-8",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "PALM_KEY"
+        ]
+      }
+    },
+    {
+      "id": "output-9",
       "type": "output"
     }
   ],

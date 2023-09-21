@@ -46,23 +46,66 @@ const body = starter.jsonata(
   }
 );
 
-board.input({ $id: "query" }).wire(
-  "text->",
-  nursery
-    .embedString()
-    .wire("<-PALM_KEY", starter.secrets(["PALM_KEY"]))
-    .wire(
-      "embedding->json",
-      body.wire(
-        "result->body",
-        apiCall.wire(
-          "response->json",
-          starter
-            .jsonata("$join(matches.metadata.text, '\n\n')")
-            .wire("result->text", board.output({ $id: "rag" }))
+// "You are a helpful and informative bot that answers questions using text from the knowledge base below.
+// Be sure to respond in a complete sentence, being comprehensive, including all relevant background information.
+
+// If the knowledge base does not contain the answer, tell the user that you do not possess this information and direct the user to Google search.
+
+// QUESTION: {query}
+
+// KNOWLEDGE BASE:
+
+// {context}
+
+// ANSWER:`
+
+const template =
+  starter.promptTemplate(`You are a helpful and informative bot that answers questions using text from the knowledge base below.
+
+Analyze the question and the knowledge base and produce a comprehensive summary that answers the question using only the information from the knowledge base.
+
+If the knowledge base does not contain the answer, tell the user that you do not possess this information and direct the user to Google search.
+
+
+# Question:
+
+{{query}}
+
+# Knowledge Base:
+{{context}}
+
+
+# Answer
+`);
+
+board
+  .input({ $id: "query" })
+  .wire(
+    "text->",
+    nursery
+      .embedString()
+      .wire("<-PALM_KEY", starter.secrets(["PALM_KEY"]))
+      .wire(
+        "embedding->json",
+        body.wire(
+          "result->body",
+          apiCall.wire(
+            "response->json",
+            starter
+              .jsonata("$join(matches.metadata.text, '\n\n')")
+              .wire("result->context", template)
+          )
         )
       )
-    )
+  )
+  .wire("text->query", template);
+
+template.wire(
+  "prompt->text",
+  starter
+    .generateText()
+    .wire("<-PALM_KEY", starter.secrets(["PALM_KEY"]))
+    .wire("completion->text", board.output())
 );
 
 export default board;
