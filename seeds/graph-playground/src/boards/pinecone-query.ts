@@ -26,7 +26,7 @@ const headers = starter
 
 const apiCall = starter
   .fetch(false, {
-    $id: "pinecone-upsert-api",
+    $id: "pinecone-query-api",
     method: "POST",
   })
   .wire("headers<-result", headers)
@@ -90,7 +90,7 @@ template.wire(
   starter
     .generateText()
     .wire("<-PALM_KEY", starter.secrets(["PALM_KEY"]))
-    .wire("completion->text", board.output())
+    .wire("completion->text", board.output({ $id: "rag" }))
 );
 
 export default board;
