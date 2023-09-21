@@ -19,7 +19,7 @@ export class TraversalMachineIterator
   constructor(
     graph: GraphRepresentation,
     result: TraversalResult,
-    noParallelExecution = false
+    noParallelExecution = true
   ) {
     this.graph = graph;
     this.#current = result;
