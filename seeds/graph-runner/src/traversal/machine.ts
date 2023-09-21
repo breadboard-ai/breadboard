@@ -45,4 +45,10 @@ export class TraversalMachine implements AsyncIterable<TraversalResult> {
     );
     return new TraversalMachineIterator(this.graph, entryResult);
   }
+
+  static async prepareToSafe(
+    result: TraversalResult
+  ): Promise<TraversalResult> {
+    return await TraversalMachineIterator.processAllPendingNodes(result);
+  }
 }

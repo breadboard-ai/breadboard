@@ -181,11 +181,11 @@ export interface QueuedNodeValuesState {
   useInputs(node: NodeIdentifier, inputs: InputValues): void;
 }
 
-export type pendingOutputPromise = Promise<{
+export interface CompletedNodeOutput {
   promiseId: symbol;
   outputs: OutputValues;
   newOpportunities: Edge[];
-}>;
+}
 
 export interface TraversalResult {
   descriptor: NodeDescriptor;
@@ -195,7 +195,7 @@ export interface TraversalResult {
   newOpportunities: Edge[];
   state: QueuedNodeValuesState;
   outputsPromise?: Promise<OutputValues>;
-  pendingOutputs: Map<symbol, pendingOutputPromise>;
+  pendingOutputs: Map<symbol, Promise<CompletedNodeOutput>>;
   skip: boolean;
 }
 

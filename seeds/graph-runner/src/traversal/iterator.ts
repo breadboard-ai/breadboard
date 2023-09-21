@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Edge, pendingOutputPromise, TraversalResult } from "../types.js";
+import type { Edge, CompletedNodeOutput, TraversalResult } from "../types.js";
 import { Traversal } from "./index.js";
 import { GraphRepresentation } from "./representation.js";
 import { MachineResult } from "./result.js";
@@ -26,6 +26,33 @@ export class TraversalMachineIterator
     this.#noParallelExecution = noParallelExecution;
   }
 
+  static #processCompletedNode(
+    result: TraversalResult,
+    completedNodeOutput: CompletedNodeOutput
+  ) {
+    const { promiseId, outputs, newOpportunities } = completedNodeOutput;
+    result.pendingOutputs.delete(promiseId);
+
+    // Process outputs.
+    result.opportunities.push(...newOpportunities);
+    result.state.wireOutputs(newOpportunities, outputs);
+  }
+
+  static async processAllPendingNodes(
+    result: TraversalResult
+  ): Promise<TraversalResult> {
+    console.log(result.pendingOutputs.values());
+    const completed = await Promise.all(result.pendingOutputs.values());
+    console.log(completed);
+    completed.forEach((completedNodeOutput) => {
+      TraversalMachineIterator.#processCompletedNode(
+        result,
+        completedNodeOutput
+      );
+    });
+    return result;
+  }
+
   async next(): Promise<IteratorResult<TraversalResult>> {
     // If there are no missing inputs, let's consume the outputs
     if (!this.#current.skip) {
@@ -41,7 +68,7 @@ export class TraversalMachineIterator
             resolve({ promiseId, outputs, newOpportunities });
           })
           .catch(reject);
-      }) as pendingOutputPromise;
+      }) as Promise<CompletedNodeOutput>;
 
       this.#current.pendingOutputs.set(promiseId, promise);
     }
@@ -57,14 +84,10 @@ export class TraversalMachineIterator
       // await it.
       //
       // TODO: Change this to a `$error` output and throw if it isn't handled.
-      const { promiseId, outputs, newOpportunities } = await Promise.race(
-        this.#current.pendingOutputs.values()
+      TraversalMachineIterator.#processCompletedNode(
+        this.#current,
+        await Promise.race(this.#current.pendingOutputs.values())
       );
-      this.#current.pendingOutputs.delete(promiseId);
-
-      // Process outputs.
-      this.#current.opportunities.push(...newOpportunities);
-      this.#current.state.wireOutputs(newOpportunities, outputs);
     }
 
     // If there are no more opportunities and none are pending, we're done.

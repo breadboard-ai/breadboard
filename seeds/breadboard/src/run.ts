@@ -6,6 +6,7 @@
 
 import {
   MachineResult,
+  TraversalMachine,
   type InputValues,
   type NodeDescriptor,
   type OutputValues,
@@ -68,14 +69,21 @@ export class RunResult implements BreadboardRunResult {
     return this.#state;
   }
 
-  save() {
-    return JSON.stringify({ state: this.#state, type: this.#type }, replacer);
+  async save() {
+    return JSON.stringify(
+      {
+        state: await TraversalMachine.prepareToSafe(this.#state),
+        type: this.#type,
+      },
+      replacer
+    );
   }
 
   isAtExitNode(): boolean {
     return (
       this.#state.newOpportunities.length === 0 &&
-      this.#state.opportunities.length === 0
+      this.#state.opportunities.length === 0 &&
+      this.#state.pendingOutputs.size === 0
     );
   }
 

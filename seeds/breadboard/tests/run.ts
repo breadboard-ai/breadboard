@@ -53,7 +53,7 @@ test("correctly saves and loads", async (t) => {
     const firstBoard = await Board.fromGraphDescriptor(board);
     for await (const stop of firstBoard.run()) {
       t.is(stop.type, "beforehandler");
-      runResult = stop.save();
+      runResult = await stop.save();
       break;
     }
   }
@@ -65,7 +65,7 @@ test("correctly saves and loads", async (t) => {
       RunResult.load(runResult)
     )) {
       t.is(stop.type, "input");
-      runResult = stop.save();
+      runResult = await stop.save();
       break;
     }
   }
@@ -77,7 +77,7 @@ test("correctly saves and loads", async (t) => {
       RunResult.load(runResult)
     )) {
       t.is(stop.type, "beforehandler");
-      runResult = stop.save();
+      runResult = await stop.save();
       break;
     }
   }
@@ -89,7 +89,7 @@ test("correctly saves and loads", async (t) => {
       RunResult.load(runResult)
     )) {
       t.is(stop.type, "output");
-      runResult = stop.save();
+      runResult = await stop.save();
       break;
     }
   }
@@ -101,7 +101,7 @@ test("correctly saves and loads", async (t) => {
       RunResult.load(runResult)
     )) {
       t.is(stop.type, "input");
-      runResult = stop.save();
+      runResult = await stop.save();
       break;
     }
   }

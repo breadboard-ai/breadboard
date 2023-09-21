@@ -30,7 +30,7 @@ export class Writer {
   async writeInput(stop: RunResult) {
     const state = stop.isAtExitNode()
       ? undefined
-      : await this.#stateTransformer(stop.save());
+      : await this.#stateTransformer(await stop.save());
     this.write({
       type: "input",
       data: stop.inputArguments,
@@ -41,7 +41,7 @@ export class Writer {
   async writeOutput(stop: RunResult) {
     const state = stop.isAtExitNode()
       ? undefined
-      : await this.#stateTransformer(stop.save());
+      : await this.#stateTransformer(await stop.save());
     this.write({
       type: "output",
       data: stop.outputs,
