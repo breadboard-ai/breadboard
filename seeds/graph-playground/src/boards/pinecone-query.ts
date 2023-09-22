@@ -17,13 +17,6 @@ const board = new Board({
 const starter = board.addKit(Starter);
 const nursery = board.addKit(Nursery);
 
-const body = starter.jsonata(
-  '{ "vector": $, "topK": 10, "includeMetadata": true }',
-  {
-    $id: "make-body",
-  }
-);
-
 const template =
   starter.promptTemplate(`Analyze the question and the knowledge base, provided below.
   
@@ -41,10 +34,9 @@ Otherwise, write a comprehensive answer to the question using only the informati
 # Answer
 `);
 
-const apiCall = board
-  .include("pinecone-vector-api.json", { $id: "pinecone-api-call" })
-  .wire("<-call", board.passthrough({ $id: "query-api", call: "query" }))
-  .wire("<-config", board.include("pinecone-api-config.json"));
+const pineconeQuery = board.include("pinecone-api-query.json", {
+  $id: "pinecone-api-query",
+});
 
 board
   .input({ $id: "query" })
@@ -54,15 +46,12 @@ board
       .embedString()
       .wire("<-PALM_KEY", starter.secrets(["PALM_KEY"]))
       .wire(
-        "embedding->json",
-        body.wire(
-          "result->body",
-          apiCall.wire(
-            "response->json",
-            starter
-              .jsonata("$join(matches.metadata.text, '\n\n')")
-              .wire("result->context", template)
-          )
+        "embedding->",
+        pineconeQuery.wire(
+          "response->json",
+          starter
+            .jsonata("$join(matches.metadata.text, '\n\n')")
+            .wire("result->context", template)
         )
       )
   )

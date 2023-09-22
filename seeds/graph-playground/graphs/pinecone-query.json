@@ -4,50 +4,32 @@
   "version": "0.0.1",
   "edges": [
     {
-      "from": "query-api",
-      "to": "pinecone-api-call",
-      "out": "call",
-      "in": "call"
-    },
-    {
-      "from": "include-2",
-      "to": "pinecone-api-call",
-      "out": "config",
-      "in": "config"
-    },
-    {
-      "from": "secrets-4",
-      "to": "embedString-3",
+      "from": "secrets-3",
+      "to": "embedString-2",
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
-      "from": "jsonata-5",
+      "from": "jsonata-4",
       "to": "promptTemplate-1",
       "out": "result",
       "in": "context"
     },
     {
-      "from": "pinecone-api-call",
-      "to": "jsonata-5",
+      "from": "pinecone-api-query",
+      "to": "jsonata-4",
       "out": "response",
       "in": "json"
     },
     {
-      "from": "make-body",
-      "to": "pinecone-api-call",
-      "out": "result",
-      "in": "body"
-    },
-    {
-      "from": "embedString-3",
-      "to": "make-body",
+      "from": "embedString-2",
+      "to": "pinecone-api-query",
       "out": "embedding",
-      "in": "json"
+      "in": "embedding"
     },
     {
       "from": "query",
-      "to": "embedString-3",
+      "to": "embedString-2",
       "out": "text",
       "in": "text"
     },
@@ -58,32 +40,25 @@
       "in": "query"
     },
     {
-      "from": "secrets-7",
-      "to": "generateText-6",
+      "from": "secrets-6",
+      "to": "generateText-5",
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
-      "from": "generateText-6",
+      "from": "generateText-5",
       "to": "rag",
       "out": "completion",
       "in": "text"
     },
     {
       "from": "promptTemplate-1",
-      "to": "generateText-6",
+      "to": "generateText-5",
       "out": "prompt",
       "in": "text"
     }
   ],
   "nodes": [
-    {
-      "id": "make-body",
-      "type": "jsonata",
-      "configuration": {
-        "expression": "{ \"vector\": $, \"topK\": 10, \"includeMetadata\": true }"
-      }
-    },
     {
       "id": "promptTemplate-1",
       "type": "promptTemplate",
@@ -92,24 +67,10 @@
       }
     },
     {
-      "id": "pinecone-api-call",
+      "id": "pinecone-api-query",
       "type": "include",
       "configuration": {
-        "$ref": "pinecone-vector-api.json"
-      }
-    },
-    {
-      "id": "query-api",
-      "type": "passthrough",
-      "configuration": {
-        "call": "query"
-      }
-    },
-    {
-      "id": "include-2",
-      "type": "include",
-      "configuration": {
-        "$ref": "pinecone-api-config.json"
+        "$ref": "pinecone-api-query.json"
       }
     },
     {
@@ -117,11 +78,11 @@
       "type": "input"
     },
     {
-      "id": "embedString-3",
+      "id": "embedString-2",
       "type": "embedString"
     },
     {
-      "id": "secrets-4",
+      "id": "secrets-3",
       "type": "secrets",
       "configuration": {
         "keys": [
@@ -130,18 +91,18 @@
       }
     },
     {
-      "id": "jsonata-5",
+      "id": "jsonata-4",
       "type": "jsonata",
       "configuration": {
         "expression": "$join(matches.metadata.text, '\n\n')"
       }
     },
     {
-      "id": "generateText-6",
+      "id": "generateText-5",
       "type": "generateText"
     },
     {
-      "id": "secrets-7",
+      "id": "secrets-6",
       "type": "secrets",
       "configuration": {
         "keys": [
