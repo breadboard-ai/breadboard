@@ -10,7 +10,12 @@ import { readFile, readdir } from "fs/promises";
 
 import { TraversalMachine } from "../src/index.js";
 
-import { GraphDescriptor, InputValues, OutputValues } from "../src/types.js";
+import {
+  ErrorCapability,
+  GraphDescriptor,
+  InputValues,
+  OutputValues,
+} from "../src/types.js";
 import { MachineResult } from "../src/traversal/result.js";
 
 const IN_DIR = "./tests/data/";
@@ -59,6 +64,19 @@ await Promise.all(
               );
               break;
             }
+            case "error": {
+              result.outputsPromise = Promise.resolve({
+                $error: {
+                  kind: "error",
+                  error: new Error("Test error"),
+                } as ErrorCapability,
+              });
+              break;
+            }
+            case "throw": {
+              result.outputsPromise = Promise.reject(new Error("Test throw"));
+              break;
+            }
             case "noop":
               result.outputsPromise = Promise.resolve({ ...inputs });
               break;
@@ -69,6 +87,18 @@ await Promise.all(
       };
       if (graph.throws) await t.throwsAsync(run);
       else await run();
+
+      // Rewrite instancesof Error to strings for comparison.
+      outputs.forEach((output) => {
+        if (output.$error) {
+          const $error = output.$error as ErrorCapability;
+          if ($error.error) {
+            t.true($error.error instanceof Error);
+            output.$error = { ...$error, error: "instanceof Error" };
+          }
+        }
+      });
+
       t.deepEqual(outputs, graph.outputs);
       t.deepEqual(sequence, graph.sequence);
     });

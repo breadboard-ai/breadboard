@@ -8,6 +8,7 @@ import type {
   InputValues,
   NodeValue,
   OutputValues,
+  ErrorCapability,
 } from "@google-labs/graph-runner";
 import {
   GenerateTextResponse,
@@ -39,6 +40,12 @@ export type GenerateTextInputs = NodeValue & {
   safetySettings: SafetySetting[];
 };
 
+export type GenerateTextError = ErrorCapability & {
+  inputs: GenerateTextInputs;
+  filters: GenerateTextResponse["filters"];
+  safetyFeedback: GenerateTextResponse["safetyFeedback"];
+};
+
 export const prepareRequest = (inputs: InputValues) => {
   const values = inputs as GenerateTextInputs;
   if (!values.PALM_KEY)
@@ -63,7 +70,18 @@ export const prepareResponse = async (
 
   const completion = response?.candidates?.[0]?.output as string;
   if (completion) return { completion, ...json };
-  return response as OutputValues;
+  else
+    return {
+      $error: {
+        kind: "error",
+        error: new Error(
+          "Palm generateText failed: " +
+            (data.ok ? JSON.stringify(json) : data.statusText)
+        ),
+        status: data.status,
+        ...json,
+      } as GenerateTextError,
+    } as OutputValues;
 };
 
 export default async (inputs: InputValues) => {

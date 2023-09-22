@@ -102,5 +102,14 @@ test("prepareResponse returns an error response is blocked", async (t) => {
     })
   );
   const response = await prepareResponse(data);
-  t.deepEqual(response, { filters: [{ reason: "foo" }] });
+  t.deepEqual(response, {
+    $error: {
+      kind: "error",
+      error: new Error(
+        'Palm generateText failed: {"filters":[{"reason":"foo"}]}'
+      ),
+      filters: [{ reason: "foo" }],
+      status: 200,
+    },
+  });
 });

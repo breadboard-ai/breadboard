@@ -8,6 +8,13 @@ export interface Capability {
   readonly kind: string;
 }
 
+export type ErrorCapability = Capability & {
+  readonly kind: "error";
+  readonly error?: Error;
+  readonly inputs?: InputValues;
+  readonly descriptor?: NodeDescriptor;
+};
+
 /**
  * A type representing a valid JSON value.
  */

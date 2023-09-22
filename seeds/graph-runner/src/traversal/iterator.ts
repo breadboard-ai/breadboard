@@ -4,7 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Edge, CompletedNodeOutput, TraversalResult } from "../types.js";
+import type {
+  Edge,
+  CompletedNodeOutput,
+  TraversalResult,
+  ErrorCapability,
+  OutputValues,
+} from "../types.js";
 import { Traversal } from "./index.js";
 import { GraphRepresentation } from "./representation.js";
 import { MachineResult } from "./result.js";
@@ -36,6 +42,21 @@ export class TraversalMachineIterator
     // Process outputs.
     result.opportunities.push(...newOpportunities);
     result.state.wireOutputs(newOpportunities, outputs);
+
+    if (
+      outputs.$error &&
+      newOpportunities.filter((e) => e.out === "$error").length === 0
+    ) {
+      // If the node threw an exception and it wasn't routed via $error,
+      // throw it again. This will cause the traversal to stop.
+      throw new Error(
+        "Uncaught exception in node handler. " +
+          "Catch by wiring up the $error output.",
+        {
+          cause: outputs.$error,
+        }
+      );
+    }
   }
 
   static async processAllPendingNodes(
@@ -54,18 +75,45 @@ export class TraversalMachineIterator
   async next(): Promise<IteratorResult<TraversalResult>> {
     // If there are no missing inputs, let's consume the outputs
     if (!this.#current.skip) {
-      const { outputsPromise, newOpportunities, descriptor } = this.#current;
+      const { inputs, outputsPromise, newOpportunities, descriptor } =
+        this.#current;
 
       // Mark inputs as used, i.e. shift inputs queues.
       this.#current.state.useInputs(descriptor.id, this.#current.inputs);
 
       const promiseId = Symbol();
-      const promise = new Promise((resolve, reject) => {
-        (outputsPromise || Promise.resolve({}))
-          .then((outputs) => {
+      const promise = new Promise((resolve) => {
+        (outputsPromise || Promise.resolve({} as OutputValues))
+          .then((outputs: OutputValues) => {
+            // If not already present, add inputs and descriptor along for
+            // context and to support retries.
+            if (outputs.$error)
+              outputs.$error = {
+                descriptor,
+                inputs,
+                ...(outputs.$error as object),
+              };
             resolve({ promiseId, outputs, newOpportunities });
           })
-          .catch(reject);
+          .catch((error) => {
+            // If the handler threw an exception, turn it into a $error output.
+            // Pass the inputs and descriptor along for context and to support
+            // retries. This Promise will hence always resolve.
+            resolve({
+              promiseId,
+              outputs: {
+                $error: {
+                  kind: "error",
+                  error,
+                  inputs,
+                  descriptor,
+                } as ErrorCapability,
+              },
+              newOpportunities: newOpportunities.filter(
+                (edge) => edge.out === "$error"
+              ),
+            });
+          });
       }) as Promise<CompletedNodeOutput>;
 
       this.#current.pendingOutputs.set(promiseId, promise);
@@ -77,11 +125,7 @@ export class TraversalMachineIterator
       (this.#current.opportunities.length === 0 || this.#noParallelExecution) &&
       this.#current.pendingOutputs.size > 0
     ) {
-      // We use Promise.race here to also get rejected Promises, i.e. runtime
-      // errors in a node. As we don't catch the error, it'll propagate when we
-      // await it.
-      //
-      // TODO: Change this to a `$error` output and throw if it isn't handled.
+      // Wait for the first pending node to be done.
       TraversalMachineIterator.#processCompletedNode(
         this.#current,
         await Promise.race(this.#current.pendingOutputs.values())
