@@ -9,7 +9,7 @@
   "type": "module",
   "scripts": {
     "test": "echo test",
-    "build": "FORCE_COLOR=1 vite build",
+    "build:vite": "FORCE_COLOR=1 vite build",
     "watch": "FORCE_COLOR=1 tsc --b --watch && vite build",
     "dev": "vite --host",
     "preview": "vite preview",
