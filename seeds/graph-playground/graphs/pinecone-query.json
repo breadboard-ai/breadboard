@@ -4,131 +4,73 @@
   "version": "0.0.1",
   "edges": [
     {
-      "from": "secrets-1",
-      "to": "make-headers",
-      "out": "PINECONE_API_KEY",
-      "in": "json"
+      "from": "query-api",
+      "to": "pinecone-api-call",
+      "out": "call",
+      "in": "call"
     },
     {
-      "from": "make-headers",
-      "to": "pinecone-query-api",
-      "out": "result",
-      "in": "headers"
-    },
-    {
-      "from": "secrets-2",
-      "to": "make-pinecone-url",
-      "out": "PINECONE_URL",
-      "in": "PINECONE_URL"
-    },
-    {
-      "from": "make-pinecone-url",
-      "to": "pinecone-query-api",
-      "out": "prompt",
-      "in": "url"
-    },
-    {
-      "from": "secrets-5",
-      "to": "embedString-4",
+      "from": "secrets-3",
+      "to": "embedString-2",
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
-      "from": "jsonata-6",
-      "to": "promptTemplate-3",
+      "from": "jsonata-4",
+      "to": "promptTemplate-1",
       "out": "result",
       "in": "context"
     },
     {
-      "from": "pinecone-query-api",
-      "to": "jsonata-6",
+      "from": "pinecone-api-call",
+      "to": "jsonata-4",
       "out": "response",
       "in": "json"
     },
     {
       "from": "make-body",
-      "to": "pinecone-query-api",
+      "to": "pinecone-api-call",
       "out": "result",
       "in": "body"
     },
     {
-      "from": "embedString-4",
+      "from": "embedString-2",
       "to": "make-body",
       "out": "embedding",
       "in": "json"
     },
     {
       "from": "query",
-      "to": "embedString-4",
+      "to": "embedString-2",
       "out": "text",
       "in": "text"
     },
     {
       "from": "query",
-      "to": "promptTemplate-3",
+      "to": "promptTemplate-1",
       "out": "text",
       "in": "query"
     },
     {
-      "from": "secrets-8",
-      "to": "generateText-7",
+      "from": "secrets-6",
+      "to": "generateText-5",
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
-      "from": "generateText-7",
+      "from": "generateText-5",
       "to": "rag",
       "out": "completion",
       "in": "text"
     },
     {
-      "from": "promptTemplate-3",
-      "to": "generateText-7",
+      "from": "promptTemplate-1",
+      "to": "generateText-5",
       "out": "prompt",
       "in": "text"
     }
   ],
   "nodes": [
-    {
-      "id": "make-headers",
-      "type": "jsonata",
-      "configuration": {
-        "expression": "{ \"Api-Key\": $, \"Accept\": \"application/json\", \"Content-Type\": \"application/json\" }"
-      }
-    },
-    {
-      "id": "secrets-1",
-      "type": "secrets",
-      "configuration": {
-        "keys": [
-          "PINECONE_API_KEY"
-        ]
-      }
-    },
-    {
-      "id": "pinecone-query-api",
-      "type": "fetch",
-      "configuration": {
-        "raw": false,
-        "method": "POST"
-      }
-    },
-    {
-      "id": "make-pinecone-url",
-      "type": "promptTemplate",
-      "configuration": {
-        "template": "{{PINECONE_URL}}/query"
-      }
-    },
-    {
-      "id": "secrets-2",
-      "type": "secrets",
-      "configuration": {
-        "keys": [
-          "PINECONE_URL"
-        ]
-      }
-    },
     {
       "id": "make-body",
       "type": "jsonata",
@@ -137,10 +79,24 @@
       }
     },
     {
-      "id": "promptTemplate-3",
+      "id": "promptTemplate-1",
       "type": "promptTemplate",
       "configuration": {
         "template": "Analyze the question and the knowledge base, provided below.\n  \nIf the knowledge base does not contain the information to produce the answer, tell the user that you don't know.\n\nOtherwise, write a comprehensive answer to the question using only the information from the knowledge base.\n\n# Question:\n\n{{query}}\n\n# Knowledge Base:\n{{context}}\n\n# Answer\n"
+      }
+    },
+    {
+      "id": "pinecone-api-call",
+      "type": "include",
+      "configuration": {
+        "$ref": "pinecone-vector-api.json"
+      }
+    },
+    {
+      "id": "query-api",
+      "type": "passthrough",
+      "configuration": {
+        "call": "query"
       }
     },
     {
@@ -148,11 +104,11 @@
       "type": "input"
     },
     {
-      "id": "embedString-4",
+      "id": "embedString-2",
       "type": "embedString"
     },
     {
-      "id": "secrets-5",
+      "id": "secrets-3",
       "type": "secrets",
       "configuration": {
         "keys": [
@@ -161,18 +117,18 @@
       }
     },
     {
-      "id": "jsonata-6",
+      "id": "jsonata-4",
       "type": "jsonata",
       "configuration": {
         "expression": "$join(matches.metadata.text, '\n\n')"
       }
     },
     {
-      "id": "generateText-7",
+      "id": "generateText-5",
       "type": "generateText"
     },
     {
-      "id": "secrets-8",
+      "id": "secrets-6",
       "type": "secrets",
       "configuration": {
         "keys": [

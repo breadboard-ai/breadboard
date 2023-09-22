@@ -17,28 +17,6 @@ const board = new Board({
 const starter = board.addKit(Starter);
 const nursery = board.addKit(Nursery);
 
-const headers = starter
-  .jsonata(
-    '{ "Api-Key": $, "Accept": "application/json", "Content-Type": "application/json" }',
-    { $id: "make-headers" }
-  )
-  .wire("json<-PINECONE_API_KEY", starter.secrets(["PINECONE_API_KEY"]));
-
-const apiCall = starter
-  .fetch(false, {
-    $id: "pinecone-query-api",
-    method: "POST",
-  })
-  .wire("headers<-result", headers)
-  .wire(
-    "url<-prompt",
-    starter
-      .promptTemplate("{{PINECONE_URL}}/query", {
-        $id: "make-pinecone-url",
-      })
-      .wire("<-PINECONE_URL", starter.secrets(["PINECONE_URL"]))
-  );
-
 const body = starter.jsonata(
   '{ "vector": $, "topK": 10, "includeMetadata": true }',
   {
@@ -62,6 +40,10 @@ Otherwise, write a comprehensive answer to the question using only the informati
 
 # Answer
 `);
+
+const apiCall = board
+  .include("pinecone-vector-api.json", { $id: "pinecone-api-call" })
+  .wire("<-call", board.passthrough({ $id: "query-api", call: "query" }));
 
 board
   .input({ $id: "query" })
