@@ -50,10 +50,10 @@ starter
   })
   .wire("headers<-result", headers)
   .wire(
-    "url<-prompt",
+    "<-url",
     starter
-      .promptTemplate(
-        "https://{{PINECONE_INDEX}}-{{PINECONE_PROJECT_ID}}.svc.{{PINECONE_ENVIRONMENT}}.pinecone.io/{{call}}",
+      .urlTemplate(
+        "https://{PINECONE_INDEX}-{PINECONE_PROJECT_ID}.svc.{PINECONE_ENVIRONMENT}.pinecone.io/{+call}",
         {
           $id: "make-pinecone-url",
         }

@@ -7,11 +7,11 @@
 graph TD;
 secrets1("secrets <br> id='secrets-1'"):::secrets -- "PINECONE_API_KEY->json" --> makeheaders["jsonata <br> id='make-headers'"]
 makeheaders["jsonata <br> id='make-headers'"] -- "result->headers" --> pineconeapicall["fetch <br> id='pinecone-api-call'"]
-secrets2("secrets <br> id='secrets-2'"):::secrets -- "PINECONE_INDEX->PINECONE_INDEX" --> makepineconeurl["promptTemplate <br> id='make-pinecone-url'"]
-secrets3("secrets <br> id='secrets-3'"):::secrets -- "PINECONE_PROJECT_ID->PINECONE_PROJECT_ID" --> makepineconeurl["promptTemplate <br> id='make-pinecone-url'"]
-secrets4("secrets <br> id='secrets-4'"):::secrets -- "PINECONE_ENVIRONMENT->PINECONE_ENVIRONMENT" --> makepineconeurl["promptTemplate <br> id='make-pinecone-url'"]
-api[/"input <br> id='api'"/]:::input -- "call->call" --> makepineconeurl["promptTemplate <br> id='make-pinecone-url'"]
-makepineconeurl["promptTemplate <br> id='make-pinecone-url'"] -- "prompt->url" --> pineconeapicall["fetch <br> id='pinecone-api-call'"]
+secrets2("secrets <br> id='secrets-2'"):::secrets -- "PINECONE_INDEX->PINECONE_INDEX" --> makepineconeurl["urlTemplate <br> id='make-pinecone-url'"]
+secrets3("secrets <br> id='secrets-3'"):::secrets -- "PINECONE_PROJECT_ID->PINECONE_PROJECT_ID" --> makepineconeurl["urlTemplate <br> id='make-pinecone-url'"]
+secrets4("secrets <br> id='secrets-4'"):::secrets -- "PINECONE_ENVIRONMENT->PINECONE_ENVIRONMENT" --> makepineconeurl["urlTemplate <br> id='make-pinecone-url'"]
+api[/"input <br> id='api'"/]:::input -- "call->call" --> makepineconeurl["urlTemplate <br> id='make-pinecone-url'"]
+makepineconeurl["urlTemplate <br> id='make-pinecone-url'"] -- "url->url" --> pineconeapicall["fetch <br> id='pinecone-api-call'"]
 api[/"input <br> id='api'"/]:::input -- "body->body" --> pineconeapicall["fetch <br> id='pinecone-api-call'"]
 pineconeapicall["fetch <br> id='pinecone-api-call'"] -- "response->response" --> response{{"output <br> id='response'"}}:::output
 schemaapi[schema]:::config -- "schema->schema" --o api

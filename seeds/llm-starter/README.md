@@ -254,7 +254,7 @@ The node will produce this output:
 
 ### The `urlTemplate` node
 
-Use this node to safely construct URLs. It's similar in spirit to the `promptTemplate` node, except it ensures that the handlebar parameters are properly encoded as part of the URL.
+Use this node to safely construct URLs. It's similar in spirit to the `promptTemplate` node, except it ensures that the handlebar parameters are properly encoded as part of the URL. This node relies on the [URI template specification](https://tools.ietf.org/html/rfc6570) to construct URLs, so the syntax is using single curly braces instead of double curly braces.
 
 #### Example:
 
@@ -262,7 +262,7 @@ If we send the following inputs to `urlTemplate`:
 
 ```json
 {
-  "template": "https://example.com?question={{question}}",
+  "template": "https://example.com?question={question}",
   "question": "How old is planet Earth?"
 }
 ```

@@ -55,7 +55,8 @@
     "@google-labs/graph-runner": "^0.2.0",
     "@google-labs/palm-lite": "^0.0.2",
     "@rgrove/parse-xml": "^4.1.0",
-    "jsonata": "^2.0.3"
+    "jsonata": "^2.0.3",
+    "url-template": "^3.1.0"
   },
   "engines": {
     "node": ">=19.0.0"

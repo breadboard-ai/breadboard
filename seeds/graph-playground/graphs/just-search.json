@@ -73,7 +73,7 @@
       "id": "urlTemplate-3",
       "type": "urlTemplate",
       "configuration": {
-        "template": "https://www.googleapis.com/customsearch/v1?key={{PALM_KEY}}&cx={{GOOGLE_CSE_ID}}&q={{query}}"
+        "template": "https://www.googleapis.com/customsearch/v1?key={PALM_KEY}&cx={GOOGLE_CSE_ID}&q={query}"
       }
     },
     {

@@ -23,7 +23,7 @@ const summarizingTemplate = kit
 
 const searchURLTemplate = kit
   .urlTemplate(
-    "https://www.googleapis.com/customsearch/v1?key={{PALM_KEY}}&cx={{GOOGLE_CSE_ID}}&q={{query}}"
+    "https://www.googleapis.com/customsearch/v1?key={PALM_KEY}&cx={GOOGLE_CSE_ID}&q={query}"
   )
   .wire(
     "url",

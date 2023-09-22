@@ -42,7 +42,7 @@
     {
       "from": "make-pinecone-url",
       "to": "pinecone-api-call",
-      "out": "prompt",
+      "out": "url",
       "in": "url"
     },
     {
@@ -109,9 +109,9 @@
     },
     {
       "id": "make-pinecone-url",
-      "type": "promptTemplate",
+      "type": "urlTemplate",
       "configuration": {
-        "template": "https://{{PINECONE_INDEX}}-{{PINECONE_PROJECT_ID}}.svc.{{PINECONE_ENVIRONMENT}}.pinecone.io/{{call}}"
+        "template": "https://{PINECONE_INDEX}-{PINECONE_PROJECT_ID}.svc.{PINECONE_ENVIRONMENT}.pinecone.io/{+call}"
       }
     },
     {

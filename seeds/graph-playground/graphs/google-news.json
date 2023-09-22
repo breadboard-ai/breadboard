@@ -80,7 +80,7 @@
       "id": "urlTemplate-2",
       "type": "urlTemplate",
       "configuration": {
-        "template": "https://news.google.com/rss/search?q={{query}}&hl=en-US&gl=US&ceid=US:en"
+        "template": "https://news.google.com/rss/search?q={query}&hl=en-US&gl=US&ceid=US:en"
       }
     },
     {

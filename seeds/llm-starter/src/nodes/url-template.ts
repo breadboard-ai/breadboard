@@ -6,6 +6,8 @@
 
 import type { InputValues } from "@google-labs/graph-runner";
 
+import { parseTemplate } from "url-template";
+
 /**
  * A simple node for making valid URLs out of templates.
  */
@@ -22,15 +24,8 @@ export type UrlTemplateInputs = {
   template: string;
 };
 
-const substitute = (template: string, values: Record<string, string>) => {
-  return Object.entries(values).reduce(
-    (acc, [key, value]) => acc.replace(`{{${key}}}`, encodeURIComponent(value)),
-    template
-  );
-};
-
 export default async (inputs: InputValues) => {
   const { template, ...values } = inputs as UrlTemplateInputs;
-  const url = substitute(template, values);
+  const url = parseTemplate(template).expand(values);
   return { url };
 };

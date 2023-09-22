@@ -28,7 +28,7 @@ input.wire(
   "text->query",
   kit
     .urlTemplate(
-      "https://news.google.com/rss/search?q={{query}}&hl=en-US&gl=US&ceid=US:en"
+      "https://news.google.com/rss/search?q={query}&hl=en-US&gl=US&ceid=US:en"
     )
     .wire(
       "url->",

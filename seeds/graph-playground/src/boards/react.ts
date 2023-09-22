@@ -147,7 +147,7 @@ const search = () => {
     .wire("prompt->text", completion);
   const searchURLTemplate = kit
     .urlTemplate(
-      "https://www.googleapis.com/customsearch/v1?key={{PALM_KEY}}&cx={{GOOGLE_CSE_ID}}&q={{query}}"
+      "https://www.googleapis.com/customsearch/v1?key={PALM_KEY}&cx={GOOGLE_CSE_ID}&q={query}"
     )
     .wire("<-PALM_KEY.", secrets)
     .wire("<-GOOGLE_CSE_ID.", secrets)
