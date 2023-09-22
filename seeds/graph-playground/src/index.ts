@@ -97,9 +97,12 @@ async function main(args: string[], use_input_handler = false) {
   };
 
   const show = (outputs: OutputValues) => {
-    const { text } = outputs;
-    if (typeof text == "string") log.success(wrap(text));
-    else log.success(JSON.stringify(text));
+    Object.entries(outputs).forEach(([key, output]) => {
+      if (key === "schema") return;
+      const title = key === "text" ? "" : `${key}: `;
+      if (typeof output == "string") log.info(wrap(`${title}${output}`));
+      else log.success(`${title}${JSON.stringify(output)}`);
+    });
   };
 
   // Use Breadboard probe feature to create a nice note in CLI for
