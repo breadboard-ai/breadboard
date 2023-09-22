@@ -75,7 +75,7 @@
                 "from": "format-to-api",
                 "to": "pinecone-api-upsert",
                 "out": "result",
-                "in": "body"
+                "in": "vectors"
               },
               {
                 "from": "generate-embeddings",

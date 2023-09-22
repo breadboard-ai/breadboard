@@ -60,11 +60,6 @@ board
       },
     },
   })
-  .wire(
-    "vectors->",
-    starter
-      .jsonata("$", { $id: "send-as-is" })
-      .wire("result->body", apiCall.wire("response->", board.output()))
-  );
+  .wire("vectors->", apiCall.wire("response->", board.output()));
 
 export default board;

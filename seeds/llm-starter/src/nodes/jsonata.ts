@@ -23,5 +23,6 @@ export default async (inputs: InputValues) => {
   if (!expression) throw new Error("Jsonata node requires `expression` input");
   const json = rest.json || rest;
   const result = await jsonata(expression).evaluate(json);
+  if (expression == "$") console.log("jsonata", { json, result });
   return raw ? result : { result };
 };

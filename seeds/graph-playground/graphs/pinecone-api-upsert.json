@@ -22,14 +22,8 @@
       "in": "response"
     },
     {
-      "from": "send-as-is",
-      "to": "pinecone-api-call",
-      "out": "result",
-      "in": "body"
-    },
-    {
       "from": "vectors",
-      "to": "send-as-is",
+      "to": "pinecone-api-call",
       "out": "vectors",
       "in": "vectors"
     }
@@ -94,13 +88,6 @@
             }
           }
         }
-      }
-    },
-    {
-      "id": "send-as-is",
-      "type": "jsonata",
-      "configuration": {
-        "expression": "$"
       }
     },
     {

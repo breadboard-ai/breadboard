@@ -55,7 +55,10 @@ const processBatch = lambda(async (board, input, output) => {
             '{ "vectors": item.[ { "id": id, "values": embedding, "metadata": metadata } ]}',
             { $id: "format-to-api" }
           )
-          .wire("result->body", pineconeUpsert.wire("response->item", output))
+          .wire(
+            "result->vectors",
+            pineconeUpsert.wire("response->item", output)
+          )
       )
   );
 });
