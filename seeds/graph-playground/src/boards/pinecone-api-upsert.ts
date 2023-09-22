@@ -5,7 +5,6 @@
  */
 
 import { Board } from "@google-labs/breadboard";
-import { Starter } from "@google-labs/llm-starter";
 
 const board = new Board({
   title: "Pinecone API upsert invocation",
@@ -13,8 +12,6 @@ const board = new Board({
     "This board invokes the Pinecone [`vectors/upsert`](https://docs.pinecone.io/reference/upsert) API.",
   version: "0.0.1",
 });
-
-const starter = board.addKit(Starter);
 
 const apiCall = board
   .include("pinecone-vector-api.json", { $id: "pinecone-api-call" })
@@ -29,30 +26,37 @@ board
       title: "The body of the API call",
       properties: {
         vectors: {
-          type: "array",
+          type: "object",
           title: "Vectors",
-          description:
-            "The vectors to upsert -- an array of objects with `id`, `values` and `metadata` properties",
-          items: {
-            type: "object",
-            properties: {
-              id: {
-                type: "string",
-                title: "ID",
-                description: "The ID of the vector",
-              },
-              values: {
-                type: "array",
-                title: "Values",
-                description: "The vector: a list of floats",
-                items: {
-                  type: "number",
-                },
-              },
-              metadata: {
+          description: "The body of the API call",
+          properties: {
+            vectors: {
+              type: "array",
+              title: "Vectors",
+              description:
+                "The vectors to upsert -- an array of objects with `id`, `values` and `metadata` properties",
+              items: {
                 type: "object",
-                title: "Metadata",
-                description: "The metadata associated with the vector",
+                properties: {
+                  id: {
+                    type: "string",
+                    title: "ID",
+                    description: "The ID of the vector",
+                  },
+                  values: {
+                    type: "array",
+                    title: "Values",
+                    description: "The vector: a list of floats",
+                    items: {
+                      type: "number",
+                    },
+                  },
+                  metadata: {
+                    type: "object",
+                    title: "Metadata",
+                    description: "The metadata associated with the vector",
+                  },
+                },
               },
             },
           },
