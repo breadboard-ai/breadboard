@@ -60,6 +60,6 @@ board
       },
     },
   })
-  .wire("vectors->", apiCall.wire("response->", board.output()));
+  .wire("vectors->body", apiCall.wire("response->", board.output()));
 
 export default board;

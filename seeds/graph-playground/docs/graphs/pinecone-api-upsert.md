@@ -8,7 +8,7 @@ graph TD;
 upsert(("passthrough <br> id='upsert'")):::passthrough -- "call->call" --> pineconeapicall[["include <br> id='pinecone-api-call'"]]:::include
 include1[["include <br> id='include-1'"]]:::include -- "config->config" --> pineconeapicall[["include <br> id='pinecone-api-call'"]]:::include
 pineconeapicall[["include <br> id='pinecone-api-call'"]]:::include -- "response->response" --> output2{{"output <br> id='output-2'"}}:::output
-vectors[/"input <br> id='vectors'"/]:::input -- "vectors->vectors" --> pineconeapicall[["include <br> id='pinecone-api-call'"]]:::include
+vectors[/"input <br> id='vectors'"/]:::input -- "vectors->body" --> pineconeapicall[["include <br> id='pinecone-api-call'"]]:::include
 $refpineconeapicall[$ref]:::config -- "$ref->$ref" --o pineconeapicall
 callupsert[call]:::config -- "call->call" --o upsert
 $refinclude1[$ref]:::config -- "$ref->$ref" --o include1
