@@ -1,22 +1,20 @@
-import path from 'path';
-import esbuild from 'esbuild';
-import { Plugin } from 'rollup';
-import { NodeGlobalsPolyfillPlugin } from '@esbuild-plugins/node-globals-polyfill';
-import { NodeModulesPolyfillPlugin } from '@esbuild-plugins/node-modules-polyfill';
+import esbuild from "esbuild";
+import { Plugin } from "rollup";
+import { NodeGlobalsPolyfillPlugin } from "@esbuild-plugins/node-globals-polyfill";
+import { NodeModulesPolyfillPlugin } from "@esbuild-plugins/node-modules-polyfill";
 
-const GraphPlugin = (kits: []): Plugin => {
+const GraphPlugin = (kits: string[]): Plugin => {
   return {
-    name: 'vite-plugin-kits',
+    name: "vite-plugin-kits",
     async buildStart() {
       for (const kit of kits) {
         console.log("Emitting kit", kit);
-        this.emitFile(
-          {
-            type: 'chunk',
-            id: kit,
-            fileName: `${kit}.js`,
-            name: kit,
-          });
+        this.emitFile({
+          type: "chunk",
+          id: kit,
+          fileName: `${kit}.js`,
+          name: kit,
+        });
       }
     },
     configureServer(server) {
@@ -27,29 +25,29 @@ const GraphPlugin = (kits: []): Plugin => {
               const buildOutput = await esbuild.build({
                 entryPoints: [kit],
                 bundle: true,
-                format: 'esm',
-                platform: 'browser',
+                format: "esm",
+                platform: "browser",
                 write: false,
-                plugins: [NodeModulesPolyfillPlugin(), NodeGlobalsPolyfillPlugin({ process: false, })], // So it's not 
+                plugins: [
+                  NodeModulesPolyfillPlugin(),
+                  NodeGlobalsPolyfillPlugin({ process: false }),
+                ], // So it's not
               });
 
               const finalOutput = buildOutput.outputFiles[0].text;
 
-              res.setHeader('Content-Type', 'text/javascript');
+              res.setHeader("Content-Type", "text/javascript");
               return res.end(finalOutput);
-
-            }
-            catch (e) {
+            } catch (e) {
               console.error(e);
             }
-
           }
         }
 
         next();
       });
-    }
-  }
+    },
+  } as Plugin;
 };
 
 export default GraphPlugin;

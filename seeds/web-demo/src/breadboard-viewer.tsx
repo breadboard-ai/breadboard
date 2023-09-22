@@ -22,7 +22,6 @@ export function BreadboardViewerApp() {
   const runButtonRef = useRef();
 
   const graphUrl = signal(simpleGraph);
-  const error = signal("");
   const board = signal<Board | undefined>(undefined);
 
   const loadGraph = async (e) => {
