@@ -43,7 +43,8 @@ Otherwise, write a comprehensive answer to the question using only the informati
 
 const apiCall = board
   .include("pinecone-vector-api.json", { $id: "pinecone-api-call" })
-  .wire("<-call", board.passthrough({ $id: "query-api", call: "query" }));
+  .wire("<-call", board.passthrough({ $id: "query-api", call: "query" }))
+  .wire("<-config", board.include("pinecone-api-config.json"));
 
 board
   .input({ $id: "query" })

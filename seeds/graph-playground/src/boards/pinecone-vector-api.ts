@@ -31,17 +31,55 @@ const api = board.input({
         title: "Body",
         description: "The body of the API call",
       },
+      config: {
+        type: "object",
+        title: "Pinecone API configuration",
+        description:
+          "The Pinecone API configuration, as returned by the `pinecone-api-config` board",
+        properties: {
+          PINECONE_INDEX: {
+            type: "string",
+            title: "Pinecone index",
+            description: "The name of the Pinecone index to use",
+          },
+          PINECONE_PROJECT_ID: {
+            type: "string",
+            title: "Pinecone project ID",
+            description: "The ID of the Pinecone project to use",
+          },
+          PINECONE_ENVIRONMENT: {
+            type: "string",
+            title: "Pinecone environment",
+            description: "The Pinecone environment to use",
+          },
+          PINECONE_API_KEY: {
+            type: "string",
+            title: "Pinecone API key",
+            description: "The Pinecone API key to use",
+          },
+        },
+        required: [
+          "PINECONE_ENVIRONMENT",
+          "PINECONE_API_KEY",
+          "PINECONE_INDEX",
+          "PINECONE_PROJECT_ID",
+        ],
+      },
     },
     required: ["api"],
   },
 });
+
+const config = starter
+  .jsonata("config", { $id: "config", raw: true })
+  .wire("<-config", api);
 
 const headers = starter
   .jsonata(
     '{ "Api-Key": $, "Accept": "application/json", "Content-Type": "application/json" }',
     { $id: "make-headers" }
   )
-  .wire("json<-PINECONE_API_KEY", starter.secrets(["PINECONE_API_KEY"]));
+  .wire("json<-PINECONE_API_KEY", config);
 
 starter
   .fetch(false, {
@@ -58,9 +96,9 @@ starter
           $id: "make-pinecone-url",
         }
       )
-      .wire("<-PINECONE_INDEX", starter.secrets(["PINECONE_INDEX"]))
-      .wire("<-PINECONE_PROJECT_ID", starter.secrets(["PINECONE_PROJECT_ID"]))
-      .wire("<-PINECONE_ENVIRONMENT", starter.secrets(["PINECONE_ENVIRONMENT"]))
+      .wire("<-PINECONE_INDEX", config)
+      .wire("<-PINECONE_PROJECT_ID", config)
+      .wire("<-PINECONE_ENVIRONMENT", config)
       .wire("<-call", api)
   )
   .wire("<-body", api)

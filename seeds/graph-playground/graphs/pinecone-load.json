@@ -72,6 +72,12 @@
                 "in": "call"
               },
               {
+                "from": "include-3",
+                "to": "pinecone-api-call",
+                "out": "config",
+                "in": "config"
+              },
+              {
                 "from": "pinecone-api-call",
                 "to": "output-2",
                 "out": "response",
@@ -117,6 +123,13 @@
                 "type": "passthrough",
                 "configuration": {
                   "call": "vectors/upsert"
+                }
+              },
+              {
+                "id": "include-3",
+                "type": "include",
+                "configuration": {
+                  "$ref": "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/pinecone-api-config.json"
                 }
               },
               {

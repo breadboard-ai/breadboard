@@ -10,20 +10,26 @@
       "in": "call"
     },
     {
-      "from": "secrets-3",
-      "to": "embedString-2",
+      "from": "include-2",
+      "to": "pinecone-api-call",
+      "out": "config",
+      "in": "config"
+    },
+    {
+      "from": "secrets-4",
+      "to": "embedString-3",
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
-      "from": "jsonata-4",
+      "from": "jsonata-5",
       "to": "promptTemplate-1",
       "out": "result",
       "in": "context"
     },
     {
       "from": "pinecone-api-call",
-      "to": "jsonata-4",
+      "to": "jsonata-5",
       "out": "response",
       "in": "json"
     },
@@ -34,14 +40,14 @@
       "in": "body"
     },
     {
-      "from": "embedString-2",
+      "from": "embedString-3",
       "to": "make-body",
       "out": "embedding",
       "in": "json"
     },
     {
       "from": "query",
-      "to": "embedString-2",
+      "to": "embedString-3",
       "out": "text",
       "in": "text"
     },
@@ -52,20 +58,20 @@
       "in": "query"
     },
     {
-      "from": "secrets-6",
-      "to": "generateText-5",
+      "from": "secrets-7",
+      "to": "generateText-6",
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
-      "from": "generateText-5",
+      "from": "generateText-6",
       "to": "rag",
       "out": "completion",
       "in": "text"
     },
     {
       "from": "promptTemplate-1",
-      "to": "generateText-5",
+      "to": "generateText-6",
       "out": "prompt",
       "in": "text"
     }
@@ -100,15 +106,22 @@
       }
     },
     {
+      "id": "include-2",
+      "type": "include",
+      "configuration": {
+        "$ref": "pinecone-api-config.json"
+      }
+    },
+    {
       "id": "query",
       "type": "input"
     },
     {
-      "id": "embedString-2",
+      "id": "embedString-3",
       "type": "embedString"
     },
     {
-      "id": "secrets-3",
+      "id": "secrets-4",
       "type": "secrets",
       "configuration": {
         "keys": [
@@ -117,18 +130,18 @@
       }
     },
     {
-      "id": "jsonata-4",
+      "id": "jsonata-5",
       "type": "jsonata",
       "configuration": {
         "expression": "$join(matches.metadata.text, '\n\n')"
       }
     },
     {
-      "id": "generateText-5",
+      "id": "generateText-6",
       "type": "generateText"
     },
     {
-      "id": "secrets-6",
+      "id": "secrets-7",
       "type": "secrets",
       "configuration": {
         "keys": [

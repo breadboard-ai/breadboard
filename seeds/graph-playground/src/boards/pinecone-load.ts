@@ -15,6 +15,9 @@ const PINECONE_BATCH_SIZE = 40;
 const PINECONE_VECTOR_API_BOARD_URL =
   "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/pinecone-vector-api.json";
 
+const PINECONE_API_CONFIG_BOARD_URL =
+  "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/pinecone-api-config.json";
+
 const generateEmebeddings = lambda(
   async (board, input, output) => {
     const nursery = board.addKit(Nursery);
@@ -45,7 +48,8 @@ const processBatch = lambda(async (board, input, output) => {
     .wire(
       "<-call",
       board.passthrough({ $id: "upsert", call: "vectors/upsert" })
-    );
+    )
+    .wire("<-config", board.include(PINECONE_API_CONFIG_BOARD_URL));
 
   input.wire(
     "item->list",
