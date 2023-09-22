@@ -4,6 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// The logic in this file is mostly old thinking and shouldn't be replicated.
+// It's here as a historical artifact.
+// See `call-react-with-slot.ts` for the new thinking.
+
 import {
   Kit,
   NodeFactory,
