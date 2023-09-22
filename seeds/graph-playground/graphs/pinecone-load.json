@@ -66,26 +66,14 @@
           "board": {
             "edges": [
               {
-                "from": "upsert",
-                "to": "pinecone-api-call",
-                "out": "call",
-                "in": "call"
-              },
-              {
-                "from": "include-3",
-                "to": "pinecone-api-call",
-                "out": "config",
-                "in": "config"
-              },
-              {
-                "from": "pinecone-api-call",
+                "from": "pinecone-api-upsert",
                 "to": "output-2",
                 "out": "response",
                 "in": "item"
               },
               {
                 "from": "format-to-api",
-                "to": "pinecone-api-call",
+                "to": "pinecone-api-upsert",
                 "out": "result",
                 "in": "body"
               },
@@ -112,24 +100,10 @@
                 "type": "output"
               },
               {
-                "id": "pinecone-api-call",
+                "id": "pinecone-api-upsert",
                 "type": "include",
                 "configuration": {
-                  "$ref": "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/pinecone-vector-api.json"
-                }
-              },
-              {
-                "id": "upsert",
-                "type": "passthrough",
-                "configuration": {
-                  "call": "vectors/upsert"
-                }
-              },
-              {
-                "id": "include-3",
-                "type": "include",
-                "configuration": {
-                  "$ref": "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/pinecone-api-config.json"
+                  "$ref": "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/pinecone-api-upsert.json"
                 }
               },
               {
