@@ -7,12 +7,9 @@
 graph TD;
 map2["map <br> id='map-2'"] -- "list->text" --> output3{{"output <br> id='output-3'"}}:::output
 subgraph sg_map2 [map-2]
-map2_secrets3("secrets <br> id='secrets-3'"):::secrets -- "PINECONE_API_KEY->json" --> map2_makeheaders["jsonata <br> id='make-headers'"]
-map2_makeheaders["jsonata <br> id='make-headers'"] -- "result->headers" --> map2_pineconeupsertapi["fetch <br> id='pinecone-upsert-api'"]
-map2_secrets4("secrets <br> id='secrets-4'"):::secrets -- "PINECONE_URL->PINECONE_URL" --> map2_makepineconeurl["promptTemplate <br> id='make-pinecone-url'"]
-map2_makepineconeurl["promptTemplate <br> id='make-pinecone-url'"] -- "prompt->url" --> map2_pineconeupsertapi["fetch <br> id='pinecone-upsert-api'"]
-map2_pineconeupsertapi["fetch <br> id='pinecone-upsert-api'"] -- "response->item" --> map2_output2{{"output <br> id='output-2'"}}:::output
-map2_formattoapi["jsonata <br> id='format-to-api'"] -- "result->body" --> map2_pineconeupsertapi["fetch <br> id='pinecone-upsert-api'"]
+map2_upsert(("passthrough <br> id='upsert'")):::passthrough -- "call->call" --> map2_pineconeapicall[["include <br> id='pinecone-api-call'"]]:::include
+map2_pineconeapicall[["include <br> id='pinecone-api-call'"]]:::include -- "response->item" --> map2_output2{{"output <br> id='output-2'"}}:::output
+map2_formattoapi["jsonata <br> id='format-to-api'"] -- "result->body" --> map2_pineconeapicall[["include <br> id='pinecone-api-call'"]]:::include
 map2_generateembeddings["map <br> id='generate-embeddings'"] -- "list->json" --> map2_formattoapi["jsonata <br> id='format-to-api'"]
 subgraph sg_generateembeddings [generate-embeddings]
 map2_generateembeddings_embedString4["embedString <br> id='embedString-4'"] -- "embedding->embedding" --> map2_generateembeddings_merge["append <br> id='merge'"]
@@ -27,10 +24,6 @@ end
 sg_generateembeddings:::slotted -- "lamdba->lamdba" --o map2_generateembeddings
 
 map2_input1[/"input <br> id='input-1'"/]:::input -- "item->list" --> map2_generateembeddings["map <br> id='generate-embeddings'"]
-
-
-
-
 
 
 

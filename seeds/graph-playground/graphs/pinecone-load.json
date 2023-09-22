@@ -66,38 +66,20 @@
           "board": {
             "edges": [
               {
-                "from": "secrets-3",
-                "to": "make-headers",
-                "out": "PINECONE_API_KEY",
-                "in": "json"
+                "from": "upsert",
+                "to": "pinecone-api-call",
+                "out": "call",
+                "in": "call"
               },
               {
-                "from": "make-headers",
-                "to": "pinecone-upsert-api",
-                "out": "result",
-                "in": "headers"
-              },
-              {
-                "from": "secrets-4",
-                "to": "make-pinecone-url",
-                "out": "PINECONE_URL",
-                "in": "PINECONE_URL"
-              },
-              {
-                "from": "make-pinecone-url",
-                "to": "pinecone-upsert-api",
-                "out": "prompt",
-                "in": "url"
-              },
-              {
-                "from": "pinecone-upsert-api",
+                "from": "pinecone-api-call",
                 "to": "output-2",
                 "out": "response",
                 "in": "item"
               },
               {
                 "from": "format-to-api",
-                "to": "pinecone-upsert-api",
+                "to": "pinecone-api-call",
                 "out": "result",
                 "in": "body"
               },
@@ -124,43 +106,17 @@
                 "type": "output"
               },
               {
-                "id": "make-headers",
-                "type": "jsonata",
+                "id": "pinecone-api-call",
+                "type": "include",
                 "configuration": {
-                  "expression": "{ \"Api-Key\": $, \"Accept\": \"application/json\", \"Content-Type\": \"application/json\" }"
+                  "$ref": "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/pinecone-vector-api.json"
                 }
               },
               {
-                "id": "secrets-3",
-                "type": "secrets",
+                "id": "upsert",
+                "type": "passthrough",
                 "configuration": {
-                  "keys": [
-                    "PINECONE_API_KEY"
-                  ]
-                }
-              },
-              {
-                "id": "pinecone-upsert-api",
-                "type": "fetch",
-                "configuration": {
-                  "raw": false,
-                  "method": "POST"
-                }
-              },
-              {
-                "id": "make-pinecone-url",
-                "type": "promptTemplate",
-                "configuration": {
-                  "template": "{{PINECONE_URL}}/vectors/upsert"
-                }
-              },
-              {
-                "id": "secrets-4",
-                "type": "secrets",
-                "configuration": {
-                  "keys": [
-                    "PINECONE_URL"
-                  ]
+                  "call": "vectors/upsert"
                 }
               },
               {

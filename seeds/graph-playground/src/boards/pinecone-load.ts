@@ -9,6 +9,11 @@ import { Starter } from "@google-labs/llm-starter";
 import { Nursery, lambda } from "@google-labs/node-nursery";
 
 const PINECONE_BATCH_SIZE = 40;
+// TODO: Because URL of the lamdba-created board is not resolved relative to
+// the board that invokes the lambda, only absolute include URLs work.
+// We need to figure out how to resolve relative URLs in labmdas.
+const PINECONE_VECTOR_API_BOARD_URL =
+  "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/pinecone-vector-api.json";
 
 const generateEmebeddings = lambda(
   async (board, input, output) => {
@@ -35,26 +40,11 @@ const processBatch = lambda(async (board, input, output) => {
   const starter = board.addKit(Starter);
   const nursery = board.addKit(Nursery);
 
-  const headers = starter
-    .jsonata(
-      '{ "Api-Key": $, "Accept": "application/json", "Content-Type": "application/json" }',
-      { $id: "make-headers" }
-    )
-    .wire("json<-PINECONE_API_KEY", starter.secrets(["PINECONE_API_KEY"]));
-
-  const apiCall = starter
-    .fetch(false, {
-      $id: "pinecone-upsert-api",
-      method: "POST",
-    })
-    .wire("headers<-result", headers)
+  const apiCall = board
+    .include(PINECONE_VECTOR_API_BOARD_URL, { $id: "pinecone-api-call" })
     .wire(
-      "url<-prompt",
-      starter
-        .promptTemplate("{{PINECONE_URL}}/vectors/upsert", {
-          $id: "make-pinecone-url",
-        })
-        .wire("<-PINECONE_URL", starter.secrets(["PINECONE_URL"]))
+      "<-call",
+      board.passthrough({ $id: "upsert", call: "vectors/upsert" })
     );
 
   input.wire(
