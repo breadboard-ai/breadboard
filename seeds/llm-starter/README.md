@@ -359,8 +359,8 @@ We will get this output:
 #### Inputs:
 
 - `expression` -- required, a string that contains the JSONata expression to be executed.
-- `json` -- a required JSON object that will be used as the context for the expression.
 - `raw` -- an optional boolean that specifies whether the result of the expression should be passed as-is (`true`), or it should be passed as the `result` output property (`false`, default).
+- `json` -- an optional JSON object that will be used as the context for the expression. If `json` is not specified, the node will use the input property bag (minus `expression` and `raw`) as the context.
 
 #### Outputs:
 
