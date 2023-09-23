@@ -18,7 +18,8 @@
     "url": "https://github.com/google/labs-prototypes"
   },
   "files": [
-    "dist/src"
+    "dist/src",
+    "graphs"
   ],
   "ava": {
     "files": [
