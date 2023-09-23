@@ -1,6 +1,6 @@
-# pinecone-vector-api
-  - Original: [`pinecone-vector-api.ts`](../../src/boards/pinecone-vector-api.ts)
-  - Graph: [`pinecone-vector-api.json`](../../graphs/pinecone-vector-api.json)
+# pinecone-api-vector
+  - Original: [`pinecone-api-vector.ts`](../../src/boards/pinecone-api-vector.ts)
+  - Graph: [`pinecone-api-vector.json`](../../graphs/pinecone-api-vector.json)
   
   ```mermaid
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
