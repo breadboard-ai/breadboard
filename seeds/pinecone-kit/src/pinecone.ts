@@ -16,7 +16,7 @@ const NODES = ["config", "query", "upsert", "vector"] as const;
 
 const KIT_PACKAGE_URL = "npm:@google-labs/pinecone-kit";
 
-export const Pinecone = makeKit<typeof NODES>(
+export const Pinecone = makeKit(
   await makeHandlersFromUrls(NODES, KIT_BASE_URL, NAMESPACE),
   NODES,
   KIT_PACKAGE_URL,
