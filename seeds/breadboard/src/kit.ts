@@ -4,8 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { KitDescriptor } from "@google-labs/graph-runner";
-import { Kit, KitConstructor } from "./types.js";
+import { KitDescriptor, NodeHandlers } from "@google-labs/graph-runner";
+import {
+  GenericKit,
+  Kit,
+  KitConstructor,
+  NodeFactory,
+  OptionalIdConfiguration,
+} from "./types.js";
 
 const urlToNpmSpec = (url: string): string => {
   const urlObj = new URL(url);
@@ -38,3 +44,33 @@ export class KitLoader {
     ).filter(Boolean);
   }
 }
+
+export const makeKit = <T extends readonly string[]>(
+  handlers: NodeHandlers,
+  nodes: T,
+  url: string,
+  prefix: string
+) => {
+  return class implements Kit {
+    url = url;
+
+    get handlers() {
+      return handlers;
+    }
+
+    constructor(nodeFactory: NodeFactory) {
+      return new Proxy(this, {
+        get(target, prop: string) {
+          if (prop === "handlers" || prop === "url") {
+            return target[prop];
+          } else if (nodes.includes(prop as T[number])) {
+            return (config: OptionalIdConfiguration = {}) => {
+              const { $id, ...rest } = config;
+              return nodeFactory.create(`${prefix}${prop}`, { ...rest }, $id);
+            };
+          }
+        },
+      });
+    }
+  } as KitConstructor<GenericKit<T>>;
+};

@@ -76,6 +76,14 @@ export interface KitConstructor<T extends Kit> {
   new (nodeFactory: NodeFactory): T;
 }
 
+type Key = string | symbol | number;
+
+export type GenericKit<T extends readonly Key[]> = Kit & {
+  [key in T[number]]: <In = unknown, Out = unknown>(
+    config?: OptionalIdConfiguration
+  ) => BreadboardNode<In, Out>;
+};
+
 /**
  * Validator metadata for a node.
  * Used e.g. in ProbeDetails.

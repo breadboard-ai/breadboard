@@ -20,4 +20,5 @@ export type {
   OptionalIdConfiguration,
   RunResultType,
   KitConstructor,
+  GenericKit,
 } from "./types.js";

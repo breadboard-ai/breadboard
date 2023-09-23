@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { makeHandlersFromUrls, makeKit } from "./kit.js";
+import { makeHandlersFromUrls } from "./kit.js";
+import { makeKit } from "@google-labs/breadboard/kits";
 
 // TODO: Replace with a well-known published URL, like a CDN.
 const KIT_BASE_URL =
