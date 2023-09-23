@@ -7,15 +7,17 @@
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 import { Nursery } from "@google-labs/node-nursery";
+import { Pinecone } from "@google-labs/pinecone-kit";
 
 const board = new Board({
   title: "Retrieval-augmented generation with Pinecone",
   description:
-    "This board implements the simples possible retrieval-augmented generation system using Pinecone store. The store was generated with [pinecone-load](https://github.com/google/labs-prototypes/blob/main/seeds/graph-playground/graphs/pinecone-load.json).",
+    "This board implements the simples possible retrieval-augmented generation (RAG) system using Pinecone store. The store was generated with [pinecone-load](https://github.com/google/labs-prototypes/blob/main/seeds/graph-playground/graphs/pinecone-load.json).",
   version: "0.0.1",
 });
 const starter = board.addKit(Starter);
 const nursery = board.addKit(Nursery);
+const pinecone = board.addKit(Pinecone);
 
 const template =
   starter.promptTemplate(`Analyze the question and the knowledge base, provided below.
@@ -34,10 +36,6 @@ Otherwise, write a comprehensive answer to the question using only the informati
 # Answer
 `);
 
-const pineconeQuery = board.include("pinecone-api-query.json", {
-  $id: "pinecone-api-query",
-});
-
 board
   .input({ $id: "query" })
   .wire(
@@ -47,12 +45,14 @@ board
       .wire("<-PALM_KEY", starter.secrets(["PALM_KEY"]))
       .wire(
         "embedding->",
-        pineconeQuery.wire(
-          "response->json",
-          starter
-            .jsonata("$join(matches.metadata.text, '\n\n')")
-            .wire("result->context", template)
-        )
+        pinecone
+          .query()
+          .wire(
+            "response->json",
+            starter
+              .jsonata("$join(matches.metadata.text, '\n\n')")
+              .wire("result->context", template)
+          )
       )
   )
   .wire("text->query", template);

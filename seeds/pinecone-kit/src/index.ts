@@ -4,4 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-console.log("code goes here");
+import { Pinecone } from "./pinecone.js";
+export default Pinecone;
+export { Pinecone };

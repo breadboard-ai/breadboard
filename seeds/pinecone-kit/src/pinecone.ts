@@ -19,15 +19,16 @@ import pineconeVector from "./boards/pinecone-api-vector.js";
 
 const wrapBoard = (board: Board) => {
   return async (inputs: InputValues) => {
+    board.url = inputs["$boardUrl"] as string;
     return await board.runOnce(inputs);
   };
 };
 
 const handlers: NodeHandlers = {
-  config: wrapBoard(pineconeAPIConfig),
-  query: wrapBoard(pineconeQuery),
-  upsert: wrapBoard(pineconeUpsert),
-  vector: wrapBoard(pineconeVector),
+  "pinecone-config": wrapBoard(pineconeAPIConfig),
+  "pinecone-query": wrapBoard(pineconeQuery),
+  "pinecone-upsert": wrapBoard(pineconeUpsert),
+  "pinecone-vector": wrapBoard(pineconeVector),
 };
 
 export class Pinecone implements Kit {
@@ -45,23 +46,23 @@ export class Pinecone implements Kit {
     this.#handlers = handlers;
   }
 
-  config(config: OptionalIdConfiguration) {
+  config(config: OptionalIdConfiguration = {}) {
     const { $id, ...rest } = config;
-    return this.#nodeFactory.create("config", { ...rest }, $id);
+    return this.#nodeFactory.create("pinecone-config", { ...rest }, $id);
   }
 
-  query(config: OptionalIdConfiguration) {
+  query(config: OptionalIdConfiguration = {}) {
     const { $id, ...rest } = config;
-    return this.#nodeFactory.create("query", { ...rest }, $id);
+    return this.#nodeFactory.create("pinecone-query", { ...rest }, $id);
   }
 
-  upsert(config: OptionalIdConfiguration) {
+  upsert(config: OptionalIdConfiguration = {}) {
     const { $id, ...rest } = config;
-    return this.#nodeFactory.create("upsert", { ...rest }, $id);
+    return this.#nodeFactory.create("pinecone-upsert", { ...rest }, $id);
   }
 
-  vector(config: OptionalIdConfiguration) {
+  vector(config: OptionalIdConfiguration = {}) {
     const { $id, ...rest } = config;
-    return this.#nodeFactory.create("vector", { ...rest }, $id);
+    return this.#nodeFactory.create("pinecone-vector", { ...rest }, $id);
   }
 }

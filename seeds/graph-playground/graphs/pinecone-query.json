@@ -1,6 +1,6 @@
 {
   "title": "Retrieval-augmented generation with Pinecone",
-  "description": "This board implements the simples possible retrieval-augmented generation system using Pinecone store. The store was generated with [pinecone-load](https://github.com/google/labs-prototypes/blob/main/seeds/graph-playground/graphs/pinecone-load.json).",
+  "description": "This board implements the simples possible retrieval-augmented generation (RAG) system using Pinecone store. The store was generated with [pinecone-load](https://github.com/google/labs-prototypes/blob/main/seeds/graph-playground/graphs/pinecone-load.json).",
   "version": "0.0.1",
   "edges": [
     {
@@ -10,20 +10,20 @@
       "in": "PALM_KEY"
     },
     {
-      "from": "jsonata-4",
+      "from": "jsonata-5",
       "to": "promptTemplate-1",
       "out": "result",
       "in": "context"
     },
     {
-      "from": "pinecone-api-query",
-      "to": "jsonata-4",
+      "from": "pinecone-query-4",
+      "to": "jsonata-5",
       "out": "response",
       "in": "json"
     },
     {
       "from": "embedString-2",
-      "to": "pinecone-api-query",
+      "to": "pinecone-query-4",
       "out": "embedding",
       "in": "embedding"
     },
@@ -40,20 +40,20 @@
       "in": "query"
     },
     {
-      "from": "secrets-6",
-      "to": "generateText-5",
+      "from": "secrets-7",
+      "to": "generateText-6",
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
-      "from": "generateText-5",
+      "from": "generateText-6",
       "to": "rag",
       "out": "completion",
       "in": "text"
     },
     {
       "from": "promptTemplate-1",
-      "to": "generateText-5",
+      "to": "generateText-6",
       "out": "prompt",
       "in": "text"
     }
@@ -64,13 +64,6 @@
       "type": "promptTemplate",
       "configuration": {
         "template": "Analyze the question and the knowledge base, provided below.\n  \nIf the knowledge base does not contain the information to produce the answer, tell the user that you don't know.\n\nOtherwise, write a comprehensive answer to the question using only the information from the knowledge base.\n\n# Question:\n\n{{query}}\n\n# Knowledge Base:\n{{context}}\n\n# Answer\n"
-      }
-    },
-    {
-      "id": "pinecone-api-query",
-      "type": "include",
-      "configuration": {
-        "$ref": "pinecone-api-query.json"
       }
     },
     {
@@ -91,18 +84,22 @@
       }
     },
     {
-      "id": "jsonata-4",
+      "id": "pinecone-query-4",
+      "type": "pinecone-query"
+    },
+    {
+      "id": "jsonata-5",
       "type": "jsonata",
       "configuration": {
         "expression": "$join(matches.metadata.text, '\n\n')"
       }
     },
     {
-      "id": "generateText-5",
+      "id": "generateText-6",
       "type": "generateText"
     },
     {
-      "id": "secrets-6",
+      "id": "secrets-7",
       "type": "secrets",
       "configuration": {
         "keys": [
@@ -121,6 +118,9 @@
     },
     {
       "url": "npm:@google-labs/node-nursery"
+    },
+    {
+      "url": "npm:@google-labs/pinecone-kit"
     }
   ]
 }

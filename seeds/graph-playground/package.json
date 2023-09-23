@@ -57,6 +57,7 @@
     "@google-labs/breadboard": "*",
     "@google-labs/graph-integrity": "*",
     "@google-labs/llm-starter": "*",
+    "@google-labs/pinecone-kit": "*",
     "@google-labs/node-nursery": "*",
     "dotenv": "^16.3.1"
   },
