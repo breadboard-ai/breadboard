@@ -19,4 +19,5 @@ export type {
   BreadboardNode,
   OptionalIdConfiguration,
   RunResultType,
+  KitConstructor,
 } from "./types.js";
