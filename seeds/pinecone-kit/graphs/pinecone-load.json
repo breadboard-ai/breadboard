@@ -1,0 +1,233 @@
+{
+  "title": "Loading Chunks into Pinecone",
+  "description": "This board is a simple example of loading chunked data into Pinecone.",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "map-2",
+      "to": "output-3",
+      "out": "list",
+      "in": "text"
+    },
+    {
+      "from": "batcher-1",
+      "to": "map-2",
+      "out": "list",
+      "in": "list"
+    },
+    {
+      "from": "get-content",
+      "to": "batcher-1",
+      "out": "result",
+      "in": "list"
+    },
+    {
+      "from": "load-chunks",
+      "to": "get-content",
+      "out": "response",
+      "in": "json"
+    },
+    {
+      "from": "url",
+      "to": "load-chunks",
+      "out": "text",
+      "in": "url"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "url",
+      "type": "input"
+    },
+    {
+      "id": "load-chunks",
+      "type": "fetch"
+    },
+    {
+      "id": "get-content",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "content.$zip($keys(),*).{\"id\": $[0],\"metadata\": {\"text\": text,\"url\": info.url,\"title\": info.title,\"description\":info.description}}"
+      }
+    },
+    {
+      "id": "batcher-1",
+      "type": "batcher",
+      "configuration": {
+        "size": 40
+      }
+    },
+    {
+      "id": "map-2",
+      "type": "map",
+      "configuration": {
+        "board": {
+          "kind": "board",
+          "board": {
+            "edges": [
+              {
+                "from": "pinecone-api-upsert",
+                "to": "output-2",
+                "out": "response",
+                "in": "item"
+              },
+              {
+                "from": "format-to-api",
+                "to": "pinecone-api-upsert",
+                "out": "result",
+                "in": "vectors"
+              },
+              {
+                "from": "generate-embeddings",
+                "to": "format-to-api",
+                "out": "list",
+                "in": "json"
+              },
+              {
+                "from": "input-1",
+                "to": "generate-embeddings",
+                "out": "item",
+                "in": "list"
+              }
+            ],
+            "nodes": [
+              {
+                "id": "input-1",
+                "type": "input"
+              },
+              {
+                "id": "output-2",
+                "type": "output"
+              },
+              {
+                "id": "pinecone-api-upsert",
+                "type": "include",
+                "configuration": {
+                  "$ref": "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/pinecone-api-upsert.json"
+                }
+              },
+              {
+                "id": "generate-embeddings",
+                "type": "map",
+                "configuration": {
+                  "board": {
+                    "kind": "board",
+                    "board": {
+                      "edges": [
+                        {
+                          "from": "embedString-4",
+                          "to": "merge",
+                          "out": "embedding",
+                          "in": "embedding"
+                        },
+                        {
+                          "from": "secrets-5",
+                          "to": "embedString-4",
+                          "out": "PALM_KEY",
+                          "in": "PALM_KEY"
+                        },
+                        {
+                          "from": "jsonata-3",
+                          "to": "embedString-4",
+                          "out": "result",
+                          "in": "text"
+                        },
+                        {
+                          "from": "input-1",
+                          "to": "jsonata-3",
+                          "out": "item",
+                          "in": "json"
+                        },
+                        {
+                          "from": "merge",
+                          "to": "output-2",
+                          "out": "accumulator",
+                          "in": "item"
+                        },
+                        {
+                          "from": "input-1",
+                          "to": "merge",
+                          "out": "item",
+                          "in": "accumulator"
+                        }
+                      ],
+                      "nodes": [
+                        {
+                          "id": "input-1",
+                          "type": "input"
+                        },
+                        {
+                          "id": "output-2",
+                          "type": "output"
+                        },
+                        {
+                          "id": "merge",
+                          "type": "append"
+                        },
+                        {
+                          "id": "jsonata-3",
+                          "type": "jsonata",
+                          "configuration": {
+                            "expression": "metadata.text"
+                          }
+                        },
+                        {
+                          "id": "embedString-4",
+                          "type": "embedString"
+                        },
+                        {
+                          "id": "secrets-5",
+                          "type": "secrets",
+                          "configuration": {
+                            "keys": [
+                              "PALM_KEY"
+                            ]
+                          }
+                        }
+                      ],
+                      "kits": [
+                        {
+                          "url": "npm:@google-labs/node-nursery"
+                        },
+                        {
+                          "url": "npm:@google-labs/llm-starter"
+                        }
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "id": "format-to-api",
+                "type": "jsonata",
+                "configuration": {
+                  "expression": "{ \"vectors\": item.[ { \"id\": id, \"values\": embedding, \"metadata\": metadata } ]}"
+                }
+              }
+            ],
+            "kits": [
+              {
+                "url": "npm:@google-labs/llm-starter"
+              },
+              {
+                "url": "npm:@google-labs/node-nursery"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "output-3",
+      "type": "output"
+    }
+  ],
+  "kits": [
+    {
+      "url": "npm:@google-labs/llm-starter"
+    },
+    {
+      "url": "npm:@google-labs/node-nursery"
+    }
+  ]
+}

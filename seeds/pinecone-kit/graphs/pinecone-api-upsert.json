@@ -1,0 +1,106 @@
+{
+  "title": "Pinecone API upsert invocation",
+  "description": "This board invokes the Pinecone [`vectors/upsert`](https://docs.pinecone.io/reference/upsert) API.",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "upsert",
+      "to": "pinecone-api-call",
+      "out": "call",
+      "in": "call"
+    },
+    {
+      "from": "include-1",
+      "to": "pinecone-api-call",
+      "out": "config",
+      "in": "config"
+    },
+    {
+      "from": "pinecone-api-call",
+      "to": "output-2",
+      "out": "response",
+      "in": "response"
+    },
+    {
+      "from": "vectors",
+      "to": "pinecone-api-call",
+      "out": "vectors",
+      "in": "body"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "pinecone-api-call",
+      "type": "include",
+      "configuration": {
+        "$ref": "pinecone-vector-api.json"
+      }
+    },
+    {
+      "id": "upsert",
+      "type": "passthrough",
+      "configuration": {
+        "call": "vectors/upsert"
+      }
+    },
+    {
+      "id": "include-1",
+      "type": "include",
+      "configuration": {
+        "$ref": "pinecone-api-config.json"
+      }
+    },
+    {
+      "id": "vectors",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "title": "The body of the API call",
+          "properties": {
+            "vectors": {
+              "type": "object",
+              "title": "Vectors",
+              "description": "The body of the API call",
+              "properties": {
+                "vectors": {
+                  "type": "array",
+                  "title": "Vectors",
+                  "description": "The vectors to upsert -- an array of objects with `id`, `values` and `metadata` properties",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "title": "ID",
+                        "description": "The ID of the vector"
+                      },
+                      "values": {
+                        "type": "array",
+                        "title": "Values",
+                        "description": "The vector: a list of floats",
+                        "items": {
+                          "type": "number"
+                        }
+                      },
+                      "metadata": {
+                        "type": "object",
+                        "title": "Metadata",
+                        "description": "The metadata associated with the vector"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "output-2",
+      "type": "output"
+    }
+  ],
+  "kits": []
+}

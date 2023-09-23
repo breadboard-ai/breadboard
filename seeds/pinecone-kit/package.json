@@ -9,7 +9,7 @@
   "type": "module",
   "scripts": {
     "test": "FORCE_COLOR=1 ava",
-    "build": "FORCE_COLOR=1 tsc --b",
+    "build": "FORCE_COLOR=1 tsc --b && node ./scripts/prepare.js",
     "watch": "FORCE_COLOR=1 tsc --b --watch",
     "lint": "FORCE_COLOR=1 eslint . --ext .ts"
   },
@@ -47,5 +47,9 @@
     "ava": "^5.2.0",
     "typescript": "^5.0.4",
     "@google-labs/tsconfig": "*"
+  },
+  "dependencies": {
+    "@google-labs/breadboard": "*",
+    "@google-labs/llm-starter": "*"
   }
 }
