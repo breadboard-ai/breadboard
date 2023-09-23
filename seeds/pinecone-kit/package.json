@@ -1,0 +1,51 @@
+{
+  "name": "@google-labs/pinecone-kit",
+  "private": true,
+  "version": "0.0.1",
+  "description": "A collection of Breadboard nodes for working with Pinecone",
+  "main": "./dist/src/index.js",
+  "exports": "./dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "test": "FORCE_COLOR=1 ava",
+    "build": "FORCE_COLOR=1 tsc --b",
+    "watch": "FORCE_COLOR=1 tsc --b --watch",
+    "lint": "FORCE_COLOR=1 eslint . --ext .ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/google/labs-prototypes"
+  },
+  "files": [
+    "dist/src"
+  ],
+  "ava": {
+    "files": [
+      "tests/**/*.ts"
+    ],
+    "workerThreads": false,
+    "typescript": {
+      "rewritePaths": {
+        "./": "dist/"
+      },
+      "compile": false
+    }
+  },
+  "keywords": [],
+  "author": "Google Labs Team",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/google/labs-prototypes/issues"
+  },
+  "homepage": "https://github.com/google/labs-prototypes/tree/main/seeds/pinecone-kit#readme",
+  "devDependencies": {
+    "@ava/typescript": "^4.0.0",
+    "@typescript-eslint/eslint-plugin": "^5.56.0",
+    "@typescript-eslint/parser": "^5.56.0",
+    "@types/node": "^18.16.3",
+    "ava": "^5.2.0",
+    "typescript": "^5.0.4",
+    "@google-labs/tsconfig": "*"
+  }
+}

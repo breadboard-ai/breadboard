@@ -12,6 +12,7 @@
     { "path": "seeds/node-nursery" },
     { "path": "seeds/coffee-bot-board" },
     { "path": "seeds/web-demo" },
-    { "path": "seeds/breadboard-server" }
+    { "path": "seeds/breadboard-server" },
+    { "path": "seeds/pinecone-kit" }
   ]
 }
