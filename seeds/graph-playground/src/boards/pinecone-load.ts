@@ -7,13 +7,9 @@
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 import { Nursery, lambda } from "@google-labs/node-nursery";
+import Pinecone from "@google-labs/pinecone-kit";
 
 const PINECONE_BATCH_SIZE = 40;
-// TODO: Because URL of the lamdba-created board is not resolved relative to
-// the board that invokes the lambda, only absolute include URLs work.
-// We need to figure out how to resolve relative URLs in labmdas.
-const PINECONE_API_UPSERT_BOARD_URL =
-  "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/pinecone-api-upsert.json";
 
 const generateEmebeddings = lambda(
   async (board, input, output) => {
@@ -39,10 +35,7 @@ const generateEmebeddings = lambda(
 const processBatch = lambda(async (board, input, output) => {
   const starter = board.addKit(Starter);
   const nursery = board.addKit(Nursery);
-
-  const pineconeUpsert = board.include(PINECONE_API_UPSERT_BOARD_URL, {
-    $id: "pinecone-api-upsert",
-  });
+  const pinecone = board.addKit(Pinecone);
 
   input.wire(
     "item->list",
@@ -57,7 +50,7 @@ const processBatch = lambda(async (board, input, output) => {
           )
           .wire(
             "result->vectors",
-            pineconeUpsert.wire("response->item", output)
+            pinecone.upsert().wire("response->item", output)
           )
       )
   );

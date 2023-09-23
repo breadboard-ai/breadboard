@@ -66,14 +66,14 @@
           "board": {
             "edges": [
               {
-                "from": "pinecone-api-upsert",
+                "from": "pinecone-upsert-3",
                 "to": "output-2",
                 "out": "response",
                 "in": "item"
               },
               {
                 "from": "format-to-api",
-                "to": "pinecone-api-upsert",
+                "to": "pinecone-upsert-3",
                 "out": "result",
                 "in": "vectors"
               },
@@ -98,13 +98,6 @@
               {
                 "id": "output-2",
                 "type": "output"
-              },
-              {
-                "id": "pinecone-api-upsert",
-                "type": "include",
-                "configuration": {
-                  "$ref": "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/pinecone-api-upsert.json"
-                }
               },
               {
                 "id": "generate-embeddings",
@@ -203,6 +196,10 @@
                 "configuration": {
                   "expression": "{ \"vectors\": item.[ { \"id\": id, \"values\": embedding, \"metadata\": metadata } ]}"
                 }
+              },
+              {
+                "id": "pinecone-upsert-3",
+                "type": "pinecone-upsert"
               }
             ],
             "kits": [
@@ -211,6 +208,9 @@
               },
               {
                 "url": "npm:@google-labs/node-nursery"
+              },
+              {
+                "url": "npm:@google-labs/pinecone-kit"
               }
             ]
           }

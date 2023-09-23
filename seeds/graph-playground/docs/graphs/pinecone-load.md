@@ -7,8 +7,8 @@
 graph TD;
 map2["map <br> id='map-2'"] -- "list->text" --> output3{{"output <br> id='output-3'"}}:::output
 subgraph sg_map2 [map-2]
-map2_pineconeapiupsert[["include <br> id='pinecone-api-upsert'"]]:::include -- "response->item" --> map2_output2{{"output <br> id='output-2'"}}:::output
-map2_formattoapi["jsonata <br> id='format-to-api'"] -- "result->vectors" --> map2_pineconeapiupsert[["include <br> id='pinecone-api-upsert'"]]:::include
+map2_pineconeupsert3["pinecone-upsert <br> id='pinecone-upsert-3'"] -- "response->item" --> map2_output2{{"output <br> id='output-2'"}}:::output
+map2_formattoapi["jsonata <br> id='format-to-api'"] -- "result->vectors" --> map2_pineconeupsert3["pinecone-upsert <br> id='pinecone-upsert-3'"]
 map2_generateembeddings["map <br> id='generate-embeddings'"] -- "list->json" --> map2_formattoapi["jsonata <br> id='format-to-api'"]
 subgraph sg_generateembeddings [generate-embeddings]
 map2_generateembeddings_embedString4["embedString <br> id='embedString-4'"] -- "embedding->embedding" --> map2_generateembeddings_merge["append <br> id='merge'"]
@@ -23,7 +23,6 @@ end
 sg_generateembeddings:::slotted -- "lamdba->lamdba" --o map2_generateembeddings
 
 map2_input1[/"input <br> id='input-1'"/]:::input -- "item->list" --> map2_generateembeddings["map <br> id='generate-embeddings'"]
-
 
 
 end
