@@ -12,6 +12,7 @@ import {
 } from "@google-labs/breadboard";
 import { InputValues, NodeHandlers } from "@google-labs/graph-runner";
 
+// TODO: Replace with a well-known published URL, like a CDN.
 const KIT_URL =
   "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/pinecone-kit/graphs/";
 
