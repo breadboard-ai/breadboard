@@ -27,9 +27,7 @@ const BOARD_URLS = boards.map((board) => `${KIT_URL}${board}.json`);
 const boardHandlers = await Promise.all(
   BOARD_URLS.map(async (url: string) => {
     return async (inputs: InputValues) => {
-      console.log("loading", url);
       const board = await Board.load(url);
-      console.log(board);
       return await board.runOnce(inputs);
     };
   })
