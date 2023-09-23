@@ -16,14 +16,14 @@
       "in": "context"
     },
     {
-      "from": "pinecone-query-4",
+      "from": "pinecone-api-query-4",
       "to": "jsonata-5",
       "out": "response",
       "in": "json"
     },
     {
       "from": "embedString-2",
-      "to": "pinecone-query-4",
+      "to": "pinecone-api-query-4",
       "out": "embedding",
       "in": "embedding"
     },
@@ -84,8 +84,8 @@
       }
     },
     {
-      "id": "pinecone-query-4",
-      "type": "pinecone-query"
+      "id": "pinecone-api-query-4",
+      "type": "pinecone-api-query"
     },
     {
       "id": "jsonata-5",

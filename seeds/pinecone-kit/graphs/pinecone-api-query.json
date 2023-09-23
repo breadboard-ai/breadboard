@@ -46,7 +46,7 @@
       "id": "pinecone-api-call",
       "type": "include",
       "configuration": {
-        "$ref": "pinecone-vector-api.json"
+        "$ref": "pinecone-api-vector.json"
       }
     },
     {

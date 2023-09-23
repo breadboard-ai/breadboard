@@ -25,7 +25,7 @@ const body = starter.jsonata(
 );
 
 const apiCall = board
-  .include("pinecone-vector-api.json", { $id: "pinecone-api-call" })
+  .include("pinecone-api-vector.json", { $id: "pinecone-api-call" })
   .wire("<-call", board.passthrough({ $id: "query-api", call: "query" }))
   .wire("<-config", board.include("pinecone-api-config.json"));
 

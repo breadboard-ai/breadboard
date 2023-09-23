@@ -188,10 +188,6 @@ export class Board implements Breadboard {
       if (["include", "slot"].includes(descriptor.type))
         inputs["parent"] = descriptor;
 
-      // TODO: Is this a total hack or a clever solution to allowing nodes
-      // to load stuff relative to their board?
-      inputs["$boardUrl"] = this.url;
-
       const handler = handlers[descriptor.type];
       if (!handler)
         throw new Error(`No handler for node type "${descriptor.type}"`);

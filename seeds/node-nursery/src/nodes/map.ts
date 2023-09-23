@@ -106,7 +106,6 @@ export default async (inputs: InputValues): Promise<OutputValues> => {
   const runnableBoard = await fromCapability(board);
   const result = await Promise.all(
     list.map(async (item, index) => {
-      runnableBoard.url = inputs["$boardUrl"] as string;
       // TODO: Express as a multi-turn `run`.
       const outputs = await runnableBoard.runOnce({ item, index, list });
       return outputs;

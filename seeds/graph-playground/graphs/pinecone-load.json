@@ -66,14 +66,14 @@
           "board": {
             "edges": [
               {
-                "from": "pinecone-upsert-3",
+                "from": "pinecone-api-upsert-3",
                 "to": "output-2",
                 "out": "response",
                 "in": "item"
               },
               {
                 "from": "format-to-api",
-                "to": "pinecone-upsert-3",
+                "to": "pinecone-api-upsert-3",
                 "out": "result",
                 "in": "vectors"
               },
@@ -198,8 +198,8 @@
                 }
               },
               {
-                "id": "pinecone-upsert-3",
-                "type": "pinecone-upsert"
+                "id": "pinecone-api-upsert-3",
+                "type": "pinecone-api-upsert"
               }
             ],
             "kits": [

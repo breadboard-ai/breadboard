@@ -7,8 +7,8 @@
 graph TD;
 map2["map <br> id='map-2'"] -- "list->text" --> output3{{"output <br> id='output-3'"}}:::output
 subgraph sg_map2 [map-2]
-map2_pineconeupsert3["pinecone-upsert <br> id='pinecone-upsert-3'"] -- "response->item" --> map2_output2{{"output <br> id='output-2'"}}:::output
-map2_formattoapi["jsonata <br> id='format-to-api'"] -- "result->vectors" --> map2_pineconeupsert3["pinecone-upsert <br> id='pinecone-upsert-3'"]
+map2_pineconeapiupsert3["pinecone-api-upsert <br> id='pinecone-api-upsert-3'"] -- "response->item" --> map2_output2{{"output <br> id='output-2'"}}:::output
+map2_formattoapi["jsonata <br> id='format-to-api'"] -- "result->vectors" --> map2_pineconeapiupsert3["pinecone-api-upsert <br> id='pinecone-api-upsert-3'"]
 map2_generateembeddings["map <br> id='generate-embeddings'"] -- "list->json" --> map2_formattoapi["jsonata <br> id='format-to-api'"]
 subgraph sg_generateembeddings [generate-embeddings]
 map2_generateembeddings_embedString4["embedString <br> id='embedString-4'"] -- "embedding->embedding" --> map2_generateembeddings_merge["append <br> id='merge'"]
