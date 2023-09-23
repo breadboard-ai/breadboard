@@ -16,15 +16,15 @@ import { InputValues, NodeHandlers } from "@google-labs/graph-runner";
 
 type Key = string | symbol | number;
 
-export type GenericKit<T extends Key> = Kit & {
-  [key in T]: <In = unknown, Out = unknown>(
+export type GenericKit<T extends readonly Key[]> = Kit & {
+  [key in T[number]]: <In = unknown, Out = unknown>(
     config?: OptionalIdConfiguration
   ) => BreadboardNode<In, Out>;
 };
 
-export const makeKit = <T extends Key>(
+export const makeKit = <T extends readonly Key[]>(
   handlers: NodeHandlers,
-  kitNodes: readonly T[],
+  nodes: T,
   url: string,
   prefix: string
 ) => {
@@ -40,7 +40,7 @@ export const makeKit = <T extends Key>(
         get(target, prop: string) {
           if (prop === "handlers" || prop === "url") {
             return target[prop];
-          } else if (kitNodes.includes(prop as T)) {
+          } else if (nodes.includes(prop as T[number])) {
             return (config: OptionalIdConfiguration = {}) => {
               const { $id, ...rest } = config;
               return nodeFactory.create(`${prefix}${prop}`, { ...rest }, $id);
@@ -54,14 +54,14 @@ export const makeKit = <T extends Key>(
 
 export const makeHandlersFromUrls = async (
   nodes: readonly string[],
-  urlPrefix: string,
+  baseUrl: string,
   nodePrefix: string
 ) => {
   const boards = nodes.map((node) => `${nodePrefix}${node}`);
 
   const boardHandlers = await Promise.all(
     boards
-      .map((board) => `${urlPrefix}${board}.json`)
+      .map((board) => `${baseUrl}${board}.json`)
       .map(async (url: string) => {
         return async (inputs: InputValues) => {
           const board = await Board.load(url);
