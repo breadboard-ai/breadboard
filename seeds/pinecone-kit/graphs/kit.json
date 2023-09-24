@@ -5,7 +5,7 @@
   "edges": [],
   "nodes": [
     {
-      "id": "include-1",
+      "id": "config",
       "type": "include",
       "configuration": {
         "graph": {
@@ -143,7 +143,7 @@
       }
     },
     {
-      "id": "include-2",
+      "id": "query",
       "type": "include",
       "configuration": {
         "graph": {
@@ -244,7 +244,7 @@
       }
     },
     {
-      "id": "include-3",
+      "id": "upsert",
       "type": "include",
       "configuration": {
         "graph": {
@@ -356,7 +356,7 @@
       }
     },
     {
-      "id": "include-4",
+      "id": "vector",
       "type": "include",
       "configuration": {
         "graph": {

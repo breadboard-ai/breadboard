@@ -140,17 +140,7 @@ export class Board implements Breadboard {
     slots?: BreadboardSlotSpec,
     result?: RunResult
   ): AsyncGenerator<RunResult> {
-    const core = new Core(
-      this,
-      { ...this.#slots, ...slots },
-      this.#validators,
-      probe
-    );
-    const kits = [core, ...this.kits];
-    const handlers = kits.reduce((handlers, kit) => {
-      return { ...handlers, ...kit.handlers };
-    }, {} as NodeHandlers);
-
+    const handlers = await Board.handlersFromBoard(this, probe, slots);
     this.#validators.forEach((validator) => validator.addGraph(this));
 
     const machine = new TraversalMachine(this, result?.state);
@@ -525,6 +515,23 @@ export class Board implements Breadboard {
     const board = await Board.fromGraphDescriptor(graph);
     board.#slots = slotted || {};
     return board;
+  }
+
+  static async handlersFromBoard(
+    board: Board,
+    probe?: EventTarget,
+    slots?: BreadboardSlotSpec
+  ): Promise<NodeHandlers> {
+    const core = new Core(
+      board,
+      { ...board.#slots, ...slots },
+      board.#validators,
+      probe
+    );
+    const kits = [core, ...board.kits];
+    return kits.reduce((handlers, kit) => {
+      return { ...handlers, ...kit.handlers };
+    }, {} as NodeHandlers);
   }
 
   static runRemote = runRemote;

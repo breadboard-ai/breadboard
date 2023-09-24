@@ -8,7 +8,6 @@
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
-    "test": "echo test",
     "build:vite": "FORCE_COLOR=1 vite build",
     "watch": "FORCE_COLOR=1 tsc --b --watch && vite build",
     "dev": "vite --host",

@@ -5,10 +5,10 @@
   ```mermaid
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-graphinclude1[graph]:::config -- "graph->graph" --o include1
-graphinclude2[graph]:::config -- "graph->graph" --o include2
-graphinclude3[graph]:::config -- "graph->graph" --o include3
-graphinclude4[graph]:::config -- "graph->graph" --o include4
+graphconfig[graph]:::config -- "graph->graph" --o config
+graphquery[graph]:::config -- "graph->graph" --o query
+graphupsert[graph]:::config -- "graph->graph" --o upsert
+graphvector[graph]:::config -- "graph->graph" --o vector
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
