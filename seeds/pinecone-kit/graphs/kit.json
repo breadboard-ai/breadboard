@@ -1,0 +1,531 @@
+{
+  "title": "Pinecone API Node Kit",
+  "description": "This board is actually a kit: a collection of nodes for working with the Pinecone API.",
+  "version": "0.0.1",
+  "edges": [],
+  "nodes": [
+    {
+      "id": "include-1",
+      "type": "include",
+      "configuration": {
+        "graph": {
+          "title": "Pinecone API configuration helper",
+          "description": "Loads the Pinecone API key and other necessary variables from the environment. Currently looks for the following environment variables: `PINECONE_API_KEY`, `PINECONE_INDEX`, `PINECONE_PROJECT_ID`, `PINECONE_ENVIRONMENT`.",
+          "version": "0.0.1",
+          "edges": [
+            {
+              "from": "secrets-1",
+              "to": "start",
+              "out": "PINECONE_INDEX",
+              "in": "PINECONE_INDEX"
+            },
+            {
+              "from": "secrets-2",
+              "to": "start",
+              "out": "PINECONE_PROJECT_ID",
+              "in": "PINECONE_PROJECT_ID"
+            },
+            {
+              "from": "secrets-3",
+              "to": "start",
+              "out": "PINECONE_ENVIRONMENT",
+              "in": "PINECONE_ENVIRONMENT"
+            },
+            {
+              "from": "secrets-4",
+              "to": "start",
+              "out": "PINECONE_API_KEY",
+              "in": "PINECONE_API_KEY"
+            },
+            {
+              "from": "start",
+              "to": "result",
+              "out": "result",
+              "in": "config"
+            }
+          ],
+          "nodes": [
+            {
+              "id": "start",
+              "type": "jsonata",
+              "configuration": {
+                "expression": "$"
+              }
+            },
+            {
+              "id": "secrets-1",
+              "type": "secrets",
+              "configuration": {
+                "keys": [
+                  "PINECONE_INDEX"
+                ]
+              }
+            },
+            {
+              "id": "secrets-2",
+              "type": "secrets",
+              "configuration": {
+                "keys": [
+                  "PINECONE_PROJECT_ID"
+                ]
+              }
+            },
+            {
+              "id": "secrets-3",
+              "type": "secrets",
+              "configuration": {
+                "keys": [
+                  "PINECONE_ENVIRONMENT"
+                ]
+              }
+            },
+            {
+              "id": "secrets-4",
+              "type": "secrets",
+              "configuration": {
+                "keys": [
+                  "PINECONE_API_KEY"
+                ]
+              }
+            },
+            {
+              "id": "result",
+              "type": "output",
+              "configuration": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "config": {
+                      "type": "object",
+                      "title": "Pinecone API configuration",
+                      "description": "The Pinecone API configuration",
+                      "properties": {
+                        "PINECONE_INDEX": {
+                          "type": "string",
+                          "title": "Pinecone index",
+                          "description": "The name of the Pinecone index to use"
+                        },
+                        "PINECONE_PROJECT_ID": {
+                          "type": "string",
+                          "title": "Pinecone project ID",
+                          "description": "The ID of the Pinecone project to use"
+                        },
+                        "PINECONE_ENVIRONMENT": {
+                          "type": "string",
+                          "title": "Pinecone environment",
+                          "description": "The Pinecone environment to use"
+                        },
+                        "PINECONE_API_KEY": {
+                          "type": "string",
+                          "title": "Pinecone API key",
+                          "description": "The Pinecone API key to use"
+                        }
+                      },
+                      "required": [
+                        "PINECONE_ENVIRONMENT",
+                        "PINECONE_API_KEY"
+                      ]
+                    }
+                  },
+                  "reqired": [
+                    "config"
+                  ]
+                }
+              }
+            }
+          ],
+          "kits": [
+            {
+              "url": "npm:@google-labs/llm-starter"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "include-2",
+      "type": "include",
+      "configuration": {
+        "graph": {
+          "title": "Pinecone API query invocation",
+          "description": "This board invokes the Pinecone [`query`](https://docs.pinecone.io/reference/query) API.",
+          "version": "0.0.1",
+          "edges": [
+            {
+              "from": "query-api",
+              "to": "pinecone-api-call",
+              "out": "call",
+              "in": "call"
+            },
+            {
+              "from": "include-1",
+              "to": "pinecone-api-call",
+              "out": "config",
+              "in": "config"
+            },
+            {
+              "from": "pinecone-api-call",
+              "to": "response",
+              "out": "response",
+              "in": "response"
+            },
+            {
+              "from": "make-body",
+              "to": "pinecone-api-call",
+              "out": "result",
+              "in": "body"
+            },
+            {
+              "from": "query",
+              "to": "make-body",
+              "out": "embedding",
+              "in": "json"
+            }
+          ],
+          "nodes": [
+            {
+              "id": "make-body",
+              "type": "jsonata",
+              "configuration": {
+                "expression": "{ \"vector\": $, \"topK\": 10, \"includeMetadata\": true }"
+              }
+            },
+            {
+              "id": "pinecone-api-call",
+              "type": "include",
+              "configuration": {
+                "$ref": "pinecone-api-vector.json"
+              }
+            },
+            {
+              "id": "query-api",
+              "type": "passthrough",
+              "configuration": {
+                "call": "query"
+              }
+            },
+            {
+              "id": "include-1",
+              "type": "include",
+              "configuration": {
+                "$ref": "pinecone-api-config.json"
+              }
+            },
+            {
+              "id": "query",
+              "type": "input",
+              "configuration": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "embedding": {
+                      "type": "array",
+                      "title": "Embedding",
+                      "description": "The embedding to query -- an array of floats",
+                      "items": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "id": "response",
+              "type": "output"
+            }
+          ],
+          "kits": [
+            {
+              "url": "npm:@google-labs/llm-starter"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "include-3",
+      "type": "include",
+      "configuration": {
+        "graph": {
+          "title": "Pinecone API upsert invocation",
+          "description": "This board invokes the Pinecone [`vectors/upsert`](https://docs.pinecone.io/reference/upsert) API.",
+          "version": "0.0.1",
+          "edges": [
+            {
+              "from": "upsert",
+              "to": "pinecone-api-call",
+              "out": "call",
+              "in": "call"
+            },
+            {
+              "from": "include-1",
+              "to": "pinecone-api-call",
+              "out": "config",
+              "in": "config"
+            },
+            {
+              "from": "pinecone-api-call",
+              "to": "output-2",
+              "out": "response",
+              "in": "response"
+            },
+            {
+              "from": "vectors",
+              "to": "pinecone-api-call",
+              "out": "vectors",
+              "in": "body"
+            }
+          ],
+          "nodes": [
+            {
+              "id": "pinecone-api-call",
+              "type": "include",
+              "configuration": {
+                "$ref": "pinecone-vector-api.json"
+              }
+            },
+            {
+              "id": "upsert",
+              "type": "passthrough",
+              "configuration": {
+                "call": "vectors/upsert"
+              }
+            },
+            {
+              "id": "include-1",
+              "type": "include",
+              "configuration": {
+                "$ref": "pinecone-api-config.json"
+              }
+            },
+            {
+              "id": "vectors",
+              "type": "input",
+              "configuration": {
+                "schema": {
+                  "type": "object",
+                  "title": "The body of the API call",
+                  "properties": {
+                    "vectors": {
+                      "type": "object",
+                      "title": "Vectors",
+                      "description": "The body of the API call",
+                      "properties": {
+                        "vectors": {
+                          "type": "array",
+                          "title": "Vectors",
+                          "description": "The vectors to upsert -- an array of objects with `id`, `values` and `metadata` properties",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "title": "ID",
+                                "description": "The ID of the vector"
+                              },
+                              "values": {
+                                "type": "array",
+                                "title": "Values",
+                                "description": "The vector: a list of floats",
+                                "items": {
+                                  "type": "number"
+                                }
+                              },
+                              "metadata": {
+                                "type": "object",
+                                "title": "Metadata",
+                                "description": "The metadata associated with the vector"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "id": "output-2",
+              "type": "output"
+            }
+          ],
+          "kits": []
+        }
+      }
+    },
+    {
+      "id": "include-4",
+      "type": "include",
+      "configuration": {
+        "graph": {
+          "title": "Pinecone API vector call builder",
+          "description": "This board helps making [vector API calls](https://docs.pinecone.io/reference/describe_index_stats_post) to Pinecone.",
+          "version": "0.0.1",
+          "edges": [
+            {
+              "from": "api",
+              "to": "config",
+              "out": "config",
+              "in": "config"
+            },
+            {
+              "from": "config",
+              "to": "make-headers",
+              "out": "PINECONE_API_KEY",
+              "in": "json"
+            },
+            {
+              "from": "make-headers",
+              "to": "pinecone-api-call",
+              "out": "result",
+              "in": "headers"
+            },
+            {
+              "from": "config",
+              "to": "make-pinecone-url",
+              "out": "PINECONE_INDEX",
+              "in": "PINECONE_INDEX"
+            },
+            {
+              "from": "config",
+              "to": "make-pinecone-url",
+              "out": "PINECONE_PROJECT_ID",
+              "in": "PINECONE_PROJECT_ID"
+            },
+            {
+              "from": "config",
+              "to": "make-pinecone-url",
+              "out": "PINECONE_ENVIRONMENT",
+              "in": "PINECONE_ENVIRONMENT"
+            },
+            {
+              "from": "api",
+              "to": "make-pinecone-url",
+              "out": "call",
+              "in": "call"
+            },
+            {
+              "from": "make-pinecone-url",
+              "to": "pinecone-api-call",
+              "out": "url",
+              "in": "url"
+            },
+            {
+              "from": "api",
+              "to": "pinecone-api-call",
+              "out": "body",
+              "in": "body"
+            },
+            {
+              "from": "pinecone-api-call",
+              "to": "response",
+              "out": "response",
+              "in": "response"
+            }
+          ],
+          "nodes": [
+            {
+              "id": "api",
+              "type": "input",
+              "configuration": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "api": {
+                      "type": "string",
+                      "title": "API call",
+                      "description": "The API call to make"
+                    },
+                    "body": {
+                      "type": "object",
+                      "title": "Body",
+                      "description": "The body of the API call"
+                    },
+                    "config": {
+                      "type": "object",
+                      "title": "Pinecone API configuration",
+                      "description": "The Pinecone API configuration, as returned by the `pinecone-api-config` board",
+                      "properties": {
+                        "PINECONE_INDEX": {
+                          "type": "string",
+                          "title": "Pinecone index",
+                          "description": "The name of the Pinecone index to use"
+                        },
+                        "PINECONE_PROJECT_ID": {
+                          "type": "string",
+                          "title": "Pinecone project ID",
+                          "description": "The ID of the Pinecone project to use"
+                        },
+                        "PINECONE_ENVIRONMENT": {
+                          "type": "string",
+                          "title": "Pinecone environment",
+                          "description": "The Pinecone environment to use"
+                        },
+                        "PINECONE_API_KEY": {
+                          "type": "string",
+                          "title": "Pinecone API key",
+                          "description": "The Pinecone API key to use"
+                        }
+                      },
+                      "required": [
+                        "PINECONE_ENVIRONMENT",
+                        "PINECONE_API_KEY",
+                        "PINECONE_INDEX",
+                        "PINECONE_PROJECT_ID"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "api"
+                  ]
+                }
+              }
+            },
+            {
+              "id": "config",
+              "type": "jsonata",
+              "configuration": {
+                "expression": "config",
+                "raw": true
+              }
+            },
+            {
+              "id": "make-headers",
+              "type": "jsonata",
+              "configuration": {
+                "expression": "{ \"Api-Key\": $, \"Accept\": \"application/json\", \"Content-Type\": \"application/json\" }"
+              }
+            },
+            {
+              "id": "pinecone-api-call",
+              "type": "fetch",
+              "configuration": {
+                "raw": false,
+                "method": "POST"
+              }
+            },
+            {
+              "id": "make-pinecone-url",
+              "type": "urlTemplate",
+              "configuration": {
+                "template": "https://{PINECONE_INDEX}-{PINECONE_PROJECT_ID}.svc.{PINECONE_ENVIRONMENT}.pinecone.io/{+call}"
+              }
+            },
+            {
+              "id": "response",
+              "type": "output"
+            }
+          ],
+          "kits": [
+            {
+              "url": "npm:@google-labs/llm-starter"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "kits": []
+}
