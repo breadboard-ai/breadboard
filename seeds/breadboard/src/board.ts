@@ -511,10 +511,17 @@ export class Board implements Breadboard {
    */
   static async load(
     url: string,
-    options?: { slotted?: BreadboardSlotSpec; base?: string }
+    options?: {
+      slotted?: BreadboardSlotSpec;
+      base?: string;
+      outerGraph?: GraphDescriptor;
+    }
   ): Promise<Board> {
-    const { base, slotted } = options || {};
-    const loader = new BoardLoader(base);
+    const { base, slotted, outerGraph } = options || {};
+    const loader = new BoardLoader({
+      url: base,
+      graphs: outerGraph?.graphs,
+    });
     const graph = await loader.load(url);
     const board = await Board.fromGraphDescriptor(graph);
     board.#slots = slotted || {};
