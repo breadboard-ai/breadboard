@@ -20,6 +20,7 @@ export type {
   Capability,
   ErrorCapability,
   TraversalResult,
+  SubGraphs,
 } from "./types.js";
 export { TraversalMachine } from "./traversal/machine.js";
 export { MachineResult } from "./traversal/result.js";

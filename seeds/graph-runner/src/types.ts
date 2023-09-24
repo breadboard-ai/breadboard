@@ -154,6 +154,18 @@ export type GraphMetadata = {
 };
 
 /**
+ * Unique identifier of a graph.
+ */
+export type GraphIdentifier = string;
+
+/**
+ * Represents a collection of sub-graphs.
+ * The key is the identifier of the sub-graph.
+ * The value is the descriptor of the sub-graph.
+ */
+export type SubGraphs = Record<GraphIdentifier, GraphDescriptor>;
+
+/**
  * Represents a graph.
  */
 export type GraphDescriptor = GraphMetadata & {
@@ -171,6 +183,11 @@ export type GraphDescriptor = GraphMetadata & {
    * All the kits (collections of node handlers) that are used by the graph.
    */
   kits?: KitDescriptor[];
+
+  /**
+   * Sub-graphs that are also described by this graph representation.
+   */
+  graphs?: SubGraphs;
 };
 
 /**

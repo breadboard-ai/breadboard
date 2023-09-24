@@ -13,6 +13,7 @@ import type {
   OutputValues,
   NodeHandler,
   GraphMetadata,
+  SubGraphs,
 } from "@google-labs/graph-runner";
 
 import {
@@ -82,6 +83,7 @@ class LocalKit implements Kit {
  * For more information on how to use Breadboard, start with [Chapter 1: Hello, world?](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-7-probes) of the tutorial.
  */
 export class Board implements Breadboard {
+  // GraphDescriptor implementation.
   url?: string;
   title?: string;
   description?: string;
@@ -89,6 +91,8 @@ export class Board implements Breadboard {
   edges: Edge[] = [];
   nodes: NodeDescriptor[] = [];
   kits: Kit[] = [];
+  graphs?: SubGraphs;
+
   #localKit?: LocalKit;
   #slots: BreadboardSlotSpec = {};
   #validators: BreadboardValidator[] = [];
