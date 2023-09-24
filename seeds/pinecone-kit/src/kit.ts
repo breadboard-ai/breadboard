@@ -57,7 +57,7 @@ export const makeHandlersFromGraphDescriptor = async (
       if (configuration) {
         inputs = { ...configuration, ...inputs };
       }
-      return handlers[node.id](inputs);
+      return handlers[node.type](inputs);
     };
     return acc;
   }, {} as NodeHandlers);

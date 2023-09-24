@@ -70,6 +70,7 @@ export class Core {
       : await Board.load(source, {
           slotted: slottedWithUrls,
           base: this.#graph.url,
+          outerGraph: this.#graph,
         });
     for (const validator of this.#validators)
       board.addValidator(

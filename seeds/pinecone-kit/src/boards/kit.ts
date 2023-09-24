@@ -18,9 +18,16 @@ const kit = new Board({
   version: "0.0.1",
 });
 
-kit.include(pineconeAPIConfig, { $id: "config" });
-kit.include(pineconeAPIQuery, { $id: "query" });
-kit.include(pineconeAPIUpsert, { $id: "upsert" });
-kit.include(pineconeAPIVector, { $id: "vector" });
+kit.graphs = {
+  "pinecone-api-config": pineconeAPIConfig,
+  "pinecone-api-query": pineconeAPIQuery,
+  "pinecone-api-upsert": pineconeAPIUpsert,
+  "pinecone-api-vector": pineconeAPIVector,
+};
+
+kit.include("#pinecone-api-config", { $id: "config" });
+kit.include("#pinecone-api-query", { $id: "query" });
+kit.include("#pinecone-api-upsert", { $id: "upsert" });
+kit.include("#pinecone-api-vector", { $id: "vector" });
 
 export default kit;

@@ -99,6 +99,7 @@ export class BoardLoader {
     }
     let graph: GraphDescriptor | undefined;
     let subgraphs = this.#graphs;
+    if (urlString.includes("#")) console.log(subgraphs);
     for (const result of results) {
       const step = new BoardLoadingStep(subgraphs);
       graph = await step.load(result);
