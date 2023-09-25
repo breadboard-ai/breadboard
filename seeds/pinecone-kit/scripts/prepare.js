@@ -11,9 +11,7 @@ const SOURCE_DIR = "./src/boards";
 const DOC_DIR = "./docs/graphs";
 const GRAPH_DIR = "./graphs";
 
-const boardFiles = (await readdir(BOARD_DIR)).filter((file) =>
-  file.endsWith(".js")
-);
+const boardFiles = ["kit.js"];
 
 const writeMermaid = async (file, mermaid) => {
   const title = file.replace(".js", "");
