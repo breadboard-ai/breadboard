@@ -66,7 +66,7 @@ export class BoardLoadingStep {
       file: loadFromFile,
       fetch: loadWithFetch,
       hash: async (hash: string) => {
-        if (!graphs) throw new Error("No graphs to load from");
+        if (!graphs) throw new Error("No sub-graphs to load from");
         return graphs[hash];
       },
       unknown: async () => {
@@ -82,6 +82,11 @@ export class BoardLoadingStep {
   }
 }
 
+export type BoardLoaderResult = {
+  graph: GraphDescriptor;
+  isSubgraph: boolean;
+};
+
 export class BoardLoader {
   #base: URL;
   #graphs?: SubGraphs;
@@ -91,7 +96,7 @@ export class BoardLoader {
     this.#graphs = graphs;
   }
 
-  async load(urlString: string): Promise<GraphDescriptor> {
+  async load(urlString: string): Promise<BoardLoaderResult> {
     const results: ResolverResult[] = [];
     let base = this.#base;
     while (!resolveURL(base, urlString, results)) {
@@ -99,7 +104,9 @@ export class BoardLoader {
     }
     let graph: GraphDescriptor | undefined;
     let subgraphs = this.#graphs;
+    let isSubgraph = true;
     for (const result of results) {
+      if (result.type === "file" || result.type === "fetch") isSubgraph = false;
       const step = new BoardLoadingStep(subgraphs);
       graph = await step.load(result);
       subgraphs = graph.graphs;
@@ -108,6 +115,6 @@ export class BoardLoader {
       throw new Error(
         "BoardLoader failed to load a graph. This error likely indicates a bug in the BoardLoader."
       );
-    return graph;
+    return { graph, isSubgraph };
   }
 }

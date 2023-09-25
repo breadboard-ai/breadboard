@@ -14,9 +14,9 @@ const board = new Board({
 });
 
 const apiCall = board
-  .include("pinecone-vector-api.json", { $id: "pinecone-api-call" })
+  .include("#pinecone-api-vector", { $id: "pinecone-api-call" })
   .wire("<-call", board.passthrough({ $id: "upsert", call: "vectors/upsert" }))
-  .wire("<-config", board.include("pinecone-api-config.json"));
+  .wire("<-config", board.include("#pinecone-api-config"));
 
 board
   .input({

@@ -96,6 +96,10 @@ export class Board implements Breadboard {
   #localKit?: LocalKit;
   #slots: BreadboardSlotSpec = {};
   #validators: BreadboardValidator[] = [];
+  /**
+   * The parent board, if this is board is a subgraph of a larger board.
+   */
+  #parent?: GraphDescriptor;
 
   /**
    *
@@ -523,8 +527,9 @@ export class Board implements Breadboard {
       url: base,
       graphs: outerGraph?.graphs,
     });
-    const graph = await loader.load(url);
+    const { isSubgraph, graph } = await loader.load(url);
     const board = await Board.fromGraphDescriptor(graph);
+    if (isSubgraph) board.#parent = outerGraph;
     board.#slots = slotted || {};
     return board;
   }
@@ -538,6 +543,7 @@ export class Board implements Breadboard {
       board,
       { ...board.#slots, ...slots },
       board.#validators,
+      board.#parent,
       probe
     );
     const kits = [core, ...board.kits];

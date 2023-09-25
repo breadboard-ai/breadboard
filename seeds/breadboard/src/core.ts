@@ -31,18 +31,21 @@ export class Core {
   #slots: BreadboardSlotSpec;
   #validators: BreadboardValidator[];
   #probe?: EventTarget;
+  #outerGraph: GraphDescriptor;
   handlers: NodeHandlers;
 
   constructor(
     graph: GraphDescriptor,
     slots: BreadboardSlotSpec,
     validators: BreadboardValidator[],
+    outerGraph?: GraphDescriptor,
     probe?: EventTarget
   ) {
     this.#graph = graph;
     this.#slots = slots;
     this.#validators = validators;
     this.#probe = probe;
+    this.#outerGraph = outerGraph || graph;
     this.handlers = CORE_HANDLERS.reduce((handlers, type) => {
       const that = this as unknown as Record<string, NodeHandler>;
       handlers[type] = that[type].bind(this);
@@ -70,7 +73,7 @@ export class Core {
       : await Board.load(source, {
           slotted: slottedWithUrls,
           base: this.#graph.url,
-          outerGraph: this.#graph,
+          outerGraph: this.#outerGraph,
         });
     for (const validator of this.#validators)
       board.addValidator(
