@@ -8,7 +8,12 @@
  * Converts `GraphDescriptor` to Mermaid format
  */
 
-import type { Edge, GraphDescriptor, NodeDescriptor } from "./types.js";
+import type {
+  Edge,
+  GraphDescriptor,
+  NodeDescriptor,
+  SubGraphs,
+} from "./types.js";
 
 const template = (edges: string, direction: string) => {
   return `%%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
@@ -83,6 +88,7 @@ class MermaidGenerator {
   edges: Edge[];
   nodes: NodeDescriptor[];
   idPrefix: string;
+  subgraphs: SubGraphs;
 
   constructor(graph: GraphDescriptor, idPrefix = "") {
     const { edges, nodes } = graph;
@@ -90,6 +96,7 @@ class MermaidGenerator {
     this.edges = edges;
     this.nodes = nodes;
     this.idPrefix = idPrefix;
+    this.subgraphs = graph.graphs || {};
   }
 
   handleSlotted(fromNode: NodeDescriptor, idPrefix: string) {
@@ -138,20 +145,24 @@ class MermaidGenerator {
   describeSubgraph(
     subgraph: GraphDescriptor,
     name: string,
-    edgeName: string,
-    fromNode: NodeDescriptor,
-    idPrefix: string
+    edgeName?: string,
+    fromNode?: NodeDescriptor,
+    idPrefix?: string
   ) {
     const subgraphGenerator = new MermaidGenerator(subgraph, idPrefix);
     const edges = subgraphGenerator.describeGraph();
     const prefix = this.idPrefix ? `${properNodeId(this.idPrefix)}_` : "";
+    const subgraphEdge =
+      edgeName && fromNode
+        ? `sg_${properNodeId(
+            name
+          )}:::slotted -- "${edgeName}->${edgeName}" --o ${prefix}${properNodeId(
+            fromNode.id
+          )}\n`
+        : "";
     return `\nsubgraph sg_${properNodeId(
       name
-    )} [${name}]\n${edges}\nend\nsg_${properNodeId(
-      name
-    )}:::slotted -- "${edgeName}->${edgeName}" --o ${prefix}${properNodeId(
-      fromNode.id
-    )}\n`;
+    )} [${name}]\n${edges}\nend\n${subgraphEdge}`;
   }
 
   describeGraph() {
@@ -160,6 +171,15 @@ class MermaidGenerator {
       const mermSubgraphs = this.describeSubgraphs(edge, this.idPrefix);
       return `${mermEdge}${mermSubgraphs}`;
     });
+    const subgraphs = Object.entries(this.subgraphs).map(([name, subgraph]) =>
+      this.describeSubgraph(
+        subgraph,
+        name,
+        undefined,
+        undefined,
+        `${name}${this.idPrefix}`
+      )
+    ) as string[];
     const constants = this.nodes
       .map((node) => {
         return Object.keys(node.configuration || {}).map((name) => {
@@ -174,7 +194,7 @@ class MermaidGenerator {
         });
       })
       .flat();
-    return [...result, ...constants].join("\n");
+    return [...result, ...constants, ...subgraphs].join("\n");
   }
 }
 
