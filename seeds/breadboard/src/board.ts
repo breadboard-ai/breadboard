@@ -519,7 +519,6 @@ export class Board implements Breadboard {
     }
   ): Promise<Board> {
     const { base, slotted, outerGraph } = options || {};
-    console.log("OUTER GRAPHS", url, outerGraph?.graphs);
     const loader = new BoardLoader({
       url: base,
       graphs: outerGraph?.graphs,
