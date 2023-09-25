@@ -6,10 +6,10 @@
 
 import { Board } from "@google-labs/breadboard";
 
-import pineconeAPIConfig from "./pinecone-api-config.js";
-import pineconeAPIQuery from "./pinecone-api-query.js";
-import pineconeAPIUpsert from "./pinecone-api-upsert.js";
-import pineconeAPIVector from "./pinecone-api-vector.js";
+import pineconeAPIConfig from "./config.js";
+import pineconeAPIQuery from "./query.js";
+import pineconeAPIUpsert from "./upsert.js";
+import pineconeAPIVector from "./vector.js";
 
 const kit = new Board({
   title: "Pinecone API Node Kit",
@@ -19,15 +19,15 @@ const kit = new Board({
 });
 
 kit.graphs = {
-  "pinecone-api-config": pineconeAPIConfig,
-  "pinecone-api-query": pineconeAPIQuery,
-  "pinecone-api-upsert": pineconeAPIUpsert,
-  "pinecone-api-vector": pineconeAPIVector,
+  config: pineconeAPIConfig,
+  query: pineconeAPIQuery,
+  upsert: pineconeAPIUpsert,
+  vector: pineconeAPIVector,
 };
 
-kit.include("#pinecone-api-config", { $id: "config" });
-kit.include("#pinecone-api-query", { $id: "query" });
-kit.include("#pinecone-api-upsert", { $id: "upsert" });
-kit.include("#pinecone-api-vector", { $id: "vector" });
+kit.include("#config", { $id: "config" });
+kit.include("#query", { $id: "query" });
+kit.include("#upsert", { $id: "upsert" });
+kit.include("#vector", { $id: "vector" });
 
 export default kit;

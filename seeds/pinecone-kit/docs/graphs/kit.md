@@ -10,12 +10,12 @@ $refquery[$ref]:::config -- "$ref->$ref" --o query
 $refupsert[$ref]:::config -- "$ref->$ref" --o upsert
 $refvector[$ref]:::config -- "$ref->$ref" --o vector
 
-subgraph sg_pineconeapiconfig [pinecone-api-config]
-pineconeapiconfig_secrets1("secrets <br> id='secrets-1'"):::secrets -- "PINECONE_INDEX->PINECONE_INDEX" --> pineconeapiconfig_start["jsonata <br> id='start'"]
-pineconeapiconfig_secrets2("secrets <br> id='secrets-2'"):::secrets -- "PINECONE_PROJECT_ID->PINECONE_PROJECT_ID" --> pineconeapiconfig_start["jsonata <br> id='start'"]
-pineconeapiconfig_secrets3("secrets <br> id='secrets-3'"):::secrets -- "PINECONE_ENVIRONMENT->PINECONE_ENVIRONMENT" --> pineconeapiconfig_start["jsonata <br> id='start'"]
-pineconeapiconfig_secrets4("secrets <br> id='secrets-4'"):::secrets -- "PINECONE_API_KEY->PINECONE_API_KEY" --> pineconeapiconfig_start["jsonata <br> id='start'"]
-pineconeapiconfig_start["jsonata <br> id='start'"] -- "result->config" --> pineconeapiconfig_result{{"output <br> id='result'"}}:::output
+subgraph sg_config [config]
+config_secrets1("secrets <br> id='secrets-1'"):::secrets -- "PINECONE_INDEX->PINECONE_INDEX" --> config_start["jsonata <br> id='start'"]
+config_secrets2("secrets <br> id='secrets-2'"):::secrets -- "PINECONE_PROJECT_ID->PINECONE_PROJECT_ID" --> config_start["jsonata <br> id='start'"]
+config_secrets3("secrets <br> id='secrets-3'"):::secrets -- "PINECONE_ENVIRONMENT->PINECONE_ENVIRONMENT" --> config_start["jsonata <br> id='start'"]
+config_secrets4("secrets <br> id='secrets-4'"):::secrets -- "PINECONE_API_KEY->PINECONE_API_KEY" --> config_start["jsonata <br> id='start'"]
+config_start["jsonata <br> id='start'"] -- "result->config" --> config_result{{"output <br> id='result'"}}:::output
 
 
 
@@ -25,12 +25,12 @@ pineconeapiconfig_start["jsonata <br> id='start'"] -- "result->config" --> pinec
 end
 
 
-subgraph sg_pineconeapiquery [pinecone-api-query]
-pineconeapiquery_queryapi(("passthrough <br> id='query-api'")):::passthrough -- "call->call" --> pineconeapiquery_pineconeapicall[["include <br> id='pinecone-api-call'"]]:::include
-pineconeapiquery_include1[["include <br> id='include-1'"]]:::include -- "config->config" --> pineconeapiquery_pineconeapicall[["include <br> id='pinecone-api-call'"]]:::include
-pineconeapiquery_pineconeapicall[["include <br> id='pinecone-api-call'"]]:::include -- "response->response" --> pineconeapiquery_response{{"output <br> id='response'"}}:::output
-pineconeapiquery_makebody["jsonata <br> id='make-body'"] -- "result->body" --> pineconeapiquery_pineconeapicall[["include <br> id='pinecone-api-call'"]]:::include
-pineconeapiquery_query[/"input <br> id='query'"/]:::input -- "embedding->json" --> pineconeapiquery_makebody["jsonata <br> id='make-body'"]
+subgraph sg_query [query]
+query_queryapi(("passthrough <br> id='query-api'")):::passthrough -- "call->call" --> query_vector[["include <br> id='vector'"]]:::include
+query_config[["include <br> id='config'"]]:::include -- "config->config" --> query_vector[["include <br> id='vector'"]]:::include
+query_vector[["include <br> id='vector'"]]:::include -- "response->response" --> query_response{{"output <br> id='response'"}}:::output
+query_makebody["jsonata <br> id='make-body'"] -- "result->body" --> query_vector[["include <br> id='vector'"]]:::include
+query_query[/"input <br> id='query'"/]:::input -- "embedding->json" --> query_makebody["jsonata <br> id='make-body'"]
 
 
 
@@ -39,11 +39,11 @@ pineconeapiquery_query[/"input <br> id='query'"/]:::input -- "embedding->json" -
 end
 
 
-subgraph sg_pineconeapiupsert [pinecone-api-upsert]
-pineconeapiupsert_upsert(("passthrough <br> id='upsert'")):::passthrough -- "call->call" --> pineconeapiupsert_pineconeapicall[["include <br> id='pinecone-api-call'"]]:::include
-pineconeapiupsert_include1[["include <br> id='include-1'"]]:::include -- "config->config" --> pineconeapiupsert_pineconeapicall[["include <br> id='pinecone-api-call'"]]:::include
-pineconeapiupsert_pineconeapicall[["include <br> id='pinecone-api-call'"]]:::include -- "response->response" --> pineconeapiupsert_output2{{"output <br> id='output-2'"}}:::output
-pineconeapiupsert_vectors[/"input <br> id='vectors'"/]:::input -- "vectors->body" --> pineconeapiupsert_pineconeapicall[["include <br> id='pinecone-api-call'"]]:::include
+subgraph sg_upsert [upsert]
+upsert_upsert(("passthrough <br> id='upsert'")):::passthrough -- "call->call" --> upsert_vector[["include <br> id='vector'"]]:::include
+upsert_config[["include <br> id='config'"]]:::include -- "config->config" --> upsert_vector[["include <br> id='vector'"]]:::include
+upsert_vector[["include <br> id='vector'"]]:::include -- "response->response" --> upsert_output1{{"output <br> id='output-1'"}}:::output
+upsert_vectors[/"input <br> id='vectors'"/]:::input -- "vectors->body" --> upsert_vector[["include <br> id='vector'"]]:::include
 
 
 
@@ -51,17 +51,17 @@ pineconeapiupsert_vectors[/"input <br> id='vectors'"/]:::input -- "vectors->body
 end
 
 
-subgraph sg_pineconeapivector [pinecone-api-vector]
-pineconeapivector_api[/"input <br> id='api'"/]:::input -- "config->config" --> pineconeapivector_config["jsonata <br> id='config'"]
-pineconeapivector_config["jsonata <br> id='config'"] -- "PINECONE_API_KEY->json" --> pineconeapivector_makeheaders["jsonata <br> id='make-headers'"]
-pineconeapivector_makeheaders["jsonata <br> id='make-headers'"] -- "result->headers" --> pineconeapivector_pineconeapicall["fetch <br> id='pinecone-api-call'"]
-pineconeapivector_config["jsonata <br> id='config'"] -- "PINECONE_INDEX->PINECONE_INDEX" --> pineconeapivector_makepineconeurl["urlTemplate <br> id='make-pinecone-url'"]
-pineconeapivector_config["jsonata <br> id='config'"] -- "PINECONE_PROJECT_ID->PINECONE_PROJECT_ID" --> pineconeapivector_makepineconeurl["urlTemplate <br> id='make-pinecone-url'"]
-pineconeapivector_config["jsonata <br> id='config'"] -- "PINECONE_ENVIRONMENT->PINECONE_ENVIRONMENT" --> pineconeapivector_makepineconeurl["urlTemplate <br> id='make-pinecone-url'"]
-pineconeapivector_api[/"input <br> id='api'"/]:::input -- "call->call" --> pineconeapivector_makepineconeurl["urlTemplate <br> id='make-pinecone-url'"]
-pineconeapivector_makepineconeurl["urlTemplate <br> id='make-pinecone-url'"] -- "url->url" --> pineconeapivector_pineconeapicall["fetch <br> id='pinecone-api-call'"]
-pineconeapivector_api[/"input <br> id='api'"/]:::input -- "body->body" --> pineconeapivector_pineconeapicall["fetch <br> id='pinecone-api-call'"]
-pineconeapivector_pineconeapicall["fetch <br> id='pinecone-api-call'"] -- "response->response" --> pineconeapivector_response{{"output <br> id='response'"}}:::output
+subgraph sg_vector [vector]
+vector_api[/"input <br> id='api'"/]:::input -- "config->config" --> vector_config["jsonata <br> id='config'"]
+vector_config["jsonata <br> id='config'"] -- "PINECONE_API_KEY->json" --> vector_makeheaders["jsonata <br> id='make-headers'"]
+vector_makeheaders["jsonata <br> id='make-headers'"] -- "result->headers" --> vector_pineconeapicall["fetch <br> id='pinecone-api-call'"]
+vector_config["jsonata <br> id='config'"] -- "PINECONE_INDEX->PINECONE_INDEX" --> vector_makepineconeurl["urlTemplate <br> id='make-pinecone-url'"]
+vector_config["jsonata <br> id='config'"] -- "PINECONE_PROJECT_ID->PINECONE_PROJECT_ID" --> vector_makepineconeurl["urlTemplate <br> id='make-pinecone-url'"]
+vector_config["jsonata <br> id='config'"] -- "PINECONE_ENVIRONMENT->PINECONE_ENVIRONMENT" --> vector_makepineconeurl["urlTemplate <br> id='make-pinecone-url'"]
+vector_api[/"input <br> id='api'"/]:::input -- "call->call" --> vector_makepineconeurl["urlTemplate <br> id='make-pinecone-url'"]
+vector_makepineconeurl["urlTemplate <br> id='make-pinecone-url'"] -- "url->url" --> vector_pineconeapicall["fetch <br> id='pinecone-api-call'"]
+vector_api[/"input <br> id='api'"/]:::input -- "body->body" --> vector_pineconeapicall["fetch <br> id='pinecone-api-call'"]
+vector_pineconeapicall["fetch <br> id='pinecone-api-call'"] -- "response->response" --> vector_response{{"output <br> id='response'"}}:::output
 
 
 

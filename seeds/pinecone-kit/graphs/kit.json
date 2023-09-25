@@ -8,34 +8,34 @@
       "id": "config",
       "type": "include",
       "configuration": {
-        "$ref": "#pinecone-api-config"
+        "$ref": "#config"
       }
     },
     {
       "id": "query",
       "type": "include",
       "configuration": {
-        "$ref": "#pinecone-api-query"
+        "$ref": "#query"
       }
     },
     {
       "id": "upsert",
       "type": "include",
       "configuration": {
-        "$ref": "#pinecone-api-upsert"
+        "$ref": "#upsert"
       }
     },
     {
       "id": "vector",
       "type": "include",
       "configuration": {
-        "$ref": "#pinecone-api-vector"
+        "$ref": "#vector"
       }
     }
   ],
   "kits": [],
   "graphs": {
-    "pinecone-api-config": {
+    "config": {
       "title": "Pinecone API configuration helper",
       "description": "Loads the Pinecone API key and other necessary variables from the environment. Currently looks for the following environment variables: `PINECONE_API_KEY`, `PINECONE_INDEX`, `PINECONE_PROJECT_ID`, `PINECONE_ENVIRONMENT`.",
       "version": "0.0.1",
@@ -167,32 +167,32 @@
         }
       ]
     },
-    "pinecone-api-query": {
+    "query": {
       "title": "Pinecone API query invocation",
       "description": "This board invokes the Pinecone [`query`](https://docs.pinecone.io/reference/query) API.",
       "version": "0.0.1",
       "edges": [
         {
           "from": "query-api",
-          "to": "pinecone-api-call",
+          "to": "vector",
           "out": "call",
           "in": "call"
         },
         {
-          "from": "include-1",
-          "to": "pinecone-api-call",
+          "from": "config",
+          "to": "vector",
           "out": "config",
           "in": "config"
         },
         {
-          "from": "pinecone-api-call",
+          "from": "vector",
           "to": "response",
           "out": "response",
           "in": "response"
         },
         {
           "from": "make-body",
-          "to": "pinecone-api-call",
+          "to": "vector",
           "out": "result",
           "in": "body"
         },
@@ -212,10 +212,10 @@
           }
         },
         {
-          "id": "pinecone-api-call",
+          "id": "vector",
           "type": "include",
           "configuration": {
-            "$ref": "#pinecone-api-vector"
+            "$ref": "#vector"
           }
         },
         {
@@ -226,10 +226,10 @@
           }
         },
         {
-          "id": "include-1",
+          "id": "config",
           "type": "include",
           "configuration": {
-            "$ref": "#pinecone-api-config"
+            "$ref": "#config"
           }
         },
         {
@@ -262,42 +262,42 @@
         }
       ]
     },
-    "pinecone-api-upsert": {
+    "upsert": {
       "title": "Pinecone API upsert invocation",
       "description": "This board invokes the Pinecone [`vectors/upsert`](https://docs.pinecone.io/reference/upsert) API.",
       "version": "0.0.1",
       "edges": [
         {
           "from": "upsert",
-          "to": "pinecone-api-call",
+          "to": "vector",
           "out": "call",
           "in": "call"
         },
         {
-          "from": "include-1",
-          "to": "pinecone-api-call",
+          "from": "config",
+          "to": "vector",
           "out": "config",
           "in": "config"
         },
         {
-          "from": "pinecone-api-call",
-          "to": "output-2",
+          "from": "vector",
+          "to": "output-1",
           "out": "response",
           "in": "response"
         },
         {
           "from": "vectors",
-          "to": "pinecone-api-call",
+          "to": "vector",
           "out": "vectors",
           "in": "body"
         }
       ],
       "nodes": [
         {
-          "id": "pinecone-api-call",
+          "id": "vector",
           "type": "include",
           "configuration": {
-            "$ref": "#pinecone-api-vector"
+            "$ref": "#vector"
           }
         },
         {
@@ -308,10 +308,10 @@
           }
         },
         {
-          "id": "include-1",
+          "id": "config",
           "type": "include",
           "configuration": {
-            "$ref": "#pinecone-api-config"
+            "$ref": "#config"
           }
         },
         {
@@ -362,13 +362,13 @@
           }
         },
         {
-          "id": "output-2",
+          "id": "output-1",
           "type": "output"
         }
       ],
       "kits": []
     },
-    "pinecone-api-vector": {
+    "vector": {
       "title": "Pinecone API vector call builder",
       "description": "This board helps making [vector API calls](https://docs.pinecone.io/reference/describe_index_stats_post) to Pinecone.",
       "version": "0.0.1",
