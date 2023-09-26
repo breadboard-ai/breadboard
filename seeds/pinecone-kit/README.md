@@ -8,9 +8,9 @@ There are currently four boards that power this kit:
 
 - [`vector`](src/boards/vector.ts), which is a thin wrapper around the [vector operations](https://docs.pinecone.io/reference/vector-operations), and is represented by the `vector` node.
 
-- [`upsert`](src/boards/upsert.ts), which uses the `pinecone-api-config` and `pinecone-api-vector` boards to call Pinecone [upsert API](https://docs.pinecone.io/reference/upsert), and is represented by the `upsert` node.
+- [`upsert`](src/boards/upsert.ts), which uses the `config` and `vector` boards above to call Pinecone [upsert API](https://docs.pinecone.io/reference/upsert), and is represented by the `upsert` node.
 
-- [`query`](src/boards/query.ts), which uses the `pinecone-api-config` and `pinecone-api-vector` boards to call Pinecone [query API](https://docs.pinecone.io/reference/query), and is represented by the `query` node.
+- [`query`](src/boards/query.ts), which uses the `config` and `vector` boards to call Pinecone [query API](https://docs.pinecone.io/reference/query), and is represented by the `query` node.
 
 To load this kit into your board, run:
 
