@@ -6,6 +6,15 @@
 
 const worker = new Worker("/src/worker.ts", { type: "module" });
 
-worker.onmessage = (message) => {
-  console.log("from worker", message);
-};
+worker.addEventListener("message", (e) => {
+  console.log(e.data);
+  const message = e.data;
+  if (message.type === "requestSecret") {
+    const data = window.localStorage.getItem("PALM_KEY");
+    console.log("secret", data);
+    worker.postMessage({
+      type: "provideSecret",
+      data,
+    });
+  }
+});
