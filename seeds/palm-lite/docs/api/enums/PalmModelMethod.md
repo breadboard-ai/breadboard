@@ -18,7 +18,7 @@
 
 #### Defined in
 
-[index.ts:28](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/index.ts#L28)
+[index.ts:28](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/index.ts#L28)
 
 ___
 
@@ -28,7 +28,7 @@ ___
 
 #### Defined in
 
-[index.ts:26](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/index.ts#L26)
+[index.ts:26](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/index.ts#L26)
 
 ___
 
@@ -38,4 +38,4 @@ ___
 
 #### Defined in
 
-[index.ts:27](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/index.ts#L27)
+[index.ts:27](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/index.ts#L27)

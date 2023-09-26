@@ -22,7 +22,7 @@ Candidate responses from the model.
 
 #### Defined in
 
-[types.ts:179](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/types.ts#L179)
+[types.ts:179](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L179)
 
 ___
 
@@ -34,7 +34,7 @@ A set of content filtering metadata for the prompt and response text. This indic
 
 #### Defined in
 
-[types.ts:183](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/types.ts#L183)
+[types.ts:183](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L183)
 
 ___
 
@@ -46,4 +46,4 @@ Returns any safety feedback related to content filtering.
 
 #### Defined in
 
-[types.ts:187](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/types.ts#L187)
+[types.ts:187](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L187)

@@ -22,7 +22,7 @@ Candidate response messages from the model.
 
 #### Defined in
 
-[types.ts:127](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/types.ts#L127)
+[types.ts:127](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L127)
 
 ___
 
@@ -34,7 +34,7 @@ A set of content filtering metadata for the prompt and response text. This indic
 
 #### Defined in
 
-[types.ts:131](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/types.ts#L131)
+[types.ts:131](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L131)
 
 ___
 
@@ -46,4 +46,4 @@ The conversation history used by the model.
 
 #### Defined in
 
-[types.ts:135](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/types.ts#L135)
+[types.ts:135](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L135)

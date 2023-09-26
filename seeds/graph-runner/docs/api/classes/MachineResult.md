@@ -19,7 +19,8 @@
 - [missingInputs](MachineResult.md#missinginputs)
 - [newOpportunities](MachineResult.md#newopportunities)
 - [opportunities](MachineResult.md#opportunities)
-- [outputs](MachineResult.md#outputs)
+- [outputsPromise](MachineResult.md#outputspromise)
+- [pendingOutputs](MachineResult.md#pendingoutputs)
 - [state](MachineResult.md#state)
 
 ### Accessors
@@ -34,7 +35,7 @@
 
 ### constructor
 
-• **new MachineResult**(`descriptor`, `inputs`, `missingInputs`, `opportunities`, `newOpportunities`, `state`)
+• **new MachineResult**(`descriptor`, `inputs`, `missingInputs`, `opportunities`, `newOpportunities`, `state`, `pendingOutputs`)
 
 #### Parameters
 
@@ -45,11 +46,12 @@
 | `missingInputs` | `string`[] |
 | `opportunities` | [`Edge`](../modules.md#edge)[] |
 | `newOpportunities` | [`Edge`](../modules.md#edge)[] |
-| `state` | `EdgeState` |
+| `state` | `QueuedNodeValuesState` |
+| `pendingOutputs` | `Map`<`symbol`, `Promise`<`CompletedNodeOutput`\>\> |
 
 #### Defined in
 
-[traversal/result.ts:26](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/graph-runner/src/traversal/result.ts#L26)
+[traversal/result.ts:28](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-runner/src/traversal/result.ts#L28)
 
 ## Properties
 
@@ -63,7 +65,7 @@
 
 #### Defined in
 
-[traversal/result.ts:18](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/graph-runner/src/traversal/result.ts#L18)
+[traversal/result.ts:19](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-runner/src/traversal/result.ts#L19)
 
 ___
 
@@ -77,7 +79,7 @@ ___
 
 #### Defined in
 
-[traversal/result.ts:19](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/graph-runner/src/traversal/result.ts#L19)
+[traversal/result.ts:20](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-runner/src/traversal/result.ts#L20)
 
 ___
 
@@ -91,7 +93,7 @@ ___
 
 #### Defined in
 
-[traversal/result.ts:20](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/graph-runner/src/traversal/result.ts#L20)
+[traversal/result.ts:21](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-runner/src/traversal/result.ts#L21)
 
 ___
 
@@ -105,7 +107,7 @@ ___
 
 #### Defined in
 
-[traversal/result.ts:22](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/graph-runner/src/traversal/result.ts#L22)
+[traversal/result.ts:23](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-runner/src/traversal/result.ts#L23)
 
 ___
 
@@ -119,27 +121,41 @@ ___
 
 #### Defined in
 
-[traversal/result.ts:21](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/graph-runner/src/traversal/result.ts#L21)
+[traversal/result.ts:22](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-runner/src/traversal/result.ts#L22)
 
 ___
 
-### outputs
+### outputsPromise
 
-• `Optional` **outputs**: `Partial`<`Record`<`string`, [`NodeValue`](../modules.md#nodevalue)\>\>
+• `Optional` **outputsPromise**: `Promise`<`Partial`<`Record`<`string`, [`NodeValue`](../modules.md#nodevalue)\>\>\>
 
 #### Implementation of
 
-[TraversalResult](../interfaces/TraversalResult.md).[outputs](../interfaces/TraversalResult.md#outputs)
+[TraversalResult](../interfaces/TraversalResult.md).[outputsPromise](../interfaces/TraversalResult.md#outputspromise)
 
 #### Defined in
 
-[traversal/result.ts:24](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/graph-runner/src/traversal/result.ts#L24)
+[traversal/result.ts:25](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-runner/src/traversal/result.ts#L25)
+
+___
+
+### pendingOutputs
+
+• **pendingOutputs**: `Map`<`symbol`, `Promise`<`CompletedNodeOutput`\>\>
+
+#### Implementation of
+
+[TraversalResult](../interfaces/TraversalResult.md).[pendingOutputs](../interfaces/TraversalResult.md#pendingoutputs)
+
+#### Defined in
+
+[traversal/result.ts:26](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-runner/src/traversal/result.ts#L26)
 
 ___
 
 ### state
 
-• **state**: `EdgeState`
+• **state**: `QueuedNodeValuesState`
 
 #### Implementation of
 
@@ -147,7 +163,7 @@ ___
 
 #### Defined in
 
-[traversal/result.ts:23](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/graph-runner/src/traversal/result.ts#L23)
+[traversal/result.ts:24](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-runner/src/traversal/result.ts#L24)
 
 ## Accessors
 
@@ -168,7 +184,7 @@ visited.
 
 #### Defined in
 
-[traversal/result.ts:46](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/graph-runner/src/traversal/result.ts#L46)
+[traversal/result.ts:50](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-runner/src/traversal/result.ts#L50)
 
 ## Methods
 
@@ -188,4 +204,4 @@ visited.
 
 #### Defined in
 
-[traversal/result.ts:50](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/graph-runner/src/traversal/result.ts#L50)
+[traversal/result.ts:54](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-runner/src/traversal/result.ts#L54)

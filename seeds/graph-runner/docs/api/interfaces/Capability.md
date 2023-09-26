@@ -21,4 +21,4 @@ SPDX-License-Identifier: Apache-2.0
 
 #### Defined in
 
-[types.ts:8](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/graph-runner/src/types.ts#L8)
+[types.ts:8](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-runner/src/types.ts#L8)

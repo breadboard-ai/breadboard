@@ -35,4 +35,4 @@
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:68](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/types.ts#L68)
+[seeds/breadboard/src/types.ts:68](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/breadboard/src/types.ts#L68)

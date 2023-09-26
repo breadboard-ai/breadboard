@@ -26,7 +26,7 @@ Renames and re-exports [Nursery](classes/Nursery.md)
 
 ### lambda
 
-▸ **lambda**<`In`, `Out`\>(`fun`): `Promise`<`OptionalIdConfiguration`\>
+▸ **lambda**<`In`, `Out`\>(`fun`, `config?`): `Promise`<`LambdaResult`\>
 
 #### Type parameters
 
@@ -40,11 +40,12 @@ Renames and re-exports [Nursery](classes/Nursery.md)
 | Name | Type |
 | :------ | :------ |
 | `fun` | `LamdbdaFunction`<`In`, `Out`\> |
+| `config` | `OptionalIdConfiguration` |
 
 #### Returns
 
-`Promise`<`OptionalIdConfiguration`\>
+`Promise`<`LambdaResult`\>
 
 #### Defined in
 
-[nodes/map.ts:56](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/node-nursery/src/nodes/map.ts#L56)
+[nodes/map.ts:61](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/node-nursery/src/nodes/map.ts#L61)

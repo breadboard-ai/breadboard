@@ -27,6 +27,7 @@ Syntactic sugar to easily create nodes.
 ### Methods
 
 - [addToVectorDatabase](Nursery.md#addtovectordatabase)
+- [batcher](Nursery.md#batcher)
 - [cache](Nursery.md#cache)
 - [createVectorDatabase](Nursery.md#createvectordatabase)
 - [embedDocs](Nursery.md#embeddocs)
@@ -54,7 +55,7 @@ Syntactic sugar to easily create nodes.
 
 #### Defined in
 
-[nursery.ts:69](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/node-nursery/src/nursery.ts#L69)
+[nursery.ts:71](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/node-nursery/src/nursery.ts#L71)
 
 ## Properties
 
@@ -64,7 +65,7 @@ Syntactic sugar to easily create nodes.
 
 #### Defined in
 
-[nursery.ts:63](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/node-nursery/src/nursery.ts#L63)
+[nursery.ts:65](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/node-nursery/src/nursery.ts#L65)
 
 ___
 
@@ -74,7 +75,7 @@ ___
 
 #### Defined in
 
-[nursery.ts:62](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/node-nursery/src/nursery.ts#L62)
+[nursery.ts:64](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/node-nursery/src/nursery.ts#L64)
 
 ___
 
@@ -88,7 +89,7 @@ Kit.url
 
 #### Defined in
 
-[nursery.ts:61](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/node-nursery/src/nursery.ts#L61)
+[nursery.ts:63](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/node-nursery/src/nursery.ts#L63)
 
 ## Accessors
 
@@ -106,7 +107,7 @@ Kit.handlers
 
 #### Defined in
 
-[nursery.ts:65](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/node-nursery/src/nursery.ts#L65)
+[nursery.ts:67](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/node-nursery/src/nursery.ts#L67)
 
 ## Methods
 
@@ -126,7 +127,27 @@ Kit.handlers
 
 #### Defined in
 
-[nursery.ts:81](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/node-nursery/src/nursery.ts#L81)
+[nursery.ts:83](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/node-nursery/src/nursery.ts#L83)
+
+___
+
+### batcher
+
+▸ **batcher**(`config?`): `BreadboardNode`<`BatcherInputs`, `BatcherOutputs`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `config` | `OptionalIdConfiguration` |
+
+#### Returns
+
+`BreadboardNode`<`BatcherInputs`, `BatcherOutputs`\>
+
+#### Defined in
+
+[nursery.ts:194](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/node-nursery/src/nursery.ts#L194)
 
 ___
 
@@ -146,7 +167,7 @@ ___
 
 #### Defined in
 
-[nursery.ts:123](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/node-nursery/src/nursery.ts#L123)
+[nursery.ts:125](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/node-nursery/src/nursery.ts#L125)
 
 ___
 
@@ -166,7 +187,7 @@ ___
 
 #### Defined in
 
-[nursery.ts:74](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/node-nursery/src/nursery.ts#L74)
+[nursery.ts:76](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/node-nursery/src/nursery.ts#L76)
 
 ___
 
@@ -186,7 +207,7 @@ ___
 
 #### Defined in
 
-[nursery.ts:95](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/node-nursery/src/nursery.ts#L95)
+[nursery.ts:97](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/node-nursery/src/nursery.ts#L97)
 
 ___
 
@@ -206,7 +227,7 @@ ___
 
 #### Defined in
 
-[nursery.ts:102](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/node-nursery/src/nursery.ts#L102)
+[nursery.ts:104](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/node-nursery/src/nursery.ts#L104)
 
 ___
 
@@ -226,7 +247,7 @@ ___
 
 #### Defined in
 
-[nursery.ts:130](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/node-nursery/src/nursery.ts#L130)
+[nursery.ts:132](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/node-nursery/src/nursery.ts#L132)
 
 ___
 
@@ -249,7 +270,7 @@ issue #110.
 
 #### Defined in
 
-[nursery.ts:180](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/node-nursery/src/nursery.ts#L180)
+[nursery.ts:182](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/node-nursery/src/nursery.ts#L182)
 
 ___
 
@@ -269,7 +290,7 @@ ___
 
 #### Defined in
 
-[nursery.ts:88](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/node-nursery/src/nursery.ts#L88)
+[nursery.ts:90](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/node-nursery/src/nursery.ts#L90)
 
 ___
 
@@ -289,7 +310,7 @@ ___
 
 #### Defined in
 
-[nursery.ts:148](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/node-nursery/src/nursery.ts#L148)
+[nursery.ts:150](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/node-nursery/src/nursery.ts#L150)
 
 ___
 
@@ -311,7 +332,7 @@ Parses a template and returns a JSON schema of placeholders.
 
 #### Defined in
 
-[nursery.ts:163](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/node-nursery/src/nursery.ts#L163)
+[nursery.ts:165](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/node-nursery/src/nursery.ts#L165)
 
 ___
 
@@ -331,7 +352,7 @@ ___
 
 #### Defined in
 
-[nursery.ts:109](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/node-nursery/src/nursery.ts#L109)
+[nursery.ts:111](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/node-nursery/src/nursery.ts#L111)
 
 ___
 
@@ -351,7 +372,7 @@ ___
 
 #### Defined in
 
-[nursery.ts:116](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/node-nursery/src/nursery.ts#L116)
+[nursery.ts:118](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/node-nursery/src/nursery.ts#L118)
 
 ___
 
@@ -371,4 +392,4 @@ ___
 
 #### Defined in
 
-[nursery.ts:137](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/node-nursery/src/nursery.ts#L137)
+[nursery.ts:139](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/node-nursery/src/nursery.ts#L139)

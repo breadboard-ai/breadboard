@@ -23,7 +23,7 @@ Optional. End of the attributed segment, exclusive.
 
 #### Defined in
 
-[types.ts:19](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/types.ts#L19)
+[types.ts:19](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L19)
 
 ___
 
@@ -35,7 +35,7 @@ Optional. License for the GitHub project that is attributed as a source for segm
 
 #### Defined in
 
-[types.ts:23](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/types.ts#L23)
+[types.ts:23](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L23)
 
 ___
 
@@ -47,7 +47,7 @@ Optional. Start of segment of the response that is attributed to this source. In
 
 #### Defined in
 
-[types.ts:27](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/types.ts#L27)
+[types.ts:27](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L27)
 
 ___
 
@@ -59,4 +59,4 @@ Optional. URI that is attributed as a source for a portion of the text.
 
 #### Defined in
 
-[types.ts:31](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/types.ts#L31)
+[types.ts:31](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L31)

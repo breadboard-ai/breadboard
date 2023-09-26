@@ -15,7 +15,8 @@
 - [missingInputs](TraversalResult.md#missinginputs)
 - [newOpportunities](TraversalResult.md#newopportunities)
 - [opportunities](TraversalResult.md#opportunities)
-- [outputs](TraversalResult.md#outputs)
+- [outputsPromise](TraversalResult.md#outputspromise)
+- [pendingOutputs](TraversalResult.md#pendingoutputs)
 - [skip](TraversalResult.md#skip)
 - [state](TraversalResult.md#state)
 
@@ -27,7 +28,7 @@
 
 #### Defined in
 
-[types.ts:202](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/graph-runner/src/types.ts#L202)
+[types.ts:215](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-runner/src/types.ts#L215)
 
 ___
 
@@ -37,7 +38,7 @@ ___
 
 #### Defined in
 
-[types.ts:203](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/graph-runner/src/types.ts#L203)
+[types.ts:216](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-runner/src/types.ts#L216)
 
 ___
 
@@ -47,7 +48,7 @@ ___
 
 #### Defined in
 
-[types.ts:204](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/graph-runner/src/types.ts#L204)
+[types.ts:217](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-runner/src/types.ts#L217)
 
 ___
 
@@ -57,7 +58,7 @@ ___
 
 #### Defined in
 
-[types.ts:206](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/graph-runner/src/types.ts#L206)
+[types.ts:219](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-runner/src/types.ts#L219)
 
 ___
 
@@ -67,17 +68,27 @@ ___
 
 #### Defined in
 
-[types.ts:205](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/graph-runner/src/types.ts#L205)
+[types.ts:218](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-runner/src/types.ts#L218)
 
 ___
 
-### outputs
+### outputsPromise
 
-• `Optional` **outputs**: `Partial`<`Record`<`string`, [`NodeValue`](../modules.md#nodevalue)\>\>
+• `Optional` **outputsPromise**: `Promise`<`Partial`<`Record`<`string`, [`NodeValue`](../modules.md#nodevalue)\>\>\>
 
 #### Defined in
 
-[types.ts:208](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/graph-runner/src/types.ts#L208)
+[types.ts:221](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-runner/src/types.ts#L221)
+
+___
+
+### pendingOutputs
+
+• **pendingOutputs**: `Map`<`symbol`, `Promise`<`CompletedNodeOutput`\>\>
+
+#### Defined in
+
+[types.ts:222](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-runner/src/types.ts#L222)
 
 ___
 
@@ -87,14 +98,14 @@ ___
 
 #### Defined in
 
-[types.ts:209](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/graph-runner/src/types.ts#L209)
+[types.ts:223](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-runner/src/types.ts#L223)
 
 ___
 
 ### state
 
-• **state**: `EdgeState`
+• **state**: `QueuedNodeValuesState`
 
 #### Defined in
 
-[types.ts:207](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/graph-runner/src/types.ts#L207)
+[types.ts:220](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-runner/src/types.ts#L220)

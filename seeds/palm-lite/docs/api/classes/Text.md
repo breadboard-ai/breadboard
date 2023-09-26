@@ -68,7 +68,7 @@ const response = await data.json();
 
 #### Defined in
 
-[text.ts:70](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/text.ts#L70)
+[text.ts:70](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/text.ts#L70)
 
 ## Properties
 
@@ -84,7 +84,7 @@ Number of generated responses to return. This value must be between [1, 8], incl
 
 #### Defined in
 
-[text.ts:47](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/text.ts#L47)
+[text.ts:47](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/text.ts#L47)
 
 ___
 
@@ -100,7 +100,7 @@ The maximum number of tokens to include in a candidate. If unset, this will defa
 
 #### Defined in
 
-[text.ts:48](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/text.ts#L48)
+[text.ts:48](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/text.ts#L48)
 
 ___
 
@@ -116,7 +116,7 @@ Required. The free-form input text given to the model as a prompt. Given a promp
 
 #### Defined in
 
-[text.ts:49](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/text.ts#L49)
+[text.ts:49](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/text.ts#L49)
 
 ___
 
@@ -132,7 +132,7 @@ A list of unique `SafetySetting` instances for blocking unsafe content. that wil
 
 #### Defined in
 
-[text.ts:50](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/text.ts#L50)
+[text.ts:50](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/text.ts#L50)
 
 ___
 
@@ -148,7 +148,7 @@ The set of character sequences (up to 5) that will stop output generation. If sp
 
 #### Defined in
 
-[text.ts:51](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/text.ts#L51)
+[text.ts:51](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/text.ts#L51)
 
 ___
 
@@ -164,7 +164,7 @@ Controls the randomness of the output. Note: The default value varies by model, 
 
 #### Defined in
 
-[text.ts:52](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/text.ts#L52)
+[text.ts:52](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/text.ts#L52)
 
 ___
 
@@ -180,7 +180,7 @@ The maximum number of tokens to consider when sampling. The model uses combined 
 
 #### Defined in
 
-[text.ts:53](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/text.ts#L53)
+[text.ts:53](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/text.ts#L53)
 
 ___
 
@@ -196,7 +196,7 @@ The maximum cumulative probability of tokens to consider when sampling. The mode
 
 #### Defined in
 
-[text.ts:54](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/text.ts#L54)
+[text.ts:54](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/text.ts#L54)
 
 ## Methods
 
@@ -221,7 +221,7 @@ The builder instance.
 
 #### Defined in
 
-[text.ts:90](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/text.ts#L90)
+[text.ts:90](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/text.ts#L90)
 
 ___
 
@@ -245,7 +245,7 @@ The builder instance.
 
 #### Defined in
 
-[text.ts:101](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/text.ts#L101)
+[text.ts:101](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/text.ts#L101)
 
 ___
 
@@ -269,4 +269,4 @@ The builder instance.
 
 #### Defined in
 
-[text.ts:79](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/text.ts#L79)
+[text.ts:79](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/text.ts#L79)

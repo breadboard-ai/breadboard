@@ -22,7 +22,7 @@ Output only. Citation information for model-generated `output` in this `TextComp
 
 #### Defined in
 
-[types.ts:346](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/types.ts#L346)
+[types.ts:346](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L346)
 
 ___
 
@@ -34,7 +34,7 @@ Output only. The generated text returned from the model.
 
 #### Defined in
 
-[types.ts:350](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/types.ts#L350)
+[types.ts:350](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L350)
 
 ___
 
@@ -46,4 +46,4 @@ Ratings for the safety of a response. There is at most one rating per category.
 
 #### Defined in
 
-[types.ts:354](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/types.ts#L354)
+[types.ts:354](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L354)

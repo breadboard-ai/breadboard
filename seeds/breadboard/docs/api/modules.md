@@ -18,11 +18,13 @@
 - [BreadboardValidator](interfaces/BreadboardValidator.md)
 - [BreadboardValidatorMetadata](interfaces/BreadboardValidatorMetadata.md)
 - [Kit](interfaces/Kit.md)
+- [KitConstructor](interfaces/KitConstructor.md)
 - [NodeFactory](interfaces/NodeFactory.md)
 
 ### Type Aliases
 
 - [BreadboardSlotSpec](modules.md#breadboardslotspec)
+- [GenericKit](modules.md#generickit)
 - [OptionalIdConfiguration](modules.md#optionalidconfiguration)
 - [ProbeEvent](modules.md#probeevent)
 - [RunResultType](modules.md#runresulttype)
@@ -35,7 +37,23 @@
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:24](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/types.ts#L24)
+[seeds/breadboard/src/types.ts:24](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/breadboard/src/types.ts#L24)
+
+___
+
+### GenericKit
+
+Ƭ **GenericKit**<`T`\>: [`Kit`](interfaces/Kit.md) & { [key in T[number]]: Function }
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `T` | extends readonly `Key`[] |
+
+#### Defined in
+
+[seeds/breadboard/src/types.ts:81](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/breadboard/src/types.ts#L81)
 
 ___
 
@@ -50,7 +68,7 @@ passed to the node itself.
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:226](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/types.ts#L226)
+[seeds/breadboard/src/types.ts:234](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/breadboard/src/types.ts#L234)
 
 ___
 
@@ -64,7 +82,7 @@ See [Chapter 7: Probes](https://github.com/google/labs-prototypes/tree/main/seed
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:158](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/types.ts#L158)
+[seeds/breadboard/src/types.ts:166](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/breadboard/src/types.ts#L166)
 
 ___
 
@@ -74,4 +92,4 @@ ___
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:26](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/types.ts#L26)
+[seeds/breadboard/src/types.ts:26](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/breadboard/src/types.ts#L26)
