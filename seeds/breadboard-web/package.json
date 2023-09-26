@@ -8,7 +8,6 @@
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
-    "test": "FORCE_COLOR=1 ava",
     "dev": "vite"
   },
   "repository": {
