@@ -4,4 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-console.log("code goes here");
+const worker = new Worker("/src/worker.ts", { type: "module" });
+
+worker.onmessage = (message) => {
+  console.log("from worker", message);
+};

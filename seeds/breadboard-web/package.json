@@ -38,15 +38,17 @@
   "homepage": "https://github.com/google/labs-prototypes/tree/main/seeds/breadboard-web#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
+    "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
+    "@google-labs/tsconfig": "*",
+    "@types/node": "^18.16.3",
     "@typescript-eslint/eslint-plugin": "^5.56.0",
     "@typescript-eslint/parser": "^5.56.0",
-    "@types/node": "^18.16.3",
     "ava": "^5.2.0",
     "typescript": "^5.0.4",
-    "vite": "^4.4.5",
-    "@google-labs/tsconfig": "*"
+    "vite": "^4.4.5"
   },
   "dependencies": {
-    "@google-labs/breadboard": "*"
+    "@google-labs/breadboard": "*",
+    "@google-labs/llm-starter": "*"
   }
 }

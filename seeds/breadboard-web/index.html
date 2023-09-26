@@ -1,1 +1,16 @@
-<!DOCTYPE html> HELLO, WORLD
+<!DOCTYPE html>
+<h1>Simplest possible test harness</h1>
+<p>
+  The whole vitejs bit will likely go away once the worker set up is a bit more
+  mature.
+</p>
+
+<script type="importmap">
+  {
+    "imports": {
+      "@google-labs/llm-starter": "./@google-labs/llm-starter.js"
+    }
+  }
+</script>
+
+<script type="module" src="src/index.ts"></script>

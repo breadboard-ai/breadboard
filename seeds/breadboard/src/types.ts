@@ -250,3 +250,5 @@ export type SlotNodeInputs = {
   slot: string;
   parent: NodeDescriptor;
 };
+
+export type KitImportMap = Record<string, KitConstructor<Kit>>;

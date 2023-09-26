@@ -9,6 +9,7 @@ import {
   GenericKit,
   Kit,
   KitConstructor,
+  KitImportMap,
   NodeFactory,
   OptionalIdConfiguration,
 } from "./types.js";
@@ -23,8 +24,11 @@ const urlToNpmSpec = (url: string): string => {
 
 export class KitLoader {
   #kits: KitDescriptor[];
-  constructor(kits?: KitDescriptor[]) {
+  #imports: KitImportMap;
+
+  constructor(kits?: KitDescriptor[], imports?: KitImportMap) {
     this.#kits = kits ?? [];
+    this.#imports = imports ?? {};
   }
 
   async load(): Promise<KitConstructor<Kit>[]> {
@@ -36,6 +40,10 @@ export class KitLoader {
           // TODO: Support protocols other than `npm:`.
           if (url === ".") return null;
           const spec = urlToNpmSpec(url);
+
+          const importedKit = this.#imports[spec];
+          if (importedKit) return importedKit;
+
           const { default: module } = await import(/* @vite-ignore */ spec);
           // TODO: Check to see if this import is actually a Kit class.
           return module;

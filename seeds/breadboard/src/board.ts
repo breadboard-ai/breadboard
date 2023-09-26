@@ -28,6 +28,7 @@ import {
   ReflectNodeOutputs,
   IncludeNodeInputs,
   SlotNodeInputs,
+  KitImportMap,
 } from "./types.js";
 
 import { TraversalMachine, toMermaid } from "@google-labs/graph-runner";
@@ -497,12 +498,15 @@ export class Board implements Breadboard {
    * @param graph - the JSON representation of the board.
    * @returns - a new `Board` instance.
    */
-  static async fromGraphDescriptor(graph: GraphDescriptor): Promise<Board> {
+  static async fromGraphDescriptor(
+    graph: GraphDescriptor,
+    kits?: KitImportMap
+  ): Promise<Board> {
     const breadboard = new Board(graph);
     breadboard.edges = graph.edges;
     breadboard.nodes = graph.nodes;
     breadboard.graphs = graph.graphs;
-    const loader = new KitLoader(graph.kits);
+    const loader = new KitLoader(graph.kits, kits);
     (await loader.load()).forEach((kit) => breadboard.addKit(kit));
     return breadboard;
   }
@@ -520,6 +524,7 @@ export class Board implements Breadboard {
       slotted?: BreadboardSlotSpec;
       base?: string;
       outerGraph?: GraphDescriptor;
+      kits?: KitImportMap;
     }
   ): Promise<Board> {
     const { base, slotted, outerGraph } = options || {};
@@ -528,7 +533,7 @@ export class Board implements Breadboard {
       graphs: outerGraph?.graphs,
     });
     const { isSubgraph, graph } = await loader.load(url);
-    const board = await Board.fromGraphDescriptor(graph);
+    const board = await Board.fromGraphDescriptor(graph, options?.kits);
     if (isSubgraph) board.#parent = outerGraph;
     board.#slots = slotted || {};
     return board;

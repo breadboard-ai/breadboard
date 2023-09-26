@@ -18,7 +18,7 @@ export type SecretInputs = {
 };
 
 const environment = (): Environment =>
-  typeof window !== "undefined" ? "browser" : "node";
+  typeof globalThis.process !== "undefined" ? "node" : "browser";
 
 const getEnvironmentValue = (key: string) => {
   const env = environment();
