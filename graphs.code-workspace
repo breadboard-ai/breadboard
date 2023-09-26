@@ -35,6 +35,9 @@
     },
     {
       "path": "seeds/pinecone-kit"
+    },
+    {
+      "path": "seeds/breadboard-web"
     }
   ],
   "settings": {}

@@ -13,6 +13,7 @@
     { "path": "seeds/coffee-bot-board" },
     { "path": "seeds/web-demo" },
     { "path": "seeds/breadboard-server" },
-    { "path": "seeds/pinecone-kit" }
+    { "path": "seeds/pinecone-kit" },
+    { "path": "seeds/breadboard-web" }
   ]
 }
