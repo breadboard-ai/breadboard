@@ -1,35 +1,15 @@
+/**
+ * @license
+ * Copyright 2023 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { Board } from "@google-labs/breadboard";
+import { InputValues } from "@google-labs/graph-runner";
 import { Starter } from "@google-labs/llm-starter";
+import { MessageController } from "./controller.js";
 
-type MailboxMessage = {
-  id?: string;
-};
-
-export class Mailbox {
-  boxes: Record<string, (value: unknown) => void> = {};
-  worker: Worker;
-
-  constructor(worker: Worker) {
-    this.worker = worker;
-    this.worker.addEventListener("message", this.#onMessage.bind(this));
-  }
-
-  #onMessage(e: MessageEvent) {
-    const message = e.data as MailboxMessage;
-    if (!message.id) return;
-    const resolve = this.boxes[message.id];
-    if (!resolve) return;
-    resolve(message);
-  }
-
-  async ask(data: unknown) {
-    const id = Math.random().toString(36).substring(2, 9);
-    this.worker.postMessage({ id, data });
-    return new Promise((resolve) => {
-      this.boxes[id] = resolve;
-    });
-  }
-}
+const controller = new MessageController(self as unknown as Worker);
 
 const BOARD_URL =
   "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/math.json";
@@ -42,28 +22,29 @@ try {
   });
 
   for await (const stop of board.run()) {
-    switch (stop.type) {
-      case "input":
-        {
-          stop.inputs = { text: "What is the square root of e?" };
-        }
-        break;
-      case "output":
-        {
-          self.postMessage({
-            type: "output",
-            data: stop.outputs,
-          });
-        }
-        break;
-      case "beforehandler": {
-        self.postMessage({
-          type: "beforehandler",
-          data: stop.node,
-        });
-      }
+    if (stop.type === "input") {
+      const inputMessage = (await controller.ask({
+        type: stop.type,
+        node: stop.node,
+        inputArguments: stop.inputArguments,
+      })) as { data: InputValues };
+      stop.inputs = inputMessage.data;
+    } else if (stop.type === "output") {
+      controller.inform({
+        type: stop.type,
+        node: stop.node,
+        outputs: stop.outputs,
+      });
+    } else if (stop.type === "beforehandler") {
+      controller.inform({
+        type: stop.type,
+        node: stop.node,
+      });
     }
   }
+  controller.inform({
+    type: "end",
+  });
 } catch (e) {
   const error = e as Error;
   self.postMessage(error.message);

@@ -4,22 +4,51 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-const worker = new Worker("/src/worker.ts", { type: "module" });
+import { MessageController } from "./controller.js";
 
-const pre = document.body.appendChild(document.createElement("pre"));
-
-const log = (...args: unknown[]) => {
-  pre.append(...args.map((arg) => JSON.stringify(arg, null, 2)), "\n");
+type TypedMessage = Record<string, unknown> & {
+  type?: string;
+  data?: {
+    type?: string;
+  };
 };
 
-worker.addEventListener("message", (e) => {
-  log(e.data);
-  const message = e.data;
-  if (message.type === "secret") {
-    const data = window.localStorage.getItem("PALM_KEY");
-    worker.postMessage({
-      type: "secret",
-      data,
-    });
+export class RunResult {
+  controller: MessageController;
+  message: TypedMessage;
+
+  constructor(controller: MessageController, message: TypedMessage) {
+    this.controller = controller;
+    this.message = message;
   }
-});
+
+  reply(reply: unknown) {
+    if (this.message.id) {
+      const id = this.message.id as string;
+      this.controller.reply(id, reply);
+    }
+  }
+}
+
+export class Runtime {
+  controller: MessageController;
+
+  constructor() {
+    const worker = new Worker("/src/worker.ts", { type: "module" });
+    this.controller = new MessageController(worker);
+  }
+
+  async *run() {
+    for (;;) {
+      const message = (await this.controller.listen()) as TypedMessage;
+      if (message.type === "secret") {
+        const data = window.localStorage.getItem("PALM_KEY");
+        this.controller.worker.postMessage({ type: "secret", data });
+        continue;
+      } else if (message.data && message.data.type === "end") {
+        break;
+      }
+      yield new RunResult(this.controller, message);
+    }
+  }
+}

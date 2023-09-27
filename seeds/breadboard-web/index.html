@@ -1,8 +1,144 @@
 <!DOCTYPE html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width" />
+  <script src="https://cdn.jsdelivr.net/combine/npm/marked@8.0.1,npm/dompurify@3.0.5"></script>
+  <style>
+    h1 {
+      font-weight: normal;
+    }
+    body {
+      padding: 1rem;
+    }
+    body,
+    input,
+    code {
+      font-family: Fira Code, monospace;
+      font-size: 1rem;
+    }
+
+    code {
+      color: gray;
+    }
+
+    #log {
+      white-space: pre-wrap;
+    }
+
+    input {
+      width: 80%;
+    }
+
+    #intro,
+    #meta,
+    form {
+      padding-bottom: 1rem;
+    }
+
+    #intro {
+      color: darkgray;
+    }
+
+    #progress {
+      color: lightgray;
+    }
+  </style>
+  <script type="module" src="src/index.ts"></script>
+</head>
 <h1>Simplest possible test harness</h1>
 <p>
   The whole vitejs bit will likely go away once the worker set up is a bit more
   mature.
 </p>
+<div id="log">
+  <div id="progress">Initializing ...</div>
+</div>
+<script type="module">
+  import { Board } from "https://esm.run/@google-labs/breadboard@0.3.1";
+  import { Runtime } from "./src/index.ts";
 
-<script type="module" src="src/index.ts"></script>
+  const markdownToHTML = (markdown) =>
+    DOMPurify.sanitize(marked.parseInline(markdown));
+
+  const log = document.querySelector("#log");
+
+  const getInputs = async (schema, previousState) => {
+    const input = document.createElement("div");
+    input.id = "input";
+    log.append(input);
+
+    if (!schema) {
+      input.textContent =
+        "No input schema detected, unable to provide useful interaction.";
+
+      return {};
+    }
+    const form = input.appendChild(document.createElement("form"));
+    Object.entries(schema.properties).forEach(([key, property]) => {
+      const label = form.appendChild(document.createElement("label"));
+      label.textContent = `${property.title}: `;
+      const input = label.appendChild(document.createElement("input"));
+      input.name = key;
+      input.placeholder = property.description;
+      input.autofocus = true;
+      form.append("\n");
+    });
+    return new Promise((resolve) => {
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        let data = {};
+        Object.entries(schema.properties).forEach(([key, property]) => {
+          const input = form[key];
+          if (input.value) {
+            data[key] = input.value;
+            log.append(`${property.title}: ${input.value}\n`);
+          }
+        });
+        input.remove();
+        resolve(data);
+      });
+    });
+  };
+
+  const writeOutput = (output) => {
+    const schema = output.schema;
+    if (!schema) {
+      log.append(JSON.stringify(output, null, 2) + "\n");
+      return;
+    }
+    Object.entries(schema.properties).forEach(([key, property]) => {
+      const html = document.createElement("span");
+      html.innerHTML = markdownToHTML(`${output[key]}`);
+      log.append(`${property.title}: `, html, "\n");
+    });
+  };
+
+  const url = new URL(window.location);
+  const runtime = new Runtime();
+  for await (const result of runtime.run()) {
+    const message = result.message.data;
+    if (message.type === "output") {
+      log.querySelector("#progress")?.remove();
+      const output = message.outputs;
+      writeOutput(output);
+    } else if (message.type === "input") {
+      log.querySelector("#progress")?.remove();
+      result.reply(
+        await getInputs(message.inputArguments.schema, message.state)
+      );
+    } else if (message.type === "beforehandler") {
+      let progress = log.querySelector("#progress");
+      if (!progress) {
+        progress = document.createElement("div");
+        progress.id = "progress";
+        log.append(progress);
+      }
+      progress.textContent = `Running "${message.node.id}" ...`;
+    } else if (message.type === "error") {
+      log.querySelector("#progress")?.remove();
+      log.append(`Error: ${message.data.message}\n`);
+    } else if (message.type === "done") {
+      log.querySelector("#progress")?.remove();
+    }
+  }
+</script>
