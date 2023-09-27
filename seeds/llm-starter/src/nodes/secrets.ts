@@ -25,7 +25,7 @@ export type SecretInputs = {
 };
 
 export type SecretWorkerResponse = {
-  type: "provideSecret";
+  type: "secret";
   data: string;
 };
 
@@ -41,12 +41,12 @@ const getEnvironmentValue = async (key: string) => {
     // avoid a special call here. Maybe some Board util?
     return new Promise<string>((resolve) => {
       self.postMessage({
-        type: "requestSecret",
+        type: "secret",
         data: key,
       });
       self.addEventListener("message", (e) => {
         const reply = e.data as SecretWorkerResponse;
-        if (!reply.type || reply.type != "provideSecret") return;
+        if (!reply.type || reply.type != "secret") return;
         resolve(reply.data);
       });
     });
