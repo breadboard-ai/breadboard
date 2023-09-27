@@ -6,9 +6,9 @@
 
 import test from "ava";
 
-import map, { MapInputs, lambda } from "../src/nodes/map.js";
+import map, { MapInputs } from "../src/nodes/map.js";
 import { Capability, InputValues } from "@google-labs/graph-runner";
-import { Board } from "@google-labs/breadboard";
+import { Board, lambda } from "@google-labs/breadboard";
 import { Nursery } from "../src/nursery.js";
 import Starter from "@google-labs/llm-starter";
 
@@ -149,7 +149,7 @@ test("using lambda with promptTemplate from outer board", async (t) => {
       const input = board.input();
       const template = llm.promptTemplate("item: {{item}}");
       const map = nursery.map(
-        await lambda(async (board, input, output) => {
+        lambda((_, input, output) => {
           input.wire("item->", template.wire("prompt->", output));
         })
       );

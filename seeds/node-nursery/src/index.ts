@@ -7,4 +7,3 @@
 import { Nursery } from "./nursery.js";
 export default Nursery;
 export { Nursery };
-export { lambda } from "./nodes/map.js";

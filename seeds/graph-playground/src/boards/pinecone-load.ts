@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board } from "@google-labs/breadboard";
+import { Board, lambda } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
-import { Nursery, lambda } from "@google-labs/node-nursery";
+import { Nursery } from "@google-labs/node-nursery";
 import Pinecone from "@google-labs/pinecone-kit";
 
 const PINECONE_BATCH_SIZE = 40;
 
-const generateEmebeddings = lambda(
+const generateEmbeddings = lambda(
   async (board, input, output) => {
     const nursery = board.addKit(Nursery);
     const starter = board.addKit(Starter);
@@ -40,7 +40,7 @@ const processBatch = lambda(async (board, input, output) => {
   input.wire(
     "item->list",
     nursery
-      .map(await generateEmebeddings)
+      .map(await generateEmbeddings)
       .wire(
         "list->json",
         starter
@@ -84,9 +84,7 @@ board
               .batcher({ size: PINECONE_BATCH_SIZE })
               .wire(
                 "list->",
-                nursery
-                  .map(await processBatch)
-                  .wire("list->text", board.output())
+                nursery.map(processBatch).wire("list->text", board.output())
               )
           )
       )

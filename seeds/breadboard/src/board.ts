@@ -14,6 +14,7 @@ import type {
   NodeHandler,
   GraphMetadata,
   SubGraphs,
+  NodeConfiguration,
 } from "@google-labs/graph-runner";
 
 import {
@@ -28,6 +29,7 @@ import {
   ReflectNodeOutputs,
   IncludeNodeInputs,
   SlotNodeInputs,
+  BreadboardCapability,
   KitImportMap,
 } from "./types.js";
 
@@ -44,6 +46,7 @@ import { KitLoader } from "./kit.js";
 import { IdVendor } from "./id.js";
 import { BoardLoader } from "./loader.js";
 import { runRemote } from "./remote.js";
+import { lambda, LamdbdaFunction, LambdaResult } from "./lambda.js";
 
 class ProbeEvent extends CustomEvent<ProbeDetails> {
   constructor(type: string, detail: ProbeDetails) {
@@ -93,6 +96,7 @@ export class Board implements Breadboard {
   nodes: NodeDescriptor[] = [];
   kits: Kit[] = [];
   graphs?: SubGraphs;
+  args?: InputValues;
 
   #localKit?: LocalKit;
   #slots: BreadboardSlotSpec = {};
@@ -249,7 +253,10 @@ export class Board implements Breadboard {
     let outputs: OutputValues = {};
     for await (const result of this.run(probe, slots)) {
       if (result.type === "input") {
-        result.inputs = inputs;
+        // Pass the inputs to the board. If there are inputs bound to the board
+        // (e.g. from a lambda node that had incoming wires), they will
+        // overwrite supplied inputs.
+        result.inputs = { ...inputs, ...this.args };
       } else if (result.type === "output") {
         outputs = result.outputs;
         // Exit once we receive the first output.
@@ -327,30 +334,58 @@ export class Board implements Breadboard {
     return new Node(this, "output", { ...rest }, $id);
   }
 
+  lambda<In, InL extends In, OutL = OutputValues>(
+    board: LamdbdaFunction<InL, OutL> | Board,
+    config: OptionalIdConfiguration = {}
+  ): BreadboardNode<In, LambdaResult> {
+    const { $id, ...rest } = config;
+
+    return new Node(
+      this,
+      "lambda",
+      typeof board === "function"
+        ? (lambda(board, config) as NodeConfiguration)
+        : {
+            board: {
+              kind: "board",
+              board: board as Board,
+            } as BreadboardCapability,
+            ...rest,
+          },
+      $id
+    );
+  }
+
   /**
    * Places an `include` node on the board.
    *
    * Use this node to include other boards into the current board.
    *
-   * The `include` node acts as a sort of instant board-to-node converter:
-   * just give it the URL of a serialized board, and it will pretend as if
-   * that whole board is just one node.
+   * The `include` node acts as a sort of instant board-to-node converter: just
+   * give it the URL of a serialized board, and it will pretend as if that whole
+   * board is just one node.
    *
-   * See [`include` node reference](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/nodes.md#include) for more information.
+   * See [`include` node
+   * reference](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/nodes.md#include)
+   * for more information.
    *
-   * @param $ref - the URL of the board to include.
+   * @param $ref - the URL of the board to include, or a graph or a
+   *   BreadboardCapability returned by e.g. lambda.
    * @param config - optional configuration for the node.
    * @returns - a `Node` object that represents the placed node.
    */
   include<In = InputValues, Out = OutputValues>(
-    $ref: string | GraphDescriptor,
+    $ref: string | GraphDescriptor | BreadboardCapability,
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<IncludeNodeInputs & In, Out> {
     const { $id, ...rest } = config;
     if (typeof $ref === "string") {
       return new Node(this, "include", { $ref, ...rest }, $id);
+    } else if (($ref as BreadboardCapability).kind === "board") {
+      return new Node(this, "include", { board: $ref, ...rest }, $id);
+    } else {
+      return new Node(this, "include", { graph: $ref, ...rest }, $id);
     }
-    return new Node(this, "include", { graph: $ref, ...rest }, $id);
   }
 
   /**
@@ -537,6 +572,36 @@ export class Board implements Breadboard {
     if (isSubgraph) board.#parent = outerGraph;
     board.#slots = slotted || {};
     return board;
+  }
+
+  /**
+   * Creates a runnable board from a BreadboardCapability,
+   * @param board {BreadboardCapability} A BreadboardCapability including a board
+   * @returns {Board} A runnable board.
+   */
+  static async fromBreadboardCapability(
+    board: BreadboardCapability
+  ): Promise<Board> {
+    if (board.kind !== "board" || !(board as BreadboardCapability).board) {
+      throw new Error(`Expected a "board" Capability, but got ${board}`);
+    }
+
+    // TODO: Use JSON schema to validate rather than this hack.
+    const boardish = (board as BreadboardCapability).board as GraphDescriptor;
+    if (!(boardish.edges && boardish.kits && boardish.nodes)) {
+      throw new Error(
+        'Supplied "board" Capability argument is not actually a board'
+      );
+    }
+
+    // If all we got is a GraphDescriptor, build a runnable board from it.
+    // TODO: Use JSON schema to validate rather than this hack.
+    let runnableBoard = (board as BreadboardCapability).board as Board;
+    if (!runnableBoard.runOnce) {
+      runnableBoard = await Board.fromGraphDescriptor(boardish);
+    }
+
+    return runnableBoard;
   }
 
   static async handlersFromBoard(

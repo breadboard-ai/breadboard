@@ -14,6 +14,10 @@ import type {
 import type {
   BreadboardSlotSpec,
   BreadboardValidator,
+  BreadboardCapability,
+  LambdaNodeInputs,
+  LambdaNodeOutputs,
+  ImportNodeInputs,
   IncludeNodeInputs,
   SlotNodeInputs,
 } from "./types.js";
@@ -53,8 +57,43 @@ export class Core {
     }, {} as NodeHandlers);
   }
 
+  async lambda(inputs: LambdaNodeInputs): Promise<LambdaNodeOutputs> {
+    const { board, ...args } = inputs;
+    if (!board || board.kind !== "board" || !board.board)
+      throw new Error(
+        `Lambda node requires a BoardCapability as "board" input`
+      );
+    const runnableBoard = {
+      ...(await Board.fromBreadboardCapability(board)),
+      inputs: args,
+    };
+
+    return {
+      board: { ...board, board: runnableBoard as GraphDescriptor },
+    };
+  }
+
+  async import(inputs: ImportNodeInputs): Promise<LambdaNodeOutputs> {
+    const { path, $ref, graph, ...args } = inputs;
+
+    // TODO: Please fix the $ref/path mess.
+    const source = path || $ref || "";
+    const board = graph
+      ? (graph as Board).runOnce // TODO: Hack! Use JSON schema or so instead.
+        ? ({ ...graph } as Board)
+        : await Board.fromGraphDescriptor(graph)
+      : await Board.load(source, {
+          base: this.#graph.url,
+          outerGraph: this.#outerGraph,
+        });
+    board.args = args;
+
+    return { board: { kind: "board", board } as BreadboardCapability };
+  }
+
+  // TODO: Rename to invoke
   async include(inputs: InputValues): Promise<OutputValues> {
-    const { path, $ref, graph, slotted, parent, ...args } =
+    const { path, $ref, board, graph, slotted, parent, ...args } =
       inputs as IncludeNodeInputs;
 
     // Add the current graph's URL as the url of the slotted graph,
@@ -68,18 +107,25 @@ export class Core {
 
     // TODO: Please fix the $ref/path mess.
     const source = path || $ref || "";
-    const board = graph
+
+    const runnableBoard = board
+      ? await Board.fromBreadboardCapability(board)
+      : graph
       ? await Board.fromGraphDescriptor(graph)
       : await Board.load(source, {
           slotted: slottedWithUrls,
           base: this.#graph.url,
           outerGraph: this.#outerGraph,
         });
+
     for (const validator of this.#validators)
-      board.addValidator(
+      runnableBoard.addValidator(
         validator.getSubgraphValidator(parent, Object.keys(args))
       );
-    return await board.runOnce(args, NestedProbe.create(this.#probe, source));
+    return await runnableBoard.runOnce(
+      args,
+      NestedProbe.create(this.#probe, source)
+    );
   }
 
   async reflect(_inputs: InputValues): Promise<OutputValues> {

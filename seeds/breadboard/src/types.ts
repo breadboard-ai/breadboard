@@ -14,6 +14,7 @@ import type {
   NodeHandlers,
   NodeTypeIdentifier,
   OutputValues,
+  Capability,
   TraversalResult,
 } from "@google-labs/graph-runner";
 
@@ -169,7 +170,13 @@ export interface Breadboard extends GraphDescriptor {
   addEdge(edge: Edge): void;
   addNode(node: NodeDescriptor): void;
   addKit<T extends Kit>(ctr: KitConstructor<T>): T;
+  args?: InputValues; // Will be passed to the input node, useful in lambdas
 }
+
+export type BreadboardCapability = Capability & {
+  kind: "board";
+  board: GraphDescriptor;
+};
 
 type Common<To, From> = {
   [P in keyof (From | To) as From[P] extends To[P] ? P : never]?:
@@ -237,9 +244,40 @@ export type ReflectNodeOutputs = OutputValues & {
   graph: GraphDescriptor;
 };
 
+export type LambdaNodeInputs = InputValues & {
+  /**
+   * The (lambda) board this node represents. The purpose of the this node is to
+   * allow wiring data into the lambda board, outside of where it's called.
+   * This is useful when passing a lambda to a map node or as a slot.
+   *
+   * Note that (for now) each board can only be represented by one node.
+   */
+  board: BreadboardCapability;
+
+  /**
+   * All other inputs will be bound to the board.
+   */
+  args: InputValues;
+};
+
+export type LambdaNodeOutputs = OutputValues & {
+  /**
+   * The lambda board that can be run.
+   */
+  board: BreadboardCapability;
+};
+
+export type ImportNodeInputs = InputValues & {
+  path?: string;
+  $ref?: string;
+  graph?: GraphDescriptor;
+  args: InputValues;
+};
+
 export type IncludeNodeInputs = InputValues & {
   path?: string;
   $ref?: string;
+  board?: BreadboardCapability;
   graph?: GraphDescriptor;
   slotted?: BreadboardSlotSpec;
   parent: NodeDescriptor;
