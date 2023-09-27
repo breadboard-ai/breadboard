@@ -20,11 +20,17 @@ try {
         break;
       case "output":
         {
-          self.postMessage(stop.outputs);
+          self.postMessage({
+            type: "output",
+            data: stop.outputs,
+          });
         }
         break;
       case "beforehandler": {
-        self.postMessage(stop.node);
+        self.postMessage({
+          type: "beforehandler",
+          data: stop.node,
+        });
       }
     }
   }

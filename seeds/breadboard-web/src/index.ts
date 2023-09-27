@@ -17,7 +17,6 @@ worker.addEventListener("message", (e) => {
   const message = e.data;
   if (message.type === "secret") {
     const data = window.localStorage.getItem("PALM_KEY");
-    log("secret", data);
     worker.postMessage({
       type: "secret",
       data,
