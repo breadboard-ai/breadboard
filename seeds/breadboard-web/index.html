@@ -136,6 +136,11 @@
       progress.textContent = `Running "${message.node.id}" ...`;
     } else if (message.type === "error") {
       log.querySelector("#progress")?.remove();
+      log.append(`Error: ${message.error}\n`);
+    } else if (message.type === "proxy") {
+      result.reply({ completion: 'function compute() { return "43"; }' });
+    } else if (message.type === "error") {
+      log.querySelector("#progress")?.remove();
       log.append(`Error: ${message.data.message}\n`);
     } else if (message.type === "done") {
       log.querySelector("#progress")?.remove();

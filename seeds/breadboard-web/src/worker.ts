@@ -8,8 +8,11 @@ import { Board } from "@google-labs/breadboard";
 import { InputValues } from "@google-labs/graph-runner";
 import { Starter } from "@google-labs/llm-starter";
 import { MessageController } from "./controller.js";
+import { NodeProxy } from "./proxy.js";
 
 const controller = new MessageController(self as unknown as Worker);
+
+const proxy = new NodeProxy(controller, ["generateText"]);
 
 const BOARD_URL =
   "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/math.json";
@@ -21,7 +24,7 @@ try {
     },
   });
 
-  for await (const stop of board.run()) {
+  for await (const stop of board.run(proxy)) {
     if (stop.type === "input") {
       const inputMessage = (await controller.ask({
         type: stop.type,
@@ -42,10 +45,9 @@ try {
       });
     }
   }
-  controller.inform({
-    type: "end",
-  });
+  controller.inform({ type: "end" });
 } catch (e) {
   const error = e as Error;
-  self.postMessage(error.message);
+  console.error(error);
+  controller.inform({ type: "error", error: error.message });
 }
