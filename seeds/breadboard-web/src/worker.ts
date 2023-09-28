@@ -12,7 +12,7 @@ import { NodeProxy } from "./proxy.js";
 
 const controller = new MessageController(self as unknown as Worker);
 
-const proxy = new NodeProxy(controller, ["generateText"]);
+const proxy = new NodeProxy(controller, ["generateText", "secrets"]);
 
 const BOARD_URL =
   "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/math.json";

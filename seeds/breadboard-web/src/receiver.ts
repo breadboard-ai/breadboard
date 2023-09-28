@@ -9,9 +9,15 @@ import {
   InputValues,
   NodeHandlers,
   NodeTypeIdentifier,
+  OutputValues,
 } from "@google-labs/graph-runner";
 import { Starter } from "@google-labs/llm-starter";
 
+/**
+ * This receiver is intentionally hacky. A real implementation would
+ * also need to pick and choose carefully which requests to execute and how.
+ * This is just an illustration of how this might be done.
+ */
 export class Receiver {
   board: Board;
   handlers?: NodeHandlers;
@@ -24,6 +30,15 @@ export class Receiver {
   async handle(nodeType: NodeTypeIdentifier, inputs: InputValues) {
     if (!this.handlers)
       this.handlers = await Board.handlersFromBoard(this.board);
+    if (nodeType === "secrets") {
+      const { keys } = inputs as { keys: string[] };
+      return keys.reduce((acc, key) => {
+        acc[key] = key;
+        return acc;
+      }, {} as OutputValues);
+    } else if (nodeType === "generateText") {
+      inputs.PALM_KEY = window.localStorage.getItem("PALM_KEY") || "";
+    }
     const handler = this.handlers[nodeType];
     if (!handler)
       throw new Error(`No handler found for node type "${nodeType}".`);

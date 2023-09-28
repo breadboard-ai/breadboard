@@ -115,7 +115,6 @@
 
   const url = new URL(window.location);
   const runtime = new Runtime();
-  const receiver = new Receiver();
 
   for await (const result of runtime.run()) {
     const message = result.message.data;
@@ -139,8 +138,6 @@
     } else if (message.type === "error") {
       log.querySelector("#progress")?.remove();
       log.append(`Error: ${message.error}\n`);
-    } else if (message.type === "proxy") {
-      result.reply(await receiver.handle(message.node.type, message.inputs));
     } else if (message.type === "error") {
       log.querySelector("#progress")?.remove();
       log.append(`Error: ${message.data.message}\n`);
