@@ -148,7 +148,7 @@ export interface ProbeDetails {
   /**
    * The output values the node provided.
    */
-  outputs?: OutputValues;
+  outputs?: OutputValues | Promise<OutputValues>;
   /**
    * The nesting level of the node.
    * When a board contains included or slotted boards, this level will

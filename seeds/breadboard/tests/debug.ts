@@ -6,8 +6,9 @@
 
 import test from "ava";
 
-import { DebugProbe } from "../src/debug.js";
+import { DebugNodePin, DebugProbe } from "../src/debug.js";
 import { NodeValue } from "@google-labs/graph-runner";
+import { ProbeEvent } from "../src/types.js";
 
 test("DebugProbe correctly handles input pins that modify inputs", (t) => {
   const probe = new DebugProbe();
@@ -54,4 +55,22 @@ test("DebugProbe can replace nodes", (t) => {
   const dispatchResult = probe.dispatchEvent(event);
   t.true(dispatchResult);
   t.deepEqual(event.detail.outputs, { foo: "bar" });
+});
+
+test("DebugProbe can replae nodes with async output", async (t) => {
+  const probe = new DebugProbe();
+  const pin: DebugNodePin = (_: NodeValue) =>
+    new Promise((resolve) => resolve({ foo: "bar" }));
+  const node = { id: "test" };
+  probe.replaceNode(node.id, pin);
+  const event = new CustomEvent("beforehandler", {
+    detail: {
+      descriptor: node,
+      inputs: {},
+    },
+  }) as ProbeEvent;
+  const dispatchResult = probe.dispatchEvent(event);
+  t.true(dispatchResult);
+  const outputs = await event.detail.outputs;
+  t.deepEqual(outputs, { foo: "bar" });
 });

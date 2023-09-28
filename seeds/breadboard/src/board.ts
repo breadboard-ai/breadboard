@@ -195,10 +195,9 @@ export class Board implements Breadboard {
       if (!handler)
         throw new Error(`No handler for node type "${descriptor.type}"`);
 
-      const beforehandlerDetail = {
+      const beforehandlerDetail: ProbeDetails = {
         descriptor,
         inputs,
-        outputs: {},
       };
 
       yield new BeforeHandlerStageResult(result);
@@ -212,6 +211,8 @@ export class Board implements Breadboard {
       const outputsPromise = (
         shouldInvokeHandler
           ? handler(inputs)
+          : beforehandlerDetail.outputs instanceof Promise
+          ? beforehandlerDetail.outputs
           : Promise.resolve(beforehandlerDetail.outputs)
       ) as Promise<OutputValues>;
 
