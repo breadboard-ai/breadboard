@@ -4,35 +4,32 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board, lambda } from "@google-labs/breadboard";
+import { Board, LambdaFunction } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 import { Nursery } from "@google-labs/node-nursery";
 import Pinecone from "@google-labs/pinecone-kit";
 
 const PINECONE_BATCH_SIZE = 40;
 
-const generateEmbeddings = lambda(
-  async (board, input, output) => {
-    const nursery = board.addKit(Nursery);
-    const starter = board.addKit(Starter);
-    const merge = starter.append({ $id: "merge" });
-    input
-      .wire(
-        "item->json",
-        starter.jsonata("metadata.text").wire(
-          "result->text",
-          nursery
-            .embedString()
-            .wire("embedding->", merge)
-            .wire("<-PALM_KEY", starter.secrets(["PALM_KEY"]))
-        )
+const generateEmbeddings: LambdaFunction = (board, input, output) => {
+  const nursery = board.addKit(Nursery);
+  const starter = board.addKit(Starter);
+  const merge = starter.append({ $id: "merge" });
+  input
+    .wire(
+      "item->json",
+      starter.jsonata("metadata.text").wire(
+        "result->text",
+        nursery
+          .embedString()
+          .wire("embedding->", merge)
+          .wire("<-PALM_KEY", starter.secrets(["PALM_KEY"]))
       )
-      .wire("item->accumulator", merge.wire("accumulator->item", output));
-  },
-  { $id: "generate-embeddings" }
-);
+    )
+    .wire("item->accumulator", merge.wire("accumulator->item", output));
+};
 
-const processBatch = lambda(async (board, input, output) => {
+const processBatch: LambdaFunction = (board, input, output) => {
   const starter = board.addKit(Starter);
   const nursery = board.addKit(Nursery);
   const pinecone = board.addKit(Pinecone);
@@ -40,7 +37,7 @@ const processBatch = lambda(async (board, input, output) => {
   input.wire(
     "item->list",
     nursery
-      .map(await generateEmbeddings)
+      .map(generateEmbeddings, { $id: "generate-embeddings" })
       .wire(
         "list->json",
         starter
@@ -54,7 +51,7 @@ const processBatch = lambda(async (board, input, output) => {
           )
       )
   );
-});
+};
 
 const board = new Board({
   title: "Loading Chunks into Pinecone",

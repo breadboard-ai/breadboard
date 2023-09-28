@@ -14,7 +14,6 @@ import type {
   NodeHandler,
   GraphMetadata,
   SubGraphs,
-  NodeConfiguration,
 } from "@google-labs/graph-runner";
 
 import {
@@ -26,6 +25,7 @@ import {
   type BreadboardValidator,
   ProbeDetails,
   BreadboardNode,
+  LambdaNodeOutputs,
   ReflectNodeOutputs,
   IncludeNodeInputs,
   SlotNodeInputs,
@@ -46,7 +46,7 @@ import { KitLoader } from "./kit.js";
 import { IdVendor } from "./id.js";
 import { BoardLoader } from "./loader.js";
 import { runRemote } from "./remote.js";
-import { lambda, LamdbdaFunction, LambdaResult } from "./lambda.js";
+import { lambda, LambdaFunction } from "./lambda.js";
 
 class ProbeEvent extends CustomEvent<ProbeDetails> {
   constructor(type: string, detail: ProbeDetails) {
@@ -336,23 +336,24 @@ export class Board implements Breadboard {
   }
 
   lambda<In, InL extends In, OutL = OutputValues>(
-    board: LamdbdaFunction<InL, OutL> | Board,
+    board: LambdaFunction<InL, OutL> | Board,
     config: OptionalIdConfiguration = {}
-  ): BreadboardNode<In, LambdaResult> {
+  ): BreadboardNode<In, LambdaNodeOutputs> {
     const { $id, ...rest } = config;
 
     return new Node(
       this,
       "lambda",
-      typeof board === "function"
-        ? (lambda(board, config) as NodeConfiguration)
-        : {
-            board: {
-              kind: "board",
-              board: board as Board,
-            } as BreadboardCapability,
-            ...rest,
-          },
+      {
+        board:
+          typeof board === "function"
+            ? lambda(board)
+            : ({
+                kind: "board",
+                board: board as Board,
+              } as BreadboardCapability),
+        ...rest,
+      },
       $id
     );
   }
