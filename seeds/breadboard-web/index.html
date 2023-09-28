@@ -50,6 +50,9 @@
   The whole vitejs bit will likely go away once the worker set up is a bit more
   mature.
 </p>
+<p>
+  <label>PALM_KEY: <input type="password" id="PALM_KEY" /></label>
+</p>
 <div id="log">
   <div id="progress">Initializing ...</div>
 </div>
@@ -61,6 +64,12 @@
     DOMPurify.sanitize(marked.parseInline(markdown));
 
   const log = document.querySelector("#log");
+
+  const palmKeyInput = document.querySelector("#PALM_KEY");
+  palmKeyInput.value = localStorage.getItem("PALM_KEY") || "";
+  palmKeyInput.addEventListener("change", (e) => {
+    localStorage.setItem("PALM_KEY", e.target.value);
+  });
 
   const getInputs = async (schema, previousState) => {
     const input = document.createElement("div");
