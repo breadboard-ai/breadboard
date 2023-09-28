@@ -125,7 +125,8 @@ async function main(args: string[], use_input_handler = false) {
       );
     }
     if (detail.descriptor.type !== "generateText") return;
-    const value = (detail?.outputs?.completion as string) || "empty response";
+    const outputs = detail.outputs as OutputValues;
+    const value = (outputs.completion as string) || "empty response";
     note(wrap(value), "text completion");
   });
 
