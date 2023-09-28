@@ -5,8 +5,9 @@
  */
 
 import { NodeTypeIdentifier, OutputValues } from "@google-labs/graph-runner";
-import { MessageController } from "./controller";
 import { ProbeEvent } from "@google-labs/breadboard";
+
+import { MessageController } from "./controller.js";
 
 type NodeProxyResult = {
   data: OutputValues;
@@ -34,11 +35,7 @@ export class NodeProxy extends EventTarget {
   async invokeProxy(event: ProbeEvent) {
     const e = event as ProbeEvent;
     const { descriptor, inputs } = e.detail;
-    const message = {
-      type: "proxy",
-      node: descriptor,
-      inputs,
-    };
+    const message = { type: "proxy", node: descriptor, inputs };
     const result = (await this.controller.ask(message)) as NodeProxyResult;
     return result.data;
   }

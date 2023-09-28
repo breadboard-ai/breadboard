@@ -55,7 +55,7 @@
 </div>
 <script type="module">
   import { Board } from "https://esm.run/@google-labs/breadboard@0.3.1";
-  import { Runtime } from "./src/index.ts";
+  import { Runtime, Receiver } from "./src/index.ts";
 
   const markdownToHTML = (markdown) =>
     DOMPurify.sanitize(marked.parseInline(markdown));
@@ -115,6 +115,8 @@
 
   const url = new URL(window.location);
   const runtime = new Runtime();
+  const receiver = new Receiver();
+
   for await (const result of runtime.run()) {
     const message = result.message.data;
     if (message.type === "output") {
@@ -138,7 +140,7 @@
       log.querySelector("#progress")?.remove();
       log.append(`Error: ${message.error}\n`);
     } else if (message.type === "proxy") {
-      result.reply({ completion: 'function compute() { return "43"; }' });
+      result.reply(await receiver.handle(message.node.type, message.inputs));
     } else if (message.type === "error") {
       log.querySelector("#progress")?.remove();
       log.append(`Error: ${message.data.message}\n`);
