@@ -29,7 +29,8 @@ export class RunResult {
   reply(reply: unknown) {
     if (!this.message.id) return;
     const id = this.message.id as string;
-    this.controller.reply(id, reply);
+    const type = this.message.type as string;
+    this.controller.reply(id, { type, ...(reply as Record<string, unknown>) });
   }
 }
 
@@ -49,10 +50,10 @@ export class Runtime {
       const data = message.data;
       if (data && data.type === "proxy" && message.id) {
         const id = message.id as string;
-        this.controller.reply(
-          id,
-          await this.receiver.handle(data.node.type, data.inputs)
-        );
+        this.controller.reply(id, {
+          type: "proxy",
+          ...(await this.receiver.handle(data.node.type, data.inputs)),
+        });
         continue;
       }
       yield new RunResult(this.controller, message);

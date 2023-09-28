@@ -15,14 +15,18 @@ export class MessageController {
   mailboxes: Record<string, ResolveFunction> = {};
   #listener?: ResolveFunction;
   worker: Worker;
+  #direction: string;
 
   constructor(worker: Worker) {
     this.worker = worker;
     this.worker.addEventListener("message", this.#onMessage.bind(this));
+    this.#direction = globalThis.window ? "<-" : "->";
   }
 
   #onMessage(e: MessageEvent) {
     const message = e.data as ControllerMessage;
+    const { type = "input", ...rest } = message.data as { type: string };
+    console.log(`[${this.#direction}]`, type, rest);
     if (message.id) {
       const resolve = this.mailboxes[message.id];
       if (resolve) {
