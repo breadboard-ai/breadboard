@@ -11,7 +11,7 @@ import {
 } from "@google-labs/graph-runner";
 import {
   ControllerMessageType,
-  ControllerMessageish,
+  ControllerMessage,
   MessageController,
   ProxyResponseMessage,
   StartMesssage,
@@ -39,7 +39,7 @@ export class RunResult {
     this.message = message;
   }
 
-  reply<T extends ControllerMessageish>(reply: unknown) {
+  reply<T extends ControllerMessage>(reply: unknown) {
     if (!this.message.id) return;
     const id = this.message.id as string;
     const type = this.message.type as ControllerMessageType;

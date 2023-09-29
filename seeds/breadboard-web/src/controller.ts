@@ -29,7 +29,7 @@ export type RoundTrip = {
   id: string;
 };
 
-export type ControllerMessageish = {
+export type ControllerMessage = {
   /**
    * The id of the message.
    */
@@ -47,7 +47,7 @@ export type ControllerMessageish = {
 /**
  * The message format used to communicate between the worker and its host.
  */
-export type ControllerMessage<
+export type ControllerMessageBase<
   Type extends ControllerMessageType,
   Payload,
   HasId extends RoundTrip | unknown = unknown
@@ -59,7 +59,7 @@ export type ControllerMessage<
   data: Payload;
 };
 
-export type StartMesssage = ControllerMessage<
+export type StartMesssage = ControllerMessageBase<
   "start",
   {
     url: string;
@@ -67,43 +67,43 @@ export type StartMesssage = ControllerMessage<
   }
 >;
 
-export type InputRequestMessage = ControllerMessage<
+export type InputRequestMessage = ControllerMessageBase<
   "input",
   { node: NodeDescriptor; inputArguments: NodeValue },
   RoundTrip
 >;
 
-export type InputResponseMessage = ControllerMessage<
+export type InputResponseMessage = ControllerMessageBase<
   "input",
   NodeValue,
   RoundTrip
 >;
 
-export type BeforehandlerMessage = ControllerMessage<
+export type BeforehandlerMessage = ControllerMessageBase<
   "beforehandler",
   { node: NodeDescriptor }
 >;
 
-export type OutputMessage = ControllerMessage<
+export type OutputMessage = ControllerMessageBase<
   "output",
   { node: NodeDescriptor; outputs: NodeValue }
 >;
 
-export type ProxyRequestMessage = ControllerMessage<
+export type ProxyRequestMessage = ControllerMessageBase<
   "proxy",
   { node: NodeDescriptor; inputs: NodeValue },
   RoundTrip
 >;
 
-export type ProxyResponseMessage = ControllerMessage<
+export type ProxyResponseMessage = ControllerMessageBase<
   "proxy",
   OutputValues,
   RoundTrip
 >;
 
-export type EndMessage = ControllerMessage<"end", unknown>;
+export type EndMessage = ControllerMessageBase<"end", unknown>;
 
-export type ErrorMessage = ControllerMessage<"error", { error: string }>;
+export type ErrorMessage = ControllerMessageBase<"error", { error: string }>;
 
 type ResolveFunction = (value: unknown) => void;
 
@@ -130,7 +130,7 @@ export class MessageController {
   }
 
   #onMessage(e: MessageEvent) {
-    const message = e.data as ControllerMessageish;
+    const message = e.data as ControllerMessage;
     if (!message.type || !VALID_MESSAGE_TYPES.includes(message.type)) {
       console.error("Invalid message type. Message:", message);
       throw new Error(`Invalid message type "${message.type}"`);
@@ -147,7 +147,7 @@ export class MessageController {
     this.#listener && this.#listener(message);
   }
 
-  async ask<T extends ControllerMessageish>(data: T["data"], type: T["type"]) {
+  async ask<T extends ControllerMessage>(data: T["data"], type: T["type"]) {
     const id = Math.random().toString(36).substring(2, 9);
     this.worker.postMessage({ id, type, data });
     return new Promise((resolve) => {
@@ -164,11 +164,11 @@ export class MessageController {
     });
   }
 
-  inform<T extends ControllerMessageish>(data: T["data"], type: T["type"]) {
+  inform<T extends ControllerMessage>(data: T["data"], type: T["type"]) {
     this.worker.postMessage({ type, data });
   }
 
-  reply<T extends ControllerMessageish>(
+  reply<T extends ControllerMessage>(
     id: string,
     data: T["data"],
     type: T["type"]
