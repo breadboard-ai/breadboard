@@ -44,6 +44,8 @@ export type ControllerMessage = {
   data: unknown;
 };
 
+export type RoundTripControllerMessage = ControllerMessage & RoundTrip;
+
 /**
  * The message format used to communicate between the worker and its host.
  */
@@ -107,6 +109,22 @@ export type ErrorMessage = ControllerMessageBase<"error", { error: string }>;
 
 type ResolveFunction = (value: unknown) => void;
 
+export class RoundTripMessageRequest {
+  controller: MessageController;
+  message: ControllerMessage;
+
+  constructor(controller: MessageController, message: ControllerMessage) {
+    this.controller = controller;
+    this.message = message;
+  }
+
+  reply<T extends ControllerMessage>(reply: T["data"]) {
+    if (!this.message.id)
+      throw new Error("No id on message, something has gone terribly wrong");
+    this.controller.reply<T>(this.message.id, reply, this.message.type);
+  }
+}
+
 export class MessageController {
   mailboxes: Record<string, ResolveFunction> = {};
   #listener?: ResolveFunction;
@@ -147,7 +165,10 @@ export class MessageController {
     this.#listener && this.#listener(message);
   }
 
-  async ask<T extends ControllerMessage>(data: T["data"], type: T["type"]) {
+  async ask<T extends RoundTripControllerMessage>(
+    data: T["data"],
+    type: T["type"]
+  ) {
     const id = Math.random().toString(36).substring(2, 9);
     this.worker.postMessage({ id, type, data });
     return new Promise((resolve) => {
