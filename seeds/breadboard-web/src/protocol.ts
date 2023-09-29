@@ -4,6 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/**
+ * This file defines the message protocol used to communicate between the
+ * worker and its host (the main thread).
+ * @packageDocumentation
+ */
+
 import {
   InputValues,
   NodeDescriptor,
@@ -11,6 +17,9 @@ import {
   OutputValues,
 } from "@google-labs/graph-runner";
 
+/**
+ * The valid message types.
+ */
 export const VALID_MESSAGE_TYPES = [
   "start",
   "input",

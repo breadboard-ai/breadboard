@@ -20,5 +20,11 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": ["src/**/*"],
-  "extends": "@google-labs/tsconfig/base.json"
+  "extends": "@google-labs/tsconfig/base.json",
+  "typedocOptions": {
+    "entryPoints": "./src/protocol.ts",
+    "out": "./docs/api",
+    "githubPages": false,
+    "readme": "none"
+  }
 }
