@@ -33,7 +33,11 @@ export class RunResult {
     if (!this.message.id) return;
     const id = this.message.id as string;
     const type = this.message.type as string;
-    this.controller.reply(id, { type, ...(reply as Record<string, unknown>) });
+    this.controller.reply(
+      id,
+      { type, ...(reply as Record<string, unknown>) },
+      type
+    );
   }
 }
 
@@ -58,16 +62,21 @@ export class Runtime {
     for (;;) {
       const message = (await this.controller.listen()) as TypedMessage;
       const data = message.data;
-      if (data && data.type === "proxy" && message.id) {
+      const type = message.type;
+      if (data && type === "proxy" && message.id) {
         const id = message.id as string;
-        this.controller.reply(id, {
-          type: "proxy",
-          ...(await this.receiver.handle(data.node.type, data.inputs)),
-        });
+        this.controller.reply(
+          id,
+          {
+            type: "proxy",
+            ...(await this.receiver.handle(data.node.type, data.inputs)),
+          },
+          "proxy"
+        );
         continue;
       }
       yield new RunResult(this.controller, message);
-      if (data && data.type === "end") {
+      if (data && type === "end") {
         break;
       }
     }

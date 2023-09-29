@@ -48,28 +48,34 @@ try {
 
   for await (const stop of board.run(proxy)) {
     if (stop.type === "input") {
-      const inputMessage = (await controller.ask({
-        type: stop.type,
-        node: stop.node,
-        inputArguments: stop.inputArguments,
-      })) as { data: InputValues };
+      const inputMessage = (await controller.ask(
+        {
+          node: stop.node,
+          inputArguments: stop.inputArguments,
+        },
+        stop.type
+      )) as { data: InputValues };
       stop.inputs = inputMessage.data;
     } else if (stop.type === "output") {
-      controller.inform({
-        type: stop.type,
-        node: stop.node,
-        outputs: stop.outputs,
-      });
+      controller.inform(
+        {
+          node: stop.node,
+          outputs: stop.outputs,
+        },
+        stop.type
+      );
     } else if (stop.type === "beforehandler") {
-      controller.inform({
-        type: stop.type,
-        node: stop.node,
-      });
+      controller.inform(
+        {
+          node: stop.node,
+        },
+        stop.type
+      );
     }
   }
-  controller.inform({ type: "end" });
+  controller.inform({}, "end");
 } catch (e) {
   const error = e as Error;
   console.error(error);
-  controller.inform({ type: "error", error: error.message });
+  controller.inform({ error: error.message }, "error");
 }

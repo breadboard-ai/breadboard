@@ -127,16 +127,17 @@
 
   for await (const result of runtime.run()) {
     const message = result.message.data;
-    if (message.type === "output") {
+    const type = result.message.type;
+    if (type === "output") {
       log.querySelector("#progress")?.remove();
       const output = message.outputs;
       writeOutput(output);
-    } else if (message.type === "input") {
+    } else if (type === "input") {
       log.querySelector("#progress")?.remove();
       result.reply(
         await getInputs(message.inputArguments.schema, message.state)
       );
-    } else if (message.type === "beforehandler") {
+    } else if (type === "beforehandler") {
       let progress = log.querySelector("#progress");
       if (!progress) {
         progress = document.createElement("div");
@@ -144,13 +145,13 @@
         log.append(progress);
       }
       progress.textContent = `Running "${message.node.id}" ...`;
-    } else if (message.type === "error") {
+    } else if (type === "error") {
       log.querySelector("#progress")?.remove();
       log.append(`Error: ${message.error}\n`);
-    } else if (message.type === "error") {
+    } else if (type === "error") {
       log.querySelector("#progress")?.remove();
       log.append(`Error: ${message.data.message}\n`);
-    } else if (message.type === "done") {
+    } else if (type === "done") {
       log.querySelector("#progress")?.remove();
     }
   }
