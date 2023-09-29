@@ -5,13 +5,13 @@
  */
 
 import { OutputValues } from "@google-labs/graph-runner";
-import {
+import type {
   ControllerMessage,
-  MessageController,
   ProxyResponseMessage,
   StartMesssage,
   ProxyRequestMessage,
-} from "./controller.js";
+} from "./protocol.js";
+import { MessageController } from "./controller.js";
 import { Receiver } from "./receiver.js";
 
 const BOARD_URL =

@@ -7,15 +7,15 @@
 import { Board } from "@google-labs/breadboard";
 import { InputValues } from "@google-labs/graph-runner";
 import { Starter } from "@google-labs/llm-starter";
-import {
+import type {
   BeforehandlerMessage,
   EndMessage,
   ErrorMessage,
   InputRequestMessage,
-  MessageController,
   OutputMessage,
   StartMesssage,
-} from "./controller.js";
+} from "./protocol.js";
+import { MessageController } from "./controller.js";
 import { NodeProxy } from "./proxy.js";
 
 const controller = new MessageController(self as unknown as Worker);

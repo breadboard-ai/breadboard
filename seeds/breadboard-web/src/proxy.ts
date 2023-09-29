@@ -7,11 +7,8 @@
 import { NodeTypeIdentifier } from "@google-labs/graph-runner";
 import { ProbeEvent } from "@google-labs/breadboard";
 
-import {
-  MessageController,
-  ProxyRequestMessage,
-  ProxyResponseMessage,
-} from "./controller.js";
+import type { ProxyRequestMessage, ProxyResponseMessage } from "./protocol.js";
+import { MessageController } from "./controller.js";
 
 export class NodeProxy extends EventTarget {
   controller: MessageController;
