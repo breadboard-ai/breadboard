@@ -5,6 +5,7 @@
  */
 
 import {
+  InputValues,
   NodeDescriptor,
   NodeValue,
   OutputValues,
@@ -88,12 +89,12 @@ export type BeforehandlerMessage = ControllerMessageBase<
 
 export type OutputMessage = ControllerMessageBase<
   "output",
-  { node: NodeDescriptor; outputs: NodeValue }
+  { node: NodeDescriptor; outputs: OutputValues }
 >;
 
 export type ProxyRequestMessage = ControllerMessageBase<
   "proxy",
-  { node: NodeDescriptor; inputs: NodeValue },
+  { node: NodeDescriptor; inputs: InputValues },
   RoundTrip
 >;
 
@@ -107,23 +108,7 @@ export type EndMessage = ControllerMessageBase<"end", unknown>;
 
 export type ErrorMessage = ControllerMessageBase<"error", { error: string }>;
 
-type ResolveFunction = (value: unknown) => void;
-
-export class RoundTripMessageRequest {
-  controller: MessageController;
-  message: ControllerMessage;
-
-  constructor(controller: MessageController, message: ControllerMessage) {
-    this.controller = controller;
-    this.message = message;
-  }
-
-  reply<T extends ControllerMessage>(reply: T["data"]) {
-    if (!this.message.id)
-      throw new Error("No id on message, something has gone terribly wrong");
-    this.controller.reply<T>(this.message.id, reply, this.message.type);
-  }
-}
+type ResolveFunction = (value: ControllerMessage) => void;
 
 export class MessageController {
   mailboxes: Record<string, ResolveFunction> = {};
@@ -176,9 +161,9 @@ export class MessageController {
     });
   }
 
-  async listen() {
+  async listen(): Promise<ControllerMessage> {
     return new Promise((resolve) => {
-      this.#listener = (message: unknown) => {
+      this.#listener = (message: ControllerMessage) => {
         resolve(message);
         this.#listener = undefined;
       };
