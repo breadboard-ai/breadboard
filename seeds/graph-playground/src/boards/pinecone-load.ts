@@ -37,7 +37,7 @@ const processBatch: LambdaFunction = (board, input, output) => {
   input.wire(
     "item->list",
     nursery
-      .map(generateEmbeddings, { $id: "generate-embeddings" })
+      .map({ board: generateEmbeddings, $id: "generate-embeddings" })
       .wire(
         "list->json",
         starter
