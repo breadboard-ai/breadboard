@@ -12,16 +12,38 @@ import { NodeProxy } from "./proxy.js";
 
 const controller = new MessageController(self as unknown as Worker);
 
-const proxy = new NodeProxy(controller, ["generateText", "secrets"]);
+type StartupInfo = {
+  url: string;
+  proxyNodes: string[];
+};
 
-const BOARD_URL =
-  "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/math.json";
+const start = async (): Promise<StartupInfo> => {
+  const message = (await controller.listen()) as {
+    type: string;
+    data: StartupInfo;
+  };
+  console.log("start", message);
+  if (message.type === "start") {
+    const data = message.data;
+    if (!data.url) {
+      throw new Error("The start message must include a url");
+    } else if (!data.proxyNodes || !data.proxyNodes.length) {
+      console.warn(
+        "No nodes to proxy were specified. The board may not run correctly"
+      );
+    }
+    return message.data;
+  }
+  throw new Error('The only valid first message is the "start" message');
+};
+
+const info = await start();
+
+const proxy = new NodeProxy(controller, info.proxyNodes);
 
 try {
-  const board = await Board.load(BOARD_URL, {
-    kits: {
-      "@google-labs/llm-starter": Starter,
-    },
+  const board = await Board.load(info.url, {
+    kits: { "@google-labs/llm-starter": Starter },
   });
 
   for await (const stop of board.run(proxy)) {

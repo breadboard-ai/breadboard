@@ -55,8 +55,8 @@ export class MessageController {
     });
   }
 
-  inform(data: unknown) {
-    this.worker.postMessage({ data });
+  inform(data: unknown, type?: string) {
+    this.worker.postMessage({ type, data });
   }
 
   reply(id: string, data: unknown) {

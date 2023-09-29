@@ -8,6 +8,9 @@ import { InputValues, NodeDescriptor } from "@google-labs/graph-runner";
 import { MessageController } from "./controller.js";
 import { Receiver } from "./receiver.js";
 
+const BOARD_URL =
+  "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/math.json";
+
 type TypedMessage = Record<string, unknown> & {
   type?: string;
   data?: {
@@ -45,6 +48,13 @@ export class Runtime {
   }
 
   async *run() {
+    this.controller.inform(
+      {
+        url: BOARD_URL,
+        proxyNodes: ["secrets", "generateText"],
+      },
+      "start"
+    );
     for (;;) {
       const message = (await this.controller.listen()) as TypedMessage;
       const data = message.data;
