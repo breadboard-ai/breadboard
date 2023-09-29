@@ -6,6 +6,7 @@
 
 import type {
   Edge,
+  NodeValue,
   GraphDescriptor,
   InputValues,
   KitDescriptor,
@@ -68,7 +69,7 @@ export interface BreadboardRunResult {
 export interface NodeFactory {
   create<Inputs, Outputs>(
     type: NodeTypeIdentifier,
-    configuration?: NodeConfiguration,
+    configuration?: NodeConfigurationConstructor,
     id?: string
   ): BreadboardNode<Inputs, Outputs>;
 }
@@ -173,6 +174,12 @@ export interface Breadboard extends GraphDescriptor {
   args?: InputValues; // Will be passed to the input node, useful in lambdas
 }
 
+export type LambdaFunction<In = InputValues, Out = OutputValues> = (
+  board: Breadboard,
+  input: BreadboardNode<In, Out>,
+  output: BreadboardNode<In, Out>
+) => void;
+
 export type BreadboardCapability = Capability & {
   kind: "board";
   board: GraphDescriptor;
@@ -238,7 +245,41 @@ export interface BreadboardNode<Inputs, Outputs> {
  * The `$id` property is used to identify the node in the board and is not
  * passed to the node itself.
  */
-export type OptionalIdConfiguration = { $id?: string } & NodeConfiguration;
+export type OptionalIdConfiguration = {
+  $id?: string;
+} & NodeConfigurationConstructor;
+
+/**
+ * A node configuration that optionally has nodes as values. The Node()
+ * constructor will remove those and turn them into wires into the node instead.
+ */
+export type NodeConfigurationConstructor = Record<
+  string,
+  NodeValue | BreadboardNode<InputValues, OutputValues>
+>; // extends NodeConfiguration
+
+/**
+ * Synctactic sugar for node factories that accept lambdas. This allows passing
+ * either
+ *  - A JS function that is a lambda function defining the board
+ *  - A board capability, i.e. the result of calling lambda()
+ *  - A board node, which should be a node with a `board` output
+ * or
+ *  - A regular config, with a `board` property with any of the above.
+ *
+ * use `getConfigWithLambda()` to turn this into a regular config.
+ */
+export type ConfigOrLambda<In, Out> =
+  | OptionalIdConfiguration
+  | BreadboardCapability
+  | BreadboardNode<LambdaNodeInputs, LambdaNodeOutputs>
+  | LambdaFunction<In, Out>
+  | {
+      board:
+        | BreadboardCapability
+        | BreadboardNode<LambdaNodeInputs, LambdaNodeOutputs>
+        | LambdaFunction<In, Out>;
+    };
 
 export type ReflectNodeOutputs = OutputValues & {
   graph: GraphDescriptor;

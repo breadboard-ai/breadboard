@@ -9,8 +9,14 @@ import type {
   NodeConfiguration,
   NodeDescriptor,
   NodeTypeIdentifier,
+  InputValues,
+  OutputValues,
 } from "@google-labs/graph-runner";
-import { Breadboard, BreadboardNode } from "./types.js";
+import {
+  Breadboard,
+  BreadboardNode,
+  NodeConfigurationConstructor,
+} from "./types.js";
 import { IdVendor } from "./id.js";
 
 export type PartialEdge = {
@@ -85,7 +91,7 @@ export const parseSpec = (spec: string): ParsedSpec => {
 
 const nodeIdVendor = new IdVendor();
 
-const hasValues = (configuration: NodeConfiguration) => {
+const hasValues = (configuration: NodeConfigurationConstructor) => {
   return Object.values(configuration).filter(Boolean).length > 0;
 };
 
@@ -96,7 +102,7 @@ export class Node<Inputs, Outputs> implements BreadboardNode<Inputs, Outputs> {
   constructor(
     breadboard: Breadboard,
     type: NodeTypeIdentifier,
-    configuration?: NodeConfiguration,
+    configuration?: NodeConfigurationConstructor,
     id?: string
   ) {
     this.#breadboard = breadboard;
@@ -105,8 +111,21 @@ export class Node<Inputs, Outputs> implements BreadboardNode<Inputs, Outputs> {
       type,
     };
 
-    if (configuration && hasValues(configuration))
-      this.#descriptor.configuration = configuration;
+    if (configuration && hasValues(configuration)) {
+      // For convenience we allow passing nodes as configuration, which are
+      // instead turned into constant incoming wires behind the scenes.
+      const incomingWiresToAdd = Object.entries(configuration).filter(
+        ([_, value]) => value instanceof Node
+      ) as unknown as [string, Node<InputValues, OutputValues>][];
+      for (const [wire, from] of incomingWiresToAdd) {
+        delete configuration[wire];
+        if (wire.indexOf("->") !== -1)
+          throw Error("Cannot pass output wire in confdig");
+        this.wire(wire.indexOf("<-") === -1 ? `${wire}<-.` : wire, from);
+      }
+
+      this.#descriptor.configuration = configuration as NodeConfiguration;
+    }
 
     this.#breadboard.addNode(this.#descriptor);
   }

@@ -6,7 +6,7 @@
 
 import test from "ava";
 
-import { parseSpec } from "../src/node.js";
+import { parseSpec, Node } from "../src/node.js";
 import { Board } from "../src/board.js";
 
 test("parseSpec: control-only", (t) => {
@@ -120,4 +120,18 @@ test("throws when wiring different boards", async (t) => {
     },
     { message: "Cannot wire nodes from different boards." }
   );
+});
+
+test("convert nodes in config to wires", async (t) => {
+  const board = new Board();
+  const input = board.input();
+  new Node(board, "test", { foo: input, "bar<-baz": input, baz: 1 });
+  t.deepEqual(board.nodes, [
+    { id: "input-1", type: "input" },
+    { id: "test-2", type: "test", configuration: { baz: 1 } },
+  ]);
+  t.deepEqual(board.edges, [
+    { constant: true, from: "input-1", to: "test-2", in: "foo", out: "foo" },
+    { from: "input-1", to: "test-2", in: "bar", out: "baz" },
+  ]);
 });

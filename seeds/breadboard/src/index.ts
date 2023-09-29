@@ -9,7 +9,7 @@ export { Node } from "./node.js";
 export { LogProbe } from "./log.js";
 export { DebugProbe } from "./debug.js";
 export { RunResult } from "./run.js";
-export { lambda, type LambdaFunction } from "./lambda.js";
+export { lambda, getConfigWithLambda } from "./lambda.js";
 export type {
   ProbeEvent,
   Kit,
@@ -20,6 +20,8 @@ export type {
   BreadboardNode,
   BreadboardCapability,
   OptionalIdConfiguration,
+  LambdaFunction,
+  ConfigOrLambda,
   RunResultType,
   KitConstructor,
   GenericKit,

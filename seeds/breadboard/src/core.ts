@@ -24,7 +24,14 @@ import type {
 import { Board } from "./board.js";
 import { NestedProbe } from "./nested-probe.js";
 
-const CORE_HANDLERS = ["include", "reflect", "slot", "passthrough"];
+const CORE_HANDLERS = [
+  "lambda",
+  "import",
+  "include",
+  "reflect",
+  "slot",
+  "passthrough",
+];
 
 const deepCopy = (graph: GraphDescriptor): GraphDescriptor => {
   return JSON.parse(JSON.stringify(graph));

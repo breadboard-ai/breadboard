@@ -14,9 +14,9 @@ import type {
   Kit,
   NodeFactory,
   OptionalIdConfiguration,
-  LambdaFunction,
+  ConfigOrLambda,
 } from "@google-labs/breadboard";
-import { lambda } from "@google-labs/breadboard";
+import { getConfigWithLambda } from "@google-labs/breadboard";
 
 import vars from "./nodes/vars.js";
 import localMemory from "./nodes/local-memory.js";
@@ -182,19 +182,11 @@ export class Nursery implements Kit {
    * @returns
    */
   map<In = InputValues, Out = OutputValues>(
-    config: OptionalIdConfiguration | LambdaFunction<In, Out> = {},
-    config2: OptionalIdConfiguration = {}
+    config: ConfigOrLambda<In, Out>
   ): BreadboardNode<MapInputs, MapOutputs> {
-    const gotBoard =
-      typeof config === "function"
-        ? lambda(config as LambdaFunction<In, Out>)
-        : config.kind === "board" && config.board
-        ? config.board
-        : undefined;
-    const { $id, ...rest } = {
-      ...(gotBoard ? { board: gotBoard } : (config as OptionalIdConfiguration)),
-      ...config2,
-    };
+    const { $id, ...rest } = getConfigWithLambda(config);
+
+    // Create the node.
     const node = this.#nodeFactory.create<MapInputs, MapOutputs>(
       "map",
       { ...rest },

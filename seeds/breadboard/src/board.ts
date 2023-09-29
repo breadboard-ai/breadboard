@@ -25,6 +25,7 @@ import {
   type BreadboardValidator,
   ProbeDetails,
   BreadboardNode,
+  LambdaFunction,
   LambdaNodeOutputs,
   ReflectNodeOutputs,
   IncludeNodeInputs,
@@ -46,7 +47,7 @@ import { KitLoader } from "./kit.js";
 import { IdVendor } from "./id.js";
 import { BoardLoader } from "./loader.js";
 import { runRemote } from "./remote.js";
-import { lambda, LambdaFunction } from "./lambda.js";
+import { lambda } from "./lambda.js";
 
 class ProbeEvent extends CustomEvent<ProbeDetails> {
   constructor(type: string, detail: ProbeDetails) {
