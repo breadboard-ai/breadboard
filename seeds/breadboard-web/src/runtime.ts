@@ -4,8 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { InputValues, NodeDescriptor } from "@google-labs/graph-runner";
-import { MessageController } from "./controller.js";
+import {
+  InputValues,
+  NodeDescriptor,
+  OutputValues,
+} from "@google-labs/graph-runner";
+import {
+  ControllerMessageType,
+  ControllerMessageish,
+  MessageController,
+  ProxyResponseMessage,
+  StartMesssage,
+} from "./controller.js";
 import { Receiver } from "./receiver.js";
 
 const BOARD_URL =
@@ -29,11 +39,11 @@ export class RunResult {
     this.message = message;
   }
 
-  reply(reply: unknown) {
+  reply<T extends ControllerMessageish>(reply: unknown) {
     if (!this.message.id) return;
     const id = this.message.id as string;
-    const type = this.message.type as string;
-    this.controller.reply(
+    const type = this.message.type as ControllerMessageType;
+    this.controller.reply<T>(
       id,
       { type, ...(reply as Record<string, unknown>) },
       type
@@ -52,7 +62,7 @@ export class Runtime {
   }
 
   async *run() {
-    this.controller.inform(
+    this.controller.inform<StartMesssage>(
       {
         url: BOARD_URL,
         proxyNodes: ["secrets", "generateText"],
@@ -61,18 +71,14 @@ export class Runtime {
     );
     for (;;) {
       const message = (await this.controller.listen()) as TypedMessage;
-      const data = message.data;
-      const type = message.type;
+      const { data, type } = message;
       if (data && type === "proxy" && message.id) {
         const id = message.id as string;
-        this.controller.reply(
-          id,
-          {
-            type: "proxy",
-            ...(await this.receiver.handle(data.node.type, data.inputs)),
-          },
-          "proxy"
-        );
+        const response = (await this.receiver.handle(
+          data.node.type,
+          data.inputs
+        )) as OutputValues;
+        this.controller.reply<ProxyResponseMessage>(id, response, "proxy");
         continue;
       }
       yield new RunResult(this.controller, message);

@@ -7,22 +7,26 @@
 import { Board } from "@google-labs/breadboard";
 import { InputValues } from "@google-labs/graph-runner";
 import { Starter } from "@google-labs/llm-starter";
-import { MessageController } from "./controller.js";
+import {
+  BeforehandlerMessage,
+  EndMessage,
+  ErrorMessage,
+  InputRequestMessage,
+  MessageController,
+  OutputMessage,
+  StartMesssage,
+} from "./controller.js";
 import { NodeProxy } from "./proxy.js";
 
 const controller = new MessageController(self as unknown as Worker);
 
-type StartupInfo = {
-  url: string;
-  proxyNodes: string[];
-};
+type StartupData = StartMesssage["data"];
 
-const start = async (): Promise<StartupInfo> => {
+const start = async (): Promise<StartupData> => {
   const message = (await controller.listen()) as {
     type: string;
-    data: StartupInfo;
+    data: StartupData;
   };
-  console.log("start", message);
   if (message.type === "start") {
     const data = message.data;
     if (!data.url) {
@@ -48,7 +52,7 @@ try {
 
   for await (const stop of board.run(proxy)) {
     if (stop.type === "input") {
-      const inputMessage = (await controller.ask(
+      const inputMessage = (await controller.ask<InputRequestMessage>(
         {
           node: stop.node,
           inputArguments: stop.inputArguments,
@@ -57,7 +61,7 @@ try {
       )) as { data: InputValues };
       stop.inputs = inputMessage.data;
     } else if (stop.type === "output") {
-      controller.inform(
+      controller.inform<OutputMessage>(
         {
           node: stop.node,
           outputs: stop.outputs,
@@ -65,7 +69,7 @@ try {
         stop.type
       );
     } else if (stop.type === "beforehandler") {
-      controller.inform(
+      controller.inform<BeforehandlerMessage>(
         {
           node: stop.node,
         },
@@ -73,9 +77,9 @@ try {
       );
     }
   }
-  controller.inform({}, "end");
+  controller.inform<EndMessage>({}, "end");
 } catch (e) {
   const error = e as Error;
   console.error(error);
-  controller.inform({ error: error.message }, "error");
+  controller.inform<ErrorMessage>({ error: error.message }, "error");
 }

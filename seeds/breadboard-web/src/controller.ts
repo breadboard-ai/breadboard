@@ -6,8 +6,8 @@
 
 import {
   NodeDescriptor,
-  NodeTypeIdentifier,
   NodeValue,
+  OutputValues,
 } from "@google-labs/graph-runner";
 
 const VALID_MESSAGE_TYPES = [
@@ -97,11 +97,13 @@ export type ProxyRequestMessage = ControllerMessage<
 
 export type ProxyResponseMessage = ControllerMessage<
   "proxy",
-  NodeValue,
+  OutputValues,
   RoundTrip
 >;
 
 export type EndMessage = ControllerMessage<"end", unknown>;
+
+export type ErrorMessage = ControllerMessage<"error", { error: string }>;
 
 type ResolveFunction = (value: unknown) => void;
 
@@ -133,8 +135,7 @@ export class MessageController {
       console.error("Invalid message type. Message:", message);
       throw new Error(`Invalid message type "${message.type}"`);
     }
-    const { type = "input", ...rest } = message.data as { type: string };
-    console.log(`[${this.#direction}]`, type, rest);
+    console.log(`[${this.#direction}]`, message.type, message.data);
     if (message.id) {
       const resolve = this.mailboxes[message.id];
       if (resolve) {
@@ -146,7 +147,7 @@ export class MessageController {
     this.#listener && this.#listener(message);
   }
 
-  async ask(data: unknown, type: NodeTypeIdentifier) {
+  async ask<T extends ControllerMessageish>(data: T["data"], type: T["type"]) {
     const id = Math.random().toString(36).substring(2, 9);
     this.worker.postMessage({ id, type, data });
     return new Promise((resolve) => {
@@ -163,11 +164,15 @@ export class MessageController {
     });
   }
 
-  inform(data: unknown, type: string) {
+  inform<T extends ControllerMessageish>(data: T["data"], type: T["type"]) {
     this.worker.postMessage({ type, data });
   }
 
-  reply(id: string, data: unknown, type: string) {
+  reply<T extends ControllerMessageish>(
+    id: string,
+    data: T["data"],
+    type: T["type"]
+  ) {
     this.worker.postMessage({ id, type, data });
   }
 }

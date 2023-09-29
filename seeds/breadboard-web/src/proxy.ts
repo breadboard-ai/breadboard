@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NodeTypeIdentifier, OutputValues } from "@google-labs/graph-runner";
+import { NodeTypeIdentifier } from "@google-labs/graph-runner";
 import { ProbeEvent } from "@google-labs/breadboard";
 
-import { MessageController } from "./controller.js";
-
-type NodeProxyResult = {
-  data: OutputValues;
-};
+import {
+  MessageController,
+  ProxyRequestMessage,
+  ProxyResponseMessage,
+} from "./controller.js";
 
 export class NodeProxy extends EventTarget {
   controller: MessageController;
@@ -36,10 +36,10 @@ export class NodeProxy extends EventTarget {
     const e = event as ProbeEvent;
     const { descriptor, inputs } = e.detail;
     const message = { type: "proxy", node: descriptor, inputs };
-    const result = (await this.controller.ask(
+    const result = (await this.controller.ask<ProxyRequestMessage>(
       message,
       "proxy"
-    )) as NodeProxyResult;
+    )) as ProxyResponseMessage;
     return result.data;
   }
 }
