@@ -2,201 +2,193 @@
 
 # @google-labs/breadboard-web
 
-## Table of contents
-
-### Type Aliases
-
-- [BeforehandlerMessage](README.md#beforehandlermessage)
-- [ControllerMessage](README.md#controllermessage)
-- [ControllerMessageBase](README.md#controllermessagebase)
-- [ControllerMessageType](README.md#controllermessagetype)
-- [EndMessage](README.md#endmessage)
-- [ErrorMessage](README.md#errormessage)
-- [InputRequestMessage](README.md#inputrequestmessage)
-- [InputResponseMessage](README.md#inputresponsemessage)
-- [OutputMessage](README.md#outputmessage)
-- [ProxyRequestMessage](README.md#proxyrequestmessage)
-- [ProxyResponseMessage](README.md#proxyresponsemessage)
-- [RoundTrip](README.md#roundtrip)
-- [RoundTripControllerMessage](README.md#roundtripcontrollermessage)
-- [StartMesssage](README.md#startmesssage)
-
-### Variables
-
-- [VALID\_MESSAGE\_TYPES](README.md#valid_message_types)
-
 ## Type Aliases
 
-### BeforehandlerMessage
+### StartMesssage
 
-Ƭ **BeforehandlerMessage**: [`ControllerMessageBase`](README.md#controllermessagebase)<``"beforehandler"``, { `node`: `NodeDescriptor`  }\>
+Ƭ **StartMesssage**: `Object`
 
-#### Defined in
-
-[protocol.ts:94](https://github.com/google/labs-prototypes/blob/6370328/seeds/breadboard-web/src/protocol.ts#L94)
-
-___
-
-### ControllerMessage
-
-Ƭ **ControllerMessage**: `Object`
+The message that sent by the host to the worker to start the board.
 
 #### Type declaration
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `data` | `unknown` | The data payload of the message. |
-| `id?` | `string` | The id of the message. |
-| `type` | [`ControllerMessageType`](README.md#controllermessagetype) | The type of the message. |
+| `type` | ``"start"`` | The "start" type signals to the worker that it should start the board. |
+| `data` | { `url`: `string` ; `proxyNodes`: `string`[]  } | - |
+| `data.url` | `string` | The url of the board to load. |
+| `data.proxyNodes` | `string`[] | The list of nodes to proxy. |
 
 #### Defined in
 
-[protocol.ts:42](https://github.com/google/labs-prototypes/blob/6370328/seeds/breadboard-web/src/protocol.ts#L42)
-
-___
-
-### ControllerMessageBase
-
-Ƭ **ControllerMessageBase**<`Type`, `Payload`, `HasId`\>: `HasId` & { `data`: `Payload` ; `type`: \`${Type}\`  }
-
-The message format used to communicate between the worker and its host.
-
-#### Type parameters
-
-| Name | Type |
-| :------ | :------ |
-| `Type` | extends [`ControllerMessageType`](README.md#controllermessagetype) |
-| `Payload` | `Payload` |
-| `HasId` | extends [`RoundTrip`](README.md#roundtrip) \| `unknown` = `unknown` |
-
-#### Defined in
-
-[protocol.ts:62](https://github.com/google/labs-prototypes/blob/6370328/seeds/breadboard-web/src/protocol.ts#L62)
-
-___
-
-### ControllerMessageType
-
-Ƭ **ControllerMessageType**: typeof [`VALID_MESSAGE_TYPES`](README.md#valid_message_types)[`number`]
-
-#### Defined in
-
-[protocol.ts:33](https://github.com/google/labs-prototypes/blob/6370328/seeds/breadboard-web/src/protocol.ts#L33)
-
-___
-
-### EndMessage
-
-Ƭ **EndMessage**: [`ControllerMessageBase`](README.md#controllermessagebase)<``"end"``, `unknown`\>
-
-#### Defined in
-
-[protocol.ts:116](https://github.com/google/labs-prototypes/blob/6370328/seeds/breadboard-web/src/protocol.ts#L116)
-
-___
-
-### ErrorMessage
-
-Ƭ **ErrorMessage**: [`ControllerMessageBase`](README.md#controllermessagebase)<``"error"``, { `error`: `string`  }\>
-
-#### Defined in
-
-[protocol.ts:118](https://github.com/google/labs-prototypes/blob/6370328/seeds/breadboard-web/src/protocol.ts#L118)
+[protocol.ts:50](https://github.com/google/labs-prototypes/blob/fd10ee8/seeds/breadboard-web/src/protocol.ts#L50)
 
 ___
 
 ### InputRequestMessage
 
-Ƭ **InputRequestMessage**: [`ControllerMessageBase`](README.md#controllermessagebase)<``"input"``, { `inputArguments`: `NodeValue` ; `node`: `NodeDescriptor`  }, [`RoundTrip`](README.md#roundtrip)\>
+Ƭ **InputRequestMessage**: `Object`
 
-#### Defined in
-
-[protocol.ts:82](https://github.com/google/labs-prototypes/blob/6370328/seeds/breadboard-web/src/protocol.ts#L82)
-
-___
-
-### InputResponseMessage
-
-Ƭ **InputResponseMessage**: [`ControllerMessageBase`](README.md#controllermessagebase)<``"input"``, `NodeValue`, [`RoundTrip`](README.md#roundtrip)\>
-
-#### Defined in
-
-[protocol.ts:88](https://github.com/google/labs-prototypes/blob/6370328/seeds/breadboard-web/src/protocol.ts#L88)
-
-___
-
-### OutputMessage
-
-Ƭ **OutputMessage**: [`ControllerMessageBase`](README.md#controllermessagebase)<``"output"``, { `node`: `NodeDescriptor` ; `outputs`: `OutputValues`  }\>
-
-#### Defined in
-
-[protocol.ts:99](https://github.com/google/labs-prototypes/blob/6370328/seeds/breadboard-web/src/protocol.ts#L99)
-
-___
-
-### ProxyRequestMessage
-
-Ƭ **ProxyRequestMessage**: [`ControllerMessageBase`](README.md#controllermessagebase)<``"proxy"``, { `inputs`: `InputValues` ; `node`: `NodeDescriptor`  }, [`RoundTrip`](README.md#roundtrip)\>
-
-#### Defined in
-
-[protocol.ts:104](https://github.com/google/labs-prototypes/blob/6370328/seeds/breadboard-web/src/protocol.ts#L104)
-
-___
-
-### ProxyResponseMessage
-
-Ƭ **ProxyResponseMessage**: [`ControllerMessageBase`](README.md#controllermessagebase)<``"proxy"``, `OutputValues`, [`RoundTrip`](README.md#roundtrip)\>
-
-#### Defined in
-
-[protocol.ts:110](https://github.com/google/labs-prototypes/blob/6370328/seeds/breadboard-web/src/protocol.ts#L110)
-
-___
-
-### RoundTrip
-
-Ƭ **RoundTrip**: `Object`
+The message that is sent by the worker to the host when the board
+requests input.
 
 #### Type declaration
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `id` | `string` | The id of the message. |
+| `type` | ``"input"`` | The "input" type signals to the host that the board is requesting input. |
+| `data` | { `node`: `NodeDescriptor` ; `inputArguments`: `InputValues`  } | - |
+| `data.node` | `NodeDescriptor` | The description of the node that is requesting input. **`See`** [NodeDescriptor](https://github.com/google/labs-prototypes/blob/main/seeds/graph-runner/src/types.ts#L54) |
+| `data.inputArguments` | `InputValues` | The input arguments that were given to the node that is requesting input. These arguments typically contain the schema of the inputs that are expected. **`See`** [InputValues](https://github.com/google/labs-prototypes/blob/main/seeds/graph-runner/src/types.ts#L229) |
 
 #### Defined in
 
-[protocol.ts:35](https://github.com/google/labs-prototypes/blob/6370328/seeds/breadboard-web/src/protocol.ts#L35)
+[protocol.ts:71](https://github.com/google/labs-prototypes/blob/fd10ee8/seeds/breadboard-web/src/protocol.ts#L71)
 
 ___
 
-### RoundTripControllerMessage
+### InputResponseMessage
 
-Ƭ **RoundTripControllerMessage**: [`ControllerMessage`](README.md#controllermessage) & [`RoundTrip`](README.md#roundtrip)
+Ƭ **InputResponseMessage**: `Object`
+
+The message that is sent by the host to the worker after it requested input.
+
+#### Type declaration
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `id` | `string` | The id of the message. |
+| `type` | ``"input"`` | The "input" type signals to the worker that the host is responding to an input request. |
+| `data` | `NodeValue` | The input values that the host is providing to the worker. **`See`** [NodeValue](https://github.com/google/labs-prototypes/blob/main/seeds/graph-runner/src/types.ts#L21) |
 
 #### Defined in
 
-[protocol.ts:57](https://github.com/google/labs-prototypes/blob/6370328/seeds/breadboard-web/src/protocol.ts#L57)
+[protocol.ts:99](https://github.com/google/labs-prototypes/blob/fd10ee8/seeds/breadboard-web/src/protocol.ts#L99)
 
 ___
 
-### StartMesssage
+### BeforehandlerMessage
 
-Ƭ **StartMesssage**: [`ControllerMessageBase`](README.md#controllermessagebase)<``"start"``, { `proxyNodes`: `string`[] ; `url`: `string`  }\>
+Ƭ **BeforehandlerMessage**: `Object`
 
-#### Defined in
+The message that is sent by the worker to the host before it runs a node.
 
-[protocol.ts:74](https://github.com/google/labs-prototypes/blob/6370328/seeds/breadboard-web/src/protocol.ts#L74)
+#### Type declaration
 
-## Variables
-
-### VALID\_MESSAGE\_TYPES
-
-• `Const` **VALID\_MESSAGE\_TYPES**: readonly [``"start"``, ``"input"``, ``"output"``, ``"beforehandler"``, ``"proxy"``, ``"end"``, ``"error"``]
-
-The valid message types.
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `type` | ``"beforehandler"`` | The "beforehandler" type signals to the host that the board is about to run a node. |
+| `data` | { `node`: `NodeDescriptor`  } | - |
+| `data.node` | `NodeDescriptor` | The description of the node that is about to be run. **`See`** [NodeDescriptor](https://github.com/google/labs-prototypes/blob/main/seeds/graph-runner/src/types.ts#L54) |
 
 #### Defined in
 
-[protocol.ts:23](https://github.com/google/labs-prototypes/blob/6370328/seeds/breadboard-web/src/protocol.ts#L23)
+[protocol.ts:119](https://github.com/google/labs-prototypes/blob/fd10ee8/seeds/breadboard-web/src/protocol.ts#L119)
+
+___
+
+### OutputMessage
+
+Ƭ **OutputMessage**: `Object`
+
+The message that is sent by the worker to the host when the board is
+providing outputs.
+
+#### Type declaration
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `type` | ``"output"`` | The "output" type signals to the host that the board is providing outputs. |
+| `data` | { `node`: `NodeDescriptor` ; `outputs`: `OutputValues`  } | - |
+| `data.node` | `NodeDescriptor` | The description of the node that is providing output. **`See`** [NodeDescriptor](https://github.com/google/labs-prototypes/blob/main/seeds/graph-runner/src/types.ts#L54) |
+| `data.outputs` | `OutputValues` | The output values that the node is providing. **`See`** [OutputValues](https://github.com/google/labs-prototypes/blob/main/seeds/graph-runner/src/types.ts#L234) |
+
+#### Defined in
+
+[protocol.ts:138](https://github.com/google/labs-prototypes/blob/fd10ee8/seeds/breadboard-web/src/protocol.ts#L138)
+
+___
+
+### ProxyRequestMessage
+
+Ƭ **ProxyRequestMessage**: `Object`
+
+The message that is sent by the worker to the host when the board is
+requesting to proxy the node.
+
+#### Type declaration
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `id` | `string` | The id of the message. |
+| `type` | ``"proxy"`` | The "proxy" type signals to the host that the board is requesting to proxy a node. |
+| `data` | { `node`: `NodeDescriptor` ; `inputs`: `InputValues`  } | - |
+| `data.node` | `NodeDescriptor` | The description of the node that is requesting to be proxied. **`See`** [NodeDescriptor](https://github.com/google/labs-prototypes/blob/main/seeds/graph-runner/src/types.ts#L54) |
+| `data.inputs` | `InputValues` | The input values that the board is providing to the node. **`See`** [InputValues](https://github.com/google/labs-prototypes/blob/main/seeds/graph-runner/src/types.ts#L229) |
+
+#### Defined in
+
+[protocol.ts:161](https://github.com/google/labs-prototypes/blob/fd10ee8/seeds/breadboard-web/src/protocol.ts#L161)
+
+___
+
+### ProxyResponseMessage
+
+Ƭ **ProxyResponseMessage**: `Object`
+
+The message that is sent by the host to the worker after it requested to
+proxy the node.
+
+#### Type declaration
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `id` | `string` | The id of the message. |
+| `type` | ``"proxy"`` | The "proxy" type signals to the worker that the host is responding to a proxy request. |
+| `data` | `OutputValues` | The output values that the host is providing to the board in lieu of the proxied node. **`See`** [OutputValues](https://github.com/google/labs-prototypes/blob/main/seeds/graph-runner/src/types.ts#L234) |
+
+#### Defined in
+
+[protocol.ts:189](https://github.com/google/labs-prototypes/blob/fd10ee8/seeds/breadboard-web/src/protocol.ts#L189)
+
+___
+
+### EndMessage
+
+Ƭ **EndMessage**: `Object`
+
+The message that is sent by the worker to the host when the board is
+finished running.
+
+#### Type declaration
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `type` | ``"end"`` | The "end" type signals to the host that the board is finished running. |
+| `data` | `unknown` | - |
+
+#### Defined in
+
+[protocol.ts:211](https://github.com/google/labs-prototypes/blob/fd10ee8/seeds/breadboard-web/src/protocol.ts#L211)
+
+___
+
+### ErrorMessage
+
+Ƭ **ErrorMessage**: `Object`
+
+The message that is sent by the worker to the host when the board
+encounters an error.
+
+#### Type declaration
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `type` | ``"error"`` | The "error" type signals to the host that the board encountered an error. |
+| `data` | { `error`: `string`  } | - |
+| `data.error` | `string` | The error message. |
+
+#### Defined in
+
+[protocol.ts:223](https://github.com/google/labs-prototypes/blob/fd10ee8/seeds/breadboard-web/src/protocol.ts#L223)

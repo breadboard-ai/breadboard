@@ -25,6 +25,9 @@
     "entryPoints": "./src/protocol.ts",
     "out": "./docs/api",
     "githubPages": false,
-    "readme": "none"
+    "readme": "none",
+    "sort": "source-order",
+    "excludeNotDocumented": true,
+    "hideInPageTOC": true
   }
 }
