@@ -14,9 +14,6 @@ import type {
 import { MessageController } from "./controller.js";
 import { Receiver } from "./receiver.js";
 
-const BOARD_URL =
-  "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/math.json";
-
 export class RunResult {
   controller: MessageController;
   message: ControllerMessage;
@@ -34,11 +31,13 @@ export class RunResult {
 }
 
 export class Runtime {
+  url: string;
   controller: MessageController;
   receiver: Receiver;
 
-  constructor() {
-    const worker = new Worker("/src/worker.ts", { type: "module" });
+  constructor(url: string, workerURL: string) {
+    this.url = url;
+    const worker = new Worker(workerURL, { type: "module" });
     this.controller = new MessageController(worker);
     this.receiver = new Receiver();
   }
@@ -46,7 +45,7 @@ export class Runtime {
   async *run() {
     this.controller.inform<StartMesssage>(
       {
-        url: BOARD_URL,
+        url: this.url,
         proxyNodes: ["secrets", "generateText"],
       },
       "start"

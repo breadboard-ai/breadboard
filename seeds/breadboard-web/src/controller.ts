@@ -8,7 +8,7 @@ import {
   type ControllerMessage,
   type RoundTripControllerMessage,
   VALID_MESSAGE_TYPES,
-} from "./protocol";
+} from "./protocol.js";
 
 type ResolveFunction = (value: ControllerMessage) => void;
 

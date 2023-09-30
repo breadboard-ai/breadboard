@@ -4,11 +4,15 @@
   "version": "0.0.1",
   "description": "The Web runtime for Breadboard",
   "main": "./dist/src/index.js",
-  "exports": "./dist/src/index.js",
+  "exports": {
+    ".": "./dist/src/runtime.js",
+    "./worker": "./dist/src/worker.js"
+  },
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "build": "FORCE_COLOR=1 vite build",
     "generate:docs": "typedoc --plugin typedoc-plugin-markdown"
   },
   "repository": {

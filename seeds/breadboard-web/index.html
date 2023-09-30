@@ -57,7 +57,6 @@
   <div id="progress">Initializing ...</div>
 </div>
 <script type="module">
-  import { Board } from "https://esm.run/@google-labs/breadboard@0.3.1";
   import { Runtime } from "./src/index.ts";
 
   const markdownToHTML = (markdown) =>
@@ -122,8 +121,13 @@
     });
   };
 
+  const BOARD_URL =
+    "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/math.json";
+
+  const WORKER_URL = "/src/worker.ts";
+
   const url = new URL(window.location);
-  const runtime = new Runtime();
+  const runtime = new Runtime(BOARD_URL, WORKER_URL);
 
   for await (const result of runtime.run()) {
     const message = result.message.data;
