@@ -26,7 +26,7 @@ const runInNode = async (
   functionName: string,
   args: string
 ): Promise<string> => {
-  const vm = await import("node:vm");
+  const vm = await import(/*@vite-ignore*/ "node:vm");
   const codeToRun = `${code}\n${functionName}(${args});`;
   const context = vm.createContext({ console });
   const script = new vm.Script(codeToRun);
