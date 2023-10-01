@@ -12,7 +12,7 @@ import type {
   ProxyRequestMessage,
 } from "./protocol.js";
 import { MessageController } from "./controller.js";
-import { Receiver } from "./receiver.js";
+import { ProxyReceiver } from "./receiver.js";
 
 export class RunResult {
   controller: MessageController;
@@ -47,7 +47,7 @@ export class Runtime {
   async *run(url: string, proxyNodes: string[]) {
     const worker = new Worker(this.workerURL, { type: "module" });
     const controller = new MessageController(worker);
-    const receiver = new Receiver();
+    const receiver = new ProxyReceiver();
     controller.inform<StartMesssage>({ url, proxyNodes }, "start");
     for (;;) {
       const message = await controller.listen();

@@ -18,7 +18,7 @@ import { Starter } from "@google-labs/llm-starter";
  * also need to pick and choose carefully which requests to execute and how.
  * This is just an illustration of how this might be done.
  */
-export class Receiver {
+export class ProxyReceiver {
   board: Board;
   handlers?: NodeHandlers;
 

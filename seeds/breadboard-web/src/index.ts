@@ -5,4 +5,4 @@
  */
 
 export { Runtime } from "./runtime.js";
-export { Receiver } from "./receiver.js";
+export { ProxyReceiver } from "./receiver.js";
