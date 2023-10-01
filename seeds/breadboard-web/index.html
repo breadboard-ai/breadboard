@@ -19,9 +19,6 @@
 <script type="module">
   import { Runtime, ProxyReceiver } from "./src/index.ts";
 
-  const BOARD_URL =
-    "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/math.json";
-
   const WORKER_URL = "/src/worker.ts";
 
   const runtime = new Runtime(WORKER_URL);
@@ -29,14 +26,27 @@
 
   const ui = document.querySelector("bb-ui");
 
-  for await (const result of runtime.run(BOARD_URL, [
+  const boardURL = await ui.start({
+    boards: [
+      {
+        title: "The calculator recipe",
+        url: "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/math.json",
+      },
+      {
+        title: "Accumulating context recipe",
+        url: "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/accumulating-context.json",
+      },
+    ],
+  });
+
+  for await (const result of runtime.run(boardURL, [
     "generateText",
     "secrets",
   ])) {
     const { data, type } = result.message;
     switch (type) {
       case "load":
-        ui.start(data);
+        ui.load(data);
         break;
       case "output":
         ui.output(data.outputs);

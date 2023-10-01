@@ -29,11 +29,89 @@ export type OutputArgs = Record<string, unknown> & {
   schema: Schema;
 };
 
-export type StartArgs = {
+export type LoadArgs = {
   title: string;
   description?: string;
   version?: string;
 };
+
+export type StartArgs = {
+  boards: {
+    title: string;
+    url: string;
+  }[];
+};
+
+class Start extends HTMLElement {
+  constructor({ boards }: StartArgs) {
+    super();
+    const root = this.attachShadow({ mode: "open" });
+    root.innerHTML = `
+      <style>
+        :host {
+          display: block;
+        }
+      
+        select, button, input {
+          font-family: var(--bb-font-family, Fira Code,monospace);
+          font-size: var(--bb-font-size, 1rem);
+        }
+        
+        select, button {
+          padding: 0.2rem 0.4rem;
+        }
+
+        div {
+          padding-bottom: 1rem;
+        }
+
+        input {
+          width: var(--bb-input-width, 80%);
+        }
+
+      </style>
+      <form>
+        <div><label>Enter board URL: 
+          <input name="board" id="board">
+        </label></div>
+        <div><label for="sample">Or select from one of sample boards</label>
+        <select name="sample" id="sample">
+          <option value>- Select -</option>
+          ${boards
+            .map(({ title, url }) => {
+              return `<option value="${url}">${title}</option>`;
+            })
+            .join("")}
+        </select>
+        <button type="submit" disabled>Run</button></div>
+      </form>
+    `;
+  }
+
+  async selectBoard() {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const root = this.shadowRoot!;
+    const form = root.querySelector("form");
+
+    return new Promise((resolve) => {
+      form?.sample?.addEventListener("change", () => {
+        const sample = form.sample.value;
+        form.board.value = sample;
+        if (sample) form.querySelector("button")?.removeAttribute("disabled");
+      });
+      form?.board?.addEventListener("input", () => {
+        const board = form.board.value;
+        if (board) form.querySelector("button")?.removeAttribute("disabled");
+      });
+      form?.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const board = form.board.value;
+        resolve(board);
+      });
+    });
+  }
+}
+customElements.define("bb-start", Start);
 
 class Progress extends HTMLElement {
   constructor(message: string) {
@@ -212,8 +290,8 @@ class Input extends HTMLElement {
 }
 customElements.define("bb-input", Input);
 
-class Start extends HTMLElement {
-  constructor({ title, description = "", version = "" }: StartArgs) {
+class Load extends HTMLElement {
+  constructor({ title, description = "", version = "" }: LoadArgs) {
     super();
     if (version) version = `version: ${version}`;
     const root = this.attachShadow({ mode: "open" });
@@ -232,7 +310,7 @@ class Start extends HTMLElement {
     `;
   }
 }
-customElements.define("bb-start", Start);
+customElements.define("bb-load", Load);
 
 class UIController extends HTMLElement implements UI {
   constructor() {
@@ -249,11 +327,18 @@ class UIController extends HTMLElement implements UI {
       </style>
       <slot></slot>
     `;
-    this.progress("Initializing...");
   }
 
-  start(info: StartArgs) {
-    this.append(new Start(info));
+  async start(args: StartArgs) {
+    const start = new Start(args);
+    this.append(start);
+    const board = await start.selectBoard();
+    start.remove();
+    return board;
+  }
+
+  load(info: LoadArgs) {
+    this.append(new Load(info));
   }
 
   progress(message: string) {
