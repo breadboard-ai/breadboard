@@ -56,8 +56,6 @@ export class ProxyReceiver {
     const nodeType = data.node.type;
     const inputs = data.inputs;
 
-    console.log("HANDLING", nodeType, inputs);
-
     if (!this.handlers)
       this.handlers = await Board.handlersFromBoard(this.board);
     if (nodeType === "secrets") {
@@ -69,10 +67,11 @@ export class ProxyReceiver {
       let value = inputs[name] as string;
       if (value.startsWith(PROXIED_PREFIX)) {
         value = this.secrets[name];
-        const ask = new AskForSecret(name);
         if (!value) {
+          const ask = new AskForSecret(name);
           yield ask;
           value = ask.value;
+          this.secrets[name] = value;
         }
         inputs[name] = value;
       }
