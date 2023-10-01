@@ -5,13 +5,9 @@
  */
 
 import { Board } from "@google-labs/breadboard";
-import {
-  InputValues,
-  NodeHandlers,
-  NodeTypeIdentifier,
-  OutputValues,
-} from "@google-labs/graph-runner";
+import { NodeHandlers, OutputValues } from "@google-labs/graph-runner";
 import { Starter } from "@google-labs/llm-starter";
+import type { ProxyRequestMessage } from "./protocol.js";
 
 /**
  * This receiver is intentionally hacky. A real implementation would
@@ -27,7 +23,10 @@ export class ProxyReceiver {
     this.board.addKit(Starter);
   }
 
-  async handle(nodeType: NodeTypeIdentifier, inputs: InputValues) {
+  async handle(data: ProxyRequestMessage["data"]) {
+    const nodeType = data.node.type;
+    const inputs = data.inputs;
+
     if (!this.handlers)
       this.handlers = await Board.handlersFromBoard(this.board);
     if (nodeType === "secrets") {

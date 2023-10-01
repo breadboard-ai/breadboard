@@ -35,7 +35,7 @@
 <bb-ui></bb-ui>
 <script type="module" src="src/ui.ts"></script>
 <script type="module">
-  import { Runtime } from "./src/index.ts";
+  import { Runtime, ProxyReceiver } from "./src/index.ts";
 
   const markdownToHTML = (markdown) =>
     DOMPurify.sanitize(marked.parseInline(markdown));
@@ -54,6 +54,7 @@
   const WORKER_URL = "/src/worker.ts";
 
   const runtime = new Runtime(WORKER_URL);
+  const receiver = new ProxyReceiver();
 
   const ui = document.querySelector("bb-ui");
 
@@ -75,6 +76,9 @@
       case "error":
         ui.error(data.error);
         break;
+      case "proxy": {
+        result.reply(await receiver.handle(data));
+      }
       case "done":
         ui.done();
         break;
