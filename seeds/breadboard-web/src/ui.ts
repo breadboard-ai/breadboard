@@ -73,7 +73,6 @@ class Output extends HTMLElement {
       </style>
     `;
     const schema = values.schema;
-    console.log("OUTPUT", values);
     if (!schema || !schema.properties) {
       root.append(JSON.stringify(values, null, 2) + "\n");
       return;
