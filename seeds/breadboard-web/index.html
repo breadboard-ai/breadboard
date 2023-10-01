@@ -53,25 +53,27 @@
 
   const WORKER_URL = "/src/worker.ts";
 
-  const runtime = new Runtime(BOARD_URL, WORKER_URL);
+  const runtime = new Runtime(WORKER_URL);
 
   const ui = document.querySelector("bb-ui");
 
-  for await (const result of runtime.run()) {
-    const message = result.message.data;
-    const type = result.message.type;
+  for await (const result of runtime.run(BOARD_URL, [
+    "generateText",
+    "secrets",
+  ])) {
+    const { data, type } = result.message;
     switch (type) {
       case "output":
-        ui.output(message.outputs);
+        ui.output(data.outputs);
         break;
       case "input":
-        result.reply(await ui.input(message.inputArguments));
+        result.reply(await ui.input(data.inputArguments));
         break;
       case "beforehandler":
-        ui.progress(`Running "${message.node.id}" ...`);
+        ui.progress(`Running "${data.node.id}" ...`);
         break;
       case "error":
-        ui.error(message.error);
+        ui.error(data.error);
         break;
       case "done":
         ui.done();

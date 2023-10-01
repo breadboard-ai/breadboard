@@ -31,39 +31,31 @@ export class RunResult {
 }
 
 export class Runtime {
-  url: string;
-  controller: MessageController;
-  receiver: Receiver;
+  workerURL: string;
 
-  constructor(url: string, workerURL: string) {
-    this.url = url;
-    const worker = new Worker(workerURL, { type: "module" });
-    this.controller = new MessageController(worker);
-    this.receiver = new Receiver();
+  constructor(workerURL: string) {
+    this.workerURL = workerURL;
   }
 
-  async *run() {
-    this.controller.inform<StartMesssage>(
-      {
-        url: this.url,
-        proxyNodes: ["secrets", "generateText"],
-      },
-      "start"
-    );
+  async *run(url: string, proxyNodes: string[]) {
+    const worker = new Worker(this.workerURL, { type: "module" });
+    const controller = new MessageController(worker);
+    const receiver = new Receiver();
+    controller.inform<StartMesssage>({ url, proxyNodes }, "start");
     for (;;) {
-      const message = await this.controller.listen();
+      const message = await controller.listen();
       const { data, type } = message;
       if (data && type === "proxy" && message.id) {
         const data = (message as ProxyRequestMessage).data;
         const id = message.id as string;
-        const response = (await this.receiver.handle(
+        const response = (await receiver.handle(
           data.node.type,
           data.inputs
         )) as OutputValues;
-        this.controller.reply<ProxyResponseMessage>(id, response, "proxy");
+        controller.reply<ProxyResponseMessage>(id, response, "proxy");
         continue;
       }
-      yield new RunResult(this.controller, message);
+      yield new RunResult(controller, message);
       if (data && type === "end") {
         break;
       }
