@@ -67,7 +67,7 @@
         ui.output(data.outputs);
         break;
       case "input":
-        result.reply(await ui.input(data.inputArguments));
+        result.reply(await ui.input(data.node.id, data.inputArguments));
         break;
       case "beforehandler":
         ui.progress(`Running "${data.node.id}" ...`);

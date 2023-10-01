@@ -9,13 +9,20 @@ import { type Schema } from "jsonschema";
 export interface UI {
   progress(message: string): void;
   output(values: OutputArgs): void;
-  input(args: InputArgs): Promise<Record<string, unknown>>;
+  input(id: string, args: InputArgs): Promise<Record<string, unknown>>;
   error(message: string): void;
   done(): void;
 }
 
 export type InputArgs = {
   schema: Schema;
+};
+
+export type InputData = Record<string, string>;
+
+export type InputOptios = {
+  remember?: boolean;
+  secret?: boolean;
 };
 
 export type OutputArgs = Record<string, unknown> & {
@@ -88,7 +95,18 @@ customElements.define("bb-output", Output);
 
 class Input extends HTMLElement {
   args: InputArgs;
-  constructor(args: InputArgs) {
+  id: string;
+  remember: boolean;
+  secret: boolean;
+
+  constructor(
+    id: string,
+    args: InputArgs,
+    { remember = false, secret = false }: InputOptios = {
+      remember: false,
+      secret: false,
+    }
+  ) {
     super();
     const root = this.attachShadow({ mode: "open" });
     root.innerHTML = `
@@ -107,6 +125,35 @@ class Input extends HTMLElement {
       </style>
     `;
     this.args = args;
+    this.id = id;
+    this.remember = remember;
+    this.secret = secret;
+  }
+
+  #getLocalStorageKey() {
+    return `bb-remember-${this.id}`;
+  }
+
+  #getRememberedValues(): InputData {
+    if (!this.remember) return {};
+    const key = this.#getLocalStorageKey();
+    const data = localStorage.getItem(key);
+    if (data) {
+      try {
+        return JSON.parse(data);
+      } catch (e) {
+        console.warn(`Unable to parse remembered values for ${key}`);
+      }
+    }
+    return {};
+  }
+
+  #rememberValues(data: InputData) {
+    if (!this.remember) return;
+    const key = this.#getLocalStorageKey();
+    const json = JSON.stringify(data);
+    localStorage.setItem(key, json);
+    return;
   }
 
   async ask() {
@@ -123,27 +170,32 @@ class Input extends HTMLElement {
       return {};
     }
     const properties = schema.properties;
+    const values = this.#getRememberedValues();
     const form = input.appendChild(document.createElement("form"));
     Object.entries(properties).forEach(([key, property]) => {
       const label = form.appendChild(document.createElement("label"));
       label.textContent = `${property.title}: `;
       const input = label.appendChild(document.createElement("input"));
       input.name = key;
+      input.type = this.secret ? "password" : "text";
       input.placeholder = property.description || "";
       input.autofocus = true;
+      input.value = values[key] ?? "";
       form.append("\n");
     });
     return new Promise((resolve) => {
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
-        const data = {};
+        const data: InputData = {};
         Object.entries(properties).forEach(([key, property]) => {
           const input = form[key];
           if (input.value) {
             data[key] = input.value;
-            root.append(`${property.title}: ${input.value}\n`);
+            if (!this.secret)
+              root.append(`${property.title}: ${input.value}\n`);
           }
         });
+        this.#rememberValues(data);
         input.remove();
         resolve(data);
       });
@@ -180,9 +232,31 @@ class UIController extends HTMLElement implements UI {
     this.append(new Output(values));
   }
 
-  async input(args: InputArgs): Promise<Record<string, unknown>> {
+  async secret(id: string): Promise<string> {
     this.removeProgress();
-    const input = new Input(args);
+    const input = new Input(
+      id,
+      {
+        schema: {
+          properties: {
+            secret: {
+              title: id,
+              description: `Enter ${id}`,
+              type: "string",
+            },
+          },
+        },
+      },
+      { remember: true, secret: true }
+    );
+    this.append(input);
+    const data = (await input.ask()) as Record<string, string>;
+    return data.secret;
+  }
+
+  async input(id: string, args: InputArgs): Promise<Record<string, unknown>> {
+    this.removeProgress();
+    const input = new Input(id, args);
     this.append(input);
     return (await input.ask()) as Record<string, unknown>;
   }
