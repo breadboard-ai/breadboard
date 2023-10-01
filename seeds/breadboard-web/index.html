@@ -7,40 +7,19 @@
     h1 {
       font-weight: normal;
     }
+
     body {
       padding: 1rem;
     }
+
     body,
-    input,
-    code {
+    input {
       font-family: Fira Code, monospace;
       font-size: 1rem;
     }
 
-    code {
-      color: gray;
-    }
-
-    #log {
-      white-space: pre-wrap;
-    }
-
     input {
       width: 80%;
-    }
-
-    #intro,
-    #meta,
-    form {
-      padding-bottom: 1rem;
-    }
-
-    #intro {
-      color: darkgray;
-    }
-
-    #progress {
-      color: lightgray;
     }
   </style>
   <script type="module" src="src/index.ts"></script>
@@ -53,9 +32,8 @@
 <p>
   <label>PALM_KEY: <input type="password" id="PALM_KEY" /></label>
 </p>
-<div id="log">
-  <div id="progress">Initializing ...</div>
-</div>
+<bb-ui></bb-ui>
+<script type="module" src="src/ui.ts"></script>
 <script type="module">
   import { Runtime } from "./src/index.ts";
 
@@ -70,93 +48,34 @@
     localStorage.setItem("PALM_KEY", e.target.value);
   });
 
-  const getInputs = async (schema, previousState) => {
-    const input = document.createElement("div");
-    input.id = "input";
-    log.append(input);
-
-    if (!schema) {
-      input.textContent =
-        "No input schema detected, unable to provide useful interaction.";
-
-      return {};
-    }
-    const form = input.appendChild(document.createElement("form"));
-    Object.entries(schema.properties).forEach(([key, property]) => {
-      const label = form.appendChild(document.createElement("label"));
-      label.textContent = `${property.title}: `;
-      const input = label.appendChild(document.createElement("input"));
-      input.name = key;
-      input.placeholder = property.description;
-      input.autofocus = true;
-      form.append("\n");
-    });
-    return new Promise((resolve) => {
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        let data = {};
-        Object.entries(schema.properties).forEach(([key, property]) => {
-          const input = form[key];
-          if (input.value) {
-            data[key] = input.value;
-            log.append(`${property.title}: ${input.value}\n`);
-          }
-        });
-        input.remove();
-        resolve(data);
-      });
-    });
-  };
-
-  const writeOutput = (output) => {
-    const schema = output.schema;
-    if (!schema) {
-      log.append(JSON.stringify(output, null, 2) + "\n");
-      return;
-    }
-    Object.entries(schema.properties).forEach(([key, property]) => {
-      const html = document.createElement("span");
-      html.innerHTML = markdownToHTML(`${output[key]}`);
-      log.append(`${property.title}: `, html, "\n");
-    });
-  };
-
   const BOARD_URL =
     "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/math.json";
 
   const WORKER_URL = "/src/worker.ts";
 
-  const url = new URL(window.location);
   const runtime = new Runtime(BOARD_URL, WORKER_URL);
+
+  const ui = document.querySelector("bb-ui");
 
   for await (const result of runtime.run()) {
     const message = result.message.data;
     const type = result.message.type;
-    if (type === "output") {
-      log.querySelector("#progress")?.remove();
-      const output = message.outputs;
-      writeOutput(output);
-    } else if (type === "input") {
-      log.querySelector("#progress")?.remove();
-      result.reply(
-        await getInputs(message.inputArguments.schema, message.state)
-      );
-    } else if (type === "beforehandler") {
-      let progress = log.querySelector("#progress");
-      if (!progress) {
-        progress = document.createElement("div");
-        progress.id = "progress";
-        log.append(progress);
-      }
-      progress.textContent = `Running "${message.node.id}" ...`;
-    } else if (type === "error") {
-      log.querySelector("#progress")?.remove();
-      log.append(`Error: ${message.error}\n`);
-    } else if (type === "error") {
-      log.querySelector("#progress")?.remove();
-      log.append(`Error: ${message.data.message}\n`);
-    } else if (type === "done") {
-      log.querySelector("#progress")?.remove();
+    switch (type) {
+      case "output":
+        ui.output(message.outputs);
+        break;
+      case "input":
+        result.reply(await ui.input(message.inputArguments));
+        break;
+      case "beforehandler":
+        ui.progress(`Running "${message.node.id}" ...`);
+        break;
+      case "error":
+        ui.error(message.error);
+        break;
+      case "done":
+        ui.done();
+        break;
     }
   }
 </script>

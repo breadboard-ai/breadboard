@@ -41,11 +41,11 @@ const start = async (): Promise<StartupData> => {
   throw new Error('The only valid first message is the "start" message');
 };
 
-const info = await start();
-
-const proxy = new NodeProxy(controller, info.proxyNodes);
-
 try {
+  const info = await start();
+
+  const proxy = new NodeProxy(controller, info.proxyNodes);
+
   const board = await Board.load(info.url, {
     kits: { "@google-labs/llm-starter": Starter },
   });
