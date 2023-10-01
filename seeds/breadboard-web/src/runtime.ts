@@ -30,11 +30,18 @@ export class RunResult {
   }
 }
 
+const prepareBlobUrl = (url: string) => {
+  const code = `import * as worker from "${url}";`;
+  const blob = new Blob([code], { type: "text/javascript" });
+  return URL.createObjectURL(blob);
+};
+
 export class Runtime {
   workerURL: string;
 
   constructor(workerURL: string) {
-    this.workerURL = workerURL;
+    const absoluteURL = new URL(workerURL, location.href);
+    this.workerURL = prepareBlobUrl(absoluteURL.href);
   }
 
   async *run(url: string, proxyNodes: string[]) {
