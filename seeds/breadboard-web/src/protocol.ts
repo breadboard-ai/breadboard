@@ -12,6 +12,7 @@ import {
 } from "@google-labs/graph-runner";
 
 export const VALID_MESSAGE_TYPES = [
+  "load",
   "start",
   "input",
   "output",
@@ -45,13 +46,18 @@ export type ControllerMessageBase<
 };
 
 /**
- * The message that sent by the host to the worker to start the board.
+ * The message that is sent by the host to the worker to request
+ * loading the board.
  */
-export type StartMesssage = {
+export type LoadRequestMessage = {
   /**
-   * The "start" type signals to the worker that it should start the board.
+   * id of the message.
    */
-  type: "start";
+  id: string;
+  /**
+   * The "load" type signals to the worker that it should load the board.
+   */
+  type: "load";
   data: {
     /**
      * The url of the board to load.
@@ -62,6 +68,47 @@ export type StartMesssage = {
      */
     proxyNodes: string[];
   };
+};
+
+/**
+ * The message that is sent by the worker to the host after it loaded the board.
+ */
+export type LoadResponseMessage = {
+  /**
+   * The id of the message.
+   */
+  id: string;
+  /**
+   * The "load" type signals to the host that the worker is responding to a
+   * load request.
+   */
+  type: "load";
+  data: {
+    /**
+     * The title of the graph.
+     */
+    title?: string;
+    /**
+     * The description of the graph.
+     */
+    description?: string;
+    /**
+     * Version of the graph.
+     * [semver](https://semver.org/) format is encouraged.
+     */
+    version?: string;
+  };
+};
+
+/**
+ * The message that sent by the host to the worker to start the board.
+ */
+export type StartMesssage = {
+  /**
+   * The "start" type signals to the worker that it should start the board.
+   */
+  type: "start";
+  data: unknown;
 };
 
 /**

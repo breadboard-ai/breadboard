@@ -4,7 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { ControllerMessage, StartMesssage } from "./protocol.js";
+import type {
+  ControllerMessage,
+  LoadRequestMessage,
+  LoadResponseMessage,
+  StartMesssage,
+} from "./protocol.js";
 import { MessageController } from "./controller.js";
 
 export class RunResult {
@@ -40,7 +45,14 @@ export class Runtime {
   async *run(url: string, proxyNodes: string[]) {
     const worker = new Worker(this.workerURL, { type: "module" });
     const controller = new MessageController(worker);
-    controller.inform<StartMesssage>({ url, proxyNodes }, "start");
+    yield new RunResult(
+      controller,
+      await controller.ask<LoadRequestMessage, LoadResponseMessage>(
+        { url, proxyNodes },
+        "load"
+      )
+    );
+    controller.inform<StartMesssage>({}, "start");
     for (;;) {
       const message = await controller.listen();
       const { data, type } = message;

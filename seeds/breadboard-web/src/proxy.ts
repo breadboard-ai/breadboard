@@ -33,10 +33,10 @@ export class NodeProxy extends EventTarget {
     const e = event as ProbeEvent;
     const { descriptor, inputs } = e.detail;
     const message = { type: "proxy", node: descriptor, inputs };
-    const result = (await this.controller.ask<ProxyRequestMessage>(
-      message,
-      "proxy"
-    )) as ProxyResponseMessage;
+    const result = (await this.controller.ask<
+      ProxyRequestMessage,
+      ProxyResponseMessage
+    >(message, "proxy")) as ProxyResponseMessage;
     return result.data;
   }
 }

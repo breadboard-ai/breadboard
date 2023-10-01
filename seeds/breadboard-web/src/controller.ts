@@ -10,10 +10,12 @@ import {
   VALID_MESSAGE_TYPES,
 } from "./protocol.js";
 
-type ResolveFunction = (value: ControllerMessage) => void;
+type ResolveFunction<T extends ControllerMessage = ControllerMessage> = (
+  value: T
+) => void;
 
 export class MessageController {
-  mailboxes: Record<string, ResolveFunction> = {};
+  mailboxes: Record<string, ResolveFunction<RoundTripControllerMessage>> = {};
   #listener?: ResolveFunction;
   worker: Worker;
   #direction: string;
@@ -42,24 +44,26 @@ export class MessageController {
     }
     console.log(`[${this.#direction}]`, message.type, message.data);
     if (message.id) {
+      const roundTripMessage = message as RoundTripControllerMessage;
       const resolve = this.mailboxes[message.id];
       if (resolve) {
         // Since resolve exists, this is a response.
-        resolve(message);
+        resolve(roundTripMessage);
         return;
       }
     }
     this.#listener && this.#listener(message);
   }
 
-  async ask<T extends RoundTripControllerMessage>(
-    data: T["data"],
-    type: T["type"]
-  ) {
+  async ask<
+    T extends RoundTripControllerMessage,
+    Res extends RoundTripControllerMessage
+  >(data: T["data"], type: T["type"]): Promise<Res> {
     const id = Math.random().toString(36).substring(2, 9);
     this.worker.postMessage({ id, type, data });
     return new Promise((resolve) => {
-      this.mailboxes[id] = resolve;
+      this.mailboxes[id] =
+        resolve as ResolveFunction<RoundTripControllerMessage>;
     });
   }
 

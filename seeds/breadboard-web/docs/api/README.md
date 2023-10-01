@@ -4,6 +4,52 @@
 
 ## Type Aliases
 
+### LoadRequestMessage
+
+Ƭ **LoadRequestMessage**: `Object`
+
+The message that is sent by the host to the worker to request
+loading the board.
+
+#### Type declaration
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `id` | `string` | id of the message. |
+| `type` | ``"load"`` | The "load" type signals to the worker that it should load the board. |
+| `data` | { `url`: `string` ; `proxyNodes`: `string`[]  } | - |
+| `data.url` | `string` | The url of the board to load. |
+| `data.proxyNodes` | `string`[] | The list of nodes to proxy. |
+
+#### Defined in
+
+[protocol.ts:52](https://github.com/google/labs-prototypes/blob/f2b06d3/seeds/breadboard-web/src/protocol.ts#L52)
+
+___
+
+### LoadResponseMessage
+
+Ƭ **LoadResponseMessage**: `Object`
+
+The message that is sent by the worker to the host after it loaded the board.
+
+#### Type declaration
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `id` | `string` | The id of the message. |
+| `type` | ``"load"`` | The "load" type signals to the host that the worker is responding to a load request. |
+| `data` | { `title?`: `string` ; `description?`: `string` ; `version?`: `string`  } | - |
+| `data.title?` | `string` | The title of the graph. |
+| `data.description?` | `string` | The description of the graph. |
+| `data.version?` | `string` | Version of the graph. [semver](https://semver.org/) format is encouraged. |
+
+#### Defined in
+
+[protocol.ts:76](https://github.com/google/labs-prototypes/blob/f2b06d3/seeds/breadboard-web/src/protocol.ts#L76)
+
+___
+
 ### StartMesssage
 
 Ƭ **StartMesssage**: `Object`
@@ -15,13 +61,11 @@ The message that sent by the host to the worker to start the board.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `type` | ``"start"`` | The "start" type signals to the worker that it should start the board. |
-| `data` | { `url`: `string` ; `proxyNodes`: `string`[]  } | - |
-| `data.url` | `string` | The url of the board to load. |
-| `data.proxyNodes` | `string`[] | The list of nodes to proxy. |
+| `data` | `unknown` | - |
 
 #### Defined in
 
-[protocol.ts:50](https://github.com/google/labs-prototypes/blob/fd10ee8/seeds/breadboard-web/src/protocol.ts#L50)
+[protocol.ts:106](https://github.com/google/labs-prototypes/blob/f2b06d3/seeds/breadboard-web/src/protocol.ts#L106)
 
 ___
 
@@ -44,7 +88,7 @@ requests input.
 
 #### Defined in
 
-[protocol.ts:71](https://github.com/google/labs-prototypes/blob/fd10ee8/seeds/breadboard-web/src/protocol.ts#L71)
+[protocol.ts:118](https://github.com/google/labs-prototypes/blob/f2b06d3/seeds/breadboard-web/src/protocol.ts#L118)
 
 ___
 
@@ -64,7 +108,7 @@ The message that is sent by the host to the worker after it requested input.
 
 #### Defined in
 
-[protocol.ts:99](https://github.com/google/labs-prototypes/blob/fd10ee8/seeds/breadboard-web/src/protocol.ts#L99)
+[protocol.ts:146](https://github.com/google/labs-prototypes/blob/f2b06d3/seeds/breadboard-web/src/protocol.ts#L146)
 
 ___
 
@@ -84,7 +128,7 @@ The message that is sent by the worker to the host before it runs a node.
 
 #### Defined in
 
-[protocol.ts:119](https://github.com/google/labs-prototypes/blob/fd10ee8/seeds/breadboard-web/src/protocol.ts#L119)
+[protocol.ts:166](https://github.com/google/labs-prototypes/blob/f2b06d3/seeds/breadboard-web/src/protocol.ts#L166)
 
 ___
 
@@ -106,7 +150,7 @@ providing outputs.
 
 #### Defined in
 
-[protocol.ts:138](https://github.com/google/labs-prototypes/blob/fd10ee8/seeds/breadboard-web/src/protocol.ts#L138)
+[protocol.ts:185](https://github.com/google/labs-prototypes/blob/f2b06d3/seeds/breadboard-web/src/protocol.ts#L185)
 
 ___
 
@@ -129,7 +173,7 @@ requesting to proxy the node.
 
 #### Defined in
 
-[protocol.ts:161](https://github.com/google/labs-prototypes/blob/fd10ee8/seeds/breadboard-web/src/protocol.ts#L161)
+[protocol.ts:208](https://github.com/google/labs-prototypes/blob/f2b06d3/seeds/breadboard-web/src/protocol.ts#L208)
 
 ___
 
@@ -150,7 +194,7 @@ proxy the node.
 
 #### Defined in
 
-[protocol.ts:189](https://github.com/google/labs-prototypes/blob/fd10ee8/seeds/breadboard-web/src/protocol.ts#L189)
+[protocol.ts:236](https://github.com/google/labs-prototypes/blob/f2b06d3/seeds/breadboard-web/src/protocol.ts#L236)
 
 ___
 
@@ -170,7 +214,7 @@ finished running.
 
 #### Defined in
 
-[protocol.ts:211](https://github.com/google/labs-prototypes/blob/fd10ee8/seeds/breadboard-web/src/protocol.ts#L211)
+[protocol.ts:258](https://github.com/google/labs-prototypes/blob/f2b06d3/seeds/breadboard-web/src/protocol.ts#L258)
 
 ___
 
@@ -191,4 +235,4 @@ encounters an error.
 
 #### Defined in
 
-[protocol.ts:223](https://github.com/google/labs-prototypes/blob/fd10ee8/seeds/breadboard-web/src/protocol.ts#L223)
+[protocol.ts:270](https://github.com/google/labs-prototypes/blob/f2b06d3/seeds/breadboard-web/src/protocol.ts#L270)

@@ -7,52 +7,74 @@
 import { Board } from "@google-labs/breadboard";
 import { InputValues } from "@google-labs/graph-runner";
 import { Starter } from "@google-labs/llm-starter";
-import type {
-  BeforehandlerMessage,
-  EndMessage,
-  ErrorMessage,
-  InputRequestMessage,
-  OutputMessage,
-  StartMesssage,
+import {
+  LoadResponseMessage,
+  type BeforehandlerMessage,
+  type EndMessage,
+  type ErrorMessage,
+  type InputRequestMessage,
+  type LoadRequestMessage,
+  type OutputMessage,
+  type StartMesssage,
+  InputResponseMessage,
 } from "./protocol.js";
 import { MessageController } from "./controller.js";
 import { NodeProxy } from "./proxy.js";
 
 const controller = new MessageController(self as unknown as Worker);
 
-type StartupData = StartMesssage["data"];
-
-const start = async (): Promise<StartupData> => {
-  const message = (await controller.listen()) as {
-    type: string;
-    data: StartupData;
-  };
-  if (message.type === "start") {
+const load = async (): Promise<LoadRequestMessage> => {
+  const message = (await controller.listen()) as LoadRequestMessage;
+  if (message.type === "load") {
     const data = message.data;
     if (!data.url) {
-      throw new Error("The start message must include a url");
+      throw new Error("The load message must include a url");
     } else if (!data.proxyNodes || !data.proxyNodes.length) {
       console.warn(
         "No nodes to proxy were specified. The board may not run correctly"
       );
     }
-    return message.data;
+    return message;
   }
-  throw new Error('The only valid first message is the "start" message');
+  throw new Error('The only valid first message is the "load" message');
+};
+
+const start = async () => {
+  const message = (await controller.listen()) as StartMesssage;
+  if (message.type !== "start") {
+    throw new Error(
+      'The only valid message at this point is the "start" message'
+    );
+  }
 };
 
 try {
-  const info = await start();
+  const loadRequest = await load();
 
-  const proxy = new NodeProxy(controller, info.proxyNodes);
+  const proxy = new NodeProxy(controller, loadRequest.data.proxyNodes);
 
-  const board = await Board.load(info.url, {
+  const board = await Board.load(loadRequest.data.url, {
     kits: { "@google-labs/llm-starter": Starter },
   });
 
+  controller.reply<LoadResponseMessage>(
+    loadRequest.id,
+    {
+      title: board.title,
+      description: board.description,
+      version: board.version,
+    },
+    "load"
+  );
+
+  await start();
+
   for await (const stop of board.run(proxy)) {
     if (stop.type === "input") {
-      const inputMessage = (await controller.ask<InputRequestMessage>(
+      const inputMessage = (await controller.ask<
+        InputRequestMessage,
+        InputResponseMessage
+      >(
         {
           node: stop.node,
           inputArguments: stop.inputArguments,
