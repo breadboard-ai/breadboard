@@ -3,31 +3,17 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width" />
   <style>
-    h1 {
-      font-weight: normal;
-    }
-
     body {
       padding: 1rem;
     }
 
-    body,
-    input {
+    body {
       font-family: Fira Code, monospace;
       font-size: 1rem;
-    }
-
-    input {
-      width: 80%;
     }
   </style>
   <script type="module" src="src/index.ts"></script>
 </head>
-<h1>Simplest possible test harness</h1>
-<p>
-  The whole vitejs bit will likely go away once the worker set up is a bit more
-  mature.
-</p>
 <bb-ui></bb-ui>
 <script type="module" src="src/ui.ts"></script>
 <script type="module">
@@ -49,6 +35,9 @@
   ])) {
     const { data, type } = result.message;
     switch (type) {
+      case "load":
+        ui.start(data);
+        break;
       case "output":
         ui.output(data.outputs);
         break;

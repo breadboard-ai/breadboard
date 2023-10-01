@@ -29,6 +29,12 @@ export type OutputArgs = Record<string, unknown> & {
   schema: Schema;
 };
 
+export type StartArgs = {
+  title: string;
+  description?: string;
+  version?: string;
+};
+
 class Progress extends HTMLElement {
   constructor(message: string) {
     super();
@@ -206,6 +212,28 @@ class Input extends HTMLElement {
 }
 customElements.define("bb-input", Input);
 
+class Start extends HTMLElement {
+  constructor({ title, description = "", version = "" }: StartArgs) {
+    super();
+    if (version) version = `version: ${version}`;
+    const root = this.attachShadow({ mode: "open" });
+    root.innerHTML = `
+      <style>
+        :host {
+          display: block;
+        }
+        h1 {
+          font-weight: var(--bb-title-font-weight, normal);
+        }
+      </style>
+      <h1>${title}</h1>
+      <p>${description}</p>
+      <p>${version}</p>
+    `;
+  }
+}
+customElements.define("bb-start", Start);
+
 class UIController extends HTMLElement implements UI {
   constructor() {
     super();
@@ -222,6 +250,10 @@ class UIController extends HTMLElement implements UI {
       <slot></slot>
     `;
     this.progress("Initializing...");
+  }
+
+  start(info: StartArgs) {
+    this.append(new Start(info));
   }
 
   progress(message: string) {
