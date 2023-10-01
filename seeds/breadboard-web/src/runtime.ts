@@ -44,9 +44,6 @@ export class Runtime {
     for (;;) {
       const message = await controller.listen();
       const { data, type } = message;
-      //   controller.reply<ProxyResponseMessage>(id, response, "proxy");
-      //   continue;
-      // }
       yield new RunResult(controller, message);
       if (data && type === "end") {
         break;

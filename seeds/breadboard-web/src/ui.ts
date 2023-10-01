@@ -178,10 +178,12 @@ class Input extends HTMLElement {
       const input = label.appendChild(document.createElement("input"));
       input.name = key;
       input.type = this.secret ? "password" : "text";
+      input.autocomplete = this.secret ? "off" : "on";
       input.placeholder = property.description || "";
       input.autofocus = true;
       input.value = values[key] ?? "";
       form.append("\n");
+      window.setTimeout(() => input.focus(), 1);
     });
     return new Promise((resolve) => {
       form.addEventListener("submit", async (e) => {
@@ -233,7 +235,6 @@ class UIController extends HTMLElement implements UI {
   }
 
   async secret(id: string): Promise<string> {
-    this.removeProgress();
     const input = new Input(
       id,
       {
