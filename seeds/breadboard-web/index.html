@@ -19,7 +19,8 @@
 <script type="module">
   import { Runtime, ProxyReceiver } from "./src/index.ts";
 
-  const WORKER_URL = "/worker.js";
+  const WORKER_URL =
+    "https://storage.googleapis.com/breadboard-playground/worker.js";
 
   const runtime = new Runtime(WORKER_URL);
   const receiver = new ProxyReceiver();
