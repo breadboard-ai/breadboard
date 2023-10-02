@@ -64,8 +64,9 @@ export class ProxyReceiver {
       return;
     }
     for (const name in inputs) {
-      let value = inputs[name] as string;
-      if (value.startsWith(PROXIED_PREFIX)) {
+      let value = inputs[name];
+      const s = typeof value === "string" ? value : "";
+      if (s.startsWith(PROXIED_PREFIX)) {
         value = this.secrets[name];
         if (!value) {
           const ask = new AskForSecret(name);
@@ -79,6 +80,7 @@ export class ProxyReceiver {
     const handler = this.handlers[nodeType];
     if (!handler)
       throw new Error(`No handler found for node type "${nodeType}".`);
+    console.log("handler", inputs);
     yield new FinalResult(await handler(inputs));
   }
 }

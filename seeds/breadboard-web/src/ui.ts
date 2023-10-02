@@ -72,7 +72,7 @@ class Start extends HTMLElement {
       </style>
       <form>
         <div>
-        <label for="sample">Select from one of sample boards</label>
+        <label for="sample">Select from one of the sample boards</label>
         <select name="sample" id="sample">
           <option value>- Select -</option>
           ${boards
