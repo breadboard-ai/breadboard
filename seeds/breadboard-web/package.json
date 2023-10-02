@@ -12,6 +12,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "deploy": "firebase deploy",
     "build:vite": "FORCE_COLOR=1 vite build",
     "generate:docs": "typedoc --plugin typedoc-plugin-markdown"
   },
