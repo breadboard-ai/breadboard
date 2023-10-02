@@ -71,10 +71,8 @@ class Start extends HTMLElement {
 
       </style>
       <form>
-        <div><label>Enter board URL: 
-          <input name="board" id="board">
-        </label></div>
-        <div><label for="sample">Or select from one of sample boards</label>
+        <div>
+        <label for="sample">Select from one of sample boards</label>
         <select name="sample" id="sample">
           <option value>- Select -</option>
           ${boards
@@ -83,25 +81,46 @@ class Start extends HTMLElement {
             })
             .join("")}
         </select>
+        </div>
+        <div><label>Or enter your own board URL: 
+          <input name="board" id="board">
+        </label></div>
         <button type="submit" disabled>Run</button></div>
       </form>
     `;
+  }
+
+  disable() {
+    const form = this.shadowRoot?.querySelector("form");
+    const button = form?.querySelector("button");
+    form?.sample.setAttribute("disabled", "");
+    form?.board.setAttribute("disabled", "");
+    button?.setAttribute("disabled", "");
+  }
+
+  enable() {
+    const form = this.shadowRoot?.querySelector("form");
+    const button = form?.querySelector("button");
+    form?.sample.removeAttribute("disabled");
+    form?.board.removeAttribute("disabled");
+    button?.removeAttribute("disabled");
   }
 
   async selectBoard() {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const root = this.shadowRoot!;
     const form = root.querySelector("form");
+    const button = form?.querySelector("button");
 
     return new Promise((resolve) => {
       form?.sample?.addEventListener("change", () => {
         const sample = form.sample.value;
         form.board.value = sample;
-        if (sample) form.querySelector("button")?.removeAttribute("disabled");
+        if (sample) button?.removeAttribute("disabled");
       });
       form?.board?.addEventListener("input", () => {
         const board = form.board.value;
-        if (board) form.querySelector("button")?.removeAttribute("disabled");
+        if (board) button?.removeAttribute("disabled");
       });
       form?.addEventListener("submit", (e) => {
         e.preventDefault();
@@ -123,7 +142,7 @@ class Progress extends HTMLElement {
           display: block;
         }
         span {
-          color: var(--bb-progress-color, lightgray);
+          color: var(--bb-progress-color, gray);
         }
       </style>
       <span>${message}</span>
@@ -300,11 +319,11 @@ class Load extends HTMLElement {
         :host {
           display: block;
         }
-        h1 {
+        h2 {
           font-weight: var(--bb-title-font-weight, normal);
         }
       </style>
-      <h1>${title}</h1>
+      <h2>${title}</h2>
       <p>${description}</p>
       <p>${version}</p>
     `;
@@ -333,7 +352,7 @@ class UIController extends HTMLElement implements UI {
     const start = new Start(args);
     this.append(start);
     const board = await start.selectBoard();
-    start.remove();
+    start.disable();
     return board;
   }
 
@@ -369,6 +388,7 @@ class UIController extends HTMLElement implements UI {
     );
     this.append(input);
     const data = (await input.ask()) as Record<string, string>;
+    input.remove();
     return data.secret;
   }
 
@@ -385,7 +405,7 @@ class UIController extends HTMLElement implements UI {
   }
 
   done() {
-    this.removeProgress();
+    this.progress("Done. Reload this page to restart.");
   }
 
   removeProgress() {

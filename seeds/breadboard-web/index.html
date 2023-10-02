@@ -7,14 +7,66 @@
       padding: 1rem;
     }
 
+    h1 {
+      font-weight: normal;
+    }
+
     body {
       font-family: Fira Code, monospace;
       font-size: 1rem;
     }
+
+    p {
+      color: #666;
+    }
+
+    details {
+      margin-top: 2rem;
+    }
   </style>
   <script type="module" src="src/index.ts"></script>
 </head>
+<h1>Breadboard Playground</h1>
 <bb-ui></bb-ui>
+<details>
+  <summary>What is this?</summary>
+  <p>
+    This is a very simple demo of
+    <a href="https://glazkov.com/2023/08/22/composing-graphs-with-breadboard/"
+      >Breadboard</a
+    >
+    runtime in the browser. The runtime resides in a cross-origin
+    <a
+      href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers#web_workers_api"
+      >Web Worker</a
+    >, and its host (this page) communicates with the worker using an
+    <a
+      href="https://github.com/google/labs-prototypes/tree/main/seeds/breadboard-web#readme"
+      >established protocol</a
+    >.
+  </p>
+  <p>
+    A board is loaded from a URL. The JSON-based format of the board is
+    described in
+    <a
+      href="https://github.com/google/labs-prototypes/blob/main/seeds/graph-runner/src/types.ts#L171"
+      >this very rough spec</a
+    >.
+  </p>
+  <p>
+    In this particular demo, some nodes are proxied: instead of being run in the
+    worker, they are handled by the host. This setup enables fairly robust
+    setups where some nodes of the same board can run in the worker and some in
+    the host. Distributed computing FTW.
+  </p>
+  <p>
+    Read more about the Breadboard project on
+    <a
+      href="https://github.com/google/labs-prototypes/tree/main/seeds/breadboard"
+      >Github</a
+    >.
+  </p>
+</details>
 <script type="module" src="src/ui.ts"></script>
 <script type="module">
   import { Runtime, ProxyReceiver } from "./src/index.ts";
@@ -75,7 +127,7 @@
           }
         }
         break;
-      case "done":
+      case "end":
         ui.done();
         break;
     }
