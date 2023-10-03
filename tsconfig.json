@@ -14,6 +14,7 @@
     { "path": "seeds/web-demo" },
     { "path": "seeds/breadboard-server" },
     { "path": "seeds/pinecone-kit" },
-    { "path": "seeds/breadboard-web" }
+    { "path": "seeds/breadboard-web" },
+    { "path": "seeds/chunker" }
   ]
 }

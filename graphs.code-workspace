@@ -38,6 +38,9 @@
     },
     {
       "path": "seeds/breadboard-web"
+    },
+    {
+      "path": "seeds/chunker"
     }
   ],
   "settings": {}
