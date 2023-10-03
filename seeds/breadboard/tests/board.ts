@@ -156,3 +156,38 @@ test("allows pausing and resuming the board", async (t) => {
     }
   }
 });
+
+test("lambda node from function with correctly assigned nodes", async (t) => {
+  const board = new Board();
+  board.lambda((board, input, output) => {
+    input.wire("*->", board.passthrough().wire("*->", output));
+  });
+
+  t.deepEqual(JSON.parse(JSON.stringify(board.nodes)), [
+    {
+      configuration: {
+        board: {
+          kind: "board",
+          board: {
+            edges: [
+              { from: "passthrough-3", out: "*", to: "output-2" },
+              {
+                from: "input-1",
+                out: "*",
+                to: "passthrough-3",
+              },
+            ],
+            nodes: [
+              { id: "input-1", type: "input" },
+              { id: "output-2", type: "output" },
+              { id: "passthrough-3", type: "passthrough" },
+            ],
+            kits: [],
+          },
+        },
+      },
+      id: "lambda-1",
+      type: "lambda",
+    },
+  ]);
+});

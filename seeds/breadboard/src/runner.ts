@@ -15,11 +15,12 @@ import type {
   SubGraphs,
 } from "@google-labs/graph-runner";
 
-import {
-  type BreadboardRunner,
-  type BreadboardSlotSpec,
-  type Kit,
-  type BreadboardValidator,
+import type {
+  BreadboardRunner,
+  BreadboardSlotSpec,
+  Kit,
+  BreadboardValidator,
+  NodeFactory,
   ProbeDetails,
   BreadboardCapability,
   KitImportMap,
@@ -263,7 +264,7 @@ export class BoardRunner implements BreadboardRunner {
           create: () => {
             throw Error("Node creation can't be called on a loaded graph");
           },
-        })
+        } as unknown as NodeFactory)
       );
     });
     return breadboard;

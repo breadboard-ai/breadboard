@@ -105,9 +105,9 @@ export class Node<Inputs, Outputs> implements BreadboardNode<Inputs, Outputs> {
     configuration?: NodeConfigurationConstructor,
     id?: string
   ) {
-    this.#breadboard = breadboard;
+    this.#breadboard = breadboard.currentBoardToAddTo();
     this.#descriptor = {
-      id: id ?? nodeIdVendor.vendId(breadboard, type),
+      id: id ?? nodeIdVendor.vendId(this.#breadboard, type),
       type,
     };
 

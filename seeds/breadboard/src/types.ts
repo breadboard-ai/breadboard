@@ -71,6 +71,9 @@ export interface NodeFactory {
     configuration?: NodeConfigurationConstructor,
     id?: string
   ): BreadboardNode<Inputs, Outputs>;
+  getConfigWithLambda<Inputs, Outputs>(
+    config: ConfigOrLambda<Inputs, Outputs>
+  ): OptionalIdConfiguration;
 }
 
 export interface KitConstructor<T extends Kit> {
@@ -181,16 +184,36 @@ export interface BreadboardRunner extends GraphDescriptor {
 }
 
 export interface Breadboard extends BreadboardRunner {
+  passthrough<In = InputValues, Out = OutputValues>(
+    config?: OptionalIdConfiguration
+  ): BreadboardNode<In, Out>;
+  input<In = InputValues, Out = OutputValues>(
+    config?: OptionalIdConfiguration
+  ): BreadboardNode<In, Out>;
+  output<In = InputValues, Out = OutputValues>(
+    config?: OptionalIdConfiguration
+  ): BreadboardNode<In, Out>;
+  lambda<In, InL extends In, OutL = OutputValues>(
+    boardOrFunction: LambdaFunction<InL, OutL> | BreadboardRunner,
+    config?: OptionalIdConfiguration
+  ): BreadboardNode<In, LambdaNodeOutputs>;
+  include<In = InputValues, Out = OutputValues>(
+    $ref: string | GraphDescriptor | BreadboardCapability,
+    config?: OptionalIdConfiguration
+  ): BreadboardNode<IncludeNodeInputs & In, Out>;
+  reflect(
+    config?: OptionalIdConfiguration
+  ): BreadboardNode<never, ReflectNodeOutputs>;
+  slot<In = InputValues, Out = OutputValues>(
+    slot: string,
+    config?: OptionalIdConfiguration
+  ): BreadboardNode<SlotNodeInputs & In, Out>;
+
   addEdge(edge: Edge): void;
   addNode(node: NodeDescriptor): void;
   addKit<T extends Kit>(ctr: KitConstructor<T>): T;
+  currentBoardToAddTo(): Breadboard;
 }
-
-export type LambdaFunction<In = InputValues, Out = OutputValues> = (
-  board: Breadboard,
-  input: BreadboardNode<In, Out>,
-  output: BreadboardNode<In, Out>
-) => void;
 
 export type BreadboardCapability = Capability & {
   kind: "board";
@@ -292,6 +315,12 @@ export type ConfigOrLambda<In, Out> =
         | BreadboardNode<LambdaNodeInputs, LambdaNodeOutputs>
         | LambdaFunction<In, Out>;
     };
+
+export type LambdaFunction<In = InputValues, Out = OutputValues> = (
+  board: Breadboard,
+  input: BreadboardNode<In, Out>,
+  output: BreadboardNode<In, Out>
+) => void;
 
 export type ReflectNodeOutputs = OutputValues & {
   graph: GraphDescriptor;

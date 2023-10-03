@@ -12,13 +12,15 @@ import type {
   OutputValues,
 } from "@google-labs/graph-runner";
 
-import {
-  type Breadboard,
-  type Kit,
-  type KitConstructor,
-  type OptionalIdConfiguration,
-  BreadboardNode,
+import type {
+  Breadboard,
+  BreadboardRunner,
+  Kit,
+  KitConstructor,
+  OptionalIdConfiguration,
+  ConfigOrLambda,
   LambdaFunction,
+  BreadboardNode,
   LambdaNodeOutputs,
   ReflectNodeOutputs,
   IncludeNodeInputs,
@@ -29,7 +31,6 @@ import {
 import { BoardRunner } from "./runner.js";
 import { toMermaid } from "@google-labs/graph-runner";
 import { Node } from "./node.js";
-import { lambda } from "./lambda.js";
 
 /**
  * This is the heart of the Breadboard library.
@@ -45,6 +46,8 @@ import { lambda } from "./lambda.js";
  * For more information on how to use Breadboard, start with [Chapter 1: Hello, world?](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-7-probes) of the tutorial.
  */
 export class Board extends BoardRunner implements Breadboard {
+  #closureStack: Board[] = [];
+
   /**
    * Core nodes. Breadboard won't function without these.
    * These are always included.
@@ -81,7 +84,7 @@ export class Board extends BoardRunner implements Breadboard {
    */
   input<In = InputValues, Out = OutputValues>(
     config: OptionalIdConfiguration = {}
-  ): Node<In, Out> {
+  ): BreadboardNode<In, Out> {
     const { $id, ...rest } = config;
     return new Node(this, "input", { ...rest }, $id);
   }
@@ -103,23 +106,55 @@ export class Board extends BoardRunner implements Breadboard {
     return new Node(this, "output", { ...rest }, $id);
   }
 
+  /**
+   * Place a `lambda` node on the board.
+   *
+   * It is a node that represents a subgraph of nodes. It can be passed to
+   * `invoke` or nodes like `map` (defined in another kit) that invoke boards.
+   *
+   * Input wires are made available as input values to the lambda board.
+   *
+   * `board` is the only output and represents a BoardCapability that invoke and
+   * others consume.
+   *
+   * You can either pass a `Board` or a Javascript function to this method. The
+   * JS function is called with a `board` to add things to, and for convenience,
+   * input and output nodes attached to the board.
+   *
+   * Example: board.lambda((board, input, output) => { input.wire( "item->item",
+   * kit.someNode().wire( "value->value", output));
+   * });
+   *
+   * @param boardOrFunction A board or a function that builds the board
+   * @param config - optional configuration for the node.
+   * @returns - a `Node` object that represents the placed node.
+   */
   lambda<In, InL extends In, OutL = OutputValues>(
-    board: LambdaFunction<InL, OutL> | Board,
+    boardOrFunction: LambdaFunction<InL, OutL> | BreadboardRunner,
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<In, LambdaNodeOutputs> {
     const { $id, ...rest } = config;
+
+    let capability: BreadboardCapability;
+    if (typeof boardOrFunction === "function") {
+      const board = new Board();
+      const input = board.input<InL>();
+      const output = board.output<OutL>();
+
+      this.#closureStack.push(board);
+      boardOrFunction(board, input, output);
+      this.#closureStack.pop();
+
+      capability = { kind: "board", board };
+    } else {
+      capability = { kind: "board", board: boardOrFunction };
+    }
 
     return new Node(
       this,
       "lambda",
       {
-        board:
-          typeof board === "function"
-            ? lambda(board)
-            : ({
-                kind: "board",
-                board: board as Board,
-              } as BreadboardCapability),
+        board: capability,
         ...rest,
       },
       $id
@@ -236,9 +271,18 @@ export class Board extends BoardRunner implements Breadboard {
       create: (...args) => {
         return new Node(this, ...args);
       },
+      getConfigWithLambda: <Inputs, Outputs>(
+        config: ConfigOrLambda<Inputs, Outputs>
+      ): OptionalIdConfiguration => {
+        return getConfigWithLambda(this, config);
+      },
     });
     this.kits.push(kit);
     return kit;
+  }
+
+  currentBoardToAddTo(): Breadboard {
+    return this.#closureStack[this.#closureStack.length - 1] ?? this;
   }
 
   /**
@@ -253,3 +297,37 @@ export class Board extends BoardRunner implements Breadboard {
     return toMermaid(this);
   }
 }
+
+/**
+ * Synctactic sugar for node factories that accept lambdas. This allows passing
+ * either
+ *  - A JS function that is a lambda function defining the board
+ *  - A board capability, i.e. the result of calling lambda()
+ *  - A board node, which should be a node with a `board` output
+ * or
+ *  - A regular config, with a `board` property with any of the above.
+ *
+ * @param config {ConfigOrLambda} the overloaded config
+ * @returns {NodeConfigurationConstructor} config with a board property
+ */
+const getConfigWithLambda = <In = InputValues, Out = OutputValues>(
+  board: Board,
+  config: ConfigOrLambda<In, Out>
+): OptionalIdConfiguration => {
+  // Look for functions, nodes and board capabilities.
+  const gotBoard =
+    typeof config === "function" ||
+    config instanceof Node ||
+    ((config as BreadboardCapability).kind === "board" &&
+      (config as BreadboardCapability).board);
+
+  const result = (
+    gotBoard ? { board: config } : config
+  ) as OptionalIdConfiguration;
+
+  // Convert passed JS function into a board node.
+  if (typeof result.board === "function")
+    result.board = board.lambda(result.board as LambdaFunction<In, Out>);
+
+  return result;
+};

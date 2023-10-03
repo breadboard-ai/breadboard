@@ -16,7 +16,6 @@ import type {
   OptionalIdConfiguration,
   ConfigOrLambda,
 } from "@google-labs/breadboard";
-import { getConfigWithLambda } from "@google-labs/breadboard";
 
 import vars from "./nodes/vars.js";
 import localMemory from "./nodes/local-memory.js";
@@ -184,7 +183,7 @@ export class Nursery implements Kit {
   map<In = InputValues, Out = OutputValues>(
     config: ConfigOrLambda<In, Out>
   ): BreadboardNode<MapInputs, MapOutputs> {
-    const { $id, ...rest } = getConfigWithLambda(config);
+    const { $id, ...rest } = this.#nodeFactory.getConfigWithLambda(config);
 
     // Create the node.
     const node = this.#nodeFactory.create<MapInputs, MapOutputs>(

@@ -9,7 +9,6 @@ export { Node } from "./node.js";
 export { LogProbe } from "./log.js";
 export { DebugProbe } from "./debug.js";
 export { RunResult } from "./run.js";
-export { lambda, getConfigWithLambda } from "./lambda.js";
 export type {
   ProbeEvent,
   Kit,
