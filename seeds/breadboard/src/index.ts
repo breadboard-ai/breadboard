@@ -5,6 +5,7 @@
  */
 
 export { Board } from "./board.js";
+export { BoardRunner } from "./runner.js";
 export { Node } from "./node.js";
 export { LogProbe } from "./log.js";
 export { DebugProbe } from "./debug.js";

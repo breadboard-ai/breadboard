@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board, RunResult } from "@google-labs/breadboard";
+import { BoardRunner, RunResult } from "@google-labs/breadboard";
 import { Request, Response } from "express";
 import { Store } from "./store.js";
 import { GraphMetadata, InputValues } from "@google-labs/graph-runner";
@@ -19,7 +19,7 @@ export type ServerResponse = Pick<
 
 export async function runResultLoop(
   writer: Writer,
-  board: Board,
+  board: BoardRunner,
   inputs: InputValues,
   runResult: RunResult | undefined
 ) {
@@ -78,7 +78,7 @@ export const handleNonPostRequest = (
 export const makeCloudFunction = (url: string) => {
   return async (req: ServerRequest, res: ServerResponse) => {
     // TODO: Handle loading errors here.
-    const board = await Board.load(url);
+    const board = await BoardRunner.load(url);
 
     if (handleNonPostRequest(board, req, res)) return;
 
