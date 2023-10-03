@@ -8,7 +8,7 @@ import { Board } from "@google-labs/breadboard";
 import { InputValues } from "@google-labs/graph-runner";
 import { Starter } from "@google-labs/llm-starter";
 import {
-  LoadResponseMessage,
+  type LoadResponseMessage,
   type BeforehandlerMessage,
   type EndMessage,
   type ErrorMessage,
@@ -16,7 +16,7 @@ import {
   type LoadRequestMessage,
   type OutputMessage,
   type StartMesssage,
-  InputResponseMessage,
+  type InputResponseMessage,
 } from "./protocol.js";
 import { MessageController } from "./controller.js";
 import { NodeProxy } from "./proxy.js";
