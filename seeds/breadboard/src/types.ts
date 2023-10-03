@@ -171,6 +171,7 @@ export interface ProbeDetails {
 export type ProbeEvent = CustomEvent<ProbeDetails>;
 
 export interface BreadboardRunner extends GraphDescriptor {
+  kits: Kit[]; // No longer optional
   run(
     probe?: EventTarget,
     slots?: BreadboardSlotSpec,

@@ -47,6 +47,7 @@ import { Node } from "./node.js";
  */
 export class Board extends BoardRunner implements Breadboard {
   #closureStack: Board[] = [];
+  #topClosure: Board | undefined;
 
   /**
    * Core nodes. Breadboard won't function without these.
@@ -141,9 +142,12 @@ export class Board extends BoardRunner implements Breadboard {
       const input = board.input<InL>();
       const output = board.output<OutL>();
 
-      this.#closureStack.push(board);
+      board.#topClosure = this.#topClosure ?? this;
+      board.#topClosure.#closureStack.push(board);
+
       boardOrFunction(board, input, output);
-      this.#closureStack.pop();
+
+      board.#topClosure.#closureStack.pop();
 
       capability = { kind: "board", board };
     } else {
@@ -295,7 +299,11 @@ export class Board extends BoardRunner implements Breadboard {
   }
 
   currentBoardToAddTo(): Breadboard {
-    return this.#closureStack[this.#closureStack.length - 1] ?? this;
+    const closureStack = this.#topClosure
+      ? this.#topClosure.#closureStack
+      : this.#closureStack;
+    if (closureStack.length === 0) return this;
+    else return closureStack[closureStack.length - 1];
   }
 
   /**

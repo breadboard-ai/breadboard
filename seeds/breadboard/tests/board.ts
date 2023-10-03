@@ -12,6 +12,7 @@ import type {
   Kit,
   NodeFactory,
   OptionalIdConfiguration,
+  BreadboardCapability,
 } from "../src/types.js";
 import { NodeHandlers } from "@google-labs/graph-runner";
 
@@ -163,27 +164,30 @@ test("allows pausing and resuming the board", async (t) => {
   }
 });
 
-test("lambda node from function with correctly assigned nodes", async (t) => {
-  class TestKit implements Kit {
-    url = "test";
-    #nodeFactory: NodeFactory;
+class TestKit implements Kit {
+  url = "none";
+  #nodeFactory: NodeFactory;
 
-    get handlers() {
-      return {} as NodeHandlers;
-    }
-
-    constructor(nodeFactory: NodeFactory) {
-      this.#nodeFactory = nodeFactory;
-    }
-
-    test(config: OptionalIdConfiguration = {}) {
-      const { $id, ...rest } = config;
-      return this.#nodeFactory.create(this, "test", rest, $id);
-    }
+  get handlers() {
+    return {} as NodeHandlers;
   }
 
+  constructor(nodeFactory: NodeFactory) {
+    this.#nodeFactory = nodeFactory;
+  }
+
+  test(config: OptionalIdConfiguration = {}) {
+    const { $id, ...rest } = config;
+    return this.#nodeFactory.create(this, "test", rest, $id);
+  }
+}
+
+test("lambda node from function with correctly assigned nodes", async (t) => {
   const board = new Board();
+
   const kit = board.addKit(TestKit);
+  kit.url = "test";
+
   board.lambda((board, input, output) => {
     input.wire("*->", kit.test().wire("*->", output));
   });
@@ -215,4 +219,52 @@ test("lambda node from function with correctly assigned nodes", async (t) => {
       type: "lambda",
     },
   ]);
+});
+
+test("nested lambdas reusing kits", async (t) => {
+  const board = new Board();
+
+  const kits = [];
+
+  const kit = board.addKit(TestKit);
+  kit.url = "test";
+  kits.push(kit);
+
+  board.lambda((board, input, output) => {
+    const kit2 = board.addKit(TestKit);
+    kit2.url = "test2";
+    kits.push(kit2);
+
+    input.wire(
+      "*->",
+      kit2.test().wire(
+        "*->",
+        board
+          .lambda((board, input, output) => {
+            input.wire(
+              "*->",
+              kit.test().wire("*->", kit2.test().wire("*->", output))
+            );
+          })
+          .wire("*->", output)
+      )
+    );
+  });
+
+  // kit2 was defined in the closure, so shouldn't be on the main board
+  t.deepEqual(board.kits, [kit]);
+
+  // kit1 wasn't used in the first lambda, so shouldn't be on the lambda board
+  const lambda1 = board.nodes.find((n) => n.type === "lambda");
+  const board2 = (
+    lambda1?.configuration?.board as BreadboardCapability | undefined
+  )?.board;
+  t.deepEqual(board2?.kits, [kits[1]]);
+
+  // both kits were used in the second lambda
+  const lambda2 = board2?.nodes.find((n) => n.type === "lambda");
+  const board3 = (
+    lambda2?.configuration?.board as BreadboardCapability | undefined
+  )?.board;
+  t.deepEqual(board3?.kits, kits);
 });
