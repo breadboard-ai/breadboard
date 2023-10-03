@@ -82,8 +82,8 @@ export class ReActHelper implements Kit {
     return this.#nodeFactory.create("getDescriptions", rest, $id);
   }
 
-  parseCompletion(args: string[], config: OptionalIdConfiguration = {}) {
+  parseCompletion(config: OptionalIdConfiguration = {}) {
     const { $id, ...rest } = config;
-    return this.#nodeFactory.create("parseCompletion", { args, ...rest }, $id);
+    return this.#nodeFactory.create("parseCompletion", { ...rest }, $id);
   }
 }

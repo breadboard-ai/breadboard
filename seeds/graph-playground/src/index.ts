@@ -135,7 +135,9 @@ async function main(args: string[], use_input_handler = false) {
   // Load the board, specified in the command line.
   const board = await Board.load(graph, { base });
   // Add a custom kit.
-  board.addKit(ReActHelper);
+  // NOTE: Currently disabled, since we removed the ability to load kits
+  // into loaded boards for now.
+  // board.addKit(ReActHelper);
 
   if (validateIntegrity) {
     const lattice = new PrincipalLattice();

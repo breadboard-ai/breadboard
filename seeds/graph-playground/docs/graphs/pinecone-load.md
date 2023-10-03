@@ -5,30 +5,32 @@
   ```mermaid
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-map2["map <br> id='map-2'"] -- "list->text" --> output3{{"output <br> id='output-3'"}}:::output
-subgraph sg_map2 [map-2]
-map2_pineconeapiupsert3["pinecone-api-upsert <br> id='pinecone-api-upsert-3'"] -- "response->item" --> map2_output2{{"output <br> id='output-2'"}}:::output
-map2_formattoapi["jsonata <br> id='format-to-api'"] -- "result->vectors" --> map2_pineconeapiupsert3["pinecone-api-upsert <br> id='pinecone-api-upsert-3'"]
-map2_generateembeddings["map <br> id='generate-embeddings'"] -- "list->json" --> map2_formattoapi["jsonata <br> id='format-to-api'"]
-subgraph sg_generateembeddings [generate-embeddings]
-map2_generateembeddings_embedString4["embedString <br> id='embedString-4'"] -- "embedding->embedding" --> map2_generateembeddings_merge["append <br> id='merge'"]
-map2_generateembeddings_secrets5("secrets <br> id='secrets-5'"):::secrets -- "PALM_KEY->PALM_KEY" --> map2_generateembeddings_embedString4["embedString <br> id='embedString-4'"]
-map2_generateembeddings_jsonata3["jsonata <br> id='jsonata-3'"] -- "result->text" --> map2_generateembeddings_embedString4["embedString <br> id='embedString-4'"]
-map2_generateembeddings_input1[/"input <br> id='input-1'"/]:::input -- "item->json" --> map2_generateembeddings_jsonata3["jsonata <br> id='jsonata-3'"]
-map2_generateembeddings_merge["append <br> id='merge'"] -- "accumulator->item" --> map2_generateembeddings_output2{{"output <br> id='output-2'"}}:::output
-map2_generateembeddings_input1[/"input <br> id='input-1'"/]:::input -- "item->accumulator" --> map2_generateembeddings_merge["append <br> id='merge'"]
+lambda2["lambda <br> id='lambda-2'"] -- "board->board" --o map3["map <br> id='map-3'"]
+subgraph sg_lambda2 [lambda-2]
+lambda2_lambda3["lambda <br> id='lambda-3'"] -- "board->board" --o lambda2_generateembeddings["map <br> id='generate-embeddings'"]
+subgraph sg_lambda3 [lambda-3]
+lambda2_lambda3_embedString4["embedString <br> id='embedString-4'"] -- "embedding->embedding" --> lambda2_lambda3_merge["append <br> id='merge'"]
+lambda2_lambda3_secrets5("secrets <br> id='secrets-5'"):::secrets -- "PALM_KEY->PALM_KEY" --> lambda2_lambda3_embedString4["embedString <br> id='embedString-4'"]
+lambda2_lambda3_jsonata3["jsonata <br> id='jsonata-3'"] -- "result->text" --> lambda2_lambda3_embedString4["embedString <br> id='embedString-4'"]
+lambda2_lambda3_input1[/"input <br> id='input-1'"/]:::input -- "item->json" --> lambda2_lambda3_jsonata3["jsonata <br> id='jsonata-3'"]
+lambda2_lambda3_merge["append <br> id='merge'"] -- "accumulator->item" --> lambda2_lambda3_output2{{"output <br> id='output-2'"}}:::output
+lambda2_lambda3_input1[/"input <br> id='input-1'"/]:::input -- "item->accumulator" --> lambda2_lambda3_merge["append <br> id='merge'"]
 
 
 end
-sg_generateembeddings:::slotted -- "lamdba->lamdba" --o map2_generateembeddings
+sg_lambda3:::slotted -- "lamdba->lamdba" --o lambda2_lambda3
 
-map2_input1[/"input <br> id='input-1'"/]:::input -- "item->list" --> map2_generateembeddings["map <br> id='generate-embeddings'"]
+lambda2_pineconeapiupsert4["pinecone-api-upsert <br> id='pinecone-api-upsert-4'"] -- "response->item" --> lambda2_output2{{"output <br> id='output-2'"}}:::output
+lambda2_formattoapi["jsonata <br> id='format-to-api'"] -- "result->vectors" --> lambda2_pineconeapiupsert4["pinecone-api-upsert <br> id='pinecone-api-upsert-4'"]
+lambda2_generateembeddings["map <br> id='generate-embeddings'"] -- "list->json" --> lambda2_formattoapi["jsonata <br> id='format-to-api'"]
+lambda2_input1[/"input <br> id='input-1'"/]:::input -- "item->list" --> lambda2_generateembeddings["map <br> id='generate-embeddings'"]
 
 
 end
-sg_map2:::slotted -- "lamdba->lamdba" --o map2
+sg_lambda2:::slotted -- "lamdba->lamdba" --o lambda2
 
-batcher1["batcher <br> id='batcher-1'"] -- "list->list" --> map2["map <br> id='map-2'"]
+map3["map <br> id='map-3'"] -- "list->text" --> output4{{"output <br> id='output-4'"}}:::output
+batcher1["batcher <br> id='batcher-1'"] -- "list->list" --> map3["map <br> id='map-3'"]
 getcontent["jsonata <br> id='get-content'"] -- "result->list" --> batcher1["batcher <br> id='batcher-1'"]
 loadchunks["fetch <br> id='load-chunks'"] -- "response->json" --> getcontent["jsonata <br> id='get-content'"]
 url[/"input <br> id='url'"/]:::input -- "text->url" --> loadchunks["fetch <br> id='load-chunks'"]

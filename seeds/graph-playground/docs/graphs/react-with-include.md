@@ -28,8 +28,6 @@ schemainput5[schema]:::config -- "schema->schema" --o input5
 stopSequencesreactcompletion[stopSequences]:::config -- "stopSequences->stopSequences" --o reactcompletion
 $refinclude6[$ref]:::config -- "$ref->$ref" --o include6
 $refinclude7[$ref]:::config -- "$ref->$ref" --o include7
-argsparseCompletion8[args]:::config -- "args->args" --o parseCompletion8
-restparseCompletion8[rest]:::config -- "rest->rest" --o parseCompletion8
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

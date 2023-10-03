@@ -175,7 +175,7 @@ reActTemplate.wire(
     .wire(
       "completion->",
       reAct
-        .parseCompletion(["completion"])
+        .parseCompletion()
         .wire("search->", search())
         .wire("math->question", math)
         .wire("answer->text", board.output())
