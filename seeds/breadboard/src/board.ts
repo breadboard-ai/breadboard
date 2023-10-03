@@ -69,7 +69,7 @@ export class Board extends BoardRunner implements Breadboard {
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<In, Out> {
     const { $id, ...rest } = config;
-    return new Node(this, "passthrough", { ...rest }, $id);
+    return new Node(this, undefined, "passthrough", { ...rest }, $id);
   }
 
   /**
@@ -86,7 +86,7 @@ export class Board extends BoardRunner implements Breadboard {
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<In, Out> {
     const { $id, ...rest } = config;
-    return new Node(this, "input", { ...rest }, $id);
+    return new Node(this, undefined, "input", { ...rest }, $id);
   }
 
   /**
@@ -103,7 +103,7 @@ export class Board extends BoardRunner implements Breadboard {
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<In, Out> {
     const { $id, ...rest } = config;
-    return new Node(this, "output", { ...rest }, $id);
+    return new Node(this, undefined, "output", { ...rest }, $id);
   }
 
   /**
@@ -152,6 +152,7 @@ export class Board extends BoardRunner implements Breadboard {
 
     return new Node(
       this,
+      undefined,
       "lambda",
       {
         board: capability,
@@ -185,11 +186,23 @@ export class Board extends BoardRunner implements Breadboard {
   ): BreadboardNode<IncludeNodeInputs & In, Out> {
     const { $id, ...rest } = config;
     if (typeof $ref === "string") {
-      return new Node(this, "include", { $ref, ...rest }, $id);
+      return new Node(this, undefined, "include", { $ref, ...rest }, $id);
     } else if (($ref as BreadboardCapability).kind === "board") {
-      return new Node(this, "include", { board: $ref, ...rest }, $id);
+      return new Node(
+        this,
+        undefined,
+        "include",
+        { board: $ref, ...rest },
+        $id
+      );
     } else {
-      return new Node(this, "include", { graph: $ref, ...rest }, $id);
+      return new Node(
+        this,
+        undefined,
+        "include",
+        { graph: $ref, ...rest },
+        $id
+      );
     }
   }
 
@@ -209,7 +222,7 @@ export class Board extends BoardRunner implements Breadboard {
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<never, ReflectNodeOutputs> {
     const { $id, ...rest } = config;
-    return new Node(this, "reflect", { ...rest }, $id);
+    return new Node(this, undefined, "reflect", { ...rest }, $id);
   }
 
   /**
@@ -233,7 +246,7 @@ export class Board extends BoardRunner implements Breadboard {
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<SlotNodeInputs & In, Out> {
     const { $id, ...rest } = config;
-    return new Node(this, "slot", { slot, ...rest }, $id);
+    return new Node(this, undefined, "slot", { slot, ...rest }, $id);
   }
 
   addEdge(edge: Edge) {

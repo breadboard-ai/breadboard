@@ -125,7 +125,7 @@ test("throws when wiring different boards", async (t) => {
 test("convert nodes in config to wires", async (t) => {
   const board = new Board();
   const input = board.input();
-  new Node(board, "test", { foo: input, "bar<-baz": input, baz: 1 });
+  new Node(board, undefined, "test", { foo: input, "bar<-baz": input, baz: 1 });
   t.deepEqual(board.nodes, [
     { id: "input-1", type: "input" },
     { id: "test-2", type: "test", configuration: { baz: 1 } },

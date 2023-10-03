@@ -19,6 +19,7 @@ export type {
   BreadboardNode,
   BreadboardCapability,
   OptionalIdConfiguration,
+  NodeConfigurationConstructor,
   LambdaFunction,
   ConfigOrLambda,
   RunResultType,

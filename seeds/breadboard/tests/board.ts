@@ -7,7 +7,13 @@
 import test from "ava";
 
 import { Board } from "../src/board.js";
-import type { ProbeEvent } from "../src/types.js";
+import type {
+  ProbeEvent,
+  Kit,
+  NodeFactory,
+  OptionalIdConfiguration,
+} from "../src/types.js";
+import { NodeHandlers } from "@google-labs/graph-runner";
 
 test("correctly skips nodes when asked", async (t) => {
   const board = new Board();
@@ -158,9 +164,28 @@ test("allows pausing and resuming the board", async (t) => {
 });
 
 test("lambda node from function with correctly assigned nodes", async (t) => {
+  class TestKit implements Kit {
+    url = "test";
+    #nodeFactory: NodeFactory;
+
+    get handlers() {
+      return {} as NodeHandlers;
+    }
+
+    constructor(nodeFactory: NodeFactory) {
+      this.#nodeFactory = nodeFactory;
+    }
+
+    test(config: OptionalIdConfiguration = {}) {
+      const { $id, ...rest } = config;
+      return this.#nodeFactory.create(this, "test", rest, $id);
+    }
+  }
+
   const board = new Board();
+  const kit = board.addKit(TestKit);
   board.lambda((board, input, output) => {
-    input.wire("*->", board.passthrough().wire("*->", output));
+    input.wire("*->", kit.test().wire("*->", output));
   });
 
   t.deepEqual(JSON.parse(JSON.stringify(board.nodes)), [
@@ -170,19 +195,19 @@ test("lambda node from function with correctly assigned nodes", async (t) => {
           kind: "board",
           board: {
             edges: [
-              { from: "passthrough-3", out: "*", to: "output-2" },
+              { from: "test-3", out: "*", to: "output-2" },
               {
                 from: "input-1",
                 out: "*",
-                to: "passthrough-3",
+                to: "test-3",
               },
             ],
             nodes: [
               { id: "input-1", type: "input" },
               { id: "output-2", type: "output" },
-              { id: "passthrough-3", type: "passthrough" },
+              { id: "test-3", type: "test" },
             ],
-            kits: [],
+            kits: [{ url: "test" }],
           },
         },
       },

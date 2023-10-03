@@ -74,7 +74,12 @@ export const makeKit = <T extends readonly string[]>(
           } else if (nodes.includes(prop as T[number])) {
             return (config: OptionalIdConfiguration = {}) => {
               const { $id, ...rest } = config;
-              return nodeFactory.create(`${prefix}${prop}`, { ...rest }, $id);
+              return nodeFactory.create(
+                this as unknown as Kit,
+                `${prefix}${prop}`,
+                { ...rest },
+                $id
+              );
             };
           }
         },

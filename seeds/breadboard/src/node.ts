@@ -13,6 +13,7 @@ import type {
   OutputValues,
 } from "@google-labs/graph-runner";
 import {
+  Kit,
   Breadboard,
   BreadboardNode,
   NodeConfigurationConstructor,
@@ -101,6 +102,7 @@ export class Node<Inputs, Outputs> implements BreadboardNode<Inputs, Outputs> {
 
   constructor(
     breadboard: Breadboard,
+    kit: Kit | undefined,
     type: NodeTypeIdentifier,
     configuration?: NodeConfigurationConstructor,
     id?: string
@@ -127,6 +129,14 @@ export class Node<Inputs, Outputs> implements BreadboardNode<Inputs, Outputs> {
       this.#descriptor.configuration = configuration as NodeConfiguration;
     }
 
+    if (
+      kit &&
+      kit.url &&
+      this.#breadboard.kits?.find((k) => k.url === kit.url) === undefined
+    ) {
+      if (!this.#breadboard.kits) this.#breadboard.kits = [];
+      this.#breadboard.kits.push(kit);
+    }
     this.#breadboard.addNode(this.#descriptor);
   }
 

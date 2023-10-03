@@ -7,6 +7,7 @@
 import {
   InputValues,
   NodeHandlers,
+  NodeTypeIdentifier,
   OutputValues,
 } from "@google-labs/graph-runner";
 import type {
@@ -69,77 +70,72 @@ export class Starter implements Kit {
     this.#handlers = coreHandlers;
   }
 
+  #create<Inputs, Outputs>(
+    type: NodeTypeIdentifier,
+    config: OptionalIdConfiguration
+  ): BreadboardNode<Inputs, Outputs> {
+    const { $id, ...rest } = config;
+    return this.#nodeFactory.create(this, type, rest, $id);
+  }
+
   append<In = AppendInputs>(
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<In, AppendOutputs> {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create("append", { ...rest }, $id);
+    return this.#create("append", config);
   }
 
   promptTemplate<In = InputValues>(
     template: string,
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<In & PromptTemplateInputs, PropmtTemplateOutputs> {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create(
-      "promptTemplate",
-      { template, ...rest },
-      $id
-    );
+    return this.#create("promptTemplate", { template, ...config });
   }
 
   urlTemplate<In = InputValues>(
     template: string,
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<In & UrlTemplateInputs, UrlTemplateOutputs> {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create("urlTemplate", { template, ...rest }, $id);
+    return this.#create("urlTemplate", { template, ...config });
   }
 
   runJavascript<In = InputValues, Out = RunJavascriptOutputs>(
     name: string,
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<In & RunJavascriptInputs, Out> {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create("runJavascript", { name, ...rest }, $id);
+    return this.#create("runJavascript", { name, ...config });
   }
 
   fetch(
     raw?: boolean,
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<FetchInputs, FetchOutputs> {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create("fetch", { raw, ...rest }, $id);
+    return this.#create("fetch", { raw, ...config });
   }
 
   jsonata<Out = OutputValues>(
     expression: string,
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<JsonataInputs, Out & JsonataOutputs> {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create("jsonata", { expression, ...rest }, $id);
+    return this.#create("jsonata", { expression, ...config });
   }
 
   xmlToJson(
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<XmlToJsonInputs, XmlToJsonOutputs> {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create("xmlToJson", { ...rest }, $id);
+    return this.#create("xmlToJson", config);
   }
 
   generateText(
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<GenerateTextInputs, GenerateTextOutputs> {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create("generateText", { ...rest }, $id);
+    return this.#create("generateText", config);
   }
 
   secrets<Out = OutputValues>(
     keys: string[],
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<SecretInputs, Out> {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create("secrets", { keys, ...rest }, $id);
+    return this.#create("secrets", { keys, ...config });
   }
 }
 

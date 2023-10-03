@@ -5,6 +5,7 @@
  */
 
 import {
+  NodeTypeIdentifier,
   InputValues,
   NodeHandlers,
   OutputValues,
@@ -74,88 +75,83 @@ export class Nursery implements Kit {
     this.#handlers = handlers;
   }
 
+  #create<Inputs, Outputs>(
+    type: NodeTypeIdentifier,
+    config: OptionalIdConfiguration
+  ): BreadboardNode<Inputs, Outputs> {
+    const { $id, ...rest } = config;
+    return this.#nodeFactory.create(this, type, rest, $id);
+  }
+
   createVectorDatabase(
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<InputValues, OutputValues> {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create("createVectorDatabase", { ...rest }, $id);
+    return this.#create("createVectorDatabase", config);
   }
 
   addToVectorDatabase(
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<InputValues, OutputValues> {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create("addToVectorDatabase", { ...rest }, $id);
+    return this.#create("addToVectorDatabase", config);
   }
 
   queryVectorDatabase(
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<InputValues, OutputValues> {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create("queryVectorDatabase", { ...rest }, $id);
+    return this.#create("queryVectorDatabase", config);
   }
 
   embedDocs(
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<InputValues, OutputValues> {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create("embedDocs", { ...rest }, $id);
+    return this.#create("embedDocs", config);
   }
 
   embedString(
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<InputValues, OutputValues> {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create("embedString", { ...rest }, $id);
+    return this.#create("embedString", config);
   }
 
   textAsset(
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<InputValues, OutputValues> {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create("textAsset", { ...rest }, $id);
+    return this.#create("textAsset", config);
   }
 
   textAssetsFromPath(
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<InputValues, OutputValues> {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create("textAssetsFromPath", { ...rest }, $id);
+    return this.#create("textAssetsFromPath", config);
   }
 
   cache(
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<InputValues, OutputValues> {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create("cache", { ...rest }, $id);
+    return this.#create("cache", config);
   }
 
   localMemory(
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<InputValues, OutputValues> {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create("localMemory", { ...rest }, $id);
+    return this.#create("localMemory", config);
   }
 
   validateJson(
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<InputValues, OutputValues> {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create<ValidateJsonInputs, ValidateJsonOutputs>(
+    return this.#create<ValidateJsonInputs, ValidateJsonOutputs>(
       "validateJson",
-      { ...rest },
-      $id
+      config
     );
   }
 
   schemish(
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<InputValues, OutputValues> {
-    const { $id, ...rest } = config;
-    const node = this.#nodeFactory.create<SchemishInputs, SchemishOutputs>(
+    const node = this.#create<SchemishInputs, SchemishOutputs>(
       "schemish",
-      { ...rest },
-      $id
+      config
     );
     return node;
   }
@@ -166,11 +162,10 @@ export class Nursery implements Kit {
   templateParser(
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<InputValues, OutputValues> {
-    const { $id, ...rest } = config;
-    const node = this.#nodeFactory.create<
-      TemplateParserInputs,
-      TemplateParserOutputs
-    >("templateParser", { ...rest }, $id);
+    const node = this.#create<TemplateParserInputs, TemplateParserOutputs>(
+      "templateParser",
+      config
+    );
     return node;
   }
 
@@ -183,13 +178,10 @@ export class Nursery implements Kit {
   map<In = InputValues, Out = OutputValues>(
     config: ConfigOrLambda<In, Out>
   ): BreadboardNode<MapInputs, MapOutputs> {
-    const { $id, ...rest } = this.#nodeFactory.getConfigWithLambda(config);
-
     // Create the node.
-    const node = this.#nodeFactory.create<MapInputs, MapOutputs>(
+    const node = this.#create<MapInputs, MapOutputs>(
       "map",
-      { ...rest },
-      $id
+      this.#nodeFactory.getConfigWithLambda(config)
     );
     return node;
   }
@@ -197,12 +189,7 @@ export class Nursery implements Kit {
   batcher(
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<BatcherInputs, BatcherOutputs> {
-    const { $id, ...rest } = config;
-    const node = this.#nodeFactory.create<BatcherInputs, BatcherOutputs>(
-      "batcher",
-      { ...rest },
-      $id
-    );
+    const node = this.#create<BatcherInputs, BatcherOutputs>("batcher", config);
     return node;
   }
 }

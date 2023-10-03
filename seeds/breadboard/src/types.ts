@@ -67,6 +67,7 @@ export interface BreadboardRunResult {
 
 export interface NodeFactory {
   create<Inputs, Outputs>(
+    kit: Kit | undefined,
     type: NodeTypeIdentifier,
     configuration?: NodeConfigurationConstructor,
     id?: string
