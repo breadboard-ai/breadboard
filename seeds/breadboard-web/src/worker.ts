@@ -48,6 +48,13 @@ const start = async () => {
   }
 };
 
+onerror = (e) => {
+  controller.inform<ErrorMessage>(
+    { error: `Unhandled error in worker: ${e}` },
+    "error"
+  );
+};
+
 try {
   const loadRequest = await load();
 
