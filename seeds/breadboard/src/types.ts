@@ -10,7 +10,6 @@ import type {
   GraphDescriptor,
   InputValues,
   KitDescriptor,
-  NodeConfiguration,
   NodeDescriptor,
   NodeHandlers,
   NodeTypeIdentifier,
@@ -167,11 +166,24 @@ export interface ProbeDetails {
  */
 export type ProbeEvent = CustomEvent<ProbeDetails>;
 
-export interface Breadboard extends GraphDescriptor {
+export interface BreadboardRunner extends GraphDescriptor {
+  run(
+    probe?: EventTarget,
+    slots?: BreadboardSlotSpec,
+    result?: BreadboardRunResult
+  ): AsyncGenerator<BreadboardRunResult>;
+  runOnce(
+    inputs: InputValues,
+    probe?: EventTarget,
+    slots?: BreadboardSlotSpec
+  ): Promise<OutputValues>;
+  addValidator(validator: BreadboardValidator): void;
+}
+
+export interface Breadboard extends BreadboardRunner {
   addEdge(edge: Edge): void;
   addNode(node: NodeDescriptor): void;
   addKit<T extends Kit>(ctr: KitConstructor<T>): T;
-  args?: InputValues; // Will be passed to the input node, useful in lambdas
 }
 
 export type LambdaFunction<In = InputValues, Out = OutputValues> = (

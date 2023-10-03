@@ -188,6 +188,11 @@ export type GraphDescriptor = GraphMetadata & {
    * Sub-graphs that are also described by this graph representation.
    */
   graphs?: SubGraphs;
+
+  /**
+   * Arguments that are passed to the graph, useful to bind values to lambdas.
+   */
+  args?: InputValues;
 };
 
 /**
