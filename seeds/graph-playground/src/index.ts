@@ -17,7 +17,7 @@ import {
   PrincipalLattice,
 } from "@google-labs/graph-integrity";
 
-import { ReActHelper } from "./react.js";
+// import { ReActHelper } from "./react.js";
 import { pathToFileURL } from "url";
 
 // buffer for input from an external source.
