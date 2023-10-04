@@ -167,6 +167,30 @@ export class Board extends BoardRunner implements Breadboard {
   }
 
   /**
+   * Places an `import` node on the board.
+   *
+   * Use this node to import other boards into the current board.
+   * Outputs `board` as a BoardCapability, which can be passed to e.g. `invoke`.
+   *
+   * @param $ref - the URL of the board to include, or a graph.
+   * @param config - optional configuration for the node.
+   * @returns - a `Node` object that represents the placed node.
+   */
+  import<In = InputValues, Out = OutputValues>(
+    $ref: string | GraphDescriptor,
+    config: OptionalIdConfiguration = {}
+  ): BreadboardNode<IncludeNodeInputs & In, Out> {
+    const { $id, ...rest } = config;
+    return new Node(
+      this,
+      undefined,
+      "include",
+      typeof $ref === "string" ? { $ref, ...rest } : { graph: $ref, ...rest },
+      $id
+    );
+  }
+
+  /**
    * Places an `include` node on the board.
    *
    * Use this node to include other boards into the current board.
@@ -189,26 +213,21 @@ export class Board extends BoardRunner implements Breadboard {
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<IncludeNodeInputs & In, Out> {
     const { $id, ...rest } = config;
-    if (typeof $ref === "string") {
-      return new Node(this, undefined, "include", { $ref, ...rest }, $id);
-    } else if (($ref as BreadboardCapability).kind === "board") {
-      return new Node(
-        this,
-        undefined,
-        "include",
-        { board: $ref, ...rest },
-        $id
-      );
-    } else {
-      return new Node(
-        this,
-        undefined,
-        "include",
-        { graph: $ref, ...rest },
-        $id
-      );
-    }
+    return new Node(
+      this,
+      undefined,
+      "include",
+      typeof $ref === "string"
+        ? { $ref, ...rest }
+        : ($ref as BreadboardCapability).kind === "board"
+        ? { board: $ref, ...rest }
+        : { graph: $ref, ...rest },
+      $id
+    );
   }
+
+  // Alias for now.
+  invoke = this.include;
 
   /**
    * Places a `reflect` node on the board.

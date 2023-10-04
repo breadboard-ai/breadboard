@@ -28,6 +28,7 @@ const CORE_HANDLERS = [
   "lambda",
   "import",
   "include",
+  "invoke",
   "reflect",
   "slot",
   "passthrough",
@@ -134,6 +135,8 @@ export class Core {
       NestedProbe.create(this.#probe, source)
     );
   }
+
+  invoke = this.include;
 
   async reflect(_inputs: InputValues): Promise<OutputValues> {
     const graph = deepCopy(this.#graph);
