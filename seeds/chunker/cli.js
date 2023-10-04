@@ -22,6 +22,7 @@ console.log(`Chunking ${filename} ...`);
 
 const chunker = new BasicChunker({
   maxWordsPerPassage: 100,
+  greedilyAggregateSiblings: true,
 });
 const result = chunker.chunk(data);
 

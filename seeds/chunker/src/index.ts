@@ -21,6 +21,7 @@ export type DocumentNode = TextNode | StructuralNode;
 
 export type ChunkerOptions = {
   maxWordsPerPassage: number;
+  greedilyAggregateSiblings: boolean;
 };
 
 export type PassageTree = Array<string | PassageTree>;
@@ -83,6 +84,8 @@ export class BasicChunker {
 
     const aggregatingNode = new AggregateNode(docNode, this.options);
 
+    let greedilyAggregatedNode = new AggregateNode(docNode, this.options);
+
     let shouldAggregate = true;
     const unchunkedNodes: AggregateNode[] = [];
     const childPassages: PassageTree = [];
@@ -91,12 +94,27 @@ export class BasicChunker {
       const childNode = this.processNode(child);
       if (childNode.chunked) {
         shouldAggregate = false;
+        if (greedilyAggregatedNode) unchunkedNodes.push(greedilyAggregatedNode);
+        greedilyAggregatedNode = new AggregateNode(docNode, this.options);
       } else {
         aggregatingNode.aggregate(childNode);
-        unchunkedNodes.push(childNode);
+        if (this.options.greedilyAggregateSiblings) {
+          if (childNode.fits(greedilyAggregatedNode)) {
+            greedilyAggregatedNode.aggregate(childNode);
+          } else {
+            unchunkedNodes.push(greedilyAggregatedNode);
+            greedilyAggregatedNode = childNode;
+          }
+        } else {
+          unchunkedNodes.push(childNode);
+        }
       }
       if (childNode.passages.length) childPassages.push(childNode.passages);
     }
+    if (this.options.greedilyAggregateSiblings) {
+      unchunkedNodes.push(greedilyAggregatedNode);
+    }
+
     if (!shouldAggregate || !node.fits(aggregatingNode)) {
       unchunkedNodes.forEach((unchunkedNode) => {
         node.addChunksAsPassagesFrom(unchunkedNode);
