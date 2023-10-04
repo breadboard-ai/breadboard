@@ -36,6 +36,7 @@ class AggregateNode {
   }
 
   aggregate(child: AggregateNode) {
+    //  console.log("aggregating", child.chunks);
     this.wordCount += child.wordCount;
     this.chunks = [...this.chunks, ...child.chunks];
   }
@@ -59,12 +60,14 @@ export class BasicChunker {
 
   chunk(data: TypedNode) {
     const passages: string[] = [];
-    this.processNode(data, passages);
+    const root = this.processNode(data, passages);
+    root.addToPassages(passages);
     return passages;
   }
 
   processNode(docNode: TypedNode, passages: string[]): AggregateNode {
     const node = new AggregateNode(docNode, this.options);
+    // console.log("processing", docNode.type);
     if (node.isText) {
       const text = (docNode as TextNode).text;
       if (text) {
@@ -74,29 +77,35 @@ export class BasicChunker {
       }
       return node;
     }
+    const children = (docNode as StructuralNode).children;
+    if (!children) return node;
+
     const aggregatingNode = new AggregateNode(docNode, this.options);
 
     let shouldAggregate = true;
     const unchunkedNodes: AggregateNode[] = [];
-    const children = (docNode as StructuralNode).children;
-    if (children) {
-      for (const child of children) {
-        const childNode = this.processNode(child, passages);
-        if (childNode.chunked) {
-          shouldAggregate = false;
-        } else {
-          aggregatingNode.aggregate(childNode);
-          unchunkedNodes.push(childNode);
-        }
+
+    for (const child of children) {
+      // console.log("child", child.type);
+      const childNode = this.processNode(child, passages);
+      if (childNode.chunked) {
+        shouldAggregate = false;
+      } else {
+        aggregatingNode.aggregate(childNode);
+        unchunkedNodes.push(childNode);
       }
-      if (!shouldAggregate || !node.fits(aggregatingNode)) {
-        unchunkedNodes.forEach((unchunkedNode) => {
-          unchunkedNode.addToPassages(passages);
-        });
-      }
-      aggregatingNode.addToPassages(passages);
     }
-    node.chunked = true;
+    if (!shouldAggregate || !node.fits(aggregatingNode)) {
+      unchunkedNodes.forEach((unchunkedNode) => {
+        unchunkedNode.addToPassages(passages);
+      });
+      aggregatingNode.addToPassages(passages);
+
+      node.chunked = true;
+      return node;
+    }
+
+    node.aggregate(aggregatingNode);
     return node;
   }
 }

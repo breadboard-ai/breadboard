@@ -1,5 +1,4 @@
 {
-  "skip": true,
   "options": {
     "maxWordsPerPassage": 10
   },
