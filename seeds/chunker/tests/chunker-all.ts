@@ -16,6 +16,11 @@ const TEST_CASES_DIRECTORY = "./tests/data";
     const data = JSON.parse(
       await readFile(`${TEST_CASES_DIRECTORY}/${testCase}`, "utf-8")
     );
+    if (data.skip) {
+      t.log(`Skipping ${testCase}`);
+      t.pass();
+      return;
+    }
     const chunker = new BasicChunker(data.options);
     const result = chunker.chunk(data.input);
     t.deepEqual(result, data.output);

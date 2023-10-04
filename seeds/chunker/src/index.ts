@@ -43,12 +43,12 @@ class AggregateNode {
   fits(child: AggregateNode): boolean {
     return this.wordCount + child.wordCount <= this.options.maxWordsPerPassage;
   }
-}
 
-const addToPassages = (node: AggregateNode, passages: string[]) => {
-  const text = node.chunks.join(" ");
-  if (text.length > 0) passages.push(text);
-};
+  addToPassages(passages: string[]) {
+    const text = this.chunks.join(" ");
+    if (text.length > 0) passages.push(text);
+  }
+}
 
 export class BasicChunker {
   options: ChunkerOptions;
@@ -91,11 +91,10 @@ export class BasicChunker {
       }
       if (!shouldAggregate || !node.fits(aggregatingNode)) {
         unchunkedNodes.forEach((unchunkedNode) => {
-          console.log("adding to passages", unchunkedNode.chunks);
-          addToPassages(unchunkedNode, passages);
+          unchunkedNode.addToPassages(passages);
         });
       }
-      addToPassages(aggregatingNode, passages);
+      aggregatingNode.addToPassages(passages);
     }
     node.chunked = true;
     return node;
