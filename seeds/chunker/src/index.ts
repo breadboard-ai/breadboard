@@ -23,12 +23,15 @@ export type ChunkerOptions = {
   maxWordsPerPassage: number;
 };
 
+export type PassageTree = Array<string | PassageTree>;
+
 class AggregateNode {
   options: ChunkerOptions;
   chunked = false;
   isText = false;
   wordCount = 0;
   chunks: string[] = [];
+  passages: PassageTree = [];
 
   constructor(node: TypedNode, options: ChunkerOptions) {
     this.isText = node.type === "text";
@@ -36,7 +39,6 @@ class AggregateNode {
   }
 
   aggregate(child: AggregateNode) {
-    //  console.log("aggregating", child.chunks);
     this.wordCount += child.wordCount;
     this.chunks = [...this.chunks, ...child.chunks];
   }
@@ -45,9 +47,9 @@ class AggregateNode {
     return this.wordCount + child.wordCount <= this.options.maxWordsPerPassage;
   }
 
-  addToPassages(passages: string[]) {
-    const text = this.chunks.join(" ");
-    if (text.length > 0) passages.push(text);
+  addChunksAsPassagesFrom(node: AggregateNode) {
+    const text = node.chunks.join(" ");
+    if (text.length > 0) this.passages.push(text);
   }
 }
 
@@ -59,15 +61,14 @@ export class BasicChunker {
   }
 
   chunk(data: TypedNode) {
-    const passages: string[] = [];
-    const root = this.processNode(data, passages);
-    root.addToPassages(passages);
+    const root = this.processNode(data);
+    root.addChunksAsPassagesFrom(root);
+    const passages = root.passages.flat(Infinity as 1);
     return passages;
   }
 
-  processNode(docNode: TypedNode, passages: string[]): AggregateNode {
+  processNode(docNode: TypedNode): AggregateNode {
     const node = new AggregateNode(docNode, this.options);
-    // console.log("processing", docNode.type);
     if (node.isText) {
       const text = (docNode as TextNode).text;
       if (text) {
@@ -84,22 +85,23 @@ export class BasicChunker {
 
     let shouldAggregate = true;
     const unchunkedNodes: AggregateNode[] = [];
+    const childPassages: PassageTree = [];
 
     for (const child of children) {
-      // console.log("child", child.type);
-      const childNode = this.processNode(child, passages);
+      const childNode = this.processNode(child);
       if (childNode.chunked) {
         shouldAggregate = false;
       } else {
         aggregatingNode.aggregate(childNode);
         unchunkedNodes.push(childNode);
       }
+      if (childNode.passages.length) childPassages.push(childNode.passages);
     }
     if (!shouldAggregate || !node.fits(aggregatingNode)) {
       unchunkedNodes.forEach((unchunkedNode) => {
-        unchunkedNode.addToPassages(passages);
+        node.addChunksAsPassagesFrom(unchunkedNode);
       });
-      aggregatingNode.addToPassages(passages);
+      if (childPassages.length) node.passages.push(childPassages);
 
       node.chunked = true;
       return node;
