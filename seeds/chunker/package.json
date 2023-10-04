@@ -12,6 +12,7 @@
   },
   "scripts": {
     "build": "FORCE_COLOR=1 tsc --b",
+    "test": "FORCE_COLOR=1 ava",
     "dev": "npx turbo build && chunker",
     "watch": "FORCE_COLOR=1 tsc --b --watch",
     "lint": "FORCE_COLOR=1 eslint . --ext .ts"

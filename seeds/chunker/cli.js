@@ -20,7 +20,9 @@ const data = JSON.parse(await readFile(filename));
 
 console.log(`Chunking ${filename} ...`);
 
-const chunker = new BasicChunker();
+const chunker = new BasicChunker({
+  maxWordsPerPassage: 100,
+});
 const result = chunker.chunk(data);
 
 console.log("DONE", result);
