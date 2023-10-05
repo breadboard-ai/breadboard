@@ -14,6 +14,7 @@ export type {
   InputValues,
   OutputValues,
   NodeHandlers,
+  NodeIdentifier,
   NodeTypeIdentifier,
   KitDescriptor,
   NodeValue,

@@ -140,16 +140,33 @@ export class Node<Inputs, Outputs> implements BreadboardNode<Inputs, Outputs> {
     to: BreadboardNode<ToInputs, ToOutputs>
   ): BreadboardNode<Inputs, Outputs> {
     const { ltr, edge } = parseSpec(spec);
-    const toNode = to as Node<ToInputs, ToOutputs>;
-    if (this.#breadboard !== toNode.#breadboard) {
-      throw new Error("Cannot wire nodes from different boards.");
-    }
+
+    const [fromNode, toNode] = ltr
+      ? [this, to as Node<ToInputs, ToOutputs>]
+      : [to as Node<ToInputs, ToOutputs>, this];
     const result: Edge = {
-      from: ltr ? this.#descriptor.id : toNode.#descriptor.id,
-      to: ltr ? toNode.#descriptor.id : this.#descriptor.id,
+      from: fromNode.#descriptor.id,
+      to: toNode.#descriptor.id,
       ...edge,
     };
-    this.#breadboard.addEdge(result);
+
+    if (fromNode.#breadboard !== toNode.#breadboard) {
+      // Note edge on the target board, which is the only currently supported
+      // version. Board.lambda() will use this to create a constant wire from
+      // the input node to this node, and from fromNode to the lambda node in
+      // the parent context, recursively if necessary.
+      toNode.#breadboard.addEdgeAcrossBoards(
+        result,
+        fromNode.#breadboard,
+        toNode.#breadboard
+      );
+    } else {
+      this.#breadboard.addEdge(result);
+    }
     return this;
+  }
+
+  get id() {
+    return this.#descriptor.id;
   }
 }

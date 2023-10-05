@@ -109,19 +109,6 @@ test("parseSpec: both in and out specified with constant", (t) => {
   });
 });
 
-test("throws when wiring different boards", async (t) => {
-  const board = new Board();
-  const board2 = new Board();
-  const input = board.input();
-  const output = board2.output();
-  await t.throwsAsync(
-    async () => {
-      input.wire("*->", output);
-    },
-    { message: "Cannot wire nodes from different boards." }
-  );
-});
-
 test("convert nodes in config to wires", async (t) => {
   const board = new Board();
   const input = board.input();

@@ -176,7 +176,7 @@ export class Nursery implements Kit {
    * @returns
    */
   map<In = InputValues, Out = OutputValues>(
-    config: ConfigOrLambda<In, Out>
+    config: ConfigOrLambda<In, Out> = {}
   ): BreadboardNode<MapInputs, MapOutputs> {
     // Create the node.
     const node = this.#create<MapInputs, MapOutputs>(

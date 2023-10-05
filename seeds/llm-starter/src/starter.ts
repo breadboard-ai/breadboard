@@ -85,10 +85,13 @@ export class Starter implements Kit {
   }
 
   promptTemplate<In = InputValues>(
-    template: string,
+    template?: string | undefined,
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<In & PromptTemplateInputs, PropmtTemplateOutputs> {
-    return this.#create("promptTemplate", { template, ...config });
+    return this.#create(
+      "promptTemplate",
+      template ? { template, ...config } : config
+    );
   }
 
   urlTemplate<In = InputValues>(

@@ -73,7 +73,7 @@ export class Core {
       );
     const runnableBoard = {
       ...(await Board.fromBreadboardCapability(board)),
-      inputs: args,
+      args,
     };
 
     return {
@@ -99,7 +99,32 @@ export class Core {
     return { board: { kind: "board", board } as BreadboardCapability };
   }
 
-  // TODO: Rename to invoke
+  async invoke(inputs: InputValues): Promise<OutputValues> {
+    const { path, board, graph, parent, ...args } = inputs as IncludeNodeInputs;
+
+    const runnableBoard = board
+      ? await Board.fromBreadboardCapability(board)
+      : graph
+      ? await Board.fromGraphDescriptor(graph)
+      : path
+      ? await Board.load(path, {
+          base: this.#graph.url,
+          outerGraph: this.#outerGraph,
+        })
+      : undefined;
+
+    if (!runnableBoard) throw new Error("No board provided");
+
+    for (const validator of this.#validators)
+      runnableBoard.addValidator(
+        validator.getSubgraphValidator(parent, Object.keys(args))
+      );
+    return await runnableBoard.runOnce(
+      args,
+      NestedProbe.create(this.#probe, path)
+    );
+  }
+
   async include(inputs: InputValues): Promise<OutputValues> {
     const { path, $ref, board, graph, slotted, parent, ...args } =
       inputs as IncludeNodeInputs;
@@ -135,8 +160,6 @@ export class Core {
       NestedProbe.create(this.#probe, source)
     );
   }
-
-  invoke = this.include;
 
   async reflect(_inputs: InputValues): Promise<OutputValues> {
     const graph = deepCopy(this.#graph);

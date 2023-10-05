@@ -7,6 +7,7 @@
 import test from "ava";
 
 import { Board } from "../src/board.js";
+import { LogProbe } from "../src/log.js";
 import type {
   ProbeEvent,
   Kit,
@@ -56,6 +57,26 @@ test("correctly passes inputs and outputs to included boards", async (t) => {
       "hello->",
       board.include(nestedBoard).wire("hello->", board.output())
     );
+
+  const result = await board.runOnce({ hello: "world" });
+  t.deepEqual(result, { hello: "world" });
+});
+
+test("correctly passes inputs and outputs to invoked boards", async (t) => {
+  const nestedBoard = new Board();
+  nestedBoard
+    .input()
+    .wire(
+      "hello->",
+      nestedBoard
+        .passthrough()
+        .wire("hello->", nestedBoard.output({ $id: "output" }))
+    );
+
+  const board = new Board();
+  board
+    .input()
+    .wire("hello->", board.invoke(nestedBoard).wire("hello->", board.output()));
 
   const result = await board.runOnce({ hello: "world" });
   t.deepEqual(result, { hello: "world" });
@@ -267,4 +288,59 @@ test("nested lambdas reusing kits", async (t) => {
     lambda2?.configuration?.board as BreadboardCapability | undefined
   )?.board;
   t.deepEqual(board3?.kits, kits);
+});
+
+test("corectly invoke a lambda", async (t) => {
+  const board = new Board();
+
+  board.input().wire(
+    "*->",
+    board
+      .invoke((board, input, output) => {
+        input.wire("*->", board.passthrough().wire("*->", output));
+      })
+      .wire("*->", board.output())
+  );
+
+  const result = await board.runOnce({ foo: "bar" });
+  t.deepEqual(result, { foo: "bar" });
+});
+
+test("throws when incorrectly wiring different boards", async (t) => {
+  const board = new Board();
+  const board2 = new Board();
+  const input = board.input();
+  const output = board2.output();
+  await t.throwsAsync(
+    async () => {
+      input.wire("foo->.", output);
+    },
+    { message: "Across board wires: From must be parent of to" }
+  );
+  await t.throwsAsync(
+    async () => {
+      input.wire("foo<-", output);
+    },
+    { message: "Across board wires: Must be constant for now" }
+  );
+});
+
+test("allow wiring across boards with lambdas", async (t) => {
+  const board = new Board();
+  const passthrough = board.passthrough({ foo: 1 });
+  const lambda = board.lambda((board, input, output) => {
+    board
+      .passthrough()
+      .wire("foo<-.", passthrough)
+      .wire("bar<-.", input)
+      .wire("*->.", output);
+  });
+  board
+    .input()
+    .wire(
+      "bar->",
+      board.invoke().wire("board<-", lambda).wire("*->", board.output())
+    );
+  const output = await board.runOnce({ bar: 2 }, new LogProbe());
+  t.deepEqual(output, { bar: 2, foo: 1 });
 });

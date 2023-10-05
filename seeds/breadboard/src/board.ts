@@ -48,6 +48,7 @@ import { Node } from "./node.js";
 export class Board extends BoardRunner implements Breadboard {
   #closureStack: Board[] = [];
   #topClosure: Board | undefined;
+  #acrossBoardsEdges: { edge: Edge; from: Board; to: Board }[] = [];
 
   /**
    * Core nodes. Breadboard won't function without these.
@@ -136,10 +137,11 @@ export class Board extends BoardRunner implements Breadboard {
   ): BreadboardNode<In, LambdaNodeOutputs> {
     const { $id, ...rest } = config;
 
-    let capability: BreadboardCapability;
+    let board: Board;
+    let input: BreadboardNode<In, InL> | undefined;
     if (typeof boardOrFunction === "function") {
-      const board = new Board();
-      const input = board.input<InL>();
+      board = new Board();
+      input = board.input<InL>();
       const output = board.output<OutL>();
 
       board.#topClosure = this.#topClosure ?? this;
@@ -148,22 +150,51 @@ export class Board extends BoardRunner implements Breadboard {
       boardOrFunction(board, input, output);
 
       board.#topClosure.#closureStack.pop();
-
-      capability = { kind: "board", board };
     } else {
-      capability = { kind: "board", board: boardOrFunction };
+      board = boardOrFunction as Board;
     }
 
-    return new Node(
+    const node = new Node(
       this,
       undefined,
       "lambda",
       {
-        board: capability,
+        board: { kind: "board", board } as BreadboardCapability,
         ...rest,
       },
       $id
     );
+
+    // Process edges that span lambdas. We have to turn this into two wires:
+    //  (1) From the input node in the child board to the destination node
+    //  (2) From the source node to this node. If the source node is in a
+    //      parent board, then instead ask parent to wire it up.
+    if (input && board.#acrossBoardsEdges.length > 0) {
+      for (const { edge, from, to } of board.#acrossBoardsEdges) {
+        if (to !== board || !edge.constant)
+          throw new Error(
+            "Across board wires: Must be constant and from parent to child"
+          );
+
+        // Hopefully unique enough name that doesn't class with other inputs
+        const label = `$l-${edge.to}-${edge.in}`;
+
+        board.addEdge({ ...edge, from: input.id, out: label });
+
+        const outerEdge = { ...edge, to: node.id, in: label };
+        if (from === this) {
+          this.addEdge(outerEdge);
+        } else {
+          this.addEdgeAcrossBoards(outerEdge, from, this);
+        }
+      }
+
+      // Clear the edges, as they are now added to the board itself.
+      // TODO: Add code in .run() to verify that all edges are consumed.
+      board.#acrossBoardsEdges = [];
+    }
+
+    return node;
   }
 
   /**
@@ -184,10 +215,40 @@ export class Board extends BoardRunner implements Breadboard {
     return new Node(
       this,
       undefined,
-      "include",
+      "import",
       typeof $ref === "string" ? { $ref, ...rest } : { graph: $ref, ...rest },
       $id
     );
+  }
+
+  /**
+   * Places an `invoke` node on the board.
+   *
+   * Use this node to invoke other boards into the current board.
+   *
+   * See [`include` node
+   * reference](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/nodes.md#include)
+   * for more information.
+   *
+   * Expects as input one of
+   *  - `path`: A board to be loaded
+   *  - `graph`: A graph (treated as JSON)
+   *  - `board`: A {BreadboardCapability}, e.g. from lambda or import
+   *
+   * All other inputs are passed to the invoked board,
+   * and the output are the invoked board's outputs.
+   *
+   * @param config - optional configuration for the node.
+   * @returns - a `Node` object that represents the placed node.
+   */
+  invoke<In = InputValues, Out = OutputValues>(
+    config: ConfigOrLambda<In, Out> | string = {}
+  ): BreadboardNode<IncludeNodeInputs & In, Out> {
+    const { $id, ...rest } =
+      typeof config === "string"
+        ? ({ path: config } as OptionalIdConfiguration)
+        : getConfigWithLambda(this, config);
+    return new Node(this, undefined, "invoke", rest, $id);
   }
 
   /**
@@ -225,9 +286,6 @@ export class Board extends BoardRunner implements Breadboard {
       $id
     );
   }
-
-  // Alias for now.
-  invoke = this.include;
 
   /**
    * Places a `reflect` node on the board.
@@ -317,12 +375,41 @@ export class Board extends BoardRunner implements Breadboard {
     return kit;
   }
 
+  /**
+   * Used in the context of board.lambda(): Returns the board that is currently
+   * being constructed, according to the nesting level of board.lambda() calls
+   * with JS functions.
+   *
+   * Only called by Node constructor, when adding nodes.
+   */
   currentBoardToAddTo(): Breadboard {
     const closureStack = this.#topClosure
       ? this.#topClosure.#closureStack
       : this.#closureStack;
     if (closureStack.length === 0) return this;
     else return closureStack[closureStack.length - 1];
+  }
+
+  /**
+   *
+   */
+  addEdgeAcrossBoards(edge: Edge, from: Board, to: Board) {
+    if (edge.out === "*")
+      throw new Error("Across board wires: * wires not supported");
+
+    if (!edge.constant)
+      throw new Error("Across board wires: Must be constant for now");
+
+    if (to !== this)
+      throw new Error("Across board wires: Must be invoked on to board");
+
+    const closureStack = this.#topClosure
+      ? this.#topClosure.#closureStack
+      : this.#closureStack;
+    if (from !== this.#topClosure && !closureStack.includes(from))
+      throw new Error("Across board wires: From must be parent of to");
+
+    this.#acrossBoardsEdges.push({ edge, from, to });
   }
 
   /**
@@ -354,15 +441,24 @@ const getConfigWithLambda = <In = InputValues, Out = OutputValues>(
   board: Board,
   config: ConfigOrLambda<In, Out>
 ): OptionalIdConfiguration => {
+  // Did we get a graph?
+  const gotGraph =
+    (config as GraphDescriptor).nodes !== undefined &&
+    (config as GraphDescriptor).edges !== undefined &&
+    (config as GraphDescriptor).kits !== undefined;
+
   // Look for functions, nodes and board capabilities.
   const gotBoard =
+    gotGraph ||
     typeof config === "function" ||
     config instanceof Node ||
     ((config as BreadboardCapability).kind === "board" &&
       (config as BreadboardCapability).board);
 
   const result = (
-    gotBoard ? { board: config } : config
+    gotBoard
+      ? { board: gotGraph ? { kind: "board", board: config } : config }
+      : config
   ) as OptionalIdConfiguration;
 
   // Convert passed JS function into a board node.

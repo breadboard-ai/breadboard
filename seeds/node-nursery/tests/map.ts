@@ -176,22 +176,21 @@ test("using lambda with promptTemplate", async (t) => {
   });
 });
 
-test("using lambda with promptTemplate from outer board", async (t) => {
-  await t.throwsAsync(
-    async () => {
-      const board = new Board();
-      const nursery = board.addKit(Nursery);
-      const llm = board.addKit(Starter);
+test("using lambda with promptTemplate with input from outer board", async (t) => {
+  const board = new Board();
+  const nursery = board.addKit(Nursery);
+  const llm = board.addKit(Starter);
 
-      const input = board.input();
-      const template = llm.promptTemplate("item: {{item}}");
-      const map = nursery.map((_, input, output) => {
-        input.wire("item->", template.wire("prompt->", output));
-      });
-      input.wire("list->", map);
-      map.wire("list->", board.output());
-      await board.runOnce({ list: [1, 2, 3] });
-    },
-    { message: "Cannot wire nodes from different boards." }
-  );
+  const input = board.input();
+  const templateConfig = board.passthrough({ template: "item: {{item}}" });
+  const map = nursery.map((_, input, output) => {
+    const template = llm.promptTemplate().wire("template<-.", templateConfig);
+    input.wire("item->", template.wire("prompt->", output));
+  });
+  input.wire("list->", map);
+  map.wire("list->", board.output());
+  const result = await board.runOnce({ list: [1, 2, 3] });
+  t.deepEqual(result, {
+    list: [{ prompt: "item: 1" }, { prompt: "item: 2" }, { prompt: "item: 3" }],
+  });
 });

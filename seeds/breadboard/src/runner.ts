@@ -257,6 +257,7 @@ export class BoardRunner implements BreadboardRunner {
     breadboard.edges = graph.edges;
     breadboard.nodes = graph.nodes;
     breadboard.graphs = graph.graphs;
+    breadboard.args = graph.args;
     const loader = new KitLoader(graph.kits, kits);
     (await loader.load()).forEach((kit) => {
       breadboard.kits.push(

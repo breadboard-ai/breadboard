@@ -12,6 +12,7 @@ import type {
   KitDescriptor,
   NodeDescriptor,
   NodeHandlers,
+  NodeIdentifier,
   NodeTypeIdentifier,
   OutputValues,
   Capability,
@@ -215,6 +216,7 @@ export interface Breadboard extends BreadboardRunner {
   addNode(node: NodeDescriptor): void;
   addKit<T extends Kit>(ctr: KitConstructor<T>): T;
   currentBoardToAddTo(): Breadboard;
+  addEdgeAcrossBoards(edge: Edge, from: Breadboard, to: Breadboard): void;
 }
 
 export type BreadboardCapability = Capability & {
@@ -274,6 +276,8 @@ export interface BreadboardNode<Inputs, Outputs> {
     spec: string,
     to: BreadboardNode<ToInputs, ToOutputs>
   ): BreadboardNode<Inputs, Outputs>;
+
+  readonly id: NodeIdentifier;
 }
 
 /**
@@ -310,6 +314,7 @@ export type ConfigOrLambda<In, Out> =
   | OptionalIdConfiguration
   | BreadboardCapability
   | BreadboardNode<LambdaNodeInputs, LambdaNodeOutputs>
+  | GraphDescriptor
   | LambdaFunction<In, Out>
   | {
       board:
