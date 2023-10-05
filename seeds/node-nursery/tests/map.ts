@@ -182,15 +182,17 @@ test("using lambda with promptTemplate with input from outer board", async (t) =
   const llm = board.addKit(Starter);
 
   const input = board.input();
-  const templateConfig = board.passthrough({ template: "item: {{item}}" });
+  const label = board.passthrough({ label: "name" });
   const map = nursery.map((_, input, output) => {
-    const template = llm.promptTemplate().wire("template<-.", templateConfig);
+    const template = llm
+      .promptTemplate("{{label}}: {{item}}")
+      .wire("label<-.", label);
     input.wire("item->", template.wire("prompt->", output));
   });
   input.wire("list->", map);
   map.wire("list->", board.output());
   const result = await board.runOnce({ list: [1, 2, 3] });
   t.deepEqual(result, {
-    list: [{ prompt: "item: 1" }, { prompt: "item: 2" }, { prompt: "item: 3" }],
+    list: [{ prompt: "name: 1" }, { prompt: "name: 2" }, { prompt: "name: 3" }],
   });
 });
