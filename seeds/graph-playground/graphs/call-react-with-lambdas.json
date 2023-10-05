@@ -1,0 +1,79 @@
+{
+  "title": "Calling ReAct with lambdas",
+  "description": "An implementation of the [ReAct](https://react-lm.github.io/) AI pattern that relies on Breadboard [lambdas](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/nodes.md#the-lambda-node) to supply tools to ReAct. They are currently populated by two boards: `search-summarize` and `math`.",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "invoke-1",
+      "to": "reactResponse",
+      "out": "text",
+      "in": "text"
+    },
+    {
+      "from": "userRequest",
+      "to": "invoke-1",
+      "out": "text",
+      "in": "text"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "userRequest",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Problem",
+              "description": "A problem to be solved"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
+    },
+    {
+      "id": "invoke-1",
+      "type": "invoke",
+      "configuration": {
+        "path": "react-with-lambdas.json",
+        "tools": [
+          {
+            "tool": "search",
+            "description": "Useful for when you need to find facts. Input should be a search query.",
+            "path": "search-summarize.json"
+          },
+          {
+            "tool": "math",
+            "description": "Useful for when you need to solve math problems. Input should be a math problem to be solved",
+            "path": "math.json"
+          }
+        ]
+      }
+    },
+    {
+      "id": "reactResponse",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "ReAct",
+              "description": "ReAct's response to the user's problem"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
+    }
+  ],
+  "kits": []
+}
