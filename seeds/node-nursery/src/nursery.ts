@@ -14,6 +14,7 @@ import type {
   BreadboardNode,
   Kit,
   NodeFactory,
+  NodeHandlerContext,
   OptionalIdConfiguration,
   ConfigOrLambda,
 } from "@google-labs/breadboard";
@@ -64,7 +65,7 @@ const handlers = {
 export class Nursery implements Kit {
   url = "npm:@google-labs/node-nursery";
   #nodeFactory: NodeFactory;
-  #handlers: NodeHandlers;
+  #handlers: NodeHandlers<NodeHandlerContext>;
 
   get handlers() {
     return this.#handlers;

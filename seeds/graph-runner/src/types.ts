@@ -247,14 +247,24 @@ export type NodeConfiguration = Record<string, NodeValue>;
 /**
  * A function that represents a type of a node in the graph.
  */
-export type NodeHandler = (
-  /**
-   * The inputs that are supplied to the node.
-   */
-  inputs: InputValues
-) => Promise<OutputValues | void>;
+export type NodeHandler<T> =
+  | ((
+      /**
+       * The inputs that are supplied to the node.
+       */
+      inputs: InputValues,
+      /**
+       * The context of the node's invocation.
+       */
+      context: T
+    ) => Promise<OutputValues | void>)
+  // Same as above, but without the context received.
+  | ((inputs: InputValues) => Promise<OutputValues | void>);
 
 /**
  * All known node handlers.
  */
-export type NodeHandlers = Record<NodeTypeIdentifier, NodeHandler>;
+export type NodeHandlers<T = object> = Record<
+  NodeTypeIdentifier,
+  NodeHandler<T>
+>;

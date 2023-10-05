@@ -16,7 +16,7 @@ test("map with no board just outputs list", async (t) => {
   const inputs = {
     list: [1, 2, 3],
   } as MapInputs;
-  const outputs = await map(inputs);
+  const outputs = await map(inputs, undefined);
   t.deepEqual(outputs, { list: [1, 2, 3] });
 });
 

@@ -19,6 +19,7 @@ export type {
   BreadboardSlotSpec,
   BreadboardNode,
   BreadboardCapability,
+  NodeHandlerContext,
   OptionalIdConfiguration,
   NodeConfigurationConstructor,
   LambdaFunction,

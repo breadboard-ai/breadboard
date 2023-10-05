@@ -7,7 +7,6 @@
 import test from "ava";
 
 import { Board } from "../src/board.js";
-import { LogProbe } from "../src/log.js";
 import type {
   ProbeEvent,
   Kit,
@@ -35,7 +34,7 @@ test("correctly skips nodes when asked", async (t) => {
     }
   });
 
-  const result = await board.runOnce({ hello: "world" }, skipper);
+  const result = await board.runOnce({ hello: "world" }, undefined, skipper);
   t.deepEqual(result, { instead: "this" });
 });
 
@@ -101,7 +100,7 @@ test("correctly passes inputs and outputs to included boards with a probe", asyn
       board.include(nestedBoard).wire("hello->", board.output())
     );
 
-  const result = await board.runOnce({ hello: "world" }, new EventTarget());
+  const result = await board.runOnce({ hello: "world" });
   t.deepEqual(result, { hello: "world" });
 });
 
@@ -130,7 +129,7 @@ test("correctly skips nodes in nested boards", async (t) => {
     }
   });
 
-  const result = await board.runOnce({ hello: "world" }, skipper);
+  const result = await board.runOnce({ hello: "world" }, undefined, skipper);
   t.deepEqual(result, { instead: "this" });
 });
 
@@ -341,6 +340,6 @@ test("allow wiring across boards with lambdas", async (t) => {
       "bar->",
       board.invoke().wire("board<-", lambda).wire("*->", board.output())
     );
-  const output = await board.runOnce({ bar: 2 }, new LogProbe());
+  const output = await board.runOnce({ bar: 2 });
   t.deepEqual(output, { bar: 2, foo: 1 });
 });

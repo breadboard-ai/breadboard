@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board, BreadboardCapability } from "@google-labs/breadboard";
+import {
+  Board,
+  BreadboardCapability,
+  NodeHandlerContext,
+} from "@google-labs/breadboard";
 import {
   Capability,
   GraphDescriptor,
@@ -39,7 +43,10 @@ export type RunnableBoard = GraphDescriptor & {
   url?: string;
 };
 
-export default async (inputs: InputValues): Promise<OutputValues> => {
+export default async (
+  inputs: InputValues,
+  context?: NodeHandlerContext
+): Promise<OutputValues> => {
   const { list, board } = inputs as MapInputs;
   if (!Array.isArray(list)) {
     throw new Error(`Expected list to be an array, but got ${list}`);
@@ -51,7 +58,10 @@ export default async (inputs: InputValues): Promise<OutputValues> => {
   const result = await Promise.all(
     list.map(async (item, index) => {
       // TODO: Express as a multi-turn `run`.
-      const outputs = await runnableBoard.runOnce({ item, index, list });
+      const outputs = await runnableBoard.runOnce(
+        { item, index, list },
+        context
+      );
       return outputs;
     })
   );

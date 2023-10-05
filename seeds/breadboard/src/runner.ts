@@ -20,6 +20,7 @@ import type {
   BreadboardSlotSpec,
   Kit,
   BreadboardValidator,
+  NodeHandlerContext,
   NodeFactory,
   ProbeDetails,
   BreadboardCapability,
@@ -37,6 +38,7 @@ import {
 import { KitLoader } from "./kit.js";
 import { BoardLoader } from "./loader.js";
 import { runRemote } from "./remote.js";
+import { NestedProbe } from "./nested-probe.js";
 
 class ProbeEvent extends CustomEvent<ProbeDetails> {
   constructor(type: string, detail: ProbeDetails) {
@@ -151,11 +153,6 @@ export class BoardRunner implements BreadboardRunner {
         continue;
       }
 
-      // The include and slot handlers require a reference to themselves to
-      // create subgraph validators at the right location in the graph.
-      if (["include", "slot"].includes(descriptor.type))
-        inputs["parent"] = descriptor;
-
       const handler = handlers[descriptor.type];
       if (!handler)
         throw new Error(`No handler for node type "${descriptor.type}"`);
@@ -175,7 +172,7 @@ export class BoardRunner implements BreadboardRunner {
 
       const outputsPromise = (
         shouldInvokeHandler
-          ? handler(inputs)
+          ? handler(inputs, { board: this, descriptor, probe })
           : beforehandlerDetail.outputs instanceof Promise
           ? beforehandlerDetail.outputs
           : Promise.resolve(beforehandlerDetail.outputs)
@@ -213,16 +210,29 @@ export class BoardRunner implements BreadboardRunner {
    */
   async runOnce(
     inputs: InputValues,
-    probe?: EventTarget,
-    slots?: BreadboardSlotSpec
+    context?: NodeHandlerContext,
+    probe?: EventTarget
   ): Promise<OutputValues> {
     let outputs: OutputValues = {};
-    for await (const result of this.run(probe, slots)) {
+    const args = { ...inputs, ...this.args };
+
+    if (context) {
+      // If called from another node in a parent board, add the parent board's
+      // validators to the board, with the current arguments.
+      for (const validator of (context.board as this).#validators)
+        this.addValidator(
+          validator.getSubgraphValidator(context.descriptor, Object.keys(args))
+        );
+
+      if (!probe && context.probe) probe = NestedProbe.create(context.probe);
+    }
+
+    for await (const result of this.run(probe)) {
       if (result.type === "input") {
         // Pass the inputs to the board. If there are inputs bound to the board
         // (e.g. from a lambda node that had incoming wires), they will
         // overwrite supplied inputs.
-        result.inputs = { ...inputs, ...this.args };
+        result.inputs = args;
       } else if (result.type === "output") {
         outputs = result.outputs;
         // Exit once we receive the first output.
@@ -333,18 +343,17 @@ export class BoardRunner implements BreadboardRunner {
     board: BoardRunner,
     probe?: EventTarget,
     slots?: BreadboardSlotSpec
-  ): Promise<NodeHandlers> {
+  ): Promise<NodeHandlers<NodeHandlerContext>> {
     const core = new Core(
       board,
       { ...board.#slots, ...slots },
       board.#validators,
-      board.#parent,
-      probe
+      board.#parent
     );
     const kits = [core, ...board.kits];
     return kits.reduce((handlers, kit) => {
       return { ...handlers, ...kit.handlers };
-    }, {} as NodeHandlers);
+    }, {} as NodeHandlers<NodeHandlerContext>);
   }
 
   static runRemote = runRemote;

@@ -15,6 +15,7 @@ import type {
   BreadboardSlotSpec,
   BreadboardValidator,
   BreadboardCapability,
+  NodeHandlerContext,
   LambdaNodeInputs,
   LambdaNodeOutputs,
   ImportNodeInputs,
@@ -22,7 +23,6 @@ import type {
   SlotNodeInputs,
 } from "./types.js";
 import { Board } from "./board.js";
-import { NestedProbe } from "./nested-probe.js";
 
 const CORE_HANDLERS = [
   "lambda",
@@ -42,27 +42,27 @@ export class Core {
   #graph: GraphDescriptor;
   #slots: BreadboardSlotSpec;
   #validators: BreadboardValidator[];
-  #probe?: EventTarget;
   #outerGraph: GraphDescriptor;
-  handlers: NodeHandlers;
+  handlers: NodeHandlers<NodeHandlerContext>;
 
   constructor(
     graph: GraphDescriptor,
     slots: BreadboardSlotSpec,
     validators: BreadboardValidator[],
-    outerGraph?: GraphDescriptor,
-    probe?: EventTarget
+    outerGraph?: GraphDescriptor
   ) {
     this.#graph = graph;
     this.#slots = slots;
     this.#validators = validators;
-    this.#probe = probe;
     this.#outerGraph = outerGraph || graph;
     this.handlers = CORE_HANDLERS.reduce((handlers, type) => {
-      const that = this as unknown as Record<string, NodeHandler>;
+      const that = this as unknown as Record<
+        string,
+        NodeHandler<NodeHandlerContext>
+      >;
       handlers[type] = that[type].bind(this);
       return handlers;
-    }, {} as NodeHandlers);
+    }, {} as NodeHandlers<NodeHandlerContext>);
   }
 
   async lambda(inputs: LambdaNodeInputs): Promise<LambdaNodeOutputs> {
@@ -99,8 +99,11 @@ export class Core {
     return { board: { kind: "board", board } as BreadboardCapability };
   }
 
-  async invoke(inputs: InputValues): Promise<OutputValues> {
-    const { path, board, graph, parent, ...args } = inputs as IncludeNodeInputs;
+  async invoke(
+    inputs: InputValues,
+    context: NodeHandlerContext
+  ): Promise<OutputValues> {
+    const { path, board, graph, ...args } = inputs as IncludeNodeInputs;
 
     const runnableBoard = board
       ? await Board.fromBreadboardCapability(board)
@@ -115,18 +118,14 @@ export class Core {
 
     if (!runnableBoard) throw new Error("No board provided");
 
-    for (const validator of this.#validators)
-      runnableBoard.addValidator(
-        validator.getSubgraphValidator(parent, Object.keys(args))
-      );
-    return await runnableBoard.runOnce(
-      args,
-      NestedProbe.create(this.#probe, path)
-    );
+    return await runnableBoard.runOnce(args, context);
   }
 
-  async include(inputs: InputValues): Promise<OutputValues> {
-    const { path, $ref, board, graph, slotted, parent, ...args } =
+  async include(
+    inputs: InputValues,
+    context: NodeHandlerContext
+  ): Promise<OutputValues> {
+    const { path, $ref, board, graph, slotted, ...args } =
       inputs as IncludeNodeInputs;
 
     // Add the current graph's URL as the url of the slotted graph,
@@ -151,14 +150,7 @@ export class Core {
           outerGraph: this.#outerGraph,
         });
 
-    for (const validator of this.#validators)
-      runnableBoard.addValidator(
-        validator.getSubgraphValidator(parent, Object.keys(args))
-      );
-    return await runnableBoard.runOnce(
-      args,
-      NestedProbe.create(this.#probe, source)
-    );
+    return await runnableBoard.runOnce(args, context);
   }
 
   async reflect(_inputs: InputValues): Promise<OutputValues> {
@@ -166,18 +158,16 @@ export class Core {
     return { graph };
   }
 
-  async slot(inputs: InputValues): Promise<OutputValues> {
-    const { slot, parent, ...args } = inputs as SlotNodeInputs;
+  async slot(
+    inputs: InputValues,
+    context: NodeHandlerContext
+  ): Promise<OutputValues> {
+    const { slot, ...args } = inputs as SlotNodeInputs;
     if (!slot) throw new Error("To use a slot, we need to specify its name");
     const graph = this.#slots[slot];
     if (!graph) throw new Error(`No graph found for slot "${slot}"`);
     const slottedBreadboard = await Board.fromGraphDescriptor(graph);
-    for (const validator of this.#validators)
-      slottedBreadboard.addValidator(validator.getSubgraphValidator(parent));
-    return await slottedBreadboard.runOnce(
-      args,
-      NestedProbe.create(this.#probe, slot)
-    );
+    return await slottedBreadboard.runOnce(args, context);
   }
 
   async passthrough(inputs: InputValues): Promise<OutputValues> {

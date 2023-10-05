@@ -20,7 +20,7 @@ import type {
 } from "@google-labs/graph-runner";
 
 export interface Kit extends KitDescriptor {
-  get handlers(): NodeHandlers;
+  get handlers(): NodeHandlers<NodeHandlerContext>;
 }
 
 export type BreadboardSlotSpec = Record<string, GraphDescriptor>;
@@ -180,8 +180,8 @@ export interface BreadboardRunner extends GraphDescriptor {
   ): AsyncGenerator<BreadboardRunResult>;
   runOnce(
     inputs: InputValues,
-    probe?: EventTarget,
-    slots?: BreadboardSlotSpec
+    context?: NodeHandlerContext,
+    probe?: EventTarget
   ): Promise<OutputValues>;
   addValidator(validator: BreadboardValidator): void;
 }
@@ -223,6 +223,12 @@ export type BreadboardCapability = Capability & {
   kind: "board";
   board: GraphDescriptor;
 };
+
+export interface NodeHandlerContext {
+  readonly board: BreadboardRunner;
+  readonly descriptor: NodeDescriptor;
+  readonly probe?: EventTarget;
+}
 
 type Common<To, From> = {
   [P in keyof (From | To) as From[P] extends To[P] ? P : never]?:
