@@ -4,19 +4,58 @@
   "version": "0.0.1",
   "edges": [
     {
-      "from": "invoke-1",
+      "from": "import-2",
+      "to": "jsonata-1",
+      "out": "board",
+      "in": "search"
+    },
+    {
+      "from": "import-3",
+      "to": "jsonata-1",
+      "out": "board",
+      "in": "math"
+    },
+    {
+      "from": "jsonata-1",
+      "to": "invoke-4",
+      "out": "result",
+      "in": "tools"
+    },
+    {
+      "from": "invoke-4",
       "to": "reactResponse",
       "out": "text",
       "in": "text"
     },
     {
       "from": "userRequest",
-      "to": "invoke-1",
+      "to": "invoke-4",
       "out": "text",
       "in": "text"
     }
   ],
   "nodes": [
+    {
+      "id": "jsonata-1",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "\n  [\n    {\n      \"tool\": \"search\",\n      \"description\":\n        \"Useful for when you need to find facts. Input should be a search query.\",\n      \"board\": search\n    },\n    {\n      \"tool\": \"math\",\n      \"description\":\n        \"Useful for when you need to solve math problems. Input should be a math problem to be solved\",\n      \"board\": math\n    }\n  ]"
+      }
+    },
+    {
+      "id": "import-2",
+      "type": "import",
+      "configuration": {
+        "$ref": "search-summarize.json"
+      }
+    },
+    {
+      "id": "import-3",
+      "type": "import",
+      "configuration": {
+        "$ref": "math.json"
+      }
+    },
     {
       "id": "userRequest",
       "type": "input",
@@ -37,22 +76,10 @@
       }
     },
     {
-      "id": "invoke-1",
+      "id": "invoke-4",
       "type": "invoke",
       "configuration": {
-        "path": "react-with-lambdas.json",
-        "tools": [
-          {
-            "tool": "search",
-            "description": "Useful for when you need to find facts. Input should be a search query.",
-            "path": "search-summarize.json"
-          },
-          {
-            "tool": "math",
-            "description": "Useful for when you need to solve math problems. Input should be a math problem to be solved",
-            "path": "math.json"
-          }
-        ]
+        "path": "react-with-lambdas.json"
       }
     },
     {
@@ -75,5 +102,9 @@
       }
     }
   ],
-  "kits": []
+  "kits": [
+    {
+      "url": "npm:@google-labs/llm-starter"
+    }
+  ]
 }

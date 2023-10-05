@@ -5,25 +5,12 @@
  */
 
 import { Board } from "@google-labs/breadboard";
+import { Starter } from "@google-labs/llm-starter";
 
 /**
  * An example of a board that uses the `react-witih-lambdas.ts` board.
  * It passes the board a list of tools.
  */
-const tools = [
-  {
-    tool: "search",
-    description:
-      "Useful for when you need to find facts. Input should be a search query.",
-    path: "search-summarize.json",
-  },
-  {
-    tool: "math",
-    description:
-      "Useful for when you need to solve math problems. Input should be a math problem to be solved",
-    path: "math.json",
-  },
-];
 
 // This is the main board that controls the rest of the board.
 const board = new Board({
@@ -32,6 +19,28 @@ const board = new Board({
     "An implementation of the [ReAct](https://react-lm.github.io/) AI pattern that relies on Breadboard [lambdas](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/nodes.md#the-lambda-node) to supply tools to ReAct. They are currently populated by two boards: `search-summarize` and `math`.",
   version: "0.0.1",
 });
+const kit = board.addKit(Starter);
+
+const tools = kit
+  .jsonata(
+    `
+  [
+    {
+      "tool": "search",
+      "description":
+        "Useful for when you need to find facts. Input should be a search query.",
+      "board": search
+    },
+    {
+      "tool": "math",
+      "description":
+        "Useful for when you need to solve math problems. Input should be a math problem to be solved",
+      "board": math
+    }
+  ]`
+  )
+  .wire("search<-board", board.import("search-summarize.json"))
+  .wire("math<-board", board.import("math.json"));
 
 // Include the `react-with-slot` board from a URL, wiring input to it.
 // Slot the `tools` board into the `tools` slot.
@@ -54,23 +63,26 @@ board
   })
   .wire(
     "text",
-    board.invoke({ path: `react-with-lambdas.json`, tools }).wire(
-      "text",
-      board.output({
-        $id: "reactResponse",
-        schema: {
-          type: "object",
-          properties: {
-            text: {
-              type: "string",
-              title: "ReAct",
-              description: "ReAct's response to the user's problem",
+    board
+      .invoke({ path: `react-with-lambdas.json` })
+      .wire("tools<-result", tools)
+      .wire(
+        "text",
+        board.output({
+          $id: "reactResponse",
+          schema: {
+            type: "object",
+            properties: {
+              text: {
+                type: "string",
+                title: "ReAct",
+                description: "ReAct's response to the user's problem",
+              },
             },
+            required: ["text"],
           },
-          required: ["text"],
-        },
-      })
-    )
+        })
+      )
   );
 
 export default board;
