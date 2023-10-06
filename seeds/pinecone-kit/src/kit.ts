@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board } from "@google-labs/breadboard";
+import { Board, NodeHandlerContext } from "@google-labs/breadboard";
 import {
   GraphDescriptor,
   InputValues,
@@ -52,13 +52,16 @@ export const makeHandlersFromGraphDescriptor = async (
   const handlers = await Board.handlersFromBoard(board);
   // Add prefixes to the handlers and close over configuration.
   return graph.nodes.reduce((acc, node) => {
-    acc[`${prefix}${node.id}`] = async (inputs: InputValues) => {
+    acc[`${prefix}${node.id}`] = async (
+      inputs: InputValues,
+      context: NodeHandlerContext
+    ) => {
       const configuration = node.configuration;
       if (configuration) {
         inputs = { ...configuration, ...inputs };
       }
-      return handlers[node.type](inputs);
+      return handlers[node.type](inputs, context);
     };
     return acc;
-  }, {} as NodeHandlers);
+  }, {} as NodeHandlers<NodeHandlerContext>);
 };

@@ -11,6 +11,7 @@ import {
   KitConstructor,
   KitImportMap,
   NodeFactory,
+  NodeHandlerContext,
   OptionalIdConfiguration,
 } from "./types.js";
 
@@ -54,7 +55,7 @@ export class KitLoader {
 }
 
 export const makeKit = <T extends readonly string[]>(
-  handlers: NodeHandlers,
+  handlers: NodeHandlers<NodeHandlerContext>,
   nodes: T,
   url: string,
   prefix: string
