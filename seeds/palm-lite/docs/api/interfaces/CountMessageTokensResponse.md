@@ -20,4 +20,4 @@ The number of tokens that the `model` tokenizes the `prompt` into. Always non-ne
 
 #### Defined in
 
-[types.ts:59](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L59)
+[types.ts:59](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L59)

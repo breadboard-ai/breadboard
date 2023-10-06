@@ -56,12 +56,12 @@ seeds/graph-runner/dist/src/types.d.ts:103
 
 ### handlers
 
-• `get` **handlers**(): `NodeHandlers`
+• `get` **handlers**(): `NodeHandlers`<[`NodeHandlerContext`](NodeHandlerContext.md)\>
 
 #### Returns
 
-`NodeHandlers`
+`NodeHandlers`<[`NodeHandlerContext`](NodeHandlerContext.md)\>
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:21](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/breadboard/src/types.ts#L21)
+[seeds/breadboard/src/types.ts:23](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/types.ts#L23)

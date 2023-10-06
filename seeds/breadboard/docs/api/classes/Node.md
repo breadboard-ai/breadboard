@@ -24,6 +24,10 @@
 - [#breadboard](Node.md##breadboard)
 - [#descriptor](Node.md##descriptor)
 
+### Accessors
+
+- [id](Node.md#id)
+
 ### Methods
 
 - [wire](Node.md#wire)
@@ -32,7 +36,7 @@
 
 ### constructor
 
-• **new Node**<`Inputs`, `Outputs`\>(`breadboard`, `type`, `configuration?`, `id?`)
+• **new Node**<`Inputs`, `Outputs`\>(`breadboard`, `kit`, `type`, `configuration?`, `id?`)
 
 #### Type parameters
 
@@ -46,13 +50,14 @@
 | Name | Type |
 | :------ | :------ |
 | `breadboard` | `Breadboard` |
+| `kit` | `undefined` \| [`Kit`](../interfaces/Kit.md) |
 | `type` | `string` |
-| `configuration?` | `NodeConfiguration` |
+| `configuration?` | [`NodeConfigurationConstructor`](../modules.md#nodeconfigurationconstructor) |
 | `id?` | `string` |
 
 #### Defined in
 
-[seeds/breadboard/src/node.ts:96](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/breadboard/src/node.ts#L96)
+[seeds/breadboard/src/node.ts:103](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/node.ts#L103)
 
 ## Properties
 
@@ -62,7 +67,7 @@
 
 #### Defined in
 
-[seeds/breadboard/src/node.ts:94](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/breadboard/src/node.ts#L94)
+[seeds/breadboard/src/node.ts:101](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/node.ts#L101)
 
 ___
 
@@ -72,7 +77,25 @@ ___
 
 #### Defined in
 
-[seeds/breadboard/src/node.ts:93](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/breadboard/src/node.ts#L93)
+[seeds/breadboard/src/node.ts:100](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/node.ts#L100)
+
+## Accessors
+
+### id
+
+• `get` **id**(): `string`
+
+#### Returns
+
+`string`
+
+#### Implementation of
+
+[BreadboardNode](../interfaces/BreadboardNode.md).[id](../interfaces/BreadboardNode.md#id)
+
+#### Defined in
+
+[seeds/breadboard/src/node.ts:169](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/node.ts#L169)
 
 ## Methods
 
@@ -110,4 +133,4 @@ Use this method to wire nodes together.
 
 #### Defined in
 
-[seeds/breadboard/src/node.ts:114](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/breadboard/src/node.ts#L114)
+[seeds/breadboard/src/node.ts:138](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/node.ts#L138)

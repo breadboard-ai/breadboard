@@ -20,4 +20,4 @@ Required. The free-form input text that the model will turn into an embedding.
 
 #### Defined in
 
-[types.ts:67](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L67)
+[types.ts:67](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L67)

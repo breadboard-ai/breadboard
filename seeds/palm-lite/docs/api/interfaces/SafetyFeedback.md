@@ -21,7 +21,7 @@ Safety rating evaluated from content.
 
 #### Defined in
 
-[types.ts:287](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L287)
+[types.ts:287](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L287)
 
 ___
 
@@ -33,4 +33,4 @@ Safety settings applied to the request.
 
 #### Defined in
 
-[types.ts:291](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L291)
+[types.ts:291](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L291)

@@ -23,4 +23,4 @@
 
 #### Defined in
 
-[policy.ts:20](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-integrity/src/policy.ts#L20)
+[policy.ts:20](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-integrity/src/policy.ts#L20)

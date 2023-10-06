@@ -38,7 +38,7 @@ Information flow control label.
 
 #### Defined in
 
-[label.ts:208](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-integrity/src/label.ts#L208)
+[label.ts:208](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-integrity/src/label.ts#L208)
 
 ## Properties
 
@@ -48,7 +48,7 @@ Information flow control label.
 
 #### Defined in
 
-[label.ts:201](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-integrity/src/label.ts#L201)
+[label.ts:201](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-integrity/src/label.ts#L201)
 
 ___
 
@@ -58,7 +58,7 @@ ___
 
 #### Defined in
 
-[label.ts:202](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-integrity/src/label.ts#L202)
+[label.ts:202](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-integrity/src/label.ts#L202)
 
 ## Methods
 
@@ -83,7 +83,7 @@ true if the label can flow to the destination label
 
 #### Defined in
 
-[label.ts:297](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-integrity/src/label.ts#L297)
+[label.ts:297](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-integrity/src/label.ts#L297)
 
 ___
 
@@ -107,7 +107,7 @@ true if the labels are equal
 
 #### Defined in
 
-[label.ts:283](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-integrity/src/label.ts#L283)
+[label.ts:283](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-integrity/src/label.ts#L283)
 
 ___
 
@@ -125,7 +125,7 @@ human-readable string
 
 #### Defined in
 
-[label.ts:312](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-integrity/src/label.ts#L312)
+[label.ts:312](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-integrity/src/label.ts#L312)
 
 ___
 
@@ -150,7 +150,7 @@ the passed
 
 #### Defined in
 
-[label.ts:248](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-integrity/src/label.ts#L248)
+[label.ts:248](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-integrity/src/label.ts#L248)
 
 ___
 
@@ -175,7 +175,7 @@ the passed
 
 #### Defined in
 
-[label.ts:229](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-integrity/src/label.ts#L229)
+[label.ts:229](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-integrity/src/label.ts#L229)
 
 ___
 
@@ -203,4 +203,4 @@ Might return empty lists if there are no defined label components.
 
 #### Defined in
 
-[label.ts:262](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-integrity/src/label.ts#L262)
+[label.ts:262](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-integrity/src/label.ts#L262)

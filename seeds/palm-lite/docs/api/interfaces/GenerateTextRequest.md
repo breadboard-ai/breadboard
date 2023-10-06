@@ -31,7 +31,7 @@ Number of generated responses to return. This value must be between [1, 8], incl
 
 #### Defined in
 
-[types.ts:143](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L143)
+[types.ts:143](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L143)
 
 ___
 
@@ -43,7 +43,7 @@ The maximum number of tokens to include in a candidate. If unset, this will defa
 
 #### Defined in
 
-[types.ts:147](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L147)
+[types.ts:147](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L147)
 
 ___
 
@@ -55,7 +55,7 @@ Required. The free-form input text given to the model as a prompt. Given a promp
 
 #### Defined in
 
-[types.ts:151](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L151)
+[types.ts:151](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L151)
 
 ___
 
@@ -67,7 +67,7 @@ A list of unique `SafetySetting` instances for blocking unsafe content. that wil
 
 #### Defined in
 
-[types.ts:155](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L155)
+[types.ts:155](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L155)
 
 ___
 
@@ -79,7 +79,7 @@ The set of character sequences (up to 5) that will stop output generation. If sp
 
 #### Defined in
 
-[types.ts:159](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L159)
+[types.ts:159](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L159)
 
 ___
 
@@ -91,7 +91,7 @@ Controls the randomness of the output. Note: The default value varies by model, 
 
 #### Defined in
 
-[types.ts:163](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L163)
+[types.ts:163](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L163)
 
 ___
 
@@ -103,7 +103,7 @@ The maximum number of tokens to consider when sampling. The model uses combined 
 
 #### Defined in
 
-[types.ts:167](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L167)
+[types.ts:167](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L167)
 
 ___
 
@@ -115,4 +115,4 @@ The maximum cumulative probability of tokens to consider when sampling. The mode
 
 #### Defined in
 
-[types.ts:171](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L171)
+[types.ts:171](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L171)

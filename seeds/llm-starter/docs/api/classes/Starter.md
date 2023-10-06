@@ -26,6 +26,7 @@ Syntactic sugar around the `coreHandlers` library.
 
 ### Methods
 
+- [#create](Starter.md##create)
 - [append](Starter.md#append)
 - [fetch](Starter.md#fetch)
 - [generateText](Starter.md#generatetext)
@@ -50,7 +51,7 @@ Syntactic sugar around the `coreHandlers` library.
 
 #### Defined in
 
-[starter.ts:67](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/llm-starter/src/starter.ts#L67)
+[starter.ts:68](https://github.com/google/labs-prototypes/blob/5114223/seeds/llm-starter/src/starter.ts#L68)
 
 ## Properties
 
@@ -60,7 +61,7 @@ Syntactic sugar around the `coreHandlers` library.
 
 #### Defined in
 
-[starter.ts:61](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/llm-starter/src/starter.ts#L61)
+[starter.ts:62](https://github.com/google/labs-prototypes/blob/5114223/seeds/llm-starter/src/starter.ts#L62)
 
 ___
 
@@ -70,7 +71,7 @@ ___
 
 #### Defined in
 
-[starter.ts:60](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/llm-starter/src/starter.ts#L60)
+[starter.ts:61](https://github.com/google/labs-prototypes/blob/5114223/seeds/llm-starter/src/starter.ts#L61)
 
 ___
 
@@ -84,7 +85,7 @@ Kit.url
 
 #### Defined in
 
-[starter.ts:59](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/llm-starter/src/starter.ts#L59)
+[starter.ts:60](https://github.com/google/labs-prototypes/blob/5114223/seeds/llm-starter/src/starter.ts#L60)
 
 ## Accessors
 
@@ -102,9 +103,37 @@ Kit.handlers
 
 #### Defined in
 
-[starter.ts:63](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/llm-starter/src/starter.ts#L63)
+[starter.ts:64](https://github.com/google/labs-prototypes/blob/5114223/seeds/llm-starter/src/starter.ts#L64)
 
 ## Methods
+
+### #create
+
+▸ `Private` **#create**<`Inputs`, `Outputs`\>(`type`, `config`): `BreadboardNode`<`Inputs`, `Outputs`\>
+
+#### Type parameters
+
+| Name |
+| :------ |
+| `Inputs` |
+| `Outputs` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `type` | `string` |
+| `config` | `OptionalIdConfiguration` |
+
+#### Returns
+
+`BreadboardNode`<`Inputs`, `Outputs`\>
+
+#### Defined in
+
+[starter.ts:73](https://github.com/google/labs-prototypes/blob/5114223/seeds/llm-starter/src/starter.ts#L73)
+
+___
 
 ### append
 
@@ -128,7 +157,7 @@ Kit.handlers
 
 #### Defined in
 
-[starter.ts:72](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/llm-starter/src/starter.ts#L72)
+[starter.ts:81](https://github.com/google/labs-prototypes/blob/5114223/seeds/llm-starter/src/starter.ts#L81)
 
 ___
 
@@ -149,7 +178,7 @@ ___
 
 #### Defined in
 
-[starter.ts:107](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/llm-starter/src/starter.ts#L107)
+[starter.ts:111](https://github.com/google/labs-prototypes/blob/5114223/seeds/llm-starter/src/starter.ts#L111)
 
 ___
 
@@ -169,7 +198,7 @@ ___
 
 #### Defined in
 
-[starter.ts:130](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/llm-starter/src/starter.ts#L130)
+[starter.ts:131](https://github.com/google/labs-prototypes/blob/5114223/seeds/llm-starter/src/starter.ts#L131)
 
 ___
 
@@ -196,13 +225,13 @@ ___
 
 #### Defined in
 
-[starter.ts:115](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/llm-starter/src/starter.ts#L115)
+[starter.ts:118](https://github.com/google/labs-prototypes/blob/5114223/seeds/llm-starter/src/starter.ts#L118)
 
 ___
 
 ### promptTemplate
 
-▸ **promptTemplate**<`In`\>(`template`, `config?`): `BreadboardNode`<`In` & `PromptTemplateInputs`, `PropmtTemplateOutputs`\>
+▸ **promptTemplate**<`In`\>(`template?`, `config?`): `BreadboardNode`<`In` & `PromptTemplateInputs`, `PropmtTemplateOutputs`\>
 
 #### Type parameters
 
@@ -214,7 +243,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `template` | `string` |
+| `template?` | `string` |
 | `config` | `OptionalIdConfiguration` |
 
 #### Returns
@@ -223,7 +252,7 @@ ___
 
 #### Defined in
 
-[starter.ts:79](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/llm-starter/src/starter.ts#L79)
+[starter.ts:87](https://github.com/google/labs-prototypes/blob/5114223/seeds/llm-starter/src/starter.ts#L87)
 
 ___
 
@@ -251,7 +280,7 @@ ___
 
 #### Defined in
 
-[starter.ts:99](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/llm-starter/src/starter.ts#L99)
+[starter.ts:104](https://github.com/google/labs-prototypes/blob/5114223/seeds/llm-starter/src/starter.ts#L104)
 
 ___
 
@@ -278,7 +307,7 @@ ___
 
 #### Defined in
 
-[starter.ts:137](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/llm-starter/src/starter.ts#L137)
+[starter.ts:137](https://github.com/google/labs-prototypes/blob/5114223/seeds/llm-starter/src/starter.ts#L137)
 
 ___
 
@@ -305,7 +334,7 @@ ___
 
 #### Defined in
 
-[starter.ts:91](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/llm-starter/src/starter.ts#L91)
+[starter.ts:97](https://github.com/google/labs-prototypes/blob/5114223/seeds/llm-starter/src/starter.ts#L97)
 
 ___
 
@@ -325,4 +354,4 @@ ___
 
 #### Defined in
 
-[starter.ts:123](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/llm-starter/src/starter.ts#L123)
+[starter.ts:125](https://github.com/google/labs-prototypes/blob/5114223/seeds/llm-starter/src/starter.ts#L125)

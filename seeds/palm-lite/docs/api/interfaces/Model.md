@@ -30,7 +30,7 @@ Required. The name of the base model, pass this to the generation request. Examp
 
 #### Defined in
 
-[types.ts:239](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L239)
+[types.ts:239](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L239)
 
 ___
 
@@ -42,7 +42,7 @@ A short description of the model.
 
 #### Defined in
 
-[types.ts:243](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L243)
+[types.ts:243](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L243)
 
 ___
 
@@ -54,7 +54,7 @@ The human-readable name of the model. E.g. "Chat Bison". The name can be up to 1
 
 #### Defined in
 
-[types.ts:247](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L247)
+[types.ts:247](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L247)
 
 ___
 
@@ -66,7 +66,7 @@ Maximum number of input tokens allowed for this model.
 
 #### Defined in
 
-[types.ts:251](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L251)
+[types.ts:251](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L251)
 
 ___
 
@@ -78,7 +78,7 @@ Required. The resource name of the `Model`. Format: `models/{model}` with a `{mo
 
 #### Defined in
 
-[types.ts:255](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L255)
+[types.ts:255](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L255)
 
 ___
 
@@ -90,7 +90,7 @@ Maximum number of output tokens available for this model.
 
 #### Defined in
 
-[types.ts:259](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L259)
+[types.ts:259](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L259)
 
 ___
 
@@ -102,7 +102,7 @@ The model's supported generation methods. The method names are defined as Pascal
 
 #### Defined in
 
-[types.ts:263](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L263)
+[types.ts:263](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L263)
 
 ___
 
@@ -114,7 +114,7 @@ Controls the randomness of the output. Values can range over `[0.0,1.0]`, inclus
 
 #### Defined in
 
-[types.ts:267](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L267)
+[types.ts:267](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L267)
 
 ___
 
@@ -126,7 +126,7 @@ For Top-k sampling. Top-k sampling considers the set of `top_k` most probable to
 
 #### Defined in
 
-[types.ts:271](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L271)
+[types.ts:271](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L271)
 
 ___
 
@@ -138,7 +138,7 @@ For Nucleus sampling. Nucleus sampling considers the smallest set of tokens whos
 
 #### Defined in
 
-[types.ts:275](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L275)
+[types.ts:275](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L275)
 
 ___
 
@@ -150,4 +150,4 @@ Required. The version number of the model. This represents the major version
 
 #### Defined in
 
-[types.ts:279](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L279)
+[types.ts:279](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L279)

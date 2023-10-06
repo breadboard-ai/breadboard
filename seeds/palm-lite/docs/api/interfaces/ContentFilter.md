@@ -21,7 +21,7 @@ A string that describes the filtering behavior in more detail.
 
 #### Defined in
 
-[types.ts:39](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L39)
+[types.ts:39](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L39)
 
 ___
 
@@ -33,4 +33,4 @@ The reason content was blocked during request processing.
 
 #### Defined in
 
-[types.ts:43](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L43)
+[types.ts:43](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L43)

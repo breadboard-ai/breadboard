@@ -21,7 +21,7 @@ Required. The category for this rating.
 
 #### Defined in
 
-[types.ts:299](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L299)
+[types.ts:299](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L299)
 
 ___
 
@@ -33,4 +33,4 @@ Required. The probability of harm for this content.
 
 #### Defined in
 
-[types.ts:310](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/palm-lite/src/types.ts#L310)
+[types.ts:310](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L310)

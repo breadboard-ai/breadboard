@@ -23,7 +23,7 @@ loading the board.
 
 #### Defined in
 
-[protocol.ts:52](https://github.com/google/labs-prototypes/blob/f2b06d3/seeds/breadboard-web/src/protocol.ts#L52)
+[protocol.ts:52](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard-web/src/protocol.ts#L52)
 
 ___
 
@@ -46,7 +46,7 @@ The message that is sent by the worker to the host after it loaded the board.
 
 #### Defined in
 
-[protocol.ts:76](https://github.com/google/labs-prototypes/blob/f2b06d3/seeds/breadboard-web/src/protocol.ts#L76)
+[protocol.ts:76](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard-web/src/protocol.ts#L76)
 
 ___
 
@@ -65,7 +65,7 @@ The message that sent by the host to the worker to start the board.
 
 #### Defined in
 
-[protocol.ts:106](https://github.com/google/labs-prototypes/blob/f2b06d3/seeds/breadboard-web/src/protocol.ts#L106)
+[protocol.ts:106](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard-web/src/protocol.ts#L106)
 
 ___
 
@@ -88,7 +88,7 @@ requests input.
 
 #### Defined in
 
-[protocol.ts:118](https://github.com/google/labs-prototypes/blob/f2b06d3/seeds/breadboard-web/src/protocol.ts#L118)
+[protocol.ts:118](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard-web/src/protocol.ts#L118)
 
 ___
 
@@ -108,7 +108,7 @@ The message that is sent by the host to the worker after it requested input.
 
 #### Defined in
 
-[protocol.ts:146](https://github.com/google/labs-prototypes/blob/f2b06d3/seeds/breadboard-web/src/protocol.ts#L146)
+[protocol.ts:146](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard-web/src/protocol.ts#L146)
 
 ___
 
@@ -128,7 +128,7 @@ The message that is sent by the worker to the host before it runs a node.
 
 #### Defined in
 
-[protocol.ts:166](https://github.com/google/labs-prototypes/blob/f2b06d3/seeds/breadboard-web/src/protocol.ts#L166)
+[protocol.ts:166](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard-web/src/protocol.ts#L166)
 
 ___
 
@@ -150,7 +150,7 @@ providing outputs.
 
 #### Defined in
 
-[protocol.ts:185](https://github.com/google/labs-prototypes/blob/f2b06d3/seeds/breadboard-web/src/protocol.ts#L185)
+[protocol.ts:185](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard-web/src/protocol.ts#L185)
 
 ___
 
@@ -173,7 +173,7 @@ requesting to proxy the node.
 
 #### Defined in
 
-[protocol.ts:208](https://github.com/google/labs-prototypes/blob/f2b06d3/seeds/breadboard-web/src/protocol.ts#L208)
+[protocol.ts:208](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard-web/src/protocol.ts#L208)
 
 ___
 
@@ -194,7 +194,7 @@ proxy the node.
 
 #### Defined in
 
-[protocol.ts:236](https://github.com/google/labs-prototypes/blob/f2b06d3/seeds/breadboard-web/src/protocol.ts#L236)
+[protocol.ts:236](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard-web/src/protocol.ts#L236)
 
 ___
 
@@ -214,7 +214,7 @@ finished running.
 
 #### Defined in
 
-[protocol.ts:258](https://github.com/google/labs-prototypes/blob/f2b06d3/seeds/breadboard-web/src/protocol.ts#L258)
+[protocol.ts:258](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard-web/src/protocol.ts#L258)
 
 ___
 
@@ -235,4 +235,4 @@ encounters an error.
 
 #### Defined in
 
-[protocol.ts:270](https://github.com/google/labs-prototypes/blob/f2b06d3/seeds/breadboard-web/src/protocol.ts#L270)
+[protocol.ts:270](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard-web/src/protocol.ts#L270)

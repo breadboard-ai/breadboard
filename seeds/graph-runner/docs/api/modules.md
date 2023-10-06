@@ -26,6 +26,7 @@
 - [NodeDescriptor](modules.md#nodedescriptor)
 - [NodeHandler](modules.md#nodehandler)
 - [NodeHandlers](modules.md#nodehandlers)
+- [NodeIdentifier](modules.md#nodeidentifier)
 - [NodeTypeIdentifier](modules.md#nodetypeidentifier)
 - [NodeValue](modules.md#nodevalue)
 - [OutputValues](modules.md#outputvalues)
@@ -48,15 +49,15 @@ Represents an edge in a graph.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `constant?` | `boolean` | If true, this edge acts as a constant: the data that passes through it remains available even after the node has consumed it. |
-| `from` | `NodeIdentifier` | The node that the edge is coming from. |
+| `from` | [`NodeIdentifier`](modules.md#nodeidentifier) | The node that the edge is coming from. |
 | `in?` | `InputIdentifier` | The input of the `to` node. If this value is undefined, then the then no data is passed as output of the `from` node. |
 | `optional?` | `boolean` | If true, this edge is optional: the data that passes through it is not considered a required input to the node. |
 | `out?` | `OutputIdentifier` | The output of the `from` node. If this value is "*", then all outputs of the `from` node are passed to the `to` node. If this value is undefined, then no data is passed to any inputs of the `to` node. |
-| `to` | `NodeIdentifier` | The node that the edge is going to. |
+| `to` | [`NodeIdentifier`](modules.md#nodeidentifier) | The node that the edge is going to. |
 
 #### Defined in
 
-[types.ts:74](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-runner/src/types.ts#L74)
+[types.ts:74](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-runner/src/types.ts#L74)
 
 ___
 
@@ -66,19 +67,19 @@ ___
 
 #### Defined in
 
-[types.ts:11](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-runner/src/types.ts#L11)
+[types.ts:11](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-runner/src/types.ts#L11)
 
 ___
 
 ### GraphDescriptor
 
-Ƭ **GraphDescriptor**: [`GraphMetadata`](modules.md#graphmetadata) & { `edges`: [`Edge`](modules.md#edge)[] ; `graphs?`: [`SubGraphs`](modules.md#subgraphs) ; `kits?`: [`KitDescriptor`](modules.md#kitdescriptor)[] ; `nodes`: [`NodeDescriptor`](modules.md#nodedescriptor)[]  }
+Ƭ **GraphDescriptor**: [`GraphMetadata`](modules.md#graphmetadata) & { `args?`: [`InputValues`](modules.md#inputvalues) ; `edges`: [`Edge`](modules.md#edge)[] ; `graphs?`: [`SubGraphs`](modules.md#subgraphs) ; `kits?`: [`KitDescriptor`](modules.md#kitdescriptor)[] ; `nodes`: [`NodeDescriptor`](modules.md#nodedescriptor)[]  }
 
 Represents a graph.
 
 #### Defined in
 
-[types.ts:171](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-runner/src/types.ts#L171)
+[types.ts:171](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-runner/src/types.ts#L171)
 
 ___
 
@@ -99,7 +100,7 @@ Represents graph metadata.
 
 #### Defined in
 
-[types.ts:133](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-runner/src/types.ts#L133)
+[types.ts:133](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-runner/src/types.ts#L133)
 
 ___
 
@@ -111,7 +112,7 @@ Values that are supplied as inputs to the `NodeHandler`.
 
 #### Defined in
 
-[types.ts:229](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-runner/src/types.ts#L229)
+[types.ts:234](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-runner/src/types.ts#L234)
 
 ___
 
@@ -133,7 +134,7 @@ The `@google-labs/llm-starter` package is an example of kit.
 
 #### Defined in
 
-[types.ts:117](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-runner/src/types.ts#L117)
+[types.ts:117](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-runner/src/types.ts#L117)
 
 ___
 
@@ -146,7 +147,7 @@ the `InputValues` and supplied as inputs to the `NodeHandler`.
 
 #### Defined in
 
-[types.ts:240](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-runner/src/types.ts#L240)
+[types.ts:245](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-runner/src/types.ts#L245)
 
 ___
 
@@ -161,50 +162,60 @@ Represents a node in a graph.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `configuration?` | [`NodeConfiguration`](modules.md#nodeconfiguration) | Configuration of the node. |
-| `id` | `NodeIdentifier` | Unique id of the node in graph. |
+| `id` | [`NodeIdentifier`](modules.md#nodeidentifier) | Unique id of the node in graph. |
 | `type` | [`NodeTypeIdentifier`](modules.md#nodetypeidentifier) | Type of the node. Used to look up the handler for the node. |
 
 #### Defined in
 
-[types.ts:54](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-runner/src/types.ts#L54)
+[types.ts:54](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-runner/src/types.ts#L54)
 
 ___
 
 ### NodeHandler
 
-Ƭ **NodeHandler**: (`inputs`: [`InputValues`](modules.md#inputvalues)) => `Promise`<[`OutputValues`](modules.md#outputvalues) \| `void`\>
-
-#### Type declaration
-
-▸ (`inputs`): `Promise`<[`OutputValues`](modules.md#outputvalues) \| `void`\>
+Ƭ **NodeHandler**<`T`\>: (`inputs`: [`InputValues`](modules.md#inputvalues), `context`: `T`) => `Promise`<[`OutputValues`](modules.md#outputvalues) \| `void`\> \| (`inputs`: [`InputValues`](modules.md#inputvalues)) => `Promise`<[`OutputValues`](modules.md#outputvalues) \| `void`\>
 
 A function that represents a type of a node in the graph.
 
-##### Parameters
+#### Type parameters
 
-| Name | Type |
-| :------ | :------ |
-| `inputs` | [`InputValues`](modules.md#inputvalues) |
-
-##### Returns
-
-`Promise`<[`OutputValues`](modules.md#outputvalues) \| `void`\>
+| Name |
+| :------ |
+| `T` |
 
 #### Defined in
 
-[types.ts:245](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-runner/src/types.ts#L245)
+[types.ts:250](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-runner/src/types.ts#L250)
 
 ___
 
 ### NodeHandlers
 
-Ƭ **NodeHandlers**: `Record`<[`NodeTypeIdentifier`](modules.md#nodetypeidentifier), [`NodeHandler`](modules.md#nodehandler)\>
+Ƭ **NodeHandlers**<`T`\>: `Record`<[`NodeTypeIdentifier`](modules.md#nodetypeidentifier), [`NodeHandler`](modules.md#nodehandler)<`T`\>\>
 
 All known node handlers.
 
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `T` | `object` |
+
 #### Defined in
 
-[types.ts:255](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-runner/src/types.ts#L255)
+[types.ts:267](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-runner/src/types.ts#L267)
+
+___
+
+### NodeIdentifier
+
+Ƭ **NodeIdentifier**: `string`
+
+Unique identifier of a node in a graph.
+
+#### Defined in
+
+[types.ts:34](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-runner/src/types.ts#L34)
 
 ___
 
@@ -216,7 +227,7 @@ Unique identifier of a node's type.
 
 #### Defined in
 
-[types.ts:49](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-runner/src/types.ts#L49)
+[types.ts:49](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-runner/src/types.ts#L49)
 
 ___
 
@@ -228,7 +239,7 @@ A type representing a valid JSON value.
 
 #### Defined in
 
-[types.ts:21](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-runner/src/types.ts#L21)
+[types.ts:21](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-runner/src/types.ts#L21)
 
 ___
 
@@ -240,7 +251,7 @@ Values that the `NodeHandler` outputs.
 
 #### Defined in
 
-[types.ts:234](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-runner/src/types.ts#L234)
+[types.ts:239](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-runner/src/types.ts#L239)
 
 ___
 
@@ -254,7 +265,7 @@ The value is the descriptor of the sub-graph.
 
 #### Defined in
 
-[types.ts:166](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-runner/src/types.ts#L166)
+[types.ts:166](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-runner/src/types.ts#L166)
 
 ## Functions
 
@@ -275,4 +286,4 @@ The value is the descriptor of the sub-graph.
 
 #### Defined in
 
-[mermaid.ts:201](https://github.com/Chizobaonorh/labs-prototypes/blob/0d5a680/seeds/graph-runner/src/mermaid.ts#L201)
+[mermaid.ts:201](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-runner/src/mermaid.ts#L201)
