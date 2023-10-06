@@ -26,37 +26,30 @@ board
       title: "The body of the API call",
       properties: {
         vectors: {
-          type: "object",
+          type: "array",
           title: "Vectors",
-          description: "The body of the API call",
-          properties: {
-            vectors: {
-              type: "array",
-              title: "Vectors",
-              description:
-                "The vectors to upsert -- an array of objects with `id`, `values` and `metadata` properties",
-              items: {
-                type: "object",
-                properties: {
-                  id: {
-                    type: "string",
-                    title: "ID",
-                    description: "The ID of the vector",
-                  },
-                  values: {
-                    type: "array",
-                    title: "Values",
-                    description: "The vector: a list of floats",
-                    items: {
-                      type: "number",
-                    },
-                  },
-                  metadata: {
-                    type: "object",
-                    title: "Metadata",
-                    description: "The metadata associated with the vector",
-                  },
+          description:
+            "The vectors to upsert -- an array of objects with `id`, `values` and `metadata` properties",
+          items: {
+            type: "object",
+            properties: {
+              id: {
+                type: "string",
+                title: "ID",
+                description: "The ID of the vector",
+              },
+              values: {
+                type: "array",
+                title: "Values",
+                description: "The vector: a list of floats",
+                items: {
+                  type: "number",
                 },
+              },
+              metadata: {
+                type: "object",
+                title: "Metadata",
+                description: "The metadata associated with the vector",
               },
             },
           },
