@@ -17,9 +17,9 @@ import {
   type OutputMessage,
   type StartMesssage,
   type InputResponseMessage,
-} from "./protocol.js";
-import { MessageController } from "./controller.js";
-import { NodeProxy } from "./proxy.js";
+  MessageController,
+  NodeProxy,
+} from "@google-labs/breadboard/worker";
 
 const controller = new MessageController(self as unknown as Worker);
 

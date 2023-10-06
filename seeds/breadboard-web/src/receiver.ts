@@ -7,7 +7,7 @@
 import { Board, NodeHandlerContext } from "@google-labs/breadboard";
 import { NodeHandlers, OutputValues } from "@google-labs/graph-runner";
 import { Starter } from "@google-labs/llm-starter";
-import type { ProxyRequestMessage } from "./protocol.js";
+import type { ProxyRequestMessage } from "@google-labs/breadboard/worker";
 
 const PROXIED_PREFIX = "PROXIED_";
 
