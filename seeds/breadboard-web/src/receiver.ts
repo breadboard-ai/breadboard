@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board } from "@google-labs/breadboard";
+import { Board, NodeHandlerContext } from "@google-labs/breadboard";
 import { NodeHandlers, OutputValues } from "@google-labs/graph-runner";
 import { Starter } from "@google-labs/llm-starter";
 import type { ProxyRequestMessage } from "./protocol.js";
@@ -44,7 +44,7 @@ class FinalResult {
  */
 export class ProxyReceiver {
   board: Board;
-  handlers?: NodeHandlers;
+  handlers?: NodeHandlers<NodeHandlerContext>;
   secrets: Record<string, string> = {};
 
   constructor() {
@@ -81,6 +81,8 @@ export class ProxyReceiver {
     if (!handler)
       throw new Error(`No handler found for node type "${nodeType}".`);
     console.log("handler", inputs);
-    yield new FinalResult(await handler(inputs));
+    yield new FinalResult(
+      await handler(inputs, { board: this.board, descriptor: data.node })
+    );
   }
 }
