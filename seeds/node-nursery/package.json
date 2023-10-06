@@ -57,6 +57,7 @@
     "@google-labs/graph-runner": "*",
     "@google-labs/llm-starter": "*",
     "@google-labs/palm-lite": "*",
+    "@google-labs/chunker": "*",
     "json-stable-stringify": "^1.0.2",
     "jsonschema": "^1.4.1",
     "ml-distance": "^4.0.1",

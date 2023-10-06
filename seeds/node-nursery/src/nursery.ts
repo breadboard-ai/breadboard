@@ -40,6 +40,7 @@ import templateParser, {
 } from "./nodes/template-parser.js";
 import map, { MapInputs, MapOutputs } from "./nodes/map.js";
 import batcher, { BatcherInputs, BatcherOutputs } from "./nodes/batcher.js";
+import chunker, { ChunkerInputs, ChunkerOutputs } from "./nodes/chunker.js";
 
 const handlers = {
   createVectorDatabase,
@@ -57,6 +58,7 @@ const handlers = {
   templateParser,
   map,
   batcher,
+  chunker,
 };
 
 /**
@@ -191,6 +193,13 @@ export class Nursery implements Kit {
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<BatcherInputs, BatcherOutputs> {
     const node = this.#create<BatcherInputs, BatcherOutputs>("batcher", config);
+    return node;
+  }
+
+  chunker(
+    config: OptionalIdConfiguration = {}
+  ): BreadboardNode<ChunkerInputs, ChunkerOutputs> {
+    const node = this.#create<ChunkerInputs, ChunkerOutputs>("chunker", config);
     return node;
   }
 }
