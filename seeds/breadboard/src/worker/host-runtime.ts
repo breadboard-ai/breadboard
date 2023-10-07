@@ -34,7 +34,7 @@ const prepareBlobUrl = (url: string) => {
   return URL.createObjectURL(blob);
 };
 
-export class Runtime {
+export class HostRuntime {
   workerURL: string;
 
   constructor(workerURL: string) {

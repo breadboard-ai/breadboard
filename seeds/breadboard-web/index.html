@@ -69,12 +69,12 @@
 </details>
 <script type="module" src="src/ui.ts"></script>
 <script type="module">
-  import { Runtime } from "@google-labs/breadboard/worker";
+  import { HostRuntime } from "@google-labs/breadboard/worker";
   import { ProxyReceiver } from "./src/index.ts";
 
   const WORKER_URL = "/src/worker.ts";
 
-  const runtime = new Runtime(WORKER_URL);
+  const runtime = new HostRuntime(WORKER_URL);
   const receiver = new ProxyReceiver();
 
   const ui = document.querySelector("bb-ui");
