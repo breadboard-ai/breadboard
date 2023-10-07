@@ -68,7 +68,7 @@
   </p>
 </details>
 <script type="module">
-  import "@google-labs/breadboard/ui";
+  import { register } from "@google-labs/breadboard/ui";
   import { HostRuntime } from "@google-labs/breadboard/worker";
   import { ProxyReceiver } from "./src/index.ts";
 
@@ -76,6 +76,8 @@
 
   const runtime = new HostRuntime(WORKER_URL);
   const receiver = new ProxyReceiver();
+
+  register();
 
   const ui = document.querySelector("bb-ui");
 
