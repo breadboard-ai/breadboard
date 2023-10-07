@@ -122,6 +122,13 @@
                 receiverResult.value = await ui.secret(receiverResult.name);
                 break;
               case "result":
+                const type = receiverResult.nodeType;
+                if (type === "generateText") {
+                  ui.result({
+                    title: "LLM response",
+                    result: receiverResult.value.completion,
+                  });
+                }
                 result.reply(receiverResult.value);
                 break;
             }

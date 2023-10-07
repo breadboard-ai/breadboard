@@ -29,10 +29,12 @@ class AskForSecret {
 }
 
 class FinalResult {
+  nodeType: string;
   value: unknown;
   type = "result";
 
-  constructor(value: unknown) {
+  constructor(nodeType: string, value: unknown) {
+    this.nodeType = nodeType;
     this.value = value;
   }
 }
@@ -60,7 +62,7 @@ export class ProxyReceiver {
       this.handlers = await Board.handlersFromBoard(this.board);
     if (nodeType === "secrets") {
       const { keys } = inputs as { keys: string[] };
-      yield new FinalResult(passProxiedKeys(keys));
+      yield new FinalResult(nodeType, passProxiedKeys(keys));
       return;
     }
     for (const name in inputs) {
@@ -80,8 +82,8 @@ export class ProxyReceiver {
     const handler = this.handlers[nodeType];
     if (!handler)
       throw new Error(`No handler found for node type "${nodeType}".`);
-    console.log("handler", inputs);
     yield new FinalResult(
+      nodeType,
       await handler(inputs, { board: this.board, descriptor: data.node })
     );
   }

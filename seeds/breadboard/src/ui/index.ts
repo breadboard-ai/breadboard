@@ -9,6 +9,7 @@ import { Input } from "./input.js";
 import { Load } from "./load.js";
 import { Output } from "./output.js";
 import { Progress } from "./progress.js";
+import { Result } from "./result.js";
 import { Start } from "./start.js";
 import { UIController } from "./ui-controller.js";
 
@@ -20,6 +21,7 @@ export const register = () => {
   customElements.define("bb-input", Input);
   customElements.define("bb-output", Output);
   customElements.define("bb-progress", Progress);
+  customElements.define("bb-result", Result);
 };
 
 export const get = () => {

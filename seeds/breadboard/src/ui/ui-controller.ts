@@ -9,6 +9,7 @@ import { Input, type InputArgs } from "./input.js";
 import { Load, type LoadArgs } from "./load.js";
 import { Output, type OutputArgs } from "./output.js";
 import { Progress } from "./progress.js";
+import { Result, ResultArgs } from "./result.js";
 import { Start, type StartArgs } from "./start.js";
 
 export interface UI {
@@ -78,6 +79,11 @@ export class UIController extends HTMLElement implements UI {
     const data = (await input.ask()) as Record<string, string>;
     input.remove();
     return data.secret;
+  }
+
+  result(value: ResultArgs) {
+    this.removeProgress();
+    this.append(new Result(value));
   }
 
   async input(id: string, args: InputArgs): Promise<Record<string, unknown>> {
