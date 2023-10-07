@@ -71,7 +71,8 @@
   import { HostRuntime } from "@google-labs/breadboard/worker";
   import { ProxyReceiver } from "./src/index.ts";
 
-  const WORKER_URL = "/src/worker.ts";
+  const WORKER_URL =
+    import.meta.env.MODE === "development" ? "/src/worker.ts" : "/worker.js";
 
   const runtime = new HostRuntime(WORKER_URL);
   const receiver = new ProxyReceiver();
