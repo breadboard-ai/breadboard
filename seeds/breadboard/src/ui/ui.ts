@@ -413,3 +413,5 @@ class UIController extends HTMLElement implements UI {
   }
 }
 customElements.define("bb-ui", UIController);
+
+export const create = () => new UIController();

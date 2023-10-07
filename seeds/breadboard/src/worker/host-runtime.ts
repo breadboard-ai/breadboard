@@ -29,7 +29,7 @@ export class RunResult {
 }
 
 const prepareBlobUrl = (url: string) => {
-  const code = `import * as worker from "${url}";`;
+  const code = `import "${url}";`;
   const blob = new Blob([code], { type: "text/javascript" });
   return URL.createObjectURL(blob);
 };
