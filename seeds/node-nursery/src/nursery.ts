@@ -19,8 +19,6 @@ import type {
   ConfigOrLambda,
 } from "@google-labs/breadboard";
 
-import vars from "./nodes/vars.js";
-import localMemory from "./nodes/local-memory.js";
 import textAsset from "./nodes/text-asset.js";
 import textAssetsFromPath from "./nodes/text-assets-from-path.js";
 import createVectorDatabase from "./nodes/create-vector-database.js";
@@ -51,8 +49,6 @@ const handlers = {
   cache,
   textAsset,
   textAssetsFromPath,
-  vars,
-  localMemory,
   validateJson,
   schemish,
   templateParser,
@@ -132,12 +128,6 @@ export class Nursery implements Kit {
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<InputValues, OutputValues> {
     return this.#create("cache", config);
-  }
-
-  localMemory(
-    config: OptionalIdConfiguration = {}
-  ): BreadboardNode<InputValues, OutputValues> {
-    return this.#create("localMemory", config);
   }
 
   validateJson(
