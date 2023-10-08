@@ -122,20 +122,20 @@
                     "board": {
                       "edges": [
                         {
-                          "from": "embedString-4",
+                          "from": "embedText-4",
                           "to": "merge",
                           "out": "embedding",
                           "in": "embedding"
                         },
                         {
                           "from": "secrets-5",
-                          "to": "embedString-4",
+                          "to": "embedText-4",
                           "out": "PALM_KEY",
                           "in": "PALM_KEY"
                         },
                         {
                           "from": "jsonata-3",
-                          "to": "embedString-4",
+                          "to": "embedText-4",
                           "out": "result",
                           "in": "text"
                         },
@@ -179,8 +179,8 @@
                           }
                         },
                         {
-                          "id": "embedString-4",
-                          "type": "embedString"
+                          "id": "embedText-4",
+                          "type": "embedText"
                         },
                         {
                           "id": "secrets-5",
@@ -193,9 +193,6 @@
                         }
                       ],
                       "kits": [
-                        {
-                          "url": "npm:@google-labs/node-nursery"
-                        },
                         {
                           "url": "npm:@google-labs/llm-starter"
                         }

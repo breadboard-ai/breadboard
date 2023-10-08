@@ -5,11 +5,11 @@
   ```mermaid
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-secrets3("secrets <br> id='secrets-3'"):::secrets -- "PALM_KEY->PALM_KEY" --> embedString2["embedString <br> id='embedString-2'"]
+secrets3("secrets <br> id='secrets-3'"):::secrets -- "PALM_KEY->PALM_KEY" --> embedText2["embedText <br> id='embedText-2'"]
 jsonata5["jsonata <br> id='jsonata-5'"] -- "result->context" --> promptTemplate1["promptTemplate <br> id='promptTemplate-1'"]
 pineconeapiquery4["pinecone-api-query <br> id='pinecone-api-query-4'"] -- "response->json" --> jsonata5["jsonata <br> id='jsonata-5'"]
-embedString2["embedString <br> id='embedString-2'"] -- "embedding->embedding" --> pineconeapiquery4["pinecone-api-query <br> id='pinecone-api-query-4'"]
-query[/"input <br> id='query'"/]:::input -- "text->text" --> embedString2["embedString <br> id='embedString-2'"]
+embedText2["embedText <br> id='embedText-2'"] -- "embedding->embedding" --> pineconeapiquery4["pinecone-api-query <br> id='pinecone-api-query-4'"]
+query[/"input <br> id='query'"/]:::input -- "text->text" --> embedText2["embedText <br> id='embedText-2'"]
 query[/"input <br> id='query'"/]:::input -- "text->query" --> promptTemplate1["promptTemplate <br> id='promptTemplate-1'"]
 secrets7("secrets <br> id='secrets-7'"):::secrets -- "PALM_KEY->PALM_KEY" --> generateText6["generateText <br> id='generateText-6'"]
 generateText6["generateText <br> id='generateText-6'"] -- "completion->text" --> rag{{"output <br> id='rag'"}}:::output

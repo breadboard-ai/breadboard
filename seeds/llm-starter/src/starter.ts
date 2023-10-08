@@ -20,6 +20,7 @@ import generateText, {
   GenerateTextInputs,
   GenerateTextOutputs,
 } from "./nodes/generate-text.js";
+import embedText, { EmbedTextInputs } from "./nodes/embed-text.js";
 import xmlToJson, {
   XmlToJsonInputs,
   XmlToJsonOutputs,
@@ -50,6 +51,7 @@ const coreHandlers = {
   xmlToJson,
   promptTemplate,
   generateText,
+  embedText,
   runJavascript,
 };
 
@@ -132,6 +134,12 @@ export class Starter implements Kit {
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<GenerateTextInputs, GenerateTextOutputs> {
     return this.#create("generateText", config);
+  }
+
+  embedText(
+    config: OptionalIdConfiguration = {}
+  ): BreadboardNode<EmbedTextInputs, OutputValues> {
+    return this.#create("embedText", config);
   }
 
   secrets<Out = OutputValues>(

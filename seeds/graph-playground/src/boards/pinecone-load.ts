@@ -12,7 +12,6 @@ import Pinecone from "@google-labs/pinecone-kit";
 const PINECONE_BATCH_SIZE = 40;
 
 const generateEmbeddings: LambdaFunction = (board, input, output) => {
-  const nursery = board.addKit(Nursery);
   const starter = board.addKit(Starter);
   const merge = starter.append({ $id: "merge" });
   input
@@ -20,8 +19,8 @@ const generateEmbeddings: LambdaFunction = (board, input, output) => {
       "item->json",
       starter.jsonata("metadata.text").wire(
         "result->text",
-        nursery
-          .embedString()
+        starter
+          .embedText()
           .wire("embedding->", merge)
           .wire("<-PALM_KEY", starter.secrets(["PALM_KEY"]))
       )

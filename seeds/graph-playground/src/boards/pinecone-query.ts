@@ -6,7 +6,6 @@
 
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
-import { Nursery } from "@google-labs/node-nursery";
 import { Pinecone } from "@google-labs/pinecone-kit";
 
 const board = new Board({
@@ -16,7 +15,6 @@ const board = new Board({
   version: "0.0.1",
 });
 const starter = board.addKit(Starter);
-const nursery = board.addKit(Nursery);
 const pinecone = board.addKit(Pinecone);
 
 const template =
@@ -40,8 +38,8 @@ board
   .input({ $id: "query" })
   .wire(
     "text->",
-    nursery
-      .embedString()
+    starter
+      .embedText()
       .wire("<-PALM_KEY", starter.secrets(["PALM_KEY"]))
       .wire(
         "embedding->",
