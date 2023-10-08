@@ -10,7 +10,7 @@ import { Starter } from "@google-labs/llm-starter";
 const board = new Board({
   title: "Endless Debate",
   description:
-    "A simple board that demonstrates how to create a conversation loop. It's a debate between a scientist named Albert and a philosopher named Friedrich. Albert is warm, funny, and inquisitve. Friedrich is  disagreeable, brooding, skeptical, and sarcastic.\nThis board goes on forever, so you'll have to close the page (or press Ctrl+C in console) to end it. Note how over time, the conversation becomes more and more mechanical and predictable, with only a few variations in sentence patterns.",
+    "A simple board that demonstrates how to create a conversation loop. It's a debate between a scientist named Albert and a philosopher named Friedrich. Albert is warm, funny, and inquisitve. Friedrich is  disagreeable, brooding, skeptical, and sarcastic.\nThis board goes on forever, so you'll have to reload or close the page (or press Ctrl+C in console) to end it. Note how over time, the conversation becomes more and more mechanical and predictable, with only a few variations in sentence patterns.",
   version: "0.0.1",
 });
 const kit = board.addKit(Starter);
