@@ -8,7 +8,7 @@ import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 
 const simplePrompt = new Board({
-  title: "Simple Prompt",
+  title: "Simple meta-reasoning",
   description:
     "Possibly the simplest meta-reasoning prompt. When asked a question, it encourages the LLM to analyze the question instead of answering it and provide steps to arrive at the solution",
   version: "0.0.1",

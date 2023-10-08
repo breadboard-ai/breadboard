@@ -30,7 +30,7 @@ export class Output extends HTMLElement {
       return;
     }
     Object.entries(schema.properties).forEach(([key, property]) => {
-      const html = document.createElement("span");
+      const html = document.createElement("pre");
       html.innerHTML = `${values[key]}`;
       root.append(`${property.title}: `, html, "\n");
     });
