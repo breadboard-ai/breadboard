@@ -1,4 +1,7 @@
 {
+  "title": "Endless Debate with Voice",
+  "description": "A simple board that demonstrates how to create a conversation loop. It's a debate between a scientist named Albert and a philosopher named Friedrich. Albert is warm, funny, and inquisitve. Friedrich is  disagreeable, brooding, skeptical, and sarcastic.\n\nTo give replies a bit more variability, a concept of `voice` is introduced: each reply is independently reinterpreted to give it a bit more variety and avoid the trap of the dialog becoming too mechanical and predictable.\nThis board goes on forever, so you'll have to reload or close the page (or press Ctrl+C in console) to end it.",
+  "version": "0.0.1",
   "edges": [
     {
       "from": "rememberQuestion",
@@ -39,7 +42,7 @@
     },
     {
       "from": "generateText-4",
-      "to": "output-5",
+      "to": "albertSays",
       "out": "completion",
       "in": "text"
     },
@@ -75,46 +78,46 @@
       "in": "context"
     },
     {
-      "from": "generateText-6",
+      "from": "generateText-5",
       "to": "rememberFriedrich",
       "out": "completion",
       "in": "Friedrich"
     },
     {
       "from": "secrets-1",
-      "to": "generateText-7",
+      "to": "generateText-6",
       "constant": true,
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
-      "from": "generateText-7",
-      "to": "output-8",
+      "from": "generateText-6",
+      "to": "friedrichSays",
       "out": "completion",
       "in": "text"
     },
     {
       "from": "friedrich-voice",
-      "to": "generateText-7",
+      "to": "generateText-6",
       "out": "prompt",
       "in": "text"
     },
     {
-      "from": "generateText-6",
+      "from": "generateText-5",
       "to": "friedrich-voice",
       "out": "completion",
       "in": "context"
     },
     {
       "from": "secrets-1",
-      "to": "generateText-6",
+      "to": "generateText-5",
       "constant": true,
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
       "from": "promptTemplate-2",
-      "to": "generateText-6",
+      "to": "generateText-5",
       "out": "prompt",
       "in": "text"
     },
@@ -125,7 +128,7 @@
       "in": "context"
     },
     {
-      "from": "input-9",
+      "from": "input-7",
       "to": "rememberQuestion",
       "out": "text",
       "in": "topic"
@@ -171,9 +174,19 @@
       "id": "generateText-3",
       "type": "generateText",
       "configuration": {
-        "stop-sequences": [
+        "stopSequences": [
           "\nFriedrich",
           "\n**Friedrich"
+        ],
+        "safetySettings": [
+          {
+            "category": "HARM_CATEGORY_DEROGATORY",
+            "threshold": "BLOCK_ONLY_HIGH"
+          },
+          {
+            "category": "HARM_CATEGORY_TOXICITY",
+            "threshold": "BLOCK_ONLY_HIGH"
+          }
         ]
       }
     },
@@ -189,16 +202,41 @@
       "type": "generateText"
     },
     {
-      "id": "output-5",
-      "type": "output"
+      "id": "albertSays",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Albert",
+              "description": "What Albert says"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
     },
     {
-      "id": "generateText-6",
+      "id": "generateText-5",
       "type": "generateText",
       "configuration": {
-        "stop-sequences": [
+        "stopSequences": [
           "\nAlbert",
           "\n**Albert"
+        ],
+        "safetySettings": [
+          {
+            "category": "HARM_CATEGORY_DEROGATORY",
+            "threshold": "BLOCK_ONLY_HIGH"
+          },
+          {
+            "category": "HARM_CATEGORY_TOXICITY",
+            "threshold": "BLOCK_ONLY_HIGH"
+          }
         ]
       }
     },
@@ -210,15 +248,30 @@
       }
     },
     {
-      "id": "generateText-7",
+      "id": "generateText-6",
       "type": "generateText"
     },
     {
-      "id": "output-8",
-      "type": "output"
+      "id": "friedrichSays",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Friedrich",
+              "description": "What Friedrich says"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
     },
     {
-      "id": "input-9",
+      "id": "input-7",
       "type": "input",
       "configuration": {
         "schema": {
