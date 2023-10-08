@@ -147,6 +147,9 @@ async function main(args: string[], use_input_handler = false) {
     lattice.insert(possiblePromptInjection, lattice.TRUSTED, lattice.UNTRUSTED);
     lattice.insert(noPromptInjection, lattice.TRUSTED, possiblePromptInjection);
 
+    const palmApiKey = new Principal("palmApiKey");
+    lattice.insert(palmApiKey, lattice.PUBLIC, lattice.PRIVATE);
+
     const policy = {
       fetch: {
         outgoing: {
@@ -158,6 +161,30 @@ async function main(args: string[], use_input_handler = false) {
           code: new Label({ integrity: noPromptInjection }),
           name: new Label({ integrity: noPromptInjection }),
         },
+      },
+      secrets: {
+        outgoing: {
+          PALM_KEY: new Label({
+            confidentiality: palmApiKey,
+          }),
+        },
+      },
+      generateText: {
+        incoming: {
+          // generateText is trusted to declassify the API key
+          PALM_KEY: new Label({ confidentiality: palmApiKey }),
+        },
+      },
+      embedText: {
+        incoming: {
+          // embedText is trusted to declassify the API key
+          PALM_KEY: new Label({ confidentiality: palmApiKey }),
+        },
+      },
+      output: {
+        node: new Label({
+          confidentiality: lattice.PUBLIC,
+        }),
       },
     } as GraphIntegrityPolicy;
 

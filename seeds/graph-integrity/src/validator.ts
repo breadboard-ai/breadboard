@@ -203,6 +203,10 @@ export class GraphIntegrityValidator implements BreadboardValidator {
           toConstraintDef.incoming[edge.in]) ||
         undefined;
 
+      if (newEdge.toConstraint?.confidentiality) {
+        newEdge.declassifies = newEdge.toConstraint.confidentiality;
+      }
+
       from.outgoing.push(newEdge);
       to.incoming.push(newEdge);
     });
