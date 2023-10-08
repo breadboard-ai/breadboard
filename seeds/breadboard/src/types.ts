@@ -84,10 +84,12 @@ export interface KitConstructor<T extends Kit> {
 
 type Key = string | symbol | number;
 
+export type NodeSugar<In, Out> = (
+  config?: OptionalIdConfiguration
+) => BreadboardNode<In, Out>;
+
 export type GenericKit<T extends readonly Key[]> = Kit & {
-  [key in T[number]]: <In = unknown, Out = unknown>(
-    config?: OptionalIdConfiguration
-  ) => BreadboardNode<In, Out>;
+  [key in T[number]]: NodeSugar<unknown, unknown>;
 };
 
 /**

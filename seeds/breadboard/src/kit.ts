@@ -4,7 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { KitDescriptor, NodeHandlers } from "@google-labs/graph-runner";
+import {
+  GraphDescriptor,
+  InputValues,
+  KitDescriptor,
+  NodeHandlers,
+  NodeIdentifier,
+} from "@google-labs/graph-runner";
 import {
   GenericKit,
   Kit,
@@ -14,6 +20,7 @@ import {
   NodeHandlerContext,
   OptionalIdConfiguration,
 } from "./types.js";
+import { Board } from "./board.js";
 
 const urlToNpmSpec = (url: string): string => {
   const urlObj = new URL(url);
@@ -54,37 +61,95 @@ export class KitLoader {
   }
 }
 
-export const makeKit = <T extends readonly string[]>(
-  handlers: NodeHandlers<NodeHandlerContext>,
-  nodes: T,
-  url: string,
-  prefix: string
-) => {
-  return class implements Kit {
-    url = url;
-
-    get handlers() {
-      return handlers;
-    }
-
-    constructor(nodeFactory: NodeFactory) {
-      return new Proxy(this, {
-        get(target, prop: string) {
-          if (prop === "handlers" || prop === "url") {
-            return target[prop];
-          } else if (nodes.includes(prop as T[number])) {
-            return (config: OptionalIdConfiguration = {}) => {
-              const { $id, ...rest } = config;
-              return nodeFactory.create(
-                this as unknown as Kit,
-                `${prefix}${prop}`,
-                { ...rest },
-                $id
-              );
-            };
-          }
-        },
-      });
-    }
-  } as KitConstructor<GenericKit<T>>;
+export type KitBuilderOptions = {
+  graph: GraphDescriptor;
+  baseUrl: string;
+  packageUrl: string;
+  namespacePrefix: string;
 };
+
+export class KitBuilder {
+  graph?: GraphDescriptor;
+  baseUrl?: string;
+  packageUrl?: string;
+  namespacePrefix?: string;
+  handlers?: NodeHandlers<NodeHandlerContext>;
+
+  async initialize({
+    graph,
+    baseUrl,
+    packageUrl,
+    namespacePrefix = "",
+  }: KitBuilderOptions) {
+    this.graph = graph;
+    this.baseUrl = baseUrl;
+    this.packageUrl = packageUrl;
+    this.namespacePrefix = namespacePrefix;
+
+    const board = await Board.fromGraphDescriptor(this.graph);
+    board.url = this.baseUrl;
+    this.handlers = await Board.handlersFromBoard(board);
+  }
+
+  #addPrefix(handlers: NodeHandlers<NodeHandlerContext>) {
+    return Object.keys(handlers).reduce((acc, key) => {
+      acc[`${this.namespacePrefix}${key}`] = handlers[key];
+      return acc;
+    }, {} as NodeHandlers<NodeHandlerContext>);
+  }
+
+  handlerForNode(id: NodeIdentifier) {
+    if (!this.graph) throw new Error(`Builder was not yet initialized.`);
+    const { nodes } = this.graph;
+    const node = nodes.find((node) => node.id === id);
+    if (!node) throw new Error(`Node ${id} not found in graph.`);
+
+    return async (inputs: InputValues, context: NodeHandlerContext) => {
+      const configuration = node.configuration;
+      if (configuration) {
+        inputs = { ...configuration, ...inputs };
+      }
+      return this.handlers?.[node.type](inputs, context);
+    };
+  }
+
+  build<Handlers extends NodeHandlers<NodeHandlerContext>>(handlers: Handlers) {
+    type NodeNames = [x: Extract<keyof Handlers, string>];
+
+    if (!this.packageUrl) throw new Error(`Builder was not yet initialized.`);
+    const url = this.packageUrl;
+    const prefix = this.namespacePrefix;
+
+    const prefixedHandlers = this.#addPrefix(handlers);
+
+    const nodes = Object.keys(handlers);
+
+    return class implements Kit {
+      url = url;
+
+      get handlers() {
+        return prefixedHandlers;
+      }
+
+      constructor(nodeFactory: NodeFactory) {
+        return new Proxy(this, {
+          get(target, prop: string) {
+            if (prop === "handlers" || prop === "url") {
+              return target[prop];
+            } else if (nodes.includes(prop as NodeNames[number])) {
+              return (config: OptionalIdConfiguration = {}) => {
+                const { $id, ...rest } = config;
+                return nodeFactory.create(
+                  this as unknown as Kit,
+                  `${prefix}${prop}`,
+                  { ...rest },
+                  $id
+                );
+              };
+            }
+          },
+        });
+      }
+    } as KitConstructor<GenericKit<NodeNames>>;
+  }
+}
