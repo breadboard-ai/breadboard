@@ -29,6 +29,14 @@ const conversationMemory = kit.append({
 // (Shortform of in({ accumulator: conversationMemory.accumulator }).)
 conversationMemory.in(conversationMemory.accumulator);
 
+// Alternative way:
+const conversationMemory2 = kit.append({ $id: "conversationMemory" });
+// loop conversationMemory.accumulator back into itself
+// While in() assumes queue-y, constants are automatically constant
+conversationMemory2.in({
+  accumulator: ["\n== Conversation History", conversationMemory],
+});
+
 // Flow:
 //   input -> prompt     ->     generator -> output -> input
 //             ^-- converationMemory <-'
