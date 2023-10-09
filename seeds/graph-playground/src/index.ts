@@ -208,7 +208,15 @@ async function main(args: string[], use_input_handler = false) {
 
     outro("Awesome work! Let's do this again sometime.");
   } catch (e) {
-    if (e instanceof Error) log.error(e.message);
+    if (e instanceof Error) {
+      let error: Error = e;
+      let message = error.message;
+      while (error?.cause) {
+        error = (error.cause as { error: Error }).error;
+        message += `\n${error.message}`;
+      }
+      log.error(message);
+    }
     outro("Oh no! Something went wrong.");
   }
 }
