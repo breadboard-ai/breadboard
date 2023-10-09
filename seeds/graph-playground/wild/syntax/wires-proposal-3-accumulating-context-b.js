@@ -9,13 +9,12 @@ const prompt = kit.promptTemplate({
   $id: "assistant",
   template:
     "This is a conversation between a friendly assistant and their user. You are the assistant and your job is to try to be helpful, empathetic, and fun.\n{{context}}\n\n== Current Conversation\nuser: {{question}}\nassistant:",
-  context: "",
+  context: "", // initial context
 });
 
-// Everything passed to constructor is assumed constant
 const generator = kit.generateText({
   $id: "generator",
-  PALM_KEY: kit.secrets(["PALM_KEY"]),
+  PALM_KEY: kit.secrets(["PALM_KEY"]), // In constructor -> Assumed constant
 });
 
 // Use the `append` node to accumulate the conversation history.
@@ -54,3 +53,35 @@ board.passthrough({ $id: "start" }).to(
     }),
   })
 );
+
+// The `.in` could possibly be left off, as the .to() context implies it:
+board.passthrough({ $id: "start" }).to(
+  input.to({
+    text: prompt.question.to({
+      prompt: generator.text.to({
+        completion: [
+          output.text.to(input),
+          conversationMemory.accumulator.to({
+            accumulator: prompt.context,
+          }),
+        ],
+      }),
+    }),
+  })
+);
+
+// To compare with the previous style:
+board
+  .passthrough({ $id: "start" })
+  .wire(
+    "->",
+    input.wire(
+      "text->prompt",
+      generator
+        .wire("completion->text", output.wire("->", input))
+        .wire(
+          "completion->accumulator",
+          conversationMemory.wire("accumulator->context", prompt)
+        )
+    )
+  );
