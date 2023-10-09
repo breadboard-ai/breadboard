@@ -1,0 +1,95 @@
+{
+  "title": "Pinecone API query invocation",
+  "description": "This board invokes the Pinecone [`query`](https://docs.pinecone.io/reference/query) API.",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "query-api",
+      "to": "pinecone-api-call",
+      "out": "call",
+      "in": "call"
+    },
+    {
+      "from": "include-1",
+      "to": "pinecone-api-call",
+      "out": "config",
+      "in": "config"
+    },
+    {
+      "from": "pinecone-api-call",
+      "to": "response",
+      "out": "response",
+      "in": "response"
+    },
+    {
+      "from": "make-body",
+      "to": "pinecone-api-call",
+      "out": "result",
+      "in": "body"
+    },
+    {
+      "from": "query",
+      "to": "make-body",
+      "out": "embedding",
+      "in": "json"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "make-body",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "{ \"vector\": $, \"topK\": 10, \"includeMetadata\": true }"
+      }
+    },
+    {
+      "id": "pinecone-api-call",
+      "type": "include",
+      "configuration": {
+        "$ref": "pinecone-vector-api.json"
+      }
+    },
+    {
+      "id": "query-api",
+      "type": "passthrough",
+      "configuration": {
+        "call": "query"
+      }
+    },
+    {
+      "id": "include-1",
+      "type": "include",
+      "configuration": {
+        "$ref": "pinecone-api-config.json"
+      }
+    },
+    {
+      "id": "query",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "embedding": {
+              "type": "array",
+              "title": "Embedding",
+              "description": "The embedding to query -- an array of floats",
+              "items": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "response",
+      "type": "output"
+    }
+  ],
+  "kits": [
+    {
+      "url": "npm:@google-labs/llm-starter"
+    }
+  ]
+}
