@@ -153,20 +153,23 @@ async function main(args: string[], use_input_handler = false) {
     const policy = {
       fetch: {
         outgoing: {
+          // Flag the fetch node as trusted to not inject prompts.
+          // (Technically UNTRUSTED, but we use this label for legibility)
           response: new Label({ integrity: possiblePromptInjection }),
         },
       },
       runJavascript: {
         incoming: {
+          // Require inputs to runJavascript to not be tainted by prompt
+          // injection.
           code: new Label({ integrity: noPromptInjection }),
           name: new Label({ integrity: noPromptInjection }),
         },
       },
       secrets: {
         outgoing: {
-          PALM_KEY: new Label({
-            confidentiality: palmApiKey,
-          }),
+          // Mark API keys as confidential
+          PALM_KEY: new Label({ confidentiality: palmApiKey }),
         },
       },
       generateText: {
@@ -182,9 +185,8 @@ async function main(args: string[], use_input_handler = false) {
         },
       },
       output: {
-        node: new Label({
-          confidentiality: lattice.PUBLIC,
-        }),
+        // Output is considered releasing the data to the public.
+        node: new Label({ confidentiality: lattice.PUBLIC }),
       },
     } as GraphIntegrityPolicy;
 
@@ -206,7 +208,6 @@ async function main(args: string[], use_input_handler = false) {
 
     outro("Awesome work! Let's do this again sometime.");
   } catch (e) {
-    console.log(e);
     if (e instanceof Error) log.error(e.message);
     outro("Oh no! Something went wrong.");
   }
