@@ -7,14 +7,3 @@
 import { Starter } from "./starter.js";
 export default Starter;
 export { Starter };
-export type {
-  AppendNodeType,
-  TemplateNodeType,
-  UrlTemplateNodeType,
-  RunJavascriptNodeType,
-  FetchNodeType,
-  JsonataNodeType,
-  XmlToJsonNodeType,
-  GenerateTextNodeType,
-  SecretsNodeType,
-} from "./starter.js";
