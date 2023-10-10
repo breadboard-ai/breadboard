@@ -7,7 +7,7 @@
 import {
   GraphDescriptor,
   InputValues,
-  KitDescriptor,
+  KitReference,
   NodeHandlers,
   NodeIdentifier,
 } from "@google-labs/graph-runner";
@@ -31,10 +31,10 @@ const urlToNpmSpec = (url: string): string => {
 };
 
 export class KitLoader {
-  #kits: KitDescriptor[];
+  #kits: KitReference[];
   #imports: KitImportMap;
 
-  constructor(kits?: KitDescriptor[], imports?: KitImportMap) {
+  constructor(kits?: KitReference[], imports?: KitImportMap) {
     this.#kits = kits ?? [];
     this.#imports = imports ?? {};
   }

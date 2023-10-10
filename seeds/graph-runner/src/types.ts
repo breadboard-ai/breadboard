@@ -109,12 +109,12 @@ export type Edge = {
 };
 
 /**
- * Represents a "kit": a collection of `NodeHandlers`. The basic permise here
- * is that people can publish kits with interesting handlers, and then
- * graphs can specify which ones they use.
+ * Represents references to a "kit": a collection of `NodeHandlers`.
+ * The basic permise here is that people can publish kits with interesting
+ * handlers, and then graphs can specify which ones they use.
  * The `@google-labs/llm-starter` package is an example of kit.
  */
-export type KitDescriptor = {
+export type KitReference = {
   /**
    * The URL pointing to the location of the kit.
    */
@@ -176,7 +176,7 @@ export type GraphDescriptor = GraphMetadata & {
   /**
    * All the kits (collections of node handlers) that are used by the graph.
    */
-  kits?: KitDescriptor[];
+  kits?: KitReference[];
 
   /**
    * Sub-graphs that are also described by this graph representation.
