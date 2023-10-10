@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { KitBuilder } from "@google-labs/breadboard/kits";
+import { GraphToKitAdapter, KitBuilder } from "@google-labs/breadboard/kits";
 
 import kit from "./boards/kit.js";
 
@@ -16,16 +16,20 @@ const NAMESPACE = "pinecone-api-";
 
 const KIT_PACKAGE_URL = "npm:@google-labs/pinecone-kit";
 
-const builder = new KitBuilder();
-await builder.initialize({
-  graph: kit,
-  baseUrl: KIT_BASE_URL,
-  packageUrl: KIT_PACKAGE_URL,
+const builder = new KitBuilder({
+  title: "Pinecone API",
+  description:
+    "A kit that provides access to the [Pinecone API](https://docs.pinecone.io/reference/).",
+  version: "0.0.1",
+  url: KIT_PACKAGE_URL,
   namespacePrefix: NAMESPACE,
 });
+
+const adapter = await GraphToKitAdapter.create(kit, KIT_BASE_URL);
+
 export const Pinecone = builder.build({
-  config: builder.handlerForNode("config"),
-  query: builder.handlerForNode("query"),
-  upsert: builder.handlerForNode("upsert"),
-  vector: builder.handlerForNode("vector"),
+  config: adapter.handlerForNode("config"),
+  query: adapter.handlerForNode("query"),
+  upsert: adapter.handlerForNode("upsert"),
+  vector: adapter.handlerForNode("vector"),
 });

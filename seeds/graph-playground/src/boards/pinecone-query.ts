@@ -11,7 +11,7 @@ import { Pinecone } from "@google-labs/pinecone-kit";
 const board = new Board({
   title: "Retrieval-augmented generation with Pinecone",
   description:
-    "This board implements the simples possible retrieval-augmented generation (RAG) system using Pinecone store. The store was generated with [pinecone-load](https://github.com/google/labs-prototypes/blob/main/seeds/graph-playground/graphs/pinecone-load.json).",
+    "This board implements the simplest possible retrieval-augmented generation (RAG) system using Pinecone store. The store was generated with [pinecone-load](https://github.com/google/labs-prototypes/blob/main/seeds/graph-playground/graphs/pinecone-load.json).",
   version: "0.0.1",
 });
 const starter = board.addKit(Starter);
