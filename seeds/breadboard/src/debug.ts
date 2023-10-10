@@ -13,7 +13,9 @@ import { ProbeEvent } from "./types.js";
 
 export type DebugPin = (value: NodeValue) => NodeValue | undefined;
 
-export type DebugNodePin = (inputs: InputValues) => OutputValues;
+export type DebugNodePin = (
+  inputs: InputValues
+) => OutputValues | Promise<OutputValues>;
 
 type NodePins = Map<string, DebugPin>;
 

@@ -6,8 +6,8 @@
 
 import {
   Board,
-  BreadboardNode,
-  OptionalIdConfiguration,
+  BreadboardCapability,
+  NodeHandlerContext,
 } from "@google-labs/breadboard";
 import {
   Capability,
@@ -43,71 +43,25 @@ export type RunnableBoard = GraphDescriptor & {
   url?: string;
 };
 
-export type BoardCapability = Capability & {
-  kind: "board";
-  board: RunnableBoard;
-};
-
-export type LamdbdaFunction<In, Out> = (
-  board: Board,
-  input: BreadboardNode<In, Out>,
-  output: BreadboardNode<In, Out>
-) => Promise<void>;
-
-export type LambdaResult = OptionalIdConfiguration & {
-  board: BoardCapability;
-};
-
-export const lambda = async <In = InputValues, Out = OutputValues>(
-  fun: LamdbdaFunction<In, Out>,
-  config: OptionalIdConfiguration = {}
-): Promise<LambdaResult> => {
-  const board = new Board();
-  const input = board.input<In>();
-  const output = board.output<Out>();
-  await fun(board, input, output);
-  return {
-    board: {
-      kind: "board",
-      board,
-    } as BoardCapability, // TODO: Fix types.
-    ...config,
-  };
-};
-
-// TODO: This likely lives elsewehere, in breadboard perhaps?
-export const fromCapability = async (
-  board: Capability
-): Promise<RunnableBoard> => {
-  if (board.kind !== "board") {
-    throw new Error(`Expected a "board" Capability, but got ${board}`);
-  }
-  // TODO: Use JSON schema to validate rather than this hack.
-  const boardish = (board as BoardCapability)
-    .board as unknown as GraphDescriptor;
-  if (!(boardish.edges && boardish.kits && boardish.nodes)) {
-    throw new Error(
-      'Supplied "board" Capability argument is not actuall a board'
-    );
-  }
-  let runnableBoard = (board as BoardCapability).board;
-  if (!runnableBoard.runOnce) {
-    runnableBoard = await Board.fromGraphDescriptor(boardish);
-  }
-  return runnableBoard;
-};
-
-export default async (inputs: InputValues): Promise<OutputValues> => {
+export default async (
+  inputs: InputValues,
+  context?: NodeHandlerContext
+): Promise<OutputValues> => {
   const { list, board } = inputs as MapInputs;
   if (!Array.isArray(list)) {
     throw new Error(`Expected list to be an array, but got ${list}`);
   }
   if (!board) return { list };
-  const runnableBoard = await fromCapability(board);
+  const runnableBoard = await Board.fromBreadboardCapability(
+    board as BreadboardCapability
+  );
   const result = await Promise.all(
     list.map(async (item, index) => {
       // TODO: Express as a multi-turn `run`.
-      const outputs = await runnableBoard.runOnce({ item, index, list });
+      const outputs = await runnableBoard.runOnce(
+        { item, index, list },
+        context
+      );
       return outputs;
     })
   );

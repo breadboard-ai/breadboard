@@ -4,14 +4,21 @@
   "version": "0.0.1",
   "edges": [
     {
-      "from": "map-2",
-      "to": "output-3",
+      "from": "lambda-2",
+      "to": "map-3",
+      "constant": true,
+      "out": "board",
+      "in": "board"
+    },
+    {
+      "from": "map-3",
+      "to": "output-4",
       "out": "list",
       "in": "text"
     },
     {
       "from": "batcher-1",
-      "to": "map-2",
+      "to": "map-3",
       "out": "list",
       "in": "list"
     },
@@ -58,22 +65,29 @@
       }
     },
     {
-      "id": "map-2",
-      "type": "map",
+      "id": "lambda-2",
+      "type": "lambda",
       "configuration": {
         "board": {
           "kind": "board",
           "board": {
             "edges": [
               {
-                "from": "pinecone-api-upsert-3",
+                "from": "lambda-3",
+                "to": "generate-embeddings",
+                "constant": true,
+                "out": "board",
+                "in": "board"
+              },
+              {
+                "from": "pinecone-api-upsert-4",
                 "to": "output-2",
                 "out": "response",
                 "in": "item"
               },
               {
                 "from": "format-to-api",
-                "to": "pinecone-api-upsert-3",
+                "to": "pinecone-api-upsert-4",
                 "out": "result",
                 "in": "vectors"
               },
@@ -100,28 +114,28 @@
                 "type": "output"
               },
               {
-                "id": "generate-embeddings",
-                "type": "map",
+                "id": "lambda-3",
+                "type": "lambda",
                 "configuration": {
                   "board": {
                     "kind": "board",
                     "board": {
                       "edges": [
                         {
-                          "from": "embedString-4",
+                          "from": "embedText-4",
                           "to": "merge",
                           "out": "embedding",
                           "in": "embedding"
                         },
                         {
                           "from": "secrets-5",
-                          "to": "embedString-4",
+                          "to": "embedText-4",
                           "out": "PALM_KEY",
                           "in": "PALM_KEY"
                         },
                         {
                           "from": "jsonata-3",
-                          "to": "embedString-4",
+                          "to": "embedText-4",
                           "out": "result",
                           "in": "text"
                         },
@@ -165,8 +179,8 @@
                           }
                         },
                         {
-                          "id": "embedString-4",
-                          "type": "embedString"
+                          "id": "embedText-4",
+                          "type": "embedText"
                         },
                         {
                           "id": "secrets-5",
@@ -180,15 +194,17 @@
                       ],
                       "kits": [
                         {
-                          "url": "npm:@google-labs/node-nursery"
-                        },
-                        {
                           "url": "npm:@google-labs/llm-starter"
                         }
                       ]
                     }
                   }
                 }
+              },
+              {
+                "id": "generate-embeddings",
+                "type": "map",
+                "configuration": {}
               },
               {
                 "id": "format-to-api",
@@ -198,7 +214,7 @@
                 }
               },
               {
-                "id": "pinecone-api-upsert-3",
+                "id": "pinecone-api-upsert-4",
                 "type": "pinecone-api-upsert"
               }
             ],
@@ -218,7 +234,12 @@
       }
     },
     {
-      "id": "output-3",
+      "id": "map-3",
+      "type": "map",
+      "configuration": {}
+    },
+    {
+      "id": "output-4",
       "type": "output"
     }
   ],

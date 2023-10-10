@@ -40,8 +40,6 @@ schemainput5[schema]:::config -- "schema->schema" --o input5
 stopSequencesreactcompletion[stopSequences]:::config -- "stopSequences->stopSequences" --o reactcompletion
 templatemathfunction[template]:::config -- "template->template" --o mathfunction
 namecompute[name]:::config -- "name->name" --o compute
-argsparseCompletion6[args]:::config -- "args->args" --o parseCompletion6
-restparseCompletion6[rest]:::config -- "rest->rest" --o parseCompletion6
 templatesummarizingtemplate[template]:::config -- "template->template" --o summarizingtemplate
 templateurlTemplate8[template]:::config -- "template->template" --o urlTemplate8
 expressionjsonata10[expression]:::config -- "expression->expression" --o jsonata10

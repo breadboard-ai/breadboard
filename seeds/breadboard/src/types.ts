@@ -6,19 +6,21 @@
 
 import type {
   Edge,
+  NodeValue,
   GraphDescriptor,
   InputValues,
   KitDescriptor,
-  NodeConfiguration,
   NodeDescriptor,
   NodeHandlers,
+  NodeIdentifier,
   NodeTypeIdentifier,
   OutputValues,
+  Capability,
   TraversalResult,
 } from "@google-labs/graph-runner";
 
 export interface Kit extends KitDescriptor {
-  get handlers(): NodeHandlers;
+  get handlers(): NodeHandlers<NodeHandlerContext>;
 }
 
 export type BreadboardSlotSpec = Record<string, GraphDescriptor>;
@@ -66,22 +68,26 @@ export interface BreadboardRunResult {
 
 export interface NodeFactory {
   create<Inputs, Outputs>(
+    kit: Kit | undefined,
     type: NodeTypeIdentifier,
-    configuration?: NodeConfiguration,
+    configuration?: NodeConfigurationConstructor,
     id?: string
   ): BreadboardNode<Inputs, Outputs>;
+  getConfigWithLambda<Inputs, Outputs>(
+    config: ConfigOrLambda<Inputs, Outputs>
+  ): OptionalIdConfiguration;
 }
 
 export interface KitConstructor<T extends Kit> {
   new (nodeFactory: NodeFactory): T;
 }
 
-type Key = string | symbol | number;
+export type NodeSugar<In, Out> = (
+  config?: OptionalIdConfiguration
+) => BreadboardNode<In, Out>;
 
-export type GenericKit<T extends readonly Key[]> = Kit & {
-  [key in T[number]]: <In = unknown, Out = unknown>(
-    config?: OptionalIdConfiguration
-  ) => BreadboardNode<In, Out>;
+export type GenericKit<T extends NodeHandlers<NodeHandlerContext>> = Kit & {
+  [key in keyof T]: NodeSugar<unknown, unknown>;
 };
 
 /**
@@ -147,7 +153,7 @@ export interface ProbeDetails {
   /**
    * The output values the node provided.
    */
-  outputs?: OutputValues;
+  outputs?: OutputValues | Promise<OutputValues>;
   /**
    * The nesting level of the node.
    * When a board contains included or slotted boards, this level will
@@ -165,10 +171,63 @@ export interface ProbeDetails {
  */
 export type ProbeEvent = CustomEvent<ProbeDetails>;
 
-export interface Breadboard extends GraphDescriptor {
+export interface BreadboardRunner extends GraphDescriptor {
+  kits: Kit[]; // No longer optional
+  run(
+    probe?: EventTarget,
+    slots?: BreadboardSlotSpec,
+    result?: BreadboardRunResult
+  ): AsyncGenerator<BreadboardRunResult>;
+  runOnce(
+    inputs: InputValues,
+    context?: NodeHandlerContext,
+    probe?: EventTarget
+  ): Promise<OutputValues>;
+  addValidator(validator: BreadboardValidator): void;
+}
+
+export interface Breadboard extends BreadboardRunner {
+  passthrough<In = InputValues, Out = OutputValues>(
+    config?: OptionalIdConfiguration
+  ): BreadboardNode<In, Out>;
+  input<In = InputValues, Out = OutputValues>(
+    config?: OptionalIdConfiguration
+  ): BreadboardNode<In, Out>;
+  output<In = InputValues, Out = OutputValues>(
+    config?: OptionalIdConfiguration
+  ): BreadboardNode<In, Out>;
+  lambda<In, InL extends In, OutL = OutputValues>(
+    boardOrFunction: LambdaFunction<InL, OutL> | BreadboardRunner,
+    config?: OptionalIdConfiguration
+  ): BreadboardNode<In, LambdaNodeOutputs>;
+  include<In = InputValues, Out = OutputValues>(
+    $ref: string | GraphDescriptor | BreadboardCapability,
+    config?: OptionalIdConfiguration
+  ): BreadboardNode<IncludeNodeInputs & In, Out>;
+  reflect(
+    config?: OptionalIdConfiguration
+  ): BreadboardNode<never, ReflectNodeOutputs>;
+  slot<In = InputValues, Out = OutputValues>(
+    slot: string,
+    config?: OptionalIdConfiguration
+  ): BreadboardNode<SlotNodeInputs & In, Out>;
+
   addEdge(edge: Edge): void;
   addNode(node: NodeDescriptor): void;
   addKit<T extends Kit>(ctr: KitConstructor<T>): T;
+  currentBoardToAddTo(): Breadboard;
+  addEdgeAcrossBoards(edge: Edge, from: Breadboard, to: Breadboard): void;
+}
+
+export type BreadboardCapability = Capability & {
+  kind: "board";
+  board: GraphDescriptor;
+};
+
+export interface NodeHandlerContext {
+  readonly board: BreadboardRunner;
+  readonly descriptor: NodeDescriptor;
+  readonly probe?: EventTarget;
 }
 
 type Common<To, From> = {
@@ -223,6 +282,8 @@ export interface BreadboardNode<Inputs, Outputs> {
     spec: string,
     to: BreadboardNode<ToInputs, ToOutputs>
   ): BreadboardNode<Inputs, Outputs>;
+
+  readonly id: NodeIdentifier;
 }
 
 /**
@@ -231,15 +292,87 @@ export interface BreadboardNode<Inputs, Outputs> {
  * The `$id` property is used to identify the node in the board and is not
  * passed to the node itself.
  */
-export type OptionalIdConfiguration = { $id?: string } & NodeConfiguration;
+export type OptionalIdConfiguration = {
+  $id?: string;
+} & NodeConfigurationConstructor;
+
+/**
+ * A node configuration that optionally has nodes as values. The Node()
+ * constructor will remove those and turn them into wires into the node instead.
+ */
+export type NodeConfigurationConstructor = Record<
+  string,
+  NodeValue | BreadboardNode<InputValues, OutputValues>
+>; // extends NodeConfiguration
+
+/**
+ * Synctactic sugar for node factories that accept lambdas. This allows passing
+ * either
+ *  - A JS function that is a lambda function defining the board
+ *  - A board capability, i.e. the result of calling lambda()
+ *  - A board node, which should be a node with a `board` output
+ * or
+ *  - A regular config, with a `board` property with any of the above.
+ *
+ * use `getConfigWithLambda()` to turn this into a regular config.
+ */
+export type ConfigOrLambda<In, Out> =
+  | OptionalIdConfiguration
+  | BreadboardCapability
+  | BreadboardNode<LambdaNodeInputs, LambdaNodeOutputs>
+  | GraphDescriptor
+  | LambdaFunction<In, Out>
+  | {
+      board:
+        | BreadboardCapability
+        | BreadboardNode<LambdaNodeInputs, LambdaNodeOutputs>
+        | LambdaFunction<In, Out>;
+    };
+
+export type LambdaFunction<In = InputValues, Out = OutputValues> = (
+  board: Breadboard,
+  input: BreadboardNode<In, Out>,
+  output: BreadboardNode<In, Out>
+) => void;
 
 export type ReflectNodeOutputs = OutputValues & {
   graph: GraphDescriptor;
 };
 
+export type LambdaNodeInputs = InputValues & {
+  /**
+   * The (lambda) board this node represents. The purpose of the this node is to
+   * allow wiring data into the lambda board, outside of where it's called.
+   * This is useful when passing a lambda to a map node or as a slot.
+   *
+   * Note that (for now) each board can only be represented by one node.
+   */
+  board: BreadboardCapability;
+
+  /**
+   * All other inputs will be bound to the board.
+   */
+  args: InputValues;
+};
+
+export type LambdaNodeOutputs = OutputValues & {
+  /**
+   * The lambda board that can be run.
+   */
+  board: BreadboardCapability;
+};
+
+export type ImportNodeInputs = InputValues & {
+  path?: string;
+  $ref?: string;
+  graph?: GraphDescriptor;
+  args: InputValues;
+};
+
 export type IncludeNodeInputs = InputValues & {
   path?: string;
   $ref?: string;
+  board?: BreadboardCapability;
   graph?: GraphDescriptor;
   slotted?: BreadboardSlotSpec;
   parent: NodeDescriptor;
@@ -250,3 +383,5 @@ export type SlotNodeInputs = {
   slot: string;
   parent: NodeDescriptor;
 };
+
+export type KitImportMap = Record<string, KitConstructor<Kit>>;

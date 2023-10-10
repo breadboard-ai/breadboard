@@ -67,7 +67,7 @@ const response = await data.json();
 
 #### Defined in
 
-[chat.ts:55](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/chat.ts#L55)
+[chat.ts:55](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/chat.ts#L55)
 
 ## Properties
 
@@ -83,7 +83,7 @@ Optional. The number of generated response messages to return. This value must b
 
 #### Defined in
 
-[chat.ts:34](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/chat.ts#L34)
+[chat.ts:34](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/chat.ts#L34)
 
 ___
 
@@ -99,7 +99,7 @@ Required. The structured textual input given to the model as a prompt. Given a p
 
 #### Defined in
 
-[chat.ts:37](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/chat.ts#L37)
+[chat.ts:37](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/chat.ts#L37)
 
 ___
 
@@ -115,7 +115,7 @@ Optional. Controls the randomness of the output. Values can range over `[0.0,1.0
 
 #### Defined in
 
-[chat.ts:33](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/chat.ts#L33)
+[chat.ts:33](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/chat.ts#L33)
 
 ___
 
@@ -131,7 +131,7 @@ Optional. The maximum number of tokens to consider when sampling. The model uses
 
 #### Defined in
 
-[chat.ts:36](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/chat.ts#L36)
+[chat.ts:36](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/chat.ts#L36)
 
 ___
 
@@ -147,7 +147,7 @@ Optional. The maximum cumulative probability of tokens to consider when sampling
 
 #### Defined in
 
-[chat.ts:35](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/chat.ts#L35)
+[chat.ts:35](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/chat.ts#L35)
 
 ## Methods
 
@@ -173,7 +173,7 @@ The builder instance.
 
 #### Defined in
 
-[chat.ts:74](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/chat.ts#L74)
+[chat.ts:74](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/chat.ts#L74)
 
 ___
 
@@ -197,7 +197,7 @@ The builder instance.
 
 #### Defined in
 
-[chat.ts:88](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/chat.ts#L88)
+[chat.ts:88](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/chat.ts#L88)
 
 ___
 
@@ -221,4 +221,4 @@ The builder instance.
 
 #### Defined in
 
-[chat.ts:64](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/chat.ts#L64)
+[chat.ts:64](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/chat.ts#L64)

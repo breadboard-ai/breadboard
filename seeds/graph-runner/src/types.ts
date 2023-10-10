@@ -109,22 +109,32 @@ export type Edge = {
 };
 
 /**
- * Represents a "kit": a collection of `NodeHandlers`. The basic permise here
- * is that people can publish kits with interesting handlers, and then
- * graphs can specify which ones they use.
+ * Represents references to a "kit": a collection of `NodeHandlers`.
+ * The basic permise here is that people can publish kits with interesting
+ * handlers, and then graphs can specify which ones they use.
  * The `@google-labs/llm-starter` package is an example of kit.
  */
-export type KitDescriptor = {
+export type KitReference = {
   /**
    * The URL pointing to the location of the kit.
    */
   url: string;
+};
 
+export type KitDescriptor = KitReference & {
   /**
-   * The list of node types in this kit that are used by the graph.
-   * If left blank or omitted, all node types are assumed to be used.
+   * The title of the kit.
    */
-  using?: string[];
+  title?: string;
+  /**
+   * The description of the kit.
+   */
+  description?: string;
+  /**
+   * Version of the kit.
+   * [semver](https://semver.org/) format is encouraged.
+   */
+  version?: string;
 };
 
 /**
@@ -182,12 +192,17 @@ export type GraphDescriptor = GraphMetadata & {
   /**
    * All the kits (collections of node handlers) that are used by the graph.
    */
-  kits?: KitDescriptor[];
+  kits?: KitReference[];
 
   /**
    * Sub-graphs that are also described by this graph representation.
    */
   graphs?: SubGraphs;
+
+  /**
+   * Arguments that are passed to the graph, useful to bind values to lambdas.
+   */
+  args?: InputValues;
 };
 
 /**
@@ -242,14 +257,24 @@ export type NodeConfiguration = Record<string, NodeValue>;
 /**
  * A function that represents a type of a node in the graph.
  */
-export type NodeHandler = (
-  /**
-   * The inputs that are supplied to the node.
-   */
-  inputs: InputValues
-) => Promise<OutputValues | void>;
+export type NodeHandler<T> =
+  | ((
+      /**
+       * The inputs that are supplied to the node.
+       */
+      inputs: InputValues,
+      /**
+       * The context of the node's invocation.
+       */
+      context: T
+    ) => Promise<OutputValues | void>)
+  // Same as above, but without the context received.
+  | ((inputs: InputValues) => Promise<OutputValues | void>);
 
 /**
  * All known node handlers.
  */
-export type NodeHandlers = Record<NodeTypeIdentifier, NodeHandler>;
+export type NodeHandlers<T = object> = Record<
+  NodeTypeIdentifier,
+  NodeHandler<T>
+>;

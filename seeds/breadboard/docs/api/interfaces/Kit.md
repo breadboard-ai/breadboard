@@ -33,7 +33,7 @@ KitDescriptor.url
 
 #### Defined in
 
-seeds/graph-runner/dist/src/types.d.ts:92
+seeds/graph-runner/dist/src/types.d.ts:98
 
 ___
 
@@ -50,18 +50,18 @@ KitDescriptor.using
 
 #### Defined in
 
-seeds/graph-runner/dist/src/types.d.ts:97
+seeds/graph-runner/dist/src/types.d.ts:103
 
 ## Accessors
 
 ### handlers
 
-• `get` **handlers**(): `NodeHandlers`
+• `get` **handlers**(): `NodeHandlers`<[`NodeHandlerContext`](NodeHandlerContext.md)\>
 
 #### Returns
 
-`NodeHandlers`
+`NodeHandlers`<[`NodeHandlerContext`](NodeHandlerContext.md)\>
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:21](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/types.ts#L21)
+[seeds/breadboard/src/types.ts:23](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/types.ts#L23)

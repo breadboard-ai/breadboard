@@ -7,12 +7,13 @@
 ### Methods
 
 - [create](NodeFactory.md#create)
+- [getConfigWithLambda](NodeFactory.md#getconfigwithlambda)
 
 ## Methods
 
 ### create
 
-▸ **create**<`Inputs`, `Outputs`\>(`type`, `configuration?`, `id?`): [`BreadboardNode`](BreadboardNode.md)<`Inputs`, `Outputs`\>
+▸ **create**<`Inputs`, `Outputs`\>(`kit`, `type`, `configuration?`, `id?`): [`BreadboardNode`](BreadboardNode.md)<`Inputs`, `Outputs`\>
 
 #### Type parameters
 
@@ -25,8 +26,9 @@
 
 | Name | Type |
 | :------ | :------ |
+| `kit` | `undefined` \| [`Kit`](Kit.md) |
 | `type` | `string` |
-| `configuration?` | `NodeConfiguration` |
+| `configuration?` | [`NodeConfigurationConstructor`](../modules.md#nodeconfigurationconstructor) |
 | `id?` | `string` |
 
 #### Returns
@@ -35,4 +37,31 @@
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:68](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/types.ts#L68)
+[seeds/breadboard/src/types.ts:70](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/types.ts#L70)
+
+___
+
+### getConfigWithLambda
+
+▸ **getConfigWithLambda**<`Inputs`, `Outputs`\>(`config`): [`OptionalIdConfiguration`](../modules.md#optionalidconfiguration)
+
+#### Type parameters
+
+| Name |
+| :------ |
+| `Inputs` |
+| `Outputs` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `config` | [`ConfigOrLambda`](../modules.md#configorlambda)<`Inputs`, `Outputs`\> |
+
+#### Returns
+
+[`OptionalIdConfiguration`](../modules.md#optionalidconfiguration)
+
+#### Defined in
+
+[seeds/breadboard/src/types.ts:76](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/types.ts#L76)

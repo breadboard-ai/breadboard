@@ -256,7 +256,7 @@ The node will produce this output:
 
 ### The `urlTemplate` node
 
-Use this node to safely construct URLs. It's similar in spirit to the `promptTemplate` node, except it ensures that the handlebar parameters are properly encoded as part of the URL.
+Use this node to safely construct URLs. It's similar in spirit to the `promptTemplate` node, except it ensures that the handlebar parameters are properly encoded as part of the URL. This node relies on the [URI template specification](https://tools.ietf.org/html/rfc6570) to construct URLs, so the syntax is using single curly braces instead of double curly braces.
 
 #### Example:
 
@@ -264,7 +264,7 @@ If we send the following inputs to `urlTemplate`:
 
 ```json
 {
-  "template": "https://example.com?question={{question}}",
+  "template": "https://example.com?question={question}",
   "question": "How old is planet Earth?"
 }
 ```
@@ -361,8 +361,8 @@ We will get this output:
 #### Inputs:
 
 - `expression` -- required, a string that contains the JSONata expression to be executed.
-- `json` -- a required JSON object that will be used as the context for the expression.
 - `raw` -- an optional boolean that specifies whether the result of the expression should be passed as-is (`true`), or it should be passed as the `result` output property (`false`, default).
+- `json` -- an optional JSON object that will be used as the context for the expression. If `json` is not specified, the node will use the input property bag (minus `expression` and `raw`) as the context.
 
 #### Outputs:
 

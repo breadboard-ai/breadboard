@@ -268,13 +268,7 @@
     },
     {
       "id": "parseCompletion-6",
-      "type": "parseCompletion",
-      "configuration": {
-        "args": [
-          "completion"
-        ],
-        "rest": {}
-      }
+      "type": "parseCompletion"
     },
     {
       "id": "generateText-7",

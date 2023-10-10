@@ -288,6 +288,23 @@ export class Label {
   }
 
   /**
+   * Compare with other label, but only if both are defined.
+   *
+   * @param {Label} other label
+   * @returns {Boolean} true if the labels are equal
+   */
+  equalsToExceptForUndefined(other: Label): boolean {
+    return (
+      (!this.confidentiality ||
+        !other.confidentiality ||
+        this.confidentiality === other.confidentiality) &&
+      (!this.integrity ||
+        !other.integrity ||
+        this.integrity === other.integrity)
+    );
+  }
+
+  /**
    * Checks whether the label can flow to the destination label.
    * Flow between undetermined labels is always allowed.
    *

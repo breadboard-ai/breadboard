@@ -28,7 +28,7 @@ Optional. The number of generated response messages to return. This value must b
 
 #### Defined in
 
-[types.ts:103](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/types.ts#L103)
+[types.ts:103](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L103)
 
 ___
 
@@ -40,7 +40,7 @@ Required. The structured textual input given to the model as a prompt. Given a p
 
 #### Defined in
 
-[types.ts:107](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/types.ts#L107)
+[types.ts:107](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L107)
 
 ___
 
@@ -52,7 +52,7 @@ Optional. Controls the randomness of the output. Values can range over `[0.0,1.0
 
 #### Defined in
 
-[types.ts:111](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/types.ts#L111)
+[types.ts:111](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L111)
 
 ___
 
@@ -64,7 +64,7 @@ Optional. The maximum number of tokens to consider when sampling. The model uses
 
 #### Defined in
 
-[types.ts:115](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/types.ts#L115)
+[types.ts:115](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L115)
 
 ___
 
@@ -76,4 +76,4 @@ Optional. The maximum cumulative probability of tokens to consider when sampling
 
 #### Defined in
 
-[types.ts:119](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/types.ts#L119)
+[types.ts:119](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L119)

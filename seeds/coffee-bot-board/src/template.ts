@@ -4,8 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board, OptionalIdConfiguration } from "@google-labs/breadboard";
-import { Starter, TemplateNodeType } from "@google-labs/llm-starter";
+import {
+  Board,
+  BreadboardNode,
+  OptionalIdConfiguration,
+} from "@google-labs/breadboard";
+import { Starter } from "@google-labs/llm-starter";
 import { readFile, readdir } from "fs/promises";
 
 type Example = {
@@ -48,6 +52,8 @@ export class PromptMaker {
     return { [name]: JSON.parse(text), $id: name };
   }
 }
+
+type TemplateNodeType = BreadboardNode<unknown, unknown>;
 
 /**
  * @deprecated don't use this class, use PromptMaker instead

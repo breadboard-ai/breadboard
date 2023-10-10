@@ -79,7 +79,11 @@ test("schemish-generator valid", async (t) => {
     return { completion: '{ "type": "drink", "order": "chai latte"}' };
   });
 
-  const outputs = await schemishGenerator.runOnce(inputs, debugProbe);
+  const outputs = await schemishGenerator.runOnce(
+    inputs,
+    undefined,
+    debugProbe
+  );
 
   t.like(outputs, { completion: { type: "drink", order: "chai latte" } });
 });
@@ -115,7 +119,11 @@ test("schemish-generator with unparseable JSON", async (t) => {
     return { completion: '{ type: "drink"}' };
   });
 
-  const outputs = await schemishGenerator.runOnce(inputs, debugProbe);
+  const outputs = await schemishGenerator.runOnce(
+    inputs,
+    undefined,
+    debugProbe
+  );
 
   t.is(count, 1);
   t.like(outputs, {
@@ -157,7 +165,11 @@ test("schemish-generator with unparseable JSON and recovery", async (t) => {
     return { completion: '{ type: "drink"}' };
   });
 
-  const outputs = await schemishGenerator.runOnce(inputs, debugProbe);
+  const outputs = await schemishGenerator.runOnce(
+    inputs,
+    undefined,
+    debugProbe
+  );
 
   t.is(count, 3);
   t.like(outputs, {
@@ -198,7 +210,11 @@ test("schemish-generator with invalid JSON", async (t) => {
     return { completion: '{ "type": "automobile"}' };
   });
 
-  const outputs = await schemishGenerator.runOnce(inputs, debugProbe);
+  const outputs = await schemishGenerator.runOnce(
+    inputs,
+    undefined,
+    debugProbe
+  );
 
   t.is(count, 1);
   t.like(outputs, {
@@ -240,7 +256,11 @@ test("schemish-generator with invalid JSON and recovery", async (t) => {
     return { completion: '{ "type": "automobile"}' };
   });
 
-  const outputs = await schemishGenerator.runOnce(inputs, debugProbe);
+  const outputs = await schemishGenerator.runOnce(
+    inputs,
+    undefined,
+    debugProbe
+  );
 
   t.is(count, 3);
   t.like(outputs, {

@@ -74,16 +74,16 @@ export class ReActHelper implements Kit {
 
   getTools(config: OptionalIdConfiguration = {}) {
     const { $id, ...rest } = config;
-    return this.#nodeFactory.create("getTools", rest, $id);
+    return this.#nodeFactory.create(this, "getTools", rest, $id);
   }
 
   getDescriptions(config: OptionalIdConfiguration = {}) {
     const { $id, ...rest } = config;
-    return this.#nodeFactory.create("getDescriptions", rest, $id);
+    return this.#nodeFactory.create(this, "getDescriptions", rest, $id);
   }
 
-  parseCompletion(args: string[], config: OptionalIdConfiguration = {}) {
+  parseCompletion(config: OptionalIdConfiguration = {}) {
     const { $id, ...rest } = config;
-    return this.#nodeFactory.create("parseCompletion", { args, rest }, $id);
+    return this.#nodeFactory.create(this, "parseCompletion", { ...rest }, $id);
   }
 }

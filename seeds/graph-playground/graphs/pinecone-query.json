@@ -5,7 +5,7 @@
   "edges": [
     {
       "from": "secrets-3",
-      "to": "embedString-2",
+      "to": "embedText-2",
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
@@ -22,14 +22,14 @@
       "in": "json"
     },
     {
-      "from": "embedString-2",
+      "from": "embedText-2",
       "to": "pinecone-api-query-4",
       "out": "embedding",
       "in": "embedding"
     },
     {
       "from": "query",
-      "to": "embedString-2",
+      "to": "embedText-2",
       "out": "text",
       "in": "text"
     },
@@ -68,11 +68,23 @@
     },
     {
       "id": "query",
-      "type": "input"
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Question",
+              "description": "Ask small corpus a question"
+            }
+          }
+        }
+      }
     },
     {
-      "id": "embedString-2",
-      "type": "embedString"
+      "id": "embedText-2",
+      "type": "embedText"
     },
     {
       "id": "secrets-3",
@@ -115,9 +127,6 @@
   "kits": [
     {
       "url": "npm:@google-labs/llm-starter"
-    },
-    {
-      "url": "npm:@google-labs/node-nursery"
     },
     {
       "url": "npm:@google-labs/pinecone-kit"

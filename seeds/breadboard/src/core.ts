@@ -14,13 +14,25 @@ import type {
 import type {
   BreadboardSlotSpec,
   BreadboardValidator,
+  BreadboardCapability,
+  NodeHandlerContext,
+  LambdaNodeInputs,
+  LambdaNodeOutputs,
+  ImportNodeInputs,
   IncludeNodeInputs,
   SlotNodeInputs,
 } from "./types.js";
 import { Board } from "./board.js";
-import { NestedProbe } from "./nested-probe.js";
 
-const CORE_HANDLERS = ["include", "reflect", "slot", "passthrough"];
+const CORE_HANDLERS = [
+  "lambda",
+  "import",
+  "include",
+  "invoke",
+  "reflect",
+  "slot",
+  "passthrough",
+];
 
 const deepCopy = (graph: GraphDescriptor): GraphDescriptor => {
   return JSON.parse(JSON.stringify(graph));
@@ -30,31 +42,90 @@ export class Core {
   #graph: GraphDescriptor;
   #slots: BreadboardSlotSpec;
   #validators: BreadboardValidator[];
-  #probe?: EventTarget;
   #outerGraph: GraphDescriptor;
-  handlers: NodeHandlers;
+  handlers: NodeHandlers<NodeHandlerContext>;
 
   constructor(
     graph: GraphDescriptor,
     slots: BreadboardSlotSpec,
     validators: BreadboardValidator[],
-    outerGraph?: GraphDescriptor,
-    probe?: EventTarget
+    outerGraph?: GraphDescriptor
   ) {
     this.#graph = graph;
     this.#slots = slots;
     this.#validators = validators;
-    this.#probe = probe;
     this.#outerGraph = outerGraph || graph;
     this.handlers = CORE_HANDLERS.reduce((handlers, type) => {
-      const that = this as unknown as Record<string, NodeHandler>;
+      const that = this as unknown as Record<
+        string,
+        NodeHandler<NodeHandlerContext>
+      >;
       handlers[type] = that[type].bind(this);
       return handlers;
-    }, {} as NodeHandlers);
+    }, {} as NodeHandlers<NodeHandlerContext>);
   }
 
-  async include(inputs: InputValues): Promise<OutputValues> {
-    const { path, $ref, graph, slotted, parent, ...args } =
+  async lambda(inputs: LambdaNodeInputs): Promise<LambdaNodeOutputs> {
+    const { board, ...args } = inputs;
+    if (!board || board.kind !== "board" || !board.board)
+      throw new Error(
+        `Lambda node requires a BoardCapability as "board" input`
+      );
+    const runnableBoard = {
+      ...(await Board.fromBreadboardCapability(board)),
+      args,
+    };
+
+    return {
+      board: { ...board, board: runnableBoard as GraphDescriptor },
+    };
+  }
+
+  async import(inputs: ImportNodeInputs): Promise<LambdaNodeOutputs> {
+    const { path, $ref, graph, ...args } = inputs;
+
+    // TODO: Please fix the $ref/path mess.
+    const source = path || $ref || "";
+    const board = graph
+      ? (graph as Board).runOnce // TODO: Hack! Use JSON schema or so instead.
+        ? ({ ...graph } as Board)
+        : await Board.fromGraphDescriptor(graph)
+      : await Board.load(source, {
+          base: this.#graph.url,
+          outerGraph: this.#outerGraph,
+        });
+    board.args = args;
+
+    return { board: { kind: "board", board } as BreadboardCapability };
+  }
+
+  async invoke(
+    inputs: InputValues,
+    context: NodeHandlerContext
+  ): Promise<OutputValues> {
+    const { path, board, graph, ...args } = inputs as IncludeNodeInputs;
+
+    const runnableBoard = board
+      ? await Board.fromBreadboardCapability(board)
+      : graph
+      ? await Board.fromGraphDescriptor(graph)
+      : path
+      ? await Board.load(path, {
+          base: this.#graph.url,
+          outerGraph: this.#outerGraph,
+        })
+      : undefined;
+
+    if (!runnableBoard) throw new Error("No board provided");
+
+    return await runnableBoard.runOnce(args, context);
+  }
+
+  async include(
+    inputs: InputValues,
+    context: NodeHandlerContext
+  ): Promise<OutputValues> {
+    const { path, $ref, board, graph, slotted, ...args } =
       inputs as IncludeNodeInputs;
 
     // Add the current graph's URL as the url of the slotted graph,
@@ -68,18 +139,18 @@ export class Core {
 
     // TODO: Please fix the $ref/path mess.
     const source = path || $ref || "";
-    const board = graph
+
+    const runnableBoard = board
+      ? await Board.fromBreadboardCapability(board)
+      : graph
       ? await Board.fromGraphDescriptor(graph)
       : await Board.load(source, {
           slotted: slottedWithUrls,
           base: this.#graph.url,
           outerGraph: this.#outerGraph,
         });
-    for (const validator of this.#validators)
-      board.addValidator(
-        validator.getSubgraphValidator(parent, Object.keys(args))
-      );
-    return await board.runOnce(args, NestedProbe.create(this.#probe, source));
+
+    return await runnableBoard.runOnce(args, context);
   }
 
   async reflect(_inputs: InputValues): Promise<OutputValues> {
@@ -87,18 +158,16 @@ export class Core {
     return { graph };
   }
 
-  async slot(inputs: InputValues): Promise<OutputValues> {
-    const { slot, parent, ...args } = inputs as SlotNodeInputs;
+  async slot(
+    inputs: InputValues,
+    context: NodeHandlerContext
+  ): Promise<OutputValues> {
+    const { slot, ...args } = inputs as SlotNodeInputs;
     if (!slot) throw new Error("To use a slot, we need to specify its name");
     const graph = this.#slots[slot];
     if (!graph) throw new Error(`No graph found for slot "${slot}"`);
     const slottedBreadboard = await Board.fromGraphDescriptor(graph);
-    for (const validator of this.#validators)
-      slottedBreadboard.addValidator(validator.getSubgraphValidator(parent));
-    return await slottedBreadboard.runOnce(
-      args,
-      NestedProbe.create(this.#probe, slot)
-    );
+    return await slottedBreadboard.runOnce(args, context);
   }
 
   async passthrough(inputs: InputValues): Promise<OutputValues> {

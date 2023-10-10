@@ -7,7 +7,12 @@
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 
-const board = new Board();
+const board = new Board({
+  title: "Endless Debate",
+  description:
+    "A simple board that demonstrates how to create a conversation loop. It's a debate between a scientist named Albert and a philosopher named Friedrich. Albert is warm, funny, and inquisitve. Friedrich is  disagreeable, brooding, skeptical, and sarcastic.\nThis board goes on forever, so you'll have to reload or close the page (or press Ctrl+C in console) to end it. Note how over time, the conversation becomes more and more mechanical and predictable, with only a few variations in sentence patterns.",
+  version: "0.0.1",
+});
 const kit = board.addKit(Starter);
 
 const rememberFriedrich = kit.append({ $id: "rememberFriedrich" });
@@ -35,13 +40,39 @@ const albert = kit
     "prompt->text",
     kit
       .generateText({
-        "stop-sequences": ["\nFriedrich", "\n**Friedrich"],
+        stopSequences: ["\nFriedrich", "\n**Friedrich"],
+        safetySettings: [
+          {
+            category: "HARM_CATEGORY_DEROGATORY",
+            threshold: "BLOCK_ONLY_HIGH",
+          },
+          {
+            category: "HARM_CATEGORY_TOXICITY",
+            threshold: "BLOCK_ONLY_HIGH",
+          },
+        ],
       })
       .wire(
         "completion->Albert",
         rememberAlbert.wire("accumulator->context", friedrich)
       )
-      .wire("completion->text", board.output())
+      .wire(
+        "completion->text",
+        board.output({
+          $id: "albertSays",
+          schema: {
+            type: "object",
+            properties: {
+              text: {
+                type: "string",
+                title: "Albert",
+                description: "What Albert says",
+              },
+            },
+            required: ["text"],
+          },
+        })
+      )
       .wire("<-PALM_KEY.", palm_key)
   );
 
@@ -49,13 +80,39 @@ friedrich.wire(
   "prompt->text",
   kit
     .generateText({
-      "stop-sequences": ["\nAlbert", "\n**Albert"],
+      stopSequences: ["\nAlbert", "\n**Albert"],
+      safetySettings: [
+        {
+          category: "HARM_CATEGORY_DEROGATORY",
+          threshold: "BLOCK_ONLY_HIGH",
+        },
+        {
+          category: "HARM_CATEGORY_TOXICITY",
+          threshold: "BLOCK_ONLY_HIGH",
+        },
+      ],
     })
     .wire(
       "completion->Friedrich",
       rememberFriedrich.wire("accumulator->context", albert)
     )
-    .wire("completion->text", board.output())
+    .wire(
+      "completion->text",
+      board.output({
+        $id: "friedrichSays",
+        schema: {
+          type: "object",
+          properties: {
+            text: {
+              type: "string",
+              title: "Friedrich",
+              description: "What Friedrich says",
+            },
+          },
+          required: ["text"],
+        },
+      })
+    )
     .wire("<-PALM_KEY.", palm_key)
 );
 

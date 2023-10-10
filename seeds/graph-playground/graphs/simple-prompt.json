@@ -1,4 +1,7 @@
 {
+  "title": "Simple meta-reasoning",
+  "description": "Possibly the simplest meta-reasoning prompt. When asked a question, it encourages the LLM to analyze the question instead of answering it and provide steps to arrive at the solution",
+  "version": "0.0.1",
   "edges": [
     {
       "from": "secrets-2",
@@ -8,7 +11,7 @@
     },
     {
       "from": "generateText-1",
-      "to": "output-4",
+      "to": "analysis",
       "out": "completion",
       "in": "text"
     },
@@ -19,7 +22,7 @@
       "in": "text"
     },
     {
-      "from": "input-3",
+      "from": "question",
       "to": "analyze-this",
       "out": "text",
       "in": "question"
@@ -40,8 +43,23 @@
       }
     },
     {
-      "id": "input-3",
-      "type": "input"
+      "id": "question",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Question",
+              "description": "Ask a question for LLM to reason about"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
     },
     {
       "id": "analyze-this",
@@ -51,8 +69,23 @@
       }
     },
     {
-      "id": "output-4",
-      "type": "output"
+      "id": "analysis",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Steps",
+              "description": "The steps to take to answer the question"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
     }
   ],
   "kits": [

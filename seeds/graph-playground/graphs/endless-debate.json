@@ -1,4 +1,7 @@
 {
+  "title": "Endless Debate",
+  "description": "A simple board that demonstrates how to create a conversation loop. It's a debate between a scientist named Albert and a philosopher named Friedrich. Albert is warm, funny, and inquisitve. Friedrich is  disagreeable, brooding, skeptical, and sarcastic.\nThis board goes on forever, so you'll have to reload or close the page (or press Ctrl+C in console) to end it. Note how over time, the conversation becomes more and more mechanical and predictable, with only a few variations in sentence patterns.",
+  "version": "0.0.1",
   "edges": [
     {
       "from": "rememberQuestion",
@@ -32,7 +35,7 @@
     },
     {
       "from": "generateText-3",
-      "to": "output-4",
+      "to": "albertSays",
       "out": "completion",
       "in": "text"
     },
@@ -56,27 +59,27 @@
       "in": "context"
     },
     {
-      "from": "generateText-5",
+      "from": "generateText-4",
       "to": "rememberFriedrich",
       "out": "completion",
       "in": "Friedrich"
     },
     {
-      "from": "generateText-5",
-      "to": "output-6",
+      "from": "generateText-4",
+      "to": "friedrichSays",
       "out": "completion",
       "in": "text"
     },
     {
       "from": "secrets-1",
-      "to": "generateText-5",
+      "to": "generateText-4",
       "constant": true,
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
       "from": "promptTemplate-2",
-      "to": "generateText-5",
+      "to": "generateText-4",
       "out": "prompt",
       "in": "text"
     },
@@ -87,7 +90,7 @@
       "in": "context"
     },
     {
-      "from": "input-7",
+      "from": "input-5",
       "to": "rememberQuestion",
       "out": "text",
       "in": "topic"
@@ -133,32 +136,82 @@
       "id": "generateText-3",
       "type": "generateText",
       "configuration": {
-        "stop-sequences": [
+        "stopSequences": [
           "\nFriedrich",
           "\n**Friedrich"
+        ],
+        "safetySettings": [
+          {
+            "category": "HARM_CATEGORY_DEROGATORY",
+            "threshold": "BLOCK_ONLY_HIGH"
+          },
+          {
+            "category": "HARM_CATEGORY_TOXICITY",
+            "threshold": "BLOCK_ONLY_HIGH"
+          }
         ]
       }
     },
     {
-      "id": "output-4",
-      "type": "output"
+      "id": "albertSays",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Albert",
+              "description": "What Albert says"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
     },
     {
-      "id": "generateText-5",
+      "id": "generateText-4",
       "type": "generateText",
       "configuration": {
-        "stop-sequences": [
+        "stopSequences": [
           "\nAlbert",
           "\n**Albert"
+        ],
+        "safetySettings": [
+          {
+            "category": "HARM_CATEGORY_DEROGATORY",
+            "threshold": "BLOCK_ONLY_HIGH"
+          },
+          {
+            "category": "HARM_CATEGORY_TOXICITY",
+            "threshold": "BLOCK_ONLY_HIGH"
+          }
         ]
       }
     },
     {
-      "id": "output-6",
-      "type": "output"
+      "id": "friedrichSays",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Friedrich",
+              "description": "What Friedrich says"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
     },
     {
-      "id": "input-7",
+      "id": "input-5",
       "type": "input",
       "configuration": {
         "schema": {

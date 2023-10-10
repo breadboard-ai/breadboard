@@ -5,6 +5,7 @@
  */
 
 import {
+  NodeTypeIdentifier,
   InputValues,
   NodeHandlers,
   OutputValues,
@@ -13,11 +14,11 @@ import type {
   BreadboardNode,
   Kit,
   NodeFactory,
+  NodeHandlerContext,
   OptionalIdConfiguration,
+  ConfigOrLambda,
 } from "@google-labs/breadboard";
 
-import vars from "./nodes/vars.js";
-import localMemory from "./nodes/local-memory.js";
 import textAsset from "./nodes/text-asset.js";
 import textAssetsFromPath from "./nodes/text-assets-from-path.js";
 import createVectorDatabase from "./nodes/create-vector-database.js";
@@ -37,6 +38,7 @@ import templateParser, {
 } from "./nodes/template-parser.js";
 import map, { MapInputs, MapOutputs } from "./nodes/map.js";
 import batcher, { BatcherInputs, BatcherOutputs } from "./nodes/batcher.js";
+import chunker, { ChunkerInputs, ChunkerOutputs } from "./nodes/chunker.js";
 
 const handlers = {
   createVectorDatabase,
@@ -47,13 +49,12 @@ const handlers = {
   cache,
   textAsset,
   textAssetsFromPath,
-  vars,
-  localMemory,
   validateJson,
   schemish,
   templateParser,
   map,
   batcher,
+  chunker,
 };
 
 /**
@@ -62,7 +63,7 @@ const handlers = {
 export class Nursery implements Kit {
   url = "npm:@google-labs/node-nursery";
   #nodeFactory: NodeFactory;
-  #handlers: NodeHandlers;
+  #handlers: NodeHandlers<NodeHandlerContext>;
 
   get handlers() {
     return this.#handlers;
@@ -73,88 +74,77 @@ export class Nursery implements Kit {
     this.#handlers = handlers;
   }
 
+  #create<Inputs, Outputs>(
+    type: NodeTypeIdentifier,
+    config: OptionalIdConfiguration
+  ): BreadboardNode<Inputs, Outputs> {
+    const { $id, ...rest } = config;
+    return this.#nodeFactory.create(this, type, rest, $id);
+  }
+
   createVectorDatabase(
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<InputValues, OutputValues> {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create("createVectorDatabase", { ...rest }, $id);
+    return this.#create("createVectorDatabase", config);
   }
 
   addToVectorDatabase(
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<InputValues, OutputValues> {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create("addToVectorDatabase", { ...rest }, $id);
+    return this.#create("addToVectorDatabase", config);
   }
 
   queryVectorDatabase(
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<InputValues, OutputValues> {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create("queryVectorDatabase", { ...rest }, $id);
+    return this.#create("queryVectorDatabase", config);
   }
 
   embedDocs(
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<InputValues, OutputValues> {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create("embedDocs", { ...rest }, $id);
+    return this.#create("embedDocs", config);
   }
 
   embedString(
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<InputValues, OutputValues> {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create("embedString", { ...rest }, $id);
+    return this.#create("embedString", config);
   }
 
   textAsset(
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<InputValues, OutputValues> {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create("textAsset", { ...rest }, $id);
+    return this.#create("textAsset", config);
   }
 
   textAssetsFromPath(
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<InputValues, OutputValues> {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create("textAssetsFromPath", { ...rest }, $id);
+    return this.#create("textAssetsFromPath", config);
   }
 
   cache(
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<InputValues, OutputValues> {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create("cache", { ...rest }, $id);
-  }
-
-  localMemory(
-    config: OptionalIdConfiguration = {}
-  ): BreadboardNode<InputValues, OutputValues> {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create("localMemory", { ...rest }, $id);
+    return this.#create("cache", config);
   }
 
   validateJson(
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<InputValues, OutputValues> {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create<ValidateJsonInputs, ValidateJsonOutputs>(
+    return this.#create<ValidateJsonInputs, ValidateJsonOutputs>(
       "validateJson",
-      { ...rest },
-      $id
+      config
     );
   }
 
   schemish(
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<InputValues, OutputValues> {
-    const { $id, ...rest } = config;
-    const node = this.#nodeFactory.create<SchemishInputs, SchemishOutputs>(
+    const node = this.#create<SchemishInputs, SchemishOutputs>(
       "schemish",
-      { ...rest },
-      $id
+      config
     );
     return node;
   }
@@ -165,11 +155,10 @@ export class Nursery implements Kit {
   templateParser(
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<InputValues, OutputValues> {
-    const { $id, ...rest } = config;
-    const node = this.#nodeFactory.create<
-      TemplateParserInputs,
-      TemplateParserOutputs
-    >("templateParser", { ...rest }, $id);
+    const node = this.#create<TemplateParserInputs, TemplateParserOutputs>(
+      "templateParser",
+      config
+    );
     return node;
   }
 
@@ -179,14 +168,13 @@ export class Nursery implements Kit {
    * @param config
    * @returns
    */
-  map(
-    config: OptionalIdConfiguration = {}
+  map<In = InputValues, Out = OutputValues>(
+    config: ConfigOrLambda<In, Out> = {}
   ): BreadboardNode<MapInputs, MapOutputs> {
-    const { $id, ...rest } = config;
-    const node = this.#nodeFactory.create<MapInputs, MapOutputs>(
+    // Create the node.
+    const node = this.#create<MapInputs, MapOutputs>(
       "map",
-      { ...rest },
-      $id
+      this.#nodeFactory.getConfigWithLambda(config)
     );
     return node;
   }
@@ -194,12 +182,14 @@ export class Nursery implements Kit {
   batcher(
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<BatcherInputs, BatcherOutputs> {
-    const { $id, ...rest } = config;
-    const node = this.#nodeFactory.create<BatcherInputs, BatcherOutputs>(
-      "batcher",
-      { ...rest },
-      $id
-    );
+    const node = this.#create<BatcherInputs, BatcherOutputs>("batcher", config);
+    return node;
+  }
+
+  chunker(
+    config: OptionalIdConfiguration = {}
+  ): BreadboardNode<ChunkerInputs, ChunkerOutputs> {
+    const node = this.#create<ChunkerInputs, ChunkerOutputs>("chunker", config);
     return node;
   }
 }

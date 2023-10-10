@@ -14,6 +14,12 @@ const board = new Board();
 
 For more information on how to use Breadboard, start with [Chapter 1: Hello, world?](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-7-probes) of the tutorial.
 
+## Hierarchy
+
+- [`BoardRunner`](BoardRunner.md)
+
+  ↳ **`Board`**
+
 ## Implements
 
 - `Breadboard`
@@ -26,11 +32,16 @@ For more information on how to use Breadboard, start with [Chapter 1: Hello, wor
 
 ### Properties
 
-- [#localKit](Board.md##localkit)
+- [#acrossBoardsEdges](Board.md##acrossboardsedges)
+- [#closureStack](Board.md##closurestack)
+- [#parent](Board.md##parent)
 - [#slots](Board.md##slots)
+- [#topClosure](Board.md##topclosure)
 - [#validators](Board.md##validators)
+- [args](Board.md#args)
 - [description](Board.md#description)
 - [edges](Board.md#edges)
+- [graphs](Board.md#graphs)
 - [kits](Board.md#kits)
 - [nodes](Board.md#nodes)
 - [title](Board.md#title)
@@ -41,20 +52,26 @@ For more information on how to use Breadboard, start with [Chapter 1: Hello, wor
 ### Methods
 
 - [addEdge](Board.md#addedge)
+- [addEdgeAcrossBoards](Board.md#addedgeacrossboards)
 - [addKit](Board.md#addkit)
 - [addNode](Board.md#addnode)
 - [addValidator](Board.md#addvalidator)
+- [currentBoardToAddTo](Board.md#currentboardtoaddto)
+- [import](Board.md#import)
 - [include](Board.md#include)
 - [input](Board.md#input)
+- [invoke](Board.md#invoke)
+- [lambda](Board.md#lambda)
 - [mermaid](Board.md#mermaid)
-- [node](Board.md#node)
 - [output](Board.md#output)
 - [passthrough](Board.md#passthrough)
 - [reflect](Board.md#reflect)
 - [run](Board.md#run)
 - [runOnce](Board.md#runonce)
 - [slot](Board.md#slot)
+- [fromBreadboardCapability](Board.md#frombreadboardcapability)
 - [fromGraphDescriptor](Board.md#fromgraphdescriptor)
+- [handlersFromBoard](Board.md#handlersfromboard)
 - [load](Board.md#load)
 
 ## Constructors
@@ -69,19 +86,49 @@ For more information on how to use Breadboard, start with [Chapter 1: Hello, wor
 | :------ | :------ | :------ |
 | `metadata?` | `GraphMetadata` | optional metadata for the board. Use this parameter to provide title, description, version, and URL for the board. |
 
+#### Inherited from
+
+[BoardRunner](BoardRunner.md).[constructor](BoardRunner.md#constructor)
+
 #### Defined in
 
-[seeds/breadboard/src/board.ts:101](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L101)
+[seeds/breadboard/src/runner.ts:81](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/runner.ts#L81)
 
 ## Properties
 
-### #localKit
+### #acrossBoardsEdges
 
-• `Private` `Optional` **#localKit**: `LocalKit`
+• `Private` **#acrossBoardsEdges**: { `edge`: `Edge` ; `from`: [`Board`](Board.md) ; `to`: [`Board`](Board.md)  }[] = `[]`
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:92](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L92)
+[seeds/breadboard/src/board.ts:51](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/board.ts#L51)
+
+___
+
+### #closureStack
+
+• `Private` **#closureStack**: [`Board`](Board.md)[] = `[]`
+
+#### Defined in
+
+[seeds/breadboard/src/board.ts:49](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/board.ts#L49)
+
+___
+
+### #parent
+
+• `Private` `Optional` **#parent**: `GraphDescriptor`
+
+The parent board, if this is board is a subgraph of a larger board.
+
+#### Inherited from
+
+[BoardRunner](BoardRunner.md).[#parent](BoardRunner.md##parent)
+
+#### Defined in
+
+[seeds/breadboard/src/runner.ts:74](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/runner.ts#L74)
 
 ___
 
@@ -89,9 +136,23 @@ ___
 
 • `Private` **#slots**: [`BreadboardSlotSpec`](../modules.md#breadboardslotspec) = `{}`
 
+#### Inherited from
+
+[BoardRunner](BoardRunner.md).[#slots](BoardRunner.md##slots)
+
 #### Defined in
 
-[seeds/breadboard/src/board.ts:93](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L93)
+[seeds/breadboard/src/runner.ts:69](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/runner.ts#L69)
+
+___
+
+### #topClosure
+
+• `Private` **#topClosure**: `undefined` \| [`Board`](Board.md)
+
+#### Defined in
+
+[seeds/breadboard/src/board.ts:50](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/board.ts#L50)
 
 ___
 
@@ -99,9 +160,31 @@ ___
 
 • `Private` **#validators**: [`BreadboardValidator`](../interfaces/BreadboardValidator.md)[] = `[]`
 
+#### Inherited from
+
+[BoardRunner](BoardRunner.md).[#validators](BoardRunner.md##validators)
+
 #### Defined in
 
-[seeds/breadboard/src/board.ts:94](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L94)
+[seeds/breadboard/src/runner.ts:70](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/runner.ts#L70)
+
+___
+
+### args
+
+• `Optional` **args**: `InputValues`
+
+#### Implementation of
+
+Breadboard.args
+
+#### Inherited from
+
+[BoardRunner](BoardRunner.md).[args](BoardRunner.md#args)
+
+#### Defined in
+
+[seeds/breadboard/src/runner.ts:67](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/runner.ts#L67)
 
 ___
 
@@ -113,9 +196,13 @@ ___
 
 Breadboard.description
 
+#### Inherited from
+
+[BoardRunner](BoardRunner.md).[description](BoardRunner.md#description)
+
 #### Defined in
 
-[seeds/breadboard/src/board.ts:87](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L87)
+[seeds/breadboard/src/runner.ts:61](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/runner.ts#L61)
 
 ___
 
@@ -127,9 +214,31 @@ ___
 
 Breadboard.edges
 
+#### Inherited from
+
+[BoardRunner](BoardRunner.md).[edges](BoardRunner.md#edges)
+
 #### Defined in
 
-[seeds/breadboard/src/board.ts:89](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L89)
+[seeds/breadboard/src/runner.ts:63](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/runner.ts#L63)
+
+___
+
+### graphs
+
+• `Optional` **graphs**: `SubGraphs`
+
+#### Implementation of
+
+Breadboard.graphs
+
+#### Inherited from
+
+[BoardRunner](BoardRunner.md).[graphs](BoardRunner.md#graphs)
+
+#### Defined in
+
+[seeds/breadboard/src/runner.ts:66](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/runner.ts#L66)
 
 ___
 
@@ -141,9 +250,13 @@ ___
 
 Breadboard.kits
 
+#### Inherited from
+
+[BoardRunner](BoardRunner.md).[kits](BoardRunner.md#kits)
+
 #### Defined in
 
-[seeds/breadboard/src/board.ts:91](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L91)
+[seeds/breadboard/src/runner.ts:65](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/runner.ts#L65)
 
 ___
 
@@ -155,9 +268,13 @@ ___
 
 Breadboard.nodes
 
+#### Inherited from
+
+[BoardRunner](BoardRunner.md).[nodes](BoardRunner.md#nodes)
+
 #### Defined in
 
-[seeds/breadboard/src/board.ts:90](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L90)
+[seeds/breadboard/src/runner.ts:64](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/runner.ts#L64)
 
 ___
 
@@ -169,9 +286,13 @@ ___
 
 Breadboard.title
 
+#### Inherited from
+
+[BoardRunner](BoardRunner.md).[title](BoardRunner.md#title)
+
 #### Defined in
 
-[seeds/breadboard/src/board.ts:86](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L86)
+[seeds/breadboard/src/runner.ts:60](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/runner.ts#L60)
 
 ___
 
@@ -183,9 +304,13 @@ ___
 
 Breadboard.url
 
+#### Inherited from
+
+[BoardRunner](BoardRunner.md).[url](BoardRunner.md#url)
+
 #### Defined in
 
-[seeds/breadboard/src/board.ts:85](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L85)
+[seeds/breadboard/src/runner.ts:59](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/runner.ts#L59)
 
 ___
 
@@ -197,9 +322,13 @@ ___
 
 Breadboard.version
 
+#### Inherited from
+
+[BoardRunner](BoardRunner.md).[version](BoardRunner.md#version)
+
 #### Defined in
 
-[seeds/breadboard/src/board.ts:88](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L88)
+[seeds/breadboard/src/runner.ts:62](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/runner.ts#L62)
 
 ___
 
@@ -221,9 +350,13 @@ ___
 
 `AsyncGenerator`<`RemoteRunResult`, `void`, `unknown`\>
 
+#### Inherited from
+
+[BoardRunner](BoardRunner.md).[runRemote](BoardRunner.md#runremote)
+
 #### Defined in
 
-[seeds/breadboard/src/board.ts:528](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L528)
+[seeds/breadboard/src/runner.ts:359](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/runner.ts#L359)
 
 ## Methods
 
@@ -247,7 +380,33 @@ Breadboard.addEdge
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:441](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L441)
+[seeds/breadboard/src/board.ts:333](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/board.ts#L333)
+
+___
+
+### addEdgeAcrossBoards
+
+▸ **addEdgeAcrossBoards**(`edge`, `from`, `to`): `void`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `edge` | `Edge` |
+| `from` | [`Board`](Board.md) |
+| `to` | [`Board`](Board.md) |
+
+#### Returns
+
+`void`
+
+#### Implementation of
+
+Breadboard.addEdgeAcrossBoards
+
+#### Defined in
+
+[seeds/breadboard/src/board.ts:396](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/board.ts#L396)
 
 ___
 
@@ -282,7 +441,7 @@ const kit = board.addKit(Starter);
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `ctr` | `KitConstructor`<`T`\> | the kit constructor. |
+| `ctr` | [`KitConstructor`](../interfaces/KitConstructor.md)<`T`\> | the kit constructor. |
 
 #### Returns
 
@@ -297,7 +456,7 @@ Breadboard.addKit
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:471](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L471)
+[seeds/breadboard/src/board.ts:363](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/board.ts#L363)
 
 ___
 
@@ -321,7 +480,7 @@ Breadboard.addNode
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:445](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L445)
+[seeds/breadboard/src/board.ts:337](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/board.ts#L337)
 
 ___
 
@@ -342,25 +501,52 @@ Will call .addGraph() on the validator before executing a graph.
 
 `void`
 
+#### Implementation of
+
+Breadboard.addValidator
+
+#### Inherited from
+
+[BoardRunner](BoardRunner.md).[addValidator](BoardRunner.md#addvalidator)
+
 #### Defined in
 
-[seeds/breadboard/src/board.ts:267](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L267)
+[seeds/breadboard/src/runner.ts:251](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/runner.ts#L251)
 
 ___
 
-### include
+### currentBoardToAddTo
 
-▸ **include**<`In`, `Out`\>(`$ref`, `config?`): [`BreadboardNode`](../interfaces/BreadboardNode.md)<`InputValues` & { `$ref?`: `string` ; `args`: `InputValues` ; `graph?`: `GraphDescriptor` ; `parent`: `NodeDescriptor` ; `path?`: `string` ; `slotted?`: [`BreadboardSlotSpec`](../modules.md#breadboardslotspec)  } & `In`, `Out`\>
+▸ **currentBoardToAddTo**(): `Breadboard`
 
-Places an `include` node on the board.
+Used in the context of board.lambda(): Returns the board that is currently
+being constructed, according to the nesting level of board.lambda() calls
+with JS functions.
 
-Use this node to include other boards into the current board.
+Only called by Node constructor, when adding nodes.
 
-The `include` node acts as a sort of instant board-to-node converter:
-just give it the URL of a serialized board, and it will pretend as if
-that whole board is just one node.
+#### Returns
 
-See [`include` node reference](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/nodes.md#include) for more information.
+`Breadboard`
+
+#### Implementation of
+
+Breadboard.currentBoardToAddTo
+
+#### Defined in
+
+[seeds/breadboard/src/board.ts:385](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/board.ts#L385)
+
+___
+
+### import
+
+▸ **import**<`In`, `Out`\>(`$ref`, `config?`): [`BreadboardNode`](../interfaces/BreadboardNode.md)<`InputValues` & { `$ref?`: `string` ; `args`: `InputValues` ; `board?`: [`BreadboardCapability`](../modules.md#breadboardcapability) ; `graph?`: `GraphDescriptor` ; `parent`: `NodeDescriptor` ; `path?`: `string` ; `slotted?`: [`BreadboardSlotSpec`](../modules.md#breadboardslotspec)  } & `In`, `Out`\>
+
+Places an `import` node on the board.
+
+Use this node to import other boards into the current board.
+Outputs `board` as a BoardCapability, which can be passed to e.g. `invoke`.
 
 #### Type parameters
 
@@ -373,24 +559,70 @@ See [`include` node reference](https://github.com/google/labs-prototypes/blob/ma
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `$ref` | `string` \| `GraphDescriptor` | the URL of the board to include. |
+| `$ref` | `string` \| `GraphDescriptor` | the URL of the board to include, or a graph. |
 | `config` | [`OptionalIdConfiguration`](../modules.md#optionalidconfiguration) | optional configuration for the node. |
 
 #### Returns
 
-[`BreadboardNode`](../interfaces/BreadboardNode.md)<`InputValues` & { `$ref?`: `string` ; `args`: `InputValues` ; `graph?`: `GraphDescriptor` ; `parent`: `NodeDescriptor` ; `path?`: `string` ; `slotted?`: [`BreadboardSlotSpec`](../modules.md#breadboardslotspec)  } & `In`, `Out`\>
+[`BreadboardNode`](../interfaces/BreadboardNode.md)<`InputValues` & { `$ref?`: `string` ; `args`: `InputValues` ; `board?`: [`BreadboardCapability`](../modules.md#breadboardcapability) ; `graph?`: `GraphDescriptor` ; `parent`: `NodeDescriptor` ; `path?`: `string` ; `slotted?`: [`BreadboardSlotSpec`](../modules.md#breadboardslotspec)  } & `In`, `Out`\>
 
 - a `Node` object that represents the placed node.
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:344](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L344)
+[seeds/breadboard/src/board.ts:210](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/board.ts#L210)
+
+___
+
+### include
+
+▸ **include**<`In`, `Out`\>(`$ref`, `config?`): [`BreadboardNode`](../interfaces/BreadboardNode.md)<`InputValues` & { `$ref?`: `string` ; `args`: `InputValues` ; `board?`: [`BreadboardCapability`](../modules.md#breadboardcapability) ; `graph?`: `GraphDescriptor` ; `parent`: `NodeDescriptor` ; `path?`: `string` ; `slotted?`: [`BreadboardSlotSpec`](../modules.md#breadboardslotspec)  } & `In`, `Out`\>
+
+Places an `include` node on the board.
+
+Use this node to include other boards into the current board.
+
+The `include` node acts as a sort of instant board-to-node converter: just
+give it the URL of a serialized board, and it will pretend as if that whole
+board is just one node.
+
+See [`include` node
+reference](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/nodes.md#include)
+for more information.
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `In` | `InputValues` |
+| `Out` | `Partial`<`Record`<`string`, `NodeValue`\>\> |
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `$ref` | `string` \| `GraphDescriptor` \| [`BreadboardCapability`](../modules.md#breadboardcapability) | the URL of the board to include, or a graph or a BreadboardCapability returned by e.g. lambda. |
+| `config` | [`OptionalIdConfiguration`](../modules.md#optionalidconfiguration) | optional configuration for the node. |
+
+#### Returns
+
+[`BreadboardNode`](../interfaces/BreadboardNode.md)<`InputValues` & { `$ref?`: `string` ; `args`: `InputValues` ; `board?`: [`BreadboardCapability`](../modules.md#breadboardcapability) ; `graph?`: `GraphDescriptor` ; `parent`: `NodeDescriptor` ; `path?`: `string` ; `slotted?`: [`BreadboardSlotSpec`](../modules.md#breadboardslotspec)  } & `In`, `Out`\>
+
+- a `Node` object that represents the placed node.
+
+#### Implementation of
+
+Breadboard.include
+
+#### Defined in
+
+[seeds/breadboard/src/board.ts:272](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/board.ts#L272)
 
 ___
 
 ### input
 
-▸ **input**<`In`, `Out`\>(`config?`): [`Node`](Node.md)<`In`, `Out`\>
+▸ **input**<`In`, `Out`\>(`config?`): [`BreadboardNode`](../interfaces/BreadboardNode.md)<`In`, `Out`\>
 
 Places an `input` node on the board.
 
@@ -413,13 +645,115 @@ See [`input` node reference](https://github.com/google/labs-prototypes/blob/main
 
 #### Returns
 
-[`Node`](Node.md)<`In`, `Out`\>
+[`BreadboardNode`](../interfaces/BreadboardNode.md)<`In`, `Out`\>
+
+- a `Node` object that represents the placed node.
+
+#### Implementation of
+
+Breadboard.input
+
+#### Defined in
+
+[seeds/breadboard/src/board.ts:87](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/board.ts#L87)
+
+___
+
+### invoke
+
+▸ **invoke**<`In`, `Out`\>(`config?`): [`BreadboardNode`](../interfaces/BreadboardNode.md)<`InputValues` & { `$ref?`: `string` ; `args`: `InputValues` ; `board?`: [`BreadboardCapability`](../modules.md#breadboardcapability) ; `graph?`: `GraphDescriptor` ; `parent`: `NodeDescriptor` ; `path?`: `string` ; `slotted?`: [`BreadboardSlotSpec`](../modules.md#breadboardslotspec)  } & `In`, `Out`\>
+
+Places an `invoke` node on the board.
+
+Use this node to invoke other boards into the current board.
+
+See [`include` node
+reference](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/nodes.md#include)
+for more information.
+
+Expects as input one of
+ - `path`: A board to be loaded
+ - `graph`: A graph (treated as JSON)
+ - `board`: A {BreadboardCapability}, e.g. from lambda or import
+
+All other inputs are passed to the invoked board,
+and the output are the invoked board's outputs.
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `In` | `InputValues` |
+| `Out` | `Partial`<`Record`<`string`, `NodeValue`\>\> |
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `config` | `string` \| [`ConfigOrLambda`](../modules.md#configorlambda)<`In`, `Out`\> | optional configuration for the node. |
+
+#### Returns
+
+[`BreadboardNode`](../interfaces/BreadboardNode.md)<`InputValues` & { `$ref?`: `string` ; `args`: `InputValues` ; `board?`: [`BreadboardCapability`](../modules.md#breadboardcapability) ; `graph?`: `GraphDescriptor` ; `parent`: `NodeDescriptor` ; `path?`: `string` ; `slotted?`: [`BreadboardSlotSpec`](../modules.md#breadboardslotspec)  } & `In`, `Out`\>
 
 - a `Node` object that represents the placed node.
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:305](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L305)
+[seeds/breadboard/src/board.ts:244](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/board.ts#L244)
+
+___
+
+### lambda
+
+▸ **lambda**<`In`, `InL`, `OutL`\>(`boardOrFunction`, `config?`): [`BreadboardNode`](../interfaces/BreadboardNode.md)<`In`, `LambdaNodeOutputs`\>
+
+Place a `lambda` node on the board.
+
+It is a node that represents a subgraph of nodes. It can be passed to
+`invoke` or nodes like `map` (defined in another kit) that invoke boards.
+
+Input wires are made available as input values to the lambda board.
+
+`board` is the only output and represents a BoardCapability that invoke and
+others consume.
+
+You can either pass a `Board` or a Javascript function to this method. The
+JS function is called with a `board` to add things to, and for convenience,
+input and output nodes attached to the board.
+
+Example: board.lambda((board, input, output) => { input.wire( "item->item",
+kit.someNode().wire( "value->value", output));
+});
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `In` | `In` |
+| `InL` | `InL` |
+| `OutL` | `Partial`<`Record`<`string`, `NodeValue`\>\> |
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `boardOrFunction` | `BreadboardRunner` \| [`LambdaFunction`](../modules.md#lambdafunction)<`InL`, `OutL`\> | A board or a function that builds the board |
+| `config` | [`OptionalIdConfiguration`](../modules.md#optionalidconfiguration) | optional configuration for the node. |
+
+#### Returns
+
+[`BreadboardNode`](../interfaces/BreadboardNode.md)<`In`, `LambdaNodeOutputs`\>
+
+- a `Node` object that represents the placed node.
+
+#### Implementation of
+
+Breadboard.lambda
+
+#### Defined in
+
+[seeds/breadboard/src/board.ts:134](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/board.ts#L134)
 
 ___
 
@@ -440,48 +774,7 @@ This is useful for visualizing the board.
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:489](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L489)
-
-___
-
-### node
-
-▸ **node**<`In`, `Out`\>(`handler`, `config?`): [`BreadboardNode`](../interfaces/BreadboardNode.md)<`In`, `Out`\>
-
-This method is a work in progress. Once finished, it will allow
-placing a `node` node on the board.
-
-This node can be used to add your own JS functions to the board.
-If you can't find the node in a kit that suits your needs, this might
-be a good fit.
-
-Downside: it makes your board non-portable. The serialized JSON of the
-board will **not** contain the code of the function, which means that
-your friends and colleagues won't be able to re-use it.
-
-#### Type parameters
-
-| Name | Type |
-| :------ | :------ |
-| `In` | `InputValues` |
-| `Out` | `Partial`<`Record`<`string`, `NodeValue`\>\> |
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `handler` | `NodeHandler` | the function that will be called when the node is visited. It must take an object with input values and return an object with output values. The function can be sync or async. For example: ```js const board = new Board(); board .input() .wire( "say->", board .node(({ say }) => ({ say: `I said: ${say}` })) .wire("say->", board.output()) ); ``` |
-| `config` | [`OptionalIdConfiguration`](../modules.md#optionalidconfiguration) | optional configuration for the node. |
-
-#### Returns
-
-[`BreadboardNode`](../interfaces/BreadboardNode.md)<`In`, `Out`\>
-
-- a `Node` object that represents the placed node.
-
-#### Defined in
-
-[seeds/breadboard/src/board.ts:427](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L427)
+[seeds/breadboard/src/board.ts:423](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/board.ts#L423)
 
 ___
 
@@ -514,9 +807,13 @@ See [`output` node reference](https://github.com/google/labs-prototypes/blob/mai
 
 - a `Node` object that represents the placed node.
 
+#### Implementation of
+
+Breadboard.output
+
 #### Defined in
 
-[seeds/breadboard/src/board.ts:322](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L322)
+[seeds/breadboard/src/board.ts:104](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/board.ts#L104)
 
 ___
 
@@ -551,9 +848,13 @@ See [`passthrough` node reference](https://github.com/google/labs-prototypes/blo
 
 - a `Node` object that represents the placed node.
 
+#### Implementation of
+
+Breadboard.passthrough
+
 #### Defined in
 
-[seeds/breadboard/src/board.ts:288](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L288)
+[seeds/breadboard/src/board.ts:70](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/board.ts#L70)
 
 ___
 
@@ -581,9 +882,13 @@ See [`reflect` node reference](https://github.com/google/labs-prototypes/blob/ma
 
 - a `Node` object that represents the placed node.
 
+#### Implementation of
+
+Breadboard.reflect
+
 #### Defined in
 
-[seeds/breadboard/src/board.ts:367](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L367)
+[seeds/breadboard/src/board.ts:302](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/board.ts#L302)
 
 ___
 
@@ -630,15 +935,23 @@ See [Chapter 8: Continuous runs](https://github.com/google/labs-prototypes/tree/
 
 `AsyncGenerator`<[`RunResult`](RunResult.md), `any`, `unknown`\>
 
+#### Implementation of
+
+Breadboard.run
+
+#### Inherited from
+
+[BoardRunner](BoardRunner.md).[run](BoardRunner.md#run)
+
 #### Defined in
 
-[seeds/breadboard/src/board.ts:138](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L138)
+[seeds/breadboard/src/runner.ts:118](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/runner.ts#L118)
 
 ___
 
 ### runOnce
 
-▸ **runOnce**(`inputs`, `probe?`, `slots?`): `Promise`<`Partial`<`Record`<`string`, `NodeValue`\>\>\>
+▸ **runOnce**(`inputs`, `context?`, `probe?`): `Promise`<`Partial`<`Record`<`string`, `NodeValue`\>\>\>
 
 A simplified version of `run` that runs the board until the board provides
 an output, and returns that output.
@@ -651,8 +964,8 @@ or the the outputs are only expected to be visited once.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `inputs` | `InputValues` | the input values to provide to the board. |
+| `context?` | [`NodeHandlerContext`](../interfaces/NodeHandlerContext.md) | - |
 | `probe?` | `EventTarget` | an optional probe. If provided, the board will dispatch events to it. See [Chapter 7: Probes](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-7-probes) of the Breadboard tutorial for more information. |
-| `slots?` | [`BreadboardSlotSpec`](../modules.md#breadboardslotspec) | an optional map of slotted graphs. See [Chapter 6: Boards with slots](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-6-boards-with-slots) of the Breadboard tutorial for more information. |
 
 #### Returns
 
@@ -660,9 +973,17 @@ or the the outputs are only expected to be visited once.
 
 - outputs provided by the board.
 
+#### Implementation of
+
+Breadboard.runOnce
+
+#### Inherited from
+
+[BoardRunner](BoardRunner.md).[runOnce](BoardRunner.md#runonce)
+
 #### Defined in
 
-[seeds/breadboard/src/board.ts:243](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L243)
+[seeds/breadboard/src/runner.ts:211](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/runner.ts#L211)
 
 ___
 
@@ -701,15 +1022,47 @@ See [`slot` node reference](https://github.com/google/labs-prototypes/blob/main/
 
 - a `Node` object that represents the placed node.
 
+#### Implementation of
+
+Breadboard.slot
+
 #### Defined in
 
-[seeds/breadboard/src/board.ts:390](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L390)
+[seeds/breadboard/src/board.ts:325](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/board.ts#L325)
+
+___
+
+### fromBreadboardCapability
+
+▸ `Static` **fromBreadboardCapability**(`board`): `Promise`<[`BoardRunner`](BoardRunner.md)\>
+
+Creates a runnable board from a BreadboardCapability,
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `board` | [`BreadboardCapability`](../modules.md#breadboardcapability) | {BreadboardCapability} A BreadboardCapability including a board |
+
+#### Returns
+
+`Promise`<[`BoardRunner`](BoardRunner.md)\>
+
+A runnable board.
+
+#### Inherited from
+
+[BoardRunner](BoardRunner.md).[fromBreadboardCapability](BoardRunner.md#frombreadboardcapability)
+
+#### Defined in
+
+[seeds/breadboard/src/runner.ts:317](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/runner.ts#L317)
 
 ___
 
 ### fromGraphDescriptor
 
-▸ `Static` **fromGraphDescriptor**(`graph`): `Promise`<[`Board`](Board.md)\>
+▸ `Static` **fromGraphDescriptor**(`graph`, `kits?`): `Promise`<[`BoardRunner`](BoardRunner.md)\>
 
 Creates a new board from JSON. If you have a serialized board, you can
 use this method to turn it into into a new Board instance.
@@ -719,22 +1072,53 @@ use this method to turn it into into a new Board instance.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `graph` | `GraphDescriptor` | the JSON representation of the board. |
+| `kits?` | `KitImportMap` | - |
 
 #### Returns
 
-`Promise`<[`Board`](Board.md)\>
+`Promise`<[`BoardRunner`](BoardRunner.md)\>
 
 - a new `Board` instance.
 
+#### Inherited from
+
+[BoardRunner](BoardRunner.md).[fromGraphDescriptor](BoardRunner.md#fromgraphdescriptor)
+
 #### Defined in
 
-[seeds/breadboard/src/board.ts:500](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L500)
+[seeds/breadboard/src/runner.ts:262](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/runner.ts#L262)
+
+___
+
+### handlersFromBoard
+
+▸ `Static` **handlersFromBoard**(`board`, `probe?`, `slots?`): `Promise`<`NodeHandlers`<[`NodeHandlerContext`](../interfaces/NodeHandlerContext.md)\>\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `board` | [`BoardRunner`](BoardRunner.md) |
+| `probe?` | `EventTarget` |
+| `slots?` | [`BreadboardSlotSpec`](../modules.md#breadboardslotspec) |
+
+#### Returns
+
+`Promise`<`NodeHandlers`<[`NodeHandlerContext`](../interfaces/NodeHandlerContext.md)\>\>
+
+#### Inherited from
+
+[BoardRunner](BoardRunner.md).[handlersFromBoard](BoardRunner.md#handlersfromboard)
+
+#### Defined in
+
+[seeds/breadboard/src/runner.ts:342](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/runner.ts#L342)
 
 ___
 
 ### load
 
-▸ `Static` **load**(`url`, `options?`): `Promise`<[`Board`](Board.md)\>
+▸ `Static` **load**(`url`, `options?`): `Promise`<[`BoardRunner`](BoardRunner.md)\>
 
 Loads a board from a URL or a file path.
 
@@ -745,14 +1129,20 @@ Loads a board from a URL or a file path.
 | `url` | `string` | the URL or a file path to the board. |
 | `options?` | `Object` | - |
 | `options.base?` | `string` | - |
+| `options.kits?` | `KitImportMap` | - |
+| `options.outerGraph?` | `GraphDescriptor` | - |
 | `options.slotted?` | [`BreadboardSlotSpec`](../modules.md#breadboardslotspec) | - |
 
 #### Returns
 
-`Promise`<[`Board`](Board.md)\>
+`Promise`<[`BoardRunner`](BoardRunner.md)\>
 
 - a new `Board` instance.
 
+#### Inherited from
+
+[BoardRunner](BoardRunner.md).[load](BoardRunner.md#load)
+
 #### Defined in
 
-[seeds/breadboard/src/board.ts:516](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/board.ts#L516)
+[seeds/breadboard/src/runner.ts:291](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/runner.ts#L291)

@@ -7,6 +7,7 @@
 import {
   InputValues,
   NodeHandlers,
+  NodeTypeIdentifier,
   OutputValues,
 } from "@google-labs/graph-runner";
 import type {
@@ -19,6 +20,7 @@ import generateText, {
   GenerateTextInputs,
   GenerateTextOutputs,
 } from "./nodes/generate-text.js";
+import embedText, { EmbedTextInputs } from "./nodes/embed-text.js";
 import xmlToJson, {
   XmlToJsonInputs,
   XmlToJsonOutputs,
@@ -49,6 +51,7 @@ const coreHandlers = {
   xmlToJson,
   promptTemplate,
   generateText,
+  embedText,
   runJavascript,
 };
 
@@ -56,7 +59,12 @@ const coreHandlers = {
  * Syntactic sugar around the `coreHandlers` library.
  */
 export class Starter implements Kit {
+  title = "LLM Starter Kit";
+  description =
+    "A kit that provides a few necessary components for wiring boards that use PaLM API.";
+  version = "0.0.1";
   url = "npm:@google-labs/llm-starter";
+
   #nodeFactory: NodeFactory;
   #handlers: NodeHandlers;
 
@@ -69,22 +77,27 @@ export class Starter implements Kit {
     this.#handlers = coreHandlers;
   }
 
+  #create<Inputs, Outputs>(
+    type: NodeTypeIdentifier,
+    config: OptionalIdConfiguration
+  ): BreadboardNode<Inputs, Outputs> {
+    const { $id, ...rest } = config;
+    return this.#nodeFactory.create(this, type, rest, $id);
+  }
+
   append<In = AppendInputs>(
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<In, AppendOutputs> {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create("append", { ...rest }, $id);
+    return this.#create("append", config);
   }
 
   promptTemplate<In = InputValues>(
-    template: string,
+    template?: string | undefined,
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<In & PromptTemplateInputs, PropmtTemplateOutputs> {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create(
+    return this.#create(
       "promptTemplate",
-      { template, ...rest },
-      $id
+      template ? { template, ...config } : config
     );
   }
 
@@ -92,63 +105,52 @@ export class Starter implements Kit {
     template: string,
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<In & UrlTemplateInputs, UrlTemplateOutputs> {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create("urlTemplate", { template, ...rest }, $id);
+    return this.#create("urlTemplate", { template, ...config });
   }
 
   runJavascript<In = InputValues, Out = RunJavascriptOutputs>(
     name: string,
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<In & RunJavascriptInputs, Out> {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create("runJavascript", { name, ...rest }, $id);
+    return this.#create("runJavascript", { name, ...config });
   }
 
   fetch(
     raw?: boolean,
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<FetchInputs, FetchOutputs> {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create("fetch", { raw, ...rest }, $id);
+    return this.#create("fetch", { raw, ...config });
   }
 
   jsonata<Out = OutputValues>(
     expression: string,
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<JsonataInputs, Out & JsonataOutputs> {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create("jsonata", { expression, ...rest }, $id);
+    return this.#create("jsonata", { expression, ...config });
   }
 
   xmlToJson(
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<XmlToJsonInputs, XmlToJsonOutputs> {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create("xmlToJson", { ...rest }, $id);
+    return this.#create("xmlToJson", config);
   }
 
   generateText(
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<GenerateTextInputs, GenerateTextOutputs> {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create("generateText", { ...rest }, $id);
+    return this.#create("generateText", config);
+  }
+
+  embedText(
+    config: OptionalIdConfiguration = {}
+  ): BreadboardNode<EmbedTextInputs, OutputValues> {
+    return this.#create("embedText", config);
   }
 
   secrets<Out = OutputValues>(
     keys: string[],
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<SecretInputs, Out> {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create("secrets", { keys, ...rest }, $id);
+    return this.#create("secrets", { keys, ...config });
   }
 }
-
-export type AppendNodeType = ReturnType<Starter["append"]>;
-export type TemplateNodeType = ReturnType<Starter["promptTemplate"]>;
-export type UrlTemplateNodeType = ReturnType<Starter["urlTemplate"]>;
-export type RunJavascriptNodeType = ReturnType<Starter["runJavascript"]>;
-export type FetchNodeType = ReturnType<Starter["fetch"]>;
-export type JsonataNodeType = ReturnType<Starter["jsonata"]>;
-export type XmlToJsonNodeType = ReturnType<Starter["xmlToJson"]>;
-export type GenerateTextNodeType = ReturnType<Starter["generateText"]>;
-export type SecretsNodeType = ReturnType<Starter["secrets"]>;

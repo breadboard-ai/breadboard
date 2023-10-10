@@ -15,9 +15,23 @@
 
 ## Table of contents
 
+### Properties
+
+- [id](BreadboardNode.md#id)
+
 ### Methods
 
 - [wire](BreadboardNode.md#wire)
+
+## Properties
+
+### id
+
+• `Readonly` **id**: `string`
+
+#### Defined in
+
+[seeds/breadboard/src/types.ts:286](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/types.ts#L286)
 
 ## Methods
 
@@ -51,4 +65,4 @@ Use this method to wire nodes together.
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:213](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/breadboard/src/types.ts#L213)
+[seeds/breadboard/src/types.ts:280](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/types.ts#L280)

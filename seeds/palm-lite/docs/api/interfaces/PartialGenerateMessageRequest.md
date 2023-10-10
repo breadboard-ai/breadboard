@@ -35,7 +35,7 @@ Omit.candidateCount
 
 #### Defined in
 
-[types.ts:103](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/types.ts#L103)
+[types.ts:103](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L103)
 
 ___
 
@@ -45,7 +45,7 @@ ___
 
 #### Defined in
 
-[chat.ts:15](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/chat.ts#L15)
+[chat.ts:15](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/chat.ts#L15)
 
 ___
 
@@ -61,7 +61,7 @@ Omit.temperature
 
 #### Defined in
 
-[types.ts:111](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/types.ts#L111)
+[types.ts:111](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L111)
 
 ___
 
@@ -77,7 +77,7 @@ Omit.topK
 
 #### Defined in
 
-[types.ts:115](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/types.ts#L115)
+[types.ts:115](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L115)
 
 ___
 
@@ -93,4 +93,4 @@ Omit.topP
 
 #### Defined in
 
-[types.ts:119](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/types.ts#L119)
+[types.ts:119](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L119)

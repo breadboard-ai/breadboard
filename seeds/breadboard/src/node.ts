@@ -9,8 +9,15 @@ import type {
   NodeConfiguration,
   NodeDescriptor,
   NodeTypeIdentifier,
+  InputValues,
+  OutputValues,
 } from "@google-labs/graph-runner";
-import { Breadboard, BreadboardNode } from "./types.js";
+import {
+  Kit,
+  Breadboard,
+  BreadboardNode,
+  NodeConfigurationConstructor,
+} from "./types.js";
 import { IdVendor } from "./id.js";
 
 export type PartialEdge = {
@@ -85,7 +92,7 @@ export const parseSpec = (spec: string): ParsedSpec => {
 
 const nodeIdVendor = new IdVendor();
 
-const hasValues = (configuration: NodeConfiguration) => {
+const hasValues = (configuration: NodeConfigurationConstructor) => {
   return Object.values(configuration).filter(Boolean).length > 0;
 };
 
@@ -95,18 +102,35 @@ export class Node<Inputs, Outputs> implements BreadboardNode<Inputs, Outputs> {
 
   constructor(
     breadboard: Breadboard,
+    kit: Kit | undefined,
     type: NodeTypeIdentifier,
-    configuration?: NodeConfiguration,
+    configuration?: NodeConfigurationConstructor,
     id?: string
   ) {
-    this.#breadboard = breadboard;
+    this.#breadboard = breadboard.currentBoardToAddTo();
     this.#descriptor = {
-      id: id ?? nodeIdVendor.vendId(breadboard, type),
+      id: id ?? nodeIdVendor.vendId(this.#breadboard, type),
       type,
     };
 
-    if (configuration && hasValues(configuration))
-      this.#descriptor.configuration = configuration;
+    if (configuration && hasValues(configuration)) {
+      // For convenience we allow passing nodes as configuration, which are
+      // instead turned into constant incoming wires behind the scenes.
+      const incomingWiresToAdd = Object.entries(configuration).filter(
+        ([_, value]) => value instanceof Node
+      ) as unknown as [string, Node<InputValues, OutputValues>][];
+      for (const [wire, from] of incomingWiresToAdd) {
+        delete configuration[wire];
+        if (wire.indexOf("->") !== -1)
+          throw Error("Cannot pass output wire in confdig");
+        this.wire(wire.indexOf("<-") === -1 ? `${wire}<-.` : wire, from);
+      }
+
+      this.#descriptor.configuration = configuration as NodeConfiguration;
+    }
+
+    if (kit?.url && !this.#breadboard.kits.find((k) => k.url === kit.url))
+      this.#breadboard.kits.push(kit);
 
     this.#breadboard.addNode(this.#descriptor);
   }
@@ -116,16 +140,33 @@ export class Node<Inputs, Outputs> implements BreadboardNode<Inputs, Outputs> {
     to: BreadboardNode<ToInputs, ToOutputs>
   ): BreadboardNode<Inputs, Outputs> {
     const { ltr, edge } = parseSpec(spec);
-    const toNode = to as Node<ToInputs, ToOutputs>;
-    if (this.#breadboard !== toNode.#breadboard) {
-      throw new Error("Cannot wire nodes from different boards.");
-    }
+
+    const [fromNode, toNode] = ltr
+      ? [this, to as Node<ToInputs, ToOutputs>]
+      : [to as Node<ToInputs, ToOutputs>, this];
     const result: Edge = {
-      from: ltr ? this.#descriptor.id : toNode.#descriptor.id,
-      to: ltr ? toNode.#descriptor.id : this.#descriptor.id,
+      from: fromNode.#descriptor.id,
+      to: toNode.#descriptor.id,
       ...edge,
     };
-    this.#breadboard.addEdge(result);
+
+    if (fromNode.#breadboard !== toNode.#breadboard) {
+      // Note edge on the target board, which is the only currently supported
+      // version. Board.lambda() will use this to create a constant wire from
+      // the input node to this node, and from fromNode to the lambda node in
+      // the parent context, recursively if necessary.
+      toNode.#breadboard.addEdgeAcrossBoards(
+        result,
+        fromNode.#breadboard,
+        toNode.#breadboard
+      );
+    } else {
+      this.#breadboard.addEdge(result);
+    }
     return this;
+  }
+
+  get id() {
+    return this.#descriptor.id;
   }
 }

@@ -22,7 +22,7 @@ Optional. The author of this Message. This serves as a key for tagging the conte
 
 #### Defined in
 
-[types.ts:207](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/types.ts#L207)
+[types.ts:207](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L207)
 
 ___
 
@@ -34,7 +34,7 @@ Output only. Citation information for model-generated `content` in this `Message
 
 #### Defined in
 
-[types.ts:211](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/types.ts#L211)
+[types.ts:211](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L211)
 
 ___
 
@@ -46,4 +46,4 @@ Required. The text content of the structured `Message`.
 
 #### Defined in
 
-[types.ts:215](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/types.ts#L215)
+[types.ts:215](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L215)

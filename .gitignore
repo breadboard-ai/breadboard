@@ -112,5 +112,10 @@ dist
 .turbo
 .DS_Store
 
+
 */__pycache__/
 *.py[cod]
+
+.firebase/
+.firebaserc
+

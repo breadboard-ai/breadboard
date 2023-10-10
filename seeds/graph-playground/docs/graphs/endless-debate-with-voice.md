@@ -11,29 +11,33 @@ rememberFriedrich["append <br> id='rememberFriedrich'"] -- "accumulator->accumul
 rememberAlbert["append <br> id='rememberAlbert'"] -- "accumulator->context" --> promptTemplate2["promptTemplate <br> id='promptTemplate-2'"]
 generateText3["generateText <br> id='generateText-3'"] -- "completion->Albert" --> rememberAlbert["append <br> id='rememberAlbert'"]
 secrets1("secrets <br> id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o generateText4["generateText <br> id='generateText-4'"]
-generateText4["generateText <br> id='generateText-4'"] -- "completion->text" --> output5{{"output <br> id='output-5'"}}:::output
+generateText4["generateText <br> id='generateText-4'"] -- "completion->text" --> albertSays{{"output <br> id='albertSays'"}}:::output
 albertvoice["promptTemplate <br> id='albert-voice'"] -- "prompt->text" --> generateText4["generateText <br> id='generateText-4'"]
 generateText3["generateText <br> id='generateText-3'"] -- "completion->context" --> albertvoice["promptTemplate <br> id='albert-voice'"]
 secrets1("secrets <br> id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o generateText3["generateText <br> id='generateText-3'"]
 albert["promptTemplate <br> id='albert'"] -- "prompt->text" --> generateText3["generateText <br> id='generateText-3'"]
 rememberFriedrich["append <br> id='rememberFriedrich'"] -- "accumulator->context" --> albert["promptTemplate <br> id='albert'"]
-generateText6["generateText <br> id='generateText-6'"] -- "completion->Friedrich" --> rememberFriedrich["append <br> id='rememberFriedrich'"]
-secrets1("secrets <br> id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o generateText7["generateText <br> id='generateText-7'"]
-generateText7["generateText <br> id='generateText-7'"] -- "completion->text" --> output8{{"output <br> id='output-8'"}}:::output
-friedrichvoice["promptTemplate <br> id='friedrich-voice'"] -- "prompt->text" --> generateText7["generateText <br> id='generateText-7'"]
-generateText6["generateText <br> id='generateText-6'"] -- "completion->context" --> friedrichvoice["promptTemplate <br> id='friedrich-voice'"]
+generateText5["generateText <br> id='generateText-5'"] -- "completion->Friedrich" --> rememberFriedrich["append <br> id='rememberFriedrich'"]
 secrets1("secrets <br> id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o generateText6["generateText <br> id='generateText-6'"]
-promptTemplate2["promptTemplate <br> id='promptTemplate-2'"] -- "prompt->text" --> generateText6["generateText <br> id='generateText-6'"]
+generateText6["generateText <br> id='generateText-6'"] -- "completion->text" --> friedrichSays{{"output <br> id='friedrichSays'"}}:::output
+friedrichvoice["promptTemplate <br> id='friedrich-voice'"] -- "prompt->text" --> generateText6["generateText <br> id='generateText-6'"]
+generateText5["generateText <br> id='generateText-5'"] -- "completion->context" --> friedrichvoice["promptTemplate <br> id='friedrich-voice'"]
+secrets1("secrets <br> id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o generateText5["generateText <br> id='generateText-5'"]
+promptTemplate2["promptTemplate <br> id='promptTemplate-2'"] -- "prompt->text" --> generateText5["generateText <br> id='generateText-5'"]
 rememberQuestion["append <br> id='rememberQuestion'"] -- "accumulator->context" --> albert["promptTemplate <br> id='albert'"]
-input9[/"input <br> id='input-9'"/]:::input -- "text->topic" --> rememberQuestion["append <br> id='rememberQuestion'"]
+input7[/"input <br> id='input-7'"/]:::input -- "text->topic" --> rememberQuestion["append <br> id='rememberQuestion'"]
 keyssecrets1[keys]:::config -- "keys->keys" --o secrets1
 templatepromptTemplate2[template]:::config -- "template->template" --o promptTemplate2
 templatealbert[template]:::config -- "template->template" --o albert
-stopsequencesgenerateText3[stop-sequences]:::config -- "stop-sequences->stop-sequences" --o generateText3
+stopSequencesgenerateText3[stopSequences]:::config -- "stopSequences->stopSequences" --o generateText3
+safetySettingsgenerateText3[safetySettings]:::config -- "safetySettings->safetySettings" --o generateText3
 templatealbertvoice[template]:::config -- "template->template" --o albertvoice
-stopsequencesgenerateText6[stop-sequences]:::config -- "stop-sequences->stop-sequences" --o generateText6
+schemaalbertSays[schema]:::config -- "schema->schema" --o albertSays
+stopSequencesgenerateText5[stopSequences]:::config -- "stopSequences->stopSequences" --o generateText5
+safetySettingsgenerateText5[safetySettings]:::config -- "safetySettings->safetySettings" --o generateText5
 templatefriedrichvoice[template]:::config -- "template->template" --o friedrichvoice
-schemainput9[schema]:::config -- "schema->schema" --o input9
+schemafriedrichSays[schema]:::config -- "schema->schema" --o friedrichSays
+schemainput7[schema]:::config -- "schema->schema" --o input7
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

@@ -59,7 +59,7 @@ Enum of valid categories in `SafetySetting` object.
 
 #### Defined in
 
-[text.ts:17](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/text.ts#L17)
+[text.ts:17](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/text.ts#L17)
 
 ___
 
@@ -71,7 +71,7 @@ Enum of valid thresholds in `SafetySetting` object.
 
 #### Defined in
 
-[text.ts:21](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/text.ts#L21)
+[text.ts:21](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/text.ts#L21)
 
 ## Functions
 
@@ -109,4 +109,4 @@ Returns an object that lets you make `message`, `text`, and `embedding` request 
 
 #### Defined in
 
-[index.ts:118](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/index.ts#L118)
+[index.ts:118](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/index.ts#L118)

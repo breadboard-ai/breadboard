@@ -38,7 +38,7 @@ Omit.candidateCount
 
 #### Defined in
 
-[types.ts:143](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/types.ts#L143)
+[types.ts:143](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L143)
 
 ___
 
@@ -54,7 +54,7 @@ Omit.maxOutputTokens
 
 #### Defined in
 
-[types.ts:147](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/types.ts#L147)
+[types.ts:147](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L147)
 
 ___
 
@@ -64,7 +64,7 @@ ___
 
 #### Defined in
 
-[text.ts:29](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/text.ts#L29)
+[text.ts:29](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/text.ts#L29)
 
 ___
 
@@ -80,7 +80,7 @@ Omit.safetySettings
 
 #### Defined in
 
-[types.ts:155](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/types.ts#L155)
+[types.ts:155](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L155)
 
 ___
 
@@ -96,7 +96,7 @@ Omit.stopSequences
 
 #### Defined in
 
-[types.ts:159](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/types.ts#L159)
+[types.ts:159](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L159)
 
 ___
 
@@ -112,7 +112,7 @@ Omit.temperature
 
 #### Defined in
 
-[types.ts:163](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/types.ts#L163)
+[types.ts:163](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L163)
 
 ___
 
@@ -128,7 +128,7 @@ Omit.topK
 
 #### Defined in
 
-[types.ts:167](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/types.ts#L167)
+[types.ts:167](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L167)
 
 ___
 
@@ -144,4 +144,4 @@ Omit.topP
 
 #### Defined in
 
-[types.ts:171](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/types.ts#L171)
+[types.ts:171](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L171)

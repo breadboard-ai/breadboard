@@ -20,4 +20,4 @@ Required. The prompt, whose token count is to be returned.
 
 #### Defined in
 
-[types.ts:51](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/types.ts#L51)
+[types.ts:51](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L51)

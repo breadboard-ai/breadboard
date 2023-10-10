@@ -17,7 +17,7 @@ import {
   PrincipalLattice,
 } from "@google-labs/graph-integrity";
 
-import { ReActHelper } from "./react.js";
+// import { ReActHelper } from "./react.js";
 import { pathToFileURL } from "url";
 
 // buffer for input from an external source.
@@ -125,7 +125,8 @@ async function main(args: string[], use_input_handler = false) {
       );
     }
     if (detail.descriptor.type !== "generateText") return;
-    const value = (detail?.outputs?.completion as string) || "empty response";
+    const outputs = detail.outputs as OutputValues;
+    const value = (outputs.completion as string) || "empty response";
     note(wrap(value), "text completion");
   });
 
@@ -134,7 +135,9 @@ async function main(args: string[], use_input_handler = false) {
   // Load the board, specified in the command line.
   const board = await Board.load(graph, { base });
   // Add a custom kit.
-  board.addKit(ReActHelper);
+  // NOTE: Currently disabled, since we removed the ability to load kits
+  // into loaded boards for now.
+  // board.addKit(ReActHelper);
 
   if (validateIntegrity) {
     const lattice = new PrincipalLattice();
@@ -144,17 +147,46 @@ async function main(args: string[], use_input_handler = false) {
     lattice.insert(possiblePromptInjection, lattice.TRUSTED, lattice.UNTRUSTED);
     lattice.insert(noPromptInjection, lattice.TRUSTED, possiblePromptInjection);
 
+    const palmApiKey = new Principal("palmApiKey");
+    lattice.insert(palmApiKey, lattice.PUBLIC, lattice.PRIVATE);
+
     const policy = {
       fetch: {
         outgoing: {
+          // Flag the fetch node as trusted to not inject prompts.
+          // (Technically UNTRUSTED, but we use this label for legibility)
           response: new Label({ integrity: possiblePromptInjection }),
         },
       },
       runJavascript: {
         incoming: {
+          // Require inputs to runJavascript to not be tainted by prompt
+          // injection.
           code: new Label({ integrity: noPromptInjection }),
           name: new Label({ integrity: noPromptInjection }),
         },
+      },
+      secrets: {
+        outgoing: {
+          // Mark API keys as confidential
+          PALM_KEY: new Label({ confidentiality: palmApiKey }),
+        },
+      },
+      generateText: {
+        incoming: {
+          // generateText is trusted to declassify the API key
+          PALM_KEY: new Label({ confidentiality: palmApiKey }),
+        },
+      },
+      embedText: {
+        incoming: {
+          // embedText is trusted to declassify the API key
+          PALM_KEY: new Label({ confidentiality: palmApiKey }),
+        },
+      },
+      output: {
+        // Output is considered releasing the data to the public.
+        node: new Label({ confidentiality: lattice.PUBLIC }),
       },
     } as GraphIntegrityPolicy;
 
@@ -176,8 +208,15 @@ async function main(args: string[], use_input_handler = false) {
 
     outro("Awesome work! Let's do this again sometime.");
   } catch (e) {
-    console.log(e);
-    if (e instanceof Error) log.error(e.message);
+    if (e instanceof Error) {
+      let error: Error = e;
+      let message = error.message;
+      while (error?.cause) {
+        error = (error.cause as { error: Error }).error;
+        message += `\n${error.message}`;
+      }
+      log.error(message);
+    }
     outro("Oh no! Something went wrong.");
   }
 }

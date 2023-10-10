@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Label } from "./label.js";
+import type { Label, Principal } from "./label.js";
 
 /**
  * Describing a graph as a list of nodes and edges.
@@ -15,6 +15,7 @@ export interface Edge {
   to: Node;
   fromConstraint?: Label;
   toConstraint?: Label;
+  declassifies?: Principal;
 }
 
 export enum NodeRoles {

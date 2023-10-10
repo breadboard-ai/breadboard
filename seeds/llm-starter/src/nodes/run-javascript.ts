@@ -10,12 +10,23 @@ import type { InputValues } from "@google-labs/graph-runner";
 const stripCodeBlock = (code: string) =>
   code.replace(/(?:```(?:js|javascript)?\n+)(.*)(?:\n+```)/gms, "$1");
 
+// Copied from "secrets.ts".
+// TODO: Clean this up, this feels like a util of some sort.
+type Environment = "node" | "browser" | "worker";
+
+const environment = (): Environment =>
+  typeof globalThis.process !== "undefined"
+    ? "node"
+    : typeof globalThis.window !== "undefined"
+    ? "browser"
+    : "worker";
+
 const runInNode = async (
   code: string,
   functionName: string,
   args: string
 ): Promise<string> => {
-  const vm = await import("node:vm");
+  const vm = await import(/*@vite-ignore*/ "node:vm");
   const codeToRun = `${code}\n${functionName}(${args});`;
   const context = vm.createContext({ console });
   const script = new vm.Script(codeToRun);
@@ -29,7 +40,7 @@ const runInBrowser = async (
   args: string
 ): Promise<string> => {
   const runner = (code: string, functionName: string) => {
-    return `${code}\nself.onmessage = () => self.postMessage(JSON.stringify(${functionName}({${args}})))`;
+    return `${code}\nself.onmessage = () => self.postMessage(JSON.stringify(${functionName}(${args})))`;
   };
 
   const blob = new Blob([runner(code, functionName)], {
@@ -37,11 +48,11 @@ const runInBrowser = async (
   });
 
   const worker = new Worker(URL.createObjectURL(blob));
-  const result = new Promise((resolve) => {
+  const result = new Promise<string>((resolve) => {
     worker.onmessage = (e) => resolve(e.data);
   });
   worker.postMessage("please");
-  return String(result);
+  return result;
 };
 
 export type RunJavascriptOutputs = Record<string, unknown> & {
@@ -62,8 +73,10 @@ export default async (inputs: InputValues) => {
   // the appropriate method to run the code.
   const functionName = name || "run";
   const argsString = JSON.stringify(args);
+  const env = environment();
+
   const result = JSON.parse(
-    typeof window === "undefined"
+    env === "node"
       ? await runInNode(clean, functionName, argsString)
       : await runInBrowser(clean, functionName, argsString)
   );

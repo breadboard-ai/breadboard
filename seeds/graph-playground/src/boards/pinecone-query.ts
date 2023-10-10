@@ -6,17 +6,15 @@
 
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
-import { Nursery } from "@google-labs/node-nursery";
 import { Pinecone } from "@google-labs/pinecone-kit";
 
 const board = new Board({
   title: "Retrieval-augmented generation with Pinecone",
   description:
-    "This board implements the simples possible retrieval-augmented generation (RAG) system using Pinecone store. The store was generated with [pinecone-load](https://github.com/google/labs-prototypes/blob/main/seeds/graph-playground/graphs/pinecone-load.json).",
+    "This board implements the simplest possible retrieval-augmented generation (RAG) system using Pinecone store. The store was generated with [pinecone-load](https://github.com/google/labs-prototypes/blob/main/seeds/graph-playground/graphs/pinecone-load.json).",
   version: "0.0.1",
 });
 const starter = board.addKit(Starter);
-const nursery = board.addKit(Nursery);
 const pinecone = board.addKit(Pinecone);
 
 const template =
@@ -37,11 +35,23 @@ Otherwise, write a comprehensive answer to the question using only the informati
 `);
 
 board
-  .input({ $id: "query" })
+  .input({
+    $id: "query",
+    schema: {
+      type: "object",
+      properties: {
+        text: {
+          type: "string",
+          title: "Question",
+          description: "Ask small corpus a question",
+        },
+      },
+    },
+  })
   .wire(
     "text->",
-    nursery
-      .embedString()
+    starter
+      .embedText()
       .wire("<-PALM_KEY", starter.secrets(["PALM_KEY"]))
       .wire(
         "embedding->",

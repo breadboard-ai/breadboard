@@ -188,13 +188,7 @@
     },
     {
       "id": "parseCompletion-8",
-      "type": "parseCompletion",
-      "configuration": {
-        "args": [
-          "completion"
-        ],
-        "rest": {}
-      }
+      "type": "parseCompletion"
     },
     {
       "id": "output-9",

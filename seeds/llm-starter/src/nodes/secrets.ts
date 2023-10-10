@@ -11,22 +11,45 @@
 
 import type { InputValues, OutputValues } from "@google-labs/graph-runner";
 
-type Environment = "node" | "browser";
+type Environment = "node" | "browser" | "worker";
+
+const environment = (): Environment =>
+  typeof globalThis.process !== "undefined"
+    ? "node"
+    : typeof globalThis.window !== "undefined"
+    ? "browser"
+    : "worker";
 
 export type SecretInputs = {
   keys: string[];
 };
 
-const environment = (): Environment =>
-  typeof window !== "undefined" ? "browser" : "node";
+export type SecretWorkerResponse = {
+  type: "secret";
+  data: string;
+};
 
-const getEnvironmentValue = (key: string) => {
+const getEnvironmentValue = async (key: string) => {
   const env = environment();
   if (env === "node") {
     return process.env[key];
   } else if (env === "browser") {
     // How do we avoid namespace clashes?
     return globalThis.localStorage.getItem(key);
+  } else if (env === "worker") {
+    // TODO: Calling main thread is a general pattern, figure out a way to
+    // avoid a special call here. Maybe some Board util?
+    return new Promise<string>((resolve) => {
+      self.postMessage({
+        type: "secret",
+        data: key,
+      });
+      self.addEventListener("message", (e) => {
+        const reply = e.data as SecretWorkerResponse;
+        if (!reply.type || reply.type != "secret") return;
+        resolve(reply.data);
+      });
+    });
   }
 };
 
@@ -41,6 +64,11 @@ export const requireNonEmpty = (key: string, value?: string | null) => {
 export default async (inputs: InputValues) => {
   const { keys = [] } = inputs as SecretInputs;
   return Object.fromEntries(
-    keys.map((key) => [key, requireNonEmpty(key, getEnvironmentValue(key))])
+    await Promise.all(
+      keys.map(async (key) => [
+        key,
+        requireNonEmpty(key, await getEnvironmentValue(key)),
+      ])
+    )
   ) as OutputValues;
 };

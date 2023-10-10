@@ -11,7 +11,7 @@ jsonata5["jsonata <br> id='jsonata-5'"] -- "result->context" --> summarizingtemp
 fetch4["fetch <br> id='fetch-4'"] -- "response->json" --> jsonata5["jsonata <br> id='jsonata-5'"]
 urlTemplate3["urlTemplate <br> id='urlTemplate-3'"] -- "url->url" --> fetch4["fetch <br> id='fetch-4'"]
 secrets6("secrets <br> id='secrets-6'"):::secrets -- "PALM_KEY->PALM_KEY" --> generateText1["generateText <br> id='generateText-1'"]
-secrets6("secrets <br> id='secrets-6'"):::secrets -- "PALM_KEY->PALM_KEY" --> urlTemplate3["urlTemplate <br> id='urlTemplate-3'"]
+secrets6("secrets <br> id='secrets-6'"):::secrets -- "API_KEY->API_KEY" --> urlTemplate3["urlTemplate <br> id='urlTemplate-3'"]
 secrets6("secrets <br> id='secrets-6'"):::secrets -- "GOOGLE_CSE_ID->GOOGLE_CSE_ID" --> urlTemplate3["urlTemplate <br> id='urlTemplate-3'"]
 input[/"input <br> id='input'"/]:::input -- "text->question" --> summarizingtemplate["promptTemplate <br> id='summarizing-template'"]
 input[/"input <br> id='input'"/]:::input -- "text->query" --> urlTemplate3["urlTemplate <br> id='urlTemplate-3'"]

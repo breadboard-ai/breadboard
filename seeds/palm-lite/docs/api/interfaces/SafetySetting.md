@@ -21,7 +21,7 @@ Required. The category for this setting.
 
 #### Defined in
 
-[types.ts:323](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/types.ts#L323)
+[types.ts:323](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L323)
 
 ___
 
@@ -33,4 +33,4 @@ Required. Controls the probability threshold at which harm is blocked.
 
 #### Defined in
 
-[types.ts:334](https://github.com/Chizobaonorh/labs-prototypes/blob/220f97e/seeds/palm-lite/src/types.ts#L334)
+[types.ts:334](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L334)

@@ -7,67 +7,30 @@
 import type {
   Edge,
   NodeDescriptor,
-  NodeHandlers,
   InputValues,
   GraphDescriptor,
   OutputValues,
-  NodeHandler,
-  GraphMetadata,
-  SubGraphs,
 } from "@google-labs/graph-runner";
 
-import {
-  type Breadboard,
-  type BreadboardSlotSpec,
-  type Kit,
-  type KitConstructor,
-  type OptionalIdConfiguration,
-  type BreadboardValidator,
-  ProbeDetails,
+import type {
+  Breadboard,
+  BreadboardRunner,
+  Kit,
+  KitConstructor,
+  OptionalIdConfiguration,
+  ConfigOrLambda,
+  LambdaFunction,
   BreadboardNode,
+  LambdaNodeOutputs,
   ReflectNodeOutputs,
   IncludeNodeInputs,
   SlotNodeInputs,
+  BreadboardCapability,
 } from "./types.js";
 
-import { TraversalMachine, toMermaid } from "@google-labs/graph-runner";
+import { BoardRunner } from "./runner.js";
+import { toMermaid } from "@google-labs/graph-runner";
 import { Node } from "./node.js";
-import { Core } from "./core.js";
-import {
-  BeforeHandlerStageResult,
-  InputStageResult,
-  OutputStageResult,
-  RunResult,
-} from "./run.js";
-import { KitLoader } from "./kit.js";
-import { IdVendor } from "./id.js";
-import { BoardLoader } from "./loader.js";
-import { runRemote } from "./remote.js";
-
-class ProbeEvent extends CustomEvent<ProbeDetails> {
-  constructor(type: string, detail: ProbeDetails) {
-    super(type, { detail, cancelable: true });
-  }
-}
-
-const nodeTypeVendor = new IdVendor();
-
-class LocalKit implements Kit {
-  /**
-   * The "." signifies local.
-   */
-  url = ".";
-
-  #handlers: NodeHandlers = {};
-
-  addHandler(type: string, handler: NodeHandler) {
-    this.#handlers[type] = handler;
-  }
-
-  get handlers() {
-    return this.#handlers;
-  }
-}
 
 /**
  * This is the heart of the Breadboard library.
@@ -82,191 +45,10 @@ class LocalKit implements Kit {
  *
  * For more information on how to use Breadboard, start with [Chapter 1: Hello, world?](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-7-probes) of the tutorial.
  */
-export class Board implements Breadboard {
-  // GraphDescriptor implementation.
-  url?: string;
-  title?: string;
-  description?: string;
-  version?: string;
-  edges: Edge[] = [];
-  nodes: NodeDescriptor[] = [];
-  kits: Kit[] = [];
-  graphs?: SubGraphs;
-
-  #localKit?: LocalKit;
-  #slots: BreadboardSlotSpec = {};
-  #validators: BreadboardValidator[] = [];
-  /**
-   * The parent board, if this is board is a subgraph of a larger board.
-   */
-  #parent?: GraphDescriptor;
-
-  /**
-   *
-   * @param metadata - optional metadata for the board. Use this parameter
-   * to provide title, description, version, and URL for the board.
-   */
-  constructor(metadata?: GraphMetadata) {
-    const { url, title, description, version } = metadata || {};
-    Object.assign(this, { url, title, description, version });
-  }
-
-  /**
-   * Runs the board. This method is an async generator that
-   * yields the results of each stage of the run.
-   *
-   * Conceptually, when we ask the board to run, it will occasionally pause
-   * and give us a chance to interact with it.
-   *
-   * It's typically used like this:
-   *
-   * ```js
-   * for await (const stop of board.run()) {
-   * // do something with `stop`
-   * }
-   * ```
-   *
-   * The `stop` iterator result will be a `RunResult` and provide ability
-   * to influence running of the board.
-   *
-   * The two key use cases are providing input and receiving output.
-   *
-   * If `stop.type` is `input`, the board is waiting for input values.
-   * When that is the case, use `stop.inputs` to provide input values.
-   *
-   * If `stop.type` is `output`, the board is providing output values.
-   * When that is the case, use `stop.outputs` to receive output values.
-   *
-   * See [Chapter 8: Continuous runs](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-8-continuous-runs) of Breadboard tutorial for an example of how to use this method.
-   *
-   * @param probe - an optional probe. If provided, the board will dispatch
-   * events to it. See [Chapter 7: Probes](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-7-probes) of the Breadboard tutorial for more information.
-   * @param slots - an optional map of slotted graphs. See [Chapter 6: Boards with slots](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-6-boards-with-slots) of the Breadboard tutorial for more information.
-   */
-  async *run(
-    probe?: EventTarget,
-    slots?: BreadboardSlotSpec,
-    result?: RunResult
-  ): AsyncGenerator<RunResult> {
-    const handlers = await Board.handlersFromBoard(this, probe, slots);
-    this.#validators.forEach((validator) => validator.addGraph(this));
-
-    const machine = new TraversalMachine(this, result?.state);
-
-    for await (const result of machine) {
-      const { inputs, descriptor, missingInputs } = result;
-
-      if (result.skip) {
-        probe?.dispatchEvent(
-          new ProbeEvent("skip", { descriptor, inputs, missingInputs })
-        );
-        continue;
-      }
-
-      if (descriptor.type === "input") {
-        yield new InputStageResult(result);
-        probe?.dispatchEvent(
-          new ProbeEvent("input", {
-            descriptor,
-            inputs,
-            outputs: await result.outputsPromise,
-          })
-        );
-        continue;
-      }
-
-      if (descriptor.type === "output") {
-        probe?.dispatchEvent(new ProbeEvent("output", { descriptor, inputs }));
-        yield new OutputStageResult(result);
-        continue;
-      }
-
-      // The include and slot handlers require a reference to themselves to
-      // create subgraph validators at the right location in the graph.
-      if (["include", "slot"].includes(descriptor.type))
-        inputs["parent"] = descriptor;
-
-      const handler = handlers[descriptor.type];
-      if (!handler)
-        throw new Error(`No handler for node type "${descriptor.type}"`);
-
-      const beforehandlerDetail = {
-        descriptor,
-        inputs,
-        outputs: {},
-      };
-
-      yield new BeforeHandlerStageResult(result);
-
-      const shouldInvokeHandler =
-        !probe ||
-        probe.dispatchEvent(
-          new ProbeEvent("beforehandler", beforehandlerDetail)
-        );
-
-      const outputsPromise = (
-        shouldInvokeHandler
-          ? handler(inputs)
-          : Promise.resolve(beforehandlerDetail.outputs)
-      ) as Promise<OutputValues>;
-
-      outputsPromise.then((outputs) => {
-        probe?.dispatchEvent(
-          new ProbeEvent("node", {
-            descriptor,
-            inputs,
-            outputs,
-            validatorMetadata: this.#validators.map((validator) =>
-              validator.getValidatorMetadata(descriptor)
-            ),
-          })
-        );
-      });
-
-      result.outputsPromise = outputsPromise;
-    }
-  }
-
-  /**
-   * A simplified version of `run` that runs the board until the board provides
-   * an output, and returns that output.
-   *
-   * This is useful for running boards that don't have multiple outputs
-   * or the the outputs are only expected to be visited once.
-   *
-   * @param inputs - the input values to provide to the board.
-   * @param probe - an optional probe. If provided, the board will dispatch
-   * events to it. See [Chapter 7: Probes](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-7-probes) of the Breadboard tutorial for more information.
-   * @param slots - an optional map of slotted graphs. See [Chapter 6: Boards with slots](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-6-boards-with-slots) of the Breadboard tutorial for more information.
-   * @returns - outputs provided by the board.
-   */
-  async runOnce(
-    inputs: InputValues,
-    probe?: EventTarget,
-    slots?: BreadboardSlotSpec
-  ): Promise<OutputValues> {
-    let outputs: OutputValues = {};
-    for await (const result of this.run(probe, slots)) {
-      if (result.type === "input") {
-        result.inputs = inputs;
-      } else if (result.type === "output") {
-        outputs = result.outputs;
-        // Exit once we receive the first output.
-        break;
-      }
-    }
-    return outputs;
-  }
-
-  /**
-   * Add validator to the board.
-   * Will call .addGraph() on the validator before executing a graph.
-   *
-   * @param validator - a validator to add to the board.
-   */
-  addValidator(validator: BreadboardValidator) {
-    this.#validators.push(validator);
-  }
+export class Board extends BoardRunner implements Breadboard {
+  #closureStack: Board[] = [];
+  #topClosure: Board | undefined;
+  #acrossBoardsEdges: { edge: Edge; from: Board; to: Board }[] = [];
 
   /**
    * Core nodes. Breadboard won't function without these.
@@ -289,7 +71,7 @@ export class Board implements Breadboard {
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<In, Out> {
     const { $id, ...rest } = config;
-    return new Node(this, "passthrough", { ...rest }, $id);
+    return new Node(this, undefined, "passthrough", { ...rest }, $id);
   }
 
   /**
@@ -304,9 +86,9 @@ export class Board implements Breadboard {
    */
   input<In = InputValues, Out = OutputValues>(
     config: OptionalIdConfiguration = {}
-  ): Node<In, Out> {
+  ): BreadboardNode<In, Out> {
     const { $id, ...rest } = config;
-    return new Node(this, "input", { ...rest }, $id);
+    return new Node(this, undefined, "input", { ...rest }, $id);
   }
 
   /**
@@ -323,7 +105,150 @@ export class Board implements Breadboard {
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<In, Out> {
     const { $id, ...rest } = config;
-    return new Node(this, "output", { ...rest }, $id);
+    return new Node(this, undefined, "output", { ...rest }, $id);
+  }
+
+  /**
+   * Place a `lambda` node on the board.
+   *
+   * It is a node that represents a subgraph of nodes. It can be passed to
+   * `invoke` or nodes like `map` (defined in another kit) that invoke boards.
+   *
+   * Input wires are made available as input values to the lambda board.
+   *
+   * `board` is the only output and represents a BoardCapability that invoke and
+   * others consume.
+   *
+   * You can either pass a `Board` or a Javascript function to this method. The
+   * JS function is called with a `board` to add things to, and for convenience,
+   * input and output nodes attached to the board.
+   *
+   * Example: board.lambda((board, input, output) => { input.wire( "item->item",
+   * kit.someNode().wire( "value->value", output));
+   * });
+   *
+   * @param boardOrFunction A board or a function that builds the board
+   * @param config - optional configuration for the node.
+   * @returns - a `Node` object that represents the placed node.
+   */
+  lambda<In, InL extends In, OutL = OutputValues>(
+    boardOrFunction: LambdaFunction<InL, OutL> | BreadboardRunner,
+    config: OptionalIdConfiguration = {}
+  ): BreadboardNode<In, LambdaNodeOutputs> {
+    const { $id, ...rest } = config;
+
+    let board: Board;
+    let input: BreadboardNode<In, InL> | undefined;
+    if (typeof boardOrFunction === "function") {
+      board = new Board();
+      input = board.input<InL>();
+      const output = board.output<OutL>();
+
+      board.#topClosure = this.#topClosure ?? this;
+      board.#topClosure.#closureStack.push(board);
+
+      boardOrFunction(board, input, output);
+
+      board.#topClosure.#closureStack.pop();
+    } else {
+      board = boardOrFunction as Board;
+    }
+
+    const node = new Node(
+      this,
+      undefined,
+      "lambda",
+      {
+        board: { kind: "board", board } as BreadboardCapability,
+        ...rest,
+      },
+      $id
+    );
+
+    // Process edges that span lambdas. We have to turn this into two wires:
+    //  (1) From the input node in the child board to the destination node
+    //  (2) From the source node to this node. If the source node is in a
+    //      parent board, then instead ask parent to wire it up.
+    if (input && board.#acrossBoardsEdges.length > 0) {
+      for (const { edge, from, to } of board.#acrossBoardsEdges) {
+        if (to !== board || !edge.constant)
+          throw new Error(
+            "Across board wires: Must be constant and from parent to child"
+          );
+
+        // Hopefully unique enough name that doesn't class with other inputs
+        const label = `$l-${edge.to}-${edge.in}`;
+
+        board.addEdge({ ...edge, from: input.id, out: label });
+
+        const outerEdge = { ...edge, to: node.id, in: label };
+        if (from === this) {
+          this.addEdge(outerEdge);
+        } else {
+          this.addEdgeAcrossBoards(outerEdge, from, this);
+        }
+      }
+
+      // Clear the edges, as they are now added to the board itself.
+      // TODO: Add code in .run() to verify that all edges are consumed.
+      board.#acrossBoardsEdges = [];
+    }
+
+    return node;
+  }
+
+  /**
+   * Places an `import` node on the board.
+   *
+   * Use this node to import other boards into the current board.
+   * Outputs `board` as a BoardCapability, which can be passed to e.g. `invoke`.
+   *
+   * @param $ref - the URL of the board to include, or a graph.
+   * @param config - optional configuration for the node.
+   * @returns - a `Node` object that represents the placed node.
+   */
+  import<In = InputValues, Out = OutputValues>(
+    $ref: string | GraphDescriptor,
+    config: OptionalIdConfiguration = {}
+  ): BreadboardNode<IncludeNodeInputs & In, Out> {
+    const { $id, ...rest } = config;
+    return new Node(
+      this,
+      undefined,
+      "import",
+      typeof $ref === "string" ? { $ref, ...rest } : { graph: $ref, ...rest },
+      $id
+    );
+  }
+
+  /**
+   * Places an `invoke` node on the board.
+   *
+   * Use this node to invoke other boards into the current board.
+   *
+   * See [`include` node
+   * reference](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/nodes.md#include)
+   * for more information.
+   *
+   * Expects as input one of
+   *  - `path`: A board to be loaded
+   *  - `graph`: A graph (treated as JSON)
+   *  - `board`: A {BreadboardCapability}, e.g. from lambda or import
+   *
+   * All other inputs are passed to the invoked board,
+   * and the output are the invoked board's outputs.
+   *
+   * @param config - optional configuration for the node.
+   * @returns - a `Node` object that represents the placed node.
+   */
+  invoke<In = InputValues, Out = OutputValues>(
+    config: ConfigOrLambda<In, Out> | string = {}
+  ): BreadboardNode<IncludeNodeInputs & In, Out> {
+    const { $id, ...rest } =
+      typeof config === "string"
+        ? ({ path: config } as OptionalIdConfiguration)
+        : getConfigWithLambda(this, config);
+    return new Node(this, undefined, "invoke", rest, $id);
   }
 
   /**
@@ -331,25 +256,35 @@ export class Board implements Breadboard {
    *
    * Use this node to include other boards into the current board.
    *
-   * The `include` node acts as a sort of instant board-to-node converter:
-   * just give it the URL of a serialized board, and it will pretend as if
-   * that whole board is just one node.
+   * The `include` node acts as a sort of instant board-to-node converter: just
+   * give it the URL of a serialized board, and it will pretend as if that whole
+   * board is just one node.
    *
-   * See [`include` node reference](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/nodes.md#include) for more information.
+   * See [`include` node
+   * reference](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/nodes.md#include)
+   * for more information.
    *
-   * @param $ref - the URL of the board to include.
+   * @param $ref - the URL of the board to include, or a graph or a
+   *   BreadboardCapability returned by e.g. lambda.
    * @param config - optional configuration for the node.
    * @returns - a `Node` object that represents the placed node.
    */
   include<In = InputValues, Out = OutputValues>(
-    $ref: string | GraphDescriptor,
+    $ref: string | GraphDescriptor | BreadboardCapability,
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<IncludeNodeInputs & In, Out> {
     const { $id, ...rest } = config;
-    if (typeof $ref === "string") {
-      return new Node(this, "include", { $ref, ...rest }, $id);
-    }
-    return new Node(this, "include", { graph: $ref, ...rest }, $id);
+    return new Node(
+      this,
+      undefined,
+      "include",
+      typeof $ref === "string"
+        ? { $ref, ...rest }
+        : ($ref as BreadboardCapability).kind === "board"
+        ? { board: $ref, ...rest }
+        : { graph: $ref, ...rest },
+      $id
+    );
   }
 
   /**
@@ -368,7 +303,7 @@ export class Board implements Breadboard {
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<never, ReflectNodeOutputs> {
     const { $id, ...rest } = config;
-    return new Node(this, "reflect", { ...rest }, $id);
+    return new Node(this, undefined, "reflect", { ...rest }, $id);
   }
 
   /**
@@ -392,50 +327,7 @@ export class Board implements Breadboard {
     config: OptionalIdConfiguration = {}
   ): BreadboardNode<SlotNodeInputs & In, Out> {
     const { $id, ...rest } = config;
-    return new Node(this, "slot", { slot, ...rest }, $id);
-  }
-
-  /**
-   * This method is a work in progress. Once finished, it will allow
-   * placing a `node` node on the board.
-   *
-   * This node can be used to add your own JS functions to the board.
-   * If you can't find the node in a kit that suits your needs, this might
-   * be a good fit.
-   *
-   * Downside: it makes your board non-portable. The serialized JSON of the
-   * board will **not** contain the code of the function, which means that
-   * your friends and colleagues won't be able to re-use it.
-   *
-   * @param handler -- the function that will be called when the node is visited. It must take an object with input values and return an object with output values. The function can be sync or async. For example:
-   *
-   * ```js
-   * const board = new Board();
-   * board
-   *   .input()
-   *   .wire(
-   *     "say->",
-   *     board
-   *       .node(({ say }) => ({ say: `I said: ${say}` }))
-   *       .wire("say->", board.output())
-   *   );
-   * ```
-   *
-   * @param config -- optional configuration for the node.
-   * @returns - a `Node` object that represents the placed node.
-   */
-  node<In = InputValues, Out = OutputValues>(
-    handler: NodeHandler,
-    config: OptionalIdConfiguration = {}
-  ): BreadboardNode<In, Out> {
-    const { $id, ...rest } = config;
-    const type = nodeTypeVendor.vendId(this, "node");
-    if (!this.#localKit) {
-      this.#localKit = new LocalKit();
-      this.kits.push(this.#localKit);
-    }
-    this.#localKit.addHandler(type, handler);
-    return new Node(this, type, { ...rest }, $id);
+    return new Node(this, undefined, "slot", { slot, ...rest }, $id);
   }
 
   addEdge(edge: Edge) {
@@ -473,9 +365,51 @@ export class Board implements Breadboard {
       create: (...args) => {
         return new Node(this, ...args);
       },
+      getConfigWithLambda: <Inputs, Outputs>(
+        config: ConfigOrLambda<Inputs, Outputs>
+      ): OptionalIdConfiguration => {
+        return getConfigWithLambda(this, config);
+      },
     });
     this.kits.push(kit);
     return kit;
+  }
+
+  /**
+   * Used in the context of board.lambda(): Returns the board that is currently
+   * being constructed, according to the nesting level of board.lambda() calls
+   * with JS functions.
+   *
+   * Only called by Node constructor, when adding nodes.
+   */
+  currentBoardToAddTo(): Breadboard {
+    const closureStack = this.#topClosure
+      ? this.#topClosure.#closureStack
+      : this.#closureStack;
+    if (closureStack.length === 0) return this;
+    else return closureStack[closureStack.length - 1];
+  }
+
+  /**
+   *
+   */
+  addEdgeAcrossBoards(edge: Edge, from: Board, to: Board) {
+    if (edge.out === "*")
+      throw new Error("Across board wires: * wires not supported");
+
+    if (!edge.constant)
+      throw new Error("Across board wires: Must be constant for now");
+
+    if (to !== this)
+      throw new Error("Across board wires: Must be invoked on to board");
+
+    const closureStack = this.#topClosure
+      ? this.#topClosure.#closureStack
+      : this.#closureStack;
+    if (from !== this.#topClosure && !closureStack.includes(from))
+      throw new Error("Across board wires: From must be parent of to");
+
+    this.#acrossBoardsEdges.push({ edge, from, to });
   }
 
   /**
@@ -489,68 +423,47 @@ export class Board implements Breadboard {
   mermaid(): string {
     return toMermaid(this);
   }
-
-  /**
-   * Creates a new board from JSON. If you have a serialized board, you can
-   * use this method to turn it into into a new Board instance.
-   *
-   * @param graph - the JSON representation of the board.
-   * @returns - a new `Board` instance.
-   */
-  static async fromGraphDescriptor(graph: GraphDescriptor): Promise<Board> {
-    const breadboard = new Board(graph);
-    breadboard.edges = graph.edges;
-    breadboard.nodes = graph.nodes;
-    breadboard.graphs = graph.graphs;
-    const loader = new KitLoader(graph.kits);
-    (await loader.load()).forEach((kit) => breadboard.addKit(kit));
-    return breadboard;
-  }
-
-  /**
-   * Loads a board from a URL or a file path.
-   *
-   * @param url - the URL or a file path to the board.
-   * @param slots - optional slots to provide to the board.
-   * @returns - a new `Board` instance.
-   */
-  static async load(
-    url: string,
-    options?: {
-      slotted?: BreadboardSlotSpec;
-      base?: string;
-      outerGraph?: GraphDescriptor;
-    }
-  ): Promise<Board> {
-    const { base, slotted, outerGraph } = options || {};
-    const loader = new BoardLoader({
-      url: base,
-      graphs: outerGraph?.graphs,
-    });
-    const { isSubgraph, graph } = await loader.load(url);
-    const board = await Board.fromGraphDescriptor(graph);
-    if (isSubgraph) board.#parent = outerGraph;
-    board.#slots = slotted || {};
-    return board;
-  }
-
-  static async handlersFromBoard(
-    board: Board,
-    probe?: EventTarget,
-    slots?: BreadboardSlotSpec
-  ): Promise<NodeHandlers> {
-    const core = new Core(
-      board,
-      { ...board.#slots, ...slots },
-      board.#validators,
-      board.#parent,
-      probe
-    );
-    const kits = [core, ...board.kits];
-    return kits.reduce((handlers, kit) => {
-      return { ...handlers, ...kit.handlers };
-    }, {} as NodeHandlers);
-  }
-
-  static runRemote = runRemote;
 }
+
+/**
+ * Synctactic sugar for node factories that accept lambdas. This allows passing
+ * either
+ *  - A JS function that is a lambda function defining the board
+ *  - A board capability, i.e. the result of calling lambda()
+ *  - A board node, which should be a node with a `board` output
+ * or
+ *  - A regular config, with a `board` property with any of the above.
+ *
+ * @param config {ConfigOrLambda} the overloaded config
+ * @returns {NodeConfigurationConstructor} config with a board property
+ */
+const getConfigWithLambda = <In = InputValues, Out = OutputValues>(
+  board: Board,
+  config: ConfigOrLambda<In, Out>
+): OptionalIdConfiguration => {
+  // Did we get a graph?
+  const gotGraph =
+    (config as GraphDescriptor).nodes !== undefined &&
+    (config as GraphDescriptor).edges !== undefined &&
+    (config as GraphDescriptor).kits !== undefined;
+
+  // Look for functions, nodes and board capabilities.
+  const gotBoard =
+    gotGraph ||
+    typeof config === "function" ||
+    config instanceof Node ||
+    ((config as BreadboardCapability).kind === "board" &&
+      (config as BreadboardCapability).board);
+
+  const result = (
+    gotBoard
+      ? { board: gotGraph ? { kind: "board", board: config } : config }
+      : config
+  ) as OptionalIdConfiguration;
+
+  // Convert passed JS function into a board node.
+  if (typeof result.board === "function")
+    result.board = board.lambda(result.board as LambdaFunction<In, Out>);
+
+  return result;
+};

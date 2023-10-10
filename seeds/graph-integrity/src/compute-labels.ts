@@ -5,7 +5,7 @@
  */
 
 import { Graph, NodeRoles } from "./types.js";
-import { Label } from "./label.js";
+import { Label, Principal } from "./label.js";
 
 /**
  * Compute labels and hence validate the safety of the graph as whole.
@@ -59,14 +59,18 @@ export function computeLabelsForGraph(graph: Graph): void {
         default: {
           // Compute the meet (lowest label) of all incoming edge constraints.
           const incomingConstraint = Label.computeMeetOfLabels(
-            node.incoming.map((edge) => edge.fromConstraint)
+            node.incoming.map((edge) =>
+              maybeDeclassifyLabel(edge.fromConstraint, edge.declassifies)
+            )
           );
 
           // Compute the meet (lowest label) of all incoming edges. Add the
           // constraint labels for this edge and node. This can lower the label,
           // but not raise it.
           const incomingLabel = Label.computeMeetOfLabels([
-            ...node.incoming.map((edge) => edge.from.label),
+            ...node.incoming.map((edge) =>
+              maybeDeclassifyLabel(edge.from.label, edge.declassifies)
+            ),
             incomingConstraint,
             node.constraint,
           ]);
@@ -113,7 +117,10 @@ export function computeLabelsForGraph(graph: Graph): void {
 
           // Graph is not safe if a constraint has to be violated, i.e. here a
           // node has to be upgraded.
-          if (node.constraint && !node.constraint.equalsTo(outgoingLabel))
+          if (
+            node.constraint &&
+            !node.constraint.equalsToExceptForUndefined(outgoingLabel)
+          )
             throw Error(
               `Graph is not safe. E.g. node ${node.node.id} ` +
                 `requires to write to ${outgoingLabel.toString()} ` +
@@ -140,4 +147,12 @@ export function computeLabelsForGraph(graph: Graph): void {
       }
     });
   } while (change);
+}
+
+function maybeDeclassifyLabel(label?: Label, declassify?: Principal) {
+  if (!declassify) return label;
+  return label?.confidentiality === declassify ||
+    label?.confidentiality?.isAbove(declassify)
+    ? new Label({ confidentiality: undefined, integrity: label?.integrity })
+    : label;
 }
