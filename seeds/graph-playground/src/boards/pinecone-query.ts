@@ -35,7 +35,19 @@ Otherwise, write a comprehensive answer to the question using only the informati
 `);
 
 board
-  .input({ $id: "query" })
+  .input({
+    $id: "query",
+    schema: {
+      type: "object",
+      properties: {
+        text: {
+          type: "string",
+          title: "Question",
+          description: "Ask small corpus a question",
+        },
+      },
+    },
+  })
   .wire(
     "text->",
     starter

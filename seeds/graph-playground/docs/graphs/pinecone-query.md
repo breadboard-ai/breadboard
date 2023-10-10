@@ -15,6 +15,7 @@ secrets7("secrets <br> id='secrets-7'"):::secrets -- "PALM_KEY->PALM_KEY" --> ge
 generateText6["generateText <br> id='generateText-6'"] -- "completion->text" --> rag{{"output <br> id='rag'"}}:::output
 promptTemplate1["promptTemplate <br> id='promptTemplate-1'"] -- "prompt->text" --> generateText6["generateText <br> id='generateText-6'"]
 templatepromptTemplate1[template]:::config -- "template->template" --o promptTemplate1
+schemaquery[schema]:::config -- "schema->schema" --o query
 keyssecrets3[keys]:::config -- "keys->keys" --o secrets3
 expressionjsonata5[expression]:::config -- "expression->expression" --o jsonata5
 keyssecrets7[keys]:::config -- "keys->keys" --o secrets7

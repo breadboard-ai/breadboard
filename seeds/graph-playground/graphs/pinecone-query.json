@@ -68,7 +68,19 @@
     },
     {
       "id": "query",
-      "type": "input"
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Question",
+              "description": "Ask small corpus a question"
+            }
+          }
+        }
+      }
     },
     {
       "id": "embedText-2",
