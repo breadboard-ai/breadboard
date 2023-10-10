@@ -16,6 +16,7 @@ export type {
   NodeHandlers,
   NodeIdentifier,
   NodeTypeIdentifier,
+  KitDescriptor,
   KitReference,
   NodeValue,
   Capability,

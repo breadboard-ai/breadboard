@@ -9,7 +9,7 @@ import type {
   NodeValue,
   GraphDescriptor,
   InputValues,
-  KitReference,
+  KitDescriptor,
   NodeDescriptor,
   NodeHandlers,
   NodeIdentifier,
@@ -19,7 +19,7 @@ import type {
   TraversalResult,
 } from "@google-labs/graph-runner";
 
-export interface Kit extends KitReference {
+export interface Kit extends KitDescriptor {
   get handlers(): NodeHandlers<NodeHandlerContext>;
 }
 

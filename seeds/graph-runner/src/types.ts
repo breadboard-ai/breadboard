@@ -121,6 +121,22 @@ export type KitReference = {
   url: string;
 };
 
+export type KitDescriptor = KitReference & {
+  /**
+   * The title of the kit.
+   */
+  title?: string;
+  /**
+   * The description of the kit.
+   */
+  description?: string;
+  /**
+   * Version of the kit.
+   * [semver](https://semver.org/) format is encouraged.
+   */
+  version?: string;
+};
+
 /**
  * Represents graph metadata.
  */
