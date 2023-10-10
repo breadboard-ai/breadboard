@@ -174,6 +174,6 @@ export class KitBuilder {
           },
         });
       }
-    } as KitConstructor<GenericKit<NodeNames>>;
+    } as KitConstructor<GenericKit<Handlers>>;
   }
 }
