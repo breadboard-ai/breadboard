@@ -102,7 +102,7 @@ export type KitBuilderOptions = {
   description: string;
   version: string;
   url: string;
-  namespacePrefix: string;
+  namespacePrefix?: string;
 };
 
 export class KitBuilder {

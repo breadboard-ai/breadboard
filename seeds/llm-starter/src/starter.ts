@@ -59,7 +59,12 @@ const coreHandlers = {
  * Syntactic sugar around the `coreHandlers` library.
  */
 export class Starter implements Kit {
+  title = "LLM Starter Kit";
+  description =
+    "A kit that provides a few necessary components for wiring boards that use PaLM API.";
+  version = "0.0.1";
   url = "npm:@google-labs/llm-starter";
+
   #nodeFactory: NodeFactory;
   #handlers: NodeHandlers;
 
