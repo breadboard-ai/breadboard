@@ -9,7 +9,11 @@
  * Currently, it simply reads them from environment.
  */
 
-import type { InputValues, OutputValues } from "@google-labs/graph-runner";
+import type {
+  InputValues,
+  NodeDescriberFunction,
+  OutputValues,
+} from "@google-labs/graph-runner";
 
 type Environment = "node" | "browser" | "worker";
 
@@ -61,7 +65,41 @@ export const requireNonEmpty = (key: string, value?: string | null) => {
   return value;
 };
 
+export const secretsDescriber: NodeDescriberFunction = async (
+  inputs?: InputValues
+) => {
+  const { keys } = (inputs ? inputs : {}) as SecretInputs;
+  const properties = keys
+    ? Object.fromEntries(
+        keys.map((key) => [
+          key,
+          {
+            title: key,
+          },
+        ])
+      )
+    : {};
+  return {
+    inputSchema: {
+      properties: {
+        keys: {
+          title: "secrets",
+          description: "The array of secrets to retrieve from the node.",
+          type: "array",
+          items: {
+            type: "string",
+          },
+        },
+      },
+    },
+    outputSchema: {
+      properties,
+    },
+  };
+};
+
 export default {
+  describe: secretsDescriber,
   invoke: async (inputs: InputValues) => {
     const { keys = [] } = inputs as SecretInputs;
     return Object.fromEntries(
