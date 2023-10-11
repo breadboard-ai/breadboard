@@ -271,10 +271,12 @@ export type NodeHandler<T> =
   // Same as above, but without the context received.
   | ((inputs: InputValues) => Promise<OutputValues | void>);
 
+export type ReservedNodeNames = {
+  [key in keyof KitDescriptor]?: never;
+};
+
 /**
  * All known node handlers.
  */
-export type NodeHandlers<T = object> = Record<
-  NodeTypeIdentifier,
-  NodeHandler<T>
->;
+export type NodeHandlers<T = object> = ReservedNodeNames &
+  Record<NodeTypeIdentifier, NodeHandler<T>>;
