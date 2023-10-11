@@ -65,20 +65,22 @@ export type RunJavascriptInputs = InputValues & {
   raw?: boolean;
 };
 
-export default async (inputs: InputValues) => {
-  const { code, name, raw, ...args } = inputs as RunJavascriptInputs;
-  if (!code) throw new Error("Running JavaScript requires `code` input");
-  const clean = stripCodeBlock(code);
-  // A smart helper that senses the environment (browser or node) and uses
-  // the appropriate method to run the code.
-  const functionName = name || "run";
-  const argsString = JSON.stringify(args);
-  const env = environment();
+export default {
+  invoke: async (inputs: InputValues) => {
+    const { code, name, raw, ...args } = inputs as RunJavascriptInputs;
+    if (!code) throw new Error("Running JavaScript requires `code` input");
+    const clean = stripCodeBlock(code);
+    // A smart helper that senses the environment (browser or node) and uses
+    // the appropriate method to run the code.
+    const functionName = name || "run";
+    const argsString = JSON.stringify(args);
+    const env = environment();
 
-  const result = JSON.parse(
-    env === "node"
-      ? await runInNode(clean, functionName, argsString)
-      : await runInBrowser(clean, functionName, argsString)
-  );
-  return raw ? result : { result };
+    const result = JSON.parse(
+      env === "node"
+        ? await runInNode(clean, functionName, argsString)
+        : await runInBrowser(clean, functionName, argsString)
+    );
+    return raw ? result : { result };
+  },
 };

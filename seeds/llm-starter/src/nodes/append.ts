@@ -48,28 +48,30 @@ const asString = (values: ValueType): string => {
   return asArray(values).join("\n");
 };
 
-export default async (inputs: InputValues): Promise<OutputValues> => {
-  const { accumulator, ...values } = inputs as AppendInputs;
-  if (Object.keys(values).length === 0) return { accumulator };
-  const type = getObjectType(accumulator);
-  switch (type) {
-    case ObjectType.stringy: {
-      const stringy =
-        accumulator === null || accumulator === undefined
-          ? ""
-          : `${accumulator}\n`;
-      return { accumulator: `${stringy}${asString(values)}` };
+export default {
+  invoke: async (inputs: InputValues): Promise<OutputValues> => {
+    const { accumulator, ...values } = inputs as AppendInputs;
+    if (Object.keys(values).length === 0) return { accumulator };
+    const type = getObjectType(accumulator);
+    switch (type) {
+      case ObjectType.stringy: {
+        const stringy =
+          accumulator === null || accumulator === undefined
+            ? ""
+            : `${accumulator}\n`;
+        return { accumulator: `${stringy}${asString(values)}` };
+      }
+      case ObjectType.array:
+        return {
+          accumulator: [...(accumulator as string[]), ...asArray(values)],
+        };
+      case ObjectType.object:
+        return {
+          accumulator: {
+            ...(accumulator as object),
+            ...values,
+          },
+        };
     }
-    case ObjectType.array:
-      return {
-        accumulator: [...(accumulator as string[]), ...asArray(values)],
-      };
-    case ObjectType.object:
-      return {
-        accumulator: {
-          ...(accumulator as object),
-          ...values,
-        },
-      };
-  }
+  },
 };

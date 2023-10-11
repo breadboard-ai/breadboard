@@ -18,10 +18,13 @@ export type JsonataInputs = {
   json?: unknown;
 };
 
-export default async (inputs: InputValues) => {
-  const { expression, raw, ...rest } = inputs as JsonataInputs;
-  if (!expression) throw new Error("Jsonata node requires `expression` input");
-  const json = rest.json || rest;
-  const result = await jsonata(expression).evaluate(json);
-  return raw ? result : { result };
+export default {
+  invoke: async (inputs: InputValues) => {
+    const { expression, raw, ...rest } = inputs as JsonataInputs;
+    if (!expression)
+      throw new Error("Jsonata node requires `expression` input");
+    const json = rest.json || rest;
+    const result = await jsonata(expression).evaluate(json);
+    return raw ? result : { result };
+  },
 };

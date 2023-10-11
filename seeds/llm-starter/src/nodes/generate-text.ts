@@ -84,6 +84,8 @@ export const prepareResponse = async (
     } as OutputValues;
 };
 
-export default async (inputs: InputValues) => {
-  return await prepareResponse(await fetch(prepareRequest(inputs)));
+export default {
+  invoke: async (inputs: InputValues) => {
+    return await prepareResponse(await fetch(prepareRequest(inputs)));
+  },
 };

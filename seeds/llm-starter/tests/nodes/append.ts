@@ -20,41 +20,43 @@ test("getObjectType correctly recognizes various object types", (t) => {
 });
 
 test("`append` correctly recognizes empty accumulator", async (t) => {
-  t.deepEqual(await append({ value: "string" }), {
+  const invoke = append.invoke;
+  t.deepEqual(await invoke({ value: "string" }), {
     accumulator: "value: string",
   });
-  t.deepEqual(await append({ accumulator: null, value: "string" }), {
+  t.deepEqual(await invoke({ accumulator: null, value: "string" }), {
     accumulator: "value: string",
   });
-  t.deepEqual(await append({ accumulator: 0, value: "string" }), {
+  t.deepEqual(await invoke({ accumulator: 0, value: "string" }), {
     accumulator: "0\nvalue: string",
   });
-  t.deepEqual(await append({ accumulator: false, value: "string" }), {
+  t.deepEqual(await invoke({ accumulator: false, value: "string" }), {
     accumulator: "false\nvalue: string",
   });
-  t.deepEqual(await append({ accumulator: "", value: "string" }), {
+  t.deepEqual(await invoke({ accumulator: "", value: "string" }), {
     accumulator: "\nvalue: string",
   });
 });
 
 test("`append` correctly appends to various object types", async (t) => {
-  t.deepEqual(await append({ accumulator: "string", value: "string" }), {
+  const invoke = append.invoke;
+  t.deepEqual(await invoke({ accumulator: "string", value: "string" }), {
     accumulator: "string\nvalue: string",
   });
-  t.deepEqual(await append({ accumulator: "string", foo: "bar", baz: 1 }), {
+  t.deepEqual(await invoke({ accumulator: "string", foo: "bar", baz: 1 }), {
     accumulator: "string\nfoo: bar\nbaz: 1",
   });
-  t.deepEqual(await append({ accumulator: [], value: "string" }), {
+  t.deepEqual(await invoke({ accumulator: [], value: "string" }), {
     accumulator: ["value: string"],
   });
-  t.deepEqual(await append({ accumulator: ["test"], foo: "bar", baz: 1 }), {
+  t.deepEqual(await invoke({ accumulator: ["test"], foo: "bar", baz: 1 }), {
     accumulator: ["test", "foo: bar", "baz: 1"],
   });
-  t.deepEqual(await append({ accumulator: {}, value: "string" }), {
+  t.deepEqual(await invoke({ accumulator: {}, value: "string" }), {
     accumulator: { value: "string" },
   });
   t.deepEqual(
-    await append({ accumulator: { test: true }, foo: "bar", baz: 1 }),
+    await invoke({ accumulator: { test: true }, foo: "bar", baz: 1 }),
     {
       accumulator: { test: true, foo: "bar", baz: 1 },
     }
@@ -62,23 +64,25 @@ test("`append` correctly appends to various object types", async (t) => {
 });
 
 test("`append` doesn't append when there are no values", async (t) => {
-  t.deepEqual(await append({ accumulator: "string" }), {
+  const invoke = append.invoke;
+  t.deepEqual(await invoke({ accumulator: "string" }), {
     accumulator: "string",
   });
-  t.deepEqual(await append({ accumulator: [] }), {
+  t.deepEqual(await invoke({ accumulator: [] }), {
     accumulator: [],
   });
-  t.deepEqual(await append({ accumulator: {} }), {
+  t.deepEqual(await invoke({ accumulator: {} }), {
     accumulator: {},
   });
 });
 
 test("`append` correctly stringifies non-stringy values", async (t) => {
-  t.deepEqual(await append({ accumulator: "string", value: ["string"] }), {
+  const invoke = append.invoke;
+  t.deepEqual(await invoke({ accumulator: "string", value: ["string"] }), {
     accumulator: 'string\nvalue: ["string"]',
   });
   t.deepEqual(
-    await append({ accumulator: "string", value: { key: "string" } }),
+    await invoke({ accumulator: "string", value: { key: "string" } }),
     {
       accumulator: 'string\nvalue: {"key":"string"}',
     }

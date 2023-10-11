@@ -67,9 +67,11 @@ const toAltJson = (
   return ["$c", ""];
 };
 
-export default async (inputs: InputValues): Promise<OutputValues> => {
-  const { xml } = inputs as XmlToJsonInputs;
-  if (!xml) throw new Error("XmlToJson requires `xml` input");
-  const json = toAltJson(parseXml(xml));
-  return { json };
+export default {
+  invoke: async (inputs: InputValues): Promise<OutputValues> => {
+    const { xml } = inputs as XmlToJsonInputs;
+    if (!xml) throw new Error("XmlToJson requires `xml` input");
+    const json = toAltJson(parseXml(xml));
+    return { json };
+  },
 };

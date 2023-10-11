@@ -36,18 +36,20 @@ export const parametersFromTemplate = (template: string): string[] => {
   return unique;
 };
 
-export default async (inputs: InputValues) => {
-  const template = inputs.template as string;
-  const parameters = parametersFromTemplate(template);
-  if (!parameters.length) return { prompt: template };
+export default {
+  invoke: async (inputs: InputValues) => {
+    const template = inputs.template as string;
+    const parameters = parametersFromTemplate(template);
+    if (!parameters.length) return { prompt: template };
 
-  const substitutes = parameters.reduce((acc, parameter) => {
-    if (inputs[parameter] === undefined)
-      throw new Error(`Input is missing parameter "${parameter}"`);
-    return { ...acc, [parameter]: inputs[parameter] };
-  }, {});
+    const substitutes = parameters.reduce((acc, parameter) => {
+      if (inputs[parameter] === undefined)
+        throw new Error(`Input is missing parameter "${parameter}"`);
+      return { ...acc, [parameter]: inputs[parameter] };
+    }, {});
 
-  const prompt = substitute(template, substitutes);
-  // log.info(`Prompt: ${prompt}`);
-  return { prompt };
+    const prompt = substitute(template, substitutes);
+    // log.info(`Prompt: ${prompt}`);
+    return { prompt };
+  },
 };

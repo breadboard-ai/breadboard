@@ -61,14 +61,16 @@ export const requireNonEmpty = (key: string, value?: string | null) => {
   return value;
 };
 
-export default async (inputs: InputValues) => {
-  const { keys = [] } = inputs as SecretInputs;
-  return Object.fromEntries(
-    await Promise.all(
-      keys.map(async (key) => [
-        key,
-        requireNonEmpty(key, await getEnvironmentValue(key)),
-      ])
-    )
-  ) as OutputValues;
+export default {
+  invoke: async (inputs: InputValues) => {
+    const { keys = [] } = inputs as SecretInputs;
+    return Object.fromEntries(
+      await Promise.all(
+        keys.map(async (key) => [
+          key,
+          requireNonEmpty(key, await getEnvironmentValue(key)),
+        ])
+      )
+    ) as OutputValues;
+  },
 };

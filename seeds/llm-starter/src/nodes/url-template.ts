@@ -24,8 +24,10 @@ export type UrlTemplateInputs = {
   template: string;
 };
 
-export default async (inputs: InputValues) => {
-  const { template, ...values } = inputs as UrlTemplateInputs;
-  const url = parseTemplate(template).expand(values);
-  return { url };
+export default {
+  invoke: async (inputs: InputValues) => {
+    const { template, ...values } = inputs as UrlTemplateInputs;
+    const url = parseTemplate(template).expand(values);
+    return { url };
+  },
 };

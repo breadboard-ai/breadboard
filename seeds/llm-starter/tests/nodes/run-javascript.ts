@@ -6,9 +6,10 @@
 
 import test from "ava";
 
-import runJavascript from "../../src/nodes/run-javascript.js";
+import handler from "../../src/nodes/run-javascript.js";
 
 test("runJavascript runs code", async (t) => {
+  const runJavascript = handler.invoke;
   const { result } = await runJavascript({
     code: "function run() { return 'hello world'; }",
   });
@@ -16,6 +17,7 @@ test("runJavascript runs code", async (t) => {
 });
 
 test("runJavascript correctly strips code", async (t) => {
+  const runJavascript = handler.invoke;
   {
     const { result } = await runJavascript({
       code: "```js\nfunction run() { return 'hello world'; }\n```",
@@ -31,6 +33,7 @@ test("runJavascript correctly strips code", async (t) => {
 });
 
 test("runJavascript runs code with specified function name", async (t) => {
+  const runJavascript = handler.invoke;
   const { result } = await runJavascript({
     code: "function compute() { return 'hello world'; }",
     name: "compute",
@@ -39,6 +42,7 @@ test("runJavascript runs code with specified function name", async (t) => {
 });
 
 test("runJavascript runs code with arguments", async (t) => {
+  const runJavascript = handler.invoke;
   const { result } = await runJavascript({
     code: "function run({ what }) { return `hello ${what}`; }",
     what: "world",
@@ -47,6 +51,7 @@ test("runJavascript runs code with arguments", async (t) => {
 });
 
 test("runJavascript understands `raw` input", async (t) => {
+  const runJavascript = handler.invoke;
   const result = await runJavascript({
     code: 'function compute() { return { hello: "world" }; }',
     name: "compute",

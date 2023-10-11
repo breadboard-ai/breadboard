@@ -33,21 +33,23 @@ export type FetchInputs = {
   raw?: boolean;
 };
 
-export default async (inputs: InputValues) => {
-  const {
-    url,
-    method = "GET",
-    body,
-    headers = {},
-    raw,
-  } = inputs as FetchInputs;
-  if (!url) throw new Error("Fetch requires `url` input");
-  const init = {
-    method,
-    headers,
-    body: JSON.stringify(body),
-  };
-  const data = await fetch(url, init);
-  const response = raw ? await data.text() : await data.json();
-  return { response };
+export default {
+  invoke: async (inputs: InputValues) => {
+    const {
+      url,
+      method = "GET",
+      body,
+      headers = {},
+      raw,
+    } = inputs as FetchInputs;
+    if (!url) throw new Error("Fetch requires `url` input");
+    const init = {
+      method,
+      headers,
+      body: JSON.stringify(body),
+    };
+    const data = await fetch(url, init);
+    const response = raw ? await data.text() : await data.json();
+    return { response };
+  },
 };
