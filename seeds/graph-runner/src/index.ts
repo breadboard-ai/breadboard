@@ -10,6 +10,8 @@ export type {
   GraphDescriptor,
   NodeConfiguration,
   NodeDescriptor,
+  NodeDescriberFunction,
+  NodeDescriberResult,
   NodeHandler,
   NodeHandlerFunction,
   InputValues,

@@ -293,7 +293,7 @@ export type SimpleSchema = {
 /**
  * The result of running `NodeDescriptorFunction`
  */
-export type NodeDescriptorResult = {
+export type NodeDescriberResult = {
   inputSchema: SimpleSchema;
   outputSchema: SimpleSchema;
 };
@@ -311,7 +311,7 @@ export type NodeDescriberFunction = (
   inputs?: InputValues,
   inputSchema?: SimpleSchema,
   outputSchema?: SimpleSchema
-) => Promise<NodeDescriptorResult>;
+) => Promise<NodeDescriberResult>;
 
 export type NodeHandler<Context> =
   | {
