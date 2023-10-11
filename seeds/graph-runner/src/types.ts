@@ -268,13 +268,55 @@ export type NodeHandlerFunction<T> = (
   context?: T
 ) => Promise<OutputValues | void>;
 
+/**
+ * Make sure that kit node names can't accidentally stomp over the properties
+ * that describe a kit.
+ */
 export type ReservedNodeNames = {
   [key in keyof KitDescriptor]?: never;
 };
 
+/**
+ * A tiny subset of JSON Schema to represent node inputs and outputs.
+ */
+export type SimpleSchema = {
+  properties: {
+    [name: string]: {
+      title?: string;
+      description?: string;
+      type?: string;
+    };
+  };
+  additionalProperties?: boolean;
+};
+
+/**
+ * The result of running `NodeDescriptorFunction`
+ */
+export type NodeDescriptorResult = {
+  inputSchema: SimpleSchema;
+  outputSchema: SimpleSchema;
+};
+
+/**
+ * Asks to describe a node. Can be called in multiple ways:
+ * - when called with no arguments, will produce the "default schema". That is,
+ * the inputs/outputs that are always available.
+ * - when called with inputs and schemas, will produce the "expected schema".
+ * For example, when a node changes its schema based on the actual inputs,
+ * it will return different schemas when inputs/schemas are supplied than
+ * when they are not.
+ */
+export type NodeDescriberFunction = (
+  inputs?: InputValues,
+  inputSchema?: SimpleSchema,
+  outputSchema?: SimpleSchema
+) => Promise<NodeDescriptorResult>;
+
 export type NodeHandler<Context> =
   | {
       invoke: NodeHandlerFunction<Context>;
+      describe?: NodeDescriberFunction;
     }
   | NodeHandlerFunction<Context>;
 
