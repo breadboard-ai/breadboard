@@ -75,9 +75,7 @@
               "description": "Type here to chat with the assistant"
             }
           },
-          "required": [
-            "text"
-          ]
+          "required": ["text"]
         }
       }
     },
@@ -108,9 +106,7 @@
       "id": "secrets-1",
       "type": "secrets",
       "configuration": {
-        "keys": [
-          "PALM_KEY"
-        ]
+        "keys": ["PALM_KEY"]
       }
     },
     {
@@ -126,9 +122,7 @@
               "description": "Assistant's response in the conversation with the user"
             }
           },
-          "required": [
-            "text"
-          ]
+          "required": ["text"]
         }
       }
     }

@@ -1,0 +1,40 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: Current File",
+      "type": "python",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "args": ["seeds/graph-playground/graphs/accumulating-context.json"],
+      "justMyCode": true
+    },
+    {
+      "name": "Launch Program",
+      "request": "launch",
+      "skipFiles": ["<node_internals>/**"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "program": "${workspaceFolder}/seeds/graph-playground/src/index.ts",
+      "args": ["seeds/graph-playground/graphs/math.json"],
+      "outFiles": ["${workspaceFolder}/**/*.js"],
+      "runtimeVersion": "20.4.0",
+      "type": "node"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Launch Program",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}/seeds/graph-playground/src/index.ts",
+      "runtimeArgs": [
+        "seeds/graph-playground/graphs/accumulating-context.json"
+      ],
+      "outFiles": ["${workspaceFolder}/**/*.js"]
+    }
+  ]
+}
