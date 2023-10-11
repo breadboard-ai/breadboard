@@ -69,6 +69,11 @@ export class GraphToKitAdapter {
     this.graph = graph;
   }
 
+  populateDescriptor(descriptor: KitBuilderOptions) {
+    const { title, description, version } = this.graph;
+    return { title, description, version, ...descriptor };
+  }
+
   async #initialize(url: string) {
     const board = await Board.fromGraphDescriptor(this.graph);
     board.url = url;
@@ -98,18 +103,18 @@ export class GraphToKitAdapter {
 }
 
 export type KitBuilderOptions = {
-  title: string;
-  description: string;
-  version: string;
   url: string;
+  title?: string;
+  description?: string;
+  version?: string;
   namespacePrefix?: string;
 };
 
 export class KitBuilder {
-  title: string;
-  description: string;
-  version: string;
   url: string;
+  title?: string;
+  description?: string;
+  version?: string;
   namespacePrefix?: string;
 
   constructor({
@@ -119,10 +124,10 @@ export class KitBuilder {
     url,
     namespacePrefix = "",
   }: KitBuilderOptions) {
+    this.url = url;
     this.title = title;
     this.description = description;
     this.version = version;
-    this.url = url;
     this.namespacePrefix = namespacePrefix;
   }
 
