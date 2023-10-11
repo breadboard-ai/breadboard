@@ -257,7 +257,7 @@ export type NodeConfiguration = Record<string, NodeValue>;
 /**
  * A function that represents a type of a node in the graph.
  */
-export type NodeHandler<T> = (
+export type NodeHandlerFunction<T> = (
   /**
    * The inputs that are supplied to the node.
    */
@@ -271,6 +271,12 @@ export type NodeHandler<T> = (
 export type ReservedNodeNames = {
   [key in keyof KitDescriptor]?: never;
 };
+
+export type NodeHandler<Context> =
+  | {
+      handle: NodeHandlerFunction<Context>;
+    }
+  | NodeHandlerFunction<Context>;
 
 /**
  * All known node handlers.

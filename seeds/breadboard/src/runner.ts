@@ -39,6 +39,7 @@ import { KitLoader } from "./kit.js";
 import { BoardLoader } from "./loader.js";
 import { runRemote } from "./remote.js";
 import { NestedProbe } from "./nested-probe.js";
+import { callHandler } from "./handler.js";
 
 class ProbeEvent extends CustomEvent<ProbeDetails> {
   constructor(type: string, detail: ProbeDetails) {
@@ -172,7 +173,7 @@ export class BoardRunner implements BreadboardRunner {
 
       const outputsPromise = (
         shouldInvokeHandler
-          ? handler(inputs, { board: this, descriptor, probe })
+          ? callHandler(handler, inputs, { board: this, descriptor, probe })
           : beforehandlerDetail.outputs instanceof Promise
           ? beforehandlerDetail.outputs
           : Promise.resolve(beforehandlerDetail.outputs)

@@ -11,6 +11,7 @@ export type {
   NodeConfiguration,
   NodeDescriptor,
   NodeHandler,
+  NodeHandlerFunction,
   InputValues,
   OutputValues,
   NodeHandlers,

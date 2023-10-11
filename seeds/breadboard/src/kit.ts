@@ -21,6 +21,7 @@ import {
   OptionalIdConfiguration,
 } from "./types.js";
 import { Board } from "./board.js";
+import { callHandler } from "./handler.js";
 
 const urlToNpmSpec = (url: string): string => {
   const urlObj = new URL(url);
@@ -91,7 +92,10 @@ export class GraphToKitAdapter {
       if (configuration) {
         inputs = { ...configuration, ...inputs };
       }
-      return this.handlers?.[node.type](inputs, context);
+      const handler = this.handlers?.[node.type];
+      if (!handler) return;
+
+      return callHandler(handler, inputs, context);
     };
   }
 

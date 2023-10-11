@@ -8,6 +8,7 @@ import type {
   GraphDescriptor,
   InputValues,
   NodeHandler,
+  NodeHandlerFunction,
   NodeHandlers,
   OutputValues,
 } from "@google-labs/graph-runner";
@@ -60,7 +61,9 @@ export class Core {
         string,
         NodeHandler<NodeHandlerContext>
       >;
-      handlers[type] = that[type].bind(this);
+      handlers[type] = (
+        that[type] as NodeHandlerFunction<NodeHandlerContext>
+      ).bind(this);
       return handlers;
     }, {} as NodeHandlers<NodeHandlerContext>);
   }
