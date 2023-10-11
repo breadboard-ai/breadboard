@@ -274,7 +274,7 @@ export type ReservedNodeNames = {
 
 export type NodeHandler<Context> =
   | {
-      handle: NodeHandlerFunction<Context>;
+      invoke: NodeHandlerFunction<Context>;
     }
   | NodeHandlerFunction<Context>;
 

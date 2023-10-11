@@ -88,7 +88,7 @@ export class GraphToKitAdapter {
     if (!node) throw new Error(`Node ${id} not found in graph.`);
 
     return {
-      handle: async (inputs: InputValues, context?: NodeHandlerContext) => {
+      invoke: async (inputs: InputValues, context?: NodeHandlerContext) => {
         const configuration = node.configuration;
         if (configuration) {
           inputs = { ...configuration, ...inputs };

@@ -12,5 +12,5 @@ export const callHandler = async <T>(
   context?: T
 ) => {
   if (handler instanceof Function) return handler(inputs, context);
-  if (handler.handle) return handler.handle(inputs, context);
+  if (handler.invoke) return handler.invoke(inputs, context);
 };
