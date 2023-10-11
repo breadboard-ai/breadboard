@@ -1,6 +1,6 @@
 {
   "title": "Retrieval-augmented generation with Pinecone",
-  "description": "This board implements the simples possible retrieval-augmented generation (RAG) system using Pinecone store. The store was generated with [pinecone-load](https://github.com/google/labs-prototypes/blob/main/seeds/graph-playground/graphs/pinecone-load.json).",
+  "description": "This board implements the simplest possible retrieval-augmented generation (RAG) system using Pinecone store. The store was generated with [pinecone-load](https://github.com/google/labs-prototypes/blob/main/seeds/graph-playground/graphs/pinecone-load.json).",
   "version": "0.0.1",
   "edges": [
     {
@@ -126,6 +126,9 @@
   ],
   "kits": [
     {
+      "title": "LLM Starter Kit",
+      "description": "A kit that provides a few necessary components for wiring boards that use PaLM API.",
+      "version": "0.0.1",
       "url": "npm:@google-labs/llm-starter"
     },
     {
