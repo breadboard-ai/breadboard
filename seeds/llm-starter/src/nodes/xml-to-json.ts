@@ -68,6 +68,27 @@ const toAltJson = (
 };
 
 export default {
+  describe: async () => {
+    return {
+      inputSchema: {
+        properties: {
+          xml: {
+            title: "XML",
+            description: "Valid XML as a string",
+          },
+        },
+      },
+      outputSchema: {
+        properties: {
+          json: {
+            title: "JSON",
+            description:
+              "JSON representation of the input XML. Represented as alt-json, described in https://developers.google.com/gdata/docs/json",
+          },
+        },
+      },
+    };
+  },
   invoke: async (inputs: InputValues): Promise<OutputValues> => {
     const { xml } = inputs as XmlToJsonInputs;
     if (!xml) throw new Error("XmlToJson requires `xml` input");
