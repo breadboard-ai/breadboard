@@ -9,6 +9,7 @@ import type {
   NodeValue,
   OutputValues,
   ErrorCapability,
+  NodeDescriberFunction,
 } from "@google-labs/graph-runner";
 import {
   GenerateTextResponse,
@@ -84,7 +85,61 @@ export const prepareResponse = async (
     } as OutputValues;
 };
 
+export const generateTextDescriber: NodeDescriberFunction = async () => {
+  return {
+    inputSchema: {
+      type: "object",
+      properties: {
+        text: {
+          title: "text",
+          description: "Prompt for text completion.",
+          type: "string",
+        },
+        PALM_KEY: {
+          title: "PALM_KEY",
+          description: "The Google Cloud Platform API key",
+          type: "string",
+        },
+        stopSequences: {
+          title: "stopSequences",
+          description: "Stop sequences",
+          type: "array",
+          items: {
+            type: "string",
+          },
+        },
+        safetySettings: {
+          title: "safetySettings",
+          description: "Safety settings",
+          type: "array",
+          items: {
+            type: "object",
+            required: ["category", "threshold"],
+          },
+        },
+      },
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        completion: {
+          title: "completion",
+          description:
+            "The generated text completion of the supplied text input.",
+          type: "string",
+        },
+        $error: {
+          title: "$error",
+          description: "Error information, if any.",
+          type: "object",
+        },
+      },
+    },
+  };
+};
+
 export default {
+  describe: generateTextDescriber,
   invoke: async (inputs: InputValues) => {
     return await prepareResponse(await fetch(prepareRequest(inputs)));
   },
