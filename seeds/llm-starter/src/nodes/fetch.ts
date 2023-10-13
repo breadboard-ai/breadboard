@@ -4,7 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { InputValues } from "@google-labs/graph-runner";
+import type {
+  InputValues,
+  NodeDescriberFunction,
+} from "@google-labs/graph-runner";
 
 export type FetchOutputs = {
   response: string | object;
@@ -33,7 +36,60 @@ export type FetchInputs = {
   raw?: boolean;
 };
 
+export const fetchDescriber: NodeDescriberFunction = async () => {
+  return {
+    inputSchema: {
+      type: "object",
+      properties: {
+        url: {
+          title: "url",
+          description: "The URL to fetch",
+          type: "string",
+        },
+        method: {
+          title: "method",
+          description: "The HTTP method to use",
+          type: "string",
+          enum: ["GET", "POST", "PUT", "DELETE"],
+        },
+        headers: {
+          title: "headers",
+          description: "Headers to send with the request",
+          type: "object",
+          additionalProperties: {
+            type: "string",
+          },
+        },
+        body: {
+          title: "body",
+          description: "The body of the request",
+          type: ["string", "object"],
+        },
+        raw: {
+          title: "raw",
+          description:
+            "Whether or not to return raw text (as opposed to parsing JSON)",
+          type: "boolean",
+        },
+      },
+      required: ["url"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        response: {
+          title: "response",
+          description: "The response from the fetch request",
+          type: ["string", "object"],
+        },
+      },
+      required: ["response"],
+    },
+  };
+};
+
 export default {
+  describe: fetchDescriber,
   invoke: async (inputs: InputValues) => {
     const {
       url,
