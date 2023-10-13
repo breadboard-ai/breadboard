@@ -4,7 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { InputValues } from "@google-labs/graph-runner";
+import type {
+  InputValues,
+  NodeDescriberFunction,
+  NodeHandlerFunction,
+  Schema,
+} from "@google-labs/graph-runner";
 
 export type PropmtTemplateOutputs = {
   prompt: string;
@@ -36,20 +41,70 @@ export const parametersFromTemplate = (template: string): string[] => {
   return unique;
 };
 
+export const promptTemplateHandler: NodeHandlerFunction<object> = async (
+  inputs: InputValues
+) => {
+  const template = inputs.template as string;
+  const parameters = parametersFromTemplate(template);
+  if (!parameters.length) return { prompt: template };
+
+  const substitutes = parameters.reduce((acc, parameter) => {
+    if (inputs[parameter] === undefined)
+      throw new Error(`Input is missing parameter "${parameter}"`);
+    return { ...acc, [parameter]: inputs[parameter] };
+  }, {});
+
+  const prompt = substitute(template, substitutes);
+  // log.info(`Prompt: ${prompt}`);
+  return { prompt };
+};
+
+export const generateInputSchema = (inputs: InputValues): Schema => {
+  const parameters = parametersFromTemplate(inputs.template as string);
+  const properties: Schema["properties"] = parameters.reduce(
+    (acc, parameter) => {
+      const schema = {
+        title: parameter,
+        description: `The value to substitute for the parameter "${parameter}"`,
+        type: ["string", "object"],
+      };
+      return { ...acc, [parameter]: schema };
+    },
+    {}
+  );
+  properties["template"] = {
+    title: "template",
+    description: "The template with placeholders to fill in.",
+    type: "string",
+  };
+  return {
+    type: "object",
+    properties,
+    required: ["template", ...parameters],
+  };
+};
+
+export const promptTemplateDescriber: NodeDescriberFunction = async (
+  inputs?: InputValues
+) => {
+  return {
+    inputSchema: generateInputSchema(inputs || {}),
+    outputSchema: {
+      type: "object",
+      properties: {
+        prompt: {
+          title: "prompt",
+          description:
+            "The resulting prompt that was produced by filling in the placeholders in the template.",
+          type: "string",
+        },
+      },
+      required: ["prompt"],
+    },
+  };
+};
+
 export default {
-  invoke: async (inputs: InputValues) => {
-    const template = inputs.template as string;
-    const parameters = parametersFromTemplate(template);
-    if (!parameters.length) return { prompt: template };
-
-    const substitutes = parameters.reduce((acc, parameter) => {
-      if (inputs[parameter] === undefined)
-        throw new Error(`Input is missing parameter "${parameter}"`);
-      return { ...acc, [parameter]: inputs[parameter] };
-    }, {});
-
-    const prompt = substitute(template, substitutes);
-    // log.info(`Prompt: ${prompt}`);
-    return { prompt };
-  },
+  describe: promptTemplateDescriber,
+  invoke: promptTemplateHandler,
 };

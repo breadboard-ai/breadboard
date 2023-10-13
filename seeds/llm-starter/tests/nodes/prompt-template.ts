@@ -7,6 +7,7 @@
 import test from "ava";
 
 import {
+  generateInputSchema,
   parametersFromTemplate,
   stringify,
   substitute,
@@ -90,4 +91,46 @@ test("substitute replaces parameters with stringified values", (t) => {
     substitute("{{foo}} {{bar}}", { foo: "bar", bar: { baz: 42 } }),
     'bar {\n  "baz": 42\n}'
   );
+});
+
+test("`generateInputSchema` correctly generates schema for a template with no parameters", (t) => {
+  const inputs = { template: "foo" };
+  const result = generateInputSchema(inputs);
+  t.deepEqual(result, {
+    type: "object",
+    properties: {
+      template: {
+        title: "template",
+        description: "The template with placeholders to fill in.",
+        type: "string",
+      },
+    },
+    required: ["template"],
+  });
+});
+
+test("`generateInputSchema` correctly generates schema for a template with parameters", (t) => {
+  const inputs = { template: "{{foo}} {{bar}}" };
+  const result = generateInputSchema(inputs);
+  t.deepEqual(result, {
+    type: "object",
+    properties: {
+      foo: {
+        title: "foo",
+        description: 'The value to substitute for the parameter "foo"',
+        type: ["string", "object"],
+      },
+      bar: {
+        title: "bar",
+        description: 'The value to substitute for the parameter "bar"',
+        type: ["string", "object"],
+      },
+      template: {
+        title: "template",
+        description: "The template with placeholders to fill in.",
+        type: "string",
+      },
+    },
+    required: ["template", "foo", "bar"],
+  });
 });
