@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { Schema } from "jsonschema";
+
 export interface Capability {
   readonly kind: string;
 }
@@ -277,25 +279,11 @@ export type ReservedNodeNames = {
 };
 
 /**
- * A tiny subset of JSON Schema to represent node inputs and outputs.
- */
-export type SimpleSchema = {
-  properties: {
-    [name: string]: {
-      title?: string;
-      description?: string;
-      type?: string | string[];
-    };
-  };
-  additionalProperties?: boolean;
-};
-
-/**
  * The result of running `NodeDescriptorFunction`
  */
 export type NodeDescriberResult = {
-  inputSchema: SimpleSchema;
-  outputSchema: SimpleSchema;
+  inputSchema: Schema;
+  outputSchema: Schema;
 };
 
 /**
@@ -309,8 +297,8 @@ export type NodeDescriberResult = {
  */
 export type NodeDescriberFunction = (
   inputs?: InputValues,
-  inputSchema?: SimpleSchema,
-  outputSchema?: SimpleSchema
+  inputSchema?: Schema,
+  outputSchema?: Schema
 ) => Promise<NodeDescriberResult>;
 
 export type NodeHandler<Context> =

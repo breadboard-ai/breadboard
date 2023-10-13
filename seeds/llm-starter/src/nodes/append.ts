@@ -9,6 +9,7 @@ import {
   NodeDescriberFunction,
   NodeValue,
   OutputValues,
+  Schema,
 } from "@google-labs/graph-runner";
 
 export enum ObjectType {
@@ -49,22 +50,34 @@ const asString = (values: ValueType): string => {
   return asArray(values).join("\n");
 };
 
-export const appendDescriber: NodeDescriberFunction = async (
-  inputs?: InputValues
-) => {
-  return {
-    inputSchema: {
-      properties: {
-        accumulator: {
-          title: "accumulator",
-          description:
-            "A string, an object, or an array to which other input values will be appended.",
-          type: ["array", "object", "string"],
-          items: { type: "string" },
-        },
-      },
-      additionalProperties: true,
+export const computeInputSchema = (incomingWires: Schema): Schema => {
+  type SchemaProperties = Schema["properties"];
+  const properties: SchemaProperties = {
+    accumulator: {
+      title: "accumulator",
+      description:
+        "A string, an object, or an array to which other input values will be appended.",
+      type: ["array", "object", "string"],
+      items: { type: "string" },
     },
+  };
+  const inputSchema = { properties, additionalProperties: true };
+
+  if (!incomingWires.properties) return inputSchema;
+
+  Object.entries(incomingWires.properties).forEach(([propertyName, schema]) => {
+    properties[propertyName] = schema;
+  });
+  return inputSchema;
+};
+
+export const appendDescriber: NodeDescriberFunction = async (
+  _inputs?: InputValues,
+  incomingWires?: Schema
+) => {
+  const inputSchema = computeInputSchema(incomingWires || {});
+  return {
+    inputSchema,
     outputSchema: {
       properties: {
         accumulator: {

@@ -5,7 +5,11 @@
  */
 
 import test from "ava";
-import append, { ObjectType, getObjectType } from "../../src/nodes/append.js";
+import append, {
+  ObjectType,
+  getObjectType,
+  computeInputSchema,
+} from "../../src/nodes/append.js";
 
 test("getObjectType correctly recognizes various object types", (t) => {
   t.is(getObjectType("string"), ObjectType.stringy);
@@ -87,4 +91,40 @@ test("`append` correctly stringifies non-stringy values", async (t) => {
       accumulator: 'string\nvalue: {"key":"string"}',
     }
   );
+});
+
+test("`computeInputSchema` reacts to incoming wires", (t) => {
+  {
+    const incomingWires = {};
+    const inputSchema = computeInputSchema(incomingWires);
+    t.like(inputSchema, {
+      properties: {
+        accumulator: {
+          title: "accumulator",
+        },
+      },
+    });
+  }
+  {
+    const incomingWires = {
+      properties: {
+        foo: {
+          title: "foo",
+          type: "string",
+        },
+      },
+    };
+    const inputSchema = computeInputSchema(incomingWires);
+    t.like(inputSchema, {
+      properties: {
+        accumulator: {
+          title: "accumulator",
+        },
+        foo: {
+          title: "foo",
+          type: "string",
+        },
+      },
+    });
+  }
 });
