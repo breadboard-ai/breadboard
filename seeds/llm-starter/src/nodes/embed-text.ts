@@ -4,10 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  InputValues,
-  NodeValue,
-  OutputValues,
+import {
+  NodeDescriberFunction,
+  type InputValues,
+  type NodeValue,
+  type OutputValues,
 } from "@google-labs/graph-runner";
 import { EmbedTextResponse, palm } from "@google-labs/palm-lite";
 
@@ -22,7 +23,45 @@ export type EmbedTextInputs = NodeValue & {
   PALM_KEY: string;
 };
 
+export const embedTextDescriber: NodeDescriberFunction = async () => {
+  return {
+    inputSchema: {
+      type: "object",
+      properties: {
+        text: {
+          title: "text",
+          description: "Prompt for text completion.",
+          type: "string",
+        },
+        PALM_KEY: {
+          title: "PALM_KEY",
+          description: "The Google Cloud Platform API key",
+          type: "string",
+        },
+      },
+      required: ["text", "PALM_KEY"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        embedding: {
+          title: "embedding",
+          description: "The embedding of the text.",
+          type: "array",
+          items: {
+            type: "number",
+          },
+          minItems: 768,
+          maxItems: 768,
+        },
+      },
+      required: ["embedding"],
+    },
+  };
+};
+
 export default {
+  descirbe: embedTextDescriber,
   invoke: async (inputs: InputValues): Promise<OutputValues> => {
     const values = inputs as EmbedTextInputs;
     if (!values.PALM_KEY)
@@ -47,6 +86,6 @@ export default {
     if (!embedding)
       throw new Error(`No embedding returned for "${values.text}"`);
 
-    return { embedding } as unknown as OutputValues;
+    return { embedding } as OutputValues;
   },
 };
