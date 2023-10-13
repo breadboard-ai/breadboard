@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { InputValues } from "@google-labs/graph-runner";
+import type {
+  InputValues,
+  NodeDescriberFunction,
+  NodeHandlerFunction,
+} from "@google-labs/graph-runner";
 
 import { parseTemplate } from "url-template";
 
@@ -19,15 +23,49 @@ export type UrlTemplateOutputs = {
 export type UrlTemplateInputs = {
   /**
    * The URL template to use
-   * @example https://example.com/{{path}}
+   * @example https://example.com/{path}
    */
   template: string;
 };
 
+export const urlTemplateHandler: NodeHandlerFunction<object> = async (
+  inputs: InputValues
+) => {
+  const { template, ...values } = inputs as UrlTemplateInputs;
+  const url = parseTemplate(template).expand(values);
+  return { url };
+};
+
+export const urlTemplateDescriber: NodeDescriberFunction = async () => {
+  return {
+    inputSchema: {
+      type: "object",
+      properties: {
+        template: {
+          title: "template",
+          description: "The URL template to use",
+          type: "string",
+        },
+      },
+      required: ["template"],
+      additionalProperties: true,
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        url: {
+          title: "url",
+          description:
+            "The resulting URL that was produced by filling in the placeholders in the template",
+          type: "string",
+        },
+      },
+      required: ["url"],
+    },
+  };
+};
+
 export default {
-  invoke: async (inputs: InputValues) => {
-    const { template, ...values } = inputs as UrlTemplateInputs;
-    const url = parseTemplate(template).expand(values);
-    return { url };
-  },
+  describe: urlTemplateDescriber,
+  invoke: urlTemplateHandler,
 };
