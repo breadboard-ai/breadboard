@@ -59,7 +59,7 @@ export const promptTemplateHandler: NodeHandlerFunction<object> = async (
   return { prompt };
 };
 
-export const generateInputSchema = (inputs: InputValues): Schema => {
+export const computeInputSchema = (inputs: InputValues): Schema => {
   const parameters = parametersFromTemplate(inputs.template as string);
   const properties: Schema["properties"] = parameters.reduce(
     (acc, parameter) => {
@@ -88,7 +88,7 @@ export const promptTemplateDescriber: NodeDescriberFunction = async (
   inputs?: InputValues
 ) => {
   return {
-    inputSchema: generateInputSchema(inputs || {}),
+    inputSchema: computeInputSchema(inputs || {}),
     outputSchema: {
       type: "object",
       properties: {

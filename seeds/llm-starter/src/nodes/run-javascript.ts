@@ -4,7 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { InputValues } from "@google-labs/graph-runner";
+import type {
+  InputValues,
+  NodeDescriberFunction,
+  NodeHandlerFunction,
+  Schema,
+} from "@google-labs/graph-runner";
 
 // https://regex101.com/r/PeEmEW/1
 const stripCodeBlock = (code: string) =>
@@ -65,22 +70,92 @@ export type RunJavascriptInputs = InputValues & {
   raw?: boolean;
 };
 
-export default {
-  invoke: async (inputs: InputValues) => {
-    const { code, name, raw, ...args } = inputs as RunJavascriptInputs;
-    if (!code) throw new Error("Running JavaScript requires `code` input");
-    const clean = stripCodeBlock(code);
-    // A smart helper that senses the environment (browser or node) and uses
-    // the appropriate method to run the code.
-    const functionName = name || "run";
-    const argsString = JSON.stringify(args);
-    const env = environment();
+export const runJavascriptHandler: NodeHandlerFunction<object> = async (
+  inputs: InputValues
+) => {
+  const { code, name, raw, ...args } = inputs as RunJavascriptInputs;
+  if (!code) throw new Error("Running JavaScript requires `code` input");
+  const clean = stripCodeBlock(code);
+  // A smart helper that senses the environment (browser or node) and uses
+  // the appropriate method to run the code.
+  const functionName = name || "run";
+  const argsString = JSON.stringify(args);
+  const env = environment();
 
-    const result = JSON.parse(
-      env === "node"
-        ? await runInNode(clean, functionName, argsString)
-        : await runInBrowser(clean, functionName, argsString)
-    );
-    return raw ? result : { result };
-  },
+  const result = JSON.parse(
+    env === "node"
+      ? await runInNode(clean, functionName, argsString)
+      : await runInBrowser(clean, functionName, argsString)
+  );
+  return raw ? result : { result };
+};
+
+export const computeOutputSchema = (inputs: InputValues): Schema => {
+  if (!inputs || !inputs.raw)
+    return {
+      type: "object",
+      properties: {
+        result: {
+          title: "result",
+          description: "The result of running the JavaScript code",
+          type: ["string", "object"],
+        },
+      },
+      required: ["result"],
+    };
+  return {
+    type: "object",
+    additionalProperties: true,
+  };
+};
+
+type SchemaProperties = Schema["properties"];
+
+export const computeAdditionalInputs = (
+  inputsSchema?: SchemaProperties
+): SchemaProperties => {
+  if (!inputsSchema) return {};
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { code, name, raw, ...args } = inputsSchema;
+  return args;
+};
+
+export const runJavascriptDescriber: NodeDescriberFunction = async (
+  inputs?: InputValues,
+  inputsSchema?: Schema
+) => {
+  return {
+    inputSchema: {
+      type: "object",
+      properties: {
+        code: {
+          title: "code",
+          description: "The JavaScript code to run",
+          type: "string",
+        },
+        name: {
+          title: "name",
+          description:
+            'The name of the function to invoke in the supplied code. Default value is "run".',
+          type: "string",
+          default: "run",
+        },
+        raw: {
+          title: "raw",
+          description:
+            "Whether or not to return use the result of execution as raw output (true) or as a port called `result` (false). Default is false.",
+          type: "boolean",
+        },
+        ...computeAdditionalInputs(inputsSchema?.properties || {}),
+      },
+      required: ["code"],
+      additionalProperties: true,
+    },
+    outputSchema: computeOutputSchema(inputs || {}),
+  };
+};
+
+export default {
+  describe: runJavascriptDescriber,
+  invoke: runJavascriptHandler,
 };

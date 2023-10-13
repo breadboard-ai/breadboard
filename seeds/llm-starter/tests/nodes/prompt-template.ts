@@ -7,7 +7,7 @@
 import test from "ava";
 
 import {
-  generateInputSchema,
+  computeInputSchema,
   parametersFromTemplate,
   stringify,
   substitute,
@@ -95,7 +95,7 @@ test("substitute replaces parameters with stringified values", (t) => {
 
 test("`generateInputSchema` correctly generates schema for a template with no parameters", (t) => {
   const inputs = { template: "foo" };
-  const result = generateInputSchema(inputs);
+  const result = computeInputSchema(inputs);
   t.deepEqual(result, {
     type: "object",
     properties: {
@@ -111,7 +111,7 @@ test("`generateInputSchema` correctly generates schema for a template with no pa
 
 test("`generateInputSchema` correctly generates schema for a template with parameters", (t) => {
   const inputs = { template: "{{foo}} {{bar}}" };
-  const result = generateInputSchema(inputs);
+  const result = computeInputSchema(inputs);
   t.deepEqual(result, {
     type: "object",
     properties: {

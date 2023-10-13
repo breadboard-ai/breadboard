@@ -33,7 +33,7 @@ export const jsonataHandler: NodeHandlerFunction<object> = async (
   return raw ? result : { result };
 };
 
-export const generateOutputSchema = async (
+export const computeOutputSchema = async (
   inputs: InputValues
 ): Promise<Schema> => {
   if (!inputs || !inputs.raw) {
@@ -78,7 +78,7 @@ export const generateOutputSchema = async (
 export const jsonataDescriber: NodeDescriberFunction = async (
   inputs?: InputValues
 ) => {
-  const outputSchema = await generateOutputSchema(inputs || {});
+  const outputSchema = await computeOutputSchema(inputs || {});
   return {
     inputSchema: {
       type: "object",
