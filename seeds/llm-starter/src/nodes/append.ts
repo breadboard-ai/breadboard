@@ -6,6 +6,7 @@
 
 import {
   InputValues,
+  NodeDescriberFunction,
   NodeValue,
   OutputValues,
 } from "@google-labs/graph-runner";
@@ -48,7 +49,36 @@ const asString = (values: ValueType): string => {
   return asArray(values).join("\n");
 };
 
+export const appendDescriber: NodeDescriberFunction = async (
+  inputs?: InputValues
+) => {
+  return {
+    inputSchema: {
+      properties: {
+        accumulator: {
+          title: "accumulator",
+          description:
+            "A string, an object, or an array to which other input values will be appended.",
+          type: ["array", "object", "string"],
+          items: { type: "string" },
+        },
+      },
+      additionalProperties: true,
+    },
+    outputSchema: {
+      properties: {
+        accumulator: {
+          title: "accumulator",
+          description:
+            "The result of appending. This is input `accumulator` with the provided values appended to it.",
+        },
+      },
+    },
+  };
+};
+
 export default {
+  describe: appendDescriber,
   invoke: async (inputs: InputValues): Promise<OutputValues> => {
     const { accumulator, ...values } = inputs as AppendInputs;
     if (Object.keys(values).length === 0) return { accumulator };

@@ -284,7 +284,7 @@ export type SimpleSchema = {
     [name: string]: {
       title?: string;
       description?: string;
-      type?: string;
+      type?: string | string[];
     };
   };
   additionalProperties?: boolean;
