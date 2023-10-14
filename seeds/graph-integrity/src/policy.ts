@@ -10,7 +10,7 @@ import { Label } from "./label.js";
  * Policies are for now just constraints on node types
  */
 
-// TODO: Duplicating NodeTypeIdentifier from graph-runner here. In the future we
+// TODO: Duplicating NodeTypeIdentifier from `breadboard` here. In the future we
 // might want to either introduce an abstraction to handle local namespaces or
 // assume a global namespace that is valid across all graphs, even
 // non-Breadboard ones like SQL queries.

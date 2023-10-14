@@ -1,4 +1,4 @@
-[@google-labs/graph-runner](../README.md) / [Exports](../modules.md) / TraversalResult
+[@google-labs/breadboard](../README.md) / [Exports](../modules.md) / TraversalResult
 
 # Interface: TraversalResult
 
@@ -28,7 +28,7 @@
 
 #### Defined in
 
-[seeds/graph-runner/src/types.ts:232](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-runner/src/types.ts#L232)
+[seeds/breadboard/src/types.ts:232](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L232)
 
 ___
 
@@ -38,7 +38,7 @@ ___
 
 #### Defined in
 
-[seeds/graph-runner/src/types.ts:233](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-runner/src/types.ts#L233)
+[seeds/breadboard/src/types.ts:233](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L233)
 
 ___
 
@@ -48,7 +48,7 @@ ___
 
 #### Defined in
 
-[seeds/graph-runner/src/types.ts:234](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-runner/src/types.ts#L234)
+[seeds/breadboard/src/types.ts:234](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L234)
 
 ___
 
@@ -58,7 +58,7 @@ ___
 
 #### Defined in
 
-[seeds/graph-runner/src/types.ts:236](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-runner/src/types.ts#L236)
+[seeds/breadboard/src/types.ts:236](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L236)
 
 ___
 
@@ -68,7 +68,7 @@ ___
 
 #### Defined in
 
-[seeds/graph-runner/src/types.ts:235](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-runner/src/types.ts#L235)
+[seeds/breadboard/src/types.ts:235](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L235)
 
 ___
 
@@ -78,7 +78,7 @@ ___
 
 #### Defined in
 
-[seeds/graph-runner/src/types.ts:238](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-runner/src/types.ts#L238)
+[seeds/breadboard/src/types.ts:238](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L238)
 
 ___
 
@@ -88,7 +88,7 @@ ___
 
 #### Defined in
 
-[seeds/graph-runner/src/types.ts:239](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-runner/src/types.ts#L239)
+[seeds/breadboard/src/types.ts:239](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L239)
 
 ___
 
@@ -98,7 +98,7 @@ ___
 
 #### Defined in
 
-[seeds/graph-runner/src/types.ts:240](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-runner/src/types.ts#L240)
+[seeds/breadboard/src/types.ts:240](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L240)
 
 ___
 
@@ -108,4 +108,4 @@ ___
 
 #### Defined in
 
-[seeds/graph-runner/src/types.ts:237](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-runner/src/types.ts#L237)
+[seeds/breadboard/src/types.ts:237](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L237)

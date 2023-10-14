@@ -28,4 +28,4 @@
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:82](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/types.ts#L82)
+[seeds/breadboard/src/types.ts:377](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L377)

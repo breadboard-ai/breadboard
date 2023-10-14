@@ -8,7 +8,9 @@
 
 - [board](NodeHandlerContext.md#board)
 - [descriptor](NodeHandlerContext.md#descriptor)
+- [parent](NodeHandlerContext.md#parent)
 - [probe](NodeHandlerContext.md#probe)
+- [slots](NodeHandlerContext.md#slots)
 
 ## Properties
 
@@ -18,17 +20,27 @@
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:228](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/types.ts#L228)
+[seeds/breadboard/src/types.ts:523](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L523)
 
 ___
 
 ### descriptor
 
-• `Readonly` **descriptor**: `NodeDescriptor`
+• `Readonly` **descriptor**: [`NodeDescriptor`](../modules.md#nodedescriptor)
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:229](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/types.ts#L229)
+[seeds/breadboard/src/types.ts:524](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L524)
+
+___
+
+### parent
+
+• `Readonly` **parent**: [`GraphDescriptor`](../modules.md#graphdescriptor)
+
+#### Defined in
+
+[seeds/breadboard/src/types.ts:525](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L525)
 
 ___
 
@@ -38,4 +50,14 @@ ___
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:230](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/types.ts#L230)
+[seeds/breadboard/src/types.ts:527](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L527)
+
+___
+
+### slots
+
+• `Readonly` **slots**: [`BreadboardSlotSpec`](../modules.md#breadboardslotspec)
+
+#### Defined in
+
+[seeds/breadboard/src/types.ts:526](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L526)

@@ -22,7 +22,7 @@ Optional. Text that should be provided to the model first to ground the response
 
 #### Defined in
 
-[types.ts:223](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L223)
+[types.ts:223](https://github.com/google/labs-prototypes/blob/99919d5/seeds/palm-lite/src/types.ts#L223)
 
 ___
 
@@ -34,7 +34,7 @@ Optional. Examples of what the model should generate. This includes both user in
 
 #### Defined in
 
-[types.ts:227](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L227)
+[types.ts:227](https://github.com/google/labs-prototypes/blob/99919d5/seeds/palm-lite/src/types.ts#L227)
 
 ___
 
@@ -46,4 +46,4 @@ Required. A snapshot of the recent conversation history sorted chronologically. 
 
 #### Defined in
 
-[types.ts:231](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L231)
+[types.ts:231](https://github.com/google/labs-prototypes/blob/99919d5/seeds/palm-lite/src/types.ts#L231)

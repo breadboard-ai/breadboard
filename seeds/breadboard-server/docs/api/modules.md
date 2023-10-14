@@ -39,4 +39,4 @@
 
 #### Defined in
 
-[server.ts:78](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard-server/src/server.ts#L78)
+[server.ts:82](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard-server/src/server.ts#L82)

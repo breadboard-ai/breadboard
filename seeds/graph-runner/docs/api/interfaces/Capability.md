@@ -2,11 +2,6 @@
 
 # Interface: Capability
 
-**`License`**
-
-Copyright 2023 Google LLC
-SPDX-License-Identifier: Apache-2.0
-
 ## Table of contents
 
 ### Properties
@@ -21,4 +16,4 @@ SPDX-License-Identifier: Apache-2.0
 
 #### Defined in
 
-[types.ts:8](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-runner/src/types.ts#L8)
+[seeds/graph-runner/src/types.ts:10](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-runner/src/types.ts#L10)

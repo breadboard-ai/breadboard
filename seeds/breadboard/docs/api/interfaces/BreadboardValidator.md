@@ -25,7 +25,7 @@ Add a graph and validate it.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `graph` | `GraphDescriptor` | The graph to validate. |
+| `graph` | [`GraphDescriptor`](../modules.md#graphdescriptor) | The graph to validate. |
 
 #### Returns
 
@@ -37,7 +37,7 @@ Error if the graph is invalid.
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:112](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/types.ts#L112)
+[seeds/breadboard/src/types.ts:407](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L407)
 
 ___
 
@@ -52,7 +52,7 @@ Generate a validator for a subgraph, replacing a given node. Call
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `node` | `NodeDescriptor` | The node to replace. |
+| `node` | [`NodeDescriptor`](../modules.md#nodedescriptor) | The node to replace. |
 | `actualInputs?` | `string`[] | Actual inputs to the node (as opposed to assuming all inputs with * or that optional ones are present) |
 
 #### Returns
@@ -63,7 +63,7 @@ A validator for the subgraph.
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:130](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/types.ts#L130)
+[seeds/breadboard/src/types.ts:425](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L425)
 
 ___
 
@@ -77,7 +77,7 @@ Gets the validation metadata for a node.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `node` | `NodeDescriptor` | Node to get metadata for. |
+| `node` | [`NodeDescriptor`](../modules.md#nodedescriptor) | Node to get metadata for. |
 
 #### Returns
 
@@ -85,4 +85,4 @@ Gets the validation metadata for a node.
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:119](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/types.ts#L119)
+[seeds/breadboard/src/types.ts:414](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L414)

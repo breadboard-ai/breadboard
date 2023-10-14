@@ -31,7 +31,7 @@
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:286](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/types.ts#L286)
+[seeds/breadboard/src/types.ts:583](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L583)
 
 ## Methods
 
@@ -65,4 +65,4 @@ Use this method to wire nodes together.
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:280](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/types.ts#L280)
+[seeds/breadboard/src/types.ts:577](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L577)

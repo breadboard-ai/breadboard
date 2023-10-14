@@ -28,7 +28,7 @@
 
 #### Defined in
 
-[index.ts:51](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-playground/src/index.ts#L51)
+[index.ts:55](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-playground/src/index.ts#L55)
 
 ___
 
@@ -48,4 +48,4 @@ ___
 
 #### Defined in
 
-[index.ts:28](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-playground/src/index.ts#L28)
+[index.ts:32](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-playground/src/index.ts#L32)

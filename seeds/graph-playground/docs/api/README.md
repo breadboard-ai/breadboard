@@ -10,12 +10,11 @@ This is a prototyping ground for experimenting with representing generative AI a
 
 :one: Open [graphs.code-workspace](../../graphs.code-workspace) in VSCode. This workspace brings all the relevant packages in the monorepo into one place, so you can easily navigate between them and not worry about other bits that aren't relevant to graphs.
 
-There are five packages in this workspace:
+There are three key packages in this workspace:
 
-1. `seeds/graph-runner` -- an implementation of the graph traversal machine.
-2. `seeds/breadboard` -- a nascent helper library for making graphs.
-3. `seeds/llm-starter` -- the nascent LLM Starter Kit, a collection of nodes that are useful for making generative AI apps.
-4. `seeds/graph-playground` -- this package, which a collection of sample code for how to use `seeds/breadboard` and `seeds/llm-starter` to make graphs.
+1. `seeds/breadboard` -- an implementation of the graph traversal machine and library for making graphs.
+2. `seeds/llm-starter` -- the nascent LLM Starter Kit, a collection of nodes that are useful for making generative AI apps.
+3. `seeds/graph-playground` -- this package, which a collection of sample code for how to use `seeds/breadboard` and `seeds/llm-starter` to make graphs.
 
 :two: In `seeds/graph-playground`, create `.env` file with the following content:
 
@@ -65,7 +64,7 @@ npm run dev graphs/react-with-include.json
 
 ```
 
-For a more detailed explanation of how graph traversal machine works, see [README.md](../graph-runner/README.md) in the `graph-runner` package.
+For a more detailed explanation of how graph traversal machine works, see [story.md](../breadboard/docs/story.md) in the `seeds/breadboard` package.
 
 For documentation on the Breadboard library, see [README.md](../breadboard/README.md) in the `seeds/breadboard` package.
 

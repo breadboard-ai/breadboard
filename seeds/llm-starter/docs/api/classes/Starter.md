@@ -18,7 +18,10 @@ Syntactic sugar around the `coreHandlers` library.
 
 - [#handlers](Starter.md##handlers)
 - [#nodeFactory](Starter.md##nodefactory)
+- [description](Starter.md#description)
+- [title](Starter.md#title)
 - [url](Starter.md#url)
+- [version](Starter.md#version)
 
 ### Accessors
 
@@ -28,6 +31,7 @@ Syntactic sugar around the `coreHandlers` library.
 
 - [#create](Starter.md##create)
 - [append](Starter.md#append)
+- [embedText](Starter.md#embedtext)
 - [fetch](Starter.md#fetch)
 - [generateText](Starter.md#generatetext)
 - [jsonata](Starter.md#jsonata)
@@ -51,7 +55,7 @@ Syntactic sugar around the `coreHandlers` library.
 
 #### Defined in
 
-[starter.ts:68](https://github.com/google/labs-prototypes/blob/5114223/seeds/llm-starter/src/starter.ts#L68)
+[starter.ts:73](https://github.com/google/labs-prototypes/blob/99919d5/seeds/llm-starter/src/starter.ts#L73)
 
 ## Properties
 
@@ -61,7 +65,7 @@ Syntactic sugar around the `coreHandlers` library.
 
 #### Defined in
 
-[starter.ts:62](https://github.com/google/labs-prototypes/blob/5114223/seeds/llm-starter/src/starter.ts#L62)
+[starter.ts:67](https://github.com/google/labs-prototypes/blob/99919d5/seeds/llm-starter/src/starter.ts#L67)
 
 ___
 
@@ -71,7 +75,35 @@ ___
 
 #### Defined in
 
-[starter.ts:61](https://github.com/google/labs-prototypes/blob/5114223/seeds/llm-starter/src/starter.ts#L61)
+[starter.ts:66](https://github.com/google/labs-prototypes/blob/99919d5/seeds/llm-starter/src/starter.ts#L66)
+
+___
+
+### description
+
+• **description**: `string` = `"A kit that provides a few necessary components for wiring boards that use PaLM API."`
+
+#### Implementation of
+
+Kit.description
+
+#### Defined in
+
+[starter.ts:61](https://github.com/google/labs-prototypes/blob/99919d5/seeds/llm-starter/src/starter.ts#L61)
+
+___
+
+### title
+
+• **title**: `string` = `"LLM Starter Kit"`
+
+#### Implementation of
+
+Kit.title
+
+#### Defined in
+
+[starter.ts:60](https://github.com/google/labs-prototypes/blob/99919d5/seeds/llm-starter/src/starter.ts#L60)
 
 ___
 
@@ -85,7 +117,21 @@ Kit.url
 
 #### Defined in
 
-[starter.ts:60](https://github.com/google/labs-prototypes/blob/5114223/seeds/llm-starter/src/starter.ts#L60)
+[starter.ts:64](https://github.com/google/labs-prototypes/blob/99919d5/seeds/llm-starter/src/starter.ts#L64)
+
+___
+
+### version
+
+• **version**: `string` = `"0.0.1"`
+
+#### Implementation of
+
+Kit.version
+
+#### Defined in
+
+[starter.ts:63](https://github.com/google/labs-prototypes/blob/99919d5/seeds/llm-starter/src/starter.ts#L63)
 
 ## Accessors
 
@@ -103,7 +149,7 @@ Kit.handlers
 
 #### Defined in
 
-[starter.ts:64](https://github.com/google/labs-prototypes/blob/5114223/seeds/llm-starter/src/starter.ts#L64)
+[starter.ts:69](https://github.com/google/labs-prototypes/blob/99919d5/seeds/llm-starter/src/starter.ts#L69)
 
 ## Methods
 
@@ -131,7 +177,7 @@ Kit.handlers
 
 #### Defined in
 
-[starter.ts:73](https://github.com/google/labs-prototypes/blob/5114223/seeds/llm-starter/src/starter.ts#L73)
+[starter.ts:78](https://github.com/google/labs-prototypes/blob/99919d5/seeds/llm-starter/src/starter.ts#L78)
 
 ___
 
@@ -157,7 +203,27 @@ ___
 
 #### Defined in
 
-[starter.ts:81](https://github.com/google/labs-prototypes/blob/5114223/seeds/llm-starter/src/starter.ts#L81)
+[starter.ts:86](https://github.com/google/labs-prototypes/blob/99919d5/seeds/llm-starter/src/starter.ts#L86)
+
+___
+
+### embedText
+
+▸ **embedText**(`config?`): `BreadboardNode`<`EmbedTextInputs`, `Partial`<`Record`<`string`, `NodeValue`\>\>\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `config` | `OptionalIdConfiguration` |
+
+#### Returns
+
+`BreadboardNode`<`EmbedTextInputs`, `Partial`<`Record`<`string`, `NodeValue`\>\>\>
+
+#### Defined in
+
+[starter.ts:142](https://github.com/google/labs-prototypes/blob/99919d5/seeds/llm-starter/src/starter.ts#L142)
 
 ___
 
@@ -178,7 +244,7 @@ ___
 
 #### Defined in
 
-[starter.ts:111](https://github.com/google/labs-prototypes/blob/5114223/seeds/llm-starter/src/starter.ts#L111)
+[starter.ts:116](https://github.com/google/labs-prototypes/blob/99919d5/seeds/llm-starter/src/starter.ts#L116)
 
 ___
 
@@ -198,7 +264,7 @@ ___
 
 #### Defined in
 
-[starter.ts:131](https://github.com/google/labs-prototypes/blob/5114223/seeds/llm-starter/src/starter.ts#L131)
+[starter.ts:136](https://github.com/google/labs-prototypes/blob/99919d5/seeds/llm-starter/src/starter.ts#L136)
 
 ___
 
@@ -225,7 +291,7 @@ ___
 
 #### Defined in
 
-[starter.ts:118](https://github.com/google/labs-prototypes/blob/5114223/seeds/llm-starter/src/starter.ts#L118)
+[starter.ts:123](https://github.com/google/labs-prototypes/blob/99919d5/seeds/llm-starter/src/starter.ts#L123)
 
 ___
 
@@ -252,7 +318,7 @@ ___
 
 #### Defined in
 
-[starter.ts:87](https://github.com/google/labs-prototypes/blob/5114223/seeds/llm-starter/src/starter.ts#L87)
+[starter.ts:92](https://github.com/google/labs-prototypes/blob/99919d5/seeds/llm-starter/src/starter.ts#L92)
 
 ___
 
@@ -280,7 +346,7 @@ ___
 
 #### Defined in
 
-[starter.ts:104](https://github.com/google/labs-prototypes/blob/5114223/seeds/llm-starter/src/starter.ts#L104)
+[starter.ts:109](https://github.com/google/labs-prototypes/blob/99919d5/seeds/llm-starter/src/starter.ts#L109)
 
 ___
 
@@ -307,7 +373,7 @@ ___
 
 #### Defined in
 
-[starter.ts:137](https://github.com/google/labs-prototypes/blob/5114223/seeds/llm-starter/src/starter.ts#L137)
+[starter.ts:148](https://github.com/google/labs-prototypes/blob/99919d5/seeds/llm-starter/src/starter.ts#L148)
 
 ___
 
@@ -334,7 +400,7 @@ ___
 
 #### Defined in
 
-[starter.ts:97](https://github.com/google/labs-prototypes/blob/5114223/seeds/llm-starter/src/starter.ts#L97)
+[starter.ts:102](https://github.com/google/labs-prototypes/blob/99919d5/seeds/llm-starter/src/starter.ts#L102)
 
 ___
 
@@ -354,4 +420,4 @@ ___
 
 #### Defined in
 
-[starter.ts:125](https://github.com/google/labs-prototypes/blob/5114223/seeds/llm-starter/src/starter.ts#L125)
+[starter.ts:130](https://github.com/google/labs-prototypes/blob/99919d5/seeds/llm-starter/src/starter.ts#L130)

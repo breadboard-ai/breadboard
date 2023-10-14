@@ -1,4 +1,4 @@
-[@google-labs/graph-runner](../README.md) / [Exports](../modules.md) / MachineResult
+[@google-labs/breadboard](../README.md) / [Exports](../modules.md) / MachineResult
 
 # Class: MachineResult
 
@@ -51,7 +51,7 @@
 
 #### Defined in
 
-[seeds/graph-runner/src/traversal/result.ts:28](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-runner/src/traversal/result.ts#L28)
+[seeds/breadboard/src/traversal/result.ts:28](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/traversal/result.ts#L28)
 
 ## Properties
 
@@ -65,7 +65,7 @@
 
 #### Defined in
 
-[seeds/graph-runner/src/traversal/result.ts:19](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-runner/src/traversal/result.ts#L19)
+[seeds/breadboard/src/traversal/result.ts:19](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/traversal/result.ts#L19)
 
 ___
 
@@ -79,7 +79,7 @@ ___
 
 #### Defined in
 
-[seeds/graph-runner/src/traversal/result.ts:20](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-runner/src/traversal/result.ts#L20)
+[seeds/breadboard/src/traversal/result.ts:20](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/traversal/result.ts#L20)
 
 ___
 
@@ -93,7 +93,7 @@ ___
 
 #### Defined in
 
-[seeds/graph-runner/src/traversal/result.ts:21](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-runner/src/traversal/result.ts#L21)
+[seeds/breadboard/src/traversal/result.ts:21](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/traversal/result.ts#L21)
 
 ___
 
@@ -107,7 +107,7 @@ ___
 
 #### Defined in
 
-[seeds/graph-runner/src/traversal/result.ts:23](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-runner/src/traversal/result.ts#L23)
+[seeds/breadboard/src/traversal/result.ts:23](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/traversal/result.ts#L23)
 
 ___
 
@@ -121,7 +121,7 @@ ___
 
 #### Defined in
 
-[seeds/graph-runner/src/traversal/result.ts:22](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-runner/src/traversal/result.ts#L22)
+[seeds/breadboard/src/traversal/result.ts:22](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/traversal/result.ts#L22)
 
 ___
 
@@ -135,7 +135,7 @@ ___
 
 #### Defined in
 
-[seeds/graph-runner/src/traversal/result.ts:25](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-runner/src/traversal/result.ts#L25)
+[seeds/breadboard/src/traversal/result.ts:25](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/traversal/result.ts#L25)
 
 ___
 
@@ -149,7 +149,7 @@ ___
 
 #### Defined in
 
-[seeds/graph-runner/src/traversal/result.ts:26](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-runner/src/traversal/result.ts#L26)
+[seeds/breadboard/src/traversal/result.ts:26](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/traversal/result.ts#L26)
 
 ___
 
@@ -163,7 +163,7 @@ ___
 
 #### Defined in
 
-[seeds/graph-runner/src/traversal/result.ts:24](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-runner/src/traversal/result.ts#L24)
+[seeds/breadboard/src/traversal/result.ts:24](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/traversal/result.ts#L24)
 
 ## Accessors
 
@@ -184,7 +184,7 @@ visited.
 
 #### Defined in
 
-[seeds/graph-runner/src/traversal/result.ts:50](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-runner/src/traversal/result.ts#L50)
+[seeds/breadboard/src/traversal/result.ts:50](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/traversal/result.ts#L50)
 
 ## Methods
 
@@ -204,4 +204,4 @@ visited.
 
 #### Defined in
 
-[seeds/graph-runner/src/traversal/result.ts:54](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-runner/src/traversal/result.ts#L54)
+[seeds/breadboard/src/traversal/result.ts:54](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/traversal/result.ts#L54)

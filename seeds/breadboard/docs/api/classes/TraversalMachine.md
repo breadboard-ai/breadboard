@@ -1,4 +1,4 @@
-[@google-labs/graph-runner](../README.md) / [Exports](../modules.md) / TraversalMachine
+[@google-labs/breadboard](../README.md) / [Exports](../modules.md) / TraversalMachine
 
 # Class: TraversalMachine
 
@@ -38,7 +38,7 @@
 
 #### Defined in
 
-[seeds/graph-runner/src/traversal/machine.ts:17](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-runner/src/traversal/machine.ts#L17)
+[seeds/breadboard/src/traversal/machine.ts:17](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/traversal/machine.ts#L17)
 
 ## Properties
 
@@ -48,7 +48,7 @@
 
 #### Defined in
 
-[seeds/graph-runner/src/traversal/machine.ts:14](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-runner/src/traversal/machine.ts#L14)
+[seeds/breadboard/src/traversal/machine.ts:14](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/traversal/machine.ts#L14)
 
 ___
 
@@ -58,7 +58,7 @@ ___
 
 #### Defined in
 
-[seeds/graph-runner/src/traversal/machine.ts:15](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-runner/src/traversal/machine.ts#L15)
+[seeds/breadboard/src/traversal/machine.ts:15](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/traversal/machine.ts#L15)
 
 ## Methods
 
@@ -76,7 +76,7 @@ AsyncIterable.[asyncIterator]
 
 #### Defined in
 
-[seeds/graph-runner/src/traversal/machine.ts:22](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-runner/src/traversal/machine.ts#L22)
+[seeds/breadboard/src/traversal/machine.ts:22](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/traversal/machine.ts#L22)
 
 ___
 
@@ -90,7 +90,7 @@ ___
 
 #### Defined in
 
-[seeds/graph-runner/src/traversal/machine.ts:26](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-runner/src/traversal/machine.ts#L26)
+[seeds/breadboard/src/traversal/machine.ts:26](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/traversal/machine.ts#L26)
 
 ___
 
@@ -110,4 +110,4 @@ ___
 
 #### Defined in
 
-[seeds/graph-runner/src/traversal/machine.ts:49](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-runner/src/traversal/machine.ts#L49)
+[seeds/breadboard/src/traversal/machine.ts:49](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/traversal/machine.ts#L49)

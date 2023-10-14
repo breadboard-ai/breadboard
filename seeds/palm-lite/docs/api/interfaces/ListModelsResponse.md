@@ -21,7 +21,7 @@ The returned Models.
 
 #### Defined in
 
-[types.ts:195](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L195)
+[types.ts:195](https://github.com/google/labs-prototypes/blob/99919d5/seeds/palm-lite/src/types.ts#L195)
 
 ___
 
@@ -33,4 +33,4 @@ A token, which can be sent as `page_token` to retrieve the next page. If this fi
 
 #### Defined in
 
-[types.ts:199](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L199)
+[types.ts:199](https://github.com/google/labs-prototypes/blob/99919d5/seeds/palm-lite/src/types.ts#L199)

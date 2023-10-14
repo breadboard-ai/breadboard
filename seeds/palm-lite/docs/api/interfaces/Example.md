@@ -21,7 +21,7 @@ Required. An example of an input `Message` from the user.
 
 #### Defined in
 
-[types.ts:91](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L91)
+[types.ts:91](https://github.com/google/labs-prototypes/blob/99919d5/seeds/palm-lite/src/types.ts#L91)
 
 ___
 
@@ -33,4 +33,4 @@ Required. An example of what the model should output given the input.
 
 #### Defined in
 
-[types.ts:95](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L95)
+[types.ts:95](https://github.com/google/labs-prototypes/blob/99919d5/seeds/palm-lite/src/types.ts#L95)

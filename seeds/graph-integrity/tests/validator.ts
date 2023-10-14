@@ -16,7 +16,7 @@ import { Policy } from "../src/policy.js";
 const IN_DIR = "./tests/data/";
 
 // JSON test data pattern copied and modified from
-// graph-runner/tests/machines.ts
+// breadboard/tests/machine.ts
 
 interface TestGraphDescriptor extends GraphDescriptor {
   safe: boolean;

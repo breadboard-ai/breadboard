@@ -279,7 +279,7 @@ We will get this output:
 
 #### Inputs:
 
-- `template` -- required, a template for the URL. It can contain zero or more placeholders that will be replaced with values from the input property bag. Specify placeholders as `{{propertyName}}` in the template.
+- `template` -- required, a template for the URL. It can contain zero or more placeholders that will be replaced with values from the input property bag. Specify placeholders as `{propertyName}` in the template.
 - zero or more inputs that will be used to replace placeholders in the template.
 
 #### Outputs:

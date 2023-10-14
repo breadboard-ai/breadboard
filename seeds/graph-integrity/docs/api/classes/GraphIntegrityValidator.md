@@ -65,7 +65,7 @@ Acts as bridge between Breadboard and the generic graph validation code.
 
 #### Defined in
 
-[validator.ts:80](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-integrity/src/validator.ts#L80)
+[validator.ts:78](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-integrity/src/validator.ts#L78)
 
 ## Properties
 
@@ -75,7 +75,7 @@ Acts as bridge between Breadboard and the generic graph validation code.
 
 #### Defined in
 
-[validator.ts:75](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-integrity/src/validator.ts#L75)
+[validator.ts:73](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-integrity/src/validator.ts#L73)
 
 ___
 
@@ -85,7 +85,7 @@ ___
 
 #### Defined in
 
-[validator.ts:77](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-integrity/src/validator.ts#L77)
+[validator.ts:75](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-integrity/src/validator.ts#L75)
 
 ___
 
@@ -95,7 +95,7 @@ ___
 
 #### Defined in
 
-[validator.ts:76](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-integrity/src/validator.ts#L76)
+[validator.ts:74](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-integrity/src/validator.ts#L74)
 
 ___
 
@@ -105,7 +105,7 @@ ___
 
 #### Defined in
 
-[validator.ts:78](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-integrity/src/validator.ts#L78)
+[validator.ts:76](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-integrity/src/validator.ts#L76)
 
 ___
 
@@ -115,7 +115,7 @@ ___
 
 #### Defined in
 
-[validator.ts:74](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-integrity/src/validator.ts#L74)
+[validator.ts:72](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-integrity/src/validator.ts#L72)
 
 ## Methods
 
@@ -145,7 +145,7 @@ BreadboardValidator.addGraph
 
 #### Defined in
 
-[validator.ts:111](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-integrity/src/validator.ts#L111)
+[validator.ts:109](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-integrity/src/validator.ts#L109)
 
 ___
 
@@ -167,7 +167,7 @@ Add a policy to validate graphs against.
 
 #### Defined in
 
-[validator.ts:101](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-integrity/src/validator.ts#L101)
+[validator.ts:99](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-integrity/src/validator.ts#L99)
 
 ___
 
@@ -187,7 +187,7 @@ ___
 
 #### Defined in
 
-[validator.ts:153](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-integrity/src/validator.ts#L153)
+[validator.ts:151](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-integrity/src/validator.ts#L151)
 
 ___
 
@@ -217,7 +217,7 @@ BreadboardValidator.getSubgraphValidator
 
 #### Defined in
 
-[validator.ts:143](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-integrity/src/validator.ts#L143)
+[validator.ts:141](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-integrity/src/validator.ts#L141)
 
 ___
 
@@ -247,7 +247,7 @@ BreadboardValidator.getValidatorMetadata
 
 #### Defined in
 
-[validator.ts:125](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-integrity/src/validator.ts#L125)
+[validator.ts:123](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-integrity/src/validator.ts#L123)
 
 ___
 
@@ -269,7 +269,7 @@ Insert a new graph into this graph.
 
 #### Defined in
 
-[validator.ts:165](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-integrity/src/validator.ts#L165)
+[validator.ts:163](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-integrity/src/validator.ts#L163)
 
 ___
 
@@ -283,4 +283,4 @@ ___
 
 #### Defined in
 
-[validator.ts:320](https://github.com/google/labs-prototypes/blob/5114223/seeds/graph-integrity/src/validator.ts#L320)
+[validator.ts:322](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-integrity/src/validator.ts#L322)

@@ -57,7 +57,7 @@
 
 #### Defined in
 
-[seeds/breadboard/src/node.ts:103](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/node.ts#L103)
+[seeds/breadboard/src/node.ts:101](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/node.ts#L101)
 
 ## Properties
 
@@ -67,17 +67,17 @@
 
 #### Defined in
 
-[seeds/breadboard/src/node.ts:101](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/node.ts#L101)
+[seeds/breadboard/src/node.ts:99](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/node.ts#L99)
 
 ___
 
 ### #descriptor
 
-• `Private` **#descriptor**: `NodeDescriptor`
+• `Private` **#descriptor**: [`NodeDescriptor`](../modules.md#nodedescriptor)
 
 #### Defined in
 
-[seeds/breadboard/src/node.ts:100](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/node.ts#L100)
+[seeds/breadboard/src/node.ts:98](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/node.ts#L98)
 
 ## Accessors
 
@@ -95,7 +95,7 @@ ___
 
 #### Defined in
 
-[seeds/breadboard/src/node.ts:169](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/node.ts#L169)
+[seeds/breadboard/src/node.ts:167](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/node.ts#L167)
 
 ## Methods
 
@@ -133,4 +133,4 @@ Use this method to wire nodes together.
 
 #### Defined in
 
-[seeds/breadboard/src/node.ts:138](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/node.ts#L138)
+[seeds/breadboard/src/node.ts:136](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/node.ts#L136)

@@ -42,22 +42,22 @@
 
 | Name | Type |
 | :------ | :------ |
-| `state` | `TraversalResult` |
+| `state` | [`TraversalResult`](../interfaces/TraversalResult.md) |
 | `type` | [`RunResultType`](../modules.md#runresulttype) |
 
 #### Defined in
 
-[seeds/breadboard/src/run.ts:43](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/run.ts#L43)
+[seeds/breadboard/src/run.ts:44](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/run.ts#L44)
 
 ## Properties
 
 ### #state
 
-• `Private` **#state**: `TraversalResult`
+• `Private` **#state**: [`TraversalResult`](../interfaces/TraversalResult.md)
 
 #### Defined in
 
-[seeds/breadboard/src/run.ts:41](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/run.ts#L41)
+[seeds/breadboard/src/run.ts:42](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/run.ts#L42)
 
 ___
 
@@ -67,17 +67,17 @@ ___
 
 #### Defined in
 
-[seeds/breadboard/src/run.ts:40](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/run.ts#L40)
+[seeds/breadboard/src/run.ts:41](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/run.ts#L41)
 
 ## Accessors
 
 ### inputArguments
 
-• `get` **inputArguments**(): `InputValues`
+• `get` **inputArguments**(): [`InputValues`](../modules.md#inputvalues)
 
 #### Returns
 
-`InputValues`
+[`InputValues`](../modules.md#inputvalues)
 
 #### Implementation of
 
@@ -85,7 +85,7 @@ BreadboardRunResult.inputArguments
 
 #### Defined in
 
-[seeds/breadboard/src/run.ts:56](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/run.ts#L56)
+[seeds/breadboard/src/run.ts:57](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/run.ts#L57)
 
 ___
 
@@ -97,7 +97,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `inputs` | `InputValues` |
+| `inputs` | [`InputValues`](../modules.md#inputvalues) |
 
 #### Returns
 
@@ -109,17 +109,17 @@ BreadboardRunResult.inputs
 
 #### Defined in
 
-[seeds/breadboard/src/run.ts:60](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/run.ts#L60)
+[seeds/breadboard/src/run.ts:61](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/run.ts#L61)
 
 ___
 
 ### node
 
-• `get` **node**(): `NodeDescriptor`
+• `get` **node**(): [`NodeDescriptor`](../modules.md#nodedescriptor)
 
 #### Returns
 
-`NodeDescriptor`
+[`NodeDescriptor`](../modules.md#nodedescriptor)
 
 #### Implementation of
 
@@ -127,17 +127,17 @@ BreadboardRunResult.node
 
 #### Defined in
 
-[seeds/breadboard/src/run.ts:52](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/run.ts#L52)
+[seeds/breadboard/src/run.ts:53](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/run.ts#L53)
 
 ___
 
 ### outputs
 
-• `get` **outputs**(): `Partial`<`Record`<`string`, `NodeValue`\>\>
+• `get` **outputs**(): `Partial`<`Record`<`string`, [`NodeValue`](../modules.md#nodevalue)\>\>
 
 #### Returns
 
-`Partial`<`Record`<`string`, `NodeValue`\>\>
+`Partial`<`Record`<`string`, [`NodeValue`](../modules.md#nodevalue)\>\>
 
 #### Implementation of
 
@@ -145,17 +145,17 @@ BreadboardRunResult.outputs
 
 #### Defined in
 
-[seeds/breadboard/src/run.ts:64](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/run.ts#L64)
+[seeds/breadboard/src/run.ts:65](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/run.ts#L65)
 
 ___
 
 ### state
 
-• `get` **state**(): `TraversalResult`
+• `get` **state**(): [`TraversalResult`](../interfaces/TraversalResult.md)
 
 #### Returns
 
-`TraversalResult`
+[`TraversalResult`](../interfaces/TraversalResult.md)
 
 #### Implementation of
 
@@ -163,7 +163,7 @@ BreadboardRunResult.state
 
 #### Defined in
 
-[seeds/breadboard/src/run.ts:68](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/run.ts#L68)
+[seeds/breadboard/src/run.ts:69](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/run.ts#L69)
 
 ___
 
@@ -181,7 +181,7 @@ BreadboardRunResult.type
 
 #### Defined in
 
-[seeds/breadboard/src/run.ts:48](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/run.ts#L48)
+[seeds/breadboard/src/run.ts:49](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/run.ts#L49)
 
 ## Methods
 
@@ -195,7 +195,7 @@ BreadboardRunResult.type
 
 #### Defined in
 
-[seeds/breadboard/src/run.ts:82](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/run.ts#L82)
+[seeds/breadboard/src/run.ts:83](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/run.ts#L83)
 
 ___
 
@@ -209,7 +209,7 @@ ___
 
 #### Defined in
 
-[seeds/breadboard/src/run.ts:72](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/run.ts#L72)
+[seeds/breadboard/src/run.ts:73](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/run.ts#L73)
 
 ___
 
@@ -229,4 +229,4 @@ ___
 
 #### Defined in
 
-[seeds/breadboard/src/run.ts:90](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/run.ts#L90)
+[seeds/breadboard/src/run.ts:91](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/run.ts#L91)

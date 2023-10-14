@@ -20,4 +20,4 @@ Required. The prompt text.
 
 #### Defined in
 
-[types.ts:362](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L362)
+[types.ts:362](https://github.com/google/labs-prototypes/blob/99919d5/seeds/palm-lite/src/types.ts#L362)

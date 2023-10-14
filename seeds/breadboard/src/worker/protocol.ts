@@ -127,14 +127,14 @@ export type InputRequestMessage = {
   data: {
     /**
      * The description of the node that is requesting input.
-     * @see [NodeDescriptor](https://github.com/google/labs-prototypes/blob/main/seeds/graph-runner/src/types.ts#L54)
+     * @see [NodeDescriptor]
      */
     node: NodeDescriptor;
     /**
      * The input arguments that were given to the node that is requesting input.
      * These arguments typically contain the schema of the inputs that are
      * expected.
-     * @see [InputValues](https://github.com/google/labs-prototypes/blob/main/seeds/graph-runner/src/types.ts#L229)
+     * @see [InputValues]
      */
     inputArguments: InputValues;
   };
@@ -155,7 +155,7 @@ export type InputResponseMessage = {
   type: "input";
   /**
    * The input values that the host is providing to the worker.
-   * @see [NodeValue](https://github.com/google/labs-prototypes/blob/main/seeds/graph-runner/src/types.ts#L21)
+   * @see [NodeValue]
    */
   data: NodeValue;
 };
@@ -172,7 +172,7 @@ export type BeforehandlerMessage = {
   data: {
     /**
      * The description of the node that is about to be run.
-     * @see [NodeDescriptor](https://github.com/google/labs-prototypes/blob/main/seeds/graph-runner/src/types.ts#L54)
+     * @see [NodeDescriptor]
      */
     node: NodeDescriptor;
   };
@@ -190,12 +190,12 @@ export type OutputMessage = {
   data: {
     /**
      * The description of the node that is providing output.
-     * @see [NodeDescriptor](https://github.com/google/labs-prototypes/blob/main/seeds/graph-runner/src/types.ts#L54)
+     * @see [NodeDescriptor]
      */
     node: NodeDescriptor;
     /**
      * The output values that the node is providing.
-     * @see [OutputValues](https://github.com/google/labs-prototypes/blob/main/seeds/graph-runner/src/types.ts#L234)
+     * @see [OutputValues]
      */
     outputs: OutputValues;
   };
@@ -218,12 +218,12 @@ export type ProxyRequestMessage = {
   data: {
     /**
      * The description of the node that is requesting to be proxied.
-     * @see [NodeDescriptor](https://github.com/google/labs-prototypes/blob/main/seeds/graph-runner/src/types.ts#L54)
+     * @see [NodeDescriptor]
      */
     node: NodeDescriptor;
     /**
      * The input values that the board is providing to the node.
-     * @see [InputValues](https://github.com/google/labs-prototypes/blob/main/seeds/graph-runner/src/types.ts#L229)
+     * @see [InputValues]
      */
     inputs: InputValues;
   };
@@ -246,7 +246,7 @@ export type ProxyResponseMessage = {
   /**
    * The output values that the host is providing to the board in lieu of
    * the proxied node.
-   * @see [OutputValues](https://github.com/google/labs-prototypes/blob/main/seeds/graph-runner/src/types.ts#L234)
+   * @see [OutputValues]
    */
   data: OutputValues;
 };

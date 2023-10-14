@@ -20,4 +20,4 @@ Citations to sources for a specific response.
 
 #### Defined in
 
-[types.ts:11](https://github.com/google/labs-prototypes/blob/5114223/seeds/palm-lite/src/types.ts#L11)
+[types.ts:11](https://github.com/google/labs-prototypes/blob/99919d5/seeds/palm-lite/src/types.ts#L11)

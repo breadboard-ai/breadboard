@@ -4,7 +4,7 @@
 
 ## Hierarchy
 
-- `KitDescriptor`
+- [`KitDescriptor`](../modules.md#kitdescriptor)
 
   ↳ **`Kit`**
 
@@ -12,14 +12,48 @@
 
 ### Properties
 
+- [description](Kit.md#description)
+- [title](Kit.md#title)
 - [url](Kit.md#url)
-- [using](Kit.md#using)
+- [version](Kit.md#version)
 
 ### Accessors
 
 - [handlers](Kit.md#handlers)
 
 ## Properties
+
+### description
+
+• `Optional` **description**: `string`
+
+The description of the kit.
+
+#### Inherited from
+
+KitDescriptor.description
+
+#### Defined in
+
+[seeds/breadboard/src/types.ts:134](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L134)
+
+___
+
+### title
+
+• `Optional` **title**: `string`
+
+The title of the kit.
+
+#### Inherited from
+
+KitDescriptor.title
+
+#### Defined in
+
+[seeds/breadboard/src/types.ts:130](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L130)
+
+___
 
 ### url
 
@@ -33,35 +67,35 @@ KitDescriptor.url
 
 #### Defined in
 
-seeds/graph-runner/dist/src/types.d.ts:98
+[seeds/breadboard/src/types.ts:123](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L123)
 
 ___
 
-### using
+### version
 
-• `Optional` **using**: `string`[]
+• `Optional` **version**: `string`
 
-The list of node types in this kit that are used by the graph.
-If left blank or omitted, all node types are assumed to be used.
+Version of the kit.
+[semver](https://semver.org/) format is encouraged.
 
 #### Inherited from
 
-KitDescriptor.using
+KitDescriptor.version
 
 #### Defined in
 
-seeds/graph-runner/dist/src/types.d.ts:103
+[seeds/breadboard/src/types.ts:139](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L139)
 
 ## Accessors
 
 ### handlers
 
-• `get` **handlers**(): `NodeHandlers`<[`NodeHandlerContext`](NodeHandlerContext.md)\>
+• `get` **handlers**(): [`NodeHandlers`](../modules.md#nodehandlers)<[`NodeHandlerContext`](NodeHandlerContext.md)\>
 
 #### Returns
 
-`NodeHandlers`<[`NodeHandlerContext`](NodeHandlerContext.md)\>
+[`NodeHandlers`](../modules.md#nodehandlers)<[`NodeHandlerContext`](NodeHandlerContext.md)\>
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:23](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/types.ts#L23)
+[seeds/breadboard/src/types.ts:318](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L318)

@@ -37,7 +37,7 @@
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:70](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/types.ts#L70)
+[seeds/breadboard/src/types.ts:365](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L365)
 
 ___
 
@@ -64,4 +64,4 @@ ___
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:76](https://github.com/google/labs-prototypes/blob/5114223/seeds/breadboard/src/types.ts#L76)
+[seeds/breadboard/src/types.ts:371](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L371)
