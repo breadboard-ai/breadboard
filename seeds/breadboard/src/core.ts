@@ -38,7 +38,6 @@ const CORE_HANDLERS = [
 ];
 
 export class Core {
-  #graph: GraphDescriptor;
   #slots: BreadboardSlotSpec;
   #validators: BreadboardValidator[];
   #outerGraph: GraphDescriptor;
@@ -50,7 +49,6 @@ export class Core {
     validators: BreadboardValidator[],
     outerGraph?: GraphDescriptor
   ) {
-    this.#graph = graph;
     this.#slots = slots;
     this.#validators = validators;
     this.#outerGraph = outerGraph || graph;
@@ -70,7 +68,10 @@ export class Core {
   passthrough = passthrough;
   reflect = reflect;
 
-  async import(inputs: ImportNodeInputs): Promise<LambdaNodeOutputs> {
+  async import(
+    inputs: ImportNodeInputs,
+    context: NodeHandlerContext
+  ): Promise<LambdaNodeOutputs> {
     const { path, $ref, graph, ...args } = inputs;
 
     // TODO: Please fix the $ref/path mess.
@@ -80,7 +81,7 @@ export class Core {
         ? ({ ...graph } as Board)
         : await Board.fromGraphDescriptor(graph)
       : await Board.load(source, {
-          base: this.#graph.url,
+          base: context.board.url,
           outerGraph: this.#outerGraph,
         });
     board.args = args;
@@ -100,7 +101,7 @@ export class Core {
       ? await Board.fromGraphDescriptor(graph)
       : path
       ? await Board.load(path, {
-          base: this.#graph.url,
+          base: context.board.url,
           outerGraph: this.#outerGraph,
         })
       : undefined;
@@ -122,7 +123,7 @@ export class Core {
     const slottedWithUrls: BreadboardSlotSpec = {};
     if (slotted) {
       for (const key in slotted) {
-        slottedWithUrls[key] = { url: this.#graph.url, ...slotted[key] };
+        slottedWithUrls[key] = { url: context.board.url, ...slotted[key] };
       }
     }
 
@@ -135,7 +136,7 @@ export class Core {
       ? await Board.fromGraphDescriptor(graph)
       : await Board.load(source, {
           slotted: slottedWithUrls,
-          base: this.#graph.url,
+          base: context.board.url,
           outerGraph: this.#outerGraph,
         });
 
