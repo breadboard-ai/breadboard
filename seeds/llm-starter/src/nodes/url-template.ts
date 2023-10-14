@@ -8,6 +8,7 @@ import type {
   InputValues,
   NodeDescriberFunction,
   NodeHandlerFunction,
+  Schema,
 } from "@google-labs/graph-runner";
 
 import { parseTemplate } from "url-template";
@@ -36,20 +37,74 @@ export const urlTemplateHandler: NodeHandlerFunction<object> = async (
   return { url };
 };
 
-export const urlTemplateDescriber: NodeDescriberFunction = async () => {
-  return {
-    inputSchema: {
-      type: "object",
-      properties: {
-        template: {
-          title: "template",
-          description: "The URL template to use",
-          type: "string",
-        },
-      },
-      required: ["template"],
-      additionalProperties: true,
+const operators = [
+  { prefix: "+", description: "reserved expansion" },
+  { prefix: "#", description: "fragment expansion" },
+  { prefix: ".", description: "label expansion, dot-prefixed" },
+  { prefix: "/", description: "path segment expansion" },
+  { prefix: ";", description: "path-style parameter expansion" },
+  { prefix: "?", description: "form-style query expansion" },
+  { prefix: "&", description: "form-style query continuation" },
+] as const;
+
+export type UrlTemplateParameters = {
+  name: string;
+  operator?: (typeof operators)[number];
+}[];
+
+export const getUrlTemplateParameters = (
+  template?: string
+): UrlTemplateParameters => {
+  if (!template) return [];
+  const matches = [...template.matchAll(/{([^{}]+)\}|([^{}]+)/g)];
+  return matches
+    .map((match) => match[1])
+    .filter(Boolean)
+    .map((name) => {
+      const prefix = name.charAt(0);
+      const operator = operators.find((op) => op.prefix === prefix);
+      if (operator) {
+        return { name: name.slice(1), operator };
+      }
+      return { name };
+    });
+};
+
+export const computeInputSchema = (template?: string): Schema => {
+  const parameters = getUrlTemplateParameters(template);
+  const properties = parameters.reduce(
+    (acc, { name, operator }) => {
+      const description = operator?.description
+        ? `Value for ${operator.description} placeholder "${name}"`
+        : `Value for placeholder "${name}"`;
+      acc[name] = {
+        title: name,
+        description,
+        type: "string",
+      };
+      return acc;
     },
+    {
+      template: {
+        title: "template",
+        description: "The URL template to use",
+        type: "string",
+      },
+    } as Record<string, Schema>
+  );
+  return {
+    type: "object",
+    properties,
+    required: ["template", ...parameters.map(({ name }) => name)],
+  };
+};
+
+export const urlTemplateDescriber: NodeDescriberFunction = async (
+  inputs?: InputValues
+) => {
+  const { template } = (inputs || {}) as UrlTemplateInputs;
+  return {
+    inputSchema: computeInputSchema(template),
     outputSchema: {
       type: "object",
       properties: {
