@@ -5,7 +5,6 @@
  */
 
 import type {
-  GraphDescriptor,
   InputValues,
   NodeHandler,
   NodeHandlerFunction,
@@ -40,18 +39,11 @@ const CORE_HANDLERS = [
 export class Core {
   #slots: BreadboardSlotSpec;
   #validators: BreadboardValidator[];
-  #outerGraph: GraphDescriptor;
   handlers: NodeHandlers<NodeHandlerContext>;
 
-  constructor(
-    graph: GraphDescriptor,
-    slots: BreadboardSlotSpec,
-    validators: BreadboardValidator[],
-    outerGraph?: GraphDescriptor
-  ) {
+  constructor(slots: BreadboardSlotSpec, validators: BreadboardValidator[]) {
     this.#slots = slots;
     this.#validators = validators;
-    this.#outerGraph = outerGraph || graph;
     this.handlers = CORE_HANDLERS.reduce((handlers, type) => {
       const that = this as unknown as Record<
         string,
@@ -82,7 +74,7 @@ export class Core {
         : await Board.fromGraphDescriptor(graph)
       : await Board.load(source, {
           base: context.board.url,
-          outerGraph: this.#outerGraph,
+          outerGraph: context.parent,
         });
     board.args = args;
 
@@ -102,7 +94,7 @@ export class Core {
       : path
       ? await Board.load(path, {
           base: context.board.url,
-          outerGraph: this.#outerGraph,
+          outerGraph: context.parent,
         })
       : undefined;
 
@@ -137,7 +129,7 @@ export class Core {
       : await Board.load(source, {
           slotted: slottedWithUrls,
           base: context.board.url,
-          outerGraph: this.#outerGraph,
+          outerGraph: context.parent,
         });
 
     return await runnableBoard.runOnce(args, context);
