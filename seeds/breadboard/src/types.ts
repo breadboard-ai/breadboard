@@ -228,6 +228,7 @@ export interface NodeHandlerContext {
   readonly board: BreadboardRunner;
   readonly descriptor: NodeDescriptor;
   readonly parent: GraphDescriptor;
+  readonly slots: BreadboardSlotSpec;
   readonly probe?: EventTarget;
 }
 

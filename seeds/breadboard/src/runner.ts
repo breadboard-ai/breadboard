@@ -121,7 +121,8 @@ export class BoardRunner implements BreadboardRunner {
     slots?: BreadboardSlotSpec,
     result?: RunResult
   ): AsyncGenerator<RunResult> {
-    const handlers = await BoardRunner.handlersFromBoard(this, slots);
+    const handlers = await BoardRunner.handlersFromBoard(this);
+    slots = { ...this.#slots, ...slots };
     this.#validators.forEach((validator) => validator.addGraph(this));
 
     const machine = new TraversalMachine(this, result?.state);
@@ -176,6 +177,7 @@ export class BoardRunner implements BreadboardRunner {
         descriptor,
         probe,
         parent: this.#parent || this,
+        slots,
       };
 
       const outputsPromise = (
@@ -348,10 +350,9 @@ export class BoardRunner implements BreadboardRunner {
   }
 
   static async handlersFromBoard(
-    board: BoardRunner,
-    slots?: BreadboardSlotSpec
+    board: BoardRunner
   ): Promise<NodeHandlers<NodeHandlerContext>> {
-    const core = new Core({ ...board.#slots, ...slots });
+    const core = new Core();
     const kits = [core, ...board.kits];
     return kits.reduce((handlers, kit) => {
       return { ...handlers, ...kit.handlers };
