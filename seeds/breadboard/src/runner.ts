@@ -351,7 +351,7 @@ export class BoardRunner implements BreadboardRunner {
     board: BoardRunner,
     slots?: BreadboardSlotSpec
   ): Promise<NodeHandlers<NodeHandlerContext>> {
-    const core = new Core({ ...board.#slots, ...slots }, board.#validators);
+    const core = new Core({ ...board.#slots, ...slots });
     const kits = [core, ...board.kits];
     return kits.reduce((handlers, kit) => {
       return { ...handlers, ...kit.handlers };

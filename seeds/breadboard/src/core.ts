@@ -13,7 +13,6 @@ import type {
 } from "@google-labs/graph-runner";
 import type {
   BreadboardSlotSpec,
-  BreadboardValidator,
   NodeHandlerContext,
   SlotNodeInputs,
 } from "./types.js";
@@ -37,12 +36,10 @@ const CORE_HANDLERS = [
 
 export class Core {
   #slots: BreadboardSlotSpec;
-  #validators: BreadboardValidator[];
   handlers: NodeHandlers<NodeHandlerContext>;
 
-  constructor(slots: BreadboardSlotSpec, validators: BreadboardValidator[]) {
+  constructor(slots: BreadboardSlotSpec) {
     this.#slots = slots;
-    this.#validators = validators;
     this.handlers = CORE_HANDLERS.reduce((handlers, type) => {
       const that = this as unknown as Record<
         string,
