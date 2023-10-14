@@ -9,7 +9,7 @@ import { InputValues, NodeHandler } from "@google-labs/graph-runner";
 export const callHandler = async <T>(
   handler: NodeHandler<T>,
   inputs: InputValues,
-  context?: T
+  context: T
 ) => {
   if (handler instanceof Function) return handler(inputs, context);
   if (handler.invoke) return handler.invoke(inputs, context);

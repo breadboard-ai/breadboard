@@ -267,7 +267,7 @@ export type NodeHandlerFunction<T> = (
   /**
    * The context of the node's invocation.
    */
-  context?: T
+  context: T
 ) => Promise<OutputValues | void>;
 
 /**

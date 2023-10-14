@@ -14,9 +14,8 @@ import { Board } from "../board.js";
 
 export default async (
   inputs: InputValues,
-  context?: NodeHandlerContext
+  context: NodeHandlerContext
 ): Promise<OutputValues> => {
-  if (!context) throw new Error("No context provided to the include node.");
   const { path, $ref, board, graph, slotted, ...args } =
     inputs as IncludeNodeInputs;
 

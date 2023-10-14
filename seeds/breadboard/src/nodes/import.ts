@@ -15,10 +15,9 @@ import type {
 
 export default async (
   inputs: InputValues,
-  context?: NodeHandlerContext
+  context: NodeHandlerContext
 ): Promise<LambdaNodeOutputs> => {
   const { path, $ref, graph, ...args } = inputs as ImportNodeInputs;
-  if (!context) throw new Error("No context provided to import node");
 
   // TODO: Please fix the $ref/path mess.
   const source = path || $ref || "";

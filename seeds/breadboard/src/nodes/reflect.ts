@@ -17,9 +17,8 @@ const deepCopy = (graph: GraphDescriptor): GraphDescriptor => {
 
 export default async (
   _inputs: InputValues,
-  context?: NodeHandlerContext
+  context: NodeHandlerContext
 ): Promise<OutputValues> => {
-  if (!context) throw new Error("No context provided to reflect node");
   const graph = deepCopy(context.board);
   return { graph };
 };
