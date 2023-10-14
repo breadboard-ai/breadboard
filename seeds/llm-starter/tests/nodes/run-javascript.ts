@@ -14,53 +14,71 @@ import handler, {
 
 test("runJavascript runs code", async (t) => {
   const runJavascript = handler.invoke;
-  const { result } = (await runJavascript({
-    code: "function run() { return 'hello world'; }",
-  })) as RunJavascriptOutputs;
+  const { result } = (await runJavascript(
+    {
+      code: "function run() { return 'hello world'; }",
+    },
+    {}
+  )) as RunJavascriptOutputs;
   t.is(result, "hello world");
 });
 
 test("runJavascript correctly strips code", async (t) => {
   const runJavascript = handler.invoke;
   {
-    const { result } = (await runJavascript({
-      code: "```js\nfunction run() { return 'hello world'; }\n```",
-    })) as RunJavascriptOutputs;
+    const { result } = (await runJavascript(
+      {
+        code: "```js\nfunction run() { return 'hello world'; }\n```",
+      },
+      {}
+    )) as RunJavascriptOutputs;
     t.is(result, "hello world");
   }
   {
-    const { result } = (await runJavascript({
-      code: "```javascript\nfunction run() { return 'hello world'; }\n```",
-    })) as RunJavascriptOutputs;
+    const { result } = (await runJavascript(
+      {
+        code: "```javascript\nfunction run() { return 'hello world'; }\n```",
+      },
+      {}
+    )) as RunJavascriptOutputs;
     t.is(result, "hello world");
   }
 });
 
 test("runJavascript runs code with specified function name", async (t) => {
   const runJavascript = handler.invoke;
-  const { result } = (await runJavascript({
-    code: "function compute() { return 'hello world'; }",
-    name: "compute",
-  })) as RunJavascriptOutputs;
+  const { result } = (await runJavascript(
+    {
+      code: "function compute() { return 'hello world'; }",
+      name: "compute",
+    },
+    {}
+  )) as RunJavascriptOutputs;
   t.is(result, "hello world");
 });
 
 test("runJavascript runs code with arguments", async (t) => {
   const runJavascript = handler.invoke;
-  const { result } = (await runJavascript({
-    code: "function run({ what }) { return `hello ${what}`; }",
-    what: "world",
-  })) as RunJavascriptOutputs;
+  const { result } = (await runJavascript(
+    {
+      code: "function run({ what }) { return `hello ${what}`; }",
+      what: "world",
+    },
+    {}
+  )) as RunJavascriptOutputs;
   t.is(result, "hello world");
 });
 
 test("runJavascript understands `raw` input", async (t) => {
   const runJavascript = handler.invoke;
-  const result = (await runJavascript({
-    code: 'function compute() { return { hello: "world" }; }',
-    name: "compute",
-    raw: true,
-  })) as RunJavascriptOutputs;
+  const result = (await runJavascript(
+    {
+      code: 'function compute() { return { hello: "world" }; }',
+      name: "compute",
+      raw: true,
+    },
+    {}
+  )) as RunJavascriptOutputs;
   t.deepEqual(result, { hello: "world" });
 });
 

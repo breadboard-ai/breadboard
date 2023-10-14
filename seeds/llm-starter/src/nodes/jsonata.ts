@@ -51,7 +51,7 @@ export const computeOutputSchema = async (
   }
 
   try {
-    const result = await jsonataHandler(inputs);
+    const result = await jsonataHandler(inputs, {});
     if (!result) return {};
     const properties: Schema["properties"] = {};
     const outputSchema = {
