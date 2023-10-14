@@ -17,13 +17,14 @@ import type {
   BreadboardValidator,
   BreadboardCapability,
   NodeHandlerContext,
-  LambdaNodeInputs,
   LambdaNodeOutputs,
   ImportNodeInputs,
   IncludeNodeInputs,
   SlotNodeInputs,
 } from "./types.js";
 import { Board } from "./board.js";
+import lambda from "./nodes/lambda.js";
+import passthrough from "./nodes/passthrough.js";
 
 const CORE_HANDLERS = [
   "lambda",
@@ -68,21 +69,8 @@ export class Core {
     }, {} as NodeHandlers<NodeHandlerContext>);
   }
 
-  async lambda(inputs: LambdaNodeInputs): Promise<LambdaNodeOutputs> {
-    const { board, ...args } = inputs;
-    if (!board || board.kind !== "board" || !board.board)
-      throw new Error(
-        `Lambda node requires a BoardCapability as "board" input`
-      );
-    const runnableBoard = {
-      ...(await Board.fromBreadboardCapability(board)),
-      args,
-    };
-
-    return {
-      board: { ...board, board: runnableBoard as GraphDescriptor },
-    };
-  }
+  lambda = lambda;
+  passthrough = passthrough;
 
   async import(inputs: ImportNodeInputs): Promise<LambdaNodeOutputs> {
     const { path, $ref, graph, ...args } = inputs;
@@ -171,9 +159,5 @@ export class Core {
     if (!graph) throw new Error(`No graph found for slot "${slot}"`);
     const slottedBreadboard = await Board.fromGraphDescriptor(graph);
     return await slottedBreadboard.runOnce(args, context);
-  }
-
-  async passthrough(inputs: InputValues): Promise<OutputValues> {
-    return inputs;
   }
 }
