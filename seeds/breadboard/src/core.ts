@@ -25,6 +25,7 @@ import type {
 import { Board } from "./board.js";
 import lambda from "./nodes/lambda.js";
 import passthrough from "./nodes/passthrough.js";
+import reflect from "./nodes/reflect.js";
 
 const CORE_HANDLERS = [
   "lambda",
@@ -35,10 +36,6 @@ const CORE_HANDLERS = [
   "slot",
   "passthrough",
 ];
-
-const deepCopy = (graph: GraphDescriptor): GraphDescriptor => {
-  return JSON.parse(JSON.stringify(graph));
-};
 
 export class Core {
   #graph: GraphDescriptor;
@@ -71,6 +68,7 @@ export class Core {
 
   lambda = lambda;
   passthrough = passthrough;
+  reflect = reflect;
 
   async import(inputs: ImportNodeInputs): Promise<LambdaNodeOutputs> {
     const { path, $ref, graph, ...args } = inputs;
@@ -142,11 +140,6 @@ export class Core {
         });
 
     return await runnableBoard.runOnce(args, context);
-  }
-
-  async reflect(_inputs: InputValues): Promise<OutputValues> {
-    const graph = deepCopy(this.#graph);
-    return { graph };
   }
 
   async slot(
