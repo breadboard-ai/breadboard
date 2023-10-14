@@ -7,8 +7,12 @@
 import { intro, log, note, outro, text } from "@clack/prompts";
 import { config } from "dotenv";
 
-import { OutputValues, InputValues } from "@google-labs/graph-runner";
-import { Board, type ProbeEvent } from "@google-labs/breadboard";
+import {
+  Board,
+  type ProbeEvent,
+  type OutputValues,
+  type InputValues,
+} from "@google-labs/breadboard";
 import {
   GraphIntegrityValidator,
   GraphIntegrityPolicy,

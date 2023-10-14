@@ -10,7 +10,7 @@ import {
   NodeValue,
   OutputValues,
   Schema,
-} from "@google-labs/graph-runner";
+} from "@google-labs/breadboard";
 
 export enum ObjectType {
   stringy,

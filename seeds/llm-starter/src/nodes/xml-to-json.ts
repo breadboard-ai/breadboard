@@ -8,7 +8,7 @@ import type {
   InputValues,
   NodeValue,
   OutputValues,
-} from "@google-labs/graph-runner";
+} from "@google-labs/breadboard";
 import {
   XmlCdata,
   XmlComment,

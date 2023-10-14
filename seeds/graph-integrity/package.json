@@ -51,7 +51,6 @@
     "typescript": "^5.0.4"
   },
   "dependencies": {
-    "@google-labs/breadboard": "*",
-    "@google-labs/graph-runner": "*"
+    "@google-labs/breadboard": "*"
   }
 }

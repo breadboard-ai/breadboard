@@ -16,8 +16,6 @@ import {
   GraphDescriptor,
   Edge as EdgeDescriptor,
   NodeDescriptor,
-} from "@google-labs/graph-runner";
-import {
   type BreadboardValidator,
   type BreadboardValidatorMetadata,
 } from "@google-labs/breadboard";

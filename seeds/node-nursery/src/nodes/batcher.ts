@@ -4,11 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  InputValues,
-  NodeValue,
-  OutputValues,
-} from "@google-labs/graph-runner";
+import { InputValues, NodeValue, OutputValues } from "@google-labs/breadboard";
 
 export type BatcherInputs = InputValues & {
   /**

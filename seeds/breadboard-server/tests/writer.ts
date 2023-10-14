@@ -7,8 +7,7 @@
 import test from "ava";
 
 import { Writer, WriterResponse } from "../src/writer.js";
-import { RunResult } from "@google-labs/breadboard";
-import { OutputValues } from "@google-labs/graph-runner";
+import { type OutputValues, RunResult } from "@google-labs/breadboard";
 
 class MockResponse implements WriterResponse {
   written = "";

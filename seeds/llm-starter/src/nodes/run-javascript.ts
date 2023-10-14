@@ -9,7 +9,7 @@ import type {
   NodeDescriberFunction,
   NodeHandlerFunction,
   Schema,
-} from "@google-labs/graph-runner";
+} from "@google-labs/breadboard";
 
 // https://regex101.com/r/PeEmEW/1
 const stripCodeBlock = (code: string) =>

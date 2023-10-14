@@ -5,7 +5,7 @@
  */
 
 import { BasicChunker } from "@google-labs/chunker";
-import { InputValues, NodeValue } from "@google-labs/graph-runner";
+import { InputValues, NodeValue } from "@google-labs/breadboard";
 
 export type ChunkerInputs = InputValues & {
   /**

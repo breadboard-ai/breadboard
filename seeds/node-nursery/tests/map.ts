@@ -7,8 +7,7 @@
 import test from "ava";
 
 import map, { MapInputs } from "../src/nodes/map.js";
-import { Capability, InputValues } from "@google-labs/graph-runner";
-import { Board } from "@google-labs/breadboard";
+import { Capability, InputValues, Board } from "@google-labs/breadboard";
 import { Nursery } from "../src/nursery.js";
 import Starter from "@google-labs/llm-starter";
 

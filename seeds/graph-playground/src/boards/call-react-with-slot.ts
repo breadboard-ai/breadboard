@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board } from "@google-labs/breadboard";
-import { NodeValue } from "@google-labs/graph-runner";
+import { Board, type NodeValue } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 
 /**

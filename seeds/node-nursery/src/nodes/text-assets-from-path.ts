@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { InputValues } from "@google-labs/graph-runner";
+import type { InputValues } from "@google-labs/breadboard";
 import { readFile, readdir } from "fs/promises";
 
 export default async (inputs: InputValues) => {

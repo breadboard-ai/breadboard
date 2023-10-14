@@ -9,7 +9,7 @@ import {
   NodeDescriberFunction,
   NodeHandlerFunction,
   Schema,
-} from "@google-labs/graph-runner";
+} from "@google-labs/breadboard";
 
 import jsonata from "jsonata";
 

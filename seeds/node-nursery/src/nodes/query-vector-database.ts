@@ -8,7 +8,7 @@ import type {
   Capability,
   InputValues,
   OutputValues,
-} from "@google-labs/graph-runner";
+} from "@google-labs/breadboard";
 
 import { VectorDocument, VectorDatabase } from "../vector-database.js";
 

@@ -1,11 +1,11 @@
 import { intro, log, text, outro } from "@clack/prompts";
 
 import {
+  type NodeValue,
   Board,
   LogProbe,
   type BreadboardSlotSpec,
 } from "@google-labs/breadboard";
-import { NodeValue } from "@google-labs/graph-runner";
 
 export const run = async (board: Board, slots?: BreadboardSlotSpec) => {
   intro("Hi! I am coffee bot! What would you like to have today?");

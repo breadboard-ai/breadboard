@@ -12,8 +12,9 @@ import {
   Kit,
   NodeFactory,
   OptionalIdConfiguration,
+  type InputValues,
+  type NodeHandlers,
 } from "@google-labs/breadboard";
-import { InputValues, NodeHandlers } from "@google-labs/graph-runner";
 
 const tools = {
   search:

@@ -5,17 +5,15 @@
  */
 
 import {
-  Board,
-  BreadboardCapability,
-  NodeHandlerContext,
-} from "@google-labs/breadboard";
-import {
   Capability,
   GraphDescriptor,
   InputValues,
   NodeValue,
   OutputValues,
-} from "@google-labs/graph-runner";
+  Board,
+  BreadboardCapability,
+  NodeHandlerContext,
+} from "@google-labs/breadboard";
 
 export type MapInputs = InputValues & {
   /**

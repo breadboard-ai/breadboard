@@ -5,7 +5,7 @@
  */
 
 import { similarity } from "ml-distance";
-import { Capability } from "@google-labs/graph-runner";
+import { Capability } from "@google-labs/breadboard";
 
 /**
  * Entry into a vector database.

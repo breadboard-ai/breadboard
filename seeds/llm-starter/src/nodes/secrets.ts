@@ -13,7 +13,7 @@ import type {
   InputValues,
   NodeDescriberFunction,
   OutputValues,
-} from "@google-labs/graph-runner";
+} from "@google-labs/breadboard";
 
 type Environment = "node" | "browser" | "worker";
 

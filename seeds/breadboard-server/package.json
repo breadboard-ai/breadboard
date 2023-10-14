@@ -54,7 +54,6 @@
   },
   "dependencies": {
     "@google-cloud/firestore": "^6.7.0",
-    "@google-labs/breadboard": "^0.3.1",
-    "@google-labs/graph-runner": "^0.2.0"
+    "@google-labs/breadboard": "^0.3.1"
   }
 }

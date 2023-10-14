@@ -4,17 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  InputValues,
-  NodeHandlers,
-  NodeTypeIdentifier,
-  OutputValues,
-} from "@google-labs/graph-runner";
 import type {
   BreadboardNode,
   Kit,
   NodeFactory,
   OptionalIdConfiguration,
+  InputValues,
+  NodeHandlers,
+  NodeTypeIdentifier,
+  OutputValues,
 } from "@google-labs/breadboard";
 import generateText, {
   GenerateTextInputs,

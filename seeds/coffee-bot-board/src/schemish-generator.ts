@@ -4,12 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board } from "@google-labs/breadboard";
+import { type NodeValue, Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 import { Nursery } from "@google-labs/node-nursery";
 
 import { PromptMaker } from "./template.js";
-import { NodeValue } from "@google-labs/graph-runner";
 
 const BASE = "v2-multi-agent";
 

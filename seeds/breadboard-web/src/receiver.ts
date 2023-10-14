@@ -4,8 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board, NodeHandlerContext } from "@google-labs/breadboard";
-import { NodeHandlers, OutputValues } from "@google-labs/graph-runner";
+import {
+  type NodeHandlers,
+  type OutputValues,
+  Board,
+  NodeHandlerContext,
+} from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 import type { ProxyRequestMessage } from "@google-labs/breadboard/worker";
 

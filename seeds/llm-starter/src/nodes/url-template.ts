@@ -9,7 +9,7 @@ import type {
   NodeDescriberFunction,
   NodeHandlerFunction,
   Schema,
-} from "@google-labs/graph-runner";
+} from "@google-labs/breadboard";
 
 import { parseTemplate } from "url-template";
 

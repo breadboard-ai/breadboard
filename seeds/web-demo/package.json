@@ -58,7 +58,6 @@
   },
   "dependencies": {
     "@google-labs/breadboard": "*",
-    "@google-labs/graph-runner": "*",
     "@google-labs/llm-starter": "*",
     "@preact/signals": "^1.2.0",
     "mermaid": "^10.2.4",

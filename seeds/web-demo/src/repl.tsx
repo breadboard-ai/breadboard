@@ -2,8 +2,7 @@ import { signal, useSignalEffect } from '@preact/signals';
 import { useRef } from 'preact/hooks';
 import emptyGraph from './graphs/empty.graph';
 
-import { Board } from "@google-labs/breadboard";
-import { OutputValues, InputValues } from "@google-labs/graph-runner";
+import { OutputValues, InputValues, Board } from "@google-labs/breadboard";
 
 import mermaid from "mermaid";
 import { LogToElementProbe } from './lib/probe.js';

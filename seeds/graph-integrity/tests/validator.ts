@@ -8,7 +8,7 @@ import test from "ava";
 
 import { readFile, readdir } from "fs/promises";
 
-import { GraphDescriptor, NodeDescriptor } from "@google-labs/graph-runner";
+import { GraphDescriptor, NodeDescriptor } from "@google-labs/breadboard";
 import { GraphIntegrityValidator } from "../src/validator.js";
 import { Label, PrincipalLattice } from "../src/label.js";
 import { Policy } from "../src/policy.js";

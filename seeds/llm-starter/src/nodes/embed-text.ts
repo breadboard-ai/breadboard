@@ -9,7 +9,7 @@ import {
   type InputValues,
   type NodeValue,
   type OutputValues,
-} from "@google-labs/graph-runner";
+} from "@google-labs/breadboard";
 import { EmbedTextResponse, palm } from "@google-labs/palm-lite";
 
 export type EmbedTextInputs = NodeValue & {

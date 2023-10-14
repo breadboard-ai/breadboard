@@ -7,7 +7,7 @@
 import type {
   InputValues,
   NodeDescriberFunction,
-} from "@google-labs/graph-runner";
+} from "@google-labs/breadboard";
 
 export type FetchOutputs = {
   response: string | object;

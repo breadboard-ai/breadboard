@@ -10,7 +10,7 @@ import type {
   OutputValues,
   ErrorCapability,
   NodeDescriberFunction,
-} from "@google-labs/graph-runner";
+} from "@google-labs/breadboard";
 import {
   GenerateTextResponse,
   SafetySetting,

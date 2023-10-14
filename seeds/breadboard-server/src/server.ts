@@ -4,10 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { BoardRunner, RunResult } from "@google-labs/breadboard";
+import {
+  type GraphMetadata,
+  type InputValues,
+  BoardRunner,
+  RunResult,
+} from "@google-labs/breadboard";
 import { Request, Response } from "express";
 import { Store } from "./store.js";
-import { GraphMetadata, InputValues } from "@google-labs/graph-runner";
 import { Writer, WriterResponse } from "./writer.js";
 
 export type ServerRequest = Pick<Request, "path" | "method" | "body">;

@@ -5,8 +5,12 @@
  */
 import { Response } from "express";
 
-import { RunResult, RunResultType } from "@google-labs/breadboard";
-import { InputValues, OutputValues } from "@google-labs/graph-runner";
+import {
+  type InputValues,
+  type OutputValues,
+  RunResult,
+  RunResultType,
+} from "@google-labs/breadboard";
 
 export type ToWrite = {
   type: RunResultType | "done" | "error";

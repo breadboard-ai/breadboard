@@ -9,7 +9,7 @@ import type {
   NodeDescriberFunction,
   NodeHandlerFunction,
   Schema,
-} from "@google-labs/graph-runner";
+} from "@google-labs/breadboard";
 
 export type PropmtTemplateOutputs = {
   prompt: string;
