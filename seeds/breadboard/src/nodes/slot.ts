@@ -10,8 +10,9 @@ import { BoardRunner } from "../runner.js";
 
 export default async (
   inputs: InputValues,
-  context: NodeHandlerContext
+  context?: NodeHandlerContext
 ): Promise<OutputValues> => {
+  if (!context) throw new Error("No context provided to the slot node");
   const { slot, ...args } = inputs as SlotNodeInputs;
   if (!slot) throw new Error("To use a slot, we need to specify its name");
   const graph = context.slots[slot];

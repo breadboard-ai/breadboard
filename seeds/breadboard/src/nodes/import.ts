@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { InputValues } from "@google-labs/graph-runner";
 import { Board } from "../board.js";
 import type {
   BreadboardCapability,
@@ -13,10 +14,11 @@ import type {
 } from "../types.js";
 
 export default async (
-  inputs: ImportNodeInputs,
-  context: NodeHandlerContext
+  inputs: InputValues,
+  context?: NodeHandlerContext
 ): Promise<LambdaNodeOutputs> => {
-  const { path, $ref, graph, ...args } = inputs;
+  const { path, $ref, graph, ...args } = inputs as ImportNodeInputs;
+  if (!context) throw new Error("No context provided to import node");
 
   // TODO: Please fix the $ref/path mess.
   const source = path || $ref || "";

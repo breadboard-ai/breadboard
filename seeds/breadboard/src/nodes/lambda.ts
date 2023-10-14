@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor } from "@google-labs/graph-runner";
+import { GraphDescriptor, InputValues } from "@google-labs/graph-runner";
 import { LambdaNodeInputs, LambdaNodeOutputs } from "../types.js";
 import { Board } from "../board.js";
 
-export default async (inputs: LambdaNodeInputs): Promise<LambdaNodeOutputs> => {
-  const { board, ...args } = inputs;
+export default async (inputs: InputValues): Promise<LambdaNodeOutputs> => {
+  const { board, ...args } = inputs as LambdaNodeInputs;
   if (!board || board.kind !== "board" || !board.board)
     throw new Error(`Lambda node requires a BoardCapability as "board" input`);
   const runnableBoard = {

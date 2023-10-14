@@ -10,9 +10,10 @@ import { Board } from "../board.js";
 
 export default async (
   inputs: InputValues,
-  context: NodeHandlerContext
+  context?: NodeHandlerContext
 ): Promise<OutputValues> => {
   const { path, board, graph, ...args } = inputs as IncludeNodeInputs;
+  if (!context) throw new Error("No context provided to the invoke node.");
 
   const runnableBoard = board
     ? await Board.fromBreadboardCapability(board)
