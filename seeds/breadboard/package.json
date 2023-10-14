@@ -51,12 +51,10 @@
     "@typescript-eslint/eslint-plugin": "^5.56.0",
     "@typescript-eslint/parser": "^5.56.0",
     "ava": "^5.2.0",
+    "jsonschema": "^1.4.1",
     "typedoc": "^0.25.1",
     "typedoc-plugin-markdown": "^3.16.0",
     "typescript": "^5.0.4"
-  },
-  "dependencies": {
-    "@google-labs/graph-runner": "^0.2.0"
   },
   "engines": {
     "node": ">=19.0.0"

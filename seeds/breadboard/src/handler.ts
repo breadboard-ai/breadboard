@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { InputValues, NodeHandler } from "@google-labs/graph-runner";
+import type { InputValues, NodeHandler } from "./types.js";
 
 export const callHandler = async <T>(
   handler: NodeHandler<T>,

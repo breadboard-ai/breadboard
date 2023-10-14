@@ -11,6 +11,27 @@ export { LogProbe } from "./log.js";
 export { DebugProbe } from "./debug.js";
 export { RunResult } from "./run.js";
 export type {
+  Edge,
+  GraphMetadata,
+  GraphDescriptor,
+  NodeConfiguration,
+  NodeDescriptor,
+  NodeDescriberFunction,
+  NodeDescriberResult,
+  NodeHandler,
+  NodeHandlerFunction,
+  InputValues,
+  OutputValues,
+  NodeHandlers,
+  NodeIdentifier,
+  NodeTypeIdentifier,
+  KitDescriptor,
+  KitReference,
+  NodeValue,
+  Capability,
+  ErrorCapability,
+  TraversalResult,
+  SubGraphs,
   ProbeEvent,
   Kit,
   NodeFactory,
@@ -28,3 +49,7 @@ export type {
   KitConstructor,
   GenericKit,
 } from "./types.js";
+export { TraversalMachine } from "./traversal/machine.js";
+export { MachineResult } from "./traversal/result.js";
+export { toMermaid } from "./mermaid.js";
+export type { Schema } from "jsonschema";

@@ -11,8 +11,6 @@ import type {
   NodeTypeIdentifier,
   InputValues,
   OutputValues,
-} from "@google-labs/graph-runner";
-import {
   Kit,
   Breadboard,
   BreadboardNode,

@@ -5,7 +5,7 @@
  */
 
 import { BoardRunner } from "@google-labs/breadboard";
-import { InputValues } from "@google-labs/graph-runner";
+import type { InputValues } from "../types.js";
 import {
   type LoadResponseMessage,
   type BeforehandlerMessage,

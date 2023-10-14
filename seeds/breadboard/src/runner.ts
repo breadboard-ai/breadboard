@@ -13,9 +13,6 @@ import type {
   OutputValues,
   GraphMetadata,
   SubGraphs,
-} from "@google-labs/graph-runner";
-
-import type {
   BreadboardRunner,
   BreadboardSlotSpec,
   Kit,
@@ -27,7 +24,7 @@ import type {
   KitImportMap,
 } from "./types.js";
 
-import { TraversalMachine } from "@google-labs/graph-runner";
+import { TraversalMachine } from "./traversal/machine.js";
 import { Core } from "./core.js";
 import {
   BeforeHandlerStageResult,

@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
+import type {
   InputValues,
   NodeDescriptor,
   NodeValue,
   OutputValues,
-} from "@google-labs/graph-runner";
+} from "../types.js";
 
 export const VALID_MESSAGE_TYPES = [
   "load",

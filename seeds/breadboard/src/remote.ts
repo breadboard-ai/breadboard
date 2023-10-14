@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NodeValue } from "@google-labs/graph-runner";
+import type { NodeValue } from "./types.js";
 
 // Polyfill to make ReadableStream async iterable
 // See https://bugs.chromium.org/p/chromium/issues/detail?id=929585

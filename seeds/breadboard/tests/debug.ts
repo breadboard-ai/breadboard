@@ -7,8 +7,7 @@
 import test from "ava";
 
 import { DebugNodePin, DebugProbe } from "../src/debug.js";
-import { NodeValue } from "@google-labs/graph-runner";
-import { ProbeEvent } from "../src/types.js";
+import type { NodeValue, ProbeEvent } from "../src/types.js";
 
 test("DebugProbe correctly handles input pins that modify inputs", (t) => {
   const probe = new DebugProbe();

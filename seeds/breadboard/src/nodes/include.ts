@@ -4,8 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { InputValues, OutputValues } from "@google-labs/graph-runner";
 import type {
+  InputValues,
+  OutputValues,
   BreadboardSlotSpec,
   IncludeNodeInputs,
   NodeHandlerContext,

@@ -13,8 +13,8 @@ import type {
   NodeFactory,
   OptionalIdConfiguration,
   BreadboardCapability,
+  NodeHandlers,
 } from "../src/types.js";
-import { NodeHandlers } from "@google-labs/graph-runner";
 
 test("correctly skips nodes when asked", async (t) => {
   const board = new Board();

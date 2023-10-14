@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor, SubGraphs } from "@google-labs/graph-runner";
+import { GraphDescriptor, SubGraphs } from "./types.js";
 
 export type BoardLoaderArguments = Pick<GraphDescriptor, "url" | "graphs">;
 

@@ -10,7 +10,7 @@ import type {
   InputValues,
   GraphDescriptor,
   OutputValues,
-} from "@google-labs/graph-runner";
+} from "./types.js";
 
 import type {
   Breadboard,
@@ -29,7 +29,7 @@ import type {
 } from "./types.js";
 
 import { BoardRunner } from "./runner.js";
-import { toMermaid } from "@google-labs/graph-runner";
+import { toMermaid } from "./mermaid.js";
 import { Node } from "./node.js";
 
 /**

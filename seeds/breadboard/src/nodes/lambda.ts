@@ -4,8 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor, InputValues } from "@google-labs/graph-runner";
-import { LambdaNodeInputs, LambdaNodeOutputs } from "../types.js";
+import {
+  GraphDescriptor,
+  InputValues,
+  LambdaNodeInputs,
+  LambdaNodeOutputs,
+} from "../types.js";
 import { Board } from "../board.js";
 
 export default async (inputs: InputValues): Promise<LambdaNodeOutputs> => {

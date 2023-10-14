@@ -4,8 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { InputValues, OutputValues } from "@google-labs/graph-runner";
-import { IncludeNodeInputs, NodeHandlerContext } from "../types.js";
+import type {
+  InputValues,
+  OutputValues,
+  IncludeNodeInputs,
+  NodeHandlerContext,
+} from "../types.js";
 import { Board } from "../board.js";
 
 export default async (

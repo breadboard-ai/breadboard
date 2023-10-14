@@ -8,8 +8,8 @@ import type {
   InputValues,
   NodeValue,
   OutputValues,
-} from "@google-labs/graph-runner";
-import { ProbeEvent } from "./types.js";
+  ProbeEvent,
+} from "./types.js";
 
 export type DebugPin = (value: NodeValue) => NodeValue | undefined;
 

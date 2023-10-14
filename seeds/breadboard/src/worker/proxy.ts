@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NodeTypeIdentifier } from "@google-labs/graph-runner";
+import type { NodeTypeIdentifier } from "../types.js";
 import { ProbeEvent } from "@google-labs/breadboard";
 
 import type { ProxyRequestMessage, ProxyResponseMessage } from "./protocol.js";

@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { InputValues } from "@google-labs/graph-runner";
 import { Board } from "../board.js";
 import type {
+  InputValues,
   BreadboardCapability,
   ImportNodeInputs,
   LambdaNodeOutputs,

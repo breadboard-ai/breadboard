@@ -4,15 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  MachineResult,
-  TraversalMachine,
-  type InputValues,
-  type NodeDescriptor,
-  type OutputValues,
-  type TraversalResult,
-} from "@google-labs/graph-runner";
-import type { BreadboardRunResult, RunResultType } from "./types.js";
+import { MachineResult } from "./traversal/result.js";
+import { TraversalMachine } from "./traversal/machine.js";
+import type {
+  InputValues,
+  NodeDescriptor,
+  OutputValues,
+  TraversalResult,
+  BreadboardRunResult,
+  RunResultType,
+} from "./types.js";
 
 export const replacer = (key: string, value: unknown) => {
   if (!(value instanceof Map)) return value;
