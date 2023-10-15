@@ -11,25 +11,52 @@ import type {
   NodeHandlerContext,
 } from "../types.js";
 import { Board } from "../board.js";
+import { SchemaBuilder } from "../schema.js";
 
-export default async (
-  inputs: InputValues,
-  context: NodeHandlerContext
-): Promise<OutputValues> => {
-  const { path, board, graph, ...args } = inputs as IncludeNodeInputs;
-
-  const runnableBoard = board
-    ? await Board.fromBreadboardCapability(board)
-    : graph
-    ? await Board.fromGraphDescriptor(graph)
-    : path
-    ? await Board.load(path, {
-        base: context.board.url,
-        outerGraph: context.parent,
+export default {
+  describe: async (inputs?: InputValues) => ({
+    inputSchema: new SchemaBuilder()
+      .setAdditionalProperties(true)
+      .addInputs(inputs)
+      .addProperties({
+        path: {
+          title: "path",
+          description: "The path to the board to invoke.",
+          type: "string",
+        },
+        $ref: {
+          title: "$ref",
+          description: "The $ref to the board to invoke.",
+          type: "string",
+        },
+        graph: {
+          title: "graph",
+          description: "The graph descriptor of the board to invoke.",
+          type: "object",
+        },
       })
-    : undefined;
+      .build(),
+    outputSchema: new SchemaBuilder().setAdditionalProperties(true).build(),
+  }),
+  invoke: async (
+    inputs: InputValues,
+    context: NodeHandlerContext
+  ): Promise<OutputValues> => {
+    const { path, board, graph, ...args } = inputs as IncludeNodeInputs;
 
-  if (!runnableBoard) throw new Error("No board provided");
+    const runnableBoard = board
+      ? await Board.fromBreadboardCapability(board)
+      : graph
+      ? await Board.fromGraphDescriptor(graph)
+      : path
+      ? await Board.load(path, {
+          base: context.board.url,
+          outerGraph: context.parent,
+        })
+      : undefined;
 
-  return await runnableBoard.runOnce(args, context);
+    if (!runnableBoard) throw new Error("No board provided");
+
+    return await runnableBoard.runOnce(args, context);
+  },
 };
