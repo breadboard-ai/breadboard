@@ -6,8 +6,7 @@
 
 import type { GraphDescriptor, InputValues, OutputValues } from "../types.js";
 import type { NodeHandlerContext } from "../types.js";
-import { empty } from "../schema.js";
-import { Schema } from "jsonschema";
+import { SchemaBuilder } from "../schema.js";
 
 const deepCopy = (graph: GraphDescriptor): GraphDescriptor => {
   return JSON.parse(JSON.stringify(graph));
@@ -16,19 +15,18 @@ const deepCopy = (graph: GraphDescriptor): GraphDescriptor => {
 export default {
   desribe: async () => {
     return {
-      inputSchema: empty(),
-      outputSchema: {
-        type: "object",
-        properties: {
+      inputSchema: SchemaBuilder.empty(),
+      outputSchema: new SchemaBuilder()
+        .addProperties({
           graph: {
             title: "graph",
             description: "The graph descriptor of the current board.",
             type: "object",
           },
-        },
-        additionalProperties: false,
-        required: ["graph"],
-      } as Schema,
+        })
+        .setAdditionalProperties(false)
+        .addRequired("graph")
+        .build(),
     };
   },
   invoke: async (

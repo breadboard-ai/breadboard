@@ -29,6 +29,8 @@ const urlToNpmSpec = (url: string): string => {
   return urlObj.pathname;
 };
 
+export { SchemaBuilder } from "./schema.js";
+
 export class KitLoader {
   #kits: KitReference[];
   #imports: KitImportMap;

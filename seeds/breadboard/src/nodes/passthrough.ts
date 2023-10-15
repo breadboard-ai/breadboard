@@ -5,19 +5,22 @@
  */
 
 import type { InputValues, OutputValues } from "../types.js";
-import { empty, fromInputs } from "../schema.js";
+import { SchemaBuilder } from "../schema.js";
 
 export default {
   desribe: async (inputs?: InputValues) => {
     if (!inputs) {
       return {
-        inputSchema: empty(true),
-        outputSchema: empty(true),
+        inputSchema: SchemaBuilder.empty(true),
+        outputSchema: SchemaBuilder.empty(true),
       };
     }
     return {
-      inputSchema: fromInputs(inputs, true),
-      outputSchema: fromInputs(inputs),
+      inputSchema: new SchemaBuilder()
+        .addInputs(inputs)
+        .setAdditionalProperties(true)
+        .build(),
+      outputSchema: new SchemaBuilder().addInputs(inputs).build(),
     };
   },
   invoke: async (inputs: InputValues): Promise<OutputValues> => {
