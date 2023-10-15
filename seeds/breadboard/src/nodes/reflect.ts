@@ -11,10 +11,29 @@ const deepCopy = (graph: GraphDescriptor): GraphDescriptor => {
   return JSON.parse(JSON.stringify(graph));
 };
 
-export default async (
-  _inputs: InputValues,
-  context: NodeHandlerContext
-): Promise<OutputValues> => {
-  const graph = deepCopy(context.board);
-  return { graph };
+export default {
+  desribe: async () => {
+    return {
+      inputSchema: {
+        type: "object",
+        properties: {},
+        additionalProperties: false,
+      },
+      outputSchema: {
+        type: "object",
+        properties: {
+          graph: { type: "object" },
+        },
+        additionalProperties: false,
+        required: ["graph"],
+      },
+    };
+  },
+  invoke: async (
+    _inputs: InputValues,
+    context: NodeHandlerContext
+  ): Promise<OutputValues> => {
+    const graph = deepCopy(context.board);
+    return { graph };
+  },
 };
