@@ -4,9 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Schema } from "jsonschema";
 import { InputValues } from "./types.js";
 
-export const empty = (additionalProperties = false) => ({
+export const empty = (additionalProperties = false): Schema => ({
   type: "object",
   properties: {},
   additionalProperties,
@@ -15,7 +16,7 @@ export const empty = (additionalProperties = false) => ({
 export const fromInputs = (
   inputs: InputValues,
   additionalProperties = false
-) => {
+): Schema => {
   return {
     type: "object",
     properties: Object.fromEntries(
