@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { BoardRunner } from "@google-labs/breadboard";
+import { BoardRunner } from "../runner.js";
 import type { InputValues } from "../types.js";
 import {
   type LoadResponseMessage,
@@ -16,9 +16,9 @@ import {
   type OutputMessage,
   type StartMesssage,
   type InputResponseMessage,
-  MessageController,
-  NodeProxy,
-} from "@google-labs/breadboard/worker";
+} from "./protocol.js";
+import { MessageController } from "./controller.js";
+import { NodeProxy } from "./proxy.js";
 
 export class WorkerRuntime {
   #controller: MessageController;

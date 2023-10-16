@@ -14,7 +14,8 @@
   "scripts": {
     "generate:docs": "typedoc --plugin typedoc-plugin-markdown",
     "test": "FORCE_COLOR=1 ava",
-    "build": "FORCE_COLOR=1 tsc --b",
+    "build": "FORCE_COLOR=1 tsc --b && npm run build:rollup",
+    "build:rollup": "rollup -c",
     "watch": "FORCE_COLOR=1 tsc --b --watch",
     "lint": "FORCE_COLOR=1 eslint . --ext .ts",
     "merm": "npm run build && node scripts/make-graphs.js"
@@ -48,11 +49,13 @@
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
     "@google-labs/tsconfig": "*",
+    "@rollup/plugin-terser": "^0.4.4",
     "@types/node": "^18.17.4",
     "@typescript-eslint/eslint-plugin": "^5.56.0",
     "@typescript-eslint/parser": "^5.56.0",
     "ava": "^5.2.0",
     "jsonschema": "^1.4.1",
+    "rollup": "^4.1.4",
     "typedoc": "^0.25.1",
     "typedoc-plugin-markdown": "^3.16.0",
     "typescript": "^5.0.4"
