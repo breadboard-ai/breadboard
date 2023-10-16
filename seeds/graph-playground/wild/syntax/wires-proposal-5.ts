@@ -149,15 +149,15 @@
     );
 
     board
-      .wire(
-        conversationMemory.out.accumulator,
-        conversationMemory.in.accumulator
-      )
-      .wire(conversationMemory.out.accumulator, prompt.in.context)
+      .wire(conversationMemory.out.accumulator, [
+        conversationMemory.in.accumulator,
+        prompt.in.context,
+      ])
       .wire(board.add(passthrough({ $id: "start" })).out, input.in)
-      .wire(input.out.text, prompt.in.question)
-      .wire(generator.out.completion, output.in.text)
-      .wire(generator.out.completion, conversationMemory.in.assistant)
-      .wire(input.out.text, conversationMemory.in.user);
+      .wire(input.out.text, [prompt.in.question, conversationMemory.in.user])
+      .wire(generator.out.completion, [
+        output.in.text,
+        conversationMemory.in.assistant,
+      ]);
   }
 }
