@@ -53,3 +53,4 @@ export { TraversalMachine } from "./traversal/machine.js";
 export { MachineResult } from "./traversal/result.js";
 export { toMermaid } from "./mermaid.js";
 export type { Schema } from "jsonschema";
+export { callHandler } from "./handler.js";

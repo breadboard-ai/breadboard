@@ -9,6 +9,7 @@ import {
   type OutputValues,
   Board,
   NodeHandlerContext,
+  callHandler,
 } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 import type { ProxyRequestMessage } from "@google-labs/breadboard/worker";
@@ -88,7 +89,12 @@ export class ProxyReceiver {
       throw new Error(`No handler found for node type "${nodeType}".`);
     yield new FinalResult(
       nodeType,
-      await handler(inputs, { board: this.board, descriptor: data.node })
+      await callHandler(handler, inputs, {
+        parent: this.board,
+        board: this.board,
+        descriptor: data.node,
+        slots: {},
+      })
     );
   }
 }
