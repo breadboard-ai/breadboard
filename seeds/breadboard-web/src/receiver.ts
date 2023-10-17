@@ -8,7 +8,6 @@ import {
   type NodeHandlers,
   type OutputValues,
   Board,
-  NodeHandlerContext,
   callHandler,
 } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
