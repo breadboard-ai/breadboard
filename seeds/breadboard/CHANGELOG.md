@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.4.0] - 2023-10-17
+
+- Added minified build artifacts.
+- Three new nodes: `invoke`, `import`, and `lambda` (see [documentation](https://github.com/google/labs-prototypes/blob/13601657112736ccccb083ed3e167f7e2ae05928/seeds/breadboard/docs/nodes.md))
+- Deprecated `include` node (the `invoke` node replaces it)
+- Rolled `graph-runner` package in. This package now has zero prod dependencies.
+- Added a way for nodes to describe themselves in `NodeHandler`.
+- All nodes now describe themselves using the mechanism above.
+- Added `SchemaBuilder` for easy building of node descriptions.
+- Added `/kits` submodule as a future place for easily creating kits
+- Added `GenericKit` abstraction for automatically generating kits from handlers.
+- Added `/ui` submodule as the future place for simple Web-based UI for Breadboard.
+- Added `/worker` submodule as the future place way to build Breadboard-based Web Workers.
+- Added the notion of subgraphs (graphs that are embedded into a larger `GraphDescriptor`).
+- Edge inputs are now queued (fixes the issue of new outputs overwriting old ones)
+- Node outputs are now asynchronous
+- Lots of fixes and love and care.
+
 ## [0.3.1] - 2023-09-15
 
 - Updated milestone shield.
