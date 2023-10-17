@@ -49,6 +49,7 @@
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
     "@google-labs/tsconfig": "*",
+    "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
     "@types/node": "^18.17.4",
     "@typescript-eslint/eslint-plugin": "^5.56.0",
