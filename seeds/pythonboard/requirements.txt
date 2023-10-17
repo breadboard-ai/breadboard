@@ -1,3 +1,4 @@
 javascript
 aiofiles
 dataclasses_json
+aiohttp
