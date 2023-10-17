@@ -50,6 +50,17 @@ npm i
 npx turbo build
 ```
 
+This project moves rather quickly, so most of the time, there will be changes that will require a full rebuild with installing new packages, etc.
+
+To make the process of syncing to the tip of tree more convenient, there's a `sync` command. It will run `npm install`, clear build artifacts, and rebuild from scratch.
+
+So every time you're back to hacking on the project after a little while, run:
+
+```bash
+npm run sync
+
+```
+
 ## Starting a new project
 
 To start a new project:
@@ -260,12 +271,16 @@ npm login --registry https://wombat-dressing-room.appspot.com
 ```bash
 npm publish --registry https://wombat-dressing-room.appspot.com
 ```
+
 ## Updating Generated API Docs
+
 As more development takes place and more features are added, the documentation requires update to stay in sync with these developments. <br> <br>
 The TSDoc tool provides a command that when run automatically updates the generated docs and inserts it into the workflow. The modules/packages have been configured with a ready TSDoc command that gets triggered when a certain command is specified. <br> <br>
 :one: Navigate to your working directory where the change was made. <br> <br>
 :two: Run this command in your terminal:
-  ```
-  npm run generate:docs
-  ```
+
+```
+npm run generate:docs
+```
+
 This command successfully regenerates the docs.

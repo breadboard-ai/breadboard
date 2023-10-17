@@ -4,6 +4,7 @@
   "description": "Google Labs repo for rapid prototyping",
   "type": "module",
   "scripts": {
+    "sync": "npm i && npm run clean:build && turbo build --force",
     "test": "turbo test",
     "build": "turbo build",
     "lint": "turbo lint",
