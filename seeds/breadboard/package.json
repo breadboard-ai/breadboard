@@ -25,7 +25,9 @@
     "url": "https://github.com/google/labs-prototypes"
   },
   "files": [
-    "dist/src"
+    "dist/src",
+    "dist/*.js",
+    "dist/*.js.map"
   ],
   "ava": {
     "files": [
