@@ -2,6 +2,7 @@
 
 ## [0.4.0] - 2023-10-17
 
+- **M2 Release**
 - Added minified build artifacts.
 - Three new nodes: `invoke`, `import`, and `lambda` (see [documentation](https://github.com/google/labs-prototypes/blob/13601657112736ccccb083ed3e167f7e2ae05928/seeds/breadboard/docs/nodes.md))
 - Deprecated `include` node (the `invoke` node replaces it)

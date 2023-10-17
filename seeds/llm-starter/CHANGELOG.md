@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.0] - 2023-10-17
+
+- **M2 Release**
+- dependency changes
+- all nodes now describe themselves
+- new node: `embedText`
+- kit can run in a Web worker now
+- `generateText` properly supports `$error` output.
+
 ## [0.1.2] - 2023-09-15
 
 - dependency changes.
