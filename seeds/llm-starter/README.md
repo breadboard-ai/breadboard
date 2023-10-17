@@ -47,7 +47,7 @@ We will get this output:
 
 #### Outputs:
 
-- `prompts` a string that contains the result of replacing placeholders in the template with values from the inputs.
+- `prompt` a string that contains the result of replacing placeholders in the template with values from the inputs.
 
 #### Implementation:
 
@@ -221,7 +221,7 @@ Will produce this output:
 
 ### The `generateText` node
 
-This is a [PaLM API](https://developers.generativeai.google/) text completion node. This node is probably the main reason this starter kit exists. To produce useful output, the node needs an `PALM_KEY` input and the `text` input.
+This is a [PaLM API](https://developers.generativeai.google/) text completion node. This node is probably the main reason this starter kit exists. To produce useful output, the node needs a `PALM_KEY` input and the `text` input.
 
 #### Example:
 
