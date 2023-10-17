@@ -51,7 +51,7 @@ class FinalResult {
  */
 export class ProxyReceiver {
   board: Board;
-  handlers?: NodeHandlers<NodeHandlerContext>;
+  handlers?: NodeHandlers;
   secrets: Record<string, string> = {};
 
   constructor() {

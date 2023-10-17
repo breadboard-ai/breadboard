@@ -259,7 +259,7 @@ export type NodeConfiguration = Record<string, NodeValue>;
 /**
  * A function that represents a type of a node in the graph.
  */
-export type NodeHandlerFunction<T> = (
+export type NodeHandlerFunction = (
   /**
    * The inputs that are supplied to the node.
    */
@@ -267,7 +267,7 @@ export type NodeHandlerFunction<T> = (
   /**
    * The context of the node's invocation.
    */
-  context: T
+  context: NodeHandlerContext
 ) => Promise<OutputValues | void>;
 
 /**
@@ -301,21 +301,21 @@ export type NodeDescriberFunction = (
   outputSchema?: Schema
 ) => Promise<NodeDescriberResult>;
 
-export type NodeHandler<Context> =
+export type NodeHandler =
   | {
-      invoke: NodeHandlerFunction<Context>;
+      invoke: NodeHandlerFunction;
       describe?: NodeDescriberFunction;
     }
-  | NodeHandlerFunction<Context>;
+  | NodeHandlerFunction;
 
 /**
  * All known node handlers.
  */
-export type NodeHandlers<T = object> = ReservedNodeNames &
-  Record<NodeTypeIdentifier, NodeHandler<T>>;
+export type NodeHandlers = ReservedNodeNames &
+  Record<NodeTypeIdentifier, NodeHandler>;
 
 export interface Kit extends KitDescriptor {
-  get handlers(): NodeHandlers<NodeHandlerContext>;
+  get handlers(): NodeHandlers;
 }
 
 export type BreadboardSlotSpec = Record<string, GraphDescriptor>;
@@ -381,7 +381,7 @@ export type NodeSugar<In, Out> = (
   config?: OptionalIdConfiguration
 ) => BreadboardNode<In, Out>;
 
-export type GenericKit<T extends NodeHandlers<NodeHandlerContext>> = Kit & {
+export type GenericKit<T extends NodeHandlers> = Kit & {
   [key in keyof T]: NodeSugar<unknown, unknown>;
 };
 

@@ -61,7 +61,7 @@ const handlers = {
 export class Nursery implements Kit {
   url = "npm:@google-labs/node-nursery";
   #nodeFactory: NodeFactory;
-  #handlers: NodeHandlers<NodeHandlerContext>;
+  #handlers: NodeHandlers;
 
   get handlers() {
     return this.#handlers;

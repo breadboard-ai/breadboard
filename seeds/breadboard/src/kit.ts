@@ -64,7 +64,7 @@ export class KitLoader {
 
 export class GraphToKitAdapter {
   graph: GraphDescriptor;
-  handlers?: NodeHandlers<NodeHandlerContext>;
+  handlers?: NodeHandlers;
 
   private constructor(graph: GraphDescriptor) {
     this.graph = graph;
@@ -137,14 +137,14 @@ export class KitBuilder {
     this.namespacePrefix = namespacePrefix;
   }
 
-  #addPrefix(handlers: NodeHandlers<NodeHandlerContext>) {
+  #addPrefix(handlers: NodeHandlers) {
     return Object.keys(handlers).reduce((acc, key) => {
       acc[`${this.namespacePrefix}${key}`] = handlers[key];
       return acc;
-    }, {} as NodeHandlers<NodeHandlerContext>);
+    }, {} as NodeHandlers);
   }
 
-  build<Handlers extends NodeHandlers<NodeHandlerContext>>(handlers: Handlers) {
+  build<Handlers extends NodeHandlers>(handlers: Handlers) {
     type NodeNames = [x: Extract<keyof Handlers, string>];
 
     if (!this.url) throw new Error(`Builder was not yet initialized.`);

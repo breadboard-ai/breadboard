@@ -346,14 +346,12 @@ export class BoardRunner implements BreadboardRunner {
     return runnableBoard;
   }
 
-  static async handlersFromBoard(
-    board: BoardRunner
-  ): Promise<NodeHandlers<NodeHandlerContext>> {
+  static async handlersFromBoard(board: BoardRunner): Promise<NodeHandlers> {
     const core = new Core();
     const kits = [core, ...board.kits];
     return kits.reduce((handlers, kit) => {
       return { ...handlers, ...kit.handlers };
-    }, {} as NodeHandlers<NodeHandlerContext>);
+    }, {} as NodeHandlers);
   }
 
   static runRemote = runRemote;
