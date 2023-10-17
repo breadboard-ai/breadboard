@@ -1,25 +1,21 @@
 import { nodeResolve } from "@rollup/plugin-node-resolve";
 import terser from "@rollup/plugin-terser";
 
-export default [
-  {
-    input: "dist/src/index.js",
+import config from "./package.json" assert { type: "json" };
+
+const makeAllTargets = Object.entries(config.exports).map(([name, input]) => {
+  name = name === "." ? "index" : name;
+  const file = `dist/${name}.min.js`;
+  return {
+    input,
     output: {
-      file: "dist/index.min.js",
+      file,
       format: "esm",
       plugins: [terser()],
       sourcemap: true,
     },
     plugins: [nodeResolve()],
-  },
-  {
-    input: "dist/src/worker/index.js",
-    output: {
-      file: "dist/worker.min.js",
-      format: "esm",
-      plugins: [terser()],
-      sourcemap: true,
-    },
-    plugins: [nodeResolve()],
-  },
-];
+  };
+});
+
+export default makeAllTargets;
