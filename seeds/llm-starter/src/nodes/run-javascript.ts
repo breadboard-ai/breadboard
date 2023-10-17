@@ -70,7 +70,7 @@ export type RunJavascriptInputs = InputValues & {
   raw?: boolean;
 };
 
-export const runJavascriptHandler: NodeHandlerFunction<object> = async (
+export const runJavascriptHandler: NodeHandlerFunction = async (
   inputs: InputValues
 ) => {
   const { code, name, raw, ...args } = inputs as RunJavascriptInputs;

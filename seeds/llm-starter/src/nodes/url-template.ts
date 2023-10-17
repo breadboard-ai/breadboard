@@ -29,7 +29,7 @@ export type UrlTemplateInputs = {
   template: string;
 };
 
-export const urlTemplateHandler: NodeHandlerFunction<object> = async (
+export const urlTemplateHandler: NodeHandlerFunction = async (
   inputs: InputValues
 ) => {
   const { template, ...values } = inputs as UrlTemplateInputs;

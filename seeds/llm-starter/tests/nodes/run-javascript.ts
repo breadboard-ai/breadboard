@@ -6,6 +6,8 @@
 
 import test from "ava";
 
+import { NodeHandlerContext } from "@google-labs/breadboard";
+
 import handler, {
   RunJavascriptOutputs,
   computeAdditionalInputs,
@@ -18,7 +20,7 @@ test("runJavascript runs code", async (t) => {
     {
       code: "function run() { return 'hello world'; }",
     },
-    {}
+    {} as NodeHandlerContext
   )) as RunJavascriptOutputs;
   t.is(result, "hello world");
 });
@@ -30,7 +32,7 @@ test("runJavascript correctly strips code", async (t) => {
       {
         code: "```js\nfunction run() { return 'hello world'; }\n```",
       },
-      {}
+      {} as NodeHandlerContext
     )) as RunJavascriptOutputs;
     t.is(result, "hello world");
   }
@@ -39,7 +41,7 @@ test("runJavascript correctly strips code", async (t) => {
       {
         code: "```javascript\nfunction run() { return 'hello world'; }\n```",
       },
-      {}
+      {} as NodeHandlerContext
     )) as RunJavascriptOutputs;
     t.is(result, "hello world");
   }
@@ -52,7 +54,7 @@ test("runJavascript runs code with specified function name", async (t) => {
       code: "function compute() { return 'hello world'; }",
       name: "compute",
     },
-    {}
+    {} as NodeHandlerContext
   )) as RunJavascriptOutputs;
   t.is(result, "hello world");
 });
@@ -64,7 +66,7 @@ test("runJavascript runs code with arguments", async (t) => {
       code: "function run({ what }) { return `hello ${what}`; }",
       what: "world",
     },
-    {}
+    {} as NodeHandlerContext
   )) as RunJavascriptOutputs;
   t.is(result, "hello world");
 });
@@ -77,7 +79,7 @@ test("runJavascript understands `raw` input", async (t) => {
       name: "compute",
       raw: true,
     },
-    {}
+    {} as NodeHandlerContext
   )) as RunJavascriptOutputs;
   t.deepEqual(result, { hello: "world" });
 });

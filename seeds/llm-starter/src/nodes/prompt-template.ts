@@ -41,7 +41,7 @@ export const parametersFromTemplate = (template: string): string[] => {
   return unique;
 };
 
-export const promptTemplateHandler: NodeHandlerFunction<object> = async (
+export const promptTemplateHandler: NodeHandlerFunction = async (
   inputs: InputValues
 ) => {
   const template = inputs.template as string;

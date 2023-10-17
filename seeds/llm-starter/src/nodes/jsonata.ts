@@ -8,6 +8,7 @@ import {
   InputValues,
   NodeDescriberFunction,
   NodeHandlerFunction,
+  NodeHandlerContext,
   Schema,
 } from "@google-labs/breadboard";
 
@@ -23,7 +24,7 @@ export type JsonataInputs = {
   json?: unknown;
 };
 
-export const jsonataHandler: NodeHandlerFunction<object> = async (
+export const jsonataHandler: NodeHandlerFunction = async (
   inputs: InputValues
 ) => {
   const { expression, raw, ...rest } = inputs as JsonataInputs;
@@ -51,7 +52,7 @@ export const computeOutputSchema = async (
   }
 
   try {
-    const result = await jsonataHandler(inputs, {});
+    const result = await jsonataHandler(inputs, {} as NodeHandlerContext);
     if (!result) return {};
     const properties: Schema["properties"] = {};
     const outputSchema = {
