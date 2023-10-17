@@ -70,11 +70,11 @@ result { hear: 'Hello, world?' }
 > 1. The `runOnce` method of the board takes a property bag (a JS object) as its argument.
 > 2. This bag of properties is then handed to the `input` node.
 > 3. The `input` node is very simple-minded: it just passes the property bag along to the next node.
-> 4. This is where the wiring comes in. When we described our single wire as `text->text`, we basically said:
+> 4. This is where the wiring comes in. When we described our single wire as `say->hear`, we basically said:
 >    1. reach into the property bag,
->    2. fish out the `text` property, then
->    3. pass it along to the next node as `text` property.
-> 5. Since the next node is the `output` node, that's the node that receives the `text` property.
+>    2. fish out the `say` property, then
+>    3. pass it along to the next node as `say` property.
+> 5. Since the next node is the `output` node, that's the node that receives the `say` property.
 > 6. The `output` node is also pretty simple. It takes the property bag it received and returns it as the of the `runOnce` method.
 
 You can see the source of this program here: [tutorial-1.js](./tutorial-1.js).
