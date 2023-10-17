@@ -661,7 +661,6 @@ export type LambdaNodeOutputs = OutputValues & {
 
 export type ImportNodeInputs = InputValues & {
   path?: string;
-  $ref?: string;
   graph?: GraphDescriptor;
   args: InputValues;
 };
@@ -672,8 +671,13 @@ export type IncludeNodeInputs = InputValues & {
   board?: BreadboardCapability;
   graph?: GraphDescriptor;
   slotted?: BreadboardSlotSpec;
-  parent: NodeDescriptor;
   args: InputValues;
+};
+
+export type InvokeNodeInputs = InputValues & {
+  path?: string;
+  board?: BreadboardCapability;
+  graph?: GraphDescriptor;
 };
 
 export type SlotNodeInputs = {

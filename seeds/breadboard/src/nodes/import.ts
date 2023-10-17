@@ -25,11 +25,6 @@ export default {
             description: "The path to the board to import.",
             type: "string",
           },
-          $ref: {
-            title: "$ref",
-            description: "The $ref to the board to import.",
-            type: "string",
-          },
           graph: {
             title: "graph",
             description: "The graph descriptor of the board to import.",
@@ -51,18 +46,19 @@ export default {
     inputs: InputValues,
     context: NodeHandlerContext
   ): Promise<LambdaNodeOutputs> => {
-    const { path, $ref, graph, ...args } = inputs as ImportNodeInputs;
+    const { path, graph, ...args } = inputs as ImportNodeInputs;
 
-    // TODO: Please fix the $ref/path mess.
-    const source = path || $ref || "";
     const board = graph
       ? (graph as Board).runOnce // TODO: Hack! Use JSON schema or so instead.
         ? ({ ...graph } as Board)
         : await Board.fromGraphDescriptor(graph)
-      : await Board.load(source, {
+      : path
+      ? await Board.load(path, {
           base: context.board.url,
           outerGraph: context.parent,
-        });
+        })
+      : undefined;
+    if (!board) throw Error("No board provided");
     board.args = args;
 
     return { board: { kind: "board", board } as BreadboardCapability };

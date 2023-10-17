@@ -7,7 +7,7 @@
 import type {
   InputValues,
   OutputValues,
-  IncludeNodeInputs,
+  InvokeNodeInputs,
   NodeHandlerContext,
 } from "../types.js";
 import { Board } from "../board.js";
@@ -25,9 +25,9 @@ export default {
           type: "string",
         },
         $ref: {
-          title: "$ref",
-          description: "The $ref to the board to invoke.",
-          type: "string",
+          title: "board",
+          description: "The board to invoke, created by `lambda` or `import`",
+          type: "BoardCapability",
         },
         graph: {
           title: "graph",
@@ -42,7 +42,7 @@ export default {
     inputs: InputValues,
     context: NodeHandlerContext
   ): Promise<OutputValues> => {
-    const { path, board, graph, ...args } = inputs as IncludeNodeInputs;
+    const { path, board, graph, ...args } = inputs as InvokeNodeInputs;
 
     const runnableBoard = board
       ? await Board.fromBreadboardCapability(board)

@@ -115,7 +115,7 @@ board
   .input()
   .wire(
     "say->text",
-    board.include(NEWS_BOARD_URL).wire("text->hear", board.output())
+    board.invoke(NEWS_BOARD_URL).wire("text->hear", board.output())
   );
 ```
 

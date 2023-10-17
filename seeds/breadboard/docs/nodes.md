@@ -100,7 +100,109 @@ See [Chapter 9: Let's build a chatbot](https://github.com/google/labs-prototypes
 
 - the properties that were passed as inputs
 
-## The `include` node
+## The `invoke` node
+
+Use this node to invoke another board from this board.
+
+It recognizes `path`, `graph`, and `board` properties that specify, respectively, a file path or URL to the serialized board, directly the serialized-as-JSON board, and a `BoardCapability` (returned by `lambda` or `import`).
+
+The rest of the inputs in the property bag are passed along to the invoked board as its inputs. If other inputs were bound to the board via wires into the `lambda` or `import` node, then those have precedence over inputs passed here.
+
+The outputs of the invoked board will be passed along as outputs of the `invoke` node.
+
+### Inputs
+
+- `path`, which specifes the file path or URL to the serialized board to be included.
+- `graph`, which is a serialized board
+- `board`, a `BoardCapability` representing a board, created by `lambda` or `import`.
+- any other properties are passed as inputs for the invoked board.
+
+### Outputs
+
+- the outputs of the invoked board
+
+## The `lambda` node
+
+Use this node to create a lambda board that can be passed around and eventually invoked by e.g. the `invoke` node.
+
+Any inputs other than `board` are bound to the lambda board and will be inputs to the board once it is invoked. This is useful to bind configurations to the lambda board, so that those are not needed whereever it is eventually invoked.
+
+The `board` input is technically a `BoardCapability`, but in practice you'll either pass a `Breadboard` instance (which will be converted to a `BoardCapability` under the hood) or inline define functions:
+
+This node accepts as parameter a JS function of type `LambdaFunction` that gets three parameters: `board` (the board created under the hood), `input` and `output` (respectively the corresponding nodes already placed on the board). This allows an easy way to create nested boards, mimicking the typical closure syntax of JS lambdas.
+
+The real power is that you can wire data directly into this function, and that this data is then bound to the lambda and available wherever the baord is invoked!
+
+Examples:
+
+```js
+const kit = board.addKit(Starter);
+const template = board.passthrough({ template: "{{foo}}: {{bar}}"});
+
+const lambda = board.lambda((board, input, output) => {
+  const prompt = kit.promptTemplate();
+  input.wire("foo->", prompt);
+  input.wire("bar->", prompt);
+  template.wire("template->.", prompt);
+  prompt.wire("prompt->", output);
+});
+// ...
+board.invoke({ board: lambda })
+  .wire("foo<-", fooSource);
+  .wire("bar->", barSource);
+  .wire("prompt->text", llm);
+```
+
+wbich behaves like this (note that we now pass a `Board` to `lambda` and that `template` is passed as input to that board via wires into the `lambda` node instead of being directly wired).
+
+```js
+const template = board.passthrough({ template: "{{foo}}: {{bar}}"});
+
+const lambdaBoard = new Board();
+{
+  const kit = lambdaBoard.addKit(Starter);
+
+  const input = lambdaBoard.input();
+  const prompt = kit.promptTemplate();
+  input.wire("foo->", prompt);
+  input.wire("bar->", prompt);
+  input.wire("template->.", prompt);
+  prompt.wire("prompt->", lambdaBoard.output());
+}
+
+const lambda = board.lambda(lambdaBoard).wire("template<-", template);
+// ...
+board.invoke({ board: lambda })
+  .wire("foo<-", fooSource);
+  .wire("bar->", barSource);
+  .wire("prompt->text", llm);
+```
+
+### Inputs
+
+- `board`, a `BoardCapability`, which is typically created via the synctactic sugar described above.
+
+### Outputs
+
+- `board`, a `BoardCapability`, which can be passed to `invoke` and other nodes that can invoke boards.
+
+## The `import` node
+
+Creates a lambda board from a pre-existing board, either loaded from `path` or passed as JSON via `graph`. All other inputs are bound to the board, which is returned as `board`.
+
+### Inputs
+
+- `path`, which specifes the file path or URL to the serialized board to be included.
+- `graph`, which is a serialized board
+- all other inputs are bound to the board
+
+### Outputs
+
+- `board`, a `BoardCapability`, which can be passed to `invoke` and other nodes that can invoke boards.
+
+## The `include` node (DEPRECATED)
+
+DEPRECATED: Use `invoke` instead
 
 Use this node to include other board into the current board. It recognizes `path` or `$ref` properties that specify, respectively, file path or URL to the serialized-as-JSON board to be included. It also accepts the `slotted` property that must contain the serialized-as-JSON boards that will be slotted into the included board.
 
@@ -123,7 +225,9 @@ For an example of how to use the `include` property, see [Chapter 5: Including o
 
 - the outputs of the included board
 
-## The `slot` node
+## The `slot` node (DEPRECATED)
+
+DEPRECATED. Instead pass boards either as URLs or as Boards from `lambda` and `invoke` them.
 
 Use this node to make a slot in a board. Adding a `slot` node turns a board into a sort of a template: each slot represents a placeholder that must be filled in when the node is included into another board.
 
