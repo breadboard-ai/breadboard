@@ -12,7 +12,6 @@ import type {
   BreadboardNode,
   Kit,
   NodeFactory,
-  NodeHandlerContext,
   OptionalIdConfiguration,
   ConfigOrLambda,
 } from "@google-labs/breadboard";

@@ -6,7 +6,7 @@
 
 import type { InputValues, NodeHandler, NodeHandlerContext } from "./types.js";
 
-export const callHandler = async <T>(
+export const callHandler = async (
   handler: NodeHandler,
   inputs: InputValues,
   context: NodeHandlerContext

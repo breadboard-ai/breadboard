@@ -15,7 +15,6 @@ import {
   KitConstructor,
   KitImportMap,
   NodeFactory,
-  NodeHandlerContext,
   OptionalIdConfiguration,
 } from "./types.js";
 import { Board } from "./board.js";
