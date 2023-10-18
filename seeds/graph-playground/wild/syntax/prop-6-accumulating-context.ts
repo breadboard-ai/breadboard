@@ -57,8 +57,8 @@ import {
 
   const start = board.place(passthrough, { $id: "start" });
 
-  // wire the main flow.
-  start.to(input.to(prompt.to(generator.to(output))));
+  // wire the main infinite conversation loop.
+  start.to(input.to(prompt.to(generator.to(output.to(input)))));
 
   // wire the conversation memory loop.
   board.wire(
