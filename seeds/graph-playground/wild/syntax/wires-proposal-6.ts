@@ -6,8 +6,12 @@ import { Schema } from "@google-labs/breadboard";
    * The Board only has two nodes: input and output.
    */
   type Board = {
-    input(options?: Options<InputInputs>): PlacedNode;
-    output(options?: Options<OutputInputs>): PlacedNode;
+    input(
+      options?: Options<InputInputs>
+    ): PlacedNode<InputInputs, InputOutputs>;
+    output(
+      options?: Options<OutputInputs>
+    ): PlacedNode<OutputInputs, OutputOutputs>;
 
     /**
      * Takes an unplaced node and places it on the board.
@@ -39,7 +43,7 @@ import { Schema } from "@google-labs/breadboard";
     place<NodeType extends UnplacedNode>(
       node: NodeType,
       options?: Options<Parameters<NodeType>[0]>
-    ): PlacedNode;
+    ): PlacedNode<Parameters<NodeType>[0], Awaited<ReturnType<NodeType>>>;
 
     /**
      * The `wire` method is the only way to draw wires explicitly in a queue-ey
@@ -71,16 +75,16 @@ import { Schema } from "@google-labs/breadboard";
   /**
    * Represents the node placed on a board.
    */
-  type PlacedNode = {
+  type PlacedNode<InputsType, OutputsType = object> = {
     /**
      * The set of input ports of a node.
      */
-    in: InputPorts;
+    in: InputPorts<InputsType>;
 
     /**
      * The set of output ports of a node.
      */
-    out: OutputPorts;
+    out: OutputPorts<OutputsType>;
 
     /**
      * A method to wire nodes in a "queue-ey" way. Using this way, we can
@@ -110,7 +114,9 @@ import { Schema } from "@google-labs/breadboard";
      * @param destination either a bag of input ports or a placed node.
      * @returns
      */
-    to: (destination: Record<string, InputPort> | PlacedNode) => PlacedNode;
+    to: <In, Out>(
+      destination: Record<string, InputPort> | PlacedNode<In, Out>
+    ) => PlacedNode<InputsType, OutputsType>;
   };
 
   const board = {} as Board;
@@ -135,8 +141,14 @@ import { Schema } from "@google-labs/breadboard";
     prompt: string;
   };
 
-  const generateText = async (_inputs: GenerateTextInputs) => {
-    return {};
+  type GenerateTextOutputs = {
+    completion: string;
+  };
+
+  const generateText = async (
+    _inputs: GenerateTextInputs
+  ): Promise<GenerateTextOutputs> => {
+    return {} as GenerateTextOutputs;
   };
 
   type RunJavascriptInputs = {
@@ -145,16 +157,26 @@ import { Schema } from "@google-labs/breadboard";
     raw: boolean;
   };
 
-  const runJavascript = async (_inputs: RunJavascriptInputs) => {
-    return {};
+  type RunJavascriptOutputs = {
+    result: string;
+  };
+
+  const runJavascript = async (
+    _inputs: RunJavascriptInputs
+  ): Promise<RunJavascriptOutputs> => {
+    return {} as RunJavascriptOutputs;
   };
 
   type SecretsInputs = {
     keys: string[];
   };
 
-  const secrets = async (_inputs: SecretsInputs) => {
-    return {};
+  type SecretsOutputs = {
+    [key: string]: string;
+  };
+
+  const secrets = async (_inputs: SecretsInputs): Promise<SecretsOutputs> => {
+    return {} as SecretsOutputs;
   };
 
   {
@@ -317,15 +339,19 @@ import { Schema } from "@google-labs/breadboard";
     schema: Schema;
   };
 
+  type InputOutputs = Record<string, NodeValue>;
+
   type OutputInputs =
     | {
         schema: Schema;
       }
     | Record<string, NodeValue>;
 
+  type OutputOutputs = object;
+
   type Options<In = object> =
     | {
-        [P in keyof In]?: NodeValue | OutputPort;
+        [P in keyof In]?: In[P] | OutputPort;
       }
     | {
         $id?: string;
@@ -338,6 +364,10 @@ import { Schema } from "@google-labs/breadboard";
   type InputPort = { input: boolean };
   type OutputPort = { output: boolean };
 
-  type InputPorts = Record<string, InputPort>;
-  type OutputPorts = Record<string, OutputPort>;
+  type InputPorts<InputsType> = {
+    [P in keyof InputsType]: InputPort;
+  };
+  type OutputPorts<OutputsType> = {
+    [P in keyof OutputsType]: OutputPort;
+  };
 }
