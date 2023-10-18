@@ -1,16 +1,13 @@
-import { InputValues, OutputValues } from "@google-labs/breadboard";
+import { NodeValue } from "@google-labs/breadboard";
+import { Schema } from "@google-labs/breadboard";
 
 {
-  type Options = Record<string, unknown>;
-
-  type UnplacedNode = (values: InputValues) => Promise<OutputValues>;
-
   /**
    * The Board only has two nodes: input and output.
    */
   type Board = {
-    input(options?: Options): PlacedNode;
-    output(options?: Options): PlacedNode;
+    input(options?: Options<InputInputs>): PlacedNode;
+    output(options?: Options<OutputInputs>): PlacedNode;
 
     /**
      * Takes an unplaced node and places it on the board.
@@ -39,7 +36,10 @@ import { InputValues, OutputValues } from "@google-labs/breadboard";
      * @param node The node to place on the board
      * @param options node configuration
      */
-    place(node: UnplacedNode, options?: Options): PlacedNode;
+    place<NodeType extends UnplacedNode>(
+      node: NodeType,
+      options?: Options<Parameters<NodeType>[0]>
+    ): PlacedNode;
 
     /**
      * The `wire` method is the only way to draw wires explicitly in a queue-ey
@@ -113,17 +113,49 @@ import { InputValues, OutputValues } from "@google-labs/breadboard";
     to: (destination: Record<string, InputPort> | PlacedNode) => PlacedNode;
   };
 
-  type InputPort = object;
-  type OutputPort = object;
-
-  type InputPorts = Record<string, InputPort>;
-  type OutputPorts = Record<string, OutputPort>;
-
   const board = {} as Board;
-  const promptTemplate = {} as UnplacedNode;
-  const generateText = {} as UnplacedNode;
-  const runJavascript = {} as UnplacedNode;
-  const secrets = {} as UnplacedNode;
+
+  type PromptTemplateInputs = {
+    template: string;
+    [x: string]: string;
+  };
+
+  type PromptTemplateOutputs = {
+    prompt: string;
+  };
+
+  const promptTemplate = async (
+    _inputs: PromptTemplateInputs
+  ): Promise<PromptTemplateOutputs> => {
+    return { prompt: "foo" };
+  };
+
+  type GenerateTextInputs = {
+    PALM_KEY: string;
+    prompt: string;
+  };
+
+  const generateText = async (_inputs: GenerateTextInputs) => {
+    return {};
+  };
+
+  type RunJavascriptInputs = {
+    code: string;
+    name: string;
+    raw: boolean;
+  };
+
+  const runJavascript = async (_inputs: RunJavascriptInputs) => {
+    return {};
+  };
+
+  type SecretsInputs = {
+    keys: string[];
+  };
+
+  const secrets = async (_inputs: SecretsInputs) => {
+    return {};
+  };
 
   {
     // math.ts -- (1 of 3) all nested in one nice fluent interface style.
@@ -275,7 +307,37 @@ import { InputValues, OutputValues } from "@google-labs/breadboard";
             }).out.question,
           }).out.prompt,
         }).out.completion,
-      }),
+      }).out.result,
     });
   }
+
+  // various type goop.
+
+  type InputInputs = {
+    schema: Schema;
+  };
+
+  type OutputInputs =
+    | {
+        schema: Schema;
+      }
+    | Record<string, NodeValue>;
+
+  type Options<In = object> =
+    | {
+        [P in keyof In]?: NodeValue | OutputPort;
+      }
+    | {
+        $id?: string;
+      };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  type UnplacedNode = (values: any) => Promise<any>;
+
+  // Both of these are just stubs for now.
+  type InputPort = { input: boolean };
+  type OutputPort = { output: boolean };
+
+  type InputPorts = Record<string, InputPort>;
+  type OutputPorts = Record<string, OutputPort>;
 }
