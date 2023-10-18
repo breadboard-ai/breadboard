@@ -6,7 +6,10 @@
 
 import { GraphDescriptor, SubGraphs } from "./types.js";
 
-export type BoardLoaderArguments = Pick<GraphDescriptor, "url" | "graphs">;
+export type BoardLoaderArguments = {
+  base?: string;
+  graphs?: SubGraphs;
+};
 
 export type BoardLoaderType = "file" | "fetch" | "hash" | "unknown";
 
@@ -91,8 +94,8 @@ export class BoardLoader {
   #base: URL;
   #graphs?: SubGraphs;
 
-  constructor({ url, graphs }: BoardLoaderArguments) {
-    this.#base = new URL(url ?? import.meta.url);
+  constructor({ base, graphs }: BoardLoaderArguments) {
+    this.#base = new URL(base ?? import.meta.url);
     this.#graphs = graphs;
   }
 

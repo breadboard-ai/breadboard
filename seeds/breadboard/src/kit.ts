@@ -20,6 +20,7 @@ import {
 } from "./types.js";
 import { Board } from "./board.js";
 import { callHandler } from "./handler.js";
+import { BoardRunner } from "./runner.js";
 
 const urlToNpmSpec = (url: string): string => {
   const urlObj = new URL(url);
@@ -65,6 +66,7 @@ export class KitLoader {
 export class GraphToKitAdapter {
   graph: GraphDescriptor;
   handlers?: NodeHandlers;
+  board?: BoardRunner;
 
   private constructor(graph: GraphDescriptor) {
     this.graph = graph;
@@ -79,6 +81,7 @@ export class GraphToKitAdapter {
     const board = await Board.fromGraphDescriptor(this.graph);
     board.url = url;
     this.handlers = await Board.handlersFromBoard(board);
+    this.board = board;
   }
 
   handlerForNode(id: NodeIdentifier) {
@@ -88,7 +91,7 @@ export class GraphToKitAdapter {
     if (!node) throw new Error(`Node ${id} not found in graph.`);
 
     return {
-      invoke: async (inputs: InputValues, context: NodeHandlerContext) => {
+      invoke: async (inputs: InputValues) => {
         const configuration = node.configuration;
         if (configuration) {
           inputs = { ...configuration, ...inputs };
@@ -96,7 +99,15 @@ export class GraphToKitAdapter {
         const handler = this.handlers?.[node.type];
         if (!handler) return;
 
-        return callHandler(handler, inputs, context);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const board = this.board!;
+
+        return callHandler(handler, inputs, {
+          board,
+          descriptor: node,
+          parent: board,
+          slots: {}, // TODO: Perhaps pass slots from graph?
+        });
       },
     };
   }

@@ -306,7 +306,7 @@ export class BoardRunner implements BreadboardRunner {
   ): Promise<BoardRunner> {
     const { base, slotted, outerGraph } = options || {};
     const loader = new BoardLoader({
-      url: base,
+      base,
       graphs: outerGraph?.graphs,
     });
     const { isSubgraph, graph } = await loader.load(url);
