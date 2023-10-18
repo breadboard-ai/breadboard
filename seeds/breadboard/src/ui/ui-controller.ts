@@ -20,6 +20,10 @@ export interface UI {
   done(): void;
 }
 
+const getBoardFromUrl = () => {
+  return new URL(window.location.href).searchParams.get("board");
+};
+
 export class UIController extends HTMLElement implements UI {
   constructor() {
     super();
@@ -38,6 +42,9 @@ export class UIController extends HTMLElement implements UI {
   }
 
   async start(args: StartArgs) {
+    const boardFromUrl = getBoardFromUrl();
+    if (boardFromUrl) return boardFromUrl;
+
     const start = new Start(args);
     this.append(start);
     const board = await start.selectBoard();
