@@ -62,10 +62,10 @@ export type Board = {
    *  .wire(mathFunction.out.prompt, mathFunctionGenerator.in.text)
    *  .wire(mathFunctionGenerator.out.completion, compute.in.code)
    * ```
-   * @param inPort a node's input port (tail) of a wire
-   * @param outPort a node's output port (head) of a wire
+   * @param outPort a node's output port (tail) of a wire
+   * @param inPort a node's input port (head) of a wire
    */
-  wire(inPort: InputPort, outPort: OutputPort): Board;
+  wire(outPort: OutputPort, inPort: InputPort): Board;
 };
 
 /**
