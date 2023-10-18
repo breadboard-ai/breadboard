@@ -14,9 +14,12 @@ This library's design emphasizes two key properties:
 
 :two: **Modularity and composability**. Easily share, remix, reuse, and compose prototypes.
 
+## Requirements
+Breadboard requires [Node](https://nodejs.org/) version >=v19.0.0. 
+
 ## Installing the library
 
-Breadboard requires Node version >=v19.0.0. To install the library, run:
+To install breadboard, run:
 
 ```sh
 npm install @google-labs/breadboard
