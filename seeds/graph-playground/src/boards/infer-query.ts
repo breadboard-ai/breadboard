@@ -77,7 +77,7 @@ const promptStuffer = starter.jsonata('{ "prompt": $ }', {
   $id: "promptStuffer",
 });
 
-const questionGenerator = starter.generateText({ $id: "questionGenerator " });
+const questionGenerator = starter.generateText({ $id: "questionGenerator" });
 
 askForTemplate.wire(
   "text->template",

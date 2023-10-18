@@ -4,20 +4,20 @@
   "version": "0.0.1",
   "edges": [
     {
-      "from": "questionGenerator ",
+      "from": "questionGenerator",
       "to": "printResults",
       "out": "completion",
       "in": "text"
     },
     {
       "from": "secrets-1",
-      "to": "questionGenerator ",
+      "to": "questionGenerator",
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
       "from": "inferringPrompt",
-      "to": "questionGenerator ",
+      "to": "questionGenerator",
       "out": "prompt",
       "in": "text"
     },
@@ -96,7 +96,7 @@
       }
     },
     {
-      "id": "questionGenerator ",
+      "id": "questionGenerator",
       "type": "generateText"
     },
     {
