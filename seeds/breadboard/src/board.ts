@@ -29,7 +29,6 @@ import type {
 } from "./types.js";
 
 import { BoardRunner } from "./runner.js";
-import { toMermaid } from "./mermaid.js";
 import { Node } from "./node.js";
 
 /**
@@ -410,18 +409,6 @@ export class Board extends BoardRunner implements Breadboard {
       throw new Error("Across board wires: From must be parent of to");
 
     this.#acrossBoardsEdges.push({ edge, from, to });
-  }
-
-  /**
-   * Returns a [Mermaid](https://mermaid-js.github.io/mermaid/#/) representation
-   * of the board.
-   *
-   * This is useful for visualizing the board.
-   *
-   * @returns - a string containing the Mermaid representation of the board.
-   */
-  mermaid(): string {
-    return toMermaid(this);
   }
 }
 

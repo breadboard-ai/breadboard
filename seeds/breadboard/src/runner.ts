@@ -37,6 +37,7 @@ import { BoardLoader } from "./loader.js";
 import { runRemote } from "./remote.js";
 import { NestedProbe } from "./nested-probe.js";
 import { callHandler } from "./handler.js";
+import { toMermaid } from "./mermaid.js";
 
 class ProbeEvent extends CustomEvent<ProbeDetails> {
   constructor(type: string, detail: ProbeDetails) {
@@ -257,6 +258,18 @@ export class BoardRunner implements BreadboardRunner {
    */
   addValidator(validator: BreadboardValidator) {
     this.#validators.push(validator);
+  }
+
+  /**
+   * Returns a [Mermaid](https://mermaid-js.github.io/mermaid/#/) representation
+   * of the board.
+   *
+   * This is useful for visualizing the board.
+   *
+   * @returns - a string containing the Mermaid representation of the board.
+   */
+  mermaid(): string {
+    return toMermaid(this);
   }
 
   /**
