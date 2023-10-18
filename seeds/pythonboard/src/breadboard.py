@@ -1,3 +1,4 @@
+import os
 from typing import Any, Dict, List, Optional, Self
 from traversal.traversal_types import (
   Edge,
@@ -9,6 +10,8 @@ from traversal.traversal_types import (
   GraphMetadata,
 )
 #from node import Node
+from loader import BoardLoader
+from kit import KitLoader
 from breadboard_types import (
   Breadboard,
   BreadboardSlotSpec,
@@ -37,8 +40,6 @@ class LocalKit(Kit):
 
 @dataclass
 class Board(GraphDescriptor):
-  #edges: List[Edge]
-  #nodes: List[NodeDescriptor]
   kits: List[Kit] = field(default_factory=list)
   ctr: List[Kit] = field(default_factory=list)
   handlers: Dict[str, Any] = field(default_factory=dict)
@@ -178,6 +179,71 @@ class Board(GraphDescriptor):
         )
 
       result.outputsPromise = outputsPromise
+
+  @staticmethod
+  def _loadGraph(graph: GraphDescriptor):
+    edges = []
+    for edge in graph['edges']:
+      if 'from' in edge:
+        edge['previous'] = edge['from']
+        edge.pop('from')
+      if 'to' in edge:
+        edge['next'] = edge['to']
+        edge.pop('to')
+      if 'in' in edge:
+        edge['input'] = edge['in']
+        edge.pop('in')
+      edges.append(Edge(**edge))
+    edges = edges
+    nodes = [NodeDescriptor(**node) for node in graph['nodes']]
+    return edges, nodes
+
+  @staticmethod
+  async def fromGraphDescriptor(graph: GraphDescriptor) -> Self:
+    """Creates a new board from JSON. If you have a serialized board, you can
+    use this method to turn it into into a new Board instance.
+  
+    @param graph - the JSON representation of the board.
+    @returns - a new `Board` instance.
+    """
+    edges, nodes = Board._loadGraph(graph)
+    breadboard = Board(
+      edges=edges,
+      nodes=nodes,
+      url=graph["url"],
+      title=graph["title"],
+      description=graph["description"],
+      version=graph["version"],
+    )
+    loader = KitLoader(graph["kits"])
+    kits = await loader.load()
+    for kit in kits:
+      breadboard.addKit(kit)
+    return breadboard
+
+  @staticmethod
+  async def load(
+    url: str,
+    slotted: Optional[BreadboardSlotSpec] = None,
+    base: Optional[str] = None,
+    outerGraph: Optional[GraphDescriptor] = None,
+  ) -> Self:
+    """Loads a board from a URL or a file path.
+
+    @param url - the URL or a file path to the board.
+    @param slots - optional slots to provide to the board.
+    @returns - a new `Board` instance.
+    """
+    loader = BoardLoader(
+      url=base or "file://" + os.getcwd() + "/",
+      graphs=outerGraph.graphs if outerGraph else None,
+    )
+    graph, isSubgraph = await loader.load(url)
+    board = await Board.fromGraphDescriptor(graph)
+    if isSubgraph:
+      board._parent = outerGraph
+    board._slots = slotted or {}
+    return board
 
   def handlersFromBoard(
     self,

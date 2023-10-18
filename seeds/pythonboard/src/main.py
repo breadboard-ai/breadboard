@@ -1,61 +1,43 @@
-from javascript import require, AsyncTask
 
-import sys
 import asyncio
+from javascript import require, AsyncTask
 import json
-from traversal.traversal_types import Edge, NodeDescriptor
-import breadboard as breadboard1
+import sys
 
-
-
-graph_path = sys.argv[1]
-with open(graph_path) as f:
-  graph = json.load(f)
-print(graph)
-print(type(graph))
-edges = []
-for edge in graph['edges']:
-  if 'from' in edge:
-    edge['previous'] = edge['from']
-    edge.pop('from')
-  if 'to' in edge:
-    edge['next'] = edge['to']
-    edge.pop('to')
-  if 'in' in edge:
-    edge['input'] = edge['in']
-    edge.pop('in')
-  edges.append(Edge(**edge))
-edges = edges
-nodes = [NodeDescriptor(**node) for node in graph['nodes']]
-
-
+from breadboard import Board
 
 
 async def main():
+  graph_path = sys.argv[1]
+  breadboard = await Board.load(graph_path)
 
-  breadboard = breadboard1.Board(edges=edges, nodes=nodes)
-  print(graph['kits'])
-  for kit in graph['kits']:
-    print(kit['url'][4:])
-    kit_constructor = require(kit['url'][4:])
-    breadboard.addKit(kit_constructor)
-
-  print("Running")
+  print("Let's traverse a graph!")
   running = True
   try:
-    print("Running after try")
     async for next_step in breadboard.run(None):
-      print("stepping!")
       if not running:
           return
       res = next_step
       if res:
         if res.type == "input":
-          message = res.inputArguments['message'] if res.inputArguments and res.inputArguments.get('message') else "Enter some text."
+          # Message can be found in any(inputArgument["schema"]["properties"])["description"]
+          message = "Enter some text."
+          if res.inputArguments and res.inputArguments.get("schema", {}).get("properties"):
+            props = res.inputArguments["schema"]["properties"]
+            if len(props) > 0:
+              first_prop = next(iter(props.values()))
+              message = first_prop.get("description", message)
           res.inputs = {"text": input(message+ "\n")}
         elif res.type == "output":
           if res.outputs and res.outputs['text']:
-            print(str(res.outputs['text']) + "\n")
+            for key in res.outputs:
+              if key == "schema":
+                continue
+              title = "" if key == "text" else f"{key}: "
+              if type(res.outputs[key]) == str:
+                print(f"{title}{res.outputs[key]}")
+              else:
+                print(f"{title}{json.dumps(res.outputs[key])}")
       else:
         print(f"All done! {next_step}")
         running = False
