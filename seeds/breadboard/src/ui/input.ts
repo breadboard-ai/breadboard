@@ -38,13 +38,25 @@ export class Input extends HTMLElement {
         :host {
           display: block;
         }
+        label {
+          display: flex;
+        }
+
         * {
           white-space: pre-wrap;
           font-family: var(--bb-font-family, Fira Code,monospace);
           font-size: var(--bb-font-size, 1rem);
         }
-        input {
+        input[type=text], textarea {
           width: var(--bb-input-width, 80%);
+        }
+
+        span {
+          flex: 1;
+        }
+
+        textarea {
+          height: 10rem;
         }
       </style>
     `;
@@ -80,6 +92,30 @@ export class Input extends HTMLElement {
     return;
   }
 
+  #createSingleLineInput(values: InputData, key: string, description?: string) {
+    const input = document.createElement("input");
+    input.name = key;
+    input.type = this.secret ? "password" : "text";
+    input.autocomplete = this.secret ? "off" : "on";
+    input.placeholder = description || "";
+    input.autofocus = true;
+    input.value = values[key] ?? "";
+    return input;
+  }
+
+  #createMultiLineInput(values: InputData, key: string, description?: string) {
+    const span = document.createElement("span");
+    const textarea = span.appendChild(document.createElement("textarea"));
+    textarea.name = key;
+    textarea.placeholder = description || "";
+    textarea.value = values[key] ?? "";
+    span.append("\n");
+    const submit = span.appendChild(document.createElement("input"));
+    submit.type = "submit";
+    submit.value = "Continue";
+    return span;
+  }
+
   async ask() {
     const schema = this.args.schema;
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -99,13 +135,11 @@ export class Input extends HTMLElement {
     Object.entries(properties).forEach(([key, property]) => {
       const label = form.appendChild(document.createElement("label"));
       label.textContent = `${property.title}: `;
-      const input = label.appendChild(document.createElement("input"));
-      input.name = key;
-      input.type = this.secret ? "password" : "text";
-      input.autocomplete = this.secret ? "off" : "on";
-      input.placeholder = property.description || "";
-      input.autofocus = true;
-      input.value = values[key] ?? "";
+      const input =
+        property.format === "multiline"
+          ? this.#createMultiLineInput(values, key, property.description)
+          : this.#createSingleLineInput(values, key, property.description);
+      label.appendChild(input);
       form.append("\n");
       window.setTimeout(() => input.focus(), 1);
     });
