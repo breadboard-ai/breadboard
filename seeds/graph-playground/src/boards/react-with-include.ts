@@ -7,8 +7,10 @@
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 import { ReActHelper } from "../react.js";
+import { Core } from "@google-labs/core-kit";
 
 const board = new Board();
+const core = board.addKit(Core);
 const kit = board.addKit(Starter);
 const reAct = board.addKit(ReActHelper);
 
@@ -115,13 +117,13 @@ const reActCompletion = kit
   .wire("<-PALM_KEY.", secrets);
 
 // Wire up the math tool by including the `math.json` graph.
-const math = board
-  .include(`${REPO_URL}/math.json`)
+const math = core
+  .include({ path: `${REPO_URL}/math.json` })
   .wire("text->Observation", rememberObservation);
 
 // Wire up the search tool by including the `search-summarize.ts` graph.
-const search = board
-  .include(`${REPO_URL}/search-summarize.json`)
+const search = core
+  .include({ path: `${REPO_URL}/search-summarize.json` })
   .wire("text->Observation", rememberObservation);
 
 reActTemplate.wire(

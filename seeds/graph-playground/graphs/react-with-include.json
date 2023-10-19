@@ -176,14 +176,14 @@
       "id": "include-6",
       "type": "include",
       "configuration": {
-        "$ref": "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/math.json"
+        "path": "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/math.json"
       }
     },
     {
       "id": "include-7",
       "type": "include",
       "configuration": {
-        "$ref": "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/search-summarize.json"
+        "path": "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/search-summarize.json"
       }
     },
     {
@@ -196,6 +196,9 @@
     }
   ],
   "kits": [
+    {
+      "url": "npm:@google-labs/core-kit"
+    },
     {
       "title": "LLM Starter Kit",
       "description": "A kit that provides a few necessary components for wiring boards that use PaLM API.",
