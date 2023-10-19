@@ -221,7 +221,6 @@ export class BoardRunner implements BreadboardRunner {
     context?: NodeHandlerContext,
     probe?: EventTarget
   ): Promise<OutputValues> {
-    let outputs: OutputValues = {};
     const args = { ...inputs, ...this.args };
 
     if (context) {
@@ -235,19 +234,28 @@ export class BoardRunner implements BreadboardRunner {
       if (!probe && context.probe) probe = NestedProbe.create(context.probe);
     }
 
-    for await (const result of this.run(probe)) {
-      if (result.type === "input") {
-        // Pass the inputs to the board. If there are inputs bound to the board
-        // (e.g. from a lambda node that had incoming wires), they will
-        // overwrite supplied inputs.
-        result.inputs = args;
-      } else if (result.type === "output") {
-        outputs = result.outputs;
-        // Exit once we receive the first output.
-        break;
+    try {
+      let outputs: OutputValues = {};
+
+      for await (const result of this.run(probe)) {
+        if (result.type === "input") {
+          // Pass the inputs to the board. If there are inputs bound to the board
+          // (e.g. from a lambda node that had incoming wires), they will
+          // overwrite supplied inputs.
+          result.inputs = args;
+        } else if (result.type === "output") {
+          outputs = result.outputs;
+          // Exit once we receive the first output.
+          break;
+        }
       }
+      return outputs;
+    } catch (e) {
+      // Unwrap unhandled error (handled errors are just outputs of the board!)
+      if ((e as Error).cause)
+        return Promise.resolve({ $error: (e as Error).cause } as OutputValues);
+      else throw e;
     }
-    return outputs;
   }
 
   /**
