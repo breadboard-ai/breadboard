@@ -7,8 +7,10 @@
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 import { ReActHelper } from "../react.js";
+import { Core } from "@google-labs/core-kit";
 
 const board = new Board();
+const core = board.addKit(Core);
 const kit = board.addKit(Starter);
 const reAct = board.addKit(ReActHelper);
 
@@ -163,7 +165,7 @@ const search = () => {
         )
     );
 
-  return board
+  return core
     .passthrough()
     .wire("search->question", summarizingTemplate)
     .wire("search->query", searchURLTemplate);
