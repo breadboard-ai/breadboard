@@ -52,7 +52,7 @@ const checkMenuTool = board.passthrough().wire(
       .slot("checkMenu")
       .wire("bot->Tool", toolMemory)
       .wire("bot->", board.output({ $id: "checkMenu-tool-output" }))
-      .wire("error->", board.output({ $id: "error" }))
+      .wire("$error->", board.output({ $id: "error" }))
   )
 );
 
@@ -64,7 +64,7 @@ const summarizeMenuTool = board.passthrough().wire(
       .slot("summarizeMenu")
       .wire("bot->Tool", toolMemory)
       .wire("bot->", board.output({ $id: "summarizeMenu-tool-output" }))
-      .wire("error->", board.output({ $id: "error" }))
+      .wire("$error->", board.output({ $id: "error" }))
   )
 );
 
@@ -115,6 +115,6 @@ board
   .wire("<-recover.", board.passthrough({ recover: true }))
   .wire("completion->", toolRouter)
   .wire("completion->Agent", agentMemory)
-  .wire("error->", board.output({ $id: "error" }));
+  .wire("$error->", board.output({ $id: "error" }));
 
 export const orderAgent = board;

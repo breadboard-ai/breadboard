@@ -28,15 +28,18 @@ export type InvalidJsonOutputs = OutputValues & {
   /**
    * The error if the JSON is invalid.
    */
-  error: {
-    /**
-     * The type of error.
-     */
-    type: ValidationErrorType;
-    /**
-     * The message of the error.
-     */
-    message: string;
+  $error: {
+    kind: "error";
+    error: {
+      /**
+       * The type of error.
+       */
+      type: ValidationErrorType;
+      /**
+       * The message of the error.
+       */
+      message: string;
+    };
   };
 };
 
@@ -57,7 +60,12 @@ export const tryParseJson = (json: string): InvalidJsonOutputs | NodeValue => {
     return JSON.parse(stripCodeBlock(json));
   } catch (e) {
     const error = e as Error;
-    return { error: { type: "parsing", message: error.message } };
+    return {
+      $error: {
+        kind: "error",
+        error: { type: "parsing", message: error.message },
+      },
+    };
   }
 };
 
@@ -73,9 +81,12 @@ export const validateJson = (
   });
   if (!validationResult.valid) {
     return {
-      error: {
-        type: "validation",
-        message: validationResult.toString(),
+      $error: {
+        kind: "error",
+        error: {
+          type: "validation",
+          message: validationResult.toString(),
+        },
       },
     };
   }

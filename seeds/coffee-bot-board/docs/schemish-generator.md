@@ -8,14 +8,14 @@ input[/"input <br> id='input'"/]:::input -- "epilogue->epilogue" --o epilogue(("
 input[/"input <br> id='input'"/]:::input -- "schema->schema" --o schema(("passthrough <br> id='schema'")):::passthrough
 input[/"input <br> id='input'"/]:::input -- "recover->allow" --o shouldRecover["runJavascript <br> id='shouldRecover'"]
 shouldRecover["runJavascript <br> id='shouldRecover'"] -- "value->value" --> willRecover(("passthrough <br> id='willRecover'")):::passthrough
-shouldRecover["runJavascript <br> id='shouldRecover'"] -- "error->error" --> error{{"output <br> id='error'"}}:::output
+shouldRecover["runJavascript <br> id='shouldRecover'"] -- "$error->$error" --> error{{"output <br> id='error'"}}:::output
 willRecover(("passthrough <br> id='willRecover'")):::passthrough --> prologue(("passthrough <br> id='prologue'")):::passthrough
 willRecover(("passthrough <br> id='willRecover'")):::passthrough --> epilogue(("passthrough <br> id='epilogue'")):::passthrough
 willRecover(("passthrough <br> id='willRecover'")):::passthrough --> schema(("passthrough <br> id='schema'")):::passthrough
 schema(("passthrough <br> id='schema'")):::passthrough -- "schema->schema" --> schemish["schemish <br> id='schemish'"]
 schema(("passthrough <br> id='schema'")):::passthrough -- "schema->schema" --> validatejson["validateJson <br> id='validate-json'"]
 validatejson["validateJson <br> id='validate-json'"] -- "json->completion" --> completion{{"output <br> id='completion'"}}:::output
-validatejson["validateJson <br> id='validate-json'"] -- "error->value" --> shouldRecover["runJavascript <br> id='shouldRecover'"]
+validatejson["validateJson <br> id='validate-json'"] -- "$error->value" --> shouldRecover["runJavascript <br> id='shouldRecover'"]
 secrets1("secrets <br> id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o generator["generateText <br> id='generator'"]
 generator["generateText <br> id='generator'"] -- "completion->json" --> validatejson["validateJson <br> id='validate-json'"]
 generator["generateText <br> id='generator'"] -- "filters->value" --> shouldRecover["runJavascript <br> id='shouldRecover'"]
@@ -28,7 +28,6 @@ codeshouldRecover[code]:::config -- "code->code" --o shouldRecover
 rawshouldRecover[raw]:::config -- "raw->raw" --o shouldRecover
 schemaerror[schema]:::config -- "schema->schema" --o error
 schemacompletion[schema]:::config -- "schema->schema" --o completion
-messageinput[message]:::config -- "message->message" --o input
 schemainput[schema]:::config -- "schema->schema" --o input
 stopSequencesgenerator[stopSequences]:::config -- "stopSequences->stopSequences" --o generator
 safetySettingsgenerator[safetySettings]:::config -- "safetySettings->safetySettings" --o generator

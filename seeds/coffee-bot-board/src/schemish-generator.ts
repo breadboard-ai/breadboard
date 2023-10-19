@@ -30,7 +30,7 @@ const schema = board.passthrough({ $id: "schema" });
 
 function gate({ allow, value }: { allow: boolean; value: NodeValue }) {
   if (allow) return { value };
-  return { error: value };
+  return { $error: value };
 }
 
 const shouldRecover = kit.runJavascript("gate", {
@@ -47,7 +47,7 @@ const $error = board.output({
   schema: {
     type: "object",
     properties: {
-      error: {
+      $error: {
         type: "object",
         title: "Error",
         description: "The error reported during generation",
@@ -110,7 +110,7 @@ board
   .wire("schema->.", schema)
   .wire("recover->allow.", shouldRecover);
 
-shouldRecover.wire("value->", willRecover).wire("error->", $error);
+shouldRecover.wire("value->", willRecover).wire("$error->", $error);
 
 willRecover.wire("->", prologue).wire("->", epilogue).wire("->", schema);
 
@@ -122,7 +122,7 @@ const validateJson = nursery
   .validateJson({ $id: "validate-json" })
   .wire("<-schema", schema)
   .wire("json->completion", $completion)
-  .wire("error->value", shouldRecover);
+  .wire("$error->value", shouldRecover);
 
 const generator = kit
   .generateText({

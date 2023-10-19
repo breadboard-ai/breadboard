@@ -22,9 +22,12 @@ test("tryParseJson correctly returns an error for unparsable JSON", (t) => {
   const json = `{"foo": bar}`;
   const result = tryParseJson(json);
   t.deepEqual(result, {
-    error: {
-      type: "parsing",
-      message: 'Unexpected token \'b\', "{"foo": bar}" is not valid JSON',
+    $error: {
+      kind: "error",
+      error: {
+        type: "parsing",
+        message: 'Unexpected token \'b\', "{"foo": bar}" is not valid JSON',
+      },
     },
   });
 });
@@ -47,9 +50,12 @@ test("validateJson correctly returns an error for invalid JSON", (t) => {
   };
   const result = validateJson(parsed, schema);
   t.deepEqual(result, {
-    error: {
-      type: "validation",
-      message: "0: instance.foo is not of a type(s) number\n",
+    $error: {
+      kind: "error",
+      error: {
+        type: "validation",
+        message: "0: instance.foo is not of a type(s) number\n",
+      },
     },
   });
 });

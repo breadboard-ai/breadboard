@@ -127,9 +127,12 @@ test("schemish-generator with unparseable JSON", async (t) => {
 
   t.is(count, 1);
   t.like(outputs, {
-    error: {
-      message: "Expected property name or '}' in JSON at position 2",
-      type: "parsing",
+    $error: {
+      kind: "error",
+      error: {
+        message: "Expected property name or '}' in JSON at position 2",
+        type: "parsing",
+      },
     },
   });
 });
@@ -218,9 +221,12 @@ test("schemish-generator with invalid JSON", async (t) => {
 
   t.is(count, 1);
   t.like(outputs, {
-    error: {
-      message: "0: instance.type is not one of enum values: drink,food\n",
-      type: "validation",
+    $error: {
+      kind: "error",
+      error: {
+        message: "0: instance.type is not one of enum values: drink,food\n",
+        type: "validation",
+      },
     },
   });
 });

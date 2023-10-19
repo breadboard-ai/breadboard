@@ -18,111 +18,64 @@ const kit = jsonPrompt.addKit(Starter);
 const nursery = jsonPrompt.addKit(Nursery);
 
 const schema = {
-  $schema: "http://json-schema.org/draft-07/schema#",
   type: "object",
   properties: {
     people: {
       type: "array",
       items: {
-        $ref: "#/definitions/Person",
+        type: "object",
+        properties: {
+          name: { type: "string" },
+          age: { type: "integer", minimum: 0 },
+        },
+        required: ["name"],
       },
     },
     relationships: {
       type: "array",
       items: {
-        $ref: "#/definitions/Relationship",
+        type: "object",
+        properties: {
+          type: {
+            type: "string",
+            enum: ["friend", "parent", "child", "sibling", "spouse", "other"],
+          },
+          person1Name: { type: "string" },
+          person2Name: { type: "string" },
+        },
+        required: ["type", "person1Name", "person2Name"],
       },
-    },
-  },
-  definitions: {
-    Person: {
-      type: "object",
-      properties: {
-        name: {
-          type: "string",
-        },
-        age: {
-          type: "integer",
-          minimum: 0,
-        },
-      },
-      required: ["name"],
-    },
-    Relationship: {
-      type: "object",
-      properties: {
-        type: {
-          type: "string",
-          enum: [
-            "friend",
-            "colleague",
-            "parent",
-            "child",
-            "sibling",
-            "spouse",
-            "other",
-          ],
-        },
-        person1Name: {
-          type: "string",
-        },
-        person2Name: {
-          type: "string",
-        },
-      },
-      required: ["type", "person1Name", "person2Name"],
     },
   },
 };
 
-const lambda = jsonPrompt.lambda((_, input, output) => {
-  const completion = kit.generateText({
-    PALM_KEY: kit.secrets(["PALM_KEY"]),
-  });
-
-  const validator = nursery.validateJson({ schema });
-
-  function checker({
-    text,
-    json,
-  }: {
-    text: string;
-    json: { people: [{ name: string; age: number }] };
-  }) {
-    const notFound = json.people.filter(
-      (person) => person.age && text.indexOf(`${person.age}`) === -1
-    );
-    if (notFound.length > 0)
-      return {
+// Validate that the LLM didn't make up the ages.
+function checker({
+  text,
+  json,
+}: {
+  text: string;
+  json: { people: [{ name: string; age: number }] };
+}) {
+  // See whether age appears in the text. This is an overly simple check that
+  // doesn't even allow for "fourteen" instead of 14. For a real implementation,
+  // use an LLM to fact check itself.
+  const notFound = json.people.filter(
+    (person) => person.age && text.indexOf(`${person.age}`) === -1
+  );
+  if (notFound.length > 0)
+    return {
+      $error: {
+        kind: "error",
         error: {
           message: `Age not found in scene for ${notFound
             .map((person) => person.name)
             .join(", ")}.`,
         },
-      };
-    else return { json };
-  }
-
-  const agechecker = kit.runJavascript("checker", {
-    code: checker.toString(),
-    raw: true,
-  });
-
-  const error = kit.jsonata(
-    '{ "$error": { "error": error, "inputs": { "completion": completion } } }',
-    { raw: true }
-  );
-
-  input.wire("text->", completion);
-  completion.wire("completion->json", validator);
-  validator.wire("json->", agechecker.wire("json->completion", output));
-  input.wire("text->", agechecker);
-
-  completion.wire("completion->completion", error);
-  input.wire("schema->", validator);
-  validator.wire("error->", error);
-  agechecker.wire("error->", error);
-});
+      },
+    };
+  else return { json };
+}
 
 jsonPrompt
   .input({
@@ -151,7 +104,33 @@ jsonPrompt
         "prompt->text",
         jsonPrompt
           .invoke({ path: "./retry.json" })
-          .wire("lambda<-board", lambda)
+          .wire(
+            "lambda<-board",
+            jsonPrompt.lambda((_, input, output) => {
+              const completion = kit.generateText({
+                PALM_KEY: kit.secrets(["PALM_KEY"]),
+              });
+
+              const validator = nursery.validateJson({ schema });
+
+              const agechecker = kit.runJavascript("checker", {
+                code: checker.toString(),
+                raw: true,
+              });
+
+              input.wire("text->", completion);
+
+              completion.wire("completion->json", validator);
+              input.wire("schema->", validator);
+              validator.wire("json->", agechecker);
+              input.wire("text->", agechecker);
+              agechecker.wire("json->completion", output);
+
+              // Hack so that completion is present among inputs in $error.
+              completion.wire("completion->", validator);
+              completion.wire("completion->", agechecker);
+            })
+          )
           .wire(
             "completion->text",
             jsonPrompt.output({

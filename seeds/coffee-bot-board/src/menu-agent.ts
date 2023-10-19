@@ -42,7 +42,7 @@ board.input().wire(
       .generateText({
         stopSequences: ["Customer:"],
       })
-      .wire("filters->error", board.output({ $id: "error" }))
+      .wire("$error->", board.output({ $id: "error" }))
       .wire("<-PALM_KEY", kit.secrets(["PALM_KEY"]))
       .wire(
         "completion->",

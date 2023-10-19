@@ -29,8 +29,8 @@ export const run = async (board: Board, slots?: BreadboardSlotSpec) => {
   };
 
   const show = (id: string, outputs: Record<string, NodeValue>) => {
-    const { bot, error } = outputs;
-    if (error) log.error(stringify(error));
+    const { bot, $error } = outputs;
+    if ($error) log.error(stringify($error));
     else log.success(`${id}: ${stringify(bot)}`);
   };
 
