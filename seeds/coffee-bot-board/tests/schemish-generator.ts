@@ -116,7 +116,7 @@ test("schemish-generator with unparseable JSON", async (t) => {
   debugProbe.replaceNode("generator", (_inputs) => {
     count++;
     if (count > 2) return { completion: '{ "type": "drink" }' };
-    return { completion: '{ type: "drink"}' };
+    return { completion: '{ typish: "drink"}' };
   });
 
   const outputs = await schemishGenerator.runOnce(
@@ -130,8 +130,8 @@ test("schemish-generator with unparseable JSON", async (t) => {
     $error: {
       kind: "error",
       error: {
-        message: "Expected property name or '}' in JSON at position 2",
-        type: "parsing",
+        message: '0: instance requires property "type"\n',
+        type: "validation",
       },
     },
   });
