@@ -1,0 +1,173 @@
+{
+  "title": "Retry",
+  "description": "Run `lambda` up to `tries` (default 5) times, appending prior attempts and error messages to the prompt.",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "input-1",
+      "to": "jsonata-4",
+      "out": "tries",
+      "in": "tries"
+    },
+    {
+      "from": "jsonata-4",
+      "to": "jsonata-4",
+      "out": "tries",
+      "in": "tries"
+    },
+    {
+      "from": "input-1",
+      "to": "promptTemplate-6",
+      "out": "text",
+      "in": "text"
+    },
+    {
+      "from": "promptTemplate-6",
+      "to": "promptTemplate-6",
+      "out": "prompt",
+      "in": "text"
+    },
+    {
+      "from": "input-1",
+      "to": "lambda completion",
+      "out": "text",
+      "in": "text"
+    },
+    {
+      "from": "input-1",
+      "to": "lambda completion",
+      "constant": true,
+      "out": "lambda",
+      "in": "board"
+    },
+    {
+      "from": "lambda completion",
+      "to": "output-2",
+      "out": "completion",
+      "in": "completion"
+    },
+    {
+      "from": "lambda completion",
+      "to": "jsonata-4",
+      "out": "$error",
+      "in": "data"
+    },
+    {
+      "from": "jsonata-4",
+      "to": "output-3",
+      "out": "done",
+      "in": "$error"
+    },
+    {
+      "from": "jsonata-4",
+      "to": "jsonata-5",
+      "out": "data",
+      "in": "json"
+    },
+    {
+      "from": "jsonata-5",
+      "to": "promptTemplate-6",
+      "out": "error",
+      "in": "error"
+    },
+    {
+      "from": "jsonata-5",
+      "to": "promptTemplate-6",
+      "out": "completion",
+      "in": "completion"
+    },
+    {
+      "from": "promptTemplate-6",
+      "to": "lambda completion",
+      "out": "prompt",
+      "in": "text"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string"
+            },
+            "lambda": {
+              "type": "BoardCapability"
+            }
+          },
+          "required": [
+            "prompt",
+            "completion"
+          ]
+        }
+      }
+    },
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "completion": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "output-3",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "$error": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "lambda completion",
+      "type": "invoke"
+    },
+    {
+      "id": "jsonata-4",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "{ \"tries\": tries - 1, (tries > 0 ? \"data\" : \"done\") : data }",
+        "tries": 5,
+        "raw": true
+      }
+    },
+    {
+      "id": "jsonata-5",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "{ \"error\": error.message, \"completion\": inputs.completion }",
+        "raw": true
+      }
+    },
+    {
+      "id": "promptTemplate-6",
+      "type": "promptTemplate",
+      "configuration": {
+        "template": "{{text}}{{completion}}\n\nThis error occured:\n{{error}}\n\nPlease try again:\n"
+      }
+    }
+  ],
+  "kits": [
+    {
+      "title": "LLM Starter Kit",
+      "description": "A kit that provides a few necessary components for wiring boards that use PaLM API.",
+      "version": "0.0.1",
+      "url": "npm:@google-labs/llm-starter"
+    }
+  ]
+}
