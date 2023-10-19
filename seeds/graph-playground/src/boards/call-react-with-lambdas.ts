@@ -6,6 +6,7 @@
 
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
+import { Core } from "@google-labs/core-kit";
 
 /**
  * An example of a board that uses the `react-witih-lambdas.ts` board.
@@ -20,6 +21,7 @@ const board = new Board({
   version: "0.0.1",
 });
 const kit = board.addKit(Starter);
+const core = board.addKit(Core);
 
 const tools = kit
   .jsonata(
@@ -39,8 +41,8 @@ const tools = kit
     }
   ]`
   )
-  .wire("search<-board", board.import("search-summarize.json"))
-  .wire("math<-board", board.import("math.json"));
+  .wire("search<-board", core.import({ path: "search-summarize.json" }))
+  .wire("math<-board", core.import({ path: "math.json" }));
 
 // Include the `react-with-slot` board from a URL, wiring input to it.
 // Slot the `tools` board into the `tools` slot.
@@ -63,7 +65,7 @@ board
   })
   .wire(
     "text",
-    board
+    core
       .invoke({ path: `react-with-lambdas.json` })
       .wire("tools<-result", tools)
       .wire(

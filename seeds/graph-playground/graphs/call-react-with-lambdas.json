@@ -46,14 +46,14 @@
       "id": "import-2",
       "type": "import",
       "configuration": {
-        "$ref": "search-summarize.json"
+        "path": "search-summarize.json"
       }
     },
     {
       "id": "import-3",
       "type": "import",
       "configuration": {
-        "$ref": "math.json"
+        "path": "math.json"
       }
     },
     {
@@ -108,6 +108,9 @@
       "description": "A kit that provides a few necessary components for wiring boards that use PaLM API.",
       "version": "0.0.1",
       "url": "npm:@google-labs/llm-starter"
+    },
+    {
+      "url": "npm:@google-labs/core-kit"
     }
   ]
 }

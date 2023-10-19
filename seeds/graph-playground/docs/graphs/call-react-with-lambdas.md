@@ -11,8 +11,8 @@ jsonata1["jsonata <br> id='jsonata-1'"] -- "result->tools" --> invoke4["invoke <
 invoke4["invoke <br> id='invoke-4'"] -- "text->text" --> reactResponse{{"output <br> id='reactResponse'"}}:::output
 userRequest[/"input <br> id='userRequest'"/]:::input -- "text->text" --> invoke4["invoke <br> id='invoke-4'"]
 expressionjsonata1[expression]:::config -- "expression->expression" --o jsonata1
-$refimport2[$ref]:::config -- "$ref->$ref" --o import2
-$refimport3[$ref]:::config -- "$ref->$ref" --o import3
+pathimport2[path]:::config -- "path->path" --o import2
+pathimport3[path]:::config -- "path->path" --o import3
 schemauserRequest[schema]:::config -- "schema->schema" --o userRequest
 pathinvoke4[path]:::config -- "path->path" --o invoke4
 schemareactResponse[schema]:::config -- "schema->schema" --o reactResponse
