@@ -56,6 +56,7 @@
   "dependencies": {
     "@clack/prompts": "^0.6.3",
     "@google-labs/breadboard": "*",
+    "@google-labs/core-kit": "*",
     "@google-labs/graph-integrity": "*",
     "@google-labs/llm-starter": "*",
     "@google-labs/pinecone-kit": "*",

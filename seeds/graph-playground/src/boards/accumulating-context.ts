@@ -6,6 +6,7 @@
 
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
+import { Core } from "@google-labs/core-kit";
 
 const board = new Board({
   title: "Accumulating Context",
@@ -14,6 +15,7 @@ const board = new Board({
   version: "0.0.1",
 });
 const kit = board.addKit(Starter);
+const core = board.addKit(Core);
 
 // Store input node so that we can refer back to it to create a conversation
 // loop.
@@ -47,7 +49,7 @@ const conversationMemory = kit.append({
 // Wire memory to accumulate: loop it to itself.
 conversationMemory.wire("accumulator->", conversationMemory);
 
-board.passthrough({ $id: "start" }).wire(
+core.passthrough({ $id: "start" }).wire(
   "->",
   input
     .wire(
