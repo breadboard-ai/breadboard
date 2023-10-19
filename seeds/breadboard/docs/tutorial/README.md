@@ -125,7 +125,19 @@ const secrets = kit.secrets(["PALM_KEY"]);
 
 The `secrets` node reaches into our program's environment and gets the environment variable that is named `PALM_KEY`, as we specified in its argument. A `secrets` node could look for any other environment variables, we just need to specify which ones. For now, we only need the `PALM_KEY`.
 
-Let's also import and use the `dotenv` package that conveniently reads environment variables from a `.env` file:
+We'll install and use the `dotenv` package, which conveniently reads environment variables from a `.env` file. First, install the package:
+
+```sh
+npm install.dotenv
+```
+
+Next, create a `.env` file and put your API key there:
+
+```sh
+echo "PALM_KEY=\"your API key goes here\"" > .env
+```
+
+Lastly, import the `dotenv` package into your script:
 
 ```js
 import { config } from "dotenv";
@@ -133,11 +145,6 @@ import { config } from "dotenv";
 config();
 ```
 
-Let's also not forget to create a `.env` file and put our API key there:
-
-```sh
-PALM_KEY="your API key goes here"
-```
 
 With this bit of prep work out of the way, we're ready to wire the `secrets` node:
 
