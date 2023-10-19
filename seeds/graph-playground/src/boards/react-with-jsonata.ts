@@ -5,9 +5,11 @@
  */
 
 import { Board } from "@google-labs/breadboard";
+import { Core } from "@google-labs/core-kit";
 import { Starter } from "@google-labs/llm-starter";
 
 const board = new Board();
+const core = board.addKit(Core);
 const kit = board.addKit(Starter);
 
 /**
@@ -41,7 +43,7 @@ const descriptions = kit.jsonata(
   "nodes.configuration.description.%.%.[id &  ': ' & configuration.description] ~> $join('\n')"
 );
 
-board.reflect().wire("graph->json", tools).wire("graph->json", descriptions);
+core.reflect().wire("graph->json", tools).wire("graph->json", descriptions);
 
 // This is the main ingredient: the template that makes the algo tick.
 const reActTemplate = kit
@@ -135,8 +137,9 @@ const reActCompletion = kit
 // An important addition is the `$id` and `description` fields.
 // These fields plant the necessary information into the graph
 // so that then this information could be extracted with `jsonata` nodes.
-const math = board
-  .include(`${REPO_URL}/math.json`, {
+const math = core
+  .include({
+    path: `${REPO_URL}/math.json`,
     $id: "math",
     description:
       "Useful for when you need to solve math problems. Input should be a math problem to be solved.",
@@ -146,8 +149,9 @@ const math = board
 // Wire up the search tool by including the `search-summarize.ts` graph.
 // Similarly to above, the `$id` and `description` fields are added to
 // communicate the purpose of this node.
-const search = board
-  .include(`${REPO_URL}/search-summarize.json`, {
+const search = core
+  .include({
+    path: `${REPO_URL}/search-summarize.json`,
     $id: "search",
     description:
       "Useful for when you need to find facts. Input should be a search query.",
