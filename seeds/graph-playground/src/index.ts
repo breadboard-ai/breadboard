@@ -12,6 +12,7 @@ import {
   type ProbeEvent,
   type OutputValues,
   type InputValues,
+  LogProbe,
 } from "@google-labs/breadboard";
 import {
   GraphIntegrityValidator,
@@ -59,6 +60,7 @@ async function main(args: string[], use_input_handler = false) {
   // Determine base URL for loading graphs, relative to the current working
   // directory.
   const base = `${pathToFileURL(process.cwd()).href}/`;
+  const logEverything = args.includes("--log");
   const validateIntegrity = args.includes("--validate-integrity");
   const logIntegrityLabels = args.includes("--log-integrity-labels");
 
@@ -111,7 +113,7 @@ async function main(args: string[], use_input_handler = false) {
 
   // Use Breadboard probe feature to create a nice note in CLI for
   // every text completion.
-  const probe = new EventTarget();
+  const probe = logEverything ? new LogProbe() : new EventTarget();
   probe.addEventListener("node", (event: Event) => {
     const { detail } = event as ProbeEvent;
     if (logIntegrityLabels && detail.validatorMetadata?.length) {
