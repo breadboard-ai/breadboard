@@ -343,3 +343,28 @@ test("allow wiring across boards with lambdas", async (t) => {
   const output = await board.runOnce({ bar: 2 });
   t.deepEqual(output, { bar: 2, foo: 1 });
 });
+
+test("when $error is set, all other outputs are ignored, named", async (t) => {
+  const board = new Board();
+  const passthrough = board.passthrough({ foo: 1, $error: { kind: "error" } });
+  passthrough.wire("foo->", board.output());
+  passthrough.wire(
+    "$error->",
+    // extra passthrough so that the above output would be used first
+    board.passthrough().wire("$error->", board.output())
+  );
+  const result = await board.runOnce({});
+  t.is(result.foo, undefined);
+  t.like(result.$error, { kind: "error" });
+});
+
+test("when $error is set, all other outputs are ignored, with *", async (t) => {
+  const board = new Board();
+  const passthrough = board.passthrough({ foo: 1, $error: { kind: "error" } });
+  const output = board.output();
+  passthrough.wire("*->", output);
+  passthrough.wire("$error->", output);
+  const result = await board.runOnce({});
+  t.is(result.foo, undefined);
+  t.like(result.$error, { kind: "error" });
+});
