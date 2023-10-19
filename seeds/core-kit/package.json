@@ -1,5 +1,5 @@
 {
-  "name": "@google-labs/breadboard-core-kit",
+  "name": "@google-labs/core-kit",
   "private": true,
   "version": "0.0.1",
   "description": "A Breadboard Kit containing nodes that enable composition and reuse of boards.",
@@ -46,5 +46,8 @@
     "ava": "^5.2.0",
     "typescript": "^5.0.4",
     "@google-labs/tsconfig": "*"
+  },
+  "dependencies": {
+    "@google-labs/breadboard": "*"
   }
 }
