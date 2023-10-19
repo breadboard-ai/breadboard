@@ -2,6 +2,7 @@
   "extends": "@google-labs/tsconfig/base.json",
   "files": [],
   "references": [
+    { "path": "seeds/core-kit" },
     { "path": "seeds/discovery-types" },
     { "path": "seeds/palm-lite" },
     { "path": "seeds/graph-playground" },

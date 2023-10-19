@@ -38,6 +38,9 @@
     },
     {
       "path": "seeds/chunker"
+    },
+    {
+      "path": "seeds/core-kit"
     }
   ],
   "settings": {}
