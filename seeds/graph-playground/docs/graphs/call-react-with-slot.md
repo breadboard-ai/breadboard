@@ -22,7 +22,7 @@ sg_tools:::slotted -- "slotted->slotted" --o include1
 
 userRequest[/"input <br> id='userRequest'"/]:::input -- "text->text" --> include1[["include <br> id='include-1'"]]:::include
 schemauserRequest[schema]:::config -- "schema->schema" --o userRequest
-$refinclude1[$ref]:::config -- "$ref->$ref" --o include1
+pathinclude1[path]:::config -- "path->path" --o include1
 
 schemareactResponse[schema]:::config -- "schema->schema" --o reactResponse
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000

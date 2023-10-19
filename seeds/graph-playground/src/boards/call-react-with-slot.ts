@@ -5,7 +5,7 @@
  */
 
 import { Board, type NodeValue } from "@google-labs/breadboard";
-import { Starter } from "@google-labs/llm-starter";
+import { Core } from "@google-labs/core-kit";
 
 /**
  * An example of a board that uses the `react-witih-slot.ts` board.
@@ -19,19 +19,21 @@ import { Starter } from "@google-labs/llm-starter";
  */
 const tools = () => {
   const tools = new Board();
-  tools.addKit(Starter);
+  const core = tools.addKit(Core);
 
   // Include a a `search-summarize` breadboard from a URL.
   // The `$id` and `description` are important, because they help ReAct recipe
   // figure out the purpose of each tool.
-  const search = tools.include("search-summarize.json", {
+  const search = core.include({
+    path: "search-summarize.json",
     $id: "search",
     description:
       "Useful for when you need to find facts. Input should be a search query.",
   });
 
   // Include `math` breadboard from a URL.
-  const math = tools.include("math.json", {
+  const math = core.include({
+    path: "math.json",
     $id: "math",
     description:
       "Useful for when you need to solve math problems. Input should be a math problem to be solved.",
@@ -60,7 +62,7 @@ const board = new Board({
     "An implementation of the [ReAct](https://react-lm.github.io/) AI pattern that relies on Breadboard [slots](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/nodes.md#the-slot-node) to supply tools to ReAct. The slots are currently populated by two boards: `search-summarize` and `math`.",
   version: "0.0.1",
 });
-board.addKit(Starter);
+const core = board.addKit(Core);
 
 // Include the `react-with-slot` board from a URL, wiring input to it.
 // Slot the `tools` board into the `tools` slot.
@@ -83,8 +85,9 @@ board
   })
   .wire(
     "text",
-    board
-      .include(`react-with-slot.json`, {
+    core
+      .include({
+        path: "react-with-slot.json",
         slotted: { tools: tools() as unknown as NodeValue },
       })
       .wire(

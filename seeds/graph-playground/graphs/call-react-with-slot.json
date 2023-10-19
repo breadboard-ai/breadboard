@@ -40,7 +40,7 @@
       "id": "include-1",
       "type": "include",
       "configuration": {
-        "$ref": "react-with-slot.json",
+        "path": "react-with-slot.json",
         "slotted": {
           "tools": {
             "edges": [
@@ -86,7 +86,7 @@
                 "id": "search",
                 "type": "include",
                 "configuration": {
-                  "$ref": "search-summarize.json",
+                  "path": "search-summarize.json",
                   "description": "Useful for when you need to find facts. Input should be a search query."
                 }
               },
@@ -94,7 +94,7 @@
                 "id": "math",
                 "type": "include",
                 "configuration": {
-                  "$ref": "math.json",
+                  "path": "math.json",
                   "description": "Useful for when you need to solve math problems. Input should be a math problem to be solved."
                 }
               },
@@ -121,10 +121,7 @@
             ],
             "kits": [
               {
-                "title": "LLM Starter Kit",
-                "description": "A kit that provides a few necessary components for wiring boards that use PaLM API.",
-                "version": "0.0.1",
-                "url": "npm:@google-labs/llm-starter"
+                "url": "npm:@google-labs/core-kit"
               }
             ]
           }
@@ -153,10 +150,7 @@
   ],
   "kits": [
     {
-      "title": "LLM Starter Kit",
-      "description": "A kit that provides a few necessary components for wiring boards that use PaLM API.",
-      "version": "0.0.1",
-      "url": "npm:@google-labs/llm-starter"
+      "url": "npm:@google-labs/core-kit"
     }
   ]
 }
