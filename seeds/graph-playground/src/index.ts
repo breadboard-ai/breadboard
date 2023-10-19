@@ -91,15 +91,30 @@ async function main(args: string[], use_input_handler = false) {
     return { text: input } as OutputValues;
   };
 
-  // Line-wrapping magic courtesy of
-  // https://stackoverflow.com/questions/14484787/wrap-text-in-javascript
   // Wrap lines neatly for clack.
   const wrap = (s: string) => {
     const cols = (process.stdout.columns || 80) - 10;
-    return s.replace(
+
+    // Line-wrapping magic courtesy of
+    // https://stackoverflow.com/questions/14484787/wrap-text-in-javascript
+    const wrapped = s.replace(
       new RegExp(`(?![^\\n]{1,${cols}}$)([^\\n]{1,${cols}})\\s`, "g"),
       "$1\n"
     );
+
+    // Some lines will still be too long. Just break them at the column limit.
+    let result = "";
+    let len = 0;
+    for (let i = 0; i < wrapped.length; i++) {
+      if (wrapped[i] === "\n") len = 0;
+      if (len > cols) {
+        result += "\n";
+        len = 0;
+      }
+      result += wrapped[i];
+      len++;
+    }
+    return result;
   };
 
   const show = (outputs: OutputValues) => {
@@ -131,8 +146,11 @@ async function main(args: string[], use_input_handler = false) {
       );
     }
     if (detail.descriptor.type !== "generateText") return;
+    const inputs = detail.inputs as OutputValues;
     const outputs = detail.outputs as OutputValues;
+    const prompt = (inputs.text as string) || "empty prompt";
     const value = (outputs.completion as string) || "empty response";
+    note(wrap(prompt), "prompt");
     note(wrap(value), "text completion");
   });
 
