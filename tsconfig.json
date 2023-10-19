@@ -2,19 +2,19 @@
   "extends": "@google-labs/tsconfig/base.json",
   "files": [],
   "references": [
+    { "path": "seeds/breadboard" },
+    { "path": "seeds/breadboard-server" },
+    { "path": "seeds/breadboard-web" },
+    { "path": "seeds/chunker" },
+    { "path": "seeds/coffee-bot-board" },
     { "path": "seeds/core-kit" },
     { "path": "seeds/discovery-types" },
-    { "path": "seeds/palm-lite" },
     { "path": "seeds/graph-playground" },
     { "path": "seeds/graph-integrity" },
-    { "path": "seeds/breadboard" },
     { "path": "seeds/llm-starter" },
     { "path": "seeds/node-nursery" },
-    { "path": "seeds/coffee-bot-board" },
-    { "path": "seeds/web-demo" },
-    { "path": "seeds/breadboard-server" },
+    { "path": "seeds/palm-lite" },
     { "path": "seeds/pinecone-kit" },
-    { "path": "seeds/breadboard-web" },
-    { "path": "seeds/chunker" }
+    { "path": "seeds/web-demo" }
   ]
 }
