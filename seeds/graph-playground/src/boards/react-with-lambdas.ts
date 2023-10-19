@@ -5,9 +5,11 @@
  */
 
 import { Board } from "@google-labs/breadboard";
+import { Core } from "@google-labs/core-kit";
 import { Starter } from "@google-labs/llm-starter";
 
 const board = new Board();
+const core = board.addKit(Core);
 const kit = board.addKit(Starter);
 
 /**
@@ -175,7 +177,7 @@ reActTemplate.wire(
 // specified by the `path` property of the tool. The `args` property is the
 // input to the graph, by convention we map the input string to an argument
 // named after the tool.
-board
+core
   .invoke()
   .wire(
     "*<-",
