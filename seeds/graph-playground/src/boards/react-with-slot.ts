@@ -5,9 +5,11 @@
  */
 
 import { Board } from "@google-labs/breadboard";
+import { Core } from "@google-labs/core-kit";
 import { Starter } from "@google-labs/llm-starter";
 
 const board = new Board();
+const core = board.addKit(Core);
 const kit = board.addKit(Starter);
 
 /**
@@ -27,7 +29,8 @@ const kit = board.addKit(Starter);
 // The single node where all the important keys come from.
 const secrets = kit.secrets(["PALM_KEY", "GOOGLE_CSE_ID"]);
 
-const reflectionSlot = board.slot("tools", {
+const reflectionSlot = core.slot({
+  slot: "tools",
   $id: "get-slot",
   graph: true,
 });
@@ -149,8 +152,9 @@ reActTemplate.wire(
         // Instead of wiring tools directly, we create a slot for them.
         .wire(
           "*->",
-          board
-            .slot("tools", {
+          core
+            .slot({
+              slot: "tools",
               $id: "tools-slot",
             })
             .wire("text->Observation", rememberObservation)
