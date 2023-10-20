@@ -5,80 +5,79 @@
   "edges": [
     {
       "from": "input-1",
-      "to": "jsonata-4",
-      "out": "tries",
-      "in": "tries"
-    },
-    {
-      "from": "jsonata-4",
-      "to": "jsonata-4",
-      "out": "tries",
-      "in": "tries"
-    },
-    {
-      "from": "input-1",
-      "to": "promptTemplate-6",
-      "out": "text",
-      "in": "text"
-    },
-    {
-      "from": "promptTemplate-6",
-      "to": "promptTemplate-6",
-      "out": "prompt",
-      "in": "text"
-    },
-    {
-      "from": "input-1",
-      "to": "lambda completion",
-      "out": "text",
-      "in": "text"
-    },
-    {
-      "from": "input-1",
-      "to": "lambda completion",
+      "to": "lambda-completion",
       "constant": true,
       "out": "lambda",
       "in": "board"
     },
     {
-      "from": "lambda completion",
-      "to": "output-2",
-      "out": "completion",
-      "in": "completion"
+      "from": "input-1",
+      "to": "countdown",
+      "out": "tries",
+      "in": "tries"
     },
     {
-      "from": "lambda completion",
-      "to": "jsonata-4",
+      "from": "countdown",
+      "to": "countdown",
+      "out": "tries",
+      "in": "tries"
+    },
+    {
+      "from": "input-1",
+      "to": "retry-prompt",
+      "out": "text",
+      "in": "text"
+    },
+    {
+      "from": "retry-prompt",
+      "to": "retry-prompt",
+      "out": "prompt",
+      "in": "text"
+    },
+    {
+      "from": "input-1",
+      "to": "lambda-completion",
+      "out": "text",
+      "in": "text"
+    },
+    {
+      "from": "lambda-completion",
+      "to": "output-success",
+      "out": "*"
+    },
+    {
+      "from": "lambda-completion",
+      "to": "countdown",
       "out": "$error",
       "in": "data"
     },
     {
-      "from": "jsonata-4",
-      "to": "output-3",
+      "from": "countdown",
+      "to": "output-error",
       "out": "done",
       "in": "$error"
     },
     {
-      "from": "jsonata-4",
-      "to": "jsonata-5",
+      "from": "countdown",
+      "to": "error-parser",
       "out": "data",
       "in": "json"
     },
     {
-      "from": "jsonata-5",
-      "to": "promptTemplate-6",
+      "from": "error-parser",
+      "to": "retry-prompt",
       "out": "error",
       "in": "error"
     },
     {
-      "from": "jsonata-5",
-      "to": "promptTemplate-6",
+      "from": "error-parser",
+      "to": "retry-prompt",
       "out": "completion",
       "in": "completion"
     },
     {
-      "from": "promptTemplate-6",
-      "to": "lambda completion",
+      "from": "retry-prompt",
+      "to": "lambda-completion",
       "out": "prompt",
       "in": "text"
     }
@@ -106,21 +105,20 @@
       }
     },
     {
-      "id": "output-2",
+      "id": "output-success",
       "type": "output",
       "configuration": {
         "schema": {
           "type": "object",
           "properties": {
-            "completion": {
-              "type": "string"
-            }
-          }
+            "additionalProperties": true
+          },
+          "description": "The output of the lambda"
         }
       }
     },
     {
-      "id": "output-3",
+      "id": "output-error",
       "type": "output",
       "configuration": {
         "schema": {
@@ -134,11 +132,11 @@
       }
     },
     {
-      "id": "lambda completion",
+      "id": "lambda-completion",
       "type": "invoke"
     },
     {
-      "id": "jsonata-4",
+      "id": "countdown",
       "type": "jsonata",
       "configuration": {
         "expression": "{ \"tries\": tries - 1, (tries > 0 ? \"data\" : \"done\") : data }",
@@ -147,15 +145,15 @@
       }
     },
     {
-      "id": "jsonata-5",
+      "id": "error-parser",
       "type": "jsonata",
       "configuration": {
-        "expression": "{ \"error\": error.message, \"completion\": inputs.completion }",
+        "expression": "{ \"error\": $exists(error.stack) ? error.stack : error.message, \"completion\": inputs.completion }",
         "raw": true
       }
     },
     {
-      "id": "promptTemplate-6",
+      "id": "retry-prompt",
       "type": "promptTemplate",
       "configuration": {
         "template": "{{text}}{{completion}}\n\nThis error occured:\n{{error}}\n\nPlease try again:\n"

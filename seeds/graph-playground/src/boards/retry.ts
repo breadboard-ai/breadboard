@@ -27,15 +27,18 @@ const input = retry.input({
 });
 
 const outputSuccess = retry.output({
+  $id: "output-success",
   schema: {
     type: "object",
     properties: {
-      completion: { type: "string" },
+      additionalProperties: true,
     },
+    description: "The output of the lambda",
   },
 });
 
 const outputError = retry.output({
+  $id: "output-error",
   schema: {
     type: "object",
     properties: {
@@ -44,22 +47,24 @@ const outputError = retry.output({
   },
 });
 
-const completionCaller = retry.invoke({ $id: "lambda completion" });
+const completionCaller = retry.invoke({ $id: "lambda-completion" });
+input.wire("lambda->board.", completionCaller);
 
 const countdown = kit.jsonata(
   '{ "tries": tries - 1, (tries > 0 ? "data" : "done") : data }',
-  { tries: 5, raw: true }
+  { $id: "countdown", tries: 5, raw: true }
 );
 input.wire("tries->", countdown); // Initial value, defaults to 5 (see above)
 countdown.wire("tries->", countdown); // Loop back last value
 
 const errorParser = kit.jsonata(
-  '{ "error": error.message, "completion": inputs.completion }',
-  { raw: true }
+  '{ "error": $exists(error.stack) ? error.stack : error.message, "completion": inputs.completion }',
+  { $id: "error-parser", raw: true }
 );
 
 const retryPrompt = kit.promptTemplate(
-  "{{text}}{{completion}}\n\nThis error occured:\n{{error}}\n\nPlease try again:\n"
+  "{{text}}{{completion}}\n\nThis error occured:\n{{error}}\n\nPlease try again:\n",
+  { $id: "retry-prompt" }
 );
 input.wire("text->", retryPrompt); // First pass is with original prompt
 retryPrompt.wire("prompt->text", retryPrompt); // Then keep appending
@@ -67,8 +72,7 @@ retryPrompt.wire("prompt->text", retryPrompt); // Then keep appending
 // Main flow:
 
 input.wire("text->text", completionCaller);
-input.wire("lambda->board.", completionCaller);
-completionCaller.wire("completion->", outputSuccess);
+completionCaller.wire("*->", outputSuccess);
 
 completionCaller.wire("$error->data", countdown);
 countdown.wire("done->$error", outputError); // Output last error after last try
