@@ -82,12 +82,28 @@ export const runJavascriptHandler: NodeHandlerFunction = async (
   const argsString = JSON.stringify(args);
   const env = environment();
 
-  const result = JSON.parse(
-    env === "node"
-      ? await runInNode(clean, functionName, argsString)
-      : await runInBrowser(clean, functionName, argsString)
-  );
-  return raw ? result : { result };
+  try {
+    const result = JSON.parse(
+      env === "node"
+        ? await runInNode(clean, functionName, argsString)
+        : await runInBrowser(clean, functionName, argsString)
+    );
+    return raw ? result : { result };
+  } catch (e) {
+    // Remove everthing outside eval from the stack trace
+    const stack = (e as Error).stack;
+    if (stack !== undefined) {
+      (e as Error).stack = stack
+        .split("\n")
+        .filter(
+          (line) =>
+            !line.startsWith("    at") ||
+            line.includes("evalmachine.<anonymous>")
+        )
+        .join("\n");
+    }
+    return { $error: { kind: "error", error: e } };
+  }
 };
 
 export const computeOutputSchema = (inputs: InputValues): Schema => {
