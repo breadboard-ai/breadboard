@@ -51,7 +51,7 @@
     "typescript": "^5.0.4"
   },
   "dependencies": {
-    "@google-labs/breadboard": "^0.4.0",
+    "@google-labs/breadboard": "^0.4.1",
     "@google-labs/palm-lite": "^0.0.2",
     "@rgrove/parse-xml": "^4.1.0",
     "jsonata": "^2.0.3",

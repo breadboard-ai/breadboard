@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.1] - 2023-10-20
+
+- Moved the `mermaid` method to `BoardRunner`.
+- Updated URL resolution on constructed Kits.
+- Tweaked documentation.
+- Multiline support and loading from URL in UI elements
+- Other fixes.
+
 ## [0.4.0] - 2023-10-17
 
 - **M2 Release**

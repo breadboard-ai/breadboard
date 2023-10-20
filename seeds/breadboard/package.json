@@ -1,6 +1,6 @@
 {
   "name": "@google-labs/breadboard",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "A library for rapid generative AI application prototyping",
   "main": "./dist/src/index.js",
   "exports": {
