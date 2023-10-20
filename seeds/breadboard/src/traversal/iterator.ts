@@ -87,13 +87,17 @@ export class TraversalMachineIterator
         (outputsPromise || Promise.resolve({} as OutputValues))
           .then((outputs: OutputValues) => {
             // If not already present, add inputs and descriptor along for
-            // context and to support retries.
-            if (outputs.$error)
+            // context and to support retries. If $error came from another node,
+            // the descriptor will remain the original, but new inputs will be
+            // added, though never overwriting prior ones.
+            if (outputs.$error) {
+              const $error = outputs.$error as ErrorCapability;
               outputs.$error = {
                 descriptor,
-                inputs,
-                ...(outputs.$error as object),
+                ...($error as object),
+                inputs: { ...inputs, ...$error.inputs },
               };
+            }
             resolve({ promiseId, outputs, newOpportunities });
           })
           .catch((error) => {
