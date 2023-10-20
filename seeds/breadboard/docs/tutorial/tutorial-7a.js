@@ -30,6 +30,7 @@ const result = await board.runOnce(
   {
     say: "Hi, how are you?",
   },
+  undefined,
   new LogProbe()
 );
 console.log("result", result);

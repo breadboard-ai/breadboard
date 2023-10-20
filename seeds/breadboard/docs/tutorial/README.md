@@ -576,6 +576,7 @@ const result = await board.runOnce(
   {
     say: "Hi, how are you?",
   },
+  undefined,
   new LogProbe()
 );
 console.log("result", result);
@@ -644,7 +645,11 @@ probe.addEventListener("node", (event) => {
 Now, when we use this probe and run our board:
 
 ```js
-const result = await board.runOnce({ say: "Hi, how are you?" }, probe);
+const result = await board.runOnce(
+  { say: "Hi, how are you?" },
+  undefined,
+  probe
+);
 console.log("result", result);
 ```
 
