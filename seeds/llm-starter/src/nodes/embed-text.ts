@@ -9,6 +9,7 @@ import {
   type InputValues,
   type NodeValue,
   type OutputValues,
+  NodeHandler,
 } from "@google-labs/breadboard";
 import { EmbedTextResponse, palm } from "@google-labs/palm-lite";
 
@@ -61,7 +62,7 @@ export const embedTextDescriber: NodeDescriberFunction = async () => {
 };
 
 export default {
-  descirbe: embedTextDescriber,
+  describe: embedTextDescriber,
   invoke: async (inputs: InputValues): Promise<OutputValues> => {
     const values = inputs as EmbedTextInputs;
     if (!values.PALM_KEY)
@@ -88,4 +89,4 @@ export default {
 
     return { embedding } as OutputValues;
   },
-};
+} satisfies NodeHandler;

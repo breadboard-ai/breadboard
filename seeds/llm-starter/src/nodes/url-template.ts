@@ -7,6 +7,7 @@
 import type {
   InputValues,
   NodeDescriberFunction,
+  NodeHandler,
   NodeHandlerFunction,
   Schema,
 } from "@google-labs/breadboard";
@@ -123,4 +124,4 @@ export const urlTemplateDescriber: NodeDescriberFunction = async (
 export default {
   describe: urlTemplateDescriber,
   invoke: urlTemplateHandler,
-};
+} satisfies NodeHandler;

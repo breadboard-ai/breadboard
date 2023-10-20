@@ -7,6 +7,7 @@
 import {
   InputValues,
   NodeDescriberFunction,
+  NodeHandler,
   NodeValue,
   OutputValues,
   Schema,
@@ -117,4 +118,4 @@ export default {
         };
     }
   },
-};
+} satisfies NodeHandler;

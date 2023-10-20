@@ -10,6 +10,7 @@ import type {
   OutputValues,
   ErrorCapability,
   NodeDescriberFunction,
+  NodeHandler,
 } from "@google-labs/breadboard";
 import {
   GenerateTextResponse,
@@ -143,4 +144,4 @@ export default {
   invoke: async (inputs: InputValues) => {
     return await prepareResponse(await fetch(prepareRequest(inputs)));
   },
-};
+} satisfies NodeHandler;

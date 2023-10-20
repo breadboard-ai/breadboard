@@ -6,6 +6,7 @@
 
 import type {
   InputValues,
+  NodeHandler,
   NodeValue,
   OutputValues,
 } from "@google-labs/breadboard";
@@ -95,4 +96,4 @@ export default {
     const json = toAltJson(parseXml(xml));
     return { json };
   },
-};
+} satisfies NodeHandler;

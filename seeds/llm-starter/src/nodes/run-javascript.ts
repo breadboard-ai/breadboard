@@ -7,6 +7,7 @@
 import type {
   InputValues,
   NodeDescriberFunction,
+  NodeHandler,
   NodeHandlerFunction,
   Schema,
 } from "@google-labs/breadboard";
@@ -174,4 +175,4 @@ export const runJavascriptDescriber: NodeDescriberFunction = async (
 export default {
   describe: runJavascriptDescriber,
   invoke: runJavascriptHandler,
-};
+} satisfies NodeHandler;

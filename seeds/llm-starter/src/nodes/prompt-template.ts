@@ -7,6 +7,7 @@
 import type {
   InputValues,
   NodeDescriberFunction,
+  NodeHandler,
   NodeHandlerFunction,
   Schema,
 } from "@google-labs/breadboard";
@@ -60,7 +61,7 @@ export const promptTemplateHandler: NodeHandlerFunction = async (
 };
 
 export const computeInputSchema = (inputs: InputValues): Schema => {
-  const parameters = parametersFromTemplate(inputs.template as string);
+  const parameters = parametersFromTemplate((inputs.template ?? '') as string);
   const properties: Schema["properties"] = parameters.reduce(
     (acc, parameter) => {
       const schema = {
@@ -107,4 +108,4 @@ export const promptTemplateDescriber: NodeDescriberFunction = async (
 export default {
   describe: promptTemplateDescriber,
   invoke: promptTemplateHandler,
-};
+} satisfies NodeHandler;

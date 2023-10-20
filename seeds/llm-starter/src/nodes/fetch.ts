@@ -7,6 +7,7 @@
 import type {
   InputValues,
   NodeDescriberFunction,
+  NodeHandler,
 } from "@google-labs/breadboard";
 
 export type FetchOutputs = {
@@ -108,4 +109,4 @@ export default {
     const response = raw ? await data.text() : await data.json();
     return { response };
   },
-};
+} satisfies NodeHandler;

@@ -12,6 +12,7 @@
 import type {
   InputValues,
   NodeDescriberFunction,
+  NodeHandler,
   OutputValues,
 } from "@google-labs/breadboard";
 
@@ -111,4 +112,4 @@ export default {
       )
     ) as OutputValues;
   },
-};
+} satisfies NodeHandler;
