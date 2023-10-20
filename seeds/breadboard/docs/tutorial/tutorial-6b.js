@@ -18,7 +18,7 @@ const NEWS_BOARD_URL =
 
 const news = await Board.load(NEWS_BOARD_URL);
 
-const board = await Board.load(NEWS_SUMMARIZER_URL, { news });
+const board = await Board.load(NEWS_SUMMARIZER_URL, { slotted: { news } });
 
 const result = await board.runOnce({ topic: "Latest news on breadboards" });
 console.log("result", result);

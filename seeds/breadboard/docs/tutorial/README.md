@@ -145,7 +145,6 @@ import { config } from "dotenv";
 config();
 ```
 
-
 With this bit of prep work out of the way, we're ready to wire the `secrets` node:
 
 ```js
@@ -533,7 +532,7 @@ const news = await Board.load(NEWS_BOARD_URL);
 Then load our summarizer board, with the newsboard slotted in:
 
 ```js
-const board = await Board.load(NEWS_SUMMARIZER_URL, { news });
+const board = await Board.load(NEWS_SUMMARIZER_URL, { slotted: { news } });
 ```
 
 When run, the board will now produce expected results! These lines:
