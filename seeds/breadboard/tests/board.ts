@@ -128,14 +128,14 @@ test("correctly skips nodes in nested boards", async (t) => {
 test("allows pausing and resuming the board", async (t) => {
   let result;
   const board = new Board();
+  const kit = board.addKit(TestKit);
   const input = board.input();
-  input.wire("<-", board.passthrough());
-  input.wire(
-    "*->",
-    board.passthrough().wire("*->", board.output().wire("*->", input))
-  );
+  input.wire("<-", kit.noop());
+  input.wire("*->", kit.noop().wire("*->", board.output().wire("*->", input)));
   {
-    const firstBoard = await Board.fromGraphDescriptor(board);
+    const firstBoard = await Board.fromGraphDescriptor(board, {
+      "test-kit": TestKit,
+    });
     for await (const stop of firstBoard.run()) {
       t.is(stop.type, "beforehandler");
       result = stop;
@@ -143,7 +143,9 @@ test("allows pausing and resuming the board", async (t) => {
     }
   }
   {
-    const secondBoard = await Board.fromGraphDescriptor(board);
+    const secondBoard = await Board.fromGraphDescriptor(board, {
+      "test-kit": TestKit,
+    });
     for await (const stop of secondBoard.run(undefined, undefined, result)) {
       t.is(stop.type, "input");
       result = stop;
@@ -151,7 +153,9 @@ test("allows pausing and resuming the board", async (t) => {
     }
   }
   {
-    const thirdBoard = await Board.fromGraphDescriptor(board);
+    const thirdBoard = await Board.fromGraphDescriptor(board, {
+      "test-kit": TestKit,
+    });
     for await (const stop of thirdBoard.run(undefined, undefined, result)) {
       t.is(stop.type, "beforehandler");
       result = stop;
@@ -159,7 +163,9 @@ test("allows pausing and resuming the board", async (t) => {
     }
   }
   {
-    const fourthBoard = await Board.fromGraphDescriptor(board);
+    const fourthBoard = await Board.fromGraphDescriptor(board, {
+      "test-kit": TestKit,
+    });
     for await (const stop of fourthBoard.run(undefined, undefined, result)) {
       t.is(stop.type, "output");
       result = stop;
@@ -167,7 +173,9 @@ test("allows pausing and resuming the board", async (t) => {
     }
   }
   {
-    const fifthBoard = await Board.fromGraphDescriptor(board);
+    const fifthBoard = await Board.fromGraphDescriptor(board, {
+      "test-kit": TestKit,
+    });
     for await (const stop of fifthBoard.run(undefined, undefined, result)) {
       t.is(stop.type, "input");
       result = stop;
