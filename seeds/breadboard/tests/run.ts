@@ -44,14 +44,14 @@ test("reviver correctly deserializes maps", async (t) => {
 test("correctly saves and loads", async (t) => {
   let runResult = "";
   const board = new Board();
+  const kit = board.addKit(TestKit);
   const input = board.input();
-  input.wire("<-", board.passthrough());
-  input.wire(
-    "*->",
-    board.passthrough().wire("*->", board.output().wire("*->", input))
-  );
+  input.wire("<-", kit.noop());
+  input.wire("*->", kit.noop().wire("*->", board.output().wire("*->", input)));
   {
-    const firstBoard = await Board.fromGraphDescriptor(board);
+    const firstBoard = await Board.fromGraphDescriptor(board, {
+      "test-kit": TestKit,
+    });
     for await (const stop of firstBoard.run()) {
       t.is(stop.type, "beforehandler");
       runResult = await stop.save();
@@ -59,7 +59,9 @@ test("correctly saves and loads", async (t) => {
     }
   }
   {
-    const secondBoard = await Board.fromGraphDescriptor(board);
+    const secondBoard = await Board.fromGraphDescriptor(board, {
+      "test-kit": TestKit,
+    });
     for await (const stop of secondBoard.run(
       undefined,
       undefined,
@@ -71,7 +73,9 @@ test("correctly saves and loads", async (t) => {
     }
   }
   {
-    const thirdBoard = await Board.fromGraphDescriptor(board);
+    const thirdBoard = await Board.fromGraphDescriptor(board, {
+      "test-kit": TestKit,
+    });
     for await (const stop of thirdBoard.run(
       undefined,
       undefined,
@@ -83,7 +87,9 @@ test("correctly saves and loads", async (t) => {
     }
   }
   {
-    const fourthBoard = await Board.fromGraphDescriptor(board);
+    const fourthBoard = await Board.fromGraphDescriptor(board, {
+      "test-kit": TestKit,
+    });
     for await (const stop of fourthBoard.run(
       undefined,
       undefined,
@@ -95,7 +101,9 @@ test("correctly saves and loads", async (t) => {
     }
   }
   {
-    const fifthBoard = await Board.fromGraphDescriptor(board);
+    const fifthBoard = await Board.fromGraphDescriptor(board, {
+      "test-kit": TestKit,
+    });
     for await (const stop of fifthBoard.run(
       undefined,
       undefined,
