@@ -177,7 +177,7 @@ export class KitBuilder {
       }
 
       constructor(nodeFactory: NodeFactory) {
-        return new Proxy(this, {
+        const proxy = new Proxy(this, {
           get(target, prop: string) {
             if (prop === "handlers" || prop === "url") {
               return target[prop];
@@ -185,7 +185,7 @@ export class KitBuilder {
               return (config: OptionalIdConfiguration = {}) => {
                 const { $id, ...rest } = config;
                 return nodeFactory.create(
-                  this as unknown as Kit,
+                  proxy as unknown as Kit,
                   `${prefix}${prop}`,
                   { ...rest },
                   $id
@@ -194,6 +194,7 @@ export class KitBuilder {
             }
           },
         });
+        return proxy;
       }
     } as KitConstructor<GenericKit<Handlers>>;
   }

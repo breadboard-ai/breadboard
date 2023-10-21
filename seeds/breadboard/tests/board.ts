@@ -7,14 +7,8 @@
 import test from "ava";
 
 import { Board } from "../src/board.js";
-import type {
-  ProbeEvent,
-  Kit,
-  NodeFactory,
-  OptionalIdConfiguration,
-  BreadboardCapability,
-  NodeHandlers,
-} from "../src/types.js";
+import type { ProbeEvent, BreadboardCapability } from "../src/types.js";
+import { TestKit } from "./helpers/_test-kit.js";
 
 test("correctly skips nodes when asked", async (t) => {
   const board = new Board();
@@ -183,24 +177,6 @@ test("allows pausing and resuming the board", async (t) => {
     }
   }
 });
-
-class TestKit implements Kit {
-  url = "none";
-  #nodeFactory: NodeFactory;
-
-  get handlers() {
-    return {} as NodeHandlers;
-  }
-
-  constructor(nodeFactory: NodeFactory) {
-    this.#nodeFactory = nodeFactory;
-  }
-
-  test(config: OptionalIdConfiguration = {}) {
-    const { $id, ...rest } = config;
-    return this.#nodeFactory.create(this, "test", rest, $id);
-  }
-}
 
 test("lambda node from function with correctly assigned nodes", async (t) => {
   const board = new Board();
