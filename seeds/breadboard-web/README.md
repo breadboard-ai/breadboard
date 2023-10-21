@@ -46,13 +46,3 @@ The typical worker lifecycle is as follows:
 9. The host responds to each `proxy` message with a `proxy` message containing the proxy object for the node.
 10. The worker sends an `end` message to the host when the board is done running.
 11. If an error occurs, the worker sends an `error` message to the host.
-
-## Vite stuff
-
-This package uses [Vite](https://vitejs.dev/), which in turn uses [Esbuild](https://esbuild.github.io/) under the covers. Esbuild has platform-dependent binaries, so you may need to run `npm rebuild` after installing this package to ensure that the correct binaries are installed:
-
-```sh
-rm package-lock.json
-npm rebuild
-npm i
-```
