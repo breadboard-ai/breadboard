@@ -9,7 +9,6 @@ import { KitBuilder } from "@google-labs/breadboard/kits";
 import importHandler from "./nodes/import.js";
 import include from "./nodes/include.js";
 import invoke from "./nodes/invoke.js";
-import lambda from "./nodes/lambda.js";
 import passthrough from "./nodes/passthrough.js";
 import reflect from "./nodes/reflect.js";
 import slot from "./nodes/slot.js";
@@ -25,7 +24,6 @@ export const Core = builder.build({
   import: importHandler,
   include,
   invoke,
-  lambda,
   passthrough,
   reflect,
   slot,

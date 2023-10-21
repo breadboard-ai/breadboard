@@ -11,8 +11,8 @@ import type {
   BreadboardCapability,
   NodeHandlerContext,
   GraphDescriptor,
+  LambdaNodeOutputs,
 } from "@google-labs/breadboard";
-import { LambdaNodeOutputs } from "./lambda.js";
 
 export type ImportNodeInputs = InputValues & {
   path?: string;

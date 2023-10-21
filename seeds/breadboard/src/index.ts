@@ -48,6 +48,7 @@ export type {
   RunResultType,
   KitConstructor,
   GenericKit,
+  LambdaNodeOutputs,
 } from "./types.js";
 export { TraversalMachine } from "./traversal/machine.js";
 export { MachineResult } from "./traversal/result.js";
