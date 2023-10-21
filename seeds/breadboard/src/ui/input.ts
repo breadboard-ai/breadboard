@@ -109,10 +109,6 @@ export class Input extends HTMLElement {
     textarea.name = key;
     textarea.placeholder = description || "";
     textarea.value = values[key] ?? "";
-    span.append("\n");
-    const submit = span.appendChild(document.createElement("input"));
-    submit.type = "submit";
-    submit.value = "Continue";
     return span;
   }
 
@@ -132,17 +128,25 @@ export class Input extends HTMLElement {
     const properties = schema.properties;
     const values = this.#getRememberedValues();
     const form = input.appendChild(document.createElement("form"));
-    Object.entries(properties).forEach(([key, property]) => {
+    let insertSubmitButton = false;
+    Object.entries(properties).forEach(([key, property], index) => {
+      const isMultiline = property.format == "multiline";
+      if (index > 0 || isMultiline) insertSubmitButton = true;
+
       const label = form.appendChild(document.createElement("label"));
       label.textContent = `${property.title}: `;
-      const input =
-        property.format === "multiline"
-          ? this.#createMultiLineInput(values, key, property.description)
-          : this.#createSingleLineInput(values, key, property.description);
+      const input = isMultiline
+        ? this.#createMultiLineInput(values, key, property.description)
+        : this.#createSingleLineInput(values, key, property.description);
       label.appendChild(input);
       form.append("\n");
       window.setTimeout(() => input.focus(), 1);
     });
+    if (insertSubmitButton) {
+      const submit = form.appendChild(document.createElement("input"));
+      submit.type = "submit";
+      submit.value = "Continue";
+    }
     return new Promise((resolve) => {
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
