@@ -8,6 +8,7 @@ import test from "ava";
 
 import { RunResult, replacer, reviver } from "../src/run.js";
 import { Board } from "../src/board.js";
+import { TestKit } from "./helpers/_test-kit.js";
 
 test("replacer correctly serializes Maps", async (t) => {
   t.is(JSON.stringify({}, replacer), "{}");
@@ -110,8 +111,9 @@ test("correctly saves and loads", async (t) => {
 
 test("correctly detects exit node", async (t) => {
   const board = new Board();
+  const kit = board.addKit(TestKit);
   const input = board.input();
-  input.wire("*->", board.passthrough().wire("*->", board.output()));
+  input.wire("*->", kit.noop().wire("*->", board.output()));
 
   const generator = board.run();
 

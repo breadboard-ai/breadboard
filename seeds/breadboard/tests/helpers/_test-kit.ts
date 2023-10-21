@@ -9,7 +9,7 @@ import { KitBuilder } from "../../src/kit.js";
  * This is a Kit designed specifically for use in the testing harness.
  */
 export const TestKit = new KitBuilder({
-  url: "test",
+  url: ".",
 }).build({
   noop: async (inputs) => inputs,
   test: async (inputs) => inputs,

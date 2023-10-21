@@ -12,12 +12,10 @@ import { TestKit } from "./helpers/_test-kit.js";
 
 test("correctly skips nodes when asked", async (t) => {
   const board = new Board();
+  const kit = board.addKit(TestKit);
   board
     .input()
-    .wire(
-      "*->",
-      board.passthrough({ $id: "toSkip" }).wire("*->", board.output())
-    );
+    .wire("*->", kit.noop({ $id: "toSkip" }).wire("*->", board.output()));
 
   const skipper = new EventTarget();
   skipper.addEventListener("beforehandler", (event) => {
@@ -322,12 +320,13 @@ test("allow wiring across boards with lambdas", async (t) => {
 
 test("when $error is set, all other outputs are ignored, named", async (t) => {
   const board = new Board();
-  const passthrough = board.passthrough({ foo: 1, $error: { kind: "error" } });
+  const kit = board.addKit(TestKit);
+  const passthrough = kit.noop({ foo: 1, $error: { kind: "error" } });
   passthrough.wire("foo->", board.output());
   passthrough.wire(
     "$error->",
     // extra passthrough so that the above output would be used first
-    board.passthrough().wire("$error->", board.output())
+    kit.noop().wire("$error->", board.output())
   );
   const result = await board.runOnce({});
   t.is(result.foo, undefined);
@@ -336,7 +335,8 @@ test("when $error is set, all other outputs are ignored, named", async (t) => {
 
 test("when $error is set, all other outputs are ignored, with *", async (t) => {
   const board = new Board();
-  const passthrough = board.passthrough({ foo: 1, $error: { kind: "error" } });
+  const kit = board.addKit(TestKit);
+  const passthrough = kit.noop({ foo: 1, $error: { kind: "error" } });
   const output = board.output();
   passthrough.wire("*->", output);
   passthrough.wire("$error->", output);
