@@ -50,5 +50,20 @@ export const Core = builder.build({
    * @returns - a `Node` object that represents the placed node.
    */
   reflect,
+  /**
+   * Places a `slot` node on the board.
+   *
+   * This node is used to provide a slot for another board to be placed into.
+   *
+   * This type of node is useful for situations where we wish to leave
+   * a place in the board where anyone could insert other boards.
+   *
+   * Programmers call it "dependency injection".
+   *
+   * See [`slot` node reference](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/nodes.md#slot) for more information.
+   *
+   * @param config - optional configuration for the node.
+   * @returns - a `Node` object that represents the placed node.
+   */
   slot,
 });

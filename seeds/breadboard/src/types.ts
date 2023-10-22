@@ -496,10 +496,6 @@ export interface Breadboard extends BreadboardRunner {
     $ref: string | GraphDescriptor | BreadboardCapability,
     config?: OptionalIdConfiguration
   ): BreadboardNode<IncludeNodeInputs & In, Out>;
-  slot<In = InputValues, Out = OutputValues>(
-    slot: string,
-    config?: OptionalIdConfiguration
-  ): BreadboardNode<SlotNodeInputs & In, Out>;
 
   addEdge(edge: Edge): void;
   addNode(node: NodeDescriptor): void;
@@ -669,11 +665,6 @@ export type InvokeNodeInputs = InputValues & {
   path?: string;
   board?: BreadboardCapability;
   graph?: GraphDescriptor;
-};
-
-export type SlotNodeInputs = {
-  slot: string;
-  parent: NodeDescriptor;
 };
 
 export type KitImportMap = Record<string, KitConstructor<Kit>>;

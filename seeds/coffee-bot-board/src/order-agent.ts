@@ -50,8 +50,8 @@ const checkMenuTool = core.passthrough().wire(
   "checkMenu->json",
   kit.jsonata("actionInput").wire(
     "result->customer",
-    board
-      .slot("checkMenu")
+    core
+      .slot({ slot: "checkMenu" })
       .wire("bot->Tool", toolMemory)
       .wire("bot->", board.output({ $id: "checkMenu-tool-output" }))
       .wire("$error->", board.output({ $id: "error" }))
@@ -62,8 +62,8 @@ const summarizeMenuTool = core.passthrough().wire(
   "summarizeMenu->json",
   kit.jsonata("actionInput").wire(
     "result->customer",
-    board
-      .slot("summarizeMenu")
+    core
+      .slot({ slot: "summarizeMenu" })
       .wire("bot->Tool", toolMemory)
       .wire("bot->", board.output({ $id: "summarizeMenu-tool-output" }))
       .wire("$error->", board.output({ $id: "error" }))

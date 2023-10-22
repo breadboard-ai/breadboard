@@ -23,7 +23,6 @@ import type {
   BreadboardNode,
   LambdaNodeOutputs,
   IncludeNodeInputs,
-  SlotNodeInputs,
   BreadboardCapability,
 } from "./types.js";
 
@@ -264,30 +263,6 @@ export class Board extends BoardRunner implements Breadboard {
         : { graph: $ref, ...rest },
       $id
     );
-  }
-
-  /**
-   * Places a `slot` node on the board.
-   *
-   * This node is used to provide a slot for another board to be placed into.
-   *
-   * This type of node is useful for situations where we wish to leave
-   * a place in the board where anyone could insert other boards.
-   *
-   * Programmers call it "dependency injection".
-   *
-   * See [`slot` node reference](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/nodes.md#slot) for more information.
-   *
-   * @param slot - the name of the slot.
-   * @param config - optional configuration for the node.
-   * @returns - a `Node` object that represents the placed node.
-   */
-  slot<In = InputValues, Out = OutputValues>(
-    slot: string,
-    config: OptionalIdConfiguration = {}
-  ): BreadboardNode<SlotNodeInputs & In, Out> {
-    const { $id, ...rest } = config;
-    return new Node(this, undefined, "slot", { slot, ...rest }, $id);
   }
 
   addEdge(edge: Edge) {

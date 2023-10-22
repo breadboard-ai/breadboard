@@ -39,7 +39,10 @@ export default {
     if (!slot) throw new Error("To use a slot, we need to specify its name");
     const graph = context.slots[slot];
     if (!graph) throw new Error(`No graph found for slot "${slot}"`);
-    const slottedBreadboard = await BoardRunner.fromGraphDescriptor(graph);
+    const slottedBreadboard = await BoardRunner.fromGraphDescriptor(
+      graph,
+      context.kits
+    );
     return await slottedBreadboard.runOnce(args, context);
   },
 };
