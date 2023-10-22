@@ -47,7 +47,7 @@ const tools = () => {
   // - Finally, wire the all of the nodes to outputs.
   tools
     .input()
-    .wire("graph", tools.reflect().wire("graph", tools.output()))
+    .wire("graph", core.reflect().wire("graph", tools.output()))
     .wire("math->text", math.wire("text", tools.output()))
     .wire("search->text", search.wire("text", tools.output()));
 

@@ -496,9 +496,6 @@ export interface Breadboard extends BreadboardRunner {
     $ref: string | GraphDescriptor | BreadboardCapability,
     config?: OptionalIdConfiguration
   ): BreadboardNode<IncludeNodeInputs & In, Out>;
-  reflect(
-    config?: OptionalIdConfiguration
-  ): BreadboardNode<never, ReflectNodeOutputs>;
   slot<In = InputValues, Out = OutputValues>(
     slot: string,
     config?: OptionalIdConfiguration
@@ -629,10 +626,6 @@ export type LambdaFunction<In = InputValues, Out = OutputValues> = (
   input: BreadboardNode<In, Out>,
   output: BreadboardNode<In, Out>
 ) => void;
-
-export type ReflectNodeOutputs = OutputValues & {
-  graph: GraphDescriptor;
-};
 
 export type LambdaNodeInputs = InputValues & {
   /**

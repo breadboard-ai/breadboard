@@ -37,6 +37,18 @@ export const Core = builder.build({
    * @returns - a `Node` object that represents the placed node.
    */
   passthrough,
+  /**
+   * Places a `reflect` node on the board.
+   *
+   * This node is used to reflect the board itself. It provides a JSON
+   * representation of the board as a `graph` output property. This can be
+   * used for studying the board's structure from inside the board.
+   *
+   * See [`reflect` node reference](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/nodes.md#reflect) for more information.
+   *
+   * @param config - optional configuration for the node.
+   * @returns - a `Node` object that represents the placed node.
+   */
   reflect,
   slot,
 });

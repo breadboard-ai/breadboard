@@ -22,7 +22,6 @@ import type {
   LambdaFunction,
   BreadboardNode,
   LambdaNodeOutputs,
-  ReflectNodeOutputs,
   IncludeNodeInputs,
   SlotNodeInputs,
   BreadboardCapability,
@@ -265,25 +264,6 @@ export class Board extends BoardRunner implements Breadboard {
         : { graph: $ref, ...rest },
       $id
     );
-  }
-
-  /**
-   * Places a `reflect` node on the board.
-   *
-   * This node is used to reflect the board itself. It provides a JSON
-   * representation of the board as a `graph` output property. This can be
-   * used for studying the board's structure from inside the board.
-   *
-   * See [`reflect` node reference](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/nodes.md#reflect) for more information.
-   *
-   * @param config - optional configuration for the node.
-   * @returns - a `Node` object that represents the placed node.
-   */
-  reflect(
-    config: OptionalIdConfiguration = {}
-  ): BreadboardNode<never, ReflectNodeOutputs> {
-    const { $id, ...rest } = config;
-    return new Node(this, undefined, "reflect", { ...rest }, $id);
   }
 
   /**
