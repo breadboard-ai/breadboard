@@ -16,6 +16,7 @@ import {
   KitImportMap,
   NodeFactory,
   OptionalIdConfiguration,
+  NodeHandlerContext,
 } from "./types.js";
 import { Board } from "./board.js";
 import { callHandler } from "./handler.js";
@@ -90,7 +91,7 @@ export class GraphToKitAdapter {
     if (!node) throw new Error(`Node ${id} not found in graph.`);
 
     return {
-      invoke: async (inputs: InputValues) => {
+      invoke: async (inputs: InputValues, context: NodeHandlerContext) => {
         const configuration = node.configuration;
         if (configuration) {
           inputs = { ...configuration, ...inputs };
@@ -106,6 +107,7 @@ export class GraphToKitAdapter {
           descriptor: node,
           parent: board,
           slots: {}, // TODO: Perhaps pass slots from graph?
+          kits: context.kits,
         });
       },
     };

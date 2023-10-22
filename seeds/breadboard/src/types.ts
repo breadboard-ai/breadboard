@@ -525,6 +525,7 @@ export interface NodeHandlerContext {
   readonly parent: GraphDescriptor;
   readonly slots: BreadboardSlotSpec;
   readonly probe?: EventTarget;
+  readonly kits: KitImportMap;
 }
 
 type Common<To, From> = {

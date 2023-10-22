@@ -57,11 +57,12 @@ export default {
     const board = graph
       ? (graph as Board).runOnce // TODO: Hack! Use JSON schema or so instead.
         ? ({ ...graph } as Board)
-        : await Board.fromGraphDescriptor(graph)
+        : await Board.fromGraphDescriptor(graph, context.kits)
       : path
       ? await Board.load(path, {
           base: context.board.url,
           outerGraph: context.parent,
+          kits: context.kits,
         })
       : undefined;
     if (!board) throw Error("No board provided");

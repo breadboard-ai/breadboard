@@ -113,11 +113,16 @@ export class BoardRunner implements BreadboardRunner {
    * @param probe - an optional probe. If provided, the board will dispatch
    * events to it. See [Chapter 7: Probes](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-7-probes) of the Breadboard tutorial for more information.
    * @param slots - an optional map of slotted graphs. See [Chapter 6: Boards with slots](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-6-boards-with-slots) of the Breadboard tutorial for more information.
+   * @param result - an optional result of a previous run. If provided, the
+   * board will resume from the state of the previous run.
+   * @param kits - an optional map of kits to use when running the board.
    */
   async *run(
+    // TODO: Use options property bag
     probe?: EventTarget,
     slots?: BreadboardSlotSpec,
-    result?: RunResult
+    result?: RunResult,
+    kits?: KitImportMap
   ): AsyncGenerator<RunResult> {
     const handlers = await BoardRunner.handlersFromBoard(this);
     slots = { ...this.#slots, ...slots };
@@ -176,6 +181,7 @@ export class BoardRunner implements BreadboardRunner {
         probe,
         parent: this.#parent || this,
         slots,
+        kits: kits || {},
       };
 
       const outputsPromise = (
@@ -214,12 +220,15 @@ export class BoardRunner implements BreadboardRunner {
    * @param probe - an optional probe. If provided, the board will dispatch
    * events to it. See [Chapter 7: Probes](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-7-probes) of the Breadboard tutorial for more information.
    * @param slots - an optional map of slotted graphs. See [Chapter 6: Boards with slots](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-6-boards-with-slots) of the Breadboard tutorial for more information.
+   * @param kits - an optional map of kits to use when running the board.
    * @returns - outputs provided by the board.
    */
   async runOnce(
     inputs: InputValues,
+    // TODO: Use options property bag
     context?: NodeHandlerContext,
-    probe?: EventTarget
+    probe?: EventTarget,
+    kits?: KitImportMap
   ): Promise<OutputValues> {
     const args = { ...inputs, ...this.args };
 
@@ -237,7 +246,7 @@ export class BoardRunner implements BreadboardRunner {
     try {
       let outputs: OutputValues = {};
 
-      for await (const result of this.run(probe)) {
+      for await (const result of this.run(probe, undefined, undefined, kits)) {
         if (result.type === "input") {
           // Pass the inputs to the board. If there are inputs bound to the board
           // (e.g. from a lambda node that had incoming wires), they will

@@ -76,11 +76,12 @@ export default {
     const runnableBoard = board
       ? await Board.fromBreadboardCapability(board)
       : graph
-      ? await Board.fromGraphDescriptor(graph)
+      ? await Board.fromGraphDescriptor(graph, context.kits)
       : await Board.load(source, {
           slotted: slottedWithUrls,
           base: context.board.url,
           outerGraph: context.parent,
+          kits: context.kits,
         });
 
     return await runnableBoard.runOnce(args, context);
