@@ -176,30 +176,6 @@ export class Board extends BoardRunner implements Breadboard {
   }
 
   /**
-   * Places an `import` node on the board.
-   *
-   * Use this node to import other boards into the current board.
-   * Outputs `board` as a BoardCapability, which can be passed to e.g. `invoke`.
-   *
-   * @param $ref - the URL of the board to include, or a graph.
-   * @param config - optional configuration for the node.
-   * @returns - a `Node` object that represents the placed node.
-   */
-  import<In = InputValues, Out = OutputValues>(
-    $ref: string | GraphDescriptor,
-    config: OptionalIdConfiguration = {}
-  ): BreadboardNode<IncludeNodeInputs & In, Out> {
-    const { $id, ...rest } = config;
-    return new Node(
-      this,
-      undefined,
-      "import",
-      typeof $ref === "string" ? { $ref, ...rest } : { graph: $ref, ...rest },
-      $id
-    );
-  }
-
-  /**
    * Places an `invoke` node on the board.
    *
    * Use this node to invoke other boards into the current board.

@@ -232,6 +232,7 @@ async function main(args: string[], use_input_handler = false) {
 
     outro("Awesome work! Let's do this again sometime.");
   } catch (e) {
+    console.log(e);
     if (e instanceof Error) {
       let error: Error = e;
       let message = error.message;

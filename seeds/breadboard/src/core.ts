@@ -6,7 +6,6 @@
 
 import type { NodeHandlers } from "./types.js";
 import lambda from "./nodes/lambda.js";
-import importHandler from "./nodes/import.js";
 import invoke from "./nodes/invoke.js";
 
 export class Core {
@@ -15,7 +14,6 @@ export class Core {
   constructor() {
     this.handlers = {
       lambda,
-      import: importHandler,
       invoke,
     };
   }

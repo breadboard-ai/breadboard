@@ -21,6 +21,18 @@ const builder = new KitBuilder({
 });
 
 export const Core = builder.build({
+  /**
+   * Places an `import` node on the board.
+   *
+   * Use this node to import other boards into the current board.
+   * Outputs `board` as a BoardCapability, which can be passed to e.g. `invoke`.
+   *
+   * The config param expects either `path` or `graph` as a string or
+   * `GraphDescriptor', respectively.
+   *
+   * @param config - optional configuration for the node.
+   * @returns - a `Node` object that represents the placed node.
+   */
   import: importHandler,
   /**
    * Places an `include` node on the board.
@@ -87,3 +99,5 @@ export const Core = builder.build({
 });
 
 export type Core = InstanceType<typeof Core>;
+
+export default Core;
