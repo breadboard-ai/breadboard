@@ -67,7 +67,7 @@ export class Template {
     version: string,
     public board: Board,
     public kit: Starter,
-    public core: InstanceType<typeof Core>
+    public core: Core
   ) {
     this.path = `./prompts/${version}`;
   }

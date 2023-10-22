@@ -67,3 +67,5 @@ export const Core = builder.build({
    */
   slot,
 });
+
+export type Core = InstanceType<typeof Core>;
