@@ -7,7 +7,11 @@
 import test from "ava";
 
 import { Board } from "../src/board.js";
-import type { ProbeEvent, BreadboardCapability } from "../src/types.js";
+import type {
+  ProbeEvent,
+  BreadboardCapability,
+  GraphDescriptor,
+} from "../src/types.js";
 import { TestKit } from "./helpers/_test-kit.js";
 
 test("correctly skips nodes when asked", async (t) => {
@@ -32,20 +36,23 @@ test("correctly skips nodes when asked", async (t) => {
 
 test("correctly passes inputs and outputs to included boards", async (t) => {
   const nestedBoard = new Board();
-  const kit = nestedBoard.addKit(TestKit);
+  const nestedKit = nestedBoard.addKit(TestKit);
   nestedBoard
     .input()
     .wire(
       "hello->",
-      kit.noop().wire("hello->", nestedBoard.output({ $id: "output" }))
+      nestedKit.noop().wire("hello->", nestedBoard.output({ $id: "output" }))
     );
 
   const board = new Board();
+  const kit = board.addKit(TestKit);
   board
     .input()
     .wire(
       "hello->",
-      board.include(nestedBoard).wire("hello->", board.output())
+      kit
+        .include({ graph: nestedBoard as GraphDescriptor })
+        .wire("hello->", board.output())
     );
 
   const result = await board.runOnce({ hello: "world" }, undefined, undefined, {
@@ -56,12 +63,12 @@ test("correctly passes inputs and outputs to included boards", async (t) => {
 
 test("correctly passes inputs and outputs to invoked boards", async (t) => {
   const nestedBoard = new Board();
-  const kit = nestedBoard.addKit(TestKit);
+  const nestedKit = nestedBoard.addKit(TestKit);
   nestedBoard
     .input()
     .wire(
       "hello->",
-      kit.noop().wire("hello->", nestedBoard.output({ $id: "output" }))
+      nestedKit.noop().wire("hello->", nestedBoard.output({ $id: "output" }))
     );
 
   const board = new Board();
@@ -77,20 +84,23 @@ test("correctly passes inputs and outputs to invoked boards", async (t) => {
 
 test("correctly passes inputs and outputs to included boards with a probe", async (t) => {
   const nestedBoard = new Board();
-  const kit = nestedBoard.addKit(TestKit);
+  const nestedKit = nestedBoard.addKit(TestKit);
   nestedBoard
     .input()
     .wire(
       "hello->",
-      kit.noop().wire("hello->", nestedBoard.output({ $id: "output" }))
+      nestedKit.noop().wire("hello->", nestedBoard.output({ $id: "output" }))
     );
 
   const board = new Board();
+  const kit = board.addKit(TestKit);
   board
     .input()
     .wire(
       "hello->",
-      board.include(nestedBoard).wire("hello->", board.output())
+      kit
+        .include({ graph: nestedBoard as GraphDescriptor })
+        .wire("hello->", board.output())
     );
 
   const result = await board.runOnce({ hello: "world" }, undefined, undefined, {
@@ -101,20 +111,26 @@ test("correctly passes inputs and outputs to included boards with a probe", asyn
 
 test("correctly skips nodes in nested boards", async (t) => {
   const nestedBoard = new Board();
-  const kit = nestedBoard.addKit(TestKit);
+  const nestedKit = nestedBoard.addKit(TestKit);
   nestedBoard
     .input()
     .wire(
       "*->",
-      kit
+      nestedKit
         .noop({ $id: "toSkip" })
         .wire("*->", nestedBoard.output({ $id: "output" }))
     );
 
   const board = new Board();
+  const kit = board.addKit(TestKit);
   board
     .input()
-    .wire("*->", board.include(nestedBoard).wire("*->", board.output()));
+    .wire(
+      "*->",
+      kit
+        .include({ graph: nestedBoard as GraphDescriptor })
+        .wire("*->", board.output())
+    );
 
   const skipper = new EventTarget();
   skipper.addEventListener("beforehandler", (event) => {

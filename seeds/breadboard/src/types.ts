@@ -492,10 +492,6 @@ export interface Breadboard extends BreadboardRunner {
     boardOrFunction: LambdaFunction<InL, OutL> | BreadboardRunner,
     config?: OptionalIdConfiguration
   ): BreadboardNode<In, LambdaNodeOutputs>;
-  include<In = InputValues, Out = OutputValues>(
-    $ref: string | GraphDescriptor | BreadboardCapability,
-    config?: OptionalIdConfiguration
-  ): BreadboardNode<IncludeNodeInputs & In, Out>;
 
   addEdge(edge: Edge): void;
   addNode(node: NodeDescriptor): void;

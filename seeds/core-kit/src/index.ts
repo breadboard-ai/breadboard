@@ -22,6 +22,24 @@ const builder = new KitBuilder({
 
 export const Core = builder.build({
   import: importHandler,
+  /**
+   * Places an `include` node on the board.
+   *
+   * Use this node to include other boards into the current board.
+   *
+   * The `include` node acts as a sort of instant board-to-node converter: just
+   * give it the URL of a serialized board, and it will pretend as if that whole
+   * board is just one node.
+   *
+   * See [`include` node
+   * reference](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/nodes.md#include)
+   * for more information.
+   *
+   * @param $ref - the URL of the board to include, or a graph or a
+   *   BreadboardCapability returned by e.g. lambda.
+   * @param config - optional configuration for the node.
+   * @returns - a `Node` object that represents the placed node.
+   */
   include,
   invoke,
   /**

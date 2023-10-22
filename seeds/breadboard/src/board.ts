@@ -229,42 +229,6 @@ export class Board extends BoardRunner implements Breadboard {
     return new Node(this, undefined, "invoke", rest, $id);
   }
 
-  /**
-   * Places an `include` node on the board.
-   *
-   * Use this node to include other boards into the current board.
-   *
-   * The `include` node acts as a sort of instant board-to-node converter: just
-   * give it the URL of a serialized board, and it will pretend as if that whole
-   * board is just one node.
-   *
-   * See [`include` node
-   * reference](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/nodes.md#include)
-   * for more information.
-   *
-   * @param $ref - the URL of the board to include, or a graph or a
-   *   BreadboardCapability returned by e.g. lambda.
-   * @param config - optional configuration for the node.
-   * @returns - a `Node` object that represents the placed node.
-   */
-  include<In = InputValues, Out = OutputValues>(
-    $ref: string | GraphDescriptor | BreadboardCapability,
-    config: OptionalIdConfiguration = {}
-  ): BreadboardNode<IncludeNodeInputs & In, Out> {
-    const { $id, ...rest } = config;
-    return new Node(
-      this,
-      undefined,
-      "include",
-      typeof $ref === "string"
-        ? { $ref, ...rest }
-        : ($ref as BreadboardCapability).kind === "board"
-        ? { board: $ref, ...rest }
-        : { graph: $ref, ...rest },
-      $id
-    );
-  }
-
   addEdge(edge: Edge) {
     this.edges.push(edge);
   }

@@ -5,6 +5,7 @@
  */
 
 import { GraphToKitAdapter, KitBuilder } from "@google-labs/breadboard/kits";
+import { Core } from "@google-labs/core-kit";
 
 import kit from "./boards/kit.js";
 
@@ -16,7 +17,9 @@ const NAMESPACE = "pinecone-api-";
 
 const KIT_PACKAGE_URL = "npm:@google-labs/pinecone-kit";
 
-const adapter = await GraphToKitAdapter.create(kit, KIT_BASE_URL);
+const adapter = await GraphToKitAdapter.create(kit, KIT_BASE_URL, {
+  "@google-labs/core-kit": Core,
+});
 
 const builder = new KitBuilder(
   adapter.populateDescriptor({

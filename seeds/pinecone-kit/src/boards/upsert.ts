@@ -15,10 +15,10 @@ const board = new Board({
 });
 const core = board.addKit(Core);
 
-const apiCall = board
-  .include("#vector", { $id: "vector" })
+const apiCall = core
+  .include({ $id: "vector", $ref: "#vector" })
   .wire("<-call", core.passthrough({ $id: "upsert", call: "vectors/upsert" }))
-  .wire("<-config", board.include("#config", { $id: "config" }));
+  .wire("<-config", core.include({ $id: "config", $ref: "#config" }));
 
 board
   .input({

@@ -8,7 +8,6 @@ import type { NodeHandlers } from "./types.js";
 import lambda from "./nodes/lambda.js";
 import importHandler from "./nodes/import.js";
 import invoke from "./nodes/invoke.js";
-import include from "./nodes/include.js";
 
 export class Core {
   handlers: NodeHandlers;
@@ -18,7 +17,6 @@ export class Core {
       lambda,
       import: importHandler,
       invoke,
-      include,
     };
   }
 }

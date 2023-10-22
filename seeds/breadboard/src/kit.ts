@@ -65,11 +65,13 @@ export class KitLoader {
 
 export class GraphToKitAdapter {
   graph: GraphDescriptor;
+  kits?: KitImportMap;
   handlers?: NodeHandlers;
   board?: BoardRunner;
 
-  private constructor(graph: GraphDescriptor) {
+  private constructor(graph: GraphDescriptor, kits?: KitImportMap) {
     this.graph = graph;
+    this.kits = kits;
   }
 
   populateDescriptor(descriptor: KitBuilderOptions) {
@@ -78,7 +80,7 @@ export class GraphToKitAdapter {
   }
 
   async #initialize(url: string) {
-    const board = await Board.fromGraphDescriptor(this.graph);
+    const board = await Board.fromGraphDescriptor(this.graph, this.kits);
     board.url = url;
     this.handlers = await Board.handlersFromBoard(board);
     this.board = board;
@@ -97,7 +99,8 @@ export class GraphToKitAdapter {
           inputs = { ...configuration, ...inputs };
         }
         const handler = this.handlers?.[node.type];
-        if (!handler) return;
+        if (!handler)
+          throw new Error(`No handler found for node "${node.type}".`);
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const board = this.board!;
@@ -107,14 +110,18 @@ export class GraphToKitAdapter {
           descriptor: node,
           parent: board,
           slots: {}, // TODO: Perhaps pass slots from graph?
-          kits: context.kits,
+          kits: this.kits || context.kits,
         });
       },
     };
   }
 
-  static async create(graph: GraphDescriptor, url: string) {
-    const adapter = new GraphToKitAdapter(graph);
+  static async create(
+    graph: GraphDescriptor,
+    url: string,
+    kits?: KitImportMap
+  ) {
+    const adapter = new GraphToKitAdapter(graph, kits);
     await adapter.#initialize(url);
     return adapter;
   }

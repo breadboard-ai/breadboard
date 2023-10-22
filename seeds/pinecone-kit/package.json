@@ -48,10 +48,10 @@
     "ava": "^5.2.0",
     "typescript": "^5.0.4",
     "@google-labs/tsconfig": "*",
-    "@google-labs/llm-starter": "*",
-    "@google-labs/core-kit": "*"
+    "@google-labs/llm-starter": "*"
   },
   "dependencies": {
-    "@google-labs/breadboard": "*"
+    "@google-labs/breadboard": "*",
+    "@google-labs/core-kit": "*"
   }
 }

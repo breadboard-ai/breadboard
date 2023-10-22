@@ -33,7 +33,11 @@
       }
     }
   ],
-  "kits": [],
+  "kits": [
+    {
+      "url": "npm:@google-labs/core-kit"
+    }
+  ],
   "graphs": {
     "config": {
       "title": "Pinecone API configuration helper",
