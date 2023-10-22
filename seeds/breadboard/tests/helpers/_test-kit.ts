@@ -11,6 +11,16 @@ import { KitBuilder } from "../../src/kit.js";
 export const TestKit = new KitBuilder({
   url: "npm:test-kit",
 }).build({
+  /**
+   * Just a no-op node.
+   * @param inputs Any inputs to the node.
+   * @returns Sme inputs
+   */
   noop: async (inputs) => inputs,
-  test: async (inputs) => inputs,
+  /**
+   * Just a no-op node, called "test, for when need two noop nodes with
+   * different names.
+   * @param inputs Any inputs to the node.
+   * @returns Sme inputs
+   */ test: async (inputs) => inputs,
 });
