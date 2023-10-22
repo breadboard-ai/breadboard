@@ -5,6 +5,7 @@
  */
 
 import { Board } from "@google-labs/breadboard";
+import { Core } from "@google-labs/core-kit";
 import { Starter } from "@google-labs/llm-starter";
 
 const math = new Board({
@@ -14,6 +15,7 @@ const math = new Board({
   version: "0.0.1",
 });
 const kit = math.addKit(Starter);
+const core = math.addKit(Core);
 
 math
   .input({
@@ -55,7 +57,7 @@ math
               compute.wire("result->text", output);
 
               // Hack for error correction: Make sure completion is listed.
-              board
+              core
                 .passthrough()
                 .wire("$error<-", compute)
                 .wire("completion<-", completion);

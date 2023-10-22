@@ -24,6 +24,18 @@ export const Core = builder.build({
   import: importHandler,
   include,
   invoke,
+  /**
+   * Places the `passthrough` node on the board.
+   *
+   * A `passthrough` node is a node that simply passes its inputs to
+   * its outputs. Every computing machine needs a no-op node,
+   * and Breadboard library is no exception.
+   *
+   * See [`passthrough` node reference](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/nodes.md#passthrough) for more information.
+   *
+   * @param config - optional configuration for the node.
+   * @returns - a `Node` object that represents the placed node.
+   */
   passthrough,
   reflect,
   slot,

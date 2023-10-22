@@ -9,6 +9,7 @@ import {
   BreadboardNode,
   OptionalIdConfiguration,
 } from "@google-labs/breadboard";
+import { Core } from "@google-labs/core-kit";
 import { Starter } from "@google-labs/llm-starter";
 import { readFile, readdir } from "fs/promises";
 
@@ -62,7 +63,12 @@ export class Template {
   path: string;
   textPrompt?: TemplateNodeType;
 
-  constructor(version: string, public board: Board, public kit: Starter) {
+  constructor(
+    version: string,
+    public board: Board,
+    public kit: Starter,
+    public core: InstanceType<typeof Core>
+  ) {
     this.path = `./prompts/${version}`;
   }
 
@@ -91,7 +97,7 @@ export class Template {
     const text = examples.join("\n\n");
     template.wire(
       "<-examples",
-      this.board.passthrough({ examples: text, $id: "examples" })
+      this.core.passthrough({ examples: text, $id: "examples" })
     );
     return template;
   }
@@ -108,7 +114,7 @@ export class Template {
     const part = await readFile(`${this.path}/${name}.${extension}`, "utf-8");
     this.textPrompt.wire(
       `<-${name}.`,
-      this.board.passthrough({ [name]: part, $id: name })
+      this.core.passthrough({ [name]: part, $id: name })
     );
   }
 

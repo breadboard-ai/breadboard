@@ -482,9 +482,6 @@ export interface BreadboardRunner extends GraphDescriptor {
 }
 
 export interface Breadboard extends BreadboardRunner {
-  passthrough<In = InputValues, Out = OutputValues>(
-    config?: OptionalIdConfiguration
-  ): BreadboardNode<In, Out>;
   input<In = InputValues, Out = OutputValues>(
     config?: OptionalIdConfiguration
   ): BreadboardNode<In, Out>;

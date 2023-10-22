@@ -55,25 +55,6 @@ export class Board extends BoardRunner implements Breadboard {
    */
 
   /**
-   * Places the `passthrough` node on the board.
-   *
-   * A `passthrough` node is a node that simply passes its inputs to
-   * its outputs. Every computing machine needs a no-op node,
-   * and Breadboard library is no exception.
-   *
-   * See [`passthrough` node reference](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/nodes.md#passthrough) for more information.
-   *
-   * @param config - optional configuration for the node.
-   * @returns - a `Node` object that represents the placed node.
-   */
-  passthrough<In = InputValues, Out = OutputValues>(
-    config: OptionalIdConfiguration = {}
-  ): BreadboardNode<In, Out> {
-    const { $id, ...rest } = config;
-    return new Node(this, undefined, "passthrough", { ...rest }, $id);
-  }
-
-  /**
    * Places an `input` node on the board.
    *
    * An `input` node is a node that asks for inputs from the user.

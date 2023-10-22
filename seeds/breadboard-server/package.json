@@ -50,7 +50,8 @@
     "jsonschema": "^1.4.1",
     "ava": "^5.2.0",
     "typedoc": "^0.25.1",
-    "typescript": "^5.0.4"
+    "typescript": "^5.0.4",
+    "@google-labs/core-kit": "*"
   },
   "dependencies": {
     "@google-cloud/firestore": "^6.7.0",

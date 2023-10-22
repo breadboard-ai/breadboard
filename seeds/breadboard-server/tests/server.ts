@@ -13,6 +13,7 @@ import {
   runResultLoop,
 } from "../src/server.js";
 import { Board, RunResult } from "@google-labs/breadboard";
+import { Core } from "@google-labs/core-kit";
 import { Writer, WriterResponse } from "../src/writer.js";
 import { Response } from "express";
 
@@ -27,11 +28,12 @@ class MockResponse implements WriterResponse {
 
 test("runResultLoop correctly handles finite graph", async (t) => {
   const board = new Board();
+  const core = board.addKit(Core);
   board
     .input({ $id: "in" })
     .wire(
       "*->",
-      board
+      core
         .passthrough({ $id: "noop" })
         .wire("*->", board.output({ $id: "out" }))
     );

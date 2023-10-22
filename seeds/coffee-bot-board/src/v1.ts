@@ -11,13 +11,15 @@ import { Starter } from "@google-labs/llm-starter";
 
 import { config } from "dotenv";
 import { Template } from "./template.js";
+import { Core } from "@google-labs/core-kit";
 
 config();
 
 const board = new Board();
 const kit = board.addKit(Starter);
+const core = board.addKit(Core);
 
-const template = await new Template("v1-multi-move", board, kit).make();
+const template = await new Template("v1-multi-move", board, kit, core).make();
 board.input().wire(
   "user->",
   template.wire(

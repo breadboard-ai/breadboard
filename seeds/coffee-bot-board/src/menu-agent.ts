@@ -10,24 +10,26 @@ import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 
 import { PromptMaker } from "./template.js";
+import { Core } from "@google-labs/core-kit";
 
 config();
 
 const maker = new PromptMaker("v2-multi-agent");
 const board = new Board();
 const kit = board.addKit(Starter);
+const core = board.addKit(Core);
 
 const menu = kit.promptTemplate(
   ...(await maker.prompt("menu-agent", "menuAgent"))
 );
-menu.wire("<-menu.", board.passthrough(await maker.part("menu", "txt")));
+menu.wire("<-menu.", core.passthrough(await maker.part("menu", "txt")));
 menu.wire(
   "<-menu-format.",
-  board.passthrough(await maker.part("menu-format", "json"))
+  core.passthrough(await maker.part("menu-format", "json"))
 );
 menu.wire(
   "<-menu-not-found.",
-  board.passthrough(await maker.part("menu-not-found", "json"))
+  core.passthrough(await maker.part("menu-not-found", "json"))
 );
 
 function parseResponse({ completion }: { completion: string }) {

@@ -10,6 +10,7 @@ import map, { MapInputs } from "../src/nodes/map.js";
 import { Capability, InputValues, Board } from "@google-labs/breadboard";
 import { Nursery } from "../src/nursery.js";
 import Starter from "@google-labs/llm-starter";
+import { Core } from "@google-labs/core-kit";
 
 test("map with no board just outputs list", async (t) => {
   const inputs = {
@@ -177,11 +178,12 @@ test("using lambda with promptTemplate", async (t) => {
 
 test("using lambda with promptTemplate with input from outer board", async (t) => {
   const board = new Board();
+  const core = board.addKit(Core);
   const nursery = board.addKit(Nursery);
   const llm = board.addKit(Starter);
 
   const input = board.input();
-  const label = board.passthrough({ label: "name" });
+  const label = core.passthrough({ label: "name" });
   const map = nursery.map((_, input, output) => {
     const template = llm
       .promptTemplate("{{label}}: {{item}}")

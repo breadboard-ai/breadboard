@@ -10,20 +10,19 @@ import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 
 import { PromptMaker } from "./template.js";
+import { Core } from "@google-labs/core-kit";
 
 config();
 
 const maker = new PromptMaker("v2-multi-agent");
 export const menuSummaryAgent = new Board();
 const kit = menuSummaryAgent.addKit(Starter);
+const core = menuSummaryAgent.addKit(Core);
 
 const menu = kit.promptTemplate(
   ...(await maker.prompt("menu-summary-agent", "menuSummaryAgent"))
 );
-menu.wire(
-  "<-menu.",
-  menuSummaryAgent.passthrough(await maker.part("menu", "txt"))
-);
+menu.wire("<-menu.", core.passthrough(await maker.part("menu", "txt")));
 
 function formatOutput({ completion }: { completion: string }) {
   const output = {

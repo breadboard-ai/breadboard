@@ -6,6 +6,7 @@
 
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
+import { Core } from "@google-labs/core-kit";
 
 const board = new Board({
   title: "Pinecone API query invocation",
@@ -15,6 +16,7 @@ const board = new Board({
 });
 
 const starter = board.addKit(Starter);
+const core = board.addKit(Core);
 
 // TODO: Make topK and other properties configurable.
 const body = starter.jsonata(
@@ -26,7 +28,7 @@ const body = starter.jsonata(
 
 const apiCall = board
   .include("#vector", { $id: "vector" })
-  .wire("<-call", board.passthrough({ $id: "query-api", call: "query" }))
+  .wire("<-call", core.passthrough({ $id: "query-api", call: "query" }))
   .wire("<-config", board.include("#config", { $id: "config" }));
 
 board

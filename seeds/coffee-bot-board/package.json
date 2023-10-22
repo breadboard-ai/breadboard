@@ -54,6 +54,7 @@
   "dependencies": {
     "@clack/prompts": "^0.6.3",
     "@google-labs/breadboard": "*",
+    "@google-labs/core-kit": "*",
     "@google-labs/llm-starter": "*",
     "@google-labs/node-nursery": "*",
     "dotenv": "^16.3.1"
