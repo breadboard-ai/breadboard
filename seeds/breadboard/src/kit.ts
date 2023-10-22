@@ -15,8 +15,9 @@ import {
   KitConstructor,
   KitImportMap,
   NodeFactory,
-  OptionalIdConfiguration,
   NodeHandlerContext,
+  ConfigOrLambda,
+  OutputValues,
 } from "./types.js";
 import { Board } from "./board.js";
 import { callHandler } from "./handler.js";
@@ -191,7 +192,10 @@ export class KitBuilder {
             if (prop === "handlers" || prop === "url") {
               return target[prop];
             } else if (nodes.includes(prop as NodeNames[number])) {
-              return (config: OptionalIdConfiguration = {}) => {
+              return (
+                configOrLambda: ConfigOrLambda<InputValues, OutputValues> = {}
+              ) => {
+                const config = nodeFactory.getConfigWithLambda(configOrLambda);
                 const { $id, ...rest } = config;
                 return nodeFactory.create(
                   proxy as unknown as Kit,
