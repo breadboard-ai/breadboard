@@ -352,7 +352,8 @@ export class BoardRunner implements BreadboardRunner {
    * @returns {Board} A runnable board.
    */
   static async fromBreadboardCapability(
-    board: BreadboardCapability
+    board: BreadboardCapability,
+    kits?: KitImportMap
   ): Promise<BoardRunner> {
     if (board.kind !== "board" || !(board as BreadboardCapability).board) {
       throw new Error(`Expected a "board" Capability, but got ${board}`);
@@ -370,7 +371,7 @@ export class BoardRunner implements BreadboardRunner {
     // TODO: Use JSON schema to validate rather than this hack.
     let runnableBoard = (board as BreadboardCapability).board as BoardRunner;
     if (!runnableBoard.runOnce) {
-      runnableBoard = await BoardRunner.fromGraphDescriptor(boardish);
+      runnableBoard = await BoardRunner.fromGraphDescriptor(boardish, kits);
     }
 
     return runnableBoard;

@@ -32,13 +32,12 @@ test("correctly skips nodes when asked", async (t) => {
 
 test("correctly passes inputs and outputs to included boards", async (t) => {
   const nestedBoard = new Board();
+  const kit = nestedBoard.addKit(TestKit);
   nestedBoard
     .input()
     .wire(
       "hello->",
-      nestedBoard
-        .passthrough()
-        .wire("hello->", nestedBoard.output({ $id: "output" }))
+      kit.noop().wire("hello->", nestedBoard.output({ $id: "output" }))
     );
 
   const board = new Board();
@@ -49,19 +48,20 @@ test("correctly passes inputs and outputs to included boards", async (t) => {
       board.include(nestedBoard).wire("hello->", board.output())
     );
 
-  const result = await board.runOnce({ hello: "world" });
+  const result = await board.runOnce({ hello: "world" }, undefined, undefined, {
+    "test-kit": TestKit,
+  });
   t.deepEqual(result, { hello: "world" });
 });
 
 test("correctly passes inputs and outputs to invoked boards", async (t) => {
   const nestedBoard = new Board();
+  const kit = nestedBoard.addKit(TestKit);
   nestedBoard
     .input()
     .wire(
       "hello->",
-      nestedBoard
-        .passthrough()
-        .wire("hello->", nestedBoard.output({ $id: "output" }))
+      kit.noop().wire("hello->", nestedBoard.output({ $id: "output" }))
     );
 
   const board = new Board();
@@ -69,19 +69,20 @@ test("correctly passes inputs and outputs to invoked boards", async (t) => {
     .input()
     .wire("hello->", board.invoke(nestedBoard).wire("hello->", board.output()));
 
-  const result = await board.runOnce({ hello: "world" });
+  const result = await board.runOnce({ hello: "world" }, undefined, undefined, {
+    "test-kit": TestKit,
+  });
   t.deepEqual(result, { hello: "world" });
 });
 
 test("correctly passes inputs and outputs to included boards with a probe", async (t) => {
   const nestedBoard = new Board();
+  const kit = nestedBoard.addKit(TestKit);
   nestedBoard
     .input()
     .wire(
       "hello->",
-      nestedBoard
-        .passthrough()
-        .wire("hello->", nestedBoard.output({ $id: "output" }))
+      kit.noop().wire("hello->", nestedBoard.output({ $id: "output" }))
     );
 
   const board = new Board();
@@ -92,18 +93,21 @@ test("correctly passes inputs and outputs to included boards with a probe", asyn
       board.include(nestedBoard).wire("hello->", board.output())
     );
 
-  const result = await board.runOnce({ hello: "world" });
+  const result = await board.runOnce({ hello: "world" }, undefined, undefined, {
+    "test-kit": TestKit,
+  });
   t.deepEqual(result, { hello: "world" });
 });
 
 test("correctly skips nodes in nested boards", async (t) => {
   const nestedBoard = new Board();
+  const kit = nestedBoard.addKit(TestKit);
   nestedBoard
     .input()
     .wire(
       "*->",
-      nestedBoard
-        .passthrough({ $id: "toSkip" })
+      kit
+        .noop({ $id: "toSkip" })
         .wire("*->", nestedBoard.output({ $id: "output" }))
     );
 
@@ -121,7 +125,9 @@ test("correctly skips nodes in nested boards", async (t) => {
     }
   });
 
-  const result = await board.runOnce({ hello: "world" }, undefined, skipper);
+  const result = await board.runOnce({ hello: "world" }, undefined, skipper, {
+    "test-kit": TestKit,
+  });
   t.deepEqual(result, { instead: "this" });
 });
 
@@ -278,12 +284,15 @@ test("corectly invoke a lambda", async (t) => {
     "*->",
     board
       .invoke((board, input, output) => {
-        input.wire("*->", board.passthrough().wire("*->", output));
+        const kit = board.addKit(TestKit);
+        input.wire("*->", kit.noop().wire("*->", output));
       })
       .wire("*->", board.output())
   );
 
-  const result = await board.runOnce({ foo: "bar" });
+  const result = await board.runOnce({ foo: "bar" }, undefined, undefined, {
+    "test-kit": TestKit,
+  });
   t.deepEqual(result, { foo: "bar" });
 });
 
@@ -308,13 +317,11 @@ test("throws when incorrectly wiring different boards", async (t) => {
 
 test("allow wiring across boards with lambdas", async (t) => {
   const board = new Board();
-  const passthrough = board.passthrough({ foo: 1 });
+  const kit = board.addKit(TestKit);
+  const noop = kit.noop({ foo: 1 });
   const lambda = board.lambda((board, input, output) => {
-    board
-      .passthrough()
-      .wire("foo<-.", passthrough)
-      .wire("bar<-.", input)
-      .wire("*->.", output);
+    const kit = board.addKit(TestKit);
+    kit.noop().wire("foo<-.", noop).wire("bar<-.", input).wire("*->.", output);
   });
   board
     .input()
@@ -322,18 +329,20 @@ test("allow wiring across boards with lambdas", async (t) => {
       "bar->",
       board.invoke().wire("board<-", lambda).wire("*->", board.output())
     );
-  const output = await board.runOnce({ bar: 2 });
+  const output = await board.runOnce({ bar: 2 }, undefined, undefined, {
+    "test-kit": TestKit,
+  });
   t.deepEqual(output, { bar: 2, foo: 1 });
 });
 
 test("when $error is set, all other outputs are ignored, named", async (t) => {
   const board = new Board();
   const kit = board.addKit(TestKit);
-  const passthrough = kit.noop({ foo: 1, $error: { kind: "error" } });
-  passthrough.wire("foo->", board.output());
-  passthrough.wire(
+  const noop = kit.noop({ foo: 1, $error: { kind: "error" } });
+  noop.wire("foo->", board.output());
+  noop.wire(
     "$error->",
-    // extra passthrough so that the above output would be used first
+    // extra noop so that the above output would be used first
     kit.noop().wire("$error->", board.output())
   );
   const result = await board.runOnce({});
@@ -344,10 +353,10 @@ test("when $error is set, all other outputs are ignored, named", async (t) => {
 test("when $error is set, all other outputs are ignored, with *", async (t) => {
   const board = new Board();
   const kit = board.addKit(TestKit);
-  const passthrough = kit.noop({ foo: 1, $error: { kind: "error" } });
+  const noop = kit.noop({ foo: 1, $error: { kind: "error" } });
   const output = board.output();
-  passthrough.wire("*->", output);
-  passthrough.wire("$error->", output);
+  noop.wire("*->", output);
+  noop.wire("$error->", output);
   const result = await board.runOnce({});
   t.is(result.foo, undefined);
   t.like(result.$error, { kind: "error" });

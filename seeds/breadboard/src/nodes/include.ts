@@ -64,7 +64,7 @@ export default {
     const source = path || $ref || "";
 
     const runnableBoard = board
-      ? await Board.fromBreadboardCapability(board)
+      ? await Board.fromBreadboardCapability(board, context.kits)
       : graph
       ? await Board.fromGraphDescriptor(graph, context.kits)
       : await Board.load(source, {
