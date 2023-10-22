@@ -378,7 +378,7 @@ export interface KitConstructor<T extends Kit> {
 }
 
 export type NodeSugar<In, Out> = (
-  config?: OptionalIdConfiguration
+  config?: ConfigOrLambda<In, Out>
 ) => BreadboardNode<In, Out>;
 
 export type GenericKit<T extends NodeHandlers> = Kit & {
@@ -640,27 +640,6 @@ export type LambdaNodeOutputs = OutputValues & {
    * The lambda board that can be run.
    */
   board: BreadboardCapability;
-};
-
-export type ImportNodeInputs = InputValues & {
-  path?: string;
-  graph?: GraphDescriptor;
-  args: InputValues;
-};
-
-export type IncludeNodeInputs = InputValues & {
-  path?: string;
-  $ref?: string;
-  board?: BreadboardCapability;
-  graph?: GraphDescriptor;
-  slotted?: BreadboardSlotSpec;
-  args: InputValues;
-};
-
-export type InvokeNodeInputs = InputValues & {
-  path?: string;
-  board?: BreadboardCapability;
-  graph?: GraphDescriptor;
 };
 
 export type KitImportMap = Record<string, KitConstructor<Kit>>;

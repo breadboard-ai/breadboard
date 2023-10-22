@@ -7,6 +7,7 @@
 import { Board } from "../../src/board.js";
 import { KitBuilder } from "../../src/kit.js";
 import {
+  BreadboardCapability,
   GraphDescriptor,
   InputValues,
   NodeHandlerContext,
@@ -16,6 +17,9 @@ type IncludeInputValues = InputValues & {
   graph?: GraphDescriptor;
 };
 
+type InvokeInputValues = InputValues & {
+  board?: BreadboardCapability;
+};
 /**
  * This is a Kit designed specifically for use in the testing harness.
  */
@@ -50,5 +54,19 @@ export const TestKit = new KitBuilder({
     }
     const board = await Board.fromGraphDescriptor(graph, context.kits);
     return await board.runOnce(inputs, context);
+  },
+  invoke: async (inputs: InvokeInputValues, context: NodeHandlerContext) => {
+    const { board, ...args } = inputs;
+
+    if (!board) {
+      throw new Error("Must provide a board to invoke");
+    }
+
+    const runnableBoard = await Board.fromBreadboardCapability(
+      board,
+      context.kits
+    );
+
+    return await runnableBoard.runOnce(args, context);
   },
 });

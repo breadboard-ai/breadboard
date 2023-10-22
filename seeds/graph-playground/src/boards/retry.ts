@@ -5,6 +5,7 @@
  */
 
 import { Board } from "@google-labs/breadboard";
+import Core from "@google-labs/core-kit";
 import { Starter } from "@google-labs/llm-starter";
 
 const retry = new Board({
@@ -14,6 +15,7 @@ const retry = new Board({
   version: "0.0.1",
 });
 const kit = retry.addKit(Starter);
+const core = retry.addKit(Core);
 
 const input = retry.input({
   schema: {
@@ -47,7 +49,7 @@ const outputError = retry.output({
   },
 });
 
-const completionCaller = retry.invoke({ $id: "lambda-completion" });
+const completionCaller = core.invoke({ $id: "lambda-completion" });
 input.wire("lambda->board.", completionCaller);
 
 const countdown = kit.jsonata(

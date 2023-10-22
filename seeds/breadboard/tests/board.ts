@@ -72,9 +72,10 @@ test("correctly passes inputs and outputs to invoked boards", async (t) => {
     );
 
   const board = new Board();
+  const kit = board.addKit(TestKit);
   board
     .input()
-    .wire("hello->", board.invoke(nestedBoard).wire("hello->", board.output()));
+    .wire("hello->", kit.invoke(nestedBoard).wire("hello->", board.output()));
 
   const result = await board.runOnce({ hello: "world" }, undefined, undefined, {
     "test-kit": TestKit,
@@ -295,10 +296,11 @@ test("nested lambdas reusing kits", async (t) => {
 
 test("corectly invoke a lambda", async (t) => {
   const board = new Board();
+  const kit = board.addKit(TestKit);
 
   board.input().wire(
     "*->",
-    board
+    kit
       .invoke((board, input, output) => {
         const kit = board.addKit(TestKit);
         input.wire("*->", kit.noop().wire("*->", output));
@@ -343,7 +345,7 @@ test("allow wiring across boards with lambdas", async (t) => {
     .input()
     .wire(
       "bar->",
-      board.invoke().wire("board<-", lambda).wire("*->", board.output())
+      kit.invoke().wire("board<-", lambda).wire("*->", board.output())
     );
   const output = await board.runOnce({ bar: 2 }, undefined, undefined, {
     "test-kit": TestKit,

@@ -5,6 +5,7 @@
  */
 
 import { Board } from "@google-labs/breadboard";
+import { Core } from "@google-labs/core-kit";
 import { Starter } from "@google-labs/llm-starter";
 import { Nursery } from "@google-labs/node-nursery";
 
@@ -15,6 +16,7 @@ const jsonPrompt = new Board({
   version: "0.0.1",
 });
 const kit = jsonPrompt.addKit(Starter);
+const core = jsonPrompt.addKit(Core);
 const nursery = jsonPrompt.addKit(Nursery);
 
 const schema = {
@@ -102,7 +104,7 @@ jsonPrompt
       )
       .wire(
         "prompt->text",
-        jsonPrompt
+        core
           .invoke({ path: "./retry.json" })
           .wire(
             "lambda<-board",

@@ -34,6 +34,7 @@ export const Core = builder.build({
    * @returns - a `Node` object that represents the placed node.
    */
   import: importHandler,
+
   /**
    * Places an `include` node on the board.
    *
@@ -53,6 +54,27 @@ export const Core = builder.build({
    * @returns - a `Node` object that represents the placed node.
    */
   include,
+
+  /**
+   * Places an `invoke` node on the board.
+   *
+   * Use this node to invoke other boards into the current board.
+   *
+   * See [`include` node
+   * reference](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/nodes.md#include)
+   * for more information.
+   *
+   * Expects as input one of
+   *  - `path`: A board to be loaded
+   *  - `graph`: A graph (treated as JSON)
+   *  - `board`: A {BreadboardCapability}, e.g. from lambda or import
+   *
+   * All other inputs are passed to the invoked board,
+   * and the output are the invoked board's outputs.
+   *
+   * @param config - optional configuration for the node.
+   * @returns - a `Node` object that represents the placed node.
+   */
   invoke,
   /**
    * Places the `passthrough` node on the board.
@@ -67,6 +89,7 @@ export const Core = builder.build({
    * @returns - a `Node` object that represents the placed node.
    */
   passthrough,
+
   /**
    * Places a `reflect` node on the board.
    *
@@ -80,6 +103,7 @@ export const Core = builder.build({
    * @returns - a `Node` object that represents the placed node.
    */
   reflect,
+
   /**
    * Places a `slot` node on the board.
    *

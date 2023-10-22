@@ -41,7 +41,7 @@ math
       )
       .wire(
         "prompt->text",
-        math
+        core
           .invoke({ path: "./retry.json" })
           .wire(
             "lambda<-board",
