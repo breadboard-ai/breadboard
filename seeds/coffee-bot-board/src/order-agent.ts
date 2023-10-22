@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { type NodeValue, Board } from "@google-labs/breadboard";
+import {
+  type NodeValue,
+  Board,
+  GraphDescriptor,
+} from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 
 import { PromptMaker } from "./template.js";
@@ -109,8 +113,8 @@ board
   .input({ $id: "first-ask-customer" })
   .wire("customer->Customer", customerMemory);
 
-board
-  .include(schemishGenerator, { $id: "generator" })
+core
+  .include({ graph: schemishGenerator as GraphDescriptor, $id: "generator" })
   .wire("prologue<-prompt.", prologuePrompt)
   .wire("epilogue<-prompt.", epiloguePrompt)
   .wire("schema<-order-schema.", schema)
