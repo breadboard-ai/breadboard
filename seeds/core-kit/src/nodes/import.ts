@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board } from "@google-labs/breadboard";
+import { BoardRunner } from "@google-labs/breadboard";
 import { SchemaBuilder } from "@google-labs/breadboard/kits";
 import type {
   InputValues,
@@ -55,11 +55,11 @@ export default {
     const { path, graph, ...args } = inputs as ImportNodeInputs;
 
     const board = graph
-      ? (graph as Board).runOnce // TODO: Hack! Use JSON schema or so instead.
-        ? ({ ...graph } as Board)
-        : await Board.fromGraphDescriptor(graph, context.kits)
+      ? (graph as BoardRunner).runOnce // TODO: Hack! Use JSON schema or so instead.
+        ? ({ ...graph } as BoardRunner)
+        : await BoardRunner.fromGraphDescriptor(graph, context.kits)
       : path
-      ? await Board.load(path, {
+      ? await BoardRunner.load(path, {
           base: context.board.url,
           outerGraph: context.parent,
           kits: context.kits,

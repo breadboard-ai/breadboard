@@ -19,7 +19,6 @@ import {
   ConfigOrLambda,
   OutputValues,
 } from "./types.js";
-import { Board } from "./board.js";
 import { callHandler } from "./handler.js";
 import { BoardRunner } from "./runner.js";
 
@@ -81,9 +80,9 @@ export class GraphToKitAdapter {
   }
 
   async #initialize(url: string) {
-    const board = await Board.fromGraphDescriptor(this.graph, this.kits);
+    const board = await BoardRunner.fromGraphDescriptor(this.graph, this.kits);
     board.url = url;
-    this.handlers = await Board.handlersFromBoard(board);
+    this.handlers = await BoardRunner.handlersFromBoard(board);
     this.board = board;
   }
 
@@ -107,10 +106,8 @@ export class GraphToKitAdapter {
         const board = this.board!;
 
         return callHandler(handler, inputs, {
-          board,
-          descriptor: node,
+          ...context,
           parent: board,
-          slots: {}, // TODO: Perhaps pass slots from graph?
           kits: this.kits || context.kits,
         });
       },
