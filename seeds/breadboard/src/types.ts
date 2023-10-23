@@ -508,7 +508,8 @@ export type BreadboardCapability = Capability & {
 export interface NodeHandlerContext {
   readonly board: BreadboardRunner;
   readonly descriptor: NodeDescriptor;
-  readonly parent: GraphDescriptor;
+  readonly base?: string;
+  readonly outerGraph: GraphDescriptor;
   readonly slots: BreadboardSlotSpec;
   readonly probe?: EventTarget;
   readonly kits: KitImportMap;

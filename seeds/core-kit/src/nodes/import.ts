@@ -60,8 +60,8 @@ export default {
         : await BoardRunner.fromGraphDescriptor(graph, context.kits)
       : path
       ? await BoardRunner.load(path, {
-          base: context.board.url,
-          outerGraph: context.parent,
+          base: context.base,
+          outerGraph: context.outerGraph,
           kits: context.kits,
         })
       : undefined;

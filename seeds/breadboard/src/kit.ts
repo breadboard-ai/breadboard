@@ -107,7 +107,8 @@ export class GraphToKitAdapter {
 
         return callHandler(handler, inputs, {
           ...context,
-          parent: board,
+          outerGraph: board,
+          base: board.url,
           kits: this.kits || context.kits,
         });
       },

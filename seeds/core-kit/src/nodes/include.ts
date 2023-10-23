@@ -66,7 +66,7 @@ export default {
     const slottedWithUrls: BreadboardSlotSpec = {};
     if (slotted) {
       for (const key in slotted) {
-        slottedWithUrls[key] = { url: context.board.url, ...slotted[key] };
+        slottedWithUrls[key] = { url: context.base, ...slotted[key] };
       }
     }
 
@@ -79,8 +79,8 @@ export default {
       ? await BoardRunner.fromGraphDescriptor(graph, context.kits)
       : await BoardRunner.load(source, {
           slotted: slottedWithUrls,
-          base: context.board.url,
-          outerGraph: context.parent,
+          base: context.base,
+          outerGraph: context.outerGraph,
           kits: context.kits,
         });
 

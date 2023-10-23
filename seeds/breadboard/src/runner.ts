@@ -70,7 +70,7 @@ export class BoardRunner implements BreadboardRunner {
   /**
    * The parent board, if this is board is a subgraph of a larger board.
    */
-  #parent?: GraphDescriptor;
+  #outerGraph?: GraphDescriptor;
 
   /**
    *
@@ -179,7 +179,8 @@ export class BoardRunner implements BreadboardRunner {
         board: this,
         descriptor,
         probe,
-        parent: this.#parent || this,
+        outerGraph: this.#outerGraph || this,
+        base: this.url,
         slots,
         kits: kits || {},
       };
@@ -341,7 +342,7 @@ export class BoardRunner implements BreadboardRunner {
     });
     const { isSubgraph, graph } = await loader.load(url);
     const board = await BoardRunner.fromGraphDescriptor(graph, options?.kits);
-    if (isSubgraph) board.#parent = outerGraph;
+    if (isSubgraph) board.#outerGraph = outerGraph;
     board.#slots = slotted || {};
     return board;
   }
