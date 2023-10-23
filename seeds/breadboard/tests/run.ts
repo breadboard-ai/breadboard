@@ -49,22 +49,17 @@ test("correctly saves and loads", async (t) => {
   input.wire("<-", kit.noop());
   input.wire("*->", kit.noop().wire("*->", board.output().wire("*->", input)));
   {
-    const firstBoard = await Board.fromGraphDescriptor(board, {
-      "test-kit": TestKit,
-    });
-    for await (const stop of firstBoard.run()) {
+    const firstBoard = await Board.fromGraphDescriptor(board);
+    for await (const stop of firstBoard.run({ kits: [kit] })) {
       t.is(stop.type, "beforehandler");
       runResult = await stop.save();
       break;
     }
   }
   {
-    const secondBoard = await Board.fromGraphDescriptor(board, {
-      "test-kit": TestKit,
-    });
+    const secondBoard = await Board.fromGraphDescriptor(board);
     for await (const stop of secondBoard.run(
-      undefined,
-      undefined,
+      { kits: [kit] },
       RunResult.load(runResult)
     )) {
       t.is(stop.type, "input");
@@ -73,12 +68,9 @@ test("correctly saves and loads", async (t) => {
     }
   }
   {
-    const thirdBoard = await Board.fromGraphDescriptor(board, {
-      "test-kit": TestKit,
-    });
+    const thirdBoard = await Board.fromGraphDescriptor(board);
     for await (const stop of thirdBoard.run(
-      undefined,
-      undefined,
+      { kits: [kit] },
       RunResult.load(runResult)
     )) {
       t.is(stop.type, "beforehandler");
@@ -87,12 +79,9 @@ test("correctly saves and loads", async (t) => {
     }
   }
   {
-    const fourthBoard = await Board.fromGraphDescriptor(board, {
-      "test-kit": TestKit,
-    });
+    const fourthBoard = await Board.fromGraphDescriptor(board);
     for await (const stop of fourthBoard.run(
-      undefined,
-      undefined,
+      { kits: [kit] },
       RunResult.load(runResult)
     )) {
       t.is(stop.type, "output");
@@ -101,12 +90,9 @@ test("correctly saves and loads", async (t) => {
     }
   }
   {
-    const fifthBoard = await Board.fromGraphDescriptor(board, {
-      "test-kit": TestKit,
-    });
+    const fifthBoard = await Board.fromGraphDescriptor(board);
     for await (const stop of fifthBoard.run(
-      undefined,
-      undefined,
+      { kits: [kit] },
       RunResult.load(runResult)
     )) {
       t.is(stop.type, "input");
@@ -123,7 +109,7 @@ test("correctly detects exit node", async (t) => {
   const input = board.input();
   input.wire("*->", kit.noop().wire("*->", board.output()));
 
-  const generator = board.run();
+  const generator = board.run({ kits: [kit] });
 
   {
     const stop = await generator.next();

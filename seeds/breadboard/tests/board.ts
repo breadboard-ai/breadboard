@@ -30,7 +30,7 @@ test("correctly skips nodes when asked", async (t) => {
     }
   });
 
-  const result = await board.runOnce({ hello: "world" }, undefined, skipper);
+  const result = await board.runOnce({ hello: "world" }, { probe: skipper });
   t.deepEqual(result, { instead: "this" });
 });
 
@@ -55,9 +55,7 @@ test("correctly passes inputs and outputs to included boards", async (t) => {
         .wire("hello->", board.output())
     );
 
-  const result = await board.runOnce({ hello: "world" }, undefined, undefined, {
-    "test-kit": TestKit,
-  });
+  const result = await board.runOnce({ hello: "world" }, { kits: [nestedKit] });
   t.deepEqual(result, { hello: "world" });
 });
 
@@ -77,9 +75,7 @@ test("correctly passes inputs and outputs to invoked boards", async (t) => {
     .input()
     .wire("hello->", kit.invoke(nestedBoard).wire("hello->", board.output()));
 
-  const result = await board.runOnce({ hello: "world" }, undefined, undefined, {
-    "test-kit": TestKit,
-  });
+  const result = await board.runOnce({ hello: "world" }, { kits: [nestedKit] });
   t.deepEqual(result, { hello: "world" });
 });
 
@@ -104,9 +100,7 @@ test("correctly passes inputs and outputs to included boards with a probe", asyn
         .wire("hello->", board.output())
     );
 
-  const result = await board.runOnce({ hello: "world" }, undefined, undefined, {
-    "test-kit": TestKit,
-  });
+  const result = await board.runOnce({ hello: "world" }, { kits: [nestedKit] });
   t.deepEqual(result, { hello: "world" });
 });
 
@@ -142,9 +136,10 @@ test("correctly skips nodes in nested boards", async (t) => {
     }
   });
 
-  const result = await board.runOnce({ hello: "world" }, undefined, skipper, {
-    "test-kit": TestKit,
-  });
+  const result = await board.runOnce(
+    { hello: "world" },
+    { probe: skipper, kits: [nestedKit] }
+  );
   t.deepEqual(result, { instead: "this" });
 });
 
@@ -159,7 +154,7 @@ test("allows pausing and resuming the board", async (t) => {
     const firstBoard = await Board.fromGraphDescriptor(board, {
       "test-kit": TestKit,
     });
-    for await (const stop of firstBoard.run()) {
+    for await (const stop of firstBoard.run({ kits: [kit] })) {
       t.is(stop.type, "beforehandler");
       result = stop;
       break;
@@ -169,7 +164,7 @@ test("allows pausing and resuming the board", async (t) => {
     const secondBoard = await Board.fromGraphDescriptor(board, {
       "test-kit": TestKit,
     });
-    for await (const stop of secondBoard.run(undefined, undefined, result)) {
+    for await (const stop of secondBoard.run({ kits: [kit] }, result)) {
       t.is(stop.type, "input");
       result = stop;
       break;
@@ -179,7 +174,7 @@ test("allows pausing and resuming the board", async (t) => {
     const thirdBoard = await Board.fromGraphDescriptor(board, {
       "test-kit": TestKit,
     });
-    for await (const stop of thirdBoard.run(undefined, undefined, result)) {
+    for await (const stop of thirdBoard.run({ kits: [kit] }, result)) {
       t.is(stop.type, "beforehandler");
       result = stop;
       break;
@@ -189,7 +184,7 @@ test("allows pausing and resuming the board", async (t) => {
     const fourthBoard = await Board.fromGraphDescriptor(board, {
       "test-kit": TestKit,
     });
-    for await (const stop of fourthBoard.run(undefined, undefined, result)) {
+    for await (const stop of fourthBoard.run({ kits: [kit] }, result)) {
       t.is(stop.type, "output");
       result = stop;
       break;
@@ -199,7 +194,7 @@ test("allows pausing and resuming the board", async (t) => {
     const fifthBoard = await Board.fromGraphDescriptor(board, {
       "test-kit": TestKit,
     });
-    for await (const stop of fifthBoard.run(undefined, undefined, result)) {
+    for await (const stop of fifthBoard.run({ kits: [kit] }, result)) {
       t.is(stop.type, "input");
       result = stop;
       break;
@@ -308,9 +303,7 @@ test("corectly invoke a lambda", async (t) => {
       .wire("*->", board.output())
   );
 
-  const result = await board.runOnce({ foo: "bar" }, undefined, undefined, {
-    "test-kit": TestKit,
-  });
+  const result = await board.runOnce({ foo: "bar" }, { kits: [kit] });
   t.deepEqual(result, { foo: "bar" });
 });
 
@@ -347,9 +340,7 @@ test("allow wiring across boards with lambdas", async (t) => {
       "bar->",
       kit.invoke().wire("board<-", lambda).wire("*->", board.output())
     );
-  const output = await board.runOnce({ bar: 2 }, undefined, undefined, {
-    "test-kit": TestKit,
-  });
+  const output = await board.runOnce({ bar: 2 }, { kits: [kit] });
   t.deepEqual(output, { bar: 2, foo: 1 });
 });
 

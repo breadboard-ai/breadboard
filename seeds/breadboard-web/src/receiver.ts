@@ -89,7 +89,7 @@ export class ProxyReceiver {
     yield new FinalResult(
       nodeType,
       await callHandler(handler, inputs, {
-        parent: this.board,
+        outerGraph: this.board,
         board: this.board,
         descriptor: data.node,
         slots: {},

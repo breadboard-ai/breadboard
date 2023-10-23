@@ -30,7 +30,7 @@ export async function runResultLoop(
   if (runResult && runResult.type === "input") {
     runResult.inputs = inputs;
   }
-  for await (const stop of board.run(undefined, undefined, runResult)) {
+  for await (const stop of board.run(undefined, runResult)) {
     if (stop.type === "beforehandler") {
       writer.writeBeforeHandler(stop);
       continue;

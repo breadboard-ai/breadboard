@@ -35,7 +35,6 @@ import {
 import { KitLoader } from "./kit.js";
 import { BoardLoader } from "./loader.js";
 import { runRemote } from "./remote.js";
-import { NestedProbe } from "./nested-probe.js";
 import { callHandler } from "./handler.js";
 import { toMermaid } from "./mermaid.js";
 
@@ -118,14 +117,11 @@ export class BoardRunner implements BreadboardRunner {
    * @param kits - an optional map of kits to use when running the board.
    */
   async *run(
-    // TODO: Use options property bag
-    probe?: EventTarget,
-    slots?: BreadboardSlotSpec,
-    result?: RunResult,
-    kits?: KitImportMap
+    context: NodeHandlerContext = {},
+    result?: RunResult
   ): AsyncGenerator<RunResult> {
-    const handlers = await BoardRunner.handlersFromBoard(this);
-    slots = { ...this.#slots, ...slots };
+    const handlers = await BoardRunner.handlersFromBoard(this, context.kits);
+    const slots = { ...this.#slots, ...context.slots };
     this.#validators.forEach((validator) => validator.addGraph(this));
 
     const machine = new TraversalMachine(this, result?.state);
@@ -134,7 +130,7 @@ export class BoardRunner implements BreadboardRunner {
       const { inputs, descriptor, missingInputs } = result;
 
       if (result.skip) {
-        probe?.dispatchEvent(
+        context?.probe?.dispatchEvent(
           new ProbeEvent("skip", { descriptor, inputs, missingInputs })
         );
         continue;
@@ -142,7 +138,7 @@ export class BoardRunner implements BreadboardRunner {
 
       if (descriptor.type === "input") {
         yield new InputStageResult(result);
-        probe?.dispatchEvent(
+        context?.probe?.dispatchEvent(
           new ProbeEvent("input", {
             descriptor,
             inputs,
@@ -153,7 +149,9 @@ export class BoardRunner implements BreadboardRunner {
       }
 
       if (descriptor.type === "output") {
-        probe?.dispatchEvent(new ProbeEvent("output", { descriptor, inputs }));
+        context.probe?.dispatchEvent(
+          new ProbeEvent("output", { descriptor, inputs })
+        );
         yield new OutputStageResult(result);
         continue;
       }
@@ -170,31 +168,31 @@ export class BoardRunner implements BreadboardRunner {
       yield new BeforeHandlerStageResult(result);
 
       const shouldInvokeHandler =
-        !probe ||
-        probe.dispatchEvent(
+        !context.probe ||
+        context.probe.dispatchEvent(
           new ProbeEvent("beforehandler", beforehandlerDetail)
         );
 
-      const context: NodeHandlerContext = {
+      const newContext: NodeHandlerContext = {
+        ...context,
         board: this,
         descriptor,
-        probe,
         outerGraph: this.#outerGraph || this,
         base: this.url,
         slots,
-        kits: kits || {},
+        kits: [...(context.kits || []), ...this.kits],
       };
 
       const outputsPromise = (
         shouldInvokeHandler
-          ? callHandler(handler, inputs, context)
+          ? callHandler(handler, inputs, newContext)
           : beforehandlerDetail.outputs instanceof Promise
           ? beforehandlerDetail.outputs
           : Promise.resolve(beforehandlerDetail.outputs)
       ) as Promise<OutputValues>;
 
       outputsPromise.then((outputs) => {
-        probe?.dispatchEvent(
+        context.probe?.dispatchEvent(
           new ProbeEvent("node", {
             descriptor,
             inputs,
@@ -226,28 +224,23 @@ export class BoardRunner implements BreadboardRunner {
    */
   async runOnce(
     inputs: InputValues,
-    // TODO: Use options property bag
-    context?: NodeHandlerContext,
-    probe?: EventTarget,
-    kits?: KitImportMap
+    context: NodeHandlerContext = {}
   ): Promise<OutputValues> {
     const args = { ...inputs, ...this.args };
 
-    if (context) {
+    if (context.board && context.descriptor) {
       // If called from another node in a parent board, add the parent board's
       // validators to the board, with the current arguments.
       for (const validator of (context.board as this).#validators)
         this.addValidator(
           validator.getSubgraphValidator(context.descriptor, Object.keys(args))
         );
-
-      if (!probe && context.probe) probe = NestedProbe.create(context.probe);
     }
 
     try {
       let outputs: OutputValues = {};
 
-      for await (const result of this.run(probe, undefined, undefined, kits)) {
+      for await (const result of this.run(context)) {
         if (result.type === "input") {
           // Pass the inputs to the board. If there are inputs bound to the board
           // (e.g. from a lambda node that had incoming wires), they will
@@ -299,14 +292,14 @@ export class BoardRunner implements BreadboardRunner {
    */
   static async fromGraphDescriptor(
     graph: GraphDescriptor,
-    kits?: KitImportMap
+    importedKits?: KitImportMap
   ): Promise<BoardRunner> {
     const breadboard = new BoardRunner(graph);
     breadboard.edges = graph.edges;
     breadboard.nodes = graph.nodes;
     breadboard.graphs = graph.graphs;
     breadboard.args = graph.args;
-    const loader = new KitLoader(graph.kits, kits);
+    const loader = new KitLoader(graph.kits, importedKits);
     (await loader.load()).forEach((kit) => {
       breadboard.kits.push(
         new kit({
@@ -332,7 +325,7 @@ export class BoardRunner implements BreadboardRunner {
       slotted?: BreadboardSlotSpec;
       base?: string;
       outerGraph?: GraphDescriptor;
-      kits?: KitImportMap;
+      importedKits?: KitImportMap;
     }
   ): Promise<BoardRunner> {
     const { base, slotted, outerGraph } = options || {};
@@ -341,7 +334,10 @@ export class BoardRunner implements BreadboardRunner {
       graphs: outerGraph?.graphs,
     });
     const { isSubgraph, graph } = await loader.load(url);
-    const board = await BoardRunner.fromGraphDescriptor(graph, options?.kits);
+    const board = await BoardRunner.fromGraphDescriptor(
+      graph,
+      options?.importedKits
+    );
     if (isSubgraph) board.#outerGraph = outerGraph;
     board.#slots = slotted || {};
     return board;
@@ -354,7 +350,7 @@ export class BoardRunner implements BreadboardRunner {
    */
   static async fromBreadboardCapability(
     board: BreadboardCapability,
-    kits?: KitImportMap
+    importedKits?: KitImportMap
   ): Promise<BoardRunner> {
     if (board.kind !== "board" || !(board as BreadboardCapability).board) {
       throw new Error(`Expected a "board" Capability, but got ${board}`);
@@ -372,17 +368,28 @@ export class BoardRunner implements BreadboardRunner {
     // TODO: Use JSON schema to validate rather than this hack.
     let runnableBoard = (board as BreadboardCapability).board as BoardRunner;
     if (!runnableBoard.runOnce) {
-      runnableBoard = await BoardRunner.fromGraphDescriptor(boardish, kits);
+      runnableBoard = await BoardRunner.fromGraphDescriptor(
+        boardish,
+        importedKits
+      );
     }
 
     return runnableBoard;
   }
 
-  static async handlersFromBoard(board: BoardRunner): Promise<NodeHandlers> {
+  static async handlersFromBoard(
+    board: BoardRunner,
+    upstreamKits: Kit[] = []
+  ): Promise<NodeHandlers> {
     const core = new Core();
-    const kits = [core, ...board.kits];
+    const kits = [core, ...upstreamKits, ...board.kits];
     return kits.reduce((handlers, kit) => {
-      return { ...handlers, ...kit.handlers };
+      // If multiple kits have the same handler, the kit earlier in the list
+      // gets precedence, including upstream kits getting precedence over kits
+      // defined in the graph.
+      //
+      // TODO: This means kits are fallback, consider non-fallback as well.
+      return { ...kit.handlers, ...handlers };
     }, {} as NodeHandlers);
   }
 

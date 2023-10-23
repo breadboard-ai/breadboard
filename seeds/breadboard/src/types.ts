@@ -469,14 +469,12 @@ export type ProbeEvent = CustomEvent<ProbeDetails>;
 export interface BreadboardRunner extends GraphDescriptor {
   kits: Kit[]; // No longer optional
   run(
-    probe?: EventTarget,
-    slots?: BreadboardSlotSpec,
+    context?: NodeHandlerContext,
     result?: BreadboardRunResult
   ): AsyncGenerator<BreadboardRunResult>;
   runOnce(
     inputs: InputValues,
-    context?: NodeHandlerContext,
-    probe?: EventTarget
+    context?: NodeHandlerContext
   ): Promise<OutputValues>;
   addValidator(validator: BreadboardValidator): void;
 }
@@ -506,13 +504,13 @@ export type BreadboardCapability = Capability & {
 };
 
 export interface NodeHandlerContext {
-  readonly board: BreadboardRunner;
-  readonly descriptor: NodeDescriptor;
+  readonly board?: BreadboardRunner;
+  readonly descriptor?: NodeDescriptor;
+  readonly kits?: Kit[];
   readonly base?: string;
-  readonly outerGraph: GraphDescriptor;
-  readonly slots: BreadboardSlotSpec;
+  readonly outerGraph?: GraphDescriptor;
+  readonly slots?: BreadboardSlotSpec;
   readonly probe?: EventTarget;
-  readonly kits: KitImportMap;
 }
 
 type Common<To, From> = {

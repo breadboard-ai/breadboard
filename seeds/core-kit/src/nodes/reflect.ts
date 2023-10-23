@@ -37,7 +37,7 @@ export default {
     _inputs: InputValues,
     context: NodeHandlerContext
   ): Promise<OutputValues> => {
-    const graph = deepCopy(context.board);
+    const graph = context.board ? deepCopy(context.board) : {};
     return { graph };
   },
 };

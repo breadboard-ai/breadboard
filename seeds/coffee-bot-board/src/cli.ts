@@ -36,7 +36,7 @@ export const run = async (board: Board, slots?: BreadboardSlotSpec) => {
 
   try {
     // Run the board until it finishes. This may run forever.
-    for await (const stop of board.run(probe, slots)) {
+    for await (const stop of board.run({ probe, slots })) {
       if (stop.type === "input") {
         stop.inputs = await ask(stop.inputArguments);
       } else if (stop.type === "output") {

@@ -74,14 +74,13 @@ export default {
     const source = path || $ref || "";
 
     const runnableBoard = board
-      ? await BoardRunner.fromBreadboardCapability(board, context.kits)
+      ? await BoardRunner.fromBreadboardCapability(board)
       : graph
-      ? await BoardRunner.fromGraphDescriptor(graph, context.kits)
+      ? await BoardRunner.fromGraphDescriptor(graph)
       : await BoardRunner.load(source, {
           slotted: slottedWithUrls,
           base: context.base,
           outerGraph: context.outerGraph,
-          kits: context.kits,
         });
 
     return await runnableBoard.runOnce(args, context);

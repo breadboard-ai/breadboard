@@ -24,7 +24,7 @@ type InvokeInputValues = InputValues & {
  * This is a Kit designed specifically for use in the testing harness.
  */
 export const TestKit = new KitBuilder({
-  url: "npm:test-kit",
+  url: ".",
 }).build({
   /**
    * Just a no-op node.
@@ -52,7 +52,7 @@ export const TestKit = new KitBuilder({
     if (!graph) {
       throw new Error("Must provide a graph to include");
     }
-    const board = await Board.fromGraphDescriptor(graph, context.kits);
+    const board = await Board.fromGraphDescriptor(graph);
     return await board.runOnce(inputs, context);
   },
   invoke: async (inputs: InvokeInputValues, context: NodeHandlerContext) => {
@@ -62,10 +62,7 @@ export const TestKit = new KitBuilder({
       throw new Error("Must provide a board to invoke");
     }
 
-    const runnableBoard = await Board.fromBreadboardCapability(
-      board,
-      context.kits
-    );
+    const runnableBoard = await Board.fromBreadboardCapability(board);
 
     return await runnableBoard.runOnce(args, context);
   },

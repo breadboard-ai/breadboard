@@ -82,6 +82,18 @@ export class GraphToKitAdapter {
   async #initialize(url: string) {
     const board = await BoardRunner.fromGraphDescriptor(this.graph, this.kits);
     board.url = url;
+    // NOTE: This means that this board will _not_ use handlers defined upstream
+    // in the stack of boards to execute to nodes on this graph, but only the
+    // kits defined on this graph.
+    //
+    // Note however that `invoke` nodes will execute subgraphs with handlers
+    // from higher in the stack, so for example a subgraph defined here that
+    // uses `fetch` will use the `fetch` handler from the parent graph before
+    // using the `fetch` handler from kit defined here.
+    //
+    // The comment above applies only to nodes acting as node handler. We
+    // haven't seen this use-case yet for anything that isn't a Core node, so
+    // let's revisit once we have that.
     this.handlers = await BoardRunner.handlersFromBoard(board);
     this.board = board;
   }
@@ -109,7 +121,8 @@ export class GraphToKitAdapter {
           ...context,
           outerGraph: board,
           base: board.url,
-          kits: this.kits || context.kits,
+          // Add this board's kits, so they are available to subgraphs
+          kits: [...(context.kits || []), ...board.kits],
         });
       },
     };

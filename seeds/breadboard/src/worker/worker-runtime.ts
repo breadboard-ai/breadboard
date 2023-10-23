@@ -83,7 +83,7 @@ export class WorkerRuntime {
 
       await this.start();
 
-      for await (const stop of board.run(proxy)) {
+      for await (const stop of board.run({ probe: proxy })) {
         if (stop.type === "input") {
           const inputMessage = (await this.#controller.ask<
             InputRequestMessage,

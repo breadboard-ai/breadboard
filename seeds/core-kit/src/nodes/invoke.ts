@@ -52,14 +52,13 @@ export default {
     const { path, board, graph, ...args } = inputs as InvokeNodeInputs;
 
     const runnableBoard = board
-      ? await BoardRunner.fromBreadboardCapability(board, context.kits)
+      ? await BoardRunner.fromBreadboardCapability(board)
       : graph
-      ? await BoardRunner.fromGraphDescriptor(graph, context.kits)
+      ? await BoardRunner.fromGraphDescriptor(graph)
       : path
       ? await BoardRunner.load(path, {
           base: context.base,
           outerGraph: context.outerGraph,
-          kits: context.kits,
         })
       : undefined;
 
