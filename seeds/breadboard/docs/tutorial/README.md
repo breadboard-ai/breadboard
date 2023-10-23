@@ -374,8 +374,8 @@ Using the `include` node, placing it into our board is trivial:
 board
   .input()
   .wire(
-    "say->text",
-    board.include(NEWS_BOARD_URL).wire("text->hear", board.output())
+    "say->topic",
+    board.include(NEWS_BOARD_URL).wire("headlines->hear", board.output())
   );
 ```
 
