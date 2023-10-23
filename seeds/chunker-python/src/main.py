@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import argparse
-from html_chunker import HtmlChunker
+from google_labs_html_chunker.html_chunker import HtmlChunker
 
 # Main function to try out HtmlChunker on a saved html file.
 #
@@ -35,8 +35,8 @@ if __name__ == "__main__":
       max_words_per_aggregate_passage=args.maxwords,
       greedily_aggregate_sibling_nodes=args.greedyagg,
   )
-  chunks = chunker.chunk(html)
+  passages = chunker.chunk(html)
 
   passages_file = open(args.outfile, "w")
-  passages_file.writelines(chunk + "\n\n" for chunk in chunks)
+  passages_file.writelines(passage + "\n\n" for passage in passages)
   passages_file.close()

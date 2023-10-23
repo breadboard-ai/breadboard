@@ -40,7 +40,7 @@ _SECTION_BREAK_HTML_TAGS = frozenset({
 class HtmlChunker:
   """Chunks html documents into text passages.
 
-  Each passage contains either a single html node of text, of the text of the
+  Each passage contains either a single html node of text, or the text of the
   node and its siblings and descendants if the total number of words is less
   than max_words_per_aggregate_passage.
 

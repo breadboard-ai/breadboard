@@ -15,13 +15,13 @@ from absl.testing import absltest
 from absl.testing import parameterized
 import sys
 sys.path.append("..")
-from src.html_chunker import HtmlChunker
+from src.google_labs_html_chunker.html_chunker import HtmlChunker
 
 
 class HtmlChunkerTest(parameterized.TestCase):
 
   def test_chunks_single_text_block(self):
-    html = "<p>Here is a paragraph.<p>"
+    html = "<p>Here is a paragraph.</p>"
 
     chunker = HtmlChunker(
         max_words_per_aggregate_passage=10,
@@ -34,7 +34,7 @@ class HtmlChunkerTest(parameterized.TestCase):
     )
 
   def test_handles_escape_codes(self):
-    html = "<p>Here&#39;s a paragraph.<p>"
+    html = "<p>Here&#39;s a paragraph.</p>"
 
     chunker = HtmlChunker(
         max_words_per_aggregate_passage=10,
