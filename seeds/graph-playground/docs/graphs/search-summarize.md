@@ -15,6 +15,7 @@ secrets6("secrets <br> id='secrets-6'"):::secrets -- "API_KEY->API_KEY" --> urlT
 secrets6("secrets <br> id='secrets-6'"):::secrets -- "GOOGLE_CSE_ID->GOOGLE_CSE_ID" --> urlTemplate3["urlTemplate <br> id='urlTemplate-3'"]
 input[/"input <br> id='input'"/]:::input -- "text->question" --> summarizingtemplate["promptTemplate <br> id='summarizing-template'"]
 input[/"input <br> id='input'"/]:::input -- "text->query" --> urlTemplate3["urlTemplate <br> id='urlTemplate-3'"]
+schemaoutput2[schema]:::config -- "schema->schema" --o output2
 templatesummarizingtemplate[template]:::config -- "template->template" --o summarizingtemplate
 templateurlTemplate3[template]:::config -- "template->template" --o urlTemplate3
 expressionjsonata5[expression]:::config -- "expression->expression" --o jsonata5

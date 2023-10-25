@@ -7,12 +7,30 @@
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 
-const searchSummarize = new Board();
+const searchSummarize = new Board({
+  title: "The Search Summarizer Recipe",
+  description:
+    "A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.",
+  version: "0.0.1",
+});
 const kit = searchSummarize.addKit(Starter);
 
-const completion = kit
-  .generateText()
-  .wire("completion->text", searchSummarize.output());
+const completion = kit.generateText().wire(
+  "completion->text",
+  searchSummarize.output({
+    schema: {
+      type: "object",
+      properties: {
+        text: {
+          type: "string",
+          title: "Answer",
+          description: "The answer to the query",
+        },
+      },
+      required: ["text"],
+    },
+  })
+);
 
 const summarizingTemplate = kit
   .promptTemplate(

@@ -1,4 +1,7 @@
 {
+  "title": "The Search Summarizer Recipe",
+  "description": "A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.",
+  "version": "0.0.1",
   "edges": [
     {
       "from": "generateText-1",
@@ -68,7 +71,22 @@
     },
     {
       "id": "output-2",
-      "type": "output"
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Answer",
+              "description": "The answer to the query"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
     },
     {
       "id": "summarizing-template",
