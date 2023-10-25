@@ -26,6 +26,20 @@ This will create a new `package.json` file. Don't forget to add `type: module` t
 
 Next, set up TypeScript for this package. If you're not sure how to do this, please refer to the various guides on the Internet, like [this one](https://code.visualstudio.com/docs/typescript/typescript-tutorial).
 
+In your `tsconfig.json`, make sure to set module resolution to `nodenext` or `bundler`. The easiest way to do this is to set:
+
+```json
+{
+  "module": "nodenext"
+}
+```
+
+You will also need to instal the `jsonschema` package for now:
+
+```bash
+npm install jsonschema
+```
+
 As the last step, install the `@google-labs/breadboard` package:
 
 ```bash
