@@ -10,4 +10,7 @@ export default {
     },
     target: "esnext",
   },
+  test: {
+    include: ["tests/**/*.ts"],
+  },
 };

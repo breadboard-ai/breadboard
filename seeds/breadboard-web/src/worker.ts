@@ -16,7 +16,7 @@ const runtime = new WorkerRuntime(controller);
 
 const url = await runtime.onload();
 const board = await Board.load(url, {
-  kits: { "@google-labs/llm-starter": Starter },
+  importedKits: { "@google-labs/llm-starter": Starter },
 });
 
 await runtime.run(board);

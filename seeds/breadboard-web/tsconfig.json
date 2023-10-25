@@ -19,7 +19,7 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "tests/**/*.ts"],
   "extends": "@google-labs/tsconfig/base.json",
   "typedocOptions": {
     "entryPoints": "./src/protocol.ts",

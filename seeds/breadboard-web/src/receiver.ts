@@ -4,23 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  type NodeHandlers,
-  type OutputValues,
-  Board,
-  callHandler,
-} from "@google-labs/breadboard";
+import { type NodeHandlers, Board, callHandler } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 import type { ProxyRequestMessage } from "@google-labs/breadboard/worker";
 
-const PROXIED_PREFIX = "PROXIED_";
-
-const passProxiedKeys = (keys: string[]) => {
-  return keys.reduce((acc, key) => {
-    acc[key] = `${PROXIED_PREFIX}${key}`;
-    return acc;
-  }, {} as OutputValues);
-};
+import { SecretKeeper } from "./secrets";
 
 class AskForSecret {
   name: string;
@@ -51,7 +39,7 @@ class FinalResult {
 export class ProxyReceiver {
   board: Board;
   handlers?: NodeHandlers;
-  secrets: Record<string, string> = {};
+  secrets = new SecretKeeper();
 
   constructor() {
     this.board = new Board();
@@ -66,19 +54,18 @@ export class ProxyReceiver {
       this.handlers = await Board.handlersFromBoard(this.board);
     if (nodeType === "secrets") {
       const { keys } = inputs as { keys: string[] };
-      yield new FinalResult(nodeType, passProxiedKeys(keys));
+      yield new FinalResult(nodeType, this.secrets.addSecretTokens(keys));
       return;
     }
     for (const name in inputs) {
       let value = inputs[name];
-      const s = typeof value === "string" ? value : "";
-      if (s.startsWith(PROXIED_PREFIX)) {
-        value = this.secrets[name];
+      if (this.secrets.hasSecrets(value)) {
+        value = this.secrets.getSecretValue(name);
         if (!value) {
           const ask = new AskForSecret(name);
           yield ask;
           value = ask.value;
-          this.secrets[name] = value;
+          this.secrets.addSecretValue(name, value);
         }
         inputs[name] = value;
       }
