@@ -117,6 +117,7 @@
   for await (const result of runtime.run(boardURL, [
     "generateText",
     "secrets",
+    "fetch",
   ])) {
     const { data, type } = result.message;
     switch (type) {

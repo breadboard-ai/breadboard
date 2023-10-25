@@ -11,8 +11,18 @@ const PROXIED_PREFIX = "PROXIED_";
 const SECRET_SCANNER = new RegExp(`${PROXIED_PREFIX}([0-9a-f]{12})`, "gm");
 
 type Secret = {
-  token: string;
+  name: string;
   value?: string;
+};
+
+export const secretScanner = (value: NodeValue) => {
+  const json = JSON.stringify(value);
+  const tokens: string[] = [];
+  json.replace(SECRET_SCANNER, (substring: string, token: string) => {
+    tokens.push(token);
+    return substring;
+  });
+  return tokens;
 };
 
 export const secretReplacer = (
@@ -21,11 +31,10 @@ export const secretReplacer = (
 ) => {
   const json = JSON.stringify(value);
   return JSON.parse(
-    json.replace(SECRET_SCANNER, (substring: string, token: string) => {
-      const secret = secrets[token];
-      console.log("secretReplacer", substring, token, secret);
-      return secret ?? substring;
-    })
+    json.replace(
+      SECRET_SCANNER,
+      (substring: string, token: string) => secrets[token] ?? substring
+    )
   );
 };
 
@@ -39,29 +48,27 @@ export const generateToken = () => {
 export class SecretKeeper {
   secrets: Record<string, Secret> = {};
 
-  hasSecrets(value: NodeValue) {
-    const s = typeof value === "string" ? value : "";
-    return s.startsWith(PROXIED_PREFIX);
+  findSecrets(value: NodeValue) {
+    return secretScanner(value);
   }
 
-  addSecretValue(name: string, value: string) {
-    const secret = this.secrets[name];
-    if (!secret)
-      throw new Error(
-        `No secret named ${name} was found. This means that the secret value was requested before it was set, which is probably a bug.`
-      );
-    secret.value = value;
+  revealSecrets(value: NodeValue, secrets: string[]) {
+    const revealed = secrets.reduce((acc, secret) => {
+      acc[secret] = this.secrets[secret]?.value || "";
+      return acc;
+    }, {} as Record<string, string>);
+    return secretReplacer(value, revealed);
   }
 
-  getSecretValue(name: string) {
-    const secret = this.secrets[name];
-    return secret?.value;
+  getSecret(token: string) {
+    return this.secrets[token];
   }
 
   addSecretToken(name: string) {
-    const token = `${PROXIED_PREFIX}${generateToken()}`;
-    this.secrets[name] = { token };
-    return token;
+    const token = generateToken();
+    const tokenString = `${PROXIED_PREFIX}${token}`;
+    this.secrets[token] = { name };
+    return tokenString;
   }
 
   addSecretTokens(keys: string[]) {

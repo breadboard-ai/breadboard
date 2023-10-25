@@ -58,17 +58,17 @@ export class ProxyReceiver {
       return;
     }
     for (const name in inputs) {
-      let value = inputs[name];
-      if (this.secrets.hasSecrets(value)) {
-        value = this.secrets.getSecretValue(name);
-        if (!value) {
-          const ask = new AskForSecret(name);
+      const value = inputs[name];
+      const secrets = this.secrets.findSecrets(value);
+      for (const token of secrets) {
+        const secret = this.secrets.getSecret(token);
+        if (!secret.value) {
+          const ask = new AskForSecret(secret.name);
           yield ask;
-          value = ask.value;
-          this.secrets.addSecretValue(name, value);
+          secret.value = ask.value;
         }
-        inputs[name] = value;
       }
+      inputs[name] = this.secrets.revealSecrets(value, secrets);
     }
     const handler = this.handlers[nodeType];
     if (!handler)

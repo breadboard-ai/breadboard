@@ -1,6 +1,10 @@
 import { expect, test } from "vitest";
 
-import { generateToken, secretReplacer } from "../src/secrets.js";
+import {
+  generateToken,
+  secretReplacer,
+  secretScanner,
+} from "../src/secrets.js";
 
 test("generateToken produces a reasonable token", async () => {
   const token = generateToken();
@@ -45,4 +49,10 @@ test("secretReplacer works with nested objects", async () => {
       baz: "barValue",
     },
   });
+});
+
+test("secretScanner finds all secrets", async () => {
+  const value = "foo:PROXIED_123456789abc, bar:PROXIED_123456789def";
+  const tokens = secretScanner(value);
+  expect(tokens).toEqual(["123456789abc", "123456789def"]);
 });
