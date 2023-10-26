@@ -153,7 +153,7 @@ The `InputValues` and `OutputValues` is how the Breadboard runtime communicates 
 For example, if I want to write a node handler that adds two numbers, I can write it as follows:
 
 ```ts
-const add = async (inputs) => {
+const add = async (inputs: InputValues) => {
   // Get the values of the inputs
   const { a, b } = inputs;
   // Make sure that the inputs are numbers
