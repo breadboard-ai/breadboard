@@ -4,13 +4,17 @@ build-backend = "hatchling.build"
 
 [project]
 name = "google_labs_html_chunker"
-version = "0.0.1"
+version = "0.0.3"
 authors = [
   { name="Google Labs", email="labs-pypi@google.com" },
 ]
 description = "A library to chunk HTML web pages into plain text passages."
 readme = "README.md"
 requires-python = ">=3.6"
+dependencies = [
+  "beautifulsoup4>=4.12.2",
+  "html5lib>=1.1"
+]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: Apache Software License",
