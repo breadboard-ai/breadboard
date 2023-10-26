@@ -16,11 +16,11 @@ const controller = new MessageController(self as unknown as Worker);
 const runtime = new WorkerRuntime(controller);
 
 const url = await runtime.onload();
-const board = await Board.load(url, {
+const runner = await Board.load(url, {
   importedKits: {
     "@google-labs/llm-starter": Starter,
     "@google-labs/core-kit": Core,
   },
 });
 
-await runtime.run(board);
+await runtime.run(runner, [Starter, Core]);

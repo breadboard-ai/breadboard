@@ -51,8 +51,7 @@ export class KitLoader {
           if (url === ".") return null;
           const spec = urlToNpmSpec(url);
 
-          const importedKit = this.#imports[spec];
-          if (importedKit) return importedKit;
+          if (spec in this.#imports) return this.#imports[spec];
 
           const { default: module } = await import(/* @vite-ignore */ spec);
           // TODO: Check to see if this import is actually a Kit class.

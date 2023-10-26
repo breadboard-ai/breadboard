@@ -5,7 +5,12 @@
  */
 
 import { BoardRunner } from "../runner.js";
-import type { InputValues } from "../types.js";
+import type {
+  InputValues,
+  Kit,
+  KitConstructor,
+  NodeFactory,
+} from "../types.js";
 import {
   type LoadResponseMessage,
   type BeforehandlerMessage,
@@ -19,6 +24,12 @@ import {
 } from "./protocol.js";
 import { MessageController } from "./controller.js";
 import { NodeProxy } from "./proxy.js";
+
+const toRunTimeKits = (kitConstructors: KitConstructor<Kit>[]) => {
+  return kitConstructors.map((kitConstructor) => {
+    return new kitConstructor(undefined as unknown as NodeFactory);
+  });
+};
 
 export class WorkerRuntime {
   #controller: MessageController;
@@ -60,7 +71,7 @@ export class WorkerRuntime {
     }
   }
 
-  async run(board: BoardRunner) {
+  async run(board: BoardRunner, kitConstructors: KitConstructor<Kit>[]) {
     try {
       if (!this.#loadRequest) {
         throw new Error("The load message must be sent before the run message");
@@ -83,7 +94,9 @@ export class WorkerRuntime {
 
       await this.start();
 
-      for await (const stop of board.run({ probe: proxy })) {
+      const kits = toRunTimeKits(kitConstructors);
+
+      for await (const stop of board.run({ probe: proxy, kits })) {
         if (stop.type === "input") {
           const inputMessage = (await this.#controller.ask<
             InputRequestMessage,
