@@ -172,9 +172,18 @@ const board = new Board();
 const kit = board.addKit(MyKit);
 const addNode = kit
   .add()
-  .wire("a<-text", board.input())
-  .wire("b<-text", board.input())
-  .wire("->text", board.output());
+  .wire("a<-", board.input())
+  .wire("b<-", board.input())
+  .wire("->value", board.output());
+
+const result = await board.runOnce({a: 1, b: 2});
+console.log(result);
+```
+
+And get:
+
+```json
+{ value: 3 }
 ```
 
 ## Exporting Kit
