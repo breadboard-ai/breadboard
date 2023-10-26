@@ -182,7 +182,7 @@ console.log(result);
 
 And get:
 
-```json
+```bash
 { value: 3 }
 ```
 
