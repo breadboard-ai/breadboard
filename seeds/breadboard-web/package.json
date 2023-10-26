@@ -50,6 +50,7 @@
     "@typescript-eslint/eslint-plugin": "^5.56.0",
     "@typescript-eslint/parser": "^5.56.0",
     "ava": "^5.2.0",
+    "dotenv": "^16.3.1",
     "typedoc": "^0.25.1",
     "typedoc-plugin-markdown": "^3.16.0",
     "typescript": "^5.0.4",
@@ -58,7 +59,7 @@
   },
   "dependencies": {
     "@google-labs/breadboard": "*",
-    "@google-labs/llm-starter": "*",
-    "@google-labs/core-kit": "*"
+    "@google-labs/core-kit": "*",
+    "@google-labs/llm-starter": "*"
   }
 }
