@@ -47,6 +47,7 @@ export type {
   ConfigOrLambda,
   RunResultType,
   KitConstructor,
+  KitImportMap,
   GenericKit,
   LambdaNodeOutputs,
 } from "./types.js";

@@ -10,6 +10,8 @@ import type {
   NodeHandlerContext,
   BreadboardCapability,
   GraphDescriptor,
+  KitConstructor,
+  Kit,
 } from "@google-labs/breadboard";
 import { BoardRunner } from "@google-labs/breadboard";
 import { SchemaBuilder } from "@google-labs/breadboard/kits";
@@ -18,6 +20,30 @@ export type InvokeNodeInputs = InputValues & {
   path?: string;
   board?: BreadboardCapability;
   graph?: GraphDescriptor;
+};
+
+const skipLoadingKits = (kits: Kit[]) => {
+  return Object.fromEntries(
+    kits.map((kit) => {
+      const url = new URL(kit.url).pathname;
+      return [url, null as unknown as KitConstructor<Kit>];
+    })
+  );
+};
+
+const getRunnableBoard = async (
+  { base, outerGraph, kits }: NodeHandlerContext,
+  path?: string,
+  board?: BreadboardCapability,
+  graph?: GraphDescriptor
+): Promise<BoardRunner | undefined> => {
+  if (board) return await BoardRunner.fromBreadboardCapability(board);
+  if (graph) return await BoardRunner.fromGraphDescriptor(graph);
+  if (path) {
+    const importedKits = skipLoadingKits(kits || []);
+    return await BoardRunner.load(path, { base, outerGraph, importedKits });
+  }
+  return undefined;
 };
 
 export default {
@@ -51,17 +77,7 @@ export default {
   ): Promise<OutputValues> => {
     const { path, board, graph, ...args } = inputs as InvokeNodeInputs;
 
-    const runnableBoard = board
-      ? await BoardRunner.fromBreadboardCapability(board)
-      : graph
-      ? await BoardRunner.fromGraphDescriptor(graph)
-      : path
-      ? await BoardRunner.load(path, {
-          base: context.base,
-          outerGraph: context.outerGraph,
-        })
-      : undefined;
-
+    const runnableBoard = await getRunnableBoard(context, path, board, graph);
     if (!runnableBoard) throw new Error("No board provided");
 
     return await runnableBoard.runOnce(args, context);
