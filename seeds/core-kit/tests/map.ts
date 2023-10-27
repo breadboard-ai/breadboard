@@ -8,9 +8,8 @@ import test from "ava";
 
 import map, { MapInputs } from "../src/nodes/map.js";
 import { Capability, InputValues, Board } from "@google-labs/breadboard";
-import { Nursery } from "../src/nursery.js";
 import Starter from "@google-labs/llm-starter";
-import { Core } from "@google-labs/core-kit";
+import { Core } from "../src/index.js";
 import { asRuntimeKit } from "@google-labs/breadboard";
 
 test("map with no board just outputs list", async (t) => {
@@ -48,9 +47,9 @@ test("map with board", async (t) => {
 
 test("using map as part of a board", async (t) => {
   const board = new Board();
-  const nursery = board.addKit(Nursery);
+  const core = board.addKit(Core);
   const input = board.input();
-  const map = nursery.map({
+  const map = core.map({
     board: {
       kind: "board",
       board: {
@@ -80,9 +79,9 @@ test("sending a real board to a map", async (t) => {
   fun.input().wire("*->", fun.output());
 
   const board = new Board();
-  const nursery = board.addKit(Nursery);
+  const core = board.addKit(Core);
   const input = board.input();
-  const map = nursery.map({
+  const map = core.map({
     board: {
       kind: "board",
       board: fun,
@@ -102,9 +101,9 @@ test("sending a real board to a map", async (t) => {
 
 test("using lambda syntactic sugar (JS)", async (t) => {
   const board = new Board();
-  const nursery = board.addKit(Nursery);
+  const core = board.addKit(Core);
   const input = board.input();
-  const map = nursery.map((board, input, output) => {
+  const map = core.map((board, input, output) => {
     input.wire("*->", output);
   });
   input.wire("list->", map);
@@ -121,9 +120,9 @@ test("using lambda syntactic sugar (JS)", async (t) => {
 
 test("using lambda syntactic sugar (JS, with config)", async (t) => {
   const board = new Board();
-  const nursery = board.addKit(Nursery);
+  const core = board.addKit(Core);
   const input = board.input();
-  const map = nursery.map({
+  const map = core.map({
     board: (board, input, output) => {
       input.wire("*->", output);
     },
@@ -142,12 +141,12 @@ test("using lambda syntactic sugar (JS, with config)", async (t) => {
 
 test("using lambda syntactic sugar (Node)", async (t) => {
   const board = new Board();
-  const nursery = board.addKit(Nursery);
+  const core = board.addKit(Core);
   const input = board.input();
   const lambda = board.lambda((board, input, output) => {
     input.wire("*->", output);
   });
-  const map = nursery.map(lambda);
+  const map = core.map(lambda);
   input.wire("list->", map);
   map.wire("list->", board.output());
   const outputs = await board.runOnce({ list: [1, 2, 3] });
@@ -162,9 +161,9 @@ test("using lambda syntactic sugar (Node)", async (t) => {
 
 test("using lambda with promptTemplate", async (t) => {
   const board = new Board();
-  const nursery = board.addKit(Nursery);
+  const core = board.addKit(Core);
   const input = board.input();
-  const map = nursery.map((board, input, output) => {
+  const map = core.map((board, input, output) => {
     const llm = board.addKit(Starter);
     const template = llm.promptTemplate("item: {{item}}");
     input.wire("item->", template.wire("prompt->", output));
@@ -185,12 +184,11 @@ test("using lambda with promptTemplate", async (t) => {
 test("using lambda with promptTemplate with input from outer board", async (t) => {
   const board = new Board();
   const core = board.addKit(Core);
-  const nursery = board.addKit(Nursery);
   const llm = board.addKit(Starter);
 
   const input = board.input();
   const label = core.passthrough({ label: "name" });
-  const map = nursery.map((_, input, output) => {
+  const map = core.map((_, input, output) => {
     const template = llm
       .promptTemplate("{{label}}: {{item}}")
       .wire("label<-.", label);

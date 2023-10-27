@@ -13,7 +13,6 @@ import type {
   Kit,
   NodeFactory,
   OptionalIdConfiguration,
-  ConfigOrLambda,
 } from "@google-labs/breadboard";
 
 import textAsset from "./nodes/text-asset.js";
@@ -33,7 +32,6 @@ import templateParser, {
   TemplateParserInputs,
   TemplateParserOutputs,
 } from "./nodes/template-parser.js";
-import map, { MapInputs, MapOutputs } from "./nodes/map.js";
 import batcher, { BatcherInputs, BatcherOutputs } from "./nodes/batcher.js";
 import chunker, { ChunkerInputs, ChunkerOutputs } from "./nodes/chunker.js";
 
@@ -49,7 +47,6 @@ const handlers = {
   validateJson,
   schemish,
   templateParser,
-  map,
   batcher,
   chunker,
 };
@@ -155,23 +152,6 @@ export class Nursery implements Kit {
     const node = this.#create<TemplateParserInputs, TemplateParserOutputs>(
       "templateParser",
       config
-    );
-    return node;
-  }
-
-  /**
-   * Work in progress implementation of a `map` node as part of work on
-   * issue #110.
-   * @param config
-   * @returns
-   */
-  map<In = InputValues, Out = OutputValues>(
-    config: ConfigOrLambda<In, Out> = {}
-  ): BreadboardNode<MapInputs, MapOutputs> {
-    // Create the node.
-    const node = this.#create<MapInputs, MapOutputs>(
-      "map",
-      this.#nodeFactory.getConfigWithLambda(config)
     );
     return node;
   }

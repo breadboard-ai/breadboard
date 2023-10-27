@@ -12,6 +12,7 @@ import invoke from "./nodes/invoke.js";
 import passthrough from "./nodes/passthrough.js";
 import reflect from "./nodes/reflect.js";
 import slot from "./nodes/slot.js";
+import map from "./nodes/map.js";
 
 const builder = new KitBuilder({
   title: "Core Kit",
@@ -120,6 +121,7 @@ export const Core = builder.build({
    * @returns - a `Node` object that represents the placed node.
    */
   slot,
+  map,
 });
 
 export type Core = InstanceType<typeof Core>;

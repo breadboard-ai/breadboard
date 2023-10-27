@@ -5,6 +5,7 @@
  */
 
 import { Board, LambdaFunction } from "@google-labs/breadboard";
+import Core from "@google-labs/core-kit";
 import { Starter } from "@google-labs/llm-starter";
 import { Nursery } from "@google-labs/node-nursery";
 import Pinecone from "@google-labs/pinecone-kit";
@@ -30,12 +31,12 @@ const generateEmbeddings: LambdaFunction = (board, input, output) => {
 
 const processBatch: LambdaFunction = (board, input, output) => {
   const starter = board.addKit(Starter);
-  const nursery = board.addKit(Nursery);
+  const core = board.addKit(Core);
   const pinecone = board.addKit(Pinecone);
 
   input.wire(
     "item->list",
-    nursery
+    core
       .map({ board: generateEmbeddings, $id: "generate-embeddings" })
       .wire(
         "list->json",
@@ -60,6 +61,7 @@ const board = new Board({
 });
 const kit = board.addKit(Starter);
 const nursery = board.addKit(Nursery);
+const core = board.addKit(Core);
 
 board
   .input({ $id: "url" })
@@ -80,7 +82,7 @@ board
               .batcher({ size: PINECONE_BATCH_SIZE })
               .wire(
                 "list->",
-                nursery.map(processBatch).wire("list->text", board.output())
+                core.map(processBatch).wire("list->text", board.output())
               )
           )
       )
