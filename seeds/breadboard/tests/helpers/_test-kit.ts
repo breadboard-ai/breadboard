@@ -5,7 +5,7 @@
  */
 
 import { Board } from "../../src/board.js";
-import { KitBuilder } from "../../src/kit.js";
+import { KitBuilder } from "../../src/kits/index.js";
 import {
   BreadboardCapability,
   GraphDescriptor,

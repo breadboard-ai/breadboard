@@ -5,7 +5,7 @@
   "main": "./dist/src/index.js",
   "exports": {
     ".": "./dist/src/index.js",
-    "./kits": "./dist/src/kit.js",
+    "./kits": "./dist/src/kits/index.js",
     "./worker": "./dist/src/worker/index.js",
     "./ui": "./dist/src/ui/index.js"
   },
