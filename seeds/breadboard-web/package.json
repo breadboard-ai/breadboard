@@ -60,6 +60,7 @@
   "dependencies": {
     "@google-labs/breadboard": "*",
     "@google-labs/core-kit": "*",
-    "@google-labs/llm-starter": "*"
+    "@google-labs/llm-starter": "*",
+    "@google-labs/pinecone-kit": "*"
   }
 }
