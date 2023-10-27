@@ -17,14 +17,14 @@
       "in": "text"
     },
     {
-      "from": "batcher-1",
+      "from": "batch-1",
       "to": "map-3",
       "out": "list",
       "in": "list"
     },
     {
       "from": "get-content",
-      "to": "batcher-1",
+      "to": "batch-1",
       "out": "result",
       "in": "list"
     },
@@ -58,8 +58,8 @@
       }
     },
     {
-      "id": "batcher-1",
-      "type": "batcher",
+      "id": "batch-1",
+      "type": "batch",
       "configuration": {
         "size": 40
       }
@@ -229,7 +229,7 @@
                 "url": "npm:@google-labs/llm-starter"
               },
               {
-                "url": "npm:@google-labs/node-nursery"
+                "url": "npm:@google-labs/core-kit"
               },
               {
                 "url": "npm:@google-labs/pinecone-kit"
@@ -257,7 +257,7 @@
       "url": "npm:@google-labs/llm-starter"
     },
     {
-      "url": "npm:@google-labs/node-nursery"
+      "url": "npm:@google-labs/core-kit"
     }
   ]
 }

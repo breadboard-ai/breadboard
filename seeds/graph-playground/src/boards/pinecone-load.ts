@@ -7,7 +7,6 @@
 import { Board, LambdaFunction } from "@google-labs/breadboard";
 import Core from "@google-labs/core-kit";
 import { Starter } from "@google-labs/llm-starter";
-import { Nursery } from "@google-labs/node-nursery";
 import Pinecone from "@google-labs/pinecone-kit";
 
 const PINECONE_BATCH_SIZE = 40;
@@ -60,7 +59,6 @@ const board = new Board({
   version: "0.0.1",
 });
 const kit = board.addKit(Starter);
-const nursery = board.addKit(Nursery);
 const core = board.addKit(Core);
 
 board
@@ -78,8 +76,8 @@ board
           )
           .wire(
             "result->list",
-            nursery
-              .batcher({ size: PINECONE_BATCH_SIZE })
+            core
+              .batch({ size: PINECONE_BATCH_SIZE })
               .wire(
                 "list->",
                 core.map(processBatch).wire("list->text", board.output())

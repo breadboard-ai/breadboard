@@ -6,7 +6,7 @@
 
 import test from "ava";
 
-import batcher from "../src/nodes/batcher.js";
+import batcher from "../src/nodes/batch.js";
 
 test("works with reasonable arguments", async (t) => {
   const inputs = {
@@ -19,7 +19,7 @@ test("works with reasonable arguments", async (t) => {
   });
 });
 
-test("handles ureasonable arguments", async (t) => {
+test("handles unreasonable arguments", async (t) => {
   {
     const inputs = {
       list: [],

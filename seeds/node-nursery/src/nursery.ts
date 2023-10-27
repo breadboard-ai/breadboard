@@ -32,7 +32,6 @@ import templateParser, {
   TemplateParserInputs,
   TemplateParserOutputs,
 } from "./nodes/template-parser.js";
-import batcher, { BatcherInputs, BatcherOutputs } from "./nodes/batcher.js";
 import chunker, { ChunkerInputs, ChunkerOutputs } from "./nodes/chunker.js";
 
 const handlers = {
@@ -47,7 +46,6 @@ const handlers = {
   validateJson,
   schemish,
   templateParser,
-  batcher,
   chunker,
 };
 
@@ -153,13 +151,6 @@ export class Nursery implements Kit {
       "templateParser",
       config
     );
-    return node;
-  }
-
-  batcher(
-    config: OptionalIdConfiguration = {}
-  ): BreadboardNode<BatcherInputs, BatcherOutputs> {
-    const node = this.#create<BatcherInputs, BatcherOutputs>("batcher", config);
     return node;
   }
 

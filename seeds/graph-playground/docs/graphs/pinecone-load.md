@@ -30,12 +30,12 @@ end
 sg_lambda2:::slotted -- "lamdba->lamdba" --o lambda2
 
 map3["map <br> id='map-3'"] -- "list->text" --> output4{{"output <br> id='output-4'"}}:::output
-batcher1["batcher <br> id='batcher-1'"] -- "list->list" --> map3["map <br> id='map-3'"]
-getcontent["jsonata <br> id='get-content'"] -- "result->list" --> batcher1["batcher <br> id='batcher-1'"]
+batch1["batch <br> id='batch-1'"] -- "list->list" --> map3["map <br> id='map-3'"]
+getcontent["jsonata <br> id='get-content'"] -- "result->list" --> batch1["batch <br> id='batch-1'"]
 loadchunks["fetch <br> id='load-chunks'"] -- "response->json" --> getcontent["jsonata <br> id='get-content'"]
 url[/"input <br> id='url'"/]:::input -- "text->url" --> loadchunks["fetch <br> id='load-chunks'"]
 expressiongetcontent[expression]:::config -- "expression->expression" --o getcontent
-sizebatcher1[size]:::config -- "size->size" --o batcher1
+sizebatch1[size]:::config -- "size->size" --o batch1
 
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
