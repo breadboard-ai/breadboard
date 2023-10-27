@@ -151,9 +151,7 @@ test("allows pausing and resuming the board", async (t) => {
   input.wire("<-", kit.noop());
   input.wire("*->", kit.noop().wire("*->", board.output().wire("*->", input)));
   {
-    const firstBoard = await Board.fromGraphDescriptor(board, {
-      "test-kit": TestKit,
-    });
+    const firstBoard = await Board.fromGraphDescriptor(board);
     for await (const stop of firstBoard.run({ kits: [kit] })) {
       t.is(stop.type, "beforehandler");
       result = stop;
@@ -161,9 +159,7 @@ test("allows pausing and resuming the board", async (t) => {
     }
   }
   {
-    const secondBoard = await Board.fromGraphDescriptor(board, {
-      "test-kit": TestKit,
-    });
+    const secondBoard = await Board.fromGraphDescriptor(board);
     for await (const stop of secondBoard.run({ kits: [kit] }, result)) {
       t.is(stop.type, "input");
       result = stop;
@@ -171,9 +167,7 @@ test("allows pausing and resuming the board", async (t) => {
     }
   }
   {
-    const thirdBoard = await Board.fromGraphDescriptor(board, {
-      "test-kit": TestKit,
-    });
+    const thirdBoard = await Board.fromGraphDescriptor(board);
     for await (const stop of thirdBoard.run({ kits: [kit] }, result)) {
       t.is(stop.type, "beforehandler");
       result = stop;
@@ -181,9 +175,7 @@ test("allows pausing and resuming the board", async (t) => {
     }
   }
   {
-    const fourthBoard = await Board.fromGraphDescriptor(board, {
-      "test-kit": TestKit,
-    });
+    const fourthBoard = await Board.fromGraphDescriptor(board);
     for await (const stop of fourthBoard.run({ kits: [kit] }, result)) {
       t.is(stop.type, "output");
       result = stop;
@@ -191,9 +183,7 @@ test("allows pausing and resuming the board", async (t) => {
     }
   }
   {
-    const fifthBoard = await Board.fromGraphDescriptor(board, {
-      "test-kit": TestKit,
-    });
+    const fifthBoard = await Board.fromGraphDescriptor(board);
     for await (const stop of fifthBoard.run({ kits: [kit] }, result)) {
       t.is(stop.type, "input");
       result = stop;

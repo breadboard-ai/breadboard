@@ -18,10 +18,8 @@ import type {
   Kit,
   BreadboardValidator,
   NodeHandlerContext,
-  NodeFactory,
   ProbeDetails,
   BreadboardCapability,
-  KitImportMap,
 } from "./types.js";
 
 import { TraversalMachine } from "./traversal/machine.js";
@@ -32,7 +30,6 @@ import {
   OutputStageResult,
   RunResult,
 } from "./run.js";
-import { KitLoader } from "./kit.js";
 import { BoardLoader } from "./loader.js";
 import { runRemote } from "./remote.js";
 import { callHandler } from "./handler.js";
@@ -291,24 +288,13 @@ export class BoardRunner implements BreadboardRunner {
    * @returns - a new `Board` instance.
    */
   static async fromGraphDescriptor(
-    graph: GraphDescriptor,
-    importedKits?: KitImportMap
+    graph: GraphDescriptor
   ): Promise<BoardRunner> {
     const breadboard = new BoardRunner(graph);
     breadboard.edges = graph.edges;
     breadboard.nodes = graph.nodes;
     breadboard.graphs = graph.graphs;
     breadboard.args = graph.args;
-    const loader = new KitLoader(graph.kits, importedKits);
-    (await loader.load()).forEach((kit) => {
-      breadboard.kits.push(
-        new kit({
-          create: () => {
-            throw Error("Node creation can't be called on a loaded graph");
-          },
-        } as unknown as NodeFactory)
-      );
-    });
     return breadboard;
   }
 
@@ -325,7 +311,6 @@ export class BoardRunner implements BreadboardRunner {
       slotted?: BreadboardSlotSpec;
       base?: string;
       outerGraph?: GraphDescriptor;
-      importedKits?: KitImportMap;
     }
   ): Promise<BoardRunner> {
     const { base, slotted, outerGraph } = options || {};
@@ -334,10 +319,7 @@ export class BoardRunner implements BreadboardRunner {
       graphs: outerGraph?.graphs,
     });
     const { isSubgraph, graph } = await loader.load(url);
-    const board = await BoardRunner.fromGraphDescriptor(
-      graph,
-      options?.importedKits
-    );
+    const board = await BoardRunner.fromGraphDescriptor(graph);
     if (isSubgraph) board.#outerGraph = outerGraph;
     board.#slots = slotted || {};
     return board;
@@ -349,8 +331,7 @@ export class BoardRunner implements BreadboardRunner {
    * @returns {Board} A runnable board.
    */
   static async fromBreadboardCapability(
-    board: BreadboardCapability,
-    importedKits?: KitImportMap
+    board: BreadboardCapability
   ): Promise<BoardRunner> {
     if (board.kind !== "board" || !(board as BreadboardCapability).board) {
       throw new Error(`Expected a "board" Capability, but got ${board}`);
@@ -368,10 +349,7 @@ export class BoardRunner implements BreadboardRunner {
     // TODO: Use JSON schema to validate rather than this hack.
     let runnableBoard = (board as BreadboardCapability).board as BoardRunner;
     if (!runnableBoard.runOnce) {
-      runnableBoard = await BoardRunner.fromGraphDescriptor(
-        boardish,
-        importedKits
-      );
+      runnableBoard = await BoardRunner.fromGraphDescriptor(boardish);
     }
 
     return runnableBoard;

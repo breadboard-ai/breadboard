@@ -5,12 +5,7 @@
  */
 
 import { BoardRunner } from "../runner.js";
-import type {
-  InputValues,
-  Kit,
-  KitConstructor,
-  NodeFactory,
-} from "../types.js";
+import type { InputValues, Kit, KitConstructor } from "../types.js";
 import {
   type LoadResponseMessage,
   type BeforehandlerMessage,
@@ -24,12 +19,7 @@ import {
 } from "./protocol.js";
 import { MessageController } from "./controller.js";
 import { NodeProxy } from "./proxy.js";
-
-const toRunTimeKits = (kitConstructors: KitConstructor<Kit>[]) => {
-  return kitConstructors.map((kitConstructor) => {
-    return new kitConstructor(undefined as unknown as NodeFactory);
-  });
-};
+import { asRuntimeKit } from "../kits/ctors.js";
 
 export class WorkerRuntime {
   #controller: MessageController;
@@ -94,7 +84,9 @@ export class WorkerRuntime {
 
       await this.start();
 
-      const kits = toRunTimeKits(kitConstructors);
+      const kits = kitConstructors.map((kitConstructor) =>
+        asRuntimeKit(kitConstructor)
+      );
 
       for await (const stop of board.run({ probe: proxy, kits })) {
         if (stop.type === "input") {

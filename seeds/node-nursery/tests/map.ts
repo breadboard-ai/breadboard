@@ -11,6 +11,7 @@ import { Capability, InputValues, Board } from "@google-labs/breadboard";
 import { Nursery } from "../src/nursery.js";
 import Starter from "@google-labs/llm-starter";
 import { Core } from "@google-labs/core-kit";
+import { asRuntimeKit } from "@google-labs/breadboard";
 
 test("map with no board just outputs list", async (t) => {
   const inputs = {
@@ -170,7 +171,12 @@ test("using lambda with promptTemplate", async (t) => {
   });
   input.wire("list->", map);
   map.wire("list->", board.output());
-  const outputs = await board.runOnce({ list: [1, 2, 3] });
+  const outputs = await board.runOnce(
+    { list: [1, 2, 3] },
+    {
+      kits: [asRuntimeKit(Starter)],
+    }
+  );
   t.deepEqual(outputs, {
     list: [{ prompt: "item: 1" }, { prompt: "item: 2" }, { prompt: "item: 3" }],
   });

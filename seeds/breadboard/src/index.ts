@@ -47,7 +47,6 @@ export type {
   ConfigOrLambda,
   RunResultType,
   KitConstructor,
-  KitImportMap,
   GenericKit,
   LambdaNodeOutputs,
 } from "./types.js";
@@ -56,3 +55,4 @@ export { MachineResult } from "./traversal/result.js";
 export { toMermaid } from "./mermaid.js";
 export type { Schema } from "jsonschema";
 export { callHandler } from "./handler.js";
+export { asRuntimeKit } from "./kits/ctors.js";

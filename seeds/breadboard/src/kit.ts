@@ -7,7 +7,6 @@
 import {
   GraphDescriptor,
   InputValues,
-  KitReference,
   NodeHandlers,
   NodeIdentifier,
   GenericKit,
@@ -22,45 +21,7 @@ import {
 import { callHandler } from "./handler.js";
 import { BoardRunner } from "./runner.js";
 
-const urlToNpmSpec = (url: string): string => {
-  const urlObj = new URL(url);
-  if (urlObj.protocol !== "npm:") {
-    throw new Error(`URL protocol must be "npm:"`);
-  }
-  return urlObj.pathname;
-};
-
 export { SchemaBuilder } from "./schema.js";
-
-export class KitLoader {
-  #kits: KitReference[];
-  #imports: KitImportMap;
-
-  constructor(kits?: KitReference[], imports?: KitImportMap) {
-    this.#kits = kits ?? [];
-    this.#imports = imports ?? {};
-  }
-
-  async load(): Promise<KitConstructor<Kit>[]> {
-    return (
-      await Promise.all(
-        this.#kits.map(async (kit) => {
-          // TODO: Support `using` property.
-          const { url } = kit;
-          // TODO: Support protocols other than `npm:`.
-          if (url === ".") return null;
-          const spec = urlToNpmSpec(url);
-
-          if (spec in this.#imports) return this.#imports[spec];
-
-          const { default: module } = await import(/* @vite-ignore */ spec);
-          // TODO: Check to see if this import is actually a Kit class.
-          return module;
-        })
-      )
-    ).filter(Boolean);
-  }
-}
 
 export class GraphToKitAdapter {
   graph: GraphDescriptor;
@@ -79,7 +40,7 @@ export class GraphToKitAdapter {
   }
 
   async #initialize(url: string) {
-    const board = await BoardRunner.fromGraphDescriptor(this.graph, this.kits);
+    const board = await BoardRunner.fromGraphDescriptor(this.graph);
     board.url = url;
     // NOTE: This means that this board will _not_ use handlers defined upstream
     // in the stack of boards to execute to nodes on this graph, but only the

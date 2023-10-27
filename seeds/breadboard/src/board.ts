@@ -8,7 +8,6 @@ import type {
   Edge,
   NodeDescriptor,
   InputValues,
-  GraphDescriptor,
   OutputValues,
 } from "./types.js";
 
@@ -18,7 +17,6 @@ import type {
   Kit,
   KitConstructor,
   OptionalIdConfiguration,
-  ConfigOrLambda,
   LambdaFunction,
   BreadboardNode,
   LambdaNodeOutputs,
@@ -27,6 +25,7 @@ import type {
 
 import { BoardRunner } from "./runner.js";
 import { Node } from "./node.js";
+import { asComposeTimeKit } from "./kits/ctors.js";
 
 /**
  * This is the heart of the Breadboard library.
@@ -205,18 +204,9 @@ export class Board extends BoardRunner implements Breadboard {
    * the board and can be used to place nodes on that board.
    */
   addKit<T extends Kit>(ctr: KitConstructor<T>): T {
-    const kit = new ctr({
-      create: (...args) => {
-        return new Node(this, ...args);
-      },
-      getConfigWithLambda: <Inputs, Outputs>(
-        config: ConfigOrLambda<Inputs, Outputs>
-      ): OptionalIdConfiguration => {
-        return getConfigWithLambda(this, config);
-      },
-    });
+    const kit = asComposeTimeKit(ctr, this);
     this.kits.push(kit);
-    return kit;
+    return kit as T;
   }
 
   /**
@@ -256,46 +246,3 @@ export class Board extends BoardRunner implements Breadboard {
     this.#acrossBoardsEdges.push({ edge, from, to });
   }
 }
-
-/**
- * Synctactic sugar for node factories that accept lambdas. This allows passing
- * either
- *  - A JS function that is a lambda function defining the board
- *  - A board capability, i.e. the result of calling lambda()
- *  - A board node, which should be a node with a `board` output
- * or
- *  - A regular config, with a `board` property with any of the above.
- *
- * @param config {ConfigOrLambda} the overloaded config
- * @returns {NodeConfigurationConstructor} config with a board property
- */
-const getConfigWithLambda = <In = InputValues, Out = OutputValues>(
-  board: Board,
-  config: ConfigOrLambda<In, Out>
-): OptionalIdConfiguration => {
-  // Did we get a graph?
-  const gotGraph =
-    (config as GraphDescriptor).nodes !== undefined &&
-    (config as GraphDescriptor).edges !== undefined &&
-    (config as GraphDescriptor).kits !== undefined;
-
-  // Look for functions, nodes and board capabilities.
-  const gotBoard =
-    gotGraph ||
-    typeof config === "function" ||
-    config instanceof Node ||
-    ((config as BreadboardCapability).kind === "board" &&
-      (config as BreadboardCapability).board);
-
-  const result = (
-    gotBoard
-      ? { board: gotGraph ? { kind: "board", board: config } : config }
-      : config
-  ) as OptionalIdConfiguration;
-
-  // Convert passed JS function into a board node.
-  if (typeof result.board === "function")
-    result.board = board.lambda(result.board as LambdaFunction<In, Out>);
-
-  return result;
-};

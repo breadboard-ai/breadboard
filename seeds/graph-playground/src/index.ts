@@ -13,6 +13,7 @@ import {
   type OutputValues,
   type InputValues,
   LogProbe,
+  asRuntimeKit,
 } from "@google-labs/breadboard";
 import {
   GraphIntegrityValidator,
@@ -24,6 +25,9 @@ import {
 
 // import { ReActHelper } from "./react.js";
 import { pathToFileURL } from "url";
+import Core from "@google-labs/core-kit";
+import Starter from "@google-labs/llm-starter";
+import Nursery from "@google-labs/node-nursery";
 
 // buffer for input from an external source.
 let input_buffer: string | null = null;
@@ -220,9 +224,15 @@ async function main(args: string[], use_input_handler = false) {
     board.addValidator(validator);
   }
 
+  const kits = [
+    asRuntimeKit(Starter),
+    asRuntimeKit(Core),
+    asRuntimeKit(Nursery),
+  ];
+
   try {
     // Run the board until it finishes. This may run forever.
-    for await (const result of board.run({ probe })) {
+    for await (const result of board.run({ probe, kits })) {
       if (result.type === "input") {
         result.inputs = await ask(result.inputArguments);
       } else if (result.type === "output") {
