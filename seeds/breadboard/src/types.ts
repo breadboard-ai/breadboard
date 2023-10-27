@@ -640,5 +640,3 @@ export type LambdaNodeOutputs = OutputValues & {
    */
   board: BreadboardCapability;
 };
-
-export type KitImportMap = Record<string, KitConstructor<Kit>>;

@@ -12,7 +12,6 @@ import {
   GenericKit,
   Kit,
   KitConstructor,
-  KitImportMap,
   NodeFactory,
   NodeHandlerContext,
   ConfigOrLambda,
@@ -25,13 +24,11 @@ export { SchemaBuilder } from "./schema.js";
 
 export class GraphToKitAdapter {
   graph: GraphDescriptor;
-  kits?: KitImportMap;
   handlers?: NodeHandlers;
-  board?: BoardRunner;
+  runner?: BoardRunner;
 
-  private constructor(graph: GraphDescriptor, kits?: KitImportMap) {
+  private constructor(graph: GraphDescriptor) {
     this.graph = graph;
-    this.kits = kits;
   }
 
   populateDescriptor(descriptor: KitBuilderOptions) {
@@ -39,9 +36,9 @@ export class GraphToKitAdapter {
     return { title, description, version, ...descriptor };
   }
 
-  async #initialize(url: string) {
-    const board = await BoardRunner.fromGraphDescriptor(this.graph);
-    board.url = url;
+  async #initialize(url: string, kits: Kit[] = []) {
+    const runner = await BoardRunner.fromGraphDescriptor(this.graph);
+    runner.url = url;
     // NOTE: This means that this board will _not_ use handlers defined upstream
     // in the stack of boards to execute to nodes on this graph, but only the
     // kits defined on this graph.
@@ -54,8 +51,10 @@ export class GraphToKitAdapter {
     // The comment above applies only to nodes acting as node handler. We
     // haven't seen this use-case yet for anything that isn't a Core node, so
     // let's revisit once we have that.
-    this.handlers = await BoardRunner.handlersFromBoard(board);
-    this.board = board;
+    this.handlers = kits?.reduce((acc, kit) => {
+      return { ...acc, ...kit.handlers };
+    }, {} as NodeHandlers);
+    this.runner = runner;
   }
 
   handlerForNode(id: NodeIdentifier) {
@@ -75,7 +74,7 @@ export class GraphToKitAdapter {
           throw new Error(`No handler found for node "${node.type}".`);
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const board = this.board!;
+        const board = this.runner!;
 
         return callHandler(handler, inputs, {
           ...context,
@@ -88,13 +87,9 @@ export class GraphToKitAdapter {
     };
   }
 
-  static async create(
-    graph: GraphDescriptor,
-    url: string,
-    kits?: KitImportMap
-  ) {
-    const adapter = new GraphToKitAdapter(graph, kits);
-    await adapter.#initialize(url);
+  static async create(graph: GraphDescriptor, url: string, kits: Kit[]) {
+    const adapter = new GraphToKitAdapter(graph);
+    await adapter.#initialize(url, kits);
     return adapter;
   }
 }

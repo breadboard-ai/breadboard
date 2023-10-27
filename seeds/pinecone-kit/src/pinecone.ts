@@ -5,9 +5,11 @@
  */
 
 import { GraphToKitAdapter, KitBuilder } from "@google-labs/breadboard/kits";
-import { Core } from "@google-labs/core-kit";
 
 import kit from "./boards/kit.js";
+import { asRuntimeKit } from "@google-labs/breadboard";
+import Starter from "@google-labs/llm-starter";
+import Core from "@google-labs/core-kit";
 
 // TODO: Replace with a well-known published URL, like a CDN.
 const KIT_BASE_URL =
@@ -17,9 +19,10 @@ const NAMESPACE = "pinecone-api-";
 
 const KIT_PACKAGE_URL = "npm:@google-labs/pinecone-kit";
 
-const adapter = await GraphToKitAdapter.create(kit, KIT_BASE_URL, {
-  "@google-labs/core-kit": Core,
-});
+const adapter = await GraphToKitAdapter.create(kit, KIT_BASE_URL, [
+  asRuntimeKit(Starter),
+  asRuntimeKit(Core),
+]);
 
 const builder = new KitBuilder(
   adapter.populateDescriptor({

@@ -28,6 +28,7 @@ import { pathToFileURL } from "url";
 import Core from "@google-labs/core-kit";
 import Starter from "@google-labs/llm-starter";
 import Nursery from "@google-labs/node-nursery";
+import Pinecone from "@google-labs/pinecone-kit";
 
 // buffer for input from an external source.
 let input_buffer: string | null = null;
@@ -228,6 +229,7 @@ async function main(args: string[], use_input_handler = false) {
     asRuntimeKit(Starter),
     asRuntimeKit(Core),
     asRuntimeKit(Nursery),
+    asRuntimeKit(Pinecone),
   ];
 
   try {
