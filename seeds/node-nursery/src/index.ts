@@ -5,5 +5,6 @@
  */
 
 import { Nursery } from "./nursery.js";
+export type Nursery = InstanceType<typeof Nursery>;
 export default Nursery;
 export { Nursery };
