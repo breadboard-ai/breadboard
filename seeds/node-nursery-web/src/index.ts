@@ -6,11 +6,13 @@
 
 import { KitBuilder } from "@google-labs/breadboard/kits";
 import credentials from "./nodes/credentials.js";
+import driveList from "./nodes/drive-list.js";
 
 const NodeNurseryWeb = new KitBuilder({
   url: "npm:@google-labs/node-nursery-web",
 }).build({
   credentials,
+  driveList,
 });
 
 export default NodeNurseryWeb;
