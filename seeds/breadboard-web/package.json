@@ -14,6 +14,8 @@
     "dev": "vite",
     "deploy": "firebase deploy",
     "build:vite": "FORCE_COLOR=1 vite build",
+    "test": "FORCE_COLOR=1 vitest --run",
+    "watch": "vitest",
     "generate:docs": "typedoc --plugin typedoc-plugin-markdown"
   },
   "repository": {
