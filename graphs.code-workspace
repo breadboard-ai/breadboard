@@ -1,45 +1,63 @@
 {
   "folders": [
     {
+      "name": "graph-playground",
       "path": "seeds/graph-playground"
     },
     {
+      "name": "breadboard",
       "path": "seeds/breadboard"
     },
     {
+      "name": "llm-starter",
       "path": "seeds/llm-starter"
     },
     {
+      "name": "graph-integrity",
       "path": "seeds/graph-integrity"
     },
     {
+      "name": "palm-lite",
       "path": "seeds/palm-lite"
     },
     {
+      "name": "node-nursery",
       "path": "seeds/node-nursery"
     },
     {
+      "name": "node-nursery-web",
+      "path": "seeds/node-nursery-web"
+    },
+    {
+      "name": "coffee-bot-board",
       "path": "seeds/coffee-bot-board"
     },
     {
+      "name": "web-demo",
       "path": "seeds/web-demo"
     },
     {
+      "name": "cloud-function",
       "path": "seeds/cloud-function"
     },
     {
+      "name": "breadboard-server",
       "path": "seeds/breadboard-server"
     },
     {
+      "name": "pinecone-kit",
       "path": "seeds/pinecone-kit"
     },
     {
+      "name": "breadboard-web",
       "path": "seeds/breadboard-web"
     },
     {
+      "name": "chunker",
       "path": "seeds/chunker"
     },
     {
+      "name": "core-kit",
       "path": "seeds/core-kit"
     }
   ],

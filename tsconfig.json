@@ -13,6 +13,7 @@
     { "path": "seeds/graph-integrity" },
     { "path": "seeds/llm-starter" },
     { "path": "seeds/node-nursery" },
+    { "path": "seeds/node-nursery-web" },
     { "path": "seeds/palm-lite" },
     { "path": "seeds/pinecone-kit" },
     { "path": "seeds/web-demo" }
