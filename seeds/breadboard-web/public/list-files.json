@@ -1,0 +1,47 @@
+{
+  "title": "List Google Drive files",
+  "description": "First attempt at a Google Drive node",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "input",
+      "to": "output",
+      "out": "*"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Text",
+              "description": "Text to display"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Text",
+              "description": "Text to display"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "kits": []
+}
