@@ -8,9 +8,6 @@ export const buildCustomAllowList = (value?: string) => {
 
 export default defineConfig(async ({ mode }) => {
   config();
-
-  console.log(mode, process.env.VITE_FS_ALLOW, process.cwd());
-
   return {
     build: {
       lib: {
