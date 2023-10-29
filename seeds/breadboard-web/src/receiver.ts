@@ -4,11 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { type NodeHandlers, Board, callHandler } from "@google-labs/breadboard";
+import {
+  type NodeHandlers,
+  Board,
+  callHandler,
+  InputValues,
+} from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 import type { ProxyRequestMessage } from "@google-labs/breadboard/worker";
 
 import { SecretKeeper } from "./secrets";
+import { KitBuilder } from "@google-labs/breadboard/kits";
 
 class AskForSecret {
   name: string;
@@ -43,6 +49,14 @@ export class ProxyReceiver {
 
   constructor() {
     this.board = new Board();
+    this.board.addKit(
+      new KitBuilder({ url: "npm:@google-labs/breadboard-web" }).build({
+        secrets: async (inputs: InputValues) => {
+          const { keys } = inputs as { keys: string[] };
+          return this.secrets.addSecretTokens(keys);
+        },
+      })
+    );
     this.board.addKit(Starter);
   }
 
@@ -52,11 +66,7 @@ export class ProxyReceiver {
 
     if (!this.handlers)
       this.handlers = await Board.handlersFromBoard(this.board);
-    if (nodeType === "secrets") {
-      const { keys } = inputs as { keys: string[] };
-      yield new FinalResult(nodeType, this.secrets.addSecretTokens(keys));
-      return;
-    }
+
     for (const name in inputs) {
       const value = inputs[name];
       const secrets = this.secrets.findSecrets(value);
