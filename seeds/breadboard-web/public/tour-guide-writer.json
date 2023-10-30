@@ -1,0 +1,111 @@
+{
+  "title": "Tour Guide Writer",
+  "description": "Based on the location specified, writes a tour guide for it",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "secrets-1",
+      "to": "travelItineraryGenerator",
+      "out": "PALM_KEY",
+      "in": "PALM_KEY"
+    },
+    {
+      "from": "splitItinerary",
+      "to": "guide",
+      "out": "result",
+      "in": "guide"
+    },
+    {
+      "from": "travelItineraryGenerator",
+      "to": "splitItinerary",
+      "out": "completion",
+      "in": "itinerary"
+    },
+    {
+      "from": "travelItinerary",
+      "to": "travelItineraryGenerator",
+      "out": "prompt",
+      "in": "text"
+    },
+    {
+      "from": "location",
+      "to": "travelItinerary",
+      "out": "*"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "location",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "location": {
+              "type": "string",
+              "title": "Location",
+              "description": "The location for which to write a tour guide"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "guide",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "guide": {
+              "type": "string",
+              "title": "Location",
+              "description": "The location for which to write a tour guide"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "travelItinerary",
+      "type": "promptTemplate",
+      "configuration": {
+        "template": "[Place] Seattle, WA\n[Top ten place-based experiences with no duplicates]\n1) See the city from the Space Needle\n2) Watch the fish throwing at Pike Place Market\n3) Add chewing gum to the The Gum Wall\n4) Stroll the Chihuly Garden and Glass Museum\n5) Take a selfie with the Fremont Troll\n6) Walk the quad at the University of Washington\n7) Watch the octopus feeding at the Seattle Aquarium\n8) Learn about aviation history at the Museum of Flight\n9) Wander the art at the Seattle Art Museum\n10) See the baby gorilla at the Woodland Park Zoo\n\n[Place] Madrid, Spain\n[Top ten place-based experiences with no duplicates]\n1) Stroll the Gran Via\n2) See the Prado Museum\n3) Attend a Real Madrid game\n4) Stroll through the Mercado de San Miguel\n5) Sip wine at the Bodega de Palacio\n6) Go clubbing at the Chueca district\n7) Shop at the El Rastro flea market\n8) Take a selfie at the Puerta del Sol\n9) Shop at the El Corte Ingles\n10) Enjoy tapas and wine at La Latina\n\n[Place] Chicago, IL\n[Top ten place-based experiences with no duplicates] \n1) Attend a Chicago Bulls game\n2) Stroll the Magnificent Mile\n3) Go to a museum at the Museum of Science and Industry\n4) Stroll the Millennium Park\n5) Visit the Willis Tower\n6) See the Chicago River\n7) Take a selfie at the Bean\n8) Eat deep dish pizza at Giordano's\n9) Shop at the Water Tower Place\n10) See the Chicago Theatre\n\n[Place] {{location}}\n[Top ten place-based experiences with no duplicates]\n"
+      }
+    },
+    {
+      "id": "travelItineraryGenerator",
+      "type": "generateText",
+      "configuration": {
+        "stopSequences": [
+          "\n[Place]"
+        ]
+      }
+    },
+    {
+      "id": "secrets-1",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "PALM_KEY"
+        ]
+      }
+    },
+    {
+      "id": "splitItinerary",
+      "type": "runJavascript",
+      "configuration": {
+        "name": "splitString",
+        "code": "function splitString({itinerary}){return itinerary.split(/[0-9]{1,2}\\)/).map(e=>e.trim()).filter(e=>e!==\"\")}"
+      }
+    }
+  ],
+  "kits": [
+    {
+      "title": "LLM Starter Kit",
+      "description": "A kit that provides a few necessary components for wiring boards that use PaLM API.",
+      "version": "0.0.1",
+      "url": "npm:@google-labs/llm-starter"
+    }
+  ]
+}
