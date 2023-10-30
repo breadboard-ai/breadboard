@@ -15,6 +15,7 @@ import type { ProxyRequestMessage } from "@google-labs/breadboard/worker";
 
 import { SecretKeeper } from "./secrets";
 import { KitBuilder } from "@google-labs/breadboard/kits";
+import { asyncGen } from "./async-gen";
 
 class AskForSecret {
   name: string;
@@ -60,6 +61,24 @@ export class ProxyReceiver {
     this.board.addKit(Starter);
   }
 
+  #revealInputSecrets(inputs: InputValues) {
+    return asyncGen(async (next) => {
+      for (const name in inputs) {
+        const value = inputs[name];
+        const secrets = this.secrets.findSecrets(value);
+        for (const token of secrets) {
+          const secret = this.secrets.getSecret(token);
+          if (!secret.value) {
+            const ask = new AskForSecret(secret.name);
+            await next(ask);
+            secret.value = ask.value;
+          }
+        }
+        inputs[name] = this.secrets.revealSecrets(value, secrets);
+      }
+    });
+  }
+
   async *handle(data: ProxyRequestMessage["data"]) {
     const nodeType = data.node.type;
     const inputs = data.inputs;
@@ -67,19 +86,7 @@ export class ProxyReceiver {
     if (!this.handlers)
       this.handlers = await Board.handlersFromBoard(this.board);
 
-    for (const name in inputs) {
-      const value = inputs[name];
-      const secrets = this.secrets.findSecrets(value);
-      for (const token of secrets) {
-        const secret = this.secrets.getSecret(token);
-        if (!secret.value) {
-          const ask = new AskForSecret(secret.name);
-          yield ask;
-          secret.value = ask.value;
-        }
-      }
-      inputs[name] = this.secrets.revealSecrets(value, secrets);
-    }
+    yield* this.#revealInputSecrets(inputs);
     const handler = this.handlers[nodeType];
     if (!handler)
       throw new Error(`No handler found for node type "${nodeType}".`);
