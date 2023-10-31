@@ -6,13 +6,16 @@
 
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
+import { Core } from "@google-labs/core-kit";
 
 const board = new Board({
   title: "Tour Guide Writer",
-  description: "Based on the location specified, writes a tour guide for it",
+  description:
+    "This boards attempts to write a tour guide for a specified location.",
   version: "0.0.1",
 });
 const starter = board.addKit(Starter);
+const core = board.addKit(Core);
 
 const input = board.input({
   $id: "location",
@@ -106,6 +109,46 @@ const splitItinerary = starter.runJavascript("splitString", {
   $id: "splitItinerary",
   code: splitString.toString(),
 });
+
+const guideTemplate = starter.promptTemplate(
+  `[City] Paris, France
+[Activity] Have a picnic in the Luxembourg Gardens
+[Experiential story] Grab a baguette, some cheese and bottle of wine and head over to Luxembourg Gardens. You'll enjoy an even stroll, a great chance to people watch, and a charming free evening that is quintessentially Parisian.
+
+[City] Madrid, Spain
+[Activity] See the Prado Museum
+[Experiential story] The Prado is an art lover's paradise. It is home to the largest collection of works by Goya, Velazquez, and El Greco. There are also works by Picasso, Monet, and Rembrandt. The Prado is a must-see for anyone visiting Madrid.
+
+[City] Tatooine
+[Activity] Catch a pod race
+[Experiential story] A pod race is a race of flying engines called pods. Pod racing is a dangerous sport and was very popular in the Outer Rim Territories before the Empire was formed.
+
+
+[City] {{location}}
+[Activity] {{activity}}
+[Experiential story]
+`,
+  { $id: "guideTemplate" }
+);
+
+const guideGenerator = starter
+  .generateText({
+    $id: "guideGenerator",
+    stopSequences: ["\n[City]"],
+  })
+  .wire("<-PALM_KEY", starter.secrets(["PALM_KEY"]));
+
+// const guideLambda = board.lambda((_, input, output) => {
+//   input.wire(
+//     "item->activity.",
+//     guideTemplate.wire(
+//       "prompt->text.",
+//       guideGenerator.wire("completion->guide.", output)
+//     )
+//   );
+// });
+
+// const guides = core.map(guideLambda);
 
 input.wire(
   "*",
