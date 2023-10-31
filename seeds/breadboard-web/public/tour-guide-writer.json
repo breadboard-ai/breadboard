@@ -24,10 +24,28 @@
       "in": "board"
     },
     {
-      "from": "map-3",
+      "from": "combineStrings",
       "to": "guide",
-      "out": "list",
+      "out": "result",
       "in": "guide"
+    },
+    {
+      "from": "location",
+      "to": "combineStrings",
+      "out": "location",
+      "in": "location"
+    },
+    {
+      "from": "splitItinerary",
+      "to": "combineStrings",
+      "out": "result",
+      "in": "activities"
+    },
+    {
+      "from": "map-3",
+      "to": "combineStrings",
+      "out": "list",
+      "in": "guides"
     },
     {
       "from": "splitItinerary",
@@ -211,6 +229,14 @@
       "id": "map-3",
       "type": "map",
       "configuration": {}
+    },
+    {
+      "id": "combineStrings",
+      "type": "runJavascript",
+      "configuration": {
+        "name": "combineStrings",
+        "code": "function combineStrings({location:location2,activities,guides}){const guideList=guides.map(item=>item.guide);return`# ${location2}\n${activities.map((activity,index)=>`## ${activity}\n${guideList[index]}\n\n`).join(\"\")}`}"
+      }
     }
   ],
   "kits": [
