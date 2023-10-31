@@ -156,7 +156,10 @@ class Board(GraphDescriptor):
       if type(handler) == javascript.proxy.Proxy:
         # This can possibly be wrapped in an AsyncTask instead of a trivial coroutine
         async def await_js(func, args):
-          res = func(args)
+          if func.invoke:
+            res = func.invoke(args)
+          else:
+            res = func(args)
           # Outputs can be a javascript proxy, so convert to dict
           try:
             res = {k: res[k] for k in res}
