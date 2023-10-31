@@ -89,8 +89,9 @@ export class UIController extends HTMLElement implements UI {
   }
 
   result(value: ResultArgs) {
-    this.removeProgress();
-    this.append(new Result(value));
+    const before = this.querySelector("bb-progress");
+    const result = new Result(value);
+    before ? before.before(result) : this.append(result);
   }
 
   async input(id: string, args: InputArgs): Promise<Record<string, unknown>> {

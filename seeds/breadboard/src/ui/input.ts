@@ -17,11 +17,28 @@ export type InputOptios = {
   secret?: boolean;
 };
 
+/**
+ * A simple "Was I supposed to remember something?" flag.
+ */
+class ShortTermMemory {
+  #computeKey(properties: Record<string, Schema>) {
+    return Object.keys(properties).join("#");
+  }
+  rememberSaving(properties: Record<string, Schema>) {
+    globalThis.sessionStorage.setItem(this.#computeKey(properties), "yes");
+  }
+
+  didSave(properties: Record<string, Schema>): boolean {
+    return !!globalThis.sessionStorage.getItem(this.#computeKey(properties));
+  }
+}
+
 export class Input extends HTMLElement {
   args: InputArgs;
   id: string;
   remember: boolean;
   secret: boolean;
+  #memory = new ShortTermMemory();
 
   constructor(
     id: string,
@@ -147,6 +164,8 @@ export class Input extends HTMLElement {
       submit.type = "submit";
       submit.value = "Continue";
     }
+    if (this.remember && this.#memory.didSave(properties))
+      return Promise.resolve(values);
     return new Promise((resolve) => {
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
@@ -160,6 +179,7 @@ export class Input extends HTMLElement {
           }
         });
         this.#rememberValues(data);
+        if (this.remember) this.#memory.rememberSaving(properties);
         input.remove();
         resolve(data);
       });
