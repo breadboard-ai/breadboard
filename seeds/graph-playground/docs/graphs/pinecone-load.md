@@ -15,8 +15,6 @@ lambda2_lambda3_jsonata3["jsonata <br> id='jsonata-3'"] -- "result->text" --> la
 lambda2_lambda3_input1[/"input <br> id='input-1'"/]:::input -- "item->json" --> lambda2_lambda3_jsonata3["jsonata <br> id='jsonata-3'"]
 lambda2_lambda3_merge["append <br> id='merge'"] -- "accumulator->item" --> lambda2_lambda3_output2{{"output <br> id='output-2'"}}:::output
 lambda2_lambda3_input1[/"input <br> id='input-1'"/]:::input -- "item->accumulator" --> lambda2_lambda3_merge["append <br> id='merge'"]
-
-
 end
 sg_lambda3:::slotted -- "lamdba->lamdba" --o lambda2_lambda3
 
@@ -24,8 +22,6 @@ lambda2_pineconeapiupsert4["pinecone-api-upsert <br> id='pinecone-api-upsert-4'"
 lambda2_formattoapi["jsonata <br> id='format-to-api'"] -- "result->vectors" --> lambda2_pineconeapiupsert4["pinecone-api-upsert <br> id='pinecone-api-upsert-4'"]
 lambda2_generateembeddings["map <br> id='generate-embeddings'"] -- "list->json" --> lambda2_formattoapi["jsonata <br> id='format-to-api'"]
 lambda2_input1[/"input <br> id='input-1'"/]:::input -- "item->list" --> lambda2_generateembeddings["map <br> id='generate-embeddings'"]
-
-
 end
 sg_lambda2:::slotted -- "lamdba->lamdba" --o lambda2
 
@@ -34,9 +30,6 @@ batch1["batch <br> id='batch-1'"] -- "list->list" --> map3["map <br> id='map-3'"
 getcontent["jsonata <br> id='get-content'"] -- "result->list" --> batch1["batch <br> id='batch-1'"]
 loadchunks["fetch <br> id='load-chunks'"] -- "response->json" --> getcontent["jsonata <br> id='get-content'"]
 url[/"input <br> id='url'"/]:::input -- "text->url" --> loadchunks["fetch <br> id='load-chunks'"]
-expressiongetcontent[expression]:::config -- "expression->expression" --o getcontent
-sizebatch1[size]:::config -- "size->size" --o batch1
-
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

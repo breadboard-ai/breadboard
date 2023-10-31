@@ -8,9 +8,6 @@ graph TD;
 secrets2("secrets <br> id='secrets-2'"):::secrets -- "PALM_KEY->PALM_KEY" --> generateText1["generateText <br> id='generateText-1'"]
 generateText1["generateText <br> id='generateText-1'"] -- "completion->text" --> completion{{"output <br> id='completion'"}}:::output
 prompt[/"input <br> id='prompt'"/]:::input -- "text->text" --> generateText1["generateText <br> id='generateText-1'"]
-keyssecrets2[keys]:::config -- "keys->keys" --o secrets2
-schemaprompt[schema]:::config -- "schema->schema" --o prompt
-schemacompletion[schema]:::config -- "schema->schema" --o completion
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

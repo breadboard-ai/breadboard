@@ -13,19 +13,12 @@ lambda2_mathfunctiongenerator["generateText <br> id='math-function-generator'"] 
 lambda2_compute["runJavascript <br> id='compute'"] -- "result->text" --> lambda2_output2{{"output <br> id='output-2'"}}:::output
 lambda2_compute["runJavascript <br> id='compute'"] -- "$error->$error" --> lambda2_passthrough4(("passthrough <br> id='passthrough-4'")):::passthrough
 lambda2_mathfunctiongenerator["generateText <br> id='math-function-generator'"] -- "completion->completion" --> lambda2_passthrough4(("passthrough <br> id='passthrough-4'")):::passthrough
-
-
 end
 sg_lambda2:::slotted -- "lamdba->lamdba" --o lambda2
 
 invoke1["invoke <br> id='invoke-1'"] -- "text->text" --> print{{"output <br> id='print'"}}:::output
 mathfunction["promptTemplate <br> id='math-function'"] -- "prompt->text" --> invoke1["invoke <br> id='invoke-1'"]
 mathquestion[/"input <br> id='math-question'"/]:::input -- "text->question" --> mathfunction["promptTemplate <br> id='math-function'"]
-schemamathquestion[schema]:::config -- "schema->schema" --o mathquestion
-templatemathfunction[template]:::config -- "template->template" --o mathfunction
-pathinvoke1[path]:::config -- "path->path" --o invoke1
-
-schemaprint[schema]:::config -- "schema->schema" --o print
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

@@ -5,10 +5,6 @@
   ```mermaid
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-$refconfig[$ref]:::config -- "$ref->$ref" --o config
-$refquery[$ref]:::config -- "$ref->$ref" --o query
-$refupsert[$ref]:::config -- "$ref->$ref" --o upsert
-$refvector[$ref]:::config -- "$ref->$ref" --o vector
 
 subgraph sg_config [config]
 config_secrets1("secrets <br> id='secrets-1'"):::secrets -- "PINECONE_INDEX->PINECONE_INDEX" --> config_start["jsonata <br> id='start'"]
@@ -16,12 +12,6 @@ config_secrets2("secrets <br> id='secrets-2'"):::secrets -- "PINECONE_PROJECT_ID
 config_secrets3("secrets <br> id='secrets-3'"):::secrets -- "PINECONE_ENVIRONMENT->PINECONE_ENVIRONMENT" --> config_start["jsonata <br> id='start'"]
 config_secrets4("secrets <br> id='secrets-4'"):::secrets -- "PINECONE_API_KEY->PINECONE_API_KEY" --> config_start["jsonata <br> id='start'"]
 config_start["jsonata <br> id='start'"] -- "result->config" --> config_result{{"output <br> id='result'"}}:::output
-
-
-
-
-
-
 end
 
 
@@ -31,11 +21,6 @@ query_config[["include <br> id='config'"]]:::include -- "config->config" --> que
 query_vector[["include <br> id='vector'"]]:::include -- "response->response" --> query_response{{"output <br> id='response'"}}:::output
 query_makebody["jsonata <br> id='make-body'"] -- "result->body" --> query_vector[["include <br> id='vector'"]]:::include
 query_query[/"input <br> id='query'"/]:::input -- "embedding->json" --> query_makebody["jsonata <br> id='make-body'"]
-
-
-
-
-
 end
 
 
@@ -44,10 +29,6 @@ upsert_upsert(("passthrough <br> id='upsert'")):::passthrough -- "call->call" --
 upsert_config[["include <br> id='config'"]]:::include -- "config->config" --> upsert_vector[["include <br> id='vector'"]]:::include
 upsert_vector[["include <br> id='vector'"]]:::include -- "response->response" --> upsert_output1{{"output <br> id='output-1'"}}:::output
 upsert_vectors[/"input <br> id='vectors'"/]:::input -- "vectors->body" --> upsert_vector[["include <br> id='vector'"]]:::include
-
-
-
-
 end
 
 
@@ -62,13 +43,6 @@ vector_api[/"input <br> id='api'"/]:::input -- "call->call" --> vector_makepinec
 vector_makepineconeurl["urlTemplate <br> id='make-pinecone-url'"] -- "url->url" --> vector_pineconeapicall["fetch <br> id='pinecone-api-call'"]
 vector_api[/"input <br> id='api'"/]:::input -- "body->body" --> vector_pineconeapicall["fetch <br> id='pinecone-api-call'"]
 vector_pineconeapicall["fetch <br> id='pinecone-api-call'"] -- "response->response" --> vector_response{{"output <br> id='response'"}}:::output
-
-
-
-
-
-
-
 end
 
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000

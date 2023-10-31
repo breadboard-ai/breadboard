@@ -9,10 +9,6 @@ secrets2("secrets <br> id='secrets-2'"):::secrets -- "PALM_KEY->PALM_KEY" --> ge
 generateText1["generateText <br> id='generateText-1'"] -- "completion->text" --> analysis{{"output <br> id='analysis'"}}:::output
 analyzethis["promptTemplate <br> id='analyze-this'"] -- "prompt->text" --> generateText1["generateText <br> id='generateText-1'"]
 question[/"input <br> id='question'"/]:::input -- "text->question" --> analyzethis["promptTemplate <br> id='analyze-this'"]
-keyssecrets2[keys]:::config -- "keys->keys" --o secrets2
-schemaquestion[schema]:::config -- "schema->schema" --o question
-templateanalyzethis[template]:::config -- "template->template" --o analyzethis
-schemaanalysis[schema]:::config -- "schema->schema" --o analysis
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

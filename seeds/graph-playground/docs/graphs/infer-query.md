@@ -11,12 +11,6 @@ inferringPrompt["promptTemplate <br> id='inferringPrompt'"] -- "prompt->text" --
 promptStuffer["jsonata <br> id='promptStuffer'"] -- "result->result" --> inferringPrompt["promptTemplate <br> id='inferringPrompt'"]
 promptToInfer["promptTemplate <br> id='promptToInfer'"] -- "prompt->json" --> promptStuffer["jsonata <br> id='promptStuffer'"]
 askForTemplate[/"input <br> id='askForTemplate'"/]:::input -- "text->template" --> promptToInfer["promptTemplate <br> id='promptToInfer'"]
-schemaaskForTemplate[schema]:::config -- "schema->schema" --o askForTemplate
-schemaprintResults[schema]:::config -- "schema->schema" --o printResults
-contextpromptToInfer[context]:::config -- "context->context" --o promptToInfer
-templateinferringPrompt[template]:::config -- "template->template" --o inferringPrompt
-expressionpromptStuffer[expression]:::config -- "expression->expression" --o promptStuffer
-keyssecrets1[keys]:::config -- "keys->keys" --o secrets1
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

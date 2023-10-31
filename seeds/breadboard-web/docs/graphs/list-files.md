@@ -4,8 +4,6 @@
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
 input[/"input <br> id='input'"/]:::input -- all --> output{{"output <br> id='output'"}}:::output
-schemainput[schema]:::config -- "schema->schema" --o input
-schemaoutput[schema]:::config -- "schema->schema" --o output
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

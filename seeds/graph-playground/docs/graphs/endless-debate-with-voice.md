@@ -26,18 +26,6 @@ secrets1("secrets <br> id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o ge
 promptTemplate2["promptTemplate <br> id='promptTemplate-2'"] -- "prompt->text" --> generateText5["generateText <br> id='generateText-5'"]
 rememberQuestion["append <br> id='rememberQuestion'"] -- "accumulator->context" --> albert["promptTemplate <br> id='albert'"]
 input7[/"input <br> id='input-7'"/]:::input -- "text->topic" --> rememberQuestion["append <br> id='rememberQuestion'"]
-keyssecrets1[keys]:::config -- "keys->keys" --o secrets1
-templatepromptTemplate2[template]:::config -- "template->template" --o promptTemplate2
-templatealbert[template]:::config -- "template->template" --o albert
-stopSequencesgenerateText3[stopSequences]:::config -- "stopSequences->stopSequences" --o generateText3
-safetySettingsgenerateText3[safetySettings]:::config -- "safetySettings->safetySettings" --o generateText3
-templatealbertvoice[template]:::config -- "template->template" --o albertvoice
-schemaalbertSays[schema]:::config -- "schema->schema" --o albertSays
-stopSequencesgenerateText5[stopSequences]:::config -- "stopSequences->stopSequences" --o generateText5
-safetySettingsgenerateText5[safetySettings]:::config -- "safetySettings->safetySettings" --o generateText5
-templatefriedrichvoice[template]:::config -- "template->template" --o friedrichvoice
-schemafriedrichSays[schema]:::config -- "schema->schema" --o friedrichSays
-schemainput7[schema]:::config -- "schema->schema" --o input7
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

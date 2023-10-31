@@ -25,16 +25,6 @@ jsonata8["jsonata <br> id='jsonata-8'"] -- all --> invoke7["invoke <br> id='invo
 jsonata6["jsonata <br> id='jsonata-6'"] -- "args->text" --> invoke7["invoke <br> id='invoke-7'"]
 invoke7["invoke <br> id='invoke-7'"] -- "text->Observation" --> rememberObservation["append <br> id='rememberObservation'"]
 jsonata6["jsonata <br> id='jsonata-6'"] -- "answer->text" --> output9{{"output <br> id='output-9'"}}:::output
-schemainput1[schema]:::config -- "schema->schema" --o input1
-keyssecrets2[keys]:::config -- "keys->keys" --o secrets2
-expressionjsonata3[expression]:::config -- "expression->expression" --o jsonata3
-expressionjsonata4[expression]:::config -- "expression->expression" --o jsonata4
-templatepromptTemplate5[template]:::config -- "template->template" --o promptTemplate5
-stopSequencesreactcompletion[stopSequences]:::config -- "stopSequences->stopSequences" --o reactcompletion
-expressionjsonata6[expression]:::config -- "expression->expression" --o jsonata6
-rawjsonata6[raw]:::config -- "raw->raw" --o jsonata6
-expressionjsonata8[expression]:::config -- "expression->expression" --o jsonata8
-rawjsonata8[raw]:::config -- "raw->raw" --o jsonata8
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

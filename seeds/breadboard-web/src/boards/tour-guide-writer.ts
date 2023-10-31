@@ -38,8 +38,8 @@ const output = board.output({
     properties: {
       guide: {
         type: "string",
-        title: "Location",
-        description: "The location for which to write a tour guide",
+        title: "Guide",
+        description: "The tour guide for the specified location",
       },
     },
   },
@@ -98,16 +98,14 @@ const travelItineraryGenerator = starter
   })
   .wire("<-PALM_KEY", starter.secrets(["PALM_KEY"]));
 
-function splitString({ itinerary }: { itinerary: string }) {
-  return itinerary
-    .split(/[0-9]{1,2}\)/)
-    .map((e) => e.trim())
-    .filter((e) => e !== "");
-}
-
-const splitItinerary = starter.runJavascript("splitString", {
+const splitItinerary = starter.runJavascript("splitItinerary", {
   $id: "splitItinerary",
-  code: splitString.toString(),
+  code: function splitItinerary({ itinerary }: { itinerary: string }) {
+    return itinerary
+      .split(/[0-9]{1,2}\)/)
+      .map((e) => e.trim())
+      .filter((e) => e !== "");
+  }.toString(),
 });
 
 // This the magic sauce. The `map` node takes in a  `list` input property, which
@@ -152,24 +150,22 @@ const createGuides = core.map((board, input, output) => {
   );
 });
 
-function combineStrings({
-  location,
-  activities,
-  guides,
-}: {
-  location: string;
-  activities: string[];
-  guides: Record<string, { guide: string }>[];
-}) {
-  const guideList = guides.map((item) => item.guide);
-  return `# ${location}\n${activities
-    .map((activity, index) => `## ${activity}\n${guideList[index]}\n\n`)
-    .join("")}`;
-}
-
-const combineGuides = starter.runJavascript("combineStrings", {
-  $id: "combineStrings",
-  code: combineStrings.toString(),
+const combineGuides = starter.runJavascript("combineGuides", {
+  $id: "combineGuides",
+  code: function combineGuides({
+    location,
+    activities,
+    guides,
+  }: {
+    location: string;
+    activities: string[];
+    guides: Record<string, { guide: string }>[];
+  }) {
+    const guideList = guides.map((item) => item.guide);
+    return `# ${location}\n${activities
+      .map((activity, index) => `## ${activity}\n${guideList[index]}\n\n`)
+      .join("")}`;
+  }.toString(),
 });
 
 location.wire(

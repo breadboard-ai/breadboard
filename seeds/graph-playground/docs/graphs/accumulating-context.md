@@ -15,12 +15,6 @@ assistant["promptTemplate <br> id='assistant'"] -- "prompt->text" --> generator[
 userRequest[/"input <br> id='userRequest'"/]:::input -- "text->question" --> assistant["promptTemplate <br> id='assistant'"]
 userRequest[/"input <br> id='userRequest'"/]:::input -- "text->user" --> conversationMemory["append <br> id='conversationMemory'"]
 start(("passthrough <br> id='start'")):::passthrough --> userRequest[/"input <br> id='userRequest'"/]:::input
-schemauserRequest[schema]:::config -- "schema->schema" --o userRequest
-templateassistant[template]:::config -- "template->template" --o assistant
-contextassistant[context]:::config -- "context->context" --o assistant
-accumulatorconversationMemory[accumulator]:::config -- "accumulator->accumulator" --o conversationMemory
-keyssecrets1[keys]:::config -- "keys->keys" --o secrets1
-schemaassistantResponse[schema]:::config -- "schema->schema" --o assistantResponse
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

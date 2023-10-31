@@ -24,18 +24,6 @@ jsonata7["jsonata <br> id='jsonata-7'"] -- "answer->text" --> output8{{"output <
 reactcompletion["generateText <br> id='react-completion'"] -- "completion->json" --> jsonata7["jsonata <br> id='jsonata-7'"]
 reactcompletion["generateText <br> id='react-completion'"] -- "completion->Thought" --> rememberThought["append <br> id='rememberThought'"]
 promptTemplate5["promptTemplate <br> id='promptTemplate-5'"] -- "prompt->text" --> reactcompletion["generateText <br> id='react-completion'"]
-keyssecrets1[keys]:::config -- "keys->keys" --o secrets1
-expressionjsonata2[expression]:::config -- "expression->expression" --o jsonata2
-expressionjsonata3[expression]:::config -- "expression->expression" --o jsonata3
-templatepromptTemplate5[template]:::config -- "template->template" --o promptTemplate5
-schemainput6[schema]:::config -- "schema->schema" --o input6
-stopSequencesreactcompletion[stopSequences]:::config -- "stopSequences->stopSequences" --o reactcompletion
-pathmath[path]:::config -- "path->path" --o math
-descriptionmath[description]:::config -- "description->description" --o math
-pathsearch[path]:::config -- "path->path" --o search
-descriptionsearch[description]:::config -- "description->description" --o search
-expressionjsonata7[expression]:::config -- "expression->expression" --o jsonata7
-rawjsonata7[raw]:::config -- "raw->raw" --o jsonata7
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

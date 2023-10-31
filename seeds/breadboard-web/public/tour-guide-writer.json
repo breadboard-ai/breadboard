@@ -24,26 +24,26 @@
       "in": "board"
     },
     {
-      "from": "combineStrings",
+      "from": "combineGuides",
       "to": "guide",
       "out": "result",
       "in": "guide"
     },
     {
       "from": "location",
-      "to": "combineStrings",
+      "to": "combineGuides",
       "out": "location",
       "in": "location"
     },
     {
       "from": "splitItinerary",
-      "to": "combineStrings",
+      "to": "combineGuides",
       "out": "result",
       "in": "activities"
     },
     {
       "from": "map-3",
-      "to": "combineStrings",
+      "to": "combineGuides",
       "out": "list",
       "in": "guides"
     },
@@ -97,8 +97,8 @@
           "properties": {
             "guide": {
               "type": "string",
-              "title": "Location",
-              "description": "The location for which to write a tour guide"
+              "title": "Guide",
+              "description": "The tour guide for the specified location"
             }
           }
         }
@@ -133,8 +133,8 @@
       "id": "splitItinerary",
       "type": "runJavascript",
       "configuration": {
-        "name": "splitString",
-        "code": "function splitString({itinerary}){return itinerary.split(/[0-9]{1,2}\\)/).map(e=>e.trim()).filter(e=>e!==\"\")}"
+        "name": "splitItinerary",
+        "code": "function splitItinerary2({itinerary}){return itinerary.split(/[0-9]{1,2}\\)/).map(e=>e.trim()).filter(e=>e!==\"\")}"
       }
     },
     {
@@ -231,11 +231,11 @@
       "configuration": {}
     },
     {
-      "id": "combineStrings",
+      "id": "combineGuides",
       "type": "runJavascript",
       "configuration": {
-        "name": "combineStrings",
-        "code": "function combineStrings({location:location2,activities,guides}){const guideList=guides.map(item=>item.guide);return`# ${location2}\n${activities.map((activity,index)=>`## ${activity}\n${guideList[index]}\n\n`).join(\"\")}`}"
+        "name": "combineGuides",
+        "code": "function combineGuides2({location:location2,activities,guides}){const guideList=guides.map(item=>item.guide);return`# ${location2}\n${activities.map((activity,index)=>`## ${activity}\n${guideList[index]}\n\n`).join(\"\")}`}"
       }
     }
   ],

@@ -13,18 +13,10 @@ include1_math[["include <br> id='math'"]]:::include -- "text->text" --> include1
 include1_input1[/"input <br> id='input-1'"/]:::input -- "math->text" --> include1_math[["include <br> id='math'"]]:::include
 include1_search[["include <br> id='search'"]]:::include -- "text->text" --> include1_output5{{"output <br> id='output-5'"}}:::output
 include1_input1[/"input <br> id='input-1'"/]:::input -- "search->text" --> include1_search[["include <br> id='search'"]]:::include
-
-
-
-
 end
 sg_tools:::slotted -- "slotted->slotted" --o include1
 
 userRequest[/"input <br> id='userRequest'"/]:::input -- "text->text" --> include1[["include <br> id='include-1'"]]:::include
-schemauserRequest[schema]:::config -- "schema->schema" --o userRequest
-pathinclude1[path]:::config -- "path->path" --o include1
-
-schemareactResponse[schema]:::config -- "schema->schema" --o reactResponse
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

@@ -22,17 +22,6 @@ jsonata6["jsonata <br> id='jsonata-6'"] -- "answer->text" --> output7{{"output <
 reactcompletion["generateText <br> id='react-completion'"] -- "completion->json" --> jsonata6["jsonata <br> id='jsonata-6'"]
 reactcompletion["generateText <br> id='react-completion'"] -- "completion->Thought" --> rememberThought["append <br> id='rememberThought'"]
 promptTemplate4["promptTemplate <br> id='promptTemplate-4'"] -- "prompt->text" --> reactcompletion["generateText <br> id='react-completion'"]
-keyssecrets1[keys]:::config -- "keys->keys" --o secrets1
-slotgetslot[slot]:::config -- "slot->slot" --o getslot
-graphgetslot[graph]:::config -- "graph->graph" --o getslot
-expressionjsonata2[expression]:::config -- "expression->expression" --o jsonata2
-expressionjsonata3[expression]:::config -- "expression->expression" --o jsonata3
-templatepromptTemplate4[template]:::config -- "template->template" --o promptTemplate4
-schemainput5[schema]:::config -- "schema->schema" --o input5
-stopSequencesreactcompletion[stopSequences]:::config -- "stopSequences->stopSequences" --o reactcompletion
-expressionjsonata6[expression]:::config -- "expression->expression" --o jsonata6
-rawjsonata6[raw]:::config -- "raw->raw" --o jsonata6
-slottoolsslot[slot]:::config -- "slot->slot" --o toolsslot
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

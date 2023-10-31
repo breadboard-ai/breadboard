@@ -22,12 +22,6 @@ parseCompletion8["parseCompletion <br> id='parseCompletion-8'"] -- "answer->text
 reactcompletion["generateText <br> id='react-completion'"] -- "completion->completion" --> parseCompletion8["parseCompletion <br> id='parseCompletion-8'"]
 reactcompletion["generateText <br> id='react-completion'"] -- "completion->Thought" --> rememberThought["append <br> id='rememberThought'"]
 promptTemplate2["promptTemplate <br> id='promptTemplate-2'"] -- "prompt->text" --> reactcompletion["generateText <br> id='react-completion'"]
-keyssecrets1[keys]:::config -- "keys->keys" --o secrets1
-templatepromptTemplate2[template]:::config -- "template->template" --o promptTemplate2
-schemainput5[schema]:::config -- "schema->schema" --o input5
-stopSequencesreactcompletion[stopSequences]:::config -- "stopSequences->stopSequences" --o reactcompletion
-pathinclude6[path]:::config -- "path->path" --o include6
-pathinclude7[path]:::config -- "path->path" --o include7
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

@@ -180,21 +180,7 @@ class MermaidGenerator {
         `${name}${this.idPrefix}`
       )
     ) as string[];
-    const constants = this.nodes
-      .map((node) => {
-        return Object.keys(node.configuration || {}).map((name) => {
-          if (name === "slotted") return "";
-          if (name === "board") return "";
-          if (this.idPrefix) return "";
-          return `${properNodeId(
-            `${name}${node.id}`
-          )}[${name}]:::config -- "${name}->${name}" --o ${properNodeId(
-            node.id
-          )}`;
-        });
-      })
-      .flat();
-    return [...result, ...constants, ...subgraphs].join("\n");
+    return [...result, ...subgraphs].join("\n");
   }
 }
 

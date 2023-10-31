@@ -14,11 +14,6 @@ query[/"input <br> id='query'"/]:::input -- "text->query" --> promptTemplate1["p
 secrets7("secrets <br> id='secrets-7'"):::secrets -- "PALM_KEY->PALM_KEY" --> generateText6["generateText <br> id='generateText-6'"]
 generateText6["generateText <br> id='generateText-6'"] -- "completion->text" --> rag{{"output <br> id='rag'"}}:::output
 promptTemplate1["promptTemplate <br> id='promptTemplate-1'"] -- "prompt->text" --> generateText6["generateText <br> id='generateText-6'"]
-templatepromptTemplate1[template]:::config -- "template->template" --o promptTemplate1
-schemaquery[schema]:::config -- "schema->schema" --o query
-keyssecrets3[keys]:::config -- "keys->keys" --o secrets3
-expressionjsonata5[expression]:::config -- "expression->expression" --o jsonata5
-keyssecrets7[keys]:::config -- "keys->keys" --o secrets7
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

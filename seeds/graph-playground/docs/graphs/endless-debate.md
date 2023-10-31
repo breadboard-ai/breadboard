@@ -20,16 +20,6 @@ secrets1("secrets <br> id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o ge
 promptTemplate2["promptTemplate <br> id='promptTemplate-2'"] -- "prompt->text" --> generateText4["generateText <br> id='generateText-4'"]
 rememberQuestion["append <br> id='rememberQuestion'"] -- "accumulator->context" --> albert["promptTemplate <br> id='albert'"]
 input5[/"input <br> id='input-5'"/]:::input -- "text->topic" --> rememberQuestion["append <br> id='rememberQuestion'"]
-keyssecrets1[keys]:::config -- "keys->keys" --o secrets1
-templatepromptTemplate2[template]:::config -- "template->template" --o promptTemplate2
-templatealbert[template]:::config -- "template->template" --o albert
-stopSequencesgenerateText3[stopSequences]:::config -- "stopSequences->stopSequences" --o generateText3
-safetySettingsgenerateText3[safetySettings]:::config -- "safetySettings->safetySettings" --o generateText3
-schemaalbertSays[schema]:::config -- "schema->schema" --o albertSays
-stopSequencesgenerateText4[stopSequences]:::config -- "stopSequences->stopSequences" --o generateText4
-safetySettingsgenerateText4[safetySettings]:::config -- "safetySettings->safetySettings" --o generateText4
-schemafriedrichSays[schema]:::config -- "schema->schema" --o friedrichSays
-schemainput5[schema]:::config -- "schema->schema" --o input5
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

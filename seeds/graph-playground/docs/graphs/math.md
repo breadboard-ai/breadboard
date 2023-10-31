@@ -10,11 +10,6 @@ mathfunctiongenerator["generateText <br> id='math-function-generator'"] -- "comp
 secrets1("secrets <br> id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --> mathfunctiongenerator["generateText <br> id='math-function-generator'"]
 mathfunction["promptTemplate <br> id='math-function'"] -- "prompt->text" --> mathfunctiongenerator["generateText <br> id='math-function-generator'"]
 mathquestion[/"input <br> id='math-question'"/]:::input -- "text->question" --> mathfunction["promptTemplate <br> id='math-function'"]
-schemamathquestion[schema]:::config -- "schema->schema" --o mathquestion
-templatemathfunction[template]:::config -- "template->template" --o mathfunction
-namecompute[name]:::config -- "name->name" --o compute
-schemaprint[schema]:::config -- "schema->schema" --o print
-keyssecrets1[keys]:::config -- "keys->keys" --o secrets1
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
