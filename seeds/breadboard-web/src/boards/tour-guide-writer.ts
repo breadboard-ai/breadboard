@@ -110,38 +110,40 @@ const splitItinerary = starter.runJavascript("splitString", {
   code: splitString.toString(),
 });
 
-const guideTemplate = starter.promptTemplate(
-  `[City] Paris, France
-[Activity] Have a picnic in the Luxembourg Gardens
-[Experiential story] Grab a baguette, some cheese and bottle of wine and head over to Luxembourg Gardens. You'll enjoy an even stroll, a great chance to people watch, and a charming free evening that is quintessentially Parisian.
-
-[City] Madrid, Spain
-[Activity] See the Prado Museum
-[Experiential story] The Prado is an art lover's paradise. It is home to the largest collection of works by Goya, Velazquez, and El Greco. There are also works by Picasso, Monet, and Rembrandt. The Prado is a must-see for anyone visiting Madrid.
-
-[City] Tatooine
-[Activity] Catch a pod race
-[Experiential story] A pod race is a race of flying engines called pods. Pod racing is a dangerous sport and was very popular in the Outer Rim Territories before the Empire was formed.
-
-
-[City] {{location}}
-[Activity] {{activity}}
-[Experiential story]
-`,
-  { $id: "guideTemplate" }
-);
-
-const guideGenerator = starter
-  .generateText({
-    $id: "guideGenerator",
-    stopSequences: ["\n[City]"],
-  })
-  .wire("<-PALM_KEY.", starter.secrets(["PALM_KEY"]));
-
 // This the magic sauce. The `map` node takes in a  `list` input property, which
 // must be an array of objects (strings, in this case).
 // It then runs a sub-graph defined below for each item in the supplied list.
-const createGuides = core.map((_, input, output) => {
+const createGuides = core.map((board, input, output) => {
+  const starter = board.addKit(Starter);
+
+  const guideTemplate = starter.promptTemplate(
+    `[City] Paris, France
+  [Activity] Have a picnic in the Luxembourg Gardens
+  [Experiential story] Grab a baguette, some cheese and bottle of wine and head over to Luxembourg Gardens. You'll enjoy an even stroll, a great chance to people watch, and a charming free evening that is quintessentially Parisian.
+  
+  [City] Madrid, Spain
+  [Activity] See the Prado Museum
+  [Experiential story] The Prado is an art lover's paradise. It is home to the largest collection of works by Goya, Velazquez, and El Greco. There are also works by Picasso, Monet, and Rembrandt. The Prado is a must-see for anyone visiting Madrid.
+  
+  [City] Tatooine
+  [Activity] Catch a pod race
+  [Experiential story] A pod race is a race of flying engines called pods. Pod racing is a dangerous sport and was very popular in the Outer Rim Territories before the Empire was formed.
+  
+  
+  [City] {{location}}
+  [Activity] {{activity}}
+  [Experiential story]
+  `,
+    { $id: "guideTemplate" }
+  );
+
+  const guideGenerator = starter
+    .generateText({
+      $id: "guideGenerator",
+      stopSequences: ["\n[City]"],
+    })
+    .wire("<-PALM_KEY.", starter.secrets(["PALM_KEY"]));
+
   input.wire(
     "item->activity",
     guideTemplate
