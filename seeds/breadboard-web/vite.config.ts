@@ -1,5 +1,8 @@
 import { config } from "dotenv";
 import { defineConfig } from "vitest/config";
+import watchAndRun from "vite-plugin-watch-and-run";
+import fullReload from "vite-plugin-full-reload";
+import path from "path";
 
 export const buildCustomAllowList = (value?: string) => {
   if (!value) return {};
@@ -26,5 +29,14 @@ export default defineConfig(async (_) => {
     test: {
       include: ["tests/**/*.ts"],
     },
+    plugins: [
+      watchAndRun([
+        {
+          watch: path.resolve("src/boards/**/*.ts"),
+          run: "npm run generate:graphs",
+        },
+      ]),
+      fullReload(["public/*.json"]),
+    ],
   };
 });
