@@ -22,7 +22,9 @@ export type InputOptios = {
  */
 class ShortTermMemory {
   #computeKey(properties: Record<string, Schema>) {
-    return Object.keys(properties).join("#");
+    return Object.values(properties)
+      .map((value) => value.title)
+      .join("#");
   }
   rememberSaving(properties: Record<string, Schema>) {
     globalThis.sessionStorage.setItem(this.#computeKey(properties), "yes");

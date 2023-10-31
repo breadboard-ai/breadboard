@@ -131,6 +131,8 @@
     "embedText",
     "secrets",
     "fetch",
+    "credentials",
+    "driveList",
   ])) {
     const { data, type } = result.message;
     switch (type) {
@@ -151,22 +153,26 @@
         break;
       case "proxy":
         {
-          for await (const receiverResult of receiver.handle(data)) {
-            switch (receiverResult.type) {
-              case "secret":
-                receiverResult.value = await ui.secret(receiverResult.name);
-                break;
-              case "result":
-                const type = receiverResult.nodeType;
-                if (type === "generateText") {
-                  ui.result({
-                    title: "LLM response",
-                    result: receiverResult.value.completion,
-                  });
-                }
-                result.reply(receiverResult.value);
-                break;
+          try {
+            for await (const receiverResult of receiver.handle(data)) {
+              switch (receiverResult.type) {
+                case "secret":
+                  receiverResult.value = await ui.secret(receiverResult.name);
+                  break;
+                case "result":
+                  const type = receiverResult.nodeType;
+                  if (type === "generateText") {
+                    ui.result({
+                      title: "LLM response",
+                      result: receiverResult.value.completion,
+                    });
+                  }
+                  result.reply(receiverResult.value);
+                  break;
+              }
             }
+          } catch (e) {
+            ui.error(e);
           }
         }
         break;

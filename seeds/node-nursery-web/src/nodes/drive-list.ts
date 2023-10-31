@@ -18,13 +18,14 @@ const DRIVE_DISCOVERY_DOC =
 interface DriveInterface {
   drive?: {
     files: {
-      list: (params: { maxResults: number }) => Promise<unknown>;
+      list: (params: { q?: string }) => Promise<unknown>;
     };
   };
 }
 
 export type DriveListInputs = InputValues & {
   accessToken: string;
+  q?: string;
 };
 
 export type DriveListOutputs = OutputValues & {
@@ -33,7 +34,7 @@ export type DriveListOutputs = OutputValues & {
 
 export default {
   invoke: async (inputs: InputValues): Promise<OutputValues> => {
-    const { accessToken } = inputs as DriveListInputs;
+    const { accessToken, q } = inputs as DriveListInputs;
     const gapi = await loadGapi();
     const client = (await loadAPIs(await loadClient(gapi), {
       [DRIVE_DISCOVERY_DOC]: "drive",
@@ -44,7 +45,7 @@ export default {
       } as GoogleApiOAuth2TokenObject);
     }
     const list = (await client.drive?.files.list({
-      maxResults: 50,
+      q,
     })) as NodeValue[];
     return { list };
   },

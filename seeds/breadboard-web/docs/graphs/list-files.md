@@ -3,7 +3,14 @@
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-input[/"input <br> id='input'"/]:::input -- all --> output{{"output <br> id='output'"}}:::output
+secrets1("secrets <br> id='secrets-1'"):::secrets -- "API_KEY->API_KEY" --> credentials["credentials <br> id='credentials'"]
+secrets2("secrets <br> id='secrets-2'"):::secrets -- "AUTH_DOMAIN->AUTH_DOMAIN" --> credentials["credentials <br> id='credentials'"]
+secrets3("secrets <br> id='secrets-3'"):::secrets -- "PROJECT_ID->PROJECT_ID" --> credentials["credentials <br> id='credentials'"]
+scopes(("passthrough <br> id='scopes'")):::passthrough -- "scopes->scopes" --> credentials["credentials <br> id='credentials'"]
+query[/"input <br> id='query'"/]:::input -- "query->q" --> driveList["driveList <br> id='driveList'"]
+parseDriveList["jsonata <br> id='parseDriveList'"] -- "result->list" --> output{{"output <br> id='output'"}}:::output
+driveList["driveList <br> id='driveList'"] -- "list->json" --> parseDriveList["jsonata <br> id='parseDriveList'"]
+credentials["credentials <br> id='credentials'"] -- "accessToken->accessToken" --> driveList["driveList <br> id='driveList'"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

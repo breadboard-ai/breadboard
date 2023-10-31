@@ -13,10 +13,10 @@ import {
 } from "@google-labs/breadboard";
 
 export type CredentialsInputs = InputValues & {
-  apiKey: string;
-  authDomain: string;
-  projectId: string;
-  scopes: string[];
+  API_KEY: string;
+  AUTH_DOMAIN: string;
+  PROJECT_ID: string;
+  scopes?: string[];
 };
 
 export type CredentialsOutputs = OutputValues & {
@@ -25,11 +25,20 @@ export type CredentialsOutputs = OutputValues & {
 
 export default {
   invoke: async (inputs: InputValues): Promise<OutputValues> => {
-    const { apiKey, authDomain, projectId, scopes } =
+    const { API_KEY, AUTH_DOMAIN, PROJECT_ID, scopes } =
       inputs as CredentialsInputs;
-    initializeApp({ apiKey, authDomain, projectId });
+    console.log("CREDENTIALS:", inputs, globalThis);
+    if (!API_KEY) throw "API Key is required to get credentials.";
+    if (!AUTH_DOMAIN)
+      throw "The domain for the popup is required to get credentials.";
+    if (!PROJECT_ID) throw "The GCP project ID is required to get credentials.";
+    initializeApp({
+      apiKey: API_KEY,
+      authDomain: AUTH_DOMAIN,
+      projectId: PROJECT_ID,
+    });
     const provider = new GoogleAuthProvider();
-    scopes.forEach((scope) => provider.addScope(scope));
+    (scopes || []).forEach((scope) => provider.addScope(scope));
 
     const auth = getAuth();
     const result = await signInWithPopup(auth, provider);

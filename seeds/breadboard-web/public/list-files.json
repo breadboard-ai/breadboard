@@ -4,27 +4,121 @@
   "version": "0.0.1",
   "edges": [
     {
-      "from": "input",
+      "from": "secrets-1",
+      "to": "credentials",
+      "out": "API_KEY",
+      "in": "API_KEY"
+    },
+    {
+      "from": "secrets-2",
+      "to": "credentials",
+      "out": "AUTH_DOMAIN",
+      "in": "AUTH_DOMAIN"
+    },
+    {
+      "from": "secrets-3",
+      "to": "credentials",
+      "out": "PROJECT_ID",
+      "in": "PROJECT_ID"
+    },
+    {
+      "from": "scopes",
+      "to": "credentials",
+      "out": "scopes",
+      "in": "scopes"
+    },
+    {
+      "from": "query",
+      "to": "driveList",
+      "out": "query",
+      "in": "q"
+    },
+    {
+      "from": "parseDriveList",
       "to": "output",
-      "out": "*"
+      "out": "result",
+      "in": "list"
+    },
+    {
+      "from": "driveList",
+      "to": "parseDriveList",
+      "out": "list",
+      "in": "json"
+    },
+    {
+      "from": "credentials",
+      "to": "driveList",
+      "out": "accessToken",
+      "in": "accessToken"
     }
   ],
   "nodes": [
     {
-      "id": "input",
+      "id": "parseDriveList",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "$join(result.files.name, \"\n\")"
+      }
+    },
+    {
+      "id": "query",
       "type": "input",
       "configuration": {
         "schema": {
           "type": "object",
           "properties": {
-            "text": {
+            "query": {
               "type": "string",
-              "title": "Text",
-              "description": "Text to display"
+              "title": "Query",
+              "description": "Search drive files with this query"
             }
           }
         }
       }
+    },
+    {
+      "id": "credentials",
+      "type": "credentials"
+    },
+    {
+      "id": "secrets-1",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "API_KEY"
+        ]
+      }
+    },
+    {
+      "id": "secrets-2",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "AUTH_DOMAIN"
+        ]
+      }
+    },
+    {
+      "id": "secrets-3",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "PROJECT_ID"
+        ]
+      }
+    },
+    {
+      "id": "scopes",
+      "type": "passthrough",
+      "configuration": {
+        "scopes": [
+          "https://www.googleapis.com/auth/drive.metadata.readonly"
+        ]
+      }
+    },
+    {
+      "id": "driveList",
+      "type": "driveList"
     },
     {
       "id": "output",
@@ -33,15 +127,28 @@
         "schema": {
           "type": "object",
           "properties": {
-            "text": {
+            "list": {
               "type": "string",
-              "title": "Text",
-              "description": "Text to display"
+              "title": "Drive List",
+              "description": "The list of drive files"
             }
           }
         }
       }
     }
   ],
-  "kits": []
+  "kits": [
+    {
+      "title": "LLM Starter Kit",
+      "description": "A kit that provides a few necessary components for wiring boards that use PaLM API.",
+      "version": "0.0.1",
+      "url": "npm:@google-labs/llm-starter"
+    },
+    {
+      "url": "npm:@google-labs/node-nursery-web"
+    },
+    {
+      "url": "npm:@google-labs/core-kit"
+    }
+  ]
 }

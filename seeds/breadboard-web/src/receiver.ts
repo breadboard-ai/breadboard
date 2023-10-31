@@ -16,6 +16,7 @@ import type { ProxyRequestMessage } from "@google-labs/breadboard/worker";
 import { SecretKeeper } from "./secrets";
 import { KitBuilder } from "@google-labs/breadboard/kits";
 import { asyncGen } from "./async-gen";
+import { NodeNurseryWeb } from "@google-labs/node-nursery-web";
 
 class AskForSecret {
   name: string;
@@ -59,6 +60,7 @@ export class ProxyReceiver {
       })
     );
     this.board.addKit(Starter);
+    this.board.addKit(NodeNurseryWeb);
   }
 
   #revealInputSecrets(inputs: InputValues) {
