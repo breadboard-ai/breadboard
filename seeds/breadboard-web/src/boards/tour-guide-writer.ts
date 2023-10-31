@@ -17,7 +17,7 @@ const board = new Board({
 const starter = board.addKit(Starter);
 const core = board.addKit(Core);
 
-const input = board.input({
+const location = board.input({
   $id: "location",
   schema: {
     type: "object",
@@ -110,53 +110,55 @@ const splitItinerary = starter.runJavascript("splitString", {
   code: splitString.toString(),
 });
 
-const guideTemplate = starter.promptTemplate(
-  `[City] Paris, France
-[Activity] Have a picnic in the Luxembourg Gardens
-[Experiential story] Grab a baguette, some cheese and bottle of wine and head over to Luxembourg Gardens. You'll enjoy an even stroll, a great chance to people watch, and a charming free evening that is quintessentially Parisian.
+const createGuides = core.map((board, input, output) => {
+  const starter = board.addKit(Starter);
 
-[City] Madrid, Spain
-[Activity] See the Prado Museum
-[Experiential story] The Prado is an art lover's paradise. It is home to the largest collection of works by Goya, Velazquez, and El Greco. There are also works by Picasso, Monet, and Rembrandt. The Prado is a must-see for anyone visiting Madrid.
+  const guideTemplate = starter.promptTemplate(
+    `[City] Paris, France
+  [Activity] Have a picnic in the Luxembourg Gardens
+  [Experiential story] Grab a baguette, some cheese and bottle of wine and head over to Luxembourg Gardens. You'll enjoy an even stroll, a great chance to people watch, and a charming free evening that is quintessentially Parisian.
+  
+  [City] Madrid, Spain
+  [Activity] See the Prado Museum
+  [Experiential story] The Prado is an art lover's paradise. It is home to the largest collection of works by Goya, Velazquez, and El Greco. There are also works by Picasso, Monet, and Rembrandt. The Prado is a must-see for anyone visiting Madrid.
+  
+  [City] Tatooine
+  [Activity] Catch a pod race
+  [Experiential story] A pod race is a race of flying engines called pods. Pod racing is a dangerous sport and was very popular in the Outer Rim Territories before the Empire was formed.
+  
+  
+  [City] {{location}}
+  [Activity] {{activity}}
+  [Experiential story]
+  `,
+    { $id: "guideTemplate" }
+  );
 
-[City] Tatooine
-[Activity] Catch a pod race
-[Experiential story] A pod race is a race of flying engines called pods. Pod racing is a dangerous sport and was very popular in the Outer Rim Territories before the Empire was formed.
+  const guideGenerator = starter
+    .generateText({
+      $id: "guideGenerator",
+      stopSequences: ["\n[City]"],
+    })
+    .wire("<-PALM_KEY.", starter.secrets(["PALM_KEY"]));
 
+  input.wire(
+    "item->activity",
+    guideTemplate
+      .wire("location<-.", location)
+      .wire("prompt->text", guideGenerator.wire("completion->guide", output))
+  );
+});
 
-[City] {{location}}
-[Activity] {{activity}}
-[Experiential story]
-`,
-  { $id: "guideTemplate" }
-);
-
-const guideGenerator = starter
-  .generateText({
-    $id: "guideGenerator",
-    stopSequences: ["\n[City]"],
-  })
-  .wire("<-PALM_KEY", starter.secrets(["PALM_KEY"]));
-
-// const guideLambda = board.lambda((_, input, output) => {
-//   input.wire(
-//     "item->activity.",
-//     guideTemplate.wire(
-//       "prompt->text.",
-//       guideGenerator.wire("completion->guide.", output)
-//     )
-//   );
-// });
-
-// const guides = core.map(guideLambda);
-
-input.wire(
+location.wire(
   "*",
   travelItineraryTemplate.wire(
     "prompt->text",
     travelItineraryGenerator.wire(
       "completion->itinerary",
-      splitItinerary.wire("result->guide", output)
+      splitItinerary.wire(
+        "result->list",
+        createGuides.wire("list->guide", output)
+      )
     )
   )
 );

@@ -16,6 +16,7 @@ type ResolveFunction<T extends ControllerMessage = ControllerMessage> = (
 
 export class MessageController {
   mailboxes: Record<string, ResolveFunction<RoundTripControllerMessage>> = {};
+  receivedMessages: ControllerMessage[] = [];
   #listener?: ResolveFunction;
   worker: Worker;
   #direction: string;
@@ -52,7 +53,11 @@ export class MessageController {
         return;
       }
     }
-    this.#listener && this.#listener(message);
+    if (this.#listener) {
+      this.#listener(message);
+    } else {
+      this.receivedMessages.push(message);
+    }
   }
 
   async ask<
@@ -68,6 +73,9 @@ export class MessageController {
   }
 
   async listen(): Promise<ControllerMessage> {
+    const message = this.receivedMessages.shift();
+    if (message) return Promise.resolve(message);
+
     return new Promise((resolve) => {
       this.#listener = (message: ControllerMessage) => {
         resolve(message);
