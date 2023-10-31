@@ -45,13 +45,22 @@ class TraversalMachineIterator():
     if outputs.get("$error") and not any(e.out == "$error" for e in newOpportunities):
       # If the node threw an exception and it wasn't routed via $error,
       # throw it again. This will cause the traversal to stop.
-      raise Exception(
-        "Uncaught exception in node handler. " +
-          "Catch by wiring up the $error output.",
-        {
-          "cause": outputs["$error"],
-        }
-      )
+      if isinstance(outputs.get("$error").error, Exception):
+        raise Exception(
+          "Uncaught exception in node handler. " +
+            "Catch by wiring up the $error output.",
+          {
+            "cause": outputs["$error"],
+          }
+        ) from outputs.get("$error").error
+      else:
+        raise Exception(
+          "Uncaught exception in node handler. " +
+            "Catch by wiring up the $error output.",
+          {
+            "cause": outputs["$error"],
+          }
+        )
 
   @staticmethod
   async def processAllPendingNodes(
@@ -89,7 +98,8 @@ class TraversalMachineIterator():
           # If not already present, add inputs and descriptor along for
           # context and to support retries.
           if "$error" in outputs:
-            outputs["$error"] = outputs["$error"] | {
+            error_dict = {k: outputs["$error"][k] for k in outputs["$error"]}
+            outputs["$error"] = error_dict | {
               "descriptor": descriptor,
               "inputs": inputs,
             }
