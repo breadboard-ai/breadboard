@@ -5,14 +5,7 @@
  */
 
 import { initializeApp } from "firebase/app";
-import {
-  getAuth,
-  signInWithPopup,
-  GoogleAuthProvider,
-  signInWithCredential,
-  setPersistence,
-  browserSessionPersistence,
-} from "firebase/auth";
+import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import {
   InputValues,
   NodeHandler,
