@@ -25,10 +25,12 @@ const saveAllBoards = async () => {
     if (file.endsWith(".ts")) {
       const board = await import(path.join(PATH, file));
       const jsonFile = file.replace(".ts", ".json");
-      manifest.push({
-        title: board.default.title,
-        url: `/graphs/${jsonFile}`,
-      });
+      if (!jsonFile.endsWith(".local.json")) {
+        manifest.push({
+          title: board.default.title,
+          url: `/graphs/${jsonFile}`,
+        });
+      }
       await writeFile(
         path.join(GRAPH_PATH, jsonFile),
         JSON.stringify(board.default, null, 2)
