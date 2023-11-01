@@ -71,6 +71,8 @@
   import { HostRuntime } from "@google-labs/breadboard/worker";
   import { ProxyReceiver } from "./src/index.ts";
 
+  const localBoards = await (await fetch("/local-boards.json")).json();
+
   const WORKER_URL =
     import.meta.env.MODE === "development" ? "/src/worker.ts" : "/worker.js";
 
@@ -123,6 +125,7 @@
         title: "ReAct with lambdas",
         url: "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/call-react-with-lambdas.json",
       },
+      ...localBoards,
     ],
   });
 
