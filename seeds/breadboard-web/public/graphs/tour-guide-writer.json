@@ -133,8 +133,8 @@
       "id": "splitItinerary",
       "type": "runJavascript",
       "configuration": {
-        "name": "splitItinerary",
-        "code": "function splitItinerary2({itinerary}){return itinerary.split(/[0-9]{1,2}\\)/).map(e=>e.trim()).filter(e=>e!==\"\")}"
+        "name": "split",
+        "code": "function split({itinerary}){return itinerary.split(/[0-9]{1,2}\\)/).map(e=>e.trim()).filter(e=>e!==\"\")}"
       }
     },
     {
@@ -234,8 +234,8 @@
       "id": "combineGuides",
       "type": "runJavascript",
       "configuration": {
-        "name": "combineGuides",
-        "code": "function combineGuides2({location:location2,activities,guides}){const guideList=guides.map(item=>item.guide);return`# ${location2}\n${activities.map((activity,index)=>`## ${activity}\n${guideList[index]}\n\n`).join(\"\")}`}"
+        "name": "combine",
+        "code": "function combine({location:location2,activities,guides}){const guideList=guides.map(item=>item.guide);return`# ${location2}\n${activities.map((activity,index)=>`## ${activity}\n${guideList[index]}\n\n`).join(\"\")}`}"
       }
     }
   ],

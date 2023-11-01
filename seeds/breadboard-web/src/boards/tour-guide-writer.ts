@@ -98,9 +98,9 @@ const travelItineraryGenerator = starter
   })
   .wire("<-PALM_KEY", starter.secrets(["PALM_KEY"]));
 
-const splitItinerary = starter.runJavascript("splitItinerary", {
+const splitItinerary = starter.runJavascript("split", {
   $id: "splitItinerary",
-  code: function splitItinerary({ itinerary }: { itinerary: string }) {
+  code: function split({ itinerary }: { itinerary: string }) {
     return itinerary
       .split(/[0-9]{1,2}\)/)
       .map((e) => e.trim())
@@ -150,9 +150,9 @@ const createGuides = core.map((board, input, output) => {
   );
 });
 
-const combineGuides = starter.runJavascript("combineGuides", {
+const combineGuides = starter.runJavascript("combine", {
   $id: "combineGuides",
-  code: function combineGuides({
+  code: function combine({
     location,
     activities,
     guides,
