@@ -18,7 +18,7 @@ import {
   type InputResponseMessage,
 } from "./protocol.js";
 import { MessageController } from "./controller.js";
-import { NodeProxy } from "./proxy.js";
+import { makeProxyKit } from "./proxy.js";
 import { asRuntimeKit } from "../kits/ctors.js";
 
 export class WorkerRuntime {
@@ -67,11 +67,6 @@ export class WorkerRuntime {
         throw new Error("The load message must be sent before the run message");
       }
 
-      const proxy = new NodeProxy(
-        this.#controller,
-        this.#loadRequest.data.proxyNodes
-      );
-
       this.#controller.reply<LoadResponseMessage>(
         this.#loadRequest.id,
         {
@@ -84,11 +79,16 @@ export class WorkerRuntime {
 
       await this.start();
 
-      const kits = kitConstructors.map((kitConstructor) =>
+      const proxyKit = makeProxyKit(
+        this.#loadRequest.data.proxyNodes,
+        this.#controller
+      );
+
+      const kits = [proxyKit, ...kitConstructors].map((kitConstructor) =>
         asRuntimeKit(kitConstructor)
       );
 
-      for await (const stop of board.run({ probe: proxy, kits })) {
+      for await (const stop of board.run({ kits })) {
         if (stop.type === "input") {
           const inputMessage = (await this.#controller.ask<
             InputRequestMessage,

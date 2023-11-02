@@ -40,7 +40,6 @@ export class MessageController {
   #onMessage(e: MessageEvent) {
     const message = e.data as ControllerMessage;
     if (!message.type || !VALID_MESSAGE_TYPES.includes(message.type)) {
-      console.error("Invalid message type. Message:", message);
       throw new Error(`Invalid message type "${message.type}"`);
     }
     console.log(`[${this.#direction}]`, message.type, message.data);
