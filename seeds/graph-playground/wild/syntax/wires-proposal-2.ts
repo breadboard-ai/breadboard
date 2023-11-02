@@ -1,3 +1,4 @@
+/*
 {
   enum WireKind {
     Required,
@@ -27,3 +28,4 @@
 
   board.wire(say, $hear, WireKind.Constant);
 }
+*/
