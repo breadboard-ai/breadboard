@@ -119,6 +119,7 @@ export const generateTextDescriber: NodeDescriberFunction = async () => {
           },
         },
       },
+      required: ["text", "PALM_KEY"],
     },
     outputSchema: {
       type: "object",
