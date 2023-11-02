@@ -10,7 +10,7 @@ import type {
   LoadResponseMessage,
   StartMesssage,
 } from "./protocol.js";
-import { MessageController } from "./controller.js";
+import { MessageController, WorkerTransport } from "./controller.js";
 
 export class RunResult {
   controller: MessageController;
@@ -44,7 +44,8 @@ export class HostRuntime {
 
   async *run(url: string, proxyNodes: string[]) {
     const worker = new Worker(this.workerURL, { type: "module" });
-    const controller = new MessageController(worker);
+    const transport = new WorkerTransport(worker);
+    const controller = new MessageController(transport);
     yield new RunResult(
       controller,
       await controller.ask<LoadRequestMessage, LoadResponseMessage>(
