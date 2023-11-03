@@ -100,11 +100,14 @@ export default {
       raw,
     } = inputs as FetchInputs;
     if (!url) throw new Error("Fetch requires `url` input");
-    const init = {
+    const init: RequestInit = {
       method,
       headers,
-      body: JSON.stringify(body),
     };
+    // GET can not have a body.
+    if (method !== "GET") {
+      init.body = JSON.stringify(body);
+    }
     const data = await fetch(url, init);
     const response = raw ? await data.text() : await data.json();
     return { response };

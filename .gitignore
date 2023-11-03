@@ -119,3 +119,6 @@ dist
 .firebase/
 .firebaserc
 
+*.local.ts
+*.local.json
+*.local.md
