@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width" />
+  <style>
+    body {
+      padding: 1rem;
+    }
+
+    h1 {
+      font-weight: normal;
+    }
+
+    body {
+      font-family: Fira Code, monospace;
+      font-size: 1rem;
+    }
+
+    p {
+      color: #666;
+    }
+
+    details {
+      margin-top: 2rem;
+    }
+  </style>
+</head>
+<h1>Breadboard Playground</h1>
+<bb-ui></bb-ui>
+<details>
+  <summary>What is this?</summary>
+  <p>
+    This is a very simple demo of
+    <a href="https://glazkov.com/2023/08/22/composing-graphs-with-breadboard/"
+      >Breadboard</a
+    >
+    runtime in the browser. The runtime resides in a cross-origin
+    <a
+      href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers#web_workers_api"
+      >Web Worker</a
+    >, and its host (this page) communicates with the worker using an
+    <a
+      href="https://github.com/google/labs-prototypes/tree/main/seeds/breadboard-web#readme"
+      >established protocol</a
+    >.
+  </p>
+  <p>
+    A board is loaded from a URL. The JSON-based format of the board is
+    described in
+    <a
+      href="https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/src/types.ts#L183"
+      >this very rough spec</a
+    >.
+  </p>
+  <p>
+    In this particular demo, some nodes are proxied: instead of being run in the
+    worker, they are handled by the host. This setup enables fairly robust
+    setups where some nodes of the same board can run in the worker and some in
+    the host. Distributed computing FTW.
+  </p>
+  <p>
+    Read more about the Breadboard project on
+    <a
+      href="https://github.com/google/labs-prototypes/tree/main/seeds/breadboard"
+      >Github</a
+    >.
+  </p>
+</details>
+<script type="module">
+  import { register } from "@google-labs/breadboard/ui";
+  import { HostRuntime } from "@google-labs/breadboard/worker";
+  import { ProxyReceiver } from "./src/index.ts";
+
+  const localBoards = await (await fetch("/local-boards.json")).json();
+
+  const WORKER_URL =
+    import.meta.env.MODE === "development" ? "/src/worker.ts" : "/worker.js";
+
+  const runtime = new HostRuntime(WORKER_URL);
+  const receiver = new ProxyReceiver();
+
+  register();
+
+  const ui = document.querySelector("bb-ui");
+
+  const boardURL = await ui.start({
+    boards: [
+      {
+        title: "Simplest",
+        url: "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/simplest.json",
+      },
+      {
+        title: "Simple meta-reasoning",
+        url: "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/simple-prompt.json",
+      },
+      {
+        title: "Infer a query for retrieval",
+        url: "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/infer-query.json",
+      },
+      {
+        title: "The calculator recipe",
+        url: "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/math.json",
+      },
+      {
+        title: "Accumulating context recipe",
+        url: "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/accumulating-context.json",
+      },
+      {
+        title: "Endless debate",
+        url: "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/endless-debate.json",
+      },
+      {
+        title: "Endless debate with voice",
+        url: "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/endless-debate-with-voice.json",
+      },
+      {
+        title: "Search summarizer",
+        url: "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/search-summarize.json",
+      },
+      {
+        title: "ReAct with slots",
+        url: "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/call-react-with-slot.json",
+      },
+      {
+        title: "ReAct with lambdas",
+        url: "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/call-react-with-lambdas.json",
+      },
+      ...localBoards,
+    ],
+  });
+
+  for await (const result of runtime.run(boardURL, [
+    "generateText",
+    "embedText",
+    "secrets",
+    "fetch",
+    "credentials",
+  ])) {
+    const { data, type } = result.message;
+    switch (type) {
+      case "load":
+        ui.load(data);
+        break;
+      case "output":
+        ui.output(data.outputs);
+        break;
+      case "input":
+        result.reply(await ui.input(data.node.id, data.inputArguments));
+        break;
+      case "beforehandler":
+        ui.progress(`Running "${data.node.id}" ...`);
+        break;
+      case "error":
+        ui.error(data.error);
+        break;
+      case "proxy":
+        {
+          try {
+            for await (const receiverResult of receiver.handle(data)) {
+              switch (receiverResult.type) {
+                case "secret":
+                  receiverResult.value = await ui.secret(receiverResult.name);
+                  break;
+                case "result":
+                  const type = receiverResult.nodeType;
+                  if (type === "generateText") {
+                    ui.result({
+                      title: "LLM response",
+                      result: receiverResult.value.completion,
+                    });
+                  }
+                  result.reply(receiverResult.value);
+                  break;
+              }
+            }
+          } catch (e) {
+            ui.error(e.message);
+          }
+        }
+        break;
+      case "end":
+        ui.done();
+        break;
+    }
+  }
+</script>
