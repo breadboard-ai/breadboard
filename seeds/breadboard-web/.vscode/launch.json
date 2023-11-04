@@ -9,7 +9,10 @@
       "request": "launch",
       "name": "Debug breadboard-web",
       "url": "http://localhost:5173",
-      "webRoot": "${workspaceFolder}"
+      "webRoot": "${workspaceFolder}",
+      "pathMapping": {
+        "@fs": "/"
+      }
     }
   ]
 }
