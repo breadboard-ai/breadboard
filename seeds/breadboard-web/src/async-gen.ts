@@ -84,6 +84,7 @@ type PatchedReadableStream<T> = ReadableStream<T> & AsyncIterable<T>;
 
 // A polyfill for ReadableStream.from:
 // See https://streams.spec.whatwg.org/#rs-from
+// TODO: Do a proper TypeScript types polyfill.
 export const streamFromAsyncGen = <T>(
   iterator: AsyncIterableIterator<T>
 ): PatchedReadableStream<T> => {
@@ -98,4 +99,26 @@ export const streamFromAsyncGen = <T>(
       controller.enqueue(value);
     },
   }) as PatchedReadableStream<T>;
+};
+
+// Polyfill to make ReadableStream async iterable
+// See https://bugs.chromium.org/p/chromium/issues/detail?id=929585
+export const patchReadableStream = () => {
+  // eslint-disable-next-line
+  // @ts-ignore
+  ReadableStream.prototype[Symbol.asyncIterator] ||
+    // eslint-disable-next-line
+    // @ts-ignore
+    (ReadableStream.prototype[Symbol.asyncIterator] = async function* () {
+      const reader = this.getReader();
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) return;
+          yield value;
+        }
+      } finally {
+        reader.releaseLock();
+      }
+    });
 };
