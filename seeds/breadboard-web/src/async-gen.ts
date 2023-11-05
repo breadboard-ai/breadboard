@@ -84,8 +84,6 @@ type PatchedReadableStream<T> = ReadableStream<T> & AsyncIterable<T>;
 
 // A polyfill for ReadableStream.from:
 // See https://streams.spec.whatwg.org/#rs-from
-// eslint-disable-next-line
-// @ts-ignore
 export const streamFromAsyncGen = <T>(
   iterator: AsyncIterableIterator<T>
 ): PatchedReadableStream<T> => {
