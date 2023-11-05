@@ -5,7 +5,7 @@
  */
 
 import { expect, test } from "vitest";
-import { asyncGen } from "../src/async-gen";
+import { asyncGen, streamFromAsyncGen } from "../src/async-gen";
 
 test("async-gen", async () => {
   const results = [];
@@ -51,4 +51,35 @@ test("async-gen call to next is optional", async () => {
 
   expect(results).toEqual([1, 1.5, 2]);
   expect(yields).toEqual([1, 2]);
+});
+
+test("streamFromAsyncGen simple", async () => {
+  async function* gen() {
+    yield 1;
+    yield 2;
+    yield 3;
+  }
+  const stream = streamFromAsyncGen(gen());
+  const reader = stream.getReader();
+  const results = [];
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    results.push(value);
+  }
+  expect(results).toEqual([1, 2, 3]);
+});
+
+test("streamFromAsyncGen as async iterator", async () => {
+  async function* gen() {
+    yield 1;
+    yield 2;
+    yield 3;
+  }
+  const stream = streamFromAsyncGen(gen());
+  const results = [];
+  for await (const value of stream) {
+    results.push(value);
+  }
+  expect(results).toEqual([1, 2, 3]);
 });

@@ -79,3 +79,25 @@ export const asyncGen = <T>(callback: AsyncGenCallback<T>) => {
     },
   };
 };
+
+type PatchedReadableStream<T> = ReadableStream<T> & AsyncIterable<T>;
+
+// A polyfill for ReadableStream.from:
+// See https://streams.spec.whatwg.org/#rs-from
+// eslint-disable-next-line
+// @ts-ignore
+export const streamFromAsyncGen = <T>(
+  iterator: AsyncIterableIterator<T>
+): PatchedReadableStream<T> => {
+  return new ReadableStream({
+    async pull(controller) {
+      const { value, done } = await iterator.next();
+
+      if (done) {
+        controller.close();
+        return;
+      }
+      controller.enqueue(value);
+    },
+  }) as PatchedReadableStream<T>;
+};
