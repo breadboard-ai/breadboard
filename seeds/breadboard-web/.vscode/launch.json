@@ -8,6 +8,7 @@
       "type": "chrome",
       "request": "launch",
       "name": "Debug breadboard-web",
+      "timeout": 50000,
       "url": "http://localhost:5173",
       "webRoot": "${workspaceFolder}",
       "pathMapping": {
