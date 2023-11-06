@@ -17,6 +17,16 @@ export type InputOptios = {
   secret?: boolean;
 };
 
+const parseValue = (type: Schema["type"], value: string) => {
+  if (type === "string") return value;
+  try {
+    return JSON.parse(value);
+  } catch (e) {
+    // TODO: Implement proper validation. Silently failing is not great.
+    return value;
+  }
+};
+
 /**
  * A simple "Was I supposed to remember something?" flag.
  */
@@ -159,7 +169,7 @@ export class Input extends HTMLElement {
         : this.#createSingleLineInput(values, key, property.description);
       label.appendChild(input);
       form.append("\n");
-      window.setTimeout(() => input.focus(), 1);
+      window.setTimeout(() => input.focus(), 100);
     });
     if (insertSubmitButton) {
       const submit = form.appendChild(document.createElement("input"));
@@ -175,7 +185,7 @@ export class Input extends HTMLElement {
         Object.entries(properties).forEach(([key, property]) => {
           const input = form[key];
           if (input.value) {
-            data[key] = input.value;
+            data[key] = parseValue(property.type, input.value);
             if (!this.secret)
               root.append(`${property.title}: ${input.value}\n`);
           }
