@@ -6,7 +6,6 @@
 
 import {
   NodeValue,
-  NodeProxy,
   InputValues,
   addNodeType,
   flow,

@@ -113,7 +113,7 @@ type NodeProxyInterface<I extends InputValues, O extends OutputValues> = {
       | InputsMaybeAsValues<I>
       | Value<NodeValue>
   ): NodeProxy<I, O>;
-  as(newKey: object): NodeProxy<I, O>;
+  as(keymap: KeyMap): Value;
 };
 
 /**
@@ -130,8 +130,6 @@ export type NodeProxy<I extends InputValues, O extends OutputValues> = {
 
 type KeyMap = { [key: string]: string };
 
-const SpreadThis = Symbol("SpreadThis");
-
 class NodeImpl<
   I extends InputValues = InputValues,
   O extends OutputValues = OutputValues
@@ -141,22 +139,18 @@ class NodeImpl<
   type: string;
   outgoing: Edge[] = [];
   incoming: Edge[] = [];
-
-  [SpreadThis] = this;
+  config: InputValues = {};
 
   #handler: NodeHandler<I, O>;
 
-  #promise?: Promise<O>;
+  #promise: Promise<O>;
   #resolve?: (value: O | PromiseLike<O>) => void;
   #reject?: (reason?: unknown) => void;
 
-  #invoked = false;
-
-  #inputs: (
-    | InputsMaybeAsValues<I>
-    | [KeyMap, NodeImpl<InputValues, OutputValues>]
-  )[] = [];
+  #inputs: InputValues;
+  #receivedFrom: NodeImpl[] = [];
   #outputs?: O;
+
   #runner: Runner;
 
   constructor(
@@ -180,43 +174,114 @@ class NodeImpl<
     let id: string | undefined = undefined;
 
     if (config instanceof NodeImpl) {
-      this.#inputs.push([
-        {},
-        config as unknown as NodeImpl<InputValues, OutputValues>,
-      ]);
+      this.addInputAsNode(config);
     } else if (config instanceof Value) {
-      this.#inputs.push(config.asNodeInput());
+      this.addInputAsNode(...config.asNodeInput());
     } else {
       const { $id, ...rest } = config as Partial<InputsMaybeAsValues<I>> & {
         $id?: string;
       };
       id = $id;
-      this.#inputs.push(rest as InputsMaybeAsValues<I>);
+      this.addInputsAsValues(rest as InputsMaybeAsValues<I>);
     }
 
+    this.#inputs = { ...this.config };
+
     this.id = id || getNextNodeId(this.type);
+
+    // Set up spread value, so that { ...node } as input works.
+    (this as unknown as { [key: string]: NodeImpl<I, O> })[this.#spreadKey()] =
+      this;
+
+    this.#promise = new Promise<O>((resolve, reject) => {
+      this.#resolve = resolve;
+      this.#reject = reject;
+    });
   }
 
-  // TODO: Turn these into edges if they are NodeImpl or Value instances.
-  addInputs(
-    inputs:
-      | InputsMaybeAsValues<I>
-      | [KeyMap, NodeImpl<InputValues, OutputValues>]
-  ) {
-    this.#inputs.push(inputs);
+  addInputsAsConstants(values: InputValues) {
+    this.config = { ...this.config, ...values };
   }
 
-  invoke() {
-    // TODO: Instead reset at the end, but need to figure out promises here.
+  addInputsAsValues(values: InputsMaybeAsValues<I>) {
+    // Split into constants and nodes
+    const constants: Partial<InputValues> = {};
+    const nodes: [NodeImpl<InputValues, OutputValues>, KeyMap][] = [];
 
-    if (this.#invoked)
-      throw Error("Can't invoke twice without first resetting");
-    this.#invoked = true;
+    Object.entries(values).forEach(([key, value]) => {
+      if (value instanceof Value) {
+        nodes.push(value.asNodeInput());
+      } else if (value instanceof NodeImpl) {
+        nodes.push([value.unProxy(), { [key]: key }]);
+      } else {
+        constants[key] = value;
+      }
+    });
 
+    this.addInputsAsConstants(constants);
+    nodes.forEach((node) => this.addInputAsNode(...node));
+  }
+
+  // Add inputs from another node as edges
+  addInputAsNode(from: NodeImpl, keymap: KeyMap = { "*": "*" }) {
+    Object.entries(keymap).forEach(([fromKey, toKey]) => {
+      // "*-<id>" means "all outputs from <id>" and comes from using a node in a
+      // spread, e.g. newNode({ ...node, $id: "id" }
+      if (fromKey.startsWith("*-")) fromKey = toKey = "*";
+
+      const edge: Edge = {
+        to: this as unknown as NodeImpl,
+        from,
+        out: fromKey,
+        in: toKey,
+      };
+
+      this.incoming.push(edge);
+      from.outgoing.push(edge);
+    });
+  }
+
+  receiveInputs(inputs: Partial<I>, from: NodeImpl) {
+    this.#inputs = { ...this.#inputs, ...inputs };
+    this.#receivedFrom.push(from);
+  }
+
+  /**
+   * Compute required inputs from edges and compare with present inputs
+   *
+   * Required inputs are
+   *  - for all named incoming edges, the presence of any data, irrespective of
+   *    which node they come from
+   *  - for all empty or * incoming edges, that the from node has sent data
+   *
+   * @returns true if all required inputs are present
+   */
+  hasAllRequiredInputs() {
+    const requiredKeys = new Set(
+      this.incoming
+        .map((edge) => edge.in)
+        .filter((key) => !["", "*"].includes(key))
+    );
+    const requiredNodes = new Set(
+      this.incoming
+        .filter((edge) => ["", "*"].includes(edge.out))
+        .map((edge) => edge.from)
+    );
+
+    const presentKeys = new Set(Object.keys(this.#inputs));
+    const presentNodes = new Set(this.#receivedFrom);
+
+    return (
+      [...requiredKeys].every((key) => presentKeys.has(key)) &&
+      [...requiredNodes].every((node) => presentNodes.has(node))
+    );
+  }
+
+  async invoke(): Promise<O> {
     if (!this.#runner) throw Error("Need a runner to invoke");
 
     const runner = new Runner(this.#runner);
-    runner.asRunnerFor(async () => {
+    return runner.asRunnerFor(async () => {
       try {
         const handler =
           typeof this.#handler === "function"
@@ -230,10 +295,17 @@ class NodeImpl<
           this
         );
 
-        if (this.#resolve) this.#resolve(result);
+        // Resolve promise, but only on first run (outputs is still empty)
+        if (this.#resolve && !this.#outputs) this.#resolve(result);
+
+        this.#outputs = result;
+
+        this.#inputs = { ...this.config };
+        this.#receivedFrom = [];
 
         return result;
       } catch (e) {
+        // Reject promise, but only on first run (outputs is still empty)
         if (this.#reject) this.#reject(e);
         throw e;
       }
@@ -297,8 +369,8 @@ class NodeImpl<
           return Reflect.get(target, prop, receiver);
         }
       },
-      ownKeys(_) {
-        return [SpreadThis];
+      ownKeys(target) {
+        return [target.#spreadKey()];
       },
     }) as unknown as NodeProxy<I, O>;
   }
@@ -330,13 +402,6 @@ class NodeImpl<
     onfulfilled?: ((value: O) => TResult1 | PromiseLike<TResult1>) | null,
     onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null
   ): PromiseLike<TResult1 | TResult2> {
-    if (!this.#promise) {
-      this.#promise = new Promise<O>((resolve, reject) => {
-        this.#resolve = resolve;
-        this.#reject = reject;
-      });
-    }
-
     this.#runner.invoke(this);
 
     return this.#promise.then(
@@ -366,15 +431,7 @@ class NodeImpl<
 
     // TODO: Ideally we would look at the schema here and use * only if
     // the output is open ended and/or not all fields are present all the time.
-    const edge: Edge = {
-      to: toNode as unknown as NodeImpl,
-      from: this as unknown as NodeImpl,
-      out: "*",
-      in: "*",
-    };
-
-    this.outgoing.push(edge);
-    toNode.incoming.push(edge);
+    toNode.addInputAsNode(this as unknown as NodeImpl, { "*": "*" });
 
     return (toNode as NodeImpl<O & ToC, ToO>).asProxy();
   }
@@ -387,23 +444,31 @@ class NodeImpl<
   ) {
     if (inputs instanceof NodeImpl) {
       const node = inputs as NodeImpl<InputValues, OutputValues>;
-      this.addInputs([{}, node]);
+      this.addInputAsNode(node);
     } else if (inputs instanceof Value) {
       const value = inputs as Value;
-      this.addInputs(value.asNodeInput());
+      this.addInputAsNode(...value.asNodeInput());
     } else {
       const values = inputs as InputsMaybeAsValues<I>;
-      this.addInputs(values);
+      this.addInputsAsValues(values);
     }
     return this.asProxy();
   }
 
-  as(newKey: object): NodeProxy<I, O> {
-    throw Error(`$as(${newKey}) in Node not implemented yet.`);
+  as(keymap: KeyMap): Value {
+    return new Value<NodeValue>(
+      this as unknown as NodeImpl,
+      this.#runner,
+      keymap
+    );
   }
 
   keys() {
-    return [SpreadThis];
+    return [this.#spreadKey()];
+  }
+
+  #spreadKey() {
+    return "*-" + this.id;
   }
 }
 
@@ -442,10 +507,13 @@ class Value<T extends NodeValue = NodeValue>
   }
 
   asNodeInput(): [
-    { [key: string]: string },
-    NodeImpl<InputValues, OutputValues>
+    NodeImpl<InputValues, OutputValues>,
+    { [key: string]: string }
   ] {
-    return [this.#keymap, this.#node as NodeImpl<InputValues, OutputValues>];
+    return [
+      this.#node.unProxy() as NodeImpl<InputValues, OutputValues>,
+      this.#keymap,
+    ];
   }
 
   to<
@@ -467,17 +535,7 @@ class Value<T extends NodeValue = NodeValue>
             config as OutputValue<T> & ToC
           );
 
-    Object.entries(this.#keymap).forEach(([fromKey, toKey]) => {
-      const edge: Edge = {
-        to: toNode as unknown as NodeImpl,
-        from: this.#node as NodeImpl,
-        out: fromKey,
-        in: toKey,
-      };
-
-      this.#node.outgoing.push(edge);
-      toNode.incoming.push(edge);
-    });
+    toNode.addInputAsNode(this.#node as unknown as NodeImpl, this.#keymap);
 
     return (toNode as NodeImpl<OutputValue<T> & ToC, ToO>).asProxy();
   }
@@ -489,9 +547,9 @@ class Value<T extends NodeValue = NodeValue>
       );
       if (inputs instanceof Value) invertedMap = inputs.#remapKeys(invertedMap);
       const node = inputs instanceof NodeImpl ? inputs : inputs.#node;
-      this.#node.addInputs([invertedMap, node]);
+      this.#node.addInputAsNode(node, invertedMap);
     } else {
-      this.#node.addInputs(inputs as Partial<InputValues>);
+      this.#node.addInputsAsValues(inputs);
     }
   }
 
@@ -565,12 +623,54 @@ export class Runner {
     return node.asProxy();
   }
 
-  invoke<
+  async invoke<
     I extends InputValues = InputValues,
     O extends OutputValues = OutputValues
   >(node: NodeImpl<I, O>) {
-    // TODO: This should run the whole graph, not just a single node.
-    node.invoke();
+    // First, let's extract the graph my traversing from this node. We have to
+    // follow both incoming and outgoing edges.
+    const nodes = new Set<NodeImpl>();
+    const edges = new Set<Edge>();
+    // TODO: This type cast should not be necessary. Dig into why it exists.
+    let queue: NodeImpl[] = [node as unknown as NodeImpl];
+
+    while (queue.length) {
+      const node = queue.shift() as NodeImpl;
+      if (nodes.has(node)) continue;
+      nodes.add(node);
+      node.incoming.forEach((edge) => {
+        edges.add(edge);
+        queue.push(edge.from);
+      });
+      node.outgoing.forEach((edge) => {
+        edges.add(edge);
+        queue.push(edge.to);
+      });
+    }
+
+    // Reset queue with all nodes that have no incoming edges
+    queue = [...nodes].filter((node) => node.incoming.length === 0);
+
+    while (queue.length) {
+      const node = queue.shift() as NodeImpl;
+
+      // Check if we have all inputs. This should always be the case.
+      if (!node.hasAllRequiredInputs())
+        throw new Error("Node in queue didn't have all required inputs. Bug.");
+
+      // Invoke node
+      const result = await node.invoke();
+
+      // Distribute data to outgoing edges
+      node.outgoing.forEach((edge) => {
+        const data =
+          edge.out === "*" ? result : { [edge.in]: result[edge.out] };
+        edge.to.receiveInputs(data, node);
+
+        // If it's ready to run, add it to the queue
+        if (edge.to.hasAllRequiredInputs()) queue.push(edge.to);
+      });
+    }
   }
 }
 
