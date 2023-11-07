@@ -60,8 +60,6 @@ async function saveBoard(filePath: string): Promise<ManifestItem> {
     url: `/graphs/${relativePath.replace(".ts", ".json")}`,
   };
 
-  console.log(manifestEntry);
-
   await writeFile(
     path.join(graphDir, jsonFile),
     JSON.stringify(board.default, null, 2)
