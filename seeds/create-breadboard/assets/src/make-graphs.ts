@@ -5,75 +5,82 @@
  */
 
 import { toMermaid } from "@google-labs/breadboard";
-import { mkdir, readdir, writeFile, stat } from "fs/promises";
+import { Dirent } from "fs";
+import { mkdir, readdir, writeFile } from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
 
-const MODULE_DIR = path.dirname(fileURLToPath(import.meta.url));
-const PATH = path.join(MODULE_DIR, "boards");
-const MANIFEST_PATH = path.join(MODULE_DIR, "../public");
-const GRAPH_PATH = path.join(MODULE_DIR, "../public/graphs");
-const DIAGRAM_PATH = path.join(MODULE_DIR, "../docs/graphs");
+const MODULE_DIR: string = path.dirname(fileURLToPath(import.meta.url));
+const PATH: string = path.join(MODULE_DIR, "boards");
+const MANIFEST_PATH: string = path.join(MODULE_DIR, "../public");
+const GRAPH_PATH: string = path.join(MODULE_DIR, "../public/graphs");
+const DIAGRAM_PATH: string = path.join(MODULE_DIR, "../docs/graphs");
 
 await mkdir(GRAPH_PATH, { recursive: true });
 await mkdir(DIAGRAM_PATH, { recursive: true });
 
-const findTsFiles = async (dir: string | Buffer | URL): Promise<string[]> => {
-  let files = await readdir(dir, { withFileTypes: true });
+type ManifestItem = {
+  title: string;
+  url: string;
+};
+
+async function findTsFiles(dir: string): Promise<string[]> {
+  const files: Dirent[] = await readdir(dir, { withFileTypes: true });
   let tsFiles: string[] = [];
-  for (let file of files) {
-    const res = path.resolve(<string>dir, file.name);
+  for (const file of files) {
+    const res: string = path.resolve(dir, file.name);
     if (file.isDirectory()) {
       tsFiles = tsFiles.concat(await findTsFiles(res));
-    } else if (file.isFile() && file.name.endsWith('.ts')) {
+    } else if (file.isFile() && file.name.endsWith(".ts")) {
       tsFiles.push(res);
     }
   }
   return tsFiles;
-};
+}
 
-const saveBoard = async (filePath: string) => {
+async function saveBoard(filePath: string): Promise<ManifestItem> {
   const board = await import(filePath);
-  const relativePath = path.relative(PATH, filePath);
-  const baseName = path.basename(filePath);
-  const jsonFile = baseName.replace(".ts", ".json");
-  const diagramFile = baseName.replace(".ts", ".md");
+  const relativePath: string = path.relative(PATH, filePath);
+  const baseName: string = path.basename(filePath);
+  const jsonFile: string = baseName.replace(".ts", ".json");
+  const diagramFile: string = baseName.replace(".ts", ".md");
 
   // Create corresponding directories based on the relative path
-  const graphDir = path.dirname(path.join(GRAPH_PATH, relativePath));
-  const diagramDir = path.dirname(path.join(DIAGRAM_PATH, relativePath));
+  const graphDir: string = path.dirname(path.join(GRAPH_PATH, relativePath));
+  const diagramDir: string = path.dirname(path.join(DIAGRAM_PATH, relativePath));
 
   // Make sure the directories exist
   await mkdir(graphDir, { recursive: true });
   await mkdir(diagramDir, { recursive: true });
 
-  const manifestEntry = {
+  const manifestEntry: { title: string; url: string } = {
     title: board.default.title,
-    url: `/graphs/${relativePath.replace('.ts', '.json')}`,
+    url: `/graphs/${relativePath.replace(".ts", ".json")}`,
   };
 
   await writeFile(
     path.join(graphDir, jsonFile),
-    JSON.stringify(board.default, null, 2)
+    JSON.stringify(board.default, null, 2),
   );
   await writeFile(
     path.join(diagramDir, diagramFile),
-    `## ${baseName}\n\n\`\`\`mermaid\n${toMermaid(board.default)}\n\`\`\``
+    `## ${baseName}\n\n\`\`\`mermaid\n${toMermaid(board.default)}\n\`\`\``,
   );
   return manifestEntry;
-};
+}
 
-const saveAllBoards = async () => {
-  const tsFiles = await findTsFiles(PATH);
-  const manifest = [];
+
+async function saveAllBoards(): Promise<void> {
+  const tsFiles: string[] = await findTsFiles(PATH);
+  const manifest: ManifestItem[] = [];
   for (const file of tsFiles) {
-    const manifestEntry = await saveBoard(file);
+    const manifestEntry: ManifestItem = await saveBoard(file);
     manifest.push(manifestEntry);
   }
   await writeFile(
     path.join(MANIFEST_PATH, "local-boards.json"),
-    JSON.stringify(manifest, null, 2)
+    JSON.stringify(manifest, null, 2),
   );
-};
+}
 
 await saveAllBoards();
