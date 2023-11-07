@@ -6,6 +6,7 @@
 
 import {
   NodeValue,
+  NodeProxy,
   InputValues,
   addNodeType,
   flow,
@@ -31,7 +32,9 @@ const secrets = addNodeType(
   "secrets",
   async (inputs: PromiseLike<{ keys: string[] }>) =>
     Promise.resolve(
-      Object.fromEntries((await inputs).keys.map((key) => [key, "SECRET"]))
+      Object.fromEntries(
+        (await inputs).keys.map((key) => [key, "SECRET"])
+      ) as Partial<{ [k: string]: string }>
     )
 );
 const generateText = addNodeType(
@@ -107,7 +110,7 @@ async function mathImperative() {
       });
       const { completion } = generateText({
         prompt,
-        PALM_KEY: secrets({ keys: ["PALM_KEY"] }).PALM_KEY,
+        PALM_KEY: secrets({ keys: ["PALM_KEY"] }),
       });
       const result = runJavascript({ code: completion });
       return result;
@@ -127,9 +130,7 @@ async function mathChainGraph() {
           "Write Javascript to compute the result for this question:\nQuestion: {{question}}\nCode: ",
         question: inputs.question,
       })
-        .to(
-          generateText({ PALM_KEY: secrets({ keys: ["PALM_KEY"] }).PALM_KEY })
-        )
+        .to(generateText({ PALM_KEY: secrets({ keys: ["PALM_KEY"] }) }))
         .completion.as("code")
         .to(runJavascript());
     },
@@ -148,7 +149,11 @@ async function mathChainDirectly() {
           "Write Javascript to compute the result for this question:\nQuestion: {{question}}\nCode: ",
       })
     )
-    .to(generateText({ PALM_KEY: secrets({ keys: ["PALM_KEY"] }).PALM_KEY }))
+    .to(
+      generateText({
+        PALM_KEY: secrets({ keys: ["PALM_KEY"] }),
+      })
+    )
     .completion.as("code")
     .to(runJavascript());
 
@@ -163,7 +168,7 @@ async function ifElse() {
         "Write Javascript to compute the result for this question:\nQuestion: {{question}}\nCode: ",
       question: inputs.question,
     })
-      .to(generateText({ PALM_KEY: secrets({ keys: ["PALM_KEY"] }).PALM_KEY }))
+      .to(generateText({ PALM_KEY: secrets({ keys: ["PALM_KEY"] }) }))
       .completion.as("code")
       .to(runJavascript());
   });

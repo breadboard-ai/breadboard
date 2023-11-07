@@ -122,7 +122,7 @@ type NodeProxyInterface<I extends InputValues, O extends OutputValues> = {
  *  - Has all the methods of the NodeProxyInterface defined above.
  *  - Including then() which makes it a PromiseLike<O>
  */
-type NodeProxy<I extends InputValues, O extends OutputValues> = {
+export type NodeProxy<I extends InputValues, O extends OutputValues> = {
   [K in keyof O]: Value<O[K]> & ((...args: unknown[]) => unknown);
 } & {
   [key in string]: Value<NodeValue> & ((...args: unknown[]) => unknown);
