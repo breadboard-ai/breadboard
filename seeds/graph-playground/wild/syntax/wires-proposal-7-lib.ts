@@ -63,11 +63,7 @@ export function addNodeType<I extends InputValues, O extends OutputValues>(
       | Partial<InputValues>
       | Value<NodeValue>
   ) => {
-    return new NodeImpl(
-      handlers[name],
-      getCurrentContextRunner(),
-      config
-    ).asProxy();
+    return new NodeImpl(name, getCurrentContextRunner(), config).asProxy();
   }) as unknown as NodeFactory<I, O>;
 }
 
@@ -202,16 +198,13 @@ class NodeImpl<
     this.id = id || getNextNodeId(this.type);
   }
 
+  // TODO: Turn these into edges if they are NodeImpl or Value instances.
   addInputs(
     inputs:
       | InputsMaybeAsValues<I>
       | [KeyMap, NodeImpl<InputValues, OutputValues>]
   ) {
     this.#inputs.push(inputs);
-  }
-
-  setRunner(runner: Runner) {
-    this.#runner = runner;
   }
 
   invoke() {
@@ -570,7 +563,6 @@ export class Runner {
             this,
             config
           );
-    node.setRunner(this);
     return node.asProxy();
   }
 
