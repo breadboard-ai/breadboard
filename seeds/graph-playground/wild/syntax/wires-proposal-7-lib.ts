@@ -30,7 +30,6 @@ type InputsMaybeAsValues<T extends InputValues> = {
 
 type NodeHandlerFunction<I extends InputValues, O extends OutputValues> = (
   inputs: PromiseLike<I> & InputsMaybeAsValues<I>,
-  run: RunFunction<InputValues, OutputValues>,
   node: NodeImpl<I, O>
 ) => O | PromiseLike<O>;
 
@@ -64,8 +63,19 @@ export function addNodeType<I extends InputValues, O extends OutputValues>(
       | Partial<InputValues>
       | Value<NodeValue>
   ) => {
-    return new NodeImpl(handlers[name], config).asProxy();
+    return new NodeImpl(
+      handlers[name],
+      getCurrentContextRunner(),
+      config
+    ).asProxy();
   }) as unknown as NodeFactory<I, O>;
+}
+
+export function action<
+  I extends InputValues = InputValues,
+  O extends OutputValues = OutputValues
+>(fn: NodeHandlerFunction<I, O>): NodeFactory<I, O> {
+  return addNodeType(getNextNodeId("fn"), fn);
 }
 
 interface Edge<
@@ -84,8 +94,6 @@ let nodeIdCounter = 0;
 const getNextNodeId = (type: string) => {
   return `${type}-${nodeIdCounter++}`;
 };
-
-const nodes: Map<string, NodeImpl<InputValues, OutputValues>> = new Map();
 
 type NodeProxyInterface<I extends InputValues, O extends OutputValues> = {
   then<TResult1 = O, TResult2 = never>(
@@ -112,7 +120,10 @@ type NodeProxyInterface<I extends InputValues, O extends OutputValues> = {
 };
 
 /**
- * Intersection between a Node and a Promise for its output.
+ * Intersection between a Node and a Promise for its output:
+ *  - Has all the output fields as Value<T> instances.
+ *  - Has all the methods of the NodeProxyInterface defined above.
+ *  - Including then() which makes it a PromiseLike<O>
  */
 type NodeProxy<I extends InputValues, O extends OutputValues> = {
   [K in keyof O]: Value<O[K]> & ((...args: unknown[]) => unknown);
@@ -122,16 +133,19 @@ type NodeProxy<I extends InputValues, O extends OutputValues> = {
 
 type KeyMap = { [key: string]: string };
 
+const SpreadThis = Symbol("SpreadThis");
+
 class NodeImpl<
   I extends InputValues = InputValues,
   O extends OutputValues = OutputValues
 > implements NodeProxyInterface<I, O>, PromiseLike<O>
 {
-  // implements PromiseLike<O>
   id: string;
   type: string;
   outgoing: Edge[] = [];
   incoming: Edge[] = [];
+
+  [SpreadThis] = this;
 
   #handler: NodeHandler<I, O>;
 
@@ -146,16 +160,28 @@ class NodeImpl<
     | [KeyMap, NodeImpl<InputValues, OutputValues>]
   )[] = [];
   #outputs?: O;
-  #runner: Runner | undefined;
+  #runner: Runner;
 
   constructor(
     handler: NodeTypeIdentifier | NodeHandler<I, O>,
+    runner: Runner,
     config: (
       | Partial<InputsMaybeAsValues<I>>
-      | NodeImpl<InputValues, I>
+      | NodeImpl<InputValues, Partial<I>>
       | Value<NodeValue>
     ) & { $id?: string } = {}
   ) {
+    this.#runner = runner;
+
+    if (typeof handler === "string") {
+      if (!handlers[handler]) throw Error(`Handler ${handler} not found`);
+      this.type = handler;
+      this.#handler = handlers[handler] as unknown as NodeHandler<I, O>;
+    } else {
+      this.type = "fn";
+      this.#handler = handler;
+    }
+
     let id: string | undefined = undefined;
 
     if (config instanceof NodeImpl) {
@@ -173,18 +199,7 @@ class NodeImpl<
       this.#inputs.push(rest as InputsMaybeAsValues<I>);
     }
 
-    if (typeof handler === "string") {
-      if (!handlers[handler]) throw Error(`Handler ${handler} not found`);
-      this.type = handler;
-      this.#handler = handlers[handler] as unknown as NodeHandler<I, O>;
-    } else {
-      this.type = "fn";
-      this.#handler = handler;
-    }
-
     this.id = id || getNextNodeId(this.type);
-
-    nodes.set(this.id, this as unknown as NodeImpl<InputValues, OutputValues>);
   }
 
   addInputs(
@@ -208,25 +223,29 @@ class NodeImpl<
 
     if (!this.#runner) throw Error("Need a runner to invoke");
 
-    try {
-      const handler =
-        typeof this.#handler === "function"
-          ? this.#handler
-          : this.#handler.invoke;
+    const runner = new Runner(this.#runner);
+    runner.asRunnerFor(async () => {
+      try {
+        const handler =
+          typeof this.#handler === "function"
+            ? this.#handler
+            : this.#handler.invoke;
 
-      const result = handler(
-        this.#inputs as unknown as PromiseLike<I> & InputsMaybeAsValues<I>,
-        this.#runner.getRunFunction(),
-        this
-      );
+        // Note: The handler might actually return a graph (as a NodeProxy), and
+        // so the await might triggers its execution. This is what we want.
+        const result = await runner.asRunnerFor(handler)(
+          this.#inputs as unknown as PromiseLike<I> & InputsMaybeAsValues<I>,
+          this
+        );
 
-      if (this.#resolve) this.#resolve(result);
+        if (this.#resolve) this.#resolve(result);
 
-      return result;
-    } catch (e) {
-      if (this.#reject) this.#reject(e);
-      throw e;
-    }
+        return result;
+      } catch (e) {
+        if (this.#reject) this.#reject(e);
+        throw e;
+      }
+    })();
   }
 
   /**
@@ -269,6 +288,7 @@ class NodeImpl<
         if (typeof prop === "string") {
           const value = new Value(
             target as unknown as NodeImpl<InputValues, OutputValues>,
+            target.#runner,
             prop
           );
           const method = target[prop as keyof NodeImpl<I, O>] as () => void;
@@ -285,7 +305,21 @@ class NodeImpl<
           return Reflect.get(target, prop, receiver);
         }
       },
+      ownKeys(_) {
+        return [SpreadThis];
+      },
     }) as unknown as NodeProxy<I, O>;
+  }
+
+  /**
+   * Retrieve underlying node from a NodeProxy. Use like this:
+   *
+   * if (thing instanceof NodeImpl) { const node = thing.unProxy(); }
+   *
+   * @returns A NodeImpl that is not a proxy, but the original NodeImpl.
+   */
+  unProxy() {
+    return this;
   }
 
   /****
@@ -310,10 +344,13 @@ class NodeImpl<
         this.#reject = reject;
       });
     }
-    // TODO: Trigger graph execution.
 
-    // TODO: Restore runner global variable before invoking these.
-    return this.#promise.then(onfulfilled, onrejected);
+    this.#runner.invoke(this);
+
+    return this.#promise.then(
+      onfulfilled && this.#runner.asRunnerFor(onfulfilled),
+      onrejected && this.#runner.asRunnerFor(onrejected)
+    );
   }
 
   to<
@@ -328,9 +365,10 @@ class NodeImpl<
   ): NodeProxy<O & ToC, ToO> {
     const toNode =
       to instanceof NodeImpl
-        ? to
+        ? to.unProxy()
         : new NodeImpl(
             to as NodeTypeIdentifier | NodeHandler<Partial<O> & ToC, ToO>,
+            this.#runner,
             config as Partial<O> & ToC
           );
 
@@ -371,19 +409,26 @@ class NodeImpl<
   as(newKey: object): NodeProxy<I, O> {
     throw Error(`$as(${newKey}) in Node not implemented yet.`);
   }
+
+  keys() {
+    return [SpreadThis];
+  }
 }
 
 class Value<T extends NodeValue = NodeValue>
   implements PromiseLike<T | undefined>
 {
   #node: NodeImpl<InputValues, OutputValue<T>>;
+  #runner: Runner;
   #keymap: KeyMap;
 
   constructor(
     node: NodeImpl<InputValues, OutputValue<T>>,
+    runner: Runner,
     keymap: string | KeyMap
   ) {
     this.#node = node;
+    this.#runner = runner;
     this.#keymap = typeof keymap === "string" ? { [keymap]: keymap } : keymap;
   }
 
@@ -396,8 +441,11 @@ class Value<T extends NodeValue = NodeValue>
     if (Object.keys(this.#keymap).length !== 1)
       throw Error("Can't `await` for multiple values");
     return this.#node.then(
-      (o) => o && onfulfilled && onfulfilled(o[Object.keys(this.#keymap)[0]]),
-      onrejected
+      (o) =>
+        o &&
+        onfulfilled &&
+        this.#runner.asRunnerFor(onfulfilled)(o[Object.keys(this.#keymap)[0]]),
+      onrejected && this.#runner.asRunnerFor(onrejected)
     ) as PromiseLike<TResult1 | TResult2>;
   }
 
@@ -420,9 +468,10 @@ class Value<T extends NodeValue = NodeValue>
   ) {
     const toNode =
       to instanceof NodeImpl
-        ? to
+        ? to.unProxy()
         : new NodeImpl(
             to as NodeTypeIdentifier | NodeHandler<OutputValue<T> & ToC, ToO>,
+            this.#runner,
             config as OutputValue<T> & ToC
           );
 
@@ -464,7 +513,7 @@ class Value<T extends NodeValue = NodeValue>
       newMap = this.#remapKeys(newKey);
     }
 
-    return new Value(this.#node, newMap);
+    return new Value(this.#node, this.#runner, newMap);
   }
 
   #remapKeys(newKeys: KeyMap) {
@@ -481,35 +530,105 @@ class Value<T extends NodeValue = NodeValue>
   }
 }
 
-type RunFunction<I extends InputValues, O extends OutputValues> = (
-  nodeOrFunction: NodeImpl<I, O> | NodeHandlerFunction<I, O>,
-  config?: NodeProxy<InputValues, Partial<I>> | InputsMaybeAsValues<I>
-) => NodeProxy<I, O>;
-
 export class Runner {
-  run<I extends InputValues, O extends OutputValues>(
+  #nodes = new Map<string, NodeImpl<InputValues, OutputValues>>();
+  #parent?: Runner;
+
+  constructor();
+  constructor(runner: Runner);
+
+  constructor(runner?: Runner) {
+    if (runner) {
+      this.#parent = runner;
+    }
+  }
+
+  /**
+   * Swap global runner with this one, run the function, then restore
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  asRunnerFor<T extends (...args: any[]) => any>(fn: T): T {
+    return ((...args: unknown[]) => {
+      const oldRunner = swapCurrentContextRunner(this);
+      try {
+        return fn(...args);
+      } finally {
+        swapCurrentContextRunner(oldRunner);
+      }
+    }) as T;
+  }
+
+  flow<I extends InputValues, O extends OutputValues>(
     nodeOrFunction: NodeImpl<I, O> | NodeHandlerFunction<I, O>,
-    config?: NodeImpl<InputValues, I> | InputsMaybeAsValues<I>
+    config?: NodeImpl<InputValues, Partial<I>> | InputsMaybeAsValues<I>
   ): NodeProxy<InputValues, OutputValues> {
     const node =
       nodeOrFunction instanceof NodeImpl
         ? nodeOrFunction
         : new NodeImpl(
-            nodeOrFunction as NodeHandlerFunction<I, O> | string,
+            nodeOrFunction as NodeHandlerFunction<I, O>,
+            this,
             config
           );
     node.setRunner(this);
     return node.asProxy();
   }
 
-  fn<
+  invoke<
     I extends InputValues = InputValues,
     O extends OutputValues = OutputValues
-  >(fn: NodeHandlerFunction<I, O>): NodeFactory<I, O> {
-    return addNodeType(getNextNodeId("fn"), fn);
-  }
-
-  getRunFunction() {
-    return this.run.bind(this);
+  >(node: NodeImpl<I, O>) {
+    // TODO: This should run the whole graph, not just a single node.
+    node.invoke();
   }
 }
+
+/**
+ * The following is inspired by zone.js, but much simpler, and crucially doesn't
+ * require monkey patching.
+ *
+ * Instead, we use a global variable to store the current runner, and swap it
+ * out when we need to run a function in a different context.
+ *
+ * Runner.asRunnerFor() wraps a function that runs with that Runner as context.
+ *
+ * flow, action and any nodeFactory will run with the current Runner as context.
+ *
+ * Crucially (and that's all we need from zone.js), {NodeImpl,Value}.then() call
+ * onsuccessful and onrejected with the Runner as context. So even if the
+ * context changed in the meantime, due to async calls, the rest of a flow
+ * defining function will run with the current Runner as context.
+ *
+ * This works because NodeImpl and Value are PromiseLike, and so their then() is
+ * called when they are awaited. Importantly, there is context switch between
+ * the await call and entering then(), and there is no context switch between
+ * then() and the onsuccessful or onrejected call.
+ *
+ * One requirement from this that there can't be any await in the body of a flow
+ * or action function, if they are followed by either node creation or flow
+ * calls. This is also a requirement for restoring state after interrupting a
+ * flow.
+ */
+
+// Initialize with a default global Runner.
+let currentContextRunner = new Runner();
+
+function getCurrentContextRunner() {
+  const runner = currentContextRunner;
+  if (!runner) throw Error("No runner found in context");
+  return runner;
+}
+
+function swapCurrentContextRunner(runner: Runner) {
+  const oldRunner = currentContextRunner;
+  currentContextRunner = runner;
+  return oldRunner;
+}
+
+// flow will execute in the current Runner's context:
+export const flow = <I extends InputValues, O extends OutputValues>(
+  nodeOrFunction: NodeImpl<I, O> | NodeHandlerFunction<I, O>,
+  config?: NodeImpl<InputValues, Partial<I>> | InputsMaybeAsValues<I>
+) => {
+  return getCurrentContextRunner().flow(nodeOrFunction, config);
+};

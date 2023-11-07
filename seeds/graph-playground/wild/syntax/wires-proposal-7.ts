@@ -8,6 +8,8 @@ import {
   NodeValue,
   InputValues,
   addNodeType,
+  flow,
+  action,
   Runner,
 } from "./wires-proposal-7-lib.js";
 
@@ -45,7 +47,7 @@ singleNode();
 async function simpleFunction() {
   const runner = new Runner();
 
-  const result = await runner.run(
+  const result = await runner.flow(
     async (inputs) => {
       const { foo } = await passthrough(inputs);
       return { foo };
@@ -59,9 +61,7 @@ simpleFunction();
 
 // Because there is no `await` this actually builds a graph that then is run
 async function simpleFunctionGraph() {
-  const runner = new Runner();
-
-  const result = await runner.run(
+  const result = await flow(
     (inputs) => {
       const p1 = passthrough(inputs);
       const { foo } = p1; // Get an output, as a Promise!
@@ -75,11 +75,9 @@ async function simpleFunctionGraph() {
 simpleFunctionGraph();
 
 async function customAction() {
-  const runner = new Runner();
-
-  const result = await runner.run(
-    (inputs, run) => {
-      return run(async (inputs) => {
+  const result = await flow(
+    (inputs) => {
+      return flow(async (inputs) => {
         const { a, b } = await inputs;
         return { result: ((a as number) || 0) + ((b as number) || 0) };
       }, inputs);
@@ -92,9 +90,7 @@ async function customAction() {
 customAction();
 
 async function mathImperative() {
-  const runner = new Runner();
-
-  const result = await runner.run(
+  const result = await flow(
     (inputs) => {
       const { prompt } = promptTemplate({
         template:
@@ -116,9 +112,7 @@ async function mathImperative() {
 mathImperative();
 
 async function mathChainGraph() {
-  const runner = new Runner();
-
-  const result = await runner.run(
+  const result = await flow(
     (inputs) => {
       return promptTemplate({
         template:
@@ -153,9 +147,7 @@ async function mathChainDirectly() {
 mathChainDirectly();
 
 async function ifElse() {
-  const runner = new Runner();
-
-  const math = runner.fn((inputs) => {
+  const math = action((inputs) => {
     return promptTemplate({
       template:
         "Write Javascript to compute the result for this question:\nQuestion: {{question}}\nCode: ",
@@ -166,12 +158,12 @@ async function ifElse() {
       .to(runJavascript());
   });
 
-  const search = runner.fn((inputs) => {
+  const search = action((inputs) => {
     // TODO: Implement
     return inputs;
   });
 
-  const result = await runner.run(
+  const result = await flow(
     async (inputs) => {
       const { completion } = await promptTemplate({
         template:
@@ -192,9 +184,7 @@ async function ifElse() {
 ifElse();
 
 async function ifElseSerializable() {
-  const runner = new Runner();
-
-  const math = runner.fn((inputs) => {
+  const math = action((inputs) => {
     return promptTemplate({
       template:
         "Write Javascript to compute the result for this question:\nQuestion: {{question}}\nCode: ",
@@ -205,12 +195,12 @@ async function ifElseSerializable() {
       .to(runJavascript());
   });
 
-  const search = runner.fn((inputs) => {
+  const search = action((inputs) => {
     // TODO: Implement
     return inputs;
   });
 
-  const result = await runner.run(
+  const result = flow(
     async (inputs) => {
       return promptTemplate({
         template:
@@ -222,9 +212,9 @@ async function ifElseSerializable() {
           async (inputs) => {
             const { completion, math, search } = await inputs;
             if (completion?.startsWith("YES")) {
-              return runner.run(math, { question: inputs.question });
+              return math({ question: inputs.question });
             } else {
-              return runner.run(search, inputs);
+              return search(inputs);
             }
           },
           { math, search }
