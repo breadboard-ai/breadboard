@@ -22,10 +22,16 @@ export type InputValues = { [key: string]: NodeValue };
 export type OutputValues = { [key: string]: NodeValue };
 type OutputValue<T> = Partial<{ [key: string]: T }>;
 
-type InputsMaybeAsValues<T extends InputValues> = {
-  [K in keyof T]: Value<T[K]> | T[K];
-} & {
-  [key in string]: Value<NodeValue> | NodeValue;
+type InputsMaybeAsValues<
+  T extends InputValues,
+  NI extends InputValues = InputValues
+> = Partial<{
+  [K in keyof T]: Value<T[K]> | NodeProxy<NI, OutputValue<T[K]>> | T[K];
+}> & {
+  [key in string]:
+    | Value<NodeValue>
+    | NodeProxy<NI, Partial<InputValues>>
+    | NodeValue;
 };
 
 type NodeHandlerFunction<I extends InputValues, O extends OutputValues> = (
@@ -57,12 +63,7 @@ export function addNodeType<I extends InputValues, O extends OutputValues>(
   fn: NodeHandlerFunction<I, O>
 ): NodeFactory<I, O> {
   (handlers[name] as unknown as NodeHandlerFunction<I, O>) = fn;
-  return ((
-    config?:
-      | NodeImpl<InputValues, OutputValues>
-      | Partial<InputValues>
-      | Value<NodeValue>
-  ) => {
+  return ((config?: InputsMaybeAsValues<I>) => {
     return new NodeImpl(name, getCurrentContextRunner(), config).asProxy();
   }) as unknown as NodeFactory<I, O>;
 }
@@ -161,11 +162,9 @@ class NodeImpl<
   constructor(
     handler: NodeTypeIdentifier | NodeHandler<I, O>,
     runner: Runner,
-    config: (
-      | Partial<InputsMaybeAsValues<I>>
-      | NodeImpl<InputValues, Partial<I>>
-      | Value<NodeValue>
-    ) & { $id?: string } = {}
+    config: (Partial<InputsMaybeAsValues<I>> | Value<NodeValue>) & {
+      $id?: string;
+    } = {}
   ) {
     this.#runner = runner;
 
@@ -553,7 +552,7 @@ export class Runner {
 
   flow<I extends InputValues, O extends OutputValues>(
     nodeOrFunction: NodeImpl<I, O> | NodeHandlerFunction<I, O>,
-    config?: NodeImpl<InputValues, Partial<I>> | InputsMaybeAsValues<I>
+    config?: InputsMaybeAsValues<I>
   ): NodeProxy<InputValues, OutputValues> {
     const node =
       nodeOrFunction instanceof NodeImpl
@@ -620,7 +619,7 @@ function swapCurrentContextRunner(runner: Runner) {
 // flow will execute in the current Runner's context:
 export const flow = <I extends InputValues, O extends OutputValues>(
   nodeOrFunction: NodeImpl<I, O> | NodeHandlerFunction<I, O>,
-  config?: NodeImpl<InputValues, Partial<I>> | InputsMaybeAsValues<I>
+  config?: InputsMaybeAsValues<I>
 ) => {
   return getCurrentContextRunner().flow(nodeOrFunction, config);
 };

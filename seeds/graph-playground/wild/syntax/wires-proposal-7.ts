@@ -27,9 +27,17 @@ const promptTemplate = addNodeType<
 >("promptTemplate", async (inputs: PromiseLike<{ template: string }>) =>
   Promise.resolve({ prompt: (await inputs).template })
 );
-const secrets = addNodeType("secrets", passthroughHandler);
-const generateText = addNodeType("generateText", async (inputs) =>
-  Promise.resolve({ completion: inputs.prompt as string })
+const secrets = addNodeType(
+  "secrets",
+  async (inputs: PromiseLike<{ keys: string[] }>) =>
+    Promise.resolve(
+      Object.fromEntries((await inputs).keys.map((key) => [key, "SECRET"]))
+    )
+);
+const generateText = addNodeType(
+  "generateText",
+  async (inputs: PromiseLike<{ prompt: string; PALM_KEY: string }>) =>
+    Promise.resolve({ completion: (await inputs).prompt })
 );
 const runJavascript = addNodeType("runJavascript", passthroughHandler);
 
@@ -99,7 +107,7 @@ async function mathImperative() {
       });
       const { completion } = generateText({
         prompt,
-        PALM_KEY: secrets({ keys: ["PALM_KEY"] }),
+        PALM_KEY: secrets({ keys: ["PALM_KEY"] }).PALM_KEY,
       });
       const result = runJavascript({ code: completion });
       return result;
@@ -119,7 +127,9 @@ async function mathChainGraph() {
           "Write Javascript to compute the result for this question:\nQuestion: {{question}}\nCode: ",
         question: inputs.question,
       })
-        .to(generateText({ PALM_KEY: secrets({ keys: ["PALM_KEY"] }) }))
+        .to(
+          generateText({ PALM_KEY: secrets({ keys: ["PALM_KEY"] }).PALM_KEY })
+        )
         .completion.as("code")
         .to(runJavascript());
     },
@@ -138,7 +148,7 @@ async function mathChainDirectly() {
           "Write Javascript to compute the result for this question:\nQuestion: {{question}}\nCode: ",
       })
     )
-    .to(generateText({ PALM_KEY: secrets({ keys: ["PALM_KEY"] }) }))
+    .to(generateText({ PALM_KEY: secrets({ keys: ["PALM_KEY"] }).PALM_KEY }))
     .completion.as("code")
     .to(runJavascript());
 
@@ -153,7 +163,7 @@ async function ifElse() {
         "Write Javascript to compute the result for this question:\nQuestion: {{question}}\nCode: ",
       question: inputs.question,
     })
-      .to(generateText({ PALM_KEY: secrets({ keys: ["PALM_KEY"] }) }))
+      .to(generateText({ PALM_KEY: secrets({ keys: ["PALM_KEY"] }).PALM_KEY }))
       .completion.as("code")
       .to(runJavascript());
   });
