@@ -5,7 +5,13 @@
  */
 
 import { expect, test } from "vitest";
-import { asyncGen, streamFromAsyncGen } from "../src/async-gen";
+import {
+  LastMessageKeeper,
+  PatchedReadableStream,
+  asyncGen,
+  streamFromAsyncGen,
+} from "../src/async-gen";
+import { Readable } from "stream";
 
 test("async-gen", async () => {
   const results = [];
@@ -82,4 +88,39 @@ test("streamFromAsyncGen as async iterator", async () => {
     results.push(value);
   }
   expect(results).toEqual([1, 2, 3]);
+});
+
+test("LastMessageKeeper keeps last message", async () => {
+  const keeper = new LastMessageKeeper();
+  const stream = new ReadableStream({
+    start(controller) {
+      controller.enqueue(1);
+      controller.enqueue(2);
+      controller.enqueue(3);
+      controller.close();
+    },
+  });
+  const reader = stream.pipeThrough(keeper.watch()).getReader();
+  for (;;) {
+    const { done } = await reader.read();
+    if (done) break;
+  }
+  const lastMessage = keeper.lastMessage();
+  expect(lastMessage).toEqual(3);
+});
+
+test("LastMessageKeeper returns undefined when stream is empty", async () => {
+  const keeper = new LastMessageKeeper();
+  const stream = new ReadableStream({
+    start(controller) {
+      controller.close();
+    },
+  });
+  const reader = stream.pipeThrough(keeper.watch()).getReader();
+  for (;;) {
+    const { done } = await reader.read();
+    if (done) break;
+  }
+  const lastMessage = keeper.lastMessage();
+  expect(lastMessage).toEqual(undefined);
 });

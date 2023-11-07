@@ -80,7 +80,7 @@ export const asyncGen = <T>(callback: AsyncGenCallback<T>) => {
   };
 };
 
-type PatchedReadableStream<T> = ReadableStream<T> & AsyncIterable<T>;
+export type PatchedReadableStream<T> = ReadableStream<T> & AsyncIterable<T>;
 
 // A polyfill for ReadableStream.from:
 // See https://streams.spec.whatwg.org/#rs-from
@@ -122,3 +122,37 @@ export const patchReadableStream = () => {
       }
     });
 };
+
+/**
+ * A helper class for keeping track of the last message in a stream.
+ *
+ * Example:
+ *
+ * ```ts
+ * const keeper = new LastMessageKeeper<string>();
+ * const stream = new ReadableStream({
+ *  start: (controller) => {
+ *   controller.enqueue("foo");
+ *   controller.enqueue("bar");
+ *   controller.enqueue("baz");
+ *   controller.close();
+ * });
+ * stream.pipeThrough(keeper.watch());
+ * console.log(keeper.lastMessage()); // "baz"
+ */
+export class LastMessageKeeper<Res> {
+  #lastMessage: Res | undefined;
+
+  watch() {
+    return new TransformStream({
+      transform: (chunk, controller) => {
+        this.#lastMessage = chunk;
+        controller.enqueue(chunk);
+      },
+    });
+  }
+
+  lastMessage(): Res | undefined {
+    return this.#lastMessage;
+  }
+}
