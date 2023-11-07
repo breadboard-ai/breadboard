@@ -253,6 +253,7 @@ class NodeImpl<
    *  - for all named incoming edges, the presence of any data, irrespective of
    *    which node they come from
    *  - for all empty or * incoming edges, that the from node has sent data
+   *  - data from at least one node if it already ran (#this.outputs not empty)
    *
    * @returns true if all required inputs are present
    */
@@ -273,7 +274,8 @@ class NodeImpl<
 
     return (
       [...requiredKeys].every((key) => presentKeys.has(key)) &&
-      [...requiredNodes].every((node) => presentNodes.has(node))
+      [...requiredNodes].every((node) => presentNodes.has(node)) &&
+      (!this.#outputs || presentNodes.size > 0)
     );
   }
 
@@ -402,7 +404,7 @@ class NodeImpl<
     onfulfilled?: ((value: O) => TResult1 | PromiseLike<TResult1>) | null,
     onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null
   ): PromiseLike<TResult1 | TResult2> {
-    this.#runner.invoke(this);
+    this.#runner.invoke(this as unknown as NodeImpl);
 
     return this.#promise.then(
       onfulfilled && this.#runner.asRunnerFor(onfulfilled),
@@ -623,33 +625,10 @@ export class Runner {
     return node.asProxy();
   }
 
-  async invoke<
-    I extends InputValues = InputValues,
-    O extends OutputValues = OutputValues
-  >(node: NodeImpl<I, O>) {
-    // First, let's extract the graph my traversing from this node. We have to
-    // follow both incoming and outgoing edges.
-    const nodes = new Set<NodeImpl>();
-    const edges = new Set<Edge>();
-    // TODO: This type cast should not be necessary. Dig into why it exists.
-    let queue: NodeImpl[] = [node as unknown as NodeImpl];
-
-    while (queue.length) {
-      const node = queue.shift() as NodeImpl;
-      if (nodes.has(node)) continue;
-      nodes.add(node);
-      node.incoming.forEach((edge) => {
-        edges.add(edge);
-        queue.push(edge.from);
-      });
-      node.outgoing.forEach((edge) => {
-        edges.add(edge);
-        queue.push(edge.to);
-      });
-    }
-
-    // Reset queue with all nodes that have no incoming edges
-    queue = [...nodes].filter((node) => node.incoming.length === 0);
+  async invoke(node: NodeImpl) {
+    const queue: NodeImpl[] = this.#findAllConnectedNodes(node).filter((node) =>
+      node.hasAllRequiredInputs()
+    );
 
     while (queue.length) {
       const node = queue.shift() as NodeImpl;
@@ -671,6 +650,21 @@ export class Runner {
         if (edge.to.hasAllRequiredInputs()) queue.push(edge.to);
       });
     }
+  }
+
+  #findAllConnectedNodes(node: NodeImpl) {
+    const nodes = new Set<NodeImpl>();
+    const queue = [node];
+
+    while (queue.length) {
+      const node = queue.shift() as NodeImpl;
+      if (nodes.has(node)) continue;
+      nodes.add(node);
+      node.incoming.forEach((edge) => queue.push(edge.from));
+      node.outgoing.forEach((edge) => queue.push(edge.to));
+    }
+
+    return [...nodes];
   }
 }
 
