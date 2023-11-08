@@ -11,6 +11,7 @@ import { Output, type OutputArgs } from "./output.js";
 import { Progress } from "./progress.js";
 import { Result, ResultArgs } from "./result.js";
 import { Start, type StartArgs } from "./start.js";
+import { Diagram } from "./diagram.js";
 
 export interface UI {
   progress(message: string): void;
@@ -54,6 +55,7 @@ export class UIController extends HTMLElement implements UI {
 
   load(info: LoadArgs) {
     this.append(new Load(info));
+    this.append(new Diagram(info));
   }
 
   progress(message: string) {

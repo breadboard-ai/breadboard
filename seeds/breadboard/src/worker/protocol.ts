@@ -97,6 +97,10 @@ export type LoadResponseMessage = {
      * [semver](https://semver.org/) format is encouraged.
      */
     version?: string;
+    /**
+     * The Mermaid diagram of the graph.
+     */
+    diagram?: string;
   };
 };
 

@@ -73,6 +73,7 @@ export class WorkerRuntime {
           title: board.title,
           description: board.description,
           version: board.version,
+          diagram: board.mermaid(),
         },
         "load"
       );

@@ -8,6 +8,7 @@ export type LoadArgs = {
   title: string;
   description?: string;
   version?: string;
+  diagram?: string;
 };
 
 export class Load extends HTMLElement {
