@@ -101,6 +101,10 @@ export type LoadResponseMessage = {
      * The Mermaid diagram of the graph.
      */
     diagram?: string;
+    /**
+     * The url of the graph.
+     */
+    url?: string;
   };
 };
 

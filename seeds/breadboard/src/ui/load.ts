@@ -9,13 +9,23 @@ export type LoadArgs = {
   description?: string;
   version?: string;
   diagram?: string;
+  url?: string;
+};
+
+const createLink = (url?: string) => {
+  if (!url) return "";
+  const linkUrl = new URL(window.location.href);
+  if (linkUrl.searchParams.has("board")) return "";
+  linkUrl.searchParams.set("board", url);
+  return `<a href="${linkUrl}"> 🔗</a>`;
 };
 
 export class Load extends HTMLElement {
-  constructor({ title, description = "", version = "" }: LoadArgs) {
+  constructor({ title, description = "", version = "", url = "" }: LoadArgs) {
     super();
     if (version) version = `version: ${version}`;
     const root = this.attachShadow({ mode: "open" });
+    const link = createLink(url);
     root.innerHTML = `
       <style>
         :host {
@@ -24,8 +34,11 @@ export class Load extends HTMLElement {
         h2 {
           font-weight: var(--bb-title-font-weight, normal);
         }
+        h2 a {
+          text-decoration: none;
+        }
       </style>
-      <h2>${title}</h2>
+      <h2>${title}${link}</h2>
       <p>${description}</p>
       <p>${version}</p>
     `;
