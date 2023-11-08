@@ -225,9 +225,7 @@ Currently, to publish an NPM package, you have to be a Googler. This is unlikely
 
 ```bash
 git pull
-npm run clean:build
-npm i
-npx turbo build
+npm run sync
 ```
 
 2. Change directory to the package to be published. For example:
