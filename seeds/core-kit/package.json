@@ -1,6 +1,5 @@
 {
   "name": "@google-labs/core-kit",
-  "private": true,
   "version": "0.0.1",
   "description": "A Breadboard Kit containing nodes that enable composition and reuse of boards.",
   "main": "./dist/src/index.js",
@@ -38,7 +37,7 @@
   "bugs": {
     "url": "https://github.com/google/labs-prototypes/issues"
   },
-  "homepage": "https://github.com/google/labs-prototypes#readme",
+  "homepage": "https://github.com/google/labs-prototypes/tree/main/seeds/core-kit#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
     "@typescript-eslint/eslint-plugin": "^5.56.0",
