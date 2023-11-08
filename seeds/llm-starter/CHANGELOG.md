@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.1] - 2023-11-08
+
+- In `fetch`, do not add request body if method is `GET`
+- In `generateText`, set `text` and `PALM_KEY` as required.
+
 ## [0.2.0] - 2023-10-17
 
 - **M2 Release**
