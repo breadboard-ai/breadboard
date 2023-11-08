@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.5.0] - 2023-11-08
+
+- The `/ui` submodule changes:
+  - supports multiple simultaneous inputs
+  - does not ask for keys more than once per session
+  - if you specify `type: "object"` for an input, it will try to parse it as JSON data and pass as an object.
+  - draw Mermaid diagrams of the boards
+  - there's now a link to the running board in the UI.
+- The `/worker` submodule changes:
+  - bug fixes (will actually queue received messages and not drop them on the floor)
+- The following nodes moved out into the Core Kit: `passthrough`, `reflect`, `slot`, `include`, `import`, and `invoke`.
+- The `run` method now takes a `NodeHandlerContext` object as its argument, rather than a list of arguments.
+- Kits are no longer implicitly imported by Breadboard. Instead, supply loaded Kits as part `NodeHandlerContext` to `run`.
+
 ## [0.4.1] - 2023-10-20
 
 - Moved the `mermaid` method to `BoardRunner`.
