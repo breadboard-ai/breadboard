@@ -24,6 +24,15 @@ export class StreamCapability<ChunkType>
   }
 }
 
+export const isStreamCapability = (object: unknown) => {
+  const maybeStream = object as StreamCapabilityType;
+  return (
+    maybeStream.kind &&
+    maybeStream.kind === STREAM_KIND &&
+    maybeStream.stream instanceof ReadableStream
+  );
+};
+
 const findStreams = (value: NodeValue, foundStreams: ReadableStream[]) => {
   if (Array.isArray(value)) {
     value.forEach((item: NodeValue) => {

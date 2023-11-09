@@ -7,11 +7,9 @@
 import { expect, test } from "vitest";
 import {
   LastMessageKeeper,
-  PatchedReadableStream,
   asyncGen,
   streamFromAsyncGen,
 } from "../src/async-gen";
-import { Readable } from "stream";
 
 test("async-gen", async () => {
   const results = [];
