@@ -4,10 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  InputValues,
-  NodeDescriberFunction,
-  NodeHandler,
+import {
+  StreamCapability,
+  type InputValues,
+  type NodeDescriberFunction,
+  type NodeHandler,
 } from "@google-labs/breadboard";
 
 export type FetchOutputs = {
@@ -32,9 +33,14 @@ export type FetchInputs = {
    */
   body?: string;
   /**
-   * Whether or not to return raw text (as opposed to parsing JSON)
+   * Whether or not to return raw text (as opposed to parsing JSON). Has no
+   * effect when `stream` is true.
    */
   raw?: boolean;
+  /**
+   * Whether or not to return a stream
+   */
+  stream?: boolean;
 };
 
 export const fetchDescriber: NodeDescriberFunction = async () => {
@@ -98,6 +104,7 @@ export default {
       body,
       headers = {},
       raw,
+      stream,
     } = inputs as FetchInputs;
     if (!url) throw new Error("Fetch requires `url` input");
     const init: RequestInit = {
@@ -109,7 +116,14 @@ export default {
       init.body = JSON.stringify(body);
     }
     const data = await fetch(url, init);
-    const response = raw ? await data.text() : await data.json();
-    return { response };
+    if (stream) {
+      if (!data.body) {
+        throw new Error("Response is not streamable.");
+      }
+      return { response: new StreamCapability(data.body) };
+    } else {
+      const response = raw ? await data.text() : await data.json();
+      return { response };
+    }
   },
 } satisfies NodeHandler;
