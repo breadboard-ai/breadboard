@@ -25,6 +25,7 @@ if __name__ == "__main__":
   arg_parser.add_argument("-o", "--outfile", help="Output passages file path.", required=True)
   arg_parser.add_argument("--maxwords", type=int, default=200, help="Max words per aggregate passage.")
   arg_parser.add_argument("--greedyagg", action=argparse.BooleanOptionalAction, help="Whether to greedily aggregate sibling nodes.")
+  arg_parser.add_argument("--excludetags", type=str, default="noscript,script,style", help="Comma-separated HTML tags from which to exclude text.")
   args = arg_parser.parse_args()
 
   html_file = open(args.infile, "r")
@@ -34,6 +35,7 @@ if __name__ == "__main__":
   chunker = HtmlChunker(
       max_words_per_aggregate_passage=args.maxwords,
       greedily_aggregate_sibling_nodes=args.greedyagg,
+      html_tags_to_exclude={tag for tag in args.excludetags.split(',')},
   )
   passages = chunker.chunk(html)
 

@@ -33,6 +33,9 @@ aggregated into passages under `max_words_per_aggregate_passage` words. If
 cannot be combined into a single passage under
 `max_words_per_aggregate_passage` words.
 
+`html_tags_to_exclude`: Text within any of the tags in this set will not be
+included in the output passages. Defaults to `{"noscript", "script", "style"}`.
+
 If you find your passages are too disjointed (insufficient context in a single
 passage for your application), consider increasing
 `max_words_per_aggregate_passage` and/or setting
@@ -125,3 +128,19 @@ The sibling children of the `<p>` node are greedily aggregated while the total
 is <=4 words:
 
 passages: ["Heading", "Text before link", "and after."]
+
+
+### Example 5
+
+```
+chunker = HtmlChunker(
+    max_words_per_aggregate_passage=4,
+    greedily_aggregate_sibling_nodes=False,
+    html_tags_to_exclude={"p"}
+)
+passages = chunker.chunk(html)
+```
+
+All text within the `<p>` tag is excluded from the output.:
+
+passages: ["Heading"]

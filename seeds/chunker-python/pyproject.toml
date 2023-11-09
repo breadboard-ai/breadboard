@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "google_labs_html_chunker"
-version = "0.0.3"
+version = "0.0.5"
 authors = [
   { name="Google Labs", email="labs-pypi@google.com" },
 ]

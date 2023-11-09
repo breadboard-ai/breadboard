@@ -46,6 +46,39 @@ class HtmlChunkerTest(parameterized.TestCase):
         ["Here's a paragraph."],
     )
 
+  def test_handles_unicode_characters(self):
+    html = (
+        "<p>Here is a"
+        " \u2119\u212b\u213e\u212b\u210A\u213e\u212b\u2119\u210F.</p>"
+    )
+
+    chunker = HtmlChunker(
+        max_words_per_aggregate_passage=10,
+        greedily_aggregate_sibling_nodes=False,
+    )
+
+    self.assertEqual(
+        chunker.chunk(html),
+        ["Here is a ℙÅℾÅℊℾÅℙℏ."],
+    )
+
+  def test_handles_byte_string(self):
+    html_bytes = (
+        b"<p>Here is a"
+        b" \xe2\x84\x99\xe2\x84\xab\xe2\x84\xbe\xe2\x84\xab\xe2\x84\x8a\xe2\x84\xbe\xe2\x84\xab\xe2\x84\x99\xe2\x84\x8f.</p>"
+    )
+
+    chunker = HtmlChunker(
+        max_words_per_aggregate_passage=10,
+        greedily_aggregate_sibling_nodes=False,
+    )
+
+    # When using bytes, we must provide the decoding, in this case utf-8.
+    self.assertEqual(
+        chunker.chunk(html_bytes.decode("utf-8")),
+        ["Here is a ℙÅℾÅℊℾÅℙℏ."],
+    )
+
   def test_strips_whitespace_around_node_text(self):
     html = """
       <div>
@@ -189,16 +222,19 @@ class HtmlChunkerTest(parameterized.TestCase):
         ],
     )
 
-  def test_skips_non_content_text(self):
+  def test_excludes_text_from_default_html_tags(self):
     html = """
-      <head>
-        <title>Title</title>
-        <style>.my-tag{display:none}</style>
-      <head>
-      <body>
-        <script type="application/json">{"@context":"https://schema.org"}</script>
-        <p><!-- A comment -->Paragraph</p>
-      </body>
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Title</title>
+          <style>.my-tag{display:none}</style>
+        <head>
+        <body>
+          <script type="application/json">{"@context":"https://schema.org"}</script>
+          <p><!-- A comment -->Paragraph</p>
+        </body>
+      </html>
     """
 
     chunker = HtmlChunker(
@@ -210,6 +246,34 @@ class HtmlChunkerTest(parameterized.TestCase):
         chunker.chunk(html),
         [
             "Title Paragraph",
+        ],
+    )
+
+  def test_excludes_text_from_given_html_tags(self):
+    html = """
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Title</title>
+          <style>.my-tag{display:none}</style>
+        <head>
+        <body>
+          <script type="application/json">{"@context":"https://schema.org"}</script>
+          <p><!-- A comment -->Paragraph</p>
+        </body>
+      </html>
+    """
+
+    chunker = HtmlChunker(
+        max_words_per_aggregate_passage=10,
+        greedily_aggregate_sibling_nodes=False,
+        html_tags_to_exclude={"   HEAD ", "p"},
+    )
+
+    self.assertEqual(
+        chunker.chunk(html),
+        [
+            '{"@context":"https://schema.org"}',
         ],
     )
 
