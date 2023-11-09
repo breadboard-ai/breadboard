@@ -9,6 +9,7 @@
   "type": "module",
   "scripts": {
     "build": "FORCE_COLOR=1 tsc --b",
+    "test": "FORCE_COLOR=1 ava",
     "watch": "FORCE_COLOR=1 tsc --b --watch",
     "lint": "FORCE_COLOR=1 eslint . --ext .ts"
   },
@@ -47,7 +48,8 @@
     "@typescript-eslint/parser": "^5.56.0",
     "ava": "^5.2.0",
     "npm": "^10.2.1",
-    "typescript": "^5.0.4"
+    "typescript": "^5.0.4",
+    "@google-labs/llm-starter": "*"
   },
   "dependencies": {
     "@google-labs/breadboard": "*",

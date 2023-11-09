@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { getStreams } from "../stream.js";
+import { InputValues } from "../types.js";
 import {
   type ControllerMessage,
   type RoundTripControllerMessage,
@@ -40,11 +42,13 @@ export class WorkerTransport implements MessageControllerTransport {
   }
 
   sendRoundTripMessage<T extends RoundTripControllerMessage>(message: T) {
-    this.worker.postMessage(message);
+    const streams = getStreams(message.data as InputValues);
+    this.worker.postMessage(message, streams);
   }
 
   sendMessage<T extends ControllerMessage>(message: T) {
-    this.worker.postMessage(message);
+    const streams = getStreams(message.data as InputValues);
+    this.worker.postMessage(message, streams);
   }
 
   #onMessage(e: MessageEvent) {

@@ -11,11 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from bs4 import BeautifulSoup, NavigableString, Comment
 
-# Html tags for non-content text. Text within these tags will be excluded from
-# passages.
-_NON_CONTENT_HTML_TAGS = frozenset({"noscript", "script", "style"})
+import bs4
+
+# Text within these html tags will be excluded from passages by default.
+_DEFAULT_HTML_TAGS_TO_EXCLUDE = frozenset({"noscript", "script", "style"})
 
 # Html tags that indicate a section break. Sibling nodes will not be
 # greedily-aggregated into a chunk across one of these tags.
@@ -53,15 +53,22 @@ class HtmlChunker:
       false, each sibling node is output as a separate passage if they cannot
       all be combined into a single passage under
       max_words_per_aggregate_passage words.
+    html_tags_to_exclude: Text within any of the tags in this set will not be
+      included in the output passages. Defaults to {"noscript", "script",
+      "style"}.
   """
 
   def __init__(
       self,
       max_words_per_aggregate_passage: int,
       greedily_aggregate_sibling_nodes: bool,
+      html_tags_to_exclude: frozenset[str] = _DEFAULT_HTML_TAGS_TO_EXCLUDE,
   ) -> None:
     self.max_words_per_aggregate_passage = max_words_per_aggregate_passage
     self.greedily_aggregate_sibling_nodes = greedily_aggregate_sibling_nodes
+    self.html_tags_to_exclude = {
+        tag.strip().lower() for tag in html_tags_to_exclude
+    }
 
   class PassageList:
     """A list of text passages."""
@@ -127,13 +134,16 @@ class HtmlChunker:
     current_node = self.AggregateNode()
     if node.name:
       current_node.html_tag = node.name
-    if node.name in _NON_CONTENT_HTML_TAGS or isinstance(node, Comment):
+    if node.name in self.html_tags_to_exclude or isinstance(node, bs4.Comment):
       # Exclude text within these tags.
       return current_node
 
-    if isinstance(node, NavigableString):
-      current_node.num_words = len(node.split())
-      current_node.segments.append(node.strip())
+    if isinstance(node, bs4.NavigableString):
+      # Store the text for this leaf node (skipping text directly under the
+      # top-level BeautifulSoup object, e.g. "html" from <!DOCTYPE html>).
+      if node.parent.name != "[document]":
+        current_node.num_words = len(node.split())
+        current_node.segments.append(node.strip())
       return current_node
 
     # Will hold the aggregate of this node and all its unchunked descendants
@@ -201,7 +211,7 @@ class HtmlChunker:
     Returns:
       A list of text passages from the html.
     """
-    tree = BeautifulSoup(html, "html5lib")
+    tree = bs4.BeautifulSoup(html, "html5lib")
     root_agg_node = self._process_node(tree)
     if not root_agg_node.get_passages():
       root_agg_node.passage_list.add_passage_for_node(root_agg_node)

@@ -46,16 +46,29 @@ const runInBrowser = async (
   args: string
 ): Promise<string> => {
   const runner = (code: string, functionName: string) => {
-    return `${code}\nself.onmessage = () => self.postMessage(JSON.stringify(${functionName}(${args})))`;
+    return `${code}\nself.onmessage = () => self.postMessage({ result: JSON.stringify(${functionName}(${args})) });self.onerror = (e) => self.postMessage({ error: e.message })`;
   };
 
   const blob = new Blob([runner(code, functionName)], {
     type: "text/javascript",
   });
 
+  type WebWorkerResultType = "error" | "result";
+  type WebWorkerResult = {
+    [x in WebWorkerResultType]: string;
+  };
+
   const worker = new Worker(URL.createObjectURL(blob));
   const result = new Promise<string>((resolve) => {
-    worker.onmessage = (e) => resolve(e.data);
+    worker.onmessage = (e) => {
+      const data = e.data as WebWorkerResult;
+      if (data.result) {
+        resolve(data.result);
+        return;
+      } else if (data.error) {
+        throw new Error(data.error);
+      }
+    };
   });
   worker.postMessage("please");
   return result;
@@ -91,7 +104,7 @@ export const runJavascriptHandler: NodeHandlerFunction = async (
     );
     return raw ? result : { result };
   } catch (e) {
-    // Remove everthing outside eval from the stack trace
+    // Remove everything outside eval from the stack trace
     const stack = (e as Error).stack;
     if (stack !== undefined) {
       (e as Error).stack = stack

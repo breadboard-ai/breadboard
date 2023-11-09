@@ -56,3 +56,8 @@ export { toMermaid } from "./mermaid.js";
 export type { Schema } from "jsonschema";
 export { callHandler } from "./handler.js";
 export { asRuntimeKit } from "./kits/ctors.js";
+export {
+  StreamCapability,
+  isStreamCapability,
+  type StreamCapabilityType,
+} from "./stream.js";
