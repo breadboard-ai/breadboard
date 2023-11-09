@@ -7,12 +7,14 @@
 import { KitBuilder } from "@google-labs/breadboard/kits";
 import credentials from "./nodes/credentials.js";
 import driveList from "./nodes/drive-list.js";
+import transformStream from "./nodes/transform-stream.js";
 
 const NodeNurseryWeb = new KitBuilder({
   url: "npm:@google-labs/node-nursery-web",
 }).build({
   credentials,
   driveList,
+  transformStream,
 });
 
 export default NodeNurseryWeb;
