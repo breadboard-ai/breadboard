@@ -5,7 +5,7 @@
  */
 
 import { callHandler } from "../handler.js";
-import { KitBuilderOptions } from "./index.js";
+import { KitBuilderOptions } from "./builder.js";
 import { BoardRunner } from "../runner.js";
 import {
   GraphDescriptor,
