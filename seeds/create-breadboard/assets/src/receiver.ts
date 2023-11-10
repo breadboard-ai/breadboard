@@ -6,21 +6,16 @@
 
 import {
   type NodeHandlers,
-  type OutputValues,
   Board,
   callHandler,
+  InputValues,
 } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 import type { ProxyRequestMessage } from "@google-labs/breadboard/worker";
 
-const PROXIED_PREFIX = "PROXIED_";
-
-const passProxiedKeys = (keys: string[]) => {
-  return keys.reduce((acc, key) => {
-    acc[key] = `${PROXIED_PREFIX}${key}`;
-    return acc;
-  }, {} as OutputValues);
-};
+import { SecretKeeper } from "./secrets";
+import { KitBuilder } from "@google-labs/breadboard/kits";
+import { asyncGen } from "./async-gen";
 
 class AskForSecret {
   name: string;
@@ -51,11 +46,37 @@ class FinalResult {
 export class ProxyReceiver {
   board: Board;
   handlers?: NodeHandlers;
-  secrets: Record<string, string> = {};
+  secrets = new SecretKeeper();
 
   constructor() {
     this.board = new Board();
+    this.board.addKit(
+      new KitBuilder({ url: "npm:@google-labs/breadboard-web" }).build({
+        secrets: async (inputs: InputValues) => {
+          const { keys } = inputs as { keys: string[] };
+          return this.secrets.addSecretTokens(keys);
+        },
+      })
+    );
     this.board.addKit(Starter);
+  }
+
+  #revealInputSecrets(inputs: InputValues) {
+    return asyncGen(async (next) => {
+      for (const name in inputs) {
+        const value = inputs[name];
+        const secrets = this.secrets.findSecrets(value);
+        for (const token of secrets) {
+          const secret = this.secrets.getSecret(token);
+          if (!secret.value) {
+            const ask = new AskForSecret(secret.name);
+            await next(ask);
+            secret.value = ask.value;
+          }
+        }
+        inputs[name] = this.secrets.revealSecrets(value, secrets);
+      }
+    });
   }
 
   async *handle(data: ProxyRequestMessage["data"]) {
@@ -64,32 +85,15 @@ export class ProxyReceiver {
 
     if (!this.handlers)
       this.handlers = await Board.handlersFromBoard(this.board);
-    if (nodeType === "secrets") {
-      const { keys } = inputs as { keys: string[] };
-      yield new FinalResult(nodeType, passProxiedKeys(keys));
-      return;
-    }
-    for (const name in inputs) {
-      let value = inputs[name];
-      const s = typeof value === "string" ? value : "";
-      if (s.startsWith(PROXIED_PREFIX)) {
-        value = this.secrets[name];
-        if (!value) {
-          const ask = new AskForSecret(name);
-          yield ask;
-          value = ask.value;
-          this.secrets[name] = value;
-        }
-        inputs[name] = value;
-      }
-    }
+
+    yield* this.#revealInputSecrets(inputs);
     const handler = this.handlers[nodeType];
     if (!handler)
       throw new Error(`No handler found for node type "${nodeType}".`);
     yield new FinalResult(
       nodeType,
       await callHandler(handler, inputs, {
-        parent: this.board,
+        outerGraph: this.board,
         board: this.board,
         descriptor: data.node,
         slots: {},

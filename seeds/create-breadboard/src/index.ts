@@ -39,22 +39,21 @@ const generateAssetList = (dir: string, base: string): Asset[] => {
 
 const { name } = create({
   // optional deps to install
-  dependencies: ["@google-labs/breadboard", "@google-labs/llm-starter"], // We can only include deps that have been published.
+  dependencies: ["@google-labs/breadboard", "@google-labs/llm-starter", "@google-labs/core-kit"], // We can only include deps that have been published.
   // optional dev deps to install
-  devDependencies: ["@ava/typescript",
+  devDependencies: [
     "@esbuild-plugins/node-globals-polyfill",
     // "@google-labs/tsconfig", // Not public
     "@types/node",
     "@typescript-eslint/eslint-plugin",
     "@typescript-eslint/parser",
-    "ava",
     "dotenv",
     "tsx",
     "typescript",
     "vite",
     "vite-plugin-full-reload",
-    "vite-plugin-watch-and-run",
-    "vitest"],
+    "vite-plugin-watch-and-run"
+  ],
   package: {
     main: "./dist/src/index.js",
     exports: {
@@ -66,8 +65,6 @@ const { name } = create({
     scripts: {
       "dev": "npm run generate:graphs && vite",
       "build:vite": "FORCE_COLOR=1 vite build",
-      "test": "FORCE_COLOR=1 vitest --run",
-      "watch": "vitest",
       "generate:graphs": "tsx src/make-graphs.ts",
       "generate:docs": "typedoc --plugin typedoc-plugin-markdown"
     },
@@ -78,4 +75,4 @@ const { name } = create({
   skipReadme: true,
 });
 
-console.log(`Created ${name}!. Enter the proejct and run: \`npm run dev\``);
+console.log(`Created ${name}!. Enter the project directory and run: \`npm run dev\``);

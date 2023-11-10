@@ -1,5 +1,5 @@
 import { config } from "dotenv";
-import { defineConfig } from "vitest/config";
+import { defineConfig } from "vite";
 import watchAndRun from "vite-plugin-watch-and-run";
 import fullReload from "vite-plugin-full-reload";
 import path from "path";
@@ -25,9 +25,6 @@ export default defineConfig(async (_) => {
     },
     server: {
       ...buildCustomAllowList(process.env.VITE_FS_ALLOW),
-    },
-    test: {
-      include: ["tests/**/*.ts"],
     },
     plugins: [
       watchAndRun([

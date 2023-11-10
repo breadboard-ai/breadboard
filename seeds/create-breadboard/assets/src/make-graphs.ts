@@ -47,39 +47,43 @@ async function saveBoard(filePath: string): Promise<ManifestItem> {
 
   // Create corresponding directories based on the relative path
   const graphDir: string = path.dirname(path.join(GRAPH_PATH, relativePath));
-  const diagramDir: string = path.dirname(path.join(DIAGRAM_PATH, relativePath));
+  const diagramDir: string = path.dirname(
+    path.join(DIAGRAM_PATH, relativePath)
+  );
 
   // Make sure the directories exist
   await mkdir(graphDir, { recursive: true });
   await mkdir(diagramDir, { recursive: true });
 
-  const manifestEntry: { title: string; url: string } = {
+  const manifestEntry: ManifestItem = {
     title: board.default.title,
     url: `/graphs/${relativePath.replace(".ts", ".json")}`,
   };
 
   await writeFile(
     path.join(graphDir, jsonFile),
-    JSON.stringify(board.default, null, 2),
+    JSON.stringify(board.default, null, 2)
   );
   await writeFile(
     path.join(diagramDir, diagramFile),
-    `## ${baseName}\n\n\`\`\`mermaid\n${toMermaid(board.default)}\n\`\`\``,
+    `## ${baseName}\n\n\`\`\`mermaid\n${toMermaid(board.default)}\n\`\`\``
   );
   return manifestEntry;
 }
 
-
 async function saveAllBoards(): Promise<void> {
-  const tsFiles: string[] = await findTsFiles(PATH);
-  const manifest: ManifestItem[] = [];
+  const tsFiles = await findTsFiles(PATH);
+  const manifest = [];
   for (const file of tsFiles) {
-    const manifestEntry: ManifestItem = await saveBoard(file);
-    manifest.push(manifestEntry);
+    const manifestEntry = await saveBoard(file);
+    // Avoid adding .local.json files to the manifest
+    if (!file.endsWith(".local.ts")) {
+      manifest.push(manifestEntry);
+    }
   }
   await writeFile(
     path.join(MANIFEST_PATH, "local-boards.json"),
-    JSON.stringify(manifest, null, 2),
+    JSON.stringify(manifest, null, 2)
   );
 }
 

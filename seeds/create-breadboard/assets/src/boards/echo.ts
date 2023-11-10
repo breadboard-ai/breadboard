@@ -5,7 +5,6 @@
  */
 
 import { Board } from "@google-labs/breadboard";
-import { Starter } from "@google-labs/llm-starter";
 
 const board = new Board({
   title: "Echo",
