@@ -175,8 +175,8 @@ class NodeImpl<
 
     if (config instanceof NodeImpl) {
       this.addInputAsNode(config);
-    } else if (config instanceof Value) {
-      this.addInputAsNode(...config.asNodeInput());
+    } else if (isValue(config)) {
+      this.addInputAsNode(...(config as Value).asNodeInput());
     } else {
       const { $id, ...rest } = config as Partial<InputsMaybeAsValues<I>> & {
         $id?: string;
@@ -209,8 +209,8 @@ class NodeImpl<
     const nodes: [NodeImpl<InputValues, OutputValues>, KeyMap][] = [];
 
     Object.entries(values).forEach(([key, value]) => {
-      if (value instanceof Value) {
-        nodes.push(value.asNodeInput());
+      if (isValue(value)) {
+        nodes.push((value as Value).asNodeInput());
       } else if (value instanceof NodeImpl) {
         nodes.push([value.unProxy(), { [key]: key }]);
       } else {
@@ -363,6 +363,11 @@ class NodeImpl<
               get(_, key, __) {
                 return Reflect.get(value, key, value);
               },
+              ownKeys(_) {
+                return Reflect.ownKeys(value).filter(
+                  (key) => typeof key === "string"
+                );
+              },
             });
           } else {
             return value;
@@ -447,7 +452,7 @@ class NodeImpl<
     if (inputs instanceof NodeImpl) {
       const node = inputs as NodeImpl<InputValues, OutputValues>;
       this.addInputAsNode(node);
-    } else if (inputs instanceof Value) {
+    } else if (isValue(inputs)) {
       const value = inputs as Value;
       this.addInputAsNode(...value.asNodeInput());
     } else {
@@ -474,12 +479,27 @@ class NodeImpl<
   }
 }
 
+// Because Value is sometimes behind a function Proxy (see above, for NodeImpl's
+// methods), we need to use this approach to identify Value instead instanceof.
+const IsValueSymbol = Symbol("IsValue");
+
+function isValue<T extends NodeValue = NodeValue>(
+  obj: unknown
+): Value<T> | false {
+  return (
+    (obj as unknown as { [key: symbol]: boolean })[IsValueSymbol] &&
+    (obj as unknown as Value<T>)
+  );
+}
+
 class Value<T extends NodeValue = NodeValue>
   implements PromiseLike<T | undefined>
 {
   #node: NodeImpl<InputValues, OutputValue<T>>;
   #runner: Runner;
   #keymap: KeyMap;
+
+  [IsValueSymbol] = this;
 
   constructor(
     node: NodeImpl<InputValues, OutputValue<T>>,
@@ -543,13 +563,17 @@ class Value<T extends NodeValue = NodeValue>
   }
 
   in(inputs: NodeImpl<InputValues, OutputValues> | InputValues) {
-    if (inputs instanceof NodeImpl || inputs instanceof Value) {
+    if (inputs instanceof NodeImpl || isValue(inputs)) {
       let invertedMap = Object.fromEntries(
         Object.entries(this.#keymap).map(([fromKey, toKey]) => [toKey, fromKey])
       );
-      if (inputs instanceof Value) invertedMap = inputs.#remapKeys(invertedMap);
-      const node = inputs instanceof NodeImpl ? inputs : inputs.#node;
-      this.#node.addInputAsNode(node, invertedMap);
+      const asValue = isValue(inputs);
+      if (asValue) {
+        invertedMap = asValue.#remapKeys(invertedMap);
+        this.#node.addInputAsNode(asValue.#node, invertedMap);
+      } else {
+        this.#node.addInputAsNode(inputs as NodeImpl, invertedMap);
+      }
     } else {
       this.#node.addInputsAsValues(inputs);
     }

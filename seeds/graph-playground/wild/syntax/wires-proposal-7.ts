@@ -10,7 +10,6 @@ import {
   addNodeType,
   flow,
   action,
-  Runner,
 } from "./wires-proposal-7-lib.js";
 
 const passthroughHandler = async (inputs: PromiseLike<InputValues>) => {
@@ -55,9 +54,7 @@ async function singleNode() {
 singleNode();
 
 async function simpleFunction() {
-  const runner = new Runner();
-
-  const result = await runner.flow(
+  const result = await flow(
     async (inputs) => {
       const { foo } = await passthrough(inputs);
       return { foo };
