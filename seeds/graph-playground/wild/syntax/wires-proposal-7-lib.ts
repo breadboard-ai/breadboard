@@ -4,6 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import {
+  GraphDescriptor,
+  NodeDescriptor,
+  SubGraphs,
+  InputValues as OriginalInputValues,
+} from "@google-labs/breadboard";
+
 export type NodeValue =
   | string
   | number
@@ -52,7 +59,17 @@ type NodeHandlers = Record<
   NodeHandler<InputValues, OutputValues>
 >;
 
-const handlers: NodeHandlers = {};
+const reservedWord: NodeHandlerFunction<
+  InputValues,
+  OutputValues
+> = async () => {
+  throw new Error("Reserved word handler should never be invoked");
+};
+
+const handlers: NodeHandlers = {
+  input: reservedWord,
+  output: reservedWord,
+};
 
 type NodeFactory<I extends InputValues, O extends OutputValues> = (
   config?: NodeImpl<InputValues, I> | Value<NodeValue> | InputsMaybeAsValues<I>
@@ -75,7 +92,7 @@ export function action<
   return addNodeType(getNextNodeId("fn"), fn);
 }
 
-interface Edge<
+interface EdgeImpl<
   FromI extends InputValues = InputValues,
   FromO extends OutputValues = OutputValues,
   ToI extends InputValues = InputValues,
@@ -130,6 +147,8 @@ export type NodeProxy<I extends InputValues, O extends OutputValues> = {
 
 type KeyMap = { [key: string]: string };
 
+class AwaitWhileSerializing extends Error {}
+
 class NodeImpl<
   I extends InputValues = InputValues,
   O extends OutputValues = OutputValues
@@ -137,9 +156,9 @@ class NodeImpl<
 {
   id: string;
   type: string;
-  outgoing: Edge[] = [];
-  incoming: Edge[] = [];
-  config: InputValues = {};
+  outgoing: EdgeImpl[] = [];
+  incoming: EdgeImpl[] = [];
+  configuration: InputValues = {};
 
   #handler: NodeHandler<I, O>;
 
@@ -174,7 +193,7 @@ class NodeImpl<
     let id: string | undefined = undefined;
 
     if (config instanceof NodeImpl) {
-      this.addInputAsNode(config);
+      this.addInputAsNode(config.unProxy());
     } else if (isValue(config)) {
       this.addInputAsNode(...(config as Value).asNodeInput());
     } else {
@@ -185,7 +204,7 @@ class NodeImpl<
       this.addInputsAsValues(rest as InputsMaybeAsValues<I>);
     }
 
-    this.#inputs = { ...this.config };
+    this.#inputs = { ...this.configuration };
 
     this.id = id || getNextNodeId(this.type);
 
@@ -200,7 +219,7 @@ class NodeImpl<
   }
 
   addInputsAsConstants(values: InputValues) {
-    this.config = { ...this.config, ...values };
+    this.configuration = { ...this.configuration, ...values };
   }
 
   addInputsAsValues(values: InputsMaybeAsValues<I>) {
@@ -229,7 +248,7 @@ class NodeImpl<
       // spread, e.g. newNode({ ...node, $id: "id" }
       if (fromKey.startsWith("*-")) fromKey = toKey = "*";
 
-      const edge: Edge = {
+      const edge: EdgeImpl = {
         to: this as unknown as NodeImpl,
         from,
         out: fromKey,
@@ -280,8 +299,6 @@ class NodeImpl<
   }
 
   async invoke(): Promise<O> {
-    if (!this.#runner) throw Error("Need a runner to invoke");
-
     const runner = new Runner(this.#runner);
     return runner.asRunnerFor(async () => {
       try {
@@ -302,7 +319,7 @@ class NodeImpl<
 
         this.#outputs = result;
 
-        this.#inputs = { ...this.config };
+        this.#inputs = { ...this.configuration };
         this.#receivedFrom = [];
 
         return result;
@@ -312,6 +329,108 @@ class NodeImpl<
         throw e;
       }
     })();
+  }
+
+  async serialize() {
+    return this.#runner.serialize(this);
+  }
+
+  async serializeNode(): Promise<[NodeDescriptor, GraphDescriptor?]> {
+    const node = {
+      id: this.id,
+      type: this.type,
+      configuration: this.configuration as OriginalInputValues,
+    };
+
+    if (this.type !== "fn") return [node];
+
+    const runner = new Runner(this.#runner, { serialize: true });
+
+    const graph = await runner.asRunnerFor(async () => {
+      try {
+        const handler =
+          typeof this.#handler === "function"
+            ? this.#handler
+            : this.#handler.invoke;
+
+        const inputNode = new NodeImpl<InputValues, I>("input", runner, {});
+
+        const result = await handler(inputNode.asProxy(), this);
+
+        if (result instanceof NodeImpl) {
+          const outputNode = new NodeImpl<O, O>("output", runner, {});
+          outputNode.addInputAsNode(result);
+          return runner.serialize(outputNode as unknown as NodeImpl);
+        } else if (isValue(result)) {
+          const value = isValue(result) as Value;
+          const outputNode = new NodeImpl<O, O>("output", runner, {});
+          outputNode.addInputAsNode(...value.asNodeInput());
+          return runner.serialize(outputNode as unknown as NodeImpl);
+        } else if (!Object.keys(result).find((key) => !isValue(result[key]))) {
+          const config: InputValues = {};
+          const values: Value[] = [];
+          Object.keys(result).forEach((key) =>
+            isValue(result[key])
+              ? values.push((result[key] as Value).as(key))
+              : (config[key] = result[key])
+          );
+          const outputNode = new NodeImpl<O, O>(
+            "output",
+            runner,
+            config as InputsMaybeAsValues<O>
+          );
+          values.forEach((value) => {
+            outputNode.addInputAsNode(...value.asNodeInput());
+          });
+          return runner.serialize(outputNode as unknown as NodeImpl);
+        } else {
+          return undefined;
+        }
+      } catch (e) {
+        if (e instanceof AwaitWhileSerializing) return null;
+        else throw e;
+      }
+    })();
+
+    // If we got a graph back, save it as a subgraph (by return as second value)
+    // and turns this into an invoke node.
+    if (graph) {
+      node.type = "invoke";
+      node.configuration = { ...node.configuration, graph: "#" + this.id };
+      return [node, graph];
+    }
+
+    // Else, serialize the handler itself and return a runJavascript node.
+    let code = this.#handler.toString();
+    let name = this.id.replace(/-/g, "_");
+
+    const arrowFunctionRegex =
+      /(?<async>async\s+)?\((?<params>[^)]*)\)\s*=>\s*\{/;
+    const traditionalFunctionRegex =
+      /(?:async\s+)?function\s+\w+\s*\([^)]*\)\s*\{/;
+
+    if (arrowFunctionRegex.test(code)) {
+      // It's an arrow function, convert to traditional
+      code = code.replace(
+        arrowFunctionRegex,
+        (_match, _offset, _string, groups) => {
+          const { async, params } = groups as {
+            async?: string;
+            params: string;
+          };
+          return `${async || ""}function ${name}(${params}) {`;
+        }
+      );
+    } else {
+      const match = traditionalFunctionRegex.exec(code);
+      if (match === null) throw new Error("Unexpected seralization: " + code);
+      else name = match.groups?.name || name;
+    }
+
+    node.type = "runJavascriptX";
+    node.configuration = { ...node.configuration, code, name };
+
+    return [node];
   }
 
   /**
@@ -409,6 +528,8 @@ class NodeImpl<
     onfulfilled?: ((value: O) => TResult1 | PromiseLike<TResult1>) | null,
     onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null
   ): PromiseLike<TResult1 | TResult2> {
+    if (this.#runner.serializing()) throw new AwaitWhileSerializing();
+
     this.#runner.invoke(this as unknown as NodeImpl);
 
     return this.#promise.then(
@@ -606,16 +727,21 @@ class Value<T extends NodeValue = NodeValue>
   }
 }
 
+interface RunnerConfig {
+  serialize: boolean;
+}
+
 export class Runner {
   #nodes = new Map<string, NodeImpl<InputValues, OutputValues>>();
   #parent?: Runner;
+  #config: RunnerConfig = { serialize: false };
 
-  constructor();
-  constructor(runner: Runner);
-
-  constructor(runner?: Runner) {
+  constructor(runner?: Runner, config?: RunnerConfig) {
     if (runner) {
       this.#parent = runner;
+    }
+    if (config) {
+      this.#config = { ...this.#config, ...config };
     }
   }
 
@@ -676,16 +802,45 @@ export class Runner {
     }
   }
 
+  async serialize(node: NodeImpl): Promise<GraphDescriptor> {
+    const queue: NodeImpl[] = this.#findAllConnectedNodes(node);
+
+    const graphs: SubGraphs = {};
+
+    const nodes = await Promise.all(
+      queue.map(async (node) => {
+        const [nodeDescriptor, subGraph] = await node.serializeNode();
+        if (subGraph) graphs[node.id] = subGraph;
+        return nodeDescriptor;
+      })
+    );
+
+    const edges = queue.flatMap((node) =>
+      node.outgoing.map((edge) => ({
+        from: edge.from.id,
+        to: edge.to.id,
+        out: edge.out,
+        in: edge.in,
+      }))
+    );
+
+    return { nodes, edges, graphs };
+  }
+
+  serializing() {
+    return this.#config.serialize;
+  }
+
   #findAllConnectedNodes(node: NodeImpl) {
     const nodes = new Set<NodeImpl>();
-    const queue = [node];
+    const queue = [node.unProxy()];
 
     while (queue.length) {
       const node = queue.shift() as NodeImpl;
       if (nodes.has(node)) continue;
       nodes.add(node);
-      node.incoming.forEach((edge) => queue.push(edge.from));
-      node.outgoing.forEach((edge) => queue.push(edge.to));
+      node.incoming.forEach((edge) => queue.push(edge.from.unProxy()));
+      node.outgoing.forEach((edge) => queue.push(edge.to.unProxy()));
     }
 
     return [...nodes];
@@ -701,7 +856,7 @@ export class Runner {
  *
  * Runner.asRunnerFor() wraps a function that runs with that Runner as context.
  *
- * flow, action and any nodeFactory will run with the current Runner as context.
+ * flow and any nodeFactory will run with the current Runner as context.
  *
  * Crucially (and that's all we need from zone.js), {NodeImpl,Value}.then() call
  * onsuccessful and onrejected with the Runner as context. So even if the

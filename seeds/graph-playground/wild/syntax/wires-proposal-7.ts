@@ -45,30 +45,30 @@ const runJavascript = addNodeType("runJavascript", passthroughHandler);
 async function singleNode() {
   const graph = passthrough({ foo: "bar" });
 
-  console.log("spread", { ...graph });
-
   const result = await graph;
 
-  console.log("simple graph", result);
+  console.log("simple node", await graph.serialize(), result);
 }
-singleNode();
+await singleNode();
 
 async function simpleFunction() {
-  const result = await flow(
+  const graph = flow(
     async (inputs) => {
       const { foo } = await passthrough(inputs);
       return { foo };
     },
-    { foo: "bar", bar: "baz" }
+    { foo: "bar", baz: "bar" }
   );
 
-  console.log("simple function", result);
+  const result = await graph;
+
+  console.log("simple function", await graph.serialize(), result);
 }
-simpleFunction();
+await simpleFunction();
 
 // Because there is no `await` this actually builds a graph that then is run
 async function simpleFunctionGraph() {
-  const result = await flow(
+  const graph = flow(
     (inputs) => {
       const p1 = passthrough(inputs);
       const { foo } = p1; // Get an output, as a Promise!
@@ -77,12 +77,14 @@ async function simpleFunctionGraph() {
     { foo: "bar", bar: "baz" }
   );
 
-  console.log("simple function", result);
+  const result = await graph;
+
+  console.log("simple function graph", await graph.serialize(), result);
 }
-simpleFunctionGraph();
+await simpleFunctionGraph();
 
 async function customAction() {
-  const result = await flow(
+  const graph = flow(
     (inputs) => {
       return flow(async (inputs) => {
         const { a, b } = await inputs;
@@ -92,12 +94,14 @@ async function customAction() {
     { a: 1, b: 2 }
   );
 
-  console.log("custom action", result);
+  const result = await graph;
+
+  console.log("custom action", await graph.serialize(), result);
 }
-customAction();
+await customAction();
 
 async function mathImperative() {
-  const result = await flow(
+  const graph = flow(
     (inputs) => {
       const { prompt } = promptTemplate({
         template:
@@ -114,12 +118,14 @@ async function mathImperative() {
     { question: "1+1" }
   );
 
-  console.log("mathImperative", result);
+  const result = await graph;
+
+  console.log("mathImperative", await graph.serialize(), result);
 }
-mathImperative();
+await mathImperative();
 
 async function mathChainGraph() {
-  const result = await flow(
+  const graph = flow(
     (inputs) => {
       return promptTemplate({
         template:
@@ -133,12 +139,14 @@ async function mathChainGraph() {
     { question: "1+1" }
   );
 
-  console.log("mathChainGraph", result);
+  const result = await graph;
+
+  console.log("mathChainGraph", await graph.serialize(), result);
 }
-mathChainGraph();
+await mathChainGraph();
 
 async function mathChainDirectly() {
-  const result = await passthrough({ question: "1+1" })
+  const graph = passthrough({ question: "1+1" })
     .to(
       promptTemplate({
         template:
@@ -153,9 +161,11 @@ async function mathChainDirectly() {
     .completion.as("code")
     .to(runJavascript());
 
-  console.log("mathChainDirectly", result);
+  const result = await graph;
+
+  console.log("mathChainGraphDirectly", await graph.serialize(), result);
 }
-mathChainDirectly();
+await mathChainDirectly();
 
 async function ifElse() {
   const math = action((inputs) => {
@@ -174,7 +184,7 @@ async function ifElse() {
     return inputs;
   });
 
-  const result = await flow(
+  const graph = flow(
     async (inputs) => {
       const { completion } = await promptTemplate({
         template:
@@ -190,9 +200,11 @@ async function ifElse() {
     { question: "1+1" }
   );
 
-  console.log("mathChainGraph", result);
+  const result = await graph;
+
+  console.log("ifElse", await graph.serialize(), result);
 }
-ifElse();
+await ifElse();
 
 async function ifElseSerializable() {
   const math = action((inputs) => {
@@ -211,7 +223,7 @@ async function ifElseSerializable() {
     return inputs;
   });
 
-  const result = flow(
+  const graph = flow(
     async (inputs) => {
       return promptTemplate({
         template:
@@ -234,6 +246,8 @@ async function ifElseSerializable() {
     { question: "1+1" }
   );
 
-  console.log("mathChainGraph", result);
+  const result = await graph;
+
+  console.log("ifElseSerializable", await graph.serialize(), result);
 }
-ifElseSerializable();
+await ifElseSerializable();
