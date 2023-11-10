@@ -7,6 +7,7 @@
 export { Board } from "./board.js";
 export { BoardRunner } from "./runner.js";
 export { Node } from "./node.js";
+export { SchemaBuilder } from "./schema.js";
 export { LogProbe } from "./log.js";
 export { DebugProbe } from "./debug.js";
 export { RunResult } from "./run.js";
@@ -40,15 +41,17 @@ export type {
   BreadboardSlotSpec,
   BreadboardNode,
   BreadboardCapability,
+  BreadboardRunner,
   NodeHandlerContext,
   OptionalIdConfiguration,
   NodeConfigurationConstructor,
   LambdaFunction,
+  LambdaNodeInputs,
   ConfigOrLambda,
   RunResultType,
   KitConstructor,
   GenericKit,
-  LambdaNodeOutputs,
+  LambdaNodeOutputs
 } from "./types.js";
 export { TraversalMachine } from "./traversal/machine.js";
 export { MachineResult } from "./traversal/result.js";

@@ -20,10 +20,11 @@ import type {
   NodeHandlerContext,
   ProbeDetails,
   BreadboardCapability,
+  LambdaNodeInputs,
+  LambdaNodeOutputs,
 } from "./types.js";
 
 import { TraversalMachine } from "./traversal/machine.js";
-import { Core } from "./core.js";
 import {
   BeforeHandlerStageResult,
   InputStageResult,
@@ -34,6 +35,7 @@ import { BoardLoader } from "./loader.js";
 import { runRemote } from "./remote.js";
 import { callHandler } from "./handler.js";
 import { toMermaid } from "./mermaid.js";
+import { SchemaBuilder } from "./schema.js";
 
 class ProbeEvent extends CustomEvent<ProbeDetails> {
   constructor(type: string, detail: ProbeDetails) {
@@ -184,8 +186,8 @@ export class BoardRunner implements BreadboardRunner {
         shouldInvokeHandler
           ? callHandler(handler, inputs, newContext)
           : beforehandlerDetail.outputs instanceof Promise
-          ? beforehandlerDetail.outputs
-          : Promise.resolve(beforehandlerDetail.outputs)
+            ? beforehandlerDetail.outputs
+            : Promise.resolve(beforehandlerDetail.outputs)
       ) as Promise<OutputValues>;
 
       outputsPromise.then((outputs) => {
@@ -354,13 +356,14 @@ export class BoardRunner implements BreadboardRunner {
 
     return runnableBoard;
   }
-
   static async handlersFromBoard(
     board: BoardRunner,
     upstreamKits: Kit[] = []
   ): Promise<NodeHandlers> {
-    const core = new Core();
+
+    const core = new Core()
     const kits = [core, ...upstreamKits, ...board.kits];
+
     return kits.reduce((handlers, kit) => {
       // If multiple kits have the same handler, the kit earlier in the list
       // gets precedence, including upstream kits getting precedence over kits
@@ -372,4 +375,50 @@ export class BoardRunner implements BreadboardRunner {
   }
 
   static runRemote = runRemote;
+}
+
+// HACK: Move the Core and Lambda logic into the same file as the BoardRunner to remove the cyclic module dependency (Lambda needs BoardRunner, BoardRunner needs Core).
+class Core {
+  handlers: NodeHandlers;
+
+  constructor() {
+    this.handlers =
+    {
+      "lambda": {
+        describe: async (inputs?: InputValues) => ({
+          inputSchema: new SchemaBuilder()
+            .setAdditionalProperties(true)
+            .addInputs(inputs)
+            .addProperty("board", {
+              title: "board",
+              description: "The board to run.",
+              type: "object",
+            })
+            .build(),
+          outputSchema: new SchemaBuilder()
+            .addProperty("board", {
+              title: "board",
+              description: "The now-runnable board.",
+              type: "object",
+            })
+            .build(),
+        }),
+        invoke: async (inputs: InputValues): Promise<LambdaNodeOutputs> => {
+          const { board, ...args } = inputs as LambdaNodeInputs;
+          if (!board || board.kind !== "board" || !board.board)
+            throw new Error(
+              `Lambda node requires a BoardCapability as "board" input`
+            );
+          const runnableBoard = {
+            ...(await BoardRunner.fromBreadboardCapability(board)),
+            args,
+          };
+
+          return {
+            board: { ...board, board: runnableBoard as GraphDescriptor },
+          };
+        },
+      }
+    };
+  }
 }
