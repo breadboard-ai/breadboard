@@ -4,12 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  InputValues,
-  NodeDescriptor,
-  NodeValue,
-  OutputValues,
-} from "../types.js";
+import {
+  BeforehandlerResponse,
+  ErrorResponse,
+  InputPromiseResponse,
+  LoadRequest,
+  LoadResponse,
+  OutputResponse,
+  ProxyPromiseResponse,
+} from "../remote/protocol.js";
+import type { NodeValue, OutputValues } from "../types.js";
 
 export const VALID_MESSAGE_TYPES = [
   "load",
@@ -58,16 +62,7 @@ export type LoadRequestMessage = {
    * The "load" type signals to the worker that it should load the board.
    */
   type: "load";
-  data: {
-    /**
-     * The url of the board to load.
-     */
-    url: string;
-    /**
-     * The list of nodes to proxy.
-     */
-    proxyNodes: string[];
-  };
+  data: LoadRequest;
 };
 
 /**
@@ -83,29 +78,7 @@ export type LoadResponseMessage = {
    * load request.
    */
   type: "load";
-  data: {
-    /**
-     * The title of the graph.
-     */
-    title?: string;
-    /**
-     * The description of the graph.
-     */
-    description?: string;
-    /**
-     * Version of the graph.
-     * [semver](https://semver.org/) format is encouraged.
-     */
-    version?: string;
-    /**
-     * The Mermaid diagram of the graph.
-     */
-    diagram?: string;
-    /**
-     * The url of the graph.
-     */
-    url?: string;
-  };
+  data: LoadResponse;
 };
 
 /**
@@ -132,20 +105,7 @@ export type InputRequestMessage = {
    * The "input" type signals to the host that the board is requesting input.
    */
   type: "input";
-  data: {
-    /**
-     * The description of the node that is requesting input.
-     * @see [NodeDescriptor]
-     */
-    node: NodeDescriptor;
-    /**
-     * The input arguments that were given to the node that is requesting input.
-     * These arguments typically contain the schema of the inputs that are
-     * expected.
-     * @see [InputValues]
-     */
-    inputArguments: InputValues;
-  };
+  data: InputPromiseResponse;
 };
 
 /**
@@ -177,13 +137,7 @@ export type BeforehandlerMessage = {
    * run a node.
    */
   type: "beforehandler";
-  data: {
-    /**
-     * The description of the node that is about to be run.
-     * @see [NodeDescriptor]
-     */
-    node: NodeDescriptor;
-  };
+  data: BeforehandlerResponse;
 };
 
 /**
@@ -195,18 +149,7 @@ export type OutputMessage = {
    * The "output" type signals to the host that the board is providing outputs.
    */
   type: "output";
-  data: {
-    /**
-     * The description of the node that is providing output.
-     * @see [NodeDescriptor]
-     */
-    node: NodeDescriptor;
-    /**
-     * The output values that the node is providing.
-     * @see [OutputValues]
-     */
-    outputs: OutputValues;
-  };
+  data: OutputResponse;
 };
 
 /**
@@ -223,18 +166,7 @@ export type ProxyRequestMessage = {
    * a node.
    */
   type: "proxy";
-  data: {
-    /**
-     * The description of the node that is requesting to be proxied.
-     * @see [NodeDescriptor]
-     */
-    node: NodeDescriptor;
-    /**
-     * The input values that the board is providing to the node.
-     * @see [InputValues]
-     */
-    inputs: InputValues;
-  };
+  data: ProxyPromiseResponse;
 };
 
 /**
@@ -280,10 +212,5 @@ export type ErrorMessage = {
    * The "error" type signals to the host that the board encountered an error.
    */
   type: "error";
-  data: {
-    /**
-     * The error message.
-     */
-    error: string;
-  };
+  data: ErrorResponse;
 };
