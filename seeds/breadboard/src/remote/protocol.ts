@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { PatchedReadableStream } from "../stream.js";
 import { InputValues, NodeDescriptor, OutputValues } from "../types.js";
 
 /**
@@ -72,6 +73,7 @@ export type RunResponseType = "output" | "beforehandler" | "input" | "proxy";
  * It basically just pokes the server to start running.
  */
 export type RunRequest = Record<string, never>;
+export type RunRequestMessage = ["run", RunRequest];
 
 /**
  * Sent by a server to supply outputs.
@@ -88,6 +90,7 @@ export type OutputResponse = {
    */
   outputs: OutputValues;
 };
+export type OutputResponseMessage = ["output", OutputResponse];
 
 /**
  * Sent by a server just before a node is about to run.
@@ -99,6 +102,10 @@ export type BeforehandlerResponse = {
    */
   node: NodeDescriptor;
 };
+export type BeforehandlerResponseMessage = [
+  "beforehandler",
+  BeforehandlerResponse
+];
 
 /**
  * Sent by a server to request input.
@@ -118,6 +125,7 @@ export type InputPromiseResponse = {
    */
   inputArguments: InputValues;
 };
+export type InputPromiseResponseMessage = ["input", InputPromiseResponse];
 
 /**
  * Sent by the client to provide inputs, requested by the server.
@@ -125,6 +133,7 @@ export type InputPromiseResponse = {
 export type InputResolveRequest = {
   inputs: InputValues;
 };
+export type InputResolveRequestMessage = ["input", InputResolveRequest];
 
 /**
  * Sent by the server to request to proxy a node.
@@ -142,6 +151,7 @@ export type ProxyPromiseResponse = {
    */
   inputs: InputValues;
 };
+export type ProxyPromiseResponseMessage = ["proxy", ProxyPromiseResponse];
 
 /**
  * Sent by the client to provide outputs of the proxied node.
@@ -154,12 +164,14 @@ export type ProxyResolveRequest = {
    */
   outputs: OutputValues;
 };
+export type ProxyResolveRequestMessage = ["proxy", ProxyResolveRequest];
 
 /**
  * Indicates that the board is done running.
  * Can only be the last message in the response stream.
  */
 export type EndResponse = Record<string, never>;
+export type EndResponseMessage = ["end", EndResponse];
 
 /**
  * Sent by the server when an error occurs.
@@ -172,6 +184,7 @@ export type ErrorResponse = {
    */
   error: string;
 };
+export type ErrorResponseMessage = ["error", ErrorResponse];
 
 /**
  * This is a bit redundant, but for consistency of the interface, this
@@ -192,3 +205,24 @@ export type ProxyRequest = ProxyPromiseResponse;
  * Sent by the server to respond to respond with the proxy results.
  */
 export type ProxyResponse = ProxyResolveRequest;
+
+export type AnyRunRequestMessage =
+  | RunRequestMessage
+  | InputResolveRequestMessage
+  | ProxyResolveRequestMessage;
+
+export type AnyRunResponseMessage =
+  | OutputResponseMessage
+  | BeforehandlerResponseMessage
+  | InputPromiseResponseMessage
+  | ProxyPromiseResponseMessage
+  | EndResponseMessage
+  | ErrorResponseMessage;
+
+export type RunResponseStream = PatchedReadableStream<AnyRunResponseMessage>;
+
+export interface Transport {
+  load(request: LoadRequest): Promise<LoadResponse>;
+  run(request: AnyRunRequestMessage): Promise<RunResponseStream>;
+  proxy(request: ProxyRequest): Promise<ProxyResponse>;
+}
