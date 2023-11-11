@@ -44,17 +44,9 @@ const getEnvironmentValue = async (key: string) => {
   } else if (env === "worker") {
     // TODO: Calling main thread is a general pattern, figure out a way to
     // avoid a special call here. Maybe some Board util?
-    return new Promise<string>((resolve) => {
-      self.postMessage({
-        type: "secret",
-        data: key,
-      });
-      self.addEventListener("message", (e) => {
-        const reply = e.data as SecretWorkerResponse;
-        if (!reply.type || reply.type != "secret") return;
-        resolve(reply.data);
-      });
-    });
+    throw new Error(
+      "Secrets are not yet supported in workers. Please proxy these nodes to the main thread."
+    );
   }
 };
 
