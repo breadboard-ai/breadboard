@@ -9,6 +9,7 @@
     { "path": "seeds/coffee-bot-board" },
     { "path": "seeds/core-kit" },
     { "path": "seeds/create-breadboard" },
+    { "path": "seeds/create-breadboard-kit" },
     { "path": "seeds/discovery-types" },
     { "path": "seeds/graph-playground" },
     { "path": "seeds/graph-integrity" },

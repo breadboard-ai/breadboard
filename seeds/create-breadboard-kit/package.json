@@ -1,0 +1,41 @@
+{
+  "name": "@google-labs/create-breadboard-kit",
+  "version": "0.0.1",
+  "description": "A starter kit for your breadboard kits",
+  "main": "dist/src/index.js",
+  "bin": {
+    "create-breadboard-kit": "dist/src/index.js"
+  },
+  "type": "module",
+  "scripts": {
+    "build": "FORCE_COLOR=1 tsc --b",
+    "watch": "FORCE_COLOR=1 tsc --b --watch",
+    "lint": "FORCE_COLOR=1 eslint . --ext .ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/google/labs-prototypes"
+  },
+  "files": [
+    "dist/src",
+    "config"
+  ],
+  "keywords": [],
+  "author": "Google Labs Team",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/google/labs-prototypes/issues"
+  },
+  "homepage": "https://github.com/google/labs-prototypes#readme",
+  "devDependencies": {
+    "@google-labs/tsconfig": "*",
+    "@types/node": "^18.18.8",
+    "@types/semver": "^7.5.4",
+    "@typescript-eslint/eslint-plugin": "^5.56.0",
+    "@typescript-eslint/parser": "^5.56.0",
+    "typescript": "^5.0.4"
+  },
+  "dependencies": {
+    "base-create": "^3.0.8"
+  }
+}
