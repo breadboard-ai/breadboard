@@ -51,7 +51,7 @@ export type {
   RunResultType,
   KitConstructor,
   GenericKit,
-  LambdaNodeOutputs
+  LambdaNodeOutputs,
 } from "./types.js";
 export { TraversalMachine } from "./traversal/machine.js";
 export { MachineResult } from "./traversal/result.js";
@@ -62,5 +62,7 @@ export { asRuntimeKit } from "./kits/ctors.js";
 export {
   StreamCapability,
   isStreamCapability,
+  patchReadableStream,
   type StreamCapabilityType,
+  type PatchedReadableStream,
 } from "./stream.js";

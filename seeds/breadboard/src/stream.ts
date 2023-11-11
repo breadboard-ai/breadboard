@@ -55,3 +55,27 @@ export const getStreams = (value: NodeValue) => {
   findStreams(value, foundStreams);
   return foundStreams;
 };
+
+export type PatchedReadableStream<T> = ReadableStream<T> & AsyncIterable<T>;
+
+// Polyfill to make ReadableStream async iterable
+// See https://bugs.chromium.org/p/chromium/issues/detail?id=929585
+export const patchReadableStream = () => {
+  // eslint-disable-next-line
+  // @ts-ignore
+  ReadableStream.prototype[Symbol.asyncIterator] ||
+    // eslint-disable-next-line
+    // @ts-ignore
+    (ReadableStream.prototype[Symbol.asyncIterator] = async function* () {
+      const reader = this.getReader();
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) return;
+          yield value;
+        }
+      } finally {
+        reader.releaseLock();
+      }
+    });
+};
