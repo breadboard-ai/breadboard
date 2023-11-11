@@ -7,10 +7,17 @@
 import { InputValues, NodeDescriptor, OutputValues } from "../types.js";
 
 /**
- * Valid request names: "load", "run", "proxy".
+ * Valid request names: "load", "run", "proxy". A good way to think of
+ * these is as a roughly equivalent to the paths in the url.
+ * For example, "/load" is a "load" request.
  */
 export type RequestName = "load" | "run" | "proxy";
 
+/**
+ * Sent by the client to request loading a board. This is an optional request
+ * that may not be implemented in some environments (for example, a cloud
+ * function that can only run one board).
+ */
 export type LoadRequest = {
   /**
    * The url of the board to load.
@@ -22,6 +29,9 @@ export type LoadRequest = {
   proxyNodes: string[];
 };
 
+/**
+ * Sent by the server to indicate that the board is loaded.
+ */
 export type LoadResponse = {
   /**
    * The title of the graph.
@@ -45,6 +55,17 @@ export type LoadResponse = {
    */
   url?: string;
 };
+
+/**
+ * These are markers for individual messages within the request,
+ * so that the server can identify which message is which.
+ */
+export type RunRequestType = "run" | "input" | "proxy";
+/**
+ * These are markers for individual messages within the response,
+ * so that the client can identify which message is which.
+ */
+export type RunResponseType = "output" | "beforehandler" | "input" | "proxy";
 
 /**
  * A run request is an empty object.
@@ -152,5 +173,22 @@ export type ErrorResponse = {
   error: string;
 };
 
+/**
+ * This is a bit redundant, but for consistency of the interface, this
+ * marks a client message a proxy request.
+ */
+export type ProxyRequestType = "proxy";
+/**
+ * This is a bit redundant, but for consistency of the interface, this
+ * marks a server message a proxy response.
+ */
+export type ProxyResponseType = "proxy";
+
+/**
+ * Sent by the client to request to proxy a node.
+ */
 export type ProxyRequest = ProxyPromiseResponse;
+/**
+ * Sent by the server to respond to respond with the proxy results.
+ */
 export type ProxyResponse = ProxyResolveRequest;
