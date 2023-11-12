@@ -79,3 +79,22 @@ export const patchReadableStream = () => {
       }
     });
 };
+
+// A polyfill for ReadableStream.from:
+// See https://streams.spec.whatwg.org/#rs-from
+// TODO: Do a proper TypeScript types polyfill.
+export const streamFromAsyncGen = <T>(
+  iterator: AsyncIterableIterator<T>
+): PatchedReadableStream<T> => {
+  return new ReadableStream({
+    async pull(controller) {
+      const { value, done } = await iterator.next();
+
+      if (done) {
+        controller.close();
+        return;
+      }
+      controller.enqueue(value);
+    },
+  }) as PatchedReadableStream<T>;
+};

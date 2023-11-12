@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { PatchedReadableStream } from "@google-labs/breadboard";
-
 type AsyncGenNext<T> = (value: T) => Promise<void>;
 type AsyncGenCallback<T> = (next: AsyncGenNext<T>) => Promise<void>;
 
@@ -80,25 +78,6 @@ export const asyncGen = <T>(callback: AsyncGenCallback<T>) => {
       };
     },
   };
-};
-
-// A polyfill for ReadableStream.from:
-// See https://streams.spec.whatwg.org/#rs-from
-// TODO: Do a proper TypeScript types polyfill.
-export const streamFromAsyncGen = <T>(
-  iterator: AsyncIterableIterator<T>
-): PatchedReadableStream<T> => {
-  return new ReadableStream({
-    async pull(controller) {
-      const { value, done } = await iterator.next();
-
-      if (done) {
-        controller.close();
-        return;
-      }
-      controller.enqueue(value);
-    },
-  }) as PatchedReadableStream<T>;
 };
 
 /**

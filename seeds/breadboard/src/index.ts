@@ -63,6 +63,7 @@ export {
   StreamCapability,
   isStreamCapability,
   patchReadableStream,
+  streamFromAsyncGen,
   type StreamCapabilityType,
   type PatchedReadableStream,
 } from "./stream.js";
