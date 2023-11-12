@@ -8,7 +8,6 @@ import test from "ava";
 import { TestClient } from "../helpers/_test-transport.js";
 import {
   InputPromiseResponseMessage,
-  InputResolveRequest,
   RunResponseStream,
 } from "../../src/remote/protocol.js";
 import { Board } from "../../src/board.js";
@@ -74,6 +73,7 @@ test("A board run can feed into a transport", async (t) => {
               const state = await stop.save();
               controller.enqueue(["input", stop, state]);
               controller.close();
+              return;
             } else if (stop.type === "output") {
               controller.enqueue(["output", stop]);
             } else if (stop.type === "beforehandler") {
