@@ -68,6 +68,8 @@ export type RunRequestType = "run" | "input" | "proxy";
  */
 export type RunResponseType = "output" | "beforehandler" | "input" | "proxy";
 
+export type RunState = string;
+
 /**
  * A run request is an empty object.
  * It basically just pokes the server to start running.
@@ -125,7 +127,11 @@ export type InputPromiseResponse = {
    */
   inputArguments: InputValues;
 };
-export type InputPromiseResponseMessage = ["input", InputPromiseResponse];
+export type InputPromiseResponseMessage = [
+  "input",
+  InputPromiseResponse,
+  RunState
+];
 
 /**
  * Sent by the client to provide inputs, requested by the server.
@@ -133,7 +139,11 @@ export type InputPromiseResponseMessage = ["input", InputPromiseResponse];
 export type InputResolveRequest = {
   inputs: InputValues;
 };
-export type InputResolveRequestMessage = ["input", InputResolveRequest];
+export type InputResolveRequestMessage = [
+  "input",
+  InputResolveRequest,
+  RunState
+];
 
 /**
  * Sent by the server to request to proxy a node.
@@ -151,7 +161,11 @@ export type ProxyPromiseResponse = {
    */
   inputs: InputValues;
 };
-export type ProxyPromiseResponseMessage = ["proxy", ProxyPromiseResponse];
+export type ProxyPromiseResponseMessage = [
+  "proxy",
+  ProxyPromiseResponse,
+  RunState
+];
 
 /**
  * Sent by the client to provide outputs of the proxied node.
@@ -164,7 +178,11 @@ export type ProxyResolveRequest = {
    */
   outputs: OutputValues;
 };
-export type ProxyResolveRequestMessage = ["proxy", ProxyResolveRequest];
+export type ProxyResolveRequestMessage = [
+  "proxy",
+  ProxyResolveRequest,
+  RunState
+];
 
 /**
  * Indicates that the board is done running.
