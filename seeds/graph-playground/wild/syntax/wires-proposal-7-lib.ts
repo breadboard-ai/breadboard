@@ -630,6 +630,7 @@ function isValue<T extends NodeValue = NodeValue>(
   obj: unknown
 ): Value<T> | false {
   return (
+    typeof obj === "object" &&
     (obj as unknown as { [key: symbol]: boolean })[IsValueSymbol] &&
     (obj as unknown as Value<T>)
   );
