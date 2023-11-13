@@ -14,7 +14,7 @@ import {
   action,
   addKit,
   NodeFactory,
-} from "./wires-proposal-7-lib.js";
+} from "./lib.js";
 
 import { Core } from "@google-labs/core-kit";
 import { Starter } from "@google-labs/llm-starter";

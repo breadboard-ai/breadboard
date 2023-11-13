@@ -426,27 +426,23 @@ class NodeImpl<
     let code = this.#handler.toString();
     let name = this.id.replace(/-/g, "_");
 
-    const arrowFunctionRegex =
-      /(?<async>async\s+)?\((?<params>[^)]*)\)\s*=>\s*\{/;
+    const arrowFunctionRegex = /(?:async\s+)?(\w+|\([^)]*\))\s*=>\s*/;
     const traditionalFunctionRegex =
-      /(?:async\s+)?function\s+\w+\s*\([^)]*\)\s*\{/;
+      /(?:async\s+)?function\s+(\w+)\s*\(([^)]*)\)\s*\{/;
 
     if (arrowFunctionRegex.test(code)) {
       // It's an arrow function, convert to traditional
-      code = code.replace(
-        arrowFunctionRegex,
-        (_match, _offset, _string, groups) => {
-          const { async, params } = groups as {
-            async?: string;
-            params: string;
-          };
-          return `${async || ""}function ${name}(${params}) {`;
-        }
-      );
+      code = code.replace(arrowFunctionRegex, (_, params) => {
+        const async = code.trim().startsWith("async") ? "async " : "";
+        const paramsWithParens = params.startsWith("(")
+          ? params
+          : `(${params})`;
+        return `${async}function ${name}${paramsWithParens} {`;
+      });
     } else {
       const match = traditionalFunctionRegex.exec(code);
       if (match === null) throw new Error("Unexpected seralization: " + code);
-      else name = match.groups?.name || name;
+      else name = match[1] || name;
     }
 
     node.type = "runJavascript";
