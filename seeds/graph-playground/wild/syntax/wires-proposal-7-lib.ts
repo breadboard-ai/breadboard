@@ -8,7 +8,10 @@ import {
   GraphDescriptor,
   NodeDescriptor,
   SubGraphs,
+  Kit,
+  KitConstructor,
   InputValues as OriginalInputValues,
+  NodeFactory as OriginalNodeFactory,
 } from "@google-labs/breadboard";
 
 export type NodeValue =
@@ -71,15 +74,15 @@ const handlers: NodeHandlers = {
   output: reservedWord,
 };
 
-type NodeFactory<I extends InputValues, O extends OutputValues> = (
+export type NodeFactory<I extends InputValues, O extends OutputValues> = (
   config?: NodeImpl<InputValues, I> | Value<NodeValue> | InputsMaybeAsValues<I>
 ) => NodeProxy<I, O>;
 
 export function addNodeType<I extends InputValues, O extends OutputValues>(
   name: string,
-  fn: NodeHandlerFunction<I, O>
+  handler: NodeHandler<I, O>
 ): NodeFactory<I, O> {
-  (handlers[name] as unknown as NodeHandlerFunction<I, O>) = fn;
+  (handlers[name] as unknown as NodeHandler<I, O>) = handler;
   return ((config?: InputsMaybeAsValues<I>) => {
     return new NodeImpl(name, getCurrentContextRunner(), config).asProxy();
   }) as unknown as NodeFactory<I, O>;
@@ -90,6 +93,25 @@ export function action<
   O extends OutputValues = OutputValues
 >(fn: NodeHandlerFunction<I, O>): NodeFactory<I, O> {
   return addNodeType(getNextNodeId("fn"), fn);
+}
+
+// Extracts handlers from kit and creates new kinds of nodes from them.
+export function addKit<T extends Kit>(ctr: KitConstructor<T>) {
+  const kit = new ctr({} as unknown as OriginalNodeFactory);
+  const nodes = {} as { [key: string]: NodeFactory<InputValues, OutputValues> };
+  Object.entries(kit.handlers).forEach(([name, handler]) => {
+    const handlerFunction =
+      handler instanceof Function ? handler : handler.invoke;
+    nodes[name] = addNodeType(name, {
+      invoke: async (inputs) => {
+        return handlerFunction(
+          (await inputs) as OriginalInputValues,
+          {}
+        ) as Promise<OutputValues>;
+      },
+    });
+  });
+  return nodes;
 }
 
 interface EdgeImpl<
@@ -229,7 +251,7 @@ class NodeImpl<
 
     Object.entries(values).forEach(([key, value]) => {
       if (isValue(value)) {
-        nodes.push((value as Value).asNodeInput());
+        nodes.push((value as Value).as(key).asNodeInput());
       } else if (value instanceof NodeImpl) {
         nodes.push([value.unProxy(), { [key]: key }]);
       } else {
@@ -427,7 +449,7 @@ class NodeImpl<
       else name = match.groups?.name || name;
     }
 
-    node.type = "runJavascriptX";
+    node.type = "runJavascript";
     node.configuration = { ...node.configuration, code, name };
 
     return [node];

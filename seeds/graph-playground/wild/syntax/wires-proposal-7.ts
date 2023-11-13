@@ -4,14 +4,48 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { config } from "dotenv";
+
 import {
   NodeValue,
   InputValues,
-  addNodeType,
+  OutputValues,
   flow,
   action,
+  addKit,
+  NodeFactory,
 } from "./wires-proposal-7-lib.js";
 
+import { Core } from "@google-labs/core-kit";
+import { Starter } from "@google-labs/llm-starter";
+
+config();
+
+const core = addKit(Core) as unknown as {
+  passthrough: NodeFactory<InputValues, OutputValues>;
+};
+const llm = addKit(Starter) as unknown as {
+  promptTemplate: NodeFactory<
+    { template: string; [key: string]: NodeValue },
+    { prompt: string }
+  >;
+  secrets: NodeFactory<{ keys: string[] }, { [k: string]: string }>;
+  generateText: NodeFactory<
+    { text: string; PALM_KEY: string },
+    { completion: string }
+  >;
+  runJavascript: NodeFactory<
+    {
+      code: string;
+      name: string;
+      raw: boolean;
+      [key: string]: NodeValue;
+    },
+    { result: NodeValue; [k: string]: NodeValue }
+  >;
+};
+
+/*
 const passthroughHandler = async (inputs: PromiseLike<InputValues>) => {
   return Promise.resolve(await inputs);
 };
@@ -41,9 +75,10 @@ const generateText = addNodeType(
     Promise.resolve({ completion: (await inputs).prompt })
 );
 const runJavascript = addNodeType("runJavascript", passthroughHandler);
+*/
 
 async function singleNode() {
-  const graph = passthrough({ foo: "bar" });
+  const graph = core.passthrough({ foo: "bar" });
 
   const result = await graph;
 
@@ -54,7 +89,7 @@ await singleNode();
 async function simpleFunction() {
   const graph = flow(
     async (inputs) => {
-      const { foo } = await passthrough(inputs);
+      const { foo } = await core.passthrough(inputs);
       return { foo };
     },
     { foo: "bar", baz: "bar" }
@@ -70,7 +105,7 @@ await simpleFunction();
 async function simpleFunctionGraph() {
   const graph = flow(
     (inputs) => {
-      const p1 = passthrough(inputs);
+      const p1 = core.passthrough(inputs);
       const { foo } = p1; // Get an output, as a Promise!
       return { foo };
     },
@@ -103,16 +138,16 @@ await customAction();
 async function mathImperative() {
   const graph = flow(
     (inputs) => {
-      const { prompt } = promptTemplate({
+      const { prompt } = llm.promptTemplate({
         template:
-          "Write Javascript to compute the result for this question:\nQuestion: {{question}}\nCode: ",
+          "Write a Javascript function called `run` to compute the result for this question:\nQuestion: {{question}}\nCode: ",
         question: inputs.question,
       });
-      const { completion } = generateText({
-        prompt,
-        PALM_KEY: secrets({ keys: ["PALM_KEY"] }),
+      const { completion } = llm.generateText({
+        text: prompt,
+        PALM_KEY: llm.secrets({ keys: ["PALM_KEY"] }).PALM_KEY,
       });
-      const result = runJavascript({ code: completion });
+      const result = llm.runJavascript({ code: completion });
       return result;
     },
     { question: "1+1" }
@@ -127,14 +162,20 @@ await mathImperative();
 async function mathChainGraph() {
   const graph = flow(
     (inputs) => {
-      return promptTemplate({
-        template:
-          "Write Javascript to compute the result for this question:\nQuestion: {{question}}\nCode: ",
-        question: inputs.question,
-      })
-        .to(generateText({ PALM_KEY: secrets({ keys: ["PALM_KEY"] }) }))
+      return llm
+        .promptTemplate({
+          template:
+            "Write a Javascript function called `run` to compute the result for this question:\nQuestion: {{question}}\nCode: ",
+          question: inputs.question,
+        })
+        .prompt.as("text")
+        .to(
+          llm.generateText({
+            PALM_KEY: llm.secrets({ keys: ["PALM_KEY"] }).PALM_KEY,
+          })
+        )
         .completion.as("code")
-        .to(runJavascript());
+        .to(llm.runJavascript());
     },
     { question: "1+1" }
   );
@@ -146,20 +187,22 @@ async function mathChainGraph() {
 await mathChainGraph();
 
 async function mathChainDirectly() {
-  const graph = passthrough({ question: "1+1" })
+  const graph = core
+    .passthrough({ question: "1+1" })
     .to(
-      promptTemplate({
+      llm.promptTemplate({
         template:
-          "Write Javascript to compute the result for this question:\nQuestion: {{question}}\nCode: ",
+          "Write a Javascript function called `run` to compute the result for this question:\nQuestion: {{question}}\nCode: ",
       })
     )
+    .prompt.as("text")
     .to(
-      generateText({
-        PALM_KEY: secrets({ keys: ["PALM_KEY"] }),
+      llm.generateText({
+        PALM_KEY: llm.secrets({ keys: ["PALM_KEY"] }).PALM_KEY,
       })
     )
     .completion.as("code")
-    .to(runJavascript());
+    .to(llm.runJavascript());
 
   const result = await graph;
 
@@ -169,14 +212,16 @@ await mathChainDirectly();
 
 async function ifElse() {
   const math = action((inputs) => {
-    return promptTemplate({
-      template:
-        "Write Javascript to compute the result for this question:\nQuestion: {{question}}\nCode: ",
-      question: inputs.question,
-    })
-      .to(generateText({ PALM_KEY: secrets({ keys: ["PALM_KEY"] }) }))
+    return llm
+      .promptTemplate({
+        template:
+          "Write a Javascript function called `run` to compute the result for this question:\nQuestion: {{question}}\nCode: ",
+        question: inputs.question,
+      })
+      .prompt.as("text")
+      .to(llm.generateText({ PALM_KEY: llm.secrets({ keys: ["PALM_KEY"] }) }))
       .completion.as("code")
-      .to(runJavascript());
+      .to(llm.runJavascript());
   });
 
   const search = action((inputs) => {
@@ -186,11 +231,18 @@ async function ifElse() {
 
   const graph = flow(
     async (inputs) => {
-      const { completion } = await promptTemplate({
-        template:
-          "Is this question about math? Answer YES or NO.\nQuestion: {{question}}\nAnswer: ",
-        question: inputs.question,
-      }).to(generateText({ PALM_KEY: secrets({ keys: ["PALM_KEY"] }) }));
+      const { completion } = await llm
+        .promptTemplate({
+          template:
+            "Is this question about math? Answer YES or NO.\nQuestion: {{question}}\nAnswer: ",
+          question: inputs.question,
+        })
+        .prompt.as("text")
+        .to(
+          llm.generateText({
+            PALM_KEY: llm.secrets({ keys: ["PALM_KEY"] }).PALM_KEY,
+          })
+        );
       if (completion && (completion as string).startsWith("YES")) {
         return math({ question: inputs.question });
       } else {
@@ -208,14 +260,16 @@ await ifElse();
 
 async function ifElseSerializable() {
   const math = action((inputs) => {
-    return promptTemplate({
-      template:
-        "Write Javascript to compute the result for this question:\nQuestion: {{question}}\nCode: ",
-      question: inputs.question,
-    })
-      .to(generateText({ PALM_KEY: secrets({ keys: ["PALM_KEY"] }) }))
+    return llm
+      .promptTemplate({
+        template:
+          "Write a Javascript function called `run` to compute the result for this question:\nQuestion: {{question}}\nCode: ",
+        question: inputs.question,
+      })
+      .prompt.as("text")
+      .to(llm.generateText({ PALM_KEY: llm.secrets({ keys: ["PALM_KEY"] }) }))
       .completion.as("code")
-      .to(runJavascript());
+      .to(llm.runJavascript());
   });
 
   const search = action((inputs) => {
@@ -225,12 +279,14 @@ async function ifElseSerializable() {
 
   const graph = flow(
     async (inputs) => {
-      return promptTemplate({
-        template:
-          "Is this question about math? Answer YES or NO.\nQuestion: {{question}}\nAnswer: ",
-        question: inputs.question,
-      })
-        .to(generateText({ PALM_KEY: secrets({ keys: ["PALM_KEY"] }) }))
+      return llm
+        .promptTemplate({
+          template:
+            "Is this question about math? Answer YES or NO.\nQuestion: {{question}}\nAnswer: ",
+          question: inputs.question,
+        })
+        .prompt.as("text")
+        .to(llm.generateText({ PALM_KEY: llm.secrets({ keys: ["PALM_KEY"] }) }))
         .to(
           async (inputs) => {
             const { completion, math, search } = await inputs;
