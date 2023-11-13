@@ -1,0 +1,14 @@
+{
+  "title": "Single Node",
+  "edges": [],
+  "nodes": [
+    {
+      "id": "passthrough-0",
+      "type": "passthrough",
+      "configuration": {
+        "foo": "bar"
+      }
+    }
+  ],
+  "graphs": {}
+}

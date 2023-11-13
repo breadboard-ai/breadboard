@@ -6,6 +6,7 @@
 
 import {
   GraphDescriptor,
+  GraphMetadata,
   NodeDescriptor,
   SubGraphs,
   Kit,
@@ -353,8 +354,8 @@ class NodeImpl<
     })();
   }
 
-  async serialize() {
-    return this.#runner.serialize(this);
+  async serialize(metadata?: GraphMetadata) {
+    return this.#runner.serialize(this, metadata);
   }
 
   async serializeNode(): Promise<[NodeDescriptor, GraphDescriptor?]> {
@@ -751,13 +752,11 @@ interface RunnerConfig {
 }
 
 export class Runner {
-  #nodes = new Map<string, NodeImpl<InputValues, OutputValues>>();
-  #parent?: Runner;
   #config: RunnerConfig = { serialize: false };
 
   constructor(runner?: Runner, config?: RunnerConfig) {
     if (runner) {
-      this.#parent = runner;
+      // TODO, e.g. this.#parent = runner;
     }
     if (config) {
       this.#config = { ...this.#config, ...config };
@@ -821,7 +820,10 @@ export class Runner {
     }
   }
 
-  async serialize(node: NodeImpl): Promise<GraphDescriptor> {
+  async serialize(
+    node: NodeImpl,
+    metadata?: GraphMetadata
+  ): Promise<GraphDescriptor> {
     const queue: NodeImpl[] = this.#findAllConnectedNodes(node);
 
     const graphs: SubGraphs = {};
@@ -843,7 +845,7 @@ export class Runner {
       }))
     );
 
-    return { nodes, edges, graphs };
+    return { ...metadata, edges, nodes, graphs };
   }
 
   serializing() {
