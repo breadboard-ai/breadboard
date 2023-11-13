@@ -1,0 +1,10 @@
+{
+  "rules": {
+    "@typescript-eslint/ban-types": ["warn", {
+      "types": {
+        "Function": false
+      },
+      "extendDefaults": true
+    }]
+  }
+}
