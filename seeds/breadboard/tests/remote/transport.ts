@@ -7,6 +7,8 @@
 import test from "ava";
 import { TestClient } from "../helpers/_test-transport.js";
 import {
+  AnyRunRequestMessage,
+  AnyRunResponseMessage,
   InputPromiseResponseMessage,
   RunResponseStream,
 } from "../../src/remote/protocol.js";
@@ -89,6 +91,103 @@ test("A board run can feed into a transport", async (t) => {
       throw t.fail("proxy should not be called");
     },
   });
+  let intermediateState;
+  for await (const result of await clientTransport.run(["run", {}])) {
+    const [type, response, state] = result as InputPromiseResponseMessage;
+    t.is(type, "input");
+    t.is(response.node.type, "input");
+    t.deepEqual(response.inputArguments, { foo: "bar" });
+    intermediateState = state;
+  }
+  t.assert(intermediateState !== undefined);
+  const secondRunResults = [];
+  let outputs;
+  for await (const result of await clientTransport.run([
+    "input",
+    {
+      inputs: { hello: "world" },
+    },
+    intermediateState as string,
+  ])) {
+    const [type, , state] = result;
+    if (type === "output") {
+      const [, output] = result;
+      outputs = output.outputs;
+    }
+    t.assert(state === undefined);
+    secondRunResults.push(type);
+  }
+  t.deepEqual(outputs, { hello: "world" });
+  t.deepEqual(secondRunResults, ["beforehandler", "output", "end"]);
+});
+
+test("Prototyping bidirectional stream", async (t) => {
+  const board = new Board();
+  const kit = board.addKit(TestKit);
+  board.input({ foo: "bar" }).wire("*", kit.noop().wire("*", board.output()));
+
+  class Pipe {
+    pipe: TransformStream<AnyRunResponseMessage, AnyRunResponseMessage>;
+
+    constructor() {
+      this.pipe = new TransformStream();
+    }
+
+    getReadableStream(): RunResponseStream {
+      return this.pipe.readable as RunResponseStream;
+    }
+
+    renew() {
+      this.pipe = new TransformStream();
+    }
+
+    getWriter() {
+      return this.pipe.writable.getWriter();
+    }
+  }
+
+  const pipe = new Pipe();
+
+  const clientTransport = new TestClient();
+  clientTransport.setServer({
+    load: async () => {
+      throw t.fail("load should not be called");
+    },
+    run: async (request) => {
+      runServer(request);
+      return pipe.getReadableStream();
+    },
+    proxy: async () => {
+      throw t.fail("proxy should not be called");
+    },
+  });
+
+  const runServer = async (request: AnyRunRequestMessage) => {
+    const [type, , state] = request;
+    const result = state ? RunResult.load(state) : undefined;
+    if (result && type === "input") {
+      const [, inputs] = request;
+      result.inputs = inputs.inputs;
+    }
+
+    const writer = pipe.getWriter();
+    for await (const stop of board.run(undefined, result)) {
+      if (stop.type === "input") {
+        const state = await stop.save();
+        writer.write(["input", stop, state]);
+        writer.close();
+        pipe.renew();
+        return;
+      } else if (stop.type === "output") {
+        writer.write(["output", stop]);
+      } else if (stop.type === "beforehandler") {
+        writer.write(["beforehandler", stop]);
+      }
+    }
+    writer.write(["end", {}]);
+    writer.close();
+  };
+
   let intermediateState;
   for await (const result of await clientTransport.run(["run", {}])) {
     const [type, response, state] = result as InputPromiseResponseMessage;
