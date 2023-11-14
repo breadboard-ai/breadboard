@@ -4,6 +4,10 @@
     "url": "/graphs/list-files.json"
   },
   {
+    "title": "New: Accumulating context",
+    "url": "/graphs/new/accumulator.json"
+  },
+  {
     "title": "New: Custom inline action",
     "url": "/graphs/new/custom-inline-action.json"
   },

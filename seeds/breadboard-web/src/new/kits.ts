@@ -17,17 +17,15 @@ import {
   OutputValues,
   addKit,
   NodeFactory,
+  base,
 } from "./lib.js";
 
 import { Core } from "@google-labs/core-kit";
 import { Starter } from "@google-labs/llm-starter";
 
+export { base };
+
 export const core = addKit(Core) as unknown as {
-  // TODO: Those shouldn't be in Core, but in something even more basic.
-  // But since we don't have `Board` anymore and Runner seems wrong for this,
-  // I put these in Core for now.
-  input: NodeFactory<InputValues, InputValues>;
-  output: NodeFactory<OutputValues, OutputValues>;
   passthrough: NodeFactory<InputValues, OutputValues>;
   // TODO: Other Core nodes.
 };
@@ -50,5 +48,9 @@ export const llm = addKit(Starter) as unknown as {
       [key: string]: NodeValue;
     },
     { result: NodeValue; [k: string]: NodeValue }
+  >;
+  append: NodeFactory<
+    { accumulator: NodeValue; [key: string]: NodeValue },
+    { accumulator: NodeValue }
   >;
 };

@@ -66,17 +66,7 @@ type NodeHandlers = Record<
   NodeHandler<InputValues, OutputValues>
 >;
 
-const reservedWord: NodeHandlerFunction<
-  InputValues,
-  OutputValues
-> = async () => {
-  throw new Error("Reserved word handler should never be invoked");
-};
-
-const handlers: NodeHandlers = {
-  input: reservedWord,
-  output: reservedWord,
-};
+const handlers: NodeHandlers = {};
 
 export type NodeFactory<I extends InputValues, O extends OutputValues> = (
   config?: NodeImpl<InputValues, I> | Value<NodeValue> | InputsMaybeAsValues<I>
@@ -91,6 +81,18 @@ export function addNodeType<I extends InputValues, O extends OutputValues>(
     return new NodeImpl(name, getCurrentContextRunner(), config).asProxy();
   }) as unknown as NodeFactory<I, O>;
 }
+
+const reservedWord: NodeHandlerFunction<
+  InputValues,
+  OutputValues
+> = async () => {
+  throw new Error("Reserved word handler should never be invoked");
+};
+
+export const base = {
+  input: addNodeType("input", reservedWord),
+  output: addNodeType("output", reservedWord),
+};
 
 export interface Serializeable {
   serialize(
@@ -181,7 +183,10 @@ type NodeProxyInterface<I extends InputValues, O extends OutputValues> = {
  *  - Has all the methods of the NodeProxyInterface defined above.
  *  - Including then() which makes it a PromiseLike<O>
  */
-export type NodeProxy<I extends InputValues, O extends OutputValues> = {
+export type NodeProxy<
+  I extends InputValues = InputValues,
+  O extends OutputValues = OutputValues
+> = {
   [K in keyof O]: Value<O[K]> & ((...args: unknown[]) => unknown);
 } & {
   [key in string]: Value<NodeValue> & ((...args: unknown[]) => unknown);
@@ -403,7 +408,7 @@ class NodeImpl<
         if (result instanceof NodeImpl) {
           // If the handler returned an output node, serialize it directly,
           // otherwise connect the returned node's outputs to the output node.
-          if (result.type === "output")
+          if (result.unProxy().type === "output")
             return runner.serialize(result as unknown as NodeImpl);
           outputNode.addInputAsNode(result.unProxy());
         } else if (isValue(result)) {

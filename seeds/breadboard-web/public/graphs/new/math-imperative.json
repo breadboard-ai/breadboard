@@ -2,61 +2,61 @@
   "title": "New: Math, imperative style graph",
   "edges": [
     {
-      "from": "runJavascript-41",
-      "to": "output-37",
+      "from": "runJavascript-44",
+      "to": "output-40",
       "out": "*",
       "in": "*"
     },
     {
-      "from": "generateText-40",
-      "to": "runJavascript-41",
+      "from": "generateText-43",
+      "to": "runJavascript-44",
       "out": "completion",
       "in": "code"
     },
     {
-      "from": "promptTemplate-38",
-      "to": "generateText-40",
+      "from": "promptTemplate-41",
+      "to": "generateText-43",
       "out": "prompt",
       "in": "text"
     },
     {
-      "from": "secrets-39",
-      "to": "generateText-40",
+      "from": "secrets-42",
+      "to": "generateText-43",
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
-      "from": "input-36",
-      "to": "promptTemplate-38",
+      "from": "input-39",
+      "to": "promptTemplate-41",
       "out": "question",
       "in": "question"
     }
   ],
   "nodes": [
     {
-      "id": "output-37",
+      "id": "output-40",
       "type": "output",
       "configuration": {}
     },
     {
-      "id": "runJavascript-41",
+      "id": "runJavascript-44",
       "type": "runJavascript",
       "configuration": {}
     },
     {
-      "id": "generateText-40",
+      "id": "generateText-43",
       "type": "generateText",
       "configuration": {}
     },
     {
-      "id": "promptTemplate-38",
+      "id": "promptTemplate-41",
       "type": "promptTemplate",
       "configuration": {
         "template": "Write a Javascript function called `run` to compute the result for this question:\nQuestion: {{question}}\nCode: "
       }
     },
     {
-      "id": "secrets-39",
+      "id": "secrets-42",
       "type": "secrets",
       "configuration": {
         "keys": [
@@ -65,7 +65,7 @@
       }
     },
     {
-      "id": "input-36",
+      "id": "input-39",
       "type": "input",
       "configuration": {}
     }
