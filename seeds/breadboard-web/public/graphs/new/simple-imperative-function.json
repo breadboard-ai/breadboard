@@ -1,0 +1,14 @@
+{
+  "title": "New: Simple imperative function",
+  "edges": [],
+  "nodes": [
+    {
+      "id": "fn-53",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "async function fn_53(inputs) {const{foo}=await core.passthrough(inputs);return{foo}}",
+        "name": "fn_53"
+      }
+    }
+  ]
+}

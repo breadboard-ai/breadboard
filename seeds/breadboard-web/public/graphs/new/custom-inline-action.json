@@ -1,0 +1,38 @@
+{
+  "title": "New: Custom inline action",
+  "edges": [
+    {
+      "from": "fn-4",
+      "to": "output-3",
+      "out": "*",
+      "in": "*"
+    },
+    {
+      "from": "input-2",
+      "to": "fn-4",
+      "out": "*",
+      "in": "*"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-3",
+      "type": "output",
+      "configuration": {}
+    },
+    {
+      "id": "fn-4",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "async function fn_4(inputs2) {const{a,b}=await inputs2;return{result:(a||0)+(b||0)}}",
+        "name": "fn_4"
+      }
+    },
+    {
+      "id": "input-2",
+      "type": "input",
+      "configuration": {}
+    }
+  ],
+  "graphs": {}
+}

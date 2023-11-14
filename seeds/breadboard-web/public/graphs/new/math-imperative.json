@@ -1,0 +1,74 @@
+{
+  "title": "New: Math, imperative style graph",
+  "edges": [
+    {
+      "from": "runJavascript-41",
+      "to": "output-37",
+      "out": "*",
+      "in": "*"
+    },
+    {
+      "from": "generateText-40",
+      "to": "runJavascript-41",
+      "out": "completion",
+      "in": "code"
+    },
+    {
+      "from": "promptTemplate-38",
+      "to": "generateText-40",
+      "out": "prompt",
+      "in": "text"
+    },
+    {
+      "from": "secrets-39",
+      "to": "generateText-40",
+      "out": "PALM_KEY",
+      "in": "PALM_KEY"
+    },
+    {
+      "from": "input-36",
+      "to": "promptTemplate-38",
+      "out": "question",
+      "in": "question"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-37",
+      "type": "output",
+      "configuration": {}
+    },
+    {
+      "id": "runJavascript-41",
+      "type": "runJavascript",
+      "configuration": {}
+    },
+    {
+      "id": "generateText-40",
+      "type": "generateText",
+      "configuration": {}
+    },
+    {
+      "id": "promptTemplate-38",
+      "type": "promptTemplate",
+      "configuration": {
+        "template": "Write a Javascript function called `run` to compute the result for this question:\nQuestion: {{question}}\nCode: "
+      }
+    },
+    {
+      "id": "secrets-39",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "PALM_KEY"
+        ]
+      }
+    },
+    {
+      "id": "input-36",
+      "type": "input",
+      "configuration": {}
+    }
+  ],
+  "graphs": {}
+}

@@ -4,15 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { flow } from "../../new/lib.js";
+import { action } from "../../new/lib.js";
 import { core } from "../../new/kits.js";
 
-export const graph = flow(
-  async (inputs) => {
-    const { foo } = await core.passthrough(inputs);
-    return { foo };
-  },
-  { foo: "bar", baz: "bar" }
-);
+export const graph = action(async (inputs) => {
+  const { foo } = await core.passthrough(inputs);
+  return { foo };
+});
 
-export default await graph.serialize({ title: "Simple imperative function" });
+export const example = { foo: "bar", bar: "baz" };
+
+export default await graph.serialize({
+  title: "New: Simple imperative function",
+});

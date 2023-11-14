@@ -45,7 +45,10 @@ type InputsMaybeAsValues<
     | NodeValue;
 };
 
-type NodeHandlerFunction<I extends InputValues, O extends OutputValues> = (
+export type NodeHandlerFunction<
+  I extends InputValues,
+  O extends OutputValues
+> = (
   inputs: PromiseLike<I> & InputsMaybeAsValues<I>,
   node: NodeImpl<I, O>
 ) => O | PromiseLike<O>;
@@ -89,11 +92,27 @@ export function addNodeType<I extends InputValues, O extends OutputValues>(
   }) as unknown as NodeFactory<I, O>;
 }
 
+export interface Serializeable {
+  serialize(
+    metadata?: GraphMetadata
+  ): Promise<GraphDescriptor> | GraphDescriptor;
+}
+
 export function action<
   I extends InputValues = InputValues,
   O extends OutputValues = OutputValues
->(fn: NodeHandlerFunction<I, O>): NodeFactory<I, O> {
-  return addNodeType(getNextNodeId("fn"), fn);
+>(fn: NodeHandlerFunction<I, O>): NodeFactory<I, O> & Serializeable {
+  const factory = addNodeType(getNextNodeId("fn"), fn) as NodeFactory<I, O> &
+    Serializeable;
+  factory.serialize = async (metadata?) => {
+    const node = new NodeImpl(fn, getCurrentContextRunner());
+    const [singleNode, graph] = await node.serializeNode();
+    // If there is a subgraph that is invoked, just return that.
+    if (graph) return { ...metadata, ...graph } as GraphDescriptor;
+    // Otherwise return the node, most likely a runJavascript node.
+    else return { ...metadata, edges: [], nodes: [singleNode] };
+  };
+  return factory;
 }
 
 // Extracts handlers from kit and creates new kinds of nodes from them.
@@ -115,7 +134,7 @@ export function addKit<T extends Kit>(ctr: KitConstructor<T>) {
   return nodes;
 }
 
-interface EdgeImpl<
+export interface EdgeImpl<
   FromI extends InputValues = InputValues,
   FromO extends OutputValues = OutputValues,
   ToI extends InputValues = InputValues,
@@ -175,7 +194,7 @@ class AwaitWhileSerializing extends Error {}
 class NodeImpl<
   I extends InputValues = InputValues,
   O extends OutputValues = OutputValues
-> implements NodeProxyInterface<I, O>, PromiseLike<O>
+> implements NodeProxyInterface<I, O>, PromiseLike<O>, Serializeable
 {
   id: string;
   type: string;
@@ -348,7 +367,7 @@ class NodeImpl<
         return result;
       } catch (e) {
         // Reject promise, but only on first run (outputs is still empty)
-        if (this.#reject) this.#reject(e);
+        if (this.#reject && !this.#outputs) this.#reject(e);
         throw e;
       }
     })();
@@ -377,45 +396,51 @@ class NodeImpl<
             : this.#handler.invoke;
 
         const inputNode = new NodeImpl<InputValues, I>("input", runner, {});
+        const outputNode = new NodeImpl<O, O>("output", runner, {});
 
-        const result = await handler(inputNode.asProxy(), this);
+        const result = handler(inputNode.asProxy(), this);
 
         if (result instanceof NodeImpl) {
-          const outputNode = new NodeImpl<O, O>("output", runner, {});
-          outputNode.addInputAsNode(result);
-          return runner.serialize(outputNode as unknown as NodeImpl);
+          // If the handler returned an output node, serialize it directly,
+          // otherwise connect the returned node's outputs to the output node.
+          if (result.type === "output")
+            return runner.serialize(result as unknown as NodeImpl);
+          outputNode.addInputAsNode(result.unProxy());
         } else if (isValue(result)) {
+          // Wire up the value to the output node
           const value = isValue(result) as Value;
-          const outputNode = new NodeImpl<O, O>("output", runner, {});
           outputNode.addInputAsNode(...value.asNodeInput());
-          return runner.serialize(outputNode as unknown as NodeImpl);
-        } else if (!Object.keys(result).find((key) => !isValue(result[key]))) {
-          const config: InputValues = {};
-          const values: Value[] = [];
-          Object.keys(result).forEach((key) =>
-            isValue(result[key])
-              ? values.push((result[key] as Value).as(key))
-              : (config[key] = result[key])
-          );
-          const outputNode = new NodeImpl<O, O>(
-            "output",
-            runner,
-            config as InputsMaybeAsValues<O>
-          );
-          values.forEach((value) => {
-            outputNode.addInputAsNode(...value.asNodeInput());
-          });
-          return runner.serialize(outputNode as unknown as NodeImpl);
         } else {
-          return undefined;
+          // Otherwise wire up all keys of the returned object to the output.
+          let output = await result;
+
+          // If the result is not an object, assume "result" as key.
+          if (typeof output !== "object")
+            output = (
+              output !== undefined ? { result: output as NodeValue } : {}
+            ) as O;
+
+          // Refactor to merge with similar code in constructor
+          Object.keys(output).forEach((key) =>
+            isValue(output[key])
+              ? outputNode.addInputAsNode(
+                  ...(output[key] as Value).as(key).asNodeInput()
+                )
+              : output[key] instanceof NodeImpl
+              ? outputNode.addInputAsNode(output[key] as NodeImpl, {
+                  [key]: key,
+                })
+              : (outputNode.configuration[key] = output[key])
+          );
         }
+        return runner.serialize(outputNode as unknown as NodeImpl);
       } catch (e) {
         if (e instanceof AwaitWhileSerializing) return null;
         else throw e;
       }
     })();
 
-    // If we got a graph back, save it as a subgraph (by return as second value)
+    // If we got a graph back, save it as a subgraph (returned as second value)
     // and turns this into an invoke node.
     if (graph) {
       node.type = "invoke";
@@ -438,7 +463,7 @@ class NodeImpl<
         const paramsWithParens = params.startsWith("(")
           ? params
           : `(${params})`;
-        return `${async}function ${name}${paramsWithParens} {`;
+        return `${async}function ${name}${paramsWithParens} `;
       });
     } else {
       const match = traditionalFunctionRegex.exec(code);
@@ -549,7 +574,14 @@ class NodeImpl<
   ): PromiseLike<TResult1 | TResult2> {
     if (this.#runner.serializing()) throw new AwaitWhileSerializing();
 
-    this.#runner.invoke(this as unknown as NodeImpl);
+    try {
+      // It's ok to call this multiple times: If it already run it'll only do
+      // something if new nodes or inputs were added (e.g. between await calls)
+      this.#runner.invoke(this as unknown as NodeImpl);
+    } catch (e) {
+      if (onrejected) onrejected(e);
+      else throw e;
+    }
 
     return this.#promise.then(
       onfulfilled && this.#runner.asRunnerFor(onfulfilled),
@@ -621,7 +653,7 @@ class NodeImpl<
 
 // Because Value is sometimes behind a function Proxy (see above, for NodeImpl's
 // methods), we need to use this approach to identify Value instead instanceof.
-const IsValueSymbol = Symbol("IsValue");
+export const IsValueSymbol = Symbol("IsValue");
 
 function isValue<T extends NodeValue = NodeValue>(
   obj: unknown
@@ -640,8 +672,6 @@ class Value<T extends NodeValue = NodeValue>
   #runner: Runner;
   #keymap: KeyMap;
 
-  [IsValueSymbol] = this;
-
   constructor(
     node: NodeImpl<InputValues, OutputValue<T>>,
     runner: Runner,
@@ -650,6 +680,7 @@ class Value<T extends NodeValue = NodeValue>
     this.#node = node;
     this.#runner = runner;
     this.#keymap = typeof keymap === "string" ? { [keymap]: keymap } : keymap;
+    (this as unknown as { [key: symbol]: Value<T> })[IsValueSymbol] = this;
   }
 
   then<TResult1 = T | undefined, TResult2 = never>(

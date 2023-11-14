@@ -1,0 +1,65 @@
+{
+  "title": "New: Math, directly calling a chain",
+  "edges": [
+    {
+      "from": "generateText-45",
+      "to": "runJavascript-46",
+      "out": "completion",
+      "in": "code"
+    },
+    {
+      "from": "secrets-44",
+      "to": "generateText-45",
+      "out": "PALM_KEY",
+      "in": "PALM_KEY"
+    },
+    {
+      "from": "promptTemplate-43",
+      "to": "generateText-45",
+      "out": "prompt",
+      "in": "text"
+    },
+    {
+      "from": "passthrough-42",
+      "to": "promptTemplate-43",
+      "out": "*",
+      "in": "*"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "runJavascript-46",
+      "type": "runJavascript",
+      "configuration": {}
+    },
+    {
+      "id": "generateText-45",
+      "type": "generateText",
+      "configuration": {}
+    },
+    {
+      "id": "secrets-44",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "PALM_KEY"
+        ]
+      }
+    },
+    {
+      "id": "promptTemplate-43",
+      "type": "promptTemplate",
+      "configuration": {
+        "template": "Write a Javascript function called `run` to compute the result for this question:\nQuestion: {{question}}\nCode: "
+      }
+    },
+    {
+      "id": "passthrough-42",
+      "type": "passthrough",
+      "configuration": {
+        "question": "1+1"
+      }
+    }
+  ],
+  "graphs": {}
+}

@@ -9,23 +9,28 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { readdir } from "fs/promises";
 
+import { flow } from "./lib.js";
+
 config();
 
 const MODULE_DIR: string = path.dirname(fileURLToPath(import.meta.url));
 const PATH: string = path.join(MODULE_DIR, "../boards/new");
 
-const files = await readdir(PATH);
-console.log(PATH, files);
+let files = await readdir(PATH);
+
+const args = process.argv.slice(2);
+if (args.length)
+  files = files.filter((file) => args.find((arg) => file.includes(arg)));
 
 for (const file of files) {
   console.log("Running " + file);
 
+  const board = await import(`${PATH}/${file}`);
+  const example = board.example;
+  const resultPromise = example ? flow(board.graph, example) : board.graph;
   try {
-    const board = await import(`${PATH}/${file}`);
-    const result = await board.graph;
-
-    console.log(result);
+    console.log(await resultPromise);
   } catch (e) {
-    console.error(e);
+    console.log(e);
   }
 }

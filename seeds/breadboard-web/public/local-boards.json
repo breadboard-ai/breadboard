@@ -4,7 +4,39 @@
     "url": "/graphs/list-files.json"
   },
   {
-    "title": "Single Node",
+    "title": "New: Custom inline action",
+    "url": "/graphs/new/custom-inline-action.json"
+  },
+  {
+    "title": "New: IfElse, imperative execution",
+    "url": "/graphs/new/if-else-imperative.json"
+  },
+  {
+    "title": "New: IfElse, serializable",
+    "url": "/graphs/new/if-else-serializable.json"
+  },
+  {
+    "title": "New: Math, chain style graph",
+    "url": "/graphs/new/math-chain.json"
+  },
+  {
+    "title": "New: Math, imperative style graph",
+    "url": "/graphs/new/math-imperative.json"
+  },
+  {
+    "title": "New: Math, directly calling a chain",
+    "url": "/graphs/new/math-inline-chain.json"
+  },
+  {
+    "title": "New: Simple graph",
+    "url": "/graphs/new/simple-graph.json"
+  },
+  {
+    "title": "New: Simple imperative function",
+    "url": "/graphs/new/simple-imperative-function.json"
+  },
+  {
+    "title": "New: Single node",
     "url": "/graphs/new/single-node.json"
   },
   {

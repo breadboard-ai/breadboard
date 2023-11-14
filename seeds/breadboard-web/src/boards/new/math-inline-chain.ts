@@ -25,8 +25,11 @@ export const graph = core
   .completion.as("code")
   .to(llm.runJavascript());
 
-// This would be typically used as "await graph", not as a (serialized) graph
+// This would be typically used as "await graph", not as a (serialized) graph.
+// Hence no example.
+
+export const example = undefined;
 
 export default await graph.serialize({
-  title: "Math, directly calling a chain",
+  title: "New: Math, directly calling a chain",
 });

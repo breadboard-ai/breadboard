@@ -1,0 +1,14 @@
+{
+  "title": "New: IfElse, imperative execution",
+  "edges": [],
+  "nodes": [
+    {
+      "id": "fn-10",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "async function fn_10(inputs) {const{completion}=await llm.promptTemplate({template:\"Is this question about math? Answer YES or NO.\\nQuestion: {{question}}\\nAnswer: \",question:inputs.question}).prompt.as(\"text\").to(llm.generateText({PALM_KEY:llm.secrets({keys:[\"PALM_KEY\"]}).PALM_KEY}));if(completion&&completion.startsWith(\"YES\")){return math({question:inputs.question})}else{return search(inputs)}}",
+        "name": "fn_10"
+      }
+    }
+  ]
+}

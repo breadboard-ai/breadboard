@@ -8,6 +8,9 @@ import { core } from "../../new/kits.js";
 
 export const graph = core.passthrough({ foo: "bar" });
 
-// This would be typically used as "await graph", not as a (serialized) graph
+// This would be typically used as "await graph", not as a (serialized) graph.
+// Hence no example.
 
-export default await graph.serialize({ title: "Single node" });
+export const example = undefined;
+
+export default await graph.serialize({ title: "New: Single node" });
