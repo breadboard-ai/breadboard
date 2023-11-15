@@ -18,6 +18,7 @@ import { TestKit } from "../helpers/_test-kit.js";
 import { RunResult } from "../../src/run.js";
 import { PatchedReadableStream } from "../../src/stream.js";
 import { BoardRunner } from "../../src/runner.js";
+import { InputValues } from "../../src/types.js";
 
 test("Test transport interactions work", async (t) => {
   const clientTransport = new TestClient();
@@ -124,7 +125,7 @@ test("A board run can feed into a transport", async (t) => {
   t.deepEqual(secondRunResults, ["beforehandler", "output", "end"]);
 });
 
-const runBoard = async (
+const server = async (
   runner: BoardRunner,
   requestStream: RunRequestStream,
   responseStream: WritableStream<AnyRunResponseMessage>
@@ -145,14 +146,14 @@ const runBoard = async (
 
   const result = resumeRun(request.value);
 
-  const writer = responseStream.getWriter();
+  const responses = responseStream.getWriter();
   for await (const stop of runner.run(undefined, result)) {
     if (stop.type === "input") {
       const state = await stop.save();
-      writer.write(["input", stop, state]);
+      responses.write(["input", stop, state]);
       request = await requestReader.read();
       if (request.done) {
-        writer.close();
+        responses.close();
         return;
       } else {
         const [type, inputs] = request.value;
@@ -161,13 +162,13 @@ const runBoard = async (
         }
       }
     } else if (stop.type === "output") {
-      writer.write(["output", stop]);
+      responses.write(["output", stop]);
     } else if (stop.type === "beforehandler") {
-      writer.write(["beforehandler", stop]);
+      responses.write(["beforehandler", stop]);
     }
   }
-  writer.write(["end", {}]);
-  writer.close();
+  responses.write(["end", {}]);
+  responses.close();
 };
 
 test("Interruptible streaming", async (t) => {
@@ -184,7 +185,7 @@ test("Interruptible streaming", async (t) => {
       AnyRunResponseMessage,
       AnyRunResponseMessage
     >();
-    runBoard(
+    server(
       board,
       requestPipe.readable as PatchedReadableStream<AnyRunRequestMessage>,
       responsePipe.writable
@@ -238,7 +239,7 @@ test("Continuous streaming", async (t) => {
     AnyRunResponseMessage,
     AnyRunResponseMessage
   >();
-  runBoard(
+  server(
     board,
     requestPipe.readable as PatchedReadableStream<AnyRunRequestMessage>,
     responsePipe.writable
@@ -265,4 +266,57 @@ test("Continuous streaming", async (t) => {
   t.like(fourthResult.value, ["end", {}]);
   const fifthResult = await reader.read();
   t.assert(fifthResult.done);
+});
+
+test("Very simple runOnce client", async (t) => {
+  const runOnceClient = async (
+    requestStream: WritableStream<AnyRunRequestMessage>,
+    responseStream: ReadableStream<AnyRunResponseMessage>,
+    inputs: InputValues
+  ) => {
+    const responses =
+      responseStream as PatchedReadableStream<AnyRunResponseMessage>;
+    const requests = requestStream.getWriter();
+
+    let outputs;
+
+    requests.write(["run", {}]);
+    for await (const response of responses) {
+      const [type, , state] = response;
+      if (type === "input") {
+        requests.write(["input", { inputs }, state]);
+      } else if (type === "output") {
+        const [, output] = response;
+        outputs = output.outputs;
+        // TODO: Figure out how to break here and close the streams.
+      }
+    }
+    return outputs;
+  };
+
+  const board = new Board();
+  const kit = board.addKit(TestKit);
+  board.input({ foo: "bar" }).wire("*", kit.noop().wire("*", board.output()));
+
+  const requestPipe = new TransformStream<
+    AnyRunRequestMessage,
+    AnyRunRequestMessage
+  >();
+  const responsePipe = new TransformStream<
+    AnyRunResponseMessage,
+    AnyRunResponseMessage
+  >();
+  server(
+    board,
+    requestPipe.readable as PatchedReadableStream<AnyRunRequestMessage>,
+    responsePipe.writable
+  );
+
+  const outputs = await runOnceClient(
+    requestPipe.writable,
+    responsePipe.readable,
+    { hello: "world" }
+  );
+
+  t.deepEqual(outputs, { hello: "world" });
 });
