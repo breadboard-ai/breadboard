@@ -17,6 +17,7 @@ import { Board } from "../../src/board.js";
 import { TestKit } from "../helpers/_test-kit.js";
 import { RunResult } from "../../src/run.js";
 import { PatchedReadableStream } from "../../src/stream.js";
+import { BoardRunner } from "../../src/runner.js";
 
 test("Test transport interactions work", async (t) => {
   const clientTransport = new TestClient();
@@ -123,7 +124,53 @@ test("A board run can feed into a transport", async (t) => {
   t.deepEqual(secondRunResults, ["beforehandler", "output", "end"]);
 });
 
-test("Prototyping bidirectional stream", async (t) => {
+const runBoard = async (
+  runner: BoardRunner,
+  requestStream: RunRequestStream,
+  responseStream: WritableStream<AnyRunResponseMessage>
+) => {
+  const requestReader = requestStream.getReader();
+  let request = await requestReader.read();
+  if (request.done) return;
+
+  const setInputs = (request: AnyRunRequestMessage) => {
+    const [type, , state] = request;
+    const result = state ? RunResult.load(state) : undefined;
+    if (result && type === "input") {
+      const [, inputs] = request;
+      result.inputs = inputs.inputs;
+    }
+    return result;
+  };
+
+  const result = setInputs(request.value);
+
+  const writer = responseStream.getWriter();
+  for await (const stop of runner.run(undefined, result)) {
+    if (stop.type === "input") {
+      const state = await stop.save();
+      writer.write(["input", stop, state]);
+      request = await requestReader.read();
+      if (request.done) {
+        writer.close();
+        return;
+      } else {
+        const [type, inputs] = request.value;
+        if (type === "input") {
+          stop.inputs = inputs.inputs;
+        }
+      }
+    } else if (stop.type === "output") {
+      writer.write(["output", stop]);
+    } else if (stop.type === "beforehandler") {
+      writer.write(["beforehandler", stop]);
+    }
+  }
+  writer.write(["end", {}]);
+  writer.close();
+};
+
+test("Interruptible streaming", async (t) => {
   const board = new Board();
   const kit = board.addKit(TestKit);
   board.input({ foo: "bar" }).wire("*", kit.noop().wire("*", board.output()));
@@ -143,49 +190,19 @@ test("Prototyping bidirectional stream", async (t) => {
         AnyRunResponseMessage
       >();
       runBoard(
+        board,
         requestPipe.readable as PatchedReadableStream<AnyRunRequestMessage>,
         responsePipe.writable
       );
-      requestPipe.writable.getWriter().write(request);
+      const writer = requestPipe.writable.getWriter();
+      writer.write(request);
+      writer.close();
       return responsePipe.readable as RunResponseStream;
     },
     proxy: async () => {
       throw t.fail("proxy should not be called");
     },
   });
-
-  const runBoard = async (
-    request: RunRequestStream,
-    response: WritableStream<AnyRunResponseMessage>
-  ) => {
-    const requestReader = request.getReader();
-    const value = (await requestReader.read()).value;
-    if (!value) {
-      throw new Error("No value");
-    }
-    const [type, , state] = value;
-    const result = state ? RunResult.load(state) : undefined;
-    if (result && type === "input") {
-      const [, inputs] = value;
-      result.inputs = inputs.inputs;
-    }
-
-    const writer = response.getWriter();
-    for await (const stop of board.run(undefined, result)) {
-      if (stop.type === "input") {
-        const state = await stop.save();
-        writer.write(["input", stop, state]);
-        writer.close();
-        return;
-      } else if (stop.type === "output") {
-        writer.write(["output", stop]);
-      } else if (stop.type === "beforehandler") {
-        writer.write(["beforehandler", stop]);
-      }
-    }
-    writer.write(["end", {}]);
-    writer.close();
-  };
 
   let intermediateState;
   for await (const result of await clientTransport.run(["run", {}])) {
@@ -215,4 +232,53 @@ test("Prototyping bidirectional stream", async (t) => {
   }
   t.deepEqual(outputs, { hello: "world" });
   t.deepEqual(secondRunResults, ["beforehandler", "output", "end"]);
+});
+
+test("Continuous streaming", async (t) => {
+  const board = new Board();
+  const kit = board.addKit(TestKit);
+  board.input({ foo: "bar" }).wire("*", kit.noop().wire("*", board.output()));
+
+  const clientTransport = new TestClient();
+  clientTransport.setServer({
+    load: async () => {
+      throw t.fail("load should not be called");
+    },
+    run: async (request) => {
+      const requestPipe = new TransformStream<
+        AnyRunRequestMessage,
+        AnyRunRequestMessage
+      >();
+      const responsePipe = new TransformStream<
+        AnyRunResponseMessage,
+        AnyRunResponseMessage
+      >();
+      runBoard(
+        board,
+        requestPipe.readable as PatchedReadableStream<AnyRunRequestMessage>,
+        responsePipe.writable
+      );
+      const writer = requestPipe.writable.getWriter();
+      writer.write(request);
+      writer.write(["input", { inputs: { hello: "world" } }, ""]);
+      writer.close();
+      return responsePipe.readable as RunResponseStream;
+    },
+    proxy: async () => {
+      throw t.fail("proxy should not be called");
+    },
+  });
+
+  const results = [];
+  const outputs = [];
+  for await (const result of await clientTransport.run(["run", {}])) {
+    results.push(result[0]);
+    const [type] = result;
+    if (type === "output") {
+      const [, output] = result;
+      outputs.push(output.outputs);
+    }
+  }
+  t.deepEqual(results, ["input", "beforehandler", "output", "end"]);
+  t.deepEqual(outputs, [{ hello: "world" }]);
 });
