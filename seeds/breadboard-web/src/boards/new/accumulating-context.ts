@@ -21,7 +21,7 @@ const input = base.input({
   },
 });
 
-core.passthrough({ $id: "start" }).to(input);
+core.passthrough({ $id: "start" }).as({}).to(input);
 
 const prompt = llm.promptTemplate({
   template:
@@ -33,24 +33,37 @@ const prompt = llm.promptTemplate({
 
 const conversationMemory = llm.append({
   accumulator: "\n== Conversation History",
-  $id: "conversationMemory",
   user: input.text,
 });
-conversationMemory.accumulator.to(conversationMemory);
+conversationMemory.in(conversationMemory.accumulator);
+prompt.in({ context: conversationMemory.accumulator });
+// conversationMemory.accumulator.to(prompt.context); ???
+// conversationMemory.accumulator.as("context").to(prompt);
 
 const response = llm.generateText({
   text: prompt.prompt,
-  PALM_KEY: llm.secrets({ keys: ["PALM_KEY"] }).PALM_KEY,
+  PALM_KEY: llm.secrets({ keys: ["PALM_KEY"] }).PALM_KEY.memoize(),
+});
+conversationMemory.in({ accumulator: response.completion });
+// response.completion.to(conversationMemory.accumulator);
+
+const output = base.output({
+  text: response.completion,
+
+  schema: {
+    type: "object",
+    properties: {
+      text: {
+        type: "string",
+        title: "Assistant",
+        description: "Assistant's response in the conversation with the user",
+      },
+    },
+    required: ["text"],
+  },
 });
 
-conversationMemory.in({ accumulator: response.completion });
-
-prompt.in({ context: conversationMemory.accumulator });
-
-const output = base.output({ text: response.completion });
-
-// TODO: Don't send data, just "->"
-output.to(input);
+output.as({}).to(input);
 
 export const graph = input; // Any node would work here.
 

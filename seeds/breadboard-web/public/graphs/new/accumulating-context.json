@@ -1,0 +1,141 @@
+{
+  "title": "New: Accumulating context",
+  "edges": [
+    {
+      "from": "userRequest",
+      "to": "assistant",
+      "out": "text",
+      "in": "question"
+    },
+    {
+      "from": "userRequest",
+      "to": "append-0",
+      "out": "text",
+      "in": "user"
+    },
+    {
+      "from": "start",
+      "to": "userRequest",
+      "out": "",
+      "in": ""
+    },
+    {
+      "from": "output-3",
+      "to": "userRequest",
+      "out": "",
+      "in": ""
+    },
+    {
+      "from": "assistant",
+      "to": "generateText-2",
+      "out": "prompt",
+      "in": "text"
+    },
+    {
+      "from": "append-0",
+      "to": "append-0",
+      "out": "accumulator",
+      "in": "accumulator"
+    },
+    {
+      "from": "append-0",
+      "to": "assistant",
+      "out": "accumulator",
+      "in": "context"
+    },
+    {
+      "from": "generateText-2",
+      "to": "append-0",
+      "out": "completion",
+      "in": "accumulator"
+    },
+    {
+      "from": "generateText-2",
+      "to": "output-3",
+      "out": "completion",
+      "in": "text"
+    },
+    {
+      "from": "secrets-1",
+      "to": "generateText-2",
+      "out": "PALM_KEY",
+      "in": "PALM_KEY",
+      "constant": true
+    }
+  ],
+  "nodes": [
+    {
+      "id": "userRequest",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "User",
+              "description": "Type here to chat with the assistant"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
+    },
+    {
+      "id": "start",
+      "type": "passthrough",
+      "configuration": {}
+    },
+    {
+      "id": "output-3",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Assistant",
+              "description": "Assistant's response in the conversation with the user"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
+    },
+    {
+      "id": "assistant",
+      "type": "promptTemplate",
+      "configuration": {
+        "template": "This is a conversation between a friendly assistant and their user. You are the assistant and your job is to try to be helpful, empathetic, and fun.\n{{context}}\n\n== Current Conversation\nuser: {{question}}\nassistant:",
+        "context": ""
+      }
+    },
+    {
+      "id": "append-0",
+      "type": "append",
+      "configuration": {
+        "accumulator": "\n== Conversation History"
+      }
+    },
+    {
+      "id": "generateText-2",
+      "type": "generateText",
+      "configuration": {}
+    },
+    {
+      "id": "secrets-1",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "PALM_KEY"
+        ]
+      }
+    }
+  ],
+  "graphs": {}
+}

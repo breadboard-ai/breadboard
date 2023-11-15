@@ -146,6 +146,7 @@ export interface EdgeImpl<
   to: NodeImpl<ToI, ToO>;
   out: string;
   in: string;
+  constant?: boolean;
 }
 
 let nodeIdCounter = 0;
@@ -205,7 +206,7 @@ class NodeImpl<
   type: string;
   outgoing: EdgeImpl[] = [];
   incoming: EdgeImpl[] = [];
-  configuration: InputValues = {};
+  configuration: Partial<I> = {};
 
   #handler: NodeHandler<I, O>;
 
@@ -213,7 +214,8 @@ class NodeImpl<
   #resolve?: (value: O | PromiseLike<O>) => void;
   #reject?: (reason?: unknown) => void;
 
-  #inputs: InputValues;
+  #inputs: Partial<I>;
+  #constants: Partial<I> = {};
   #receivedFrom: NodeImpl[] = [];
   #outputs?: O;
 
@@ -240,15 +242,19 @@ class NodeImpl<
     let id: string | undefined = undefined;
 
     if (config instanceof NodeImpl) {
-      this.addInputAsNode(config.unProxy());
+      this.addInputsFromNode(config.unProxy());
     } else if (isValue(config)) {
-      this.addInputAsNode(...(config as Value).asNodeInput());
+      this.addInputsFromNode(...(config as Value).asNodeInput());
     } else {
       const { $id, ...rest } = config as Partial<InputsMaybeAsValues<I>> & {
         $id?: string;
       };
       id = $id;
       this.addInputsAsValues(rest as InputsMaybeAsValues<I>);
+
+      // Treat incoming constants as configuration
+      this.configuration = { ...this.configuration, ...this.#constants };
+      this.#constants = {};
     }
 
     this.#inputs = { ...this.configuration };
@@ -265,51 +271,75 @@ class NodeImpl<
     });
   }
 
-  addInputsAsConstants(values: InputValues) {
-    this.configuration = { ...this.configuration, ...values };
-  }
-
   addInputsAsValues(values: InputsMaybeAsValues<I>) {
     // Split into constants and nodes
     const constants: Partial<InputValues> = {};
-    const nodes: [NodeImpl<InputValues, OutputValues>, KeyMap][] = [];
+    const nodes: [NodeImpl<InputValues, OutputValues>, KeyMap, boolean][] = [];
 
     Object.entries(values).forEach(([key, value]) => {
       if (isValue(value)) {
         nodes.push((value as Value).as(key).asNodeInput());
       } else if (value instanceof NodeImpl) {
-        nodes.push([value.unProxy(), { [key]: key }]);
+        nodes.push([value.unProxy(), { [key]: key }, false]);
       } else {
         constants[key] = value;
       }
     });
 
-    this.addInputsAsConstants(constants);
-    nodes.forEach((node) => this.addInputAsNode(...node));
+    this.#constants = { ...this.#constants, ...constants };
+    nodes.forEach((node) => this.addInputsFromNode(...node));
   }
 
   // Add inputs from another node as edges
-  addInputAsNode(from: NodeImpl, keymap: KeyMap = { "*": "*" }) {
-    Object.entries(keymap).forEach(([fromKey, toKey]) => {
-      // "*-<id>" means "all outputs from <id>" and comes from using a node in a
-      // spread, e.g. newNode({ ...node, $id: "id" }
-      if (fromKey.startsWith("*-")) fromKey = toKey = "*";
+  addInputsFromNode(
+    from: NodeImpl,
+    keymap: KeyMap = { "*": "*" },
+    constant?: boolean
+  ) {
+    const keyPairs = Object.entries(keymap);
+    if (keyPairs.length === 0) {
+      // Add an empty edge: Just control flow, no data moving.
 
       const edge: EdgeImpl = {
         to: this as unknown as NodeImpl,
         from,
-        out: fromKey,
-        in: toKey,
+        out: "",
+        in: "",
       };
-
       this.incoming.push(edge);
       from.outgoing.push(edge);
-    });
+    } else
+      keyPairs.forEach(([fromKey, toKey]) => {
+        // "*-<id>" means "all outputs from <id>" and comes from using a node in a
+        // spread, e.g. newNode({ ...node, $id: "id" }
+        if (fromKey.startsWith("*-")) fromKey = toKey = "*";
+
+        const edge: EdgeImpl = {
+          to: this as unknown as NodeImpl,
+          from,
+          out: fromKey,
+          in: toKey,
+        };
+
+        if (constant) edge.constant = true;
+
+        this.incoming.push(edge);
+        from.outgoing.push(edge);
+      });
   }
 
-  receiveInputs(inputs: Partial<I>, from: NodeImpl) {
-    this.#inputs = { ...this.#inputs, ...inputs };
-    this.#receivedFrom.push(from);
+  receiveInputs(edge: EdgeImpl, inputs: InputValues) {
+    const data =
+      edge.out === "*"
+        ? inputs
+        : edge.out === ""
+        ? {}
+        : { [edge.in]: inputs[edge.out] };
+
+    if (edge.constant) this.#constants = { ...this.#constants, ...data };
+
+    this.#inputs = { ...this.#inputs, ...data };
+    this.#receivedFrom.push(edge.from);
   }
 
   /**
@@ -335,7 +365,10 @@ class NodeImpl<
         .map((edge) => edge.from)
     );
 
-    const presentKeys = new Set(Object.keys(this.#inputs));
+    const presentKeys = new Set([
+      ...Object.keys(this.#inputs),
+      ...Object.keys(this.#constants),
+    ]);
     const presentNodes = new Set(this.#receivedFrom);
 
     return (
@@ -366,7 +399,7 @@ class NodeImpl<
 
         this.#outputs = result;
 
-        this.#inputs = { ...this.configuration };
+        this.#inputs = { ...this.configuration, ...this.#constants };
         this.#receivedFrom = [];
 
         return result;
@@ -379,7 +412,7 @@ class NodeImpl<
   }
 
   async serialize(metadata?: GraphMetadata) {
-    return this.#runner.serialize(this, metadata);
+    return this.#runner.serialize(this as unknown as NodeImpl, metadata);
   }
 
   async serializeNode(): Promise<[NodeDescriptor, GraphDescriptor?]> {
@@ -410,11 +443,11 @@ class NodeImpl<
           // otherwise connect the returned node's outputs to the output node.
           if (result.unProxy().type === "output")
             return runner.serialize(result as unknown as NodeImpl);
-          outputNode.addInputAsNode(result.unProxy());
+          outputNode.addInputsFromNode(result.unProxy());
         } else if (isValue(result)) {
           // Wire up the value to the output node
           const value = isValue(result) as Value;
-          outputNode.addInputAsNode(...value.asNodeInput());
+          outputNode.addInputsFromNode(...value.asNodeInput());
         } else {
           // Otherwise wire up all keys of the returned object to the output.
           let output = await result;
@@ -428,14 +461,16 @@ class NodeImpl<
           // Refactor to merge with similar code in constructor
           Object.keys(output).forEach((key) =>
             isValue(output[key])
-              ? outputNode.addInputAsNode(
+              ? outputNode.addInputsFromNode(
                   ...(output[key] as Value).as(key).asNodeInput()
                 )
               : output[key] instanceof NodeImpl
-              ? outputNode.addInputAsNode(output[key] as NodeImpl, {
+              ? outputNode.addInputsFromNode(output[key] as NodeImpl, {
                   [key]: key,
                 })
-              : (outputNode.configuration[key] = output[key])
+              : (outputNode.configuration[key as keyof O] = output[
+                  key
+                ] as (typeof outputNode.configuration)[keyof O])
           );
         }
         return runner.serialize(outputNode as unknown as NodeImpl);
@@ -615,7 +650,7 @@ class NodeImpl<
 
     // TODO: Ideally we would look at the schema here and use * only if
     // the output is open ended and/or not all fields are present all the time.
-    toNode.addInputAsNode(this as unknown as NodeImpl, { "*": "*" });
+    toNode.addInputsFromNode(this as unknown as NodeImpl, { "*": "*" });
 
     return (toNode as NodeImpl<O & ToC, ToO>).asProxy();
   }
@@ -628,10 +663,10 @@ class NodeImpl<
   ) {
     if (inputs instanceof NodeImpl) {
       const node = inputs as NodeImpl<InputValues, OutputValues>;
-      this.addInputAsNode(node);
+      this.addInputsFromNode(node);
     } else if (isValue(inputs)) {
       const value = inputs as Value;
-      this.addInputAsNode(...value.asNodeInput());
+      this.addInputsFromNode(...value.asNodeInput());
     } else {
       const values = inputs as InputsMaybeAsValues<I>;
       this.addInputsAsValues(values);
@@ -676,16 +711,19 @@ class Value<T extends NodeValue = NodeValue>
   #node: NodeImpl<InputValues, OutputValue<T>>;
   #runner: Runner;
   #keymap: KeyMap;
+  #constant: boolean;
 
   constructor(
     node: NodeImpl<InputValues, OutputValue<T>>,
     runner: Runner,
-    keymap: string | KeyMap
+    keymap: string | KeyMap,
+    constant = false
   ) {
     this.#node = node;
     this.#runner = runner;
     this.#keymap = typeof keymap === "string" ? { [keymap]: keymap } : keymap;
     (this as unknown as { [key: symbol]: Value<T> })[IsValueSymbol] = this;
+    this.#constant = constant;
   }
 
   then<TResult1 = T | undefined, TResult2 = never>(
@@ -707,11 +745,13 @@ class Value<T extends NodeValue = NodeValue>
 
   asNodeInput(): [
     NodeImpl<InputValues, OutputValues>,
-    { [key: string]: string }
+    { [key: string]: string },
+    constant: boolean
   ] {
     return [
       this.#node.unProxy() as NodeImpl<InputValues, OutputValues>,
       this.#keymap,
+      this.#constant,
     ];
   }
 
@@ -734,11 +774,16 @@ class Value<T extends NodeValue = NodeValue>
             config as OutputValue<T> & ToC
           );
 
-    toNode.addInputAsNode(this.#node as unknown as NodeImpl, this.#keymap);
+    toNode.addInputsFromNode(
+      this.#node as unknown as NodeImpl,
+      this.#keymap,
+      this.#constant
+    );
 
     return (toNode as NodeImpl<OutputValue<T> & ToC, ToO>).asProxy();
   }
 
+  // TODO: Double check this, as it's acting on output types, not input types.
   in(inputs: NodeImpl<InputValues, OutputValues> | InputValues) {
     if (inputs instanceof NodeImpl || isValue(inputs)) {
       let invertedMap = Object.fromEntries(
@@ -747,9 +792,9 @@ class Value<T extends NodeValue = NodeValue>
       const asValue = isValue(inputs);
       if (asValue) {
         invertedMap = asValue.#remapKeys(invertedMap);
-        this.#node.addInputAsNode(asValue.#node, invertedMap);
+        this.#node.addInputsFromNode(asValue.#node, invertedMap);
       } else {
-        this.#node.addInputAsNode(inputs as NodeImpl, invertedMap);
+        this.#node.addInputsFromNode(inputs as NodeImpl, invertedMap);
       }
     } else {
       this.#node.addInputsAsValues(inputs);
@@ -766,7 +811,11 @@ class Value<T extends NodeValue = NodeValue>
       newMap = this.#remapKeys(newKey);
     }
 
-    return new Value(this.#node, this.#runner, newMap);
+    return new Value(this.#node, this.#runner, newMap, this.#constant);
+  }
+
+  memoize() {
+    return new Value(this.#node, this.#runner, this.#keymap, true);
   }
 
   #remapKeys(newKeys: KeyMap) {
@@ -846,9 +895,7 @@ export class Runner {
 
       // Distribute data to outgoing edges
       node.outgoing.forEach((edge) => {
-        const data =
-          edge.out === "*" ? result : { [edge.in]: result[edge.out] };
-        edge.to.receiveInputs(data, node);
+        edge.to.receiveInputs(edge, result);
 
         // If it's ready to run, add it to the queue
         if (edge.to.hasAllRequiredInputs()) queue.push(edge.to);
@@ -878,6 +925,7 @@ export class Runner {
         to: edge.to.id,
         out: edge.out,
         in: edge.in,
+        ...(edge.constant ? { constant: true } : {}),
       }))
     );
 
