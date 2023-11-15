@@ -147,28 +147,32 @@ const server = async (
   const result = resumeRun(request.value);
 
   const responses = responseStream.getWriter();
-  for await (const stop of runner.run(undefined, result)) {
-    if (stop.type === "input") {
-      const state = await stop.save();
-      responses.write(["input", stop, state]);
-      request = await requestReader.read();
-      if (request.done) {
-        responses.close();
-        return;
-      } else {
-        const [type, inputs] = request.value;
-        if (type === "input") {
-          stop.inputs = inputs.inputs;
+  try {
+    for await (const stop of runner.run(undefined, result)) {
+      if (stop.type === "input") {
+        const state = await stop.save();
+        await responses.write(["input", stop, state]);
+        request = await requestReader.read();
+        if (request.done) {
+          await responses.close();
+          return;
+        } else {
+          const [type, inputs] = request.value;
+          if (type === "input") {
+            stop.inputs = inputs.inputs;
+          }
         }
+      } else if (stop.type === "output") {
+        await responses.write(["output", stop]);
+      } else if (stop.type === "beforehandler") {
+        await responses.write(["beforehandler", stop]);
       }
-    } else if (stop.type === "output") {
-      responses.write(["output", stop]);
-    } else if (stop.type === "beforehandler") {
-      responses.write(["beforehandler", stop]);
     }
+    await responses.write(["end", {}]);
+    await responses.close();
+  } catch (e) {
+    await responses.abort(e);
   }
-  responses.write(["end", {}]);
-  responses.close();
 };
 
 test("Interruptible streaming", async (t) => {
@@ -280,17 +284,19 @@ test("Very simple runOnce client", async (t) => {
 
     let outputs;
 
-    requests.write(["run", {}]);
+    await requests.write(["run", {}]);
     for await (const response of responses) {
       const [type, , state] = response;
       if (type === "input") {
-        requests.write(["input", { inputs }, state]);
+        await requests.write(["input", { inputs }, state]);
       } else if (type === "output") {
         const [, output] = response;
         outputs = output.outputs;
-        // TODO: Figure out how to break here and close the streams.
+        break;
       }
     }
+    await responses.cancel();
+    await requests.close();
     return outputs;
   };
 
