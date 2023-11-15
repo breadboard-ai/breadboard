@@ -10,11 +10,13 @@ import {
   AnyRunRequestMessage,
   AnyRunResponseMessage,
   InputPromiseResponseMessage,
+  RunRequestStream,
   RunResponseStream,
 } from "../../src/remote/protocol.js";
 import { Board } from "../../src/board.js";
 import { TestKit } from "../helpers/_test-kit.js";
 import { RunResult } from "../../src/run.js";
+import { PatchedReadableStream } from "../../src/stream.js";
 
 test("Test transport interactions work", async (t) => {
   const clientTransport = new TestClient();
@@ -126,57 +128,54 @@ test("Prototyping bidirectional stream", async (t) => {
   const kit = board.addKit(TestKit);
   board.input({ foo: "bar" }).wire("*", kit.noop().wire("*", board.output()));
 
-  class Pipe {
-    pipe: TransformStream<AnyRunResponseMessage, AnyRunResponseMessage>;
-
-    constructor() {
-      this.pipe = new TransformStream();
-    }
-
-    getReadableStream(): RunResponseStream {
-      return this.pipe.readable as RunResponseStream;
-    }
-
-    renew() {
-      this.pipe = new TransformStream();
-    }
-
-    getWriter() {
-      return this.pipe.writable.getWriter();
-    }
-  }
-
-  const pipe = new Pipe();
-
   const clientTransport = new TestClient();
   clientTransport.setServer({
     load: async () => {
       throw t.fail("load should not be called");
     },
     run: async (request) => {
-      runServer(request);
-      return pipe.getReadableStream();
+      const requestPipe = new TransformStream<
+        AnyRunRequestMessage,
+        AnyRunRequestMessage
+      >();
+      const responsePipe = new TransformStream<
+        AnyRunResponseMessage,
+        AnyRunResponseMessage
+      >();
+      runBoard(
+        requestPipe.readable as PatchedReadableStream<AnyRunRequestMessage>,
+        responsePipe.writable
+      );
+      requestPipe.writable.getWriter().write(request);
+      return responsePipe.readable as RunResponseStream;
     },
     proxy: async () => {
       throw t.fail("proxy should not be called");
     },
   });
 
-  const runServer = async (request: AnyRunRequestMessage) => {
-    const [type, , state] = request;
+  const runBoard = async (
+    request: RunRequestStream,
+    response: WritableStream<AnyRunResponseMessage>
+  ) => {
+    const requestReader = request.getReader();
+    const value = (await requestReader.read()).value;
+    if (!value) {
+      throw new Error("No value");
+    }
+    const [type, , state] = value;
     const result = state ? RunResult.load(state) : undefined;
     if (result && type === "input") {
-      const [, inputs] = request;
+      const [, inputs] = value;
       result.inputs = inputs.inputs;
     }
 
-    const writer = pipe.getWriter();
+    const writer = response.getWriter();
     for await (const stop of board.run(undefined, result)) {
       if (stop.type === "input") {
         const state = await stop.save();
         writer.write(["input", stop, state]);
         writer.close();
-        pipe.renew();
         return;
       } else if (stop.type === "output") {
         writer.write(["output", stop]);

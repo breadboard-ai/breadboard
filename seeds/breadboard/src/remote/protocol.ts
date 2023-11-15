@@ -238,6 +238,7 @@ export type AnyRunResponseMessage =
   | ErrorResponseMessage;
 
 export type RunResponseStream = PatchedReadableStream<AnyRunResponseMessage>;
+export type RunRequestStream = PatchedReadableStream<AnyRunRequestMessage>;
 
 export interface Transport {
   load(request: LoadRequest): Promise<LoadResponse>;
