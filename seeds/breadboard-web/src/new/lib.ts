@@ -197,6 +197,8 @@ type KeyMap = { [key: string]: string };
 
 class AwaitWhileSerializing extends Error {}
 
+// TODO: Extract base class that isn't opinioanted about the syntax. Marking
+// methods that should be base as "TODO:BASE" below, including complications.
 class NodeImpl<
   I extends InputValues = InputValues,
   O extends OutputValues = OutputValues
@@ -221,6 +223,17 @@ class NodeImpl<
 
   #runner: Runner;
 
+  // TODO:BASE: The syntax specific one will
+  // - handle passing functions
+  // - extract the wires from the config
+  // - then call the original constructor
+  // - then add the wires
+  // - then add the spread value hack
+  // - then add the promises
+  //
+  // Open question: Is assigning of default ids something the base class does or
+  // should it error out if there isn't an id and require each syntax to define
+  // their own default id generation scheme?
   constructor(
     handler: NodeTypeIdentifier | NodeHandler<I, O>,
     runner: Runner,
@@ -310,8 +323,8 @@ class NodeImpl<
       from.outgoing.push(edge);
     } else
       keyPairs.forEach(([fromKey, toKey]) => {
-        // "*-<id>" means "all outputs from <id>" and comes from using a node in a
-        // spread, e.g. newNode({ ...node, $id: "id" }
+        // "*-<id>" means "all outputs from <id>" and comes from using a node in
+        // a spread, e.g. newNode({ ...node, $id: "id" }
         if (fromKey.startsWith("*-")) fromKey = toKey = "*";
 
         const edge: EdgeImpl = {
@@ -328,6 +341,7 @@ class NodeImpl<
       });
   }
 
+  // TODO:BASE (this shouldn't require any changes)
   receiveInputs(edge: EdgeImpl, inputs: InputValues) {
     const data =
       edge.out === "*"
@@ -342,6 +356,7 @@ class NodeImpl<
     this.#receivedFrom.push(edge.from);
   }
 
+  // TODO:BASE (this shouldn't require any changes)
   /**
    * Compute required inputs from edges and compare with present inputs
    *
@@ -378,6 +393,9 @@ class NodeImpl<
     );
   }
 
+  // TODO:BASE: In the end, we need to capture the outputs and resolve the
+  // promise. But before that there is a bit of refactoring to do to allow
+  // returning of graphs, parallel execution, etc.
   async invoke(): Promise<O> {
     const runner = new Runner(this.#runner);
     return runner.asRunnerFor(async () => {
@@ -389,6 +407,21 @@ class NodeImpl<
 
         // Note: The handler might actually return a graph (as a NodeProxy), and
         // so the await might triggers its execution. This is what we want.
+        //
+        // Awaiting here means that parallel execution isn't possible.
+        // TODO: Return a promise that knows how to do the rest. Make sure to
+        // never invoke the handler twice while it is running, though.
+        //
+        // TODO: What this should do instead is much closer to what the
+        // serialization code below does. It should:
+        //  - add an input node, assign the inputs to it
+        //  - call the handler with that input node's proxy (this gives it all
+        //    the values, but as promises) if it supports promises, otherwise
+        //    call it with the values directly.
+        //  - if the handler returns a node (i.e. a graph), and
+        //    - it isn't an output node, add an output node and wire it up
+        //    - execute the graph, and return the output node's outputs
+        //  - otherwise return the handler's return value as result.
         const result = await runner.asRunnerFor(handler)(
           this.#inputs as unknown as PromiseLike<I> & InputsMaybeAsValues<I>,
           this
@@ -399,6 +432,7 @@ class NodeImpl<
 
         this.#outputs = result;
 
+        // Clear inputs, reset with configuration and constants
         this.#inputs = { ...this.configuration, ...this.#constants };
         this.#receivedFrom = [];
 
@@ -411,10 +445,14 @@ class NodeImpl<
     })();
   }
 
+  // TODO:BASE
   async serialize(metadata?: GraphMetadata) {
     return this.#runner.serialize(this as unknown as NodeImpl, metadata);
   }
 
+  // TODO:BASE Special casing the function case (which is most of the code
+  // here), everything else is the same, but really just the first few lines
+  // here.
   async serializeNode(): Promise<[NodeDescriptor, GraphDescriptor?]> {
     const node = {
       id: this.id,
@@ -836,9 +874,11 @@ interface RunnerConfig {
   serialize: boolean;
 }
 
+// TODO:BASE (see NodeImpl for context)
 export class Runner {
   #config: RunnerConfig = { serialize: false };
 
+  // TODO:BASE, config of subclasses can have more fields
   constructor(runner?: Runner, config?: RunnerConfig) {
     if (runner) {
       // TODO, e.g. this.#parent = runner;
@@ -878,6 +918,7 @@ export class Runner {
     return node.asProxy();
   }
 
+  // TODO:BASE - and really this should implement .run() and .runOnce()
   async invoke(node: NodeImpl) {
     const queue: NodeImpl[] = this.#findAllConnectedNodes(node).filter((node) =>
       node.hasAllRequiredInputs()
@@ -903,6 +944,7 @@ export class Runner {
     }
   }
 
+  // TODO:BASE, should be complete.
   async serialize(
     node: NodeImpl,
     metadata?: GraphMetadata
@@ -932,6 +974,8 @@ export class Runner {
     return { ...metadata, edges, nodes, graphs };
   }
 
+  // TODO:BASE, this is needed for our syntax so that it can call handlers in
+  // serialization mode. Should this be part of the base class? Probably not.
   serializing() {
     return this.#config.serialize;
   }
