@@ -230,37 +230,39 @@ test("Continuous streaming", async (t) => {
   const kit = board.addKit(TestKit);
   board.input({ foo: "bar" }).wire("*", kit.noop().wire("*", board.output()));
 
-  const run = async (request: AnyRunRequestMessage) => {
-    const requestPipe = new TransformStream<
-      AnyRunRequestMessage,
-      AnyRunRequestMessage
-    >();
-    const responsePipe = new TransformStream<
-      AnyRunResponseMessage,
-      AnyRunResponseMessage
-    >();
-    runBoard(
-      board,
-      requestPipe.readable as PatchedReadableStream<AnyRunRequestMessage>,
-      responsePipe.writable
-    );
-    const writer = requestPipe.writable.getWriter();
-    writer.write(request);
-    writer.write(["input", { inputs: { hello: "world" } }, ""]);
-    writer.close();
-    return responsePipe.readable as RunResponseStream;
-  };
+  const requestPipe = new TransformStream<
+    AnyRunRequestMessage,
+    AnyRunRequestMessage
+  >();
+  const responsePipe = new TransformStream<
+    AnyRunResponseMessage,
+    AnyRunResponseMessage
+  >();
+  runBoard(
+    board,
+    requestPipe.readable as PatchedReadableStream<AnyRunRequestMessage>,
+    responsePipe.writable
+  );
+  const writer = requestPipe.writable.getWriter();
+  const reader = responsePipe.readable.getReader();
 
-  const results = [];
-  const outputs = [];
-  for await (const result of await run(["run", {}])) {
-    results.push(result[0]);
-    const [type] = result;
-    if (type === "output") {
-      const [, output] = result;
-      outputs.push(output.outputs);
-    }
-  }
-  t.deepEqual(results, ["input", "beforehandler", "output", "end"]);
-  t.deepEqual(outputs, [{ hello: "world" }]);
+  writer.write(["run", {}]);
+  const firsResult = await reader.read();
+  t.assert(!firsResult.done);
+  t.like(firsResult.value, [
+    "input",
+    { node: { type: "input" }, inputArguments: { foo: "bar" } },
+  ]);
+  writer.write(["input", { inputs: { hello: "world" } }, ""]);
+  const secondResult = await reader.read();
+  t.assert(!secondResult.done);
+  t.like(secondResult.value, ["beforehandler", { node: { type: "noop" } }]);
+  const thirdResult = await reader.read();
+  t.assert(!thirdResult.done);
+  t.like(thirdResult.value, ["output", { outputs: { hello: "world" } }]);
+  const fourthResult = await reader.read();
+  t.assert(!fourthResult.done);
+  t.like(fourthResult.value, ["end", {}]);
+  const fifthResult = await reader.read();
+  t.assert(fifthResult.done);
 });
