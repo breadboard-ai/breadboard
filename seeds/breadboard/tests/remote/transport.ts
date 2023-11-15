@@ -133,7 +133,7 @@ const runBoard = async (
   let request = await requestReader.read();
   if (request.done) return;
 
-  const setInputs = (request: AnyRunRequestMessage) => {
+  const resumeRun = (request: AnyRunRequestMessage) => {
     const [type, , state] = request;
     const result = state ? RunResult.load(state) : undefined;
     if (result && type === "input") {
@@ -143,7 +143,7 @@ const runBoard = async (
     return result;
   };
 
-  const result = setInputs(request.value);
+  const result = resumeRun(request.value);
 
   const writer = responseStream.getWriter();
   for await (const stop of runner.run(undefined, result)) {
@@ -175,37 +175,28 @@ test("Interruptible streaming", async (t) => {
   const kit = board.addKit(TestKit);
   board.input({ foo: "bar" }).wire("*", kit.noop().wire("*", board.output()));
 
-  const clientTransport = new TestClient();
-  clientTransport.setServer({
-    load: async () => {
-      throw t.fail("load should not be called");
-    },
-    run: async (request) => {
-      const requestPipe = new TransformStream<
-        AnyRunRequestMessage,
-        AnyRunRequestMessage
-      >();
-      const responsePipe = new TransformStream<
-        AnyRunResponseMessage,
-        AnyRunResponseMessage
-      >();
-      runBoard(
-        board,
-        requestPipe.readable as PatchedReadableStream<AnyRunRequestMessage>,
-        responsePipe.writable
-      );
-      const writer = requestPipe.writable.getWriter();
-      writer.write(request);
-      writer.close();
-      return responsePipe.readable as RunResponseStream;
-    },
-    proxy: async () => {
-      throw t.fail("proxy should not be called");
-    },
-  });
+  const run = async (request: AnyRunRequestMessage) => {
+    const requestPipe = new TransformStream<
+      AnyRunRequestMessage,
+      AnyRunRequestMessage
+    >();
+    const responsePipe = new TransformStream<
+      AnyRunResponseMessage,
+      AnyRunResponseMessage
+    >();
+    runBoard(
+      board,
+      requestPipe.readable as PatchedReadableStream<AnyRunRequestMessage>,
+      responsePipe.writable
+    );
+    const writer = requestPipe.writable.getWriter();
+    writer.write(request);
+    writer.close();
+    return responsePipe.readable as RunResponseStream;
+  };
 
   let intermediateState;
-  for await (const result of await clientTransport.run(["run", {}])) {
+  for await (const result of await run(["run", {}])) {
     const [type, response, state] = result as InputPromiseResponseMessage;
     t.is(type, "input");
     t.is(response.node.type, "input");
@@ -215,7 +206,7 @@ test("Interruptible streaming", async (t) => {
   t.assert(intermediateState !== undefined);
   const secondRunResults = [];
   let outputs;
-  for await (const result of await clientTransport.run([
+  for await (const result of await run([
     "input",
     {
       inputs: { hello: "world" },
@@ -239,39 +230,30 @@ test("Continuous streaming", async (t) => {
   const kit = board.addKit(TestKit);
   board.input({ foo: "bar" }).wire("*", kit.noop().wire("*", board.output()));
 
-  const clientTransport = new TestClient();
-  clientTransport.setServer({
-    load: async () => {
-      throw t.fail("load should not be called");
-    },
-    run: async (request) => {
-      const requestPipe = new TransformStream<
-        AnyRunRequestMessage,
-        AnyRunRequestMessage
-      >();
-      const responsePipe = new TransformStream<
-        AnyRunResponseMessage,
-        AnyRunResponseMessage
-      >();
-      runBoard(
-        board,
-        requestPipe.readable as PatchedReadableStream<AnyRunRequestMessage>,
-        responsePipe.writable
-      );
-      const writer = requestPipe.writable.getWriter();
-      writer.write(request);
-      writer.write(["input", { inputs: { hello: "world" } }, ""]);
-      writer.close();
-      return responsePipe.readable as RunResponseStream;
-    },
-    proxy: async () => {
-      throw t.fail("proxy should not be called");
-    },
-  });
+  const run = async (request: AnyRunRequestMessage) => {
+    const requestPipe = new TransformStream<
+      AnyRunRequestMessage,
+      AnyRunRequestMessage
+    >();
+    const responsePipe = new TransformStream<
+      AnyRunResponseMessage,
+      AnyRunResponseMessage
+    >();
+    runBoard(
+      board,
+      requestPipe.readable as PatchedReadableStream<AnyRunRequestMessage>,
+      responsePipe.writable
+    );
+    const writer = requestPipe.writable.getWriter();
+    writer.write(request);
+    writer.write(["input", { inputs: { hello: "world" } }, ""]);
+    writer.close();
+    return responsePipe.readable as RunResponseStream;
+  };
 
   const results = [];
   const outputs = [];
-  for await (const result of await clientTransport.run(["run", {}])) {
+  for await (const result of await run(["run", {}])) {
     results.push(result[0]);
     const [type] = result;
     if (type === "output") {
