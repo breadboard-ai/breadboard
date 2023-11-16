@@ -124,6 +124,28 @@ test("A board run can feed into a transport", async (t) => {
   t.deepEqual(secondRunResults, ["beforehandler", "output", "end"]);
 });
 
+const identityTransport = () => {
+  const requestPipe = new TransformStream<
+    AnyRunRequestMessage,
+    AnyRunRequestMessage
+  >();
+  const responsePipe = new TransformStream<
+    AnyRunResponseMessage,
+    AnyRunResponseMessage
+  >();
+
+  return {
+    client: {
+      requests: requestPipe.writable,
+      responses: responsePipe.readable as RunResponseStream,
+    },
+    server: {
+      requests: requestPipe.readable as RunRequestStream,
+      responses: responsePipe.writable,
+    },
+  };
+};
+
 test("Interruptible streaming", async (t) => {
   const board = new Board();
   const kit = board.addKit(TestKit);
@@ -186,23 +208,12 @@ test("Continuous streaming", async (t) => {
   const kit = board.addKit(TestKit);
   board.input({ foo: "bar" }).wire("*", kit.noop().wire("*", board.output()));
 
-  const requestPipe = new TransformStream<
-    AnyRunRequestMessage,
-    AnyRunRequestMessage
-  >();
-  const responsePipe = new TransformStream<
-    AnyRunResponseMessage,
-    AnyRunResponseMessage
-  >();
-  server(
-    {
-      requests: requestPipe.readable as RunRequestStream,
-      responses: responsePipe.writable,
-    },
-    board
-  );
-  const writer = requestPipe.writable.getWriter();
-  const reader = responsePipe.readable.getReader();
+  const transport = identityTransport();
+
+  server(transport.server, board);
+  const { requests, responses } = transport.client;
+  const writer = requests.getWriter();
+  const reader = responses.getReader();
 
   writer.write(["run", {}]);
   const firsResult = await reader.read();
@@ -230,29 +241,11 @@ test("runOnce client can run once", async (t) => {
   const kit = board.addKit(TestKit);
   board.input({ foo: "bar" }).wire("*", kit.noop().wire("*", board.output()));
 
-  const requestPipe = new TransformStream<
-    AnyRunRequestMessage,
-    AnyRunRequestMessage
-  >();
-  const responsePipe = new TransformStream<
-    AnyRunResponseMessage,
-    AnyRunResponseMessage
-  >();
-  server(
-    {
-      requests: requestPipe.readable as RunRequestStream,
-      responses: responsePipe.writable,
-    },
-    board
-  );
+  const transport = identityTransport();
 
-  const outputs = await runOnceClient(
-    {
-      requests: requestPipe.writable,
-      responses: responsePipe.readable as RunResponseStream,
-    },
-    { hello: "world" }
-  );
+  server(transport.server, board);
+
+  const outputs = await runOnceClient(transport.client, { hello: "world" });
 
   t.deepEqual(outputs, { hello: "world" });
 });
