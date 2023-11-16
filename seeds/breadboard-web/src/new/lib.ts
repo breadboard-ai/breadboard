@@ -84,7 +84,9 @@ export function addNodeType<I extends InputValues, O extends OutputValues>(
   name: string,
   handler: NodeHandler<I, O>
 ): NodeFactory<I, O> {
-  getCurrentContextRunner().addHandler(name, handler as unknown as NodeHandler);
+  getCurrentContextRunner().addHandlers({
+    [name]: handler as unknown as NodeHandler,
+  });
   return ((config?: InputsMaybeAsValues<I>) => {
     return new NodeImpl(name, getCurrentContextRunner(), config).asProxy();
   }) as unknown as NodeFactory<I, O>;
@@ -222,7 +224,7 @@ class NodeImpl<
   incoming: EdgeImpl[] = [];
   configuration: Partial<I> = {};
 
-  #handler: NodeHandler<InputValues, OutputValues>;
+  #handler?: NodeHandler<InputValues, OutputValues>;
 
   #promise: Promise<O>;
   #resolve?: (value: O | PromiseLike<O>) => void;
@@ -257,9 +259,6 @@ class NodeImpl<
 
     if (typeof handler === "string") {
       this.type = handler;
-      const actualHandler = this.#runner.getHandler(handler);
-      if (!actualHandler) throw new Error(`Handler ${handler} not found`);
-      this.#handler = actualHandler;
     } else {
       this.type = "fn";
       this.#handler = handler as unknown as NodeHandler<
@@ -414,6 +413,12 @@ class NodeImpl<
     return { ...this.#inputs };
   }
 
+  #getHandlerFunction(runner: Runner) {
+    const handler = this.#handler ?? runner.getHandler(this.type);
+    if (!handler) throw new Error(`Handler ${this.type} not found`);
+    return typeof handler === "function" ? handler : handler.invoke;
+  }
+
   // TODO:BASE: In the end, we need to capture the outputs and resolve the
   // promise. But before that there is a bit of refactoring to do to allow
   // returning of graphs, parallel execution, etc.
@@ -423,9 +428,9 @@ class NodeImpl<
     );
     return runner.asRunnerFor(async () => {
       try {
-        const handler = (typeof this.#handler === "function"
-          ? this.#handler
-          : this.#handler.invoke) as unknown as NodeHandlerFunction<I, O>;
+        const handler = this.#getHandlerFunction(
+          runner
+        ) as unknown as NodeHandlerFunction<I, O>;
 
         // Note: The handler might actually return a graph (as a NodeProxy), and
         // so the await might triggers its execution. This is what we want.
@@ -488,9 +493,9 @@ class NodeImpl<
 
     const graph = await runner.asRunnerFor(async () => {
       try {
-        const handler = (typeof this.#handler === "function"
-          ? this.#handler
-          : this.#handler.invoke) as unknown as NodeHandlerFunction<I, O>;
+        const handler = this.#getHandlerFunction(
+          runner
+        ) as unknown as NodeHandlerFunction<I, O>;
 
         const inputNode = new NodeImpl<InputValues, I>("input", runner, {});
         const outputNode = new NodeImpl<O, O>("output", runner, {});
@@ -548,7 +553,7 @@ class NodeImpl<
     }
 
     // Else, serialize the handler itself and return a runJavascript node.
-    let code = this.#handler.toString();
+    let code = this.#handler?.toString() ?? ""; // The ?? is just for typescript
     let name = this.id.replace(/-/g, "_");
 
     const arrowFunctionRegex = /(?:async\s+)?(\w+|\([^)]*\))\s*=>\s*/;
@@ -912,8 +917,10 @@ export class Runner {
   }
 
   // TODO:BASE
-  addHandler(name: string, handler: NodeHandler<InputValues, OutputValues>) {
-    this.#handlers[name] = handler;
+  addHandlers(handlers: NodeHandlers) {
+    Object.entries(handlers).forEach(
+      ([name, handler]) => (this.#handlers[name] = handler)
+    );
   }
 
   // TODO:BASE
@@ -1150,11 +1157,7 @@ export class BoardRunner implements BreadboardRunner {
     kits,
   }: NodeHandlerContext): AsyncGenerator<BreadboardRunResult> {
     const runner = new Runner([this.#runner], { probe });
-    kits?.forEach((kit) =>
-      Object.entries(handlersFromKit(kit)).forEach(([name, handler]) =>
-        runner.addHandler(name, handler)
-      )
-    );
+    kits?.forEach((kit) => runner.addHandlers(handlersFromKit(kit)));
     for await (const result of runner.run(this.#anyNode as NodeImpl))
       yield result;
   }
