@@ -1,0 +1,166 @@
+{
+  "title": "New: The Search Summarizer Recipe",
+  "description": "A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.",
+  "version": "0.0.2",
+  "edges": [
+    {
+      "from": "generateText-68",
+      "to": "output-69",
+      "out": "completion",
+      "in": "text"
+    },
+    {
+      "from": "summarizing-template",
+      "to": "generateText-68",
+      "out": "prompt",
+      "in": "text"
+    },
+    {
+      "from": "secrets-67",
+      "to": "generateText-68",
+      "out": "PALM_KEY",
+      "in": "PALM_KEY"
+    },
+    {
+      "from": "input",
+      "to": "urlTemplate-64",
+      "out": "text",
+      "in": "query"
+    },
+    {
+      "from": "input",
+      "to": "summarizing-template",
+      "out": "text",
+      "in": "question"
+    },
+    {
+      "from": "jsonata-66",
+      "to": "summarizing-template",
+      "out": "result",
+      "in": "context"
+    },
+    {
+      "from": "urlTemplate-64",
+      "to": "fetch-65",
+      "out": "url",
+      "in": "url"
+    },
+    {
+      "from": "fetch-65",
+      "to": "jsonata-66",
+      "out": "response",
+      "in": "json"
+    },
+    {
+      "from": "secrets-62",
+      "to": "urlTemplate-64",
+      "out": "API_KEY",
+      "in": "API_KEY"
+    },
+    {
+      "from": "secrets-63",
+      "to": "urlTemplate-64",
+      "out": "GOOGLE_CSE_ID",
+      "in": "GOOGLE_CSE_ID"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-69",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Answer",
+              "description": "The answer to the query"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
+    },
+    {
+      "id": "generateText-68",
+      "type": "generateText",
+      "configuration": {}
+    },
+    {
+      "id": "summarizing-template",
+      "type": "promptTemplate",
+      "configuration": {
+        "template": "Use context below to answer this question:\n\n##Question:\n{{question}}\n\n## Context {{context}}\n\\n## Answer:\n"
+      }
+    },
+    {
+      "id": "secrets-67",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "PALM_KEY"
+        ]
+      }
+    },
+    {
+      "id": "input",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Query",
+              "description": "What would you like to search for?"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
+    },
+    {
+      "id": "jsonata-66",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "$join(items.snippet, '\n')"
+      }
+    },
+    {
+      "id": "urlTemplate-64",
+      "type": "urlTemplate",
+      "configuration": {
+        "template": "https://www.googleapis.com/customsearch/v1?key={API_KEY}&cx={GOOGLE_CSE_ID}&q={query}"
+      }
+    },
+    {
+      "id": "fetch-65",
+      "type": "fetch",
+      "configuration": {}
+    },
+    {
+      "id": "secrets-62",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "API_KEY"
+        ]
+      }
+    },
+    {
+      "id": "secrets-63",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "GOOGLE_CSE_ID"
+        ]
+      }
+    }
+  ],
+  "graphs": {}
+}

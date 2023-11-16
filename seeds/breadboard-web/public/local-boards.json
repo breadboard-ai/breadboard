@@ -32,6 +32,14 @@
     "url": "/graphs/new/math-inline-chain.json"
   },
   {
+    "title": "New: The Search Summarizer Recipe",
+    "url": "/graphs/new/search-summarize-as-action.json"
+  },
+  {
+    "title": "New: The Search Summarizer Recipe",
+    "url": "/graphs/new/search-summarize.json"
+  },
+  {
     "title": "New: Simple graph",
     "url": "/graphs/new/simple-graph.json"
   },

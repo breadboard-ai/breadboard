@@ -2,31 +2,31 @@
   "title": "New: Simple graph",
   "edges": [
     {
-      "from": "passthrough-54",
-      "to": "output-53",
+      "from": "passthrough-74",
+      "to": "output-73",
       "out": "foo",
       "in": "foo"
     },
     {
-      "from": "input-52",
-      "to": "passthrough-54",
+      "from": "input-72",
+      "to": "passthrough-74",
       "out": "*",
       "in": "*"
     }
   ],
   "nodes": [
     {
-      "id": "output-53",
+      "id": "output-73",
       "type": "output",
       "configuration": {}
     },
     {
-      "id": "passthrough-54",
+      "id": "passthrough-74",
       "type": "passthrough",
       "configuration": {}
     },
     {
-      "id": "input-52",
+      "id": "input-72",
       "type": "input",
       "configuration": {}
     }
