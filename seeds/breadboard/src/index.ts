@@ -43,6 +43,7 @@ export type {
   BreadboardNode,
   BreadboardCapability,
   BreadboardRunner,
+  BreadboardRunResult,
   NodeHandlerContext,
   OptionalIdConfiguration,
   NodeConfigurationConstructor,

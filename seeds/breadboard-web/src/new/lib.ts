@@ -8,11 +8,18 @@ import {
   GraphDescriptor,
   GraphMetadata,
   NodeDescriptor,
+  Edge,
   SubGraphs,
   Kit,
   KitConstructor,
   InputValues as OriginalInputValues,
+  OutputValues as OriginalOutputValues,
   NodeFactory as OriginalNodeFactory,
+  BoardRunner as OriginalBoardRunner,
+  BreadboardRunner,
+  BreadboardRunResult,
+  NodeHandlerContext,
+  BreadboardValidator,
 } from "@google-labs/breadboard";
 
 export type NodeValue =
@@ -53,7 +60,10 @@ export type NodeHandlerFunction<
   node: NodeImpl<I, O>
 ) => O | PromiseLike<O>;
 
-type NodeHandler<I extends InputValues, O extends OutputValues> =
+type NodeHandler<
+  I extends InputValues = InputValues,
+  O extends OutputValues = OutputValues
+> =
   | {
       invoke: NodeHandlerFunction<I, O>;
       // describe?: NodeDescriberFunction<I, O>;
@@ -66,8 +76,6 @@ type NodeHandlers = Record<
   NodeHandler<InputValues, OutputValues>
 >;
 
-const handlers: NodeHandlers = {};
-
 export type NodeFactory<I extends InputValues, O extends OutputValues> = (
   config?: NodeImpl<InputValues, I> | Value<NodeValue> | InputsMaybeAsValues<I>
 ) => NodeProxy<I, O>;
@@ -76,23 +84,11 @@ export function addNodeType<I extends InputValues, O extends OutputValues>(
   name: string,
   handler: NodeHandler<I, O>
 ): NodeFactory<I, O> {
-  (handlers[name] as unknown as NodeHandler<I, O>) = handler;
+  getCurrentContextRunner().addHandler(name, handler as unknown as NodeHandler);
   return ((config?: InputsMaybeAsValues<I>) => {
     return new NodeImpl(name, getCurrentContextRunner(), config).asProxy();
   }) as unknown as NodeFactory<I, O>;
 }
-
-const reservedWord: NodeHandlerFunction<
-  InputValues,
-  OutputValues
-> = async () => {
-  throw new Error("Reserved word handler should never be invoked");
-};
-
-export const base = {
-  input: addNodeType("input", reservedWord),
-  output: addNodeType("output", reservedWord),
-};
 
 export interface Serializeable {
   serialize(
@@ -118,22 +114,38 @@ export function action<
 }
 
 // Extracts handlers from kit and creates new kinds of nodes from them.
-export function addKit<T extends Kit>(ctr: KitConstructor<T>) {
+function handlersFromKit(kit: Kit): NodeHandlers {
+  return Object.fromEntries(
+    Object.entries(kit.handlers).map(([name, handler]) => {
+      const handlerFunction =
+        handler instanceof Function ? handler : handler.invoke;
+      return [
+        name,
+        {
+          invoke: async (inputs) => {
+            return handlerFunction(
+              (await inputs) as OriginalInputValues,
+              {}
+            ) as Promise<OutputValues>;
+          },
+        },
+      ];
+    })
+  );
+}
+
+// Extracts handlers from kits and creates node factorie for them.
+export function addKit<T extends Kit>(
+  ctr: KitConstructor<T>
+): { [key: string]: NodeFactory<InputValues, OutputValues> } {
   const kit = new ctr({} as unknown as OriginalNodeFactory);
-  const nodes = {} as { [key: string]: NodeFactory<InputValues, OutputValues> };
-  Object.entries(kit.handlers).forEach(([name, handler]) => {
-    const handlerFunction =
-      handler instanceof Function ? handler : handler.invoke;
-    nodes[name] = addNodeType(name, {
-      invoke: async (inputs) => {
-        return handlerFunction(
-          (await inputs) as OriginalInputValues,
-          {}
-        ) as Promise<OutputValues>;
-      },
-    });
-  });
-  return nodes;
+  const handlers = handlersFromKit(kit);
+  return Object.fromEntries(
+    Object.entries(handlers).map(([name, handler]) => [
+      name,
+      addNodeType(name, handler),
+    ])
+  );
 }
 
 export interface EdgeImpl<
@@ -210,7 +222,7 @@ class NodeImpl<
   incoming: EdgeImpl[] = [];
   configuration: Partial<I> = {};
 
-  #handler: NodeHandler<I, O>;
+  #handler: NodeHandler<InputValues, OutputValues>;
 
   #promise: Promise<O>;
   #resolve?: (value: O | PromiseLike<O>) => void;
@@ -244,12 +256,16 @@ class NodeImpl<
     this.#runner = runner;
 
     if (typeof handler === "string") {
-      if (!handlers[handler]) throw Error(`Handler ${handler} not found`);
       this.type = handler;
-      this.#handler = handlers[handler] as unknown as NodeHandler<I, O>;
+      const actualHandler = this.#runner.getHandler(handler);
+      if (!actualHandler) throw new Error(`Handler ${handler} not found`);
+      this.#handler = actualHandler;
     } else {
       this.type = "fn";
-      this.#handler = handler;
+      this.#handler = handler as unknown as NodeHandler<
+        InputValues,
+        OutputValues
+      >;
     }
 
     let id: string | undefined = undefined;
@@ -393,17 +409,23 @@ class NodeImpl<
     );
   }
 
+  // TODO:BASE
+  getInputs() {
+    return { ...this.#inputs };
+  }
+
   // TODO:BASE: In the end, we need to capture the outputs and resolve the
   // promise. But before that there is a bit of refactoring to do to allow
   // returning of graphs, parallel execution, etc.
-  async invoke(): Promise<O> {
-    const runner = new Runner(this.#runner);
+  async invoke(callingRunner?: Runner): Promise<O> {
+    const runner = new Runner(
+      callingRunner ? [callingRunner, this.#runner] : [this.#runner]
+    );
     return runner.asRunnerFor(async () => {
       try {
-        const handler =
-          typeof this.#handler === "function"
-            ? this.#handler
-            : this.#handler.invoke;
+        const handler = (typeof this.#handler === "function"
+          ? this.#handler
+          : this.#handler.invoke) as unknown as NodeHandlerFunction<I, O>;
 
         // Note: The handler might actually return a graph (as a NodeProxy), and
         // so the await might triggers its execution. This is what we want.
@@ -422,7 +444,7 @@ class NodeImpl<
         //    - it isn't an output node, add an output node and wire it up
         //    - execute the graph, and return the output node's outputs
         //  - otherwise return the handler's return value as result.
-        const result = await runner.asRunnerFor(handler)(
+        const result = await handler(
           this.#inputs as unknown as PromiseLike<I> & InputsMaybeAsValues<I>,
           this
         );
@@ -462,14 +484,13 @@ class NodeImpl<
 
     if (this.type !== "fn") return [node];
 
-    const runner = new Runner(this.#runner, { serialize: true });
+    const runner = new Runner([this.#runner], { serialize: true });
 
     const graph = await runner.asRunnerFor(async () => {
       try {
-        const handler =
-          typeof this.#handler === "function"
-            ? this.#handler
-            : this.#handler.invoke;
+        const handler = (typeof this.#handler === "function"
+          ? this.#handler
+          : this.#handler.invoke) as unknown as NodeHandlerFunction<I, O>;
 
         const inputNode = new NodeImpl<InputValues, I>("input", runner, {});
         const outputNode = new NodeImpl<O, O>("output", runner, {});
@@ -802,7 +823,7 @@ class Value<T extends NodeValue = NodeValue>
       | NodeTypeIdentifier
       | NodeHandler<OutputValue<T> & ToC, ToO>,
     config?: ToC
-  ) {
+  ): NodeProxy<OutputValue<T> & ToC, ToO> {
     const toNode =
       to instanceof NodeImpl
         ? to.unProxy()
@@ -871,21 +892,55 @@ class Value<T extends NodeValue = NodeValue>
 }
 
 interface RunnerConfig {
-  serialize: boolean;
+  serialize?: boolean;
+  probe?: EventTarget;
 }
 
 // TODO:BASE (see NodeImpl for context)
 export class Runner {
   #config: RunnerConfig = { serialize: false };
+  #parents?: Runner[];
+
+  #handlers: NodeHandlers = {};
 
   // TODO:BASE, config of subclasses can have more fields
-  constructor(runner?: Runner, config?: RunnerConfig) {
-    if (runner) {
-      // TODO, e.g. this.#parent = runner;
-    }
+  constructor(parents: Runner[] = [], config?: RunnerConfig) {
+    this.#parents = parents;
     if (config) {
       this.#config = { ...this.#config, ...config };
     }
+  }
+
+  // TODO:BASE
+  addHandler(name: string, handler: NodeHandler<InputValues, OutputValues>) {
+    this.#handlers[name] = handler;
+  }
+
+  // TODO:BASE
+  /**
+   * Finds handler by name
+   *
+   * Scans up the parent chain if not found in this runner. It's a depth-first
+   * search prioritizing the runners earlier in the list, by convention the
+   * calling runners before the declaration context runners.
+   *
+   * That is, if a graph is invoked with a specific set of kits, then those kits
+   * have precedence over kits declared when building the graphs. And kits
+   * declared by invoking graphs downstream have precedence over those declared
+   * upstream.
+   *
+   * @param name Name of the handler to retrieve
+   * @returns Handler or undefined
+   */
+  getHandler<
+    I extends InputValues = InputValues,
+    O extends OutputValues = OutputValues
+  >(name: string): NodeHandler<I, O> | undefined {
+    return (this.#handlers[name] ||
+      this.#parents?.reduce(
+        (result, parent) => result ?? parent.getHandler(name),
+        undefined as NodeHandler | undefined
+      )) as unknown as NodeHandler<I, O>;
   }
 
   /**
@@ -903,21 +958,6 @@ export class Runner {
     }) as T;
   }
 
-  flow<I extends InputValues, O extends OutputValues>(
-    nodeOrFunction: NodeImpl<I, O> | NodeHandlerFunction<I, O>,
-    config?: InputsMaybeAsValues<I>
-  ): NodeProxy<InputValues, OutputValues> {
-    const node =
-      nodeOrFunction instanceof NodeImpl
-        ? nodeOrFunction
-        : new NodeImpl(
-            nodeOrFunction as NodeHandlerFunction<I, O>,
-            this,
-            config
-          );
-    return node.asProxy();
-  }
-
   // TODO:BASE - and really this should implement .run() and .runOnce()
   async invoke(node: NodeImpl) {
     const queue: NodeImpl[] = this.#findAllConnectedNodes(node).filter((node) =>
@@ -932,7 +972,99 @@ export class Runner {
         throw new Error("Node in queue didn't have all required inputs. Bug.");
 
       // Invoke node
-      const result = await node.invoke();
+      const result = await node.invoke(this);
+
+      // Distribute data to outgoing edges
+      node.outgoing.forEach((edge) => {
+        edge.to.receiveInputs(edge, result);
+
+        // If it's ready to run, add it to the queue
+        if (edge.to.hasAllRequiredInputs()) queue.push(edge.to);
+      });
+    }
+  }
+
+  async *run(anyNode: NodeImpl) {
+    const queue: NodeImpl[] = this.#findAllConnectedNodes(anyNode).filter(
+      (node) => node.hasAllRequiredInputs()
+    );
+
+    while (queue.length) {
+      const node = queue.shift() as NodeImpl;
+
+      // Check if we have all inputs. This should always be the case.
+      if (!node.hasAllRequiredInputs())
+        throw new Error("Node in queue didn't have all required inputs. Bug.");
+
+      // Invoke node
+      let result: OutputValues;
+
+      const descriptor = {
+        id: node.id,
+        type: node.type,
+        configuration: node.configuration,
+      } as NodeDescriptor;
+      const inputs = node.getInputs() as OriginalInputValues;
+      const type =
+        node.type === "input"
+          ? "input"
+          : node.type === "output"
+          ? "output"
+          : "beforehandler";
+      const runResult: BreadboardRunResult = {
+        type,
+        node: descriptor,
+        inputArguments: inputs,
+        inputs: {},
+        outputs: inputs,
+        state: { skip: false } as unknown as BreadboardRunResult["state"],
+      };
+
+      if (type === "beforehandler") {
+        yield runResult;
+        const beforeHandlerDetail = {
+          descriptor,
+          inputs,
+          outputs: Promise.resolve({}),
+        };
+        const shouldInvokeHandler =
+          !this.#config.probe ||
+          this.#config.probe?.dispatchEvent(
+            // Using CustomEvent instead of ProbeEvent because not enough types
+            // are currently exported by breadboard, and I didn't want to change
+            // too much while prototyping. TODO: Fix this.
+            new CustomEvent("beforehandler", {
+              detail: beforeHandlerDetail,
+              cancelable: true,
+            })
+          );
+        if (shouldInvokeHandler) result = await node.invoke(this);
+        else result = (await beforeHandlerDetail.outputs) as OutputValues;
+        this.#config.probe?.dispatchEvent(
+          new CustomEvent("node", {
+            detail: { descriptor, inputs, outputs: result },
+            cancelable: true,
+          })
+        );
+      } else if (type === "input") {
+        yield runResult;
+        result = runResult.inputs as OutputValues;
+        this.#config.probe?.dispatchEvent(
+          new CustomEvent("input", {
+            detail: { descriptor, inputs, outputs: result },
+            cancelable: true,
+          })
+        );
+      } /* node.type === "output" */ else {
+        this.#config.probe?.dispatchEvent(
+          new CustomEvent("output", {
+            detail: { descriptor, inputs },
+            cancelable: true,
+          })
+        );
+        yield runResult;
+        result = {};
+      }
 
       // Distribute data to outgoing edges
       node.outgoing.forEach((edge) => {
@@ -997,6 +1129,131 @@ export class Runner {
 }
 
 /**
+ * Implements the old API, so that we can run old flows.
+ */
+export class BoardRunner implements BreadboardRunner {
+  kits: Kit[] = []; // No-op for now
+  edges: Edge[] = [];
+  nodes: NodeDescriptor[] = [];
+  args?: OriginalInputValues;
+
+  #runner: Runner;
+  #anyNode?: NodeImpl;
+
+  constructor() {
+    // Initialize Runner is call context of where the board is created
+    this.#runner = new Runner([getCurrentContextRunner()]);
+  }
+
+  async *run({
+    probe,
+    kits,
+  }: NodeHandlerContext): AsyncGenerator<BreadboardRunResult> {
+    const runner = new Runner([this.#runner], { probe });
+    kits?.forEach((kit) =>
+      Object.entries(handlersFromKit(kit)).forEach(([name, handler]) =>
+        runner.addHandler(name, handler)
+      )
+    );
+    for await (const result of runner.run(this.#anyNode as NodeImpl))
+      yield result;
+  }
+
+  // This is mostly copy & pasted from the original
+  async runOnce(
+    inputs: OriginalInputValues,
+    context?: NodeHandlerContext
+  ): Promise<OriginalOutputValues> {
+    const args = { ...inputs, ...this.args };
+
+    try {
+      let outputs: OriginalOutputValues = {};
+
+      for await (const result of this.run(context ?? {})) {
+        if (result.type === "input") {
+          // Pass the inputs to the board. If there are inputs bound to the board
+          // (e.g. from a lambda node that had incoming wires), they will
+          // overwrite supplied inputs.
+          result.inputs = args;
+        } else if (result.type === "output") {
+          outputs = result.outputs;
+          // Exit once we receive the first output.
+          break;
+        }
+      }
+      return outputs;
+    } catch (e) {
+      // Unwrap unhandled error (handled errors are just outputs of the board!)
+      if ((e as { cause: string }).cause)
+        return Promise.resolve({
+          $error: (e as { cause: string }).cause,
+        } as OriginalOutputValues);
+      else throw e;
+    }
+  }
+
+  addValidator(_: BreadboardValidator): void {
+    // TODO: Implement
+  }
+
+  static async fromNode(
+    node: NodeImpl,
+    metadata?: GraphMetadata
+  ): Promise<BoardRunner> {
+    const board = new BoardRunner();
+    Object.assign(board, await node.serialize(metadata));
+    board.#anyNode = node;
+    return board;
+  }
+
+  static async fromGraphDescriptor(
+    graph: GraphDescriptor
+  ): Promise<BoardRunner> {
+    const board = new BoardRunner();
+    board.nodes = graph.nodes;
+    board.edges = graph.edges;
+    board.args = graph.args;
+
+    const nodes = new Map<string, NodeImpl>();
+    graph.nodes.forEach((node) => {
+      const newNode = new NodeImpl(
+        node.type,
+        board.#runner,
+        node.configuration as InputValues
+      );
+      nodes.set(node.id, newNode);
+      if (!board.#anyNode) board.#anyNode = newNode;
+    });
+
+    graph.edges.forEach((edge) => {
+      const newEdge = {
+        from: nodes.get(edge.from),
+        to: nodes.get(edge.to),
+        out: edge.out,
+        in: edge.in,
+        constant: edge.constant,
+      } as EdgeImpl;
+      newEdge.from.outgoing.push(newEdge);
+      newEdge.to.incoming.push(newEdge);
+    });
+
+    return board;
+  }
+
+  static async load(
+    url: string,
+    options?: {
+      base?: string;
+      outerGraph?: GraphDescriptor;
+    }
+  ): Promise<BoardRunner> {
+    const graph = await OriginalBoardRunner.load(url, options);
+    const board = await BoardRunner.fromGraphDescriptor(graph);
+    return board;
+  }
+}
+
+/**
  * The following is inspired by zone.js, but much simpler, and crucially doesn't
  * require monkey patching.
  *
@@ -1038,10 +1295,17 @@ function swapCurrentContextRunner(runner: Runner) {
   return oldRunner;
 }
 
-// flow will execute in the current Runner's context:
-export const flow = <I extends InputValues, O extends OutputValues>(
-  nodeOrFunction: NodeImpl<I, O> | NodeHandlerFunction<I, O>,
-  config?: InputsMaybeAsValues<I>
-) => {
-  return getCurrentContextRunner().flow(nodeOrFunction, config);
+// Create the base kit:
+
+const reservedWord: NodeHandlerFunction<
+  InputValues,
+  OutputValues
+> = async () => {
+  throw new Error("Reserved word handler should never be invoked");
+};
+
+// These get added to the default runner defined above
+export const base = {
+  input: addNodeType("input", reservedWord),
+  output: addNodeType("output", reservedWord),
 };

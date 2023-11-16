@@ -9,8 +9,6 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { readdir } from "fs/promises";
 
-import { flow } from "./lib.js";
-
 config();
 
 const MODULE_DIR: string = path.dirname(fileURLToPath(import.meta.url));
@@ -27,7 +25,7 @@ for (const file of files) {
 
   const board = await import(`${PATH}/${file}`);
   const example = board.example;
-  const resultPromise = example ? flow(board.graph, example) : board.graph;
+  const resultPromise = example ? board.graph(example) : board.graph;
   try {
     console.log(await resultPromise);
   } catch (e) {

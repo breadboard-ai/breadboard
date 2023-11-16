@@ -35,6 +35,10 @@ export const llm = addKit(Starter) as unknown as {
     { template: string; [key: string]: NodeValue },
     { prompt: string }
   >;
+  urlTemplate: NodeFactory<
+    { template: string; [key: string]: NodeValue },
+    { url: string }
+  >;
   secrets: NodeFactory<{ keys: string[] }, { [k: string]: string }>;
   generateText: NodeFactory<
     { text: string; PALM_KEY: string },
@@ -52,5 +56,15 @@ export const llm = addKit(Starter) as unknown as {
   append: NodeFactory<
     { accumulator: NodeValue; [key: string]: NodeValue },
     { accumulator: NodeValue }
+  >;
+  fetch: NodeFactory<{ url: string }, { response: string }>;
+  jsonata: NodeFactory<
+    {
+      expression: string;
+      json: string;
+      raw: boolean;
+      [key: string]: NodeValue;
+    },
+    { result: string; [key: string]: NodeValue }
   >;
 };
