@@ -13,6 +13,7 @@
     { "path": "seeds/discovery-types" },
     { "path": "seeds/graph-playground" },
     { "path": "seeds/graph-integrity" },
+    { "path": "seeds/hello-world" },
     { "path": "seeds/llm-starter" },
     { "path": "seeds/node-nursery" },
     { "path": "seeds/node-nursery-web" },
