@@ -3,12 +3,17 @@ import asyncio
 from javascript import require, AsyncTask
 import json
 import sys
+import os
+project_path = os.path.dirname(__file__)
+sys.path.append(project_path)
 
 from breadboard import Board
 
+class LogProbe():
+  def dispatchEvent(self, probe_event):
+    print(f"Probe Event: {probe_event.__dict__}")
 
-async def main():
-  graph_path = sys.argv[1]
+async def main(graph_path: str):
   breadboard = await Board.load(graph_path)
 
   print("Let's traverse a graph!")
@@ -27,7 +32,8 @@ async def main():
             if len(props) > 0:
               first_prop = next(iter(props.values()))
               message = first_prop.get("description", message)
-          res.inputs = {"text": input(message+ "\n")}
+          user_input = input(message+ "\n")
+          res.inputs = {"text": user_input} if user_input else {"exit": True}
         elif res.type == "output":
           if res.outputs and res.outputs['text']:
             for key in res.outputs:
@@ -47,4 +53,5 @@ async def main():
     raise e
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    graph_path = sys.argv[1]
+    asyncio.run(main(graph_path))

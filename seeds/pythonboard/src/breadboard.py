@@ -113,7 +113,7 @@ class Board(GraphDescriptor):
       if result.skip:
         if probe:
           probe.dispatchEvent(
-            ProbeEvent("skip", descriptor.__dict__ | inputs | missingInputs)
+            ProbeEvent("skip", descriptor.__dict__ | inputs | {"missingInputs": missingInputs})
           )
         continue
 
@@ -166,19 +166,31 @@ class Board(GraphDescriptor):
           except TypeError as e:
             # This can occur when javascript object is empty.
             res = {}
+
+          if probe:
+            probe.dispatchEvent(
+              ProbeEvent("node", descriptor.__dict__ | inputs | res | {
+                "validatorMetadata": [validator.getValidatorMetadata(descriptor) for validator in self._validators]
+              })
+            )
           return res
         outputsPromise = await_js(handler, inputs)
       else:
+        async def await_awaitable(func, args):
+          if func is not None:
+            res = await func(args)
+          else:
+            res = args
+          if probe:
+            probe.dispatchEvent(
+              ProbeEvent("node", descriptor.__dict__ | inputs | res | {
+                "validatorMetadata": [validator.getValidatorMetadata(descriptor) for validator in self._validators]
+              })
+            )
+          return res
+        # TODO(kevxiao): Handle shouldInvokeHandler with probe
         outputsPromise = (
-            handler(inputs) if shouldInvokeHandler else wrap_future(beforehandlerDetail.outputs)
-        )
-
-      # TODO(kevxiao): should append probe.dispatchEvent to part of promise/awaitable instead of running now
-      if probe:
-        probe.dispatchEvent(
-          ProbeEvent("node", descriptor | inputs | outputsPromise | {
-            "validatorMetadata": [validator.getValidatorMetadata(descriptor) for validator in self._validators]
-          })
+            handler(inputs) # if shouldInvokeHandler else wrap_future(beforehandlerDetail["outputs"])
         )
 
       result.outputsPromise = outputsPromise

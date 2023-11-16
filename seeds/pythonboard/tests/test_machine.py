@@ -1,7 +1,9 @@
 import unittest
 import asyncio
+import os
 import sys
-sys.path.append("..")
+project_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.append(project_path)
 from src import util
 from src.traversal.state import MachineEdgeState
 from src.traversal.traversal_types import (
@@ -37,6 +39,7 @@ class TestGraphDescriptor(GraphDescriptor):
 
 class TestMachine(unittest.IsolatedAsyncioTestCase):
   async def _run_file(self, filename):
+    print(f"Testing {filename}")
     async with aiofiles.open(filename, 'r') as handle:
       # read the contents of the file
       data = await handle.read()
@@ -44,8 +47,8 @@ class TestMachine(unittest.IsolatedAsyncioTestCase):
       data = data.replace('"to":', '"next":')
       data = data.replace('"in":', '"input":')
       graph = TestGraphDescriptor.from_json(data)
-      if "skip" in graph.__dict__.get("title", []):
-        self.log("Skipped")
+      if "skip" in (graph.__dict__.get("title") or []):
+        print("Skipped")
         return
       machine = TraversalMachine(graph)
       outputs = []
