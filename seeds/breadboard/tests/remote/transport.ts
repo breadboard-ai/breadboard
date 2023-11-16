@@ -9,17 +9,15 @@ import { TestClient } from "../helpers/_test-transport.js";
 import {
   AnyRunRequestMessage,
   AnyRunResponseMessage,
-  ClientBidirectionalStream,
   InputPromiseResponseMessage,
   RunRequestStream,
   RunResponseStream,
-  ServerBidirectionalStream,
 } from "../../src/remote/protocol.js";
 import { Board } from "../../src/board.js";
 import { TestKit } from "../helpers/_test-kit.js";
 import { RunResult } from "../../src/run.js";
-import { BoardRunner } from "../../src/runner.js";
-import { InputValues } from "../../src/types.js";
+import { runOnceClient } from "../../src/remote/client.js";
+import { server } from "../../src/remote/server.js";
 
 test("Test transport interactions work", async (t) => {
   const clientTransport = new TestClient();
@@ -126,55 +124,6 @@ test("A board run can feed into a transport", async (t) => {
   t.deepEqual(secondRunResults, ["beforehandler", "output", "end"]);
 });
 
-const server = async (
-  stream: ServerBidirectionalStream,
-  runner: BoardRunner
-) => {
-  const requestReader = stream.requests.getReader();
-  let request = await requestReader.read();
-  if (request.done) return;
-
-  const resumeRun = (request: AnyRunRequestMessage) => {
-    const [type, , state] = request;
-    const result = state ? RunResult.load(state) : undefined;
-    if (result && type === "input") {
-      const [, inputs] = request;
-      result.inputs = inputs.inputs;
-    }
-    return result;
-  };
-
-  const result = resumeRun(request.value);
-
-  const responses = stream.responses.getWriter();
-  try {
-    for await (const stop of runner.run(undefined, result)) {
-      if (stop.type === "input") {
-        const state = await stop.save();
-        await responses.write(["input", stop, state]);
-        request = await requestReader.read();
-        if (request.done) {
-          await responses.close();
-          return;
-        } else {
-          const [type, inputs] = request.value;
-          if (type === "input") {
-            stop.inputs = inputs.inputs;
-          }
-        }
-      } else if (stop.type === "output") {
-        await responses.write(["output", stop]);
-      } else if (stop.type === "beforehandler") {
-        await responses.write(["beforehandler", stop]);
-      }
-    }
-    await responses.write(["end", {}]);
-    await responses.close();
-  } catch (e) {
-    await responses.abort(e);
-  }
-};
-
 test("Interruptible streaming", async (t) => {
   const board = new Board();
   const kit = board.addKit(TestKit);
@@ -276,32 +225,7 @@ test("Continuous streaming", async (t) => {
   t.assert(fifthResult.done);
 });
 
-test("Very simple runOnce client", async (t) => {
-  const runOnceClient = async (
-    stream: ClientBidirectionalStream,
-    inputs: InputValues
-  ) => {
-    const responses = stream.responses;
-    const requests = stream.requests.getWriter();
-
-    let outputs;
-
-    await requests.write(["run", {}]);
-    for await (const response of responses) {
-      const [type, , state] = response;
-      if (type === "input") {
-        await requests.write(["input", { inputs }, state]);
-      } else if (type === "output") {
-        const [, output] = response;
-        outputs = output.outputs;
-        break;
-      }
-    }
-    await responses.cancel();
-    await requests.close();
-    return outputs;
-  };
-
+test("runOnce client can run once", async (t) => {
   const board = new Board();
   const kit = board.addKit(TestKit);
   board.input({ foo: "bar" }).wire("*", kit.noop().wire("*", board.output()));
