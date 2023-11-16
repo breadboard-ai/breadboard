@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { type Schema } from "jsonschema";
+import { type Schema } from "../types.js";
 
 export type InputArgs = {
   schema: Schema;

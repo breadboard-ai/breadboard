@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { type Schema } from "jsonschema";
+import { type Schema } from "../types.js";
 import { StreamCapabilityType } from "../stream.js";
 
 export type OutputArgs = Record<string, unknown> & {

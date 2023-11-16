@@ -34,13 +34,7 @@ In your `tsconfig.json`, make sure to set module resolution to `nodenext` or `bu
 }
 ```
 
-You will also need to instal the `jsonschema` package for now:
-
-```bash
-npm install jsonschema
-```
-
-As the last step, install the `@google-labs/breadboard` package:
+Then, install the `@google-labs/breadboard` package:
 
 ```bash
 npm install @google-labs/breadboard
@@ -176,7 +170,7 @@ const addNode = kit
   .wire("b<-", board.input())
   .wire("->value", board.output());
 
-const result = await board.runOnce({a: 1, b: 2});
+const result = await board.runOnce({ a: 1, b: 2 });
 console.log(result);
 ```
 

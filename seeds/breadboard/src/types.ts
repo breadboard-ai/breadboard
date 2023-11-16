@@ -4,7 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Schema } from "jsonschema";
+export type Schema = {
+  title?: string;
+  description?: string;
+  type?: string | string[];
+  properties?: Record<string, Schema>;
+  required?: string[];
+  format?: string;
+  enum?: string[];
+  additionalProperties?: boolean | Schema;
+  items?: Schema | Schema[];
+};
 
 export interface Capability {
   readonly kind: string;
