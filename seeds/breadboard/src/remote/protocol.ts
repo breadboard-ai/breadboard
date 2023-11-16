@@ -239,9 +239,21 @@ export type AnyRunResponseMessage =
 
 export type RunResponseStream = PatchedReadableStream<AnyRunResponseMessage>;
 export type RunRequestStream = PatchedReadableStream<AnyRunRequestMessage>;
+export type WritableRunRequestStream = WritableStream<AnyRunRequestMessage>;
+export type WritableRunResponseStream = WritableStream<AnyRunResponseMessage>;
 
 export interface Transport {
   load(request: LoadRequest): Promise<LoadResponse>;
   run(request: AnyRunRequestMessage): Promise<RunResponseStream>;
   proxy(request: ProxyRequest): Promise<ProxyResponse>;
+}
+
+export interface ClientBidirectionalStream {
+  requests: WritableRunRequestStream;
+  responses: RunResponseStream;
+}
+
+export interface ServerBidirectionalStream {
+  requests: RunRequestStream;
+  responses: WritableRunResponseStream;
 }

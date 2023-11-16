@@ -9,14 +9,15 @@ import { TestClient } from "../helpers/_test-transport.js";
 import {
   AnyRunRequestMessage,
   AnyRunResponseMessage,
+  ClientBidirectionalStream,
   InputPromiseResponseMessage,
   RunRequestStream,
   RunResponseStream,
+  ServerBidirectionalStream,
 } from "../../src/remote/protocol.js";
 import { Board } from "../../src/board.js";
 import { TestKit } from "../helpers/_test-kit.js";
 import { RunResult } from "../../src/run.js";
-import { PatchedReadableStream } from "../../src/stream.js";
 import { BoardRunner } from "../../src/runner.js";
 import { InputValues } from "../../src/types.js";
 
@@ -126,11 +127,10 @@ test("A board run can feed into a transport", async (t) => {
 });
 
 const server = async (
-  runner: BoardRunner,
-  requestStream: RunRequestStream,
-  responseStream: WritableStream<AnyRunResponseMessage>
+  stream: ServerBidirectionalStream,
+  runner: BoardRunner
 ) => {
-  const requestReader = requestStream.getReader();
+  const requestReader = stream.requests.getReader();
   let request = await requestReader.read();
   if (request.done) return;
 
@@ -146,7 +146,7 @@ const server = async (
 
   const result = resumeRun(request.value);
 
-  const responses = responseStream.getWriter();
+  const responses = stream.responses.getWriter();
   try {
     for await (const stop of runner.run(undefined, result)) {
       if (stop.type === "input") {
@@ -190,9 +190,11 @@ test("Interruptible streaming", async (t) => {
       AnyRunResponseMessage
     >();
     server(
-      board,
-      requestPipe.readable as PatchedReadableStream<AnyRunRequestMessage>,
-      responsePipe.writable
+      {
+        requests: requestPipe.readable as RunRequestStream,
+        responses: responsePipe.writable,
+      },
+      board
     );
     const writer = requestPipe.writable.getWriter();
     writer.write(request);
@@ -244,9 +246,11 @@ test("Continuous streaming", async (t) => {
     AnyRunResponseMessage
   >();
   server(
-    board,
-    requestPipe.readable as PatchedReadableStream<AnyRunRequestMessage>,
-    responsePipe.writable
+    {
+      requests: requestPipe.readable as RunRequestStream,
+      responses: responsePipe.writable,
+    },
+    board
   );
   const writer = requestPipe.writable.getWriter();
   const reader = responsePipe.readable.getReader();
@@ -274,13 +278,11 @@ test("Continuous streaming", async (t) => {
 
 test("Very simple runOnce client", async (t) => {
   const runOnceClient = async (
-    requestStream: WritableStream<AnyRunRequestMessage>,
-    responseStream: ReadableStream<AnyRunResponseMessage>,
+    stream: ClientBidirectionalStream,
     inputs: InputValues
   ) => {
-    const responses =
-      responseStream as PatchedReadableStream<AnyRunResponseMessage>;
-    const requests = requestStream.getWriter();
+    const responses = stream.responses;
+    const requests = stream.requests.getWriter();
 
     let outputs;
 
@@ -313,14 +315,18 @@ test("Very simple runOnce client", async (t) => {
     AnyRunResponseMessage
   >();
   server(
-    board,
-    requestPipe.readable as PatchedReadableStream<AnyRunRequestMessage>,
-    responsePipe.writable
+    {
+      requests: requestPipe.readable as RunRequestStream,
+      responses: responsePipe.writable,
+    },
+    board
   );
 
   const outputs = await runOnceClient(
-    requestPipe.writable,
-    responsePipe.readable,
+    {
+      requests: requestPipe.writable,
+      responses: responsePipe.readable as RunResponseStream,
+    },
     { hello: "world" }
   );
 
