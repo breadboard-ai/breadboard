@@ -22,6 +22,9 @@ import {
   BreadboardValidator,
 } from "@google-labs/breadboard";
 
+// TODO:BASE: Same as before, but I added NodeFactory as base type, which is a
+// way to encapsulate boards, including lambdas (instead of BoardCapability).
+// Can keep it a capability, but this feels quite fundamental.
 export type NodeValue =
   | string
   | number
@@ -40,6 +43,7 @@ export type InputValues = { [key: string]: NodeValue };
 export type OutputValues = { [key: string]: NodeValue };
 type OutputValue<T> = Partial<{ [key: string]: T }>;
 
+// TODO:BASE: This is pure syntactic sugar and should _not_ be moved
 type InputsMaybeAsValues<
   T extends InputValues,
   NI extends InputValues = InputValues
@@ -52,6 +56,8 @@ type InputsMaybeAsValues<
     | NodeValue;
 };
 
+// TODO:BASE: Allowing inputs to be promises. In syntactic sugar this should
+// actually be a NodeProxy on an input node (which looks like a promise).
 export type NodeHandlerFunction<
   I extends InputValues,
   O extends OutputValues
@@ -60,6 +66,8 @@ export type NodeHandlerFunction<
   node: NodeImpl<I, O>
 ) => O | PromiseLike<O>;
 
+// TODO:BASE: New: Allow handlers to accepts inputs as a promise.
+// See also hack in handlersFromKit() below.
 type NodeHandler<
   I extends InputValues = InputValues,
   O extends OutputValues = OutputValues
@@ -67,7 +75,6 @@ type NodeHandler<
   | {
       invoke: NodeHandlerFunction<I, O>;
       // describe?: NodeDescriberFunction<I, O>;
-      acceptsPromises?: boolean;
     }
   | NodeHandlerFunction<I, O>; // Is assumed to accept promises
 
@@ -80,6 +87,10 @@ export type NodeFactory<I extends InputValues, O extends OutputValues> = (
   config?: NodeImpl<InputValues, I> | Value<NodeValue> | InputsMaybeAsValues<I>
 ) => NodeProxy<I, O>;
 
+// TODO:BASE: This does two things
+//   (1) register a handler with the runner
+//   (2) create a factory function for the node type
+// BASE should only be the first part, the second part should be in the syntax
 export function addNodeType<I extends InputValues, O extends OutputValues>(
   name: string,
   handler: NodeHandler<I, O>
@@ -115,7 +126,10 @@ export function action<
   return factory;
 }
 
-// Extracts handlers from kit and creates new kinds of nodes from them.
+// TODO:BASE: This is wraps classic handlers that expected resolved inputs
+// into something that accepts promises. We should either change all handlers
+// to support promises or add a flag or something to support either mode.
+// (Almost all handlers will immediately await, so it's a bit of a pain...)
 function handlersFromKit(kit: Kit): NodeHandlers {
   return Object.fromEntries(
     Object.entries(kit.handlers).map(([name, handler]) => {
@@ -150,6 +164,8 @@ export function addKit<T extends Kit>(
   );
 }
 
+// TODO:BASE This is almost `Edge`, except that it's references to nodes and not
+// node ids. Also optional is missing.
 export interface EdgeImpl<
   FromI extends InputValues = InputValues,
   FromO extends OutputValues = OutputValues,
@@ -163,6 +179,8 @@ export interface EdgeImpl<
   constant?: boolean;
 }
 
+// TODO:BASE: Decide whether this is part of the base or each syntactic layer
+// needs to figure out how to assign ids.
 let nodeIdCounter = 0;
 const getNextNodeId = (type: string) => {
   return `${type}-${nodeIdCounter++}`;
@@ -211,7 +229,7 @@ type KeyMap = { [key: string]: string };
 
 class AwaitWhileSerializing extends Error {}
 
-// TODO: Extract base class that isn't opinioanted about the syntax. Marking
+// TODO:BASE Extract base class that isn't opinioanted about the syntax. Marking
 // methods that should be base as "TODO:BASE" below, including complications.
 class NodeImpl<
   I extends InputValues = InputValues,
@@ -901,7 +919,7 @@ interface RunnerConfig {
   probe?: EventTarget;
 }
 
-// TODO:BASE (see NodeImpl for context)
+// TODO:BASE Maybe this should really be "Scope"?
 export class Runner {
   #config: RunnerConfig = { serialize: false };
   #parents?: Runner[];
@@ -991,6 +1009,7 @@ export class Runner {
     }
   }
 
+  // TODO:BASE
   async *run(anyNode: NodeImpl) {
     const queue: NodeImpl[] = this.#findAllConnectedNodes(anyNode).filter(
       (node) => node.hasAllRequiredInputs()
@@ -1136,7 +1155,8 @@ export class Runner {
 }
 
 /**
- * Implements the old API, so that we can run old flows.
+ * Implements the current API, so that we can run in existing Breadboard
+ * environments.
  */
 export class BoardRunner implements BreadboardRunner {
   kits: Kit[] = []; // No-op for now
