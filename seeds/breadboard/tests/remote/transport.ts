@@ -14,9 +14,9 @@ import {
 } from "../../src/remote/protocol.js";
 import { Board } from "../../src/board.js";
 import { TestKit } from "../helpers/_test-kit.js";
-import { runOnceClient } from "../../src/remote/client.js";
 import { server } from "../../src/remote/server.js";
 import { IdentityTransport } from "../helpers/_test-transport.js";
+import { Client } from "../../src/remote/client.js";
 
 test("Interruptible streaming", async (t) => {
   const board = new Board();
@@ -118,7 +118,9 @@ test("runOnce client can run once", async (t) => {
 
   server(transport.createServerStream(), board);
 
-  const outputs = await runOnceClient(transport.createClientStream(), {
+  const client = new Client(transport);
+
+  const outputs = await client.runOnce({
     hello: "world",
   });
 

@@ -476,8 +476,7 @@ export interface ProbeDetails {
  */
 export type ProbeEvent = CustomEvent<ProbeDetails>;
 
-export interface BreadboardRunner extends GraphDescriptor {
-  kits: Kit[]; // No longer optional
+export interface RunnerLike {
   run(
     context?: NodeHandlerContext,
     result?: BreadboardRunResult
@@ -486,6 +485,10 @@ export interface BreadboardRunner extends GraphDescriptor {
     inputs: InputValues,
     context?: NodeHandlerContext
   ): Promise<OutputValues>;
+}
+
+export interface BreadboardRunner extends GraphDescriptor, RunnerLike {
+  kits: Kit[]; // No longer optional
   addValidator(validator: BreadboardValidator): void;
 }
 
