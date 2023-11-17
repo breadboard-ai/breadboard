@@ -24,25 +24,13 @@ test("Interruptible streaming", async (t) => {
   board.input({ foo: "bar" }).wire("*", kit.noop().wire("*", board.output()));
 
   const run = async (request: AnyRunRequestMessage) => {
-    const requestPipe = new TransformStream<
-      AnyRunRequestMessage,
-      AnyRunRequestMessage
-    >();
-    const responsePipe = new TransformStream<
-      AnyRunResponseMessage,
-      AnyRunResponseMessage
-    >();
-    server(
-      {
-        readableRequests: requestPipe.readable as RunRequestStream,
-        writableResponses: responsePipe.writable,
-      },
-      board
-    );
-    const writer = requestPipe.writable.getWriter();
+    const transport = new IdentityTransport();
+    server(transport.createServerStream(), board);
+    const client = transport.createClientStream();
+    const writer = client.writableRequests.getWriter();
     writer.write(request);
     writer.close();
-    return responsePipe.readable as RunResponseStream;
+    return client.readableResponses;
   };
 
   let intermediateState;
