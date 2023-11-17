@@ -22,13 +22,13 @@ export const server = async (
   stream: ServerBidirectionalStream,
   runner: BoardRunner
 ) => {
-  const requestReader = stream.requests.getReader();
+  const requestReader = stream.readableRequests.getReader();
   let request = await requestReader.read();
   if (request.done) return;
 
   const result = resumeRun(request.value);
 
-  const responses = stream.responses.getWriter();
+  const responses = stream.writableResponses.getWriter();
   try {
     for await (const stop of runner.run(undefined, result)) {
       if (stop.type === "input") {

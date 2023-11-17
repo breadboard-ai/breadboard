@@ -11,8 +11,8 @@ export const runOnceClient = async (
   stream: ClientBidirectionalStream,
   inputs: InputValues
 ) => {
-  const responses = stream.responses;
-  const requests = stream.requests.getWriter();
+  const responses = stream.readableResponses;
+  const requests = stream.writableRequests.getWriter();
 
   let outputs;
 
