@@ -7,16 +7,13 @@
 import test from "ava";
 import {
   AnyRunRequestMessage,
-  AnyRunResponseMessage,
   InputPromiseResponseMessage,
-  RunRequestStream,
-  RunResponseStream,
 } from "../../src/remote/protocol.js";
 import { Board } from "../../src/board.js";
 import { TestKit } from "../helpers/_test-kit.js";
-import { server } from "../../src/remote/server.js";
 import { IdentityTransport } from "../helpers/_test-transport.js";
 import { Client } from "../../src/remote/client.js";
+import { Server } from "../../src/remote/server.js";
 
 test("Interruptible streaming", async (t) => {
   const board = new Board();
@@ -25,7 +22,8 @@ test("Interruptible streaming", async (t) => {
 
   const run = async (request: AnyRunRequestMessage) => {
     const transport = new IdentityTransport();
-    server(transport.createServerStream(), board);
+    const server = new Server(transport);
+    server.serve(board);
     const client = transport.createClientStream();
     const writer = client.writableRequests.getWriter();
     writer.write(request);
@@ -69,8 +67,8 @@ test("Continuous streaming", async (t) => {
   board.input({ foo: "bar" }).wire("*", kit.noop().wire("*", board.output()));
 
   const transport = new IdentityTransport();
-
-  server(transport.createServerStream(), board);
+  const server = new Server(transport);
+  server.serve(board);
   const { writableRequests: requests, readableResponses: responses } =
     transport.createClientStream();
   const writer = requests.getWriter();
@@ -103,11 +101,10 @@ test("runOnce client can run once", async (t) => {
   board.input({ foo: "bar" }).wire("*", kit.noop().wire("*", board.output()));
 
   const transport = new IdentityTransport();
-
-  server(transport.createServerStream(), board);
-
+  const server = new Server(transport);
   const client = new Client(transport);
 
+  server.serve(board);
   const outputs = await client.runOnce({
     hello: "world",
   });

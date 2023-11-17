@@ -24,9 +24,11 @@ export class Client implements RunnerLike {
     context?: NodeHandlerContext,
     result?: BreadboardRunResult
   ): AsyncGenerator<BreadboardRunResult> {
+    // TODO: Implement this.
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     yield result!;
   }
+
   async runOnce(
     inputs: InputValues,
     _context?: NodeHandlerContext
@@ -41,7 +43,6 @@ export class Client implements RunnerLike {
     for await (const response of responses) {
       const [type, , state] = response;
       if (type === "input") {
-        // TODO: Support interruptibility.
         await requests.write(["input", { inputs }, state]);
       } else if (type === "output") {
         const [, output] = response;
