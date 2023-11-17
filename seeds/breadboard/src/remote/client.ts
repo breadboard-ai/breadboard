@@ -89,18 +89,21 @@ export class Client implements RunnerLike {
     const requests = stream.writableRequests.getWriter();
 
     await requests.write(["run", {}]);
-    for await (const response of responses) {
-      const [type] = response;
-      if (type === "proxy") {
-        // TODO: Implement proxying.
-        throw new Error("Proxying is not yet implemented.");
-      } else if (type === "end") {
-        break;
+    try {
+      for await (const response of responses) {
+        const [type] = response;
+        if (type === "proxy") {
+          // TODO: Implement proxying.
+          throw new Error("Proxying is not yet implemented.");
+        } else if (type === "end") {
+          break;
+        }
+        yield new ClientRunResult(requests, response);
       }
-      yield new ClientRunResult(requests, response);
+    } finally {
+      await responses.cancel();
+      await requests.close();
     }
-    await responses.cancel();
-    await requests.close();
   }
 
   async runOnce(inputs: InputValues): Promise<OutputValues> {
