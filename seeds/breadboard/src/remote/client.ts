@@ -4,14 +4,77 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { RunResult } from "../run.js";
 import {
   BreadboardRunResult,
   InputValues,
-  NodeHandlerContext,
+  NodeDescriptor,
   OutputValues,
+  RunResultType,
   RunnerLike,
+  TraversalResult,
 } from "../types.js";
-import { ClientTransport } from "./protocol.js";
+import {
+  AnyRunRequestMessage,
+  AnyRunResponseMessage,
+  ClientTransport,
+} from "./protocol.js";
+
+type Writer = WritableStreamDefaultWriter<AnyRunRequestMessage>;
+
+class ClientRunResult implements BreadboardRunResult {
+  type: RunResultType;
+  node: NodeDescriptor;
+
+  #state?: string;
+  #inputArguments: InputValues = {};
+  #outputs: OutputValues = {};
+  #requests: Writer;
+
+  constructor(requests: Writer, response: AnyRunResponseMessage) {
+    this.#requests = requests;
+
+    const [type, data, state] = response;
+    this.#state = state;
+    this.type = type as RunResultType;
+    if (type === "error") {
+      throw new Error("Server experienced an error", { cause: data.error });
+    }
+    this.node = data.node;
+
+    if (type === "input") {
+      this.#inputArguments = data.inputArguments;
+    } else if (type === "output") {
+      this.#outputs = data.outputs;
+    }
+  }
+
+  #checkState() {
+    if (!this.#state) {
+      throw new Error("State was not supplied for this ClientRunResult.");
+    }
+  }
+
+  set inputs(inputs: InputValues) {
+    if (this.type !== "input") return;
+    this.#checkState();
+    this.#requests.write(["input", { inputs }, this.#state || ""]);
+  }
+
+  get outputs(): OutputValues {
+    return this.#outputs;
+  }
+
+  get inputArguments(): InputValues {
+    return this.#inputArguments;
+  }
+
+  get state(): TraversalResult {
+    this.#checkState();
+    const runResult = RunResult.load(this.#state || "");
+    return runResult.state;
+  }
+}
 
 export class Client implements RunnerLike {
   #transport: ClientTransport;
@@ -20,38 +83,38 @@ export class Client implements RunnerLike {
     this.#transport = clientTransport;
   }
 
-  async *run(
-    context?: NodeHandlerContext,
-    result?: BreadboardRunResult
-  ): AsyncGenerator<BreadboardRunResult> {
-    // TODO: Implement this.
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    yield result!;
-  }
-
-  async runOnce(
-    inputs: InputValues,
-    _context?: NodeHandlerContext
-  ): Promise<OutputValues> {
+  async *run(): AsyncGenerator<BreadboardRunResult> {
     const stream = this.#transport.createClientStream();
     const responses = stream.readableResponses;
     const requests = stream.writableRequests.getWriter();
 
-    let outputs;
-
     await requests.write(["run", {}]);
     for await (const response of responses) {
-      const [type, , state] = response;
-      if (type === "input") {
-        await requests.write(["input", { inputs }, state]);
-      } else if (type === "output") {
-        const [, output] = response;
-        outputs = output.outputs;
+      const [type] = response;
+      if (type === "proxy") {
+        // TODO: Implement proxying.
+        throw new Error("Proxying is not yet implemented.");
+      } else if (type === "end") {
         break;
       }
+      yield new ClientRunResult(requests, response);
     }
     await responses.cancel();
     await requests.close();
+  }
+
+  async runOnce(inputs: InputValues): Promise<OutputValues> {
+    let outputs;
+
+    for await (const stop of this.run()) {
+      if (stop.type === "input") {
+        stop.inputs = inputs;
+      } else if (stop.type === "output") {
+        outputs = stop.outputs;
+        break;
+      }
+    }
+
     return outputs || {};
   }
 }
