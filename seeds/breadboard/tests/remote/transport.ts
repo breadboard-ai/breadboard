@@ -108,9 +108,7 @@ test("runOnce client can run once", async (t) => {
   const client = new Client(transport);
 
   server.serve(board);
-  const outputs = await client.runOnce({
-    hello: "world",
-  });
+  const outputs = await client.runOnce({ hello: "world" });
 
   t.deepEqual(outputs, { hello: "world" });
 });

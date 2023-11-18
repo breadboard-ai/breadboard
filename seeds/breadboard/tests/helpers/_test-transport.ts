@@ -14,6 +14,7 @@ import {
   ServerBidirectionalStream,
   ServerTransport,
 } from "../../src/remote/protocol.js";
+import { PortStreams, portToStreams } from "../../src/stream.js";
 
 export class IdentityTransport implements ServerTransport, ClientTransport {
   #requestPipe = new TransformStream<
@@ -40,52 +41,9 @@ export class IdentityTransport implements ServerTransport, ClientTransport {
   }
 }
 
-interface MessagePortLike {
-  postMessage(message: unknown): void;
-  onmessage: ((ev: MessageEvent) => unknown) | null;
-}
-
-type Streams<Read, Write> = {
-  readable: ReadableStream<Read>;
-  writable: WritableStream<Write>;
-};
-
-const portToStreams = <Read, Write>(
-  tag: string,
-  port: MessagePortLike
-): Streams<Read, Write> => {
-  const readable = new ReadableStream<Read>({
-    start(controller) {
-      port.onmessage = (ev) => {
-        if (ev.data === null) {
-          controller.close();
-          return;
-        }
-        controller.enqueue(ev.data);
-      };
-    },
-    cancel() {
-      port.onmessage = null;
-    },
-  });
-  const writable = new WritableStream<Write>({
-    write(chunk) {
-      // TODO: Teach it handle streams.
-      port.postMessage(chunk);
-    },
-    close() {
-      port.postMessage(null);
-    },
-  });
-  return {
-    readable,
-    writable,
-  };
-};
-
 export class MockWorkerTransport implements ServerTransport, ClientTransport {
-  #workerStreams: Streams<AnyRunRequestMessage, AnyRunResponseMessage>;
-  #hostStreams: Streams<AnyRunResponseMessage, AnyRunRequestMessage>;
+  #workerStreams: PortStreams<AnyRunRequestMessage, AnyRunResponseMessage>;
+  #hostStreams: PortStreams<AnyRunResponseMessage, AnyRunRequestMessage>;
 
   constructor() {
     const channel = new MessageChannel();

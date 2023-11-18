@@ -58,6 +58,50 @@ export const getStreams = (value: NodeValue) => {
 
 export type PatchedReadableStream<T> = ReadableStream<T> & AsyncIterable<T>;
 
+interface MessagePortLike {
+  postMessage(message: unknown, transfer: Transferable[]): void;
+  onmessage: ((ev: MessageEvent) => unknown) | null;
+}
+
+export type PortStreams<Read, Write> = {
+  readable: ReadableStream<Read>;
+  writable: WritableStream<Write>;
+};
+
+export const portToStreams = <Read, Write>(
+  tag: string,
+  port: MessagePortLike
+): PortStreams<Read, Write> => {
+  const readable = new ReadableStream<Read>({
+    start(controller) {
+      port.onmessage = (ev) => {
+        if (ev.data === null) {
+          controller.close();
+          return;
+        }
+        controller.enqueue(ev.data);
+      };
+    },
+    cancel() {
+      port.onmessage = null;
+    },
+  });
+  const writable = new WritableStream<Write>({
+    write(chunk) {
+      const foundStreams: ReadableStream[] = [];
+      findStreams(chunk as NodeValue, foundStreams);
+      port.postMessage(chunk, foundStreams);
+    },
+    close() {
+      port.postMessage(null, []);
+    },
+  });
+  return {
+    readable,
+    writable,
+  };
+};
+
 // Polyfill to make ReadableStream async iterable
 // See https://bugs.chromium.org/p/chromium/issues/detail?id=929585
 export const patchReadableStream = () => {
