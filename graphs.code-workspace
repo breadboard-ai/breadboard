@@ -59,6 +59,9 @@
     {
       "name": "core-kit",
       "path": "seeds/core-kit"
+    },
+    {
+      "path": "seeds/palm-kit"
     }
   ],
   "settings": {}

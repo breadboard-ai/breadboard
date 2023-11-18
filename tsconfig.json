@@ -18,6 +18,7 @@
     { "path": "seeds/node-nursery" },
     { "path": "seeds/node-nursery-web" },
     { "path": "seeds/palm-lite" },
+    { "path": "seeds/palm-kit" },
     { "path": "seeds/pinecone-kit" },
     { "path": "seeds/web-demo" }
   ]
