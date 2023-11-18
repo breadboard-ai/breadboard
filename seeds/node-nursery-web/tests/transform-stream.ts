@@ -51,6 +51,27 @@ test("transform stream noop", async (t) => {
   t.deepEqual(results, [1, 2, 3]);
 });
 
+test("transform stream noop with text decoding", async (t) => {
+  const stream = new ReadableStream({
+    start(controller) {
+      const encoder = new TextEncoder();
+      controller.enqueue(encoder.encode("one"));
+      controller.enqueue(encoder.encode("two"));
+      controller.enqueue(encoder.encode("three"));
+      controller.close();
+    },
+  });
+  const inputs: TransformStreamInputs = {
+    stream: new StreamCapability(stream),
+    decode: true,
+  };
+  const outputs = (await callHandler(transformStream, inputs, {})) as {
+    stream: StreamCapabilityType<number>;
+  };
+  const results = await toArray<number>(outputs.stream.stream);
+  t.deepEqual(results, ["one", "two", "three"]);
+});
+
 test("transform stream with a board", async (t) => {
   const board = new Board();
   board.input().wire("chunk->", board.output());
