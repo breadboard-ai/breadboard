@@ -69,7 +69,6 @@ export type PortStreams<Read, Write> = {
 };
 
 export const portToStreams = <Read, Write>(
-  tag: string,
   port: MessagePortLike
 ): PortStreams<Read, Write> => {
   const readable = new ReadableStream<Read>({

@@ -47,8 +47,8 @@ export class MockWorkerTransport implements ServerTransport, ClientTransport {
 
   constructor() {
     const channel = new MessageChannel();
-    this.#workerStreams = portToStreams("worker", channel.port1);
-    this.#hostStreams = portToStreams("host", channel.port2);
+    this.#workerStreams = portToStreams(channel.port1);
+    this.#hostStreams = portToStreams(channel.port2);
   }
 
   createClientStream(): ClientBidirectionalStream {
