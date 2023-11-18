@@ -6,6 +6,7 @@
 
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
+import { Core } from "@google-labs/core-kit";
 
 const board = new Board({
   title: "Endless Debate",
@@ -14,10 +15,11 @@ const board = new Board({
   version: "0.0.1",
 });
 const kit = board.addKit(Starter);
+const core = board.addKit(Core);
 
-const rememberFriedrich = kit.append({ $id: "rememberFriedrich" });
-const rememberAlbert = kit.append({ $id: "rememberAlbert" });
-const rememberQuestion = kit.append({ $id: "rememberQuestion" });
+const rememberFriedrich = core.append({ $id: "rememberFriedrich" });
+const rememberAlbert = core.append({ $id: "rememberAlbert" });
+const rememberQuestion = core.append({ $id: "rememberQuestion" });
 
 rememberQuestion.wire("accumulator->", rememberAlbert);
 rememberAlbert.wire("accumulator->", rememberFriedrich);

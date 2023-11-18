@@ -35,9 +35,9 @@ const epiloguePrompt = kit.promptTemplate(
   ...(await maker.prompt("order-agent-epilogue", "orderAgentEpilogue"))
 );
 
-const customerMemory = kit.append({ $id: "customerMemory" });
-const agentMemory = kit.append({ $id: "agentMemory" });
-const toolMemory = kit.append({ $id: "toolMemory" });
+const customerMemory = core.append({ $id: "customerMemory" });
+const agentMemory = core.append({ $id: "agentMemory" });
+const toolMemory = core.append({ $id: "toolMemory" });
 
 core.passthrough({ accumulator: "\n" }).wire("accumulator->", customerMemory);
 customerMemory.wire("accumulator->", agentMemory);

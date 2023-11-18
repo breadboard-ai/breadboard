@@ -8,6 +8,79 @@ A [Breadboard](https://github.com/google/labs-prototypes/tree/main/seeds/breadbo
 
 This kit contains the following nodes:
 
+## The `append` node
+
+Use this node to accumulate local state, like context in a prompt.
+
+The node looks for property called `accumulator` in its input. All other properties are appended to this property, and returned as `accumulator` output property.
+
+The way the properties are appended depends on the type of the `accumulator` input property.
+
+If the `accumulator` property is "string-ey" (that is, it's a `string`, `number`, `boolean`, `bigint`, `null` or `undefined`), the properties will be appended as strings, formatted as `{{property_name}}: {{proprety_value}}` and joined with "`\n`".
+
+If the `accumulator` property is an array, the properties will be appended as array items, formatted as `{{property_name}}: {{proprety_value}}`,
+
+Otherwise, the `accumulator` property will be treated as an object and the properties will be added as properties on this object.
+
+### Example
+
+If we send the `append` node an input of `Question` with the value of `How old is planet Earth?` and the `accumulator` value of `\n`:
+
+```json
+{
+  "accumulator": "\n",
+  "Question": "How old is planet Earth?"
+}
+```
+
+We will see the following output:
+
+```json
+{
+  "accumulator": "\n\nQuestion: How old is planet Earth?"
+}
+```
+
+If we send the node an input of `Question` with the value of `How old is planet Earth?` and the `accumulator` value of `[]`:
+
+```json
+{
+  "accumulator": [],
+  "Question": "How old is planet Earth?"
+}
+```
+
+We will get the output:
+
+```json
+{
+  "accumulator": ["Question: How old is planet Earth?"]
+}
+```
+
+If we send the node an input of `Question` with the value of `How old is planet Earth?` and the `accumulator` value of `{}`:
+
+```json
+{
+  "accumulator": {},
+  "Question": "How old is planet Earth?"
+}
+```
+
+We'll get the output of:
+
+```json
+{
+  "accumulator": {
+    "Question": "How old is planet Earth?"
+  }
+}
+```
+
+#### Implementation:
+
+- [src/nodes/append.ts](src/nodes/append.ts)
+
 ## The `passthrough` node
 
 This is a no-op node. It takes the input property bag and passes it along as output, unmodified. This node can be useful when the board needs an entry point, but the rest of the board forms a cycle.

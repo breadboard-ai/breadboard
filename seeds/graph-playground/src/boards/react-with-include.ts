@@ -64,7 +64,7 @@ const reActTemplate = kit
 // to append it to the memory.
 // This node wires directly to the `reActTemplate` node,
 // since it's at the end of our order.
-const rememberObservation = kit
+const rememberObservation = core
   .append({ $id: "rememberObservation" })
   .wire("accumulator->memory", reActTemplate);
 
@@ -72,7 +72,7 @@ const rememberObservation = kit
 // to append it to the memory.
 // Notice how the `accumulator` is wired in a cycle with the
 // `rememberObservation` node. This is what allows ordering in a cycle.
-const rememberThought = kit
+const rememberThought = core
   .append({ $id: "rememberThought" })
   .wire("accumulator->", rememberObservation)
   .wire("accumulator<-", rememberObservation);
@@ -84,7 +84,7 @@ const rememberThought = kit
 // We also wire its accumulator to the `reActTemplate` node for the same
 // reason: when the first iteration starts, there aren't any thoughts or
 // observations yet.
-const rememberQuestion = kit
+const rememberQuestion = core
   .append({ $id: "rememberQuestion" })
   .wire("accumulator->", rememberThought)
   .wire("accumulator->memory", reActTemplate);

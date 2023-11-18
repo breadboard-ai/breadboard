@@ -9,7 +9,7 @@ import append, {
   ObjectType,
   getObjectType,
   computeInputSchema,
-} from "../../src/nodes/append.js";
+} from "../src/nodes/append.js";
 
 test("getObjectType correctly recognizes various object types", (t) => {
   t.is(getObjectType("string"), ObjectType.stringy);

@@ -13,7 +13,8 @@ const PINECONE_BATCH_SIZE = 40;
 
 const generateEmbeddings: LambdaFunction = (board, input, output) => {
   const starter = board.addKit(Starter);
-  const merge = starter.append({ $id: "merge" });
+  const core = board.addKit(Core);
+  const merge = core.append({ $id: "merge" });
   input
     .wire(
       "item->json",

@@ -37,11 +37,9 @@ import runJavascript, {
   RunJavascriptInputs,
   RunJavascriptOutputs,
 } from "./nodes/run-javascript.js";
-import append, { AppendInputs, AppendOutputs } from "./nodes/append.js";
 import secrets, { SecretInputs } from "./nodes/secrets.js";
 
 const coreHandlers = {
-  append,
   jsonata,
   secrets,
   fetch,
@@ -81,12 +79,6 @@ export class Starter implements Kit {
   ): BreadboardNode<Inputs, Outputs> {
     const { $id, ...rest } = config;
     return this.#nodeFactory.create(this, type, rest, $id);
-  }
-
-  append<In = AppendInputs>(
-    config: OptionalIdConfiguration = {}
-  ): BreadboardNode<In, AppendOutputs> {
-    return this.#create("append", config);
   }
 
   promptTemplate<In = InputValues>(

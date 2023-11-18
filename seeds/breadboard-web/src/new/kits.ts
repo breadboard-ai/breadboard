@@ -27,6 +27,10 @@ export { base };
 
 export const core = addKit(Core) as unknown as {
   passthrough: NodeFactory<InputValues, OutputValues>;
+  append: NodeFactory<
+    { accumulator: NodeValue; [key: string]: NodeValue },
+    { accumulator: NodeValue }
+  >;
   // TODO: Other Core nodes.
 };
 
@@ -52,10 +56,6 @@ export const llm = addKit(Starter) as unknown as {
       [key: string]: NodeValue;
     },
     { result: NodeValue; [k: string]: NodeValue }
-  >;
-  append: NodeFactory<
-    { accumulator: NodeValue; [key: string]: NodeValue },
-    { accumulator: NodeValue }
   >;
   fetch: NodeFactory<{ url: string }, { response: string }>;
   jsonata: NodeFactory<

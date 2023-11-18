@@ -14,6 +14,7 @@ import reflect from "./nodes/reflect.js";
 import slot from "./nodes/slot.js";
 import map from "./nodes/map.js";
 import batch from "./nodes/batch.js";
+import append from "./nodes/append.js";
 
 const builder = new KitBuilder({
   title: "Core Kit",
@@ -122,6 +123,32 @@ export const Core = builder.build({
    * @returns - a `Node` object that represents the placed node.
    */
   slot,
+
+  /**
+   * Use this node to accumulate local state, like context in a prompt.
+   *
+   * The node looks for property called `accumulator` in its input. All other
+   * properties are appended to this property, and returned as `accumulator`
+   * output property.
+   *
+   * The way the properties are appended depends on the type of the
+   * `accumulator` input property.
+   *
+   * If the `accumulator` property is "string-ey" (that is, it's a `string`,
+   * `number`, `boolean`, `bigint`, `null` or `undefined`), the properties will
+   * be appended as strings, formatted as
+   * `{{property_name}}: {{proprety_value}}` and joined with "`\n`".
+   *
+   * If the `accumulator` property is an array, the properties will be appended
+   * as array items, formatted as `{{property_name}}: {{proprety_value}}`.
+   *
+   * Otherwise, the `accumulator` property will be treated as an object and
+   * the properties will be added as properties on this object.
+   *
+   * See [`append` node reference](https://github.com/google/labs-prototypes/blob/main/seeds/core-kit/README.md) for more information.
+   *
+   */
+  append,
 
   /**
    * Work-in-progress implementation of the `map` node.

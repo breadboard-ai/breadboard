@@ -31,7 +31,7 @@ const prompt = llm.promptTemplate({
   $id: "assistant",
 });
 
-const conversationMemory = llm.append({
+const conversationMemory = core.append({
   accumulator: "\n== Conversation History",
   user: input.text,
 });
