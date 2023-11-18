@@ -8,11 +8,13 @@ import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 import { ReActHelper } from "../react.js";
 import { Core } from "@google-labs/core-kit";
+import { PaLMKit } from "@google-labs/palm-kit";
 
 const board = new Board();
 const core = board.addKit(Core);
 const kit = board.addKit(Starter);
 const reAct = board.addKit(ReActHelper);
+const palm = board.addKit(PaLMKit);
 
 /**
  * This is a slight improvement on the plain (see `react.ts`) ReAct
@@ -109,7 +111,7 @@ board
 
 // The completion must include stop sentences, to prevent LLM form hallucinating
 // all answers.
-const reActCompletion = kit
+const reActCompletion = palm
   .generateText({
     stopSequences: ["\nObservation"],
     $id: "react-completion",

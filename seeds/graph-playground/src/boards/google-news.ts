@@ -6,9 +6,11 @@
 
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
+import { PaLMKit } from "@google-labs/palm-kit";
 
 const board = new Board();
 const kit = board.addKit(Starter);
+const palm = board.addKit(PaLMKit);
 
 const input = board.input({
   schema: {
@@ -49,7 +51,7 @@ input.wire(
                 .wire("topic<-text", input)
                 .wire(
                   "prompt->text",
-                  kit
+                  palm
                     .generateText()
                     .wire("<-PALM_KEY.", kit.secrets(["PALM_KEY"]))
                     .wire("completion->text", board.output())

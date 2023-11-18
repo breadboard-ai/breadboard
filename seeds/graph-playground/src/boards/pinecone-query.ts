@@ -7,6 +7,7 @@
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 import { Pinecone } from "@google-labs/pinecone-kit";
+import { PaLMKit } from "@google-labs/palm-kit";
 
 const board = new Board({
   title: "Retrieval-augmented generation with Pinecone",
@@ -16,6 +17,7 @@ const board = new Board({
 });
 const starter = board.addKit(Starter);
 const pinecone = board.addKit(Pinecone);
+const palm = board.addKit(PaLMKit);
 
 const template =
   starter.promptTemplate(`Analyze the question and the knowledge base, provided below.
@@ -50,7 +52,7 @@ board
   })
   .wire(
     "text->",
-    starter
+    palm
       .embedText()
       .wire("<-PALM_KEY", starter.secrets(["PALM_KEY"]))
       .wire(
@@ -69,7 +71,7 @@ board
 
 template.wire(
   "prompt->text",
-  starter
+  palm
     .generateText()
     .wire("<-PALM_KEY", starter.secrets(["PALM_KEY"]))
     .wire("completion->text", board.output({ $id: "rag" }))

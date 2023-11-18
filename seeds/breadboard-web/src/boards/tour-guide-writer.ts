@@ -7,6 +7,7 @@
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 import { Core } from "@google-labs/core-kit";
+import { PaLMKit } from "@google-labs/palm-kit";
 
 const board = new Board({
   title: "Tour Guide Writer",
@@ -16,6 +17,7 @@ const board = new Board({
 });
 const starter = board.addKit(Starter);
 const core = board.addKit(Core);
+const palm = board.addKit(PaLMKit);
 
 const location = board.input({
   $id: "location",
@@ -91,7 +93,7 @@ const travelItineraryTemplate = starter.promptTemplate(
   { $id: "travelItinerary" }
 );
 
-const travelItineraryGenerator = starter
+const travelItineraryGenerator = palm
   .generateText({
     $id: "travelItineraryGenerator",
     stopSequences: ["\n[Place]"],
@@ -113,6 +115,7 @@ const splitItinerary = starter.runJavascript("split", {
 // It then runs a sub-graph defined below for each item in the supplied list.
 const createGuides = core.map((board, input, output) => {
   const starter = board.addKit(Starter);
+  const palm = board.addKit(PaLMKit);
 
   const guideTemplate = starter.promptTemplate(
     `[City] Paris, France
@@ -135,7 +138,7 @@ const createGuides = core.map((board, input, output) => {
     { $id: "guideTemplate" }
   );
 
-  const guideGenerator = starter
+  const guideGenerator = palm
     .generateText({
       $id: "guideGenerator",
       stopSequences: ["\n[City]"],

@@ -8,23 +8,25 @@ import { writeFile } from "fs/promises";
 
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
+import { PaLMKit } from "@google-labs/palm-kit";
+import { Core } from "@google-labs/core-kit";
 
 import { config } from "dotenv";
 import { Template } from "./template.js";
-import { Core } from "@google-labs/core-kit";
 
 config();
 
 const board = new Board();
 const kit = board.addKit(Starter);
 const core = board.addKit(Core);
+const palm = board.addKit(PaLMKit);
 
 const template = await new Template("v1-multi-move", board, kit, core).make();
 board.input().wire(
   "user->",
   template.wire(
     "prompt->text",
-    kit
+    palm
       .generateText({
         safetySettings: [
           {

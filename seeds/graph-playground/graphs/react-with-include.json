@@ -207,6 +207,9 @@
     },
     {
       "url": "."
+    },
+    {
+      "url": "npm:@google-labs/palm-kit"
     }
   ]
 }

@@ -8,9 +8,10 @@ import { config } from "dotenv";
 
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
+import { Core } from "@google-labs/core-kit";
+import { PaLMKit } from "@google-labs/palm-kit";
 
 import { PromptMaker } from "./template.js";
-import { Core } from "@google-labs/core-kit";
 
 config();
 
@@ -18,6 +19,7 @@ const maker = new PromptMaker("v2-multi-agent");
 const board = new Board();
 const kit = board.addKit(Starter);
 const core = board.addKit(Core);
+const palm = board.addKit(PaLMKit);
 
 const menu = kit.promptTemplate(
   ...(await maker.prompt("menu-agent", "menuAgent"))
@@ -40,7 +42,7 @@ board.input().wire(
   "customer->",
   menu.wire(
     "prompt->text",
-    kit
+    palm
       .generateText({
         stopSequences: ["Customer:"],
       })

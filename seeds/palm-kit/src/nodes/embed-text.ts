@@ -15,7 +15,7 @@ import { EmbedTextResponse, palm } from "@google-labs/palm-lite";
 
 export type EmbedTextInputs = NodeValue & {
   /**
-   * Prompt for text completion.
+   * Text to embed.
    */
   text: string;
   /**

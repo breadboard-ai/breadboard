@@ -7,9 +7,10 @@
 import { type NodeValue, Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 import { Nursery } from "@google-labs/node-nursery";
+import { Core } from "@google-labs/core-kit";
+import { PaLMKit } from "@google-labs/palm-kit";
 
 import { PromptMaker } from "./template.js";
-import { Core } from "@google-labs/core-kit";
 
 const BASE = "v2-multi-agent";
 
@@ -24,6 +25,7 @@ const board = new Board({
 const core = board.addKit(Core);
 const kit = board.addKit(Starter);
 const nursery = board.addKit(Nursery);
+const palm = board.addKit(PaLMKit);
 
 // Inputs
 const prologue = core.passthrough({ $id: "prologue" });
@@ -126,7 +128,7 @@ const validateJson = nursery
   .wire("json->completion", $completion)
   .wire("$error->value", shouldRecover);
 
-const generator = kit
+const generator = palm
   .generateText({
     $id: "generator",
     stopSequences: ["Tool:", "Customer:", "\n\n"],

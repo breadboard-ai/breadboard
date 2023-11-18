@@ -6,6 +6,7 @@
 
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
+import { PaLMKit } from "@google-labs/palm-kit";
 
 const math = new Board({
   title: "The Calculator Recipe",
@@ -14,6 +15,7 @@ const math = new Board({
   version: "0.0.1",
 });
 const kit = math.addKit(Starter);
+const palm = math.addKit(PaLMKit);
 
 math
   .input({
@@ -39,7 +41,7 @@ math
       )
       .wire(
         "prompt->text",
-        kit
+        palm
           .generateText({ $id: "math-function-generator" })
           .wire(
             "completion->code",

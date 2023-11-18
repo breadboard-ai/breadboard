@@ -146,39 +146,6 @@ Will produce this output:
 
 - [src/nodes/secrets.ts](src/nodes/secrets.ts)
 
-### The `generateText` node
-
-This is a [PaLM API](https://developers.generativeai.google/) text completion node. This node is probably the main reason this starter kit exists. To produce useful output, the node needs a `PALM_KEY` input and the `text` input.
-
-#### Example:
-
-Given this input:
-
-```json
-{
-  "PALM_KEY": "<your API key>",
-  "text": "How old is planet Earth?"
-}
-```
-
-The node will produce this output:
-
-```json
-{
-  "completion": "It is about 4.5 billion years old."
-}
-```
-
-#### Inputs:
-
-- `PALM_KEY` required, must contain the Google Cloud Platform API key for the project has the "Generative Language API" API enabled.
-- `text` required, sent as the prompt for the completion.
-- `stopSequences` optional array of strings. These will be passed as the stop sequences to the completion API.
-
-#### Outputs:
-
-- `completion` - result of the PaLM API text completion.
-
 ### The `urlTemplate` node
 
 Use this node to safely construct URLs. It's similar in spirit to the `promptTemplate` node, except it ensures that the handlebar parameters are properly encoded as part of the URL. This node relies on the [URI template specification](https://tools.ietf.org/html/rfc6570) to construct URLs, so the syntax is using single curly braces instead of double curly braces.

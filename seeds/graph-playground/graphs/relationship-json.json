@@ -227,6 +227,9 @@
                 "url": "npm:@google-labs/llm-starter"
               },
               {
+                "url": "npm:@google-labs/palm-kit"
+              },
+              {
                 "url": "npm:@google-labs/node-nursery"
               }
             ]
@@ -266,6 +269,9 @@
     },
     {
       "url": "npm:@google-labs/node-nursery"
+    },
+    {
+      "url": "npm:@google-labs/palm-kit"
     }
   ]
 }

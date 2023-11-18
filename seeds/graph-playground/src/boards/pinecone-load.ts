@@ -8,19 +8,21 @@ import { Board, LambdaFunction } from "@google-labs/breadboard";
 import Core from "@google-labs/core-kit";
 import { Starter } from "@google-labs/llm-starter";
 import Pinecone from "@google-labs/pinecone-kit";
+import { PaLMKit } from "@google-labs/palm-kit";
 
 const PINECONE_BATCH_SIZE = 40;
 
 const generateEmbeddings: LambdaFunction = (board, input, output) => {
   const starter = board.addKit(Starter);
   const core = board.addKit(Core);
+  const palm = board.addKit(PaLMKit);
   const merge = core.append({ $id: "merge" });
   input
     .wire(
       "item->json",
       starter.jsonata("metadata.text").wire(
         "result->text",
-        starter
+        palm
           .embedText()
           .wire("embedding->", merge)
           .wire("<-PALM_KEY", starter.secrets(["PALM_KEY"]))

@@ -6,7 +6,7 @@
       "id": "fn-22",
       "type": "runJavascript",
       "configuration": {
-        "code": "async function fn_22(inputs) {return llm.promptTemplate({template:\"Is this question about math? Answer YES or NO.\\nQuestion: {{question}}\\nAnswer: \",question:inputs.question}).prompt.as(\"text\").to(llm.generateText({PALM_KEY:llm.secrets({keys:[\"PALM_KEY\"]}).PALM_KEY})).to(async inputs2=>{const{completion,math:math2,search:search2}=await inputs2;if(completion?.startsWith(\"YES\")){return math2({question:inputs2.question})}else{return search2(inputs2)}},{math,search})}",
+        "code": "async function fn_22(inputs) {return llm.promptTemplate({template:\"Is this question about math? Answer YES or NO.\\nQuestion: {{question}}\\nAnswer: \",question:inputs.question}).prompt.as(\"text\").to(palm.generateText({PALM_KEY:llm.secrets({keys:[\"PALM_KEY\"]}).PALM_KEY})).to(async inputs2=>{const{completion,math:math2,search:search2}=await inputs2;if(completion?.startsWith(\"YES\")){return math2({question:inputs2.question})}else{return search2(inputs2)}},{math,search})}",
         "name": "fn_22"
       }
     }

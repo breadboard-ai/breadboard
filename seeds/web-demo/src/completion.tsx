@@ -3,7 +3,7 @@ import { useRef } from 'preact/hooks';
 
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
-
+import { PaLMKit } from "@google-labs/palm-kit";
 
 const promptOutput = signal("");
 
@@ -13,7 +13,8 @@ export function CompletionApp() {
     const input = board.input();
     const output = board.output();
     const kit = board.addKit(Starter);
-    const completion = kit.generateText();
+    const palm = board.addKit(PaLMKit);
+    const completion = palm.generateText();
 
     localStorage.setItem("PALM_KEY", apiKey);
 
@@ -39,7 +40,8 @@ export function CompletionApp() {
 const input = board.input();
 const output = board.output();
 const kit = board.addKit(Starter);
-const completion = kit.generateText();
+const palm = board.addKit(PaLMKit);
+const completion = palm.generateText();
 
 localStorage.setItem("PALM_KEY", apiKey);
 

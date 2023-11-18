@@ -7,6 +7,7 @@
 import { Board } from "@google-labs/breadboard";
 import { Core } from "@google-labs/core-kit";
 import { Starter } from "@google-labs/llm-starter";
+import { PaLMKit } from "@google-labs/palm-kit";
 
 const board = new Board({
   title: "Endless Debate with Voice",
@@ -16,6 +17,7 @@ const board = new Board({
 });
 const kit = board.addKit(Starter);
 const core = board.addKit(Core);
+const palm = board.addKit(PaLMKit);
 
 const rememberFriedrich = core.append({ $id: "rememberFriedrich" });
 const rememberAlbert = core.append({ $id: "rememberAlbert" });
@@ -40,7 +42,7 @@ const albert = kit
   )
   .wire(
     "prompt->text",
-    kit
+    palm
       .generateText({
         stopSequences: ["\nFriedrich", "\n**Friedrich"],
         safetySettings: [
@@ -67,7 +69,7 @@ const albert = kit
           )
           .wire(
             "prompt->text",
-            kit
+            palm
               .generateText()
               .wire("<-PALM_KEY.", palm_key)
               .wire(
@@ -94,7 +96,7 @@ const albert = kit
 
 friedrich.wire(
   "prompt->text",
-  kit
+  palm
     .generateText({
       stopSequences: ["\nAlbert", "\n**Albert"],
       safetySettings: [
@@ -121,7 +123,7 @@ friedrich.wire(
         )
         .wire(
           "prompt->text",
-          kit
+          palm
             .generateText()
             .wire("<-PALM_KEY.", palm_key)
             .wire(

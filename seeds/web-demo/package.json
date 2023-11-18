@@ -59,6 +59,7 @@
   "dependencies": {
     "@google-labs/breadboard": "*",
     "@google-labs/llm-starter": "*",
+    "@google-labs/palm-kit": "*",
     "@preact/signals": "^1.2.0",
     "mermaid": "^10.2.4",
     "preact": "^10.16.0",

@@ -142,6 +142,9 @@
     },
     {
       "url": "npm:@google-labs/core-kit"
+    },
+    {
+      "url": "npm:@google-labs/palm-kit"
     }
   ]
 }

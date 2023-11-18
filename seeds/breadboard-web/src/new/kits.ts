@@ -22,6 +22,7 @@ import {
 
 import { Core } from "@google-labs/core-kit";
 import { Starter } from "@google-labs/llm-starter";
+import { PaLMKit } from "@google-labs/palm-kit";
 
 export { base };
 
@@ -34,6 +35,13 @@ export const core = addKit(Core) as unknown as {
   // TODO: Other Core nodes.
 };
 
+export const palm = addKit(PaLMKit) as unknown as {
+  generateText: NodeFactory<
+    { text: string; PALM_KEY: string },
+    { completion: string }
+  >;
+};
+
 export const llm = addKit(Starter) as unknown as {
   promptTemplate: NodeFactory<
     { template: string; [key: string]: NodeValue },
@@ -44,10 +52,6 @@ export const llm = addKit(Starter) as unknown as {
     { url: string }
   >;
   secrets: NodeFactory<{ keys: string[] }, { [k: string]: string }>;
-  generateText: NodeFactory<
-    { text: string; PALM_KEY: string },
-    { completion: string }
-  >;
   runJavascript: NodeFactory<
     {
       code: string;

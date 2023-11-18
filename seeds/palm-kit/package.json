@@ -2,13 +2,14 @@
   "name": "@google-labs/palm-kit",
   "private": true,
   "version": "0.0.1",
-  "description": "A Breadboard Kit with nodes for PaLM APIs.",
+  "description": "A Breadboard Kit with nodes to access PaLM APIs.",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
     "build": "FORCE_COLOR=1 tsc --b",
+    "test": "FORCE_COLOR=1 ava",
     "watch": "FORCE_COLOR=1 tsc --b --watch",
     "lint": "FORCE_COLOR=1 eslint . --ext .ts"
   },
@@ -46,5 +47,9 @@
     "ava": "^5.2.0",
     "typescript": "^5.0.4",
     "@google-labs/tsconfig": "*"
+  },
+  "dependencies": {
+    "@google-labs/breadboard": "^0.5.0",
+    "@google-labs/palm-lite": "^0.0.2"
   }
 }

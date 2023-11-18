@@ -6,6 +6,7 @@
 
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
+import { PaLMKit } from "@google-labs/palm-kit";
 
 const searchSummarize = new Board({
   title: "The Search Summarizer Recipe",
@@ -14,8 +15,9 @@ const searchSummarize = new Board({
   version: "0.0.1",
 });
 const kit = searchSummarize.addKit(Starter);
+const palm = searchSummarize.addKit(PaLMKit);
 
-const completion = kit.generateText().wire(
+const completion = palm.generateText().wire(
   "completion->text",
   searchSummarize.output({
     schema: {

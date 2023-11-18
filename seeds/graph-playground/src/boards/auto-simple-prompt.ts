@@ -6,11 +6,13 @@
 
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
+import { PaLMKit } from "@google-labs/palm-kit";
 
 const autoSimplePrompt = new Board();
 const kit = autoSimplePrompt.addKit(Starter);
+const palm = autoSimplePrompt.addKit(PaLMKit);
 
-const completion = kit.generateText();
+const completion = palm.generateText();
 kit.secrets(["PALM_KEY"]).wire("PALM_KEY", completion);
 kit
   .promptTemplate(

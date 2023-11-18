@@ -8,11 +8,13 @@ import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 import { ReActHelper } from "../react.js";
 import { Core } from "@google-labs/core-kit";
+import { PaLMKit } from "@google-labs/palm-kit";
 
 const board = new Board();
 const core = board.addKit(Core);
 const kit = board.addKit(Starter);
 const reAct = board.addKit(ReActHelper);
+const palm = board.addKit(PaLMKit);
 
 /**
  * This is a plain ReAct implementation. It's very verbose, and is meant
@@ -106,7 +108,7 @@ board
 
 // The completion must include stop sentences, to prevent LLM form hallucinating
 // all answers.
-const reActCompletion = kit
+const reActCompletion = palm
   .generateText({
     stopSequences: ["\nObservation"],
     $id: "react-completion",
@@ -122,7 +124,7 @@ const math = kit
   )
   .wire(
     "prompt->text",
-    kit
+    palm
       .generateText({ $id: "math-function-completion" })
       .wire(
         "completion->code",
@@ -136,7 +138,7 @@ const math = kit
 // Wire up the search tool. This code is mostly the same as in
 // `search-summarize.ts`, with tweaks to play nice in the ReAct board.
 const search = () => {
-  const completion = kit
+  const completion = palm
     .generateText()
     .wire("completion->Observation", rememberObservation)
     .wire("<-PALM_KEY.", secrets);

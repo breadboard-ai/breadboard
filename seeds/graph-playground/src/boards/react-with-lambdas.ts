@@ -7,10 +7,12 @@
 import { Board } from "@google-labs/breadboard";
 import { Core } from "@google-labs/core-kit";
 import { Starter } from "@google-labs/llm-starter";
+import { PaLMKit } from "@google-labs/palm-kit";
 
 const board = new Board();
 const core = board.addKit(Core);
 const kit = board.addKit(Starter);
+const palm = board.addKit(PaLMKit);
 
 /**
  * This final form of the ReAct implementation.
@@ -145,7 +147,7 @@ input.wire("text->Question", rememberQuestion);
 
 // The completion must include stop sentences, to prevent LLM form hallucinating
 // all answers.
-const reActCompletion = kit
+const reActCompletion = palm
   .generateText({
     stopSequences: ["\nObservation"],
     $id: "react-completion",

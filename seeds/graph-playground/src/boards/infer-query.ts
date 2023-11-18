@@ -6,6 +6,7 @@
 
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
+import { PaLMKit } from "@google-labs/palm-kit";
 
 const board = new Board({
   title: "Inferring a query for the RAG pattern",
@@ -14,6 +15,7 @@ const board = new Board({
   version: "0.0.1",
 });
 const starter = board.addKit(Starter);
+const palm = board.addKit(PaLMKit);
 
 const askForTemplate = board.input({
   $id: "askForTemplate",
@@ -77,7 +79,7 @@ const promptStuffer = starter.jsonata('{ "prompt": $ }', {
   $id: "promptStuffer",
 });
 
-const questionGenerator = starter.generateText({ $id: "questionGenerator" });
+const questionGenerator = palm.generateText({ $id: "questionGenerator" });
 
 askForTemplate.wire(
   "text->template",

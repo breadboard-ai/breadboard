@@ -5,7 +5,7 @@
  */
 
 import { action } from "../../new/lib.js";
-import { llm } from "../../new/kits.js";
+import { llm, palm } from "../../new/kits.js";
 
 export const graph = action((inputs) => {
   return llm
@@ -16,7 +16,7 @@ export const graph = action((inputs) => {
     })
     .prompt.as("text")
     .to(
-      llm.generateText({
+      palm.generateText({
         PALM_KEY: llm.secrets({ keys: ["PALM_KEY"] }).PALM_KEY,
       })
     )

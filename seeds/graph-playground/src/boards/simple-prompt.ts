@@ -6,6 +6,7 @@
 
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
+import { PaLMKit } from "@google-labs/palm-kit";
 
 const simplePrompt = new Board({
   title: "Simple meta-reasoning",
@@ -14,8 +15,9 @@ const simplePrompt = new Board({
   version: "0.0.1",
 });
 const kit = simplePrompt.addKit(Starter);
+const palm = simplePrompt.addKit(PaLMKit);
 
-const completion = kit.generateText();
+const completion = palm.generateText();
 kit.secrets(["PALM_KEY"]).wire("PALM_KEY", completion);
 simplePrompt
   .input({

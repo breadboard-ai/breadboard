@@ -7,6 +7,7 @@
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 import { Core } from "@google-labs/core-kit";
+import { PaLMKit } from "@google-labs/palm-kit";
 
 const board = new Board({
   title: "Accumulating Context",
@@ -16,6 +17,7 @@ const board = new Board({
 });
 const kit = board.addKit(Starter);
 const core = board.addKit(Core);
+const palm = board.addKit(PaLMKit);
 
 // Store input node so that we can refer back to it to create a conversation
 // loop.
@@ -56,7 +58,7 @@ core.passthrough({ $id: "start" }).wire(
       "text->question",
       prompt.wire(
         "prompt->text",
-        kit
+        palm
           .generateText({ $id: "generator" })
           .wire("<-PALM_KEY.", kit.secrets(["PALM_KEY"]))
           .wire(

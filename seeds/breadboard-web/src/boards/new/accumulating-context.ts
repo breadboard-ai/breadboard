@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { base, core, llm } from "../../new/kits.js";
+import { base, core, llm, palm } from "../../new/kits.js";
 
 const input = base.input({
   $id: "userRequest",
@@ -40,7 +40,7 @@ prompt.in({ context: conversationMemory.accumulator });
 // conversationMemory.accumulator.to(prompt.context); ???
 // conversationMemory.accumulator.as("context").to(prompt);
 
-const response = llm.generateText({
+const response = palm.generateText({
   text: prompt.prompt,
   PALM_KEY: llm.secrets({ keys: ["PALM_KEY"] }).PALM_KEY.memoize(),
 });

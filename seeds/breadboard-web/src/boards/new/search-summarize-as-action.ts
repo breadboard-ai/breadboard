@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { core, llm } from "../../new/kits.js";
+import { core, llm, palm } from "../../new/kits.js";
 
 import { action } from "../../new/lib.js";
 
@@ -31,7 +31,7 @@ export const graph = action((input) => {
     $id: "summarizing-template",
   });
 
-  const generateSummary = llm.generateText({
+  const generateSummary = palm.generateText({
     text: summarizingTemplate.prompt,
     PALM_KEY: llm.secrets({ keys: ["PALM_KEY"] }).PALM_KEY,
   });

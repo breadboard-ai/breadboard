@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { base, llm } from "../../new/kits.js";
+import { base, llm, palm } from "../../new/kits.js";
 
 const input = base.input({
   $id: "input",
@@ -43,7 +43,7 @@ const summarizingTemplate = llm.promptTemplate({
   $id: "summarizing-template",
 });
 
-const generateSummary = llm.generateText({
+const generateSummary = palm.generateText({
   text: summarizingTemplate.prompt,
   PALM_KEY: llm.secrets({ keys: ["PALM_KEY"] }).PALM_KEY,
 });

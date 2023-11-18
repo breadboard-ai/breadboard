@@ -11,6 +11,7 @@ import {
   InputValues,
 } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
+import { PaLMKit } from "@google-labs/palm-kit";
 import type { ProxyRequestMessage } from "@google-labs/breadboard/worker";
 
 import { SecretKeeper } from "./secrets";
@@ -60,6 +61,7 @@ export class ProxyReceiver {
       })
     );
     this.board.addKit(Starter);
+    this.board.addKit(PaLMKit);
     this.board.addKit(NodeNurseryWeb);
   }
 

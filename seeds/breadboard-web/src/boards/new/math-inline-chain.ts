@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { core, llm } from "../../new/kits.js";
+import { core, llm, palm } from "../../new/kits.js";
 
 const question = "1+1";
 
@@ -18,7 +18,7 @@ export const graph = core
   )
   .prompt.as("text")
   .to(
-    llm.generateText({
+    palm.generateText({
       PALM_KEY: llm.secrets({ keys: ["PALM_KEY"] }).PALM_KEY,
     })
   )

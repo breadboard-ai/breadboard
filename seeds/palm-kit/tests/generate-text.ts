@@ -6,10 +6,7 @@
 
 import test from "ava";
 
-import {
-  prepareRequest,
-  prepareResponse,
-} from "../../src/nodes/generate-text.js";
+import { prepareRequest, prepareResponse } from "../src/nodes/generate-text.js";
 
 test("prepareRequest throws when there's no PALM_KEY", (t) => {
   t.throws(() => prepareRequest({ text: "foo" }));

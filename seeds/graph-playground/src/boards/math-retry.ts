@@ -7,6 +7,7 @@
 import { Board } from "@google-labs/breadboard";
 import { Core } from "@google-labs/core-kit";
 import { Starter } from "@google-labs/llm-starter";
+import { PaLMKit } from "@google-labs/palm-kit";
 
 const math = new Board({
   title: "The Calculator Recipe (with retries)",
@@ -16,6 +17,7 @@ const math = new Board({
 });
 const kit = math.addKit(Starter);
 const core = math.addKit(Core);
+const palm = math.addKit(PaLMKit);
 
 math
   .input({
@@ -46,7 +48,7 @@ math
           .wire(
             "lambda<-board",
             math.lambda((board, input, output) => {
-              const completion = kit
+              const completion = palm
                 .generateText({ $id: "math-function-generator" })
                 .wire("<-PALM_KEY", kit.secrets(["PALM_KEY"]));
               const compute = kit.runJavascript("compute", { $id: "compute" });

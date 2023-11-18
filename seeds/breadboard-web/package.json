@@ -66,6 +66,7 @@
   "dependencies": {
     "@google-labs/breadboard": "*",
     "@google-labs/core-kit": "*",
+    "@google-labs/palm-kit": "*",
     "@google-labs/llm-starter": "*",
     "@google-labs/pinecone-kit": "*",
     "@google-labs/node-nursery-web": "*"

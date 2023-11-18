@@ -6,6 +6,7 @@
 
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
+import { PaLMKit } from "@google-labs/palm-kit";
 
 const simplest = new Board({
   title: "The simplest LLM-based recipe",
@@ -14,8 +15,9 @@ const simplest = new Board({
   version: "0.0.1",
 });
 const kit = simplest.addKit(Starter);
+const palm = simplest.addKit(PaLMKit);
 
-const completion = kit.generateText();
+const completion = palm.generateText();
 kit.secrets(["PALM_KEY"]).wire("PALM_KEY", completion);
 simplest
   .input({

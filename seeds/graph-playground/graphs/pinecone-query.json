@@ -133,6 +133,9 @@
     },
     {
       "url": "npm:@google-labs/pinecone-kit"
+    },
+    {
+      "url": "npm:@google-labs/palm-kit"
     }
   ]
 }

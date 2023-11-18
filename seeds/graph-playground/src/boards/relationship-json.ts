@@ -8,6 +8,7 @@ import { Board } from "@google-labs/breadboard";
 import { Core } from "@google-labs/core-kit";
 import { Starter } from "@google-labs/llm-starter";
 import { Nursery } from "@google-labs/node-nursery";
+import { PaLMKit } from "@google-labs/palm-kit";
 
 const jsonPrompt = new Board({
   title: "Simple JSON prompt",
@@ -18,6 +19,7 @@ const jsonPrompt = new Board({
 const kit = jsonPrompt.addKit(Starter);
 const core = jsonPrompt.addKit(Core);
 const nursery = jsonPrompt.addKit(Nursery);
+const palm = jsonPrompt.addKit(PaLMKit);
 
 const schema = {
   type: "object",
@@ -109,7 +111,7 @@ jsonPrompt
           .wire(
             "lambda<-board",
             jsonPrompt.lambda((_, input, output) => {
-              const completion = kit.generateText({
+              const completion = palm.generateText({
                 PALM_KEY: kit.secrets(["PALM_KEY"]),
               });
 
