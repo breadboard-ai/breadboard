@@ -11,7 +11,10 @@ import {
 } from "../../src/remote/protocol.js";
 import { Board } from "../../src/board.js";
 import { TestKit } from "../helpers/_test-kit.js";
-import { IdentityTransport } from "../helpers/_test-transport.js";
+import {
+  IdentityTransport,
+  MockWorkerTransport,
+} from "../helpers/_test-transport.js";
 import { Client } from "../../src/remote/client.js";
 import { Server } from "../../src/remote/server.js";
 
@@ -66,7 +69,7 @@ test("Continuous streaming", async (t) => {
   const kit = board.addKit(TestKit);
   board.input({ foo: "bar" }).wire("*", kit.noop().wire("*", board.output()));
 
-  const transport = new IdentityTransport();
+  const transport = new MockWorkerTransport();
   const server = new Server(transport);
   server.serve(board);
   const { writableRequests: requests, readableResponses: responses } =
@@ -100,7 +103,7 @@ test("runOnce client can run once", async (t) => {
   const kit = board.addKit(TestKit);
   board.input({ foo: "bar" }).wire("*", kit.noop().wire("*", board.output()));
 
-  const transport = new IdentityTransport();
+  const transport = new MockWorkerTransport();
   const server = new Server(transport);
   const client = new Client(transport);
 

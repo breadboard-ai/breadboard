@@ -39,7 +39,8 @@ export class Server {
       for await (const stop of runner.run(context, result)) {
         if (stop.type === "input") {
           const state = await stop.save();
-          await responses.write(["input", stop, state]);
+          const { node, inputArguments } = stop;
+          await responses.write(["input", { node, inputArguments }, state]);
           request = await requestReader.read();
           if (request.done) {
             await responses.close();
@@ -51,9 +52,11 @@ export class Server {
             }
           }
         } else if (stop.type === "output") {
-          await responses.write(["output", stop]);
+          const { node, outputs } = stop;
+          await responses.write(["output", { node, outputs }]);
         } else if (stop.type === "beforehandler") {
-          await responses.write(["beforehandler", stop]);
+          const { node } = stop;
+          await responses.write(["beforehandler", { node }]);
         }
       }
       await responses.write(["end", {}]);
