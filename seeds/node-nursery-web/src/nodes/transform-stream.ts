@@ -17,6 +17,7 @@ import {
 
 export type TransformStreamInputs = InputValues & {
   stream: StreamCapabilityType;
+  decode?: boolean;
   board?: BreadboardCapability;
 };
 
@@ -48,14 +49,15 @@ export default {
     inputs: InputValues,
     context?: NodeHandlerContext
   ): Promise<OutputValues> => {
-    const { stream, board } = inputs as TransformStreamInputs;
+    const { stream, board, decode = false } = inputs as TransformStreamInputs;
     if (!stream) throw new Error("The `stream` input is required");
     if (!isStreamCapability(stream))
       throw new Error("The `stream` input must be a `StreamCapability`.");
     const transformer = await getTransformer(board, context);
     const streamCapability = stream as StreamCapabilityType;
+    const decoder = decode ? new TextDecoderStream() : new TransformStream();
     const outputStream = streamCapability.stream
-      .pipeThrough(new TextDecoderStream())
+      .pipeThrough(decoder)
       .pipeThrough(new TransformStream(transformer));
     return { stream: new StreamCapability<object>(outputStream) };
   },

@@ -76,7 +76,7 @@ test("transform stream with a board", async (t) => {
     stream: StreamCapabilityType<number>;
   };
   const results = await toArray<number>(outputs.stream.stream);
-  t.deepEqual(results, [1, 2, 3]);
+  t.deepEqual(results, [{ chunk: 1 }, { chunk: 2 }, { chunk: 3 }]);
 });
 
 test("transform works in a board", async (t) => {
@@ -125,5 +125,9 @@ test("transform works in a board", async (t) => {
     stream: StreamCapabilityType<number>;
   };
   const results = await toArray<number>(outputs.stream.stream);
-  t.deepEqual(results, ["number: 1", "number: 2", "number: 3"]);
+  t.deepEqual(results, [
+    { chunk: "number: 1" },
+    { chunk: "number: 2" },
+    { chunk: "number: 3" },
+  ]);
 });
