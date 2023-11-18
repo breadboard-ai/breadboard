@@ -13,6 +13,7 @@ import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 import { Core } from "@google-labs/core-kit";
 import { Pinecone } from "@google-labs/pinecone-kit";
+import { NodeNurseryWeb } from "@google-labs/node-nursery-web";
 
 const controller = new MessageController(
   new WorkerTransport(self as unknown as Worker)
@@ -23,4 +24,4 @@ const url = await runtime.onload();
 
 const runner = await Board.load(url);
 
-await runtime.run(runner, [Starter, Core, Pinecone]);
+await runtime.run(runner, [Starter, Core, Pinecone, NodeNurseryWeb]);

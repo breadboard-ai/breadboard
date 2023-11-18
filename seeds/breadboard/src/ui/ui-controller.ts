@@ -63,9 +63,11 @@ export class UIController extends HTMLElement implements UI {
     this.append(new Progress(message));
   }
 
-  output(values: OutputArgs) {
+  async output(values: OutputArgs) {
     this.removeProgress();
-    this.append(new Output(values));
+    const output = new Output();
+    this.append(output);
+    await output.display(values);
   }
 
   async secret(id: string): Promise<string> {

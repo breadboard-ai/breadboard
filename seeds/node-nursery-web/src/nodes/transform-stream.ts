@@ -32,7 +32,7 @@ const getTransformer = async (
       async transform(chunk, controller) {
         const inputs = { chunk };
         const result = await runnableBoard.runOnce(inputs, context);
-        controller.enqueue(result.chunk);
+        controller.enqueue({ chunk: result.chunk });
       },
     };
   } else
@@ -54,9 +54,9 @@ export default {
       throw new Error("The `stream` input must be a `StreamCapability`.");
     const transformer = await getTransformer(board, context);
     const streamCapability = stream as StreamCapabilityType;
-    const outputStream = streamCapability.stream.pipeThrough(
-      new TransformStream(transformer)
-    );
+    const outputStream = streamCapability.stream
+      .pipeThrough(new TextDecoderStream())
+      .pipeThrough(new TransformStream(transformer));
     return { stream: new StreamCapability<object>(outputStream) };
   },
 };
