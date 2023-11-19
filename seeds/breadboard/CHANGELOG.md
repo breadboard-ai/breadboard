@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.5.1] - 2023-11-18
+
+- Removed unintended dependency on `jsonschema`.
+- Removed circular dependency between `Board` and `BoardRunner`.
+- Other bug fixes.
+
 ## [0.5.0] - 2023-11-08
 
 - The `/ui` submodule changes:
