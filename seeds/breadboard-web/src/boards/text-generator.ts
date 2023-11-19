@@ -6,7 +6,6 @@
 
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
-import { Core } from "@google-labs/core-kit";
 import { PaLMKit } from "@google-labs/palm-kit";
 
 const board = new Board({
@@ -17,7 +16,6 @@ const board = new Board({
 });
 const palm = board.addKit(PaLMKit);
 const starter = board.addKit(Starter);
-const core = board.addKit(Core);
 
 const input = board.input({
   $id: "input",
