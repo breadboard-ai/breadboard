@@ -1,0 +1,122 @@
+{
+  "title": "Text Generator",
+  "description": "This is a text generator. It can generate text using various LLMs. Currently, it only supports the PaLM model.",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "secrets-3",
+      "to": "palm-generateText-2",
+      "out": "PALM_KEY",
+      "in": "PALM_KEY"
+    },
+    {
+      "from": "runJavascript-1",
+      "to": "palm-generateText-2",
+      "out": "palm",
+      "in": "palm"
+    },
+    {
+      "from": "input",
+      "to": "runJavascript-1",
+      "out": "model",
+      "in": "model"
+    },
+    {
+      "from": "palm-generateText-2",
+      "to": "output",
+      "out": "completion",
+      "in": "text"
+    },
+    {
+      "from": "input",
+      "to": "palm-generateText-2",
+      "out": "text",
+      "in": "text"
+    },
+    {
+      "from": "runJavascript-1",
+      "to": "output",
+      "out": "other",
+      "in": "text"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Text",
+              "description": "The text to generate"
+            },
+            "model": {
+              "type": "string",
+              "title": "Model",
+              "description": "The model to use for generation",
+              "enum": [
+                "PaLM"
+              ],
+              "default": "PaLM"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "runJavascript-1",
+      "type": "runJavascript",
+      "configuration": {
+        "name": "switchModel",
+        "code": "function switchModel({model}){switch(model){case\"PaLM\":return{palm:true};default:return{other:`Unsupported model: ${model}`}}}",
+        "raw": true
+      }
+    },
+    {
+      "id": "palm-generateText-2",
+      "type": "palm-generateText"
+    },
+    {
+      "id": "secrets-3",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "PALM_KEY"
+        ]
+      }
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Text",
+              "description": "The generated text"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "kits": [
+    {
+      "url": "npm:@google-labs/palm-kit"
+    },
+    {
+      "title": "LLM Starter Kit",
+      "description": "A kit that provides a few necessary components for wiring boards that use PaLM API.",
+      "version": "0.0.1",
+      "url": "npm:@google-labs/llm-starter"
+    },
+    {
+      "url": "npm:@google-labs/core-kit"
+    }
+  ]
+}

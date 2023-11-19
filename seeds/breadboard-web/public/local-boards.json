@@ -52,6 +52,10 @@
     "url": "/graphs/new/single-node.json"
   },
   {
+    "title": "Text Generator",
+    "url": "/graphs/text-generator.json"
+  },
+  {
     "title": "Tour Guide Writer",
     "url": "/graphs/tour-guide-writer.json"
   }
