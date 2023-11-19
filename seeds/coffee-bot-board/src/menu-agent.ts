@@ -21,9 +21,8 @@ const kit = board.addKit(Starter);
 const core = board.addKit(Core);
 const palm = board.addKit(PaLMKit);
 
-const menu = kit.promptTemplate(
-  ...(await maker.prompt("menu-agent", "menuAgent"))
-);
+const menu = kit.promptTemplate(await maker.prompt("menu-agent", "menuAgent"));
+
 menu.wire("<-menu.", core.passthrough(await maker.part("menu", "txt")));
 menu.wire(
   "<-menu-format.",
@@ -47,12 +46,13 @@ board.input().wire(
         stopSequences: ["Customer:"],
       })
       .wire("$error->", board.output({ $id: "error" }))
-      .wire("<-PALM_KEY", kit.secrets(["PALM_KEY"]))
+      .wire("<-PALM_KEY", kit.secrets({ keys: ["PALM_KEY"] }))
       .wire(
         "completion->",
         kit
-          .runJavascript("parseResponse", {
+          .runJavascript({
             $id: "parseResponse",
+            name: "parseResponse",
             code: parseResponse.toString(),
             raw: true,
           })

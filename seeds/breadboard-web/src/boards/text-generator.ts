@@ -47,14 +47,15 @@ function switchModel({ model }: { model: string }) {
   }
 }
 
-const switcher = starter.runJavascript("switchModel", {
+const switcher = starter.runJavascript({
+  name: "switchModel",
   code: switchModel.toString(),
   raw: true,
 });
 
 const generateText = palm
   .generateText()
-  .wire("<-PALM_KEY", starter.secrets(["PALM_KEY"]));
+  .wire("<-PALM_KEY", starter.secrets({ keys: ["PALM_KEY"] }));
 
 const output = board.output({
   $id: "output",

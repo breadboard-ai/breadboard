@@ -28,7 +28,7 @@ const completion = kit
   .generateText()
   .wire("completion->hear", output)
   .wire("completion->assistant", history)
-  .wire("<-PALM_KEY.", kit.secrets(["PALM_KEY"]));
+  .wire("<-PALM_KEY.", kit.secrets({ keys: ["PALM_KEY"] }));
 
 kit
   .promptTemplate(

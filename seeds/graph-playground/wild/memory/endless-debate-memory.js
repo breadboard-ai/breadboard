@@ -15,7 +15,7 @@ config();
 const board = new Board();
 const kit = board.addKit(Starter);
 
-const palm_key = kit.secrets(["PALM_KEY"]);
+const palm_key = kit.secrets({ keys: ["PALM_KEY"] });
 
 // Store Friedrich's template so that we can refer back to it to create a
 // conversation loop.

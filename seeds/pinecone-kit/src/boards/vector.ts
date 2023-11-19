@@ -71,18 +71,23 @@ const api = board.input({
 });
 
 const config = starter
-  .jsonata("config", { $id: "config", raw: true })
+  .jsonata({
+    expression: "config",
+    $id: "config",
+    raw: true,
+  })
   .wire("<-config", api);
 
 const headers = starter
-  .jsonata(
-    '{ "Api-Key": $, "Accept": "application/json", "Content-Type": "application/json" }',
-    { $id: "make-headers" }
-  )
+  .jsonata({
+    expression:
+      "{ \"Api-Key\": $, \"Accept\": \"application/json\", \"Content-Type\": \"application/json\" }",
+    $id: "make-headers",
+  })
   .wire("json<-PINECONE_API_KEY", config);
 
 starter
-  .fetch(false, {
+  .fetch({
     $id: "pinecone-api-call",
     method: "POST",
   })
@@ -90,12 +95,10 @@ starter
   .wire(
     "<-url",
     starter
-      .urlTemplate(
-        "https://{PINECONE_INDEX}-{PINECONE_PROJECT_ID}.svc.{PINECONE_ENVIRONMENT}.pinecone.io/{+call}",
-        {
-          $id: "make-pinecone-url",
-        }
-      )
+      .urlTemplate({
+        $id: "make-pinecone-url",
+        template: "https://{PINECONE_INDEX}-{PINECONE_PROJECT_ID}.svc.{PINECONE_ENVIRONMENT}.pinecone.io/{+call}",
+      })
       .wire("<-PINECONE_INDEX", config)
       .wire("<-PINECONE_PROJECT_ID", config)
       .wire("<-PINECONE_ENVIRONMENT", config)

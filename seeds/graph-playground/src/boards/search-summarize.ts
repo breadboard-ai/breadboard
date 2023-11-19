@@ -31,20 +31,22 @@ const completion = palm.generateText().wire(
       },
       required: ["text"],
     },
-  })
+  }),
 );
 
 const summarizingTemplate = kit
-  .promptTemplate(
-    "Use context below to answer this question:\n\n##Question:\n{{question}}\n\n## Context {{context}}\n\\n## Answer:\n",
-    { $id: "summarizing-template" }
+  .promptTemplate({
+      template: "Use context below to answer this question:\n\n##Question:\n{{question}}\n\n## Context {{context}}\n\\n## Answer:\n",
+      $id: "summarizing-template",
+    },
   )
   .wire("prompt->text", completion);
 
 const searchURLTemplate = kit
-  .urlTemplate(
-    "https://www.googleapis.com/customsearch/v1?key={API_KEY}&cx={GOOGLE_CSE_ID}&q={query}"
-  )
+  .urlTemplate({
+    template:
+      "https://www.googleapis.com/customsearch/v1?key={API_KEY}&cx={GOOGLE_CSE_ID}&q={query}",
+  })
   .wire(
     "url",
     kit
@@ -52,13 +54,13 @@ const searchURLTemplate = kit
       .wire(
         "response->json",
         kit
-          .jsonata("$join(items.snippet, '\n')")
-          .wire("result->context", summarizingTemplate)
-      )
+          .jsonata({ expression: "$join(items.snippet, '\n')" })
+          .wire("result->context", summarizingTemplate),
+      ),
   );
 
 kit
-  .secrets(["PALM_KEY", "API_KEY", "GOOGLE_CSE_ID"])
+  .secrets({ keys: ["PALM_KEY", "API_KEY", "GOOGLE_CSE_ID"] })
   .wire("PALM_KEY", completion)
   .wire("API_KEY", searchURLTemplate)
   .wire("GOOGLE_CSE_ID", searchURLTemplate);

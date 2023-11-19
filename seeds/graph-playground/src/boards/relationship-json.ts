@@ -100,10 +100,10 @@ jsonPrompt
   .wire(
     "text->scene",
     kit
-      .promptTemplate(
-        "You are a tool that given a scene understands the relationship between people and describes them in the following JSON schema. Age is optional, don't make it up. Only use the relations in the schema:\n\n{{schema}}\n\nScene:\n{{scene}}\n",
-        { schema: JSON.stringify(schema) }
-      )
+      .promptTemplate({
+        template: "You are a tool that given a scene understands the relationship between people and describes them in the following JSON schema. Age is optional, don't make it up. Only use the relations in the schema:\n\n{{schema}}\n\nScene:\n{{scene}}\n",
+        schema: JSON.stringify(schema),
+      })
       .wire(
         "prompt->text",
         core
@@ -112,12 +112,13 @@ jsonPrompt
             "lambda<-board",
             jsonPrompt.lambda((_, input, output) => {
               const completion = palm.generateText({
-                PALM_KEY: kit.secrets(["PALM_KEY"]),
+                PALM_KEY: kit.secrets({ keys: ["PALM_KEY"] }),
               });
 
               const validator = nursery.validateJson({ schema });
 
-              const agechecker = kit.runJavascript("checker", {
+              const agechecker = kit.runJavascript({
+                name: "checker",
                 code: checker.toString(),
                 raw: true,
               });

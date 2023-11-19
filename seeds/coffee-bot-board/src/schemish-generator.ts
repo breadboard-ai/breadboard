@@ -37,7 +37,7 @@ function gate({ allow, value }: { allow: boolean; value: NodeValue }) {
   return { $error: value };
 }
 
-const shouldRecover = kit.runJavascript("gate", {
+const shouldRecover = kit.runJavascript({
   $id: "shouldRecover",
   code: gate.toString(),
   raw: true,
@@ -139,14 +139,13 @@ const generator = palm
       },
     ],
   })
-  .wire("<-PALM_KEY.", kit.secrets(["PALM_KEY"]))
+  .wire("<-PALM_KEY.", kit.secrets({ keys: ["PALM_KEY"] }))
   .wire("completion->json", validateJson)
   .wire("filters->value", shouldRecover);
 
 // Template
-const template = await maker.prompt("schemish-generator", "schemishGenerator");
 kit
-  .promptTemplate(...template)
+  .promptTemplate(await maker.prompt("schemish-generator", "schemishGenerator"))
   .wire("<-prologue", prologue)
   .wire("<-epilogue", epilogue)
   .wire("<-schemish", convertToSchemish)

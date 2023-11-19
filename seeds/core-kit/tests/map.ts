@@ -165,7 +165,9 @@ test("using lambda with promptTemplate", async (t) => {
   const input = board.input();
   const map = core.map((board, input, output) => {
     const llm = board.addKit(Starter);
-    const template = llm.promptTemplate("item: {{item}}");
+    const template = llm.promptTemplate({
+      template: "item: {{item}}",
+    });
     input.wire("item->", template.wire("prompt->", output));
   });
   input.wire("list->", map);
@@ -190,7 +192,9 @@ test("using lambda with promptTemplate with input from outer board", async (t) =
   const label = core.passthrough({ label: "name" });
   const map = core.map((_, input, output) => {
     const template = llm
-      .promptTemplate("{{label}}: {{item}}")
+      .promptTemplate({
+        template: "{{label}}: {{item}}",
+      })
       .wire("label<-.", label);
     input.wire("item->", template.wire("prompt->", output));
   });

@@ -14,7 +14,7 @@ const prompt = kit.promptTemplate({
 
 const generator = kit.generateText({
   $id: "generator",
-  PALM_KEY: kit.secrets(["PALM_KEY"]), // In constructor -> Assumed constant
+  PALM_KEY: kit.secrets({ keys: ["PALM_KEY"] }), // In constructor -> Assumed constant
 });
 
 // Use the `append` node to accumulate the conversation history.

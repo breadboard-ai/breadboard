@@ -20,12 +20,12 @@ const generateEmbeddings: LambdaFunction = (board, input, output) => {
   input
     .wire(
       "item->json",
-      starter.jsonata("metadata.text").wire(
+      starter.jsonata({ expression: "metadata.text" }).wire(
         "result->text",
         palm
           .embedText()
           .wire("embedding->", merge)
-          .wire("<-PALM_KEY", starter.secrets(["PALM_KEY"]))
+          .wire("<-PALM_KEY", starter.secrets({ keys: ["PALM_KEY"] })),
       )
     )
     .wire("item->accumulator", merge.wire("accumulator->item", output));
@@ -43,10 +43,10 @@ const processBatch: LambdaFunction = (board, input, output) => {
       .wire(
         "list->json",
         starter
-          .jsonata(
-            '{ "vectors": item.[ { "id": id, "values": embedding, "metadata": metadata } ]}',
-            { $id: "format-to-api" }
-          )
+          .jsonata({
+            expression: "{ \"vectors\": item.[ { \"id\": id, \"values\": embedding, \"metadata\": metadata } ]}",
+            $id: "format-to-api",
+          })
           .wire(
             "result->vectors",
             pinecone.upsert().wire("response->item", output)
@@ -69,14 +69,17 @@ board
   .wire(
     "text->url",
     kit
-      .fetch(false, { $id: "load-chunks" })
+      .fetch({
+        $id: "load-chunks",
+        raw: false,
+      })
       .wire(
         "response->json",
         kit
-          .jsonata(
-            'content.$zip($keys(),*).{"id": $[0],"metadata": {"text": text,"url": info.url,"title": info.title,"description":info.description}}',
-            { $id: "get-content" }
-          )
+          .jsonata({
+            expression: "content.$zip($keys(),*).{\"id\": $[0],\"metadata\": {\"text\": text,\"url\": info.url,\"title\": info.title,\"description\":info.description}}",
+            $id: "get-content",
+          })
           .wire(
             "result->list",
             core

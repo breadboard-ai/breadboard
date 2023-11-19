@@ -45,5 +45,5 @@ board.output({
       text: template.prompt,
     }).completion,
   }),
-  PALM_KEY: kit.secrets(["PALM_KEY"]),
+  PALM_KEY: kit.secrets({ keys: ["PALM_KEY"] }),
 });

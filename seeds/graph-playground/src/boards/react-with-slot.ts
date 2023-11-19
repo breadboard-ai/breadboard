@@ -29,7 +29,7 @@ const palm = board.addKit(PaLMKit);
  */
 
 // The single node where all the important keys come from.
-const secrets = kit.secrets(["PALM_KEY", "GOOGLE_CSE_ID"]);
+const secrets = kit.secrets({ keys: ["PALM_KEY", "GOOGLE_CSE_ID"] });
 
 const reflectionSlot = core.slot({
   slot: "tools",
@@ -39,30 +39,32 @@ const reflectionSlot = core.slot({
 
 // This is the jsonata node that extracts the tool names
 // from the reflected graph.
-const tools = kit.jsonata(
-  "nodes.configuration.description.%.%.[id] ~> $join(', ')"
-);
+const tools = kit.jsonata({
+  expression: "nodes.configuration.description.%.%.[id] ~> $join(', ')",
+});
 
 // This is the jsonata node that extracts the tool descriptions
 // from the reflected graph.
-const descriptions = kit.jsonata(
-  "nodes.configuration.description.%.%.[id &  ': ' & configuration.description] ~> $join('\n')"
-);
+const descriptions = kit.jsonata({
+  expression: "nodes.configuration.description.%.%.[id &  ': ' & configuration.description] ~> $join('\n')",
+});
 
 reflectionSlot.wire("graph->json", tools).wire("graph->json", descriptions);
 
 // This is the main ingredient: the template that makes the algo tick.
 const reActTemplate = kit
-  .promptTemplate(
-    "Answer the following questions as best you can. You have access to the " +
-      "following tools:\n\n{{descriptions}}\n\nUse the following " +
-      "format:\n\nQuestion: the input question you must answer\nThought: you " +
-      "should always think about what to do\nAction: the action to take, " +
-      "should be one of: {{tools}}\nAction Input: the input to the action\n" +
-      "Observation: the result of the action\n... " +
-      "(this Thought/Action/Action Input/Observation can repeat N times)\n" +
-      "Thought: I now know the final answer\nFinal Answer: the final answer to " +
-      "the original input question\n\nBegin!\n\n{{memory}}\nThought:"
+  .promptTemplate({
+      template:
+        "Answer the following questions as best you can. You have access to the " +
+        "following tools:\n\n{{descriptions}}\n\nUse the following " +
+        "format:\n\nQuestion: the input question you must answer\nThought: you " +
+        "should always think about what to do\nAction: the action to take, " +
+        "should be one of: {{tools}}\nAction Input: the input to the action\n" +
+        "Observation: the result of the action\n... " +
+        "(this Thought/Action/Action Input/Observation can repeat N times)\n" +
+        "Thought: I now know the final answer\nFinal Answer: the final answer to " +
+        "the original input question\n\nBegin!\n\n{{memory}}\nThought:",
+    },
   )
   .wire("descriptions<-result.", descriptions)
   .wire("tools<-result.", tools);
@@ -146,8 +148,8 @@ reActTemplate.wire(
       "completion->json",
       kit
         .jsonata(
-          "($f := function($line, $str) { $contains($line, $str) ? $substring($line, $length($str)) }; $merge(($split('\n')[[1..2]]) @ $line.$.{'action': $f($line, 'Action: '), 'input': $f($line, 'Action Input: '),'answer': $f($line, 'Final Answer: ') }).{ action: input,'answer': answer})",
           {
+            expression: "($f := function($line, $str) { $contains($line, $str) ? $substring($line, $length($str)) }; $merge(($split('\n')[[1..2]]) @ $line.$.{'action': $f($line, 'Action: '), 'input': $f($line, 'Action Input: '),'answer': $f($line, 'Final Answer: ') }).{ action: input,'answer': answer})",
             raw: true,
           }
         )

@@ -38,9 +38,15 @@ export class PromptMaker {
 
   async prompt(
     filename: string,
-    id: string
-  ): Promise<[string, OptionalIdConfiguration]> {
-    return [await this.loader.load(filename, "txt"), { $id: id }];
+    id: string,
+  ): Promise<{
+    $id: string;
+    template: string;
+  }> {
+    return {
+      $id: id,
+      template: await this.loader.load(filename, "txt")
+    };
   }
 
   async part(name: string, extension: string) {
@@ -104,8 +110,8 @@ export class Template {
 
   async loadTemplate(filename: string): Promise<TemplateNodeType> {
     const { kit } = this;
-    const text = await readFile(`${this.path}/${filename}`, "utf-8");
-    this.textPrompt = kit.promptTemplate(text, { $id: "bot-prompt" });
+    const template = await readFile(`${this.path}/${filename}`, "utf-8");
+    this.textPrompt = kit.promptTemplate({ $id: "bot-prompt", text: template });
     return this.textPrompt;
   }
 

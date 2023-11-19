@@ -20,7 +20,7 @@ board.input().wire(
   kit
     .generateText()
     .wire("completion->hear", output)
-    .wire("<-PALM_KEY", kit.secrets(["PALM_KEY"]))
+    .wire("<-PALM_KEY", kit.secrets({ keys: ["PALM_KEY"] }))
 );
 
 for await (const stop of board.run()) {

@@ -6,7 +6,7 @@ const Constant = (value) => () => value;
 
 const generator = kit.generateText({
   $id: "generator",
-  PALM_KEY: Constant(kit.secrets(["PALM_KEY"])),
+  PALM_KEY: Constant(kit.secrets({ keys: ["PALM_KEY"] })),
 });
 
 // Store prompt node for the same reason.

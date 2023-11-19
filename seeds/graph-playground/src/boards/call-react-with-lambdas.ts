@@ -24,8 +24,8 @@ const kit = board.addKit(Starter);
 const core = board.addKit(Core);
 
 const tools = kit
-  .jsonata(
-    `
+  .jsonata({
+    expression: `
   [
     {
       "tool": "search",
@@ -40,7 +40,7 @@ const tools = kit
       "board": math
     }
   ]`
-  )
+  })
   .wire("search<-board", core.import({ path: "search-summarize.json" }))
   .wire("math<-board", core.import({ path: "math.json" }));
 

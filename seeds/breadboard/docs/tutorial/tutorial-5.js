@@ -32,7 +32,7 @@ input.wire(
       "prompt->text",
       kit
         .generateText()
-        .wire("<-PALM_KEY.", kit.secrets(["PALM_KEY"]))
+        .wire("<-PALM_KEY.", kit.secrets({ keys: ["PALM_KEY"] }))
         .wire("completion->say", board.output())
     )
   )

@@ -35,7 +35,7 @@ conversationMemory({
   assistant: kit.generateText({
     $id: "generator",
     text: prompt.prompt,
-    PALM_KEY: Constant(kit.secrets(["PALM_KEY"])),
+    PALM_KEY: Constant(kit.secrets({ keys: ["PALM_KEY"] })),
   }).completion,
 });
 

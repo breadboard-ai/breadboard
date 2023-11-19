@@ -49,13 +49,15 @@ const printResults = board.output({
 
 const contextPlaceholder = "CONTEXT GOES HERE";
 
-const promptToInfer = starter.promptTemplate(undefined, {
+const promptToInfer = starter.promptTemplate({
   $id: "promptToInfer",
+  template: undefined,
   context: `\n\n${contextPlaceholder}\n\n`,
 });
 
-const inferringPrompt = starter.promptTemplate(
-  `
+const inferringPrompt = starter.promptTemplate({
+  $id: "inferringPrompt",
+  template: `
 The JSON below represents a prompt that the user wants to populate with more context to better answer questions within the prompt. The context will supplied by a search engine and will be inserted in place of the "${contextPlaceholder}" placeholder.
 
 Your job is to analyze the prompt and summarize all of the information within it, then formulate a query that would allow retrieving the relevant context from a search engine.
@@ -71,11 +73,11 @@ Reply as valid JSON in the following format:
 JSON:
 {{result}}
 
-Question:`,
-  { $id: "inferringPrompt" }
-);
+Question:`
+});
 
-const promptStuffer = starter.jsonata('{ "prompt": $ }', {
+const promptStuffer = starter.jsonata({
+  expression: "{ \"prompt\": $ }",
   $id: "promptStuffer",
 });
 
@@ -91,7 +93,7 @@ askForTemplate.wire(
         "prompt->text",
         questionGenerator
           .wire("completion->text", printResults)
-          .wire("<-PALM_KEY", starter.secrets(["PALM_KEY"]))
+          .wire("<-PALM_KEY", starter.secrets({ keys: ["PALM_KEY"] })),
       )
     )
   )

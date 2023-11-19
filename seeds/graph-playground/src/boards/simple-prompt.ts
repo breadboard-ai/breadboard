@@ -18,7 +18,7 @@ const kit = simplePrompt.addKit(Starter);
 const palm = simplePrompt.addKit(PaLMKit);
 
 const completion = palm.generateText();
-kit.secrets(["PALM_KEY"]).wire("PALM_KEY", completion);
+kit.secrets({ keys: ["PALM_KEY"] }).wire("PALM_KEY", completion);
 simplePrompt
   .input({
     $id: "question",
@@ -37,9 +37,10 @@ simplePrompt
   .wire(
     "text->question",
     kit
-      .promptTemplate(
-        "Analyze the following question and instead of answering, list out steps to take to answer the question: {{question}}",
-        { $id: "analyze-this" }
+      .promptTemplate({
+          template: "Analyze the following question and instead of answering, list out steps to take to answer the question: {{question}}",
+          $id: "analyze-this",
+        },
       )
       .wire(
         "prompt->text",

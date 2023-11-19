@@ -25,12 +25,15 @@ const palm = board.addKit(PaLMKit);
  */
 
 // The single node where all the important keys come from.
-const secrets = kit.secrets(["PALM_KEY", "GOOGLE_CSE_ID"]);
+const secrets = kit.secrets({
+  keys: ["PALM_KEY", "GOOGLE_CSE_ID"],
+});
 
 // This is the main ingredient: the template that makes the algo tick.
 const reActTemplate = kit
-  .promptTemplate(
-    "Answer the following questions as best you can. You have access to the " +
+  .promptTemplate({
+    template:
+      "Answer the following questions as best you can. You have access to the " +
       "following tools:\n\n{{descriptions}}\n\nUse the following " +
       "format:\n\nQuestion: the input question you must answer\nThought: you " +
       "should always think about what to do\nAction: the action to take, " +
@@ -38,8 +41,8 @@ const reActTemplate = kit
       "Observation: the result of the action\n... " +
       "(this Thought/Action/Action Input/Observation can repeat N times)\n" +
       "Thought: I now know the final answer\nFinal Answer: the final answer to " +
-      "the original input question\n\nBegin!\n\n{{memory}}\nThought:"
-  )
+      "the original input question\n\nBegin!\n\n{{memory}}\nThought:",
+  })
   .wire("<-descriptions.", reAct.getDescriptions())
   .wire("<-tools.", reAct.getTools());
 
@@ -118,10 +121,10 @@ const reActCompletion = palm
 // Wire up the math tool. This code mostly matches what is in
 // `math.ts`, but is now participating in the larger ReAct board.
 const math = kit
-  .promptTemplate(
-    "Translate the math problem below into a JavaScript function named `compute` that can be executed to provide the answer to the problem\nMath Problem: {{question}}\nSolution:",
-    { $id: "math-function" }
-  )
+  .promptTemplate({
+    template: "Translate the math problem below into a JavaScript function named `compute` that can be executed to provide the answer to the problem\nMath Problem: {{question}}\nSolution:",
+    $id: "math-function",
+  })
   .wire(
     "prompt->text",
     palm
@@ -129,8 +132,10 @@ const math = kit
       .wire(
         "completion->code",
         kit
-          .runJavascript("compute", { $id: "compute" })
-          .wire("result->Observation", rememberObservation)
+          .runJavascript({
+            name: "compute",
+            $id: "compute",
+          })
       )
       .wire("<-PALM_KEY.", secrets)
   );
@@ -144,15 +149,16 @@ const search = () => {
     .wire("<-PALM_KEY.", secrets);
 
   const summarizingTemplate = kit
-    .promptTemplate(
-      "Use context below to answer this question:\n\n##Question:\n{{question}}\n\n## Context {{context}}\n\\n## Answer:\n",
-      { $id: "summarizing-template" }
-    )
+    .promptTemplate({
+      template: "Use context below to answer this question:\n\n##Question:\n{{question}}\n\n## Context {{context}}\n\\n## Answer:\n",
+      $id: "summarizing-template",
+    })
     .wire("prompt->text", completion);
   const searchURLTemplate = kit
-    .urlTemplate(
-      "https://www.googleapis.com/customsearch/v1?key={PALM_KEY}&cx={GOOGLE_CSE_ID}&q={query}"
-    )
+    .urlTemplate({
+      template:
+        "https://www.googleapis.com/customsearch/v1?key={PALM_KEY}&cx={GOOGLE_CSE_ID}&q={query}",
+    })
     .wire("<-PALM_KEY.", secrets)
     .wire("<-GOOGLE_CSE_ID.", secrets)
     .wire(
@@ -162,9 +168,9 @@ const search = () => {
         .wire(
           "response->json",
           kit
-            .jsonata("$join(items.snippet, '\n')")
-            .wire("result->context", summarizingTemplate)
-        )
+            .jsonata({ expression: "$join(items.snippet, '\n')" })
+            .wire("result->context", summarizingTemplate),
+        ),
     );
 
   return core

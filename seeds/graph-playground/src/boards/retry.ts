@@ -52,21 +52,25 @@ const outputError = retry.output({
 const completionCaller = core.invoke({ $id: "lambda-completion" });
 input.wire("lambda->board.", completionCaller);
 
-const countdown = kit.jsonata(
-  '{ "tries": tries - 1, (tries > 0 ? "data" : "done") : data }',
-  { $id: "countdown", tries: 5, raw: true }
+const countdown = kit.jsonata({
+    expression: "{ \"tries\": tries - 1, (tries > 0 ? \"data\" : \"done\") : data }",
+    $id: "countdown", tries: 5, raw: true,
+  },
 );
 input.wire("tries->", countdown); // Initial value, defaults to 5 (see above)
 countdown.wire("tries->", countdown); // Loop back last value
 
 const errorParser = kit.jsonata(
-  '{ "error": $exists(error.stack) ? error.stack : error.message, "completion": inputs.completion }',
-  { $id: "error-parser", raw: true }
+  {
+    expression: "{ \"error\": $exists(error.stack) ? error.stack : error.message, \"completion\": inputs.completion }",
+    $id: "error-parser", raw: true,
+  },
 );
 
-const retryPrompt = kit.promptTemplate(
-  "{{text}}{{completion}}\n\nThis error occured:\n{{error}}\n\nPlease try again:\n",
-  { $id: "retry-prompt" }
+const retryPrompt = kit.promptTemplate({
+    template: "{{text}}{{completion}}\n\nThis error occured:\n{{error}}\n\nPlease try again:\n",
+    $id: "retry-prompt",
+  },
 );
 input.wire("text->", retryPrompt); // First pass is with original prompt
 retryPrompt.wire("prompt->text", retryPrompt); // Then keep appending

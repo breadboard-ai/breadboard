@@ -10,6 +10,6 @@ import { Starter } from "@google-labs/llm-starter";
 const board = new Board();
 const kit = board.addKit(Starter);
 
-kit.secrets(["PALM_KEY"]).wire("PALM_KEY", board.output());
+kit.secrets({ keys: ["PALM_KEY"] }).wire("PALM_KEY", board.output());
 
 export default board;

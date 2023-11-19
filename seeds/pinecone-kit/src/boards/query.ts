@@ -19,11 +19,10 @@ const starter = board.addKit(Starter);
 const core = board.addKit(Core);
 
 // TODO: Make topK and other properties configurable.
-const body = starter.jsonata(
-  '{ "vector": $, "topK": 10, "includeMetadata": true }',
-  {
+const body = starter.jsonata({
+    expression: "{ \"vector\": $, \"topK\": 10, \"includeMetadata\": true }",
     $id: "make-body",
-  }
+  },
 );
 
 const apiCall = core

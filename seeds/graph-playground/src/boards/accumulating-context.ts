@@ -37,10 +37,11 @@ const input = board.input({
 });
 
 // Store prompt node for the same reason.
-const prompt = kit.promptTemplate(
-  "This is a conversation between a friendly assistant and their user. You are the assistant and your job is to try to be helpful, empathetic, and fun.\n{{context}}\n\n== Current Conversation\nuser: {{question}}\nassistant:",
-  { context: "", $id: "assistant" }
-);
+const prompt = kit.promptTemplate({
+  $id: "assistant",
+  template: "This is a conversation between a friendly assistant and their user. You are the assistant and your job is to try to be helpful, empathetic, and fun.\n{{context}}\n\n== Current Conversation\nuser: {{question}}\nassistant:",
+  context: "",
+});
 
 // Use the `append` node to accumulate the conversation history.
 // Populate it with initial context.
@@ -60,7 +61,7 @@ core.passthrough({ $id: "start" }).wire(
         "prompt->text",
         palm
           .generateText({ $id: "generator" })
-          .wire("<-PALM_KEY.", kit.secrets(["PALM_KEY"]))
+          .wire("<-PALM_KEY.", kit.secrets({ keys: ["PALM_KEY"] }))
           .wire(
             "completion->assistant",
             conversationMemory.wire("accumulator->context", prompt)

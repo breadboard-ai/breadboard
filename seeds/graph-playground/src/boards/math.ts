@@ -35,17 +35,20 @@ math
   .wire(
     "text->question",
     kit
-      .promptTemplate(
-        "Translate the math problem below into a JavaScript function named `compute` that can be executed to provide the answer to the problem\nMath Problem: {{question}}\nSolution:",
-        { $id: "math-function" }
-      )
+      .promptTemplate({
+        template: "Translate the math problem below into a JavaScript function named `compute` that can be executed to provide the answer to the problem\nMath Problem: {{question}}\nSolution:",
+        $id: "math-function",
+      })
       .wire(
         "prompt->text",
         palm
           .generateText({ $id: "math-function-generator" })
           .wire(
             "completion->code",
-            kit.runJavascript("compute", { $id: "compute" }).wire(
+            kit.runJavascript({
+              name: "compute",
+              $id: "compute",
+            }).wire(
               "result->text",
               math.output({
                 $id: "print",
@@ -62,8 +65,8 @@ math
                 },
               })
             )
+              .wire("<-PALM_KEY", kit.secrets({ keys: ["PALM_KEY"] })),
           )
-          .wire("<-PALM_KEY", kit.secrets(["PALM_KEY"]))
       )
   );
 

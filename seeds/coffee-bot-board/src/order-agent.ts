@@ -24,16 +24,12 @@ const kit = board.addKit(Starter);
 const core = board.addKit(Core);
 
 const prologuePrompt = kit
-  .promptTemplate(
-    ...(await maker.prompt("order-agent-prologue", "orderAgentPrologue"))
-  )
+  .promptTemplate(await maker.prompt("order-agent-prologue", "orderAgentPrologue"))
   .wire("<-tools.", core.passthrough(await maker.part("tools", "json")));
 
 const schema = core.passthrough(await maker.jsonPart("order-schema"));
 
-const epiloguePrompt = kit.promptTemplate(
-  ...(await maker.prompt("order-agent-epilogue", "orderAgentEpilogue"))
-);
+const epiloguePrompt = kit.promptTemplate(await maker.prompt("order-agent-epilogue", "orderAgentEpilogue"));
 
 const customerMemory = core.append({ $id: "customerMemory" });
 const agentMemory = core.append({ $id: "agentMemory" });
@@ -52,7 +48,7 @@ epiloguePrompt
 
 const checkMenuTool = core.passthrough().wire(
   "checkMenu->json",
-  kit.jsonata("actionInput").wire(
+  kit.jsonata({ expression: "actionInput" }).wire(
     "result->customer",
     core
       .slot({ slot: "checkMenu" })
@@ -64,7 +60,7 @@ const checkMenuTool = core.passthrough().wire(
 
 const summarizeMenuTool = core.passthrough().wire(
   "summarizeMenu->json",
-  kit.jsonata("actionInput").wire(
+  kit.jsonata({ expression: "actionInput" }).wire(
     "result->customer",
     core
       .slot({ slot: "summarizeMenu" })
@@ -79,7 +75,7 @@ const customerTool = core
   .wire(
     "customer->json",
     kit
-      .jsonata("actionInput")
+      .jsonata({ expression: "actionInput" })
       .wire(
         "result->message",
         board
@@ -98,8 +94,9 @@ function route({ completion }: { completion: NodeValue }) {
 }
 
 const toolRouter = kit
-  .runJavascript("route", {
+  .runJavascript({
     $id: "toolRouter",
+    name: "route",
     code: route.toString(),
     raw: true,
   })

@@ -29,31 +29,32 @@ const input = board.input({
 input.wire(
   "text->query",
   kit
-    .urlTemplate(
-      "https://news.google.com/rss/search?q={query}&hl=en-US&gl=US&ceid=US:en"
-    )
+    .urlTemplate({
+      template: "https://news.google.com/rss/search?q={query}&hl=en-US&gl=US&ceid=US:en",
+    })
     .wire(
       "url->",
-      kit.fetch(true).wire(
+      kit.fetch({ raw: true }).wire(
         "response->xml",
         kit.xmlToJson().wire(
           "json->",
           kit
-            .jsonata("$join((rss.channel.item.title.`$t`)[[1..20]], '\n')")
+            .jsonata({ expression: "$join((rss.channel.item.title.`$t`)[[1..20]], '\n')" })
             .wire(
               "result->headlines",
               kit
-                .promptTemplate(
-                  "Use the news headlines below to write a few sentences to" +
+                .promptTemplate({
+                  template:
+                    "Use the news headlines below to write a few sentences to" +
                     "summarize the latest news on this topic:\n\n##Topic:\n" +
-                    "{{topic}}\n\n## Headlines {{headlines}}\n\\n## Summary:\n"
-                )
+                    "{{topic}}\n\n## Headlines {{headlines}}\n\\n## Summary:\n",
+                })
                 .wire("topic<-text", input)
                 .wire(
                   "prompt->text",
                   palm
                     .generateText()
-                    .wire("<-PALM_KEY.", kit.secrets(["PALM_KEY"]))
+                    .wire("<-PALM_KEY.", kit.secrets({ keys: ["PALM_KEY"] }))
                     .wire("completion->text", board.output())
                 )
             )

@@ -34,7 +34,7 @@ const append = () => ({});
           generateText
             .text({
               $id: "math-function-generator",
-              PALM_KEY: secrets(["PALM_KEY"]).PALM_KEY,
+              PALM_KEY: secrets({ keys: ["PALM_KEY"] }).PALM_KEY,
             })
             .completion.to(
               runJavascript.code({ $id: "compute" }).result.to(
@@ -114,7 +114,7 @@ const append = () => ({});
 
   const generator = generateText({
     $id: "generator",
-    PALM_KEY: secrets(["PALM_KEY"]).PALM_KEY,
+    PALM_KEY: secrets({ keys: ["PALM_KEY"] }).PALM_KEY,
   });
 
   passthrough({ $id: "start" }).to(

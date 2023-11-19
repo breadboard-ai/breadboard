@@ -66,24 +66,23 @@ const input = board.input({
 });
 
 // The single node where all the important keys come from.
-const secrets = kit.secrets(["PALM_KEY", "GOOGLE_CSE_ID"]);
+const secrets = kit.secrets({ keys: ["PALM_KEY", "GOOGLE_CSE_ID"] });
 
 // This is the jsonata node that extracts the tool names
 // from the reflected graph.
-const tools = kit.jsonata("*.tool ~> $join(', ')");
+const tools = kit.jsonata({ expression: "*.tool ~> $join(', ')" });
 
 // This is the jsonata node that extracts the tool descriptions
 // from the reflected graph.
-const descriptions = kit.jsonata(
-  "$join(*.($$.tool & ': ' & $$.description), '\n')"
-);
+const descriptions = kit.jsonata({ expression: "$join(*.($$.tool & ': ' & $$.description), '\n')" });
 
 input.wire("tools->json", tools).wire("tools->json", descriptions);
 
 // This is the main ingredient: the template that makes the algo tick.
 const reActTemplate = kit
-  .promptTemplate(
-    "Answer the following questions as best you can. You have access to the " +
+  .promptTemplate({
+    template:
+      "Answer the following questions as best you can. You have access to the " +
       "following tools:\n\n{{descriptions}}\n\nUse the following " +
       "format:\n\nQuestion: the input question you must answer\nThought: you " +
       "should always think about what to do\nAction: the action to take, " +
@@ -91,8 +90,8 @@ const reActTemplate = kit
       "Observation: the result of the action\n... " +
       "(this Thought/Action/Action Input/Observation can repeat N times)\n" +
       "Thought: I now know the final answer\nFinal Answer: the final answer to " +
-      "the original input question\n\nBegin!\n\n{{memory}}\nThought:"
-  )
+      "the original input question\n\nBegin!\n\n{{memory}}\nThought:",
+  })
   .wire("descriptions<-result.", descriptions)
   .wire("tools<-result.", tools);
 
@@ -159,12 +158,14 @@ const reActCompletion = palm
 //   Action Input: <action input> --> args
 // or
 //   Final Answer: <answer> --> answer
-const parser = kit.jsonata(
-  "{ " +
-    "'tool': $match($, /Action: (.+)$/m).groups[0], " +
-    "'args': $match($, /Action Input: (.+)$/m).groups[0], " +
-    "'answer': $match($, /Final Answer: (.+)$/m).groups[0] }",
-  { raw: true }
+const parser = kit.jsonata({
+    expression:
+      "{ " +
+      "'tool': $match($, /Action: (.+)$/m).groups[0], " +
+      "'args': $match($, /Action Input: (.+)$/m).groups[0], " +
+      "'answer': $match($, /Final Answer: (.+)$/m).groups[0] }",
+    raw: true,
+  },
 );
 
 // Call the LLM, remember the thought and parse the response
@@ -184,7 +185,7 @@ core
   .wire(
     "*<-",
     kit
-      .jsonata("tools[tool = $$.tool]", { raw: true })
+      .jsonata({ expression: "tools[tool = $$.tool]", raw: true })
       .wire("tool<-", parser)
       .wire("tools<-.", input)
   )

@@ -18,7 +18,7 @@ const kit = simplest.addKit(Starter);
 const palm = simplest.addKit(PaLMKit);
 
 const completion = palm.generateText();
-kit.secrets(["PALM_KEY"]).wire("PALM_KEY", completion);
+kit.secrets({ keys: ["PALM_KEY"] }).wire("PALM_KEY", completion);
 simplest
   .input({
     $id: "prompt",

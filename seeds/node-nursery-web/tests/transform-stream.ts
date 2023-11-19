@@ -117,7 +117,8 @@ test("transform works in a board", async (t) => {
         input.wire(
           "chunk->",
           starter
-            .runJavascript("run", {
+            .runJavascript({
+              name: "run",
               code: run.toString(),
             })
             .wire("result->chunk", output)

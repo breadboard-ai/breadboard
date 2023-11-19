@@ -17,11 +17,14 @@ const board = new Board({
 const starter = board.addKit(Starter);
 
 starter
-  .jsonata("$", { $id: "start" })
-  .wire("<-PINECONE_INDEX", starter.secrets(["PINECONE_INDEX"]))
-  .wire("<-PINECONE_PROJECT_ID", starter.secrets(["PINECONE_PROJECT_ID"]))
-  .wire("<-PINECONE_ENVIRONMENT", starter.secrets(["PINECONE_ENVIRONMENT"]))
-  .wire("<-PINECONE_API_KEY", starter.secrets(["PINECONE_API_KEY"]))
+  .jsonata({
+    expression: "$",
+    $id: "start",
+  })
+  .wire("<-PINECONE_INDEX", starter.secrets({ keys: ["PINECONE_INDEX"] }))
+  .wire("<-PINECONE_PROJECT_ID", starter.secrets({ keys: ["PINECONE_PROJECT_ID"] }))
+  .wire("<-PINECONE_ENVIRONMENT", starter.secrets({ keys: ["PINECONE_ENVIRONMENT"] }))
+  .wire("<-PINECONE_API_KEY", starter.secrets({ keys: ["PINECONE_API_KEY"] }))
   .wire(
     "result->config",
     board.output({

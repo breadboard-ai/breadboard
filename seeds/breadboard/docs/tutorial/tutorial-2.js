@@ -21,7 +21,7 @@ const generateText = kit.generateText();
 input.wire("say->text", generateText);
 generateText.wire("completion->hear", output);
 
-const secrets = kit.secrets(["PALM_KEY"]);
+const secrets = kit.secrets({ keys: ["PALM_KEY"] });
 
 secrets.wire("PALM_KEY->", generateText);
 

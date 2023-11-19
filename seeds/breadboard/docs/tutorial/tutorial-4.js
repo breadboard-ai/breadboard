@@ -27,7 +27,7 @@ board
     kit
       .generateText()
       .wire("completion->hear", output)
-      .wire("<-PALM_KEY", kit.secrets(["PALM_KEY"]))
+      .wire("<-PALM_KEY", kit.secrets({ keys: ["PALM_KEY"] }))
   );
 
 const json = JSON.stringify(board, null, 2);

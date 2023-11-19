@@ -20,8 +20,10 @@ const pinecone = board.addKit(Pinecone);
 const palm = board.addKit(PaLMKit);
 
 const template =
-  starter.promptTemplate(`Analyze the question and the knowledge base, provided below.
-  
+  starter.promptTemplate({
+    template: `
+Analyze the question and the knowledge base, provided below.
+
 If the knowledge base does not contain the information to produce the answer, tell the user that you don't know.
 
 Otherwise, write a comprehensive answer to the question using only the information from the knowledge base.
@@ -34,7 +36,8 @@ Otherwise, write a comprehensive answer to the question using only the informati
 {{context}}
 
 # Answer
-`);
+`
+  });
 
 board
   .input({
@@ -54,7 +57,7 @@ board
     "text->",
     palm
       .embedText()
-      .wire("<-PALM_KEY", starter.secrets(["PALM_KEY"]))
+      .wire("<-PALM_KEY", starter.secrets({ keys: ["PALM_KEY"] }))
       .wire(
         "embedding->",
         pinecone
@@ -62,7 +65,7 @@ board
           .wire(
             "response->json",
             starter
-              .jsonata("$join(matches.metadata.text, '\n\n')")
+              .jsonata({ expression: "$join(matches.metadata.text, '\n\n')" })
               .wire("result->context", template)
           )
       )
@@ -73,7 +76,7 @@ template.wire(
   "prompt->text",
   palm
     .generateText()
-    .wire("<-PALM_KEY", starter.secrets(["PALM_KEY"]))
+    .wire("<-PALM_KEY", starter.secrets({ keys: ["PALM_KEY"] }))
     .wire("completion->text", board.output({ $id: "rag" }))
 );
 

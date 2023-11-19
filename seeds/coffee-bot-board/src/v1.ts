@@ -37,7 +37,7 @@ board.input().wire(
       })
       .wire("completion->", board.output({ $id: "completion" }))
       .wire("filters->", board.output({ $id: "blocked" }))
-      .wire("<-PALM_KEY", kit.secrets(["PALM_KEY"]))
+      .wire("<-PALM_KEY", kit.secrets({ keys: ["PALM_KEY"] }))
   )
 );
 

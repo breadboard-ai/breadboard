@@ -98,7 +98,7 @@ const travelItineraryGenerator = palm
     $id: "travelItineraryGenerator",
     stopSequences: ["\n[Place]"],
   })
-  .wire("<-PALM_KEY", starter.secrets(["PALM_KEY"]));
+  .wire("<-PALM_KEY", starter.secrets({ keys: ["PALM_KEY"] }));
 
 const splitItinerary = starter.runJavascript("split", {
   $id: "splitItinerary",
@@ -143,7 +143,7 @@ const createGuides = core.map((board, input, output) => {
       $id: "guideGenerator",
       stopSequences: ["\n[City]"],
     })
-    .wire("<-PALM_KEY.", starter.secrets(["PALM_KEY"]));
+    .wire("<-PALM_KEY.", starter.secrets({ keys: ["PALM_KEY"] }));
 
   input.wire(
     "item->activity",
@@ -153,7 +153,8 @@ const createGuides = core.map((board, input, output) => {
   );
 });
 
-const combineGuides = starter.runJavascript("combine", {
+const combineGuides = starter.runJavascript({
+  name: "combine",
   $id: "combineGuides",
   code: function combine({
     location,

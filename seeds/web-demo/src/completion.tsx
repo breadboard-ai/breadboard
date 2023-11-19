@@ -18,7 +18,7 @@ export function CompletionApp() {
 
     localStorage.setItem("PALM_KEY", apiKey);
 
-    kit.secrets(["PALM_KEY"]).wire("PALM_KEY", completion);
+    kit.secrets({ keys: ["PALM_KEY"] }).wire("PALM_KEY", completion);
 
     input.wire("ask->text", completion);
     completion.wire("completion->receive", output);
@@ -45,7 +45,7 @@ const completion = palm.generateText();
 
 localStorage.setItem("PALM_KEY", apiKey);
 
-kit.secrets(["PALM_KEY"]).wire("PALM_KEY", completion);
+kit.secrets({keys:["PALM_KEY"]}).wire("PALM_KEY", completion);
 
 input.wire("ask->text", completion);
 completion.wire("completion->receive", output);

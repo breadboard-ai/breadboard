@@ -35,10 +35,10 @@ findFileBySimilarity
       "documents",
       nursery
         .embedDocs()
-        .wire("<-PALM_KEY", kit.secrets(["PALM_KEY"]))
+        .wire("<-PALM_KEY", kit.secrets({ keys: ["PALM_KEY"] }))
         .wire(
           "<-cache",
-          nursery.cache().wire("path<-CACHE_DB", kit.secrets(["CACHE_DB"]))
+          nursery.cache().wire("path<-CACHE_DB", kit.secrets({ keys: ["CACHE_DB"] })),
         )
         .wire(
           "documents",
@@ -68,23 +68,22 @@ findFileBySimilarity
     "text",
     nursery
       .embedString()
-      .wire("<-PALM_KEY", kit.secrets(["PALM_KEY"]))
+      .wire("<-PALM_KEY", kit.secrets({ keys: ["PALM_KEY"] }))
       .wire(
         "embedding",
         queryVectorDatabase.wire(
           "results->json",
           kit
-            .jsonata(
-              `
+            .jsonata({
+              expression: `
               $join(
                 $map(*, function($v, $i, $a) {
                   $v.document.id & ": " & $string($v.similarity)
                 }),
                 "\n"
-              )
-            `
-            )
-            .wire("result->text", findFileBySimilarity.output())
+              )`
+            })
+            .wire("result->text", findFileBySimilarity.output()),
         )
       )
   );
