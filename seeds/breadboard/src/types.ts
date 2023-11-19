@@ -12,6 +12,7 @@ export type Schema = {
   required?: string[];
   format?: string;
   enum?: string[];
+  default?: string;
   additionalProperties?: boolean | Schema;
   items?: Schema | Schema[];
 };

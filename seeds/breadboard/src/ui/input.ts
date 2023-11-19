@@ -141,6 +141,31 @@ export class Input extends HTMLElement {
     return span;
   }
 
+  #createInput(schema: Schema, values: InputData, key: string) {
+    const isSelect = schema.enum && schema.enum.length > 0;
+    if (isSelect) {
+      const select = document.createElement("select");
+      select.name = key;
+      schema.enum?.forEach((value) => {
+        const option = select.appendChild(document.createElement("option"));
+        option.value = value;
+        option.textContent = value;
+      });
+      const defaultIndex = schema.default
+        ? schema.enum?.indexOf(schema.default) || -1
+        : -1;
+      if (defaultIndex >= 0) select.selectedIndex = defaultIndex;
+      return select;
+    } else {
+      const isMultiline = schema.format == "multiline";
+      const input = isMultiline
+        ? this.#createMultiLineInput(values, key, schema.description)
+        : this.#createSingleLineInput(values, key, schema.description);
+      window.setTimeout(() => input.focus(), 100);
+      return input;
+    }
+  }
+
   async ask() {
     const schema = this.args.schema;
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -164,12 +189,9 @@ export class Input extends HTMLElement {
 
       const label = form.appendChild(document.createElement("label"));
       label.textContent = `${property.title}: `;
-      const input = isMultiline
-        ? this.#createMultiLineInput(values, key, property.description)
-        : this.#createSingleLineInput(values, key, property.description);
+      const input = this.#createInput(property, values, key);
       label.appendChild(input);
       form.append("\n");
-      window.setTimeout(() => input.focus(), 100);
     });
     if (insertSubmitButton) {
       const submit = form.appendChild(document.createElement("input"));
