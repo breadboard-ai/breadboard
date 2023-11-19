@@ -4,9 +4,9 @@
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
 passthrough61(("passthrough <br> id='passthrough-61'")):::passthrough -- all --> output53{{"output <br> id='output-53'"}}:::output
-generateText60["generateText <br> id='generateText-60'"] -- "completion->text" --> passthrough61(("passthrough <br> id='passthrough-61'")):::passthrough
-summarizingtemplate["promptTemplate <br> id='summarizing-template'"] -- "prompt->text" --> generateText60["generateText <br> id='generateText-60'"]
-secrets59("secrets <br> id='secrets-59'"):::secrets -- "PALM_KEY->PALM_KEY" --> generateText60["generateText <br> id='generateText-60'"]
+palmgenerateText60["palm-generateText <br> id='palm-generateText-60'"] -- "completion->text" --> passthrough61(("passthrough <br> id='passthrough-61'")):::passthrough
+summarizingtemplate["promptTemplate <br> id='summarizing-template'"] -- "prompt->text" --> palmgenerateText60["palm-generateText <br> id='palm-generateText-60'"]
+secrets59("secrets <br> id='secrets-59'"):::secrets -- "PALM_KEY->PALM_KEY" --> palmgenerateText60["palm-generateText <br> id='palm-generateText-60'"]
 input52[/"input <br> id='input-52'"/]:::input -- "text->query" --> urlTemplate56["urlTemplate <br> id='urlTemplate-56'"]
 input52[/"input <br> id='input-52'"/]:::input -- "text->question" --> summarizingtemplate["promptTemplate <br> id='summarizing-template'"]
 jsonata58["jsonata <br> id='jsonata-58'"] -- "result->context" --> summarizingtemplate["promptTemplate <br> id='summarizing-template'"]

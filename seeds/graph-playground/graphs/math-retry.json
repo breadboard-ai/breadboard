@@ -118,7 +118,7 @@
               },
               {
                 "id": "math-function-generator",
-                "type": "generateText"
+                "type": "palm-generateText"
               },
               {
                 "id": "secrets-3",

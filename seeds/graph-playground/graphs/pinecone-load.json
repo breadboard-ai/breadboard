@@ -122,20 +122,20 @@
                     "board": {
                       "edges": [
                         {
-                          "from": "embedText-4",
+                          "from": "palm-embedText-4",
                           "to": "merge",
                           "out": "embedding",
                           "in": "embedding"
                         },
                         {
                           "from": "secrets-5",
-                          "to": "embedText-4",
+                          "to": "palm-embedText-4",
                           "out": "PALM_KEY",
                           "in": "PALM_KEY"
                         },
                         {
                           "from": "jsonata-3",
-                          "to": "embedText-4",
+                          "to": "palm-embedText-4",
                           "out": "result",
                           "in": "text"
                         },
@@ -179,8 +179,8 @@
                           }
                         },
                         {
-                          "id": "embedText-4",
-                          "type": "embedText"
+                          "id": "palm-embedText-4",
+                          "type": "palm-embedText"
                         },
                         {
                           "id": "secrets-5",

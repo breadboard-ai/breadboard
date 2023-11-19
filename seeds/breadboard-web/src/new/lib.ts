@@ -152,13 +152,21 @@ function handlersFromKit(kit: Kit): NodeHandlers {
 
 // Extracts handlers from kits and creates node factorie for them.
 export function addKit<T extends Kit>(
-  ctr: KitConstructor<T>
+  ctr: KitConstructor<T>,
+  namespacePrefix = ""
 ): { [key: string]: NodeFactory<InputValues, OutputValues> } {
   const kit = new ctr({} as unknown as OriginalNodeFactory);
   const handlers = handlersFromKit(kit);
+  const removeNamespacePrefix = namespacePrefix
+    ? (name: string) => {
+        return name.startsWith(namespacePrefix)
+          ? name.slice(namespacePrefix.length)
+          : name;
+      }
+    : (name: string) => name;
   return Object.fromEntries(
     Object.entries(handlers).map(([name, handler]) => [
-      name,
+      removeNamespacePrefix(name),
       addNodeType(name, handler),
     ])
   );

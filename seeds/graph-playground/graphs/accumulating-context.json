@@ -102,7 +102,7 @@
     },
     {
       "id": "generator",
-      "type": "generateText"
+      "type": "palm-generateText"
     },
     {
       "id": "secrets-1",

@@ -165,7 +165,7 @@
     },
     {
       "id": "react-completion",
-      "type": "generateText",
+      "type": "palm-generateText",
       "configuration": {
         "stopSequences": [
           "\nObservation"

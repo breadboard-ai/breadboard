@@ -7,12 +7,12 @@
 graph TD;
 lambda2["lambda <br> id='lambda-2'"] -- "board->lambda" --> invoke1["invoke <br> id='invoke-1'"]
 subgraph sg_lambda2 [lambda-2]
-lambda2_secrets3("secrets <br> id='secrets-3'"):::secrets -- "PALM_KEY->PALM_KEY" --> lambda2_mathfunctiongenerator["generateText <br> id='math-function-generator'"]
-lambda2_input1[/"input <br> id='input-1'"/]:::input -- "text->text" --> lambda2_mathfunctiongenerator["generateText <br> id='math-function-generator'"]
-lambda2_mathfunctiongenerator["generateText <br> id='math-function-generator'"] -- "completion->code" --> lambda2_compute["runJavascript <br> id='compute'"]
+lambda2_secrets3("secrets <br> id='secrets-3'"):::secrets -- "PALM_KEY->PALM_KEY" --> lambda2_mathfunctiongenerator["palm-generateText <br> id='math-function-generator'"]
+lambda2_input1[/"input <br> id='input-1'"/]:::input -- "text->text" --> lambda2_mathfunctiongenerator["palm-generateText <br> id='math-function-generator'"]
+lambda2_mathfunctiongenerator["palm-generateText <br> id='math-function-generator'"] -- "completion->code" --> lambda2_compute["runJavascript <br> id='compute'"]
 lambda2_compute["runJavascript <br> id='compute'"] -- "result->text" --> lambda2_output2{{"output <br> id='output-2'"}}:::output
 lambda2_compute["runJavascript <br> id='compute'"] -- "$error->$error" --> lambda2_passthrough4(("passthrough <br> id='passthrough-4'")):::passthrough
-lambda2_mathfunctiongenerator["generateText <br> id='math-function-generator'"] -- "completion->completion" --> lambda2_passthrough4(("passthrough <br> id='passthrough-4'")):::passthrough
+lambda2_mathfunctiongenerator["palm-generateText <br> id='math-function-generator'"] -- "completion->completion" --> lambda2_passthrough4(("passthrough <br> id='passthrough-4'")):::passthrough
 end
 sg_lambda2:::slotted -- "lamdba->lamdba" --o lambda2
 

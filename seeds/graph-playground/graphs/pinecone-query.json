@@ -5,7 +5,7 @@
   "edges": [
     {
       "from": "secrets-3",
-      "to": "embedText-2",
+      "to": "palm-embedText-2",
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
@@ -22,14 +22,14 @@
       "in": "json"
     },
     {
-      "from": "embedText-2",
+      "from": "palm-embedText-2",
       "to": "pinecone-api-query-4",
       "out": "embedding",
       "in": "embedding"
     },
     {
       "from": "query",
-      "to": "embedText-2",
+      "to": "palm-embedText-2",
       "out": "text",
       "in": "text"
     },
@@ -41,19 +41,19 @@
     },
     {
       "from": "secrets-7",
-      "to": "generateText-6",
+      "to": "palm-generateText-6",
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
-      "from": "generateText-6",
+      "from": "palm-generateText-6",
       "to": "rag",
       "out": "completion",
       "in": "text"
     },
     {
       "from": "promptTemplate-1",
-      "to": "generateText-6",
+      "to": "palm-generateText-6",
       "out": "prompt",
       "in": "text"
     }
@@ -83,8 +83,8 @@
       }
     },
     {
-      "id": "embedText-2",
-      "type": "embedText"
+      "id": "palm-embedText-2",
+      "type": "palm-embedText"
     },
     {
       "id": "secrets-3",
@@ -107,8 +107,8 @@
       }
     },
     {
-      "id": "generateText-6",
-      "type": "generateText"
+      "id": "palm-generateText-6",
+      "type": "palm-generateText"
     },
     {
       "id": "secrets-7",

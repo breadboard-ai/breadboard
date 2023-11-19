@@ -2,20 +2,20 @@
   "title": "New: Math, directly calling a chain",
   "edges": [
     {
-      "from": "generateText-48",
+      "from": "palm-generateText-48",
       "to": "runJavascript-49",
       "out": "completion",
       "in": "code"
     },
     {
       "from": "secrets-47",
-      "to": "generateText-48",
+      "to": "palm-generateText-48",
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
       "from": "promptTemplate-46",
-      "to": "generateText-48",
+      "to": "palm-generateText-48",
       "out": "prompt",
       "in": "text"
     },
@@ -33,8 +33,8 @@
       "configuration": {}
     },
     {
-      "id": "generateText-48",
-      "type": "generateText",
+      "id": "palm-generateText-48",
+      "type": "palm-generateText",
       "configuration": {}
     },
     {

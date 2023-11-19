@@ -6,9 +6,9 @@
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
 input1[/"input <br> id='input-1'"/]:::input -- "text->topic" --> promptTemplate6["promptTemplate <br> id='promptTemplate-6'"]
-secrets8("secrets <br> id='secrets-8'"):::secrets -- "PALM_KEY->PALM_KEY" --o generateText7["generateText <br> id='generateText-7'"]
-generateText7["generateText <br> id='generateText-7'"] -- "completion->text" --> output9{{"output <br> id='output-9'"}}:::output
-promptTemplate6["promptTemplate <br> id='promptTemplate-6'"] -- "prompt->text" --> generateText7["generateText <br> id='generateText-7'"]
+secrets8("secrets <br> id='secrets-8'"):::secrets -- "PALM_KEY->PALM_KEY" --o palmgenerateText7["palm-generateText <br> id='palm-generateText-7'"]
+palmgenerateText7["palm-generateText <br> id='palm-generateText-7'"] -- "completion->text" --> output9{{"output <br> id='output-9'"}}:::output
+promptTemplate6["promptTemplate <br> id='promptTemplate-6'"] -- "prompt->text" --> palmgenerateText7["palm-generateText <br> id='palm-generateText-7'"]
 jsonata5["jsonata <br> id='jsonata-5'"] -- "result->headlines" --> promptTemplate6["promptTemplate <br> id='promptTemplate-6'"]
 xmlToJson4["xmlToJson <br> id='xmlToJson-4'"] -- "json->json" --> jsonata5["jsonata <br> id='jsonata-5'"]
 fetch3["fetch <br> id='fetch-3'"] -- "response->xml" --> xmlToJson4["xmlToJson <br> id='xmlToJson-4'"]

@@ -113,7 +113,7 @@
     },
     {
       "id": "travelItineraryGenerator",
-      "type": "generateText",
+      "type": "palm-generateText",
       "configuration": {
         "stopSequences": [
           "\n[Place]"
@@ -196,7 +196,7 @@
               },
               {
                 "id": "guideGenerator",
-                "type": "generateText",
+                "type": "palm-generateText",
                 "configuration": {
                   "stopSequences": [
                     "\n[City]"

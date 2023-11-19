@@ -15,13 +15,13 @@ rememberObservation["append <br> id='rememberObservation'"] -- "accumulator->acc
 rememberQuestion["append <br> id='rememberQuestion'"] -- "accumulator->accumulator" --> rememberThought["append <br> id='rememberThought'"]
 rememberQuestion["append <br> id='rememberQuestion'"] -- "accumulator->memory" --> promptTemplate4["promptTemplate <br> id='promptTemplate-4'"]
 input5[/"input <br> id='input-5'"/]:::input -- "text->Question" --> rememberQuestion["append <br> id='rememberQuestion'"]
-secrets1("secrets <br> id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o reactcompletion["generateText <br> id='react-completion'"]
+secrets1("secrets <br> id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o reactcompletion["palm-generateText <br> id='react-completion'"]
 toolsslot(("slot <br> id='tools-slot'")):::slot -- "text->Observation" --> rememberObservation["append <br> id='rememberObservation'"]
 jsonata6["jsonata <br> id='jsonata-6'"] -- all --> toolsslot(("slot <br> id='tools-slot'")):::slot
 jsonata6["jsonata <br> id='jsonata-6'"] -- "answer->text" --> output7{{"output <br> id='output-7'"}}:::output
-reactcompletion["generateText <br> id='react-completion'"] -- "completion->json" --> jsonata6["jsonata <br> id='jsonata-6'"]
-reactcompletion["generateText <br> id='react-completion'"] -- "completion->Thought" --> rememberThought["append <br> id='rememberThought'"]
-promptTemplate4["promptTemplate <br> id='promptTemplate-4'"] -- "prompt->text" --> reactcompletion["generateText <br> id='react-completion'"]
+reactcompletion["palm-generateText <br> id='react-completion'"] -- "completion->json" --> jsonata6["jsonata <br> id='jsonata-6'"]
+reactcompletion["palm-generateText <br> id='react-completion'"] -- "completion->Thought" --> rememberThought["append <br> id='rememberThought'"]
+promptTemplate4["promptTemplate <br> id='promptTemplate-4'"] -- "prompt->text" --> reactcompletion["palm-generateText <br> id='react-completion'"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

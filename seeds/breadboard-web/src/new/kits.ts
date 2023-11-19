@@ -35,7 +35,7 @@ export const core = addKit(Core) as unknown as {
   // TODO: Other Core nodes.
 };
 
-export const palm = addKit(PaLMKit) as unknown as {
+export const palm = addKit(PaLMKit, "palm-") as unknown as {
   generateText: NodeFactory<
     { text: string; PALM_KEY: string },
     { completion: string }

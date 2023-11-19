@@ -5,9 +5,9 @@
   ```mermaid
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-secrets2("secrets <br> id='secrets-2'"):::secrets -- "PALM_KEY->PALM_KEY" --> generateText1["generateText <br> id='generateText-1'"]
-generateText1["generateText <br> id='generateText-1'"] -- "completion->text" --> analysis{{"output <br> id='analysis'"}}:::output
-analyzethis["promptTemplate <br> id='analyze-this'"] -- "prompt->text" --> generateText1["generateText <br> id='generateText-1'"]
+secrets2("secrets <br> id='secrets-2'"):::secrets -- "PALM_KEY->PALM_KEY" --> palmgenerateText1["palm-generateText <br> id='palm-generateText-1'"]
+palmgenerateText1["palm-generateText <br> id='palm-generateText-1'"] -- "completion->text" --> analysis{{"output <br> id='analysis'"}}:::output
+analyzethis["promptTemplate <br> id='analyze-this'"] -- "prompt->text" --> palmgenerateText1["palm-generateText <br> id='palm-generateText-1'"]
 question[/"input <br> id='question'"/]:::input -- "text->question" --> analyzethis["promptTemplate <br> id='analyze-this'"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000

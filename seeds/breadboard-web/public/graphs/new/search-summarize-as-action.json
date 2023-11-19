@@ -10,20 +10,20 @@
       "in": "*"
     },
     {
-      "from": "generateText-60",
+      "from": "palm-generateText-60",
       "to": "passthrough-61",
       "out": "completion",
       "in": "text"
     },
     {
       "from": "summarizing-template",
-      "to": "generateText-60",
+      "to": "palm-generateText-60",
       "out": "prompt",
       "in": "text"
     },
     {
       "from": "secrets-59",
-      "to": "generateText-60",
+      "to": "palm-generateText-60",
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
@@ -82,8 +82,8 @@
       "configuration": {}
     },
     {
-      "id": "generateText-60",
-      "type": "generateText",
+      "id": "palm-generateText-60",
+      "type": "palm-generateText",
       "configuration": {}
     },
     {

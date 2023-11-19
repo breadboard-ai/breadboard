@@ -6,12 +6,12 @@
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
 conversationMemory["append <br> id='conversationMemory'"] -- "accumulator->accumulator" --> conversationMemory["append <br> id='conversationMemory'"]
-secrets1("secrets <br> id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o generator["generateText <br> id='generator'"]
+secrets1("secrets <br> id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o generator["palm-generateText <br> id='generator'"]
 conversationMemory["append <br> id='conversationMemory'"] -- "accumulator->context" --> assistant["promptTemplate <br> id='assistant'"]
-generator["generateText <br> id='generator'"] -- "completion->assistant" --> conversationMemory["append <br> id='conversationMemory'"]
+generator["palm-generateText <br> id='generator'"] -- "completion->assistant" --> conversationMemory["append <br> id='conversationMemory'"]
 assistantResponse{{"output <br> id='assistantResponse'"}}:::output --> userRequest[/"input <br> id='userRequest'"/]:::input
-generator["generateText <br> id='generator'"] -- "completion->text" --> assistantResponse{{"output <br> id='assistantResponse'"}}:::output
-assistant["promptTemplate <br> id='assistant'"] -- "prompt->text" --> generator["generateText <br> id='generator'"]
+generator["palm-generateText <br> id='generator'"] -- "completion->text" --> assistantResponse{{"output <br> id='assistantResponse'"}}:::output
+assistant["promptTemplate <br> id='assistant'"] -- "prompt->text" --> generator["palm-generateText <br> id='generator'"]
 userRequest[/"input <br> id='userRequest'"/]:::input -- "text->question" --> assistant["promptTemplate <br> id='assistant'"]
 userRequest[/"input <br> id='userRequest'"/]:::input -- "text->user" --> conversationMemory["append <br> id='conversationMemory'"]
 start(("passthrough <br> id='start'")):::passthrough --> userRequest[/"input <br> id='userRequest'"/]:::input

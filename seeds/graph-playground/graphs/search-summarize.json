@@ -4,14 +4,14 @@
   "version": "0.0.1",
   "edges": [
     {
-      "from": "generateText-1",
+      "from": "palm-generateText-1",
       "to": "output-2",
       "out": "completion",
       "in": "text"
     },
     {
       "from": "summarizing-template",
-      "to": "generateText-1",
+      "to": "palm-generateText-1",
       "out": "prompt",
       "in": "text"
     },
@@ -35,7 +35,7 @@
     },
     {
       "from": "secrets-6",
-      "to": "generateText-1",
+      "to": "palm-generateText-1",
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
@@ -66,8 +66,8 @@
   ],
   "nodes": [
     {
-      "id": "generateText-1",
-      "type": "generateText"
+      "id": "palm-generateText-1",
+      "type": "palm-generateText"
     },
     {
       "id": "output-2",

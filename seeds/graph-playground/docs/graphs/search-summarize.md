@@ -5,12 +5,12 @@
   ```mermaid
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-generateText1["generateText <br> id='generateText-1'"] -- "completion->text" --> output2{{"output <br> id='output-2'"}}:::output
-summarizingtemplate["promptTemplate <br> id='summarizing-template'"] -- "prompt->text" --> generateText1["generateText <br> id='generateText-1'"]
+palmgenerateText1["palm-generateText <br> id='palm-generateText-1'"] -- "completion->text" --> output2{{"output <br> id='output-2'"}}:::output
+summarizingtemplate["promptTemplate <br> id='summarizing-template'"] -- "prompt->text" --> palmgenerateText1["palm-generateText <br> id='palm-generateText-1'"]
 jsonata5["jsonata <br> id='jsonata-5'"] -- "result->context" --> summarizingtemplate["promptTemplate <br> id='summarizing-template'"]
 fetch4["fetch <br> id='fetch-4'"] -- "response->json" --> jsonata5["jsonata <br> id='jsonata-5'"]
 urlTemplate3["urlTemplate <br> id='urlTemplate-3'"] -- "url->url" --> fetch4["fetch <br> id='fetch-4'"]
-secrets6("secrets <br> id='secrets-6'"):::secrets -- "PALM_KEY->PALM_KEY" --> generateText1["generateText <br> id='generateText-1'"]
+secrets6("secrets <br> id='secrets-6'"):::secrets -- "PALM_KEY->PALM_KEY" --> palmgenerateText1["palm-generateText <br> id='palm-generateText-1'"]
 secrets6("secrets <br> id='secrets-6'"):::secrets -- "API_KEY->API_KEY" --> urlTemplate3["urlTemplate <br> id='urlTemplate-3'"]
 secrets6("secrets <br> id='secrets-6'"):::secrets -- "GOOGLE_CSE_ID->GOOGLE_CSE_ID" --> urlTemplate3["urlTemplate <br> id='urlTemplate-3'"]
 input[/"input <br> id='input'"/]:::input -- "text->question" --> summarizingtemplate["promptTemplate <br> id='summarizing-template'"]

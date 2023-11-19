@@ -27,7 +27,7 @@
     },
     {
       "from": "assistant",
-      "to": "generateText-2",
+      "to": "palm-generateText-2",
       "out": "prompt",
       "in": "text"
     },
@@ -44,20 +44,20 @@
       "in": "context"
     },
     {
-      "from": "generateText-2",
+      "from": "palm-generateText-2",
       "to": "append-0",
       "out": "completion",
       "in": "accumulator"
     },
     {
-      "from": "generateText-2",
+      "from": "palm-generateText-2",
       "to": "output-3",
       "out": "completion",
       "in": "text"
     },
     {
       "from": "secrets-1",
-      "to": "generateText-2",
+      "to": "palm-generateText-2",
       "out": "PALM_KEY",
       "in": "PALM_KEY",
       "constant": true
@@ -123,8 +123,8 @@
       }
     },
     {
-      "id": "generateText-2",
-      "type": "generateText",
+      "id": "palm-generateText-2",
+      "type": "palm-generateText",
       "configuration": {}
     },
     {

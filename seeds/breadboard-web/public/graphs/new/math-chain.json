@@ -8,20 +8,20 @@
       "in": "*"
     },
     {
-      "from": "generateText-35",
+      "from": "palm-generateText-35",
       "to": "runJavascript-36",
       "out": "completion",
       "in": "code"
     },
     {
       "from": "secrets-34",
-      "to": "generateText-35",
+      "to": "palm-generateText-35",
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
       "from": "promptTemplate-33",
-      "to": "generateText-35",
+      "to": "palm-generateText-35",
       "out": "prompt",
       "in": "text"
     },
@@ -44,8 +44,8 @@
       "configuration": {}
     },
     {
-      "id": "generateText-35",
-      "type": "generateText",
+      "id": "palm-generateText-35",
+      "type": "palm-generateText",
       "configuration": {}
     },
     {

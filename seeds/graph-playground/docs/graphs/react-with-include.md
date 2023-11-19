@@ -13,15 +13,15 @@ rememberObservation["append <br> id='rememberObservation'"] -- "accumulator->acc
 rememberQuestion["append <br> id='rememberQuestion'"] -- "accumulator->accumulator" --> rememberThought["append <br> id='rememberThought'"]
 rememberQuestion["append <br> id='rememberQuestion'"] -- "accumulator->memory" --> promptTemplate2["promptTemplate <br> id='promptTemplate-2'"]
 input5[/"input <br> id='input-5'"/]:::input -- "text->Question" --> rememberQuestion["append <br> id='rememberQuestion'"]
-secrets1("secrets <br> id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o reactcompletion["generateText <br> id='react-completion'"]
+secrets1("secrets <br> id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o reactcompletion["palm-generateText <br> id='react-completion'"]
 include6[["include <br> id='include-6'"]]:::include -- "text->Observation" --> rememberObservation["append <br> id='rememberObservation'"]
 include7[["include <br> id='include-7'"]]:::include -- "text->Observation" --> rememberObservation["append <br> id='rememberObservation'"]
 parseCompletion8["parseCompletion <br> id='parseCompletion-8'"] -- "search->text" --> include7[["include <br> id='include-7'"]]:::include
 parseCompletion8["parseCompletion <br> id='parseCompletion-8'"] -- "math->text" --> include6[["include <br> id='include-6'"]]:::include
 parseCompletion8["parseCompletion <br> id='parseCompletion-8'"] -- "answer->text" --> output9{{"output <br> id='output-9'"}}:::output
-reactcompletion["generateText <br> id='react-completion'"] -- "completion->completion" --> parseCompletion8["parseCompletion <br> id='parseCompletion-8'"]
-reactcompletion["generateText <br> id='react-completion'"] -- "completion->Thought" --> rememberThought["append <br> id='rememberThought'"]
-promptTemplate2["promptTemplate <br> id='promptTemplate-2'"] -- "prompt->text" --> reactcompletion["generateText <br> id='react-completion'"]
+reactcompletion["palm-generateText <br> id='react-completion'"] -- "completion->completion" --> parseCompletion8["parseCompletion <br> id='parseCompletion-8'"]
+reactcompletion["palm-generateText <br> id='react-completion'"] -- "completion->Thought" --> rememberThought["append <br> id='rememberThought'"]
+promptTemplate2["promptTemplate <br> id='promptTemplate-2'"] -- "prompt->text" --> reactcompletion["palm-generateText <br> id='react-completion'"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

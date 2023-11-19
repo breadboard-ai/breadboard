@@ -13,6 +13,7 @@ const builder = new KitBuilder({
   title: "PaLM Kit",
   description: "A Breadboard Kit with nodes to access PaLM APIs.",
   url: "npm:@google-labs/palm-kit",
+  namespacePrefix: "palm-",
 });
 
 export const PaLMKit = builder.build({

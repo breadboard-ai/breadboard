@@ -73,19 +73,19 @@
             "edges": [
               {
                 "from": "secrets-3",
-                "to": "generateText-4",
+                "to": "palm-generateText-4",
                 "constant": true,
                 "out": "PALM_KEY",
                 "in": "PALM_KEY"
               },
               {
                 "from": "input-1",
-                "to": "generateText-4",
+                "to": "palm-generateText-4",
                 "out": "text",
                 "in": "text"
               },
               {
-                "from": "generateText-4",
+                "from": "palm-generateText-4",
                 "to": "validateJson-5",
                 "out": "completion",
                 "in": "json"
@@ -115,13 +115,13 @@
                 "in": "completion"
               },
               {
-                "from": "generateText-4",
+                "from": "palm-generateText-4",
                 "to": "validateJson-5",
                 "out": "completion",
                 "in": "completion"
               },
               {
-                "from": "generateText-4",
+                "from": "palm-generateText-4",
                 "to": "runJavascript-6",
                 "out": "completion",
                 "in": "completion"
@@ -146,8 +146,8 @@
                 }
               },
               {
-                "id": "generateText-4",
-                "type": "generateText",
+                "id": "palm-generateText-4",
+                "type": "palm-generateText",
                 "configuration": {}
               },
               {

@@ -3,9 +3,9 @@
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-generateText68["generateText <br> id='generateText-68'"] -- "completion->text" --> output69{{"output <br> id='output-69'"}}:::output
-summarizingtemplate["promptTemplate <br> id='summarizing-template'"] -- "prompt->text" --> generateText68["generateText <br> id='generateText-68'"]
-secrets67("secrets <br> id='secrets-67'"):::secrets -- "PALM_KEY->PALM_KEY" --> generateText68["generateText <br> id='generateText-68'"]
+palmgenerateText68["palm-generateText <br> id='palm-generateText-68'"] -- "completion->text" --> output69{{"output <br> id='output-69'"}}:::output
+summarizingtemplate["promptTemplate <br> id='summarizing-template'"] -- "prompt->text" --> palmgenerateText68["palm-generateText <br> id='palm-generateText-68'"]
+secrets67("secrets <br> id='secrets-67'"):::secrets -- "PALM_KEY->PALM_KEY" --> palmgenerateText68["palm-generateText <br> id='palm-generateText-68'"]
 input[/"input <br> id='input'"/]:::input -- "text->query" --> urlTemplate64["urlTemplate <br> id='urlTemplate-64'"]
 input[/"input <br> id='input'"/]:::input -- "text->question" --> summarizingtemplate["promptTemplate <br> id='summarizing-template'"]
 jsonata66["jsonata <br> id='jsonata-66'"] -- "result->context" --> summarizingtemplate["promptTemplate <br> id='summarizing-template'"]
