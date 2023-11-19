@@ -128,7 +128,7 @@ The `secrets` node reaches into our program's environment and gets the environme
 We'll install and use the `dotenv` package, which conveniently reads environment variables from a `.env` file. First, install the package:
 
 ```sh
-npm install.dotenv
+npm install dotenv
 ```
 
 Next, create a `.env` file and put your API key there:
