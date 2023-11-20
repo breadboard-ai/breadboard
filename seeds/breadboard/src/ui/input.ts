@@ -121,23 +121,23 @@ export class Input extends HTMLElement {
     return;
   }
 
-  #createSingleLineInput(values: InputData, key: string, description?: string) {
+  #createSingleLineInput(schema: Schema, values: InputData, key: string) {
     const input = document.createElement("input");
     input.name = key;
     input.type = this.secret ? "password" : "text";
     input.autocomplete = this.secret ? "off" : "on";
-    input.placeholder = description || "";
+    input.placeholder = schema.description || "";
     input.autofocus = true;
-    input.value = values[key] ?? "";
+    input.value = values[key] ?? schema.default ?? "";
     return input;
   }
 
-  #createMultiLineInput(values: InputData, key: string, description?: string) {
+  #createMultiLineInput(schema: Schema, values: InputData, key: string) {
     const span = document.createElement("span");
     const textarea = span.appendChild(document.createElement("textarea"));
     textarea.name = key;
-    textarea.placeholder = description || "";
-    textarea.value = values[key] ?? "";
+    textarea.placeholder = schema.description || "";
+    textarea.value = values[key] ?? schema.default ?? "";
     return span;
   }
 
@@ -159,8 +159,8 @@ export class Input extends HTMLElement {
     } else {
       const isMultiline = schema.format == "multiline";
       const input = isMultiline
-        ? this.#createMultiLineInput(values, key, schema.description)
-        : this.#createSingleLineInput(values, key, schema.description);
+        ? this.#createMultiLineInput(schema, values, key)
+        : this.#createSingleLineInput(schema, values, key);
       window.setTimeout(() => input.focus(), 100);
       return input;
     }
