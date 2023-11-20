@@ -45,6 +45,18 @@ class ShortTermMemory {
   }
 }
 
+const isMultiline = (schema: Schema) => {
+  return schema.format == "multiline";
+};
+
+const isMultipart = (schema: Schema) => {
+  return schema.type == "object" && schema.format == "multipart";
+};
+
+const isSelect = (schema: Schema) => {
+  return schema.enum && schema.enum.length > 0;
+};
+
 export class Input extends HTMLElement {
   args: InputArgs;
   id: string;
@@ -142,8 +154,7 @@ export class Input extends HTMLElement {
   }
 
   #createInput(schema: Schema, values: InputData, key: string) {
-    const isSelect = schema.enum && schema.enum.length > 0;
-    if (isSelect) {
+    if (isSelect(schema)) {
       const select = document.createElement("select");
       select.name = key;
       schema.enum?.forEach((value) => {
@@ -156,6 +167,9 @@ export class Input extends HTMLElement {
         : -1;
       if (defaultIndex >= 0) select.selectedIndex = defaultIndex;
       return select;
+    } else if (isMultipart(schema)) {
+      // TODO: Implement actual multi-part input bits
+      return this.#createMultiLineInput(schema, values, key);
     } else {
       const isMultiline = schema.format == "multiline";
       const input = isMultiline
@@ -184,8 +198,8 @@ export class Input extends HTMLElement {
     const form = input.appendChild(document.createElement("form"));
     let insertSubmitButton = false;
     Object.entries(properties).forEach(([key, property], index) => {
-      const isMultiline = property.format == "multiline";
-      if (index > 0 || isMultiline) insertSubmitButton = true;
+      const needsSubmitButton = isMultiline(schema) || isMultipart(schema);
+      if (index > 0 || needsSubmitButton) insertSubmitButton = true;
 
       const label = form.appendChild(document.createElement("label"));
       label.textContent = `${property.title}: `;
@@ -200,6 +214,7 @@ export class Input extends HTMLElement {
     }
     if (this.remember && this.#memory.didSave(properties))
       return Promise.resolve(values);
+
     return new Promise((resolve) => {
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
