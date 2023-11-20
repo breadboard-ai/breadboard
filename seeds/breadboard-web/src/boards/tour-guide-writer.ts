@@ -47,8 +47,8 @@ const output = board.output({
   },
 });
 
-const travelItineraryTemplate = starter.promptTemplate(
-  `[Place] Seattle, WA
+const travelItineraryTemplate = starter.promptTemplate({
+  template: `[Place] Seattle, WA
 [Top ten place-based experiences with no duplicates]
 1) See the city from the Space Needle
 2) Watch the fish throwing at Pike Place Market
@@ -90,8 +90,8 @@ const travelItineraryTemplate = starter.promptTemplate(
 [Place] {{location}}
 [Top ten place-based experiences with no duplicates]
 `,
-  { $id: "travelItinerary" }
-);
+  $id: "travelItinerary",
+});
 
 const travelItineraryGenerator = palm
   .generateText({
@@ -100,7 +100,8 @@ const travelItineraryGenerator = palm
   })
   .wire("<-PALM_KEY", starter.secrets({ keys: ["PALM_KEY"] }));
 
-const splitItinerary = starter.runJavascript("split", {
+const splitItinerary = starter.runJavascript({
+  name: "split",
   $id: "splitItinerary",
   code: function split({ itinerary }: { itinerary: string }) {
     return itinerary
@@ -117,8 +118,8 @@ const createGuides = core.map((board, input, output) => {
   const starter = board.addKit(Starter);
   const palm = board.addKit(PaLMKit);
 
-  const guideTemplate = starter.promptTemplate(
-    `[City] Paris, France
+  const guideTemplate = starter.promptTemplate({
+    template: `[City] Paris, France
   [Activity] Have a picnic in the Luxembourg Gardens
   [Experiential story] Grab a baguette, some cheese and bottle of wine and head over to Luxembourg Gardens. You'll enjoy an even stroll, a great chance to people watch, and a charming free evening that is quintessentially Parisian.
   
@@ -135,8 +136,8 @@ const createGuides = core.map((board, input, output) => {
   [Activity] {{activity}}
   [Experiential story]
   `,
-    { $id: "guideTemplate" }
-  );
+    $id: "guideTemplate",
+  });
 
   const guideGenerator = palm
     .generateText({

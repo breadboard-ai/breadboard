@@ -18,7 +18,8 @@ const starter = board.addKit(Starter);
 const nursery = board.addKit(NodeNurseryWeb);
 const core = board.addKit(Core);
 
-const parseDriveList = starter.jsonata('$join(result.files.name, "\n")', {
+const parseDriveList = starter.jsonata({
+  expression: '$join(result.files.name, "\n")',
   $id: "parseDriveList",
 });
 
@@ -40,9 +41,9 @@ nursery
   .credentials({
     $id: "credentials",
   })
-  .wire("<-API_KEY", starter.secrets(["API_KEY"]))
-  .wire("<-AUTH_DOMAIN", starter.secrets(["AUTH_DOMAIN"]))
-  .wire("<-PROJECT_ID", starter.secrets(["PROJECT_ID"]))
+  .wire("<-API_KEY", starter.secrets({ keys: ["API_KEY"] }))
+  .wire("<-AUTH_DOMAIN", starter.secrets({ keys: ["AUTH_DOMAIN"] }))
+  .wire("<-PROJECT_ID", starter.secrets({ keys: ["PROJECT_ID"] }))
   .wire(
     "<-scopes",
     core.passthrough({

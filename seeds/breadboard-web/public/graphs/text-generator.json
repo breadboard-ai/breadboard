@@ -10,12 +10,6 @@
       "in": "PALM_KEY"
     },
     {
-      "from": "runJavascript-1",
-      "to": "palm-generateText-2",
-      "out": "palm",
-      "in": "palm"
-    },
-    {
       "from": "input",
       "to": "runJavascript-1",
       "out": "model",
@@ -34,10 +28,34 @@
       "in": "text"
     },
     {
+      "from": "mockModel",
+      "to": "output",
+      "out": "text",
+      "in": "text"
+    },
+    {
+      "from": "input",
+      "to": "mockModel",
+      "out": "text",
+      "in": "text"
+    },
+    {
       "from": "runJavascript-1",
       "to": "output",
       "out": "other",
       "in": "text"
+    },
+    {
+      "from": "runJavascript-1",
+      "to": "palm-generateText-2",
+      "out": "palm",
+      "in": "palm"
+    },
+    {
+      "from": "runJavascript-1",
+      "to": "mockModel",
+      "out": "mock",
+      "in": "mock"
     }
   ],
   "nodes": [
@@ -58,7 +76,8 @@
               "title": "Model",
               "description": "The model to use for generation",
               "enum": [
-                "PaLM"
+                "PaLM",
+                "mock"
               ],
               "default": "PaLM"
             }
@@ -71,7 +90,7 @@
       "type": "runJavascript",
       "configuration": {
         "name": "switchModel",
-        "code": "function switchModel({model}){switch(model){case\"PaLM\":return{palm:true};default:return{other:`Unsupported model: ${model}`}}}",
+        "code": "function switchModel({model}){switch(model){case\"PaLM\":return{palm:true};case\"mock\":return{mock:true};default:return{other:`Unsupported model: ${model}`}}}",
         "raw": true
       }
     },
@@ -86,6 +105,15 @@
         "keys": [
           "PALM_KEY"
         ]
+      }
+    },
+    {
+      "id": "mockModel",
+      "type": "runJavascript",
+      "configuration": {
+        "name": "runMockModel",
+        "code": "function runMockModel({text}){return{text:`Mock model echoes back: ${text}`}}",
+        "raw": true
       }
     },
     {
@@ -110,9 +138,6 @@
       "url": "npm:@google-labs/palm-kit"
     },
     {
-      "title": "LLM Starter Kit",
-      "description": "A kit that provides a few necessary components for wiring boards that use PaLM API.",
-      "version": "0.0.1",
       "url": "npm:@google-labs/llm-starter"
     }
   ]
