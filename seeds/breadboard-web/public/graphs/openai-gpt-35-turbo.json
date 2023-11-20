@@ -1,0 +1,120 @@
+{
+  "title": "OpenAI GPT-3.5-turbo",
+  "description": "This board is the simplest possible invocation of OpenAI's GPT-3.5 API to generate text.",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "secrets-2",
+      "to": "jsonata-1",
+      "out": "OPENAI_API_KEY",
+      "in": "json"
+    },
+    {
+      "from": "jsonata-1",
+      "to": "fetch-4",
+      "out": "result",
+      "in": "headers"
+    },
+    {
+      "from": "jsonata-5",
+      "to": "output",
+      "out": "result",
+      "in": "text"
+    },
+    {
+      "from": "fetch-4",
+      "to": "jsonata-5",
+      "out": "response",
+      "in": "json"
+    },
+    {
+      "from": "jsonata-3",
+      "to": "fetch-4",
+      "out": "result",
+      "in": "body"
+    },
+    {
+      "from": "input",
+      "to": "jsonata-3",
+      "out": "text",
+      "in": "json"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Text",
+              "description": "The text to generate"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Text",
+              "description": "The generated text"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "jsonata-1",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "{\n    \"Content-Type\": \"application/json\",\n    \"Authorization\": \"Bearer \" & $\n  }"
+      }
+    },
+    {
+      "id": "secrets-2",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "OPENAI_API_KEY"
+        ]
+      }
+    },
+    {
+      "id": "jsonata-3",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "{\n    \"model\": \"gpt-3.5-turbo\",\n    \"messages\": [\n      {\n        \"role\": \"user\",\n        \"content\": $\n      }\n    ],\n    \"temperature\": 1,\n    \"max_tokens\": 256,\n    \"top_p\": 1,\n    \"frequency_penalty\": 0,\n    \"presence_penalty\": 0\n  }"
+      }
+    },
+    {
+      "id": "fetch-4",
+      "type": "fetch",
+      "configuration": {
+        "url": "https://api.openai.com/v1/chat/completions",
+        "method": "POST"
+      }
+    },
+    {
+      "id": "jsonata-5",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "choices[0].message.content"
+      }
+    }
+  ],
+  "kits": [
+    {
+      "url": "npm:@google-labs/llm-starter"
+    }
+  ]
+}

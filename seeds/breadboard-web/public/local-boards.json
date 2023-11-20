@@ -52,6 +52,10 @@
     "url": "/graphs/new/single-node.json"
   },
   {
+    "title": "OpenAI GPT-3.5-turbo",
+    "url": "/graphs/openai-gpt-35-turbo.json"
+  },
+  {
     "title": "Text Generator",
     "url": "/graphs/text-generator.json"
   },
