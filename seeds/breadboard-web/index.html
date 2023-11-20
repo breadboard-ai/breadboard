@@ -164,7 +164,7 @@
                   break;
                 case "result":
                   const type = receiverResult.nodeType;
-                  if (type === "generateText") {
+                  if (type === "palm-generateText") {
                     ui.result({
                       title: "LLM response",
                       result: receiverResult.value.completion,
