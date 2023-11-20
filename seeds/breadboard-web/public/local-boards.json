@@ -56,6 +56,10 @@
     "url": "/graphs/text-generator.json"
   },
   {
+    "title": "Tour Guide Writer, Take Two",
+    "url": "/graphs/tour-guide-writer-2.json"
+  },
+  {
     "title": "Tour Guide Writer",
     "url": "/graphs/tour-guide-writer.json"
   }
