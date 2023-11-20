@@ -4,11 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  Board,
-  BreadboardNode,
-  OptionalIdConfiguration,
-} from "@google-labs/breadboard";
+import { Board, BreadboardNode } from "@google-labs/breadboard";
 import { Core } from "@google-labs/core-kit";
 import { Starter } from "@google-labs/llm-starter";
 import { readFile, readdir } from "fs/promises";
@@ -38,14 +34,14 @@ export class PromptMaker {
 
   async prompt(
     filename: string,
-    id: string,
+    id: string
   ): Promise<{
     $id: string;
     template: string;
   }> {
     return {
       $id: id,
-      template: await this.loader.load(filename, "txt")
+      template: await this.loader.load(filename, "txt"),
     };
   }
 
