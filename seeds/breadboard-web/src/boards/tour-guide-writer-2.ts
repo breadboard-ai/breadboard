@@ -11,7 +11,7 @@ import { Core } from "@google-labs/core-kit";
 const board = new Board({
   title: "Tour Guide Writer, Take Two",
   description:
-    "This boards attempts to write a tour guide for a specified location. This time, it takes a text generator board as an input.",
+    "This boards attempts to write a tour guide for a specified location. This time, it takes a text generator board as an input.\n\nInterestingly, because we currently don't have a way to close over the inputs of the invoked text generator, this board exposes the text generator's inputs as its own inputs.",
   version: "0.0.1",
 });
 const starter = board.addKit(Starter);
@@ -35,7 +35,7 @@ const userInput = board.input({
       },
       model: {
         type: "string",
-        title: "Model",
+        title: "Model (feeds into TextGenerator)",
         description: "The model to use for the text generator",
         default: "PaLM",
         enum: ["PaLM", "mock"],

@@ -11,7 +11,7 @@ import { PaLMKit } from "@google-labs/palm-kit";
 const board = new Board({
   title: "Text Generator",
   description:
-    "This is a text generator. It can generate text using various LLMs. Currently, it only supports the PaLM model.",
+    "This is a text generator. It can generate text using various LLMs. Currently, it only supports the PaLM model and a mock model. The mock model simply echoes back the input text. It's good for testing.",
   version: "0.0.1",
 });
 const palm = board.addKit(PaLMKit);
