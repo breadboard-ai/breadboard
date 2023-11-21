@@ -15,6 +15,7 @@ export type Schema = {
   default?: string;
   additionalProperties?: boolean | Schema;
   items?: Schema | Schema[];
+  minItems?: number;
 };
 
 export interface Capability {

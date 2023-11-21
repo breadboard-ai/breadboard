@@ -11,7 +11,6 @@ type MultipartValue = unknown;
 type MultipartData = { value: MultipartValue; html: HTMLElement };
 
 const MULTIPART_INPUT_PREFIX = "multipart-input-";
-const DELETE_EMOJI = "\\1f5d1";
 
 export const isMultipart = (schema: Schema) => {
   return schema.type == "array" && schema.format == "multipart";
@@ -43,12 +42,37 @@ export class MultipartInput extends HTMLElement {
             flex-direction: column;
             flex: 1;
           }
+
+          * {
+            white-space: initial;
+          }
+
           textarea {
             width: var(--bb-input-width, 80%);
           }
+
+          div {
+            padding-top: 0.5rem;
+          }
+
+          button {
+            cursor: pointer;
+            background-color: transparent;
+            padding-right: 1rem;
+            border: none;
+          }
       </style>
-      <slot></slot>`;
-    this.append(new MultipartInputImage());
+      <slot></slot>
+      <div>
+        <button id="add-text">➕ Add text</button>
+        <button id="add-image">🖼️ Add image</button>
+      </div>`;
+    root.querySelector("#add-text")?.addEventListener("click", () => {
+      this.append(new MultipartInputText());
+    });
+    root.querySelector("#add-image")?.addEventListener("click", () => {
+      this.append(new MultipartInputImage());
+    });
     this.append(new MultipartInputText());
   }
 
@@ -80,14 +104,19 @@ abstract class MultipartInputPart extends HTMLElement {
         #delete {
           width: 2rem;
           height: 2rem;
+          cursor: pointer;
         }
 
-        #delete:after {
-          content: '${DELETE_EMOJI}';
+        button {
+          border: none;
+          background-color: transparent;
         }
       </style>
-      <div id="delete"></div>
+      <button id="delete">🗑️</button>
     `;
+    root.querySelector("#delete")?.addEventListener("click", () => {
+      this.remove();
+    });
   }
 
   abstract getData(): MultipartData;
