@@ -16,8 +16,20 @@
       "in": "model"
     },
     {
+      "from": "input",
+      "to": "runJavascript-1",
+      "out": "useStreaming",
+      "in": "useStreaming"
+    },
+    {
+      "from": "input",
+      "to": "gpt35",
+      "out": "useStreaming",
+      "in": "useStreaming"
+    },
+    {
       "from": "gpt35",
-      "to": "output",
+      "to": "textOutput",
       "out": "text",
       "in": "text"
     },
@@ -29,7 +41,7 @@
     },
     {
       "from": "palm-generateText-2",
-      "to": "output",
+      "to": "textOutput",
       "out": "completion",
       "in": "text"
     },
@@ -40,8 +52,14 @@
       "in": "text"
     },
     {
+      "from": "input",
+      "to": "mockModel",
+      "out": "useStreaming",
+      "in": "useStreaming"
+    },
+    {
       "from": "mockModel",
-      "to": "output",
+      "to": "textOutput",
       "out": "text",
       "in": "text"
     },
@@ -53,7 +71,7 @@
     },
     {
       "from": "runJavascript-1",
-      "to": "output",
+      "to": "textOutput",
       "out": "other",
       "in": "text"
     },
@@ -74,6 +92,18 @@
       "to": "mockModel",
       "out": "mock",
       "in": "mock"
+    },
+    {
+      "from": "mockModel",
+      "to": "listToStream-4",
+      "out": "list",
+      "in": "list"
+    },
+    {
+      "from": "listToStream-4",
+      "to": "streamOutput",
+      "out": "stream",
+      "in": "stream"
     }
   ],
   "nodes": [
@@ -89,7 +119,7 @@
               "title": "Text",
               "description": "The text to generate"
             },
-            "stream": {
+            "useStreaming": {
               "type": "boolean",
               "title": "Stream",
               "description": "Whether to stream the output",
@@ -115,7 +145,7 @@
       "type": "runJavascript",
       "configuration": {
         "name": "switchModel",
-        "code": "function switchModel({model}){switch(model){case\"PaLM\":return{palm:true};case\"mock\":return{mock:true};case\"GPT 3.5 Turbo\":return{gpt35:true};default:return{other:`Unsupported model: ${model}`}}}",
+        "code": "function switchModel({model,useStreaming}){switch(model){case\"PaLM\":if(useStreaming){return{other:`Streaming is not supported for ${model}`}}return{palm:true};case\"mock\":return{mock:true};case\"GPT 3.5 Turbo\":return{gpt35:true};default:return{other:`Unsupported model: ${model}`}}}",
         "raw": true
       }
     },
@@ -144,12 +174,16 @@
       "type": "runJavascript",
       "configuration": {
         "name": "runMockModel",
-        "code": "function runMockModel({text}){return{text:`Mock model echoes back: ${text}`}}",
+        "code": "function runMockModel({text,useStreaming}){text=`Mock model with streaming off echoes back: ${text}`;if(useStreaming){const list=text.split(\" \");return{list}}return{text}}",
         "raw": true
       }
     },
     {
-      "id": "output",
+      "id": "listToStream-4",
+      "type": "listToStream"
+    },
+    {
+      "id": "textOutput",
       "type": "output",
       "configuration": {
         "schema": {
@@ -159,6 +193,23 @@
               "type": "string",
               "title": "Text",
               "description": "The generated text"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "streamOutput",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "stream": {
+              "type": "object",
+              "title": "Stream",
+              "description": "The generated text",
+              "format": "stream"
             }
           }
         }
@@ -174,6 +225,9 @@
     },
     {
       "url": "npm:@google-labs/core-kit"
+    },
+    {
+      "url": "npm:@google-labs/node-nursery-web"
     }
   ]
 }

@@ -8,6 +8,7 @@ import { Board } from "@google-labs/breadboard";
 import { Core } from "@google-labs/core-kit";
 import { Starter } from "@google-labs/llm-starter";
 import { PaLMKit } from "@google-labs/palm-kit";
+import { NodeNurseryWeb } from "@google-labs/node-nursery-web";
 
 const board = new Board({
   title: "Text Generator",
@@ -18,6 +19,7 @@ const board = new Board({
 const palm = board.addKit(PaLMKit);
 const starter = board.addKit(Starter);
 const core = board.addKit(Core);
+const nursery = board.addKit(NodeNurseryWeb);
 
 const input = board.input({
   $id: "input",
@@ -29,7 +31,7 @@ const input = board.input({
         title: "Text",
         description: "The text to generate",
       },
-      stream: {
+      useStreaming: {
         type: "boolean",
         title: "Stream",
         description: "Whether to stream the output",
@@ -46,9 +48,18 @@ const input = board.input({
   },
 });
 
-function switchModel({ model }: { model: string }) {
+function switchModel({
+  model,
+  useStreaming,
+}: {
+  model: string;
+  useStreaming: boolean;
+}) {
   switch (model) {
     case "PaLM":
+      if (useStreaming) {
+        return { other: `Streaming is not supported for ${model}` };
+      }
       return { palm: true };
     case "mock":
       return { mock: true };
@@ -74,8 +85,19 @@ const gpt35 = core.invoke({
   path: "openai-gpt-35-turbo.json",
 });
 
-function runMockModel({ text }: { text: string }) {
-  return { text: `Mock model echoes back: ${text}` };
+function runMockModel({
+  text,
+  useStreaming,
+}: {
+  text: string;
+  useStreaming: boolean;
+}) {
+  text = `Mock model with streaming off echoes back: ${text}`;
+  if (useStreaming) {
+    const list = text.split(" ");
+    return { list };
+  }
+  return { text };
 }
 
 const mockModel = starter.runJavascript({
@@ -85,8 +107,10 @@ const mockModel = starter.runJavascript({
   raw: true,
 });
 
-const output = board.output({
-  $id: "output",
+const mockModelStream = nursery.listToStream();
+
+const textOutput = board.output({
+  $id: "textOutput",
   schema: {
     type: "object",
     properties: {
@@ -99,14 +123,38 @@ const output = board.output({
   },
 });
 
+const streamOutput = board.output({
+  $id: "streamOutput",
+  schema: {
+    type: "object",
+    properties: {
+      stream: {
+        type: "object",
+        title: "Stream",
+        description: "The generated text",
+        format: "stream",
+      },
+    },
+  },
+});
+
 input.wire("model->", switcher);
-input.wire("text->", gpt35.wire("text->", output));
-input.wire("text->", generateText.wire("completion->text", output));
-input.wire("text->", mockModel.wire("text->", output));
+input.wire("useStreaming->", switcher);
+
+input.wire("useStreaming->", gpt35);
+input.wire("text->", gpt35.wire("text->", textOutput));
+
+input.wire("text->", generateText.wire("completion->text", textOutput));
+
+input.wire("useStreaming->", mockModel);
+input.wire("text->", mockModel.wire("text->", textOutput));
 switcher
-  .wire("other->text", output)
+  .wire("other->text", textOutput)
   .wire("palm->", generateText)
   .wire("gpt35->", gpt35)
   .wire("mock->", mockModel);
+
+mockModel.wire("list->", mockModelStream);
+mockModelStream.wire("stream->", streamOutput);
 
 export default board;
