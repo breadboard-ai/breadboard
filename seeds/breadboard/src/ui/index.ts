@@ -13,7 +13,11 @@ import { Result } from "./result.js";
 import { Start } from "./start.js";
 import { Diagram } from "./diagram.js";
 import { UIController } from "./ui-controller.js";
-import { MultipartInput } from "./input-multipart.js";
+import {
+  MultipartInput,
+  MultipartInputImage,
+  MultipartInputText,
+} from "./input-multipart.js";
 
 export const register = () => {
   customElements.define("bb-ui", UIController);
@@ -26,6 +30,8 @@ export const register = () => {
   customElements.define("bb-progress", Progress);
   customElements.define("bb-result", Result);
   customElements.define("bb-multipart-input", MultipartInput);
+  customElements.define("bb-multipart-input-image", MultipartInputImage);
+  customElements.define("bb-multipart-input-text", MultipartInputText);
 };
 
 export const get = () => {

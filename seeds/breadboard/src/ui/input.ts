@@ -15,7 +15,7 @@ export type InputArgs = {
   schema: Schema;
 };
 
-export type InputData = Record<string, string>;
+export type InputData = Record<string, unknown>;
 
 export type InputOptios = {
   remember?: boolean;
@@ -157,7 +157,7 @@ export class Input extends HTMLElement {
     input.autocomplete = this.secret ? "off" : "on";
     input.placeholder = schema.description || "";
     input.autofocus = true;
-    input.value = values[key] ?? schema.default ?? "";
+    input.value = (values[key] as string) ?? schema.default ?? "";
     return input;
   }
 
@@ -166,7 +166,7 @@ export class Input extends HTMLElement {
     const textarea = span.appendChild(document.createElement("textarea"));
     textarea.name = key;
     textarea.placeholder = schema.description || "";
-    textarea.value = values[key] ?? schema.default ?? "";
+    textarea.value = (values[key] as string) ?? schema.default ?? "";
     return span;
   }
 
@@ -216,7 +216,7 @@ export class Input extends HTMLElement {
     const form = input.appendChild(document.createElement("form"));
     let insertSubmitButton = false;
     Object.entries(properties).forEach(([key, property], index) => {
-      const needsSubmitButton = isMultiline(schema) || isMultipart(schema);
+      const needsSubmitButton = isMultiline(property) || isMultipart(property);
       if (index > 0 || needsSubmitButton) insertSubmitButton = true;
 
       const label = form.appendChild(document.createElement("label"));
@@ -241,7 +241,7 @@ export class Input extends HTMLElement {
           if (isMultipart(property)) {
             const { html, value } = getMultipartValue(form, key);
             data[key] = value;
-            root.append(`${property.title}: `, html);
+            root.append(`${property.title}: `, ...html);
           } else {
             const input = form[key];
             if (input.value) {
