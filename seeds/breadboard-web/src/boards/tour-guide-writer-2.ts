@@ -38,7 +38,7 @@ const userInput = board.input({
         title: "Model (feeds into TextGenerator)",
         description: "The model to use for the text generator",
         default: "PaLM",
-        enum: ["PaLM", "mock"],
+        enum: ["PaLM", "GPT 3.5 Turbo", "mock"],
       },
     },
   },
