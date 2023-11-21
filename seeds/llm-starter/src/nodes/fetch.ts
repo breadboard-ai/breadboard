@@ -11,6 +11,29 @@ import {
   type NodeHandler,
 } from "@google-labs/breadboard";
 
+const serverSentEventTransform = () =>
+  new TransformStream({
+    transform(chunk, controller) {
+      const text = chunk.toString();
+      const lines = text.split("\n");
+      for (const line of lines) {
+        if (line.startsWith("data: ")) {
+          const data = line.slice(6);
+          let chunk;
+          try {
+            // Special case for OpenAI's API.
+            if (data === "[DONE]") continue;
+            chunk = JSON.parse(data);
+          } catch (e) {
+            // TODO: Handle this more gracefully.
+            chunk = data;
+          }
+          controller.enqueue(chunk);
+        }
+      }
+    },
+  });
+
 export type FetchOutputs = {
   response: string | object;
 };
@@ -38,7 +61,8 @@ export type FetchInputs = {
    */
   raw?: boolean;
   /**
-   * Whether or not to return a stream
+   * Whether or not to return a stream. Currently, fetch presumes that the
+   * streaming response is sent as [Server-Sent Events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#event_stream_format).
    */
   stream?: boolean;
 };
@@ -120,7 +144,13 @@ export default {
       if (!data.body) {
         throw new Error("Response is not streamable.");
       }
-      return { response: new StreamCapability(data.body) };
+      return {
+        stream: new StreamCapability(
+          data.body
+            .pipeThrough(new TextDecoderStream())
+            .pipeThrough(serverSentEventTransform())
+        ),
+      };
     } else {
       const response = raw ? await data.text() : await data.json();
       return { response };
