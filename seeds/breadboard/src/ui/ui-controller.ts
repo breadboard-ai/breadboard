@@ -11,7 +11,7 @@ import { Output, type OutputArgs } from "./output.js";
 import { Progress } from "./progress.js";
 import { Result, ResultArgs } from "./result.js";
 import { Start, type StartArgs } from "./start.js";
-import { Diagram } from "./diagram.js";
+import { StartEvent } from "./events.js";
 
 export interface UI {
   progress(message: string): void;
@@ -26,36 +26,239 @@ const getBoardFromUrl = () => {
 };
 
 export class UIController extends HTMLElement implements UI {
+  #start!: Start;
+
   constructor() {
     super();
+
     const root = this.attachShadow({ mode: "open" });
     root.innerHTML = `
       <style>
         :host {
-          display: block;
+          --grid-size: var(--bb-grid-size, 4px);
+
+          display: grid;
+          width: 100%;
+          margin-bottom: calc(var(--grid-size) * 30);
+          padding: 0 calc(var(--grid-size) * 6) 0 calc(var(--grid-size) * 6);
         }
-        ::slotted(*) {
-          padding-bottom: var(--bb-item-spacing, 0.4rem);
+
+        :host * {
+          box-sizing: border-box;
+        }
+
+        #intro {
+          opacity: 0;
+        }
+
+        #intro.active {
+          opacity: 1;
+        }
+
+        #start-container {
+          width: 100%;
+          max-width: calc(var(--grid-size) * 100);
+          margin: 0 auto;
+        }
+
+        #response-container {
+          background: rgb(244, 247, 252);
+          border: 2px solid rgb(244, 247, 252);
+          border-radius: calc(var(--grid-size) * 8);
+          padding: calc(var(--grid-size) * 6);
+          overflow: scroll;
+          scrollbar-gutter: stable;
+        }
+
+        #response-container > #intro > h1 {
+          font-size: var(--bb-text-xx-large);
+          margin: 0 0 calc(var(--grid-size) * 6) 0;
+          display: inline-block;
+          background: linear-gradient(
+            45deg,
+            rgb(90, 64, 119), 
+            rgb(144, 68, 228)
+          );
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+
+        #response-container > #intro > p {
+          max-width: calc(var(--grid-size) * 125);
+          margin: 0 0 calc(var(--grid-size) * 5) 0;
+          line-height: 1.5;
+        }
+
+        #response-container a {
+          color: var(--bb-font-color);
+          font-weight: 700;
+        }
+
+        #new-here {
+          font-size: var(--bb-text-small);
+        }
+
+        #url-input-container {
+          margin-top: calc(var(--grid-size) * 10);
+          position: relative;
+        }
+
+        #url-input {
+          border-radius: calc(var(--grid-size) * 10);
+          background: rgb(255, 255, 255);
+          height: calc(var(--grid-size) * 12);
+          padding: 0 calc(var(--grid-size) * 10) 0 calc(var(--grid-size) * 4);
+          width: 100%;
+          border: 1px solid rgb(209, 209, 209);
+        }
+
+        #url-submit {
+          font-size: 0;
+          width: calc(var(--grid-size) * 8);
+          height: calc(var(--grid-size) * 8);
+          position: absolute;
+          right: calc(var(--grid-size) * 2);
+          top: calc(var(--grid-size) * 2);
+          border-radius: 50%;
+          background: #FFF var(--bb-start-icon) center center no-repeat;
+          border: none;
+        }
+
+        #board-content {
+          border-radius: calc(var(--grid-size) * 8);
+          padding: calc(var(--grid-size) * 8);
+          background: rgb(255, 255, 255);
+          opacity: 0;
+        }
+
+        #board-content.active {
+          opacity: 1;
+        }
+
+        @media(min-width: 740px) {
+          :host {
+            padding: 0 calc(var(--bb-grid-size) * 12) 0 calc(var(--bb-grid-size) * 8);
+            column-gap: calc(var(--bb-grid-size) * 5);
+            grid-template-columns: calc(var(--grid-size) * 64) auto;
+            margin: 0;
+          }
+
+          #start-container {
+            margin: 0;
+            height: 74vh;
+          }
+
+          #response-container {
+            padding: calc(var(--grid-size) * 12);
+            height: 74vh;
+          }
         }
       </style>
-      <slot></slot>
+      <div id="start-container">
+        <slot name="start"></slot>
+      </div>
+      <div id="response-container">
+        <div id="intro">
+          <h1>Hello there!</h1>
+          <p>This is the <strong>Breadboard Playground</strong> running in the browser. Here you can either try out one of the sample boards, or you can enter the URL for your own board below.</p>
+
+          <p id="new-here">New here? Read more about the <a href="https://github.com/google/labs-prototypes/tree/main">Breadboard project on Github</a>.</p>
+
+          <form>
+            <div id="url-input-container">
+              <input required id="url-input" type="url" name="url" placeholder="Enter a Board URL" />
+              <input id="url-submit" type="submit" />
+            </div>
+          </form>
+        </div>
+        
+        <slot name="load"></slot>
+        
+        <div id="board-content">
+          <slot></slot>
+        </div>
+      </div>
     `;
   }
 
-  async start(args: StartArgs) {
-    const boardFromUrl = getBoardFromUrl();
-    if (boardFromUrl) return boardFromUrl;
+  setActiveBreadboard(url: string) {
+    if (!this.#start) {
+      return;
+    }
 
-    const start = new Start(args);
-    this.append(start);
-    const board = await start.selectBoard();
-    start.disable();
-    return board;
+    this.#start.setAttribute("url", url);
+  }
+
+  async start(args: StartArgs) {
+    this.#start = new Start(args);
+    this.#start.slot = "start";
+    this.append(this.#start);
+
+    const boardFromUrl = getBoardFromUrl();
+    if (boardFromUrl) {
+      this.dispatchEvent(new StartEvent(boardFromUrl));
+    } else {
+      this.showIntroContent();
+    }
+  }
+
+  private clearContents() {
+    const root = this.shadowRoot;
+    if (!root) {
+      throw new Error("Unable to locate shadow root in UI Controller");
+    }
+
+    const children = Array.from(
+      root.querySelectorAll("#response-container > *")
+    );
+
+    for (const child of children) {
+      // Skip the main slot & board content so we still have that to populate.
+      if (child.nodeName === "SLOT" || child.id === "board-content") {
+        continue;
+      }
+
+      child.remove();
+    }
+  }
+
+  private showIntroContent() {
+    const root = this.shadowRoot;
+    if (!root) {
+      throw new Error("Unable to locate shadow root in UI Controller");
+    }
+
+    root.querySelector("#intro")?.classList.add("active");
+
+    const form = root.querySelector("form");
+    form?.addEventListener("submit", (evt: Event) => {
+      evt.preventDefault();
+      const data = new FormData(form);
+      const url = data.get("url");
+      if (!url) {
+        throw new Error("Unable to located url in form data");
+      }
+
+      this.dispatchEvent(new StartEvent(url.toString()));
+    });
+  }
+
+  private showBoardContent() {
+    const root = this.shadowRoot;
+    if (!root) {
+      throw new Error("Unable to locate shadow root in UI Controller");
+    }
+
+    root.querySelector("#board-content")?.classList.add("active");
   }
 
   load(info: LoadArgs) {
-    this.append(new Load(info));
-    this.append(new Diagram(info));
+    this.clearContents();
+    this.showBoardContent();
+
+    const load = new Load(info);
+    load.slot = "load";
+    this.append(load);
   }
 
   progress(message: string) {

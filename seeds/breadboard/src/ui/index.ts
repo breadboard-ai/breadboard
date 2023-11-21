@@ -29,3 +29,11 @@ export const register = () => {
 export const get = () => {
   return document.querySelector("bb-ui") as UIController;
 };
+
+export type { LoadArgs } from "./load.js";
+export type { OutputArgs } from "./output.js";
+export type { InputArgs } from "./input.js";
+export type { ResultArgs } from "./result.js";
+export type { StartArgs } from "./start.js";
+
+export { StartEvent } from "./events.js";

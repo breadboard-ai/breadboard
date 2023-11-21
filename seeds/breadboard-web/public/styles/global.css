@@ -1,0 +1,76 @@
+/**
+ * @license
+ * Copyright 2023 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  --bb-grid-size: 4px;
+  --bb-font-family-header: "Fira Code";
+  --bb-font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --bb-font-color: rgb(23, 23, 23);
+  --bb-main-bg: rgb(244, 247, 252);
+  --bb-text-baseline: calc(var(--bb-grid-size) * 4);
+  --bb-text-xx-large: 3rem;
+  --bb-text-x-large: 2rem;
+  --bb-text-large: 1.5rem;
+  --bb-text-medium: 0.875rem;
+  --bb-text-small: 0.75rem;
+  --bb-easing: cubic-bezier(0, 0, 0.3, 1);
+  --bb-easing-duration-in: 0.15s;
+  --bb-easing-duration-out: 0.3s;
+  --bb-board-icon: url(/third_party/icons/board.svg);
+  --bb-start-icon: url(/third_party/icons/start.svg);
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  font-family: var(--bb-font-family);
+  color: var(--bb-font-color);
+}
+
+header {
+  padding: calc(var(--bb-grid-size) * 10) calc(var(--bb-grid-size) * 6)
+    calc(var(--bb-grid-size) * 8) calc(var(--bb-grid-size) * 6);
+  min-height: calc(var(--bb-grid-size) * 24);
+  display: flex;
+  align-items: flex-end;
+}
+
+header a {
+  text-decoration: none;
+}
+
+#title {
+  font: var(--bb-text-baseline) var(--bb-font-family-header);
+  color: rgb(90, 64, 119);
+  margin: 0;
+}
+
+@media (min-width: 500px) {
+  #title {
+    font-size: 20px;
+  }
+
+  header {
+    min-height: calc(var(--bb-grid-size) * 26);
+  }
+}
+
+@media (min-width: 640px) {
+  #title {
+    font-size: var(--bb-text-large);
+  }
+
+  header {
+    padding: calc(var(--bb-grid-size) * 8) calc(var(--bb-grid-size) * 9)
+      calc(var(--bb-grid-size) * 12) calc(var(--bb-grid-size) * 9);
+    min-height: calc(var(--bb-grid-size) * 30);
+  }
+}

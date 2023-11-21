@@ -92,9 +92,10 @@ export class Input extends HTMLElement {
 
         * {
           white-space: pre-wrap;
-          font-family: var(--bb-font-family, Fira Code,monospace);
+          font-family: var(--bb-font-family-header, Fira Code, monospace);
           font-size: var(--bb-font-size, 1rem);
         }
+        
         input[type=text], textarea {
           width: var(--bb-input-width, 80%);
         }
