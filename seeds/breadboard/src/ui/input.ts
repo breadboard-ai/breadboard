@@ -240,7 +240,7 @@ export class Input extends HTMLElement {
           const input = form[key];
           if (input.value) {
             const parsedValue = parseValue(property.type, input);
-            data[key] = parsedValue.toString();
+            data[key] = parsedValue;
             if (!this.secret)
               root.append(`${property.title}: ${parsedValue}\n`);
           }

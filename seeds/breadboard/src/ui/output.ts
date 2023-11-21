@@ -28,6 +28,7 @@ export class Output extends HTMLElement {
   }
 
   async display(values: OutputArgs) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const root = this.shadowRoot!;
     const schema = values.schema;
     if (!schema || !schema.properties) {
