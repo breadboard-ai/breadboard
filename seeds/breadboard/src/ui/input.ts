@@ -5,6 +5,11 @@
  */
 
 import { type Schema } from "../types.js";
+import {
+  createMultipartInput,
+  getMultipartValue,
+  isMultipart,
+} from "./input-multipart.js";
 
 export type InputArgs = {
   schema: Schema;
@@ -50,10 +55,6 @@ class ShortTermMemory {
 
 const isMultiline = (schema: Schema) => {
   return schema.format == "multiline";
-};
-
-const isMultipart = (schema: Schema) => {
-  return schema.type == "object" && schema.format == "multipart";
 };
 
 const isSelect = (schema: Schema) => {
@@ -186,8 +187,7 @@ export class Input extends HTMLElement {
     } else if (isBoolean(schema)) {
       return this.#createBooleanInput(schema, values, key);
     } else if (isMultipart(schema)) {
-      // TODO: Implement actual multi-part input bits
-      return this.#createMultiLineInput(schema, values, key);
+      return createMultipartInput(schema, key);
     } else {
       const isMultiline = schema.format == "multiline";
       const input = isMultiline
@@ -238,12 +238,18 @@ export class Input extends HTMLElement {
         e.preventDefault();
         const data: InputData = {};
         Object.entries(properties).forEach(([key, property]) => {
-          const input = form[key];
-          if (input.value) {
-            const parsedValue = parseValue(property.type, input);
-            data[key] = parsedValue;
-            if (!this.secret)
-              root.append(`${property.title}: ${parsedValue}\n`);
+          if (isMultipart(property)) {
+            const { html, value } = getMultipartValue(form, key);
+            data[key] = value;
+            root.append(`${property.title}: `, html);
+          } else {
+            const input = form[key];
+            if (input.value) {
+              const parsedValue = parseValue(property.type, input);
+              data[key] = parsedValue;
+              if (!this.secret)
+                root.append(`${property.title}: ${parsedValue}\n`);
+            }
           }
         });
         this.#rememberValues(data);
