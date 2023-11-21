@@ -143,6 +143,7 @@ input.wire("useStreaming->", switcher);
 
 input.wire("useStreaming->", gpt35);
 input.wire("text->", gpt35.wire("text->", textOutput));
+gpt35.wire("stream->", streamOutput);
 
 input.wire("text->", generateText.wire("completion->text", textOutput));
 

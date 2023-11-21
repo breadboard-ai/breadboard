@@ -40,6 +40,12 @@
       "in": "text"
     },
     {
+      "from": "gpt35",
+      "to": "streamOutput",
+      "out": "stream",
+      "in": "stream"
+    },
+    {
       "from": "palm-generateText-2",
       "to": "textOutput",
       "out": "completion",
