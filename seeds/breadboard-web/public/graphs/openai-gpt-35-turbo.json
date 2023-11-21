@@ -16,6 +16,19 @@
       "in": "headers"
     },
     {
+      "from": "lambda-6",
+      "to": "transformStream-7",
+      "constant": true,
+      "out": "board",
+      "in": "board"
+    },
+    {
+      "from": "input",
+      "to": "jsonata-3",
+      "out": "useStreaming",
+      "in": "useStreaming"
+    },
+    {
       "from": "jsonata-5",
       "to": "output",
       "out": "result",
@@ -28,6 +41,18 @@
       "in": "json"
     },
     {
+      "from": "transformStream-7",
+      "to": "stream",
+      "out": "stream",
+      "in": "stream"
+    },
+    {
+      "from": "fetch-4",
+      "to": "transformStream-7",
+      "out": "stream",
+      "in": "stream"
+    },
+    {
       "from": "jsonata-3",
       "to": "fetch-4",
       "out": "result",
@@ -37,7 +62,7 @@
       "from": "input",
       "to": "jsonata-3",
       "out": "text",
-      "in": "json"
+      "in": "text"
     }
   ],
   "nodes": [
@@ -52,6 +77,12 @@
               "type": "string",
               "title": "Text",
               "description": "The text to generate"
+            },
+            "useStreaming": {
+              "type": "boolean",
+              "title": "Stream",
+              "description": "Whether to stream the output",
+              "default": false
             }
           }
         }
@@ -67,6 +98,23 @@
             "text": {
               "type": "string",
               "title": "Text",
+              "description": "The generated text"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "stream",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "stream": {
+              "type": "object",
+              "title": "Stream",
+              "format": "stream",
               "description": "The generated text"
             }
           }
@@ -93,7 +141,7 @@
       "id": "jsonata-3",
       "type": "jsonata",
       "configuration": {
-        "expression": "{\n    \"model\": \"gpt-3.5-turbo-1106\",\n    \"messages\": [\n      {\n        \"role\": \"user\",\n        \"content\": $\n      }\n    ],\n    \"temperature\": 1,\n    \"max_tokens\": 256,\n    \"top_p\": 1,\n    \"frequency_penalty\": 0,\n    \"presence_penalty\": 0\n  }"
+        "expression": "{\n    \"model\": \"gpt-3.5-turbo-1106\",\n    \"messages\": [\n      {\n        \"role\": \"user\",\n        \"content\": $.text\n      }\n    ],\n    \"stream\": $.useStreaming,\n    \"temperature\": 1,\n    \"max_tokens\": 256,\n    \"top_p\": 1,\n    \"frequency_penalty\": 0,\n    \"presence_penalty\": 0\n  }"
       }
     },
     {
@@ -101,7 +149,8 @@
       "type": "fetch",
       "configuration": {
         "url": "https://api.openai.com/v1/chat/completions",
-        "method": "POST"
+        "method": "POST",
+        "stream": true
       }
     },
     {
@@ -110,11 +159,66 @@
       "configuration": {
         "expression": "choices[0].message.content"
       }
+    },
+    {
+      "id": "lambda-6",
+      "type": "lambda",
+      "configuration": {
+        "board": {
+          "kind": "board",
+          "board": {
+            "edges": [
+              {
+                "from": "jsonata-3",
+                "to": "output-2",
+                "out": "result",
+                "in": "chunk"
+              },
+              {
+                "from": "input-1",
+                "to": "jsonata-3",
+                "out": "chunk",
+                "in": "json"
+              }
+            ],
+            "nodes": [
+              {
+                "id": "input-1",
+                "type": "input"
+              },
+              {
+                "id": "output-2",
+                "type": "output"
+              },
+              {
+                "id": "jsonata-3",
+                "type": "jsonata",
+                "configuration": {
+                  "expression": "choices[0].delta.content ? choices[0].delta.content : \"\""
+                }
+              }
+            ],
+            "kits": [
+              {
+                "url": "npm:@google-labs/llm-starter"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "transformStream-7",
+      "type": "transformStream",
+      "configuration": {}
     }
   ],
   "kits": [
     {
       "url": "npm:@google-labs/llm-starter"
+    },
+    {
+      "url": "npm:@google-labs/node-nursery-web"
     }
   ]
 }

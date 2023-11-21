@@ -6,6 +6,7 @@
 
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
+import { NodeNurseryWeb } from "@google-labs/node-nursery-web";
 
 const board = new Board({
   title: "OpenAI GPT-3.5-turbo",
@@ -14,6 +15,7 @@ const board = new Board({
   version: "0.0.1",
 });
 const starter = board.addKit(Starter);
+const nursery = board.addKit(NodeNurseryWeb);
 
 const input = board.input({
   $id: "input",
@@ -25,11 +27,17 @@ const input = board.input({
         title: "Text",
         description: "The text to generate",
       },
+      useStreaming: {
+        type: "boolean",
+        title: "Stream",
+        description: "Whether to stream the output",
+        default: false,
+      },
     },
   },
 });
 
-const output = board.output({
+const textOutput = board.output({
   $id: "output",
   schema: {
     type: "object",
@@ -37,6 +45,21 @@ const output = board.output({
       text: {
         type: "string",
         title: "Text",
+        description: "The generated text",
+      },
+    },
+  },
+});
+
+const streamOutput = board.output({
+  $id: "stream",
+  schema: {
+    type: "object",
+    properties: {
+      stream: {
+        type: "object",
+        title: "Stream",
+        format: "stream",
         description: "The generated text",
       },
     },
@@ -58,9 +81,10 @@ const body = starter.jsonata({
     "messages": [
       {
         "role": "user",
-        "content": $
+        "content": $.text
       }
     ],
+    "stream": $.useStreaming,
     "temperature": 1,
     "max_tokens": 256,
     "top_p": 1,
@@ -73,6 +97,7 @@ const fetch = starter
   .fetch({
     url: "https://api.openai.com/v1/chat/completions",
     method: "POST",
+    stream: true,
   })
   .wire("headers<-result", headers);
 
@@ -80,11 +105,29 @@ const getResponse = starter.jsonata({
   expression: `choices[0].message.content`,
 });
 
+const streamTransform = nursery.transformStream(
+  (transformBoard, input, output) => {
+    const starter = transformBoard.addKit(Starter);
+
+    const transformCompletion = starter.jsonata({
+      expression: 'choices[0].delta.content ? choices[0].delta.content : ""',
+    });
+
+    input.wire(
+      "chunk->json",
+      transformCompletion.wire("result->chunk", output)
+    );
+  }
+);
+
+input.wire("useStreaming->", body);
 input.wire(
-  "text->json",
+  "text->",
   body.wire(
     "result->body",
-    fetch.wire("response->json", getResponse.wire("result->text", output))
+    fetch
+      .wire("response->json", getResponse.wire("result->text", textOutput))
+      .wire("stream->", streamTransform.wire("stream->", streamOutput))
   )
 );
 
