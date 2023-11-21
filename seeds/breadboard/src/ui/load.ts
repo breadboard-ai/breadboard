@@ -42,6 +42,7 @@ export class Load extends HTMLElement {
 
     this.#diagram = diagram;
 
+    const show = localStorage.getItem(LOCAL_STORAGE_KEY) ? "open" : "";
     const root = this.attachShadow({ mode: "open" });
     const link = createLink(url);
     root.innerHTML = `
@@ -64,7 +65,7 @@ export class Load extends HTMLElement {
           vertical-align: middle;
         }
       </style>
-      <details>
+      <details ${show}>
         <summary>
           <h1>${title} ${link}</h1>
         </summary>
