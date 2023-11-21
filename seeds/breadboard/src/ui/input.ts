@@ -17,7 +17,10 @@ export type InputOptios = {
   secret?: boolean;
 };
 
-const parseValue = (type: Schema["type"], value: string) => {
+const parseValue = (type: Schema["type"], input: HTMLInputElement) => {
+  if (type === "boolean") return input.checked;
+
+  const value = input.value;
   if (type === "string") return value;
   try {
     return JSON.parse(value);
@@ -55,6 +58,10 @@ const isMultipart = (schema: Schema) => {
 
 const isSelect = (schema: Schema) => {
   return schema.enum && schema.enum.length > 0;
+};
+
+const isBoolean = (schema: Schema) => {
+  return schema.type == "boolean";
 };
 
 export class Input extends HTMLElement {
@@ -133,6 +140,14 @@ export class Input extends HTMLElement {
     return;
   }
 
+  #createBooleanInput(schema: Schema, values: InputData, key: string) {
+    const input = document.createElement("input");
+    input.name = key;
+    input.type = "checkbox";
+    input.checked = !!values[key] ?? schema.default ?? false;
+    return input;
+  }
+
   #createSingleLineInput(schema: Schema, values: InputData, key: string) {
     const input = document.createElement("input");
     input.name = key;
@@ -167,6 +182,8 @@ export class Input extends HTMLElement {
         : -1;
       if (defaultIndex >= 0) select.selectedIndex = defaultIndex;
       return select;
+    } else if (isBoolean(schema)) {
+      return this.#createBooleanInput(schema, values, key);
     } else if (isMultipart(schema)) {
       // TODO: Implement actual multi-part input bits
       return this.#createMultiLineInput(schema, values, key);
@@ -222,9 +239,10 @@ export class Input extends HTMLElement {
         Object.entries(properties).forEach(([key, property]) => {
           const input = form[key];
           if (input.value) {
-            data[key] = parseValue(property.type, input.value);
+            const parsedValue = parseValue(property.type, input);
+            data[key] = parsedValue.toString();
             if (!this.secret)
-              root.append(`${property.title}: ${input.value}\n`);
+              root.append(`${property.title}: ${parsedValue}\n`);
           }
         });
         this.#rememberValues(data);

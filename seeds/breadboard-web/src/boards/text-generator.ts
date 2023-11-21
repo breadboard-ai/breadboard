@@ -29,6 +29,12 @@ const input = board.input({
         title: "Text",
         description: "The text to generate",
       },
+      stream: {
+        type: "boolean",
+        title: "Stream",
+        description: "Whether to stream the output",
+        default: false,
+      },
       model: {
         type: "string",
         title: "Model",
