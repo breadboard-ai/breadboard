@@ -5,12 +5,15 @@
 graph TD;
 secrets3("secrets <br> id='secrets-3'"):::secrets -- "PALM_KEY->PALM_KEY" --> palmgenerateText2["palm-generateText <br> id='palm-generateText-2'"]
 input[/"input <br> id='input'"/]:::input -- "model->model" --> runJavascript1["runJavascript <br> id='runJavascript-1'"]
+gpt35["invoke <br> id='gpt35'"] -- "text->text" --> output{{"output <br> id='output'"}}:::output
+input[/"input <br> id='input'"/]:::input -- "text->text" --> gpt35["invoke <br> id='gpt35'"]
 palmgenerateText2["palm-generateText <br> id='palm-generateText-2'"] -- "completion->text" --> output{{"output <br> id='output'"}}:::output
 input[/"input <br> id='input'"/]:::input -- "text->text" --> palmgenerateText2["palm-generateText <br> id='palm-generateText-2'"]
 mockModel["runJavascript <br> id='mockModel'"] -- "text->text" --> output{{"output <br> id='output'"}}:::output
 input[/"input <br> id='input'"/]:::input -- "text->text" --> mockModel["runJavascript <br> id='mockModel'"]
 runJavascript1["runJavascript <br> id='runJavascript-1'"] -- "other->text" --> output{{"output <br> id='output'"}}:::output
 runJavascript1["runJavascript <br> id='runJavascript-1'"] -- "palm->palm" --> palmgenerateText2["palm-generateText <br> id='palm-generateText-2'"]
+runJavascript1["runJavascript <br> id='runJavascript-1'"] -- "gpt35->gpt35" --> gpt35["invoke <br> id='gpt35'"]
 runJavascript1["runJavascript <br> id='runJavascript-1'"] -- "mock->mock" --> mockModel["runJavascript <br> id='mockModel'"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000

@@ -54,7 +54,7 @@ const headers = starter
 
 const body = starter.jsonata({
   expression: `{
-    "model": "gpt-3.5-turbo",
+    "model": "gpt-3.5-turbo-1106",
     "messages": [
       {
         "role": "user",

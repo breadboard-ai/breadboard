@@ -1,6 +1,6 @@
 {
   "title": "Text Generator",
-  "description": "This is a text generator. It can generate text using various LLMs. Currently, it only supports the PaLM model and a mock model. The mock model simply echoes back the input text. It's good for testing.",
+  "description": "This is a text generator. It can generate text using various LLMs. Currently, it supports the follwogin models: Google PaLM text-bison-001, OpenAI GPT-3.5 Turbo, and a mock model. The mock model simply echoes back the input text. It's good for testing.",
   "version": "0.0.1",
   "edges": [
     {
@@ -14,6 +14,18 @@
       "to": "runJavascript-1",
       "out": "model",
       "in": "model"
+    },
+    {
+      "from": "gpt35",
+      "to": "output",
+      "out": "text",
+      "in": "text"
+    },
+    {
+      "from": "input",
+      "to": "gpt35",
+      "out": "text",
+      "in": "text"
     },
     {
       "from": "palm-generateText-2",
@@ -53,6 +65,12 @@
     },
     {
       "from": "runJavascript-1",
+      "to": "gpt35",
+      "out": "gpt35",
+      "in": "gpt35"
+    },
+    {
+      "from": "runJavascript-1",
       "to": "mockModel",
       "out": "mock",
       "in": "mock"
@@ -77,6 +95,7 @@
               "description": "The model to use for generation",
               "enum": [
                 "PaLM",
+                "GPT 3.5 Turbo",
                 "mock"
               ],
               "default": "PaLM"
@@ -90,7 +109,7 @@
       "type": "runJavascript",
       "configuration": {
         "name": "switchModel",
-        "code": "function switchModel({model}){switch(model){case\"PaLM\":return{palm:true};case\"mock\":return{mock:true};default:return{other:`Unsupported model: ${model}`}}}",
+        "code": "function switchModel({model}){switch(model){case\"PaLM\":return{palm:true};case\"mock\":return{mock:true};case\"GPT 3.5 Turbo\":return{gpt35:true};default:return{other:`Unsupported model: ${model}`}}}",
         "raw": true
       }
     },
@@ -105,6 +124,13 @@
         "keys": [
           "PALM_KEY"
         ]
+      }
+    },
+    {
+      "id": "gpt35",
+      "type": "invoke",
+      "configuration": {
+        "path": "openai-gpt-35-turbo.json"
       }
     },
     {
@@ -139,6 +165,9 @@
     },
     {
       "url": "npm:@google-labs/llm-starter"
+    },
+    {
+      "url": "npm:@google-labs/core-kit"
     }
   ]
 }
