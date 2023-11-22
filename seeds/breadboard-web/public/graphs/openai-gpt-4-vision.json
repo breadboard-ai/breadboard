@@ -1,0 +1,224 @@
+{
+  "title": "OpenAI GPT 4 Vision Preview",
+  "description": "This board is the simplest possible invocation of OpenAI's GPT 4 Vision Preview API to generate text from multipart inputs.",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "secrets-2",
+      "to": "jsonata-1",
+      "out": "OPENAI_API_KEY",
+      "in": "OPENAI_API_KEY"
+    },
+    {
+      "from": "jsonata-1",
+      "to": "fetch-4",
+      "out": "result",
+      "in": "headers"
+    },
+    {
+      "from": "lambda-6",
+      "to": "transformStream-7",
+      "constant": true,
+      "out": "board",
+      "in": "board"
+    },
+    {
+      "from": "input",
+      "to": "jsonata-3",
+      "out": "useStreaming",
+      "in": "useStreaming"
+    },
+    {
+      "from": "jsonata-5",
+      "to": "output",
+      "out": "result",
+      "in": "text"
+    },
+    {
+      "from": "fetch-4",
+      "to": "jsonata-5",
+      "out": "response",
+      "in": "json"
+    },
+    {
+      "from": "transformStream-7",
+      "to": "stream",
+      "out": "stream",
+      "in": "stream"
+    },
+    {
+      "from": "fetch-4",
+      "to": "transformStream-7",
+      "out": "stream",
+      "in": "stream"
+    },
+    {
+      "from": "jsonata-3",
+      "to": "fetch-4",
+      "out": "result",
+      "in": "body"
+    },
+    {
+      "from": "input",
+      "to": "jsonata-3",
+      "out": "content",
+      "in": "content"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "content": {
+              "type": "array",
+              "title": "Content",
+              "format": "multipart"
+            },
+            "useStreaming": {
+              "type": "boolean",
+              "title": "Stream",
+              "description": "Whether to stream the output",
+              "default": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Text",
+              "description": "The generated text"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "stream",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "stream": {
+              "type": "object",
+              "title": "Stream",
+              "format": "stream",
+              "description": "The generated text"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "jsonata-1",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "{\n    \"Content-Type\": \"application/json\",\n    \"Authorization\": \"Bearer \" & $.OPENAI_API_KEY\n  }"
+      }
+    },
+    {
+      "id": "secrets-2",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "OPENAI_API_KEY"
+        ]
+      }
+    },
+    {
+      "id": "jsonata-3",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "{\n    \"model\": \"gpt-4-vision-preview\",\n    \"messages\": [\n      {\n        \"role\": \"user\",\n        \"content\": $.content.{\n          \"type\": $keys($) = \"text\" ? \"text\" : \"image_url\" ,\n          \"text\": $.text,\n          \"image_url\": \"data:\" & $.inline_data.mime_type & \";base64,\" & $.inline_data.data\n        }\n      }\n    ],\n    \"stream\": $.useStreaming,\n    \"temperature\": 1,\n    \"max_tokens\": 256,\n    \"top_p\": 1,\n    \"frequency_penalty\": 0,\n    \"presence_penalty\": 0\n  }"
+      }
+    },
+    {
+      "id": "fetch-4",
+      "type": "fetch",
+      "configuration": {
+        "url": "https://api.openai.com/v1/chat/completions",
+        "method": "POST",
+        "stream": true
+      }
+    },
+    {
+      "id": "jsonata-5",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "choices[0].message.content"
+      }
+    },
+    {
+      "id": "lambda-6",
+      "type": "lambda",
+      "configuration": {
+        "board": {
+          "kind": "board",
+          "board": {
+            "edges": [
+              {
+                "from": "jsonata-3",
+                "to": "output-2",
+                "out": "result",
+                "in": "chunk"
+              },
+              {
+                "from": "input-1",
+                "to": "jsonata-3",
+                "out": "chunk",
+                "in": "json"
+              }
+            ],
+            "nodes": [
+              {
+                "id": "input-1",
+                "type": "input"
+              },
+              {
+                "id": "output-2",
+                "type": "output"
+              },
+              {
+                "id": "jsonata-3",
+                "type": "jsonata",
+                "configuration": {
+                  "expression": "choices[0].delta.content ? choices[0].delta.content : \"\""
+                }
+              }
+            ],
+            "kits": [
+              {
+                "url": "npm:@google-labs/llm-starter"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "transformStream-7",
+      "type": "transformStream",
+      "configuration": {}
+    }
+  ],
+  "kits": [
+    {
+      "url": "npm:@google-labs/llm-starter"
+    },
+    {
+      "url": "npm:@google-labs/node-nursery-web"
+    }
+  ]
+}

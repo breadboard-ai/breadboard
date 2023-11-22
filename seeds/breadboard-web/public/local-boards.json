@@ -56,6 +56,10 @@
     "url": "/graphs/openai-gpt-35-turbo.json"
   },
   {
+    "title": "OpenAI GPT 4 Vision Preview",
+    "url": "/graphs/openai-gpt-4-vision.json"
+  },
+  {
     "title": "Text Generator",
     "url": "/graphs/text-generator.json"
   },
