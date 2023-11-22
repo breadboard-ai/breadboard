@@ -1247,101 +1247,40 @@ export class Scope {
       if (!node.hasAllRequiredInputs())
         throw new Error("Node in queue didn't have all required inputs. Bug.");
 
-      // Invoke node
-      const result = await node.invoke(this);
-
-      // Distribute data to outgoing edges
-      node.outgoing.forEach((edge) => {
-        edge.to.receiveInputs(edge, result);
-
-        // If it's ready to run, add it to the queue
-        if (edge.to.hasAllRequiredInputs()) queue.push(edge.to);
-      });
-    }
-  }
-
-  // TODO:BASE
-  async *run(anyNode: NodeImpl) {
-    const queue: NodeImpl[] = this.#findAllConnectedNodes(anyNode).filter(
-      (node) => node.hasAllRequiredInputs()
-    );
-
-    while (queue.length) {
-      const node = queue.shift() as NodeImpl;
-
-      // Check if we have all inputs. This should always be the case.
-      if (!node.hasAllRequiredInputs())
-        throw new Error("Node in queue didn't have all required inputs. Bug.");
-
-      // Invoke node
-      let result: OutputValues;
-
-      const descriptor = {
-        id: node.id,
-        type: node.type,
-        configuration: node.configuration,
-      } as NodeDescriptor;
-      const inputs = node.getInputs() as OriginalInputValues;
-      const type =
-        node.type === "input"
-          ? "input"
-          : node.type === "output"
-          ? "output"
-          : "beforehandler";
-      const runResult: BreadboardRunResult = {
-        type,
-        node: descriptor,
-        inputArguments: inputs,
-        inputs: {},
-        outputs: inputs,
-        state: { skip: false } as unknown as BreadboardRunResult["state"],
+      // Send beforeHandler event
+      const beforeHandlerDetail = {
+        descriptor: {
+          id: node.id,
+          type: node.type,
+          configuration: node.configuration,
+        } as NodeDescriptor,
+        inputs: node.getInputs() as OriginalInputValues,
+        outputs: Promise.resolve({}),
       };
+      const shouldInvokeHandler =
+        !this.#probe ||
+        this.#probe?.dispatchEvent(
+          // Using CustomEvent instead of ProbeEvent because not enough types
+          // are currently exported by breadboard, and I didn't want to change
+          // too much while prototyping. TODO: Fix this.
+          new CustomEvent("beforehandler", {
+            detail: beforeHandlerDetail,
+            cancelable: true,
+          })
+        );
 
-      if (type === "beforehandler") {
-        yield runResult;
-        const beforeHandlerDetail = {
-          descriptor,
-          inputs,
-          outputs: Promise.resolve({}),
-        };
-        const shouldInvokeHandler =
-          !this.#probe ||
-          this.#probe?.dispatchEvent(
-            // Using CustomEvent instead of ProbeEvent because not enough types
-            // are currently exported by breadboard, and I didn't want to change
-            // too much while prototyping. TODO: Fix this.
-            new CustomEvent("beforehandler", {
-              detail: beforeHandlerDetail,
-              cancelable: true,
-            })
-          );
-        if (shouldInvokeHandler) result = await node.invoke(this);
-        else result = (await beforeHandlerDetail.outputs) as OutputValues;
-        this.#probe?.dispatchEvent(
-          new CustomEvent("node", {
-            detail: { descriptor, inputs, outputs: result },
-            cancelable: true,
-          })
-        );
-      } else if (type === "input") {
-        yield runResult;
-        result = runResult.inputs as OutputValues;
-        this.#probe?.dispatchEvent(
-          new CustomEvent("input", {
-            detail: { descriptor, inputs, outputs: result },
-            cancelable: true,
-          })
-        );
-      } /* node.type === "output" */ else {
-        this.#probe?.dispatchEvent(
-          new CustomEvent("output", {
-            detail: { descriptor, inputs },
-            cancelable: true,
-          })
-        );
-        yield runResult;
-        result = {};
-      }
+      // Invoke node, unless beforeHandler event was cancelled.
+      const result = shouldInvokeHandler
+        ? await node.invoke(this)
+        : ((await beforeHandlerDetail.outputs) as OutputValues);
+
+      // Send node event with the results
+      this.#probe?.dispatchEvent(
+        new CustomEvent("node", {
+          detail: { ...beforeHandlerDetail, outputs: result },
+          cancelable: true,
+        })
+      );
 
       // Distribute data to outgoing edges
       node.outgoing.forEach((edge) => {
@@ -1427,14 +1366,77 @@ export class BoardRunner implements BreadboardRunner {
     probe,
     kits,
   }: NodeHandlerContext): AsyncGenerator<BreadboardRunResult> {
+    if (!this.#anyNode)
+      throw new Error("Can't run board without any nodes in it");
+
     const scope = new Scope({
       declaringScope: this.#scope,
       invokingScope: getCurrentContextScope(),
       probe,
     });
+
+    let streamController: ReadableStreamDefaultController<BreadboardRunResult>;
+    const stream = new ReadableStream<BreadboardRunResult>({
+      start(controller) {
+        streamController = controller;
+      },
+    });
+
+    scope.addHandlers({
+      input: async (inputs: InputsMaybeAsValues<InputValues>, node) => {
+        let resolver: (outputs: OutputValues) => void;
+        const outputsPromise = new Promise<OutputValues>((resolve) => {
+          resolver = resolve;
+        });
+        const descriptor = { type: node.type, id: node.id };
+        const result = {
+          type: "input",
+          node: descriptor,
+          inputArguments: inputs as OriginalInputValues,
+          set inputs(inputs: OriginalInputValues) {
+            resolver(inputs as OutputValues);
+          },
+          state: { skip: false } as unknown as BreadboardRunResult["state"],
+        } as BreadboardRunResult;
+        streamController.enqueue(result);
+        outputsPromise.then((result) =>
+          probe?.dispatchEvent(
+            new CustomEvent("input", {
+              detail: { descriptor, inputs, outputs: result },
+            })
+          )
+        );
+        return outputsPromise as Promise<OutputValues>;
+      },
+      output: async (inputs: InputsMaybeAsValues<InputValues>, node) => {
+        const descriptor = { type: node.type, id: node.id };
+        const result = {
+          type: "output",
+          node: descriptor,
+          outputs: inputs as OriginalInputValues,
+          state: { skip: false } as unknown as BreadboardRunResult["state"],
+        } as BreadboardRunResult;
+        probe?.dispatchEvent(
+          new CustomEvent("output", {
+            detail: { descriptor, inputs },
+            cancelable: true,
+          })
+        );
+        streamController.enqueue(result);
+        return {};
+      },
+    });
+
     kits?.forEach((kit) => scope.addHandlers(handlersFromKit(kit)));
-    for await (const result of scope.run(this.#anyNode as NodeImpl))
-      yield result;
+
+    scope.invoke(this.#anyNode).then(() => streamController.close());
+
+    const reader = stream.getReader();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      yield value;
+    }
   }
 
   // This is mostly copy & pasted from the original
@@ -1468,6 +1470,49 @@ export class BoardRunner implements BreadboardRunner {
         } as OriginalOutputValues);
       else throw e;
     }
+  }
+
+  // To discuss: This is the same as runOnce() above, but implemented in
+  // parallel to run(), using different (and very simple) proxied input and
+  // output nodes.
+  async runOnce2(
+    inputs: OriginalInputValues,
+    context?: NodeHandlerContext
+  ): Promise<OriginalOutputValues> {
+    if (!this.#anyNode)
+      throw new Error("Can't run board without any nodes in it");
+
+    const args = { ...inputs, ...this.args };
+
+    const scope = new Scope({
+      declaringScope: this.#scope,
+      invokingScope: getCurrentContextScope(),
+      probe: context?.probe,
+    });
+
+    context?.kits?.forEach((kit) => scope.addHandlers(handlersFromKit(kit)));
+
+    let resolver: (outputs: OriginalOutputValues) => void;
+    const promise = new Promise<OriginalOutputValues>((resolve) => {
+      resolver = resolve;
+    });
+
+    scope.addHandlers({
+      input: async () => {
+        return args as InputValues;
+      },
+      output: async (inputs: InputsMaybeAsValues<InputValues>) => {
+        resolver(inputs as OriginalOutputValues);
+        return {};
+      },
+    });
+
+    // TODO: One big difference to before: This will keep running forever, even
+    // after the first output is encountered. We need to add a way to abort the
+    // run.
+    scope.invoke(this.#anyNode);
+
+    return promise;
   }
 
   addValidator(_: BreadboardValidator): void {
