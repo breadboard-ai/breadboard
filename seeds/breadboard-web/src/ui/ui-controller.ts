@@ -210,7 +210,6 @@ export class UIController extends HTMLElement implements UI {
 
     const children = Array.from(this.querySelectorAll("*"));
     for (const child of children) {
-      // Skip the main slot & board content so we still have that to populate.
       if (child === this.#start) {
         continue;
       }
