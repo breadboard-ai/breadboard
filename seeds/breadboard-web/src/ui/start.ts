@@ -135,7 +135,6 @@ export class Start extends HTMLElement {
 
     for (const btn of Array.from(root.querySelectorAll(".sample-board"))) {
       btn.classList.remove("active");
-      btn.setAttribute("disabled", "disabled");
     }
 
     if (name !== "url" || newValue === null) {

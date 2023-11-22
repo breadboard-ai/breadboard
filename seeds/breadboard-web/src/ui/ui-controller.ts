@@ -48,11 +48,11 @@ export class UIController extends HTMLElement implements UI {
         }
 
         #intro {
-          opacity: 0;
+          display: none;
         }
 
         #intro.active {
-          opacity: 1;
+          display: block;
         }
 
         #start-container {
@@ -198,31 +198,29 @@ export class UIController extends HTMLElement implements UI {
     if (boardFromUrl) {
       this.dispatchEvent(new StartEvent(boardFromUrl));
     } else {
-      this.showIntroContent();
+      this.#showIntroContent();
     }
   }
 
-  private clearContents() {
+  #clearBoardContents() {
     const root = this.shadowRoot;
     if (!root) {
       throw new Error("Unable to locate shadow root in UI Controller");
     }
 
-    const children = Array.from(
-      root.querySelectorAll("#response-container > *")
-    );
-
+    const children = Array.from(this.querySelectorAll("*"));
     for (const child of children) {
       // Skip the main slot & board content so we still have that to populate.
-      if (child.nodeName === "SLOT" || child.id === "board-content") {
+      if (child === this.#start) {
         continue;
       }
 
+      console.log(child);
       child.remove();
     }
   }
 
-  private showIntroContent() {
+  #showIntroContent() {
     const root = this.shadowRoot;
     if (!root) {
       throw new Error("Unable to locate shadow root in UI Controller");
@@ -243,7 +241,16 @@ export class UIController extends HTMLElement implements UI {
     });
   }
 
-  private showBoardContent() {
+  #hideIntroContent() {
+    const root = this.shadowRoot;
+    if (!root) {
+      throw new Error("Unable to locate shadow root in UI Controller");
+    }
+
+    root.querySelector("#intro")?.classList.remove("active");
+  }
+
+  #showBoardContainer() {
     const root = this.shadowRoot;
     if (!root) {
       throw new Error("Unable to locate shadow root in UI Controller");
@@ -253,8 +260,9 @@ export class UIController extends HTMLElement implements UI {
   }
 
   load(info: LoadArgs) {
-    this.clearContents();
-    this.showBoardContent();
+    this.#hideIntroContent();
+    this.#clearBoardContents();
+    this.#showBoardContainer();
 
     const load = new Load(info);
     load.slot = "load";

@@ -9,5 +9,8 @@
     <a href="/"><h1 id="title">Breadboard Playground</h1></a>
   </header>
   <bb-ui></bb-ui>
-  <script type="module" src="src/index.ts"></script>
+  <script type="module">
+    import { Main } from "./src/index.ts";
+    new Main();
+  </script>
 </body>

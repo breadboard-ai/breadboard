@@ -36,6 +36,9 @@ const prepareBlobUrl = (url: string) => {
 
 export class HostRuntime {
   workerURL: string;
+  worker: Worker | null = null;
+  transport: WorkerTransport | null = null;
+  controller: MessageController | null = null;
 
   constructor(workerURL: string) {
     const absoluteURL = new URL(workerURL, location.href);
@@ -43,24 +46,41 @@ export class HostRuntime {
   }
 
   async *run(url: string, proxyNodes: string[]) {
-    const worker = new Worker(this.workerURL, { type: "module" });
-    const transport = new WorkerTransport(worker);
-    const controller = new MessageController(transport);
+    if (this.worker && this.transport && this.controller) {
+      this.#stop();
+      yield new RunResult(this.controller, { type: "shutdown", data: null });
+    }
+
+    this.worker = new Worker(this.workerURL, { type: "module" });
+    this.transport = new WorkerTransport(this.worker);
+    this.controller = new MessageController(this.transport);
     yield new RunResult(
-      controller,
-      await controller.ask<LoadRequestMessage, LoadResponseMessage>(
+      this.controller,
+      await this.controller.ask<LoadRequestMessage, LoadResponseMessage>(
         { url, proxyNodes },
         "load"
       )
     );
-    controller.inform<StartMesssage>({}, "start");
+
+    this.controller.inform<StartMesssage>({}, "start");
     for (;;) {
-      const message = await controller.listen();
+      const message = await this.controller.listen();
       const { data, type } = message;
-      yield new RunResult(controller, message);
+      yield new RunResult(this.controller, message);
       if (data && type === "end") {
         break;
       }
     }
+  }
+
+  #stop() {
+    if (!this.worker) {
+      return;
+    }
+
+    this.worker.terminate();
+    this.worker = null;
+    this.transport = null;
+    this.controller = null;
   }
 }
