@@ -39,6 +39,7 @@ function gate({ allow, value }: { allow: boolean; value: NodeValue }) {
 
 const shouldRecover = kit.runJavascript({
   $id: "shouldRecover",
+  name: "gate",
   code: gate.toString(),
   raw: true,
 });
