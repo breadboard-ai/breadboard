@@ -7,7 +7,7 @@
 import { ToastType } from "./events.js";
 
 export class Toast extends HTMLElement {
-  constructor(public message: string, public type: ToastType, timeout = 20000) {
+  constructor(public message: string, public type: ToastType, timeout = 8000) {
     super();
     const root = this.attachShadow({ mode: "open" });
 
@@ -30,14 +30,15 @@ export class Toast extends HTMLElement {
           right: calc(var(--bb-grid-size) * 10);
           display: block;
           background: rgb(255, 255, 255);
-          border: 1px solid #E5E5E5;
-          box-shadow: 0 7px 9px 0 rgba(0,0,0,0.16);
+          border: 1px solid #CCC;
+          box-shadow: 0 2px 3px 0 rgba(0,0,0,0.13),
+            0 7px 9px 0 rgba(0,0,0,0.16);
           border-radius: calc(var(--bb-grid-size) * 8);
           padding: calc(var(--bb-grid-size) * 5) calc(var(--bb-grid-size) * 8)
               calc(var(--bb-grid-size) * 5) calc(var(--bb-grid-size) * 12);
 
           animation: slideIn var(--bb-easing-duration-in) var(--bb-easing) forwards;
-          max-width: 300px;
+          max-width: min(360px, 50vw);
         }
 
         :host(.warning) {

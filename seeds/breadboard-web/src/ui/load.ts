@@ -5,6 +5,7 @@
  */
 
 import { svgToPng } from "../utils/svg-to-png.js";
+import { ToastEvent, ToastType } from "./events.js";
 
 export type LoadArgs = {
   title: string;
@@ -15,16 +16,7 @@ export type LoadArgs = {
 };
 
 const MERMAID_URL = "https://cdn.jsdelivr.net/npm/mermaid@10.6.1/+esm";
-
 const LOCAL_STORAGE_KEY = "bb-ui-show-diagram";
-
-const createLink = (url?: string) => {
-  if (!url) return "";
-  const linkUrl = new URL(window.location.href);
-  if (linkUrl.searchParams.has("board")) return "";
-  linkUrl.searchParams.set("board", url);
-  return `<a href="${linkUrl}">🔗</a>`;
-};
 
 export class Load extends HTMLElement {
   #diagram: string;
@@ -46,7 +38,6 @@ export class Load extends HTMLElement {
 
     const show = localStorage.getItem(LOCAL_STORAGE_KEY) ? "open" : "";
     const root = this.attachShadow({ mode: "open" });
-    const link = createLink(url);
     root.innerHTML = `
       <style>
         :host {
@@ -131,11 +122,29 @@ export class Load extends HTMLElement {
           opacity: 0.4;
         }
 
+        #copy-to-clipboard {
+          width: 24px;
+          height: 24px;
+          font-size: 0;
+          display: inline-block;
+          background: var(--bb-icon-copy-to-clipboard) center center no-repeat;
+          vertical-align: middle;
+          border: none;
+          cursor: pointer;
+          transition: opacity var(--bb-easing-duration-out) var(--bb-easing);
+          opacity: 0.5;
+        }
+
+        #copy-to-clipboard:hover {
+          transition: opacity var(--bb-easing-duration-in) var(--bb-easing);
+          opacity: 1;
+        }
+
         #mermaid {
           line-height: 1;
         }
       </style>
-      <h1>${title} ${link}</h1>
+      <h1>${title} <button id="copy-to-clipboard"></h1>
       <button id="toggle">Toggle</button>
       <div id="info" class="${show}">
         <dl>
@@ -166,6 +175,24 @@ export class Load extends HTMLElement {
       } else {
         localStorage.removeItem(LOCAL_STORAGE_KEY);
       }
+    });
+
+    let copying = false;
+    const copyToClipboard = root.querySelector("#copy-to-clipboard");
+    copyToClipboard?.addEventListener("click", async () => {
+      if (copying) {
+        return;
+      }
+
+      copying = true;
+      const linkUrl = new URL(window.location.href);
+      linkUrl.searchParams.set("board", url);
+
+      await navigator.clipboard.writeText(linkUrl.toString());
+      this.dispatchEvent(
+        new ToastEvent("Board URL copied to clipboard", ToastType.INFORMATION)
+      );
+      copying = false;
     });
   }
 
