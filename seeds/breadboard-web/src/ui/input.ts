@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { type Schema } from "../types.js";
+import { type Schema } from "@google-labs/breadboard";
 import {
   createMultipartInput,
   getMultipartValue,

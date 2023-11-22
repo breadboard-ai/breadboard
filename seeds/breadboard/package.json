@@ -6,8 +6,7 @@
   "exports": {
     ".": "./dist/src/index.js",
     "./kits": "./dist/src/kits/index.js",
-    "./worker": "./dist/src/worker/index.js",
-    "./ui": "./dist/src/ui/index.js"
+    "./worker": "./dist/src/worker/index.js"
   },
   "types": "dist/src/index.d.ts",
   "type": "module",
