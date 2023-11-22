@@ -5,19 +5,19 @@
  */
 
 import { action } from "../../new/lib.js";
-import { llm, palm } from "../../new/kits.js";
+import { starter, palm } from "../../new/kits.js";
 
 export const graph = action((inputs) => {
-  const { prompt } = llm.promptTemplate({
+  const { prompt } = starter.promptTemplate({
     template:
       "Write a Javascript function called `run` to compute the result for this question:\nQuestion: {{question}}\nCode: ",
     question: inputs.question,
   });
   const { completion } = palm.generateText({
     text: prompt,
-    PALM_KEY: llm.secrets({ keys: ["PALM_KEY"] }).PALM_KEY,
+    PALM_KEY: starter.secrets({ keys: ["PALM_KEY"] }).PALM_KEY,
   });
-  const result = llm.runJavascript({ code: completion });
+  const result = starter.runJavascript({ code: completion });
   return result;
 });
 

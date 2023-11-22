@@ -6,7 +6,7 @@
 
 import { z } from "zod";
 
-import { base, core, llm, palm } from "../../new/kits.js";
+import { base, core, starter, palm } from "../../new/kits.js";
 
 const input = base.input({
   $id: "userRequest",
@@ -17,7 +17,7 @@ const input = base.input({
 
 core.passthrough({ $id: "start" }).as({}).to(input);
 
-const prompt = llm.promptTemplate({
+const prompt = starter.promptTemplate({
   template:
     "This is a conversation between a friendly assistant and their user. You are the assistant and your job is to try to be helpful, empathetic, and fun.\n{{context}}\n\n== Current Conversation\nuser: {{question}}\nassistant:",
   context: "",
@@ -36,7 +36,7 @@ prompt.in({ context: conversationMemory.accumulator });
 
 const response = palm.generateText({
   text: prompt.prompt,
-  PALM_KEY: llm.secrets({ keys: ["PALM_KEY"] }).PALM_KEY.memoize(),
+  PALM_KEY: starter.secrets({ keys: ["PALM_KEY"] }).PALM_KEY.memoize(),
 });
 conversationMemory.in({ accumulator: response.completion });
 // response.completion.to(conversationMemory.accumulator);

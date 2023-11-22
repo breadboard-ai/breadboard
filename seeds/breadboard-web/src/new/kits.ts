@@ -42,7 +42,7 @@ export const palm = addKit(PaLMKit, "palm-") as unknown as {
   >;
 };
 
-export const llm = addKit(Starter) as unknown as {
+export const starter = addKit(Starter) as unknown as {
   promptTemplate: NodeFactory<
     { template: string; [key: string]: NodeValue },
     { prompt: string }

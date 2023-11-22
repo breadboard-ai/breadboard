@@ -6,9 +6,9 @@
 
 import { z } from "zod";
 
-import { llm, palm } from "../../new/kits.js";
-
 import { action } from "../../new/lib.js";
+
+import { starter, palm } from "../../new/kits.js";
 
 export const graph = action(
   {
@@ -20,21 +20,21 @@ export const graph = action(
     }),
   },
   (input) => {
-    const searchURLTemplate = llm.urlTemplate({
+    const searchURLTemplate = starter.urlTemplate({
       template:
         "https://www.googleapis.com/customsearch/v1?key={API_KEY}&cx={GOOGLE_CSE_ID}&q={query}",
       query: input.text,
-      API_KEY: llm.secrets({ keys: ["API_KEY"] }).API_KEY,
-      GOOGLE_CSE_ID: llm.secrets({ keys: ["GOOGLE_CSE_ID"] }).GOOGLE_CSE_ID,
+      API_KEY: starter.secrets({ keys: ["API_KEY"] }).API_KEY,
+      GOOGLE_CSE_ID: starter.secrets({ keys: ["GOOGLE_CSE_ID"] }).GOOGLE_CSE_ID,
     });
 
-    const search = llm.fetch({ url: searchURLTemplate.url });
-    const results = llm.jsonata({
+    const search = starter.fetch({ url: searchURLTemplate.url });
+    const results = starter.jsonata({
       expression: "$join(items.snippet, '\n')",
       json: search.response,
     });
 
-    const summarizingTemplate = llm.promptTemplate({
+    const summarizingTemplate = starter.promptTemplate({
       template:
         "Use context below to answer this question:\n\n##Question:\n{{question}}\n\n## Context {{context}}\n\\n## Answer:\n",
       question: input.text,
@@ -44,7 +44,7 @@ export const graph = action(
 
     const generateSummary = palm.generateText({
       text: summarizingTemplate.prompt,
-      PALM_KEY: llm.secrets({ keys: ["PALM_KEY"] }).PALM_KEY,
+      PALM_KEY: starter.secrets({ keys: ["PALM_KEY"] }).PALM_KEY,
     });
 
     return { text: generateSummary.completion };

@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { core, llm, palm } from "../../new/kits.js";
+import { core, starter, palm } from "../../new/kits.js";
 
 const question = "1+1";
 
 export const graph = core
   .passthrough({ question })
   .to(
-    llm.promptTemplate({
+    starter.promptTemplate({
       template:
         "Write a Javascript function called `run` to compute the result for this question:\nQuestion: {{question}}\nCode: ",
     })
@@ -19,11 +19,11 @@ export const graph = core
   .prompt.as("text")
   .to(
     palm.generateText({
-      PALM_KEY: llm.secrets({ keys: ["PALM_KEY"] }).PALM_KEY,
+      PALM_KEY: starter.secrets({ keys: ["PALM_KEY"] }).PALM_KEY,
     })
   )
   .completion.as("code")
-  .to(llm.runJavascript());
+  .to(starter.runJavascript());
 
 // This would be typically used as "await graph", not as a (serialized) graph.
 // Hence no example.

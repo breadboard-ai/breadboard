@@ -5,10 +5,10 @@
  */
 
 import { action } from "../../new/lib.js";
-import { llm, palm } from "../../new/kits.js";
+import { starter, palm } from "../../new/kits.js";
 
 const math = action((inputs) => {
-  return llm
+  return starter
     .promptTemplate({
       template:
         "Write a Javascript function called `run` to compute the result for this question:\nQuestion: {{question}}\nCode: ",
@@ -17,11 +17,11 @@ const math = action((inputs) => {
     .prompt.as("text")
     .to(
       palm.generateText({
-        PALM_KEY: llm.secrets({ keys: ["PALM_KEY"] }).PALM_KEY,
+        PALM_KEY: starter.secrets({ keys: ["PALM_KEY"] }).PALM_KEY,
       })
     )
     .completion.as("code")
-    .to(llm.runJavascript());
+    .to(starter.runJavascript());
 });
 
 const search = action((inputs) => {
@@ -30,7 +30,7 @@ const search = action((inputs) => {
 });
 
 export const graph = action(async (inputs) => {
-  const { completion } = await llm
+  const { completion } = await starter
     .promptTemplate({
       template:
         "Is this question about math? Answer YES or NO.\nQuestion: {{question}}\nAnswer: ",
@@ -39,7 +39,7 @@ export const graph = action(async (inputs) => {
     .prompt.as("text")
     .to(
       palm.generateText({
-        PALM_KEY: llm.secrets({ keys: ["PALM_KEY"] }).PALM_KEY,
+        PALM_KEY: starter.secrets({ keys: ["PALM_KEY"] }).PALM_KEY,
       })
     );
 
