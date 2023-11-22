@@ -130,6 +130,10 @@ export class Load extends HTMLElement {
         #diagram-download:not([href]) {
           opacity: 0.4;
         }
+
+        #mermaid {
+          line-height: 1;
+        }
       </style>
       <h1>${title} ${link}</h1>
       <button id="toggle">Toggle</button>
