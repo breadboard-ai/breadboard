@@ -17,6 +17,7 @@
     { "path": "seeds/llm-starter" },
     { "path": "seeds/node-nursery" },
     { "path": "seeds/node-nursery-web" },
+    { "path": "seeds/node-proxy-server" },
     { "path": "seeds/palm-lite" },
     { "path": "seeds/palm-kit" },
     { "path": "seeds/pinecone-kit" },
