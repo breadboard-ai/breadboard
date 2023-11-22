@@ -501,11 +501,10 @@ class NodeImpl<
         : edge.out === ""
         ? {}
         : { [edge.in]: inputs[edge.out] };
-
     if (edge.constant) this.#constants = { ...this.#constants, ...data };
-
     this.#inputs = { ...this.#inputs, ...data };
-    this.#receivedFrom.push(edge.from);
+
+    if (edge.out === "" || edge.out === "*") this.#receivedFrom.push(edge.from);
   }
 
   // TODO:BASE (this shouldn't require any changes)
@@ -515,7 +514,7 @@ class NodeImpl<
    * Required inputs are
    *  - for all named incoming edges, the presence of any data, irrespective of
    *    which node they come from
-   *  - for all empty or * incoming edges, that the from node has sent data
+   *  - at least one of the empty (control flow edges) or * incoming edges
    *  - data from at least one node if it already ran (#this.outputs not empty)
    *
    * @returns true if all required inputs are present
@@ -526,7 +525,7 @@ class NodeImpl<
         .map((edge) => edge.in)
         .filter((key) => !["", "*"].includes(key))
     );
-    const requiredNodes = new Set(
+    const controlFlowNodes = new Set(
       this.incoming
         .filter((edge) => ["", "*"].includes(edge.out))
         .map((edge) => edge.from)
@@ -540,8 +539,9 @@ class NodeImpl<
 
     return (
       [...requiredKeys].every((key) => presentKeys.has(key)) &&
-      [...requiredNodes].every((node) => presentNodes.has(node)) &&
-      (!this.#outputs || presentNodes.size > 0)
+      (controlFlowNodes.size === 0 ||
+        [...controlFlowNodes].find((node) => presentNodes.has(node))) &&
+      (!this.#outputs || presentKeys.size > 0 || presentNodes.size > 0)
     );
   }
 
