@@ -105,6 +105,11 @@ export class Input extends HTMLElement {
           flex: 1;
         }
 
+        img {
+          max-width: 80%;
+          height: 6rem;
+        }
+
         textarea {
           height: 10rem;
         }

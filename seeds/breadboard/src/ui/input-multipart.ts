@@ -114,8 +114,13 @@ abstract class MultipartInputPart extends HTMLElement {
           background-color: transparent;
         }
 
-        img, textarea {
+        textarea {
           width: 80%;
+        }
+
+        img {
+          max-width: 80%;
+          height: 6rem;
         }
       </style>
       <button id="delete">🗑️</button>
@@ -153,8 +158,10 @@ export class MultipartInputImage extends MultipartInputPart {
     return new Promise<MultipartData>((resolve) => {
       reader.addEventListener("loadend", async () => {
         const base64url = reader.result as string;
-        const html = document.createElement("img");
-        html.src = base64url;
+        const html = document.createElement("span");
+        const img = document.createElement("img");
+        img.src = base64url;
+        html.append(img);
         const data = base64url.slice(base64url.indexOf(",") + 1);
         resolve({
           value: {
