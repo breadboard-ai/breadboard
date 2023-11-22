@@ -41,7 +41,6 @@ export class UIController extends HTMLElement implements UI {
           display: grid;
           width: 100%;
           margin-bottom: calc(var(--grid-size) * 30);
-          padding: 0 calc(var(--grid-size) * 6) 0 calc(var(--grid-size) * 6);
         }
 
         :host * {
@@ -58,17 +57,29 @@ export class UIController extends HTMLElement implements UI {
 
         #start-container {
           width: 100%;
-          max-width: calc(var(--grid-size) * 100);
+          max-width: min(84vw, calc(var(--grid-size) * 100));
           margin: 0 auto;
         }
 
         #response-container {
           background: rgb(244, 247, 252);
           border: 2px solid rgb(244, 247, 252);
-          border-radius: calc(var(--grid-size) * 8);
-          padding: calc(var(--grid-size) * 6);
-          overflow: scroll;
-          scrollbar-gutter: stable;
+          padding: calc(var(--grid-size) * 4);
+          margin-top: calc(var(--grid-size) * 6);
+        }
+
+        @media(min-width: 640px) {
+          :host {
+            padding: 0 calc(var(--grid-size) * 6) 0 calc(var(--grid-size) * 6);
+          }
+
+          #response-container {
+            padding: calc(var(--grid-size) * 6);
+            border-radius: calc(var(--grid-size) * 8);
+            margin-top: 0;
+            overflow: scroll;
+            scrollbar-gutter: stable;
+          }
         }
 
         #response-container > #intro > h1 {

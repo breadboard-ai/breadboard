@@ -38,7 +38,7 @@ export class Toast extends HTMLElement {
               calc(var(--bb-grid-size) * 5) calc(var(--bb-grid-size) * 12);
 
           animation: slideIn var(--bb-easing-duration-in) var(--bb-easing) forwards;
-          max-width: min(360px, 50vw);
+          max-width: min(360px, 80vw);
         }
 
         :host(.warning) {

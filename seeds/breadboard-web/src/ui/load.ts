@@ -70,7 +70,7 @@ export class Load extends HTMLElement {
         }
 
         h1 {
-          font: var(--bb-text-large) var(--bb-font-family);
+          font: var(--bb-text-baseline) var(--bb-font-family);
           font-weight: 700;
         }
 
@@ -82,22 +82,39 @@ export class Load extends HTMLElement {
           vertical-align: middle;
         }
 
-        dl {
-          display: grid;
-          grid-template-columns: 35fr 60fr;
-          column-gap: calc(var(--bb-grid-size) * 5);
-          font-size: var(--bb-text-medium);
-        }
-
         dt {
+          font-size: var(--bb-text-medium);
           font-weight: 700;
           margin-bottom: calc(var(--bb-grid-size) * 3);
         }
 
         dd {
+          font-size: var(--bb-text-medium);
           margin: 0;
           margin-bottom: calc(var(--bb-grid-size) * 5);
           line-height: 1.5;
+        }
+
+        @media(min-width: 640px) {
+          h1 {
+            font: var(--bb-text-large) var(--bb-font-family);
+            font-weight: 700;
+          }
+
+          dl {
+            display: grid;
+            grid-template-columns: 35fr 60fr;
+            column-gap: calc(var(--bb-grid-size) * 5);
+            font-size: var(--bb-text-medium);
+          }
+
+          dt {
+            font-size: var(--bb-text-baseline);
+          }
+  
+          dd {
+            font-size: var(--bb-text-baseline);
+          }
         }
 
         #diagram dd {
