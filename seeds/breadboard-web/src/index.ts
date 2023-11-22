@@ -6,11 +6,18 @@
 
 import * as BreadboardUI from "./ui";
 import type * as Breadboard from "@google-labs/breadboard";
-import { HostRuntime } from "@google-labs/breadboard/worker";
+import { type RunResult, HostRuntime } from "@google-labs/breadboard/worker";
 import { ProxyReceiver } from "./receiver.js";
 
 const localBoards = await (await fetch("/local-boards.json")).json();
-
+const PROXY_NODES = [
+  "palm-generateText",
+  "embedText",
+  "secrets",
+  "fetch",
+  "credentials",
+  "driveList",
+];
 const WORKER_URL =
   import.meta.env.MODE === "development" ? "/src/worker.ts" : "/worker.js";
 const config = {
@@ -59,42 +66,55 @@ const config = {
   ],
 };
 
-BreadboardUI.register();
+export class Main {
+  #ui = BreadboardUI.get();
+  #runtime = new HostRuntime(WORKER_URL);
+  #receiver = new ProxyReceiver();
+  #hasActiveBoard = false;
 
-let isRunning = false;
-const ui = BreadboardUI.get();
-ui.addEventListener(BreadboardUI.StartEvent.eventName, async (evt) => {
-  if (isRunning) {
-    return;
+  constructor() {
+    BreadboardUI.register();
+
+    this.#ui.addEventListener(
+      BreadboardUI.StartEvent.eventName,
+      async (evt) => {
+        if (this.#hasActiveBoard) {
+          if (
+            !confirm("You already have an active board. Do you want to change?")
+          ) {
+            return;
+          }
+        }
+
+        this.#hasActiveBoard = true;
+
+        const startEvent = evt as BreadboardUI.StartEvent;
+        this.#ui.setActiveBreadboard(startEvent.url);
+
+        for await (const result of this.#runtime.run(
+          startEvent.url,
+          PROXY_NODES
+        )) {
+          this.#handleEvent(result);
+        }
+      }
+    );
+
+    this.#ui.start(config);
   }
-  isRunning = true;
 
-  // TODO: Allow board switches.
-  const runtime = new HostRuntime(WORKER_URL);
-  const receiver = new ProxyReceiver();
-  const startEvent = evt as BreadboardUI.StartEvent;
-
-  ui.setActiveBreadboard(startEvent.url);
-
-  for await (const result of runtime.run(startEvent.url, [
-    "palm-generateText",
-    "embedText",
-    "secrets",
-    "fetch",
-    "credentials",
-    "driveList",
-  ])) {
+  async #handleEvent(result: RunResult) {
     const { data, type } = result.message;
     switch (type) {
       case "load": {
         const loadData = data as BreadboardUI.LoadArgs;
-        ui.load(loadData);
+        this.#ui.load(loadData);
         break;
       }
 
       case "output": {
         const outputData = data as { outputs: BreadboardUI.OutputArgs };
-        await ui.output(outputData.outputs);
+        await this.#ui.output(outputData.outputs);
         break;
       }
 
@@ -104,20 +124,20 @@ ui.addEventListener(BreadboardUI.StartEvent.eventName, async (evt) => {
           inputArguments: BreadboardUI.InputArgs;
         };
         result.reply(
-          await ui.input(inputData.node.id, inputData.inputArguments)
+          await this.#ui.input(inputData.node.id, inputData.inputArguments)
         );
         break;
       }
 
       case "beforehandler": {
         const progressData = data as { node: { id: unknown } };
-        ui.progress(`Running "${progressData.node.id}" ...`);
+        this.#ui.progress(`Running "${progressData.node.id}" ...`);
         break;
       }
 
       case "error": {
         const errorData = data as { error: string };
-        ui.error(errorData.error);
+        this.#ui.error(errorData.error);
         break;
       }
 
@@ -128,7 +148,9 @@ ui.addEventListener(BreadboardUI.StartEvent.eventName, async (evt) => {
               node: Breadboard.NodeDescriptor;
               inputs: Breadboard.InputValues;
             };
-            for await (const handledResult of receiver.handle(proxyData)) {
+            for await (const handledResult of this.#receiver.handle(
+              proxyData
+            )) {
               const receiverResult = handledResult as {
                 type: "secret" | "result";
                 name: string;
@@ -138,14 +160,16 @@ ui.addEventListener(BreadboardUI.StartEvent.eventName, async (evt) => {
 
               switch (receiverResult.type) {
                 case "secret":
-                  receiverResult.value = await ui.secret(receiverResult.name);
+                  receiverResult.value = await this.#ui.secret(
+                    receiverResult.name
+                  );
                   break;
                 case "result":
                   if (receiverResult.nodeType === "palm-generateText") {
                     const resultValue = receiverResult.value as {
                       completion: string;
                     };
-                    ui.result({
+                    this.#ui.result({
                       title: "LLM response",
                       result: resultValue.completion,
                     });
@@ -156,16 +180,19 @@ ui.addEventListener(BreadboardUI.StartEvent.eventName, async (evt) => {
             }
           } catch (e) {
             const err = e as Error;
-            ui.error(err.message);
+            this.#ui.error(err.message);
           }
         }
         break;
 
       case "end":
-        ui.done();
+        this.#ui.done();
+        this.#hasActiveBoard = false;
+        break;
+
+      case "shutdown":
+        this.#hasActiveBoard = false;
         break;
     }
   }
-});
-
-ui.start(config);
+}
