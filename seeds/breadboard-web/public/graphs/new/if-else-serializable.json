@@ -1,14 +1,77 @@
 {
   "title": "New: IfElse, serializable",
-  "edges": [],
+  "edges": [
+    {
+      "from": "fn-28",
+      "to": "output-24",
+      "out": "*",
+      "in": "*"
+    },
+    {
+      "from": "palm-generateText-27",
+      "to": "fn-28",
+      "out": "*",
+      "in": "*"
+    },
+    {
+      "from": "secrets-26",
+      "to": "palm-generateText-27",
+      "out": "PALM_KEY",
+      "in": "PALM_KEY"
+    },
+    {
+      "from": "promptTemplate-25",
+      "to": "palm-generateText-27",
+      "out": "prompt",
+      "in": "text"
+    },
+    {
+      "from": "input-23",
+      "to": "promptTemplate-25",
+      "out": "question",
+      "in": "question"
+    }
+  ],
   "nodes": [
     {
-      "id": "fn-22",
+      "id": "output-24",
+      "type": "output",
+      "configuration": {}
+    },
+    {
+      "id": "fn-28",
       "type": "runJavascript",
       "configuration": {
-        "code": "async function fn_22(inputs) {return starter.promptTemplate({template:\"Is this question about math? Answer YES or NO.\\nQuestion: {{question}}\\nAnswer: \",question:inputs.question}).prompt.as(\"text\").to(palm.generateText({PALM_KEY:starter.secrets({keys:[\"PALM_KEY\"]}).PALM_KEY})).to(async inputs2=>{const{completion,math:math2,search:search2}=await inputs2;if(completion?.startsWith(\"YES\")){return math2({question:inputs2.question})}else{return search2(inputs2)}},{math,search})}",
-        "name": "fn_22"
+        "code": "async function fn_28(inputs2) {const{completion,math:math2,search:search2}=await inputs2;if(completion?.startsWith(\"YES\")){return math2({question:inputs2.question})}else{return search2(inputs2)}}",
+        "name": "fn_28"
       }
+    },
+    {
+      "id": "palm-generateText-27",
+      "type": "palm-generateText",
+      "configuration": {}
+    },
+    {
+      "id": "secrets-26",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "PALM_KEY"
+        ]
+      }
+    },
+    {
+      "id": "promptTemplate-25",
+      "type": "promptTemplate",
+      "configuration": {
+        "template": "Is this question about math? Answer YES or NO.\nQuestion: {{question}}\nAnswer: "
+      }
+    },
+    {
+      "id": "input-23",
+      "type": "input",
+      "configuration": {}
     }
-  ]
+  ],
+  "graphs": {}
 }

@@ -7,7 +7,7 @@
 import { action } from "../../new/lib.js";
 import { starter, palm } from "../../new/kits.js";
 
-export const graph = action((inputs) => {
+export const graph = action(async (inputs) => {
   return starter
     .promptTemplate({
       template:

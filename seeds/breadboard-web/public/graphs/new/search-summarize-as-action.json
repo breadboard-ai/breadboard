@@ -4,69 +4,69 @@
   "version": "0.0.2",
   "edges": [
     {
-      "from": "palm-generateText-60",
-      "to": "output-53",
+      "from": "palm-generateText-62",
+      "to": "output-55",
       "out": "completion",
       "in": "text"
     },
     {
       "from": "summarizing-template",
-      "to": "palm-generateText-60",
+      "to": "palm-generateText-62",
       "out": "prompt",
       "in": "text"
     },
     {
-      "from": "secrets-59",
-      "to": "palm-generateText-60",
+      "from": "secrets-61",
+      "to": "palm-generateText-62",
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
-      "from": "input-52",
-      "to": "urlTemplate-56",
+      "from": "input-54",
+      "to": "urlTemplate-58",
       "out": "text",
       "in": "query"
     },
     {
-      "from": "input-52",
+      "from": "input-54",
       "to": "summarizing-template",
       "out": "text",
       "in": "question"
     },
     {
-      "from": "jsonata-58",
+      "from": "jsonata-60",
       "to": "summarizing-template",
       "out": "result",
       "in": "context"
     },
     {
-      "from": "urlTemplate-56",
-      "to": "fetch-57",
+      "from": "urlTemplate-58",
+      "to": "fetch-59",
       "out": "url",
       "in": "url"
     },
     {
-      "from": "fetch-57",
-      "to": "jsonata-58",
+      "from": "fetch-59",
+      "to": "jsonata-60",
       "out": "response",
       "in": "json"
     },
     {
-      "from": "secrets-54",
-      "to": "urlTemplate-56",
+      "from": "secrets-56",
+      "to": "urlTemplate-58",
       "out": "API_KEY",
       "in": "API_KEY"
     },
     {
-      "from": "secrets-55",
-      "to": "urlTemplate-56",
+      "from": "secrets-57",
+      "to": "urlTemplate-58",
       "out": "GOOGLE_CSE_ID",
       "in": "GOOGLE_CSE_ID"
     }
   ],
   "nodes": [
     {
-      "id": "output-53",
+      "id": "output-55",
       "type": "output",
       "configuration": {
         "schema": {
@@ -86,7 +86,7 @@
       }
     },
     {
-      "id": "palm-generateText-60",
+      "id": "palm-generateText-62",
       "type": "palm-generateText",
       "configuration": {}
     },
@@ -98,7 +98,7 @@
       }
     },
     {
-      "id": "secrets-59",
+      "id": "secrets-61",
       "type": "secrets",
       "configuration": {
         "keys": [
@@ -107,7 +107,7 @@
       }
     },
     {
-      "id": "input-52",
+      "id": "input-54",
       "type": "input",
       "configuration": {
         "schema": {
@@ -127,26 +127,26 @@
       }
     },
     {
-      "id": "jsonata-58",
+      "id": "jsonata-60",
       "type": "jsonata",
       "configuration": {
         "expression": "$join(items.snippet, '\n')"
       }
     },
     {
-      "id": "urlTemplate-56",
+      "id": "urlTemplate-58",
       "type": "urlTemplate",
       "configuration": {
         "template": "https://www.googleapis.com/customsearch/v1?key={API_KEY}&cx={GOOGLE_CSE_ID}&q={query}"
       }
     },
     {
-      "id": "fetch-57",
+      "id": "fetch-59",
       "type": "fetch",
       "configuration": {}
     },
     {
-      "id": "secrets-54",
+      "id": "secrets-56",
       "type": "secrets",
       "configuration": {
         "keys": [
@@ -155,7 +155,7 @@
       }
     },
     {
-      "id": "secrets-55",
+      "id": "secrets-57",
       "type": "secrets",
       "configuration": {
         "keys": [

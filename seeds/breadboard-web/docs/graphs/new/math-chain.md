@@ -3,11 +3,11 @@
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-runJavascript36["runJavascript <br> id='runJavascript-36'"] -- all --> output32{{"output <br> id='output-32'"}}:::output
-palmgenerateText35["palm-generateText <br> id='palm-generateText-35'"] -- "completion->code" --> runJavascript36["runJavascript <br> id='runJavascript-36'"]
-secrets34("secrets <br> id='secrets-34'"):::secrets -- "PALM_KEY->PALM_KEY" --> palmgenerateText35["palm-generateText <br> id='palm-generateText-35'"]
-promptTemplate33["promptTemplate <br> id='promptTemplate-33'"] -- "prompt->text" --> palmgenerateText35["palm-generateText <br> id='palm-generateText-35'"]
-input31[/"input <br> id='input-31'"/]:::input -- "question->question" --> promptTemplate33["promptTemplate <br> id='promptTemplate-33'"]
+runJavascript38["runJavascript <br> id='runJavascript-38'"] -- all --> output34{{"output <br> id='output-34'"}}:::output
+palmgenerateText37["palm-generateText <br> id='palm-generateText-37'"] -- "completion->code" --> runJavascript38["runJavascript <br> id='runJavascript-38'"]
+secrets36("secrets <br> id='secrets-36'"):::secrets -- "PALM_KEY->PALM_KEY" --> palmgenerateText37["palm-generateText <br> id='palm-generateText-37'"]
+promptTemplate35["promptTemplate <br> id='promptTemplate-35'"] -- "prompt->text" --> palmgenerateText37["palm-generateText <br> id='palm-generateText-37'"]
+input33[/"input <br> id='input-33'"/]:::input -- "question->question" --> promptTemplate35["promptTemplate <br> id='promptTemplate-35'"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

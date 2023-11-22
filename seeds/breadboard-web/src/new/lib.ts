@@ -348,10 +348,6 @@ export type NodeProxy<
 
 type KeyMap = { [key: string]: string };
 
-class AwaitWhileSerializing {
-  constructor(public node: NodeImpl) {}
-}
-
 // TODO:BASE Extract base class that isn't opinioanted about the syntax. Marking
 // methods that should be base as "TODO:BASE" below, including complications.
 class NodeImpl<
@@ -663,7 +659,27 @@ class NodeImpl<
           outputSchema ? { schema: outputSchema } : {}
         );
 
-        const result = handler(inputNode.asProxy(), this);
+        const resultOrPromise = handler(inputNode.asProxy(), this);
+
+        // Support both async and sync handlers. Sync handlers should in
+        // practice only be used to statically create graphs (as reading inputs
+        // requires async await and all other nodes should do work on their
+        // inputs or maybe otherwise await external signals)
+        let result =
+          resultOrPromise instanceof Promise
+            ? await resultOrPromise
+            : resultOrPromise;
+
+        // await flattens Promises, so a handler returning a NodeImpl will
+        // actually return a TrapResult, as its `then` method will be called. At
+        // most one is created per serializing runner, so we now that this must
+        // be the one.
+        if (TrapResult.isTrapResult(result))
+          result = TrapResult.getNode(result);
+        // If a trap result was generated, but not returned, then we must assume
+        // some processing, i.e. not statically graph generating, and the
+        // function must be serialized.
+        else if (this.#runner.didTrapResultTrigger()) return null;
 
         let actualOutput = outputNode as NodeImpl;
         if (result instanceof NodeImpl) {
@@ -672,38 +688,37 @@ class NodeImpl<
           // otherwise connect the returned node's outputs to the output node.
           if (node.type === "output") actualOutput = node;
           else outputNode.addInputsFromNode(node);
-        } else if (isValue(result)) {
-          // Wire up the value to the output node
-          const value = isValue(result) as Value;
-          outputNode.addInputsFromNode(...value.asNodeInput());
         } else {
           // Otherwise wire up all keys of the returned object to the output.
-          let output = (await result) as InputsMaybeAsValues<O>;
+          const output = result as InputsMaybeAsValues<O>;
 
-          // If the result is not an object, assume "result" as key.
-          if (typeof output !== "object")
-            output = (
-              output !== undefined ? { result: output as NodeValue } : {}
-            ) as O;
-
-          // Refactor to merge with similar code in constructor
-          Object.keys(output).forEach((key) =>
+          // TODO: Refactor to merge with similar code in constructor
+          let anyNonConstants = false;
+          Object.keys(result as InputsMaybeAsValues<O>).forEach((key) =>
             isValue(output[key])
-              ? outputNode.addInputsFromNode(
+              ? (outputNode.addInputsFromNode(
                   ...(output[key] as Value).as(key).asNodeInput()
-                )
+                ),
+                (anyNonConstants = true))
               : output[key] instanceof NodeImpl
-              ? outputNode.addInputsFromNode(output[key] as NodeImpl, {
+              ? (outputNode.addInputsFromNode(output[key] as NodeImpl, {
                   [key]: key,
-                })
+                }),
+                (anyNonConstants = true))
               : (outputNode.configuration[key as keyof OutputValues] = output[
                   key
                 ] as (typeof outputNode.configuration)[keyof OutputValues])
           );
+
+          // If all outputs are constants, then we didn't get a graph that
+          // depends on its inputs. While this could indeed be a static node
+          // that always returns the same value, we shouldn't assume for now
+          // that it's deterministic, so we serialize it.
+          if (!anyNonConstants) return null;
         }
         return runner.serialize(actualOutput);
       } catch (e) {
-        if (e instanceof AwaitWhileSerializing) return null;
+        if (e instanceof TrappedDataReadWhileSerializing) return null;
         else throw e;
       }
     })();
@@ -844,22 +859,26 @@ class NodeImpl<
     onfulfilled?: ((value: O) => TResult1 | PromiseLike<TResult1>) | null,
     onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null
   ): PromiseLike<TResult1 | TResult2> {
-    if (this.#runner.serializing())
-      throw new AwaitWhileSerializing(this as NodeImpl);
-
     try {
+      if (this.#runner.serializing())
+        return Promise.resolve(this.#runner.createTrapResult(this)).then(
+          onfulfilled && this.#runner.asRunnerFor(onfulfilled),
+          onrejected && this.#runner.asRunnerFor(onrejected)
+        );
+
       // It's ok to call this multiple times: If it already run it'll only do
       // something if new nodes or inputs were added (e.g. between await calls)
       this.#runner.invoke(this as unknown as NodeImpl);
+
+      return this.#promise.then(
+        onfulfilled && this.#runner.asRunnerFor(onfulfilled),
+        onrejected && this.#runner.asRunnerFor(onrejected)
+      );
     } catch (e) {
-      if (onrejected) onrejected(e);
+      if (onrejected)
+        return Promise.reject(e).catch(this.#runner.asRunnerFor(onrejected));
       else throw e;
     }
-
-    return this.#promise.then(
-      onfulfilled && this.#runner.asRunnerFor(onfulfilled),
-      onrejected && this.#runner.asRunnerFor(onrejected)
-    );
   }
 
   to<
@@ -1065,6 +1084,68 @@ class Value<T extends NodeValue = NodeValue>
   }
 }
 
+/**
+ * During serialization, these will be returned on `await` on a node. If the
+ * code accesses a field, it will throw an `AwaitWhileSerializing`.
+ *
+ * That way when an awaited async handler function returns a node, and it will
+ * be returned as TrapResult, which we remember in the runner.
+ *
+ * But if the function itself awaits a node and reads the results, it will throw
+ * an exception.
+ *
+ * If the function itself awaits a node and for some reason doesn't do anything
+ * with it (otherwise it would trigger the exception), and returns a different
+ * value or node, we'll detect that by seeing that TrapResult was set, but was
+ * not returned. Such a handler function should be serialized.
+ *
+ * If the function doesn't return either a value or a node, i.e. just a constant
+ * value, we'll for now assume that it's a non-deterministic function whose
+ * output doesn't depend on the inputs and serialize it (a node that returns
+ * pure values but does read from the inputs would trigger the condition above).
+ *
+ * TODO: Eventually though, that last case should throw an error, as all
+ * external calls should be explicit (e.g. using a fetch node).
+ */
+const trapResultSymbol = Symbol("TrapResult");
+
+class TrapResult<I extends InputValues, O extends OutputValues> {
+  [trapResultSymbol]: NodeImpl<I, O>;
+
+  constructor(public node: NodeImpl<I, O>) {
+    this[trapResultSymbol] = node;
+    return new Proxy(this, {
+      get: (target, prop) => {
+        // `then` because await checks whether this is a thenable (it should
+        // fail). NOTE: Code that uses as an output wire called `await` will now
+        // not trigger the trap. That's why there is a then symbol: Increasing
+        // the chances that we get some weird error anyway. TODO: Improve.
+        if (typeof prop === "symbol" || prop === "then")
+          return Reflect.get(target, prop);
+        throw new TrappedDataReadWhileSerializing();
+      },
+    });
+  }
+
+  then = Symbol("then");
+
+  // Use this instead of `instanceof`.
+  static isTrapResult<I extends InputValues, O extends OutputValues>(
+    trapResult: TrapResult<I, O>
+  ) {
+    return trapResult[trapResultSymbol] !== undefined;
+  }
+
+  // This is used to get the underlying node despite the proxy above.
+  static getNode<I extends InputValues, O extends OutputValues>(
+    trapResult: TrapResult<I, O>
+  ) {
+    return trapResult[trapResultSymbol];
+  }
+}
+
+class TrappedDataReadWhileSerializing {}
+
 interface RunnerConfig {
   serialize?: boolean;
   probe?: EventTarget;
@@ -1076,6 +1157,8 @@ export class Runner {
   #parents?: Runner[];
 
   #handlers: NodeHandlers = {};
+
+  #trapResultTriggered = false;
 
   // TODO:BASE, config of subclasses can have more fields
   constructor(parents: Runner[] = [], config?: RunnerConfig) {
@@ -1132,6 +1215,24 @@ export class Runner {
         swapCurrentContextRunner(oldRunner);
       }
     }) as T;
+  }
+
+  createTrapResult<I extends InputValues, O extends OutputValues>(
+    node: NodeImpl<I, O>
+  ): O {
+    if (!this.#config.serialize)
+      throw new Error("Can't create fake result outside of serialization");
+
+    // We expect at most one trap - the one for the final result - in a
+    // statically graph generating handler function.
+    if (this.#trapResultTriggered) throw new TrappedDataReadWhileSerializing();
+    this.#trapResultTriggered = true;
+
+    return new TrapResult(node) as unknown as O;
+  }
+
+  didTrapResultTrigger() {
+    return this.#trapResultTriggered;
   }
 
   // TODO:BASE - and really this should implement .run() and .runOnce()
