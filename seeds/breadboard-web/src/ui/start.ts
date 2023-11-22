@@ -71,7 +71,7 @@ export class Start extends HTMLElement {
         }
 
         .sample-board::before {
-          background: var(--bb-board-icon) center center no-repeat;
+          background: var(--bb-icon-board) center center no-repeat;
           content: '';
           height: 24px;
           left: calc(var(--bb-grid-size, 4px) * 3 + 2px);

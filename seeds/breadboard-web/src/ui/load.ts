@@ -36,8 +36,8 @@ export class Load extends HTMLElement {
   }: LoadArgs) {
     super();
 
-    if (version) {
-      version = `Version: ${version}`;
+    if (!version) {
+      version = "Unversioned";
     }
 
     this.#diagram = diagram;
@@ -49,12 +49,36 @@ export class Load extends HTMLElement {
       <style>
         :host {
           display: block;
+          position: relative;
+        }
+
+        #info {
+          display: none;
+        }
+
+        #info.open {
+          display: block;
+        }
+
+        #toggle {
+          cursor: pointer;
+          position: absolute;
+          width: 24px;
+          height: 24px;
+          right: 0;
+          top: var(--bb-grid-size, 4px);
+          background: var(--bb-icon-expand) center center no-repeat;
+          border: none;
+          font-size: 0;
+        }
+
+        #toggle.collapse {
+          background: var(--bb-icon-collapse) center center no-repeat;
         }
 
         h1 {
           font: var(--bb-text-large) var(--bb-font-family);
           font-weight: 700;
-          display: inline-block;
         }
 
         h1 > a {
@@ -64,19 +88,61 @@ export class Load extends HTMLElement {
         h1 > button {
           vertical-align: middle;
         }
+
+        dl {
+          display: grid;
+          grid-template-columns: 35fr 60fr;
+          column-gap: calc(var(--bb-grid-size) * 5);
+          font-size: var(--bb-text-medium);
+        }
+
+        dt {
+          font-weight: 700;
+          margin-bottom: calc(var(--bb-grid-size) * 3);
+        }
+
+        dd {
+          margin: 0;
+          margin-bottom: calc(var(--bb-grid-size) * 5);
+          line-height: 1.5;
+        }
+
+        #diagram dd {
+          background: #FFF;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: calc(var(--bb-grid-size) * 8);
+          border-radius: calc(var(--bb-grid-size) * 8);
+        }
       </style>
-      <details ${show}>
-        <summary>
-          <h1>${title} ${link}</h1>
-        </summary>
-        <p>${description}</p>
-        <p>${version}</p>
-        <div id="mermaid"></div>
-      </details>
+      <h1>${title} ${link}</h1>
+      <button id="toggle">Toggle</button>
+      <div id="info" class="${show}">
+        <dl>
+          <div>
+            <dt>Version</dt>
+            <dd>${version}</dd>
+
+            <dt>Description</dt>
+            <dd>${description}</dd>
+          </div>
+          
+          <div id="diagram">
+            <dt>Board diagram</dt>
+            <dd><div id="mermaid"></div></dd>
+          </div>
+        </dl>
+      </div>
     `;
 
-    root.querySelector("details")?.addEventListener("toggle", (e) => {
-      if ((e.target as HTMLDetailsElement).open) {
+    const toggle = root.querySelector("#toggle");
+    toggle?.addEventListener("click", (e) => {
+      const info = root.querySelector("#info");
+      info?.classList.toggle("open");
+      toggle?.classList.toggle("collapse", info?.classList.contains("open"));
+
+      if (info?.classList.contains("open")) {
         localStorage.setItem(LOCAL_STORAGE_KEY, "true");
       } else {
         localStorage.removeItem(LOCAL_STORAGE_KEY);
