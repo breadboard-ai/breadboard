@@ -20,8 +20,8 @@ const getId = (key: string) => {
   return `${MULTIPART_INPUT_PREFIX}${key}`;
 };
 
-export const createMultipartInput = (schema: Schema, key: string) => {
-  return new MultipartInput(getId(key), schema);
+export const createMultipartInput = (_: Schema, key: string) => {
+  return new MultipartInput(getId(key));
 };
 
 export const getMultipartValue = async (form: HTMLFormElement, key: string) => {
@@ -30,11 +30,9 @@ export const getMultipartValue = async (form: HTMLFormElement, key: string) => {
 };
 
 export class MultipartInput extends HTMLElement {
-  constructor(id: string, schema: Schema) {
+  constructor(id: string) {
     super();
     this.id = id;
-    const placeholder = schema.description || "";
-    const defaultValue = schema.default ?? "";
     const root = this.attachShadow({ mode: "open" });
     root.innerHTML = `<style>
           :host {
