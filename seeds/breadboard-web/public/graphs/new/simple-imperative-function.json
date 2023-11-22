@@ -3,11 +3,11 @@
   "edges": [],
   "nodes": [
     {
-      "id": "fn-76",
+      "id": "fn-75",
       "type": "runJavascript",
       "configuration": {
-        "code": "async function fn_76(inputs) {const{foo}=await core.passthrough(inputs);return{foo}}",
-        "name": "fn_76"
+        "code": "async function fn_75(inputs) {const{foo}=await core.passthrough(inputs);return{foo}}",
+        "name": "fn_75"
       }
     }
   ]

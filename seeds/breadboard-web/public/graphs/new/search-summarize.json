@@ -4,26 +4,26 @@
   "version": "0.0.2",
   "edges": [
     {
-      "from": "palm-generateText-68",
-      "to": "output-69",
+      "from": "palm-generateText-67",
+      "to": "output-68",
       "out": "completion",
       "in": "text"
     },
     {
       "from": "summarizing-template",
-      "to": "palm-generateText-68",
+      "to": "palm-generateText-67",
       "out": "prompt",
       "in": "text"
     },
     {
-      "from": "secrets-67",
-      "to": "palm-generateText-68",
+      "from": "secrets-66",
+      "to": "palm-generateText-67",
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
       "from": "input",
-      "to": "urlTemplate-64",
+      "to": "urlTemplate-63",
       "out": "text",
       "in": "query"
     },
@@ -34,39 +34,39 @@
       "in": "question"
     },
     {
-      "from": "jsonata-66",
+      "from": "jsonata-65",
       "to": "summarizing-template",
       "out": "result",
       "in": "context"
     },
     {
-      "from": "urlTemplate-64",
-      "to": "fetch-65",
+      "from": "urlTemplate-63",
+      "to": "fetch-64",
       "out": "url",
       "in": "url"
     },
     {
-      "from": "fetch-65",
-      "to": "jsonata-66",
+      "from": "fetch-64",
+      "to": "jsonata-65",
       "out": "response",
       "in": "json"
     },
     {
-      "from": "secrets-62",
-      "to": "urlTemplate-64",
+      "from": "secrets-61",
+      "to": "urlTemplate-63",
       "out": "API_KEY",
       "in": "API_KEY"
     },
     {
-      "from": "secrets-63",
-      "to": "urlTemplate-64",
+      "from": "secrets-62",
+      "to": "urlTemplate-63",
       "out": "GOOGLE_CSE_ID",
       "in": "GOOGLE_CSE_ID"
     }
   ],
   "nodes": [
     {
-      "id": "output-69",
+      "id": "output-68",
       "type": "output",
       "configuration": {
         "schema": {
@@ -85,7 +85,7 @@
       }
     },
     {
-      "id": "palm-generateText-68",
+      "id": "palm-generateText-67",
       "type": "palm-generateText",
       "configuration": {}
     },
@@ -97,7 +97,7 @@
       }
     },
     {
-      "id": "secrets-67",
+      "id": "secrets-66",
       "type": "secrets",
       "configuration": {
         "keys": [
@@ -125,26 +125,26 @@
       }
     },
     {
-      "id": "jsonata-66",
+      "id": "jsonata-65",
       "type": "jsonata",
       "configuration": {
         "expression": "$join(items.snippet, '\n')"
       }
     },
     {
-      "id": "urlTemplate-64",
+      "id": "urlTemplate-63",
       "type": "urlTemplate",
       "configuration": {
         "template": "https://www.googleapis.com/customsearch/v1?key={API_KEY}&cx={GOOGLE_CSE_ID}&q={query}"
       }
     },
     {
-      "id": "fetch-65",
+      "id": "fetch-64",
       "type": "fetch",
       "configuration": {}
     },
     {
-      "id": "secrets-62",
+      "id": "secrets-61",
       "type": "secrets",
       "configuration": {
         "keys": [
@@ -153,7 +153,7 @@
       }
     },
     {
-      "id": "secrets-63",
+      "id": "secrets-62",
       "type": "secrets",
       "configuration": {
         "keys": [

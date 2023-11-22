@@ -1,17 +1,11 @@
 {
-  "title": "New: The Search Summarizer Recipe",
+  "title": "New: The Search Summarizer Recipe (as an Action)",
   "description": "A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.",
   "version": "0.0.2",
   "edges": [
     {
-      "from": "passthrough-61",
-      "to": "output-53",
-      "out": "*",
-      "in": "*"
-    },
-    {
       "from": "palm-generateText-60",
-      "to": "passthrough-61",
+      "to": "output-53",
       "out": "completion",
       "in": "text"
     },
@@ -74,12 +68,22 @@
     {
       "id": "output-53",
       "type": "output",
-      "configuration": {}
-    },
-    {
-      "id": "passthrough-61",
-      "type": "passthrough",
-      "configuration": {}
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "description": "The answer to the query",
+              "title": "Answer"
+            }
+          },
+          "required": [
+            "text"
+          ],
+          "additionalProperties": false
+        }
+      }
     },
     {
       "id": "palm-generateText-60",
@@ -105,7 +109,22 @@
     {
       "id": "input-52",
       "type": "input",
-      "configuration": {}
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "description": "What would you like to search for?",
+              "title": "Query"
+            }
+          },
+          "required": [
+            "text"
+          ],
+          "additionalProperties": false
+        }
+      }
     },
     {
       "id": "jsonata-58",

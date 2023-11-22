@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { z } from "zod";
+import { zodToJsonSchema } from "zod-to-json-schema";
+
 import {
   GraphDescriptor,
   GraphMetadata,
@@ -20,6 +23,8 @@ import {
   BreadboardRunResult,
   NodeHandlerContext,
   BreadboardValidator,
+  Schema,
+  NodeDescriberFunction,
 } from "@google-labs/breadboard";
 
 // TODO:BASE: Same as before, but I added NodeFactory as base type, which is a
@@ -64,7 +69,7 @@ export type NodeHandlerFunction<
 > = (
   inputs: PromiseLike<I> & InputsMaybeAsValues<I>,
   node: NodeImpl<I, O>
-) => O | PromiseLike<O>;
+) => InputsMaybeAsValues<O> | PromiseLike<O>;
 
 // TODO:BASE: New: Allow handlers to accepts inputs as a promise.
 // See also hack in handlersFromKit() below.
@@ -74,7 +79,7 @@ type NodeHandler<
 > =
   | {
       invoke: NodeHandlerFunction<I, O>;
-      // describe?: NodeDescriberFunction<I, O>;
+      describe?: NodeDescriberFunction;
     }
   | NodeHandlerFunction<I, O>; // Is assumed to accept promises
 
@@ -109,14 +114,91 @@ export interface Serializeable {
   ): Promise<GraphDescriptor> | GraphDescriptor;
 }
 
+/**
+ * Creates a node factory for a node type that invokes a handler function. This
+ * version infers the types from the function.
+ *
+ * The handler function can either return a graph (in which case it would be
+ * serialized to a graph), or returns the results of a computation, called at
+ * runtime and serialized as Javascript.
+ *
+ * @param fn Handler or graph creation function
+ */
 export function action<
   I extends InputValues = InputValues,
   O extends OutputValues = OutputValues
->(fn: NodeHandlerFunction<I, O>): NodeFactory<I, O> & Serializeable {
-  const factory = addNodeType(getNextNodeId("fn"), fn) as NodeFactory<I, O> &
-    Serializeable;
+>(fn: NodeHandlerFunction<I, O>): NodeFactory<I, O> & Serializeable;
+
+/**
+ * Alternative version to above that infers the type of the passed in Zod type.
+ *
+ * @param options Object with at least `input`, `output` and `invoke` set
+ */
+export function action<I extends InputValues, O extends OutputValues>(options: {
+  input: z.ZodType<I>;
+  output: z.ZodType<O>;
+  invoke: NodeHandlerFunction<I, O>;
+  describe?: NodeDescriberFunction;
+  name?: string;
+}): NodeFactory<I, O> & Serializeable;
+
+/**
+ * Same as above, but takes handler as a second parameter instead of as invoke
+ * option. This looks a bit nicer in the code (less indentation).
+ *
+ * @param options `input` and `output` schemas
+ * @param fn Handler function
+ */
+export function action<I extends InputValues, O extends OutputValues>(
+  options: {
+    input: z.ZodType<I>;
+    output: z.ZodType<O>;
+    describe?: NodeDescriberFunction;
+    name?: string;
+  },
+  fn?: NodeHandlerFunction<I, O>
+): NodeFactory<I, O> & Serializeable;
+
+export function action<I extends InputValues, O extends OutputValues>(
+  optionsOrFn:
+    | {
+        input: z.ZodType<I>;
+        output: z.ZodType<O>;
+        invoke?: NodeHandlerFunction<I, O>;
+        describe?: NodeDescriberFunction;
+        name?: string;
+      }
+    | NodeHandlerFunction<I, O>,
+  fn?: NodeHandlerFunction<I, O>
+): NodeFactory<I, O> & Serializeable {
+  const options = typeof optionsOrFn === "function" ? undefined : optionsOrFn;
+  if (!options) {
+    fn = optionsOrFn as NodeHandlerFunction<I, O>;
+  } else {
+    if (options.invoke) fn = options.invoke;
+    if (!fn) throw new Error("Missing invoke function");
+  }
+  const handler: NodeHandler<I, O> = {
+    invoke: fn,
+  };
+  if (options) {
+    handler.describe =
+      options.describe ??
+      (async () => {
+        return {
+          inputSchema: zodToSchema(options.input) as Schema,
+          outputSchema: zodToSchema(options.output) as Schema,
+        };
+      });
+  }
+  const factory: NodeFactory<I, O> & Serializeable = addNodeType(
+    options?.name ?? getNextNodeId("fn"),
+    handler
+  ) as NodeFactory<I, O> & Serializeable;
   factory.serialize = async (metadata?) => {
-    const node = new NodeImpl(fn, getCurrentContextRunner());
+    // TODO: Schema isn't serialized right now
+    // (as a function will be turned into a runJavascript node)
+    const node = new NodeImpl(handler, getCurrentContextRunner());
     const [singleNode, graph] = await node.serializeNode();
     // If there is a subgraph that is invoked, just return that.
     if (graph) return { ...metadata, ...graph } as GraphDescriptor;
@@ -124,6 +206,37 @@ export function action<
     else return { ...metadata, edges: [], nodes: [singleNode] };
   };
   return factory;
+}
+
+/**
+ * This post processed JSON schema generated from Zod:
+ *  - adds a title to the schema or any field by parsing the description as
+ *    `${title}: ${description}`
+ *  - removes $schema field
+ *
+ * @param zod Zod schema
+ * @returns Post processed `Schema` object
+ */
+function zodToSchema(zod: z.ZodType<unknown>): Schema {
+  const schema = zodToJsonSchema(zod) as Schema & { $schema?: string };
+  delete schema.$schema;
+
+  // Recursively visit all fields and add titles from descriptions
+  const addTitles = (schema: Schema) => {
+    if (schema.description) {
+      const [title, description] = schema.description.split(":", 2);
+      schema.title = title.trim();
+      schema.description = description.trim();
+    }
+    if (schema.properties)
+      Object.values(schema.properties).forEach((property) =>
+        addTitles(property)
+      );
+  };
+
+  addTitles(schema);
+
+  return schema;
 }
 
 // TODO:BASE: This is wraps classic handlers that expected resolved inputs
@@ -235,7 +348,9 @@ export type NodeProxy<
 
 type KeyMap = { [key: string]: string };
 
-class AwaitWhileSerializing extends Error {}
+class AwaitWhileSerializing {
+  constructor(public node: NodeImpl) {}
+}
 
 // TODO:BASE Extract base class that isn't opinioanted about the syntax. Marking
 // methods that should be base as "TODO:BASE" below, including complications.
@@ -445,6 +560,12 @@ class NodeImpl<
     return typeof handler === "function" ? handler : handler.invoke;
   }
 
+  #getHandlerDescribe(runner: Runner) {
+    const handler = this.#handler ?? runner.getHandler(this.type);
+    if (!handler) throw new Error(`Handler ${this.type} not found`);
+    return typeof handler === "function" ? undefined : handler.describe;
+  }
+
   // TODO:BASE: In the end, we need to capture the outputs and resolve the
   // promise. But before that there is a bit of refactoring to do to allow
   // returning of graphs, parallel execution, etc.
@@ -475,10 +596,10 @@ class NodeImpl<
         //    - it isn't an output node, add an output node and wire it up
         //    - execute the graph, and return the output node's outputs
         //  - otherwise return the handler's return value as result.
-        const result = await handler(
+        const result = (await handler(
           this.#inputs as unknown as PromiseLike<I> & InputsMaybeAsValues<I>,
           this
-        );
+        )) as O;
 
         // Resolve promise, but only on first run (outputs is still empty)
         if (this.#resolve && !this.#outputs) this.#resolve(result);
@@ -517,30 +638,47 @@ class NodeImpl<
 
     const runner = new Runner([this.#runner], { serialize: true });
 
+    const describe = this.#getHandlerDescribe(runner);
+    const { inputSchema, outputSchema } = describe
+      ? await describe()
+      : { inputSchema: undefined, outputSchema: undefined };
+
     const graph = await runner.asRunnerFor(async () => {
       try {
         const handler = this.#getHandlerFunction(
           runner
         ) as unknown as NodeHandlerFunction<I, O>;
 
-        const inputNode = new NodeImpl<InputValues, I>("input", runner, {});
-        const outputNode = new NodeImpl<O, O>("output", runner, {});
+        const inputNode = new NodeImpl<InputValues, I>(
+          "input",
+          runner,
+          inputSchema ? { schema: inputSchema } : {}
+        );
+        // TODO: Had to set type to InputValues instead of
+        // `O & { schema: Schema }` because of a typescript.
+        // I don't know why. I should fix this.
+        const outputNode = new NodeImpl<InputValues, O>(
+          "output",
+          runner,
+          outputSchema ? { schema: outputSchema } : {}
+        );
 
         const result = handler(inputNode.asProxy(), this);
 
+        let actualOutput = outputNode as NodeImpl;
         if (result instanceof NodeImpl) {
+          const node = (result as NodeImpl).unProxy();
           // If the handler returned an output node, serialize it directly,
           // otherwise connect the returned node's outputs to the output node.
-          if (result.unProxy().type === "output")
-            return runner.serialize(result as unknown as NodeImpl);
-          outputNode.addInputsFromNode(result.unProxy());
+          if (node.type === "output") actualOutput = node;
+          else outputNode.addInputsFromNode(node);
         } else if (isValue(result)) {
           // Wire up the value to the output node
           const value = isValue(result) as Value;
           outputNode.addInputsFromNode(...value.asNodeInput());
         } else {
           // Otherwise wire up all keys of the returned object to the output.
-          let output = await result;
+          let output = (await result) as InputsMaybeAsValues<O>;
 
           // If the result is not an object, assume "result" as key.
           if (typeof output !== "object")
@@ -558,12 +696,12 @@ class NodeImpl<
               ? outputNode.addInputsFromNode(output[key] as NodeImpl, {
                   [key]: key,
                 })
-              : (outputNode.configuration[key as keyof O] = output[
+              : (outputNode.configuration[key as keyof OutputValues] = output[
                   key
-                ] as (typeof outputNode.configuration)[keyof O])
+                ] as (typeof outputNode.configuration)[keyof OutputValues])
           );
         }
-        return runner.serialize(outputNode as unknown as NodeImpl);
+        return runner.serialize(actualOutput);
       } catch (e) {
         if (e instanceof AwaitWhileSerializing) return null;
         else throw e;
@@ -579,7 +717,11 @@ class NodeImpl<
     }
 
     // Else, serialize the handler itself and return a runJavascript node.
-    let code = this.#handler?.toString() ?? ""; // The ?? is just for typescript
+    const fn =
+      typeof this.#handler === "function"
+        ? this.#handler
+        : this.#handler?.invoke ?? "";
+    let code = fn.toString() ?? ""; // The ?? is just for typescript
     let name = this.id.replace(/-/g, "_");
 
     const arrowFunctionRegex = /(?:async\s+)?(\w+|\([^)]*\))\s*=>\s*/;
@@ -702,7 +844,8 @@ class NodeImpl<
     onfulfilled?: ((value: O) => TResult1 | PromiseLike<TResult1>) | null,
     onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null
   ): PromiseLike<TResult1 | TResult2> {
-    if (this.#runner.serializing()) throw new AwaitWhileSerializing();
+    if (this.#runner.serializing())
+      throw new AwaitWhileSerializing(this as NodeImpl);
 
     try {
       // It's ok to call this multiple times: If it already run it'll only do
@@ -1293,7 +1436,8 @@ export class BoardRunner implements BreadboardRunner {
  *
  * Runner.asRunnerFor() wraps a function that runs with that Runner as context.
  *
- * flow and any nodeFactory will run with the current Runner as context.
+ * action and any nodeFactory will run with the current Runner as context. That
+ * is, they remember the Runner that was active when they were created.
  *
  * Crucially (and that's all we need from zone.js), {NodeImpl,Value}.then() call
  * onsuccessful and onrejected with the Runner as context. So even if the
@@ -1301,9 +1445,13 @@ export class BoardRunner implements BreadboardRunner {
  * defining function will run with the current Runner as context.
  *
  * This works because NodeImpl and Value are PromiseLike, and so their then() is
- * called when they are awaited. Importantly, there is context switch between
- * the await call and entering then(), and there is no context switch between
- * then() and the onsuccessful or onrejected call.
+ * called when they are awaited. Importantly, there is no context switch between
+ * then() and the onsuccessful or onrejected call, if called from a Promise
+ * then(), including a Promise.resolve().then (This makes it robust in case the
+ * containing function isn't immediately awaited and so possibly Promises are
+ * being scheduled). However, there is a context switch between the await and
+ * the then() call, and so the context might have changed. That's why we
+ * remember the runner on the node object.
  *
  * One requirement from this that there can't be any await in the body of a flow
  * or action function, if they are followed by either node creation or flow
@@ -1335,8 +1483,53 @@ const reservedWord: NodeHandlerFunction<
   throw new Error("Reserved word handler should never be invoked");
 };
 
+function convertZodToSchemaInConfig<
+  I extends InputValues,
+  O extends OutputValues
+>(
+  config: { schema?: z.ZodType | Schema; $id?: string },
+  factory: NodeFactory<I, O>
+) {
+  if (config.schema && config.schema instanceof z.ZodType) {
+    config.schema = zodToSchema(config.schema);
+  }
+  return factory(config as Partial<I>);
+}
+
+const inputFactory = addNodeType("input", reservedWord);
+const outputFactory = addNodeType("output", reservedWord);
+
 // These get added to the default runner defined above
 export const base = {
-  input: addNodeType("input", reservedWord),
-  output: addNodeType("output", reservedWord),
+  input: (config: { schema?: z.ZodType | Schema; $id?: string }) =>
+    convertZodToSchemaInConfig(config, inputFactory),
+  output: (config: { schema?: z.ZodType | Schema; $id?: string }) =>
+    convertZodToSchemaInConfig(config, outputFactory),
+} as {
+  input:
+    | (<T extends OutputValues = OutputValues>(config: {
+        schema: z.ZodObject<{ [K in keyof T]: z.ZodType<T[K]> }>;
+        $id?: string;
+      }) => NodeProxy<Record<string, never>, T>) &
+        ((config: {
+          schema?: Schema;
+          $id?: string;
+        }) => NodeProxy<Record<string, never>, OutputValues>);
+  output: (<T extends InputValues>(
+    config: {
+      schema: z.ZodType<T>;
+      $id?: string;
+    } & Partial<{
+      [K in keyof T]:
+        | Value<T[K]>
+        | NodeProxy<InputValues, OutputValue<T[K]>>
+        | T[K];
+    }>
+  ) => NodeProxy<T, Record<string, never>>) &
+    ((
+      config: {
+        schema?: Schema;
+        $id?: string;
+      } & InputsMaybeAsValues<InputValues>
+    ) => NodeProxy<InputValues, Record<string, never>>);
 };

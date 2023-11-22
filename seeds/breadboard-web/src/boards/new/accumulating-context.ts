@@ -4,21 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { z } from "zod";
+
 import { base, core, llm, palm } from "../../new/kits.js";
 
 const input = base.input({
   $id: "userRequest",
-  schema: {
-    type: "object",
-    properties: {
-      text: {
-        type: "string",
-        title: "User",
-        description: "Type here to chat with the assistant",
-      },
-    },
-    required: ["text"],
-  },
+  schema: z.object({
+    text: z.string().describe("User: Type here to chat with the assistant"),
+  }),
 });
 
 core.passthrough({ $id: "start" }).as({}).to(input);
@@ -50,17 +44,13 @@ conversationMemory.in({ accumulator: response.completion });
 const output = base.output({
   text: response.completion,
 
-  schema: {
-    type: "object",
-    properties: {
-      text: {
-        type: "string",
-        title: "Assistant",
-        description: "Assistant's response in the conversation with the user",
-      },
-    },
-    required: ["text"],
-  },
+  schema: z.object({
+    text: z
+      .string()
+      .describe(
+        "Assistant: Assistant's response in the conversation with the user"
+      ),
+  }),
 });
 
 output.as({}).to(input);

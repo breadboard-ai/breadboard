@@ -73,13 +73,14 @@
           "properties": {
             "text": {
               "type": "string",
-              "title": "User",
-              "description": "Type here to chat with the assistant"
+              "description": "Type here to chat with the assistant",
+              "title": "User"
             }
           },
           "required": [
             "text"
-          ]
+          ],
+          "additionalProperties": false
         }
       }
     },
@@ -97,13 +98,14 @@
           "properties": {
             "text": {
               "type": "string",
-              "title": "Assistant",
-              "description": "Assistant's response in the conversation with the user"
+              "description": "Assistant's response in the conversation with the user",
+              "title": "Assistant"
             }
           },
           "required": [
             "text"
-          ]
+          ],
+          "additionalProperties": false
         }
       }
     },

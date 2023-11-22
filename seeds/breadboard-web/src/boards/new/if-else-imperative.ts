@@ -42,6 +42,7 @@ export const graph = action(async (inputs) => {
         PALM_KEY: llm.secrets({ keys: ["PALM_KEY"] }).PALM_KEY,
       })
     );
+
   if (completion && (completion as string).startsWith("YES")) {
     return math({ question: inputs.question });
   } else {
