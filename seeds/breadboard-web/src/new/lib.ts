@@ -93,18 +93,18 @@ export type NodeFactory<I extends InputValues, O extends OutputValues> = (
 ) => NodeProxy<I, O>;
 
 // TODO:BASE: This does two things
-//   (1) register a handler with the runner
+//   (1) register a handler with the scope
 //   (2) create a factory function for the node type
 // BASE should only be the first part, the second part should be in the syntax
 export function addNodeType<I extends InputValues, O extends OutputValues>(
   name: string,
   handler: NodeHandler<I, O>
 ): NodeFactory<I, O> {
-  getCurrentContextRunner().addHandlers({
+  getCurrentContextScope().addHandlers({
     [name]: handler as unknown as NodeHandler,
   });
   return ((config?: InputsMaybeAsValues<I>) => {
-    return new NodeImpl(name, getCurrentContextRunner(), config).asProxy();
+    return new NodeImpl(name, getCurrentContextScope(), config).asProxy();
   }) as unknown as NodeFactory<I, O>;
 }
 
@@ -198,7 +198,7 @@ export function action<I extends InputValues, O extends OutputValues>(
   factory.serialize = async (metadata?) => {
     // TODO: Schema isn't serialized right now
     // (as a function will be turned into a runJavascript node)
-    const node = new NodeImpl(handler, getCurrentContextRunner());
+    const node = new NodeImpl(handler, getCurrentContextScope());
     const [singleNode, graph] = await node.serializeNode();
     // If there is a subgraph that is invoked, just return that.
     if (graph) return { ...metadata, ...graph } as GraphDescriptor;
@@ -372,7 +372,7 @@ class NodeImpl<
   #receivedFrom: NodeImpl[] = [];
   #outputs?: O;
 
-  #runner: Runner;
+  #scope: Scope;
 
   // TODO:BASE: The syntax specific one will
   // - handle passing functions
@@ -387,12 +387,12 @@ class NodeImpl<
   // their own default id generation scheme?
   constructor(
     handler: NodeTypeIdentifier | NodeHandler<I, O>,
-    runner: Runner,
+    scope: Scope,
     config: (Partial<InputsMaybeAsValues<I>> | Value<NodeValue>) & {
       $id?: string;
     } = {}
   ) {
-    this.#runner = runner;
+    this.#scope = scope;
 
     if (typeof handler === "string") {
       this.type = handler;
@@ -550,14 +550,14 @@ class NodeImpl<
     return { ...this.#inputs };
   }
 
-  #getHandlerFunction(runner: Runner) {
-    const handler = this.#handler ?? runner.getHandler(this.type);
+  #getHandlerFunction(scope: Scope) {
+    const handler = this.#handler ?? scope.getHandler(this.type);
     if (!handler) throw new Error(`Handler ${this.type} not found`);
     return typeof handler === "function" ? handler : handler.invoke;
   }
 
-  #getHandlerDescribe(runner: Runner) {
-    const handler = this.#handler ?? runner.getHandler(this.type);
+  #getHandlerDescribe(scope: Scope) {
+    const handler = this.#handler ?? scope.getHandler(this.type);
     if (!handler) throw new Error(`Handler ${this.type} not found`);
     return typeof handler === "function" ? undefined : handler.describe;
   }
@@ -565,14 +565,14 @@ class NodeImpl<
   // TODO:BASE: In the end, we need to capture the outputs and resolve the
   // promise. But before that there is a bit of refactoring to do to allow
   // returning of graphs, parallel execution, etc.
-  async invoke(callingRunner?: Runner): Promise<O> {
-    const runner = new Runner(
-      callingRunner ? [callingRunner, this.#runner] : [this.#runner]
+  async invoke(callingScope?: Scope): Promise<O> {
+    const scope = new Scope(
+      callingScope ? [callingScope, this.#scope] : [this.#scope]
     );
-    return runner.asRunnerFor(async () => {
+    return scope.asScopeFor(async () => {
       try {
         const handler = this.#getHandlerFunction(
-          runner
+          scope
         ) as unknown as NodeHandlerFunction<I, O>;
 
         // Note: The handler might actually return a graph (as a NodeProxy), and
@@ -617,7 +617,7 @@ class NodeImpl<
 
   // TODO:BASE
   async serialize(metadata?: GraphMetadata) {
-    return this.#runner.serialize(this as unknown as NodeImpl, metadata);
+    return this.#scope.serialize(this as unknown as NodeImpl, metadata);
   }
 
   // TODO:BASE Special casing the function case (which is most of the code
@@ -632,22 +632,22 @@ class NodeImpl<
 
     if (this.type !== "fn") return [node];
 
-    const runner = new Runner([this.#runner], { serialize: true });
+    const scope = new Scope([this.#scope], { serialize: true });
 
-    const describe = this.#getHandlerDescribe(runner);
+    const describe = this.#getHandlerDescribe(scope);
     const { inputSchema, outputSchema } = describe
       ? await describe()
       : { inputSchema: undefined, outputSchema: undefined };
 
-    const graph = await runner.asRunnerFor(async () => {
+    const graph = await scope.asScopeFor(async () => {
       try {
         const handler = this.#getHandlerFunction(
-          runner
+          scope
         ) as unknown as NodeHandlerFunction<I, O>;
 
         const inputNode = new NodeImpl<InputValues, I>(
           "input",
-          runner,
+          scope,
           inputSchema ? { schema: inputSchema } : {}
         );
         // TODO: Had to set type to InputValues instead of
@@ -655,7 +655,7 @@ class NodeImpl<
         // I don't know why. I should fix this.
         const outputNode = new NodeImpl<InputValues, O>(
           "output",
-          runner,
+          scope,
           outputSchema ? { schema: outputSchema } : {}
         );
 
@@ -672,14 +672,14 @@ class NodeImpl<
 
         // await flattens Promises, so a handler returning a NodeImpl will
         // actually return a TrapResult, as its `then` method will be called. At
-        // most one is created per serializing runner, so we now that this must
+        // most one is created per serializing scope, so we now that this must
         // be the one.
         if (TrapResult.isTrapResult(result))
           result = TrapResult.getNode(result);
         // If a trap result was generated, but not returned, then we must assume
         // some processing, i.e. not statically graph generating, and the
         // function must be serialized.
-        else if (this.#runner.didTrapResultTrigger()) return null;
+        else if (this.#scope.didTrapResultTrigger()) return null;
 
         let actualOutput = outputNode as NodeImpl;
         if (result instanceof NodeImpl) {
@@ -716,7 +716,7 @@ class NodeImpl<
           // that it's deterministic, so we serialize it.
           if (!anyNonConstants) return null;
         }
-        return runner.serialize(actualOutput);
+        return scope.serialize(actualOutput);
       } catch (e) {
         if (e instanceof TrappedDataReadWhileSerializing) return null;
         else throw e;
@@ -804,7 +804,7 @@ class NodeImpl<
         if (typeof prop === "string") {
           const value = new Value(
             target as unknown as NodeImpl<InputValues, OutputValues>,
-            target.#runner,
+            target.#scope,
             prop
           );
           const method = target[prop as keyof NodeImpl<I, O>] as () => void;
@@ -860,23 +860,23 @@ class NodeImpl<
     onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null
   ): PromiseLike<TResult1 | TResult2> {
     try {
-      if (this.#runner.serializing())
-        return Promise.resolve(this.#runner.createTrapResult(this)).then(
-          onfulfilled && this.#runner.asRunnerFor(onfulfilled),
-          onrejected && this.#runner.asRunnerFor(onrejected)
+      if (this.#scope.serializing())
+        return Promise.resolve(this.#scope.createTrapResult(this)).then(
+          onfulfilled && this.#scope.asScopeFor(onfulfilled),
+          onrejected && this.#scope.asScopeFor(onrejected)
         );
 
       // It's ok to call this multiple times: If it already run it'll only do
       // something if new nodes or inputs were added (e.g. between await calls)
-      this.#runner.invoke(this as unknown as NodeImpl);
+      this.#scope.invoke(this as unknown as NodeImpl);
 
       return this.#promise.then(
-        onfulfilled && this.#runner.asRunnerFor(onfulfilled),
-        onrejected && this.#runner.asRunnerFor(onrejected)
+        onfulfilled && this.#scope.asScopeFor(onfulfilled),
+        onrejected && this.#scope.asScopeFor(onrejected)
       );
     } catch (e) {
       if (onrejected)
-        return Promise.reject(e).catch(this.#runner.asRunnerFor(onrejected));
+        return Promise.reject(e).catch(this.#scope.asScopeFor(onrejected));
       else throw e;
     }
   }
@@ -896,7 +896,7 @@ class NodeImpl<
         ? to.unProxy()
         : new NodeImpl(
             to as NodeTypeIdentifier | NodeHandler<Partial<O> & ToC, ToO>,
-            this.#runner,
+            this.#scope,
             config as Partial<O> & ToC
           );
 
@@ -929,7 +929,7 @@ class NodeImpl<
   as(keymap: KeyMap): Value {
     return new Value<NodeValue>(
       this as unknown as NodeImpl,
-      this.#runner,
+      this.#scope,
       keymap
     );
   }
@@ -961,18 +961,18 @@ class Value<T extends NodeValue = NodeValue>
   implements PromiseLike<T | undefined>
 {
   #node: NodeImpl<InputValues, OutputValue<T>>;
-  #runner: Runner;
+  #scope: Scope;
   #keymap: KeyMap;
   #constant: boolean;
 
   constructor(
     node: NodeImpl<InputValues, OutputValue<T>>,
-    runner: Runner,
+    scope: Scope,
     keymap: string | KeyMap,
     constant = false
   ) {
     this.#node = node;
-    this.#runner = runner;
+    this.#scope = scope;
     this.#keymap = typeof keymap === "string" ? { [keymap]: keymap } : keymap;
     (this as unknown as { [key: symbol]: Value<T> })[IsValueSymbol] = this;
     this.#constant = constant;
@@ -990,8 +990,8 @@ class Value<T extends NodeValue = NodeValue>
       (o) =>
         o &&
         onfulfilled &&
-        this.#runner.asRunnerFor(onfulfilled)(o[Object.keys(this.#keymap)[0]]),
-      onrejected && this.#runner.asRunnerFor(onrejected)
+        this.#scope.asScopeFor(onfulfilled)(o[Object.keys(this.#keymap)[0]]),
+      onrejected && this.#scope.asScopeFor(onrejected)
     ) as PromiseLike<TResult1 | TResult2>;
   }
 
@@ -1022,7 +1022,7 @@ class Value<T extends NodeValue = NodeValue>
         ? to.unProxy()
         : new NodeImpl(
             to as NodeTypeIdentifier | NodeHandler<OutputValue<T> & ToC, ToO>,
-            this.#runner,
+            this.#scope,
             config as OutputValue<T> & ToC
           );
 
@@ -1063,11 +1063,11 @@ class Value<T extends NodeValue = NodeValue>
       newMap = this.#remapKeys(newKey);
     }
 
-    return new Value(this.#node, this.#runner, newMap, this.#constant);
+    return new Value(this.#node, this.#scope, newMap, this.#constant);
   }
 
   memoize() {
-    return new Value(this.#node, this.#runner, this.#keymap, true);
+    return new Value(this.#node, this.#scope, this.#keymap, true);
   }
 
   #remapKeys(newKeys: KeyMap) {
@@ -1089,7 +1089,7 @@ class Value<T extends NodeValue = NodeValue>
  * code accesses a field, it will throw an `AwaitWhileSerializing`.
  *
  * That way when an awaited async handler function returns a node, and it will
- * be returned as TrapResult, which we remember in the runner.
+ * be returned as TrapResult, which we remember in the scope.
  *
  * But if the function itself awaits a node and reads the results, it will throw
  * an exception.
@@ -1146,22 +1146,22 @@ class TrapResult<I extends InputValues, O extends OutputValues> {
 
 class TrappedDataReadWhileSerializing {}
 
-interface RunnerConfig {
+interface ScopeConfig {
   serialize?: boolean;
   probe?: EventTarget;
 }
 
 // TODO:BASE Maybe this should really be "Scope"?
-export class Runner {
-  #config: RunnerConfig = { serialize: false };
-  #parents?: Runner[];
+export class Scope {
+  #config: ScopeConfig = { serialize: false };
+  #parents?: Scope[];
 
   #handlers: NodeHandlers = {};
 
   #trapResultTriggered = false;
 
   // TODO:BASE, config of subclasses can have more fields
-  constructor(parents: Runner[] = [], config?: RunnerConfig) {
+  constructor(parents: Scope[] = [], config?: ScopeConfig) {
     this.#parents = parents;
     if (config) {
       this.#config = { ...this.#config, ...config };
@@ -1179,9 +1179,9 @@ export class Runner {
   /**
    * Finds handler by name
    *
-   * Scans up the parent chain if not found in this runner. It's a depth-first
-   * search prioritizing the runners earlier in the list, by convention the
-   * calling runners before the declaration context runners.
+   * Scans up the parent chain if not found in this scope. It's a depth-first
+   * search prioritizing the scopes earlier in the list, by convention the
+   * calling scopes before the declaration context scopes.
    *
    * That is, if a graph is invoked with a specific set of kits, then those kits
    * have precedence over kits declared when building the graphs. And kits
@@ -1203,16 +1203,16 @@ export class Runner {
   }
 
   /**
-   * Swap global runner with this one, run the function, then restore
+   * Swap global scope with this one, run the function, then restore
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  asRunnerFor<T extends (...args: any[]) => any>(fn: T): T {
+  asScopeFor<T extends (...args: any[]) => any>(fn: T): T {
     return ((...args: unknown[]) => {
-      const oldRunner = swapCurrentContextRunner(this);
+      const oldScope = swapCurrentContextScope(this);
       try {
         return fn(...args);
       } finally {
-        swapCurrentContextRunner(oldRunner);
+        swapCurrentContextScope(oldScope);
       }
     }) as T;
   }
@@ -1416,21 +1416,21 @@ export class BoardRunner implements BreadboardRunner {
   nodes: NodeDescriptor[] = [];
   args?: OriginalInputValues;
 
-  #runner: Runner;
+  #scope: Scope;
   #anyNode?: NodeImpl;
 
   constructor() {
-    // Initialize Runner is call context of where the board is created
-    this.#runner = new Runner([getCurrentContextRunner()]);
+    // Initial Scope is from call context of where the board is created
+    this.#scope = new Scope([getCurrentContextScope()]);
   }
 
   async *run({
     probe,
     kits,
   }: NodeHandlerContext): AsyncGenerator<BreadboardRunResult> {
-    const runner = new Runner([this.#runner], { probe });
-    kits?.forEach((kit) => runner.addHandlers(handlersFromKit(kit)));
-    for await (const result of runner.run(this.#anyNode as NodeImpl))
+    const scope = new Scope([this.#scope], { probe });
+    kits?.forEach((kit) => scope.addHandlers(handlersFromKit(kit)));
+    for await (const result of scope.run(this.#anyNode as NodeImpl))
       yield result;
   }
 
@@ -1493,7 +1493,7 @@ export class BoardRunner implements BreadboardRunner {
     graph.nodes.forEach((node) => {
       const newNode = new NodeImpl(
         node.type,
-        board.#runner,
+        board.#scope,
         node.configuration as InputValues
       );
       nodes.set(node.id, newNode);
@@ -1532,18 +1532,18 @@ export class BoardRunner implements BreadboardRunner {
  * The following is inspired by zone.js, but much simpler, and crucially doesn't
  * require monkey patching.
  *
- * Instead, we use a global variable to store the current runner, and swap it
+ * Instead, we use a global variable to store the current scope, and swap it
  * out when we need to run a function in a different context.
  *
- * Runner.asRunnerFor() wraps a function that runs with that Runner as context.
+ * Scope.asScopeFor() wraps a function that runs with that Scope as context.
  *
- * action and any nodeFactory will run with the current Runner as context. That
- * is, they remember the Runner that was active when they were created.
+ * action and any nodeFactory will run with the current Scope as context. That
+ * is, they remember the Scope that was active when they were created.
  *
  * Crucially (and that's all we need from zone.js), {NodeImpl,Value}.then() call
- * onsuccessful and onrejected with the Runner as context. So even if the
+ * onsuccessful and onrejected with the Scope as context. So even if the
  * context changed in the meantime, due to async calls, the rest of a flow
- * defining function will run with the current Runner as context.
+ * defining function will run with the current Scope as context.
  *
  * This works because NodeImpl and Value are PromiseLike, and so their then() is
  * called when they are awaited. Importantly, there is no context switch between
@@ -1552,7 +1552,7 @@ export class BoardRunner implements BreadboardRunner {
  * containing function isn't immediately awaited and so possibly Promises are
  * being scheduled). However, there is a context switch between the await and
  * the then() call, and so the context might have changed. That's why we
- * remember the runner on the node object.
+ * remember the scope on the node object.
  *
  * One requirement from this that there can't be any await in the body of a flow
  * or action function, if they are followed by either node creation or flow
@@ -1560,19 +1560,19 @@ export class BoardRunner implements BreadboardRunner {
  * flow.
  */
 
-// Initialize with a default global Runner.
-let currentContextRunner = new Runner();
+// Initialize with a default global Scope.
+let currentContextScope = new Scope();
 
-function getCurrentContextRunner() {
-  const runner = currentContextRunner;
-  if (!runner) throw Error("No runner found in context");
-  return runner;
+function getCurrentContextScope() {
+  const scope = currentContextScope;
+  if (!scope) throw Error("No scope found in context");
+  return scope;
 }
 
-function swapCurrentContextRunner(runner: Runner) {
-  const oldRunner = currentContextRunner;
-  currentContextRunner = runner;
-  return oldRunner;
+function swapCurrentContextScope(scope: Scope) {
+  const oldScope = currentContextScope;
+  currentContextScope = scope;
+  return oldScope;
 }
 
 // Create the base kit:
@@ -1597,10 +1597,10 @@ function convertZodToSchemaInConfig<
   return factory(config as Partial<I>);
 }
 
+// These get added to the default scope defined above
 const inputFactory = addNodeType("input", reservedWord);
 const outputFactory = addNodeType("output", reservedWord);
 
-// These get added to the default runner defined above
 export const base = {
   input: (config: { schema?: z.ZodType | Schema; $id?: string }) =>
     convertZodToSchemaInConfig(config, inputFactory),
