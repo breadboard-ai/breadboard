@@ -565,10 +565,8 @@ class NodeImpl<
   // TODO:BASE: In the end, we need to capture the outputs and resolve the
   // promise. But before that there is a bit of refactoring to do to allow
   // returning of graphs, parallel execution, etc.
-  async invoke(callingScope?: Scope): Promise<O> {
-    const scope = new Scope(
-      callingScope ? [callingScope, this.#scope] : [this.#scope]
-    );
+  async invoke(invokingScope?: Scope): Promise<O> {
+    const scope = new Scope({ invokingScope, declaringScope: this.#scope });
     return scope.asScopeFor(async () => {
       try {
         const handler = this.#getHandlerFunction(
@@ -632,7 +630,7 @@ class NodeImpl<
 
     if (this.type !== "fn") return [node];
 
-    const scope = new Scope([this.#scope], { serialize: true });
+    const scope = new Scope({ declaringScope: this.#scope, serialize: true });
 
     const describe = this.#getHandlerDescribe(scope);
     const { inputSchema, outputSchema } = describe
@@ -1146,26 +1144,30 @@ class TrapResult<I extends InputValues, O extends OutputValues> {
 
 class TrappedDataReadWhileSerializing {}
 
-interface ScopeConfig {
-  serialize?: boolean;
-  probe?: EventTarget;
-}
-
 // TODO:BASE Maybe this should really be "Scope"?
 export class Scope {
-  #config: ScopeConfig = { serialize: false };
-  #parents?: Scope[];
+  #declaringScope?: Scope;
+  #invokingScope?: Scope;
+  #isSerializing: boolean;
+  #probe?: EventTarget;
 
   #handlers: NodeHandlers = {};
 
   #trapResultTriggered = false;
 
   // TODO:BASE, config of subclasses can have more fields
-  constructor(parents: Scope[] = [], config?: ScopeConfig) {
-    this.#parents = parents;
-    if (config) {
-      this.#config = { ...this.#config, ...config };
-    }
+  constructor(
+    config: {
+      declaringScope?: Scope;
+      invokingScope?: Scope;
+      serialize?: boolean;
+      probe?: EventTarget;
+    } = {}
+  ) {
+    this.#declaringScope = config.declaringScope;
+    this.#invokingScope = config.invokingScope;
+    this.#isSerializing = config.serialize ?? false;
+    this.#probe = config.probe;
   }
 
   // TODO:BASE
@@ -1179,9 +1181,8 @@ export class Scope {
   /**
    * Finds handler by name
    *
-   * Scans up the parent chain if not found in this scope. It's a depth-first
-   * search prioritizing the scopes earlier in the list, by convention the
-   * calling scopes before the declaration context scopes.
+   * Scans up the parent chain if not found in this scope, looking in calling
+   * scopes before the declaration context scopes.
    *
    * That is, if a graph is invoked with a specific set of kits, then those kits
    * have precedence over kits declared when building the graphs. And kits
@@ -1196,10 +1197,8 @@ export class Scope {
     O extends OutputValues = OutputValues
   >(name: string): NodeHandler<I, O> | undefined {
     return (this.#handlers[name] ||
-      this.#parents?.reduce(
-        (result, parent) => result ?? parent.getHandler(name),
-        undefined as NodeHandler | undefined
-      )) as unknown as NodeHandler<I, O>;
+      this.#invokingScope?.getHandler(name) ||
+      this.#declaringScope?.getHandler(name)) as unknown as NodeHandler<I, O>;
   }
 
   /**
@@ -1220,7 +1219,7 @@ export class Scope {
   createTrapResult<I extends InputValues, O extends OutputValues>(
     node: NodeImpl<I, O>
   ): O {
-    if (!this.#config.serialize)
+    if (!this.#isSerializing)
       throw new Error("Can't create fake result outside of serialization");
 
     // We expect at most one trap - the one for the final result - in a
@@ -1306,8 +1305,8 @@ export class Scope {
           outputs: Promise.resolve({}),
         };
         const shouldInvokeHandler =
-          !this.#config.probe ||
-          this.#config.probe?.dispatchEvent(
+          !this.#probe ||
+          this.#probe?.dispatchEvent(
             // Using CustomEvent instead of ProbeEvent because not enough types
             // are currently exported by breadboard, and I didn't want to change
             // too much while prototyping. TODO: Fix this.
@@ -1318,7 +1317,7 @@ export class Scope {
           );
         if (shouldInvokeHandler) result = await node.invoke(this);
         else result = (await beforeHandlerDetail.outputs) as OutputValues;
-        this.#config.probe?.dispatchEvent(
+        this.#probe?.dispatchEvent(
           new CustomEvent("node", {
             detail: { descriptor, inputs, outputs: result },
             cancelable: true,
@@ -1327,14 +1326,14 @@ export class Scope {
       } else if (type === "input") {
         yield runResult;
         result = runResult.inputs as OutputValues;
-        this.#config.probe?.dispatchEvent(
+        this.#probe?.dispatchEvent(
           new CustomEvent("input", {
             detail: { descriptor, inputs, outputs: result },
             cancelable: true,
           })
         );
       } /* node.type === "output" */ else {
-        this.#config.probe?.dispatchEvent(
+        this.#probe?.dispatchEvent(
           new CustomEvent("output", {
             detail: { descriptor, inputs },
             cancelable: true,
@@ -1387,7 +1386,7 @@ export class Scope {
   // TODO:BASE, this is needed for our syntax so that it can call handlers in
   // serialization mode. Should this be part of the base class? Probably not.
   serializing() {
-    return this.#config.serialize;
+    return this.#isSerializing;
   }
 
   #findAllConnectedNodes(node: NodeImpl) {
@@ -1421,14 +1420,18 @@ export class BoardRunner implements BreadboardRunner {
 
   constructor() {
     // Initial Scope is from call context of where the board is created
-    this.#scope = new Scope([getCurrentContextScope()]);
+    this.#scope = new Scope({ declaringScope: getCurrentContextScope() });
   }
 
   async *run({
     probe,
     kits,
   }: NodeHandlerContext): AsyncGenerator<BreadboardRunResult> {
-    const scope = new Scope([this.#scope], { probe });
+    const scope = new Scope({
+      declaringScope: this.#scope,
+      invokingScope: getCurrentContextScope(),
+      probe,
+    });
     kits?.forEach((kit) => scope.addHandlers(handlersFromKit(kit)));
     for await (const result of scope.run(this.#anyNode as NodeImpl))
       yield result;
