@@ -214,7 +214,6 @@ export class UIController extends HTMLElement implements UI {
         continue;
       }
 
-      console.log(child);
       child.remove();
     }
   }
