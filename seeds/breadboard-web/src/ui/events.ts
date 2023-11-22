@@ -15,3 +15,21 @@ export class StartEvent extends Event {
     });
   }
 }
+
+export const enum ToastType {
+  INFORMATION = "information",
+  WARNING = "warning",
+  ERROR = "error",
+}
+
+export class ToastEvent extends Event {
+  static eventName = "breadboardtoastevent";
+
+  constructor(public message: string, public toastType: ToastType) {
+    super(ToastEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}

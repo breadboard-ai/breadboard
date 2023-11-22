@@ -28,6 +28,9 @@ html {
   --bb-icon-expand: url(/third_party/icons/expand.svg);
   --bb-icon-collapse: url(/third_party/icons/collapse.svg);
   --bb-icon-download: url(/third_party/icons/download.svg);
+  --bb-icon-info: url(/third_party/icons/info.svg);
+  --bb-icon-warning: url(/third_party/icons/warning.svg);
+  --bb-icon-error: url(/third_party/icons/error.svg);
 }
 
 html,

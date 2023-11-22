@@ -100,6 +100,11 @@ export class Main {
       }
     );
 
+    this.#ui.addEventListener(BreadboardUI.ToastEvent.eventName, (evt) => {
+      const toastEvent = evt as BreadboardUI.ToastEvent;
+      this.#ui.toast(toastEvent.message, toastEvent.toastType);
+    });
+
     this.#ui.start(config);
   }
 

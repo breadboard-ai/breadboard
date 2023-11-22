@@ -11,7 +11,8 @@ import { Output, type OutputArgs } from "./output.js";
 import { Progress } from "./progress.js";
 import { Result, ResultArgs } from "./result.js";
 import { Start, type StartArgs } from "./start.js";
-import { StartEvent } from "./events.js";
+import { StartEvent, type ToastType } from "./events.js";
+import { Toast } from "./toast.js";
 
 export interface UI {
   progress(message: string): void;
@@ -200,6 +201,11 @@ export class UIController extends HTMLElement implements UI {
     } else {
       this.#showIntroContent();
     }
+  }
+
+  toast(message: string, type: ToastType) {
+    const toast = new Toast(message, type);
+    document.body.appendChild(toast);
   }
 
   #clearBoardContents() {
