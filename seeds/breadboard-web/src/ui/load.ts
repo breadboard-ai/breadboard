@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { svgToPng } from "../utils/svg-to-png.js";
+
 export type LoadArgs = {
   title: string;
   description?: string;
@@ -115,6 +117,19 @@ export class Load extends HTMLElement {
           padding: calc(var(--bb-grid-size) * 8);
           border-radius: calc(var(--bb-grid-size) * 8);
         }
+
+        #diagram-download {
+          width: 24px;
+          height: 24px;
+          font-size: 0;
+          display: inline-block;
+          background: var(--bb-icon-download) center center no-repeat;
+          vertical-align: middle;
+        }
+
+        #diagram-download:not([href]) {
+          opacity: 0.4;
+        }
       </style>
       <h1>${title} ${link}</h1>
       <button id="toggle">Toggle</button>
@@ -129,7 +144,7 @@ export class Load extends HTMLElement {
           </div>
           
           <div id="diagram">
-            <dt>Board diagram</dt>
+            <dt>Board diagram <a id="diagram-download" download="${title}" title="Download as PNG">Download as PNG</a></dt>
             <dd><div id="mermaid"></div></dd>
           </div>
         </dl>
@@ -137,7 +152,7 @@ export class Load extends HTMLElement {
     `;
 
     const toggle = root.querySelector("#toggle");
-    toggle?.addEventListener("click", (e) => {
+    toggle?.addEventListener("click", () => {
       const info = root.querySelector("#info");
       info?.classList.toggle("open");
       toggle?.classList.toggle("collapse", info?.classList.contains("open"));
@@ -147,11 +162,6 @@ export class Load extends HTMLElement {
       } else {
         localStorage.removeItem(LOCAL_STORAGE_KEY);
       }
-    });
-
-    root.addEventListener("click", (evt: Event) => {
-      const target = evt.target as HTMLElement;
-      target;
     });
   }
 
@@ -166,5 +176,17 @@ export class Load extends HTMLElement {
     const { svg } = await mermaid.render("graphDiv", this.#diagram);
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     this.shadowRoot!.querySelector("#mermaid")!.innerHTML = svg;
+
+    const root = this.shadowRoot;
+    if (!root) {
+      throw new Error("Unable to find shadow root");
+    }
+
+    const download = root.querySelector(
+      "#diagram-download"
+    ) as HTMLAnchorElement;
+
+    const pngSrc = await svgToPng(svg);
+    download.setAttribute("href", pngSrc);
   }
 }
