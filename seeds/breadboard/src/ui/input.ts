@@ -237,21 +237,23 @@ export class Input extends HTMLElement {
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
         const data: InputData = {};
-        Object.entries(properties).forEach(([key, property]) => {
-          if (isMultipart(property)) {
-            const { html, value } = getMultipartValue(form, key);
-            data[key] = value;
-            root.append(`${property.title}: `, ...html);
-          } else {
-            const input = form[key];
-            if (input.value) {
-              const parsedValue = parseValue(property.type, input);
-              data[key] = parsedValue;
-              if (!this.secret)
-                root.append(`${property.title}: ${parsedValue}\n`);
+        await Promise.all(
+          Object.entries(properties).map(async ([key, property]) => {
+            if (isMultipart(property)) {
+              const { html, value } = await getMultipartValue(form, key);
+              data[key] = value;
+              root.append(`${property.title}: `, ...html);
+            } else {
+              const input = form[key];
+              if (input.value) {
+                const parsedValue = parseValue(property.type, input);
+                data[key] = parsedValue;
+                if (!this.secret)
+                  root.append(`${property.title}: ${parsedValue}\n`);
+              }
             }
-          }
-        });
+          })
+        );
         this.#rememberValues(data);
         if (this.remember) this.#memory.rememberSaving(properties);
         input.remove();

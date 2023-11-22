@@ -24,9 +24,9 @@ export const createMultipartInput = (schema: Schema, key: string) => {
   return new MultipartInput(getId(key), schema);
 };
 
-export const getMultipartValue = (form: HTMLFormElement, key: string) => {
+export const getMultipartValue = async (form: HTMLFormElement, key: string) => {
   const input = form.querySelector(`#${getId(key)}`) as MultipartInput;
-  return input?.value;
+  return await input?.getValue();
 };
 
 export class MultipartInput extends HTMLElement {
@@ -76,14 +76,16 @@ export class MultipartInput extends HTMLElement {
     this.append(new MultipartInputText());
   }
 
-  get value() {
+  async getValue() {
     const value: unknown[] = [];
     const html: HTMLElement[] = [];
-    Array.from(this.children).forEach((child) => {
-      const data = (child as MultipartInputPart).getData();
-      value.push(data.value);
-      html.push(data.html);
-    });
+    await Promise.all(
+      Array.from(this.children).map(async (child) => {
+        const data = await (child as MultipartInputPart).getData();
+        value.push(data.value);
+        html.push(data.html);
+      })
+    );
     return { value, html };
   }
 }
@@ -111,6 +113,10 @@ abstract class MultipartInputPart extends HTMLElement {
           border: none;
           background-color: transparent;
         }
+
+        img, textarea {
+          width: 80%;
+        }
       </style>
       <button id="delete">🗑️</button>
     `;
@@ -119,29 +125,46 @@ abstract class MultipartInputPart extends HTMLElement {
     });
   }
 
-  abstract getData(): MultipartData;
+  abstract getData(): Promise<MultipartData>;
 }
 
 export class MultipartInputImage extends MultipartInputPart {
+  file?: File;
+
   constructor() {
     super();
-    const textarea = document.createElement("textarea");
-    textarea.placeholder = "image";
-    this.shadowRoot?.prepend(textarea);
+    const upload = document.createElement("input") as HTMLInputElement;
+    upload.type = "file";
+    upload.accept = "image/png, image/jpeg";
+    upload.addEventListener("change", () => {
+      if (!upload?.files?.length) return;
+      const image = document.createElement("img") as HTMLImageElement;
+      this.file = upload.files[0];
+      image.src = URL.createObjectURL(this.file);
+      this.shadowRoot?.prepend(image);
+    });
+    upload.click();
   }
 
-  getData() {
-    const textarea = this.shadowRoot?.querySelector("textarea");
-    if (!textarea) throw new Error("Improperly initialized part input");
-    const data = textarea.value;
-    const html = document.createElement("img");
-    html.src = `data:image/png;base64,${data}`;
-    return {
-      value: {
-        inline_data: { mime_type: "image/png", data },
-      },
-      html,
-    };
+  async getData() {
+    if (!this.file) throw new Error("Improperly initialized part input");
+    const reader = new FileReader();
+
+    return new Promise<MultipartData>((resolve) => {
+      reader.addEventListener("loadend", async () => {
+        const base64url = reader.result as string;
+        const html = document.createElement("img");
+        html.src = base64url;
+        const data = base64url.slice(base64url.indexOf(",") + 1);
+        resolve({
+          value: {
+            inline_data: { mime_type: "image/png", data },
+          },
+          html,
+        });
+      });
+      this.file && reader.readAsDataURL(this.file);
+    });
   }
 }
 
@@ -153,7 +176,7 @@ export class MultipartInputText extends MultipartInputPart {
     this.shadowRoot?.prepend(textarea);
   }
 
-  getData() {
+  async getData() {
     const textarea = this.shadowRoot?.querySelector("textarea");
     if (!textarea) throw new Error("Improperly initialized part input");
     const text = textarea.value;
