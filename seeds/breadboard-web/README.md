@@ -46,3 +46,17 @@ The typical worker lifecycle is as follows:
 9. The host responds to each `proxy` message with a `proxy` message containing the proxy object for the node.
 10. The worker sends an `end` message to the host when the board is done running.
 11. If an error occurs, the worker sends an `error` message to the host.
+
+# Firebase bits
+
+Must have firebase CLI installed:
+
+```bash
+npm install -g firebase-tools
+```
+
+Set project (PROJECT_ID is the ID of the project in the Firebase console):
+
+```bash
+firebase use --add ${PROJECT_ID}
+```
