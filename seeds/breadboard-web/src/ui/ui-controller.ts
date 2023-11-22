@@ -120,7 +120,7 @@ export class UIController extends HTMLElement implements UI {
           right: calc(var(--grid-size) * 2);
           top: calc(var(--grid-size) * 2);
           border-radius: 50%;
-          background: #FFF var(--bb-start-icon) center center no-repeat;
+          background: #FFF var(--bb-icon-start) center center no-repeat;
           border: none;
         }
 
