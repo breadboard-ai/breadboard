@@ -23,7 +23,32 @@ export type CredentialsOutputs = OutputValues & {
   accessToken: string;
 };
 
+type SessionStorage = {
+  key: string;
+  expires: number;
+};
+
+const STORE_DURATION = 1000 * 60 * 60; // 1 hour
 const CREDENTIALS_KEY = "google:credentials:accessToken";
+
+class Store {
+  get(): string | undefined {
+    const store = globalThis.sessionStorage.getItem(CREDENTIALS_KEY);
+    if (!store) return undefined;
+    const { key, expires } = JSON.parse(store) as SessionStorage;
+    if (expires < Date.now()) return undefined;
+    return key;
+  }
+
+  set(key?: string) {
+    if (!key) return;
+    const store: SessionStorage = {
+      key,
+      expires: Date.now() + STORE_DURATION,
+    };
+    globalThis.sessionStorage.setItem(CREDENTIALS_KEY, JSON.stringify(store));
+  }
+}
 
 export default {
   invoke: async (inputs: InputValues): Promise<OutputValues> => {
@@ -44,14 +69,13 @@ export default {
     const provider = new GoogleAuthProvider();
     (scopes || []).forEach((scope) => provider.addScope(scope));
 
-    let accessToken =
-      globalThis.sessionStorage.getItem(CREDENTIALS_KEY) || undefined;
+    const store = new Store();
+    let accessToken = store.get();
     if (!accessToken) {
       const result = await signInWithPopup(auth, provider);
       const credential = GoogleAuthProvider.credentialFromResult(result);
       accessToken = credential?.accessToken;
-      accessToken &&
-        globalThis.sessionStorage.setItem(CREDENTIALS_KEY, accessToken);
+      store.set(accessToken);
     }
     return { accessToken };
   },
