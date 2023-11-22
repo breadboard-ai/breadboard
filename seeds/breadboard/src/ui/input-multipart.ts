@@ -129,7 +129,7 @@ abstract class MultipartInputPart extends HTMLElement {
 }
 
 export class MultipartInputImage extends MultipartInputPart {
-  file?: File;
+  #file?: File;
 
   constructor() {
     super();
@@ -139,15 +139,15 @@ export class MultipartInputImage extends MultipartInputPart {
     upload.addEventListener("change", () => {
       if (!upload?.files?.length) return;
       const image = document.createElement("img") as HTMLImageElement;
-      this.file = upload.files[0];
-      image.src = URL.createObjectURL(this.file);
+      this.#file = upload.files[0];
+      image.src = URL.createObjectURL(this.#file);
       this.shadowRoot?.prepend(image);
     });
     upload.click();
   }
 
   async getData() {
-    if (!this.file) throw new Error("Improperly initialized part input");
+    if (!this.#file) throw new Error("Improperly initialized part input");
     const reader = new FileReader();
 
     return new Promise<MultipartData>((resolve) => {
@@ -163,7 +163,7 @@ export class MultipartInputImage extends MultipartInputPart {
           html,
         });
       });
-      this.file && reader.readAsDataURL(this.file);
+      this.#file && reader.readAsDataURL(this.#file);
     });
   }
 }
