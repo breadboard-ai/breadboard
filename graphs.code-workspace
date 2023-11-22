@@ -62,6 +62,9 @@
     },
     {
       "path": "seeds/palm-kit"
+    },
+    {
+      "path": "seeds/node-proxy-server"
     }
   ],
   "settings": {}
