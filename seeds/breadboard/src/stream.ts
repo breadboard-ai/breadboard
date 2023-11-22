@@ -39,6 +39,7 @@ const findStreams = (value: NodeValue, foundStreams: ReadableStream[]) => {
       findStreams(item, foundStreams);
     });
   } else if (typeof value === "object") {
+    if (value === null || value === undefined) return;
     const maybeCapability = value as StreamCapabilityType;
     if (maybeCapability.kind && maybeCapability.kind === STREAM_KIND) {
       foundStreams.push(maybeCapability.stream);
