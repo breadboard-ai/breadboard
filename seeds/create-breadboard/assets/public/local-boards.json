@@ -1,0 +1,26 @@
+[
+  {
+    "title": "List Google Drive files",
+    "url": "/graphs/list-files.json"
+  },
+  {
+    "title": "OpenAI GPT-3.5-turbo",
+    "url": "/graphs/openai-gpt-35-turbo.json"
+  },
+  {
+    "title": "OpenAI GPT 4 Vision Preview",
+    "url": "/graphs/openai-gpt-4-vision.json"
+  },
+  {
+    "title": "Text Generator",
+    "url": "/graphs/text-generator.json"
+  },
+  {
+    "title": "Tour Guide Writer, Take Two",
+    "url": "/graphs/tour-guide-writer-2.json"
+  },
+  {
+    "title": "Tour Guide Writer",
+    "url": "/graphs/tour-guide-writer.json"
+  }
+]

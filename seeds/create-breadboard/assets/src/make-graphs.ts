@@ -40,6 +40,9 @@ async function findTsFiles(dir: string): Promise<string[]> {
 
 async function saveBoard(filePath: string): Promise<ManifestItem> {
   const board = await import(filePath);
+  if (!board.default) {
+    throw new Error(`Board ${filePath} does not have a default export`);
+  }
   const relativePath: string = path.relative(PATH, filePath);
   const baseName: string = path.basename(filePath);
   const jsonFile: string = baseName.replace(".ts", ".json");
@@ -56,7 +59,7 @@ async function saveBoard(filePath: string): Promise<ManifestItem> {
   await mkdir(diagramDir, { recursive: true });
 
   const manifestEntry: ManifestItem = {
-    title: board.default.title,
+    title: board.default.title ?? "Untitled",
     url: `/graphs/${relativePath.replace(".ts", ".json")}`,
   };
 
