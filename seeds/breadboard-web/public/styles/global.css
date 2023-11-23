@@ -14,6 +14,12 @@ html {
   --bb-font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   --bb-font-color: rgb(23, 23, 23);
   --bb-main-bg: rgb(244, 247, 252);
+  --bb-highlight-color: rgb(211, 170, 255);
+  --bb-progress-color: rgb(223, 195, 253);
+  --bb-progress-color-faded: rgb(244, 235, 255);
+  --bb-warning-color: rgb(251, 137, 3);
+  --bb-error-color: rgb(251, 3, 3);
+  --bb-done-color: rgb(51, 235, 168);
   --bb-text-baseline: calc(var(--bb-grid-size) * 4);
   --bb-text-xx-large: 3rem;
   --bb-text-x-large: 2rem;
@@ -79,5 +85,15 @@ header a {
     padding: calc(var(--bb-grid-size) * 8) calc(var(--bb-grid-size) * 9)
       calc(var(--bb-grid-size) * 12) calc(var(--bb-grid-size) * 9);
     min-height: calc(var(--bb-grid-size) * 30);
+  }
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0);
+  }
+
+  to {
+    transform: rotate(360deg);
   }
 }

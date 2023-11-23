@@ -18,8 +18,11 @@ import {
   MultipartInputText,
 } from "./input-multipart.js";
 import { Toast } from "./toast.js";
+import { ResponseContainer } from "./response-container.js";
+import { Done } from "./done.js";
 
 export const register = () => {
+  customElements.define("bb-response-container", ResponseContainer);
   customElements.define("bb-ui", UIController);
   customElements.define("bb-start", Start);
   customElements.define("bb-load", Load);
@@ -28,6 +31,7 @@ export const register = () => {
   customElements.define("bb-output", Output);
   customElements.define("bb-progress", Progress);
   customElements.define("bb-result", Result);
+  customElements.define("bb-done", Done);
   customElements.define("bb-multipart-input", MultipartInput);
   customElements.define("bb-multipart-input-image", MultipartInputImage);
   customElements.define("bb-multipart-input-text", MultipartInputText);

@@ -42,11 +42,11 @@ export class Toast extends HTMLElement {
         }
 
         :host(.warning) {
-          color: #FB8903;
+          color: var(--bb-warning-color);
         }
 
         :host(.error) {
-          color: #FB0303;
+          color: var(--bb-error-color);
         }
 
         :host(.toasted) {

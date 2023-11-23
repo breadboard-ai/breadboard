@@ -13,9 +13,6 @@ export class Progress extends HTMLElement {
         :host {
           display: block;
         }
-        span {
-          color: var(--bb-progress-color, gray);
-        }
       </style>
       <span>${message}</span>
     `;

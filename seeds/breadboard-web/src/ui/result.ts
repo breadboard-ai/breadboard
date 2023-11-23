@@ -25,6 +25,7 @@ export class Result extends HTMLElement {
 
         details pre {
           padding-left: 1rem;
+          margin: 0;
         }
       </style>
       <details>

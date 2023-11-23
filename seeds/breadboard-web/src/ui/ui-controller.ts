@@ -13,6 +13,8 @@ import { Result, ResultArgs } from "./result.js";
 import { Start, type StartArgs } from "./start.js";
 import { StartEvent, type ToastType } from "./events.js";
 import { Toast } from "./toast.js";
+import { ResponseContainer } from "./response-container.js";
+import { Done } from "./done.js";
 
 export interface UI {
   progress(message: string): void;
@@ -28,6 +30,7 @@ const getBoardFromUrl = () => {
 
 export class UIController extends HTMLElement implements UI {
   #start!: Start;
+  #responseContainer = new ResponseContainer();
 
   constructor() {
     super();
@@ -191,6 +194,8 @@ export class UIController extends HTMLElement implements UI {
         </div>
       </div>
     `;
+
+    this.appendChild(this.#responseContainer);
   }
 
   setActiveBreadboard(url: string) {
@@ -220,6 +225,8 @@ export class UIController extends HTMLElement implements UI {
   }
 
   #clearBoardContents() {
+    this.#responseContainer.clearContents();
+
     const root = this.shadowRoot;
     if (!root) {
       throw new Error("Unable to locate shadow root in UI Controller");
@@ -227,10 +234,9 @@ export class UIController extends HTMLElement implements UI {
 
     const children = Array.from(this.querySelectorAll("*"));
     for (const child of children) {
-      if (child === this.#start) {
+      if (child === this.#start || child === this.#responseContainer) {
         continue;
       }
-
       child.remove();
     }
   }
@@ -281,18 +287,19 @@ export class UIController extends HTMLElement implements UI {
 
     const load = new Load(info);
     load.slot = "load";
-    this.append(load);
+    this.appendChild(load);
   }
 
   progress(message: string) {
     this.removeProgress();
-    this.append(new Progress(message));
+    const progress = new Progress(message);
+    this.#responseContainer.appendChild(progress);
   }
 
   async output(values: OutputArgs) {
     this.removeProgress();
     const output = new Output();
-    this.append(output);
+    this.#responseContainer.appendChild(output);
     await output.display(values);
   }
 
@@ -312,7 +319,7 @@ export class UIController extends HTMLElement implements UI {
       },
       { remember: true, secret: true }
     );
-    this.append(input);
+    this.#responseContainer.appendChild(input);
     const data = (await input.ask()) as Record<string, string>;
     input.remove();
     return data.secret;
@@ -321,23 +328,28 @@ export class UIController extends HTMLElement implements UI {
   result(value: ResultArgs) {
     const before = this.querySelector("bb-progress");
     const result = new Result(value);
-    before ? before.before(result) : this.append(result);
+    before
+      ? before.before(result)
+      : this.#responseContainer.appendChild(result);
   }
 
   async input(id: string, args: InputArgs): Promise<Record<string, unknown>> {
     this.removeProgress();
     const input = new Input(id, args);
-    this.append(input);
+    this.#responseContainer.appendChild(input);
     return (await input.ask()) as Record<string, unknown>;
   }
 
   error(message: string) {
     this.removeProgress();
-    this.append(new ErrorMessage(message));
+    const error = new ErrorMessage(message);
+    this.#responseContainer.appendChild(error);
   }
 
   done() {
-    this.progress("Done. Reload this page to restart.");
+    this.removeProgress();
+    const done = new Done("Board finished.");
+    this.#responseContainer.appendChild(done);
   }
 
   removeProgress() {

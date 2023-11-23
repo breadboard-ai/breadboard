@@ -4,18 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export class ErrorMessage extends HTMLElement {
-  constructor(message: string) {
+export class Done extends HTMLElement {
+  constructor(message = "Done.") {
     super();
     const root = this.attachShadow({ mode: "open" });
     root.innerHTML = `
       <style>
         :host {
           display: block;
-          color: var(--bb-error-color);
         }
       </style>
-      ${message}
+      <span>${message}</span>
     `;
   }
 }

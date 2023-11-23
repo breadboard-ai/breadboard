@@ -26,6 +26,9 @@ export class Output extends HTMLElement {
         * {
           white-space: pre-wrap;
         }
+        pre {
+          margin: 0;
+        }
       </style>
     `;
   }
