@@ -7,6 +7,7 @@
 import test from "ava";
 import {
   AnyRunRequestMessage,
+  AnyRunResponseMessage,
   InputPromiseResponseMessage,
 } from "../../src/remote/protocol.js";
 import { Board } from "../../src/board.js";
@@ -24,7 +25,10 @@ test("Interruptible streaming", async (t) => {
   board.input({ foo: "bar" }).wire("*", kit.noop().wire("*", board.output()));
 
   const run = async (request: AnyRunRequestMessage) => {
-    const transport = new IdentityTransport();
+    const transport = new IdentityTransport<
+      AnyRunRequestMessage,
+      AnyRunResponseMessage
+    >();
     const server = new RunServer(transport);
     server.serve(board);
     const client = transport.createClientStream();
@@ -69,7 +73,10 @@ test("Continuous streaming", async (t) => {
   const kit = board.addKit(TestKit);
   board.input({ foo: "bar" }).wire("*", kit.noop().wire("*", board.output()));
 
-  const transport = new MockWorkerTransport();
+  const transport = new MockWorkerTransport<
+    AnyRunRequestMessage,
+    AnyRunResponseMessage
+  >();
   const server = new RunServer(transport);
   server.serve(board);
   const { writableRequests: requests, readableResponses: responses } =
@@ -103,7 +110,10 @@ test("runOnce client can run once", async (t) => {
   const kit = board.addKit(TestKit);
   board.input({ foo: "bar" }).wire("*", kit.noop().wire("*", board.output()));
 
-  const transport = new MockWorkerTransport();
+  const transport = new MockWorkerTransport<
+    AnyRunRequestMessage,
+    AnyRunResponseMessage
+  >();
   const server = new RunServer(transport);
   const client = new RunClient(transport);
 

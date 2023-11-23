@@ -259,13 +259,3 @@ export interface ServerTransport<Request, Response> {
 export interface ClientTransport<Request, Response> {
   createClientStream(): ClientBidirectionalStream<Request, Response>;
 }
-
-export type RunServerTransport = ServerTransport<
-  AnyRunRequestMessage,
-  AnyRunResponseMessage
->;
-
-export type RunClientTransport = ClientTransport<
-  AnyRunRequestMessage,
-  AnyRunResponseMessage
->;

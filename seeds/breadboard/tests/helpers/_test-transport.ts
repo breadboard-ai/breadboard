@@ -4,48 +4,45 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { ClientTransport, ServerTransport } from "../../src/remote/protocol.js";
 import {
-  AnyRunRequestMessage,
-  AnyRunResponseMessage,
-  RunClientTransport,
-  RunRequestStream,
-  RunResponseStream,
-  RunServerTransport,
-} from "../../src/remote/protocol.js";
-import { PortStreams, portToStreams } from "../../src/stream.js";
+  PatchedReadableStream,
+  PortStreams,
+  portToStreams,
+} from "../../src/stream.js";
 
-export class IdentityTransport
-  implements RunServerTransport, RunClientTransport
+export class IdentityTransport<Request, Response>
+  implements
+    ServerTransport<Request, Response>,
+    ClientTransport<Request, Response>
 {
-  #requestPipe = new TransformStream<
-    AnyRunRequestMessage,
-    AnyRunRequestMessage
-  >();
-  #responsePipe = new TransformStream<
-    AnyRunResponseMessage,
-    AnyRunResponseMessage
-  >();
+  #requestPipe = new TransformStream<Request, Request>();
+  #responsePipe = new TransformStream<Response, Response>();
 
   createClientStream() {
     return {
       writableRequests: this.#requestPipe.writable,
-      readableResponses: this.#responsePipe.readable as RunResponseStream,
+      readableResponses: this.#responsePipe
+        .readable as PatchedReadableStream<Response>,
     };
   }
 
   createServerStream() {
     return {
-      readableRequests: this.#requestPipe.readable as RunRequestStream,
+      readableRequests: this.#requestPipe
+        .readable as PatchedReadableStream<Request>,
       writableResponses: this.#responsePipe.writable,
     };
   }
 }
 
-export class MockWorkerTransport
-  implements RunServerTransport, RunClientTransport
+export class MockWorkerTransport<Request, Response>
+  implements
+    ServerTransport<Request, Response>,
+    ClientTransport<Request, Response>
 {
-  #workerStreams: PortStreams<AnyRunRequestMessage, AnyRunResponseMessage>;
-  #hostStreams: PortStreams<AnyRunResponseMessage, AnyRunRequestMessage>;
+  #workerStreams: PortStreams<Request, Response>;
+  #hostStreams: PortStreams<Response, Request>;
 
   constructor() {
     const channel = new MessageChannel();
@@ -56,13 +53,15 @@ export class MockWorkerTransport
   createClientStream() {
     return {
       writableRequests: this.#hostStreams.writable,
-      readableResponses: this.#hostStreams.readable as RunResponseStream,
+      readableResponses: this.#hostStreams
+        .readable as PatchedReadableStream<Response>,
     };
   }
 
   createServerStream() {
     return {
-      readableRequests: this.#workerStreams.readable as RunRequestStream,
+      readableRequests: this.#workerStreams
+        .readable as PatchedReadableStream<Request>,
       writableResponses: this.#workerStreams.writable,
     };
   }

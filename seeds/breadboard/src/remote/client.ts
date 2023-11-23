@@ -17,7 +17,7 @@ import {
 import {
   AnyRunRequestMessage,
   AnyRunResponseMessage,
-  RunClientTransport,
+  ClientTransport,
 } from "./protocol.js";
 
 type Writer = WritableStreamDefaultWriter<AnyRunRequestMessage>;
@@ -75,6 +75,11 @@ class ClientRunResult implements BreadboardRunResult {
     return runResult.state;
   }
 }
+
+export type RunClientTransport = ClientTransport<
+  AnyRunRequestMessage,
+  AnyRunResponseMessage
+>;
 
 export class RunClient implements RunnerLike {
   #transport: RunClientTransport;

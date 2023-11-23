@@ -7,7 +7,11 @@
 import { RunResult } from "../run.js";
 import { BoardRunner } from "../runner.js";
 import { NodeHandlerContext } from "../types.js";
-import { AnyRunRequestMessage, RunServerTransport } from "./protocol.js";
+import {
+  AnyRunRequestMessage,
+  AnyRunResponseMessage,
+  ServerTransport,
+} from "./protocol.js";
 
 const resumeRun = (request: AnyRunRequestMessage) => {
   const [type, , state] = request;
@@ -18,6 +22,11 @@ const resumeRun = (request: AnyRunRequestMessage) => {
   }
   return result;
 };
+
+type RunServerTransport = ServerTransport<
+  AnyRunRequestMessage,
+  AnyRunResponseMessage
+>;
 
 export class RunServer {
   #transport: RunServerTransport;
