@@ -267,7 +267,7 @@ npm login --registry https://wombat-dressing-room.appspot.com
 10. Publish to npm:
 
 ```bash
-npm publish --registry https://wombat-dressing-room.appspot.com
+npm publish --registry https://wombat-dressing-room.appspot.com --access public
 ```
 
 ## Updating Generated API Docs
