@@ -369,7 +369,7 @@ class NodeImpl<
 
   #inputs: Partial<I>;
   #constants: Partial<I> = {};
-  #receivedFrom: NodeImpl[] = [];
+  #incomingEmptyWires: NodeImpl[] = [];
   #outputs?: O;
 
   #scope: Scope;
@@ -500,11 +500,16 @@ class NodeImpl<
         ? inputs
         : edge.out === ""
         ? {}
-        : { [edge.in]: inputs[edge.out] };
+        : inputs[edge.out] !== undefined
+        ? { [edge.in]: inputs[edge.out] }
+        : {};
     if (edge.constant) this.#constants = { ...this.#constants, ...data };
     this.#inputs = { ...this.#inputs, ...data };
 
-    if (edge.out === "" || edge.out === "*") this.#receivedFrom.push(edge.from);
+    if (edge.out === "") this.#incomingEmptyWires.push(edge.from);
+
+    // return which wires were used
+    return Object.keys(data);
   }
 
   // TODO:BASE (this shouldn't require any changes)
@@ -514,35 +519,29 @@ class NodeImpl<
    * Required inputs are
    *  - for all named incoming edges, the presence of any data, irrespective of
    *    which node they come from
-   *  - at least one of the empty (control flow edges) or * incoming edges
+   *  - at least one of the empty (control flow edges), if present
+   *  - at least one of * incoming edges (TODO: Is that correct?)
    *  - data from at least one node if it already ran (#this.outputs not empty)
    *
-   * @returns true if all required inputs are present
+   * @returns false if none are missing, otherwise string[] of missing inputs.
+   * NOTE: A node with no incoming wires returns an empty array after  first run.
    */
-  hasAllRequiredInputs() {
-    const requiredKeys = new Set(
-      this.incoming
-        .map((edge) => edge.in)
-        .filter((key) => !["", "*"].includes(key))
-    );
-    const controlFlowNodes = new Set(
-      this.incoming
-        .filter((edge) => ["", "*"].includes(edge.out))
-        .map((edge) => edge.from)
-    );
+  missingInputs(): string[] | false {
+    if (this.incoming.length === 0 && this.#outputs) return [];
+
+    const requiredKeys = new Set(this.incoming.map((edge) => edge.in));
 
     const presentKeys = new Set([
       ...Object.keys(this.#inputs),
       ...Object.keys(this.#constants),
     ]);
-    const presentNodes = new Set(this.#receivedFrom);
+    if (this.#incomingEmptyWires.length) presentKeys.add("");
 
-    return (
-      [...requiredKeys].every((key) => presentKeys.has(key)) &&
-      (controlFlowNodes.size === 0 ||
-        [...controlFlowNodes].find((node) => presentNodes.has(node))) &&
-      (!this.#outputs || presentKeys.size > 0 || presentNodes.size > 0)
+    const missingInputs = [...requiredKeys].filter(
+      (key) => !presentKeys.has(key)
     );
+
+    return missingInputs.length ? missingInputs : false;
   }
 
   // TODO:BASE
@@ -602,7 +601,7 @@ class NodeImpl<
 
         // Clear inputs, reset with configuration and constants
         this.#inputs = { ...this.configuration, ...this.#constants };
-        this.#receivedFrom = [];
+        this.#incomingEmptyWires = [];
 
         return result;
       } catch (e) {
@@ -1236,16 +1235,14 @@ export class Scope {
 
   // TODO:BASE - and really this should implement .run() and .runOnce()
   async invoke(node: NodeImpl) {
-    const queue: NodeImpl[] = this.#findAllConnectedNodes(node).filter((node) =>
-      node.hasAllRequiredInputs()
+    const queue: NodeImpl[] = this.#findAllConnectedNodes(node).filter(
+      (node) => !node.missingInputs()
     );
 
+    const lastNodeDetails = new Map<string, object>();
+    let lastNode: object | undefined = undefined;
     while (queue.length) {
       const node = queue.shift() as NodeImpl;
-
-      // Check if we have all inputs. This should always be the case.
-      if (!node.hasAllRequiredInputs())
-        throw new Error("Node in queue didn't have all required inputs. Bug.");
 
       // Send beforeHandler event
       const beforeHandlerDetail = {
@@ -1274,22 +1271,60 @@ export class Scope {
         ? await node.invoke(this)
         : ((await beforeHandlerDetail.outputs) as OutputValues);
 
-      // Send node event with the results
-      this.#probe?.dispatchEvent(
-        new CustomEvent("node", {
-          detail: { ...beforeHandlerDetail, outputs: result },
-          cancelable: true,
-        })
-      );
-
       // Distribute data to outgoing edges
+      const receivingNodes: { [key: string]: string[] } = {};
+      const unusedKeys = new Set<string>(Object.keys(result));
+      const incompleteNodes: {
+        node: string;
+        missing: string[];
+      }[] = [];
       node.outgoing.forEach((edge) => {
-        edge.to.receiveInputs(edge, result);
+        const ports = edge.to.receiveInputs(edge, result);
+        receivingNodes[edge.to.id] = ports;
+        ports.forEach((key) => unusedKeys.delete(key));
 
         // If it's ready to run, add it to the queue
-        if (edge.to.hasAllRequiredInputs()) queue.push(edge.to);
+        const missing = edge.to.missingInputs();
+        if (!missing) queue.push(edge.to);
+        else
+          incompleteNodes.push({
+            node: edge.to.id,
+            missing,
+          });
       });
+
+      // Send node event with the results
+      const probeDetails = {
+        ...beforeHandlerDetail,
+        outputs: result,
+        receivingNodes,
+        incompleteNodes,
+        unusedKeys: [...unusedKeys],
+      };
+      this.#probe?.dispatchEvent(
+        new CustomEvent("node", { detail: probeDetails })
+      );
+
+      // Keep track of the last run of any node with incomplete next nodes
+      if (probeDetails.incompleteNodes.length > 0)
+        lastNodeDetails.set(node.id, probeDetails);
+      else lastNodeDetails.delete(node.id);
+
+      lastNode = probeDetails;
     }
+
+    // For convenience, send a done event with the last node's details. In a
+    // developer tool, this could be highlighted if the last node wasn't
+    // expected, e.g. not an output node, and it might point out where the graph
+    // got stuck.
+    this.#probe?.dispatchEvent(
+      new CustomEvent("done", {
+        detail: {
+          last: lastNode,
+          incompleteNextNodes: [...lastNodeDetails.values()],
+        },
+      })
+    );
   }
 
   // TODO:BASE, should be complete.
