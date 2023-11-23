@@ -224,6 +224,14 @@ export type ProxyRequest = ProxyPromiseResponse;
  */
 export type ProxyResponse = ProxyResolveRequest;
 
+export type ProxyRequestMessage = ["proxy", ProxyRequest];
+export type ProxyResponseMessage = ["proxy", ProxyResponse];
+
+export type AnyProxyRequestMessage = ProxyRequestMessage;
+export type AnyProxyResponseMessage =
+  | ProxyResponseMessage
+  | ErrorResponseMessage;
+
 export type AnyRunRequestMessage =
   | RunRequestMessage
   | InputResolveRequestMessage
@@ -237,10 +245,10 @@ export type AnyRunResponseMessage =
   | EndResponseMessage
   | ErrorResponseMessage;
 
-export type RunResponseStream = PatchedReadableStream<AnyRunResponseMessage>;
-export type RunRequestStream = PatchedReadableStream<AnyRunRequestMessage>;
-export type WritableRunRequestStream = WritableStream<AnyRunRequestMessage>;
-export type WritableRunResponseStream = WritableStream<AnyRunResponseMessage>;
+// export type RunResponseStream = PatchedReadableStream<AnyRunResponseMessage>;
+// export type RunRequestStream = PatchedReadableStream<AnyRunRequestMessage>;
+// export type WritableRunRequestStream = WritableStream<AnyRunRequestMessage>;
+// export type WritableRunResponseStream = WritableStream<AnyRunResponseMessage>;
 
 export interface ClientBidirectionalStream<Request, Response> {
   writableRequests: WritableStream<Request>;
