@@ -12,7 +12,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "deploy": "firebase deploy",
+    "deploy": "npm run build:vite && firebase deploy",
     "build:vite": "FORCE_COLOR=1 vite build",
     "test": "FORCE_COLOR=1 vitest --run",
     "watch": "vitest",
