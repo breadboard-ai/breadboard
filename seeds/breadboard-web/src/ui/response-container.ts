@@ -11,10 +11,15 @@ export class ResponseContainer extends HTMLElement {
     const root = this.attachShadow({ mode: "open" });
     root.innerHTML = `
       <style>
+        :host {
+          display: block;
+          padding-top: calc(var(--bb-grid-size) * 6);
+        }
+
         ::slotted(*) {
           position: relative;
-          padding: calc(var(--bb-grid-size) * 3) 0 calc(var(--bb-grid-size) * 4)
-          calc(var(--bb-grid-size) * 6); 
+          padding-bottom: calc(var(--bb-grid-size) * 4);
+          padding-left: calc(var(--bb-grid-size) * 6); 
         }
 
         ::slotted(*)::before {

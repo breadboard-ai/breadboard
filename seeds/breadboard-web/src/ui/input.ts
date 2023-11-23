@@ -85,20 +85,73 @@ export class Input extends HTMLElement {
     root.innerHTML = `
       <style>
         :host {
-          display: block;
-        }
-        label {
           display: flex;
+          flex-direction: column;
         }
 
         * {
-          white-space: pre-wrap;
-          font-family: var(--bb-font-family-header, Fira Code, monospace);
-          font-size: var(--bb-font-size, 1rem);
+          box-sizing: border-box; 
+          font-size: var(--bb-text-medium);
+        }
+
+        form {
+          display: flex;
+          flex-direction: column;
+        }
+
+        label {
+          font-family: var(--bb-font-family);
+          font-size: var(--bb-text-small);
+          margin-top: calc(var(--bb-grid-size) * -6);
+          padding: 0 0 calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 8);
+        }
+
+        #input {
+          position: relative;
+        }
+
+        input[type=text],
+        input[type=password],
+        .parsed-value {
+          border-radius: calc(var(--grid-size) * 10);
+          background: rgb(255, 255, 255);
+          height: calc(var(--grid-size) * 12);
+          padding: 0 calc(var(--grid-size) * 10) 0 calc(var(--grid-size) * 8);
+          width: 100%;
+          border: 1px solid rgb(209, 209, 209);
+        }
+
+        div#input {
+          min-height: calc(var(--grid-size) * 12);
+        }
+
+        input[type=text]::placeholder,
+        input[type=password]::placeholder {
+          font-size: var(--bb-text-medium);
+        }
+
+        .parsed-value {
+          background: rgb(250, 250, 250);
+          color: var(--bb-font-color-faded);
+          display: flex;
+          align-items: center;
+          font-size: var(--bb-text-medium);
+        }
+
+        input[type=submit] {
+          font-size: 0;
+          width: calc(var(--grid-size) * 8);
+          height: calc(var(--grid-size) * 8);
+          position: absolute;
+          right: calc(var(--grid-size) * 2);
+          top: calc(var(--grid-size) * 2);
+          border-radius: 50%;
+          background: #FFF var(--bb-icon-start) center center no-repeat;
+          border: none;
         }
         
-        input[type=text], textarea {
-          width: var(--bb-input-width, 80%);
+        textarea {
+          width: 100%;
         }
 
         span {
@@ -150,6 +203,7 @@ export class Input extends HTMLElement {
   #createBooleanInput(schema: Schema, values: InputData, key: string) {
     const input = document.createElement("input");
     input.name = key;
+    input.id = key;
     input.type = "checkbox";
     input.checked = !!values[key] ?? schema.default ?? false;
     return input;
@@ -158,6 +212,7 @@ export class Input extends HTMLElement {
   #createSingleLineInput(schema: Schema, values: InputData, key: string) {
     const input = document.createElement("input");
     input.name = key;
+    input.id = key;
     input.type = this.secret ? "password" : "text";
     input.autocomplete = this.secret ? "off" : "on";
     input.placeholder = schema.description || "";
@@ -170,6 +225,7 @@ export class Input extends HTMLElement {
     const span = document.createElement("span");
     const textarea = span.appendChild(document.createElement("textarea"));
     textarea.name = key;
+    textarea.id = key;
     textarea.placeholder = schema.description || "";
     textarea.value = (values[key] as string) ?? schema.default ?? "";
     return span;
@@ -210,31 +266,36 @@ export class Input extends HTMLElement {
     const input = document.createElement("div");
     input.id = "input";
     root.append(input);
+
     if (!schema || !schema.properties) {
       input.textContent =
         "No input schema detected, unable to provide useful interaction.";
 
       return {};
     }
+
     const properties = schema.properties;
     const values = this.#getRememberedValues();
     const form = input.appendChild(document.createElement("form"));
-    let insertSubmitButton = false;
+    let insertSubmitButton = true;
     Object.entries(properties).forEach(([key, property], index) => {
       const needsSubmitButton = isMultiline(property) || isMultipart(property);
       if (index > 0 || needsSubmitButton) insertSubmitButton = true;
 
       const label = form.appendChild(document.createElement("label"));
-      label.textContent = `${property.title}: `;
+      label.setAttribute("for", key);
+      label.textContent = `${property.title}`;
+
       const input = this.#createInput(property, values, key);
-      label.appendChild(input);
-      form.append("\n");
+      form.appendChild(input);
     });
+
     if (insertSubmitButton) {
       const submit = form.appendChild(document.createElement("input"));
       submit.type = "submit";
       submit.value = "Continue";
     }
+
     if (this.remember && this.#memory.didSave(properties))
       return Promise.resolve(values);
 
@@ -253,8 +314,16 @@ export class Input extends HTMLElement {
               if (input.value) {
                 const parsedValue = parseValue(property.type, input);
                 data[key] = parsedValue;
-                if (!this.secret)
-                  root.append(`${property.title}: ${parsedValue}\n`);
+                if (!this.secret) {
+                  const label = document.createElement("label");
+                  label.textContent = `${property.title}`;
+                  const value = document.createElement("div");
+                  value.classList.add("parsed-value");
+                  value.textContent = `${parsedValue}`;
+
+                  root.appendChild(label);
+                  root.appendChild(value);
+                }
               }
             }
           })

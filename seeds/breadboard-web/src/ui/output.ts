@@ -22,6 +22,7 @@ export class Output extends HTMLElement {
       <style>
         :host {
           display: block;
+          padding-top: calc(var(--bb-grid-size) * 3);
         }
         * {
           white-space: pre-wrap;

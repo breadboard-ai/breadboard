@@ -85,7 +85,6 @@ export class Main {
             return;
           }
         }
-
         this.#hasActiveBoard = true;
 
         const startEvent = evt as BreadboardUI.StartEvent;
@@ -196,7 +195,6 @@ export class Main {
         break;
 
       case "shutdown":
-        this.#hasActiveBoard = false;
         break;
     }
   }

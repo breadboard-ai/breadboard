@@ -12,9 +12,14 @@ export class Progress extends HTMLElement {
       <style>
         :host {
           display: block;
+          padding-top: calc(var(--bb-grid-size) * 3);
+        }
+
+        div {
+          margin-bottom: calc(var(--bb-grid-size) * 6);
         }
       </style>
-      <span>${message}</span>
+      <div>${message}</div>
     `;
   }
 }

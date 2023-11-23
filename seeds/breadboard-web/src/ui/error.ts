@@ -13,6 +13,7 @@ export class ErrorMessage extends HTMLElement {
         :host {
           display: block;
           color: var(--bb-error-color);
+          padding-top: calc(var(--bb-grid-size) * 3);
         }
       </style>
       ${message}

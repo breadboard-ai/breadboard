@@ -12,6 +12,7 @@ export class Done extends HTMLElement {
       <style>
         :host {
           display: block;
+          padding-top: calc(var(--bb-grid-size) * 3);
         }
       </style>
       <span>${message}</span>
