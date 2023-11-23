@@ -7,16 +7,16 @@
 import {
   AnyRunRequestMessage,
   AnyRunResponseMessage,
-  ClientBidirectionalStream,
-  ClientTransport,
+  RunClientTransport,
   RunRequestStream,
   RunResponseStream,
-  ServerBidirectionalStream,
-  ServerTransport,
+  RunServerTransport,
 } from "../../src/remote/protocol.js";
 import { PortStreams, portToStreams } from "../../src/stream.js";
 
-export class IdentityTransport implements ServerTransport, ClientTransport {
+export class IdentityTransport
+  implements RunServerTransport, RunClientTransport
+{
   #requestPipe = new TransformStream<
     AnyRunRequestMessage,
     AnyRunRequestMessage
@@ -26,14 +26,14 @@ export class IdentityTransport implements ServerTransport, ClientTransport {
     AnyRunResponseMessage
   >();
 
-  createClientStream(): ClientBidirectionalStream {
+  createClientStream() {
     return {
       writableRequests: this.#requestPipe.writable,
       readableResponses: this.#responsePipe.readable as RunResponseStream,
     };
   }
 
-  createServerStream(): ServerBidirectionalStream {
+  createServerStream() {
     return {
       readableRequests: this.#requestPipe.readable as RunRequestStream,
       writableResponses: this.#responsePipe.writable,
@@ -41,7 +41,9 @@ export class IdentityTransport implements ServerTransport, ClientTransport {
   }
 }
 
-export class MockWorkerTransport implements ServerTransport, ClientTransport {
+export class MockWorkerTransport
+  implements RunServerTransport, RunClientTransport
+{
   #workerStreams: PortStreams<AnyRunRequestMessage, AnyRunResponseMessage>;
   #hostStreams: PortStreams<AnyRunResponseMessage, AnyRunRequestMessage>;
 
@@ -51,14 +53,14 @@ export class MockWorkerTransport implements ServerTransport, ClientTransport {
     this.#hostStreams = portToStreams(channel.port2);
   }
 
-  createClientStream(): ClientBidirectionalStream {
+  createClientStream() {
     return {
       writableRequests: this.#hostStreams.writable,
       readableResponses: this.#hostStreams.readable as RunResponseStream,
     };
   }
 
-  createServerStream(): ServerBidirectionalStream {
+  createServerStream() {
     return {
       readableRequests: this.#workerStreams.readable as RunRequestStream,
       writableResponses: this.#workerStreams.writable,

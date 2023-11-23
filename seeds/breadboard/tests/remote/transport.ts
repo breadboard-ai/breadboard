@@ -15,8 +15,8 @@ import {
   IdentityTransport,
   MockWorkerTransport,
 } from "../helpers/_test-transport.js";
-import { Client } from "../../src/remote/client.js";
-import { Server } from "../../src/remote/server.js";
+import { RunClient } from "../../src/remote/client.js";
+import { RunServer } from "../../src/remote/server.js";
 
 test("Interruptible streaming", async (t) => {
   const board = new Board();
@@ -25,7 +25,7 @@ test("Interruptible streaming", async (t) => {
 
   const run = async (request: AnyRunRequestMessage) => {
     const transport = new IdentityTransport();
-    const server = new Server(transport);
+    const server = new RunServer(transport);
     server.serve(board);
     const client = transport.createClientStream();
     const writer = client.writableRequests.getWriter();
@@ -70,7 +70,7 @@ test("Continuous streaming", async (t) => {
   board.input({ foo: "bar" }).wire("*", kit.noop().wire("*", board.output()));
 
   const transport = new MockWorkerTransport();
-  const server = new Server(transport);
+  const server = new RunServer(transport);
   server.serve(board);
   const { writableRequests: requests, readableResponses: responses } =
     transport.createClientStream();
@@ -104,8 +104,8 @@ test("runOnce client can run once", async (t) => {
   board.input({ foo: "bar" }).wire("*", kit.noop().wire("*", board.output()));
 
   const transport = new MockWorkerTransport();
-  const server = new Server(transport);
-  const client = new Client(transport);
+  const server = new RunServer(transport);
+  const client = new RunClient(transport);
 
   server.serve(board);
   const outputs = await client.runOnce({ hello: "world" });

@@ -242,20 +242,30 @@ export type RunRequestStream = PatchedReadableStream<AnyRunRequestMessage>;
 export type WritableRunRequestStream = WritableStream<AnyRunRequestMessage>;
 export type WritableRunResponseStream = WritableStream<AnyRunResponseMessage>;
 
-export interface ClientBidirectionalStream {
-  writableRequests: WritableRunRequestStream;
-  readableResponses: RunResponseStream;
+export interface ClientBidirectionalStream<Request, Response> {
+  writableRequests: WritableStream<Request>;
+  readableResponses: PatchedReadableStream<Response>;
 }
 
-export interface ServerBidirectionalStream {
-  readableRequests: RunRequestStream;
-  writableResponses: WritableRunResponseStream;
+export interface ServerBidirectionalStream<Request, Response> {
+  readableRequests: PatchedReadableStream<Request>;
+  writableResponses: WritableStream<Response>;
 }
 
-export interface ServerTransport {
-  createServerStream(): ServerBidirectionalStream;
+export interface ServerTransport<Request, Response> {
+  createServerStream(): ServerBidirectionalStream<Request, Response>;
 }
 
-export interface ClientTransport {
-  createClientStream(): ClientBidirectionalStream;
+export interface ClientTransport<Request, Response> {
+  createClientStream(): ClientBidirectionalStream<Request, Response>;
 }
+
+export type RunServerTransport = ServerTransport<
+  AnyRunRequestMessage,
+  AnyRunResponseMessage
+>;
+
+export type RunClientTransport = ClientTransport<
+  AnyRunRequestMessage,
+  AnyRunResponseMessage
+>;
