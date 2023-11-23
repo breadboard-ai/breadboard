@@ -6,10 +6,16 @@
 
 import { Board } from "../board.js";
 import { callHandler } from "../handler.js";
-import { NodeHandlers } from "../types.js";
+import {
+  InputValues,
+  NodeDescriptor,
+  NodeHandlers,
+  OutputValues,
+} from "../types.js";
 import {
   AnyProxyRequestMessage,
   AnyProxyResponseMessage,
+  ClientTransport,
   ServerTransport,
 } from "./protocol.js";
 
@@ -70,6 +76,48 @@ export class ProxyServer {
     } catch (e) {
       writer.write(["error", { error: (e as Error).message }]);
       writer.close();
+    }
+  }
+}
+
+type ProxyClientTransport = ClientTransport<
+  AnyProxyRequestMessage,
+  AnyProxyResponseMessage
+>;
+
+export class ProxyClient {
+  #transport: ProxyClientTransport;
+
+  constructor(transport: ProxyClientTransport) {
+    this.#transport = transport;
+  }
+
+  async proxy(
+    node: NodeDescriptor,
+    inputs: InputValues
+  ): Promise<OutputValues> {
+    const stream = this.#transport.createClientStream();
+    const writer = stream.writableRequests.getWriter();
+    const reader = stream.readableResponses.getReader();
+
+    writer.write(["proxy", { node, inputs }]);
+    writer.close();
+
+    const result = await reader.read();
+    if (result.done)
+      throw new Error("Unexpected proxy failure: empty response.");
+
+    const [type] = result.value;
+    if (type === "proxy") {
+      const [, { outputs }] = result.value;
+      return outputs;
+    } else if (type === "error") {
+      const [, { error }] = result.value;
+      throw new Error(error);
+    } else {
+      throw new Error(
+        `Unexpected proxy failure: unknown response type "${type}".`
+      );
     }
   }
 }
