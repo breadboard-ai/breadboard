@@ -8,7 +8,6 @@
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
-    "test": "FORCE_COLOR=1 ava",
     "serve": "cd functions && npm run serve",
     "watch": "FORCE_COLOR=1 tsc --b --watch",
     "lint": "FORCE_COLOR=1 eslint . --ext .ts",
