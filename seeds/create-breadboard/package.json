@@ -1,7 +1,7 @@
 {
   "name": "@google-labs/create-breadboard",
   "version": "0.0.4",
-  "description": "A starter kit for your breadboard projects",
+  "description": "A starter kit for your Breadboard projects",
   "main": "dist/src/index.js",
   "bin": {
     "create-breadboard": "dist/src/index.js"
