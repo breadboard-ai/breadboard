@@ -16,8 +16,7 @@ import {
   IdentityTransport,
   MockWorkerTransport,
 } from "../helpers/_test-transport.js";
-import { RunClient } from "../../src/remote/client.js";
-import { RunServer } from "../../src/remote/server.js";
+import { RunClient, RunServer } from "../../src/remote/run.js";
 
 test("Interruptible streaming", async (t) => {
   const board = new Board();

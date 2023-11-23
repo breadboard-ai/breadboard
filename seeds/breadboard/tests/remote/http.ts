@@ -7,7 +7,7 @@
 import test from "ava";
 
 import { HTTPServerTransport } from "../../src/remote/http.js";
-import { RunServer } from "../../src/remote/server.js";
+import { RunServer } from "../../src/remote/run.js";
 import {
   AnyRunRequestMessage,
   AnyRunResponseMessage,

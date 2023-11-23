@@ -12,7 +12,7 @@ import {
 } from "../../src/remote/protocol.js";
 import { TestKit } from "../helpers/_test-kit.js";
 import { HTTPServerTransport } from "../../src/remote/http.js";
-import { ProxyServer } from "../../src/remote/server.js";
+import { ProxyServer } from "../../src/remote/proxy.js";
 
 test("ProxyServer can use HTTPServerTransport", async (t) => {
   const board = new Board();
