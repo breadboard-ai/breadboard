@@ -9,9 +9,10 @@
   "type": "module",
   "scripts": {
     "test": "FORCE_COLOR=1 ava",
-    "build": "FORCE_COLOR=1 tsc --b",
+    "serve": "cd functions && npm run serve",
     "watch": "FORCE_COLOR=1 tsc --b --watch",
-    "lint": "FORCE_COLOR=1 eslint . --ext .ts"
+    "lint": "FORCE_COLOR=1 eslint . --ext .ts",
+    "deploy": "firebase deploy --only functions"
   },
   "repository": {
     "type": "git",
