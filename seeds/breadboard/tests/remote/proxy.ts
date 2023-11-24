@@ -11,12 +11,9 @@ import {
   HTTPClientTransport,
   HTTPServerTransport,
 } from "../../src/remote/http.js";
-import {
-  AnyProxyRequestMessage,
-  AnyProxyResponseMessage,
-} from "../../src/remote/protocol.js";
+import { AnyProxyRequestMessage } from "../../src/remote/protocol.js";
 import { Board } from "../../src/board.js";
-import { TestKit } from "../helpers/_test-kit.js";
+import { MirrorUniverseKit, TestKit } from "../helpers/_test-kit.js";
 
 test("ProxyServer can use HTTPServerTransport", async (t) => {
   const board = new Board();
@@ -48,22 +45,36 @@ test("End-to-end proxy works with HTTP transports", async (t) => {
   connection.onRequest(async (request, response) => {
     const serverBoard = new Board();
     serverBoard.addKit(TestKit);
-
-    const serverTransport = new HTTPServerTransport<
-      AnyProxyRequestMessage,
-      AnyProxyResponseMessage
-    >(request, response);
-    const server = new ProxyServer(serverTransport);
+    const server = new ProxyServer(new HTTPServerTransport(request, response));
     await server.serve(serverBoard);
   });
-  const clientTransport = new HTTPClientTransport<
-    AnyProxyRequestMessage,
-    AnyProxyResponseMessage
-  >("http://example.com", { fetch: connection.fetch });
-  const client = new ProxyClient(clientTransport);
+  const client = new ProxyClient(
+    new HTTPClientTransport("http://example.com", { fetch: connection.fetch })
+  );
   const result = await client.proxy(
     { id: "id", type: "reverser" },
     { hello: "world" }
   );
   t.deepEqual(result, { hello: "dlrow" });
+});
+
+test("ProxyClient creates functional proxy kits", async (t) => {
+  const connection = new MockHTTPConnection<AnyProxyRequestMessage>();
+  connection.onRequest(async (request, response) => {
+    const serverBoard = new Board();
+    serverBoard.addKit(MirrorUniverseKit);
+    const server = new ProxyServer(new HTTPServerTransport(request, response));
+    await server.serve(serverBoard);
+  });
+  const client = new ProxyClient(
+    new HTTPClientTransport("http://example.com", { fetch: connection.fetch })
+  );
+  const board = new Board();
+  const kit = board.addKit(TestKit);
+  board
+    .input({ hello: "world" })
+    .wire("*", kit.reverser().wire("*", board.output()));
+  const kits = [client.createProxyKit(["reverser"]), kit];
+  const outputs = await board.runOnce({ hello: "world" }, { kits });
+  t.deepEqual(outputs, { hello: "dlorw" });
 });

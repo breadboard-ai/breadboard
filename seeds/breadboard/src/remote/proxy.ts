@@ -6,10 +6,14 @@
 
 import { Board } from "../board.js";
 import { callHandler } from "../handler.js";
+import { asRuntimeKit } from "../index.js";
+import { KitBuilder } from "../kits/builder.js";
 import {
   InputValues,
   NodeDescriptor,
+  NodeHandlerContext,
   NodeHandlers,
+  NodeTypeIdentifier,
   OutputValues,
 } from "../types.js";
 import {
@@ -119,5 +123,27 @@ export class ProxyClient {
         `Unexpected proxy failure: unknown response type "${type}".`
       );
     }
+  }
+
+  createProxyKit(nodesToProxy: NodeTypeIdentifier[]) {
+    const proxiedNodes = Object.fromEntries(
+      nodesToProxy.map((type) => {
+        return [
+          type,
+          {
+            invoke: async (
+              inputs: InputValues,
+              context: NodeHandlerContext
+            ) => {
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+              const descriptor = context.descriptor!;
+              const result = await this.proxy(descriptor, inputs);
+              return result;
+            },
+          },
+        ];
+      })
+    );
+    return asRuntimeKit(new KitBuilder({ url: "proxy" }).build(proxiedNodes));
   }
 }
