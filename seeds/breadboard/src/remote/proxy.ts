@@ -64,9 +64,8 @@ export class ProxyServer {
     try {
       const result = await callHandler(handler, inputs, {
         outerGraph: board,
-        board: board,
+        board,
         descriptor: node,
-        slots: {},
       });
 
       if (!result) {
