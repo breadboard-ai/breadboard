@@ -179,3 +179,73 @@ test("KitBuilder can splat all the functions in the extenral library and make no
   // We really need to pick a library with more than one function.
   t.true(myKit.validate instanceof Function);
 });
+
+
+test("KitBuilder can access platform functions", async (t) => {
+  // Wrap the jsonschema validate function in a kit and expose function as a node.
+  const MyKit = KitBuilder.wrap({ url: "test" }, { random: Math.random });
+
+  const board = new Board({
+    title: "Test Echo",
+    description: "Test Breadboard Kit",
+    version: "0.0.1",
+  });
+
+  const myKit = board.addKit(MyKit);
+
+  myKit.random();
+
+  // We really need to pick a library with more than one function.
+  t.true(myKit.random instanceof Function);
+});
+
+test("KitBuilder can call platform functions that contain 0 arguments", async (t) => {
+  // Wrap the jsonschema validate function in a kit and expose function as a node.
+  const MyKit = KitBuilder.wrap({ url: "test" }, { random: Math.random });
+
+  const board = new Board({
+    title: "Test Echo",
+    description: "Test Breadboard Kit",
+    version: "0.0.1",
+  });
+
+  const myKit = board.addKit(MyKit);
+
+  const random = myKit.random();
+
+  // result because it's just a string from a dynamic function
+  random.wire("result->", board.output());
+
+  const output = await board.runOnce({});
+
+  // We really need to pick a library with more than one function.
+  t.true(typeof(output["result"]) === "number");
+});
+
+test("KitBuilder can call platform functions that accept a splat", async (t) => {
+  // Wrap the jsonschema validate function in a kit and expose function as a node.
+  const MyKit = KitBuilder.wrap({ url: "test" }, { min: Math.min });
+
+  const board = new Board({
+    title: "Test Echo",
+    description: "Test Breadboard Kit",
+    version: "0.0.1",
+  });
+
+  const myKit = board.addKit(MyKit);
+
+  const min = myKit.min();
+  const input = board.input();
+
+  // result because it's just a string from a dynamic function
+  input.wire("___args->", min.wire("result->", board.output()));
+
+  const output = await board.runOnce({
+    "___args": [1, 2, 3, 4, 5]
+  });
+
+  // We really need to pick a library with more than one function.
+  t.true(typeof(output["result"]) === "number");
+  t.true(output["result"] === 1);
+
+});

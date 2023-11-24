@@ -105,22 +105,48 @@ export class KitBuilder {
   }
 
   static wrap<F extends Record<string, Function>>(params: KitBuilderOptions, functions: F): KitConstructor<GenericKit<{ [x in keyof FunctionsOnly<F>]: NodeHandler }>> {
-    
+
     const createHandler = (previous: NodeHandlers, current: [string, Function]) => {
       const [name, fn] = current;
 
       previous[name] = {
         invoke: async (inputs: InputValues) => {
-          const argNames = fn.toString().match(/\((.*?)\)/)?.[1].split(",") ?? [];
+          // JS can have rest args, eg. "...args" as a parameter at the end of a function, but breadboard cannot accept "." so we use "___".
+
+          let argNames: string[] = [];
+          if (fn && fn.length > 0) {
+            argNames = fn.toString().match(/\((.+?)\)/)?.[1].split(",") ?? [];
+
+            /*  
+            If fn.length is greater than 1 and argNames.length = 0, then we likely have a system function that accepts a splat of arguments..
+
+            e.g Math.max([1,2,3,4])
+
+            We need to special case this and pass the arguments as an array and expect `inputs` to have a key of `args` that is an array.
+            */
+
+            if (fn.length > 1 && argNames.length === 0 && "___args" in inputs && Array.isArray(inputs["___args"])) {
+              argNames = ["___args"];
+            }
+          }
 
           // Validate the input names.
           for (const argName of argNames) {
-            if (argName.trim() in inputs === false) { // Maybe we should use hasOwnProperty here?
+            if (argName.trim() in inputs === false) {
               throw new Error(`Missing input: ${argName.trim()}. Valid inputs are: ${Object.keys(inputs).join(", ")}`);
             }
           }
 
-          const args = argNames.map((argName: string) => inputs[argName.trim()]);
+          const args = argNames
+            .filter(argName => argName.startsWith("___") == false)
+            .map((argName: string) => inputs[argName.trim()]);
+
+          
+          const lastArgName = argNames[argNames.length - 1];
+          if (lastArgName != undefined && lastArgName.startsWith("___")) {
+            // Splat the rest of the arguments.
+            args.push(...(<Array<any>>inputs[lastArgName]));
+          }
 
           const results = await fn(...args);
 
