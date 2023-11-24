@@ -50,7 +50,11 @@ export class HTTPServerTransport<Request, Response>
       readableRequests: new ReadableStream({
         start(controller) {
           if (!isIterable(request.body)) {
-            controller.error(new Error("Expected iterable body."));
+            controller.error(
+              new Error(
+                "Unexpected uniterable body. This is likely a result of processing a GET request. Only POST requests are supported."
+              )
+            );
             return;
           }
           controller.enqueue(request.body);
