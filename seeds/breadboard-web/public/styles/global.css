@@ -16,6 +16,7 @@ html {
   --bb-font-color-faded: rgb(59, 59, 59);
   --bb-main-bg: rgb(244, 247, 252);
   --bb-highlight-color: rgb(211, 170, 255);
+  --bb-result-color: rgb(103, 179, 252);
   --bb-progress-color: rgb(119, 187, 253);
   --bb-progress-color-faded: rgb(207, 231, 255);
   --bb-warning-color: rgb(251, 137, 3);

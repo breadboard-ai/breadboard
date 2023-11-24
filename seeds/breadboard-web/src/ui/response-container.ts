@@ -58,6 +58,10 @@ export class ResponseContainer extends HTMLElement {
           background: var(--bb-highlight-color);
         }
 
+        ::slotted(bb-result)::after {
+          background: var(--bb-result-color);
+        }
+
         ::slotted(bb-done)::after {
           background: var(--bb-done-color);
         }
