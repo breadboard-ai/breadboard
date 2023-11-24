@@ -1,6 +1,6 @@
 {
   "name": "@google-labs/create-breadboard",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "A starter kit for your Breadboard projects",
   "main": "dist/src/index.js",
   "bin": {
@@ -8,7 +8,8 @@
   },
   "type": "module",
   "scripts": {
-    "build": "FORCE_COLOR=1 tsc --b",
+    "copy-assets": "FORCE_COLOR=1 cp -r assets dist",
+    "build": "FORCE_COLOR=1 tsc --b && npm run copy-assets",
     "watch": "FORCE_COLOR=1 tsc --b --watch",
     "lint": "FORCE_COLOR=1 eslint . --ext .ts"
   },
@@ -17,8 +18,8 @@
     "url": "https://github.com/google/labs-prototypes"
   },
   "files": [
-    "dist/src",
-    "config"
+    "dist/assets",
+    "dist/src"
   ],
   "keywords": [],
   "author": "Google Labs Team",
