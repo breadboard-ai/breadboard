@@ -20,6 +20,7 @@ const LOCAL_STORAGE_KEY = "bb-ui-show-diagram";
 
 export class Load extends HTMLElement {
   #diagram: string;
+  #isLoadingDiagram = false;
 
   constructor({
     title,
@@ -36,7 +37,12 @@ export class Load extends HTMLElement {
 
     this.#diagram = diagram;
 
-    const show = localStorage.getItem(LOCAL_STORAGE_KEY) ? "open" : "";
+    const autoOpen = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (autoOpen) {
+      this.#loadDiagramIfNeeded();
+    }
+
+    const show = autoOpen ? "open" : "";
     const root = this.attachShadow({ mode: "open" });
     root.innerHTML = `
       <style>
@@ -160,6 +166,10 @@ export class Load extends HTMLElement {
         #mermaid {
           line-height: 1;
         }
+
+        #mermaid:empty::before {
+          content: 'Generating board image...';
+        }
       </style>
       <h1>${title} <button id="copy-to-clipboard"></h1>
       <button id="toggle">Toggle</button>
@@ -189,6 +199,7 @@ export class Load extends HTMLElement {
 
       if (info?.classList.contains("open")) {
         localStorage.setItem(LOCAL_STORAGE_KEY, "true");
+        this.#loadDiagramIfNeeded();
       } else {
         localStorage.removeItem(LOCAL_STORAGE_KEY);
       }
@@ -213,7 +224,12 @@ export class Load extends HTMLElement {
     });
   }
 
-  async connectedCallback() {
+  async #loadDiagramIfNeeded() {
+    if (this.#isLoadingDiagram) {
+      return;
+    }
+
+    this.#isLoadingDiagram = true;
     if (!this.#diagram) {
       return;
     }
@@ -224,16 +240,13 @@ export class Load extends HTMLElement {
     const { svg } = await mermaid.render("graphDiv", this.#diagram);
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     this.shadowRoot!.querySelector("#mermaid")!.innerHTML = svg;
-
     const root = this.shadowRoot;
     if (!root) {
       throw new Error("Unable to find shadow root");
     }
-
     const download = root.querySelector(
       "#diagram-download"
     ) as HTMLAnchorElement;
-
     const pngSrc = await svgToPng(svg);
     download.setAttribute("href", pngSrc);
   }
