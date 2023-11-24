@@ -15,15 +15,15 @@ import {
 /**
  * Minimal interface in the shape of express.js's request object.
  */
-type ServerRequest<Request> = {
+export type ServerRequest<Request> = {
   body: Request;
 };
 
 /**
  * Minimal interface in the shape of express.js's response object.
  */
-type ServerResponse<Response> = {
-  write: (response: Response) => boolean;
+export type ServerResponse = {
+  write: (chunk: unknown) => boolean;
   end: () => unknown;
 };
 
@@ -31,12 +31,9 @@ export class HTTPServerTransport<Request, Response>
   implements ServerTransport<Request, Response>
 {
   #request: ServerRequest<Request>;
-  #response: ServerResponse<Response>;
+  #response: ServerResponse;
 
-  constructor(
-    request: ServerRequest<Request>,
-    response: ServerResponse<Response>
-  ) {
+  constructor(request: ServerRequest<Request>, response: ServerResponse) {
     this.#request = request;
     this.#response = response;
   }
@@ -53,7 +50,7 @@ export class HTTPServerTransport<Request, Response>
       }) as PatchedReadableStream<Request>,
       writableResponses: new WritableStream({
         write(chunk) {
-          response.write(chunk);
+          response.write(JSON.stringify(chunk));
         },
         close() {
           response.end();
@@ -106,7 +103,7 @@ export class HTTPClientTransport<Request, Response>
             if (result.done) {
               break;
             } else {
-              controller.enqueue(result.value);
+              controller.enqueue(result.value as Response);
             }
           }
           controller.close();

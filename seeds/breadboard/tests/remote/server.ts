@@ -6,10 +6,7 @@
 
 import test from "ava";
 import { Board } from "../../src/board.js";
-import {
-  AnyProxyRequestMessage,
-  AnyProxyResponseMessage,
-} from "../../src/remote/protocol.js";
+import { AnyProxyRequestMessage } from "../../src/remote/protocol.js";
 import { TestKit } from "../helpers/_test-kit.js";
 import { HTTPServerTransport } from "../../src/remote/http.js";
 import { ProxyServer } from "../../src/remote/proxy.js";
@@ -25,8 +22,9 @@ test("ProxyServer can use HTTPServerTransport", async (t) => {
     ] as AnyProxyRequestMessage,
   };
   const response = {
-    write: (response: AnyProxyResponseMessage) => {
-      t.deepEqual(response, ["proxy", { outputs: { hello: "world" } }]);
+    write: (response: unknown) => {
+      const data = JSON.parse(response as string);
+      t.deepEqual(data, ["proxy", { outputs: { hello: "world" } }]);
       return true;
     },
     end: () => {
