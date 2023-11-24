@@ -9,6 +9,7 @@
   "type": "module",
   "scripts": {
     "serve": "cd functions && npm run serve",
+    "dev": "cd functions && npm run build && firebase emulators:exec --only functions \"npm run build:watch\"",
     "watch": "FORCE_COLOR=1 tsc --b --watch",
     "lint": "FORCE_COLOR=1 eslint . --ext .ts",
     "deploy": "firebase deploy --only functions"
