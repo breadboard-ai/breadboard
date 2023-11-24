@@ -66,4 +66,16 @@ export const TestKit = new KitBuilder({
 
     return await runnableBoard.runOnce(args, context);
   },
+  /**
+   * Reverses provided string inputs. Will crash if provided non-string inputs.
+   * @param inputs InputValues
+   */
+  reverser: async (inputs) => {
+    return Object.fromEntries(
+      Object.entries(inputs).map(([key, value]) => [
+        key,
+        (inputs[key] = [...(value as string)].reverse().join("")),
+      ])
+    );
+  },
 });
