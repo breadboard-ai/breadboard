@@ -1,5 +1,6 @@
 {
   "name": "functions",
+  "type": "module",
   "scripts": {
     "build": "tsc",
     "build:watch": "tsc --watch",
@@ -14,7 +15,8 @@
   "main": "lib/index.js",
   "dependencies": {
     "firebase-admin": "^11.8.0",
-    "firebase-functions": "^4.3.1"
+    "firebase-functions": "^4.3.1",
+    "@google-labs/breadboard": "^0.5.1"
   },
   "devDependencies": {
     "typescript": "^4.9.0",

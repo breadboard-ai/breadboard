@@ -29,6 +29,7 @@
   },
   "workspaces": [
     "./core/*",
-    "./seeds/*"
+    "./seeds/*",
+    "./seeds/node-proxy-server/functions"
   ]
 }
