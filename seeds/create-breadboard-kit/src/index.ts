@@ -76,7 +76,7 @@ const { name } = create({
       workerThreads: false
     },
   },
-  files: generateAssetList(path.resolve(__dirname, "../../assets"), path.resolve(__dirname, "../../assets")),
+  files: generateAssetList(path.resolve(__dirname, "../assets"), path.resolve(__dirname, "../assets")),
   skipGitignore: false,
   skipReadme: true,
 });
