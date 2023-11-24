@@ -44,11 +44,12 @@ export class Result extends HTMLElement {
 
         pre {
           line-height: 1.5;
-          overflow-x: scroll;
+          overflow-x: auto;
           padding: calc(var(--bb-grid-size) * 3) calc(var(--grid-size) * 8);
           background: rgb(253, 253, 255);
           font-size: var(--bb-text-medium);
           margin: 0;
+          white-space: pre-line;
         }
       </style>
       <details>

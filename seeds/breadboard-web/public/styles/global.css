@@ -21,7 +21,8 @@ html {
   --bb-progress-color-faded: rgb(207, 231, 255);
   --bb-warning-color: rgb(251, 137, 3);
   --bb-error-color: rgb(251, 3, 3);
-  --bb-done-color: rgb(51, 235, 168);
+  --bb-output-color: rgb(51, 235, 168);
+  --bb-done-color: rgb(3, 190, 122);
   --bb-text-baseline: calc(var(--bb-grid-size) * 4);
   --bb-text-xx-large: 3rem;
   --bb-text-x-large: 2rem;
@@ -66,6 +67,14 @@ header a {
   font: var(--bb-text-baseline) var(--bb-font-family-header);
   color: rgb(90, 64, 119);
   margin: 0;
+}
+
+#dgraphDiv {
+  position: fixed;
+  opacity: 0;
+  top: 0;
+  left: 0;
+  pointer-events: none;
 }
 
 @media (min-width: 500px) {

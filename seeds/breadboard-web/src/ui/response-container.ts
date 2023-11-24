@@ -20,6 +20,11 @@ export class ResponseContainer extends HTMLElement {
           position: relative;
           padding-bottom: calc(var(--bb-grid-size) * 4);
           padding-left: calc(var(--bb-grid-size) * 6); 
+          margin-right: calc(var(--bb-grid-size) * 12);
+        }
+
+        ::slotted(bb-output) {
+          padding-bottom: calc(var(--bb-grid-size) * 10);
         }
 
         ::slotted(*)::before {
@@ -64,6 +69,10 @@ export class ResponseContainer extends HTMLElement {
 
         ::slotted(bb-done)::after {
           background: var(--bb-done-color);
+        }
+
+        ::slotted(bb-output)::after {
+          background: var(--bb-output-color);
         }
 
         ::slotted(bb-error)::after {

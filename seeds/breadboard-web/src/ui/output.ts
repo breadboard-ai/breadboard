@@ -22,15 +22,47 @@ export class Output extends HTMLElement {
       <style>
         :host {
           display: block;
-          padding-top: calc(var(--bb-grid-size) * 3);
+          padding-bottom: calc(var(--bb-grid-size) * 3);
         }
-        * {
-          white-space: pre-wrap;
+
+        details {
+          border-radius: calc(var(--bb-grid-size) * 4);
+          background: rgb(240, 240, 240);
+          list-style: none;
         }
+
+        #output-wrapper {
+          border-radius: 0 0 calc(var(--bb-grid-size) * 4) calc(var(--bb-grid-size) * 4);
+          background: rgb(240, 240, 240);
+          padding-bottom: calc(var(--bb-grid-size) * 8);
+        }
+
+        summary {
+          list-style: none;
+          font-size: var(--bb-text-small);
+          font-weight: 500;
+          padding: calc(var(--bb-grid-size) * 3) calc(var(--grid-size) * 8);
+        }
+
+        summary::-webkit-details-marker {
+          display: none;
+        }
+
         pre {
+          line-height: 1.5;
+          overflow-x: auto;
+          padding: calc(var(--bb-grid-size) * 3) calc(var(--grid-size) * 8);
+          background: rgb(253, 253, 255);
+          font-size: var(--bb-text-medium);
           margin: 0;
+          white-space: pre-line;
         }
+
       </style>
+      <details open>
+        <summary>Output</summary>
+        <div id="output-wrapper"></div>
+      </details>
     `;
   }
 
@@ -42,6 +74,9 @@ export class Output extends HTMLElement {
       root.append(JSON.stringify(values, null, 2) + "\n");
       return;
     }
+
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const outputWrapper = root.querySelector("#output-wrapper")!;
     await Promise.all(
       Object.entries(schema.properties).map(async ([key, property]) => {
         if (property.type === "object" && property.format === "stream") {
@@ -51,9 +86,9 @@ export class Output extends HTMLElement {
           );
           return;
         }
-        const html = document.createElement("pre");
-        html.innerHTML = `${values[key]}`;
-        root.append(`${property.title}: `, html, "\n");
+        const response = document.createElement("pre");
+        response.innerHTML = `${property.title}: ${values[key]}`;
+        outputWrapper.appendChild(response);
       })
     );
   }

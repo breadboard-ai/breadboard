@@ -86,7 +86,8 @@ export class Input extends HTMLElement {
       <style>
         :host {
           display: flex;
-          flex-direction: column;
+          flex-direction: row;
+          width: 100%;
         }
 
         * {
@@ -94,31 +95,66 @@ export class Input extends HTMLElement {
           font-size: var(--bb-text-medium);
         }
 
-        form {
-          display: flex;
-          flex-direction: column;
+        form,
+        #choice-container {
+          display: grid;
+          justify-items: start;
+          grid-template-columns: 1fr 3fr;
+          row-gap: calc(var(--bb-grid-size) * 2);
+          flex: 1;
+          margin-right: calc(var(--bb-grid-size) * 12);
+          margin-top: calc(var(--bb-grid-size) * -6);
         }
 
         label {
           font-family: var(--bb-font-family);
           font-size: var(--bb-text-small);
-          margin-top: calc(var(--bb-grid-size) * -6);
-          padding: 0 0 calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 8);
+          padding: 0 calc(var(--bb-grid-size) * 2) 0 calc(var(--bb-grid-size) * 8);
+        }
+
+        #choice-container label:not(:first-of-type) {
+          padding-top: calc(var(--bb-grid-size) * 2);
+        }
+
+        label.first-of-type {
+          grid-column: 1 / 3;
         }
 
         #input {
           position: relative;
+          flex: 1;
+        }
+
+        .multiline {
+          grid-column: 1 / 3;
+          flex: 1;
+          width: 100%;
+          overflow: hidden;
+          border-radius: calc(var(--grid-size) * 10);
+          border: 1px solid rgb(209, 209, 209);
+          min-height: calc(var(--grid-size) * 50);
         }
 
         input[type=text],
         input[type=password],
+        textarea,
         .parsed-value {
+          grid-column: 1 / 3;
           border-radius: calc(var(--grid-size) * 10);
           background: rgb(255, 255, 255);
-          height: calc(var(--grid-size) * 12);
+          min-height: calc(var(--grid-size) * 12);
           padding: 0 calc(var(--grid-size) * 10) 0 calc(var(--grid-size) * 8);
           width: 100%;
           border: 1px solid rgb(209, 209, 209);
+        }
+
+        textarea {
+          resize: none;
+          padding-top: calc(var(--grid-size) * 4);
+          padding-bottom: calc(var(--grid-size) * 4);
+          line-height: 1.4;
+          border: none;
+          height: 100%;
         }
 
         div#input {
@@ -136,6 +172,7 @@ export class Input extends HTMLElement {
           display: flex;
           align-items: center;
           font-size: var(--bb-text-medium);
+          height: auto;
         }
 
         input[type=submit] {
@@ -149,22 +186,10 @@ export class Input extends HTMLElement {
           background: #FFF var(--bb-icon-start) center center no-repeat;
           border: none;
         }
-        
-        textarea {
-          width: 100%;
-        }
-
-        span {
-          flex: 1;
-        }
 
         img {
           max-width: 80%;
           height: 6rem;
-        }
-
-        textarea {
-          height: 10rem;
         }
       </style>
     `;
@@ -213,6 +238,7 @@ export class Input extends HTMLElement {
     const input = document.createElement("input");
     input.name = key;
     input.id = key;
+    input.required = true;
     input.type = this.secret ? "password" : "text";
     input.autocomplete = this.secret ? "off" : "on";
     input.placeholder = schema.description || "";
@@ -222,13 +248,15 @@ export class Input extends HTMLElement {
   }
 
   #createMultiLineInput(schema: Schema, values: InputData, key: string) {
-    const span = document.createElement("span");
-    const textarea = span.appendChild(document.createElement("textarea"));
+    const container = document.createElement("div");
+    container.classList.add("multiline");
+
+    const textarea = container.appendChild(document.createElement("textarea"));
     textarea.name = key;
     textarea.id = key;
     textarea.placeholder = schema.description || "";
     textarea.value = (values[key] as string) ?? schema.default ?? "";
-    return span;
+    return container;
   }
 
   #createInput(schema: Schema, values: InputData, key: string) {
@@ -302,6 +330,11 @@ export class Input extends HTMLElement {
     return new Promise((resolve) => {
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
+
+        const choiceContainer = document.createElement("div");
+        choiceContainer.id = "choice-container";
+        root.appendChild(choiceContainer);
+
         const data: InputData = {};
         await Promise.all(
           Object.entries(properties).map(async ([key, property]) => {
@@ -321,8 +354,8 @@ export class Input extends HTMLElement {
                   value.classList.add("parsed-value");
                   value.textContent = `${parsedValue}`;
 
-                  root.appendChild(label);
-                  root.appendChild(value);
+                  choiceContainer.appendChild(label);
+                  choiceContainer.appendChild(value);
                 }
               }
             }
