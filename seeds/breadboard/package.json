@@ -6,7 +6,8 @@
   "exports": {
     ".": "./dist/src/index.js",
     "./kits": "./dist/src/kits/index.js",
-    "./worker": "./dist/src/worker/index.js"
+    "./worker": "./dist/src/worker/index.js",
+    "./remote": "./dist/src/remote/index.js"
   },
   "types": "dist/src/index.d.ts",
   "type": "module",
