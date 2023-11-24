@@ -71,6 +71,7 @@ export class Main {
   #runtime = new HostRuntime(WORKER_URL);
   #receiver = new ProxyReceiver();
   #hasActiveBoard = false;
+  #boardId = 0;
 
   constructor() {
     BreadboardUI.register();
@@ -86,6 +87,7 @@ export class Main {
           }
         }
         this.#hasActiveBoard = true;
+        this.#boardId++;
 
         const startEvent = evt as BreadboardUI.StartEvent;
         this.#ui.setActiveBreadboard(startEvent.url);
@@ -94,7 +96,7 @@ export class Main {
           startEvent.url,
           PROXY_NODES
         )) {
-          this.#handleEvent(result);
+          await this.#handleEvent(result);
         }
       }
     );
@@ -152,9 +154,19 @@ export class Main {
               node: Breadboard.NodeDescriptor;
               inputs: Breadboard.InputValues;
             };
+
+            // Track the board ID. If it changes while awaiting a result, then
+            // the board has changed and the handled result should be discarded
+            // as it is stale.
+            const boardId = this.#boardId;
             for await (const handledResult of this.#receiver.handle(
               proxyData
             )) {
+              if (boardId !== this.#boardId) {
+                console.log("Board has changed; proxy result is stale");
+                break;
+              }
+
               const receiverResult = handledResult as {
                 type: "secret" | "result";
                 name: string;
