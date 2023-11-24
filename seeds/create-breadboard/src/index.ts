@@ -70,7 +70,7 @@ const { name } = create({
     },
     files: ["dist/src"],
   },
-  files: generateAssetList(path.resolve(__dirname, "../../assets"), path.resolve(__dirname, "../../assets")),
+  files: generateAssetList(path.resolve(__dirname, "../assets"), path.resolve(__dirname, "../assets")),
   skipGitignore: false,
   skipReadme: true,
 });
