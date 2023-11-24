@@ -210,6 +210,10 @@ export class UIController extends HTMLElement implements UI {
       return;
     }
 
+    const pageUrl = new URL(window.location.href);
+    pageUrl.searchParams.set("board", url);
+    window.history.replaceState(null, "", pageUrl);
+
     this.#start.setAttribute("url", url);
   }
 
