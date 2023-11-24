@@ -76,11 +76,16 @@ export class UIController extends HTMLElement implements UI {
             padding: 0 calc(var(--grid-size) * 6) 0 calc(var(--grid-size) * 6);
           }
 
+          #response-container-wrapper {
+            overflow: hidden;
+            border-radius: calc(var(--grid-size) * 8);
+          }
+
           #response-container {
             padding: calc(var(--grid-size) * 6);
-            border-radius: calc(var(--grid-size) * 8);
             margin-top: 0;
-            overflow: scroll;
+            overflow-y: scroll;
+            overflow-y: overflow;
             scrollbar-gutter: stable;
           }
         }
@@ -172,25 +177,27 @@ export class UIController extends HTMLElement implements UI {
       <div id="start-container">
         <slot name="start"></slot>
       </div>
-      <div id="response-container">
-        <div id="intro">
-          <h1>Hello there!</h1>
-          <p>This is the <strong>Breadboard Playground</strong> running in the browser. Here you can either try out one of the sample boards, or you can enter the URL for your own board below.</p>
+      <div id="response-container-wrapper">
+        <div id="response-container">
+          <div id="intro">
+            <h1>Hello there!</h1>
+            <p>This is the <strong>Breadboard Playground</strong> running in the browser. Here you can either try out one of the sample boards, or you can enter the URL for your own board below.</p>
 
-          <p id="new-here">New here? Read more about the <a href="https://github.com/google/labs-prototypes/tree/main">Breadboard project on Github</a>.</p>
+            <p id="new-here">New here? Read more about the <a href="https://github.com/google/labs-prototypes/tree/main">Breadboard project on Github</a>.</p>
 
-          <form>
-            <div id="url-input-container">
-              <input required id="url-input" type="url" name="url" placeholder="Enter a Board URL" />
-              <input id="url-submit" type="submit" />
-            </div>
-          </form>
-        </div>
-        
-        <slot name="load"></slot>
-        
-        <div id="board-content">
-          <slot></slot>
+            <form>
+              <div id="url-input-container">
+                <input required id="url-input" type="url" name="url" placeholder="Enter a Board URL" />
+                <input id="url-submit" type="submit" />
+              </div>
+            </form>
+          </div>
+          
+          <slot name="load"></slot>
+          
+          <div id="board-content">
+            <slot></slot>
+          </div>
         </div>
       </div>
     `;

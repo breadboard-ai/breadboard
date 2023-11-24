@@ -174,7 +174,7 @@ export class Main {
                       completion: string;
                     };
                     this.#ui.result({
-                      title: "LLM response",
+                      title: "LLM Response",
                       result: resultValue.completion,
                     });
                   }

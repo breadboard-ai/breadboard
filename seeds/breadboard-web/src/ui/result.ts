@@ -17,21 +17,45 @@ export class Result extends HTMLElement {
       <style>
         :host {
           display: block;
-          padding-top: calc(var(--bb-grid-size) * 3);
         }
 
         details {
-          color: var(--bb-result-color, gray);
+          border-radius: calc(var(--bb-grid-size) * 4);
+          background: rgb(240, 240, 240);
+          list-style: none;
         }
 
-        details pre {
-          padding-left: 1rem;
+        #output-wrapper {
+          border-radius: 0 0 calc(var(--bb-grid-size) * 4) calc(var(--bb-grid-size) * 4);
+          background: rgb(240, 240, 240);
+          padding-bottom: calc(var(--bb-grid-size) * 8);
+        }
+
+        summary {
+          list-style: none;
+          font-size: var(--bb-text-small);
+          font-weight: 500;
+          padding: calc(var(--bb-grid-size) * 3) calc(var(--grid-size) * 8);
+        }
+
+        summary::-webkit-details-marker {
+          display: none;
+        }
+
+        pre {
+          line-height: 1.5;
+          overflow-x: scroll;
+          padding: calc(var(--bb-grid-size) * 3) calc(var(--grid-size) * 8);
+          background: rgb(253, 253, 255);
+          font-size: var(--bb-text-medium);
           margin: 0;
         }
       </style>
       <details>
         <summary>${result.title}</summary>
-        <pre><code>${result.result}</code></pre>
+        <div id="output-wrapper">
+          <pre>${result.result}</pre>
+        </div>
       </details>
     `;
   }

@@ -40,8 +40,10 @@ export class Start extends HTMLElement {
 
         #sample-board-list {
           flex: 1;
-          overflow: scroll;
+          overflow-y: scroll;
+          overflow-y: overlay;
           scrollbar-gutter: stable;
+          padding-right: (var(--bb-grid-size) * 2);
         }
         
         .sample-board {
