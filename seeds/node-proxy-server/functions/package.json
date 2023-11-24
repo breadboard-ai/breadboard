@@ -16,7 +16,8 @@
   "dependencies": {
     "firebase-admin": "^11.8.0",
     "firebase-functions": "^4.3.1",
-    "@google-labs/breadboard": "^0.5.1"
+    "@google-labs/breadboard": "^0.5.1",
+    "@google-labs/llm-starter": "^0.2.1"
   },
   "devDependencies": {
     "typescript": "^4.9.0",

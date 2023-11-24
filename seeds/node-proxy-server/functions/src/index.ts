@@ -4,29 +4,48 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/**
- * Import function triggers from their respective submodules:
- *
- * import {onCall} from "firebase-functions/v2/https";
- * import {onDocumentWritten} from "firebase-functions/v2/firestore";
- *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
- */
-
 import { onRequest } from "firebase-functions/v2/https";
-import * as logger from "firebase-functions/logger";
+import { Request, Response, logger } from "firebase-functions";
 
 import { Board } from "@google-labs/breadboard";
+import {
+  HTTPServerTransport,
+  ProxyServer,
+} from "@google-labs/breadboard/remote";
+import { Starter } from "@google-labs/llm-starter";
 
-// Start writing functions
-// https://firebase.google.com/docs/functions/typescript
+const handleNonPostRequest = (request: Request, response: Response) => {
+  if (request.method === "POST") return false;
+  if (request.method !== "GET") {
+    response.status(405);
+    response.send("Method not allowed");
+    return true;
+  }
+  if (request.path === "/") {
+    response.sendFile(
+      new URL("../public/index.html", import.meta.url).pathname
+    );
+    return true;
+  } else {
+    response.status(404);
+    response.send("Not found");
+    return true;
+  }
+};
 
 export const nodeProxyServer = onRequest(
   { cors: true },
-  (request, response) => {
+  async (request, response) => {
+    if (handleNonPostRequest(request, response)) return;
     const board = new Board();
+    board.addKit(Starter);
 
-    logger.info("Hello logs!", { structuredData: true });
-    response.send(board);
+    const server = new ProxyServer(new HTTPServerTransport(request, response));
+    try {
+      await server.serve(board);
+    } catch (e) {
+      logger.error(e);
+      response.status(500).send(`500 Server Error: ${(e as Error).message}`);
+    }
   }
 );

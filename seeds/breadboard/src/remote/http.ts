@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { PatchedReadableStream } from "../stream.js";
+import { PatchedReadableStream, patchReadableStream } from "../stream.js";
 import {
   ClientBidirectionalStream,
   ClientTransport,
@@ -27,6 +27,10 @@ export type ServerResponse = {
   end: () => unknown;
 };
 
+const isIterable = (o: unknown): boolean => {
+  return typeof o === "object" && o !== null && Symbol.iterator in o;
+};
+
 export class HTTPServerTransport<Request, Response>
   implements ServerTransport<Request, Response>
 {
@@ -41,9 +45,14 @@ export class HTTPServerTransport<Request, Response>
   createServerStream(): ServerBidirectionalStream<Request, Response> {
     const request = this.#request;
     const response = this.#response;
+    patchReadableStream();
     return {
       readableRequests: new ReadableStream({
         start(controller) {
+          if (!isIterable(request.body)) {
+            controller.error(new Error("Expected iterable body."));
+            return;
+          }
           controller.enqueue(request.body);
           controller.close();
         },
