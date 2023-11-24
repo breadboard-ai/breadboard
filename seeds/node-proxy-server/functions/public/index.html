@@ -1,3 +1,109 @@
 <!DOCTYPE html>
-<title>Node Proxy Server</title>
-<h1>Node Proxy Server</h1>
+<title>Breadboard Node Proxy Server</title>
+<style>
+  pre,
+  textarea,
+  input {
+    width: 80%;
+  }
+  code,
+  pre {
+    background-color: #eee;
+  }
+  pre {
+    padding: 0.5rem;
+  }
+  label {
+    display: block;
+  }
+  input,
+  textarea {
+    display: block;
+  }
+  textarea {
+    height: 10rem;
+  }
+</style>
+<h1>Breadboard Node Proxy Server</h1>
+
+<h2>API Tester</h2>
+
+<form>
+  <label>
+    Node Type:
+    <input name="nodeType" placeholder="id of the node handler" />
+  </label>
+  <label>
+    Inputs:
+    <textarea name="inputs" placeholder="JSON object of inputs"></textarea>
+  </label>
+  <button type="submit">Submit</button>
+</form>
+<h3>Results</h3>
+<code>
+  <pre id="result"></pre>
+</code>
+
+<details>
+  <summary>What is this?</summary>
+  <summary></summary>
+  <p>This is a node proxy server for Breadboard nodes.</p>
+  <p>The API is:</p>
+  <p>
+    <code>POST /</code> with a JSON body of the form:
+    <code>
+      <pre>
+[ "proxy", { node { type: { node type id } }, inputs: { ... } } ]</pre
+      >
+    </code>
+    The result will be a JSON object of the form:
+    <code>
+      <pre>[ "proxy", outputs: { ... } ]</pre>
+    </code>
+    Or, if an error has occurred:
+    <code>
+      <pre>[ "proxy", error: { message: { the error message } } ]</pre>
+    </code>
+  </p>
+</details>
+
+<script type="module">
+  const url = new URL(window.location.href);
+
+  document.querySelector("form").onsubmit = async (event) => {
+    event.preventDefault();
+
+    const {
+      nodeType: { value: type },
+      inputs: { value: inputsJSON },
+    } = event.target;
+
+    if (!type) {
+      document.querySelector("#result").textContent =
+        "Node type is required, please fix to submit";
+      return;
+    }
+    let inputs;
+    try {
+      inputs = JSON.parse(inputsJSON);
+    } catch (error) {
+      document.querySelector("#result").textContent =
+        "Inputs value is invalid JSON, please fix to submit";
+      return;
+    }
+    const result = await fetch(url, {
+      method: "POST",
+      body: JSON.stringify(["proxy", { node: { type }, inputs }]),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    const json = await result.json();
+    document.querySelector("#result").textContent = JSON.stringify(
+      json,
+      null,
+      2
+    );
+  };
+</script>
