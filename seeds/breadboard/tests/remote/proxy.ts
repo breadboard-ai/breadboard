@@ -37,7 +37,7 @@ test("ProxyServer can use HTTPServerTransport", async (t) => {
   };
   const transport = new HTTPServerTransport(request, response);
   const server = new ProxyServer(transport);
-  await server.serve(board);
+  await server.serve({ board });
 });
 
 test("End-to-end proxy works with HTTP transports", async (t) => {
@@ -46,7 +46,7 @@ test("End-to-end proxy works with HTTP transports", async (t) => {
     const serverBoard = new Board();
     serverBoard.addKit(TestKit);
     const server = new ProxyServer(new HTTPServerTransport(request, response));
-    await server.serve(serverBoard);
+    await server.serve({ board: serverBoard });
   });
   const client = new ProxyClient(
     new HTTPClientTransport("http://example.com", { fetch: connection.fetch })
@@ -64,7 +64,7 @@ test("ProxyClient creates functional proxy kits", async (t) => {
     const serverBoard = new Board();
     serverBoard.addKit(MirrorUniverseKit);
     const server = new ProxyServer(new HTTPServerTransport(request, response));
-    await server.serve(serverBoard);
+    await server.serve({ board: serverBoard });
   });
   const client = new ProxyClient(
     new HTTPClientTransport("http://example.com", { fetch: connection.fetch })

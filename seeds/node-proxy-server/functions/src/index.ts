@@ -7,12 +7,12 @@
 import { onRequest } from "firebase-functions/v2/https";
 import { Request, Response, logger } from "firebase-functions";
 
-import { Board } from "@google-labs/breadboard";
 import {
   HTTPServerTransport,
   ProxyServer,
 } from "@google-labs/breadboard/remote";
-import { Starter } from "@google-labs/llm-starter";
+
+import config from "./config.js";
 
 const handleNonPostRequest = (request: Request, response: Response) => {
   if (request.method === "POST") return false;
@@ -37,12 +37,10 @@ export const nodeProxyServer = onRequest(
   { cors: true },
   async (request, response) => {
     if (handleNonPostRequest(request, response)) return;
-    const board = new Board();
-    board.addKit(Starter);
 
     const server = new ProxyServer(new HTTPServerTransport(request, response));
     try {
-      await server.serve(board);
+      await server.serve(config);
     } catch (e) {
       logger.error(e);
       response.status(500).send(`500 Server Error: ${(e as Error).message}`);

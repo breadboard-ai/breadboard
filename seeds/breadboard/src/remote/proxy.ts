@@ -16,6 +16,7 @@ import {
   NodeTypeIdentifier,
   OutputValues,
 } from "../types.js";
+import { ProxyServerConfig } from "./config.js";
 import {
   AnyProxyRequestMessage,
   AnyProxyResponseMessage,
@@ -36,7 +37,8 @@ export class ProxyServer {
     this.#transport = transport;
   }
 
-  async serve(board: Board) {
+  async serve(config: ProxyServerConfig) {
+    const { board } = config;
     const stream = this.#transport.createServerStream();
     const reader = stream.readableRequests.getReader();
     const request = await reader.read();
