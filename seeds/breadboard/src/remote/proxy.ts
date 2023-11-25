@@ -22,6 +22,7 @@ import {
   ClientTransport,
   ServerTransport,
 } from "./protocol.js";
+import { VaultSecretsSpec } from "./vault.js";
 
 type ProxyServerTransport = ServerTransport<
   AnyProxyRequestMessage,
@@ -88,6 +89,31 @@ type ProxyClientTransport = ClientTransport<
   AnyProxyResponseMessage
 >;
 
+/**
+ * Example:
+ * ```js
+ * {
+ *   node: "secrets",
+ *   protect: {
+ *     PALM_KEY: ["palm-generateText", "palm-embedText"],
+ *     NODE_SPECIFIC_KEY: "specific-node-type",
+ *     PINECONE_KEY: {
+ *       receiver: "fetch",
+ *       inputs: {
+ *        url: /\.pinecone\.io\/,
+ *       },
+ *     },
+ *   }
+ * }
+ * ```
+ */
+export type NodeProxySpec = {
+  node: NodeTypeIdentifier;
+  protect?: VaultSecretsSpec;
+};
+
+type ProxyKitArgs = (NodeTypeIdentifier | NodeProxySpec)[];
+
 export class ProxyClient {
   #transport: ProxyClientTransport;
 
@@ -124,7 +150,11 @@ export class ProxyClient {
     }
   }
 
-  createProxyKit(nodesToProxy: NodeTypeIdentifier[]) {
+  createProxyKit(args: ProxyKitArgs) {
+    const nodesToProxy = args.map((arg) => {
+      if (typeof arg === "string") return arg;
+      else return arg.node;
+    });
     const proxiedNodes = Object.fromEntries(
       nodesToProxy.map((type) => {
         return [
