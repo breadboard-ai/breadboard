@@ -6,7 +6,7 @@
 
 import { ProbeEvent } from "./types.js";
 
-type Receiver = {
+export type Receiver = {
   log: (...args: unknown[]) => void;
 };
 
