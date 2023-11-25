@@ -15,18 +15,35 @@ import {
   NodeHandlers,
   OutputValues,
 } from "../types.js";
-import { NodeProxyConfig, ProxyServerConfig } from "./config.js";
+import { NodeProxyConfig, NodeProxySpec, ProxyServerConfig } from "./config.js";
 import {
   AnyProxyRequestMessage,
   AnyProxyResponseMessage,
   ClientTransport,
   ServerTransport,
 } from "./protocol.js";
+import { OpenVault, Vault } from "./vault.js";
 
 type ProxyServerTransport = ServerTransport<
   AnyProxyRequestMessage,
   AnyProxyResponseMessage
 >;
+
+const getHandlerConfig = (
+  type: string,
+  config: NodeProxyConfig = []
+): NodeProxySpec | undefined => {
+  const handlerConfig = config.find((arg) => {
+    if (typeof arg === "string") return arg === type;
+    else return arg.node === type;
+  });
+  if (typeof handlerConfig === "string") {
+    return {
+      node: handlerConfig,
+    };
+  }
+  return handlerConfig;
+};
 
 export class ProxyServer {
   #transport: ProxyServerTransport;
@@ -55,19 +72,27 @@ export class ProxyServer {
     const [, { node, inputs }] = request.value;
 
     const handlers: NodeHandlers = await Board.handlersFromBoard(board);
-    const handler = handlers[node.type];
+    const handlerConfig = getHandlerConfig(node.type, config.proxy);
+    const handler = handlerConfig ? handlers[node.type] : undefined;
     if (!handler) {
-      writer.write(["error", { error: "Unknown node type." }]);
+      writer.write([
+        "error",
+        { error: "Can't proxy a node of this node type." },
+      ]);
       writer.close();
       return;
     }
 
     try {
-      const result = await callHandler(handler, inputs, {
-        outerGraph: board,
-        board,
-        descriptor: node,
-      });
+      const protect = handlerConfig && handlerConfig.protect;
+      const vault = protect ? new Vault(protect) : new OpenVault();
+      const result = vault.protectOutputs(
+        await callHandler(handler, vault.revealInputs(inputs), {
+          outerGraph: board,
+          board,
+          descriptor: node,
+        })
+      );
 
       if (!result) {
         writer.write(["error", { error: "Handler returned nothing." }]);

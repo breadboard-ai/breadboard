@@ -112,3 +112,28 @@ export const replaceInputs = (
     })
   );
 };
+
+export class Vault {
+  #spec: VaultSecretsSpec;
+  constructor(spec: VaultSecretsSpec) {
+    this.#spec = spec;
+  }
+
+  protectOutputs(outputs: void | OutputValues) {
+    return outputs;
+  }
+
+  revealInputs(inputs: InputValues) {
+    return inputs;
+  }
+}
+
+export class OpenVault {
+  protectOutputs(outputs: void | OutputValues) {
+    return outputs;
+  }
+
+  revealInputs(inputs: InputValues) {
+    return inputs;
+  }
+}
