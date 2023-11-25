@@ -13,17 +13,15 @@ import {
   NodeDescriptor,
   NodeHandlerContext,
   NodeHandlers,
-  NodeTypeIdentifier,
   OutputValues,
 } from "../types.js";
-import { ProxyServerConfig } from "./config.js";
+import { NodeProxyConfig, ProxyServerConfig } from "./config.js";
 import {
   AnyProxyRequestMessage,
   AnyProxyResponseMessage,
   ClientTransport,
   ServerTransport,
 } from "./protocol.js";
-import { VaultSecretsSpec } from "./vault.js";
 
 type ProxyServerTransport = ServerTransport<
   AnyProxyRequestMessage,
@@ -91,31 +89,6 @@ type ProxyClientTransport = ClientTransport<
   AnyProxyResponseMessage
 >;
 
-/**
- * Example:
- * ```js
- * {
- *   node: "secrets",
- *   protect: {
- *     PALM_KEY: ["palm-generateText", "palm-embedText"],
- *     NODE_SPECIFIC_KEY: "specific-node-type",
- *     PINECONE_KEY: {
- *       receiver: "fetch",
- *       inputs: {
- *        url: /\.pinecone\.io\/,
- *       },
- *     },
- *   }
- * }
- * ```
- */
-export type NodeProxySpec = {
-  node: NodeTypeIdentifier;
-  protect?: VaultSecretsSpec;
-};
-
-type ProxyKitArgs = (NodeTypeIdentifier | NodeProxySpec)[];
-
 export class ProxyClient {
   #transport: ProxyClientTransport;
 
@@ -152,7 +125,7 @@ export class ProxyClient {
     }
   }
 
-  createProxyKit(args: ProxyKitArgs) {
+  createProxyKit(args: NodeProxyConfig) {
     const nodesToProxy = args.map((arg) => {
       if (typeof arg === "string") return arg;
       else return arg.node;

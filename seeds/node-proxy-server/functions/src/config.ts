@@ -13,4 +13,13 @@ board.addKit(Starter);
 
 export default defineConfig({
   board,
+  proxy: [
+    "fetch",
+    {
+      node: "secrets",
+      protect: {
+        PALM_KEY: ["palm-generateText", "palm-embedText"],
+      },
+    },
+  ],
 });
