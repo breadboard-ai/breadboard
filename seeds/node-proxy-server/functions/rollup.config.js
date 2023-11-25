@@ -4,6 +4,7 @@ import commonjs from "@rollup/plugin-commonjs";
 import json from "@rollup/plugin-json";
 
 export default {
+  external: ["firebase-functions/v2/https", "firebase-functions"],
   input: "lib/index.js",
   output: {
     file: "lib/bundle.js",
