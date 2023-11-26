@@ -113,14 +113,39 @@ export const replaceInputs = (
   );
 };
 
+// Compute a simple hash that expires every 7 days.
+// The point of this hash is not protect anything, but rather to have
+// a simple way to identify a string that represents a protected value.
+// It is also rotating so that the users of the node proxy don't accidentally
+// adopt bad practices of hard-coding the values.
+// Note: the rotation is not window-based, so it will occasionaly cause errors
+// at the break of the week.
+// TODO: Fix the rotation to be window-based or come up with an even better
+// solution.
+const expirationHash = Math.round(Date.now() / 1000 / 60 / 60 / 7).toString(36);
+const PROTECTED_PREFIX = `VAULT-${expirationHash}-`;
+
+export const getProtectedValue = (
+  nodeType: NodeTypeIdentifier,
+  outputName: string
+) => {
+  return `${PROTECTED_PREFIX}${nodeType}-${outputName}`;
+};
+
 export class Vault {
-  #spec: VaultSecretsSpec;
-  constructor(spec: VaultSecretsSpec) {
-    this.#spec = spec;
+  #spec: VaultMatches;
+  #nodeType: NodeTypeIdentifier;
+
+  constructor(nodeType: NodeTypeIdentifier, spec: VaultSecretsSpec) {
+    this.#spec = readSpec(spec);
+    this.#nodeType = nodeType;
   }
 
   protectOutputs(outputs: void | OutputValues) {
-    return outputs;
+    if (!outputs) return outputs;
+    return replaceOutputs(outputs, this.#spec, (name) =>
+      getProtectedValue(this.#nodeType, name)
+    );
   }
 
   revealInputs(inputs: InputValues) {

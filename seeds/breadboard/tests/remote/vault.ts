@@ -6,7 +6,9 @@
 
 import test from "ava";
 import {
+  Vault,
   VaultMatch,
+  getProtectedValue,
   readSpec,
   replaceInputs,
   replaceOutputs,
@@ -119,4 +121,13 @@ test("replaceInputs works as advertised", (t) => {
       foo: "bar",
     });
   }
+});
+
+test("Vault correctly protects outputs", (t) => {
+  const vault = new Vault("secrets", {
+    test: [new VaultMatch("test", "bar")],
+  });
+  const protectedValue = getProtectedValue("secrets", "test");
+  const result = vault.protectOutputs({ test: "value", foo: "bar" });
+  t.deepEqual(result, { test: protectedValue, foo: "bar" });
 });

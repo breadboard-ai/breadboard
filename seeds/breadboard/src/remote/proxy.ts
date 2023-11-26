@@ -85,7 +85,7 @@ export class ProxyServer {
 
     try {
       const protect = handlerConfig && handlerConfig.protect;
-      const vault = protect ? new Vault(protect) : new OpenVault();
+      const vault = protect ? new Vault(node.type, protect) : new OpenVault();
       const result = vault.protectOutputs(
         await callHandler(handler, vault.revealInputs(inputs), {
           outerGraph: board,
