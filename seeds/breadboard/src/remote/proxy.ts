@@ -22,7 +22,6 @@ import {
   ClientTransport,
   ServerTransport,
 } from "./protocol.js";
-import { OpenVault, Vault } from "./tunnel.js";
 
 type ProxyServerTransport = ServerTransport<
   AnyProxyRequestMessage,
@@ -87,15 +86,11 @@ export class ProxyServer {
     }
 
     try {
-      const protect = handlerConfig && handlerConfig.tunnel;
-      const vault = protect ? new Vault(node.type, protect) : new OpenVault();
-      const result = vault.protectOutputs(
-        await callHandler(handler, vault.revealInputs(inputs), {
-          outerGraph: board,
-          board,
-          descriptor: node,
-        })
-      );
+      const result = await callHandler(handler, inputs, {
+        outerGraph: board,
+        board,
+        descriptor: node,
+      });
 
       if (!result) {
         writer.write(["error", { error: "Handler returned nothing." }]);

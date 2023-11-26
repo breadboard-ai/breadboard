@@ -261,34 +261,3 @@ export const createTunnelKit = (
     handlers,
   };
 };
-
-export class Vault {
-  #spec: NodeTunnels;
-  #nodeType: NodeTypeIdentifier;
-
-  constructor(nodeType: NodeTypeIdentifier, spec: TunnelSpec) {
-    this.#spec = {};
-    this.#nodeType = nodeType;
-  }
-
-  protectOutputs(outputs: void | OutputValues) {
-    if (!outputs) return outputs;
-    return replaceOutputs(outputs, this.#spec, (name) =>
-      getTunnelValue(this.#nodeType, name, {})
-    );
-  }
-
-  revealInputs(inputs: InputValues) {
-    return inputs;
-  }
-}
-
-export class OpenVault {
-  protectOutputs(outputs: void | OutputValues) {
-    return outputs;
-  }
-
-  revealInputs(inputs: InputValues) {
-    return inputs;
-  }
-}
