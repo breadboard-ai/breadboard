@@ -22,7 +22,7 @@ import {
   ClientTransport,
   ServerTransport,
 } from "./protocol.js";
-import { OpenVault, Vault } from "./vault.js";
+import { OpenVault, Vault } from "./tunnel.js";
 
 type ProxyServerTransport = ServerTransport<
   AnyProxyRequestMessage,
@@ -52,6 +52,9 @@ export class ProxyServer {
     this.#transport = transport;
   }
 
+  // TODO: Don't serve board, just serve a list of kits.
+  // TODO: Create a VaultKit that wraps nodes that need to be protected.
+  // TODO: Handle VaultKit outside of the ProxyServer? Maybe not.
   async serve(config: ProxyServerConfig) {
     const { board } = config;
     const stream = this.#transport.createServerStream();
@@ -84,7 +87,7 @@ export class ProxyServer {
     }
 
     try {
-      const protect = handlerConfig && handlerConfig.protect;
+      const protect = handlerConfig && handlerConfig.tunnel;
       const vault = protect ? new Vault(node.type, protect) : new OpenVault();
       const result = vault.protectOutputs(
         await callHandler(handler, vault.revealInputs(inputs), {

@@ -11,32 +11,32 @@ import {
   OutputValues,
 } from "../types.js";
 
-export type VaultMatchInputs = {
+export type TunnelInputs = {
   [inputName: string]: string | RegExp;
 };
 
-export type VaultMatchOutputs = {
-  receiver: NodeTypeIdentifier;
-  inputs: VaultMatchInputs;
+export type TunnelDestinations = {
+  to: NodeTypeIdentifier;
+  inputs: TunnelInputs;
 };
 
-export type VaultSecretsSpec = {
+export type TunnelSpec = {
   [outputName: string]:
-    | VaultMatchOutputs
-    | VaultMatchOutputs[]
+    | TunnelDestinations
+    | TunnelDestinations[]
     | string[]
     | string;
 };
 
-export type VaultMatches = {
-  [outputName: string]: VaultMatch[];
+export type Tunnels = {
+  [outputName: string]: Tunnel[];
 };
 
-export class VaultMatch implements VaultMatchOutputs {
+export class Tunnel implements TunnelDestinations {
   constructor(
     readonly outputName: string,
-    readonly receiver: NodeTypeIdentifier,
-    readonly inputs: VaultMatchInputs = {}
+    readonly to: NodeTypeIdentifier,
+    readonly inputs: TunnelInputs = {}
   ) {}
 
   matches(inputs: InputValues) {
@@ -52,26 +52,23 @@ export class VaultMatch implements VaultMatchOutputs {
   }
 }
 
-export const readSpec = (spec: VaultSecretsSpec): VaultMatches => {
+export const readSpec = (spec: TunnelSpec): Tunnels => {
   return Object.fromEntries(
     Object.entries(spec).map(([outputName, value]) => {
       if (typeof value === "string") {
-        return [outputName, [new VaultMatch(outputName, value)]];
+        return [outputName, [new Tunnel(outputName, value)]];
       } else if (Array.isArray(value)) {
         return [
           outputName,
           value.map((v) => {
             if (typeof v === "string") {
-              return new VaultMatch(outputName, v);
+              return new Tunnel(outputName, v);
             }
-            return new VaultMatch(outputName, v.receiver, v.inputs);
+            return new Tunnel(outputName, v.to, v.inputs);
           }),
         ];
       } else {
-        return [
-          outputName,
-          [new VaultMatch(outputName, value.receiver, value.inputs)],
-        ];
+        return [outputName, [new Tunnel(outputName, value.to, value.inputs)]];
       }
     })
   );
@@ -81,7 +78,7 @@ type OutputReplacer = (outputName: string, outputValue: NodeValue) => NodeValue;
 
 export const replaceOutputs = (
   outputs: OutputValues,
-  matches: VaultMatches,
+  matches: Tunnels,
   replacer: OutputReplacer
 ): OutputValues => {
   return Object.fromEntries(
@@ -98,14 +95,12 @@ type InputReplacer = (inputName: string, inputValue: NodeValue) => NodeValue;
 export const replaceInputs = (
   node: NodeTypeIdentifier,
   inputs: InputValues,
-  matches: VaultMatches,
+  matches: Tunnels,
   replacer: InputReplacer
 ) => {
   return Object.fromEntries(
     Object.entries(inputs).map(([inputName, value]) => {
-      const match = matches[inputName]?.find(
-        (match) => match.receiver === node
-      );
+      const match = matches[inputName]?.find((match) => match.to === node);
       if (!match) return [inputName, value];
       if (!match.matches(inputs)) return [inputName, value];
       return [inputName, replacer(inputName, value)];
@@ -133,10 +128,10 @@ export const getProtectedValue = (
 };
 
 export class Vault {
-  #spec: VaultMatches;
+  #spec: Tunnels;
   #nodeType: NodeTypeIdentifier;
 
-  constructor(nodeType: NodeTypeIdentifier, spec: VaultSecretsSpec) {
+  constructor(nodeType: NodeTypeIdentifier, spec: TunnelSpec) {
     this.#spec = readSpec(spec);
     this.#nodeType = nodeType;
   }

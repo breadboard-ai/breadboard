@@ -19,7 +19,7 @@ export default defineConfig({
     "fetch",
     {
       node: "secrets",
-      protect: {
+      tunnel: {
         PALM_KEY: ["palm-generateText", "palm-embedText"],
       },
     },

@@ -7,30 +7,30 @@
 import test from "ava";
 import {
   Vault,
-  VaultMatch,
+  Tunnel,
   getProtectedValue,
   readSpec,
   replaceInputs,
   replaceOutputs,
-} from "../../src/remote/vault.js";
+} from "../../src/remote/tunnel.js";
 
 test("readSpec works as advertised", (t) => {
   const output = readSpec({
     foo: "bar",
     bar: ["foo", "baz"],
-    baz: { receiver: "foo", inputs: { foo: "bar" } },
+    baz: { to: "foo", inputs: { foo: "bar" } },
     qux: [
-      { receiver: "foo", inputs: { foo: "bar" } },
-      { receiver: "baz", inputs: { foo: "foo" } },
+      { to: "foo", inputs: { foo: "bar" } },
+      { to: "baz", inputs: { foo: "foo" } },
     ],
   });
   t.deepEqual(output, {
-    foo: [new VaultMatch("foo", "bar")],
-    bar: [new VaultMatch("bar", "foo"), new VaultMatch("bar", "baz")],
-    baz: [new VaultMatch("baz", "foo", { foo: "bar" })],
+    foo: [new Tunnel("foo", "bar")],
+    bar: [new Tunnel("bar", "foo"), new Tunnel("bar", "baz")],
+    baz: [new Tunnel("baz", "foo", { foo: "bar" })],
     qux: [
-      new VaultMatch("qux", "foo", { foo: "bar" }),
-      new VaultMatch("qux", "baz", { foo: "foo" }),
+      new Tunnel("qux", "foo", { foo: "bar" }),
+      new Tunnel("qux", "baz", { foo: "foo" }),
     ],
   });
 });
@@ -42,7 +42,7 @@ test("replaceOutputs works as advertised", (t) => {
       bar: "baz",
     },
     {
-      foo: [new VaultMatch("foo", "bar")],
+      foo: [new Tunnel("foo", "bar")],
     },
     (name, value) => `${name}=${value}`
   );
@@ -61,7 +61,7 @@ test("replaceInputs works as advertised", (t) => {
         foo: "bar",
       },
       {
-        foo: [new VaultMatch("foo", "fetch", { url: "https://example2.com" })],
+        foo: [new Tunnel("foo", "fetch", { url: "https://example2.com" })],
       },
       (name, value) => `${name}=${value}`
     );
@@ -78,7 +78,7 @@ test("replaceInputs works as advertised", (t) => {
         foo: "bar",
       },
       {
-        foo: [new VaultMatch("foo", "fetch", { url: "https://example.com" })],
+        foo: [new Tunnel("foo", "fetch", { url: "https://example.com" })],
       },
       (name, value) => `${name}=${value}`
     );
@@ -95,7 +95,7 @@ test("replaceInputs works as advertised", (t) => {
         foo: "bar",
       },
       {
-        foo: [new VaultMatch("foo", "fetch", { url: /example\.com/ })],
+        foo: [new Tunnel("foo", "fetch", { url: /example\.com/ })],
       },
       (name, value) => `${name}=${value}`
     );
@@ -112,7 +112,7 @@ test("replaceInputs works as advertised", (t) => {
         foo: "bar",
       },
       {
-        url: [new VaultMatch("url", "fetch", { url: /example\.com/ })],
+        url: [new Tunnel("url", "fetch", { url: /example\.com/ })],
       },
       (name, value) => `${name}=${value}`
     );
@@ -125,7 +125,7 @@ test("replaceInputs works as advertised", (t) => {
 
 test("Vault correctly protects outputs", (t) => {
   const vault = new Vault("secrets", {
-    test: [new VaultMatch("test", "bar")],
+    test: [new Tunnel("test", "bar")],
   });
   const protectedValue = getProtectedValue("secrets", "test");
   const result = vault.protectOutputs({ test: "value", foo: "bar" });

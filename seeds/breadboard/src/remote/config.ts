@@ -6,7 +6,7 @@
 
 import { BoardRunner } from "../runner.js";
 import { NodeTypeIdentifier } from "../types.js";
-import { VaultSecretsSpec } from "./vault.js";
+import { TunnelSpec } from "./tunnel.js";
 
 /**
  * A detailed specification for ProxyServer and ProxyClient.
@@ -65,7 +65,7 @@ export type NodeProxySpec = {
    * - An array of VaultMatchOutputs objects -- same as above, but a
    * list of them.
    */
-  protect?: VaultSecretsSpec;
+  tunnel?: TunnelSpec;
 };
 
 export type NodeProxyConfig = (NodeTypeIdentifier | NodeProxySpec)[];
