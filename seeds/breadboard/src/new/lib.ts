@@ -24,73 +24,30 @@ import {
   BreadboardValidator,
   Schema,
   NodeDescriberFunction,
-} from "../types.js";
-import { BoardRunner as OriginalBoardRunner } from "../runner.js";
-
-// TODO:BASE: Same as before, but I added NodeFactory as base type, which is a
-// way to encapsulate boards, including lambdas (instead of BoardCapability).
-// Can keep it a capability, but this feels quite fundamental.
-export type NodeValue =
-  | string
-  | number
-  | boolean
-  | null
-  | undefined
-  | NodeValue[]
-  | PromiseLike<NodeValue>
-  | { [key: string]: NodeValue }
-  | NodeFactory<InputValues, OutputValues>;
-
-type NodeTypeIdentifier = string;
-
-export type InputValues = { [key: string]: NodeValue };
-
-export type OutputValues = { [key: string]: NodeValue };
-type OutputValue<T> = Partial<{ [key: string]: T }>;
-
-// TODO:BASE: This is pure syntactic sugar and should _not_ be moved
-type InputsMaybeAsValues<
-  T extends InputValues,
-  NI extends InputValues = InputValues
-> = Partial<{
-  [K in keyof T]: Value<T[K]> | NodeProxy<NI, OutputValue<T[K]>> | T[K];
-}> & {
-  [key in string]:
-    | Value<NodeValue>
-    | NodeProxy<NI, Partial<InputValues>>
-    | NodeValue;
-};
-
-// TODO:BASE: Allowing inputs to be promises. In syntactic sugar this should
-// actually be a NodeProxy on an input node (which looks like a promise).
-export type NodeHandlerFunction<
-  I extends InputValues,
-  O extends OutputValues
-> = (
-  inputs: PromiseLike<I> & InputsMaybeAsValues<I>,
-  node: NodeImpl<I, O>
-) => InputsMaybeAsValues<O> | PromiseLike<O>;
-
-// TODO:BASE: New: Allow handlers to accepts inputs as a promise.
-// See also hack in handlersFromKit() below.
-type NodeHandler<
-  I extends InputValues = InputValues,
-  O extends OutputValues = OutputValues
-> =
-  | {
-      invoke: NodeHandlerFunction<I, O>;
-      describe?: NodeDescriberFunction;
-    }
-  | NodeHandlerFunction<I, O>; // Is assumed to accept promises
-
-type NodeHandlers = Record<
+  BoardRunner as OriginalBoardRunner,
+} from "@google-labs/breadboard";
+import {
+  InputValues,
+  OutputValues,
+  NodeHandler,
+  NodeFactory,
+  InputsMaybeAsValues,
+  NodeHandlerFunction,
+  NodeHandlers,
   NodeTypeIdentifier,
-  NodeHandler<InputValues, OutputValues>
->;
-
-export type NodeFactory<I extends InputValues, O extends OutputValues> = (
-  config?: NodeImpl<InputValues, I> | Value<NodeValue> | InputsMaybeAsValues<I>
-) => NodeProxy<I, O>;
+  NodeValue,
+  OutputValue,
+  Serializeable,
+  NodeProxy,
+  NodeProxyMethods,
+  KeyMap,
+  AbstractNode,
+  AbstractValue,
+  EdgeInterface,
+  ScopeInterface,
+  InvokeCallbacks,
+  OutputDistribution,
+} from "./types.js";
 
 // TODO:BASE: This does two things
 //   (1) register a handler with the scope
@@ -106,12 +63,6 @@ export function addNodeType<I extends InputValues, O extends OutputValues>(
   return ((config?: InputsMaybeAsValues<I>) => {
     return new NodeImpl(name, getCurrentContextScope(), config).asProxy();
   }) as unknown as NodeFactory<I, O>;
-}
-
-export interface Serializeable {
-  serialize(
-    metadata?: GraphMetadata
-  ): Promise<GraphDescriptor> | GraphDescriptor;
 }
 
 /**
@@ -285,21 +236,6 @@ export function addKit<T extends Kit>(
   );
 }
 
-// TODO:BASE This is almost `Edge`, except that it's references to nodes and not
-// node ids. Also optional is missing.
-export interface EdgeImpl<
-  FromI extends InputValues = InputValues,
-  FromO extends OutputValues = OutputValues,
-  ToI extends InputValues = InputValues,
-  ToO extends OutputValues = OutputValues
-> {
-  from: NodeImpl<FromI, FromO>;
-  to: NodeImpl<ToI, ToO>;
-  out: string;
-  in: string;
-  constant?: boolean;
-}
-
 // TODO:BASE: Decide whether this is part of the base or each syntactic layer
 // needs to figure out how to assign ids.
 let nodeIdCounter = 0;
@@ -307,58 +243,19 @@ const getNextNodeId = (type: string) => {
   return `${type}-${nodeIdCounter++}`;
 };
 
-type NodeProxyInterface<I extends InputValues, O extends OutputValues> = {
-  then<TResult1 = O, TResult2 = never>(
-    onfulfilled?: ((value: O) => TResult1 | PromiseLike<TResult1>) | null,
-    onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null
-  ): PromiseLike<TResult1 | TResult2>;
-  to<
-    ToO extends OutputValues = OutputValues,
-    ToC extends InputValues = InputValues
-  >(
-    to:
-      | NodeProxy<O & ToC, ToO>
-      | NodeTypeIdentifier
-      | NodeHandler<O & ToC, ToO>,
-    config?: ToC
-  ): NodeProxy<O & ToC, ToO>;
-  in(
-    inputs:
-      | NodeProxy<InputValues, Partial<I>>
-      | InputsMaybeAsValues<I>
-      | Value<NodeValue>
-  ): NodeProxy<I, O>;
-  as(keymap: KeyMap): Value;
-};
-
-/**
- * Intersection between a Node and a Promise for its output:
- *  - Has all the output fields as Value<T> instances.
- *  - Has all the methods of the NodeProxyInterface defined above.
- *  - Including then() which makes it a PromiseLike<O>
- */
-export type NodeProxy<
-  I extends InputValues = InputValues,
-  O extends OutputValues = OutputValues
-> = {
-  [K in keyof O]: Value<O[K]> & ((...args: unknown[]) => unknown);
-} & {
-  [key in string]: Value<NodeValue> & ((...args: unknown[]) => unknown);
-} & NodeProxyInterface<I, O>;
-
-type KeyMap = { [key: string]: string };
-
 // TODO:BASE Extract base class that isn't opinioanted about the syntax. Marking
 // methods that should be base as "TODO:BASE" below, including complications.
-class NodeImpl<
-  I extends InputValues = InputValues,
-  O extends OutputValues = OutputValues
-> implements NodeProxyInterface<I, O>, PromiseLike<O>, Serializeable
+export class NodeImpl<
+    I extends InputValues = InputValues,
+    O extends OutputValues = OutputValues
+  >
+  extends AbstractNode<I, O>
+  implements NodeProxyMethods<I, O>, PromiseLike<O>, Serializeable
 {
   id: string;
   type: string;
-  outgoing: EdgeImpl[] = [];
-  incoming: EdgeImpl[] = [];
+  outgoing: EdgeInterface[] = [];
+  incoming: EdgeInterface[] = [];
   configuration: Partial<I> = {};
 
   #handler?: NodeHandler<InputValues, OutputValues>;
@@ -369,7 +266,7 @@ class NodeImpl<
 
   #inputs: Partial<I>;
   #constants: Partial<I> = {};
-  #incomingEmptyWires: NodeImpl[] = [];
+  #incomingEmptyWires: AbstractNode[] = [];
   #outputs?: O;
 
   #scope: Scope;
@@ -388,10 +285,12 @@ class NodeImpl<
   constructor(
     handler: NodeTypeIdentifier | NodeHandler<I, O>,
     scope: Scope,
-    config: (Partial<InputsMaybeAsValues<I>> | Value<NodeValue>) & {
+    config: (Partial<InputsMaybeAsValues<I>> | AbstractValue<NodeValue>) & {
       $id?: string;
     } = {}
   ) {
+    super();
+
     this.#scope = scope;
 
     if (typeof handler === "string") {
@@ -465,7 +364,7 @@ class NodeImpl<
     if (keyPairs.length === 0) {
       // Add an empty edge: Just control flow, no data moving.
 
-      const edge: EdgeImpl = {
+      const edge: EdgeInterface = {
         to: this as unknown as NodeImpl,
         from,
         out: "",
@@ -479,7 +378,7 @@ class NodeImpl<
         // a spread, e.g. newNode({ ...node, $id: "id" }
         if (fromKey.startsWith("*-")) fromKey = toKey = "*";
 
-        const edge: EdgeImpl = {
+        const edge: EdgeInterface = {
           to: this as unknown as NodeImpl,
           from,
           out: fromKey,
@@ -494,7 +393,7 @@ class NodeImpl<
   }
 
   // TODO:BASE (this shouldn't require any changes)
-  receiveInputs(edge: EdgeImpl, inputs: InputValues) {
+  receiveInputs(edge: EdgeInterface, inputs: InputValues) {
     const data =
       edge.out === "*"
         ? inputs
@@ -908,7 +807,7 @@ class NodeImpl<
     inputs:
       | NodeProxy<InputValues, Partial<I>>
       | InputsMaybeAsValues<I>
-      | Value<NodeValue>
+      | AbstractValue<NodeValue>
   ) {
     if (inputs instanceof NodeImpl) {
       const node = inputs as NodeImpl<InputValues, OutputValues>;
@@ -954,7 +853,8 @@ function isValue<T extends NodeValue = NodeValue>(
   );
 }
 
-class Value<T extends NodeValue = NodeValue>
+export class Value<T extends NodeValue = NodeValue>
+  extends AbstractValue
   implements PromiseLike<T | undefined>
 {
   #node: NodeImpl<InputValues, OutputValue<T>>;
@@ -968,6 +868,7 @@ class Value<T extends NodeValue = NodeValue>
     keymap: string | KeyMap,
     constant = false
   ) {
+    super();
     this.#node = node;
     this.#scope = scope;
     this.#keymap = typeof keymap === "string" ? { [keymap]: keymap } : keymap;
@@ -1135,27 +1036,8 @@ class TrapResult<I extends InputValues, O extends OutputValues> {
 
 class TrappedDataReadWhileSerializing {}
 
-export interface OutputDistribution {
-  nodes: { node: NodeImpl; received: string[]; missing: string[] | false }[];
-  unused: string[];
-}
-
-export interface InvokeCallbacks {
-  before?: (
-    node: NodeImpl,
-    inputs: InputValues
-  ) => undefined | Promise<OutputValues | undefined>;
-  after?: (
-    node: NodeImpl,
-    inputs: InputValues,
-    outputs: OutputValues,
-    distribution: OutputDistribution
-  ) => void | Promise<void>;
-  done?: () => void | Promise<void>;
-}
-
 // TODO:BASE Maybe this should really be "Scope"?
-export class Scope {
+export class Scope implements ScopeInterface {
   #declaringScope?: Scope;
   #invokingScope?: Scope;
   #isSerializing: boolean;
@@ -1185,20 +1067,6 @@ export class Scope {
   }
 
   // TODO:BASE
-  /**
-   * Finds handler by name
-   *
-   * Scans up the parent chain if not found in this scope, looking in calling
-   * scopes before the declaration context scopes.
-   *
-   * That is, if a graph is invoked with a specific set of kits, then those kits
-   * have precedence over kits declared when building the graphs. And kits
-   * declared by invoking graphs downstream have precedence over those declared
-   * upstream.
-   *
-   * @param name Name of the handler to retrieve
-   * @returns Handler or undefined
-   */
   getHandler<
     I extends InputValues = InputValues,
     O extends OutputValues = OutputValues
@@ -1208,9 +1076,6 @@ export class Scope {
       this.#declaringScope?.getHandler(name)) as unknown as NodeHandler<I, O>;
   }
 
-  /**
-   * Swap global scope with this one, run the function, then restore
-   */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   asScopeFor<T extends (...args: any[]) => any>(fn: T): T {
     return ((...args: unknown[]) => {
@@ -1242,13 +1107,13 @@ export class Scope {
   }
 
   // TODO:BASE - and really this should implement .run() and .runOnce()
-  async invoke(node: NodeImpl, callbacks: InvokeCallbacks[] = []) {
-    const queue: NodeImpl[] = this.#findAllConnectedNodes(node).filter(
+  async invoke(node: AbstractNode, callbacks: InvokeCallbacks[] = []) {
+    const queue: AbstractNode[] = this.#findAllConnectedNodes(node).filter(
       (node) => !node.missingInputs()
     );
 
     while (queue.length) {
-      const node = queue.shift() as NodeImpl;
+      const node = queue.shift() as AbstractNode;
 
       const inputs = node.getInputs();
 
@@ -1333,7 +1198,7 @@ export class Scope {
     return this.#isSerializing;
   }
 
-  #findAllConnectedNodes(node: NodeImpl) {
+  #findAllConnectedNodes(node: AbstractNode) {
     const nodes = new Set<NodeImpl>();
     const queue = [node.unProxy()];
 
@@ -1635,7 +1500,7 @@ export class Runner implements BreadboardRunner {
         out: edge.out,
         in: edge.in,
         constant: edge.constant,
-      } as EdgeImpl;
+      } as EdgeInterface;
       newEdge.from.outgoing.push(newEdge);
       newEdge.to.incoming.push(newEdge);
     });
@@ -1750,7 +1615,7 @@ export const base = {
       $id?: string;
     } & Partial<{
       [K in keyof T]:
-        | Value<T[K]>
+        | AbstractValue<T[K]>
         | NodeProxy<InputValues, OutputValue<T[K]>>
         | T[K];
     }>

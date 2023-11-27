@@ -68,15 +68,13 @@ export {
   type StreamCapabilityType,
   type PatchedReadableStream,
 } from "./stream.js";
-export {
-  recipe,
-  base,
-  addKit,
-  Runner,
-  type NodeFactory as NewNodeFactory,
-  type NodeValue as NewNodeValue,
-  type InputValues as NewInputValues,
-  type OutputValues as NewOutputValues,
-  type NodeProxy,
-  type Serializeable,
-} from "./new/lib.js";
+
+export { recipe, base, addKit, Runner } from "./new/lib.js";
+export type {
+  NodeFactory as NewNodeFactory,
+  NodeValue as NewNodeValue,
+  InputValues as NewInputValues,
+  OutputValues as NewOutputValues,
+  NodeProxy,
+  Serializeable,
+} from "./new/types.js";
