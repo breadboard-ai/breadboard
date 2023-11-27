@@ -18,14 +18,14 @@ import {
   InputValues as OriginalInputValues,
   OutputValues as OriginalOutputValues,
   NodeFactory as OriginalNodeFactory,
-  BoardRunner as OriginalBoardRunner,
   BreadboardRunner,
   BreadboardRunResult,
   NodeHandlerContext,
   BreadboardValidator,
   Schema,
   NodeDescriberFunction,
-} from "@google-labs/breadboard";
+} from "../types.js";
+import { BoardRunner as OriginalBoardRunner } from "../runner.js";
 
 // TODO:BASE: Same as before, but I added NodeFactory as base type, which is a
 // way to encapsulate boards, including lambdas (instead of BoardCapability).
