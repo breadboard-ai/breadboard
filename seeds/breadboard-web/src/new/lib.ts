@@ -1143,12 +1143,30 @@ class TrapResult<I extends InputValues, O extends OutputValues> {
 
 class TrappedDataReadWhileSerializing {}
 
+export interface OutputDistribution {
+  nodes: { node: NodeImpl; received: string[]; missing: string[] | false }[];
+  unused: string[];
+}
+
+export interface InvokeCallbacks {
+  before?: (
+    node: NodeImpl,
+    inputs: InputValues
+  ) => undefined | Promise<OutputValues | undefined>;
+  after?: (
+    node: NodeImpl,
+    inputs: InputValues,
+    outputs: OutputValues,
+    distribution: OutputDistribution
+  ) => void | Promise<void>;
+  done?: () => void | Promise<void>;
+}
+
 // TODO:BASE Maybe this should really be "Scope"?
 export class Scope {
   #declaringScope?: Scope;
   #invokingScope?: Scope;
   #isSerializing: boolean;
-  #probe?: EventTarget;
 
   #handlers: NodeHandlers = {};
 
@@ -1160,13 +1178,11 @@ export class Scope {
       declaringScope?: Scope;
       invokingScope?: Scope;
       serialize?: boolean;
-      probe?: EventTarget;
     } = {}
   ) {
     this.#declaringScope = config.declaringScope;
     this.#invokingScope = config.invokingScope;
     this.#isSerializing = config.serialize ?? false;
-    this.#probe = config.probe;
   }
 
   // TODO:BASE
@@ -1234,97 +1250,59 @@ export class Scope {
   }
 
   // TODO:BASE - and really this should implement .run() and .runOnce()
-  async invoke(node: NodeImpl) {
+  async invoke(node: NodeImpl, callbacks: InvokeCallbacks[] = []) {
     const queue: NodeImpl[] = this.#findAllConnectedNodes(node).filter(
       (node) => !node.missingInputs()
     );
 
-    const lastNodeDetails = new Map<string, object>();
-    let lastNode: object | undefined = undefined;
     while (queue.length) {
       const node = queue.shift() as NodeImpl;
 
-      // Send beforeHandler event
-      const beforeHandlerDetail = {
-        descriptor: {
-          id: node.id,
-          type: node.type,
-          configuration: node.configuration,
-        } as NodeDescriptor,
-        inputs: node.getInputs() as OriginalInputValues,
-        outputs: Promise.resolve({}),
-      };
-      const shouldInvokeHandler =
-        !this.#probe ||
-        this.#probe?.dispatchEvent(
-          // Using CustomEvent instead of ProbeEvent because not enough types
-          // are currently exported by breadboard, and I didn't want to change
-          // too much while prototyping. TODO: Fix this.
-          new CustomEvent("beforehandler", {
-            detail: beforeHandlerDetail,
-            cancelable: true,
-          })
-        );
+      const inputs = node.getInputs();
 
-      // Invoke node, unless beforeHandler event was cancelled.
-      const result = shouldInvokeHandler
-        ? await node.invoke(this)
-        : ((await beforeHandlerDetail.outputs) as OutputValues);
+      let callbackResult: OutputValues | undefined = undefined;
+      for (const callback of callbacks) {
+        callbackResult = await callback.before?.(node, inputs);
+        if (callbackResult) break;
+      }
+
+      // Invoke node, unless before callback already provided a result.
+      const result =
+        callbackResult ??
+        (await node.invoke(this).catch((e) => {
+          return {
+            $error: {
+              type: "error",
+              error: e,
+            },
+          };
+        }));
 
       // Distribute data to outgoing edges
-      const receivingNodes: { [key: string]: string[] } = {};
-      const unusedKeys = new Set<string>(Object.keys(result));
-      const incompleteNodes: {
-        node: string;
-        missing: string[];
-      }[] = [];
+      const unusedPorts = new Set<string>(Object.keys(result));
+      const distribution: OutputDistribution = { nodes: [], unused: [] };
       node.outgoing.forEach((edge) => {
         const ports = edge.to.receiveInputs(edge, result);
-        receivingNodes[edge.to.id] = ports;
-        ports.forEach((key) => unusedKeys.delete(key));
+        ports.forEach((key) => unusedPorts.delete(key));
 
         // If it's ready to run, add it to the queue
         const missing = edge.to.missingInputs();
         if (!missing) queue.push(edge.to);
-        else
-          incompleteNodes.push({
-            node: edge.to.id,
-            missing,
-          });
+
+        distribution.nodes.push({ node: edge.to, received: ports, missing });
       });
 
-      // Send node event with the results
-      const probeDetails = {
-        ...beforeHandlerDetail,
-        outputs: result,
-        receivingNodes,
-        incompleteNodes,
-        unusedKeys: [...unusedKeys],
-      };
-      this.#probe?.dispatchEvent(
-        new CustomEvent("node", { detail: probeDetails })
-      );
-
-      // Keep track of the last run of any node with incomplete next nodes
-      if (probeDetails.incompleteNodes.length > 0)
-        lastNodeDetails.set(node.id, probeDetails);
-      else lastNodeDetails.delete(node.id);
-
-      lastNode = probeDetails;
+      // Call after callback
+      distribution.unused = [...unusedPorts];
+      for (const callback of callbacks) {
+        await callback.after?.(node, inputs, result, distribution);
+      }
     }
 
-    // For convenience, send a done event with the last node's details. In a
-    // developer tool, this could be highlighted if the last node wasn't
-    // expected, e.g. not an output node, and it might point out where the graph
-    // got stuck.
-    this.#probe?.dispatchEvent(
-      new CustomEvent("done", {
-        detail: {
-          last: lastNode,
-          incompleteNextNodes: [...lastNodeDetails.values()],
-        },
-      })
-    );
+    // Call done callback
+    for (const callback of callbacks) {
+      await callback.done?.();
+    }
   }
 
   // TODO:BASE, should be complete.
@@ -1379,6 +1357,77 @@ export class Scope {
   }
 }
 
+function createProbeCallbacks(probe: EventTarget): InvokeCallbacks {
+  const lastNodeDetails = new Map<string, object>();
+  let lastNode: object | undefined = undefined;
+
+  return {
+    before: async (node, inputs) => {
+      const detail = {
+        descriptor: {
+          id: node.id,
+          type: node.type,
+          configuration: node.configuration,
+        } as NodeDescriptor,
+        inputs,
+        outputs: Promise.resolve({}),
+      };
+      const shouldInvokeHandler = probe.dispatchEvent(
+        new CustomEvent("beforehandler", {
+          detail,
+          cancelable: true,
+        })
+      );
+      return shouldInvokeHandler ? undefined : detail.outputs;
+    },
+    after: (node, inputs, outputs, distribution) => {
+      const detail = {
+        descriptor: {
+          id: node.id,
+          type: node.type,
+          configuration: node.configuration,
+        } as NodeDescriptor,
+        inputs,
+        outputs,
+        receivingNodes: Object.fromEntries(
+          distribution.nodes
+            .filter((node) => node.received.length > 0)
+            .map((node) => [node.node.id, node.received])
+        ),
+        incompleteNodes: Object.fromEntries(
+          distribution.nodes
+            .filter((node) => node.missing !== false)
+            .map((node) => [node.node.id, node.missing])
+        ),
+        unusedKeys: distribution.unused,
+      };
+      probe.dispatchEvent(new CustomEvent("node", { detail }));
+
+      // Keep track of the last run of any node with incomplete next nodes
+      if (Object.entries(detail.incompleteNodes).length > 0)
+        lastNodeDetails.set(node.id, detail);
+      else lastNodeDetails.delete(node.id);
+
+      lastNode = detail;
+    },
+    done: () => {
+      // For convenience, send a done event with the last node's details. In a
+      // developer tool, this could be highlighted if the last node wasn't
+      // expected, e.g. not an output node, and it might point out where the graph
+      // got stuck.
+
+      probe.dispatchEvent(
+        new CustomEvent("done", {
+          detail: {
+            last: lastNode,
+            incompleteNextNodes: [...lastNodeDetails.values()],
+          },
+        })
+      );
+    },
+  };
+}
+
 /**
  * Implements the current API, so that we can run in existing Breadboard
  * environments.
@@ -1407,7 +1456,6 @@ export class BoardRunner implements BreadboardRunner {
     const scope = new Scope({
       declaringScope: this.#scope,
       invokingScope: getCurrentContextScope(),
-      probe,
     });
 
     let streamController: ReadableStreamDefaultController<BreadboardRunResult>;
@@ -1464,7 +1512,11 @@ export class BoardRunner implements BreadboardRunner {
 
     kits?.forEach((kit) => scope.addHandlers(handlersFromKit(kit)));
 
-    scope.invoke(this.#anyNode).then(() => streamController.close());
+    const callbacks = probe ? [createProbeCallbacks(probe)] : [];
+
+    scope
+      .invoke(this.#anyNode, callbacks)
+      .finally(() => streamController.close());
 
     const reader = stream.getReader();
     while (true) {
@@ -1522,7 +1574,6 @@ export class BoardRunner implements BreadboardRunner {
     const scope = new Scope({
       declaringScope: this.#scope,
       invokingScope: getCurrentContextScope(),
-      probe: context?.probe,
     });
 
     context?.kits?.forEach((kit) => scope.addHandlers(handlersFromKit(kit)));
@@ -1542,10 +1593,14 @@ export class BoardRunner implements BreadboardRunner {
       },
     });
 
+    const callbacks = context?.probe
+      ? [createProbeCallbacks(context.probe)]
+      : [];
+
     // TODO: One big difference to before: This will keep running forever, even
     // after the first output is encountered. We need to add a way to abort the
     // run.
-    scope.invoke(this.#anyNode);
+    scope.invoke(this.#anyNode, callbacks);
 
     return promise;
   }
