@@ -69,7 +69,11 @@ export {
   type PatchedReadableStream,
 } from "./stream.js";
 
-export { recipe, base, addKit, Runner } from "./new/lib.js";
+// New Syntax:
+export { recipe } from "./new/recipe.js";
+export { addKit } from "./new/kits.js";
+export { Runner } from "./new/runner.js";
+export { base } from "./new/base.js";
 export type {
   NodeFactory as NewNodeFactory,
   NodeValue as NewNodeValue,
