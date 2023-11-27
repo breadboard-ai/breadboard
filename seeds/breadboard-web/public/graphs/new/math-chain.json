@@ -2,54 +2,54 @@
   "title": "New: Math, chain style graph",
   "edges": [
     {
-      "from": "runJavascript-38",
-      "to": "output-34",
+      "from": "runJavascript-6",
+      "to": "output-2",
       "out": "*",
       "in": "*"
     },
     {
-      "from": "palm-generateText-37",
-      "to": "runJavascript-38",
+      "from": "palm-generateText-5",
+      "to": "runJavascript-6",
       "out": "completion",
       "in": "code"
     },
     {
-      "from": "secrets-36",
-      "to": "palm-generateText-37",
+      "from": "secrets-4",
+      "to": "palm-generateText-5",
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
-      "from": "promptTemplate-35",
-      "to": "palm-generateText-37",
+      "from": "promptTemplate-3",
+      "to": "palm-generateText-5",
       "out": "prompt",
       "in": "text"
     },
     {
-      "from": "input-33",
-      "to": "promptTemplate-35",
+      "from": "input-1",
+      "to": "promptTemplate-3",
       "out": "question",
       "in": "question"
     }
   ],
   "nodes": [
     {
-      "id": "output-34",
+      "id": "output-2",
       "type": "output",
       "configuration": {}
     },
     {
-      "id": "runJavascript-38",
+      "id": "runJavascript-6",
       "type": "runJavascript",
       "configuration": {}
     },
     {
-      "id": "palm-generateText-37",
+      "id": "palm-generateText-5",
       "type": "palm-generateText",
       "configuration": {}
     },
     {
-      "id": "secrets-36",
+      "id": "secrets-4",
       "type": "secrets",
       "configuration": {
         "keys": [
@@ -58,14 +58,14 @@
       }
     },
     {
-      "id": "promptTemplate-35",
+      "id": "promptTemplate-3",
       "type": "promptTemplate",
       "configuration": {
         "template": "Write a Javascript function called `run` to compute the result for this question:\nQuestion: {{question}}\nCode: "
       }
     },
     {
-      "id": "input-33",
+      "id": "input-1",
       "type": "input",
       "configuration": {}
     }

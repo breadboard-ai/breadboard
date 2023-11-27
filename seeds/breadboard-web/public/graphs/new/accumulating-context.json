@@ -9,7 +9,7 @@
     },
     {
       "from": "userRequest",
-      "to": "append-0",
+      "to": "append-1",
       "out": "text",
       "in": "user"
     },
@@ -20,44 +20,44 @@
       "in": ""
     },
     {
-      "from": "output-3",
+      "from": "output-4",
       "to": "userRequest",
       "out": "",
       "in": ""
     },
     {
       "from": "assistant",
-      "to": "palm-generateText-2",
+      "to": "palm-generateText-3",
       "out": "prompt",
       "in": "text"
     },
     {
-      "from": "append-0",
-      "to": "append-0",
+      "from": "append-1",
+      "to": "append-1",
       "out": "accumulator",
       "in": "accumulator"
     },
     {
-      "from": "append-0",
+      "from": "append-1",
       "to": "assistant",
       "out": "accumulator",
       "in": "context"
     },
     {
-      "from": "palm-generateText-2",
-      "to": "append-0",
+      "from": "palm-generateText-3",
+      "to": "append-1",
       "out": "completion",
       "in": "accumulator"
     },
     {
-      "from": "palm-generateText-2",
-      "to": "output-3",
+      "from": "palm-generateText-3",
+      "to": "output-4",
       "out": "completion",
       "in": "text"
     },
     {
-      "from": "secrets-1",
-      "to": "palm-generateText-2",
+      "from": "secrets-2",
+      "to": "palm-generateText-3",
       "out": "PALM_KEY",
       "in": "PALM_KEY",
       "constant": true
@@ -90,7 +90,7 @@
       "configuration": {}
     },
     {
-      "id": "output-3",
+      "id": "output-4",
       "type": "output",
       "configuration": {
         "schema": {
@@ -118,19 +118,19 @@
       }
     },
     {
-      "id": "append-0",
+      "id": "append-1",
       "type": "append",
       "configuration": {
         "accumulator": "\n== Conversation History"
       }
     },
     {
-      "id": "palm-generateText-2",
+      "id": "palm-generateText-3",
       "type": "palm-generateText",
       "configuration": {}
     },
     {
-      "id": "secrets-1",
+      "id": "secrets-2",
       "type": "secrets",
       "configuration": {
         "keys": [

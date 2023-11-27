@@ -4,15 +4,15 @@
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
 userRequest[/"input <br> id='userRequest'"/]:::input -- "text->question" --> assistant["promptTemplate <br> id='assistant'"]
-userRequest[/"input <br> id='userRequest'"/]:::input -- "text->user" --> append0["append <br> id='append-0'"]
+userRequest[/"input <br> id='userRequest'"/]:::input -- "text->user" --> append1["append <br> id='append-1'"]
 start(("passthrough <br> id='start'")):::passthrough --> userRequest[/"input <br> id='userRequest'"/]:::input
-output3{{"output <br> id='output-3'"}}:::output --> userRequest[/"input <br> id='userRequest'"/]:::input
-assistant["promptTemplate <br> id='assistant'"] -- "prompt->text" --> palmgenerateText2["palm-generateText <br> id='palm-generateText-2'"]
-append0["append <br> id='append-0'"] -- "accumulator->accumulator" --> append0["append <br> id='append-0'"]
-append0["append <br> id='append-0'"] -- "accumulator->context" --> assistant["promptTemplate <br> id='assistant'"]
-palmgenerateText2["palm-generateText <br> id='palm-generateText-2'"] -- "completion->accumulator" --> append0["append <br> id='append-0'"]
-palmgenerateText2["palm-generateText <br> id='palm-generateText-2'"] -- "completion->text" --> output3{{"output <br> id='output-3'"}}:::output
-secrets1("secrets <br> id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o palmgenerateText2["palm-generateText <br> id='palm-generateText-2'"]
+output4{{"output <br> id='output-4'"}}:::output --> userRequest[/"input <br> id='userRequest'"/]:::input
+assistant["promptTemplate <br> id='assistant'"] -- "prompt->text" --> palmgenerateText3["palm-generateText <br> id='palm-generateText-3'"]
+append1["append <br> id='append-1'"] -- "accumulator->accumulator" --> append1["append <br> id='append-1'"]
+append1["append <br> id='append-1'"] -- "accumulator->context" --> assistant["promptTemplate <br> id='assistant'"]
+palmgenerateText3["palm-generateText <br> id='palm-generateText-3'"] -- "completion->accumulator" --> append1["append <br> id='append-1'"]
+palmgenerateText3["palm-generateText <br> id='palm-generateText-3'"] -- "completion->text" --> output4{{"output <br> id='output-4'"}}:::output
+secrets2("secrets <br> id='secrets-2'"):::secrets -- "PALM_KEY->PALM_KEY" --o palmgenerateText3["palm-generateText <br> id='palm-generateText-3'"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

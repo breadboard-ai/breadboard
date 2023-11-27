@@ -2,43 +2,43 @@
   "title": "New: Math, directly calling a chain",
   "edges": [
     {
-      "from": "palm-generateText-50",
-      "to": "runJavascript-51",
+      "from": "palm-generateText-13",
+      "to": "runJavascript-14",
       "out": "completion",
       "in": "code"
     },
     {
-      "from": "secrets-49",
-      "to": "palm-generateText-50",
+      "from": "secrets-12",
+      "to": "palm-generateText-13",
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
-      "from": "promptTemplate-48",
-      "to": "palm-generateText-50",
+      "from": "promptTemplate-11",
+      "to": "palm-generateText-13",
       "out": "prompt",
       "in": "text"
     },
     {
-      "from": "passthrough-47",
-      "to": "promptTemplate-48",
+      "from": "passthrough-10",
+      "to": "promptTemplate-11",
       "out": "*",
       "in": "*"
     }
   ],
   "nodes": [
     {
-      "id": "runJavascript-51",
+      "id": "runJavascript-14",
       "type": "runJavascript",
       "configuration": {}
     },
     {
-      "id": "palm-generateText-50",
+      "id": "palm-generateText-13",
       "type": "palm-generateText",
       "configuration": {}
     },
     {
-      "id": "secrets-49",
+      "id": "secrets-12",
       "type": "secrets",
       "configuration": {
         "keys": [
@@ -47,14 +47,14 @@
       }
     },
     {
-      "id": "promptTemplate-48",
+      "id": "promptTemplate-11",
       "type": "promptTemplate",
       "configuration": {
         "template": "Write a Javascript function called `run` to compute the result for this question:\nQuestion: {{question}}\nCode: "
       }
     },
     {
-      "id": "passthrough-47",
+      "id": "passthrough-10",
       "type": "passthrough",
       "configuration": {
         "question": "1+1"

@@ -3,8 +3,8 @@
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-passthrough75(("passthrough <br> id='passthrough-75'")):::passthrough -- "foo->foo" --> output74{{"output <br> id='output-74'"}}:::output
-input73[/"input <br> id='input-73'"/]:::input -- all --> passthrough75(("passthrough <br> id='passthrough-75'")):::passthrough
+passthrough3(("passthrough <br> id='passthrough-3'")):::passthrough -- "foo->foo" --> output2{{"output <br> id='output-2'"}}:::output
+input1[/"input <br> id='input-1'"/]:::input -- all --> passthrough3(("passthrough <br> id='passthrough-3'")):::passthrough
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

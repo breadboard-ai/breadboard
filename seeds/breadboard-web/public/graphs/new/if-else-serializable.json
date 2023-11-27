@@ -2,57 +2,57 @@
   "title": "New: IfElse, serializable",
   "edges": [
     {
-      "from": "fn-28",
-      "to": "output-24",
+      "from": "fn-6",
+      "to": "output-2",
       "out": "*",
       "in": "*"
     },
     {
-      "from": "palm-generateText-27",
-      "to": "fn-28",
+      "from": "palm-generateText-5",
+      "to": "fn-6",
       "out": "*",
       "in": "*"
     },
     {
-      "from": "secrets-26",
-      "to": "palm-generateText-27",
+      "from": "secrets-4",
+      "to": "palm-generateText-5",
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
-      "from": "promptTemplate-25",
-      "to": "palm-generateText-27",
+      "from": "promptTemplate-3",
+      "to": "palm-generateText-5",
       "out": "prompt",
       "in": "text"
     },
     {
-      "from": "input-23",
-      "to": "promptTemplate-25",
+      "from": "input-1",
+      "to": "promptTemplate-3",
       "out": "question",
       "in": "question"
     }
   ],
   "nodes": [
     {
-      "id": "output-24",
+      "id": "output-2",
       "type": "output",
       "configuration": {}
     },
     {
-      "id": "fn-28",
+      "id": "fn-6",
       "type": "runJavascript",
       "configuration": {
-        "code": "async function fn_28(inputs2) {const{completion,math:math2,search:search2}=await inputs2;if(completion?.startsWith(\"YES\")){return math2({question:inputs2.question})}else{return search2(inputs2)}}",
-        "name": "fn_28"
+        "code": "async function fn_6(inputs2) {const{completion,math:math2,search:search2}=await inputs2;if(completion?.startsWith(\"YES\")){return math2({question:inputs2.question})}else{return search2(inputs2)}}",
+        "name": "fn_6"
       }
     },
     {
-      "id": "palm-generateText-27",
+      "id": "palm-generateText-5",
       "type": "palm-generateText",
       "configuration": {}
     },
     {
-      "id": "secrets-26",
+      "id": "secrets-4",
       "type": "secrets",
       "configuration": {
         "keys": [
@@ -61,14 +61,14 @@
       }
     },
     {
-      "id": "promptTemplate-25",
+      "id": "promptTemplate-3",
       "type": "promptTemplate",
       "configuration": {
         "template": "Is this question about math? Answer YES or NO.\nQuestion: {{question}}\nAnswer: "
       }
     },
     {
-      "id": "input-23",
+      "id": "input-1",
       "type": "input",
       "configuration": {}
     }

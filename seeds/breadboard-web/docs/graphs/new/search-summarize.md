@@ -3,16 +3,16 @@
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-palmgenerateText69["palm-generateText <br> id='palm-generateText-69'"] -- "completion->text" --> output70{{"output <br> id='output-70'"}}:::output
-summarizingtemplate["promptTemplate <br> id='summarizing-template'"] -- "prompt->text" --> palmgenerateText69["palm-generateText <br> id='palm-generateText-69'"]
-secrets68("secrets <br> id='secrets-68'"):::secrets -- "PALM_KEY->PALM_KEY" --> palmgenerateText69["palm-generateText <br> id='palm-generateText-69'"]
-input[/"input <br> id='input'"/]:::input -- "text->query" --> urlTemplate65["urlTemplate <br> id='urlTemplate-65'"]
+palmgenerateText22["palm-generateText <br> id='palm-generateText-22'"] -- "completion->text" --> output23{{"output <br> id='output-23'"}}:::output
+summarizingtemplate["promptTemplate <br> id='summarizing-template'"] -- "prompt->text" --> palmgenerateText22["palm-generateText <br> id='palm-generateText-22'"]
+secrets21("secrets <br> id='secrets-21'"):::secrets -- "PALM_KEY->PALM_KEY" --> palmgenerateText22["palm-generateText <br> id='palm-generateText-22'"]
+input[/"input <br> id='input'"/]:::input -- "text->query" --> urlTemplate18["urlTemplate <br> id='urlTemplate-18'"]
 input[/"input <br> id='input'"/]:::input -- "text->question" --> summarizingtemplate["promptTemplate <br> id='summarizing-template'"]
-jsonata67["jsonata <br> id='jsonata-67'"] -- "result->context" --> summarizingtemplate["promptTemplate <br> id='summarizing-template'"]
-urlTemplate65["urlTemplate <br> id='urlTemplate-65'"] -- "url->url" --> fetch66["fetch <br> id='fetch-66'"]
-fetch66["fetch <br> id='fetch-66'"] -- "response->json" --> jsonata67["jsonata <br> id='jsonata-67'"]
-secrets63("secrets <br> id='secrets-63'"):::secrets -- "API_KEY->API_KEY" --> urlTemplate65["urlTemplate <br> id='urlTemplate-65'"]
-secrets64("secrets <br> id='secrets-64'"):::secrets -- "GOOGLE_CSE_ID->GOOGLE_CSE_ID" --> urlTemplate65["urlTemplate <br> id='urlTemplate-65'"]
+jsonata20["jsonata <br> id='jsonata-20'"] -- "result->context" --> summarizingtemplate["promptTemplate <br> id='summarizing-template'"]
+urlTemplate18["urlTemplate <br> id='urlTemplate-18'"] -- "url->url" --> fetch19["fetch <br> id='fetch-19'"]
+fetch19["fetch <br> id='fetch-19'"] -- "response->json" --> jsonata20["jsonata <br> id='jsonata-20'"]
+secrets16("secrets <br> id='secrets-16'"):::secrets -- "API_KEY->API_KEY" --> urlTemplate18["urlTemplate <br> id='urlTemplate-18'"]
+secrets17("secrets <br> id='secrets-17'"):::secrets -- "GOOGLE_CSE_ID->GOOGLE_CSE_ID" --> urlTemplate18["urlTemplate <br> id='urlTemplate-18'"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

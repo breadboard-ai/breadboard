@@ -3,11 +3,11 @@
   "edges": [],
   "nodes": [
     {
-      "id": "fn-13",
+      "id": "fn-6",
       "type": "runJavascript",
       "configuration": {
-        "code": "async function fn_13(inputs) {const{completion}=await starter.promptTemplate({template:\"Is this question about math? Answer YES or NO.\\nQuestion: {{question}}\\nAnswer: \",question:inputs.question}).prompt.as(\"text\").to(palm.generateText({PALM_KEY:starter.secrets({keys:[\"PALM_KEY\"]}).PALM_KEY}));if(completion&&completion.startsWith(\"YES\")){return math({question:inputs.question})}else{return search(inputs)}}",
-        "name": "fn_13"
+        "code": "async function fn_6(inputs) {const{completion}=await starter.promptTemplate({template:\"Is this question about math? Answer YES or NO.\\nQuestion: {{question}}\\nAnswer: \",question:inputs.question}).prompt.as(\"text\").to(palm.generateText({PALM_KEY:starter.secrets({keys:[\"PALM_KEY\"]}).PALM_KEY}));if(completion&&completion.startsWith(\"YES\")){return math({question:inputs.question})}else{return search(inputs)}}",
+        "name": "fn_6"
       }
     }
   ]

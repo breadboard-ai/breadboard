@@ -3,10 +3,10 @@
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-palmgenerateText50["palm-generateText <br> id='palm-generateText-50'"] -- "completion->code" --> runJavascript51["runJavascript <br> id='runJavascript-51'"]
-secrets49("secrets <br> id='secrets-49'"):::secrets -- "PALM_KEY->PALM_KEY" --> palmgenerateText50["palm-generateText <br> id='palm-generateText-50'"]
-promptTemplate48["promptTemplate <br> id='promptTemplate-48'"] -- "prompt->text" --> palmgenerateText50["palm-generateText <br> id='palm-generateText-50'"]
-passthrough47(("passthrough <br> id='passthrough-47'")):::passthrough -- all --> promptTemplate48["promptTemplate <br> id='promptTemplate-48'"]
+palmgenerateText13["palm-generateText <br> id='palm-generateText-13'"] -- "completion->code" --> runJavascript14["runJavascript <br> id='runJavascript-14'"]
+secrets12("secrets <br> id='secrets-12'"):::secrets -- "PALM_KEY->PALM_KEY" --> palmgenerateText13["palm-generateText <br> id='palm-generateText-13'"]
+promptTemplate11["promptTemplate <br> id='promptTemplate-11'"] -- "prompt->text" --> palmgenerateText13["palm-generateText <br> id='palm-generateText-13'"]
+passthrough10(("passthrough <br> id='passthrough-10'")):::passthrough -- all --> promptTemplate11["promptTemplate <br> id='promptTemplate-11'"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

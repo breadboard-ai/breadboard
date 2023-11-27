@@ -2,61 +2,61 @@
   "title": "New: Math, imperative style graph",
   "edges": [
     {
-      "from": "runJavascript-46",
-      "to": "output-42",
+      "from": "runJavascript-6",
+      "to": "output-2",
       "out": "*",
       "in": "*"
     },
     {
-      "from": "palm-generateText-45",
-      "to": "runJavascript-46",
+      "from": "palm-generateText-5",
+      "to": "runJavascript-6",
       "out": "completion",
       "in": "code"
     },
     {
-      "from": "promptTemplate-43",
-      "to": "palm-generateText-45",
+      "from": "promptTemplate-3",
+      "to": "palm-generateText-5",
       "out": "prompt",
       "in": "text"
     },
     {
-      "from": "secrets-44",
-      "to": "palm-generateText-45",
+      "from": "secrets-4",
+      "to": "palm-generateText-5",
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
-      "from": "input-41",
-      "to": "promptTemplate-43",
+      "from": "input-1",
+      "to": "promptTemplate-3",
       "out": "question",
       "in": "question"
     }
   ],
   "nodes": [
     {
-      "id": "output-42",
+      "id": "output-2",
       "type": "output",
       "configuration": {}
     },
     {
-      "id": "runJavascript-46",
+      "id": "runJavascript-6",
       "type": "runJavascript",
       "configuration": {}
     },
     {
-      "id": "palm-generateText-45",
+      "id": "palm-generateText-5",
       "type": "palm-generateText",
       "configuration": {}
     },
     {
-      "id": "promptTemplate-43",
+      "id": "promptTemplate-3",
       "type": "promptTemplate",
       "configuration": {
         "template": "Write a Javascript function called `run` to compute the result for this question:\nQuestion: {{question}}\nCode: "
       }
     },
     {
-      "id": "secrets-44",
+      "id": "secrets-4",
       "type": "secrets",
       "configuration": {
         "keys": [
@@ -65,7 +65,7 @@
       }
     },
     {
-      "id": "input-41",
+      "id": "input-1",
       "type": "input",
       "configuration": {}
     }
