@@ -129,20 +129,25 @@ export const replaceOutputs = (
   );
 };
 
-type InputReplacer = (inputName: string, inputValue: NodeValue) => NodeValue;
+type InputReplacer = (
+  inputValue: NodeValue,
+  allow: boolean
+) => Promise<NodeValue>;
 
-export const replaceInputs = (
+export const replaceInputs = async (
   inputs: InputValues,
   tunnels: DestinationTunnels,
   replacer: InputReplacer
 ) => {
+  // Decide if we should allow or block values for this node.
+  const allow = Object.values(tunnels).some((tunnel) => tunnel.matches(inputs));
+
   return Object.fromEntries(
-    Object.entries(inputs).map(([inputName, value]) => {
-      const tunnel = tunnels[inputName];
-      if (!tunnel) return [inputName, value];
-      if (!tunnel.matches(inputs)) return [inputName, value];
-      return [inputName, replacer(inputName, value)];
-    })
+    await Promise.all(
+      Object.entries(inputs).map(async ([inputName, value]) => {
+        return [inputName, await replacer(value, allow)];
+      })
+    )
   );
 };
 
@@ -154,9 +159,12 @@ export const replaceInputs = (
 // Note: the rotation will occasionaly cause errors at the break of the week.
 // TODO: Fix the rotation to be window-based or come up with an even better
 // solution.
-const expirationHash = Math.round(Date.now() / 1000 / 60 / 60 / 7).toString(36);
-const TUNNEL_PREFIX = `T-${expirationHash}-`;
-const TUNNEL_SUFFIX = `-${expirationHash}-T`;
+const TUNNEL_HASH = Math.round(Date.now() / 1000 / 60 / 60 / 7).toString(36);
+const TUNNEL_PREFIX = `T-${TUNNEL_HASH}-`;
+const TUNNEL_SUFFIX = `-${TUNNEL_HASH}-T`;
+const SPLIT_REGEX = new RegExp(`(${TUNNEL_PREFIX}.*?${TUNNEL_SUFFIX})`, "gm");
+const TUNNEL_REGEX = new RegExp(`^${TUNNEL_PREFIX}(.+?)${TUNNEL_SUFFIX}$`);
+const BLOCKED_TUNNEL_VALUE = "VALUE_BLOCKED";
 
 export const getTunnelValue = (
   nodeType: NodeTypeIdentifier,
@@ -165,6 +173,80 @@ export const getTunnelValue = (
 ) => {
   const memoize = JSON.stringify(inputs);
   return `${TUNNEL_PREFIX}${nodeType}$${outputName}$${memoize}${TUNNEL_SUFFIX}`;
+};
+
+type TunnelScanResult = (
+  | {
+      value: string;
+    }
+  | {
+      nodeType: NodeTypeIdentifier;
+      outputName: string;
+      inputs: string;
+    }
+)[];
+
+export const scanTunnelValue = (value: string): TunnelScanResult => {
+  const parts = value.split(SPLIT_REGEX).filter(Boolean);
+  return parts.map((part) => {
+    const match = part.match(TUNNEL_REGEX);
+    if (match) {
+      // This is a tunnel value, parse it into components and return
+      // a helper object that enables the caller to replace the value.
+      const [nodeType, outputName, inputs] = match[1].split("$");
+      return {
+        nodeType,
+        outputName,
+        inputs,
+      };
+    } else {
+      // This is a regular substring, return a helper object that handles
+      // joining it back together as a string.
+      return {
+        value: part,
+      };
+    }
+  });
+};
+
+type TunnelValueReplacer = (
+  nodeType: NodeTypeIdentifier,
+  inputs: InputValues
+) => Promise<void | OutputValues>;
+
+export const replaceTunnelledInputs = async (
+  input: NodeValue,
+  /**
+   * If true, the tunneled inputs will be replaced with the original value.
+   * If false, the tunneled inputs should be blocked. The tunnel value
+   * is replaced with a BLOCKED_TUNNEL_VALUE.
+   */
+  allow: boolean,
+  replacer: TunnelValueReplacer
+) => {
+  const json = JSON.stringify(input);
+  const parts = scanTunnelValue(json);
+
+  const result = await Promise.all(
+    parts.map(async (part) => {
+      if ("inputs" in part) {
+        const inputs = JSON.parse(JSON.parse(`"${part.inputs}"`));
+        const { nodeType, outputName } = part;
+        const outputs = allow
+          ? await replacer(nodeType, inputs)
+          : { [outputName]: BLOCKED_TUNNEL_VALUE };
+        if (!outputs) return "";
+        let jsonString = JSON.stringify(outputs[outputName]);
+        if (jsonString.startsWith('"')) {
+          jsonString = jsonString.slice(1, -1);
+        }
+        jsonString = JSON.stringify(jsonString);
+        return jsonString.slice(1, -1);
+      }
+      return part.value;
+    })
+  );
+  return JSON.parse(result.join(""));
 };
 
 export const createDestinationMap = (map: TunnelMap): TunnelDestinationMap => {
@@ -211,7 +293,7 @@ export const createTunnelKit = (
   handlers: NodeHandlers
 ): Kit => {
   // wrap handlers to tunnel outputs (tunnel entries)
-  handlers = Object.fromEntries(
+  const outputWrappedHandlers = Object.fromEntries(
     Object.entries(handlers).map(([nodeType, handler]) => {
       const nodeTunnels = map[nodeType];
       if (!nodeTunnels) return [nodeType, handler];
@@ -229,8 +311,8 @@ export const createTunnelKit = (
 
   // wrap handlers to connect the tunnel to the inputs (tunnel destinations)
   const destinations = createDestinationMap(map);
-  handlers = Object.fromEntries(
-    Object.entries(handlers).map(([nodeType, handler]) => {
+  const inputWrappedHandlers = Object.fromEntries(
+    Object.entries(outputWrappedHandlers).map(([nodeType, handler]) => {
       const destinationTunnels = destinations[nodeType];
       if (!destinationTunnels) return [nodeType, handler];
       return [
@@ -238,17 +320,26 @@ export const createTunnelKit = (
         async (inputs: InputValues, context: NodeHandlerContext) => {
           return callHandler(
             handler,
-            replaceInputs(inputs, destinationTunnels, (name, value) => {
-              // TODO: Implement replacement here.
-              // scan for tunneled values in `value`.
-              // for each found `tunnel value`,
-              // - extract the node type and output name of the tunnel entry.
-              // - call the handler of the node type for the tunnel entry
-              //   with the inputs that are decoded from the tunnel value
-              // - from the outputs, extract the inputs that are tunneled
-              //   and replace the `tunnel value` with them.
-              return value;
-            }),
+            await replaceInputs(
+              inputs,
+              destinationTunnels,
+              async (value, allow) => {
+                // scan for tunneled values in `value`.
+                // for each found `tunnel value`,
+                // - extract the node type and output name of the tunnel entry.
+                // - call the handler of the node type for the tunnel entry
+                //   with the inputs that are decoded from the tunnel value
+                // - from the outputs, extract the inputs that are tunneled
+                //   and replace the `tunnel value` with them.
+                return replaceTunnelledInputs(
+                  value,
+                  allow,
+                  async (nodeType, inputs) => {
+                    return callHandler(handlers[nodeType], inputs, context);
+                  }
+                );
+              }
+            ),
             context
           );
         },
@@ -258,6 +349,6 @@ export const createTunnelKit = (
 
   return {
     url: "tunnel-kit",
-    handlers,
+    handlers: inputWrappedHandlers,
   };
 };

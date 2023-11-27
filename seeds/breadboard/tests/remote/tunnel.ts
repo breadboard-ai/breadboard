@@ -14,6 +14,8 @@ import {
   readConfig,
   createTunnelKit,
   createDestinationMap,
+  replaceTunnelledInputs,
+  scanTunnelValue,
 } from "../../src/remote/tunnel.js";
 import { BoardRunner } from "../../src/runner.js";
 import { callHandler } from "../../src/handler.js";
@@ -83,73 +85,77 @@ test("replaceOutputs works as advertised", (t) => {
   });
 });
 
-test("replaceInputs works as advertised", (t) => {
+test("replaceInputs works as advertised", async (t) => {
   {
-    const result = replaceInputs(
+    const result = await replaceInputs(
       {
         url: "https://example.com",
         foo: "bar",
       },
       {
-        foo: new NodeTunnel("foo", "fetch", "fetch", {
+        foo: new NodeTunnel("unused", "unused", "unused", {
           url: "https://example2.com",
         }),
       },
-      (name, value) => `${name}=${value}`
+      async (value, allow) => (allow ? `REPLACE=${value}` : "BLOCKED")
     );
     t.deepEqual(result, {
-      url: "https://example.com",
-      foo: "bar",
+      url: "BLOCKED",
+      foo: "BLOCKED",
     });
   }
   {
-    const result = replaceInputs(
+    const result = await replaceInputs(
       {
         url: "https://example.com",
         foo: "bar",
       },
       {
-        foo: new NodeTunnel("foo", "fetch", "fetch", {
+        foo: new NodeTunnel("unused", "unused", "unused", {
           url: "https://example.com",
         }),
       },
-      (name, value) => `${name}=${value}`
+      async (value, allow) => (allow ? `REPLACE=${value}` : "BLOCKED")
     );
     t.deepEqual(result, {
-      url: "https://example.com",
-      foo: "foo=bar",
+      url: "REPLACE=https://example.com",
+      foo: "REPLACE=bar",
     });
   }
   {
-    const result = replaceInputs(
+    const result = await replaceInputs(
       {
         url: "https://example.com",
         foo: "bar",
       },
       {
-        foo: new NodeTunnel("foo", "fetch", "fetch", { url: /example\.com/ }),
+        foo: new NodeTunnel("unused", "unused", "unused", {
+          url: /example\.com/,
+        }),
       },
-      (name, value) => `${name}=${value}`
+      async (value, allow) => (allow ? `REPLACE=${value}` : "BLOCKED")
     );
     t.deepEqual(result, {
-      url: "https://example.com",
-      foo: "foo=bar",
+      url: "REPLACE=https://example.com",
+      foo: "REPLACE=bar",
     });
   }
   {
-    const result = replaceInputs(
+    const result = await replaceInputs(
       {
         url: "https://example.com",
         foo: "bar",
       },
       {
-        url: new NodeTunnel("url", "fetch", "fetch", { url: /example\.com/ }),
+        url: new NodeTunnel("unused", "unused", "unused", {
+          url: /example2\.com/,
+        }),
       },
-      (name, value) => `${name}=${value}`
+      async (value, allow) => (allow ? `REPLACE=${value}` : "BLOCKED")
     );
     t.deepEqual(result, {
-      url: "url=https://example.com",
-      foo: "bar",
+      url: "BLOCKED",
+      foo: "BLOCKED",
     });
   }
 });
@@ -176,6 +182,125 @@ test("createTunnelKit creates a kit that tunnels outputs", async (t) => {
   t.deepEqual(await callHandler(kit.handlers.secrets, {}, {}), {
     API_KEY: getTunnelValue("secrets", "API_KEY", {}),
   });
+});
+
+test("createTunnelKit creates a kit that tunnels outputs to inputs", async (t) => {
+  const handlers = {
+    secrets: async (inputs) => {
+      t.deepEqual(inputs, { keys: ["API_KEY"] });
+      return { API_KEY: "<secret value>" };
+    },
+    fetch: async (inputs) => {
+      t.deepEqual(inputs, { url: "<secret value>", method: "POST" });
+      return { result: "fetch result" };
+    },
+  } satisfies NodeHandlers;
+  const kit = createTunnelKit(
+    {
+      secrets: {
+        API_KEY: [new NodeTunnel("API_KEY", "secrets", "fetch")],
+      },
+    },
+    handlers
+  );
+
+  t.deepEqual(
+    await callHandler(
+      kit.handlers.fetch,
+      {
+        url: getTunnelValue("secrets", "API_KEY", { keys: ["API_KEY"] }),
+        method: "POST",
+      },
+      {}
+    ),
+    {
+      result: "fetch result",
+    }
+  );
+});
+
+test("createTunnelKit correctly blocks tunnels", async (t) => {
+  {
+    const handlers = {
+      secrets: async (inputs) => {
+        t.deepEqual(inputs, { keys: ["API_KEY"] });
+        return { API_KEY: "<secret value>" };
+      },
+      fetch: async (inputs) => {
+        t.deepEqual(inputs, { url: "VALUE_BLOCKED", method: "POST" });
+        return { result: "fetch result" };
+      },
+    } satisfies NodeHandlers;
+    const kit = createTunnelKit(
+      {
+        secrets: {
+          API_KEY: [
+            new NodeTunnel("API_KEY", "secrets", "fetch", {
+              url: /example\.com/,
+            }),
+          ],
+        },
+      },
+      handlers
+    );
+
+    t.deepEqual(
+      await callHandler(
+        kit.handlers.fetch,
+        {
+          url: getTunnelValue("secrets", "API_KEY", { keys: ["API_KEY"] }),
+          method: "POST",
+        },
+        {}
+      ),
+      {
+        result: "fetch result",
+      }
+    );
+  }
+  {
+    const handlers = {
+      secrets: async (inputs) => {
+        t.deepEqual(inputs, { keys: ["API_KEY"] });
+        return { API_KEY: "<secret value>" };
+      },
+      fetch: async (inputs) => {
+        t.deepEqual(inputs, {
+          url: "https://example.com/key=<secret value>",
+          method: "POST",
+        });
+        return { result: "fetch result" };
+      },
+    } satisfies NodeHandlers;
+    const kit = createTunnelKit(
+      {
+        secrets: {
+          API_KEY: [
+            new NodeTunnel("API_KEY", "secrets", "fetch", {
+              url: /example\.com/,
+            }),
+          ],
+        },
+      },
+      handlers
+    );
+
+    t.deepEqual(
+      await callHandler(
+        kit.handlers.fetch,
+        {
+          url: `https://example.com/key=${getTunnelValue("secrets", "API_KEY", {
+            keys: ["API_KEY"],
+          })}`,
+          method: "POST",
+        },
+        {}
+      ),
+      {
+        result: "fetch result",
+      }
+    );
+  }
 });
 
 test("createDestinationMap works as advertised", (t) => {
@@ -213,6 +338,157 @@ test("createDestinationMap works as advertised", (t) => {
           "someNodeThatUsesAPIKey"
         ),
       },
+    });
+  }
+});
+
+test("scanTunnelValue works as advertised", (t) => {
+  const tunnelValue = getTunnelValue("nodeType", "outputName", {
+    inputName: "inputValue",
+  });
+  t.deepEqual(scanTunnelValue(`HELLO${tunnelValue}WORLD`), [
+    { value: "HELLO" },
+    {
+      nodeType: "nodeType",
+      outputName: "outputName",
+      inputs: '{"inputName":"inputValue"}',
+    },
+    { value: "WORLD" },
+  ]);
+  t.deepEqual(scanTunnelValue(`HELLO${tunnelValue}`), [
+    { value: "HELLO" },
+    {
+      nodeType: "nodeType",
+      outputName: "outputName",
+      inputs: '{"inputName":"inputValue"}',
+    },
+  ]);
+  t.deepEqual(scanTunnelValue(`${tunnelValue}WORLD`), [
+    {
+      nodeType: "nodeType",
+      outputName: "outputName",
+      inputs: '{"inputName":"inputValue"}',
+    },
+    { value: "WORLD" },
+  ]);
+  t.deepEqual(scanTunnelValue(tunnelValue), [
+    {
+      nodeType: "nodeType",
+      outputName: "outputName",
+      inputs: '{"inputName":"inputValue"}',
+    },
+  ]);
+  t.deepEqual(scanTunnelValue(""), []);
+  t.deepEqual(scanTunnelValue("HELLO WORLD"), [{ value: "HELLO WORLD" }]);
+});
+
+test("replaceTunnelledInputs correctly round-trips objects", async (t) => {
+  const output = await replaceTunnelledInputs(
+    {
+      url: "https://example.com",
+      foo: "bar",
+    },
+    false,
+    async (_, inputs) => {
+      return inputs;
+    }
+  );
+  t.deepEqual(output, {
+    url: "https://example.com",
+    foo: "bar",
+  });
+});
+
+test("replaceTunnelledInputs correctly replaces values in string inputs", async (t) => {
+  {
+    const output = await replaceTunnelledInputs(
+      `HELLO ${getTunnelValue("secrets", "API_KEY", {
+        API_KEY: ["API_KEY"],
+      })} WORLD`,
+      true,
+      async (_, inputs) => {
+        t.deepEqual(inputs, { API_KEY: ["API_KEY"] });
+        return inputs;
+      }
+    );
+    t.deepEqual(output, `HELLO ["API_KEY"] WORLD`);
+  }
+  {
+    const output = await replaceTunnelledInputs(
+      `HELLO ${getTunnelValue("secrets", "API_KEY", {
+        API_KEY: ["API_KEY"],
+      })} WORLD`,
+      true,
+      async (_, inputs) => {
+        t.deepEqual(inputs, { API_KEY: ["API_KEY"] });
+        return {
+          API_KEY: "<secret value>",
+        };
+      }
+    );
+    t.deepEqual(output, `HELLO <secret value> WORLD`);
+  }
+});
+
+test("replaceTunnelledInputs correctly replaces values in object inputs", async (t) => {
+  {
+    const output = await replaceTunnelledInputs(
+      {
+        value: `HELLO ${getTunnelValue("secrets", "API_KEY", {
+          API_KEY: ["API_KEY"],
+        })} WORLD`,
+      },
+      true,
+      async (_, inputs) => {
+        t.deepEqual(inputs, { API_KEY: ["API_KEY"] });
+        return {
+          API_KEY: "<secret value>",
+        };
+      }
+    );
+    t.deepEqual(output, { value: `HELLO <secret value> WORLD` });
+  }
+  {
+    const output = await replaceTunnelledInputs(
+      [
+        `HELLO ${getTunnelValue("secrets", "API_KEY", {
+          API_KEY: ["API_KEY"],
+        })} WORLD`,
+      ],
+      true,
+      async (_, inputs) => {
+        t.deepEqual(inputs, { API_KEY: ["API_KEY"] });
+        return {
+          API_KEY: "<secret value>",
+        };
+      }
+    );
+    t.deepEqual(output, [`HELLO <secret value> WORLD`]);
+  }
+});
+
+test("replaceTunnelledInputs correctly replaces multiple values", async (t) => {
+  {
+    const output = await replaceTunnelledInputs(
+      {
+        value: `HELLO ${getTunnelValue("secrets", "API_KEY", {
+          API_KEY: ["API_KEY"],
+        })} WORLD`,
+        also: getTunnelValue("secrets", "ANOTHER_KEY", {
+          ANOTHER_KEY: ["ANOTHER_KEY"],
+        }),
+      },
+      true,
+      async () => {
+        return {
+          API_KEY: "<secret value>",
+          ANOTHER_KEY: "<another secret value>",
+        };
+      }
+    );
+    t.deepEqual(output, {
+      value: `HELLO <secret value> WORLD`,
+      also: "<another secret value>",
     });
   }
 });
