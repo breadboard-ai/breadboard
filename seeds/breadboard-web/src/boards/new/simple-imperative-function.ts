@@ -5,7 +5,8 @@
  */
 
 import { recipe } from "@google-labs/breadboard";
-import { core } from "../../new/kits.js";
+
+import { core } from "@google-labs/core-kit";
 
 export const graph = recipe(async (inputs) => {
   const { foo } = await core.passthrough(inputs);

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { core } from "../../new/kits.js";
+import { core } from "@google-labs/core-kit";
 
 export const graph = core.passthrough({ foo: "bar" });
 

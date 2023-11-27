@@ -5,7 +5,8 @@
  */
 
 import { recipe } from "@google-labs/breadboard";
-import { core } from "../../new/kits.js";
+
+import { core } from "@google-labs/core-kit";
 
 export const graph = recipe((inputs) => {
   const p1 = core.passthrough(inputs);

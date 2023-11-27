@@ -10,7 +10,7 @@
 import { intro, log, note, outro, text } from "@clack/prompts";
 import { config } from "dotenv";
 
-import { BoardRunner } from "./lib.ts";
+import { Runner as BoardRunner } from "@google-labs/breadboard";
 import {
   type ProbeEvent,
   type OutputValues,

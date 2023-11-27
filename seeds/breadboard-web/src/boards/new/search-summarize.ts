@@ -4,7 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { base, starter, palm } from "../../new/kits.js";
+import { base } from "@google-labs/breadboard";
+import { starter } from "@google-labs/llm-starter";
+import { palm } from "@google-labs/palm-kit";
 
 const input = base.input({
   $id: "input",

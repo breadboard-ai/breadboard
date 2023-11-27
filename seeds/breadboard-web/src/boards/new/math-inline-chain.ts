@@ -4,7 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { core, starter, palm } from "../../new/kits.js";
+import { core } from "@google-labs/core-kit";
+import { starter } from "@google-labs/llm-starter";
+import { palm } from "@google-labs/palm-kit";
 
 const question = "1+1";
 

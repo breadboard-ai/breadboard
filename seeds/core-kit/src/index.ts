@@ -161,3 +161,26 @@ export const Core = builder.build({
 export type Core = InstanceType<typeof Core>;
 
 export default Core;
+
+/**
+ * This is a wrapper around existing kits for the new syntax to add types.
+ *
+ * This should transition to a codegen step, with typescript types constructed
+ * from .describe() calls.
+ */
+import {
+  addKit,
+  NewNodeValue as NodeValue,
+  NewInputValues as InputValues,
+  NewOutputValues as OutputValues,
+  NewNodeFactory as NodeFactory,
+} from "@google-labs/breadboard";
+
+export const core = addKit(Core) as unknown as {
+  passthrough: NodeFactory<InputValues, OutputValues>;
+  append: NodeFactory<
+    { accumulator: NodeValue; [key: string]: NodeValue },
+    { accumulator: NodeValue }
+  >;
+  // TODO: Other Core nodes.
+};

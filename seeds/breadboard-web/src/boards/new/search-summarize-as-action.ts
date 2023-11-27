@@ -8,7 +8,8 @@ import { z } from "zod";
 
 import { recipe } from "@google-labs/breadboard";
 
-import { starter, palm } from "../../new/kits.js";
+import { starter } from "@google-labs/llm-starter";
+import { palm } from "@google-labs/palm-kit";
 
 export const graph = recipe(
   {

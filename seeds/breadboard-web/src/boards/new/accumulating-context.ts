@@ -6,7 +6,10 @@
 
 import { z } from "zod";
 
-import { base, core, starter, palm } from "../../new/kits.js";
+import { base } from "@google-labs/breadboard";
+import { core } from "@google-labs/core-kit";
+import { starter } from "@google-labs/llm-starter";
+import { palm } from "@google-labs/palm-kit";
 
 const input = base.input({
   $id: "userRequest",

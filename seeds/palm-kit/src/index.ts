@@ -40,3 +40,18 @@ export const PaLMKit = builder.build({
 export type PaLMKit = InstanceType<typeof PaLMKit>;
 
 export default PaLMKit;
+
+/**
+ * This is a wrapper around existing kits for the new syntax to add types.
+ *
+ * This should transition to a codegen step, with typescript types constructed
+ * from .describe() calls.
+ */
+import { addKit, NewNodeFactory as NodeFactory } from "@google-labs/breadboard";
+
+export const palm = addKit(PaLMKit, "palm-") as unknown as {
+  generateText: NodeFactory<
+    { text: string; PALM_KEY: string },
+    { completion: string }
+  >;
+};
