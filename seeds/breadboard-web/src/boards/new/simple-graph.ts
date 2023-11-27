@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { recipe } from "../../new/lib.js";
+import { recipe } from "@google-labs/breadboard";
 import { core } from "../../new/kits.js";
 
 export const graph = recipe((inputs) => {

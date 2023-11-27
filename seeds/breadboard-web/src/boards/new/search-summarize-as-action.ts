@@ -6,7 +6,7 @@
 
 import { z } from "zod";
 
-import { recipe } from "../../new/lib.js";
+import { recipe } from "@google-labs/breadboard";
 
 import { starter, palm } from "../../new/kits.js";
 

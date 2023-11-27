@@ -992,16 +992,8 @@ class Value<T extends NodeValue = NodeValue>
     ) as PromiseLike<TResult1 | TResult2>;
   }
 
-  asNodeInput(): [
-    NodeImpl<InputValues, OutputValues>,
-    { [key: string]: string },
-    constant: boolean
-  ] {
-    return [
-      this.#node.unProxy() as NodeImpl<InputValues, OutputValues>,
-      this.#keymap,
-      this.#constant,
-    ];
+  asNodeInput(): [NodeImpl, { [key: string]: string }, boolean] {
+    return [this.#node.unProxy() as NodeImpl, this.#keymap, this.#constant];
   }
 
   to<
@@ -1432,7 +1424,7 @@ function createProbeCallbacks(probe: EventTarget): InvokeCallbacks {
  * Implements the current API, so that we can run in existing Breadboard
  * environments.
  */
-export class BoardRunner implements BreadboardRunner {
+export class Runner implements BreadboardRunner {
   kits: Kit[] = []; // No-op for now
   edges: Edge[] = [];
   nodes: NodeDescriptor[] = [];
@@ -1612,17 +1604,15 @@ export class BoardRunner implements BreadboardRunner {
   static async fromNode(
     node: NodeImpl,
     metadata?: GraphMetadata
-  ): Promise<BoardRunner> {
-    const board = new BoardRunner();
+  ): Promise<Runner> {
+    const board = new Runner();
     Object.assign(board, await node.serialize(metadata));
     board.#anyNode = node;
     return board;
   }
 
-  static async fromGraphDescriptor(
-    graph: GraphDescriptor
-  ): Promise<BoardRunner> {
-    const board = new BoardRunner();
+  static async fromGraphDescriptor(graph: GraphDescriptor): Promise<Runner> {
+    const board = new Runner();
     board.nodes = graph.nodes;
     board.edges = graph.edges;
     board.args = graph.args;
@@ -1659,9 +1649,9 @@ export class BoardRunner implements BreadboardRunner {
       base?: string;
       outerGraph?: GraphDescriptor;
     }
-  ): Promise<BoardRunner> {
+  ): Promise<Runner> {
     const graph = await OriginalBoardRunner.load(url, options);
-    const board = await BoardRunner.fromGraphDescriptor(graph);
+    const board = await Runner.fromGraphDescriptor(graph);
     return board;
   }
 }

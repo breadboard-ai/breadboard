@@ -12,13 +12,13 @@
  */
 
 import {
-  NodeValue,
-  InputValues,
-  OutputValues,
+  NewNodeValue as NodeValue,
+  NewInputValues as InputValues,
+  NewOutputValues as OutputValues,
   addKit,
-  NodeFactory,
+  NewNodeFactory as NodeFactory,
   base,
-} from "./lib.js";
+} from "@google-labs/breadboard";
 
 import { Core } from "@google-labs/core-kit";
 import { Starter } from "@google-labs/llm-starter";
