@@ -159,7 +159,10 @@ export const replaceInputs = async (
 // Note: the rotation will occasionaly cause errors at the break of the week.
 // TODO: Fix the rotation to be window-based or come up with an even better
 // solution.
-const TUNNEL_HASH = Math.round(Date.now() / 1000 / 60 / 60 / 7).toString(36);
+const MILLISECONDS_IN_A_WEEK = 1000 * 60 * 60 * 24 * 7;
+const TUNNEL_HASH = Math.round(Date.now() / MILLISECONDS_IN_A_WEEK).toString(
+  36
+);
 const TUNNEL_PREFIX = `T-${TUNNEL_HASH}-`;
 const TUNNEL_SUFFIX = `-${TUNNEL_HASH}-T`;
 const SPLIT_REGEX = new RegExp(`(${TUNNEL_PREFIX}.*?${TUNNEL_SUFFIX})`, "gm");

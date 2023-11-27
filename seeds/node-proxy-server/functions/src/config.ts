@@ -17,6 +17,9 @@ export default defineConfig({
   board,
   proxy: [
     "fetch",
+    "palm-generateText",
+    "palm-embedText",
+    "promptTemplate",
     {
       node: "secrets",
       tunnel: {
