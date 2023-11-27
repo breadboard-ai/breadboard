@@ -99,7 +99,7 @@ export class Input extends HTMLElement {
         #choice-container {
           display: grid;
           justify-items: start;
-          grid-template-columns: 1fr 3fr;
+          grid-template-columns: 1fr 1fr 1fr 1fr;
           row-gap: calc(var(--bb-grid-size) * 2);
           flex: 1;
           margin-right: calc(var(--bb-grid-size) * 12);
@@ -117,7 +117,7 @@ export class Input extends HTMLElement {
         }
 
         label.first-of-type {
-          grid-column: 1 / 3;
+          grid-column: 1 / 5;
         }
 
         #input {
@@ -126,7 +126,7 @@ export class Input extends HTMLElement {
         }
 
         .multiline {
-          grid-column: 1 / 3;
+          grid-column: 1 / 5;
           flex: 1;
           width: 100%;
           overflow: hidden;
@@ -139,13 +139,17 @@ export class Input extends HTMLElement {
         input[type=password],
         textarea,
         .parsed-value {
-          grid-column: 1 / 3;
+          grid-column: 1 / 5;
           border-radius: calc(var(--grid-size) * 10);
           background: rgb(255, 255, 255);
           min-height: calc(var(--grid-size) * 12);
           padding: 0 calc(var(--grid-size) * 10) 0 calc(var(--grid-size) * 8);
           width: 100%;
           border: 1px solid rgb(209, 209, 209);
+        }
+
+        bb-multipart-input {
+          grid-column: 1 / 5;
         }
 
         textarea {
@@ -187,9 +191,17 @@ export class Input extends HTMLElement {
           border: none;
         }
 
-        img {
-          max-width: 80%;
-          height: 6rem;
+        input[type=submit][disabled] {
+          opacity: 50%;
+        }
+
+        .parsed-value img {
+          width: calc(var(--grid-size) * 36);
+          height: calc(var(--grid-size) * 36);
+          margin: calc(var(--grid-size) * 5) 0;
+          border-radius: calc(var(--grid-size) * 6);
+          object-fit: cover;
+          aspect-ratio: auto;
         }
       </style>
     `;
@@ -331,17 +343,29 @@ export class Input extends HTMLElement {
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
 
-        const choiceContainer = document.createElement("div");
-        choiceContainer.id = "choice-container";
-        root.appendChild(choiceContainer);
-
         const data: InputData = {};
-        await Promise.all(
+        const elementGroups: HTMLElement[][] = await Promise.all(
           Object.entries(properties).map(async ([key, property]) => {
+            const elementsToAdd = [];
             if (isMultipart(property)) {
               const { html, value } = await getMultipartValue(form, key);
               data[key] = value;
-              root.append(`${property.title}: `, ...html);
+
+              for (const element of html) {
+                const label = document.createElement("label");
+                label.textContent = `${property.title}`;
+
+                const parsedValue = document.createElement("div");
+                parsedValue.classList.add("parsed-value");
+                parsedValue.classList.toggle(
+                  "parsed-value-image",
+                  element.tagName === "IMG"
+                );
+                parsedValue.appendChild(element);
+
+                elementsToAdd.push(label);
+                elementsToAdd.push(parsedValue);
+              }
             } else {
               const input = form[key];
               if (input.value) {
@@ -354,13 +378,26 @@ export class Input extends HTMLElement {
                   value.classList.add("parsed-value");
                   value.textContent = `${parsedValue}`;
 
-                  choiceContainer.appendChild(label);
-                  choiceContainer.appendChild(value);
+                  elementsToAdd.push(label);
+                  elementsToAdd.push(value);
                 }
               }
             }
+
+            return elementsToAdd;
           })
         );
+
+        const choiceContainer = document.createElement("div");
+        choiceContainer.id = "choice-container";
+        root.appendChild(choiceContainer);
+
+        for (const group of elementGroups) {
+          for (const el of group) {
+            choiceContainer.appendChild(el);
+          }
+        }
+
         this.#rememberValues(data);
         if (this.remember) this.#memory.rememberSaving(properties);
         input.remove();

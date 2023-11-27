@@ -36,9 +36,13 @@ export class MultipartInput extends HTMLElement {
     const root = this.attachShadow({ mode: "open" });
     root.innerHTML = `<style>
           :host {
-            display: flex;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            column-gap: calc(var(--bb-grid-size) * 2);
             flex-direction: column;
             flex: 1;
+            position: relative;
           }
 
           * {
@@ -49,29 +53,87 @@ export class MultipartInput extends HTMLElement {
             width: var(--bb-input-width, 80%);
           }
 
-          div {
-            padding-top: 0.5rem;
+          #controls {
+            position: absolute;
+            top: -32px;
+            right: 0;
+            height: 24px;
           }
 
           button {
             cursor: pointer;
             background-color: transparent;
-            padding-right: 1rem;
+            margin-left: calc(var(--bb-grid-size) * 2);
+            padding-left: calc(var(--bb-grid-size) * 5);
             border: none;
+            position: relative;
+            z-index: 1;
+            height: 25px;
+            transition: opacity var(--bb-easing-duration-out) var(--bb-easing);
+            opacity: 0.5;
+            font-size: 0;
           }
+  
+          button:hover {
+            transition: opacity var(--bb-easing-duration-in) var(--bb-easing);
+            opacity: 1;
+          }
+
+          button::before {
+            content: '';
+            width: 24px;
+            height: 24px;
+            background: red;
+            position: absolute;
+            left: calc(var(--bb-grid-size) * 1);
+            top: 0;
+            pointer-events: none;
+          }
+
+          #add-text::before {
+            background: var(--bb-icon-add-note) center center no-repeat;
+          }
+
+          #add-image::before {
+            background: var(--bb-icon-add-photo) center center no-repeat;
+          }
+
+          @media (min-width: 910px) {
+            button {
+              font-size: var(--bb-text-medium);
+              padding-left: calc(var(--bb-grid-size) * 8);
+            }
+          }
+
+          ::slotted(.full-width) {
+            grid-column: 1 / 5;
+          }
+
       </style>
-      <slot></slot>
-      <div>
-        <button id="add-text">➕ Add text</button>
-        <button id="add-image">🖼️ Add image</button>
-      </div>`;
-    root.querySelector("#add-text")?.addEventListener("click", () => {
-      this.append(new MultipartInputText());
-    });
+      <div id="controls">
+        <button id="add-text">Add text</button>
+        <button id="add-image">Add image</button>
+      </div>
+      <slot name="text"></slot>
+      <slot name="image"></slot>`;
+
+    const appendText = () => {
+      const text = new MultipartInputText();
+      text.classList.add("full-width");
+      text.slot = "text";
+      this.append(text);
+    };
+
+    root.querySelector("#add-text")?.addEventListener("click", appendText);
+
     root.querySelector("#add-image")?.addEventListener("click", () => {
-      this.append(new MultipartInputImage());
+      const image = new MultipartInputImage();
+      image.classList.add("reserved");
+      image.slot = "image";
+      this.append(image);
     });
-    this.append(new MultipartInputText());
+
+    appendText();
   }
 
   async getValue() {
@@ -99,6 +161,30 @@ abstract class MultipartInputPart extends HTMLElement {
       <style>
         :host {
           display: flex;
+          width: 100%;
+          position: relative;
+          margin-bottom: calc(var(--grid-size) * 2);
+          min-height: calc(var(--grid-size) * 32);
+        }
+
+        :host(.reserved) {
+          border-radius: calc(var(--grid-size) * 8);
+          background: rgb(255, 255, 255);
+          border: 1px solid rgb(209, 209, 209);
+        }
+
+        :host(.pending)::before {
+          content: '';
+          width: calc(100% - var(--grid-size) * 12);
+          height: calc(var(--grid-size) * 31);
+          margin: calc(var(--grid-size) * 2);
+          border-radius: calc(var(--grid-size) * 6);
+          background: rgb(240, 240, 240);
+          box-sizing: border-box;
+        }
+
+        * {
+          box-sizing: border-box;
         }
 
         #delete {
@@ -112,16 +198,49 @@ abstract class MultipartInputPart extends HTMLElement {
           background-color: transparent;
         }
 
+        .multiline {
+          grid-column: 1 / 5;
+          flex: 1;
+          width: 100%;
+          overflow: hidden;
+          border-radius: calc(var(--grid-size) * 10);
+          border: 1px solid rgb(209, 209, 209);
+          height: 100%;
+        }
+
         textarea {
-          width: 80%;
+          resize: none;
+          line-height: 1.4;
+          border: none;
+          width: 100%;
+          height: 100%;
+          border-radius: calc(var(--grid-size) * 10);
+          background: rgb(255, 255, 255);
+          min-height: calc(var(--grid-size) * 12);
+          padding: calc(var(--grid-size) * 4) calc(var(--grid-size) * 10) calc(var(--grid-size) * 4) calc(var(--grid-size) * 8);
         }
 
         img {
-          max-width: 80%;
-          height: 6rem;
+          width: calc(100% - 32px);
+          height: calc(var(--grid-size) * 36);
+          padding: calc(var(--grid-size) * 2);
+          border-radius: calc(var(--grid-size) * 8);
+          object-fit: cover;
+          aspect-ratio: auto;
+        }
+
+        #delete {
+          position: absolute;
+          top: 50%;
+          right: calc(var(--grid-size) * 2);
+          background: rgb(255, 255, 255);
+          border-radius: 50%;
+          background: var(--bb-icon-delete) center center no-repeat;
+          font-size: 0;
+          translate: 0 -50%;
         }
       </style>
-      <button id="delete">🗑️</button>
+      <button id="delete" title="Delete">Delete</button>
     `;
     root.querySelector("#delete")?.addEventListener("click", () => {
       this.remove();
@@ -136,6 +255,8 @@ export class MultipartInputImage extends MultipartInputPart {
 
   constructor() {
     super();
+    this.classList.add("pending");
+
     const upload = document.createElement("input") as HTMLInputElement;
     upload.type = "file";
     upload.accept = "image/png, image/jpeg";
@@ -145,7 +266,13 @@ export class MultipartInputImage extends MultipartInputPart {
       this.#file = upload.files[0];
       image.src = URL.createObjectURL(this.#file);
       this.shadowRoot?.prepend(image);
+      this.classList.remove("pending");
     });
+
+    upload.addEventListener("cancel", () => {
+      this.remove();
+    });
+
     upload.click();
   }
 
@@ -156,10 +283,8 @@ export class MultipartInputImage extends MultipartInputPart {
     return new Promise<MultipartData>((resolve) => {
       reader.addEventListener("loadend", async () => {
         const base64url = reader.result as string;
-        const html = document.createElement("span");
-        const img = document.createElement("img");
-        img.src = base64url;
-        html.append(img);
+        const html = document.createElement("img");
+        html.src = base64url;
         const data = base64url.slice(base64url.indexOf(",") + 1);
         resolve({
           value: {
@@ -176,9 +301,13 @@ export class MultipartInputImage extends MultipartInputPart {
 export class MultipartInputText extends MultipartInputPart {
   constructor() {
     super();
-    const textarea = document.createElement("textarea");
-    textarea.placeholder = "text";
-    this.shadowRoot?.prepend(textarea);
+    const container = document.createElement("div");
+    container.classList.add("multiline");
+
+    const textarea = container.appendChild(document.createElement("textarea"));
+    textarea.placeholder = "Enter your text";
+    textarea.required = true;
+    this.shadowRoot?.prepend(container);
   }
 
   async getData() {

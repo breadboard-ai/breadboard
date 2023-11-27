@@ -41,6 +41,9 @@ html {
   --bb-icon-warning: url(/third_party/icons/warning.svg);
   --bb-icon-error: url(/third_party/icons/error.svg);
   --bb-icon-copy-to-clipboard: url(/third_party/icons/copy-to-clipboard.svg);
+  --bb-icon-add-photo: url(/third_party/icons/add-photo.svg);
+  --bb-icon-add-note: url(/third_party/icons/add-note.svg);
+  --bb-icon-delete: url(/third_party/icons/delete.svg);
 }
 
 html,
