@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { action } from "../../new/lib.js";
+import { recipe } from "../../new/lib.js";
 import { core } from "../../new/kits.js";
 
-export const graph = action((inputs) => {
+export const graph = recipe((inputs) => {
   const p1 = core.passthrough(inputs);
   const { foo } = p1; // Get an output, as a Promise!
   return { foo };

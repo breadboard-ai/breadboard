@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { action } from "../../new/lib.js";
+import { recipe } from "../../new/lib.js";
 import { starter, palm } from "../../new/kits.js";
 
-const math = action((inputs) => {
+const math = recipe((inputs) => {
   return starter
     .promptTemplate({
       template:
@@ -24,12 +24,12 @@ const math = action((inputs) => {
     .to(starter.runJavascript());
 });
 
-const search = action((inputs) => {
+const search = recipe((inputs) => {
   // TODO: Implement
   return inputs;
 });
 
-export const graph = action(async (inputs) => {
+export const graph = recipe(async (inputs) => {
   const { completion } = await starter
     .promptTemplate({
       template:

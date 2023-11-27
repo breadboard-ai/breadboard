@@ -124,7 +124,7 @@ export interface Serializeable {
  *
  * @param fn Handler or graph creation function
  */
-export function action<
+export function recipe<
   I extends InputValues = InputValues,
   O extends OutputValues = OutputValues
 >(fn: NodeHandlerFunction<I, O>): NodeFactory<I, O> & Serializeable;
@@ -134,7 +134,7 @@ export function action<
  *
  * @param options Object with at least `input`, `output` and `invoke` set
  */
-export function action<I extends InputValues, O extends OutputValues>(options: {
+export function recipe<I extends InputValues, O extends OutputValues>(options: {
   input: z.ZodType<I>;
   output: z.ZodType<O>;
   invoke: NodeHandlerFunction<I, O>;
@@ -149,7 +149,7 @@ export function action<I extends InputValues, O extends OutputValues>(options: {
  * @param options `input` and `output` schemas
  * @param fn Handler function
  */
-export function action<I extends InputValues, O extends OutputValues>(
+export function recipe<I extends InputValues, O extends OutputValues>(
   options: {
     input: z.ZodType<I>;
     output: z.ZodType<O>;
@@ -159,7 +159,7 @@ export function action<I extends InputValues, O extends OutputValues>(
   fn?: NodeHandlerFunction<I, O>
 ): NodeFactory<I, O> & Serializeable;
 
-export function action<I extends InputValues, O extends OutputValues>(
+export function recipe<I extends InputValues, O extends OutputValues>(
   optionsOrFn:
     | {
         input: z.ZodType<I>;

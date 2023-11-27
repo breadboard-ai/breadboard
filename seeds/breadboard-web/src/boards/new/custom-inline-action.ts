@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { action } from "../../new/lib.js";
+import { recipe } from "../../new/lib.js";
 
-export const graph = action((inputs) => {
-  return action<{ a: number; b: number }, { result: number }>(
+export const graph = recipe((inputs) => {
+  return recipe<{ a: number; b: number }, { result: number }>(
     async (inputs) => {
       const { a, b } = await inputs;
       return { result: (a || 0) + (b || 0) };

@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { action } from "../../new/lib.js";
+import { recipe } from "../../new/lib.js";
 import { starter, palm } from "../../new/kits.js";
 
-export const graph = action((inputs) => {
+export const graph = recipe((inputs) => {
   const { prompt } = starter.promptTemplate({
     template:
       "Write a Javascript function called `run` to compute the result for this question:\nQuestion: {{question}}\nCode: ",

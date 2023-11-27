@@ -6,11 +6,11 @@
 
 import { z } from "zod";
 
-import { action } from "../../new/lib.js";
+import { recipe } from "../../new/lib.js";
 
 import { starter, palm } from "../../new/kits.js";
 
-export const graph = action(
+export const graph = recipe(
   {
     input: z.object({
       text: z.string().describe("Query: What would you like to search for?"),
