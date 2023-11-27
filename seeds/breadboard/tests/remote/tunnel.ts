@@ -303,6 +303,53 @@ test("createTunnelKit correctly blocks tunnels", async (t) => {
   }
 });
 
+test("createTunnelKit correctly tunnels multiple inputs", async (t) => {
+  {
+    const handlers = {
+      secrets: async () => {
+        return {
+          API_KEY: "<secret value>",
+          ANOTHER_KEY: "<another secret value>",
+        };
+      },
+      fetch: async (inputs) => {
+        t.deepEqual(inputs, {
+          url: "https://example.com/key=<secret value>&another=<another secret value>",
+          method: "POST",
+        });
+        return { result: "fetch result" };
+      },
+    } satisfies NodeHandlers;
+    const kit = createTunnelKit(
+      {
+        secrets: {
+          API_KEY: [new NodeTunnel("API_KEY", "secrets", "fetch")],
+          ANOTHER_KEY: [new NodeTunnel("ANOTHER_KEY", "secrets", "fetch")],
+        },
+      },
+      handlers
+    );
+
+    t.deepEqual(
+      await callHandler(
+        kit.handlers.fetch,
+        {
+          url: `https://example.com/key=${getTunnelValue("secrets", "API_KEY", {
+            keys: ["API_KEY"],
+          })}&another=${getTunnelValue("secrets", "ANOTHER_KEY", {
+            keys: ["ANOTHER_KEY"],
+          })}`,
+          method: "POST",
+        },
+        {}
+      ),
+      {
+        result: "fetch result",
+      }
+    );
+  }
+});
+
 test("createDestinationMap works as advertised", (t) => {
   {
     const output = createDestinationMap({
