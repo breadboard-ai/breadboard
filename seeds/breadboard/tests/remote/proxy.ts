@@ -78,3 +78,83 @@ test("ProxyClient creates functional proxy kits", async (t) => {
   const outputs = await board.runOnce({ hello: "world" }, { kits });
   t.deepEqual(outputs, { hello: "dlorw" });
 });
+
+test("ProxyServer can be configured to tunnel nodes", async (t) => {
+  {
+    const connection = new MockHTTPConnection<AnyProxyRequestMessage>();
+    connection.onRequest(async (request, response) => {
+      const serverBoard = new Board();
+      serverBoard.addKit(TestKit);
+      const server = new ProxyServer(
+        new HTTPServerTransport(request, response)
+      );
+      await server.serve({
+        board: serverBoard,
+        proxy: [
+          {
+            node: "test",
+            tunnel: {
+              hello: "reverser",
+            },
+          },
+          "reverser",
+        ],
+      });
+    });
+    const client = new ProxyClient(
+      new HTTPClientTransport("http://example.com", { fetch: connection.fetch })
+    );
+    const board = new Board();
+    const kit = board.addKit(TestKit);
+    board
+      .input({ hello: "world" })
+      .wire(
+        "*",
+        kit.test().wire("*", kit.reverser().wire("*", board.output()))
+      );
+    const kits = [client.createProxyKit(["test", "reverser"]), kit];
+    const outputs = await board.runOnce({ hello: "world" }, { kits });
+    t.deepEqual(outputs, { hello: "dlrow" });
+  }
+  {
+    const connection = new MockHTTPConnection<AnyProxyRequestMessage>();
+    connection.onRequest(async (request, response) => {
+      const serverBoard = new Board();
+      serverBoard.addKit(TestKit);
+      const server = new ProxyServer(
+        new HTTPServerTransport(request, response)
+      );
+      await server.serve({
+        board: serverBoard,
+        proxy: [
+          {
+            node: "test",
+            tunnel: {
+              hello: {
+                to: "reverser",
+                inputs: {
+                  hello: "bye",
+                },
+              },
+            },
+          },
+          "reverser",
+        ],
+      });
+    });
+    const client = new ProxyClient(
+      new HTTPClientTransport("http://example.com", { fetch: connection.fetch })
+    );
+    const board = new Board();
+    const kit = board.addKit(TestKit);
+    board
+      .input({ hello: "world" })
+      .wire(
+        "*",
+        kit.test().wire("*", kit.reverser().wire("*", board.output()))
+      );
+    const kits = [client.createProxyKit(["test", "reverser"]), kit];
+    const outputs = await board.runOnce({ hello: "world" }, { kits });
+    t.deepEqual(outputs, { hello: "DEKCOLB_EULAV" });
+  }
+});

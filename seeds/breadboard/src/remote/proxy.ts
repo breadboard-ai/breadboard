@@ -12,7 +12,6 @@ import {
   InputValues,
   NodeDescriptor,
   NodeHandlerContext,
-  NodeHandlers,
   OutputValues,
 } from "../types.js";
 import { NodeProxyConfig, NodeProxySpec, ProxyServerConfig } from "./config.js";
@@ -22,6 +21,7 @@ import {
   ClientTransport,
   ServerTransport,
 } from "./protocol.js";
+import { createTunnelKit, readConfig } from "./tunnel.js";
 
 type ProxyServerTransport = ServerTransport<
   AnyProxyRequestMessage,
@@ -73,8 +73,14 @@ export class ProxyServer {
 
     const [, { node, inputs }] = request.value;
 
-    const handlers: NodeHandlers = await Board.handlersFromBoard(board);
     const handlerConfig = getHandlerConfig(node.type, config.proxy);
+
+    const tunnelKit = createTunnelKit(
+      readConfig(config),
+      await Board.handlersFromBoard(board)
+    );
+    const handlers = tunnelKit.handlers;
+
     const handler = handlerConfig ? handlers[node.type] : undefined;
     if (!handler) {
       writer.write([
