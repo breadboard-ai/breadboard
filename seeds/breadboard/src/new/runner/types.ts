@@ -28,7 +28,7 @@ export type NodeHandlerFunction<
   I extends InputValues,
   O extends OutputValues
 > = (
-  inputs: PromiseLike<I> & I,
+  inputs: PromiseLike<I> | I,
   node: AbstractNode<I, O>
 ) => O | PromiseLike<O>;
 
@@ -85,7 +85,7 @@ export abstract class AbstractNode<
   abstract receiveInputs(edge: EdgeInterface, inputs: InputValues): string[];
   abstract missingInputs(): string[] | false;
 
-  abstract getInputs(): Partial<I>;
+  abstract getInputs(): I;
 
   abstract invoke(invokingScope?: ScopeInterface): Promise<O>;
 

@@ -124,7 +124,6 @@ export class BaseNode<
     this.#inputs = { ...this.#inputs, ...constants };
   }
 
-  // TODO:BASE (this shouldn't require any changes)
   /**
    * Compute required inputs from edges and compare with present inputs
    *
@@ -156,8 +155,8 @@ export class BaseNode<
     return missingInputs.length ? missingInputs : false;
   }
 
-  getInputs(): Partial<I> {
-    return { ...this.#inputs };
+  getInputs(): I {
+    return { ...(this.#inputs as I) };
   }
 
   setOutputs(outputs: O) {
@@ -193,10 +192,7 @@ export class BaseNode<
     });
     const handler = this.#getHandlerFunction(scope);
 
-    const result = (await handler(
-      this.getInputs() as PromiseLike<I> & I,
-      this
-    )) as O;
+    const result = (await handler(this.getInputs(), this)) as O;
 
     this.setOutputs(result);
 
