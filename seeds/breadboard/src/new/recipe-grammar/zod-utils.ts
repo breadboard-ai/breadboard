@@ -7,9 +7,10 @@
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 
-import { Schema } from "../types.js";
+import { Schema } from "../../types.js";
 
-import { InputValues, OutputValues, NodeFactory } from "./types.js";
+import { NodeFactory } from "./types.js";
+import { InputValues, OutputValues } from "../runner/types.js";
 
 /**
  * This post processed JSON schema generated from Zod:

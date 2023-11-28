@@ -5,17 +5,15 @@
  */
 
 import { z } from "zod";
-import { Schema } from "../types.js";
+import { Schema } from "../../types.js";
 
+import { InputsMaybeAsValues, NodeProxy, AbstractValue } from "./types.js";
 import {
   InputValues,
   OutputValues,
-  InputsMaybeAsValues,
   NodeHandlerFunction,
   OutputValue,
-  NodeProxy,
-  AbstractValue,
-} from "./types.js";
+} from "../runner/types.js";
 
 import { addNodeType } from "./kits.js";
 import { convertZodToSchemaInConfig } from "./zod-utils.js";

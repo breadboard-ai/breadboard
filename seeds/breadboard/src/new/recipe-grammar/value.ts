@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { NodeProxy, AbstractValue, BuilderNodeInterface } from "./types.js";
 import {
   InputValues,
   OutputValues,
@@ -11,11 +12,8 @@ import {
   NodeTypeIdentifier,
   NodeValue,
   OutputValue,
-  NodeProxy,
   KeyMap,
-  AbstractValue,
-  BuilderNodeInterface,
-} from "./types.js";
+} from "../runner/types.js";
 
 import { BuilderNode } from "./node.js";
 import { BuilderScope } from "./scope.js";

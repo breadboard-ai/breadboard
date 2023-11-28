@@ -21,13 +21,11 @@ import {
 import {
   InputValues,
   OutputValues,
-  InputsMaybeAsValues,
   EdgeInterface,
   InvokeCallbacks,
   AbstractNode,
 } from "./types.js";
 
-import { getCurrentContextScope } from "./default-scope.js";
 import { handlersFromKit } from "./kits.js";
 import { BaseNode } from "./node.js";
 import { Scope } from "./scope.js";
@@ -116,8 +114,7 @@ export class Runner implements BreadboardRunner {
   #anyNode?: AbstractNode;
 
   constructor() {
-    // Initial Scope is from call context of where the board is created
-    this.#scope = new Scope({ declaringScope: getCurrentContextScope() });
+    this.#scope = new Scope();
   }
 
   async *run({
@@ -127,10 +124,7 @@ export class Runner implements BreadboardRunner {
     if (!this.#anyNode)
       throw new Error("Can't run board without any nodes in it");
 
-    const scope = new Scope({
-      declaringScope: this.#scope,
-      invokingScope: getCurrentContextScope(),
-    });
+    const scope = new Scope({ declaringScope: this.#scope });
 
     let streamController: ReadableStreamDefaultController<BreadboardRunResult>;
     const stream = new ReadableStream<BreadboardRunResult>({
@@ -140,16 +134,19 @@ export class Runner implements BreadboardRunner {
     });
 
     scope.addHandlers({
-      input: async (inputs: InputsMaybeAsValues<InputValues>, node) => {
+      input: async (inputs: InputValues | PromiseLike<InputValues>, node) => {
         let resolver: (outputs: OutputValues) => void;
         const outputsPromise = new Promise<OutputValues>((resolve) => {
           resolver = resolve;
         });
+
         const descriptor = { type: node.type, id: node.id };
+        const awaitedInputs = await inputs;
+
         const result = {
           type: "input",
           node: descriptor,
-          inputArguments: inputs as OriginalInputValues,
+          inputArguments: awaitedInputs as OriginalInputValues,
           set inputs(inputs: OriginalInputValues) {
             resolver(inputs as OutputValues);
           },
@@ -159,23 +156,23 @@ export class Runner implements BreadboardRunner {
         outputsPromise.then((result) =>
           probe?.dispatchEvent(
             new CustomEvent("input", {
-              detail: { descriptor, inputs, outputs: result },
+              detail: { descriptor, inputs: awaitedInputs, outputs: result },
             })
           )
         );
         return outputsPromise as Promise<OutputValues>;
       },
-      output: async (inputs: InputsMaybeAsValues<InputValues>, node) => {
+      output: async (inputs: InputValues | PromiseLike<InputValues>, node) => {
         const descriptor = { type: node.type, id: node.id };
         const result = {
           type: "output",
           node: descriptor,
-          outputs: inputs as OriginalInputValues,
+          outputs: (await inputs) as OriginalInputValues,
           state: { skip: false } as unknown as BreadboardRunResult["state"],
         } as BreadboardRunResult;
         probe?.dispatchEvent(
           new CustomEvent("output", {
-            detail: { descriptor, inputs },
+            detail: { descriptor, inputs: await inputs },
             cancelable: true,
           })
         );
@@ -245,10 +242,7 @@ export class Runner implements BreadboardRunner {
 
     const args = { ...inputs, ...this.args };
 
-    const scope = new Scope({
-      declaringScope: this.#scope,
-      invokingScope: getCurrentContextScope(),
-    });
+    const scope = new Scope({ declaringScope: this.#scope });
 
     context?.kits?.forEach((kit) => scope.addHandlers(handlersFromKit(kit)));
 
@@ -261,8 +255,8 @@ export class Runner implements BreadboardRunner {
       input: async () => {
         return args as InputValues;
       },
-      output: async (inputs: InputsMaybeAsValues<InputValues>) => {
-        resolver(inputs as OriginalOutputValues);
+      output: async (inputs: InputValues | PromiseLike<InputValues>) => {
+        resolver((await inputs) as OriginalOutputValues);
         return {};
       },
     });

@@ -70,15 +70,17 @@ export {
 } from "./stream.js";
 
 // New Syntax:
-export { recipe } from "./new/recipe.js";
-export { addKit } from "./new/kits.js";
-export { Runner } from "./new/runner.js";
-export { base } from "./new/base.js";
+export { Runner } from "./new/runner/runner.js";
+export { recipe } from "./new/recipe-grammar/recipe.js";
+export { addKit } from "./new/recipe-grammar/kits.js";
+export { base } from "./new/recipe-grammar/base.js";
 export type {
-  NodeFactory as NewNodeFactory,
   NodeValue as NewNodeValue,
   InputValues as NewInputValues,
   OutputValues as NewOutputValues,
-  NodeProxy,
   Serializeable,
-} from "./new/types.js";
+} from "./new/runner/types.js";
+export type {
+  NodeFactory as NewNodeFactory,
+  NodeProxy,
+} from "./new/recipe-grammar/types.js";

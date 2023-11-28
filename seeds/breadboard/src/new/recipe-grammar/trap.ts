@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { InputValues, OutputValues, AbstractNode } from "./types.js";
+import { InputValues, OutputValues, AbstractNode } from "../runner/types.js";
 
 /**
  * During serialization, these will be returned on `await` on a node. If the
