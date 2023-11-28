@@ -25,10 +25,10 @@ test("readNodeSpec works as advertised", (t) => {
   const output = readNodeSpec("secrets", {
     foo: "bar",
     bar: ["foo", "baz"],
-    baz: { to: "foo", inputs: { foo: "bar" } },
+    baz: { to: "foo", when: { foo: "bar" } },
     qux: [
-      { to: "foo", inputs: { foo: "bar" } },
-      { to: "baz", inputs: { foo: "foo" } },
+      { to: "foo", when: { foo: "bar" } },
+      { to: "baz", when: { foo: "foo" } },
     ],
   });
   t.deepEqual(output, {
@@ -92,11 +92,11 @@ test("replaceInputs works as advertised", async (t) => {
         url: "https://example.com",
         foo: "bar",
       },
-      {
-        foo: new NodeTunnel("unused", "unused", "unused", {
+      [
+        new NodeTunnel("unused", "unused", "unused", {
           url: "https://example2.com",
         }),
-      },
+      ],
       async (value, allow) => (allow ? `REPLACE=${value}` : "BLOCKED")
     );
     t.deepEqual(result, {
@@ -110,11 +110,11 @@ test("replaceInputs works as advertised", async (t) => {
         url: "https://example.com",
         foo: "bar",
       },
-      {
-        foo: new NodeTunnel("unused", "unused", "unused", {
+      [
+        new NodeTunnel("unused", "unused", "unused", {
           url: "https://example.com",
         }),
-      },
+      ],
       async (value, allow) => (allow ? `REPLACE=${value}` : "BLOCKED")
     );
     t.deepEqual(result, {
@@ -128,11 +128,11 @@ test("replaceInputs works as advertised", async (t) => {
         url: "https://example.com",
         foo: "bar",
       },
-      {
-        foo: new NodeTunnel("unused", "unused", "unused", {
+      [
+        new NodeTunnel("unused", "unused", "unused", {
           url: /example\.com/,
         }),
-      },
+      ],
       async (value, allow) => (allow ? `REPLACE=${value}` : "BLOCKED")
     );
     t.deepEqual(result, {
@@ -146,11 +146,11 @@ test("replaceInputs works as advertised", async (t) => {
         url: "https://example.com",
         foo: "bar",
       },
-      {
-        url: new NodeTunnel("unused", "unused", "unused", {
+      [
+        new NodeTunnel("unused", "unused", "unused", {
           url: /example2\.com/,
         }),
-      },
+      ],
       async (value, allow) => (allow ? `REPLACE=${value}` : "BLOCKED")
     );
     t.deepEqual(result, {
@@ -360,9 +360,9 @@ test("createDestinationMap works as advertised", (t) => {
       },
     });
     t.deepEqual(output, {
-      someNodeThatUsesAPIKey: {
-        API_KEY: new NodeTunnel("API_KEY", "secrets", "someNodeThatUsesAPIKey"),
-      },
+      someNodeThatUsesAPIKey: [
+        new NodeTunnel("API_KEY", "secrets", "someNodeThatUsesAPIKey"),
+      ],
     });
   }
   {
@@ -377,16 +377,39 @@ test("createDestinationMap works as advertised", (t) => {
       },
     });
     t.deepEqual(output, {
-      someNodeThatUsesAPIKey: {
-        API_KEY: new NodeTunnel("API_KEY", "secrets", "someNodeThatUsesAPIKey"),
-        ANOTHER_KEY: new NodeTunnel(
-          "ANOTHER_KEY",
-          "secrets",
-          "someNodeThatUsesAPIKey"
-        ),
-      },
+      someNodeThatUsesAPIKey: [
+        new NodeTunnel("API_KEY", "secrets", "someNodeThatUsesAPIKey"),
+        new NodeTunnel("ANOTHER_KEY", "secrets", "someNodeThatUsesAPIKey"),
+      ],
     });
   }
+});
+
+test("createDestinationMap can handle tunnel collisions", (t) => {
+  const output = createDestinationMap({
+    secrets: {
+      API_KEY: [
+        new NodeTunnel("API_KEY", "secrets", "fetch", {
+          url: /www.googleapis.com\/customsearch\/v1/,
+        }),
+      ],
+      GOOGLE_CSE_ID: [
+        new NodeTunnel("GOOGLE_CSE_ID", "secrets", "fetch", {
+          url: /www.googleapis.com\/customsearch\/v1/,
+        }),
+      ],
+    },
+  });
+  t.deepEqual(output, {
+    fetch: [
+      new NodeTunnel("API_KEY", "secrets", "fetch", {
+        url: /www.googleapis.com\/customsearch\/v1/,
+      }),
+      new NodeTunnel("GOOGLE_CSE_ID", "secrets", "fetch", {
+        url: /www.googleapis.com\/customsearch\/v1/,
+      }),
+    ],
+  });
 });
 
 test("scanTunnelValue works as advertised", (t) => {

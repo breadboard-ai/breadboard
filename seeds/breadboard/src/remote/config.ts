@@ -67,13 +67,17 @@ export type NodeProxySpec = {
   tunnel?: TunnelSpec;
 };
 
-export type TunnelInputs = {
-  [inputName: string]: string | RegExp;
+export type TunnelConstraints = {
+  [inputName: string]: string | TunnelConstraint;
+};
+
+export type TunnelConstraint = {
+  test(value: string): boolean;
 };
 
 export type TunnelDestinations = {
   to: NodeTypeIdentifier;
-  inputs: TunnelInputs;
+  when: TunnelConstraints;
 };
 
 export type TunnelSpec = {

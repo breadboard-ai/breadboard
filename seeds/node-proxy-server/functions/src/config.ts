@@ -24,6 +24,18 @@ export default defineConfig({
       node: "secrets",
       tunnel: {
         PALM_KEY: ["palm-generateText", "palm-embedText"],
+        GOOGLE_CSE_ID: {
+          to: "fetch",
+          when: {
+            url: /www.googleapis.com\/customsearch\/v1/,
+          },
+        },
+        API_KEY: {
+          to: "fetch",
+          when: {
+            url: /www.googleapis.com\/customsearch\/v1/,
+          },
+        },
       },
     },
   ],

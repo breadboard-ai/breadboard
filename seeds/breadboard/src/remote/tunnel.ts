@@ -17,7 +17,7 @@ import {
 import {
   ProxyServerConfig,
   TunnelDestinations,
-  TunnelInputs,
+  TunnelConstraints,
   TunnelSpec,
 } from "./config.js";
 
@@ -35,12 +35,8 @@ export type TunnelMap = {
   [node: NodeTypeIdentifier]: NodeTunnels;
 };
 
-export type DestinationTunnels = {
-  [inputName: string]: NodeTunnel;
-};
-
 export type TunnelDestinationMap = {
-  [destinationNode: NodeTypeIdentifier]: DestinationTunnels;
+  [destinationNode: NodeTypeIdentifier]: NodeTunnel[];
 };
 
 export class NodeTunnel implements TunnelDestinations {
@@ -48,16 +44,16 @@ export class NodeTunnel implements TunnelDestinations {
     readonly outputName: string,
     readonly from: NodeTypeIdentifier,
     readonly to: NodeTypeIdentifier,
-    readonly inputs: TunnelInputs = {}
+    readonly when: TunnelConstraints = {}
   ) {}
 
   getInputNames() {
-    const inputNames = Object.keys(this.inputs);
+    const inputNames = Object.keys(this.when);
     return inputNames.length === 0 ? [this.outputName] : inputNames;
   }
 
   matches(inputs: InputValues) {
-    return Object.entries(this.inputs).every(([inputName, value]) => {
+    return Object.entries(this.when).every(([inputName, value]) => {
       const inputValue = inputs[inputName];
       if (typeof value === "string") {
         return inputValue === value;
@@ -99,13 +95,13 @@ export const readNodeSpec = (
             if (typeof v === "string") {
               return new NodeTunnel(outputName, node, v);
             }
-            return new NodeTunnel(outputName, node, v.to, v.inputs);
+            return new NodeTunnel(outputName, node, v.to, v.when);
           }),
         ];
       } else {
         return [
           outputName,
-          [new NodeTunnel(outputName, node, value.to, value.inputs)],
+          [new NodeTunnel(outputName, node, value.to, value.when)],
         ];
       }
     })
@@ -136,11 +132,11 @@ type InputReplacer = (
 
 export const replaceInputs = async (
   inputs: InputValues,
-  tunnels: DestinationTunnels,
+  tunnels: NodeTunnel[],
   replacer: InputReplacer
 ) => {
   // Decide if we should allow or block values for this node.
-  const allow = Object.values(tunnels).some((tunnel) => tunnel.matches(inputs));
+  const allow = tunnels.some((tunnel) => tunnel.matches(inputs));
 
   return Object.fromEntries(
     await Promise.all(
@@ -263,19 +259,10 @@ export const createDestinationMap = (map: TunnelMap): TunnelDestinationMap => {
   }) as [NodeTypeIdentifier, NodeTunnel][];
   // collate entries by destination node
   return entries.reduce((acc, [to, tunnel]) => {
-    if (!acc[to]) acc[to] = {};
-    for (const inputName of tunnel.getInputNames()) {
-      // TODO: What to do about tunnel destination collisions?
-      // At this point, let's just throw an exception.
-      if (acc[to][inputName]) {
-        throw new Error(
-          `Tunnel destination collision: ${to}.${inputName} is already occupied by ${acc[to][inputName].from}.${acc[to][inputName].outputName}`
-        );
-      }
-      acc[to][inputName] = tunnel;
-    }
+    if (!acc[to]) acc[to] = [];
+    acc[to].push(tunnel);
     return acc;
-  }, {} as Record<NodeTypeIdentifier, Record<NodeTypeIdentifier, NodeTunnel>>);
+  }, {} as TunnelDestinationMap);
 };
 
 /**

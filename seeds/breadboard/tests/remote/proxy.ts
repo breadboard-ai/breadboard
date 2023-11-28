@@ -132,7 +132,7 @@ test("ProxyServer can be configured to tunnel nodes", async (t) => {
             tunnel: {
               hello: {
                 to: "reverser",
-                inputs: {
+                when: {
                   hello: "bye",
                 },
               },
