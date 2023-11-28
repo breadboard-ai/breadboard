@@ -110,8 +110,17 @@
       if (done) {
         break;
       }
-      const json = JSON.parse(value);
-      resultElement.append(JSON.stringify(json, null, 2));
+      value
+        .split("\n")
+        .filter(Boolean)
+        .forEach((line) => {
+          try {
+            const json = JSON.parse(line);
+            resultElement.append(JSON.stringify(json, null, 2), "\n");
+          } catch (error) {
+            resultElement.append("Coulnd't parse:", line, "\n");
+          }
+        });
     }
   };
 </script>

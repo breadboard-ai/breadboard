@@ -63,7 +63,7 @@ export class HTTPServerTransport<Request, Response>
       }) as PatchedReadableStream<Request>,
       writableResponses: new WritableStream({
         write(chunk) {
-          response.write(JSON.stringify(chunk));
+          response.write(`${JSON.stringify(chunk)}\n`);
         },
         close() {
           response.end();

@@ -36,6 +36,12 @@ export default defineConfig({
             url: hasOrigin("https://www.googleapis.com"),
           },
         },
+        OPENAI_API_KEY: {
+          to: "fetch",
+          when: {
+            url: hasOrigin("https://api.openai.com"),
+          },
+        },
       },
     },
   ],

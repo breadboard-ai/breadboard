@@ -227,10 +227,18 @@ export type ProxyResponse = ProxyResolveRequest;
 export type ProxyRequestMessage = ["proxy", ProxyRequest];
 export type ProxyResponseMessage = ["proxy", ProxyResponse];
 
+export type ProxyChunkResponse = {
+  chunk: unknown;
+};
+
+export type ProxyChunkResponseMessage = ["chunk", ProxyChunkResponse];
+
 export type AnyProxyRequestMessage = ProxyRequestMessage;
 export type AnyProxyResponseMessage =
   | ProxyResponseMessage
-  | ErrorResponseMessage;
+  | ErrorResponseMessage
+  | ProxyChunkResponseMessage
+  | EndResponseMessage;
 
 export type AnyRunRequestMessage =
   | RunRequestMessage

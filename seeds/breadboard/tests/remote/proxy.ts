@@ -14,6 +14,7 @@ import {
 import { AnyProxyRequestMessage } from "../../src/remote/protocol.js";
 import { Board } from "../../src/board.js";
 import { MirrorUniverseKit, TestKit } from "../helpers/_test-kit.js";
+import { StreamCapability } from "../../src/stream.js";
 
 test("ProxyServer can use HTTPServerTransport", async (t) => {
   const board = new Board();
@@ -157,4 +158,40 @@ test("ProxyServer can be configured to tunnel nodes", async (t) => {
     const outputs = await board.runOnce({ hello: "world" }, { kits });
     t.deepEqual(outputs, { hello: "DEKCOLB_EULAV" });
   }
+});
+
+test("ProxyServer and ProxyClient correctly handle streams", async (t) => {
+  const connection = new MockHTTPConnection<AnyProxyRequestMessage>();
+  connection.onRequest(async (request, response) => {
+    const serverBoard = new Board();
+    serverBoard.addKit(TestKit);
+    const server = new ProxyServer(new HTTPServerTransport(request, response));
+    await server.serve({
+      board: serverBoard,
+      proxy: ["streamer"],
+    });
+  });
+  const client = new ProxyClient(
+    new HTTPClientTransport("http://example.com", { fetch: connection.fetch })
+  );
+  const board = new Board();
+  const kit = board.addKit(TestKit);
+  board
+    .input({ hello: "world" })
+    .wire("*", kit.streamer().wire("*", board.output()));
+  const kits = [client.createProxyKit(["streamer"]), kit];
+  const outputs = await board.runOnce({ hello: "world" }, { kits });
+  t.like(outputs, { stream: { kind: "stream" } });
+  const stream = (outputs.stream as StreamCapability<string>).stream;
+  const reader = stream.getReader();
+  const chunks: string[] = [];
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+  }
+  t.deepEqual(
+    chunks.join(""),
+    "Breadboard is a project that helps you make AI recipes. "
+  );
 });

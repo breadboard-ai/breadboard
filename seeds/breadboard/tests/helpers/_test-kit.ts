@@ -6,6 +6,7 @@
 
 import { Board } from "../../src/board.js";
 import { KitBuilder } from "../../src/kits/index.js";
+import { StreamCapability } from "../../src/stream.js";
 import {
   BreadboardCapability,
   GraphDescriptor,
@@ -77,6 +78,22 @@ export const TestKit = new KitBuilder({
         (inputs[key] = [...(value as string)].reverse().join("")),
       ])
     );
+  },
+  /**
+   * Supplies a simple stream output that can be used to test interactions with
+   * streams.
+   */
+  streamer: async () => {
+    const words = "Breadboard is a project that helps you make AI recipes.";
+    const stream = new ReadableStream({
+      start(controller) {
+        for (const word of words.split(" ")) {
+          controller.enqueue(`${word} `);
+        }
+        controller.close();
+      },
+    });
+    return { stream: new StreamCapability(stream) };
   },
 });
 
