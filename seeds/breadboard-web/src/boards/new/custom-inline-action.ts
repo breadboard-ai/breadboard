@@ -17,13 +17,13 @@ export const graph = recipe(
       result: z.number().describe("Sum: The sum of two numbers"),
     }),
   },
-  (inputs) => {
+  async (inputs) => {
     return recipe<{ a: number; b: number }, { result: number }>(
       async (inputs) => {
         const { a, b } = await inputs;
         return { result: (a || 0) + (b || 0) };
       }
-    )(inputs);
+    )({ a: inputs.a, b: inputs.b });
   }
 );
 

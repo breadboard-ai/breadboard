@@ -10,8 +10,14 @@
     {
       "from": "input-1",
       "to": "fn-3",
-      "out": "*",
-      "in": ""
+      "out": "a",
+      "in": "a"
+    },
+    {
+      "from": "input-1",
+      "to": "fn-3",
+      "out": "b",
+      "in": "b"
     }
   ],
   "nodes": [
