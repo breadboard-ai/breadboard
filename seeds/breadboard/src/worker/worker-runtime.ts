@@ -20,6 +20,7 @@ import {
 import { MessageController } from "./controller.js";
 import { makeProxyKit } from "./proxy.js";
 import { asRuntimeKit } from "../kits/ctors.js";
+import { LogProbe } from "../log.js";
 
 export class WorkerRuntime {
   #controller: MessageController;
@@ -90,7 +91,7 @@ export class WorkerRuntime {
         asRuntimeKit(kitConstructor)
       );
 
-      for await (const stop of board.run({ kits })) {
+      for await (const stop of board.run({ probe: new LogProbe(), kits })) {
         if (stop.type === "input") {
           const inputMessage = (await this.#controller.ask<
             InputRequestMessage,
