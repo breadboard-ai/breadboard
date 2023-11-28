@@ -36,7 +36,22 @@
     {
       "id": "output-2",
       "type": "output",
-      "configuration": {}
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "result": {
+              "type": "string",
+              "description": "The answer to the query",
+              "title": "Answer"
+            }
+          },
+          "required": [
+            "result"
+          ],
+          "additionalProperties": false
+        }
+      }
     },
     {
       "id": "runJavascript-6",
@@ -67,7 +82,22 @@
     {
       "id": "input-1",
       "type": "input",
-      "configuration": {}
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "question": {
+              "type": "string",
+              "description": "What is your math question?",
+              "title": "Query"
+            }
+          },
+          "required": [
+            "question"
+          ],
+          "additionalProperties": false
+        }
+      }
     }
   ],
   "graphs": {}
