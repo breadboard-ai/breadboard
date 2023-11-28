@@ -22,7 +22,7 @@ test("HTTPServerTransport does the basics", async (t) => {
   };
   const response = {
     write: (response: unknown) => {
-      t.deepEqual(response, '["input",{"node":{"type":"input"}}]');
+      t.deepEqual(response, '["input",{"node":{"type":"input"}}]\n');
       return true;
     },
     end: () => {
