@@ -5,13 +5,13 @@
       "from": "fn-3",
       "to": "output-2",
       "out": "*",
-      "in": "*"
+      "in": ""
     },
     {
       "from": "input-1",
       "to": "fn-3",
       "out": "*",
-      "in": "*"
+      "in": ""
     }
   ],
   "nodes": [

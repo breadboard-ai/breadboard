@@ -23,7 +23,7 @@
       "from": "passthrough-10",
       "to": "promptTemplate-11",
       "out": "*",
-      "in": "*"
+      "in": ""
     }
   ],
   "nodes": [

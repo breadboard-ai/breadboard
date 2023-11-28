@@ -5,13 +5,13 @@
       "from": "fn-6",
       "to": "output-2",
       "out": "*",
-      "in": "*"
+      "in": ""
     },
     {
       "from": "palm-generateText-5",
       "to": "fn-6",
       "out": "*",
-      "in": "*"
+      "in": ""
     },
     {
       "from": "secrets-4",

@@ -11,7 +11,7 @@
       "from": "input-1",
       "to": "passthrough-3",
       "out": "*",
-      "in": "*"
+      "in": ""
     }
   ],
   "nodes": [
