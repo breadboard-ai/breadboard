@@ -130,7 +130,7 @@ export class Scope implements ScopeInterface {
         from: edge.from.id,
         to: edge.to.id,
         out: edge.out,
-        in: edge.in === "*" ? "" : edge.in,
+        in: edge.in,
         ...(edge.constant ? { constant: true } : {}),
       }))
     );

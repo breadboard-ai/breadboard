@@ -129,7 +129,7 @@ export class BuilderNode<
   // Add inputs from another node as edges
   addInputsFromNode(
     from: AbstractNode,
-    keymap: KeyMap = { "*": "*" },
+    keymap: KeyMap = { "*": "" },
     constant?: boolean
   ) {
     const keyPairs = Object.entries(keymap);
@@ -140,7 +140,10 @@ export class BuilderNode<
       keyPairs.forEach(([fromKey, toKey]) => {
         // "*-<id>" means "all outputs from <id>" and comes from using a node in
         // a spread, e.g. newNode({ ...node, $id: "id" }
-        if (fromKey.startsWith("*-")) fromKey = toKey = "*";
+        if (fromKey.startsWith("*-")) {
+          fromKey = "*";
+          toKey = "";
+        }
 
         this.unProxy().addIncomingEdge(
           from instanceof BuilderNode ? from.unProxy() : from,
@@ -503,7 +506,7 @@ export class BuilderNode<
 
     // TODO: Ideally we would look at the schema here and use * only if
     // the output is open ended and/or not all fields are present all the time.
-    toNode.addInputsFromNode(this as unknown as BaseNode, { "*": "*" });
+    toNode.addInputsFromNode(this as unknown as BaseNode, { "*": "" });
 
     return (toNode as BuilderNode<O & ToC, ToO>).asProxy();
   }
