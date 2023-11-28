@@ -5,15 +5,27 @@
  */
 
 import { recipe } from "@google-labs/breadboard";
+import { z } from "zod";
 
-export const graph = recipe((inputs) => {
-  return recipe<{ a: number; b: number }, { result: number }>(
-    async (inputs) => {
-      const { a, b } = await inputs;
-      return { result: (a || 0) + (b || 0) };
-    }
-  )(inputs);
-});
+export const graph = recipe(
+  {
+    input: z.object({
+      a: z.number().describe("A: One Number"),
+      b: z.number().describe("B: Another number"),
+    }),
+    output: z.object({
+      result: z.number().describe("Sum: The sum of two numbers"),
+    }),
+  },
+  (inputs) => {
+    return recipe<{ a: number; b: number }, { result: number }>(
+      async (inputs) => {
+        const { a, b } = await inputs;
+        return { result: (a || 0) + (b || 0) };
+      }
+    )(inputs);
+  }
+);
 
 export const example = { a: 1, b: 2 };
 

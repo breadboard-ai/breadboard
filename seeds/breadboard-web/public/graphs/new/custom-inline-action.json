@@ -18,7 +18,22 @@
     {
       "id": "output-2",
       "type": "output",
-      "configuration": {}
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "result": {
+              "type": "number",
+              "description": "The sum of two numbers",
+              "title": "Sum"
+            }
+          },
+          "required": [
+            "result"
+          ],
+          "additionalProperties": false
+        }
+      }
     },
     {
       "id": "fn-3",
@@ -31,7 +46,28 @@
     {
       "id": "input-1",
       "type": "input",
-      "configuration": {}
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "a": {
+              "type": "number",
+              "description": "One Number",
+              "title": "A"
+            },
+            "b": {
+              "type": "number",
+              "description": "Another number",
+              "title": "B"
+            }
+          },
+          "required": [
+            "a",
+            "b"
+          ],
+          "additionalProperties": false
+        }
+      }
     }
   ],
   "graphs": {}
