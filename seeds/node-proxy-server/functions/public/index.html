@@ -13,6 +13,11 @@
   pre {
     padding: 0.5rem;
     white-space: pre-wrap;
+  }
+  pre div {
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    background-color: #fff;
     overflow-x: auto;
   }
   label {
@@ -104,23 +109,14 @@
     });
 
     resultElement.textContent = "";
-    const reader = result.body.pipeThrough(new TextDecoderStream()).getReader();
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) {
-        break;
-      }
-      value
-        .split("\n")
-        .filter(Boolean)
-        .forEach((line) => {
-          try {
-            const json = JSON.parse(line);
-            resultElement.append(JSON.stringify(json, null, 2), "\n");
-          } catch (error) {
-            resultElement.append("Coulnd't parse:", line, "\n");
-          }
-        });
-    }
+    const reader = result.body.pipeThrough(new TextDecoderStream()).pipeTo(
+      new WritableStream({
+        write(chunk) {
+          const div = document.createElement("div");
+          div.textContent = chunk;
+          resultElement.append(div);
+        },
+      })
+    );
   };
 </script>
