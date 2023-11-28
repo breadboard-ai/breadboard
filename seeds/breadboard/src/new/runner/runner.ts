@@ -16,8 +16,8 @@ import {
   BreadboardRunResult,
   NodeHandlerContext,
   BreadboardValidator,
-  BoardRunner as OriginalBoardRunner,
-} from "@google-labs/breadboard";
+} from "../../types.js";
+import { BoardRunner as OriginalBoardRunner } from "../../runner.js";
 import {
   InputValues,
   OutputValues,
