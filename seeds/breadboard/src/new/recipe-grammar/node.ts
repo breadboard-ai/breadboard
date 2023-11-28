@@ -191,7 +191,10 @@ export class BuilderNode<
         //    - it isn't an output node, add an output node and wire it up
         //    - execute the graph, and return the output node's outputs
         //  - otherwise return the handler's return value as result.
-        const result = (await handler(this.getInputs(), this)) as O;
+        const result = (await handler(
+          this.getInputs() as PromiseLike<I> & I,
+          this
+        )) as O;
 
         // Resolve promise, but only on first run
         if (this.#resolve) {
@@ -245,7 +248,10 @@ export class BuilderNode<
           >
         );
 
-        const resultOrPromise = handler(inputNode.asProxy(), this);
+        const resultOrPromise = handler(
+          inputNode.asProxy() as unknown as I & PromiseLike<I>,
+          this
+        );
 
         // Support both async and sync handlers. Sync handlers should in
         // practice only be used to statically create graphs (as reading inputs

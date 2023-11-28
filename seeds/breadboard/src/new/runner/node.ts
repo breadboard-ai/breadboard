@@ -192,7 +192,10 @@ export class BaseNode<
     });
     const handler = this.#getHandlerFunction(scope);
 
-    const result = (await handler(this.getInputs(), this)) as O;
+    const result = (await handler(
+      this.getInputs() as I & PromiseLike<I>,
+      this
+    )) as O;
 
     this.setOutputs(result);
 

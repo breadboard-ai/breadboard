@@ -28,7 +28,7 @@ export type NodeHandlerFunction<
   I extends InputValues,
   O extends OutputValues
 > = (
-  inputs: PromiseLike<I> | I,
+  inputs: PromiseLike<I> & I,
   node: AbstractNode<I, O>
 ) => O | PromiseLike<O>;
 
