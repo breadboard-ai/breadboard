@@ -169,7 +169,7 @@ async function main(args: string[], use_input_handler = false) {
       incompleteNextNodes: {
         descriptor: NodeDescriptor;
         receivingNodes: { [key: string]: string[] };
-        incompleteNodes: { node: string; missing: string[] }[];
+        incompleteNodes: { [key: string]: string[] };
         unusedKeys: string[];
       }[];
     }>;
@@ -187,8 +187,8 @@ async function main(args: string[], use_input_handler = false) {
                 ` receiving nodes: ${Object.entries(detail.receivingNodes)
                   .map(([id, ports]) => `${id} (${ports.join(", ")})`)
                   .join(", ")}\n` +
-                ` incomplete nodes: ${detail.incompleteNodes
-                  .map(({ node, missing }) => `${node} (${missing.join(", ")})`)
+                ` incomplete nodes: ${Object.entries(detail.incompleteNodes)
+                  .map(([node, missing]) => `${node} (${missing.join(", ")})`)
                   .join(", ")}\n` +
                 ` unused keys: ${detail.unusedKeys.join(", ")}\n`
             )

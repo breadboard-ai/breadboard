@@ -17,8 +17,7 @@ import {
   AbstractValue,
 } from "./types.js";
 
-import { addNodeType } from "./default-scope.js";
-
+import { addNodeType } from "./kits.js";
 import { convertZodToSchemaInConfig } from "./zod-utils.js";
 
 const reservedWord: NodeHandlerFunction<

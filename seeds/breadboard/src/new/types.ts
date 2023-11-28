@@ -125,24 +125,18 @@ export interface EdgeInterface<
   in: string;
   constant?: boolean;
 }
+export type OptionalIdConfiguration = { $id?: string };
 
 export abstract class AbstractNode<
   I extends InputValues = InputValues,
   O extends OutputValues = OutputValues
-> implements NodeProxyMethods<I, O>, PromiseLike<O>, Serializeable
+> implements Serializeable
 {
   abstract id: string;
   abstract type: string;
   abstract outgoing: EdgeInterface[];
   abstract incoming: EdgeInterface[];
   abstract configuration: Partial<I>;
-
-  abstract addInputsAsValues(values: InputsMaybeAsValues<I>): void;
-  abstract addInputsFromNode(
-    from: AbstractNode,
-    keymap: KeyMap,
-    constant?: boolean
-  ): void;
 
   abstract receiveInputs(edge: EdgeInterface, inputs: InputValues): string[];
   abstract missingInputs(): string[] | false;
@@ -155,9 +149,7 @@ export abstract class AbstractNode<
 
   abstract serializeNode(): Promise<[NodeDescriptor, GraphDescriptor?]>;
 
-  abstract asProxy(): NodeProxy<I, O>;
-  abstract unProxy(): AbstractNode<I, O>;
-
+  /*
   abstract then<TResult1 = O, TResult2 = never>(
     onfulfilled?: ((value: O) => TResult1 | PromiseLike<TResult1>) | null,
     onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null
@@ -181,7 +173,22 @@ export abstract class AbstractNode<
       | AbstractValue
   ): NodeProxy<I, O>;
 
-  abstract as(keymap: KeyMap): AbstractValue;
+  abstract as(keymap: KeyMap): AbstractValue;*/
+}
+
+export interface BuilderNodeInterface<
+  I extends InputValues = InputValues,
+  O extends OutputValues = OutputValues
+> extends AbstractNode<I, O> {
+  addInputsAsValues(values: InputsMaybeAsValues<I>): void;
+  addInputsFromNode(
+    from: AbstractNode,
+    keymap: KeyMap,
+    constant?: boolean
+  ): void;
+
+  asProxy(): NodeProxy<I, O>;
+  unProxy(): BuilderNodeInterface<I, O>;
 }
 
 export abstract class AbstractValue<T extends NodeValue = NodeValue>
@@ -279,6 +286,13 @@ export interface ScopeInterface {
     name: string
   ): NodeHandler<I, O> | undefined;
 
+  serialize(
+    node: AbstractNode,
+    metadata?: GraphMetadata
+  ): Promise<GraphDescriptor>;
+}
+
+export interface DeclaringScopeInterface {
   /**
    * Swap global scope with this one, run the function, then restore
    */
@@ -290,11 +304,6 @@ export interface ScopeInterface {
   ): O;
   didTrapResultTrigger(): boolean;
   invoke(node: AbstractNode, callbacks?: InvokeCallbacks[]): void;
-
-  serialize(
-    node: AbstractNode,
-    metadata?: GraphMetadata
-  ): Promise<GraphDescriptor>;
 
   serializing(): boolean;
 }

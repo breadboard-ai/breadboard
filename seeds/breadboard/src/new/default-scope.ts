@@ -4,16 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  InputValues,
-  OutputValues,
-  NodeHandler,
-  NodeFactory,
-  InputsMaybeAsValues,
-} from "./types.js";
-
-import { Scope } from "./scope.js";
-import { NodeImpl } from "./node.js";
+import { BuilderScope } from "./scope.js";
 
 /**
  * The following is inspired by zone.js, but much simpler, and crucially doesn't
@@ -47,38 +38,17 @@ import { NodeImpl } from "./node.js";
  * flow.
  */
 
-// Initialize with a default global Scope.
-let currentContextScope = new Scope();
+let currentContextScope: BuilderScope | undefined = undefined;
 
 export function getCurrentContextScope() {
-  const scope = currentContextScope;
-  if (!scope) throw Error("No scope found in context");
-  return scope;
+  // Initialize on first use.
+  if (!currentContextScope) currentContextScope = new BuilderScope();
+
+  return currentContextScope;
 }
 
-export function swapCurrentContextScope(scope: Scope) {
-  const oldScope = currentContextScope;
+export function swapCurrentContextScope(scope: BuilderScope) {
+  const oldScope = getCurrentContextScope();
   currentContextScope = scope;
   return oldScope;
-}
-
-// TODO:BASE: This does two things
-//   (1) register a handler with the scope
-//   (2) create a factory function for the node type
-// BASE should only be the first part, the second part should be in the syntax
-export function addNodeType<I extends InputValues, O extends OutputValues>(
-  name: string | undefined,
-  handler: NodeHandler<I, O>
-): NodeFactory<I, O> {
-  if (name)
-    getCurrentContextScope().addHandlers({
-      [name]: handler as unknown as NodeHandler,
-    });
-  return ((config?: InputsMaybeAsValues<I>) => {
-    return new NodeImpl(
-      name ?? handler,
-      getCurrentContextScope(),
-      config
-    ).asProxy();
-  }) as unknown as NodeFactory<I, O>;
 }

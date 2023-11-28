@@ -17,8 +17,9 @@ import {
 } from "./types.js";
 
 import { zodToSchema } from "./zod-utils.js";
-import { addNodeType, getCurrentContextScope } from "./default-scope.js";
-import { NodeImpl } from "./node.js";
+import { addNodeType } from "./kits.js";
+import { getCurrentContextScope } from "./default-scope.js";
+import { BuilderNode } from "./node.js";
 
 /**
  * Creates a node factory for a node type that invokes a handler function. This
@@ -112,7 +113,7 @@ export function recipe<I extends InputValues, O extends OutputValues>(
   factory.serialize = async (metadata?) => {
     // TODO: Schema isn't serialized right now
     // (as a function will be turned into a runJavascript node)
-    const node = new NodeImpl(handler, declaringScope);
+    const node = new BuilderNode(handler, declaringScope);
     const [singleNode, graph] = await node.serializeNode();
     // If there is a subgraph that is invoked, just return that.
     if (graph) return { ...metadata, ...graph } as GraphDescriptor;

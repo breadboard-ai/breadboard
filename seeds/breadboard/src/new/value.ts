@@ -14,10 +14,11 @@ import {
   NodeProxy,
   KeyMap,
   AbstractValue,
+  BuilderNodeInterface,
 } from "./types.js";
 
-import { NodeImpl } from "./node.js";
-import { Scope } from "./scope.js";
+import { BuilderNode } from "./node.js";
+import { BuilderScope } from "./scope.js";
 
 // Because Value is sometimes behind a function Proxy (see above, for NodeImpl's
 // methods), we need to use this approach to identify Value instead instanceof.
@@ -37,14 +38,14 @@ export class Value<T extends NodeValue = NodeValue>
   extends AbstractValue
   implements PromiseLike<T | undefined>
 {
-  #node: NodeImpl<InputValues, OutputValue<T>>;
-  #scope: Scope;
+  #node: BuilderNode<InputValues, OutputValue<T>>;
+  #scope: BuilderScope;
   #keymap: KeyMap;
   #constant: boolean;
 
   constructor(
-    node: NodeImpl<InputValues, OutputValue<T>>,
-    scope: Scope,
+    node: BuilderNode<InputValues, OutputValue<T>>,
+    scope: BuilderScope,
     keymap: string | KeyMap,
     constant = false
   ) {
@@ -73,8 +74,12 @@ export class Value<T extends NodeValue = NodeValue>
     ) as PromiseLike<TResult1 | TResult2>;
   }
 
-  asNodeInput(): [NodeImpl, { [key: string]: string }, boolean] {
-    return [this.#node.unProxy() as NodeImpl, this.#keymap, this.#constant];
+  asNodeInput(): [
+    BuilderNodeInterface<InputValues, OutputValue<T>>,
+    { [key: string]: string },
+    boolean
+  ] {
+    return [this.#node.unProxy(), this.#keymap, this.#constant];
   }
 
   to<
@@ -88,26 +93,28 @@ export class Value<T extends NodeValue = NodeValue>
     config?: ToC
   ): NodeProxy<OutputValue<T> & ToC, ToO> {
     const toNode =
-      to instanceof NodeImpl
+      to instanceof BuilderNode
         ? to.unProxy()
-        : new NodeImpl(
+        : new BuilderNode(
             to as NodeTypeIdentifier | NodeHandler<OutputValue<T> & ToC, ToO>,
             this.#scope,
             config as OutputValue<T> & ToC
           );
 
     toNode.addInputsFromNode(
-      this.#node as unknown as NodeImpl,
+      this.#node as unknown as BuilderNodeInterface,
       this.#keymap,
       this.#constant
     );
 
-    return (toNode as NodeImpl<OutputValue<T> & ToC, ToO>).asProxy();
+    return (
+      toNode as BuilderNodeInterface<OutputValue<T> & ToC, ToO>
+    ).asProxy();
   }
 
   // TODO: Double check this, as it's acting on output types, not input types.
-  in(inputs: NodeImpl<InputValues, OutputValues> | InputValues) {
-    if (inputs instanceof NodeImpl || isValue(inputs)) {
+  in(inputs: BuilderNodeInterface<InputValues, OutputValues> | InputValues) {
+    if (inputs instanceof BuilderNode || isValue(inputs)) {
       let invertedMap = Object.fromEntries(
         Object.entries(this.#keymap).map(([fromKey, toKey]) => [toKey, fromKey])
       );
@@ -116,10 +123,13 @@ export class Value<T extends NodeValue = NodeValue>
         invertedMap = asValue.#remapKeys(invertedMap);
         this.#node.addInputsFromNode(asValue.#node, invertedMap);
       } else {
-        this.#node.addInputsFromNode(inputs as NodeImpl, invertedMap);
+        this.#node.addInputsFromNode(
+          inputs as BuilderNodeInterface,
+          invertedMap
+        );
       }
     } else {
-      this.#node.addInputsAsValues(inputs);
+      this.#node.addInputsAsValues(inputs as InputValues);
     }
   }
 

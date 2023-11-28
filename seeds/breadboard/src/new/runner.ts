@@ -24,11 +24,12 @@ import {
   InputsMaybeAsValues,
   EdgeInterface,
   InvokeCallbacks,
+  AbstractNode,
 } from "./types.js";
 
 import { getCurrentContextScope } from "./default-scope.js";
 import { handlersFromKit } from "./kits.js";
-import { NodeImpl } from "./node.js";
+import { BaseNode } from "./node.js";
 import { Scope } from "./scope.js";
 
 function createProbeCallbacks(probe: EventTarget): InvokeCallbacks {
@@ -112,7 +113,7 @@ export class Runner implements BreadboardRunner {
   args?: OriginalInputValues;
 
   #scope: Scope;
-  #anyNode?: NodeImpl;
+  #anyNode?: AbstractNode;
 
   constructor() {
     // Initial Scope is from call context of where the board is created
@@ -283,7 +284,7 @@ export class Runner implements BreadboardRunner {
   }
 
   static async fromNode(
-    node: NodeImpl,
+    node: AbstractNode,
     metadata?: GraphMetadata
   ): Promise<Runner> {
     const board = new Runner();
@@ -298,9 +299,9 @@ export class Runner implements BreadboardRunner {
     board.edges = graph.edges;
     board.args = graph.args;
 
-    const nodes = new Map<string, NodeImpl>();
+    const nodes = new Map<string, BaseNode>();
     graph.nodes.forEach((node) => {
-      const newNode = new NodeImpl(
+      const newNode = new BaseNode(
         node.type,
         board.#scope,
         node.configuration as InputValues

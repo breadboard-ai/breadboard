@@ -9,6 +9,8 @@ import {
   GraphMetadata,
   NodeDescriptor,
   InputValues as OriginalInputValues,
+  Schema,
+  NodeDescriberResult,
 } from "@google-labs/breadboard";
 import {
   InputValues,
@@ -25,9 +27,12 @@ import {
   AbstractNode,
   AbstractValue,
   EdgeInterface,
+  OptionalIdConfiguration,
+  ScopeInterface,
+  BuilderNodeInterface,
 } from "./types.js";
 
-import { Scope } from "./scope.js";
+import { BuilderScope, Scope } from "./scope.js";
 import { TrapResult, TrappedDataReadWhileSerializing } from "./trap.js";
 import { Value, isValue } from "./value.js";
 
@@ -37,12 +42,12 @@ export const nodeIdVendor = new IdVendor();
 
 // TODO:BASE Extract base class that isn't opinionated about the syntax. Marking
 // methods that should be base as "TODO:BASE" below, including complications.
-export class NodeImpl<
+export class BaseNode<
     I extends InputValues = InputValues,
     O extends OutputValues = OutputValues
   >
   extends AbstractNode<I, O>
-  implements NodeProxyMethods<I, O>, PromiseLike<O>, Serializeable
+  implements Serializeable
 {
   id: string;
   type: string;
@@ -52,34 +57,17 @@ export class NodeImpl<
 
   #handler?: NodeHandler<InputValues, OutputValues>;
 
-  #promise: Promise<O>;
-  #resolve?: (value: O | PromiseLike<O>) => void;
-  #reject?: (reason?: unknown) => void;
-
   #inputs: Partial<I>;
   #constants: Partial<I> = {};
   #incomingEmptyWires: AbstractNode[] = [];
   #outputs?: O;
 
-  #scope: Scope;
+  #scope: ScopeInterface;
 
-  // TODO:BASE: The syntax specific one will
-  // - handle passing functions
-  // - extract the wires from the config
-  // - then call the original constructor
-  // - then add the wires
-  // - then add the spread value hack
-  // - then add the promises
-  //
-  // Open question: Is assigning of default ids something the base class does or
-  // should it error out if there isn't an id and require each syntax to define
-  // their own default id generation scheme?
   constructor(
     handler: NodeTypeIdentifier | NodeHandler<I, O>,
-    scope: Scope,
-    config: (Partial<InputsMaybeAsValues<I>> | AbstractValue<NodeValue>) & {
-      $id?: string;
-    } = {}
+    scope: ScopeInterface,
+    config: Partial<I> & OptionalIdConfiguration = {}
   ) {
     super();
 
@@ -95,95 +83,34 @@ export class NodeImpl<
       >;
     }
 
-    let id: string | undefined = undefined;
+    const { $id, ...rest } = config;
 
-    if (config instanceof NodeImpl) {
-      this.addInputsFromNode(config.unProxy());
-    } else if (isValue(config)) {
-      this.addInputsFromNode(...(config as Value).asNodeInput());
-    } else {
-      const { $id, ...rest } = config as Partial<InputsMaybeAsValues<I>> & {
-        $id?: string;
-      };
-      id = $id;
-      this.addInputsAsValues(rest as InputsMaybeAsValues<I>);
+    this.id = $id ?? nodeIdVendor.vendId(scope, this.type);
 
-      // Treat incoming constants as configuration
-      this.configuration = { ...this.configuration, ...this.#constants };
-      this.#constants = {};
-    }
-
+    this.configuration = rest as Partial<I>;
     this.#inputs = { ...this.configuration };
 
-    this.id = id || nodeIdVendor.vendId(scope, this.type);
-
-    // Set up spread value, so that { ...node } as input works.
-    (this as unknown as { [key: string]: NodeImpl<I, O> })[this.#spreadKey()] =
-      this;
-
-    this.#promise = new Promise<O>((resolve, reject) => {
-      this.#resolve = resolve;
-      this.#reject = reject;
-    });
+    this.#constants = {};
   }
 
-  addInputsAsValues(values: InputsMaybeAsValues<I>) {
-    // Split into constants and nodes
-    const constants: Partial<InputValues> = {};
-    const nodes: [NodeImpl<InputValues, OutputValues>, KeyMap, boolean][] = [];
-
-    Object.entries(values).forEach(([key, value]) => {
-      if (isValue(value)) {
-        nodes.push((value as Value).as(key).asNodeInput());
-      } else if (value instanceof NodeImpl) {
-        nodes.push([value.unProxy(), { [key]: key }, false]);
-      } else {
-        constants[key] = value;
-      }
-    });
-
-    this.#constants = { ...this.#constants, ...constants };
-    nodes.forEach((node) => this.addInputsFromNode(...node));
-  }
-
-  // Add inputs from another node as edges
-  addInputsFromNode(
-    from: NodeImpl,
-    keymap: KeyMap = { "*": "*" },
+  addIncomingEdge(
+    from: AbstractNode,
+    out: string,
+    in_: string,
     constant?: boolean
   ) {
-    const keyPairs = Object.entries(keymap);
-    if (keyPairs.length === 0) {
-      // Add an empty edge: Just control flow, no data moving.
-      const edge: EdgeInterface = {
-        to: this as unknown as NodeImpl,
-        from,
-        out: "",
-        in: "",
-      };
-      this.incoming.push(edge);
-      from.outgoing.push(edge);
-    } else
-      keyPairs.forEach(([fromKey, toKey]) => {
-        // "*-<id>" means "all outputs from <id>" and comes from using a node in
-        // a spread, e.g. newNode({ ...node, $id: "id" }
-        if (fromKey.startsWith("*-")) fromKey = toKey = "*";
+    const edge: EdgeInterface = {
+      to: this as unknown as AbstractNode,
+      from: from,
+      out,
+      in: in_,
+    };
+    if (constant) edge.constant = true;
 
-        const edge: EdgeInterface = {
-          to: this as unknown as NodeImpl,
-          from,
-          out: fromKey,
-          in: toKey,
-        };
-
-        if (constant) edge.constant = true;
-
-        this.incoming.push(edge);
-        from.outgoing.push(edge);
-      });
+    this.incoming.push(edge);
+    from.outgoing.push(edge);
   }
 
-  // TODO:BASE (this shouldn't require any changes)
   receiveInputs(edge: EdgeInterface, inputs: InputValues) {
     const data =
       edge.out === "*"
@@ -200,6 +127,11 @@ export class NodeImpl<
 
     // return which wires were used
     return Object.keys(data);
+  }
+
+  receiveConstants(constants: InputValues) {
+    this.#constants = { ...this.#constants, ...constants };
+    this.#inputs = { ...this.#inputs, ...constants };
   }
 
   // TODO:BASE (this shouldn't require any changes)
@@ -234,9 +166,22 @@ export class NodeImpl<
     return missingInputs.length ? missingInputs : false;
   }
 
-  // TODO:BASE
-  getInputs() {
+  getInputs(): InputsMaybeAsValues<I> {
     return { ...this.#inputs };
+  }
+
+  setOutputs(outputs: O) {
+    this.#outputs = outputs;
+
+    // Clear inputs, reset with configuration and constants
+    this.#inputs = { ...this.configuration, ...this.#constants };
+    this.#incomingEmptyWires = [];
+  }
+
+  #getHandlerDescribe(scope: ScopeInterface) {
+    const handler = this.#handler ?? scope.getHandler(this.type);
+    if (!handler) throw new Error(`Handler ${this.type} not found`);
+    return typeof handler === "function" ? undefined : handler.describe;
   }
 
   #getHandlerFunction(scope: Scope) {
@@ -245,17 +190,188 @@ export class NodeImpl<
     return typeof handler === "function" ? handler : handler.invoke;
   }
 
-  #getHandlerDescribe(scope: Scope) {
+  // TODO:BASE: In the end, we need to capture the outputs and resolve the
+  // promise. But before that there is a bit of refactoring to do to allow
+  // returning of graphs, parallel execution, etc.
+  //
+  // The logic from BuilderNode.invoke should be somehow called from here, for
+  // deserialized nodes that require the Builder environment.
+  async invoke(invokingScope?: Scope): Promise<O> {
+    const scope = new Scope({
+      invokingScope,
+      declaringScope: this.#scope,
+    });
+    const handler = this.#getHandlerFunction(scope);
+
+    const result = (await handler(
+      this.getInputs() as PromiseLike<I> & InputsMaybeAsValues<I>,
+      this
+    )) as O;
+
+    this.setOutputs(result);
+
+    return result;
+  }
+
+  async describe(
+    scope: ScopeInterface = this.#scope,
+    inputs?: InputValues,
+    inputSchema?: Schema,
+    outputSchema?: Schema
+  ): Promise<NodeDescriberResult | undefined> {
+    const describe = this.#getHandlerDescribe(scope);
+    return describe
+      ? await describe(inputs as OriginalInputValues, inputSchema, outputSchema)
+      : undefined;
+  }
+
+  async serialize(metadata?: GraphMetadata): Promise<GraphDescriptor> {
+    return this.#scope.serialize(this as unknown as BaseNode, metadata);
+  }
+
+  async serializeNode(): Promise<[NodeDescriptor, GraphDescriptor?]> {
+    const node = {
+      id: this.id,
+      type: this.type,
+      configuration: this.configuration as OriginalInputValues,
+    };
+
+    return [node];
+  }
+}
+
+export class BuilderNode<
+    I extends InputValues = InputValues,
+    O extends OutputValues = OutputValues
+  >
+  extends BaseNode<I, O>
+  implements
+    BuilderNodeInterface<I, O>,
+    NodeProxyMethods<I, O>,
+    PromiseLike<O>,
+    Serializeable
+{
+  #promise: Promise<O>;
+  #resolve?: (value: O | PromiseLike<O>) => void;
+  #reject?: (reason?: unknown) => void;
+
+  #scope: BuilderScope;
+  #handler?: NodeHandler<I, O>;
+
+  constructor(
+    handler: NodeTypeIdentifier | NodeHandler<I, O>,
+    scope: BuilderScope,
+    config: (Partial<InputsMaybeAsValues<I>> | AbstractValue<NodeValue>) & {
+      $id?: string;
+    } = {}
+  ) {
+    const nonProxyConfig: InputValues = {};
+    if (!(config instanceof AbstractNode) && !isValue(config)) {
+      for (const [key, value] of Object.entries(config) as [
+        [string, NodeValue | AbstractNode | Value]
+      ]) {
+        if (!(value instanceof AbstractNode) && !isValue(value)) {
+          nonProxyConfig[key as keyof InputValues] = value as NodeValue;
+          delete config[key as keyof typeof config];
+        }
+      }
+    }
+
+    super(
+      handler,
+      scope,
+      nonProxyConfig as Partial<I> & OptionalIdConfiguration
+    );
+
+    this.#scope = scope;
+
+    if (typeof handler !== "string") this.#handler = handler;
+
+    if (config instanceof BuilderNode) {
+      this.addInputsFromNode(config.unProxy());
+    } else if (config instanceof AbstractNode) {
+      this.addInputsFromNode(config);
+    } else if (isValue(config)) {
+      this.addInputsFromNode(...(config as Value).asNodeInput());
+    } else {
+      this.addInputsAsValues(config as InputsMaybeAsValues<I>);
+    }
+
+    // Set up spread value, so that { ...node } as input works.
+    (this as unknown as { [key: string]: BaseNode<I, O> })[this.#spreadKey()] =
+      this;
+
+    this.#promise = new Promise<O>((resolve, reject) => {
+      this.#resolve = resolve;
+      this.#reject = reject;
+    });
+  }
+
+  addInputsAsValues(values: InputsMaybeAsValues<I>) {
+    // Split into constants and nodes
+    const constants: Partial<InputValues> = {};
+    const nodes: [AbstractNode, KeyMap, boolean][] = [];
+
+    Object.entries(values).forEach(([key, value]) => {
+      if (isValue(value)) {
+        nodes.push((value as Value).as(key).asNodeInput());
+      } else if (value instanceof AbstractNode) {
+        nodes.push([
+          value instanceof BuilderNode ? value.unProxy() : value,
+          { [key]: key },
+          false,
+        ]);
+      } else {
+        constants[key] = value;
+      }
+    });
+
+    this.receiveConstants(constants);
+    nodes.forEach((node) => this.unProxy().addInputsFromNode(...node));
+  }
+
+  // Add inputs from another node as edges
+  addInputsFromNode(
+    from: AbstractNode,
+    keymap: KeyMap = { "*": "*" },
+    constant?: boolean
+  ) {
+    const keyPairs = Object.entries(keymap);
+    if (keyPairs.length === 0) {
+      // Add an empty edge: Just control flow, no data moving.
+      this.addIncomingEdge(from, "", "", constant);
+    } else {
+      keyPairs.forEach(([fromKey, toKey]) => {
+        // "*-<id>" means "all outputs from <id>" and comes from using a node in
+        // a spread, e.g. newNode({ ...node, $id: "id" }
+        if (fromKey.startsWith("*-")) fromKey = toKey = "*";
+
+        this.unProxy().addIncomingEdge(
+          from instanceof BuilderNode ? from.unProxy() : from,
+          fromKey,
+          toKey,
+          constant
+        );
+      });
+    }
+  }
+
+  // TODO:BASE: This should just be in the super class, below should become a
+  // wrapper around it.
+  #getHandlerFunction(scope: Scope) {
     const handler = this.#handler ?? scope.getHandler(this.type);
     if (!handler) throw new Error(`Handler ${this.type} not found`);
-    return typeof handler === "function" ? undefined : handler.describe;
+    return typeof handler === "function" ? handler : handler.invoke;
   }
 
   // TODO:BASE: In the end, we need to capture the outputs and resolve the
   // promise. But before that there is a bit of refactoring to do to allow
   // returning of graphs, parallel execution, etc.
   async invoke(invokingScope?: Scope): Promise<O> {
-    const scope = new Scope({ invokingScope, declaringScope: this.#scope });
+    const scope = new BuilderScope({
+      invokingScope,
+      declaringScope: this.#scope,
+    });
     return scope.asScopeFor(async () => {
       try {
         const handler = this.#getHandlerFunction(
@@ -280,70 +396,60 @@ export class NodeImpl<
         //    - execute the graph, and return the output node's outputs
         //  - otherwise return the handler's return value as result.
         const result = (await handler(
-          this.#inputs as unknown as PromiseLike<I> & InputsMaybeAsValues<I>,
+          this.getInputs() as PromiseLike<I> & InputsMaybeAsValues<I>,
           this
         )) as O;
 
-        // Resolve promise, but only on first run (outputs is still empty)
-        if (this.#resolve && !this.#outputs) this.#resolve(result);
+        // Resolve promise, but only on first run
+        if (this.#resolve) {
+          this.#resolve(result);
+          this.#resolve = this.#reject = undefined;
+        }
 
-        this.#outputs = result;
-
-        // Clear inputs, reset with configuration and constants
-        this.#inputs = { ...this.configuration, ...this.#constants };
-        this.#incomingEmptyWires = [];
+        this.setOutputs(result);
 
         return result;
       } catch (e) {
-        // Reject promise, but only on first run (outputs is still empty)
-        if (this.#reject && !this.#outputs) this.#reject(e);
+        // Reject promise, but only on first run
+        if (this.#reject) {
+          this.#reject(e);
+          this.#resolve = this.#reject = undefined;
+        }
         throw e;
       }
     })();
-  }
-
-  // TODO:BASE
-  async serialize(metadata?: GraphMetadata) {
-    return this.#scope.serialize(this as unknown as NodeImpl, metadata);
   }
 
   // TODO:BASE Special casing the function case (which is most of the code
   // here), everything else is the same, but really just the first few lines
   // here.
   async serializeNode(): Promise<[NodeDescriptor, GraphDescriptor?]> {
-    const node = {
-      id: this.id,
-      type: this.type,
-      configuration: this.configuration as OriginalInputValues,
-    };
+    if (this.type !== "fn") return super.serializeNode();
 
-    if (this.type !== "fn") return [node];
+    const scope = new BuilderScope({
+      declaringScope: this.#scope,
+      serialize: true,
+    });
 
-    const scope = new Scope({ declaringScope: this.#scope, serialize: true });
+    const handler = this.#getHandlerFunction(
+      scope
+    ) as unknown as NodeHandlerFunction<I, O>;
 
-    const describe = this.#getHandlerDescribe(scope);
-    const { inputSchema, outputSchema } = describe
-      ? await describe()
-      : { inputSchema: undefined, outputSchema: undefined };
+    const schemas = await this.describe(scope);
 
     const graph = await scope.asScopeFor(async () => {
       try {
-        const handler = this.#getHandlerFunction(
-          scope
-        ) as unknown as NodeHandlerFunction<I, O>;
-
-        const inputNode = new NodeImpl<InputValues, I>(
+        const inputNode = new BuilderNode<InputValues, I>(
           "input",
           scope,
-          inputSchema ? { schema: inputSchema } : {}
+          schemas ? { schema: schemas.inputSchema } : {}
         );
-        // TODO: Had to set type to InputValues instead of
-        // `O & { schema: Schema }` because of a typescript.
-        // I don't know why. I should fix this.
-        const outputNode = new NodeImpl<InputValues, O>(
+        const outputNode = new BuilderNode<O & { schema?: Schema }, O>(
           "output",
           scope,
-          outputSchema ? { schema: outputSchema } : {}
+          (schemas ? { schema: schemas.outputSchema } : {}) as Partial<
+            O & { schema?: Schema }
+          >
         );
 
         const resultOrPromise = handler(inputNode.asProxy(), this);
@@ -357,7 +463,7 @@ export class NodeImpl<
             ? await resultOrPromise
             : resultOrPromise;
 
-        // await flattens Promises, so a handler returning a NodeImpl will
+        // await flattens Promises, so a handler returning a BuilderNode will
         // actually return a TrapResult, as its `then` method will be called. At
         // most one is created per serializing scope, so we now that this must
         // be the one.
@@ -366,11 +472,11 @@ export class NodeImpl<
         // If a trap result was generated, but not returned, then we must assume
         // some processing, i.e. not statically graph generating, and the
         // function must be serialized.
-        else if (this.#scope.didTrapResultTrigger()) return null;
+        else if (scope.didTrapResultTrigger()) return null;
 
-        let actualOutput = outputNode as NodeImpl;
-        if (result instanceof NodeImpl) {
-          const node = (result as NodeImpl).unProxy();
+        let actualOutput = outputNode as BuilderNode<O, O>;
+        if (result instanceof BuilderNode) {
+          const node = result.unProxy();
           // If the handler returned an output node, serialize it directly,
           // otherwise connect the returned node's outputs to the output node.
           if (node.type === "output") actualOutput = node;
@@ -387,12 +493,12 @@ export class NodeImpl<
                   ...(output[key] as Value).as(key).asNodeInput()
                 ),
                 (anyNonConstants = true))
-              : output[key] instanceof NodeImpl
-              ? (outputNode.addInputsFromNode(output[key] as NodeImpl, {
+              : output[key] instanceof AbstractNode
+              ? (outputNode.addInputsFromNode(output[key] as BuilderNode, {
                   [key]: key,
                 }),
                 (anyNonConstants = true))
-              : (outputNode.configuration[key as keyof OutputValues] = output[
+              : (outputNode.configuration[key as keyof O] = output[
                   key
                 ] as (typeof outputNode.configuration)[keyof OutputValues])
           );
@@ -413,17 +519,20 @@ export class NodeImpl<
     // If we got a graph back, save it as a subgraph (returned as second value)
     // and turns this into an invoke node.
     if (graph) {
-      node.type = "invoke";
-      node.configuration = { ...node.configuration, graph: "#" + this.id };
+      const node: NodeDescriptor = {
+        id: this.id,
+        type: "invoke",
+        configuration: {
+          ...(this.configuration as OriginalInputValues),
+          graph: "#" + this.id,
+        },
+      };
+
       return [node, graph];
     }
 
     // Else, serialize the handler itself and return a runJavascript node.
-    const fn =
-      typeof this.#handler === "function"
-        ? this.#handler
-        : this.#handler?.invoke ?? "";
-    let code = fn.toString() ?? ""; // The ?? is just for typescript
+    let code = handler.toString();
     let name = this.id.replace(/-/g, "_");
 
     const arrowFunctionRegex = /(?:async\s+)?(\w+|\([^)]*\))\s*=>\s*/;
@@ -445,8 +554,15 @@ export class NodeImpl<
       else name = match[1] || name;
     }
 
-    node.type = "runJavascript";
-    node.configuration = { ...node.configuration, code, name };
+    const node = {
+      id: this.id,
+      type: "runJavascript",
+      configuration: {
+        ...(this.configuration as OriginalInputValues),
+        code,
+        name,
+      },
+    };
 
     return [node];
   }
@@ -490,11 +606,11 @@ export class NodeImpl<
       get(target, prop, receiver) {
         if (typeof prop === "string") {
           const value = new Value(
-            target as unknown as NodeImpl<InputValues, OutputValues>,
-            target.#scope,
+            target as unknown as BuilderNode<InputValues, OutputValues>,
+            target.#scope as BuilderScope,
             prop
           );
-          const method = target[prop as keyof NodeImpl<I, O>] as () => void;
+          const method = target[prop as keyof BuilderNode<I, O>] as () => void;
           if (method && typeof method === "function") {
             return new Proxy(method.bind(target), {
               get(_, key, __) {
@@ -522,9 +638,9 @@ export class NodeImpl<
   /**
    * Retrieve underlying node from a NodeProxy. Use like this:
    *
-   * if (thing instanceof NodeImpl) { const node = thing.unProxy(); }
+   * if (thing instanceof BuilderNode) { const node = thing.unProxy(); }
    *
-   * @returns A NodeImpl that is not a proxy, but the original NodeImpl.
+   * @returns A BuilderNoder that is not a proxy, but the original BuilderNode.
    */
   unProxy() {
     return this;
@@ -554,7 +670,7 @@ export class NodeImpl<
 
       // It's ok to call this multiple times: If it already run it'll only do
       // something if new nodes or inputs were added (e.g. between await calls)
-      this.#scope.invoke(this as unknown as NodeImpl);
+      this.#scope.invoke(this as unknown as BaseNode);
 
       return this.#promise.then(
         onfulfilled && this.#scope.asScopeFor(onfulfilled),
@@ -578,9 +694,9 @@ export class NodeImpl<
     config?: ToC
   ): NodeProxy<O & ToC, ToO> {
     const toNode =
-      to instanceof NodeImpl
+      to instanceof BuilderNode
         ? to.unProxy()
-        : new NodeImpl(
+        : new BuilderNode(
             to as NodeTypeIdentifier | NodeHandler<Partial<O> & ToC, ToO>,
             this.#scope,
             config as Partial<O> & ToC
@@ -588,9 +704,9 @@ export class NodeImpl<
 
     // TODO: Ideally we would look at the schema here and use * only if
     // the output is open ended and/or not all fields are present all the time.
-    toNode.addInputsFromNode(this as unknown as NodeImpl, { "*": "*" });
+    toNode.addInputsFromNode(this as unknown as BaseNode, { "*": "*" });
 
-    return (toNode as NodeImpl<O & ToC, ToO>).asProxy();
+    return (toNode as BuilderNode<O & ToC, ToO>).asProxy();
   }
 
   in(
@@ -599,8 +715,8 @@ export class NodeImpl<
       | InputsMaybeAsValues<I>
       | AbstractValue<NodeValue>
   ) {
-    if (inputs instanceof NodeImpl) {
-      const node = inputs as NodeImpl<InputValues, OutputValues>;
+    if (inputs instanceof BaseNode) {
+      const node = inputs as BaseNode<InputValues, OutputValues>;
       this.addInputsFromNode(node);
     } else if (isValue(inputs)) {
       const value = inputs as Value;
@@ -614,7 +730,7 @@ export class NodeImpl<
 
   as(keymap: KeyMap): Value {
     return new Value<NodeValue>(
-      this as unknown as NodeImpl,
+      this as unknown as BuilderNode,
       this.#scope,
       keymap
     );
