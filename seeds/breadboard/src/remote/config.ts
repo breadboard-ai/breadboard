@@ -104,3 +104,7 @@ export type ProxyServerConfig = {
 };
 
 export const defineConfig = (config: ProxyServerConfig) => config;
+
+export const hasOrigin = (origin: string) => ({
+  test: (url: string) => new URL(url).origin === origin,
+});
