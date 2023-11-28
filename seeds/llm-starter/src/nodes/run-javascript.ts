@@ -69,6 +69,9 @@ const runInBrowser = async (
         throw new Error(data.error);
       }
     };
+    worker.onerror = (e) => {
+      throw new Error(e.toString());
+    };
   });
   worker.postMessage("please");
   return result;
