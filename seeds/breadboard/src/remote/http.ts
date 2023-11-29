@@ -77,16 +77,28 @@ export type HTTPClientTransportOptions = RequestInit & {
   fetch?: typeof globalThis.fetch;
 };
 
+/**
+ * When processing HTTP responses, the server may send chunks that are
+ * broken in two ways:
+ * - Multiple chunks might be merged together
+ * - A single chunk might be broken into multiple chunks.
+ *
+ * This transform stream repairs such chunks, merging broken chunks and
+ * splitting merged chunks.
+ *
+ * @returns The transform stream that repaired chunks.
+ */
 const chunkRepairTransform = () => {
-  const queue: string[] = [];
+  let queue: string[] = [];
   return new TransformStream<string, string>({
     transform(chunk, controller) {
       const brokenChunk = !chunk.endsWith("\n");
       const chunks = chunk.split("\n").filter(Boolean);
       // If there are items in the queue, prepend them to the first chunk
       // and enqueue the result.
-      if (queue.length) {
-        controller.enqueue(`${queue.shift()}${chunks.shift()}`);
+      if (queue.length && !brokenChunk) {
+        controller.enqueue(`${queue.join("")}${chunks.shift()}`);
+        queue = [];
       }
       // Queue all chunks except the last one.
       while (chunks.length > 1) {
@@ -101,9 +113,12 @@ const chunkRepairTransform = () => {
         controller.enqueue(lastChunk);
       }
     },
-    flush(controller) {
+    flush() {
+      // The queue should be empty at the end of the stream.
+      // The presence of items in the queue is an indication that the
+      // stream was not formatted correctly.
       if (queue.length) {
-        controller.enqueue(queue.shift());
+        throw new Error("Unexpected end of stream.");
       }
     },
   });

@@ -130,7 +130,9 @@ test("HTTPClientTransport does the basics", async (t) => {
           return new ReadableStream({
             start(controller) {
               const data = ["input", { node: {} }];
-              const chunk = new TextEncoder().encode(JSON.stringify(data));
+              const chunk = new TextEncoder().encode(
+                `${JSON.stringify(data)}\n`
+              );
               controller.enqueue(chunk);
               controller.close();
             },
