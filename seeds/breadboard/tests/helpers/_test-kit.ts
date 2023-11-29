@@ -117,3 +117,22 @@ export const MirrorUniverseKit = new KitBuilder({
     );
   },
 });
+
+/**
+ * Recipe grammar versions of the above, with types.
+ */
+import { addKit, NewNodeFactory as NodeFactory } from "../../src/index.js";
+
+export const testKit = addKit(TestKit) as unknown as {
+  noop: NodeFactory<InputValues, InputValues>;
+  test: NodeFactory<InputValues, InputValues>;
+  reverser: NodeFactory<{ [key: string]: string }, { [key: string]: string }>;
+  streamer: NodeFactory<
+    Record<string, never>,
+    { stream: ReadableStream<string> }
+  >;
+};
+
+export const mirrorUniverseKit = addKit(MirrorUniverseKit) as unknown as {
+  reverser: NodeFactory<{ [key: string]: string }, { [key: string]: string }>;
+};
