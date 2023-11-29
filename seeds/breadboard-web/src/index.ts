@@ -6,8 +6,10 @@
 
 import * as BreadboardUI from "./ui";
 import type * as Breadboard from "@google-labs/breadboard";
-import { type RunResult, HostRuntime } from "@google-labs/breadboard/worker";
+import { HostRuntime } from "@google-labs/breadboard/worker";
 import { ProxyReceiver } from "./receiver.js";
+import { Runtime, RuntimeRunResult } from "./types.js";
+import { MainThreadRuntime } from "./main-thread-runtime.js";
 
 const localBoards = await (await fetch("/local-boards.json")).json();
 const PROXY_NODES = [
@@ -66,14 +68,18 @@ const config = {
   ],
 };
 
+const RUNTIME_SWITCH_KEY = "bb-runtime";
+const MAINTHREAD_RUNTIME_VALUE = "main-thread";
+
 export class Main {
   #ui = BreadboardUI.get();
-  #runtime = new HostRuntime(WORKER_URL);
+  #runtime: Runtime;
   #receiver = new ProxyReceiver();
   #hasActiveBoard = false;
   #boardId = 0;
 
   constructor() {
+    this.#runtime = this.#getRuntime();
     BreadboardUI.register();
 
     this.#ui.addEventListener(
@@ -109,7 +115,7 @@ export class Main {
     this.#ui.start(config);
   }
 
-  async #handleEvent(result: RunResult) {
+  async #handleEvent(result: RuntimeRunResult) {
     const { data, type } = result.message;
     switch (type) {
       case "load": {
@@ -208,6 +214,23 @@ export class Main {
 
       case "shutdown":
         break;
+    }
+  }
+
+  #getRuntime() {
+    const runtime = globalThis.localStorage.getItem(RUNTIME_SWITCH_KEY);
+    switch (runtime) {
+      case MAINTHREAD_RUNTIME_VALUE:
+        return new MainThreadRuntime(async ({ keys }) => {
+          if (!keys) return {};
+          return Object.fromEntries(
+            await Promise.all(
+              keys.map(async (key) => [key, await this.#ui.secret(key)])
+            )
+          );
+        });
+      default:
+        return new HostRuntime(WORKER_URL);
     }
   }
 }
