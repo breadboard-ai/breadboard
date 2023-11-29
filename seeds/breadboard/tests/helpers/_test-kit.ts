@@ -138,6 +138,8 @@ export const testKit = addKit(TestKit) as unknown as {
   >;
 };
 
-export const mirrorUniverseKit = addKit(MirrorUniverseKit) as unknown as {
-  reverser: NodeFactory<{ [key: string]: string }, { [key: string]: string }>;
-};
+// This will create a kit only when called, so we can test scoping.
+export const makeMirrorUniverseKit = () =>
+  addKit(MirrorUniverseKit) as unknown as {
+    reverser: NodeFactory<{ [key: string]: string }, { [key: string]: string }>;
+  };
