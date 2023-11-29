@@ -3,7 +3,7 @@
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-runJavascript6["runJavascript <br> id='runJavascript-6'"] -- all --> output2{{"output <br> id='output-2'"}}:::output
+runJavascript6["runJavascript <br> id='runJavascript-6'"] -- "result->result" --> output2{{"output <br> id='output-2'"}}:::output
 palmgenerateText5["palm-generateText <br> id='palm-generateText-5'"] -- "completion->code" --> runJavascript6["runJavascript <br> id='runJavascript-6'"]
 promptTemplate3["promptTemplate <br> id='promptTemplate-3'"] -- "prompt->text" --> palmgenerateText5["palm-generateText <br> id='palm-generateText-5'"]
 secrets4("secrets <br> id='secrets-4'"):::secrets -- "PALM_KEY->PALM_KEY" --> palmgenerateText5["palm-generateText <br> id='palm-generateText-5'"]

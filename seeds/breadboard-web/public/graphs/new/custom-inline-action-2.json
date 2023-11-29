@@ -1,0 +1,14 @@
+{
+  "title": "New: Custom inline action",
+  "edges": [],
+  "nodes": [
+    {
+      "id": "fn-5",
+      "type": "runJavascript",
+      "configuration": {
+        "code": "async function fn_5(inputs) {const{a,b}=await inputs;return{result:a+b}}",
+        "name": "fn_5"
+      }
+    }
+  ]
+}

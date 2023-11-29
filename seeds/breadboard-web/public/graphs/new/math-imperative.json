@@ -4,8 +4,8 @@
     {
       "from": "runJavascript-6",
       "to": "output-2",
-      "out": "*",
-      "in": ""
+      "out": "result",
+      "in": "result"
     },
     {
       "from": "palm-generateText-5",

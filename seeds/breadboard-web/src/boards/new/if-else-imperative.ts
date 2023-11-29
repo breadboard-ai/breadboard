@@ -4,53 +4,46 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { z } from "zod";
+
 import { recipe } from "@google-labs/breadboard";
 
 import { starter } from "@google-labs/llm-starter";
 import { palm } from "@google-labs/palm-kit";
 
-const math = recipe((inputs) => {
-  return starter
-    .promptTemplate({
-      template:
-        "Write a Javascript function called `run` to compute the result for this question:\nQuestion: {{question}}\nCode: ",
-      question: inputs.question,
-    })
-    .prompt.as("text")
-    .to(
-      palm.generateText({
-        PALM_KEY: starter.secrets({ keys: ["PALM_KEY"] }).PALM_KEY,
+import { graph as math } from "./math-imperative.js";
+import { graph as search } from "./search-summarize-as-action.js";
+
+export const graph = recipe(
+  {
+    input: z.object({
+      question: z.string().describe("Query: A math or search question?"),
+    }),
+    output: z.object({
+      result: z.string().describe("Answer: The answer to the query"),
+    }),
+  },
+  async (inputs) => {
+    const { completion } = await starter
+      .promptTemplate({
+        template:
+          "Is this question about math? Answer YES or NO.\nQuestion: {{question}}\nAnswer: ",
+        question: inputs.question,
       })
-    )
-    .completion.as("code")
-    .to(starter.runJavascript());
-});
+      .prompt.as("text")
+      .to(
+        palm.generateText({
+          PALM_KEY: starter.secrets({ keys: ["PALM_KEY"] }).PALM_KEY,
+        })
+      );
 
-const search = recipe((inputs) => {
-  // TODO: Implement
-  return inputs;
-});
-
-export const graph = recipe(async (inputs) => {
-  const { completion } = await starter
-    .promptTemplate({
-      template:
-        "Is this question about math? Answer YES or NO.\nQuestion: {{question}}\nAnswer: ",
-      question: inputs.question,
-    })
-    .prompt.as("text")
-    .to(
-      palm.generateText({
-        PALM_KEY: starter.secrets({ keys: ["PALM_KEY"] }).PALM_KEY,
-      })
-    );
-
-  if (completion && (completion as string).startsWith("YES")) {
-    return math({ question: inputs.question });
-  } else {
-    return search(inputs);
+    if (completion?.startsWith("YES")) {
+      return { result: await math({ question: inputs.question }).result };
+    } else {
+      return { result: await search({ text: inputs.question }).text };
+    }
   }
-});
+);
 
 export const example = { question: "1+1" };
 

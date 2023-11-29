@@ -7,10 +7,11 @@
 import { z } from "zod";
 
 import { GraphDescriptor, Schema, NodeDescriberFunction } from "../../types.js";
-import { NodeFactory } from "./types.js";
+import { NodeFactory, InputsMaybeAsValues } from "./types.js";
 import {
   InputValues,
   OutputValues,
+  AbstractNode,
   NodeHandler,
   NodeHandlerFunction,
   Serializeable,
@@ -20,6 +21,14 @@ import { zodToSchema } from "./zod-utils.js";
 import { addNodeType } from "./kits.js";
 import { getCurrentContextScope } from "./default-scope.js";
 import { BuilderNode } from "./node.js";
+
+export type NodeProxyHandlerFunction<
+  I extends InputValues,
+  O extends OutputValues
+> = (
+  inputs: PromiseLike<I> & I,
+  node: AbstractNode<I, O>
+) => O | PromiseLike<O> | InputsMaybeAsValues<O>;
 
 /**
  * Creates a node factory for a node type that invokes a handler function. This
@@ -34,7 +43,7 @@ import { BuilderNode } from "./node.js";
 export function recipe<
   I extends InputValues = InputValues,
   O extends OutputValues = OutputValues
->(fn: NodeHandlerFunction<I, O>): NodeFactory<I, O> & Serializeable;
+>(fn: NodeProxyHandlerFunction<I, O>): NodeFactory<I, O> & Serializeable;
 
 /**
  * Alternative version to above that infers the type of the passed in Zod type.
@@ -44,7 +53,7 @@ export function recipe<
 export function recipe<I extends InputValues, O extends OutputValues>(options: {
   input: z.ZodType<I>;
   output: z.ZodType<O>;
-  invoke: NodeHandlerFunction<I, O>;
+  invoke: NodeProxyHandlerFunction<I, O>;
   describe?: NodeDescriberFunction;
   name?: string;
 }): NodeFactory<I, O> & Serializeable;
@@ -63,7 +72,7 @@ export function recipe<I extends InputValues, O extends OutputValues>(
     describe?: NodeDescriberFunction;
     name?: string;
   },
-  fn?: NodeHandlerFunction<I, O>
+  fn?: NodeProxyHandlerFunction<I, O>
 ): NodeFactory<I, O> & Serializeable;
 
 /**
@@ -74,12 +83,12 @@ export function recipe<I extends InputValues, O extends OutputValues>(
     | {
         input: z.ZodType<I>;
         output: z.ZodType<O>;
-        invoke?: NodeHandlerFunction<I, O>;
+        invoke?: NodeProxyHandlerFunction<I, O>;
         describe?: NodeDescriberFunction;
         name?: string;
       }
-    | NodeHandlerFunction<I, O>,
-  fn?: NodeHandlerFunction<I, O>
+    | NodeProxyHandlerFunction<I, O>,
+  fn?: NodeProxyHandlerFunction<I, O>
 ): NodeFactory<I, O> & Serializeable {
   const options = typeof optionsOrFn === "function" ? undefined : optionsOrFn;
   if (!options) {
@@ -90,7 +99,7 @@ export function recipe<I extends InputValues, O extends OutputValues>(
   }
 
   const handler: NodeHandler<I, O> = {
-    invoke: fn,
+    invoke: fn as NodeHandlerFunction<I, O>,
   };
 
   if (options) {

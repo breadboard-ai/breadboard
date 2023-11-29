@@ -83,4 +83,6 @@ export type {
 export type {
   NodeFactory as NewNodeFactory,
   NodeProxy,
+  InputsMaybeAsValues,
+  AbstractValue as V,
 } from "./new/recipe-grammar/types.js";
