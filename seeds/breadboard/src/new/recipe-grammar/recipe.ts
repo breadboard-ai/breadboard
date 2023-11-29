@@ -7,10 +7,14 @@
 import { z } from "zod";
 
 import { GraphDescriptor, Schema, NodeDescriberFunction } from "../../types.js";
-import { NodeFactory, InputsMaybeAsValues } from "./types.js";
 import {
+  NodeValue,
   InputValues,
   OutputValues,
+  NodeFactory,
+  OutputsMaybeAsValues,
+} from "./types.js";
+import {
   AbstractNode,
   NodeHandler,
   NodeHandlerFunction,
@@ -22,13 +26,18 @@ import { addNodeType } from "./kits.js";
 import { getCurrentContextScope } from "./default-scope.js";
 import { BuilderNode } from "./node.js";
 
+type OutputValuesOrUnknown = { [key: string]: NodeValue | unknown };
+type ProjectBackToOutputValues<O extends OutputValuesOrUnknown> = {
+  [K in keyof O]: O[K] extends NodeValue ? O[K] : NodeValue;
+};
+
 export type NodeProxyHandlerFunction<
   I extends InputValues,
-  O extends OutputValues
+  O extends OutputValuesOrUnknown
 > = (
   inputs: PromiseLike<I> & I,
-  node: AbstractNode<I, O>
-) => O | PromiseLike<O> | InputsMaybeAsValues<O>;
+  node: AbstractNode<I, ProjectBackToOutputValues<O>>
+) => O | PromiseLike<O> | OutputsMaybeAsValues<ProjectBackToOutputValues<O>>;
 
 /**
  * Creates a node factory for a node type that invokes a handler function. This
@@ -92,7 +101,7 @@ export function recipe<I extends InputValues, O extends OutputValues>(
 ): NodeFactory<I, O> & Serializeable {
   const options = typeof optionsOrFn === "function" ? undefined : optionsOrFn;
   if (!options) {
-    fn = optionsOrFn as NodeHandlerFunction<I, O>;
+    fn = optionsOrFn as NodeProxyHandlerFunction<I, O>;
   } else {
     if (options.invoke) fn = options.invoke;
     if (!fn) throw new Error("Missing invoke function");

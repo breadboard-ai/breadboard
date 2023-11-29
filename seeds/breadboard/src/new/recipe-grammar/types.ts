@@ -34,6 +34,11 @@ export type InputsMaybeAsValues<
     | NodeValue;
 };
 
+export type OutputsMaybeAsValues<
+  T extends OutputValues,
+  NI extends InputValues = InputValues
+> = InputsMaybeAsValues<T, NI>;
+
 export type NodeFactory<I extends InputValues, O extends OutputValues> = (
   config?:
     | AbstractNode<InputValues, I>
