@@ -16,7 +16,7 @@ import {
 // way to encapsulate boards, including lambdas (instead of BoardCapability).
 // Can keep it a capability, but this feels quite fundamental.
 
-export type NodeValue = OriginalNodeValue | PromiseLike<NodeValue>;
+export type NodeValue = OriginalNodeValue | PromiseLike<NodeValue> | unknown;
 export type NodeTypeIdentifier = string;
 
 export type InputValues = { [key: string]: NodeValue };

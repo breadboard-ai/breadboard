@@ -65,7 +65,7 @@ export const starter = addKit(Starter) as unknown as {
       raw: boolean;
       [key: string]: NodeValue;
     },
-    { result: NodeValue; [k: string]: NodeValue }
+    { result: unknown; [k: string]: unknown }
   >;
   fetch: NodeFactory<{ url: string }, { response: string }>;
   jsonata: NodeFactory<

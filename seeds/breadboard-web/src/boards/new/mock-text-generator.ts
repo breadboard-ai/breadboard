@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { recipe, V } from "@google-labs/breadboard";
+import { recipe } from "@google-labs/breadboard";
 import { starter } from "@google-labs/llm-starter";
 import { z } from "zod";
 
@@ -44,8 +44,7 @@ const mockGenerator = recipe(
       raw: true,
     });
 
-    // V<string> is a helper to narrow the type returned by runJavascript
-    return { text: mockModel.text as V<string> };
+    return { text: mockModel.text };
   }
 );
 

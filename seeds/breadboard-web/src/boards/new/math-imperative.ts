@@ -5,7 +5,7 @@
  */
 
 import { z } from "zod";
-import { recipe, V } from "@google-labs/breadboard";
+import { recipe } from "@google-labs/breadboard";
 
 import { starter } from "@google-labs/llm-starter";
 import { palm } from "@google-labs/palm-kit";
@@ -32,7 +32,7 @@ export const graph = recipe(
     const { result } = starter.runJavascript({
       code: completion,
     });
-    return { result: result as V<string> };
+    return { result: result };
   }
 );
 

@@ -20,7 +20,11 @@ export type InputsMaybeAsValues<
   T extends InputValues,
   NI extends InputValues = InputValues
 > = Partial<{
-  [K in keyof T]: AbstractValue<T[K]> | NodeProxy<NI, OutputValue<T[K]>> | T[K];
+  [K in keyof T]:
+    | AbstractValue<T[K]>
+    | NodeProxy<NI, OutputValue<T[K]>>
+    | T[K]
+    | unknown;
 }> & {
   [key in string]:
     | AbstractValue<NodeValue>
