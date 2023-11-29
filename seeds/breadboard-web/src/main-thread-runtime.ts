@@ -79,25 +79,19 @@ export class MainThreadRuntime implements Runtime {
         NodeNurseryWeb,
       ].map((kitConstructor) => asRuntimeKit(kitConstructor));
 
-      for await (const stop of runner.run({
+      for await (const data of runner.run({
         probe: new LogProbe(),
         kits,
       })) {
-        const { type } = stop;
+        const { type } = data;
         if (type === "input") {
-          const { node, inputArguments } = stop;
-          const inputResult = new MainThreadRunResult({
-            type,
-            data: { node, inputArguments },
-          });
+          const inputResult = new MainThreadRunResult({ type, data });
           yield inputResult;
-          stop.inputs = inputResult.response as InputValues;
+          data.inputs = inputResult.response as InputValues;
         } else if (type === "output") {
-          const { node, outputs } = stop;
-          yield new MainThreadRunResult({ type, data: { node, outputs } });
-        } else if (stop.type === "beforehandler") {
-          const { node } = stop;
-          yield new MainThreadRunResult({ type, data: { node } });
+          yield new MainThreadRunResult({ type, data });
+        } else if (data.type === "beforehandler") {
+          yield new MainThreadRunResult({ type, data });
         }
       }
       yield new MainThreadRunResult({ type: "end", data: {} });
