@@ -21,8 +21,11 @@ test("HTTPServerTransport does the basics", async (t) => {
     body: ["run", {}],
   };
   const response = {
+    header() {
+      return;
+    },
     write: (response: unknown) => {
-      t.deepEqual(response, '["input",{"node":{"type":"input"}}]\n');
+      t.deepEqual(response, 'data: ["input",{"node":{"type":"input"}}]\n\n');
       return true;
     },
     end: () => {
@@ -51,8 +54,11 @@ test("RunServer can use HTTPServerTransport", async (t) => {
     body: ["run", {}] as AnyRunRequestMessage,
   };
   const response = {
+    header() {
+      return;
+    },
     write: (response: unknown) => {
-      const data = JSON.parse(response as string);
+      const data = JSON.parse((response as string).slice(6));
       t.like(data, ["input", { node: { type: "input" } }]);
       return true;
     },
@@ -131,7 +137,7 @@ test("HTTPClientTransport does the basics", async (t) => {
             start(controller) {
               const data = ["input", { node: {} }];
               const chunk = new TextEncoder().encode(
-                `${JSON.stringify(data)}\n`
+                `data: ${JSON.stringify(data)}\n\n`
               );
               controller.enqueue(chunk);
               controller.close();

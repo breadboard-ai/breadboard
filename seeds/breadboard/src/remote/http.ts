@@ -23,12 +23,23 @@ export type ServerRequest<Request> = {
  * Minimal interface in the shape of express.js's response object.
  */
 export type ServerResponse = {
+  header(field: string, value: string): unknown;
   write: (chunk: unknown) => boolean;
   end: () => unknown;
 };
 
 const isIterable = (o: unknown): boolean => {
   return typeof o === "object" && o !== null && Symbol.iterator in o;
+};
+
+const serverStreamEventDecoder = () => {
+  return new TransformStream<string, string>({
+    transform(chunk, controller) {
+      if (chunk.startsWith("data: ")) {
+        controller.enqueue(chunk.slice(6));
+      }
+    },
+  });
 };
 
 export class HTTPServerTransport<Request, Response>
@@ -46,6 +57,7 @@ export class HTTPServerTransport<Request, Response>
     const request = this.#request;
     const response = this.#response;
     patchReadableStream();
+    response.header("Content-Type", "text/event-stream");
     return {
       readableRequests: new ReadableStream({
         start(controller) {
@@ -63,7 +75,7 @@ export class HTTPServerTransport<Request, Response>
       }) as PatchedReadableStream<Request>,
       writableResponses: new WritableStream({
         write(chunk) {
-          response.write(`${JSON.stringify(chunk)}\n`);
+          response.write(`data: ${JSON.stringify(chunk)}\n\n`);
         },
         close() {
           response.end();
@@ -186,6 +198,7 @@ export class HTTPClientTransport<Request, Response>
             response.body
               ?.pipeThrough(new TextDecoderStream())
               .pipeThrough(chunkRepairTransform())
+              .pipeThrough(serverStreamEventDecoder())
               .pipeThrough(
                 new TransformStream({
                   transform(chunk, controller) {

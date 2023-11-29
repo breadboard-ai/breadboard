@@ -145,6 +145,9 @@ export class MockHTTPConnection<Request> {
       const request = { body: JSON.parse(body as string) };
       const chunkMutator = createChunkMutator(this.#options);
       const response = {
+        header() {
+          return;
+        },
         write(response: unknown) {
           chunkMutator(response, writer);
           return true;

@@ -27,8 +27,11 @@ test("ProxyServer can use HTTPServerTransport", async (t) => {
     ] as AnyProxyRequestMessage,
   };
   const response = {
+    header() {
+      return;
+    },
     write: (response: unknown) => {
-      const data = JSON.parse(response as string);
+      const data = JSON.parse((response as string).slice(6));
       t.deepEqual(data, ["proxy", { outputs: { hello: "world" } }]);
       return true;
     },
