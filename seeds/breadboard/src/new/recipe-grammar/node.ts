@@ -199,6 +199,20 @@ export class BuilderNode<
           this
         )) as O;
 
+        // Execute graphs returned by the handler as individual results (A full
+        // graph returned would have already been executed above)
+        //
+        // TODO: As a future feature, it would be nice to do this as deep
+        // traversal, so that developers can return complex structures composed
+        // of different responses. But only if we support this for regular nodes
+        // as well.
+        for (const [key, value] of Object.entries(result)) {
+          if (value instanceof BuilderNode)
+            result[key as keyof O] = (await value)[key];
+          else if (isValue(value))
+            result[key as keyof O] = (await value) as O[keyof O];
+        }
+
         // Resolve promise, but only on first run
         if (this.#resolve) {
           this.#resolve(result);
