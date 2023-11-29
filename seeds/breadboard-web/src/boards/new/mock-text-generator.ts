@@ -44,7 +44,7 @@ const mockGenerator = recipe(
       raw: true,
     });
 
-    return { text: mockModel.result as unknown as string };
+    return { text: mockModel.text as unknown as string };
   }
 );
 

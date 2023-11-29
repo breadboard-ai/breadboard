@@ -3,7 +3,7 @@
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-runJavascript3["runJavascript <br> id='runJavascript-3'"] -- "result->text" --> output2{{"output <br> id='output-2'"}}:::output
+runJavascript3["runJavascript <br> id='runJavascript-3'"] -- "text->text" --> output2{{"output <br> id='output-2'"}}:::output
 input1[/"input <br> id='input-1'"/]:::input -- "text->text" --> runJavascript3["runJavascript <br> id='runJavascript-3'"]
 input1[/"input <br> id='input-1'"/]:::input -- "useStreaming->useStreaming" --> runJavascript3["runJavascript <br> id='runJavascript-3'"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
