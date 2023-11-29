@@ -2,10 +2,28 @@
   "title": "New: IfElse, serializable",
   "edges": [
     {
-      "from": "fn-6",
+      "from": "passthrough-7",
       "to": "output-2",
       "out": "*",
       "in": ""
+    },
+    {
+      "from": "fn-6",
+      "to": "passthrough-7",
+      "out": "result",
+      "in": "result"
+    },
+    {
+      "from": "input-1",
+      "to": "promptTemplate-3",
+      "out": "text",
+      "in": "question"
+    },
+    {
+      "from": "input-1",
+      "to": "fn-6",
+      "out": "text",
+      "in": "question"
     },
     {
       "from": "palm-generateText-5",
@@ -14,51 +32,76 @@
       "in": ""
     },
     {
-      "from": "secrets-4",
-      "to": "palm-generateText-5",
-      "out": "PALM_KEY",
-      "in": "PALM_KEY"
-    },
-    {
       "from": "promptTemplate-3",
       "to": "palm-generateText-5",
       "out": "prompt",
       "in": "text"
     },
     {
-      "from": "input-1",
-      "to": "promptTemplate-3",
-      "out": "question",
-      "in": "question"
+      "from": "secrets-4",
+      "to": "palm-generateText-5",
+      "out": "PALM_KEY",
+      "in": "PALM_KEY"
     }
   ],
   "nodes": [
     {
       "id": "output-2",
       "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "result": {
+              "type": "string",
+              "description": "The answer to the query",
+              "title": "Answer"
+            }
+          },
+          "required": [
+            "result"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "id": "passthrough-7",
+      "type": "passthrough",
       "configuration": {}
     },
     {
       "id": "fn-6",
       "type": "runJavascript",
       "configuration": {
-        "code": "async function fn_6(inputs2) {const{completion,math:math2,search:search2}=await inputs2;if(completion?.startsWith(\"YES\")){return math2({question:inputs2.question})}else{return search2(inputs2)}}",
+        "code": "async function fn_6(inputs2) {const{completion,math:math2,search:search2}=await inputs2;if(completion?.startsWith(\"YES\")){return{result:math2({question:inputs2.question}).result}}else{return{result:search2({text:inputs2.question}).text}}}",
         "name": "fn_6"
+      }
+    },
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "description": "A math or search question?",
+              "title": "Query"
+            }
+          },
+          "required": [
+            "text"
+          ],
+          "additionalProperties": false
+        }
       }
     },
     {
       "id": "palm-generateText-5",
       "type": "palm-generateText",
       "configuration": {}
-    },
-    {
-      "id": "secrets-4",
-      "type": "secrets",
-      "configuration": {
-        "keys": [
-          "PALM_KEY"
-        ]
-      }
     },
     {
       "id": "promptTemplate-3",
@@ -68,9 +111,13 @@
       }
     },
     {
-      "id": "input-1",
-      "type": "input",
-      "configuration": {}
+      "id": "secrets-4",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "PALM_KEY"
+        ]
+      }
     }
   ],
   "graphs": {}

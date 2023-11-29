@@ -5,15 +5,17 @@
  */
 
 import {
-  NodeValue,
-  InputValues,
-  OutputValues,
+  NodeValue as BaseNodeValue,
   OutputValue,
   NodeTypeIdentifier,
   NodeHandler,
   KeyMap,
   AbstractNode,
 } from "../runner/types.js";
+
+export type NodeValue = BaseNodeValue | NodeFactory<InputValues, OutputValues>;
+export type InputValues = { [key: string]: NodeValue };
+export type OutputValues = { [key: string]: NodeValue };
 
 // TODO:BASE: This is pure syntactic sugar and should _not_ be moved
 export type InputsMaybeAsValues<
