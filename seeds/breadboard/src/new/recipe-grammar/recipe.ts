@@ -8,9 +8,10 @@ import { z } from "zod";
 
 import { GraphDescriptor, Schema, NodeDescriberFunction } from "../../types.js";
 import {
-  NodeValue,
   InputValues,
   OutputValues,
+  OutputValuesOrUnknown,
+  ProjectBackToOutputValues,
   NodeFactory,
   OutputsMaybeAsValues,
 } from "./types.js";
@@ -26,18 +27,13 @@ import { addNodeType } from "./kits.js";
 import { getCurrentContextScope } from "./default-scope.js";
 import { BuilderNode } from "./node.js";
 
-type OutputValuesOrUnknown = { [key: string]: NodeValue | unknown };
-type ProjectBackToOutputValues<O extends OutputValuesOrUnknown> = {
-  [K in keyof O]: O[K] extends NodeValue ? O[K] : NodeValue;
-};
-
 export type NodeProxyHandlerFunction<
   I extends InputValues,
   O extends OutputValuesOrUnknown
 > = (
   inputs: PromiseLike<I> & I,
   node: AbstractNode<I, ProjectBackToOutputValues<O>>
-) => O | PromiseLike<O> | OutputsMaybeAsValues<ProjectBackToOutputValues<O>>;
+) => O | PromiseLike<O> | OutputsMaybeAsValues<O>;
 
 /**
  * Creates a node factory for a node type that invokes a handler function. This

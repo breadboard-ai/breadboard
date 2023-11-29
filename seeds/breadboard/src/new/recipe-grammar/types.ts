@@ -22,6 +22,18 @@ export type InputsMaybeAsValues<
   T extends InputValues,
   NI extends InputValues = InputValues
 > = Partial<{
+  [K in keyof T]: AbstractValue<T[K]> | NodeProxy<NI, OutputValue<T[K]>> | T[K];
+}> & {
+  [key in string]:
+    | AbstractValue<NodeValue>
+    | NodeProxy<NI, Partial<InputValues>>
+    | NodeValue;
+};
+
+export type OutputsMaybeAsValues<
+  T extends OutputValuesOrUnknown,
+  NI extends InputValues = InputValues
+> = Partial<{
   [K in keyof T]:
     | AbstractValue<T[K]>
     | NodeProxy<NI, OutputValue<T[K]>>
@@ -34,10 +46,10 @@ export type InputsMaybeAsValues<
     | NodeValue;
 };
 
-export type OutputsMaybeAsValues<
-  T extends OutputValues,
-  NI extends InputValues = InputValues
-> = InputsMaybeAsValues<T, NI>;
+export type OutputValuesOrUnknown = { [key: string]: NodeValue | unknown };
+export type ProjectBackToOutputValues<O extends OutputValuesOrUnknown> = {
+  [K in keyof O]: O[K] extends NodeValue ? O[K] : NodeValue;
+};
 
 export type NodeFactory<I extends InputValues, O extends OutputValues> = (
   config?:
@@ -85,7 +97,7 @@ export interface BuilderNodeInterface<
   unProxy(): BuilderNodeInterface<I, O>;
 }
 
-export abstract class AbstractValue<T extends NodeValue = NodeValue>
+export abstract class AbstractValue<T extends NodeValue | unknown = NodeValue>
   implements PromiseLike<T | undefined>
 {
   abstract then<TResult1 = T | undefined, TResult2 = never>(

@@ -79,10 +79,15 @@ export type {
   InputValues as NewInputValues,
   OutputValues as NewOutputValues,
   Serializeable,
+  AbstractNode,
 } from "./new/runner/types.js";
 export type {
   NodeFactory as NewNodeFactory,
-  NodeProxy,
+  NodeProxy as __NodeProxy,
   InputsMaybeAsValues,
+  OutputsMaybeAsValues,
+  OutputValuesOrUnknown,
+  ProjectBackToOutputValues as __ProjectBackToOutputValues,
+  InputValues as NewInputValuesWithNodeFactory,
   AbstractValue as V,
 } from "./new/recipe-grammar/types.js";
