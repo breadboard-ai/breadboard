@@ -74,12 +74,67 @@ type MockRequestHandler<Request> = (
   response: ServerResponse
 ) => void;
 
+type MockHTTPConnectionOptions = {
+  breakChunks?: boolean;
+  combineChunks?: boolean;
+};
+
+const createChunkMutator = (options: MockHTTPConnectionOptions) => {
+  const { breakChunks, combineChunks } = options;
+  if (breakChunks) {
+    return (
+      response: unknown,
+      writer: WritableStreamDefaultWriter<Uint8Array>
+    ) => {
+      if (typeof response !== "string")
+        throw new Error("Expected string response.");
+      const encoder = new TextEncoder();
+      // split chunk in two
+      const chunkSize = Math.floor(response.length / 2);
+      for (let i = 0; i < response.length; i += chunkSize) {
+        writer.write(encoder.encode(response.slice(i, i + chunkSize)));
+      }
+    };
+  } else if (combineChunks) {
+    const chunkQueue: Uint8Array[] = [];
+    return (
+      response: unknown,
+      writer: WritableStreamDefaultWriter<Uint8Array>
+    ) => {
+      if (typeof response !== "string")
+        throw new Error("Expected string response.");
+      const encoder = new TextEncoder();
+      // remember chunks in a queue of 2
+      // and push them when the queue is full
+      chunkQueue.push(encoder.encode(response));
+      if (chunkQueue.length < 2) return;
+      while (chunkQueue.length > 0) {
+        writer.write(chunkQueue.shift());
+      }
+    };
+  } else {
+    return (
+      response: unknown,
+      writer: WritableStreamDefaultWriter<Uint8Array>
+    ) => {
+      if (typeof response !== "string")
+        throw new Error("Expected string response.");
+      writer.write(new TextEncoder().encode(response));
+    };
+  }
+};
+
 /**
  * Creates a pretend Internet to enable end-to-end testing
  * of HTTPClientTransport and HTTPServerTransport.
  */
 export class MockHTTPConnection<Request> {
   #handler?: MockRequestHandler<Request>;
+  #options: MockHTTPConnectionOptions;
+
+  constructor(options: MockHTTPConnectionOptions = {}) {
+    this.#options = options;
+  }
 
   get fetch() {
     return async (_: unknown, init?: RequestInit) => {
@@ -88,9 +143,10 @@ export class MockHTTPConnection<Request> {
       if (!this.#handler) throw new Error("Set request handler first.");
       const { body } = init || {};
       const request = { body: JSON.parse(body as string) };
+      const chunkMutator = createChunkMutator(this.#options);
       const response = {
         write(response: unknown) {
-          writer.write(new TextEncoder().encode(response as string));
+          chunkMutator(response, writer);
           return true;
         },
         end() {

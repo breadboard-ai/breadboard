@@ -77,13 +77,44 @@ export type HTTPClientTransportOptions = RequestInit & {
   fetch?: typeof globalThis.fetch;
 };
 
+const chunkRepairTransform = () => {
+  const queue: string[] = [];
+  return new TransformStream<string, string>({
+    transform(chunk, controller) {
+      const brokenChunk = !chunk.endsWith("\n");
+      const chunks = chunk.split("\n").filter(Boolean);
+      // If there are items in the queue, prepend them to the first chunk
+      // and enqueue the result.
+      if (queue.length) {
+        controller.enqueue(`${queue.shift()}${chunks.shift()}`);
+      }
+      // Queue all chunks except the last one.
+      while (chunks.length > 1) {
+        controller.enqueue(chunks.shift());
+      }
+      const lastChunk = chunks.shift();
+      if (!lastChunk) return;
+
+      if (brokenChunk) {
+        queue.push(lastChunk);
+      } else {
+        controller.enqueue(lastChunk);
+      }
+    },
+    flush(controller) {
+      if (queue.length) {
+        controller.enqueue(queue.shift());
+      }
+    },
+  });
+};
+
 export class HTTPClientTransport<Request, Response>
   implements ClientTransport<Request, Response>
 {
   #url: string;
   #options: HTTPClientTransportOptions;
   #fetch: typeof globalThis.fetch;
-  #responsePromise?: Promise<PatchedReadableStream<Response>>;
 
   constructor(url: string, options?: HTTPClientTransportOptions) {
     this.#url = url;
@@ -137,13 +168,16 @@ export class HTTPClientTransport<Request, Response>
             controller.error(new Error(`HTTP error: ${response.status}`));
           }
           responseResolve(
-            response.body?.pipeThrough(new TextDecoderStream()).pipeThrough(
-              new TransformStream({
-                transform(chunk, controller) {
-                  controller.enqueue(JSON.parse(chunk) as Response);
-                },
-              })
-            ) as PatchedReadableStream<Response>
+            response.body
+              ?.pipeThrough(new TextDecoderStream())
+              .pipeThrough(chunkRepairTransform())
+              .pipeThrough(
+                new TransformStream({
+                  transform(chunk, controller) {
+                    controller.enqueue(JSON.parse(chunk) as Response);
+                  },
+                })
+              ) as PatchedReadableStream<Response>
           );
           responseResolve = undefined;
         },

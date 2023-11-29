@@ -65,72 +65,6 @@ test("RunServer can use HTTPServerTransport", async (t) => {
   await server.serve(board);
 });
 
-test("HTTPClientTransport does the basics", async (t) => {
-  const transport = new HTTPClientTransport("http://example.com", {
-    fetch: async (url, init) => {
-      t.is(url, "http://example.com");
-      t.like(init, {
-        method: "POST",
-        body: JSON.stringify(["run", {}]),
-      });
-      return {
-        ok: true,
-        get body() {
-          return new ReadableStream({
-            start(controller) {
-              const data = ["input", { node: {} }];
-              const chunk = new TextEncoder().encode(JSON.stringify(data));
-              controller.enqueue(chunk);
-              controller.close();
-            },
-          });
-        },
-      } as unknown as globalThis.Response;
-    },
-  });
-  const stream = transport.createClientStream();
-  const writer = stream.writableRequests.getWriter();
-  const reader = stream.readableResponses.getReader();
-  writer.write(["run", {}]);
-  writer.close();
-  const response = await reader.read();
-  t.false(response.done);
-  t.deepEqual(response.value, ["input", { node: {} }]);
-  const done = await reader.read();
-  t.true(done.done);
-});
-
-test("HTTPClientTransport complains about multiple writes", async (t) => {
-  const transport = new HTTPClientTransport("http://example.com", {
-    fetch: async (url, init) => {
-      t.is(url, "http://example.com");
-      t.like(init, {
-        method: "POST",
-        body: JSON.stringify(["run", {}]),
-      });
-      return {
-        ok: true,
-        get body() {
-          return new ReadableStream({
-            start(controller) {
-              const data = ["input", { node: {} }];
-              const chunk = new TextEncoder().encode(JSON.stringify(data));
-              controller.enqueue(chunk);
-              controller.close();
-            },
-          });
-        },
-      } as unknown as globalThis.Response;
-    },
-  });
-  const stream = transport.createClientStream();
-  const writer = stream.writableRequests.getWriter();
-  writer.write(["run", {}]);
-  await t.throwsAsync(() => writer.write(["run", {}]), {
-    message: "HTTPClientTransport supports only one write per stream instance.",
-  });
-});
-
 test("MockHTTPConnection works as advertised", async (t) => {
   const connection = new MockHTTPConnection();
   connection.onRequest(async (request, response) => {
@@ -180,4 +114,98 @@ test("MockHTTPConnection end-to-end test", async (t) => {
   t.deepEqual(data.value, ["input", { node: {} }]);
   const done = await reader.read();
   t.true(done.done);
+});
+
+test("HTTPClientTransport does the basics", async (t) => {
+  const transport = new HTTPClientTransport("http://example.com", {
+    fetch: async (url, init) => {
+      t.is(url, "http://example.com");
+      t.like(init, {
+        method: "POST",
+        body: JSON.stringify(["run", {}]),
+      });
+      return {
+        ok: true,
+        get body() {
+          return new ReadableStream({
+            start(controller) {
+              const data = ["input", { node: {} }];
+              const chunk = new TextEncoder().encode(JSON.stringify(data));
+              controller.enqueue(chunk);
+              controller.close();
+            },
+          });
+        },
+      } as unknown as globalThis.Response;
+    },
+  });
+  const stream = transport.createClientStream();
+  const writer = stream.writableRequests.getWriter();
+  const reader = stream.readableResponses.getReader();
+  writer.write(["run", {}]);
+  writer.close();
+  const response = await reader.read();
+  t.false(response.done);
+  t.deepEqual(response.value, ["input", { node: {} }]);
+  const done = await reader.read();
+  t.true(done.done);
+});
+
+test("HTTPClientTransport handles broken chunks", async (t) => {
+  const connection = new MockHTTPConnection({ breakChunks: true });
+  const clientTransport = new HTTPClientTransport("http://example.com", {
+    fetch: connection.fetch,
+  });
+  connection.onRequest(async (request, response) => {
+    const serverTransport = new HTTPServerTransport(request, response);
+    const stream = serverTransport.createServerStream();
+    const reader = stream.readableRequests.getReader();
+    const data = await reader.read();
+    t.false(data.done);
+    t.deepEqual(data.value, ["run", {}]);
+    const writer = stream.writableResponses.getWriter();
+    writer.write(["input", { node: {} }]);
+    writer.close();
+  });
+  const stream = clientTransport.createClientStream();
+  const writer = stream.writableRequests.getWriter();
+  const reader = stream.readableResponses.getReader();
+  writer.write(["run", {}]);
+  writer.close();
+  const data = await reader.read();
+  t.false(data.done);
+  t.deepEqual(data.value, ["input", { node: {} }]);
+  const done = await reader.read();
+  t.true(done.done);
+});
+
+test("HTTPClientTransport complains about multiple writes", async (t) => {
+  const transport = new HTTPClientTransport("http://example.com", {
+    fetch: async (url, init) => {
+      t.is(url, "http://example.com");
+      t.like(init, {
+        method: "POST",
+        body: JSON.stringify(["run", {}]),
+      });
+      return {
+        ok: true,
+        get body() {
+          return new ReadableStream({
+            start(controller) {
+              const data = ["input", { node: {} }];
+              const chunk = new TextEncoder().encode(JSON.stringify(data));
+              controller.enqueue(chunk);
+              controller.close();
+            },
+          });
+        },
+      } as unknown as globalThis.Response;
+    },
+  });
+  const stream = transport.createClientStream();
+  const writer = stream.writableRequests.getWriter();
+  writer.write(["run", {}]);
+  await t.throwsAsync(() => writer.write(["run", {}]), {
+    message: "HTTPClientTransport supports only one write per stream instance.",
+  });
 });
