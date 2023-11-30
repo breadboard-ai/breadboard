@@ -92,21 +92,37 @@ export class ResponseContainer extends HTMLElement {
           background: var(--bb-error-color);
         }
 
-        ::slotted(bb-progress)::after {
+        ::slotted(bb-input)::after {
           background: radial-gradient(
-                var(--bb-progress-color) 0%,
-                var(--bb-progress-color) 40%,
-                var(--bb-progress-color-faded) 40%,
-                var(--bb-progress-color-faded) 58%,
-                transparent 58.1%,
-                transparent 100%
-              )
-              no-repeat,
-            conic-gradient(var(--bb-progress-color) 0deg, var(--bb-progress-color) 90deg, transparent 91deg)
-              no-repeat,
-            linear-gradient(var(--bb-progress-color-faded), var(--bb-progress-color-faded)) no-repeat;
+            var(--bb-progress-color-faded) 0%,
+            var(--bb-progress-color-faded) 55%,
+            transparent 55%,
+            transparent 100%
+          ),
+          conic-gradient(
+            var(--bb-progress-color) 0deg,
+            var(--bb-progress-color) 45deg,
+            transparent 45deg,
+            transparent 90deg,
+            var(--bb-progress-color) 90deg,
+            var(--bb-progress-color) 135deg,
+            transparent 135deg,
+            transparent 180deg,
+            var(--bb-progress-color) 180deg,
+            var(--bb-progress-color) 225deg,
+            transparent 225deg,
+            transparent 270deg,
+            var(--bb-progress-color) 270deg,
+            var(--bb-progress-color) 315deg,
+            transparent 315deg,
+            transparent 360deg
+          ),
+          linear-gradient(
+            var(--bb-progress-color-faded),
+            var(--bb-progress-color-faded)
+          );
 
-          animation: rotate 1s linear infinite;
+          animation: rotate 0.7s linear infinite;
         }
       </style>
       <slot></slot>
