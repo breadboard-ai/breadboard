@@ -8,8 +8,8 @@ import type {
   InputValues,
   NodeValue,
   OutputValues,
+  Schema,
 } from "@google-labs/breadboard";
-import { Schema } from "jsonschema";
 
 export const convert = (schema: Schema): NodeValue => {
   if (schema.type === "string" || schema.type === "number") {
