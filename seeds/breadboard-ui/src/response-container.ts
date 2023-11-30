@@ -92,7 +92,7 @@ export class ResponseContainer extends HTMLElement {
           background: var(--bb-error-color);
         }
 
-        ::slotted(bb-input)::after {
+        ::slotted(bb-progress)::after {
           background: radial-gradient(
             var(--bb-progress-color-faded) 0%,
             var(--bb-progress-color-faded) 55%,
