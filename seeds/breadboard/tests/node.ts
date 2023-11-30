@@ -6,7 +6,7 @@
 
 import test from "ava";
 
-import { parseSpec, Node } from "../src/node.js";
+import { parseSpec, Node, hasValues } from "../src/node.js";
 import { Board } from "../src/board.js";
 
 test("parseSpec: control-only", (t) => {
@@ -121,4 +121,13 @@ test("convert nodes in config to wires", async (t) => {
     { constant: true, from: "input-1", to: "test-2", in: "foo", out: "foo" },
     { from: "input-1", to: "test-2", in: "bar", out: "baz" },
   ]);
+});
+
+test("hasValue correctly tests for an empty object", (t) => {
+  t.false(hasValues({}));
+  t.true(hasValues({ foo: false }));
+  t.true(hasValues({ foo: 0 }));
+  t.true(hasValues({ foo: "" }));
+  t.true(hasValues({ foo: undefined }));
+  t.true(hasValues({ foo: null }));
 });

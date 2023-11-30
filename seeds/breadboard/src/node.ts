@@ -90,8 +90,8 @@ export const parseSpec = (spec: string): ParsedSpec => {
 
 const nodeIdVendor = new IdVendor();
 
-const hasValues = (configuration: NodeConfigurationConstructor) => {
-  return Object.values(configuration).filter(Boolean).length > 0;
+export const hasValues = (configuration: NodeConfigurationConstructor) => {
+  return Object.values(configuration).length > 0;
 };
 
 export class Node<Inputs, Outputs> implements BreadboardNode<Inputs, Outputs> {
