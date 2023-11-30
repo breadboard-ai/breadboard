@@ -65,6 +65,7 @@
   },
   "dependencies": {
     "@google-labs/breadboard": "*",
+    "@google-labs/breadboard-ui": "*",
     "@google-labs/core-kit": "*",
     "@google-labs/palm-kit": "*",
     "@google-labs/llm-starter": "*",

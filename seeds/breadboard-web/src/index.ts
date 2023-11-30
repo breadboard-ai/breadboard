@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as BreadboardUI from "./ui";
+import * as BreadboardUI from "@google-labs/breadboard-ui";
 import type * as Breadboard from "@google-labs/breadboard";
 import { HostRuntime } from "@google-labs/breadboard/worker";
 import { ProxyReceiver } from "./receiver.js";

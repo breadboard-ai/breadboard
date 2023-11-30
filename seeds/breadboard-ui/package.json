@@ -1,0 +1,52 @@
+{
+  "name": "@google-labs/breadboard-ui",
+  "version": "0.0.1",
+  "description": "The UI components for @google-labs/breadboard",
+  "main": "./dist/src/index.js",
+  "exports": {
+    ".": "./dist/src/index.js"
+  },
+  "types": "dist/src/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "generate:docs": "typedoc --plugin typedoc-plugin-markdown",
+    "dev": "vite dev",
+    "test": "FORCE_COLOR=1 vitest --run",
+    "build": "FORCE_COLOR=1 tsc --b && npm run build:rollup",
+    "build:rollup": "rollup -c",
+    "watch": "FORCE_COLOR=1 tsc --b --watch",
+    "lint": "FORCE_COLOR=1 eslint . --ext .ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/google/labs-prototypes"
+  },
+  "files": [
+    "dist/src",
+    "dist/*.js",
+    "dist/*.js.map"
+  ],
+  "keywords": [],
+  "author": "Google Labs Team",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/google/labs-prototypes/issues"
+  },
+  "homepage": "https://github.com/google/labs-prototypes/tree/main/seeds/breadboard#readme",
+  "devDependencies": {
+    "@google-labs/tsconfig": "*",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@types/node": "^18.17.4",
+    "@typescript-eslint/eslint-plugin": "^5.56.0",
+    "@typescript-eslint/parser": "^5.56.0",
+    "rollup": "^4.1.4",
+    "typedoc": "^0.25.1",
+    "typedoc-plugin-markdown": "^3.16.0",
+    "typescript": "^5.0.4"
+  },
+  "engines": {
+    "node": ">=19.0.0"
+  },
+  "dependencies": {}
+}

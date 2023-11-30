@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "./dist"
+  },
+  "include": ["src/**/*", "tests/**/*"],
+  "extends": "@google-labs/tsconfig/base.json",
+  "typedocOptions": {
+    "entryPoints": "./src/index.ts",
+    "out": "./docs/api",
+    "githubPages": "false"
+  }
+}

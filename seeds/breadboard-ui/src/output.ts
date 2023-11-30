@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
+import type {
   OutputValues,
   StreamCapabilityType,
-  type Schema,
+  Schema,
 } from "@google-labs/breadboard";
 
 export type OutputArgs = Record<string, unknown> & {

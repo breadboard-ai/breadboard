@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { svgToPng } from "../utils/svg-to-png.js";
+import { svgToPng } from "./utils/svg-to-png.js";
 import { ToastEvent, ToastType } from "./events.js";
 
 export type LoadArgs = {

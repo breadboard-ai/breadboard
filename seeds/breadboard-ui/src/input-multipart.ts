@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Schema } from "@google-labs/breadboard";
+import { type Schema } from "@google-labs/breadboard";
 
 // TODO: Define this more precisely.
 type MultipartValue = unknown;

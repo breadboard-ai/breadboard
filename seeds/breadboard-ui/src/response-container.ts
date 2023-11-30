@@ -114,7 +114,7 @@ export class ResponseContainer extends HTMLElement {
   }
 
   clearContents() {
-    const children = this.querySelectorAll("*");
+    const children = Array.from(this.querySelectorAll("*"));
     for (const child of children) {
       child.remove();
     }

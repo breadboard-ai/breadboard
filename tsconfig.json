@@ -5,6 +5,7 @@
     { "path": "seeds/breadboard" },
     { "path": "seeds/breadboard-server" },
     { "path": "seeds/breadboard-web" },
+    { "path": "seeds/breadboard-ui" },
     { "path": "seeds/chunker" },
     { "path": "seeds/coffee-bot-board" },
     { "path": "seeds/core-kit" },
