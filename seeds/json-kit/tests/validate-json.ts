@@ -54,7 +54,7 @@ test("validateJson correctly returns an error for invalid JSON", (t) => {
       kind: "error",
       error: {
         type: "validation",
-        message: "0: instance.foo is not of a type(s) number\n",
+        message: "data/foo must be number",
       },
     },
   });

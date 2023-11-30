@@ -34,8 +34,20 @@
       "in": "useStreaming"
     },
     {
-      "from": "textGenerator",
+      "from": "parameters",
+      "to": "validateJson-2",
+      "out": "schema",
+      "in": "schema"
+    },
+    {
+      "from": "validateJson-2",
       "to": "json",
+      "out": "json",
+      "in": "json"
+    },
+    {
+      "from": "textGenerator",
+      "to": "validateJson-2",
       "out": "text",
       "in": "json"
     },
@@ -123,6 +135,10 @@
       "configuration": {
         "useStreaming": false
       }
+    },
+    {
+      "id": "validateJson-2",
+      "type": "validateJson"
     }
   ],
   "kits": [

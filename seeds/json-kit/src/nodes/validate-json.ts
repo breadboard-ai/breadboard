@@ -8,8 +8,9 @@ import type {
   InputValues,
   NodeValue,
   OutputValues,
+  Schema,
 } from "@google-labs/breadboard";
-import { Schema, Validator } from "jsonschema";
+import Ajv from "ajv";
 
 export type ValidateJsonInputs = InputValues & {
   /**
@@ -75,17 +76,16 @@ export const validateJson = (
 ): ValidateJsonOutputs => {
   const result = { json: parsed };
   if (!schema) return result;
-  const validator = new Validator();
-  const validationResult = validator.validate(parsed, schema as Schema, {
-    nestedErrors: true,
-  });
-  if (!validationResult.valid) {
+  const validator = new Ajv.default();
+  const validate = validator.compile(schema);
+  const valid = validate(parsed);
+  if (!valid) {
     return {
       $error: {
         kind: "error",
         error: {
           type: "validation",
-          message: validationResult.toString(),
+          message: validator.errorsText(validate.errors),
         },
       },
     };

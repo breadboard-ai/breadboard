@@ -119,11 +119,13 @@ const textGenerator = core
     core.passthrough({ $id: "dontUseStreaming", useStreaming: false })
   );
 
+const validate = json.validateJson().wire("<-schema", parameters);
+
 parameters.wire(
   "template->",
   generatorTemplate.wire(
     "prompt->text",
-    textGenerator.wire("text->json", output)
+    textGenerator.wire("text->json", validate.wire("json->", output))
   )
 );
 

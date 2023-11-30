@@ -8,7 +8,9 @@ schemish1["schemish <br> id='schemish-1'"] -- "schemish->schemish" --> formatTem
 formatTemplate["promptTemplate <br> id='formatTemplate'"] -- "prompt->format" --> generatorTemplate["promptTemplate <br> id='generatorTemplate'"]
 parameters[/"input <br> id='parameters'"/]:::input -- "generator->path" --> textGenerator["invoke <br> id='textGenerator'"]
 dontUseStreaming(("passthrough <br> id='dontUseStreaming'")):::passthrough -- "useStreaming->useStreaming" --> textGenerator["invoke <br> id='textGenerator'"]
-textGenerator["invoke <br> id='textGenerator'"] -- "text->json" --> json{{"output <br> id='json'"}}:::output
+parameters[/"input <br> id='parameters'"/]:::input -- "schema->schema" --> validateJson2["validateJson <br> id='validateJson-2'"]
+validateJson2["validateJson <br> id='validateJson-2'"] -- "json->json" --> json{{"output <br> id='json'"}}:::output
+textGenerator["invoke <br> id='textGenerator'"] -- "text->json" --> validateJson2["validateJson <br> id='validateJson-2'"]
 generatorTemplate["promptTemplate <br> id='generatorTemplate'"] -- "prompt->text" --> textGenerator["invoke <br> id='textGenerator'"]
 parameters[/"input <br> id='parameters'"/]:::input -- "template->template" --> generatorTemplate["promptTemplate <br> id='generatorTemplate'"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
