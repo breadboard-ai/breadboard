@@ -7,7 +7,6 @@
 import test from "ava";
 
 import { recipe } from "../../../src/new/recipe-grammar/recipe.js";
-import { base } from "../../../src/new/recipe-grammar/base.js";
 import { testKit } from "../../helpers/_test-kit.js";
 
 test("directly await a node", async (t) => {
