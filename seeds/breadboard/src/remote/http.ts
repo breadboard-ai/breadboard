@@ -150,7 +150,7 @@ export class HTTPClientTransport<Request, Response>
       method: "POST",
       headers: { "Content-Type": "application/json" },
     };
-    this.#fetch = this.#options.fetch ?? globalThis.fetch;
+    this.#fetch = this.#options.fetch ?? globalThis.fetch.bind(globalThis);
   }
 
   createClientStream(): ClientBidirectionalStream<Request, Response> {
@@ -174,6 +174,11 @@ export class HTTPClientTransport<Request, Response>
             if (result.done) {
               break;
             } else {
+              console.log(
+                "%cServer-Sent Event Chunk",
+                "background: #009; color: #FFF",
+                result.value
+              );
               controller.enqueue(result.value as Response);
             }
           }
