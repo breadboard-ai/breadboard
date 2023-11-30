@@ -68,6 +68,7 @@
     "@google-labs/breadboard-ui": "*",
     "@google-labs/core-kit": "*",
     "@google-labs/palm-kit": "*",
+    "@google-labs/json-kit": "*",
     "@google-labs/llm-starter": "*",
     "@google-labs/node-nursery-web": "*",
     "@google-labs/pinecone-kit": "*",

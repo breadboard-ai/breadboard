@@ -4,6 +4,10 @@
     "url": "/graphs/accumulating-context.json"
   },
   {
+    "title": "JSON Generator",
+    "url": "/graphs/json-generator.json"
+  },
+  {
     "title": "List Google Drive files",
     "url": "/graphs/list-files.json"
   },

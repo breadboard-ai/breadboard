@@ -20,6 +20,7 @@ import Core from "@google-labs/core-kit";
 import PaLMKit from "@google-labs/palm-kit";
 import Pinecone from "@google-labs/pinecone-kit";
 import NodeNurseryWeb from "@google-labs/node-nursery-web";
+import JSONKit from "@google-labs/json-kit";
 
 export class MainThreadRunResult<MessageType extends Result>
   implements RuntimeRunResult
@@ -77,6 +78,7 @@ export class MainThreadRuntime implements Runtime {
         Pinecone,
         PaLMKit,
         NodeNurseryWeb,
+        JSONKit,
       ].map((kitConstructor) => asRuntimeKit(kitConstructor));
 
       for await (const data of runner.run({
