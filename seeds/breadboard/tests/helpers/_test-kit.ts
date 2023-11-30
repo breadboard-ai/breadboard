@@ -95,6 +95,18 @@ export const TestKit = new KitBuilder({
     });
     return { stream: new StreamCapability(stream) };
   },
+  /**
+   * Unsafe JS runner. Needed to test serializing recipes that are pure code.
+   */
+  runJavascript: async (inputs) => {
+    const { code, name, raw, ...rest } = inputs;
+    const result = eval(
+      `${code} (async () => { return await ${name}(${JSON.stringify(
+        rest
+      )}); })();`
+    );
+    return raw ? result : { result };
+  },
 });
 
 /**
@@ -123,6 +135,7 @@ export const MirrorUniverseKit = new KitBuilder({
  */
 import {
   addKit,
+  NewNodeValue,
   NewInputValues,
   NewOutputValues,
   NewNodeFactory as NodeFactory,
@@ -135,6 +148,15 @@ export const testKit = addKit(TestKit) as unknown as {
   streamer: NodeFactory<
     Record<string, never>,
     { stream: ReadableStream<string> }
+  >;
+  runJavascript: NodeFactory<
+    {
+      code: string;
+      name: string;
+      raw: boolean;
+      [key: string]: NewNodeValue;
+    },
+    { result: unknown; [k: string]: unknown }
   >;
 };
 

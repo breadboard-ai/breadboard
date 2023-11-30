@@ -4,9 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { z } from "zod";
 import test from "ava";
 
 import { recipe } from "../../../src/new/recipe-grammar/recipe.js";
+import { AbstractValue as V } from "../../../src/new/recipe-grammar/types.js";
 import { testKit } from "../../helpers/_test-kit.js";
 
 test("directly await a node", async (t) => {
@@ -103,4 +105,114 @@ test("directly await imperative recipe, deconstruct", async (t) => {
   });
   const { foo } = await graph({ foo: "bar" });
   t.is(foo, "bar");
+});
+
+test("if-else, imperative execution", async (t) => {
+  const math = recipe(async () => {
+    return { result: "math result" };
+  });
+  const search = recipe(async () => {
+    return { text: "search result" };
+  });
+
+  const graph = recipe(
+    {
+      input: z.object({
+        question: z.string().describe("Query: A math or search question?"),
+      }),
+      output: z.object({
+        result: z.string().describe("Answer: The answer to the query"),
+      }),
+    },
+    async (inputs) => {
+      const { text } = (await testKit
+        .noop({
+          template:
+            "Is this question about math? Answer YES or NO.\nQuestion: {{question}}\nAnswer: ",
+          question: inputs.question,
+        })
+        .question.as("text")
+        .to(
+          testKit.noop({
+            PALM_KEY: testKit.noop({ PALM_KEY: "dummy" }).PALM_KEY,
+          })
+        )) as { text: string };
+
+      if (text?.startsWith("YES")) {
+        return { result: await math({ question: inputs.question }).result };
+      } else {
+        return { result: await search({ text: inputs.question }).text };
+      }
+    }
+  );
+
+  {
+    const { result } = await graph({ question: "YES it is" });
+    t.is(result, "math result");
+  }
+
+  {
+    const { result } = await graph({ question: "NO it is" });
+    t.is(result, "search result");
+  }
+});
+
+test.skip("if-else, serializable", async (t) => {
+  const math = recipe(async () => {
+    return { result: "math result" };
+  });
+  const search = recipe(async () => {
+    return { text: "search result" };
+  });
+
+  const graph = recipe(
+    {
+      input: z.object({
+        question: z.string().describe("Query: A math or search question?"),
+      }),
+      output: z.object({
+        result: z.string().describe("Answer: The answer to the query"),
+      }),
+    },
+    async (inputs) => {
+      return testKit
+        .noop({
+          template:
+            "Is this question about math? Answer YES or NO.\nQuestion: {{question}}\nAnswer: ",
+          question: inputs.question,
+        })
+        .question.as("text")
+        .to(
+          testKit.noop({
+            PALM_KEY: testKit.noop({ PALM_KEY: "dummy" }).PALM_KEY,
+          })
+        )
+        .to(
+          async (inputs) => {
+            const { text, math, search } = await inputs;
+            if ((text as string)?.startsWith("YES")) {
+              return {
+                result: math({ question: inputs.question }).result,
+              };
+            } else {
+              return {
+                result: search({ text: inputs.question }).text,
+              };
+            }
+          },
+          { math, search }
+        )
+        .result.to(testKit.noop());
+    }
+  );
+
+  {
+    const { result } = await graph({ question: "YES it is" });
+    t.is(result, "math result");
+  }
+
+  {
+    const { result } = await graph({ question: "NO it is" });
+    t.is(result, "search result");
+  }
 });

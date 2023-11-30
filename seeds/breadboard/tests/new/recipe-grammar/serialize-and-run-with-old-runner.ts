@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { z } from "zod";
 import test from "ava";
 
 import { recipe } from "../../../src/new/recipe-grammar/recipe.js";
@@ -65,4 +66,77 @@ test("two nodes, spread", async (t) => {
   });
   const result = await serializeAndRunGraph(graph, { foo: "bar" });
   t.deepEqual(result, { foo: "rab" });
+});
+
+test("simple inline action", async (t) => {
+  const graph = recipe<{ a: number; b: number }, { result: number }>(
+    async (inputs) => {
+      return recipe<{ a: number; b: number }, { result: number }>(
+        async (inputs) => {
+          const { a, b } = await inputs;
+          return { result: a + b };
+        }
+      )({ a: inputs.a, b: inputs.b });
+    }
+  );
+
+  const result = await serializeAndRunGraph(graph, { a: 1, b: 2 });
+  t.deepEqual(result, { result: 3 });
+});
+
+test("code recipe called from another recipe", async (t) => {
+  const add = recipe<{ a: number; b: number }, { result: number }>(
+    async (inputs) => {
+      const { a, b } = await inputs;
+      return { result: a + b };
+    }
+  );
+
+  const graph = recipe<{ a: number; b: number }, { result: number }>(
+    async (inputs) => {
+      return add({ a: inputs.a, b: inputs.b });
+    }
+  );
+
+  const result = await serializeAndRunGraph(graph, { a: 1, b: 2 });
+  t.deepEqual(result, { result: 3 });
+});
+
+test("nested inline action, with schema", async (t) => {
+  const graph = recipe(
+    {
+      input: z.object({
+        a: z.number().describe("A: One Number"),
+        b: z.number().describe("B: Another number"),
+      }),
+      output: z.object({
+        result: z.number().describe("Sum: The sum of two numbers"),
+      }),
+    },
+    async (inputs) => {
+      return recipe<{ a: number; b: number }, { result: number }>(
+        async (inputs) => {
+          const { a, b } = await inputs;
+          return { result: a + b };
+        }
+      )({ a: inputs.a, b: inputs.b });
+    }
+  );
+
+  const result = await serializeAndRunGraph(graph, { a: 1, b: 2 });
+  t.deepEqual(result, {
+    result: 3,
+    schema: {
+      type: "object",
+      properties: {
+        result: {
+          type: "number",
+          title: "Sum",
+          description: "The sum of two numbers",
+        },
+      },
+      required: ["result"],
+      additionalProperties: false,
+    },
+  });
 });
