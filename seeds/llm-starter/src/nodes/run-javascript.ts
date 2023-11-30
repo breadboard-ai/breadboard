@@ -59,18 +59,18 @@ const runInBrowser = async (
   };
 
   const worker = new Worker(URL.createObjectURL(blob));
-  const result = new Promise<string>((resolve) => {
+  const result = new Promise<string>((resolve, reject) => {
     worker.onmessage = (e) => {
       const data = e.data as WebWorkerResult;
       if (data.result) {
         resolve(data.result);
         return;
       } else if (data.error) {
-        throw new Error(data.error);
+        reject(new Error(data.error));
       }
     };
     worker.onerror = (e) => {
-      throw new Error(e.toString());
+      reject(new Error(e.toString()));
     };
   });
   worker.postMessage("please");
