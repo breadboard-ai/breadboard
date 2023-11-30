@@ -7,8 +7,8 @@
 import { Board } from "@google-labs/breadboard";
 import { Core } from "@google-labs/core-kit";
 import { Starter } from "@google-labs/llm-starter";
-import { Nursery } from "@google-labs/node-nursery";
 import { PaLMKit } from "@google-labs/palm-kit";
+import JSONKit from "@google-labs/json-kit";
 
 const jsonPrompt = new Board({
   title: "Simple JSON prompt",
@@ -18,7 +18,7 @@ const jsonPrompt = new Board({
 });
 const kit = jsonPrompt.addKit(Starter);
 const core = jsonPrompt.addKit(Core);
-const nursery = jsonPrompt.addKit(Nursery);
+const json = jsonPrompt.addKit(JSONKit);
 const palm = jsonPrompt.addKit(PaLMKit);
 
 const schema = {
@@ -101,7 +101,8 @@ jsonPrompt
     "text->scene",
     kit
       .promptTemplate({
-        template: "You are a tool that given a scene understands the relationship between people and describes them in the following JSON schema. Age is optional, don't make it up. Only use the relations in the schema:\n\n{{schema}}\n\nScene:\n{{scene}}\n",
+        template:
+          "You are a tool that given a scene understands the relationship between people and describes them in the following JSON schema. Age is optional, don't make it up. Only use the relations in the schema:\n\n{{schema}}\n\nScene:\n{{scene}}\n",
         schema: JSON.stringify(schema),
       })
       .wire(
@@ -115,7 +116,7 @@ jsonPrompt
                 PALM_KEY: kit.secrets({ keys: ["PALM_KEY"] }),
               });
 
-              const validator = nursery.validateJson({ schema });
+              const validator = json.validateJson({ schema });
 
               const agechecker = kit.runJavascript({
                 name: "checker",

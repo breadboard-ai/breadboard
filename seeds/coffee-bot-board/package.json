@@ -57,6 +57,7 @@
     "@google-labs/core-kit": "*",
     "@google-labs/palm-kit": "*",
     "@google-labs/llm-starter": "*",
+    "@google-labs/json-kit": "*",
     "@google-labs/node-nursery": "*",
     "dotenv": "^16.3.1"
   }

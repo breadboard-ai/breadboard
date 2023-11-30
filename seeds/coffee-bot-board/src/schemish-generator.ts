@@ -6,9 +6,9 @@
 
 import { type NodeValue, Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
-import { Nursery } from "@google-labs/node-nursery";
 import { Core } from "@google-labs/core-kit";
 import { PaLMKit } from "@google-labs/palm-kit";
+import JSONKit from "@google-labs/json-kit";
 
 import { PromptMaker } from "./template.js";
 
@@ -24,7 +24,7 @@ const board = new Board({
 });
 const core = board.addKit(Core);
 const kit = board.addKit(Starter);
-const nursery = board.addKit(Nursery);
+const json = board.addKit(JSONKit);
 const palm = board.addKit(PaLMKit);
 
 // Inputs
@@ -119,11 +119,11 @@ shouldRecover.wire("value->", willRecover).wire("$error->", $error);
 
 willRecover.wire("->", prologue).wire("->", epilogue).wire("->", schema);
 
-const convertToSchemish = nursery
+const convertToSchemish = json
   .schemish({ $id: "schemish" })
   .wire("<-schema", schema);
 
-const validateJson = nursery
+const validateJson = json
   .validateJson({ $id: "validate-json" })
   .wire("<-schema", schema)
   .wire("json->completion", $completion)

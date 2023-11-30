@@ -9,6 +9,7 @@
   "type": "module",
   "scripts": {
     "build": "FORCE_COLOR=1 tsc --b",
+    "test": "FORCE_COLOR=1 ava",
     "watch": "FORCE_COLOR=1 tsc --b --watch",
     "lint": "FORCE_COLOR=1 eslint . --ext .ts"
   },
@@ -46,5 +47,9 @@
     "ava": "^5.2.0",
     "typescript": "^5.0.4",
     "@google-labs/tsconfig": "*"
+  },
+  "dependencies": {
+    "jsonschema": "^1.4.1",
+    "@google-labs/breadboard": "^0.5.1"
   }
 }

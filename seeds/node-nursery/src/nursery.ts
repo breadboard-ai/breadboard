@@ -14,8 +14,6 @@ import queryVectorDatabase from "./nodes/query-vector-database.js";
 import embedDocs from "./nodes/embed-docs.js";
 import embedString from "./nodes/embed-string.js";
 import cache from "./nodes/cache.js";
-import validateJson from "./nodes/validate-json.js";
-import schemish from "./nodes/schemish.js";
 import templateParser from "./nodes/template-parser.js";
 import chunker from "./nodes/chunker.js";
 
@@ -33,8 +31,6 @@ export const Nursery = new KitBuilder({
   cache,
   textAsset,
   textAssetsFromPath,
-  validateJson,
-  schemish,
   templateParser,
   chunker,
 });
