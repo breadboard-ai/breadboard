@@ -16,10 +16,18 @@ import {
   createDestinationMap,
   replaceTunnelledInputs,
   scanTunnelValue,
+  atob,
+  btoa,
 } from "../../src/remote/tunnel.js";
 import { BoardRunner } from "../../src/runner.js";
 import { callHandler } from "../../src/handler.js";
 import { NodeHandlers } from "../../src/types.js";
+
+test("atob and btoa polyfills work", (t) => {
+  t.is(atob("aGVsbG8gd29ybGQ="), "hello world");
+  t.is(btoa("hello world"), "aGVsbG8gd29ybGQ=");
+  t.is(atob(btoa("hello world")), "hello world");
+});
 
 test("readNodeSpec works as advertised", (t) => {
   const output = readNodeSpec("secrets", {

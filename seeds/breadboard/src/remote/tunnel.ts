@@ -22,6 +22,18 @@ import {
 } from "./config.js";
 
 /**
+ * Polyfill for atob and btoa.
+ */
+export const atob = globalThis.process
+  ? (str: string) => Buffer.from(str, "base64").toString("binary")
+  : globalThis.atob;
+export const btoa = globalThis.process
+  ? (str: string) => Buffer.from(str, "binary").toString("base64")
+  : globalThis.btoa;
+
+const TUNNEL_VALUE_SEPARATOR = "~";
+
+/**
  * All tunnels defined for a particular node (the tunnel entry).
  */
 export type NodeTunnels = {
@@ -170,8 +182,8 @@ export const getTunnelValue = (
   outputName: string,
   inputs: InputValues
 ) => {
-  const memoize = JSON.stringify(inputs);
-  return `${TUNNEL_PREFIX}${nodeType}$${outputName}$${memoize}${TUNNEL_SUFFIX}`;
+  const memoize = btoa(JSON.stringify(inputs)).replace("=", "");
+  return `${TUNNEL_PREFIX}${nodeType}${TUNNEL_VALUE_SEPARATOR}${outputName}${TUNNEL_VALUE_SEPARATOR}${memoize}${TUNNEL_SUFFIX}`;
 };
 
 type TunnelScanResult = (
@@ -192,7 +204,9 @@ export const scanTunnelValue = (value: string): TunnelScanResult => {
     if (match) {
       // This is a tunnel value, parse it into components and return
       // a helper object that enables the caller to replace the value.
-      const [nodeType, outputName, inputs] = match[1].split("$");
+      const value = match[1].split(TUNNEL_VALUE_SEPARATOR);
+      const [nodeType, outputName, encodedInputs] = value;
+      const inputs = atob(encodedInputs);
       return {
         nodeType,
         outputName,
@@ -229,7 +243,7 @@ export const replaceTunnelledInputs = async (
   const result = await Promise.all(
     parts.map(async (part) => {
       if ("inputs" in part) {
-        const inputs = JSON.parse(JSON.parse(`"${part.inputs}"`));
+        const inputs = JSON.parse(part.inputs);
         const { nodeType, outputName } = part;
         const outputs = allow
           ? await replacer(nodeType, inputs)
