@@ -39,4 +39,4 @@ export const graph = recipe(
 
 export const example = { question: "1+1" };
 
-export default await graph.serialize({ title: "New: Math, chain style graph" });
+export default await graph.serialize({ title: "Math, chain style graph" });

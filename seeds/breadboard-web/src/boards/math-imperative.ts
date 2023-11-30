@@ -39,5 +39,5 @@ export const graph = recipe(
 export const example = { question: "1+1" };
 
 export default await graph.serialize({
-  title: "New: Math, imperative style graph",
+  title: "Math, imperative style graph",
 });

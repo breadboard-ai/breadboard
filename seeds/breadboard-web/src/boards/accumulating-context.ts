@@ -60,4 +60,6 @@ output.as({}).to(input);
 
 export const graph = input; // Any node would work here.
 
-export default await graph.serialize({ title: "New: Accumulating context" });
+export default await graph.serialize({
+  title: "Simple chatbot (accumulating context)",
+});

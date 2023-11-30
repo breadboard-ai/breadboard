@@ -1,0 +1,143 @@
+{
+  "title": "Simple chatbot (accumulating context)",
+  "edges": [
+    {
+      "from": "userRequest",
+      "to": "assistant",
+      "out": "text",
+      "in": "question"
+    },
+    {
+      "from": "userRequest",
+      "to": "append-1",
+      "out": "text",
+      "in": "user"
+    },
+    {
+      "from": "start",
+      "to": "userRequest",
+      "out": "",
+      "in": ""
+    },
+    {
+      "from": "output-4",
+      "to": "userRequest",
+      "out": "",
+      "in": ""
+    },
+    {
+      "from": "assistant",
+      "to": "palm-generateText-3",
+      "out": "prompt",
+      "in": "text"
+    },
+    {
+      "from": "append-1",
+      "to": "append-1",
+      "out": "accumulator",
+      "in": "accumulator"
+    },
+    {
+      "from": "append-1",
+      "to": "assistant",
+      "out": "accumulator",
+      "in": "context"
+    },
+    {
+      "from": "palm-generateText-3",
+      "to": "append-1",
+      "out": "completion",
+      "in": "accumulator"
+    },
+    {
+      "from": "palm-generateText-3",
+      "to": "output-4",
+      "out": "completion",
+      "in": "text"
+    },
+    {
+      "from": "secrets-2",
+      "to": "palm-generateText-3",
+      "out": "PALM_KEY",
+      "in": "PALM_KEY",
+      "constant": true
+    }
+  ],
+  "nodes": [
+    {
+      "id": "userRequest",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "description": "Type here to chat with the assistant",
+              "title": "User"
+            }
+          },
+          "required": [
+            "text"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "id": "start",
+      "type": "passthrough",
+      "configuration": {}
+    },
+    {
+      "id": "output-4",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "description": "Assistant's response in the conversation with the user",
+              "title": "Assistant"
+            }
+          },
+          "required": [
+            "text"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "id": "assistant",
+      "type": "promptTemplate",
+      "configuration": {
+        "template": "This is a conversation between a friendly assistant and their user. You are the assistant and your job is to try to be helpful, empathetic, and fun.\n{{context}}\n\n== Current Conversation\nuser: {{question}}\nassistant:",
+        "context": ""
+      }
+    },
+    {
+      "id": "append-1",
+      "type": "append",
+      "configuration": {
+        "accumulator": "\n== Conversation History"
+      }
+    },
+    {
+      "id": "palm-generateText-3",
+      "type": "palm-generateText",
+      "configuration": {}
+    },
+    {
+      "id": "secrets-2",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "PALM_KEY"
+        ]
+      }
+    }
+  ],
+  "graphs": {}
+}

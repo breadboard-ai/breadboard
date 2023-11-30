@@ -70,7 +70,7 @@ export const graph = output;
 export const example = "What is the meaning of life?";
 
 export default await graph.serialize({
-  title: "New: The Search Summarizer Recipe",
+  title: "New: The Search Summarizer Recipe (as a chain with input and output)",
   description:
     "A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.",
   version: "0.0.2",

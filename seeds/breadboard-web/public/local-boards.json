@@ -1,63 +1,23 @@
 [
   {
+    "title": "Simple chatbot (accumulating context)",
+    "url": "/graphs/accumulating-context.json"
+  },
+  {
     "title": "List Google Drive files",
     "url": "/graphs/list-files.json"
   },
   {
-    "title": "New: Accumulating context",
-    "url": "/graphs/new/accumulating-context.json"
+    "title": "Math, chain style graph",
+    "url": "/graphs/math-chain.json"
   },
   {
-    "title": "New: Custom inline action",
-    "url": "/graphs/new/custom-inline-action-simple.json"
-  },
-  {
-    "title": "New: Custom inline action",
-    "url": "/graphs/new/custom-inline-action.json"
-  },
-  {
-    "title": "New: IfElse, imperative execution",
-    "url": "/graphs/new/if-else-imperative.json"
-  },
-  {
-    "title": "New: IfElse, serializable",
-    "url": "/graphs/new/if-else-serializable.json"
-  },
-  {
-    "title": "New: Math, chain style graph",
-    "url": "/graphs/new/math-chain.json"
-  },
-  {
-    "title": "New: Math, imperative style graph",
-    "url": "/graphs/new/math-imperative.json"
-  },
-  {
-    "title": "New: Math, directly calling a chain",
-    "url": "/graphs/new/math-inline-chain.json"
+    "title": "Math, imperative style graph",
+    "url": "/graphs/math-imperative.json"
   },
   {
     "title": "Mock Text Generator",
-    "url": "/graphs/new/mock-text-generator.json"
-  },
-  {
-    "title": "New: The Search Summarizer Recipe (as an Action)",
-    "url": "/graphs/new/search-summarize-as-action.json"
-  },
-  {
-    "title": "New: The Search Summarizer Recipe",
-    "url": "/graphs/new/search-summarize.json"
-  },
-  {
-    "title": "New: Simple graph",
-    "url": "/graphs/new/simple-graph.json"
-  },
-  {
-    "title": "New: Simple imperative function",
-    "url": "/graphs/new/simple-imperative-function.json"
-  },
-  {
-    "title": "New: Single node",
-    "url": "/graphs/new/single-node.json"
+    "url": "/graphs/mock-text-generator.json"
   },
   {
     "title": "OpenAI GPT-3.5-turbo",
@@ -66,6 +26,14 @@
   {
     "title": "OpenAI GPT 4 Vision Preview",
     "url": "/graphs/openai-gpt-4-vision.json"
+  },
+  {
+    "title": "New: The Search Summarizer Recipe (as a recipe() call)",
+    "url": "/graphs/search-summarize-as-recipe.json"
+  },
+  {
+    "title": "New: The Search Summarizer Recipe (as a chain with input and output)",
+    "url": "/graphs/search-summarize.json"
   },
   {
     "title": "Text Generator Recipe",
