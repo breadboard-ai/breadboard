@@ -75,7 +75,8 @@
       "type": "runJavascript",
       "configuration": {
         "code": "async function fn_6(inputs2) {const{completion,math:math2,search:search2}=await inputs2;if(completion?.startsWith(\"YES\")){return{result:math2({question:inputs2.question}).result}}else{return{result:search2({text:inputs2.question}).text}}}",
-        "name": "fn_6"
+        "name": "fn_6",
+        "raw": true
       }
     },
     {

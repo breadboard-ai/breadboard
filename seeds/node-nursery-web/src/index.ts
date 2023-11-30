@@ -22,3 +22,24 @@ const NodeNurseryWeb = new KitBuilder({
 export default NodeNurseryWeb;
 export type NodeNurseryWeb = InstanceType<typeof NodeNurseryWeb>;
 export { NodeNurseryWeb };
+
+/**
+ * This is a wrapper around existing kits for the new syntax to add types.
+ *
+ * This should transition to a codegen step, with typescript types constructed
+ * from .describe() calls.
+ */
+import {
+  addKit,
+  NewNodeValue as NodeValue,
+  NewNodeFactory as NodeFactory,
+} from "@google-labs/breadboard";
+
+export const nursery = addKit(NodeNurseryWeb) as unknown as {
+  transformStream: NodeFactory<
+    { stream: NodeValue; board: NodeValue; decode?: boolean },
+    { stream: NodeValue }
+  >;
+  listToStream: NodeFactory<{ list: NodeValue[] }, { stream: NodeValue }>;
+  // TODO: Other NodeNurseryWeb nodes.
+};

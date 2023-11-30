@@ -377,6 +377,7 @@ export class BuilderNode<
         ...(this.configuration as OriginalInputValues),
         code,
         name,
+        raw: true,
       },
     };
 

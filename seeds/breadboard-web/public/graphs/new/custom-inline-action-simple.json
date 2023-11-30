@@ -7,7 +7,8 @@
       "type": "runJavascript",
       "configuration": {
         "code": "async function fn_5(inputs) {const{a,b}=await inputs;return{result:a+b}}",
-        "name": "fn_5"
+        "name": "fn_5",
+        "raw": true
       }
     }
   ]

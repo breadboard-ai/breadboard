@@ -182,5 +182,14 @@ export const core = addKit(Core) as unknown as {
     { accumulator: NodeValue; [key: string]: NodeValue },
     { accumulator: NodeValue }
   >;
+  invoke: NodeFactory<
+    {
+      path?: string;
+      graph?: string;
+      board?: NodeValue;
+      [key: string]: NodeValue;
+    },
+    { [key: string]: unknown }
+  >;
   // TODO: Other Core nodes.
 };

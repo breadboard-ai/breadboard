@@ -68,6 +68,10 @@
     "url": "/graphs/openai-gpt-4-vision.json"
   },
   {
+    "title": "Text Generator Recipe",
+    "url": "/graphs/text-generator-recipe.json"
+  },
+  {
     "title": "Text Generator",
     "url": "/graphs/text-generator.json"
   },

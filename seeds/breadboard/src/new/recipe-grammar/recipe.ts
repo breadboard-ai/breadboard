@@ -48,7 +48,9 @@ export type NodeProxyHandlerFunction<
 export function recipe<
   I extends InputValues = InputValues,
   O extends OutputValues = OutputValues
->(fn: NodeProxyHandlerFunction<I, O>): NodeFactory<I, O> & Serializeable;
+>(
+  fn: NodeProxyHandlerFunction<I, O>
+): NodeFactory<I, Required<O>> & Serializeable;
 
 /**
  * Alternative version to above that infers the type of the passed in Zod type.
@@ -61,7 +63,7 @@ export function recipe<I extends InputValues, O extends OutputValues>(options: {
   invoke: NodeProxyHandlerFunction<I, O>;
   describe?: NodeDescriberFunction;
   name?: string;
-}): NodeFactory<I, O> & Serializeable;
+}): NodeFactory<I, Required<O>> & Serializeable;
 
 /**
  * Same as above, but takes handler as a second parameter instead of as invoke
@@ -78,7 +80,7 @@ export function recipe<I extends InputValues, O extends OutputValues>(
     name?: string;
   },
   fn?: NodeProxyHandlerFunction<I, O>
-): NodeFactory<I, O> & Serializeable;
+): NodeFactory<I, Required<O>> & Serializeable;
 
 /**
  * Actual implementation of all the above
@@ -94,7 +96,7 @@ export function recipe<I extends InputValues, O extends OutputValues>(
       }
     | NodeProxyHandlerFunction<I, O>,
   fn?: NodeProxyHandlerFunction<I, O>
-): NodeFactory<I, O> & Serializeable {
+): NodeFactory<I, Required<O>> & Serializeable {
   const options = typeof optionsOrFn === "function" ? undefined : optionsOrFn;
   if (!options) {
     fn = optionsOrFn as NodeProxyHandlerFunction<I, O>;
@@ -118,10 +120,10 @@ export function recipe<I extends InputValues, O extends OutputValues>(
       });
   }
 
-  const factory: NodeFactory<I, O> & Serializeable = addNodeType(
+  const factory: NodeFactory<I, Required<O>> & Serializeable = addNodeType(
     options?.name,
     handler
-  ) as NodeFactory<I, O> & Serializeable;
+  ) as NodeFactory<I, Required<O>> & Serializeable;
 
   const declaringScope = getCurrentContextScope();
   factory.serialize = async (metadata?) => {
