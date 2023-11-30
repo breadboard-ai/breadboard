@@ -10,6 +10,7 @@ import { HostRuntime } from "@google-labs/breadboard/worker";
 import { ProxyReceiver } from "./receiver.js";
 import { Runtime, RuntimeRunResult } from "./types.js";
 import { MainThreadRuntime } from "./main-thread-runtime.js";
+import { ProxyServerRuntime } from "./proxy-server-runtime.js";
 
 const localBoards = await (await fetch("/local-boards.json")).json();
 const PROXY_NODES = [
@@ -70,6 +71,8 @@ const config = {
 
 const RUNTIME_SWITCH_KEY = "bb-runtime";
 const MAINTHREAD_RUNTIME_VALUE = "main-thread";
+const PROXY_SERVER_RUNTIME_VALUE = "proxy-server";
+const PROXY_URL_KEY = "bb-proxy-url";
 
 export class Main {
   #ui = BreadboardUI.get();
@@ -229,8 +232,17 @@ export class Main {
             )
           );
         });
-      default:
-        return new HostRuntime(WORKER_URL);
+      case PROXY_SERVER_RUNTIME_VALUE: {
+        const proxyServerUrl = globalThis.localStorage.getItem(PROXY_URL_KEY);
+        if (!proxyServerUrl) {
+          console.log(
+            "Unable to initialize proxy server runtime, falling back on worker runtime."
+          );
+          break;
+        }
+        return new ProxyServerRuntime(proxyServerUrl);
+      }
     }
+    return new HostRuntime(WORKER_URL);
   }
 }
