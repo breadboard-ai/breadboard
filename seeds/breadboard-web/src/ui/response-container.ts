@@ -47,6 +47,15 @@ export class ResponseContainer extends HTMLElement {
           height: calc(var(--bb-grid-size) * 4);
         }
 
+        ::slotted(bb-input:first-child)::before {
+          height: max(0px, calc(100% - var(--bb-grid-size) * 9));
+          top: calc(var(--bb-grid-size) * 9);
+        }
+
+        ::slotted(bb-input:last-child)::before {
+          height: max(0px, calc(var(--bb-grid-size) * 10));
+        }
+
         ::slotted(:only-child)::before {
           display: none;
         }
@@ -61,6 +70,10 @@ export class ResponseContainer extends HTMLElement {
           height: calc(var(--bb-grid-size) * 4);
           border-radius: 50%;
           background: var(--bb-highlight-color);
+        }
+
+        ::slotted(bb-input)::after {
+          translate: -50% calc(var(--bb-grid-size) * 9.5);
         }
 
         ::slotted(bb-result)::after {
