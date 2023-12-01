@@ -97,8 +97,8 @@ const fetch = starter
   .fetch({
     url: "https://api.openai.com/v1/chat/completions",
     method: "POST",
-    stream: true,
   })
+  .wire("stream<-useStreaming", input)
   .wire("headers<-result", headers);
 
 const getResponse = starter.jsonata({

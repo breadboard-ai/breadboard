@@ -4,6 +4,7 @@
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
 secrets2("secrets <br> id='secrets-2'"):::secrets -- "OPENAI_API_KEY->json" --> jsonata1["jsonata <br> id='jsonata-1'"]
+input[/"input <br> id='input'"/]:::input -- "useStreaming->stream" --> fetch4["fetch <br> id='fetch-4'"]
 jsonata1["jsonata <br> id='jsonata-1'"] -- "result->headers" --> fetch4["fetch <br> id='fetch-4'"]
 lambda6["lambda <br> id='lambda-6'"] -- "board->board" --o transformStream7["transformStream <br> id='transformStream-7'"]
 subgraph sg_lambda6 [lambda-6]

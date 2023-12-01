@@ -10,6 +10,12 @@
       "in": "json"
     },
     {
+      "from": "input",
+      "to": "fetch-4",
+      "out": "useStreaming",
+      "in": "stream"
+    },
+    {
       "from": "jsonata-1",
       "to": "fetch-4",
       "out": "result",
@@ -149,8 +155,7 @@
       "type": "fetch",
       "configuration": {
         "url": "https://api.openai.com/v1/chat/completions",
-        "method": "POST",
-        "stream": true
+        "method": "POST"
       }
     },
     {
