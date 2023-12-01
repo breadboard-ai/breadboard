@@ -34,18 +34,17 @@ const parameters = retry.input({
         default: "5",
       },
       lambda: {
-        type: "BoardCapability",
-        title: "Lambda",
-        description:
-          "The lambda to retry. This value can't be entered in the Web UI.",
+        type: "board",
+        title: "Board",
+        description: "The board to retry.",
       },
     },
-    required: ["prompt", "completion"],
+    required: ["text", "lambda"],
   } satisfies Schema,
 });
 
 const outputSuccess = retry.output({
-  $id: "output-success",
+  $id: "outputSuccess",
   schema: {
     type: "object",
     properties: {
@@ -56,7 +55,7 @@ const outputSuccess = retry.output({
 });
 
 const outputError = retry.output({
-  $id: "output-error",
+  $id: "outputError",
   schema: {
     type: "object",
     properties: {
@@ -65,8 +64,8 @@ const outputError = retry.output({
   },
 });
 
-const completionCaller = core.invoke({ $id: "lambda-completion" });
-parameters.wire("lambda->board.", completionCaller);
+const generatorCaller = core.invoke({ $id: "generatorCaller" });
+parameters.wire("lambda->board.", generatorCaller);
 
 const countdown = kit.jsonata({
   expression: '{ "tries": tries - 1, (tries > 0 ? "data" : "done") : data }',
@@ -80,30 +79,30 @@ countdown.wire("tries->", countdown); // Loop back last value
 const errorParser = kit.jsonata({
   expression:
     '{ "error": $exists(error.stack) ? error.stack : error.message, "completion": inputs.completion }',
-  $id: "error-parser",
+  $id: "errorParser",
   raw: true,
 });
 
 const retryPrompt = kit.promptTemplate({
   template:
     "{{text}}{{completion}}\n\nThis error occured:\n{{error}}\n\nPlease try again:\n",
-  $id: "retry-prompt",
+  $id: "retryPrompt",
 });
 parameters.wire("text->", retryPrompt); // First pass is with original prompt
 retryPrompt.wire("prompt->text", retryPrompt); // Then keep appending
 
 // Main flow:
 
-parameters.wire("text->text", completionCaller);
-completionCaller.wire("*->", outputSuccess);
+parameters.wire("text->text", generatorCaller);
+generatorCaller.wire("*->", outputSuccess);
 
-completionCaller.wire("$error->data", countdown);
+generatorCaller.wire("$error->data", countdown);
 countdown.wire("done->$error", outputError); // Output last error after last try
 countdown.wire("data->json", errorParser); // Otherwise parse error and retry
 
 errorParser.wire("error->", retryPrompt);
 errorParser.wire("completion->", retryPrompt);
 
-retryPrompt.wire("prompt->text", completionCaller);
+retryPrompt.wire("prompt->text", generatorCaller);
 
 export default retry;
