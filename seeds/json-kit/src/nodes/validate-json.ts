@@ -100,7 +100,7 @@ export default async (inputs: InputValues): Promise<OutputValues> => {
   // First, let's try to parse JSON.
   const parsed = tryParseJson(json);
   const possiblyInvalid = parsed as InvalidJsonOutputs;
-  if (possiblyInvalid?.error) return possiblyInvalid;
+  if (possiblyInvalid?.$error) return possiblyInvalid;
 
   // Now, let's try to validate JSON.
   return validateJson(parsed, schema as Schema);
