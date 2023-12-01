@@ -3,12 +3,12 @@
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-input1[/"input <br> id='input-1'"/]:::input -- "lambda->board" --o lambdacompletion["invoke <br> id='lambda-completion'"]
-input1[/"input <br> id='input-1'"/]:::input -- "tries->tries" --> countdown["jsonata <br> id='countdown'"]
+parameters[/"input <br> id='parameters'"/]:::input -- "lambda->board" --o lambdacompletion["invoke <br> id='lambda-completion'"]
+parameters[/"input <br> id='parameters'"/]:::input -- "tries->tries" --> countdown["jsonata <br> id='countdown'"]
 countdown["jsonata <br> id='countdown'"] -- "tries->tries" --> countdown["jsonata <br> id='countdown'"]
-input1[/"input <br> id='input-1'"/]:::input -- "text->text" --> retryprompt["promptTemplate <br> id='retry-prompt'"]
+parameters[/"input <br> id='parameters'"/]:::input -- "text->text" --> retryprompt["promptTemplate <br> id='retry-prompt'"]
 retryprompt["promptTemplate <br> id='retry-prompt'"] -- "prompt->text" --> retryprompt["promptTemplate <br> id='retry-prompt'"]
-input1[/"input <br> id='input-1'"/]:::input -- "text->text" --> lambdacompletion["invoke <br> id='lambda-completion'"]
+parameters[/"input <br> id='parameters'"/]:::input -- "text->text" --> lambdacompletion["invoke <br> id='lambda-completion'"]
 lambdacompletion["invoke <br> id='lambda-completion'"] -- all --> outputsuccess{{"output <br> id='output-success'"}}:::output
 lambdacompletion["invoke <br> id='lambda-completion'"] -- "$error->data" --> countdown["jsonata <br> id='countdown'"]
 countdown["jsonata <br> id='countdown'"] -- "done->$error" --> outputerror{{"output <br> id='output-error'"}}:::output

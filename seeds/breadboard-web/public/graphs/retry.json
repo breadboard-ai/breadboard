@@ -4,14 +4,14 @@
   "version": "0.0.1",
   "edges": [
     {
-      "from": "input-1",
+      "from": "parameters",
       "to": "lambda-completion",
       "constant": true,
       "out": "lambda",
       "in": "board"
     },
     {
-      "from": "input-1",
+      "from": "parameters",
       "to": "countdown",
       "out": "tries",
       "in": "tries"
@@ -23,7 +23,7 @@
       "in": "tries"
     },
     {
-      "from": "input-1",
+      "from": "parameters",
       "to": "retry-prompt",
       "out": "text",
       "in": "text"
@@ -35,7 +35,7 @@
       "in": "text"
     },
     {
-      "from": "input-1",
+      "from": "parameters",
       "to": "lambda-completion",
       "out": "text",
       "in": "text"
@@ -84,17 +84,27 @@
   ],
   "nodes": [
     {
-      "id": "input-1",
+      "id": "parameters",
       "type": "input",
       "configuration": {
         "schema": {
           "type": "object",
           "properties": {
             "text": {
-              "type": "string"
+              "type": "string",
+              "title": "Original",
+              "description": "The original prompt"
+            },
+            "tries": {
+              "type": "number",
+              "title": "Tries",
+              "description": "The number of tries to attempt to fix the problem",
+              "default": "5"
             },
             "lambda": {
-              "type": "BoardCapability"
+              "type": "BoardCapability",
+              "title": "Lambda",
+              "description": "The lambda to retry. This value can't be entered in the Web UI."
             }
           },
           "required": [

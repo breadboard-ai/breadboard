@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board } from "@google-labs/breadboard";
+import { Board, Schema } from "@google-labs/breadboard";
 import Core from "@google-labs/core-kit";
 import { Starter } from "@google-labs/llm-starter";
 
@@ -17,15 +17,31 @@ const retry = new Board({
 const kit = retry.addKit(Starter);
 const core = retry.addKit(Core);
 
-const input = retry.input({
+const parameters = retry.input({
+  $id: "parameters",
   schema: {
     type: "object",
     properties: {
-      text: { type: "string" },
-      lambda: { type: "BoardCapability" },
+      text: {
+        type: "string",
+        title: "Original",
+        description: "The original prompt",
+      },
+      tries: {
+        type: "number",
+        title: "Tries",
+        description: "The number of tries to attempt to fix the problem",
+        default: "5",
+      },
+      lambda: {
+        type: "BoardCapability",
+        title: "Lambda",
+        description:
+          "The lambda to retry. This value can't be entered in the Web UI.",
+      },
     },
     required: ["prompt", "completion"],
-  },
+  } satisfies Schema,
 });
 
 const outputSuccess = retry.output({
@@ -50,7 +66,7 @@ const outputError = retry.output({
 });
 
 const completionCaller = core.invoke({ $id: "lambda-completion" });
-input.wire("lambda->board.", completionCaller);
+parameters.wire("lambda->board.", completionCaller);
 
 const countdown = kit.jsonata({
   expression: '{ "tries": tries - 1, (tries > 0 ? "data" : "done") : data }',
@@ -58,7 +74,7 @@ const countdown = kit.jsonata({
   tries: 5,
   raw: true,
 });
-input.wire("tries->", countdown); // Initial value, defaults to 5 (see above)
+parameters.wire("tries->", countdown); // Initial value, defaults to 5 (see above)
 countdown.wire("tries->", countdown); // Loop back last value
 
 const errorParser = kit.jsonata({
@@ -73,12 +89,12 @@ const retryPrompt = kit.promptTemplate({
     "{{text}}{{completion}}\n\nThis error occured:\n{{error}}\n\nPlease try again:\n",
   $id: "retry-prompt",
 });
-input.wire("text->", retryPrompt); // First pass is with original prompt
+parameters.wire("text->", retryPrompt); // First pass is with original prompt
 retryPrompt.wire("prompt->text", retryPrompt); // Then keep appending
 
 // Main flow:
 
-input.wire("text->text", completionCaller);
+parameters.wire("text->text", completionCaller);
 completionCaller.wire("*->", outputSuccess);
 
 completionCaller.wire("$error->data", countdown);
