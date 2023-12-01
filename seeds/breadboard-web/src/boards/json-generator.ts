@@ -78,7 +78,7 @@ const parameters = board.input({
   } satisfies Schema,
 });
 
-const output = board.output({
+const validOutput = board.output({
   $id: "json",
   schema: {
     type: "object",
@@ -86,6 +86,20 @@ const output = board.output({
       json: {
         type: "object",
         title: "JSON",
+        description: "Generated JSON",
+      },
+    },
+  } satisfies Schema,
+});
+
+const errorOutput = board.output({
+  $id: "error",
+  schema: {
+    type: "object",
+    properties: {
+      error: {
+        type: "object",
+        title: "Error",
         description: "Generated JSON",
       },
     },
@@ -119,13 +133,72 @@ const textGenerator = core
     core.passthrough({ $id: "dontUseStreaming", useStreaming: false })
   );
 
-const validate = json.validateJson().wire("<-schema", parameters);
+const validateOnce = json
+  .validateJson({ $id: "validateOnce" })
+  .wire("<-schema", parameters);
+
+const validateTwice = json
+  .validateJson({ $id: "validateTwice" })
+  .wire("<-schema", parameters);
+
+const errorRetryFormatter = starter.jsonata({
+  expression: "$string($.error, true)",
+});
+
+const retryTemplate = starter.promptTemplate({
+  $id: "retryTemplate",
+  template: `The following output failed to parse as valid JSON:"
+{{json}}
+The error was:
+{{error}}
+Please reply with the corrected JSON.`,
+});
+
+const errorOutputFormatter = starter
+  .jsonata({
+    $id: "errorFormatter",
+    expression: `{
+  "type": $.error.type,
+  "message": $.error.message
+}`,
+    raw: true,
+  })
+  .wire("message->error", errorOutput);
+
+const retryGenerator = core
+  .invoke({ $id: "retryGenerator" })
+  .wire("path<-generator", parameters)
+  .wire(
+    "<-useStreaming",
+    core.passthrough({ $id: "dontUseStreaming", useStreaming: false })
+  );
 
 parameters.wire(
   "template->",
   generatorTemplate.wire(
     "prompt->text",
-    textGenerator.wire("text->json", validate.wire("json->", output))
+    textGenerator
+      .wire(
+        "text->json",
+        validateOnce
+          .wire("json->", validOutput)
+          .wire(
+            "$error->json",
+            errorRetryFormatter.wire(
+              "result->error",
+              retryTemplate.wire(
+                "prompt->text",
+                retryGenerator.wire(
+                  "text->json",
+                  validateTwice
+                    .wire("json->", validOutput)
+                    .wire("$error->json", errorOutputFormatter)
+                )
+              )
+            )
+          )
+      )
+      .wire("text->json", retryTemplate)
   )
 );
 

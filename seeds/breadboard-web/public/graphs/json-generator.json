@@ -35,19 +35,85 @@
     },
     {
       "from": "parameters",
-      "to": "validateJson-2",
+      "to": "validateOnce",
       "out": "schema",
       "in": "schema"
     },
     {
-      "from": "validateJson-2",
+      "from": "parameters",
+      "to": "validateTwice",
+      "out": "schema",
+      "in": "schema"
+    },
+    {
+      "from": "errorFormatter",
+      "to": "error",
+      "out": "message",
+      "in": "error"
+    },
+    {
+      "from": "parameters",
+      "to": "retryGenerator",
+      "out": "generator",
+      "in": "path"
+    },
+    {
+      "from": "dontUseStreaming",
+      "to": "retryGenerator",
+      "out": "useStreaming",
+      "in": "useStreaming"
+    },
+    {
+      "from": "validateOnce",
       "to": "json",
       "out": "json",
       "in": "json"
     },
     {
+      "from": "validateTwice",
+      "to": "json",
+      "out": "json",
+      "in": "json"
+    },
+    {
+      "from": "validateTwice",
+      "to": "errorFormatter",
+      "out": "$error",
+      "in": "json"
+    },
+    {
+      "from": "retryGenerator",
+      "to": "validateTwice",
+      "out": "text",
+      "in": "json"
+    },
+    {
+      "from": "retryTemplate",
+      "to": "retryGenerator",
+      "out": "prompt",
+      "in": "text"
+    },
+    {
+      "from": "jsonata-2",
+      "to": "retryTemplate",
+      "out": "result",
+      "in": "error"
+    },
+    {
+      "from": "validateOnce",
+      "to": "jsonata-2",
+      "out": "$error",
+      "in": "json"
+    },
+    {
       "from": "textGenerator",
-      "to": "validateJson-2",
+      "to": "validateOnce",
+      "out": "text",
+      "in": "json"
+    },
+    {
+      "from": "textGenerator",
+      "to": "retryTemplate",
       "out": "text",
       "in": "json"
     },
@@ -111,6 +177,22 @@
       }
     },
     {
+      "id": "error",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "error": {
+              "type": "object",
+              "title": "Error",
+              "description": "Generated JSON"
+            }
+          }
+        }
+      }
+    },
+    {
       "id": "schemish-1",
       "type": "schemish"
     },
@@ -137,8 +219,45 @@
       }
     },
     {
-      "id": "validateJson-2",
+      "id": "validateOnce",
       "type": "validateJson"
+    },
+    {
+      "id": "validateTwice",
+      "type": "validateJson"
+    },
+    {
+      "id": "jsonata-2",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "$string($.error, true)"
+      }
+    },
+    {
+      "id": "retryTemplate",
+      "type": "promptTemplate",
+      "configuration": {
+        "template": "The following output failed to parse as valid JSON:\"\n{{json}}\nThe error was:\n{{error}}\nPlease reply with the corrected JSON."
+      }
+    },
+    {
+      "id": "errorFormatter",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "{\n  \"type\": $.error.type,\n  \"message\": $.error.message\n}",
+        "raw": true
+      }
+    },
+    {
+      "id": "retryGenerator",
+      "type": "invoke"
+    },
+    {
+      "id": "dontUseStreaming",
+      "type": "passthrough",
+      "configuration": {
+        "useStreaming": false
+      }
     }
   ],
   "kits": [
