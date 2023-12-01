@@ -32,6 +32,10 @@
     "url": "/graphs/openai-gpt-4-vision.json"
   },
   {
+    "title": "Retry",
+    "url": "/graphs/retry.json"
+  },
+  {
     "title": "New: The Search Summarizer Recipe (as a recipe() call)",
     "url": "/graphs/search-summarize-as-recipe.json"
   },
