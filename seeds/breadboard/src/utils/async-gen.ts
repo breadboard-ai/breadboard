@@ -75,7 +75,7 @@ export const asyncGen = <T>(callback: AsyncGenCallback<T>) => {
           waitForCallbackToCallNext = new Promise<MaybeT>(resolver);
           return { done, value };
         },
-      };
+      } as AsyncIterator<T, void, unknown>;
     },
   };
 };
