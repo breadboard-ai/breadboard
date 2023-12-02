@@ -37,7 +37,11 @@ export const bubbleUpInputsIfNeeded = async (
 
   const outputs = (await result.outputsPromise) ?? {};
   const reader = new InputSchemaReader(outputs, inputs);
-  result.outputsPromise = reader.read(async (name, schema, required) => {
+  result.outputsPromise = reader.read(createBubbleHandler(context));
+};
+
+export const createBubbleHandler = (context: NodeHandlerContext) => {
+  return (async (name, schema, required) => {
     if (required) {
       throw new Error(createErrorMessage(name, context, required));
     }
@@ -49,7 +53,7 @@ export const bubbleUpInputsIfNeeded = async (
       throw new Error(createErrorMessage(name, context, required));
     }
     return value;
-  });
+  }) satisfies InputSchemaHandler;
 };
 
 export type InputSchemaHandler = (

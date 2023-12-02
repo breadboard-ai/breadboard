@@ -5,8 +5,12 @@
  */
 
 import test from "ava";
-import { InputSchemaReader, createErrorMessage } from "../src/bubble.js";
-import { BreadboardRunner } from "../src/types.js";
+import {
+  InputSchemaReader,
+  createBubbleHandler,
+  createErrorMessage,
+} from "../src/bubble.js";
+import { BreadboardRunner, NodeHandlerContext } from "../src/types.js";
 
 test("InputSchemaReader works as expected", async (t) => {
   {
@@ -186,4 +190,45 @@ test("createErrorMessage makes sensible messages", (t) => {
     ),
     'Missing input "foo" for board "url goes here".'
   );
+});
+
+test("createBubbleHandler works as expected", async (t) => {
+  {
+    const handler = createBubbleHandler({});
+    await t.throwsAsync(
+      handler("foo", { type: "string" }, true),
+      undefined,
+      'Missing required input "foo".'
+    );
+    await t.throwsAsync(
+      handler("foo", { type: "string" }, false),
+      undefined,
+      'Missing input "foo".'
+    );
+    t.deepEqual(
+      await handler("foo", { type: "string", default: "bar" }, false),
+      "bar"
+    );
+  }
+  {
+    const handler = createBubbleHandler({
+      board: { title: "Foo" } as BreadboardRunner,
+    });
+    await t.throwsAsync(
+      handler("foo", { type: "string" }, true),
+      undefined,
+      'Missing required input "foo" for board "Foo".'
+    );
+  }
+  {
+    const handler = createBubbleHandler({
+      requestInput: async () => "bar",
+    } satisfies NodeHandlerContext);
+    t.deepEqual(await handler("foo", { type: "string" }, false), "bar");
+    await t.throwsAsync(
+      handler("foo", { type: "string" }, true),
+      undefined,
+      'Missing required input "foo".'
+    );
+  }
 });
