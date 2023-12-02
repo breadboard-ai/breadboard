@@ -126,8 +126,8 @@ test("schemish-generator with unparseable JSON", async (t) => {
     $error: {
       kind: "error",
       error: {
-        message: '0: instance requires property "type"\n',
-        type: "validation",
+        message: "Expected property name or '}' in JSON at position 2",
+        type: "parsing",
       },
     },
   });
@@ -216,7 +216,7 @@ test("schemish-generator with invalid JSON", async (t) => {
     $error: {
       kind: "error",
       error: {
-        message: "0: instance.type is not one of enum values: drink,food\n",
+        message: "data/type must be equal to one of the allowed values",
         type: "validation",
       },
     },
