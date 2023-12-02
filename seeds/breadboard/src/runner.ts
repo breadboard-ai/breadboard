@@ -37,6 +37,7 @@ import { callHandler } from "./handler.js";
 import { toMermaid } from "./mermaid.js";
 import { SchemaBuilder } from "./schema.js";
 import { bubbleUpInputsIfNeeded } from "./bubble.js";
+import { asyncGen } from "./utils/async-gen.js";
 
 class ProbeEvent extends CustomEvent<ProbeDetails> {
   constructor(type: string, detail: ProbeDetails) {
@@ -120,93 +121,95 @@ export class BoardRunner implements BreadboardRunner {
     context: NodeHandlerContext = {},
     result?: RunResult
   ): AsyncGenerator<RunResult> {
-    const handlers = await BoardRunner.handlersFromBoard(this, context.kits);
-    const slots = { ...this.#slots, ...context.slots };
-    this.#validators.forEach((validator) => validator.addGraph(this));
+    yield* asyncGen(async (next) => {
+      const handlers = await BoardRunner.handlersFromBoard(this, context.kits);
+      const slots = { ...this.#slots, ...context.slots };
+      this.#validators.forEach((validator) => validator.addGraph(this));
 
-    const machine = new TraversalMachine(this, result?.state);
+      const machine = new TraversalMachine(this, result?.state);
 
-    for await (const result of machine) {
-      const { inputs, descriptor, missingInputs } = result;
+      for await (const result of machine) {
+        const { inputs, descriptor, missingInputs } = result;
 
-      if (result.skip) {
-        context?.probe?.dispatchEvent(
-          new ProbeEvent("skip", { descriptor, inputs, missingInputs })
-        );
-        continue;
+        if (result.skip) {
+          context?.probe?.dispatchEvent(
+            new ProbeEvent("skip", { descriptor, inputs, missingInputs })
+          );
+          continue;
+        }
+
+        if (descriptor.type === "input") {
+          await next(new InputStageResult(result));
+          context?.probe?.dispatchEvent(
+            new ProbeEvent("input", {
+              descriptor,
+              inputs,
+              outputs: await result.outputsPromise,
+            })
+          );
+          await bubbleUpInputsIfNeeded(context, inputs, result);
+          continue;
+        }
+
+        if (descriptor.type === "output") {
+          context.probe?.dispatchEvent(
+            new ProbeEvent("output", { descriptor, inputs })
+          );
+          await next(new OutputStageResult(result));
+          continue;
+        }
+
+        const handler = handlers[descriptor.type];
+        if (!handler)
+          throw new Error(`No handler for node type "${descriptor.type}"`);
+
+        const beforehandlerDetail: ProbeDetails = {
+          descriptor,
+          inputs,
+        };
+
+        await next(new BeforeHandlerStageResult(result));
+
+        const shouldInvokeHandler =
+          !context.probe ||
+          context.probe.dispatchEvent(
+            new ProbeEvent("beforehandler", beforehandlerDetail)
+          );
+
+        const newContext: NodeHandlerContext = {
+          ...context,
+          board: this,
+          descriptor,
+          outerGraph: this.#outerGraph || this,
+          base: this.url,
+          slots,
+          kits: [...(context.kits || []), ...this.kits],
+        };
+
+        const outputsPromise = (
+          shouldInvokeHandler
+            ? callHandler(handler, inputs, newContext)
+            : beforehandlerDetail.outputs instanceof Promise
+            ? beforehandlerDetail.outputs
+            : Promise.resolve(beforehandlerDetail.outputs)
+        ) as Promise<OutputValues>;
+
+        outputsPromise.then((outputs) => {
+          context.probe?.dispatchEvent(
+            new ProbeEvent("node", {
+              descriptor,
+              inputs,
+              outputs,
+              validatorMetadata: this.#validators.map((validator) =>
+                validator.getValidatorMetadata(descriptor)
+              ),
+            })
+          );
+        });
+
+        result.outputsPromise = outputsPromise;
       }
-
-      if (descriptor.type === "input") {
-        yield new InputStageResult(result);
-        context?.probe?.dispatchEvent(
-          new ProbeEvent("input", {
-            descriptor,
-            inputs,
-            outputs: await result.outputsPromise,
-          })
-        );
-        await bubbleUpInputsIfNeeded(context, inputs, result);
-        continue;
-      }
-
-      if (descriptor.type === "output") {
-        context.probe?.dispatchEvent(
-          new ProbeEvent("output", { descriptor, inputs })
-        );
-        yield new OutputStageResult(result);
-        continue;
-      }
-
-      const handler = handlers[descriptor.type];
-      if (!handler)
-        throw new Error(`No handler for node type "${descriptor.type}"`);
-
-      const beforehandlerDetail: ProbeDetails = {
-        descriptor,
-        inputs,
-      };
-
-      yield new BeforeHandlerStageResult(result);
-
-      const shouldInvokeHandler =
-        !context.probe ||
-        context.probe.dispatchEvent(
-          new ProbeEvent("beforehandler", beforehandlerDetail)
-        );
-
-      const newContext: NodeHandlerContext = {
-        ...context,
-        board: this,
-        descriptor,
-        outerGraph: this.#outerGraph || this,
-        base: this.url,
-        slots,
-        kits: [...(context.kits || []), ...this.kits],
-      };
-
-      const outputsPromise = (
-        shouldInvokeHandler
-          ? callHandler(handler, inputs, newContext)
-          : beforehandlerDetail.outputs instanceof Promise
-          ? beforehandlerDetail.outputs
-          : Promise.resolve(beforehandlerDetail.outputs)
-      ) as Promise<OutputValues>;
-
-      outputsPromise.then((outputs) => {
-        context.probe?.dispatchEvent(
-          new ProbeEvent("node", {
-            descriptor,
-            inputs,
-            outputs,
-            validatorMetadata: this.#validators.map((validator) =>
-              validator.getValidatorMetadata(descriptor)
-            ),
-          })
-        );
-      });
-
-      result.outputsPromise = outputsPromise;
-    }
+    });
   }
 
   /**
