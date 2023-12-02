@@ -91,3 +91,4 @@ export type {
   InputValues as NewInputValuesWithNodeFactory,
   AbstractValue as V,
 } from "./new/recipe-grammar/types.js";
+export { asyncGen } from "./utils/async-gen.js";

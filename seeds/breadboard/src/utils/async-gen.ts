@@ -79,37 +79,3 @@ export const asyncGen = <T>(callback: AsyncGenCallback<T>) => {
     },
   };
 };
-
-/**
- * A helper class for keeping track of the last message in a stream.
- *
- * Example:
- *
- * ```ts
- * const keeper = new LastMessageKeeper<string>();
- * const stream = new ReadableStream({
- *  start: (controller) => {
- *   controller.enqueue("foo");
- *   controller.enqueue("bar");
- *   controller.enqueue("baz");
- *   controller.close();
- * });
- * stream.pipeThrough(keeper.watch());
- * console.log(keeper.lastMessage()); // "baz"
- */
-export class LastMessageKeeper<Res> {
-  #lastMessage: Res | undefined;
-
-  watch() {
-    return new TransformStream({
-      transform: (chunk, controller) => {
-        this.#lastMessage = chunk;
-        controller.enqueue(chunk);
-      },
-    });
-  }
-
-  lastMessage(): Res | undefined {
-    return this.#lastMessage;
-  }
-}

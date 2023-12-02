@@ -9,6 +9,7 @@ import {
   Board,
   callHandler,
   InputValues,
+  asyncGen,
 } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 import { PaLMKit } from "@google-labs/palm-kit";
@@ -16,7 +17,6 @@ import type { ProxyRequestMessage } from "@google-labs/breadboard/worker";
 
 import { SecretKeeper } from "./secrets";
 import { KitBuilder } from "@google-labs/breadboard/kits";
-import { asyncGen } from "./async-gen";
 import { NodeNurseryWeb } from "@google-labs/node-nursery-web";
 
 class AskForSecret {
