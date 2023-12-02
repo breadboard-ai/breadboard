@@ -11,7 +11,7 @@ import { Starter } from "@google-labs/llm-starter";
 const retry = new Board({
   title: "Retry",
   description:
-    "Run `lambda` up to `tries` (default 5) times, appending prior attempts and error messages to the prompt.",
+    "Run `board` up to `tries` (default 5) times, appending prior attempts and error messages to the prompt.",
   version: "0.0.1",
 });
 const kit = retry.addKit(Starter);
@@ -33,13 +33,14 @@ const parameters = retry.input({
         description: "The number of tries to attempt to fix the problem",
         default: "5",
       },
-      lambda: {
+      board: {
         type: "board",
         title: "Board",
         description: "The board to retry.",
+        default: "/graphs/text-generator.json",
       },
     },
-    required: ["text", "lambda"],
+    required: ["text", "board"],
   } satisfies Schema,
 });
 
@@ -65,7 +66,7 @@ const outputError = retry.output({
 });
 
 const generatorCaller = core.invoke({ $id: "generatorCaller" });
-parameters.wire("lambda->board.", generatorCaller);
+parameters.wire("board->path.", generatorCaller);
 
 const countdown = kit.jsonata({
   expression: '{ "tries": tries - 1, (tries > 0 ? "data" : "done") : data }',

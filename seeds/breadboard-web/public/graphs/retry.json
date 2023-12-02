@@ -1,14 +1,14 @@
 {
   "title": "Retry",
-  "description": "Run `lambda` up to `tries` (default 5) times, appending prior attempts and error messages to the prompt.",
+  "description": "Run `board` up to `tries` (default 5) times, appending prior attempts and error messages to the prompt.",
   "version": "0.0.1",
   "edges": [
     {
       "from": "parameters",
       "to": "generatorCaller",
       "constant": true,
-      "out": "lambda",
-      "in": "board"
+      "out": "board",
+      "in": "path"
     },
     {
       "from": "parameters",
@@ -101,15 +101,16 @@
               "description": "The number of tries to attempt to fix the problem",
               "default": "5"
             },
-            "lambda": {
+            "board": {
               "type": "board",
               "title": "Board",
-              "description": "The board to retry."
+              "description": "The board to retry.",
+              "default": "/graphs/text-generator.json"
             }
           },
           "required": [
             "text",
-            "lambda"
+            "board"
           ]
         }
       }

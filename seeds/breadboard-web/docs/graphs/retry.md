@@ -3,7 +3,7 @@
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-parameters[/"input <br> id='parameters'"/]:::input -- "lambda->board" --o generatorCaller["invoke <br> id='generatorCaller'"]
+parameters[/"input <br> id='parameters'"/]:::input -- "board->path" --o generatorCaller["invoke <br> id='generatorCaller'"]
 parameters[/"input <br> id='parameters'"/]:::input -- "tries->tries" --> countdown["jsonata <br> id='countdown'"]
 countdown["jsonata <br> id='countdown'"] -- "tries->tries" --> countdown["jsonata <br> id='countdown'"]
 parameters[/"input <br> id='parameters'"/]:::input -- "text->text" --> retryPrompt["promptTemplate <br> id='retryPrompt'"]
