@@ -64,25 +64,22 @@ export class InputSchemaReader {
 
     if (!schema.properties) return this.#currentOutputs;
 
+    const entries = Object.entries(schema.properties);
+
+    const newOutputs: OutputValues = {};
+    for (const [name, property] of entries) {
+      if (name in this.#currentOutputs) {
+        newOutputs[name] = this.#currentOutputs[name];
+        continue;
+      }
+      const required = schema.required?.includes(name) ?? false;
+      const value = await handler(name, property, required);
+      newOutputs[name] = value;
+    }
+
     return {
       ...this.#currentOutputs,
-      ...Object.fromEntries(
-        await Promise.all(
-          Object.entries(schema.properties).map(async ([name, property]) => {
-            if (name in this.#currentOutputs)
-              return [name, this.#currentOutputs[name]];
-            const required = schema.required?.includes(name) ?? false;
-            const value = await handler(name, property, required);
-            return [name, value];
-          })
-        )
-      ),
+      ...newOutputs,
     };
   }
 }
-
-// if (required) {
-//   throw new Error(
-//     `Missing required input "${name}" for board "${this.#boardName}"`
-//   );
-// }
