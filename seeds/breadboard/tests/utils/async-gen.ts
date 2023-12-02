@@ -52,3 +52,31 @@ test("async-gen call to next is optional", async (t) => {
   t.deepEqual(results, [1, 1.5, 2]);
   t.deepEqual(yields, [1, 2]);
 });
+
+test("asyncGen can handle exceptions", async (t) => {
+  const results = [];
+  const yields = [];
+
+  async function* foo() {
+    yield 1;
+    yield* asyncGen(async (next) => {
+      results.push(1.5);
+      await next(2);
+      results.push(2.5);
+      throw new Error("test");
+    });
+    yield 3;
+  }
+
+  try {
+    for await (const val of foo()) {
+      results.push(val);
+      yields.push(val);
+    }
+  } catch (e) {
+    t.is((e as Error).message, "test");
+  }
+
+  t.deepEqual(results, [1, 1.5, 2, 2.5]);
+  t.deepEqual(yields, [1, 2]);
+});

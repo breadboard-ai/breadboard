@@ -45,6 +45,7 @@ export const asyncGen = <T>(callback: AsyncGenCallback<T>) => {
   type MaybeT = T | undefined;
   let proceedToNext: (() => void) | undefined;
   let nextCalled: (value: MaybeT) => void;
+  let nextThrew: (err: Error) => void;
 
   const next = async (result: T) => {
     nextCalled(result);
@@ -57,16 +58,24 @@ export const asyncGen = <T>(callback: AsyncGenCallback<T>) => {
     [Symbol.asyncIterator]() {
       let waitForCallbackToCallNext: Promise<MaybeT>;
       let done = false;
-      const resolver = (resolve: (value: MaybeT) => void) => {
+      const resolver = (
+        resolve: (value: MaybeT) => void,
+        reject: (value: unknown) => void
+      ) => {
         nextCalled = resolve;
+        nextThrew = reject;
       };
 
       waitForCallbackToCallNext = new Promise<MaybeT>(resolver);
       proceedToNext = () => {
-        callback(next).then(() => {
-          done = true;
-          nextCalled(undefined);
-        });
+        callback(next)
+          .then(() => {
+            done = true;
+            nextCalled(undefined);
+          })
+          .catch((err) => {
+            nextThrew(err);
+          });
       };
       return {
         async next() {
