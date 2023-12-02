@@ -67,7 +67,7 @@ export class MainThreadRuntime implements Runtime {
         url: "secret-asking-kit ",
       }).build({
         secrets: async (inputs) => {
-          return this.#secretHandler(inputs as InputValues);
+          return await this.#secretHandler(inputs as InputValues);
         },
       });
 
