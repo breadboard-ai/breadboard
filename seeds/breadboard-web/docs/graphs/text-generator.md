@@ -4,7 +4,7 @@
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
 secrets3("secrets <br> id='secrets-3'"):::secrets -- "PALM_KEY->PALM_KEY" --> palmgenerateText2["palm-generateText <br> id='palm-generateText-2'"]
-input[/"input <br> id='input'"/]:::input -- "model->model" --> runJavascript1["runJavascript <br> id='runJavascript-1'"]
+input[/"input <br> id='input'"/]:::input -- "MODEL->MODEL" --> runJavascript1["runJavascript <br> id='runJavascript-1'"]
 input[/"input <br> id='input'"/]:::input -- "useStreaming->useStreaming" --> runJavascript1["runJavascript <br> id='runJavascript-1'"]
 input[/"input <br> id='input'"/]:::input -- "useStreaming->useStreaming" --> gpt35["invoke <br> id='gpt35'"]
 gpt35["invoke <br> id='gpt35'"] -- "text->text" --> textOutput{{"output <br> id='textOutput'"}}:::output

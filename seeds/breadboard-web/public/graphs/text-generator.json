@@ -12,8 +12,8 @@
     {
       "from": "input",
       "to": "runJavascript-1",
-      "out": "model",
-      "in": "model"
+      "out": "MODEL",
+      "in": "MODEL"
     },
     {
       "from": "input",
@@ -131,7 +131,7 @@
               "description": "Whether to stream the output",
               "default": "false"
             },
-            "model": {
+            "MODEL": {
               "type": "string",
               "title": "Model",
               "description": "The model to use for generation",
@@ -144,7 +144,8 @@
             }
           },
           "required": [
-            "text"
+            "text",
+            "useStreaming"
           ]
         }
       }
@@ -154,7 +155,7 @@
       "type": "runJavascript",
       "configuration": {
         "name": "switchModel",
-        "code": "function switchModel({model,useStreaming}){switch(model){case\"PaLM\":if(useStreaming){return{other:`Streaming is not supported for ${model}`}}return{palm:true};case\"mock\":return{mock:true};case\"GPT 3.5 Turbo\":return{gpt35:true};default:return{other:`Unsupported model: ${model}`}}}",
+        "code": "function switchModel({MODEL,useStreaming}){switch(MODEL){case\"PaLM\":if(useStreaming){return{other:`Streaming is not supported for ${MODEL}`}}return{palm:true};case\"mock\":return{mock:true};case\"GPT 3.5 Turbo\":return{gpt35:true};default:return{other:`Unsupported model: ${MODEL}`}}}",
         "raw": true
       }
     },
