@@ -36,7 +36,7 @@ import { runRemote } from "./remote.js";
 import { callHandler } from "./handler.js";
 import { toMermaid } from "./mermaid.js";
 import { SchemaBuilder } from "./schema.js";
-import { bubbleUpInputsIfNeeded } from "./bubble.js";
+import { RequestedInputsManager, bubbleUpInputsIfNeeded } from "./bubble.js";
 import { asyncGen } from "./utils/async-gen.js";
 
 class ProbeEvent extends CustomEvent<ProbeDetails> {
@@ -128,6 +128,8 @@ export class BoardRunner implements BreadboardRunner {
 
       const machine = new TraversalMachine(this, result?.state);
 
+      const requestedInputs = new RequestedInputsManager(context);
+
       for await (const result of machine) {
         const { inputs, descriptor, missingInputs } = result;
 
@@ -184,6 +186,7 @@ export class BoardRunner implements BreadboardRunner {
           base: this.url,
           slots,
           kits: [...(context.kits || []), ...this.kits],
+          requestInput: requestedInputs.createHandler(next, result),
         };
 
         const outputsPromise = (

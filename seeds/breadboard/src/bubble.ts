@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { InputStageResult, RunResult } from "./run.js";
 import {
   InputValues,
   NodeHandlerContext,
@@ -80,6 +81,39 @@ export class InputSchemaReader {
     return {
       ...this.#currentOutputs,
       ...newOutputs,
+    };
+  }
+}
+
+export class RequestedInputsManager {
+  #context: NodeHandlerContext;
+  #cache: Map<string, NodeValue> = new Map();
+
+  constructor(context: NodeHandlerContext) {
+    this.#context = context;
+  }
+
+  createHandler(
+    next: (result: RunResult) => Promise<void>,
+    result: TraversalResult
+  ) {
+    return async (name: string, schema: Schema) => {
+      const cachedValue = this.#cache.get(name);
+      if (cachedValue !== undefined) return cachedValue;
+      const requestInputResult = {
+        ...result,
+        inputs: {
+          schema: { type: "object", properties: { [name]: schema } },
+        },
+      };
+      await next(new InputStageResult(requestInputResult));
+      const outputs = await requestInputResult.outputsPromise;
+      let value = outputs && outputs[name];
+      if (value === undefined) {
+        value = await this.#context.requestInput?.(name, schema);
+      }
+      this.#cache.set(name, value);
+      return value;
     };
   }
 }

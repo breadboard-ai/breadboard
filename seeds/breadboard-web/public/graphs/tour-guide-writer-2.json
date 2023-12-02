@@ -10,10 +10,10 @@
       "in": "path"
     },
     {
-      "from": "location-and-generator",
+      "from": "dontUseStreaming",
       "to": "travelItineraryGenerator",
-      "out": "model",
-      "in": "model"
+      "out": "useStreaming",
+      "in": "useStreaming"
     },
     {
       "from": "location-and-generator",
@@ -21,13 +21,6 @@
       "constant": true,
       "out": "generator",
       "in": "$l-guideGenerator-path"
-    },
-    {
-      "from": "location-and-generator",
-      "to": "lambda-1",
-      "constant": true,
-      "out": "model",
-      "in": "$l-guideGenerator-model"
     },
     {
       "from": "location-and-generator",
@@ -102,24 +95,14 @@
             "location": {
               "type": "string",
               "title": "Location",
-              "description": "The location for which to write a tour guide"
+              "description": "The location for which to write a tour guide",
+              "default": "Stresa, Italy"
             },
             "generator": {
               "type": "board",
               "title": "Text Generator",
               "description": "The text generator to use for writing the tour guide",
               "default": "/graphs/text-generator.json"
-            },
-            "model": {
-              "type": "string",
-              "title": "Model (feeds into TextGenerator)",
-              "description": "The model to use for the text generator",
-              "default": "PaLM",
-              "enum": [
-                "PaLM",
-                "GPT 3.5 Turbo",
-                "mock"
-              ]
             }
           }
         }
@@ -158,6 +141,13 @@
       }
     },
     {
+      "id": "dontUseStreaming",
+      "type": "passthrough",
+      "configuration": {
+        "useStreaming": false
+      }
+    },
+    {
       "id": "splitItinerary",
       "type": "runJavascript",
       "configuration": {
@@ -173,6 +163,12 @@
           "kind": "board",
           "board": {
             "edges": [
+              {
+                "from": "dontUseStreaming",
+                "to": "guideGenerator",
+                "out": "useStreaming",
+                "in": "useStreaming"
+              },
               {
                 "from": "guideGenerator",
                 "to": "output-2",
@@ -197,13 +193,6 @@
                 "constant": true,
                 "out": "$l-guideGenerator-path",
                 "in": "path"
-              },
-              {
-                "from": "input-1",
-                "to": "guideGenerator",
-                "constant": true,
-                "out": "$l-guideGenerator-model",
-                "in": "model"
               },
               {
                 "from": "input-1",
@@ -233,10 +222,16 @@
                 "id": "guideGenerator",
                 "type": "invoke",
                 "configuration": {
-                  "model": "PaLM",
                   "stopSequences": [
                     "\n[City]"
                   ]
+                }
+              },
+              {
+                "id": "dontUseStreaming",
+                "type": "passthrough",
+                "configuration": {
+                  "useStreaming": false
                 }
               }
             ],

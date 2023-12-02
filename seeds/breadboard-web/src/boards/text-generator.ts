@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board } from "@google-labs/breadboard";
+import { Board, Schema } from "@google-labs/breadboard";
 import { Core } from "@google-labs/core-kit";
 import { Starter } from "@google-labs/llm-starter";
 import { PaLMKit } from "@google-labs/palm-kit";
@@ -35,7 +35,7 @@ const input = board.input({
         type: "boolean",
         title: "Stream",
         description: "Whether to stream the output",
-        default: false,
+        default: "false",
       },
       model: {
         type: "string",
@@ -45,7 +45,8 @@ const input = board.input({
         default: "PaLM",
       },
     },
-  },
+    required: ["text"],
+  } satisfies Schema,
 });
 
 function switchModel({

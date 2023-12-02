@@ -26,19 +26,13 @@ const userInput = board.input({
         type: "string",
         title: "Location",
         description: "The location for which to write a tour guide",
+        default: "Stresa, Italy",
       },
       generator: {
         type: "board",
         title: "Text Generator",
         description: "The text generator to use for writing the tour guide",
         default: "/graphs/text-generator.json",
-      },
-      model: {
-        type: "string",
-        title: "Model (feeds into TextGenerator)",
-        description: "The model to use for the text generator",
-        default: "PaLM",
-        enum: ["PaLM", "GPT 3.5 Turbo", "mock"],
       },
     },
   },
@@ -110,7 +104,10 @@ const travelItineraryGenerator = core
     stopSequences: ["\n[Place]"],
   })
   .wire("path<-generator", userInput)
-  .wire("<-model", userInput);
+  .wire(
+    "<-useStreaming",
+    core.passthrough({ $id: "dontUseStreaming", useStreaming: false })
+  );
 
 const splitItinerary = starter.runJavascript({
   name: "split",
@@ -153,11 +150,13 @@ const createGuides = core.map((board, input, output) => {
   const guideGenerator = core
     .invoke({
       $id: "guideGenerator",
-      model: "PaLM",
       stopSequences: ["\n[City]"],
     })
     .wire("path<-generator.", userInput)
-    .wire("<-model.", userInput);
+    .wire(
+      "<-useStreaming",
+      core.passthrough({ $id: "dontUseStreaming", useStreaming: false })
+    );
 
   input.wire(
     "item->activity",

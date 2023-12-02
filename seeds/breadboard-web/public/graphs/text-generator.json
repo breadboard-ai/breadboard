@@ -129,7 +129,7 @@
               "type": "boolean",
               "title": "Stream",
               "description": "Whether to stream the output",
-              "default": false
+              "default": "false"
             },
             "model": {
               "type": "string",
@@ -142,7 +142,10 @@
               ],
               "default": "PaLM"
             }
-          }
+          },
+          "required": [
+            "text"
+          ]
         }
       }
     },
