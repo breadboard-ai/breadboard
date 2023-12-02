@@ -263,7 +263,7 @@ export class BoardRunner implements BreadboardRunner {
     } catch (e) {
       // Unwrap unhandled error (handled errors are just outputs of the board!)
       if ((e as Error).cause)
-        return Promise.resolve({ $error: (e as Error).cause } as OutputValues);
+        return { $error: (e as Error).cause } as OutputValues;
       else throw e;
     }
   }
