@@ -16,11 +16,13 @@ import {
 
 export const createErrorMessage = (
   inputName: string,
-  context: NodeHandlerContext
+  context: NodeHandlerContext,
+  required: boolean
 ): string => {
   const boardTitle = context.board?.title ?? context.board?.url;
-  return `Missing required input "${inputName}"${
-    boardTitle ? `for board "${boardTitle}".` : "."
+  const requiredText = required ? "required " : "";
+  return `Missing ${requiredText}input "${inputName}"${
+    boardTitle ? ` for board "${boardTitle}".` : "."
   }`;
 };
 
@@ -36,10 +38,17 @@ export const bubbleUpInputsIfNeeded = async (
   const outputs = (await result.outputsPromise) ?? {};
   const reader = new InputSchemaReader(outputs, inputs);
   result.outputsPromise = reader.read(async (name, schema, required) => {
-    if (required || !context.requestInput) {
-      throw new Error(createErrorMessage(name, context));
+    if (required) {
+      throw new Error(createErrorMessage(name, context, required));
     }
-    return await context.requestInput(name, schema);
+    const value = await context.requestInput?.(name, schema);
+    if (value === undefined) {
+      if (schema.default !== undefined) {
+        return schema.default;
+      }
+      throw new Error(createErrorMessage(name, context, required));
+    }
+    return value;
   });
 };
 

@@ -5,7 +5,8 @@
  */
 
 import test from "ava";
-import { InputSchemaReader } from "../src/bubble.js";
+import { InputSchemaReader, createErrorMessage } from "../src/bubble.js";
+import { BreadboardRunner } from "../src/types.js";
 
 test("InputSchemaReader works as expected", async (t) => {
   {
@@ -153,4 +154,36 @@ test("InputSchemaReader correctly handles existing outputs", async (t) => {
     t.deepEqual(inputs, []);
     t.deepEqual(result, { a: "existingA", c: "existingC" });
   }
+});
+
+test("createErrorMessage makes sensible messages", (t) => {
+  t.deepEqual(
+    createErrorMessage("foo", {}, true),
+    'Missing required input "foo".'
+  );
+  t.deepEqual(createErrorMessage("foo", {}, false), 'Missing input "foo".');
+  t.deepEqual(
+    createErrorMessage(
+      "foo",
+      { board: { title: "Foo", url: "url goes here" } as BreadboardRunner },
+      true
+    ),
+    'Missing required input "foo" for board "Foo".'
+  );
+  t.deepEqual(
+    createErrorMessage(
+      "foo",
+      { board: { url: "url goes here" } as BreadboardRunner },
+      true
+    ),
+    'Missing required input "foo" for board "url goes here".'
+  );
+  t.deepEqual(
+    createErrorMessage(
+      "foo",
+      { board: { url: "url goes here" } as BreadboardRunner },
+      false
+    ),
+    'Missing input "foo" for board "url goes here".'
+  );
 });
