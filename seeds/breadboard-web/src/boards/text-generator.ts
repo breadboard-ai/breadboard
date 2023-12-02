@@ -37,7 +37,7 @@ const input = board.input({
         description: "Whether to stream the output",
         default: "false",
       },
-      model: {
+      MODEL: {
         type: "string",
         title: "Model",
         description: "The model to use for generation",
@@ -45,21 +45,21 @@ const input = board.input({
         default: "PaLM",
       },
     },
-    required: ["text"],
+    required: ["text", "useStreaming"],
   } satisfies Schema,
 });
 
 function switchModel({
-  model,
+  MODEL,
   useStreaming,
 }: {
-  model: string;
+  MODEL: string;
   useStreaming: boolean;
 }) {
-  switch (model) {
+  switch (MODEL) {
     case "PaLM":
       if (useStreaming) {
-        return { other: `Streaming is not supported for ${model}` };
+        return { other: `Streaming is not supported for ${MODEL}` };
       }
       return { palm: true };
     case "mock":
@@ -67,7 +67,7 @@ function switchModel({
     case "GPT 3.5 Turbo":
       return { gpt35: true };
     default:
-      return { other: `Unsupported model: ${model}` };
+      return { other: `Unsupported model: ${MODEL}` };
   }
 }
 
@@ -139,7 +139,7 @@ const streamOutput = board.output({
   },
 });
 
-input.wire("model->", switcher);
+input.wire("MODEL->", switcher);
 input.wire("useStreaming->", switcher);
 
 input.wire("useStreaming->", gpt35);
