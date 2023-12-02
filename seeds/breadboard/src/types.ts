@@ -526,6 +526,7 @@ export interface NodeHandlerContext {
   readonly outerGraph?: GraphDescriptor;
   readonly slots?: BreadboardSlotSpec;
   readonly probe?: EventTarget;
+  readonly requestInput?: (name: string, schema: Schema) => Promise<NodeValue>;
 }
 
 type Common<To, From> = {

@@ -36,6 +36,7 @@ import { runRemote } from "./remote.js";
 import { callHandler } from "./handler.js";
 import { toMermaid } from "./mermaid.js";
 import { SchemaBuilder } from "./schema.js";
+import { bubbleUpInputsIfNeeded } from "./bubble.js";
 
 class ProbeEvent extends CustomEvent<ProbeDetails> {
   constructor(type: string, detail: ProbeDetails) {
@@ -144,6 +145,7 @@ export class BoardRunner implements BreadboardRunner {
             outputs: await result.outputsPromise,
           })
         );
+        await bubbleUpInputsIfNeeded(context, inputs, result);
         continue;
       }
 
@@ -186,8 +188,8 @@ export class BoardRunner implements BreadboardRunner {
         shouldInvokeHandler
           ? callHandler(handler, inputs, newContext)
           : beforehandlerDetail.outputs instanceof Promise
-            ? beforehandlerDetail.outputs
-            : Promise.resolve(beforehandlerDetail.outputs)
+          ? beforehandlerDetail.outputs
+          : Promise.resolve(beforehandlerDetail.outputs)
       ) as Promise<OutputValues>;
 
       outputsPromise.then((outputs) => {
@@ -360,8 +362,7 @@ export class BoardRunner implements BreadboardRunner {
     board: BoardRunner,
     upstreamKits: Kit[] = []
   ): Promise<NodeHandlers> {
-
-    const core = new Core()
+    const core = new Core();
     const kits = [core, ...upstreamKits, ...board.kits];
 
     return kits.reduce((handlers, kit) => {
@@ -382,9 +383,8 @@ class Core {
   handlers: NodeHandlers;
 
   constructor() {
-    this.handlers =
-    {
-      "lambda": {
+    this.handlers = {
+      lambda: {
         describe: async (inputs?: InputValues) => ({
           inputSchema: new SchemaBuilder()
             .setAdditionalProperties(true)
@@ -418,7 +418,7 @@ class Core {
             board: { ...board, board: runnableBoard as GraphDescriptor },
           };
         },
-      }
+      },
     };
   }
 }
