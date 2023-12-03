@@ -48,15 +48,23 @@ export class TraversalMachineIterator
     result.opportunities.push(...opportunities);
     result.state.wireOutputs(opportunities, outputs);
 
-    if (outputs.$error && opportunities.length === 0) {
-      // If the node threw an exception and it wasn't routed via $error,
-      // throw it again. This will cause the traversal to stop.
-      throw new Error(
-        "Uncaught exception in node handler. Catch by wiring up the $error output.",
-        {
-          cause: outputs.$error,
-        }
-      );
+    if (outputs.$error) {
+      if (opportunities.length === 0) {
+        // If the node threw an exception and it wasn't routed via $error,
+        // throw it again. This will cause the traversal to stop.
+        throw new Error(
+          "Uncaught exception in node handler. Catch by wiring up the $error output.",
+          {
+            cause: outputs.$error,
+          }
+        );
+      } else {
+        globalThis.console.warn(
+          "Error in node handler, passinng to the wired $error output.",
+          outputs.$error,
+          opportunities
+        );
+      }
     }
   }
 
