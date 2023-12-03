@@ -79,12 +79,23 @@ export class Output extends HTMLElement {
     const outputWrapper = root.querySelector("#output-wrapper")!;
     await Promise.all(
       Object.entries(schema.properties).map(async ([key, property]) => {
-        if (property.type === "object" && property.format === "stream") {
-          await this.appendStream(
-            property,
-            (values[key] as StreamCapabilityType).stream
-          );
-          return;
+        if (property.type === "object") {
+          if (property.format === "stream") {
+            await this.appendStream(
+              property,
+              (values[key] as StreamCapabilityType).stream
+            );
+            return;
+          } else {
+            const response = document.createElement("pre");
+            response.innerHTML = `${property.title}: ${JSON.stringify(
+              values[key],
+              null,
+              2
+            )}`;
+            outputWrapper.appendChild(response);
+            return;
+          }
         }
         const response = document.createElement("pre");
         response.innerHTML = `${property.title}: ${values[key]}`;
