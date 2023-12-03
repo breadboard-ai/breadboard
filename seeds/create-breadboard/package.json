@@ -8,7 +8,7 @@
   },
   "type": "module",
   "scripts": {
-    "copy-assets": "FORCE_COLOR=1 cp -r assets dist",
+    "copy-assets": "FORCE_COLOR=1 rm -rf dist/assets/* && cp -r assets dist",
     "build": "FORCE_COLOR=1 tsc --b && npm run copy-assets",
     "watch": "FORCE_COLOR=1 tsc --b --watch",
     "lint": "FORCE_COLOR=1 eslint . --ext .ts"

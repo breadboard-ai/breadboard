@@ -39,7 +39,7 @@ const generateAssetList = (dir: string, base: string): Asset[] => {
 
 const { name } = create({
   // optional deps to install
-  dependencies: ["@google-labs/breadboard", "@google-labs/llm-starter", "@google-labs/core-kit"], // We can only include deps that have been published.
+  dependencies: ["@google-labs/breadboard", "@google-labs/breadboard-ui", "@google-labs/llm-starter", "@google-labs/core-kit"], // We can only include deps that have been published.
   // optional dev deps to install
   devDependencies: [
     "@esbuild-plugins/node-globals-polyfill",
