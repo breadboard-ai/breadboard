@@ -1,0 +1,73 @@
+{
+  "title": "Healer",
+  "description": "Try to heal broken text by generating new text that fixes the erros supplied by the validator",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "parameters",
+      "to": "outputSuccess",
+      "out": "*"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "parameters",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Text to Heal",
+              "format": "multiline",
+              "description": "The text to heal, if necessary",
+              "default": "{\n  first_answer: \"to live\",\n  \"assumptions\": [\n      \"life is meaningful\",\n      \"there is a single meaning to life\",\n      \"the meaning of life is inherent to life itself\"\n  ],\n  \"critique\": [\n      \"life may not be meaningful\",\n      \"there may be multiple meanings to life\",\n      \"the meaning of life may be extrinsic to life itself\"\n  ],\n  \"response\": \"the meaning of life is a complex question with no easy answer\"\n}"
+            },
+            "generator": {
+              "type": "board",
+              "title": "Text Generator",
+              "description": "The text generator to use for healing.",
+              "default": "/graphs/text-generator.json"
+            },
+            "validator": {
+              "type": "board",
+              "title": "Text Validator",
+              "description": "The text validator to use for healing.",
+              "default": "/graphs/json-validator.json"
+            }
+          },
+          "required": [
+            "text",
+            "gnerator",
+            "validator"
+          ]
+        }
+      }
+    },
+    {
+      "id": "outputSuccess",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Healed Text",
+              "description": "The healed text"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "kits": [
+    {
+      "url": "npm:@google-labs/llm-starter"
+    },
+    {
+      "url": "npm:@google-labs/core-kit"
+    }
+  ]
+}

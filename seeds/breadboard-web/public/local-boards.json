@@ -4,6 +4,10 @@
     "url": "/graphs/accumulating-context.json"
   },
   {
+    "title": "Healer",
+    "url": "/graphs/healer.json"
+  },
+  {
     "title": "JSON Generator",
     "url": "/graphs/json-generator.json"
   },
