@@ -123,9 +123,14 @@ export class WorkerRuntime {
       }
       this.#controller.inform<EndMessage>({}, "end");
     } catch (e) {
-      const error = e as Error;
-      console.error(error);
-      this.#controller.inform<ErrorMessage>({ error: error.message }, "error");
+      let error = e as Error;
+      let message = "";
+      while (error?.cause) {
+        error = (error.cause as { error: Error }).error;
+        message += `\n${error.message}`;
+      }
+      console.error("Error in worker", error);
+      this.#controller.inform<ErrorMessage>({ error: message }, "error");
     }
   }
 }
