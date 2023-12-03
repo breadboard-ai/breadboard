@@ -141,7 +141,8 @@
             "generator": {
               "type": "board",
               "title": "Text Generator",
-              "description": "The underlying text generator to use."
+              "description": "The underlying text generator to use.",
+              "default": "/graphs/text-generator.json"
             },
             "template": {
               "type": "text",
