@@ -68,6 +68,9 @@
     },
     {
       "path": "seeds/json-kit"
+    },
+    {
+      "path": "seeds/breadboard-ui"
     }
   ],
   "settings": {}
