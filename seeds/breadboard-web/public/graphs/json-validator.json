@@ -1,0 +1,118 @@
+{
+  "title": "JSON Validator",
+  "description": "A very simple example of a validator board: it validates JSON against a schema. All validators share the same shape: `text` in, `text` out (if valid) or `error` out (if invalid).",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "parameters",
+      "to": "validateJson-1",
+      "out": "text",
+      "in": "json"
+    },
+    {
+      "from": "parameters",
+      "to": "validateJson-1",
+      "out": "schema",
+      "in": "schema"
+    },
+    {
+      "from": "validateJson-1",
+      "to": "outputSuccess",
+      "out": "json",
+      "in": "text"
+    },
+    {
+      "from": "validateJson-1",
+      "to": "prettifyError",
+      "out": "$error",
+      "in": "json"
+    },
+    {
+      "from": "prettifyError",
+      "to": "outputFailure",
+      "out": "result",
+      "in": "error"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "parameters",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "JSON",
+              "format": "multiline",
+              "description": "The JSON to validate",
+              "default": "{\n  first_answer: \"to live\",\n  \"assumptions\": [\n      \"life is meaningful\",\n      \"there is a single meaning to life\",\n      \"the meaning of life is inherent to life itself\"\n  ],\n  \"critique\": [\n      \"life may not be meaningful\",\n      \"there may be multiple meanings to life\",\n      \"the meaning of life may be extrinsic to life itself\"\n  ],\n  \"response\": \"the meaning of life is a complex question with no easy answer\"\n}"
+            },
+            "schema": {
+              "type": "object",
+              "title": "Schema",
+              "format": "multiline",
+              "description": "The schema of the JSON to be generated",
+              "default": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"first_answer\": {\n      \"type\": \"string\",\n      \"description\": \"a first attempt at the answer to the question\"\n    },\n    \"assumptions\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"description\": \"one or more assumptions made when making the response above\",\n        \"type\": \"string\"\n      }\n    },\n    \"critique\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"description\": \"how might these assumptions be wrong?\",\n        \"type\": \"string\"\n      }\n    },\n    \"response\": {\n      \"type\": \"string\",\n      \"description\": \"the final response made synthesizing first_answer, assumptions, and critique\"\n    }\n  }\n}"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
+    },
+    {
+      "id": "validateJson-1",
+      "type": "validateJson"
+    },
+    {
+      "id": "outputSuccess",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "object",
+              "title": "JSON",
+              "description": "The validated JSON"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "prettifyError",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "error.type & \" error: \" & error.message"
+      }
+    },
+    {
+      "id": "outputFailure",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "error": {
+              "type": "object",
+              "title": "Errors",
+              "description": "The validator errors that occurred"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "kits": [
+    {
+      "url": "npm:@google-labs/llm-starter"
+    },
+    {
+      "url": "npm:@google-labs/json-kit"
+    }
+  ]
+}

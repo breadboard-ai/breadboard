@@ -12,6 +12,10 @@
     "url": "/graphs/json-generator.json"
   },
   {
+    "title": "JSON Validator",
+    "url": "/graphs/json-validator.json"
+  },
+  {
     "title": "List Google Drive files",
     "url": "/graphs/list-files.json"
   },
