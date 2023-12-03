@@ -167,34 +167,22 @@ test("createErrorMessage makes sensible messages", (t) => {
   );
   t.deepEqual(createErrorMessage("foo", {}, false), 'Missing input "foo".');
   t.deepEqual(
-    createErrorMessage(
-      "foo",
-      { board: { title: "Foo", url: "url goes here" } as BreadboardRunner },
-      true
-    ),
+    createErrorMessage("foo", { title: "Foo", url: "url goes here" }, true),
     'Missing required input "foo" for board "Foo".'
   );
   t.deepEqual(
-    createErrorMessage(
-      "foo",
-      { board: { url: "url goes here" } as BreadboardRunner },
-      true
-    ),
+    createErrorMessage("foo", { url: "url goes here" }, true),
     'Missing required input "foo" for board "url goes here".'
   );
   t.deepEqual(
-    createErrorMessage(
-      "foo",
-      { board: { url: "url goes here" } as BreadboardRunner },
-      false
-    ),
+    createErrorMessage("foo", { url: "url goes here" }, false),
     'Missing input "foo" for board "url goes here".'
   );
 });
 
 test("createBubbleHandler works as expected", async (t) => {
   {
-    const handler = createBubbleHandler({});
+    const handler = createBubbleHandler({}, {});
     await t.throwsAsync(
       handler("foo", { type: "string" }, true),
       undefined,
@@ -211,9 +199,12 @@ test("createBubbleHandler works as expected", async (t) => {
     );
   }
   {
-    const handler = createBubbleHandler({
-      board: { title: "Foo" } as BreadboardRunner,
-    });
+    const handler = createBubbleHandler(
+      {},
+      {
+        board: { title: "Foo" } as BreadboardRunner,
+      }
+    );
     await t.throwsAsync(
       handler("foo", { type: "string" }, true),
       undefined,
@@ -221,7 +212,7 @@ test("createBubbleHandler works as expected", async (t) => {
     );
   }
   {
-    const handler = createBubbleHandler({
+    const handler = createBubbleHandler({}, {
       requestInput: async () => "bar",
     } satisfies NodeHandlerContext);
     t.deepEqual(await handler("foo", { type: "string" }, false), "bar");

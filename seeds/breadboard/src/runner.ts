@@ -149,7 +149,7 @@ export class BoardRunner implements BreadboardRunner {
               outputs: await result.outputsPromise,
             })
           );
-          await bubbleUpInputsIfNeeded(context, inputs, result);
+          await bubbleUpInputsIfNeeded(this, context, result);
           continue;
         }
 

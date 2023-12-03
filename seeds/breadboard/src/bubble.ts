@@ -6,6 +6,7 @@
 
 import { InputStageResult, RunResult } from "./run.js";
 import {
+  GraphMetadata,
   InputValues,
   NodeHandlerContext,
   NodeValue,
@@ -16,10 +17,10 @@ import {
 
 export const createErrorMessage = (
   inputName: string,
-  context: NodeHandlerContext,
+  metadata: GraphMetadata = {},
   required: boolean
 ): string => {
-  const boardTitle = context.board?.title ?? context.board?.url;
+  const boardTitle = metadata.title ?? metadata?.url;
   const requiredText = required ? "required " : "";
   return `Missing ${requiredText}input "${inputName}"${
     boardTitle ? ` for board "${boardTitle}".` : "."
@@ -27,8 +28,8 @@ export const createErrorMessage = (
 };
 
 export const bubbleUpInputsIfNeeded = async (
+  metadata: GraphMetadata,
   context: NodeHandlerContext,
-  inputs: InputValues,
   result: TraversalResult
 ): Promise<void> => {
   // If we have no way to bubble up inputs, we just return and not
@@ -36,21 +37,24 @@ export const bubbleUpInputsIfNeeded = async (
   if (!context.requestInput) return;
 
   const outputs = (await result.outputsPromise) ?? {};
-  const reader = new InputSchemaReader(outputs, inputs);
-  result.outputsPromise = reader.read(createBubbleHandler(context));
+  const reader = new InputSchemaReader(outputs, result.inputs);
+  result.outputsPromise = reader.read(createBubbleHandler(metadata, context));
 };
 
-export const createBubbleHandler = (context: NodeHandlerContext) => {
+export const createBubbleHandler = (
+  metadata: GraphMetadata,
+  context: NodeHandlerContext
+) => {
   return (async (name, schema, required) => {
     if (required) {
-      throw new Error(createErrorMessage(name, context, required));
+      throw new Error(createErrorMessage(name, metadata, required));
     }
     const value = await context.requestInput?.(name, schema);
     if (value === undefined) {
       if (schema.default !== undefined) {
         return schema.default;
       }
-      throw new Error(createErrorMessage(name, context, required));
+      throw new Error(createErrorMessage(name, metadata, required));
     }
     return value;
   }) satisfies InputSchemaHandler;
