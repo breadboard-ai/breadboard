@@ -14,7 +14,7 @@ const board = new Board({
     "Try to heal broken text by generating new text that fixes the erros supplied by the validator",
   version: "0.0.1",
 });
-const kit = board.addKit(Starter);
+const starter = board.addKit(Starter);
 const core = board.addKit(Core);
 
 const brokenJSON = `{
@@ -61,20 +61,72 @@ const parameters = board.input({
   } satisfies Schema,
 });
 
-const success = board.output({
-  $id: "outputSuccess",
+const validate = core
+  .invoke({
+    $id: "validate",
+  })
+  .wire("path<-validator", parameters)
+  .wire("<-text", parameters);
+
+const generate = core
+  .invoke({
+    $id: "generate",
+  })
+  .wire("path<-generator", parameters)
+  .wire("<-text", parameters)
+  .wire(
+    "<-useStreaming",
+    core.passthrough({ $id: "dontUseStreaming", useStreaming: false })
+  );
+
+starter
+  .promptTemplate({
+    $id: "retryTemplate",
+    template: `You are a validation error fixer. Your job is to examine the input provided and the validation errors it currently contains. Notice the format of the input produce a fix that matches the format and contains minimal modifications to input to fixes the validation error. Do not change the content of the input, only the validation errors."
+INPUT:
+
+{{text}}
+
+The validation errors are:
+
+ERRORS:
+{{error}}
+
+FIX:`,
+  })
+  .wire("<-error", validate)
+  .wire("<-text", parameters)
+  .wire("text->", generate);
+
+board
+  .output({
+    $id: "outputSuccess",
+    schema: {
+      type: "object",
+      properties: {
+        text: {
+          type: "string",
+          title: "Healed Text",
+          description: "The healed text",
+        },
+      },
+    } satisfies Schema,
+  })
+  .wire("<-text", generate)
+  .wire("<-text", validate);
+
+board.output({
+  $id: "outputError",
   schema: {
     type: "object",
     properties: {
-      text: {
-        type: "string",
-        title: "Healed Text",
-        description: "The healed text",
+      error: {
+        type: "object",
+        title: "Error",
+        description: "Error reported as a failure to heal",
       },
     },
-  } satisfies Schema,
+  },
 });
-
-parameters.wire("*", success);
 
 export default board;

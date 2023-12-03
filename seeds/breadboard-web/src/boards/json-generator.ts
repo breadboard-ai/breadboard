@@ -47,6 +47,8 @@ const sampleSchema = {
         "the final response made synthesizing first_answer, assumptions, and critique",
     },
   },
+  required: ["first_answer", "assumptions", "critique", "response"],
+  additionalProperties: false,
 } satisfies Schema;
 
 const parameters = board.input({
