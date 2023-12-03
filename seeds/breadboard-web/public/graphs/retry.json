@@ -7,8 +7,14 @@
       "from": "parameters",
       "to": "generatorCaller",
       "constant": true,
-      "out": "board",
+      "out": "generator",
       "in": "path"
+    },
+    {
+      "from": "dontUseStreaming",
+      "to": "generatorCaller",
+      "out": "useStreaming",
+      "in": "useStreaming"
     },
     {
       "from": "parameters",
@@ -101,7 +107,7 @@
               "description": "The number of tries to attempt to fix the problem",
               "default": "5"
             },
-            "board": {
+            "generator": {
               "type": "board",
               "title": "Board",
               "description": "The board to retry.",
@@ -110,7 +116,8 @@
           },
           "required": [
             "text",
-            "board"
+            "gnerator",
+            "validator"
           ]
         }
       }
@@ -145,6 +152,13 @@
     {
       "id": "generatorCaller",
       "type": "invoke"
+    },
+    {
+      "id": "dontUseStreaming",
+      "type": "passthrough",
+      "configuration": {
+        "useStreaming": false
+      }
     },
     {
       "id": "countdown",

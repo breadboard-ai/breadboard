@@ -33,14 +33,14 @@ const parameters = retry.input({
         description: "The number of tries to attempt to fix the problem",
         default: "5",
       },
-      board: {
+      generator: {
         type: "board",
         title: "Board",
         description: "The board to retry.",
         default: "/graphs/text-generator.json",
       },
     },
-    required: ["text", "board"],
+    required: ["text", "gnerator", "validator"],
   } satisfies Schema,
 });
 
@@ -66,7 +66,10 @@ const outputError = retry.output({
 });
 
 const generatorCaller = core.invoke({ $id: "generatorCaller" });
-parameters.wire("board->path.", generatorCaller);
+parameters.wire("generator->path.", generatorCaller);
+core
+  .passthrough({ $id: "dontUseStreaming", useStreaming: false })
+  .wire("useStreaming->", generatorCaller);
 
 const countdown = kit.jsonata({
   expression: '{ "tries": tries - 1, (tries > 0 ? "data" : "done") : data }',
