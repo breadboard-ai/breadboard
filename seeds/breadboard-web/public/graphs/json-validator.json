@@ -22,13 +22,49 @@
       "in": "text"
     },
     {
+      "from": "parameters",
+      "to": "formatValidationError",
+      "out": "schema",
+      "in": "schema"
+    },
+    {
       "from": "validateJson-1",
-      "to": "prettifyError",
+      "to": "formatValidationError",
+      "out": "$error",
+      "in": "$error"
+    },
+    {
+      "from": "validateJson-1",
+      "to": "formatParsingError",
+      "out": "$error",
+      "in": "$error"
+    },
+    {
+      "from": "validateJson-1",
+      "to": "parseErrorType",
       "out": "$error",
       "in": "json"
     },
     {
-      "from": "prettifyError",
+      "from": "parseErrorType",
+      "to": "formatValidationError",
+      "out": "validation",
+      "in": "validation"
+    },
+    {
+      "from": "parseErrorType",
+      "to": "formatParsingError",
+      "out": "parsing",
+      "in": "parsing"
+    },
+    {
+      "from": "formatValidationError",
+      "to": "outputFailure",
+      "out": "result",
+      "in": "error"
+    },
+    {
+      "from": "formatParsingError",
       "to": "outputFailure",
       "out": "result",
       "in": "error"
@@ -47,7 +83,7 @@
               "title": "JSON",
               "format": "multiline",
               "description": "The JSON to validate",
-              "default": "{\n  first_answer: \"to live\",\n  \"assumptions\": [\n      \"life is meaningful\",\n      \"there is a single meaning to life\",\n      \"the meaning of life is inherent to life itself\"\n  ],\n  \"critique\": [\n      \"life may not be meaningful\",\n      \"there may be multiple meanings to life\",\n      \"the meaning of life may be extrinsic to life itself\"\n  ],\n  \"response\": \"the meaning of life is a complex question with no easy answer\"\n}"
+              "default": "{\n  \"first_answer\": \"to live\",\n  \"guesses\": [\n      \"life is meaningful\",\n      \"there is a single meaning to life\",\n      \"the meaning of life is inherent to life itself\"\n  ],\n  \"critique\": [\n      \"life may not be meaningful\",\n      \"there may be multiple meanings to life\",\n      \"the meaning of life may be extrinsic to life itself\"\n  ],\n  \"response\": \"the meaning of life is a complex question with no easy answer\"\n}"
             },
             "schema": {
               "type": "object",
@@ -84,10 +120,25 @@
       }
     },
     {
-      "id": "prettifyError",
+      "id": "formatValidationError",
       "type": "jsonata",
       "configuration": {
-        "expression": "error.type & \" error: \" & error.message"
+        "expression": "\"JSON Validation Error: \" & `$error`.error.message & \"\nWhen validaing against this schema:\n\n\" & $string(schema, true)"
+      }
+    },
+    {
+      "id": "formatParsingError",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "\"JSON Parsing Error: \" & `$error`.error.message"
+      }
+    },
+    {
+      "id": "parseErrorType",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "{ error.type: true }",
+        "raw": true
       }
     },
     {

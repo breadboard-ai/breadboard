@@ -18,8 +18,8 @@ const starter = board.addKit(Starter);
 const json = board.addKit(JSONKit);
 
 const brokenJSON = `{
-  first_answer: "to live",
-  "assumptions": [
+  "first_answer": "to live",
+  "guesses": [
       "life is meaningful",
       "there is a single meaning to life",
       "the meaning of life is inherent to life itself"
@@ -109,12 +109,40 @@ board
   })
   .wire("text<-json", validator);
 
-const prettifyError = starter
+const formatValidationError = starter
   .jsonata({
-    $id: "prettifyError",
-    expression: `error.type & " error: " & error.message`,
+    $id: "formatValidationError",
+    expression: `"JSON Validation Error: " & \`$error\`.error.message & "
+When validaing against this schema:
+
+" & $string(schema, true)`,
   })
-  .wire("json<-$error", validator);
+  .wire("<-schema", parameters)
+  .wire("<-$error", validator);
+
+const formatParsingError = starter
+  .jsonata({
+    $id: "formatParsingError",
+    expression: `"JSON Parsing Error: " & \`$error\`.error.message`,
+  })
+  .wire("<-$error", validator);
+
+starter
+  .jsonata({
+    $id: "parseErrorType",
+    expression: `{ error.type: true }`,
+    raw: true,
+  })
+  .wire("json<-$error", validator)
+  .wire("validation->", formatValidationError)
+  .wire("parsing->", formatParsingError);
+
+// starter
+//   .jsonata({
+//     $id: "prettifyError",
+//     expression: `error.type & " error: " & error.message`,
+//   })
+//   .wire("json<-$error", validator);
 
 board
   .output({
@@ -130,6 +158,7 @@ board
       },
     } satisfies Schema,
   })
-  .wire("error<-result", prettifyError);
+  .wire("error<-result", formatValidationError)
+  .wire("error<-result", formatParsingError);
 
 export default board;

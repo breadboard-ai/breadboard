@@ -73,7 +73,6 @@ const generate = core
     $id: "generate",
   })
   .wire("path<-generator", parameters)
-  .wire("<-text", parameters)
   .wire(
     "<-useStreaming",
     core.passthrough({ $id: "dontUseStreaming", useStreaming: false })
@@ -82,7 +81,8 @@ const generate = core
 starter
   .promptTemplate({
     $id: "retryTemplate",
-    template: `You are a validation error fixer. Your job is to examine the input provided and the validation errors it currently contains. Notice the format of the input produce a fix that matches the format and contains minimal modifications to input to fixes the validation error. Do not change the content of the input, only the validation errors."
+    template: `You are a validation error fixer. Your job is to examine the INPUT provided and the ERRORS it currently contains. You notice the format of the input and supply a FIX that matches the format and contains minimal modifications to input to correct the validation errors. You do not change the content of the input, only the validation errors.
+
 INPUT:
 
 {{text}}
@@ -96,7 +96,7 @@ FIX:`,
   })
   .wire("<-error", validate)
   .wire("<-text", parameters)
-  .wire("text->", generate);
+  .wire("prompt->text", generate);
 
 board
   .output({
