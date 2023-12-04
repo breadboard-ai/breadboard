@@ -98,8 +98,13 @@ export class MainThreadRuntime implements Runtime {
       }
       yield new MainThreadRunResult({ type: "end", data: {} });
     } catch (e) {
-      const error = e as Error;
-      console.error(error);
+      let error = e as Error;
+      let message = "";
+      while (error?.cause) {
+        error = (error.cause as { error: Error }).error;
+        message += `\n${error.message}`;
+      }
+      console.error(message, error);
       yield new MainThreadRunResult({ type: "error", data: { error } });
     }
   }
