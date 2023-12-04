@@ -137,13 +137,6 @@ starter
   .wire("validation->", formatValidationError)
   .wire("parsing->", formatParsingError);
 
-// starter
-//   .jsonata({
-//     $id: "prettifyError",
-//     expression: `error.type & " error: " & error.message`,
-//   })
-//   .wire("json<-$error", validator);
-
 board
   .output({
     $id: "outputFailure",

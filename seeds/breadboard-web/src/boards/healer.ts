@@ -11,7 +11,7 @@ import { Starter } from "@google-labs/llm-starter";
 const board = new Board({
   title: "Healer",
   description:
-    "Try to heal broken text by generating new text that fixes the erros supplied by the validator",
+    "Try to heal broken text by generating new text that fixes the errors supplied by the validator",
   version: "0.0.1",
 });
 const starter = board.addKit(Starter);
@@ -19,7 +19,7 @@ const core = board.addKit(Core);
 
 const brokenJSON = `{
   first_answer: "to live",
-  "assumptions": [
+  "assumptionss": [
       "life is meaningful",
       "there is a single meaning to life",
       "the meaning of life is inherent to life itself"
@@ -56,6 +56,12 @@ const parameters = board.input({
         description: "The text validator to use for healing.",
         default: "/graphs/json-validator.json",
       },
+      tries: {
+        type: "number",
+        title: "Tries",
+        description: "The number of tries to attempt to fix the problem",
+        default: "5",
+      },
     },
     required: ["text", "gnerator", "validator"],
   } satisfies Schema,
@@ -65,23 +71,60 @@ const validate = core
   .invoke({
     $id: "validate",
   })
-  .wire("path<-validator", parameters)
+  .wire("path<-validator.", parameters)
   .wire("<-text", parameters);
 
 const generate = core
   .invoke({
     $id: "generate",
   })
-  .wire("path<-generator", parameters)
+  .wire("path<-generator.", parameters)
   .wire(
-    "<-useStreaming",
+    "<-useStreaming.",
     core.passthrough({ $id: "dontUseStreaming", useStreaming: false })
   );
 
-starter
-  .promptTemplate({
-    $id: "retryTemplate",
-    template: `You are a validation error fixer. Your job is to examine the INPUT provided and the ERRORS it currently contains. You notice the format of the input and supply a FIX that matches the format and contains minimal modifications to input to correct the validation errors. You do not change the content of the input, only the validation errors.
+// This node signifies the beginning of the cycle of healing.
+// The cycle begins after validation fails.
+const startCycle = core.passthrough({ $id: "startCycle" });
+
+// Let's start by moving all parameters to the beginning of the cycle.
+validate.wire("error->", startCycle);
+
+// Reports whether or not the cycle is the first time through.
+const isFirstTime = starter.jsonata({
+  $id: "first",
+  expression: `{
+    "error": error,
+    "count": count + 1, 
+    "tries": tries,
+    (count = 0 ? 
+        "first" : 
+        count > 0 and count < tries ?
+            "again" : 
+            "done"): true
+}`,
+  count: 0,
+  raw: true,
+});
+isFirstTime.wire("count->", isFirstTime);
+parameters.wire("tries->.", isFirstTime);
+
+// This node is the preamble for the first time through the cycle.
+const firstTimePremble = core.passthrough({
+  $id: "firstTimePremble",
+  preamble: `You are a validation error fixer bot. Your job is to examine the INPUT provided and the ERRORS it currently contains. You notice the format of the input and supply a FIX that matches the format and contains minimal modifications to input to correct the validation errors. You do not change the content of the input, only the validation errors.`,
+});
+
+const otherTimePremble = core.passthrough({
+  $id: "otherTimePremble",
+  preamble: `Nice job, validation error fixer bot! However, you didn't get it quite right `,
+});
+
+const tryTemplate = starter.promptTemplate({
+  $id: "tryTemplate",
+  template: `
+{{preamble}}
 
 INPUT:
 
@@ -93,10 +136,21 @@ ERRORS:
 {{error}}
 
 FIX:`,
-  })
-  .wire("<-error", validate)
+});
+
+startCycle.wire("error->", isFirstTime);
+isFirstTime.wire("first->", firstTimePremble);
+isFirstTime.wire("again->", otherTimePremble);
+firstTimePremble.wire("preamble->", tryTemplate);
+otherTimePremble.wire("preamble->", tryTemplate);
+
+tryTemplate
   .wire("<-text", parameters)
+  .wire("<-text", generate)
+  .wire("<-error", validate)
   .wire("prompt->text", generate);
+
+generate.wire("text->", validate);
 
 board
   .output({
@@ -105,14 +159,13 @@ board
       type: "object",
       properties: {
         text: {
-          type: "string",
+          type: "object",
           title: "Healed Text",
           description: "The healed text",
         },
       },
     } satisfies Schema,
   })
-  .wire("<-text", generate)
   .wire("<-text", validate);
 
 board.output({
