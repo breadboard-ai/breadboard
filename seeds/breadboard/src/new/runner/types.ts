@@ -87,7 +87,7 @@ export abstract class AbstractNode<
 
   abstract getInputs(): I;
 
-  abstract invoke(invokingScope?: ScopeInterface): Promise<O>;
+  abstract invoke(dynamicScope?: ScopeInterface): Promise<O>;
 
   abstract serialize(metadata?: GraphMetadata): Promise<GraphDescriptor>;
 
@@ -118,8 +118,8 @@ export interface InvokeCallbacks {
 }
 
 export interface ScopeConfig {
-  declaringScope?: ScopeInterface;
-  invokingScope?: ScopeInterface;
+  lexicalScope?: ScopeInterface;
+  dynamicScope?: ScopeInterface;
 }
 
 export interface ScopeInterface {

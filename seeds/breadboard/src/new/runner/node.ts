@@ -185,10 +185,10 @@ export class BaseNode<
   //
   // The logic from BuilderNode.invoke should be somehow called from here, for
   // deserialized nodes that require the Builder environment.
-  async invoke(invokingScope?: Scope): Promise<O> {
+  async invoke(dynamicScope?: Scope): Promise<O> {
     const scope = new Scope({
-      invokingScope,
-      declaringScope: this.#scope,
+      dynamicScope,
+      lexicalScope: this.#scope,
     });
     const handler = this.#getHandlerFunction(scope);
 

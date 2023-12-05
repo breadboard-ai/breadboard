@@ -166,10 +166,10 @@ export class BuilderNode<
   // TODO:BASE: In the end, we need to capture the outputs and resolve the
   // promise. But before that there is a bit of refactoring to do to allow
   // returning of graphs, parallel execution, etc.
-  async invoke(invokingScope?: ScopeInterface): Promise<O> {
+  async invoke(dynamicScope?: ScopeInterface): Promise<O> {
     const scope = new BuilderScope({
-      invokingScope,
-      declaringScope: this.#scope,
+      dynamicScope,
+      lexicalScope: this.#scope,
     });
     return scope.asScopeFor(async () => {
       try {
@@ -240,7 +240,7 @@ export class BuilderNode<
     if (this.type !== "fn") return super.serializeNode();
 
     const scope = new BuilderScope({
-      declaringScope: this.#scope,
+      lexicalScope: this.#scope,
       serialize: true,
     });
 

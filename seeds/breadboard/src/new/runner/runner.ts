@@ -124,7 +124,7 @@ export class Runner implements BreadboardRunner {
     if (!this.#anyNode)
       throw new Error("Can't run board without any nodes in it");
 
-    const scope = new Scope({ declaringScope: this.#scope });
+    const scope = new Scope({ lexicalScope: this.#scope });
 
     let streamController: ReadableStreamDefaultController<BreadboardRunResult>;
     const stream = new ReadableStream<BreadboardRunResult>({
@@ -242,7 +242,7 @@ export class Runner implements BreadboardRunner {
 
     const args = { ...inputs, ...this.args };
 
-    const scope = new Scope({ declaringScope: this.#scope });
+    const scope = new Scope({ lexicalScope: this.#scope });
 
     context?.kits?.forEach((kit) => scope.addHandlers(handlersFromKit(kit)));
 

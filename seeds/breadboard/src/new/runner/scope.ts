@@ -22,14 +22,14 @@ import {
 } from "./types.js";
 
 export class Scope implements ScopeInterface {
-  #declaringScope?: ScopeInterface;
-  #invokingScope?: ScopeInterface;
+  #lexicalScope?: ScopeInterface;
+  #dynamicScope?: ScopeInterface;
 
   #handlers: NodeHandlers = {};
 
   constructor(config: ScopeConfig = {}) {
-    this.#declaringScope = config.declaringScope;
-    this.#invokingScope = config.invokingScope;
+    this.#lexicalScope = config.lexicalScope;
+    this.#dynamicScope = config.dynamicScope;
   }
 
   addHandlers(handlers: NodeHandlers) {
@@ -43,8 +43,8 @@ export class Scope implements ScopeInterface {
     O extends OutputValues = OutputValues
   >(name: string): NodeHandler<I, O> | undefined {
     return (this.#handlers[name] ||
-      this.#invokingScope?.getHandler(name) ||
-      this.#declaringScope?.getHandler(name)) as unknown as NodeHandler<I, O>;
+      this.#dynamicScope?.getHandler(name) ||
+      this.#lexicalScope?.getHandler(name)) as unknown as NodeHandler<I, O>;
   }
 
   async invoke(node: AbstractNode, callbacks: InvokeCallbacks[] = []) {
