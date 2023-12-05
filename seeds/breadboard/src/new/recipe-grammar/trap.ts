@@ -39,7 +39,7 @@ export class TrapResult<I extends InputValues, O extends OutputValues> {
     return new Proxy(this, {
       get: (target, prop) => {
         // `then` because await checks whether this is a thenable (it should
-        // fail). NOTE: Code that uses as an output wire called `await` will now
+        // fail). NOTE: Code that uses as an output wire called `then` will now
         // not trigger the trap. That's why there is a then symbol: Increasing
         // the chances that we get some weird error anyway. TODO: Improve.
         if (typeof prop === "symbol" || prop === "then")
@@ -54,7 +54,7 @@ export class TrapResult<I extends InputValues, O extends OutputValues> {
   // Use this instead of `instanceof`.
   static isTrapResult<I extends InputValues, O extends OutputValues>(
     trapResult: TrapResult<I, O>
-  ) {
+  ): trapResult is TrapResult<I, O> {
     return trapResult[trapResultSymbol] !== undefined;
   }
 
