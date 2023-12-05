@@ -108,9 +108,6 @@ export class Load extends HTMLElement {
           }
 
           dl {
-            display: grid;
-            grid-template-columns: 35fr 60fr;
-            column-gap: calc(var(--bb-grid-size) * 5);
             font-size: var(--bb-text-medium);
           }
 
@@ -165,6 +162,8 @@ export class Load extends HTMLElement {
 
         #mermaid {
           line-height: 1;
+          width: 100%;
+          max-width: 40vw;
         }
 
         #mermaid:empty::before {
