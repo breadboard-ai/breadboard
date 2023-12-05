@@ -57,13 +57,13 @@ export function recipe<
  *
  * @param options Object with at least `input`, `output` and `invoke` set
  */
-export function recipe<I extends InputValues, O extends OutputValues>(options: {
-  input: z.ZodType<I>;
-  output: z.ZodType<O>;
-  invoke: NodeProxyHandlerFunction<I, O>;
+export function recipe<IT extends z.ZodType, OT extends z.ZodType>(options: {
+  input: IT;
+  output: OT;
+  invoke: NodeProxyHandlerFunction<z.infer<IT>, z.infer<OT>>;
   describe?: NodeDescriberFunction;
   name?: string;
-}): NodeFactory<I, Required<O>> & Serializeable;
+}): NodeFactory<z.infer<IT>, Required<z.infer<OT>>> & Serializeable;
 
 /**
  * Same as above, but takes handler as a second parameter instead of as invoke
@@ -72,41 +72,41 @@ export function recipe<I extends InputValues, O extends OutputValues>(options: {
  * @param options `input` and `output` schemas
  * @param fn Handler function
  */
-export function recipe<I extends InputValues, O extends OutputValues>(
+export function recipe<IT extends z.ZodType, OT extends z.ZodType>(
   options: {
-    input: z.ZodType<I>;
-    output: z.ZodType<O>;
+    input: IT;
+    output: OT;
     describe?: NodeDescriberFunction;
     name?: string;
   },
-  fn?: NodeProxyHandlerFunction<I, O>
-): NodeFactory<I, Required<O>> & Serializeable;
+  fn?: NodeProxyHandlerFunction<z.infer<IT>, z.infer<OT>>
+): NodeFactory<z.infer<IT>, Required<z.infer<OT>>> & Serializeable;
 
 /**
  * Actual implementation of all the above
  */
-export function recipe<I extends InputValues, O extends OutputValues>(
+export function recipe<IT extends z.ZodType, OT extends z.ZodType>(
   optionsOrFn:
     | {
-        input: z.ZodType<I>;
-        output: z.ZodType<O>;
-        invoke?: NodeProxyHandlerFunction<I, O>;
+        input: IT;
+        output: OT;
+        invoke?: NodeProxyHandlerFunction<z.infer<IT>, z.infer<OT>>;
         describe?: NodeDescriberFunction;
         name?: string;
       }
-    | NodeProxyHandlerFunction<I, O>,
-  fn?: NodeProxyHandlerFunction<I, O>
-): NodeFactory<I, Required<O>> & Serializeable {
+    | NodeProxyHandlerFunction<z.infer<IT>, z.infer<OT>>,
+  fn?: NodeProxyHandlerFunction<z.infer<IT>, z.infer<OT>>
+): NodeFactory<z.infer<IT>, Required<z.infer<OT>>> & Serializeable {
   const options = typeof optionsOrFn === "function" ? undefined : optionsOrFn;
   if (!options) {
-    fn = optionsOrFn as NodeProxyHandlerFunction<I, O>;
+    fn = optionsOrFn as NodeProxyHandlerFunction<z.infer<IT>, z.infer<OT>>;
   } else {
     if (options.invoke) fn = options.invoke;
     if (!fn) throw new Error("Missing invoke function");
   }
 
-  const handler: NodeHandler<I, O> = {
-    invoke: fn as NodeHandlerFunction<I, O>,
+  const handler: NodeHandler<z.infer<IT>, z.infer<OT>> = {
+    invoke: fn as NodeHandlerFunction<z.infer<IT>, z.infer<OT>>,
   };
 
   if (options) {
@@ -120,10 +120,12 @@ export function recipe<I extends InputValues, O extends OutputValues>(
       });
   }
 
-  const factory: NodeFactory<I, Required<O>> & Serializeable = addNodeType(
-    options?.name,
-    handler
-  ) as NodeFactory<I, Required<O>> & Serializeable;
+  const factory: NodeFactory<z.infer<IT>, Required<z.infer<OT>>> &
+    Serializeable = addNodeType(options?.name, handler) as NodeFactory<
+    z.infer<IT>,
+    Required<z.infer<OT>>
+  > &
+    Serializeable;
 
   const declaringScope = getCurrentContextScope();
   factory.serialize = async (metadata?) => {

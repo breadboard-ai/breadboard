@@ -139,9 +139,13 @@ test("if-else, imperative execution", async (t) => {
         )) as { text: string };
 
       if (text?.startsWith("YES")) {
-        return { result: await math({ question: inputs.question }).result };
+        return {
+          result: (await math({ question: inputs.question }).result) ?? "",
+        };
       } else {
-        return { result: await search({ text: inputs.question }).text };
+        return {
+          result: (await search({ text: inputs.question }).text) ?? "",
+        };
       }
     }
   );
@@ -202,7 +206,9 @@ test.skip("if-else, serializable", async (t) => {
           },
           { math, search }
         )
-        .result.to(testKit.noop());
+        .result.to(testKit.noop()) as unknown as PromiseLike<{
+        result: string;
+      }>;
     }
   );
 

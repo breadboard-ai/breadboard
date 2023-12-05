@@ -13,7 +13,9 @@ import {
   AbstractNode,
 } from "../runner/types.js";
 
-export type NodeValue = BaseNodeValue | NodeFactory<InputValues, OutputValues>;
+export type NodeValue =
+  | BaseNodeValue
+  | NodeFactory<InputValues, OutputValuesOrUnknown>;
 export type InputValues = { [key: string]: NodeValue };
 export type OutputValues = { [key: string]: NodeValue };
 
@@ -51,7 +53,10 @@ export type ProjectBackToOutputValues<O extends OutputValuesOrUnknown> = {
   [K in keyof O]: O[K] extends NodeValue ? O[K] : NodeValue;
 };
 
-export type NodeFactory<I extends InputValues, O extends OutputValues> = (
+export type NodeFactory<
+  I extends InputValues,
+  O extends OutputValuesOrUnknown
+> = (
   config?:
     | AbstractNode<InputValues, I>
     | AbstractValue<NodeValue>
