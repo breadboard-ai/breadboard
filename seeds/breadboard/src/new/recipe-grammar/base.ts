@@ -7,7 +7,7 @@
 import { z } from "zod";
 import { Schema } from "../../types.js";
 
-import { InputsMaybeAsValues, NodeProxy, NodeValue } from "./types.js";
+import { InputsMaybeAsValues, NodeProxy } from "./types.js";
 import {
   InputValues,
   OutputValues,

@@ -4,6 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { z } from "zod";
+
+import { NodeDescriberFunction } from "../../types.js";
+
 import {
   NodeValue as BaseNodeValue,
   OutputValue,
@@ -11,6 +15,7 @@ import {
   NodeHandler,
   KeyMap,
   AbstractNode,
+  Serializeable,
 } from "../runner/types.js";
 
 export type NodeValue =
@@ -54,14 +59,68 @@ export type ProjectBackToOutputValues<O extends OutputValuesOrUnknown> = {
 };
 
 export type NodeFactory<
-  I extends InputValues,
-  O extends OutputValuesOrUnknown
+  I extends InputValues = InputValues,
+  O extends OutputValuesOrUnknown = OutputValuesOrUnknown
 > = (
   config?:
     | AbstractNode<InputValues, I>
     | AbstractValue<NodeValue>
     | InputsMaybeAsValues<I>
 ) => NodeProxy<I, O>;
+
+export type NodeProxyHandlerFunction<
+  I extends InputValues = InputValues,
+  O extends OutputValuesOrUnknown = OutputValuesOrUnknown
+> = (
+  inputs: PromiseLike<I> & I,
+  node: AbstractNode<I, ProjectBackToOutputValues<O>>
+) => O | PromiseLike<O> | OutputsMaybeAsValues<O>;
+
+export interface RecipeFactory {
+  /**
+   * Creates a node factory for a node type that invokes a handler function. This
+   * version infers the types from the function.
+   *
+   * The handler function can either return a graph (in which case it would be
+   * serialized to a graph), or returns the results of a computation, called at
+   * runtime and serialized as Javascript.
+   *
+   * @param fn Handler or graph creation function
+   */
+  <I extends InputValues = InputValues, O extends OutputValues = OutputValues>(
+    fn: NodeProxyHandlerFunction<I, O>
+  ): NodeFactory<I, Required<O>> & Serializeable;
+
+  /**
+   * Alternative version to above that infers the type of the passed in Zod type.
+   *
+   * @param options Object with at least `input`, `output` and `invoke` set
+   */
+  <IT extends z.ZodType, OT extends z.ZodType>(options: {
+    input: IT;
+    output: OT;
+    invoke: NodeProxyHandlerFunction<z.infer<IT>, z.infer<OT>>;
+    describe?: NodeDescriberFunction;
+    name?: string;
+  }): NodeFactory<z.infer<IT>, Required<z.infer<OT>>> & Serializeable;
+
+  /**
+   * Same as above, but takes handler as a second parameter instead of as invoke
+   * option. This looks a bit nicer in the code (less indentation).
+   *
+   * @param options `input` and `output` schemas
+   * @param fn Handler function
+   */
+  <IT extends z.ZodType, OT extends z.ZodType>(
+    options: {
+      input: IT;
+      output: OT;
+      describe?: NodeDescriberFunction;
+      name?: string;
+    },
+    fn?: NodeProxyHandlerFunction<z.infer<IT>, z.infer<OT>>
+  ): NodeFactory<z.infer<IT>, Required<z.infer<OT>>> & Serializeable;
+}
 
 export type NodeProxyMethods<I extends InputValues, O extends OutputValues> = {
   then<TResult1 = O, TResult2 = never>(

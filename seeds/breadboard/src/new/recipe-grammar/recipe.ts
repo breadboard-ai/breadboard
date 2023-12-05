@@ -14,6 +14,8 @@ import {
   ProjectBackToOutputValues,
   NodeFactory,
   OutputsMaybeAsValues,
+  RecipeFactory,
+  NodeProxyHandlerFunction,
 } from "./types.js";
 import {
   AbstractNode,
@@ -27,111 +29,59 @@ import { addNodeType } from "./kits.js";
 import { getCurrentContextScope } from "./default-scope.js";
 import { BuilderNode } from "./node.js";
 
-export type NodeProxyHandlerFunction<
-  I extends InputValues,
-  O extends OutputValuesOrUnknown
-> = (
-  inputs: PromiseLike<I> & I,
-  node: AbstractNode<I, ProjectBackToOutputValues<O>>
-) => O | PromiseLike<O> | OutputsMaybeAsValues<O>;
-
-/**
- * Creates a node factory for a node type that invokes a handler function. This
- * version infers the types from the function.
- *
- * The handler function can either return a graph (in which case it would be
- * serialized to a graph), or returns the results of a computation, called at
- * runtime and serialized as Javascript.
- *
- * @param fn Handler or graph creation function
- */
-export function recipe<
-  I extends InputValues = InputValues,
-  O extends OutputValues = OutputValues
->(
-  fn: NodeProxyHandlerFunction<I, O>
-): NodeFactory<I, Required<O>> & Serializeable;
-
-/**
- * Alternative version to above that infers the type of the passed in Zod type.
- *
- * @param options Object with at least `input`, `output` and `invoke` set
- */
-export function recipe<IT extends z.ZodType, OT extends z.ZodType>(options: {
-  input: IT;
-  output: OT;
-  invoke: NodeProxyHandlerFunction<z.infer<IT>, z.infer<OT>>;
-  describe?: NodeDescriberFunction;
-  name?: string;
-}): NodeFactory<z.infer<IT>, Required<z.infer<OT>>> & Serializeable;
-
-/**
- * Same as above, but takes handler as a second parameter instead of as invoke
- * option. This looks a bit nicer in the code (less indentation).
- *
- * @param options `input` and `output` schemas
- * @param fn Handler function
- */
-export function recipe<IT extends z.ZodType, OT extends z.ZodType>(
-  options: {
-    input: IT;
-    output: OT;
-    describe?: NodeDescriberFunction;
-    name?: string;
-  },
-  fn?: NodeProxyHandlerFunction<z.infer<IT>, z.infer<OT>>
-): NodeFactory<z.infer<IT>, Required<z.infer<OT>>> & Serializeable;
+function isZodSchema(object: z.ZodType | Schema): object is z.ZodType {
+  return typeof (object as z.ZodType)?.parse === "function";
+}
 
 /**
  * Actual implementation of all the above
  */
-export function recipe<IT extends z.ZodType, OT extends z.ZodType>(
+export const recipe: RecipeFactory = (
   optionsOrFn:
     | {
-        input: IT;
-        output: OT;
-        invoke?: NodeProxyHandlerFunction<z.infer<IT>, z.infer<OT>>;
+        input: z.ZodType | Schema;
+        output: z.ZodType | Schema;
+        invoke?: NodeProxyHandlerFunction;
         describe?: NodeDescriberFunction;
         name?: string;
       }
-    | NodeProxyHandlerFunction<z.infer<IT>, z.infer<OT>>,
-  fn?: NodeProxyHandlerFunction<z.infer<IT>, z.infer<OT>>
-): NodeFactory<z.infer<IT>, Required<z.infer<OT>>> & Serializeable {
+    | NodeProxyHandlerFunction,
+  fn?: NodeProxyHandlerFunction
+): NodeFactory & Serializeable => {
   const options = typeof optionsOrFn === "function" ? undefined : optionsOrFn;
   if (!options) {
-    fn = optionsOrFn as NodeProxyHandlerFunction<z.infer<IT>, z.infer<OT>>;
+    fn = optionsOrFn as NodeProxyHandlerFunction;
   } else {
     if (options.invoke) fn = options.invoke;
     if (!fn) throw new Error("Missing invoke function");
   }
 
-  const handler: NodeHandler<z.infer<IT>, z.infer<OT>> = {
-    invoke: fn as NodeHandlerFunction<z.infer<IT>, z.infer<OT>>,
+  const handler: NodeHandler = {
+    invoke: fn as NodeHandlerFunction<InputValues, OutputValues>,
   };
 
   if (options) {
+    const inputSchema = isZodSchema(options.input)
+      ? zodToSchema(options.input)
+      : options.input;
+    const outputSchema = isZodSchema(options.output)
+      ? zodToSchema(options.output)
+      : options.output;
     handler.describe =
       options.describe ??
       (async () => {
-        return {
-          inputSchema: zodToSchema(options.input) as Schema,
-          outputSchema: zodToSchema(options.output) as Schema,
-        };
+        return { inputSchema, outputSchema };
       });
   }
 
-  const factory: NodeFactory<z.infer<IT>, Required<z.infer<OT>>> &
-    Serializeable = addNodeType(options?.name, handler) as NodeFactory<
-    z.infer<IT>,
-    Required<z.infer<OT>>
-  > &
+  const factory = addNodeType(options?.name, handler) as NodeFactory &
     Serializeable;
 
-  const declaringScope = getCurrentContextScope();
+  const lexicalScope = getCurrentContextScope();
   factory.serialize = async (metadata?) => {
     // TODO: Schema isn't serialized right now
     // (as a function will be turned into a runJavascript node)
-    const node = new BuilderNode(handler, declaringScope);
+    const node = new BuilderNode(handler, lexicalScope);
     const [singleNode, graph] = await node.serializeNode();
     // If there is a subgraph that is invoked, just return that.
     if (graph) return { ...metadata, ...graph } as GraphDescriptor;
@@ -140,4 +90,4 @@ export function recipe<IT extends z.ZodType, OT extends z.ZodType>(
   };
 
   return factory;
-}
+};
