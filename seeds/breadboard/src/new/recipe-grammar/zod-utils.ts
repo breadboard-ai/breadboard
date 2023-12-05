@@ -21,7 +21,9 @@ import { InputValues, OutputValues } from "../runner/types.js";
  * @param zod Zod schema
  * @returns Post processed `Schema` object
  */
-export function zodToSchema(zod: z.ZodType<unknown>): Schema {
+export function zodToSchema(zod: z.ZodType<unknown> | Schema): Schema {
+  if (!isZodSchema(zod)) return zod;
+
   const schema = zodToJsonSchema(zod) as Schema & { $schema?: string };
   delete schema.$schema;
 
@@ -54,4 +56,8 @@ export function convertZodToSchemaInConfig<
     config.schema = zodToSchema(config.schema);
   }
   return factory(config as Partial<I>);
+}
+
+function isZodSchema(object: z.ZodType | Schema): object is z.ZodType {
+  return typeof (object as z.ZodType)?.parse === "function";
 }

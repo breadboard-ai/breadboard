@@ -29,10 +29,6 @@ import { addNodeType } from "./kits.js";
 import { getCurrentContextScope } from "./default-scope.js";
 import { BuilderNode } from "./node.js";
 
-function isZodSchema(object: z.ZodType | Schema): object is z.ZodType {
-  return typeof (object as z.ZodType)?.parse === "function";
-}
-
 /**
  * Actual implementation of all the above
  */
@@ -61,12 +57,8 @@ export const recipe: RecipeFactory = (
   };
 
   if (options) {
-    const inputSchema = isZodSchema(options.input)
-      ? zodToSchema(options.input)
-      : options.input;
-    const outputSchema = isZodSchema(options.output)
-      ? zodToSchema(options.output)
-      : options.output;
+    const inputSchema = zodToSchema(options.input);
+    const outputSchema = zodToSchema(options.output);
     handler.describe =
       options.describe ??
       (async () => {
