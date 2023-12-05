@@ -454,7 +454,7 @@ export class UIController extends HTMLElement implements UI {
       diagram += `\nclass ${highlightNode} active`;
     }
 
-    const module = await import(MERMAID_URL);
+    const module = await import(/* @vite-ignore */ MERMAID_URL);
     const mermaid = module.default;
     mermaid.initialize({ startOnLoad: false, themeCSS: MERMAID_STYLES });
     const { svg } = await mermaid.render("graphDiv", diagram);
