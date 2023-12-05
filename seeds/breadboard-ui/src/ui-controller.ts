@@ -218,8 +218,6 @@ export class UIController extends HTMLElement implements UI {
 
         #mermaid {
           display: flex;
-          align-items: center;
-          justify-content: center;
         }
 
         #input {
