@@ -88,7 +88,7 @@ export class BuilderNode<
     } else if (config instanceof AbstractNode) {
       this.addInputsFromNode(config);
     } else if (isValue(config)) {
-      this.addInputsFromNode(...(config as Value).asNodeInput());
+      this.addInputsFromNode(...config.asNodeInput());
     } else {
       this.addInputsAsValues(config as InputsMaybeAsValues<I>);
     }
@@ -110,7 +110,7 @@ export class BuilderNode<
 
     Object.entries(values).forEach(([key, value]) => {
       if (isValue(value)) {
-        nodes.push((value as Value).as(key).asNodeInput());
+        nodes.push(value.as(key).asNodeInput());
       } else if (value instanceof AbstractNode) {
         nodes.push([
           value instanceof BuilderNode ? value.unProxy() : value,
@@ -533,14 +533,11 @@ export class BuilderNode<
       | AbstractValue<NodeValue>
   ) {
     if (inputs instanceof BaseNode) {
-      const node = inputs as BaseNode<InputValues, OutputValues>;
-      this.addInputsFromNode(node);
+      this.addInputsFromNode(inputs);
     } else if (isValue(inputs)) {
-      const value = inputs as Value;
-      this.addInputsFromNode(...value.asNodeInput());
+      this.addInputsFromNode(...inputs.asNodeInput());
     } else {
-      const values = inputs as InputsMaybeAsValues<I>;
-      this.addInputsAsValues(values);
+      this.addInputsAsValues(inputs as InputsMaybeAsValues<I>);
     }
     return this.asProxy();
   }

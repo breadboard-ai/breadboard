@@ -22,17 +22,16 @@ import {
 import { BuilderNode } from "./node.js";
 import { BuilderScope } from "./scope.js";
 
-// Because Value is sometimes behind a function Proxy (see above, for NodeImpl's
-// methods), we need to use this approach to identify Value instead instanceof.
+// Because Value is sometimes behind a function Proxy (see NodeImpl's methods),
+// we need to use this approach to identify Value instead instanceof.
 export const IsValueSymbol = Symbol("IsValue");
 
 export function isValue<T extends NodeValue = NodeValue>(
   obj: unknown
-): Value<T> | false {
+): obj is Value<T> {
   return (
     typeof obj === "object" &&
-    (obj as unknown as { [key: symbol]: boolean })[IsValueSymbol] &&
-    (obj as unknown as Value<T>)
+    (obj as unknown as { [key: symbol]: boolean })[IsValueSymbol] !== undefined
   );
 }
 
@@ -120,10 +119,9 @@ export class Value<T extends NodeValue = NodeValue>
       let invertedMap = Object.fromEntries(
         Object.entries(this.#keymap).map(([fromKey, toKey]) => [toKey, fromKey])
       );
-      const asValue = isValue(inputs);
-      if (asValue) {
-        invertedMap = asValue.#remapKeys(invertedMap);
-        this.#node.addInputsFromNode(asValue.#node, invertedMap);
+      if (isValue(inputs)) {
+        invertedMap = inputs.#remapKeys(invertedMap);
+        this.#node.addInputsFromNode(inputs.#node, invertedMap);
       } else {
         this.#node.addInputsFromNode(
           inputs as BuilderNodeInterface,
