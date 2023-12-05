@@ -526,6 +526,16 @@ export class BuilderNode<
     return (toNode as BuilderNode<O & ToC, ToO>).asProxy();
   }
 
+  // This doesn't do any type checking on the inputs.
+  //
+  // TODO: See whether that's somehow possible. The main problem is that
+  // node.<field> is typed for the outputs. We could add a new InputValue type
+  // and generate those from node.in().field so that the final syntax could be
+  // - `toNode.in({ toField: fromNode.in().fromField) }` or
+  // - `toNode.in({ field: fromNode.in() })`
+  //
+  // That is, today .in() returns itself, and in with this change, it would
+  // return a proxy object typed with the input types.
   in(
     inputs:
       | NodeProxy<InputValues, Partial<I>>

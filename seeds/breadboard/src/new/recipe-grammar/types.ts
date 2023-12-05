@@ -184,9 +184,11 @@ export abstract class AbstractValue<T extends NodeValue | unknown = NodeValue>
     config?: ToC
   ): NodeProxy<OutputValue<T> & ToC, ToO>;
 
-  // TODO: Double check this, as it's acting on output types, not input types.
   abstract in(
-    inputs: AbstractNode<InputValues, OutputValues> | InputValues
+    inputs:
+      | AbstractNode<InputValues, OutputValues>
+      | AbstractValue<NodeValue>
+      | InputsMaybeAsValues<InputValues>
   ): void;
 
   abstract as(newKey: string | KeyMap): AbstractValue<T>;

@@ -7,6 +7,7 @@
 import {
   NodeValue,
   InputValues,
+  InputsMaybeAsValues,
   OutputValues,
   NodeProxy,
   AbstractValue,
@@ -113,23 +114,34 @@ export class Value<T extends NodeValue = NodeValue>
     ).asProxy();
   }
 
-  // TODO: Double check this, as it's acting on output types, not input types.
-  in(inputs: BuilderNodeInterface<InputValues, OutputValues> | InputValues) {
-    if (inputs instanceof BuilderNode || isValue(inputs)) {
-      let invertedMap = Object.fromEntries(
-        Object.entries(this.#keymap).map(([fromKey, toKey]) => [toKey, fromKey])
-      );
-      if (isValue(inputs)) {
-        invertedMap = inputs.#remapKeys(invertedMap);
-        this.#node.addInputsFromNode(inputs.#node, invertedMap);
-      } else {
-        this.#node.addInputsFromNode(
-          inputs as BuilderNodeInterface,
-          invertedMap
-        );
-      }
+  // This doesn't do any type checking on the inputs.
+  //
+  // TODO: See whether that's somehow possible. The main problem is that
+  // node.<field> is typed for the outputs. We could add a new InputValue type
+  // and generate those from node.in().field so that the final syntax could be
+  // `toNode.toField.in(fromNode.in().fromField)`.
+  //
+  // That is, today .in() on a value returns void and in the future it would
+  // return that new InputValue type, typed with the right input value from the
+  // original node. To accomplish this, we'll have to keep passing the
+  // node input values type through the chain of values and .as() statements.
+  in(
+    inputs:
+      | BuilderNodeInterface<InputValues, OutputValues>
+      | AbstractValue<NodeValue>
+      | InputsMaybeAsValues<InputValues>
+  ) {
+    let invertedMap = Object.fromEntries(
+      Object.entries(this.#keymap).map(([fromKey, toKey]) => [toKey, fromKey])
+    );
+
+    if (isValue(inputs)) {
+      invertedMap = inputs.#remapKeys(invertedMap);
+      this.#node.addInputsFromNode(inputs.#node, invertedMap);
+    } else if (inputs instanceof BuilderNode) {
+      this.#node.addInputsFromNode(inputs as BuilderNodeInterface, invertedMap);
     } else {
-      this.#node.addInputsAsValues(inputs as InputValues);
+      this.#node.addInputsAsValues(inputs as InputsMaybeAsValues<InputValues>);
     }
   }
 
