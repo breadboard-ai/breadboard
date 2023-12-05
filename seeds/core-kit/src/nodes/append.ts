@@ -20,7 +20,7 @@ export enum ObjectType {
 }
 
 type AccumulatorType = string | string[] | Record<string, NodeValue>;
-type ValueType = string | Record<string, NodeValue>;
+type ValueType = NodeValue | Record<string, NodeValue>;
 
 export type AppendInputs = Record<string, NodeValue> & {
   accumulator: AccumulatorType;
@@ -39,16 +39,15 @@ export const getObjectType = (value: unknown): ObjectType => {
   return ObjectType.object;
 };
 
-const asArray = (values: ValueType): string[] => {
-  return Object.entries(values).map(([k, v]) => {
-    const value =
-      getObjectType(v) === ObjectType.stringy ? v : JSON.stringify(v);
-    return `${k}: ${value}`;
-  });
-};
-
-const asString = (values: ValueType): string => {
-  return asArray(values).join("\n");
+const asString = (values: NodeValue): string => {
+  if (getObjectType(values) == ObjectType.stringy) return String(values);
+  return Object.entries(values as Record<string, NodeValue>)
+    .map(([k, v]) => {
+      const value =
+        getObjectType(v) === ObjectType.stringy ? v : JSON.stringify(v);
+      return `${k}: ${value}`;
+    })
+    .join("\n");
 };
 
 export const computeInputSchema = (incomingWires: Schema): Schema => {
@@ -107,7 +106,7 @@ export default {
       }
       case ObjectType.array:
         return {
-          accumulator: [...(accumulator as string[]), ...asArray(values)],
+          accumulator: [...(accumulator as string[]), values],
         };
       case ObjectType.object:
         return {

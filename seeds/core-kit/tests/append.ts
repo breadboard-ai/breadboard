@@ -51,10 +51,10 @@ test("`append` correctly appends to various object types", async (t) => {
     accumulator: "string\nfoo: bar\nbaz: 1",
   });
   t.deepEqual(await invoke({ accumulator: [], value: "string" }), {
-    accumulator: ["value: string"],
+    accumulator: [{ value: "string" }],
   });
   t.deepEqual(await invoke({ accumulator: ["test"], foo: "bar", baz: 1 }), {
-    accumulator: ["test", "foo: bar", "baz: 1"],
+    accumulator: ["test", { foo: "bar", baz: 1 }],
   });
   t.deepEqual(await invoke({ accumulator: {}, value: "string" }), {
     accumulator: { value: "string" },
