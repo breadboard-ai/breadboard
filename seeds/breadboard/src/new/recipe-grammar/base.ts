@@ -7,12 +7,11 @@
 import { z } from "zod";
 import { Schema } from "../../types.js";
 
-import { InputsMaybeAsValues, NodeProxy, AbstractValue } from "./types.js";
+import { InputsMaybeAsValues, NodeProxy, NodeValue } from "./types.js";
 import {
   InputValues,
   OutputValues,
   NodeHandlerFunction,
-  OutputValue,
 } from "../runner/types.js";
 
 import { addNodeType } from "./kits.js";
@@ -35,27 +34,24 @@ export const base = {
   output: (config: { schema?: z.ZodType | Schema; $id?: string }) =>
     convertZodToSchemaInConfig(config, outputFactory),
 } as {
-  input: (<T extends OutputValues = OutputValues>(config: {
-    schema: z.ZodObject<{
-      [K in keyof T]: z.ZodType<T[K]>;
-    }>;
-    $id?: string;
-  }) => NodeProxy<Record<string, never>, T>) &
-    ((config: {
-      schema?: Schema;
-      $id?: string;
-    }) => NodeProxy<Record<string, never>, OutputValues>);
-  output: (<T extends InputValues>(
+  input: (<T extends z.ZodType>(
     config: {
-      schema: z.ZodType<T>;
+      schema: T;
       $id?: string;
-    } & Partial<{
-      [K in keyof T]:
-        | AbstractValue<T[K]>
-        | NodeProxy<InputValues, OutputValue<T[K]>>
-        | T[K];
-    }>
-  ) => NodeProxy<T, Record<string, never>>) &
+    } & InputsMaybeAsValues<z.infer<T>>
+  ) => NodeProxy<Record<string, never>, z.infer<T>>) &
+    ((
+      config: {
+        schema?: Schema;
+        $id?: string;
+      } & InputsMaybeAsValues<InputValues>
+    ) => NodeProxy<InputValues, OutputValues>);
+  output: (<T extends z.ZodType>(
+    config: {
+      schema: T;
+      $id?: string;
+    } & InputsMaybeAsValues<z.infer<T>>
+  ) => NodeProxy<z.infer<T>, Record<string, never>>) &
     ((
       config: {
         schema?: Schema;
