@@ -58,22 +58,31 @@ export class UIController extends HTMLElement implements UI {
           display: block;
         }
 
-        #start-container {
+        header {
           width: 100%;
-          max-width: min(84vw, calc(var(--grid-size) * 100));
-          margin: 0 auto;
+          display: flex;
+          min-height: calc(var(--bb-grid-size) * 20);
+          align-items: center;
+          padding: 0 calc(var(--grid-size) * 4);
+        }
+
+        #header-container {
+          flex: 1;
         }
 
         #response-container {
           background: rgb(244, 247, 252);
           border: 2px solid rgb(244, 247, 252);
           padding: calc(var(--grid-size) * 4);
-          margin-top: calc(var(--grid-size) * 6);
         }
 
         @media(min-width: 640px) {
           :host {
             padding: 0 calc(var(--grid-size) * 6) 0 calc(var(--grid-size) * 6);
+          }
+
+          header {
+            padding: 0;
           }
 
           #response-container-wrapper {
@@ -157,26 +166,24 @@ export class UIController extends HTMLElement implements UI {
 
         @media(min-width: 740px) {
           :host {
-            padding: 0 calc(var(--bb-grid-size) * 12) 0 calc(var(--bb-grid-size) * 8);
-            column-gap: calc(var(--bb-grid-size) * 5);
-            grid-template-columns: calc(var(--grid-size) * 64) auto;
+            padding: 0 calc(var(--bb-grid-size) * 8);
             margin: 0;
-          }
-
-          #start-container {
-            margin: 0;
-            height: 74vh;
           }
 
           #response-container {
-            padding: calc(var(--grid-size) * 12);
-            height: 74vh;
+            padding: calc(var(--grid-size) * 8);
+            height: 85vh;
           }
         }
       </style>
-      <div id="start-container">
-        <slot name="start"></slot>
-      </div>
+      <header>
+        <div id="header-container">
+          <slot name="header"></slot>
+        </div>
+        <div id="start-container">
+          <slot name="start"></slot>
+        </div>
+      </header>
       <div id="response-container-wrapper">
         <div id="response-container">
           <div id="intro">
@@ -243,9 +250,13 @@ export class UIController extends HTMLElement implements UI {
       throw new Error("Unable to locate shadow root in UI Controller");
     }
 
-    const children = Array.from(this.querySelectorAll("*"));
+    const children = Array.from(this.children);
     for (const child of children) {
-      if (child === this.#start || child === this.#responseContainer) {
+      if (
+        child.tagName === "HEADER" ||
+        child === this.#start ||
+        child === this.#responseContainer
+      ) {
         continue;
       }
       child.remove();

@@ -28,24 +28,15 @@ export class Start extends HTMLElement {
           height: 100%;
         }
 
-        h1 {
-          font-size: var(--bb-text-small);
-          font-weight: 500;
-          margin: 0 0 calc(var(--bb-grid-size) * 2) 0;
-        }
-        
-        #create-board-from-url {
-          margin: 0 0 calc(var(--bb-grid-size) * 4) 0;
+        #sample-board-list {
+          width: auto;
+          max-width: 30vw;
+          padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 4);
+          border-radius: 30px;
+          background: rgb(255, 255, 255);
+          border: 1px solid rgb(200, 200, 200);
         }
 
-        #sample-board-list {
-          flex: 1;
-          overflow-y: scroll;
-          overflow-y: overlay;
-          scrollbar-gutter: stable;
-          padding-right: (var(--bb-grid-size) * 2);
-        }
-        
         .sample-board {
           background-color: rgb(249, 250, 253);
           border-radius: 120px;
@@ -105,24 +96,22 @@ export class Start extends HTMLElement {
         }
       </style>
 
-      <h1>Sample boards</h1>
-      <div id="sample-board-list">
+      <select id="sample-board-list">
+        <option class="sample-board" value="" disabled selected>-- Choose a board --</option>
         ${boards
           .map(({ title, url }) => {
-            return `<button class="sample-board" data-value="${url}">${title}</option>`;
+            return `<option class="sample-board" value="${url}">${title}</option>`;
           })
           .join("")}
-      </div>
+      </select>
     `;
 
-    root.addEventListener("click", (e: Event) => {
-      const target = e.target as HTMLElement;
-      if (!(target.dataset && target.dataset.value)) {
-        return;
-      }
-
-      this.dispatchEvent(new StartEvent(target.dataset.value));
-    });
+    root
+      .querySelector("#sample-board-list")
+      ?.addEventListener("change", (e: Event) => {
+        const target = e.target as HTMLSelectElement;
+        this.dispatchEvent(new StartEvent(target.value));
+      });
   }
 
   attributeChangedCallback(
@@ -135,19 +124,19 @@ export class Start extends HTMLElement {
       throw new Error("Unable to locate shadow root in Start");
     }
 
-    for (const btn of Array.from(root.querySelectorAll(".sample-board"))) {
-      btn.classList.remove("active");
+    for (const opt of Array.from(root.querySelectorAll("option"))) {
+      opt.removeAttribute("selected");
     }
 
     if (name !== "url" || newValue === null) {
       return;
     }
 
-    const activeBoard = root.querySelector(`[data-value="${newValue}"]`);
+    const activeBoard = root.querySelector(`option[value="${newValue}"]`);
     if (!activeBoard) {
       return;
     }
 
-    activeBoard.classList.add("active");
+    activeBoard.setAttribute("selected", "selected");
   }
 }

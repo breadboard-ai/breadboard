@@ -163,7 +163,7 @@ export class Load extends HTMLElement {
         #mermaid {
           line-height: 1;
           width: 100%;
-          max-width: 40vw;
+          max-width: 50vw;
         }
 
         #mermaid:empty::before {

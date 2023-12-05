@@ -54,12 +54,8 @@ body {
   color: var(--bb-font-color);
 }
 
-header {
-  padding: calc(var(--bb-grid-size) * 10) calc(var(--bb-grid-size) * 6)
-    calc(var(--bb-grid-size) * 8) calc(var(--bb-grid-size) * 6);
-  min-height: calc(var(--bb-grid-size) * 24);
-  display: flex;
-  align-items: flex-end;
+bb-ui:not(:defined) header {
+  display: none;
 }
 
 header a {
@@ -84,21 +80,11 @@ header a {
   #title {
     font-size: 20px;
   }
-
-  header {
-    min-height: calc(var(--bb-grid-size) * 26);
-  }
 }
 
 @media (min-width: 640px) {
   #title {
     font-size: var(--bb-text-large);
-  }
-
-  header {
-    padding: calc(var(--bb-grid-size) * 8) calc(var(--bb-grid-size) * 9)
-      calc(var(--bb-grid-size) * 12) calc(var(--bb-grid-size) * 9);
-    min-height: calc(var(--bb-grid-size) * 30);
   }
 }
 
