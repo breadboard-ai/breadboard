@@ -151,7 +151,7 @@ export class Main {
 
       case "output": {
         const outputData = data as { outputs: BreadboardUI.OutputArgs };
-        // await this.#ui.output(outputData.outputs);
+        await this.#ui.output(outputData.outputs);
         break;
       }
 

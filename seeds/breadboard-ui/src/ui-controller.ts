@@ -239,6 +239,30 @@ export class UIController extends HTMLElement implements UI {
           display: block;
         }
 
+        #temp-output {
+          position: fixed;
+          bottom: 100px;
+          right: 32px;
+          padding: 20px;
+          background: rgba(255, 255, 255, 0.8);
+          border-radius: 20px;
+          box-shadow: 0 2px 3px 0 rgba(0,0,0,0.13),
+            0 7px 9px 0 rgba(0,0,0,0.16);
+          width: 50vw;
+          max-height: 80vh;
+          overflow-y: scroll;
+        }
+
+        #temp-output.collapsed {
+          width: 30px;
+          height: 30px;
+          overflow: hidden;
+        }
+
+        #temp-output > * {
+          margin-bottom: 20px;
+        }
+
         @media(min-width: 740px) {
           :host {
             padding: 0 calc(var(--bb-grid-size) * 8);
@@ -288,9 +312,20 @@ export class UIController extends HTMLElement implements UI {
           </div>
         </div>
       </div>
+
+      <!-- Just here to collect outputs for now -->
+      <div id="temp-output"></div>
     `;
 
     this.appendChild(this.#responseContainer);
+
+    if (!root) {
+      throw new Error("Unable to locate shadow root in UI Controller");
+    }
+
+    root.querySelector("#temp-output")?.addEventListener("click", (evt) => {
+      (evt.target as HTMLElement).classList.toggle("collapsed");
+    });
   }
 
   setActiveBreadboard(url: string) {
@@ -340,6 +375,13 @@ export class UIController extends HTMLElement implements UI {
       ) {
         continue;
       }
+      child.remove();
+    }
+
+    const tempChildren = Array.from(
+      this.shadowRoot!.querySelector("#temp-output")?.childNodes || []
+    );
+    for (const child of tempChildren) {
       child.remove();
     }
   }
@@ -442,8 +484,10 @@ export class UIController extends HTMLElement implements UI {
     this.#responseContainer.clearContents();
     this.#showInputContainer();
 
+    const tempOutput = this.shadowRoot!.querySelector("#temp-output");
+
     const output = new Output();
-    this.#responseContainer.appendChild(output);
+    tempOutput?.appendChild(output);
     await output.display(values);
   }
 
