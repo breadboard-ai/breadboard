@@ -105,6 +105,7 @@ export class Main {
           startEvent.url,
           PROXY_NODES
         )) {
+          // TODO: Send the appropriate thing to the UI.
           await this.#handleEvent(result);
         }
       }
@@ -118,8 +119,29 @@ export class Main {
     this.#ui.start(config);
   }
 
+  #hasNodeInfo(data: unknown): data is { node: { id: string } } {
+    if (data === null) {
+      return false;
+    }
+
+    const possibleData = data as { node: { id: string } };
+    if ("node" in possibleData) {
+      return true;
+    }
+
+    return false;
+  }
+
   async #handleEvent(result: RuntimeRunResult) {
     const { data, type } = result.message;
+
+    // Update the graph to the latest.
+    if (this.#hasNodeInfo(data)) {
+      await this.#ui.renderDiagram(data.node.id);
+    } else {
+      await this.#ui.renderDiagram();
+    }
+
     switch (type) {
       case "load": {
         const loadData = data as BreadboardUI.LoadArgs;
@@ -129,7 +151,7 @@ export class Main {
 
       case "output": {
         const outputData = data as { outputs: BreadboardUI.OutputArgs };
-        await this.#ui.output(outputData.outputs);
+        // await this.#ui.output(outputData.outputs);
         break;
       }
 

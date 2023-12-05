@@ -286,8 +286,8 @@ export class BoardRunner implements BreadboardRunner {
    *
    * @returns - a string containing the Mermaid representation of the board.
    */
-  mermaid(): string {
-    return toMermaid(this);
+  mermaid(direction = "TD", unstyled = false): string {
+    return toMermaid(this, direction, unstyled);
   }
 
   /**

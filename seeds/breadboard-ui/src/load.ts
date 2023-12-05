@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { svgToPng } from "./utils/svg-to-png.js";
 import { ToastEvent, ToastType } from "./events.js";
 
 export type LoadArgs = {
@@ -15,34 +14,17 @@ export type LoadArgs = {
   url?: string;
 };
 
-const MERMAID_URL = "https://cdn.jsdelivr.net/npm/mermaid@10.6.1/+esm";
 const LOCAL_STORAGE_KEY = "bb-ui-show-diagram";
 
 export class Load extends HTMLElement {
-  #diagram: string;
-  #isLoadingDiagram = false;
-
-  constructor({
-    title,
-    description = "",
-    version = "",
-    url = "",
-    diagram = "",
-  }: LoadArgs) {
+  constructor({ title, description = "", version = "", url = "" }: LoadArgs) {
     super();
 
     if (!version) {
       version = "Unversioned";
     }
 
-    this.#diagram = diagram;
-
-    const autoOpen = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (autoOpen) {
-      this.#loadDiagramIfNeeded();
-    }
-
-    const show = autoOpen ? "open" : "";
+    const show = localStorage.getItem(LOCAL_STORAGE_KEY) ? "open" : "";
     const root = this.attachShadow({ mode: "open" });
     root.innerHTML = `
       <style>
@@ -181,11 +163,6 @@ export class Load extends HTMLElement {
             <dt>Description</dt>
             <dd>${description}</dd>
           </div>
-          
-          <div id="diagram">
-            <dt>Board diagram <a id="diagram-download" download="${title}" title="Download as PNG">Download as PNG</a></dt>
-            <dd><div id="mermaid"></div></dd>
-          </div>
         </dl>
       </div>
     `;
@@ -198,7 +175,6 @@ export class Load extends HTMLElement {
 
       if (info?.classList.contains("open")) {
         localStorage.setItem(LOCAL_STORAGE_KEY, "true");
-        this.#loadDiagramIfNeeded();
       } else {
         localStorage.removeItem(LOCAL_STORAGE_KEY);
       }
@@ -221,32 +197,5 @@ export class Load extends HTMLElement {
       );
       copying = false;
     });
-  }
-
-  async #loadDiagramIfNeeded() {
-    if (this.#isLoadingDiagram) {
-      return;
-    }
-
-    this.#isLoadingDiagram = true;
-    if (!this.#diagram) {
-      return;
-    }
-
-    const module = await import(/* @vite-ignore */ MERMAID_URL);
-    const mermaid = module.default;
-    mermaid.initialize({ startOnLoad: false });
-    const { svg } = await mermaid.render("graphDiv", this.#diagram);
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    this.shadowRoot!.querySelector("#mermaid")!.innerHTML = svg;
-    const root = this.shadowRoot;
-    if (!root) {
-      throw new Error("Unable to find shadow root");
-    }
-    const download = root.querySelector(
-      "#diagram-download"
-    ) as HTMLAnchorElement;
-    const pngSrc = await svgToPng(svg);
-    download.setAttribute("href", pngSrc);
   }
 }

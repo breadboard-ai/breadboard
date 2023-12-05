@@ -29,6 +29,11 @@ classDef secrets stroke:#db4437,fill:#f4cccc,color:#000
 classDef slotted stroke:#a64d79`;
 };
 
+const unstyledTemplate = (edges: string, direction: string) => {
+  return `graph ${direction};
+${edges}`;
+};
+
 const properNodeId = (node: string) => {
   // Mermaid gets confused by hyphens in node ids
   // For example `get-graph` id will throw a syntax error, because it thinks
@@ -184,8 +189,14 @@ class MermaidGenerator {
   }
 }
 
-export const toMermaid = (graph: GraphDescriptor, direction = "TD") => {
+export const toMermaid = (
+  graph: GraphDescriptor,
+  direction = "TD",
+  unstyled = false
+) => {
   const generator = new MermaidGenerator(graph);
   const edges = generator.describeGraph();
-  return template(edges, direction);
+  return unstyled
+    ? unstyledTemplate(edges, direction)
+    : template(edges, direction);
 };

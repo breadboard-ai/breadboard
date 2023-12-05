@@ -16,6 +16,48 @@ import { Toast } from "./toast.js";
 import { ResponseContainer } from "./response-container.js";
 import { Done } from "./done.js";
 
+const MERMAID_URL = "https://cdn.jsdelivr.net/npm/mermaid@10.6.1/+esm";
+const MERMAID_STYLES = `.node.active > * {
+  stroke-width: 4px;
+  stroke: #666 !important;
+}
+
+.node.default > * {
+  stroke: #ffab40;
+  fill: #fff2ccff;
+  color: #000;
+}
+
+.node.secrets > * {
+  stroke: #db4437;
+  fill: #f4cccc;
+}
+
+.node.input > * {
+  stroke: #3c78d8;
+  fill: #c9daf8ff;
+}
+
+.node.output > * {
+  stroke: #38761d;
+  fill: #b6d7a8ff;
+}
+
+.node.passthrough {
+  stroke: #a64d79;
+  fill: #ead1dcff;
+}
+
+.node.slot {
+  stroke: #a64d79;
+  fill: #ead1dcff;
+}
+
+.node.slotted {
+  stroke: #a64d79;
+}
+`;
+
 export interface UI {
   progress(message: string): void;
   output(values: OutputArgs): void;
@@ -31,6 +73,7 @@ const getBoardFromUrl = () => {
 export class UIController extends HTMLElement implements UI {
   #start!: Start;
   #responseContainer = new ResponseContainer();
+  #currentBoardDiagram = "";
 
   constructor() {
     super();
@@ -74,6 +117,8 @@ export class UIController extends HTMLElement implements UI {
           background: rgb(244, 247, 252);
           border: 2px solid rgb(244, 247, 252);
           padding: calc(var(--grid-size) * 4);
+          display: flex;
+          flex-direction: column;
         }
 
         @media(min-width: 640px) {
@@ -158,10 +203,40 @@ export class UIController extends HTMLElement implements UI {
           padding: calc(var(--grid-size) * 8);
           background: rgb(255, 255, 255);
           opacity: 0;
+          position: relative;
+          flex: 1;
         }
 
         #board-content.active {
           opacity: 1;
+        }
+
+        #diagram,
+        #diagram svg {
+          max-height: 60vh;
+        }
+
+        #mermaid {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        #input {
+          position: absolute;
+          bottom: calc(var(--bb-grid-size) * 8);
+          width: calc(100% - var(--bb-grid-size) * 16);
+          border-radius: calc(var(--bb-grid-size) * 6);
+          background: rgb(255, 255, 255);
+          padding: calc(var(--bb-grid-size) * 4);
+          border: 1px solid rgb(204, 204, 204);
+          box-shadow: 0 2px 3px 0 rgba(0,0,0,0.13),
+            0 7px 9px 0 rgba(0,0,0,0.16);
+          display: none;
+        }
+
+        #input.active {
+          display: block;
         }
 
         @media(min-width: 740px) {
@@ -203,7 +278,13 @@ export class UIController extends HTMLElement implements UI {
           <slot name="load"></slot>
           
           <div id="board-content">
-            <slot></slot>
+            <div id="diagram">
+              <div id="mermaid"></div>
+            </div>
+
+            <div id="input">
+              <slot></slot>
+            </div>
           </div>
         </div>
       </div>
@@ -302,24 +383,65 @@ export class UIController extends HTMLElement implements UI {
     root.querySelector("#board-content")?.classList.add("active");
   }
 
+  #showInputContainer() {
+    const root = this.shadowRoot;
+    if (!root) {
+      throw new Error("Unable to locate shadow root in UI Controller");
+    }
+
+    root.querySelector("#input")?.classList.add("active");
+  }
+
   load(info: LoadArgs) {
+    this.#currentBoardDiagram = info.diagram || "";
+
     this.#hideIntroContent();
     this.#clearBoardContents();
     this.#showBoardContainer();
-
     const load = new Load(info);
     load.slot = "load";
     this.appendChild(load);
   }
 
+  async renderDiagram(highlightNode = "") {
+    if (!this.#currentBoardDiagram) {
+      return;
+    }
+
+    highlightNode = highlightNode.replace(/-/g, "");
+    let diagram = this.#currentBoardDiagram;
+    if (highlightNode) {
+      diagram += `\nclass ${highlightNode} active`;
+    }
+
+    const module = await import(MERMAID_URL);
+    const mermaid = module.default;
+    mermaid.initialize({ startOnLoad: false, themeCSS: MERMAID_STYLES });
+    const { svg } = await mermaid.render("graphDiv", diagram);
+    const root = this.shadowRoot;
+    if (!root) {
+      throw new Error("Unable to find shadow root");
+    }
+
+    const mermaidElement = root.querySelector("#mermaid");
+    if (!mermaidElement) {
+      return;
+    }
+    mermaidElement.innerHTML = svg;
+  }
+
   progress(message: string) {
-    this.removeProgress();
+    this.#responseContainer.clearContents();
+    this.#showInputContainer();
+
     const progress = new Progress(message);
     this.#responseContainer.appendChild(progress);
   }
 
   async output(values: OutputArgs) {
-    this.removeProgress();
+    this.#responseContainer.clearContents();
+    this.#showInputContainer();
+
     const output = new Output();
     this.#responseContainer.appendChild(output);
     await output.display(values);
@@ -356,25 +478,24 @@ export class UIController extends HTMLElement implements UI {
   }
 
   async input(id: string, args: InputArgs): Promise<Record<string, unknown>> {
-    this.removeProgress();
+    this.#showInputContainer();
+    this.#responseContainer.clearContents();
     const input = new Input(id, args);
     this.#responseContainer.appendChild(input);
     return (await input.ask()) as Record<string, unknown>;
   }
 
   error(message: string) {
-    this.removeProgress();
     const error = new ErrorMessage(message);
+    this.#showInputContainer();
+    this.#responseContainer.clearContents();
     this.#responseContainer.appendChild(error);
   }
 
   done() {
-    this.removeProgress();
     const done = new Done("Board finished.");
+    this.#showInputContainer();
+    this.#responseContainer.clearContents();
     this.#responseContainer.appendChild(done);
-  }
-
-  removeProgress() {
-    this.querySelector("bb-progress")?.remove();
   }
 }

@@ -103,7 +103,6 @@ export class Input extends HTMLElement {
           row-gap: calc(var(--bb-grid-size) * 2);
           flex: 1;
           margin-right: calc(var(--bb-grid-size) * 12);
-          /* margin-top: calc(var(--bb-grid-size) * -6); */ /* Dimitri hack */
         }
 
         label {

@@ -49,7 +49,7 @@ export class ProxyServerRuntime implements Runtime {
           title: runner.title,
           description: runner.description,
           version: runner.version,
-          diagram: runner.mermaid(),
+          diagram: runner.mermaid("TD", true),
           url: url,
         },
       });

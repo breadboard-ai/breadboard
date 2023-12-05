@@ -67,10 +67,10 @@
     "@google-labs/breadboard": "*",
     "@google-labs/breadboard-ui": "*",
     "@google-labs/core-kit": "*",
-    "@google-labs/palm-kit": "*",
     "@google-labs/json-kit": "*",
     "@google-labs/llm-starter": "*",
     "@google-labs/node-nursery-web": "*",
+    "@google-labs/palm-kit": "*",
     "@google-labs/pinecone-kit": "*",
     "zod": "^3.22.4",
     "zod-to-json-schema": "^3.22.0"

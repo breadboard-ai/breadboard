@@ -74,7 +74,7 @@ export class WorkerRuntime {
           title: board.title,
           description: board.description,
           version: board.version,
-          diagram: board.mermaid(),
+          diagram: board.mermaid("TD", true),
           url: this.#loadRequest.data.url,
         },
         "load"

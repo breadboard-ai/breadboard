@@ -22,7 +22,6 @@ export class Output extends HTMLElement {
       <style>
         :host {
           display: block;
-          padding-bottom: calc(var(--bb-grid-size) * 3);
         }
 
         details {
@@ -56,6 +55,8 @@ export class Output extends HTMLElement {
           font-size: var(--bb-text-medium);
           margin: 0;
           white-space: pre-line;
+          max-height: 20vh;
+          overflow-y: auto;
         }
 
       </style>
