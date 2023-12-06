@@ -4,12 +4,33 @@ If you like learning by starting with simple examples that get more complex with
 
 Pre-requisites:
 
-- familiarity with Javascript and Node.
-- `@google-labs/breadboard` and `@google-labs/llm-starter` npm packages installed locally
+- Familiarity with Javascript and Node.
+- Node v19.0.0 or higher
 - PaLM API key (go [here](https://developers.generativeai.google/tutorials/setup) to obtain one)
-- spirit of adventure
+- Spirit of adventure
 
 Each chapter is also available as a [Replit](https://replit.com/) project. Look for the "run in replit" link at the end of each chapter.
+
+## Setup
+
+1. Initialize your package:
+  ```sh
+  mkdir my-first-breadboard
+  cd my-first-breadboard
+  npm init --yes
+  ```
+
+2. Install dependencies:
+  ```sh
+  npm install @google-labs/breadboard @google-labs/llm-starter
+  ```
+
+3. Tell Node to use modern JavaScript modules by default by editing `package.json` and adding:
+  ```json
+  {
+    "type": "module"
+  }
+  ```
 
 ## Chapter 1: Hello, world?
 
@@ -68,14 +89,14 @@ result { hear: 'Hello, world?' }
 > **🔍✨ What happened here?** The outcome should be fairly intuitive, but let's go through the process step by step:
 >
 > 1. The `runOnce` method of the board takes a property bag (a JS object) as its argument.
-> 2. This bag of properties is then handed to the `input` node.
+> 2. This bag of properties is then handed to the `input` node. (Why the `input` node? Because it was automatically detected as the *entrypoint*, meaning it was the only node with no nodes connected to its inputs).
 > 3. The `input` node is very simple-minded: it just passes the property bag along to the next node.
 > 4. This is where the wiring comes in. When we described our single wire as `say->hear`, we basically said:
 >    1. reach into the property bag,
 >    2. fish out the `say` property, then
->    3. pass it along to the next node as `say` property.
+>    3. pass it along to the next node as the `say` property.
 > 5. Since the next node is the `output` node, that's the node that receives the `say` property.
-> 6. The `output` node is also pretty simple. It takes the property bag it received and returns it as the of the `runOnce` method.
+> 6. The `output` node is also pretty simple. It takes the property bag it received and returns it as the result of the `runOnce` method.
 
 You can see the source of this program here: [tutorial-1.js](./tutorial-1.js).
 
@@ -83,7 +104,7 @@ You can see the source of this program here: [tutorial-1.js](./tutorial-1.js).
 
 ## Chapter 2: Wiring more nodes
 
-This is definitely a fun little program, but it's not very useful. Let's add another node to the board. This time, we need a kit: a collection of nodes that are bundled together for a specific purpose.
+This is definitely a fun little program, but it's not very useful. Let's add another node to the board. This time, we need a *kit*: a collection of nodes that are bundled together for a specific purpose.
 
 Because we're here to make generative AI applications, we'll get the [LLM Starter Kit](https://github.com/google/labs-prototypes/tree/main/seeds/llm-starter):
 
@@ -262,12 +283,17 @@ await writeFile("./docs/tutorial/tutorial-4.json", json);
 const board2 = await Board.load("./docs/tutorial/tutorial-4.json");
 ```
 
-Once we have the new board loaded, we can run it:
+Once we have the new board loaded, we can run it (note that the kits that the loaded board depends on
+must now be provided):
 
 ```js
-const result = await board2.runOnce({
-  say: "Hi, how are you?",
-});
+import { Board, asRuntimeKit } from "@google-labs/breadboard";
+import { Starter } from "@google-labs/llm-starter";
+
+const result = await board2.runOnce(
+  { say: "Hi, how are you?" },
+  { kits: [asRuntimeKit(Starter)] }
+);
 
 console.log("result", result);
 ```
@@ -343,7 +369,7 @@ classDef secrets stroke:#db4437,fill:#f4cccc,color:#000
 classDef slotted stroke:#a64d79
 ```
 
-Coincidentally, Github Markdown has great support for Mermaid. Just paste the Mermaid output as code into the doc as source code marked as `mermaid`:
+You can generate an SVG or other kind of image using [mermaid-cli](https://github.com/mermaid-js/mermaid-cli). Github Markdown has great support for Mermaid. Just paste the Mermaid output as code into the doc as source code marked as `mermaid`:
 
 ````markdown
 ```mermaid
