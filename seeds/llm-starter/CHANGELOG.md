@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.0] - 2023-12-06
+
+- The `generateText` and `embedText` moved to `palm-kit`.
+- Lots of error-handling improvements.
+- Streaming and Server-sent event support for `fetch`.
+
 ## [0.2.1] - 2023-11-08
 
 - In `fetch`, do not add request body if method is `GET`
