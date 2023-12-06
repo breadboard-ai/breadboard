@@ -5,36 +5,42 @@
  */
 
 import { Board } from "@google-labs/breadboard";
+import { Core } from "@google-labs/core-kit";
 import { Starter } from "@google-labs/llm-starter";
+import { PaLMKit } from "@google-labs/palm-kit";
+
 import { writeFile } from "fs/promises";
 
 import { config } from "dotenv";
 
-import * as path from 'path';
-import { fileURLToPath } from 'url';
+import * as path from "path";
+import { fileURLToPath } from "url";
 const __dir = path.dirname(fileURLToPath(import.meta.url));
 
 config();
 
 const board = new Board();
-const kit = board.addKit(Starter);
+const core = board.addKit(Core);
+const starter = board.addKit(Starter);
+const palm = board.addKit(PaLMKit);
 
-const template = kit.promptTemplate(
-  "Use the news headlines below to write a few sentences to" +
+const template = starter.promptTemplate({
+  template:
+    "Use the news headlines below to write a few sentences to " +
     "summarize the latest news on this topic:\n\n##Topic:\n" +
-    "{{topic}}\n\n## Headlines {{headlines}}\n\\n## Summary:\n"
-);
+    "{{topic}}\n\n## Headlines\n{{headlines}}\n\n## Summary:\n",
+});
 
 const input = board.input();
 input.wire(
   "topic->",
-  board.slot("news").wire(
+  core.slot({ slot: "news" }).wire(
     "headlines->",
     template.wire("topic<-", input).wire(
       "prompt->text",
-      kit
+      palm
         .generateText()
-        .wire("<-PALM_KEY.", kit.secrets({ keys: ["PALM_KEY"] }))
+        .wire("<-PALM_KEY.", starter.secrets({ keys: ["PALM_KEY"] }))
         .wire("completion->summary", board.output())
     )
   )

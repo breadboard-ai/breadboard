@@ -8,20 +8,20 @@
     },
     {
       "from": "secrets-5",
-      "to": "generateText-4",
+      "to": "palm-generateText-4",
       "constant": true,
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
-      "from": "generateText-4",
+      "from": "palm-generateText-4",
       "to": "output-6",
       "out": "completion",
       "in": "summary"
     },
     {
       "from": "promptTemplate-1",
-      "to": "generateText-4",
+      "to": "palm-generateText-4",
       "out": "prompt",
       "in": "text"
     },
@@ -43,7 +43,7 @@
       "id": "promptTemplate-1",
       "type": "promptTemplate",
       "configuration": {
-        "template": "Use the news headlines below to write a few sentences tosummarize the latest news on this topic:\n\n##Topic:\n{{topic}}\n\n## Headlines {{headlines}}\n\\n## Summary:\n"
+        "template": "Use the news headlines below to write a few sentences to summarize the latest news on this topic:\n\n##Topic:\n{{topic}}\n\n## Headlines\n{{headlines}}\n\n## Summary:\n"
       }
     },
     {
@@ -58,8 +58,8 @@
       }
     },
     {
-      "id": "generateText-4",
-      "type": "generateText"
+      "id": "palm-generateText-4",
+      "type": "palm-generateText"
     },
     {
       "id": "secrets-5",
@@ -77,7 +77,13 @@
   ],
   "kits": [
     {
+      "url": "npm:@google-labs/core-kit"
+    },
+    {
       "url": "npm:@google-labs/llm-starter"
+    },
+    {
+      "url": "npm:@google-labs/palm-kit"
     }
   ]
 }

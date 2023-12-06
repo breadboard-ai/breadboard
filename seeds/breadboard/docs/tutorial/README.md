@@ -4,7 +4,7 @@ If you like learning by starting with simple examples that get more complex with
 
 Pre-requisites:
 
-- Familiarity with Javascript and Node.
+- Familiarity with JavaScript and Node.
 - Node v19.0.0 or higher
 - PaLM API key (go [here](https://developers.generativeai.google/tutorials/setup) to obtain one)
 - Spirit of adventure
@@ -14,23 +14,26 @@ Each chapter is also available as a [Replit](https://replit.com/) project. Look 
 ## Setup
 
 1. Initialize your package:
-  ```sh
-  mkdir my-first-breadboard
-  cd my-first-breadboard
-  npm init --yes
-  ```
+
+   ```sh
+   mkdir my-first-breadboard
+   cd my-first-breadboard
+   npm init --yes
+   ```
 
 2. Install dependencies:
-  ```sh
-  npm install @google-labs/breadboard @google-labs/llm-starter
-  ```
+
+   ```sh
+   npm install @google-labs/breadboard @google-labs/llm-starter @google-labs/palm-kit
+   ```
 
 3. Tell Node to use modern JavaScript modules by default by editing `package.json` and adding:
-  ```json
-  {
-    "type": "module"
-  }
-  ```
+
+   ```json
+   {
+     "type": "module"
+   }
+   ```
 
 ## Chapter 1: Hello, world?
 
@@ -89,7 +92,7 @@ result { hear: 'Hello, world?' }
 > **🔍✨ What happened here?** The outcome should be fairly intuitive, but let's go through the process step by step:
 >
 > 1. The `runOnce` method of the board takes a property bag (a JS object) as its argument.
-> 2. This bag of properties is then handed to the `input` node. (Why the `input` node? Because it was automatically detected as the *entrypoint*, meaning it was the only node with no nodes connected to its inputs).
+> 2. This bag of properties is then handed to the `input` node. (Why the `input` node? Because it was automatically detected as the _entrypoint_, meaning it was the only node with no nodes connected to its inputs).
 > 3. The `input` node is very simple-minded: it just passes the property bag along to the next node.
 > 4. This is where the wiring comes in. When we described our single wire as `say->hear`, we basically said:
 >    1. reach into the property bag,
@@ -104,17 +107,19 @@ You can see the source of this program here: [tutorial-1.js](./tutorial-1.js).
 
 ## Chapter 2: Wiring more nodes
 
-This is definitely a fun little program, but it's not very useful. Let's add another node to the board. This time, we need a *kit*: a collection of nodes that are bundled together for a specific purpose.
+This is definitely a fun little program, but it's not very useful. Let's add another node to the board. This time, we need a _kit_: a collection of nodes that are bundled together for a specific purpose.
 
-Because we're here to make generative AI applications, we'll get the [LLM Starter Kit](https://github.com/google/labs-prototypes/tree/main/seeds/llm-starter):
+Because we're here to make generative AI applications, we'll get the [LLM Starter Kit](https://github.com/google/labs-prototypes/tree/main/seeds/llm-starter) and the [PaLM Kit](https://github.com/google/labs-prototypes/tree/main/seeds/llm-starter) (PaLM is an LLM API from Google, though note that Breadboard works with many LLM service providers).
 
 ```js
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
+import { PaLMKit } from "@google-labs/palm-kit";
 
 const board = new Board();
-// add kit to the board
-const kit = board.addKit(Starter);
+// add kits to the board
+const starter = board.addKit(Starter);
+const palm = board.addKit(PaLMKit);
 ```
 
 The last line of the code snippet above is signficant: it adds a kit to the board. Calling the `addKit` method creates a new instance of the LLM Starter kit that is connected to our board.
@@ -124,7 +129,7 @@ Now that we've added the kit, we can use it to add nodes from it:
 ```js
 const input = board.input();
 const output = board.output();
-const generateText = kit.generateText();
+const generateText = palm.generateText();
 ```
 
 The `generateText` node that we've added is a node that uses the [PaLM API](https://developers.generativeai.google/) to generate text. This node takes a `text` property as an input and returns a `completion` property.
@@ -141,7 +146,7 @@ Now, we have not one, but two wires on the board, connecting our three nodes. Th
 To make this program go, we need another node and a wire. The PaLM API behind the `generateText` node requires an API key, so we'll add a `secrets` node to the board:
 
 ```js
-const secrets = kit.secrets(["PALM_KEY"]);
+const secrets = starter.secrets({ keys: ["PALM_KEY"] });
 ```
 
 The `secrets` node reaches into our program's environment and gets the environment variable that is named `PALM_KEY`, as we specified in its argument. A `secrets` node could look for any other environment variables, we just need to specify which ones. For now, we only need the `PALM_KEY`.
@@ -204,8 +209,8 @@ First, the `wire` method returns the node itself, allowing us to wire the same n
 ```js
 const input = board.input();
 const output = board.output();
-const generateText = kit.generateText();
-const secrets = kit.secrets(["PALM_KEY"]);
+const generateText = palm.generateText();
+const secrets = starter.secrets(["PALM_KEY"]);
 
 input.wire("say->text", generateText).wire("say->", output);
 generateText.wire("completion->hear", output);
@@ -220,13 +225,13 @@ result { say: 'Hi, how are you?', hear: 'doing okay' }
 Second, we don't always need to create a new variable for each node. We can just create nodes as we wire them:
 
 ```js
-board.input().wire("say->text", kit.generateText()).wire("say->", output);
+board.input().wire("say->text", palm.generateText()).wire("say->", output);
 ```
 
 Finally, we can we can wire in both directions. For example, we can wire the `secrets` node to the `generateText` node like this:
 
 ```js
-generateText.wire("<-PALM_KEY", kit.secrets(["PALM_KEY"]));
+generateText.wire("<-PALM_KEY", starter.secrets(["PALM_KEY"]));
 ```
 
 Here, the arrow points in a different direction, and asks the board to wire the `PALM_KEY` output of the `secrets` node to the same input of the `generateText` node. It's equivalent to the wiring we had in the previous chapter.
@@ -240,10 +245,10 @@ board
   .wire("say->", output)
   .wire(
     "say->text",
-    kit
+    palm
       .generateText()
       .wire("completion->hear", output)
-      .wire("<-PALM_KEY", kit.secrets(["PALM_KEY"]))
+      .wire("<-PALM_KEY", starter.secrets(["PALM_KEY"]))
   );
 ```
 
@@ -292,7 +297,7 @@ import { Starter } from "@google-labs/llm-starter";
 
 const result = await board2.runOnce(
   { say: "Hi, how are you?" },
-  { kits: [asRuntimeKit(Starter)] }
+  { kits: [asRuntimeKit(Starter), asRuntimeKit(PaLMKit)] }
 );
 
 console.log("result", result);
@@ -369,7 +374,7 @@ classDef secrets stroke:#db4437,fill:#f4cccc,color:#000
 classDef slotted stroke:#a64d79
 ```
 
-You can generate an SVG or other kind of image using [mermaid-cli](https://github.com/mermaid-js/mermaid-cli). Github Markdown has great support for Mermaid. Just paste the Mermaid output as code into the doc as source code marked as `mermaid`:
+You can generate an SVG or other kind of image using [mermaid-cli](https://github.com/mermaid-js/mermaid-cli). Github Markdown also has great support for Mermaid. Just paste the Mermaid output as code into the doc as source code marked as `mermaid`:
 
 ````markdown
 ```mermaid
@@ -391,17 +396,23 @@ Our friend published their board's JSON at this URL:
 
 ```js
 const NEWS_BOARD_URL =
-  "https://gist.githubusercontent.com/dglazkov/55db9bb36acd5ba5cfbd82d2901e7ced/raw/google-news-headlines.json";
+  "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/breadboard/docs/tutorial/google-news-headlines.json";
 ```
 
-Using the `include` node, placing it into our board is trivial:
+Using the `include` node from the [Core Kit](https://github.com/google/labs-prototypes/tree/main/seeds/core-kit), placing it into our board is trivial:
 
 ```js
+import { Core } from "@google-labs/core-kit";
+
+const core = board.addKit(Core);
+
 board
   .input()
   .wire(
     "say->topic",
-    board.include(NEWS_BOARD_URL).wire("headlines->hear", board.output())
+    core
+      .include({ path: NEWS_BOARD_URL })
+      .wire("headlines->hear", board.output())
   );
 ```
 
@@ -444,14 +455,15 @@ Let's add a few more nodes to make the board that summarizes news on a given top
 First, we'll need a prompt that combines the topic we've provided, the headlines produced by our friend's board, and some instructions on what to do with them. To do that, we'll use the `promptTemplate` node from the [LLM Starter Kit](https://github.com/google/labs-prototypes/tree/main/seeds/llm-starter):
 
 ```js
-const template = kit.promptTemplate(
-  "Use the news headlines below to write a few sentences to" +
+const template = starter.promptTemplate({
+  template:
+    "Use the news headlines below to write a few sentences to " +
     "summarize the latest news on this topic:\n\n##Topic:\n" +
-    "{{topic}}\n\n## Headlines {{headlines}}\n\\n## Summary:\n"
-);
+    "{{topic}}\n\n## Headlines\n{{headlines}}\n\n## Summary:\n",
+});
 ```
 
-The `promptTemplate` node takes a template string as its argument. The template string is a string that can contain placeholders. The placeholders are enclosed in double curly braces, like this: `{{placeholder}}`. The node replaces placholders with the values of the properties that are passed to it.
+The `promptTemplate` node takes a `template` string in its argument object. The template string is a string that can contain placeholders. The placeholders are enclosed in double curly braces, like this: `{{placeholder}}`. The node replaces placholders with the values of the properties that are passed to it.
 
 So, in the code snippet above, this node needs to have these two properties wired into it: `topic` and `headlines`.
 
@@ -461,13 +473,13 @@ Additionally, we'll wire up the `generateText` node that we've learned about in 
 const input = board.input();
 input.wire(
   "say->topic",
-  board.include(NEWS_BOARD_URL).wire(
+  core.include({ path: NEWS_BOARD_URL }).wire(
     "headlines->",
     template.wire("topic<-say", input).wire(
       "prompt->text",
-      kit
+      palm
         .generateText()
-        .wire("<-PALM_KEY.", kit.secrets(["PALM_KEY"]))
+        .wire("<-PALM_KEY.", starter.secrets({ keys: ["PALM_KEY"] }))
         .wire("completion->say", board.output())
     )
   )
@@ -499,8 +511,8 @@ In this case, what we need is a board with a slot: instead of including our frie
 Let's see if we can make something like that. First, we'll need to prepare the board with a slot. This part is fairly straightforward. Instead of using the `include` node, we replace it with the `slot` node:
 
 ```diff
--   board.include(NEWS_BOARD_URL).wire(
-+   board.slot("news").wire(
+-   core.include({ path: NEWS_BOARD_URL }).wire(
++   board.slot({ slot: "news" }).wire(
 ```
 
 We will end up with the board that looks like something like this:
@@ -509,13 +521,13 @@ We will end up with the board that looks like something like this:
 const input = board.input();
 input.wire(
   "topic->",
-  board.slot("news").wire(
+  core.slot({ slot: "news" }).wire(
     "headlines->",
     template.wire("topic<-", input).wire(
       "prompt->text",
-      kit
+      palm
         .generateText()
-        .wire("<-PALM_KEY.", kit.secrets(["PALM_KEY"]))
+        .wire("<-PALM_KEY.", starter.secrets({ keys: ["PALM_KEY"] }))
         .wire("completion->summary", board.output())
     )
   )
@@ -543,14 +555,14 @@ Suppose we published it at this URL:
 
 ```js
 const NEWS_SUMMARIZER_URL =
-  "https://gist.githubusercontent.com/dglazkov/dd3f071260a1c3b97aa81beac6045da3/raw/news-summarizer.json";
+  "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/breadboard/docs/tutorial/news-summarizer.json";
 ```
 
 Now, when our friend wants to use this board, they need to do something like this. Load their newsboard:
 
 ```js
 const NEWS_BOARD_URL =
-  "https://gist.githubusercontent.com/dglazkov/55db9bb36acd5ba5cfbd82d2901e7ced/raw/google-news-headlines.json";
+  "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/breadboard/docs/tutorial/google-news-headlines.json";
 
 const news = await Board.load(NEWS_BOARD_URL);
 ```
@@ -564,7 +576,10 @@ const board = await Board.load(NEWS_SUMMARIZER_URL, { slotted: { news } });
 When run, the board will now produce expected results! These lines:
 
 ```js
-const result = await board.runOnce({ topic: "Latest news on breadboards" });
+const result = await board.runOnce(
+  { topic: "Latest news on breadboards" },
+  { kits: [asRuntimeKit(Core), asRuntimeKit(Starter), asRuntimeKit(PaLMKit)] }
+);
 console.log("result", result);
 ```
 
@@ -581,7 +596,7 @@ Our friend is thrilled! To try a different board, all they need to do is supply 
 You can see the source code for this chapter here:
 
 - [tutorial-6a.js](./tutorial-6a.js) -- setting up a board with a slot
-- [tutorial-6b.js](./tutorial-6b.js) -- calling a slotted board.
+- [tutorial-6b.js](./tutorial-6b.js) -- calling a slotted board
 
 [![Static Badge](https://img.shields.io/badge/run%20in%20replit-chapter_6a-orange?logo=replit "run in replit: chapter 6a")](https://replit.com/@dglazkov/Breadboard-Tutorial-Chapter-6-a)
 
@@ -612,21 +627,22 @@ Now, in addition to printing the results, we will see a bunch of extra text in t
 
 ```sh
 input {
-  descriptor: Node { id: 'input-2', type: 'input', configuration: undefined },
+  descriptor: { id: 'input-2', type: 'input' },
   inputs: {},
   outputs: { say: 'Hi, how are you?' }
 }
 node {
-  descriptor: Node {
+  descriptor: {
     id: 'secrets-4',
     type: 'secrets',
     configuration: { keys: [Array] }
   },
   inputs: { keys: [ 'PALM_KEY' ] },
   outputs: { PALM_KEY: '<key here>' },
+  validatorMetadata: []
 }
 skip {
-  descriptor: Node { id: 'output-1', type: 'output', configuration: undefined },
+  descriptor: { id: 'output-1', type: 'output' },
   inputs: { say: 'Hi, how are you?' },
   missingInputs: [ 'hear' ]
 }
@@ -647,9 +663,9 @@ There are four different kinds of events:
 - `node` -- same, but for all other kinds of nodes.
 - `skip` -- this event happens when a node does not yet have the data for all its inputs. As data, the probe will supply `missingInputs`, which is a list of inputs that haven't yet been supplied by other nodes to visit this node.
 
-These events give us a pretty good way to see what's happening. By studying `inputs` and `outputs` fields of each event, we can see what is being passed. Very commonly, this shows us our mistakes of passing the wrong data or passing data to the wrong node.
+These events give us a pretty good way to see what's happening. By studying the `input` and `output` fields of each event, we can see what is being passed. Very commonly, this shows us our mistakes of passing the wrong data or passing data to the wrong node.
 
-By itself, `skip` event is not a bad thing. It's just an indicator that the boards is looking at possible candidates for the next node to visit, and this candidate isn't yet ready (`missingInputs` will tell you why). However, the `skip` event can be very handy when troubleshooting boards that return nothing. Usually, the last statement in such a board will be a `skip` event indicating which inputs were missing. This is a decent way to find typos in our wiring.
+By itself, `skip` event is not a bad thing. It's just an indicator that the board is looking at possible candidates for the next node to visit, and this candidate isn't yet ready (`missingInputs` will tell you why). However, the `skip` event can be very handy when troubleshooting boards that return nothing. Usually, the last statement in such a board will be a `skip` event indicating which inputs were missing. This is a decent way to find typos in our wiring.
 
 The `LogProbe` is just one kind of a probe that can be inserted into the board. You can make your own. To make your own probe, just use a built-in `EventTarget` class (available in both Node 19+ and as a Web API):
 
@@ -662,7 +678,7 @@ Then, listen to any of the events above. For instance, let's make a simple probe
 ```js
 probe.addEventListener("node", (event) => {
   const data = event.detail;
-  if (data.descriptor.type == "generateText") {
+  if (data.descriptor.type == "palm-generateText") {
     console.log("completion:", data.outputs.completion);
   }
 });
@@ -671,11 +687,7 @@ probe.addEventListener("node", (event) => {
 Now, when we use this probe and run our board:
 
 ```js
-const result = await board.runOnce(
-  { say: "Hi, how are you?" },
-  undefined,
-  probe
-);
+const result = await board.runOnce({ say: "Hi, how are you?" }, { probe });
 console.log("result", result);
 ```
 
@@ -712,7 +724,7 @@ for await (const stop of board.run()) {
 
 A good way to think of what the code above describes is that when we ask the board to run, it will occasionally pause and give us a chance to interact with it.
 
-The two particular occasions that the board pauses for are to ask for inputs and to provide outputs. To find out why the board stopped, we check for `type` property on `stop`:
+The two particular occasions that the board pauses for are to ask for inputs and to provide outputs. To find out why the board stopped, we check for the `type` property on `stop`:
 
 ```js
 for await (const stop of board.run()) {
@@ -730,14 +742,14 @@ For example, if we take this simple board:
 const output = board.output();
 board.input().wire(
   "say->text",
-  kit
+  palm
     .generateText()
     .wire("completion->hear", output)
-    .wire("<-PALM_KEY", kit.secrets(["PALM_KEY"]))
+    .wire("<-PALM_KEY", starter.secrets({ keys: ["PALM_KEY"] }))
 );
 ```
 
-We can make run using the `run` method like so:
+We can make it run using the `run` method like so:
 
 ```js
 for await (const stop of board.run()) {
@@ -757,7 +769,7 @@ See the source code for this chapter: [tutorial-8.js](./tutorial-8.js).
 
 ## Chapter 9: Let's build a chat bot.
 
-However, what if we want to keep going? Let's build a very, very simple chat bot. Unlike in previous chapters, here we'll make a tiny, yet full-fledged program, so we'll need a few more Javascript imports than usual:
+However, what if we want to keep going? Let's build a very, very simple chat bot. Unlike in previous chapters, here we'll make a tiny, yet full-fledged program, so we'll need a few more JavaScript imports than usual:
 
 ```js
 import readline from "node:readline/promises";
@@ -771,13 +783,15 @@ import { Starter } from "@google-labs/llm-starter";
 
 The first two lines give us just enough bits to add the simplest possible interactivity: asking program user for input.
 
-Now, let's create a new board, add the [LLM Starter Kit](https://github.com/google/labs-prototypes/tree/main/seeds/llm-starter) and load the `.env` variables, just like we did in Chapter 2.
+Now, let's create a new board, add the [LLM Starter Kit](https://github.com/google/labs-prototypes/tree/main/seeds/llm-starter) and the [PaLM Kit](https://github.com/google/labs-prototypes/tree/main/seeds/llm-starter) and load the `.env` variables, just like we did in Chapter 2.
 
 ```js
 config();
 
 const board = new Board();
-const kit = board.addKit(Starter);
+const core = board.addKit(Core);
+const starter = board.addKit(Starter);
+const palm = board.addKit(PaLMKit);
 ```
 
 We are ready to place some nodes on the board. Let's start with `input` and `output`. Since we already know that we're building a chat bot that looks for input right after producing the output, we'll go ahead and wire `output` right back to `input`:
@@ -790,17 +804,17 @@ output.wire("->", input);
 
 This wiring above is new to this tutorial, since it doesn't have the familiar property name in it. It's a control-only wire. It does not pass any data, just tells the board to visit `input` after `output`.
 
-Next, let's add some way to store the history of the conversation between the user and our chat bot. To do this, we'll need the `append` node from the [LLM Starter Kit](https://github.com/google/labs-prototypes/tree/main/seeds/llm-starter):
+Next, let's add some way to store the history of the conversation between the user and our chat bot. To do this, we'll need the `append` node from the [Core Kit](https://github.com/google/labs-prototypes/tree/main/seeds/core-kit):
 
 ```js
-const history = kit.append();
+const history = core.append();
 history.wire("accumulator->?", history);
 input.wire("say->user", history);
 ```
 
 There's a lot of power stuffed into this little snippet. Let's unpack it.
 
-Though introduced so late in the tutorial, the `append` node is probably the most versatile power tool in the [LLM Starter Kit](https://github.com/google/labs-prototypes/tree/main/seeds/llm-starter).
+Though introduced so late in the tutorial, the `append` node is probably the most versatile power tool in the [Core Kit](https://github.com/google/labs-prototypes/tree/main/seeds/core-kit).
 
 What it does is deceptively simple: the `append` node looks for an input property named `accumulator`, then appends the rest of the input properties to it, and then returns the result as the output property named `accumulator`. It _accumulates_, get it?
 
@@ -823,23 +837,24 @@ Such wiring allows us to create a running list of the interactions between the u
 As the next step, let's place and wire the `generateText` node:
 
 ```js
-const completion = kit
+const completion = palm
   .generateText()
   .wire("completion->hear", output)
   .wire("completion->assistant", history)
-  .wire("<-PALM_KEY.", kit.secrets(["PALM_KEY"]));
+  .wire("<-PALM_KEY.", starter.secrets({ keys: ["PALM_KEY"] }));
 ```
 
 Let's look at this node's wiring. The first two make sense. We want the result of text completion to go to output, and we want it in the conversation history. The third one is also familiar, but it has a weird dot (`.`) at the end. What is that?
 
 The dot signifies that this wire is a constant. It remembers the last value passed through it and makes it always available to the receiving node. It's important here, because otherwise, we'd have to find ways to visit the `secrets` node on every cycle of the loop.
 
-So we have the `generateText` all set up. But what's the prompt that goes into it? To create a prompt, we need a `promptTemplate` node. Let's place and wire it:
+So we have the `generateText` node all set up. But what's the prompt that goes into it? To create a prompt, we need a `promptTemplate` node. Let's place and wire it:
 
 ```js
-kit
-  .promptTemplate(
-    "This is a conversation between a friendly assistant and their user.\n" +
+starter
+  .promptTemplate({
+    template:
+      "This is a conversation between a friendly assistant and their user.\n" +
       "You are the assistant and your job is to try to be helpful,\n" +
       "empathetic, and fun.\n\n" +
       "== Conversation History\n" +
@@ -847,8 +862,8 @@ kit
       "== Current Conversation\n" +
       "user: {{question}}\n" +
       "assistant:",
-    { context: "" }
-  )
+    context: "",
+  })
   .wire("prompt->text", completion)
   .wire("question<-say", input)
   .wire("context<-accumulator", history);
@@ -873,7 +888,7 @@ How do we fix that? It's actually fairly easy. We employ a handy node called `pa
 All we need to do is place this `passthrough` node on the board and wire it to the input:
 
 ```js
-board.passthrough().wire("->", input);
+core.passthrough().wire("->", input);
 ```
 
 Now, when the board runs, it will see this `passthrough` node as the entry, and will make its way to the `input`, starting the chat bot cycle.

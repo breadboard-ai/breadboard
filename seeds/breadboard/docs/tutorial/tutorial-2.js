@@ -6,22 +6,24 @@
 
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
+import { PaLMKit } from "@google-labs/palm-kit";
 import { config } from "dotenv";
 
 config();
 
 const board = new Board();
-// add kit to the board
-const kit = board.addKit(Starter);
+// add kits to the board
+const starter = board.addKit(Starter);
+const palm = board.addKit(PaLMKit);
 
 const input = board.input();
 const output = board.output();
-const generateText = kit.generateText();
+const generateText = palm.generateText();
 
 input.wire("say->text", generateText);
 generateText.wire("completion->hear", output);
 
-const secrets = kit.secrets({ keys: ["PALM_KEY"] });
+const secrets = starter.secrets({ keys: ["PALM_KEY"] });
 
 secrets.wire("PALM_KEY->", generateText);
 

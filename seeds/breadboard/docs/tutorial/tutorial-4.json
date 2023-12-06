@@ -7,20 +7,20 @@
       "in": "say"
     },
     {
-      "from": "generateText-3",
+      "from": "palm-generateText-3",
       "to": "output-1",
       "out": "completion",
       "in": "hear"
     },
     {
       "from": "secrets-4",
-      "to": "generateText-3",
+      "to": "palm-generateText-3",
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
       "from": "input-2",
-      "to": "generateText-3",
+      "to": "palm-generateText-3",
       "out": "say",
       "in": "text"
     }
@@ -35,8 +35,8 @@
       "type": "input"
     },
     {
-      "id": "generateText-3",
-      "type": "generateText"
+      "id": "palm-generateText-3",
+      "type": "palm-generateText"
     },
     {
       "id": "secrets-4",
@@ -51,6 +51,9 @@
   "kits": [
     {
       "url": "npm:@google-labs/llm-starter"
+    },
+    {
+      "url": "npm:@google-labs/palm-kit"
     }
   ]
 }
