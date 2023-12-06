@@ -1,6 +1,5 @@
 {
   "name": "@google-labs/palm-kit",
-  "private": true,
   "version": "0.0.1",
   "description": "A Breadboard Kit with nodes to access PaLM APIs.",
   "main": "./dist/src/index.js",
