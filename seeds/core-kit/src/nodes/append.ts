@@ -71,6 +71,18 @@ export const computeInputSchema = (incomingWires: Schema): Schema => {
   return inputSchema;
 };
 
+export const flattenValues = (values: InputValues) => {
+  let result: InputValues = {};
+  Object.entries(values).forEach(([key, value]) => {
+    if (key === "$flatten" && getObjectType(value) == ObjectType.object) {
+      result = { ...result, ...(value as object) };
+    } else {
+      result[key] = value;
+    }
+  });
+  return result;
+};
+
 export const appendDescriber: NodeDescriberFunction = async (
   _inputs?: InputValues,
   incomingWires?: Schema
@@ -105,8 +117,9 @@ export default {
         return { accumulator: `${stringy}${asString(values)}` };
       }
       case ObjectType.array:
+        const flattenedValues = flattenValues(values);
         return {
-          accumulator: [...(accumulator as string[]), values],
+          accumulator: [...(accumulator as string[]), flattenedValues],
         };
       case ObjectType.object:
         return {
