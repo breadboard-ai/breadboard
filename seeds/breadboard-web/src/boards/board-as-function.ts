@@ -68,9 +68,6 @@ starter
     $id: "getBoard",
   })
   .wire("url<-board", input)
-  .wire(
-    "response->json",
-    getFunctionSignature.wire("function->", output).wire("returns->", output)
-  );
+  .wire("response->json", getFunctionSignature.wire("*->", output));
 
 export default board;

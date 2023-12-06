@@ -12,14 +12,7 @@
     {
       "from": "getFunctionSignature",
       "to": "output",
-      "out": "function",
-      "in": "function"
-    },
-    {
-      "from": "getFunctionSignature",
-      "to": "output",
-      "out": "returns",
-      "in": "returns"
+      "out": "*"
     },
     {
       "from": "getBoard",
