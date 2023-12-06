@@ -1,0 +1,36 @@
+{
+  "title": "Echo",
+  "description": "Echo cho cho cho ho o",
+  "version": "0.0.3",
+  "edges": [
+    {
+      "from": "input",
+      "to": "output-1",
+      "out": "text",
+      "in": "text"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Echo",
+              "description": "What shall I say back to you?"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "output-1",
+      "type": "output"
+    }
+  ],
+  "kits": []
+}

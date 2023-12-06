@@ -3,6 +3,7 @@
   "files": [],
   "references": [
     { "path": "seeds/breadboard" },
+    { "path": "seeds/breadboard-cli-tools" },
     { "path": "seeds/breadboard-server" },
     { "path": "seeds/breadboard-web" },
     { "path": "seeds/breadboard-ui" },

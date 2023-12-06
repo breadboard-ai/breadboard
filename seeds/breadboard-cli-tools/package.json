@@ -1,0 +1,61 @@
+{
+  "name": "@google-labs/breadboard-cli-tools",
+  "private": true,
+  "version": "0.0.1",
+  "description": "A suite of tools for interacting with the Breadboard.",
+  "bin": {
+    "breadboard": "dist/src/index.js"
+  },
+  "main": "./dist/src/index.js",
+  "exports": "./dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "test": "FORCE_COLOR=1 ava",
+    "run-debug": "FORCE_COLOR=1 npm run build && npx breadboard",
+    "build": "FORCE_COLOR=1 tsc --b",
+    "watch": "FORCE_COLOR=1 tsc --b --watch",
+    "lint": "FORCE_COLOR=1 eslint . --ext .ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/google/labs-prototypes"
+  },
+  "files": [
+    "dist/src"
+  ],
+  "ava": {
+    "files": [
+      "tests/**/*.ts"
+    ],
+    "workerThreads": false,
+    "typescript": {
+      "rewritePaths": {
+        "./": "dist/"
+      },
+      "compile": false
+    }
+  },
+  "keywords": [],
+  "author": "Google Labs Team",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/google/labs-prototypes/issues"
+  },
+  "homepage": "https://github.com/google/labs-prototypes#readme",
+  "devDependencies": {
+    "@ava/typescript": "^4.0.0",
+    "@google-labs/tsconfig": "*",
+    "@types/node": "^18.16.3",
+    "@types/serve-handler": "^6.1.4",
+    "@typescript-eslint/eslint-plugin": "^5.56.0",
+    "@typescript-eslint/parser": "^5.56.0",
+    "ava": "^5.2.0",
+    "typescript": "^5.0.4"
+  },
+  "dependencies": {
+    "@google-labs/breadboard": "*",
+    "commander": "^11.1.0",
+    "serve": "^14.2.1"
+  }
+}
