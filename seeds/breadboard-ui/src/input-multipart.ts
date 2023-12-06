@@ -163,22 +163,22 @@ abstract class MultipartInputPart extends HTMLElement {
           display: flex;
           width: 100%;
           position: relative;
-          margin-bottom: calc(var(--grid-size) * 2);
-          min-height: calc(var(--grid-size) * 32);
+          margin-bottom: calc(var(--bb-grid-size) * 2);
+          min-height: calc(var(--bb-grid-size) * 32);
         }
 
         :host(.reserved) {
-          border-radius: calc(var(--grid-size) * 8);
+          border-radius: calc(var(--bb-grid-size) * 8);
           background: rgb(255, 255, 255);
           border: 1px solid rgb(209, 209, 209);
         }
 
         :host(.pending)::before {
           content: '';
-          width: calc(100% - var(--grid-size) * 12);
-          height: calc(var(--grid-size) * 31);
-          margin: calc(var(--grid-size) * 2);
-          border-radius: calc(var(--grid-size) * 6);
+          width: calc(100% - var(--bb-grid-size) * 12);
+          height: calc(var(--bb-grid-size) * 31);
+          margin: calc(var(--bb-grid-size) * 2);
+          border-radius: calc(var(--bb-grid-size) * 6);
           background: rgb(240, 240, 240);
           box-sizing: border-box;
         }
@@ -203,7 +203,7 @@ abstract class MultipartInputPart extends HTMLElement {
           flex: 1;
           width: 100%;
           overflow: hidden;
-          border-radius: calc(var(--grid-size) * 10);
+          border-radius: calc(var(--bb-grid-size) * 10);
           border: 1px solid rgb(209, 209, 209);
           height: 100%;
         }
@@ -214,17 +214,17 @@ abstract class MultipartInputPart extends HTMLElement {
           border: none;
           width: 100%;
           height: 100%;
-          border-radius: calc(var(--grid-size) * 10);
+          border-radius: calc(var(--bb-grid-size) * 10);
           background: rgb(255, 255, 255);
-          min-height: calc(var(--grid-size) * 12);
-          padding: calc(var(--grid-size) * 4) calc(var(--grid-size) * 10) calc(var(--grid-size) * 4) calc(var(--grid-size) * 8);
+          min-height: calc(var(--bb-grid-size) * 12);
+          padding: calc(var(--bb-grid-size) * 4) calc(var(--bb-grid-size) * 10) calc(var(--bb-grid-size) * 4) calc(var(--bb-grid-size) * 8);
         }
 
         img {
           width: calc(100% - 32px);
-          height: calc(var(--grid-size) * 36);
-          padding: calc(var(--grid-size) * 2);
-          border-radius: calc(var(--grid-size) * 8);
+          height: calc(var(--bb-grid-size) * 36);
+          padding: calc(var(--bb-grid-size) * 2);
+          border-radius: calc(var(--bb-grid-size) * 8);
           object-fit: cover;
           aspect-ratio: auto;
         }
@@ -232,7 +232,7 @@ abstract class MultipartInputPart extends HTMLElement {
         #delete {
           position: absolute;
           top: 50%;
-          right: calc(var(--grid-size) * 2);
+          right: calc(var(--bb-grid-size) * 2);
           background: rgb(255, 255, 255);
           border-radius: 50%;
           background: var(--bb-icon-delete) center center no-repeat;

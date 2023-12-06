@@ -60,6 +60,7 @@ export class Load extends HTMLElement {
         h1 {
           font: var(--bb-text-baseline) var(--bb-font-family);
           font-weight: 700;
+          margin: calc(var(--bb-grid-size, 4px) * 4) 0;
         }
 
         h1 > a {

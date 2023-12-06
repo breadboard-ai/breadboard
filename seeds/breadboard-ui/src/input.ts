@@ -129,9 +129,9 @@ export class Input extends HTMLElement {
           flex: 1;
           width: 100%;
           overflow: hidden;
-          border-radius: calc(var(--grid-size) * 10);
+          border-radius: calc(var(--bb-grid-size) * 10);
           border: 1px solid rgb(209, 209, 209);
-          min-height: calc(var(--grid-size) * 50);
+          min-height: calc(var(--bb-grid-size) * 50);
         }
 
         input[type=text],
@@ -139,10 +139,10 @@ export class Input extends HTMLElement {
         textarea,
         .parsed-value {
           grid-column: 1 / 5;
-          border-radius: calc(var(--grid-size) * 10);
+          border-radius: calc(var(--bb-grid-size) * 10);
           background: rgb(255, 255, 255);
-          min-height: calc(var(--grid-size) * 12);
-          padding: 0 calc(var(--grid-size) * 10) 0 calc(var(--grid-size) * 8);
+          min-height: calc(var(--bb-grid-size) * 12);
+          padding: 0 calc(var(--bb-grid-size) * 10) 0 calc(var(--bb-grid-size) * 8);
           width: 100%;
           border: 1px solid rgb(209, 209, 209);
         }
@@ -153,15 +153,15 @@ export class Input extends HTMLElement {
 
         textarea {
           resize: none;
-          padding-top: calc(var(--grid-size) * 4);
-          padding-bottom: calc(var(--grid-size) * 4);
+          padding-top: calc(var(--bb-grid-size) * 4);
+          padding-bottom: calc(var(--bb-grid-size) * 4);
           line-height: 1.4;
           border: none;
           height: 100%;
         }
 
         div#input {
-          min-height: calc(var(--grid-size) * 12);
+          min-height: calc(var(--bb-grid-size) * 12);
         }
 
         input[type=text]::placeholder,
@@ -180,11 +180,11 @@ export class Input extends HTMLElement {
 
         input[type=submit] {
           font-size: 0;
-          width: calc(var(--grid-size) * 8);
-          height: calc(var(--grid-size) * 8);
+          width: calc(var(--bb-grid-size) * 8);
+          height: calc(var(--bb-grid-size) * 8);
           position: absolute;
-          right: calc(var(--grid-size) * 2);
-          top: calc(var(--grid-size) * 7);
+          right: calc(var(--bb-grid-size) * 2);
+          top: calc(var(--bb-grid-size) * 7);
           border-radius: 50%;
           background: #FFF var(--bb-icon-start) center center no-repeat;
           border: none;
@@ -195,10 +195,10 @@ export class Input extends HTMLElement {
         }
 
         .parsed-value img {
-          width: calc(var(--grid-size) * 36);
-          height: calc(var(--grid-size) * 36);
-          margin: calc(var(--grid-size) * 5) 0;
-          border-radius: calc(var(--grid-size) * 6);
+          width: calc(var(--bb-grid-size) * 36);
+          height: calc(var(--bb-grid-size) * 36);
+          margin: calc(var(--bb-grid-size) * 5) 0;
+          border-radius: calc(var(--bb-grid-size) * 6);
           object-fit: cover;
           aspect-ratio: auto;
         }

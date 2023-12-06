@@ -10,7 +10,6 @@ import { Load, type LoadArgs } from "./load.js";
 import { Output, type OutputArgs } from "./output.js";
 import { Progress } from "./progress.js";
 import { Result, ResultArgs } from "./result.js";
-import { Start, type StartArgs } from "./start.js";
 import { StartEvent, type ToastType } from "./events.js";
 import { Toast } from "./toast.js";
 import { ResponseContainer } from "./response-container.js";
@@ -19,7 +18,7 @@ import { Done } from "./done.js";
 const MERMAID_URL = "https://cdn.jsdelivr.net/npm/mermaid@10.6.1/+esm";
 const MERMAID_STYLES = `.node.active > * {
   stroke-width: 4px;
-  stroke: #666 !important;
+  stroke: #4CE8F6 !important;
 }
 
 .node.default > * {
@@ -66,12 +65,7 @@ export interface UI {
   done(): void;
 }
 
-const getBoardFromUrl = () => {
-  return new URL(window.location.href).searchParams.get("board");
-};
-
 export class UIController extends HTMLElement implements UI {
-  #start!: Start;
   #responseContainer = new ResponseContainer();
   #currentBoardDiagram = "";
 
@@ -82,71 +76,120 @@ export class UIController extends HTMLElement implements UI {
     root.innerHTML = `
       <style>
         :host {
-          --grid-size: var(--bb-grid-size, 4px);
-
-          display: grid;
-          width: 100%;
-          margin-bottom: calc(var(--grid-size) * 30);
+          display: flex;
+          flex-direction: column;
+          padding: calc(var(--bb-grid-size) * 4) calc(var(--bb-grid-size) * 8)
+              calc(var(--bb-grid-size) * 8) calc(var(--bb-grid-size) * 8);
+          box-sizing: border-box;
+          overflow: hidden;
         }
 
         :host * {
           box-sizing: border-box;
         }
 
+        #wrapper {
+          border-radius: calc(var(--bb-grid-size) * 9);
+          border: 2px solid #E3E7ED;
+          width: 100%;
+          height: 100%;
+          display: grid;
+          grid-template-columns: 65fr 35fr;
+          overflow: hidden;
+        }
+
+        #diagram {
+          background-color: rgb(244, 247, 252);
+          background-image: var(--bb-grid-pattern);
+          border-radius: calc(var(--bb-grid-size) * 9);
+          overflow: hidden;
+          outline: 2px solid #E3E7ED;
+          display: none;
+          position: relative;
+        }
+
+        #diagram.active {
+          display: block;
+        }
+
+        #mermaid {
+          width: 100%;
+          height: 100%;
+          overflow: auto;
+        }
+
+        #mermaid svg {
+          display: block;
+        }
+
         #intro {
           display: none;
+          grid-column: 1/3;
+          background: rgb(244, 247, 252);
+          border-radius: calc(var(--bb-grid-size) * 9);
+          padding: calc(var(--bb-grid-size) * 8);
+        }
+
+        #intro > #contents {
+          max-width: 600px;
+        }
+
+        #intro p {
+          line-height: 1.5;
         }
 
         #intro.active {
           display: block;
         }
 
-        header {
-          width: 100%;
-          display: flex;
-          min-height: calc(var(--bb-grid-size) * 20);
-          align-items: center;
-          padding: 0 calc(var(--grid-size) * 4);
+        #sidebar {
+          display: none;
         }
 
-        #header-container {
-          flex: 1;
+        #sidebar.active {
+          display: grid;
+          grid-template-rows: 2fr 3fr;
+          height: 100%;
+          overflow: hidden;
         }
 
-        #response-container {
-          background: rgb(244, 247, 252);
-          border: 2px solid rgb(244, 247, 252);
-          padding: calc(var(--grid-size) * 4);
+        #history {
+          background: red;
+        }
+
+        #output {
           display: flex;
           flex-direction: column;
+          overflow: hidden;
+          grid-row: 1/3;
+          padding: calc(var(--bb-grid-size) * 5);
         }
 
-        @media(min-width: 640px) {
-          :host {
-            padding: 0 calc(var(--grid-size) * 6) 0 calc(var(--grid-size) * 6);
-          }
+        #output h1 {
+          font-size: var(--bb-text-medium);
+          margin: 0;
+          font-weight: 400;
+          padding: 0 0 calc(var(--bb-grid-size) * 5) calc(var(--bb-grid-size) * 8);
+          background: var(--bb-icon-output) 0 0 no-repeat;
+          line-height: calc(var(--bb-grid-size) * 6);
+        }
 
-          header {
-            padding: 0;
-          }
+        #output-list {
+          overflow-y: scroll;
+        }
 
-          #response-container-wrapper {
-            overflow: hidden;
-            border-radius: calc(var(--grid-size) * 8);
-          }
+        #output-list > * {
+          padding: calc(var(--bb-grid-size) * 2);
+        }
 
-          #response-container {
-            padding: calc(var(--grid-size) * 6);
-            margin-top: 0;
-            overflow-y: scroll;
-            overflow-y: overflow;
-            scrollbar-gutter: stable;
-          }
+        #output-list:empty::before {
+          content: 'No board outputs received';
+          font-size: var(--bb-text-small);
         }
 
         #response-container > #intro > h1 {
           font-size: var(--bb-text-xx-large);
-          margin: 0 0 calc(var(--grid-size) * 6) 0;
+          margin: 0 0 calc(var(--bb-grid-size) * 6) 0;
           display: inline-block;
           background: linear-gradient(
             45deg,
@@ -158,8 +201,8 @@ export class UIController extends HTMLElement implements UI {
         }
 
         #response-container > #intro > p {
-          max-width: calc(var(--grid-size) * 125);
-          margin: 0 0 calc(var(--grid-size) * 5) 0;
+          max-width: calc(var(--bb-grid-size) * 125);
+          margin: 0 0 calc(var(--bb-grid-size) * 5) 0;
           line-height: 1.5;
         }
 
@@ -173,51 +216,29 @@ export class UIController extends HTMLElement implements UI {
         }
 
         #url-input-container {
-          margin-top: calc(var(--grid-size) * 10);
+          margin-top: calc(var(--bb-grid-size) * 10);
           position: relative;
         }
 
         #url-input {
-          border-radius: calc(var(--grid-size) * 10);
+          border-radius: calc(var(--bb-grid-size) * 10);
           background: rgb(255, 255, 255);
-          height: calc(var(--grid-size) * 12);
-          padding: 0 calc(var(--grid-size) * 10) 0 calc(var(--grid-size) * 4);
+          height: calc(var(--bb-grid-size) * 12);
+          padding: 0 calc(var(--bb-grid-size) * 10) 0 calc(var(--bb-grid-size) * 4);
           width: 100%;
           border: 1px solid rgb(209, 209, 209);
         }
 
         #url-submit {
           font-size: 0;
-          width: calc(var(--grid-size) * 8);
-          height: calc(var(--grid-size) * 8);
+          width: calc(var(--bb-grid-size) * 8);
+          height: calc(var(--bb-grid-size) * 8);
           position: absolute;
-          right: calc(var(--grid-size) * 2);
-          top: calc(var(--grid-size) * 2);
+          right: calc(var(--bb-grid-size) * 2);
+          top: calc(var(--bb-grid-size) * 2);
           border-radius: 50%;
           background: #FFF var(--bb-icon-start) center center no-repeat;
           border: none;
-        }
-
-        #board-content {
-          border-radius: calc(var(--grid-size) * 8);
-          padding: calc(var(--grid-size) * 8);
-          background: rgb(255, 255, 255);
-          opacity: 0;
-          position: relative;
-          flex: 1;
-        }
-
-        #board-content.active {
-          opacity: 1;
-        }
-
-        #diagram,
-        #diagram svg {
-          max-height: 60vh;
-        }
-
-        #mermaid {
-          display: flex;
         }
 
         #input {
@@ -225,65 +246,29 @@ export class UIController extends HTMLElement implements UI {
           bottom: calc(var(--bb-grid-size) * 8);
           width: calc(100% - var(--bb-grid-size) * 16);
           border-radius: calc(var(--bb-grid-size) * 6);
-          background: rgb(255, 255, 255);
+          background: rgba(255, 255, 255, 0.7);
           padding: calc(var(--bb-grid-size) * 4);
           border: 1px solid rgb(204, 204, 204);
           box-shadow: 0 2px 3px 0 rgba(0,0,0,0.13),
             0 7px 9px 0 rgba(0,0,0,0.16);
           display: none;
+          left: 50%;
+          translate: -50% 0;
         }
 
         #input.active {
           display: block;
         }
-
-        #temp-output {
-          position: fixed;
-          bottom: 100px;
-          right: 32px;
-          padding: 20px;
-          background: rgba(255, 255, 255, 0.8);
-          border-radius: 20px;
-          box-shadow: 0 2px 3px 0 rgba(0,0,0,0.13),
-            0 7px 9px 0 rgba(0,0,0,0.16);
-          width: 50vw;
-          max-height: 80vh;
-          overflow-y: scroll;
-        }
-
-        #temp-output.collapsed {
-          width: 30px;
-          height: 30px;
-          overflow: hidden;
-        }
-
-        #temp-output > * {
-          margin-bottom: 20px;
-        }
-
-        @media(min-width: 740px) {
-          :host {
-            padding: 0 calc(var(--bb-grid-size) * 8);
-            margin: 0;
-          }
-
-          #response-container {
-            padding: calc(var(--grid-size) * 8);
-            height: 85vh;
-          }
-        }
       </style>
-      <header>
-        <div id="header-container">
-          <slot name="header"></slot>
-        </div>
-        <div id="start-container">
-          <slot name="start"></slot>
-        </div>
-      </header>
-      <div id="response-container-wrapper">
-        <div id="response-container">
-          <div id="intro">
+      <!-- Load info -->
+      <div id="load-container">  
+        <slot name="load"></slot>
+      </div>
+
+      <div id="wrapper">
+        <!-- Intro -->
+        <div id="intro">
+          <div id="contents">
             <h1>Hello there!</h1>
             <p>This is the <strong>Breadboard Playground</strong> running in the browser. Here you can either try out one of the sample boards, or you can enter the URL for your own board below.</p>
 
@@ -296,58 +281,35 @@ export class UIController extends HTMLElement implements UI {
               </div>
             </form>
           </div>
-          
-          <slot name="load"></slot>
-          
-          <div id="board-content">
-            <div id="diagram">
-              <div id="mermaid"></div>
-            </div>
+        </div>
 
-            <div id="input">
-              <slot></slot>
-            </div>
+        <!-- Diagram -->
+        <div id="diagram">
+          <div id="mermaid"></div>
+
+          <!-- Inputs -->
+          <div id="input">
+            <slot></slot>
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div id="sidebar">
+          <!-- <div id="history">
+             <h1>History</h1>
+          </div> -->
+          <div id="output">
+            <h1>Output</h1>
+            <div id="output-list">No outputs received</div>
           </div>
         </div>
       </div>
-
-      <!-- Just here to collect outputs for now -->
-      <div id="temp-output"></div>
     `;
 
     this.appendChild(this.#responseContainer);
 
     if (!root) {
       throw new Error("Unable to locate shadow root in UI Controller");
-    }
-
-    root.querySelector("#temp-output")?.addEventListener("click", (evt) => {
-      (evt.target as HTMLElement).classList.toggle("collapsed");
-    });
-  }
-
-  setActiveBreadboard(url: string) {
-    if (!this.#start) {
-      return;
-    }
-
-    const pageUrl = new URL(window.location.href);
-    pageUrl.searchParams.set("board", url);
-    window.history.replaceState(null, "", pageUrl);
-
-    this.#start.setAttribute("url", url);
-  }
-
-  async start(args: StartArgs) {
-    this.#start = new Start(args);
-    this.#start.slot = "start";
-    this.append(this.#start);
-
-    const boardFromUrl = getBoardFromUrl();
-    if (boardFromUrl) {
-      this.dispatchEvent(new StartEvent(boardFromUrl));
-    } else {
-      this.#showIntroContent();
     }
   }
 
@@ -366,26 +328,23 @@ export class UIController extends HTMLElement implements UI {
 
     const children = Array.from(this.children);
     for (const child of children) {
-      if (
-        child.tagName === "HEADER" ||
-        child === this.#start ||
-        child === this.#responseContainer
-      ) {
+      if (child.tagName === "HEADER" || child === this.#responseContainer) {
         continue;
       }
       child.remove();
     }
 
-    const tempChildren = Array.from(
+    const outputs = Array.from(
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      this.shadowRoot!.querySelector("#temp-output")?.childNodes || []
+      this.shadowRoot!.querySelector("#output-list")?.childNodes || []
     );
-    for (const child of tempChildren) {
+
+    for (const child of outputs) {
       child.remove();
     }
   }
 
-  #showIntroContent() {
+  showIntroContent() {
     const root = this.shadowRoot;
     if (!root) {
       throw new Error("Unable to locate shadow root in UI Controller");
@@ -421,7 +380,8 @@ export class UIController extends HTMLElement implements UI {
       throw new Error("Unable to locate shadow root in UI Controller");
     }
 
-    root.querySelector("#board-content")?.classList.add("active");
+    root.querySelector("#sidebar")?.classList.add("active");
+    root.querySelector("#diagram")?.classList.add("active");
   }
 
   #showInputContainer() {
@@ -439,6 +399,7 @@ export class UIController extends HTMLElement implements UI {
     this.#hideIntroContent();
     this.#clearBoardContents();
     this.#showBoardContainer();
+
     const load = new Load(info);
     load.slot = "load";
     this.appendChild(load);
@@ -469,6 +430,29 @@ export class UIController extends HTMLElement implements UI {
       return;
     }
     mermaidElement.innerHTML = svg;
+
+    // Do a little tidy up.
+    const svgImage = root.querySelector("svg");
+    svgImage?.removeAttribute("style");
+    svgImage?.setAttribute("width", "100%");
+    svgImage?.setAttribute("height", "100%");
+
+    // TODO: Make this into its own element.
+    const scale = 0.8;
+    const viewBox = svgImage?.getAttribute("viewBox");
+    if (!viewBox) {
+      return;
+    }
+
+    const [, , w, h] = viewBox.split(" ").map((i) => parseFloat(i) || 0);
+    const diagramWidth = w / scale;
+    const diagramHeight = h / scale;
+    const diagramX = (w - diagramWidth) / 2;
+    const diagramY = (h - diagramHeight) / 2;
+
+    const newViewBox = `${diagramX} ${diagramY} ${diagramWidth} ${diagramHeight}`;
+    svgImage?.setAttribute("viewBox", newViewBox);
+    svgImage?.setAttribute("preserveAspectRatio", "xMidYMin");
   }
 
   progress(message: string) {
@@ -484,10 +468,10 @@ export class UIController extends HTMLElement implements UI {
     this.#showInputContainer();
 
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const tempOutput = this.shadowRoot!.querySelector("#temp-output");
-
+    const outputContainer = this.shadowRoot!.querySelector("#output-list");
     const output = new Output();
-    tempOutput?.appendChild(output);
+    outputContainer?.appendChild(output);
+
     await output.display(values);
   }
 

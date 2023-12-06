@@ -85,9 +85,9 @@ export class Main {
     this.#runtime = this.#getRuntime();
     BreadboardUI.register();
 
-    this.#ui.addEventListener(
+    document.body.addEventListener(
       BreadboardUI.StartEvent.eventName,
-      async (evt) => {
+      async (evt: Event) => {
         if (this.#hasActiveBoard) {
           if (
             !confirm("You already have an active board. Do you want to change?")
@@ -99,7 +99,7 @@ export class Main {
         this.#boardId++;
 
         const startEvent = evt as BreadboardUI.StartEvent;
-        this.#ui.setActiveBreadboard(startEvent.url);
+        this.setActiveBreadboard(startEvent.url);
 
         for await (const result of this.#runtime.run(
           startEvent.url,
@@ -116,7 +116,43 @@ export class Main {
       this.#ui.toast(toastEvent.message, toastEvent.toastType);
     });
 
-    this.#ui.start(config);
+    this.start(config);
+  }
+
+  setActiveBreadboard(url: string) {
+    const pageUrl = new URL(window.location.href);
+    pageUrl.searchParams.set("board", url);
+    window.history.replaceState(null, "", pageUrl);
+
+    // Update the board selector.
+    document.querySelector("bb-start")?.setAttribute("url", url);
+  }
+
+  start(args: BreadboardUI.StartArgs) {
+    const header = document.querySelector("header");
+    if (!header) {
+      return;
+    }
+
+    const Start = customElements.get("bb-start");
+    if (!Start) {
+      console.warn("Start element not defined");
+      return;
+    }
+
+    const start = new Start(args);
+    header.append(start);
+
+    const boardFromUrl = this.#getBoardFromUrl();
+    if (boardFromUrl) {
+      document.body.dispatchEvent(new BreadboardUI.StartEvent(boardFromUrl));
+    } else {
+      this.#ui.showIntroContent();
+    }
+  }
+
+  #getBoardFromUrl() {
+    return new URL(window.location.href).searchParams.get("board");
   }
 
   #hasNodeInfo(data: unknown): data is { node: { id: string } } {

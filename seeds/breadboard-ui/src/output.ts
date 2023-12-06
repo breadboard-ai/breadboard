@@ -40,7 +40,7 @@ export class Output extends HTMLElement {
           list-style: none;
           font-size: var(--bb-text-small);
           font-weight: 500;
-          padding: calc(var(--bb-grid-size) * 3) calc(var(--grid-size) * 8);
+          padding: calc(var(--bb-grid-size) * 3) calc(var(--bb-grid-size) * 8);
         }
 
         summary::-webkit-details-marker {
@@ -50,7 +50,7 @@ export class Output extends HTMLElement {
         pre {
           line-height: 1.5;
           overflow-x: auto;
-          padding: calc(var(--bb-grid-size) * 3) calc(var(--grid-size) * 8);
+          padding: calc(var(--bb-grid-size) * 3) calc(var(--bb-grid-size) * 8);
           background: rgb(253, 253, 255);
           font-size: var(--bb-text-medium);
           margin: 0;
