@@ -8,6 +8,7 @@
     "test": "turbo test",
     "build": "turbo build",
     "lint": "turbo lint",
+    "deep-clean:build": "rm -rf node_modules seeds/*/node_modules package-lock.json && npm run sync",
     "clean:build": "rimraf -g seeds/*/dist seeds/*/.turbo",
     "ci": "npm ci",
     "check:format": "prettier --check --config .prettierrc seeds/**/*.ts",
