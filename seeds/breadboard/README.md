@@ -1,6 +1,6 @@
 # Breadboard
 
-![Milestone](https://img.shields.io/badge/milestone-M2-red) ![Stability](https://img.shields.io/badge/stability-wip-green) [![Discord](https://img.shields.io/discord/1138546999872999556?logo=discord)](https://discord.gg/breadboard)
+![Milestone](https://img.shields.io/badge/milestone-M3-red) ![Stability](https://img.shields.io/badge/stability-wip-green) [![Discord](https://img.shields.io/discord/1138546999872999556?logo=discord)](https://discord.gg/breadboard)
 
 A library for prototyping generative AI applications.
 
@@ -15,7 +15,8 @@ This library's design emphasizes two key properties:
 :two: **Modularity and composability**. Easily share, remix, reuse, and compose prototypes.
 
 ## Requirements
-Breadboard requires [Node](https://nodejs.org/) version >=v19.0.0. 
+
+Breadboard requires [Node](https://nodejs.org/) version >=v19.0.0.
 
 ## Installing the library
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.6.0] - 2023-12-06
+
+- Bug fixes
+- New `remote` submodule to enable invoking boards over HTTP and workers
+- The new syntax! (WIP)
+- The `ui` submodule moved to its own package `breadboard-ui`
+- [Bubbling](https://github.com/google/labs-prototypes/issues/252) inputs!
+
 ## [0.5.1] - 2023-11-18
 
 - Removed unintended dependency on `jsonschema`.

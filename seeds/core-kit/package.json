@@ -49,6 +49,6 @@
     "@google-labs/llm-starter": "*"
   },
   "dependencies": {
-    "@google-labs/breadboard": "^0.5.1"
+    "@google-labs/breadboard": "^0.6.0"
   }
 }

@@ -49,7 +49,7 @@
     "typescript": "^5.0.4"
   },
   "dependencies": {
-    "@google-labs/breadboard": "^0.5.1",
+    "@google-labs/breadboard": "^0.6.0",
     "ajv": "^8.12.0",
     "jsonschema": "^1.4.1"
   }
