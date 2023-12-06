@@ -1,6 +1,6 @@
 # Breadboard Core Kit
 
-![Milestone](https://img.shields.io/badge/milestone-M2-red) ![Stability](https://img.shields.io/badge/stability-wip-green)
+![Milestone](https://img.shields.io/badge/milestone-M3-red) ![Stability](https://img.shields.io/badge/stability-wip-green)
 
 A [Breadboard](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/) Kit containing nodes that enable composition and reuse of boards.
 
