@@ -20,7 +20,6 @@ export enum ObjectType {
 }
 
 type AccumulatorType = string | string[] | Record<string, NodeValue>;
-type ValueType = NodeValue | Record<string, NodeValue>;
 
 export type AppendInputs = Record<string, NodeValue> & {
   accumulator: AccumulatorType;
@@ -116,11 +115,12 @@ export default {
             : `${accumulator}\n`;
         return { accumulator: `${stringy}${asString(values)}` };
       }
-      case ObjectType.array:
+      case ObjectType.array: {
         const flattenedValues = flattenValues(values);
         return {
           accumulator: [...(accumulator as string[]), flattenedValues],
         };
+      }
       case ObjectType.object:
         return {
           accumulator: {

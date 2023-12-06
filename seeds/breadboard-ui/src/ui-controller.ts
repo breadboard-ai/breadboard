@@ -377,6 +377,7 @@ export class UIController extends HTMLElement implements UI {
     }
 
     const tempChildren = Array.from(
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       this.shadowRoot!.querySelector("#temp-output")?.childNodes || []
     );
     for (const child of tempChildren) {
@@ -482,6 +483,7 @@ export class UIController extends HTMLElement implements UI {
     this.#responseContainer.clearContents();
     this.#showInputContainer();
 
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const tempOutput = this.shadowRoot!.querySelector("#temp-output");
 
     const output = new Output();
