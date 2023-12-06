@@ -1,0 +1,88 @@
+{
+  "title": "Board as Function",
+  "description": "Take a board URL and turn it into an LLM function call",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "input",
+      "to": "getBoard",
+      "out": "board",
+      "in": "url"
+    },
+    {
+      "from": "getFunctionSignature",
+      "to": "output",
+      "out": "function",
+      "in": "function"
+    },
+    {
+      "from": "getFunctionSignature",
+      "to": "output",
+      "out": "returns",
+      "in": "returns"
+    },
+    {
+      "from": "getBoard",
+      "to": "getFunctionSignature",
+      "out": "response",
+      "in": "json"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "board": {
+              "type": "string",
+              "title": "Board URL",
+              "description": "The URL of the board to convert to a function call",
+              "default": "/graphs/board-as-function.json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "function": {
+              "type": "object",
+              "title": "Call",
+              "description": "The function call to make"
+            },
+            "returns": {
+              "type": "object",
+              "title": "Returns",
+              "description": "Schema of the return value(s) of the function"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "getFunctionSignature",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "\n{ \n  \"function\": {\n    \"name\": $replace(title, /\\W/, \"_\"),\n    \"description\": description,\n    \"parameters\": nodes[type=\"input\"][0].configuration.schema\n  }, \n  \"returns\": nodes[type=\"output\"][0].configuration.schema \n}",
+        "raw": true
+      }
+    },
+    {
+      "id": "getBoard",
+      "type": "fetch"
+    }
+  ],
+  "kits": [
+    {
+      "url": "npm:@google-labs/llm-starter"
+    }
+  ]
+}

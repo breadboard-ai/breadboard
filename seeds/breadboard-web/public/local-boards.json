@@ -4,6 +4,10 @@
     "url": "/graphs/accumulating-context.json"
   },
   {
+    "title": "Board as Function",
+    "url": "/graphs/board-as-function.json"
+  },
+  {
     "title": "Healer",
     "url": "/graphs/healer.json"
   },
