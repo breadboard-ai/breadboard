@@ -21,7 +21,7 @@ export const loadBoard = async (file: string) => {
 
 export const parseStdin = (): Promise<string> => {
   let resolveStdin: (value: string) => void;
-  let rejectStdin: (reason?: any) => void;
+  let rejectStdin: (reason?: unknown) => void;
 
   const p = new Promise<string>((resolve, reject) => {
     resolveStdin = resolve;
@@ -31,7 +31,7 @@ export const parseStdin = (): Promise<string> => {
   let stdin = '';
 
   process.stdin.on('readable', () => {
-    let chunk = process.stdin.read();
+    const chunk = process.stdin.read();
     if (chunk !== null) {
       stdin += chunk;
     }

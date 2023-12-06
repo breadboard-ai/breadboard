@@ -1,12 +1,12 @@
 import { fileURLToPath, pathToFileURL } from 'url'
 import { stat } from 'fs/promises';
-import { createReadStream } from 'fs';
+import { Stats, createReadStream } from 'fs';
 import { dirname } from 'path';
 import handler from 'serve-handler';
 import http from 'http';
 
 export const debug = async (file: string) => {
-  let fileStat: any;
+  let fileStat: Stats;
   let fileUrl: URL;
 
   if (file != undefined) {
@@ -15,6 +15,7 @@ export const debug = async (file: string) => {
   }
 
   // We are assuming that this package will be published.
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   const distPath = await import("@google-labs/breadboard-web/dist");
   const distDir = dirname(fileURLToPath(distPath.path));

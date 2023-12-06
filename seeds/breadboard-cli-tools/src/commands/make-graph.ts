@@ -1,10 +1,9 @@
 import { watch } from 'fs';
 import path from 'path';
 import { loadBoardFromModule, resolveFilePath } from './lib/utils.js';
-import { Command } from 'commander';
 
-export const makeGraph = async (file: string, options: Record<string, string>, command: Command) => {
-  let filePath = resolveFilePath(file);
+export const makeGraph = async (file: string, options: Record<string, string>) => {
+  const filePath = resolveFilePath(file);
 
   if (file != undefined) {
     if (path.extname(file) != '.js') {
@@ -12,7 +11,7 @@ export const makeGraph = async (file: string, options: Record<string, string>, c
     }
 
     const controller = new AbortController();
-    const board = await loadBoardFromModule(filePath);
+    let board = await loadBoardFromModule(filePath);
 
     console.log(JSON.stringify(board, null, 2));
 
@@ -21,7 +20,7 @@ export const makeGraph = async (file: string, options: Record<string, string>, c
         if (typeof (filename) != 'string') return;
 
         if (eventType === 'change') {
-          let board = await loadBoardFromModule(filePath);
+          board = await loadBoardFromModule(filePath);
 
           console.log(JSON.stringify(board, null, 2));
         }

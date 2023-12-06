@@ -5,8 +5,7 @@ import { loadBoard, parseStdin, resolveFilePath } from './lib/utils.js';
 export const mermaid = async (file: string, options: Record<string, string>) => {
 
   if (file != undefined) {
-    let filePath = resolveFilePath(file);
-
+    const filePath = resolveFilePath(file);
     let board = await loadBoard(filePath);
     console.log(board.mermaid());
 
@@ -17,8 +16,7 @@ export const mermaid = async (file: string, options: Record<string, string>) => 
         if (typeof (filename) != 'string') return;
 
         if (eventType === 'change') {
-
-          let board = await loadBoard(filePath);
+          board = await loadBoard(filePath);
           console.log(board.mermaid());
         }
         else if (eventType === 'rename') {
