@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board } from "@google-labs/breadboard";
+import { Board, Schema } from "@google-labs/breadboard";
+import Core from "@google-labs/core-kit";
 import { Starter } from "@google-labs/llm-starter";
 import { NodeNurseryWeb } from "@google-labs/node-nursery-web";
 
@@ -16,6 +17,7 @@ const board = new Board({
 });
 const starter = board.addKit(Starter);
 const nursery = board.addKit(NodeNurseryWeb);
+const core = board.addKit(Core);
 
 const input = board.input({
   $id: "input",
@@ -27,18 +29,29 @@ const input = board.input({
         title: "Text",
         description: "The text to generate",
       },
+      tools: {
+        type: "array",
+        title: "Tools",
+        description: "URLs of boards to use as tools",
+        items: {
+          type: "string",
+        },
+        default:
+          '[ "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/math.json" ]',
+      },
       useStreaming: {
         type: "boolean",
         title: "Stream",
         description: "Whether to stream the output",
-        default: false,
+        default: "false",
       },
     },
-  },
+    required: ["text"],
+  } satisfies Schema,
 });
 
 const textOutput = board.output({
-  $id: "output",
+  $id: "textOutput",
   schema: {
     type: "object",
     properties: {
@@ -52,7 +65,7 @@ const textOutput = board.output({
 });
 
 const streamOutput = board.output({
-  $id: "stream",
+  $id: "streamOutput",
   schema: {
     type: "object",
     properties: {
@@ -66,8 +79,15 @@ const streamOutput = board.output({
   },
 });
 
+// TODO: This shouldn't be necessary, only here to parse input string to JSON.
+const tools = starter.jsonata({
+  $id: "makeTools",
+  expression: `$.tools`,
+});
+
 const headers = starter
   .jsonata({
+    $id: "makeHeaders",
     expression: `{
     "Content-Type": "application/json",
     "Authorization": "Bearer " & $
@@ -76,6 +96,7 @@ const headers = starter
   .wire("json<-OPENAI_API_KEY", starter.secrets({ keys: ["OPENAI_API_KEY"] }));
 
 const body = starter.jsonata({
+  $id: "makeBody",
   expression: `{
     "model": "gpt-3.5-turbo-1106",
     "messages": [
@@ -87,6 +108,7 @@ const body = starter.jsonata({
     "stream": $.useStreaming,
     "temperature": 1,
     "top_p": 1,
+    "tools": $.tools,
     "frequency_penalty": 0,
     "presence_penalty": 0
   }`,
@@ -94,6 +116,7 @@ const body = starter.jsonata({
 
 const fetch = starter
   .fetch({
+    $id: "callOpenAI",
     url: "https://api.openai.com/v1/chat/completions",
     method: "POST",
   })
@@ -109,6 +132,7 @@ const streamTransform = nursery.transformStream(
     const starter = transformBoard.addKit(Starter);
 
     const transformCompletion = starter.jsonata({
+      $id: "transformChunk",
       expression: 'choices[0].delta.content ? choices[0].delta.content : ""',
     });
 
@@ -119,6 +143,34 @@ const streamTransform = nursery.transformStream(
   }
 );
 
+const formatTools = starter.jsonata({
+  $id: "formatTools",
+  expression: `[function.{ 
+    "type": "function",
+    "function": $
+}]`,
+});
+
+input.wire(
+  "tools->",
+  tools.wire(
+    "result->list",
+    core
+      .map((_, input, output) => {
+        // for each URL, invoke board-as-function.
+        input.wire(
+          "item->boardURL",
+          core
+            .invoke({
+              $id: "boardToFunction",
+              path: "/graphs/board-as-function.json",
+            })
+            .wire("function->", output)
+        );
+      })
+      .wire("list->json", formatTools.wire("result->tools", body))
+  )
+);
 input.wire("useStreaming->", body);
 input.wire(
   "text->",

@@ -6,7 +6,7 @@
     {
       "from": "input",
       "to": "getBoard",
-      "out": "board",
+      "out": "boardURL",
       "in": "url"
     },
     {
@@ -29,7 +29,7 @@
         "schema": {
           "type": "object",
           "properties": {
-            "board": {
+            "boardURL": {
               "type": "string",
               "title": "Board URL",
               "description": "The URL of the board to convert to a function call",

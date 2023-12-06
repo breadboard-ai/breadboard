@@ -4,69 +4,100 @@
   "version": "0.0.1",
   "edges": [
     {
-      "from": "secrets-2",
-      "to": "jsonata-1",
+      "from": "secrets-1",
+      "to": "makeHeaders",
       "out": "OPENAI_API_KEY",
       "in": "json"
     },
     {
       "from": "input",
-      "to": "fetch-4",
+      "to": "callOpenAI",
       "out": "useStreaming",
       "in": "stream"
     },
     {
-      "from": "jsonata-1",
-      "to": "fetch-4",
+      "from": "makeHeaders",
+      "to": "callOpenAI",
       "out": "result",
       "in": "headers"
     },
     {
-      "from": "lambda-6",
-      "to": "transformStream-7",
+      "from": "lambda-3",
+      "to": "transformStream-4",
       "constant": true,
       "out": "board",
       "in": "board"
     },
     {
+      "from": "lambda-5",
+      "to": "map-6",
+      "constant": true,
+      "out": "board",
+      "in": "board"
+    },
+    {
+      "from": "formatTools",
+      "to": "makeBody",
+      "out": "result",
+      "in": "tools"
+    },
+    {
+      "from": "map-6",
+      "to": "formatTools",
+      "out": "list",
+      "in": "json"
+    },
+    {
+      "from": "makeTools",
+      "to": "map-6",
+      "out": "result",
+      "in": "list"
+    },
+    {
       "from": "input",
-      "to": "jsonata-3",
+      "to": "makeTools",
+      "out": "tools",
+      "in": "tools"
+    },
+    {
+      "from": "input",
+      "to": "makeBody",
       "out": "useStreaming",
       "in": "useStreaming"
     },
     {
-      "from": "jsonata-5",
-      "to": "output",
+      "from": "jsonata-2",
+      "to": "textOutput",
       "out": "result",
       "in": "text"
     },
     {
-      "from": "fetch-4",
-      "to": "jsonata-5",
+      "from": "callOpenAI",
+      "to": "jsonata-2",
       "out": "response",
       "in": "json"
     },
     {
-      "from": "transformStream-7",
-      "to": "stream",
+      "from": "transformStream-4",
+      "to": "streamOutput",
       "out": "stream",
       "in": "stream"
     },
     {
-      "from": "fetch-4",
-      "to": "transformStream-7",
+      "from": "callOpenAI",
+      "to": "transformStream-4",
       "out": "stream",
       "in": "stream"
     },
     {
-      "from": "jsonata-3",
-      "to": "fetch-4",
+      "from": "makeBody",
+      "to": "callOpenAI",
       "out": "result",
       "in": "body"
     },
     {
       "from": "input",
-      "to": "jsonata-3",
+      "to": "makeBody",
       "out": "text",
       "in": "text"
     }
@@ -84,18 +115,30 @@
               "title": "Text",
               "description": "The text to generate"
             },
+            "tools": {
+              "type": "array",
+              "title": "Tools",
+              "description": "URLs of boards to use as tools",
+              "items": {
+                "type": "string"
+              },
+              "default": "[ \"https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/math.json\" ]"
+            },
             "useStreaming": {
               "type": "boolean",
               "title": "Stream",
               "description": "Whether to stream the output",
-              "default": false
+              "default": "false"
             }
-          }
+          },
+          "required": [
+            "text"
+          ]
         }
       }
     },
     {
-      "id": "output",
+      "id": "textOutput",
       "type": "output",
       "configuration": {
         "schema": {
@@ -111,7 +154,7 @@
       }
     },
     {
-      "id": "stream",
+      "id": "streamOutput",
       "type": "output",
       "configuration": {
         "schema": {
@@ -128,14 +171,21 @@
       }
     },
     {
-      "id": "jsonata-1",
+      "id": "makeTools",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "$.tools"
+      }
+    },
+    {
+      "id": "makeHeaders",
       "type": "jsonata",
       "configuration": {
         "expression": "{\n    \"Content-Type\": \"application/json\",\n    \"Authorization\": \"Bearer \" & $\n  }"
       }
     },
     {
-      "id": "secrets-2",
+      "id": "secrets-1",
       "type": "secrets",
       "configuration": {
         "keys": [
@@ -144,14 +194,14 @@
       }
     },
     {
-      "id": "jsonata-3",
+      "id": "makeBody",
       "type": "jsonata",
       "configuration": {
-        "expression": "{\n    \"model\": \"gpt-3.5-turbo-1106\",\n    \"messages\": [\n      {\n        \"role\": \"user\",\n        \"content\": $.text\n      }\n    ],\n    \"stream\": $.useStreaming,\n    \"temperature\": 1,\n    \"top_p\": 1,\n    \"frequency_penalty\": 0,\n    \"presence_penalty\": 0\n  }"
+        "expression": "{\n    \"model\": \"gpt-3.5-turbo-1106\",\n    \"messages\": [\n      {\n        \"role\": \"user\",\n        \"content\": $.text\n      }\n    ],\n    \"stream\": $.useStreaming,\n    \"temperature\": 1,\n    \"top_p\": 1,\n    \"tools\": $.tools,\n    \"frequency_penalty\": 0,\n    \"presence_penalty\": 0\n  }"
       }
     },
     {
-      "id": "fetch-4",
+      "id": "callOpenAI",
       "type": "fetch",
       "configuration": {
         "url": "https://api.openai.com/v1/chat/completions",
@@ -159,14 +209,14 @@
       }
     },
     {
-      "id": "jsonata-5",
+      "id": "jsonata-2",
       "type": "jsonata",
       "configuration": {
         "expression": "choices[0].message.content"
       }
     },
     {
-      "id": "lambda-6",
+      "id": "lambda-3",
       "type": "lambda",
       "configuration": {
         "board": {
@@ -174,14 +224,14 @@
           "board": {
             "edges": [
               {
-                "from": "jsonata-3",
+                "from": "transformChunk",
                 "to": "output-2",
                 "out": "result",
                 "in": "chunk"
               },
               {
                 "from": "input-1",
-                "to": "jsonata-3",
+                "to": "transformChunk",
                 "out": "chunk",
                 "in": "json"
               }
@@ -196,7 +246,7 @@
                 "type": "output"
               },
               {
-                "id": "jsonata-3",
+                "id": "transformChunk",
                 "type": "jsonata",
                 "configuration": {
                   "expression": "choices[0].delta.content ? choices[0].delta.content : \"\""
@@ -213,8 +263,67 @@
       }
     },
     {
-      "id": "transformStream-7",
+      "id": "transformStream-4",
       "type": "transformStream",
+      "configuration": {}
+    },
+    {
+      "id": "formatTools",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "[function.{ \n    \"type\": \"function\",\n    \"function\": $\n}]"
+      }
+    },
+    {
+      "id": "lambda-5",
+      "type": "lambda",
+      "configuration": {
+        "board": {
+          "kind": "board",
+          "board": {
+            "edges": [
+              {
+                "from": "boardToFunction",
+                "to": "output-2",
+                "out": "function",
+                "in": "function"
+              },
+              {
+                "from": "input-1",
+                "to": "boardToFunction",
+                "out": "item",
+                "in": "boardURL"
+              }
+            ],
+            "nodes": [
+              {
+                "id": "input-1",
+                "type": "input"
+              },
+              {
+                "id": "output-2",
+                "type": "output"
+              },
+              {
+                "id": "boardToFunction",
+                "type": "invoke",
+                "configuration": {
+                  "path": "/graphs/board-as-function.json"
+                }
+              }
+            ],
+            "kits": [
+              {
+                "url": "npm:@google-labs/core-kit"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "map-6",
+      "type": "map",
       "configuration": {}
     }
   ],
@@ -224,6 +333,9 @@
     },
     {
       "url": "npm:@google-labs/node-nursery-web"
+    },
+    {
+      "url": "npm:@google-labs/core-kit"
     }
   ]
 }

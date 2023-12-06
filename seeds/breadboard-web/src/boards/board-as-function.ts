@@ -20,7 +20,7 @@ const input = board.input({
   schema: {
     type: "object",
     properties: {
-      board: {
+      boardURL: {
         type: "string",
         title: "Board URL",
         description: "The URL of the board to convert to a function call",
@@ -67,7 +67,7 @@ starter
   .fetch({
     $id: "getBoard",
   })
-  .wire("url<-board", input)
+  .wire("url<-boardURL", input)
   .wire("response->json", getFunctionSignature.wire("*->", output));
 
 export default board;
