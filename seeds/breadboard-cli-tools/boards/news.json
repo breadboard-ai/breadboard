@@ -1,0 +1,77 @@
+{
+  "edges": [
+    {
+      "from": "jsonata-5",
+      "to": "output-6",
+      "out": "result",
+      "in": "headlines"
+    },
+    {
+      "from": "xmlToJson-4",
+      "to": "jsonata-5",
+      "out": "json",
+      "in": "json"
+    },
+    {
+      "from": "fetch-3",
+      "to": "xmlToJson-4",
+      "out": "response",
+      "in": "xml"
+    },
+    {
+      "from": "urlTemplate-2",
+      "to": "fetch-3",
+      "out": "url",
+      "in": "url"
+    },
+    {
+      "from": "input-1",
+      "to": "urlTemplate-2",
+      "out": "topic",
+      "in": "query"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "message": "Enter news topic"
+      }
+    },
+    {
+      "id": "urlTemplate-2",
+      "type": "urlTemplate",
+      "configuration": {
+        "template": "https://news.google.com/rss/search?q={{query}}&hl=en-US&gl=US&ceid=US:en"
+      }
+    },
+    {
+      "id": "fetch-3",
+      "type": "fetch",
+      "configuration": {
+        "raw": true
+      }
+    },
+    {
+      "id": "xmlToJson-4",
+      "type": "xmlToJson"
+    },
+    {
+      "id": "jsonata-5",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "$join((rss.channel.item.title.`$t`)[[1..20]], '\n')"
+      }
+    },
+    {
+      "id": "output-6",
+      "type": "output"
+    }
+  ],
+  "kits": [
+    {
+      "url": "npm:@google-labs/llm-starter"
+    }
+  ]
+}

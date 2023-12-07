@@ -40,6 +40,7 @@ program
   .command("run [file]")
   .description("Run a graph.")
   .option("-w, --watch", "Watch the file for changes.")
+  .option("-k, --kit <kit...>", "The kit to use.")
   .option("-i, --input <input>", "The JSON that represents the input to the graph.")
   .action(run)
 
