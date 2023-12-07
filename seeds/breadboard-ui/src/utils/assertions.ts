@@ -39,3 +39,11 @@ export function assertPointerEvent(
     throw new Error("Not a pointer event");
   }
 }
+
+export function assertMouseWheelEvent(
+  value: Event
+): asserts value is WheelEvent {
+  if (!(value instanceof WheelEvent)) {
+    throw new Error("Not a wheel event");
+  }
+}

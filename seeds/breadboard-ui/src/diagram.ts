@@ -6,6 +6,7 @@
 
 import {
   assertHTMLElement,
+  assertMouseWheelEvent,
   assertPointerEvent,
   assertRoot,
   assertSVGElement,
@@ -196,8 +197,25 @@ export class Diagram extends HTMLElement {
     });
 
     root.addEventListener("click", (evt: Event) => this.#onClick(evt));
+    this.addEventListener("mousewheel", (evt: Event) =>
+      this.#onMouseWheel(evt)
+    );
 
     window.addEventListener("resize", () => this.#onWindowResize());
+  }
+
+  #onMouseWheel(evt: Event) {
+    assertMouseWheelEvent(evt);
+    evt.preventDefault();
+
+    this.#scale *= 1 + evt.deltaY / 200;
+    if (this.#scale < 0.1) {
+      this.#scale = 0.1;
+    } else if (this.#scale > 10) {
+      this.#scale = 10;
+    }
+
+    this.#attemptUpdateViewBox();
   }
 
   #onClick(evt: Event) {
