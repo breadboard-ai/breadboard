@@ -209,13 +209,17 @@ export class Diagram extends HTMLElement {
     evt.preventDefault();
 
     this.#scale *= 1 + evt.deltaY / 200;
+
+    this.#clampScale();
+    this.#attemptUpdateViewBox();
+  }
+
+  #clampScale() {
     if (this.#scale < 0.1) {
       this.#scale = 0.1;
     } else if (this.#scale > 10) {
       this.#scale = 10;
     }
-
-    this.#attemptUpdateViewBox();
   }
 
   #onClick(evt: Event) {
@@ -256,6 +260,7 @@ export class Diagram extends HTMLElement {
             this.#scale *= 0.8;
           }
 
+          this.#clampScale();
           this.#attemptUpdateViewBox();
         }
         break;
