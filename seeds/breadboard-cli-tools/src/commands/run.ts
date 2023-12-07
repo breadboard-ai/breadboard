@@ -32,7 +32,6 @@ async function runBoard(
 }
 
 export const run = async (file: string, options: Record<string, any>) => {
-  console.log(options);
   const kitDeclarations = options.kit as string[] | undefined;
 
   if (file != undefined) {
