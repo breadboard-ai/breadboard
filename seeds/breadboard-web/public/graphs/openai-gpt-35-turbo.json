@@ -29,35 +29,16 @@
       "in": "board"
     },
     {
-      "from": "lambda-5",
-      "to": "map-6",
-      "constant": true,
-      "out": "board",
-      "in": "board"
-    },
-    {
       "from": "formatTools",
       "to": "makeBody",
       "out": "result",
       "in": "tools"
     },
     {
-      "from": "map-6",
-      "to": "formatTools",
-      "out": "list",
-      "in": "json"
-    },
-    {
-      "from": "makeTools",
-      "to": "map-6",
-      "out": "result",
-      "in": "list"
-    },
-    {
       "from": "input",
-      "to": "makeTools",
+      "to": "formatTools",
       "out": "tools",
-      "in": "tools"
+      "in": "json"
     },
     {
       "from": "input",
@@ -68,8 +49,14 @@
     {
       "from": "jsonata-2",
       "to": "textOutput",
-      "out": "result",
+      "out": "text",
       "in": "text"
+    },
+    {
+      "from": "jsonata-2",
+      "to": "toolCallsOutput",
+      "out": "tool_calls",
+      "in": "tool_calls"
     },
     {
       "from": "callOpenAI",
@@ -117,12 +104,13 @@
             },
             "tools": {
               "type": "array",
+              "format": "multiline",
               "title": "Tools",
-              "description": "URLs of boards to use as tools",
+              "description": "An array of functions to use for tool-calling",
               "items": {
                 "type": "string"
               },
-              "default": "[ \"https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/math.json\" ]"
+              "default": "[\n  {\n    \"name\": \"The_Calculator_Recipe\",\n    \"description\": \"A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.\",\n    \"parameters\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"text\": {\n          \"type\": \"string\",\n          \"description\": \"Ask a math question\"\n        }\n      },\n      \"required\": [\n        \"text\"\n      ]\n    }\n  },\n  {\n    \"name\": \"The_Search_Summarizer_Recipe\",\n    \"description\": \"A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.\",\n    \"parameters\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"text\": {\n          \"type\": \"string\",\n          \"description\": \"What would you like to search for?\"\n        }\n      },\n      \"required\": [\n        \"text\"\n      ]\n    }\n  }\n]"
             },
             "useStreaming": {
               "type": "boolean",
@@ -154,6 +142,22 @@
       }
     },
     {
+      "id": "toolCallsOutput",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "tool_calls": {
+              "type": "object",
+              "title": "Tool Calls",
+              "description": "The generated tool calls"
+            }
+          }
+        }
+      }
+    },
+    {
       "id": "streamOutput",
       "type": "output",
       "configuration": {
@@ -168,13 +172,6 @@
             }
           }
         }
-      }
-    },
-    {
-      "id": "makeTools",
-      "type": "jsonata",
-      "configuration": {
-        "expression": "$.tools"
       }
     },
     {
@@ -197,7 +194,7 @@
       "id": "makeBody",
       "type": "jsonata",
       "configuration": {
-        "expression": "{\n    \"model\": \"gpt-3.5-turbo-1106\",\n    \"messages\": [\n      {\n        \"role\": \"user\",\n        \"content\": $.text\n      }\n    ],\n    \"stream\": $.useStreaming,\n    \"temperature\": 1,\n    \"top_p\": 1,\n    \"tools\": $.tools,\n    \"frequency_penalty\": 0,\n    \"presence_penalty\": 0\n  }"
+        "expression": "{\n    \"model\": \"gpt-3.5-turbo-1106\",\n    \"messages\": [\n      {\n        \"role\": \"user\",\n        \"content\": $.text\n      }\n    ],\n    \"stream\": $.useStreaming,\n    \"temperature\": 1,\n    \"top_p\": 1,\n    \"tools\": $count($.tools) > 0 ? $.tools,\n    \"frequency_penalty\": 0,\n    \"presence_penalty\": 0\n  }"
       }
     },
     {
@@ -212,7 +209,8 @@
       "id": "jsonata-2",
       "type": "jsonata",
       "configuration": {
-        "expression": "choices[0].message.content"
+        "expression": "choices[0].message.{\n    \"text\": $boolean(content) ? content,\n    \"tool_calls\": tool_calls.function\n}",
+        "raw": true
       }
     },
     {
@@ -271,60 +269,8 @@
       "id": "formatTools",
       "type": "jsonata",
       "configuration": {
-        "expression": "[function.{ \n    \"type\": \"function\",\n    \"function\": $\n}]"
+        "expression": "[$.{ \"type\": \"function\", \"function\": $ }]"
       }
-    },
-    {
-      "id": "lambda-5",
-      "type": "lambda",
-      "configuration": {
-        "board": {
-          "kind": "board",
-          "board": {
-            "edges": [
-              {
-                "from": "boardToFunction",
-                "to": "output-2",
-                "out": "function",
-                "in": "function"
-              },
-              {
-                "from": "input-1",
-                "to": "boardToFunction",
-                "out": "item",
-                "in": "boardURL"
-              }
-            ],
-            "nodes": [
-              {
-                "id": "input-1",
-                "type": "input"
-              },
-              {
-                "id": "output-2",
-                "type": "output"
-              },
-              {
-                "id": "boardToFunction",
-                "type": "invoke",
-                "configuration": {
-                  "path": "/graphs/board-as-function.json"
-                }
-              }
-            ],
-            "kits": [
-              {
-                "url": "npm:@google-labs/core-kit"
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "id": "map-6",
-      "type": "map",
-      "configuration": {}
     }
   ],
   "kits": [
@@ -333,9 +279,6 @@
     },
     {
       "url": "npm:@google-labs/node-nursery-web"
-    },
-    {
-      "url": "npm:@google-labs/core-kit"
     }
   ]
 }

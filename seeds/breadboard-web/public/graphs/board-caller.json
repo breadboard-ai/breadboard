@@ -1,0 +1,239 @@
+{
+  "title": "Board Caller",
+  "description": "Takes a tool-calling-capable generator and a lsit of board URLs, and helps generator call these boards as tools",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "lambda-1",
+      "to": "invoke-2",
+      "constant": true,
+      "out": "board",
+      "in": "board"
+    },
+    {
+      "from": "noStreaming",
+      "to": "generate",
+      "out": "useStreaming",
+      "in": "useStreaming"
+    },
+    {
+      "from": "parameters",
+      "to": "generate",
+      "out": "text",
+      "in": "text"
+    },
+    {
+      "from": "invoke-2",
+      "to": "generate",
+      "out": "tools",
+      "in": "tools"
+    },
+    {
+      "from": "parameters",
+      "to": "invoke-2",
+      "out": "boards",
+      "in": "boards"
+    },
+    {
+      "from": "generate",
+      "to": "output",
+      "out": "tool_calls",
+      "in": "tool_calls"
+    },
+    {
+      "from": "parameters",
+      "to": "generate",
+      "out": "generator",
+      "in": "path"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output",
+      "type": "output"
+    },
+    {
+      "id": "parameters",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "description": "The text to use with tool calling",
+              "default": "What is the square root of e?"
+            },
+            "generator": {
+              "type": "string",
+              "title": "Generator",
+              "description": "The URL of the generator to call",
+              "default": "/graphs/openai-gpt-35-turbo.json"
+            },
+            "boards": {
+              "type": "array",
+              "title": "Tools",
+              "description": "URLs of boards to use as tools",
+              "items": {
+                "type": "string"
+              },
+              "default": "[ \"https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/math.json\", \"https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/search-summarize.json\" ]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "lambda-1",
+      "type": "lambda",
+      "configuration": {
+        "board": {
+          "kind": "board",
+          "board": {
+            "edges": [
+              {
+                "from": "lambda-3",
+                "to": "map-4",
+                "constant": true,
+                "out": "board",
+                "in": "board"
+              },
+              {
+                "from": "formatAsTools",
+                "to": "output-2",
+                "out": "result",
+                "in": "tools"
+              },
+              {
+                "from": "map-4",
+                "to": "formatAsTools",
+                "out": "list",
+                "in": "json"
+              },
+              {
+                "from": "makeList",
+                "to": "map-4",
+                "out": "result",
+                "in": "list"
+              },
+              {
+                "from": "input-1",
+                "to": "makeList",
+                "out": "boards",
+                "in": "boards"
+              }
+            ],
+            "nodes": [
+              {
+                "id": "input-1",
+                "type": "input"
+              },
+              {
+                "id": "output-2",
+                "type": "output"
+              },
+              {
+                "id": "lambda-3",
+                "type": "lambda",
+                "configuration": {
+                  "board": {
+                    "kind": "board",
+                    "board": {
+                      "edges": [
+                        {
+                          "from": "boardToFunction",
+                          "to": "output-2",
+                          "out": "function",
+                          "in": "function"
+                        },
+                        {
+                          "from": "input-1",
+                          "to": "boardToFunction",
+                          "out": "item",
+                          "in": "boardURL"
+                        }
+                      ],
+                      "nodes": [
+                        {
+                          "id": "input-1",
+                          "type": "input"
+                        },
+                        {
+                          "id": "output-2",
+                          "type": "output"
+                        },
+                        {
+                          "id": "boardToFunction",
+                          "type": "invoke",
+                          "configuration": {
+                            "path": "/graphs/board-as-function.json"
+                          }
+                        }
+                      ],
+                      "kits": [
+                        {
+                          "url": "npm:@google-labs/core-kit"
+                        }
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "id": "map-4",
+                "type": "map",
+                "configuration": {}
+              },
+              {
+                "id": "makeList",
+                "type": "jsonata",
+                "configuration": {
+                  "expression": "$.boards"
+                }
+              },
+              {
+                "id": "formatAsTools",
+                "type": "jsonata",
+                "configuration": {
+                  "expression": "[function]"
+                }
+              }
+            ],
+            "kits": [
+              {
+                "url": "npm:@google-labs/core-kit"
+              },
+              {
+                "url": "npm:@google-labs/llm-starter"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "invoke-2",
+      "type": "invoke",
+      "configuration": {}
+    },
+    {
+      "id": "generate",
+      "type": "invoke"
+    },
+    {
+      "id": "noStreaming",
+      "type": "passthrough",
+      "configuration": {
+        "useStreaming": false
+      }
+    }
+  ],
+  "kits": [
+    {
+      "url": "npm:@google-labs/llm-starter"
+    },
+    {
+      "url": "npm:@google-labs/core-kit"
+    }
+  ]
+}

@@ -5,7 +5,6 @@
  */
 
 import { Board, Schema } from "@google-labs/breadboard";
-import Core from "@google-labs/core-kit";
 import { Starter } from "@google-labs/llm-starter";
 import { NodeNurseryWeb } from "@google-labs/node-nursery-web";
 
@@ -17,7 +16,39 @@ const board = new Board({
 });
 const starter = board.addKit(Starter);
 const nursery = board.addKit(NodeNurseryWeb);
-const core = board.addKit(Core);
+
+const sampleTools = [
+  {
+    name: "The_Calculator_Recipe",
+    description:
+      "A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.",
+    parameters: {
+      type: "object",
+      properties: {
+        text: {
+          type: "string",
+          description: "Ask a math question",
+        },
+      },
+      required: ["text"],
+    },
+  },
+  {
+    name: "The_Search_Summarizer_Recipe",
+    description:
+      "A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.",
+    parameters: {
+      type: "object",
+      properties: {
+        text: {
+          type: "string",
+          description: "What would you like to search for?",
+        },
+      },
+      required: ["text"],
+    },
+  },
+];
 
 const input = board.input({
   $id: "input",
@@ -31,13 +62,13 @@ const input = board.input({
       },
       tools: {
         type: "array",
+        format: "multiline",
         title: "Tools",
-        description: "URLs of boards to use as tools",
+        description: "An array of functions to use for tool-calling",
         items: {
           type: "string",
         },
-        default:
-          '[ "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/math.json" ]',
+        default: JSON.stringify(sampleTools, null, 2),
       },
       useStreaming: {
         type: "boolean",
@@ -64,6 +95,20 @@ const textOutput = board.output({
   },
 });
 
+const toolCallsOutput = board.output({
+  $id: "toolCallsOutput",
+  schema: {
+    type: "object",
+    properties: {
+      tool_calls: {
+        type: "object",
+        title: "Tool Calls",
+        description: "The generated tool calls",
+      },
+    },
+  },
+});
+
 const streamOutput = board.output({
   $id: "streamOutput",
   schema: {
@@ -77,12 +122,6 @@ const streamOutput = board.output({
       },
     },
   },
-});
-
-// TODO: This shouldn't be necessary, only here to parse input string to JSON.
-const tools = starter.jsonata({
-  $id: "makeTools",
-  expression: `$.tools`,
 });
 
 const headers = starter
@@ -108,7 +147,7 @@ const body = starter.jsonata({
     "stream": $.useStreaming,
     "temperature": 1,
     "top_p": 1,
-    "tools": $.tools,
+    "tools": $count($.tools) > 0 ? $.tools,
     "frequency_penalty": 0,
     "presence_penalty": 0
   }`,
@@ -124,7 +163,11 @@ const fetch = starter
   .wire("headers<-result", headers);
 
 const getResponse = starter.jsonata({
-  expression: `choices[0].message.content`,
+  expression: `choices[0].message.{
+    "text": $boolean(content) ? content,
+    "tool_calls": tool_calls.function
+}`,
+  raw: true,
 });
 
 const streamTransform = nursery.transformStream(
@@ -145,42 +188,22 @@ const streamTransform = nursery.transformStream(
 
 const formatTools = starter.jsonata({
   $id: "formatTools",
-  expression: `[function.{ 
-    "type": "function",
-    "function": $
-}]`,
+  expression: `[$.{ "type": "function", "function": $ }]`,
 });
 
-const turnBoardsToFunctions = core.map((_, input, output) => {
-  // for each URL, invoke board-as-function.
-  input.wire(
-    "item->boardURL",
-    core
-      .invoke({
-        $id: "boardToFunction",
-        path: "/graphs/board-as-function.json",
-      })
-      .wire("function->", output)
-  );
-});
-
-input.wire(
-  "tools->",
-  tools.wire(
-    "result->list",
-    turnBoardsToFunctions.wire(
-      "list->json",
-      formatTools.wire("result->tools", body)
-    )
-  )
-);
+input.wire("tools->json", formatTools.wire("result->tools", body));
 input.wire("useStreaming->", body);
 input.wire(
   "text->",
   body.wire(
     "result->body",
     fetch
-      .wire("response->json", getResponse.wire("result->text", textOutput))
+      .wire(
+        "response->json",
+        getResponse
+          .wire("text->", textOutput)
+          .wire("tool_calls->", toolCallsOutput)
+      )
       .wire("stream->", streamTransform.wire("stream->", streamOutput))
   )
 );

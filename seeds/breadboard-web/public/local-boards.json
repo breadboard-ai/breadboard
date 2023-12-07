@@ -8,6 +8,10 @@
     "url": "/graphs/board-as-function.json"
   },
   {
+    "title": "Board Caller",
+    "url": "/graphs/board-caller.json"
+  },
+  {
     "title": "Healer",
     "url": "/graphs/healer.json"
   },
