@@ -1,3 +1,9 @@
+/**
+ * @license
+ * Copyright 2023 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { fileURLToPath, pathToFileURL } from 'url'
 import { stat } from 'fs/promises';
 import { Stats, createReadStream } from 'fs';

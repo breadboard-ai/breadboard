@@ -1,6 +1,11 @@
+/**
+ * @license
+ * Copyright 2023 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { Board } from '@google-labs/breadboard';
 import path from "path";
-
 
 export const loadBoardFromModule = async (file: string) => {
   const board = (await import(file)).default;
@@ -10,14 +15,16 @@ export const loadBoardFromModule = async (file: string) => {
   if (board instanceof Board == false) throw new Error(`Board ${file} does not have a default export of type Board`);
 
   return board;
-};export const resolveFilePath = (file: string) => {
+}; 
+
+export const resolveFilePath = (file: string) => {
   return path.resolve(process.cwd(), path.join(path.dirname(file), path.basename(file)));
 };
 
 export const loadBoard = async (file: string) => {
   const board = await Board.load(file);
   return board;
-}  
+}
 
 export const parseStdin = (): Promise<string> => {
   let resolveStdin: (value: string) => void;

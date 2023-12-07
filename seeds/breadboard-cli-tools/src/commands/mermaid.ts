@@ -1,3 +1,9 @@
+/**
+ * @license
+ * Copyright 2023 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { BoardRunner } from '@google-labs/breadboard';
 import { watch } from 'fs';
 import { loadBoard, parseStdin, resolveFilePath } from './lib/utils.js';

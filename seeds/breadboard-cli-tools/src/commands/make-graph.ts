@@ -1,3 +1,9 @@
+/**
+ * @license
+ * Copyright 2023 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { watch } from 'fs';
 import path from 'path';
 import { loadBoardFromModule, resolveFilePath } from './lib/utils.js';
