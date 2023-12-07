@@ -14,48 +14,7 @@ import { StartEvent, type ToastType } from "./events.js";
 import { Toast } from "./toast.js";
 import { ResponseContainer } from "./response-container.js";
 import { Done } from "./done.js";
-
-const MERMAID_URL = "https://cdn.jsdelivr.net/npm/mermaid@10.6.1/+esm";
-const MERMAID_STYLES = `.node.active > * {
-  stroke-width: 4px;
-  stroke: #4CE8F6 !important;
-}
-
-.node.default > * {
-  stroke: #ffab40;
-  fill: #fff2ccff;
-  color: #000;
-}
-
-.node.secrets > * {
-  stroke: #db4437;
-  fill: #f4cccc;
-}
-
-.node.input > * {
-  stroke: #3c78d8;
-  fill: #c9daf8ff;
-}
-
-.node.output > * {
-  stroke: #38761d;
-  fill: #b6d7a8ff;
-}
-
-.node.passthrough {
-  stroke: #a64d79;
-  fill: #ead1dcff;
-}
-
-.node.slot {
-  stroke: #a64d79;
-  fill: #ead1dcff;
-}
-
-.node.slotted {
-  stroke: #a64d79;
-}
-`;
+import { Diagram } from "./diagram.js";
 
 export interface UI {
   progress(message: string): void;
@@ -68,6 +27,7 @@ export interface UI {
 export class UIController extends HTMLElement implements UI {
   #responseContainer = new ResponseContainer();
   #currentBoardDiagram = "";
+  #diagram = new Diagram();
 
   constructor() {
     super();
@@ -112,14 +72,10 @@ export class UIController extends HTMLElement implements UI {
           display: block;
         }
 
-        #mermaid {
+        #diagram-container {
           width: 100%;
           height: 100%;
           overflow: auto;
-        }
-
-        #mermaid svg {
-          display: block;
         }
 
         #intro {
@@ -285,7 +241,7 @@ export class UIController extends HTMLElement implements UI {
 
         <!-- Diagram -->
         <div id="diagram">
-          <div id="mermaid"></div>
+          <div id="diagram-container"></div>
 
           <!-- Inputs -->
           <div id="input">
@@ -308,9 +264,11 @@ export class UIController extends HTMLElement implements UI {
 
     this.appendChild(this.#responseContainer);
 
-    if (!root) {
-      throw new Error("Unable to locate shadow root in UI Controller");
+    const diagramContainer = root.querySelector("#diagram-container");
+    if (!root || !diagramContainer) {
+      throw new Error("Unable to append Diagram Container");
     }
+    diagramContainer.appendChild(this.#diagram);
   }
 
   toast(message: string, type: ToastType) {
@@ -403,6 +361,7 @@ export class UIController extends HTMLElement implements UI {
     const load = new Load(info);
     load.slot = "load";
     this.appendChild(load);
+    this.#diagram.reset();
   }
 
   async renderDiagram(highlightNode = "") {
@@ -410,49 +369,7 @@ export class UIController extends HTMLElement implements UI {
       return;
     }
 
-    highlightNode = highlightNode.replace(/-/g, "");
-    let diagram = this.#currentBoardDiagram;
-    if (highlightNode) {
-      diagram += `\nclass ${highlightNode} active`;
-    }
-
-    const module = await import(/* @vite-ignore */ MERMAID_URL);
-    const mermaid = module.default;
-    mermaid.initialize({ startOnLoad: false, themeCSS: MERMAID_STYLES });
-    const { svg } = await mermaid.render("graphDiv", diagram);
-    const root = this.shadowRoot;
-    if (!root) {
-      throw new Error("Unable to find shadow root");
-    }
-
-    const mermaidElement = root.querySelector("#mermaid");
-    if (!mermaidElement) {
-      return;
-    }
-    mermaidElement.innerHTML = svg;
-
-    // Do a little tidy up.
-    const svgImage = root.querySelector("svg");
-    svgImage?.removeAttribute("style");
-    svgImage?.setAttribute("width", "100%");
-    svgImage?.setAttribute("height", "100%");
-
-    // TODO: Make this into its own element.
-    const scale = 0.8;
-    const viewBox = svgImage?.getAttribute("viewBox");
-    if (!viewBox) {
-      return;
-    }
-
-    const [, , w, h] = viewBox.split(" ").map((i) => parseFloat(i) || 0);
-    const diagramWidth = w / scale;
-    const diagramHeight = h / scale;
-    const diagramX = (w - diagramWidth) / 2;
-    const diagramY = (h - diagramHeight) / 2;
-
-    const newViewBox = `${diagramX} ${diagramY} ${diagramWidth} ${diagramHeight}`;
-    svgImage?.setAttribute("viewBox", newViewBox);
-    svgImage?.setAttribute("preserveAspectRatio", "xMidYMin");
+    return this.#diagram.render(this.#currentBoardDiagram, highlightNode);
   }
 
   progress(message: string) {

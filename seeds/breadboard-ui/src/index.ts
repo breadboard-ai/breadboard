@@ -20,8 +20,10 @@ import {
 import { Toast } from "./toast.js";
 import { ResponseContainer } from "./response-container.js";
 import { Done } from "./done.js";
+import { Diagram } from "./diagram.js";
 
 export const register = () => {
+  customElements.define("bb-diagram", Diagram);
   customElements.define("bb-response-container", ResponseContainer);
   customElements.define("bb-ui", UIController);
   customElements.define("bb-start", Start);
