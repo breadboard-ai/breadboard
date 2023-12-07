@@ -64,8 +64,6 @@ export class UIController extends HTMLElement implements UI {
         }
 
         #diagram {
-          background-color: rgb(244, 247, 252);
-          background-image: var(--bb-grid-pattern);
           border-radius: calc(var(--bb-grid-size) * 9);
           overflow: hidden;
           outline: 2px solid #E3E7ED;

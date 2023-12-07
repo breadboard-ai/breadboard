@@ -81,6 +81,9 @@ export class Diagram extends HTMLElement {
     root.innerHTML = `
       <style>
         :host {
+          background-color: rgb(244, 247, 252);
+          background-image: var(--bb-grid-pattern);
+          background-position: var(--diagram-x, 0) var(--diagram-y, 0);
           display: block;
           width: 100%;
           height: 100%;
@@ -406,7 +409,11 @@ export class Diagram extends HTMLElement {
     const newViewBox = `${this.#translation.x / ratio} ${
       this.#translation.y / ratio
     } ${viewBoxWidth} ${viewBoxHeight}`;
+
     svgImage.setAttribute("viewBox", newViewBox);
+
+    this.style.setProperty("--diagram-x", `${-this.#translation.x}px`);
+    this.style.setProperty("--diagram-y", `${-this.#translation.y}px`);
   }
 
   #captureSVGViewBoxSize() {
