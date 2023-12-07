@@ -9,7 +9,6 @@ import { watch } from 'fs';
 import { loadBoard, parseStdin, resolveFilePath } from './lib/utils.js';
 
 export const mermaid = async (file: string, options: Record<string, string>) => {
-
   if (file != undefined) {
     const filePath = resolveFilePath(file);
     let board = await loadBoard(filePath);
@@ -34,13 +33,10 @@ export const mermaid = async (file: string, options: Record<string, string>) => 
   }
   else {
     const stdin = await parseStdin();
-    const url = URL.createObjectURL(new Blob([stdin], { type: 'application/json' }));
-
+   
     // We should validate it looks like a board...
     const board = await BoardRunner.fromGraphDescriptor(JSON.parse(stdin));
 
     console.log(board.mermaid());
-
-    URL.revokeObjectURL(url);
   }
 }
