@@ -56,9 +56,9 @@ const getFunctionSignature = starter.jsonata({
   "function": {
     "name": $replace(title, /\\W/, "_"),
     "description": description,
-    "parameters": nodes[type="input"][0].configuration.schema
+    "parameters": nodes[type="input"][0].configuration.schema ~> | ** | {}, 'title' |
   }, 
-  "returns": nodes[type="output"][0].configuration.schema 
+  "returns": nodes[type="output"][0].configuration.schema ~> | ** | {}, 'title' |
 }`,
   raw: true,
 });

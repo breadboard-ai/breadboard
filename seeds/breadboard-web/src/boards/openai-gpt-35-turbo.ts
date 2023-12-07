@@ -151,24 +151,27 @@ const formatTools = starter.jsonata({
 }]`,
 });
 
+const turnBoardsToFunctions = core.map((_, input, output) => {
+  // for each URL, invoke board-as-function.
+  input.wire(
+    "item->boardURL",
+    core
+      .invoke({
+        $id: "boardToFunction",
+        path: "/graphs/board-as-function.json",
+      })
+      .wire("function->", output)
+  );
+});
+
 input.wire(
   "tools->",
   tools.wire(
     "result->list",
-    core
-      .map((_, input, output) => {
-        // for each URL, invoke board-as-function.
-        input.wire(
-          "item->boardURL",
-          core
-            .invoke({
-              $id: "boardToFunction",
-              path: "/graphs/board-as-function.json",
-            })
-            .wire("function->", output)
-        );
-      })
-      .wire("list->json", formatTools.wire("result->tools", body))
+    turnBoardsToFunctions.wire(
+      "list->json",
+      formatTools.wire("result->tools", body)
+    )
   )
 );
 input.wire("useStreaming->", body);

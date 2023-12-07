@@ -64,7 +64,7 @@
       "id": "getFunctionSignature",
       "type": "jsonata",
       "configuration": {
-        "expression": "\n{ \n  \"function\": {\n    \"name\": $replace(title, /\\W/, \"_\"),\n    \"description\": description,\n    \"parameters\": nodes[type=\"input\"][0].configuration.schema\n  }, \n  \"returns\": nodes[type=\"output\"][0].configuration.schema \n}",
+        "expression": "\n{ \n  \"function\": {\n    \"name\": $replace(title, /\\W/, \"_\"),\n    \"description\": description,\n    \"parameters\": nodes[type=\"input\"][0].configuration.schema ~> | ** | {}, 'title' |\n  }, \n  \"returns\": nodes[type=\"output\"][0].configuration.schema ~> | ** | {}, 'title' |\n}",
         "raw": true
       }
     },
