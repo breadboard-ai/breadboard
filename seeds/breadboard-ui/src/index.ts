@@ -50,4 +50,4 @@ export type { InputArgs } from "./input.js";
 export type { ResultArgs } from "./result.js";
 export type { StartArgs } from "./start.js";
 
-export { StartEvent, ToastEvent } from "./events.js";
+export { StartEvent, ToastEvent, DelayEvent } from "./events.js";

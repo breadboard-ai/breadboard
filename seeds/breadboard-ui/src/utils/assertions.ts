@@ -10,16 +10,32 @@ export function assertRoot(value: unknown): asserts value is ShadowRoot {
   }
 }
 
-export function assertElement(value: unknown): asserts value is HTMLElement {
-  if (value === null) {
-    throw new Error("Unable to find element");
+export function assertHTMLElement(
+  value: unknown
+): asserts value is HTMLElement {
+  if (!(value instanceof HTMLElement)) {
+    throw new Error("Element is not HTMLElement");
+  }
+}
+
+export function assertSVGElement(value: unknown): asserts value is SVGElement {
+  if (!(value instanceof SVGElement)) {
+    throw new Error("Element is not HTMLElement");
+  }
+}
+
+export function assertSelectElement(
+  value: unknown
+): asserts value is HTMLSelectElement {
+  if (!(value instanceof HTMLSelectElement)) {
+    throw new Error("Element is not HTMLSelectElement");
   }
 }
 
 export function assertPointerEvent(
   value: Event
 ): asserts value is PointerEvent {
-  if (!("clientX" in value)) {
+  if (!(value instanceof PointerEvent)) {
     throw new Error("Not a pointer event");
   }
 }

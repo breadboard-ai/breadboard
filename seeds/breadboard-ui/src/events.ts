@@ -33,3 +33,15 @@ export class ToastEvent extends Event {
     });
   }
 }
+
+export class DelayEvent extends Event {
+  static eventName = "breadboarddelayevent";
+
+  constructor(public duration: number) {
+    super(DelayEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}

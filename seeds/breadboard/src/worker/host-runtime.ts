@@ -64,6 +64,10 @@ export class HostRuntime {
 
     this.controller.inform<StartMesssage>({}, "start");
     for (;;) {
+      if (!this.controller) {
+        break;
+      }
+
       const message = await this.controller.listen();
       const { data, type } = message;
       yield new RunResult(this.controller, message);

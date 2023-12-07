@@ -10,11 +10,16 @@ import { Load, type LoadArgs } from "./load.js";
 import { Output, type OutputArgs } from "./output.js";
 import { Progress } from "./progress.js";
 import { Result, ResultArgs } from "./result.js";
-import { StartEvent, type ToastType } from "./events.js";
+import { DelayEvent, StartEvent, type ToastType } from "./events.js";
 import { Toast } from "./toast.js";
 import { ResponseContainer } from "./response-container.js";
 import { Done } from "./done.js";
 import { Diagram } from "./diagram.js";
+import {
+  assertHTMLElement,
+  assertRoot,
+  assertSelectElement,
+} from "./utils/assertions.js";
 
 export interface UI {
   progress(message: string): void;
@@ -72,6 +77,20 @@ export class UIController extends HTMLElement implements UI {
           display: block;
         }
 
+        :host(.paused) #diagram::after {
+          height: calc(var(--bb-grid-size) * 8);
+          line-height: calc(var(--bb-grid-size) * 8);
+          text-align: center;
+          background: rgb(255, 242, 204);
+          border-bottom: 1px solid rgb(255, 195, 115);
+          content: 'This board is paused';
+          position: absolute;
+          width: 100%;
+          top: 0;
+          left: 0;
+          font-size: var(--bb-text-small);
+        }
+
         #diagram-container {
           width: 100%;
           height: 100%;
@@ -104,9 +123,18 @@ export class UIController extends HTMLElement implements UI {
 
         #sidebar.active {
           display: grid;
-          grid-template-rows: 2fr 3fr;
+          grid-template-rows: calc(var(--bb-grid-size) * 14) 2fr 3fr;
           height: 100%;
           overflow: hidden;
+        }
+
+        #controls {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          justify-content: flex-end;
+          border-bottom: 1px solid rgb(227, 231, 237);
+          padding-right: calc(var(--bb-grid-size) * 6);
         }
 
         #history {
@@ -117,7 +145,7 @@ export class UIController extends HTMLElement implements UI {
           display: flex;
           flex-direction: column;
           overflow: hidden;
-          grid-row: 1/3;
+          grid-row: 2/4;
           padding: calc(var(--bb-grid-size) * 5);
         }
 
@@ -139,7 +167,7 @@ export class UIController extends HTMLElement implements UI {
         }
 
         #output-list:empty::before {
-          content: 'No board outputs received';
+          content: 'No board outputs received yet';
           font-size: var(--bb-text-small);
         }
 
@@ -215,6 +243,16 @@ export class UIController extends HTMLElement implements UI {
         #input.active {
           display: block;
         }
+
+        #delay {
+          width: auto;
+          max-width: calc(var(--bb-grid-size) * 50);
+          padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 4);
+          padding-left: 30px;
+          border-radius: 30px;
+          background: rgb(255, 255, 255) var(--bb-icon-delay) 5px 4px no-repeat;
+          border: 1px solid rgb(200, 200, 200);
+        }
       </style>
       <!-- Load info -->
       <div id="load-container">  
@@ -251,6 +289,15 @@ export class UIController extends HTMLElement implements UI {
 
         <!-- Sidebar -->
         <div id="sidebar">
+          <div id="controls">
+            <select id="delay">
+              <option>No delay</option>
+              <option>250ms delay</option>
+              <option>500ms delay</option>
+              <option>1000ms delay</option>
+              <option>1500ms delay</option>
+            </select>
+          </div>
           <!-- <div id="history">
              <h1>History</h1>
           </div> -->
@@ -265,15 +312,27 @@ export class UIController extends HTMLElement implements UI {
     this.appendChild(this.#responseContainer);
 
     const diagramContainer = root.querySelector("#diagram-container");
-    if (!root || !diagramContainer) {
-      throw new Error("Unable to append Diagram Container");
-    }
+    const delay = root.querySelector("#delay");
+    assertHTMLElement(diagramContainer);
+    assertSelectElement(delay);
+
     diagramContainer.appendChild(this.#diagram);
+    delay.addEventListener("change", () => {
+      this.dispatchEvent(new DelayEvent(parseFloat(delay.value)));
+    });
   }
 
   toast(message: string, type: ToastType) {
     const toast = new Toast(message, type);
     document.body.appendChild(toast);
+  }
+
+  showPaused() {
+    this.classList.add("paused");
+  }
+
+  hidePaused() {
+    this.classList.remove("paused");
   }
 
   #clearBoardContents() {
@@ -344,11 +403,16 @@ export class UIController extends HTMLElement implements UI {
 
   #showInputContainer() {
     const root = this.shadowRoot;
-    if (!root) {
-      throw new Error("Unable to locate shadow root in UI Controller");
-    }
+    assertRoot(root);
 
     root.querySelector("#input")?.classList.add("active");
+  }
+
+  #hideInputContainer() {
+    const root = this.shadowRoot;
+    assertRoot(root);
+
+    root.querySelector("#input")?.classList.remove("active");
   }
 
   load(info: LoadArgs) {
@@ -357,6 +421,7 @@ export class UIController extends HTMLElement implements UI {
     this.#hideIntroContent();
     this.#clearBoardContents();
     this.#showBoardContainer();
+    this.#hideInputContainer();
 
     const load = new Load(info);
     load.slot = "load";
