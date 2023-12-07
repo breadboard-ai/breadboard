@@ -47,3 +47,7 @@ Creates a graph json from a breadboard javascript file.
 
 Pipe it to mermaid
 `npx breadboard make seeds/breadboard-cli-tools/boards/echo.js | npx breadboard mermaid`
+
+Include kits:
+
+`npx breadboard run boards/news.json -i "{\"topic\": \"Paul Kinlan\"}" --kit "@google-labs/llm-starter"`
