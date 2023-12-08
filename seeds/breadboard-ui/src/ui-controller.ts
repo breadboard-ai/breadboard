@@ -488,14 +488,14 @@ export class UIController extends HTMLElement implements UI {
     return this.#diagram.render(this.#currentBoardDiagram, highlightNode);
   }
 
-  progress(message: string, id?: string) {
+  progress(message: string, id?: string, data: unknown | null = null) {
     this.#responseContainer.clearContents();
     this.#showInputContainer();
 
     const progress = new Progress(`${message}...`);
     this.#responseContainer.appendChild(progress);
 
-    this.#createHistoryEntry(HarnessEventType.PROGRESS, message, id);
+    this.#createHistoryEntry(HarnessEventType.PROGRESS, message, id, data);
   }
 
   async output(values: OutputArgs) {

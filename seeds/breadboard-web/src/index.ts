@@ -232,10 +232,17 @@ export class Main {
       }
 
       case "beforehandler": {
-        const progressData = data as { node: { id: string; type: string } };
+        const progressData = data as {
+          node: {
+            id: string;
+            type: string;
+            configuration: Record<string, unknown> | null;
+          };
+        };
         this.#ui.progress(
           `Running "${progressData.node.type}"`,
-          progressData.node.id
+          progressData.node.id,
+          progressData.node.configuration || null
         );
         this.#pending.set(progressData.node.id, progressData.node.type);
         break;
