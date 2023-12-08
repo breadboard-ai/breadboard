@@ -5,7 +5,6 @@
  */
 
 import { Board } from '@google-labs/breadboard';
-import { read } from 'fs';
 import { readFile } from 'fs/promises';
 import path from "path";
 
