@@ -165,7 +165,7 @@ const fetch = starter
 const getResponse = starter.jsonata({
   expression: `choices[0].message.{
     "text": $boolean(content) ? content,
-    "tool_calls": tool_calls.function
+    "tool_calls": tool_calls.function ~> | $ | { "args": $eval(arguments) }, "arguments" |
 }`,
   raw: true,
 });

@@ -14,8 +14,7 @@ sg_lambda3:::slotted -- "lamdba->lamdba" --o lambda1_lambda3
 
 lambda1_formatAsTools["jsonata <br> id='formatAsTools'"] -- "result->tools" --> lambda1_output2{{"output <br> id='output-2'"}}:::output
 lambda1_map4["map <br> id='map-4'"] -- "list->json" --> lambda1_formatAsTools["jsonata <br> id='formatAsTools'"]
-lambda1_makeList["jsonata <br> id='makeList'"] -- "result->list" --> lambda1_map4["map <br> id='map-4'"]
-lambda1_input1[/"input <br> id='input-1'"/]:::input -- "boards->boards" --> lambda1_makeList["jsonata <br> id='makeList'"]
+lambda1_input1[/"input <br> id='input-1'"/]:::input -- "boards->list" --> lambda1_map4["map <br> id='map-4'"]
 end
 sg_lambda1:::slotted -- "lamdba->lamdba" --o lambda1
 

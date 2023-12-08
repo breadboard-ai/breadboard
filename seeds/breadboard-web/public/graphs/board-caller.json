@@ -111,16 +111,10 @@
                 "in": "json"
               },
               {
-                "from": "makeList",
-                "to": "map-4",
-                "out": "result",
-                "in": "list"
-              },
-              {
                 "from": "input-1",
-                "to": "makeList",
+                "to": "map-4",
                 "out": "boards",
-                "in": "boards"
+                "in": "list"
               }
             ],
             "nodes": [
@@ -183,13 +177,6 @@
                 "id": "map-4",
                 "type": "map",
                 "configuration": {}
-              },
-              {
-                "id": "makeList",
-                "type": "jsonata",
-                "configuration": {
-                  "expression": "$.boards"
-                }
               },
               {
                 "id": "formatAsTools",

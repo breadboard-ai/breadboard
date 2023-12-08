@@ -209,7 +209,7 @@
       "id": "jsonata-2",
       "type": "jsonata",
       "configuration": {
-        "expression": "choices[0].message.{\n    \"text\": $boolean(content) ? content,\n    \"tool_calls\": tool_calls.function\n}",
+        "expression": "choices[0].message.{\n    \"text\": $boolean(content) ? content,\n    \"tool_calls\": tool_calls.function ~> | $ | { \"args\": $eval(arguments) }, \"arguments\" |\n}",
         "raw": true
       }
     },

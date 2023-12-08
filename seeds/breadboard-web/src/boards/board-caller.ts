@@ -74,26 +74,16 @@ const formatFunctionDeclarations = core.invoke((board, input, output) => {
   });
 
   input.wire(
-    "boards->",
-    starter
-      .jsonata({
-        // TODO: This shouldn't be necessary,
-        // only here to parse input string to JSON.
-        $id: "makeList",
-        expression: `$.boards`,
-      })
-      .wire(
-        "result->list",
-        turnBoardsToFunctions.wire(
-          "list->json",
-          starter
-            .jsonata({
-              $id: "formatAsTools",
-              expression: `[function]`,
-            })
-            .wire("result->tools", output)
-        )
-      )
+    "boards->list",
+    turnBoardsToFunctions.wire(
+      "list->json",
+      starter
+        .jsonata({
+          $id: "formatAsTools",
+          expression: `[function]`,
+        })
+        .wire("result->tools", output)
+    )
   );
 });
 
