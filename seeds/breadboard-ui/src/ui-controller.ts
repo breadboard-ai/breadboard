@@ -20,8 +20,8 @@ import {
   assertRoot,
   assertSelectElement,
 } from "./utils/assertions.js";
-import { HistoryEntry } from "./history-entry.js";
 import { HarnessEventType } from "./types.js";
+import { HistoryEntry } from "./history-entry.js";
 
 export interface UI {
   progress(message: string): void;
@@ -31,11 +31,20 @@ export interface UI {
   done(): void;
 }
 
+interface HistoryLogItem {
+  type: string;
+  summary: string;
+  id: string | null;
+  data: unknown | null;
+  elapsedTime: number;
+}
+
 export class UIController extends HTMLElement implements UI {
   #responseContainer = new ResponseContainer();
   #currentBoardDiagram = "";
   #diagram = new Diagram();
   #lastHistoryEventTime = Number.NaN;
+  #historyLog: HistoryLogItem[] = [];
 
   constructor() {
     super();
@@ -160,6 +169,11 @@ export class UIController extends HTMLElement implements UI {
 
         #history h1 {
           background: var(--bb-icon-history) 0 0 no-repeat;
+          display: flex;
+        }
+
+        #history h1 span {
+          flex: 1;
         }
 
         #output h1 {
@@ -276,6 +290,11 @@ export class UIController extends HTMLElement implements UI {
           background: rgb(255, 255, 255) var(--bb-icon-delay) 5px 4px no-repeat;
           border: 1px solid rgb(200, 200, 200);
         }
+
+        #download-history-log {
+          font-size: var(--bb-text-nano);
+          color: #888;
+        }
       </style>
       <!-- Load info -->
       <div id="load-container">  
@@ -322,8 +341,11 @@ export class UIController extends HTMLElement implements UI {
             </select>
           </div>
           <div id="history">
-             <h1>History</h1>
-             <div id="history-list"></div>
+            <h1>
+              <span>History</span>
+              <a href="#" id="download-history-log" download="history-log.json">Download log</a>
+            </h1>
+            <div id="history-list"></div>
           </div>
           <div id="output">
             <h1>Outputs</h1>
@@ -343,6 +365,20 @@ export class UIController extends HTMLElement implements UI {
     diagramContainer.appendChild(this.#diagram);
     delay.addEventListener("change", () => {
       this.dispatchEvent(new DelayEvent(parseFloat(delay.value)));
+    });
+
+    const downloadLog = root.querySelector("#download-history-log");
+    assertHTMLElement(downloadLog);
+    downloadLog.addEventListener("click", () => {
+      const currentLink = downloadLog.getAttribute("href");
+      if (currentLink) {
+        URL.revokeObjectURL(currentLink);
+      }
+
+      const contents = JSON.stringify(this.#historyLog, null, 2);
+      const file = new Blob([contents], { type: "application/json" });
+      downloadLog.setAttribute("download", `history-log-${Date.now()}.json`);
+      downloadLog.setAttribute("href", URL.createObjectURL(file));
     });
   }
 
@@ -438,7 +474,7 @@ export class UIController extends HTMLElement implements UI {
   #createHistoryEntry(
     type: HarnessEventType,
     summary: string,
-    id = "",
+    id: string | null = null,
     data: unknown | null = null
   ) {
     if (Number.isNaN(this.#lastHistoryEventTime)) {
@@ -456,6 +492,8 @@ export class UIController extends HTMLElement implements UI {
     this.#lastHistoryEventTime = globalThis.performance.now();
 
     const historyEntry = new HistoryEntry(type, summary, id, data, elapsedTime);
+    this.#historyLog.push({ type, summary, id, data, elapsedTime });
+
     historyList.appendChild(historyEntry);
   }
 
@@ -472,6 +510,7 @@ export class UIController extends HTMLElement implements UI {
     this.appendChild(load);
     this.#diagram.reset();
 
+    this.#historyLog.length = 0;
     this.#lastHistoryEventTime = globalThis.performance.now();
     this.#createHistoryEntry(
       HarnessEventType.LOAD,
@@ -550,7 +589,7 @@ export class UIController extends HTMLElement implements UI {
     this.#createHistoryEntry(type, `Completed ${type}`, id);
   }
 
-  result(value: ResultArgs, id = "") {
+  result(value: ResultArgs, id = null) {
     const before = this.querySelector("bb-progress");
     const result = new Result(value);
     before

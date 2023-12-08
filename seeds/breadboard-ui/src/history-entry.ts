@@ -10,7 +10,7 @@ export class HistoryEntry extends HTMLElement {
   constructor(
     type: HarnessEventType,
     summary: string,
-    id = "",
+    id: string | null = null,
     data: unknown = null,
     elapsedTime: number
   ) {
@@ -18,6 +18,7 @@ export class HistoryEntry extends HTMLElement {
 
     const root = this.attachShadow({ mode: "open" });
     const dataOutput = this.#createDataOutput(data);
+    const idOutput = id || "";
 
     root.innerHTML = `
       <style>
@@ -121,7 +122,7 @@ export class HistoryEntry extends HTMLElement {
       </style>
       <div id="container" class="${type}">
         <details>
-          <summary>${summary} <span id="id">${id}</span> <span id="elapsed-time">${this.#formatTime(
+          <summary>${summary} <span id="id">${idOutput}</span> <span id="elapsed-time">${this.#formatTime(
       elapsedTime
     )}<span></summary>
           <div><pre>${dataOutput}</pre></div>
