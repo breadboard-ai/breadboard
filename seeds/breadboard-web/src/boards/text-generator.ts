@@ -45,7 +45,7 @@ const input = board.input({
         default: "PaLM",
       },
     },
-    required: ["text", "useStreaming"],
+    required: ["text"],
   } satisfies Schema,
 });
 

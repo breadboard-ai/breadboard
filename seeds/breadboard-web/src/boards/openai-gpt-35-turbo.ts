@@ -17,38 +17,38 @@ const board = new Board({
 const starter = board.addKit(Starter);
 const nursery = board.addKit(NodeNurseryWeb);
 
-const sampleTools = [
-  {
-    name: "The_Calculator_Recipe",
-    description:
-      "A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.",
-    parameters: {
-      type: "object",
-      properties: {
-        text: {
-          type: "string",
-          description: "Ask a math question",
-        },
-      },
-      required: ["text"],
-    },
-  },
-  {
-    name: "The_Search_Summarizer_Recipe",
-    description:
-      "A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.",
-    parameters: {
-      type: "object",
-      properties: {
-        text: {
-          type: "string",
-          description: "What would you like to search for?",
-        },
-      },
-      required: ["text"],
-    },
-  },
-];
+// const sampleTools = [
+//   {
+//     name: "The_Calculator_Recipe",
+//     description:
+//       "A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.",
+//     parameters: {
+//       type: "object",
+//       properties: {
+//         text: {
+//           type: "string",
+//           description: "Ask a math question",
+//         },
+//       },
+//       required: ["text"],
+//     },
+//   },
+//   {
+//     name: "The_Search_Summarizer_Recipe",
+//     description:
+//       "A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.",
+//     parameters: {
+//       type: "object",
+//       properties: {
+//         text: {
+//           type: "string",
+//           description: "What would you like to search for?",
+//         },
+//       },
+//       required: ["text"],
+//     },
+//   },
+// ];
 
 const input = board.input({
   $id: "input",
@@ -68,7 +68,7 @@ const input = board.input({
         items: {
           type: "string",
         },
-        default: JSON.stringify(sampleTools, null, 2),
+        default: JSON.stringify([], null, 2),
       },
       useStreaming: {
         type: "boolean",

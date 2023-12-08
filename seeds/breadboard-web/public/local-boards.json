@@ -56,7 +56,7 @@
     "url": "/graphs/search-summarize-as-recipe.json"
   },
   {
-    "title": "New: The Search Summarizer Recipe (as a chain with input and output)",
+    "title": "The Search Summarizer Recipe",
     "url": "/graphs/search-summarize.json"
   },
   {

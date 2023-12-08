@@ -61,7 +61,7 @@ const parameters = board.input({
           type: "string",
         },
         default:
-          '[ "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/math.json", "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/search-summarize.json" ]',
+          '[ "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/math.json", "/graphs/search-summarize.json" ]',
       },
     },
   },

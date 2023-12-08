@@ -1,31 +1,55 @@
 {
-  "title": "New: The Search Summarizer Recipe (as a chain with input and output)",
+  "title": "The Search Summarizer Recipe",
   "description": "A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "edges": [
     {
-      "from": "palm-generateText-15",
-      "to": "output-16",
-      "out": "completion",
+      "from": "generator",
+      "to": "output-1",
+      "out": "text",
       "in": "text"
     },
     {
       "from": "summarizing-template",
-      "to": "palm-generateText-15",
+      "to": "generator",
       "out": "prompt",
       "in": "text"
     },
     {
-      "from": "secrets-14",
-      "to": "palm-generateText-15",
-      "out": "PALM_KEY",
-      "in": "PALM_KEY"
+      "from": "jsonata-4",
+      "to": "summarizing-template",
+      "out": "result",
+      "in": "context"
+    },
+    {
+      "from": "fetch-3",
+      "to": "jsonata-4",
+      "out": "response",
+      "in": "json"
+    },
+    {
+      "from": "urlTemplate-2",
+      "to": "fetch-3",
+      "out": "url",
+      "in": "url"
+    },
+    {
+      "from": "secrets-5",
+      "to": "urlTemplate-2",
+      "out": "API_KEY",
+      "in": "API_KEY"
+    },
+    {
+      "from": "secrets-5",
+      "to": "urlTemplate-2",
+      "out": "GOOGLE_CSE_ID",
+      "in": "GOOGLE_CSE_ID"
     },
     {
       "from": "input",
-      "to": "urlTemplate-11",
-      "out": "text",
-      "in": "query"
+      "to": "generator",
+      "out": "generator",
+      "in": "path"
     },
     {
       "from": "input",
@@ -34,39 +58,40 @@
       "in": "question"
     },
     {
-      "from": "jsonata-13",
-      "to": "summarizing-template",
-      "out": "result",
-      "in": "context"
-    },
-    {
-      "from": "urlTemplate-11",
-      "to": "fetch-12",
-      "out": "url",
-      "in": "url"
-    },
-    {
-      "from": "fetch-12",
-      "to": "jsonata-13",
-      "out": "response",
-      "in": "json"
-    },
-    {
-      "from": "secrets-9",
-      "to": "urlTemplate-11",
-      "out": "API_KEY",
-      "in": "API_KEY"
-    },
-    {
-      "from": "secrets-10",
-      "to": "urlTemplate-11",
-      "out": "GOOGLE_CSE_ID",
-      "in": "GOOGLE_CSE_ID"
+      "from": "input",
+      "to": "urlTemplate-2",
+      "out": "text",
+      "in": "query"
     }
   ],
   "nodes": [
     {
-      "id": "output-16",
+      "id": "input",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Query",
+              "description": "What would you like to search for?"
+            },
+            "generator": {
+              "type": "string",
+              "title": "Generator",
+              "description": "The URL of the generator to call",
+              "default": "/graphs/text-generator.json"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
+    },
+    {
+      "id": "output-1",
       "type": "output",
       "configuration": {
         "schema": {
@@ -85,9 +110,8 @@
       }
     },
     {
-      "id": "palm-generateText-15",
-      "type": "palm-generateText",
-      "configuration": {}
+      "id": "generator",
+      "type": "invoke"
     },
     {
       "id": "summarizing-template",
@@ -97,70 +121,40 @@
       }
     },
     {
-      "id": "secrets-14",
-      "type": "secrets",
-      "configuration": {
-        "keys": [
-          "PALM_KEY"
-        ]
-      }
-    },
-    {
-      "id": "input",
-      "type": "input",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "text": {
-              "type": "string",
-              "title": "Query",
-              "description": "What would you like to search for?"
-            }
-          },
-          "required": [
-            "text"
-          ]
-        }
-      }
-    },
-    {
-      "id": "jsonata-13",
-      "type": "jsonata",
-      "configuration": {
-        "expression": "$join(items.snippet, '\n')"
-      }
-    },
-    {
-      "id": "urlTemplate-11",
+      "id": "urlTemplate-2",
       "type": "urlTemplate",
       "configuration": {
         "template": "https://www.googleapis.com/customsearch/v1?key={API_KEY}&cx={GOOGLE_CSE_ID}&q={query}"
       }
     },
     {
-      "id": "fetch-12",
-      "type": "fetch",
-      "configuration": {}
+      "id": "fetch-3",
+      "type": "fetch"
     },
     {
-      "id": "secrets-9",
-      "type": "secrets",
+      "id": "jsonata-4",
+      "type": "jsonata",
       "configuration": {
-        "keys": [
-          "API_KEY"
-        ]
+        "expression": "$join(items.snippet, '\n')"
       }
     },
     {
-      "id": "secrets-10",
+      "id": "secrets-5",
       "type": "secrets",
       "configuration": {
         "keys": [
+          "API_KEY",
           "GOOGLE_CSE_ID"
         ]
       }
     }
   ],
-  "graphs": {}
+  "kits": [
+    {
+      "url": "npm:@google-labs/llm-starter"
+    },
+    {
+      "url": "npm:@google-labs/core-kit"
+    }
+  ]
 }
