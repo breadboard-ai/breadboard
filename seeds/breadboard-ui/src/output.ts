@@ -10,8 +10,15 @@ import type {
   Schema,
 } from "@google-labs/breadboard";
 
-export type OutputArgs = Record<string, unknown> & {
-  schema: Schema;
+export type OutputArgs = {
+  node: {
+    id: string;
+    type: string;
+    configuration: unknown;
+  };
+  outputs: {
+    schema: Schema;
+  } & Record<string, unknown>;
 };
 
 export class Output extends HTMLElement {
@@ -67,7 +74,7 @@ export class Output extends HTMLElement {
     `;
   }
 
-  async display(values: OutputArgs) {
+  async display(values: OutputArgs["outputs"]) {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const root = this.shadowRoot!;
     const schema = values.schema;

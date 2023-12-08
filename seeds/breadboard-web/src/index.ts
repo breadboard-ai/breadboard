@@ -58,7 +58,8 @@ class Pauser extends EventTarget {
   }
 }
 
-const sleep = (time: number) => new Promise(resolve => setTimeout(resolve, time));
+const sleep = (time: number) =>
+  new Promise((resolve) => setTimeout(resolve, time));
 
 export class Main {
   #ui = BreadboardUI.get();
@@ -68,6 +69,7 @@ export class Main {
   #boardId = 0;
   #delay = 0;
   #pauser = new Pauser();
+  #pending = new Map<string, string>();
 
   constructor(config: BreadboardUI.StartArgs) {
     this.#runtime = this.#getRuntime();
@@ -213,8 +215,8 @@ export class Main {
 
     switch (type) {
       case "output": {
-        const outputData = data as { outputs: BreadboardUI.OutputArgs };
-        await this.#ui.output(outputData.outputs);
+        const outputData = data as BreadboardUI.OutputArgs;
+        await this.#ui.output(outputData);
         break;
       }
 
@@ -230,8 +232,12 @@ export class Main {
       }
 
       case "beforehandler": {
-        const progressData = data as { node: { id: unknown } };
-        this.#ui.progress(`Running "${progressData.node.id}" ...`);
+        const progressData = data as { node: { id: string; type: string } };
+        this.#ui.progress(
+          `Running "${progressData.node.type}"`,
+          progressData.node.id
+        );
+        this.#pending.set(progressData.node.id, progressData.node.type);
         break;
       }
 
@@ -248,6 +254,14 @@ export class Main {
               node: Breadboard.NodeDescriptor;
               inputs: Breadboard.InputValues;
             };
+
+            const pending = this.#pending.get(
+              proxyData.node.id
+            ) as BreadboardUI.HarnessEventType;
+            if (pending) {
+              this.#pending.delete(proxyData.node.id);
+              this.#ui.proxyResult(pending, proxyData.node.id);
+            }
 
             // Track the board ID. If it changes while awaiting a result, then
             // the board has changed and the handled result should be discarded

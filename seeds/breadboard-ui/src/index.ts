@@ -21,8 +21,10 @@ import { Toast } from "./toast.js";
 import { ResponseContainer } from "./response-container.js";
 import { Done } from "./done.js";
 import { Diagram } from "./diagram.js";
+import { HistoryEntry } from "./history-entry.js";
 
 export const register = () => {
+  customElements.define("bb-history-entry", HistoryEntry);
   customElements.define("bb-diagram", Diagram);
   customElements.define("bb-response-container", ResponseContainer);
   customElements.define("bb-ui", UIController);
@@ -49,5 +51,6 @@ export type { OutputArgs } from "./output.js";
 export type { InputArgs } from "./input.js";
 export type { ResultArgs } from "./result.js";
 export type { StartArgs } from "./start.js";
+export type { HarnessEventType } from "./types.js";
 
 export { StartEvent, ToastEvent, DelayEvent } from "./events.js";

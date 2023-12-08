@@ -20,6 +20,8 @@ import {
   assertRoot,
   assertSelectElement,
 } from "./utils/assertions.js";
+import { HistoryEntry } from "./history-entry.js";
+import { HarnessEventType } from "./types.js";
 
 export interface UI {
   progress(message: string): void;
@@ -33,6 +35,7 @@ export class UIController extends HTMLElement implements UI {
   #responseContainer = new ResponseContainer();
   #currentBoardDiagram = "";
   #diagram = new Diagram();
+  #lastHistoryEventTime = Number.NaN;
 
   constructor() {
     super();
@@ -121,7 +124,7 @@ export class UIController extends HTMLElement implements UI {
 
         #sidebar.active {
           display: grid;
-          grid-template-rows: calc(var(--bb-grid-size) * 14) 2fr 3fr;
+          grid-template-rows: calc(var(--bb-grid-size) * 14) 1fr 1fr;
           height: 100%;
           overflow: hidden;
         }
@@ -135,38 +138,59 @@ export class UIController extends HTMLElement implements UI {
           padding-right: calc(var(--bb-grid-size) * 6);
         }
 
-        #history {
-          background: red;
-        }
-
+        #history,
         #output {
           display: flex;
           flex-direction: column;
           overflow: hidden;
-          grid-row: 2/4;
-          padding: calc(var(--bb-grid-size) * 5);
         }
 
+        #history {
+          border-bottom: 1px solid rgb(227, 231, 237);
+        }
+
+        #history h1,
         #output h1 {
           font-size: var(--bb-text-medium);
-          margin: 0;
+          margin: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 2);
           font-weight: 400;
-          padding: 0 0 calc(var(--bb-grid-size) * 5) calc(var(--bb-grid-size) * 8);
-          background: var(--bb-icon-output) 0 0 no-repeat;
+          padding: 0 0 0 calc(var(--bb-grid-size) * 8);
           line-height: calc(var(--bb-grid-size) * 6);
         }
 
-        #output-list {
-          overflow-y: scroll;
+        #history h1 {
+          background: var(--bb-icon-history) 0 0 no-repeat;
         }
 
+        #output h1 {
+          background: var(--bb-icon-output) 0 0 no-repeat;
+        }
+
+        #history-list,
+        #output-list {
+          overflow-y: auto;
+          flex: 1;
+        }
+
+        #history-list > *,
         #output-list > * {
           padding: calc(var(--bb-grid-size) * 2);
+          padding-left: calc(var(--bb-grid-size) * 3 - 1px);
+        }
+
+        #history-list:empty::before,
+        #output-list:empty::before {
+          font-size: var(--bb-text-small);
+          padding: calc(var(--bb-grid-size) * 5);
+          padding-left: calc(var(--bb-grid-size) * 3 - 1px);
+        }
+
+        #history-list:empty::before {
+          content: 'No nodes have run yet';
         }
 
         #output-list:empty::before {
           content: 'No board outputs received yet';
-          font-size: var(--bb-text-small);
         }
 
         #response-container > #intro > h1 {
@@ -296,12 +320,13 @@ export class UIController extends HTMLElement implements UI {
               <option>1500ms delay</option>
             </select>
           </div>
-          <!-- <div id="history">
+          <div id="history">
              <h1>History</h1>
-          </div> -->
+             <div id="history-list"></div>
+          </div>
           <div id="output">
             <h1>Output</h1>
-            <div id="output-list">No outputs received</div>
+            <div id="output-list"></div>
           </div>
         </div>
       </div>
@@ -337,9 +362,7 @@ export class UIController extends HTMLElement implements UI {
     this.#responseContainer.clearContents();
 
     const root = this.shadowRoot;
-    if (!root) {
-      throw new Error("Unable to locate shadow root in UI Controller");
-    }
+    assertRoot(root);
 
     const children = Array.from(this.children);
     for (const child of children) {
@@ -349,12 +372,10 @@ export class UIController extends HTMLElement implements UI {
       child.remove();
     }
 
-    const outputs = Array.from(
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      this.shadowRoot!.querySelector("#output-list")?.childNodes || []
+    const outputList = root.querySelectorAll(
+      "#output-list > *, #history-list > *"
     );
-
-    for (const child of outputs) {
+    for (const child of Array.from(outputList)) {
       child.remove();
     }
   }
@@ -413,6 +434,30 @@ export class UIController extends HTMLElement implements UI {
     root.querySelector("#input")?.classList.remove("active");
   }
 
+  #createHistoryEntry(
+    type: HarnessEventType,
+    summary: string,
+    id = "",
+    data: unknown | null = null
+  ) {
+    if (Number.isNaN(this.#lastHistoryEventTime)) {
+      this.#lastHistoryEventTime = globalThis.performance.now();
+    }
+
+    const root = this.shadowRoot;
+    assertRoot(root);
+
+    const historyList = root.querySelector("#history-list");
+    assertHTMLElement(historyList);
+
+    const elapsedTime =
+      globalThis.performance.now() - this.#lastHistoryEventTime;
+    this.#lastHistoryEventTime = globalThis.performance.now();
+
+    const historyEntry = new HistoryEntry(type, summary, id, data, elapsedTime);
+    historyList.appendChild(historyEntry);
+  }
+
   load(info: LoadArgs) {
     this.#currentBoardDiagram = info.diagram || "";
 
@@ -425,6 +470,14 @@ export class UIController extends HTMLElement implements UI {
     load.slot = "load";
     this.appendChild(load);
     this.#diagram.reset();
+
+    this.#lastHistoryEventTime = globalThis.performance.now();
+    this.#createHistoryEntry(
+      HarnessEventType.LOAD,
+      "Board loaded",
+      undefined,
+      info.url
+    );
   }
 
   async renderDiagram(highlightNode = "") {
@@ -435,24 +488,33 @@ export class UIController extends HTMLElement implements UI {
     return this.#diagram.render(this.#currentBoardDiagram, highlightNode);
   }
 
-  progress(message: string) {
+  progress(message: string, id?: string) {
     this.#responseContainer.clearContents();
     this.#showInputContainer();
 
-    const progress = new Progress(message);
+    const progress = new Progress(`${message}...`);
     this.#responseContainer.appendChild(progress);
+
+    this.#createHistoryEntry(HarnessEventType.PROGRESS, message, id);
   }
 
   async output(values: OutputArgs) {
     this.#responseContainer.clearContents();
     this.#showInputContainer();
 
+    this.#createHistoryEntry(
+      HarnessEventType.OUTPUT,
+      "Output",
+      values.node.id,
+      values.outputs
+    );
+
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const outputContainer = this.shadowRoot!.querySelector("#output-list");
     const output = new Output();
     outputContainer?.appendChild(output);
 
-    await output.display(values);
+    await output.display(values.outputs);
   }
 
   async secret(id: string): Promise<string> {
@@ -471,18 +533,35 @@ export class UIController extends HTMLElement implements UI {
       },
       { remember: true, secret: true }
     );
+
+    this.#createHistoryEntry(HarnessEventType.SECRETS, `Requested secret`, id);
+
     this.#responseContainer.appendChild(input);
     const data = (await input.ask()) as Record<string, string>;
     input.remove();
+
+    this.#createHistoryEntry(HarnessEventType.SECRETS, `Received secret`, id);
+
     return data.secret;
   }
 
-  result(value: ResultArgs) {
+  proxyResult(type: HarnessEventType, id: string) {
+    this.#createHistoryEntry(type, `Completed ${type}`, id);
+  }
+
+  result(value: ResultArgs, id = "") {
     const before = this.querySelector("bb-progress");
     const result = new Result(value);
     before
       ? before.before(result)
       : this.#responseContainer.appendChild(result);
+
+    this.#createHistoryEntry(
+      HarnessEventType.RESULT,
+      value.title,
+      id,
+      value.result || null
+    );
   }
 
   async input(id: string, args: InputArgs): Promise<Record<string, unknown>> {
@@ -490,7 +569,18 @@ export class UIController extends HTMLElement implements UI {
     this.#responseContainer.clearContents();
     const input = new Input(id, args);
     this.#responseContainer.appendChild(input);
-    return (await input.ask()) as Record<string, unknown>;
+
+    this.#createHistoryEntry(HarnessEventType.INPUT, "Requested input", id, {
+      args,
+    });
+
+    const answer = (await input.ask()) as Record<string, unknown>;
+
+    this.#createHistoryEntry(HarnessEventType.INPUT, "Received input", id, {
+      answer,
+    });
+
+    return answer;
   }
 
   error(message: string) {
@@ -498,6 +588,8 @@ export class UIController extends HTMLElement implements UI {
     this.#showInputContainer();
     this.#responseContainer.clearContents();
     this.#responseContainer.appendChild(error);
+
+    this.#createHistoryEntry(HarnessEventType.ERROR, message);
   }
 
   done() {
@@ -505,5 +597,7 @@ export class UIController extends HTMLElement implements UI {
     this.#showInputContainer();
     this.#responseContainer.clearContents();
     this.#responseContainer.appendChild(done);
+
+    this.#createHistoryEntry(HarnessEventType.DONE, "Board finished.");
   }
 }
