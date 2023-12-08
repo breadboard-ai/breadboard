@@ -54,7 +54,6 @@ export class Output extends HTMLElement {
           font-size: var(--bb-text-nano);
           margin: 0;
           white-space: pre-line;
-          max-height: 20vh;
           overflow: auto;
           scrollbar-gutter: stable;
         }
