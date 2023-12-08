@@ -8,11 +8,33 @@
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
-    "serve": "cd functions && npm run serve",
-    "dev": "cd functions && npm run build && firebase emulators:exec --only functions \"npm run build:watch\"",
-    "watch": "FORCE_COLOR=1 tsc --b --watch",
-    "lint": "FORCE_COLOR=1 eslint . --ext .ts",
-    "deploy": "firebase deploy --only functions"
+    "serve": "wireit",
+    "dev": "npm run serve --watch",
+    "lint": "wireit",
+    "deploy": "wireit"
+  },
+  "wireit": {
+    "serve": {
+      "dependencies": [
+        "./functions:serve"
+      ]
+    },
+    "deploy": {
+      "command": "firebase deploy --only functions",
+      "dependencies": [
+        "./functions:build"
+      ]
+    },
+    "lint": {
+      "command": "eslint . --ext .ts",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "files": [
+        "src/**/*.ts"
+      ],
+      "output": []
+    }
   },
   "repository": {
     "type": "git",
@@ -22,6 +44,7 @@
     "dist/src"
   ],
   "ava": {
+    "timeout": "30s",
     "files": [
       "tests/**/*.ts"
     ],

@@ -11,13 +11,115 @@
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "wireit",
     "deploy": "npm run build:vite && firebase deploy",
-    "build:vite": "FORCE_COLOR=1 vite build",
-    "test": "FORCE_COLOR=1 vitest --run",
-    "watch": "vitest",
-    "generate:graphs": "tsx src/make-graphs.ts",
-    "generate:docs": "typedoc --plugin typedoc-plugin-markdown"
+    "build": "wireit",
+    "build:vite": "wireit",
+    "test": "wireit",
+    "generate:graphs": "wireit",
+    "generate:docs": "wireit"
+  },
+  "wireit": {
+    "build": {
+      "dependencies": [
+        "../breadboard:build",
+        "../breadboard-ui:build",
+        "../core-kit:build",
+        "../json-kit:build",
+        "../llm-starter:build",
+        "../node-nursery-web:build",
+        "../palm-kit:build",
+        "../pinecone-kit:build",
+        "build:vite",
+        "generate:graphs"
+      ]
+    },
+    "typescript-files-and-deps": {
+      "dependencies": [
+        "../breadboard:build:tsc",
+        "../breadboard-ui:build:tsc",
+        "../core-kit:build:tsc",
+        "../json-kit:build:tsc",
+        "../llm-starter:build:tsc",
+        "../node-nursery-web:build:tsc",
+        "../palm-kit:build:tsc",
+        "../pinecone-kit:build:tsc"
+      ],
+      "files": [
+        "src/**/*.ts",
+        "tests/**/*.ts",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
+      ]
+    },
+    "build:vite": {
+      "command": "vite build",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "typescript-files-and-deps",
+        "generate:graphs"
+      ],
+      "files": [
+        "vite.config.ts"
+      ],
+      "output": [
+        "dist/"
+      ]
+    },
+    "dev": {
+      "command": "vite",
+      "service": true,
+      "dependencies": [
+        {
+          "script": "typescript-files-and-deps",
+          "cascade": false
+        },
+        {
+          "script": "generate:graphs",
+          "cascade": false
+        }
+      ],
+      "files": [
+        "vite.config.ts"
+      ]
+    },
+    "test": {
+      "command": "vitest --run",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "typescript-files-and-deps"
+      ],
+      "files": [
+        "vite.config.ts"
+      ],
+      "output": []
+    },
+    "generate:graphs": {
+      "command": "tsx src/make-graphs.ts",
+      "dependencies": [
+        "typescript-files-and-deps"
+      ],
+      "files": [],
+      "output": [
+        "public/local-boards.json",
+        "public/graphs/**/*.json"
+      ]
+    },
+    "generate:docs": {
+      "command": "typedoc --plugin typedoc-plugin-markdown",
+      "files": [
+        "src/**/*.ts",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
+      ],
+      "output": [
+        "docs/api/"
+      ]
+    }
   },
   "repository": {
     "type": "git",
@@ -27,6 +129,7 @@
     "dist/src"
   ],
   "ava": {
+    "timeout": "30s",
     "files": [
       "tests/**/*.ts"
     ],

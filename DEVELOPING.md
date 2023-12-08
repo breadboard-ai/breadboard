@@ -10,7 +10,7 @@ Each prototype project lives as an `npm` package. There are two kinds of package
 
 - `seeds` -- contains early experiments and things that aren't fully fleshed out. Most projects will be packages in this directory.
 
-We use [Turborepo](https://turbo.build/repo/docs) as the build tool for the monorepo.
+We use [Wireit](https://github.com/google/wireit) as the build tool for the monorepo.
 
 All packages within the monorepo have a similar structure:
 
@@ -47,7 +47,7 @@ npm i
 :two: build the project:
 
 ```bash
-npx turbo build
+npx run build
 ```
 
 This project moves rather quickly, so most of the time, there will be changes that will require a full rebuild with installing new packages, etc.
@@ -86,7 +86,7 @@ cp -rf templates/blank seeds/awesome-ai-game
 }
 ```
 
-:four: Verify that you have the right setup. Run `npm i` and `npx turbo build` and make sure that the new package shows up in the build log. Then try to run it:
+:four: Verify that you have the right setup. Run `npm i` and `npm run build` and make sure that the new package shows up in the build log. Then try to run it:
 
 ```bash
 cd seeds/awesome-ai-game
@@ -103,21 +103,21 @@ The new package is configured as a private package by default. If you would like
 
 If everything is set up well, you will spend most of your time tinkering inside of your package.
 
-We recommend opening [VSCode](https://code.visualstudio.com/) in the package directory to reduce the amount of clutter. When you run `npx turbo` inside of your package directory, it will automatically scope the build to only dependencies in your package.
+We recommend opening [VSCode](https://code.visualstudio.com/) in the package directory to reduce the amount of clutter. When you run `npm run` inside of your package directory, it will automatically scope the build to only dependencies in your package.
 
 To build your package:
 
 ```bash
-npx turbo build
+npm run build
 ```
 
 To test your package:
 
 ```bash
-npx turbo test
+npm test
 ```
 
-You can add more commands to `package.json` and invoke them either using `npx turbo <command>` or if you don't want to use `npx turbo`, you can get the same results (with more typing and checking) by using `npm` directly.
+You can add more commands to `package.json` and invoke them using `npm run <command>`.
 
 To add a new dependency for your package, just run `npm i <package-name>` in your package working directory.
 
@@ -133,11 +133,11 @@ In your project's `package.json` edit the contents of `dependencies` (or `devDep
 
 ## Testing
 
-Out of the box, the project template is configured to use [ava](https://github.com/avajs/ava) for testing. You can pick a different test framework. Just make sure to configure your `package.json` to point to it, so that `turbo` can run it.
+Out of the box, the project template is configured to use [ava](https://github.com/avajs/ava) for testing. You can pick a different test framework. Just make sure to configure your `package.json` to point to it, so that `npm` can run it.
 
 ## Cleaning stuff
 
-Sometimes, TypeScript Compiler or Turbo (or both!) gets confused, and the only way forward is to clean up the build artifacts and start over. To do that, run:
+Sometimes, TypeScript Compiler or Wireit (or both!) gets confused, and the only way forward is to clean up the build artifacts and start over. To do that, run:
 
 ```bash
 npm run clean
@@ -201,7 +201,7 @@ The dev cycle is:
 - Open the directory of the package (or several of them) in VSCode
 - Write some code
 - Make ESLint and TypeScript live-compiler happy (no errors show up in the PROBLEMS window)
-- Run `npx turbo build` to build the code.
+- Run `npm run build` to build the code.
 - Run your code with `node .` or whatever is the right way to run it. For convenience, create an [npm script](https://docs.npmjs.com/cli/v9/using-npm/scripts) to combine building and running. See example here.
 - Go to the “Write some code” step.
 
@@ -209,9 +209,7 @@ The dev cycle is:
 
 This is a monorepo, which in Node.js vernacular means that it is a flat list of npm packages that are all hosted in the same git repository.
 
-The main reason we need to run `npx turbo build` is because in the monorepo, we need to compute the dependency graph before compiling TypeScript to Javascript, and that is not something that comes standard with the TypeScript compiler.
-
-There are other ways to do it, and turbo is likely an overkill. There are more elegant setups with ts-node that make it possible to avoid the build steps altogether, but I haven’t put it together yet. If you have a better/neater way to build, please let me know.
+The main reason we need to run `npm run build` is because in the monorepo, we need to compute the dependency graph before compiling TypeScript to Javascript, and that is not something that comes standard with the TypeScript compiler.
 
 #### Front-end
 

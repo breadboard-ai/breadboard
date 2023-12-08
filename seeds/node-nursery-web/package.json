@@ -8,10 +8,61 @@
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
-    "build": "FORCE_COLOR=1 tsc --b",
-    "test": "FORCE_COLOR=1 ava",
-    "watch": "FORCE_COLOR=1 tsc --b --watch",
-    "lint": "FORCE_COLOR=1 eslint . --ext .ts"
+    "test": "wireit",
+    "build": "wireit",
+    "build:tsc": "wireit",
+    "lint": "wireit"
+  },
+  "wireit": {
+    "build": {
+      "dependencies": [
+        "../breadboard:build",
+        "../llm-starter:build",
+        "build:tsc"
+      ]
+    },
+    "build:tsc": {
+      "command": "tsc -b",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "../breadboard:build:tsc",
+        "../llm-starter:build:tsc"
+      ],
+      "files": [
+        "src/**/*.ts",
+        "tests/**/*.ts",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
+      ],
+      "output": [
+        "dist/"
+      ],
+      "clean": "if-file-deleted"
+    },
+    "test": {
+      "command": "ava",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
+      "output": []
+    },
+    "lint": {
+      "command": "eslint . --ext .ts",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "files": [
+        "src/**/*.ts",
+        "tests/**/*.ts"
+      ],
+      "output": []
+    }
   },
   "repository": {
     "type": "git",
@@ -21,6 +72,7 @@
     "dist/src"
   ],
   "ava": {
+    "timeout": "30s",
     "files": [
       "tests/**/*.ts"
     ],

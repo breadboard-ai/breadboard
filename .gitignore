@@ -108,8 +108,6 @@ dist
 # Ignore .devcontainer bits for now
 .devcontainer
 
-# Ignore Turbobuild cache files
-.turbo
 .DS_Store
 
 

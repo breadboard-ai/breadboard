@@ -8,11 +8,75 @@
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
-    "generate:docs": "typedoc --plugin typedoc-plugin-markdown",
-    "test": "FORCE_COLOR=1 ava",
-    "build": "FORCE_COLOR=1 tsc --b",
-    "watch": "FORCE_COLOR=1 tsc --b --watch",
-    "lint": "FORCE_COLOR=1 eslint . --ext .ts"
+    "generate:docs": "wireit",
+    "test": "wireit",
+    "build": "wireit",
+    "build:tsc": "wireit",
+    "lint": "wireit"
+  },
+  "wireit": {
+    "build": {
+      "dependencies": [
+        "../breadboard:build",
+        "../chunker:build",
+        "../palm-lite:build",
+        "build:tsc"
+      ]
+    },
+    "build:tsc": {
+      "command": "tsc -b",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "../breadboard:build:tsc",
+        "../chunker:build:tsc",
+        "../palm-lite:build:tsc"
+      ],
+      "files": [
+        "src/**/*.ts",
+        "tests/**/*.ts",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
+      ],
+      "output": [
+        "dist/"
+      ],
+      "clean": "if-file-deleted"
+    },
+    "test": {
+      "command": "ava",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
+      "output": []
+    },
+    "lint": {
+      "command": "eslint . --ext .ts",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "files": [
+        "src/**/*.ts",
+        "tests/**/*.ts"
+      ],
+      "output": []
+    },
+    "generate:docs": {
+      "command": "typedoc --plugin typedoc-plugin-markdown",
+      "files": [
+        "src/**/*.ts",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
+      ],
+      "output": [
+        "docs/api/"
+      ]
+    }
   },
   "repository": {
     "type": "git",
@@ -22,6 +86,7 @@
     "dist/src"
   ],
   "ava": {
+    "timeout": "30s",
     "files": [
       "tests/**/*.ts"
     ],

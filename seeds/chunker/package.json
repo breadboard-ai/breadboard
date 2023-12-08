@@ -11,11 +11,64 @@
     "chunker": "./cli.js"
   },
   "scripts": {
-    "build": "FORCE_COLOR=1 tsc --b",
-    "test": "FORCE_COLOR=1 ava",
-    "dev": "npx turbo build && chunker",
-    "watch": "FORCE_COLOR=1 tsc --b --watch",
-    "lint": "FORCE_COLOR=1 eslint . --ext .ts"
+    "dev": "wireit",
+    "test": "wireit",
+    "build": "wireit",
+    "build:tsc": "wireit",
+    "lint": "wireit"
+  },
+  "wireit": {
+    "build": {
+      "dependencies": [
+        "build:tsc"
+      ]
+    },
+    "build:tsc": {
+      "command": "tsc -b",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "files": [
+        "src/**/*.ts",
+        "tests/**/*.ts",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
+      ],
+      "output": [
+        "dist/"
+      ],
+      "clean": "if-file-deleted"
+    },
+    "dev": {
+      "command": "chunker",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
+      "output": []
+    },
+    "test": {
+      "command": "ava",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
+      "output": []
+    },
+    "lint": {
+      "command": "eslint . --ext .ts",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "files": [
+        "src/**/*.ts",
+        "tests/**/*.ts"
+      ],
+      "output": []
+    }
   },
   "repository": {
     "type": "git",
@@ -25,6 +78,7 @@
     "dist/src"
   ],
   "ava": {
+    "timeout": "30s",
     "files": [
       "tests/**/*.ts"
     ],

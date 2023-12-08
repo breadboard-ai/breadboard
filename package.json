@@ -4,15 +4,104 @@
   "description": "Google Labs repo for rapid prototyping",
   "type": "module",
   "scripts": {
-    "sync": "npm i && npm run clean:build && turbo build --force --no-daemon",
-    "test": "turbo test",
-    "build": "turbo build",
-    "lint": "turbo lint",
+    "sync": "npm i && npm run clean:build && npm run build",
+    "test": "wireit",
+    "build": "wireit",
+    "lint": "wireit",
     "deep-clean:build": "rm -rf node_modules seeds/*/node_modules package-lock.json && npm run sync",
-    "clean:build": "rimraf -g seeds/*/dist seeds/*/.turbo",
+    "clean:build": "rimraf -g seeds/*/dist seeds/*/.wireit",
     "ci": "npm ci",
     "check:format": "prettier --check --config .prettierrc seeds/**/*.ts",
-    "ci:local": "npm run clean:build && turbo build && turbo lint && npm run check:format && turbo test"
+    "ci:local": "wireit"
+  },
+  "wireit": {
+    "build": {
+      "dependencies": [
+        "./seeds/breadboard:build",
+        "./seeds/breadboard-cli-tools:build",
+        "./seeds/breadboard-server:build",
+        "./seeds/breadboard-ui:build",
+        "./seeds/breadboard-web:build",
+        "./seeds/chunker:build",
+        "./seeds/cloud-function:build",
+        "./seeds/coffee-bot-board:build",
+        "./seeds/core-kit:build",
+        "./seeds/create-breadboard:build",
+        "./seeds/create-breadboard-kit:build",
+        "./seeds/discovery-types:build",
+        "./seeds/graph-integrity:build",
+        "./seeds/graph-playground:build",
+        "./seeds/graph-runner:build",
+        "./seeds/hello-world:build",
+        "./seeds/json-kit:build",
+        "./seeds/llm-starter:build",
+        "./seeds/node-nursery:build",
+        "./seeds/node-nursery-web:build",
+        "./seeds/palm-kit:build",
+        "./seeds/palm-lite:build",
+        "./seeds/pinecone-kit:build",
+        "./seeds/web-demo:build"
+      ]
+    },
+    "test": {
+      "dependencies": [
+        "./seeds/breadboard:test",
+        "./seeds/breadboard-cli-tools:test",
+        "./seeds/breadboard-server:test",
+        "./seeds/breadboard-ui:test",
+        "./seeds/breadboard-web:test",
+        "./seeds/chunker:test",
+        "./seeds/cloud-function:test",
+        "./seeds/coffee-bot-board:test",
+        "./seeds/core-kit:test",
+        "./seeds/discovery-types:test",
+        "./seeds/graph-integrity:test",
+        "./seeds/graph-playground:test",
+        "./seeds/graph-runner:test",
+        "./seeds/hello-world:test",
+        "./seeds/json-kit:test",
+        "./seeds/llm-starter:test",
+        "./seeds/node-nursery:test",
+        "./seeds/node-nursery-web:test",
+        "./seeds/palm-kit:test",
+        "./seeds/palm-lite:test",
+        "./seeds/pinecone-kit:test"
+      ]
+    },
+    "lint": {
+      "dependencies": [
+        "./seeds/breadboard:lint",
+        "./seeds/breadboard-cli-tools:lint",
+        "./seeds/breadboard-server:lint",
+        "./seeds/breadboard-ui:lint",
+        "./seeds/chunker:lint",
+        "./seeds/coffee-bot-board:lint",
+        "./seeds/core-kit:lint",
+        "./seeds/create-breadboard:lint",
+        "./seeds/create-breadboard-kit:lint",
+        "./seeds/discovery-types:lint",
+        "./seeds/graph-integrity:lint",
+        "./seeds/graph-playground:lint",
+        "./seeds/graph-runner:lint",
+        "./seeds/hello-world:lint",
+        "./seeds/json-kit:lint",
+        "./seeds/llm-starter:lint",
+        "./seeds/node-nursery:lint",
+        "./seeds/node-nursery-web:lint",
+        "./seeds/palm-kit:lint",
+        "./seeds/palm-lite:lint",
+        "./seeds/pinecone-kit:lint",
+        "./seeds/web-demo:lint"
+      ]
+    },
+    "ci:local": {
+      "dependencies": [
+        "build",
+        "check:format",
+        "lint",
+        "test"
+      ]
+    }
   },
   "keywords": [],
   "author": "Google Labs Team",
@@ -25,7 +114,6 @@
     "eslint": "^8.36.0",
     "npm-ci": "^0.0.2",
     "rimraf": "^5.0.1",
-    "turbo": "1.10.15",
     "typescript": "^5.0.4",
     "wireit": "^0.14.1"
   },

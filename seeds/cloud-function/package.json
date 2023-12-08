@@ -6,9 +6,52 @@
   "main": "./src/index.js",
   "type": "module",
   "scripts": {
-    "deploy": "./scripts/deploy.sh",
-    "dev": "npx turbo build && functions-framework --target=board",
-    "test": "FORCE_COLOR=1 ava"
+    "build": "wireit",
+    "deploy": "wireit",
+    "dev": "wireit",
+    "test": "wireit"
+  },
+  "wireit": {
+    "build": {
+      "dependencies": [
+        "../breadboard-server:build"
+      ]
+    },
+    "deploy": {
+      "command": "./scripts/deploy.sh",
+      "dependencies": [
+        "build"
+      ],
+      "files": [
+        "scripts/deploy.sh",
+        "src/**/*.js"
+      ],
+      "output": []
+    },
+    "dev": {
+      "command": "functions-framework --target=board",
+      "service": true,
+      "dependencies": [
+        "build"
+      ],
+      "files": [
+        "src/**/*.js"
+      ]
+    },
+    "test": {
+      "command": "ava",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "build"
+      ],
+      "files": [
+        "src/**/*.js",
+        "tests/**/*.js"
+      ],
+      "output": []
+    }
   },
   "repository": {
     "type": "git",
@@ -18,6 +61,7 @@
     "dist/src"
   ],
   "ava": {
+    "timeout": "30s",
     "files": [
       "tests/**/*.js"
     ],

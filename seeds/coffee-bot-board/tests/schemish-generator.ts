@@ -126,7 +126,7 @@ test("schemish-generator with unparseable JSON", async (t) => {
     $error: {
       kind: "error",
       error: {
-        message: "Expected property name or '}' in JSON at position 2",
+        message: "Expected property name or '}' in JSON at position 2 (line 1 column 3)",
         type: "parsing",
       },
     },

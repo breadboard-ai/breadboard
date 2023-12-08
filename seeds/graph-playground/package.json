@@ -8,14 +8,120 @@
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
-    "generate:docs": "typedoc --plugin typedoc-plugin-markdown",
-    "test": "FORCE_COLOR=1 ava",
-    "prepare-graphs": "turbo build && node scripts/prepare.js",
-    "build": "FORCE_COLOR=1 tsc --b",
-    "watch": "FORCE_COLOR=1 tsc --b --watch",
-    "dev": "npm run prepare-graphs && node --enable-source-maps .",
-    "ask": "node --enable-source-maps .",
-    "lint": "FORCE_COLOR=1 eslint . --ext .ts"
+    "generate:docs": "wireit",
+    "test": "wireit",
+    "prepare-graphs": "wireit",
+    "build": "wireit",
+    "build:tsc": "wireit",
+    "dev": "wireit",
+    "ask": "wireit",
+    "lint": "wireit"
+  },
+  "wireit": {
+    "build": {
+      "dependencies": [
+        "../breadboard:build",
+        "../core-kit:build",
+        "../graph-integrity:build",
+        "../json-kit:build",
+        "../llm-starter:build",
+        "../node-nursery:build",
+        "../palm-kit:build",
+        "../pinecone-kit:build",
+        "build:tsc"
+      ]
+    },
+    "build:tsc": {
+      "command": "tsc -b",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "../breadboard:build:tsc",
+        "../core-kit:build:tsc",
+        "../graph-integrity:build:tsc",
+        "../json-kit:build:tsc",
+        "../llm-starter:build:tsc",
+        "../node-nursery:build:tsc",
+        "../palm-kit:build:tsc",
+        "../pinecone-kit:build:tsc"
+      ],
+      "files": [
+        "src/**/*.ts",
+        "wild/**/*.ts",
+        "tests/**/*.ts",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
+      ],
+      "output": [
+        "dist/"
+      ],
+      "clean": "if-file-deleted"
+    },
+    "generate:docs": {
+      "command": "typedoc --plugin typedoc-plugin-markdown",
+      "files": [
+        "src/**/*.ts",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
+      ],
+      "output": [
+        "docs/api/"
+      ]
+    },
+    "test": {
+      "command": "ava",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
+      "output": []
+    },
+    "lint": {
+      "command": "eslint . --ext .ts",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "files": [
+        "src/**/*.ts",
+        "wild/**/*.ts",
+        "tests/**/*.ts"
+      ],
+      "output": []
+    },
+    "prepare-graphs": {
+      "command": "node scripts/prepare.js",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [
+        "scripts/prepare.js"
+      ],
+      "output": [
+        "docs/graphs/*.md",
+        "graphs/*.json"
+      ]
+    },
+    "dev": {
+      "command": "node --enable-source-maps .",
+      "dependencies": [
+        "build:tsc",
+        "prepare-graphs"
+      ],
+      "files": [],
+      "output": []
+    },
+    "ask": {
+      "command": "node --enable-source-maps .",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
+      "output": []
+    }
   },
   "repository": {
     "type": "git",
@@ -25,6 +131,7 @@
     "dist/src"
   ],
   "ava": {
+    "timeout": "30s",
     "files": [
       "tests/**/*.ts"
     ],

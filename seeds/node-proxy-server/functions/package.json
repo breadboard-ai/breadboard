@@ -2,11 +2,71 @@
   "name": "functions",
   "type": "module",
   "scripts": {
-    "build": "tsc && rollup -c",
-    "serve": "npm run build && firebase emulators:start --only functions",
-    "shell": "npm run build && firebase functions:shell",
+    "build": "wireit",
+    "build:tsc": "wireit",
+    "build:rollup": "wireit",
+    "serve": "wireit",
+    "shell": "npm run build && npx firebase functions:shell",
     "start": "npm run shell",
     "logs": "firebase functions:log"
+  },
+  "wireit": {
+    "build": {
+      "dependencies": [
+        "../../breadboard:build",
+        "../../llm-starter:build",
+        "../../palm-kit:build",
+        "build:rollup",
+        "build:tsc"
+      ]
+    },
+    "typescript-files-and-deps": {
+      "dependencies": [
+        "../../breadboard:build:tsc",
+        "../../llm-starter:build:tsc",
+        "../../palm-kit:build:tsc"
+      ],
+      "files": [
+        "src/**/*.ts",
+        "tsconfig.json"
+      ]
+    },
+    "build:tsc": {
+      "command": "tsc",
+      "dependencies": [
+        "typescript-files-and-deps"
+      ],
+      "files": [],
+      "output": [
+        "lib/",
+        "!lib/bundle.js"
+      ],
+      "clean": "if-file-deleted"
+    },
+    "build:rollup": {
+      "command": "rollup -c",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [
+        "rollup.config.js",
+        "package.json"
+      ],
+      "output": [
+        "lib/bundle.js"
+      ]
+    },
+    "serve": {
+      "command": "firebase emulators:start --only functions",
+      "service": true,
+      "dependencies": [
+        {
+          "script": "typescript-files-and-deps",
+          "cascade": false
+        }
+      ],
+      "files": []
+    }
   },
   "engines": {
     "node": "20"

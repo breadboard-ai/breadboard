@@ -8,10 +8,52 @@
   },
   "type": "module",
   "scripts": {
-    "copy-assets": "FORCE_COLOR=1 rm -rf dist/assets/* && cp -r assets dist",
-    "build": "FORCE_COLOR=1 tsc --b && npm run copy-assets",
-    "watch": "FORCE_COLOR=1 tsc --b --watch",
-    "lint": "FORCE_COLOR=1 eslint . --ext .ts"
+    "copy-assets": "wireit",
+    "build": "wireit",
+    "lint": "wireit"
+  },
+  "wireit": {
+    "copy-assets": {
+      "command": "cp -r assets dist",
+      "files": [
+        "assets/"
+      ],
+      "output": [
+        "dist/assets/"
+      ]
+    },
+    "build": {
+      "dependencies": [
+        "build:tsc",
+        "copy-assets"
+      ]
+    },
+    "build:tsc": {
+      "command": "tsc -b",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "files": [
+        "src/**/*.ts",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
+      ],
+      "output": [
+        "dist/",
+        "!dist/assets/"
+      ],
+      "clean": "if-file-deleted"
+    },
+    "lint": {
+      "command": "eslint . --ext .ts",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "files": [
+        "src/**/*.ts"
+      ],
+      "output": []
+    }
   },
   "repository": {
     "type": "git",

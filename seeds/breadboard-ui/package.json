@@ -9,13 +9,110 @@
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
-    "generate:docs": "typedoc --plugin typedoc-plugin-markdown",
-    "dev": "vite dev",
-    "test": "FORCE_COLOR=1 vitest --run",
-    "build": "FORCE_COLOR=1 tsc --b && npm run build:rollup",
-    "build:rollup": "rollup -c",
-    "watch": "FORCE_COLOR=1 tsc --b --watch",
-    "lint": "FORCE_COLOR=1 eslint . --ext .ts"
+    "generate:docs": "wireit",
+    "dev": "wireit",
+    "test": "wireit",
+    "build": "wireit",
+    "build:tsc": "wireit",
+    "build:rollup": "wireit",
+    "lint": "wireit"
+  },
+  "wireit": {
+    "build": {
+      "dependencies": [
+        "../breadboard:build",
+        "build:tsc",
+        "build:rollup"
+      ]
+    },
+    "typescript-files-and-deps": {
+      "dependencies": [
+        "../breadboard:build:tsc"
+      ],
+      "files": [
+        "src/**/*.ts",
+        "tests/**/*.ts",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
+      ]
+    },
+    "build:tsc": {
+      "command": "tsc -b",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "typescript-files-and-deps"
+      ],
+      "files": [],
+      "output": [
+        "dist/",
+        "!dist/**/*.min.js{,.map}"
+      ],
+      "clean": "if-file-deleted"
+    },
+    "build:rollup": {
+      "command": "rollup -c",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [
+        "rollup.config.js",
+        "package.json"
+      ],
+      "output": [
+        "dist/**/*.min.js{,.map}"
+      ]
+    },
+    "dev": {
+      "command": "vite dev",
+      "service": true,
+      "dependencies": [
+        {
+          "script": "typescript-files-and-deps",
+          "cascade": false
+        }
+      ],
+      "files": [
+        "index.html",
+        "vite.config.ts"
+      ]
+    },
+    "test": {
+      "command": "vitest --run",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "typescript-files-and-deps"
+      ],
+      "files": [
+        "vite.config.ts"
+      ],
+      "output": []
+    },
+    "lint": {
+      "command": "eslint . --ext .ts",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "files": [
+        "src/**/*.ts",
+        "tests/**/*.ts"
+      ],
+      "output": []
+    },
+    "generate:docs": {
+      "command": "typedoc --plugin typedoc-plugin-markdown",
+      "files": [
+        "src/**/*.ts",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
+      ],
+      "output": [
+        "docs/api/"
+      ]
+    }
   },
   "repository": {
     "type": "git",

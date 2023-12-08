@@ -8,12 +8,91 @@
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
-    "build:vite": "FORCE_COLOR=1 vite build",
-    "watch": "FORCE_COLOR=1 tsc --b --watch && vite build",
-    "dev": "vite --host",
-    "preview": "vite preview",
-    "serve": "npx serve dist",
-    "lint": "FORCE_COLOR=1 eslint . --ext .ts"
+    "build": "wireit",
+    "build:vite": "wireit",
+    "dev": "wireit",
+    "preview": "wireit",
+    "serve": "wireit",
+    "lint": "wireit"
+  },
+  "wireit": {
+    "build": {
+      "dependencies": [
+        "../breadboard:build",
+        "../llm-starter:build",
+        "../palm-kit:build",
+        "../palm-lite:build",
+        "build:vite"
+      ]
+    },
+    "vite-deps-and-files": {
+      "dependencies": [
+        "../breadboard:build:tsc",
+        "../llm-starter:build:tsc",
+        "../palm-kit:build:tsc",
+        "../palm-lite:build:tsc"
+      ],
+      "files": [
+        "src/",
+        "vite.config.ts",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
+      ]
+    },
+    "build:vite": {
+      "command": "vite build",
+      "dependencies": [
+        "vite-deps-and-files"
+      ],
+      "files": [],
+      "output": [
+        "dist/"
+      ]
+    },
+    "dev": {
+      "command": "vite --host",
+      "service": true,
+      "dependencies": [
+        {
+          "script": "vite-deps-and-files",
+          "cascade": false
+        }
+      ],
+      "files": []
+    },
+    "preview": {
+      "command": "vite preview",
+      "service": true,
+      "dependencies": [
+        {
+          "script": "build:vite",
+          "cascade": false
+        }
+      ],
+      "files": []
+    },
+    "serve": {
+      "command": "serve dist",
+      "service": true,
+      "dependencies": [
+        {
+          "script": "build:vite",
+          "cascade": false
+        }
+      ],
+      "files": []
+    },
+    "lint": {
+      "command": "eslint . --ext .ts",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "files": [
+        "src/**/*.ts",
+        "tests/**/*.ts"
+      ],
+      "output": []
+    }
   },
   "repository": {
     "type": "git",
@@ -23,6 +102,7 @@
     "dist/src"
   ],
   "ava": {
+    "timeout": "30s",
     "files": [
       "tests/**/*.ts"
     ],
