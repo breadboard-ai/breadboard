@@ -11,8 +11,8 @@ import Starter from "@google-labs/llm-starter";
 const board = new Board({
   title: "Board Caller",
   description:
-    "Takes a tool-calling-capable generator and a lsit of board URLs, and helps generator call these boards as tools",
-  version: "0.0.1",
+    "Takes a tool-calling-capable generator and a list of board URLs, and helps generator call these boards as tools",
+  version: "0.0.5",
 });
 
 const starter = board.addKit(Starter);
