@@ -222,4 +222,27 @@ test("createBubbleHandler works as expected", async (t) => {
       'Missing required input "foo".'
     );
   }
+  {
+    const handler = createBubbleHandler({}, {});
+    t.deepEqual(
+      await handler("foo", { type: "string", default: "bar" }, false),
+      "bar"
+    );
+    t.deepEqual(
+      await handler("foo", { type: "boolean", default: "false" }, false),
+      false
+    );
+    t.deepEqual(
+      await handler("foo", { type: "array", default: "[]" }, false),
+      []
+    );
+    t.deepEqual(
+      await handler(
+        "foo",
+        { type: "object", default: '{ "foo": "bar" }' },
+        false
+      ),
+      { foo: "bar" }
+    );
+  }
 });

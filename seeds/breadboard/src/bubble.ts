@@ -49,11 +49,14 @@ export const createBubbleHandler = (
     if (required) {
       throw new Error(createErrorMessage(name, metadata, required));
     }
+    if (schema.default !== undefined) {
+      if (schema.type !== "string") {
+        return JSON.parse(schema.default);
+      }
+      return schema.default;
+    }
     const value = await context.requestInput?.(name, schema);
     if (value === undefined) {
-      if (schema.default !== undefined) {
-        return schema.default;
-      }
       throw new Error(createErrorMessage(name, metadata, required));
     }
     return value;
