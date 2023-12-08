@@ -8,6 +8,7 @@ import {
   BoardRunner,
   InputValues,
   Kit,
+  Schema,
   asRuntimeKit,
 } from "@google-labs/breadboard";
 import { watch as fsWatch } from "fs";
@@ -36,6 +37,7 @@ async function runBoard(
       const nodeInputs = stop.inputArguments;
       // we won't mutate the inputs.
       const newInputs = inputs;
+      const schema = nodeInputs.schema as Schema;
 
       /* 
       We will ask for the data if it's not present on the inputs. 
@@ -43,19 +45,20 @@ async function runBoard(
       */
       if (
         pipedInput == false &&
-        nodeInputs.schema != undefined &&
-        nodeInputs.schema.properties != undefined
-      ) {
+        schema != undefined) {
         const rl = readline.createInterface({ input, output });
 
-        const properties = Object.entries(nodeInputs.schema.properties);
+        if (schema.properties != undefined) {
 
-        for (const [name, property] of properties) {
-          if (name in newInputs == false) {
-            // The required argument is not on the input. Ask for it.
-            const answer = await rl.question(property.description + " ");
+          const properties = Object.entries(schema.properties);
 
-            newInputs[name] = answer;
+          for (const [name, property] of properties) {
+            if (name in newInputs == false) {
+              // The required argument is not on the input. Ask for it.
+              const answer = await rl.question(property.description + " ");
+
+              newInputs[name] = answer;
+            }
           }
         }
 
