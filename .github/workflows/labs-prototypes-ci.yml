@@ -20,6 +20,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
+      - uses: google/wireit@setup-github-actions-caching/v1
 
       - name: Clean Installing dependencies
         run: npm run ci

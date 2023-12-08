@@ -12,13 +12,98 @@
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
-    "generate:docs": "typedoc --plugin typedoc-plugin-markdown",
-    "test": "FORCE_COLOR=1 ava",
-    "build": "FORCE_COLOR=1 tsc --b && npm run build:rollup",
-    "build:rollup": "rollup -c",
-    "watch": "FORCE_COLOR=1 tsc --b --watch",
-    "lint": "FORCE_COLOR=1 eslint . --ext .ts",
-    "merm": "npm run build && node scripts/make-graphs.js"
+    "generate:docs": "wireit",
+    "test": "wireit",
+    "build": "wireit",
+    "build:tsc": "wireit",
+    "build:rollup": "wireit",
+    "lint": "wireit",
+    "merm": "wireit"
+  },
+  "wireit": {
+    "build": {
+      "dependencies": [
+        "build:rollup",
+        "build:tsc"
+      ]
+    },
+    "build:tsc": {
+      "command": "tsc -b",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "files": [
+        "src/**/*.ts",
+        "tests/**/*.ts",
+        "tsconfig.json",
+        "../tsconfig/base.json"
+      ],
+      "output": [
+        "dist/",
+        "!dist/**/*.min.js{,.map}"
+      ],
+      "clean": "if-file-deleted"
+    },
+    "build:rollup": {
+      "command": "rollup -c",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [
+        "rollup.config.js",
+        "package.json"
+      ],
+      "output": [
+        "dist/**/*.min.js{,.map}"
+      ]
+    },
+    "test": {
+      "command": "ava",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
+      "output": []
+    },
+    "lint": {
+      "command": "eslint . --ext .ts",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "files": [
+        "src/**/*.ts",
+        "tests/**/*.ts",
+        ".eslintrc"
+      ],
+      "output": []
+    },
+    "merm": {
+      "command": "node scripts/make-graphs.js",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [
+        "scripts/make-graphs.js",
+        "tests/data/**/*.json"
+      ],
+      "output": [
+        "docs/graphs/**/*.md"
+      ]
+    },
+    "generate:docs": {
+      "command": "typedoc --plugin typedoc-plugin-markdown",
+      "files": [
+        "src/**/*.ts",
+        "tsconfig.json",
+        "../tsconfig/base.json"
+      ],
+      "output": [
+        "docs/api/"
+      ]
+    }
   },
   "repository": {
     "type": "git",

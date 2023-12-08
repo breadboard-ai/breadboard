@@ -26,7 +26,8 @@
     "npm-ci": "^0.0.2",
     "rimraf": "^5.0.1",
     "turbo": "1.10.15",
-    "typescript": "^5.0.4"
+    "typescript": "^5.0.4",
+    "wireit": "^0.14.1"
   },
   "workspaces": [
     "./core/*",

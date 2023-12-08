@@ -122,3 +122,5 @@ dist
 *.local.ts
 *.local.json
 *.local.md
+
+.wireit

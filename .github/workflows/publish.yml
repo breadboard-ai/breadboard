@@ -13,12 +13,13 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 18
+      - uses: google/wireit@setup-github-actions-caching/v1
       - run: npm install
       - run: npm run build
       - uses: actions/setup-node@v3
         with:
           node-version: 18
-          registry-url: 'https://wombat-dressing-room.appspot.com/'
+          registry-url: "https://wombat-dressing-room.appspot.com/"
       - name: npm publish
         run: |
           cd seeds/palm-lite/
