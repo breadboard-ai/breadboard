@@ -9,20 +9,28 @@ lambda1_lambda3["lambda <br> id='lambda-3'"] -- "board->board" --o lambda1_map4[
 subgraph sg_lambda3 [lambda-3]
 lambda1_lambda3_boardToFunction["invoke <br> id='boardToFunction'"] -- "function->function" --> lambda1_lambda3_output2{{"output <br> id='output-2'"}}:::output
 lambda1_lambda3_input1[/"input <br> id='input-1'"/]:::input -- "item->boardURL" --> lambda1_lambda3_boardToFunction["invoke <br> id='boardToFunction'"]
+lambda1_lambda3_input1[/"input <br> id='input-1'"/]:::input -- "item->boardURL" --> lambda1_lambda3_output2{{"output <br> id='output-2'"}}:::output
 end
 sg_lambda3:::slotted -- "lamdba->lamdba" --o lambda1_lambda3
 
 lambda1_formatAsTools["jsonata <br> id='formatAsTools'"] -- "result->tools" --> lambda1_output2{{"output <br> id='output-2'"}}:::output
 lambda1_map4["map <br> id='map-4'"] -- "list->json" --> lambda1_formatAsTools["jsonata <br> id='formatAsTools'"]
+lambda1_makeURLMap["jsonata <br> id='makeURLMap'"] -- "result->urlMap" --> lambda1_output2{{"output <br> id='output-2'"}}:::output
+lambda1_map4["map <br> id='map-4'"] -- "list->json" --> lambda1_makeURLMap["jsonata <br> id='makeURLMap'"]
 lambda1_input1[/"input <br> id='input-1'"/]:::input -- "boards->list" --> lambda1_map4["map <br> id='map-4'"]
 end
 sg_lambda1:::slotted -- "lamdba->lamdba" --o lambda1
 
 noStreaming(("passthrough <br> id='noStreaming'")):::passthrough -- "useStreaming->useStreaming" --> generate["invoke <br> id='generate'"]
+generate["invoke <br> id='generate'"] -- "tool_calls->tool_calls" --> formatOutput["jsonata <br> id='formatOutput'"]
 parameters[/"input <br> id='parameters'"/]:::input -- "text->text" --> generate["invoke <br> id='generate'"]
 invoke2["invoke <br> id='invoke-2'"] -- "tools->tools" --> generate["invoke <br> id='generate'"]
+invoke2["invoke <br> id='invoke-2'"] -- "urlMap->urlMap" --> getBoardPath["jsonata <br> id='getBoardPath'"]
 parameters[/"input <br> id='parameters'"/]:::input -- "boards->boards" --> invoke2["invoke <br> id='invoke-2'"]
-generate["invoke <br> id='generate'"] -- "tool_calls->tool_calls" --> output{{"output <br> id='output'"}}:::output
+formatOutput["jsonata <br> id='formatOutput'"] -- all --> output{{"output <br> id='output'"}}:::output
+callBoardAsTool["invoke <br> id='callBoardAsTool'"] -- "text->text" --> formatOutput["jsonata <br> id='formatOutput'"]
+getBoardPath["jsonata <br> id='getBoardPath'"] -- all --> callBoardAsTool["invoke <br> id='callBoardAsTool'"]
+generate["invoke <br> id='generate'"] -- "tool_calls->tool_calls" --> getBoardPath["jsonata <br> id='getBoardPath'"]
 parameters[/"input <br> id='parameters'"/]:::input -- "generator->path" --> generate["invoke <br> id='generate'"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
