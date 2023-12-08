@@ -29,48 +29,37 @@ export class Output extends HTMLElement {
       <style>
         :host {
           display: block;
+          border-top: 1px solid rgb(240, 240, 240);
+          padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 4);
         }
 
-        details {
-          border-radius: calc(var(--bb-grid-size) * 4);
-          background: rgb(240, 240, 240);
-          list-style: none;
+        #container {
+          display: flex;
         }
 
-        #output-wrapper {
-          border-radius: 0 0 calc(var(--bb-grid-size) * 4) calc(var(--bb-grid-size) * 4);
-          background: rgb(240, 240, 240);
-          padding-bottom: calc(var(--bb-grid-size) * 8);
-        }
-
-        summary {
-          list-style: none;
-          font-size: var(--bb-text-small);
-          font-weight: 500;
-          padding: calc(var(--bb-grid-size) * 3) calc(var(--bb-grid-size) * 8);
-        }
-
-        summary::-webkit-details-marker {
-          display: none;
+        #container::before {
+          content: '';
+          box-sizing: border-box;
+          width: calc(var(--bb-grid-size) * 4);
+          height: calc(var(--bb-grid-size) * 4);
+          background: #b6d7a8ff;
+          border: 1px solid #38761d;
+          border-radius: 50%;
+          margin-right: calc(var(--bb-grid-size) * 2);
+          flex: 0 0 auto;
         }
 
         pre {
           line-height: 1.5;
-          overflow-x: auto;
-          padding: calc(var(--bb-grid-size) * 3) calc(var(--bb-grid-size) * 8);
-          background: rgb(253, 253, 255);
-          font-size: var(--bb-text-medium);
+          font-size: var(--bb-text-nano);
           margin: 0;
           white-space: pre-line;
           max-height: 20vh;
-          overflow-y: auto;
+          overflow: auto;
+          scrollbar-gutter: stable;
         }
-
       </style>
-      <details open>
-        <summary>Output</summary>
-        <div id="output-wrapper"></div>
-      </details>
+      <div id="container"></div>
     `;
   }
 
@@ -84,7 +73,7 @@ export class Output extends HTMLElement {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const outputWrapper = root.querySelector("#output-wrapper")!;
+    const outputWrapper = root.querySelector("#container")!;
     await Promise.all(
       Object.entries(schema.properties).map(async ([key, property]) => {
         if (property.type === "object") {

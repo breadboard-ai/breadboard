@@ -326,7 +326,7 @@ export class UIController extends HTMLElement implements UI {
              <div id="history-list"></div>
           </div>
           <div id="output">
-            <h1>Output</h1>
+            <h1>Outputs</h1>
             <div id="output-list"></div>
           </div>
         </div>

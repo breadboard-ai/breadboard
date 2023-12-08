@@ -29,6 +29,7 @@ html {
   --bb-text-large: 1.5rem;
   --bb-text-medium: 0.875rem;
   --bb-text-small: 0.75rem;
+  --bb-text-nano: 0.7rem;
   --bb-easing: cubic-bezier(0, 0, 0.3, 1);
   --bb-easing-duration-in: 0.15s;
   --bb-easing-duration-out: 0.3s;
