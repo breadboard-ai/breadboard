@@ -49,6 +49,11 @@ export class HistoryEntry extends HTMLElement {
           border: 1px solid rgb(90, 64, 119);
         }
 
+        #container.error::before {
+          background: #CC0000;
+          border: 1px solid #CC0000;
+        }
+
         #container.result::before {
           background: #ffa500;
           border: 1px solid #ffa500;

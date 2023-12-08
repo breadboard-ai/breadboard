@@ -35,10 +35,8 @@ export class Progress extends HTMLElement {
             transparent 100%
           ),
             conic-gradient(
-              var(--bb-progress-color) 0deg,
-              var(--bb-progress-color) 90deg,
-              transparent 91deg,
-              transparent 360deg
+              transparent 0deg,
+              var(--bb-progress-color) 360deg
             ),
             linear-gradient(
               var(--bb-progress-color-faded),

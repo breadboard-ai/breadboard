@@ -168,6 +168,7 @@ export class UIController extends HTMLElement implements UI {
 
         #history-list,
         #output-list {
+          scrollbar-gutter: stable;
           overflow-y: auto;
           flex: 1;
         }
