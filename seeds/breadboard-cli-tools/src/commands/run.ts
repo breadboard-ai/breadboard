@@ -12,11 +12,14 @@ import {
 } from "@google-labs/breadboard";
 import { watch as fsWatch } from "fs";
 import { loadBoard, parseStdin, resolveFilePath } from "./lib/utils.js";
+import * as readline from "node:readline/promises";
+import { stdin as input, stdout as output } from "node:process";
 
 async function runBoard(
   board: BoardRunner,
   inputs: InputValues,
-  kitDeclarations: string[] | undefined
+  kitDeclarations: string[] | undefined,
+  pipedInput = false
 ) {
   const kits: Kit[] = [];
 
@@ -30,7 +33,36 @@ async function runBoard(
 
   for await (const stop of board.run({ kits })) {
     if (stop.type === "input") {
-      stop.inputs = inputs;
+      const nodeInputs = stop.inputArguments;
+      // we won't mutate the inputs.
+      const newInputs = inputs;
+
+      /* 
+      We will ask for the data if it's not present on the inputs. 
+      However we can't ask for prompts if the graph has been piped in.
+      */
+      if (
+        pipedInput == false &&
+        nodeInputs.schema != undefined &&
+        nodeInputs.schema.properties != undefined
+      ) {
+        const rl = readline.createInterface({ input, output });
+
+        const properties = Object.entries(nodeInputs.schema.properties);
+
+        for (const [name, property] of properties) {
+          if (name in newInputs == false) {
+            // The required argument is not on the input. Ask for it.
+            const answer = await rl.question(property.description + " ");
+
+            newInputs[name] = answer;
+          }
+        }
+
+        rl.close();
+      }
+
+      stop.inputs = newInputs;
     } else if (stop.type === "output") {
       console.log(stop.outputs);
     }
@@ -39,9 +71,10 @@ async function runBoard(
 
 export const run = async (file: string, options: Record<string, any>) => {
   const kitDeclarations = options.kit as string[] | undefined;
+  const input =
+    "input" in options ? (JSON.parse(options.input) as InputValues) : {};
 
   if (file != undefined) {
-    const input = JSON.parse(options.input) as InputValues;
     const filePath = resolveFilePath(file);
 
     let board = await loadBoard(filePath);
@@ -79,10 +112,6 @@ export const run = async (file: string, options: Record<string, any>) => {
     // We should validate it looks like a board...
     const board = await BoardRunner.fromGraphDescriptor(JSON.parse(stdin));
 
-    await runBoard(
-      board,
-      <InputValues>(<unknown>options["input"]),
-      kitDeclarations
-    );
+    await runBoard(board, input, kitDeclarations, true);
   }
 };

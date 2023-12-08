@@ -7,6 +7,8 @@
 import { Board } from '@google-labs/breadboard';
 import { readFile } from 'fs/promises';
 import path from "path";
+import * as readline from 'node:readline/promises';
+import { stdin as input } from 'node:process';
 
 export const loadBoardFromModule = async (file: string) => {
   const board = (await import(file)).default;
@@ -31,31 +33,12 @@ export const loadBoard = async (file: string) => {
   return board;
 };
 
-export const parseStdin = (): Promise<string> => {
-  let resolveStdin: (value: string) => void;
-  let rejectStdin: (reason?: unknown) => void;
-
-  const p = new Promise<string>((resolve, reject) => {
-    resolveStdin = resolve;
-    rejectStdin = reject;
-  });
-
-  let stdin = '';
-
-  process.stdin.on('readable', () => {
-    const chunk = process.stdin.read();
-    if (chunk !== null) {
-      stdin += chunk;
-    }
-  });
-
-  process.stdin.on('end', function () {
-    resolveStdin(stdin);
-  });
-
-  process.stdin.on('error', (err) => {
-    rejectStdin(err);
-  });
-
-  return p;
+export const parseStdin = async (): Promise<string> => {
+  let lines = ""
+  const rl = readline.createInterface({ input });
+  for await (const line of rl) {
+    lines += line;
+  }
+  rl.close();
+  return lines;
 };
