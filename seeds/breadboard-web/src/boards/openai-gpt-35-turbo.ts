@@ -5,7 +5,6 @@
  */
 
 import { Board, Schema } from "@google-labs/breadboard";
-import Core from "@google-labs/core-kit";
 import { Starter } from "@google-labs/llm-starter";
 import { NodeNurseryWeb } from "@google-labs/node-nursery-web";
 
@@ -16,48 +15,47 @@ const board = new Board({
   version: "0.0.1",
 });
 const starter = board.addKit(Starter);
-const core = board.addKit(Core);
 const nursery = board.addKit(NodeNurseryWeb);
 
-// const sampleTools = [
-//   {
-//     name: "The_Calculator_Recipe",
-//     description:
-//       "A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.",
-//     parameters: {
-//       type: "object",
-//       properties: {
-//         text: {
-//           type: "string",
-//           description: "Ask a math question",
-//         },
-//       },
-//       required: ["text"],
-//     },
-//   },
-//   {
-//     name: "The_Search_Summarizer_Recipe",
-//     description:
-//       "A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.",
-//     parameters: {
-//       type: "object",
-//       properties: {
-//         text: {
-//           type: "string",
-//           description: "What would you like to search for?",
-//         },
-//       },
-//       required: ["text"],
-//     },
-//   },
-// ];
+const toolsExample = [
+  {
+    name: "The_Calculator_Recipe",
+    description:
+      "A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.",
+    parameters: {
+      type: "object",
+      properties: {
+        text: {
+          type: "string",
+          description: "Ask a math question",
+        },
+      },
+      required: ["text"],
+    },
+  },
+  {
+    name: "The_Search_Summarizer_Recipe",
+    description:
+      "A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.",
+    parameters: {
+      type: "object",
+      properties: {
+        text: {
+          type: "string",
+          description: "What would you like to search for?",
+        },
+      },
+      required: ["text"],
+    },
+  },
+];
 
-// const contextExample = [
-//   {
-//     role: "system",
-//     content: "You are a pirate. Please talk like a pirate.",
-//   },
-// ];
+const contextExample = [
+  {
+    role: "system",
+    content: "You are a pirate. Please talk like a pirate.",
+  },
+];
 
 const input = board.input({
   $id: "input",
@@ -76,8 +74,8 @@ const input = board.input({
         items: {
           type: "string",
         },
-        // Subtitute the [] for sampleTools to see how it works
         default: JSON.stringify([], null, 2),
+        examples: [JSON.stringify(toolsExample, null, 2)],
       },
       context: {
         type: "array",
@@ -86,8 +84,8 @@ const input = board.input({
         items: {
           type: "object",
         },
-        // Subtitute the [] for contextExample to see how it works
         default: JSON.stringify([], null, 2),
+        examples: [JSON.stringify(contextExample, null, 2)],
       },
       useStreaming: {
         type: "boolean",
