@@ -11,6 +11,12 @@
     },
     {
       "from": "input",
+      "to": "makeMessages",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "input",
       "to": "callOpenAI",
       "out": "useStreaming",
       "in": "stream"
@@ -22,8 +28,14 @@
       "in": "headers"
     },
     {
-      "from": "lambda-3",
-      "to": "transformStream-4",
+      "from": "makeMessages",
+      "to": "getNewContext",
+      "out": "result",
+      "in": "messages"
+    },
+    {
+      "from": "lambda-2",
+      "to": "transformStream-3",
       "constant": true,
       "out": "board",
       "in": "board"
@@ -47,32 +59,44 @@
       "in": "useStreaming"
     },
     {
-      "from": "jsonata-2",
+      "from": "getResponse",
       "to": "textOutput",
       "out": "text",
       "in": "text"
     },
     {
-      "from": "jsonata-2",
+      "from": "getResponse",
       "to": "toolCallsOutput",
       "out": "tool_calls",
       "in": "tool_calls"
     },
     {
       "from": "callOpenAI",
-      "to": "jsonata-2",
+      "to": "getResponse",
       "out": "response",
       "in": "json"
     },
     {
-      "from": "transformStream-4",
+      "from": "getNewContext",
+      "to": "textOutput",
+      "out": "result",
+      "in": "context"
+    },
+    {
+      "from": "callOpenAI",
+      "to": "getNewContext",
+      "out": "response",
+      "in": "response"
+    },
+    {
+      "from": "transformStream-3",
       "to": "streamOutput",
       "out": "stream",
       "in": "stream"
     },
     {
       "from": "callOpenAI",
-      "to": "transformStream-4",
+      "to": "transformStream-3",
       "out": "stream",
       "in": "stream"
     },
@@ -83,8 +107,14 @@
       "in": "body"
     },
     {
-      "from": "input",
+      "from": "makeMessages",
       "to": "makeBody",
+      "out": "result",
+      "in": "messages"
+    },
+    {
+      "from": "input",
+      "to": "makeMessages",
       "out": "text",
       "in": "text"
     }
@@ -104,11 +134,19 @@
             },
             "tools": {
               "type": "array",
-              "format": "multiline",
               "title": "Tools",
               "description": "An array of functions to use for tool-calling",
               "items": {
                 "type": "string"
+              },
+              "default": "[]"
+            },
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "description": "An array of messages to use as conversation context",
+              "items": {
+                "type": "object"
               },
               "default": "[]"
             },
@@ -136,6 +174,11 @@
               "type": "string",
               "title": "Text",
               "description": "The generated text"
+            },
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "description": "The conversation context"
             }
           }
         }
@@ -191,10 +234,17 @@
       }
     },
     {
+      "id": "makeMessages",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "$append($boolean($.context) ? $.context, [{ \"role\": \"user\", \"content\": $.text }])"
+      }
+    },
+    {
       "id": "makeBody",
       "type": "jsonata",
       "configuration": {
-        "expression": "{\n    \"model\": \"gpt-3.5-turbo-1106\",\n    \"messages\": [\n      {\n        \"role\": \"user\",\n        \"content\": $.text\n      }\n    ],\n    \"stream\": $.useStreaming,\n    \"temperature\": 1,\n    \"top_p\": 1,\n    \"tools\": $count($.tools) > 0 ? $.tools,\n    \"frequency_penalty\": 0,\n    \"presence_penalty\": 0\n  }"
+        "expression": "{\n    \"model\": \"gpt-3.5-turbo-1106\",\n    \"messages\": $.messages,\n    \"stream\": $.useStreaming,\n    \"temperature\": 1,\n    \"top_p\": 1,\n    \"tools\": $count($.tools) > 0 ? $.tools,\n    \"frequency_penalty\": 0,\n    \"presence_penalty\": 0\n  }"
       }
     },
     {
@@ -206,7 +256,7 @@
       }
     },
     {
-      "id": "jsonata-2",
+      "id": "getResponse",
       "type": "jsonata",
       "configuration": {
         "expression": "choices[0].message.{\n    \"text\": $boolean(content) ? content,\n    \"tool_calls\": tool_calls.function ~> | $ | { \"args\": $eval(arguments) }, \"arguments\" |\n}",
@@ -214,7 +264,14 @@
       }
     },
     {
-      "id": "lambda-3",
+      "id": "getNewContext",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "$append(messages, response.choices[0].message)"
+      }
+    },
+    {
+      "id": "lambda-2",
       "type": "lambda",
       "configuration": {
         "board": {
@@ -261,7 +318,7 @@
       }
     },
     {
-      "id": "transformStream-4",
+      "id": "transformStream-3",
       "type": "transformStream",
       "configuration": {}
     },
@@ -276,6 +333,9 @@
   "kits": [
     {
       "url": "npm:@google-labs/llm-starter"
+    },
+    {
+      "url": "npm:@google-labs/core-kit"
     },
     {
       "url": "npm:@google-labs/node-nursery-web"

@@ -5,6 +5,7 @@
  */
 
 import { Board, Schema } from "@google-labs/breadboard";
+import Core from "@google-labs/core-kit";
 import { Starter } from "@google-labs/llm-starter";
 import { NodeNurseryWeb } from "@google-labs/node-nursery-web";
 
@@ -15,6 +16,7 @@ const board = new Board({
   version: "0.0.1",
 });
 const starter = board.addKit(Starter);
+const core = board.addKit(Core);
 const nursery = board.addKit(NodeNurseryWeb);
 
 // const sampleTools = [
@@ -50,6 +52,13 @@ const nursery = board.addKit(NodeNurseryWeb);
 //   },
 // ];
 
+// const contextExample = [
+//   {
+//     role: "system",
+//     content: "You are a pirate. Please talk like a pirate.",
+//   },
+// ];
+
 const input = board.input({
   $id: "input",
   schema: {
@@ -62,12 +71,22 @@ const input = board.input({
       },
       tools: {
         type: "array",
-        format: "multiline",
         title: "Tools",
         description: "An array of functions to use for tool-calling",
         items: {
           type: "string",
         },
+        // Subtitute the [] for sampleTools to see how it works
+        default: JSON.stringify([], null, 2),
+      },
+      context: {
+        type: "array",
+        title: "Context",
+        description: "An array of messages to use as conversation context",
+        items: {
+          type: "object",
+        },
+        // Subtitute the [] for contextExample to see how it works
         default: JSON.stringify([], null, 2),
       },
       useStreaming: {
@@ -90,6 +109,11 @@ const textOutput = board.output({
         type: "string",
         title: "Text",
         description: "The generated text",
+      },
+      context: {
+        type: "array",
+        title: "Context",
+        description: "The conversation context",
       },
     },
   },
@@ -134,16 +158,18 @@ const headers = starter
   })
   .wire("json<-OPENAI_API_KEY", starter.secrets({ keys: ["OPENAI_API_KEY"] }));
 
+const makeMessages = starter
+  .jsonata({
+    $id: "makeMessages",
+    expression: `$append($boolean($.context) ? $.context, [{ "role": "user", "content": $.text }])`,
+  })
+  .wire("<-context", input);
+
 const body = starter.jsonata({
   $id: "makeBody",
   expression: `{
     "model": "gpt-3.5-turbo-1106",
-    "messages": [
-      {
-        "role": "user",
-        "content": $.text
-      }
-    ],
+    "messages": $.messages,
     "stream": $.useStreaming,
     "temperature": 1,
     "top_p": 1,
@@ -163,12 +189,20 @@ const fetch = starter
   .wire("headers<-result", headers);
 
 const getResponse = starter.jsonata({
+  $id: "getResponse",
   expression: `choices[0].message.{
     "text": $boolean(content) ? content,
     "tool_calls": tool_calls.function ~> | $ | { "args": $eval(arguments) }, "arguments" |
 }`,
   raw: true,
 });
+
+const getNewContext = starter
+  .jsonata({
+    $id: "getNewContext",
+    expression: `$append(messages, response.choices[0].message)`,
+  })
+  .wire("messages<-result", makeMessages);
 
 const streamTransform = nursery.transformStream(
   (transformBoard, input, output) => {
@@ -195,16 +229,20 @@ input.wire("tools->json", formatTools.wire("result->tools", body));
 input.wire("useStreaming->", body);
 input.wire(
   "text->",
-  body.wire(
-    "result->body",
-    fetch
-      .wire(
-        "response->json",
-        getResponse
-          .wire("text->", textOutput)
-          .wire("tool_calls->", toolCallsOutput)
-      )
-      .wire("stream->", streamTransform.wire("stream->", streamOutput))
+  makeMessages.wire(
+    "result->messages",
+    body.wire(
+      "result->body",
+      fetch
+        .wire(
+          "response->json",
+          getResponse
+            .wire("text->", textOutput)
+            .wire("tool_calls->", toolCallsOutput)
+        )
+        .wire("response->", getNewContext.wire("result->context", textOutput))
+        .wire("stream->", streamTransform.wire("stream->", streamOutput))
+    )
   )
 );
 
