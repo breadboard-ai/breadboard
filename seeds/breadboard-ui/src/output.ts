@@ -94,6 +94,15 @@ export class Output extends HTMLElement {
             outputWrapper.appendChild(response);
             return;
           }
+        } else if (property.type === "array") {
+          const response = document.createElement("pre");
+          response.innerHTML = `${property.title}: ${JSON.stringify(
+            values[key],
+            null,
+            2
+          )}`;
+          outputWrapper.appendChild(response);
+          return;
         }
         const response = document.createElement("pre");
         response.innerHTML = `${property.title}: ${values[key]}`;

@@ -42,7 +42,7 @@
     },
     {
       "from": "invoke-2",
-      "to": "getBoardPath",
+      "to": "getBoardArgs",
       "out": "urlMap",
       "in": "urlMap"
     },
@@ -64,13 +64,19 @@
       "in": "text"
     },
     {
-      "from": "getBoardPath",
+      "from": "getBoardArgs",
       "to": "callBoardAsTool",
       "out": "*"
     },
     {
+      "from": "parameters",
+      "to": "getBoardArgs",
+      "out": "generator",
+      "in": "generator"
+    },
+    {
       "from": "generate",
-      "to": "getBoardPath",
+      "to": "getBoardArgs",
       "out": "tool_calls",
       "in": "tool_calls"
     },
@@ -320,10 +326,10 @@
       }
     },
     {
-      "id": "getBoardPath",
+      "id": "getBoardArgs",
       "type": "jsonata",
       "configuration": {
-        "expression": "$merge([{\n    \"path\": $lookup(urlMap, tool_calls[0].name) },\n    tool_calls[0].args\n  ])",
+        "expression": "$merge([{\n      \"path\": $lookup(urlMap, tool_calls[0].name)\n    },\n    { \"generator\": generator },\n    tool_calls[0].args\n  ])",
         "raw": true
       }
     },

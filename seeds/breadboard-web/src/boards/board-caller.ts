@@ -137,10 +137,12 @@ const generate = core
     core.passthrough({ $id: "noStreaming", useStreaming: false })
   );
 
-const getBoardPath = starter.jsonata({
-  $id: "getBoardPath",
+const getBoardArgs = starter.jsonata({
+  $id: "getBoardArgs",
   expression: `$merge([{
-    "path": $lookup(urlMap, tool_calls[0].name) },
+      "path": $lookup(urlMap, tool_calls[0].name)
+    },
+    { "generator": generator },
     tool_calls[0].args
   ])`,
   raw: true,
@@ -161,19 +163,21 @@ parameters
     "boards->",
     formatFunctionDeclarations
       .wire("tools->", generate)
-      .wire("urlMap->", getBoardPath)
+      .wire("urlMap->", getBoardArgs)
   )
   .wire(
     "generator->path",
     generate
       .wire(
         "tool_calls->",
-        getBoardPath.wire(
-          "*->",
-          core
-            .invoke({ $id: "callBoardAsTool" })
-            .wire("text->", formatOutput.wire("*->", output))
-        )
+        getBoardArgs
+          .wire(
+            "*->",
+            core
+              .invoke({ $id: "callBoardAsTool" })
+              .wire("text->", formatOutput.wire("*->", output))
+          )
+          .wire("<-generator", parameters)
       )
       .wire("context->", formatOutput)
   );

@@ -26,12 +26,13 @@ generate["invoke <br> id='generate'"] -- "tool_calls->tool_calls" --> formatOutp
 parameters[/"input <br> id='parameters'"/]:::input -- "text->text" --> generate["invoke <br> id='generate'"]
 parameters[/"input <br> id='parameters'"/]:::input -- "context->context" --> generate["invoke <br> id='generate'"]
 invoke2["invoke <br> id='invoke-2'"] -- "tools->tools" --> generate["invoke <br> id='generate'"]
-invoke2["invoke <br> id='invoke-2'"] -- "urlMap->urlMap" --> getBoardPath["jsonata <br> id='getBoardPath'"]
+invoke2["invoke <br> id='invoke-2'"] -- "urlMap->urlMap" --> getBoardArgs["jsonata <br> id='getBoardArgs'"]
 parameters[/"input <br> id='parameters'"/]:::input -- "boards->boards" --> invoke2["invoke <br> id='invoke-2'"]
 formatOutput["jsonata <br> id='formatOutput'"] -- all --> output{{"output <br> id='output'"}}:::output
 callBoardAsTool["invoke <br> id='callBoardAsTool'"] -- "text->text" --> formatOutput["jsonata <br> id='formatOutput'"]
-getBoardPath["jsonata <br> id='getBoardPath'"] -- all --> callBoardAsTool["invoke <br> id='callBoardAsTool'"]
-generate["invoke <br> id='generate'"] -- "tool_calls->tool_calls" --> getBoardPath["jsonata <br> id='getBoardPath'"]
+getBoardArgs["jsonata <br> id='getBoardArgs'"] -- all --> callBoardAsTool["invoke <br> id='callBoardAsTool'"]
+parameters[/"input <br> id='parameters'"/]:::input -- "generator->generator" --> getBoardArgs["jsonata <br> id='getBoardArgs'"]
+generate["invoke <br> id='generate'"] -- "tool_calls->tool_calls" --> getBoardArgs["jsonata <br> id='getBoardArgs'"]
 generate["invoke <br> id='generate'"] -- "context->context" --> formatOutput["jsonata <br> id='formatOutput'"]
 parameters[/"input <br> id='parameters'"/]:::input -- "generator->path" --> generate["invoke <br> id='generate'"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
