@@ -51,7 +51,7 @@ const parameters = board.input({
         type: "string",
         title: "Text",
         description: "The text to use with tool calling",
-        default: "What is the square root of e?",
+        examples: ["What is the square root of e?"],
       },
       context: {
         type: "array",
