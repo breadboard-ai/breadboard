@@ -24,6 +24,7 @@ sg_lambda1:::slotted -- "lamdba->lamdba" --o lambda1
 noStreaming(("passthrough <br> id='noStreaming'")):::passthrough -- "useStreaming->useStreaming" --> generate["invoke <br> id='generate'"]
 generate["invoke <br> id='generate'"] -- "tool_calls->tool_calls" --> formatOutput["jsonata <br> id='formatOutput'"]
 parameters[/"input <br> id='parameters'"/]:::input -- "text->text" --> generate["invoke <br> id='generate'"]
+parameters[/"input <br> id='parameters'"/]:::input -- "context->context" --> generate["invoke <br> id='generate'"]
 invoke2["invoke <br> id='invoke-2'"] -- "tools->tools" --> generate["invoke <br> id='generate'"]
 invoke2["invoke <br> id='invoke-2'"] -- "urlMap->urlMap" --> getBoardPath["jsonata <br> id='getBoardPath'"]
 parameters[/"input <br> id='parameters'"/]:::input -- "boards->boards" --> invoke2["invoke <br> id='invoke-2'"]
@@ -31,6 +32,7 @@ formatOutput["jsonata <br> id='formatOutput'"] -- all --> output{{"output <br> i
 callBoardAsTool["invoke <br> id='callBoardAsTool'"] -- "text->text" --> formatOutput["jsonata <br> id='formatOutput'"]
 getBoardPath["jsonata <br> id='getBoardPath'"] -- all --> callBoardAsTool["invoke <br> id='callBoardAsTool'"]
 generate["invoke <br> id='generate'"] -- "tool_calls->tool_calls" --> getBoardPath["jsonata <br> id='getBoardPath'"]
+generate["invoke <br> id='generate'"] -- "context->context" --> formatOutput["jsonata <br> id='formatOutput'"]
 parameters[/"input <br> id='parameters'"/]:::input -- "generator->path" --> generate["invoke <br> id='generate'"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000

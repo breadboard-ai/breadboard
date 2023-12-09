@@ -74,7 +74,7 @@ const input = board.input({
         items: {
           type: "string",
         },
-        default: JSON.stringify([], null, 2),
+        default: "[]",
         examples: [JSON.stringify(toolsExample, null, 2)],
       },
       context: {
@@ -84,7 +84,7 @@ const input = board.input({
         items: {
           type: "object",
         },
-        default: JSON.stringify([], null, 2),
+        default: "[]",
         examples: [JSON.stringify(contextExample, null, 2)],
       },
       useStreaming: {
@@ -126,6 +126,11 @@ const toolCallsOutput = board.output({
         type: "object",
         title: "Tool Calls",
         description: "The generated tool calls",
+      },
+      context: {
+        type: "array",
+        title: "Context",
+        description: "The conversation context",
       },
     },
   },
@@ -238,7 +243,12 @@ input.wire(
             .wire("text->", textOutput)
             .wire("tool_calls->", toolCallsOutput)
         )
-        .wire("response->", getNewContext.wire("result->context", textOutput))
+        .wire(
+          "response->",
+          getNewContext
+            .wire("result->context", textOutput)
+            .wire("result->context", toolCallsOutput)
+        )
         .wire("stream->", streamTransform.wire("stream->", streamOutput))
     )
   )

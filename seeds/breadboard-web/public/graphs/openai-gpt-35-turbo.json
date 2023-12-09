@@ -83,6 +83,12 @@
       "in": "context"
     },
     {
+      "from": "getNewContext",
+      "to": "toolCallsOutput",
+      "out": "result",
+      "in": "context"
+    },
+    {
       "from": "callOpenAI",
       "to": "getNewContext",
       "out": "response",
@@ -151,7 +157,10 @@
               "items": {
                 "type": "object"
               },
-              "default": "[]"
+              "default": "[]",
+              "examples": [
+                "[\n  {\n    \"role\": \"system\",\n    \"content\": \"You are a pirate. Please talk like a pirate.\"\n  }\n]"
+              ]
             },
             "useStreaming": {
               "type": "boolean",
@@ -198,6 +207,11 @@
               "type": "object",
               "title": "Tool Calls",
               "description": "The generated tool calls"
+            },
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "description": "The conversation context"
             }
           }
         }
