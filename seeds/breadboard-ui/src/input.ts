@@ -254,7 +254,8 @@ export class Input extends HTMLElement {
     input.autocomplete = this.secret ? "off" : "on";
     input.placeholder = schema.description || "";
     input.autofocus = true;
-    input.value = (values[key] as string) ?? schema.default ?? "";
+    input.value =
+      (values[key] as string) ?? schema.examples ?? schema.default ?? "";
     return input;
   }
 
@@ -266,7 +267,8 @@ export class Input extends HTMLElement {
     textarea.name = key;
     textarea.id = key;
     textarea.placeholder = schema.description || "";
-    textarea.value = (values[key] as string) ?? schema.default ?? "";
+    textarea.value =
+      (values[key] as string) ?? schema.examples ?? schema.default ?? "";
     return container;
   }
 

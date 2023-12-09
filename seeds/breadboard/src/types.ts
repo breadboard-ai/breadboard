@@ -12,10 +12,18 @@ export type Schema = {
   required?: string[];
   format?: string;
   enum?: string[];
+  /**
+   * The default value of the schema. The UI can use this to pre-populate a
+   * field with a value, if there is no `examples` present.
+   */
   default?: string;
   additionalProperties?: boolean | Schema;
   items?: Schema | Schema[];
   minItems?: number;
+  /**
+   * Can be used by UI to pre-populate a field with a value that could be
+   * used as an example.
+   */
   examples?: string[];
 };
 
