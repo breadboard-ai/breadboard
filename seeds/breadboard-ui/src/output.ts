@@ -72,7 +72,9 @@ export class Output extends HTMLElement {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const outputWrapper = root.querySelector("#container")!;
+    const outputContainer = root.querySelector("#container")!;
+    const outputWrapper = document.createElement("div");
+    outputContainer.appendChild(outputWrapper);
     await Promise.all(
       Object.entries(schema.properties).map(async ([key, property]) => {
         if (property.type === "object") {
