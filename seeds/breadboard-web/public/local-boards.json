@@ -36,6 +36,10 @@
     "url": "/graphs/math-imperative.json"
   },
   {
+    "title": "The Calculator Recipe",
+    "url": "/graphs/math.json"
+  },
+  {
     "title": "Mock Text Generator",
     "url": "/graphs/mock-text-generator.json"
   },
