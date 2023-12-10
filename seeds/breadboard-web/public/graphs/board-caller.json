@@ -187,26 +187,13 @@
                 "in": "board"
               },
               {
-                "from": "formatAsTools",
+                "from": "formatResults",
                 "to": "output-2",
-                "out": "result",
-                "in": "tools"
+                "out": "*"
               },
               {
                 "from": "map-4",
-                "to": "formatAsTools",
-                "out": "list",
-                "in": "json"
-              },
-              {
-                "from": "makeURLMap",
-                "to": "output-2",
-                "out": "result",
-                "in": "urlMap"
-              },
-              {
-                "from": "map-4",
-                "to": "makeURLMap",
+                "to": "formatResults",
                 "out": "list",
                 "in": "json"
               },
@@ -285,17 +272,11 @@
                 "configuration": {}
               },
               {
-                "id": "formatAsTools",
+                "id": "formatResults",
                 "type": "jsonata",
                 "configuration": {
-                  "expression": "[function]"
-                }
-              },
-              {
-                "id": "makeURLMap",
-                "type": "jsonata",
-                "configuration": {
-                  "expression": "$merge([$.{ function.name: boardURL }])"
+                  "expression": "{\n      \"tools\": [function],\n      \"urlMap\": $merge([{ function.name: boardURL }])\n  }",
+                  "raw": true
                 }
               }
             ],

@@ -13,10 +13,8 @@ lambda1_lambda3_input1[/"input <br> id='input-1'"/]:::input -- "item->boardURL" 
 end
 sg_lambda3:::slotted -- "lamdba->lamdba" --o lambda1_lambda3
 
-lambda1_formatAsTools["jsonata <br> id='formatAsTools'"] -- "result->tools" --> lambda1_output2{{"output <br> id='output-2'"}}:::output
-lambda1_map4["map <br> id='map-4'"] -- "list->json" --> lambda1_formatAsTools["jsonata <br> id='formatAsTools'"]
-lambda1_makeURLMap["jsonata <br> id='makeURLMap'"] -- "result->urlMap" --> lambda1_output2{{"output <br> id='output-2'"}}:::output
-lambda1_map4["map <br> id='map-4'"] -- "list->json" --> lambda1_makeURLMap["jsonata <br> id='makeURLMap'"]
+lambda1_formatResults["jsonata <br> id='formatResults'"] -- all --> lambda1_output2{{"output <br> id='output-2'"}}:::output
+lambda1_map4["map <br> id='map-4'"] -- "list->json" --> lambda1_formatResults["jsonata <br> id='formatResults'"]
 lambda1_input1[/"input <br> id='input-1'"/]:::input -- "boards->list" --> lambda1_map4["map <br> id='map-4'"]
 end
 sg_lambda1:::slotted -- "lamdba->lamdba" --o lambda1

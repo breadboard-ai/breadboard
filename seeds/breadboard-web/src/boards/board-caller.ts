@@ -106,27 +106,18 @@ const formatFunctionDeclarations = core.invoke((board, input, output) => {
       .wire("item->boardURL", output);
   });
 
+  const formatResults = starter.jsonata({
+    $id: "formatResults",
+    expression: `{
+      "tools": [function],
+      "urlMap": $merge([{ function.name: boardURL }])
+  }`,
+    raw: true,
+  });
+
   input.wire(
     "boards->list",
-    turnBoardsToFunctions
-      .wire(
-        "list->json",
-        starter
-          .jsonata({
-            $id: "formatAsTools",
-            expression: `[function]`,
-          })
-          .wire("result->tools", output)
-      )
-      .wire(
-        "list->json",
-        starter
-          .jsonata({
-            expression: `$merge([$.{ function.name: boardURL }])`,
-            $id: "makeURLMap",
-          })
-          .wire("result->urlMap", output)
-      )
+    turnBoardsToFunctions.wire("list->json", formatResults.wire("*->", output))
   );
 });
 
