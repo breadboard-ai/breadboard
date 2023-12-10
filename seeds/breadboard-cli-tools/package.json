@@ -44,7 +44,7 @@
       "clean": "if-file-deleted"
     },
     "build:breadboard-web": {
-      "command": "cp -r ../breadboard-web/dist/ dist/ui/",
+      "command": "mkdir -p dist/ui && cp -r ../breadboard-web/dist/ dist/ui/",
       "env": {
         "FORCE_COLOR": "1"
       },
