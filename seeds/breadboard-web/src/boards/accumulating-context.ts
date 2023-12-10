@@ -9,7 +9,16 @@ import { z } from "zod";
 import { base } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { starter } from "@google-labs/llm-starter";
-import { palm } from "@google-labs/palm-kit";
+
+const parameters = base.input({
+  $id: "parameters",
+  schema: z.object({
+    generator: z
+      .string()
+      .describe("Generator: Text generator to use")
+      .default("/graphs/text-generator.json"),
+  }),
+});
 
 const input = base.input({
   $id: "userRequest",
@@ -18,7 +27,7 @@ const input = base.input({
   }),
 });
 
-core.passthrough({ $id: "start" }).as({}).to(input);
+parameters.as({}).to(input);
 
 const prompt = starter.promptTemplate({
   template:
@@ -37,16 +46,17 @@ prompt.in({ context: conversationMemory.accumulator });
 // conversationMemory.accumulator.to(prompt.context); ???
 // conversationMemory.accumulator.as("context").to(prompt);
 
-const response = palm.generateText({
+const generator = core.invoke({
+  $id: "generator",
+  path: parameters.generator.memoize(),
   text: prompt.prompt,
-  PALM_KEY: starter.secrets({ keys: ["PALM_KEY"] }).PALM_KEY.memoize(),
 });
-conversationMemory.in({ accumulator: response.completion });
+
+conversationMemory.in({ accumulator: generator.text });
 // response.completion.to(conversationMemory.accumulator);
 
 const output = base.output({
-  text: response.completion,
-
+  text: generator.text as unknown as string,
   schema: z.object({
     text: z
       .string()
@@ -62,4 +72,7 @@ export const graph = input; // Any node would work here.
 
 export default await graph.serialize({
   title: "Simple chatbot (accumulating context)",
+  description:
+    'An example of a board that implements a multi-turn experience: a very simple chat bot that accumulates context of the conversations. Tell it "I am hungry" or something like this and then give simple replies, like "bbq". It should be able to infer what you\'re asking for based on the conversation context. All replies are pure hallucinations, but should give you a sense of how a Breadboard API endpoint for a board with cycles looks like.',
+  version: "0.0.2",
 });

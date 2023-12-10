@@ -1,5 +1,7 @@
 {
   "title": "Simple chatbot (accumulating context)",
+  "description": "An example of a board that implements a multi-turn experience: a very simple chat bot that accumulates context of the conversations. Tell it \"I am hungry\" or something like this and then give simple replies, like \"bbq\". It should be able to infer what you're asking for based on the conversation context. All replies are pure hallucinations, but should give you a sense of how a Breadboard API endpoint for a board with cycles looks like.",
+  "version": "0.0.2",
   "edges": [
     {
       "from": "userRequest",
@@ -14,20 +16,27 @@
       "in": "user"
     },
     {
-      "from": "start",
+      "from": "parameters",
       "to": "userRequest",
       "out": "",
       "in": ""
     },
     {
-      "from": "output-4",
+      "from": "parameters",
+      "to": "generator",
+      "out": "generator",
+      "in": "path",
+      "constant": true
+    },
+    {
+      "from": "output-2",
       "to": "userRequest",
       "out": "",
       "in": ""
     },
     {
       "from": "assistant",
-      "to": "palm-generateText-3",
+      "to": "generator",
       "out": "prompt",
       "in": "text"
     },
@@ -44,23 +53,16 @@
       "in": "context"
     },
     {
-      "from": "palm-generateText-3",
+      "from": "generator",
       "to": "append-1",
-      "out": "completion",
+      "out": "text",
       "in": "accumulator"
     },
     {
-      "from": "palm-generateText-3",
-      "to": "output-4",
-      "out": "completion",
+      "from": "generator",
+      "to": "output-2",
+      "out": "text",
       "in": "text"
-    },
-    {
-      "from": "secrets-2",
-      "to": "palm-generateText-3",
-      "out": "PALM_KEY",
-      "in": "PALM_KEY",
-      "constant": true
     }
   ],
   "nodes": [
@@ -85,12 +87,25 @@
       }
     },
     {
-      "id": "start",
-      "type": "passthrough",
-      "configuration": {}
+      "id": "parameters",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "generator": {
+              "type": "string",
+              "description": "Text generator to use",
+              "default": "/graphs/text-generator.json",
+              "title": "Generator"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
     },
     {
-      "id": "output-4",
+      "id": "output-2",
       "type": "output",
       "configuration": {
         "schema": {
@@ -125,18 +140,9 @@
       }
     },
     {
-      "id": "palm-generateText-3",
-      "type": "palm-generateText",
+      "id": "generator",
+      "type": "invoke",
       "configuration": {}
-    },
-    {
-      "id": "secrets-2",
-      "type": "secrets",
-      "configuration": {
-        "keys": [
-          "PALM_KEY"
-        ]
-      }
     }
   ],
   "graphs": {}
