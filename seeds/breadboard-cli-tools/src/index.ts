@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { debug } from "./commands/debug.js";
 import { mermaid } from "./commands/mermaid.js";
 import { makeGraph } from "./commands/make-graph.js";
 import { run } from "./commands/run.js";
@@ -15,14 +16,10 @@ import { program } from "commander";
 program
   .version("0.0.1")
 
-/*
-Removing until we have a better way to import the breadboard-web project
-
-program  
+program
   .command("debug [file]")
-    .description("Starts a simple HTTP server that serves the breadboard-web app, and outputs a URL that contains a link to a breadboard file that the user provided.")
-    .action(debug);
-*/
+  .description("Starts a simple HTTP server that serves the breadboard-web app, and outputs a URL that contains a link to a breadboard file that the user provided.")
+  .action(debug);
 
 program
   .command("mermaid [file]")

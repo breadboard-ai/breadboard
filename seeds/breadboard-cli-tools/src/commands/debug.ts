@@ -7,9 +7,11 @@
 import { fileURLToPath, pathToFileURL } from 'url'
 import { stat } from 'fs/promises';
 import { Stats, createReadStream } from 'fs';
-import { dirname } from 'path';
+import { join, dirname } from 'path';
 import handler from 'serve-handler';
 import http from 'http';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export const debug = async (file: string) => {
   let fileStat: Stats;
@@ -20,11 +22,8 @@ export const debug = async (file: string) => {
     fileUrl = pathToFileURL(file);
   }
 
-  // We are assuming that this package will be published.
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  const distPath = await import("@google-labs/breadboard-web/dist");
-  const distDir = dirname(fileURLToPath(distPath.path));
+  const distDir = join(__dirname, "..", "..", "ui");
+  //const distDir = dirname(fileURLToPath(distPath));
   const server = http.createServer((request, response) => {
     // You pass two more arguments for config and middleware
     // More details here: https://github.com/vercel/serve-handler#options

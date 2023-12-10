@@ -20,7 +20,8 @@
     "build": {
       "dependencies": [
         "../breadboard:build",
-        "build:tsc"
+        "build:tsc",
+        "build:breadboard-web"
       ]
     },
     "build:tsc": {
@@ -39,6 +40,22 @@
       ],
       "output": [
         "dist/"
+      ],
+      "clean": "if-file-deleted"
+    },
+    "build:breadboard-web": {
+      "command": "cp -r ../breadboard-web/dist/ dist/ui/",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "../breadboard-web:build"
+      ],
+      "files": [
+        "../breadboard-web/dist/**/*"
+      ],
+      "output": [
+        "dist/ui/"
       ],
       "clean": "if-file-deleted"
     },
@@ -70,7 +87,8 @@
     "url": "https://github.com/google/labs-prototypes"
   },
   "files": [
-    "dist/src"
+    "dist/src",
+    "dist/ui"
   ],
   "ava": {
     "timeout": "30s",
