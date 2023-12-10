@@ -19,8 +19,8 @@
     {
       "from": "generate",
       "to": "formatOutput",
-      "out": "tool_calls",
-      "in": "tool_calls"
+      "out": "toolCalls",
+      "in": "toolCalls"
     },
     {
       "from": "parameters",
@@ -77,8 +77,8 @@
     {
       "from": "generate",
       "to": "getBoardArgs",
-      "out": "tool_calls",
-      "in": "tool_calls"
+      "out": "toolCalls",
+      "in": "toolCalls"
     },
     {
       "from": "generate",
@@ -331,7 +331,7 @@
       "id": "getBoardArgs",
       "type": "jsonata",
       "configuration": {
-        "expression": "$merge([{\n      \"path\": $lookup(urlMap, tool_calls[0].name)\n    },\n    { \"generator\": generator },\n    tool_calls[0].args\n  ])",
+        "expression": "$merge([{\n      \"path\": $lookup(urlMap, toolCalls[0].name)\n    },\n    { \"generator\": generator },\n    toolCalls[0].args\n  ])",
         "raw": true
       }
     },
@@ -339,7 +339,7 @@
       "id": "formatOutput",
       "type": "jsonata",
       "configuration": {
-        "expression": "{ \"text\": text, \"name\": tool_calls[0].name, \"context\": context }",
+        "expression": "{ \"text\": text, \"name\": toolCalls[0].name, \"context\": context }",
         "raw": true
       }
     },

@@ -15,7 +15,7 @@ end
 sg_lambda2:::slotted -- "lamdba->lamdba" --o lambda2
 
 getResponse["jsonata <br> id='getResponse'"] -- "text->text" --> textOutput{{"output <br> id='textOutput'"}}:::output
-getResponse["jsonata <br> id='getResponse'"] -- "tool_calls->tool_calls" --> toolCallsOutput{{"output <br> id='toolCallsOutput'"}}:::output
+getResponse["jsonata <br> id='getResponse'"] -- "tool_calls->toolCalls" --> toolCallsOutput{{"output <br> id='toolCallsOutput'"}}:::output
 callOpenAI["fetch <br> id='callOpenAI'"] -- "response->json" --> getResponse["jsonata <br> id='getResponse'"]
 getNewContext["jsonata <br> id='getNewContext'"] -- "result->context" --> textOutput{{"output <br> id='textOutput'"}}:::output
 getNewContext["jsonata <br> id='getNewContext'"] -- "result->context" --> toolCallsOutput{{"output <br> id='toolCallsOutput'"}}:::output

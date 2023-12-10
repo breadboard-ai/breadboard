@@ -42,7 +42,7 @@
       "from": "getResponse",
       "to": "toolCallsOutput",
       "out": "tool_calls",
-      "in": "tool_calls"
+      "in": "toolCalls"
     },
     {
       "from": "callOpenAI",
@@ -159,7 +159,7 @@
         "schema": {
           "type": "object",
           "properties": {
-            "tool_calls": {
+            "toolCalls": {
               "type": "object",
               "title": "Tool Calls",
               "description": "The generated tool calls"

@@ -140,10 +140,10 @@ const generate = core
 const getBoardArgs = starter.jsonata({
   $id: "getBoardArgs",
   expression: `$merge([{
-      "path": $lookup(urlMap, tool_calls[0].name)
+      "path": $lookup(urlMap, toolCalls[0].name)
     },
     { "generator": generator },
-    tool_calls[0].args
+    toolCalls[0].args
   ])`,
   raw: true,
 });
@@ -151,10 +151,10 @@ const getBoardArgs = starter.jsonata({
 const formatOutput = starter
   .jsonata({
     $id: "formatOutput",
-    expression: `{ "text": text, "name": tool_calls[0].name, "context": context }`,
+    expression: `{ "text": text, "name": toolCalls[0].name, "context": context }`,
     raw: true,
   })
-  .wire("<-tool_calls", generate);
+  .wire("<-toolCalls", generate);
 
 parameters
   .wire("text->", generate)
@@ -169,7 +169,7 @@ parameters
     "generator->path",
     generate
       .wire(
-        "tool_calls->",
+        "toolCalls->",
         getBoardArgs
           .wire(
             "*->",

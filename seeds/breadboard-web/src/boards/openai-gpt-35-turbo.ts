@@ -122,7 +122,7 @@ const toolCallsOutput = board.output({
   schema: {
     type: "object",
     properties: {
-      tool_calls: {
+      toolCalls: {
         type: "object",
         title: "Tool Calls",
         description: "The generated tool calls",
@@ -233,7 +233,9 @@ const streamTransform = nursery.transformStream(
 fetch
   .wire(
     "response->json",
-    getResponse.wire("text->", textOutput).wire("tool_calls->", toolCallsOutput)
+    getResponse
+      .wire("text->", textOutput)
+      .wire("tool_calls->toolCalls", toolCallsOutput)
   )
   .wire(
     "response->",
