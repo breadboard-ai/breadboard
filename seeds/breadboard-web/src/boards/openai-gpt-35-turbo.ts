@@ -151,36 +151,44 @@ const streamOutput = board.output({
   },
 });
 
-const headers = starter
+const formatParameters = starter
   .jsonata({
-    $id: "makeHeaders",
-    expression: `{
-    "Content-Type": "application/json",
-    "Authorization": "Bearer " & $
-  }`,
+    $id: "formatParameters",
+    expression: `(
+    $context := $append(
+        context ? context, [
+            {
+                "role": "user",
+                "content": text
+            }
+        ]);
+    OPENAI_API_KEY ? text ? {
+        "headers": {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " & OPENAI_API_KEY
+        },
+        "body": {
+            "model": "gpt-3.5-turbo-1106",
+            "messages": $context,
+            "stream": useStreaming,
+            "temperature": 1,
+            "top_p": 1,
+            "tools": tools ? [tools.{ "type": "function", "function": $ }],
+            "frequency_penalty": 0,
+            "presence_penalty": 0
+        },
+        "stream": useStreaming,
+        "context": $context
+    } : {
+        "$error": "\`text\` input is required"
+    } : {
+        "$error": "\`OPENAI_API_KEY\` input is required"
+    }
+)`,
+    raw: true,
   })
-  .wire("json<-OPENAI_API_KEY", starter.secrets({ keys: ["OPENAI_API_KEY"] }));
-
-const makeMessages = starter
-  .jsonata({
-    $id: "makeMessages",
-    expression: `$append($boolean($.context) ? $.context, [{ "role": "user", "content": $.text }])`,
-  })
-  .wire("<-context", input);
-
-const body = starter.jsonata({
-  $id: "makeBody",
-  expression: `{
-    "model": "gpt-3.5-turbo-1106",
-    "messages": $.messages,
-    "stream": $.useStreaming,
-    "temperature": 1,
-    "top_p": 1,
-    "tools": $count($.tools) > 0 ? $.tools,
-    "frequency_penalty": 0,
-    "presence_penalty": 0
-  }`,
-});
+  .wire("<-*", input)
+  .wire("<-OPENAI_API_KEY", starter.secrets({ keys: ["OPENAI_API_KEY"] }));
 
 const fetch = starter
   .fetch({
@@ -188,8 +196,7 @@ const fetch = starter
     url: "https://api.openai.com/v1/chat/completions",
     method: "POST",
   })
-  .wire("stream<-useStreaming", input)
-  .wire("headers<-result", headers);
+  .wire("*<-", formatParameters);
 
 const getResponse = starter.jsonata({
   $id: "getResponse",
@@ -205,7 +212,7 @@ const getNewContext = starter
     $id: "getNewContext",
     expression: `$append(messages, response.choices[0].message)`,
   })
-  .wire("messages<-result", makeMessages);
+  .wire("messages<-context", formatParameters);
 
 const streamTransform = nursery.transformStream(
   (transformBoard, input, output) => {
@@ -223,35 +230,17 @@ const streamTransform = nursery.transformStream(
   }
 );
 
-const formatTools = starter.jsonata({
-  $id: "formatTools",
-  expression: `[$.{ "type": "function", "function": $ }]`,
-});
-
-input.wire("tools->json", formatTools.wire("result->tools", body));
-input.wire("useStreaming->", body);
-input.wire(
-  "text->",
-  makeMessages.wire(
-    "result->messages",
-    body.wire(
-      "result->body",
-      fetch
-        .wire(
-          "response->json",
-          getResponse
-            .wire("text->", textOutput)
-            .wire("tool_calls->", toolCallsOutput)
-        )
-        .wire(
-          "response->",
-          getNewContext
-            .wire("result->context", textOutput)
-            .wire("result->context", toolCallsOutput)
-        )
-        .wire("stream->", streamTransform.wire("stream->", streamOutput))
-    )
+fetch
+  .wire(
+    "response->json",
+    getResponse.wire("text->", textOutput).wire("tool_calls->", toolCallsOutput)
   )
-);
+  .wire(
+    "response->",
+    getNewContext
+      .wire("result->context", textOutput)
+      .wire("result->context", toolCallsOutput)
+  )
+  .wire("stream->", streamTransform.wire("stream->", streamOutput));
 
 export default board;

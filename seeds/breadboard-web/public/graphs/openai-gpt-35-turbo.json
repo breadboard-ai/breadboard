@@ -4,33 +4,25 @@
   "version": "0.0.1",
   "edges": [
     {
+      "from": "input",
+      "to": "formatParameters",
+      "out": "*"
+    },
+    {
       "from": "secrets-1",
-      "to": "makeHeaders",
+      "to": "formatParameters",
       "out": "OPENAI_API_KEY",
-      "in": "json"
+      "in": "OPENAI_API_KEY"
     },
     {
-      "from": "input",
-      "to": "makeMessages",
-      "out": "context",
-      "in": "context"
-    },
-    {
-      "from": "input",
+      "from": "formatParameters",
       "to": "callOpenAI",
-      "out": "useStreaming",
-      "in": "stream"
+      "out": "*"
     },
     {
-      "from": "makeHeaders",
-      "to": "callOpenAI",
-      "out": "result",
-      "in": "headers"
-    },
-    {
-      "from": "makeMessages",
+      "from": "formatParameters",
       "to": "getNewContext",
-      "out": "result",
+      "out": "context",
       "in": "messages"
     },
     {
@@ -39,24 +31,6 @@
       "constant": true,
       "out": "board",
       "in": "board"
-    },
-    {
-      "from": "formatTools",
-      "to": "makeBody",
-      "out": "result",
-      "in": "tools"
-    },
-    {
-      "from": "input",
-      "to": "formatTools",
-      "out": "tools",
-      "in": "json"
-    },
-    {
-      "from": "input",
-      "to": "makeBody",
-      "out": "useStreaming",
-      "in": "useStreaming"
     },
     {
       "from": "getResponse",
@@ -105,24 +79,6 @@
       "to": "transformStream-3",
       "out": "stream",
       "in": "stream"
-    },
-    {
-      "from": "makeBody",
-      "to": "callOpenAI",
-      "out": "result",
-      "in": "body"
-    },
-    {
-      "from": "makeMessages",
-      "to": "makeBody",
-      "out": "result",
-      "in": "messages"
-    },
-    {
-      "from": "input",
-      "to": "makeMessages",
-      "out": "text",
-      "in": "text"
     }
   ],
   "nodes": [
@@ -235,10 +191,11 @@
       }
     },
     {
-      "id": "makeHeaders",
+      "id": "formatParameters",
       "type": "jsonata",
       "configuration": {
-        "expression": "{\n    \"Content-Type\": \"application/json\",\n    \"Authorization\": \"Bearer \" & $\n  }"
+        "expression": "(\n    $context := $append(\n        context ? context, [\n            {\n                \"role\": \"user\",\n                \"content\": text\n            }\n        ]);\n    OPENAI_API_KEY ? text ? {\n        \"headers\": {\n            \"Content-Type\": \"application/json\",\n            \"Authorization\": \"Bearer \" & OPENAI_API_KEY\n        },\n        \"body\": {\n            \"model\": \"gpt-3.5-turbo-1106\",\n            \"messages\": $context,\n            \"stream\": useStreaming,\n            \"temperature\": 1,\n            \"top_p\": 1,\n            \"tools\": tools ? [tools.{ \"type\": \"function\", \"function\": $ }],\n            \"frequency_penalty\": 0,\n            \"presence_penalty\": 0\n        },\n        \"stream\": useStreaming,\n        \"context\": $context\n    } : {\n        \"$error\": \"`text` input is required\"\n    } : {\n        \"$error\": \"`OPENAI_API_KEY` input is required\"\n    }\n)",
+        "raw": true
       }
     },
     {
@@ -248,20 +205,6 @@
         "keys": [
           "OPENAI_API_KEY"
         ]
-      }
-    },
-    {
-      "id": "makeMessages",
-      "type": "jsonata",
-      "configuration": {
-        "expression": "$append($boolean($.context) ? $.context, [{ \"role\": \"user\", \"content\": $.text }])"
-      }
-    },
-    {
-      "id": "makeBody",
-      "type": "jsonata",
-      "configuration": {
-        "expression": "{\n    \"model\": \"gpt-3.5-turbo-1106\",\n    \"messages\": $.messages,\n    \"stream\": $.useStreaming,\n    \"temperature\": 1,\n    \"top_p\": 1,\n    \"tools\": $count($.tools) > 0 ? $.tools,\n    \"frequency_penalty\": 0,\n    \"presence_penalty\": 0\n  }"
       }
     },
     {
@@ -338,13 +281,6 @@
       "id": "transformStream-3",
       "type": "transformStream",
       "configuration": {}
-    },
-    {
-      "id": "formatTools",
-      "type": "jsonata",
-      "configuration": {
-        "expression": "[$.{ \"type\": \"function\", \"function\": $ }]"
-      }
     }
   ],
   "kits": [
