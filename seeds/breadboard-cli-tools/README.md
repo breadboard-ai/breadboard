@@ -1,4 +1,4 @@
-# Your README goes here
+# CLI tools that let you play with breadboard
 
 `npm install -g breadboard-cli-tools`
 
