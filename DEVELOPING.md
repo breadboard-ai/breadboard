@@ -213,7 +213,8 @@ The main reason we need to run `npm run build` is because in the monorepo, we ne
 
 #### Front-end
 
-[Vite](https://vitejs.dev/) is currently brought up in the `web-demo` dir. Use it as a template for other front-end TypeScript packages.
+[Vite](https://vitejs.dev/) is currently brought up in the `breadboard-web` dir. Use it as a template for other front-end TypeScript packages. Alternatively, you can use `npm init @google-labs/breadboard [project-name]` to 
+create a new front-end project.
 
 ## Publishing NPM packages
 

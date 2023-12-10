@@ -39,8 +39,7 @@
         "./seeds/node-nursery-web:build",
         "./seeds/palm-kit:build",
         "./seeds/palm-lite:build",
-        "./seeds/pinecone-kit:build",
-        "./seeds/web-demo:build"
+        "./seeds/pinecone-kit:build"
       ]
     },
     "test": {
@@ -90,8 +89,7 @@
         "./seeds/node-nursery-web:lint",
         "./seeds/palm-kit:lint",
         "./seeds/palm-lite:lint",
-        "./seeds/pinecone-kit:lint",
-        "./seeds/web-demo:lint"
+        "./seeds/pinecone-kit:lint"
       ]
     },
     "ci:local": {
