@@ -1,8 +1,14 @@
 {
   "title": "The Calculator Recipe",
   "description": "A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "edges": [
+    {
+      "from": "math-question",
+      "to": "generator",
+      "out": "generator",
+      "in": "path"
+    },
     {
       "from": "compute",
       "to": "print",
@@ -16,14 +22,14 @@
       "in": "PALM_KEY"
     },
     {
-      "from": "math-function-generator",
+      "from": "generator",
       "to": "compute",
-      "out": "completion",
+      "out": "text",
       "in": "code"
     },
     {
       "from": "math-function",
-      "to": "math-function-generator",
+      "to": "generator",
       "out": "prompt",
       "in": "text"
     },
@@ -46,6 +52,12 @@
               "type": "string",
               "title": "Math problem",
               "description": "Ask a math question"
+            },
+            "generator": {
+              "type": "string",
+              "title": "Generator",
+              "description": "The URL of the generator to call",
+              "default": "/graphs/text-generator.json"
             }
           },
           "required": [
@@ -62,8 +74,8 @@
       }
     },
     {
-      "id": "math-function-generator",
-      "type": "palm-generateText"
+      "id": "generator",
+      "type": "invoke"
     },
     {
       "id": "compute",
@@ -106,7 +118,7 @@
       "url": "npm:@google-labs/llm-starter"
     },
     {
-      "url": "npm:@google-labs/palm-kit"
+      "url": "npm:@google-labs/core-kit"
     }
   ]
 }

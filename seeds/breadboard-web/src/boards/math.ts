@@ -5,52 +5,62 @@
  */
 
 import { Board } from "@google-labs/breadboard";
+import Core from "@google-labs/core-kit";
 import { Starter } from "@google-labs/llm-starter";
-import { PaLMKit } from "@google-labs/palm-kit";
 
-const math = new Board({
+const recipe = new Board({
   title: "The Calculator Recipe",
   description:
     "A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.",
-  version: "0.0.1",
+  version: "0.0.2",
 });
-const kit = math.addKit(Starter);
-const palm = math.addKit(PaLMKit);
+const kit = recipe.addKit(Starter);
+const core = recipe.addKit(Core);
 
-math
-  .input({
-    $id: "math-question",
-    schema: {
-      type: "object",
-      properties: {
-        text: {
-          type: "string",
-          title: "Math problem",
-          description: "Ask a math question",
-        },
+const inputs = recipe.input({
+  $id: "math-question",
+  schema: {
+    type: "object",
+    properties: {
+      text: {
+        type: "string",
+        title: "Math problem",
+        description: "Ask a math question",
       },
-      required: ["text"],
+      generator: {
+        type: "string",
+        title: "Generator",
+        description: "The URL of the generator to call",
+        default: "/graphs/text-generator.json",
+      },
     },
-  })
-  .wire(
-    "text->question",
-    kit
-      .promptTemplate({
-        template: "Translate the math problem below into a JavaScript function named `compute` that can be executed to provide the answer to the problem\nMath Problem: {{question}}\nSolution:",
-        $id: "math-function",
-      })
-      .wire(
-        "prompt->text",
-        palm
-          .generateText({ $id: "math-function-generator" })
-          .wire(
-            "completion->code",
-            kit.runJavascript({
+    required: ["text"],
+  },
+});
+
+inputs.wire(
+  "text->question",
+  kit
+    .promptTemplate({
+      template:
+        "Translate the math problem below into a JavaScript function named `compute` that can be executed to provide the answer to the problem\nMath Problem: {{question}}\nSolution:",
+      $id: "math-function",
+    })
+    .wire(
+      "prompt->text",
+      core
+        .invoke({ $id: "generator" })
+        .wire("path<-generator", inputs)
+        .wire(
+          "text->code",
+          kit
+            .runJavascript({
               name: "compute",
               $id: "compute",
-            }).wire(
+            })
+            .wire(
               "result->text",
-              math.output({
+              recipe.output({
                 $id: "print",
                 schema: {
                   type: "object",
@@ -65,9 +75,9 @@ math
                 },
               })
             )
-              .wire("<-PALM_KEY", kit.secrets({ keys: ["PALM_KEY"] })),
-          )
-      )
-  );
+            .wire("<-PALM_KEY", kit.secrets({ keys: ["PALM_KEY"] }))
+        )
+    )
+);
 
-export default math;
+export default recipe;

@@ -140,7 +140,9 @@
                 "GPT 3.5 Turbo",
                 "mock"
               ],
-              "default": "PaLM"
+              "examples": [
+                "PaLM"
+              ]
             }
           },
           "required": [

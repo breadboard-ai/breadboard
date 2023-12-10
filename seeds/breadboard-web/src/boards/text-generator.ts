@@ -42,7 +42,7 @@ const input = board.input({
         title: "Model",
         description: "The model to use for generation",
         enum: ["PaLM", "GPT 3.5 Turbo", "mock"],
-        default: "PaLM",
+        examples: ["PaLM"],
       },
     },
     required: ["text"],
