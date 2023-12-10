@@ -57,7 +57,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/google/labs-prototypes"
+    "url": "git+https://github.com/google/labs-prototypes.git"
   },
   "files": [
     "dist/assets",
@@ -80,5 +80,6 @@
   },
   "dependencies": {
     "base-create": "^3.0.8"
-  }
+  },
+  "types": "./dist/src/index.d.ts"
 }
