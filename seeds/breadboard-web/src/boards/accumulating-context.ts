@@ -6,7 +6,7 @@
 
 import { z } from "zod";
 
-import { base } from "@google-labs/breadboard";
+import { V, base } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { starter } from "@google-labs/llm-starter";
 
@@ -56,7 +56,7 @@ conversationMemory.in({ accumulator: generator.text });
 // response.completion.to(conversationMemory.accumulator);
 
 const output = base.output({
-  text: generator.text as unknown as string,
+  text: generator.text as V<string>,
   schema: z.object({
     text: z
       .string()
