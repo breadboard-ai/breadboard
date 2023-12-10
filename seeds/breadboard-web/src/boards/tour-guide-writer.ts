@@ -7,20 +7,18 @@
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 import { Core } from "@google-labs/core-kit";
-import { PaLMKit } from "@google-labs/palm-kit";
 
 const board = new Board({
   title: "Tour Guide Writer",
   description:
-    "This boards attempts to write a tour guide for a specified location.",
-  version: "0.0.1",
+    "This boards attempts to write a tour guide for a specified location. This time, it takes a text generator board as an input.\n\nInterestingly, because we currently don't have a way to close over the inputs of the invoked text generator, this board exposes the text generator's inputs as its own inputs.",
+  version: "0.0.2",
 });
 const starter = board.addKit(Starter);
 const core = board.addKit(Core);
-const palm = board.addKit(PaLMKit);
 
-const location = board.input({
-  $id: "location",
+const userInput = board.input({
+  $id: "location-and-generator",
   schema: {
     type: "object",
     properties: {
@@ -28,8 +26,16 @@ const location = board.input({
         type: "string",
         title: "Location",
         description: "The location for which to write a tour guide",
+        examples: ["Stresa, Italy"],
+      },
+      generator: {
+        type: "board",
+        title: "Text Generator",
+        description: "The text generator to use for writing the tour guide",
+        examples: ["/graphs/text-generator.json"],
       },
     },
+    required: ["location"],
   },
 });
 
@@ -93,12 +99,16 @@ const travelItineraryTemplate = starter.promptTemplate({
   $id: "travelItinerary",
 });
 
-const travelItineraryGenerator = palm
-  .generateText({
+const travelItineraryGenerator = core
+  .invoke({
     $id: "travelItineraryGenerator",
     stopSequences: ["\n[Place]"],
   })
-  .wire("<-PALM_KEY", starter.secrets({ keys: ["PALM_KEY"] }));
+  .wire("path<-generator", userInput)
+  .wire(
+    "<-useStreaming",
+    core.passthrough({ $id: "dontUseStreaming", useStreaming: false })
+  );
 
 const splitItinerary = starter.runJavascript({
   name: "split",
@@ -116,7 +126,6 @@ const splitItinerary = starter.runJavascript({
 // It then runs a sub-graph defined below for each item in the supplied list.
 const createGuides = core.map((board, input, output) => {
   const starter = board.addKit(Starter);
-  const palm = board.addKit(PaLMKit);
 
   const guideTemplate = starter.promptTemplate({
     template: `[City] Paris, France
@@ -139,18 +148,22 @@ const createGuides = core.map((board, input, output) => {
     $id: "guideTemplate",
   });
 
-  const guideGenerator = palm
-    .generateText({
+  const guideGenerator = core
+    .invoke({
       $id: "guideGenerator",
       stopSequences: ["\n[City]"],
     })
-    .wire("<-PALM_KEY.", starter.secrets({ keys: ["PALM_KEY"] }));
+    .wire("path<-generator.", userInput)
+    .wire(
+      "<-useStreaming",
+      core.passthrough({ $id: "dontUseStreaming", useStreaming: false })
+    );
 
   input.wire(
     "item->activity",
     guideTemplate
-      .wire("location<-.", location)
-      .wire("prompt->text", guideGenerator.wire("completion->guide", output))
+      .wire("location<-.", userInput)
+      .wire("prompt->text", guideGenerator.wire("text->guide", output))
   );
 });
 
@@ -173,19 +186,19 @@ const combineGuides = starter.runJavascript({
   }.toString(),
 });
 
-location.wire(
+userInput.wire(
   "*",
   travelItineraryTemplate.wire(
     "prompt->text",
     travelItineraryGenerator.wire(
-      "completion->itinerary",
+      "text->itinerary",
       splitItinerary.wire(
         "result->list",
         createGuides.wire(
           "list->guides",
           combineGuides
             .wire("result->guide", output)
-            .wire("<-location", location)
+            .wire("<-location", userInput)
             .wire("activities<-result", splitItinerary)
         )
       )

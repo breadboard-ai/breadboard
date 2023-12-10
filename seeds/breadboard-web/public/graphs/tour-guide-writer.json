@@ -1,24 +1,37 @@
 {
   "title": "Tour Guide Writer",
-  "description": "This boards attempts to write a tour guide for a specified location.",
-  "version": "0.0.1",
+  "description": "This boards attempts to write a tour guide for a specified location. This time, it takes a text generator board as an input.\n\nInterestingly, because we currently don't have a way to close over the inputs of the invoked text generator, this board exposes the text generator's inputs as its own inputs.",
+  "version": "0.0.2",
   "edges": [
     {
-      "from": "secrets-1",
+      "from": "location-and-generator",
       "to": "travelItineraryGenerator",
-      "out": "PALM_KEY",
-      "in": "PALM_KEY"
+      "out": "generator",
+      "in": "path"
     },
     {
-      "from": "location",
-      "to": "lambda-2",
+      "from": "dontUseStreaming",
+      "to": "travelItineraryGenerator",
+      "out": "useStreaming",
+      "in": "useStreaming"
+    },
+    {
+      "from": "location-and-generator",
+      "to": "lambda-1",
+      "constant": true,
+      "out": "generator",
+      "in": "$l-guideGenerator-path"
+    },
+    {
+      "from": "location-and-generator",
+      "to": "lambda-1",
       "constant": true,
       "out": "location",
       "in": "$l-guideTemplate-location"
     },
     {
-      "from": "lambda-2",
-      "to": "map-3",
+      "from": "lambda-1",
+      "to": "map-2",
       "constant": true,
       "out": "board",
       "in": "board"
@@ -30,7 +43,7 @@
       "in": "guide"
     },
     {
-      "from": "location",
+      "from": "location-and-generator",
       "to": "combineGuides",
       "out": "location",
       "in": "location"
@@ -42,21 +55,21 @@
       "in": "activities"
     },
     {
-      "from": "map-3",
+      "from": "map-2",
       "to": "combineGuides",
       "out": "list",
       "in": "guides"
     },
     {
       "from": "splitItinerary",
-      "to": "map-3",
+      "to": "map-2",
       "out": "result",
       "in": "list"
     },
     {
       "from": "travelItineraryGenerator",
       "to": "splitItinerary",
-      "out": "completion",
+      "out": "text",
       "in": "itinerary"
     },
     {
@@ -66,14 +79,14 @@
       "in": "text"
     },
     {
-      "from": "location",
+      "from": "location-and-generator",
       "to": "travelItinerary",
       "out": "*"
     }
   ],
   "nodes": [
     {
-      "id": "location",
+      "id": "location-and-generator",
       "type": "input",
       "configuration": {
         "schema": {
@@ -82,9 +95,23 @@
             "location": {
               "type": "string",
               "title": "Location",
-              "description": "The location for which to write a tour guide"
+              "description": "The location for which to write a tour guide",
+              "examples": [
+                "Stresa, Italy"
+              ]
+            },
+            "generator": {
+              "type": "board",
+              "title": "Text Generator",
+              "description": "The text generator to use for writing the tour guide",
+              "examples": [
+                "/graphs/text-generator.json"
+              ]
             }
-          }
+          },
+          "required": [
+            "location"
+          ]
         }
       }
     },
@@ -113,7 +140,7 @@
     },
     {
       "id": "travelItineraryGenerator",
-      "type": "palm-generateText",
+      "type": "invoke",
       "configuration": {
         "stopSequences": [
           "\n[Place]"
@@ -121,12 +148,10 @@
       }
     },
     {
-      "id": "secrets-1",
-      "type": "secrets",
+      "id": "dontUseStreaming",
+      "type": "passthrough",
       "configuration": {
-        "keys": [
-          "PALM_KEY"
-        ]
+        "useStreaming": false
       }
     },
     {
@@ -138,7 +163,7 @@
       }
     },
     {
-      "id": "lambda-2",
+      "id": "lambda-1",
       "type": "lambda",
       "configuration": {
         "board": {
@@ -146,16 +171,15 @@
           "board": {
             "edges": [
               {
-                "from": "secrets-3",
+                "from": "dontUseStreaming",
                 "to": "guideGenerator",
-                "constant": true,
-                "out": "PALM_KEY",
-                "in": "PALM_KEY"
+                "out": "useStreaming",
+                "in": "useStreaming"
               },
               {
                 "from": "guideGenerator",
                 "to": "output-2",
-                "out": "completion",
+                "out": "text",
                 "in": "guide"
               },
               {
@@ -169,6 +193,13 @@
                 "to": "guideTemplate",
                 "out": "item",
                 "in": "activity"
+              },
+              {
+                "from": "input-1",
+                "to": "guideGenerator",
+                "constant": true,
+                "out": "$l-guideGenerator-path",
+                "in": "path"
               },
               {
                 "from": "input-1",
@@ -196,7 +227,7 @@
               },
               {
                 "id": "guideGenerator",
-                "type": "palm-generateText",
+                "type": "invoke",
                 "configuration": {
                   "stopSequences": [
                     "\n[City]"
@@ -204,12 +235,10 @@
                 }
               },
               {
-                "id": "secrets-3",
-                "type": "secrets",
+                "id": "dontUseStreaming",
+                "type": "passthrough",
                 "configuration": {
-                  "keys": [
-                    "PALM_KEY"
-                  ]
+                  "useStreaming": false
                 }
               }
             ],
@@ -218,7 +247,7 @@
                 "url": "npm:@google-labs/llm-starter"
               },
               {
-                "url": "npm:@google-labs/palm-kit"
+                "url": "npm:@google-labs/core-kit"
               }
             ]
           }
@@ -226,7 +255,7 @@
       }
     },
     {
-      "id": "map-3",
+      "id": "map-2",
       "type": "map",
       "configuration": {}
     },
@@ -235,7 +264,7 @@
       "type": "runJavascript",
       "configuration": {
         "name": "combine",
-        "code": "function combine({location:location2,activities,guides}){const guideList=guides.map(item=>item.guide);return`# ${location2}\n${activities.map((activity,index)=>`## ${activity}\n${guideList[index]}\n\n`).join(\"\")}`}"
+        "code": "function combine({location,activities,guides}){const guideList=guides.map(item=>item.guide);return`# ${location}\n${activities.map((activity,index)=>`## ${activity}\n${guideList[index]}\n\n`).join(\"\")}`}"
       }
     }
   ],
@@ -245,9 +274,6 @@
     },
     {
       "url": "npm:@google-labs/core-kit"
-    },
-    {
-      "url": "npm:@google-labs/palm-kit"
     }
   ]
 }
