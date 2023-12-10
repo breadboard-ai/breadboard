@@ -28,8 +28,6 @@ const config = {
 
 const RUNTIME_SWITCH_KEY = "bb-runtime";
 const MAINTHREAD_RUNTIME_VALUE = "main-thread";
-const PROXY_SERVER_RUNTIME_VALUE = "proxy-server";
-const PROXY_URL_KEY = "bb-proxy-url";
 
 export class Main {
   #ui = BreadboardUI.get();
