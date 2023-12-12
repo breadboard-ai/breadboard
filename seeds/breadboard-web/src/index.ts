@@ -6,11 +6,11 @@
 
 import * as BreadboardUI from "@google-labs/breadboard-ui";
 import type * as Breadboard from "@google-labs/breadboard";
-import { HostRuntime } from "@google-labs/breadboard/worker";
+import { HostRuntime as HostHarness } from "@google-labs/breadboard/worker";
 import { ProxyReceiver } from "./receiver.js";
-import { Runtime, RuntimeRunResult } from "./types.js";
-import { MainThreadRuntime } from "./main-thread-runtime.js";
-import { ProxyServerRuntime } from "./proxy-server-runtime.js";
+import { Harness, HarnessRunResult } from "./types.js";
+import { MainThreadHarness } from "./main-thread-harness.js";
+import { ProxyServerHarness } from "./proxy-server-harness.js";
 
 const PROXY_NODES = [
   "palm-generateText",
@@ -23,9 +23,9 @@ const PROXY_NODES = [
 const WORKER_URL =
   import.meta.env.MODE === "development" ? "/src/worker.ts" : "/worker.js";
 
-const RUNTIME_SWITCH_KEY = "bb-runtime";
-const MAINTHREAD_RUNTIME_VALUE = "main-thread";
-const PROXY_SERVER_RUNTIME_VALUE = "proxy-server";
+const HARNESS_SWITCH_KEY = "bb-harness";
+const MAINTHREAD_HARNESS_VALUE = "main-thread";
+const PROXY_SERVER_HARNESS_VALUE = "proxy-server";
 const PROXY_URL_KEY = "bb-proxy-url";
 
 type PauserCallback = (paused: boolean) => void;
@@ -63,7 +63,7 @@ const sleep = (time: number) =>
 
 export class Main {
   #ui = BreadboardUI.get();
-  #runtime: Runtime;
+  #harness: Harness;
   #receiver = new ProxyReceiver();
   #hasActiveBoard = false;
   #boardId = 0;
@@ -72,7 +72,7 @@ export class Main {
   #pending = new Map<string, string>();
 
   constructor(config: BreadboardUI.StartArgs) {
-    this.#runtime = this.#getRuntime();
+    this.#harness = this.#getHarness();
     BreadboardUI.register();
 
     document.body.addEventListener(
@@ -99,7 +99,7 @@ export class Main {
         const startEvent = evt as BreadboardUI.StartEvent;
         this.setActiveBreadboard(startEvent.url);
 
-        for await (const result of this.#runtime.run(
+        for await (const result of this.#harness.run(
           startEvent.url,
           PROXY_NODES
         )) {
@@ -198,7 +198,7 @@ export class Main {
     });
   }
 
-  async #handleEvent(result: RuntimeRunResult) {
+  async #handleEvent(result: HarnessRunResult) {
     const { data, type } = result.message;
 
     if (type === "load") {
@@ -326,11 +326,11 @@ export class Main {
     }
   }
 
-  #getRuntime() {
-    const runtime = globalThis.localStorage.getItem(RUNTIME_SWITCH_KEY);
-    switch (runtime) {
-      case MAINTHREAD_RUNTIME_VALUE:
-        return new MainThreadRuntime(async ({ keys }) => {
+  #getHarness() {
+    const harness = globalThis.localStorage.getItem(HARNESS_SWITCH_KEY);
+    switch (harness) {
+      case MAINTHREAD_HARNESS_VALUE:
+        return new MainThreadHarness(async ({ keys }) => {
           if (!keys) return {};
           return Object.fromEntries(
             await Promise.all(
@@ -338,17 +338,17 @@ export class Main {
             )
           );
         });
-      case PROXY_SERVER_RUNTIME_VALUE: {
+      case PROXY_SERVER_HARNESS_VALUE: {
         const proxyServerUrl = globalThis.localStorage.getItem(PROXY_URL_KEY);
         if (!proxyServerUrl) {
           console.log(
-            "Unable to initialize proxy server runtime, falling back on worker runtime."
+            "Unable to initialize proxy server harness, falling back on worker harness."
           );
           break;
         }
-        return new ProxyServerRuntime(proxyServerUrl);
+        return new ProxyServerHarness(proxyServerUrl);
       }
     }
-    return new HostRuntime(WORKER_URL);
+    return new HostHarness(WORKER_URL);
   }
 }

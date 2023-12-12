@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Result, Runtime, RuntimeRunResult } from "./types";
+import { Harness } from "./types";
 
 import {
   Board,
@@ -13,42 +13,33 @@ import {
   OutputValues,
   asRuntimeKit,
 } from "@google-labs/breadboard";
-import { KitBuilder } from "@google-labs/breadboard/kits";
 
 import Starter from "@google-labs/llm-starter";
 import Core from "@google-labs/core-kit";
 import PaLMKit from "@google-labs/palm-kit";
 import Pinecone from "@google-labs/pinecone-kit";
 import NodeNurseryWeb from "@google-labs/node-nursery-web";
-import JSONKit from "@google-labs/json-kit";
-
-export class MainThreadRunResult<MessageType extends Result>
-  implements RuntimeRunResult
-{
-  message: MessageType;
-  response?: unknown;
-
-  constructor(message: MessageType) {
-    this.message = message;
-  }
-
-  reply(reply: unknown) {
-    this.response = reply;
-  }
-}
+import { MainThreadRunResult } from "./main-thread-harness";
+import {
+  HTTPClientTransport,
+  ProxyClient,
+} from "@google-labs/breadboard/remote";
 
 export type SecretHandler = (keys: {
   keys?: string[];
 }) => Promise<OutputValues>;
 
-export class MainThreadRuntime implements Runtime {
-  #secretHandler: SecretHandler;
+export class ProxyServerHarness implements Harness {
+  #proxyServerUrl: string;
 
-  constructor(secretHandler: SecretHandler) {
-    this.#secretHandler = secretHandler;
+  constructor(proxyServerUrl: string) {
+    this.#proxyServerUrl = proxyServerUrl;
   }
-
   async *run(url: string) {
+    const proxyClient = new ProxyClient(
+      new HTTPClientTransport(this.#proxyServerUrl)
+    );
+
     try {
       const runner = await Board.load(url);
 
@@ -63,23 +54,20 @@ export class MainThreadRuntime implements Runtime {
         },
       });
 
-      const SecretAskingKit = new KitBuilder({
-        url: "secret-asking-kit ",
-      }).build({
-        secrets: async (inputs) => {
-          return await this.#secretHandler(inputs as InputValues);
-        },
-      });
+      const proxyKit = await proxyClient.createProxyKit([
+        "fetch",
+        "palm-generateText",
+        "palm-embedText",
+        "promptTemplate",
+        "secrets",
+      ]);
 
       const kits = [
-        SecretAskingKit,
-        Starter,
-        Core,
-        Pinecone,
-        PaLMKit,
-        NodeNurseryWeb,
-        JSONKit,
-      ].map((kitConstructor) => asRuntimeKit(kitConstructor));
+        proxyKit,
+        ...[Starter, Core, Pinecone, PaLMKit, NodeNurseryWeb].map(
+          (kitConstructor) => asRuntimeKit(kitConstructor)
+        ),
+      ];
 
       for await (const data of runner.run({
         probe: new LogProbe(),
@@ -98,13 +86,8 @@ export class MainThreadRuntime implements Runtime {
       }
       yield new MainThreadRunResult({ type: "end", data: {} });
     } catch (e) {
-      let error = e as Error;
-      let message = "";
-      while (error?.cause) {
-        error = (error.cause as { error: Error }).error;
-        message += `\n${error.message}`;
-      }
-      console.error(message, error);
+      const error = e as Error;
+      console.error(error);
       yield new MainThreadRunResult({ type: "error", data: { error } });
     }
   }

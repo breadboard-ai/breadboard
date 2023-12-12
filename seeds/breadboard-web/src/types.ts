@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export interface Runtime {
+export interface Harness {
   run(
     url: string,
     proxyNodes: string[]
-  ): AsyncGenerator<RuntimeRunResult, void>;
+  ): AsyncGenerator<HarnessRunResult, void>;
 }
 
 export type Result = {
@@ -17,7 +17,7 @@ export type Result = {
   data: unknown;
 };
 
-export interface RuntimeRunResult {
+export interface HarnessRunResult {
   reply(reply: unknown): void;
   message: Result;
 }
