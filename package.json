@@ -22,7 +22,6 @@
         "./seeds/breadboard-server:build",
         "./seeds/breadboard-ui:build",
         "./seeds/breadboard-web:build",
-        "./seeds/chunker:build",
         "./seeds/cloud-function:build",
         "./seeds/coffee-bot-board:build",
         "./seeds/core-kit:build",
@@ -38,7 +37,6 @@
         "./seeds/node-nursery:build",
         "./seeds/node-nursery-web:build",
         "./seeds/palm-kit:build",
-        "./seeds/palm-lite:build",
         "./seeds/pinecone-kit:build"
       ]
     },
@@ -49,7 +47,6 @@
         "./seeds/breadboard-server:test",
         "./seeds/breadboard-ui:test",
         "./seeds/breadboard-web:test",
-        "./seeds/chunker:test",
         "./seeds/cloud-function:test",
         "./seeds/coffee-bot-board:test",
         "./seeds/core-kit:test",
@@ -63,7 +60,6 @@
         "./seeds/node-nursery:test",
         "./seeds/node-nursery-web:test",
         "./seeds/palm-kit:test",
-        "./seeds/palm-lite:test",
         "./seeds/pinecone-kit:test"
       ]
     },
@@ -73,7 +69,6 @@
         "./seeds/breadboard-cli-tools:lint",
         "./seeds/breadboard-server:lint",
         "./seeds/breadboard-ui:lint",
-        "./seeds/chunker:lint",
         "./seeds/coffee-bot-board:lint",
         "./seeds/core-kit:lint",
         "./seeds/create-breadboard:lint",
@@ -88,7 +83,6 @@
         "./seeds/node-nursery:lint",
         "./seeds/node-nursery-web:lint",
         "./seeds/palm-kit:lint",
-        "./seeds/palm-lite:lint",
         "./seeds/pinecone-kit:lint"
       ]
     },

@@ -15,7 +15,6 @@
     "build": {
       "dependencies": [
         "../breadboard:build",
-        "../palm-lite:build",
         "build:tsc"
       ]
     },
@@ -25,8 +24,7 @@
         "FORCE_COLOR": "1"
       },
       "dependencies": [
-        "../breadboard:build:tsc",
-        "../palm-lite:build:tsc"
+        "../breadboard:build:tsc"
       ],
       "files": [
         "src/**/*.ts",
