@@ -6,7 +6,7 @@
 
 import { Input, type InputArgs } from "./input.js";
 import { Load, type LoadArgs } from "./load.js";
-import { type OutputArgs } from "./output.js";
+import { Output, type OutputArgs } from "./output.js";
 import { ResultArgs } from "./result.js";
 import { DelayEvent, StartEvent, type ToastType } from "./events.js";
 import { Toast } from "./toast.js";
@@ -131,7 +131,7 @@ export class UIController extends HTMLElement implements UI {
 
         #sidebar.active {
           display: grid;
-          grid-template-rows: calc(var(--bb-grid-size) * 14) 2fr 3fr;
+          grid-template-rows: calc(var(--bb-grid-size) * 14) auto;
           height: 100%;
           overflow: hidden;
         }
@@ -153,7 +153,7 @@ export class UIController extends HTMLElement implements UI {
           overflow: hidden;
         }
 
-        #history {
+        #history, #input {
           border-bottom: 1px solid rgb(227, 231, 237);
         }
 
@@ -355,6 +355,10 @@ export class UIController extends HTMLElement implements UI {
               <slot></slot>
             </div>
           </div>
+          <div id="output">
+            <h1>Outputs</h1>
+            <div id="output-list"></div>
+          </div>
         </div>
       </div>
     `;
@@ -545,6 +549,12 @@ export class UIController extends HTMLElement implements UI {
       values.node.id,
       values.outputs
     );
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const outputContainer = this.shadowRoot!.querySelector("#output-list");
+    const output = new Output();
+    outputContainer?.appendChild(output);
+
+    await output.display(values.outputs);
   }
 
   async secret(id: string): Promise<string> {
