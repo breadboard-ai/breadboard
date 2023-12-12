@@ -98,7 +98,7 @@ export class BuilderNode<
       this.addInputsFromNode(config);
     } else if (isLambda(config)) {
       this.addInputsAsValues({
-        board: config.getBoardCapabilityAsValue(),
+        $recipe: config.getBoardCapabilityAsValue(),
       } as InputsMaybeAsValues<I>);
     } else if (isValue(config)) {
       this.addInputsFromNode(...config.asNodeInput());

@@ -9,7 +9,6 @@ import test from "ava";
 import { recipe, isLambda } from "../../../src/new/recipe-grammar/recipe.js";
 import { isValue } from "../../../src/new/recipe-grammar/value.js";
 import { Serializeable } from "../../../src/new/runner/types.js";
-import { Lambda } from "../../../src/new/recipe-grammar/types.js";
 import {
   InputValues,
   OutputValues,

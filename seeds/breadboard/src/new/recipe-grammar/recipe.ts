@@ -97,7 +97,7 @@ export const recipe: RecipeFactory = (
     else
       return new BuilderNode("invoke", getCurrentContextScope(), {
         ...config,
-        board: lambdaNode.asProxy().board,
+        $recipe: lambdaNode.asProxy().board,
       });
   }) as Lambda;
 
@@ -172,7 +172,7 @@ export const recipe: RecipeFactory = (
       if (lambdaNode?.incoming.length === 0) return await serialized;
 
       const invoke = new BuilderNode("invoke", getCurrentContextScope(), {
-        board: lambdaNode?.asProxy().board,
+        $recipe: lambdaNode?.asProxy().board,
       });
 
       return invoke.serialize(metadata);

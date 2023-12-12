@@ -59,20 +59,40 @@ export const TestKit = new KitBuilder({
    * just enough for testing.
    */
   invoke: async (inputs: InvokeInputValues, context: NodeHandlerContext) => {
-    const { board, path, ...args } = inputs;
+    const { $recipe, ...args } = inputs;
 
-    const runnableBoard = board
-      ? await Board.fromBreadboardCapability(board)
-      : path
-      ? await Board.load(path, {
-          base: context.base,
-          outerGraph: context.outerGraph,
-        })
-      : undefined;
+    if ($recipe) {
+      const board =
+        ($recipe as BreadboardCapability).kind === "board"
+          ? await Board.fromBreadboardCapability(
+              $recipe as BreadboardCapability
+            )
+          : typeof $recipe === "string"
+          ? await Board.load($recipe, {
+              base: context.base,
+              outerGraph: context.outerGraph,
+            })
+          : undefined;
 
-    if (!runnableBoard) throw new Error("Must provide valid board to invoke");
+      if (!board) throw new Error("Must provide valid $recipe to invoke");
 
-    return await runnableBoard.runOnce(args, context);
+      return await board.runOnce(args, context);
+    } else {
+      const { board, path, ...args } = inputs;
+
+      const runnableBoard = board
+        ? await Board.fromBreadboardCapability(board)
+        : path
+        ? await Board.load(path, {
+            base: context.base,
+            outerGraph: context.outerGraph,
+          })
+        : undefined;
+
+      if (!runnableBoard) throw new Error("Must provide valid board to invoke");
+
+      return await runnableBoard.runOnce(args, context);
+    }
   },
   /**
    * Reverses provided string inputs. Will crash if provided non-string inputs.
