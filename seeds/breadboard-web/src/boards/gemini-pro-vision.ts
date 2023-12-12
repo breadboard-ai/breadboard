@@ -93,7 +93,7 @@ const makeUrl = starter
   .urlTemplate({
     $id: "makeURL",
     template:
-      "https://autopush-generativelanguage.sandbox.googleapis.com/v1beta/models/gemini-pro-vision:{method}?key={GEMINI_KEY}{+sseOption}",
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:{method}?key={GEMINI_KEY}{+sseOption}",
   })
   .wire("<-GEMINI_KEY", starter.secrets({ keys: ["GEMINI_KEY"] }))
   .wire("<-method", chooseMethod)

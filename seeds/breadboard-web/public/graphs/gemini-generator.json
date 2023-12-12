@@ -231,7 +231,7 @@
       "id": "makeURL",
       "type": "urlTemplate",
       "configuration": {
-        "template": "https://autopush-generativelanguage.sandbox.googleapis.com/v1beta/models/gemini-pro:{method}?key={GEMINI_KEY}{+sseOption}"
+        "template": "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:{method}?key={GEMINI_KEY}{+sseOption}"
       }
     },
     {
