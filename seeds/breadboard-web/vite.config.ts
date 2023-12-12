@@ -1,6 +1,6 @@
 import { config } from "dotenv";
 import { defineConfig } from "vitest/config";
-import watchAndRun from "vite-plugin-watch-and-run";
+import { watchAndRun } from "vite-plugin-watch-and-run";
 import fullReload from "vite-plugin-full-reload";
 import path from "path";
 
