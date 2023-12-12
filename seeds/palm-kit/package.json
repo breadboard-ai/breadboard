@@ -98,6 +98,6 @@
   },
   "dependencies": {
     "@google-labs/breadboard": "^0.6.0",
-    "@google-labs/palm-lite": "^0.0.2"
+    "@google-labs/palm-lite": "^0.0.3"
   }
 }
