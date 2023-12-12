@@ -14,10 +14,10 @@ import { config } from "dotenv";
 config();
 
 const NEWS_SUMMARIZER_URL =
-  "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/breadboard/docs/tutorial/news-summarizer.json";
+  "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/seeds/breadboard/docs/tutorial/news-summarizer.json";
 
 const NEWS_BOARD_URL =
-  "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/breadboard/docs/tutorial/google-news-headlines.json";
+  "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/seeds/breadboard/docs/tutorial/google-news-headlines.json";
 
 const news = await Board.load(NEWS_BOARD_URL);
 

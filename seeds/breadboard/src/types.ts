@@ -483,7 +483,7 @@ export interface ProbeDetails {
 /**
  * A probe event that is distpached during board run.
  *
- * See [Chapter 7: Probes](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-7-probes) for more information.
+ * See [Chapter 7: Probes](https://github.com/breadboard-ai/breadboard/tree/main/seeds/breadboard/docs/tutorial#chapter-7-probes) for more information.
  */
 export type ProbeEvent = CustomEvent<ProbeDetails>;
 
@@ -581,7 +581,7 @@ export interface BreadboardNode<Inputs, Outputs> {
    *
    * Use this method to wire nodes together.
    *
-   * @param spec - the wiring spec. See the [wiring spec](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/wires.md) for more details.
+   * @param spec - the wiring spec. See the [wiring spec](https://github.com/breadboard-ai/breadboard/blob/main/seeds/breadboard/docs/wires.md) for more details.
    * @param to - the node to wire this node with.
    * @returns - the current node, to enable chaining.
    */

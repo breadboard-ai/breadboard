@@ -2,7 +2,7 @@
 
 To make boards run, we'll need to place nodes on them and then wire them together.
 
-We can load various kits (like the [LLM Starter Kit](https://github.com/google/labs-prototypes/tree/main/seeds/llm-starter)) to get interesting node types. However, some node types are available without loading any kits.
+We can load various kits (like the [LLM Starter Kit](https://github.com/breadboard-ai/breadboard/tree/main/seeds/llm-starter)) to get interesting node types. However, some node types are available without loading any kits.
 
 These nodes make boards usable and easy to work with.
 

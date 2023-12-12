@@ -48,7 +48,7 @@ export const Core = builder.build({
    * board is just one node.
    *
    * See [`include` node
-   * reference](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/nodes.md#include)
+   * reference](https://github.com/breadboard-ai/breadboard/blob/main/seeds/breadboard/docs/nodes.md#include)
    * for more information.
    *
    * @param $ref - the URL of the board to include, or a graph or a
@@ -64,7 +64,7 @@ export const Core = builder.build({
    * Use this node to invoke other boards into the current board.
    *
    * See [`include` node
-   * reference](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/nodes.md#include)
+   * reference](https://github.com/breadboard-ai/breadboard/blob/main/seeds/breadboard/docs/nodes.md#include)
    * for more information.
    *
    * Expects as input one of
@@ -86,7 +86,7 @@ export const Core = builder.build({
    * its outputs. Every computing machine needs a no-op node,
    * and Breadboard library is no exception.
    *
-   * See [`passthrough` node reference](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/nodes.md#passthrough) for more information.
+   * See [`passthrough` node reference](https://github.com/breadboard-ai/breadboard/blob/main/seeds/breadboard/docs/nodes.md#passthrough) for more information.
    *
    * @param config - optional configuration for the node.
    * @returns - a `Node` object that represents the placed node.
@@ -100,7 +100,7 @@ export const Core = builder.build({
    * representation of the board as a `graph` output property. This can be
    * used for studying the board's structure from inside the board.
    *
-   * See [`reflect` node reference](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/nodes.md#reflect) for more information.
+   * See [`reflect` node reference](https://github.com/breadboard-ai/breadboard/blob/main/seeds/breadboard/docs/nodes.md#reflect) for more information.
    *
    * @param config - optional configuration for the node.
    * @returns - a `Node` object that represents the placed node.
@@ -117,7 +117,7 @@ export const Core = builder.build({
    *
    * Programmers call it "dependency injection".
    *
-   * See [`slot` node reference](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/nodes.md#slot) for more information.
+   * See [`slot` node reference](https://github.com/breadboard-ai/breadboard/blob/main/seeds/breadboard/docs/nodes.md#slot) for more information.
    *
    * @param config - optional configuration for the node.
    * @returns - a `Node` object that represents the placed node.
@@ -145,7 +145,7 @@ export const Core = builder.build({
    * Otherwise, the `accumulator` property will be treated as an object and
    * the properties will be added as properties on this object.
    *
-   * See [`append` node reference](https://github.com/google/labs-prototypes/blob/main/seeds/core-kit/README.md) for more information.
+   * See [`append` node reference](https://github.com/breadboard-ai/breadboard/blob/main/seeds/core-kit/README.md) for more information.
    *
    */
   append,

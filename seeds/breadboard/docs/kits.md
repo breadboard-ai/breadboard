@@ -1,6 +1,6 @@
 # How to make a Breadboard kit
 
-Breadboard Kits are a way to import functionality into your application for use on a board. Typically, they are used to create logical units of nodes that are frequently used in conjunction with each other. For example, a kit could be used to group nodes that are related to a certain API provider. One example of such kit is the [Pinecone Kit](https://github.com/google/labs-prototypes/tree/main/seeds/pinecone-kit), which contains node that implement various parts of the [Pinecone API](https://www.pinecone.io/).
+Breadboard Kits are a way to import functionality into your application for use on a board. Typically, they are used to create logical units of nodes that are frequently used in conjunction with each other. For example, a kit could be used to group nodes that are related to a certain API provider. One example of such kit is the [Pinecone Kit](https://github.com/breadboard-ai/breadboard/tree/main/seeds/pinecone-kit), which contains node that implement various parts of the [Pinecone API](https://www.pinecone.io/).
 
 This guide assumes some familiarity with making npm packages. If you are not familiar with this process, please refer to the [npm documentation](https://docs.npmjs.com/).
 

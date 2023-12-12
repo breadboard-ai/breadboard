@@ -19,7 +19,7 @@ const starter = board.addKit(Starter);
 const palm = board.addKit(PaLMKit);
 
 const NEWS_BOARD_URL =
-  "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/breadboard/docs/tutorial/google-news-headlines.json";
+  "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/seeds/breadboard/docs/tutorial/google-news-headlines.json";
 
 const template = starter.promptTemplate({
   template:

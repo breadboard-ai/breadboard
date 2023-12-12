@@ -6,7 +6,7 @@
 - New `remote` submodule to enable invoking boards over HTTP and workers
 - The new syntax! (WIP)
 - The `ui` submodule moved to its own package `breadboard-ui`
-- [Bubbling](https://github.com/google/labs-prototypes/issues/252) inputs!
+- [Bubbling](https://github.com/breadboard-ai/breadboard/issues/166) inputs!
 
 ## [0.5.1] - 2023-11-18
 
@@ -40,7 +40,7 @@
 
 - **M2 Release**
 - Added minified build artifacts.
-- Three new nodes: `invoke`, `import`, and `lambda` (see [documentation](https://github.com/google/labs-prototypes/blob/13601657112736ccccb083ed3e167f7e2ae05928/seeds/breadboard/docs/nodes.md))
+- Three new nodes: `invoke`, `import`, and `lambda` (see [documentation](https://github.com/breadboard-ai/breadboard/blob/13601657112736ccccb083ed3e167f7e2ae05928/seeds/breadboard/docs/nodes.md))
 - Deprecated `include` node (the `invoke` node replaces it)
 - Rolled `graph-runner` package in. This package now has zero prod dependencies.
 - Added a way for nodes to describe themselves in `NodeHandler`.
@@ -62,7 +62,7 @@
 ## [0.3.0] - 2023-09-15
 
 - There is no more `seeksInput` property on `RunResult`. Instead, the `type` property will tell us why the board paused. Currently, three valid results are `input`, `output`, and `beforehandler`. The first two existed before. The third one now interrupts before running every node.
-- The boards now can store metadata about them. See https://github.com/google/labs-prototypes/blob/main/seeds/graph-playground/graphs/call-react-with-slot.json for an example. Yes, you can put Markdown in description.
+- The boards now can store metadata about them. See https://github.com/breadboard-ai/breadboard/blob/main/seeds/graph-playground/graphs/call-react-with-slot.json for an example. Yes, you can put Markdown in description.
 - The boards now have URLs associated with them. When a board is loaded from a URL, the `url` property will reflect that value. All subsequent URLs are resolved relative to the URL of the board.
 - If the URL is not supplied, the board is assumed to have a URL of the current working directory of whatever loaded the board.
 - There's a `ResultRun.isAtExitNode` method that reports true if the currently visited node is an exit node for the graph.
@@ -93,4 +93,4 @@
 ## [0.0.1] - 2023-08-04
 
 - started a changelog
-- [M0 release](https://github.com/google/labs-prototypes/issues?q=is%3Aissue+milestone%3A%22Breadboard+M0%22+is%3Aclosed)
+- [M0 release](https://github.com/breadboard-ai/breadboard/issues?q=is%3Aissue+milestone%3A%22Breadboard+M0%22+is%3Aclosed)

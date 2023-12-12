@@ -30,15 +30,15 @@
 
 #### Type declaration
 
-| Name | Type |
-| :------ | :------ |
+| Name     | Type     |
+| :------- | :------- |
 | `schema` | `Schema` |
 
 #### Defined in
 
-[seeds/breadboard-ui/src/input.ts:14](https://github.com/google/labs-prototypes/blob/a792f6c/seeds/breadboard-ui/src/input.ts#L14)
+[seeds/breadboard-ui/src/input.ts:14](https://github.com/breadboard-ai/breadboard/blob/a792f6c/seeds/breadboard-ui/src/input.ts#L14)
 
-___
+---
 
 ### LoadArgs
 
@@ -46,29 +46,29 @@ ___
 
 #### Type declaration
 
-| Name | Type |
-| :------ | :------ |
+| Name           | Type     |
+| :------------- | :------- |
 | `description?` | `string` |
-| `diagram?` | `string` |
-| `title` | `string` |
-| `url?` | `string` |
-| `version?` | `string` |
+| `diagram?`     | `string` |
+| `title`        | `string` |
+| `url?`         | `string` |
+| `version?`     | `string` |
 
 #### Defined in
 
-[seeds/breadboard-ui/src/load.ts:10](https://github.com/google/labs-prototypes/blob/a792f6c/seeds/breadboard-ui/src/load.ts#L10)
+[seeds/breadboard-ui/src/load.ts:10](https://github.com/breadboard-ai/breadboard/blob/a792f6c/seeds/breadboard-ui/src/load.ts#L10)
 
-___
+---
 
 ### OutputArgs
 
-Ƭ **OutputArgs**: `Record`<`string`, `unknown`\> & { `schema`: `Schema`  }
+Ƭ **OutputArgs**: `Record`<`string`, `unknown`\> & { `schema`: `Schema` }
 
 #### Defined in
 
-[seeds/breadboard-ui/src/output.ts:13](https://github.com/google/labs-prototypes/blob/a792f6c/seeds/breadboard-ui/src/output.ts#L13)
+[seeds/breadboard-ui/src/output.ts:13](https://github.com/breadboard-ai/breadboard/blob/a792f6c/seeds/breadboard-ui/src/output.ts#L13)
 
-___
+---
 
 ### ResultArgs
 
@@ -81,16 +81,16 @@ SPDX-License-Identifier: Apache-2.0
 
 #### Type declaration
 
-| Name | Type |
-| :------ | :------ |
+| Name     | Type     |
+| :------- | :------- |
 | `result` | `string` |
-| `title` | `string` |
+| `title`  | `string` |
 
 #### Defined in
 
-[seeds/breadboard-ui/src/result.ts:7](https://github.com/google/labs-prototypes/blob/a792f6c/seeds/breadboard-ui/src/result.ts#L7)
+[seeds/breadboard-ui/src/result.ts:7](https://github.com/breadboard-ai/breadboard/blob/a792f6c/seeds/breadboard-ui/src/result.ts#L7)
 
-___
+---
 
 ### StartArgs
 
@@ -98,13 +98,13 @@ ___
 
 #### Type declaration
 
-| Name | Type |
-| :------ | :------ |
-| `boards` | { `title`: `string` ; `url`: `string`  }[] |
+| Name     | Type                                      |
+| :------- | :---------------------------------------- |
+| `boards` | { `title`: `string` ; `url`: `string` }[] |
 
 #### Defined in
 
-[seeds/breadboard-ui/src/start.ts:9](https://github.com/google/labs-prototypes/blob/a792f6c/seeds/breadboard-ui/src/start.ts#L9)
+[seeds/breadboard-ui/src/start.ts:9](https://github.com/breadboard-ai/breadboard/blob/a792f6c/seeds/breadboard-ui/src/start.ts#L9)
 
 ## Functions
 
@@ -118,9 +118,9 @@ ___
 
 #### Defined in
 
-[seeds/breadboard-ui/src/index.ts:41](https://github.com/google/labs-prototypes/blob/a792f6c/seeds/breadboard-ui/src/index.ts#L41)
+[seeds/breadboard-ui/src/index.ts:41](https://github.com/breadboard-ai/breadboard/blob/a792f6c/seeds/breadboard-ui/src/index.ts#L41)
 
-___
+---
 
 ### register
 
@@ -132,4 +132,4 @@ ___
 
 #### Defined in
 
-[seeds/breadboard-ui/src/index.ts:24](https://github.com/google/labs-prototypes/blob/a792f6c/seeds/breadboard-ui/src/index.ts#L24)
+[seeds/breadboard-ui/src/index.ts:24](https://github.com/breadboard-ai/breadboard/blob/a792f6c/seeds/breadboard-ui/src/index.ts#L24)

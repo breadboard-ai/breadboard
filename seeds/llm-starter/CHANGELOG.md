@@ -23,7 +23,7 @@
 ## [0.1.2] - 2023-09-15
 
 - dependency changes.
-- [M1 Release](https://github.com/google/labs-prototypes/milestone/4)
+- [M1 Release](https://github.com/breadboard-ai/breadboard/milestone/4)
 
 ## [0.1.1] - 2023-09-02
 
@@ -43,4 +43,4 @@
 ## [0.0.1] - 2023-08-04
 
 - started a changelog
-- [M0 Release](https://github.com/google/labs-prototypes/issues?q=is%3Aissue+milestone%3A%22LLM+Starter+Kit+M0%22+is%3Aclosed)
+- [M0 Release](https://github.com/breadboard-ai/breadboard/issues?q=is%3Aissue+milestone%3A%22LLM+Starter+Kit+M0%22+is%3Aclosed)

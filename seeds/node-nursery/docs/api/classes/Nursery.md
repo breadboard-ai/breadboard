@@ -50,13 +50,13 @@ Syntactic sugar to easily create nodes.
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
+| Name          | Type          |
+| :------------ | :------------ |
 | `nodeFactory` | `NodeFactory` |
 
 #### Defined in
 
-[nursery.ts:70](https://github.com/google/labs-prototypes/blob/99919d5/seeds/node-nursery/src/nursery.ts#L70)
+[nursery.ts:70](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/node-nursery/src/nursery.ts#L70)
 
 ## Properties
 
@@ -66,9 +66,9 @@ Syntactic sugar to easily create nodes.
 
 #### Defined in
 
-[nursery.ts:64](https://github.com/google/labs-prototypes/blob/99919d5/seeds/node-nursery/src/nursery.ts#L64)
+[nursery.ts:64](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/node-nursery/src/nursery.ts#L64)
 
-___
+---
 
 ### #nodeFactory
 
@@ -76,9 +76,9 @@ ___
 
 #### Defined in
 
-[nursery.ts:63](https://github.com/google/labs-prototypes/blob/99919d5/seeds/node-nursery/src/nursery.ts#L63)
+[nursery.ts:63](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/node-nursery/src/nursery.ts#L63)
 
-___
+---
 
 ### url
 
@@ -90,7 +90,7 @@ Kit.url
 
 #### Defined in
 
-[nursery.ts:62](https://github.com/google/labs-prototypes/blob/99919d5/seeds/node-nursery/src/nursery.ts#L62)
+[nursery.ts:62](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/node-nursery/src/nursery.ts#L62)
 
 ## Accessors
 
@@ -108,7 +108,7 @@ Kit.handlers
 
 #### Defined in
 
-[nursery.ts:66](https://github.com/google/labs-prototypes/blob/99919d5/seeds/node-nursery/src/nursery.ts#L66)
+[nursery.ts:66](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/node-nursery/src/nursery.ts#L66)
 
 ## Methods
 
@@ -118,16 +118,16 @@ Kit.handlers
 
 #### Type parameters
 
-| Name |
-| :------ |
-| `Inputs` |
+| Name      |
+| :-------- |
+| `Inputs`  |
 | `Outputs` |
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `type` | `string` |
+| Name     | Type                      |
+| :------- | :------------------------ |
+| `type`   | `string`                  |
 | `config` | `OptionalIdConfiguration` |
 
 #### Returns
@@ -136,9 +136,9 @@ Kit.handlers
 
 #### Defined in
 
-[nursery.ts:75](https://github.com/google/labs-prototypes/blob/99919d5/seeds/node-nursery/src/nursery.ts#L75)
+[nursery.ts:75](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/node-nursery/src/nursery.ts#L75)
 
-___
+---
 
 ### addToVectorDatabase
 
@@ -146,8 +146,8 @@ ___
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
+| Name     | Type                      |
+| :------- | :------------------------ |
 | `config` | `OptionalIdConfiguration` |
 
 #### Returns
@@ -156,9 +156,9 @@ ___
 
 #### Defined in
 
-[nursery.ts:89](https://github.com/google/labs-prototypes/blob/99919d5/seeds/node-nursery/src/nursery.ts#L89)
+[nursery.ts:89](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/node-nursery/src/nursery.ts#L89)
 
-___
+---
 
 ### batcher
 
@@ -166,8 +166,8 @@ ___
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
+| Name     | Type                      |
+| :------- | :------------------------ |
 | `config` | `OptionalIdConfiguration` |
 
 #### Returns
@@ -176,9 +176,9 @@ ___
 
 #### Defined in
 
-[nursery.ts:180](https://github.com/google/labs-prototypes/blob/99919d5/seeds/node-nursery/src/nursery.ts#L180)
+[nursery.ts:180](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/node-nursery/src/nursery.ts#L180)
 
-___
+---
 
 ### cache
 
@@ -186,8 +186,8 @@ ___
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
+| Name     | Type                      |
+| :------- | :------------------------ |
 | `config` | `OptionalIdConfiguration` |
 
 #### Returns
@@ -196,9 +196,9 @@ ___
 
 #### Defined in
 
-[nursery.ts:125](https://github.com/google/labs-prototypes/blob/99919d5/seeds/node-nursery/src/nursery.ts#L125)
+[nursery.ts:125](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/node-nursery/src/nursery.ts#L125)
 
-___
+---
 
 ### chunker
 
@@ -206,8 +206,8 @@ ___
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
+| Name     | Type                      |
+| :------- | :------------------------ |
 | `config` | `OptionalIdConfiguration` |
 
 #### Returns
@@ -216,9 +216,9 @@ ___
 
 #### Defined in
 
-[nursery.ts:187](https://github.com/google/labs-prototypes/blob/99919d5/seeds/node-nursery/src/nursery.ts#L187)
+[nursery.ts:187](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/node-nursery/src/nursery.ts#L187)
 
-___
+---
 
 ### createVectorDatabase
 
@@ -226,8 +226,8 @@ ___
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
+| Name     | Type                      |
+| :------- | :------------------------ |
 | `config` | `OptionalIdConfiguration` |
 
 #### Returns
@@ -236,9 +236,9 @@ ___
 
 #### Defined in
 
-[nursery.ts:83](https://github.com/google/labs-prototypes/blob/99919d5/seeds/node-nursery/src/nursery.ts#L83)
+[nursery.ts:83](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/node-nursery/src/nursery.ts#L83)
 
-___
+---
 
 ### embedDocs
 
@@ -246,8 +246,8 @@ ___
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
+| Name     | Type                      |
+| :------- | :------------------------ |
 | `config` | `OptionalIdConfiguration` |
 
 #### Returns
@@ -256,9 +256,9 @@ ___
 
 #### Defined in
 
-[nursery.ts:101](https://github.com/google/labs-prototypes/blob/99919d5/seeds/node-nursery/src/nursery.ts#L101)
+[nursery.ts:101](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/node-nursery/src/nursery.ts#L101)
 
-___
+---
 
 ### embedString
 
@@ -266,8 +266,8 @@ ___
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
+| Name     | Type                      |
+| :------- | :------------------------ |
 | `config` | `OptionalIdConfiguration` |
 
 #### Returns
@@ -276,9 +276,9 @@ ___
 
 #### Defined in
 
-[nursery.ts:107](https://github.com/google/labs-prototypes/blob/99919d5/seeds/node-nursery/src/nursery.ts#L107)
+[nursery.ts:107](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/node-nursery/src/nursery.ts#L107)
 
-___
+---
 
 ### map
 
@@ -289,15 +289,15 @@ issue #110.
 
 #### Type parameters
 
-| Name | Type |
-| :------ | :------ |
-| `In` | `InputValues` |
+| Name  | Type                                         |
+| :---- | :------------------------------------------- |
+| `In`  | `InputValues`                                |
 | `Out` | `Partial`<`Record`<`string`, `NodeValue`\>\> |
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
+| Name     | Type                           |
+| :------- | :----------------------------- |
 | `config` | `ConfigOrLambda`<`In`, `Out`\> |
 
 #### Returns
@@ -306,9 +306,9 @@ issue #110.
 
 #### Defined in
 
-[nursery.ts:169](https://github.com/google/labs-prototypes/blob/99919d5/seeds/node-nursery/src/nursery.ts#L169)
+[nursery.ts:169](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/node-nursery/src/nursery.ts#L169)
 
-___
+---
 
 ### queryVectorDatabase
 
@@ -316,8 +316,8 @@ ___
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
+| Name     | Type                      |
+| :------- | :------------------------ |
 | `config` | `OptionalIdConfiguration` |
 
 #### Returns
@@ -326,9 +326,9 @@ ___
 
 #### Defined in
 
-[nursery.ts:95](https://github.com/google/labs-prototypes/blob/99919d5/seeds/node-nursery/src/nursery.ts#L95)
+[nursery.ts:95](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/node-nursery/src/nursery.ts#L95)
 
-___
+---
 
 ### schemish
 
@@ -336,8 +336,8 @@ ___
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
+| Name     | Type                      |
+| :------- | :------------------------ |
 | `config` | `OptionalIdConfiguration` |
 
 #### Returns
@@ -346,9 +346,9 @@ ___
 
 #### Defined in
 
-[nursery.ts:140](https://github.com/google/labs-prototypes/blob/99919d5/seeds/node-nursery/src/nursery.ts#L140)
+[nursery.ts:140](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/node-nursery/src/nursery.ts#L140)
 
-___
+---
 
 ### templateParser
 
@@ -358,8 +358,8 @@ Parses a template and returns a JSON schema of placeholders.
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
+| Name     | Type                      |
+| :------- | :------------------------ |
 | `config` | `OptionalIdConfiguration` |
 
 #### Returns
@@ -368,9 +368,9 @@ Parses a template and returns a JSON schema of placeholders.
 
 #### Defined in
 
-[nursery.ts:153](https://github.com/google/labs-prototypes/blob/99919d5/seeds/node-nursery/src/nursery.ts#L153)
+[nursery.ts:153](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/node-nursery/src/nursery.ts#L153)
 
-___
+---
 
 ### textAsset
 
@@ -378,8 +378,8 @@ ___
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
+| Name     | Type                      |
+| :------- | :------------------------ |
 | `config` | `OptionalIdConfiguration` |
 
 #### Returns
@@ -388,9 +388,9 @@ ___
 
 #### Defined in
 
-[nursery.ts:113](https://github.com/google/labs-prototypes/blob/99919d5/seeds/node-nursery/src/nursery.ts#L113)
+[nursery.ts:113](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/node-nursery/src/nursery.ts#L113)
 
-___
+---
 
 ### textAssetsFromPath
 
@@ -398,8 +398,8 @@ ___
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
+| Name     | Type                      |
+| :------- | :------------------------ |
 | `config` | `OptionalIdConfiguration` |
 
 #### Returns
@@ -408,9 +408,9 @@ ___
 
 #### Defined in
 
-[nursery.ts:119](https://github.com/google/labs-prototypes/blob/99919d5/seeds/node-nursery/src/nursery.ts#L119)
+[nursery.ts:119](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/node-nursery/src/nursery.ts#L119)
 
-___
+---
 
 ### validateJson
 
@@ -418,8 +418,8 @@ ___
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
+| Name     | Type                      |
+| :------- | :------------------------ |
 | `config` | `OptionalIdConfiguration` |
 
 #### Returns
@@ -428,4 +428,4 @@ ___
 
 #### Defined in
 
-[nursery.ts:131](https://github.com/google/labs-prototypes/blob/99919d5/seeds/node-nursery/src/nursery.ts#L131)
+[nursery.ts:131](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/node-nursery/src/nursery.ts#L131)

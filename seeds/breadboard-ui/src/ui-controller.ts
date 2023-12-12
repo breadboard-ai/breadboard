@@ -222,7 +222,7 @@ export class UIController extends HTMLElement implements UI {
           display: inline-block;
           background: linear-gradient(
             45deg,
-            rgb(90, 64, 119), 
+            rgb(90, 64, 119),
             rgb(144, 68, 228)
           );
           -webkit-background-clip: text;
@@ -303,7 +303,7 @@ export class UIController extends HTMLElement implements UI {
         }
       </style>
       <!-- Load info -->
-      <div id="load-container">  
+      <div id="load-container">
         <slot name="load"></slot>
       </div>
 
@@ -314,7 +314,7 @@ export class UIController extends HTMLElement implements UI {
             <h1>Hello there!</h1>
             <p>This is the <strong>Breadboard Playground</strong> running in the browser. Here you can either try out one of the sample boards, or you can enter the URL for your own board below.</p>
 
-            <p id="new-here">New here? Read more about the <a href="https://github.com/google/labs-prototypes/tree/main">Breadboard project on Github</a>.</p>
+            <p id="new-here">New here? Read more about the <a href="https://github.com/breadboard-ai/breadboard/tree/main">Breadboard project on Github</a>.</p>
 
             <form>
               <div id="url-input-container">

@@ -33,8 +33,8 @@ Create new label. Must be
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
+| Name   | Type     | Description                      |
+| :----- | :------- | :------------------------------- |
 | `name` | `string` | {string} Name of the label value |
 
 **`Method`**
@@ -43,7 +43,7 @@ ed into the semi-lattice.
 
 #### Defined in
 
-[label.ts:20](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-integrity/src/label.ts#L20)
+[label.ts:20](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/label.ts#L20)
 
 ## Properties
 
@@ -53,9 +53,9 @@ ed into the semi-lattice.
 
 #### Defined in
 
-[label.ts:12](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-integrity/src/label.ts#L12)
+[label.ts:12](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/label.ts#L12)
 
-___
+---
 
 ### below
 
@@ -63,9 +63,9 @@ ___
 
 #### Defined in
 
-[label.ts:11](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-integrity/src/label.ts#L11)
+[label.ts:11](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/label.ts#L11)
 
-___
+---
 
 ### name
 
@@ -73,7 +73,7 @@ ___
 
 #### Defined in
 
-[label.ts:13](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-integrity/src/label.ts#L13)
+[label.ts:13](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/label.ts#L13)
 
 ## Methods
 
@@ -85,8 +85,8 @@ Test whether this label is above another in the semi-lattice.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
+| Name    | Type                        | Description                           |
+| :------ | :-------------------------- | :------------------------------------ |
 | `other` | [`Principal`](Principal.md) | {Principal} Principal to compare with |
 
 #### Returns
@@ -97,9 +97,9 @@ true if this label is above the other
 
 #### Defined in
 
-[label.ts:48](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-integrity/src/label.ts#L48)
+[label.ts:48](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/label.ts#L48)
 
-___
+---
 
 ### isBelow
 
@@ -109,8 +109,8 @@ Test whether this label is below another in the semi-lattice.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
+| Name    | Type                        | Description                           |
+| :------ | :-------------------------- | :------------------------------------ |
 | `other` | [`Principal`](Principal.md) | {Principal} Principal to compare with |
 
 #### Returns
@@ -121,9 +121,9 @@ true if this label is above the other
 
 #### Defined in
 
-[label.ts:32](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-integrity/src/label.ts#L32)
+[label.ts:32](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/label.ts#L32)
 
-___
+---
 
 ### greatestLowerBound
 
@@ -136,8 +136,8 @@ Returns undefined for an empty list.
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
+| Name     | Type                          |
+| :------- | :---------------------------- |
 | `values` | [`Principal`](Principal.md)[] |
 
 #### Returns
@@ -146,9 +146,9 @@ Returns undefined for an empty list.
 
 #### Defined in
 
-[label.ts:97](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-integrity/src/label.ts#L97)
+[label.ts:97](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/label.ts#L97)
 
-___
+---
 
 ### leastUpperBound
 
@@ -161,8 +161,8 @@ Returns undefined for an empty list.
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
+| Name     | Type                          |
+| :------- | :---------------------------- |
 | `values` | [`Principal`](Principal.md)[] |
 
 #### Returns
@@ -171,4 +171,4 @@ Returns undefined for an empty list.
 
 #### Defined in
 
-[label.ts:64](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-integrity/src/label.ts#L64)
+[label.ts:64](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/label.ts#L64)

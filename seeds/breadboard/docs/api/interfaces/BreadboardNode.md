@@ -4,9 +4,9 @@
 
 ## Type parameters
 
-| Name |
-| :------ |
-| `Inputs` |
+| Name      |
+| :-------- |
+| `Inputs`  |
 | `Outputs` |
 
 ## Implemented by
@@ -31,7 +31,7 @@
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:583](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L583)
+[seeds/breadboard/src/types.ts:583](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/types.ts#L583)
 
 ## Methods
 
@@ -45,17 +45,17 @@ Use this method to wire nodes together.
 
 #### Type parameters
 
-| Name |
-| :------ |
-| `ToInputs` |
+| Name        |
+| :---------- |
+| `ToInputs`  |
 | `ToOutputs` |
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `spec` | `string` | the wiring spec. See the [wiring spec](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/wires.md) for more details. |
-| `to` | [`BreadboardNode`](BreadboardNode.md)<`ToInputs`, `ToOutputs`\> | the node to wire this node with. |
+| Name   | Type                                                            | Description                                                                                                                                    |
+| :----- | :-------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------- |
+| `spec` | `string`                                                        | the wiring spec. See the [wiring spec](https://github.com/breadboard-ai/breadboard/blob/main/seeds/breadboard/docs/wires.md) for more details. |
+| `to`   | [`BreadboardNode`](BreadboardNode.md)<`ToInputs`, `ToOutputs`\> | the node to wire this node with.                                                                                                               |
 
 #### Returns
 
@@ -65,4 +65,4 @@ Use this method to wire nodes together.
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:577](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L577)
+[seeds/breadboard/src/types.ts:577](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/types.ts#L577)

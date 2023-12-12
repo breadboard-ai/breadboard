@@ -17,7 +17,7 @@ import { Core } from "@google-labs/core-kit";
 const board = new Board({
   title: "Calling ReAct with lambdas",
   description:
-    "An implementation of the [ReAct](https://react-lm.github.io/) AI pattern that relies on Breadboard [lambdas](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/nodes.md#the-lambda-node) to supply tools to ReAct. They are currently populated by two boards: `search-summarize` and `math`.",
+    "An implementation of the [ReAct](https://react-lm.github.io/) AI pattern that relies on Breadboard [lambdas](https://github.com/breadboard-ai/breadboard/blob/main/seeds/breadboard/docs/nodes.md#the-lambda-node) to supply tools to ReAct. They are currently populated by two boards: `search-summarize` and `math`.",
   version: "0.0.1",
 });
 const kit = board.addKit(Starter);
@@ -39,7 +39,7 @@ const tools = kit
         "Useful for when you need to solve math problems. Input should be a math problem to be solved",
       "board": math
     }
-  ]`
+  ]`,
   })
   .wire("search<-board", core.import({ path: "search-summarize.json" }))
   .wire("math<-board", core.import({ path: "math.json" }));

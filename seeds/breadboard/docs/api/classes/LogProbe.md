@@ -4,10 +4,11 @@
 
 A convenience probe for easily logging events from the Board.
 Usage:
+
 ```ts
 const log = new LogProbe();
 for await (const result of this.run(log)) {
- // ...
+  // ...
 }
 ```
 
@@ -45,8 +46,8 @@ console will be used.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
+| Name        | Type       | Description                                                                   |
+| :---------- | :--------- | :---------------------------------------------------------------------------- |
 | `receiver?` | `Receiver` | Optional. An object with a `log` method that accepts any number of arguments. |
 
 #### Overrides
@@ -55,7 +56,7 @@ EventTarget.constructor
 
 #### Defined in
 
-[seeds/breadboard/src/log.ts:32](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/log.ts#L32)
+[seeds/breadboard/src/log.ts:32](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/log.ts#L32)
 
 ## Properties
 
@@ -65,7 +66,7 @@ EventTarget.constructor
 
 #### Defined in
 
-[seeds/breadboard/src/log.ts:24](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/log.ts#L24)
+[seeds/breadboard/src/log.ts:24](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/log.ts#L24)
 
 ## Methods
 
@@ -75,7 +76,7 @@ EventTarget.constructor
 
 #### Parameters
 
-| Name | Type |
+| Name    | Type    |
 | :------ | :------ |
 | `event` | `Event` |
 
@@ -85,9 +86,9 @@ EventTarget.constructor
 
 #### Defined in
 
-[seeds/breadboard/src/log.ts:42](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/log.ts#L42)
+[seeds/breadboard/src/log.ts:42](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/log.ts#L42)
 
-___
+---
 
 ### addEventListener
 
@@ -111,11 +112,11 @@ The event listener is appended to target's event listener list and is not append
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `type` | `string` |
-| `callback` | ``null`` \| `EventListenerOrEventListenerObject` |
-| `options?` | `boolean` \| `AddEventListenerOptions` |
+| Name       | Type                                           |
+| :--------- | :--------------------------------------------- |
+| `type`     | `string`                                       |
+| `callback` | `null` \| `EventListenerOrEventListenerObject` |
+| `options?` | `boolean` \| `AddEventListenerOptions`         |
 
 #### Returns
 
@@ -129,7 +130,7 @@ EventTarget.addEventListener
 
 node_modules/typescript/lib/lib.dom.d.ts:8168
 
-___
+---
 
 ### dispatchEvent
 
@@ -141,7 +142,7 @@ Dispatches a synthetic event event to target and returns true if either event's 
 
 #### Parameters
 
-| Name | Type |
+| Name    | Type    |
 | :------ | :------ |
 | `event` | `Event` |
 
@@ -157,7 +158,7 @@ EventTarget.dispatchEvent
 
 node_modules/typescript/lib/lib.dom.d.ts:8174
 
-___
+---
 
 ### removeEventListener
 
@@ -169,11 +170,11 @@ Removes the event listener in target's event listener list with the same type, c
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `type` | `string` |
-| `callback` | ``null`` \| `EventListenerOrEventListenerObject` |
-| `options?` | `boolean` \| `EventListenerOptions` |
+| Name       | Type                                           |
+| :--------- | :--------------------------------------------- |
+| `type`     | `string`                                       |
+| `callback` | `null` \| `EventListenerOrEventListenerObject` |
+| `options?` | `boolean` \| `EventListenerOptions`            |
 
 #### Returns
 

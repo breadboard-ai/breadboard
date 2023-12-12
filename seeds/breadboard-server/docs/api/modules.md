@@ -16,8 +16,8 @@
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
+| Name  | Type     |
+| :---- | :------- |
 | `url` | `string` |
 
 #### Returns
@@ -28,9 +28,9 @@
 
 ##### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `req` | `ServerRequest` |
+| Name  | Type             |
+| :---- | :--------------- |
+| `req` | `ServerRequest`  |
 | `res` | `ServerResponse` |
 
 ##### Returns
@@ -39,4 +39,4 @@
 
 #### Defined in
 
-[server.ts:82](https://github.com/google/labs-prototypes/blob/e84aaa5/seeds/breadboard-server/src/server.ts#L82)
+[server.ts:82](https://github.com/breadboard-ai/breadboard/blob/e84aaa5/seeds/breadboard-server/src/server.ts#L82)

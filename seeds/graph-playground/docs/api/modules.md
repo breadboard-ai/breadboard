@@ -7,7 +7,7 @@
 ### Functions
 
 - [main](modules.md#main)
-- [pass\_in\_input](modules.md#pass_in_input)
+- [pass_in_input](modules.md#pass_in_input)
 
 ## Functions
 
@@ -17,10 +17,10 @@
 
 #### Parameters
 
-| Name | Type | Default value |
-| :------ | :------ | :------ |
-| `args` | `string`[] | `undefined` |
-| `use_input_handler` | `boolean` | `false` |
+| Name                | Type       | Default value |
+| :------------------ | :--------- | :------------ |
+| `args`              | `string`[] | `undefined`   |
+| `use_input_handler` | `boolean`  | `false`       |
 
 #### Returns
 
@@ -28,18 +28,18 @@
 
 #### Defined in
 
-[index.ts:55](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-playground/src/index.ts#L55)
+[index.ts:55](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-playground/src/index.ts#L55)
 
-___
+---
 
-### pass\_in\_input
+### pass_in_input
 
 ▸ **pass_in_input**(`value`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
+| Name    | Type     |
+| :------ | :------- |
 | `value` | `string` |
 
 #### Returns
@@ -48,4 +48,4 @@ ___
 
 #### Defined in
 
-[index.ts:32](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-playground/src/index.ts#L32)
+[index.ts:32](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-playground/src/index.ts#L32)

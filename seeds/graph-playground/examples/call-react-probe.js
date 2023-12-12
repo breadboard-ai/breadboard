@@ -17,7 +17,7 @@ config();
 
 // A URL to a repository containing various saved breadboard layouts.
 const REPO_URL =
-  "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs";
+  "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/seeds/graph-playground/graphs";
 
 /**
  * Creates a breadboard that wires up a bunch of useful tools for ReAct recipe

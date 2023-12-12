@@ -20,9 +20,9 @@
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:523](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L523)
+[seeds/breadboard/src/types.ts:523](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/types.ts#L523)
 
-___
+---
 
 ### descriptor
 
@@ -30,9 +30,9 @@ ___
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:524](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L524)
+[seeds/breadboard/src/types.ts:524](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/types.ts#L524)
 
-___
+---
 
 ### parent
 
@@ -40,9 +40,9 @@ ___
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:525](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L525)
+[seeds/breadboard/src/types.ts:525](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/types.ts#L525)
 
-___
+---
 
 ### probe
 
@@ -50,9 +50,9 @@ ___
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:527](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L527)
+[seeds/breadboard/src/types.ts:527](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/types.ts#L527)
 
-___
+---
 
 ### slots
 
@@ -60,4 +60,4 @@ ___
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:526](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L526)
+[seeds/breadboard/src/types.ts:526](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/types.ts#L526)

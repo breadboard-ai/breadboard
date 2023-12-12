@@ -2,7 +2,7 @@
 
 ![Milestone](https://img.shields.io/badge/milestone-M3-red) ![Stability](https://img.shields.io/badge/stability-wip-green)
 
-A [Breadboard](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/) Kit containing nodes that enable composition and reuse of boards.
+A [Breadboard](https://github.com/breadboard-ai/breadboard/tree/main/seeds/breadboard/) Kit containing nodes that enable composition and reuse of boards.
 
 ## Node Reference
 
@@ -103,7 +103,7 @@ Will produce this output:
 result { say: 'Hello, world!' }
 ```
 
-See [Chapter 9: Let's build a chatbot](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-9-lets-build-a-chat-bot) of Breadboard tutorial to see another example of usage.
+See [Chapter 9: Let's build a chatbot](https://github.com/breadboard-ai/breadboard/tree/main/seeds/breadboard/docs/tutorial#chapter-9-lets-build-a-chat-bot) of Breadboard tutorial to see another example of usage.
 
 ### Inputs
 
@@ -160,7 +160,7 @@ This enables treating the included board as a kind of a node: it takes inputs an
 
 ### Example
 
-For an example of how to use the `include` property, see [Chapter 5: Including other boards](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-5-including-other-boards) of Breadboard tutorial.
+For an example of how to use the `include` property, see [Chapter 5: Including other boards](https://github.com/breadboard-ai/breadboard/tree/main/seeds/breadboard/docs/tutorial#chapter-5-including-other-boards) of Breadboard tutorial.
 
 ### Inputs
 
@@ -183,7 +183,7 @@ The node takes a `slot` property, which specifies the name of the slot, and pass
 
 ### Example
 
-For an example of how to use the `slot` node, see [Chapter 6: Boards with slots](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-6-boards-with-slots) of Breadboard tutorial.
+For an example of how to use the `slot` node, see [Chapter 6: Boards with slots](https://github.com/breadboard-ai/breadboard/tree/main/seeds/breadboard/docs/tutorial#chapter-6-boards-with-slots) of Breadboard tutorial.
 
 ### Inputs
 

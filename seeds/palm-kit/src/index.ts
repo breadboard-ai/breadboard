@@ -23,7 +23,7 @@ export const PaLMKit = builder.build({
    * Use this node to generate text from a prompt.
    *
    * See [`generateText` node
-   * reference](https://github.com/google/labs-prototypes/blob/main/seeds/palm-kit/README.md) for more information.
+   * reference](https://github.com/breadboard-ai/breadboard/blob/main/seeds/palm-kit/README.md) for more information.
    */
   generateText,
   /**
@@ -32,7 +32,7 @@ export const PaLMKit = builder.build({
    * Use this node to embed text.
    *
    * See [`embedText` node
-   * reference](https://github.com/google/labs-prototypes/blob/main/seeds/palm-kit/README.md) for more information.
+   * reference](https://github.com/breadboard-ai/breadboard/blob/main/seeds/palm-kit/README.md) for more information.
    */
   embedText,
 });

@@ -17,19 +17,19 @@
 
 #### Type parameters
 
-| Name |
-| :------ |
-| `Inputs` |
+| Name      |
+| :-------- |
+| `Inputs`  |
 | `Outputs` |
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `kit` | `undefined` \| [`Kit`](Kit.md) |
-| `type` | `string` |
+| Name             | Type                                                                         |
+| :--------------- | :--------------------------------------------------------------------------- |
+| `kit`            | `undefined` \| [`Kit`](Kit.md)                                               |
+| `type`           | `string`                                                                     |
 | `configuration?` | [`NodeConfigurationConstructor`](../modules.md#nodeconfigurationconstructor) |
-| `id?` | `string` |
+| `id?`            | `string`                                                                     |
 
 #### Returns
 
@@ -37,9 +37,9 @@
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:365](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L365)
+[seeds/breadboard/src/types.ts:365](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/types.ts#L365)
 
-___
+---
 
 ### getConfigWithLambda
 
@@ -47,15 +47,15 @@ ___
 
 #### Type parameters
 
-| Name |
-| :------ |
-| `Inputs` |
+| Name      |
+| :-------- |
+| `Inputs`  |
 | `Outputs` |
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
+| Name     | Type                                                                   |
+| :------- | :--------------------------------------------------------------------- |
 | `config` | [`ConfigOrLambda`](../modules.md#configorlambda)<`Inputs`, `Outputs`\> |
 
 #### Returns
@@ -64,4 +64,4 @@ ___
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:371](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L371)
+[seeds/breadboard/src/types.ts:371](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/types.ts#L371)

@@ -38,7 +38,7 @@ import { asComposeTimeKit } from "./kits/ctors.js";
  * const board = new Board();
  * ```
  *
- * For more information on how to use Breadboard, start with [Chapter 1: Hello, world?](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-7-probes) of the tutorial.
+ * For more information on how to use Breadboard, start with [Chapter 1: Hello, world?](https://github.com/breadboard-ai/breadboard/tree/main/seeds/breadboard/docs/tutorial#chapter-7-probes) of the tutorial.
  */
 export class Board extends BoardRunner implements Breadboard {
   #closureStack: Board[] = [];
@@ -55,7 +55,7 @@ export class Board extends BoardRunner implements Breadboard {
    *
    * An `input` node is a node that asks for inputs from the user.
    *
-   * See [`input` node reference](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/nodes.md#input) for more information.
+   * See [`input` node reference](https://github.com/breadboard-ai/breadboard/blob/main/seeds/breadboard/docs/nodes.md#input) for more information.
    *
    * @param config - optional configuration for the node.
    * @returns - a `Node` object that represents the placed node.
@@ -72,7 +72,7 @@ export class Board extends BoardRunner implements Breadboard {
    *
    * An `output` node is a node that provides outputs to the user.
    *
-   * See [`output` node reference](https://github.com/google/labs-prototypes/blob/main/seeds/breadboard/docs/nodes.md#output) for more information.
+   * See [`output` node reference](https://github.com/breadboard-ai/breadboard/blob/main/seeds/breadboard/docs/nodes.md#output) for more information.
    *
    * @param config - optional configuration for the node.
    * @returns - a `Node` object that represents the placed node.
@@ -185,7 +185,7 @@ export class Board extends BoardRunner implements Breadboard {
    * Adds a new kit to the board.
    *
    * Kits are collections of nodes that are bundled together for a specific
-   * purpose. For example, the [LLM Starter Kit](https://github.com/google/labs-prototypes/tree/main/seeds/llm-starter) provides a few nodes that
+   * purpose. For example, the [LLM Starter Kit](https://github.com/breadboard-ai/breadboard/tree/main/seeds/llm-starter) provides a few nodes that
    * are useful for making generative AI applications.
    *
    * Typically, kits are distributed as NPM packages. To add a kit to the board,

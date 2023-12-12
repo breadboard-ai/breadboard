@@ -4,9 +4,9 @@
 
 ## Type parameters
 
-| Name | Type |
-| :------ | :------ |
-| `T` | extends [`Kit`](Kit.md) |
+| Name | Type                    |
+| :--- | :---------------------- |
+| `T`  | extends [`Kit`](Kit.md) |
 
 ## Table of contents
 
@@ -22,10 +22,10 @@
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
+| Name          | Type                            |
+| :------------ | :------------------------------ |
 | `nodeFactory` | [`NodeFactory`](NodeFactory.md) |
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:377](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L377)
+[seeds/breadboard/src/types.ts:377](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/types.ts#L377)

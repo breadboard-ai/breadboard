@@ -12,7 +12,7 @@ config();
 
 // A URL to a repository containing various saved breadboard layouts.
 const REPO_URL =
-  "https://raw.githubusercontent.com/google/labs-prototypes/main";
+  "https://raw.githubusercontent.com/breadboard-ai/breadboard/main";
 
 // First, we load the tools board.
 const tools = await Board.load("./examples/tools.json");

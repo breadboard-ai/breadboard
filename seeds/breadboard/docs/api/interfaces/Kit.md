@@ -35,9 +35,9 @@ KitDescriptor.description
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:134](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L134)
+[seeds/breadboard/src/types.ts:134](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/types.ts#L134)
 
-___
+---
 
 ### title
 
@@ -51,9 +51,9 @@ KitDescriptor.title
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:130](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L130)
+[seeds/breadboard/src/types.ts:130](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/types.ts#L130)
 
-___
+---
 
 ### url
 
@@ -67,9 +67,9 @@ KitDescriptor.url
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:123](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L123)
+[seeds/breadboard/src/types.ts:123](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/types.ts#L123)
 
-___
+---
 
 ### version
 
@@ -84,7 +84,7 @@ KitDescriptor.version
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:139](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L139)
+[seeds/breadboard/src/types.ts:139](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/types.ts#L139)
 
 ## Accessors
 
@@ -98,4 +98,4 @@ KitDescriptor.version
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:318](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/types.ts#L318)
+[seeds/breadboard/src/types.ts:318](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/types.ts#L318)

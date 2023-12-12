@@ -56,7 +56,7 @@ EventTarget.constructor
 
 #### Defined in
 
-[seeds/breadboard/src/debug.ts:41](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/debug.ts#L41)
+[seeds/breadboard/src/debug.ts:41](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/debug.ts#L41)
 
 ## Properties
 
@@ -66,9 +66,9 @@ EventTarget.constructor
 
 #### Defined in
 
-[seeds/breadboard/src/debug.ts:23](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/debug.ts#L23)
+[seeds/breadboard/src/debug.ts:23](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/debug.ts#L23)
 
-___
+---
 
 ### #nodePins
 
@@ -76,7 +76,7 @@ ___
 
 #### Defined in
 
-[seeds/breadboard/src/debug.ts:24](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/debug.ts#L24)
+[seeds/breadboard/src/debug.ts:24](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/debug.ts#L24)
 
 ## Methods
 
@@ -86,8 +86,8 @@ ___
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
+| Name     | Type     |
+| :------- | :------- |
 | `nodeId` | `string` |
 
 #### Returns
@@ -96,9 +96,9 @@ ___
 
 #### Defined in
 
-[seeds/breadboard/src/debug.ts:46](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/debug.ts#L46)
+[seeds/breadboard/src/debug.ts:46](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/debug.ts#L46)
 
-___
+---
 
 ### #onBeforeHandler
 
@@ -106,7 +106,7 @@ ___
 
 #### Parameters
 
-| Name | Type |
+| Name    | Type    |
 | :------ | :------ |
 | `event` | `Event` |
 
@@ -116,9 +116,9 @@ ___
 
 #### Defined in
 
-[seeds/breadboard/src/debug.ts:85](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/debug.ts#L85)
+[seeds/breadboard/src/debug.ts:85](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/debug.ts#L85)
 
-___
+---
 
 ### addEventListener
 
@@ -142,11 +142,11 @@ The event listener is appended to target's event listener list and is not append
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `type` | `string` |
-| `callback` | ``null`` \| `EventListenerOrEventListenerObject` |
-| `options?` | `boolean` \| `AddEventListenerOptions` |
+| Name       | Type                                           |
+| :--------- | :--------------------------------------------- |
+| `type`     | `string`                                       |
+| `callback` | `null` \| `EventListenerOrEventListenerObject` |
+| `options?` | `boolean` \| `AddEventListenerOptions`         |
 
 #### Returns
 
@@ -160,7 +160,7 @@ EventTarget.addEventListener
 
 node_modules/typescript/lib/lib.dom.d.ts:8168
 
-___
+---
 
 ### dispatchEvent
 
@@ -172,7 +172,7 @@ Dispatches a synthetic event event to target and returns true if either event's 
 
 #### Parameters
 
-| Name | Type |
+| Name    | Type    |
 | :------ | :------ |
 | `event` | `Event` |
 
@@ -188,7 +188,7 @@ EventTarget.dispatchEvent
 
 node_modules/typescript/lib/lib.dom.d.ts:8174
 
-___
+---
 
 ### removeEventListener
 
@@ -200,11 +200,11 @@ Removes the event listener in target's event listener list with the same type, c
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `type` | `string` |
-| `callback` | ``null`` \| `EventListenerOrEventListenerObject` |
-| `options?` | `boolean` \| `EventListenerOptions` |
+| Name       | Type                                           |
+| :--------- | :--------------------------------------------- |
+| `type`     | `string`                                       |
+| `callback` | `null` \| `EventListenerOrEventListenerObject` |
+| `options?` | `boolean` \| `EventListenerOptions`            |
 
 #### Returns
 
@@ -218,7 +218,7 @@ EventTarget.removeEventListener
 
 node_modules/typescript/lib/lib.dom.d.ts:8180
 
-___
+---
 
 ### replaceNode
 
@@ -232,10 +232,10 @@ tests or other conditions. For example, replace a `generateText` node from
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `nodeId` | `string` | id of the node whose handler to replace |
-| `pin` | `DebugNodePin` | the new handler function. Unlike the handler function, this one must be synchronous. |
+| Name     | Type           | Description                                                                          |
+| :------- | :------------- | :----------------------------------------------------------------------------------- |
+| `nodeId` | `string`       | id of the node whose handler to replace                                              |
+| `pin`    | `DebugNodePin` | the new handler function. Unlike the handler function, this one must be synchronous. |
 
 #### Returns
 
@@ -243,9 +243,9 @@ tests or other conditions. For example, replace a `generateText` node from
 
 #### Defined in
 
-[seeds/breadboard/src/debug.ts:81](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/debug.ts#L81)
+[seeds/breadboard/src/debug.ts:81](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/debug.ts#L81)
 
-___
+---
 
 ### watchInput
 
@@ -260,11 +260,11 @@ the input value will not be modified.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `nodeId` | `string` | id of the node to add the pin to |
-| `inputName` | `string` | name of the input to pin |
-| `debugPin` | `DebugPin` | the pin function. It takes in the input value as its only argument and returns a new value or undefined. |
+| Name        | Type       | Description                                                                                              |
+| :---------- | :--------- | :------------------------------------------------------------------------------------------------------- |
+| `nodeId`    | `string`   | id of the node to add the pin to                                                                         |
+| `inputName` | `string`   | name of the input to pin                                                                                 |
+| `debugPin`  | `DebugPin` | the pin function. It takes in the input value as its only argument and returns a new value or undefined. |
 
 #### Returns
 
@@ -272,4 +272,4 @@ the input value will not be modified.
 
 #### Defined in
 
-[seeds/breadboard/src/debug.ts:66](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/debug.ts#L66)
+[seeds/breadboard/src/debug.ts:66](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/debug.ts#L66)

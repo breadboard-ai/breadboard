@@ -33,13 +33,13 @@ Information flow control label.
 
 #### Parameters
 
-| Name | Type | Default value | Description |
-| :------ | :------ | :------ | :------ |
-| `label` | `undefined` \| [`Label`](Label.md) \| { `confidentiality?`: [`Principal`](Principal.md) ; `integrity?`: [`Principal`](Principal.md)  } | `undefined` | Label to copy or pair of Principals to create a new label from. |
+| Name    | Type                                                                                                                                  | Default value | Description                                                     |
+| :------ | :------------------------------------------------------------------------------------------------------------------------------------ | :------------ | :-------------------------------------------------------------- |
+| `label` | `undefined` \| [`Label`](Label.md) \| { `confidentiality?`: [`Principal`](Principal.md) ; `integrity?`: [`Principal`](Principal.md) } | `undefined`   | Label to copy or pair of Principals to create a new label from. |
 
 #### Defined in
 
-[label.ts:208](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-integrity/src/label.ts#L208)
+[label.ts:208](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/label.ts#L208)
 
 ## Properties
 
@@ -49,9 +49,9 @@ Information flow control label.
 
 #### Defined in
 
-[label.ts:201](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-integrity/src/label.ts#L201)
+[label.ts:201](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/label.ts#L201)
 
-___
+---
 
 ### integrity
 
@@ -59,7 +59,7 @@ ___
 
 #### Defined in
 
-[label.ts:202](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-integrity/src/label.ts#L202)
+[label.ts:202](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/label.ts#L202)
 
 ## Methods
 
@@ -72,8 +72,8 @@ Flow between undetermined labels is always allowed.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
+| Name               | Type                               | Description      |
+| :----------------- | :--------------------------------- | :--------------- |
 | `destinationLabel` | `undefined` \| [`Label`](Label.md) | label to flow to |
 
 #### Returns
@@ -84,9 +84,9 @@ true if the label can flow to the destination label
 
 #### Defined in
 
-[label.ts:314](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-integrity/src/label.ts#L314)
+[label.ts:314](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/label.ts#L314)
 
-___
+---
 
 ### equalsTo
 
@@ -96,9 +96,9 @@ Compare with other label.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `other` | [`Label`](Label.md) | label |
+| Name    | Type                | Description |
+| :------ | :------------------ | :---------- |
+| `other` | [`Label`](Label.md) | label       |
 
 #### Returns
 
@@ -108,9 +108,9 @@ true if the labels are equal
 
 #### Defined in
 
-[label.ts:283](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-integrity/src/label.ts#L283)
+[label.ts:283](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/label.ts#L283)
 
-___
+---
 
 ### equalsToExceptForUndefined
 
@@ -120,9 +120,9 @@ Compare with other label, but only if both are defined.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `other` | [`Label`](Label.md) | label |
+| Name    | Type                | Description |
+| :------ | :------------------ | :---------- |
+| `other` | [`Label`](Label.md) | label       |
 
 #### Returns
 
@@ -132,9 +132,9 @@ true if the labels are equal
 
 #### Defined in
 
-[label.ts:296](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-integrity/src/label.ts#L296)
+[label.ts:296](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/label.ts#L296)
 
-___
+---
 
 ### toString
 
@@ -150,9 +150,9 @@ human-readable string
 
 #### Defined in
 
-[label.ts:329](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-integrity/src/label.ts#L329)
+[label.ts:329](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/label.ts#L329)
 
-___
+---
 
 ### computeJoinOfLabels
 
@@ -162,8 +162,8 @@ Join (⊔):
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
+| Name     | Type                                   |
+| :------- | :------------------------------------- |
 | `labels` | (`undefined` \| [`Label`](Label.md))[] |
 
 #### Returns
@@ -175,9 +175,9 @@ the passed
 
 #### Defined in
 
-[label.ts:248](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-integrity/src/label.ts#L248)
+[label.ts:248](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/label.ts#L248)
 
-___
+---
 
 ### computeMeetOfLabels
 
@@ -187,8 +187,8 @@ Meet (⊓):
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
+| Name     | Type                                   |
+| :------- | :------------------------------------- |
 | `labels` | (`undefined` \| [`Label`](Label.md))[] |
 
 #### Returns
@@ -200,9 +200,9 @@ the passed
 
 #### Defined in
 
-[label.ts:229](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-integrity/src/label.ts#L229)
+[label.ts:229](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/label.ts#L229)
 
-___
+---
 
 ### getLabelComponents
 
@@ -213,19 +213,19 @@ Might return empty lists if there are no defined label components.
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
+| Name     | Type                                   |
+| :------- | :------------------------------------- |
 | `labels` | (`undefined` \| [`Label`](Label.md))[] |
 
 #### Returns
 
 `Object`
 
-| Name | Type |
-| :------ | :------ |
+| Name                    | Type                          |
+| :---------------------- | :---------------------------- |
 | `confidentialityLabels` | [`Principal`](Principal.md)[] |
-| `integrityLabels` | [`Principal`](Principal.md)[] |
+| `integrityLabels`       | [`Principal`](Principal.md)[] |
 
 #### Defined in
 
-[label.ts:262](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-integrity/src/label.ts#L262)
+[label.ts:262](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/label.ts#L262)

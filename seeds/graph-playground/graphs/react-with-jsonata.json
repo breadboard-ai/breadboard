@@ -123,10 +123,7 @@
       "id": "secrets-1",
       "type": "secrets",
       "configuration": {
-        "keys": [
-          "PALM_KEY",
-          "GOOGLE_CSE_ID"
-        ]
+        "keys": ["PALM_KEY", "GOOGLE_CSE_ID"]
       }
     },
     {
@@ -179,9 +176,7 @@
               "description": "Ask ReAct a question"
             }
           },
-          "required": [
-            "text"
-          ]
+          "required": ["text"]
         }
       }
     },
@@ -189,16 +184,14 @@
       "id": "react-completion",
       "type": "palm-generateText",
       "configuration": {
-        "stopSequences": [
-          "\nObservation"
-        ]
+        "stopSequences": ["\nObservation"]
       }
     },
     {
       "id": "math",
       "type": "include",
       "configuration": {
-        "path": "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/math.json",
+        "path": "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/seeds/graph-playground/graphs/math.json",
         "description": "Useful for when you need to solve math problems. Input should be a math problem to be solved."
       }
     },
@@ -206,7 +199,7 @@
       "id": "search",
       "type": "include",
       "configuration": {
-        "path": "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs/search-summarize.json",
+        "path": "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/seeds/graph-playground/graphs/search-summarize.json",
         "description": "Useful for when you need to find facts. Input should be a search query."
       }
     },

@@ -49,13 +49,13 @@ Syntactic sugar around the `coreHandlers` library.
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
+| Name          | Type          |
+| :------------ | :------------ |
 | `nodeFactory` | `NodeFactory` |
 
 #### Defined in
 
-[starter.ts:73](https://github.com/google/labs-prototypes/blob/99919d5/seeds/llm-starter/src/starter.ts#L73)
+[starter.ts:73](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/llm-starter/src/starter.ts#L73)
 
 ## Properties
 
@@ -65,9 +65,9 @@ Syntactic sugar around the `coreHandlers` library.
 
 #### Defined in
 
-[starter.ts:67](https://github.com/google/labs-prototypes/blob/99919d5/seeds/llm-starter/src/starter.ts#L67)
+[starter.ts:67](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/llm-starter/src/starter.ts#L67)
 
-___
+---
 
 ### #nodeFactory
 
@@ -75,9 +75,9 @@ ___
 
 #### Defined in
 
-[starter.ts:66](https://github.com/google/labs-prototypes/blob/99919d5/seeds/llm-starter/src/starter.ts#L66)
+[starter.ts:66](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/llm-starter/src/starter.ts#L66)
 
-___
+---
 
 ### description
 
@@ -89,9 +89,9 @@ Kit.description
 
 #### Defined in
 
-[starter.ts:61](https://github.com/google/labs-prototypes/blob/99919d5/seeds/llm-starter/src/starter.ts#L61)
+[starter.ts:61](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/llm-starter/src/starter.ts#L61)
 
-___
+---
 
 ### title
 
@@ -103,9 +103,9 @@ Kit.title
 
 #### Defined in
 
-[starter.ts:60](https://github.com/google/labs-prototypes/blob/99919d5/seeds/llm-starter/src/starter.ts#L60)
+[starter.ts:60](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/llm-starter/src/starter.ts#L60)
 
-___
+---
 
 ### url
 
@@ -117,9 +117,9 @@ Kit.url
 
 #### Defined in
 
-[starter.ts:64](https://github.com/google/labs-prototypes/blob/99919d5/seeds/llm-starter/src/starter.ts#L64)
+[starter.ts:64](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/llm-starter/src/starter.ts#L64)
 
-___
+---
 
 ### version
 
@@ -131,7 +131,7 @@ Kit.version
 
 #### Defined in
 
-[starter.ts:63](https://github.com/google/labs-prototypes/blob/99919d5/seeds/llm-starter/src/starter.ts#L63)
+[starter.ts:63](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/llm-starter/src/starter.ts#L63)
 
 ## Accessors
 
@@ -149,7 +149,7 @@ Kit.handlers
 
 #### Defined in
 
-[starter.ts:69](https://github.com/google/labs-prototypes/blob/99919d5/seeds/llm-starter/src/starter.ts#L69)
+[starter.ts:69](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/llm-starter/src/starter.ts#L69)
 
 ## Methods
 
@@ -159,16 +159,16 @@ Kit.handlers
 
 #### Type parameters
 
-| Name |
-| :------ |
-| `Inputs` |
+| Name      |
+| :-------- |
+| `Inputs`  |
 | `Outputs` |
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `type` | `string` |
+| Name     | Type                      |
+| :------- | :------------------------ |
+| `type`   | `string`                  |
 | `config` | `OptionalIdConfiguration` |
 
 #### Returns
@@ -177,9 +177,9 @@ Kit.handlers
 
 #### Defined in
 
-[starter.ts:78](https://github.com/google/labs-prototypes/blob/99919d5/seeds/llm-starter/src/starter.ts#L78)
+[starter.ts:78](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/llm-starter/src/starter.ts#L78)
 
-___
+---
 
 ### append
 
@@ -187,14 +187,14 @@ ___
 
 #### Type parameters
 
-| Name | Type |
-| :------ | :------ |
+| Name | Type           |
+| :--- | :------------- |
 | `In` | `AppendInputs` |
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
+| Name     | Type                      |
+| :------- | :------------------------ |
 | `config` | `OptionalIdConfiguration` |
 
 #### Returns
@@ -203,9 +203,9 @@ ___
 
 #### Defined in
 
-[starter.ts:86](https://github.com/google/labs-prototypes/blob/99919d5/seeds/llm-starter/src/starter.ts#L86)
+[starter.ts:86](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/llm-starter/src/starter.ts#L86)
 
-___
+---
 
 ### embedText
 
@@ -213,8 +213,8 @@ ___
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
+| Name     | Type                      |
+| :------- | :------------------------ |
 | `config` | `OptionalIdConfiguration` |
 
 #### Returns
@@ -223,9 +223,9 @@ ___
 
 #### Defined in
 
-[starter.ts:142](https://github.com/google/labs-prototypes/blob/99919d5/seeds/llm-starter/src/starter.ts#L142)
+[starter.ts:142](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/llm-starter/src/starter.ts#L142)
 
-___
+---
 
 ### fetch
 
@@ -233,9 +233,9 @@ ___
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `raw?` | `boolean` |
+| Name     | Type                      |
+| :------- | :------------------------ |
+| `raw?`   | `boolean`                 |
 | `config` | `OptionalIdConfiguration` |
 
 #### Returns
@@ -244,9 +244,9 @@ ___
 
 #### Defined in
 
-[starter.ts:116](https://github.com/google/labs-prototypes/blob/99919d5/seeds/llm-starter/src/starter.ts#L116)
+[starter.ts:116](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/llm-starter/src/starter.ts#L116)
 
-___
+---
 
 ### generateText
 
@@ -254,8 +254,8 @@ ___
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
+| Name     | Type                      |
+| :------- | :------------------------ |
 | `config` | `OptionalIdConfiguration` |
 
 #### Returns
@@ -264,36 +264,36 @@ ___
 
 #### Defined in
 
-[starter.ts:136](https://github.com/google/labs-prototypes/blob/99919d5/seeds/llm-starter/src/starter.ts#L136)
+[starter.ts:136](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/llm-starter/src/starter.ts#L136)
 
-___
+---
 
 ### jsonata
 
-▸ **jsonata**<`Out`\>(`expression`, `config?`): `BreadboardNode`<`JsonataInputs`, `Out` & `Record`<`string`, `unknown`\> & { `result`: `unknown`  }\>
+▸ **jsonata**<`Out`\>(`expression`, `config?`): `BreadboardNode`<`JsonataInputs`, `Out` & `Record`<`string`, `unknown`\> & { `result`: `unknown` }\>
 
 #### Type parameters
 
-| Name | Type |
-| :------ | :------ |
+| Name  | Type                                         |
+| :---- | :------------------------------------------- |
 | `Out` | `Partial`<`Record`<`string`, `NodeValue`\>\> |
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `expression` | `string` |
-| `config` | `OptionalIdConfiguration` |
+| Name         | Type                      |
+| :----------- | :------------------------ |
+| `expression` | `string`                  |
+| `config`     | `OptionalIdConfiguration` |
 
 #### Returns
 
-`BreadboardNode`<`JsonataInputs`, `Out` & `Record`<`string`, `unknown`\> & { `result`: `unknown`  }\>
+`BreadboardNode`<`JsonataInputs`, `Out` & `Record`<`string`, `unknown`\> & { `result`: `unknown` }\>
 
 #### Defined in
 
-[starter.ts:123](https://github.com/google/labs-prototypes/blob/99919d5/seeds/llm-starter/src/starter.ts#L123)
+[starter.ts:123](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/llm-starter/src/starter.ts#L123)
 
-___
+---
 
 ### promptTemplate
 
@@ -301,16 +301,16 @@ ___
 
 #### Type parameters
 
-| Name | Type |
-| :------ | :------ |
+| Name | Type          |
+| :--- | :------------ |
 | `In` | `InputValues` |
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `template?` | `string` |
-| `config` | `OptionalIdConfiguration` |
+| Name        | Type                      |
+| :---------- | :------------------------ |
+| `template?` | `string`                  |
+| `config`    | `OptionalIdConfiguration` |
 
 #### Returns
 
@@ -318,37 +318,37 @@ ___
 
 #### Defined in
 
-[starter.ts:92](https://github.com/google/labs-prototypes/blob/99919d5/seeds/llm-starter/src/starter.ts#L92)
+[starter.ts:92](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/llm-starter/src/starter.ts#L92)
 
-___
+---
 
 ### runJavascript
 
-▸ **runJavascript**<`In`, `Out`\>(`name`, `config?`): `BreadboardNode`<`In` & `InputValues` & { `code?`: `string` ; `name?`: `string` ; `raw?`: `boolean`  }, `Out`\>
+▸ **runJavascript**<`In`, `Out`\>(`name`, `config?`): `BreadboardNode`<`In` & `InputValues` & { `code?`: `string` ; `name?`: `string` ; `raw?`: `boolean` }, `Out`\>
 
 #### Type parameters
 
-| Name | Type |
-| :------ | :------ |
-| `In` | `InputValues` |
+| Name  | Type                   |
+| :---- | :--------------------- |
+| `In`  | `InputValues`          |
 | `Out` | `RunJavascriptOutputs` |
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `name` | `string` |
+| Name     | Type                      |
+| :------- | :------------------------ |
+| `name`   | `string`                  |
 | `config` | `OptionalIdConfiguration` |
 
 #### Returns
 
-`BreadboardNode`<`In` & `InputValues` & { `code?`: `string` ; `name?`: `string` ; `raw?`: `boolean`  }, `Out`\>
+`BreadboardNode`<`In` & `InputValues` & { `code?`: `string` ; `name?`: `string` ; `raw?`: `boolean` }, `Out`\>
 
 #### Defined in
 
-[starter.ts:109](https://github.com/google/labs-prototypes/blob/99919d5/seeds/llm-starter/src/starter.ts#L109)
+[starter.ts:109](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/llm-starter/src/starter.ts#L109)
 
-___
+---
 
 ### secrets
 
@@ -356,15 +356,15 @@ ___
 
 #### Type parameters
 
-| Name | Type |
-| :------ | :------ |
+| Name  | Type                                         |
+| :---- | :------------------------------------------- |
 | `Out` | `Partial`<`Record`<`string`, `NodeValue`\>\> |
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `keys` | `string`[] |
+| Name     | Type                      |
+| :------- | :------------------------ |
+| `keys`   | `string`[]                |
 | `config` | `OptionalIdConfiguration` |
 
 #### Returns
@@ -373,9 +373,9 @@ ___
 
 #### Defined in
 
-[starter.ts:148](https://github.com/google/labs-prototypes/blob/99919d5/seeds/llm-starter/src/starter.ts#L148)
+[starter.ts:148](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/llm-starter/src/starter.ts#L148)
 
-___
+---
 
 ### urlTemplate
 
@@ -383,16 +383,16 @@ ___
 
 #### Type parameters
 
-| Name | Type |
-| :------ | :------ |
+| Name | Type          |
+| :--- | :------------ |
 | `In` | `InputValues` |
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `template` | `string` |
-| `config` | `OptionalIdConfiguration` |
+| Name       | Type                      |
+| :--------- | :------------------------ |
+| `template` | `string`                  |
+| `config`   | `OptionalIdConfiguration` |
 
 #### Returns
 
@@ -400,9 +400,9 @@ ___
 
 #### Defined in
 
-[starter.ts:102](https://github.com/google/labs-prototypes/blob/99919d5/seeds/llm-starter/src/starter.ts#L102)
+[starter.ts:102](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/llm-starter/src/starter.ts#L102)
 
-___
+---
 
 ### xmlToJson
 
@@ -410,8 +410,8 @@ ___
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
+| Name     | Type                      |
+| :------- | :------------------------ |
 | `config` | `OptionalIdConfiguration` |
 
 #### Returns
@@ -420,4 +420,4 @@ ___
 
 #### Defined in
 
-[starter.ts:130](https://github.com/google/labs-prototypes/blob/99919d5/seeds/llm-starter/src/starter.ts#L130)
+[starter.ts:130](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/llm-starter/src/starter.ts#L130)

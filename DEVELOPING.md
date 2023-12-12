@@ -213,7 +213,7 @@ The main reason we need to run `npm run build` is because in the monorepo, we ne
 
 #### Front-end
 
-[Vite](https://vitejs.dev/) is currently brought up in the `breadboard-web` dir. Use it as a template for other front-end TypeScript packages. Alternatively, you can use `npm init @google-labs/breadboard [project-name]` to 
+[Vite](https://vitejs.dev/) is currently brought up in the `breadboard-web` dir. Use it as a template for other front-end TypeScript packages. Alternatively, you can use `npm init @google-labs/breadboard [project-name]` to
 create a new front-end project.
 
 ## Publishing NPM packages
@@ -235,7 +235,7 @@ cd seeds/graph-runner
 
 3. Update `package.json` of this package with the version bump. Follow the [semver](https://semver.org/) guidance. Basically, minor fixes increment the patch version (third number) and everything else increments the minor version (second number).
 
-4. Update `CHANGELOG.md` file to summarize the changes since the last release. You can see the list of changes by looking at the packge directory commit history on Github. For example, for `seeds/graph-runner`, commit history is at [https://github.com/google/labs-prototypes/commits/main/seeds/graph-runner](commits/main/seeds/graph-runner). Follow the convention in the changelog doc. It is loosely inspired by [keepachangelog.com](https://keepachangelog.com/en/1.1.0/)
+4. Update `CHANGELOG.md` file to summarize the changes since the last release. You can see the list of changes by looking at the packge directory commit history on Github. For example, for `seeds/graph-runner`, commit history is at [https://github.com/breadboard-ai/breadboard/commits/main/seeds/graph-runner](commits/main/seeds/graph-runner). Follow the convention in the changelog doc. It is loosely inspired by [keepachangelog.com](https://keepachangelog.com/en/1.1.0/)
 
 5. If there are version dependencies on the newly-published package in this monorepo, update their respective `package.json` entries to point to the new version and re-run `npm i`.
 

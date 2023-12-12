@@ -108,11 +108,11 @@ export class BoardRunner implements BreadboardRunner {
    * If `stop.type` is `output`, the board is providing output values.
    * When that is the case, use `stop.outputs` to receive output values.
    *
-   * See [Chapter 8: Continuous runs](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-8-continuous-runs) of Breadboard tutorial for an example of how to use this method.
+   * See [Chapter 8: Continuous runs](https://github.com/breadboard-ai/breadboard/tree/main/seeds/breadboard/docs/tutorial#chapter-8-continuous-runs) of Breadboard tutorial for an example of how to use this method.
    *
    * @param probe - an optional probe. If provided, the board will dispatch
-   * events to it. See [Chapter 7: Probes](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-7-probes) of the Breadboard tutorial for more information.
-   * @param slots - an optional map of slotted graphs. See [Chapter 6: Boards with slots](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-6-boards-with-slots) of the Breadboard tutorial for more information.
+   * events to it. See [Chapter 7: Probes](https://github.com/breadboard-ai/breadboard/tree/main/seeds/breadboard/docs/tutorial#chapter-7-probes) of the Breadboard tutorial for more information.
+   * @param slots - an optional map of slotted graphs. See [Chapter 6: Boards with slots](https://github.com/breadboard-ai/breadboard/tree/main/seeds/breadboard/docs/tutorial#chapter-6-boards-with-slots) of the Breadboard tutorial for more information.
    * @param result - an optional result of a previous run. If provided, the
    * board will resume from the state of the previous run.
    * @param kits - an optional map of kits to use when running the board.
@@ -224,8 +224,8 @@ export class BoardRunner implements BreadboardRunner {
    *
    * @param inputs - the input values to provide to the board.
    * @param probe - an optional probe. If provided, the board will dispatch
-   * events to it. See [Chapter 7: Probes](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-7-probes) of the Breadboard tutorial for more information.
-   * @param slots - an optional map of slotted graphs. See [Chapter 6: Boards with slots](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-6-boards-with-slots) of the Breadboard tutorial for more information.
+   * events to it. See [Chapter 7: Probes](https://github.com/breadboard-ai/breadboard/tree/main/seeds/breadboard/docs/tutorial#chapter-7-probes) of the Breadboard tutorial for more information.
+   * @param slots - an optional map of slotted graphs. See [Chapter 6: Boards with slots](https://github.com/breadboard-ai/breadboard/tree/main/seeds/breadboard/docs/tutorial#chapter-6-boards-with-slots) of the Breadboard tutorial for more information.
    * @param kits - an optional map of kits to use when running the board.
    * @returns - outputs provided by the board.
    */

@@ -59,13 +59,13 @@ See the {Board} class for a way to build a board that can also be serialized.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
+| Name        | Type                                           | Description                                                                                                        |
+| :---------- | :--------------------------------------------- | :----------------------------------------------------------------------------------------------------------------- |
 | `metadata?` | [`GraphMetadata`](../modules.md#graphmetadata) | optional metadata for the board. Use this parameter to provide title, description, version, and URL for the board. |
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:79](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/runner.ts#L79)
+[seeds/breadboard/src/runner.ts:79](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L79)
 
 ## Properties
 
@@ -77,9 +77,9 @@ The parent board, if this is board is a subgraph of a larger board.
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:72](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/runner.ts#L72)
+[seeds/breadboard/src/runner.ts:72](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L72)
 
-___
+---
 
 ### #slots
 
@@ -87,9 +87,9 @@ ___
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:67](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/runner.ts#L67)
+[seeds/breadboard/src/runner.ts:67](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L67)
 
-___
+---
 
 ### #validators
 
@@ -97,9 +97,9 @@ ___
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:68](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/runner.ts#L68)
+[seeds/breadboard/src/runner.ts:68](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L68)
 
-___
+---
 
 ### args
 
@@ -111,9 +111,9 @@ BreadboardRunner.args
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:65](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/runner.ts#L65)
+[seeds/breadboard/src/runner.ts:65](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L65)
 
-___
+---
 
 ### description
 
@@ -125,9 +125,9 @@ BreadboardRunner.description
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:59](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/runner.ts#L59)
+[seeds/breadboard/src/runner.ts:59](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L59)
 
-___
+---
 
 ### edges
 
@@ -139,9 +139,9 @@ BreadboardRunner.edges
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:61](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/runner.ts#L61)
+[seeds/breadboard/src/runner.ts:61](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L61)
 
-___
+---
 
 ### graphs
 
@@ -153,9 +153,9 @@ BreadboardRunner.graphs
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:64](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/runner.ts#L64)
+[seeds/breadboard/src/runner.ts:64](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L64)
 
-___
+---
 
 ### kits
 
@@ -167,9 +167,9 @@ BreadboardRunner.kits
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:63](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/runner.ts#L63)
+[seeds/breadboard/src/runner.ts:63](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L63)
 
-___
+---
 
 ### nodes
 
@@ -181,9 +181,9 @@ BreadboardRunner.nodes
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:62](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/runner.ts#L62)
+[seeds/breadboard/src/runner.ts:62](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L62)
 
-___
+---
 
 ### title
 
@@ -195,9 +195,9 @@ BreadboardRunner.title
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:58](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/runner.ts#L58)
+[seeds/breadboard/src/runner.ts:58](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L58)
 
-___
+---
 
 ### url
 
@@ -209,9 +209,9 @@ BreadboardRunner.url
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:57](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/runner.ts#L57)
+[seeds/breadboard/src/runner.ts:57](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L57)
 
-___
+---
 
 ### version
 
@@ -223,9 +223,9 @@ BreadboardRunner.version
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:60](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/runner.ts#L60)
+[seeds/breadboard/src/runner.ts:60](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L60)
 
-___
+---
 
 ### runRemote
 
@@ -237,8 +237,8 @@ ___
 
 ##### Parameters
 
-| Name | Type |
-| :------ | :------ |
+| Name  | Type     |
+| :---- | :------- |
 | `url` | `string` |
 
 ##### Returns
@@ -247,7 +247,7 @@ ___
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:359](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/runner.ts#L359)
+[seeds/breadboard/src/runner.ts:359](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L359)
 
 ## Methods
 
@@ -260,8 +260,8 @@ Will call .addGraph() on the validator before executing a graph.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
+| Name        | Type                                                          | Description                      |
+| :---------- | :------------------------------------------------------------ | :------------------------------- |
 | `validator` | [`BreadboardValidator`](../interfaces/BreadboardValidator.md) | a validator to add to the board. |
 
 #### Returns
@@ -274,9 +274,9 @@ BreadboardRunner.addValidator
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:258](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/runner.ts#L258)
+[seeds/breadboard/src/runner.ts:258](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L258)
 
-___
+---
 
 ### run
 
@@ -292,7 +292,7 @@ It's typically used like this:
 
 ```js
 for await (const stop of board.run()) {
-// do something with `stop`
+  // do something with `stop`
 }
 ```
 
@@ -307,15 +307,15 @@ When that is the case, use `stop.inputs` to provide input values.
 If `stop.type` is `output`, the board is providing output values.
 When that is the case, use `stop.outputs` to receive output values.
 
-See [Chapter 8: Continuous runs](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-8-continuous-runs) of Breadboard tutorial for an example of how to use this method.
+See [Chapter 8: Continuous runs](https://github.com/breadboard-ai/breadboard/tree/main/seeds/breadboard/docs/tutorial#chapter-8-continuous-runs) of Breadboard tutorial for an example of how to use this method.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `probe?` | `EventTarget` | an optional probe. If provided, the board will dispatch events to it. See [Chapter 7: Probes](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-7-probes) of the Breadboard tutorial for more information. |
-| `slots?` | [`BreadboardSlotSpec`](../modules.md#breadboardslotspec) | an optional map of slotted graphs. See [Chapter 6: Boards with slots](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-6-boards-with-slots) of the Breadboard tutorial for more information. |
-| `result?` | [`RunResult`](RunResult.md) | - |
+| Name      | Type                                                     | Description                                                                                                                                                                                                                                           |
+| :-------- | :------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `probe?`  | `EventTarget`                                            | an optional probe. If provided, the board will dispatch events to it. See [Chapter 7: Probes](https://github.com/breadboard-ai/breadboard/tree/main/seeds/breadboard/docs/tutorial#chapter-7-probes) of the Breadboard tutorial for more information. |
+| `slots?`  | [`BreadboardSlotSpec`](../modules.md#breadboardslotspec) | an optional map of slotted graphs. See [Chapter 6: Boards with slots](https://github.com/breadboard-ai/breadboard/tree/main/seeds/breadboard/docs/tutorial#chapter-6-boards-with-slots) of the Breadboard tutorial for more information.              |
+| `result?` | [`RunResult`](RunResult.md)                              | -                                                                                                                                                                                                                                                     |
 
 #### Returns
 
@@ -327,9 +327,9 @@ BreadboardRunner.run
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:116](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/runner.ts#L116)
+[seeds/breadboard/src/runner.ts:116](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L116)
 
-___
+---
 
 ### runOnce
 
@@ -343,11 +343,11 @@ or the the outputs are only expected to be visited once.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `inputs` | [`InputValues`](../modules.md#inputvalues) | the input values to provide to the board. |
-| `context?` | [`NodeHandlerContext`](../interfaces/NodeHandlerContext.md) | - |
-| `probe?` | `EventTarget` | an optional probe. If provided, the board will dispatch events to it. See [Chapter 7: Probes](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/docs/tutorial#chapter-7-probes) of the Breadboard tutorial for more information. |
+| Name       | Type                                                        | Description                                                                                                                                                                                                                                           |
+| :--------- | :---------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `inputs`   | [`InputValues`](../modules.md#inputvalues)                  | the input values to provide to the board.                                                                                                                                                                                                             |
+| `context?` | [`NodeHandlerContext`](../interfaces/NodeHandlerContext.md) | -                                                                                                                                                                                                                                                     |
+| `probe?`   | `EventTarget`                                               | an optional probe. If provided, the board will dispatch events to it. See [Chapter 7: Probes](https://github.com/breadboard-ai/breadboard/tree/main/seeds/breadboard/docs/tutorial#chapter-7-probes) of the Breadboard tutorial for more information. |
 
 #### Returns
 
@@ -361,9 +361,9 @@ BreadboardRunner.runOnce
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:218](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/runner.ts#L218)
+[seeds/breadboard/src/runner.ts:218](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L218)
 
-___
+---
 
 ### fromBreadboardCapability
 
@@ -373,8 +373,8 @@ Creates a runnable board from a BreadboardCapability,
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
+| Name    | Type                                                         | Description                                                     |
+| :------ | :----------------------------------------------------------- | :-------------------------------------------------------------- |
 | `board` | [`BreadboardCapability`](../modules.md#breadboardcapability) | {BreadboardCapability} A BreadboardCapability including a board |
 
 #### Returns
@@ -385,9 +385,9 @@ A runnable board.
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:324](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/runner.ts#L324)
+[seeds/breadboard/src/runner.ts:324](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L324)
 
-___
+---
 
 ### fromGraphDescriptor
 
@@ -398,10 +398,10 @@ use this method to turn it into into a new Board instance.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
+| Name    | Type                                               | Description                           |
+| :------ | :------------------------------------------------- | :------------------------------------ |
 | `graph` | [`GraphDescriptor`](../modules.md#graphdescriptor) | the JSON representation of the board. |
-| `kits?` | `KitImportMap` | - |
+| `kits?` | `KitImportMap`                                     | -                                     |
 
 #### Returns
 
@@ -411,9 +411,9 @@ use this method to turn it into into a new Board instance.
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:269](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/runner.ts#L269)
+[seeds/breadboard/src/runner.ts:269](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L269)
 
-___
+---
 
 ### handlersFromBoard
 
@@ -421,8 +421,8 @@ ___
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
+| Name    | Type                            |
+| :------ | :------------------------------ |
 | `board` | [`BoardRunner`](BoardRunner.md) |
 
 #### Returns
@@ -431,9 +431,9 @@ ___
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:349](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/runner.ts#L349)
+[seeds/breadboard/src/runner.ts:349](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L349)
 
-___
+---
 
 ### load
 
@@ -443,14 +443,14 @@ Loads a board from a URL or a file path.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `url` | `string` | the URL or a file path to the board. |
-| `options?` | `Object` | - |
-| `options.base?` | `string` | - |
-| `options.kits?` | `KitImportMap` | - |
-| `options.outerGraph?` | [`GraphDescriptor`](../modules.md#graphdescriptor) | - |
-| `options.slotted?` | [`BreadboardSlotSpec`](../modules.md#breadboardslotspec) | - |
+| Name                  | Type                                                     | Description                          |
+| :-------------------- | :------------------------------------------------------- | :----------------------------------- |
+| `url`                 | `string`                                                 | the URL or a file path to the board. |
+| `options?`            | `Object`                                                 | -                                    |
+| `options.base?`       | `string`                                                 | -                                    |
+| `options.kits?`       | `KitImportMap`                                           | -                                    |
+| `options.outerGraph?` | [`GraphDescriptor`](../modules.md#graphdescriptor)       | -                                    |
+| `options.slotted?`    | [`BreadboardSlotSpec`](../modules.md#breadboardslotspec) | -                                    |
 
 #### Returns
 
@@ -460,4 +460,4 @@ Loads a board from a URL or a file path.
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:298](https://github.com/google/labs-prototypes/blob/99919d5/seeds/breadboard/src/runner.ts#L298)
+[seeds/breadboard/src/runner.ts:298](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L298)

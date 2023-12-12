@@ -2,7 +2,7 @@
 
 ![Milestone](https://img.shields.io/badge/milestone-M3-red) ![Stability](https://img.shields.io/badge/stability-wip-green)
 
-A [Breadboard](https://github.com/google/labs-prototypes/tree/main/seeds/breadboard/) Kit containing nodes that help wrangle JSON.
+A [Breadboard](https://github.com/breadboard-ai/breadboard/tree/main/seeds/breadboard/) Kit containing nodes that help wrangle JSON.
 
 ## Node Reference
 

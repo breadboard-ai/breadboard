@@ -12,16 +12,15 @@ import { PaLMKit } from "@google-labs/palm-kit";
 const board = new Board({
   title: "Retrieval-augmented generation with Pinecone",
   description:
-    "This board implements the simplest possible retrieval-augmented generation (RAG) system using Pinecone store. The store was generated with [pinecone-load](https://github.com/google/labs-prototypes/blob/main/seeds/graph-playground/graphs/pinecone-load.json).",
+    "This board implements the simplest possible retrieval-augmented generation (RAG) system using Pinecone store. The store was generated with [pinecone-load](https://github.com/breadboard-ai/breadboard/blob/main/seeds/graph-playground/graphs/pinecone-load.json).",
   version: "0.0.1",
 });
 const starter = board.addKit(Starter);
 const pinecone = board.addKit(Pinecone);
 const palm = board.addKit(PaLMKit);
 
-const template =
-  starter.promptTemplate({
-    template: `
+const template = starter.promptTemplate({
+  template: `
 Analyze the question and the knowledge base, provided below.
 
 If the knowledge base does not contain the information to produce the answer, tell the user that you don't know.
@@ -36,8 +35,8 @@ Otherwise, write a comprehensive answer to the question using only the informati
 {{context}}
 
 # Answer
-`
-  });
+`,
+});
 
 board
   .input({

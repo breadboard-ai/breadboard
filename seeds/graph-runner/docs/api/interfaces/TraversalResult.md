@@ -28,9 +28,9 @@
 
 #### Defined in
 
-[seeds/graph-runner/src/types.ts:232](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-runner/src/types.ts#L232)
+[seeds/graph-runner/src/types.ts:232](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-runner/src/types.ts#L232)
 
-___
+---
 
 ### inputs
 
@@ -38,9 +38,9 @@ ___
 
 #### Defined in
 
-[seeds/graph-runner/src/types.ts:233](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-runner/src/types.ts#L233)
+[seeds/graph-runner/src/types.ts:233](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-runner/src/types.ts#L233)
 
-___
+---
 
 ### missingInputs
 
@@ -48,9 +48,9 @@ ___
 
 #### Defined in
 
-[seeds/graph-runner/src/types.ts:234](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-runner/src/types.ts#L234)
+[seeds/graph-runner/src/types.ts:234](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-runner/src/types.ts#L234)
 
-___
+---
 
 ### newOpportunities
 
@@ -58,9 +58,9 @@ ___
 
 #### Defined in
 
-[seeds/graph-runner/src/types.ts:236](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-runner/src/types.ts#L236)
+[seeds/graph-runner/src/types.ts:236](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-runner/src/types.ts#L236)
 
-___
+---
 
 ### opportunities
 
@@ -68,9 +68,9 @@ ___
 
 #### Defined in
 
-[seeds/graph-runner/src/types.ts:235](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-runner/src/types.ts#L235)
+[seeds/graph-runner/src/types.ts:235](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-runner/src/types.ts#L235)
 
-___
+---
 
 ### outputsPromise
 
@@ -78,9 +78,9 @@ ___
 
 #### Defined in
 
-[seeds/graph-runner/src/types.ts:238](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-runner/src/types.ts#L238)
+[seeds/graph-runner/src/types.ts:238](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-runner/src/types.ts#L238)
 
-___
+---
 
 ### pendingOutputs
 
@@ -88,9 +88,9 @@ ___
 
 #### Defined in
 
-[seeds/graph-runner/src/types.ts:239](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-runner/src/types.ts#L239)
+[seeds/graph-runner/src/types.ts:239](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-runner/src/types.ts#L239)
 
-___
+---
 
 ### skip
 
@@ -98,9 +98,9 @@ ___
 
 #### Defined in
 
-[seeds/graph-runner/src/types.ts:240](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-runner/src/types.ts#L240)
+[seeds/graph-runner/src/types.ts:240](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-runner/src/types.ts#L240)
 
-___
+---
 
 ### state
 
@@ -108,4 +108,4 @@ ___
 
 #### Defined in
 
-[seeds/graph-runner/src/types.ts:237](https://github.com/google/labs-prototypes/blob/99919d5/seeds/graph-runner/src/types.ts#L237)
+[seeds/graph-runner/src/types.ts:237](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-runner/src/types.ts#L237)
