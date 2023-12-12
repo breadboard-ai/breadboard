@@ -6,7 +6,6 @@
 
 import { Board, Schema } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
-import { Core } from "@google-labs/core-kit";
 import { NodeNurseryWeb } from "@google-labs/node-nursery-web";
 
 const board = new Board({
@@ -15,7 +14,6 @@ const board = new Board({
   version: "0.0.1",
 });
 const starter = board.addKit(Starter);
-const core = board.addKit(Core);
 const nursery = board.addKit(NodeNurseryWeb);
 
 const parameters = board.input({
