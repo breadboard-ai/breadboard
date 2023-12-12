@@ -1,0 +1,329 @@
+{
+  "title": "Gemini Pro Generator",
+  "description": "The text generator recipe powered by the Gemini Pro model",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "parameters",
+      "to": "chooseMethod",
+      "out": "useStreaming",
+      "in": "useStreaming"
+    },
+    {
+      "from": "secrets-1",
+      "to": "makeURL",
+      "out": "GEMINI_KEY",
+      "in": "GEMINI_KEY"
+    },
+    {
+      "from": "chooseMethod",
+      "to": "makeURL",
+      "out": "method",
+      "in": "method"
+    },
+    {
+      "from": "chooseMethod",
+      "to": "makeURL",
+      "out": "sseOption",
+      "in": "sseOption"
+    },
+    {
+      "from": "parameters",
+      "to": "callGeminiAPI",
+      "out": "useStreaming",
+      "in": "stream"
+    },
+    {
+      "from": "makeURL",
+      "to": "callGeminiAPI",
+      "out": "url",
+      "in": "url"
+    },
+    {
+      "from": "lambda-2",
+      "to": "transformStream-3",
+      "constant": true,
+      "out": "board",
+      "in": "board"
+    },
+    {
+      "from": "formatResponse",
+      "to": "toolCallsOutput",
+      "out": "functionCall",
+      "in": "functionCall"
+    },
+    {
+      "from": "formatResponse",
+      "to": "textOutput",
+      "out": "text",
+      "in": "text"
+    },
+    {
+      "from": "formatResponse",
+      "to": "textOutput",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "formatResponse",
+      "to": "toolCallsOutput",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "parameters",
+      "to": "formatResponse",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "callGeminiAPI",
+      "to": "formatResponse",
+      "out": "response",
+      "in": "response"
+    },
+    {
+      "from": "transformStream-3",
+      "to": "streamOutput",
+      "out": "stream",
+      "in": "stream"
+    },
+    {
+      "from": "callGeminiAPI",
+      "to": "transformStream-3",
+      "out": "stream",
+      "in": "stream"
+    },
+    {
+      "from": "makeBody",
+      "to": "callGeminiAPI",
+      "out": "result",
+      "in": "body"
+    },
+    {
+      "from": "parameters",
+      "to": "makeBody",
+      "out": "*"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "parameters",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Text",
+              "description": "The text to generate",
+              "examples": [
+                "What is the square root of pi?"
+              ]
+            },
+            "tools": {
+              "type": "array",
+              "title": "Tools",
+              "description": "An array of functions to use for tool-calling",
+              "items": {
+                "type": "string"
+              },
+              "default": "[]",
+              "examples": [
+                "[\n  {\n    \"function_declarations\": [\n      {\n        \"name\": \"The_Calculator_Recipe\",\n        \"description\": \"A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.\",\n        \"parameters\": {\n          \"type\": \"object\",\n          \"properties\": {\n            \"text\": {\n              \"type\": \"string\",\n              \"description\": \"Ask a math question\"\n            }\n          },\n          \"required\": [\n            \"text\"\n          ]\n        }\n      },\n      {\n        \"name\": \"The_Search_Summarizer_Recipe\",\n        \"description\": \"A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.\",\n        \"parameters\": {\n          \"type\": \"object\",\n          \"properties\": {\n            \"text\": {\n              \"type\": \"string\",\n              \"description\": \"What would you like to search for?\"\n            }\n          },\n          \"required\": [\n            \"text\"\n          ]\n        }\n      }\n    ]\n  }\n]"
+              ]
+            },
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "description": "An array of messages to use as conversation context",
+              "items": {
+                "type": "object"
+              },
+              "default": "[]",
+              "examples": [
+                "[\n  {\n    \"role\": \"user\",\n    \"parts\": [\n      {\n        \"text\": \"You are a pirate. Please talk like a pirate.\"\n      }\n    ]\n  },\n  {\n    \"role\": \"model\",\n    \"parts\": [\n      {\n        \"text\": \"Arr, matey!\"\n      }\n    ]\n  }\n]"
+              ]
+            },
+            "useStreaming": {
+              "type": "boolean",
+              "title": "Stream",
+              "description": "Whether to stream the output",
+              "default": "false"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
+    },
+    {
+      "id": "textOutput",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Text",
+              "description": "The generated text"
+            },
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "description": "The conversation context"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "toolCallsOutput",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "functionCall": {
+              "type": "object",
+              "title": "Tool Calls",
+              "description": "The generated tool calls"
+            },
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "description": "The conversation context"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "streamOutput",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "stream": {
+              "type": "object",
+              "title": "Stream",
+              "format": "stream",
+              "description": "The generated text"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "chooseMethod",
+      "type": "runJavascript",
+      "configuration": {
+        "name": "chooseMethodFunction",
+        "code": "function chooseMethodFunction({useStreaming}){const method=useStreaming?\"streamGenerateContent\":\"generateContent\";const sseOption=useStreaming?\"&alt=sse\":\"\";return{method,sseOption}}",
+        "raw": true
+      }
+    },
+    {
+      "id": "makeURL",
+      "type": "urlTemplate",
+      "configuration": {
+        "template": "https://autopush-generativelanguage.sandbox.googleapis.com/v1beta/models/gemini-pro:{method}?key={GEMINI_KEY}{+sseOption}"
+      }
+    },
+    {
+      "id": "secrets-1",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "GEMINI_KEY"
+        ]
+      }
+    },
+    {
+      "id": "makeBody",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "(\n    $context := $append(\n        context ? context, [\n            {\n                \"role\": \"user\",\n                \"parts\": [\n                    {\n                        \"text\": text\n                    }\n                ]\n            }\n        ]);\n    text ? {\n        \"contents\": $context, \n        \"tools\": tools \n    } : {\n        \"$error\": \"`text` input is required\"\n    }\n)"
+      }
+    },
+    {
+      "id": "callGeminiAPI",
+      "type": "fetch",
+      "configuration": {
+        "method": "POST"
+      }
+    },
+    {
+      "id": "formatResponse",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "\n  response.candidates[0].content.parts.{\n    \"text\": text ? text,\n    \"functionCall\": functionCall ? functionCall ,\n    \"context\": $append($$.context, %.$)\n}",
+        "raw": true
+      }
+    },
+    {
+      "id": "lambda-2",
+      "type": "lambda",
+      "configuration": {
+        "board": {
+          "kind": "board",
+          "board": {
+            "edges": [
+              {
+                "from": "transformChunk",
+                "to": "output-2",
+                "out": "result",
+                "in": "chunk"
+              },
+              {
+                "from": "input-1",
+                "to": "transformChunk",
+                "out": "chunk",
+                "in": "json"
+              }
+            ],
+            "nodes": [
+              {
+                "id": "input-1",
+                "type": "input"
+              },
+              {
+                "id": "output-2",
+                "type": "output"
+              },
+              {
+                "id": "transformChunk",
+                "type": "jsonata",
+                "configuration": {
+                  "expression": "candidates[0].content.parts.text ? $join(candidates[0].content.parts.text) : ''"
+                }
+              }
+            ],
+            "kits": [
+              {
+                "url": "npm:@google-labs/llm-starter"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "transformStream-3",
+      "type": "transformStream",
+      "configuration": {}
+    }
+  ],
+  "kits": [
+    {
+      "url": "npm:@google-labs/llm-starter"
+    },
+    {
+      "url": "npm:@google-labs/node-nursery-web"
+    }
+  ]
+}
