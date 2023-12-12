@@ -58,46 +58,75 @@ const parameters = board.input({
           },
         ],
       },
+      useStreaming: {
+        type: "boolean",
+        title: "Stream",
+        description: "Whether to stream the output",
+        default: "false",
+      },
     },
+    required: ["parts"],
   } satisfies Schema,
 });
 
-const oauthCredentials = core.invoke({
-  $id: "oauth",
-  path: "oauth-config.local.json",
-});
-
-const headers = starter
-  .jsonata({
-    $id: "make-headers",
-    expression:
-      '{ "Authorization": "Bearer " & $.accessToken, "Accept": "application/json", "Content-Type": "application/json", "X-Goog-User-Project": $.projectId, "X-Google-Project-Override": "apiKey" }',
-  })
-  .wire(
-    "<-projectId",
-    core.passthrough({
-      $id: "projectId",
-      projectId: "google.com:breadboard-ai",
-    })
-  )
-  .wire("<-accessToken", oauthCredentials);
-
-const body = starter.jsonata({
+const makeBody = starter.jsonata({
+  $id: "makeBody",
   expression: `{ "contents": { "parts": $.parts }}`,
 });
+
+function chooseMethodFunction({ useStreaming }: { useStreaming: boolean }) {
+  const method = useStreaming ? "streamGenerateContent" : "generateContent";
+  const sseOption = useStreaming ? "&alt=sse" : "";
+  return { method, sseOption };
+}
+
+const chooseMethod = starter
+  .runJavascript({
+    $id: "chooseMethod",
+    name: "chooseMethodFunction",
+    code: chooseMethodFunction.toString(),
+    raw: true,
+  })
+  .wire("<-useStreaming", parameters);
+
+const makeUrl = starter
+  .urlTemplate({
+    $id: "makeURL",
+    template:
+      "https://autopush-generativelanguage.sandbox.googleapis.com/v1beta/models/gemini-pro-vision:{method}?key={GEMINI_KEY}{+sseOption}",
+  })
+  .wire("<-GEMINI_KEY", starter.secrets({ keys: ["GEMINI_KEY"] }))
+  .wire("<-method", chooseMethod)
+  .wire("<-sseOption", chooseMethod);
 
 const fetch = starter
   .fetch({
     method: "POST",
-    stream: true,
   })
-  .wire("headers<-result", headers)
-  .wire("<-body", body)
+  .wire("stream<-useStreaming", parameters)
+  .wire("<-url", makeUrl)
   .wire(
-    "<-url",
-    core.passthrough({
-      url: "https://autopush-generativelanguage.sandbox.googleapis.com/v1beta/models/gemini-pro-vision:streamGenerateContent?alt=sse",
-    })
+    "$error->json",
+    starter
+      .jsonata({
+        $id: "formatError",
+        expression: "error.message",
+      })
+      .wire(
+        "result->error",
+        board.output({
+          $id: "errorOutput",
+          schema: {
+            type: "object",
+            properties: {
+              error: {
+                type: "string",
+                title: "Error",
+              },
+            },
+          } satisfies Schema,
+        })
+      )
   );
 
 const chunkToText = nursery.transformStream((_, input, output) => {
@@ -137,11 +166,31 @@ const output = board.output({
 
 parameters.wire(
   "parts->",
-  body.wire(
+  makeBody.wire(
     "result->body",
-    fetch
-      .wire("headers<-results", headers)
-      .wire("stream->", chunkToText.wire("stream->", output))
+    fetch.wire("stream->", chunkToText.wire("stream->", output)).wire(
+      "response->json",
+      starter
+        .jsonata({
+          $id: "formatOutput",
+          expression: "$join(candidates.content.parts.text)",
+        })
+        .wire(
+          "result->",
+          board.output({
+            $id: "textOutput",
+            schema: {
+              type: "object",
+              properties: {
+                result: {
+                  type: "string",
+                  title: "Result",
+                },
+              },
+            } satisfies Schema,
+          })
+        )
+    )
   )
 );
 

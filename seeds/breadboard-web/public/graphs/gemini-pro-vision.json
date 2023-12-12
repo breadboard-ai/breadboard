@@ -4,69 +4,93 @@
   "version": "0.0.1",
   "edges": [
     {
-      "from": "projectId",
-      "to": "make-headers",
-      "out": "projectId",
-      "in": "projectId"
+      "from": "parameters",
+      "to": "chooseMethod",
+      "out": "useStreaming",
+      "in": "useStreaming"
     },
     {
-      "from": "oauth",
-      "to": "make-headers",
-      "out": "accessToken",
-      "in": "accessToken"
+      "from": "secrets-1",
+      "to": "makeURL",
+      "out": "GEMINI_KEY",
+      "in": "GEMINI_KEY"
     },
     {
-      "from": "make-headers",
+      "from": "chooseMethod",
+      "to": "makeURL",
+      "out": "method",
+      "in": "method"
+    },
+    {
+      "from": "chooseMethod",
+      "to": "makeURL",
+      "out": "sseOption",
+      "in": "sseOption"
+    },
+    {
+      "from": "parameters",
       "to": "fetch-2",
-      "out": "result",
-      "in": "headers"
+      "out": "useStreaming",
+      "in": "stream"
     },
     {
-      "from": "jsonata-1",
-      "to": "fetch-2",
-      "out": "body",
-      "in": "body"
-    },
-    {
-      "from": "passthrough-3",
+      "from": "makeURL",
       "to": "fetch-2",
       "out": "url",
       "in": "url"
     },
     {
-      "from": "lambda-4",
-      "to": "transformStream-5",
+      "from": "formatError",
+      "to": "errorOutput",
+      "out": "result",
+      "in": "error"
+    },
+    {
+      "from": "fetch-2",
+      "to": "formatError",
+      "out": "$error",
+      "in": "json"
+    },
+    {
+      "from": "lambda-3",
+      "to": "transformStream-4",
       "constant": true,
       "out": "board",
       "in": "board"
     },
     {
-      "from": "make-headers",
-      "to": "fetch-2",
-      "out": "results",
-      "in": "headers"
-    },
-    {
-      "from": "transformStream-5",
-      "to": "output-6",
+      "from": "transformStream-4",
+      "to": "output-5",
       "out": "stream",
       "in": "stream"
     },
     {
       "from": "fetch-2",
-      "to": "transformStream-5",
+      "to": "transformStream-4",
       "out": "stream",
       "in": "stream"
     },
     {
-      "from": "jsonata-1",
+      "from": "formatOutput",
+      "to": "textOutput",
+      "out": "result",
+      "in": "result"
+    },
+    {
+      "from": "fetch-2",
+      "to": "formatOutput",
+      "out": "response",
+      "in": "json"
+    },
+    {
+      "from": "makeBody",
       "to": "fetch-2",
       "out": "result",
       "in": "body"
     },
     {
       "from": "parameters",
-      "to": "jsonata-1",
+      "to": "makeBody",
       "out": "parts",
       "in": "parts"
     }
@@ -116,56 +140,83 @@
                   }
                 }
               ]
+            },
+            "useStreaming": {
+              "type": "boolean",
+              "title": "Stream",
+              "description": "Whether to stream the output",
+              "default": "false"
             }
-          }
+          },
+          "required": [
+            "parts"
+          ]
         }
       }
     },
     {
-      "id": "oauth",
-      "type": "invoke",
-      "configuration": {
-        "path": "oauth-config.local.json"
-      }
-    },
-    {
-      "id": "make-headers",
-      "type": "jsonata",
-      "configuration": {
-        "expression": "{ \"Authorization\": \"Bearer \" & $.accessToken, \"Accept\": \"application/json\", \"Content-Type\": \"application/json\", \"X-Goog-User-Project\": $.projectId, \"X-Google-Project-Override\": \"apiKey\" }"
-      }
-    },
-    {
-      "id": "projectId",
-      "type": "passthrough",
-      "configuration": {
-        "projectId": "google.com:breadboard-ai"
-      }
-    },
-    {
-      "id": "jsonata-1",
+      "id": "makeBody",
       "type": "jsonata",
       "configuration": {
         "expression": "{ \"contents\": { \"parts\": $.parts }}"
       }
     },
     {
+      "id": "chooseMethod",
+      "type": "runJavascript",
+      "configuration": {
+        "name": "chooseMethodFunction",
+        "code": "function chooseMethodFunction({useStreaming}){const method=useStreaming?\"streamGenerateContent\":\"generateContent\";const sseOption=useStreaming?\"&alt=sse\":\"\";return{method,sseOption}}",
+        "raw": true
+      }
+    },
+    {
+      "id": "makeURL",
+      "type": "urlTemplate",
+      "configuration": {
+        "template": "https://autopush-generativelanguage.sandbox.googleapis.com/v1beta/models/gemini-pro-vision:{method}?key={GEMINI_KEY}{+sseOption}"
+      }
+    },
+    {
+      "id": "secrets-1",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "GEMINI_KEY"
+        ]
+      }
+    },
+    {
       "id": "fetch-2",
       "type": "fetch",
       "configuration": {
-        "method": "POST",
-        "stream": true
+        "method": "POST"
       }
     },
     {
-      "id": "passthrough-3",
-      "type": "passthrough",
+      "id": "formatError",
+      "type": "jsonata",
       "configuration": {
-        "url": "https://autopush-generativelanguage.sandbox.googleapis.com/v1beta/models/gemini-pro-vision:streamGenerateContent?alt=sse"
+        "expression": "error.message"
       }
     },
     {
-      "id": "lambda-4",
+      "id": "errorOutput",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "error": {
+              "type": "string",
+              "title": "Error"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "lambda-3",
       "type": "lambda",
       "configuration": {
         "board": {
@@ -212,12 +263,12 @@
       }
     },
     {
-      "id": "transformStream-5",
+      "id": "transformStream-4",
       "type": "transformStream",
       "configuration": {}
     },
     {
-      "id": "output-6",
+      "id": "output-5",
       "type": "output",
       "configuration": {
         "schema": {
@@ -226,6 +277,28 @@
               "type": "object",
               "title": "Result",
               "format": "stream"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "formatOutput",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "$join(candidates.content.parts.text)"
+      }
+    },
+    {
+      "id": "textOutput",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "result": {
+              "type": "string",
+              "title": "Result"
             }
           }
         }
