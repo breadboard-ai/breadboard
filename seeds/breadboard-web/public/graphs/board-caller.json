@@ -154,7 +154,7 @@
               "title": "Generator",
               "description": "The URL of the generator to call",
               "examples": [
-                "/graphs/openai-gpt-35-turbo.json"
+                "gemini-generator.json"
               ]
             },
             "boards": {
@@ -165,7 +165,7 @@
                 "type": "string"
               },
               "examples": [
-                "[ \"https://raw.githubusercontent.com/breadboard-ai/breadboardmain/seeds/graph-playground/graphs/math.json\", \"/graphs/search-summarize.json\" ]"
+                "[ \"/graphs/math.json\", \"/graphs/search-summarize.json\" ]"
               ]
             }
           },

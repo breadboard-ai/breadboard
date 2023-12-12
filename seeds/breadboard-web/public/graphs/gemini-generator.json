@@ -49,8 +49,8 @@
     {
       "from": "formatResponse",
       "to": "toolCallsOutput",
-      "out": "functionCall",
-      "in": "functionCall"
+      "out": "toolCalls",
+      "in": "toolCalls"
     },
     {
       "from": "formatResponse",
@@ -131,7 +131,7 @@
               },
               "default": "[]",
               "examples": [
-                "[\n  {\n    \"function_declarations\": [\n      {\n        \"name\": \"The_Calculator_Recipe\",\n        \"description\": \"A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.\",\n        \"parameters\": {\n          \"type\": \"object\",\n          \"properties\": {\n            \"text\": {\n              \"type\": \"string\",\n              \"description\": \"Ask a math question\"\n            }\n          },\n          \"required\": [\n            \"text\"\n          ]\n        }\n      },\n      {\n        \"name\": \"The_Search_Summarizer_Recipe\",\n        \"description\": \"A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.\",\n        \"parameters\": {\n          \"type\": \"object\",\n          \"properties\": {\n            \"text\": {\n              \"type\": \"string\",\n              \"description\": \"What would you like to search for?\"\n            }\n          },\n          \"required\": [\n            \"text\"\n          ]\n        }\n      }\n    ]\n  }\n]"
+                "[\n  {\n    \"name\": \"The_Calculator_Recipe\",\n    \"description\": \"A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.\",\n    \"parameters\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"text\": {\n          \"type\": \"string\",\n          \"description\": \"Ask a math question\"\n        }\n      },\n      \"required\": [\n        \"text\"\n      ]\n    }\n  },\n  {\n    \"name\": \"The_Search_Summarizer_Recipe\",\n    \"description\": \"A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.\",\n    \"parameters\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"text\": {\n          \"type\": \"string\",\n          \"description\": \"What would you like to search for?\"\n        }\n      },\n      \"required\": [\n        \"text\"\n      ]\n    }\n  }\n]"
               ]
             },
             "context": {
@@ -187,8 +187,8 @@
         "schema": {
           "type": "object",
           "properties": {
-            "functionCall": {
-              "type": "object",
+            "toolCalls": {
+              "type": "array",
               "title": "Tool Calls",
               "description": "The generated tool calls"
             },
@@ -247,7 +247,7 @@
       "id": "makeBody",
       "type": "jsonata",
       "configuration": {
-        "expression": "(\n    $context := $append(\n        context ? context, [\n            {\n                \"role\": \"user\",\n                \"parts\": [\n                    {\n                        \"text\": text\n                    }\n                ]\n            }\n        ]);\n    text ? {\n        \"contents\": $context, \n        \"tools\": tools \n    } : {\n        \"$error\": \"`text` input is required\"\n    }\n)"
+        "expression": "(\n    $context := $append(\n        context ? context, [\n            {\n                \"role\": \"user\",\n                \"parts\": [\n                    {\n                        \"text\": text\n                    }\n                ]\n            }\n        ]);\n    text ? {\n        \"contents\": $context, \n        \"tools\": tools ? {\n          \"function_declarations\": tools\n        }\n    } : {\n        \"$error\": \"`text` input is required\"\n    }\n)"
       }
     },
     {
@@ -261,7 +261,7 @@
       "id": "formatResponse",
       "type": "jsonata",
       "configuration": {
-        "expression": "\n  response.candidates[0].content.parts.{\n    \"text\": text ? text,\n    \"functionCall\": functionCall ? functionCall ,\n    \"context\": $append($$.context, %.$)\n}",
+        "expression": "\n  response.candidates[0].content.parts.{\n    \"text\": text ? text,\n    \"toolCalls\": functionCall ? [ functionCall ],\n    \"context\": $append($$.context, %.$)\n  }",
         "raw": true
       }
     },

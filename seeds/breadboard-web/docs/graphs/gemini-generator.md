@@ -16,7 +16,7 @@ lambda2_input1[/"input <br> id='input-1'"/]:::input -- "chunk->json" --> lambda2
 end
 sg_lambda2:::slotted -- "lamdba->lamdba" --o lambda2
 
-formatResponse["jsonata <br> id='formatResponse'"] -- "functionCall->functionCall" --> toolCallsOutput{{"output <br> id='toolCallsOutput'"}}:::output
+formatResponse["jsonata <br> id='formatResponse'"] -- "toolCalls->toolCalls" --> toolCallsOutput{{"output <br> id='toolCallsOutput'"}}:::output
 formatResponse["jsonata <br> id='formatResponse'"] -- "text->text" --> textOutput{{"output <br> id='textOutput'"}}:::output
 formatResponse["jsonata <br> id='formatResponse'"] -- "context->context" --> textOutput{{"output <br> id='textOutput'"}}:::output
 formatResponse["jsonata <br> id='formatResponse'"] -- "context->context" --> toolCallsOutput{{"output <br> id='toolCallsOutput'"}}:::output

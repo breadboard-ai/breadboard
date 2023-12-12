@@ -57,50 +57,48 @@ type GenerateContentContentsType = {
   parts: PartType[];
 };
 
+type FunctionDeclaration = {
+  name: string;
+  description: string;
+  parameters?: Schema;
+};
+
 type Tool = {
-  function_declarations: {
-    name: string;
-    description: string;
-    parameters?: Schema;
-  }[];
+  function_declarations: FunctionDeclaration[];
 };
 
 const toolsExample = [
   {
-    function_declarations: [
-      {
-        name: "The_Calculator_Recipe",
-        description:
-          "A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.",
-        parameters: {
-          type: "object",
-          properties: {
-            text: {
-              type: "string",
-              description: "Ask a math question",
-            },
-          },
-          required: ["text"],
+    name: "The_Calculator_Recipe",
+    description:
+      "A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.",
+    parameters: {
+      type: "object",
+      properties: {
+        text: {
+          type: "string",
+          description: "Ask a math question",
         },
       },
-      {
-        name: "The_Search_Summarizer_Recipe",
-        description:
-          "A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.",
-        parameters: {
-          type: "object",
-          properties: {
-            text: {
-              type: "string",
-              description: "What would you like to search for?",
-            },
-          },
-          required: ["text"],
-        },
-      },
-    ],
+      required: ["text"],
+    },
   },
-] satisfies Tool[];
+  {
+    name: "The_Search_Summarizer_Recipe",
+    description:
+      "A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.",
+    parameters: {
+      type: "object",
+      properties: {
+        text: {
+          type: "string",
+          description: "What would you like to search for?",
+        },
+      },
+      required: ["text"],
+    },
+  },
+] satisfies FunctionDeclaration[];
 
 const contextExample = [
   {
@@ -187,8 +185,8 @@ const functionCallOutput = board.output({
   schema: {
     type: "object",
     properties: {
-      functionCall: {
-        type: "object",
+      toolCalls: {
+        type: "array",
         title: "Tool Calls",
         description: "The generated tool calls",
       },
@@ -257,7 +255,9 @@ const makeBody = starter.jsonata({
         ]);
     text ? {
         "contents": $context, 
-        "tools": tools 
+        "tools": tools ? {
+          "function_declarations": tools
+        }
     } : {
         "$error": "\`text\` input is required"
     }
@@ -277,9 +277,9 @@ const formatResponse = starter.jsonata({
   expression: `
   response.candidates[0].content.parts.{
     "text": text ? text,
-    "functionCall": functionCall ? functionCall ,
+    "toolCalls": functionCall ? [ functionCall ],
     "context": $append($$.context, %.$)
-}`,
+  }`,
   raw: true,
 });
 
@@ -305,7 +305,7 @@ parameters.wire(
       .wire(
         "response->response",
         formatResponse
-          .wire("functionCall->", functionCallOutput)
+          .wire("toolCalls->", functionCallOutput)
           .wire("text->", textOutput)
           .wire("context->", textOutput)
           .wire("context->", functionCallOutput)

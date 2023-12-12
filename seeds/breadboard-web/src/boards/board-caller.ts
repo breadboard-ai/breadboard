@@ -66,7 +66,7 @@ const parameters = board.input({
         type: "string",
         title: "Generator",
         description: "The URL of the generator to call",
-        examples: ["/graphs/openai-gpt-35-turbo.json"],
+        examples: ["gemini-generator.json"],
       },
       boards: {
         type: "array",
@@ -75,9 +75,7 @@ const parameters = board.input({
         items: {
           type: "string",
         },
-        examples: [
-          '[ "https://raw.githubusercontent.com/breadboard-ai/breadboardmain/seeds/graph-playground/graphs/math.json", "/graphs/search-summarize.json" ]',
-        ],
+        examples: ['[ "/graphs/math.json", "/graphs/search-summarize.json" ]'],
       },
     },
     required: ["text", "boards"],
