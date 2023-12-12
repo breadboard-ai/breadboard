@@ -28,7 +28,7 @@ const palm = board.addKit(PaLMKit);
 
 // A URL to a repository containing various saved breadboard layouts.
 const REPO_URL =
-  "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs";
+  "https://raw.githubusercontent.com/google/breadboard-ai/main/seeds/graph-playground/graphs";
 
 // The single node where all the important keys come from.
 const secrets = kit.secrets({ keys: ["PALM_KEY", "GOOGLE_CSE_ID"] });
@@ -36,8 +36,7 @@ const secrets = kit.secrets({ keys: ["PALM_KEY", "GOOGLE_CSE_ID"] });
 // This is the jsonata node that extracts the tool names
 // from the reflected graph.
 const tools = kit.jsonata({
-  expression:
-    "nodes.configuration.description.%.%.[id] ~> $join(', ')",
+  expression: "nodes.configuration.description.%.%.[id] ~> $join(', ')",
 });
 
 // This is the jsonata node that extracts the tool descriptions
@@ -169,12 +168,11 @@ reActTemplate.wire(
     .wire(
       "completion->json",
       kit
-        .jsonata(
-          {
-            expression: "($f := function($line, $str) { $contains($line, $str) ? $substring($line, $length($str)) }; $merge(($split('\n')[[1..2]]) @ $line.$.{'action': $f($line, 'Action: '), 'input': $f($line, 'Action Input: '),'answer': $f($line, 'Final Answer: ') }).{ action: input,'answer': answer})",
-            raw: true,
-          }
-        )
+        .jsonata({
+          expression:
+            "($f := function($line, $str) { $contains($line, $str) ? $substring($line, $length($str)) }; $merge(($split('\n')[[1..2]]) @ $line.$.{'action': $f($line, 'Action: '), 'input': $f($line, 'Action Input: '),'answer': $f($line, 'Final Answer: ') }).{ action: input,'answer': answer})",
+          raw: true,
+        })
         .wire("search->text", search)
         .wire("math->text", math)
         .wire("answer->text", board.output())

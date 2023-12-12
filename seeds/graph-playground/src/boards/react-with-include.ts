@@ -25,29 +25,27 @@ const palm = board.addKit(PaLMKit);
 
 // A URL to a repository containing various saved breadboard layouts.
 const REPO_URL =
-  "https://raw.githubusercontent.com/google/labs-prototypes/main/seeds/graph-playground/graphs";
+  "https://raw.githubusercontent.com/google/breadboard-ai/main/seeds/graph-playground/graphs";
 
 // The single node where all the important keys come from.
 const secrets = kit.secrets({
-  keys: ["PALM_KEY", "GOOGLE_CSE_ID",
-  ],
+  keys: ["PALM_KEY", "GOOGLE_CSE_ID"],
 });
 
 // This is the main ingredient: the template that makes the algo tick.
 const reActTemplate = kit
   .promptTemplate({
-      template:
-        "Answer the following questions as best you can. You have access to the " +
-        "following tools:\n\n{{descriptions}}\n\nUse the following " +
-        "format:\n\nQuestion: the input question you must answer\nThought: you " +
-        "should always think about what to do\nAction: the action to take, " +
-        "should be one of: {{tools}}\nAction Input: the input to the action\n" +
-        "Observation: the result of the action\n... " +
-        "(this Thought/Action/Action Input/Observation can repeat N times)\n" +
-        "Thought: I now know the final answer\nFinal Answer: the final answer to " +
-        "the original input question\n\nBegin!\n\n{{memory}}\nThought:",
-    },
-  )
+    template:
+      "Answer the following questions as best you can. You have access to the " +
+      "following tools:\n\n{{descriptions}}\n\nUse the following " +
+      "format:\n\nQuestion: the input question you must answer\nThought: you " +
+      "should always think about what to do\nAction: the action to take, " +
+      "should be one of: {{tools}}\nAction Input: the input to the action\n" +
+      "Observation: the result of the action\n... " +
+      "(this Thought/Action/Action Input/Observation can repeat N times)\n" +
+      "Thought: I now know the final answer\nFinal Answer: the final answer to " +
+      "the original input question\n\nBegin!\n\n{{memory}}\nThought:",
+  })
   .wire("<-descriptions.", reAct.getDescriptions())
   .wire("<-tools.", reAct.getTools());
 
