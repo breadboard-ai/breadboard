@@ -26,7 +26,12 @@ const WORKER_URL =
 const HARNESS_SWITCH_KEY = "bb-harness";
 const MAINTHREAD_HARNESS_VALUE = "main-thread";
 const PROXY_SERVER_HARNESS_VALUE = "proxy-server";
-const PROXY_URL_KEY = "bb-proxy-url";
+const WORKER_HARNESS_VALUE = "worker";
+
+const PROXY_SERVER_URL = import.meta.env.VITE_PROXY_SERVER_URL ?? "";
+const DEFAULT_HARNESS = PROXY_SERVER_URL
+  ? PROXY_SERVER_HARNESS_VALUE
+  : MAINTHREAD_HARNESS_VALUE;
 
 type PauserCallback = (paused: boolean) => void;
 class Pauser extends EventTarget {
@@ -327,9 +332,10 @@ export class Main {
   }
 
   #getHarness() {
-    const harness = globalThis.localStorage.getItem(HARNESS_SWITCH_KEY);
+    const harness =
+      globalThis.localStorage.getItem(HARNESS_SWITCH_KEY) ?? DEFAULT_HARNESS;
     switch (harness) {
-      case MAINTHREAD_HARNESS_VALUE:
+      case MAINTHREAD_HARNESS_VALUE: {
         return new MainThreadHarness(async ({ keys }) => {
           if (!keys) return {};
           return Object.fromEntries(
@@ -338,17 +344,20 @@ export class Main {
             )
           );
         });
+      }
       case PROXY_SERVER_HARNESS_VALUE: {
-        const proxyServerUrl = globalThis.localStorage.getItem(PROXY_URL_KEY);
+        const proxyServerUrl = PROXY_SERVER_URL;
         if (!proxyServerUrl) {
-          console.log(
-            "Unable to initialize proxy server harness, falling back on worker harness."
+          throw new Error(
+            "Unable to initialize proxy server harness. Please provide PROXY_SERVER_URL."
           );
-          break;
         }
         return new ProxyServerHarness(proxyServerUrl);
       }
+      case WORKER_HARNESS_VALUE: {
+        return new HostHarness(WORKER_URL);
+      }
     }
-    return new HostHarness(WORKER_URL);
+    throw new Error(`Unknown harness: ${harness}`);
   }
 }
