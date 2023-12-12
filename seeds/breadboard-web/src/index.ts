@@ -31,7 +31,7 @@ const WORKER_HARNESS_VALUE = "worker";
 const PROXY_SERVER_URL = import.meta.env.VITE_PROXY_SERVER_URL ?? "";
 const DEFAULT_HARNESS = PROXY_SERVER_URL
   ? PROXY_SERVER_HARNESS_VALUE
-  : MAINTHREAD_HARNESS_VALUE;
+  : WORKER_HARNESS_VALUE;
 
 type PauserCallback = (paused: boolean) => void;
 class Pauser extends EventTarget {
