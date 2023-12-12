@@ -31,14 +31,14 @@ const input = board.input({
         type: "boolean",
         title: "Stream",
         description: "Whether to stream the output",
-        default: false,
+        default: "false",
       },
     },
   },
 });
 
 const textOutput = board.output({
-  $id: "output",
+  $id: "textOutput",
   schema: {
     type: "object",
     properties: {
@@ -52,7 +52,7 @@ const textOutput = board.output({
 });
 
 const streamOutput = board.output({
-  $id: "stream",
+  $id: "streamOutput",
   schema: {
     type: "object",
     properties: {
@@ -66,8 +66,9 @@ const streamOutput = board.output({
   },
 });
 
-const headers = starter
+const makeHeaders = starter
   .jsonata({
+    $id: "makeeHeaders",
     expression: `{
     "Content-Type": "application/json",
     "Authorization": "Bearer " & $.OPENAI_API_KEY
@@ -75,7 +76,8 @@ const headers = starter
   })
   .wire("<-OPENAI_API_KEY", starter.secrets({ keys: ["OPENAI_API_KEY"] }));
 
-const body = starter.jsonata({
+const makeBody = starter.jsonata({
+  $id: "makeBody",
   expression: `{
     "model": "gpt-4-vision-preview",
     "messages": [
@@ -101,11 +103,12 @@ const fetch = starter
   .fetch({
     url: "https://api.openai.com/v1/chat/completions",
     method: "POST",
-    stream: true,
   })
-  .wire("headers<-result", headers);
+  .wire("stream<-useStreaming", input)
+  .wire("headers<-result", makeHeaders);
 
 const getResponse = starter.jsonata({
+  $id: "getResponse",
   expression: `choices[0].message.content`,
 });
 
@@ -114,6 +117,7 @@ const streamTransform = nursery.transformStream(
     const starter = transformBoard.addKit(Starter);
 
     const transformCompletion = starter.jsonata({
+      $id: "transformCompletion",
       expression: 'choices[0].delta.content ? choices[0].delta.content : ""',
     });
 
@@ -124,10 +128,10 @@ const streamTransform = nursery.transformStream(
   }
 );
 
-input.wire("useStreaming->", body);
+input.wire("useStreaming->", makeBody);
 input.wire(
   "content->",
-  body.wire(
+  makeBody.wire(
     "result->body",
     fetch
       .wire("response->json", getResponse.wire("result->text", textOutput))

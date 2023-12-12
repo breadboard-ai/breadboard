@@ -4,63 +4,69 @@
   "version": "0.0.1",
   "edges": [
     {
-      "from": "secrets-2",
-      "to": "jsonata-1",
+      "from": "secrets-1",
+      "to": "makeeHeaders",
       "out": "OPENAI_API_KEY",
       "in": "OPENAI_API_KEY"
     },
     {
-      "from": "jsonata-1",
-      "to": "fetch-4",
+      "from": "input",
+      "to": "fetch-2",
+      "out": "useStreaming",
+      "in": "stream"
+    },
+    {
+      "from": "makeeHeaders",
+      "to": "fetch-2",
       "out": "result",
       "in": "headers"
     },
     {
-      "from": "lambda-6",
-      "to": "transformStream-7",
+      "from": "lambda-3",
+      "to": "transformStream-4",
       "constant": true,
       "out": "board",
       "in": "board"
     },
     {
       "from": "input",
-      "to": "jsonata-3",
+      "to": "makeBody",
       "out": "useStreaming",
       "in": "useStreaming"
     },
     {
-      "from": "jsonata-5",
-      "to": "output",
+      "from": "getResponse",
+      "to": "textOutput",
       "out": "result",
       "in": "text"
     },
     {
-      "from": "fetch-4",
-      "to": "jsonata-5",
+      "from": "fetch-2",
+      "to": "getResponse",
       "out": "response",
       "in": "json"
     },
     {
-      "from": "transformStream-7",
-      "to": "stream",
+      "from": "transformStream-4",
+      "to": "streamOutput",
       "out": "stream",
       "in": "stream"
     },
     {
-      "from": "fetch-4",
-      "to": "transformStream-7",
+      "from": "fetch-2",
+      "to": "transformStream-4",
       "out": "stream",
       "in": "stream"
     },
     {
-      "from": "jsonata-3",
-      "to": "fetch-4",
+      "from": "makeBody",
+      "to": "fetch-2",
       "out": "result",
       "in": "body"
     },
     {
       "from": "input",
-      "to": "jsonata-3",
+      "to": "makeBody",
       "out": "content",
       "in": "content"
     }
@@ -82,14 +88,14 @@
               "type": "boolean",
               "title": "Stream",
               "description": "Whether to stream the output",
-              "default": false
+              "default": "false"
             }
           }
         }
       }
     },
     {
-      "id": "output",
+      "id": "textOutput",
       "type": "output",
       "configuration": {
         "schema": {
@@ -105,7 +111,7 @@
       }
     },
     {
-      "id": "stream",
+      "id": "streamOutput",
       "type": "output",
       "configuration": {
         "schema": {
@@ -122,14 +128,14 @@
       }
     },
     {
-      "id": "jsonata-1",
+      "id": "makeeHeaders",
       "type": "jsonata",
       "configuration": {
         "expression": "{\n    \"Content-Type\": \"application/json\",\n    \"Authorization\": \"Bearer \" & $.OPENAI_API_KEY\n  }"
       }
     },
     {
-      "id": "secrets-2",
+      "id": "secrets-1",
       "type": "secrets",
       "configuration": {
         "keys": [
@@ -138,30 +144,29 @@
       }
     },
     {
-      "id": "jsonata-3",
+      "id": "makeBody",
       "type": "jsonata",
       "configuration": {
         "expression": "{\n    \"model\": \"gpt-4-vision-preview\",\n    \"messages\": [\n      {\n        \"role\": \"user\",\n        \"content\": $.content.{\n          \"type\": $keys($) = \"text\" ? \"text\" : \"image_url\" ,\n          \"text\": $.text,\n          \"image_url\": \"data:\" & $.inline_data.mime_type & \";base64,\" & $.inline_data.data\n        }\n      }\n    ],\n    \"stream\": $.useStreaming,\n    \"temperature\": 1,\n    \"max_tokens\": 256,\n    \"top_p\": 1,\n    \"frequency_penalty\": 0,\n    \"presence_penalty\": 0\n  }"
       }
     },
     {
-      "id": "fetch-4",
+      "id": "fetch-2",
       "type": "fetch",
       "configuration": {
         "url": "https://api.openai.com/v1/chat/completions",
-        "method": "POST",
-        "stream": true
+        "method": "POST"
       }
     },
     {
-      "id": "jsonata-5",
+      "id": "getResponse",
       "type": "jsonata",
       "configuration": {
         "expression": "choices[0].message.content"
       }
     },
     {
-      "id": "lambda-6",
+      "id": "lambda-3",
       "type": "lambda",
       "configuration": {
         "board": {
@@ -169,14 +174,14 @@
           "board": {
             "edges": [
               {
-                "from": "jsonata-3",
+                "from": "transformCompletion",
                 "to": "output-2",
                 "out": "result",
                 "in": "chunk"
               },
               {
                 "from": "input-1",
-                "to": "jsonata-3",
+                "to": "transformCompletion",
                 "out": "chunk",
                 "in": "json"
               }
@@ -191,7 +196,7 @@
                 "type": "output"
               },
               {
-                "id": "jsonata-3",
+                "id": "transformCompletion",
                 "type": "jsonata",
                 "configuration": {
                   "expression": "choices[0].delta.content ? choices[0].delta.content : \"\""
@@ -208,7 +213,7 @@
       }
     },
     {
-      "id": "transformStream-7",
+      "id": "transformStream-4",
       "type": "transformStream",
       "configuration": {}
     }
