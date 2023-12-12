@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export class ResponseContainer extends HTMLElement {
+export class InputContainer extends HTMLElement {
   constructor() {
     super();
 
@@ -13,6 +13,7 @@ export class ResponseContainer extends HTMLElement {
       <style>
         :host {
           display: block;
+          padding: calc(var(--bb-grid-size) * 2);
         }
       </style>
       <slot></slot>

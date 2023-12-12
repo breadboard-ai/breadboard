@@ -18,15 +18,19 @@ import {
   MultipartInputText,
 } from "./input-multipart.js";
 import { Toast } from "./toast.js";
-import { ResponseContainer } from "./response-container.js";
+import { InputContainer } from "./input-container.js";
 import { Done } from "./done.js";
 import { Diagram } from "./diagram.js";
 import { HistoryEntry } from "./history-entry.js";
+import { Webcam } from "./webcam.js";
+import { Drawable } from "./drawable.js";
 
 export const register = () => {
+  customElements.define("bb-webcam", Webcam);
+  customElements.define("bb-drawable", Drawable);
   customElements.define("bb-history-entry", HistoryEntry);
   customElements.define("bb-diagram", Diagram);
-  customElements.define("bb-response-container", ResponseContainer);
+  customElements.define("bb-input-container", InputContainer);
   customElements.define("bb-ui", UIController);
   customElements.define("bb-start", Start);
   customElements.define("bb-load", Load);

@@ -10,6 +10,8 @@ import {
   getMultipartValue,
   isMultipart,
 } from "./input-multipart.js";
+import { Webcam } from "./webcam.js";
+import { Drawable } from "./drawable.js";
 
 export type InputArgs = {
   schema: Schema;
@@ -65,6 +67,20 @@ const isBoolean = (schema: Schema) => {
   return schema.type == "boolean";
 };
 
+const isImage = (schema: Schema) => {
+  return typeof schema.type === "string" && schema.type.startsWith("image");
+};
+
+const isWebcam = (schema: Schema) => {
+  return schema.format === "webcam";
+};
+
+const isDrawable = (schema: Schema) => {
+  return schema.format === "drawable";
+};
+
+const PREAMBLE_LENGTH = "data:image/png;base64,".length;
+
 export class Input extends HTMLElement {
   args: InputArgs;
   id: string;
@@ -102,7 +118,7 @@ export class Input extends HTMLElement {
           grid-template-columns: 1fr 1fr 1fr 1fr;
           row-gap: calc(var(--bb-grid-size) * 2);
           flex: 1;
-          margin-right: calc(var(--bb-grid-size) * 12);
+          margin: calc(var(--bb-grid-size) * 3) 0;
         }
 
         label {
@@ -136,6 +152,8 @@ export class Input extends HTMLElement {
 
         input[type=text],
         input[type=password],
+        bb-drawable,
+        bb-webcam,
         textarea,
         .parsed-value {
           grid-column: 1 / 5;
@@ -158,6 +176,15 @@ export class Input extends HTMLElement {
           line-height: 1.4;
           border: none;
           height: 100%;
+        }
+
+        #choice-container img,
+        bb-drawable,
+        bb-webcam {
+          display: block;
+          border-radius: calc(var(--bb-grid-size) * 2);
+          border: 1px solid rgb(209, 209, 209);
+          padding: 0;
         }
 
         div#input {
@@ -184,7 +211,7 @@ export class Input extends HTMLElement {
           height: calc(var(--bb-grid-size) * 8);
           position: absolute;
           right: calc(var(--bb-grid-size) * 2);
-          top: calc(var(--bb-grid-size) * 7);
+          top: calc(var(--bb-grid-size) * 0);
           border-radius: 50%;
           background: #FFF var(--bb-icon-start) center center no-repeat;
           border: none;
@@ -245,6 +272,14 @@ export class Input extends HTMLElement {
     return input;
   }
 
+  #createCanvasInput(key: string) {
+    const canvas = document.createElement("canvas");
+    canvas.width = 640;
+    canvas.height = 480;
+    canvas.id = key;
+    return canvas;
+  }
+
   #createSingleLineInput(schema: Schema, values: InputData, key: string) {
     const input = document.createElement("input");
     input.name = key;
@@ -273,7 +308,16 @@ export class Input extends HTMLElement {
   }
 
   #createInput(schema: Schema, values: InputData, key: string) {
-    if (isSelect(schema)) {
+    if (isImage(schema)) {
+      const canvas = this.#createCanvasInput(key);
+      let input: HTMLElement = canvas;
+      if (isWebcam(schema)) {
+        input = this.#attachWebcam(canvas);
+      } else if (isDrawable(schema)) {
+        input = this.#attachDrawable(canvas);
+      }
+      return input;
+    } else if (isSelect(schema)) {
       const select = document.createElement("select");
       select.name = key;
       schema.enum?.forEach((value) => {
@@ -298,6 +342,18 @@ export class Input extends HTMLElement {
       window.setTimeout(() => input.focus(), 100);
       return input;
     }
+  }
+
+  #attachWebcam(input: HTMLCanvasElement) {
+    const webcam = new Webcam(input);
+    webcam.start();
+    return webcam;
+  }
+
+  #attachDrawable(input: HTMLCanvasElement) {
+    const drawable = new Drawable(input);
+    drawable.start();
+    return drawable;
   }
 
   async ask() {
@@ -369,18 +425,44 @@ export class Input extends HTMLElement {
               }
             } else {
               const input = form[key];
-              if (input.value) {
+
+              if (input && input.value) {
                 const parsedValue = parseValue(property.type, input);
                 data[key] = parsedValue;
                 if (!this.secret) {
-                  const label = document.createElement("label");
-                  label.textContent = `${property.title}`;
                   const value = document.createElement("div");
                   value.classList.add("parsed-value");
                   value.textContent = `${parsedValue}`;
 
+                  const label = document.createElement("label");
+                  label.textContent = `${property.title}`;
                   elementsToAdd.push(label);
                   elementsToAdd.push(value);
+                }
+              } else {
+                const element = form.querySelector(`#${key}`);
+                if (element && element instanceof HTMLCanvasElement) {
+                  const type =
+                    typeof property.type === "string"
+                      ? property.type
+                      : "image/png";
+                  const dataURL = element.toDataURL(type, 80);
+
+                  data[key] = {
+                    inline_data: {
+                      mime_type: type,
+                      data: dataURL.substring(PREAMBLE_LENGTH),
+                    },
+                  };
+
+                  const label = document.createElement("label");
+                  label.textContent = `${property.title}`;
+                  elementsToAdd.push(label);
+
+                  const img = document.createElement("img");
+                  img.src = dataURL;
+                  img.classList.add("parsed-value");
+                  elementsToAdd.push(img);
                 }
               }
             }
@@ -396,6 +478,12 @@ export class Input extends HTMLElement {
         for (const group of elementGroups) {
           for (const el of group) {
             choiceContainer.appendChild(el);
+          }
+        }
+
+        for (const formItems of Array.from(form.childNodes)) {
+          if (formItems instanceof Webcam || formItems instanceof Drawable) {
+            formItems.stop();
           }
         }
 

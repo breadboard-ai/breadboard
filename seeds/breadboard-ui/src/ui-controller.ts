@@ -4,16 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ErrorMessage } from "./error.js";
 import { Input, type InputArgs } from "./input.js";
 import { Load, type LoadArgs } from "./load.js";
-import { Output, type OutputArgs } from "./output.js";
-import { Progress } from "./progress.js";
-import { Result, ResultArgs } from "./result.js";
+import { type OutputArgs } from "./output.js";
+import { ResultArgs } from "./result.js";
 import { DelayEvent, StartEvent, type ToastType } from "./events.js";
 import { Toast } from "./toast.js";
-import { ResponseContainer } from "./response-container.js";
-import { Done } from "./done.js";
+import { InputContainer } from "./input-container.js";
 import { Diagram } from "./diagram.js";
 import {
   assertHTMLElement,
@@ -24,7 +21,7 @@ import { HarnessEventType } from "./types.js";
 import { HistoryEntry } from "./history-entry.js";
 
 export interface UI {
-  progress(message: string): void;
+  progress(id: string, message: string): void;
   output(values: OutputArgs): void;
   input(id: string, args: InputArgs): Promise<Record<string, unknown>>;
   error(message: string): void;
@@ -40,7 +37,8 @@ interface HistoryLogItem {
 }
 
 export class UIController extends HTMLElement implements UI {
-  #responseContainer = new ResponseContainer();
+  #inputContainer = new InputContainer();
+  #progressContainer: HTMLElement;
   #currentBoardDiagram = "";
   #diagram = new Diagram();
   #lastHistoryEventTime = Number.NaN;
@@ -133,7 +131,7 @@ export class UIController extends HTMLElement implements UI {
 
         #sidebar.active {
           display: grid;
-          grid-template-rows: calc(var(--bb-grid-size) * 14) 1fr 1fr;
+          grid-template-rows: calc(var(--bb-grid-size) * 14) 2fr 3fr;
           height: 100%;
           overflow: hidden;
         }
@@ -148,7 +146,8 @@ export class UIController extends HTMLElement implements UI {
         }
 
         #history,
-        #output {
+        #output,
+        #input {
           display: flex;
           flex-direction: column;
           overflow: hidden;
@@ -159,7 +158,8 @@ export class UIController extends HTMLElement implements UI {
         }
 
         #history h1,
-        #output h1 {
+        #output h1,
+        #input h1 {
           font-size: var(--bb-text-medium);
           margin: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 2);
           font-weight: 400;
@@ -180,21 +180,25 @@ export class UIController extends HTMLElement implements UI {
           background: var(--bb-icon-output) 0 0 no-repeat;
         }
 
+        #input h1 {
+          background: var(--bb-icon-input) 0 0 no-repeat;
+        }
+
         #history-list,
-        #output-list {
+        #output-list,
+        #input-list {
           scrollbar-gutter: stable;
           overflow-y: auto;
           flex: 1;
         }
 
-        #history-list > *,
-        #output-list > * {
-          padding: calc(var(--bb-grid-size) * 2);
-          padding-left: calc(var(--bb-grid-size) * 3 - 1px);
+        #input-list {
+          border-top: 1px solid rgb(240, 240, 240);
         }
 
         #history-list:empty::before,
-        #output-list:empty::before {
+        #output-list:empty::before,
+        #input-list:empty::before {
           font-size: var(--bb-text-small);
           padding: calc(var(--bb-grid-size) * 5);
           padding-left: calc(var(--bb-grid-size) * 3 - 1px);
@@ -206,6 +210,10 @@ export class UIController extends HTMLElement implements UI {
 
         #output-list:empty::before {
           content: 'No board outputs received yet';
+        }
+
+        #input-list:empty::before {
+          content: 'No active board inputs';
         }
 
         #response-container > #intro > h1 {
@@ -262,25 +270,6 @@ export class UIController extends HTMLElement implements UI {
           border: none;
         }
 
-        #input {
-          position: absolute;
-          bottom: calc(var(--bb-grid-size) * 8);
-          width: calc(100% - var(--bb-grid-size) * 16);
-          border-radius: calc(var(--bb-grid-size) * 6);
-          background: rgba(255, 255, 255, 0.7);
-          padding: calc(var(--bb-grid-size) * 4);
-          border: 1px solid rgb(204, 204, 204);
-          box-shadow: 0 2px 3px 0 rgba(0,0,0,0.13),
-            0 7px 9px 0 rgba(0,0,0,0.16);
-          display: none;
-          left: 50%;
-          translate: -50% 0;
-        }
-
-        #input.active {
-          display: block;
-        }
-
         #delay {
           width: auto;
           max-width: calc(var(--bb-grid-size) * 50);
@@ -294,6 +283,23 @@ export class UIController extends HTMLElement implements UI {
         #download-history-log {
           font-size: var(--bb-text-nano);
           color: #888;
+        }
+
+        #progress-container:empty {
+          display: none;
+        }
+
+        #progress-container {
+          display: block;
+          position: absolute;
+          bottom: 20px;
+          left: 20px;
+          border-radius: calc(var(--bb-grid-size) * 6);
+          background: rgb(255, 255, 255);
+          padding: calc(var(--bb-grid-size) * 2);
+          border: 1px solid rgb(204, 204, 204);
+          box-shadow: 0 2px 3px 0 rgba(0,0,0,0.13),
+            0 7px 9px 0 rgba(0,0,0,0.16);
         }
       </style>
       <!-- Load info -->
@@ -322,11 +328,7 @@ export class UIController extends HTMLElement implements UI {
         <!-- Diagram -->
         <div id="diagram">
           <div id="diagram-container"></div>
-
-          <!-- Inputs -->
-          <div id="input">
-            <slot></slot>
-          </div>
+          <div id="progress-container"></div>
         </div>
 
         <!-- Sidebar -->
@@ -347,15 +349,21 @@ export class UIController extends HTMLElement implements UI {
             </h1>
             <div id="history-list"></div>
           </div>
-          <div id="output">
-            <h1>Outputs</h1>
-            <div id="output-list"></div>
+          <div id="input">
+            <h1>Input</h1>
+            <div id="input-list">
+              <slot></slot>
+            </div>
           </div>
         </div>
       </div>
     `;
 
-    this.appendChild(this.#responseContainer);
+    const progressContainer = root.querySelector("#progress-container");
+    assertHTMLElement(progressContainer);
+    this.#progressContainer = progressContainer;
+
+    this.appendChild(this.#inputContainer);
 
     const diagramContainer = root.querySelector("#diagram-container");
     const delay = root.querySelector("#delay");
@@ -396,14 +404,15 @@ export class UIController extends HTMLElement implements UI {
   }
 
   #clearBoardContents() {
-    this.#responseContainer.clearContents();
+    this.#clearProgressContainer();
+    this.#inputContainer.clearContents();
 
     const root = this.shadowRoot;
     assertRoot(root);
 
     const children = Array.from(this.children);
     for (const child of children) {
-      if (child.tagName === "HEADER" || child === this.#responseContainer) {
+      if (child.tagName === "HEADER" || child === this.#inputContainer) {
         continue;
       }
       child.remove();
@@ -457,20 +466,6 @@ export class UIController extends HTMLElement implements UI {
     root.querySelector("#diagram")?.classList.add("active");
   }
 
-  #showInputContainer() {
-    const root = this.shadowRoot;
-    assertRoot(root);
-
-    root.querySelector("#input")?.classList.add("active");
-  }
-
-  #hideInputContainer() {
-    const root = this.shadowRoot;
-    assertRoot(root);
-
-    root.querySelector("#input")?.classList.remove("active");
-  }
-
   #createHistoryEntry(
     type: HarnessEventType,
     summary: string,
@@ -494,7 +489,18 @@ export class UIController extends HTMLElement implements UI {
     const historyEntry = new HistoryEntry(type, summary, id, data, elapsedTime);
     this.#historyLog.push({ type, summary, id, data, elapsedTime });
 
-    historyList.appendChild(historyEntry);
+    if (historyList.childNodes.length) {
+      historyList.insertBefore(historyEntry, historyList.firstChild);
+    } else {
+      historyList.appendChild(historyEntry);
+    }
+  }
+
+  #clearProgressContainer() {
+    const children = Array.from(this.#progressContainer.querySelectorAll("*"));
+    for (const child of children) {
+      child.remove();
+    }
   }
 
   load(info: LoadArgs) {
@@ -503,7 +509,6 @@ export class UIController extends HTMLElement implements UI {
     this.#hideIntroContent();
     this.#clearBoardContents();
     this.#showBoardContainer();
-    this.#hideInputContainer();
 
     const load = new Load(info);
     load.slot = "load";
@@ -528,33 +533,18 @@ export class UIController extends HTMLElement implements UI {
     return this.#diagram.render(this.#currentBoardDiagram, highlightNode);
   }
 
-  progress(message: string, id?: string, data: unknown | null = null) {
-    this.#responseContainer.clearContents();
-    this.#showInputContainer();
-
-    const progress = new Progress(`${message}...`);
-    this.#responseContainer.appendChild(progress);
-
-    this.#createHistoryEntry(HarnessEventType.PROGRESS, message, id, data);
+  progress(id: string, message: string) {
+    this.#createHistoryEntry(HarnessEventType.PROGRESS, message, id);
   }
 
   async output(values: OutputArgs) {
-    this.#responseContainer.clearContents();
-    this.#showInputContainer();
-
+    this.#clearProgressContainer();
     this.#createHistoryEntry(
       HarnessEventType.OUTPUT,
       "Output",
       values.node.id,
       values.outputs
     );
-
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const outputContainer = this.shadowRoot!.querySelector("#output-list");
-    const output = new Output();
-    outputContainer?.appendChild(output);
-
-    await output.display(values.outputs);
   }
 
   async secret(id: string): Promise<string> {
@@ -574,28 +564,25 @@ export class UIController extends HTMLElement implements UI {
       { remember: true, secret: true }
     );
 
-    this.#createHistoryEntry(HarnessEventType.SECRETS, `Requested secret`, id);
+    if (this.#inputContainer.childNodes.length) {
+      this.#inputContainer.insertBefore(input, this.#inputContainer.firstChild);
+    } else {
+      this.#inputContainer.appendChild(input);
+    }
 
-    this.#responseContainer.appendChild(input);
     const data = (await input.ask()) as Record<string, string>;
     input.remove();
 
-    this.#createHistoryEntry(HarnessEventType.SECRETS, `Received secret`, id);
+    this.#createHistoryEntry(HarnessEventType.SECRETS, `secrets`, id);
 
     return data.secret;
   }
 
-  proxyResult(type: HarnessEventType, id: string) {
-    this.#createHistoryEntry(type, `Completed ${type}`, id);
+  proxyResult(type: HarnessEventType, id: string, data: unknown | null = null) {
+    this.#createHistoryEntry(type, type, id, data);
   }
 
   result(value: ResultArgs, id = null) {
-    const before = this.querySelector("bb-progress");
-    const result = new Result(value);
-    before
-      ? before.before(result)
-      : this.#responseContainer.appendChild(result);
-
     this.#createHistoryEntry(
       HarnessEventType.RESULT,
       value.title,
@@ -605,39 +592,31 @@ export class UIController extends HTMLElement implements UI {
   }
 
   async input(id: string, args: InputArgs): Promise<Record<string, unknown>> {
-    this.#showInputContainer();
-    this.#responseContainer.clearContents();
+    this.#clearProgressContainer();
+
     const input = new Input(id, args);
-    this.#responseContainer.appendChild(input);
+    if (this.#inputContainer.childNodes.length) {
+      this.#inputContainer.insertBefore(input, this.#inputContainer.firstChild);
+    } else {
+      this.#inputContainer.appendChild(input);
+    }
 
-    this.#createHistoryEntry(HarnessEventType.INPUT, "Requested input", id, {
+    const response = (await input.ask()) as Record<string, unknown>;
+    this.#createHistoryEntry(HarnessEventType.INPUT, "input", id, {
       args,
+      response,
     });
 
-    const answer = (await input.ask()) as Record<string, unknown>;
-
-    this.#createHistoryEntry(HarnessEventType.INPUT, "Received input", id, {
-      answer,
-    });
-
-    return answer;
+    return response;
   }
 
   error(message: string) {
-    const error = new ErrorMessage(message);
-    this.#showInputContainer();
-    this.#responseContainer.clearContents();
-    this.#responseContainer.appendChild(error);
-
+    this.#clearProgressContainer();
     this.#createHistoryEntry(HarnessEventType.ERROR, message);
   }
 
   done() {
-    const done = new Done("Board finished.");
-    this.#showInputContainer();
-    this.#responseContainer.clearContents();
-    this.#responseContainer.appendChild(done);
-
-    this.#createHistoryEntry(HarnessEventType.DONE, "Board finished.");
+    this.#clearProgressContainer();
+    this.#createHistoryEntry(HarnessEventType.DONE, "Board finished");
   }
 }

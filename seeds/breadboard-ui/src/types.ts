@@ -9,3 +9,8 @@ export const enum HarnessEventType {
   RESULT = "result",
   SECRETS = "secrets",
 }
+
+export interface ImageHandler {
+  start(): Promise<void>;
+  stop(): void;
+}

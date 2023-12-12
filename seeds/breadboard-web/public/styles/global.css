@@ -47,8 +47,10 @@ html {
   --bb-icon-fit: url(/third_party/icons/fit.svg);
   --bb-icon-history: url(/third_party/icons/history.svg);
   --bb-icon-info: url(/third_party/icons/info.svg);
-  --bb-icon-pan: url(/third_party/icons/pan.svg);
+  --bb-icon-input: url(/third_party/icons/input.svg);
   --bb-icon-output: url(/third_party/icons/output.svg);
+  --bb-icon-pan: url(/third_party/icons/pan.svg);
+  --bb-icon-reset-image: url(/third_party/icons/reset-image.svg);
   --bb-icon-start: url(/third_party/icons/start.svg);
   --bb-icon-warning: url(/third_party/icons/warning.svg);
   --bb-icon-zoom-in: url(/third_party/icons/zoom-in.svg);

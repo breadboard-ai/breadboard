@@ -18,6 +18,14 @@ export function assertHTMLElement(
   }
 }
 
+export function assertInputElement(
+  value: unknown
+): asserts value is HTMLInputElement {
+  if (!(value instanceof HTMLInputElement)) {
+    throw new Error("Element is not HTMLInputElement");
+  }
+}
+
 export function assertSVGElement(value: unknown): asserts value is SVGElement {
   if (!(value instanceof SVGElement)) {
     throw new Error("Element is not HTMLElement");

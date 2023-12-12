@@ -125,15 +125,21 @@ export class Main {
       }
     );
 
-    this.#ui.addEventListener(BreadboardUI.ToastEvent.eventName, (evt) => {
-      const toastEvent = evt as BreadboardUI.ToastEvent;
-      this.#ui.toast(toastEvent.message, toastEvent.toastType);
-    });
+    this.#ui.addEventListener(
+      BreadboardUI.ToastEvent.eventName,
+      (evt: Event) => {
+        const toastEvent = evt as BreadboardUI.ToastEvent;
+        this.#ui.toast(toastEvent.message, toastEvent.toastType);
+      }
+    );
 
-    this.#ui.addEventListener(BreadboardUI.DelayEvent.eventName, (evt) => {
-      const delayEvent = evt as BreadboardUI.DelayEvent;
-      this.#delay = delayEvent.duration;
-    });
+    this.#ui.addEventListener(
+      BreadboardUI.DelayEvent.eventName,
+      (evt: Event) => {
+        const delayEvent = evt as BreadboardUI.DelayEvent;
+        this.#delay = delayEvent.duration;
+      }
+    );
 
     this.start(config);
   }
@@ -244,11 +250,7 @@ export class Main {
             configuration: Record<string, unknown> | null;
           };
         };
-        this.#ui.progress(
-          `Running "${progressData.node.type}"`,
-          progressData.node.id,
-          progressData.node.configuration || null
-        );
+        this.#ui.progress(progressData.node.id, progressData.node.type);
         this.#pending.set(progressData.node.id, progressData.node.type);
         break;
       }
@@ -272,7 +274,13 @@ export class Main {
             ) as BreadboardUI.HarnessEventType;
             if (pending) {
               this.#pending.delete(proxyData.node.id);
-              this.#ui.proxyResult(pending, proxyData.node.id);
+              if (pending !== "secrets") {
+                this.#ui.proxyResult(
+                  pending,
+                  proxyData.node.id,
+                  proxyData.inputs
+                );
+              }
             }
 
             // Track the board ID. If it changes while awaiting a result, then
