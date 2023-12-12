@@ -15,6 +15,7 @@ import { BoardRunner } from "@google-labs/breadboard";
 import { SchemaBuilder } from "@google-labs/breadboard/kits";
 
 export type InvokeNodeInputs = InputValues & {
+  $recipe?: string | BreadboardCapability | GraphDescriptor;
   path?: string;
   board?: BreadboardCapability;
   graph?: GraphDescriptor;
@@ -34,6 +35,28 @@ const getRunnableBoard = async (
   return undefined;
 };
 
+const isBreadboardCapability = (
+  candidate: unknown
+): candidate is BreadboardCapability => {
+  const board = candidate as BreadboardCapability;
+  return (
+    board &&
+    typeof board === "object" &&
+    board.kind === "board" &&
+    board.board &&
+    isGraphDescriptor(board.board)
+  );
+};
+
+const isGraphDescriptor = (
+  candidate: unknown
+): candidate is GraphDescriptor => {
+  const graph = candidate as GraphDescriptor;
+  return (
+    graph && typeof graph === "object" && graph.nodes && graph.edges && true
+  );
+};
+
 export default {
   describe: async (inputs?: InputValues) => ({
     inputSchema: new SchemaBuilder()
@@ -45,7 +68,7 @@ export default {
           description: "The path to the board to invoke.",
           type: "string",
         },
-        $ref: {
+        board: {
           title: "board",
           description: "The board to invoke, created by `lambda` or `import`",
           type: "BoardCapability",
@@ -55,6 +78,12 @@ export default {
           description: "The graph descriptor of the board to invoke.",
           type: "object",
         },
+        $recipe: {
+          title: "recipe",
+          description:
+            "The recipe to invoke. Can be a BoardCapability, a graph or a URL",
+          type: "string", // TODO: Make this a union type
+        },
       })
       .build(),
     outputSchema: new SchemaBuilder().setAdditionalProperties(true).build(),
@@ -63,11 +92,31 @@ export default {
     inputs: InputValues,
     context: NodeHandlerContext
   ): Promise<OutputValues> => {
-    const { path, board, graph, ...args } = inputs as InvokeNodeInputs;
+    const { $recipe, ...args } = inputs as InvokeNodeInputs;
 
-    const runnableBoard = await getRunnableBoard(context, path, board, graph);
-    if (!runnableBoard) throw new Error("No board provided");
+    if ($recipe) {
+      let board;
 
-    return await runnableBoard.runOnce(args, context);
+      if (isBreadboardCapability($recipe))
+        board = await BoardRunner.fromBreadboardCapability($recipe);
+      if (isGraphDescriptor($recipe))
+        board = await BoardRunner.fromGraphDescriptor($recipe);
+      if (typeof $recipe === "string") {
+        board = await BoardRunner.load($recipe, context);
+      } else {
+        board = undefined;
+      }
+
+      if (!board) throw new Error("No board provided");
+
+      return await board.runOnce(args, context);
+    } else {
+      const { path, board, graph, ...args } = inputs as InvokeNodeInputs;
+
+      const runnableBoard = await getRunnableBoard(context, path, board, graph);
+      if (!runnableBoard) throw new Error("No board provided");
+
+      return await runnableBoard.runOnce(args, context);
+    }
   },
 };
