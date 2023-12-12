@@ -5,6 +5,7 @@
  */
 
 import {
+  BreadboardCapability,
   GraphDescriptor,
   NodeDescriptor,
   InputValues as OriginalInputValues,
@@ -35,6 +36,7 @@ import { BaseNode } from "../runner/node.js";
 import { BuilderScope } from "./scope.js";
 import { TrapResult, TrappedDataReadWhileSerializing } from "./trap.js";
 import { Value, isValue } from "./value.js";
+import { isLambda } from "./recipe.js";
 
 export class BuilderNode<
     I extends InputValues = InputValues,
@@ -57,16 +59,27 @@ export class BuilderNode<
   constructor(
     handler: NodeTypeIdentifier | NodeHandler<I, O>,
     scope: BuilderScope,
-    config: (Partial<InputsMaybeAsValues<I>> | AbstractValue<NodeValue>) & {
-      $id?: string;
-    } = {}
+    config:
+      | Partial<InputsMaybeAsValues<I>>
+      | AbstractValue<NodeValue>
+      | BuilderNodeInterface<InputValues, Partial<I>>
+      | { $id?: string } = {}
   ) {
     const nonProxyConfig: InputValues = {};
-    if (!(config instanceof AbstractNode) && !isValue(config)) {
+    if (
+      !(config instanceof AbstractNode) &&
+      !isBuilderNodeProxy(config) &&
+      !isValue(config)
+    ) {
       for (const [key, value] of Object.entries(config) as [
         [string, NodeValue | AbstractNode | Value]
       ]) {
-        if (!(value instanceof AbstractNode) && !isValue(value)) {
+        if (
+          !(value instanceof AbstractNode) &&
+          !isBuilderNodeProxy(config) &&
+          !isValue(value) &&
+          !isLambda(value)
+        ) {
           nonProxyConfig[key as keyof InputValues] = value as NodeValue;
           delete config[key as keyof typeof config];
         }
@@ -83,10 +96,14 @@ export class BuilderNode<
 
     if (typeof handler !== "string") this.#handler = handler;
 
-    if (config instanceof BuilderNode) {
+    if (isBuilderNodeProxy(config)) {
       this.addInputsFromNode(config.unProxy());
     } else if (config instanceof AbstractNode) {
       this.addInputsFromNode(config);
+    } else if (isLambda(config)) {
+      this.addInputsAsValues({
+        board: config.getBoardCapabilityAsValue(),
+      } as InputsMaybeAsValues<I>);
     } else if (isValue(config)) {
       this.addInputsFromNode(...config.asNodeInput());
     } else {
@@ -109,11 +126,17 @@ export class BuilderNode<
     const nodes: [AbstractNode, KeyMap, boolean][] = [];
 
     Object.entries(values).forEach(([key, value]) => {
+      // This turns something returned by recipe() into a BoardCapability, which
+      // is going to be either a Promise for a BoardCapability (assigned to
+      // constants below) or an AbstractValue to one.
+      if (isLambda(value))
+        value = value.getBoardCapabilityAsValue() as unknown as typeof value;
+
       if (isValue(value)) {
         nodes.push(value.as(key).asNodeInput());
-      } else if (value instanceof AbstractNode) {
+      } else if (value instanceof AbstractNode || isBuilderNodeProxy(value)) {
         nodes.push([
-          value instanceof BuilderNode ? value.unProxy() : value,
+          isBuilderNodeProxy(value) ? value.unProxy() : value,
           { [key]: key },
           false,
         ]);
@@ -146,7 +169,7 @@ export class BuilderNode<
         }
 
         this.unProxy().addIncomingEdge(
-          from instanceof BuilderNode ? from.unProxy() : from,
+          isBuilderNodeProxy(from) ? from.unProxy() : from,
           fromKey,
           toKey,
           constant
@@ -211,6 +234,9 @@ export class BuilderNode<
             result[key as keyof O] = (await value)[key];
           else if (isValue(value))
             result[key as keyof O] = (await value) as O[keyof O];
+          else if (isLambda(value))
+            result[key as keyof O] =
+              (await value.getBoardCapabilityAsValue()) as O[keyof O];
         }
 
         // Resolve promise, but only on first run
@@ -237,7 +263,22 @@ export class BuilderNode<
   // here), everything else is the same, but really just the first few lines
   // here.
   async serializeNode(): Promise<[NodeDescriptor, GraphDescriptor?]> {
-    if (this.type !== "fn") return super.serializeNode();
+    if (this.type !== "fn") {
+      // HACK: See recipe.getClosureNode() for why this is needed. There we
+      // create a node that has a board capability as input, but serializing the
+      // graph is async, while node creation isn't. So we wait until here to
+      // await the serialized BoardCapability. To fix: Make node factories a
+      // first class object, which should inherently move serializing the
+      // subgraph to here (and never serialize subgraphs if their parent graphs
+      // aren't serialized either).
+      for (const [key, value] of Object.entries(this.configuration)) {
+        if (value instanceof Promise) {
+          this.configuration[key as keyof typeof this.configuration] =
+            await value;
+        }
+      }
+      return super.serializeNode();
+    }
 
     const scope = new BuilderScope({
       lexicalScope: this.#scope,
@@ -340,7 +381,7 @@ export class BuilderNode<
         type: "invoke",
         configuration: {
           ...(this.configuration as OriginalInputValues),
-          graph: "#" + this.id,
+          path: "#" + this.id,
         },
       };
 
@@ -370,18 +411,46 @@ export class BuilderNode<
       else name = match[1] || name;
     }
 
-    const node = {
-      id: this.id,
-      type: "runJavascript",
-      configuration: {
-        ...(this.configuration as OriginalInputValues),
-        code,
-        name,
-        raw: true,
-      },
+    const invokeGraph: GraphDescriptor = {
+      edges: [
+        { from: `${this.id}-input`, to: `${this.id}-run`, out: "*" },
+        { from: `${this.id}-run`, to: `${this.id}-output`, out: "*" },
+      ],
+      nodes: [
+        {
+          id: `${this.id}-input`,
+          type: "input",
+          configuration: schemas?.inputSchema
+            ? { schema: schemas.inputSchema }
+            : {},
+        },
+        {
+          id: `${this.id}-run`,
+          type: "runJavascript",
+          configuration: {
+            ...(this.configuration as OriginalInputValues),
+            code,
+            name,
+            raw: true,
+          },
+        },
+        {
+          id: `${this.id}-output`,
+          type: "output",
+          configuration: schemas?.outputSchema
+            ? { schema: schemas.outputSchema }
+            : {},
+        },
+      ],
     };
 
-    return [node];
+    const node = {
+      id: this.id,
+      type: "invoke",
+      configuration: { path: "#" + this.id },
+    };
+
+    return [node, invokeGraph];
   }
 
   /**
@@ -440,7 +509,19 @@ export class BuilderNode<
               },
             });
           } else {
-            return value;
+            // Return a proxy for the value such that () calls .invoke() on it
+            return new Proxy(value, {
+              apply(_, __, args) {
+                return value.invoke(...args);
+              },
+              get(_, key, __) {
+                // This restores access to private members despite proxying
+                const maybeMethod = Reflect.get(value, key, value);
+                return typeof maybeMethod === "function"
+                  ? maybeMethod.bind(value)
+                  : maybeMethod;
+              },
+            });
           }
         } else {
           return Reflect.get(target, prop, receiver);
@@ -510,14 +591,13 @@ export class BuilderNode<
       | NodeHandler<O & ToC, ToO>,
     config?: ToC
   ): NodeProxy<O & ToC, ToO> {
-    const toNode =
-      to instanceof BuilderNode
-        ? to.unProxy()
-        : new BuilderNode(
-            to as NodeTypeIdentifier | NodeHandler<Partial<O> & ToC, ToO>,
-            this.#scope,
-            config as Partial<O> & ToC
-          );
+    const toNode = isBuilderNodeProxy(to)
+      ? to.unProxy()
+      : new BuilderNode(
+          to as NodeTypeIdentifier | NodeHandler<Partial<O> & ToC, ToO>,
+          this.#scope,
+          config as Partial<O> & ToC
+        );
 
     // TODO: Ideally we would look at the schema here and use * only if
     // the output is open ended and/or not all fields are present all the time.
@@ -567,4 +647,15 @@ export class BuilderNode<
   #spreadKey() {
     return "*-" + this.id;
   }
+}
+
+// This will also match Lambdas, since they behave like a subset of
+// BuilderNodeProxy.
+//
+// TODO: Identify where they don't and possibly use a different is* there.
+export function isBuilderNodeProxy<
+  I extends InputValues = InputValues,
+  O extends OutputValues = OutputValues
+>(node: unknown): node is BuilderNodeInterface<I, O> {
+  return typeof (node as BuilderNodeInterface<I, O>).unProxy === "function";
 }

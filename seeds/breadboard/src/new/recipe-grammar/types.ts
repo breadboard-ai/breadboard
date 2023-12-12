@@ -6,7 +6,7 @@
 
 import { z } from "zod";
 
-import { NodeDescriberFunction } from "../../types.js";
+import { BreadboardCapability, NodeDescriberFunction } from "../../types.js";
 
 import {
   NodeValue as BaseNodeValue,
@@ -24,7 +24,6 @@ export type NodeValue =
 export type InputValues = { [key: string]: NodeValue };
 export type OutputValues = { [key: string]: NodeValue };
 
-// TODO:BASE: This is pure syntactic sugar and should _not_ be moved
 export type InputsMaybeAsValues<
   T extends InputValues,
   NI extends InputValues = InputValues
@@ -68,13 +67,24 @@ export type NodeFactory<
     | InputsMaybeAsValues<I>
 ) => NodeProxy<I, O>;
 
+export type InputsForHandler<T extends InputValues> = {
+  [K in keyof T]: AbstractValue<T[K]> & PromiseLike<T[K]>;
+} & {
+  [key in string]: AbstractValue<NodeValue> & PromiseLike<NodeValue>;
+} & PromiseLike<T>;
+
 export type NodeProxyHandlerFunction<
   I extends InputValues = InputValues,
   O extends OutputValuesOrUnknown = OutputValuesOrUnknown
 > = (
-  inputs: PromiseLike<I> & I,
+  inputs: InputsForHandler<I>,
   node: AbstractNode<I, ProjectBackToOutputValues<O>>
 ) => O | PromiseLike<O> | OutputsMaybeAsValues<O>;
+
+export type Lambda<
+  I extends InputValues = InputValues,
+  O extends OutputValues = OutputValues
+> = NodeFactory<I, O> & Serializeable & ClosureNodeInterface;
 
 export interface RecipeFactory {
   /**
@@ -89,7 +99,7 @@ export interface RecipeFactory {
    */
   <I extends InputValues = InputValues, O extends OutputValues = OutputValues>(
     fn: NodeProxyHandlerFunction<I, O>
-  ): NodeFactory<I, Required<O>> & Serializeable;
+  ): Lambda<I, Required<O>>;
 
   /**
    * Alternative version to above that infers the type of the passed in Zod type.
@@ -102,7 +112,7 @@ export interface RecipeFactory {
     invoke: NodeProxyHandlerFunction<z.infer<IT>, z.infer<OT>>;
     describe?: NodeDescriberFunction;
     name?: string;
-  }): NodeFactory<z.infer<IT>, Required<z.infer<OT>>> & Serializeable;
+  }): Lambda<z.infer<IT>, Required<z.infer<OT>>>;
 
   /**
    * Same as above, but takes handler as a second parameter instead of as invoke
@@ -119,7 +129,7 @@ export interface RecipeFactory {
       name?: string;
     },
     fn?: NodeProxyHandlerFunction<z.infer<IT>, z.infer<OT>>
-  ): NodeFactory<z.infer<IT>, Required<z.infer<OT>>> & Serializeable;
+  ): Lambda<z.infer<IT>, Required<z.infer<OT>>>;
 }
 
 export type NodeProxyMethods<I extends InputValues, O extends OutputValues> = {
@@ -161,6 +171,15 @@ export interface BuilderNodeInterface<
   unProxy(): BuilderNodeInterface<I, O>;
 }
 
+export type ClosureNodeInterface<
+  I extends InputValues = InputValues,
+  O extends OutputValues = OutputValues
+> = Pick<BuilderNodeInterface<I, O>, "unProxy"> &
+  Pick<NodeProxyMethods<I, O>, "in"> &
+  Pick<AbstractValue<NodeValue>, "invoke"> & {
+    getBoardCapabilityAsValue(): AbstractValue<BreadboardCapability>;
+  };
+
 export abstract class AbstractValue<T extends NodeValue | unknown = NodeValue>
   implements PromiseLike<T | undefined>
 {
@@ -194,6 +213,14 @@ export abstract class AbstractValue<T extends NodeValue | unknown = NodeValue>
   abstract as(newKey: string | KeyMap): AbstractValue<T>;
 
   abstract memoize(): AbstractValue<T>;
+
+  abstract invoke(
+    config?:
+      | Partial<InputsMaybeAsValues<InputValues>>
+      | AbstractValue<NodeValue>
+      | BuilderNodeInterface<InputValues, Partial<InputValues>>
+      | { $id?: string }
+  ): NodeProxy;
 }
 
 /**

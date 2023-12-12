@@ -8,7 +8,6 @@ import { z } from "zod";
 import test from "ava";
 
 import { recipe } from "../../../src/new/recipe-grammar/recipe.js";
-import { AbstractValue as V } from "../../../src/new/recipe-grammar/types.js";
 import { testKit } from "../../helpers/_test-kit.js";
 
 test("directly await a node", async (t) => {

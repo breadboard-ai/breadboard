@@ -20,6 +20,7 @@ type IncludeInputValues = InputValues & {
 
 type InvokeInputValues = InputValues & {
   board?: BreadboardCapability;
+  path?: string;
 };
 /**
  * This is a Kit designed specifically for use in the testing harness.
@@ -44,9 +45,6 @@ export const TestKit = new KitBuilder({
   /**
    * This is a primitive implementation of the `include` node in Core Kit,
    * just enough for testing.
-   * @param inputs
-   * @param context
-   * @returns
    */
   include: async (inputs: IncludeInputValues, context: NodeHandlerContext) => {
     const { graph } = inputs;
@@ -56,14 +54,23 @@ export const TestKit = new KitBuilder({
     const board = await Board.fromGraphDescriptor(graph);
     return await board.runOnce(inputs, context);
   },
+  /**
+   * This is a primitive implementation of the `invoke` node in Core Kit,
+   * just enough for testing.
+   */
   invoke: async (inputs: InvokeInputValues, context: NodeHandlerContext) => {
-    const { board, ...args } = inputs;
+    const { board, path, ...args } = inputs;
 
-    if (!board) {
-      throw new Error("Must provide a board to invoke");
-    }
+    const runnableBoard = board
+      ? await Board.fromBreadboardCapability(board)
+      : path
+      ? await Board.load(path, {
+          base: context.base,
+          outerGraph: context.outerGraph,
+        })
+      : undefined;
 
-    const runnableBoard = await Board.fromBreadboardCapability(board);
+    if (!runnableBoard) throw new Error("Must provide valid board to invoke");
 
     return await runnableBoard.runOnce(args, context);
   },

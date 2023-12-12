@@ -10,8 +10,8 @@ import {
   InputsMaybeAsValues,
   OutputValues,
   NodeProxy,
-  AbstractValue,
   BuilderNodeInterface,
+  AbstractValue,
 } from "./types.js";
 import {
   OutputValue,
@@ -20,7 +20,7 @@ import {
   KeyMap,
 } from "../runner/types.js";
 
-import { BuilderNode } from "./node.js";
+import { BuilderNode, isBuilderNodeProxy } from "./node.js";
 import { BuilderScope } from "./scope.js";
 
 // Because Value is sometimes behind a function Proxy (see NodeImpl's methods),
@@ -37,7 +37,7 @@ export function isValue<T extends NodeValue = NodeValue>(
 }
 
 export class Value<T extends NodeValue = NodeValue>
-  extends AbstractValue
+  extends AbstractValue<T>
   implements PromiseLike<T | undefined>
 {
   #node: BuilderNode<InputValues, OutputValue<T>>;
@@ -94,14 +94,13 @@ export class Value<T extends NodeValue = NodeValue>
       | NodeHandler<OutputValue<T> & ToC, ToO>,
     config?: ToC
   ): NodeProxy<OutputValue<T> & ToC, ToO> {
-    const toNode =
-      to instanceof BuilderNode
-        ? to.unProxy()
-        : new BuilderNode(
-            to as NodeTypeIdentifier | NodeHandler<OutputValue<T> & ToC, ToO>,
-            this.#scope,
-            config as OutputValue<T> & ToC
-          );
+    const toNode = isBuilderNodeProxy(to)
+      ? to.unProxy()
+      : new BuilderNode(
+          to as NodeTypeIdentifier | NodeHandler<OutputValue<T> & ToC, ToO>,
+          this.#scope,
+          config as OutputValue<T> & ToC
+        );
 
     toNode.addInputsFromNode(
       this.#node as unknown as BuilderNodeInterface,
@@ -138,8 +137,8 @@ export class Value<T extends NodeValue = NodeValue>
     if (isValue(inputs)) {
       invertedMap = inputs.#remapKeys(invertedMap);
       this.#node.addInputsFromNode(inputs.#node, invertedMap);
-    } else if (inputs instanceof BuilderNode) {
-      this.#node.addInputsFromNode(inputs as BuilderNodeInterface, invertedMap);
+    } else if (isBuilderNodeProxy(inputs)) {
+      this.#node.addInputsFromNode(inputs.unProxy(), invertedMap);
     } else {
       this.#node.addInputsAsValues(inputs as InputsMaybeAsValues<InputValues>);
     }
@@ -160,6 +159,16 @@ export class Value<T extends NodeValue = NodeValue>
 
   memoize() {
     return new Value(this.#node, this.#scope, this.#keymap, true);
+  }
+
+  // Create a node for the lambda that is being sent as this value. At this
+  // point we can't verify that this actually is a BoardCapability, so we just
+  // do it and let the runtime throw an error if this wasn't one.
+  invoke(config?: ConstructorParameters<typeof BuilderNode>[2]): NodeProxy {
+    return new BuilderNode("invoke", this.#scope, {
+      ...config,
+      board: this,
+    }).asProxy();
   }
 
   #remapKeys(newKeys: KeyMap) {

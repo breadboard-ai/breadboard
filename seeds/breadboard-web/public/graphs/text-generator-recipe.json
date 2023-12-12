@@ -147,20 +147,16 @@
     },
     {
       "id": "fn-8",
-      "type": "runJavascript",
+      "type": "invoke",
       "configuration": {
-        "code": "function fn_8(inputs2) {const{text,useStreaming}=inputs2;const result=`Mock model with streaming off echoes back: ${text}`;if(useStreaming){const list=result.split(\" \");return{list}}return{text:result}}",
-        "name": "fn_8",
-        "raw": true
+        "path": "#fn-8"
       }
     },
     {
       "id": "fn-10",
-      "type": "runJavascript",
+      "type": "invoke",
       "configuration": {
-        "code": "function fn_10(inputs2) {const{model,useStreaming}=inputs2;switch(model){case\"PaLM\":if(useStreaming){return{other:`Streaming is not supported for ${model}`}}return{palm:true};case\"mock\":return{mock:true};case\"GPT 3.5 Turbo\":return{gpt35:true};default:return{other:`Unsupported model: ${model}`}}}",
-        "name": "fn_10",
-        "raw": true
+        "path": "#fn-10"
       }
     },
     {
@@ -232,5 +228,76 @@
       "configuration": {}
     }
   ],
-  "graphs": {}
+  "graphs": {
+    "fn-8": {
+      "edges": [
+        {
+          "from": "fn-8-input",
+          "to": "fn-8-run",
+          "out": "*"
+        },
+        {
+          "from": "fn-8-run",
+          "to": "fn-8-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "fn-8-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "fn-8-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function fn_8(inputs2) {const{text,useStreaming}=inputs2;const result=`Mock model with streaming off echoes back: ${text}`;if(useStreaming){const list=result.split(\" \");return{list}}return{text:result}}",
+            "name": "fn_8",
+            "raw": true
+          }
+        },
+        {
+          "id": "fn-8-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    },
+    "fn-10": {
+      "edges": [
+        {
+          "from": "fn-10-input",
+          "to": "fn-10-run",
+          "out": "*"
+        },
+        {
+          "from": "fn-10-run",
+          "to": "fn-10-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "fn-10-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "fn-10-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function fn_10(inputs2) {const{model,useStreaming}=inputs2;switch(model){case\"PaLM\":if(useStreaming){return{other:`Streaming is not supported for ${model}`}}return{palm:true};case\"mock\":return{mock:true};case\"GPT 3.5 Turbo\":return{gpt35:true};default:return{other:`Unsupported model: ${model}`}}}",
+            "name": "fn_10",
+            "raw": true
+          }
+        },
+        {
+          "id": "fn-10-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    }
+  }
 }

@@ -82,6 +82,7 @@ export type {
   AbstractNode,
 } from "./new/runner/types.js";
 export type {
+  Lambda,
   NodeFactory as NewNodeFactory,
   NodeProxy as __NodeProxy,
   InputsMaybeAsValues,
