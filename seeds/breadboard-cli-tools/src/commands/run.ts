@@ -15,6 +15,7 @@ import { watch as fsWatch } from "fs";
 import { loadBoard, parseStdin, resolveFilePath } from "./lib/utils.js";
 import * as readline from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
+import path from "path";
 
 async function runBoard(
   board: BoardRunner,
@@ -43,13 +44,10 @@ async function runBoard(
       We will ask for the data if it's not present on the inputs. 
       However we can't ask for prompts if the graph has been piped in.
       */
-      if (
-        pipedInput == false &&
-        schema != undefined) {
+      if (pipedInput == false && schema != undefined) {
         const rl = readline.createInterface({ input, output });
 
         if (schema.properties != undefined) {
-
           const properties = Object.entries(schema.properties);
 
           for (const [name, property] of properties) {
@@ -77,10 +75,20 @@ export const run = async (file: string, options: Record<string, any>) => {
   const input =
     "input" in options ? (JSON.parse(options.input) as InputValues) : {};
 
+  if (
+    file != undefined &&
+    path.extname(file) == ".ts" &&
+    "output" in options == false
+  ) {
+    throw new Error(
+      `File ${file} is a TypeScript file. You must specify the output directory with --output.`
+    );
+  }
+
   if (file != undefined) {
     const filePath = resolveFilePath(file);
 
-    let board = await loadBoard(filePath);
+    let board = await loadBoard(filePath, options);
 
     // We always have to run the board once.
     await runBoard(board, input, kitDeclarations);
@@ -97,7 +105,7 @@ export const run = async (file: string, options: Record<string, any>) => {
 
           if (eventType === "change") {
             // Now the board has changed, we need to reload it and run it again.
-            board = await loadBoard(filePath);
+            board = await loadBoard(filePath, options);
             // We might want to clear the console here.
             await runBoard(board, input, kitDeclarations);
           } else if (eventType === "rename") {
@@ -112,6 +120,7 @@ export const run = async (file: string, options: Record<string, any>) => {
   } else {
     const stdin = await parseStdin();
 
+    // TODO: What do we do if it's typescript?
     // We should validate it looks like a board...
     const board = await BoardRunner.fromGraphDescriptor(JSON.parse(stdin));
 
