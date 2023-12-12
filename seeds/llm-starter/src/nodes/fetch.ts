@@ -140,6 +140,10 @@ export default {
       init.body = JSON.stringify(body);
     }
     const data = await fetch(url, init);
+    if (!data.ok)
+      return {
+        $error: await data.json(),
+      };
     if (stream) {
       if (!data.body) {
         throw new Error("Response is not streamable.");
