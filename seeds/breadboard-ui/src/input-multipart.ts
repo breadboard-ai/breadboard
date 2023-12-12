@@ -56,7 +56,7 @@ export class MultipartInput extends HTMLElement {
           #controls {
             position: absolute;
             top: -32px;
-            right: 0;
+            right: 40px;
             height: 24px;
           }
 
