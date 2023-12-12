@@ -29,13 +29,27 @@ async function serializeAndRunGraph(
 }
 
 test("simplest lambda", async (t) => {
-  const graph = recipe<{ foo: string }>(async (inputs) => {
+  const graph = recipe(async ({ foo }) => {
     const lambda = recipe(async (inputs) => testKit.noop(inputs));
     t.assert(isLambda(lambda));
-    const caller = recipe<{ lambda: Lambda; foo: string }>(async (inputs) => {
-      return inputs.lambda.invoke({ foo: inputs.foo });
+    const caller = recipe(async ({ lambda, foo }) => {
+      return lambda.invoke({ foo });
     });
-    return caller({ lambda, foo: inputs.foo });
+    return caller({ lambda, foo });
+  });
+
+  const result = await serializeAndRunGraph(graph, { foo: "bar" });
+  t.deepEqual(result, { foo: "bar" });
+});
+
+test("simplest lambda, direct call, no invoke()", async (t) => {
+  const graph = recipe(async ({ foo }) => {
+    const lambda = recipe(async (inputs) => testKit.noop(inputs));
+    t.assert(isLambda(lambda));
+    const caller = recipe(async ({ lambda, foo }) => {
+      return lambda({ foo });
+    });
+    return caller({ lambda, foo });
   });
 
   const result = await serializeAndRunGraph(graph, { foo: "bar" });
@@ -43,13 +57,13 @@ test("simplest lambda", async (t) => {
 });
 
 test("simplest closure lambda, using to()", async (t) => {
-  const graph = recipe<{ foo: string }>(async (inputs) => {
+  const graph = recipe(async ({ foo, bar }) => {
     const lambda = recipe(async (inputs) => testKit.noop(inputs));
-    inputs.bar.to(lambda);
-    const caller = recipe<{ lambda: Lambda; foo: string }>(async (inputs) => {
-      return inputs.lambda.invoke({ foo: inputs.foo });
+    bar.to(lambda);
+    const caller = recipe(async ({ lambda, foo }) => {
+      return lambda({ foo });
     });
-    return caller({ lambda, foo: inputs.foo });
+    return caller({ lambda, foo });
   });
 
   const result = await serializeAndRunGraph(graph, { foo: "bar", bar: "baz" });
@@ -57,13 +71,13 @@ test("simplest closure lambda, using to()", async (t) => {
 });
 
 test("simplest closure lambda, using in()", async (t) => {
-  const graph = recipe<{ foo: string }>(async (inputs) => {
+  const graph = recipe(async ({ foo, bar }) => {
     const lambda = recipe(async (inputs) => testKit.noop(inputs));
-    lambda.in(inputs.bar);
-    const caller = recipe<{ lambda: Lambda; foo: string }>(async (inputs) => {
-      return inputs.lambda.invoke({ foo: inputs.foo });
+    lambda.in(bar);
+    const caller = recipe(async ({ lambda, foo }) => {
+      return lambda.invoke({ foo });
     });
-    return caller({ lambda, foo: inputs.foo });
+    return caller({ lambda, foo });
   });
 
   const result = await serializeAndRunGraph(graph, { foo: "bar", bar: "baz" });

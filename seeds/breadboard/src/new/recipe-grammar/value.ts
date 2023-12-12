@@ -11,6 +11,7 @@ import {
   OutputValues,
   NodeProxy,
   BuilderNodeInterface,
+  BuilderNodeConfig,
   AbstractValue,
 } from "./types.js";
 import {
@@ -31,7 +32,7 @@ export function isValue<T extends NodeValue = NodeValue>(
   obj: unknown
 ): obj is Value<T> {
   return (
-    typeof obj === "object" &&
+    (typeof obj === "object" || typeof obj === "function") &&
     (obj as unknown as { [key: symbol]: boolean })[IsValueSymbol] !== undefined
   );
 }
@@ -164,7 +165,7 @@ export class Value<T extends NodeValue = NodeValue>
   // Create a node for the lambda that is being sent as this value. At this
   // point we can't verify that this actually is a BoardCapability, so we just
   // do it and let the runtime throw an error if this wasn't one.
-  invoke(config?: ConstructorParameters<typeof BuilderNode>[2]): NodeProxy {
+  invoke(config?: BuilderNodeConfig): NodeProxy {
     return new BuilderNode("invoke", this.#scope, {
       ...config,
       board: this,

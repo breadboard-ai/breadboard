@@ -5,7 +5,6 @@
  */
 
 import {
-  BreadboardCapability,
   GraphDescriptor,
   NodeDescriptor,
   InputValues as OriginalInputValues,
@@ -17,6 +16,7 @@ import {
   NodeProxyMethods,
   AbstractValue,
   BuilderNodeInterface,
+  BuilderNodeConfig,
 } from "./types.js";
 import {
   InputValues,
@@ -59,11 +59,7 @@ export class BuilderNode<
   constructor(
     handler: NodeTypeIdentifier | NodeHandler<I, O>,
     scope: BuilderScope,
-    config:
-      | Partial<InputsMaybeAsValues<I>>
-      | AbstractValue<NodeValue>
-      | BuilderNodeInterface<InputValues, Partial<I>>
-      | { $id?: string } = {}
+    config: BuilderNodeConfig<I> = {}
   ) {
     const nonProxyConfig: InputValues = {};
     if (
@@ -496,33 +492,29 @@ export class BuilderNode<
             target.#scope as BuilderScope,
             prop
           );
-          const method = target[prop as keyof BuilderNode<I, O>] as () => void;
-          if (method && typeof method === "function") {
-            return new Proxy(method.bind(target), {
-              get(_, key, __) {
-                return Reflect.get(value, key, value);
-              },
-              ownKeys(_) {
-                return Reflect.ownKeys(value).filter(
-                  (key) => typeof key === "string"
-                );
-              },
-            });
-          } else {
-            // Return a proxy for the value such that () calls .invoke() on it
-            return new Proxy(value, {
-              apply(_, __, args) {
-                return value.invoke(...args);
-              },
-              get(_, key, __) {
-                // This restores access to private members despite proxying
-                const maybeMethod = Reflect.get(value, key, value);
-                return typeof maybeMethod === "function"
-                  ? maybeMethod.bind(value)
-                  : maybeMethod;
-              },
-            });
-          }
+
+          let method = target[prop as keyof BuilderNode<I, O>] as () => void;
+          // .to(), .in(), etc. call the original method:
+          if (method && typeof method === "function")
+            method = method.bind(target);
+          // Otherwise, default "method" is to invoke the lambda represented by the value
+          else
+            method = ((config?: BuilderNodeConfig) =>
+              value.invoke(config)).bind(value);
+
+          return new Proxy(method, {
+            get(_, key, __) {
+              const maybeMethod = Reflect.get(value, key, value);
+              return typeof maybeMethod === "function"
+                ? maybeMethod.bind(value)
+                : maybeMethod;
+            },
+            ownKeys(_) {
+              return Reflect.ownKeys(value).filter(
+                (key) => typeof key === "string"
+              );
+            },
+          });
         } else {
           return Reflect.get(target, prop, receiver);
         }

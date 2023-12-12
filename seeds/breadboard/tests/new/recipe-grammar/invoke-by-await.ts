@@ -20,6 +20,11 @@ test("directly await a value", async (t) => {
   t.is(foo, "bar");
 });
 
+test("directly await a value called 'to'", async (t) => {
+  const to = (await testKit.noop({ to: "foo" }).to) as unknown as string;
+  t.is(to, "foo");
+});
+
 test("directly await declarative recipe returning node, value assignment", async (t) => {
   const graph = recipe(async (inputs) => {
     return testKit.noop({ foo: inputs.foo });
@@ -45,6 +50,15 @@ test("directly await declarative recipe, value assignment", async (t) => {
   t.is(foo, "bar");
 });
 
+test("directly await declarative recipe, values named 'in' and 'to'", async (t) => {
+  const graph = recipe<{ in: string }, { to: unknown }>(async (inputs) => {
+    const { to } = testKit.noop({ to: inputs.in });
+    return { to };
+  });
+  const to = await graph({ in: "bar" }).to;
+  t.is(to, "bar");
+});
+
 test("directly await declarative recipe, deconstruct", async (t) => {
   const graph = recipe(async (inputs) => {
     const { foo } = testKit.noop({ foo: inputs.foo });
@@ -52,6 +66,15 @@ test("directly await declarative recipe, deconstruct", async (t) => {
   });
   const { foo } = await graph({ foo: "bar" });
   t.is(foo as unknown as string, "bar");
+});
+
+test("directly await declarative recipe, deconstruct, 'in' and 'to'", async (t) => {
+  const graph = recipe(async (inputs) => {
+    const { to } = testKit.noop({ to: inputs.in });
+    return { to };
+  });
+  const { to } = await graph({ in: "bar" });
+  t.is(to as unknown as string, "bar");
 });
 
 test("directly await declarative recipe, passing full inputs, value", async (t) => {

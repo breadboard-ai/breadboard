@@ -68,7 +68,9 @@ export type NodeFactory<
 ) => NodeProxy<I, O>;
 
 export type InputsForHandler<T extends InputValues> = {
-  [K in keyof T]: AbstractValue<T[K]> & PromiseLike<T[K]>;
+  [K in keyof T]: AbstractValue<T[K]> &
+    PromiseLike<T[K]> &
+    ((config?: BuilderNodeConfig) => NodeProxy);
 } & {
   [key in string]: AbstractValue<NodeValue> & PromiseLike<NodeValue>;
 } & PromiseLike<T>;
@@ -171,6 +173,12 @@ export interface BuilderNodeInterface<
   unProxy(): BuilderNodeInterface<I, O>;
 }
 
+export type BuilderNodeConfig<I extends InputValues = InputValues> =
+  | Partial<InputsMaybeAsValues<I>>
+  | AbstractValue<NodeValue>
+  | BuilderNodeInterface<InputValues, Partial<I>>
+  | { $id?: string };
+
 export type ClosureNodeInterface<
   I extends InputValues = InputValues,
   O extends OutputValues = OutputValues
@@ -214,13 +222,7 @@ export abstract class AbstractValue<T extends NodeValue | unknown = NodeValue>
 
   abstract memoize(): AbstractValue<T>;
 
-  abstract invoke(
-    config?:
-      | Partial<InputsMaybeAsValues<InputValues>>
-      | AbstractValue<NodeValue>
-      | BuilderNodeInterface<InputValues, Partial<InputValues>>
-      | { $id?: string }
-  ): NodeProxy;
+  abstract invoke(config?: BuilderNodeConfig): NodeProxy;
 }
 
 /**
