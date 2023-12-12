@@ -52,14 +52,28 @@ const output = board.output({
 const getFunctionSignature = starter.jsonata({
   $id: "getFunctionSignature",
   expression: `
-{ 
-  "function": {
-    "name": $replace(title, /\\W/, "_"),
-    "description": description,
-    "parameters": nodes[type="input"][0].configuration.schema ~> | ** | {}, 'title' |
-  }, 
-  "returns": nodes[type="output"][0].configuration.schema ~> | ** | {}, 'title' |
-}`,
+  (
+    $adjustType := function ($type) {
+        $type = "object" or $type = "array" ? "string" : $type
+    };
+
+    { 
+    "function": {
+        "name": $replace(title, /\\W/, "_"),
+        "description": description,
+        "parameters": {
+            "type": "object",
+            "properties": nodes[type="input"][0].configuration.schema.properties ~> $each(function($v, $k) {
+            { $k: {
+                "type": $v.type ~> $adjustType,
+                "description": $v.description
+            } }
+            }) ~> $merge
+        }
+    }, 
+    "returns": nodes[type="output"][0].configuration.schema ~> | ** | {}, 'title' |
+    }
+)`,
   raw: true,
 });
 

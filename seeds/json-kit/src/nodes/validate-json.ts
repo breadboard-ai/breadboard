@@ -102,6 +102,16 @@ export default async (inputs: InputValues): Promise<OutputValues> => {
   const possiblyInvalid = parsed as InvalidJsonOutputs;
   if (possiblyInvalid?.$error) return possiblyInvalid;
 
+  // Then, let's make sure we have schema in the right format.
+  let parsedSchema = schema;
+  if (schema && typeof schema === "string") {
+    try {
+      parsedSchema = tryParseJson(schema);
+    } catch (e) {
+      throw new Error("The `schema` input is not valid JSON.");
+    }
+  }
+
   // Now, let's try to validate JSON.
-  return validateJson(parsed, schema as Schema);
+  return validateJson(parsed, parsedSchema as Schema);
 };
