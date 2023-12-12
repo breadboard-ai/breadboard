@@ -18,18 +18,21 @@ program
 
 program
   .command("debug [file]")
+  .option("-o, --output <path>", "If compiling a graph in Typescript (.ts), you MUST specific a location to output the compiled graph.")
   .description("Starts a simple HTTP server that serves the breadboard-web app, and outputs a URL that contains a link to a breadboard file that the user provided.")
   .action(debug);
 
 program
   .command("mermaid [file]")
   .description("Watch a breadboard file and output the mermaid diagram when it changes.")
+  .option("-o, --output <path>", "If compiling a graph in Typescript (.ts), you MUST specific a location to output the compiled graph.")
   .option("-w, --watch", "Watch the file for changes.")
   .action(mermaid)
 
 program
   .command("make [file]")
   .description("Make a graph from a javascript file. Note:all the imports have to be resolvable from the current directory.")
+  .option("-o, --output <path>", "If compiling a graph in Typescript (.ts), you MUST specific a location to output the compiled graph.")
   .option("-w, --watch", "Watch the file for changes.")
   .action(makeGraph)
 
@@ -37,8 +40,12 @@ program
   .command("run [file]")
   .description("Run a graph.")
   .option("-w, --watch", "Watch the file for changes.")
+  .option("-o, --output <path>", "If compiling a graph in Typescript (.ts), you MUST specific a location to output the compiled graph.")
   .option("-k, --kit <kit...>", "The kit to use.")
   .option("-i, --input <input>", "The JSON that represents the input to the graph.")
   .action(run)
 
 program.parse();
+
+// Allow developers to integrate with the CLI
+export { debug, mermaid, makeGraph, run };

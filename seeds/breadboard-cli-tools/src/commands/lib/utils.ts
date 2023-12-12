@@ -4,21 +4,80 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board } from '@google-labs/breadboard';
-import { readFile } from 'fs/promises';
-import path from "path";
-import * as readline from 'node:readline/promises';
-import { stdin as input } from 'node:process';
+import { Board, BoardRunner } from "@google-labs/breadboard";
+import * as esbuild from "esbuild";
+import { readFile, stat, unlink, writeFile } from "fs/promises";
+import { join } from "node:path";
+import { stdin as input } from "node:process";
+import * as readline from "node:readline/promises";
+import path, { basename } from "path";
+
+export type Options = {
+  output?: string;
+  watch?: boolean;
+};
+
+export async function makeFromSource(filename: string, source: string, options?: Options) {
+  const board = await loadBoardFromSource(filename, source, options);
+  const boardJson = JSON.stringify(board, null, 2);
+  return { boardJson, board };
+}
+
+export async function makeFromFile(filePath: string, options?: Options) {
+  const board = await loadBoardFromModule(filePath);
+  const boardJson = JSON.stringify(board, null, 2);
+  return { boardJson, board };
+}
 
 export const loadBoardFromModule = async (file: string) => {
-  const board = (await import(file)).default;
+  console.log(file)
 
-  if (board == undefined) throw new Error(`Board ${file} does not have a default export`);
+  // This will leak. Look for other hot reloading solutions.
+  const board = (await import(`${file}?${Date.now()}`)).default;
 
-  if (board instanceof Board == false) throw new Error(`Board ${file} does not have a default export of type Board`);
+  if (board == undefined)
+    throw new Error(`Board ${file} does not have a default export`);
+
+  if (board instanceof Board == false)
+    throw new Error(
+      `Board ${file} does not have a default export of type Board`
+    );
 
   return board;
 };
+
+/* 
+  If we are loading from Source (TS) then we need to compile it and output it to a place where there are unlikely to be any collisions.
+*/
+export const loadBoardFromSource = async (filename: string, source: string, options?: Options) => {
+
+  const tmpDir = options?.output ?? process.cwd();
+  const filePath = join(tmpDir, `~${basename(filename, "ts")}tmp.mjs`);
+
+  let tmpFileStat;
+  try {
+    tmpFileStat = await stat(filePath);
+  } catch (e) {
+    "Nothing to see here. Just don't want to have to re-throw."
+  }
+
+  if (tmpFileStat && tmpFileStat.isSymbolicLink()) {
+    // Don't write to a symbolic link.
+    throw new Error(`The file ${filePath} is a symbolic link. We can't write to it.`);
+  }
+
+  // I heard it might be possible to do a symlink hijack. double check.
+  await writeFile(filePath, source);
+
+  // For the import to work it has to be relative to the current working directory.
+  const board = await loadBoardFromModule(path.resolve(process.cwd(), filePath));
+
+  // remove the file
+  await unlink(filePath);
+
+  return board;
+}
+
 
 export const resolveFilePath = (file: string) => {
   return path.resolve(
@@ -27,14 +86,24 @@ export const resolveFilePath = (file: string) => {
   );
 };
 
-export const loadBoard = async (file: string) => {
-  const fileContents = await readFile(file, 'utf-8');
-  const board = await Board.fromGraphDescriptor(JSON.parse(fileContents));
-  return board;
+export const loadBoard = async (file: string, options: Options): Promise<BoardRunner> => {
+  if (file.endsWith(".ts")) {
+    const fileContents = await readFile(file, "utf-8");
+    const result = await esbuild.transform(fileContents, { loader: "ts" });
+    const { board } = await makeFromSource(file, result.code, options);
+    return board;
+  } else if (file.endsWith(".js")) {
+    const { board } = await makeFromFile(file);
+    return board;
+  } else {
+    const fileContents = await readFile(file, "utf-8");
+    const board = await Board.fromGraphDescriptor(JSON.parse(fileContents));
+    return board;
+  }
 };
 
 export const parseStdin = async (): Promise<string> => {
-  let lines = ""
+  let lines = "";
   const rl = readline.createInterface({ input });
   for await (const line of rl) {
     lines += line;
