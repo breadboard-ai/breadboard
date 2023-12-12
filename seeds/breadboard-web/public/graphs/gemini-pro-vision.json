@@ -1,0 +1,246 @@
+{
+  "title": "Gemini Pro Vision",
+  "description": "A simple example of using `gemini-pro-vision` model",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "projectId",
+      "to": "make-headers",
+      "out": "projectId",
+      "in": "projectId"
+    },
+    {
+      "from": "oauth",
+      "to": "make-headers",
+      "out": "accessToken",
+      "in": "accessToken"
+    },
+    {
+      "from": "make-headers",
+      "to": "fetch-2",
+      "out": "result",
+      "in": "headers"
+    },
+    {
+      "from": "jsonata-1",
+      "to": "fetch-2",
+      "out": "body",
+      "in": "body"
+    },
+    {
+      "from": "passthrough-3",
+      "to": "fetch-2",
+      "out": "url",
+      "in": "url"
+    },
+    {
+      "from": "lambda-4",
+      "to": "transformStream-5",
+      "constant": true,
+      "out": "board",
+      "in": "board"
+    },
+    {
+      "from": "make-headers",
+      "to": "fetch-2",
+      "out": "results",
+      "in": "headers"
+    },
+    {
+      "from": "transformStream-5",
+      "to": "output-6",
+      "out": "stream",
+      "in": "stream"
+    },
+    {
+      "from": "fetch-2",
+      "to": "transformStream-5",
+      "out": "stream",
+      "in": "stream"
+    },
+    {
+      "from": "jsonata-1",
+      "to": "fetch-2",
+      "out": "result",
+      "in": "body"
+    },
+    {
+      "from": "parameters",
+      "to": "jsonata-1",
+      "out": "parts",
+      "in": "parts"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "parameters",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "parts": {
+              "type": "array",
+              "format": "multipart",
+              "title": "Content",
+              "description": "Add content here",
+              "minItems": 1,
+              "items": [
+                {
+                  "type": "object",
+                  "title": "Text",
+                  "format": "text_part",
+                  "description": "A text part, which consists of plain text",
+                  "properties": {
+                    "text": {
+                      "type": "string"
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "title": "Image",
+                  "format": "image_part",
+                  "description": "An image part. Can be a JPEG or PNG image",
+                  "properties": {
+                    "mime_type": {
+                      "type": "enum",
+                      "enum": [
+                        "image/png",
+                        "image/jpeg"
+                      ]
+                    },
+                    "data": {
+                      "type": "string"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "oauth",
+      "type": "invoke",
+      "configuration": {
+        "path": "oauth-config.local.json"
+      }
+    },
+    {
+      "id": "make-headers",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "{ \"Authorization\": \"Bearer \" & $.accessToken, \"Accept\": \"application/json\", \"Content-Type\": \"application/json\", \"X-Goog-User-Project\": $.projectId, \"X-Google-Project-Override\": \"apiKey\" }"
+      }
+    },
+    {
+      "id": "projectId",
+      "type": "passthrough",
+      "configuration": {
+        "projectId": "google.com:breadboard-ai"
+      }
+    },
+    {
+      "id": "jsonata-1",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "{ \"contents\": { \"parts\": $.parts }}"
+      }
+    },
+    {
+      "id": "fetch-2",
+      "type": "fetch",
+      "configuration": {
+        "method": "POST",
+        "stream": true
+      }
+    },
+    {
+      "id": "passthrough-3",
+      "type": "passthrough",
+      "configuration": {
+        "url": "https://autopush-generativelanguage.sandbox.googleapis.com/v1beta/models/gemini-pro-vision:streamGenerateContent?alt=sse"
+      }
+    },
+    {
+      "id": "lambda-4",
+      "type": "lambda",
+      "configuration": {
+        "board": {
+          "kind": "board",
+          "board": {
+            "edges": [
+              {
+                "from": "runJavascript-3",
+                "to": "output-2",
+                "out": "result",
+                "in": "chunk"
+              },
+              {
+                "from": "input-1",
+                "to": "runJavascript-3",
+                "out": "chunk",
+                "in": "chunk"
+              }
+            ],
+            "nodes": [
+              {
+                "id": "input-1",
+                "type": "input"
+              },
+              {
+                "id": "output-2",
+                "type": "output"
+              },
+              {
+                "id": "runJavascript-3",
+                "type": "runJavascript",
+                "configuration": {
+                  "code": "function run({chunk}){return chunk.candidates[0].content.parts[0].text}"
+                }
+              }
+            ],
+            "kits": [
+              {
+                "url": "npm:@google-labs/llm-starter"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "transformStream-5",
+      "type": "transformStream",
+      "configuration": {}
+    },
+    {
+      "id": "output-6",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "stream": {
+              "type": "object",
+              "title": "Result",
+              "format": "stream"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "kits": [
+    {
+      "url": "npm:@google-labs/llm-starter"
+    },
+    {
+      "url": "npm:@google-labs/core-kit"
+    },
+    {
+      "url": "npm:@google-labs/node-nursery-web"
+    }
+  ]
+}

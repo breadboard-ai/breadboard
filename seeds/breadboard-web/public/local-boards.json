@@ -19,6 +19,10 @@
     "url": "/graphs/gemini-generator.json"
   },
   {
+    "title": "Gemini Pro Vision",
+    "url": "/graphs/gemini-pro-vision.json"
+  },
+  {
     "title": "Healer",
     "url": "/graphs/healer.json",
     "version": "0.0.1"
