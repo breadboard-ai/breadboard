@@ -18,7 +18,7 @@ const starter = board.addKit(Starter);
 const json = board.addKit(JSONKit);
 
 const brokenJSON = `{
-  "first_answer": "to live",
+  first_answer: "to live",
   "guesses": [
       "life is meaningful",
       "there is a single meaning to life",
@@ -74,14 +74,14 @@ const parameters = board.input({
         title: "JSON",
         format: "multiline",
         description: "The JSON to validate",
-        default: brokenJSON,
+        examples: [brokenJSON],
       },
       schema: {
         type: "object",
         title: "Schema",
         format: "multiline",
         description: "The schema of the JSON to be generated",
-        default: JSON.stringify(sampleSchema, null, 2),
+        examples: [JSON.stringify(sampleSchema, null, 2)],
       },
     },
     required: ["text"],

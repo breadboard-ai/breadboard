@@ -27,7 +27,8 @@ invoke2["invoke <br> id='invoke-2'"] -- "tools->tools" --> generate["invoke <br>
 invoke2["invoke <br> id='invoke-2'"] -- "urlMap->urlMap" --> getBoardArgs["jsonata <br> id='getBoardArgs'"]
 parameters[/"input <br> id='parameters'"/]:::input -- "boards->boards" --> invoke2["invoke <br> id='invoke-2'"]
 formatOutput["jsonata <br> id='formatOutput'"] -- all --> output{{"output <br> id='output'"}}:::output
-callBoardAsTool["invoke <br> id='callBoardAsTool'"] -- "text->text" --> formatOutput["jsonata <br> id='formatOutput'"]
+hoistOutputs["jsonata <br> id='hoistOutputs'"] -- "result->result" --> formatOutput["jsonata <br> id='formatOutput'"]
+callBoardAsTool["invoke <br> id='callBoardAsTool'"] -- all --> hoistOutputs["jsonata <br> id='hoistOutputs'"]
 getBoardArgs["jsonata <br> id='getBoardArgs'"] -- all --> callBoardAsTool["invoke <br> id='callBoardAsTool'"]
 parameters[/"input <br> id='parameters'"/]:::input -- "generator->generator" --> getBoardArgs["jsonata <br> id='getBoardArgs'"]
 generate["invoke <br> id='generate'"] -- "toolCalls->toolCalls" --> getBoardArgs["jsonata <br> id='getBoardArgs'"]
