@@ -41,8 +41,8 @@ const input = board.input({
         type: "string",
         title: "Model",
         description: "The model to use for generation",
-        enum: ["PaLM", "GPT 3.5 Turbo", "mock"],
-        examples: ["PaLM"],
+        enum: ["Gemini Pro", "GPT 3.5 Turbo", "PaLM", "mock"],
+        examples: ["Gemini Pro"],
       },
     },
     required: ["text"],
@@ -57,6 +57,8 @@ function switchModel({
   useStreaming: boolean;
 }) {
   switch (MODEL) {
+    case "Gemini Pro":
+      return { gemini: true };
     case "PaLM":
       if (useStreaming) {
         return { other: `Streaming is not supported for ${MODEL}` };
@@ -71,11 +73,51 @@ function switchModel({
   }
 }
 
+const textOutput = board.output({
+  $id: "textOutput",
+  schema: {
+    type: "object",
+    properties: {
+      text: {
+        type: "string",
+        title: "Text",
+        description: "The generated text",
+      },
+    },
+  },
+});
+
+const streamOutput = board.output({
+  $id: "streamOutput",
+  schema: {
+    type: "object",
+    properties: {
+      stream: {
+        type: "object",
+        title: "Stream",
+        description: "The generated text",
+        format: "stream",
+      },
+    },
+  },
+});
+
 const switcher = starter.runJavascript({
+  $id: "switchModel",
   name: "switchModel",
   code: switchModel.toString(),
   raw: true,
 });
+
+const gemini = core
+  .invoke({
+    $id: "gemini",
+    path: "gemini-generator.json",
+  })
+  .wire("<-useStreaming", input)
+  .wire("<-text", input)
+  .wire("text->", textOutput)
+  .wire("stream->", streamOutput);
 
 const generateText = palm
   .generateText()
@@ -110,35 +152,6 @@ const mockModel = starter.runJavascript({
 
 const mockModelStream = nursery.listToStream();
 
-const textOutput = board.output({
-  $id: "textOutput",
-  schema: {
-    type: "object",
-    properties: {
-      text: {
-        type: "string",
-        title: "Text",
-        description: "The generated text",
-      },
-    },
-  },
-});
-
-const streamOutput = board.output({
-  $id: "streamOutput",
-  schema: {
-    type: "object",
-    properties: {
-      stream: {
-        type: "object",
-        title: "Stream",
-        description: "The generated text",
-        format: "stream",
-      },
-    },
-  },
-});
-
 input.wire("MODEL->", switcher);
 input.wire("useStreaming->", switcher);
 
@@ -152,6 +165,7 @@ input.wire("useStreaming->", mockModel);
 input.wire("text->", mockModel.wire("text->", textOutput));
 switcher
   .wire("other->text", textOutput)
+  .wire("gemini->", gemini)
   .wire("palm->", generateText)
   .wire("gpt35->", gpt35)
   .wire("mock->", mockModel);

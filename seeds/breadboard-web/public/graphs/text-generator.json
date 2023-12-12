@@ -4,20 +4,44 @@
   "version": "0.0.1",
   "edges": [
     {
-      "from": "secrets-3",
-      "to": "palm-generateText-2",
+      "from": "input",
+      "to": "gemini",
+      "out": "useStreaming",
+      "in": "useStreaming"
+    },
+    {
+      "from": "input",
+      "to": "gemini",
+      "out": "text",
+      "in": "text"
+    },
+    {
+      "from": "gemini",
+      "to": "textOutput",
+      "out": "text",
+      "in": "text"
+    },
+    {
+      "from": "gemini",
+      "to": "streamOutput",
+      "out": "stream",
+      "in": "stream"
+    },
+    {
+      "from": "secrets-2",
+      "to": "palm-generateText-1",
       "out": "PALM_KEY",
       "in": "PALM_KEY"
     },
     {
       "from": "input",
-      "to": "runJavascript-1",
+      "to": "switchModel",
       "out": "MODEL",
       "in": "MODEL"
     },
     {
       "from": "input",
-      "to": "runJavascript-1",
+      "to": "switchModel",
       "out": "useStreaming",
       "in": "useStreaming"
     },
@@ -46,14 +70,14 @@
       "in": "stream"
     },
     {
-      "from": "palm-generateText-2",
+      "from": "palm-generateText-1",
       "to": "textOutput",
       "out": "completion",
       "in": "text"
     },
     {
       "from": "input",
-      "to": "palm-generateText-2",
+      "to": "palm-generateText-1",
       "out": "text",
       "in": "text"
     },
@@ -76,37 +100,43 @@
       "in": "text"
     },
     {
-      "from": "runJavascript-1",
+      "from": "switchModel",
       "to": "textOutput",
       "out": "other",
       "in": "text"
     },
     {
-      "from": "runJavascript-1",
-      "to": "palm-generateText-2",
+      "from": "switchModel",
+      "to": "gemini",
+      "out": "gemini",
+      "in": "gemini"
+    },
+    {
+      "from": "switchModel",
+      "to": "palm-generateText-1",
       "out": "palm",
       "in": "palm"
     },
     {
-      "from": "runJavascript-1",
+      "from": "switchModel",
       "to": "gpt35",
       "out": "gpt35",
       "in": "gpt35"
     },
     {
-      "from": "runJavascript-1",
+      "from": "switchModel",
       "to": "mockModel",
       "out": "mock",
       "in": "mock"
     },
     {
       "from": "mockModel",
-      "to": "listToStream-4",
+      "to": "listToStream-3",
       "out": "list",
       "in": "list"
     },
     {
-      "from": "listToStream-4",
+      "from": "listToStream-3",
       "to": "streamOutput",
       "out": "stream",
       "in": "stream"
@@ -136,12 +166,13 @@
               "title": "Model",
               "description": "The model to use for generation",
               "enum": [
-                "PaLM",
+                "Gemini Pro",
                 "GPT 3.5 Turbo",
+                "PaLM",
                 "mock"
               ],
               "examples": [
-                "PaLM"
+                "Gemini Pro"
               ]
             }
           },
@@ -150,48 +181,6 @@
           ]
         }
       }
-    },
-    {
-      "id": "runJavascript-1",
-      "type": "runJavascript",
-      "configuration": {
-        "name": "switchModel",
-        "code": "function switchModel({MODEL,useStreaming}){switch(MODEL){case\"PaLM\":if(useStreaming){return{other:`Streaming is not supported for ${MODEL}`}}return{palm:true};case\"mock\":return{mock:true};case\"GPT 3.5 Turbo\":return{gpt35:true};default:return{other:`Unsupported model: ${MODEL}`}}}",
-        "raw": true
-      }
-    },
-    {
-      "id": "palm-generateText-2",
-      "type": "palm-generateText"
-    },
-    {
-      "id": "secrets-3",
-      "type": "secrets",
-      "configuration": {
-        "keys": [
-          "PALM_KEY"
-        ]
-      }
-    },
-    {
-      "id": "gpt35",
-      "type": "invoke",
-      "configuration": {
-        "path": "openai-gpt-35-turbo.json"
-      }
-    },
-    {
-      "id": "mockModel",
-      "type": "runJavascript",
-      "configuration": {
-        "name": "runMockModel",
-        "code": "function runMockModel({text,useStreaming}){text=`Mock model with streaming off echoes back: ${text}`;if(useStreaming){const list=text.split(\" \");return{list}}return{text}}",
-        "raw": true
-      }
-    },
-    {
-      "id": "listToStream-4",
-      "type": "listToStream"
     },
     {
       "id": "textOutput",
@@ -225,6 +214,55 @@
           }
         }
       }
+    },
+    {
+      "id": "switchModel",
+      "type": "runJavascript",
+      "configuration": {
+        "name": "switchModel",
+        "code": "function switchModel({MODEL,useStreaming}){switch(MODEL){case\"Gemini Pro\":return{gemini:true};case\"PaLM\":if(useStreaming){return{other:`Streaming is not supported for ${MODEL}`}}return{palm:true};case\"mock\":return{mock:true};case\"GPT 3.5 Turbo\":return{gpt35:true};default:return{other:`Unsupported model: ${MODEL}`}}}",
+        "raw": true
+      }
+    },
+    {
+      "id": "gemini",
+      "type": "invoke",
+      "configuration": {
+        "path": "gemini-generator.json"
+      }
+    },
+    {
+      "id": "palm-generateText-1",
+      "type": "palm-generateText"
+    },
+    {
+      "id": "secrets-2",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "PALM_KEY"
+        ]
+      }
+    },
+    {
+      "id": "gpt35",
+      "type": "invoke",
+      "configuration": {
+        "path": "openai-gpt-35-turbo.json"
+      }
+    },
+    {
+      "id": "mockModel",
+      "type": "runJavascript",
+      "configuration": {
+        "name": "runMockModel",
+        "code": "function runMockModel({text,useStreaming}){text=`Mock model with streaming off echoes back: ${text}`;if(useStreaming){const list=text.split(\" \");return{list}}return{text}}",
+        "raw": true
+      }
+    },
+    {
+      "id": "listToStream-3",
+      "type": "listToStream"
     }
   ],
   "kits": [
