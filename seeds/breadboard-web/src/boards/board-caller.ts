@@ -76,7 +76,7 @@ const parameters = board.input({
           type: "string",
         },
         examples: [
-          '[ "https://raw.githubusercontent.com/google/breadboard-ai/main/seeds/graph-playground/graphs/math.json", "/graphs/search-summarize.json" ]',
+          '[ "https://raw.githubusercontent.com/breadboard-ai/breadboardmain/seeds/graph-playground/graphs/math.json", "/graphs/search-summarize.json" ]',
         ],
       },
     },

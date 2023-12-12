@@ -136,9 +136,7 @@
               "type": "string",
               "title": "Text",
               "description": "The text to use with tool calling",
-              "examples": [
-                "What is the square root of e?"
-              ]
+              "examples": ["What is the square root of e?"]
             },
             "context": {
               "type": "array",
@@ -153,9 +151,7 @@
               "type": "string",
               "title": "Generator",
               "description": "The URL of the generator to call",
-              "examples": [
-                "/graphs/openai-gpt-35-turbo.json"
-              ]
+              "examples": ["/graphs/openai-gpt-35-turbo.json"]
             },
             "boards": {
               "type": "array",
@@ -165,14 +161,11 @@
                 "type": "string"
               },
               "examples": [
-                "[ \"https://raw.githubusercontent.com/google/breadboard-ai/main/seeds/graph-playground/graphs/math.json\", \"/graphs/search-summarize.json\" ]"
+                "[ \"https://raw.githubusercontent.com/breadboard-ai/breadboardmain/seeds/graph-playground/graphs/math.json\", \"/graphs/search-summarize.json\" ]"
               ]
             }
           },
-          "required": [
-            "text",
-            "boards"
-          ]
+          "required": ["text", "boards"]
         }
       }
     },
