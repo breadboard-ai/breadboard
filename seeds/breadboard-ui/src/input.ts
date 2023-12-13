@@ -107,7 +107,7 @@ export class Input extends HTMLElement {
         }
 
         * {
-          box-sizing: border-box; 
+          box-sizing: border-box;
           font-size: var(--bb-text-medium);
         }
 
@@ -118,13 +118,18 @@ export class Input extends HTMLElement {
           grid-template-columns: 1fr 1fr 1fr 1fr;
           row-gap: calc(var(--bb-grid-size) * 2);
           flex: 1;
-          margin: calc(var(--bb-grid-size) * 3) 0;
+          margin: calc(var(--bb-grid-size) * 2) 0;
+        }
+
+        #choice-container {
+          border-top: 1px solid rgb(244, 244, 244);
         }
 
         label {
+          grid-column: 1/3;
           font-family: var(--bb-font-family);
           font-size: var(--bb-text-small);
-          padding: 0 calc(var(--bb-grid-size) * 2) 0 calc(var(--bb-grid-size) * 8);
+          padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 2) 0 0;
         }
 
         #choice-container label:not(:first-of-type) {
@@ -145,7 +150,7 @@ export class Input extends HTMLElement {
           flex: 1;
           width: 100%;
           overflow: hidden;
-          border-radius: calc(var(--bb-grid-size) * 10);
+          border-radius: calc(var(--bb-grid-size) * 3);
           border: 1px solid rgb(209, 209, 209);
           min-height: calc(var(--bb-grid-size) * 50);
         }
@@ -157,10 +162,9 @@ export class Input extends HTMLElement {
         textarea,
         .parsed-value {
           grid-column: 1 / 5;
-          border-radius: calc(var(--bb-grid-size) * 10);
+          border-radius: calc(var(--bb-grid-size) * 3);
           background: rgb(255, 255, 255);
-          min-height: calc(var(--bb-grid-size) * 12);
-          padding: 0 calc(var(--bb-grid-size) * 10) 0 calc(var(--bb-grid-size) * 8);
+          padding: calc(var(--bb-grid-size) * 2);
           width: 100%;
           border: 1px solid rgb(209, 209, 209);
         }
@@ -171,8 +175,9 @@ export class Input extends HTMLElement {
 
         textarea {
           resize: none;
-          padding-top: calc(var(--bb-grid-size) * 4);
-          padding-bottom: calc(var(--bb-grid-size) * 4);
+          font-size: var(--bb-text-small);
+          padding-top: calc(var(--bb-grid-size) * 2);
+          padding-bottom: calc(var(--bb-grid-size) * 2);
           line-height: 1.4;
           border: none;
           height: 100%;
@@ -210,10 +215,10 @@ export class Input extends HTMLElement {
           width: calc(var(--bb-grid-size) * 8);
           height: calc(var(--bb-grid-size) * 8);
           position: absolute;
-          right: calc(var(--bb-grid-size) * 2);
-          top: calc(var(--bb-grid-size) * 0);
+          right: 0;
+          top: calc(var(--bb-grid-size) * 1.5);
           border-radius: 50%;
-          background: #FFF var(--bb-icon-start) center center no-repeat;
+          background: var(--bb-icon-start) center center no-repeat;
           border: none;
         }
 

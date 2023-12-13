@@ -47,6 +47,13 @@ export class UIController extends HTMLElement implements UI {
   constructor() {
     super();
 
+    const toggleMapping = ["history", "output", "input"];
+    const isExpanded = new Map(
+      toggleMapping.map((id) => {
+        return [id, this.#getRememberedValue(`ui-${id}-active`, true)];
+      })
+    );
+
     const root = this.attachShadow({ mode: "open" });
     root.innerHTML = `
       <style>
@@ -130,13 +137,15 @@ export class UIController extends HTMLElement implements UI {
         }
 
         #sidebar.active {
-          display: grid;
-          grid-template-rows: calc(var(--bb-grid-size) * 14) auto;
+          display: flex;
+          flex-direction: column;
           height: 100%;
           overflow: hidden;
         }
 
         #controls {
+          height: calc(var(--bb-grid-size) * 14);
+          flex: 0 0 auto;
           display: flex;
           flex-direction: row;
           align-items: center;
@@ -153,8 +162,14 @@ export class UIController extends HTMLElement implements UI {
           overflow: hidden;
         }
 
-        #history, #input {
-          border-bottom: 1px solid rgb(227, 231, 237);
+        #history.active,
+        #output.active,
+        #input.active {
+          flex: 1;
+        }
+
+        #history, #output {
+          border-top: 1px solid rgb(227, 231, 237);
         }
 
         #history h1,
@@ -165,6 +180,17 @@ export class UIController extends HTMLElement implements UI {
           font-weight: 400;
           padding: 0 0 0 calc(var(--bb-grid-size) * 8);
           line-height: calc(var(--bb-grid-size) * 6);
+          cursor: pointer;
+          opacity: 0.6;
+        }
+
+        #history.active h1,
+        #history h1:hover,
+        #output.active h1,
+        #output h1:hover,
+        #input.active h1,
+        #input h1:hover {
+          opacity: 1;
         }
 
         #history h1 {
@@ -187,9 +213,16 @@ export class UIController extends HTMLElement implements UI {
         #history-list,
         #output-list,
         #input-list {
+          display: none;
           scrollbar-gutter: stable;
           overflow-y: auto;
           flex: 1;
+        }
+
+        #history.active #history-list,
+        #output.active #output-list,
+        #input.active #input-list {
+          display: block;
         }
 
         #input-list {
@@ -342,22 +375,24 @@ export class UIController extends HTMLElement implements UI {
               <option>1500ms delay</option>
             </select>
           </div>
-          <div id="history">
+          <div id="input" class="${isExpanded.get("input") ? "active" : ""}">
+            <h1>Inputs</h1>
+            <div id="input-list" class="active">
+              <slot></slot>
+            </div>
+          </div>
+          <div id="output" class="${isExpanded.get("output") ? "active" : ""}">
+            <h1>Outputs</h1>
+            <div id="output-list" class="active"></div>
+          </div>
+          <div id="history" class="${
+            isExpanded.get("history") ? "active" : ""
+          }">
             <h1>
               <span>History</span>
               <a href="#" id="download-history-log" download="history-log.json">Download log</a>
             </h1>
-            <div id="history-list"></div>
-          </div>
-          <div id="input">
-            <h1>Input</h1>
-            <div id="input-list">
-              <slot></slot>
-            </div>
-          </div>
-          <div id="output">
-            <h1>Outputs</h1>
-            <div id="output-list"></div>
+            <div id="history-list" class="active"></div>
           </div>
         </div>
       </div>
@@ -381,7 +416,9 @@ export class UIController extends HTMLElement implements UI {
 
     const downloadLog = root.querySelector("#download-history-log");
     assertHTMLElement(downloadLog);
-    downloadLog.addEventListener("click", () => {
+    downloadLog.addEventListener("click", (evt: Event) => {
+      evt.stopImmediatePropagation();
+
       const currentLink = downloadLog.getAttribute("href");
       if (currentLink) {
         URL.revokeObjectURL(currentLink);
@@ -392,6 +429,21 @@ export class UIController extends HTMLElement implements UI {
       downloadLog.setAttribute("download", `history-log-${Date.now()}.json`);
       downloadLog.setAttribute("href", URL.createObjectURL(file));
     });
+
+    for (const target of toggleMapping) {
+      const element = root.querySelector(`#${target} > h1`);
+      const targetElement = root.querySelector(`#${target}`);
+      assertHTMLElement(element);
+      assertHTMLElement(targetElement);
+
+      element.addEventListener("click", () => {
+        targetElement.classList.toggle("active");
+        this.#rememberValue(
+          `ui-${target}-active`,
+          targetElement.classList.contains("active")
+        );
+      });
+    }
   }
 
   toast(message: string, type: ToastType) {
@@ -405,6 +457,28 @@ export class UIController extends HTMLElement implements UI {
 
   hidePaused() {
     this.classList.remove("paused");
+  }
+
+  #getLocalStorageKey(id: string) {
+    return `bb-remember-${id}`;
+  }
+
+  #getRememberedValue<T>(id: string, defaultValue: T): T {
+    const key = this.#getLocalStorageKey(id);
+    const data = localStorage.getItem(key);
+    if (!data) {
+      this.#rememberValue(id, defaultValue);
+      return defaultValue;
+    }
+
+    return JSON.parse(data) as T;
+  }
+
+  #rememberValue(id: string, data: unknown) {
+    const key = this.#getLocalStorageKey(id);
+    const json = JSON.stringify(data);
+    localStorage.setItem(key, json);
+    return;
   }
 
   #clearBoardContents() {
@@ -468,6 +542,17 @@ export class UIController extends HTMLElement implements UI {
 
     root.querySelector("#sidebar")?.classList.add("active");
     root.querySelector("#diagram")?.classList.add("active");
+  }
+
+  #autoShowInput() {
+    const root = this.shadowRoot;
+    assertRoot(root);
+
+    const input = root.querySelector("#input");
+    assertHTMLElement(input);
+
+    input.classList.add("active");
+    this.#rememberValue(`ui-input-active`, true);
   }
 
   #createHistoryEntry(
@@ -579,6 +664,7 @@ export class UIController extends HTMLElement implements UI {
     } else {
       this.#inputContainer.appendChild(input);
     }
+    this.#autoShowInput();
 
     const data = (await input.ask()) as Record<string, string>;
     input.remove();
@@ -610,6 +696,8 @@ export class UIController extends HTMLElement implements UI {
     } else {
       this.#inputContainer.appendChild(input);
     }
+
+    this.#autoShowInput();
 
     const response = (await input.ask()) as Record<string, unknown>;
     this.#createHistoryEntry(HarnessEventType.INPUT, "input", id, {
