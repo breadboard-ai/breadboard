@@ -63,10 +63,6 @@ type FunctionDeclaration = {
   parameters?: Schema;
 };
 
-type Tool = {
-  function_declarations: FunctionDeclaration[];
-};
-
 const toolsExample = [
   {
     name: "The_Calculator_Recipe",
