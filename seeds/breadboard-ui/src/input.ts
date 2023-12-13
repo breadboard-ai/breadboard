@@ -215,7 +215,7 @@ export class Input extends HTMLElement {
           width: calc(var(--bb-grid-size) * 8);
           height: calc(var(--bb-grid-size) * 8);
           position: absolute;
-          right: calc(var(--bb-grid-size) * 2);
+          right: 0;
           top: calc(var(--bb-grid-size) * 1.5);
           border-radius: 50%;
           background: var(--bb-icon-start) center center no-repeat;
