@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { NodeSelectEvent } from "./events.js";
 import {
   assertHTMLElement,
   assertMouseWheelEvent,
@@ -13,7 +14,11 @@ import {
 } from "./utils/assertions.js";
 
 const MERMAID_URL = "https://cdn.jsdelivr.net/npm/mermaid@10.6.1/+esm";
-const MERMAID_STYLES = `.node.active > * {
+const MERMAID_STYLES = `.node {
+  cursor: pointer;
+}
+
+.node.active > * {
   stroke-width: 4px;
   stroke: #4CE8F6 !important;
 }
@@ -62,7 +67,7 @@ const enum MODE {
 }
 
 export class Diagram extends HTMLElement {
-  #mode = MODE.PAN;
+  #mode = MODE.SELECT;
   #translation = { x: Number.NaN, y: Number.NaN };
   #transformOrigin = { x: "50%", y: "50%" };
   #diagramDimensions = { w: Number.NaN, h: Number.NaN };
@@ -90,7 +95,6 @@ export class Diagram extends HTMLElement {
           position: relative;
           user-select: none;
           pointer-events: auto;
-          cursor: auto;
         }
 
         :host(.pan) {
@@ -108,6 +112,11 @@ export class Diagram extends HTMLElement {
         svg {
           display: block;
           pointer-events: none;
+        }
+
+        :host(.select) svg g {
+          pointer-events: auto;
+          cursor: pointer;
         }
 
         #mermaid {
@@ -199,6 +208,28 @@ export class Diagram extends HTMLElement {
       this.#onPointerUp();
     });
 
+    let lastMode: MODE | null = null;
+    document.body.addEventListener("keydown", (evt: KeyboardEvent) => {
+      if (evt.code !== "Space" || lastMode !== null) {
+        return;
+      }
+
+      lastMode = this.#mode;
+      this.#mode = MODE.PAN;
+      this.#updateContainerClass();
+    });
+
+    document.body.addEventListener("keyup", (evt: KeyboardEvent) => {
+      if (evt.code !== "Space" || lastMode === null) {
+        return;
+      }
+
+      this.#mode = lastMode;
+      lastMode = null;
+      this.#updateControls();
+      this.#updateContainerClass();
+    });
+
     root.addEventListener("click", (evt: Event) => this.#onClick(evt));
     this.addEventListener("mousewheel", (evt: Event) =>
       this.#onMouseWheel(evt)
@@ -226,55 +257,74 @@ export class Diagram extends HTMLElement {
   }
 
   #onClick(evt: Event) {
-    const target = evt.target;
-    assertHTMLElement(target);
+    const target = evt.composedPath()[0];
+    if (target instanceof HTMLButtonElement) {
+      switch (target.id) {
+        case "select":
+          this.#mode = MODE.SELECT;
+          break;
 
-    switch (target.id) {
-      case "select":
-        this.#mode = MODE.SELECT;
-        break;
+        case "pan":
+          this.#mode = MODE.PAN;
+          break;
 
-      case "pan":
-        this.#mode = MODE.PAN;
-        break;
+        case "zoom-in":
+          this.#mode = MODE.ZOOM_IN;
+          break;
 
-      case "zoom-in":
-        this.#mode = MODE.ZOOM_IN;
-        break;
+        case "zoom-out":
+          this.#mode = MODE.ZOOM_OUT;
+          break;
 
-      case "zoom-out":
-        this.#mode = MODE.ZOOM_OUT;
-        break;
+        case "fit": {
+          this.#scale = 0.85;
+          this.#translation.x = 0;
+          this.#translation.y = 0;
+          this.#mode = MODE.PAN;
+          this.#attemptUpdateViewBox();
+          break;
+        }
 
-      case "fit": {
-        this.#scale = 0.85;
-        this.#translation.x = 0;
-        this.#translation.y = 0;
-        this.#mode = MODE.PAN;
-        this.#attemptUpdateViewBox();
-        break;
+        default:
+          {
+            if (this.#mode === MODE.ZOOM_IN) {
+              this.#scale *= 1.2;
+            } else if (this.#mode === MODE.ZOOM_OUT) {
+              this.#scale *= 0.8;
+            }
+
+            this.#clampScale();
+            this.#attemptUpdateViewBox();
+          }
+          break;
       }
 
-      default:
-        {
-          if (this.#mode === MODE.ZOOM_IN) {
-            this.#scale *= 1.2;
-          } else if (this.#mode === MODE.ZOOM_OUT) {
-            this.#scale *= 0.8;
+      this.#updateControls();
+      this.#updateContainerClass();
+    } else if (this.#mode === MODE.SELECT) {
+      // Walk the composed path to find the selected node if there is one.
+      for (const item of evt.composedPath()) {
+        if (item instanceof SVGElement) {
+          if (item.classList.contains("node")) {
+            // Because the node's ID will be stripped of any dashes, we need to
+            // go looking in the SVG's node label for the "actual" label.
+            const label = item.querySelector(".nodeLabel");
+            if (!label || !label.textContent) {
+              break;
+            }
+
+            // TODO: Find a nicer way of doing this; it's very brittle.
+            const id = label.textContent.replace(/.*?id='(.*?)'.*?/gim, "$1");
+            this.dispatchEvent(new NodeSelectEvent(id));
           }
-
-          this.#clampScale();
-          this.#attemptUpdateViewBox();
         }
-        break;
+      }
     }
-
-    this.#updateControls();
-    this.#updateContainerClass();
   }
 
   #onPointerDown(evt: Event) {
     this.#isInteracting = true;
+    this.#updateControls();
 
     assertPointerEvent(evt);
 
@@ -361,17 +411,24 @@ export class Diagram extends HTMLElement {
   }
 
   #updateContainerClass() {
-    this.classList.remove("pan", "zoom-in", "zoom-out");
     switch (this.#mode) {
+      case MODE.SELECT:
+        this.classList.remove("pan", "zoom-in", "zoom-out");
+        this.classList.add("select");
+        break;
+
       case MODE.PAN:
+        this.classList.remove("select", "zoom-in", "zoom-out");
         this.classList.add("pan");
         break;
 
       case MODE.ZOOM_IN:
+        this.classList.remove("select", "pan", "zoom-out");
         this.classList.add("zoom-in");
         break;
 
       case MODE.ZOOM_OUT:
+        this.classList.remove("select", "pan", "zoom-in");
         this.classList.add("zoom-out");
         break;
     }
@@ -495,7 +552,7 @@ export class Diagram extends HTMLElement {
   }
 
   reset() {
-    this.#mode = MODE.PAN;
+    this.#mode = MODE.SELECT;
     this.#translation.x = Number.NaN;
     this.#translation.y = Number.NaN;
     this.#diagramDimensions.w = Number.NaN;

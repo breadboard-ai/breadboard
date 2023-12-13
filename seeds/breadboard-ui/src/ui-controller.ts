@@ -8,7 +8,12 @@ import { Input, type InputArgs } from "./input.js";
 import { Load, type LoadArgs } from "./load.js";
 import { Output, type OutputArgs } from "./output.js";
 import { ResultArgs } from "./result.js";
-import { DelayEvent, StartEvent, type ToastType } from "./events.js";
+import {
+  DelayEvent,
+  NodeSelectEvent,
+  StartEvent,
+  type ToastType,
+} from "./events.js";
 import { Toast } from "./toast.js";
 import { InputContainer } from "./input-container.js";
 import { Diagram } from "./diagram.js";
@@ -19,6 +24,7 @@ import {
 } from "./utils/assertions.js";
 import { HarnessEventType } from "./types.js";
 import { HistoryEntry } from "./history-entry.js";
+import { NodeConfiguration, NodeDescriptor } from "@google-labs/breadboard";
 
 export interface UI {
   progress(id: string, message: string): void;
@@ -38,11 +44,15 @@ interface HistoryLogItem {
 
 export class UIController extends HTMLElement implements UI {
   #inputContainer = new InputContainer();
-  #progressContainer: HTMLElement;
+  #nodeInformation: HTMLElement;
   #currentBoardDiagram = "";
   #diagram = new Diagram();
   #lastHistoryEventTime = Number.NaN;
   #historyLog: HistoryLogItem[] = [];
+  #nodeInfo: Map<
+    string,
+    { type: string; configuration: NodeConfiguration | undefined }
+  > = new Map();
 
   constructor() {
     super();
@@ -318,21 +328,76 @@ export class UIController extends HTMLElement implements UI {
           color: #888;
         }
 
-        #progress-container:empty {
+        #node-information:empty {
           display: none;
         }
 
-        #progress-container {
+        #node-information {
           display: block;
           position: absolute;
           bottom: 20px;
           left: 20px;
+          max-width: calc(var(--bb-grid-size) * 90);
+          max-height: 40%;
           border-radius: calc(var(--bb-grid-size) * 6);
           background: rgb(255, 255, 255);
-          padding: calc(var(--bb-grid-size) * 2);
+          padding: calc(var(--bb-grid-size) * 4);
           border: 1px solid rgb(204, 204, 204);
           box-shadow: 0 2px 3px 0 rgba(0,0,0,0.13),
             0 7px 9px 0 rgba(0,0,0,0.16);
+          overflow-y: auto;
+          scrollbar-gutter: stable;
+        }
+
+        #node-information h1 {
+          font-size: var(--bb-text-medium);
+          margin: 0;
+          font-weight: 400;
+          padding: 0 0 0 calc(var(--bb-grid-size) * 8);
+          line-height: calc(var(--bb-grid-size) * 6);
+          cursor: pointer;
+          background: var(--bb-icon-info) 0 0 no-repeat;
+        }
+
+        #node-information dl {
+          margin: calc(var(--bb-grid-size) * 2) 0;
+          padding-right: calc(var(--bb-grid-size) * 5);
+          display: grid;
+          grid-template-columns: fit-content(50px) 1fr;
+          column-gap: calc(var(--bb-grid-size) * 2);
+          row-gap: calc(var(--bb-grid-size) * 1);
+          font-size: var(--bb-text-nano);
+          width: 100%;
+          overflow-x: auto;
+          scrollbar-gutter: stable;
+        }
+
+        #node-information dd {
+          margin: 0;
+          font-weight: bold;
+        }
+
+        #node-information pre {
+          font-size: var(--bb-text-nano);
+          white-space: pre-wrap;
+          margin: 0;
+        }
+
+        #node-information #close {
+          position: absolute;
+          right: calc(var(--bb-grid-size) * 3);
+          top: calc(var(--bb-grid-size) * 4);
+          width: 24px;
+          height: 24px;
+          background: var(--bb-icon-close) center center no-repeat;
+          border: none;
+          font-size: 0;
+          opacity: 0.5;
+          cursor: pointer;
+        }
+
+        #node-information #close:hover {
+          opacity: 1;
         }
       </style>
       <!-- Load info -->
@@ -361,7 +426,7 @@ export class UIController extends HTMLElement implements UI {
         <!-- Diagram -->
         <div id="diagram">
           <div id="diagram-container"></div>
-          <div id="progress-container"></div>
+          <div id="node-information"></div>
         </div>
 
         <!-- Sidebar -->
@@ -398,9 +463,18 @@ export class UIController extends HTMLElement implements UI {
       </div>
     `;
 
-    const progressContainer = root.querySelector("#progress-container");
-    assertHTMLElement(progressContainer);
-    this.#progressContainer = progressContainer;
+    const nodeInformation = root.querySelector("#node-information");
+    assertHTMLElement(nodeInformation);
+    this.#nodeInformation = nodeInformation;
+    this.#nodeInformation.addEventListener("click", (evt: Event) => {
+      if (!(evt.target instanceof HTMLElement)) {
+        return;
+      }
+
+      if (evt.target.id === "close") {
+        this.#clearNodeInformation();
+      }
+    });
 
     this.appendChild(this.#inputContainer);
 
@@ -410,6 +484,11 @@ export class UIController extends HTMLElement implements UI {
     assertSelectElement(delay);
 
     diagramContainer.appendChild(this.#diagram);
+    this.#diagram.addEventListener(NodeSelectEvent.eventName, (evt: Event) => {
+      const nodeSelect = evt as NodeSelectEvent;
+      this.#showNodeInformation(nodeSelect.id);
+    });
+
     delay.addEventListener("change", () => {
       this.dispatchEvent(new DelayEvent(parseFloat(delay.value)));
     });
@@ -481,8 +560,64 @@ export class UIController extends HTMLElement implements UI {
     return;
   }
 
+  #showNodeInformation(id: string) {
+    this.#clearNodeInformation();
+
+    const nodeInfo = this.#nodeInfo.get(id);
+    if (!nodeInfo) {
+      return;
+    }
+
+    const title = document.createElement("h1");
+    title.textContent = "Node information";
+    this.#nodeInformation.appendChild(title);
+
+    const close = document.createElement("button");
+    close.id = "close";
+    close.textContent = "Close";
+    this.#nodeInformation.appendChild(close);
+
+    const headerInfo = document.createElement("dl");
+    const nodeId = document.createElement("dd");
+    const nodeIdValue = document.createElement("dt");
+    const type = document.createElement("dd");
+    const typeValue = document.createElement("dt");
+    const configuration = document.createElement("dd");
+    const configurationValue = document.createElement("dt");
+    const configurationValuePre = document.createElement("pre");
+
+    nodeId.textContent = "ID";
+    nodeIdValue.textContent = id;
+
+    type.textContent = "Type";
+    typeValue.textContent = nodeInfo.type;
+
+    configuration.textContent = "Configuration";
+    configurationValue.appendChild(configurationValuePre);
+    configurationValuePre.textContent = JSON.stringify(
+      nodeInfo.configuration || "No node configuration found",
+      null,
+      2
+    );
+
+    headerInfo.appendChild(nodeId);
+    headerInfo.appendChild(nodeIdValue);
+    headerInfo.appendChild(type);
+    headerInfo.appendChild(typeValue);
+    headerInfo.appendChild(configuration);
+    headerInfo.appendChild(configurationValue);
+
+    this.#nodeInformation.appendChild(headerInfo);
+  }
+
+  #clearNodeInformation() {
+    const children = Array.from(this.#nodeInformation.querySelectorAll("*"));
+    for (const child of children) {
+      child.remove();
+    }
+  }
+
   #clearBoardContents() {
-    this.#clearProgressContainer();
     this.#inputContainer.clearContents();
 
     const root = this.shadowRoot;
@@ -585,10 +720,19 @@ export class UIController extends HTMLElement implements UI {
     }
   }
 
-  #clearProgressContainer() {
-    const children = Array.from(this.#progressContainer.querySelectorAll("*"));
-    for (const child of children) {
-      child.remove();
+  #parseNodeInformation(nodes?: NodeDescriptor[]) {
+    this.#nodeInfo.clear();
+    if (!nodes) {
+      return;
+    }
+
+    for (const node of nodes) {
+      // The diagram is going to emit IDs without dashes in, so store the config
+      // based on the modified ID here.
+      this.#nodeInfo.set(node.id, {
+        type: node.type,
+        configuration: node.configuration,
+      });
     }
   }
 
@@ -603,6 +747,8 @@ export class UIController extends HTMLElement implements UI {
     load.slot = "load";
     this.appendChild(load);
     this.#diagram.reset();
+
+    this.#parseNodeInformation(info.nodes);
 
     this.#historyLog.length = 0;
     this.#lastHistoryEventTime = globalThis.performance.now();
@@ -627,7 +773,6 @@ export class UIController extends HTMLElement implements UI {
   }
 
   async output(values: OutputArgs) {
-    this.#clearProgressContainer();
     this.#createHistoryEntry(
       HarnessEventType.OUTPUT,
       "Output",
@@ -688,8 +833,6 @@ export class UIController extends HTMLElement implements UI {
   }
 
   async input(id: string, args: InputArgs): Promise<Record<string, unknown>> {
-    this.#clearProgressContainer();
-
     const input = new Input(id, args);
     if (this.#inputContainer.childNodes.length) {
       this.#inputContainer.insertBefore(input, this.#inputContainer.firstChild);
@@ -709,12 +852,10 @@ export class UIController extends HTMLElement implements UI {
   }
 
   error(message: string) {
-    this.#clearProgressContainer();
     this.#createHistoryEntry(HarnessEventType.ERROR, message);
   }
 
   done() {
-    this.#clearProgressContainer();
     this.#createHistoryEntry(HarnessEventType.DONE, "Board finished");
   }
 }

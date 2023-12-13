@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { NodeDescriptor } from "@google-labs/breadboard";
 import { ToastEvent, ToastType } from "./events.js";
 
 export type LoadArgs = {
@@ -12,6 +13,7 @@ export type LoadArgs = {
   version?: string;
   diagram?: string;
   url?: string;
+  nodes?: NodeDescriptor[];
 };
 
 const LOCAL_STORAGE_KEY = "bb-ui-show-diagram";
@@ -97,7 +99,7 @@ export class Load extends HTMLElement {
           dt {
             font-size: var(--bb-text-baseline);
           }
-  
+
           dd {
             font-size: var(--bb-text-baseline);
           }
