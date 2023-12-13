@@ -10,16 +10,16 @@
       "in": "text"
     },
     {
+      "from": "secrets-1",
+      "to": "compute",
+      "out": "PALM_KEY",
+      "in": "PALM_KEY"
+    },
+    {
       "from": "math-function-generator",
       "to": "compute",
       "out": "completion",
       "in": "code"
-    },
-    {
-      "from": "secrets-1",
-      "to": "math-function-generator",
-      "out": "PALM_KEY",
-      "in": "PALM_KEY"
     },
     {
       "from": "math-function",
@@ -103,9 +103,6 @@
   ],
   "kits": [
     {
-      "title": "LLM Starter Kit",
-      "description": "A kit that provides a few necessary components for wiring boards that use PaLM API.",
-      "version": "0.0.1",
       "url": "npm:@google-labs/llm-starter"
     },
     {

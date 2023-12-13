@@ -28,7 +28,7 @@ const palm = board.addKit(PaLMKit);
 
 // A URL to a repository containing various saved breadboard layouts.
 const REPO_URL =
-  "https://raw.githubusercontent.com/breadboard-ai/breadboardmain/seeds/graph-playground/graphs";
+  "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/seeds/graph-playground/graphs";
 
 // The single node where all the important keys come from.
 const secrets = kit.secrets({ keys: ["PALM_KEY", "GOOGLE_CSE_ID"] });

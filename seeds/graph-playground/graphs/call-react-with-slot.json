@@ -30,7 +30,9 @@
               "description": "A problem to be solved"
             }
           },
-          "required": ["text"]
+          "required": [
+            "text"
+          ]
         }
       }
     },
@@ -139,7 +141,9 @@
               "description": "ReAct's response to the user's problem"
             }
           },
-          "required": ["text"]
+          "required": [
+            "text"
+          ]
         }
       }
     }

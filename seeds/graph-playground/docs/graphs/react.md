@@ -14,7 +14,6 @@ rememberQuestion["append <br> id='rememberQuestion'"] -- "accumulator->accumulat
 rememberQuestion["append <br> id='rememberQuestion'"] -- "accumulator->memory" --> promptTemplate2["promptTemplate <br> id='promptTemplate-2'"]
 input5[/"input <br> id='input-5'"/]:::input -- "text->Question" --> rememberQuestion["append <br> id='rememberQuestion'"]
 secrets1("secrets <br> id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o reactcompletion["palm-generateText <br> id='react-completion'"]
-compute["runJavascript <br> id='compute'"] -- "result->Observation" --> rememberObservation["append <br> id='rememberObservation'"]
 mathfunctioncompletion["palm-generateText <br> id='math-function-completion'"] -- "completion->code" --> compute["runJavascript <br> id='compute'"]
 secrets1("secrets <br> id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --o mathfunctioncompletion["palm-generateText <br> id='math-function-completion'"]
 mathfunction["promptTemplate <br> id='math-function'"] -- "prompt->text" --> mathfunctioncompletion["palm-generateText <br> id='math-function-completion'"]

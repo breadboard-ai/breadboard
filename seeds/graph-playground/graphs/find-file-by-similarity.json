@@ -177,7 +177,7 @@
       "id": "jsonata-13",
       "type": "jsonata",
       "configuration": {
-        "expression": "\n              $join(\n                $map(*, function($v, $i, $a) {\n                  $v.document.id & \": \" & $string($v.similarity)\n                }),\n                \"\n\"\n              )\n            "
+        "expression": "\n              $join(\n                $map(*, function($v, $i, $a) {\n                  $v.document.id & \": \" & $string($v.similarity)\n                }),\n                \"\n\"\n              )"
       }
     },
     {
@@ -187,9 +187,6 @@
   ],
   "kits": [
     {
-      "title": "LLM Starter Kit",
-      "description": "A kit that provides a few necessary components for wiring boards that use PaLM API.",
-      "version": "0.0.1",
       "url": "npm:@google-labs/llm-starter"
     },
     {

@@ -13,7 +13,7 @@ import Core from "@google-labs/core-kit";
 
 // TODO: Replace with a well-known published URL, like a CDN.
 const KIT_BASE_URL =
-  "https://raw.githubusercontent.com/breadboard-ai/breadboardmain/seeds/pinecone-kit/graphs/kit.json";
+  "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/seeds/pinecone-kit/graphs/kit.json";
 
 const NAMESPACE = "pinecone-api-";
 

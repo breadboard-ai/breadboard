@@ -1,7 +1,7 @@
 {
   "title": "The simplest LLM-based recipe",
   "description": "This is as simple as it gets: the recipe takes a prompt as input and generates a response as output.",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "edges": [
     {
       "from": "secrets-2",
@@ -77,9 +77,6 @@
   ],
   "kits": [
     {
-      "title": "LLM Starter Kit",
-      "description": "A kit that provides a few necessary components for wiring boards that use PaLM API.",
-      "version": "0.0.1",
       "url": "npm:@google-labs/llm-starter"
     },
     {

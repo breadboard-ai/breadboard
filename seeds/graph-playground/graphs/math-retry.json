@@ -146,9 +146,6 @@
                 "url": "npm:@google-labs/palm-kit"
               },
               {
-                "title": "LLM Starter Kit",
-                "description": "A kit that provides a few necessary components for wiring boards that use PaLM API.",
-                "version": "0.0.1",
                 "url": "npm:@google-labs/llm-starter"
               },
               {
@@ -181,9 +178,6 @@
   ],
   "kits": [
     {
-      "title": "LLM Starter Kit",
-      "description": "A kit that provides a few necessary components for wiring boards that use PaLM API.",
-      "version": "0.0.1",
       "url": "npm:@google-labs/llm-starter"
     },
     {

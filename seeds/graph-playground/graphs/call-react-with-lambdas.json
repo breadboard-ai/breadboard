@@ -69,7 +69,9 @@
               "description": "A problem to be solved"
             }
           },
-          "required": ["text"]
+          "required": [
+            "text"
+          ]
         }
       }
     },
@@ -93,16 +95,15 @@
               "description": "ReAct's response to the user's problem"
             }
           },
-          "required": ["text"]
+          "required": [
+            "text"
+          ]
         }
       }
     }
   ],
   "kits": [
     {
-      "title": "LLM Starter Kit",
-      "description": "A kit that provides a few necessary components for wiring boards that use PaLM API.",
-      "version": "0.0.1",
       "url": "npm:@google-labs/llm-starter"
     },
     {

@@ -12,7 +12,7 @@ const simplest = new Board({
   title: "The simplest LLM-based recipe",
   description:
     "This is as simple as it gets: the recipe takes a prompt as input and generates a response as output.",
-  version: "0.0.1",
+  version: "0.0.2",
 });
 const kit = simplest.addKit(Starter);
 const palm = simplest.addKit(PaLMKit);

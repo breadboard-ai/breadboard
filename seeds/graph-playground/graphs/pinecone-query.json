@@ -63,7 +63,7 @@
       "id": "promptTemplate-1",
       "type": "promptTemplate",
       "configuration": {
-        "template": "Analyze the question and the knowledge base, provided below.\n  \nIf the knowledge base does not contain the information to produce the answer, tell the user that you don't know.\n\nOtherwise, write a comprehensive answer to the question using only the information from the knowledge base.\n\n# Question:\n\n{{query}}\n\n# Knowledge Base:\n{{context}}\n\n# Answer\n"
+        "template": "\nAnalyze the question and the knowledge base, provided below.\n\nIf the knowledge base does not contain the information to produce the answer, tell the user that you don't know.\n\nOtherwise, write a comprehensive answer to the question using only the information from the knowledge base.\n\n# Question:\n\n{{query}}\n\n# Knowledge Base:\n{{context}}\n\n# Answer\n"
       }
     },
     {
@@ -90,7 +90,9 @@
       "id": "secrets-3",
       "type": "secrets",
       "configuration": {
-        "keys": ["PALM_KEY"]
+        "keys": [
+          "PALM_KEY"
+        ]
       }
     },
     {
@@ -112,7 +114,9 @@
       "id": "secrets-7",
       "type": "secrets",
       "configuration": {
-        "keys": ["PALM_KEY"]
+        "keys": [
+          "PALM_KEY"
+        ]
       }
     },
     {
@@ -122,9 +126,6 @@
   ],
   "kits": [
     {
-      "title": "LLM Starter Kit",
-      "description": "A kit that provides a few necessary components for wiring boards that use PaLM API.",
-      "version": "0.0.1",
       "url": "npm:@google-labs/llm-starter"
     },
     {

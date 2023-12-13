@@ -111,7 +111,10 @@
       "id": "secrets-1",
       "type": "secrets",
       "configuration": {
-        "keys": ["PALM_KEY", "GOOGLE_CSE_ID"]
+        "keys": [
+          "PALM_KEY",
+          "GOOGLE_CSE_ID"
+        ]
       }
     },
     {
@@ -154,7 +157,9 @@
               "description": "Ask ReAct a question"
             }
           },
-          "required": ["text"]
+          "required": [
+            "text"
+          ]
         }
       }
     },
@@ -162,7 +167,9 @@
       "id": "react-completion",
       "type": "palm-generateText",
       "configuration": {
-        "stopSequences": ["\nObservation"]
+        "stopSequences": [
+          "\nObservation"
+        ]
       }
     },
     {
@@ -193,9 +200,6 @@
       "url": "npm:@google-labs/core-kit"
     },
     {
-      "title": "LLM Starter Kit",
-      "description": "A kit that provides a few necessary components for wiring boards that use PaLM API.",
-      "version": "0.0.1",
       "url": "npm:@google-labs/llm-starter"
     },
     {
