@@ -5,13 +5,17 @@
  */
 
 import { z } from "zod";
-import { recipe, base } from "@google-labs/breadboard";
+import {
+  recipeAsGraphWithZod,
+  recipeAsCode,
+  base,
+} from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { starter } from "@google-labs/llm-starter";
 import { palm } from "@google-labs/palm-kit";
 import { nursery } from "@google-labs/node-nursery-web";
 
-const textGenerator = recipe(
+const textGenerator = recipeAsGraphWithZod(
   {
     input: z.object({
       text: z.string().describe("Text: The text to generate"),
@@ -68,11 +72,11 @@ const textGenerator = recipe(
     gpt35.text.to(textOutput);
     gpt35.stream.to(streamOutput);
 
-    const mockModel = recipe<
+    const mockModel = recipeAsCode<
       { text: string; useStreaming?: boolean },
       { text?: string; list?: string[] }
-    >(async (inputs) => {
-      const { text, useStreaming } = await inputs;
+    >((inputs) => {
+      const { text, useStreaming } = inputs;
 
       const result = `Mock model with streaming off echoes back: ${text}`;
       if (useStreaming) {
@@ -84,8 +88,8 @@ const textGenerator = recipe(
     mockModel.text.to(textOutput);
     mockModel.list.to(nursery.listToStream()).to(streamOutput);
 
-    const switcher = recipe(async (inputs) => {
-      const { model, useStreaming } = await inputs;
+    const switcher = recipeAsCode((inputs) => {
+      const { model, useStreaming } = inputs;
       switch (model) {
         case "PaLM":
           if (useStreaming) {
