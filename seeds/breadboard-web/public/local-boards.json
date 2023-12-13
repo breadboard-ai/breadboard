@@ -16,11 +16,13 @@
   },
   {
     "title": "Gemini Pro Generator",
-    "url": "/graphs/gemini-generator.json"
+    "url": "/graphs/gemini-generator.json",
+    "version": "0.0.2"
   },
   {
     "title": "Gemini Pro Vision",
-    "url": "/graphs/gemini-pro-vision.json"
+    "url": "/graphs/gemini-pro-vision.json",
+    "version": "0.0.2"
   },
   {
     "title": "Healer",
