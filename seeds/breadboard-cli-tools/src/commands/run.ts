@@ -11,8 +11,7 @@ import {
   Schema,
   asRuntimeKit,
 } from "@google-labs/breadboard";
-import { watch as fsWatch } from "fs";
-import { loadBoard, parseStdin, resolveFilePath } from "./lib/utils.js";
+import { loadBoard, parseStdin, resolveFilePath, watch } from "./lib/utils.js";
 import * as readline from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
 import path from "path";
@@ -95,27 +94,14 @@ export const run = async (file: string, options: Record<string, any>) => {
 
     // If we are watching, we need to run the board again when the file changes.
     if ("watch" in options) {
-      const controller = new AbortController();
-
-      fsWatch(
-        file,
-        { signal: controller.signal },
-        async (eventType: string, filename: string | Buffer | null) => {
-          if (typeof filename != "string") return;
-
-          if (eventType === "change") {
-            // Now the board has changed, we need to reload it and run it again.
-            board = await loadBoard(filePath, options);
-            // We might want to clear the console here.
-            await runBoard(board, input, kitDeclarations);
-          } else if (eventType === "rename") {
-            console.error(
-              `File ${filename} has been renamed. We can't manage this yet. Sorry!`
-            );
-            controller.abort();
-          }
-        }
-      );
+      watch(file, {
+        onChange: async () => {
+          // Now the board has changed, we need to reload it and run it again.
+          board = await loadBoard(filePath, options);
+          // We might want to clear the console here.
+          await runBoard(board, input, kitDeclarations);
+        },
+      });
     }
   } else {
     const stdin = await parseStdin();

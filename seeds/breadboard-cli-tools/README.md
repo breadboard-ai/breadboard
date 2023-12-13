@@ -6,15 +6,12 @@
 
 ### Debug
 
-If it's not installed:
+`npx breadboard debug` - Brings up the web debug server
+`npx breadboard debug ./tests/echo.json` - Brings up the local board hosted in the UI
 
-`npm run run-debug debug` - Brings up the web debug server
-`npm run run-debug debug ./tests/echo.json` - Brings up the local board hosted in the UI
+`npx breadboard debug ./tests/` - Brings up the local board hosted in the UI and show all the boards in the folder.
 
-If it is installed:
-
-`breadboard debug` - Brings up the web debug server
-`breadboard debug ./tests/echo.json` - Brings up the local board hosted in the UI
+`npx breadboard debug ./tests/ --watch` - Brings up the local board hosted in the UI and show all the boards in the folder. If new boards added to the folder then they will be added to the UI.
 
 ### Mermaid
 

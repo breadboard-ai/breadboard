@@ -18,8 +18,9 @@ program
 
 program
   .command("debug [file]")
-  .option("-o, --output <path>", "If compiling a graph in Typescript (.ts), you MUST specific a location to output the compiled graph.")
   .description("Starts a simple HTTP server that serves the breadboard-web app, and outputs a URL that contains a link to a breadboard file that the user provided.")
+  .option("-o, --output <path>", "If compiling a graph in Typescript (.ts), you MUST specific a location to output the compiled graph.")
+  .option("-w, --watch", "Watch the file for changes.")
   .action(debug);
 
 program

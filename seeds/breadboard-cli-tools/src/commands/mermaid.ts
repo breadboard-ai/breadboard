@@ -5,15 +5,13 @@
  */
 
 import { BoardRunner } from "@google-labs/breadboard";
-import { watch } from "fs";
-import { loadBoard, parseStdin, resolveFilePath } from "./lib/utils.js";
+import { loadBoard, parseStdin, resolveFilePath, watch } from "./lib/utils.js";
 import path from "path";
 
 export const mermaid = async (
   file: string,
   options: Record<string, string>
 ) => {
-
   if (
     file != undefined &&
     path.extname(file) == ".ts" &&
@@ -31,25 +29,12 @@ export const mermaid = async (
     console.log(board.mermaid());
 
     if ("watch" in options) {
-      const controller = new AbortController();
-
-      watch(
-        file,
-        { signal: controller.signal },
-        async (eventType: string, filename: string | Buffer | null) => {
-          if (typeof filename != "string") return;
-
-          if (eventType === "change") {
-            board = await loadBoard(filePath, options);
-            console.log(board.mermaid());
-          } else if (eventType === "rename") {
-            console.error(
-              `File ${filename} has been renamed. We can't manage this yet. Sorry!`
-            );
-            controller.abort();
-          }
-        }
-      );
+      watch(file, {
+        onChange: async () => {
+          board = await loadBoard(filePath, options);
+          console.log(board.mermaid());
+        },
+      });
     }
   } else {
     const stdin = await parseStdin();
