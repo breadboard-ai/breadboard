@@ -416,7 +416,9 @@ export class UIController extends HTMLElement implements UI {
 
     const downloadLog = root.querySelector("#download-history-log");
     assertHTMLElement(downloadLog);
-    downloadLog.addEventListener("click", () => {
+    downloadLog.addEventListener("click", (evt: Event) => {
+      evt.stopImmediatePropagation();
+
       const currentLink = downloadLog.getAttribute("href");
       if (currentLink) {
         URL.revokeObjectURL(currentLink);
