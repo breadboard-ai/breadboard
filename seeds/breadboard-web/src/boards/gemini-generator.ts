@@ -11,7 +11,7 @@ import NodeNurseryWeb from "@google-labs/node-nursery-web";
 const board = new Board({
   title: "Gemini Pro Generator",
   description: "The text generator recipe powered by the Gemini Pro model",
-  version: "0.0.1",
+  version: "0.0.2",
 });
 const starter = board.addKit(Starter);
 const nursery = board.addKit(NodeNurseryWeb);

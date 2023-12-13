@@ -1,7 +1,7 @@
 {
   "title": "Gemini Pro Generator",
   "description": "The text generator recipe powered by the Gemini Pro model",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "edges": [
     {
       "from": "parameters",
