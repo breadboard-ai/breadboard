@@ -12,7 +12,7 @@ const board = new Board({
   title: "OpenAI GPT-3.5-turbo",
   description:
     "This board is the simplest possible invocation of OpenAI's GPT-3.5 API to generate text.",
-  version: "0.0.1",
+  version: "0.0.2",
 });
 const starter = board.addKit(Starter);
 const nursery = board.addKit(NodeNurseryWeb);

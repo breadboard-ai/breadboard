@@ -10,6 +10,7 @@ export type StartArgs = {
   boards: {
     title: string;
     url: string;
+    version: string;
   }[];
 };
 

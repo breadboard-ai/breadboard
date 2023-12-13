@@ -22,7 +22,7 @@ export const graph = recipe(
     title: "New: The Search Summarizer Recipe (as a recipe() call)",
     description:
       "A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.",
-    version: "0.0.2",
+    version: "0.0.1",
   },
   (input) => {
     const searchURLTemplate = starter.urlTemplate({

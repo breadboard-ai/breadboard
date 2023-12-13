@@ -22,6 +22,7 @@ await mkdir(DIAGRAM_PATH, { recursive: true });
 type ManifestItem = {
   title: string;
   url: string;
+  version: string;
 };
 
 async function findTsFiles(dir: string): Promise<string[]> {
@@ -61,6 +62,7 @@ async function saveBoard(filePath: string): Promise<ManifestItem> {
   const manifestEntry: ManifestItem = {
     title: board.default.title ?? "Untitled",
     url: `/graphs/${relativePath.replace(".ts", ".json")}`,
+    version: board.default.version ?? undefined,
   };
 
   await writeFile(

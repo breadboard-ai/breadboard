@@ -1,31 +1,38 @@
 [
   {
     "title": "Simple chatbot (accumulating context)",
-    "url": "/graphs/accumulating-context.json"
+    "url": "/graphs/accumulating-context.json",
+    "version": "0.0.2"
   },
   {
     "title": "Board as Function",
-    "url": "/graphs/board-as-function.json"
+    "url": "/graphs/board-as-function.json",
+    "version": "0.0.1"
   },
   {
     "title": "Board Caller",
-    "url": "/graphs/board-caller.json"
+    "url": "/graphs/board-caller.json",
+    "version": "0.0.6"
   },
   {
     "title": "Healer",
-    "url": "/graphs/healer.json"
+    "url": "/graphs/healer.json",
+    "version": "0.0.1"
   },
   {
     "title": "JSON Generator",
-    "url": "/graphs/json-generator.json"
+    "url": "/graphs/json-generator.json",
+    "version": "0.0.1"
   },
   {
     "title": "JSON Validator",
-    "url": "/graphs/json-validator.json"
+    "url": "/graphs/json-validator.json",
+    "version": "0.0.1"
   },
   {
     "title": "List Google Drive files",
-    "url": "/graphs/list-files.json"
+    "url": "/graphs/list-files.json",
+    "version": "0.0.1"
   },
   {
     "title": "Math, chain style graph",
@@ -37,7 +44,8 @@
   },
   {
     "title": "The Calculator Recipe",
-    "url": "/graphs/math.json"
+    "url": "/graphs/math.json",
+    "version": "0.0.2"
   },
   {
     "title": "Mock Text Generator",
@@ -45,34 +53,42 @@
   },
   {
     "title": "OpenAI GPT-3.5-turbo",
-    "url": "/graphs/openai-gpt-35-turbo.json"
+    "url": "/graphs/openai-gpt-35-turbo.json",
+    "version": "0.0.2"
   },
   {
     "title": "OpenAI GPT 4 Vision Preview",
-    "url": "/graphs/openai-gpt-4-vision.json"
+    "url": "/graphs/openai-gpt-4-vision.json",
+    "version": "0.0.2"
   },
   {
     "title": "Retry",
-    "url": "/graphs/retry.json"
+    "url": "/graphs/retry.json",
+    "version": "0.0.1"
   },
   {
     "title": "New: The Search Summarizer Recipe (as a recipe() call)",
-    "url": "/graphs/search-summarize-as-recipe.json"
+    "url": "/graphs/search-summarize-as-recipe.json",
+    "version": "0.0.1"
   },
   {
     "title": "The Search Summarizer Recipe",
-    "url": "/graphs/search-summarize.json"
+    "url": "/graphs/search-summarize.json",
+    "version": "0.1.0"
   },
   {
     "title": "Text Generator Recipe",
-    "url": "/graphs/text-generator-recipe.json"
+    "url": "/graphs/text-generator-recipe.json",
+    "version": "0.0.1"
   },
   {
     "title": "Text Generator",
-    "url": "/graphs/text-generator.json"
+    "url": "/graphs/text-generator.json",
+    "version": "0.0.1"
   },
   {
     "title": "Tour Guide Writer",
-    "url": "/graphs/tour-guide-writer.json"
+    "url": "/graphs/tour-guide-writer.json",
+    "version": "0.0.2"
   }
 ]

@@ -77,6 +77,15 @@ export class Main {
   #pending = new Map<string, string>();
 
   constructor(config: BreadboardUI.StartArgs) {
+    // Remove boards that are still works-in-progress from production builds.
+    // These boards will have either no version or a version of "0.0.1".
+    if (import.meta.env.MODE === "production") {
+      config.boards = config.boards.filter(
+        (board) => board.version && board.version !== "0.0.1"
+      );
+    }
+    config.boards.sort((a, b) => a.title.localeCompare(b.title));
+
     this.#harness = this.#getHarness();
     BreadboardUI.register();
 

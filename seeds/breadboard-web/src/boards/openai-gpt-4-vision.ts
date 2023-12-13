@@ -12,7 +12,7 @@ const board = new Board({
   title: "OpenAI GPT 4 Vision Preview",
   description:
     "This board is the simplest possible invocation of OpenAI's GPT 4 Vision Preview API to generate text from multipart inputs.",
-  version: "0.0.1",
+  version: "0.0.2",
 });
 const starter = board.addKit(Starter);
 const nursery = board.addKit(NodeNurseryWeb);
