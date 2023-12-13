@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board } from "@google-labs/breadboard";
+import { Board, Schema } from "@google-labs/breadboard";
 import Core from "@google-labs/core-kit";
 import { Starter } from "@google-labs/llm-starter";
 
@@ -26,6 +26,7 @@ const inputs = recipe.input({
         type: "string",
         title: "Math problem",
         description: "Ask a math question",
+        examples: ["What is the square root of pi?"],
       },
       generator: {
         type: "string",
@@ -35,7 +36,7 @@ const inputs = recipe.input({
       },
     },
     required: ["text"],
-  },
+  } satisfies Schema,
 });
 
 inputs.wire(

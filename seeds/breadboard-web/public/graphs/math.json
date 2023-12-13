@@ -51,7 +51,10 @@
             "text": {
               "type": "string",
               "title": "Math problem",
-              "description": "Ask a math question"
+              "description": "Ask a math question",
+              "examples": [
+                "What is the square root of pi?"
+              ]
             },
             "generator": {
               "type": "string",
