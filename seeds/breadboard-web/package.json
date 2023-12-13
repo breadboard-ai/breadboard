@@ -62,7 +62,8 @@
         "generate:graphs"
       ],
       "files": [
-        "vite.config.ts"
+        "vite.config.ts",
+        ".env"
       ],
       "output": [
         "dist/"
