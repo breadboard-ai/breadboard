@@ -13,7 +13,8 @@ import type {
 } from "@google-labs/breadboard";
 
 export type PropmtTemplateOutputs = {
-  prompt: string;
+  text: string;
+  prompt: string; // Deprecated
 };
 
 export type PromptTemplateInputs = {
@@ -47,7 +48,7 @@ export const promptTemplateHandler: NodeHandlerFunction = async (
 ) => {
   const template = inputs.template as string;
   const parameters = parametersFromTemplate(template);
-  if (!parameters.length) return { prompt: template };
+  if (!parameters.length) return { prompt: template, text: template };
 
   const substitutes = parameters.reduce((acc, parameter) => {
     if (inputs[parameter] === undefined)
@@ -57,7 +58,7 @@ export const promptTemplateHandler: NodeHandlerFunction = async (
 
   const prompt = substitute(template, substitutes);
   // log.info(`Prompt: ${prompt}`);
-  return { prompt };
+  return { prompt, text: prompt };
 };
 
 export const computeInputSchema = (inputs: InputValues): Schema => {
@@ -93,14 +94,14 @@ export const promptTemplateDescriber: NodeDescriberFunction = async (
     outputSchema: {
       type: "object",
       properties: {
-        prompt: {
+        text: {
           title: "prompt",
           description:
             "The resulting prompt that was produced by filling in the placeholders in the template.",
           type: "string",
         },
       },
-      required: ["prompt"],
+      required: ["text"],
     },
   };
 };
