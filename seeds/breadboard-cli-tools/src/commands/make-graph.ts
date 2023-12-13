@@ -4,11 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { watch } from "fs";
 import { stat } from "fs/promises";
 import path from "path";
-import { resolveFilePath } from "./lib/utils.js";
-import { makeFromFile } from "./lib/utils.js";
+import { makeFromFile, resolveFilePath, watch } from "./lib/utils.js";
 
 export const makeGraph = async (
   file: string,
@@ -36,7 +34,11 @@ export const makeGraph = async (
     }
   }
 
-  if (file != undefined && path.extname(file) != ".js" && path.extname(file) != ".ts") {
+  if (
+    file != undefined &&
+    path.extname(file) != ".js" &&
+    path.extname(file) != ".ts"
+  ) {
     throw new Error(`File ${file} must be JavaScript or a TypeScript file.`);
   }
 
@@ -46,25 +48,13 @@ export const makeGraph = async (
     console.log(boardJson, null, 2);
 
     if ("watch" in options) {
-      const controller = new AbortController();
-      watch(
-        file,
-        { signal: controller.signal },
-        async (eventType: string, filename: string | Buffer | null) => {
-          if (typeof filename != "string") return;
+      watch(file, {
+        onChange: async () => {
+          ({ boardJson } = await makeFromFile(filePath));
 
-          if (eventType === "change") {
-            ({ boardJson } = await makeFromFile(filePath));
-
-            console.log(JSON.stringify(boardJson, null, 2));
-          } else if (eventType === "rename") {
-            console.error(
-              `File ${filename} has been renamed. We can't manage this yet. Sorry!`
-            );
-            controller.abort();
-          }
-        }
-      );
+          console.log(JSON.stringify(boardJson, null, 2));
+        },
+      });
     }
   }
 };
