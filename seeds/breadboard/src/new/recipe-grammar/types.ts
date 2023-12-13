@@ -89,13 +89,15 @@ export type InputsForGraphDeclaration<T extends InputValues> = {
 export type OutputsForGraphDeclaration<
   T extends OutputValuesOrUnknown,
   NI extends InputValues = InputValues
-> = {
-  [K in keyof T]: AbstractValue<T[K]> | NodeProxy<NI, OutputValue<T[K]>>;
-} & {
-  [key in string]:
-    | AbstractValue<NodeValue>
-    | NodeProxy<NI, Partial<InputValues>>;
-};
+> =
+  | ({
+      [K in keyof T]: AbstractValue<T[K]> | NodeProxy<NI, OutputValue<T[K]>>;
+    } & {
+      [key in string]:
+        | AbstractValue<NodeValue>
+        | NodeProxy<NI, Partial<InputValues>>;
+    })
+  | PromiseLike<OutputsMaybeAsValues<T>>; // = returning a node
 
 export type NodeProxyHandlerFunction<
   I extends InputValues = InputValues,
@@ -158,7 +160,7 @@ export interface RecipeFactory {
     options: {
       input: IT;
       output: OT;
-      invoke: NodeProxyHandlerFunction<z.infer<IT>, z.infer<OT>>;
+      invoke: (inputs: z.infer<IT>) => z.infer<OT> | PromiseLike<z.infer<OT>>;
       describe?: NodeDescriberFunction;
       name?: string;
     } & GraphMetadata
@@ -178,7 +180,7 @@ export interface RecipeFactory {
       describe?: NodeDescriberFunction;
       name?: string;
     } & GraphMetadata,
-    fn: NodeProxyHandlerFunction<z.infer<IT>, z.infer<OT>>
+    fn: NodeProxyHandlerFunctionForGraphDeclaration<z.infer<IT>, z.infer<OT>>
   ): Lambda<z.infer<IT>, Required<z.infer<OT>>>;
 }
 

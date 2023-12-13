@@ -22,7 +22,7 @@ test("metadata in recipe constructor", async (t) => {
       description: "test test",
       version: "0.0.1",
     },
-    async (inputs) => testKit.noop(inputs)
+    (inputs) => testKit.noop(inputs)
   );
 
   const serialized = await graph.serialize();

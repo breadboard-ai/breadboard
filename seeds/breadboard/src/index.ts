@@ -77,6 +77,7 @@ export {
   recipeAsCode,
   recipeAsGraphWithZod,
   recipeAsCodeWithZod,
+  zRecipe,
 } from "./new/recipe-grammar/recipe.js";
 export { addKit } from "./new/recipe-grammar/kits.js";
 export { base } from "./new/recipe-grammar/base.js";

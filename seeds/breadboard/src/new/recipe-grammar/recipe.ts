@@ -43,10 +43,14 @@ export const recipe: RecipeFactory = (
         name?: string;
       } & GraphMetadata)
     | NodeProxyHandlerFunction,
-  maybeFn?: NodeProxyHandlerFunction
+  maybeFn?:
+    | NodeProxyHandlerFunction
+    | NodeProxyHandlerFunctionForGraphDeclaration
 ) => {
   const options = typeof optionsOrFn === "object" ? optionsOrFn : {};
-  options.invoke ??= typeof optionsOrFn === "function" ? optionsOrFn : maybeFn;
+  options.invoke ??= (
+    typeof optionsOrFn === "function" ? optionsOrFn : maybeFn
+  ) as NodeProxyHandlerFunction;
 
   return recipeImpl(options);
 };
@@ -104,6 +108,21 @@ export const recipeAsCodeWithZod = <IT extends z.ZodType, OT extends z.ZodType>(
     name?: string;
   } & GraphMetadata
 ): Lambda<z.infer<IT>, Required<z.infer<OT>>> => {
+  return recipeImpl(options) as Lambda<z.infer<IT>, Required<z.infer<OT>>>;
+};
+
+// Mix of the last two, using optionals instead of overloading.
+export const zRecipe = <IT extends z.ZodType, OT extends z.ZodType>(
+  options: {
+    input: IT;
+    output: OT;
+    invoke?: (inputs: z.infer<IT>) => z.infer<OT> | PromiseLike<z.infer<OT>>;
+    describe?: NodeDescriberFunction;
+    name?: string;
+  } & GraphMetadata,
+  fn?: NodeProxyHandlerFunctionForGraphDeclaration<z.infer<IT>, z.infer<OT>>
+): Lambda<z.infer<IT>, Required<z.infer<OT>>> => {
+  if (!options.invoke && fn) options.invoke = fn;
   return recipeImpl(options) as Lambda<z.infer<IT>, Required<z.infer<OT>>>;
 };
 

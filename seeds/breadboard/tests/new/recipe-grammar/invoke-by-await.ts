@@ -137,16 +137,14 @@ test("if-else, imperative execution", async (t) => {
     return { text: "search result" };
   });
 
-  const graph = recipe(
-    {
-      input: z.object({
-        question: z.string().describe("Query: A math or search question?"),
-      }),
-      output: z.object({
-        result: z.string().describe("Answer: The answer to the query"),
-      }),
-    },
-    async (inputs) => {
+  const graph = recipe({
+    input: z.object({
+      question: z.string().describe("Query: A math or search question?"),
+    }),
+    output: z.object({
+      result: z.string().describe("Answer: The answer to the query"),
+    }),
+    invoke: async (inputs) => {
       const { text } = (await testKit
         .noop({
           template:
@@ -169,8 +167,8 @@ test("if-else, imperative execution", async (t) => {
           result: (await search({ text: inputs.question }).text) ?? "",
         };
       }
-    }
-  );
+    },
+  });
 
   {
     const { result } = await graph({ question: "YES it is" });
@@ -191,16 +189,14 @@ test.skip("if-else, serializable", async (t) => {
     return { text: "search result" };
   });
 
-  const graph = recipe(
-    {
-      input: z.object({
-        question: z.string().describe("Query: A math or search question?"),
-      }),
-      output: z.object({
-        result: z.string().describe("Answer: The answer to the query"),
-      }),
-    },
-    async (inputs) => {
+  const graph = recipe({
+    input: z.object({
+      question: z.string().describe("Query: A math or search question?"),
+    }),
+    output: z.object({
+      result: z.string().describe("Answer: The answer to the query"),
+    }),
+    invoke: async (inputs) => {
       return testKit
         .noop({
           template:
@@ -231,8 +227,8 @@ test.skip("if-else, serializable", async (t) => {
         .result.to(testKit.noop()) as unknown as PromiseLike<{
         result: string;
       }>;
-    }
-  );
+    },
+  });
 
   {
     const { result } = await graph({ question: "YES it is" });

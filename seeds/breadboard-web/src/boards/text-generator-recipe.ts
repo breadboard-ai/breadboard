@@ -88,8 +88,7 @@ const textGenerator = recipeAsGraphWithZod(
     mockModel.text.to(textOutput);
     mockModel.list.to(nursery.listToStream()).to(streamOutput);
 
-    const switcher = recipeAsCode((inputs) => {
-      const { model, useStreaming } = inputs;
+    const switcher = recipeAsCode(({ model, useStreaming }) => {
       switch (model) {
         case "PaLM":
           if (useStreaming) {
