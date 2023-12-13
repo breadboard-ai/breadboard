@@ -43,7 +43,7 @@ inputs.wire(
   kit
     .promptTemplate({
       template:
-        "Translate the math problem below into a JavaScript function named `compute` that can be executed to provide the answer to the problem\nMath Problem: {{question}}\nSolution:",
+        "Translate the math problem below into a self-contained, zero-argument JavaScript function named `compute` that can be executed to provide the answer to the problem. Do not use any dependencies or libraries.\nMath Problem: {{question}}\nSolution:",
       $id: "math-function",
     })
     .wire(
