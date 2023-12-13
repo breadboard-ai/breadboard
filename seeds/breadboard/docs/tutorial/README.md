@@ -27,12 +27,26 @@ Each chapter is also available as a [Replit](https://replit.com/) project. Look 
    npm install @google-labs/breadboard @google-labs/llm-starter @google-labs/palm-kit
    ```
 
-3. Tell Node to use modern JavaScript modules by default by editing `package.json` and adding:
+   If you run into version warnings, [upgrade your node installation](https://nodejs.org).
+
+3. Tell Node to use modern JavaScript modules by default by editing `package.json` and adding a [type](https://nodejs.org/api/packages.html#type) to the root:
 
    ```json
    {
      "type": "module"
    }
+   ```
+
+4. Add an empty file `tutorial.js`:
+
+   ```sh
+   touch tutorial.js
+   ```
+   
+   For the rest of this demo you can execute that file in the terminal:
+
+   ```sh
+   node tutorial.js
    ```
 
 ## Chapter 1: Hello, world?
