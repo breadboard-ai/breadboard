@@ -14,11 +14,7 @@ import {
 } from "./utils/assertions.js";
 
 const MERMAID_URL = "https://cdn.jsdelivr.net/npm/mermaid@10.6.1/+esm";
-const MERMAID_STYLES = `.node {
-  cursor: pointer;
-}
-
-.node.active > * {
+const MERMAID_STYLES = `.node.active > * {
   stroke-width: 4px;
   stroke: #4CE8F6 !important;
 }

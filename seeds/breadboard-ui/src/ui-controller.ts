@@ -333,7 +333,8 @@ export class UIController extends HTMLElement implements UI {
         }
 
         #node-information {
-          display: block;
+          display: flex;
+          flex-direction: column;
           position: absolute;
           bottom: 20px;
           left: 20px;
@@ -368,7 +369,8 @@ export class UIController extends HTMLElement implements UI {
           row-gap: calc(var(--bb-grid-size) * 1);
           font-size: var(--bb-text-nano);
           width: 100%;
-          overflow-x: auto;
+          flex: 1;
+          overflow: auto;
           scrollbar-gutter: stable;
         }
 
