@@ -252,7 +252,7 @@
           "id": "fn-8-run",
           "type": "runJavascript",
           "configuration": {
-            "code": "function fn_8(inputs2) {const{text,useStreaming}=inputs2;const result=`Mock model with streaming off echoes back: ${text}`;if(useStreaming){const list=result.split(\" \");return{list}}return{text:result}}",
+            "code": "async function fn_8(inputs2) {const{text,useStreaming}=await inputs2;const result=`Mock model with streaming off echoes back: ${text}`;if(useStreaming){const list=result.split(\" \");return{list}}return{text:result}}",
             "name": "fn_8",
             "raw": true
           }
@@ -287,7 +287,7 @@
           "id": "fn-10-run",
           "type": "runJavascript",
           "configuration": {
-            "code": "function fn_10(inputs2) {const{model,useStreaming}=inputs2;switch(model){case\"PaLM\":if(useStreaming){return{other:`Streaming is not supported for ${model}`}}return{palm:true};case\"mock\":return{mock:true};case\"GPT 3.5 Turbo\":return{gpt35:true};default:return{other:`Unsupported model: ${model}`}}}",
+            "code": "async function fn_10(inputs2) {const{model,useStreaming}=await inputs2;switch(model){case\"PaLM\":if(useStreaming){return{other:`Streaming is not supported for ${model}`}}return{palm:true};case\"mock\":return{mock:true};case\"GPT 3.5 Turbo\":return{gpt35:true};default:return{other:`Unsupported model: ${model}`}}}",
             "name": "fn_10",
             "raw": true
           }

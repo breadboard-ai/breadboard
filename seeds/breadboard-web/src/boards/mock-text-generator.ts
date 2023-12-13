@@ -19,6 +19,9 @@ const mockGenerator = recipe(
     output: z.object({
       text: z.string().describe("TexT: The generated text"),
     }),
+    title: "Mock Text Generator",
+    description:
+      "Useful for when you want a text generator for testing purposes",
   },
   (inputs) => {
     function runMockModel({
@@ -48,7 +51,4 @@ const mockGenerator = recipe(
   }
 );
 
-export default await mockGenerator.serialize({
-  title: "Mock Text Generator",
-  description: "Useful for when you want a text generator for testing purposes",
-});
+export default await mockGenerator.serialize({});

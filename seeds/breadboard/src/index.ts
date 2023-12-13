@@ -83,6 +83,7 @@ export type {
 } from "./new/runner/types.js";
 export type {
   Lambda,
+  InputsForHandler,
   NodeFactory as NewNodeFactory,
   NodeProxy as __NodeProxy,
   InputsMaybeAsValues,

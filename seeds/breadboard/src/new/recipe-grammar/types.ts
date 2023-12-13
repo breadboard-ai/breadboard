@@ -85,7 +85,11 @@ export type NodeProxyHandlerFunction<
 > = (
   inputs: InputsForHandler<I>,
   node: AbstractNode<I, ProjectBackToOutputValues<O>>
-) => O | PromiseLike<O> | OutputsMaybeAsValues<O>;
+) =>
+  | O
+  | PromiseLike<O>
+  | OutputsMaybeAsValues<O>
+  | PromiseLike<OutputsMaybeAsValues<O>>;
 
 export type Lambda<
   I extends InputValues = InputValues,
@@ -108,10 +112,10 @@ export interface RecipeFactory {
   ): Lambda<I, Required<O>>;
 
   /**
-   * Same as above, but accepting GraphMetadata as config.
+   * Same as above, but accepting GraphMetadata as
    */
   <I extends InputValues = InputValues, O extends OutputValues = OutputValues>(
-    options: GraphMetadata,
+    options: { input?: z.Schema<I> } & GraphMetadata,
     fn: NodeProxyHandlerFunction<I, O>
   ): Lambda<I, Required<O>>;
 

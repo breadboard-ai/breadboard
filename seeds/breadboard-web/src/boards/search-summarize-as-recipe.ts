@@ -19,6 +19,10 @@ export const graph = recipe(
     output: z.object({
       text: z.string().describe("Answer: The answer to the query"),
     }),
+    title: "New: The Search Summarizer Recipe (as a recipe() call)",
+    description:
+      "A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.",
+    version: "0.0.2",
   },
   (input) => {
     const searchURLTemplate = starter.urlTemplate({
@@ -54,9 +58,4 @@ export const graph = recipe(
 
 export const example = { text: "What is the meaning of life?" };
 
-export default await graph.serialize({
-  title: "New: The Search Summarizer Recipe (as a recipe() call)",
-  description:
-    "A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.",
-  version: "0.0.2",
-});
+export default await graph.serialize({});

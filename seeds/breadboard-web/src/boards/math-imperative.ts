@@ -18,12 +18,13 @@ export const graph = recipe(
     output: z.object({
       result: z.string().describe("Answer: The answer to the query"),
     }),
+    title: "Math, imperative style graph",
   },
-  (inputs) => {
+  async ({ question }) => {
     const { prompt } = starter.promptTemplate({
       template:
         "Write a Javascript function called `run` to compute the result for this question:\nQuestion: {{question}}\nCode: ",
-      question: inputs.question,
+      question: question,
     });
     const { completion } = palm.generateText({
       text: prompt,
@@ -38,6 +39,4 @@ export const graph = recipe(
 
 export const example = { question: "1+1" };
 
-export default await graph.serialize({
-  title: "Math, imperative style graph",
-});
+export default await graph.serialize({});

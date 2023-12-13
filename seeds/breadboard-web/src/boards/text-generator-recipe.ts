@@ -28,6 +28,10 @@ const textGenerator = recipe(
       text: z.string().describe("Text: The generated text").optional(),
       stream: z.object({}).describe("Stream: The generated text").optional(),
     }),
+    title: "Text Generator Recipe",
+    description:
+      "This is a text generator. It can generate text using various LLMs. Currently, it supports the follwogin models: Google PaLM text-bison-001, OpenAI GPT-3.5 Turbo, and a mock model. The mock model simply echoes back the input text. It's good for testing.",
+    version: "0.0.1",
   },
   async (inputs) => {
     const textOutput = base.output({
@@ -65,10 +69,10 @@ const textGenerator = recipe(
     gpt35.stream.to(streamOutput);
 
     const mockModel = recipe<
-      { text: string; useStreaming: boolean },
+      { text: string; useStreaming?: boolean },
       { text?: string; list?: string[] }
-    >((inputs) => {
-      const { text, useStreaming } = inputs;
+    >(async (inputs) => {
+      const { text, useStreaming } = await inputs;
 
       const result = `Mock model with streaming off echoes back: ${text}`;
       if (useStreaming) {
@@ -80,8 +84,8 @@ const textGenerator = recipe(
     mockModel.text.to(textOutput);
     mockModel.list.to(nursery.listToStream()).to(streamOutput);
 
-    const switcher = recipe((inputs) => {
-      const { model, useStreaming } = inputs;
+    const switcher = recipe(async (inputs) => {
+      const { model, useStreaming } = await inputs;
       switch (model) {
         case "PaLM":
           if (useStreaming) {
@@ -106,9 +110,4 @@ const textGenerator = recipe(
   }
 );
 
-export default await textGenerator.serialize({
-  title: "Text Generator Recipe",
-  description:
-    "This is a text generator. It can generate text using various LLMs. Currently, it supports the follwogin models: Google PaLM text-bison-001, OpenAI GPT-3.5 Turbo, and a mock model. The mock model simply echoes back the input text. It's good for testing.",
-  version: "0.0.1",
-});
+export default await textGenerator.serialize({});

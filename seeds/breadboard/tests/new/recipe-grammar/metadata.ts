@@ -6,6 +6,8 @@
 
 import test from "ava";
 
+import { z } from "zod";
+
 import { recipe } from "../../../src/new/recipe-grammar/recipe.js";
 
 import { testKit } from "../../helpers/_test-kit.js";
@@ -13,6 +15,29 @@ import { testKit } from "../../helpers/_test-kit.js";
 test("metadata in recipe constructor", async (t) => {
   const graph = recipe(
     { url: "data:", title: "test", description: "test test", version: "0.0.1" },
+    async (inputs) => testKit.noop(inputs)
+  );
+
+  const serialized = await graph.serialize();
+
+  t.like(serialized, {
+    url: "data:",
+    title: "test",
+    description: "test test",
+    version: "0.0.1",
+  });
+});
+
+test("metadata in recipe constructor + schema", async (t) => {
+  const graph = recipe(
+    {
+      input: z.object({ foo: z.string() }),
+      output: z.object({ foo: z.string() }),
+      url: "data:",
+      title: "test",
+      description: "test test",
+      version: "0.0.1",
+    },
     async (inputs) => testKit.noop(inputs)
   );
 
