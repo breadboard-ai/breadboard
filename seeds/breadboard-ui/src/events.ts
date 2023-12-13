@@ -45,3 +45,15 @@ export class DelayEvent extends Event {
     });
   }
 }
+
+export class NodeSelectEvent extends Event {
+  static eventName = "breadboardnodeselectevent";
+
+  constructor(public id: string) {
+    super(NodeSelectEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}

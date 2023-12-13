@@ -51,6 +51,7 @@ export class ProxyServerHarness implements Harness {
           version: runner.version,
           diagram: runner.mermaid("TD", true),
           url: url,
+          nodes: runner.nodes,
         },
       });
 

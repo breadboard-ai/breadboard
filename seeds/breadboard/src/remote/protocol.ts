@@ -55,6 +55,10 @@ export type LoadResponse = {
    * The url of the graph.
    */
   url?: string;
+  /**
+   * Information about the nodes in the graph.
+   */
+  nodes?: NodeDescriptor[];
 };
 
 /**
