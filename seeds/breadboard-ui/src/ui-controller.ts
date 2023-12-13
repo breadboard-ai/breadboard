@@ -744,6 +744,7 @@ export class UIController extends HTMLElement implements UI {
     this.#hideIntroContent();
     this.#clearBoardContents();
     this.#showBoardContainer();
+    this.#clearNodeInformation();
 
     const load = new Load(info);
     load.slot = "load";
