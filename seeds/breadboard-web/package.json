@@ -63,7 +63,8 @@
       ],
       "files": [
         "vite.config.ts",
-        ".env"
+        ".env",
+        "index.html"
       ],
       "output": [
         "dist/"
