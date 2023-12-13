@@ -6,7 +6,11 @@
 
 import { z } from "zod";
 
-import { BreadboardCapability, NodeDescriberFunction } from "../../types.js";
+import {
+  BreadboardCapability,
+  NodeDescriberFunction,
+  GraphMetadata,
+} from "../../types.js";
 
 import {
   NodeValue as BaseNodeValue,
@@ -104,17 +108,27 @@ export interface RecipeFactory {
   ): Lambda<I, Required<O>>;
 
   /**
+   * Same as above, but accepting GraphMetadata as config.
+   */
+  <I extends InputValues = InputValues, O extends OutputValues = OutputValues>(
+    options: GraphMetadata,
+    fn: NodeProxyHandlerFunction<I, O>
+  ): Lambda<I, Required<O>>;
+
+  /**
    * Alternative version to above that infers the type of the passed in Zod type.
    *
    * @param options Object with at least `input`, `output` and `invoke` set
    */
-  <IT extends z.ZodType, OT extends z.ZodType>(options: {
-    input: IT;
-    output: OT;
-    invoke: NodeProxyHandlerFunction<z.infer<IT>, z.infer<OT>>;
-    describe?: NodeDescriberFunction;
-    name?: string;
-  }): Lambda<z.infer<IT>, Required<z.infer<OT>>>;
+  <IT extends z.ZodType, OT extends z.ZodType>(
+    options: {
+      input: IT;
+      output: OT;
+      invoke: NodeProxyHandlerFunction<z.infer<IT>, z.infer<OT>>;
+      describe?: NodeDescriberFunction;
+      name?: string;
+    } & GraphMetadata
+  ): Lambda<z.infer<IT>, Required<z.infer<OT>>>;
 
   /**
    * Same as above, but takes handler as a second parameter instead of as invoke
@@ -129,7 +143,7 @@ export interface RecipeFactory {
       output: OT;
       describe?: NodeDescriberFunction;
       name?: string;
-    },
+    } & GraphMetadata,
     fn?: NodeProxyHandlerFunction<z.infer<IT>, z.infer<OT>>
   ): Lambda<z.infer<IT>, Required<z.infer<OT>>>;
 }

@@ -34,13 +34,13 @@ import { BuilderNode } from "./node.js";
  */
 export const recipe: RecipeFactory = (
   optionsOrFn:
-    | {
-        input: z.ZodType | Schema;
-        output: z.ZodType | Schema;
+    | ({
+        input?: z.ZodType | Schema;
+        output?: z.ZodType | Schema;
         invoke?: NodeProxyHandlerFunction;
         describe?: NodeDescriberFunction;
         name?: string;
-      }
+      } & GraphMetadata)
     | NodeProxyHandlerFunction,
   fn?: NodeProxyHandlerFunction
 ): Lambda => {
@@ -61,13 +61,18 @@ export const recipe: RecipeFactory = (
   const outputSchema =
     options !== undefined && options.output && zodToSchema(options.output);
 
-  if (inputSchema && outputSchema) {
-    handler.describe =
-      options.describe ??
-      (async () => {
-        return { inputSchema, outputSchema };
-      });
-  }
+  if (options?.describe) handler.describe = options.describe;
+  else if (inputSchema && outputSchema)
+    handler.describe = async () => ({ inputSchema, outputSchema });
+
+  // Extract recipe metadata from config. Used in serialize().
+  const { url, title, description, version } = options ?? {};
+  const configMetadata: GraphMetadata = {
+    ...(url ? { url } : {}),
+    ...(title ? { title } : {}),
+    ...(description ? { description } : {}),
+    ...(version ? { version } : {}),
+  };
 
   const lexicalScope = getCurrentContextScope();
   let lambdaNode:
@@ -113,12 +118,12 @@ export const recipe: RecipeFactory = (
     if (graph) {
       if (singleNode.type !== "invoke")
         throw new Error("Unexpected node with graph");
-      return { ...metadata, ...graph } as GraphDescriptor;
+      return { ...configMetadata, ...metadata, ...graph } as GraphDescriptor;
     }
-
-    // Otherwise build a graph around the node.
+    // Otherwise build a graph around the node:
     else
       return {
+        ...configMetadata,
         ...metadata,
         edges: [
           { from: `${singleNode.id}-input`, to: singleNode.id, out: "*" },
@@ -175,7 +180,7 @@ export const recipe: RecipeFactory = (
         $recipe: lambdaNode?.asProxy().board,
       });
 
-      return invoke.serialize(metadata);
+      return invoke.serialize({ ...configMetadata, ...metadata });
     };
 
     return lambdaNode;
