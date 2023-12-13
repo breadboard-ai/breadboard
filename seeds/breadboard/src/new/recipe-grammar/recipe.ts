@@ -18,6 +18,7 @@ import {
   OutputValues,
   RecipeFactory,
   NodeProxyHandlerFunction,
+  NodeProxyHandlerFunctionForGraphDeclaration,
   NodeProxy,
   InputsMaybeAsValues,
   Lambda,
@@ -30,38 +31,104 @@ import { getCurrentContextScope } from "./default-scope.js";
 import { BuilderNode } from "./node.js";
 
 /**
- * Actual implementation of all the above
+ * Implementation of the overloaded recipe function.
  */
 export const recipe: RecipeFactory = (
   optionsOrFn:
     | ({
-        input?: z.ZodType | Schema;
-        output?: z.ZodType | Schema;
+        input?: z.ZodType;
+        output?: z.ZodType;
         invoke?: NodeProxyHandlerFunction;
         describe?: NodeDescriberFunction;
         name?: string;
       } & GraphMetadata)
     | NodeProxyHandlerFunction,
-  fn?: NodeProxyHandlerFunction
-): Lambda => {
-  const options = typeof optionsOrFn === "function" ? undefined : optionsOrFn;
-  if (!options) {
-    fn = optionsOrFn as NodeProxyHandlerFunction;
-  } else {
-    if (options.invoke) fn = options.invoke;
-    if (!fn) throw new Error("Missing invoke function");
-  }
+  maybeFn?: NodeProxyHandlerFunction
+) => {
+  const options = typeof optionsOrFn === "object" ? optionsOrFn : {};
+  options.invoke ??= typeof optionsOrFn === "function" ? optionsOrFn : maybeFn;
+
+  return recipeImpl(options);
+};
+
+/**
+ * Explicit implementations of the overloaded variants, also splitting
+ * graph generation and code recipes.
+ */
+export const recipeAsGraph = <
+  I extends InputValues = InputValues,
+  O extends OutputValues = OutputValues
+>(
+  fn: NodeProxyHandlerFunctionForGraphDeclaration<I, O>
+): Lambda<I, Required<O>> => {
+  return recipeImpl({
+    invoke: fn as NodeProxyHandlerFunction,
+  }) as Lambda<I, Required<O>>;
+};
+
+export const recipeAsCode = <
+  I extends InputValues = InputValues,
+  O extends OutputValues = OutputValues
+>(
+  fn: (inputs: I) => O | PromiseLike<O>
+): Lambda<I, Required<O>> => {
+  return recipeImpl({
+    invoke: fn as unknown as NodeProxyHandlerFunction,
+  }) as Lambda<I, Required<O>>;
+};
+
+export const recipeAsGraphWithZod = <
+  IT extends z.ZodType,
+  OT extends z.ZodType
+>(
+  options: {
+    input: IT;
+    output: OT;
+    describe?: NodeDescriberFunction;
+    name?: string;
+  } & GraphMetadata,
+  fn: NodeProxyHandlerFunctionForGraphDeclaration<z.infer<IT>, z.infer<OT>>
+): Lambda<z.infer<IT>, Required<z.infer<OT>>> => {
+  return recipeImpl({
+    ...options,
+    invoke: fn as NodeProxyHandlerFunction,
+  }) as Lambda<z.infer<IT>, Required<z.infer<OT>>>;
+};
+
+export const recipeAsCodeWithZod = <IT extends z.ZodType, OT extends z.ZodType>(
+  options: {
+    input: IT;
+    output: OT;
+    invoke: (inputs: z.infer<IT>) => z.infer<OT> | PromiseLike<z.infer<OT>>;
+    describe?: NodeDescriberFunction;
+    name?: string;
+  } & GraphMetadata
+): Lambda<z.infer<IT>, Required<z.infer<OT>>> => {
+  return recipeImpl(options) as Lambda<z.infer<IT>, Required<z.infer<OT>>>;
+};
+
+/**
+ * Actual implementation of all the above
+ */
+function recipeImpl(
+  options: {
+    input?: z.ZodType | Schema;
+    output?: z.ZodType | Schema;
+    invoke?: NodeProxyHandlerFunction;
+    describe?: NodeDescriberFunction;
+    name?: string;
+  } & GraphMetadata
+): Lambda {
+  if (!options.invoke) throw new Error("Missing invoke function");
 
   const handler: NodeHandler = {
-    invoke: fn as NodeHandlerFunction<InputValues, OutputValues>,
+    invoke: options.invoke as NodeHandlerFunction<InputValues, OutputValues>,
   };
 
-  const inputSchema =
-    options !== undefined && options.input && zodToSchema(options.input);
-  const outputSchema =
-    options !== undefined && options.output && zodToSchema(options.output);
+  const inputSchema = options.input && zodToSchema(options.input);
+  const outputSchema = options.output && zodToSchema(options.output);
 
-  if (options?.describe) handler.describe = options.describe;
+  if (options.describe) handler.describe = options.describe;
   else if (inputSchema && outputSchema)
     handler.describe = async () => ({ inputSchema, outputSchema });
 
@@ -85,8 +152,8 @@ export const recipe: RecipeFactory = (
   // TODO: Fix for closures, probably create a graph with an invoke node and
   // re-register name with that as handler. But first we need to get cross-scope
   // wiring right.
-  if (options?.name)
-    registerNodeType(options?.name, handler as unknown as NodeHandler);
+  if (options.name)
+    registerNodeType(options.name, handler as unknown as NodeHandler);
 
   // When this factory is called, create node with handler and return as proxy.
   // But if this is a closure, i.e. there are incoming wires to the lambda node
@@ -203,7 +270,7 @@ export const recipe: RecipeFactory = (
     getLambdaNode().in(inputs) as NodeProxy;
 
   return factory;
-};
+}
 
 export function isLambda(factory: unknown): factory is Lambda {
   return typeof (factory as Lambda).getBoardCapabilityAsValue === "function";

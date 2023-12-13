@@ -14,22 +14,6 @@ import { testKit } from "../../helpers/_test-kit.js";
 
 test("metadata in recipe constructor", async (t) => {
   const graph = recipe(
-    { url: "data:", title: "test", description: "test test", version: "0.0.1" },
-    async (inputs) => testKit.noop(inputs)
-  );
-
-  const serialized = await graph.serialize();
-
-  t.like(serialized, {
-    url: "data:",
-    title: "test",
-    description: "test test",
-    version: "0.0.1",
-  });
-});
-
-test("metadata in recipe constructor + schema", async (t) => {
-  const graph = recipe(
     {
       input: z.object({ foo: z.string() }),
       output: z.object({ foo: z.string() }),
@@ -71,7 +55,12 @@ test("metadata in serialize", async (t) => {
 
 test("metadata in serialize overrides metadata in constructor", async (t) => {
   const graph = recipe(
-    { title: "constructor", description: "test test" },
+    {
+      input: z.object({ foo: z.string() }),
+      output: z.object({ foo: z.string() }),
+      title: "constructor",
+      description: "test test",
+    },
     async (inputs) => testKit.noop(inputs)
   );
 

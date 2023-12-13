@@ -79,6 +79,24 @@ export type InputsForHandler<T extends InputValues> = {
   [key in string]: AbstractValue<NodeValue> & PromiseLike<NodeValue>;
 } & PromiseLike<T>;
 
+export type InputsForGraphDeclaration<T extends InputValues> = {
+  [K in keyof T]: AbstractValue<T[K]> &
+    ((config?: BuilderNodeConfig) => NodeProxy);
+} & {
+  [key in string]: AbstractValue<NodeValue>;
+};
+
+export type OutputsForGraphDeclaration<
+  T extends OutputValuesOrUnknown,
+  NI extends InputValues = InputValues
+> = {
+  [K in keyof T]: AbstractValue<T[K]> | NodeProxy<NI, OutputValue<T[K]>>;
+} & {
+  [key in string]:
+    | AbstractValue<NodeValue>
+    | NodeProxy<NI, Partial<InputValues>>;
+};
+
 export type NodeProxyHandlerFunction<
   I extends InputValues = InputValues,
   O extends OutputValuesOrUnknown = OutputValuesOrUnknown
@@ -91,6 +109,13 @@ export type NodeProxyHandlerFunction<
   | OutputsMaybeAsValues<O>
   | PromiseLike<OutputsMaybeAsValues<O>>;
 
+export type NodeProxyHandlerFunctionForGraphDeclaration<
+  I extends InputValues = InputValues,
+  O extends OutputValuesOrUnknown = OutputValuesOrUnknown
+> = (
+  inputs: InputsForGraphDeclaration<I>
+) => OutputsForGraphDeclaration<O> | PromiseLike<OutputsForGraphDeclaration<O>>;
+
 export type Lambda<
   I extends InputValues = InputValues,
   O extends OutputValues = OutputValues
@@ -98,8 +123,8 @@ export type Lambda<
 
 export interface RecipeFactory {
   /**
-   * Creates a node factory for a node type that invokes a handler function. This
-   * version infers the types from the function.
+   * Creates a node factory for a node type that invokes a handler function.
+   * This version infers the types from the function.
    *
    * The handler function can either return a graph (in which case it would be
    * serialized to a graph), or returns the results of a computation, called at
@@ -114,10 +139,15 @@ export interface RecipeFactory {
   /**
    * Same as above, but accepting GraphMetadata as
    */
+
+  /**
+   * Disable for now, overloading is too confusing
+   * 
   <I extends InputValues = InputValues, O extends OutputValues = OutputValues>(
     options: { input?: z.Schema<I> } & GraphMetadata,
     fn: NodeProxyHandlerFunction<I, O>
   ): Lambda<I, Required<O>>;
+  */
 
   /**
    * Alternative version to above that infers the type of the passed in Zod type.
@@ -148,7 +178,7 @@ export interface RecipeFactory {
       describe?: NodeDescriberFunction;
       name?: string;
     } & GraphMetadata,
-    fn?: NodeProxyHandlerFunction<z.infer<IT>, z.infer<OT>>
+    fn: NodeProxyHandlerFunction<z.infer<IT>, z.infer<OT>>
   ): Lambda<z.infer<IT>, Required<z.infer<OT>>>;
 }
 
