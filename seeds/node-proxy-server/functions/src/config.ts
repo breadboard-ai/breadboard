@@ -24,6 +24,12 @@ export default defineConfig({
       node: "secrets",
       tunnel: {
         PALM_KEY: ["palm-generateText", "palm-embedText"],
+        GEMINI_KEY: {
+          to: "fetch",
+          when: {
+            url: hasOrigin("https://generativelanguage.googleapis.com"),
+          },
+        },
         GOOGLE_CSE_ID: {
           to: "fetch",
           when: {

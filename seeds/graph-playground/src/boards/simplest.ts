@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board } from "@google-labs/breadboard";
+import { Board, Schema } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 import { PaLMKit } from "@google-labs/palm-kit";
 
@@ -29,10 +29,11 @@ simplest
           type: "string",
           title: "Prompt",
           description: "The prompt to generate a completion for",
+          examples: ["Tell me a fun story about playing with breadboards"],
         },
       },
       required: ["text"],
-    },
+    } satisfies Schema,
   })
   .wire(
     "text",

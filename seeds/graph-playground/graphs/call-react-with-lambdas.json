@@ -66,7 +66,10 @@
             "text": {
               "type": "string",
               "title": "Problem",
-              "description": "A problem to be solved"
+              "description": "A problem to be solved",
+              "examples": [
+                "What's the square root of the distance between Earth and Moon?"
+              ]
             }
           },
           "required": [
