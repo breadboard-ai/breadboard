@@ -6,8 +6,8 @@
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
 compute["runJavascript <br> id='compute'"] -- "result->text" --> print{{"output <br> id='print'"}}:::output
-secrets1("secrets <br> id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --> compute["runJavascript <br> id='compute'"]
 mathfunctiongenerator["palm-generateText <br> id='math-function-generator'"] -- "completion->code" --> compute["runJavascript <br> id='compute'"]
+secrets1("secrets <br> id='secrets-1'"):::secrets -- "PALM_KEY->PALM_KEY" --> mathfunctiongenerator["palm-generateText <br> id='math-function-generator'"]
 mathfunction["promptTemplate <br> id='math-function'"] -- "prompt->text" --> mathfunctiongenerator["palm-generateText <br> id='math-function-generator'"]
 mathquestion[/"input <br> id='math-question'"/]:::input -- "text->question" --> mathfunction["promptTemplate <br> id='math-function'"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
