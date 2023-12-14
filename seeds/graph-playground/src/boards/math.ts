@@ -36,7 +36,8 @@ math
     "text->question",
     kit
       .promptTemplate({
-        template: "Translate the math problem below into a JavaScript function named `compute` that can be executed to provide the answer to the problem\nMath Problem: {{question}}\nSolution:",
+        template:
+          "Translate the math problem below into a JavaScript function named `compute` that can be executed to provide the answer to the problem\nMath Problem: {{question}}\nSolution:",
         $id: "math-function",
       })
       .wire(
@@ -45,28 +46,30 @@ math
           .generateText({ $id: "math-function-generator" })
           .wire(
             "completion->code",
-            kit.runJavascript({
-              name: "compute",
-              $id: "compute",
-            }).wire(
-              "result->text",
-              math.output({
-                $id: "print",
-                schema: {
-                  type: "object",
-                  properties: {
-                    text: {
-                      type: "string",
-                      title: "Answer",
-                      description: "The answer to the math problem",
-                    },
-                  },
-                  required: ["text"],
-                },
+            kit
+              .runJavascript({
+                name: "compute",
+                $id: "compute",
               })
-            )
-              .wire("<-PALM_KEY", kit.secrets({ keys: ["PALM_KEY"] })),
+              .wire(
+                "result->text",
+                math.output({
+                  $id: "print",
+                  schema: {
+                    type: "object",
+                    properties: {
+                      text: {
+                        type: "string",
+                        title: "Answer",
+                        description: "The answer to the math problem",
+                      },
+                    },
+                    required: ["text"],
+                  },
+                })
+              )
           )
+          .wire("<-PALM_KEY", kit.secrets({ keys: ["PALM_KEY"] }))
       )
   );
 

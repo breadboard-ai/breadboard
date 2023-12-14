@@ -10,16 +10,16 @@
       "in": "text"
     },
     {
-      "from": "secrets-1",
-      "to": "compute",
-      "out": "PALM_KEY",
-      "in": "PALM_KEY"
-    },
-    {
       "from": "math-function-generator",
       "to": "compute",
       "out": "completion",
       "in": "code"
+    },
+    {
+      "from": "secrets-1",
+      "to": "math-function-generator",
+      "out": "PALM_KEY",
+      "in": "PALM_KEY"
     },
     {
       "from": "math-function",
