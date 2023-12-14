@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board } from "@google-labs/breadboard";
+import { Board, Schema } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 import { Core } from "@google-labs/core-kit";
 
@@ -58,10 +58,13 @@ board
           type: "string",
           title: "Problem",
           description: "A problem to be solved",
+          examples: [
+            "What's the square root of the distance between Earth and Moon?",
+          ],
         },
       },
       required: ["text"],
-    },
+    } satisfies Schema,
   })
   .wire(
     "text",
