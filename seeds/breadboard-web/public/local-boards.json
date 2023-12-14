@@ -87,6 +87,11 @@
     "version": "0.1.0"
   },
   {
+    "title": "The simplest LLM-based recipe",
+    "url": "/graphs/simplest.json",
+    "version": "0.0.3"
+  },
+  {
     "title": "Text Generator Recipe",
     "url": "/graphs/text-generator-recipe.json",
     "version": "0.0.1"
