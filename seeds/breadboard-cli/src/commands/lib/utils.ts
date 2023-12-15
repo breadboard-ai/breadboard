@@ -34,16 +34,22 @@ export async function makeFromFile(filePath: string, options?: Options) {
   return { boardJson, board };
 }
 
-export const loadBoardFromModule = async (file: string) => {
-  console.log(file);
+const boardLike = (board: Record<string, unknown>) => {
+  return board && "edges" in board && "nodes" in board;
+};
 
+export const loadBoardFromModule = async (file: string) => {
   // This will leak. Look for other hot reloading solutions.
-  const board = (await import(`${file}?${Date.now()}`)).default;
+  let board = (await import(`${file}?${Date.now()}`)).default;
 
   if (board == undefined)
     throw new Error(`Board ${file} does not have a default export`);
 
-  if (board instanceof Board == false)
+  if (boardLike(board)) {
+    // A graph descriptor has been exported.. Possibly a lambda.
+    board = await Board.fromGraphDescriptor(board);
+  }
+  if (board instanceof Board == false && board instanceof BoardRunner == false)
     throw new Error(
       `Board ${file} does not have a default export of type Board`
     );
