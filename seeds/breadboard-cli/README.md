@@ -1,6 +1,6 @@
 # CLI tools that let you play with breadboard
 
-`npm install -g breadboard-cli`
+`npm install -g @google-labs/breadboard-cli`
 
 ## Usage
 
