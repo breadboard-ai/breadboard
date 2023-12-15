@@ -1,0 +1,78 @@
+{
+  "title": "Tour Guide Writer",
+  "description": "This boards attempts to write a tour guide for a specified location. This time, it takes a text generator board as an input.\n\nInterestingly, because we currently don't have a way to close over the inputs of the invoked text generator, this board exposes the text generator's inputs as its own inputs.",
+  "version": "0.0.3",
+  "edges": [
+    {
+      "from": "parameters",
+      "to": "guide",
+      "out": "location",
+      "in": "guide"
+    },
+    {
+      "from": "parameters",
+      "to": "travelItineraryGenerator",
+      "out": "generator",
+      "in": "path"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "guide",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "guide": {
+              "type": "string",
+              "title": "Guide",
+              "description": "The tour guide for the specified location"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "parameters",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "location": {
+              "type": "string",
+              "title": "Location",
+              "description": "The location for which to write a tour guide",
+              "examples": [
+                "Stresa, Italy"
+              ]
+            },
+            "generator": {
+              "type": "board",
+              "title": "Text Generator",
+              "description": "The text generator to use for writing the tour guide",
+              "examples": [
+                "/graphs/text-generator.json"
+              ]
+            }
+          },
+          "required": [
+            "location"
+          ]
+        }
+      }
+    },
+    {
+      "id": "travelItineraryGenerator",
+      "type": "invoke",
+      "configuration": {
+        "stopSequences": [
+          "\n[Place]"
+        ],
+        "useStreaming": false
+      }
+    }
+  ],
+  "graphs": {}
+}
