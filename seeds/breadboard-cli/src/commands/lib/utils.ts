@@ -51,7 +51,7 @@ export const loadBoardFromModule = async (file: string) => {
   }
   if (board instanceof Board == false && board instanceof BoardRunner == false)
     throw new Error(
-      `Board ${file} does not have a default export of type Board`
+      `Board ${file} does not have a default export of type Board, Lambda or something that looks like a board.`
     );
 
   return board;
