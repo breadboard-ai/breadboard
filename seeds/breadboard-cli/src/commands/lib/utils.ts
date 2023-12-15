@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board, BoardRunner } from "@google-labs/breadboard";
+import { Board, BoardRunner, GraphDescriptor } from "@google-labs/breadboard";
 import * as esbuild from "esbuild";
+import { watch as fsWatch } from "fs";
 import { readFile, stat, unlink, writeFile } from "fs/promises";
 import { join } from "node:path";
 import { stdin as input } from "node:process";
 import * as readline from "node:readline/promises";
 import path, { basename } from "path";
-import { watch as fsWatch } from "fs";
 
 export type Options = {
   output?: string;
@@ -28,24 +28,32 @@ export async function makeFromSource(
   return { boardJson, board };
 }
 
-export async function makeFromFile(filePath: string, options?: Options) {
+export async function makeFromFile(filePath: string) {
   const board = await loadBoardFromModule(filePath);
   const boardJson = JSON.stringify(board, null, 2);
   return { boardJson, board };
 }
 
-export const loadBoardFromModule = async (file: string) => {
-  console.log(file);
+const boardLike = (
+  board: Record<string, unknown>
+): board is GraphDescriptor => {
+  return board && "edges" in board && "nodes" in board;
+};
 
+export const loadBoardFromModule = async (file: string) => {
   // This will leak. Look for other hot reloading solutions.
-  const board = (await import(`${file}?${Date.now()}`)).default;
+  let board = (await import(`${file}?${Date.now()}`)).default;
 
   if (board == undefined)
     throw new Error(`Board ${file} does not have a default export`);
 
-  if (board instanceof Board == false)
+  if (boardLike(board)) {
+    // A graph descriptor has been exported.. Possibly a lambda.
+    board = await Board.fromGraphDescriptor(board);
+  }
+  if (board instanceof Board == false && board instanceof BoardRunner == false)
     throw new Error(
-      `Board ${file} does not have a default export of type Board`
+      `Board ${file} does not have a default export of type Board, Lambda or something that looks like a board.`
     );
 
   return board;
