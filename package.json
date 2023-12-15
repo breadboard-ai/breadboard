@@ -18,7 +18,7 @@
     "build": {
       "dependencies": [
         "./seeds/breadboard:build",
-        "./seeds/breadboard-cli-tools:build",
+        "./seeds/breadboard-cli:build",
         "./seeds/breadboard-server:build",
         "./seeds/breadboard-ui:build",
         "./seeds/breadboard-web:build",
@@ -43,7 +43,7 @@
     "test": {
       "dependencies": [
         "./seeds/breadboard:test",
-        "./seeds/breadboard-cli-tools:test",
+        "./seeds/breadboard-cli:test",
         "./seeds/breadboard-server:test",
         "./seeds/breadboard-ui:test",
         "./seeds/breadboard-web:test",
@@ -66,7 +66,7 @@
     "lint": {
       "dependencies": [
         "./seeds/breadboard:lint",
-        "./seeds/breadboard-cli-tools:lint",
+        "./seeds/breadboard-cli:lint",
         "./seeds/breadboard-server:lint",
         "./seeds/breadboard-ui:lint",
         "./seeds/coffee-bot-board:lint",

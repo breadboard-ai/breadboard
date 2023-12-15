@@ -3,11 +3,10 @@
   "files": [],
   "references": [
     { "path": "seeds/breadboard" },
-    { "path": "seeds/breadboard-cli-tools" },
+    { "path": "seeds/breadboard-cli" },
     { "path": "seeds/breadboard-server" },
     { "path": "seeds/breadboard-web" },
     { "path": "seeds/breadboard-ui" },
-    { "path": "seeds/chunker" },
     { "path": "seeds/coffee-bot-board" },
     { "path": "seeds/core-kit" },
     { "path": "seeds/create-breadboard" },
@@ -20,7 +19,6 @@
     { "path": "seeds/node-nursery" },
     { "path": "seeds/node-nursery-web" },
     { "path": "seeds/node-proxy-server" },
-    { "path": "seeds/palm-lite" },
     { "path": "seeds/palm-kit" },
     { "path": "seeds/pinecone-kit" },
     { "path": "seeds/json-kit" }
