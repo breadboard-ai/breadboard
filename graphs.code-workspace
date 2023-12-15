@@ -17,10 +17,6 @@
       "path": "seeds/graph-integrity"
     },
     {
-      "name": "palm-lite",
-      "path": "seeds/palm-lite"
-    },
-    {
       "name": "node-nursery",
       "path": "seeds/node-nursery"
     },
@@ -47,10 +43,6 @@
     {
       "name": "breadboard-web",
       "path": "seeds/breadboard-web"
-    },
-    {
-      "name": "chunker",
-      "path": "seeds/chunker"
     },
     {
       "name": "core-kit",
