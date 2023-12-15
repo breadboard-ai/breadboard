@@ -56,7 +56,7 @@
       "from": "generator",
       "to": "append-1",
       "out": "text",
-      "in": "accumulator"
+      "in": "assistant"
     },
     {
       "from": "generator",
