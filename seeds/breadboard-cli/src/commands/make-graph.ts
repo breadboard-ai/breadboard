@@ -43,7 +43,7 @@ export const makeGraph = async (
   }
 
   if (file != undefined) {
-    let { boardJson } = await makeFromFile(filePath, options);
+    let { boardJson } = await makeFromFile(filePath);
 
     console.log(boardJson, null, 2);
 

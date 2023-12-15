@@ -27,6 +27,9 @@ Pipe in a file
 Pipe the output of a command
 `cat seeds/breadboard-cli/tests/echo.json | npx breadboard mermaid`
 
+Watching and piping the output of a command
+`fswatch see/recipes/rss.ts | xargs -n1 -I {} sh -c "npx breadboard mermaid {} -o ./ | mmdc -o test.png -i -"`
+
 ### Make
 
 Creates a graph json from a breadboard javascript file.
