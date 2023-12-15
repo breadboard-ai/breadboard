@@ -112,7 +112,8 @@
   "files": [
     "dist/src",
     "dist/*.js",
-    "dist/*.js.map"
+    "dist/*.js.map",
+    "breadboard.schema.json"
   ],
   "ava": {
     "timeout": "30s",
