@@ -49,8 +49,15 @@ const outputSchema = {
 export default await recipe(async () => {
   const input = base.input({ $id: "math-question", schema: inputSchema });
   const template = starter.promptTemplate({
-    template:
-      "Translate the math problem below into a self-contained, zero-argument JavaScript function named `compute` that can be executed to provide the answer to the problem. Do not use any dependencies or libraries.\nMath Problem: {{question}}\nSolution:",
+    template: `Translate the math problem below into a self-contained,
+zero-argument JavaScript function named \`compute\` that can be executed
+to provide the answer to the problem. 
+
+Do not use any dependencies or libraries.
+
+Math Problem: {{question}}
+
+Solution:`,
     $id: "math-function",
     question: input.question,
   });
