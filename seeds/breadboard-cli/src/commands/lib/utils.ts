@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board, BoardRunner } from "@google-labs/breadboard";
+import { Board, BoardRunner, GraphDescriptor } from "@google-labs/breadboard";
 import * as esbuild from "esbuild";
+import { watch as fsWatch } from "fs";
 import { readFile, stat, unlink, writeFile } from "fs/promises";
 import { join } from "node:path";
 import { stdin as input } from "node:process";
 import * as readline from "node:readline/promises";
 import path, { basename } from "path";
-import { watch as fsWatch } from "fs";
 
 export type Options = {
   output?: string;
@@ -28,13 +28,15 @@ export async function makeFromSource(
   return { boardJson, board };
 }
 
-export async function makeFromFile(filePath: string, options?: Options) {
+export async function makeFromFile(filePath: string) {
   const board = await loadBoardFromModule(filePath);
   const boardJson = JSON.stringify(board, null, 2);
   return { boardJson, board };
 }
 
-const boardLike = (board: Record<string, unknown>) => {
+const boardLike = (
+  board: Record<string, unknown>
+): board is GraphDescriptor => {
   return board && "edges" in board && "nodes" in board;
 };
 
