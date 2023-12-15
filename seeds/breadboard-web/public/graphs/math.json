@@ -4,22 +4,10 @@
   "version": "0.0.2",
   "edges": [
     {
-      "from": "math-question",
-      "to": "generator",
-      "out": "generator",
-      "in": "path"
-    },
-    {
       "from": "compute",
-      "to": "print",
-      "out": "result",
-      "in": "text"
-    },
-    {
-      "from": "secrets-1",
-      "to": "compute",
-      "out": "PALM_KEY",
-      "in": "PALM_KEY"
+      "to": "answer",
+      "out": "*",
+      "in": ""
     },
     {
       "from": "generator",
@@ -28,19 +16,56 @@
       "in": "code"
     },
     {
+      "from": "math-question",
+      "to": "math-function",
+      "out": "question",
+      "in": "question"
+    },
+    {
+      "from": "math-question",
+      "to": "generator",
+      "out": "generator",
+      "in": "path"
+    },
+    {
       "from": "math-function",
       "to": "generator",
       "out": "prompt",
       "in": "text"
-    },
-    {
-      "from": "math-question",
-      "to": "math-function",
-      "out": "text",
-      "in": "question"
     }
   ],
   "nodes": [
+    {
+      "id": "answer",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "result": {
+              "type": "string",
+              "title": "Answer",
+              "description": "The answer to the math problem"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
+    },
+    {
+      "id": "compute",
+      "type": "runJavascript",
+      "configuration": {
+        "name": "compute"
+      }
+    },
+    {
+      "id": "generator",
+      "type": "invoke",
+      "configuration": {}
+    },
     {
       "id": "math-question",
       "type": "input",
@@ -48,7 +73,7 @@
         "schema": {
           "type": "object",
           "properties": {
-            "text": {
+            "question": {
               "type": "string",
               "title": "Math problem",
               "description": "Ask a math question",
@@ -73,55 +98,9 @@
       "id": "math-function",
       "type": "promptTemplate",
       "configuration": {
-        "template": "Translate the math problem below into a self-contained, zero-argument JavaScript function named `compute` that can be executed to provide the answer to the problem. Do not use any dependencies or libraries.\nMath Problem: {{question}}\nSolution:"
-      }
-    },
-    {
-      "id": "generator",
-      "type": "invoke"
-    },
-    {
-      "id": "compute",
-      "type": "runJavascript",
-      "configuration": {
-        "name": "compute"
-      }
-    },
-    {
-      "id": "print",
-      "type": "output",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "text": {
-              "type": "string",
-              "title": "Answer",
-              "description": "The answer to the math problem"
-            }
-          },
-          "required": [
-            "text"
-          ]
-        }
-      }
-    },
-    {
-      "id": "secrets-1",
-      "type": "secrets",
-      "configuration": {
-        "keys": [
-          "PALM_KEY"
-        ]
+        "template": "Translate the math problem below into a self-contained,\nzero-argument JavaScript function named `compute` that can be executed\nto provide the answer to the problem. \n\nDo not use any dependencies or libraries.\n\nMath Problem: {{question}}\n\nSolution:"
       }
     }
   ],
-  "kits": [
-    {
-      "url": "npm:@google-labs/llm-starter"
-    },
-    {
-      "url": "npm:@google-labs/core-kit"
-    }
-  ]
+  "graphs": {}
 }
