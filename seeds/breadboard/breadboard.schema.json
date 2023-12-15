@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/seeds/breadboard/breadboard.schema.json",
+  "title": "Breadboard",
+  "description": "An executable program graph",
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-zA-Z_][a-zA-Z0-9_-]*$"
+    }
+  },
+  "type": "object",
+  "required": ["nodes", "edges"],
+  "additionalProperties": false,
+  "properties": {
+    "nodes": {
+      "description": "All of the nodes in the graph",
+      "type": "array",
+      "items": {
+        "description": "A \"step\" or \"function\" in the program which performs computation",
+        "type": "object",
+        "required": ["id", "type"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "Identifier for this node that is unique to this graph",
+            "$ref": "#/$defs/identifier"
+          },
+          "type": {
+            "description": "The type of the node. Must be either a built-in type or a type provided by a kit.",
+            "$ref": "#/$defs/identifier"
+          },
+          "configuration": {
+            "description": "Type-specific configuration of the node",
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      }
+    },
+    "edges": {
+      "description": "All of the edges in the graph",
+      "type": "array",
+      "items": {
+        "description": "A connection between two nodes through which data flows",
+        "type": "object",
+        "required": ["from", "to"],
+        "additionalProperties": false,
+        "properties": {
+          "from": {
+            "description": "The ID of the source node",
+            "$ref": "#/$defs/identifier"
+          },
+          "to": {
+            "description": "The ID of the destination node",
+            "$ref": "#/$defs/identifier"
+          },
+          "out": {
+            "description": "The output port of the `from` node.\nIf \"*\", then all outputs of the `from` node are passed to the `to` node. In this case `in` must be empty string or undefined.\nIf undefined or empty string, then no data is passed, and the nodes are instead connected purely for yielding control flow. In this case `in` must be empty string or undefined.",
+            "type": "string"
+          },
+          "in": {
+            "description": "The input port of the `to` node.\nMust be empty string or undefined if and only if `out` is either \"*\" or itself empty string or undefined.",
+            "type": "string"
+          },
+          "optional": {
+            "description": "If true, nodes connected to this edge won't wait for data to appear before proceding with execution.",
+            "type": "boolean"
+          },
+          "constant": {
+            "description": "If true, the most recent data that passed through this edge will remain available indefinitely, instead of being destructively consumed.",
+            "type": "boolean"
+          }
+        },
+        "oneOf": [
+          {
+            "required": [],
+            "properties": {
+              "out": {
+                "const": ""
+              },
+              "in": {
+                "const": ""
+              }
+            }
+          },
+          {
+            "required": ["out"],
+            "properties": {
+              "out": {
+                "const": "*"
+              },
+              "in": {
+                "const": ""
+              }
+            }
+          },
+          {
+            "required": ["out", "in"],
+            "properties": {
+              "out": {
+                "$ref": "#/$defs/identifier"
+              },
+              "in": {
+                "$ref": "#/$defs/identifier"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "kits": {
+      "description": "All of the kits this graph depends on",
+      "type": "array",
+      "items": {
+        "description": "A library that will be imported prior to execution for providing handlers for non built-in node types.",
+        "type": "object",
+        "required": ["url"],
+        "additionalProperties": false,
+        "properties": {
+          "url": {
+            "description": "Address of the kit",
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      }
+    },
+    "graphs": {
+      "description": "Sub-graphs that can be referred to by nodes in the parent graph.",
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[a-zA-Z_][a-zA-Z0-9_-]*$": {
+          "$ref": "#"
+        }
+      }
+    },
+    "args": {
+      "description": "Arguments that are passed to the graph, useful to bind values to lambdas.",
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}
