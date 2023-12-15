@@ -1,44 +1,28 @@
 {
   "title": "Board as Function",
   "description": "Take a board URL and turn it into an LLM function call",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "edges": [
-    {
-      "from": "input",
-      "to": "getBoard",
-      "out": "boardURL",
-      "in": "url"
-    },
     {
       "from": "getFunctionSignature",
       "to": "output",
-      "out": "*"
+      "out": "*",
+      "in": ""
     },
     {
       "from": "getBoard",
       "to": "getFunctionSignature",
       "out": "response",
       "in": "json"
+    },
+    {
+      "from": "input",
+      "to": "getBoard",
+      "out": "boardURL",
+      "in": "url"
     }
   ],
   "nodes": [
-    {
-      "id": "input",
-      "type": "input",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "boardURL": {
-              "type": "string",
-              "title": "Board URL",
-              "description": "The URL of the board to convert to a function call",
-              "default": "/graphs/board-as-function.json"
-            }
-          }
-        }
-      }
-    },
     {
       "id": "output",
       "type": "output",
@@ -64,18 +48,32 @@
       "id": "getFunctionSignature",
       "type": "jsonata",
       "configuration": {
-        "expression": "\n  (\n    $adjustType := function ($type) {\n        $type = \"object\" or $type = \"array\" ? \"string\" : $type\n    };\n\n    { \n    \"function\": {\n        \"name\": $replace(title, /\\W/, \"_\"),\n        \"description\": description,\n        \"parameters\": {\n            \"type\": \"object\",\n            \"properties\": nodes[type=\"input\"][0].configuration.schema.properties ~> $each(function($v, $k) {\n            { $k: {\n                \"type\": $v.type ~> $adjustType,\n                \"description\": $v.description\n            } }\n            }) ~> $merge\n        }\n    }, \n    \"returns\": nodes[type=\"output\"][0].configuration.schema ~> | ** | {}, 'title' |\n    }\n)",
+        "expression": "\n    (\n      $adjustType := function ($type) {\n          $type = \"object\" or $type = \"array\" ? \"string\" : $type\n      };\n  \n      { \n      \"function\": {\n          \"name\": $replace(title, /\\W/, \"_\"),\n          \"description\": description,\n          \"parameters\": {\n              \"type\": \"object\",\n              \"properties\": nodes[type=\"input\"][0].configuration.schema.properties ~> $each(function($v, $k) {\n              { $k: {\n                  \"type\": $v.type ~> $adjustType,\n                  \"description\": $v.description\n              } }\n              }) ~> $merge\n          }\n      }, \n      \"returns\": nodes[type=\"output\"][0].configuration.schema ~> | ** | {}, 'title' |\n      }\n  )",
         "raw": true
       }
     },
     {
       "id": "getBoard",
-      "type": "fetch"
+      "type": "fetch",
+      "configuration": {}
+    },
+    {
+      "id": "input",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "boardURL": {
+              "type": "string",
+              "title": "Board URL",
+              "description": "The URL of the board to convert to a function call",
+              "default": "/graphs/board-as-function.json"
+            }
+          }
+        }
+      }
     }
   ],
-  "kits": [
-    {
-      "url": "npm:@google-labs/llm-starter"
-    }
-  ]
+  "graphs": {}
 }
