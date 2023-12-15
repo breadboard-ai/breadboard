@@ -52,7 +52,7 @@ const generator = core.invoke({
   text: prompt.prompt,
 });
 
-conversationMemory.in({ accumulator: generator.text });
+conversationMemory.in({ assistant: generator.text });
 // response.completion.to(conversationMemory.accumulator);
 
 const output = base.output({

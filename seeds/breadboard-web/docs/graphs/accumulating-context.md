@@ -11,7 +11,7 @@ output2{{"output <br> id='output-2'"}}:::output --> userRequest[/"input <br> id=
 assistant["promptTemplate <br> id='assistant'"] -- "prompt->text" --> generator["invoke <br> id='generator'"]
 append1["append <br> id='append-1'"] -- "accumulator->accumulator" --> append1["append <br> id='append-1'"]
 append1["append <br> id='append-1'"] -- "accumulator->context" --> assistant["promptTemplate <br> id='assistant'"]
-generator["invoke <br> id='generator'"] -- "text->accumulator" --> append1["append <br> id='append-1'"]
+generator["invoke <br> id='generator'"] -- "text->assistant" --> append1["append <br> id='append-1'"]
 generator["invoke <br> id='generator'"] -- "text->text" --> output2{{"output <br> id='output-2'"}}:::output
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
