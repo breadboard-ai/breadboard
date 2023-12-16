@@ -34,7 +34,7 @@ import {
 
 import { BaseNode } from "../runner/node.js";
 import { BuilderScope } from "./scope.js";
-import { TrapResult, TrappedDataReadWhileSerializing } from "./trap.js";
+import { TrapResult } from "./trap.js";
 import { Value, isValue } from "./value.js";
 import { isLambda } from "./recipe.js";
 
@@ -364,8 +364,7 @@ export class BuilderNode<
         }
         return scope.serialize(actualOutput);
       } catch (e) {
-        if (e instanceof TrappedDataReadWhileSerializing) return null;
-        else throw e;
+        return null;
       }
     })();
 
