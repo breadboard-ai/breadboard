@@ -191,5 +191,12 @@ export const core = addKit(Core) as unknown as {
     },
     { [key: string]: unknown }
   >;
+  map: NodeFactory<
+    {
+      list: NodeValue[];
+      board?: NodeValue;
+    },
+    { list: NodeValue[] }
+  >;
   // TODO: Other Core nodes.
 };
