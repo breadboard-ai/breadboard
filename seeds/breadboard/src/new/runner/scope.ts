@@ -21,6 +21,8 @@ import {
   ScopeConfig,
 } from "./types.js";
 
+import { Schema } from "../../types.js";
+
 export class Scope implements ScopeInterface {
   #lexicalScope?: ScopeInterface;
   #dynamicScope?: ScopeInterface;
@@ -120,7 +122,23 @@ export class Scope implements ScopeInterface {
     const nodes = await Promise.all(
       queue.map(async (node) => {
         const [nodeDescriptor, subGraph] = await node.serializeNode();
-        if (subGraph) graphs[node.id] = subGraph;
+
+        // Save subgraphs returned, typically for `invoke` nodes that call
+        // serialized graphs or functions.
+        if (subGraph) graphs[nodeDescriptor.id] = subGraph;
+
+        // If `input` or `output` nodes don't have a schema, derive it from
+        // their wires, calling the respective nodes' describe method.
+        if (
+          (nodeDescriptor.type === "input" ||
+            nodeDescriptor.type === "output") &&
+          !nodeDescriptor.configuration?.schema
+        )
+          nodeDescriptor.configuration = {
+            ...nodeDescriptor.configuration,
+            schema: await this.#addMissingSchemas(node),
+          };
+
         return nodeDescriptor;
       })
     );
@@ -151,5 +169,38 @@ export class Scope implements ScopeInterface {
     }
 
     return [...nodes];
+  }
+
+  async #addMissingSchemas(node: AbstractNode): Promise<Schema> {
+    const properties: Schema["properties"] = {};
+    if (node.type === "input") {
+      for (const edge of node.outgoing) {
+        const toSchema = await edge.to.describe(this, edge.to.configuration);
+        properties[edge.out] = toSchema?.inputSchema?.properties?.[edge.in] ?? {
+          type: "string",
+          title: edge.out,
+        };
+      }
+    } else if (node.type === "output") {
+      for (const edge of node.incoming) {
+        const fromSchema = await edge.from.describe(
+          this,
+          edge.from.configuration
+        );
+        properties[edge.in] = fromSchema?.inputSchema?.properties?.[
+          edge.out
+        ] ?? {
+          type: "string",
+          title: edge.in,
+        };
+      }
+    } else {
+      throw new Error("Can't yet derive schema for non-input/output nodes");
+    }
+    return {
+      type: "object",
+      properties,
+      required: Object.keys(properties),
+    } satisfies Schema;
   }
 }
