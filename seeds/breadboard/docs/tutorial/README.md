@@ -224,7 +224,7 @@ First, the `wire` method returns the node itself, allowing us to wire the same n
 const input = board.input();
 const output = board.output();
 const generateText = palm.generateText();
-const secrets = starter.secrets(["PALM_KEY"]);
+const secrets = starter.secrets({ keys: ["PALM_KEY"] });
 
 input.wire("say->text", generateText).wire("say->", output);
 generateText.wire("completion->hear", output);
@@ -245,7 +245,7 @@ board.input().wire("say->text", palm.generateText()).wire("say->", output);
 Finally, we can we can wire in both directions. For example, we can wire the `secrets` node to the `generateText` node like this:
 
 ```js
-generateText.wire("<-PALM_KEY", starter.secrets(["PALM_KEY"]));
+generateText.wire("<-PALM_KEY", starter.secrets({ keys: ["PALM_KEY"] }));
 ```
 
 Here, the arrow points in a different direction, and asks the board to wire the `PALM_KEY` output of the `secrets` node to the same input of the `generateText` node. It's equivalent to the wiring we had in the previous chapter.
@@ -262,7 +262,7 @@ board
     palm
       .generateText()
       .wire("completion->hear", output)
-      .wire("<-PALM_KEY", starter.secrets(["PALM_KEY"]))
+      .wire("<-PALM_KEY", starter.secrets({ keys: ["PALM_KEY"] }))
   );
 ```
 
