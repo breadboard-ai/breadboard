@@ -32,7 +32,7 @@ const js = await import("jsonschema");
 
 ### Step 3: Wrap the library and add it to the board
 
-```TypeScript 
+```TypeScript
 const MyKit = KitBuilder.wrap({ url: "test" }, { ...js.default });
 // The validate method is the only method that will be exposed from the library (it's the only function, the other properties are just Classes)
 
@@ -59,8 +59,6 @@ inputC.wire("c->options", validateNode);
 Now that we have the inputs wired up, we can wire the wire the `validateNode` to the output of the board.
 
 In this case, we need to look to see if there are any values on the `errors` value.
-
-
 
 ```TypeScript
 // result because it's just a string from a dynamic function
