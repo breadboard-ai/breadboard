@@ -364,8 +364,7 @@ export class BuilderNode<
         }
         return scope.serialize(actualOutput);
       } catch (e) {
-        if (e instanceof TrappedDataReadWhileSerializing) return null;
-        else throw e;
+        return null;
       }
     })();
 
