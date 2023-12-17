@@ -4,6 +4,8 @@
 
 `npm install -g @google-labs/breadboard-cli`
 
+The CLI tools are designed to help you create and debug your breadboard files directly from your command line.
+
 ## Usage
 
 ### Debug
