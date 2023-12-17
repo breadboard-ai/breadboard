@@ -4,84 +4,24 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { fileURLToPath, pathToFileURL } from "url";
-import { stat, opendir, readFile } from "fs/promises";
 import { createReadStream } from "fs";
-import path, { join, dirname, relative } from "path";
-import { watch } from "./lib/utils.js";
-import handler from "serve-handler";
 import http from "http";
-import * as esbuild from "esbuild";
+import { dirname, join, relative } from "path";
+import handler from "serve-handler";
+import { fileURLToPath, pathToFileURL } from "url";
+import { BoardMetaData, compileKits, loadBoards, watch } from "./lib/utils.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-type LocalBoard = { title: string; url: string; version: string };
-
-const getBoards = async (path: string): Promise<Array<LocalBoard>> => {
-  const fileStat = await stat(path);
-  const fileUrl = pathToFileURL(path);
-
-  if (fileStat && fileStat.isFile() && path.endsWith(".json")) {
-    const data = await readFile(path, { encoding: "utf-8" });
-    const board = JSON.parse(data);
-
-    if ("title" in board == false) return [];
-
-    return [
-      {
-        title: board.title,
-        url: join("/", relative(process.cwd(), path)),
-        version: board.version ?? "0.0.1",
-      },
-    ];
-  }
-
-  if (fileStat && fileStat.isDirectory()) {
-    const dir = await opendir(fileUrl);
-    const boards: Array<LocalBoard> = [];
-    for await (const dirent of dir) {
-      if (dirent.isFile() && dirent.name.endsWith(".json")) {
-        const data = await readFile(dirent.path, { encoding: "utf-8" });
-        const board = JSON.parse(data);
-        boards.push({
-          ...board,
-          title: board.title ?? join("/", path, dirent.name),
-          url: join("/", path, dirent.name),
-          version: board.version ?? "0.0.1",
-        });
-      }
-    }
-    return boards;
-  }
-
-  return [];
-};
-
 export const debug = async (file: string, options: Record<string, any>) => {
+  const distDir = join(__dirname, "..", "..", "ui");
   const kitDeclarations = options.kit as string[] | undefined;
-  const kitOutput: Record<string, string> = {};
+  let boards: Array<BoardMetaData> = [];
+  let kitOutput: Record<string, string>;
 
   if (kitDeclarations != undefined) {
     // We should warn if we are importing code and the associated risks
-    for (const kitDetail of kitDeclarations) {
-      console.log(`Fetching kit ${kitDetail}...`);
-      const output = await esbuild.build({
-        bundle: true,
-        format: "esm",
-        platform: "node",
-        tsconfig: path.join(process.cwd(), "..", "..", "tsconfig.json"),
-        stdin: {
-          resolveDir: process.cwd(),
-          contents: `export * from "${kitDetail}";
-          export { default } from "${kitDetail}";`,
-        },
-        write: false,
-      });
-
-      kitOutput[kitDetail] = Buffer.from(
-        output.outputFiles[0].contents
-      ).toString();
-    }
+    kitOutput = await compileKits(kitDeclarations);
   }
 
   if (file == undefined) {
@@ -90,21 +30,17 @@ export const debug = async (file: string, options: Record<string, any>) => {
 
   const fileUrl = pathToFileURL(file);
 
-  let boards: Array<LocalBoard> = [];
-
-  const distDir = join(__dirname, "..", "..", "ui");
-
   if ("watch" in options) {
     watch(file, {
       onChange: async (filename: string) => {
         // Refresh the list of boards that are passed in at the start of the server.
         console.log(`${filename} changed. Refreshing boards...`);
-        boards = await getBoards(file);
+        boards = await loadBoards(file);
       },
       onRename: async () => {
         // Refresh the list of boards that are passed in at the start of the server.
         console.log(`Refreshing boards...`);
-        boards = await getBoards(file);
+        boards = await loadBoards(file);
       },
     });
   }
@@ -117,7 +53,7 @@ export const debug = async (file: string, options: Record<string, any>) => {
     if (requestURL.pathname === "/local-boards.json") {
       // Generate a list of boards that are valid at runtime.
       // Cache until things change.
-      boards = await getBoards(file);
+      boards = await loadBoards(file);
 
       const boardsData = JSON.stringify(
         boards.map((board) => ({
@@ -126,6 +62,7 @@ export const debug = async (file: string, options: Record<string, any>) => {
           title: board.title,
         }))
       );
+
       response.writeHead(200, {
         "Content-Type": "application/json",
         "Content-Length": boardsData.length,

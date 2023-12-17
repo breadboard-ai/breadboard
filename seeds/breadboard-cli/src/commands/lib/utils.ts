@@ -7,16 +7,20 @@
 import { Board, BoardRunner, GraphDescriptor } from "@google-labs/breadboard";
 import * as esbuild from "esbuild";
 import { watch as fsWatch } from "fs";
-import { readFile, stat, unlink, writeFile } from "fs/promises";
+import { opendir, readFile, stat, unlink, writeFile } from "fs/promises";
 import { join } from "node:path";
 import { stdin as input } from "node:process";
 import * as readline from "node:readline/promises";
 import path, { basename } from "path";
+import { relative } from "path/posix";
+import { pathToFileURL } from "url";
 
 export type Options = {
   output?: string;
   watch?: boolean;
 };
+
+export type BoardMetaData = { title: string; url: string; version: string };
 
 export async function makeFromSource(
   filename: string,
@@ -168,4 +172,74 @@ export const parseStdin = async (): Promise<string> => {
   }
   rl.close();
   return lines;
+};
+
+export async function compileKits(
+  kitDeclarations: string[]
+): Promise<Record<string, string>> {
+  const kitOutput: Record<string, string> = {};
+
+  for (const kitDetail of kitDeclarations) {
+    console.log(`Fetching kit ${kitDetail}...`);
+    const output = await esbuild.build({
+      bundle: true,
+      format: "esm",
+      platform: "node",
+      tsconfig: path.join(process.cwd(), "..", "..", "tsconfig.json"),
+      stdin: {
+        resolveDir: process.cwd(),
+        contents: `export * from "${kitDetail}";
+          export { default } from "${kitDetail}";`,
+      },
+      write: false,
+    });
+
+    kitOutput[kitDetail] = Buffer.from(
+      output.outputFiles[0].contents
+    ).toString();
+  }
+
+  return kitOutput;
+}
+export const loadBoards = async (
+  path: string
+): Promise<Array<BoardMetaData>> => {
+  const fileStat = await stat(path);
+  const fileUrl = pathToFileURL(path);
+
+  if (fileStat && fileStat.isFile() && path.endsWith(".json")) {
+    const data = await readFile(path, { encoding: "utf-8" });
+    const board = JSON.parse(data);
+
+    if ("title" in board == false) return [];
+
+    return [
+      {
+        ...board,
+        title: board.title,
+        url: join("/", relative(process.cwd(), path)),
+        version: board.version ?? "0.0.1",
+      },
+    ];
+  }
+
+  if (fileStat && fileStat.isDirectory()) {
+    const dir = await opendir(fileUrl);
+    const boards: Array<BoardMetaData> = [];
+    for await (const dirent of dir) {
+      if (dirent.isFile() && dirent.name.endsWith(".json")) {
+        const data = await readFile(dirent.path, { encoding: "utf-8" });
+        const board = JSON.parse(data);
+        boards.push({
+          ...board,
+          title: board.title ?? join("/", path, dirent.name),
+          url: join("/", path, dirent.name),
+          version: board.version ?? "0.0.1",
+        });
+      }
+    }
+    return boards;
+  }
+
+  return [];
 };
