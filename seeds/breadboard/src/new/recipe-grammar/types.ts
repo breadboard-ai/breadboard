@@ -184,6 +184,8 @@ export interface RecipeFactory {
   ): Lambda<z.infer<IT>, Required<z.infer<OT>>>;
 }
 
+export type FnTypes = "code" | "graph";
+
 export type NodeProxyMethods<I extends InputValues, O extends OutputValues> = {
   then<TResult1 = O, TResult2 = never>(
     onfulfilled?: ((value: O) => TResult1 | PromiseLike<TResult1>) | null,
