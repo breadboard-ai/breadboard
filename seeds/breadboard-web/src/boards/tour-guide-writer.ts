@@ -9,7 +9,7 @@ import { core } from "@google-labs/core-kit";
 import { starter } from "@google-labs/llm-starter";
 
 const metadata = {
-  title: "Tour Guide Writer 3",
+  title: "Tour Guide Writer",
   description:
     "This boards attempts to write a tour guide for a specified location. This time, it takes a text generator board as an input.\n\nInterestingly, because we currently don't have a way to close over the inputs of the invoked text generator, this board exposes the text generator's inputs as its own inputs.",
   version: "0.0.3",
