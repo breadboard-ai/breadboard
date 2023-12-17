@@ -102,13 +102,8 @@
     "version": "0.0.1"
   },
   {
-    "title": "Tour Guide Writer 3",
-    "url": "/graphs/tour-guide-writer-3.json",
-    "version": "0.0.3"
-  },
-  {
     "title": "Tour Guide Writer",
     "url": "/graphs/tour-guide-writer.json",
-    "version": "0.0.2"
+    "version": "0.0.3"
   }
 ]
