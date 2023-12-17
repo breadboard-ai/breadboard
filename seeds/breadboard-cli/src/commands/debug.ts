@@ -94,18 +94,20 @@ export const debug = async (file: string, options: Record<string, any>) => {
 
   const distDir = join(__dirname, "..", "..", "ui");
 
-  watch(file, {
-    onChange: async (filename: string) => {
-      // Refresh the list of boards that are passed in at the start of the server.
-      console.log(`${filename} changed. Refreshing boards...`);
-      boards = await getBoards(file);
-    },
-    onRename: async () => {
-      // Refresh the list of boards that are passed in at the start of the server.
-      console.log(`Refreshing boards...`);
-      boards = await getBoards(file);
-    },
-  });
+  if ("watch" in options) {
+    watch(file, {
+      onChange: async (filename: string) => {
+        // Refresh the list of boards that are passed in at the start of the server.
+        console.log(`${filename} changed. Refreshing boards...`);
+        boards = await getBoards(file);
+      },
+      onRename: async () => {
+        // Refresh the list of boards that are passed in at the start of the server.
+        console.log(`Refreshing boards...`);
+        boards = await getBoards(file);
+      },
+    });
+  }
 
   const server = http.createServer(async (request, response) => {
     // You pass two more arguments for config and middleware
