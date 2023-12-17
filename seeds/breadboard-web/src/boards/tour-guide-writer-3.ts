@@ -168,13 +168,13 @@ const graph = recipe(async () => {
     guides: Record<string, { guide: string }>[];
   };
 
-  type Guide = { result: string };
+  type Guide = { guide: string };
 
   const combineGuides = recipeAsCode<GuideMaterials, Guide>(
     ({ location, activities, guides }) => {
       const guideList = guides.map((item) => item.guide);
       return {
-        result: `# ${location}\n${activities
+        guide: `# ${location}\n${activities
           .map((activity, index) => `## ${activity}\n${guideList[index]}\n\n`)
           .join("")}`,
       };
@@ -185,7 +185,7 @@ const graph = recipe(async () => {
     guides: createGuides.list as V<GuideMaterials["guides"]>,
   });
 
-  combineGuides.guides.to(output);
+  combineGuides.guide.to(output);
 
   return output;
 });

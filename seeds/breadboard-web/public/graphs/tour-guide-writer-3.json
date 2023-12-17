@@ -16,10 +16,10 @@
       "in": "itinerary"
     },
     {
-      "from": "fn-7",
+      "from": "fn-6",
       "to": "guide",
-      "out": "guides",
-      "in": "guides"
+      "out": "guide",
+      "in": "guide"
     },
     {
       "from": "parameters",
@@ -47,7 +47,7 @@
     },
     {
       "from": "parameters",
-      "to": "fn-7",
+      "to": "fn-6",
       "out": "location",
       "in": "location"
     },
@@ -65,24 +65,18 @@
     },
     {
       "from": "fn-3",
-      "to": "fn-7",
+      "to": "fn-6",
       "out": "list",
       "in": "activities"
     },
     {
       "from": "createGuides",
-      "to": "fn-7",
+      "to": "fn-6",
       "out": "list",
       "in": "guides"
     },
     {
       "from": "lambda-5",
-      "to": "invoke-6",
-      "out": "getBoardCapabilityAsValue",
-      "in": "$recipe"
-    },
-    {
-      "from": "invoke-6",
       "to": "createGuides",
       "out": "board",
       "in": "board"
@@ -116,10 +110,10 @@
       }
     },
     {
-      "id": "fn-7",
+      "id": "fn-6",
       "type": "invoke",
       "configuration": {
-        "path": "#fn-7"
+        "path": "#fn-6"
       }
     },
     {
@@ -249,44 +243,39 @@
           }
         }
       }
-    },
-    {
-      "id": "invoke-6",
-      "type": "invoke",
-      "configuration": {}
     }
   ],
   "graphs": {
-    "fn-7": {
+    "fn-6": {
       "edges": [
         {
-          "from": "fn-7-input",
-          "to": "fn-7-run",
+          "from": "fn-6-input",
+          "to": "fn-6-run",
           "out": "*"
         },
         {
-          "from": "fn-7-run",
-          "to": "fn-7-output",
+          "from": "fn-6-run",
+          "to": "fn-6-output",
           "out": "*"
         }
       ],
       "nodes": [
         {
-          "id": "fn-7-input",
+          "id": "fn-6-input",
           "type": "input",
           "configuration": {}
         },
         {
-          "id": "fn-7-run",
+          "id": "fn-6-run",
           "type": "runJavascript",
           "configuration": {
-            "code": "function fn_7({location,activities,guides}) {const guideList=guides.map(item=>item.guide);return{result:`# ${location}\n${activities.map((activity,index)=>`## ${activity}\n${guideList[index]}\n\n`).join(\"\")}`}}",
-            "name": "fn_7",
+            "code": "function fn_6({location,activities,guides}) {const guideList=guides.map(item=>item.guide);return{guide:`# ${location}\n${activities.map((activity,index)=>`## ${activity}\n${guideList[index]}\n\n`).join(\"\")}`}}",
+            "name": "fn_6",
             "raw": true
           }
         },
         {
-          "id": "fn-7-output",
+          "id": "fn-6-output",
           "type": "output",
           "configuration": {}
         }
