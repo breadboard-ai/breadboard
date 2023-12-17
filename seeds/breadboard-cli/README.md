@@ -1,5 +1,7 @@
 # CLI tools that let you play with breadboard
 
+:note: The package is not yet published. You can use it by running `npx breadboard` from this monorepo.
+
 `npm install -g @google-labs/breadboard-cli`
 
 ## Usage
@@ -39,15 +41,16 @@ Creates a graph json from a breadboard javascript file.
 Pipe it to mermaid
 `npx breadboard make seeds/breadboard-cli/boards/echo.js | npx breadboard mermaid`
 
+Watch a directory and make the files: `fswatch see/recipes/*.ts | xargs -n1 -I {} sh -c "npx breadboard make {} -o ./`
+
 ### Run
 
 Creates a graph json from a breadboard javascript file.
 
-`npx breadboard make seeds/breadboard-cli/boards/echo.js`
+`npx breadboard run seeds/breadboard-cli/boards/echo.js` - Runs the board and outputs the result to the console. Because there is no input defined, the board will ask you for input data.
 
-Pipe it to mermaid
-`npx breadboard make seeds/breadboard-cli/boards/echo.js | npx breadboard mermaid`
+You can also pass in your own input with the `-i` flag: `npx breadboard run seeds/breadboard-cli/boards/echo.js -i "{\"text\": \"Hello World\"}"``
 
-Include kits:
+If your board has kits, then you can pass in the kit name with the `--kit` flag (specify --kit for each kit you want to use)
 
 `npx breadboard run boards/news.json -i "{\"topic\": \"Paul Kinlan\"}" --kit "@google-labs/llm-starter"`
