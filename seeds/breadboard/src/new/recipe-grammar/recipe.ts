@@ -22,6 +22,7 @@ import {
   NodeProxy,
   InputsMaybeAsValues,
   Lambda,
+  FnTypes,
 } from "./types.js";
 import { NodeHandler, NodeHandlerFunction } from "../runner/types.js";
 
@@ -67,6 +68,7 @@ export const recipeAsGraph = <
 ): Lambda<I, Required<O>> => {
   return recipeImpl({
     invoke: fn as NodeProxyHandlerFunction,
+    fnType: "graph",
   }) as Lambda<I, Required<O>>;
 };
 
@@ -78,6 +80,7 @@ export const recipeAsCode = <
 ): Lambda<I, Required<O>> => {
   return recipeImpl({
     invoke: fn as unknown as NodeProxyHandlerFunction,
+    fnType: "code",
   }) as Lambda<I, Required<O>>;
 };
 
@@ -96,6 +99,7 @@ export const recipeAsGraphWithZod = <
   return recipeImpl({
     ...options,
     invoke: fn as NodeProxyHandlerFunction,
+    fnType: "graph",
   }) as Lambda<z.infer<IT>, Required<z.infer<OT>>>;
 };
 
@@ -106,6 +110,7 @@ export const recipeAsCodeWithZod = <IT extends z.ZodType, OT extends z.ZodType>(
     invoke: (inputs: z.infer<IT>) => z.infer<OT> | PromiseLike<z.infer<OT>>;
     describe?: NodeDescriberFunction;
     name?: string;
+    fnType: "code";
   } & GraphMetadata
 ): Lambda<z.infer<IT>, Required<z.infer<OT>>> => {
   return recipeImpl(options) as Lambda<z.infer<IT>, Required<z.infer<OT>>>;
@@ -136,6 +141,7 @@ function recipeImpl(
     invoke?: NodeProxyHandlerFunction;
     describe?: NodeDescriberFunction;
     name?: string;
+    fnType?: FnTypes;
   } & GraphMetadata
 ): Lambda {
   if (!options.invoke) throw new Error("Missing invoke function");
@@ -183,7 +189,8 @@ function recipeImpl(
       return new BuilderNode(
         handler,
         getCurrentContextScope(),
-        config
+        config,
+        options.fnType
       ).asProxy();
     else
       return new BuilderNode("invoke", getCurrentContextScope(), {
@@ -285,12 +292,17 @@ function recipeImpl(
   // access to `board` output, wire the factory directly. In the future we'll
   // get rid of BoardCapability and treat node factories as first class entities.
   //
-  factory.in = (inputs: Parameters<Lambda["in"]>[0]) =>
-    getLambdaNode().in(inputs) as NodeProxy;
+  factory.in = (inputs: Parameters<Lambda["in"]>[0]) => {
+    getLambdaNode().in(inputs);
+    return factory as unknown as NodeProxy;
+  };
 
   return factory;
 }
 
 export function isLambda(factory: unknown): factory is Lambda {
-  return typeof (factory as Lambda).getBoardCapabilityAsValue === "function";
+  return (
+    typeof factory === "function" &&
+    typeof (factory as Lambda).getBoardCapabilityAsValue === "function"
+  );
 }
