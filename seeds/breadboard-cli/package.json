@@ -25,7 +25,7 @@
       ]
     },
     "build:tsc": {
-      "command": "tsc -b",
+      "command": "tsc -b && chmod +x dist/src/index.js",
       "env": {
         "FORCE_COLOR": "1"
       },
@@ -122,6 +122,7 @@
   },
   "dependencies": {
     "@google-labs/breadboard": "*",
+    "@google-labs/pinecone-kit": "^0.0.1",
     "commander": "^11.1.0",
     "esbuild": "^0.19.9",
     "serve": "^14.2.1"

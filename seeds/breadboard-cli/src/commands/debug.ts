@@ -7,14 +7,15 @@
 import { fileURLToPath, pathToFileURL } from "url";
 import { stat, opendir, readFile } from "fs/promises";
 import { createReadStream } from "fs";
-import { join, dirname, relative } from "path";
+import path, { join, dirname, relative } from "path";
 import { watch } from "./lib/utils.js";
 import handler from "serve-handler";
 import http from "http";
+import * as esbuild from "esbuild";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-type LocalBoard = { title: string; url: string };
+type LocalBoard = { title: string; url: string; version: string };
 
 const getBoards = async (path: string): Promise<Array<LocalBoard>> => {
   const fileStat = await stat(path);
@@ -30,6 +31,7 @@ const getBoards = async (path: string): Promise<Array<LocalBoard>> => {
       {
         title: board.title,
         url: join("/", relative(process.cwd(), path)),
+        version: board.version ?? "0.0.1",
       },
     ];
   }
@@ -42,8 +44,10 @@ const getBoards = async (path: string): Promise<Array<LocalBoard>> => {
         const data = await readFile(dirent.path, { encoding: "utf-8" });
         const board = JSON.parse(data);
         boards.push({
+          ...board,
           title: board.title ?? join("/", path, dirent.name),
           url: join("/", path, dirent.name),
+          version: board.version ?? "0.0.1",
         });
       }
     }
@@ -53,7 +57,33 @@ const getBoards = async (path: string): Promise<Array<LocalBoard>> => {
   return [];
 };
 
-export const debug = async (file: string) => {
+export const debug = async (file: string, options: Record<string, any>) => {
+  const kitDeclarations = options.kit as string[] | undefined;
+  const kitOutput: Record<string, string> = {};
+
+  if (kitDeclarations != undefined) {
+    // We should warn if we are importing code and the associated risks
+    for (const kitDetail of kitDeclarations) {
+      console.log(`Fetching kit ${kitDetail}...`);
+      const output = await esbuild.build({
+        bundle: true,
+        format: "esm",
+        platform: "node",
+        tsconfig: path.join(process.cwd(), "..", "..", "tsconfig.json"),
+        stdin: {
+          resolveDir: process.cwd(),
+          contents: `export * from "${kitDetail}";
+          export { default } from "${kitDetail}";`,
+        },
+        write: false,
+      });
+
+      kitOutput[kitDetail] = Buffer.from(
+        output.outputFiles[0].contents
+      ).toString();
+    }
+  }
+
   if (file == undefined) {
     file = process.cwd();
   }
@@ -87,13 +117,41 @@ export const debug = async (file: string) => {
       // Cache until things change.
       boards = await getBoards(file);
 
-      const boardsData = JSON.stringify(boards);
+      const boardsData = JSON.stringify(
+        boards.map((board) => ({
+          url: board.url,
+          version: board.version,
+          title: board.title,
+        }))
+      );
       response.writeHead(200, {
         "Content-Type": "application/json",
         "Content-Length": boardsData.length,
       });
 
       return response.end(boardsData);
+    }
+
+    if (request.url && request.url.search(/\/index-([a-z0-9]+)\.js/) > -1) {
+      // Intercept the index.js bundle file and inject the kit code. THIS IS A HACK.
+      response.writeHead(200, {
+        "Content-Type": "application/javascript",
+      });
+
+      // Need to check this doesn't include "../" and other escape characters.
+      const fileStream = createReadStream(`${distDir}${request.url}`);
+      fileStream.pipe(response, { end: false });
+      fileStream.on("end", () => {
+        for (const kitName in kitOutput) {
+          response.write(
+            `// Kit (${kitName}) dynamically added from Server.\n`
+          );
+          response.write(kitOutput[kitName]);
+          response.write("\n");
+        }
+        response.end();
+      });
+      return;
     }
 
     const board = boards.find((board) => board.url == requestURL.pathname);
@@ -106,9 +164,7 @@ export const debug = async (file: string) => {
         "Content-Length": boardData.length,
       });
 
-      const readStream = createReadStream(file);
-      readStream.pipe(response);
-      return;
+      return response.end(boardData);
     }
 
     return handler(request, response, { public: distDir });
