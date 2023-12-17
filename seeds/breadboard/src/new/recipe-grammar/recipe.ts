@@ -292,12 +292,17 @@ function recipeImpl(
   // access to `board` output, wire the factory directly. In the future we'll
   // get rid of BoardCapability and treat node factories as first class entities.
   //
-  factory.in = (inputs: Parameters<Lambda["in"]>[0]) =>
-    getLambdaNode().in(inputs) as NodeProxy;
+  factory.in = (inputs: Parameters<Lambda["in"]>[0]) => {
+    getLambdaNode().in(inputs);
+    return factory as unknown as NodeProxy;
+  };
 
   return factory;
 }
 
 export function isLambda(factory: unknown): factory is Lambda {
-  return typeof (factory as Lambda).getBoardCapabilityAsValue === "function";
+  return (
+    typeof factory === "function" &&
+    typeof (factory as Lambda).getBoardCapabilityAsValue === "function"
+  );
 }
