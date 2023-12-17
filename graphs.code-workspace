@@ -59,6 +59,9 @@
     },
     {
       "path": "seeds/breadboard-ui"
+    },
+    {
+      "path": "seeds/breadboard-cli"
     }
   ],
   "settings": {}
