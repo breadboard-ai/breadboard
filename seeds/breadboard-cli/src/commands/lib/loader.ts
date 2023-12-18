@@ -61,7 +61,7 @@ export abstract class Loader {
     const tmpDir = options?.output ?? process.cwd();
     const randomName = Buffer.from(
       crypto.getRandomValues(new Uint32Array(16))
-    ).toString("base64");
+    ).toString("hex");
     const filePath = join(
       tmpDir,
       `~${basename(filename, "ts")}${randomName}tmp.mjs`
