@@ -3,27 +3,29 @@
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-input[/"input <br> id='input'"/]:::input -- "useStreaming->useStreaming" --> gemini["invoke <br> id='gemini'"]
-input[/"input <br> id='input'"/]:::input -- "text->text" --> gemini["invoke <br> id='gemini'"]
+mock["invoke <br> id='mock'"] -- "text->text" --> textOutput{{"output <br> id='textOutput'"}}:::output
+mock["invoke <br> id='mock'"] -- "stream->stream" --> streamOutput{{"output <br> id='streamOutput'"}}:::output
 gemini["invoke <br> id='gemini'"] -- "text->text" --> textOutput{{"output <br> id='textOutput'"}}:::output
 gemini["invoke <br> id='gemini'"] -- "stream->stream" --> streamOutput{{"output <br> id='streamOutput'"}}:::output
-input[/"input <br> id='input'"/]:::input -- "useStreaming->useStreaming" --> palmGenerator["invoke <br> id='palmGenerator'"]
-input[/"input <br> id='input'"/]:::input -- "MODEL->MODEL" --> switchModel["runJavascript <br> id='switchModel'"]
-input[/"input <br> id='input'"/]:::input -- "useStreaming->useStreaming" --> gpt35["invoke <br> id='gpt35'"]
-gpt35["invoke <br> id='gpt35'"] -- "text->text" --> textOutput{{"output <br> id='textOutput'"}}:::output
-input[/"input <br> id='input'"/]:::input -- "text->text" --> gpt35["invoke <br> id='gpt35'"]
-gpt35["invoke <br> id='gpt35'"] -- "stream->stream" --> streamOutput{{"output <br> id='streamOutput'"}}:::output
 palmGenerator["invoke <br> id='palmGenerator'"] -- "text->text" --> textOutput{{"output <br> id='textOutput'"}}:::output
-input[/"input <br> id='input'"/]:::input -- "text->text" --> palmGenerator["invoke <br> id='palmGenerator'"]
-input[/"input <br> id='input'"/]:::input -- "useStreaming->useStreaming" --> mockModel["invoke <br> id='mockModel'"]
-mockModel["invoke <br> id='mockModel'"] -- "text->text" --> textOutput{{"output <br> id='textOutput'"}}:::output
-input[/"input <br> id='input'"/]:::input -- "text->text" --> mockModel["invoke <br> id='mockModel'"]
-switchModel["runJavascript <br> id='switchModel'"] -- "other->text" --> textOutput{{"output <br> id='textOutput'"}}:::output
-switchModel["runJavascript <br> id='switchModel'"] -- "gemini->gemini" --> gemini["invoke <br> id='gemini'"]
-switchModel["runJavascript <br> id='switchModel'"] -- "palm->palm" --> palmGenerator["invoke <br> id='palmGenerator'"]
-switchModel["runJavascript <br> id='switchModel'"] -- "gpt35->gpt35" --> gpt35["invoke <br> id='gpt35'"]
-switchModel["runJavascript <br> id='switchModel'"] -- "mock->mock" --> mockModel["invoke <br> id='mockModel'"]
-mockModel["invoke <br> id='mockModel'"] -- "stream->stream" --> streamOutput{{"output <br> id='streamOutput'"}}:::output
+palmGenerator["invoke <br> id='palmGenerator'"] -- "stream->stream" --> streamOutput{{"output <br> id='streamOutput'"}}:::output
+gpt35["invoke <br> id='gpt35'"] -- "text->text" --> textOutput{{"output <br> id='textOutput'"}}:::output
+gpt35["invoke <br> id='gpt35'"] -- "stream->stream" --> streamOutput{{"output <br> id='streamOutput'"}}:::output
+fn3["invoke <br> id='fn-3'"] -- "mock->choose" --> mock["invoke <br> id='mock'"]
+fn3["invoke <br> id='fn-3'"] -- "gemini->choose" --> gemini["invoke <br> id='gemini'"]
+fn3["invoke <br> id='fn-3'"] -- "palm->choose" --> palmGenerator["invoke <br> id='palmGenerator'"]
+fn3["invoke <br> id='fn-3'"] -- "gpt35->choose" --> gpt35["invoke <br> id='gpt35'"]
+input[/"input <br> id='input'"/]:::input -- "MODEL->MODEL" --> fn3["invoke <br> id='fn-3'"]
+input[/"input <br> id='input'"/]:::input -- all --> mock["invoke <br> id='mock'"]
+input[/"input <br> id='input'"/]:::input -- all --> gemini["invoke <br> id='gemini'"]
+input[/"input <br> id='input'"/]:::input -- all --> palmGenerator["invoke <br> id='palmGenerator'"]
+input[/"input <br> id='input'"/]:::input -- all --> gpt35["invoke <br> id='gpt35'"]
+
+subgraph sg_fn3 [fn-3]
+fn3_fn3input[/"input <br> id='fn-3-input'"/]:::input -- all --> fn3_fn3run["runJavascript <br> id='fn-3-run'"]
+fn3_fn3run["runJavascript <br> id='fn-3-run'"] -- all --> fn3_fn3output{{"output <br> id='fn-3-output'"}}:::output
+end
+
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
