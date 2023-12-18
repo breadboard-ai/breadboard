@@ -1,22 +1,21 @@
 # Docs
 
-The documentation in this folder are for management of the breadboard project, 
+The documentation in this folder are for management of the breadboard project,
 explaining how to [contribute](./contributing.md) and what the [code of conduct](./code-of-conduct.md) is.
 
-### Seeds Docs
+### Packages Docs
 
-There is a lot of great content in this project, but it's under development and is mostly in the [seeds](../seeds) directory.
+There is a lot of great content in this project, but it's under development and is mostly in the [packages](../packages) directory.
 
 ### Breadboard Docs
 
-See the [Breadboard Docs](../seeds/breadboard/docs) for most of what you want to find.  
+See the [Breadboard Docs](../packages/breadboard/docs) for most of what you want to find.
 
 Here are a few highlights:
 
-* [Breadboard Tutorial](../seeds/breadboard/docs/tutorial)
-* [Breadboard API](../seeds/breadboard/docs/api)
-* [Breadboard Grammar](../seeds/breadboard/docs/grammar)
-* [Breadboard Examples](../seeds/breadboard/docs/examples)
-* [Breadboard Graphs](../seeds/breadboard/docs/graphs)
-* [Breadboard Kits](../seeds/breadboard/docs/kits.md)
-
+- [Breadboard Tutorial](../packages/breadboard/docs/tutorial)
+- [Breadboard API](../packages/breadboard/docs/api)
+- [Breadboard Grammar](../packages/breadboard/docs/grammar)
+- [Breadboard Examples](../packages/breadboard/docs/examples)
+- [Breadboard Graphs](../packages/breadboard/docs/graphs)
+- [Breadboard Kits](../packages/breadboard/docs/kits.md)

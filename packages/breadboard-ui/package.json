@@ -129,7 +129,7 @@
   "bugs": {
     "url": "https://github.com/breadboard-ai/breadboard/issues"
   },
-  "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/seeds/breadboard#readme",
+  "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/breadboard#readme",
   "devDependencies": {
     "@google-labs/tsconfig": "*",
     "@rollup/plugin-node-resolve": "^15.2.3",

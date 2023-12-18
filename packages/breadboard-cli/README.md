@@ -21,19 +21,19 @@ The CLI tools are designed to help you create and debug your breadboard files di
 
 Creates a mermaid diagram from a breadboard file.
 
-Pass in a file: `npx breadboard mermaid seeds/breadboard-cli/tests/echo.json`
+Pass in a file: `npx breadboard mermaid packages/breadboard-cli/tests/echo.json`
 
-Pipe in a file: `npx breadboard mermaid < seeds/breadboard-cli/tests/echo.json | npx breadboard mermaid`
+Pipe in a file: `npx breadboard mermaid < packages/breadboard-cli/tests/echo.json | npx breadboard mermaid`
 
-Pipe the output of a command: `cat seeds/breadboard-cli/tests/echo.json | npx breadboard mermaid`
+Pipe the output of a command: `cat packages/breadboard-cli/tests/echo.json | npx breadboard mermaid`
 
 Watching and piping the output of a command: `fswatch see/recipes/rss.ts | xargs -n1 -I {} sh -c "npx breadboard mermaid {} -o ./ | mmdc -o test.png -i -"`
 
 ### Make
 
-Creates a graph json from a breadboard javascript file: `npx breadboard make seeds/breadboard-cli/boards/echo.js`
+Creates a graph json from a breadboard javascript file: `npx breadboard make packages/breadboard-cli/boards/echo.js`
 
-Pipe it to mermaid: `npx breadboard make seeds/breadboard-cli/boards/echo.js | npx breadboard mermaid`
+Pipe it to mermaid: `npx breadboard make packages/breadboard-cli/boards/echo.js | npx breadboard mermaid`
 
 Watch a directory and make the files: `fswatch see/recipes/*.ts | xargs -n1 -I {} sh -c "npx breadboard make {} -o ./`
 
@@ -41,9 +41,9 @@ Watch a directory and make the files: `fswatch see/recipes/*.ts | xargs -n1 -I {
 
 Creates a graph json from a breadboard javascript file.
 
-`npx breadboard run seeds/breadboard-cli/boards/echo.js` - Runs the board and outputs the result to the console. Because there is no input defined, the board will ask you for input data.
+`npx breadboard run packages/breadboard-cli/boards/echo.js` - Runs the board and outputs the result to the console. Because there is no input defined, the board will ask you for input data.
 
-You can also pass in your own input with the `-i` flag: `npx breadboard run seeds/breadboard-cli/boards/echo.js -i "{\"text\": \"Hello World\"}"``
+You can also pass in your own input with the `-i` flag: `npx breadboard run packages/breadboard-cli/boards/echo.js -i "{\"text\": \"Hello World\"}"``
 
 If your board has kits, then you can pass in the kit name with the `--kit` flag (specify --kit for each kit you want to use)
 

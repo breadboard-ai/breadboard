@@ -42,7 +42,7 @@ Each chapter is also available as a [Replit](https://replit.com/) project. Look 
    ```sh
    touch tutorial.js
    ```
-   
+
    For the rest of this demo you can execute that file in the terminal:
 
    ```sh
@@ -123,7 +123,7 @@ You can see the source of this program here: [tutorial-1.js](./tutorial-1.js).
 
 This is definitely a fun little program, but it's not very useful. Let's add another node to the board. This time, we need a _kit_: a collection of nodes that are bundled together for a specific purpose.
 
-Because we're here to make generative AI applications, we'll get the [LLM Starter Kit](https://github.com/breadboard-ai/breadboard/tree/main/seeds/llm-starter).  Breadboard works with many LLM service providers, but for this tutorial we are going to pick the [PaLM Kit](https://github.com/breadboard-ai/breadboard/tree/main/seeds/llm-starter) (PaLM is an LLM API from Google).  You will need to get an [PaLM API Key](https://developers.generativeai.google/), save it someplace safe, and come right back.
+Because we're here to make generative AI applications, we'll get the [LLM Starter Kit](https://github.com/breadboard-ai/breadboard/tree/main/packages/llm-starter). Breadboard works with many LLM service providers, but for this tutorial we are going to pick the [PaLM Kit](https://github.com/breadboard-ai/breadboard/tree/main/packages/llm-starter) (PaLM is an LLM API from Google). You will need to get an [PaLM API Key](https://developers.generativeai.google/), save it someplace safe, and come right back.
 
 ```js
 import { Board } from "@google-labs/breadboard";
@@ -410,18 +410,18 @@ Our friend published their board's JSON at this URL:
 
 ```js
 const NEWS_BOARD_URL =
-  "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/seeds/breadboard/docs/tutorial/google-news-headlines.json";
+  "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/breadboard/docs/tutorial/google-news-headlines.json";
 ```
 
-We can _include_ their board using the `include` node from the 
-[Core Kit](https://github.com/breadboard-ai/breadboard/tree/main/seeds/core-kit), 
+We can _include_ their board using the `include` node from the
+[Core Kit](https://github.com/breadboard-ai/breadboard/tree/main/packages/core-kit),
 which you may need to install:
 
 ```sh
 npm install @google-labs/core-kit
 ```
 
-Import the Core module, add the kit to the board, and then wire `core.include({ path: NEWS_BOARD_URL })` as a new node in our board. 
+Import the Core module, add the kit to the board, and then wire `core.include({ path: NEWS_BOARD_URL })` as a new node in our board.
 In this case we are wiring `topic` into the included news board and the `headlines` it returns are wired into `hear` on our output:
 
 ```js
@@ -475,7 +475,7 @@ result {
 
 Let's add a few more nodes to the board which will use a LLM to summarize news on a given topic.
 
-First, we'll need a prompt that combines the topic we've provided, the headlines produced by our friend's board, and some instructions on what to do with them. To do that, we'll use the `promptTemplate` node from the [LLM Starter Kit](https://github.com/breadboard-ai/breadboard/tree/main/seeds/llm-starter):
+First, we'll need a prompt that combines the topic we've provided, the headlines produced by our friend's board, and some instructions on what to do with them. To do that, we'll use the `promptTemplate` node from the [LLM Starter Kit](https://github.com/breadboard-ai/breadboard/tree/main/packages/llm-starter):
 
 ```js
 const template = starter.promptTemplate({
@@ -580,14 +580,14 @@ Suppose we published it at this URL:
 
 ```js
 const NEWS_SUMMARIZER_URL =
-  "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/seeds/breadboard/docs/tutorial/news-summarizer.json";
+  "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/breadboard/docs/tutorial/news-summarizer.json";
 ```
 
 Now, when our friend wants to use this board, they need to do something like this. Load their newsboard:
 
 ```js
 const NEWS_BOARD_URL =
-  "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/seeds/breadboard/docs/tutorial/google-news-headlines.json";
+  "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/breadboard/docs/tutorial/google-news-headlines.json";
 
 const news = await Board.load(NEWS_BOARD_URL);
 ```
@@ -808,7 +808,7 @@ import { Starter } from "@google-labs/llm-starter";
 
 The first two lines give us just enough bits to add the simplest possible interactivity: asking program user for input.
 
-Now, let's create a new board, add the [LLM Starter Kit](https://github.com/breadboard-ai/breadboard/tree/main/seeds/llm-starter) and the [PaLM Kit](https://github.com/breadboard-ai/breadboard/tree/main/seeds/llm-starter) and load the `.env` variables, just like we did in Chapter 2.
+Now, let's create a new board, add the [LLM Starter Kit](https://github.com/breadboard-ai/breadboard/tree/main/packages/llm-starter) and the [PaLM Kit](https://github.com/breadboard-ai/breadboard/tree/main/packages/llm-starter) and load the `.env` variables, just like we did in Chapter 2.
 
 ```js
 config();
@@ -829,7 +829,7 @@ output.wire("->", input);
 
 This wiring above is new to this tutorial, since it doesn't have the familiar property name in it. It's a control-only wire. It does not pass any data, just tells the board to visit `input` after `output`.
 
-Next, let's add some way to store the history of the conversation between the user and our chat bot. To do this, we'll need the `append` node from the [Core Kit](https://github.com/breadboard-ai/breadboard/tree/main/seeds/core-kit):
+Next, let's add some way to store the history of the conversation between the user and our chat bot. To do this, we'll need the `append` node from the [Core Kit](https://github.com/breadboard-ai/breadboard/tree/main/packages/core-kit):
 
 ```js
 const history = core.append();
@@ -839,7 +839,7 @@ input.wire("say->user", history);
 
 There's a lot of power stuffed into this little snippet. Let's unpack it.
 
-Though introduced so late in the tutorial, the `append` node is probably the most versatile power tool in the [Core Kit](https://github.com/breadboard-ai/breadboard/tree/main/seeds/core-kit).
+Though introduced so late in the tutorial, the `append` node is probably the most versatile power tool in the [Core Kit](https://github.com/breadboard-ai/breadboard/tree/main/packages/core-kit).
 
 What it does is deceptively simple: the `append` node looks for an input property named `accumulator`, then appends the rest of the input properties to it, and then returns the result as the output property named `accumulator`. It _accumulates_, get it?
 

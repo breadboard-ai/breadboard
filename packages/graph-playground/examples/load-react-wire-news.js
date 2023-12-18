@@ -19,7 +19,7 @@ const tools = await Board.load("./examples/tools.json");
 
 // Next, we'll wire in another tool right into it.
 const news = tools.include(
-  `${REPO_URL}/seeds/graph-playground/graphs/google-news.json`,
+  `${REPO_URL}/packages/graph-playground/graphs/google-news.json`,
   {
     $id: "news",
     description:
@@ -30,7 +30,7 @@ const news = tools.include(
 tools.input().wire("news->text", news.wire("text", tools.output()));
 
 const board = await Board.load(
-  `${REPO_URL}/seeds/graph-playground/graphs/react-with-slot.json`,
+  `${REPO_URL}/packages/graph-playground/graphs/react-with-slot.json`,
   { tools }
 );
 

@@ -106,7 +106,7 @@
   "bugs": {
     "url": "https://github.com/breadboard-ai/breadboard/issues"
   },
-  "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/seeds/pinecone-kit#readme",
+  "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/pinecone-kit#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
     "@typescript-eslint/eslint-plugin": "^5.56.0",

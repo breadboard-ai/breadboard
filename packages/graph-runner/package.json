@@ -110,7 +110,7 @@
   "bugs": {
     "url": "https://github.com/breadboard-ai/breadboard/issues"
   },
-  "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/seeds/graph-runner#readme",
+  "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/graph-runner#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
     "@google-labs/tsconfig": "*",

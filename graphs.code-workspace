@@ -2,66 +2,66 @@
   "folders": [
     {
       "name": "graph-playground",
-      "path": "seeds/graph-playground"
+      "path": "packages/graph-playground"
     },
     {
       "name": "breadboard",
-      "path": "seeds/breadboard"
+      "path": "packages/breadboard"
     },
     {
       "name": "llm-starter",
-      "path": "seeds/llm-starter"
+      "path": "packages/llm-starter"
     },
     {
       "name": "graph-integrity",
-      "path": "seeds/graph-integrity"
+      "path": "packages/graph-integrity"
     },
     {
       "name": "node-nursery",
-      "path": "seeds/node-nursery"
+      "path": "packages/node-nursery"
     },
     {
       "name": "node-nursery-web",
-      "path": "seeds/node-nursery-web"
+      "path": "packages/node-nursery-web"
     },
     {
       "name": "coffee-bot-board",
-      "path": "seeds/coffee-bot-board"
+      "path": "packages/coffee-bot-board"
     },
     {
       "name": "cloud-function",
-      "path": "seeds/cloud-function"
+      "path": "packages/cloud-function"
     },
     {
       "name": "breadboard-server",
-      "path": "seeds/breadboard-server"
+      "path": "packages/breadboard-server"
     },
     {
       "name": "pinecone-kit",
-      "path": "seeds/pinecone-kit"
+      "path": "packages/pinecone-kit"
     },
     {
       "name": "breadboard-web",
-      "path": "seeds/breadboard-web"
+      "path": "packages/breadboard-web"
     },
     {
       "name": "core-kit",
-      "path": "seeds/core-kit"
+      "path": "packages/core-kit"
     },
     {
-      "path": "seeds/palm-kit"
+      "path": "packages/palm-kit"
     },
     {
-      "path": "seeds/node-proxy-server"
+      "path": "packages/node-proxy-server"
     },
     {
-      "path": "seeds/json-kit"
+      "path": "packages/json-kit"
     },
     {
-      "path": "seeds/breadboard-ui"
+      "path": "packages/breadboard-ui"
     },
     {
-      "path": "seeds/breadboard-cli"
+      "path": "packages/breadboard-cli"
     }
   ],
   "settings": {}

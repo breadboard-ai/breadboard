@@ -1,6 +1,6 @@
 {
   "title": "Calling ReAct with lambdas",
-  "description": "An implementation of the [ReAct](https://react-lm.github.io/) AI pattern that relies on Breadboard [lambdas](https://github.com/breadboard-ai/breadboard/blob/main/seeds/breadboard/docs/nodes.md#the-lambda-node) to supply tools to ReAct. They are currently populated by two boards: `search-summarize` and `math`.",
+  "description": "An implementation of the [ReAct](https://react-lm.github.io/) AI pattern that relies on Breadboard [lambdas](https://github.com/breadboard-ai/breadboard/blob/main/packages/breadboard/docs/nodes.md#the-lambda-node) to supply tools to ReAct. They are currently populated by two boards: `search-summarize` and `math`.",
   "version": "0.0.1",
   "edges": [
     {
@@ -72,9 +72,7 @@
               ]
             }
           },
-          "required": [
-            "text"
-          ]
+          "required": ["text"]
         }
       }
     },
@@ -98,9 +96,7 @@
               "description": "ReAct's response to the user's problem"
             }
           },
-          "required": [
-            "text"
-          ]
+          "required": ["text"]
         }
       }
     }
