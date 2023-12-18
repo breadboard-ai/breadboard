@@ -1,13 +1,31 @@
 {
   "title": "The Search Summarizer Recipe",
   "description": "A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "edges": [
     {
       "from": "generator",
-      "to": "output-1",
+      "to": "output-4",
       "out": "text",
       "in": "text"
+    },
+    {
+      "from": "parameters",
+      "to": "customSearchURL",
+      "out": "text",
+      "in": "query"
+    },
+    {
+      "from": "parameters",
+      "to": "summarizing-template",
+      "out": "text",
+      "in": "question"
+    },
+    {
+      "from": "parameters",
+      "to": "generator",
+      "out": "generator",
+      "in": "path"
     },
     {
       "from": "summarizing-template",
@@ -16,57 +34,57 @@
       "in": "text"
     },
     {
-      "from": "jsonata-4",
+      "from": "customSearchURL",
+      "to": "search",
+      "out": "url",
+      "in": "url"
+    },
+    {
+      "from": "getSnippets",
       "to": "summarizing-template",
       "out": "result",
       "in": "context"
     },
     {
-      "from": "fetch-3",
-      "to": "jsonata-4",
+      "from": "secrets-3",
+      "to": "customSearchURL",
+      "out": "*",
+      "in": ""
+    },
+    {
+      "from": "search",
+      "to": "getSnippets",
       "out": "response",
       "in": "json"
-    },
-    {
-      "from": "urlTemplate-2",
-      "to": "fetch-3",
-      "out": "url",
-      "in": "url"
-    },
-    {
-      "from": "secrets-5",
-      "to": "urlTemplate-2",
-      "out": "API_KEY",
-      "in": "API_KEY"
-    },
-    {
-      "from": "secrets-5",
-      "to": "urlTemplate-2",
-      "out": "GOOGLE_CSE_ID",
-      "in": "GOOGLE_CSE_ID"
-    },
-    {
-      "from": "input",
-      "to": "generator",
-      "out": "generator",
-      "in": "path"
-    },
-    {
-      "from": "input",
-      "to": "summarizing-template",
-      "out": "text",
-      "in": "question"
-    },
-    {
-      "from": "input",
-      "to": "urlTemplate-2",
-      "out": "text",
-      "in": "query"
     }
   ],
   "nodes": [
     {
-      "id": "input",
+      "id": "output-4",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Answer",
+              "description": "The answer to the query"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
+    },
+    {
+      "id": "generator",
+      "type": "invoke",
+      "configuration": {}
+    },
+    {
+      "id": "parameters",
       "type": "input",
       "configuration": {
         "schema": {
@@ -91,29 +109,6 @@
       }
     },
     {
-      "id": "output-1",
-      "type": "output",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "text": {
-              "type": "string",
-              "title": "Answer",
-              "description": "The answer to the query"
-            }
-          },
-          "required": [
-            "text"
-          ]
-        }
-      }
-    },
-    {
-      "id": "generator",
-      "type": "invoke"
-    },
-    {
       "id": "summarizing-template",
       "type": "promptTemplate",
       "configuration": {
@@ -121,25 +116,21 @@
       }
     },
     {
-      "id": "urlTemplate-2",
+      "id": "customSearchURL",
       "type": "urlTemplate",
       "configuration": {
         "template": "https://www.googleapis.com/customsearch/v1?key={API_KEY}&cx={GOOGLE_CSE_ID}&q={query}"
       }
     },
     {
-      "id": "fetch-3",
-      "type": "fetch"
-    },
-    {
-      "id": "jsonata-4",
+      "id": "getSnippets",
       "type": "jsonata",
       "configuration": {
         "expression": "$join(items.snippet, '\n')"
       }
     },
     {
-      "id": "secrets-5",
+      "id": "secrets-3",
       "type": "secrets",
       "configuration": {
         "keys": [
@@ -147,14 +138,12 @@
           "GOOGLE_CSE_ID"
         ]
       }
-    }
-  ],
-  "kits": [
-    {
-      "url": "npm:@google-labs/llm-starter"
     },
     {
-      "url": "npm:@google-labs/core-kit"
+      "id": "search",
+      "type": "fetch",
+      "configuration": {}
     }
-  ]
+  ],
+  "graphs": {}
 }
