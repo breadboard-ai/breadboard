@@ -236,6 +236,30 @@ const serializedGraph = recipe((input) => {
   .serialize();
 ```
 
+or
+
+```ts
+import { recipe, base } from "@breadboard-ai/breadboard";
+
+const metadata = {
+  title: "A recipe",
+  description: "An example recipe",
+  version: "0.0.1",
+  url: "https://...",
+};
+
+const serializedGraph = recipe(() => {
+  const input = base
+    .input()
+    .is(j.schema({ foo: j.string().title("A foo").description("Foo-lish") }));
+  const output = base
+    .output({ bar: input.foo })
+    .is(j.schema({ bar: j.string().title("A bar").description("Bar-ish") }));
+})
+  .metadata(metadata)
+  .serialize();
+```
+
 #### Code as nodes
 
 To introduce functions as nodes, use `code`. It works exactly like `recipe`,
