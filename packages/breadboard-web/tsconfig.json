@@ -22,7 +22,7 @@
   "include": ["src/**/*", "tests/**/*.ts"],
   "extends": "@google-labs/tsconfig/base.json",
   "typedocOptions": {
-    "entryPoints": "./src/protocol.ts",
+    "entryPoints": "./src/index.ts",
     "out": "./docs/api",
     "githubPages": false,
     "readme": "none",
