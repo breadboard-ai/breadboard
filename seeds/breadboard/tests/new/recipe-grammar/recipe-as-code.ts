@@ -5,12 +5,7 @@
  */
 
 import test from "ava";
-import {
-  GraphDescriptor,
-  InputValues,
-  OutputValues,
-  recipeAsCode,
-} from "../../../src/index.js";
+import { recipeAsCode } from "../../../src/index.js";
 
 test("recipeAsCode works with sync arrow functions", async (t) => {
   const code = await recipeAsCode(() => {
@@ -40,12 +35,12 @@ test("recipeAsCode works with async arrow functions", async (t) => {
   })({}).serialize();
   t.like(code, {
     graphs: {
-      "fn-1": {
+      "fn-2": {
         nodes: [
           { type: "input" },
           {
             configuration: {
-              code: `async  function fn_1() {
+              code: `async function fn_2() {
         return { value: 1 };
     }`,
             },
