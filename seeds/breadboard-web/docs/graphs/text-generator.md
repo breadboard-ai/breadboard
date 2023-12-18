@@ -3,28 +3,17 @@
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-input[/"input <br> id='input'"/]:::input -- "useStreaming->useStreaming" --> gemini["invoke <br> id='gemini'"]
-input[/"input <br> id='input'"/]:::input -- "text->text" --> gemini["invoke <br> id='gemini'"]
-gemini["invoke <br> id='gemini'"] -- "text->text" --> textOutput{{"output <br> id='textOutput'"}}:::output
-gemini["invoke <br> id='gemini'"] -- "stream->stream" --> streamOutput{{"output <br> id='streamOutput'"}}:::output
-secrets2("secrets <br> id='secrets-2'"):::secrets -- "PALM_KEY->PALM_KEY" --> palmgenerateText1["palm-generateText <br> id='palm-generateText-1'"]
-input[/"input <br> id='input'"/]:::input -- "MODEL->MODEL" --> switchModel["runJavascript <br> id='switchModel'"]
-input[/"input <br> id='input'"/]:::input -- "useStreaming->useStreaming" --> switchModel["runJavascript <br> id='switchModel'"]
-input[/"input <br> id='input'"/]:::input -- "useStreaming->useStreaming" --> gpt35["invoke <br> id='gpt35'"]
-gpt35["invoke <br> id='gpt35'"] -- "text->text" --> textOutput{{"output <br> id='textOutput'"}}:::output
-input[/"input <br> id='input'"/]:::input -- "text->text" --> gpt35["invoke <br> id='gpt35'"]
-gpt35["invoke <br> id='gpt35'"] -- "stream->stream" --> streamOutput{{"output <br> id='streamOutput'"}}:::output
-palmgenerateText1["palm-generateText <br> id='palm-generateText-1'"] -- "completion->text" --> textOutput{{"output <br> id='textOutput'"}}:::output
-input[/"input <br> id='input'"/]:::input -- "text->text" --> palmgenerateText1["palm-generateText <br> id='palm-generateText-1'"]
-input[/"input <br> id='input'"/]:::input -- "useStreaming->useStreaming" --> mockModel["invoke <br> id='mockModel'"]
-mockModel["invoke <br> id='mockModel'"] -- "text->text" --> textOutput{{"output <br> id='textOutput'"}}:::output
-input[/"input <br> id='input'"/]:::input -- "text->text" --> mockModel["invoke <br> id='mockModel'"]
-switchModel["runJavascript <br> id='switchModel'"] -- "other->text" --> textOutput{{"output <br> id='textOutput'"}}:::output
-switchModel["runJavascript <br> id='switchModel'"] -- "gemini->gemini" --> gemini["invoke <br> id='gemini'"]
-switchModel["runJavascript <br> id='switchModel'"] -- "palm->palm" --> palmgenerateText1["palm-generateText <br> id='palm-generateText-1'"]
-switchModel["runJavascript <br> id='switchModel'"] -- "gpt35->gpt35" --> gpt35["invoke <br> id='gpt35'"]
-switchModel["runJavascript <br> id='switchModel'"] -- "mock->mock" --> mockModel["invoke <br> id='mockModel'"]
-mockModel["invoke <br> id='mockModel'"] -- "stream->stream" --> streamOutput{{"output <br> id='streamOutput'"}}:::output
+invoke["invoke <br> id='invoke'"] -- "text->text" --> textOutput{{"output <br> id='textOutput'"}}:::output
+invoke["invoke <br> id='invoke'"] -- "stream->stream" --> streamOutput{{"output <br> id='streamOutput'"}}:::output
+fn3["invoke <br> id='fn-3'"] -- "path->path" --> invoke["invoke <br> id='invoke'"]
+input[/"input <br> id='input'"/]:::input -- "MODEL->MODEL" --> fn3["invoke <br> id='fn-3'"]
+input[/"input <br> id='input'"/]:::input -- all --> invoke["invoke <br> id='invoke'"]
+
+subgraph sg_fn3 [fn-3]
+fn3_fn3input[/"input <br> id='fn-3-input'"/]:::input -- all --> fn3_fn3run["runJavascript <br> id='fn-3-run'"]
+fn3_fn3run["runJavascript <br> id='fn-3-run'"] -- all --> fn3_fn3output{{"output <br> id='fn-3-output'"}}:::output
+end
+
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
