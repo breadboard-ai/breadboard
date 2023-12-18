@@ -75,56 +75,25 @@ export default await recipe(async () => {
     schema: streamOutputSchema,
   });
 
-  const switchModel = recipeAsCode(({ MODEL }) => {
-    switch (MODEL) {
-      case "Gemini Pro":
-        return { gemini: true };
-      case "PaLM":
-        return { palm: true };
-      case "mock":
-        return { mock: true };
-      case "GPT 3.5 Turbo":
-        return { gpt35: true };
-      default:
-        return { other: `Unsupported model: ${MODEL}` };
-    }
+  const switchModel = recipeAsCode(({ MODEL }: { MODEL: string }) => {
+    const models: Record<string, string> = {
+      "Gemini Pro": "gemini-generator.json",
+      PaLM: "palm-text-generator.json",
+      mock: "mock-text-generator.json",
+      "GPT 3.5 Turbo": "openai-gpt-35-turbo.json",
+    };
+    const path = models[MODEL];
+    if (!path) throw new Error(`Unsupported model: ${MODEL}`);
+    return { path };
   })(parameters.MODEL);
 
-  const mock = core.invoke({
-    $id: "mock",
-    path: "mock-text-generator.json",
-    choose: switchModel.mock,
+  const invoke = core.invoke({
+    $id: "invoke",
+    path: switchModel.path,
   });
-  parameters.to(mock);
-  mock.text.to(textOutput);
-  mock.stream.to(streamOutput);
-
-  const gemini = core.invoke({
-    $id: "gemini",
-    path: "gemini-generator.json",
-    choose: switchModel.gemini,
-  });
-  parameters.to(gemini);
-  gemini.text.to(textOutput);
-  gemini.stream.to(streamOutput);
-
-  const palmGenerator = core.invoke({
-    $id: "palmGenerator",
-    path: "palm-text-generator.json",
-    choose: switchModel.palm,
-  });
-  parameters.to(palmGenerator);
-  palmGenerator.text.to(textOutput);
-  palmGenerator.stream.to(streamOutput);
-
-  const gpt35 = core.invoke({
-    $id: "gpt35",
-    path: "openai-gpt-35-turbo.json",
-    choose: switchModel.gpt35,
-  });
-  parameters.to(gpt35);
-  gpt35.text.to(textOutput);
-  gpt35.stream.to(streamOutput);
+  parameters.to(invoke);
+  invoke.text.to(textOutput);
+  invoke.stream.to(streamOutput);
 
   return textOutput;
 }).serialize(metadata);
