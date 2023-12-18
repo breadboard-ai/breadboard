@@ -1,4 +1,4 @@
-import { Board, BoardRunner, GraphDescriptor } from "@google-labs/breadboard";
+import { BoardRunner } from "@google-labs/breadboard";
 import esbuild from "esbuild";
 import { readFile } from "fs/promises";
 import { Loader, Options } from "../loader.js";

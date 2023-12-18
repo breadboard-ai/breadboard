@@ -6,9 +6,8 @@
 
 import { stat } from "fs/promises";
 import path, { extname } from "path";
-import { resolveFilePath, watch } from "./lib/utils.js";
-import { Loader } from "./lib/loader.js";
 import { Loaders } from "./lib/loaders/index.js";
+import { resolveFilePath, watch } from "./lib/utils.js";
 
 export const makeGraph = async (
   file: string,

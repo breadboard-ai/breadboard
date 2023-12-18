@@ -4,18 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board, BoardRunner, GraphDescriptor } from "@google-labs/breadboard";
-import * as esbuild from "esbuild";
+import { BoardRunner, GraphDescriptor } from "@google-labs/breadboard";
 import { watch as fsWatch } from "fs";
-import { opendir, readFile, stat, unlink, writeFile } from "fs/promises";
+import { opendir, readFile, stat } from "fs/promises";
 import { join } from "node:path";
 import { stdin as input } from "node:process";
 import * as readline from "node:readline/promises";
-import path, { basename, extname } from "path";
+import path, { extname } from "path";
 import { relative } from "path/posix";
 import { pathToFileURL } from "url";
-import { Loaders } from "./loaders/index.js";
 import { Options } from "./loader.js";
+import { Loaders } from "./loaders/index.js";
 
 export type BoardMetaData = {
   title: string;
@@ -73,8 +72,6 @@ export const loadBoard = async (
   file: string,
   options: Options
 ): Promise<BoardRunner> => {
-  let board: BoardRunner;
-
   const loaderType = extname(file).slice(1) as "js" | "ts" | "yaml" | "json";
 
   const loader = new Loaders(loaderType);
