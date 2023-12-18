@@ -362,8 +362,33 @@ const example = recipe(() => {
 const myKitJson = myKit.serialize();
 ```
 
-TODO: Tooling to save `myKitJson` and to rehydrate it as something TS can
-`import`.
+Such a kit can be used in another context like this:
+
+```ts
+import { recipe, load, loadKit } from "@breadboard-ai/breadboard";
+
+const serializedGraph = recipe(({ db, query }) => {
+  const fooKit = loadKit("fooKit.json");
+
+  const foo = fooKit.fooReverse({ foo: "bar" });
+  ...
+}).serialize();
+```
+
+However this won't have any TS type annotations.
+
+TODO: Tooling to create type annotations for `myKitJson` and to both allow
+
+- ````ts
+    import { fooKit } from "...";
+    ```
+  and
+  ````
+- ```ts
+  import { FooKitI } from "..."
+  ...
+    const fooKit = loadKit("fooKit.json") as FooKitI
+  ```
 
 #### Unserializable kits
 
@@ -403,4 +428,12 @@ const serializedGraph = recipe(({ db, query }) => {
   const results = acmeKit.query({ query });
   ...
 }).serialize();
+```
+
+This will serialize the graph, including referencing the original URL of the kit
+as dependency. The `makeKit` call transfers all the metadata from the `load`
+call and what is contained in the loaded `.json`.
+
+```
+
 ```
