@@ -174,33 +174,6 @@ export const parseStdin = async (): Promise<string> => {
   return lines;
 };
 
-export async function compileKits(
-  kitDeclarations: string[]
-): Promise<Record<string, string>> {
-  const kitOutput: Record<string, string> = {};
-
-  for (const kitDetail of kitDeclarations) {
-    console.log(`Fetching kit ${kitDetail}...`);
-    const output = await esbuild.build({
-      bundle: true,
-      format: "esm",
-      platform: "node",
-      tsconfig: path.join(process.cwd(), "..", "..", "tsconfig.json"),
-      stdin: {
-        resolveDir: process.cwd(),
-        contents: `export * from "${kitDetail}";
-          export { default } from "${kitDetail}";`,
-      },
-      write: false,
-    });
-
-    kitOutput[kitDetail] = Buffer.from(
-      output.outputFiles[0].contents
-    ).toString();
-  }
-
-  return kitOutput;
-}
 export const loadBoards = async (
   path: string
 ): Promise<Array<BoardMetaData>> => {

@@ -27,7 +27,6 @@ program
     "If compiling a graph in Typescript (.ts), you MUST specific a location to output the compiled graph."
   )
   .option("-w, --watch", "Watch the file for changes.")
-  .option("-k, --kit <kit...>", "The kit to use.")
   .action(debug);
 
 program

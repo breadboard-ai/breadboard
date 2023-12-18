@@ -4,25 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { createReadStream } from "fs";
 import http from "http";
 import { dirname, join, relative } from "path";
 import handler from "serve-handler";
 import { fileURLToPath, pathToFileURL } from "url";
-import { BoardMetaData, compileKits, loadBoards, watch } from "./lib/utils.js";
+import { BoardMetaData, loadBoards, watch } from "./lib/utils.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export const debug = async (file: string, options: Record<string, any>) => {
   const distDir = join(__dirname, "..", "..", "ui");
-  const kitDeclarations = options.kit as string[] | undefined;
   let boards: Array<BoardMetaData> = [];
-  let kitOutput: Record<string, string>;
-
-  if (kitDeclarations != undefined) {
-    // We should warn if we are importing code and the associated risks
-    kitOutput = await compileKits(kitDeclarations);
-  }
 
   if (file == undefined) {
     file = process.cwd();
@@ -69,28 +61,6 @@ export const debug = async (file: string, options: Record<string, any>) => {
       });
 
       return response.end(boardsData);
-    }
-
-    if (request.url && request.url.search(/\/index-([a-z0-9]+)\.js/) > -1) {
-      // Intercept the index.js bundle file and inject the kit code. THIS IS A HACK.
-      response.writeHead(200, {
-        "Content-Type": "application/javascript",
-      });
-
-      // Need to check this doesn't include "../" and other escape characters.
-      const fileStream = createReadStream(`${distDir}${request.url}`);
-      fileStream.pipe(response, { end: false });
-      fileStream.on("end", () => {
-        for (const kitName in kitOutput) {
-          response.write(
-            `// Kit (${kitName}) dynamically added from Server.\n`
-          );
-          response.write(kitOutput[kitName]);
-          response.write("\n");
-        }
-        response.end();
-      });
-      return;
     }
 
     const board = boards.find((board) => board.url == requestURL.pathname);
