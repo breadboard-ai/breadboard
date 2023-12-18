@@ -6,7 +6,8 @@
   "customizations": {
     "vscode": {
       "extensions": [
-        "bierner.markdown-mermaid"
+        "bierner.markdown-mermaid",
+        "Google.wireit"
       ]
     }
   }
