@@ -4,96 +4,113 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { fileURLToPath, pathToFileURL } from "url";
-import { stat, opendir, readFile } from "fs/promises";
-import { createReadStream } from "fs";
-import { join, dirname, relative } from "path";
-import { watch } from "./lib/utils.js";
-import handler from "serve-handler";
 import http from "http";
+import { dirname, join, relative } from "path";
+import handler from "serve-handler";
+import { fileURLToPath, pathToFileURL } from "url";
+import { BoardMetaData, loadBoards, watch } from "./lib/utils.js";
+import { stat } from "fs/promises";
+import { createReadStream } from "fs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-type LocalBoard = { title: string; url: string };
+const clients: Record<string, http.ServerResponse> = {};
 
-const getBoards = async (path: string): Promise<Array<LocalBoard>> => {
-  const fileStat = await stat(path);
-  const fileUrl = pathToFileURL(path);
+export const debug = async (file: string, options: Record<string, any>) => {
+  const distDir = join(__dirname, "..", "..", "ui");
+  let boards: Array<BoardMetaData> = [];
 
-  if (fileStat && fileStat.isFile() && path.endsWith(".json")) {
-    const data = await readFile(path, { encoding: "utf-8" });
-    const board = JSON.parse(data);
-
-    if ("title" in board == false) return [];
-
-    return [
-      {
-        title: board.title,
-        url: join("/", relative(process.cwd(), path)),
-      },
-    ];
-  }
-
-  if (fileStat && fileStat.isDirectory()) {
-    const dir = await opendir(fileUrl);
-    const boards: Array<LocalBoard> = [];
-    for await (const dirent of dir) {
-      if (dirent.isFile() && dirent.name.endsWith(".json")) {
-        const data = await readFile(dirent.path, { encoding: "utf-8" });
-        const board = JSON.parse(data);
-        boards.push({
-          title: board.title ?? join("/", path, dirent.name),
-          url: join("/", path, dirent.name),
-        });
-      }
-    }
-    return boards;
-  }
-
-  return [];
-};
-
-export const debug = async (file: string) => {
   if (file == undefined) {
     file = process.cwd();
   }
 
+  const isDirectory = (await stat(file)).isDirectory();
+
   const fileUrl = pathToFileURL(file);
 
-  let boards: Array<LocalBoard> = [];
+  if ("watch" in options) {
+    watch(file, {
+      onChange: async (filename: string) => {
+        // Refresh the list of boards that are passed in at the start of the server.
+        console.log(`${filename} changed. Refreshing boards...`);
+        boards = await loadBoards(file);
 
-  const distDir = join(__dirname, "..", "..", "ui");
-
-  watch(file, {
-    onChange: async (filename: string) => {
-      // Refresh the list of boards that are passed in at the start of the server.
-      console.log(`${filename} changed. Refreshing boards...`);
-      boards = await getBoards(file);
-    },
-    onRename: async () => {
-      // Refresh the list of boards that are passed in at the start of the server.
-      console.log(`Refreshing boards...`);
-      boards = await getBoards(file);
-    },
-  });
+        // Notify all the clients that the board has changed.
+        Object.values(clients).forEach((clientResponse) => {
+          clientResponse.write(`event: update\ndata:na\nid:${Date.now()}\n\n`);
+        });
+      },
+      onRename: async () => {
+        // Refresh the list of boards that are passed in at the start of the server.
+        console.log(`Refreshing boards...`);
+        boards = await loadBoards(file);
+      },
+    });
+  }
 
   const server = http.createServer(async (request, response) => {
-    // You pass two more arguments for config and middleware
-    // More details here: https://github.com/vercel/serve-handler#options
     const requestURL = new URL(request.url ?? "", "http://localhost:3000");
 
+    // We should think about a simple router here.. Right now we share a lot of state.
     if (requestURL.pathname === "/local-boards.json") {
       // Generate a list of boards that are valid at runtime.
       // Cache until things change.
-      boards = await getBoards(file);
+      boards = await loadBoards(file);
 
-      const boardsData = JSON.stringify(boards);
+      const boardsData = JSON.stringify(
+        boards.map((board) => ({
+          url: board.url,
+          version: board.version,
+          title: board.title,
+        }))
+      );
+
       response.writeHead(200, {
         "Content-Type": "application/json",
         "Content-Length": boardsData.length,
       });
 
       return response.end(boardsData);
+    }
+
+    if ("watch" in options) {
+      if (
+        requestURL.pathname === "/" ||
+        requestURL.pathname === "/index.html"
+      ) {
+        response.writeHead(200, {
+          "Content-Type": "text/html",
+        });
+
+        // Need to check this doesn't include "../" and other escape characters.
+        const fileStream = createReadStream(`${distDir}/index.html`);
+        fileStream.pipe(response, { end: false });
+        fileStream.on("end", () => {
+          response.write(`<!-- Added by Debug command --><script>
+const evtSource = new EventSource("/~~debug");
+evtSource.addEventListener("update", () => { window.location.reload(); });</script>`);
+          response.end();
+        });
+        return;
+      }
+
+      if (requestURL.pathname === "/~~debug") {
+        response.writeHead(200, {
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          Connection: "keep-alive",
+        });
+        const clientId =
+          Date.now() +
+          Buffer.from(crypto.getRandomValues(new Uint32Array(10))).toString(
+            "hex"
+          );
+        response.on("close", () => {
+          delete clients[clientId];
+        });
+        clients[clientId] = response;
+        return;
+      }
     }
 
     const board = boards.find((board) => board.url == requestURL.pathname);
@@ -106,21 +123,16 @@ export const debug = async (file: string) => {
         "Content-Length": boardData.length,
       });
 
-      const readStream = createReadStream(file);
-      readStream.pipe(response);
-      return;
+      return response.end(boardData);
     }
 
     return handler(request, response, { public: distDir });
   });
 
   server.listen(3000, () => {
-    console.log(
-      `Running at http://localhost:3000/${
-        fileUrl != undefined
-          ? `?board=/${relative(process.cwd(), fileUrl.pathname)}`
-          : ""
-      }`
-    );
+    const urlPath = isDirectory
+      ? ""
+      : `?board=/${relative(process.cwd(), fileUrl.pathname)}`;
+    console.log(`Running at http://localhost:3000/${urlPath}`);
   });
 };

@@ -12,16 +12,6 @@ export const mermaid = async (
   file: string,
   options: Record<string, string>
 ) => {
-  if (
-    file != undefined &&
-    path.extname(file) == ".ts" &&
-    "output" in options == false
-  ) {
-    throw new Error(
-      `File ${file} is a TypeScript file. You must specify the output directory with --output.`
-    );
-  }
-
   if (file != undefined) {
     const filePath = resolveFilePath(file);
     let board = await loadBoard(filePath, options);

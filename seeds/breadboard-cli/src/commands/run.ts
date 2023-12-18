@@ -14,7 +14,6 @@ import {
 import { loadBoard, parseStdin, resolveFilePath, watch } from "./lib/utils.js";
 import * as readline from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
-import path from "path";
 
 async function runBoard(
   board: BoardRunner,
@@ -73,16 +72,6 @@ export const run = async (file: string, options: Record<string, any>) => {
   const kitDeclarations = options.kit as string[] | undefined;
   const input =
     "input" in options ? (JSON.parse(options.input) as InputValues) : {};
-
-  if (
-    file != undefined &&
-    path.extname(file) == ".ts" &&
-    "output" in options == false
-  ) {
-    throw new Error(
-      `File ${file} is a TypeScript file. You must specify the output directory with --output.`
-    );
-  }
 
   if (file != undefined) {
     const filePath = resolveFilePath(file);
