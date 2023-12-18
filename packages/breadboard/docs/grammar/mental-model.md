@@ -298,9 +298,9 @@ Node types are first class entities that can be passed as values:
 import { recipe, code } from "@breadboard-ai/breadboard";
 
 const serializedGraph = recipe(({ foo, bar, baz }) => {
-  const reverseText = code<{ text: string }>(({ text }) => {
+  const reverseText = code(({ text }) => {
     return { reversed: test.split("").reverse().join("") };
-  });
+  }).parameters({ text: j.string() });
 
   const reverseOp = recipe(({ param }) => {
     return { result: reverseText({ text: param }).reversed };
@@ -322,11 +322,8 @@ This example defines the same code function as before, a recipe that primarily
 renames inputs and outputs, and a recipe that takes a recipe as parameter and
 applies to its other parameters.
 
-Here we had to add a manual type annotation to `code` for TypeScript.
-
-TODO: What's the `jod` way to do this? `.is` doesn't work to set the type of the
-function itself. We probably need `code({ input: { foo: j.string() }},
-<function>)`, but we ran into issues with this pattern before.
+Note the `jod` annotations on `reverseText`. This is how we can add types that
+are visible to both TypeScript and serialization.
 
 Note how `reverseOp` refers to `reverseText` that is defined in its parent
 scope. This works, because the passed function is immediately evaluated, not
@@ -357,7 +354,7 @@ const serializedGraph = recipe(({ foo, bar, baz, suffix }) => {
   const suffixOp = recipe(({ param }) => {
     const appendSuffix = code(({ text, suffix }) => ({
       text: text + "-" + suffix,
-    }));
+    })).parameters({ text: j.string(), suffix: j.string() });
     return {
       result: appendSuffix({
         text: param.isString(),
@@ -374,7 +371,7 @@ const serializedGraph = recipe(({ foo, bar, baz, suffix }) => {
     };
   });
 
-  return applyOp({ op: reverseOp, a: foo, b: bar, c: baz });
+  return applyOp({ op: suffixOp, a: foo, b: bar, c: baz });
 }).serialize();
 ```
 
@@ -430,15 +427,7 @@ const suffixOpGenerator = recipe(({ suffix }) => {
     };
   });
 
-  const applyOp = recipe(({ a, b, c, op }) => {
-    return {
-      a: op({ param: a }).result,
-      b: op({ param: b }).result,
-      c: op({ param: c }).result,
-    };
-  });
-
-  return { op: applyOp };
+  return { op: suffixOp };
 }).serialize();
 ```
 
@@ -521,11 +510,10 @@ However this won't have any TS type annotations.
 
 TODO: Tooling to create type annotations for `myKitJson` and to both allow
 
-- ````ts
-    import { fooKit } from "...";
-    ```
+- ```ts
+  import { fooKit } from "...";
+  ```
   and
-  ````
 - ```ts
   import { FooKitI } from "..."
   ...
@@ -546,25 +534,22 @@ server-side variant under the hood.
 
 They are defined just as above, except that they can't be serialized.
 
-#### Kits made closure-like lambdas
+#### Kits made from closure-like lambdas
 
 If kits are classes with all static methods, then we can imagine how kits as
 objects could look like: A recipe that outputs a kit, where the nodes are
-pre-configured to some values. (Non-const members aren't supported yet)
+pre-configured to some values. (Non-const members aren't supported)
 
-This could be useful to represent a specific index. Consider a recipe taking the
-URL of a database as input can output `query` and other node types that act on
-that database.
-
-This could be used on-the-fly in a recipe, e.g. when the URL is dynamic. Or that
-kit could just be published as `.json` file as a way to query that specific
-database.
+Consider a recipe taking the URL of a database as input can output `query` and
+other node types that act on that database.
 
 ```ts
 import { recipe, load, makeKit } from "@breadboard-ai/breadboard";
 
+// Created by tooling from "acmeDB.json":
+import { acmeDb } from ".../kits/acmeDb";
+
 const serializedGraph = recipe(({ db, query }) => {
-  const acmeDb = load(".../acmeDB.json");
   const acmeKit = makeKit(acmeDb({ db }));
 
   const results = acmeKit.query({ query });
@@ -574,8 +559,25 @@ const serializedGraph = recipe(({ db, query }) => {
 
 This will serialize the graph, including referencing the original URL of the kit
 as dependency. The `makeKit` call transfers all the metadata from the `load`
-call and what is contained in the loaded `.json`.
+call and what is contained in the loaded `.json`. TypeScript types are
+transferred from the `acmeDb` to the kit as well.
 
-```
+#### Serializing such kits from closure-like lambdas
 
+This gets really powerful when publishing database specific `.json` files. Say
+I'm publishing a semantic index of my blog, using acmeDB, which itself
+implements the generic "semanticIndex" interface.
+
+```ts
+import { recipe, load, makeKit } from "@breadboard-ai/breadboard";
+
+// Just the interface! (Created by tooling or pre-published as npm package)
+import { SemanticIndexI } from ".../semantic-index";
+
+const serializedGraph = recipe(({ query }) => {
+  const myBlogDb = loadKit(".../myBlog.json").is(SemanticIndexI));
+
+  const results = myBlogDb.query({ query });
+  ...
+}).serialize();
 ```
