@@ -123,7 +123,7 @@ You can see the source of this program here: [tutorial-1.js](./tutorial-1.js).
 
 This is definitely a fun little program, but it's not very useful. Let's add another node to the board. This time, we need a _kit_: a collection of nodes that are bundled together for a specific purpose.
 
-Because we're here to make generative AI applications, we'll get the [LLM Starter Kit](https://github.com/breadboard-ai/breadboard/tree/main/seeds/llm-starter) and the [PaLM Kit](https://github.com/breadboard-ai/breadboard/tree/main/seeds/llm-starter) (PaLM is an LLM API from Google, though note that Breadboard works with many LLM service providers).
+Because we're here to make generative AI applications, we'll get the [LLM Starter Kit](https://github.com/breadboard-ai/breadboard/tree/main/seeds/llm-starter).  Breadboard works with many LLM service providers, but for this tutorial we are going to pick the [PaLM Kit](https://github.com/breadboard-ai/breadboard/tree/main/seeds/llm-starter) (PaLM is an LLM API from Google).  You will need to get an [PaLM API Key](https://developers.generativeai.google/), save it someplace safe, and come right back.
 
 ```js
 import { Board } from "@google-labs/breadboard";
@@ -136,9 +136,9 @@ const starter = board.addKit(Starter);
 const palm = board.addKit(PaLMKit);
 ```
 
-The last line of the code snippet above is signficant: it adds a kit to the board. Calling the `addKit` method creates a new instance of the LLM Starter kit that is connected to our board.
+The last 2 lines of the code snippet above are signficant: they each add a kit to the board. Calling the `addKit` method creates a new instance of the LLM Starter kit which is connected to our board, likewise for PaLM kit.
 
-Now that we've added the kit, we can use it to add nodes from it:
+Now that we've added the kits, we add nodes provided by the kit to our board:
 
 ```js
 const input = board.input();
@@ -413,7 +413,16 @@ const NEWS_BOARD_URL =
   "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/seeds/breadboard/docs/tutorial/google-news-headlines.json";
 ```
 
-Using the `include` node from the [Core Kit](https://github.com/breadboard-ai/breadboard/tree/main/seeds/core-kit), placing it into our board is trivial:
+We can _include_ their board using the `include` node from the 
+[Core Kit](https://github.com/breadboard-ai/breadboard/tree/main/seeds/core-kit), 
+which you may need to install:
+
+```sh
+npm install @google-labs/core-kit
+```
+
+Import the Core module, add the kit to the board, and then wire `core.include({ path: NEWS_BOARD_URL })` as a new node in our board. 
+In this case we are wiring `topic` into the included news board and the `headlines` it returns are wired into `hear` on our output:
 
 ```js
 import { Core } from "@google-labs/core-kit";
@@ -464,7 +473,7 @@ result {
 }
 ```
 
-Let's add a few more nodes to make the board that summarizes news on a given topic.
+Let's add a few more nodes to the board which will use a LLM to summarize news on a given topic.
 
 First, we'll need a prompt that combines the topic we've provided, the headlines produced by our friend's board, and some instructions on what to do with them. To do that, we'll use the `promptTemplate` node from the [LLM Starter Kit](https://github.com/breadboard-ai/breadboard/tree/main/seeds/llm-starter):
 
@@ -499,6 +508,8 @@ input.wire(
   )
 );
 ```
+
+You can see the `template` node gets `topic` and `headlines` as inputs and returns a `prompt` string which is wired as the `text` input to `palm.generateText()`.
 
 After these changes, running our board produces a nice, concise summary:
 
@@ -558,7 +569,7 @@ Error: No graph found for slot "news"
 
 This is expected. Our board has an empty slot. Without a board being slotted into it, this board can't run.
 
-As the next step, we share the board with our friend. The best way to do this is to save it as a file and then put it somewhere our friend can access:
+As the next step, we share the board with our friend. The best way to do this is to save it as a json file and then put it somewhere our friend can access:
 
 ```js
 const json = JSON.stringify(board, null, 2);
