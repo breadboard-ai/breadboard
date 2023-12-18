@@ -3,8 +3,10 @@
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-fn3["invoke <br> id='fn-3'"] -- "text->text" --> output2{{"output <br> id='output-2'"}}:::output
+fn3["invoke <br> id='fn-3'"] -- "list->list" --> mockModelStream["listToStream <br> id='mockModelStream'"]
+fn3["invoke <br> id='fn-3'"] -- "text->text" --> textOutput{{"output <br> id='textOutput'"}}:::output
 parameters[/"input <br> id='parameters'"/]:::input -- all --> fn3["invoke <br> id='fn-3'"]
+mockModelStream["listToStream <br> id='mockModelStream'"] -- "stream->stream" --> streamOutput{{"output <br> id='streamOutput'"}}:::output
 
 subgraph sg_fn3 [fn-3]
 fn3_fn3input[/"input <br> id='fn-3-input'"/]:::input -- all --> fn3_fn3run["runJavascript <br> id='fn-3-run'"]

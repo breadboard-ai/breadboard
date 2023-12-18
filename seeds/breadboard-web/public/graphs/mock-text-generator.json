@@ -5,7 +5,13 @@
   "edges": [
     {
       "from": "fn-3",
-      "to": "output-2",
+      "to": "mockModelStream",
+      "out": "list",
+      "in": "list"
+    },
+    {
+      "from": "fn-3",
+      "to": "textOutput",
       "out": "text",
       "in": "text"
     },
@@ -14,13 +20,30 @@
       "to": "fn-3",
       "out": "*",
       "in": ""
+    },
+    {
+      "from": "mockModelStream",
+      "to": "streamOutput",
+      "out": "stream",
+      "in": "stream"
     }
   ],
   "nodes": [
     {
-      "id": "output-2",
+      "id": "textOutput",
       "type": "output",
-      "configuration": {}
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Text",
+              "description": "The generated text"
+            }
+          }
+        }
+      }
     },
     {
       "id": "fn-3",
@@ -53,6 +76,28 @@
           ]
         }
       }
+    },
+    {
+      "id": "mockModelStream",
+      "type": "listToStream",
+      "configuration": {}
+    },
+    {
+      "id": "streamOutput",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "stream": {
+              "type": "object",
+              "title": "Stream",
+              "description": "The generated text",
+              "format": "stream"
+            }
+          }
+        }
+      }
     }
   ],
   "graphs": {
@@ -79,7 +124,7 @@
           "id": "fn-3-run",
           "type": "runJavascript",
           "configuration": {
-            "code": "asyncasync  function fn_3({text,useStreaming}) {text=`Mock model with streaming off echoes back: ${text}`;if(useStreaming){const list=text.split(\" \");return{list}}return{text}}",
+            "code": "function fn_3({text,useStreaming}) {text=`Mock model with streaming off echoes back: ${text}`;if(useStreaming){const list=text.split(\" \");return{list}}return{text}}",
             "name": "fn_3",
             "raw": true
           }

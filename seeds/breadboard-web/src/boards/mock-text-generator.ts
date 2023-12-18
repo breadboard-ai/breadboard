@@ -7,11 +7,12 @@
 import {
   NodeValue,
   Schema,
+  V,
   base,
   recipe,
   recipeAsCode,
 } from "@google-labs/breadboard";
-import { starter } from "@google-labs/llm-starter";
+import { nursery } from "@google-labs/node-nursery-web";
 
 const metadata = {
   title: "Mock Text Generator",
@@ -78,14 +79,12 @@ type MockGeneratorOutputs = MockGeneratorTextOutput | MockGeneratorStreamOutput;
 
 const mockGenerator = recipe<MockGeneratorInputs, MockGeneratorOutputs>(
   async () => {
-    const inputs = base.input({
-      $id: "parameters",
-      schema: inputSchema,
-    });
+    const inputs = base.input({ $id: "parameters", schema: inputSchema });
+
     type GeneratorOutputs = MockGeneratorTextOutput | { list: string[] };
 
     const generator = recipeAsCode<MockGeneratorInputs, GeneratorOutputs>(
-      async ({ text, useStreaming }) => {
+      ({ text, useStreaming }) => {
         text = `Mock model with streaming off echoes back: ${text}`;
         if (useStreaming) {
           const list = text.split(" ");
@@ -95,7 +94,24 @@ const mockGenerator = recipe<MockGeneratorInputs, MockGeneratorOutputs>(
       }
     )(inputs);
 
-    return { text: generator.text };
+    const textOutput = base.output({
+      $id: "textOutput",
+      schema: textOutputSchema,
+    });
+
+    const streamOutput = base.output({
+      $id: "streamOutput",
+      schema: streamOutputSchema,
+    });
+
+    nursery
+      .listToStream({
+        $id: "mockModelStream",
+        list: generator.list as V<string[]>,
+      })
+      .stream.to(streamOutput);
+
+    return generator.text.to(textOutput);
   }
 );
 
