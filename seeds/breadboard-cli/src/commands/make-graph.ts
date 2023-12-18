@@ -48,9 +48,8 @@ export const makeGraph = async (
     const loader = new Loaders(loaderType);
 
     let board = await loader.load(filePath, options);
-    const boardJson = JSON.stringify(board, null, 2);
 
-    console.log(boardJson, null, 2);
+    console.log(JSON.stringify(board, null, 2));
 
     if ("watch" in options) {
       watch(file, {
