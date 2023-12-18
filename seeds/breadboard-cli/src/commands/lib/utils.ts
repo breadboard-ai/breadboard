@@ -14,7 +14,7 @@ import * as readline from "node:readline/promises";
 import path, { basename } from "path";
 import { relative } from "path/posix";
 import { pathToFileURL } from "url";
-import vm from "node:vm";
+import yaml from "yaml";
 
 export type Options = {
   output?: string;
@@ -120,6 +120,53 @@ export const loadBoardFromSource = async (
   return board;
 };
 
+export async function loadBoardFromYaml(
+  fileContents: string
+): Promise<BoardRunner> {
+  const yamlInstance = yaml.parse(fileContents);
+
+  if (yamlInstance == undefined) {
+    throw new Error(`There is an error with your YAML file`);
+  }
+
+  if (yamlInstance.edges == undefined) {
+    throw new Error(`There is no edges property in your YAML file`);
+  }
+
+  if (yamlInstance.nodes == undefined) {
+    throw new Error(`There is no nodes property in your YAML file`);
+  }
+
+  const edges = yamlInstance.edges.map((edgeYaml: string) => {
+    // Parse the edge syntax
+    const edgeSyntax = edgeYaml.match(/(.+)\.(.+){0,1}->(.+)\.(.+){0,1}/);
+
+    if (edgeSyntax == null || edgeSyntax.length == 0) {
+      return null;
+    }
+
+    const edge = {
+      from: edgeSyntax[1],
+      out: edgeSyntax[2],
+      to: edgeSyntax[3],
+      in: edgeSyntax[4],
+    };
+
+    return {
+      ...edge,
+    };
+  });
+
+  const board: GraphDescriptor = {
+    edges,
+    nodes: yamlInstance.nodes,
+    title: yamlInstance.title,
+    version: yamlInstance.version,
+  };
+
+  return Board.fromGraphDescriptor(board);
+}
+
 type WatchOptions = {
   onChange: (filename: string) => void;
   onRename?: (filename: string) => void;
@@ -167,19 +214,22 @@ export const loadBoard = async (
   file: string,
   options: Options
 ): Promise<BoardRunner> => {
+  let board: BoardRunner;
   if (file.endsWith(".ts")) {
     const fileContents = await readFile(file, "utf-8");
     const result = await esbuild.transform(fileContents, { loader: "ts" });
-    const { board } = await makeFromSource(file, result.code, options);
-    return board;
+    ({ board } = await makeFromSource(file, result.code, options));
   } else if (file.endsWith(".js")) {
-    const { board } = await makeFromFile(file);
-    return board;
+    ({ board } = await makeFromFile(file));
+  } else if (file.endsWith(".yaml")) {
+    const fileContents = await readFile(file, "utf-8");
+    board = await loadBoardFromYaml(fileContents);
   } else {
     const fileContents = await readFile(file, "utf-8");
-    const board = await Board.fromGraphDescriptor(JSON.parse(fileContents));
-    return board;
+    board = await Board.fromGraphDescriptor(JSON.parse(fileContents));
   }
+
+  return board;
 };
 
 export const parseStdin = async (): Promise<string> => {
@@ -217,9 +267,9 @@ export const loadBoards = async (
   if (
     fileStat &&
     fileStat.isFile() &&
-    (path.endsWith(".js") || path.endsWith(".ts"))
+    (path.endsWith(".js") || path.endsWith(".ts") || path.endsWith(".yaml"))
   ) {
-    // Compile the JS
+    // Compile the JS, TS or YAML.
     const board = await loadBoard(path, { watch: false });
 
     return [
@@ -249,7 +299,9 @@ export const loadBoards = async (
 
       if (
         dirent.isFile() &&
-        (dirent.name.endsWith(".js") || dirent.name.endsWith(".ts"))
+        (dirent.name.endsWith(".js") ||
+          dirent.name.endsWith(".ts") ||
+          dirent.name.endsWith(".yaml"))
       ) {
         const board = await loadBoard(dirent.path, { watch: false });
         boards.push({
