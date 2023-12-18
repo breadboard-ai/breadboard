@@ -4,51 +4,115 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { recipe } from "@google-labs/breadboard";
-import { starter } from "@google-labs/llm-starter";
-import { z } from "zod";
+import {
+  NodeValue,
+  Schema,
+  V,
+  base,
+  recipe,
+  recipeAsCode,
+} from "@google-labs/breadboard";
+import { nursery } from "@google-labs/node-nursery-web";
 
-const mockGenerator = recipe(
-  {
-    input: z.object({
-      text: z.string().describe("Text: The text to generate from"),
-      useStreaming: z
-        .boolean()
-        .describe("Stream: Whether to stream the output"),
-    }),
-    output: z.object({
-      text: z.string().describe("TexT: The generated text"),
-    }),
-    title: "Mock Text Generator",
-    description:
-      "Useful for when you want a text generator for testing purposes",
+const metadata = {
+  title: "Mock Text Generator",
+  description:
+    "This is a mock text generator. It can generate text using a mock model. The mock model simply echoes back the input text. It's good for testing.",
+  version: "0.0.2",
+};
+
+const inputSchema = {
+  type: "object",
+  properties: {
+    text: {
+      type: "string",
+      title: "Text",
+      description: "The text to generate",
+    },
+    useStreaming: {
+      type: "boolean",
+      title: "Stream",
+      description: "Whether to stream the output",
+      default: "false",
+    },
   },
-  (inputs) => {
-    function runMockModel({
-      text,
-      useStreaming,
-    }: {
-      text: string;
-      useStreaming: boolean;
-    }) {
-      text = `Mock model with streaming off echoes back: ${text}`;
-      if (useStreaming) {
-        const list = text.split(" ");
-        return { list };
-      }
-      return { text };
-    }
+  required: ["text"],
+} satisfies Schema;
 
-    const mockModel = starter.runJavascript({
-      text: inputs.text,
-      useStreaming: inputs.useStreaming,
-      name: "runMockModel",
-      code: runMockModel.toString(),
-      raw: true,
+type MockGeneratorInputs = {
+  text: string;
+  useStreaming: boolean;
+};
+
+const textOutputSchema = {
+  type: "object",
+  properties: {
+    text: {
+      type: "string",
+      title: "Text",
+      description: "The generated text",
+    },
+  },
+} satisfies Schema;
+
+type MockGeneratorTextOutput = {
+  text: string;
+};
+
+const streamOutputSchema = {
+  type: "object",
+  properties: {
+    stream: {
+      type: "object",
+      title: "Stream",
+      description: "The generated text",
+      format: "stream",
+    },
+  },
+} satisfies Schema;
+
+type MockGeneratorStreamOutput = {
+  stream: NodeValue;
+};
+
+type MockGeneratorOutputs = MockGeneratorTextOutput | MockGeneratorStreamOutput;
+
+const mockGenerator = recipe<MockGeneratorInputs, MockGeneratorOutputs>(
+  async () => {
+    const inputs = base.input({ $id: "parameters", schema: inputSchema });
+
+    type GeneratorOutputs = MockGeneratorTextOutput | { list: string[] };
+
+    const generator = recipeAsCode<MockGeneratorInputs, GeneratorOutputs>(
+      ({ text, useStreaming }) => {
+        text = `Mock model with streaming off echoes back: ${text}`;
+        if (useStreaming) {
+          const list = text.split(" ");
+          return { list };
+        }
+        return { text };
+      }
+    )(inputs);
+
+    const textOutput = base.output({
+      $id: "textOutput",
+      schema: textOutputSchema,
     });
 
-    return { text: mockModel.text };
+    const streamOutput = base.output({
+      $id: "streamOutput",
+      schema: streamOutputSchema,
+    });
+
+    nursery
+      .listToStream({
+        $id: "mockModelStream",
+        list: generator.list as V<string[]>,
+      })
+      .stream.to(streamOutput);
+
+    return generator.text.to(textOutput);
   }
 );
 
-export default await mockGenerator.serialize({});
+export default await mockGenerator.serialize(metadata);
