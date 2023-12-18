@@ -28,22 +28,16 @@
       "in": "stream"
     },
     {
-      "from": "secrets-2",
-      "to": "palm-generateText-1",
-      "out": "PALM_KEY",
-      "in": "PALM_KEY"
+      "from": "input",
+      "to": "palmGenerator",
+      "out": "useStreaming",
+      "in": "useStreaming"
     },
     {
       "from": "input",
       "to": "switchModel",
       "out": "MODEL",
       "in": "MODEL"
-    },
-    {
-      "from": "input",
-      "to": "switchModel",
-      "out": "useStreaming",
-      "in": "useStreaming"
     },
     {
       "from": "input",
@@ -70,14 +64,14 @@
       "in": "stream"
     },
     {
-      "from": "palm-generateText-1",
+      "from": "palmGenerator",
       "to": "textOutput",
-      "out": "completion",
+      "out": "text",
       "in": "text"
     },
     {
       "from": "input",
-      "to": "palm-generateText-1",
+      "to": "palmGenerator",
       "out": "text",
       "in": "text"
     },
@@ -113,7 +107,7 @@
     },
     {
       "from": "switchModel",
-      "to": "palm-generateText-1",
+      "to": "palmGenerator",
       "out": "palm",
       "in": "palm"
     },
@@ -214,7 +208,7 @@
       "type": "runJavascript",
       "configuration": {
         "name": "switchModel",
-        "code": "function switchModel({MODEL,useStreaming}){switch(MODEL){case\"Gemini Pro\":return{gemini:true};case\"PaLM\":if(useStreaming){return{other:`Streaming is not supported for ${MODEL}`}}return{palm:true};case\"mock\":return{mock:true};case\"GPT 3.5 Turbo\":return{gpt35:true};default:return{other:`Unsupported model: ${MODEL}`}}}",
+        "code": "function switchModel({MODEL}){switch(MODEL){case\"Gemini Pro\":return{gemini:true};case\"PaLM\":return{palm:true};case\"mock\":return{mock:true};case\"GPT 3.5 Turbo\":return{gpt35:true};default:return{other:`Unsupported model: ${MODEL}`}}}",
         "raw": true
       }
     },
@@ -226,16 +220,10 @@
       }
     },
     {
-      "id": "palm-generateText-1",
-      "type": "palm-generateText"
-    },
-    {
-      "id": "secrets-2",
-      "type": "secrets",
+      "id": "palmGenerator",
+      "type": "invoke",
       "configuration": {
-        "keys": [
-          "PALM_KEY"
-        ]
+        "path": "palm-text-generator.json"
       }
     },
     {
@@ -254,9 +242,6 @@
     }
   ],
   "kits": [
-    {
-      "url": "npm:@google-labs/palm-kit"
-    },
     {
       "url": "npm:@google-labs/llm-starter"
     },

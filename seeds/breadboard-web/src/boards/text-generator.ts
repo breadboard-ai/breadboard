@@ -7,7 +7,6 @@
 import { Board, Schema } from "@google-labs/breadboard";
 import { Core } from "@google-labs/core-kit";
 import { Starter } from "@google-labs/llm-starter";
-import { PaLMKit } from "@google-labs/palm-kit";
 
 const board = new Board({
   title: "Text Generator",
@@ -15,7 +14,6 @@ const board = new Board({
     "This is a text generator. It can generate text using various LLMs. Currently, it supports the follwogin models: Google Gemini Pro, Google PaLM text-bison-001, OpenAI GPT-3.5 Turbo, and a mock model.",
   version: "0.0.1",
 });
-const palm = board.addKit(PaLMKit);
 const starter = board.addKit(Starter);
 const core = board.addKit(Core);
 
@@ -47,20 +45,11 @@ const input = board.input({
   } satisfies Schema,
 });
 
-function switchModel({
-  MODEL,
-  useStreaming,
-}: {
-  MODEL: string;
-  useStreaming: boolean;
-}) {
+function switchModel({ MODEL }: { MODEL: string }) {
   switch (MODEL) {
     case "Gemini Pro":
       return { gemini: true };
     case "PaLM":
-      if (useStreaming) {
-        return { other: `Streaming is not supported for ${MODEL}` };
-      }
       return { palm: true };
     case "mock":
       return { mock: true };
@@ -117,9 +106,11 @@ const gemini = core
   .wire("text->", textOutput)
   .wire("stream->", streamOutput);
 
-const generateText = palm
-  .generateText()
-  .wire("<-PALM_KEY", starter.secrets({ keys: ["PALM_KEY"] }));
+const palmGenerator = core.invoke({
+  $id: "palmGenerator",
+  path: "palm-text-generator.json",
+});
+input.wire("useStreaming->", palmGenerator);
 
 const gpt35 = core.invoke({
   $id: "gpt35",
@@ -127,13 +118,12 @@ const gpt35 = core.invoke({
 });
 
 input.wire("MODEL->", switcher);
-input.wire("useStreaming->", switcher);
 
 input.wire("useStreaming->", gpt35);
 input.wire("text->", gpt35.wire("text->", textOutput));
 gpt35.wire("stream->", streamOutput);
 
-input.wire("text->", generateText.wire("completion->text", textOutput));
+input.wire("text->", palmGenerator.wire("text->", textOutput));
 
 const mockModel = core.invoke({
   $id: "mockModel",
@@ -145,7 +135,7 @@ input.wire("text->", mockModel.wire("text->", textOutput));
 switcher
   .wire("other->text", textOutput)
   .wire("gemini->", gemini)
-  .wire("palm->", generateText)
+  .wire("palm->", palmGenerator)
   .wire("gpt35->", gpt35)
   .wire("mock->", mockModel);
 
