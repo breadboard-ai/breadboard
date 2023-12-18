@@ -59,7 +59,8 @@
   },
   {
     "title": "Mock Text Generator",
-    "url": "/graphs/mock-text-generator.json"
+    "url": "/graphs/mock-text-generator.json",
+    "version": "0.0.2"
   },
   {
     "title": "OpenAI GPT-3.5-turbo",
@@ -70,6 +71,11 @@
     "title": "OpenAI GPT 4 Vision Preview",
     "url": "/graphs/openai-gpt-4-vision.json",
     "version": "0.0.2"
+  },
+  {
+    "title": "PaLM Text Generator",
+    "url": "/graphs/palm-text-generator.json",
+    "version": "0.0.1"
   },
   {
     "title": "Retry",
@@ -102,13 +108,8 @@
     "version": "0.0.1"
   },
   {
-    "title": "Tour Guide Writer 3",
-    "url": "/graphs/tour-guide-writer-3.json",
-    "version": "0.0.3"
-  },
-  {
     "title": "Tour Guide Writer",
     "url": "/graphs/tour-guide-writer.json",
-    "version": "0.0.2"
+    "version": "0.0.3"
   }
 ]

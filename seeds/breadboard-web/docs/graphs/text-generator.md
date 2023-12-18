@@ -16,16 +16,15 @@ input[/"input <br> id='input'"/]:::input -- "text->text" --> gpt35["invoke <br> 
 gpt35["invoke <br> id='gpt35'"] -- "stream->stream" --> streamOutput{{"output <br> id='streamOutput'"}}:::output
 palmgenerateText1["palm-generateText <br> id='palm-generateText-1'"] -- "completion->text" --> textOutput{{"output <br> id='textOutput'"}}:::output
 input[/"input <br> id='input'"/]:::input -- "text->text" --> palmgenerateText1["palm-generateText <br> id='palm-generateText-1'"]
-input[/"input <br> id='input'"/]:::input -- "useStreaming->useStreaming" --> mockModel["runJavascript <br> id='mockModel'"]
-mockModel["runJavascript <br> id='mockModel'"] -- "text->text" --> textOutput{{"output <br> id='textOutput'"}}:::output
-input[/"input <br> id='input'"/]:::input -- "text->text" --> mockModel["runJavascript <br> id='mockModel'"]
+input[/"input <br> id='input'"/]:::input -- "useStreaming->useStreaming" --> mockModel["invoke <br> id='mockModel'"]
+mockModel["invoke <br> id='mockModel'"] -- "text->text" --> textOutput{{"output <br> id='textOutput'"}}:::output
+input[/"input <br> id='input'"/]:::input -- "text->text" --> mockModel["invoke <br> id='mockModel'"]
 switchModel["runJavascript <br> id='switchModel'"] -- "other->text" --> textOutput{{"output <br> id='textOutput'"}}:::output
 switchModel["runJavascript <br> id='switchModel'"] -- "gemini->gemini" --> gemini["invoke <br> id='gemini'"]
 switchModel["runJavascript <br> id='switchModel'"] -- "palm->palm" --> palmgenerateText1["palm-generateText <br> id='palm-generateText-1'"]
 switchModel["runJavascript <br> id='switchModel'"] -- "gpt35->gpt35" --> gpt35["invoke <br> id='gpt35'"]
-switchModel["runJavascript <br> id='switchModel'"] -- "mock->mock" --> mockModel["runJavascript <br> id='mockModel'"]
-mockModel["runJavascript <br> id='mockModel'"] -- "list->list" --> listToStream3["listToStream <br> id='listToStream-3'"]
-listToStream3["listToStream <br> id='listToStream-3'"] -- "stream->stream" --> streamOutput{{"output <br> id='streamOutput'"}}:::output
+switchModel["runJavascript <br> id='switchModel'"] -- "mock->mock" --> mockModel["invoke <br> id='mockModel'"]
+mockModel["invoke <br> id='mockModel'"] -- "stream->stream" --> streamOutput{{"output <br> id='streamOutput'"}}:::output
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

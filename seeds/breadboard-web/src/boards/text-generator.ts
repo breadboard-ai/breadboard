@@ -8,18 +8,16 @@ import { Board, Schema } from "@google-labs/breadboard";
 import { Core } from "@google-labs/core-kit";
 import { Starter } from "@google-labs/llm-starter";
 import { PaLMKit } from "@google-labs/palm-kit";
-import { NodeNurseryWeb } from "@google-labs/node-nursery-web";
 
 const board = new Board({
   title: "Text Generator",
   description:
-    "This is a text generator. It can generate text using various LLMs. Currently, it supports the follwogin models: Google PaLM text-bison-001, OpenAI GPT-3.5 Turbo, and a mock model. The mock model simply echoes back the input text. It's good for testing.",
+    "This is a text generator. It can generate text using various LLMs. Currently, it supports the follwogin models: Google Gemini Pro, Google PaLM text-bison-001, OpenAI GPT-3.5 Turbo, and a mock model.",
   version: "0.0.1",
 });
 const palm = board.addKit(PaLMKit);
 const starter = board.addKit(Starter);
 const core = board.addKit(Core);
-const nursery = board.addKit(NodeNurseryWeb);
 
 const input = board.input({
   $id: "input",
@@ -128,30 +126,6 @@ const gpt35 = core.invoke({
   path: "openai-gpt-35-turbo.json",
 });
 
-function runMockModel({
-  text,
-  useStreaming,
-}: {
-  text: string;
-  useStreaming: boolean;
-}) {
-  text = `Mock model with streaming off echoes back: ${text}`;
-  if (useStreaming) {
-    const list = text.split(" ");
-    return { list };
-  }
-  return { text };
-}
-
-const mockModel = starter.runJavascript({
-  $id: "mockModel",
-  name: "runMockModel",
-  code: runMockModel.toString(),
-  raw: true,
-});
-
-const mockModelStream = nursery.listToStream();
-
 input.wire("MODEL->", switcher);
 input.wire("useStreaming->", switcher);
 
@@ -160,6 +134,11 @@ input.wire("text->", gpt35.wire("text->", textOutput));
 gpt35.wire("stream->", streamOutput);
 
 input.wire("text->", generateText.wire("completion->text", textOutput));
+
+const mockModel = core.invoke({
+  $id: "mockModel",
+  path: "mock-text-generator.json",
+});
 
 input.wire("useStreaming->", mockModel);
 input.wire("text->", mockModel.wire("text->", textOutput));
@@ -170,7 +149,6 @@ switcher
   .wire("gpt35->", gpt35)
   .wire("mock->", mockModel);
 
-mockModel.wire("list->", mockModelStream);
-mockModelStream.wire("stream->", streamOutput);
+mockModel.wire("stream->", streamOutput);
 
 export default board;
