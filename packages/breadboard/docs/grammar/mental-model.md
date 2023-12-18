@@ -274,17 +274,16 @@ Let's look at an example:
 import { recipe, code } from "@breadboard-ai/breadboard";
 
 const serializedGraph = recipe(({ foo }) => {
-  const reverseText = code<{ text: string }>(({ text }) => {
+  const reverseText = code(({ text }) => {
     return { reversed: test.split("").reverse().join("") };
   });
-  return { bar: reverseFoo({ foo }).reversed };
+  return { bar: reverseFoo({ foo.isString() }).reversed };
 }).serialize();
 ```
 
 Here, `reverseFoo` is a new node type that is created by the `code` function.
-`code` has a type annotation here, since otherwise TypeScript will complain
-about calling `split` on `text`. We could have added it on the `recipe` call
-instead. More later.
+Note how we annotated `foo` as `foo.isString()` as otherwise TypeScript would
+complain about `test.split`.
 
 The `return` line instantiates a node, passing it the input `foo` and assigning
 its output `reversed` to the recipe's output `bar`.
@@ -323,6 +322,12 @@ This example defines the same code function as before, a recipe that primarily
 renames inputs and outputs, and a recipe that takes a recipe as parameter and
 applies to its other parameters.
 
+Here we had to add a manual type annotation to `code` for TypeScript.
+
+TODO: What's the `jod` way to do this? `.is` doesn't work to set the type of the
+function itself. We probably need `code({ input: { foo: j.string() }},
+<function>)`, but we ran into issues with this pattern before.
+
 Note how `reverseOp` refers to `reverseText` that is defined in its parent
 scope. This works, because the passed function is immediately evaluated, not
 serialized. So `recipe` functions don't have to be self-contained (but must
@@ -350,10 +355,15 @@ import { recipe, code } from "@breadboard-ai/breadboard";
 
 const serializedGraph = recipe(({ foo, bar, baz, suffix }) => {
   const suffixOp = recipe(({ param }) => {
-    const appendSuffix = code<{ text: string; suffix: string }>(
-      ({ text, suffix }) => ({ text: text + "-" + suffix })
-    );
-    return { result: appendSuffix({ text: param, suffix }).text };
+    const appendSuffix = code(({ text, suffix }) => ({
+      text: text + "-" + suffix,
+    }));
+    return {
+      result: appendSuffix({
+        text: param.isString(),
+        suffix: suffix.isString(),
+      }).text,
+    };
   });
 
   const applyOp = recipe(({ a, b, c, op }) => {
@@ -409,10 +419,15 @@ import { recipe, code } from "@breadboard-ai/breadboard";
 
 const suffixOpGenerator = recipe(({ suffix }) => {
   const suffixOp = recipe(({ param }) => {
-    const appendSuffix = code<{ text: string; suffix: string }>(
-      ({ text, suffix }) => ({ text: text + "-" + suffix })
-    );
-    return { result: appendSuffix({ text: param, suffix }).text };
+    const appendSuffix = code(({ text, suffix }) => ({
+      text: text + "-" + suffix,
+    }));
+    return {
+      result: appendSuffix({
+        text: param.isString(),
+        suffix: suffix.isString(),
+      }).text,
+    };
   });
 
   const applyOp = recipe(({ a, b, c, op }) => {
