@@ -162,6 +162,8 @@ instead. More later.
 The `return` line instantiates a node, passing it the input `foo` and assigning
 its output `reversed` to the recipe's output `bar`.
 
+### Lambdas, closures and other more advanced topics
+
 #### Passing lambdas
 
 Node types are first class entities that can be passed as values:
@@ -336,3 +338,69 @@ places:
 
 (At runtime, there is another class of scopes, "dynamic scopes", along which
 information like which kits to use is passed)
+
+### Kits
+
+#### Simple kits
+
+Kits are just collections of the primitives defined above. Here is a simple kit,
+defined inline and then used and serialized:
+
+```ts
+const myKit = makeKit({
+  name: "myKit",
+  url: "...",
+}, {
+  fooPassthrough: recipe(({foo} = ({foo})),
+  fooReverse: recipe(...)
+};
+
+const example = recipe(() => {
+  const fpt = myKit.fooPassthrough();
+});
+
+const myKitJson = myKit.serialize();
+```
+
+TODO: Tooling to save `myKitJson` and to rehydrate it as something TS can
+`import`.
+
+#### Unserializable kits
+
+Some kits might contain functions that can't be serialized, e.g. because they
+use information from the environment. That's ok, and in fact the primary way
+such functionality can be imported.
+
+Such kits have to be provided by the runtime environment. Crucially, the
+environment gets to choose which version of the kit it provides. For example a
+browser environment can provide the browser version, a node environment the node
+implementation. Or maybe the browser just provides proxy nodes that call the
+server-side variant under the hood.
+
+They are defined just as above, except that they can't be serialized.
+
+#### Kits made closure-like lambdas
+
+If kits are classes with all static methods, then we can imagine how kits as
+objects could look like: A recipe that outputs a kit, where the nodes are
+pre-configured to some values. (Non-const members aren't supported yet)
+
+This could be useful to represent a specific index. Consider a recipe taking the
+URL of a database as input can output `query` and other node types that act on
+that database.
+
+This could be used on-the-fly in a recipe, e.g. when the URL is dynamic. Or that
+kit could just be published as `.json` file as a way to query that specific
+database.
+
+```ts
+import { recipe, load, makeKit } from "@breadboard-ai/breadboard";
+
+const serializedGraph = recipe(({ db, query }) => {
+  const acmeDb = load(".../acmeDB.json");
+  const acmeKit = makeKit(acmeDb({ db }));
+
+  const results = acmeKit.query({ query });
+  ...
+}).serialize();
+```
