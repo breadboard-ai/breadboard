@@ -2,9 +2,9 @@
 
 # LLM Starter Kit
 
-![Milestone](https://img.shields.io/badge/milestone-M1-red) ![Stability](https://img.shields.io/badge/stability-wip-green)
+![Milestone](https://img.shields.io/badge/milestone-M3-red) ![Stability](https://img.shields.io/badge/stability-wip-green)
 
-The LLM Starter Kit is a collection of [Breadboard](https://github.com/breadboard-ai/breadboard/tree/main/seeds/breadboard) nodes that are helpful for building LLM-based (Generative AI) applications.
+The LLM Starter Kit is a collection of [Breadboard](https://github.com/breadboard-ai/breadboard/tree/main/packages/breadboard) nodes that are helpful for building LLM-based (Generative AI) applications.
 
 ## Installing
 
@@ -20,7 +20,7 @@ Here are all node handlers that are included in the LLM Starter Kit.
 
 ### The `promptTemplate` node
 
-Use this node to populate simple handlebar-style templates. A reuired input is `template`, which is a string that contains the template prompt template. The template can contain zero or more placeholders that will be replaced with values from inputs. Specify placeholders as `{{inputName}}` in the template. The placeholders in the template must match the inputs wired into this node. The node will replace all placeholders with values from the input property bag and pass the result along as the `prompt` output property.
+Use this node to populate simple handlebar-style templates. A required input is `template`, which is a string that contains the template prompt template. The template can contain zero or more placeholders that will be replaced with values from inputs. Specify placeholders as `{{inputName}}` in the template. The placeholders in the template must match the inputs wired into this node. The node will replace all placeholders with values from the input property bag and pass the result along as the `prompt` output property.
 
 #### Example:
 
@@ -49,84 +49,11 @@ We will get this output:
 
 #### Outputs:
 
-- `prompts` a string that contains the result of replacing placeholders in the template with values from the inputs.
+- `prompt` a string that contains the result of replacing placeholders in the template with values from the inputs.
 
 #### Implementation:
 
 - [src/nodes/prompt-template.ts](src/nodes/prompt-template.ts)
-
-## The `append` node
-
-Use this node to accumulate local state, like context in a prompt.
-
-The node looks for property called `accumulator` in its input. All other properties are appended to this property, and returned as `accumulator` output property.
-
-The way the properties are appended depends on the type of the `accumulator` input property.
-
-If the `accumulator` property is "string-ey" (that is, it's a `string`, `number`, `boolean`, `bigint`, `null` or `undefined`), the properties will be appended as strings, formatted as `{{property_name}}: {{proprety_value}}` and joined with "`\n`".
-
-If the `accumulator` property is an array, the properties will be appended as array items, formatted as `{{property_name}}: {{proprety_value}}`,
-
-Otherwise, the `accumulator` property will be treated as an object and the properties will be added as properties on this object.
-
-### Example
-
-If we send the `append` node an input of `Question` with the value of `How old is planet Earth?` and the `accumulator` value of `\n`:
-
-```json
-{
-  "accumulator": "\n",
-  "Question": "How old is planet Earth?"
-}
-```
-
-We will see the following output:
-
-```json
-{
-  "accumulator": "\n\nQuestion: How old is planet Earth?"
-}
-```
-
-If we send the node an input of `Question` with the value of `How old is planet Earth?` and the `accumulator` value of `[]`:
-
-```json
-{
-  "accumulator": [],
-  "Question": "How old is planet Earth?"
-}
-```
-
-We will get the output:
-
-```json
-{
-  "accumulator": ["Question: How old is planet Earth?"]
-}
-```
-
-If we send the node an input of `Question` with the value of `How old is planet Earth?` and the `accumulator` value of `{}`:
-
-```json
-{
-  "accumulator": {},
-  "Question": "How old is planet Earth?"
-}
-```
-
-We'll get the output of:
-
-```json
-{
-  "accumulator": {
-    "Question": "How old is planet Earth?"
-  }
-}
-```
-
-#### Implementation:
-
-- [src/nodes/append.ts](src/nodes/append.ts)
 
 ### The `runJavascript` node
 
@@ -220,39 +147,6 @@ Will produce this output:
 #### Implementation:
 
 - [src/nodes/secrets.ts](src/nodes/secrets.ts)
-
-### The `generateText` node
-
-This is a [PaLM API](https://developers.generativeai.google/) text completion node. This node is probably the main reason this starter kit exists. To produce useful output, the node needs an `PALM_KEY` input and the `text` input.
-
-#### Example:
-
-Given this input:
-
-```json
-{
-  "PALM_KEY": "<your API key>",
-  "text": "How old is planet Earth?"
-}
-```
-
-The node will produce this output:
-
-```json
-{
-  "completion": "It is about 4.5 billion years old."
-}
-```
-
-#### Inputs:
-
-- `PALM_KEY` required, must contain the Google Cloud Platform API key for the project has the "Generative Language API" API enabled.
-- `text` required, sent as the prompt for the completion.
-- `stopSequences` optional array of strings. These will be passed as the stop sequences to the completion API.
-
-#### Outputs:
-
-- `completion` - result of the PaLM API text completion.
 
 ### The `urlTemplate` node
 

@@ -12,7 +12,7 @@ To start making, create a new breadboard:
 const board = new Board();
 ```
 
-For more information on how to use Breadboard, start with [Chapter 1: Hello, world?](https://github.com/breadboard-ai/breadboard/tree/main/seeds/breadboard/docs/tutorial#chapter-7-probes) of the tutorial.
+For more information on how to use Breadboard, start with [Chapter 1: Hello, world?](https://github.com/breadboard-ai/breadboard/tree/main/packages/breadboard/docs/tutorial#chapter-7-probes) of the tutorial.
 
 ## Hierarchy
 
@@ -34,7 +34,7 @@ For more information on how to use Breadboard, start with [Chapter 1: Hello, wor
 
 - [#acrossBoardsEdges](Board.md##acrossboardsedges)
 - [#closureStack](Board.md##closurestack)
-- [#parent](Board.md##parent)
+- [#outerGraph](Board.md##outergraph)
 - [#slots](Board.md##slots)
 - [#topClosure](Board.md##topclosure)
 - [#validators](Board.md##validators)
@@ -57,18 +57,12 @@ For more information on how to use Breadboard, start with [Chapter 1: Hello, wor
 - [addNode](Board.md#addnode)
 - [addValidator](Board.md#addvalidator)
 - [currentBoardToAddTo](Board.md#currentboardtoaddto)
-- [import](Board.md#import)
-- [include](Board.md#include)
 - [input](Board.md#input)
-- [invoke](Board.md#invoke)
 - [lambda](Board.md#lambda)
 - [mermaid](Board.md#mermaid)
 - [output](Board.md#output)
-- [passthrough](Board.md#passthrough)
-- [reflect](Board.md#reflect)
 - [run](Board.md#run)
 - [runOnce](Board.md#runonce)
-- [slot](Board.md#slot)
 - [fromBreadboardCapability](Board.md#frombreadboardcapability)
 - [fromGraphDescriptor](Board.md#fromgraphdescriptor)
 - [handlersFromBoard](Board.md#handlersfromboard)
@@ -78,13 +72,17 @@ For more information on how to use Breadboard, start with [Chapter 1: Hello, wor
 
 ### constructor
 
-• **new Board**(`metadata?`)
+• **new Board**(`metadata?`): [`Board`](Board.md)
 
 #### Parameters
 
-| Name        | Type                                           | Description                                                                                                        |
-| :---------- | :--------------------------------------------- | :----------------------------------------------------------------------------------------------------------------- |
+| Name | Type | Description |
+| :------ | :------ | :------ |
 | `metadata?` | [`GraphMetadata`](../modules.md#graphmetadata) | optional metadata for the board. Use this parameter to provide title, description, version, and URL for the board. |
+
+#### Returns
+
+[`Board`](Board.md)
 
 #### Inherited from
 
@@ -92,19 +90,19 @@ For more information on how to use Breadboard, start with [Chapter 1: Hello, wor
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:79](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L79)
+[packages/breadboard/src/runner.ts:80](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L80)
 
 ## Properties
 
 ### #acrossBoardsEdges
 
-• `Private` **#acrossBoardsEdges**: { `edge`: [`Edge`](../modules.md#edge) ; `from`: [`Board`](Board.md) ; `to`: [`Board`](Board.md) }[] = `[]`
+• `Private` **#acrossBoardsEdges**: \{ `edge`: [`Edge`](../modules.md#edge) ; `from`: [`Board`](Board.md) ; `to`: [`Board`](Board.md)  }[] = `[]`
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:51](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/board.ts#L51)
+[packages/breadboard/src/board.ts:46](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/board.ts#L46)
 
----
+___
 
 ### #closureStack
 
@@ -112,25 +110,25 @@ For more information on how to use Breadboard, start with [Chapter 1: Hello, wor
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:49](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/board.ts#L49)
+[packages/breadboard/src/board.ts:44](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/board.ts#L44)
 
----
+___
 
-### #parent
+### #outerGraph
 
-• `Private` `Optional` **#parent**: [`GraphDescriptor`](../modules.md#graphdescriptor)
+• `Private` `Optional` **#outerGraph**: [`GraphDescriptor`](../modules.md#graphdescriptor)
 
 The parent board, if this is board is a subgraph of a larger board.
 
 #### Inherited from
 
-[BoardRunner](BoardRunner.md).[#parent](BoardRunner.md##parent)
+[BoardRunner](BoardRunner.md).[#outerGraph](BoardRunner.md##outergraph)
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:72](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L72)
+[packages/breadboard/src/runner.ts:73](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L73)
 
----
+___
 
 ### #slots
 
@@ -142,9 +140,9 @@ The parent board, if this is board is a subgraph of a larger board.
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:67](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L67)
+[packages/breadboard/src/runner.ts:68](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L68)
 
----
+___
 
 ### #topClosure
 
@@ -152,9 +150,9 @@ The parent board, if this is board is a subgraph of a larger board.
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:50](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/board.ts#L50)
+[packages/breadboard/src/board.ts:45](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/board.ts#L45)
 
----
+___
 
 ### #validators
 
@@ -166,13 +164,15 @@ The parent board, if this is board is a subgraph of a larger board.
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:68](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L68)
+[packages/breadboard/src/runner.ts:69](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L69)
 
----
+___
 
 ### args
 
 • `Optional` **args**: [`InputValues`](../modules.md#inputvalues)
+
+Arguments that are passed to the graph, useful to bind values to lambdas.
 
 #### Implementation of
 
@@ -184,13 +184,15 @@ Breadboard.args
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:65](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L65)
+[packages/breadboard/src/runner.ts:66](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L66)
 
----
+___
 
 ### description
 
 • `Optional` **description**: `string`
+
+The description of the graph.
 
 #### Implementation of
 
@@ -202,13 +204,15 @@ Breadboard.description
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:59](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L59)
+[packages/breadboard/src/runner.ts:60](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L60)
 
----
+___
 
 ### edges
 
 • **edges**: [`Edge`](../modules.md#edge)[] = `[]`
+
+The collection of all edges in the graph.
 
 #### Implementation of
 
@@ -220,13 +224,15 @@ Breadboard.edges
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:61](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L61)
+[packages/breadboard/src/runner.ts:62](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L62)
 
----
+___
 
 ### graphs
 
 • `Optional` **graphs**: [`SubGraphs`](../modules.md#subgraphs)
+
+Sub-graphs that are also described by this graph representation.
 
 #### Implementation of
 
@@ -238,9 +244,9 @@ Breadboard.graphs
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:64](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L64)
+[packages/breadboard/src/runner.ts:65](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L65)
 
----
+___
 
 ### kits
 
@@ -256,13 +262,15 @@ Breadboard.kits
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:63](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L63)
+[packages/breadboard/src/runner.ts:64](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L64)
 
----
+___
 
 ### nodes
 
 • **nodes**: [`NodeDescriptor`](../modules.md#nodedescriptor)[] = `[]`
+
+The collection of all nodes in the graph.
 
 #### Implementation of
 
@@ -274,13 +282,15 @@ Breadboard.nodes
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:62](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L62)
+[packages/breadboard/src/runner.ts:63](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L63)
 
----
+___
 
 ### title
 
 • `Optional` **title**: `string`
+
+The title of the graph.
 
 #### Implementation of
 
@@ -292,13 +302,18 @@ Breadboard.title
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:58](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L58)
+[packages/breadboard/src/runner.ts:59](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L59)
 
----
+___
 
 ### url
 
 • `Optional` **url**: `string`
+
+The URL pointing to the location of the graph.
+This URL is used to resolve relative paths in the graph.
+If not specified, the paths are assumed to be relative to the current
+working directory.
 
 #### Implementation of
 
@@ -310,13 +325,16 @@ Breadboard.url
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:57](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L57)
+[packages/breadboard/src/runner.ts:58](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L58)
 
----
+___
 
 ### version
 
 • `Optional` **version**: `string`
+
+Version of the graph.
+[semver](https://semver.org/) format is encouraged.
 
 #### Implementation of
 
@@ -328,27 +346,27 @@ Breadboard.version
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:60](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L60)
+[packages/breadboard/src/runner.ts:61](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L61)
 
----
+___
 
 ### runRemote
 
-▪ `Static` **runRemote**: (`url`: `string`) => `AsyncGenerator`<`RemoteRunResult`, `void`, `unknown`\> = `runRemote`
+▪ `Static` **runRemote**: (`url`: `string`) => `AsyncGenerator`\<`RemoteRunResult`, `void`, `unknown`\> = `runRemote`
 
 #### Type declaration
 
-▸ (`url`): `AsyncGenerator`<`RemoteRunResult`, `void`, `unknown`\>
+▸ (`url`): `AsyncGenerator`\<`RemoteRunResult`, `void`, `unknown`\>
 
 ##### Parameters
 
-| Name  | Type     |
-| :---- | :------- |
+| Name | Type |
+| :------ | :------ |
 | `url` | `string` |
 
 ##### Returns
 
-`AsyncGenerator`<`RemoteRunResult`, `void`, `unknown`\>
+`AsyncGenerator`\<`RemoteRunResult`, `void`, `unknown`\>
 
 #### Inherited from
 
@@ -356,7 +374,7 @@ Breadboard.version
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:359](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L359)
+[packages/breadboard/src/runner.ts:384](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L384)
 
 ## Methods
 
@@ -366,8 +384,8 @@ Breadboard.version
 
 #### Parameters
 
-| Name   | Type                         |
-| :----- | :--------------------------- |
+| Name | Type |
+| :------ | :------ |
 | `edge` | [`Edge`](../modules.md#edge) |
 
 #### Returns
@@ -380,9 +398,9 @@ Breadboard.addEdge
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:333](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/board.ts#L333)
+[packages/breadboard/src/board.ts:176](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/board.ts#L176)
 
----
+___
 
 ### addEdgeAcrossBoards
 
@@ -390,11 +408,11 @@ Breadboard.addEdge
 
 #### Parameters
 
-| Name   | Type                         |
-| :----- | :--------------------------- |
+| Name | Type |
+| :------ | :------ |
 | `edge` | [`Edge`](../modules.md#edge) |
-| `from` | [`Board`](Board.md)          |
-| `to`   | [`Board`](Board.md)          |
+| `from` | [`Board`](Board.md) |
+| `to` | [`Board`](Board.md) |
 
 #### Returns
 
@@ -406,18 +424,18 @@ Breadboard.addEdgeAcrossBoards
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:396](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/board.ts#L396)
+[packages/breadboard/src/board.ts:230](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/board.ts#L230)
 
----
+___
 
 ### addKit
 
-▸ **addKit**<`T`\>(`ctr`): `T`
+▸ **addKit**\<`T`\>(`ctr`): `T`
 
 Adds a new kit to the board.
 
 Kits are collections of nodes that are bundled together for a specific
-purpose. For example, the [LLM Starter Kit](https://github.com/breadboard-ai/breadboard/tree/main/seeds/llm-starter) provides a few nodes that
+purpose. For example, the [LLM Starter Kit](https://github.com/breadboard-ai/breadboard/tree/main/packages/llm-starter) provides a few nodes that
 are useful for making generative AI applications.
 
 Typically, kits are distributed as NPM packages. To add a kit to the board,
@@ -433,22 +451,22 @@ const kit = board.addKit(Starter);
 
 #### Type parameters
 
-| Name | Type                                        |
-| :--- | :------------------------------------------ |
-| `T`  | extends [`Kit`](../interfaces/Kit.md)<`T`\> |
+| Name | Type |
+| :------ | :------ |
+| `T` | extends [`Kit`](../interfaces/Kit.md) |
 
 #### Parameters
 
-| Name  | Type                                                      | Description          |
-| :---- | :-------------------------------------------------------- | :------------------- |
-| `ctr` | [`KitConstructor`](../interfaces/KitConstructor.md)<`T`\> | the kit constructor. |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `ctr` | [`KitConstructor`](../interfaces/KitConstructor.md)\<`T`\> | the kit constructor. |
 
 #### Returns
 
 `T`
 
 - the kit object, which is associated with
-  the board and can be used to place nodes on that board.
+the board and can be used to place nodes on that board.
 
 #### Implementation of
 
@@ -456,9 +474,9 @@ Breadboard.addKit
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:363](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/board.ts#L363)
+[packages/breadboard/src/board.ts:206](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/board.ts#L206)
 
----
+___
 
 ### addNode
 
@@ -466,8 +484,8 @@ Breadboard.addKit
 
 #### Parameters
 
-| Name   | Type                                             |
-| :----- | :----------------------------------------------- |
+| Name | Type |
+| :------ | :------ |
 | `node` | [`NodeDescriptor`](../modules.md#nodedescriptor) |
 
 #### Returns
@@ -480,9 +498,9 @@ Breadboard.addNode
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:337](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/board.ts#L337)
+[packages/breadboard/src/board.ts:180](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/board.ts#L180)
 
----
+___
 
 ### addValidator
 
@@ -493,8 +511,8 @@ Will call .addGraph() on the validator before executing a graph.
 
 #### Parameters
 
-| Name        | Type                                                          | Description                      |
-| :---------- | :------------------------------------------------------------ | :------------------------------- |
+| Name | Type | Description |
+| :------ | :------ | :------ |
 | `validator` | [`BreadboardValidator`](../interfaces/BreadboardValidator.md) | a validator to add to the board. |
 
 #### Returns
@@ -511,9 +529,9 @@ Breadboard.addValidator
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:258](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L258)
+[packages/breadboard/src/runner.ts:277](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L277)
 
----
+___
 
 ### currentBoardToAddTo
 
@@ -535,117 +553,36 @@ Breadboard.currentBoardToAddTo
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:385](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/board.ts#L385)
+[packages/breadboard/src/board.ts:219](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/board.ts#L219)
 
----
-
-### import
-
-▸ **import**<`In`, `Out`\>(`$ref`, `config?`): [`BreadboardNode`](../interfaces/BreadboardNode.md)<[`InputValues`](../modules.md#inputvalues) & { `$ref?`: `string` ; `args`: [`InputValues`](../modules.md#inputvalues) ; `board?`: [`BreadboardCapability`](../modules.md#breadboardcapability) ; `graph?`: [`GraphDescriptor`](../modules.md#graphdescriptor) ; `parent`: [`NodeDescriptor`](../modules.md#nodedescriptor) ; `path?`: `string` ; `slotted?`: [`BreadboardSlotSpec`](../modules.md#breadboardslotspec) } & `In`, `Out`\>
-
-Places an `import` node on the board.
-
-Use this node to import other boards into the current board.
-Outputs `board` as a BoardCapability, which can be passed to e.g. `invoke`.
-
-#### Type parameters
-
-| Name  | Type                                                                    |
-| :---- | :---------------------------------------------------------------------- |
-| `In`  | [`InputValues`](../modules.md#inputvalues)                              |
-| `Out` | `Partial`<`Record`<`string`, [`NodeValue`](../modules.md#nodevalue)\>\> |
-
-#### Parameters
-
-| Name     | Type                                                               | Description                                  |
-| :------- | :----------------------------------------------------------------- | :------------------------------------------- |
-| `$ref`   | `string` \| [`GraphDescriptor`](../modules.md#graphdescriptor)     | the URL of the board to include, or a graph. |
-| `config` | [`OptionalIdConfiguration`](../modules.md#optionalidconfiguration) | optional configuration for the node.         |
-
-#### Returns
-
-[`BreadboardNode`](../interfaces/BreadboardNode.md)<[`InputValues`](../modules.md#inputvalues) & { `$ref?`: `string` ; `args`: [`InputValues`](../modules.md#inputvalues) ; `board?`: [`BreadboardCapability`](../modules.md#breadboardcapability) ; `graph?`: [`GraphDescriptor`](../modules.md#graphdescriptor) ; `parent`: [`NodeDescriptor`](../modules.md#nodedescriptor) ; `path?`: `string` ; `slotted?`: [`BreadboardSlotSpec`](../modules.md#breadboardslotspec) } & `In`, `Out`\>
-
-- a `Node` object that represents the placed node.
-
-#### Defined in
-
-[seeds/breadboard/src/board.ts:210](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/board.ts#L210)
-
----
-
-### include
-
-▸ **include**<`In`, `Out`\>(`$ref`, `config?`): [`BreadboardNode`](../interfaces/BreadboardNode.md)<[`InputValues`](../modules.md#inputvalues) & { `$ref?`: `string` ; `args`: [`InputValues`](../modules.md#inputvalues) ; `board?`: [`BreadboardCapability`](../modules.md#breadboardcapability) ; `graph?`: [`GraphDescriptor`](../modules.md#graphdescriptor) ; `parent`: [`NodeDescriptor`](../modules.md#nodedescriptor) ; `path?`: `string` ; `slotted?`: [`BreadboardSlotSpec`](../modules.md#breadboardslotspec) } & `In`, `Out`\>
-
-Places an `include` node on the board.
-
-Use this node to include other boards into the current board.
-
-The `include` node acts as a sort of instant board-to-node converter: just
-give it the URL of a serialized board, and it will pretend as if that whole
-board is just one node.
-
-See [`include` node
-reference](https://github.com/breadboard-ai/breadboard/blob/main/seeds/breadboard/docs/nodes.md#include)
-for more information.
-
-#### Type parameters
-
-| Name  | Type                                                                    |
-| :---- | :---------------------------------------------------------------------- |
-| `In`  | [`InputValues`](../modules.md#inputvalues)                              |
-| `Out` | `Partial`<`Record`<`string`, [`NodeValue`](../modules.md#nodevalue)\>\> |
-
-#### Parameters
-
-| Name     | Type                                                                                                                           | Description                                                                                    |
-| :------- | :----------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------- |
-| `$ref`   | `string` \| [`GraphDescriptor`](../modules.md#graphdescriptor) \| [`BreadboardCapability`](../modules.md#breadboardcapability) | the URL of the board to include, or a graph or a BreadboardCapability returned by e.g. lambda. |
-| `config` | [`OptionalIdConfiguration`](../modules.md#optionalidconfiguration)                                                             | optional configuration for the node.                                                           |
-
-#### Returns
-
-[`BreadboardNode`](../interfaces/BreadboardNode.md)<[`InputValues`](../modules.md#inputvalues) & { `$ref?`: `string` ; `args`: [`InputValues`](../modules.md#inputvalues) ; `board?`: [`BreadboardCapability`](../modules.md#breadboardcapability) ; `graph?`: [`GraphDescriptor`](../modules.md#graphdescriptor) ; `parent`: [`NodeDescriptor`](../modules.md#nodedescriptor) ; `path?`: `string` ; `slotted?`: [`BreadboardSlotSpec`](../modules.md#breadboardslotspec) } & `In`, `Out`\>
-
-- a `Node` object that represents the placed node.
-
-#### Implementation of
-
-Breadboard.include
-
-#### Defined in
-
-[seeds/breadboard/src/board.ts:272](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/board.ts#L272)
-
----
+___
 
 ### input
 
-▸ **input**<`In`, `Out`\>(`config?`): [`BreadboardNode`](../interfaces/BreadboardNode.md)<`In`, `Out`\>
+▸ **input**\<`In`, `Out`\>(`config?`): [`BreadboardNode`](../interfaces/BreadboardNode.md)\<`In`, `Out`\>
 
 Places an `input` node on the board.
 
 An `input` node is a node that asks for inputs from the user.
 
-See [`input` node reference](https://github.com/breadboard-ai/breadboard/blob/main/seeds/breadboard/docs/nodes.md#input) for more information.
+See [`input` node reference](https://github.com/breadboard-ai/breadboard/blob/main/packages/breadboard/docs/nodes.md#input) for more information.
 
 #### Type parameters
 
-| Name  | Type                                                                    |
-| :---- | :---------------------------------------------------------------------- |
-| `In`  | [`InputValues`](../modules.md#inputvalues)                              |
-| `Out` | `Partial`<`Record`<`string`, [`NodeValue`](../modules.md#nodevalue)\>\> |
+| Name | Type |
+| :------ | :------ |
+| `In` | [`InputValues`](../modules.md#inputvalues) |
+| `Out` | `Partial`\<`Record`\<`string`, [`NodeValue`](../modules.md#nodevalue)\>\> |
 
 #### Parameters
 
-| Name     | Type                                                               | Description                          |
-| :------- | :----------------------------------------------------------------- | :----------------------------------- |
+| Name | Type | Description |
+| :------ | :------ | :------ |
 | `config` | [`OptionalIdConfiguration`](../modules.md#optionalidconfiguration) | optional configuration for the node. |
 
 #### Returns
 
-[`BreadboardNode`](../interfaces/BreadboardNode.md)<`In`, `Out`\>
+[`BreadboardNode`](../interfaces/BreadboardNode.md)\<`In`, `Out`\>
 
 - a `Node` object that represents the placed node.
 
@@ -655,59 +592,13 @@ Breadboard.input
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:87](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/board.ts#L87)
+[packages/breadboard/src/board.ts:63](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/board.ts#L63)
 
----
-
-### invoke
-
-▸ **invoke**<`In`, `Out`\>(`config?`): [`BreadboardNode`](../interfaces/BreadboardNode.md)<[`InputValues`](../modules.md#inputvalues) & { `$ref?`: `string` ; `args`: [`InputValues`](../modules.md#inputvalues) ; `board?`: [`BreadboardCapability`](../modules.md#breadboardcapability) ; `graph?`: [`GraphDescriptor`](../modules.md#graphdescriptor) ; `parent`: [`NodeDescriptor`](../modules.md#nodedescriptor) ; `path?`: `string` ; `slotted?`: [`BreadboardSlotSpec`](../modules.md#breadboardslotspec) } & `In`, `Out`\>
-
-Places an `invoke` node on the board.
-
-Use this node to invoke other boards into the current board.
-
-See [`include` node
-reference](https://github.com/breadboard-ai/breadboard/blob/main/seeds/breadboard/docs/nodes.md#include)
-for more information.
-
-Expects as input one of
-
-- `path`: A board to be loaded
-- `graph`: A graph (treated as JSON)
-- `board`: A {BreadboardCapability}, e.g. from lambda or import
-
-All other inputs are passed to the invoked board,
-and the output are the invoked board's outputs.
-
-#### Type parameters
-
-| Name  | Type                                                                    |
-| :---- | :---------------------------------------------------------------------- |
-| `In`  | [`InputValues`](../modules.md#inputvalues)                              |
-| `Out` | `Partial`<`Record`<`string`, [`NodeValue`](../modules.md#nodevalue)\>\> |
-
-#### Parameters
-
-| Name     | Type                                                                       | Description                          |
-| :------- | :------------------------------------------------------------------------- | :----------------------------------- |
-| `config` | `string` \| [`ConfigOrLambda`](../modules.md#configorlambda)<`In`, `Out`\> | optional configuration for the node. |
-
-#### Returns
-
-[`BreadboardNode`](../interfaces/BreadboardNode.md)<[`InputValues`](../modules.md#inputvalues) & { `$ref?`: `string` ; `args`: [`InputValues`](../modules.md#inputvalues) ; `board?`: [`BreadboardCapability`](../modules.md#breadboardcapability) ; `graph?`: [`GraphDescriptor`](../modules.md#graphdescriptor) ; `parent`: [`NodeDescriptor`](../modules.md#nodedescriptor) ; `path?`: `string` ; `slotted?`: [`BreadboardSlotSpec`](../modules.md#breadboardslotspec) } & `In`, `Out`\>
-
-- a `Node` object that represents the placed node.
-
-#### Defined in
-
-[seeds/breadboard/src/board.ts:244](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/board.ts#L244)
-
----
+___
 
 ### lambda
 
-▸ **lambda**<`In`, `InL`, `OutL`\>(`boardOrFunction`, `config?`): [`BreadboardNode`](../interfaces/BreadboardNode.md)<`In`, `LambdaNodeOutputs`\>
+▸ **lambda**\<`In`, `InL`, `OutL`\>(`boardOrFunction`, `config?`): [`BreadboardNode`](../interfaces/BreadboardNode.md)\<`In`, [`LambdaNodeOutputs`](../modules.md#lambdanodeoutputs)\>
 
 Place a `lambda` node on the board.
 
@@ -729,22 +620,22 @@ kit.someNode().wire( "value->value", output));
 
 #### Type parameters
 
-| Name   | Type                                                                    |
-| :----- | :---------------------------------------------------------------------- |
-| `In`   | `In`                                                                    |
-| `InL`  | `InL`                                                                   |
-| `OutL` | `Partial`<`Record`<`string`, [`NodeValue`](../modules.md#nodevalue)\>\> |
+| Name | Type |
+| :------ | :------ |
+| `In` | `In` |
+| `InL` | `InL` |
+| `OutL` | `Partial`\<`Record`\<`string`, [`NodeValue`](../modules.md#nodevalue)\>\> |
 
 #### Parameters
 
-| Name              | Type                                                                                   | Description                                 |
-| :---------------- | :------------------------------------------------------------------------------------- | :------------------------------------------ |
-| `boardOrFunction` | `BreadboardRunner` \| [`LambdaFunction`](../modules.md#lambdafunction)<`InL`, `OutL`\> | A board or a function that builds the board |
-| `config`          | [`OptionalIdConfiguration`](../modules.md#optionalidconfiguration)                     | optional configuration for the node.        |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `boardOrFunction` | [`BreadboardRunner`](../interfaces/BreadboardRunner.md) \| [`LambdaFunction`](../modules.md#lambdafunction)\<`InL`, `OutL`\> | A board or a function that builds the board |
+| `config` | [`OptionalIdConfiguration`](../modules.md#optionalidconfiguration) | optional configuration for the node. |
 
 #### Returns
 
-[`BreadboardNode`](../interfaces/BreadboardNode.md)<`In`, `LambdaNodeOutputs`\>
+[`BreadboardNode`](../interfaces/BreadboardNode.md)\<`In`, [`LambdaNodeOutputs`](../modules.md#lambdanodeoutputs)\>
 
 - a `Node` object that represents the placed node.
 
@@ -754,18 +645,25 @@ Breadboard.lambda
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:134](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/board.ts#L134)
+[packages/breadboard/src/board.ts:110](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/board.ts#L110)
 
----
+___
 
 ### mermaid
 
-▸ **mermaid**(): `string`
+▸ **mermaid**(`direction?`, `unstyled?`): `string`
 
 Returns a [Mermaid](https://mermaid-js.github.io/mermaid/#/) representation
 of the board.
 
 This is useful for visualizing the board.
+
+#### Parameters
+
+| Name | Type | Default value |
+| :------ | :------ | :------ |
+| `direction` | `string` | `"TD"` |
+| `unstyled` | `boolean` | `false` |
 
 #### Returns
 
@@ -773,38 +671,42 @@ This is useful for visualizing the board.
 
 - a string containing the Mermaid representation of the board.
 
+#### Inherited from
+
+[BoardRunner](BoardRunner.md).[mermaid](BoardRunner.md#mermaid)
+
 #### Defined in
 
-[seeds/breadboard/src/board.ts:423](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/board.ts#L423)
+[packages/breadboard/src/runner.ts:289](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L289)
 
----
+___
 
 ### output
 
-▸ **output**<`In`, `Out`\>(`config?`): [`BreadboardNode`](../interfaces/BreadboardNode.md)<`In`, `Out`\>
+▸ **output**\<`In`, `Out`\>(`config?`): [`BreadboardNode`](../interfaces/BreadboardNode.md)\<`In`, `Out`\>
 
 Places an `output` node on the board.
 
 An `output` node is a node that provides outputs to the user.
 
-See [`output` node reference](https://github.com/breadboard-ai/breadboard/blob/main/seeds/breadboard/docs/nodes.md#output) for more information.
+See [`output` node reference](https://github.com/breadboard-ai/breadboard/blob/main/packages/breadboard/docs/nodes.md#output) for more information.
 
 #### Type parameters
 
-| Name  | Type                                                                    |
-| :---- | :---------------------------------------------------------------------- |
-| `In`  | [`InputValues`](../modules.md#inputvalues)                              |
-| `Out` | `Partial`<`Record`<`string`, [`NodeValue`](../modules.md#nodevalue)\>\> |
+| Name | Type |
+| :------ | :------ |
+| `In` | [`InputValues`](../modules.md#inputvalues) |
+| `Out` | `Partial`\<`Record`\<`string`, [`NodeValue`](../modules.md#nodevalue)\>\> |
 
 #### Parameters
 
-| Name     | Type                                                               | Description                          |
-| :------- | :----------------------------------------------------------------- | :----------------------------------- |
+| Name | Type | Description |
+| :------ | :------ | :------ |
 | `config` | [`OptionalIdConfiguration`](../modules.md#optionalidconfiguration) | optional configuration for the node. |
 
 #### Returns
 
-[`BreadboardNode`](../interfaces/BreadboardNode.md)<`In`, `Out`\>
+[`BreadboardNode`](../interfaces/BreadboardNode.md)\<`In`, `Out`\>
 
 - a `Node` object that represents the placed node.
 
@@ -814,88 +716,13 @@ Breadboard.output
 
 #### Defined in
 
-[seeds/breadboard/src/board.ts:104](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/board.ts#L104)
+[packages/breadboard/src/board.ts:80](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/board.ts#L80)
 
----
-
-### passthrough
-
-▸ **passthrough**<`In`, `Out`\>(`config?`): [`BreadboardNode`](../interfaces/BreadboardNode.md)<`In`, `Out`\>
-
-Places the `passthrough` node on the board.
-
-A `passthrough` node is a node that simply passes its inputs to
-its outputs. Every computing machine needs a no-op node,
-and Breadboard library is no exception.
-
-See [`passthrough` node reference](https://github.com/breadboard-ai/breadboard/blob/main/seeds/breadboard/docs/nodes.md#passthrough) for more information.
-
-#### Type parameters
-
-| Name  | Type                                                                    |
-| :---- | :---------------------------------------------------------------------- |
-| `In`  | [`InputValues`](../modules.md#inputvalues)                              |
-| `Out` | `Partial`<`Record`<`string`, [`NodeValue`](../modules.md#nodevalue)\>\> |
-
-#### Parameters
-
-| Name     | Type                                                               | Description                          |
-| :------- | :----------------------------------------------------------------- | :----------------------------------- |
-| `config` | [`OptionalIdConfiguration`](../modules.md#optionalidconfiguration) | optional configuration for the node. |
-
-#### Returns
-
-[`BreadboardNode`](../interfaces/BreadboardNode.md)<`In`, `Out`\>
-
-- a `Node` object that represents the placed node.
-
-#### Implementation of
-
-Breadboard.passthrough
-
-#### Defined in
-
-[seeds/breadboard/src/board.ts:70](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/board.ts#L70)
-
----
-
-### reflect
-
-▸ **reflect**(`config?`): [`BreadboardNode`](../interfaces/BreadboardNode.md)<`never`, `ReflectNodeOutputs`\>
-
-Places a `reflect` node on the board.
-
-This node is used to reflect the board itself. It provides a JSON
-representation of the board as a `graph` output property. This can be
-used for studying the board's structure from inside the board.
-
-See [`reflect` node reference](https://github.com/breadboard-ai/breadboard/blob/main/seeds/breadboard/docs/nodes.md#reflect) for more information.
-
-#### Parameters
-
-| Name     | Type                                                               | Description                          |
-| :------- | :----------------------------------------------------------------- | :----------------------------------- |
-| `config` | [`OptionalIdConfiguration`](../modules.md#optionalidconfiguration) | optional configuration for the node. |
-
-#### Returns
-
-[`BreadboardNode`](../interfaces/BreadboardNode.md)<`never`, `ReflectNodeOutputs`\>
-
-- a `Node` object that represents the placed node.
-
-#### Implementation of
-
-Breadboard.reflect
-
-#### Defined in
-
-[seeds/breadboard/src/board.ts:302](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/board.ts#L302)
-
----
+___
 
 ### run
 
-▸ **run**(`probe?`, `slots?`, `result?`): `AsyncGenerator`<[`RunResult`](RunResult.md), `any`, `unknown`\>
+▸ **run**(`context?`, `result?`): `AsyncGenerator`\<[`RunResult`](RunResult.md), `any`, `unknown`\>
 
 Runs the board. This method is an async generator that
 yields the results of each stage of the run.
@@ -907,7 +734,7 @@ It's typically used like this:
 
 ```js
 for await (const stop of board.run()) {
-  // do something with `stop`
+// do something with `stop`
 }
 ```
 
@@ -922,19 +749,18 @@ When that is the case, use `stop.inputs` to provide input values.
 If `stop.type` is `output`, the board is providing output values.
 When that is the case, use `stop.outputs` to receive output values.
 
-See [Chapter 8: Continuous runs](https://github.com/breadboard-ai/breadboard/tree/main/seeds/breadboard/docs/tutorial#chapter-8-continuous-runs) of Breadboard tutorial for an example of how to use this method.
+See [Chapter 8: Continuous runs](https://github.com/breadboard-ai/breadboard/tree/main/packages/breadboard/docs/tutorial#chapter-8-continuous-runs) of Breadboard tutorial for an example of how to use this method.
 
 #### Parameters
 
-| Name      | Type                                                     | Description                                                                                                                                                                                                                                           |
-| :-------- | :------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `probe?`  | `EventTarget`                                            | an optional probe. If provided, the board will dispatch events to it. See [Chapter 7: Probes](https://github.com/breadboard-ai/breadboard/tree/main/seeds/breadboard/docs/tutorial#chapter-7-probes) of the Breadboard tutorial for more information. |
-| `slots?`  | [`BreadboardSlotSpec`](../modules.md#breadboardslotspec) | an optional map of slotted graphs. See [Chapter 6: Boards with slots](https://github.com/breadboard-ai/breadboard/tree/main/seeds/breadboard/docs/tutorial#chapter-6-boards-with-slots) of the Breadboard tutorial for more information.              |
-| `result?` | [`RunResult`](RunResult.md)                              | -                                                                                                                                                                                                                                                     |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `context` | [`NodeHandlerContext`](../interfaces/NodeHandlerContext.md) | - |
+| `result?` | [`RunResult`](RunResult.md) | an optional result of a previous run. If provided, the board will resume from the state of the previous run. |
 
 #### Returns
 
-`AsyncGenerator`<[`RunResult`](RunResult.md), `any`, `unknown`\>
+`AsyncGenerator`\<[`RunResult`](RunResult.md), `any`, `unknown`\>
 
 #### Implementation of
 
@@ -946,13 +772,13 @@ Breadboard.run
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:116](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L116)
+[packages/breadboard/src/runner.ts:120](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L120)
 
----
+___
 
 ### runOnce
 
-▸ **runOnce**(`inputs`, `context?`, `probe?`): `Promise`<`Partial`<`Record`<`string`, [`NodeValue`](../modules.md#nodevalue)\>\>\>
+▸ **runOnce**(`inputs`, `context?`): `Promise`\<`Partial`\<`Record`\<`string`, [`NodeValue`](../modules.md#nodevalue)\>\>\>
 
 A simplified version of `run` that runs the board until the board provides
 an output, and returns that output.
@@ -962,15 +788,14 @@ or the the outputs are only expected to be visited once.
 
 #### Parameters
 
-| Name       | Type                                                        | Description                                                                                                                                                                                                                                           |
-| :--------- | :---------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `inputs`   | [`InputValues`](../modules.md#inputvalues)                  | the input values to provide to the board.                                                                                                                                                                                                             |
-| `context?` | [`NodeHandlerContext`](../interfaces/NodeHandlerContext.md) | -                                                                                                                                                                                                                                                     |
-| `probe?`   | `EventTarget`                                               | an optional probe. If provided, the board will dispatch events to it. See [Chapter 7: Probes](https://github.com/breadboard-ai/breadboard/tree/main/seeds/breadboard/docs/tutorial#chapter-7-probes) of the Breadboard tutorial for more information. |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `inputs` | [`InputValues`](../modules.md#inputvalues) | the input values to provide to the board. |
+| `context` | [`NodeHandlerContext`](../interfaces/NodeHandlerContext.md) | - |
 
 #### Returns
 
-`Promise`<`Partial`<`Record`<`string`, [`NodeValue`](../modules.md#nodevalue)\>\>\>
+`Promise`\<`Partial`\<`Record`\<`string`, [`NodeValue`](../modules.md#nodevalue)\>\>\>
 
 - outputs provided by the board.
 
@@ -984,70 +809,25 @@ Breadboard.runOnce
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:218](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L218)
+[packages/breadboard/src/runner.ts:232](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L232)
 
----
-
-### slot
-
-▸ **slot**<`In`, `Out`\>(`slot`, `config?`): [`BreadboardNode`](../interfaces/BreadboardNode.md)<`SlotNodeInputs` & `In`, `Out`\>
-
-Places a `slot` node on the board.
-
-This node is used to provide a slot for another board to be placed into.
-
-This type of node is useful for situations where we wish to leave
-a place in the board where anyone could insert other boards.
-
-Programmers call it "dependency injection".
-
-See [`slot` node reference](https://github.com/breadboard-ai/breadboard/blob/main/seeds/breadboard/docs/nodes.md#slot) for more information.
-
-#### Type parameters
-
-| Name  | Type                                                                    |
-| :---- | :---------------------------------------------------------------------- |
-| `In`  | [`InputValues`](../modules.md#inputvalues)                              |
-| `Out` | `Partial`<`Record`<`string`, [`NodeValue`](../modules.md#nodevalue)\>\> |
-
-#### Parameters
-
-| Name     | Type                                                               | Description                          |
-| :------- | :----------------------------------------------------------------- | :----------------------------------- |
-| `slot`   | `string`                                                           | the name of the slot.                |
-| `config` | [`OptionalIdConfiguration`](../modules.md#optionalidconfiguration) | optional configuration for the node. |
-
-#### Returns
-
-[`BreadboardNode`](../interfaces/BreadboardNode.md)<`SlotNodeInputs` & `In`, `Out`\>
-
-- a `Node` object that represents the placed node.
-
-#### Implementation of
-
-Breadboard.slot
-
-#### Defined in
-
-[seeds/breadboard/src/board.ts:325](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/board.ts#L325)
-
----
+___
 
 ### fromBreadboardCapability
 
-▸ `Static` **fromBreadboardCapability**(`board`): `Promise`<[`BoardRunner`](BoardRunner.md)\>
+▸ **fromBreadboardCapability**(`board`): `Promise`\<[`BoardRunner`](BoardRunner.md)\>
 
 Creates a runnable board from a BreadboardCapability,
 
 #### Parameters
 
-| Name    | Type                                                         | Description                                                     |
-| :------ | :----------------------------------------------------------- | :-------------------------------------------------------------- |
+| Name | Type | Description |
+| :------ | :------ | :------ |
 | `board` | [`BreadboardCapability`](../modules.md#breadboardcapability) | {BreadboardCapability} A BreadboardCapability including a board |
 
 #### Returns
 
-`Promise`<[`BoardRunner`](BoardRunner.md)\>
+`Promise`\<[`BoardRunner`](BoardRunner.md)\>
 
 A runnable board.
 
@@ -1057,27 +837,26 @@ A runnable board.
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:324](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L324)
+[packages/breadboard/src/runner.ts:343](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L343)
 
----
+___
 
 ### fromGraphDescriptor
 
-▸ `Static` **fromGraphDescriptor**(`graph`, `kits?`): `Promise`<[`BoardRunner`](BoardRunner.md)\>
+▸ **fromGraphDescriptor**(`graph`): `Promise`\<[`BoardRunner`](BoardRunner.md)\>
 
 Creates a new board from JSON. If you have a serialized board, you can
 use this method to turn it into into a new Board instance.
 
 #### Parameters
 
-| Name    | Type                                               | Description                           |
-| :------ | :------------------------------------------------- | :------------------------------------ |
+| Name | Type | Description |
+| :------ | :------ | :------ |
 | `graph` | [`GraphDescriptor`](../modules.md#graphdescriptor) | the JSON representation of the board. |
-| `kits?` | `KitImportMap`                                     | -                                     |
 
 #### Returns
 
-`Promise`<[`BoardRunner`](BoardRunner.md)\>
+`Promise`\<[`BoardRunner`](BoardRunner.md)\>
 
 - a new `Board` instance.
 
@@ -1087,23 +866,24 @@ use this method to turn it into into a new Board instance.
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:269](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L269)
+[packages/breadboard/src/runner.ts:300](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L300)
 
----
+___
 
 ### handlersFromBoard
 
-▸ `Static` **handlersFromBoard**(`board`): `Promise`<[`NodeHandlers`](../modules.md#nodehandlers)<[`NodeHandlerContext`](../interfaces/NodeHandlerContext.md)\>\>
+▸ **handlersFromBoard**(`board`, `upstreamKits?`): `Promise`\<[`NodeHandlers`](../modules.md#nodehandlers)\>
 
 #### Parameters
 
-| Name    | Type                            |
-| :------ | :------------------------------ |
-| `board` | [`BoardRunner`](BoardRunner.md) |
+| Name | Type | Default value |
+| :------ | :------ | :------ |
+| `board` | [`BoardRunner`](BoardRunner.md) | `undefined` |
+| `upstreamKits` | [`Kit`](../interfaces/Kit.md)[] | `[]` |
 
 #### Returns
 
-`Promise`<[`NodeHandlers`](../modules.md#nodehandlers)<[`NodeHandlerContext`](../interfaces/NodeHandlerContext.md)\>\>
+`Promise`\<[`NodeHandlers`](../modules.md#nodehandlers)\>
 
 #### Inherited from
 
@@ -1111,30 +891,29 @@ use this method to turn it into into a new Board instance.
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:349](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L349)
+[packages/breadboard/src/runner.ts:367](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L367)
 
----
+___
 
 ### load
 
-▸ `Static` **load**(`url`, `options?`): `Promise`<[`BoardRunner`](BoardRunner.md)\>
+▸ **load**(`url`, `options?`): `Promise`\<[`BoardRunner`](BoardRunner.md)\>
 
 Loads a board from a URL or a file path.
 
 #### Parameters
 
-| Name                  | Type                                                     | Description                          |
-| :-------------------- | :------------------------------------------------------- | :----------------------------------- |
-| `url`                 | `string`                                                 | the URL or a file path to the board. |
-| `options?`            | `Object`                                                 | -                                    |
-| `options.base?`       | `string`                                                 | -                                    |
-| `options.kits?`       | `KitImportMap`                                           | -                                    |
-| `options.outerGraph?` | [`GraphDescriptor`](../modules.md#graphdescriptor)       | -                                    |
-| `options.slotted?`    | [`BreadboardSlotSpec`](../modules.md#breadboardslotspec) | -                                    |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `url` | `string` | the URL or a file path to the board. |
+| `options?` | `Object` | - |
+| `options.base?` | `string` | - |
+| `options.outerGraph?` | [`GraphDescriptor`](../modules.md#graphdescriptor) | - |
+| `options.slotted?` | [`BreadboardSlotSpec`](../modules.md#breadboardslotspec) | - |
 
 #### Returns
 
-`Promise`<[`BoardRunner`](BoardRunner.md)\>
+`Promise`\<[`BoardRunner`](BoardRunner.md)\>
 
 - a new `Board` instance.
 
@@ -1144,4 +923,4 @@ Loads a board from a URL or a file path.
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:298](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L298)
+[packages/breadboard/src/runner.ts:318](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L318)

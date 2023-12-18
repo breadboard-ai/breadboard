@@ -53,19 +53,23 @@ Acts as bridge between Breadboard and the generic graph validation code.
 
 ### constructor
 
-• **new GraphIntegrityValidator**(`parentValidator?`, `parentNode?`, `parentInputs?`)
+• **new GraphIntegrityValidator**(`parentValidator?`, `parentNode?`, `parentInputs?`): [`GraphIntegrityValidator`](GraphIntegrityValidator.md)
 
 #### Parameters
 
-| Name               | Type                                                    |
-| :----------------- | :------------------------------------------------------ |
+| Name | Type |
+| :------ | :------ |
 | `parentValidator?` | [`GraphIntegrityValidator`](GraphIntegrityValidator.md) |
-| `parentNode?`      | `NodeFromBreadboard`                                    |
-| `parentInputs?`    | `string`[]                                              |
+| `parentNode?` | `NodeFromBreadboard` |
+| `parentInputs?` | `string`[] |
+
+#### Returns
+
+[`GraphIntegrityValidator`](GraphIntegrityValidator.md)
 
 #### Defined in
 
-[validator.ts:78](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/validator.ts#L78)
+[validator.ts:78](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/validator.ts#L78)
 
 ## Properties
 
@@ -75,9 +79,9 @@ Acts as bridge between Breadboard and the generic graph validation code.
 
 #### Defined in
 
-[validator.ts:73](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/validator.ts#L73)
+[validator.ts:73](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/validator.ts#L73)
 
----
+___
 
 ### parentInputs
 
@@ -85,9 +89,9 @@ Acts as bridge between Breadboard and the generic graph validation code.
 
 #### Defined in
 
-[validator.ts:75](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/validator.ts#L75)
+[validator.ts:75](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/validator.ts#L75)
 
----
+___
 
 ### parentNode
 
@@ -95,9 +99,9 @@ Acts as bridge between Breadboard and the generic graph validation code.
 
 #### Defined in
 
-[validator.ts:74](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/validator.ts#L74)
+[validator.ts:74](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/validator.ts#L74)
 
----
+___
 
 ### policy
 
@@ -105,9 +109,9 @@ Acts as bridge between Breadboard and the generic graph validation code.
 
 #### Defined in
 
-[validator.ts:76](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/validator.ts#L76)
+[validator.ts:76](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/validator.ts#L76)
 
----
+___
 
 ### wholeGraph
 
@@ -115,7 +119,7 @@ Acts as bridge between Breadboard and the generic graph validation code.
 
 #### Defined in
 
-[validator.ts:72](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/validator.ts#L72)
+[validator.ts:72](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/validator.ts#L72)
 
 ## Methods
 
@@ -127,8 +131,8 @@ Add nodes to the validator and validate the full graph.
 
 #### Parameters
 
-| Name       | Type              |
-| :--------- | :---------------- |
+| Name | Type |
+| :------ | :------ |
 | `newGraph` | `GraphDescriptor` |
 
 #### Returns
@@ -145,9 +149,9 @@ BreadboardValidator.addGraph
 
 #### Defined in
 
-[validator.ts:109](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/validator.ts#L109)
+[validator.ts:109](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/validator.ts#L109)
 
----
+___
 
 ### addPolicy
 
@@ -157,8 +161,8 @@ Add a policy to validate graphs against.
 
 #### Parameters
 
-| Name     | Type                                                         | Description                     |
-| :------- | :----------------------------------------------------------- | :------------------------------ |
+| Name | Type | Description |
+| :------ | :------ | :------ |
 | `policy` | [`GraphIntegrityPolicy`](../modules.md#graphintegritypolicy) | The policy to validate against. |
 
 #### Returns
@@ -167,18 +171,18 @@ Add a policy to validate graphs against.
 
 #### Defined in
 
-[validator.ts:99](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/validator.ts#L99)
+[validator.ts:99](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/validator.ts#L99)
 
----
+___
 
 ### getNodeById
 
-▸ `Protected` **getNodeById**(`node`): `undefined` \| `NodeFromBreadboard`
+▸ **getNodeById**(`node`): `undefined` \| `NodeFromBreadboard`
 
 #### Parameters
 
-| Name   | Type             |
-| :----- | :--------------- |
+| Name | Type |
+| :------ | :------ |
 | `node` | `NodeDescriptor` |
 
 #### Returns
@@ -187,9 +191,9 @@ Add a policy to validate graphs against.
 
 #### Defined in
 
-[validator.ts:151](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/validator.ts#L151)
+[validator.ts:151](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/validator.ts#L151)
 
----
+___
 
 ### getSubgraphValidator
 
@@ -200,10 +204,10 @@ Generate a validator for a subgraph, replacing a given node. Call
 
 #### Parameters
 
-| Name            | Type             | Description                                                                                             |
-| :-------------- | :--------------- | :------------------------------------------------------------------------------------------------------ |
-| `node`          | `NodeDescriptor` | The node to replace.                                                                                    |
-| `actualInputs?` | `string`[]       | Actual inputs to the node (as opposed to assuming all inputs with \* or that optional ones are present) |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `node` | `NodeDescriptor` | The node to replace. |
+| `actualInputs?` | `string`[] | Actual inputs to the node (as opposed to assuming all inputs with * or that optional ones are present) |
 
 #### Returns
 
@@ -217,9 +221,9 @@ BreadboardValidator.getSubgraphValidator
 
 #### Defined in
 
-[validator.ts:141](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/validator.ts#L141)
+[validator.ts:141](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/validator.ts#L141)
 
----
+___
 
 ### getValidatorMetadata
 
@@ -229,8 +233,8 @@ Get the safety label of a node.
 
 #### Parameters
 
-| Name   | Type             |
-| :----- | :--------------- |
+| Name | Type |
+| :------ | :------ |
 | `node` | `NodeDescriptor` |
 
 #### Returns
@@ -238,8 +242,8 @@ Get the safety label of a node.
 `GraphIntegrityValidatorMetadata`
 
 The safety label of the node, or undefined if it wasn't computed.
-Note that the safety label's value can be undefined, meaning that
-there were no constraints on it.
+         Note that the safety label's value can be undefined, meaning that
+         there were no constraints on it.
 
 #### Implementation of
 
@@ -247,20 +251,20 @@ BreadboardValidator.getValidatorMetadata
 
 #### Defined in
 
-[validator.ts:123](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/validator.ts#L123)
+[validator.ts:123](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/validator.ts#L123)
 
----
+___
 
 ### insertGraph
 
-▸ `Protected` **insertGraph**(`newGraph`): `void`
+▸ **insertGraph**(`newGraph`): `void`
 
 Insert a new graph into this graph.
 
 #### Parameters
 
-| Name       | Type              | Description          |
-| :--------- | :---------------- | :------------------- |
+| Name | Type | Description |
+| :------ | :------ | :------ |
 | `newGraph` | `GraphDescriptor` | Graph to be inserted |
 
 #### Returns
@@ -269,9 +273,9 @@ Insert a new graph into this graph.
 
 #### Defined in
 
-[validator.ts:163](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/validator.ts#L163)
+[validator.ts:163](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/validator.ts#L163)
 
----
+___
 
 ### toMermaid
 
@@ -283,4 +287,4 @@ Insert a new graph into this graph.
 
 #### Defined in
 
-[validator.ts:322](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/validator.ts#L322)
+[validator.ts:322](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/validator.ts#L322)

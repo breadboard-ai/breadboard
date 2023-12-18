@@ -16,9 +16,9 @@
 
 ### Properties
 
-- [AT_TARGET](ToastEvent.md#at_target)
-- [BUBBLING_PHASE](ToastEvent.md#bubbling_phase)
-- [CAPTURING_PHASE](ToastEvent.md#capturing_phase)
+- [AT\_TARGET](ToastEvent.md#at_target)
+- [BUBBLING\_PHASE](ToastEvent.md#bubbling_phase)
+- [CAPTURING\_PHASE](ToastEvent.md#capturing_phase)
 - [NONE](ToastEvent.md#none)
 - [bubbles](ToastEvent.md#bubbles)
 - [cancelBubble](ToastEvent.md#cancelbubble)
@@ -35,9 +35,9 @@
 - [timeStamp](ToastEvent.md#timestamp)
 - [toastType](ToastEvent.md#toasttype)
 - [type](ToastEvent.md#type)
-- [AT_TARGET](ToastEvent.md#at_target-1)
-- [BUBBLING_PHASE](ToastEvent.md#bubbling_phase-1)
-- [CAPTURING_PHASE](ToastEvent.md#capturing_phase-1)
+- [AT\_TARGET](ToastEvent.md#at_target-1)
+- [BUBBLING\_PHASE](ToastEvent.md#bubbling_phase-1)
+- [CAPTURING\_PHASE](ToastEvent.md#capturing_phase-1)
 - [NONE](ToastEvent.md#none-1)
 - [eventName](ToastEvent.md#eventname)
 
@@ -53,14 +53,18 @@
 
 ### constructor
 
-• **new ToastEvent**(`message`, `toastType`)
+• **new ToastEvent**(`message`, `toastType`): [`ToastEvent`](ToastEvent.md)
 
 #### Parameters
 
-| Name        | Type        |
-| :---------- | :---------- |
-| `message`   | `string`    |
+| Name | Type |
+| :------ | :------ |
+| `message` | `string` |
 | `toastType` | `ToastType` |
+
+#### Returns
+
+[`ToastEvent`](ToastEvent.md)
 
 #### Overrides
 
@@ -68,55 +72,55 @@ Event.constructor
 
 #### Defined in
 
-[seeds/breadboard-ui/src/events.ts:28](https://github.com/breadboard-ai/breadboard/blob/a792f6c/seeds/breadboard-ui/src/events.ts#L28)
+[packages/breadboard-ui/src/events.ts:28](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard-ui/src/events.ts#L28)
 
 ## Properties
 
-### AT_TARGET
+### AT\_TARGET
 
-• `Readonly` **AT_TARGET**: `2`
-
-#### Inherited from
-
-Event.AT_TARGET
-
-#### Defined in
-
-node_modules/typescript/lib/lib.dom.d.ts:8057
-
----
-
-### BUBBLING_PHASE
-
-• `Readonly` **BUBBLING_PHASE**: `3`
+• `Readonly` **AT\_TARGET**: ``2``
 
 #### Inherited from
 
-Event.BUBBLING_PHASE
+Event.AT\_TARGET
 
 #### Defined in
 
-node_modules/typescript/lib/lib.dom.d.ts:8058
+node_modules/typescript/lib/lib.dom.d.ts:8100
 
----
+___
 
-### CAPTURING_PHASE
+### BUBBLING\_PHASE
 
-• `Readonly` **CAPTURING_PHASE**: `1`
+• `Readonly` **BUBBLING\_PHASE**: ``3``
 
 #### Inherited from
 
-Event.CAPTURING_PHASE
+Event.BUBBLING\_PHASE
 
 #### Defined in
 
-node_modules/typescript/lib/lib.dom.d.ts:8056
+node_modules/typescript/lib/lib.dom.d.ts:8101
 
----
+___
+
+### CAPTURING\_PHASE
+
+• `Readonly` **CAPTURING\_PHASE**: ``1``
+
+#### Inherited from
+
+Event.CAPTURING\_PHASE
+
+#### Defined in
+
+node_modules/typescript/lib/lib.dom.d.ts:8099
+
+___
 
 ### NONE
 
-• `Readonly` **NONE**: `0`
+• `Readonly` **NONE**: ``0``
 
 #### Inherited from
 
@@ -124,9 +128,9 @@ Event.NONE
 
 #### Defined in
 
-node_modules/typescript/lib/lib.dom.d.ts:8055
+node_modules/typescript/lib/lib.dom.d.ts:8098
 
----
+___
 
 ### bubbles
 
@@ -142,9 +146,9 @@ Event.bubbles
 
 #### Defined in
 
-node_modules/typescript/lib/lib.dom.d.ts:7952
+node_modules/typescript/lib/lib.dom.d.ts:7995
 
----
+___
 
 ### cancelBubble
 
@@ -160,9 +164,9 @@ Event.cancelBubble
 
 #### Defined in
 
-node_modules/typescript/lib/lib.dom.d.ts:7958
+node_modules/typescript/lib/lib.dom.d.ts:8001
 
----
+___
 
 ### cancelable
 
@@ -178,9 +182,9 @@ Event.cancelable
 
 #### Defined in
 
-node_modules/typescript/lib/lib.dom.d.ts:7964
+node_modules/typescript/lib/lib.dom.d.ts:8007
 
----
+___
 
 ### composed
 
@@ -196,13 +200,13 @@ Event.composed
 
 #### Defined in
 
-node_modules/typescript/lib/lib.dom.d.ts:7970
+node_modules/typescript/lib/lib.dom.d.ts:8013
 
----
+___
 
 ### currentTarget
 
-• `Readonly` **currentTarget**: `null` \| `EventTarget`
+• `Readonly` **currentTarget**: ``null`` \| `EventTarget`
 
 Returns the object whose event listener's callback is currently being invoked.
 
@@ -214,9 +218,9 @@ Event.currentTarget
 
 #### Defined in
 
-node_modules/typescript/lib/lib.dom.d.ts:7976
+node_modules/typescript/lib/lib.dom.d.ts:8019
 
----
+___
 
 ### defaultPrevented
 
@@ -232,9 +236,9 @@ Event.defaultPrevented
 
 #### Defined in
 
-node_modules/typescript/lib/lib.dom.d.ts:7982
+node_modules/typescript/lib/lib.dom.d.ts:8025
 
----
+___
 
 ### eventPhase
 
@@ -250,9 +254,9 @@ Event.eventPhase
 
 #### Defined in
 
-node_modules/typescript/lib/lib.dom.d.ts:7988
+node_modules/typescript/lib/lib.dom.d.ts:8031
 
----
+___
 
 ### isTrusted
 
@@ -268,9 +272,9 @@ Event.isTrusted
 
 #### Defined in
 
-node_modules/typescript/lib/lib.dom.d.ts:7994
+node_modules/typescript/lib/lib.dom.d.ts:8037
 
----
+___
 
 ### message
 
@@ -278,9 +282,9 @@ node_modules/typescript/lib/lib.dom.d.ts:7994
 
 #### Defined in
 
-[seeds/breadboard-ui/src/events.ts:28](https://github.com/breadboard-ai/breadboard/blob/a792f6c/seeds/breadboard-ui/src/events.ts#L28)
+[packages/breadboard-ui/src/events.ts:28](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard-ui/src/events.ts#L28)
 
----
+___
 
 ### returnValue
 
@@ -296,13 +300,13 @@ Event.returnValue
 
 #### Defined in
 
-node_modules/typescript/lib/lib.dom.d.ts:8000
+node_modules/typescript/lib/lib.dom.d.ts:8043
 
----
+___
 
 ### srcElement
 
-• `Readonly` **srcElement**: `null` \| `EventTarget`
+• `Readonly` **srcElement**: ``null`` \| `EventTarget`
 
 **`Deprecated`**
 
@@ -314,13 +318,13 @@ Event.srcElement
 
 #### Defined in
 
-node_modules/typescript/lib/lib.dom.d.ts:8006
+node_modules/typescript/lib/lib.dom.d.ts:8049
 
----
+___
 
 ### target
 
-• `Readonly` **target**: `null` \| `EventTarget`
+• `Readonly` **target**: ``null`` \| `EventTarget`
 
 Returns the object to which event is dispatched (its target).
 
@@ -332,9 +336,9 @@ Event.target
 
 #### Defined in
 
-node_modules/typescript/lib/lib.dom.d.ts:8012
+node_modules/typescript/lib/lib.dom.d.ts:8055
 
----
+___
 
 ### timeStamp
 
@@ -350,9 +354,9 @@ Event.timeStamp
 
 #### Defined in
 
-node_modules/typescript/lib/lib.dom.d.ts:8018
+node_modules/typescript/lib/lib.dom.d.ts:8061
 
----
+___
 
 ### toastType
 
@@ -360,9 +364,9 @@ node_modules/typescript/lib/lib.dom.d.ts:8018
 
 #### Defined in
 
-[seeds/breadboard-ui/src/events.ts:28](https://github.com/breadboard-ai/breadboard/blob/a792f6c/seeds/breadboard-ui/src/events.ts#L28)
+[packages/breadboard-ui/src/events.ts:28](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard-ui/src/events.ts#L28)
 
----
+___
 
 ### type
 
@@ -378,55 +382,55 @@ Event.type
 
 #### Defined in
 
-node_modules/typescript/lib/lib.dom.d.ts:8024
-
----
-
-### AT_TARGET
-
-▪ `Static` `Readonly` **AT_TARGET**: `2`
-
-#### Inherited from
-
-Event.AT_TARGET
-
-#### Defined in
-
-node_modules/typescript/lib/lib.dom.d.ts:8066
-
----
-
-### BUBBLING_PHASE
-
-▪ `Static` `Readonly` **BUBBLING_PHASE**: `3`
-
-#### Inherited from
-
-Event.BUBBLING_PHASE
-
-#### Defined in
-
 node_modules/typescript/lib/lib.dom.d.ts:8067
 
----
+___
 
-### CAPTURING_PHASE
+### AT\_TARGET
 
-▪ `Static` `Readonly` **CAPTURING_PHASE**: `1`
+▪ `Static` `Readonly` **AT\_TARGET**: ``2``
 
 #### Inherited from
 
-Event.CAPTURING_PHASE
+Event.AT\_TARGET
 
 #### Defined in
 
-node_modules/typescript/lib/lib.dom.d.ts:8065
+node_modules/typescript/lib/lib.dom.d.ts:8109
 
----
+___
+
+### BUBBLING\_PHASE
+
+▪ `Static` `Readonly` **BUBBLING\_PHASE**: ``3``
+
+#### Inherited from
+
+Event.BUBBLING\_PHASE
+
+#### Defined in
+
+node_modules/typescript/lib/lib.dom.d.ts:8110
+
+___
+
+### CAPTURING\_PHASE
+
+▪ `Static` `Readonly` **CAPTURING\_PHASE**: ``1``
+
+#### Inherited from
+
+Event.CAPTURING\_PHASE
+
+#### Defined in
+
+node_modules/typescript/lib/lib.dom.d.ts:8108
+
+___
 
 ### NONE
 
-▪ `Static` `Readonly` **NONE**: `0`
+▪ `Static` `Readonly` **NONE**: ``0``
 
 #### Inherited from
 
@@ -434,9 +438,9 @@ Event.NONE
 
 #### Defined in
 
-node_modules/typescript/lib/lib.dom.d.ts:8064
+node_modules/typescript/lib/lib.dom.d.ts:8107
 
----
+___
 
 ### eventName
 
@@ -444,7 +448,7 @@ node_modules/typescript/lib/lib.dom.d.ts:8064
 
 #### Defined in
 
-[seeds/breadboard-ui/src/events.ts:26](https://github.com/breadboard-ai/breadboard/blob/a792f6c/seeds/breadboard-ui/src/events.ts#L26)
+[packages/breadboard-ui/src/events.ts:26](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard-ui/src/events.ts#L26)
 
 ## Methods
 
@@ -466,9 +470,9 @@ Event.composedPath
 
 #### Defined in
 
-node_modules/typescript/lib/lib.dom.d.ts:8030
+node_modules/typescript/lib/lib.dom.d.ts:8073
 
----
+___
 
 ### initEvent
 
@@ -476,10 +480,10 @@ node_modules/typescript/lib/lib.dom.d.ts:8030
 
 #### Parameters
 
-| Name          | Type      |
-| :------------ | :-------- |
-| `type`        | `string`  |
-| `bubbles?`    | `boolean` |
+| Name | Type |
+| :------ | :------ |
+| `type` | `string` |
+| `bubbles?` | `boolean` |
 | `cancelable?` | `boolean` |
 
 #### Returns
@@ -496,9 +500,9 @@ Event.initEvent
 
 #### Defined in
 
-node_modules/typescript/lib/lib.dom.d.ts:8036
+node_modules/typescript/lib/lib.dom.d.ts:8079
 
----
+___
 
 ### preventDefault
 
@@ -518,9 +522,9 @@ Event.preventDefault
 
 #### Defined in
 
-node_modules/typescript/lib/lib.dom.d.ts:8042
+node_modules/typescript/lib/lib.dom.d.ts:8085
 
----
+___
 
 ### stopImmediatePropagation
 
@@ -540,9 +544,9 @@ Event.stopImmediatePropagation
 
 #### Defined in
 
-node_modules/typescript/lib/lib.dom.d.ts:8048
+node_modules/typescript/lib/lib.dom.d.ts:8091
 
----
+___
 
 ### stopPropagation
 
@@ -562,4 +566,4 @@ Event.stopPropagation
 
 #### Defined in
 
-node_modules/typescript/lib/lib.dom.d.ts:8054
+node_modules/typescript/lib/lib.dom.d.ts:8097

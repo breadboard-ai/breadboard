@@ -1,17 +1,17 @@
 [@google-labs/breadboard](../README.md) / [Exports](../modules.md) / Node
 
-# Class: Node<Inputs, Outputs\>
+# Class: Node\<Inputs, Outputs\>
 
 ## Type parameters
 
-| Name      |
-| :-------- |
-| `Inputs`  |
+| Name |
+| :------ |
+| `Inputs` |
 | `Outputs` |
 
 ## Implements
 
-- [`BreadboardNode`](../interfaces/BreadboardNode.md)<`Inputs`, `Outputs`\>
+- [`BreadboardNode`](../interfaces/BreadboardNode.md)\<`Inputs`, `Outputs`\>
 
 ## Table of contents
 
@@ -36,28 +36,32 @@
 
 ### constructor
 
-• **new Node**<`Inputs`, `Outputs`\>(`breadboard`, `kit`, `type`, `configuration?`, `id?`)
+• **new Node**\<`Inputs`, `Outputs`\>(`breadboard`, `kit`, `type`, `configuration?`, `id?`): [`Node`](Node.md)\<`Inputs`, `Outputs`\>
 
 #### Type parameters
 
-| Name      |
-| :-------- |
-| `Inputs`  |
+| Name |
+| :------ |
+| `Inputs` |
 | `Outputs` |
 
 #### Parameters
 
-| Name             | Type                                                                         |
-| :--------------- | :--------------------------------------------------------------------------- |
-| `breadboard`     | `Breadboard`                                                                 |
-| `kit`            | `undefined` \| [`Kit`](../interfaces/Kit.md)                                 |
-| `type`           | `string`                                                                     |
+| Name | Type |
+| :------ | :------ |
+| `breadboard` | `Breadboard` |
+| `kit` | `undefined` \| [`Kit`](../interfaces/Kit.md) |
+| `type` | `string` |
 | `configuration?` | [`NodeConfigurationConstructor`](../modules.md#nodeconfigurationconstructor) |
-| `id?`            | `string`                                                                     |
+| `id?` | `string` |
+
+#### Returns
+
+[`Node`](Node.md)\<`Inputs`, `Outputs`\>
 
 #### Defined in
 
-[seeds/breadboard/src/node.ts:101](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/node.ts#L101)
+[packages/breadboard/src/node.ts:101](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/node.ts#L101)
 
 ## Properties
 
@@ -67,9 +71,9 @@
 
 #### Defined in
 
-[seeds/breadboard/src/node.ts:99](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/node.ts#L99)
+[packages/breadboard/src/node.ts:99](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/node.ts#L99)
 
----
+___
 
 ### #descriptor
 
@@ -77,7 +81,7 @@
 
 #### Defined in
 
-[seeds/breadboard/src/node.ts:98](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/node.ts#L98)
+[packages/breadboard/src/node.ts:98](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/node.ts#L98)
 
 ## Accessors
 
@@ -95,13 +99,13 @@
 
 #### Defined in
 
-[seeds/breadboard/src/node.ts:167](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/node.ts#L167)
+[packages/breadboard/src/node.ts:167](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/node.ts#L167)
 
 ## Methods
 
 ### wire
 
-▸ **wire**<`ToInputs`, `ToOutputs`\>(`spec`, `to`): [`BreadboardNode`](../interfaces/BreadboardNode.md)<`Inputs`, `Outputs`\>
+▸ **wire**\<`ToInputs`, `ToOutputs`\>(`spec`, `to`): [`BreadboardNode`](../interfaces/BreadboardNode.md)\<`Inputs`, `Outputs`\>
 
 Wires the current node to another node.
 
@@ -109,21 +113,21 @@ Use this method to wire nodes together.
 
 #### Type parameters
 
-| Name        |
-| :---------- |
-| `ToInputs`  |
+| Name |
+| :------ |
+| `ToInputs` |
 | `ToOutputs` |
 
 #### Parameters
 
-| Name   | Type                                                                          | Description                                                                                                                                    |
-| :----- | :---------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------- |
-| `spec` | `string`                                                                      | the wiring spec. See the [wiring spec](https://github.com/breadboard-ai/breadboard/blob/main/seeds/breadboard/docs/wires.md) for more details. |
-| `to`   | [`BreadboardNode`](../interfaces/BreadboardNode.md)<`ToInputs`, `ToOutputs`\> | the node to wire this node with.                                                                                                               |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `spec` | `string` | the wiring spec. See the [wiring spec](https://github.com/breadboard-ai/breadboard/blob/main/packages/breadboard/docs/wires.md) for more details. |
+| `to` | [`BreadboardNode`](../interfaces/BreadboardNode.md)\<`ToInputs`, `ToOutputs`\> | the node to wire this node with. |
 
 #### Returns
 
-[`BreadboardNode`](../interfaces/BreadboardNode.md)<`Inputs`, `Outputs`\>
+[`BreadboardNode`](../interfaces/BreadboardNode.md)\<`Inputs`, `Outputs`\>
 
 - the current node, to enable chaining.
 
@@ -133,4 +137,4 @@ Use this method to wire nodes together.
 
 #### Defined in
 
-[seeds/breadboard/src/node.ts:136](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/node.ts#L136)
+[packages/breadboard/src/node.ts:136](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/node.ts#L136)

@@ -33,12 +33,16 @@
 
 ### constructor
 
-• **new DebugProbe**()
+• **new DebugProbe**(): [`DebugProbe`](DebugProbe.md)
 
 Creates a new DebugProbe.
 
 A `DebugProbe` can be used to examine and modify the inputs to a node
 as the board is running.
+
+#### Returns
+
+[`DebugProbe`](DebugProbe.md)
 
 **`Example`**
 
@@ -56,38 +60,38 @@ EventTarget.constructor
 
 #### Defined in
 
-[seeds/breadboard/src/debug.ts:41](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/debug.ts#L41)
+[packages/breadboard/src/debug.ts:41](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/debug.ts#L41)
 
 ## Properties
 
 ### #inputPins
 
-• `Private` **#inputPins**: `Map`<`string`, `NodePins`\>
+• `Private` **#inputPins**: `Map`\<`string`, `NodePins`\>
 
 #### Defined in
 
-[seeds/breadboard/src/debug.ts:23](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/debug.ts#L23)
+[packages/breadboard/src/debug.ts:23](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/debug.ts#L23)
 
----
+___
 
 ### #nodePins
 
-• `Private` **#nodePins**: `Map`<`string`, `DebugNodePin`\>
+• `Private` **#nodePins**: `Map`\<`string`, `DebugNodePin`\>
 
 #### Defined in
 
-[seeds/breadboard/src/debug.ts:24](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/debug.ts#L24)
+[packages/breadboard/src/debug.ts:24](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/debug.ts#L24)
 
 ## Methods
 
 ### #getInputPins
 
-▸ `Private` **#getInputPins**(`nodeId`): `NodePins`
+▸ **#getInputPins**(`nodeId`): `NodePins`
 
 #### Parameters
 
-| Name     | Type     |
-| :------- | :------- |
+| Name | Type |
+| :------ | :------ |
 | `nodeId` | `string` |
 
 #### Returns
@@ -96,17 +100,17 @@ EventTarget.constructor
 
 #### Defined in
 
-[seeds/breadboard/src/debug.ts:46](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/debug.ts#L46)
+[packages/breadboard/src/debug.ts:46](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/debug.ts#L46)
 
----
+___
 
 ### #onBeforeHandler
 
-▸ `Private` **#onBeforeHandler**(`event`): `void`
+▸ **#onBeforeHandler**(`event`): `void`
 
 #### Parameters
 
-| Name    | Type    |
+| Name | Type |
 | :------ | :------ |
 | `event` | `Event` |
 
@@ -116,9 +120,9 @@ EventTarget.constructor
 
 #### Defined in
 
-[seeds/breadboard/src/debug.ts:85](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/debug.ts#L85)
+[packages/breadboard/src/debug.ts:85](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/debug.ts#L85)
 
----
+___
 
 ### addEventListener
 
@@ -142,11 +146,11 @@ The event listener is appended to target's event listener list and is not append
 
 #### Parameters
 
-| Name       | Type                                           |
-| :--------- | :--------------------------------------------- |
-| `type`     | `string`                                       |
-| `callback` | `null` \| `EventListenerOrEventListenerObject` |
-| `options?` | `boolean` \| `AddEventListenerOptions`         |
+| Name | Type |
+| :------ | :------ |
+| `type` | `string` |
+| `callback` | ``null`` \| `EventListenerOrEventListenerObject` |
+| `options?` | `boolean` \| `AddEventListenerOptions` |
 
 #### Returns
 
@@ -158,9 +162,9 @@ EventTarget.addEventListener
 
 #### Defined in
 
-node_modules/typescript/lib/lib.dom.d.ts:8168
+node_modules/typescript/lib/lib.dom.d.ts:8211
 
----
+___
 
 ### dispatchEvent
 
@@ -172,7 +176,7 @@ Dispatches a synthetic event event to target and returns true if either event's 
 
 #### Parameters
 
-| Name    | Type    |
+| Name | Type |
 | :------ | :------ |
 | `event` | `Event` |
 
@@ -186,9 +190,9 @@ EventTarget.dispatchEvent
 
 #### Defined in
 
-node_modules/typescript/lib/lib.dom.d.ts:8174
+node_modules/typescript/lib/lib.dom.d.ts:8217
 
----
+___
 
 ### removeEventListener
 
@@ -200,11 +204,11 @@ Removes the event listener in target's event listener list with the same type, c
 
 #### Parameters
 
-| Name       | Type                                           |
-| :--------- | :--------------------------------------------- |
-| `type`     | `string`                                       |
-| `callback` | `null` \| `EventListenerOrEventListenerObject` |
-| `options?` | `boolean` \| `EventListenerOptions`            |
+| Name | Type |
+| :------ | :------ |
+| `type` | `string` |
+| `callback` | ``null`` \| `EventListenerOrEventListenerObject` |
+| `options?` | `boolean` \| `EventListenerOptions` |
 
 #### Returns
 
@@ -216,9 +220,9 @@ EventTarget.removeEventListener
 
 #### Defined in
 
-node_modules/typescript/lib/lib.dom.d.ts:8180
+node_modules/typescript/lib/lib.dom.d.ts:8223
 
----
+___
 
 ### replaceNode
 
@@ -232,10 +236,10 @@ tests or other conditions. For example, replace a `generateText` node from
 
 #### Parameters
 
-| Name     | Type           | Description                                                                          |
-| :------- | :------------- | :----------------------------------------------------------------------------------- |
-| `nodeId` | `string`       | id of the node whose handler to replace                                              |
-| `pin`    | `DebugNodePin` | the new handler function. Unlike the handler function, this one must be synchronous. |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `nodeId` | `string` | id of the node whose handler to replace |
+| `pin` | `DebugNodePin` | the new handler function. Unlike the handler function, this one must be synchronous. |
 
 #### Returns
 
@@ -243,9 +247,9 @@ tests or other conditions. For example, replace a `generateText` node from
 
 #### Defined in
 
-[seeds/breadboard/src/debug.ts:81](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/debug.ts#L81)
+[packages/breadboard/src/debug.ts:81](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/debug.ts#L81)
 
----
+___
 
 ### watchInput
 
@@ -260,11 +264,11 @@ the input value will not be modified.
 
 #### Parameters
 
-| Name        | Type       | Description                                                                                              |
-| :---------- | :--------- | :------------------------------------------------------------------------------------------------------- |
-| `nodeId`    | `string`   | id of the node to add the pin to                                                                         |
-| `inputName` | `string`   | name of the input to pin                                                                                 |
-| `debugPin`  | `DebugPin` | the pin function. It takes in the input value as its only argument and returns a new value or undefined. |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `nodeId` | `string` | id of the node to add the pin to |
+| `inputName` | `string` | name of the input to pin |
+| `debugPin` | `DebugPin` | the pin function. It takes in the input value as its only argument and returns a new value or undefined. |
 
 #### Returns
 
@@ -272,4 +276,4 @@ the input value will not be modified.
 
 #### Defined in
 
-[seeds/breadboard/src/debug.ts:66](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/debug.ts#L66)
+[packages/breadboard/src/debug.ts:66](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/debug.ts#L66)

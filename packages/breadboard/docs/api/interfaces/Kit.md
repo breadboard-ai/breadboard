@@ -35,9 +35,9 @@ KitDescriptor.description
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:134](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/types.ts#L134)
+[packages/breadboard/src/types.ts:155](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L155)
 
----
+___
 
 ### title
 
@@ -51,9 +51,9 @@ KitDescriptor.title
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:130](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/types.ts#L130)
+[packages/breadboard/src/types.ts:151](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L151)
 
----
+___
 
 ### url
 
@@ -67,9 +67,9 @@ KitDescriptor.url
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:123](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/types.ts#L123)
+[packages/breadboard/src/types.ts:144](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L144)
 
----
+___
 
 ### version
 
@@ -84,18 +84,18 @@ KitDescriptor.version
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:139](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/types.ts#L139)
+[packages/breadboard/src/types.ts:160](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L160)
 
 ## Accessors
 
 ### handlers
 
-• `get` **handlers**(): [`NodeHandlers`](../modules.md#nodehandlers)<[`NodeHandlerContext`](NodeHandlerContext.md)\>
+• `get` **handlers**(): [`NodeHandlers`](../modules.md#nodehandlers)
 
 #### Returns
 
-[`NodeHandlers`](../modules.md#nodehandlers)<[`NodeHandlerContext`](NodeHandlerContext.md)\>
+[`NodeHandlers`](../modules.md#nodehandlers)
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:318](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/types.ts#L318)
+[packages/breadboard/src/types.ts:339](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L339)

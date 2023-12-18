@@ -19,8 +19,8 @@
 
 ### GraphIntegrityPolicy
 
-Ƭ **GraphIntegrityPolicy**: `Record`<`NodeTypeIdentifier`, `TrustedLabels`\>
+Ƭ **GraphIntegrityPolicy**: `Record`\<`NodeTypeIdentifier`, `TrustedLabels`\>
 
 #### Defined in
 
-[policy.ts:20](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/policy.ts#L20)
+[policy.ts:20](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/policy.ts#L20)

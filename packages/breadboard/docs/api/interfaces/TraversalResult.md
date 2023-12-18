@@ -28,9 +28,9 @@
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:232](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/types.ts#L232)
+[packages/breadboard/src/types.ts:253](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L253)
 
----
+___
 
 ### inputs
 
@@ -38,9 +38,9 @@
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:233](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/types.ts#L233)
+[packages/breadboard/src/types.ts:254](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L254)
 
----
+___
 
 ### missingInputs
 
@@ -48,9 +48,9 @@
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:234](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/types.ts#L234)
+[packages/breadboard/src/types.ts:255](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L255)
 
----
+___
 
 ### newOpportunities
 
@@ -58,9 +58,9 @@
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:236](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/types.ts#L236)
+[packages/breadboard/src/types.ts:257](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L257)
 
----
+___
 
 ### opportunities
 
@@ -68,29 +68,29 @@
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:235](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/types.ts#L235)
+[packages/breadboard/src/types.ts:256](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L256)
 
----
+___
 
 ### outputsPromise
 
-• `Optional` **outputsPromise**: `Promise`<`Partial`<`Record`<`string`, [`NodeValue`](../modules.md#nodevalue)\>\>\>
+• `Optional` **outputsPromise**: `Promise`\<`Partial`\<`Record`\<`string`, [`NodeValue`](../modules.md#nodevalue)\>\>\>
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:238](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/types.ts#L238)
+[packages/breadboard/src/types.ts:259](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L259)
 
----
+___
 
 ### pendingOutputs
 
-• **pendingOutputs**: `Map`<`symbol`, `Promise`<`CompletedNodeOutput`\>\>
+• **pendingOutputs**: `Map`\<`symbol`, `Promise`\<`CompletedNodeOutput`\>\>
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:239](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/types.ts#L239)
+[packages/breadboard/src/types.ts:260](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L260)
 
----
+___
 
 ### skip
 
@@ -98,9 +98,9 @@
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:240](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/types.ts#L240)
+[packages/breadboard/src/types.ts:261](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L261)
 
----
+___
 
 ### state
 
@@ -108,4 +108,4 @@
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:237](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/types.ts#L237)
+[packages/breadboard/src/types.ts:258](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L258)
