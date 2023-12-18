@@ -59,7 +59,13 @@ export abstract class Loader {
     options?: Options
   ) {
     const tmpDir = options?.output ?? process.cwd();
-    const filePath = join(tmpDir, `~${basename(filename, "ts")}tmp.mjs`);
+    const randomName = Buffer.from(
+      crypto.getRandomValues(new Uint32Array(16))
+    ).toString("hex");
+    const filePath = join(
+      tmpDir,
+      `~${basename(filename, "ts")}${randomName}tmp.mjs`
+    );
 
     let tmpFileStat;
     try {
@@ -80,6 +86,13 @@ export abstract class Loader {
       // Don't write to a symbolic link.
       throw new Error(
         `The file ${filePath} is a symbolic link. We can't write to it.`
+      );
+    }
+
+    if (tmpFileStat && tmpFileStat.isDirectory() == false) {
+      // Don't write to a directory.
+      throw new Error(
+        `The file ${filePath} is a directory. We can't write to it.`
       );
     }
 
