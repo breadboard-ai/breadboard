@@ -93,6 +93,51 @@ streams, so each value is used at most once. You can append `.memoize()` to a
 wire, and then the last value is always available to downstream nodes:
 `pt.foo.memoize().to(pt2)`.
 
+#### Jod: TypeScript-mapping of JSON Schema
+
+We want to take advantage of types both at graph definition time (e.g. so that
+IntelliSense suggests the right things and that TypeScript catches many
+potential errors in the graph) and runtime (e.g. to pass a recipe to an LLM as
+tool, but also just to validate recipes that are loaded dynamically).
+
+To support this, we use `jod`, which is heavily inspired by
+[Zod](https://zod.dev/): It's a way to declare JSON schema in a way that also
+generated TypeScript types. (Zod also validates schemas, which `jod` doesn't as
+there are already many JSON schema validators)
+
+There are two ways to use `jod`:
+
+Defining a full schema:
+
+```ts
+import { j } from "...tbd";
+
+const schema = j
+  .schema({
+    foo: j
+      .string()
+      .title("The Foo")
+      .description("Foo-lish, not to be confused with Bar and Baz"),
+  })
+  .title("Foo Schema")
+  .description("Contains a single foo");
+
+const jsonSchema = schema.toJson();
+
+const myFoo = { foo } satisfies typeof schema;
+```
+
+Annotating wires:
+
+- `pt.foo.isString().to(pt2)`
+- `pt.is(schema)` and `pt.foo.is(j.string())`
+- `pt.foo.title("A foo").description("...")`
+
+WHen using nodes from kits, they should usually come with type information
+already and so most of the time, types can be inferred. `jod` is helpful to add
+type information where types are ambiguous (e.g. because these nodes have
+dynamic output ports) or to add metadata like title and descriptions.
+
 #### Defining recipes
 
 To create a recipe use the `recipe` function. `recipe` returns a node factory
@@ -132,6 +177,64 @@ that are used as nodes.
 
 [Ed note: Not sure we should even introduce the second so early once we have
 default derived schemas and jod annotations]
+
+#### Adding types to recipes
+
+To describe recipes better and make them more reusable, it's advisable to add
+type information. By default the framework will infer types from the wires,
+including copying descriptions from used nodes. But this shouldn't be the final
+take.
+
+```ts
+import { recipe, base } from "@breadboard-ai/breadboard";
+
+const metadata = {
+  title: "A recipe",
+  description: "An example recipe",
+  version: "0.0.1",
+  url: "https://...",
+};
+
+const serializedGraph = recipe(({ foo }) => {
+  const pt = base.passthrough({
+    foo: foo.isString().title("A foo").description("Foo-lish"),
+  });
+
+  return { bar: pt.foo.isString().title("A bar").description("Bar-ish") };
+})
+  .metadata(metadata)
+  .serialize();
+```
+
+Creates a recipe with complete metadata and input and output schema. The input
+and output schema are still inferred, but see how the wires were all annotated.
+
+Alternatively, you can describe full schemas like so:
+
+```ts
+import { recipe, base } from "@breadboard-ai/breadboard";
+
+const metadata = {
+  title: "A recipe",
+  description: "An example recipe",
+  version: "0.0.1",
+  url: "https://...",
+};
+
+const serializedGraph = recipe((input) => {
+  const { foo } = input.is(
+    j.schema({ foo: j.string().title("A foo").description("Foo-lish") })
+  );
+
+  const pt = base.passthrough({ foo });
+
+  return base
+    .output({ bar: pt.foo })
+    .is(j.schema({ bar: j.string().title("A bar").description("Bar-ish") }));
+})
+  .metadata(metadata)
+  .serialize();
+```
 
 #### Code as nodes
 
