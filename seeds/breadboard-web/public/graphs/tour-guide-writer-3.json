@@ -269,7 +269,7 @@
           "id": "fn-6-run",
           "type": "runJavascript",
           "configuration": {
-            "code": "function fn_6({location,activities,guides}) {const guideList=guides.map(item=>item.guide);return{guide:`# ${location}\n${activities.map((activity,index)=>`## ${activity}\n${guideList[index]}\n\n`).join(\"\")}`}}",
+            "code": " function fn_6({location,activities,guides}) {const guideList=guides.map(item=>item.guide);return{guide:`# ${location}\n${activities.map((activity,index)=>`## ${activity}\n${guideList[index]}\n\n`).join(\"\")}`}}",
             "name": "fn_6",
             "raw": true
           }
@@ -304,7 +304,7 @@
           "id": "fn-3-run",
           "type": "runJavascript",
           "configuration": {
-            "code": "function fn_3({itinerary}) {const list=itinerary.split(/[0-9]{1,2}\\)/).map(e=>e.trim()).filter(e=>e!==\"\");return{list}}",
+            "code": " function fn_3({itinerary}) {const list=itinerary.split(/[0-9]{1,2}\\)/).map(e=>e.trim()).filter(e=>e!==\"\");return{list}}",
             "name": "fn_3",
             "raw": true
           }

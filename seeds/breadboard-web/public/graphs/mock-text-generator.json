@@ -1,58 +1,36 @@
 {
   "title": "Mock Text Generator",
-  "description": "Useful for when you want a text generator for testing purposes",
+  "description": "This is a mock text generator. It can generate text using a mock model. The mock model simply echoes back the input text. It's good for testing.",
+  "version": "0.0.2",
   "edges": [
     {
-      "from": "runJavascript-3",
+      "from": "fn-3",
       "to": "output-2",
       "out": "text",
       "in": "text"
     },
     {
-      "from": "input-1",
-      "to": "runJavascript-3",
-      "out": "text",
-      "in": "text"
-    },
-    {
-      "from": "input-1",
-      "to": "runJavascript-3",
-      "out": "useStreaming",
-      "in": "useStreaming"
+      "from": "parameters",
+      "to": "fn-3",
+      "out": "*",
+      "in": ""
     }
   ],
   "nodes": [
     {
       "id": "output-2",
       "type": "output",
+      "configuration": {}
+    },
+    {
+      "id": "fn-3",
+      "type": "invoke",
       "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "text": {
-              "type": "string",
-              "description": "The generated text",
-              "title": "TexT"
-            }
-          },
-          "required": [
-            "text"
-          ],
-          "additionalProperties": false
-        }
+        "path": "#fn-3"
       }
     },
     {
-      "id": "runJavascript-3",
-      "type": "runJavascript",
-      "configuration": {
-        "name": "runMockModel",
-        "code": "function runMockModel({text,useStreaming}){text=`Mock model with streaming off echoes back: ${text}`;if(useStreaming){const list=text.split(\" \");return{list}}return{text}}",
-        "raw": true
-      }
-    },
-    {
-      "id": "input-1",
+      "id": "parameters",
       "type": "input",
       "configuration": {
         "schema": {
@@ -60,23 +38,58 @@
           "properties": {
             "text": {
               "type": "string",
-              "description": "The text to generate from",
-              "title": "Text"
+              "title": "Text",
+              "description": "The text to generate"
             },
             "useStreaming": {
               "type": "boolean",
+              "title": "Stream",
               "description": "Whether to stream the output",
-              "title": "Stream"
+              "default": "false"
             }
           },
           "required": [
-            "text",
-            "useStreaming"
-          ],
-          "additionalProperties": false
+            "text"
+          ]
         }
       }
     }
   ],
-  "graphs": {}
+  "graphs": {
+    "fn-3": {
+      "edges": [
+        {
+          "from": "fn-3-input",
+          "to": "fn-3-run",
+          "out": "*"
+        },
+        {
+          "from": "fn-3-run",
+          "to": "fn-3-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "fn-3-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "fn-3-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "asyncasync  function fn_3({text,useStreaming}) {text=`Mock model with streaming off echoes back: ${text}`;if(useStreaming){const list=text.split(\" \");return{list}}return{text}}",
+            "name": "fn_3",
+            "raw": true
+          }
+        },
+        {
+          "id": "fn-3-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    }
+  }
 }
