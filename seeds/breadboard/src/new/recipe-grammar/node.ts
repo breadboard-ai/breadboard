@@ -400,7 +400,7 @@ export class BuilderNode<
     let code = handler.toString();
     let name = this.id.replace(/-/g, "_");
 
-    const arrowFunctionRegex = /(?:async\s+)?(\w+|\([^)]*\))\s*=>\s*/;
+    const arrowFunctionRegex = /(?:async\s*)?(\w+|\([^)]*\))\s*=>\s*/;
     const traditionalFunctionRegex =
       /(?:async\s+)?function\s+(\w+)\s*\(([^)]*)\)\s*\{/;
 

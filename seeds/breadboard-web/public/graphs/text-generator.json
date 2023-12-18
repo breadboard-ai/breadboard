@@ -1,6 +1,6 @@
 {
   "title": "Text Generator",
-  "description": "This is a text generator. It can generate text using various LLMs. Currently, it supports the follwogin models: Google PaLM text-bison-001, OpenAI GPT-3.5 Turbo, and a mock model. The mock model simply echoes back the input text. It's good for testing.",
+  "description": "This is a text generator. It can generate text using various LLMs. Currently, it supports the follwogin models: Google Gemini Pro, Google PaLM text-bison-001, OpenAI GPT-3.5 Turbo, and a mock model.",
   "version": "0.0.1",
   "edges": [
     {
@@ -131,12 +131,6 @@
     },
     {
       "from": "mockModel",
-      "to": "listToStream-3",
-      "out": "list",
-      "in": "list"
-    },
-    {
-      "from": "listToStream-3",
       "to": "streamOutput",
       "out": "stream",
       "in": "stream"
@@ -253,16 +247,10 @@
     },
     {
       "id": "mockModel",
-      "type": "runJavascript",
+      "type": "invoke",
       "configuration": {
-        "name": "runMockModel",
-        "code": "function runMockModel({text,useStreaming}){text=`Mock model with streaming off echoes back: ${text}`;if(useStreaming){const list=text.split(\" \");return{list}}return{text}}",
-        "raw": true
+        "path": "mock-text-generator.json"
       }
-    },
-    {
-      "id": "listToStream-3",
-      "type": "listToStream"
     }
   ],
   "kits": [
@@ -274,9 +262,6 @@
     },
     {
       "url": "npm:@google-labs/core-kit"
-    },
-    {
-      "url": "npm:@google-labs/node-nursery-web"
     }
   ]
 }

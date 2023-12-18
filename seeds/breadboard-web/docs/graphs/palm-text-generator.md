@@ -1,12 +1,12 @@
-## mock-text-generator.ts
+## palm-text-generator.ts
 
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-fn3["invoke <br> id='fn-3'"] -- "list->list" --> mockModelStream["listToStream <br> id='mockModelStream'"]
-fn3["invoke <br> id='fn-3'"] -- "text->text" --> textOutput{{"output <br> id='textOutput'"}}:::output
-parameters[/"input <br> id='parameters'"/]:::input -- all --> fn3["invoke <br> id='fn-3'"]
-mockModelStream["listToStream <br> id='mockModelStream'"] -- "stream->stream" --> streamOutput{{"output <br> id='streamOutput'"}}:::output
+generateText["palm-generateText <br> id='generateText'"] -- "completion->text" --> textOutput{{"output <br> id='textOutput'"}}:::output
+parameters[/"input <br> id='parameters'"/]:::input -- "useStreaming->useStreaming" --> fn3["invoke <br> id='fn-3'"]
+parameters[/"input <br> id='parameters'"/]:::input -- "text->text" --> generateText["palm-generateText <br> id='generateText'"]
+secrets4("secrets <br> id='secrets-4'"):::secrets -- "PALM_KEY->PALM_KEY" --> generateText["palm-generateText <br> id='generateText'"]
 
 subgraph sg_fn3 [fn-3]
 fn3_fn3input[/"input <br> id='fn-3-input'"/]:::input -- all --> fn3_fn3run["runJavascript <br> id='fn-3-run'"]
