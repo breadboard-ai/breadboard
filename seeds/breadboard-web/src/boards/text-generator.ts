@@ -4,15 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  Board,
-  Schema,
-  base,
-  recipe,
-  recipeAsCode,
-} from "@google-labs/breadboard";
-import { Core, core } from "@google-labs/core-kit";
-import { Starter } from "@google-labs/llm-starter";
+import { Schema, base, recipe, recipeAsCode } from "@google-labs/breadboard";
+import { core } from "@google-labs/core-kit";
 
 const metadata = {
   title: "Text Generator",
