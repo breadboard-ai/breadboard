@@ -122,7 +122,6 @@
   },
   "dependencies": {
     "@google-labs/breadboard": "*",
-    "@google-labs/pinecone-kit": "^0.0.1",
     "commander": "^11.1.0",
     "esbuild": "^0.19.9",
     "serve": "^14.2.1"
