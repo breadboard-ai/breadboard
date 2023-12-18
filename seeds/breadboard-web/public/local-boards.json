@@ -59,7 +59,8 @@
   },
   {
     "title": "Mock Text Generator",
-    "url": "/graphs/mock-text-generator.json"
+    "url": "/graphs/mock-text-generator.json",
+    "version": "0.0.2"
   },
   {
     "title": "OpenAI GPT-3.5-turbo",

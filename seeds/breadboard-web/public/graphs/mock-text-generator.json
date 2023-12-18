@@ -1,29 +1,36 @@
 {
   "title": "Mock Text Generator",
-  "description": "Useful for when you want a text generator for testing purposes",
+  "description": "This is a mock text generator. It can generate text using a mock model. The mock model simply echoes back the input text. It's good for testing.",
+  "version": "0.0.2",
   "edges": [
     {
-      "from": "runJavascript-3",
-      "to": "output-2",
+      "from": "fn-3",
+      "to": "mockModelStream",
+      "out": "list",
+      "in": "list"
+    },
+    {
+      "from": "fn-3",
+      "to": "textOutput",
       "out": "text",
       "in": "text"
     },
     {
-      "from": "input-1",
-      "to": "runJavascript-3",
-      "out": "text",
-      "in": "text"
+      "from": "parameters",
+      "to": "fn-3",
+      "out": "*",
+      "in": ""
     },
     {
-      "from": "input-1",
-      "to": "runJavascript-3",
-      "out": "useStreaming",
-      "in": "useStreaming"
+      "from": "mockModelStream",
+      "to": "streamOutput",
+      "out": "stream",
+      "in": "stream"
     }
   ],
   "nodes": [
     {
-      "id": "output-2",
+      "id": "textOutput",
       "type": "output",
       "configuration": {
         "schema": {
@@ -31,28 +38,22 @@
           "properties": {
             "text": {
               "type": "string",
-              "description": "The generated text",
-              "title": "TexT"
+              "title": "Text",
+              "description": "The generated text"
             }
-          },
-          "required": [
-            "text"
-          ],
-          "additionalProperties": false
+          }
         }
       }
     },
     {
-      "id": "runJavascript-3",
-      "type": "runJavascript",
+      "id": "fn-3",
+      "type": "invoke",
       "configuration": {
-        "name": "runMockModel",
-        "code": "function runMockModel({text,useStreaming}){text=`Mock model with streaming off echoes back: ${text}`;if(useStreaming){const list=text.split(\" \");return{list}}return{text}}",
-        "raw": true
+        "path": "#fn-3"
       }
     },
     {
-      "id": "input-1",
+      "id": "parameters",
       "type": "input",
       "configuration": {
         "schema": {
@@ -60,23 +61,80 @@
           "properties": {
             "text": {
               "type": "string",
-              "description": "The text to generate from",
-              "title": "Text"
+              "title": "Text",
+              "description": "The text to generate"
             },
             "useStreaming": {
               "type": "boolean",
+              "title": "Stream",
               "description": "Whether to stream the output",
-              "title": "Stream"
+              "default": "false"
             }
           },
           "required": [
-            "text",
-            "useStreaming"
-          ],
-          "additionalProperties": false
+            "text"
+          ]
+        }
+      }
+    },
+    {
+      "id": "mockModelStream",
+      "type": "listToStream",
+      "configuration": {}
+    },
+    {
+      "id": "streamOutput",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "stream": {
+              "type": "object",
+              "title": "Stream",
+              "description": "The generated text",
+              "format": "stream"
+            }
+          }
         }
       }
     }
   ],
-  "graphs": {}
+  "graphs": {
+    "fn-3": {
+      "edges": [
+        {
+          "from": "fn-3-input",
+          "to": "fn-3-run",
+          "out": "*"
+        },
+        {
+          "from": "fn-3-run",
+          "to": "fn-3-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "fn-3-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "fn-3-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function fn_3({text,useStreaming}) {text=`Mock model with streaming off echoes back: ${text}`;if(useStreaming){const list=text.split(\" \");return{list}}return{text}}",
+            "name": "fn_3",
+            "raw": true
+          }
+        },
+        {
+          "id": "fn-3-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    }
+  }
 }

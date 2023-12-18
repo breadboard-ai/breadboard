@@ -3,9 +3,16 @@
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-runJavascript3["runJavascript <br> id='runJavascript-3'"] -- "text->text" --> output2{{"output <br> id='output-2'"}}:::output
-input1[/"input <br> id='input-1'"/]:::input -- "text->text" --> runJavascript3["runJavascript <br> id='runJavascript-3'"]
-input1[/"input <br> id='input-1'"/]:::input -- "useStreaming->useStreaming" --> runJavascript3["runJavascript <br> id='runJavascript-3'"]
+fn3["invoke <br> id='fn-3'"] -- "list->list" --> mockModelStream["listToStream <br> id='mockModelStream'"]
+fn3["invoke <br> id='fn-3'"] -- "text->text" --> textOutput{{"output <br> id='textOutput'"}}:::output
+parameters[/"input <br> id='parameters'"/]:::input -- all --> fn3["invoke <br> id='fn-3'"]
+mockModelStream["listToStream <br> id='mockModelStream'"] -- "stream->stream" --> streamOutput{{"output <br> id='streamOutput'"}}:::output
+
+subgraph sg_fn3 [fn-3]
+fn3_fn3input[/"input <br> id='fn-3-input'"/]:::input -- all --> fn3_fn3run["runJavascript <br> id='fn-3-run'"]
+fn3_fn3run["runJavascript <br> id='fn-3-run'"] -- all --> fn3_fn3output{{"output <br> id='fn-3-output'"}}:::output
+end
+
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
