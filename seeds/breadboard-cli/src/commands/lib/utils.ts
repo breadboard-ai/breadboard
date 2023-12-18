@@ -14,13 +14,21 @@ import * as readline from "node:readline/promises";
 import path, { basename } from "path";
 import { relative } from "path/posix";
 import { pathToFileURL } from "url";
+import vm from "node:vm";
 
 export type Options = {
   output?: string;
   watch?: boolean;
 };
 
-export type BoardMetaData = { title: string; url: string; version: string };
+export type BoardMetaData = {
+  title: string;
+  url: string;
+  version: string;
+  edges: Array<unknown>;
+  nodes: Array<unknown>;
+  kits: Array<unknown>;
+};
 
 export async function makeFromSource(
   filename: string,
@@ -33,7 +41,9 @@ export async function makeFromSource(
 }
 
 export async function makeFromFile(filePath: string) {
-  const board = await loadBoardFromModule(filePath);
+  const board = await loadBoardFromModule(
+    path.resolve(process.cwd(), filePath)
+  );
   const boardJson = JSON.stringify(board, null, 2);
   return { boardJson, board };
 }
@@ -78,7 +88,15 @@ export const loadBoardFromSource = async (
   try {
     tmpFileStat = await stat(filePath);
   } catch (e) {
+    // Don't care if the file doesn't exist. It's fine. It's what we want.
     ("Nothing to see here. Just don't want to have to re-throw.");
+  }
+
+  if (tmpFileStat && tmpFileStat.isFile()) {
+    // Don't write to a file.
+    throw new Error(
+      `The temporary file ${filePath} already exists. We can't write to it.`
+    );
   }
 
   if (tmpFileStat && tmpFileStat.isSymbolicLink()) {
@@ -182,14 +200,32 @@ export const loadBoards = async (
 
   if (fileStat && fileStat.isFile() && path.endsWith(".json")) {
     const data = await readFile(path, { encoding: "utf-8" });
-    const board = JSON.parse(data);
+    const board = JSON.parse(data) as GraphDescriptor; // assume conversion would fail if it wasn't a graph descriptor.
 
-    if ("title" in board == false) return [];
+    return [
+      {
+        edges: board.edges ?? [],
+        nodes: board.nodes ?? [],
+        kits: board.kits ?? [],
+        title: board.title ?? path,
+        url: join("/", relative(process.cwd(), path)),
+        version: board.version ?? "0.0.1",
+      },
+    ];
+  }
+
+  if (
+    fileStat &&
+    fileStat.isFile() &&
+    (path.endsWith(".js") || path.endsWith(".ts"))
+  ) {
+    // Compile the JS
+    const board = await loadBoard(path, { watch: false });
 
     return [
       {
         ...board,
-        title: board.title,
+        title: board.title ?? path,
         url: join("/", relative(process.cwd(), path)),
         version: board.version ?? "0.0.1",
       },
@@ -203,6 +239,19 @@ export const loadBoards = async (
       if (dirent.isFile() && dirent.name.endsWith(".json")) {
         const data = await readFile(dirent.path, { encoding: "utf-8" });
         const board = JSON.parse(data);
+        boards.push({
+          ...board,
+          title: board.title ?? join("/", path, dirent.name),
+          url: join("/", path, dirent.name),
+          version: board.version ?? "0.0.1",
+        });
+      }
+
+      if (
+        dirent.isFile() &&
+        (dirent.name.endsWith(".js") || dirent.name.endsWith(".ts"))
+      ) {
+        const board = await loadBoard(dirent.path, { watch: false });
         boards.push({
           ...board,
           title: board.title ?? join("/", path, dirent.name),

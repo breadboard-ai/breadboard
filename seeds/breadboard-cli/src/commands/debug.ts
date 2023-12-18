@@ -9,6 +9,7 @@ import { dirname, join, relative } from "path";
 import handler from "serve-handler";
 import { fileURLToPath, pathToFileURL } from "url";
 import { BoardMetaData, loadBoards, watch } from "./lib/utils.js";
+import { stat } from "fs/promises";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -19,6 +20,8 @@ export const debug = async (file: string, options: Record<string, any>) => {
   if (file == undefined) {
     file = process.cwd();
   }
+
+  const isDirectory = (await stat(file)).isDirectory();
 
   const fileUrl = pathToFileURL(file);
 
@@ -80,12 +83,9 @@ export const debug = async (file: string, options: Record<string, any>) => {
   });
 
   server.listen(3000, () => {
-    console.log(
-      `Running at http://localhost:3000/${
-        fileUrl != undefined
-          ? `?board=/${relative(process.cwd(), fileUrl.pathname)}`
-          : ""
-      }`
-    );
+    const urlPath = isDirectory
+      ? ""
+      : `?board=/${relative(process.cwd(), fileUrl.pathname)}`;
+    console.log(`Running at http://localhost:3000/${urlPath}`);
   });
 };
