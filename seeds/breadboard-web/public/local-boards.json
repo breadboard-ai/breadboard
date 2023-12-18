@@ -83,24 +83,14 @@
     "version": "0.0.1"
   },
   {
-    "title": "New: The Search Summarizer Recipe (as a recipe() call)",
-    "url": "/graphs/search-summarize-as-recipe.json",
-    "version": "0.0.1"
-  },
-  {
     "title": "The Search Summarizer Recipe",
     "url": "/graphs/search-summarize.json",
-    "version": "0.1.0"
+    "version": "0.1.1"
   },
   {
     "title": "The simplest LLM-based recipe",
     "url": "/graphs/simplest.json",
     "version": "0.0.3"
-  },
-  {
-    "title": "Text Generator Recipe",
-    "url": "/graphs/text-generator-recipe.json",
-    "version": "0.0.1"
   },
   {
     "title": "Text Generator",
