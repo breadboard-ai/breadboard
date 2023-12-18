@@ -11,15 +11,11 @@ import { opendir, readFile, stat, unlink, writeFile } from "fs/promises";
 import { join } from "node:path";
 import { stdin as input } from "node:process";
 import * as readline from "node:readline/promises";
-import path, { basename } from "path";
+import path, { basename, extname } from "path";
 import { relative } from "path/posix";
 import { pathToFileURL } from "url";
-import yaml from "yaml";
-
-export type Options = {
-  output?: string;
-  watch?: boolean;
-};
+import { Loaders } from "./loaders/index.js";
+import { Options } from "./loader.js";
 
 export type BoardMetaData = {
   title: string;
@@ -30,144 +26,7 @@ export type BoardMetaData = {
   kits: Array<unknown>;
 };
 
-export async function makeFromSource(
-  filename: string,
-  source: string,
-  options?: Options
-) {
-  const board = await loadBoardFromSource(filename, source, options);
-  const boardJson = JSON.stringify(board, null, 2);
-  return { boardJson, board };
-}
-
-export async function makeFromFile(filePath: string) {
-  const board = await loadBoardFromModule(
-    path.resolve(process.cwd(), filePath)
-  );
-  const boardJson = JSON.stringify(board, null, 2);
-  return { boardJson, board };
-}
-
-const boardLike = (
-  board: Record<string, unknown>
-): board is GraphDescriptor => {
-  return board && "edges" in board && "nodes" in board;
-};
-
-export const loadBoardFromModule = async (file: string) => {
-  // This will leak. Look for other hot reloading solutions.
-  let board = (await import(`${file}?${Date.now()}`)).default;
-
-  if (board == undefined)
-    throw new Error(`Board ${file} does not have a default export`);
-
-  if (boardLike(board)) {
-    // A graph descriptor has been exported.. Possibly a lambda.
-    board = await Board.fromGraphDescriptor(board);
-  }
-  if (board instanceof Board == false && board instanceof BoardRunner == false)
-    throw new Error(
-      `Board ${file} does not have a default export of type Board, Lambda or something that looks like a board.`
-    );
-
-  return board;
-};
-
-/* 
-  If we are loading from Source (TS) then we need to compile it and output it to a place where there are unlikely to be any collisions.
-*/
-export const loadBoardFromSource = async (
-  filename: string,
-  source: string,
-  options?: Options
-) => {
-  const tmpDir = options?.output ?? process.cwd();
-  const filePath = join(tmpDir, `~${basename(filename, "ts")}tmp.mjs`);
-
-  let tmpFileStat;
-  try {
-    tmpFileStat = await stat(filePath);
-  } catch (e) {
-    // Don't care if the file doesn't exist. It's fine. It's what we want.
-    ("Nothing to see here. Just don't want to have to re-throw.");
-  }
-
-  if (tmpFileStat && tmpFileStat.isFile()) {
-    // Don't write to a file.
-    throw new Error(
-      `The temporary file ${filePath} already exists. We can't write to it.`
-    );
-  }
-
-  if (tmpFileStat && tmpFileStat.isSymbolicLink()) {
-    // Don't write to a symbolic link.
-    throw new Error(
-      `The file ${filePath} is a symbolic link. We can't write to it.`
-    );
-  }
-
-  // I heard it might be possible to do a symlink hijack. double check.
-  await writeFile(filePath, source);
-
-  // For the import to work it has to be relative to the current working directory.
-  const board = await loadBoardFromModule(
-    path.resolve(process.cwd(), filePath)
-  );
-
-  // remove the file
-  await unlink(filePath);
-
-  return board;
-};
-
-export async function loadBoardFromYaml(
-  fileContents: string
-): Promise<BoardRunner> {
-  const yamlInstance = yaml.parse(fileContents);
-
-  if (yamlInstance == undefined) {
-    throw new Error(`There is an error with your YAML file`);
-  }
-
-  if (yamlInstance.edges == undefined) {
-    throw new Error(`There is no edges property in your YAML file`);
-  }
-
-  if (yamlInstance.nodes == undefined) {
-    throw new Error(`There is no nodes property in your YAML file`);
-  }
-
-  const edges = yamlInstance.edges.map((edgeYaml: string) => {
-    // Parse the edge syntax
-    const edgeSyntax = edgeYaml.match(/(.+)\.(.+){0,1}->(.+)\.(.+){0,1}/);
-
-    if (edgeSyntax == null || edgeSyntax.length == 0) {
-      return null;
-    }
-
-    const edge = {
-      from: edgeSyntax[1],
-      out: edgeSyntax[2],
-      to: edgeSyntax[3],
-      in: edgeSyntax[4],
-    };
-
-    return {
-      ...edge,
-    };
-  });
-
-  const board: GraphDescriptor = {
-    edges,
-    nodes: yamlInstance.nodes,
-    title: yamlInstance.title,
-    version: yamlInstance.version,
-  };
-
-  return Board.fromGraphDescriptor(board);
-}
-
-type WatchOptions = {
+export type WatchOptions = {
   onChange: (filename: string) => void;
   onRename?: (filename: string) => void;
   controller?: AbortController;
@@ -215,21 +74,11 @@ export const loadBoard = async (
   options: Options
 ): Promise<BoardRunner> => {
   let board: BoardRunner;
-  if (file.endsWith(".ts")) {
-    const fileContents = await readFile(file, "utf-8");
-    const result = await esbuild.transform(fileContents, { loader: "ts" });
-    ({ board } = await makeFromSource(file, result.code, options));
-  } else if (file.endsWith(".js")) {
-    ({ board } = await makeFromFile(file));
-  } else if (file.endsWith(".yaml")) {
-    const fileContents = await readFile(file, "utf-8");
-    board = await loadBoardFromYaml(fileContents);
-  } else {
-    const fileContents = await readFile(file, "utf-8");
-    board = await Board.fromGraphDescriptor(JSON.parse(fileContents));
-  }
 
-  return board;
+  const loaderType = extname(file).slice(1) as "js" | "ts" | "yaml" | "json";
+
+  const loader = new Loaders(loaderType);
+  return await loader.load(file, options);
 };
 
 export const parseStdin = async (): Promise<string> => {

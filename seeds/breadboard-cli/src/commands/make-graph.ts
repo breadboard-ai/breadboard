@@ -5,8 +5,10 @@
  */
 
 import { stat } from "fs/promises";
-import path from "path";
-import { makeFromFile, resolveFilePath, watch } from "./lib/utils.js";
+import path, { extname } from "path";
+import { resolveFilePath, watch } from "./lib/utils.js";
+import { Loader } from "./lib/loader.js";
+import { Loaders } from "./lib/loaders/index.js";
 
 export const makeGraph = async (
   file: string,
@@ -43,16 +45,20 @@ export const makeGraph = async (
   }
 
   if (file != undefined) {
-    let { boardJson } = await makeFromFile(filePath);
+    const loaderType = extname(file).slice(1) as "js" | "ts" | "yaml" | "json";
+    const loader = new Loaders(loaderType);
+
+    let board = await loader.load(filePath, options);
+    const boardJson = JSON.stringify(board, null, 2);
 
     console.log(boardJson, null, 2);
 
     if ("watch" in options) {
       watch(file, {
         onChange: async () => {
-          ({ boardJson } = await makeFromFile(filePath));
+          board = await loader.load(filePath, options);
 
-          console.log(JSON.stringify(boardJson, null, 2));
+          console.log(JSON.stringify(board, null, 2));
         },
       });
     }
