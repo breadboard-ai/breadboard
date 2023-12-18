@@ -83,11 +83,6 @@
     "version": "0.0.1"
   },
   {
-    "title": "New: The Search Summarizer Recipe (as a recipe() call)",
-    "url": "/graphs/search-summarize-as-recipe.json",
-    "version": "0.0.1"
-  },
-  {
     "title": "The Search Summarizer Recipe",
     "url": "/graphs/search-summarize.json",
     "version": "0.1.1"
