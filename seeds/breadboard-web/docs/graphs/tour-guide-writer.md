@@ -3,29 +3,40 @@
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-locationandgenerator[/"input <br> id='location-and-generator'"/]:::input -- "generator->path" --> travelItineraryGenerator["invoke <br> id='travelItineraryGenerator'"]
-dontUseStreaming(("passthrough <br> id='dontUseStreaming'")):::passthrough -- "useStreaming->useStreaming" --> travelItineraryGenerator["invoke <br> id='travelItineraryGenerator'"]
-locationandgenerator[/"input <br> id='location-and-generator'"/]:::input -- "generator->$l-guideGenerator-path" --o lambda1["lambda <br> id='lambda-1'"]
-locationandgenerator[/"input <br> id='location-and-generator'"/]:::input -- "location->$l-guideTemplate-location" --o lambda1["lambda <br> id='lambda-1'"]
-lambda1["lambda <br> id='lambda-1'"] -- "board->board" --o map2["map <br> id='map-2'"]
-subgraph sg_lambda1 [lambda-1]
-lambda1_dontUseStreaming(("passthrough <br> id='dontUseStreaming'")):::passthrough -- "useStreaming->useStreaming" --> lambda1_guideGenerator["invoke <br> id='guideGenerator'"]
-lambda1_guideGenerator["invoke <br> id='guideGenerator'"] -- "text->guide" --> lambda1_output2{{"output <br> id='output-2'"}}:::output
-lambda1_guideTemplate["promptTemplate <br> id='guideTemplate'"] -- "prompt->text" --> lambda1_guideGenerator["invoke <br> id='guideGenerator'"]
-lambda1_input1[/"input <br> id='input-1'"/]:::input -- "item->activity" --> lambda1_guideTemplate["promptTemplate <br> id='guideTemplate'"]
-lambda1_input1[/"input <br> id='input-1'"/]:::input -- "$l-guideGenerator-path->path" --o lambda1_guideGenerator["invoke <br> id='guideGenerator'"]
-lambda1_input1[/"input <br> id='input-1'"/]:::input -- "$l-guideTemplate-location->location" --o lambda1_guideTemplate["promptTemplate <br> id='guideTemplate'"]
-end
-sg_lambda1:::slotted -- "lamdba->lamdba" --o lambda1
-
-combineGuides["runJavascript <br> id='combineGuides'"] -- "result->guide" --> guide{{"output <br> id='guide'"}}:::output
-locationandgenerator[/"input <br> id='location-and-generator'"/]:::input -- "location->location" --> combineGuides["runJavascript <br> id='combineGuides'"]
-splitItinerary["runJavascript <br> id='splitItinerary'"] -- "result->activities" --> combineGuides["runJavascript <br> id='combineGuides'"]
-map2["map <br> id='map-2'"] -- "list->guides" --> combineGuides["runJavascript <br> id='combineGuides'"]
-splitItinerary["runJavascript <br> id='splitItinerary'"] -- "result->list" --> map2["map <br> id='map-2'"]
-travelItineraryGenerator["invoke <br> id='travelItineraryGenerator'"] -- "text->itinerary" --> splitItinerary["runJavascript <br> id='splitItinerary'"]
+travelItineraryGenerator["invoke <br> id='travelItineraryGenerator'"] -- "text->itinerary" --> guide{{"output <br> id='guide'"}}:::output
+travelItineraryGenerator["invoke <br> id='travelItineraryGenerator'"] -- "text->itinerary" --> fn3["invoke <br> id='fn-3'"]
+fn6["invoke <br> id='fn-6'"] -- "guide->guide" --> guide{{"output <br> id='guide'"}}:::output
+parameters[/"input <br> id='parameters'"/]:::input -- "location->location" --> travelItinerary["promptTemplate <br> id='travelItinerary'"]
+parameters[/"input <br> id='parameters'"/]:::input -- "generator->path" --> travelItineraryGenerator["invoke <br> id='travelItineraryGenerator'"]
+parameters[/"input <br> id='parameters'"/]:::input -- "location->location" --> lambda5["lambda <br> id='lambda-5'"]
+parameters[/"input <br> id='parameters'"/]:::input -- "generator->generator" --> lambda5["lambda <br> id='lambda-5'"]
+parameters[/"input <br> id='parameters'"/]:::input -- "location->location" --> fn6["invoke <br> id='fn-6'"]
 travelItinerary["promptTemplate <br> id='travelItinerary'"] -- "prompt->text" --> travelItineraryGenerator["invoke <br> id='travelItineraryGenerator'"]
-locationandgenerator[/"input <br> id='location-and-generator'"/]:::input -- all --> travelItinerary["promptTemplate <br> id='travelItinerary'"]
+fn3["invoke <br> id='fn-3'"] -- "list->list" --> createGuides["map <br> id='createGuides'"]
+fn3["invoke <br> id='fn-3'"] -- "list->activities" --> fn6["invoke <br> id='fn-6'"]
+createGuides["map <br> id='createGuides'"] -- "list->guides" --> fn6["invoke <br> id='fn-6'"]
+lambda5["lambda <br> id='lambda-5'"] -- "board->board" --> createGuides["map <br> id='createGuides'"]
+subgraph sg_lambda5 [lambda-5]
+lambda5_guideGenerator["invoke <br> id='guideGenerator'"] -- "text->guide" --> lambda5_output4{{"output <br> id='output-4'"}}:::output
+lambda5_input1[/"input <br> id='input-1'"/]:::input -- "location->location" --> lambda5_guideTemplate["promptTemplate <br> id='guideTemplate'"]
+lambda5_input1[/"input <br> id='input-1'"/]:::input -- "generator->path" --> lambda5_guideGenerator["invoke <br> id='guideGenerator'"]
+lambda5_guideTemplate["promptTemplate <br> id='guideTemplate'"] -- "prompt->text" --> lambda5_guideGenerator["invoke <br> id='guideGenerator'"]
+lambda5_input3[/"input <br> id='input-3'"/]:::input -- "item->activity" --> lambda5_guideTemplate["promptTemplate <br> id='guideTemplate'"]
+end
+sg_lambda5:::slotted -- "lamdba->lamdba" --o lambda5
+
+
+subgraph sg_fn6 [fn-6]
+fn6_fn6input[/"input <br> id='fn-6-input'"/]:::input -- all --> fn6_fn6run["runJavascript <br> id='fn-6-run'"]
+fn6_fn6run["runJavascript <br> id='fn-6-run'"] -- all --> fn6_fn6output{{"output <br> id='fn-6-output'"}}:::output
+end
+
+
+subgraph sg_fn3 [fn-3]
+fn3_fn3input[/"input <br> id='fn-3-input'"/]:::input -- all --> fn3_fn3run["runJavascript <br> id='fn-3-run'"]
+fn3_fn3run["runJavascript <br> id='fn-3-run'"] -- all --> fn3_fn3output{{"output <br> id='fn-3-output'"}}:::output
+end
+
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
