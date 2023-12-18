@@ -73,6 +73,11 @@
     "version": "0.0.2"
   },
   {
+    "title": "PaLM Text Generator",
+    "url": "/graphs/palm-text-generator.json",
+    "version": "0.0.1"
+  },
+  {
     "title": "Retry",
     "url": "/graphs/retry.json",
     "version": "0.0.1"
