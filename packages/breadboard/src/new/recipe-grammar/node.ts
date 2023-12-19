@@ -70,9 +70,12 @@ export class BuilderNode<
       !isBuilderNodeProxy(config) &&
       !isValue(config)
     ) {
-      for (const [key, value] of Object.entries(config) as [
+      for (const [key, entry] of Object.entries(config) as [
         [string, NodeValue | AbstractNode | Value]
       ]) {
+        const value = isLambda(entry)
+          ? entry.getBoardCapabilityAsValue()
+          : entry;
         if (
           !(value instanceof AbstractNode) &&
           !isBuilderNodeProxy(config) &&
@@ -263,20 +266,20 @@ export class BuilderNode<
   // here), everything else is the same, but really just the first few lines
   // here.
   async serializeNode(): Promise<[NodeDescriptor, GraphDescriptor?]> {
+    // HACK: See recipe.getClosureNode() and
+    // recipe.getBoardCapabilityAsValue() for why this is needed. There we
+    // create a node that has a board capability as input, but serializing the
+    // graph is async, while node creation isn't. So we wait until here to
+    // await the serialized BoardCapability. To fix: Make node factories a
+    // first class object, which should inherently move serializing the
+    // subgraph to here (and never serialize subgraphs if their parent graphs
+    // aren't serialized either).
+    for (const [key, value] of Object.entries(this.configuration))
+      if (value instanceof Promise)
+        this.configuration[key as keyof typeof this.configuration] =
+          await value;
+
     if (this.type !== "fn") {
-      // HACK: See recipe.getClosureNode() for why this is needed. There we
-      // create a node that has a board capability as input, but serializing the
-      // graph is async, while node creation isn't. So we wait until here to
-      // await the serialized BoardCapability. To fix: Make node factories a
-      // first class object, which should inherently move serializing the
-      // subgraph to here (and never serialize subgraphs if their parent graphs
-      // aren't serialized either).
-      for (const [key, value] of Object.entries(this.configuration)) {
-        if (value instanceof Promise) {
-          this.configuration[key as keyof typeof this.configuration] =
-            await value;
-        }
-      }
       return super.serializeNode();
     }
 

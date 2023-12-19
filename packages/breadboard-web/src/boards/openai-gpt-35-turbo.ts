@@ -227,7 +227,7 @@ export default await recipe(async () => {
   return nursery
     .transformStream({
       $id: "streamTransform",
-      board: chunkTransformer(),
+      board: chunkTransformer,
       stream: fetch,
     })
     .to(streamOutput);

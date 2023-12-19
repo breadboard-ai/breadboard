@@ -280,7 +280,13 @@ function recipeImpl(
   }
 
   // Return wire from lambdaNode that will generate a BoardCapability
-  factory.getBoardCapabilityAsValue = () => getLambdaNode().asProxy().board;
+  factory.getBoardCapabilityAsValue = () =>
+    lambdaNode !== undefined
+      ? lambdaNode.asProxy().board
+      : ((async () => ({
+          kind: "board",
+          board: { kits: [], ...(await factory.serialize()) },
+        }))() as Promise<BreadboardCapability>);
 
   // Access to factory as if it was a node means accessing the closure node.
   // This makes otherNode.to(factory) work.
