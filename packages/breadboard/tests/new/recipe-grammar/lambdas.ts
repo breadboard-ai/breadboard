@@ -30,7 +30,7 @@ async function serializeAndRunGraph(
 test("simplest lambda", async (t) => {
   const graph = recipe(async ({ foo }) => {
     const lambda = recipe(async (inputs) => testKit.noop(inputs));
-    t.assert(isLambda(lambda));
+    t.true(isLambda(lambda));
     t.false(isLambda(testKit.noop({})));
     const caller = recipe(async ({ lambda, foo }) => {
       return lambda.invoke({ foo });
@@ -88,9 +88,10 @@ test("serialize simple lambda", async (t) => {
   const lambda = recipe(async (inputs) => testKit.noop(inputs));
   t.assert(isLambda(lambda));
 
-  // This turns a simple recipe into a lambda
+  // This is no closure, so there should be no lambda node
   const boardValue = lambda.getBoardCapabilityAsValue();
-  t.assert(isValue(boardValue));
+  t.false(isValue(boardValue));
+  t.like(await boardValue, { kind: "board" });
 
   const serialized = await lambda.serialize();
 
