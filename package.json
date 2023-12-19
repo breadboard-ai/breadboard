@@ -38,7 +38,8 @@
         "./packages/node-nursery:build",
         "./packages/node-nursery-web:build",
         "./packages/palm-kit:build",
-        "./packages/pinecone-kit:build"
+        "./packages/pinecone-kit:build",
+        "./packages/website:build"
       ]
     },
     "test": {
