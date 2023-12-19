@@ -113,7 +113,21 @@
               {
                 "id": "result",
                 "type": "output",
-                "configuration": {}
+                "configuration": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "chunk": {
+                        "title": "result",
+                        "description": "The result of the Jsonata expression",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "chunk"
+                    ]
+                  }
+                }
               },
               {
                 "id": "transformCompletion",
@@ -125,7 +139,24 @@
               {
                 "id": "chunk",
                 "type": "input",
-                "configuration": {}
+                "configuration": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "chunk": {
+                        "title": "json",
+                        "description": "The JSON object to evaluate",
+                        "type": [
+                          "object",
+                          "string"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "chunk"
+                    ]
+                  }
+                }
               }
             ],
             "graphs": {}
