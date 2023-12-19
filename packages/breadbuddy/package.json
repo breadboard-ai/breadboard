@@ -70,7 +70,6 @@
   "author": "Google Labs Team",
   "license": "Apache-2.0",
   "devDependencies": {
-    "@google-labs/breadboard": "*",
     "@types/node": "^20.10.4",
     "@types/nunjucks": "^3.2.6",
     "vite": "^5.0.8",
@@ -80,6 +79,7 @@
     "wireit": "^0.14.1"
   },
   "dependencies": {
+    "@google-labs/breadboard": "*",
     "@lit/task": "^1.0.0",
     "jszip": "^3.10.1",
     "lit": "^3.1.0",
