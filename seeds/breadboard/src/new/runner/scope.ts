@@ -21,7 +21,7 @@ import {
   ScopeConfig,
 } from "./types.js";
 
-import { Schema } from "../../types.js";
+import { NodeDescriberResult, Schema } from "../../types.js";
 
 export class Scope implements ScopeInterface {
   #lexicalScope?: ScopeInterface;
@@ -133,11 +133,14 @@ export class Scope implements ScopeInterface {
           (nodeDescriptor.type === "input" ||
             nodeDescriptor.type === "output") &&
           !nodeDescriptor.configuration?.schema
-        )
-          nodeDescriptor.configuration = {
-            ...nodeDescriptor.configuration,
-            schema: await this.#addMissingSchemas(node),
-          };
+        ) {
+          const schema = await this.#addMissingSchemas(node);
+          if (Object.entries(schema.properties ?? {}).length > 0)
+            nodeDescriptor.configuration = {
+              ...nodeDescriptor.configuration,
+              schema,
+            };
+        }
 
         return nodeDescriptor;
       })
@@ -171,32 +174,77 @@ export class Scope implements ScopeInterface {
     return [...nodes];
   }
 
+  async #getSchemasForNode(
+    node: AbstractNode
+  ): Promise<NodeDescriberResult | undefined> {
+    const incomingPorts = Object.fromEntries(
+      node.incoming
+        .filter((edge) => edge.out !== "" && edge.out !== "*")
+        .map((edge) => [edge.out, {}])
+    );
+    const outgoingPorts = Object.fromEntries(
+      node.outgoing
+        .filter((edge) => edge.out !== "" && edge.out !== "*")
+        .map((edge) => [edge.out, {}])
+    );
+
+    return await node.describe(
+      this,
+      node.configuration,
+      { properties: incomingPorts },
+      { properties: outgoingPorts }
+    );
+  }
+
   async #addMissingSchemas(node: AbstractNode): Promise<Schema> {
     const properties: Schema["properties"] = {};
+    const ports = new Set<string>();
+
     if (node.type === "input") {
-      for (const edge of node.outgoing) {
-        const toSchema = await edge.to.describe(this, edge.to.configuration);
-        properties[edge.out] = toSchema?.inputSchema?.properties?.[edge.in] ?? {
-          type: "string",
-          title: edge.out,
-        };
+      const nodes = new Set<AbstractNode>();
+
+      // Find all nodes downstream of this input node, note all ports
+      for (const edge of node.outgoing)
+        if (edge.out !== "*" && edge.out !== "") {
+          nodes.add(edge.to);
+          ports.add(edge.out);
+        }
+
+      // For each node, get the schema and copy over the ports we care about
+      for (const toNode of nodes) {
+        const schema = await this.#getSchemasForNode(toNode);
+        const schemaPorts = schema?.inputSchema?.properties;
+        if (schemaPorts)
+          for (const edge of toNode.incoming)
+            if (edge.from === node && schemaPorts[edge.in])
+              properties[edge.out] = schemaPorts[edge.in];
       }
     } else if (node.type === "output") {
-      for (const edge of node.incoming) {
-        const fromSchema = await edge.from.describe(
-          this,
-          edge.from.configuration
-        );
-        properties[edge.in] = fromSchema?.inputSchema?.properties?.[
-          edge.out
-        ] ?? {
-          type: "string",
-          title: edge.in,
-        };
+      const nodes = new Set<AbstractNode>();
+
+      // Find all nodes upstream of this output node, note all ports
+      for (const edge of node.incoming)
+        if (edge.out !== "*" && edge.out !== "") {
+          nodes.add(edge.from);
+          ports.add(edge.in);
+        }
+
+      // For each node, get the schema and copy over the ports we care about
+      for (const fromNode of nodes) {
+        const schema = await this.#getSchemasForNode(fromNode);
+        const schemaPorts = schema?.outputSchema?.properties;
+        if (schemaPorts)
+          for (const edge of fromNode.outgoing)
+            if (edge.to === node && schemaPorts[edge.out])
+              properties[edge.in] = schemaPorts[edge.out];
       }
     } else {
       throw new Error("Can't yet derive schema for non-input/output nodes");
     }
+
+    for (const port of ports)
+      if (!properties[port]) properties[port] = { type: "string", title: port };
+
     return {
       type: "object",
       properties,

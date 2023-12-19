@@ -137,21 +137,32 @@ export const TestKit = new KitBuilder({
         ])
       );
     },
-    describe: async (inputs?: InputValues): Promise<NodeDescriberResult> => {
-      const schema = {
+    describe: async (
+      inputs?: InputValues,
+      inputSchema?: Schema
+    ): Promise<NodeDescriberResult> => {
+      const ports = [
+        ...Object.keys(inputs ?? {}),
+        ...Object.keys(inputSchema?.properties ?? {}),
+      ];
+
+      const schema = (description: string) => ({
         title: "Reverser",
         description: "Reverses the provided string inputs",
         type: "object",
         properties: Object.fromEntries(
-          Object.entries(inputs ?? {}).map(([key, value]) => [
-            key,
-            { type: "string", title: key },
+          ports.map((port) => [
+            port,
+            { type: "string", title: port, description },
           ])
         ),
         additonalProperties: Object.entries(inputs ?? {}).length === 0,
-      };
+      });
 
-      return { inputSchema: schema, outputSchema: schema };
+      return {
+        inputSchema: schema("String to reverse"),
+        outputSchema: schema("Reversed string"),
+      };
     },
   },
   /**

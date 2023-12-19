@@ -12,56 +12,61 @@ import { recipe } from "../../../src/new/recipe-grammar/recipe.js";
 
 import { testKit } from "../../helpers/_test-kit.js";
 
-test("schema derived from reverser", async (t) => {
-  const graph = recipe<{ foo: string }>(({ foo }) => testKit.reverser({ foo }));
+test("schema derived from reverser (has describe)", async (t) => {
+  const graph = recipe<{ foo: string }>(({ foo }) => ({
+    bar: testKit.reverser({ foo }).foo,
+  }));
 
   const serialized = await graph.serialize();
 
-  t.like(serialized, {
-    url: "data:",
-    title: "test",
-    description: "test test",
-    version: "0.0.1",
-  });
-});
+  const inputSchema = serialized.nodes.find((node) => node.type === "input")
+    ?.configuration?.schema;
+  const outputSchema = serialized.nodes.find((node) => node.type === "output")
+    ?.configuration?.schema;
 
-test("metadata in serialize", async (t) => {
-  const graph = recipe(async (inputs) => testKit.noop(inputs));
-
-  const serialized = await graph.serialize({
-    url: "data:",
-    title: "test",
-    description: "test test",
-    version: "0.0.1",
-  });
-
-  t.like(serialized, {
-    url: "data:",
-    title: "test",
-    description: "test test",
-    version: "0.0.1",
-  });
-});
-
-test("metadata in serialize overrides metadata in constructor", async (t) => {
-  const graph = recipe(
-    {
-      input: z.object({ foo: z.string() }),
-      output: z.object({ foo: z.string() }),
-      title: "constructor",
-      description: "test test",
+  t.deepEqual(inputSchema, {
+    type: "object",
+    properties: {
+      foo: { type: "string", title: "foo", description: "String to reverse" },
     },
-    async (inputs) => testKit.noop(inputs)
-  );
-
-  const serialized = await graph.serialize({
-    url: "data:",
-    title: "serialized",
+    required: ["foo"],
   });
 
-  t.like(serialized, {
-    url: "data:",
-    title: "serialized",
-    description: "test test",
+  // Note "foo" as title, as this is determined by the reverse node.
+  t.deepEqual(outputSchema, {
+    type: "object",
+    properties: {
+      bar: { type: "string", title: "foo", description: "Reversed string" },
+    },
+    required: ["bar"],
+  });
+});
+
+test("schema derived from noop (no describe)", async (t) => {
+  const graph = recipe(({ foo }) => ({
+    bar: testKit.noop({ foo }).foo,
+  }));
+
+  const serialized = await graph.serialize();
+
+  const inputSchema = serialized.nodes.find((node) => node.type === "input")
+    ?.configuration?.schema;
+  const outputSchema = serialized.nodes.find((node) => node.type === "output")
+    ?.configuration?.schema;
+
+  t.deepEqual(inputSchema, {
+    type: "object",
+    properties: {
+      foo: { type: "string", title: "foo" },
+    },
+    required: ["foo"],
+  });
+
+  t.deepEqual(outputSchema, {
+    type: "object",
+    properties: {
+      bar: { type: "string", title: "bar" },
+    },
+    required: ["bar"],
   });
 });
