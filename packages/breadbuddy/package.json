@@ -51,25 +51,13 @@
       "files": [
         "vite.config.ts"
       ]
-    },
-    "test": {
-      "command": "vitest --run",
-      "env": {
-        "FORCE_COLOR": "1"
-      },
-      "dependencies": [
-        "typescript-files-and-deps"
-      ],
-      "files": [
-        "vite.config.ts"
-      ],
-      "output": []
     }
   },
   "keywords": [],
   "author": "Google Labs Team",
   "license": "Apache-2.0",
   "devDependencies": {
+    "@google-labs/tsconfig": "*",
     "@types/node": "^20.10.4",
     "@types/nunjucks": "^3.2.6",
     "vite": "^5.0.8",
