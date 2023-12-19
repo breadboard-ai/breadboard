@@ -237,7 +237,9 @@ export type ClosureNodeInterface<
 > = Pick<BuilderNodeInterface<I, O>, "unProxy"> &
   Pick<NodeProxyMethods<I, O>, "in"> &
   Pick<AbstractValue<NodeValue>, "invoke"> & {
-    getBoardCapabilityAsValue(): AbstractValue<BreadboardCapability>;
+    getBoardCapabilityAsValue():
+      | AbstractValue<BreadboardCapability>
+      | Promise<BreadboardCapability>;
   };
 
 export abstract class AbstractValue<T extends NodeValue | unknown = NodeValue>
