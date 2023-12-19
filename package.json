@@ -23,7 +23,7 @@
         "./packages/breadboard-server:build",
         "./packages/breadboard-ui:build",
         "./packages/breadboard-web:build",
-        "./packages/breadboard-buddy:build",
+        "./packages/breadbuddy:build",
         "./packages/cloud-function:build",
         "./packages/coffee-bot-board:build",
         "./packages/core-kit:build",
