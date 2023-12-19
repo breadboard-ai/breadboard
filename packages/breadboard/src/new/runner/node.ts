@@ -169,8 +169,9 @@ export class BaseNode<
 
   #getHandlerDescribe(scope: ScopeInterface) {
     const handler = this.#handler ?? scope.getHandler(this.type);
-    if (!handler) throw new Error(`Handler ${this.type} not found`);
-    return typeof handler === "function" ? undefined : handler.describe;
+    return handler && typeof handler !== "function"
+      ? handler.describe
+      : undefined;
   }
 
   #getHandlerFunction(scope: Scope) {

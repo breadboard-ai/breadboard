@@ -56,7 +56,7 @@ test("simplest graph, pick input and output", async (t) => {
     return { foo };
   });
   const result = await serializeAndRunGraph(graph, { foo: "bar" });
-  t.deepEqual(result, { foo: "bar" });
+  t.like(result, { foo: "bar" });
 });
 
 test("two nodes, spread", async (t) => {

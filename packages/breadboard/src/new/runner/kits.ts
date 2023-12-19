@@ -16,6 +16,10 @@ export function handlersFromKit(kit: Kit): NodeHandlers {
     Object.entries(kit.handlers).map(([name, handler]) => {
       const handlerFunction =
         handler instanceof Function ? handler : handler.invoke;
+      const describeFunction =
+        handler instanceof Function ? undefined : handler.describe;
+      const describe = describeFunction ? { describe: describeFunction } : {};
+
       return [
         name,
         {
@@ -25,6 +29,7 @@ export function handlersFromKit(kit: Kit): NodeHandlers {
               {}
             ) as Promise<OutputValues>;
           },
+          ...describe,
         },
       ];
     })
