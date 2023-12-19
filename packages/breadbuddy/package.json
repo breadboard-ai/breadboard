@@ -2,7 +2,7 @@
   "private": true,
   "version": "0.0.1",
   "type": "module",
-  "name": "breadbuddy",
+  "name": "@google-labs/breadbuddy",
   "description": "Google Labs repo for making app prototypes from a Breadboard",
   "scripts": {
     "dev": "wireit",
