@@ -8,7 +8,7 @@ Each prototype project lives as an `npm` package. There are two kinds of package
 
 - `core` -- contains projects that are core to the repo. These are usually well-established, largely settled bits of code.
 
-- `seeds` -- contains early experiments and things that aren't fully fleshed out. Most projects will be packages in this directory.
+- `packages` -- contains early experiments and things that aren't fully fleshed out. Most projects will be packages in this directory.
 
 We use [Wireit](https://github.com/google/wireit) as the build tool for the monorepo.
 
@@ -65,10 +65,10 @@ npm run sync
 
 To start a new project:
 
-:one: Copy a template project as a new directory under `seeds`. For example, if the name of your new prototyping project is `awesome-ai-game`, you would run something like this:
+:one: Copy a template project as a new directory under `packages`. For example, if the name of your new prototyping project is `awesome-ai-game`, you would run something like this:
 
 ```bash
-cp -rf templates/blank seeds/awesome-ai-game
+cp -rf templates/blank packages/awesome-ai-game
 ```
 
 :two: Replace the following placeholders:
@@ -82,14 +82,14 @@ cp -rf templates/blank seeds/awesome-ai-game
 {
   "extends": "@google-labs/tsconfig/base.json",
   "files": [],
-  "references": [{ "path": "seeds/awesome-ai-game" }]
+  "references": [{ "path": "packages/awesome-ai-game" }]
 }
 ```
 
 :four: Verify that you have the right setup. Run `npm i` and `npm run build` and make sure that the new package shows up in the build log. Then try to run it:
 
 ```bash
-cd seeds/awesome-ai-game
+cd packages/awesome-ai-game
 node .
 ```
 
@@ -230,12 +230,12 @@ npm run sync
 2. Change directory to the package to be published. For example:
 
 ```
-cd seeds/graph-runner
+cd packages/graph-runner
 ```
 
 3. Update `package.json` of this package with the version bump. Follow the [semver](https://semver.org/) guidance. Basically, minor fixes increment the patch version (third number) and everything else increments the minor version (second number).
 
-4. Update `CHANGELOG.md` file to summarize the changes since the last release. You can see the list of changes by looking at the packge directory commit history on Github. For example, for `seeds/graph-runner`, commit history is at [https://github.com/breadboard-ai/breadboard/commits/main/seeds/graph-runner](commits/main/seeds/graph-runner). Follow the convention in the changelog doc. It is loosely inspired by [keepachangelog.com](https://keepachangelog.com/en/1.1.0/)
+4. Update `CHANGELOG.md` file to summarize the changes since the last release. You can see the list of changes by looking at the packge directory commit history on Github. For example, for `packages/graph-runner`, commit history is at [https://github.com/breadboard-ai/breadboard/commits/main/packages/graph-runner](commits/main/packages/graph-runner). Follow the convention in the changelog doc. It is loosely inspired by [keepachangelog.com](https://keepachangelog.com/en/1.1.0/)
 
 5. If there are version dependencies on the newly-published package in this monorepo, update their respective `package.json` entries to point to the new version and re-run `npm i`.
 

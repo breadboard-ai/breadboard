@@ -1,0 +1,160 @@
+{
+  "name": "@google-labs/breadboard",
+  "version": "0.6.0",
+  "description": "A library for rapid generative AI application prototyping",
+  "main": "./dist/src/index.js",
+  "exports": {
+    ".": "./dist/src/index.js",
+    "./kits": "./dist/src/kits/index.js",
+    "./worker": "./dist/src/worker/index.js",
+    "./remote": "./dist/src/remote/index.js"
+  },
+  "types": "dist/src/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "generate:docs": "wireit",
+    "test": "wireit",
+    "build": "wireit",
+    "build:tsc": "wireit",
+    "build:rollup": "wireit",
+    "lint": "wireit",
+    "merm": "wireit"
+  },
+  "wireit": {
+    "build": {
+      "dependencies": [
+        "build:rollup",
+        "build:tsc"
+      ]
+    },
+    "build:tsc": {
+      "command": "tsc -b",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "files": [
+        "src/**/*.ts",
+        "tests/**/*.ts",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
+      ],
+      "output": [
+        "dist/",
+        "!dist/**/*.min.js{,.map}"
+      ],
+      "clean": "if-file-deleted"
+    },
+    "build:rollup": {
+      "command": "rollup -c",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [
+        "rollup.config.js",
+        "package.json"
+      ],
+      "output": [
+        "dist/**/*.min.js{,.map}"
+      ]
+    },
+    "test": {
+      "command": "ava",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
+      "output": []
+    },
+    "lint": {
+      "command": "eslint . --ext .ts",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "files": [
+        "src/**/*.ts",
+        "tests/**/*.ts",
+        ".eslintrc"
+      ],
+      "output": []
+    },
+    "merm": {
+      "command": "node scripts/make-graphs.js",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [
+        "scripts/make-graphs.js",
+        "tests/data/**/*.json"
+      ],
+      "output": [
+        "docs/graphs/**/*.md"
+      ]
+    },
+    "generate:docs": {
+      "command": "typedoc --plugin typedoc-plugin-markdown",
+      "files": [
+        "src/**/*.ts",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
+      ],
+      "output": [
+        "docs/api/"
+      ]
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/breadboard-ai/breadboard"
+  },
+  "files": [
+    "dist/src",
+    "dist/*.js",
+    "dist/*.js.map",
+    "breadboard.schema.json"
+  ],
+  "ava": {
+    "timeout": "30s",
+    "files": [
+      "tests/**/*.ts"
+    ],
+    "workerThreads": false,
+    "typescript": {
+      "rewritePaths": {
+        "./": "dist/"
+      },
+      "compile": false
+    }
+  },
+  "keywords": [],
+  "author": "Google Labs Team",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/breadboard-ai/breadboard/issues"
+  },
+  "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/breadboard#readme",
+  "devDependencies": {
+    "@ava/typescript": "^4.0.0",
+    "@google-labs/tsconfig": "*",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@types/node": "^18.17.4",
+    "@typescript-eslint/eslint-plugin": "^5.56.0",
+    "@typescript-eslint/parser": "^5.56.0",
+    "ava": "^5.2.0",
+    "jsonschema": "^1.4.1",
+    "rollup": "^4.1.4",
+    "typedoc": "^0.25.1",
+    "typedoc-plugin-markdown": "^3.16.0",
+    "typescript": "^5.0.4"
+  },
+  "engines": {
+    "node": ">=19.0.0"
+  },
+  "dependencies": {
+    "zod": "^3.22.4",
+    "zod-to-json-schema": "^3.22.1"
+  }
+}
