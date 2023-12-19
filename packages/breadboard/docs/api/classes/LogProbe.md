@@ -4,11 +4,10 @@
 
 A convenience probe for easily logging events from the Board.
 Usage:
-
 ```ts
 const log = new LogProbe();
 for await (const result of this.run(log)) {
-  // ...
+ // ...
 }
 ```
 
@@ -39,16 +38,20 @@ for await (const result of this.run(log)) {
 
 ### constructor
 
-• **new LogProbe**(`receiver?`)
+• **new LogProbe**(`receiver?`): [`LogProbe`](LogProbe.md)
 
 Creates a new LogProbe instance. If no receiver is provided, the
 console will be used.
 
 #### Parameters
 
-| Name        | Type       | Description                                                                   |
-| :---------- | :--------- | :---------------------------------------------------------------------------- |
+| Name | Type | Description |
+| :------ | :------ | :------ |
 | `receiver?` | `Receiver` | Optional. An object with a `log` method that accepts any number of arguments. |
+
+#### Returns
+
+[`LogProbe`](LogProbe.md)
 
 #### Overrides
 
@@ -56,7 +59,7 @@ EventTarget.constructor
 
 #### Defined in
 
-[seeds/breadboard/src/log.ts:32](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/log.ts#L32)
+[packages/breadboard/src/log.ts:32](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/log.ts#L32)
 
 ## Properties
 
@@ -66,17 +69,17 @@ EventTarget.constructor
 
 #### Defined in
 
-[seeds/breadboard/src/log.ts:24](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/log.ts#L24)
+[packages/breadboard/src/log.ts:24](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/log.ts#L24)
 
 ## Methods
 
 ### #eventHandler
 
-▸ `Private` **#eventHandler**(`event`): `void`
+▸ **#eventHandler**(`event`): `void`
 
 #### Parameters
 
-| Name    | Type    |
+| Name | Type |
 | :------ | :------ |
 | `event` | `Event` |
 
@@ -86,9 +89,9 @@ EventTarget.constructor
 
 #### Defined in
 
-[seeds/breadboard/src/log.ts:42](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/log.ts#L42)
+[packages/breadboard/src/log.ts:42](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/log.ts#L42)
 
----
+___
 
 ### addEventListener
 
@@ -112,11 +115,11 @@ The event listener is appended to target's event listener list and is not append
 
 #### Parameters
 
-| Name       | Type                                           |
-| :--------- | :--------------------------------------------- |
-| `type`     | `string`                                       |
-| `callback` | `null` \| `EventListenerOrEventListenerObject` |
-| `options?` | `boolean` \| `AddEventListenerOptions`         |
+| Name | Type |
+| :------ | :------ |
+| `type` | `string` |
+| `callback` | ``null`` \| `EventListenerOrEventListenerObject` |
+| `options?` | `boolean` \| `AddEventListenerOptions` |
 
 #### Returns
 
@@ -128,9 +131,9 @@ EventTarget.addEventListener
 
 #### Defined in
 
-node_modules/typescript/lib/lib.dom.d.ts:8168
+node_modules/typescript/lib/lib.dom.d.ts:8211
 
----
+___
 
 ### dispatchEvent
 
@@ -142,7 +145,7 @@ Dispatches a synthetic event event to target and returns true if either event's 
 
 #### Parameters
 
-| Name    | Type    |
+| Name | Type |
 | :------ | :------ |
 | `event` | `Event` |
 
@@ -156,9 +159,9 @@ EventTarget.dispatchEvent
 
 #### Defined in
 
-node_modules/typescript/lib/lib.dom.d.ts:8174
+node_modules/typescript/lib/lib.dom.d.ts:8217
 
----
+___
 
 ### removeEventListener
 
@@ -170,11 +173,11 @@ Removes the event listener in target's event listener list with the same type, c
 
 #### Parameters
 
-| Name       | Type                                           |
-| :--------- | :--------------------------------------------- |
-| `type`     | `string`                                       |
-| `callback` | `null` \| `EventListenerOrEventListenerObject` |
-| `options?` | `boolean` \| `EventListenerOptions`            |
+| Name | Type |
+| :------ | :------ |
+| `type` | `string` |
+| `callback` | ``null`` \| `EventListenerOrEventListenerObject` |
+| `options?` | `boolean` \| `EventListenerOptions` |
 
 #### Returns
 
@@ -186,4 +189,4 @@ EventTarget.removeEventListener
 
 #### Defined in
 
-node_modules/typescript/lib/lib.dom.d.ts:8180
+node_modules/typescript/lib/lib.dom.d.ts:8223

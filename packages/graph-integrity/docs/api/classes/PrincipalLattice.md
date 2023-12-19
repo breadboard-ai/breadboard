@@ -32,11 +32,15 @@ least restrictive values.
 
 ### constructor
 
-• **new PrincipalLattice**()
+• **new PrincipalLattice**(): [`PrincipalLattice`](PrincipalLattice.md)
+
+#### Returns
+
+[`PrincipalLattice`](PrincipalLattice.md)
 
 #### Defined in
 
-[label.ts:154](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/label.ts#L154)
+[label.ts:154](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/label.ts#L154)
 
 ## Properties
 
@@ -46,9 +50,9 @@ least restrictive values.
 
 #### Defined in
 
-[label.ts:133](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/label.ts#L133)
+[label.ts:133](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/label.ts#L133)
 
----
+___
 
 ### PRIVATE
 
@@ -56,9 +60,9 @@ least restrictive values.
 
 #### Defined in
 
-[label.ts:135](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/label.ts#L135)
+[label.ts:135](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/label.ts#L135)
 
----
+___
 
 ### PUBLIC
 
@@ -66,9 +70,9 @@ least restrictive values.
 
 #### Defined in
 
-[label.ts:136](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/label.ts#L136)
+[label.ts:136](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/label.ts#L136)
 
----
+___
 
 ### TOP
 
@@ -76,9 +80,9 @@ least restrictive values.
 
 #### Defined in
 
-[label.ts:132](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/label.ts#L132)
+[label.ts:132](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/label.ts#L132)
 
----
+___
 
 ### TRUSTED
 
@@ -86,9 +90,9 @@ least restrictive values.
 
 #### Defined in
 
-[label.ts:140](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/label.ts#L140)
+[label.ts:140](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/label.ts#L140)
 
----
+___
 
 ### UNTRUSTED
 
@@ -96,17 +100,17 @@ least restrictive values.
 
 #### Defined in
 
-[label.ts:139](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/label.ts#L139)
+[label.ts:139](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/label.ts#L139)
 
----
+___
 
 ### labels
 
-• `Readonly` **labels**: `Map`<`string`, `undefined` \| [`Principal`](Principal.md)\>
+• `Readonly` **labels**: `Map`\<`string`, `undefined` \| [`Principal`](Principal.md)\>
 
 #### Defined in
 
-[label.ts:142](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/label.ts#L142)
+[label.ts:142](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/label.ts#L142)
 
 ## Methods
 
@@ -118,8 +122,8 @@ Get principal by name.
 
 #### Parameters
 
-| Name   | Type     | Description               |
-| :----- | :------- | :------------------------ |
+| Name | Type | Description |
+| :------ | :------ | :------ |
 | `name` | `string` | Name of principal to find |
 
 #### Returns
@@ -130,9 +134,9 @@ principal or undefined
 
 #### Defined in
 
-[label.ts:192](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/label.ts#L192)
+[label.ts:192](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/label.ts#L192)
 
----
+___
 
 ### insert
 
@@ -142,9 +146,9 @@ Insert a new principal between two existing label values.
 
 #### Parameters
 
-| Name    | Type                        | Description                                     |
-| :------ | :-------------------------- | :---------------------------------------------- |
-| `label` | [`Principal`](Principal.md) | -                                               |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `label` | [`Principal`](Principal.md) | - |
 | `below` | [`Principal`](Principal.md) | {Principal} Principal below the new label value |
 | `above` | [`Principal`](Principal.md) | {Principal} Principal above the new label value |
 
@@ -154,4 +158,4 @@ Insert a new principal between two existing label values.
 
 #### Defined in
 
-[label.ts:166](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-integrity/src/label.ts#L166)
+[label.ts:166](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/label.ts#L166)

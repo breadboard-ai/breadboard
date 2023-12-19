@@ -6,43 +6,66 @@
 
 ### Properties
 
+- [base](NodeHandlerContext.md#base)
 - [board](NodeHandlerContext.md#board)
 - [descriptor](NodeHandlerContext.md#descriptor)
-- [parent](NodeHandlerContext.md#parent)
+- [kits](NodeHandlerContext.md#kits)
+- [outerGraph](NodeHandlerContext.md#outergraph)
 - [probe](NodeHandlerContext.md#probe)
+- [requestInput](NodeHandlerContext.md#requestinput)
 - [slots](NodeHandlerContext.md#slots)
 
 ## Properties
 
-### board
+### base
 
-• `Readonly` **board**: `BreadboardRunner`
+• `Optional` `Readonly` **base**: `string`
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:523](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/types.ts#L523)
+[packages/breadboard/src/types.ts:534](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L534)
 
----
+___
+
+### board
+
+• `Optional` `Readonly` **board**: [`BreadboardRunner`](BreadboardRunner.md)
+
+#### Defined in
+
+[packages/breadboard/src/types.ts:531](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L531)
+
+___
 
 ### descriptor
 
-• `Readonly` **descriptor**: [`NodeDescriptor`](../modules.md#nodedescriptor)
+• `Optional` `Readonly` **descriptor**: [`NodeDescriptor`](../modules.md#nodedescriptor)
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:524](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/types.ts#L524)
+[packages/breadboard/src/types.ts:532](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L532)
 
----
+___
 
-### parent
+### kits
 
-• `Readonly` **parent**: [`GraphDescriptor`](../modules.md#graphdescriptor)
+• `Optional` `Readonly` **kits**: [`Kit`](Kit.md)[]
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:525](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/types.ts#L525)
+[packages/breadboard/src/types.ts:533](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L533)
 
----
+___
+
+### outerGraph
+
+• `Optional` `Readonly` **outerGraph**: [`GraphDescriptor`](../modules.md#graphdescriptor)
+
+#### Defined in
+
+[packages/breadboard/src/types.ts:535](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L535)
+
+___
 
 ### probe
 
@@ -50,14 +73,39 @@
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:527](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/types.ts#L527)
+[packages/breadboard/src/types.ts:537](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L537)
 
----
+___
 
-### slots
+### requestInput
 
-• `Readonly` **slots**: [`BreadboardSlotSpec`](../modules.md#breadboardslotspec)
+• `Optional` `Readonly` **requestInput**: (`name`: `string`, `schema`: [`Schema`](../modules.md#schema)) => `Promise`\<[`NodeValue`](../modules.md#nodevalue)\>
+
+#### Type declaration
+
+▸ (`name`, `schema`): `Promise`\<[`NodeValue`](../modules.md#nodevalue)\>
+
+##### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `name` | `string` |
+| `schema` | [`Schema`](../modules.md#schema) |
+
+##### Returns
+
+`Promise`\<[`NodeValue`](../modules.md#nodevalue)\>
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:526](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/types.ts#L526)
+[packages/breadboard/src/types.ts:538](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L538)
+
+___
+
+### slots
+
+• `Optional` `Readonly` **slots**: [`BreadboardSlotSpec`](../modules.md#breadboardslotspec)
+
+#### Defined in
+
+[packages/breadboard/src/types.ts:536](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L536)

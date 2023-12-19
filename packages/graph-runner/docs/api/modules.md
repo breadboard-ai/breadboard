@@ -51,42 +51,42 @@ Represents an edge in a graph.
 
 #### Type declaration
 
-| Name        | Type                                          | Description                                                                                                                                                                                               |
-| :---------- | :-------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `constant?` | `boolean`                                     | If true, this edge acts as a constant: the data that passes through it remains available even after the node has consumed it.                                                                             |
-| `from`      | [`NodeIdentifier`](modules.md#nodeidentifier) | The node that the edge is coming from.                                                                                                                                                                    |
-| `in?`       | `InputIdentifier`                             | The input of the `to` node. If this value is undefined, then the then no data is passed as output of the `from` node.                                                                                     |
-| `optional?` | `boolean`                                     | If true, this edge is optional: the data that passes through it is not considered a required input to the node.                                                                                           |
-| `out?`      | `OutputIdentifier`                            | The output of the `from` node. If this value is "\*", then all outputs of the `from` node are passed to the `to` node. If this value is undefined, then no data is passed to any inputs of the `to` node. |
-| `to`        | [`NodeIdentifier`](modules.md#nodeidentifier) | The node that the edge is going to.                                                                                                                                                                       |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `constant?` | `boolean` | If true, this edge acts as a constant: the data that passes through it remains available even after the node has consumed it. |
+| `from` | [`NodeIdentifier`](modules.md#nodeidentifier) | The node that the edge is coming from. |
+| `in?` | `InputIdentifier` | The input of the `to` node. If this value is undefined, then the then no data is passed as output of the `from` node. |
+| `optional?` | `boolean` | If true, this edge is optional: the data that passes through it is not considered a required input to the node. |
+| `out?` | `OutputIdentifier` | The output of the `from` node. If this value is "*", then all outputs of the `from` node are passed to the `to` node. If this value is undefined, then no data is passed to any inputs of the `to` node. |
+| `to` | [`NodeIdentifier`](modules.md#nodeidentifier) | The node that the edge is going to. |
 
 #### Defined in
 
-[seeds/graph-runner/src/types.ts:76](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-runner/src/types.ts#L76)
+[packages/graph-runner/src/types.ts:76](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L76)
 
----
+___
 
 ### ErrorCapability
 
-Ƭ **ErrorCapability**: [`Capability`](interfaces/Capability.md) & { `descriptor?`: [`NodeDescriptor`](modules.md#nodedescriptor) ; `error?`: `Error` ; `inputs?`: [`InputValues`](modules.md#inputvalues) ; `kind`: `"error"` }
+Ƭ **ErrorCapability**: [`Capability`](interfaces/Capability.md) & \{ `descriptor?`: [`NodeDescriptor`](modules.md#nodedescriptor) ; `error?`: `Error` ; `inputs?`: [`InputValues`](modules.md#inputvalues) ; `kind`: ``"error"``  }
 
 #### Defined in
 
-[seeds/graph-runner/src/types.ts:13](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-runner/src/types.ts#L13)
+[packages/graph-runner/src/types.ts:13](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L13)
 
----
+___
 
 ### GraphDescriptor
 
-Ƭ **GraphDescriptor**: [`GraphMetadata`](modules.md#graphmetadata) & { `args?`: [`InputValues`](modules.md#inputvalues) ; `edges`: [`Edge`](modules.md#edge)[] ; `graphs?`: [`SubGraphs`](modules.md#subgraphs) ; `kits?`: [`KitReference`](modules.md#kitreference)[] ; `nodes`: [`NodeDescriptor`](modules.md#nodedescriptor)[] }
+Ƭ **GraphDescriptor**: [`GraphMetadata`](modules.md#graphmetadata) & \{ `args?`: [`InputValues`](modules.md#inputvalues) ; `edges`: [`Edge`](modules.md#edge)[] ; `graphs?`: [`SubGraphs`](modules.md#subgraphs) ; `kits?`: [`KitReference`](modules.md#kitreference)[] ; `nodes`: [`NodeDescriptor`](modules.md#nodedescriptor)[]  }
 
 Represents a graph.
 
 #### Defined in
 
-[seeds/graph-runner/src/types.ts:183](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-runner/src/types.ts#L183)
+[packages/graph-runner/src/types.ts:183](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L183)
 
----
+___
 
 ### GraphMetadata
 
@@ -96,40 +96,40 @@ Represents graph metadata.
 
 #### Type declaration
 
-| Name           | Type     | Description                                                                                                                                                                                      |
-| :------------- | :------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `description?` | `string` | The description of the graph.                                                                                                                                                                    |
-| `title?`       | `string` | The title of the graph.                                                                                                                                                                          |
-| `url?`         | `string` | The URL pointing to the location of the graph. This URL is used to resolve relative paths in the graph. If not specified, the paths are assumed to be relative to the current working directory. |
-| `version?`     | `string` | Version of the graph. [semver](https://semver.org/) format is encouraged.                                                                                                                        |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `description?` | `string` | The description of the graph. |
+| `title?` | `string` | The title of the graph. |
+| `url?` | `string` | The URL pointing to the location of the graph. This URL is used to resolve relative paths in the graph. If not specified, the paths are assumed to be relative to the current working directory. |
+| `version?` | `string` | Version of the graph. [semver](https://semver.org/) format is encouraged. |
 
 #### Defined in
 
-[seeds/graph-runner/src/types.ts:145](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-runner/src/types.ts#L145)
+[packages/graph-runner/src/types.ts:145](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L145)
 
----
+___
 
 ### InputValues
 
-Ƭ **InputValues**: `Record`<`InputIdentifier`, [`NodeValue`](modules.md#nodevalue)\>
+Ƭ **InputValues**: `Record`\<`InputIdentifier`, [`NodeValue`](modules.md#nodevalue)\>
 
 Values that are supplied as inputs to the `NodeHandler`.
 
 #### Defined in
 
-[seeds/graph-runner/src/types.ts:246](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-runner/src/types.ts#L246)
+[packages/graph-runner/src/types.ts:246](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L246)
 
----
+___
 
 ### KitDescriptor
 
-Ƭ **KitDescriptor**: [`KitReference`](modules.md#kitreference) & { `description?`: `string` ; `title?`: `string` ; `version?`: `string` }
+Ƭ **KitDescriptor**: [`KitReference`](modules.md#kitreference) & \{ `description?`: `string` ; `title?`: `string` ; `version?`: `string`  }
 
 #### Defined in
 
-[seeds/graph-runner/src/types.ts:126](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-runner/src/types.ts#L126)
+[packages/graph-runner/src/types.ts:126](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L126)
 
----
+___
 
 ### KitReference
 
@@ -142,63 +142,62 @@ The `@google-labs/llm-starter` package is an example of kit.
 
 #### Type declaration
 
-| Name  | Type     | Description                                  |
-| :---- | :------- | :------------------------------------------- |
+| Name | Type | Description |
+| :------ | :------ | :------ |
 | `url` | `string` | The URL pointing to the location of the kit. |
 
 #### Defined in
 
-[seeds/graph-runner/src/types.ts:119](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-runner/src/types.ts#L119)
+[packages/graph-runner/src/types.ts:119](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L119)
 
----
+___
 
 ### NodeConfiguration
 
-Ƭ **NodeConfiguration**: `Record`<`string`, [`NodeValue`](modules.md#nodevalue)\>
+Ƭ **NodeConfiguration**: `Record`\<`string`, [`NodeValue`](modules.md#nodevalue)\>
 
 Values that are supplied as part of the graph. These values are merged with
 the `InputValues` and supplied as inputs to the `NodeHandler`.
 
 #### Defined in
 
-[seeds/graph-runner/src/types.ts:257](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-runner/src/types.ts#L257)
+[packages/graph-runner/src/types.ts:257](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L257)
 
----
+___
 
 ### NodeDescriberFunction
 
-Ƭ **NodeDescriberFunction**: (`inputs?`: [`InputValues`](modules.md#inputvalues), `inputSchema?`: [`Schema`](interfaces/Schema.md), `outputSchema?`: [`Schema`](interfaces/Schema.md)) => `Promise`<[`NodeDescriberResult`](modules.md#nodedescriberresult)\>
+Ƭ **NodeDescriberFunction**: (`inputs?`: [`InputValues`](modules.md#inputvalues), `inputSchema?`: [`Schema`](interfaces/Schema.md), `outputSchema?`: [`Schema`](interfaces/Schema.md)) => `Promise`\<[`NodeDescriberResult`](modules.md#nodedescriberresult)\>
 
 #### Type declaration
 
-▸ (`inputs?`, `inputSchema?`, `outputSchema?`): `Promise`<[`NodeDescriberResult`](modules.md#nodedescriberresult)\>
+▸ (`inputs?`, `inputSchema?`, `outputSchema?`): `Promise`\<[`NodeDescriberResult`](modules.md#nodedescriberresult)\>
 
 Asks to describe a node. Can be called in multiple ways:
-
 - when called with no arguments, will produce the "default schema". That is,
-  the inputs/outputs that are always available.
+the inputs/outputs that are always available.
 - when called with inputs and schemas, will produce the "expected schema".
-  For example, when a node changes its schema based on the actual inputs,
-  it will return different schemas when inputs/schemas are supplied than
-  when they are not.
+For example, when a node changes its schema based on the actual inputs,
+it will return different schemas when inputs/schemas are supplied than
+when they are not.
 
 ##### Parameters
 
-| Name            | Type                                    |
-| :-------------- | :-------------------------------------- |
-| `inputs?`       | [`InputValues`](modules.md#inputvalues) |
-| `inputSchema?`  | [`Schema`](interfaces/Schema.md)        |
-| `outputSchema?` | [`Schema`](interfaces/Schema.md)        |
+| Name | Type |
+| :------ | :------ |
+| `inputs?` | [`InputValues`](modules.md#inputvalues) |
+| `inputSchema?` | [`Schema`](interfaces/Schema.md) |
+| `outputSchema?` | [`Schema`](interfaces/Schema.md) |
 
 ##### Returns
 
-`Promise`<[`NodeDescriberResult`](modules.md#nodedescriberresult)\>
+`Promise`\<[`NodeDescriberResult`](modules.md#nodedescriberresult)\>
 
 #### Defined in
 
-[seeds/graph-runner/src/types.ts:298](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-runner/src/types.ts#L298)
+[packages/graph-runner/src/types.ts:298](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L298)
 
----
+___
 
 ### NodeDescriberResult
 
@@ -208,16 +207,16 @@ The result of running `NodeDescriptorFunction`
 
 #### Type declaration
 
-| Name           | Type                             |
-| :------------- | :------------------------------- |
-| `inputSchema`  | [`Schema`](interfaces/Schema.md) |
+| Name | Type |
+| :------ | :------ |
+| `inputSchema` | [`Schema`](interfaces/Schema.md) |
 | `outputSchema` | [`Schema`](interfaces/Schema.md) |
 
 #### Defined in
 
-[seeds/graph-runner/src/types.ts:284](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-runner/src/types.ts#L284)
+[packages/graph-runner/src/types.ts:284](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L284)
 
----
+___
 
 ### NodeDescriptor
 
@@ -227,84 +226,84 @@ Represents a node in a graph.
 
 #### Type declaration
 
-| Name             | Type                                                  | Description                                                 |
-| :--------------- | :---------------------------------------------------- | :---------------------------------------------------------- |
-| `configuration?` | [`NodeConfiguration`](modules.md#nodeconfiguration)   | Configuration of the node.                                  |
-| `id`             | [`NodeIdentifier`](modules.md#nodeidentifier)         | Unique id of the node in graph.                             |
-| `type`           | [`NodeTypeIdentifier`](modules.md#nodetypeidentifier) | Type of the node. Used to look up the handler for the node. |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `configuration?` | [`NodeConfiguration`](modules.md#nodeconfiguration) | Configuration of the node. |
+| `id` | [`NodeIdentifier`](modules.md#nodeidentifier) | Unique id of the node in graph. |
+| `type` | [`NodeTypeIdentifier`](modules.md#nodetypeidentifier) | Type of the node. Used to look up the handler for the node. |
 
 #### Defined in
 
-[seeds/graph-runner/src/types.ts:56](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-runner/src/types.ts#L56)
+[packages/graph-runner/src/types.ts:56](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L56)
 
----
+___
 
 ### NodeHandler
 
-Ƭ **NodeHandler**<`Context`\>: { `describe?`: [`NodeDescriberFunction`](modules.md#nodedescriberfunction) ; `invoke`: [`NodeHandlerFunction`](modules.md#nodehandlerfunction)<`Context`\> } \| [`NodeHandlerFunction`](modules.md#nodehandlerfunction)<`Context`\>
-
-#### Type parameters
-
-| Name      |
-| :-------- |
-| `Context` |
-
-#### Defined in
-
-[seeds/graph-runner/src/types.ts:304](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-runner/src/types.ts#L304)
-
----
-
-### NodeHandlerFunction
-
-Ƭ **NodeHandlerFunction**<`T`\>: (`inputs`: [`InputValues`](modules.md#inputvalues), `context`: `T`) => `Promise`<[`OutputValues`](modules.md#outputvalues) \| `void`\>
+Ƭ **NodeHandler**\<`Context`\>: \{ `describe?`: [`NodeDescriberFunction`](modules.md#nodedescriberfunction) ; `invoke`: [`NodeHandlerFunction`](modules.md#nodehandlerfunction)\<`Context`\>  } \| [`NodeHandlerFunction`](modules.md#nodehandlerfunction)\<`Context`\>
 
 #### Type parameters
 
 | Name |
-| :--- |
-| `T`  |
+| :------ |
+| `Context` |
+
+#### Defined in
+
+[packages/graph-runner/src/types.ts:304](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L304)
+
+___
+
+### NodeHandlerFunction
+
+Ƭ **NodeHandlerFunction**\<`T`\>: (`inputs`: [`InputValues`](modules.md#inputvalues), `context`: `T`) => `Promise`\<[`OutputValues`](modules.md#outputvalues) \| `void`\>
+
+#### Type parameters
+
+| Name |
+| :------ |
+| `T` |
 
 #### Type declaration
 
-▸ (`inputs`, `context`): `Promise`<[`OutputValues`](modules.md#outputvalues) \| `void`\>
+▸ (`inputs`, `context`): `Promise`\<[`OutputValues`](modules.md#outputvalues) \| `void`\>
 
 A function that represents a type of a node in the graph.
 
 ##### Parameters
 
-| Name      | Type                                    |
-| :-------- | :-------------------------------------- |
-| `inputs`  | [`InputValues`](modules.md#inputvalues) |
-| `context` | `T`                                     |
+| Name | Type |
+| :------ | :------ |
+| `inputs` | [`InputValues`](modules.md#inputvalues) |
+| `context` | `T` |
 
 ##### Returns
 
-`Promise`<[`OutputValues`](modules.md#outputvalues) \| `void`\>
+`Promise`\<[`OutputValues`](modules.md#outputvalues) \| `void`\>
 
 #### Defined in
 
-[seeds/graph-runner/src/types.ts:262](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-runner/src/types.ts#L262)
+[packages/graph-runner/src/types.ts:262](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L262)
 
----
+___
 
 ### NodeHandlers
 
-Ƭ **NodeHandlers**<`T`\>: `ReservedNodeNames` & `Record`<[`NodeTypeIdentifier`](modules.md#nodetypeidentifier), [`NodeHandler`](modules.md#nodehandler)<`T`\>\>
+Ƭ **NodeHandlers**\<`T`\>: `ReservedNodeNames` & `Record`\<[`NodeTypeIdentifier`](modules.md#nodetypeidentifier), [`NodeHandler`](modules.md#nodehandler)\<`T`\>\>
 
 All known node handlers.
 
 #### Type parameters
 
-| Name | Type     |
-| :--- | :------- |
-| `T`  | `object` |
+| Name | Type |
+| :------ | :------ |
+| `T` | `object` |
 
 #### Defined in
 
-[seeds/graph-runner/src/types.ts:314](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-runner/src/types.ts#L314)
+[packages/graph-runner/src/types.ts:314](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L314)
 
----
+___
 
 ### NodeIdentifier
 
@@ -314,9 +313,9 @@ Unique identifier of a node in a graph.
 
 #### Defined in
 
-[seeds/graph-runner/src/types.ts:36](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-runner/src/types.ts#L36)
+[packages/graph-runner/src/types.ts:36](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L36)
 
----
+___
 
 ### NodeTypeIdentifier
 
@@ -326,37 +325,37 @@ Unique identifier of a node's type.
 
 #### Defined in
 
-[seeds/graph-runner/src/types.ts:51](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-runner/src/types.ts#L51)
+[packages/graph-runner/src/types.ts:51](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L51)
 
----
+___
 
 ### NodeValue
 
-Ƭ **NodeValue**: `string` \| `number` \| `boolean` \| `null` \| `undefined` \| [`NodeValue`](modules.md#nodevalue)[] \| [`Capability`](interfaces/Capability.md) \| { `[key: string]`: [`NodeValue`](modules.md#nodevalue); }
+Ƭ **NodeValue**: `string` \| `number` \| `boolean` \| ``null`` \| `undefined` \| [`NodeValue`](modules.md#nodevalue)[] \| [`Capability`](interfaces/Capability.md) \| \{ `[key: string]`: [`NodeValue`](modules.md#nodevalue);  }
 
 A type representing a valid JSON value.
 
 #### Defined in
 
-[seeds/graph-runner/src/types.ts:23](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-runner/src/types.ts#L23)
+[packages/graph-runner/src/types.ts:23](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L23)
 
----
+___
 
 ### OutputValues
 
-Ƭ **OutputValues**: `Partial`<`Record`<`OutputIdentifier`, [`NodeValue`](modules.md#nodevalue)\>\>
+Ƭ **OutputValues**: `Partial`\<`Record`\<`OutputIdentifier`, [`NodeValue`](modules.md#nodevalue)\>\>
 
 Values that the `NodeHandler` outputs.
 
 #### Defined in
 
-[seeds/graph-runner/src/types.ts:251](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-runner/src/types.ts#L251)
+[packages/graph-runner/src/types.ts:251](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L251)
 
----
+___
 
 ### SubGraphs
 
-Ƭ **SubGraphs**: `Record`<`GraphIdentifier`, [`GraphDescriptor`](modules.md#graphdescriptor)\>
+Ƭ **SubGraphs**: `Record`\<`GraphIdentifier`, [`GraphDescriptor`](modules.md#graphdescriptor)\>
 
 Represents a collection of sub-graphs.
 The key is the identifier of the sub-graph.
@@ -364,7 +363,7 @@ The value is the descriptor of the sub-graph.
 
 #### Defined in
 
-[seeds/graph-runner/src/types.ts:178](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-runner/src/types.ts#L178)
+[packages/graph-runner/src/types.ts:178](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L178)
 
 ## Functions
 
@@ -374,10 +373,10 @@ The value is the descriptor of the sub-graph.
 
 #### Parameters
 
-| Name        | Type                                            | Default value |
-| :---------- | :---------------------------------------------- | :------------ |
-| `graph`     | [`GraphDescriptor`](modules.md#graphdescriptor) | `undefined`   |
-| `direction` | `string`                                        | `"TD"`        |
+| Name | Type | Default value |
+| :------ | :------ | :------ |
+| `graph` | [`GraphDescriptor`](modules.md#graphdescriptor) | `undefined` |
+| `direction` | `string` | `"TD"` |
 
 #### Returns
 
@@ -385,4 +384,4 @@ The value is the descriptor of the sub-graph.
 
 #### Defined in
 
-[seeds/graph-runner/src/mermaid.ts:201](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-runner/src/mermaid.ts#L201)
+[packages/graph-runner/src/mermaid.ts:201](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/mermaid.ts#L201)

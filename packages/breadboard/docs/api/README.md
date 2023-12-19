@@ -2,7 +2,7 @@
 
 # Breadboard
 
-![Milestone](https://img.shields.io/badge/milestone-M1-red) ![Stability](https://img.shields.io/badge/stability-wip-green) [![Discord](https://img.shields.io/discord/1138546999872999556?logo=discord)](https://discord.gg/breadboard)
+![Milestone](https://img.shields.io/badge/milestone-M3-red) ![Stability](https://img.shields.io/badge/stability-wip-green) [![Discord](https://img.shields.io/discord/1138546999872999556?logo=discord)](https://discord.gg/breadboard)
 
 A library for prototyping generative AI applications.
 
@@ -16,22 +16,26 @@ This library's design emphasizes two key properties:
 
 :two: **Modularity and composability**. Easily share, remix, reuse, and compose prototypes.
 
+## Requirements
+
+Breadboard requires [Node](https://nodejs.org/) version >=v19.0.0.
+
 ## Installing the library
 
-Breadboard requires Node version >=v19.0.0. To install the library, run:
+To install breadboard, run:
 
 ```sh
 npm install @google-labs/breadboard
 ```
 
-You will also need the [LLM Starter Kit](https://github.com/breadboard-ai/breadboard/tree/main/seeds/llm-starter):
+You will also need the [LLM Starter Kit](https://github.com/breadboard-ai/breadboard/tree/main/packages/llm-starter):
 
 ```sh
 npm install @google-labs/llm-starter
 ```
 
 The LLM Starter Kit comes with Breadboard nodes helpful for building LLM-based applications including the
-[promptTemplate node](https://github.com/breadboard-ai/breadboard/tree/main/seeds/llm-starter#the-prompttemplate-node), [append node](https://github.com/breadboard-ai/breadboard/tree/main/seeds/llm-starter#the-append-node), [generateText node](https://github.com/breadboard-ai/breadboard/tree/main/seeds/llm-starter#the-generatetext-node), and more.
+[promptTemplate node](https://github.com/breadboard-ai/breadboard/tree/main/packages/llm-starter#the-prompttemplate-node), [append node](https://github.com/breadboard-ai/breadboard/tree/main/packages/llm-starter#the-append-node), [generateText node](https://github.com/breadboard-ai/breadboard/tree/main/packages/llm-starter#the-generatetext-node), and more.
 
 ## Using breadboard
 
@@ -93,7 +97,7 @@ When run, the output of the sample board above will look something like this:
 result { say: 'Hi, how are you?', hear: 'Doing alright.' }
 ```
 
-The `run` method provides a lot more flexibility on how the board run happens, and is described in more detail [Chapter 8: Continuous runs](https://github.com/breadboard-ai/breadboard/tree/main/seeds/breadboard/docs/tutorial#chapter-8-continuous-runs) of Breadboard tutorial.
+The `run` method provides a lot more flexibility on how the board run happens, and is described in more detail [Chapter 8: Continuous runs](https://github.com/breadboard-ai/breadboard/tree/main/packages/breadboard/docs/tutorial#chapter-8-continuous-runs) of Breadboard tutorial.
 
 Breadboard is designed for modularity. You can easily save boards: they nicely serialize as JSON:
 
@@ -117,7 +121,7 @@ board
   .input()
   .wire(
     "say->text",
-    board.include(NEWS_BOARD_URL).wire("text->hear", board.output())
+    board.invoke(NEWS_BOARD_URL).wire("text->hear", board.output())
   );
 ```
 
@@ -144,16 +148,16 @@ input.wire(
 
 To learn more about Breadboard, here are a couple of resources:
 
-- [Breadboard Tutorial](https://github.com/breadboard-ai/breadboard/blob/main/seeds/breadboard/docs/tutorial/README.md) -- learn how to use breadboard step-by-step, from easy to more complex.
-- [Node Types Reference](https://github.com/breadboard-ai/breadboard/blob/main/seeds/breadboard/docs/nodes.md) - learn about the nodes that come built-in with Breadboard.
-- [Wiring spec](https://github.com/breadboard-ai/breadboard/blob/main/seeds/breadboard/docs/wires.md) -- all the different ways to wire nodes.
+- [Breadboard Tutorial](https://github.com/breadboard-ai/breadboard/blob/main/packages/breadboard/docs/tutorial/README.md) -- learn how to use breadboard step-by-step, from easy to more complex.
+- [Node Types Reference](https://github.com/breadboard-ai/breadboard/blob/main/packages/breadboard/docs/nodes.md) - learn about the nodes that come built-in with Breadboard.
+- [Wiring spec](https://github.com/breadboard-ai/breadboard/blob/main/packages/breadboard/docs/wires.md) -- all the different ways to wire nodes.
 - Sample boards, helpfully visualized with [Mermaid](https://mermaid.js.org/) (click on the the link next to "Original:" heading to see the board code):
-  - [Simple text completion](https://github.com/breadboard-ai/breadboard/blob/main/seeds/graph-playground/docs/graphs/simplest.md)
-  - [Google Search summary](https://github.com/breadboard-ai/breadboard/blob/main/seeds/graph-playground/docs/graphs/search-summarize.md)
-  - [Google News summary](https://github.com/breadboard-ai/breadboard/blob/main/seeds/graph-playground/docs/graphs/google-news.md)
-  - [Math problem solver](https://github.com/breadboard-ai/breadboard/blob/main/seeds/graph-playground/docs/graphs/math.md)
-  - [Endless debate between Albert and Friedrich](https://github.com/breadboard-ai/breadboard/blob/main/seeds/graph-playground/docs/graphs/endless-debate-with-voice.md)
-  - [ReAct](https://github.com/breadboard-ai/breadboard/blob/main/seeds/graph-playground/docs/graphs/react.md)
-  - [ReAct with slot](https://github.com/breadboard-ai/breadboard/blob/main/seeds/graph-playground/docs/graphs/react-with-slot.md)
-  - [Example of calling "ReAct with slot"](https://github.com/breadboard-ai/breadboard/blob/main/seeds/graph-playground/docs/graphs/call-react-with-slot.md)
-  - [Semantic retrieval](https://github.com/breadboard-ai/breadboard/blob/main/seeds/graph-playground/docs/graphs/find-file-by-similarity.md)
+  - [Simple text completion](https://github.com/breadboard-ai/breadboard/blob/main/packages/graph-playground/docs/graphs/simplest.md)
+  - [Google Search summary](https://github.com/breadboard-ai/breadboard/blob/main/packages/graph-playground/docs/graphs/search-summarize.md)
+  - [Google News summary](https://github.com/breadboard-ai/breadboard/blob/main/packages/graph-playground/docs/graphs/google-news.md)
+  - [Math problem solver](https://github.com/breadboard-ai/breadboard/blob/main/packages/graph-playground/docs/graphs/math.md)
+  - [Endless debate between Albert and Friedrich](https://github.com/breadboard-ai/breadboard/blob/main/packages/graph-playground/docs/graphs/endless-debate-with-voice.md)
+  - [ReAct](https://github.com/breadboard-ai/breadboard/blob/main/packages/graph-playground/docs/graphs/react.md)
+  - [ReAct with slot](https://github.com/breadboard-ai/breadboard/blob/main/packages/graph-playground/docs/graphs/react-with-slot.md)
+  - [Example of calling "ReAct with slot"](https://github.com/breadboard-ai/breadboard/blob/main/packages/graph-playground/docs/graphs/call-react-with-slot.md)
+  - [Semantic retrieval](https://github.com/breadboard-ai/breadboard/blob/main/packages/graph-playground/docs/graphs/find-file-by-similarity.md)

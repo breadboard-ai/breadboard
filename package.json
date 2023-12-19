@@ -12,7 +12,8 @@
     "clean:build": "rimraf -g packages/*/dist packages/*/.wireit",
     "ci": "npm ci",
     "check:format": "prettier --check --config .prettierrc packages/**/*.ts",
-    "ci:local": "wireit"
+    "ci:local": "wireit",
+    "generate:docs": "wireit"
   },
   "wireit": {
     "build": {
@@ -92,6 +93,21 @@
         "check:format",
         "lint",
         "test"
+      ]
+    },
+    "generate:docs": {
+      "dependencies": [
+        "./packages/breadboard:generate:docs",
+        "./packages/breadboard-server:generate:docs",
+        "./packages/breadboard-ui:generate:docs",
+        "./packages/breadboard-web:generate:docs",
+        "./packages/coffee-bot-board:generate:docs",
+        "./packages/discovery-types:generate:docs",
+        "./packages/graph-integrity:generate:docs",
+        "./packages/graph-playground:generate:docs",
+        "./packages/graph-runner:generate:docs",
+        "./packages/llm-starter:generate:docs",
+        "./packages/node-nursery:generate:docs"
       ]
     }
   },

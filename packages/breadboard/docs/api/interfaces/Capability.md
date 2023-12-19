@@ -2,6 +2,12 @@
 
 # Interface: Capability
 
+## Hierarchy
+
+- **`Capability`**
+
+  ↳ [`StreamCapabilityType`](StreamCapabilityType.md)
+
 ## Table of contents
 
 ### Properties
@@ -16,4 +22,4 @@
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:10](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/types.ts#L10)
+[packages/breadboard/src/types.ts:31](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L31)

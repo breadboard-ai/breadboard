@@ -1,12 +1,12 @@
 [@google-labs/breadboard](../README.md) / [Exports](../modules.md) / KitConstructor
 
-# Interface: KitConstructor<T\>
+# Interface: KitConstructor\<T\>
 
 ## Type parameters
 
-| Name | Type                    |
-| :--- | :---------------------- |
-| `T`  | extends [`Kit`](Kit.md) |
+| Name | Type |
+| :------ | :------ |
+| `T` | extends [`Kit`](Kit.md) |
 
 ## Table of contents
 
@@ -18,14 +18,18 @@
 
 ### constructor
 
-• **new KitConstructor**(`nodeFactory`)
+• **new KitConstructor**(`nodeFactory`): `T`
 
 #### Parameters
 
-| Name          | Type                            |
-| :------------ | :------------------------------ |
+| Name | Type |
+| :------ | :------ |
 | `nodeFactory` | [`NodeFactory`](NodeFactory.md) |
+
+#### Returns
+
+`T`
 
 #### Defined in
 
-[seeds/breadboard/src/types.ts:377](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/types.ts#L377)
+[packages/breadboard/src/types.ts:398](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L398)

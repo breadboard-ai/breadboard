@@ -17,7 +17,7 @@ See the {Board} class for a way to build a board that can also be serialized.
 
 ## Implements
 
-- `BreadboardRunner`
+- [`BreadboardRunner`](../interfaces/BreadboardRunner.md)
 
 ## Table of contents
 
@@ -27,7 +27,7 @@ See the {Board} class for a way to build a board that can also be serialized.
 
 ### Properties
 
-- [#parent](BoardRunner.md##parent)
+- [#outerGraph](BoardRunner.md##outergraph)
 - [#slots](BoardRunner.md##slots)
 - [#validators](BoardRunner.md##validators)
 - [args](BoardRunner.md#args)
@@ -44,6 +44,7 @@ See the {Board} class for a way to build a board that can also be serialized.
 ### Methods
 
 - [addValidator](BoardRunner.md#addvalidator)
+- [mermaid](BoardRunner.md#mermaid)
 - [run](BoardRunner.md#run)
 - [runOnce](BoardRunner.md#runonce)
 - [fromBreadboardCapability](BoardRunner.md#frombreadboardcapability)
@@ -55,31 +56,35 @@ See the {Board} class for a way to build a board that can also be serialized.
 
 ### constructor
 
-• **new BoardRunner**(`metadata?`)
+• **new BoardRunner**(`metadata?`): [`BoardRunner`](BoardRunner.md)
 
 #### Parameters
 
-| Name        | Type                                           | Description                                                                                                        |
-| :---------- | :--------------------------------------------- | :----------------------------------------------------------------------------------------------------------------- |
+| Name | Type | Description |
+| :------ | :------ | :------ |
 | `metadata?` | [`GraphMetadata`](../modules.md#graphmetadata) | optional metadata for the board. Use this parameter to provide title, description, version, and URL for the board. |
+
+#### Returns
+
+[`BoardRunner`](BoardRunner.md)
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:79](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L79)
+[packages/breadboard/src/runner.ts:80](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L80)
 
 ## Properties
 
-### #parent
+### #outerGraph
 
-• `Private` `Optional` **#parent**: [`GraphDescriptor`](../modules.md#graphdescriptor)
+• `Private` `Optional` **#outerGraph**: [`GraphDescriptor`](../modules.md#graphdescriptor)
 
 The parent board, if this is board is a subgraph of a larger board.
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:72](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L72)
+[packages/breadboard/src/runner.ts:73](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L73)
 
----
+___
 
 ### #slots
 
@@ -87,9 +92,9 @@ The parent board, if this is board is a subgraph of a larger board.
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:67](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L67)
+[packages/breadboard/src/runner.ts:68](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L68)
 
----
+___
 
 ### #validators
 
@@ -97,65 +102,73 @@ The parent board, if this is board is a subgraph of a larger board.
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:68](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L68)
+[packages/breadboard/src/runner.ts:69](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L69)
 
----
+___
 
 ### args
 
 • `Optional` **args**: [`InputValues`](../modules.md#inputvalues)
 
+Arguments that are passed to the graph, useful to bind values to lambdas.
+
 #### Implementation of
 
-BreadboardRunner.args
+[BreadboardRunner](../interfaces/BreadboardRunner.md).[args](../interfaces/BreadboardRunner.md#args)
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:65](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L65)
+[packages/breadboard/src/runner.ts:66](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L66)
 
----
+___
 
 ### description
 
 • `Optional` **description**: `string`
 
+The description of the graph.
+
 #### Implementation of
 
-BreadboardRunner.description
+[BreadboardRunner](../interfaces/BreadboardRunner.md).[description](../interfaces/BreadboardRunner.md#description)
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:59](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L59)
+[packages/breadboard/src/runner.ts:60](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L60)
 
----
+___
 
 ### edges
 
 • **edges**: [`Edge`](../modules.md#edge)[] = `[]`
 
+The collection of all edges in the graph.
+
 #### Implementation of
 
-BreadboardRunner.edges
+[BreadboardRunner](../interfaces/BreadboardRunner.md).[edges](../interfaces/BreadboardRunner.md#edges)
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:61](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L61)
+[packages/breadboard/src/runner.ts:62](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L62)
 
----
+___
 
 ### graphs
 
 • `Optional` **graphs**: [`SubGraphs`](../modules.md#subgraphs)
 
+Sub-graphs that are also described by this graph representation.
+
 #### Implementation of
 
-BreadboardRunner.graphs
+[BreadboardRunner](../interfaces/BreadboardRunner.md).[graphs](../interfaces/BreadboardRunner.md#graphs)
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:64](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L64)
+[packages/breadboard/src/runner.ts:65](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L65)
 
----
+___
 
 ### kits
 
@@ -163,91 +176,103 @@ BreadboardRunner.graphs
 
 #### Implementation of
 
-BreadboardRunner.kits
+[BreadboardRunner](../interfaces/BreadboardRunner.md).[kits](../interfaces/BreadboardRunner.md#kits)
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:63](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L63)
+[packages/breadboard/src/runner.ts:64](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L64)
 
----
+___
 
 ### nodes
 
 • **nodes**: [`NodeDescriptor`](../modules.md#nodedescriptor)[] = `[]`
 
+The collection of all nodes in the graph.
+
 #### Implementation of
 
-BreadboardRunner.nodes
+[BreadboardRunner](../interfaces/BreadboardRunner.md).[nodes](../interfaces/BreadboardRunner.md#nodes)
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:62](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L62)
+[packages/breadboard/src/runner.ts:63](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L63)
 
----
+___
 
 ### title
 
 • `Optional` **title**: `string`
 
+The title of the graph.
+
 #### Implementation of
 
-BreadboardRunner.title
+[BreadboardRunner](../interfaces/BreadboardRunner.md).[title](../interfaces/BreadboardRunner.md#title)
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:58](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L58)
+[packages/breadboard/src/runner.ts:59](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L59)
 
----
+___
 
 ### url
 
 • `Optional` **url**: `string`
 
+The URL pointing to the location of the graph.
+This URL is used to resolve relative paths in the graph.
+If not specified, the paths are assumed to be relative to the current
+working directory.
+
 #### Implementation of
 
-BreadboardRunner.url
+[BreadboardRunner](../interfaces/BreadboardRunner.md).[url](../interfaces/BreadboardRunner.md#url)
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:57](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L57)
+[packages/breadboard/src/runner.ts:58](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L58)
 
----
+___
 
 ### version
 
 • `Optional` **version**: `string`
 
+Version of the graph.
+[semver](https://semver.org/) format is encouraged.
+
 #### Implementation of
 
-BreadboardRunner.version
+[BreadboardRunner](../interfaces/BreadboardRunner.md).[version](../interfaces/BreadboardRunner.md#version)
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:60](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L60)
+[packages/breadboard/src/runner.ts:61](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L61)
 
----
+___
 
 ### runRemote
 
-▪ `Static` **runRemote**: (`url`: `string`) => `AsyncGenerator`<`RemoteRunResult`, `void`, `unknown`\> = `runRemote`
+▪ `Static` **runRemote**: (`url`: `string`) => `AsyncGenerator`\<`RemoteRunResult`, `void`, `unknown`\> = `runRemote`
 
 #### Type declaration
 
-▸ (`url`): `AsyncGenerator`<`RemoteRunResult`, `void`, `unknown`\>
+▸ (`url`): `AsyncGenerator`\<`RemoteRunResult`, `void`, `unknown`\>
 
 ##### Parameters
 
-| Name  | Type     |
-| :---- | :------- |
+| Name | Type |
+| :------ | :------ |
 | `url` | `string` |
 
 ##### Returns
 
-`AsyncGenerator`<`RemoteRunResult`, `void`, `unknown`\>
+`AsyncGenerator`\<`RemoteRunResult`, `void`, `unknown`\>
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:359](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L359)
+[packages/breadboard/src/runner.ts:384](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L384)
 
 ## Methods
 
@@ -260,8 +285,8 @@ Will call .addGraph() on the validator before executing a graph.
 
 #### Parameters
 
-| Name        | Type                                                          | Description                      |
-| :---------- | :------------------------------------------------------------ | :------------------------------- |
+| Name | Type | Description |
+| :------ | :------ | :------ |
 | `validator` | [`BreadboardValidator`](../interfaces/BreadboardValidator.md) | a validator to add to the board. |
 
 #### Returns
@@ -270,17 +295,45 @@ Will call .addGraph() on the validator before executing a graph.
 
 #### Implementation of
 
-BreadboardRunner.addValidator
+[BreadboardRunner](../interfaces/BreadboardRunner.md).[addValidator](../interfaces/BreadboardRunner.md#addvalidator)
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:258](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L258)
+[packages/breadboard/src/runner.ts:277](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L277)
 
----
+___
+
+### mermaid
+
+▸ **mermaid**(`direction?`, `unstyled?`): `string`
+
+Returns a [Mermaid](https://mermaid-js.github.io/mermaid/#/) representation
+of the board.
+
+This is useful for visualizing the board.
+
+#### Parameters
+
+| Name | Type | Default value |
+| :------ | :------ | :------ |
+| `direction` | `string` | `"TD"` |
+| `unstyled` | `boolean` | `false` |
+
+#### Returns
+
+`string`
+
+- a string containing the Mermaid representation of the board.
+
+#### Defined in
+
+[packages/breadboard/src/runner.ts:289](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L289)
+
+___
 
 ### run
 
-▸ **run**(`probe?`, `slots?`, `result?`): `AsyncGenerator`<[`RunResult`](RunResult.md), `any`, `unknown`\>
+▸ **run**(`context?`, `result?`): `AsyncGenerator`\<[`RunResult`](RunResult.md), `any`, `unknown`\>
 
 Runs the board. This method is an async generator that
 yields the results of each stage of the run.
@@ -292,7 +345,7 @@ It's typically used like this:
 
 ```js
 for await (const stop of board.run()) {
-  // do something with `stop`
+// do something with `stop`
 }
 ```
 
@@ -307,33 +360,32 @@ When that is the case, use `stop.inputs` to provide input values.
 If `stop.type` is `output`, the board is providing output values.
 When that is the case, use `stop.outputs` to receive output values.
 
-See [Chapter 8: Continuous runs](https://github.com/breadboard-ai/breadboard/tree/main/seeds/breadboard/docs/tutorial#chapter-8-continuous-runs) of Breadboard tutorial for an example of how to use this method.
+See [Chapter 8: Continuous runs](https://github.com/breadboard-ai/breadboard/tree/main/packages/breadboard/docs/tutorial#chapter-8-continuous-runs) of Breadboard tutorial for an example of how to use this method.
 
 #### Parameters
 
-| Name      | Type                                                     | Description                                                                                                                                                                                                                                           |
-| :-------- | :------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `probe?`  | `EventTarget`                                            | an optional probe. If provided, the board will dispatch events to it. See [Chapter 7: Probes](https://github.com/breadboard-ai/breadboard/tree/main/seeds/breadboard/docs/tutorial#chapter-7-probes) of the Breadboard tutorial for more information. |
-| `slots?`  | [`BreadboardSlotSpec`](../modules.md#breadboardslotspec) | an optional map of slotted graphs. See [Chapter 6: Boards with slots](https://github.com/breadboard-ai/breadboard/tree/main/seeds/breadboard/docs/tutorial#chapter-6-boards-with-slots) of the Breadboard tutorial for more information.              |
-| `result?` | [`RunResult`](RunResult.md)                              | -                                                                                                                                                                                                                                                     |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `context` | [`NodeHandlerContext`](../interfaces/NodeHandlerContext.md) | - |
+| `result?` | [`RunResult`](RunResult.md) | an optional result of a previous run. If provided, the board will resume from the state of the previous run. |
 
 #### Returns
 
-`AsyncGenerator`<[`RunResult`](RunResult.md), `any`, `unknown`\>
+`AsyncGenerator`\<[`RunResult`](RunResult.md), `any`, `unknown`\>
 
 #### Implementation of
 
-BreadboardRunner.run
+[BreadboardRunner](../interfaces/BreadboardRunner.md).[run](../interfaces/BreadboardRunner.md#run)
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:116](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L116)
+[packages/breadboard/src/runner.ts:120](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L120)
 
----
+___
 
 ### runOnce
 
-▸ **runOnce**(`inputs`, `context?`, `probe?`): `Promise`<`Partial`<`Record`<`string`, [`NodeValue`](../modules.md#nodevalue)\>\>\>
+▸ **runOnce**(`inputs`, `context?`): `Promise`\<`Partial`\<`Record`\<`string`, [`NodeValue`](../modules.md#nodevalue)\>\>\>
 
 A simplified version of `run` that runs the board until the board provides
 an output, and returns that output.
@@ -343,121 +395,119 @@ or the the outputs are only expected to be visited once.
 
 #### Parameters
 
-| Name       | Type                                                        | Description                                                                                                                                                                                                                                           |
-| :--------- | :---------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `inputs`   | [`InputValues`](../modules.md#inputvalues)                  | the input values to provide to the board.                                                                                                                                                                                                             |
-| `context?` | [`NodeHandlerContext`](../interfaces/NodeHandlerContext.md) | -                                                                                                                                                                                                                                                     |
-| `probe?`   | `EventTarget`                                               | an optional probe. If provided, the board will dispatch events to it. See [Chapter 7: Probes](https://github.com/breadboard-ai/breadboard/tree/main/seeds/breadboard/docs/tutorial#chapter-7-probes) of the Breadboard tutorial for more information. |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `inputs` | [`InputValues`](../modules.md#inputvalues) | the input values to provide to the board. |
+| `context` | [`NodeHandlerContext`](../interfaces/NodeHandlerContext.md) | - |
 
 #### Returns
 
-`Promise`<`Partial`<`Record`<`string`, [`NodeValue`](../modules.md#nodevalue)\>\>\>
+`Promise`\<`Partial`\<`Record`\<`string`, [`NodeValue`](../modules.md#nodevalue)\>\>\>
 
 - outputs provided by the board.
 
 #### Implementation of
 
-BreadboardRunner.runOnce
+[BreadboardRunner](../interfaces/BreadboardRunner.md).[runOnce](../interfaces/BreadboardRunner.md#runonce)
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:218](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L218)
+[packages/breadboard/src/runner.ts:232](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L232)
 
----
+___
 
 ### fromBreadboardCapability
 
-▸ `Static` **fromBreadboardCapability**(`board`): `Promise`<[`BoardRunner`](BoardRunner.md)\>
+▸ **fromBreadboardCapability**(`board`): `Promise`\<[`BoardRunner`](BoardRunner.md)\>
 
 Creates a runnable board from a BreadboardCapability,
 
 #### Parameters
 
-| Name    | Type                                                         | Description                                                     |
-| :------ | :----------------------------------------------------------- | :-------------------------------------------------------------- |
+| Name | Type | Description |
+| :------ | :------ | :------ |
 | `board` | [`BreadboardCapability`](../modules.md#breadboardcapability) | {BreadboardCapability} A BreadboardCapability including a board |
 
 #### Returns
 
-`Promise`<[`BoardRunner`](BoardRunner.md)\>
+`Promise`\<[`BoardRunner`](BoardRunner.md)\>
 
 A runnable board.
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:324](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L324)
+[packages/breadboard/src/runner.ts:343](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L343)
 
----
+___
 
 ### fromGraphDescriptor
 
-▸ `Static` **fromGraphDescriptor**(`graph`, `kits?`): `Promise`<[`BoardRunner`](BoardRunner.md)\>
+▸ **fromGraphDescriptor**(`graph`): `Promise`\<[`BoardRunner`](BoardRunner.md)\>
 
 Creates a new board from JSON. If you have a serialized board, you can
 use this method to turn it into into a new Board instance.
 
 #### Parameters
 
-| Name    | Type                                               | Description                           |
-| :------ | :------------------------------------------------- | :------------------------------------ |
+| Name | Type | Description |
+| :------ | :------ | :------ |
 | `graph` | [`GraphDescriptor`](../modules.md#graphdescriptor) | the JSON representation of the board. |
-| `kits?` | `KitImportMap`                                     | -                                     |
 
 #### Returns
 
-`Promise`<[`BoardRunner`](BoardRunner.md)\>
+`Promise`\<[`BoardRunner`](BoardRunner.md)\>
 
 - a new `Board` instance.
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:269](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L269)
+[packages/breadboard/src/runner.ts:300](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L300)
 
----
+___
 
 ### handlersFromBoard
 
-▸ `Static` **handlersFromBoard**(`board`): `Promise`<[`NodeHandlers`](../modules.md#nodehandlers)<[`NodeHandlerContext`](../interfaces/NodeHandlerContext.md)\>\>
+▸ **handlersFromBoard**(`board`, `upstreamKits?`): `Promise`\<[`NodeHandlers`](../modules.md#nodehandlers)\>
 
 #### Parameters
 
-| Name    | Type                            |
-| :------ | :------------------------------ |
-| `board` | [`BoardRunner`](BoardRunner.md) |
+| Name | Type | Default value |
+| :------ | :------ | :------ |
+| `board` | [`BoardRunner`](BoardRunner.md) | `undefined` |
+| `upstreamKits` | [`Kit`](../interfaces/Kit.md)[] | `[]` |
 
 #### Returns
 
-`Promise`<[`NodeHandlers`](../modules.md#nodehandlers)<[`NodeHandlerContext`](../interfaces/NodeHandlerContext.md)\>\>
+`Promise`\<[`NodeHandlers`](../modules.md#nodehandlers)\>
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:349](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L349)
+[packages/breadboard/src/runner.ts:367](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L367)
 
----
+___
 
 ### load
 
-▸ `Static` **load**(`url`, `options?`): `Promise`<[`BoardRunner`](BoardRunner.md)\>
+▸ **load**(`url`, `options?`): `Promise`\<[`BoardRunner`](BoardRunner.md)\>
 
 Loads a board from a URL or a file path.
 
 #### Parameters
 
-| Name                  | Type                                                     | Description                          |
-| :-------------------- | :------------------------------------------------------- | :----------------------------------- |
-| `url`                 | `string`                                                 | the URL or a file path to the board. |
-| `options?`            | `Object`                                                 | -                                    |
-| `options.base?`       | `string`                                                 | -                                    |
-| `options.kits?`       | `KitImportMap`                                           | -                                    |
-| `options.outerGraph?` | [`GraphDescriptor`](../modules.md#graphdescriptor)       | -                                    |
-| `options.slotted?`    | [`BreadboardSlotSpec`](../modules.md#breadboardslotspec) | -                                    |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `url` | `string` | the URL or a file path to the board. |
+| `options?` | `Object` | - |
+| `options.base?` | `string` | - |
+| `options.outerGraph?` | [`GraphDescriptor`](../modules.md#graphdescriptor) | - |
+| `options.slotted?` | [`BreadboardSlotSpec`](../modules.md#breadboardslotspec) | - |
 
 #### Returns
 
-`Promise`<[`BoardRunner`](BoardRunner.md)\>
+`Promise`\<[`BoardRunner`](BoardRunner.md)\>
 
 - a new `Board` instance.
 
 #### Defined in
 
-[seeds/breadboard/src/runner.ts:298](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/runner.ts#L298)
+[packages/breadboard/src/runner.ts:318](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L318)
