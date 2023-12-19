@@ -1,0 +1,151 @@
+{
+  "name": "@google-labs/breadboard-ui",
+  "version": "0.0.2",
+  "description": "The UI components for @google-labs/breadboard",
+  "main": "./dist/src/index.js",
+  "exports": {
+    ".": "./dist/src/index.js"
+  },
+  "types": "dist/src/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "generate:docs": "wireit",
+    "dev": "wireit",
+    "test": "wireit",
+    "build": "wireit",
+    "build:tsc": "wireit",
+    "build:rollup": "wireit",
+    "lint": "wireit"
+  },
+  "wireit": {
+    "build": {
+      "dependencies": [
+        "../breadboard:build",
+        "build:tsc",
+        "build:rollup"
+      ]
+    },
+    "typescript-files-and-deps": {
+      "dependencies": [
+        "../breadboard:build:tsc"
+      ],
+      "files": [
+        "src/**/*.ts",
+        "tests/**/*.ts",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
+      ]
+    },
+    "build:tsc": {
+      "command": "tsc -b",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "typescript-files-and-deps"
+      ],
+      "files": [],
+      "output": [
+        "dist/",
+        "!dist/**/*.min.js{,.map}"
+      ],
+      "clean": "if-file-deleted"
+    },
+    "build:rollup": {
+      "command": "rollup -c",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [
+        "rollup.config.js",
+        "package.json"
+      ],
+      "output": [
+        "dist/**/*.min.js{,.map}"
+      ]
+    },
+    "dev": {
+      "command": "vite dev",
+      "service": true,
+      "dependencies": [
+        {
+          "script": "typescript-files-and-deps",
+          "cascade": false
+        }
+      ],
+      "files": [
+        "index.html",
+        "vite.config.ts"
+      ]
+    },
+    "test": {
+      "command": "vitest --run",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "typescript-files-and-deps"
+      ],
+      "files": [
+        "vite.config.ts"
+      ],
+      "output": []
+    },
+    "lint": {
+      "command": "eslint . --ext .ts",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "files": [
+        "src/**/*.ts",
+        "tests/**/*.ts"
+      ],
+      "output": []
+    },
+    "generate:docs": {
+      "command": "typedoc --plugin typedoc-plugin-markdown",
+      "files": [
+        "src/**/*.ts",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
+      ],
+      "output": [
+        "docs/api/"
+      ]
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/breadboard-ai/breadboard"
+  },
+  "files": [
+    "dist/src",
+    "dist/*.js",
+    "dist/*.js.map"
+  ],
+  "keywords": [],
+  "author": "Google Labs Team",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/breadboard-ai/breadboard/issues"
+  },
+  "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/breadboard#readme",
+  "devDependencies": {
+    "@google-labs/tsconfig": "*",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@types/node": "^18.17.4",
+    "@typescript-eslint/eslint-plugin": "^5.56.0",
+    "@typescript-eslint/parser": "^5.56.0",
+    "rollup": "^4.1.4",
+    "typedoc": "^0.25.1",
+    "typedoc-plugin-markdown": "^3.16.0",
+    "typescript": "^5.0.4"
+  },
+  "engines": {
+    "node": ">=19.0.0"
+  },
+  "dependencies": {
+    "@google-labs/breadboard": "0.6.0"
+  }
+}

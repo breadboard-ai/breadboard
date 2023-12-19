@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width" />
+  <link rel="stylesheet" href="/styles/global.css" />
+  <title>Breadboard Playground</title>
+</head>
+<body>
+  <header slot="header">
+    <a href="/"><h1 id="title">Breadboard Playground</h1></a>
+  </header>
+  <bb-ui> </bb-ui>
+  <script type="module">
+    import { Main } from "./src/index.ts";
+
+    const localBoards = await (await fetch("/local-boards.json")).json();
+
+    const config = {
+      boards: [
+        {
+          title: "Simple meta-reasoning",
+          url: "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/graph-playground/graphs/simple-prompt.json",
+        },
+        {
+          title: "Infer a query for retrieval",
+          url: "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/graph-playground/graphs/infer-query.json",
+        },
+        {
+          title: "Endless debate",
+          url: "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/graph-playground/graphs/endless-debate.json",
+          version: "0.0.2",
+        },
+        {
+          title: "Endless debate with voice",
+          url: "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/graph-playground/graphs/endless-debate-with-voice.json",
+          version: "0.0.2",
+        },
+        {
+          title: "ReAct with slots",
+          url: "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/graph-playground/graphs/call-react-with-slot.json",
+        },
+        {
+          title: "Classic ReAct",
+          url: "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/graph-playground/graphs/call-react-with-lambdas.json",
+          version: "0.0.2",
+        },
+        ...localBoards,
+      ],
+    };
+
+    new Main(config);
+  </script>
+</body>

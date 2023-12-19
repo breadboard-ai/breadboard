@@ -17,7 +17,7 @@
       "request": "launch",
       "program": "${file}",
       "console": "integratedTerminal",
-      "args": ["seeds/graph-playground/graphs/accumulating-context.json"],
+      "args": ["packages/graph-playground/graphs/accumulating-context.json"],
       "justMyCode": true
     },
     {
@@ -26,8 +26,8 @@
       "skipFiles": ["<node_internals>/**"],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
-      "program": "${workspaceFolder}/seeds/graph-playground/src/index.ts",
-      "args": ["seeds/graph-playground/graphs/math.json"],
+      "program": "${workspaceFolder}/packages/graph-playground/src/index.ts",
+      "args": ["packages/graph-playground/graphs/math.json"],
       "outFiles": ["${workspaceFolder}/**/*.js"],
       "runtimeVersion": "20.4.0",
       "type": "node"
@@ -37,9 +37,9 @@
       "request": "launch",
       "name": "Launch Program",
       "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}/seeds/graph-playground/src/index.ts",
+      "program": "${workspaceFolder}/packages/graph-playground/src/index.ts",
       "runtimeArgs": [
-        "seeds/graph-playground/graphs/accumulating-context.json"
+        "packages/graph-playground/graphs/accumulating-context.json"
       ],
       "outFiles": ["${workspaceFolder}/**/*.js"]
     },
@@ -48,15 +48,11 @@
       "request": "launch",
       "name": "Debug AVA test file",
       "program": "${workspaceFolder}/node_modules/ava/entrypoints/cli.mjs",
-      "args": [
-        "${file}"
-      ],
+      "args": ["${file}"],
       "cwd": "${fileDirname}",
       "outputCapture": "std",
       "console": "integratedTerminal",
-      "skipFiles": [
-        "<node_internals>/**/*.js"
-      ]
+      "skipFiles": ["<node_internals>/**/*.js"]
     }
   ]
 }
