@@ -591,50 +591,24 @@ const serializedGraph = recipe(({ query }) => {
 The basic building blocks are _nodes_. Nodes have named _ports_ that define
 their inputs and outputs.
 
-Under the hood, they are stateless async functions that take a bag of properties
-(named after the ports) as input and return a promise for bag of properties as
-output. (To the degree that they aren't stateless, it's because they interact
-with something stateful outside the system. They never store node-specific state
+Nodes comes from collections of nodes we call _kits_ or as single nodes from
+_recipes_ published on the web, and you can define them yourself.
+
+Think of nodes as stateless async functions that take a bag of properties (named
+after the ports) as input and return a promise for bag of properties as output.
+(To the degree that they aren't stateless, it's because they interact with
+something stateful outside the system. They never store node-specific state
 between invocations).
 
 When using multiple nodes, the framework allows passing promises that one node
 returns as inputs to another node. That's one way to _wire_ nodes together, i.e.
-connecting output ports from one node with input nodes from another node.
+connecting output ports from one node with input nodes from another node. There are also methods to wire nodes after they are instantiated.
 
 This builds a graph of nodes (the functions, which are called when all the
-inputs are available) and edges (the wires). Unlike what typical promises
-suggest you can build cycles (quick aside: technically, promises are thenables,
-and those are allowed to update their states between calls).
+inputs are available) and edges (the wires). Cycles are allowed.
 
 You can either call that graph directly or you can wrap it up as a reusable
-recipe, which can then be used like other nodes. In fact nodes are either such
-graphs or they are regular code.
-
-(put kits and reusing components here?)
-
-Something unique to this framework, is that you can serialize such recipes as
-`.json` files. Then they can run in any compatible runtime (with some
-constraints if special capabilities are needed), e.g. in browsers, on various
-server configurations and in native apps. And they can be reused in other
-frameworks, including non-JS ones, for example python frameworks, graphical
-graph editors, etc. -- this is at the core of the component system.
-
-Note that in order for functions to be serializable, they have to be
-self-contained.
-
-That brings us to _kits_: Those are collections of such _node types_, which can
-again be either recipes or functions. There are _light kits_ that are themselves
-available as `.json` files and can be loaded on the fly, and there are _heavy
-kits_ that have to be loaded and provided by the runtime environment. Typically,
-the latter contains functions that aren't self-contained. This is a way for the
-runtime environment to provide runtime specific implementations.
-
-To recap, nodes can be of three kinds:
-
-1. Recipes: A graph of nodes, with a defined interface
-2. Stateless functions: Serializable if self-contained.
-3. Nodes from kits: Which are underneath on of these two, but in some cases the
-   environment choosing which implementation to use.
+recipe, which can then be reused like other nodes. In fact nodes are always either such graphs or they are regular code.
 
 Values that can be sent over the wires are standard JSON, `ReadableStream` and
 node types (e.g. recipes) themselves. This constraint allows state
@@ -643,3 +617,21 @@ etc.
 
 TODO: Add proper capabilities support to the syntax to cover the remaining
 cases, with all the added work that re-enabling the above will take...
+
+#### Serialization
+
+Something unique to this framework, is that you can serialize such recipes as
+`.json` files. Then they can run in any compatible runtime (with some
+constraints if special capabilities are needed), e.g. in browsers, on various
+server configurations and in native apps. And they can be reused in other
+frameworks, including non-JS ones, for example python frameworks, graphical
+graph editors, etc. -- this is at the core of the component system.
+
+Recipes can be published as singletons or as part of a _kit_, together with
+other recipes or single functions.
+
+There are _light kits_ that are themselves available as `.json` files and can be
+loaded on the fly, and there are _heavy kits_ that have to be loaded and
+provided by the runtime environment. Typically, the latter contains functions
+that aren't self-contained. This is a way for the runtime environment to provide
+runtime specific implementations of common functionality.
