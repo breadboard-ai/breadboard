@@ -1,0 +1,22 @@
+/**
+ * @license
+ * Copyright 2023 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import { defineConfig } from "vitest/config";
+
+export default defineConfig({
+  build: {
+    lib: {
+      entry: {
+        worker: "./worker.ts",
+        index: "index.html",
+      },
+      name: "app",
+      formats: ["es"],
+    },
+    target: "esnext",
+  },
+  plugins: [],
+});

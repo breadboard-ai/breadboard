@@ -1,0 +1,93 @@
+/**
+ * @license
+ * Copyright 2023 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+@font-face {
+  font-family: "FiraCode";
+  font-weight: normal;
+  font-style: normal;
+  src: url("/third_party/firacode/FiraCode-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "FiraCode";
+  font-weight: bold;
+  font-style: bold;
+  src: url("/third_party/firacode/FiraCode-Bold.woff2") format("woff2");
+}
+
+html,
+body {
+  --bb-font-family: "FiraCode", Arial, Helvetica, sans-serif;
+  --bb-submit-input-text-transform: uppercase;
+  --bb-input-font-size: 16px;
+  --bb-input-padding: 16px 32px;
+  --bb-accent-color: #6b5484;
+  --bb-grid-size: 4px;
+  --bb-accent-color: #6b5484;
+
+  --bb-input-border-radius: 32px;
+  --bb-input-background-color: #6b5484;
+  --bb-input-border: none;
+  --bb-input-padding: 8px 24px;
+  --bb-input-color: #fff;
+
+  --bb-submit-input-text-transform: none;
+  --bb-line-height: 1.5;
+
+  margin: 0;
+  padding: 0;
+  font-family: var(--bb-font-family);
+  height: 100%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  background: #f4f7fc url(/images/pattern.png);
+}
+
+main {
+  padding: 32px;
+  flex: 1 0 auto;
+  max-width: 960px;
+}
+
+h1 {
+  font-size: 24px;
+  margin: 0;
+  padding: 24px 36px 0 36px;
+  font-weight: normal;
+  text-transform: uppercase;
+}
+
+footer {
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 16px 36px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+footer span {
+  font-weight: bold;
+}
+
+@media (min-width: 600px) {
+  h1 {
+    padding: 32px 36px;
+    font-size: 32px;
+  }
+}
+
+@media (min-width: 900px) {
+  h1 {
+    padding: 40px 36px;
+    font-size: 40px;
+  }
+}
