@@ -39,10 +39,12 @@ async function findTsFiles(dir: string): Promise<string[]> {
   return tsFiles;
 }
 
-async function saveBoard(filePath: string): Promise<ManifestItem> {
+async function saveBoard(filePath: string): Promise<ManifestItem | undefined> {
   const board = await import(filePath);
   if (!board.default) {
-    throw new Error(`Board ${filePath} does not have a default export`);
+    // This is probably not a board or a board that doesn't want to be in the
+    // manifest.
+    return;
   }
   const relativePath: string = path.relative(PATH, filePath);
   const baseName: string = path.basename(filePath);
@@ -81,6 +83,7 @@ async function saveAllBoards(): Promise<void> {
   const manifest = [];
   for (const file of tsFiles) {
     const manifestEntry = await saveBoard(file);
+    if (!manifestEntry) continue;
     // Avoid adding .local.json files to the manifest
     if (!file.endsWith(".local.ts")) {
       manifest.push(manifestEntry);
