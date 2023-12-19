@@ -102,7 +102,10 @@ export const TestKit = new KitBuilder({
       // Bare subset of describe() for invoke: Find the first input and output
       // nodes of inline supplied graphs (no loading), and use their schemas.
       let graph: GraphDescriptor | undefined = undefined;
-      if ((inputs?.$recipe as BreadboardCapability).kind === "board") {
+      if (
+        inputs?.$recipe &&
+        (inputs?.$recipe as BreadboardCapability).kind === "board"
+      ) {
         graph = (inputs?.$recipe as BreadboardCapability).board;
       } else if (
         inputs?.board &&
