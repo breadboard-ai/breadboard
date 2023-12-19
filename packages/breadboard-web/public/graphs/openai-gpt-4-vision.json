@@ -4,35 +4,52 @@
   "version": "0.0.2",
   "edges": [
     {
-      "from": "secrets-1",
-      "to": "makeeHeaders",
-      "out": "OPENAI_API_KEY",
-      "in": "OPENAI_API_KEY"
+      "from": "streamTransform",
+      "to": "streamOutput",
+      "out": "*",
+      "in": ""
     },
     {
-      "from": "input",
-      "to": "fetch-2",
-      "out": "useStreaming",
-      "in": "stream"
-    },
-    {
-      "from": "makeeHeaders",
-      "to": "fetch-2",
-      "out": "result",
-      "in": "headers"
-    },
-    {
-      "from": "lambda-3",
-      "to": "transformStream-4",
-      "constant": true,
+      "from": "lambda-5",
+      "to": "streamTransform",
       "out": "board",
       "in": "board"
     },
     {
+      "from": "openai",
+      "to": "getResponse",
+      "out": "response",
+      "in": "json"
+    },
+    {
+      "from": "openai",
+      "to": "streamTransform",
+      "out": "stream",
+      "in": "stream"
+    },
+    {
       "from": "input",
       "to": "makeBody",
+      "out": "*",
+      "in": ""
+    },
+    {
+      "from": "input",
+      "to": "openai",
       "out": "useStreaming",
-      "in": "useStreaming"
+      "in": "stream"
+    },
+    {
+      "from": "makeHeaders",
+      "to": "openai",
+      "out": "result",
+      "in": "headers"
+    },
+    {
+      "from": "makeBody",
+      "to": "openai",
+      "out": "result",
+      "in": "body"
     },
     {
       "from": "getResponse",
@@ -41,37 +58,89 @@
       "in": "text"
     },
     {
-      "from": "fetch-2",
-      "to": "getResponse",
-      "out": "response",
-      "in": "json"
-    },
-    {
-      "from": "transformStream-4",
-      "to": "streamOutput",
-      "out": "stream",
-      "in": "stream"
-    },
-    {
-      "from": "fetch-2",
-      "to": "transformStream-4",
-      "out": "stream",
-      "in": "stream"
-    },
-    {
-      "from": "makeBody",
-      "to": "fetch-2",
-      "out": "result",
-      "in": "body"
-    },
-    {
-      "from": "input",
-      "to": "makeBody",
-      "out": "content",
-      "in": "content"
+      "from": "secrets-3",
+      "to": "makeHeaders",
+      "out": "OPENAI_API_KEY",
+      "in": "OPENAI_API_KEY"
     }
   ],
   "nodes": [
+    {
+      "id": "streamOutput",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "stream": {
+              "type": "object",
+              "title": "Stream",
+              "format": "stream",
+              "description": "The generated text"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "streamTransform",
+      "type": "transformStream",
+      "configuration": {}
+    },
+    {
+      "id": "lambda-5",
+      "type": "lambda",
+      "configuration": {
+        "board": {
+          "kind": "board",
+          "board": {
+            "kits": [],
+            "edges": [
+              {
+                "from": "transformCompletion",
+                "to": "result",
+                "out": "result",
+                "in": "chunk"
+              },
+              {
+                "from": "chunk",
+                "to": "transformCompletion",
+                "out": "chunk",
+                "in": "json"
+              }
+            ],
+            "nodes": [
+              {
+                "id": "result",
+                "type": "output",
+                "configuration": {}
+              },
+              {
+                "id": "transformCompletion",
+                "type": "jsonata",
+                "configuration": {
+                  "expression": "choices[0].delta.content ? choices[0].delta.content : \"\""
+                }
+              },
+              {
+                "id": "chunk",
+                "type": "input",
+                "configuration": {}
+              }
+            ],
+            "graphs": {}
+          }
+        }
+      }
+    },
+    {
+      "id": "openai",
+      "type": "fetch",
+      "configuration": {
+        "url": "https://api.openai.com/v1/chat/completions",
+        "method": "POST"
+      }
+    },
     {
       "id": "input",
       "type": "input",
@@ -95,6 +164,36 @@
       }
     },
     {
+      "id": "makeHeaders",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "{\n        \"Content-Type\": \"application/json\",\n        \"Authorization\": \"Bearer \" & $.OPENAI_API_KEY\n      }"
+      }
+    },
+    {
+      "id": "makeBody",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "{\n          \"model\": \"gpt-4-vision-preview\",\n          \"messages\": [\n            {\n              \"role\": \"user\",\n              \"content\": $.content.{\n                \"type\": $keys($) = \"text\" ? \"text\" : \"image_url\" ,\n                \"text\": $.text,\n                \"image_url\": \"data:\" & $.inline_data.mime_type & \";base64,\" & $.inline_data.data\n              }\n            }\n          ],\n          \"stream\": $.useStreaming,\n          \"temperature\": 1,\n          \"max_tokens\": 256,\n          \"top_p\": 1,\n          \"frequency_penalty\": 0,\n          \"presence_penalty\": 0\n    }"
+      }
+    },
+    {
+      "id": "getResponse",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "choices[0].message.content"
+      }
+    },
+    {
+      "id": "secrets-3",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "OPENAI_API_KEY"
+        ]
+      }
+    },
+    {
       "id": "textOutput",
       "type": "output",
       "configuration": {
@@ -109,121 +208,7 @@
           }
         }
       }
-    },
-    {
-      "id": "streamOutput",
-      "type": "output",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "stream": {
-              "type": "object",
-              "title": "Stream",
-              "format": "stream",
-              "description": "The generated text"
-            }
-          }
-        }
-      }
-    },
-    {
-      "id": "makeeHeaders",
-      "type": "jsonata",
-      "configuration": {
-        "expression": "{\n    \"Content-Type\": \"application/json\",\n    \"Authorization\": \"Bearer \" & $.OPENAI_API_KEY\n  }"
-      }
-    },
-    {
-      "id": "secrets-1",
-      "type": "secrets",
-      "configuration": {
-        "keys": [
-          "OPENAI_API_KEY"
-        ]
-      }
-    },
-    {
-      "id": "makeBody",
-      "type": "jsonata",
-      "configuration": {
-        "expression": "{\n    \"model\": \"gpt-4-vision-preview\",\n    \"messages\": [\n      {\n        \"role\": \"user\",\n        \"content\": $.content.{\n          \"type\": $keys($) = \"text\" ? \"text\" : \"image_url\" ,\n          \"text\": $.text,\n          \"image_url\": \"data:\" & $.inline_data.mime_type & \";base64,\" & $.inline_data.data\n        }\n      }\n    ],\n    \"stream\": $.useStreaming,\n    \"temperature\": 1,\n    \"max_tokens\": 256,\n    \"top_p\": 1,\n    \"frequency_penalty\": 0,\n    \"presence_penalty\": 0\n  }"
-      }
-    },
-    {
-      "id": "fetch-2",
-      "type": "fetch",
-      "configuration": {
-        "url": "https://api.openai.com/v1/chat/completions",
-        "method": "POST"
-      }
-    },
-    {
-      "id": "getResponse",
-      "type": "jsonata",
-      "configuration": {
-        "expression": "choices[0].message.content"
-      }
-    },
-    {
-      "id": "lambda-3",
-      "type": "lambda",
-      "configuration": {
-        "board": {
-          "kind": "board",
-          "board": {
-            "edges": [
-              {
-                "from": "transformCompletion",
-                "to": "output-2",
-                "out": "result",
-                "in": "chunk"
-              },
-              {
-                "from": "input-1",
-                "to": "transformCompletion",
-                "out": "chunk",
-                "in": "json"
-              }
-            ],
-            "nodes": [
-              {
-                "id": "input-1",
-                "type": "input"
-              },
-              {
-                "id": "output-2",
-                "type": "output"
-              },
-              {
-                "id": "transformCompletion",
-                "type": "jsonata",
-                "configuration": {
-                  "expression": "choices[0].delta.content ? choices[0].delta.content : \"\""
-                }
-              }
-            ],
-            "kits": [
-              {
-                "url": "npm:@google-labs/llm-starter"
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "id": "transformStream-4",
-      "type": "transformStream",
-      "configuration": {}
     }
   ],
-  "kits": [
-    {
-      "url": "npm:@google-labs/llm-starter"
-    },
-    {
-      "url": "npm:@google-labs/node-nursery-web"
-    }
-  ]
+  "graphs": {}
 }

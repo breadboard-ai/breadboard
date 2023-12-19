@@ -3,23 +3,22 @@
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-secrets1("secrets <br> id='secrets-1'"):::secrets -- "OPENAI_API_KEY->OPENAI_API_KEY" --> makeeHeaders["jsonata <br> id='makeeHeaders'"]
-input[/"input <br> id='input'"/]:::input -- "useStreaming->stream" --> fetch2["fetch <br> id='fetch-2'"]
-makeeHeaders["jsonata <br> id='makeeHeaders'"] -- "result->headers" --> fetch2["fetch <br> id='fetch-2'"]
-lambda3["lambda <br> id='lambda-3'"] -- "board->board" --o transformStream4["transformStream <br> id='transformStream-4'"]
-subgraph sg_lambda3 [lambda-3]
-lambda3_transformCompletion["jsonata <br> id='transformCompletion'"] -- "result->chunk" --> lambda3_output2{{"output <br> id='output-2'"}}:::output
-lambda3_input1[/"input <br> id='input-1'"/]:::input -- "chunk->json" --> lambda3_transformCompletion["jsonata <br> id='transformCompletion'"]
+streamTransform["transformStream <br> id='streamTransform'"] -- all --> streamOutput{{"output <br> id='streamOutput'"}}:::output
+lambda5["lambda <br> id='lambda-5'"] -- "board->board" --> streamTransform["transformStream <br> id='streamTransform'"]
+subgraph sg_lambda5 [lambda-5]
+lambda5_transformCompletion["jsonata <br> id='transformCompletion'"] -- "result->chunk" --> lambda5_result{{"output <br> id='result'"}}:::output
+lambda5_chunk[/"input <br> id='chunk'"/]:::input -- "chunk->json" --> lambda5_transformCompletion["jsonata <br> id='transformCompletion'"]
 end
-sg_lambda3:::slotted -- "lamdba->lamdba" --o lambda3
+sg_lambda5:::slotted -- "lamdba->lamdba" --o lambda5
 
-input[/"input <br> id='input'"/]:::input -- "useStreaming->useStreaming" --> makeBody["jsonata <br> id='makeBody'"]
+openai["fetch <br> id='openai'"] -- "response->json" --> getResponse["jsonata <br> id='getResponse'"]
+openai["fetch <br> id='openai'"] -- "stream->stream" --> streamTransform["transformStream <br> id='streamTransform'"]
+input[/"input <br> id='input'"/]:::input -- all --> makeBody["jsonata <br> id='makeBody'"]
+input[/"input <br> id='input'"/]:::input -- "useStreaming->stream" --> openai["fetch <br> id='openai'"]
+makeHeaders["jsonata <br> id='makeHeaders'"] -- "result->headers" --> openai["fetch <br> id='openai'"]
+makeBody["jsonata <br> id='makeBody'"] -- "result->body" --> openai["fetch <br> id='openai'"]
 getResponse["jsonata <br> id='getResponse'"] -- "result->text" --> textOutput{{"output <br> id='textOutput'"}}:::output
-fetch2["fetch <br> id='fetch-2'"] -- "response->json" --> getResponse["jsonata <br> id='getResponse'"]
-transformStream4["transformStream <br> id='transformStream-4'"] -- "stream->stream" --> streamOutput{{"output <br> id='streamOutput'"}}:::output
-fetch2["fetch <br> id='fetch-2'"] -- "stream->stream" --> transformStream4["transformStream <br> id='transformStream-4'"]
-makeBody["jsonata <br> id='makeBody'"] -- "result->body" --> fetch2["fetch <br> id='fetch-2'"]
-input[/"input <br> id='input'"/]:::input -- "content->content" --> makeBody["jsonata <br> id='makeBody'"]
+secrets3("secrets <br> id='secrets-3'"):::secrets -- "OPENAI_API_KEY->OPENAI_API_KEY" --> makeHeaders["jsonata <br> id='makeHeaders'"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
