@@ -209,7 +209,20 @@
               {
                 "id": "output-4",
                 "type": "output",
-                "configuration": {}
+                "configuration": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "guide": {
+                        "type": "string",
+                        "title": "guide"
+                      }
+                    },
+                    "required": [
+                      "guide"
+                    ]
+                  }
+                }
               },
               {
                 "id": "guideGenerator",
@@ -224,7 +237,30 @@
               {
                 "id": "input-1",
                 "type": "input",
-                "configuration": {}
+                "configuration": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "location": {
+                        "title": "location",
+                        "description": "The value to substitute for the parameter \"location\"",
+                        "type": [
+                          "string",
+                          "object"
+                        ]
+                      },
+                      "generator": {
+                        "title": "path",
+                        "description": "The path to the board to invoke.",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "location",
+                      "generator"
+                    ]
+                  }
+                }
               },
               {
                 "id": "guideTemplate",
@@ -236,7 +272,24 @@
               {
                 "id": "input-3",
                 "type": "input",
-                "configuration": {}
+                "configuration": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "item": {
+                        "title": "activity",
+                        "description": "The value to substitute for the parameter \"activity\"",
+                        "type": [
+                          "string",
+                          "object"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "item"
+                    ]
+                  }
+                }
               }
             ],
             "graphs": {}
