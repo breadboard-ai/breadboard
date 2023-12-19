@@ -11,7 +11,9 @@ import {
   BreadboardCapability,
   GraphDescriptor,
   InputValues,
+  NodeDescriberResult,
   NodeHandlerContext,
+  Schema,
 } from "../../src/types.js";
 
 type IncludeInputValues = InputValues & {
@@ -58,53 +60,113 @@ export const TestKit = new KitBuilder({
    * This is a primitive implementation of the `invoke` node in Core Kit,
    * just enough for testing.
    */
-  invoke: async (inputs: InvokeInputValues, context: NodeHandlerContext) => {
-    const { $recipe, ...args } = inputs;
+  invoke: {
+    invoke: async (inputs: InvokeInputValues, context: NodeHandlerContext) => {
+      const { $recipe, ...args } = inputs;
 
-    if ($recipe) {
-      const board =
-        ($recipe as BreadboardCapability).kind === "board"
-          ? await Board.fromBreadboardCapability(
-              $recipe as BreadboardCapability
-            )
-          : typeof $recipe === "string"
-          ? await Board.load($recipe, {
+      if ($recipe) {
+        const board =
+          ($recipe as BreadboardCapability).kind === "board"
+            ? await Board.fromBreadboardCapability(
+                $recipe as BreadboardCapability
+              )
+            : typeof $recipe === "string"
+            ? await Board.load($recipe, {
+                base: context.base,
+                outerGraph: context.outerGraph,
+              })
+            : undefined;
+
+        if (!board) throw new Error("Must provide valid $recipe to invoke");
+
+        return await board.runOnce(args, context);
+      } else {
+        const { board, path, ...args } = inputs;
+
+        const runnableBoard = board
+          ? await Board.fromBreadboardCapability(board)
+          : path
+          ? await Board.load(path, {
               base: context.base,
               outerGraph: context.outerGraph,
             })
           : undefined;
 
-      if (!board) throw new Error("Must provide valid $recipe to invoke");
+        if (!runnableBoard)
+          throw new Error("Must provide valid board to invoke");
 
-      return await board.runOnce(args, context);
-    } else {
-      const { board, path, ...args } = inputs;
+        return await runnableBoard.runOnce(args, context);
+      }
+    },
+    describe: async (inputs?: InputValues): Promise<NodeDescriberResult> => {
+      // Bare subset of describe() for invoke: Find the first input and output
+      // nodes of inline supplied graphs (no loading), and use their schemas.
+      let graph: GraphDescriptor | undefined = undefined;
+      if (
+        inputs?.$recipe &&
+        (inputs?.$recipe as BreadboardCapability).kind === "board"
+      ) {
+        graph = (inputs?.$recipe as BreadboardCapability).board;
+      } else if (
+        inputs?.board &&
+        (inputs.board as BreadboardCapability).kind === "board"
+      ) {
+        graph = (inputs.board as BreadboardCapability).board;
+      } else if (inputs?.graph) {
+        graph = inputs.graph as GraphDescriptor;
+      }
 
-      const runnableBoard = board
-        ? await Board.fromBreadboardCapability(board)
-        : path
-        ? await Board.load(path, {
-            base: context.base,
-            outerGraph: context.outerGraph,
-          })
-        : undefined;
+      const inputSchema =
+        (graph?.nodes.find((n) => n.type === "input" && n.configuration?.schema)
+          ?.configuration?.schema as Schema) ?? {};
+      const outputSchema =
+        (graph?.nodes.find(
+          (n) => n.type === "output" && n.configuration?.schema
+        )?.configuration?.schema as Schema) ?? {};
 
-      if (!runnableBoard) throw new Error("Must provide valid board to invoke");
-
-      return await runnableBoard.runOnce(args, context);
-    }
+      return { inputSchema, outputSchema };
+    },
   },
   /**
    * Reverses provided string inputs. Will crash if provided non-string inputs.
    * @param inputs InputValues
    */
-  reverser: async (inputs) => {
-    return Object.fromEntries(
-      Object.entries(inputs).map(([key, value]) => [
-        key,
-        (inputs[key] = [...(value as string)].reverse().join("")),
-      ])
-    );
+  reverser: {
+    invoke: async (inputs) => {
+      return Object.fromEntries(
+        Object.entries(inputs).map(([key, value]) => [
+          key,
+          (inputs[key] = [...(value as string)].reverse().join("")),
+        ])
+      );
+    },
+    describe: async (
+      inputs?: InputValues,
+      inputSchema?: Schema
+    ): Promise<NodeDescriberResult> => {
+      const ports = [
+        ...Object.keys(inputs ?? {}),
+        ...Object.keys(inputSchema?.properties ?? {}),
+      ];
+
+      const schema = (description: string) => ({
+        title: "Reverser",
+        description: "Reverses the provided string inputs",
+        type: "object",
+        properties: Object.fromEntries(
+          ports.map((port) => [
+            port,
+            { type: "string", title: port, description },
+          ])
+        ),
+        additonalProperties: Object.entries(inputs ?? {}).length === 0,
+      });
+
+      return {
+        inputSchema: schema("String to reverse"),
+        outputSchema: schema("Reversed string"),
+      };
+    },
   },
   /**
    * Supplies a simple stream output that can be used to test interactions with
