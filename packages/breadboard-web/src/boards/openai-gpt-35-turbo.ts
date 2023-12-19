@@ -4,15 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  GraphMetadata,
-  Schema,
-  V,
-  base,
-  recipe,
-} from "@google-labs/breadboard";
+import { GraphMetadata, Schema, base, recipe } from "@google-labs/breadboard";
 import { starter } from "@google-labs/llm-starter";
 import { nursery } from "@google-labs/node-nursery-web";
+import { chunkTransformer } from "./openai-chunk-transformer";
 
 const metadata = {
   title: "OpenAI GPT-3.5-turbo",
@@ -232,19 +227,7 @@ export default await recipe(async () => {
   return nursery
     .transformStream({
       $id: "streamTransform",
-      board: recipe(async () => {
-        const input = base.input({ $id: "chunk" });
-        const transformCompletion = starter.jsonata({
-          $id: "transformCompletion",
-          expression:
-            'choices[0].delta.content ? choices[0].delta.content : ""',
-          json: input.chunk as V<string>,
-        });
-
-        return transformCompletion.result
-          .as("chunk")
-          .to(base.output({ $id: "result" }));
-      }),
+      board: chunkTransformer(),
       stream: fetch,
     })
     .to(streamOutput);
