@@ -7,8 +7,10 @@
   "scripts": {
     "dev": "wireit",
     "build": "wireit",
-    "build:vite": "wireit"
+    "build:vite": "wireit",
+    "lint": "wireit"
   },
+  "main": "./dist/src/web/index.js",
   "wireit": {
     "build": {
       "dependencies": [
@@ -28,6 +30,7 @@
         "FORCE_COLOR": "1"
       },
       "dependencies": [
+        "../breadboard:build",
         "typescript-files-and-deps"
       ],
       "files": [
@@ -51,6 +54,17 @@
       "files": [
         "vite.config.ts"
       ]
+    },
+    "lint": {
+      "command": "eslint . --ext .ts",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "files": [
+        "src/**/*.ts",
+        "tests/**/*.ts"
+      ],
+      "output": []
     }
   },
   "keywords": [],
@@ -60,6 +74,8 @@
     "@google-labs/tsconfig": "*",
     "@types/node": "^20.10.4",
     "@types/nunjucks": "^3.2.6",
+    "@typescript-eslint/eslint-plugin": "^5.56.0",
+    "@typescript-eslint/parser": "^5.56.0",
     "vite": "^5.0.8",
     "vite-plugin-full-reload": "^1.1.0",
     "vite-plugin-watch-and-run": "^1.5.1",

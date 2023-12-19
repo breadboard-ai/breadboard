@@ -72,6 +72,7 @@
         "./packages/breadboard-cli:lint",
         "./packages/breadboard-server:lint",
         "./packages/breadboard-ui:lint",
+        "./packages/breadbuddy:lint",
         "./packages/coffee-bot-board:lint",
         "./packages/core-kit:lint",
         "./packages/create-breadboard:lint",
