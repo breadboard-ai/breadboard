@@ -19,8 +19,14 @@ chooseMethod["runJavascript <br> id='chooseMethod'"] -- "sseOption->sseOption" -
 secrets3("secrets <br> id='secrets-3'"):::secrets -- "GEMINI_KEY->GEMINI_KEY" --> makeURL["urlTemplate <br> id='makeURL'"]
 lambda6["lambda <br> id='lambda-6'"] -- "board->board" --> chunkToText["transformStream <br> id='chunkToText'"]
 subgraph sg_lambda6 [lambda-6]
-lambda6_runJavascript4["runJavascript <br> id='runJavascript-4'"] -- "result->chunk" --> lambda6_output5{{"output <br> id='output-5'"}}:::output
-lambda6_input3[/"input <br> id='input-3'"/]:::input -- "chunk->chunk" --> lambda6_runJavascript4["runJavascript <br> id='runJavascript-4'"]
+lambda6_fn4["invoke <br> id='fn-4'"] -- all --> lambda6_output5{{"output <br> id='output-5'"}}:::output
+lambda6_input3[/"input <br> id='input-3'"/]:::input -- "chunk->chunk" --> lambda6_fn4["invoke <br> id='fn-4'"]
+
+subgraph sg_fn4 [fn-4]
+fn4lambda6_fn4input[/"input <br> id='fn-4-input'"/]:::input -- all --> fn4lambda6_fn4run["runJavascript <br> id='fn-4-run'"]
+fn4lambda6_fn4run["runJavascript <br> id='fn-4-run'"] -- all --> fn4lambda6_fn4output{{"output <br> id='fn-4-output'"}}:::output
+end
+
 end
 sg_lambda6:::slotted -- "lamdba->lamdba" --o lambda6
 

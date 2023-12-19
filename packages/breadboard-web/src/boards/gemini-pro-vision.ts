@@ -4,7 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphMetadata, Schema, base, recipe } from "@google-labs/breadboard";
+import {
+  GraphMetadata,
+  Schema,
+  base,
+  recipe,
+  recipeAsCode,
+} from "@google-labs/breadboard";
 import { starter } from "@google-labs/llm-starter";
 import { nursery } from "@google-labs/node-nursery-web";
 
@@ -136,26 +142,23 @@ export default await recipe(async () => {
   const chunkToText = nursery.transformStream({
     $id: "chunkToText",
     board: recipe(async () => {
-      function run({
-        chunk,
-      }: {
+      type Chunky = {
         chunk: {
           candidates: {
             content: { parts: { text: string }[] };
           }[];
         };
-      }): string {
-        return chunk.candidates[0].content.parts[0].text;
-      }
+      };
 
       return base
         .input({})
         .chunk.to(
-          starter.runJavascript({
-            code: run.toString(),
-          })
+          recipeAsCode(({ chunk }: Chunky) => {
+            return {
+              chunk: chunk.candidates[0].content.parts[0].text,
+            };
+          })()
         )
-        .result.as("chunk")
         .to(base.output({}));
     }),
     stream: fetch.stream,
