@@ -9,7 +9,9 @@ import {
   GraphDescriptor,
   GraphMetadata,
   NodeDescriberFunction,
+  NodeDescriberResult,
   NodeValue as OriginalNodeValue,
+  Schema,
 } from "../../types.js";
 
 // TODO:BASE: Same as before, but I added NodeFactory as base type, which is a
@@ -88,6 +90,12 @@ export abstract class AbstractNode<
   abstract getInputs(): I;
 
   abstract invoke(dynamicScope?: ScopeInterface): Promise<O>;
+  abstract describe(
+    scope?: ScopeInterface,
+    inputs?: InputValues,
+    inputSchema?: Schema,
+    outputSchema?: Schema
+  ): Promise<NodeDescriberResult | undefined>;
 
   abstract serialize(metadata?: GraphMetadata): Promise<GraphDescriptor>;
 
