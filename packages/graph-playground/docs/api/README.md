@@ -12,11 +12,11 @@ This is a prototyping ground for experimenting with representing generative AI a
 
 There are three key packages in this workspace:
 
-1. `seeds/breadboard` -- an implementation of the graph traversal machine and library for making graphs.
-2. `seeds/llm-starter` -- the nascent LLM Starter Kit, a collection of nodes that are useful for making generative AI apps.
-3. `seeds/graph-playground` -- this package, which a collection of sample code for how to use `seeds/breadboard` and `seeds/llm-starter` to make graphs.
+1. `packages/breadboard` -- an implementation of the graph traversal machine and library for making graphs.
+2. `packages/llm-starter` -- the nascent LLM Starter Kit, a collection of nodes that are useful for making generative AI apps.
+3. `packages/graph-playground` -- this package, which a collection of sample code for how to use `packages/breadboard` and `packages/llm-starter` to make graphs.
 
-:two: In `seeds/graph-playground`, create `.env` file with the following content:
+:two: In `packages/graph-playground`, create `.env` file with the following content:
 
 ```bash
 PALM_KEY="your GCP API key"
@@ -64,8 +64,8 @@ npm run dev graphs/react-with-include.json
 
 ```
 
-For a more detailed explanation of how graph traversal machine works, see [story.md](../breadboard/docs/story.md) in the `seeds/breadboard` package.
+For a more detailed explanation of how graph traversal machine works, see [story.md](../breadboard/docs/story.md) in the `packages/breadboard` package.
 
-For documentation on the Breadboard library, see [README.md](../breadboard/README.md) in the `seeds/breadboard` package.
+For documentation on the Breadboard library, see [README.md](../breadboard/README.md) in the `packages/breadboard` package.
 
-For documentation on the LLM Starter Kit, see [README.md](../llm-starter/README.md) in the `seeds/llm-starter` package.
+For documentation on the LLM Starter Kit, see [README.md](../llm-starter/README.md) in the `packages/llm-starter` package.

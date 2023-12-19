@@ -4,7 +4,7 @@
 
 ## Implements
 
-- `AsyncIterable`<[`TraversalResult`](../interfaces/TraversalResult.md)\>
+- `AsyncIterable`\<[`TraversalResult`](../interfaces/TraversalResult.md)\>
 
 ## Table of contents
 
@@ -27,18 +27,22 @@
 
 ### constructor
 
-• **new TraversalMachine**(`descriptor`, `result?`)
+• **new TraversalMachine**(`descriptor`, `result?`): [`TraversalMachine`](TraversalMachine.md)
 
 #### Parameters
 
-| Name         | Type                                                  |
-| :----------- | :---------------------------------------------------- |
-| `descriptor` | [`GraphDescriptor`](../modules.md#graphdescriptor)    |
-| `result?`    | [`TraversalResult`](../interfaces/TraversalResult.md) |
+| Name | Type |
+| :------ | :------ |
+| `descriptor` | [`GraphDescriptor`](../modules.md#graphdescriptor) |
+| `result?` | [`TraversalResult`](../interfaces/TraversalResult.md) |
+
+#### Returns
+
+[`TraversalMachine`](TraversalMachine.md)
 
 #### Defined in
 
-[seeds/breadboard/src/traversal/machine.ts:17](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/traversal/machine.ts#L17)
+[packages/breadboard/src/traversal/machine.ts:17](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/traversal/machine.ts#L17)
 
 ## Properties
 
@@ -48,9 +52,9 @@
 
 #### Defined in
 
-[seeds/breadboard/src/traversal/machine.ts:14](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/traversal/machine.ts#L14)
+[packages/breadboard/src/traversal/machine.ts:14](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/traversal/machine.ts#L14)
 
----
+___
 
 ### previousResult
 
@@ -58,17 +62,17 @@
 
 #### Defined in
 
-[seeds/breadboard/src/traversal/machine.ts:15](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/traversal/machine.ts#L15)
+[packages/breadboard/src/traversal/machine.ts:15](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/traversal/machine.ts#L15)
 
 ## Methods
 
 ### [asyncIterator]
 
-▸ **[asyncIterator]**(): `AsyncIterator`<[`TraversalResult`](../interfaces/TraversalResult.md), `any`, `undefined`\>
+▸ **[asyncIterator]**(): `AsyncIterator`\<[`TraversalResult`](../interfaces/TraversalResult.md), `any`, `undefined`\>
 
 #### Returns
 
-`AsyncIterator`<[`TraversalResult`](../interfaces/TraversalResult.md), `any`, `undefined`\>
+`AsyncIterator`\<[`TraversalResult`](../interfaces/TraversalResult.md), `any`, `undefined`\>
 
 #### Implementation of
 
@@ -76,9 +80,9 @@ AsyncIterable.[asyncIterator]
 
 #### Defined in
 
-[seeds/breadboard/src/traversal/machine.ts:22](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/traversal/machine.ts#L22)
+[packages/breadboard/src/traversal/machine.ts:22](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/traversal/machine.ts#L22)
 
----
+___
 
 ### start
 
@@ -90,24 +94,24 @@ AsyncIterable.[asyncIterator]
 
 #### Defined in
 
-[seeds/breadboard/src/traversal/machine.ts:26](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/traversal/machine.ts#L26)
+[packages/breadboard/src/traversal/machine.ts:26](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/traversal/machine.ts#L26)
 
----
+___
 
 ### prepareToSafe
 
-▸ `Static` **prepareToSafe**(`result`): `Promise`<[`TraversalResult`](../interfaces/TraversalResult.md)\>
+▸ **prepareToSafe**(`result`): `Promise`\<[`TraversalResult`](../interfaces/TraversalResult.md)\>
 
 #### Parameters
 
-| Name     | Type                                                  |
-| :------- | :---------------------------------------------------- |
+| Name | Type |
+| :------ | :------ |
 | `result` | [`TraversalResult`](../interfaces/TraversalResult.md) |
 
 #### Returns
 
-`Promise`<[`TraversalResult`](../interfaces/TraversalResult.md)\>
+`Promise`\<[`TraversalResult`](../interfaces/TraversalResult.md)\>
 
 #### Defined in
 
-[seeds/breadboard/src/traversal/machine.ts:49](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/breadboard/src/traversal/machine.ts#L49)
+[packages/breadboard/src/traversal/machine.ts:49](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/traversal/machine.ts#L49)

@@ -7,39 +7,39 @@
 ### Functions
 
 - [main](modules.md#main)
-- [pass_in_input](modules.md#pass_in_input)
+- [pass\_in\_input](modules.md#pass_in_input)
 
 ## Functions
 
 ### main
 
-▸ **main**(`args`, `use_input_handler?`): `Promise`<`void`\>
+▸ **main**(`args`, `use_input_handler?`): `Promise`\<`void`\>
 
 #### Parameters
 
-| Name                | Type       | Default value |
-| :------------------ | :--------- | :------------ |
-| `args`              | `string`[] | `undefined`   |
-| `use_input_handler` | `boolean`  | `false`       |
+| Name | Type | Default value |
+| :------ | :------ | :------ |
+| `args` | `string`[] | `undefined` |
+| `use_input_handler` | `boolean` | `false` |
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>
 
 #### Defined in
 
-[index.ts:55](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-playground/src/index.ts#L55)
+[index.ts:61](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-playground/src/index.ts#L61)
 
----
+___
 
-### pass_in_input
+### pass\_in\_input
 
 ▸ **pass_in_input**(`value`): `void`
 
 #### Parameters
 
-| Name    | Type     |
-| :------ | :------- |
+| Name | Type |
+| :------ | :------ |
 | `value` | `string` |
 
 #### Returns
@@ -48,4 +48,4 @@
 
 #### Defined in
 
-[index.ts:32](https://github.com/breadboard-ai/breadboard/blob/99919d5/seeds/graph-playground/src/index.ts#L32)
+[index.ts:38](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-playground/src/index.ts#L38)

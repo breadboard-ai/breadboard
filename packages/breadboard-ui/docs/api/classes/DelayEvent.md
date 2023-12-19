@@ -1,73 +1,68 @@
-[@google-labs/breadboard-ui](../README.md) / [Exports](../modules.md) / StartEvent
+[@google-labs/breadboard-ui](../README.md) / [Exports](../modules.md) / DelayEvent
 
-# Class: StartEvent
-
-**`License`**
-
-Copyright 2023 Google LLC
-SPDX-License-Identifier: Apache-2.0
+# Class: DelayEvent
 
 ## Hierarchy
 
 - `Event`
 
-  ↳ **`StartEvent`**
+  ↳ **`DelayEvent`**
 
 ## Table of contents
 
 ### Constructors
 
-- [constructor](StartEvent.md#constructor)
+- [constructor](DelayEvent.md#constructor)
 
 ### Properties
 
-- [AT\_TARGET](StartEvent.md#at_target)
-- [BUBBLING\_PHASE](StartEvent.md#bubbling_phase)
-- [CAPTURING\_PHASE](StartEvent.md#capturing_phase)
-- [NONE](StartEvent.md#none)
-- [bubbles](StartEvent.md#bubbles)
-- [cancelBubble](StartEvent.md#cancelbubble)
-- [cancelable](StartEvent.md#cancelable)
-- [composed](StartEvent.md#composed)
-- [currentTarget](StartEvent.md#currenttarget)
-- [defaultPrevented](StartEvent.md#defaultprevented)
-- [eventPhase](StartEvent.md#eventphase)
-- [isTrusted](StartEvent.md#istrusted)
-- [returnValue](StartEvent.md#returnvalue)
-- [srcElement](StartEvent.md#srcelement)
-- [target](StartEvent.md#target)
-- [timeStamp](StartEvent.md#timestamp)
-- [type](StartEvent.md#type)
-- [url](StartEvent.md#url)
-- [AT\_TARGET](StartEvent.md#at_target-1)
-- [BUBBLING\_PHASE](StartEvent.md#bubbling_phase-1)
-- [CAPTURING\_PHASE](StartEvent.md#capturing_phase-1)
-- [NONE](StartEvent.md#none-1)
-- [eventName](StartEvent.md#eventname)
+- [AT\_TARGET](DelayEvent.md#at_target)
+- [BUBBLING\_PHASE](DelayEvent.md#bubbling_phase)
+- [CAPTURING\_PHASE](DelayEvent.md#capturing_phase)
+- [NONE](DelayEvent.md#none)
+- [bubbles](DelayEvent.md#bubbles)
+- [cancelBubble](DelayEvent.md#cancelbubble)
+- [cancelable](DelayEvent.md#cancelable)
+- [composed](DelayEvent.md#composed)
+- [currentTarget](DelayEvent.md#currenttarget)
+- [defaultPrevented](DelayEvent.md#defaultprevented)
+- [duration](DelayEvent.md#duration)
+- [eventPhase](DelayEvent.md#eventphase)
+- [isTrusted](DelayEvent.md#istrusted)
+- [returnValue](DelayEvent.md#returnvalue)
+- [srcElement](DelayEvent.md#srcelement)
+- [target](DelayEvent.md#target)
+- [timeStamp](DelayEvent.md#timestamp)
+- [type](DelayEvent.md#type)
+- [AT\_TARGET](DelayEvent.md#at_target-1)
+- [BUBBLING\_PHASE](DelayEvent.md#bubbling_phase-1)
+- [CAPTURING\_PHASE](DelayEvent.md#capturing_phase-1)
+- [NONE](DelayEvent.md#none-1)
+- [eventName](DelayEvent.md#eventname)
 
 ### Methods
 
-- [composedPath](StartEvent.md#composedpath)
-- [initEvent](StartEvent.md#initevent)
-- [preventDefault](StartEvent.md#preventdefault)
-- [stopImmediatePropagation](StartEvent.md#stopimmediatepropagation)
-- [stopPropagation](StartEvent.md#stoppropagation)
+- [composedPath](DelayEvent.md#composedpath)
+- [initEvent](DelayEvent.md#initevent)
+- [preventDefault](DelayEvent.md#preventdefault)
+- [stopImmediatePropagation](DelayEvent.md#stopimmediatepropagation)
+- [stopPropagation](DelayEvent.md#stoppropagation)
 
 ## Constructors
 
 ### constructor
 
-• **new StartEvent**(`url`): [`StartEvent`](StartEvent.md)
+• **new DelayEvent**(`duration`): [`DelayEvent`](DelayEvent.md)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `url` | `string` |
+| `duration` | `number` |
 
 #### Returns
 
-[`StartEvent`](StartEvent.md)
+[`DelayEvent`](DelayEvent.md)
 
 #### Overrides
 
@@ -75,7 +70,7 @@ Event.constructor
 
 #### Defined in
 
-[packages/breadboard-ui/src/events.ts:10](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard-ui/src/events.ts#L10)
+[packages/breadboard-ui/src/events.ts:40](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard-ui/src/events.ts#L40)
 
 ## Properties
 
@@ -243,6 +238,16 @@ node_modules/typescript/lib/lib.dom.d.ts:8025
 
 ___
 
+### duration
+
+• **duration**: `number`
+
+#### Defined in
+
+[packages/breadboard-ui/src/events.ts:40](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard-ui/src/events.ts#L40)
+
+___
+
 ### eventPhase
 
 • `Readonly` **eventPhase**: `number`
@@ -369,16 +374,6 @@ node_modules/typescript/lib/lib.dom.d.ts:8067
 
 ___
 
-### url
-
-• **url**: `string`
-
-#### Defined in
-
-[packages/breadboard-ui/src/events.ts:10](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard-ui/src/events.ts#L10)
-
-___
-
 ### AT\_TARGET
 
 ▪ `Static` `Readonly` **AT\_TARGET**: ``2``
@@ -437,11 +432,11 @@ ___
 
 ### eventName
 
-▪ `Static` **eventName**: `string` = `"breadboardstartevent"`
+▪ `Static` **eventName**: `string` = `"breadboarddelayevent"`
 
 #### Defined in
 
-[packages/breadboard-ui/src/events.ts:8](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard-ui/src/events.ts#L8)
+[packages/breadboard-ui/src/events.ts:38](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard-ui/src/events.ts#L38)
 
 ## Methods
 

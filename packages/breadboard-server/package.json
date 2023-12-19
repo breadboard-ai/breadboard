@@ -65,6 +65,9 @@
     },
     "generate:docs": {
       "command": "typedoc --plugin typedoc-plugin-markdown",
+      "dependencies": [
+        "build:tsc"
+      ],
       "files": [
         "src/**/*.ts",
         "tsconfig.json",
