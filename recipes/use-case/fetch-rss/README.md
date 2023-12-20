@@ -16,7 +16,7 @@ This recipe demonstrates how to fetch an RSS feed return the items and metadata.
 ### From the CLI
 
 ```bash
-breadboard run recipes/use-case/fetch-rss/index.js --kit @google-labs/llm-starter
+breadboard run recipes/use-case/fetch-rss/index.js --kit @google-labs/llm-starter -i {\"url\":\"https://paul.kinlan.me/index.xml\"}"
 ```
 
 ### From the UI

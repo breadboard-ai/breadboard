@@ -16,7 +16,7 @@ This recipe demonstrates how to fetch an ATOM feed return the items and metadata
 ### From the CLI
 
 ```bash
-breadboard run recipes/use-case/fetch-atom/index.js --kit @google-labs/llm-starter
+breadboard run recipes/use-case/fetch-atom/index.js --kit @google-labs/llm-starter -i {\"url\":\"https://blog.chromium.org/feeds/posts/default\"}"
 ```
 
 ### From the UI

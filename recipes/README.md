@@ -24,5 +24,13 @@ To create a new recipe, create a new directory in this directory. The name of th
 
 ## List of Recipes
 
+### Use Cases
+
+A use case recipe is something that can be integrated into a Breadboard to solve a particular problem.
+
 - [Fetch RSS Feed](./use-case/fetch-rss/README.md)
 - [Fetch ATOm Feed](./use-case/fetch-atom/README.md)
+
+### Concepts
+
+A concept recipe is something that demonstrates a particular concept in Breadboard. For example, how to
