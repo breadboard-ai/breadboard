@@ -106,7 +106,7 @@ test("directly await declarative recipe, passing full inputs as spread", async (
   t.is(baz, "bar");
 });
 
-test.skip("directly await declarative recipe, passing full inputs as spread, twice", async (t) => {
+test("directly await declarative recipe, passing full inputs as spread, twice", async (t) => {
   const graph = recipe<{ [key: string]: string }>((inputs) => {
     const reverser = testKit.reverser({ ...inputs });
     return testKit.noop({ ...reverser });
@@ -187,22 +187,24 @@ test("if-else, imperative execution", async (t) => {
 });
 
 test.skip("if-else, serializable", async (t) => {
-  const math = recipe(async () => {
+  const math = recipeAsCode(async () => {
     return { result: "math result" };
   });
-  const search = recipe(async () => {
+  const search = recipeAsCode(async () => {
     return { text: "search result" };
   });
 
-  const graph = recipe({
-    input: z.object({
-      question: z.string().describe("Query: A math or search question?"),
-    }),
-    output: z.object({
-      result: z.string().describe("Answer: The answer to the query"),
-    }),
-    invoke: async (inputs) => {
-      return testKit
+  const graph = recipe(
+    {
+      input: z.object({
+        question: z.string().describe("Query: A math or search question?"),
+      }),
+      output: z.object({
+        result: z.string().describe("Answer: The answer to the query"),
+      }),
+    },
+    (inputs) =>
+      testKit
         .noop({
           template:
             "Is this question about math? Answer YES or NO.\nQuestion: {{question}}\nAnswer: ",
@@ -229,11 +231,7 @@ test.skip("if-else, serializable", async (t) => {
           },
           { math, search }
         )
-        .result.to(testKit.noop()) as unknown as PromiseLike<{
-        result: string;
-      }>;
-    },
-  });
+  );
 
   {
     const { result } = await graph({ question: "YES it is" });

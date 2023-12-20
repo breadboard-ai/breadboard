@@ -21,7 +21,6 @@ import {
   InputValues,
   OutputValues,
   NodeHandler,
-  NodeHandlerFunction,
   NodeTypeIdentifier,
   NodeValue,
   Serializeable,
@@ -158,17 +157,6 @@ export class BuilderNode<
     }
   }
 
-  // TODO:BASE: This should just be in the super class, below should become a
-  // wrapper around it.
-  #getHandlerFunction(scope: ScopeInterface) {
-    const handler = this.#handler ?? scope.getHandler(this.type);
-    if (!handler) throw new Error(`Handler ${this.type} not found`);
-    return typeof handler === "function" ? handler : handler.invoke;
-  }
-
-  // TODO:BASE: In the end, we need to capture the outputs and resolve the
-  // promise. But before that there is a bit of refactoring to do to allow
-  // returning of graphs, parallel execution, etc.
   async invoke(dynamicScope?: ScopeInterface): Promise<O> {
     const scope = new BuilderScope({
       dynamicScope,
@@ -176,9 +164,9 @@ export class BuilderNode<
     });
     return scope.asScopeFor(async () => {
       try {
-        const handler = this.#getHandlerFunction(
-          scope
-        ) as unknown as NodeHandlerFunction<I, O>;
+        const handler = this.#handler ?? scope.getHandler(this.type);
+
+        let result: O;
 
         // Note: The handler might actually return a graph (as a NodeProxy), and
         // so the await might triggers its execution. This is what we want.
@@ -197,10 +185,21 @@ export class BuilderNode<
         //    - it isn't an output node, add an output node and wire it up
         //    - execute the graph, and return the output node's outputs
         //  - otherwise return the handler's return value as result.
-        const result = (await handler(
-          this.getInputs() as PromiseLike<I> & I,
-          this
-        )) as O;
+        const handlerFn =
+          typeof handler === "function" ? handler : handler?.invoke;
+        if (handlerFn) {
+          result = (await handlerFn(
+            this.getInputs() as PromiseLike<I> & I,
+            this
+          )) as O;
+        } else if (handler && typeof handler !== "function" && handler.graph) {
+          result = (await scope.invokeOnce(
+            handler.graph,
+            this.getInputs()
+          )) as O;
+        } else {
+          throw new Error(`Can't find handler for ${this.id}`);
+        }
 
         // Execute graphs returned by the handler as individual results (A full
         // graph returned would have already been executed above)

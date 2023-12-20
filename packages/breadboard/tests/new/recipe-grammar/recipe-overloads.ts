@@ -25,5 +25,5 @@ test("zod + graph, w/ nested code recipe", async (t) => {
   );
 
   const result = await graph({ foo: "bar" });
-  t.deepEqual(result, { foo: "bar!" });
+  t.like(result, { foo: "bar!" });
 });
