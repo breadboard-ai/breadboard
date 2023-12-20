@@ -9,9 +9,8 @@ generate["invoke <br> id='generate'"] -- "toolCalls->toolCalls" --> getBoardArgs
 generate["invoke <br> id='generate'"] -- all --> formatOutput["jsonata <br> id='formatOutput'"]
 callBoardAsTool["invoke <br> id='callBoardAsTool'"] -- all --> hoistOutputs["jsonata <br> id='hoistOutputs'"]
 parameters[/"input <br> id='parameters'"/]:::input -- "boards->boards" --> formatFunctionDeclarations["invoke <br> id='formatFunctionDeclarations'"]
-parameters[/"input <br> id='parameters'"/]:::input -- "text->text" --> generate["invoke <br> id='generate'"]
+parameters[/"input <br> id='parameters'"/]:::input -- all --> generate["invoke <br> id='generate'"]
 parameters[/"input <br> id='parameters'"/]:::input -- "generator->path" --> generate["invoke <br> id='generate'"]
-parameters[/"input <br> id='parameters'"/]:::input -- "context->context" --> generate["invoke <br> id='generate'"]
 parameters[/"input <br> id='parameters'"/]:::input -- "generator->generator" --> getBoardArgs["jsonata <br> id='getBoardArgs'"]
 formatFunctionDeclarations["invoke <br> id='formatFunctionDeclarations'"] -- "tools->tools" --> generate["invoke <br> id='generate'"]
 formatFunctionDeclarations["invoke <br> id='formatFunctionDeclarations'"] -- "urlMap->urlMap" --> getBoardArgs["jsonata <br> id='getBoardArgs'"]
@@ -19,7 +18,7 @@ getBoardArgs["jsonata <br> id='getBoardArgs'"] -- all --> callBoardAsTool["invok
 
 subgraph sg_formatFunctionDeclarations [formatFunctionDeclarations]
 formatFunctionDeclarations_formatResults["jsonata <br> id='formatResults'"] -- all --> formatFunctionDeclarations_output5{{"output <br> id='output-5'"}}:::output
-formatFunctionDeclarations_map4["map <br> id='map-4'"] -- "list->json" --> formatFunctionDeclarations_formatResults["jsonata <br> id='formatResults'"]
+formatFunctionDeclarations_map4["map <br> id='map-4'"] -- "list->list" --> formatFunctionDeclarations_formatResults["jsonata <br> id='formatResults'"]
 subgraph sg_map4 [map-4]
 formatFunctionDeclarations_map4_boardToFunction["invoke <br> id='boardToFunction'"] -- "function->function" --> formatFunctionDeclarations_map4_output4{{"output <br> id='output-4'"}}:::output
 formatFunctionDeclarations_map4_input3[/"input <br> id='input-3'"/]:::input -- "item->boardURL" --> formatFunctionDeclarations_map4_boardToFunction["invoke <br> id='boardToFunction'"]

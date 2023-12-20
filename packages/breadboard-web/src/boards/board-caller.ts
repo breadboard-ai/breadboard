@@ -5,15 +5,14 @@
  */
 
 import {
-  Board,
   GraphMetadata,
   Schema,
   V,
   base,
   recipe,
 } from "@google-labs/breadboard";
-import Core, { core } from "@google-labs/core-kit";
-import Starter, { starter } from "@google-labs/llm-starter";
+import { core } from "@google-labs/core-kit";
+import { starter } from "@google-labs/llm-starter";
 
 const metadata = {
   title: "Board Caller",
@@ -82,11 +81,6 @@ const parametersSchema = {
   required: ["text", "boards"],
 } satisfies Schema;
 
-// const board = new Board(metadata);
-
-// const starter = board.addKit(Starter);
-// const core = board.addKit(Core);
-
 export default await recipe(async () => {
   const parameters = base.input({
     $id: "parameters",
@@ -114,39 +108,19 @@ export default await recipe(async () => {
         });
       }),
       list: input.boards as V<string[]>,
-      //   input
-      //     .wire(
-      //       "item->boardURL",
-      //       core
-      //         .invoke({
-      //           $id: "boardToFunction",
-      //           path: "/graphs/board-as-function.json",
-      //         })
-      //         .wire("function->", output)
-      //     )
-      //     .wire("item->boardURL", output);
-      // }),
     });
 
     return starter
       .jsonata({
         $id: "formatResults",
         expression: `{
-        "tools": [function],
-        "urlMap": $merge([{ function.name: boardURL }])
+        "tools": [list.function],
+        "urlMap": $merge([list.{ function.name: boardURL }])
       }`,
         raw: true,
-        json: turnBoardsToFunctions.list as unknown as V<string>,
+        list: turnBoardsToFunctions,
       })
       .to(base.output({}));
-
-    // input.wire(
-    //   "boards->list",
-    //   turnBoardsToFunctions.wire(
-    //     "list->json",
-    //     formatResults.wire("*->", output)
-    //   )
-    // );
   })({
     $id: "formatFunctionDeclarations",
     boards: parameters,
@@ -155,9 +129,8 @@ export default await recipe(async () => {
   const generate = core.invoke({
     $id: "generate",
     useStreaming: false,
-    text: parameters.text as V<string>,
+    ...parameters,
     path: parameters.generator as V<string>,
-    context: parameters.context as V<string[]>,
     tools: formatFunctionDeclarations,
   });
 
@@ -185,7 +158,6 @@ export default await recipe(async () => {
     expression: `$ ~> | ** | {}, "schema" |`,
     ...callBoardAsTool,
   });
-  // .wire("result->", formatOutput.wire("*->", output));
 
   const formatOutput = starter.jsonata({
     $id: "formatOutput",
@@ -202,38 +174,4 @@ export default await recipe(async () => {
   });
 
   return output;
-
-  // parameters
-  //   .wire("text->", generate)
-  //   .wire("context->", generate)
-  //   .wire(
-  //     "boards->",
-  //     formatFunctionDeclarations
-  //       .wire("tools->", generate)
-  //       .wire("urlMap->", getBoardArgs)
-  //   )
-  //   .wire(
-  //     "generator->path",
-  //     generate
-  //       .wire(
-  //         "toolCalls->",
-  //         getBoardArgs
-  //           .wire(
-  //             "*->",
-  //             core.invoke({ $id: "callBoardAsTool" }).wire(
-  //               "*->",
-  //               starter
-  //                 .jsonata({
-  //                   $id: "hoistOutputs",
-  //                   expression: `$ ~> | ** | {}, "schema" |`,
-  //                 })
-  //                 .wire("result->", formatOutput.wire("*->", output))
-  //             )
-  //           )
-  //           .wire("<-generator", parameters)
-  //       )
-  //       .wire("context->", formatOutput)
-  //   );
 }).serialize(metadata);
-
-// export default board;

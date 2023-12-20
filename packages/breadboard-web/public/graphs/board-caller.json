@@ -42,20 +42,14 @@
     {
       "from": "parameters",
       "to": "generate",
-      "out": "text",
-      "in": "text"
+      "out": "*",
+      "in": ""
     },
     {
       "from": "parameters",
       "to": "generate",
       "out": "generator",
       "in": "path"
-    },
-    {
-      "from": "parameters",
-      "to": "generate",
-      "out": "context",
-      "in": "context"
     },
     {
       "from": "parameters",
@@ -216,7 +210,7 @@
           "from": "map-4",
           "to": "formatResults",
           "out": "list",
-          "in": "json"
+          "in": "list"
         },
         {
           "from": "boards",
@@ -235,7 +229,7 @@
           "id": "formatResults",
           "type": "jsonata",
           "configuration": {
-            "expression": "{\n        \"tools\": [function],\n        \"urlMap\": $merge([{ function.name: boardURL }])\n      }",
+            "expression": "{\n        \"tools\": [list.function],\n        \"urlMap\": $merge([list.{ function.name: boardURL }])\n      }",
             "raw": true
           }
         },
