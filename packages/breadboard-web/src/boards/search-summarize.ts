@@ -1,0 +1,92 @@
+/**
+ * @license
+ * Copyright 2023 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import {
+  GraphMetadata,
+  Schema,
+  V,
+  base,
+  recipe,
+} from "@google-labs/breadboard";
+import { core } from "@google-labs/core-kit";
+import { starter } from "@google-labs/llm-starter";
+
+const metadata = {
+  title: "The Search Summarizer Recipe",
+  description:
+    "A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.",
+  version: "0.1.1",
+} satisfies GraphMetadata;
+
+const inputSchema = {
+  type: "object",
+  properties: {
+    text: {
+      type: "string",
+      title: "Query",
+      description: "What would you like to search for?",
+    },
+    generator: {
+      type: "string",
+      title: "Generator",
+      description: "The URL of the generator to call",
+      default: "/graphs/text-generator.json",
+    },
+  },
+  required: ["text"],
+} satisfies Schema;
+
+const outputSchema = {
+  type: "object",
+  properties: {
+    text: {
+      type: "string",
+      title: "Answer",
+      description: "The answer to the query",
+    },
+  },
+  required: ["text"],
+} satisfies Schema;
+
+export default await recipe(async () => {
+  const parameters = base.input({ $id: "parameters", schema: inputSchema });
+
+  return starter
+    .secrets({ keys: ["API_KEY", "GOOGLE_CSE_ID"] })
+    .to(
+      starter.urlTemplate({
+        $id: "customSearchURL",
+        template:
+          "https://www.googleapis.com/customsearch/v1?key={API_KEY}&cx={GOOGLE_CSE_ID}&q={query}",
+        query: parameters.text,
+      })
+    )
+    .url.to(starter.fetch({ $id: "search" }))
+    .response.as("json")
+    .to(
+      starter.jsonata({
+        $id: "getSnippets",
+        expression: "$join(items.snippet, '\n')",
+      })
+    )
+    .result.as("context")
+    .to(
+      starter.promptTemplate({
+        template:
+          "Use context below to answer this question:\n\n##Question:\n{{question}}\n\n## Context {{context}}\n\\n## Answer:\n",
+        $id: "summarizing-template",
+        question: parameters.text,
+      })
+    )
+    .prompt.as("text")
+    .to(
+      core.invoke({
+        $id: "generator",
+        path: parameters.generator as V<string>,
+      })
+    )
+    .text.to(base.output({ schema: outputSchema }));
+}).serialize(metadata);

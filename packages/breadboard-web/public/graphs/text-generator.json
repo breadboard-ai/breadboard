@@ -1,0 +1,160 @@
+{
+  "title": "Text Generator",
+  "description": "This is a text generator. It can generate text using various LLMs. Currently, it supports the follwogin models: Google Gemini Pro, Google PaLM text-bison-001, OpenAI GPT-3.5 Turbo, and a mock model.",
+  "version": "0.0.2",
+  "edges": [
+    {
+      "from": "invoke",
+      "to": "textOutput",
+      "out": "text",
+      "in": "text"
+    },
+    {
+      "from": "invoke",
+      "to": "streamOutput",
+      "out": "stream",
+      "in": "stream"
+    },
+    {
+      "from": "fn-3",
+      "to": "invoke",
+      "out": "path",
+      "in": "path"
+    },
+    {
+      "from": "input",
+      "to": "fn-3",
+      "out": "MODEL",
+      "in": "MODEL"
+    },
+    {
+      "from": "input",
+      "to": "invoke",
+      "out": "*",
+      "in": ""
+    }
+  ],
+  "nodes": [
+    {
+      "id": "textOutput",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Text",
+              "description": "The generated text"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "invoke",
+      "type": "invoke",
+      "configuration": {}
+    },
+    {
+      "id": "fn-3",
+      "type": "invoke",
+      "configuration": {
+        "path": "#fn-3"
+      }
+    },
+    {
+      "id": "input",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Text",
+              "description": "The text to generate"
+            },
+            "useStreaming": {
+              "type": "boolean",
+              "title": "Stream",
+              "description": "Whether to stream the output",
+              "default": "false"
+            },
+            "MODEL": {
+              "type": "string",
+              "title": "Model",
+              "description": "The model to use for generation",
+              "enum": [
+                "Gemini Pro",
+                "GPT 3.5 Turbo",
+                "PaLM",
+                "mock"
+              ],
+              "examples": [
+                "Gemini Pro"
+              ]
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
+    },
+    {
+      "id": "streamOutput",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "stream": {
+              "type": "object",
+              "title": "Stream",
+              "description": "The generated text",
+              "format": "stream"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "graphs": {
+    "fn-3": {
+      "edges": [
+        {
+          "from": "fn-3-input",
+          "to": "fn-3-run",
+          "out": "*"
+        },
+        {
+          "from": "fn-3-run",
+          "to": "fn-3-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "fn-3-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "fn-3-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function fn_3({MODEL}) {const models={\"Gemini Pro\":\"gemini-generator.json\",PaLM:\"palm-text-generator.json\",mock:\"mock-text-generator.json\",\"GPT 3.5 Turbo\":\"openai-gpt-35-turbo.json\"};const path=models[MODEL];if(!path)throw new Error(`Unsupported model: ${MODEL}`);return{path}}",
+            "name": "fn_3",
+            "raw": true
+          }
+        },
+        {
+          "id": "fn-3-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    }
+  }
+}

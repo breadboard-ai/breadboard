@@ -1,0 +1,56 @@
+{
+  "name": "@google-labs/internal-website",
+  "private": true,
+  "version": "1.0.0",
+  "description": "The public documentation website for Breadboard",
+  "author": "Google Labs Team",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/breadboard-ai/breadboard#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/breadboard-ai/breadboard"
+  },
+  "bugs": {
+    "url": "https://github.com/breadboard-ai/breadboard/issues"
+  },
+  "type": "module",
+  "scripts": {
+    "build": "wireit",
+    "build:eleventy": "wireit",
+    "serve": "wireit",
+    "dev": "npm run serve --watch"
+  },
+  "wireit": {
+    "build": {
+      "dependencies": [
+        "build:eleventy"
+      ]
+    },
+    "build:eleventy": {
+      "command": "eleventy --input=src/",
+      "files": [
+        "src/"
+      ],
+      "output": [
+        "_site/"
+      ]
+    },
+    "serve": {
+      "command": "web-dev-server --root-dir _site/ --node-resolve --watch",
+      "service": true,
+      "dependencies": [
+        {
+          "script": "build:eleventy",
+          "cascade": false
+        }
+      ],
+      "files": []
+    }
+  },
+  "dependencies": {
+    "@11ty/eleventy": "^2.0.1"
+  },
+  "devDependencies": {
+    "@web/dev-server": "^0.4.1"
+  }
+}

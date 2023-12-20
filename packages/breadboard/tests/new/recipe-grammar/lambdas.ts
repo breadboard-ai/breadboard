@@ -1,0 +1,131 @@
+/**
+ * @license
+ * Copyright 2023 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import test from "ava";
+
+import { recipe, isLambda } from "../../../src/new/recipe-grammar/recipe.js";
+import { isValue } from "../../../src/new/recipe-grammar/value.js";
+import { Serializeable } from "../../../src/new/runner/types.js";
+import {
+  InputValues,
+  OutputValues,
+  BoardRunner,
+  asRuntimeKit,
+  BreadboardCapability,
+} from "../../../src/index.js";
+
+import { TestKit, testKit } from "../../helpers/_test-kit.js";
+
+async function serializeAndRunGraph(
+  graph: Serializeable,
+  inputs: InputValues
+): Promise<OutputValues> {
+  const board = await BoardRunner.fromGraphDescriptor(await graph.serialize());
+  return board.runOnce(inputs, { kits: [asRuntimeKit(TestKit)] });
+}
+
+test("simplest lambda", async (t) => {
+  const graph = recipe(async ({ foo }) => {
+    const lambda = recipe(async (inputs) => testKit.noop(inputs));
+    t.true(isLambda(lambda));
+    t.false(isLambda(testKit.noop({})));
+    const caller = recipe(async ({ lambda, foo }) => {
+      return lambda.invoke({ foo });
+    });
+    return caller({ lambda, foo });
+  });
+
+  const result = await serializeAndRunGraph(graph, { foo: "bar" });
+  t.deepEqual(result, { foo: "bar" });
+});
+
+test("simplest lambda, direct call, no invoke()", async (t) => {
+  const graph = recipe(async ({ foo }) => {
+    const lambda = recipe(async (inputs) => testKit.noop(inputs));
+    t.assert(isLambda(lambda));
+    const caller = recipe(async ({ lambda, foo }) => {
+      return lambda({ foo });
+    });
+    return caller({ lambda, foo });
+  });
+
+  const result = await serializeAndRunGraph(graph, { foo: "bar" });
+  t.deepEqual(result, { foo: "bar" });
+});
+
+test("simplest closure lambda, using to()", async (t) => {
+  const graph = recipe(async ({ foo, bar }) => {
+    const lambda = recipe(async (inputs) => testKit.noop(inputs));
+    bar.to(lambda);
+    const caller = recipe(async ({ lambda, foo }) => {
+      return lambda({ foo });
+    });
+    return caller({ lambda, foo });
+  });
+
+  const result = await serializeAndRunGraph(graph, { foo: "bar", bar: "baz" });
+  t.deepEqual(result, { foo: "bar", bar: "baz" });
+});
+
+test("simplest closure lambda, using in()", async (t) => {
+  const graph = recipe(async ({ foo, bar }) => {
+    const lambda = recipe(async (inputs) => testKit.noop(inputs));
+    t.true(isLambda(lambda.in(bar)));
+    const caller = recipe(async ({ lambda, foo }) => {
+      return lambda.invoke({ foo });
+    });
+    return caller({ lambda, foo });
+  });
+
+  const result = await serializeAndRunGraph(graph, { foo: "bar", bar: "baz" });
+  t.deepEqual(result, { foo: "bar", bar: "baz" });
+});
+
+test("serialize simple lambda", async (t) => {
+  const lambda = recipe(async (inputs) => testKit.noop(inputs));
+  t.assert(isLambda(lambda));
+
+  // This is no closure, so there should be no lambda node
+  const boardValue = lambda.getBoardCapabilityAsValue();
+  t.false(isValue(boardValue));
+  t.like(await boardValue, { kind: "board" });
+
+  const serialized = await lambda.serialize();
+
+  // Create another simple one to compare. This time don't use as value.
+  const lambda2 = recipe(async (inputs) => testKit.noop(inputs));
+  const serialized2 = await lambda2.serialize();
+
+  t.deepEqual(serialized, serialized2);
+});
+
+test("serialize closure lambda", async (t) => {
+  const lambda = recipe(async (inputs) => testKit.noop(inputs));
+  t.assert(isLambda(lambda));
+
+  // Wiring something into the lambda makes it a closure
+  testKit.noop({ bar: "baz", $id: "extra-noop" }).to(lambda);
+
+  // This should serialize the graph that generates the lambda, including the
+  // nodes generating the incoming data, the lambda node with the graph and an
+  // invoke node.
+  const serialized = await lambda.serialize();
+
+  t.assert(serialized?.nodes?.some((node) => node.id === "extra-noop"));
+  t.assert(serialized?.nodes?.some((node) => node.type === "lambda"));
+
+  // Create another simple one to compare with the inner graph.
+  const lambda2 = recipe(async (inputs) => testKit.noop(inputs));
+  const serialized2 = await lambda2.serialize();
+
+  t.deepEqual(
+    (
+      serialized?.nodes?.find((node) => node.type === "lambda")?.configuration
+        ?.board as BreadboardCapability
+    )?.board,
+    { kits: [], ...serialized2 }
+  );
+});

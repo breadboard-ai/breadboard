@@ -1,0 +1,356 @@
+/**
+ * @license
+ * Copyright 2023 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+const PROXY_NODES = [
+  "palm-generateText",
+  "embedText",
+  "secrets",
+  "fetch",
+  "credentials",
+  "driveList",
+];
+
+import * as Breadboard from "@google-labs/breadboard";
+import { PaLMKit } from "@google-labs/palm-kit";
+import { Core } from "@google-labs/core-kit";
+import { Starter } from "@google-labs/llm-starter";
+
+import {
+  HostRuntime as HostHarness,
+  RunResult,
+} from "@google-labs/breadboard/worker";
+
+import { LitElement, html, css } from "lit";
+import { customElement, state } from "lit/decorators.js";
+
+import * as BreadboardUI from "@google-labs/breadboard-ui/src";
+import "@google-labs/breadboard-ui/src";
+import { Ref, createRef, ref } from "lit/directives/ref.js";
+
+const WORKER_URL = "/worker.ts";
+const enum RENDER_STATE {
+  ERROR,
+  INPUT,
+  LOADING,
+  OUTPUT,
+  PENDING,
+  WAITING,
+}
+
+@customElement("bb-main")
+export class Main extends LitElement {
+  @state()
+  private renderState = RENDER_STATE.WAITING;
+
+  @state()
+  private renderData: unknown = null;
+
+  @state()
+  private retainedInputs: Array<{ type: string; content: string }> = [];
+
+  #renderResult: RunResult | null = null;
+  #harness = new HostHarness(WORKER_URL);
+  #board = new Breadboard.Board();
+  #props: Record<string, Record<string, Record<string, string>>> = {};
+  #autoSubmitForm = false;
+  #formRef: Ref<HTMLFormElement> = createRef();
+
+  static styles = css`
+    :host {
+      --default-bb-font-family: monospace;
+      --default-bb-accent-color: #6b5484;
+
+      --default-bb-input-border-radius: 32px;
+      --default-bb-input-background-color: #6b5484;
+      --default-bb-input-border: none;
+      --default-bb-input-padding: 8px 24px;
+      --default-bb-input-color: #fff;
+
+      --default-bb-submit-input-text-transform: none;
+      --default-bb-line-height: 1.5;
+
+      line-height: var(--bb-line-height, var(--default-bb-line-height));
+      display: grid;
+      row-gap: 16px;
+    }
+
+    form {
+      display: grid;
+      row-gap: 16px;
+    }
+
+    a {
+      color: var(--bb-accent-color, var(--default-bb-accent-color));
+    }
+
+    input[type="submit"] {
+      display: block;
+      width: auto;
+      max-width: 140px;
+      cursor: pointer;
+
+      background-color: var(
+        --bb-input-background-color,
+        var(--default-bb-input-background-color)
+      );
+
+      border: var(--bb-input-border, var(--default-bb-input-border));
+      border-radius: var(
+        --bb-input-border-radius,
+        var(--default-bb-input-border-radius)
+      );
+
+      color: var(--bb-input-color, var(--default-bb-input-color));
+      font-family: var(--bb-font-family, var(--default-bb-font-family));
+      padding: var(--bb-input-padding, var(--default-bb-input-padding));
+      text-transform: var(
+        --bb-submit-input-text-transform,
+        var(--default-bb-submit-input-text-transform)
+      );
+    }
+  `;
+
+  constructor(url: string) {
+    super();
+
+    this.#board.addKit(Core);
+    this.#board.addKit(PaLMKit);
+    this.#board.addKit(Starter);
+    this.renderState = RENDER_STATE.LOADING;
+    this.#init(url);
+  }
+
+  async #init(url: string) {
+    const propsResponse = await fetch("/properties.json");
+    this.#props = await propsResponse.json();
+
+    for await (const result of this.#harness.run(url, PROXY_NODES)) {
+      await this.#handleEvent(result);
+    }
+  }
+
+  async #handleEvent(result: RunResult) {
+    const { data, type } = result.message;
+    switch (type) {
+      case "proxy": {
+        this.renderState = RENDER_STATE.PENDING;
+
+        const proxyData = data as {
+          node: Breadboard.NodeDescriptor;
+          inputs: Breadboard.InputValues;
+        };
+
+        const handlers = await Breadboard.Board.handlersFromBoard(this.#board);
+        const handler = handlers[proxyData.node.type];
+
+        if (proxyData.node.type === "secrets") {
+          const keys = proxyData.inputs.keys;
+          if (!keys || !Array.isArray(keys)) {
+            break;
+          }
+
+          for (const key of keys) {
+            throw new Error(`Unable to handle key ${key}`);
+          }
+        } else if (handler) {
+          const response = await Breadboard.callHandler(
+            handler,
+            proxyData.inputs,
+            {
+              outerGraph: this.#board,
+              board: this.#board,
+              descriptor: proxyData.node,
+              slots: {},
+            }
+          );
+
+          result.reply(response);
+        } else {
+          console.warn(`Unable to handle ${proxyData.node.type}`);
+        }
+
+        break;
+      }
+
+      case "input": {
+        this.renderState = RENDER_STATE.INPUT;
+        this.renderData = data;
+        this.#renderResult = result;
+        break;
+      }
+
+      case "error": {
+        this.renderState = RENDER_STATE.ERROR;
+        this.renderData = data;
+        break;
+      }
+
+      case "output": {
+        this.renderState = RENDER_STATE.OUTPUT;
+        this.renderData = data;
+        break;
+      }
+    }
+  }
+
+  render() {
+    const retainedInputs = this.retainedInputs.map((input) => {
+      return html`<bb-retained-input
+        type=${input.type}
+        .content=${input.content}
+      ></bb-retained-input>`;
+    });
+
+    let tmpl;
+    switch (this.renderState) {
+      case RENDER_STATE.LOADING:
+        tmpl = html`<bb-progress></bb-progress>`;
+        break;
+
+      case RENDER_STATE.PENDING:
+        tmpl = html`<bb-progress></bb-progress>`;
+        break;
+
+      case RENDER_STATE.INPUT: {
+        const inputData = this.renderData as {
+          inputArguments: { schema: Breadboard.Schema };
+          node: {
+            id: string;
+            type: string;
+            configuration: { schema: Breadboard.Schema };
+          };
+        };
+
+        const inputProperties = inputData.node.configuration.schema.properties;
+        if (!inputProperties) {
+          console.warn(
+            `No properties available - input (${inputData.node.id}) possibly broken?`
+          );
+          return html``;
+        }
+
+        const props: Record<string, Record<string, string>> = this.#props[
+          inputData.node.id
+        ] || {};
+
+        this.#autoSubmitForm = true;
+
+        tmpl = html`<form ${ref(this.#formRef)} @submit=${this.#onSubmit}>
+          ${Object.entries(inputProperties).map((inputProperty) => {
+            const [name, descriptor] = inputProperty;
+            const inputProps: Record<string, string> = props[name] || {};
+
+            if (
+              descriptor.type === "string" &&
+              inputProps.configurable !== "on"
+            ) {
+              const defaultValue = inputProps["default-value"] || "";
+              return html`
+                <input type="hidden" name="${name}" value="${defaultValue}" />
+              `;
+            }
+
+            this.#autoSubmitForm = false;
+            return html`<bb-input
+              name="${name}"
+              .descriptor=${descriptor}
+              .props=${inputProps || {}}
+            ></bb-input>`;
+          })}
+
+          <input type="submit" value="Continue" />
+        </form>`;
+        break;
+      }
+
+      case RENDER_STATE.ERROR: {
+        const errorData = this.renderData as { error: string };
+        tmpl = html`${errorData.error} - <a href="/">Try again?</a>`;
+        break;
+      }
+
+      case RENDER_STATE.OUTPUT: {
+        const outputData = this.renderData as { outputs: { text: string } };
+        tmpl = html`<bb-output
+          type="string"
+          .content=${outputData.outputs.text}
+        ></bb-output>`;
+        break;
+      }
+    }
+
+    return html`${retainedInputs}${tmpl}`;
+  }
+
+  #onSubmit(evt: SubmitEvent) {
+    evt.preventDefault();
+
+    if (!(evt.target instanceof HTMLFormElement)) {
+      return;
+    }
+
+    const root = this.shadowRoot;
+    if (!root) {
+      return;
+    }
+
+    const retainInputs =
+      this.#props.__board?.general?.["retain-inputs"] || "off";
+    const shouldRetainInputs = retainInputs === "on";
+    const data: Record<string, unknown> = {};
+    for (const input of root.querySelectorAll("bb-input, input")) {
+      const bbInput = input as BreadboardUI.Input | HTMLInputElement;
+      if (bbInput.name === "" || bbInput.value === "") {
+        continue;
+      }
+
+      if (shouldRetainInputs) {
+        if ("descriptor" in bbInput) {
+          switch (bbInput.descriptor.type) {
+            case BreadboardUI.InputType.STRING: {
+              const content = bbInput.value as string;
+              this.retainedInputs.push({
+                type: bbInput.descriptor.type,
+                content,
+              });
+              break;
+            }
+
+            case BreadboardUI.InputType.IMAGE_JPG:
+            case BreadboardUI.InputType.IMAGE_PNG: {
+              const value = bbInput.value as { inline_data: { data: string } };
+              this.retainedInputs.push({
+                type: bbInput.descriptor.type,
+                content: value.inline_data.data,
+              });
+              break;
+            }
+          }
+        }
+      }
+
+      data[bbInput.name] = bbInput.value;
+    }
+
+    this.#renderResult?.reply(data);
+  }
+
+  updated() {
+    if (!this.#formRef.value) {
+      return;
+    }
+
+    if (!this.#autoSubmitForm) {
+      return;
+    }
+
+    const evt = new SubmitEvent("submit");
+    this.#formRef.value.dispatchEvent(evt);
+  }
+}
+
+const main = document.querySelector("main");
+main?.appendChild(new Main("/board.json"));

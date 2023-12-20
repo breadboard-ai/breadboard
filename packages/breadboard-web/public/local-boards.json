@@ -1,0 +1,105 @@
+[
+  {
+    "title": "Simple chatbot (accumulating context)",
+    "url": "/graphs/accumulating-context.json",
+    "version": "0.0.2"
+  },
+  {
+    "title": "Board as Function",
+    "url": "/graphs/board-as-function.json",
+    "version": "0.0.2"
+  },
+  {
+    "title": "Board Caller",
+    "url": "/graphs/board-caller.json",
+    "version": "0.0.6"
+  },
+  {
+    "title": "Gemini Pro Generator",
+    "url": "/graphs/gemini-generator.json",
+    "version": "0.0.2"
+  },
+  {
+    "title": "Gemini Pro Vision",
+    "url": "/graphs/gemini-pro-vision.json",
+    "version": "0.0.2"
+  },
+  {
+    "title": "Healer",
+    "url": "/graphs/healer.json",
+    "version": "0.0.1"
+  },
+  {
+    "title": "JSON Generator",
+    "url": "/graphs/json-generator.json",
+    "version": "0.0.1"
+  },
+  {
+    "title": "JSON Validator",
+    "url": "/graphs/json-validator.json",
+    "version": "0.0.1"
+  },
+  {
+    "title": "List Google Drive files",
+    "url": "/graphs/list-files.json",
+    "version": "0.0.1"
+  },
+  {
+    "title": "Math, chain style graph",
+    "url": "/graphs/math-chain.json"
+  },
+  {
+    "title": "Math, imperative style graph",
+    "url": "/graphs/math-imperative.json"
+  },
+  {
+    "title": "The Calculator Recipe",
+    "url": "/graphs/math.json",
+    "version": "0.0.2"
+  },
+  {
+    "title": "Mock Text Generator",
+    "url": "/graphs/mock-text-generator.json",
+    "version": "0.0.2"
+  },
+  {
+    "title": "OpenAI GPT-3.5-turbo",
+    "url": "/graphs/openai-gpt-35-turbo.json",
+    "version": "0.0.2"
+  },
+  {
+    "title": "OpenAI GPT 4 Vision Preview",
+    "url": "/graphs/openai-gpt-4-vision.json",
+    "version": "0.0.2"
+  },
+  {
+    "title": "PaLM Text Generator",
+    "url": "/graphs/palm-text-generator.json",
+    "version": "0.0.1"
+  },
+  {
+    "title": "Retry",
+    "url": "/graphs/retry.json",
+    "version": "0.0.1"
+  },
+  {
+    "title": "The Search Summarizer Recipe",
+    "url": "/graphs/search-summarize.json",
+    "version": "0.1.1"
+  },
+  {
+    "title": "The simplest LLM-based recipe",
+    "url": "/graphs/simplest.json",
+    "version": "0.0.3"
+  },
+  {
+    "title": "Text Generator",
+    "url": "/graphs/text-generator.json",
+    "version": "0.0.2"
+  },
+  {
+    "title": "Tour Guide Writer",
+    "url": "/graphs/tour-guide-writer.json",
+    "version": "0.0.3"
+  }
+]

@@ -1,0 +1,92 @@
+{
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "name": "@google-labs/breadbuddy",
+  "description": "Google Labs repo for making app prototypes from a Breadboard",
+  "scripts": {
+    "dev": "wireit",
+    "build": "wireit",
+    "build:vite": "wireit",
+    "lint": "wireit"
+  },
+  "main": "./dist/src/web/index.js",
+  "wireit": {
+    "build": {
+      "dependencies": [
+        "build:vite"
+      ]
+    },
+    "typescript-files-and-deps": {
+      "dependencies": [],
+      "files": [
+        "src/**/*.ts",
+        "tsconfig.json"
+      ]
+    },
+    "build:vite": {
+      "command": "vite build",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "../breadboard:build",
+        "typescript-files-and-deps"
+      ],
+      "files": [
+        "vite.config.ts",
+        ".env",
+        "src/web/index.html"
+      ],
+      "output": [
+        "dist/"
+      ]
+    },
+    "dev": {
+      "command": "vite",
+      "service": true,
+      "dependencies": [
+        {
+          "script": "typescript-files-and-deps",
+          "cascade": false
+        }
+      ],
+      "files": [
+        "vite.config.ts"
+      ]
+    },
+    "lint": {
+      "command": "eslint . --ext .ts",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "files": [
+        "src/**/*.ts",
+        "tests/**/*.ts"
+      ],
+      "output": []
+    }
+  },
+  "keywords": [],
+  "author": "Google Labs Team",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@google-labs/tsconfig": "*",
+    "@types/node": "^20.10.4",
+    "@types/nunjucks": "^3.2.6",
+    "@typescript-eslint/eslint-plugin": "^5.56.0",
+    "@typescript-eslint/parser": "^5.56.0",
+    "vite": "^5.0.8",
+    "vite-plugin-full-reload": "^1.1.0",
+    "vite-plugin-watch-and-run": "^1.5.1",
+    "vitest": "^1.0.4",
+    "wireit": "^0.14.1"
+  },
+  "dependencies": {
+    "@google-labs/breadboard": "*",
+    "@lit/task": "^1.0.0",
+    "jszip": "^3.10.1",
+    "lit": "^3.1.0",
+    "nunjucks": "^3.2.4"
+  }
+}
