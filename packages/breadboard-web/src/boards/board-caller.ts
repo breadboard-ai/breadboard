@@ -114,9 +114,9 @@ export default await recipe(async () => {
       .jsonata({
         $id: "formatResults",
         expression: `{
-        "tools": [list.function],
-        "urlMap": $merge([list.{ function.name: boardURL }])
-      }`,
+          "tools": [list.function],
+          "urlMap": $merge([list.{ function.name: boardURL }])
+        }`,
         raw: true,
         list: turnBoardsToFunctions,
       })
@@ -137,11 +137,11 @@ export default await recipe(async () => {
   const getBoardArgs = starter.jsonata({
     $id: "getBoardArgs",
     expression: `$merge([{
-      "path": $lookup(urlMap, toolCalls[0].name)
-    },
-    toolCalls[0].args,
-    { "generator": generator }
-  ])`,
+        "path": $lookup(urlMap, toolCalls[0].name)
+      },
+      toolCalls[0].args,
+      { "generator": generator }
+    ])`,
     raw: true,
     urlMap: formatFunctionDeclarations,
     toolCalls: generate,
@@ -161,7 +161,11 @@ export default await recipe(async () => {
 
   const formatOutput = starter.jsonata({
     $id: "formatOutput",
-    expression: `{ "result": result, "name": toolCalls[0].name, "context": context }`,
+    expression: `{
+      "result": result,
+      "name": toolCalls[0].name,
+      "context": context
+    }`,
     raw: true,
     result: hoistOutputs,
     ...generate,
