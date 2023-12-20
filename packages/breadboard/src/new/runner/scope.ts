@@ -111,6 +111,34 @@ export class Scope implements ScopeInterface {
     }
   }
 
+  async invokeOnce(
+    node: AbstractNode,
+    inputs: InputValues,
+    callbacks: InvokeCallbacks[] = []
+  ): Promise<OutputValues> {
+    let resolver: (outputs: OutputValues) => void;
+    const promise = new Promise<OutputValues>((resolve) => {
+      resolver = resolve;
+    });
+
+    const scope = new Scope({ dynamicScope: this });
+
+    scope.addHandlers({
+      input: async () => {
+        return inputs;
+      },
+      output: async (inputs: InputValues | PromiseLike<InputValues>) => {
+        resolver(await inputs);
+        return {};
+      },
+    });
+
+    scope.invoke(node, callbacks);
+
+    // TODO: This will wait forever if there was no output node.
+    return promise;
+  }
+
   async serialize(
     node: AbstractNode,
     metadata?: GraphMetadata

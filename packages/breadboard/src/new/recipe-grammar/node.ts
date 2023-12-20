@@ -8,7 +8,6 @@ import {
   GraphDescriptor,
   NodeDescriptor,
   InputValues as OriginalInputValues,
-  Schema,
 } from "@google-labs/breadboard";
 import {
   InputsMaybeAsValues,
@@ -17,13 +16,11 @@ import {
   AbstractValue,
   BuilderNodeInterface,
   BuilderNodeConfig,
-  FnTypes,
 } from "./types.js";
 import {
   InputValues,
   OutputValues,
   NodeHandler,
-  NodeHandlerFunction,
   NodeTypeIdentifier,
   NodeValue,
   Serializeable,
@@ -35,7 +32,6 @@ import {
 
 import { BaseNode } from "../runner/node.js";
 import { BuilderScope } from "./scope.js";
-import { TrapResult } from "./trap.js";
 import { Value, isValue } from "./value.js";
 import { isLambda } from "./recipe.js";
 
@@ -56,46 +52,26 @@ export class BuilderNode<
 
   #scope: BuilderScope;
   #handler?: NodeHandler<I, O>;
-  #fnType?: FnTypes;
 
   constructor(
     handler: NodeTypeIdentifier | NodeHandler<I, O>,
     scope: BuilderScope,
-    config: BuilderNodeConfig<I> = {},
-    fnType?: FnTypes
+    config: BuilderNodeConfig<I> = {}
   ) {
-    const nonProxyConfig: InputValues = {};
-    if (
-      !(config instanceof AbstractNode) &&
+    const $id =
       !isBuilderNodeProxy(config) &&
-      !isValue(config)
-    ) {
-      for (const [key, entry] of Object.entries(config) as [
-        [string, NodeValue | AbstractNode | Value]
-      ]) {
-        const value = isLambda(entry)
-          ? entry.getBoardCapabilityAsValue()
-          : entry;
-        if (
-          !(value instanceof AbstractNode) &&
-          !isBuilderNodeProxy(config) &&
-          !isValue(value) &&
-          !isLambda(value)
-        ) {
-          nonProxyConfig[key as keyof InputValues] = value as NodeValue;
-          delete config[key as keyof typeof config];
-        }
-      }
-    }
+      !(config instanceof AbstractNode) &&
+      !isLambda(config) &&
+      !isValue(config) &&
+      (config as OptionalIdConfiguration).$id;
 
     super(
       handler,
       scope,
-      nonProxyConfig as Partial<I> & OptionalIdConfiguration
+      $id ? ({ $id } as Partial<I> & OptionalIdConfiguration) : {}
     );
 
     this.#scope = scope;
-    this.#fnType = fnType;
 
     if (typeof handler !== "string") this.#handler = handler;
 
@@ -110,6 +86,8 @@ export class BuilderNode<
     } else if (isValue(config)) {
       this.addInputsFromNode(...config.asNodeInput());
     } else {
+      if ((config as OptionalIdConfiguration).$id !== undefined)
+        delete (config as OptionalIdConfiguration)["$id"];
       this.addInputsAsValues(config as InputsMaybeAsValues<I>);
     }
 
@@ -148,7 +126,7 @@ export class BuilderNode<
       }
     });
 
-    this.receiveConstants(constants);
+    this.configuration = { ...this.configuration, ...constants };
     nodes.forEach((node) => this.unProxy().addInputsFromNode(...node));
   }
 
@@ -181,17 +159,6 @@ export class BuilderNode<
     }
   }
 
-  // TODO:BASE: This should just be in the super class, below should become a
-  // wrapper around it.
-  #getHandlerFunction(scope: ScopeInterface) {
-    const handler = this.#handler ?? scope.getHandler(this.type);
-    if (!handler) throw new Error(`Handler ${this.type} not found`);
-    return typeof handler === "function" ? handler : handler.invoke;
-  }
-
-  // TODO:BASE: In the end, we need to capture the outputs and resolve the
-  // promise. But before that there is a bit of refactoring to do to allow
-  // returning of graphs, parallel execution, etc.
   async invoke(dynamicScope?: ScopeInterface): Promise<O> {
     const scope = new BuilderScope({
       dynamicScope,
@@ -199,9 +166,9 @@ export class BuilderNode<
     });
     return scope.asScopeFor(async () => {
       try {
-        const handler = this.#getHandlerFunction(
-          scope
-        ) as unknown as NodeHandlerFunction<I, O>;
+        const handler = this.#handler ?? scope.getHandler(this.type);
+
+        let result: O;
 
         // Note: The handler might actually return a graph (as a NodeProxy), and
         // so the await might triggers its execution. This is what we want.
@@ -220,10 +187,21 @@ export class BuilderNode<
         //    - it isn't an output node, add an output node and wire it up
         //    - execute the graph, and return the output node's outputs
         //  - otherwise return the handler's return value as result.
-        const result = (await handler(
-          this.getInputs() as PromiseLike<I> & I,
-          this
-        )) as O;
+        const handlerFn =
+          typeof handler === "function" ? handler : handler?.invoke;
+        if (handlerFn) {
+          result = (await handlerFn(
+            this.getInputs() as PromiseLike<I> & I,
+            this
+          )) as O;
+        } else if (handler && typeof handler !== "function" && handler.graph) {
+          result = (await scope.invokeOnce(
+            handler.graph,
+            this.getInputs()
+          )) as O;
+        } else {
+          throw new Error(`Can't find handler for ${this.id}`);
+        }
 
         // Execute graphs returned by the handler as individual results (A full
         // graph returned would have already been executed above)
@@ -288,105 +266,11 @@ export class BuilderNode<
       serialize: true,
     });
 
-    const handler = this.#getHandlerFunction(
-      scope
-    ) as unknown as NodeHandlerFunction<I, O>;
+    const handler = this.#handler ?? scope.getHandler(this.type);
 
-    const schemas = await this.describe(scope);
-
-    const graph =
-      this.#fnType !== "code"
-        ? await scope.asScopeFor(async () => {
-            try {
-              const inputNode = new BuilderNode<InputValues, I>(
-                "input",
-                scope,
-                schemas ? { schema: schemas.inputSchema } : {}
-              );
-              const outputNode = new BuilderNode<O & { schema?: Schema }, O>(
-                "output",
-                scope,
-                (schemas ? { schema: schemas.outputSchema } : {}) as Partial<
-                  O & { schema?: Schema }
-                >
-              );
-
-              const resultOrPromise = handler(
-                inputNode.asProxy() as unknown as I & PromiseLike<I>,
-                this
-              );
-
-              // Support both async and sync handlers. Sync handlers should in
-              // practice only be used to statically create graphs (as reading inputs
-              // requires async await and all other nodes should do work on their
-              // inputs or maybe otherwise await external signals)
-              let result =
-                resultOrPromise instanceof Promise
-                  ? await resultOrPromise
-                  : resultOrPromise;
-
-              // await flattens Promises, so a handler returning a BuilderNode will
-              // actually return a TrapResult, as its `then` method will be called. At
-              // most one is created per serializing scope, so we now that this must
-              // be the one.
-              if (TrapResult.isTrapResult(result))
-                result = TrapResult.getNode(result);
-              // If a trap result was generated, but not returned, then we must assume
-              // some processing, i.e. not statically graph generating, and the
-              // function must be serialized.
-              else if (scope.didTrapResultTrigger()) return null;
-
-              let actualOutput = outputNode as BuilderNode<O, O>;
-              if (result instanceof BuilderNode) {
-                const node = result.unProxy();
-                // If the handler returned an output node, serialize it directly,
-                // otherwise connect the returned node's outputs to the output node.
-                if (node.type === "output") actualOutput = node;
-                else outputNode.addInputsFromNode(node);
-              } else {
-                // Otherwise wire up all keys of the returned object to the output.
-                const output = result as InputsMaybeAsValues<O>;
-
-                // TODO: Refactor to merge with similar code in constructor
-                let anyNonConstants = false;
-                Object.keys(result as InputsMaybeAsValues<O>).forEach((key) =>
-                  isValue(output[key])
-                    ? (outputNode.addInputsFromNode(
-                        ...(output[key] as Value).as(key).asNodeInput()
-                      ),
-                      (anyNonConstants = true))
-                    : output[key] instanceof AbstractNode
-                    ? (outputNode.addInputsFromNode(
-                        output[key] as BuilderNode,
-                        {
-                          [key]: key,
-                        }
-                      ),
-                      (anyNonConstants = true))
-                    : (outputNode.configuration[key as keyof O] = output[
-                        key
-                      ] as (typeof outputNode.configuration)[keyof OutputValues])
-                );
-
-                // If all outputs are constants, then we didn't get a graph that
-                // depends on its inputs. While this could indeed be a static node
-                // that always returns the same value, we shouldn't assume for now
-                // that it's deterministic, so we serialize it.
-                if (!anyNonConstants) return null;
-              }
-              return scope.serialize(actualOutput);
-            } catch (e) {
-              // If caller claimed this was a valid graph, then throw
-              if (this.#fnType === "graph") throw e;
-              // Otherwise it probably wasn't a graph, so serialize the code
-              return null;
-            }
-          })()
-        : undefined;
-
-    // If we got a graph back, save it as a subgraph (returned as second value)
+    // If this is a graph nide, save it as a subgraph (returned as second value)
     // and turns this into an invoke node.
-    if (graph) {
+    if (handler && typeof handler !== "function" && handler.graph) {
       const node: NodeDescriptor = {
         id: this.id,
         type: "invoke",
@@ -396,11 +280,15 @@ export class BuilderNode<
         },
       };
 
-      return [node, graph];
+      return [node, await scope.serialize(handler.graph)];
     }
 
     // Else, serialize the handler itself and return a runJavascript node.
-    let code = handler.toString();
+    const handlerFn = typeof handler === "function" ? handler : handler?.invoke;
+    if (!handlerFn)
+      throw new Error(`Handler for ${this.type} in ${this.id} not found`);
+
+    let code = handlerFn.toString();
     let name = this.id.replace(/-/g, "_");
 
     const arrowFunctionRegex = /(?:async\s*)?(\w+|\([^)]*\))\s*=>\s*/;
@@ -421,6 +309,8 @@ export class BuilderNode<
       if (match === null) throw new Error("Unexpected seralization: " + code);
       else name = match[1] || name;
     }
+
+    const schemas = await this.describe(scope);
 
     const invokeGraph: GraphDescriptor = {
       edges: [
@@ -566,13 +456,12 @@ export class BuilderNode<
     onfulfilled?: ((value: O) => TResult1 | PromiseLike<TResult1>) | null,
     onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null
   ): PromiseLike<TResult1 | TResult2> {
+    if (this.#scope.serializing())
+      throw new Error(
+        `Can't \`await\` on ${this.id} in recipe declaration. ` +
+          `Did you mean to use \`code\` instead of \`recipe\`?`
+      );
     try {
-      if (this.#scope.serializing())
-        return Promise.resolve(this.#scope.createTrapResult(this)).then(
-          onfulfilled && this.#scope.asScopeFor(onfulfilled),
-          onrejected && this.#scope.asScopeFor(onrejected)
-        );
-
       // It's ok to call this multiple times: If it already run it'll only do
       // something if new nodes or inputs were added (e.g. between await calls)
       this.#scope.invoke(this as unknown as BaseNode);

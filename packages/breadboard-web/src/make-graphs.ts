@@ -40,42 +40,47 @@ async function findTsFiles(dir: string): Promise<string[]> {
 }
 
 async function saveBoard(filePath: string): Promise<ManifestItem | undefined> {
-  const board = await import(filePath);
-  if (!board.default) {
-    // This is probably not a board or a board that doesn't want to be in the
-    // manifest.
-    return;
+  try {
+    const board = await import(filePath);
+
+    if (!board.default) {
+      // This is probably not a board or a board that doesn't want to be in the
+      // manifest.
+      return;
+    }
+    const relativePath: string = path.relative(PATH, filePath);
+    const baseName: string = path.basename(filePath);
+    const jsonFile: string = baseName.replace(".ts", ".json");
+    const diagramFile: string = baseName.replace(".ts", ".md");
+
+    // Create corresponding directories based on the relative path
+    const graphDir: string = path.dirname(path.join(GRAPH_PATH, relativePath));
+    const diagramDir: string = path.dirname(
+      path.join(DIAGRAM_PATH, relativePath)
+    );
+
+    // Make sure the directories exist
+    await mkdir(graphDir, { recursive: true });
+    await mkdir(diagramDir, { recursive: true });
+
+    const manifestEntry: ManifestItem = {
+      title: board.default.title ?? "Untitled",
+      url: `/graphs/${relativePath.replace(".ts", ".json")}`,
+      version: board.default.version ?? undefined,
+    };
+
+    await writeFile(
+      path.join(graphDir, jsonFile),
+      JSON.stringify(board.default, null, 2)
+    );
+    await writeFile(
+      path.join(diagramDir, diagramFile),
+      `## ${baseName}\n\n\`\`\`mermaid\n${toMermaid(board.default)}\n\`\`\``
+    );
+    return manifestEntry;
+  } catch (e) {
+    throw new Error(`Error loading ${filePath}: ${e}`);
   }
-  const relativePath: string = path.relative(PATH, filePath);
-  const baseName: string = path.basename(filePath);
-  const jsonFile: string = baseName.replace(".ts", ".json");
-  const diagramFile: string = baseName.replace(".ts", ".md");
-
-  // Create corresponding directories based on the relative path
-  const graphDir: string = path.dirname(path.join(GRAPH_PATH, relativePath));
-  const diagramDir: string = path.dirname(
-    path.join(DIAGRAM_PATH, relativePath)
-  );
-
-  // Make sure the directories exist
-  await mkdir(graphDir, { recursive: true });
-  await mkdir(diagramDir, { recursive: true });
-
-  const manifestEntry: ManifestItem = {
-    title: board.default.title ?? "Untitled",
-    url: `/graphs/${relativePath.replace(".ts", ".json")}`,
-    version: board.default.version ?? undefined,
-  };
-
-  await writeFile(
-    path.join(graphDir, jsonFile),
-    JSON.stringify(board.default, null, 2)
-  );
-  await writeFile(
-    path.join(diagramDir, diagramFile),
-    `## ${baseName}\n\n\`\`\`mermaid\n${toMermaid(board.default)}\n\`\`\``
-  );
-  return manifestEntry;
 }
 
 async function saveAllBoards(): Promise<void> {
