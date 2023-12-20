@@ -4,16 +4,70 @@
   "version": "0.0.2",
   "edges": [
     {
+      "from": "formatOutput",
+      "to": "textOutput",
+      "out": "result",
+      "in": "result"
+    },
+    {
+      "from": "fetch-4",
+      "to": "formatError",
+      "out": "$error",
+      "in": "json"
+    },
+    {
+      "from": "fetch-4",
+      "to": "chunkToText",
+      "out": "stream",
+      "in": "stream"
+    },
+    {
+      "from": "fetch-4",
+      "to": "formatOutput",
+      "out": "response",
+      "in": "json"
+    },
+    {
+      "from": "parameters",
+      "to": "makeBody",
+      "out": "parts",
+      "in": "parts"
+    },
+    {
       "from": "parameters",
       "to": "chooseMethod",
       "out": "useStreaming",
       "in": "useStreaming"
     },
     {
-      "from": "secrets-1",
-      "to": "makeURL",
-      "out": "GEMINI_KEY",
-      "in": "GEMINI_KEY"
+      "from": "parameters",
+      "to": "fetch-4",
+      "out": "useStreaming",
+      "in": "stream"
+    },
+    {
+      "from": "makeURL",
+      "to": "fetch-4",
+      "out": "url",
+      "in": "url"
+    },
+    {
+      "from": "makeBody",
+      "to": "fetch-4",
+      "out": "result",
+      "in": "body"
+    },
+    {
+      "from": "formatError",
+      "to": "errorOutput",
+      "out": "result",
+      "in": "error"
+    },
+    {
+      "from": "chunkToText",
+      "to": "streamOutput",
+      "out": "stream",
+      "in": "stream"
     },
     {
       "from": "chooseMethod",
@@ -28,74 +82,48 @@
       "in": "sseOption"
     },
     {
-      "from": "parameters",
-      "to": "fetch-2",
-      "out": "useStreaming",
-      "in": "stream"
+      "from": "secrets-3",
+      "to": "makeURL",
+      "out": "GEMINI_KEY",
+      "in": "GEMINI_KEY"
     },
     {
-      "from": "makeURL",
-      "to": "fetch-2",
-      "out": "url",
-      "in": "url"
-    },
-    {
-      "from": "formatError",
-      "to": "errorOutput",
-      "out": "result",
-      "in": "error"
-    },
-    {
-      "from": "fetch-2",
-      "to": "formatError",
-      "out": "$error",
-      "in": "json"
-    },
-    {
-      "from": "lambda-3",
-      "to": "transformStream-4",
-      "constant": true,
+      "from": "lambda-6",
+      "to": "chunkToText",
       "out": "board",
       "in": "board"
-    },
-    {
-      "from": "transformStream-4",
-      "to": "output-5",
-      "out": "stream",
-      "in": "stream"
-    },
-    {
-      "from": "fetch-2",
-      "to": "transformStream-4",
-      "out": "stream",
-      "in": "stream"
-    },
-    {
-      "from": "formatOutput",
-      "to": "textOutput",
-      "out": "result",
-      "in": "result"
-    },
-    {
-      "from": "fetch-2",
-      "to": "formatOutput",
-      "out": "response",
-      "in": "json"
-    },
-    {
-      "from": "makeBody",
-      "to": "fetch-2",
-      "out": "result",
-      "in": "body"
-    },
-    {
-      "from": "parameters",
-      "to": "makeBody",
-      "out": "parts",
-      "in": "parts"
     }
   ],
   "nodes": [
+    {
+      "id": "textOutput",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "result": {
+              "type": "string",
+              "title": "Result"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "formatOutput",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "$join(candidates.content.parts.text)"
+      }
+    },
+    {
+      "id": "fetch-4",
+      "type": "fetch",
+      "configuration": {
+        "method": "POST"
+      }
+    },
     {
       "id": "parameters",
       "type": "input",
@@ -125,19 +153,7 @@
                   "type": "object",
                   "title": "Image",
                   "format": "image_part",
-                  "description": "An image part. Can be a JPEG or PNG image",
-                  "properties": {
-                    "mime_type": {
-                      "type": "enum",
-                      "enum": [
-                        "image/png",
-                        "image/jpeg"
-                      ]
-                    },
-                    "data": {
-                      "type": "string"
-                    }
-                  }
+                  "description": "An image part. Can be a JPEG or PNG image"
                 }
               ]
             },
@@ -155,11 +171,30 @@
       }
     },
     {
+      "id": "makeURL",
+      "type": "urlTemplate",
+      "configuration": {
+        "template": "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:{method}?key={GEMINI_KEY}{+sseOption}"
+      }
+    },
+    {
       "id": "makeBody",
       "type": "jsonata",
       "configuration": {
         "expression": "{ \"contents\": { \"parts\": $.parts }}"
       }
+    },
+    {
+      "id": "formatError",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "error.message"
+      }
+    },
+    {
+      "id": "chunkToText",
+      "type": "transformStream",
+      "configuration": {}
     },
     {
       "id": "chooseMethod",
@@ -171,33 +206,12 @@
       }
     },
     {
-      "id": "makeURL",
-      "type": "urlTemplate",
-      "configuration": {
-        "template": "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:{method}?key={GEMINI_KEY}{+sseOption}"
-      }
-    },
-    {
-      "id": "secrets-1",
+      "id": "secrets-3",
       "type": "secrets",
       "configuration": {
         "keys": [
           "GEMINI_KEY"
         ]
-      }
-    },
-    {
-      "id": "fetch-2",
-      "type": "fetch",
-      "configuration": {
-        "method": "POST"
-      }
-    },
-    {
-      "id": "formatError",
-      "type": "jsonata",
-      "configuration": {
-        "expression": "error.message"
       }
     },
     {
@@ -216,59 +230,102 @@
       }
     },
     {
-      "id": "lambda-3",
+      "id": "lambda-6",
       "type": "lambda",
       "configuration": {
         "board": {
           "kind": "board",
           "board": {
+            "kits": [],
             "edges": [
               {
-                "from": "runJavascript-3",
-                "to": "output-2",
-                "out": "result",
-                "in": "chunk"
+                "from": "fn-4",
+                "to": "output-5",
+                "out": "*",
+                "in": ""
               },
               {
-                "from": "input-1",
-                "to": "runJavascript-3",
+                "from": "input-3",
+                "to": "fn-4",
                 "out": "chunk",
                 "in": "chunk"
               }
             ],
             "nodes": [
               {
-                "id": "input-1",
-                "type": "input"
+                "id": "output-5",
+                "type": "output",
+                "configuration": {}
               },
               {
-                "id": "output-2",
-                "type": "output"
-              },
-              {
-                "id": "runJavascript-3",
-                "type": "runJavascript",
+                "id": "fn-4",
+                "type": "invoke",
                 "configuration": {
-                  "code": "function run({chunk}){return chunk.candidates[0].content.parts[0].text}"
+                  "path": "#fn-4"
+                }
+              },
+              {
+                "id": "input-3",
+                "type": "input",
+                "configuration": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "chunk": {
+                        "type": "string",
+                        "title": "chunk"
+                      }
+                    },
+                    "required": [
+                      "chunk"
+                    ]
+                  }
                 }
               }
             ],
-            "kits": [
-              {
-                "url": "npm:@google-labs/llm-starter"
+            "graphs": {
+              "fn-4": {
+                "edges": [
+                  {
+                    "from": "fn-4-input",
+                    "to": "fn-4-run",
+                    "out": "*"
+                  },
+                  {
+                    "from": "fn-4-run",
+                    "to": "fn-4-output",
+                    "out": "*"
+                  }
+                ],
+                "nodes": [
+                  {
+                    "id": "fn-4-input",
+                    "type": "input",
+                    "configuration": {}
+                  },
+                  {
+                    "id": "fn-4-run",
+                    "type": "runJavascript",
+                    "configuration": {
+                      "code": "function fn_4({chunk}) {return{chunk:chunk.candidates[0].content.parts[0].text}}",
+                      "name": "fn_4",
+                      "raw": true
+                    }
+                  },
+                  {
+                    "id": "fn-4-output",
+                    "type": "output",
+                    "configuration": {}
+                  }
+                ]
               }
-            ]
+            }
           }
         }
       }
     },
     {
-      "id": "transformStream-4",
-      "type": "transformStream",
-      "configuration": {}
-    },
-    {
-      "id": "output-5",
+      "id": "streamOutput",
       "type": "output",
       "configuration": {
         "schema": {
@@ -281,36 +338,7 @@
           }
         }
       }
-    },
-    {
-      "id": "formatOutput",
-      "type": "jsonata",
-      "configuration": {
-        "expression": "$join(candidates.content.parts.text)"
-      }
-    },
-    {
-      "id": "textOutput",
-      "type": "output",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "result": {
-              "type": "string",
-              "title": "Result"
-            }
-          }
-        }
-      }
     }
   ],
-  "kits": [
-    {
-      "url": "npm:@google-labs/llm-starter"
-    },
-    {
-      "url": "npm:@google-labs/node-nursery-web"
-    }
-  ]
+  "graphs": {}
 }

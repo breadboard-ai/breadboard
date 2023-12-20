@@ -4,28 +4,40 @@
   "version": "0.0.2",
   "edges": [
     {
+      "from": "streamTransform",
+      "to": "streamOutput",
+      "out": "stream",
+      "in": "stream"
+    },
+    {
+      "from": "lambda-5",
+      "to": "streamTransform",
+      "out": "board",
+      "in": "board"
+    },
+    {
+      "from": "callGeminiAPI",
+      "to": "formatResponse",
+      "out": "response",
+      "in": "response"
+    },
+    {
+      "from": "callGeminiAPI",
+      "to": "streamTransform",
+      "out": "stream",
+      "in": "stream"
+    },
+    {
       "from": "parameters",
       "to": "chooseMethod",
       "out": "useStreaming",
       "in": "useStreaming"
     },
     {
-      "from": "secrets-1",
-      "to": "makeURL",
-      "out": "GEMINI_KEY",
-      "in": "GEMINI_KEY"
-    },
-    {
-      "from": "chooseMethod",
-      "to": "makeURL",
-      "out": "method",
-      "in": "method"
-    },
-    {
-      "from": "chooseMethod",
-      "to": "makeURL",
-      "out": "sseOption",
-      "in": "sseOption"
+      "from": "parameters",
+      "to": "makeBody",
+      "out": "*",
+      "in": ""
     },
     {
       "from": "parameters",
@@ -40,17 +52,16 @@
       "in": "url"
     },
     {
-      "from": "lambda-2",
-      "to": "transformStream-3",
-      "constant": true,
-      "out": "board",
-      "in": "board"
+      "from": "makeBody",
+      "to": "callGeminiAPI",
+      "out": "result",
+      "in": "body"
     },
     {
       "from": "formatResponse",
-      "to": "toolCallsOutput",
-      "out": "toolCalls",
-      "in": "toolCalls"
+      "to": "textOutput",
+      "out": "context",
+      "in": "context"
     },
     {
       "from": "formatResponse",
@@ -60,53 +71,136 @@
     },
     {
       "from": "formatResponse",
-      "to": "textOutput",
+      "to": "toolCallsOutput",
       "out": "context",
       "in": "context"
     },
     {
       "from": "formatResponse",
       "to": "toolCallsOutput",
-      "out": "context",
-      "in": "context"
+      "out": "toolCalls",
+      "in": "toolCalls"
     },
     {
-      "from": "parameters",
-      "to": "formatResponse",
-      "out": "context",
-      "in": "context"
+      "from": "chooseMethod",
+      "to": "makeURL",
+      "out": "*",
+      "in": ""
     },
     {
-      "from": "callGeminiAPI",
-      "to": "formatResponse",
-      "out": "response",
-      "in": "response"
-    },
-    {
-      "from": "transformStream-3",
-      "to": "streamOutput",
-      "out": "stream",
-      "in": "stream"
-    },
-    {
-      "from": "callGeminiAPI",
-      "to": "transformStream-3",
-      "out": "stream",
-      "in": "stream"
-    },
-    {
-      "from": "makeBody",
-      "to": "callGeminiAPI",
-      "out": "result",
-      "in": "body"
-    },
-    {
-      "from": "parameters",
-      "to": "makeBody",
-      "out": "*"
+      "from": "secrets-3",
+      "to": "makeURL",
+      "out": "GEMINI_KEY",
+      "in": "GEMINI_KEY"
     }
   ],
   "nodes": [
+    {
+      "id": "streamOutput",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "stream": {
+              "type": "object",
+              "title": "Stream",
+              "format": "stream",
+              "description": "The generated text"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "streamTransform",
+      "type": "transformStream",
+      "configuration": {}
+    },
+    {
+      "id": "lambda-5",
+      "type": "lambda",
+      "configuration": {
+        "board": {
+          "kind": "board",
+          "board": {
+            "kits": [],
+            "edges": [
+              {
+                "from": "transformChunk",
+                "to": "output-4",
+                "out": "result",
+                "in": "chunk"
+              },
+              {
+                "from": "input-3",
+                "to": "transformChunk",
+                "out": "chunk",
+                "in": "json"
+              }
+            ],
+            "nodes": [
+              {
+                "id": "output-4",
+                "type": "output",
+                "configuration": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "chunk": {
+                        "title": "result",
+                        "description": "The result of the Jsonata expression",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "chunk"
+                    ]
+                  }
+                }
+              },
+              {
+                "id": "transformChunk",
+                "type": "jsonata",
+                "configuration": {
+                  "expression": "candidates[0].content.parts.text ? $join(candidates[0].content.parts.text) : ''"
+                }
+              },
+              {
+                "id": "input-3",
+                "type": "input",
+                "configuration": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "chunk": {
+                        "title": "json",
+                        "description": "The JSON object to evaluate",
+                        "type": [
+                          "object",
+                          "string"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "chunk"
+                    ]
+                  }
+                }
+              }
+            ],
+            "graphs": {}
+          }
+        }
+      }
+    },
+    {
+      "id": "callGeminiAPI",
+      "type": "fetch",
+      "configuration": {
+        "method": "POST"
+      }
+    },
     {
       "id": "parameters",
       "type": "input",
@@ -160,6 +254,46 @@
       }
     },
     {
+      "id": "makeURL",
+      "type": "urlTemplate",
+      "configuration": {
+        "template": "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:{method}?key={GEMINI_KEY}{+sseOption}"
+      }
+    },
+    {
+      "id": "makeBody",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "(\n      $context := $append(\n          context ? context, [\n              {\n                  \"role\": \"user\",\n                  \"parts\": [\n                      {\n                          \"text\": text\n                      }\n                  ]\n              }\n          ]);\n      text ? {\n          \"contents\": $context, \n          \"tools\": tools ? {\n            \"function_declarations\": tools\n          }\n      } : {\n          \"$error\": \"`text` input is required\"\n      }\n    )"
+      }
+    },
+    {
+      "id": "formatResponse",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "\n  response.candidates[0].content.parts.{\n    \"text\": text ? text,\n    \"toolCalls\": functionCall ? [ functionCall ],\n    \"context\": $append($$.context, %.$)\n  }",
+        "raw": true
+      }
+    },
+    {
+      "id": "chooseMethod",
+      "type": "runJavascript",
+      "configuration": {
+        "name": "chooseMethodFunction",
+        "code": "function chooseMethodFunction({useStreaming}){const method=useStreaming?\"streamGenerateContent\":\"generateContent\";const sseOption=useStreaming?\"&alt=sse\":\"\";return{method,sseOption}}",
+        "raw": true
+      }
+    },
+    {
+      "id": "secrets-3",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "GEMINI_KEY"
+        ]
+      }
+    },
+    {
       "id": "textOutput",
       "type": "output",
       "configuration": {
@@ -200,130 +334,7 @@
           }
         }
       }
-    },
-    {
-      "id": "streamOutput",
-      "type": "output",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "stream": {
-              "type": "object",
-              "title": "Stream",
-              "format": "stream",
-              "description": "The generated text"
-            }
-          }
-        }
-      }
-    },
-    {
-      "id": "chooseMethod",
-      "type": "runJavascript",
-      "configuration": {
-        "name": "chooseMethodFunction",
-        "code": "function chooseMethodFunction({useStreaming}){const method=useStreaming?\"streamGenerateContent\":\"generateContent\";const sseOption=useStreaming?\"&alt=sse\":\"\";return{method,sseOption}}",
-        "raw": true
-      }
-    },
-    {
-      "id": "makeURL",
-      "type": "urlTemplate",
-      "configuration": {
-        "template": "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:{method}?key={GEMINI_KEY}{+sseOption}"
-      }
-    },
-    {
-      "id": "secrets-1",
-      "type": "secrets",
-      "configuration": {
-        "keys": [
-          "GEMINI_KEY"
-        ]
-      }
-    },
-    {
-      "id": "makeBody",
-      "type": "jsonata",
-      "configuration": {
-        "expression": "(\n    $context := $append(\n        context ? context, [\n            {\n                \"role\": \"user\",\n                \"parts\": [\n                    {\n                        \"text\": text\n                    }\n                ]\n            }\n        ]);\n    text ? {\n        \"contents\": $context, \n        \"tools\": tools ? {\n          \"function_declarations\": tools\n        }\n    } : {\n        \"$error\": \"`text` input is required\"\n    }\n)"
-      }
-    },
-    {
-      "id": "callGeminiAPI",
-      "type": "fetch",
-      "configuration": {
-        "method": "POST"
-      }
-    },
-    {
-      "id": "formatResponse",
-      "type": "jsonata",
-      "configuration": {
-        "expression": "\n  response.candidates[0].content.parts.{\n    \"text\": text ? text,\n    \"toolCalls\": functionCall ? [ functionCall ],\n    \"context\": $append($$.context, %.$)\n  }",
-        "raw": true
-      }
-    },
-    {
-      "id": "lambda-2",
-      "type": "lambda",
-      "configuration": {
-        "board": {
-          "kind": "board",
-          "board": {
-            "edges": [
-              {
-                "from": "transformChunk",
-                "to": "output-2",
-                "out": "result",
-                "in": "chunk"
-              },
-              {
-                "from": "input-1",
-                "to": "transformChunk",
-                "out": "chunk",
-                "in": "json"
-              }
-            ],
-            "nodes": [
-              {
-                "id": "input-1",
-                "type": "input"
-              },
-              {
-                "id": "output-2",
-                "type": "output"
-              },
-              {
-                "id": "transformChunk",
-                "type": "jsonata",
-                "configuration": {
-                  "expression": "candidates[0].content.parts.text ? $join(candidates[0].content.parts.text) : ''"
-                }
-              }
-            ],
-            "kits": [
-              {
-                "url": "npm:@google-labs/llm-starter"
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "id": "transformStream-3",
-      "type": "transformStream",
-      "configuration": {}
     }
   ],
-  "kits": [
-    {
-      "url": "npm:@google-labs/llm-starter"
-    },
-    {
-      "url": "npm:@google-labs/node-nursery-web"
-    }
-  ]
+  "graphs": {}
 }
