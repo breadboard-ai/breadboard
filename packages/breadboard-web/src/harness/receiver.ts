@@ -15,7 +15,7 @@ import { Starter } from "@google-labs/llm-starter";
 import { PaLMKit } from "@google-labs/palm-kit";
 import type { ProxyRequestMessage } from "@google-labs/breadboard/worker";
 
-import { SecretKeeper } from "./secrets";
+import { SecretKeeper } from "../secrets";
 import { KitBuilder } from "@google-labs/breadboard/kits";
 import { NodeNurseryWeb } from "@google-labs/node-nursery-web";
 

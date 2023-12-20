@@ -13,33 +13,28 @@ import {
   OutputValues,
   asRuntimeKit,
 } from "@google-labs/breadboard";
+import { KitBuilder } from "@google-labs/breadboard/kits";
 
 import Starter from "@google-labs/llm-starter";
 import Core from "@google-labs/core-kit";
 import PaLMKit from "@google-labs/palm-kit";
 import Pinecone from "@google-labs/pinecone-kit";
 import NodeNurseryWeb from "@google-labs/node-nursery-web";
-import { MainThreadRunResult } from "./main-thread-harness";
-import {
-  HTTPClientTransport,
-  ProxyClient,
-} from "@google-labs/breadboard/remote";
+import JSONKit from "@google-labs/json-kit";
+import { MainThreadRunResult } from "./result";
 
 export type SecretHandler = (keys: {
   keys?: string[];
 }) => Promise<OutputValues>;
 
-export class ProxyServerHarness implements Harness {
-  #proxyServerUrl: string;
+export class MainThreadHarness implements Harness {
+  #secretHandler: SecretHandler;
 
-  constructor(proxyServerUrl: string) {
-    this.#proxyServerUrl = proxyServerUrl;
+  constructor(secretHandler: SecretHandler) {
+    this.#secretHandler = secretHandler;
   }
-  async *run(url: string) {
-    const proxyClient = new ProxyClient(
-      new HTTPClientTransport(this.#proxyServerUrl)
-    );
 
+  async *run(url: string) {
     try {
       const runner = await Board.load(url);
 
@@ -55,20 +50,23 @@ export class ProxyServerHarness implements Harness {
         },
       });
 
-      const proxyKit = await proxyClient.createProxyKit([
-        "fetch",
-        "palm-generateText",
-        "palm-embedText",
-        "promptTemplate",
-        "secrets",
-      ]);
+      const SecretAskingKit = new KitBuilder({
+        url: "secret-asking-kit ",
+      }).build({
+        secrets: async (inputs) => {
+          return await this.#secretHandler(inputs as InputValues);
+        },
+      });
 
       const kits = [
-        proxyKit,
-        ...[Starter, Core, Pinecone, PaLMKit, NodeNurseryWeb].map(
-          (kitConstructor) => asRuntimeKit(kitConstructor)
-        ),
-      ];
+        SecretAskingKit,
+        Starter,
+        Core,
+        Pinecone,
+        PaLMKit,
+        NodeNurseryWeb,
+        JSONKit,
+      ].map((kitConstructor) => asRuntimeKit(kitConstructor));
 
       for await (const data of runner.run({
         probe: new LogProbe(),
@@ -87,8 +85,13 @@ export class ProxyServerHarness implements Harness {
       }
       yield new MainThreadRunResult({ type: "end", data: {} });
     } catch (e) {
-      const error = e as Error;
-      console.error(error);
+      let error = e as Error;
+      let message = "";
+      while (error?.cause) {
+        error = (error.cause as { error: Error }).error;
+        message += `\n${error.message}`;
+      }
+      console.error(message, error);
       yield new MainThreadRunResult({ type: "error", data: { error } });
     }
   }

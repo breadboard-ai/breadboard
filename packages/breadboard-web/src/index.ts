@@ -7,10 +7,10 @@
 import * as BreadboardUI from "@google-labs/breadboard-ui";
 import type * as Breadboard from "@google-labs/breadboard";
 import { HostRuntime as HostHarness } from "@google-labs/breadboard/worker";
-import { ProxyReceiver } from "./receiver.js";
-import { Harness, HarnessRunResult } from "./types.js";
-import { MainThreadHarness } from "./main-thread-harness.js";
-import { ProxyServerHarness } from "./proxy-server-harness.js";
+import { ProxyReceiver } from "./harness/receiver.js";
+import { Harness, HarnessRunResult } from "./harness/types.js";
+import { MainThreadHarness } from "./harness/main-thread-harness.js";
+import { ProxyServerHarness } from "./harness/proxy-server-harness.js";
 
 const PROXY_NODES = [
   "palm-generateText",
