@@ -5,15 +5,14 @@
  */
 
 import {
-  Board,
   GraphMetadata,
   Schema,
   V,
   base,
   recipe,
 } from "@google-labs/breadboard";
-import Starter, { starter } from "@google-labs/llm-starter";
-import NodeNurseryWeb, { nursery } from "@google-labs/node-nursery-web";
+import { starter } from "@google-labs/llm-starter";
+import { nursery } from "@google-labs/node-nursery-web";
 
 type TextPartType = {
   text: string;
@@ -67,10 +66,6 @@ const metadata = {
   description: "The text generator recipe powered by the Gemini Pro model",
   version: "0.0.2",
 } as GraphMetadata;
-
-// const board = new Board(metadata);
-// const starter = board.addKit(Starter);
-// const nursery = board.addKit(NodeNurseryWeb);
 
 const toolsExample = [
   {
@@ -227,14 +222,13 @@ export default await recipe(async () => {
     useStreaming: parameters,
   });
 
-  const makeUrl = starter
-    .urlTemplate({
-      $id: "makeURL",
-      template:
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:{method}?key={GEMINI_KEY}{+sseOption}",
-      GEMINI_KEY: starter.secrets({ keys: ["GEMINI_KEY"] }),
-    })
-    .in(chooseMethod);
+  const makeUrl = starter.urlTemplate({
+    $id: "makeURL",
+    template:
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:{method}?key={GEMINI_KEY}{+sseOption}",
+    GEMINI_KEY: starter.secrets({ keys: ["GEMINI_KEY"] }),
+    ...chooseMethod,
+  });
 
   const makeBody = starter.jsonata({
     $id: "makeBody",
@@ -259,8 +253,8 @@ export default await recipe(async () => {
           "$error": "\`text\` input is required"
       }
     )`,
+    ...parameters,
   });
-  parameters.to(makeBody);
 
   const fetch = starter.fetch({
     $id: "callGeminiAPI",
