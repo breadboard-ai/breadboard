@@ -3,8 +3,11 @@
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-fn6input[/"input <br> id='fn-6-input'"/]:::input -- all --> fn6run["runJavascript <br> id='fn-6-run'"]
-fn6run["runJavascript <br> id='fn-6-run'"] -- all --> fn6output{{"output <br> id='fn-6-output'"}}:::output
+compute["runJavascript <br> id='compute'"] -- all --> answer{{"output <br> id='answer'"}}:::output
+generator["invoke <br> id='generator'"] -- "text->code" --> compute["runJavascript <br> id='compute'"]
+mathquestion[/"input <br> id='math-question'"/]:::input -- "question->question" --> mathfunction["promptTemplate <br> id='math-function'"]
+mathquestion[/"input <br> id='math-question'"/]:::input -- "generator->path" --> generator["invoke <br> id='generator'"]
+mathfunction["promptTemplate <br> id='math-function'"] -- "prompt->text" --> generator["invoke <br> id='generator'"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000
