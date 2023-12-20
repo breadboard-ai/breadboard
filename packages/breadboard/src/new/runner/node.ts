@@ -49,7 +49,7 @@ export class BaseNode<
 
   #inputs: Partial<I>;
   #constants: Partial<I> = {};
-  #incomingEmptyWires: AbstractNode[] = [];
+  #incomingControlWires: AbstractNode[] = [];
   #outputs?: O;
 
   #scope: ScopeInterface;
@@ -78,8 +78,8 @@ export class BaseNode<
     this.id = $id ?? nodeIdVendor.vendId(scope, this.type);
 
     this.configuration = rest as Partial<I>;
-    this.#inputs = { ...this.configuration };
 
+    this.#inputs = {};
     this.#constants = {};
   }
 
@@ -89,6 +89,9 @@ export class BaseNode<
     in_: string,
     constant?: boolean
   ) {
+    if ((from as BaseNode).#scope !== this.#scope)
+      throw new Error("Can't connect nodes from different scopes");
+
     const edge: EdgeInterface = {
       to: this as unknown as AbstractNode,
       from: from,
@@ -113,7 +116,7 @@ export class BaseNode<
     if (edge.constant) this.#constants = { ...this.#constants, ...data };
     this.#inputs = { ...this.#inputs, ...data };
 
-    if (edge.out === "") this.#incomingEmptyWires.push(edge.from);
+    if (edge.in === "") this.#incomingControlWires.push(edge.from);
 
     // return which wires were used
     return Object.keys(data);
@@ -130,12 +133,13 @@ export class BaseNode<
    * Required inputs are
    *  - for all named incoming edges, the presence of any data, irrespective of
    *    which node they come from
-   *  - at least one of the empty (control flow edges), if present
-   *  - at least one of * incoming edges (TODO: Is that correct?)
+   *  - at least one of the incoming empty or * wires, if present (TODO: Is that
+   *    correct?)
    *  - data from at least one node if it already ran (#this.outputs not empty)
    *
    * @returns false if none are missing, otherwise string[] of missing inputs.
-   * NOTE: A node with no incoming wires returns an empty array after  first run.
+   * NOTE: A node with no incoming wires returns an empty array after  first
+   * run.
    */
   missingInputs(): string[] | false {
     if (this.incoming.length === 0 && this.#outputs) return [];
@@ -143,28 +147,28 @@ export class BaseNode<
     const requiredKeys = new Set(this.incoming.map((edge) => edge.in));
 
     const presentKeys = new Set([
+      ...Object.keys(this.configuration),
       ...Object.keys(this.#inputs),
       ...Object.keys(this.#constants),
     ]);
-    if (this.#incomingEmptyWires.length) presentKeys.add("");
+    if (this.#incomingControlWires.length) presentKeys.add("");
 
     const missingInputs = [...requiredKeys].filter(
       (key) => !presentKeys.has(key)
     );
-
     return missingInputs.length ? missingInputs : false;
   }
 
   getInputs(): I {
-    return { ...(this.#inputs as I) };
+    return { ...this.configuration, ...(this.#inputs as I) };
   }
 
   setOutputs(outputs: O) {
     this.#outputs = outputs;
 
-    // Clear inputs, reset with configuration and constants
-    this.#inputs = { ...this.configuration, ...this.#constants };
-    this.#incomingEmptyWires = [];
+    // Clear inputs, reset with constants
+    this.#inputs = { ...this.#constants };
+    this.#incomingControlWires = [];
   }
 
   #getHandlerDescribe(scope: ScopeInterface) {
@@ -174,29 +178,32 @@ export class BaseNode<
       : undefined;
   }
 
-  #getHandlerFunction(scope: Scope) {
-    const handler = this.#handler ?? scope.getHandler(this.type);
-    if (!handler) throw new Error(`Handler ${this.type} not found`);
-    return typeof handler === "function" ? handler : handler.invoke;
-  }
-
-  // TODO:BASE: In the end, we need to capture the outputs and resolve the
-  // promise. But before that there is a bit of refactoring to do to allow
-  // returning of graphs, parallel execution, etc.
+  // In the end, we need to capture the outputs and resolve the promise. But
+  // before that there is a bit of refactoring to do to allow returning of
+  // graphs, parallel execution, etc.
   //
   // The logic from BuilderNode.invoke should be somehow called from here, for
   // deserialized nodes that require the Builder environment.
   async invoke(dynamicScope?: Scope): Promise<O> {
-    const scope = new Scope({
-      dynamicScope,
-      lexicalScope: this.#scope,
-    });
-    const handler = this.#getHandlerFunction(scope);
+    const scope = dynamicScope ?? (this.#scope as Scope);
 
-    const result = (await handler(
-      this.getInputs() as I & PromiseLike<I>,
-      this
-    )) as O;
+    const handler: NodeHandler | undefined =
+      this.#handler ?? scope.getHandler(this.type);
+
+    let result;
+
+    const handlerFn = typeof handler === "function" ? handler : handler?.invoke;
+
+    if (handlerFn) {
+      result = (await handlerFn(
+        this.getInputs() as I & PromiseLike<I>,
+        this
+      )) as O;
+    } else if (handler && typeof handler !== "function" && handler.graph) {
+      result = (await scope.invokeOnce(handler.graph, this.getInputs())) as O;
+    } else {
+      throw new Error(`Can't find handler for ${this.id}`);
+    }
 
     this.setOutputs(result);
 

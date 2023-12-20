@@ -111,12 +111,10 @@ export type NodeProxyHandlerFunction<
   | OutputsMaybeAsValues<O>
   | PromiseLike<OutputsMaybeAsValues<O>>;
 
-export type NodeProxyHandlerFunctionForGraphDeclaration<
+export type GraphDeclarationFunction<
   I extends InputValues = InputValues,
   O extends OutputValuesOrUnknown = OutputValuesOrUnknown
-> = (
-  inputs: InputsForGraphDeclaration<I>
-) => OutputsForGraphDeclaration<O> | PromiseLike<OutputsForGraphDeclaration<O>>;
+> = (inputs: InputsForGraphDeclaration<I>) => OutputsForGraphDeclaration<O>;
 
 export type Lambda<
   I extends InputValues = InputValues,
@@ -135,7 +133,7 @@ export interface RecipeFactory {
    * @param fn Handler or graph creation function
    */
   <I extends InputValues = InputValues, O extends OutputValues = OutputValues>(
-    fn: NodeProxyHandlerFunction<I, O>
+    fn: GraphDeclarationFunction<I, O>
   ): Lambda<I, Required<O>>;
 
   /**
@@ -180,11 +178,9 @@ export interface RecipeFactory {
       describe?: NodeDescriberFunction;
       name?: string;
     } & GraphMetadata,
-    fn: NodeProxyHandlerFunctionForGraphDeclaration<z.infer<IT>, z.infer<OT>>
+    fn: GraphDeclarationFunction<z.infer<IT>, z.infer<OT>>
   ): Lambda<z.infer<IT>, Required<z.infer<OT>>>;
 }
-
-export type FnTypes = "code" | "graph";
 
 export type NodeProxyMethods<I extends InputValues, O extends OutputValues> = {
   then<TResult1 = O, TResult2 = never>(
@@ -305,8 +301,4 @@ export interface BuilderScopeInterface {
    * Helpers to detect handlers that construct graphs but don't invoke them.
    */
   serializing(): boolean;
-  createTrapResult<I extends InputValues, O extends OutputValues>(
-    node: AbstractNode<I, O>
-  ): O;
-  didTrapResultTrigger(): boolean;
 }

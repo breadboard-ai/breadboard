@@ -36,7 +36,7 @@ test("metadata in recipe constructor", async (t) => {
 });
 
 test("metadata in serialize", async (t) => {
-  const graph = recipe(async (inputs) => testKit.noop(inputs));
+  const graph = recipe((inputs) => testKit.noop(inputs));
 
   const serialized = await graph.serialize({
     url: "data:",
@@ -61,7 +61,7 @@ test("metadata in serialize overrides metadata in constructor", async (t) => {
       title: "constructor",
       description: "test test",
     },
-    async (inputs) => testKit.noop(inputs)
+    (inputs) => testKit.noop(inputs)
   );
 
   const serialized = await graph.serialize({
