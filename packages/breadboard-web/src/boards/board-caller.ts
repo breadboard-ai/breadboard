@@ -81,7 +81,7 @@ const parametersSchema = {
   required: ["text", "boards"],
 } satisfies Schema;
 
-export default await recipe(async () => {
+export default await recipe(() => {
   const parameters = base.input({
     $id: "parameters",
     schema: parametersSchema,
@@ -91,9 +91,9 @@ export default await recipe(async () => {
    * Formats a list of boards as function declarations that can be supplied
    * to a generator.
    */
-  const formatFunctionDeclarations = recipe(async ({ boards }) => {
+  const formatFunctionDeclarations = recipe(({ boards }) => {
     const turnBoardsToFunctions = core.map({
-      board: recipe(async ({ item }) => {
+      board: recipe(({ item }) => {
         // for each URL, invoke board-as-function.
         const boardToFunction = core.invoke({
           $id: "boardToFunction",

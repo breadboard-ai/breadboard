@@ -20,7 +20,7 @@ export const graph = recipe(
     }),
     title: "Math, chain style graph",
   },
-  async ({ question }) => {
+  ({ question }) => {
     return starter
       .promptTemplate({
         template:

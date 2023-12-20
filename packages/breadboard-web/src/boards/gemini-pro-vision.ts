@@ -89,7 +89,7 @@ const textOutputSchema = {
   },
 } satisfies Schema;
 
-export default await recipe(async () => {
+export default await recipe(() => {
   const parameters = base.input({ $id: "parameters", schema: inputSchema });
 
   const makeBody = starter.jsonata({
@@ -141,7 +141,7 @@ export default await recipe(async () => {
 
   const chunkToText = nursery.transformStream({
     $id: "chunkToText",
-    board: recipe(async () => {
+    board: recipe(() => {
       type Chunky = {
         chunk: {
           candidates: {

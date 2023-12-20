@@ -139,7 +139,7 @@ const streamOutputSchema = {
   },
 } satisfies Schema;
 
-export default await recipe(async () => {
+export default await recipe(() => {
   const input = base.input({ $id: "input", schema: inputSchema });
 
   const streamOutput = base.output({

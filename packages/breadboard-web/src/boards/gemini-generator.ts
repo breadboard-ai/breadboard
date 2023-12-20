@@ -202,7 +202,7 @@ const streamOutputSchema = {
   },
 } satisfies Schema;
 
-export default await recipe(async () => {
+export default await recipe(() => {
   const parameters = base.input({
     $id: "parameters",
     schema: parametersSchema,
@@ -278,7 +278,7 @@ export default await recipe(async () => {
 
   const streamTransform = nursery.transformStream({
     $id: "streamTransform",
-    board: recipe(async () => {
+    board: recipe(() => {
       const transformChunk = starter.jsonata({
         $id: "transformChunk",
         expression:

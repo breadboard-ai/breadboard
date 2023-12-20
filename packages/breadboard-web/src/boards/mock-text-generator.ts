@@ -77,42 +77,40 @@ type MockGeneratorStreamOutput = {
 
 type MockGeneratorOutputs = MockGeneratorTextOutput | MockGeneratorStreamOutput;
 
-const mockGenerator = recipe<MockGeneratorInputs, MockGeneratorOutputs>(
-  async () => {
-    const inputs = base.input({ $id: "parameters", schema: inputSchema });
+const mockGenerator = recipe<MockGeneratorInputs, MockGeneratorOutputs>(() => {
+  const inputs = base.input({ $id: "parameters", schema: inputSchema });
 
-    type GeneratorOutputs = MockGeneratorTextOutput | { list: string[] };
+  type GeneratorOutputs = MockGeneratorTextOutput | { list: string[] };
 
-    const generator = recipeAsCode<MockGeneratorInputs, GeneratorOutputs>(
-      ({ text, useStreaming }) => {
-        text = `Mock model with streaming off echoes back: ${text}`;
-        if (useStreaming) {
-          const list = text.split(" ");
-          return { list };
-        }
-        return { text };
+  const generator = recipeAsCode<MockGeneratorInputs, GeneratorOutputs>(
+    ({ text, useStreaming }) => {
+      text = `Mock model with streaming off echoes back: ${text}`;
+      if (useStreaming) {
+        const list = text.split(" ");
+        return { list };
       }
-    )(inputs);
+      return { text };
+    }
+  )(inputs);
 
-    const textOutput = base.output({
-      $id: "textOutput",
-      schema: textOutputSchema,
-    });
+  const textOutput = base.output({
+    $id: "textOutput",
+    schema: textOutputSchema,
+  });
 
-    const streamOutput = base.output({
-      $id: "streamOutput",
-      schema: streamOutputSchema,
-    });
+  const streamOutput = base.output({
+    $id: "streamOutput",
+    schema: streamOutputSchema,
+  });
 
-    nursery
-      .listToStream({
-        $id: "mockModelStream",
-        list: generator.list as V<string[]>,
-      })
-      .stream.to(streamOutput);
+  nursery
+    .listToStream({
+      $id: "mockModelStream",
+      list: generator.list as V<string[]>,
+    })
+    .stream.to(streamOutput);
 
-    return generator.text.to(textOutput);
-  }
-);
+  return generator.text.to(textOutput);
+});
 
 export default await mockGenerator.serialize(metadata);
