@@ -18,15 +18,15 @@ getBoardArgs["jsonata <br> id='getBoardArgs'"] -- all --> callBoardAsTool["invok
 
 subgraph sg_formatFunctionDeclarations [formatFunctionDeclarations]
 formatFunctionDeclarations_formatResults["jsonata <br> id='formatResults'"] -- all --> formatFunctionDeclarations_output5{{"output <br> id='output-5'"}}:::output
-formatFunctionDeclarations_map4["map <br> id='map-4'"] -- "list->list" --> formatFunctionDeclarations_formatResults["jsonata <br> id='formatResults'"]
-subgraph sg_map4 [map-4]
-formatFunctionDeclarations_map4_boardToFunction["invoke <br> id='boardToFunction'"] -- "function->function" --> formatFunctionDeclarations_map4_output2{{"output <br> id='output-2'"}}:::output
-formatFunctionDeclarations_map4_input1[/"input <br> id='input-1'"/]:::input -- "item->boardURL" --> formatFunctionDeclarations_map4_boardToFunction["invoke <br> id='boardToFunction'"]
-formatFunctionDeclarations_map4_input1[/"input <br> id='input-1'"/]:::input -- "item->boardURL" --> formatFunctionDeclarations_map4_output2{{"output <br> id='output-2'"}}:::output
+formatFunctionDeclarations_map3["map <br> id='map-3'"] -- "list->list" --> formatFunctionDeclarations_formatResults["jsonata <br> id='formatResults'"]
+subgraph sg_map3 [map-3]
+formatFunctionDeclarations_map3_boardToFunction["invoke <br> id='boardToFunction'"] -- "function->function" --> formatFunctionDeclarations_map3_output2{{"output <br> id='output-2'"}}:::output
+formatFunctionDeclarations_map3_input1[/"input <br> id='input-1'"/]:::input -- "item->boardURL" --> formatFunctionDeclarations_map3_boardToFunction["invoke <br> id='boardToFunction'"]
+formatFunctionDeclarations_map3_input1[/"input <br> id='input-1'"/]:::input -- "item->boardURL" --> formatFunctionDeclarations_map3_output2{{"output <br> id='output-2'"}}:::output
 end
-sg_map4:::slotted -- "lamdba->lamdba" --o formatFunctionDeclarations_map4
+sg_map3:::slotted -- "lamdba->lamdba" --o formatFunctionDeclarations_map3
 
-formatFunctionDeclarations_input1[/"input <br> id='input-1'"/]:::input -- "boards->list" --> formatFunctionDeclarations_map4["map <br> id='map-4'"]
+formatFunctionDeclarations_input1[/"input <br> id='input-1'"/]:::input -- "boards->list" --> formatFunctionDeclarations_map3["map <br> id='map-3'"]
 end
 
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000

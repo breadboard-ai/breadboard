@@ -10,7 +10,7 @@ import { starter } from "@google-labs/llm-starter";
 /**
  * A recipe for chunking OpenaAI output streams into text chunks.
  */
-export const chunkTransformer = recipe(async () => {
+export const chunkTransformer = recipe(() => {
   const input = base.input({ $id: "chunk" });
   const transformCompletion = starter.jsonata({
     $id: "transformCompletion",

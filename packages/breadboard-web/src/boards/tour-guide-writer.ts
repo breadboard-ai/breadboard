@@ -45,7 +45,7 @@ const outputSchema = {
   },
 } satisfies Schema;
 
-const graph = recipe(async () => {
+const graph = recipe(() => {
   const parameters = base.input({ $id: "parameters", schema: inputSchema });
 
   const output = base.output({ $id: "guide", schema: outputSchema });
@@ -121,7 +121,7 @@ const graph = recipe(async () => {
 
   travelItinerary.prompt.as("text").to(travelItineraryGenerator);
 
-  const createGuide = recipe(async ({ location, generator }) => {
+  const createGuide = recipe(({ location, generator }) => {
     const guideTemplate = starter.promptTemplate({
       template: `[City] Paris, France
     [Activity] Have a picnic in the Luxembourg Gardens
