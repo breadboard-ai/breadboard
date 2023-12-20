@@ -86,12 +86,6 @@
       "to": "makeURL",
       "out": "GEMINI_KEY",
       "in": "GEMINI_KEY"
-    },
-    {
-      "from": "lambda-6",
-      "to": "chunkToText",
-      "out": "board",
-      "in": "board"
     }
   ],
   "nodes": [
@@ -194,44 +188,6 @@
     {
       "id": "chunkToText",
       "type": "transformStream",
-      "configuration": {}
-    },
-    {
-      "id": "chooseMethod",
-      "type": "runJavascript",
-      "configuration": {
-        "name": "chooseMethodFunction",
-        "code": "function chooseMethodFunction({useStreaming}){const method=useStreaming?\"streamGenerateContent\":\"generateContent\";const sseOption=useStreaming?\"&alt=sse\":\"\";return{method,sseOption}}",
-        "raw": true
-      }
-    },
-    {
-      "id": "secrets-3",
-      "type": "secrets",
-      "configuration": {
-        "keys": [
-          "GEMINI_KEY"
-        ]
-      }
-    },
-    {
-      "id": "errorOutput",
-      "type": "output",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "error": {
-              "type": "string",
-              "title": "Error"
-            }
-          }
-        }
-      }
-    },
-    {
-      "id": "lambda-6",
-      "type": "lambda",
       "configuration": {
         "board": {
           "kind": "board",
@@ -319,6 +275,39 @@
                   }
                 ]
               }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "chooseMethod",
+      "type": "runJavascript",
+      "configuration": {
+        "name": "chooseMethodFunction",
+        "code": "function chooseMethodFunction({useStreaming}){const method=useStreaming?\"streamGenerateContent\":\"generateContent\";const sseOption=useStreaming?\"&alt=sse\":\"\";return{method,sseOption}}",
+        "raw": true
+      }
+    },
+    {
+      "id": "secrets-3",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "GEMINI_KEY"
+        ]
+      }
+    },
+    {
+      "id": "errorOutput",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "error": {
+              "type": "string",
+              "title": "Error"
             }
           }
         }
