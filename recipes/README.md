@@ -25,3 +25,4 @@ To create a new recipe, create a new directory in this directory. The name of th
 ## List of Recipes
 
 - [Fetch RSS Feed](./use-case/fetch-rss/README.md)
+- [Fetch ATOm Feed](./use-case/fetch-atom/README.md)
