@@ -91,23 +91,21 @@ export default await recipe(async () => {
    * Formats a list of boards as function declarations that can be supplied
    * to a generator.
    */
-  const formatFunctionDeclarations = recipe(async () => {
-    const input = base.input({ $id: "boards" });
+  const formatFunctionDeclarations = recipe(async ({ boards }) => {
     const turnBoardsToFunctions = core.map({
-      board: recipe(async () => {
-        const input = base.input({});
+      board: recipe(async ({ item }) => {
         // for each URL, invoke board-as-function.
         const boardToFunction = core.invoke({
           $id: "boardToFunction",
           path: "/graphs/board-as-function.json",
-          boardURL: input.item,
+          boardURL: item,
         });
-        return base.output({
+        return {
           function: boardToFunction,
-          boardURL: input.item,
-        });
+          boardURL: item,
+        };
       }),
-      list: input.boards as V<string[]>,
+      list: boards as V<string[]>,
     });
 
     return starter

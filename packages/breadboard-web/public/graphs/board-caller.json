@@ -107,7 +107,7 @@
       "id": "formatOutput",
       "type": "jsonata",
       "configuration": {
-        "expression": "{ \"result\": result, \"name\": toolCalls[0].name, \"context\": context }",
+        "expression": "{\n      \"result\": result,\n      \"name\": toolCalls[0].name,\n      \"context\": context\n    }",
         "raw": true
       }
     },
@@ -192,7 +192,7 @@
       "id": "getBoardArgs",
       "type": "jsonata",
       "configuration": {
-        "expression": "$merge([{\n      \"path\": $lookup(urlMap, toolCalls[0].name)\n    },\n    toolCalls[0].args,\n    { \"generator\": generator }\n  ])",
+        "expression": "$merge([{\n        \"path\": $lookup(urlMap, toolCalls[0].name)\n      },\n      toolCalls[0].args,\n      { \"generator\": generator }\n    ])",
         "raw": true
       }
     }
@@ -213,7 +213,7 @@
           "in": "list"
         },
         {
-          "from": "boards",
+          "from": "input-1",
           "to": "map-4",
           "out": "boards",
           "in": "list"
@@ -229,7 +229,7 @@
           "id": "formatResults",
           "type": "jsonata",
           "configuration": {
-            "expression": "{\n        \"tools\": [list.function],\n        \"urlMap\": $merge([list.{ function.name: boardURL }])\n      }",
+            "expression": "{\n          \"tools\": [list.function],\n          \"urlMap\": $merge([list.{ function.name: boardURL }])\n        }",
             "raw": true
           }
         },
@@ -244,26 +244,26 @@
                 "edges": [
                   {
                     "from": "boardToFunction",
-                    "to": "output-4",
+                    "to": "output-2",
                     "out": "function",
                     "in": "function"
                   },
                   {
-                    "from": "input-3",
+                    "from": "input-1",
                     "to": "boardToFunction",
                     "out": "item",
                     "in": "boardURL"
                   },
                   {
-                    "from": "input-3",
-                    "to": "output-4",
+                    "from": "input-1",
+                    "to": "output-2",
                     "out": "item",
                     "in": "boardURL"
                   }
                 ],
                 "nodes": [
                   {
-                    "id": "output-4",
+                    "id": "output-2",
                     "type": "output",
                     "configuration": {
                       "schema": {
@@ -293,7 +293,7 @@
                     }
                   },
                   {
-                    "id": "input-3",
+                    "id": "input-1",
                     "type": "input",
                     "configuration": {
                       "schema": {
@@ -317,7 +317,7 @@
           }
         },
         {
-          "id": "boards",
+          "id": "input-1",
           "type": "input",
           "configuration": {
             "schema": {
