@@ -86,6 +86,8 @@ export class BuilderNode<
     } else if (isValue(config)) {
       this.addInputsFromNode(...config.asNodeInput());
     } else {
+      if ((config as OptionalIdConfiguration).$id !== undefined)
+        delete (config as OptionalIdConfiguration)["$id"];
       this.addInputsAsValues(config as InputsMaybeAsValues<I>);
     }
 

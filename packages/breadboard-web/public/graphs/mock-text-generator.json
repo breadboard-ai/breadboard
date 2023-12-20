@@ -33,7 +33,6 @@
       "id": "textOutput",
       "type": "output",
       "configuration": {
-        "$id": "textOutput",
         "schema": {
           "type": "object",
           "properties": {
@@ -57,7 +56,6 @@
       "id": "parameters",
       "type": "input",
       "configuration": {
-        "$id": "parameters",
         "schema": {
           "type": "object",
           "properties": {
@@ -82,15 +80,12 @@
     {
       "id": "mockModelStream",
       "type": "listToStream",
-      "configuration": {
-        "$id": "mockModelStream"
-      }
+      "configuration": {}
     },
     {
       "id": "streamOutput",
       "type": "output",
       "configuration": {
-        "$id": "streamOutput",
         "schema": {
           "type": "object",
           "properties": {

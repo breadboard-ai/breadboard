@@ -33,7 +33,6 @@
       "id": "textOutput",
       "type": "output",
       "configuration": {
-        "$id": "textOutput",
         "schema": {
           "type": "object",
           "properties": {
@@ -49,15 +48,12 @@
     {
       "id": "generateText",
       "type": "palm-generateText",
-      "configuration": {
-        "$id": "generateText"
-      }
+      "configuration": {}
     },
     {
       "id": "parameters",
       "type": "input",
       "configuration": {
-        "$id": "parameters",
         "schema": {
           "type": "object",
           "properties": {

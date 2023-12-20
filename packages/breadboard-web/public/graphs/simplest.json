@@ -21,7 +21,6 @@
       "id": "response",
       "type": "output",
       "configuration": {
-        "$id": "response",
         "schema": {
           "type": "object",
           "properties": {
@@ -41,7 +40,6 @@
       "id": "gemini",
       "type": "invoke",
       "configuration": {
-        "$id": "gemini",
         "path": "/graphs/gemini-generator.json"
       }
     },
@@ -49,7 +47,6 @@
       "id": "text",
       "type": "input",
       "configuration": {
-        "$id": "text",
         "schema": {
           "type": "object",
           "properties": {

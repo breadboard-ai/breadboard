@@ -63,7 +63,6 @@
       "id": "streamOutput",
       "type": "output",
       "configuration": {
-        "$id": "streamOutput",
         "schema": {
           "type": "object",
           "properties": {
@@ -104,7 +103,6 @@
                 "id": "result",
                 "type": "output",
                 "configuration": {
-                  "$id": "result",
                   "schema": {
                     "type": "object",
                     "properties": {
@@ -124,7 +122,6 @@
                 "id": "transformCompletion",
                 "type": "jsonata",
                 "configuration": {
-                  "$id": "transformCompletion",
                   "expression": "choices[0].delta.content ? choices[0].delta.content : \"\""
                 }
               },
@@ -132,7 +129,6 @@
                 "id": "chunk",
                 "type": "input",
                 "configuration": {
-                  "$id": "chunk",
                   "schema": {
                     "type": "object",
                     "properties": {
@@ -154,15 +150,13 @@
             ],
             "graphs": {}
           }
-        },
-        "$id": "streamTransform"
+        }
       }
     },
     {
       "id": "openai",
       "type": "fetch",
       "configuration": {
-        "$id": "openai",
         "url": "https://api.openai.com/v1/chat/completions",
         "method": "POST"
       }
@@ -171,7 +165,6 @@
       "id": "input",
       "type": "input",
       "configuration": {
-        "$id": "input",
         "schema": {
           "type": "object",
           "properties": {
@@ -194,7 +187,6 @@
       "id": "makeHeaders",
       "type": "jsonata",
       "configuration": {
-        "$id": "makeHeaders",
         "expression": "{\n        \"Content-Type\": \"application/json\",\n        \"Authorization\": \"Bearer \" & $.OPENAI_API_KEY\n      }"
       }
     },
@@ -202,7 +194,6 @@
       "id": "makeBody",
       "type": "jsonata",
       "configuration": {
-        "$id": "makeBody",
         "expression": "{\n          \"model\": \"gpt-4-vision-preview\",\n          \"messages\": [\n            {\n              \"role\": \"user\",\n              \"content\": $.content.{\n                \"type\": $keys($) = \"text\" ? \"text\" : \"image_url\" ,\n                \"text\": $.text,\n                \"image_url\": \"data:\" & $.inline_data.mime_type & \";base64,\" & $.inline_data.data\n              }\n            }\n          ],\n          \"stream\": $.useStreaming,\n          \"temperature\": 1,\n          \"max_tokens\": 256,\n          \"top_p\": 1,\n          \"frequency_penalty\": 0,\n          \"presence_penalty\": 0\n    }"
       }
     },
@@ -210,7 +201,6 @@
       "id": "getResponse",
       "type": "jsonata",
       "configuration": {
-        "$id": "getResponse",
         "expression": "choices[0].message.content"
       }
     },
@@ -227,7 +217,6 @@
       "id": "textOutput",
       "type": "output",
       "configuration": {
-        "$id": "textOutput",
         "schema": {
           "type": "object",
           "properties": {

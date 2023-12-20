@@ -81,15 +81,12 @@
     {
       "id": "generator",
       "type": "invoke",
-      "configuration": {
-        "$id": "generator"
-      }
+      "configuration": {}
     },
     {
       "id": "parameters",
       "type": "input",
       "configuration": {
-        "$id": "parameters",
         "schema": {
           "type": "object",
           "properties": {
@@ -115,15 +112,13 @@
       "id": "summarizing-template",
       "type": "promptTemplate",
       "configuration": {
-        "template": "Use context below to answer this question:\n\n##Question:\n{{question}}\n\n## Context {{context}}\n\\n## Answer:\n",
-        "$id": "summarizing-template"
+        "template": "Use context below to answer this question:\n\n##Question:\n{{question}}\n\n## Context {{context}}\n\\n## Answer:\n"
       }
     },
     {
       "id": "customSearchURL",
       "type": "urlTemplate",
       "configuration": {
-        "$id": "customSearchURL",
         "template": "https://www.googleapis.com/customsearch/v1?key={API_KEY}&cx={GOOGLE_CSE_ID}&q={query}"
       }
     },
@@ -131,7 +126,6 @@
       "id": "getSnippets",
       "type": "jsonata",
       "configuration": {
-        "$id": "getSnippets",
         "expression": "$join(items.snippet, '\n')"
       }
     },
@@ -148,9 +142,7 @@
     {
       "id": "search",
       "type": "fetch",
-      "configuration": {
-        "$id": "search"
-      }
+      "configuration": {}
     }
   ],
   "graphs": {}

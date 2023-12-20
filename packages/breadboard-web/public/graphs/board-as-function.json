@@ -27,7 +27,6 @@
       "id": "output",
       "type": "output",
       "configuration": {
-        "$id": "output",
         "schema": {
           "type": "object",
           "properties": {
@@ -49,7 +48,6 @@
       "id": "getFunctionSignature",
       "type": "jsonata",
       "configuration": {
-        "$id": "getFunctionSignature",
         "expression": "\n    (\n      $adjustType := function ($type) {\n          $type = \"object\" or $type = \"array\" ? \"string\" : $type\n      };\n  \n      { \n      \"function\": {\n          \"name\": $replace(title, /\\W/, \"_\"),\n          \"description\": description,\n          \"parameters\": {\n              \"type\": \"object\",\n              \"properties\": nodes[type=\"input\"][0].configuration.schema.properties ~> $each(function($v, $k) {\n              { $k: {\n                  \"type\": $v.type ~> $adjustType,\n                  \"description\": $v.description\n              } }\n              }) ~> $merge\n          }\n      }, \n      \"returns\": nodes[type=\"output\"][0].configuration.schema ~> | ** | {}, 'title' |\n      }\n  )",
         "raw": true
       }
@@ -57,15 +55,12 @@
     {
       "id": "getBoard",
       "type": "fetch",
-      "configuration": {
-        "$id": "getBoard"
-      }
+      "configuration": {}
     },
     {
       "id": "input",
       "type": "input",
       "configuration": {
-        "$id": "input",
         "schema": {
           "type": "object",
           "properties": {

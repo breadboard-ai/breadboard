@@ -70,7 +70,6 @@
       "id": "userRequest",
       "type": "input",
       "configuration": {
-        "$id": "userRequest",
         "schema": {
           "type": "object",
           "properties": {
@@ -91,7 +90,6 @@
       "id": "parameters",
       "type": "input",
       "configuration": {
-        "$id": "parameters",
         "schema": {
           "type": "object",
           "properties": {
@@ -131,8 +129,7 @@
       "type": "promptTemplate",
       "configuration": {
         "template": "This is a conversation between a friendly assistant and their user. You are the assistant and your job is to try to be helpful, empathetic, and fun.\n{{context}}\n\n== Current Conversation\nuser: {{question}}\nassistant:",
-        "context": "",
-        "$id": "assistant"
+        "context": ""
       }
     },
     {
@@ -145,9 +142,7 @@
     {
       "id": "generator",
       "type": "invoke",
-      "configuration": {
-        "$id": "generator"
-      }
+      "configuration": {}
     }
   ],
   "graphs": {}

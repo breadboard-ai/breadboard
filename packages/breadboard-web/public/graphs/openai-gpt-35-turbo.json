@@ -75,7 +75,6 @@
       "id": "streamOutput",
       "type": "output",
       "configuration": {
-        "$id": "streamOutput",
         "schema": {
           "type": "object",
           "properties": {
@@ -93,7 +92,6 @@
       "id": "streamTransform",
       "type": "transformStream",
       "configuration": {
-        "$id": "streamTransform",
         "board": {
           "kind": "board",
           "board": {
@@ -117,7 +115,6 @@
                 "id": "result",
                 "type": "output",
                 "configuration": {
-                  "$id": "result",
                   "schema": {
                     "type": "object",
                     "properties": {
@@ -137,7 +134,6 @@
                 "id": "transformCompletion",
                 "type": "jsonata",
                 "configuration": {
-                  "$id": "transformCompletion",
                   "expression": "choices[0].delta.content ? choices[0].delta.content : \"\""
                 }
               },
@@ -145,7 +141,6 @@
                 "id": "chunk",
                 "type": "input",
                 "configuration": {
-                  "$id": "chunk",
                   "schema": {
                     "type": "object",
                     "properties": {
@@ -174,7 +169,6 @@
       "id": "callOpenAI",
       "type": "fetch",
       "configuration": {
-        "$id": "callOpenAI",
         "url": "https://api.openai.com/v1/chat/completions",
         "method": "POST"
       }
@@ -183,7 +177,6 @@
       "id": "formatParameters",
       "type": "jsonata",
       "configuration": {
-        "$id": "formatParameters",
         "expression": "(\n        $context := $append(\n            context ? context, [\n                {\n                    \"role\": \"user\",\n                    \"content\": text\n                }\n            ]);\n        OPENAI_API_KEY ? text ? {\n            \"headers\": {\n                \"Content-Type\": \"application/json\",\n                \"Authorization\": \"Bearer \" & OPENAI_API_KEY\n            },\n            \"body\": {\n                \"model\": \"gpt-3.5-turbo-1106\",\n                \"messages\": $context,\n                \"stream\": useStreaming,\n                \"temperature\": 1,\n                \"top_p\": 1,\n                \"tools\": tools ? [tools.{ \"type\": \"function\", \"function\": $ }],\n                \"frequency_penalty\": 0,\n                \"presence_penalty\": 0\n            },\n            \"stream\": useStreaming,\n            \"context\": $context\n        } : {\n            \"$error\": \"`text` input is required\"\n        } : {\n            \"$error\": \"`OPENAI_API_KEY` input is required\"\n        }\n      )",
         "raw": true
       }
@@ -192,7 +185,6 @@
       "id": "getResponse",
       "type": "jsonata",
       "configuration": {
-        "$id": "getResponse",
         "expression": "choices[0].message.{\n      \"text\": $boolean(content) ? content,\n      \"tool_calls\": tool_calls.function ~> | $ | { \"args\": $eval(arguments) }, \"arguments\" |\n    }",
         "raw": true
       }
@@ -210,7 +202,6 @@
       "id": "input",
       "type": "input",
       "configuration": {
-        "$id": "input",
         "schema": {
           "type": "object",
           "properties": {
@@ -263,7 +254,6 @@
       "id": "getNewContext",
       "type": "jsonata",
       "configuration": {
-        "$id": "getNewContext",
         "expression": "$append(messages, response.choices[0].message)"
       }
     },
@@ -271,7 +261,6 @@
       "id": "textOutput",
       "type": "output",
       "configuration": {
-        "$id": "textOutput",
         "schema": {
           "type": "object",
           "properties": {
@@ -293,7 +282,6 @@
       "id": "toolCallsOutput",
       "type": "output",
       "configuration": {
-        "$id": "toolCallsOutput",
         "schema": {
           "type": "object",
           "properties": {

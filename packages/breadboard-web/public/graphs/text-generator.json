@@ -39,7 +39,6 @@
       "id": "textOutput",
       "type": "output",
       "configuration": {
-        "$id": "textOutput",
         "schema": {
           "type": "object",
           "properties": {
@@ -55,9 +54,7 @@
     {
       "id": "invoke",
       "type": "invoke",
-      "configuration": {
-        "$id": "invoke"
-      }
+      "configuration": {}
     },
     {
       "id": "fn-3",
@@ -70,7 +67,6 @@
       "id": "input",
       "type": "input",
       "configuration": {
-        "$id": "input",
         "schema": {
           "type": "object",
           "properties": {
@@ -110,7 +106,6 @@
       "id": "streamOutput",
       "type": "output",
       "configuration": {
-        "$id": "streamOutput",
         "schema": {
           "type": "object",
           "properties": {
