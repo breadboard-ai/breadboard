@@ -4,12 +4,11 @@
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
 streamTransform["transformStream <br> id='streamTransform'"] -- all --> streamOutput{{"output <br> id='streamOutput'"}}:::output
-lambda5["lambda <br> id='lambda-5'"] -- "board->board" --> streamTransform["transformStream <br> id='streamTransform'"]
-subgraph sg_lambda5 [lambda-5]
-lambda5_transformCompletion["jsonata <br> id='transformCompletion'"] -- "result->chunk" --> lambda5_result{{"output <br> id='result'"}}:::output
-lambda5_chunk[/"input <br> id='chunk'"/]:::input -- "chunk->json" --> lambda5_transformCompletion["jsonata <br> id='transformCompletion'"]
+subgraph sg_streamTransform [streamTransform]
+streamTransform_transformCompletion["jsonata <br> id='transformCompletion'"] -- "result->chunk" --> streamTransform_result{{"output <br> id='result'"}}:::output
+streamTransform_chunk[/"input <br> id='chunk'"/]:::input -- "chunk->json" --> streamTransform_transformCompletion["jsonata <br> id='transformCompletion'"]
 end
-sg_lambda5:::slotted -- "lamdba->lamdba" --o lambda5
+sg_streamTransform:::slotted -- "lamdba->lamdba" --o streamTransform
 
 openai["fetch <br> id='openai'"] -- "response->json" --> getResponse["jsonata <br> id='getResponse'"]
 openai["fetch <br> id='openai'"] -- "stream->stream" --> streamTransform["transformStream <br> id='streamTransform'"]
