@@ -3,27 +3,33 @@
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
+formatOutput["jsonata <br> id='formatOutput'"] -- "result->result" --> textOutput{{"output <br> id='textOutput'"}}:::output
+fetch4["fetch <br> id='fetch-4'"] -- "$error->json" --> formatError["jsonata <br> id='formatError'"]
+fetch4["fetch <br> id='fetch-4'"] -- "stream->stream" --> chunkToText["transformStream <br> id='chunkToText'"]
+fetch4["fetch <br> id='fetch-4'"] -- "response->json" --> formatOutput["jsonata <br> id='formatOutput'"]
+parameters[/"input <br> id='parameters'"/]:::input -- "parts->parts" --> makeBody["jsonata <br> id='makeBody'"]
 parameters[/"input <br> id='parameters'"/]:::input -- "useStreaming->useStreaming" --> chooseMethod["runJavascript <br> id='chooseMethod'"]
-secrets1("secrets <br> id='secrets-1'"):::secrets -- "GEMINI_KEY->GEMINI_KEY" --> makeURL["urlTemplate <br> id='makeURL'"]
+parameters[/"input <br> id='parameters'"/]:::input -- "useStreaming->stream" --> fetch4["fetch <br> id='fetch-4'"]
+makeURL["urlTemplate <br> id='makeURL'"] -- "url->url" --> fetch4["fetch <br> id='fetch-4'"]
+makeBody["jsonata <br> id='makeBody'"] -- "result->body" --> fetch4["fetch <br> id='fetch-4'"]
+formatError["jsonata <br> id='formatError'"] -- "result->error" --> errorOutput{{"output <br> id='errorOutput'"}}:::output
+chunkToText["transformStream <br> id='chunkToText'"] -- "stream->stream" --> streamOutput{{"output <br> id='streamOutput'"}}:::output
 chooseMethod["runJavascript <br> id='chooseMethod'"] -- "method->method" --> makeURL["urlTemplate <br> id='makeURL'"]
 chooseMethod["runJavascript <br> id='chooseMethod'"] -- "sseOption->sseOption" --> makeURL["urlTemplate <br> id='makeURL'"]
-parameters[/"input <br> id='parameters'"/]:::input -- "useStreaming->stream" --> fetch2["fetch <br> id='fetch-2'"]
-makeURL["urlTemplate <br> id='makeURL'"] -- "url->url" --> fetch2["fetch <br> id='fetch-2'"]
-formatError["jsonata <br> id='formatError'"] -- "result->error" --> errorOutput{{"output <br> id='errorOutput'"}}:::output
-fetch2["fetch <br> id='fetch-2'"] -- "$error->json" --> formatError["jsonata <br> id='formatError'"]
-lambda3["lambda <br> id='lambda-3'"] -- "board->board" --o transformStream4["transformStream <br> id='transformStream-4'"]
-subgraph sg_lambda3 [lambda-3]
-lambda3_runJavascript3["runJavascript <br> id='runJavascript-3'"] -- "result->chunk" --> lambda3_output2{{"output <br> id='output-2'"}}:::output
-lambda3_input1[/"input <br> id='input-1'"/]:::input -- "chunk->chunk" --> lambda3_runJavascript3["runJavascript <br> id='runJavascript-3'"]
-end
-sg_lambda3:::slotted -- "lamdba->lamdba" --o lambda3
+secrets3("secrets <br> id='secrets-3'"):::secrets -- "GEMINI_KEY->GEMINI_KEY" --> makeURL["urlTemplate <br> id='makeURL'"]
+lambda6["lambda <br> id='lambda-6'"] -- "board->board" --> chunkToText["transformStream <br> id='chunkToText'"]
+subgraph sg_lambda6 [lambda-6]
+lambda6_fn4["invoke <br> id='fn-4'"] -- all --> lambda6_output5{{"output <br> id='output-5'"}}:::output
+lambda6_input3[/"input <br> id='input-3'"/]:::input -- "chunk->chunk" --> lambda6_fn4["invoke <br> id='fn-4'"]
 
-transformStream4["transformStream <br> id='transformStream-4'"] -- "stream->stream" --> output5{{"output <br> id='output-5'"}}:::output
-fetch2["fetch <br> id='fetch-2'"] -- "stream->stream" --> transformStream4["transformStream <br> id='transformStream-4'"]
-formatOutput["jsonata <br> id='formatOutput'"] -- "result->result" --> textOutput{{"output <br> id='textOutput'"}}:::output
-fetch2["fetch <br> id='fetch-2'"] -- "response->json" --> formatOutput["jsonata <br> id='formatOutput'"]
-makeBody["jsonata <br> id='makeBody'"] -- "result->body" --> fetch2["fetch <br> id='fetch-2'"]
-parameters[/"input <br> id='parameters'"/]:::input -- "parts->parts" --> makeBody["jsonata <br> id='makeBody'"]
+subgraph sg_fn4 [fn-4]
+fn4lambda6_fn4input[/"input <br> id='fn-4-input'"/]:::input -- all --> fn4lambda6_fn4run["runJavascript <br> id='fn-4-run'"]
+fn4lambda6_fn4run["runJavascript <br> id='fn-4-run'"] -- all --> fn4lambda6_fn4output{{"output <br> id='fn-4-output'"}}:::output
+end
+
+end
+sg_lambda6:::slotted -- "lamdba->lamdba" --o lambda6
+
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

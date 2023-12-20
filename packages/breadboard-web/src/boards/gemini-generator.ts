@@ -4,17 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board, Schema } from "@google-labs/breadboard";
-import Starter from "@google-labs/llm-starter";
-import NodeNurseryWeb from "@google-labs/node-nursery-web";
-
-const board = new Board({
-  title: "Gemini Pro Generator",
-  description: "The text generator recipe powered by the Gemini Pro model",
-  version: "0.0.2",
-});
-const starter = board.addKit(Starter);
-const nursery = board.addKit(NodeNurseryWeb);
+import {
+  Board,
+  GraphMetadata,
+  Schema,
+  V,
+  base,
+  recipe,
+} from "@google-labs/breadboard";
+import Starter, { starter } from "@google-labs/llm-starter";
+import NodeNurseryWeb, { nursery } from "@google-labs/node-nursery-web";
 
 type TextPartType = {
   text: string;
@@ -62,6 +61,16 @@ type FunctionDeclaration = {
   description: string;
   parameters?: Schema;
 };
+
+const metadata = {
+  title: "Gemini Pro Generator",
+  description: "The text generator recipe powered by the Gemini Pro model",
+  version: "0.0.2",
+} as GraphMetadata;
+
+// const board = new Board(metadata);
+// const starter = board.addKit(Starter);
+// const nursery = board.addKit(NodeNurseryWeb);
 
 const toolsExample = [
   {
@@ -115,200 +124,195 @@ const contextExample = [
   },
 ] satisfies GenerateContentContentsType[];
 
-const parameters = board.input({
-  $id: "parameters",
-  schema: {
-    type: "object",
-    properties: {
-      text: {
+const parametersSchema = {
+  type: "object",
+  properties: {
+    text: {
+      type: "string",
+      title: "Text",
+      description: "The text to generate",
+      examples: ["What is the square root of pi?"],
+    },
+    tools: {
+      type: "array",
+      title: "Tools",
+      description: "An array of functions to use for tool-calling",
+      items: {
         type: "string",
-        title: "Text",
-        description: "The text to generate",
-        examples: ["What is the square root of pi?"],
       },
-      tools: {
-        type: "array",
-        title: "Tools",
-        description: "An array of functions to use for tool-calling",
-        items: {
-          type: "string",
-        },
-        default: "[]",
-        examples: [JSON.stringify(toolsExample, null, 2)],
-      },
-      context: {
-        type: "array",
-        title: "Context",
-        description: "An array of messages to use as conversation context",
-        items: {
-          type: "object",
-        },
-        default: "[]",
-        examples: [JSON.stringify(contextExample, null, 2)],
-      },
-      useStreaming: {
-        type: "boolean",
-        title: "Stream",
-        description: "Whether to stream the output",
-        default: "false",
-      },
+      default: "[]",
+      examples: [JSON.stringify(toolsExample, null, 2)],
     },
-    required: ["text"],
-  } satisfies Schema,
-});
-
-const textOutput = board.output({
-  $id: "textOutput",
-  schema: {
-    type: "object",
-    properties: {
-      text: {
-        type: "string",
-        title: "Text",
-        description: "The generated text",
-      },
-      context: {
-        type: "array",
-        title: "Context",
-        description: "The conversation context",
-      },
-    },
-  },
-});
-
-const functionCallOutput = board.output({
-  $id: "toolCallsOutput",
-  schema: {
-    type: "object",
-    properties: {
-      toolCalls: {
-        type: "array",
-        title: "Tool Calls",
-        description: "The generated tool calls",
-      },
-      context: {
-        type: "array",
-        title: "Context",
-        description: "The conversation context",
-      },
-    },
-  },
-});
-
-const streamOutput = board.output({
-  $id: "streamOutput",
-  schema: {
-    type: "object",
-    properties: {
-      stream: {
+    context: {
+      type: "array",
+      title: "Context",
+      description: "An array of messages to use as conversation context",
+      items: {
         type: "object",
-        title: "Stream",
-        format: "stream",
-        description: "The generated text",
       },
+      default: "[]",
+      examples: [JSON.stringify(contextExample, null, 2)],
+    },
+    useStreaming: {
+      type: "boolean",
+      title: "Stream",
+      description: "Whether to stream the output",
+      default: "false",
     },
   },
-});
+  required: ["text"],
+} satisfies Schema;
 
-function chooseMethodFunction({ useStreaming }: { useStreaming: boolean }) {
-  const method = useStreaming ? "streamGenerateContent" : "generateContent";
-  const sseOption = useStreaming ? "&alt=sse" : "";
-  return { method, sseOption };
-}
+const textOutputSchema = {
+  type: "object",
+  properties: {
+    text: {
+      type: "string",
+      title: "Text",
+      description: "The generated text",
+    },
+    context: {
+      type: "array",
+      title: "Context",
+      description: "The conversation context",
+    },
+  },
+} satisfies Schema;
 
-const chooseMethod = starter
-  .runJavascript({
+const toolCallOutputSchema = {
+  type: "object",
+  properties: {
+    toolCalls: {
+      type: "array",
+      title: "Tool Calls",
+      description: "The generated tool calls",
+    },
+    context: {
+      type: "array",
+      title: "Context",
+      description: "The conversation context",
+    },
+  },
+} satisfies Schema;
+
+const streamOutputSchema = {
+  type: "object",
+  properties: {
+    stream: {
+      type: "object",
+      title: "Stream",
+      format: "stream",
+      description: "The generated text",
+    },
+  },
+} satisfies Schema;
+
+export default await recipe(async () => {
+  const parameters = base.input({
+    $id: "parameters",
+    schema: parametersSchema,
+  });
+
+  function chooseMethodFunction({ useStreaming }: { useStreaming: boolean }) {
+    const method = useStreaming ? "streamGenerateContent" : "generateContent";
+    const sseOption = useStreaming ? "&alt=sse" : "";
+    return { method, sseOption };
+  }
+
+  const chooseMethod = starter.runJavascript({
     $id: "chooseMethod",
     name: "chooseMethodFunction",
     code: chooseMethodFunction.toString(),
     raw: true,
-  })
-  .wire("<-useStreaming", parameters);
+    useStreaming: parameters,
+  });
 
-const url = starter
-  .urlTemplate({
-    $id: "makeURL",
-    template:
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:{method}?key={GEMINI_KEY}{+sseOption}",
-  })
-  .wire("<-GEMINI_KEY", starter.secrets({ keys: ["GEMINI_KEY"] }))
-  .wire("<-method", chooseMethod)
-  .wire("<-sseOption", chooseMethod);
+  const makeUrl = starter
+    .urlTemplate({
+      $id: "makeURL",
+      template:
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:{method}?key={GEMINI_KEY}{+sseOption}",
+      GEMINI_KEY: starter.secrets({ keys: ["GEMINI_KEY"] }),
+    })
+    .in(chooseMethod);
 
-const makeBody = starter.jsonata({
-  $id: "makeBody",
-  expression: `(
-    $context := $append(
-        context ? context, [
-            {
-                "role": "user",
-                "parts": [
-                    {
-                        "text": text
-                    }
-                ]
-            }
-        ]);
-    text ? {
-        "contents": $context, 
-        "tools": tools ? {
-          "function_declarations": tools
-        }
-    } : {
-        "$error": "\`text\` input is required"
-    }
-)`,
-});
+  const makeBody = starter.jsonata({
+    $id: "makeBody",
+    expression: `(
+      $context := $append(
+          context ? context, [
+              {
+                  "role": "user",
+                  "parts": [
+                      {
+                          "text": text
+                      }
+                  ]
+              }
+          ]);
+      text ? {
+          "contents": $context, 
+          "tools": tools ? {
+            "function_declarations": tools
+          }
+      } : {
+          "$error": "\`text\` input is required"
+      }
+    )`,
+  });
+  parameters.to(makeBody);
 
-const fetch = starter
-  .fetch({
+  const fetch = starter.fetch({
     $id: "callGeminiAPI",
     method: "POST",
-  })
-  .wire("stream<-useStreaming", parameters)
-  .wire("<-url", url);
+    stream: parameters.useStreaming,
+    url: makeUrl.url,
+    body: makeBody.result,
+  });
 
-const formatResponse = starter.jsonata({
-  $id: "formatResponse",
-  expression: `
+  const formatResponse = starter.jsonata({
+    $id: "formatResponse",
+    expression: `
   response.candidates[0].content.parts.{
     "text": text ? text,
     "toolCalls": functionCall ? [ functionCall ],
     "context": $append($$.context, %.$)
   }`,
-  raw: true,
-});
+    raw: true,
+    response: fetch,
+  });
 
-const streamTransform = nursery.transformStream(
-  (transformBoard, input, output) => {
-    const starter = transformBoard.addKit(Starter);
+  const streamTransform = nursery.transformStream({
+    $id: "streamTransform",
+    board: recipe(async () => {
+      const transformChunk = starter.jsonata({
+        $id: "transformChunk",
+        expression:
+          "candidates[0].content.parts.text ? $join(candidates[0].content.parts.text) : ''",
+        json: base.input({}).chunk as V<string>,
+      });
+      return base.output({ chunk: transformChunk.result });
+    }),
+    stream: fetch,
+  });
 
-    const transformChunk = starter.jsonata({
-      $id: "transformChunk",
-      expression:
-        "candidates[0].content.parts.text ? $join(candidates[0].content.parts.text) : ''",
-    });
+  base.output({
+    $id: "textOutput",
+    schema: textOutputSchema,
+    context: formatResponse,
+    text: formatResponse,
+  });
 
-    input.wire("chunk->json", transformChunk.wire("result->chunk", output));
-  }
-);
+  base.output({
+    $id: "toolCallsOutput",
+    schema: toolCallOutputSchema,
+    context: formatResponse,
+    toolCalls: formatResponse,
+  });
 
-parameters.wire(
-  "*->",
-  makeBody.wire(
-    "result->body",
-    fetch
-      .wire(
-        "response->response",
-        formatResponse
-          .wire("toolCalls->", functionCallOutput)
-          .wire("text->", textOutput)
-          .wire("context->", textOutput)
-          .wire("context->", functionCallOutput)
-          .wire("<-context", parameters)
-      )
-      .wire("stream->", streamTransform.wire("stream->", streamOutput))
-  )
-);
-
-export default board;
+  return base.output({
+    $id: "streamOutput",
+    schema: streamOutputSchema,
+    stream: streamTransform,
+  });
+}).serialize(metadata);
