@@ -49,7 +49,10 @@ export class Scope implements ScopeInterface {
       this.#lexicalScope?.getHandler(name)) as unknown as NodeHandler<I, O>;
   }
 
-  async invoke(node: AbstractNode, callbacks: InvokeCallbacks[] = []) {
+  async invoke(
+    node: AbstractNode,
+    callbacks: InvokeCallbacks[] = []
+  ): Promise<void> {
     try {
       const queue: AbstractNode[] = this.#findAllConnectedNodes(node).filter(
         (node) => !node.missingInputs()
@@ -116,7 +119,7 @@ export class Scope implements ScopeInterface {
     inputs: InputValues,
     callbacks: InvokeCallbacks[] = []
   ): Promise<OutputValues> {
-    let resolver: (outputs: OutputValues) => void;
+    let resolver: undefined | ((outputs: OutputValues) => void) = undefined;
     const promise = new Promise<OutputValues>((resolve) => {
       resolver = resolve;
     });
@@ -128,14 +131,50 @@ export class Scope implements ScopeInterface {
         return inputs;
       },
       output: async (inputs: InputValues | PromiseLike<InputValues>) => {
-        resolver(await inputs);
+        resolver?.(await inputs);
+        resolver = undefined;
         return {};
       },
     });
 
-    scope.invoke(node, callbacks);
+    let lastNode: AbstractNode | undefined = undefined;
+    const lastMissingInputs = new Map<string, string>();
 
-    // TODO: This will wait forever if there was no output node.
+    scope.invoke(node, [
+      {
+        after: (node, _inputs, _outputs, distribution) => {
+          // Remember debug information to make the error below more useful.
+
+          lastNode = node;
+          for (const { node, missing } of distribution.nodes) {
+            if (missing) {
+              lastMissingInputs.set(node.id, missing.join(", "));
+            } else {
+              lastMissingInputs.delete(node.id);
+            }
+          }
+        },
+        done: () => {
+          // Make sure we don't wait forever if execution terminates without
+          // reaching an output node.
+          resolver?.({
+            $error: {
+              type: "error",
+              error: new Error(
+                `Output node never reach. Last node was ${
+                  lastNode?.id
+                }.\n\nThese nodes had inputs missing:\n${Array.from(
+                  lastMissingInputs,
+                  ([id, missing]) => `  ${id}: ${missing}`
+                ).join("\n")}`
+              ),
+            },
+          });
+        },
+      },
+      ...callbacks,
+    ]);
+
     return promise;
   }
 
