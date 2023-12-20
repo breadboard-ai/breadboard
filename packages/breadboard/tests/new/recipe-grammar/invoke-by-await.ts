@@ -111,7 +111,6 @@ test("directly await declarative recipe, passing full inputs as spread, twice", 
     const reverser = testKit.reverser({ ...inputs });
     return testKit.noop({ ...reverser });
   });
-  t.log(await graph.serialize());
   const baz = await graph({ baz: "bar" }).baz;
   t.is(baz as unknown as string, "rab");
 });

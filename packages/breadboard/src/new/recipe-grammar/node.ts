@@ -464,7 +464,11 @@ export class BuilderNode<
     try {
       // It's ok to call this multiple times: If it already run it'll only do
       // something if new nodes or inputs were added (e.g. between await calls)
-      this.#scope.invoke(this as unknown as BaseNode);
+      this.#scope.invoke(this as unknown as BaseNode).catch((e) => {
+        if (onrejected)
+          return Promise.reject(e).catch(this.#scope.asScopeFor(onrejected));
+        else throw e;
+      });
 
       return this.#promise.then(
         onfulfilled && this.#scope.asScopeFor(onfulfilled),
