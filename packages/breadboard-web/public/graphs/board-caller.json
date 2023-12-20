@@ -198,7 +198,7 @@
       "id": "getBoardArgs",
       "type": "jsonata",
       "configuration": {
-        "expression": "$merge([{\n      \"path\": $lookup(urlMap, toolCalls[0].name)\n    },\n    { \"generator\": generator },\n    toolCalls[0].args\n  ])",
+        "expression": "$merge([{\n      \"path\": $lookup(urlMap, toolCalls[0].name)\n    },\n    toolCalls[0].args,\n    { \"generator\": generator }\n  ])",
         "raw": true
       }
     }

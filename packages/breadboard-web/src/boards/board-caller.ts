@@ -166,8 +166,8 @@ export default await recipe(async () => {
     expression: `$merge([{
       "path": $lookup(urlMap, toolCalls[0].name)
     },
-    { "generator": generator },
-    toolCalls[0].args
+    toolCalls[0].args,
+    { "generator": generator }
   ])`,
     raw: true,
     urlMap: formatFunctionDeclarations,
