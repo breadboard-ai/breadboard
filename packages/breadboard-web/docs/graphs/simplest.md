@@ -3,8 +3,8 @@
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-gemini["invoke <br> id='gemini'"] -- all --> response{{"output <br> id='response'"}}:::output
-text[/"input <br> id='text'"/]:::input -- all --> gemini["invoke <br> id='gemini'"]
+fn12input[/"input <br> id='fn-12-input'"/]:::input -- all --> fn12run["runJavascript <br> id='fn-12-run'"]
+fn12run["runJavascript <br> id='fn-12-run'"] -- all --> fn12output{{"output <br> id='fn-12-output'"}}:::output
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

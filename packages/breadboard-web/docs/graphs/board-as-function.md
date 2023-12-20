@@ -3,9 +3,8 @@
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-getFunctionSignature["jsonata <br> id='getFunctionSignature'"] -- all --> output{{"output <br> id='output'"}}:::output
-getBoard["fetch <br> id='getBoard'"] -- "response->json" --> getFunctionSignature["jsonata <br> id='getFunctionSignature'"]
-input[/"input <br> id='input'"/]:::input -- "boardURL->url" --> getBoard["fetch <br> id='getBoard'"]
+fn3input[/"input <br> id='fn-3-input'"/]:::input -- all --> fn3run["runJavascript <br> id='fn-3-run'"]
+fn3run["runJavascript <br> id='fn-3-run'"] -- all --> fn3output{{"output <br> id='fn-3-output'"}}:::output
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

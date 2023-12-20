@@ -78,8 +78,8 @@ export class BaseNode<
     this.id = $id ?? nodeIdVendor.vendId(scope, this.type);
 
     this.configuration = rest as Partial<I>;
-    this.#inputs = { ...this.configuration };
 
+    this.#inputs = {};
     this.#constants = {};
   }
 
@@ -89,6 +89,9 @@ export class BaseNode<
     in_: string,
     constant?: boolean
   ) {
+    if ((from as BaseNode).#scope !== this.#scope)
+      throw new Error("Can't connect nodes from different scopes");
+
     const edge: EdgeInterface = {
       to: this as unknown as AbstractNode,
       from: from,
@@ -143,6 +146,7 @@ export class BaseNode<
     const requiredKeys = new Set(this.incoming.map((edge) => edge.in));
 
     const presentKeys = new Set([
+      ...Object.keys(this.configuration),
       ...Object.keys(this.#inputs),
       ...Object.keys(this.#constants),
     ]);
@@ -156,14 +160,14 @@ export class BaseNode<
   }
 
   getInputs(): I {
-    return { ...(this.#inputs as I) };
+    return { ...this.configuration, ...(this.#inputs as I) };
   }
 
   setOutputs(outputs: O) {
     this.#outputs = outputs;
 
-    // Clear inputs, reset with configuration and constants
-    this.#inputs = { ...this.configuration, ...this.#constants };
+    // Clear inputs, reset with constants
+    this.#inputs = { ...this.#constants };
     this.#incomingEmptyWires = [];
   }
 
@@ -174,15 +178,9 @@ export class BaseNode<
       : undefined;
   }
 
-  #getHandlerFunction(scope: Scope) {
-    const handler = this.#handler ?? scope.getHandler(this.type);
-    if (!handler) throw new Error(`Handler ${this.type} not found`);
-    return typeof handler === "function" ? handler : handler.invoke;
-  }
-
-  // TODO:BASE: In the end, we need to capture the outputs and resolve the
-  // promise. But before that there is a bit of refactoring to do to allow
-  // returning of graphs, parallel execution, etc.
+  // In the end, we need to capture the outputs and resolve the promise. But
+  // before that there is a bit of refactoring to do to allow returning of
+  // graphs, parallel execution, etc.
   //
   // The logic from BuilderNode.invoke should be somehow called from here, for
   // deserialized nodes that require the Builder environment.
@@ -191,12 +189,45 @@ export class BaseNode<
       dynamicScope,
       lexicalScope: this.#scope,
     });
-    const handler = this.#getHandlerFunction(scope);
+    const handler: NodeHandler | undefined =
+      this.#handler ?? scope.getHandler(this.type);
 
-    const result = (await handler(
-      this.getInputs() as I & PromiseLike<I>,
-      this
-    )) as O;
+    let result;
+
+    const handlerFn = typeof handler === "function" ? handler : handler?.invoke;
+
+    if (handlerFn) {
+      result = (await handlerFn(
+        this.getInputs() as I & PromiseLike<I>,
+        this
+      )) as O;
+    } else if (handler && typeof handler !== "function" && handler.graph) {
+      // Invoke graph.
+      //
+      // TODO: This should move into scope as a default way to invoke graphs
+
+      let resolver: (outputs: O) => void;
+      const promise = new Promise<O>((resolve) => {
+        resolver = resolve;
+      });
+
+      scope.addHandlers({
+        input: async () => {
+          return this.getInputs() as InputValues;
+        },
+        output: async (inputs: InputValues | PromiseLike<InputValues>) => {
+          resolver((await inputs) as O);
+          return {};
+        },
+      });
+
+      scope.invoke(handler.graph);
+
+      // TODO: This will wait forever if there was no output node.
+      result = await promise;
+    } else {
+      throw new Error(`Can't find handler for ${this.id}`);
+    }
 
     this.setOutputs(result);
 
