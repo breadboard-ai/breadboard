@@ -3,37 +3,32 @@
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
-lambda1["lambda <br> id='lambda-1'"] -- "board->board" --o invoke2["invoke <br> id='invoke-2'"]
-subgraph sg_lambda1 [lambda-1]
-lambda1_lambda3["lambda <br> id='lambda-3'"] -- "board->board" --o lambda1_map4["map <br> id='map-4'"]
-subgraph sg_lambda3 [lambda-3]
-lambda1_lambda3_boardToFunction["invoke <br> id='boardToFunction'"] -- "function->function" --> lambda1_lambda3_output2{{"output <br> id='output-2'"}}:::output
-lambda1_lambda3_input1[/"input <br> id='input-1'"/]:::input -- "item->boardURL" --> lambda1_lambda3_boardToFunction["invoke <br> id='boardToFunction'"]
-lambda1_lambda3_input1[/"input <br> id='input-1'"/]:::input -- "item->boardURL" --> lambda1_lambda3_output2{{"output <br> id='output-2'"}}:::output
-end
-sg_lambda3:::slotted -- "lamdba->lamdba" --o lambda1_lambda3
-
-lambda1_formatResults["jsonata <br> id='formatResults'"] -- all --> lambda1_output2{{"output <br> id='output-2'"}}:::output
-lambda1_map4["map <br> id='map-4'"] -- "list->json" --> lambda1_formatResults["jsonata <br> id='formatResults'"]
-lambda1_input1[/"input <br> id='input-1'"/]:::input -- "boards->list" --> lambda1_map4["map <br> id='map-4'"]
-end
-sg_lambda1:::slotted -- "lamdba->lamdba" --o lambda1
-
-noStreaming(("passthrough <br> id='noStreaming'")):::passthrough -- "useStreaming->useStreaming" --> generate["invoke <br> id='generate'"]
-generate["invoke <br> id='generate'"] -- "toolCalls->toolCalls" --> formatOutput["jsonata <br> id='formatOutput'"]
-parameters[/"input <br> id='parameters'"/]:::input -- "text->text" --> generate["invoke <br> id='generate'"]
-parameters[/"input <br> id='parameters'"/]:::input -- "context->context" --> generate["invoke <br> id='generate'"]
-invoke2["invoke <br> id='invoke-2'"] -- "tools->tools" --> generate["invoke <br> id='generate'"]
-invoke2["invoke <br> id='invoke-2'"] -- "urlMap->urlMap" --> getBoardArgs["jsonata <br> id='getBoardArgs'"]
-parameters[/"input <br> id='parameters'"/]:::input -- "boards->boards" --> invoke2["invoke <br> id='invoke-2'"]
 formatOutput["jsonata <br> id='formatOutput'"] -- all --> output{{"output <br> id='output'"}}:::output
 hoistOutputs["jsonata <br> id='hoistOutputs'"] -- "result->result" --> formatOutput["jsonata <br> id='formatOutput'"]
-callBoardAsTool["invoke <br> id='callBoardAsTool'"] -- all --> hoistOutputs["jsonata <br> id='hoistOutputs'"]
-getBoardArgs["jsonata <br> id='getBoardArgs'"] -- all --> callBoardAsTool["invoke <br> id='callBoardAsTool'"]
-parameters[/"input <br> id='parameters'"/]:::input -- "generator->generator" --> getBoardArgs["jsonata <br> id='getBoardArgs'"]
 generate["invoke <br> id='generate'"] -- "toolCalls->toolCalls" --> getBoardArgs["jsonata <br> id='getBoardArgs'"]
-generate["invoke <br> id='generate'"] -- "context->context" --> formatOutput["jsonata <br> id='formatOutput'"]
+generate["invoke <br> id='generate'"] -- all --> formatOutput["jsonata <br> id='formatOutput'"]
+callBoardAsTool["invoke <br> id='callBoardAsTool'"] -- all --> hoistOutputs["jsonata <br> id='hoistOutputs'"]
+parameters[/"input <br> id='parameters'"/]:::input -- "boards->boards" --> formatFunctionDeclarations["invoke <br> id='formatFunctionDeclarations'"]
+parameters[/"input <br> id='parameters'"/]:::input -- all --> generate["invoke <br> id='generate'"]
 parameters[/"input <br> id='parameters'"/]:::input -- "generator->path" --> generate["invoke <br> id='generate'"]
+parameters[/"input <br> id='parameters'"/]:::input -- "generator->generator" --> getBoardArgs["jsonata <br> id='getBoardArgs'"]
+formatFunctionDeclarations["invoke <br> id='formatFunctionDeclarations'"] -- "tools->tools" --> generate["invoke <br> id='generate'"]
+formatFunctionDeclarations["invoke <br> id='formatFunctionDeclarations'"] -- "urlMap->urlMap" --> getBoardArgs["jsonata <br> id='getBoardArgs'"]
+getBoardArgs["jsonata <br> id='getBoardArgs'"] -- all --> callBoardAsTool["invoke <br> id='callBoardAsTool'"]
+
+subgraph sg_formatFunctionDeclarations [formatFunctionDeclarations]
+formatFunctionDeclarations_formatResults["jsonata <br> id='formatResults'"] -- all --> formatFunctionDeclarations_output5{{"output <br> id='output-5'"}}:::output
+formatFunctionDeclarations_map4["map <br> id='map-4'"] -- "list->list" --> formatFunctionDeclarations_formatResults["jsonata <br> id='formatResults'"]
+subgraph sg_map4 [map-4]
+formatFunctionDeclarations_map4_boardToFunction["invoke <br> id='boardToFunction'"] -- "function->function" --> formatFunctionDeclarations_map4_output2{{"output <br> id='output-2'"}}:::output
+formatFunctionDeclarations_map4_input1[/"input <br> id='input-1'"/]:::input -- "item->boardURL" --> formatFunctionDeclarations_map4_boardToFunction["invoke <br> id='boardToFunction'"]
+formatFunctionDeclarations_map4_input1[/"input <br> id='input-1'"/]:::input -- "item->boardURL" --> formatFunctionDeclarations_map4_output2{{"output <br> id='output-2'"}}:::output
+end
+sg_map4:::slotted -- "lamdba->lamdba" --o formatFunctionDeclarations_map4
+
+formatFunctionDeclarations_input1[/"input <br> id='input-1'"/]:::input -- "boards->list" --> formatFunctionDeclarations_map4["map <br> id='map-4'"]
+end
+
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

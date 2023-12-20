@@ -4,58 +4,10 @@
   "version": "0.0.6",
   "edges": [
     {
-      "from": "lambda-1",
-      "to": "invoke-2",
-      "constant": true,
-      "out": "board",
-      "in": "board"
-    },
-    {
-      "from": "noStreaming",
-      "to": "generate",
-      "out": "useStreaming",
-      "in": "useStreaming"
-    },
-    {
-      "from": "generate",
-      "to": "formatOutput",
-      "out": "toolCalls",
-      "in": "toolCalls"
-    },
-    {
-      "from": "parameters",
-      "to": "generate",
-      "out": "text",
-      "in": "text"
-    },
-    {
-      "from": "parameters",
-      "to": "generate",
-      "out": "context",
-      "in": "context"
-    },
-    {
-      "from": "invoke-2",
-      "to": "generate",
-      "out": "tools",
-      "in": "tools"
-    },
-    {
-      "from": "invoke-2",
-      "to": "getBoardArgs",
-      "out": "urlMap",
-      "in": "urlMap"
-    },
-    {
-      "from": "parameters",
-      "to": "invoke-2",
-      "out": "boards",
-      "in": "boards"
-    },
-    {
       "from": "formatOutput",
       "to": "output",
-      "out": "*"
+      "out": "*",
+      "in": ""
     },
     {
       "from": "hoistOutputs",
@@ -64,22 +16,6 @@
       "in": "result"
     },
     {
-      "from": "callBoardAsTool",
-      "to": "hoistOutputs",
-      "out": "*"
-    },
-    {
-      "from": "getBoardArgs",
-      "to": "callBoardAsTool",
-      "out": "*"
-    },
-    {
-      "from": "parameters",
-      "to": "getBoardArgs",
-      "out": "generator",
-      "in": "generator"
-    },
-    {
       "from": "generate",
       "to": "getBoardArgs",
       "out": "toolCalls",
@@ -88,14 +24,56 @@
     {
       "from": "generate",
       "to": "formatOutput",
-      "out": "context",
-      "in": "context"
+      "out": "*",
+      "in": ""
+    },
+    {
+      "from": "callBoardAsTool",
+      "to": "hoistOutputs",
+      "out": "*",
+      "in": ""
+    },
+    {
+      "from": "parameters",
+      "to": "formatFunctionDeclarations",
+      "out": "boards",
+      "in": "boards"
+    },
+    {
+      "from": "parameters",
+      "to": "generate",
+      "out": "*",
+      "in": ""
     },
     {
       "from": "parameters",
       "to": "generate",
       "out": "generator",
       "in": "path"
+    },
+    {
+      "from": "parameters",
+      "to": "getBoardArgs",
+      "out": "generator",
+      "in": "generator"
+    },
+    {
+      "from": "formatFunctionDeclarations",
+      "to": "generate",
+      "out": "tools",
+      "in": "tools"
+    },
+    {
+      "from": "formatFunctionDeclarations",
+      "to": "getBoardArgs",
+      "out": "urlMap",
+      "in": "urlMap"
+    },
+    {
+      "from": "getBoardArgs",
+      "to": "callBoardAsTool",
+      "out": "*",
+      "in": ""
     }
   ],
   "nodes": [
@@ -124,6 +102,33 @@
           }
         }
       }
+    },
+    {
+      "id": "formatOutput",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "{\n      \"result\": result,\n      \"name\": toolCalls[0].name,\n      \"context\": context\n    }",
+        "raw": true
+      }
+    },
+    {
+      "id": "hoistOutputs",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "$ ~> | ** | {}, \"schema\" |"
+      }
+    },
+    {
+      "id": "generate",
+      "type": "invoke",
+      "configuration": {
+        "useStreaming": false
+      }
+    },
+    {
+      "id": "callBoardAsTool",
+      "type": "invoke",
+      "configuration": {}
     },
     {
       "id": "parameters",
@@ -177,176 +182,160 @@
       }
     },
     {
-      "id": "lambda-1",
-      "type": "lambda",
-      "configuration": {
-        "board": {
-          "kind": "board",
-          "board": {
-            "edges": [
-              {
-                "from": "lambda-3",
-                "to": "map-4",
-                "constant": true,
-                "out": "board",
-                "in": "board"
-              },
-              {
-                "from": "formatResults",
-                "to": "output-2",
-                "out": "*"
-              },
-              {
-                "from": "map-4",
-                "to": "formatResults",
-                "out": "list",
-                "in": "json"
-              },
-              {
-                "from": "input-1",
-                "to": "map-4",
-                "out": "boards",
-                "in": "list"
-              }
-            ],
-            "nodes": [
-              {
-                "id": "input-1",
-                "type": "input"
-              },
-              {
-                "id": "output-2",
-                "type": "output"
-              },
-              {
-                "id": "lambda-3",
-                "type": "lambda",
-                "configuration": {
-                  "board": {
-                    "kind": "board",
-                    "board": {
-                      "edges": [
-                        {
-                          "from": "boardToFunction",
-                          "to": "output-2",
-                          "out": "function",
-                          "in": "function"
-                        },
-                        {
-                          "from": "input-1",
-                          "to": "boardToFunction",
-                          "out": "item",
-                          "in": "boardURL"
-                        },
-                        {
-                          "from": "input-1",
-                          "to": "output-2",
-                          "out": "item",
-                          "in": "boardURL"
-                        }
-                      ],
-                      "nodes": [
-                        {
-                          "id": "input-1",
-                          "type": "input"
-                        },
-                        {
-                          "id": "output-2",
-                          "type": "output"
-                        },
-                        {
-                          "id": "boardToFunction",
-                          "type": "invoke",
-                          "configuration": {
-                            "path": "/graphs/board-as-function.json"
-                          }
-                        }
-                      ],
-                      "kits": [
-                        {
-                          "url": "npm:@google-labs/core-kit"
-                        }
-                      ]
-                    }
-                  }
-                }
-              },
-              {
-                "id": "map-4",
-                "type": "map",
-                "configuration": {}
-              },
-              {
-                "id": "formatResults",
-                "type": "jsonata",
-                "configuration": {
-                  "expression": "{\n      \"tools\": [function],\n      \"urlMap\": $merge([{ function.name: boardURL }])\n  }",
-                  "raw": true
-                }
-              }
-            ],
-            "kits": [
-              {
-                "url": "npm:@google-labs/core-kit"
-              },
-              {
-                "url": "npm:@google-labs/llm-starter"
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "id": "invoke-2",
+      "id": "formatFunctionDeclarations",
       "type": "invoke",
-      "configuration": {}
-    },
-    {
-      "id": "generate",
-      "type": "invoke"
-    },
-    {
-      "id": "noStreaming",
-      "type": "passthrough",
       "configuration": {
-        "useStreaming": false
+        "path": "#formatFunctionDeclarations"
       }
     },
     {
       "id": "getBoardArgs",
       "type": "jsonata",
       "configuration": {
-        "expression": "$merge([{\n      \"path\": $lookup(urlMap, toolCalls[0].name)\n    },\n    { \"generator\": generator },\n    toolCalls[0].args\n  ])",
+        "expression": "$merge([{\n        \"path\": $lookup(urlMap, toolCalls[0].name)\n      },\n      toolCalls[0].args,\n      { \"generator\": generator }\n    ])",
         "raw": true
-      }
-    },
-    {
-      "id": "formatOutput",
-      "type": "jsonata",
-      "configuration": {
-        "expression": "{ \"result\": result, \"name\": toolCalls[0].name, \"context\": context }",
-        "raw": true
-      }
-    },
-    {
-      "id": "callBoardAsTool",
-      "type": "invoke"
-    },
-    {
-      "id": "hoistOutputs",
-      "type": "jsonata",
-      "configuration": {
-        "expression": "$ ~> | ** | {}, \"schema\" |"
       }
     }
   ],
-  "kits": [
-    {
-      "url": "npm:@google-labs/llm-starter"
-    },
-    {
-      "url": "npm:@google-labs/core-kit"
+  "graphs": {
+    "formatFunctionDeclarations": {
+      "edges": [
+        {
+          "from": "formatResults",
+          "to": "output-5",
+          "out": "*",
+          "in": ""
+        },
+        {
+          "from": "map-4",
+          "to": "formatResults",
+          "out": "list",
+          "in": "list"
+        },
+        {
+          "from": "input-1",
+          "to": "map-4",
+          "out": "boards",
+          "in": "list"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "output-5",
+          "type": "output",
+          "configuration": {}
+        },
+        {
+          "id": "formatResults",
+          "type": "jsonata",
+          "configuration": {
+            "expression": "{\n          \"tools\": [list.function],\n          \"urlMap\": $merge([list.{ function.name: boardURL }])\n        }",
+            "raw": true
+          }
+        },
+        {
+          "id": "map-4",
+          "type": "map",
+          "configuration": {
+            "board": {
+              "kind": "board",
+              "board": {
+                "kits": [],
+                "edges": [
+                  {
+                    "from": "boardToFunction",
+                    "to": "output-2",
+                    "out": "function",
+                    "in": "function"
+                  },
+                  {
+                    "from": "input-1",
+                    "to": "boardToFunction",
+                    "out": "item",
+                    "in": "boardURL"
+                  },
+                  {
+                    "from": "input-1",
+                    "to": "output-2",
+                    "out": "item",
+                    "in": "boardURL"
+                  }
+                ],
+                "nodes": [
+                  {
+                    "id": "output-2",
+                    "type": "output",
+                    "configuration": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "function": {
+                            "type": "string",
+                            "title": "function"
+                          },
+                          "boardURL": {
+                            "type": "string",
+                            "title": "boardURL"
+                          }
+                        },
+                        "required": [
+                          "function",
+                          "boardURL"
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "id": "boardToFunction",
+                    "type": "invoke",
+                    "configuration": {
+                      "path": "/graphs/board-as-function.json"
+                    }
+                  },
+                  {
+                    "id": "input-1",
+                    "type": "input",
+                    "configuration": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "item": {
+                            "type": "string",
+                            "title": "item"
+                          }
+                        },
+                        "required": [
+                          "item"
+                        ]
+                      }
+                    }
+                  }
+                ],
+                "graphs": {}
+              }
+            }
+          }
+        },
+        {
+          "id": "input-1",
+          "type": "input",
+          "configuration": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "boards": {
+                  "type": "string",
+                  "title": "boards"
+                }
+              },
+              "required": [
+                "boards"
+              ]
+            }
+          }
+        }
+      ],
+      "graphs": {}
     }
-  ]
+  }
 }
