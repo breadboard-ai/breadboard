@@ -46,7 +46,7 @@ const toAltJson = (
 ): [string, NodeValue] => {
   if (node.type === "document") {
     const doc = node as XmlDocument;
-    const element = doc.children[0] as XmlElement;
+    const element = doc.children.find((child) => child.type === "element") as XmlElement;
     const [name, value] = toAltJson(element);
     return ["$doc", element ? { [name]: value } : ""];
   }
