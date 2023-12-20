@@ -33,4 +33,6 @@ A use case recipe is something that can be integrated into a Breadboard to solve
 
 ### Concepts
 
-A concept recipe is something that demonstrates a particular concept in Breadboard. For example, how to
+A concept recipe is something that demonstrates a particular concept in Breadboard.
+
+- [Accumlating Context](./concept/accumulating-context/README.md)
