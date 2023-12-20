@@ -207,14 +207,14 @@
           "in": ""
         },
         {
-          "from": "map-4",
+          "from": "map-3",
           "to": "formatResults",
           "out": "list",
           "in": "list"
         },
         {
           "from": "input-1",
-          "to": "map-4",
+          "to": "map-3",
           "out": "boards",
           "in": "list"
         }
@@ -234,7 +234,7 @@
           }
         },
         {
-          "id": "map-4",
+          "id": "map-3",
           "type": "map",
           "configuration": {
             "board": {

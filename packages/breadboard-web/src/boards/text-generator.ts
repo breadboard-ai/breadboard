@@ -62,7 +62,7 @@ const streamOutputSchema = {
   },
 } satisfies Schema;
 
-export default await recipe(async () => {
+export default await recipe(() => {
   const parameters = base.input({ $id: "input", schema: inputSchema });
 
   const textOutput = base.output({
