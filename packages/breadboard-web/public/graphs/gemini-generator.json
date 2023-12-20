@@ -10,12 +10,6 @@
       "in": "stream"
     },
     {
-      "from": "lambda-5",
-      "to": "streamTransform",
-      "out": "board",
-      "in": "board"
-    },
-    {
       "from": "callGeminiAPI",
       "to": "formatResponse",
       "out": "response",
@@ -115,11 +109,6 @@
     {
       "id": "streamTransform",
       "type": "transformStream",
-      "configuration": {}
-    },
-    {
-      "id": "lambda-5",
-      "type": "lambda",
       "configuration": {
         "board": {
           "kind": "board",
