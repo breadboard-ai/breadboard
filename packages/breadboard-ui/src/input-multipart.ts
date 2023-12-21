@@ -43,7 +43,7 @@ export class MultipartInput extends HTMLElement {
           :host {
             width: 100%;
             display: grid;
-            grid-template-columns: 2fr 1fr;
+            grid-template-columns: 1fr 1fr;
             column-gap: calc(var(--bb-grid-size) * 2);
             flex-direction: column;
             flex: 1;
