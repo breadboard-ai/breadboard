@@ -32,7 +32,7 @@ export type SecretHandler = (keys: {
   keys?: string[];
 }) => Promise<OutputValues>;
 
-export type ProxyReceiverConfig = {
+export type HarnessConfig = {
   proxy: NodeTypeIdentifier[];
   kits: Kit[];
   onSecret: SecretHandler;

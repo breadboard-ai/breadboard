@@ -11,6 +11,9 @@ import Starter from "@google-labs/llm-starter";
 import PaLMKit from "@google-labs/palm-kit";
 import NodeNurseryWeb from "@google-labs/node-nursery-web";
 import { createHarness } from "./harness/index.js";
+import Core from "@google-labs/core-kit";
+import Pinecone from "@google-labs/pinecone-kit";
+import JSONKit from "@google-labs/json-kit";
 
 const PROXY_NODES = [
   "palm-generateText",
@@ -280,11 +283,9 @@ export class Main {
     return createHarness({
       proxy: PROXY_NODES,
       onSecret,
-      kits: [
-        asRuntimeKit(Starter),
-        asRuntimeKit(PaLMKit),
-        asRuntimeKit(NodeNurseryWeb),
-      ],
+      kits: [Starter, Core, Pinecone, PaLMKit, NodeNurseryWeb, JSONKit].map(
+        (kitConstructor) => asRuntimeKit(kitConstructor)
+      ),
     });
   }
 }

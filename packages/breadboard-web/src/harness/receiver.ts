@@ -14,7 +14,7 @@ import {
 import type { ProxyRequestMessage } from "@google-labs/breadboard/worker";
 
 import { SecretKeeper } from "../secrets";
-import { ProxyReceiverConfig, SecretHandler } from "./types";
+import { HarnessConfig, SecretHandler } from "./types";
 
 type ProxyResult = {
   nodeType: string;
@@ -25,7 +25,7 @@ export class ProxyReceiver {
   handlers: NodeHandlers;
   secrets = new SecretKeeper();
 
-  constructor(config: ProxyReceiverConfig) {
+  constructor(config: HarnessConfig) {
     const proxyNodeHandlers = this.#createProxyNodeHandlers(config);
     this.handlers = {
       ...proxyNodeHandlers,
@@ -36,9 +36,7 @@ export class ProxyReceiver {
     };
   }
 
-  #createProxyNodeHandlers(
-    config: ProxyReceiverConfig
-  ): Record<string, NodeHandler> {
+  #createProxyNodeHandlers(config: HarnessConfig): Record<string, NodeHandler> {
     const handlers = config.kits.reduce((handlers, kit) => {
       return { ...kit.handlers, ...handlers };
     }, {} as NodeHandlers);

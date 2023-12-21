@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Harness, SecretHandler } from "./types";
+import { Harness, HarnessConfig } from "./types";
 
 import {
   Board,
@@ -13,20 +13,13 @@ import {
   asRuntimeKit,
 } from "@google-labs/breadboard";
 import { KitBuilder } from "@google-labs/breadboard/kits";
-
-import Starter from "@google-labs/llm-starter";
-import Core from "@google-labs/core-kit";
-import PaLMKit from "@google-labs/palm-kit";
-import Pinecone from "@google-labs/pinecone-kit";
-import NodeNurseryWeb from "@google-labs/node-nursery-web";
-import JSONKit from "@google-labs/json-kit";
 import { MainThreadRunResult } from "./result";
 
 export class MainThreadHarness implements Harness {
-  #secretHandler: SecretHandler;
+  #config: HarnessConfig;
 
-  constructor(secretHandler: SecretHandler) {
-    this.#secretHandler = secretHandler;
+  constructor(config: HarnessConfig) {
+    this.#config = config;
   }
 
   async *run(url: string) {
@@ -46,22 +39,14 @@ export class MainThreadHarness implements Harness {
       });
 
       const SecretAskingKit = new KitBuilder({
-        url: "secret-asking-kit ",
+        url: "secret-asking-kit",
       }).build({
         secrets: async (inputs) => {
-          return await this.#secretHandler(inputs as InputValues);
+          return await this.#config.onSecret(inputs as InputValues);
         },
       });
 
-      const kits = [
-        SecretAskingKit,
-        Starter,
-        Core,
-        Pinecone,
-        PaLMKit,
-        NodeNurseryWeb,
-        JSONKit,
-      ].map((kitConstructor) => asRuntimeKit(kitConstructor));
+      const kits = [asRuntimeKit(SecretAskingKit), ...this.#config.kits];
 
       for await (const data of runner.run({
         probe: new LogProbe(),

@@ -5,14 +5,14 @@
  */
 
 import { HostRuntime, RunResult } from "@google-labs/breadboard/worker";
-import { ProxyReceiverConfig } from "./types";
+import { HarnessConfig } from "./types";
 import { ProxyReceiver } from "./receiver";
 import { ProxyPromiseResponse } from "@google-labs/breadboard/remote";
 
 export class WorkerHarness extends HostRuntime {
-  #config: ProxyReceiverConfig;
+  #config: HarnessConfig;
 
-  constructor(workerURL: string, config: ProxyReceiverConfig) {
+  constructor(workerURL: string, config: HarnessConfig) {
     super(workerURL);
     this.#config = config;
   }
