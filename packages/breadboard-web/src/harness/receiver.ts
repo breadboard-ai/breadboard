@@ -6,10 +6,8 @@
 
 import {
   type NodeHandlers,
-  Board,
   callHandler,
   InputValues,
-  asyncGen,
   NodeTypeIdentifier,
   asRuntimeKit,
   Kit,
@@ -21,37 +19,18 @@ import { PaLMKit } from "@google-labs/palm-kit";
 import type { ProxyRequestMessage } from "@google-labs/breadboard/worker";
 
 import { SecretKeeper } from "../secrets";
-import { KitBuilder } from "@google-labs/breadboard/kits";
 import NodeNurseryWeb from "@google-labs/node-nursery-web";
 import { SecretHandler } from "./types";
 
-class AskForSecret {
-  name: string;
-  type = "secret";
-  value = "";
-
-  constructor(name: string) {
-    this.name = name;
-  }
-}
-
-class FinalResult {
+type ProxyResult = {
   nodeType: string;
   value: unknown;
-  type = "result";
-
-  constructor(nodeType: string, value: unknown) {
-    this.nodeType = nodeType;
-    this.value = value;
-  }
-}
-
-type SecretAsker = (ask: AskForSecret) => Promise<void>;
+};
 
 export type ProxyReceiverConfig = {
   proxy: NodeTypeIdentifier[];
   kits: Kit[];
-  onSecret: SecretAsker;
+  onSecret: SecretHandler;
 };
 
 /**
@@ -60,36 +39,27 @@ export type ProxyReceiverConfig = {
  * This is just an illustration of how this might be done.
  */
 export class ProxyReceiver {
-  board: Board;
-  handlers?: NodeHandlers;
+  handlers: NodeHandlers;
   secrets = new SecretKeeper();
 
-  constructor(proxy: NodeTypeIdentifier[], secretHandler: SecretHandler) {
-    this.board = new Board();
+  constructor(proxy: NodeTypeIdentifier[], onSecret: SecretHandler) {
     const kits = [
       asRuntimeKit(Starter),
       asRuntimeKit(PaLMKit),
       asRuntimeKit(NodeNurseryWeb),
     ];
-    const onSecret: SecretAsker = async (ask) => {
-      console.log("ASKING FOR SECRET", ask);
-      const secrets = await secretHandler({ keys: [ask.name] });
-      ask.value = secrets[ask.name] as string;
-    };
     const proxyNodeHandlers = this.#createProxyNodeHandlers({
       proxy,
       kits,
       onSecret,
     });
-    this.board.addKit(
-      new KitBuilder({ url: "npm:@google-labs/breadboard-web" }).build({
-        ...proxyNodeHandlers,
-        secrets: async (inputs: InputValues) => {
-          const { keys } = inputs as { keys: string[] };
-          return this.secrets.addSecretTokens(keys);
-        },
-      })
-    );
+    this.handlers = {
+      ...proxyNodeHandlers,
+      secrets: async (inputs: InputValues) => {
+        const { keys } = inputs as { keys: string[] };
+        return this.secrets.addSecretTokens(keys);
+      },
+    };
   }
 
   #createProxyNodeHandlers(
@@ -100,12 +70,9 @@ export class ProxyReceiver {
     }, {} as NodeHandlers);
 
     return config.proxy.reduce<NodeHandlers>((acc, id) => {
-      console.log("CONFIGURING PROXY HANDLER", id);
       const handler = {
         invoke: async (inputs: InputValues, context: NodeHandlerContext) => {
-          console.log("INVOKING PROXIED HANDLER", id);
           inputs = await this.#revealSecretsForInput(inputs, config.onSecret);
-          console.log("INPUTS for", id, inputs);
           return callHandler(handlers[id], inputs, context);
         },
       } satisfies NodeHandler;
@@ -115,7 +82,7 @@ export class ProxyReceiver {
 
   async #revealSecretsForInput(
     inputs: InputValues,
-    asker: SecretAsker
+    secretHandler: SecretHandler
   ): Promise<InputValues> {
     const results = { ...inputs };
     for (const name in inputs) {
@@ -124,9 +91,8 @@ export class ProxyReceiver {
       for (const token of secrets) {
         const secret = this.secrets.getSecret(token);
         if (!secret.value) {
-          const ask = new AskForSecret(secret.name);
-          await asker(ask);
-          secret.value = ask.value;
+          const secrets = await secretHandler({ keys: [secret.name] });
+          secret.value = secrets[secret.name] as string;
         }
       }
       results[name] = this.secrets.revealSecrets(value, secrets);
@@ -138,20 +104,15 @@ export class ProxyReceiver {
     const nodeType = data.node.type;
     const inputs = data.inputs;
 
-    if (!this.handlers)
-      this.handlers = await Board.handlersFromBoard(this.board);
-
     const handler = this.handlers[nodeType];
     if (!handler)
       throw new Error(`No handler found for node type "${nodeType}".`);
-    return new FinalResult(
+    return {
       nodeType,
-      await callHandler(handler, inputs, {
-        outerGraph: this.board,
-        board: this.board,
+      value: await callHandler(handler, inputs, {
         descriptor: data.node,
         slots: {},
-      })
-    );
+      }),
+    } satisfies ProxyResult;
   }
 }

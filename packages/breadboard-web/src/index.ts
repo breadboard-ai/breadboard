@@ -307,15 +307,8 @@ export class Main {
             if (boardId !== this.#boardId) {
               console.log("Board has changed; proxy result is stale");
             } else {
-              const receiverResult = handledResult as {
-                type: "secret" | "result";
-                name: string;
-                value: string | { completion: string };
-                nodeType: Breadboard.NodeTypeIdentifier;
-              };
-
-              if (receiverResult.nodeType === "palm-generateText") {
-                const resultValue = receiverResult.value as {
+              if (handledResult.nodeType === "palm-generateText") {
+                const resultValue = handledResult.value as {
                   completion: string;
                 };
                 this.#ui.result({
@@ -323,7 +316,7 @@ export class Main {
                   result: resultValue.completion,
                 });
               }
-              result.reply(receiverResult.value);
+              result.reply(handledResult.value);
             }
           } catch (e) {
             const err = e as Error;

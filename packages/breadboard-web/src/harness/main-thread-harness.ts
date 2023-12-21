@@ -10,7 +10,6 @@ import {
   Board,
   InputValues,
   LogProbe,
-  OutputValues,
   asRuntimeKit,
 } from "@google-labs/breadboard";
 import { KitBuilder } from "@google-labs/breadboard/kits";
