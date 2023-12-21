@@ -4,36 +4,23 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Harness } from "./types";
+import { Harness, HarnessConfig } from "./types";
 
-import {
-  Board,
-  InputValues,
-  LogProbe,
-  OutputValues,
-  asRuntimeKit,
-} from "@google-labs/breadboard";
+import { Board, InputValues, LogProbe } from "@google-labs/breadboard";
 
-import Starter from "@google-labs/llm-starter";
-import Core from "@google-labs/core-kit";
-import PaLMKit from "@google-labs/palm-kit";
-import Pinecone from "@google-labs/pinecone-kit";
-import NodeNurseryWeb from "@google-labs/node-nursery-web";
 import { MainThreadRunResult } from "./result";
 import {
   HTTPClientTransport,
   ProxyClient,
 } from "@google-labs/breadboard/remote";
 
-export type SecretHandler = (keys: {
-  keys?: string[];
-}) => Promise<OutputValues>;
-
 export class ProxyServerHarness implements Harness {
   #proxyServerUrl: string;
+  #config: HarnessConfig;
 
-  constructor(proxyServerUrl: string) {
+  constructor(proxyServerUrl: string, config: HarnessConfig) {
     this.#proxyServerUrl = proxyServerUrl;
+    this.#config = config;
   }
   async *run(url: string) {
     const proxyClient = new ProxyClient(
@@ -55,20 +42,9 @@ export class ProxyServerHarness implements Harness {
         },
       });
 
-      const proxyKit = await proxyClient.createProxyKit([
-        "fetch",
-        "palm-generateText",
-        "palm-embedText",
-        "promptTemplate",
-        "secrets",
-      ]);
+      const proxyKit = proxyClient.createProxyKit(this.#config.proxy);
 
-      const kits = [
-        proxyKit,
-        ...[Starter, Core, Pinecone, PaLMKit, NodeNurseryWeb].map(
-          (kitConstructor) => asRuntimeKit(kitConstructor)
-        ),
-      ];
+      const kits = [proxyKit, ...this.#config.kits];
 
       for await (const data of runner.run({
         probe: new LogProbe(),

@@ -17,11 +17,13 @@ import JSONKit from "@google-labs/json-kit";
 
 const PROXY_NODES = [
   "palm-generateText",
-  "embedText",
+  "palm-embedText",
   "secrets",
   "fetch",
-  "credentials",
-  "driveList",
+  // TODO: These are only meaningful when proxying to main thread,
+  //       not anywhere else. Need to figure out what to do here.
+  // "credentials",
+  // "driveList",
 ];
 
 type PauserCallback = (paused: boolean) => void;

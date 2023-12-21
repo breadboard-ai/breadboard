@@ -37,7 +37,7 @@ export const createHarness = (config: HarnessConfig): Harness => {
           "Unable to initialize proxy server harness. Please provide PROXY_SERVER_URL."
         );
       }
-      return new ProxyServerHarness(proxyServerUrl);
+      return new ProxyServerHarness(proxyServerUrl, config);
     }
     case WORKER_HARNESS_VALUE: {
       return new WorkerHarness(WORKER_URL, config);
