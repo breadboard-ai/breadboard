@@ -141,7 +141,9 @@
               "type": "string",
               "title": "Text",
               "description": "The text to use with tool calling",
-              "examples": ["What is the square root of e?"]
+              "examples": [
+                "What is the square root of e?"
+              ]
             },
             "context": {
               "type": "array",
@@ -156,7 +158,9 @@
               "type": "string",
               "title": "Generator",
               "description": "The URL of the generator to call",
-              "examples": ["gemini-generator.json"]
+              "examples": [
+                "gemini-generator.json"
+              ]
             },
             "boards": {
               "type": "array",
@@ -170,7 +174,10 @@
               ]
             }
           },
-          "required": ["text", "boards"]
+          "required": [
+            "text",
+            "boards"
+          ]
         }
       }
     },
@@ -271,7 +278,10 @@
                             "title": "boardURL"
                           }
                         },
-                        "required": ["function", "boardURL"]
+                        "required": [
+                          "function",
+                          "boardURL"
+                        ]
                       }
                     }
                   },
@@ -294,7 +304,9 @@
                             "title": "item"
                           }
                         },
-                        "required": ["item"]
+                        "required": [
+                          "item"
+                        ]
                       }
                     }
                   }
@@ -316,7 +328,9 @@
                   "title": "boards"
                 }
               },
-              "required": ["boards"]
+              "required": [
+                "boards"
+              ]
             }
           }
         }

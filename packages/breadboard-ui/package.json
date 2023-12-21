@@ -19,7 +19,6 @@
   "wireit": {
     "build": {
       "dependencies": [
-        "../breadboard:build",
         "build:tsc"
       ]
     },

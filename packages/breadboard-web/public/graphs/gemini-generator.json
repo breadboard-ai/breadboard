@@ -142,7 +142,9 @@
                         "type": "string"
                       }
                     },
-                    "required": ["chunk"]
+                    "required": [
+                      "chunk"
+                    ]
                   }
                 }
               },
@@ -163,10 +165,15 @@
                       "chunk": {
                         "title": "json",
                         "description": "The JSON object to evaluate",
-                        "type": ["object", "string"]
+                        "type": [
+                          "object",
+                          "string"
+                        ]
                       }
                     },
-                    "required": ["chunk"]
+                    "required": [
+                      "chunk"
+                    ]
                   }
                 }
               }
@@ -194,7 +201,9 @@
               "type": "string",
               "title": "Text",
               "description": "The text to generate",
-              "examples": ["What is the square root of pi?"]
+              "examples": [
+                "What is the square root of pi?"
+              ]
             },
             "tools": {
               "type": "array",
@@ -227,7 +236,9 @@
               "default": "false"
             }
           },
-          "required": ["text"]
+          "required": [
+            "text"
+          ]
         }
       }
     },
@@ -266,7 +277,9 @@
       "id": "secrets-3",
       "type": "secrets",
       "configuration": {
-        "keys": ["GEMINI_KEY"]
+        "keys": [
+          "GEMINI_KEY"
+        ]
       }
     },
     {
