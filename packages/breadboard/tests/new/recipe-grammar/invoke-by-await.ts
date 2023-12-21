@@ -7,11 +7,7 @@
 import { z } from "zod";
 import test from "ava";
 
-import {
-  recipe,
-  recipeAsCode,
-  recipeAsGraph,
-} from "../../../src/new/recipe-grammar/recipe.js";
+import { recipe, code } from "../../../src/new/recipe-grammar/recipe.js";
 import { V } from "../../../src/index.js";
 import { testKit } from "../../helpers/_test-kit.js";
 
@@ -74,7 +70,7 @@ test("directly await declarative recipe, deconstruct", async (t) => {
 });
 
 test("directly await declarative recipe, deconstruct, 'in' and 'to'", async (t) => {
-  const graph = recipeAsGraph((inputs) => {
+  const graph = recipe((inputs) => {
     const { to } = testKit.noop({ to: inputs.in });
     return { to: to as unknown as V<string> };
   });
@@ -116,7 +112,7 @@ test("directly await declarative recipe, passing full inputs as spread, twice", 
 });
 
 test("directly await imperative recipe, value assignment", async (t) => {
-  const graph = recipeAsCode(async (inputs) => {
+  const graph = code(async (inputs) => {
     const { foo } = await testKit.noop({ foo: inputs.foo });
     return { foo };
   });
@@ -125,7 +121,7 @@ test("directly await imperative recipe, value assignment", async (t) => {
 });
 
 test("directly await imperative recipe, deconstruct", async (t) => {
-  const graph = recipeAsCode(async (inputs) => {
+  const graph = code(async (inputs) => {
     const { foo } = await testKit.noop({ foo: inputs.foo });
     return { foo };
   });
@@ -134,10 +130,10 @@ test("directly await imperative recipe, deconstruct", async (t) => {
 });
 
 test("if-else, imperative execution", async (t) => {
-  const math = recipeAsCode(async () => {
+  const math = code(async () => {
     return { result: "math result" };
   });
-  const search = recipeAsCode(async () => {
+  const search = code(async () => {
     return { text: "search result" };
   });
 
@@ -186,10 +182,10 @@ test("if-else, imperative execution", async (t) => {
 });
 
 test.skip("if-else, serializable", async (t) => {
-  const math = recipeAsCode(async () => {
+  const math = code(async () => {
     return { result: "math result" };
   });
-  const search = recipeAsCode(async () => {
+  const search = code(async () => {
     return { text: "search result" };
   });
 

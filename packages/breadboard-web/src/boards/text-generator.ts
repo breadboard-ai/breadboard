@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Schema, base, recipe, recipeAsCode } from "@google-labs/breadboard";
+import { Schema, base, recipe, code } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 
 const metadata = {
@@ -75,7 +75,7 @@ export default await recipe(() => {
     schema: streamOutputSchema,
   });
 
-  const switchModel = recipeAsCode(({ MODEL }: { MODEL: string }) => {
+  const switchModel = code(({ MODEL }: { MODEL: string }) => {
     const models: Record<string, string> = {
       "Gemini Pro": "gemini-generator.json",
       PaLM: "palm-text-generator.json",
