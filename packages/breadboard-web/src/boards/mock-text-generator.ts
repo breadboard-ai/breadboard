@@ -10,7 +10,7 @@ import {
   V,
   base,
   recipe,
-  recipeAsCode,
+  code,
 } from "@google-labs/breadboard";
 import { nursery } from "@google-labs/node-nursery-web";
 
@@ -82,7 +82,7 @@ const mockGenerator = recipe<MockGeneratorInputs, MockGeneratorOutputs>(() => {
 
   type GeneratorOutputs = MockGeneratorTextOutput | { list: string[] };
 
-  const generator = recipeAsCode<MockGeneratorInputs, GeneratorOutputs>(
+  const generator = code<MockGeneratorInputs, GeneratorOutputs>(
     ({ text, useStreaming }) => {
       text = `Mock model with streaming off echoes back: ${text}`;
       if (useStreaming) {

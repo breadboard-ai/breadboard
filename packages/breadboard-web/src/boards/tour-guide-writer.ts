@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Schema, V, base, recipe, recipeAsCode } from "@google-labs/breadboard";
+import { Schema, V, base, recipe, code } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { starter } from "@google-labs/llm-starter";
 
@@ -109,15 +109,13 @@ const graph = recipe(() => {
   type Itinerary = { itinerary: string };
   type SplitItinerary = { list: string[] };
 
-  const splitItinerary = recipeAsCode<Itinerary, SplitItinerary>(
-    ({ itinerary }) => {
-      const list = itinerary
-        .split(/[0-9]{1,2}\)/)
-        .map((e) => e.trim())
-        .filter((e) => e !== "");
-      return { list };
-    }
-  )({ itinerary: travelItineraryGenerator.text as V<string> });
+  const splitItinerary = code<Itinerary, SplitItinerary>(({ itinerary }) => {
+    const list = itinerary
+      .split(/[0-9]{1,2}\)/)
+      .map((e) => e.trim())
+      .filter((e) => e !== "");
+    return { list };
+  })({ itinerary: travelItineraryGenerator.text as V<string> });
 
   travelItinerary.prompt.as("text").to(travelItineraryGenerator);
 
@@ -170,7 +168,7 @@ const graph = recipe(() => {
 
   type Guide = { guide: string };
 
-  const combineGuides = recipeAsCode<GuideMaterials, Guide>(
+  const combineGuides = code<GuideMaterials, Guide>(
     ({ location, activities, guides }) => {
       const guideList = guides.map((item) => item.guide);
       return {

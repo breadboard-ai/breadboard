@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Schema, V, base, recipe, recipeAsCode } from "@google-labs/breadboard";
+import { Schema, V, base, recipe, code } from "@google-labs/breadboard";
 import { starter } from "@google-labs/llm-starter";
 import { palm } from "@google-labs/palm-kit";
 
@@ -47,7 +47,7 @@ const textOutputSchema = {
 export default await recipe(() => {
   const parameters = base.input({ $id: "parameters", schema: inputSchema });
 
-  recipeAsCode(({ useStreaming }) => {
+  code(({ useStreaming }) => {
     if (useStreaming)
       throw new Error("Streaming is not supported by PaLM model");
     return {};
