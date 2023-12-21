@@ -28,11 +28,11 @@ async function serializeAndRunGraph(
 }
 
 test("simplest lambda", async (t) => {
-  const graph = recipe(async ({ foo }) => {
-    const lambda = recipe(async (inputs) => testKit.noop(inputs));
+  const graph = recipe(({ foo }) => {
+    const lambda = recipe((inputs) => testKit.noop(inputs));
     t.true(isLambda(lambda));
     t.false(isLambda(testKit.noop({})));
-    const caller = recipe(async ({ lambda, foo }) => {
+    const caller = recipe(({ lambda, foo }) => {
       return lambda.invoke({ foo });
     });
     return caller({ lambda, foo });
@@ -43,10 +43,10 @@ test("simplest lambda", async (t) => {
 });
 
 test("simplest lambda, direct call, no invoke()", async (t) => {
-  const graph = recipe(async ({ foo }) => {
-    const lambda = recipe(async (inputs) => testKit.noop(inputs));
+  const graph = recipe(({ foo }) => {
+    const lambda = recipe((inputs) => testKit.noop(inputs));
     t.assert(isLambda(lambda));
-    const caller = recipe(async ({ lambda, foo }) => {
+    const caller = recipe(({ lambda, foo }) => {
       return lambda({ foo });
     });
     return caller({ lambda, foo });
@@ -57,10 +57,10 @@ test("simplest lambda, direct call, no invoke()", async (t) => {
 });
 
 test("simplest closure lambda, using to()", async (t) => {
-  const graph = recipe(async ({ foo, bar }) => {
-    const lambda = recipe(async (inputs) => testKit.noop(inputs));
+  const graph = recipe(({ foo, bar }) => {
+    const lambda = recipe((inputs) => testKit.noop(inputs));
     bar.to(lambda);
-    const caller = recipe(async ({ lambda, foo }) => {
+    const caller = recipe(({ lambda, foo }) => {
       return lambda({ foo });
     });
     return caller({ lambda, foo });
@@ -71,10 +71,10 @@ test("simplest closure lambda, using to()", async (t) => {
 });
 
 test("simplest closure lambda, using in()", async (t) => {
-  const graph = recipe(async ({ foo, bar }) => {
-    const lambda = recipe(async (inputs) => testKit.noop(inputs));
+  const graph = recipe(({ foo, bar }) => {
+    const lambda = recipe((inputs) => testKit.noop(inputs));
     t.true(isLambda(lambda.in(bar)));
-    const caller = recipe(async ({ lambda, foo }) => {
+    const caller = recipe(({ lambda, foo }) => {
       return lambda.invoke({ foo });
     });
     return caller({ lambda, foo });
@@ -85,25 +85,22 @@ test("simplest closure lambda, using in()", async (t) => {
 });
 
 test("serialize simple lambda", async (t) => {
-  const lambda = recipe(async (inputs) => testKit.noop(inputs));
+  // This is no closure, so there should be no lambda node
+  const lambda = recipe((inputs) => testKit.noop(inputs));
   t.assert(isLambda(lambda));
 
-  // This is no closure, so there should be no lambda node
+  // When wiring it, no lambda node is created
   const boardValue = lambda.getBoardCapabilityAsValue();
   t.false(isValue(boardValue));
   t.like(await boardValue, { kind: "board" });
 
+  // Nor is there one in the serialized graph
   const serialized = await lambda.serialize();
-
-  // Create another simple one to compare. This time don't use as value.
-  const lambda2 = recipe(async (inputs) => testKit.noop(inputs));
-  const serialized2 = await lambda2.serialize();
-
-  t.deepEqual(serialized, serialized2);
+  t.false(serialized?.nodes?.some((node) => node.type === "lambda"));
 });
 
 test("serialize closure lambda", async (t) => {
-  const lambda = recipe(async (inputs) => testKit.noop(inputs));
+  const lambda = recipe((inputs) => testKit.noop(inputs));
   t.assert(isLambda(lambda));
 
   // Wiring something into the lambda makes it a closure
@@ -118,7 +115,7 @@ test("serialize closure lambda", async (t) => {
   t.assert(serialized?.nodes?.some((node) => node.type === "lambda"));
 
   // Create another simple one to compare with the inner graph.
-  const lambda2 = recipe(async (inputs) => testKit.noop(inputs));
+  const lambda2 = recipe((inputs) => testKit.noop(inputs));
   const serialized2 = await lambda2.serialize();
 
   t.deepEqual(

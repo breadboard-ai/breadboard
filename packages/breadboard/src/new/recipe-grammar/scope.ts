@@ -6,24 +6,16 @@
 
 import { GraphDescriptor, GraphMetadata } from "@google-labs/breadboard";
 import { BuilderScopeInterface, BuilderNodeInterface } from "./types.js";
-import {
-  InputValues,
-  OutputValues,
-  AbstractNode,
-  ScopeConfig,
-} from "../runner/types.js";
+import { AbstractNode, ScopeConfig } from "../runner/types.js";
 
 import { Scope } from "../runner/scope.js";
 import { swapCurrentContextScope } from "./default-scope.js";
-import { TrappedDataReadWhileSerializing, TrapResult } from "./trap.js";
 
 /**
  * Adds syntactic sugar to support unproxying and serialization of nodes/graphs.
  */
 export class BuilderScope extends Scope implements BuilderScopeInterface {
   #isSerializing: boolean;
-
-  #trapResultTriggered = false;
 
   // TODO:BASE, config of subclasses can have more fields
   constructor(
@@ -61,23 +53,5 @@ export class BuilderScope extends Scope implements BuilderScopeInterface {
         swapCurrentContextScope(oldScope);
       }
     }) as T;
-  }
-
-  createTrapResult<I extends InputValues, O extends OutputValues>(
-    node: AbstractNode<I, O>
-  ): O {
-    if (!this.#isSerializing)
-      throw new Error("Can't create fake result outside of serialization");
-
-    // We expect at most one trap - the one for the final result - in a
-    // statically graph generating handler function.
-    if (this.#trapResultTriggered) throw new TrappedDataReadWhileSerializing();
-    this.#trapResultTriggered = true;
-
-    return new TrapResult(node) as unknown as O;
-  }
-
-  didTrapResultTrigger() {
-    return this.#trapResultTriggered;
   }
 }
