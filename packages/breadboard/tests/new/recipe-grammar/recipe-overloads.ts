@@ -8,10 +8,7 @@ import test from "ava";
 
 import { z } from "zod";
 
-import {
-  recipe,
-  recipeAsCode,
-} from "../../../src/new/recipe-grammar/recipe.js";
+import { recipe, code } from "../../../src/new/recipe-grammar/recipe.js";
 
 test("zod + graph, w/ nested code recipe", async (t) => {
   const graph = recipe(
@@ -20,7 +17,7 @@ test("zod + graph, w/ nested code recipe", async (t) => {
       output: z.object({ foo: z.string() }),
     },
     (inputs) => {
-      return recipeAsCode(({ foo }) => ({ foo: `${foo}!` }))(inputs);
+      return code(({ foo }) => ({ foo: `${foo}!` }))(inputs);
     }
   );
 

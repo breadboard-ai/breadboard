@@ -7,10 +7,7 @@
 import { z } from "zod";
 import test from "ava";
 
-import {
-  recipe,
-  recipeAsCode,
-} from "../../../src/new/recipe-grammar/recipe.js";
+import { recipe, code } from "../../../src/new/recipe-grammar/recipe.js";
 import { Serializeable } from "../../../src/new/runner/types.js";
 import {
   InputValues,
@@ -74,7 +71,7 @@ test("two nodes, spread", async (t) => {
 test("simple inline action", async (t) => {
   const graph = recipe<{ a: number; b: number }, { result: number }>(
     (inputs) => {
-      return recipeAsCode<{ a: number; b: number }, { result: number }>(
+      return code<{ a: number; b: number }, { result: number }>(
         async (inputs) => {
           const { a, b } = await inputs;
           return { result: a + b };
@@ -88,7 +85,7 @@ test("simple inline action", async (t) => {
 });
 
 test("code recipe called from another recipe", async (t) => {
-  const add = recipeAsCode<{ a: number; b: number }, { result: number }>(
+  const add = code<{ a: number; b: number }, { result: number }>(
     async (inputs) => {
       const { a, b } = await inputs;
       return { result: a + b };
@@ -117,7 +114,7 @@ test("nested inline action, with schema", async (t) => {
       }),
     },
     (inputs) => {
-      return recipeAsCode<{ a: number; b: number }, { result: number }>(
+      return code<{ a: number; b: number }, { result: number }>(
         async (inputs) => {
           const { a, b } = await inputs;
           return { result: a + b };

@@ -51,69 +51,28 @@ export const recipe: RecipeFactory = (
   const options = typeof optionsOrFn === "object" ? optionsOrFn : {};
   options.graph ??= typeof optionsOrFn === "function" ? optionsOrFn : maybeFn;
 
-  return recipeImpl(options);
+  return lambdaFactory(options);
 };
 
 /**
  * Explicit implementations of the overloaded variants, also splitting
  * graph generation and code recipes.
  */
-export const recipeAsGraph = <
-  I extends InputValues = InputValues,
-  O extends OutputValues = OutputValues
->(
-  fn: GraphDeclarationFunction<I, O>
-): Lambda<I, Required<O>> => {
-  return recipeImpl({
-    graph: fn as GraphDeclarationFunction,
-  }) as Lambda<I, Required<O>>;
-};
-
-export const recipeAsCode = <
+export const code = <
   I extends InputValues = InputValues,
   O extends OutputValues = OutputValues
 >(
   fn: (inputs: I) => O | PromiseLike<O>
 ): Lambda<I, Required<O>> => {
-  return recipeImpl({
+  return lambdaFactory({
     invoke: fn as unknown as NodeProxyHandlerFunction,
   }) as Lambda<I, Required<O>>;
-};
-
-export const recipeAsGraphWithZod = <
-  IT extends z.ZodType,
-  OT extends z.ZodType
->(
-  options: {
-    input: IT;
-    output: OT;
-    describe?: NodeDescriberFunction;
-    name?: string;
-  } & GraphMetadata,
-  fn: GraphDeclarationFunction<z.infer<IT>, z.infer<OT>>
-): Lambda<z.infer<IT>, Required<z.infer<OT>>> => {
-  return recipeImpl({
-    ...options,
-    graph: fn as GraphDeclarationFunction,
-  }) as Lambda<z.infer<IT>, Required<z.infer<OT>>>;
-};
-
-export const recipeAsCodeWithZod = <IT extends z.ZodType, OT extends z.ZodType>(
-  options: {
-    input: IT;
-    output: OT;
-    invoke: (inputs: z.infer<IT>) => z.infer<OT> | PromiseLike<z.infer<OT>>;
-    describe?: NodeDescriberFunction;
-    name?: string;
-  } & GraphMetadata
-): Lambda<z.infer<IT>, Required<z.infer<OT>>> => {
-  return recipeImpl(options) as Lambda<z.infer<IT>, Required<z.infer<OT>>>;
 };
 
 /**
  * Actual implementation of all the above
  */
-function recipeImpl(
+function lambdaFactory(
   options: {
     input?: z.ZodType | Schema;
     output?: z.ZodType | Schema;

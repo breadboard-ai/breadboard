@@ -5,13 +5,13 @@
  */
 
 import test from "ava";
-import { recipeAsCode } from "../../../src/index.js";
+import { code } from "../../../src/index.js";
 
 test("recipeAsCode works with sync arrow functions", async (t) => {
-  const code = await recipeAsCode(() => {
+  const fn = await code(() => {
     return { value: 1 };
   })({}).serialize();
-  t.like(code, {
+  t.like(fn, {
     graphs: {
       "fn-1": {
         nodes: [
@@ -30,10 +30,10 @@ test("recipeAsCode works with sync arrow functions", async (t) => {
 });
 
 test("recipeAsCode works with async arrow functions", async (t) => {
-  const code = await recipeAsCode(async () => {
+  const fn = await code(async () => {
     return { value: 1 };
   })({}).serialize();
-  t.like(code, {
+  t.like(fn, {
     graphs: {
       "fn-2": {
         nodes: [
