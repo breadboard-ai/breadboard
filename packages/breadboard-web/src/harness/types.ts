@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { OutputValues } from "@google-labs/breadboard";
+import type {
+  Kit,
+  NodeTypeIdentifier,
+  OutputValues,
+} from "@google-labs/breadboard";
 
 export interface Harness {
   run(
@@ -27,3 +31,9 @@ export interface HarnessRunResult {
 export type SecretHandler = (keys: {
   keys?: string[];
 }) => Promise<OutputValues>;
+
+export type ProxyReceiverConfig = {
+  proxy: NodeTypeIdentifier[];
+  kits: Kit[];
+  onSecret: SecretHandler;
+};

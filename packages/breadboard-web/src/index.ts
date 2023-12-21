@@ -6,9 +6,11 @@
 
 import * as BreadboardUI from "@google-labs/breadboard-ui";
 import { Harness, HarnessRunResult, SecretHandler } from "./harness/types.js";
-import { MainThreadHarness } from "./harness/main-thread-harness.js";
-import { ProxyServerHarness } from "./harness/proxy-server-harness.js";
-import { WorkerHarness } from "./harness/worker-harness.js";
+import { asRuntimeKit } from "@google-labs/breadboard";
+import Starter from "@google-labs/llm-starter";
+import PaLMKit from "@google-labs/palm-kit";
+import NodeNurseryWeb from "@google-labs/node-nursery-web";
+import { createHarness } from "./harness/index.js";
 
 const PROXY_NODES = [
   "palm-generateText",
@@ -18,18 +20,6 @@ const PROXY_NODES = [
   "credentials",
   "driveList",
 ];
-const WORKER_URL =
-  import.meta.env.MODE === "development" ? "/src/worker.ts" : "/worker.js";
-
-const HARNESS_SWITCH_KEY = "bb-harness";
-const MAINTHREAD_HARNESS_VALUE = "main-thread";
-const PROXY_SERVER_HARNESS_VALUE = "proxy-server";
-const WORKER_HARNESS_VALUE = "worker";
-
-const PROXY_SERVER_URL = import.meta.env.VITE_PROXY_SERVER_URL ?? "";
-const DEFAULT_HARNESS = PROXY_SERVER_URL
-  ? PROXY_SERVER_HARNESS_VALUE
-  : WORKER_HARNESS_VALUE;
 
 type PauserCallback = (paused: boolean) => void;
 class Pauser extends EventTarget {
@@ -278,9 +268,7 @@ export class Main {
   }
 
   #getHarness() {
-    const harness =
-      globalThis.localStorage.getItem(HARNESS_SWITCH_KEY) ?? DEFAULT_HARNESS;
-    const secretHandler: SecretHandler = async ({ keys }) => {
+    const onSecret: SecretHandler = async ({ keys }) => {
       if (!keys) return {};
       return Object.fromEntries(
         await Promise.all(
@@ -288,23 +276,15 @@ export class Main {
         )
       );
     };
-    switch (harness) {
-      case MAINTHREAD_HARNESS_VALUE: {
-        return new MainThreadHarness(secretHandler);
-      }
-      case PROXY_SERVER_HARNESS_VALUE: {
-        const proxyServerUrl = PROXY_SERVER_URL;
-        if (!proxyServerUrl) {
-          throw new Error(
-            "Unable to initialize proxy server harness. Please provide PROXY_SERVER_URL."
-          );
-        }
-        return new ProxyServerHarness(proxyServerUrl);
-      }
-      case WORKER_HARNESS_VALUE: {
-        return new WorkerHarness(WORKER_URL, secretHandler);
-      }
-    }
-    throw new Error(`Unknown harness: ${harness}`);
+
+    return createHarness({
+      proxy: PROXY_NODES,
+      onSecret,
+      kits: [
+        asRuntimeKit(Starter),
+        asRuntimeKit(PaLMKit),
+        asRuntimeKit(NodeNurseryWeb),
+      ],
+    });
   }
 }

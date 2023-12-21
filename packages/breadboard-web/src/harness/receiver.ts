@@ -8,51 +8,25 @@ import {
   type NodeHandlers,
   callHandler,
   InputValues,
-  NodeTypeIdentifier,
-  asRuntimeKit,
-  Kit,
   NodeHandler,
   NodeHandlerContext,
 } from "@google-labs/breadboard";
-import { Starter } from "@google-labs/llm-starter";
-import { PaLMKit } from "@google-labs/palm-kit";
 import type { ProxyRequestMessage } from "@google-labs/breadboard/worker";
 
 import { SecretKeeper } from "../secrets";
-import NodeNurseryWeb from "@google-labs/node-nursery-web";
-import { SecretHandler } from "./types";
+import { ProxyReceiverConfig, SecretHandler } from "./types";
 
 type ProxyResult = {
   nodeType: string;
   value: unknown;
 };
 
-export type ProxyReceiverConfig = {
-  proxy: NodeTypeIdentifier[];
-  kits: Kit[];
-  onSecret: SecretHandler;
-};
-
-/**
- * This receiver is intentionally hacky. A real implementation would
- * also need to pick and choose carefully which requests to execute and how.
- * This is just an illustration of how this might be done.
- */
 export class ProxyReceiver {
   handlers: NodeHandlers;
   secrets = new SecretKeeper();
 
-  constructor(proxy: NodeTypeIdentifier[], onSecret: SecretHandler) {
-    const kits = [
-      asRuntimeKit(Starter),
-      asRuntimeKit(PaLMKit),
-      asRuntimeKit(NodeNurseryWeb),
-    ];
-    const proxyNodeHandlers = this.#createProxyNodeHandlers({
-      proxy,
-      kits,
-      onSecret,
-    });
+  constructor(config: ProxyReceiverConfig) {
+    const proxyNodeHandlers = this.#createProxyNodeHandlers(config);
     this.handlers = {
       ...proxyNodeHandlers,
       secrets: async (inputs: InputValues) => {

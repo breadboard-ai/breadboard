@@ -5,20 +5,20 @@
  */
 
 import { HostRuntime, RunResult } from "@google-labs/breadboard/worker";
-import { SecretHandler } from "./types";
+import { ProxyReceiverConfig } from "./types";
 import { ProxyReceiver } from "./receiver";
 import { ProxyPromiseResponse } from "@google-labs/breadboard/remote";
 
 export class WorkerHarness extends HostRuntime {
-  #secretHandler: SecretHandler;
+  #config: ProxyReceiverConfig;
 
-  constructor(workerURL: string, secretHandler: SecretHandler) {
+  constructor(workerURL: string, config: ProxyReceiverConfig) {
     super(workerURL);
-    this.#secretHandler = secretHandler;
+    this.#config = config;
   }
 
   override async *run(url: string, proxyNodes: string[]) {
-    const receiver = new ProxyReceiver(proxyNodes, this.#secretHandler);
+    const receiver = new ProxyReceiver(this.#config);
     for await (const result of super.run(url, proxyNodes)) {
       const { type, data } = result.message;
       if (type === "proxy") {
