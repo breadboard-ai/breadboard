@@ -17,7 +17,7 @@ import {
   MultipartInputImage,
   MultipartInputText,
 } from "./input-multipart.js";
-import { Toast } from "./toast.js";
+export { Toast } from "./toast.js";
 import { InputContainer } from "./input-container.js";
 import { Done } from "./done.js";
 import { Diagram } from "./diagram.js";
@@ -43,7 +43,6 @@ export const register = () => {
   customElements.define("bb-multipart-input", MultipartInput);
   customElements.define("bb-multipart-input-image", MultipartInputImage);
   customElements.define("bb-multipart-input-text", MultipartInputText);
-  customElements.define("bb-toast", Toast);
 };
 
 export const get = () => {
