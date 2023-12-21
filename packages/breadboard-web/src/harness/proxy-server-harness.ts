@@ -15,16 +15,18 @@ import {
 } from "@google-labs/breadboard/remote";
 
 export class ProxyServerHarness implements Harness {
-  #proxyServerUrl: string;
   #config: HarnessConfig;
 
-  constructor(proxyServerUrl: string, config: HarnessConfig) {
-    this.#proxyServerUrl = proxyServerUrl;
+  constructor(config: HarnessConfig) {
     this.#config = config;
   }
   async *run(url: string) {
+    const proxyServerUrl = this.#config.proxy?.[0].url;
+    if (!proxyServerUrl) {
+      throw new Error("No node proxy server URL provided");
+    }
     const proxyClient = new ProxyClient(
-      new HTTPClientTransport(this.#proxyServerUrl)
+      new HTTPClientTransport(proxyServerUrl)
     );
 
     try {

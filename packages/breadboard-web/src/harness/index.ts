@@ -18,7 +18,7 @@ const MAINTHREAD_HARNESS_VALUE = "main-thread";
 const PROXY_SERVER_HARNESS_VALUE = "proxy-server";
 const WORKER_HARNESS_VALUE = "worker";
 
-const PROXY_SERVER_URL = import.meta.env.VITE_PROXY_SERVER_URL ?? "";
+const PROXY_SERVER_URL = import.meta.env.VITE_PROXY_SERVER_URL;
 const DEFAULT_HARNESS = PROXY_SERVER_URL
   ? PROXY_SERVER_HARNESS_VALUE
   : WORKER_HARNESS_VALUE;
@@ -39,13 +39,7 @@ export const createHarness = (oldConfig: OldStyleHarnessConfig): Harness => {
       });
     }
     case PROXY_SERVER_HARNESS_VALUE: {
-      const proxyServerUrl = PROXY_SERVER_URL;
-      if (!proxyServerUrl) {
-        throw new Error(
-          "Unable to initialize proxy server harness. Please provide PROXY_SERVER_URL."
-        );
-      }
-      return new ProxyServerHarness(proxyServerUrl, {
+      return new ProxyServerHarness({
         type: "server",
         runtime: {
           location: "main",
@@ -54,7 +48,7 @@ export const createHarness = (oldConfig: OldStyleHarnessConfig): Harness => {
         proxy: [
           {
             location: "http",
-            url: proxyServerUrl,
+            url: PROXY_SERVER_URL,
             nodes: proxy,
           },
         ],
@@ -63,7 +57,7 @@ export const createHarness = (oldConfig: OldStyleHarnessConfig): Harness => {
     }
     case WORKER_HARNESS_VALUE: {
       return new WorkerHarness(WORKER_URL, {
-        type: "server",
+        type: "client",
         runtime: {
           location: "worker",
           kits,
