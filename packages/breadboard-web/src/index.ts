@@ -5,12 +5,10 @@
  */
 
 import * as BreadboardUI from "@google-labs/breadboard-ui";
-import type * as Breadboard from "@google-labs/breadboard";
-import { HostRuntime as HostHarness } from "@google-labs/breadboard/worker";
-import { ProxyReceiver } from "./harness/receiver.js";
-import { Harness, HarnessRunResult } from "./harness/types.js";
+import { Harness, HarnessRunResult, SecretHandler } from "./harness/types.js";
 import { MainThreadHarness } from "./harness/main-thread-harness.js";
 import { ProxyServerHarness } from "./harness/proxy-server-harness.js";
+import { WorkerHarness } from "./harness/worker-harness.js";
 
 const PROXY_NODES = [
   "palm-generateText",
@@ -69,14 +67,6 @@ const sleep = (time: number) =>
 export class Main {
   #ui = BreadboardUI.get();
   #harness: Harness;
-  #receiver = new ProxyReceiver(PROXY_NODES, async ({ keys }) => {
-    if (!keys) return {};
-    return Object.fromEntries(
-      await Promise.all(
-        keys.map(async (key) => [key, await this.#ui.secret(key)])
-      )
-    );
-  });
   #hasActiveBoard = false;
   #boardId = 0;
   #delay = 0;
@@ -277,54 +267,6 @@ export class Main {
         break;
       }
 
-      case "proxy":
-        {
-          try {
-            const proxyData = data as {
-              node: Breadboard.NodeDescriptor;
-              inputs: Breadboard.InputValues;
-            };
-
-            const pending = this.#pending.get(
-              proxyData.node.id
-            ) as BreadboardUI.HarnessEventType;
-            if (pending) {
-              this.#pending.delete(proxyData.node.id);
-              if (pending !== "secrets") {
-                this.#ui.proxyResult(
-                  pending,
-                  proxyData.node.id,
-                  proxyData.inputs
-                );
-              }
-            }
-
-            // Track the board ID. If it changes while awaiting a result, then
-            // the board has changed and the handled result should be discarded
-            // as it is stale.
-            const boardId = this.#boardId;
-            const handledResult = await this.#receiver.handle(proxyData);
-            if (boardId !== this.#boardId) {
-              console.log("Board has changed; proxy result is stale");
-            } else {
-              if (handledResult.nodeType === "palm-generateText") {
-                const resultValue = handledResult.value as {
-                  completion: string;
-                };
-                this.#ui.result({
-                  title: "LLM Response",
-                  result: resultValue.completion,
-                });
-              }
-              result.reply(handledResult.value);
-            }
-          } catch (e) {
-            const err = e as Error;
-            this.#ui.error(err.message);
-          }
-        }
-        break;
-
       case "end":
         this.#ui.done();
         this.#hasActiveBoard = false;
@@ -338,16 +280,17 @@ export class Main {
   #getHarness() {
     const harness =
       globalThis.localStorage.getItem(HARNESS_SWITCH_KEY) ?? DEFAULT_HARNESS;
+    const secretHandler: SecretHandler = async ({ keys }) => {
+      if (!keys) return {};
+      return Object.fromEntries(
+        await Promise.all(
+          keys.map(async (key) => [key, await this.#ui.secret(key)])
+        )
+      );
+    };
     switch (harness) {
       case MAINTHREAD_HARNESS_VALUE: {
-        return new MainThreadHarness(async ({ keys }) => {
-          if (!keys) return {};
-          return Object.fromEntries(
-            await Promise.all(
-              keys.map(async (key) => [key, await this.#ui.secret(key)])
-            )
-          );
-        });
+        return new MainThreadHarness(secretHandler);
       }
       case PROXY_SERVER_HARNESS_VALUE: {
         const proxyServerUrl = PROXY_SERVER_URL;
@@ -359,7 +302,7 @@ export class Main {
         return new ProxyServerHarness(proxyServerUrl);
       }
       case WORKER_HARNESS_VALUE: {
-        return new HostHarness(WORKER_URL);
+        return new WorkerHarness(WORKER_URL, secretHandler);
       }
     }
     throw new Error(`Unknown harness: ${harness}`);
