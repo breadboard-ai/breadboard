@@ -35,7 +35,7 @@ function createProbeCallbacks(probe: EventTarget): InvokeCallbacks {
   let lastNode: object | undefined = undefined;
 
   return {
-    before: async (node, inputs) => {
+    before: async (_, node, inputs) => {
       const detail = {
         descriptor: {
           id: node.id,
@@ -53,7 +53,7 @@ function createProbeCallbacks(probe: EventTarget): InvokeCallbacks {
       );
       return shouldInvokeHandler ? undefined : detail.outputs;
     },
-    after: (node, inputs, outputs, distribution) => {
+    after: (_, node, inputs, outputs, distribution) => {
       const detail = {
         descriptor: {
           id: node.id,
