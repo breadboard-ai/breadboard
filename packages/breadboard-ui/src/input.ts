@@ -10,12 +10,10 @@ import {
   getMultipartValue,
   isMultipart,
 } from "./input-multipart.js";
-// TODO: Bring back Drawables.
-// import { Drawable } from "./drawable.js";
 import { ShortTermMemory } from "./utils/short-term-memory.js";
 import {
   isBoolean,
-  // isDrawable,
+  isDrawable,
   isImage,
   isMultiline,
   isSelect,
@@ -25,6 +23,7 @@ import { LitElement, html, css } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { InputEnterEvent } from "./events.js";
 import { WebcamInput } from "./webcam.js";
+import { DrawableInput } from "./drawable.js";
 
 export type InputArgs = {
   schema: Schema;
@@ -130,7 +129,7 @@ export class Input extends LitElement {
 
     input[type="text"],
     input[type="password"],
-    bb-drawable,
+    bb-drawable-input,
     bb-webcam-input,
     textarea,
     .parsed-value {
@@ -157,7 +156,7 @@ export class Input extends LitElement {
     }
 
     #choice-container img,
-    bb-drawable,
+    bb-drawable-input,
     bb-webcam-input {
       display: block;
       border-radius: calc(var(--bb-grid-size) * 2);
@@ -173,6 +172,10 @@ export class Input extends LitElement {
     input[type="text"]::placeholder,
     input[type="password"]::placeholder {
       font-size: var(--bb-text-medium);
+    }
+
+    #choice-container label {
+      grid-column: 1 / 5;
     }
 
     .parsed-value {
@@ -201,9 +204,7 @@ export class Input extends LitElement {
     }
 
     .parsed-value img {
-      width: calc(var(--bb-grid-size) * 36);
-      height: calc(var(--bb-grid-size) * 36);
-      margin: calc(var(--bb-grid-size) * 5) 0;
+      width: 100%;
       border-radius: calc(var(--bb-grid-size) * 6);
       object-fit: cover;
       aspect-ratio: auto;
@@ -284,9 +285,15 @@ export class Input extends LitElement {
           // Custom elements don't look like form elements, so they need to be
           // processed separately.
           const element = form.querySelector(`#${key}`);
-          if (element && element instanceof WebcamInput) {
-            const value = element.value;
+          if (!element) {
+            console.warn(`Unable to find element for key ${key}`);
+            continue;
+          }
 
+          const isImage =
+            element instanceof WebcamInput || element instanceof DrawableInput;
+          if (isImage) {
+            const value = element.value;
             data[key] = value;
             processedValues[key] = {
               value: [value],
@@ -381,6 +388,8 @@ export class Input extends LitElement {
             // Webcam input.
             if (isWebcam(property)) {
               input = html`<bb-webcam-input id="${key}"></bb-webcam-input>`;
+            } else if (isDrawable(property)) {
+              input = html`<bb-drawable-input id="${key}"></bb-drawable-input>`;
             } else {
               input = html`Image type not supported yet.`;
             }

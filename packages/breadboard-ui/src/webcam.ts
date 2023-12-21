@@ -81,8 +81,6 @@ export class WebcamInput extends LitElement {
   connectedCallback(): void {
     super.connectedCallback();
 
-    console.log("Added");
-
     navigator.mediaDevices
       .getUserMedia({
         audio: false,
