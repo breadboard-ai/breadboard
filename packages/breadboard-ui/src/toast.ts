@@ -5,94 +5,92 @@
  */
 
 import { ToastType } from "./events.js";
+import { LitElement, html, css } from "lit";
+import { customElement, property } from "lit/decorators.js";
 
-export class Toast extends HTMLElement {
-  constructor(public message: string, public type: ToastType, timeout = 8000) {
-    super();
-    const root = this.attachShadow({ mode: "open" });
+@customElement("bb-toast")
+export class Toast extends LitElement {
+  @property({ reflect: true })
+  type: ToastType = ToastType.INFORMATION;
 
-    let icon = "--bb-icon-info";
-    switch (type) {
-      case ToastType.ERROR:
-        icon = "--bb-icon-error";
-        break;
+  @property()
+  message = "";
 
-      case ToastType.WARNING:
-        icon = "--bb-icon-warning";
-        break;
+  @property()
+  timeout = 8000;
+
+  static styles = css`
+    :host {
+      --bb-toast-icon: var(--bb-icon-info);
+
+      position: fixed;
+      bottom: calc(var(--bb-grid-size) * 10);
+      right: calc(var(--bb-grid-size) * 10);
+      display: block;
+      background: rgb(255, 255, 255);
+      border: 1px solid #ccc;
+      box-shadow: 0 2px 3px 0 rgba(0, 0, 0, 0.13),
+        0 7px 9px 0 rgba(0, 0, 0, 0.16);
+      border-radius: calc(var(--bb-grid-size) * 8);
+      padding: calc(var(--bb-grid-size) * 5) calc(var(--bb-grid-size) * 8)
+        calc(var(--bb-grid-size) * 5) calc(var(--bb-grid-size) * 12);
+
+      animation: slideIn var(--bb-easing-duration-in) var(--bb-easing) forwards;
+      max-width: min(360px, 80vw);
     }
 
-    root.innerHTML = `
-      <style>
-        :host {
-          position: fixed;
-          bottom: calc(var(--bb-grid-size) * 10);
-          right: calc(var(--bb-grid-size) * 10);
-          display: block;
-          background: rgb(255, 255, 255);
-          border: 1px solid #CCC;
-          box-shadow: 0 2px 3px 0 rgba(0,0,0,0.13),
-            0 7px 9px 0 rgba(0,0,0,0.16);
-          border-radius: calc(var(--bb-grid-size) * 8);
-          padding: calc(var(--bb-grid-size) * 5) calc(var(--bb-grid-size) * 8)
-              calc(var(--bb-grid-size) * 5) calc(var(--bb-grid-size) * 12);
+    :host([type="warning"]) {
+      --bb-toast-icon: var(--bb-icon-warning);
+      color: var(--bb-warning-color);
+    }
 
-          animation: slideIn var(--bb-easing-duration-in) var(--bb-easing) forwards;
-          max-width: min(360px, 80vw);
-        }
+    :host([type="error"]) {
+      --bb-toast-icon: var(--bb-icon-error);
+      color: var(--bb-error-color);
+    }
 
-        :host(.warning) {
-          color: var(--bb-warning-color);
-        }
+    :host(.toasted) {
+      animation: slideOut var(--bb-easing-duration-out) var(--bb-easing)
+        forwards;
+    }
 
-        :host(.error) {
-          color: var(--bb-error-color);
-        }
+    :host::before {
+      content: "";
+      position: absolute;
+      left: 16px;
+      top: 17px;
+      width: 24px;
+      height: 24px;
+      background: var(--bb-toast-icon) center center no-repeat;
+    }
 
-        :host(.toasted) {
-          animation: slideOut var(--bb-easing-duration-out) var(--bb-easing) forwards;
-        }
+    @keyframes slideIn {
+      from {
+        transform: translateY(20px);
+        opacity: 0;
+      }
 
-        :host::before {
-          content: '';
-          position: absolute;
-          left: 16px;
-          top: 17px;
-          width: 24px;
-          height: 24px;
-          background: var(${icon}) center center no-repeat;
-        }
+      to {
+        transform: none;
+        opacity: 1;
+      }
+    }
 
-        @keyframes slideIn {
-          from {
-            transform: translateY(20px);
-            opacity: 0;
-          }
+    @keyframes slideOut {
+      from {
+        transform: none;
+        opacity: 1;
+      }
 
-          to {
-            transform: none;
-            opacity: 1;
-          }
-        }
+      to {
+        transform: translateY(-20px);
+        opacity: 0;
+      }
+    }
+  `;
 
-        @keyframes slideOut {
-          from {
-            transform: none;
-            opacity: 1;
-          }
-          
-          to {
-            transform: translateY(-20px);
-            opacity: 0;
-          }
-        }
-      </style>
-      <div>
-        ${message}
-      </div>
-    `;
-
-    this.classList.add(type);
+  connectedCallback(): void {
+    super.connectedCallback();
 
     setTimeout(() => {
       this.addEventListener(
@@ -104,6 +102,10 @@ export class Toast extends HTMLElement {
       );
 
       this.classList.add("toasted");
-    }, timeout);
+    }, this.timeout);
+  }
+
+  render() {
+    return html`<div>${this.message}</div>`;
   }
 }

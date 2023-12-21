@@ -9,5 +9,38 @@
   <header>
     <a href="/"><h1 id="title">Breadboard UI</h1></a>
   </header>
-  <bb-ui></bb-ui>
+  <section>
+    <h1>Toasts</h1>
+    <button class="toast" id="toast-info">Info Toast</button>
+    <button class="toast" id="toast-warning">Warning Toast</button>
+    <button class="toast" id="toast-error">Error Toast</button>
+  </section>
+  <script type="module" src="/src/index.ts"></script>
+  <script>
+    const toasts = document.querySelectorAll(".toast");
+    const createToast = (evt) => {
+      const toast = document.createElement("bb-toast");
+
+      switch (evt.target.id) {
+        case "toast-warning":
+          toast.message = "Warning toast";
+          toast.type = "warning";
+          break;
+
+        case "toast-error":
+          toast.message = "Error toast";
+          toast.type = "error";
+          break;
+
+        default:
+          toast.message = "Info toast";
+          toast.type = "information";
+          break;
+      }
+      document.body.appendChild(toast);
+    };
+    for (const toast of toasts) {
+      toast.addEventListener("click", createToast);
+    }
+  </script>
 </body>
