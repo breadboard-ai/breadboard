@@ -84,7 +84,8 @@
         }
       ],
       "files": [
-        "vite.config.ts"
+        "vite.config.ts",
+        ".env"
       ]
     },
     "test": {
