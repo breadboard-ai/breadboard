@@ -196,8 +196,8 @@ export class BuilderNode<
           )) as O;
         } else if (handler && typeof handler !== "function" && handler.graph) {
           result = (await scope.invokeOnce(
-            handler.graph,
-            this.getInputs()
+            this.getInputs(),
+            handler.graph
           )) as O;
         } else {
           throw new Error(`Can't find handler for ${this.id}`);
@@ -280,7 +280,7 @@ export class BuilderNode<
         },
       };
 
-      return [node, await scope.serialize(handler.graph)];
+      return [node, await scope.serialize({}, handler.graph)];
     }
 
     // Else, serialize the handler itself and return a runJavascript node.
