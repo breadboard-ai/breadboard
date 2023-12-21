@@ -8,7 +8,12 @@ import { type Schema } from "@google-labs/breadboard";
 
 // TODO: Define this more precisely.
 type MultipartValue = unknown;
-type MultipartData = { value: MultipartValue; html: HTMLElement };
+type MultipartType = "image" | "string";
+type MultipartData = {
+  value: MultipartValue;
+  html: HTMLElement;
+  type: MultipartType;
+};
 
 const MULTIPART_INPUT_PREFIX = "multipart-input-";
 
@@ -73,7 +78,7 @@ export class MultipartInput extends HTMLElement {
             opacity: 0.5;
             font-size: 0;
           }
-  
+
           button:hover {
             transition: opacity var(--bb-easing-duration-in) var(--bb-easing);
             opacity: 1;
@@ -139,14 +144,16 @@ export class MultipartInput extends HTMLElement {
   async getValue() {
     const value: unknown[] = [];
     const html: HTMLElement[] = [];
+    const type: unknown[] = [];
     await Promise.all(
       Array.from(this.children).map(async (child) => {
         const data = await (child as MultipartInputPart).getData();
         value.push(data.value);
         html.push(data.html);
+        type.push(data.type);
       })
     );
-    return { value, html };
+    return { value, html, type };
   }
 }
 
@@ -291,6 +298,7 @@ export class MultipartInputImage extends MultipartInputPart {
             inline_data: { mime_type: "image/png", data },
           },
           html,
+          type: "image",
         });
       });
       this.#file && reader.readAsDataURL(this.#file);
@@ -316,6 +324,6 @@ export class MultipartInputText extends MultipartInputPart {
     const text = textarea.value;
     const html = document.createElement("div");
     html.textContent = text;
-    return { value: { text }, html };
+    return { value: { text }, html, type: "string" as MultipartType };
   }
 }
