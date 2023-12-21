@@ -32,7 +32,7 @@ const outputSchema = {
   required: ["text"],
 } satisfies Schema;
 
-export default await recipe(async () => {
+export default await recipe(() => {
   return base
     .input({ $id: "text", schema: inputSchema })
     .to(core.invoke({ $id: "gemini", path: "/graphs/gemini-generator.json" }))

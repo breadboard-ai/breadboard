@@ -5,7 +5,7 @@
  */
 
 import { z } from "zod";
-import { recipe } from "@google-labs/breadboard";
+import { recipe, V } from "@google-labs/breadboard";
 
 import { starter } from "@google-labs/llm-starter";
 import { palm } from "@google-labs/palm-kit";
@@ -20,7 +20,7 @@ export const graph = recipe(
     }),
     title: "Math, imperative style graph",
   },
-  async ({ question }) => {
+  ({ question }) => {
     const { prompt } = starter.promptTemplate({
       template:
         "Write a Javascript function called `run` to compute the result for this question:\nQuestion: {{question}}\nCode: ",
@@ -33,7 +33,7 @@ export const graph = recipe(
     const { result } = starter.runJavascript({
       code: completion,
     });
-    return { result: result };
+    return { result: result as V<string> };
   }
 );
 

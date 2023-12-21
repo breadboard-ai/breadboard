@@ -18,11 +18,11 @@ import {
   OutputValues,
   RecipeFactory,
   NodeProxyHandlerFunction,
-  NodeProxyHandlerFunctionForGraphDeclaration,
+  InputsForGraphDeclaration,
+  GraphDeclarationFunction,
   NodeProxy,
   InputsMaybeAsValues,
   Lambda,
-  FnTypes,
 } from "./types.js";
 import { NodeHandler, NodeHandlerFunction } from "../runner/types.js";
 
@@ -30,6 +30,7 @@ import { zodToSchema } from "./zod-utils.js";
 import { registerNodeType } from "./kits.js";
 import { getCurrentContextScope } from "./default-scope.js";
 import { BuilderNode } from "./node.js";
+import { BuilderScope } from "./scope.js";
 
 /**
  * Implementation of the overloaded recipe function.
@@ -39,19 +40,16 @@ export const recipe: RecipeFactory = (
     | ({
         input?: z.ZodType;
         output?: z.ZodType;
+        graph?: GraphDeclarationFunction;
         invoke?: NodeProxyHandlerFunction;
         describe?: NodeDescriberFunction;
         name?: string;
       } & GraphMetadata)
-    | NodeProxyHandlerFunction,
-  maybeFn?:
-    | NodeProxyHandlerFunction
-    | NodeProxyHandlerFunctionForGraphDeclaration
+    | GraphDeclarationFunction,
+  maybeFn?: GraphDeclarationFunction
 ) => {
   const options = typeof optionsOrFn === "object" ? optionsOrFn : {};
-  options.invoke ??= (
-    typeof optionsOrFn === "function" ? optionsOrFn : maybeFn
-  ) as NodeProxyHandlerFunction;
+  options.graph ??= typeof optionsOrFn === "function" ? optionsOrFn : maybeFn;
 
   return recipeImpl(options);
 };
@@ -64,11 +62,10 @@ export const recipeAsGraph = <
   I extends InputValues = InputValues,
   O extends OutputValues = OutputValues
 >(
-  fn: NodeProxyHandlerFunctionForGraphDeclaration<I, O>
+  fn: GraphDeclarationFunction<I, O>
 ): Lambda<I, Required<O>> => {
   return recipeImpl({
-    invoke: fn as NodeProxyHandlerFunction,
-    fnType: "graph",
+    graph: fn as GraphDeclarationFunction,
   }) as Lambda<I, Required<O>>;
 };
 
@@ -80,7 +77,6 @@ export const recipeAsCode = <
 ): Lambda<I, Required<O>> => {
   return recipeImpl({
     invoke: fn as unknown as NodeProxyHandlerFunction,
-    fnType: "code",
   }) as Lambda<I, Required<O>>;
 };
 
@@ -94,12 +90,11 @@ export const recipeAsGraphWithZod = <
     describe?: NodeDescriberFunction;
     name?: string;
   } & GraphMetadata,
-  fn: NodeProxyHandlerFunctionForGraphDeclaration<z.infer<IT>, z.infer<OT>>
+  fn: GraphDeclarationFunction<z.infer<IT>, z.infer<OT>>
 ): Lambda<z.infer<IT>, Required<z.infer<OT>>> => {
   return recipeImpl({
     ...options,
-    invoke: fn as NodeProxyHandlerFunction,
-    fnType: "graph",
+    graph: fn as GraphDeclarationFunction,
   }) as Lambda<z.infer<IT>, Required<z.infer<OT>>>;
 };
 
@@ -110,24 +105,8 @@ export const recipeAsCodeWithZod = <IT extends z.ZodType, OT extends z.ZodType>(
     invoke: (inputs: z.infer<IT>) => z.infer<OT> | PromiseLike<z.infer<OT>>;
     describe?: NodeDescriberFunction;
     name?: string;
-    fnType: "code";
   } & GraphMetadata
 ): Lambda<z.infer<IT>, Required<z.infer<OT>>> => {
-  return recipeImpl(options) as Lambda<z.infer<IT>, Required<z.infer<OT>>>;
-};
-
-// Mix of the last two, using optionals instead of overloading.
-export const zRecipe = <IT extends z.ZodType, OT extends z.ZodType>(
-  options: {
-    input: IT;
-    output: OT;
-    invoke?: (inputs: z.infer<IT>) => z.infer<OT> | PromiseLike<z.infer<OT>>;
-    describe?: NodeDescriberFunction;
-    name?: string;
-  } & GraphMetadata,
-  fn?: NodeProxyHandlerFunctionForGraphDeclaration<z.infer<IT>, z.infer<OT>>
-): Lambda<z.infer<IT>, Required<z.infer<OT>>> => {
-  if (!options.invoke && fn) options.invoke = fn;
   return recipeImpl(options) as Lambda<z.infer<IT>, Required<z.infer<OT>>>;
 };
 
@@ -138,24 +117,16 @@ function recipeImpl(
   options: {
     input?: z.ZodType | Schema;
     output?: z.ZodType | Schema;
+    graph?: GraphDeclarationFunction;
     invoke?: NodeProxyHandlerFunction;
     describe?: NodeDescriberFunction;
     name?: string;
-    fnType?: FnTypes;
   } & GraphMetadata
 ): Lambda {
-  if (!options.invoke) throw new Error("Missing invoke function");
+  if (!options.invoke && !options.graph)
+    throw new Error("Missing invoke or graph definition function");
 
-  const handler: NodeHandler = {
-    invoke: options.invoke as NodeHandlerFunction<InputValues, OutputValues>,
-  };
-
-  const inputSchema = options.input && zodToSchema(options.input);
-  const outputSchema = options.output && zodToSchema(options.output);
-
-  if (options.describe) handler.describe = options.describe;
-  else if (inputSchema && outputSchema)
-    handler.describe = async () => ({ inputSchema, outputSchema });
+  const lexicalScope = getCurrentContextScope();
 
   // Extract recipe metadata from config. Used in serialize().
   const { url, title, description, version } = options ?? {};
@@ -166,7 +137,62 @@ function recipeImpl(
     ...(version ? { version } : {}),
   };
 
-  const lexicalScope = getCurrentContextScope();
+  const inputSchema = options.input && zodToSchema(options.input);
+  const outputSchema = options.output && zodToSchema(options.output);
+
+  const handler: NodeHandler = {};
+
+  if (options.describe) handler.describe = options.describe;
+  else if (inputSchema && outputSchema)
+    handler.describe = async () => ({ inputSchema, outputSchema });
+
+  if (options.invoke) handler.invoke = options.invoke as NodeHandlerFunction;
+
+  if (options.graph) {
+    const scope = new BuilderScope({ lexicalScope, serialize: true });
+
+    handler.graph = scope.asScopeFor(() => {
+      const inputNode = new BuilderNode(
+        "input",
+        scope,
+        inputSchema ? { schema: inputSchema } : {}
+      );
+      const outputNode = new BuilderNode(
+        "output",
+        scope,
+        outputSchema ? { schema: outputSchema } : {}
+      );
+
+      const result = options.graph?.(
+        inputNode.asProxy() as InputsForGraphDeclaration<InputValues>
+      );
+
+      if (result instanceof Promise)
+        throw new Error("Graph generation function can't be async");
+
+      let actualOutput = outputNode as BuilderNode;
+
+      if (result instanceof BuilderNode) {
+        // If the handler returned an output node, serialize it directly,
+        // otherwise connect the returned node's outputs to the output node.
+        const node = result.unProxy();
+        if (node.type === "output") actualOutput = node;
+        else outputNode.addInputsFromNode(node);
+      } else if (typeof result === "object") {
+        // Otherwise wire up all keys of the returned object to the output.
+        outputNode.addInputsAsValues(
+          result as InputsMaybeAsValues<OutputValues>
+        );
+      } else {
+        throw new Error(
+          `Unexpected return ${typeof result} value from graph declaration`
+        );
+      }
+
+      return actualOutput;
+    })();
+  }
+
   let lambdaNode:
     | BuilderNode<
         { board: BreadboardCapability },
@@ -189,8 +215,7 @@ function recipeImpl(
       return new BuilderNode(
         handler,
         getCurrentContextScope(),
-        config,
-        options.fnType
+        config
       ).asProxy();
     else
       return new BuilderNode("invoke", getCurrentContextScope(), {
@@ -281,7 +306,7 @@ function recipeImpl(
 
   // Return wire from lambdaNode that will generate a BoardCapability
   factory.getBoardCapabilityAsValue = () =>
-    lambdaNode !== undefined
+    lambdaNode !== undefined && lambdaNode.incoming.length > 0
       ? lambdaNode.asProxy().board
       : ((async () => ({
           kind: "board",

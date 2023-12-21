@@ -46,7 +46,7 @@ const outputSchema = {
   required: ["text"],
 } satisfies Schema;
 
-export default await recipe(async () => {
+export default await recipe(() => {
   const input = base.input({ $id: "math-question", schema: inputSchema });
   const template = starter.promptTemplate({
     template: `Translate the math problem below into a self-contained,

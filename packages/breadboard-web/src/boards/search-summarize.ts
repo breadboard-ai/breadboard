@@ -51,7 +51,7 @@ const outputSchema = {
   required: ["text"],
 } satisfies Schema;
 
-export default await recipe(async () => {
+export default await recipe(() => {
   const parameters = base.input({ $id: "parameters", schema: inputSchema });
 
   return starter

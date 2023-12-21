@@ -27,8 +27,8 @@ export type OutputValues = { [key: string]: NodeValue };
 export type OutputValue<T> = Partial<{ [key: string]: T }>;
 
 export type NodeHandlerFunction<
-  I extends InputValues,
-  O extends OutputValues
+  I extends InputValues = InputValues,
+  O extends OutputValues = OutputValues
 > = (
   inputs: PromiseLike<I> & I,
   node: AbstractNode<I, O>
@@ -39,8 +39,9 @@ export type NodeHandler<
   O extends OutputValues = OutputValues
 > =
   | {
-      invoke: NodeHandlerFunction<I, O>;
+      invoke?: NodeHandlerFunction<I, O>;
       describe?: NodeDescriberFunction;
+      graph?: AbstractNode; // Graphs can be node handlers, too
     }
   | NodeHandlerFunction<I, O>;
 
