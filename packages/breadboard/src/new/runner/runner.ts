@@ -35,7 +35,7 @@ function createProbeCallbacks(probe: EventTarget): InvokeCallbacks {
   let lastNode: object | undefined = undefined;
 
   return {
-    before: async (node, inputs) => {
+    before: async (_, node, inputs) => {
       const detail = {
         descriptor: {
           id: node.id,
@@ -53,7 +53,7 @@ function createProbeCallbacks(probe: EventTarget): InvokeCallbacks {
       );
       return shouldInvokeHandler ? undefined : detail.outputs;
     },
-    after: (node, inputs, outputs, distribution) => {
+    after: (_, node, inputs, outputs, distribution) => {
       const detail = {
         descriptor: {
           id: node.id,
@@ -183,11 +183,9 @@ export class Runner implements BreadboardRunner {
 
     kits?.forEach((kit) => scope.addHandlers(handlersFromKit(kit)));
 
-    const callbacks = probe ? [createProbeCallbacks(probe)] : [];
+    if (probe) scope.addCallbacks(createProbeCallbacks(probe));
 
-    scope
-      .invoke(this.#anyNode, callbacks)
-      .finally(() => streamController.close());
+    scope.invoke(this.#anyNode).finally(() => streamController.close());
 
     const reader = stream.getReader();
     while (true) {
@@ -261,14 +259,12 @@ export class Runner implements BreadboardRunner {
       },
     });
 
-    const callbacks = context?.probe
-      ? [createProbeCallbacks(context.probe)]
-      : [];
+    if (context?.probe) scope.addCallbacks(createProbeCallbacks(context.probe));
 
     // TODO: One big difference to before: This will keep running forever, even
     // after the first output is encountered. We need to add a way to abort the
     // run.
-    scope.invoke(this.#anyNode, callbacks);
+    scope.invoke(this.#anyNode);
 
     return promise;
   }

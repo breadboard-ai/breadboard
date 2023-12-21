@@ -7,7 +7,7 @@
 import { z } from "zod";
 import test from "ava";
 
-import { recipe } from "../../../src/new/recipe-grammar/recipe.js";
+import { recipe, code } from "../../../src/new/recipe-grammar/recipe.js";
 import { Serializeable } from "../../../src/new/runner/types.js";
 import {
   InputValues,
@@ -27,7 +27,7 @@ async function serializeAndRunGraph(
 }
 
 test("simplest graph", async (t) => {
-  const graph = recipe(async (inputs) => {
+  const graph = recipe((inputs) => {
     return testKit.noop(inputs);
   });
   const result = await serializeAndRunGraph(graph, { foo: "bar" });
@@ -35,7 +35,7 @@ test("simplest graph", async (t) => {
 });
 
 test("simplest graph, spread", async (t) => {
-  const graph = recipe(async (inputs) => {
+  const graph = recipe((inputs) => {
     return testKit.noop({ ...inputs });
   });
   const result = await serializeAndRunGraph(graph, { foo: "bar" });
@@ -43,7 +43,7 @@ test("simplest graph, spread", async (t) => {
 });
 
 test("simplest graph, pick input", async (t) => {
-  const graph = recipe(async (inputs) => {
+  const graph = recipe((inputs) => {
     return testKit.noop({ foo: inputs.foo });
   });
   const result = await serializeAndRunGraph(graph, { foo: "bar" });
@@ -51,7 +51,7 @@ test("simplest graph, pick input", async (t) => {
 });
 
 test("simplest graph, pick input and output", async (t) => {
-  const graph = recipe(async (inputs) => {
+  const graph = recipe((inputs) => {
     const { foo } = testKit.noop({ foo: inputs.foo });
     return { foo };
   });
@@ -60,7 +60,7 @@ test("simplest graph, pick input and output", async (t) => {
 });
 
 test("two nodes, spread", async (t) => {
-  const graph = recipe<{ [key: string]: string }>(async (inputs) => {
+  const graph = recipe<{ [key: string]: string }>((inputs) => {
     const reverser = testKit.reverser({ ...inputs });
     return testKit.noop({ ...reverser });
   });
@@ -70,8 +70,8 @@ test("two nodes, spread", async (t) => {
 
 test("simple inline action", async (t) => {
   const graph = recipe<{ a: number; b: number }, { result: number }>(
-    async (inputs) => {
-      return recipe<{ a: number; b: number }, { result: number }>(
+    (inputs) => {
+      return code<{ a: number; b: number }, { result: number }>(
         async (inputs) => {
           const { a, b } = await inputs;
           return { result: a + b };
@@ -85,7 +85,7 @@ test("simple inline action", async (t) => {
 });
 
 test("code recipe called from another recipe", async (t) => {
-  const add = recipe<{ a: number; b: number }, { result: number }>(
+  const add = code<{ a: number; b: number }, { result: number }>(
     async (inputs) => {
       const { a, b } = await inputs;
       return { result: a + b };
@@ -93,7 +93,7 @@ test("code recipe called from another recipe", async (t) => {
   );
 
   const graph = recipe<{ a: number; b: number }, { result: number }>(
-    async (inputs) => {
+    (inputs) => {
       return add({ a: inputs.a, b: inputs.b });
     }
   );
@@ -113,8 +113,8 @@ test("nested inline action, with schema", async (t) => {
         result: z.number().describe("Sum: The sum of two numbers"),
       }),
     },
-    async (inputs) => {
-      return recipe<{ a: number; b: number }, { result: number }>(
+    (inputs) => {
+      return code<{ a: number; b: number }, { result: number }>(
         async (inputs) => {
           const { a, b } = await inputs;
           return { result: a + b };

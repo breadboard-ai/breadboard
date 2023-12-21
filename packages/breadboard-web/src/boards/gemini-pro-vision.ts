@@ -9,7 +9,7 @@ import {
   Schema,
   base,
   recipe,
-  recipeAsCode,
+  code,
 } from "@google-labs/breadboard";
 import { starter } from "@google-labs/llm-starter";
 import { nursery } from "@google-labs/node-nursery-web";
@@ -153,7 +153,7 @@ export default await recipe(() => {
       return base
         .input({})
         .chunk.to(
-          recipeAsCode(({ chunk }: Chunky) => {
+          code(({ chunk }: Chunky) => {
             return {
               chunk: chunk.candidates[0].content.parts[0].text,
             };

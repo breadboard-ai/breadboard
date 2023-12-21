@@ -7,7 +7,8 @@
 import { z } from "zod";
 import test from "ava";
 
-import { recipe } from "../../../src/new/recipe-grammar/recipe.js";
+import { recipe, code } from "../../../src/new/recipe-grammar/recipe.js";
+import { V } from "../../../src/index.js";
 import { testKit } from "../../helpers/_test-kit.js";
 
 test("directly await a node", async (t) => {
@@ -26,7 +27,7 @@ test("directly await a value called 'to'", async (t) => {
 });
 
 test("directly await declarative recipe returning node, value assignment", async (t) => {
-  const graph = recipe(async (inputs) => {
+  const graph = recipe((inputs) => {
     return testKit.noop({ foo: inputs.foo });
   });
   const foo = await graph({ foo: "bar" }).foo;
@@ -34,7 +35,7 @@ test("directly await declarative recipe returning node, value assignment", async
 });
 
 test("directly await declarative recipe returning node, deconstruct", async (t) => {
-  const graph = recipe(async (inputs) => {
+  const graph = recipe<{ foo: string }>((inputs) => {
     return testKit.noop({ foo: inputs.foo });
   });
   const { foo } = await graph({ foo: "bar" });
@@ -42,7 +43,7 @@ test("directly await declarative recipe returning node, deconstruct", async (t) 
 });
 
 test("directly await declarative recipe, value assignment", async (t) => {
-  const graph = recipe(async (inputs) => {
+  const graph = recipe((inputs) => {
     const { foo } = testKit.noop({ foo: inputs.foo });
     return { foo };
   });
@@ -51,16 +52,16 @@ test("directly await declarative recipe, value assignment", async (t) => {
 });
 
 test("directly await declarative recipe, values named 'in' and 'to'", async (t) => {
-  const graph = recipe<{ in: string }, { to: unknown }>(async (inputs) => {
+  const graph = recipe<{ in: string }, { to: unknown }>((inputs) => {
     const { to } = testKit.noop({ to: inputs.in });
-    return { to };
+    return { to: to as unknown as V<string> };
   });
   const to = await graph({ in: "bar" }).to;
   t.is(to, "bar");
 });
 
 test("directly await declarative recipe, deconstruct", async (t) => {
-  const graph = recipe(async (inputs) => {
+  const graph = recipe((inputs) => {
     const { foo } = testKit.noop({ foo: inputs.foo });
     return { foo };
   });
@@ -69,16 +70,16 @@ test("directly await declarative recipe, deconstruct", async (t) => {
 });
 
 test("directly await declarative recipe, deconstruct, 'in' and 'to'", async (t) => {
-  const graph = recipe(async (inputs) => {
+  const graph = recipe((inputs) => {
     const { to } = testKit.noop({ to: inputs.in });
-    return { to };
+    return { to: to as unknown as V<string> };
   });
   const { to } = await graph({ in: "bar" });
   t.is(to as unknown as string, "bar");
 });
 
 test("directly await declarative recipe, passing full inputs, value", async (t) => {
-  const graph = recipe(async (inputs) => {
+  const graph = recipe((inputs) => {
     return testKit.noop(inputs);
   });
   const baz = await graph({ baz: "bar" }).baz;
@@ -86,7 +87,7 @@ test("directly await declarative recipe, passing full inputs, value", async (t) 
 });
 
 test("directly await declarative recipe, passing full inputs, deconstruct", async (t) => {
-  const graph = recipe(async (inputs) => {
+  const graph = recipe<{ [key: string]: unknown }>((inputs) => {
     return testKit.noop(inputs);
   });
   const { baz } = await graph({ baz: "bar" });
@@ -94,25 +95,24 @@ test("directly await declarative recipe, passing full inputs, deconstruct", asyn
 });
 
 test("directly await declarative recipe, passing full inputs as spread", async (t) => {
-  const graph = recipe(async (inputs) => {
+  const graph = recipe((inputs) => {
     return testKit.noop({ ...inputs });
   });
   const baz = await graph({ baz: "bar" }).baz;
   t.is(baz, "bar");
 });
 
-test.skip("directly await declarative recipe, passing full inputs as spread, twice", async (t) => {
-  const graph = recipe<{ [key: string]: string }>(async (inputs) => {
+test("directly await declarative recipe, passing full inputs as spread, twice", async (t) => {
+  const graph = recipe<{ [key: string]: string }>((inputs) => {
     const reverser = testKit.reverser({ ...inputs });
     return testKit.noop({ ...reverser });
   });
-  t.log(await graph.serialize());
   const baz = await graph({ baz: "bar" }).baz;
   t.is(baz as unknown as string, "rab");
 });
 
 test("directly await imperative recipe, value assignment", async (t) => {
-  const graph = recipe(async (inputs) => {
+  const graph = code(async (inputs) => {
     const { foo } = await testKit.noop({ foo: inputs.foo });
     return { foo };
   });
@@ -121,7 +121,7 @@ test("directly await imperative recipe, value assignment", async (t) => {
 });
 
 test("directly await imperative recipe, deconstruct", async (t) => {
-  const graph = recipe(async (inputs) => {
+  const graph = code(async (inputs) => {
     const { foo } = await testKit.noop({ foo: inputs.foo });
     return { foo };
   });
@@ -130,10 +130,10 @@ test("directly await imperative recipe, deconstruct", async (t) => {
 });
 
 test("if-else, imperative execution", async (t) => {
-  const math = recipe(async () => {
+  const math = code(async () => {
     return { result: "math result" };
   });
-  const search = recipe(async () => {
+  const search = code(async () => {
     return { text: "search result" };
   });
 
@@ -182,22 +182,24 @@ test("if-else, imperative execution", async (t) => {
 });
 
 test.skip("if-else, serializable", async (t) => {
-  const math = recipe(async () => {
+  const math = code(async () => {
     return { result: "math result" };
   });
-  const search = recipe(async () => {
+  const search = code(async () => {
     return { text: "search result" };
   });
 
-  const graph = recipe({
-    input: z.object({
-      question: z.string().describe("Query: A math or search question?"),
-    }),
-    output: z.object({
-      result: z.string().describe("Answer: The answer to the query"),
-    }),
-    invoke: async (inputs) => {
-      return testKit
+  const graph = recipe(
+    {
+      input: z.object({
+        question: z.string().describe("Query: A math or search question?"),
+      }),
+      output: z.object({
+        result: z.string().describe("Answer: The answer to the query"),
+      }),
+    },
+    (inputs) =>
+      testKit
         .noop({
           template:
             "Is this question about math? Answer YES or NO.\nQuestion: {{question}}\nAnswer: ",
@@ -224,11 +226,7 @@ test.skip("if-else, serializable", async (t) => {
           },
           { math, search }
         )
-        .result.to(testKit.noop()) as unknown as PromiseLike<{
-        result: string;
-      }>;
-    },
-  });
+  );
 
   {
     const { result } = await graph({ question: "YES it is" });

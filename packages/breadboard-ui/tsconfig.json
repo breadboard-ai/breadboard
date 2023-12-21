@@ -1,7 +1,10 @@
 {
   "compilerOptions": {
     "composite": true,
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"]
   },
   "include": ["src/**/*", "tests/**/*"],
   "extends": "@google-labs/tsconfig/base.json",

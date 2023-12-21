@@ -27,8 +27,8 @@ export type OutputValues = { [key: string]: NodeValue };
 export type OutputValue<T> = Partial<{ [key: string]: T }>;
 
 export type NodeHandlerFunction<
-  I extends InputValues,
-  O extends OutputValues
+  I extends InputValues = InputValues,
+  O extends OutputValues = OutputValues
 > = (
   inputs: PromiseLike<I> & I,
   node: AbstractNode<I, O>
@@ -39,8 +39,9 @@ export type NodeHandler<
   O extends OutputValues = OutputValues
 > =
   | {
-      invoke: NodeHandlerFunction<I, O>;
+      invoke?: NodeHandlerFunction<I, O>;
       describe?: NodeDescriberFunction;
+      graph?: ScopeInterface; // Pinned graph is the node
     }
   | NodeHandlerFunction<I, O>;
 
@@ -112,16 +113,32 @@ export interface OutputDistribution {
 }
 
 export interface InvokeCallbacks {
+  // Called at the top of any iteration.
+  // Return true to abort execution.
+  abort?: (scope: ScopeInterface) => boolean | Promise<boolean>;
+
+  // Called before a node is invoked.
+  // Waits for execution until promise is resolved. (Useful to pause execution)
+  // Return outputs values to skip invocation and use those values instead.
   before?: (
+    scope: ScopeInterface,
     node: AbstractNode,
     inputs: InputValues
   ) => undefined | Promise<OutputValues | undefined>;
+
+  // Called after a node is invoked.
+  // Contains information useful for debugging.
+  // Does _not_ wait for promise to resolve before continuing execution.
   after?: (
+    scope: ScopeInterface,
     node: AbstractNode,
     inputs: InputValues,
     outputs: OutputValues,
     distribution: OutputDistribution
   ) => void | Promise<void>;
+
+  // Called after a graph is done executing.
+  // Only called on the scope that the callback was added to.
   done?: () => void | Promise<void>;
 }
 
@@ -154,8 +171,78 @@ export interface ScopeInterface {
     name: string
   ): NodeHandler<I, O> | undefined;
 
+  /**
+   * Pins a node to this scope, meaning it will be invoked/serialized for
+   * invoke() and serialize() unless those are called with specific nodes.
+   *
+   * Note that while all nodes are created within a scope, the scope is not by
+   * default aware of them. If nodes are created and nothing references them,
+   * then they are garbage collected.
+   *
+   * So there are two ways to reference graphs:
+   *  - keep a reference to any node of the graph, then pass it to invoke() or
+   *    serialize(). This is especially useful in the root scope.
+   *  - create a graph, then pin it to the scope, and from then on refer to that
+   *    scope when referring to a graph. This maps the mental model of nested
+   *    scopes that define graphs. This also allows refering to a set of
+   *    disjoint graphs (in the same scope).
+   *
+   * @param node node to pin to this scope
+   */
+  pin(node: AbstractNode): void;
+
+  /**
+   * Reduces set of pinned pins to one per disjoint graph. Call this after
+   * constructing a graph that might have pinned several nodes.
+   */
+  compactPins(): void;
+
+  /**
+   * Returns all pinned nodes in this scope. After calling compactPins(), this
+   * will return one node representing each disjoint graph.
+   *
+   * @returns Array of pinned nodes
+   */
+  getPinnedNodes(): AbstractNode[];
+
+  /**
+   * Invokes a node, or all pinned nodes if none is specified.
+   *
+   * @param node Node to invoke, or undefined to invoke all pinned nodes
+   * @returns Promise that resolves when all nodes have been invoked
+   */
+  invoke(node?: AbstractNode): Promise<void>;
+
+  /**
+   * Helper to invoke a graph and return the values of the first `output` node
+   * that is being invoked.
+   *
+   * @param inputs Inputs to be passed to `input` node
+   * @param node Node to invoke, or undefined to invoke all pinned nodes
+   *
+   * @throws If no output node was called before graph terminates
+   */
+  invokeOnce(inputs: InputValues, node?: AbstractNode): Promise<OutputValues>;
+
+  /**
+   * Adds callbacks that are being called before and after each node invocation
+   * and once execution is done.
+   *
+   * `abort`, `before` and `after` will be called in invoked subgraphs as well.
+   * `done` only for scope that the callback was added to.
+   *
+   * @param callbacks Callbacks to add to the scope
+   */
+  addCallbacks(callbacks: InvokeCallbacks): void;
+
+  /**
+   * Serializes a node, or all pinned nodes if none is specified.
+   *
+   * @param metadata Metadata to be added to serialized graph
+   * @param node Node to serialize, or undefined to serialize all pinned nodes
+   */
   serialize(
-    node: AbstractNode,
-    metadata?: GraphMetadata
+    metadata?: GraphMetadata,
+    node?: AbstractNode
   ): Promise<GraphDescriptor>;
 }

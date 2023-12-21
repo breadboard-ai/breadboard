@@ -4,135 +4,178 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ImageHandler } from "./types.js";
-import {
-  assertHTMLElement,
-  assertInputElement,
-  assertPointerEvent,
-} from "./utils/assertions.js";
+import { LitElement, html, css } from "lit";
+import { customElement, property, state } from "lit/decorators.js";
+import { createRef, ref, type Ref } from "lit/directives/ref.js";
+import { CanvasData } from "./types.js";
 
-export class Drawable extends HTMLElement implements ImageHandler {
+@customElement("bb-drawable-input")
+export class DrawableInput extends LitElement {
+  @property()
+  type = "image/png";
+
+  @state()
+  error = "";
+
+  @state()
+  strokeColor = "#333333";
+
   #drawing = false;
-  #ctx: CanvasRenderingContext2D;
-  #boundFunctions = new Map<string, EventListenerOrEventListenerObject>();
+  #canvasRef: Ref<HTMLCanvasElement> = createRef();
   #bounds = { x: 0, y: 0 };
   #lastPosition = { x: 0, y: 0 };
   #lastDimensions = { w: 0, h: 0 };
-  #strokeColor = "#333333";
+  #onWindowResizeBound = this.#onWindowResize.bind(this);
 
-  constructor(public target: HTMLCanvasElement) {
-    super();
+  static styles = css`
+    :host {
+      --default-bb-box-shadow: 0 6px 9px 0 rgba(0, 0, 0, 0.12),
+        0 2px 3px 0 rgba(0, 0, 0, 0.23);
+      --default-bb-border-radius: 8px;
+      --default-bb-input-background-color: #fff;
 
-    const root = this.attachShadow({ mode: "open" });
-    root.innerHTML = `
-      <style>
-        :host {
-          display: block;
-          overflow: hidden;
-          position: relative;
-        }
-        
-        ::slotted(canvas) {
-          display: block;
-          width: 100%;
-        }
-
-        #controls {
-          width: calc(var(--bb-grid-size) * 8);
-          position: absolute;
-          top: calc(var(--bb-grid-size) * 4);
-          left: calc(var(--bb-grid-size) * 4);
-          padding: calc(var(--bb-grid-size) * 0.5);
-          background: rgb(255, 255, 255);
-          border: 1px solid rgb(237, 237, 237);
-          border-radius: calc(var(--bb-grid-size) * 2);
-          cursor: auto;
-          z-index: 1;
-        }
-
-        #controls > button#reset-image {
-          background-image: var(--bb-icon-reset-image);
-        }
-
-        #controls > button:first-child {
-          margin-top: 0px;
-        }
-
-        #color-input,
-        #controls > button {
-          width: 32px;
-          height: 32px;
-          font-size: 0;
-          border-radius: calc(var(--bb-grid-size) * 1.5);
-          border: none;
-          background: none;
-          display: block;
-          margin-top: 4px;
-          cursor: pointer;
-        }
-
-        #controls > button {
-          background-color: rgb(255, 255, 255);
-          background-position: center center;
-          background-repeat: no-repeat;
-          opacity: 0.5;
-        }
-
-        #controls > button:hover,
-        #controls > button.active {
-          background-color: rgb(230, 241, 242);
-          opacity: 1;
-        }
-      </style>
-
-      <div id="controls">
-        <button id="reset-image">Reset image</button>
-        <input type="color" id="color-input" value="${this.#strokeColor}" />
-      </div>
-      <slot></slot>
-    `;
-
-    const ctx = target.getContext("2d", { willReadFrequently: true });
-    if (!ctx) {
-      throw new Error("Unable to create canvas context");
+      position: relative;
+      display: block;
+      width: 100%;
+      background-color: var(
+        --bb-input-background-color,
+        var(--default-bb-input-background-color)
+      );
+      box-shadow: var(--bb-box-shadow, var(--default-bb-box-shadow));
+      border-radius: var(--bb-border-radius, var(--default-bb-border-radius));
+      aspect-ratio: 4/3;
     }
 
-    this.#ctx = ctx;
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      border-radius: var(--bb-border-radius, var(--default-bb-border-radius));
+      animation: fadeIn 0.3s cubic-bezier(0, 0, 0.3, 1) both;
+      animation-delay: 0.3s;
+    }
 
-    this.#boundFunctions.set("onWindowResize", this.#onWindowResize.bind(this));
-    this.#boundFunctions.set("onKeyDown", this.#onKeyDown.bind(this));
-    this.#boundFunctions.set("onPointerDown", this.#onPointerDown.bind(this));
-    this.#boundFunctions.set("onPointerMove", this.#onPointerMove.bind(this));
-    this.#boundFunctions.set("onPointerUp", this.#onPointerUp.bind(this));
+    canvas.active {
+      animation: fadeIn 0.3s cubic-bezier(0, 0, 0.3, 1) both;
+      animation-delay: 0.3s;
+    }
 
-    this.#fillCanvas();
+    #controls {
+      width: calc(var(--bb-grid-size) * 8);
+      position: absolute;
+      top: calc(var(--bb-grid-size) * 4);
+      left: calc(var(--bb-grid-size) * 4);
+      padding: calc(var(--bb-grid-size) * 0.5);
+      background: rgb(255, 255, 255);
+      border: 1px solid rgb(237, 237, 237);
+      border-radius: calc(var(--bb-grid-size) * 2);
+      cursor: auto;
+      z-index: 1;
+    }
 
-    this.appendChild(this.target);
+    #controls > button#reset-image {
+      background-image: var(--bb-icon-reset-image);
+    }
 
-    const resetImage = root.querySelector("#reset-image");
-    assertHTMLElement(resetImage);
-    resetImage.addEventListener("click", () => {
-      this.#fillCanvas();
-    });
+    #controls > button:first-child {
+      margin-top: 0px;
+    }
 
-    const colorInput = root.querySelector("#color-input");
-    assertInputElement(colorInput);
-    colorInput.addEventListener("input", () => {
-      if (!colorInput.value) {
-        return;
+    #color-input,
+    #controls > button {
+      width: 32px;
+      height: 32px;
+      font-size: 0;
+      border-radius: calc(var(--bb-grid-size) * 1.5);
+      border: none;
+      background: none;
+      display: block;
+      margin-top: 4px;
+      cursor: pointer;
+    }
+
+    #controls > button {
+      background-color: rgb(255, 255, 255);
+      background-position: center center;
+      background-repeat: no-repeat;
+      opacity: 0.5;
+    }
+
+    #controls > button:hover,
+    #controls > button.active {
+      background-color: rgb(230, 241, 242);
+      opacity: 1;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
       }
 
-      this.#strokeColor = colorInput.value;
-    });
+      to {
+        opacity: 1;
+      }
+    }
+  `;
+
+  connectedCallback(): void {
+    super.connectedCallback();
+
+    window.addEventListener("resize", this.#onWindowResizeBound);
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+
+    window.removeEventListener("resize", this.#onWindowResizeBound);
+  }
+
+  #onColorInput(evt: InputEvent) {
+    if (!(evt.target instanceof HTMLInputElement)) {
+      return;
+    }
+
+    this.strokeColor = evt.target.value;
+  }
+
+  #fillCanvas() {
+    if (!this.#canvasRef.value) {
+      return;
+    }
+
+    const ctx = this.#canvasRef.value.getContext("2d");
+    if (!ctx) {
+      return;
+    }
+
+    ctx.fillStyle = "#FFF";
+    ctx.fillRect(0, 0, this.#lastDimensions.w, this.#lastDimensions.h);
+  }
+
+  #onReset() {
+    this.#fillCanvas();
   }
 
   #onWindowResize() {
-    const { width, height } = this.target.getBoundingClientRect();
+    if (!this.#canvasRef.value) {
+      return;
+    }
+
+    const canvas = this.#canvasRef.value;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) {
+      return;
+    }
+
+    let { width, height } = canvas.getBoundingClientRect();
+    width = Math.floor(width);
+    height = Math.floor(height);
 
     // Preserve the image during the resize.
     let imageData: ImageData | null = null;
     if (this.#lastDimensions.w !== 0 && this.#lastDimensions.h !== 0) {
-      imageData = this.#ctx.getImageData(
+      imageData = ctx.getImageData(
         0,
         0,
         this.#lastDimensions.w,
@@ -140,8 +183,8 @@ export class Drawable extends HTMLElement implements ImageHandler {
       );
     }
 
-    this.target.width = width;
-    this.target.height = height;
+    canvas.width = width;
+    canvas.height = height;
 
     this.#lastDimensions.w = width;
     this.#lastDimensions.h = height;
@@ -149,117 +192,135 @@ export class Drawable extends HTMLElement implements ImageHandler {
     this.#fillCanvas();
 
     if (imageData !== null) {
-      this.#ctx.putImageData(imageData, 0, 0);
+      ctx.putImageData(imageData, 0, 0);
     }
   }
 
-  #onKeyDown(evt: Event) {
-    const keyEvt = evt as KeyboardEvent;
-    if (keyEvt.key !== "Escape") {
+  #onPointerDown(evt: PointerEvent) {
+    if (!this.#canvasRef.value) {
       return;
     }
 
-    this.#fillCanvas();
-  }
-
-  #onPointerDown(evt: Event) {
-    assertPointerEvent(evt);
-
-    if (evt.composedPath()[0] !== this.target) {
+    const canvas = this.#canvasRef.value;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) {
       return;
     }
 
-    this.#drawing = true;
+    if (evt.composedPath()[0] !== canvas) {
+      return;
+    }
 
-    const { width, height, x, y } = this.target.getBoundingClientRect();
+    const bounds = canvas.getBoundingClientRect();
+    const { x, y } = bounds;
+    const width = Math.floor(bounds.width);
+    const height = Math.floor(bounds.height);
 
     if (this.#lastDimensions.w !== width || this.#lastDimensions.h !== height) {
       this.#onWindowResize();
     }
 
+    canvas.setPointerCapture(evt.pointerId);
+
+    this.#drawing = true;
     this.#bounds.x = x;
     this.#bounds.y = y;
 
-    this.#ctx.strokeStyle = this.#strokeColor;
-    this.#ctx.lineCap = "round";
-    this.#ctx.lineWidth = 3;
+    ctx.strokeStyle = this.strokeColor;
+    ctx.lineCap = "round";
+    ctx.lineWidth = 3;
 
     const startX = evt.pageX - this.#bounds.x;
     const startY = evt.pageY - this.#bounds.y;
-    this.#ctx.beginPath();
-    this.#ctx.moveTo(startX, startY);
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
 
     this.#lastPosition.x = startX;
     this.#lastPosition.y = startY;
   }
 
-  #onPointerUp(evt: Event) {
-    assertPointerEvent(evt);
+  #onPointerUp() {
     if (!this.#drawing) {
       return;
     }
 
     this.#drawing = false;
-    this.#ctx.closePath();
+
+    if (!this.#canvasRef.value) {
+      return;
+    }
+
+    const canvas = this.#canvasRef.value;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) {
+      return;
+    }
+
+    ctx.closePath();
   }
 
-  #onPointerMove(evt: Event) {
-    assertPointerEvent(evt);
-
+  #onPointerMove(evt: PointerEvent) {
     if (!this.#drawing) {
       return;
     }
 
-    this.#ctx.moveTo(this.#lastPosition.x, this.#lastPosition.y);
+    if (!this.#canvasRef.value) {
+      return;
+    }
+
+    const canvas = this.#canvasRef.value;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) {
+      return;
+    }
+
+    ctx.moveTo(this.#lastPosition.x, this.#lastPosition.y);
 
     const x = evt.pageX - this.#bounds.x;
     const y = evt.pageY - this.#bounds.y;
 
-    this.#ctx.lineTo(x, y);
-    this.#ctx.stroke();
+    ctx.lineTo(x, y);
+    ctx.stroke();
 
     this.#lastPosition.x = x;
     this.#lastPosition.y = y;
   }
 
-  #fillCanvas() {
-    this.#ctx.fillStyle = "#FFF";
-    this.#ctx.fillRect(0, 0, this.#lastDimensions.w, this.#lastDimensions.h);
-  }
-
-  #getListener(name: string): EventListenerOrEventListenerObject {
-    const listener = this.#boundFunctions.get(name);
-    if (!listener) {
-      throw new Error(`Listener ${name} does not exist`);
+  get value() {
+    const value = { inline_data: { data: "", mime_type: this.type } };
+    const inlineData = this.#canvasRef.value?.toDataURL(this.type, 80);
+    if (!inlineData) {
+      return value;
     }
-    return listener;
+
+    const preamble = `data:${this.type};base64,`;
+    value.inline_data.data = inlineData.substring(preamble.length);
+    return value;
   }
 
-  async start() {
-    const onWindowResize = this.#getListener("onWindowResize");
-    const onKeyDown = this.#getListener("onKeyDown");
-    const onPointerDown = this.#getListener("onPointerDown");
-    const onPointerMove = this.#getListener("onPointerMove");
-    const onPointerUp = this.#getListener("onPointerUp");
-
-    window.addEventListener("resize", onWindowResize);
-    document.addEventListener("keydown", onKeyDown);
-    document.addEventListener("pointerdown", onPointerDown);
-    document.addEventListener("pointermove", onPointerMove);
-    document.addEventListener("pointerup", onPointerUp);
+  set value(_v: CanvasData) {
+    console.warn("Value set on drawable, but values are not supported");
   }
 
-  stop() {
-    const onWindowResize = this.#getListener("onWindowResize");
-    const onKeyDown = this.#getListener("onKeyDown");
-    const onPointerDown = this.#getListener("onPointerDown");
-    const onPointerMove = this.#getListener("onPointerMove");
-    const onPointerUp = this.#getListener("onPointerUp");
+  render() {
+    if (this.error) {
+      return html`${this.error}`;
+    }
 
-    window.removeEventListener("resize", onWindowResize);
-    document.removeEventListener("keydown", onKeyDown);
-    document.removeEventListener("pointerdown", onPointerDown);
-    document.removeEventListener("pointermove", onPointerMove);
-    document.removeEventListener("pointerup", onPointerUp);
+    return html`<div id="controls">
+        <button @click=${this.#onReset} id="reset-image">Reset image</button>
+        <input
+          @input=${this.#onColorInput}
+          type="color"
+          id="color-input"
+          value="${this.strokeColor}"
+        />
+      </div>
+      <canvas
+        @pointerdown=${this.#onPointerDown}
+        @pointermove=${this.#onPointerMove}
+        @pointerup=${this.#onPointerUp}
+        ${ref(this.#canvasRef)}
+      ></canvas>`;
   }
 }

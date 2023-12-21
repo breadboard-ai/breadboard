@@ -5,33 +5,26 @@
  */
 
 import * as BreadboardUI from "@google-labs/breadboard-ui";
-import type * as Breadboard from "@google-labs/breadboard";
-import { HostRuntime as HostHarness } from "@google-labs/breadboard/worker";
-import { ProxyReceiver } from "./receiver.js";
-import { Harness, HarnessRunResult } from "./types.js";
-import { MainThreadHarness } from "./main-thread-harness.js";
-import { ProxyServerHarness } from "./proxy-server-harness.js";
+import { Harness, HarnessRunResult, SecretHandler } from "./harness/types.js";
+import { asRuntimeKit } from "@google-labs/breadboard";
+import Starter from "@google-labs/llm-starter";
+import PaLMKit from "@google-labs/palm-kit";
+import NodeNurseryWeb from "@google-labs/node-nursery-web";
+import { createHarness } from "./harness/index.js";
+import Core from "@google-labs/core-kit";
+import Pinecone from "@google-labs/pinecone-kit";
+import JSONKit from "@google-labs/json-kit";
 
 const PROXY_NODES = [
   "palm-generateText",
-  "embedText",
+  "palm-embedText",
   "secrets",
   "fetch",
-  "credentials",
-  "driveList",
+  // TODO: These are only meaningful when proxying to main thread,
+  //       not anywhere else. Need to figure out what to do here.
+  // "credentials",
+  // "driveList",
 ];
-const WORKER_URL =
-  import.meta.env.MODE === "development" ? "/src/worker.ts" : "/worker.js";
-
-const HARNESS_SWITCH_KEY = "bb-harness";
-const MAINTHREAD_HARNESS_VALUE = "main-thread";
-const PROXY_SERVER_HARNESS_VALUE = "proxy-server";
-const WORKER_HARNESS_VALUE = "worker";
-
-const PROXY_SERVER_URL = import.meta.env.VITE_PROXY_SERVER_URL ?? "";
-const DEFAULT_HARNESS = PROXY_SERVER_URL
-  ? PROXY_SERVER_HARNESS_VALUE
-  : WORKER_HARNESS_VALUE;
 
 type PauserCallback = (paused: boolean) => void;
 class Pauser extends EventTarget {
@@ -69,7 +62,6 @@ const sleep = (time: number) =>
 export class Main {
   #ui = BreadboardUI.get();
   #harness: Harness;
-  #receiver = new ProxyReceiver();
   #hasActiveBoard = false;
   #boardId = 0;
   #delay = 0;
@@ -270,74 +262,6 @@ export class Main {
         break;
       }
 
-      case "proxy":
-        {
-          try {
-            const proxyData = data as {
-              node: Breadboard.NodeDescriptor;
-              inputs: Breadboard.InputValues;
-            };
-
-            const pending = this.#pending.get(
-              proxyData.node.id
-            ) as BreadboardUI.HarnessEventType;
-            if (pending) {
-              this.#pending.delete(proxyData.node.id);
-              if (pending !== "secrets") {
-                this.#ui.proxyResult(
-                  pending,
-                  proxyData.node.id,
-                  proxyData.inputs
-                );
-              }
-            }
-
-            // Track the board ID. If it changes while awaiting a result, then
-            // the board has changed and the handled result should be discarded
-            // as it is stale.
-            const boardId = this.#boardId;
-            for await (const handledResult of this.#receiver.handle(
-              proxyData
-            )) {
-              if (boardId !== this.#boardId) {
-                console.log("Board has changed; proxy result is stale");
-                break;
-              }
-
-              const receiverResult = handledResult as {
-                type: "secret" | "result";
-                name: string;
-                value: string | { completion: string };
-                nodeType: Breadboard.NodeTypeIdentifier;
-              };
-
-              switch (receiverResult.type) {
-                case "secret":
-                  receiverResult.value = await this.#ui.secret(
-                    receiverResult.name
-                  );
-                  break;
-                case "result":
-                  if (receiverResult.nodeType === "palm-generateText") {
-                    const resultValue = receiverResult.value as {
-                      completion: string;
-                    };
-                    this.#ui.result({
-                      title: "LLM Response",
-                      result: resultValue.completion,
-                    });
-                  }
-                  result.reply(receiverResult.value);
-                  break;
-              }
-            }
-          } catch (e) {
-            const err = e as Error;
-            this.#ui.error(err.message);
-          }
-        }
-        break;
-
       case "end":
         this.#ui.done();
         this.#hasActiveBoard = false;
@@ -349,32 +273,21 @@ export class Main {
   }
 
   #getHarness() {
-    const harness =
-      globalThis.localStorage.getItem(HARNESS_SWITCH_KEY) ?? DEFAULT_HARNESS;
-    switch (harness) {
-      case MAINTHREAD_HARNESS_VALUE: {
-        return new MainThreadHarness(async ({ keys }) => {
-          if (!keys) return {};
-          return Object.fromEntries(
-            await Promise.all(
-              keys.map(async (key) => [key, await this.#ui.secret(key)])
-            )
-          );
-        });
-      }
-      case PROXY_SERVER_HARNESS_VALUE: {
-        const proxyServerUrl = PROXY_SERVER_URL;
-        if (!proxyServerUrl) {
-          throw new Error(
-            "Unable to initialize proxy server harness. Please provide PROXY_SERVER_URL."
-          );
-        }
-        return new ProxyServerHarness(proxyServerUrl);
-      }
-      case WORKER_HARNESS_VALUE: {
-        return new HostHarness(WORKER_URL);
-      }
-    }
-    throw new Error(`Unknown harness: ${harness}`);
+    const onSecret: SecretHandler = async ({ keys }) => {
+      if (!keys) return {};
+      return Object.fromEntries(
+        await Promise.all(
+          keys.map(async (key) => [key, await this.#ui.secret(key)])
+        )
+      );
+    };
+
+    return createHarness({
+      proxy: PROXY_NODES,
+      onSecret,
+      kits: [Starter, Core, Pinecone, PaLMKit, NodeNurseryWeb, JSONKit].map(
+        (kitConstructor) => asRuntimeKit(kitConstructor)
+      ),
+    });
   }
 }

@@ -8,7 +8,7 @@ import test from "ava";
 
 import { z } from "zod";
 
-import { recipe } from "../../../src/new/recipe-grammar/recipe.js";
+import { recipe, code } from "../../../src/new/recipe-grammar/recipe.js";
 
 test("zod + graph, w/ nested code recipe", async (t) => {
   const graph = recipe(
@@ -16,11 +16,26 @@ test("zod + graph, w/ nested code recipe", async (t) => {
       input: z.object({ foo: z.string() }),
       output: z.object({ foo: z.string() }),
     },
-    async (inputs) => {
-      return recipe(({ foo }) => ({ foo: `${foo}!` }))(inputs);
+    (inputs) => {
+      return code(({ foo }) => ({ foo: `${foo}!` }))(inputs);
     }
   );
 
   const result = await graph({ foo: "bar" });
-  t.deepEqual(result, { foo: "bar!" });
+  t.like(result, { foo: "bar!" });
+});
+
+test("recipe with its own inputs and outputs", async (t) => {
+  const graph = recipe((_, base) => {
+    base.input().foo.as("bar").to(base.output());
+  });
+
+  const serialized = await graph.serialize();
+
+  t.like(serialized, {
+    nodes: [{ type: "input" }, { type: "output" }],
+  });
+
+  const result = await graph({ foo: "success" });
+  t.like(result, { bar: "success" });
 });
