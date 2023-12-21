@@ -32,6 +32,9 @@ const PROXY_NODES = [
   // "driveList",
 ];
 
+const WORKER_URL =
+  import.meta.env.MODE === "development" ? "/src/worker.ts" : "/worker.js";
+
 const HARNESS_SWITCH_KEY = "bb-harness";
 
 const PROXY_SERVER_HARNESS_VALUE = "proxy-server";
@@ -121,10 +124,7 @@ export class Main {
         const startEvent = evt as BreadboardUI.StartEvent;
         this.setActiveBreadboard(startEvent.url);
 
-        for await (const result of this.#harness.run(
-          startEvent.url,
-          PROXY_NODES
-        )) {
+        for await (const result of this.#harness.run(startEvent.url)) {
           if (
             result.message.type !== "load" &&
             result.message.type !== "beforehandler" &&
@@ -327,6 +327,7 @@ export class Main {
     const config: HarnessConfig = {
       runtime: {
         location: harness === WORKER_HARNESS_VALUE ? "worker" : "main",
+        url: harness === WORKER_HARNESS_VALUE ? WORKER_URL : undefined,
         kits,
       },
       proxy,

@@ -8,10 +8,7 @@ import type { Kit, OutputValues } from "@google-labs/breadboard";
 import type { NodeProxyConfig } from "@google-labs/breadboard/remote";
 
 export interface Harness {
-  run(
-    url: string,
-    proxyNodes: string[]
-  ): AsyncGenerator<HarnessRunResult, void>;
+  run(url: string): AsyncGenerator<HarnessRunResult, void>;
 }
 
 export type Result = {
@@ -40,6 +37,7 @@ export type HarnessProxyConfig = {
 export type HarnessConfig = {
   runtime: {
     location: RuntimeLocation;
+    url?: string;
     kits: Kit[];
   };
   proxy?: HarnessProxyConfig[];
