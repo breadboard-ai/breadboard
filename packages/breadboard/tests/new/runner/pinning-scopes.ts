@@ -65,3 +65,19 @@ test("pin node and invoke scope", async (t) => {
 
   t.is(outputs.bar, "success");
 });
+
+test("pin node and invokeOnce scope", async (t) => {
+  const scope = new Scope();
+
+  buildTestGraph(scope);
+
+  const handlers = {
+    noop: (inputs: InputValues) => inputs,
+  };
+
+  scope.addHandlers(handlers);
+
+  const result = await scope.invokeOnce({ foo: "success" });
+
+  t.deepEqual(result, { bar: "success" });
+});
