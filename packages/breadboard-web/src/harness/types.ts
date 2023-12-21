@@ -29,12 +29,6 @@ export type SecretHandler = (keys: {
   keys?: string[];
 }) => Promise<OutputValues>;
 
-export type OldStyleHarnessConfig = {
-  proxy: string[];
-  onSecret: SecretHandler;
-  kits: Kit[];
-};
-
 export type RuntimeLocation = "main" | "worker" | "http";
 
 export type HarnessProxyConfig = {
