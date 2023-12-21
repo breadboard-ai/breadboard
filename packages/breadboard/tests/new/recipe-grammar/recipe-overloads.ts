@@ -10,6 +10,8 @@ import { z } from "zod";
 
 import { recipe, code } from "../../../src/new/recipe-grammar/recipe.js";
 
+import { testKit } from "../../helpers/_test-kit.js";
+
 test("zod + graph, w/ nested code recipe", async (t) => {
   const graph = recipe(
     {
@@ -38,4 +40,27 @@ test("recipe with its own inputs and outputs", async (t) => {
 
   const result = await graph({ foo: "success" });
   t.like(result, { bar: "success" });
+});
+
+test("recipe with multiple outputs", async (t) => {
+  const graph2 = recipe<{ foo: string }>(({ foo }) => {
+    const { bar } = testKit.noop({ bar: foo });
+    const { baz } = testKit.reverser({ baz: foo });
+    return [{ bar, baz }, { bar }];
+  });
+
+  const graph = recipe(({ foo }) => {
+    const { bar } = testKit.noop({ bar: foo });
+    const { baz } = testKit.noop({ baz: foo });
+    return [{ bar }, { baz }];
+  });
+
+  const serialized = await graph.serialize();
+
+  t.like(serialized.nodes.map((node) => node.type).sort(), [
+    "input",
+    "noop",
+    "output",
+    "output",
+  ]);
 });

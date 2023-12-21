@@ -21,6 +21,7 @@ import {
   AbstractNode,
   Serializeable,
 } from "../runner/types.js";
+import { InputType } from "zlib";
 
 export type NodeValue =
   | BaseNodeValue
@@ -86,7 +87,7 @@ export type InputsForGraphDeclaration<T extends InputValues> = {
   [key in string]: AbstractValue<NodeValue>;
 };
 
-export type OutputsForGraphDeclaration<
+export type OutputForGraphDeclaration<
   T extends OutputValuesOrUnknown,
   NI extends InputValues = InputValues
 > =
@@ -97,7 +98,14 @@ export type OutputsForGraphDeclaration<
         | AbstractValue<NodeValue>
         | NodeProxy<NI, Partial<InputValues>>;
     })
-  | PromiseLike<OutputsMaybeAsValues<T>> // = returning a node
+  | PromiseLike<OutputsMaybeAsValues<T>>; // = returning a node
+
+export type OutputsForGraphDeclaration<
+  T extends OutputValuesOrUnknown,
+  NI extends InputValues = InputValues
+> =
+  | OutputForGraphDeclaration<T, NI>
+  | Array<OutputForGraphDeclaration<Partial<T>, NI>> // = multiple output nodes
   | void; // = returning nothing, i.e. expect nodes to be pinned instead
 
 export type NodeProxyHandlerFunction<

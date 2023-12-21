@@ -150,29 +150,33 @@ function lambdaFactory(
       if (result instanceof Promise)
         throw new Error("Graph generation function can't be async");
 
-      let actualOutput = outputNode as BuilderNode;
+      const results = result instanceof Array ? result : [result];
 
-      if (result instanceof BuilderNode) {
-        // If the handler returned an output node, serialize it directly,
-        // otherwise connect the returned node's outputs to the output node.
-        const node = result.unProxy();
-        if (node.type === "output") actualOutput = node;
-        else outputNode.addInputsFromNode(node);
-      } else if (typeof result === "object") {
-        // Otherwise wire up all keys of the returned object to the output.
-        outputNode.addInputsAsValues(
-          result as InputsMaybeAsValues<OutputValues>
-        );
-      } else {
-        throw new Error(
-          `Unexpected return ${typeof result} value from graph declaration`
-        );
+      for (const result of results) {
+        let actualOutput = outputNode as BuilderNode;
+
+        if (result instanceof BuilderNode) {
+          // If the handler returned an output node, serialize it directly,
+          // otherwise connect the returned node's outputs to the output node.
+          const node = result.unProxy();
+          if (node.type === "output") actualOutput = node;
+          else outputNode.addInputsFromNode(node);
+        } else if (typeof result === "object") {
+          // Otherwise wire up all keys of the returned object to the output.
+          outputNode.addInputsAsValues(
+            result as InputsMaybeAsValues<OutputValues>
+          );
+        } else {
+          throw new Error(
+            `Unexpected return ${typeof result} value from graph declaration`
+          );
+        }
+
+        // Pin the resulting graph. Note: This might not contain either of the
+        // input or output nodes created above, if e.g. a new input node was
+        // created and an output node was returned.
+        scope.pin(actualOutput);
       }
-
-      // Pin the resulting graph. Note: This might not contain either of the
-      // input or output nodes created above, if e.g. a new input node was
-      // created and an output node was returned.
-      scope.pin(actualOutput);
     })();
 
     scope.compactPins();
