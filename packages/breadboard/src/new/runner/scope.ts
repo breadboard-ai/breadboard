@@ -56,6 +56,24 @@ export class Scope implements ScopeInterface {
     this.#pinnedNodes.push(node);
   }
 
+  compactPins() {
+    const visited = new Set<AbstractNode>();
+    const disjointPins = [];
+
+    for (const node of this.#pinnedNodes) {
+      if (visited.has(node)) continue;
+      disjointPins.push(node);
+      const connected = this.#findAllConnectedNodes(node);
+      connected.forEach((node) => visited.add(node));
+    }
+
+    this.#pinnedNodes = disjointPins;
+  }
+
+  getPinnedNodes(): AbstractNode[] {
+    return this.#pinnedNodes;
+  }
+
   addCallbacks(callbacks: InvokeCallbacks) {
     this.#callbacks.push(callbacks);
   }
@@ -94,7 +112,7 @@ export class Scope implements ScopeInterface {
         let callbackResult: OutputValues | undefined = undefined;
         for (const callback of callbacks)
           callbackResult ??= await callback.before?.(this, node, inputs);
-        console.log("called", node.id);
+
         // Invoke node, unless before callback already provided a result.
         const result =
           callbackResult ??

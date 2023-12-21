@@ -200,7 +200,12 @@ export class BaseNode<
         this
       )) as O;
     } else if (handler && typeof handler !== "function" && handler.graph) {
-      result = (await scope.invokeOnce(this.getInputs(), handler.graph)) as O;
+      // TODO: This isn't quite right, but good enough for now. Instead what
+      // this should be in invoking a graph from a lexical scope in a dynamic
+      // scope. This requires moving state management into the dyanmic scope.
+      const graphs = handler.graph.getPinnedNodes();
+      if (graphs.length !== 1) throw new Error("Expected exactly one graph");
+      result = (await scope.invokeOnce(this.getInputs(), graphs[0])) as O;
     } else {
       throw new Error(`Can't find handler for ${this.id}`);
     }

@@ -24,3 +24,18 @@ test("zod + graph, w/ nested code recipe", async (t) => {
   const result = await graph({ foo: "bar" });
   t.like(result, { foo: "bar!" });
 });
+
+test("recipe with its own inputs and outputs", async (t) => {
+  const graph = recipe((_, base) => {
+    base.input().foo.as("bar").to(base.output());
+  });
+
+  const serialized = await graph.serialize();
+
+  t.like(serialized, {
+    nodes: [{ type: "input" }, { type: "output" }],
+  });
+
+  const result = await graph({ foo: "success" });
+  t.like(result, { bar: "success" });
+});

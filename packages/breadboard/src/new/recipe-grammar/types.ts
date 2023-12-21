@@ -97,7 +97,8 @@ export type OutputsForGraphDeclaration<
         | AbstractValue<NodeValue>
         | NodeProxy<NI, Partial<InputValues>>;
     })
-  | PromiseLike<OutputsMaybeAsValues<T>>; // = returning a node
+  | PromiseLike<OutputsMaybeAsValues<T>> // = returning a node
+  | void; // = returning nothing, i.e. expect nodes to be pinned instead
 
 export type NodeProxyHandlerFunction<
   I extends InputValues = InputValues,
@@ -114,7 +115,10 @@ export type NodeProxyHandlerFunction<
 export type GraphDeclarationFunction<
   I extends InputValues = InputValues,
   O extends OutputValuesOrUnknown = OutputValuesOrUnknown
-> = (inputs: InputsForGraphDeclaration<I>) => OutputsForGraphDeclaration<O>;
+> = (
+  inputs: InputsForGraphDeclaration<I>,
+  base: { [key: string]: NodeFactory<InputValues, OutputValues> }
+) => OutputsForGraphDeclaration<O>;
 
 export type Lambda<
   I extends InputValues = InputValues,

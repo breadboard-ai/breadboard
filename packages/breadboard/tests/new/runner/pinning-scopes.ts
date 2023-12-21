@@ -81,3 +81,32 @@ test("pin node and invokeOnce scope", async (t) => {
 
   t.deepEqual(result, { bar: "success" });
 });
+
+test("multiple connected pins result in only pinning once", async (t) => {
+  const scope = new Scope();
+
+  t.is(scope.getPinnedNodes().length, 0);
+
+  const input = new BaseNode("input", scope);
+  const noop = new BaseNode("noop", scope);
+  const output = new BaseNode("output", scope);
+  noop.addIncomingEdge(input, "foo", "foo");
+  output.addIncomingEdge(noop, "foo", "bar");
+
+  scope.pin(input);
+  t.is(scope.getPinnedNodes().length, 1);
+
+  scope.pin(output);
+  t.is(scope.getPinnedNodes().length, 2);
+
+  scope.compactPins();
+  t.is(scope.getPinnedNodes().length, 1);
+
+  const noop2 = new BaseNode("noop", scope);
+  scope.pin(noop2);
+
+  t.is(scope.getPinnedNodes().length, 2);
+
+  scope.compactPins();
+  t.is(scope.getPinnedNodes().length, 2);
+});

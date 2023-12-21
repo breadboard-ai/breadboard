@@ -195,10 +195,13 @@ export class BuilderNode<
             this
           )) as O;
         } else if (handler && typeof handler !== "function" && handler.graph) {
-          result = (await scope.invokeOnce(
-            this.getInputs(),
-            handler.graph
-          )) as O;
+          // TODO: This isn't quite right, but good enough for now. Instead what
+          // this should be in invoking a graph from a lexical scope in a dynamic
+          // scope. This requires moving state management into the dyanmic scope.
+          const graphs = handler.graph.getPinnedNodes();
+          if (graphs.length !== 1)
+            throw new Error("Expected exactly one graph");
+          result = (await scope.invokeOnce(this.getInputs(), graphs[0])) as O;
         } else {
           throw new Error(`Can't find handler for ${this.id}`);
         }
@@ -268,7 +271,7 @@ export class BuilderNode<
 
     const handler = this.#handler ?? scope.getHandler(this.type);
 
-    // If this is a graph nide, save it as a subgraph (returned as second value)
+    // If this is a graph node, save it as a subgraph (returned as second value)
     // and turns this into an invoke node.
     if (handler && typeof handler !== "function" && handler.graph) {
       const node: NodeDescriptor = {
@@ -280,7 +283,10 @@ export class BuilderNode<
         },
       };
 
-      return [node, await scope.serialize({}, handler.graph)];
+      const graphs = handler.graph.getPinnedNodes();
+      if (graphs.length !== 1) throw new Error("Expected exactly one graph");
+
+      return [node, await scope.serialize({}, graphs[0])];
     }
 
     // Else, serialize the handler itself and return a runJavascript node.
