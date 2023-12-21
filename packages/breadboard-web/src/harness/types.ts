@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { OutputValues } from "@google-labs/breadboard";
+
 export interface Harness {
   run(
     url: string,
@@ -21,3 +23,7 @@ export interface HarnessRunResult {
   reply(reply: unknown): void;
   message: Result;
 }
+
+export type SecretHandler = (keys: {
+  keys?: string[];
+}) => Promise<OutputValues>;

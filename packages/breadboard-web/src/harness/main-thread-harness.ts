@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Harness } from "./types";
+import { Harness, SecretHandler } from "./types";
 
 import {
   Board,
@@ -22,10 +22,6 @@ import Pinecone from "@google-labs/pinecone-kit";
 import NodeNurseryWeb from "@google-labs/node-nursery-web";
 import JSONKit from "@google-labs/json-kit";
 import { MainThreadRunResult } from "./result";
-
-export type SecretHandler = (keys: {
-  keys?: string[];
-}) => Promise<OutputValues>;
 
 export class MainThreadHarness implements Harness {
   #secretHandler: SecretHandler;

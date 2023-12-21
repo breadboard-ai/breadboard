@@ -69,7 +69,14 @@ const sleep = (time: number) =>
 export class Main {
   #ui = BreadboardUI.get();
   #harness: Harness;
-  #receiver = new ProxyReceiver();
+  #receiver = new ProxyReceiver(PROXY_NODES, async ({ keys }) => {
+    if (!keys) return {};
+    return Object.fromEntries(
+      await Promise.all(
+        keys.map(async (key) => [key, await this.#ui.secret(key)])
+      )
+    );
+  });
   #hasActiveBoard = false;
   #boardId = 0;
   #delay = 0;
@@ -296,14 +303,10 @@ export class Main {
             // the board has changed and the handled result should be discarded
             // as it is stale.
             const boardId = this.#boardId;
-            for await (const handledResult of this.#receiver.handle(
-              proxyData
-            )) {
-              if (boardId !== this.#boardId) {
-                console.log("Board has changed; proxy result is stale");
-                break;
-              }
-
+            const handledResult = await this.#receiver.handle(proxyData);
+            if (boardId !== this.#boardId) {
+              console.log("Board has changed; proxy result is stale");
+            } else {
               const receiverResult = handledResult as {
                 type: "secret" | "result";
                 name: string;
@@ -311,25 +314,16 @@ export class Main {
                 nodeType: Breadboard.NodeTypeIdentifier;
               };
 
-              switch (receiverResult.type) {
-                case "secret":
-                  receiverResult.value = await this.#ui.secret(
-                    receiverResult.name
-                  );
-                  break;
-                case "result":
-                  if (receiverResult.nodeType === "palm-generateText") {
-                    const resultValue = receiverResult.value as {
-                      completion: string;
-                    };
-                    this.#ui.result({
-                      title: "LLM Response",
-                      result: resultValue.completion,
-                    });
-                  }
-                  result.reply(receiverResult.value);
-                  break;
+              if (receiverResult.nodeType === "palm-generateText") {
+                const resultValue = receiverResult.value as {
+                  completion: string;
+                };
+                this.#ui.result({
+                  title: "LLM Response",
+                  result: resultValue.completion,
+                });
               }
+              result.reply(receiverResult.value);
             }
           } catch (e) {
             const err = e as Error;
