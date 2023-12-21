@@ -28,6 +28,7 @@ export class Scope implements ScopeInterface {
   #dynamicScope?: ScopeInterface;
 
   #handlers: NodeHandlers = {};
+  #pinnedNodes: AbstractNode[] = [];
 
   constructor(config: ScopeConfig = {}) {
     this.#lexicalScope = config.lexicalScope;
@@ -49,13 +50,38 @@ export class Scope implements ScopeInterface {
       this.#lexicalScope?.getHandler(name)) as unknown as NodeHandler<I, O>;
   }
 
+  /**
+   * Pins a node to this scope, meaning it will be invoked/serialized for
+   * invoke() and serialize() unless those are called with specific nodes.
+   *
+   * Note that while all nodes are created within a scope, the scope is not by
+   * default aware of them. If nodes are created and nothing references them,
+   * then they are garbage collected.
+   *
+   * So there are two ways to reference graphs:
+   *  - keep a reference to any node of the graph, then pass it to invoke() or
+   *    serialize(). This is especially useful in the root scope.
+   *  - create a graph, then pin it to the scope, and from then on refer to that
+   *    scope when referring to a graph. This maps the mental model of nested
+   *    scopes that define graphs. This also allows refering to a set of
+   *    disjoint graphs (in the same scope).
+   *
+   * @param node node to pin to this scope
+   */
+  pin(node: AbstractNode) {
+    this.#pinnedNodes.push(node);
+  }
+
   async invoke(
-    node: AbstractNode,
+    node?: AbstractNode,
     callbacks: InvokeCallbacks[] = []
   ): Promise<void> {
     try {
-      const queue: AbstractNode[] = this.#findAllConnectedNodes(node).filter(
-        (node) => !node.missingInputs()
+      const queue: AbstractNode[] = (node ? [node] : this.#pinnedNodes).flatMap(
+        (node) =>
+          this.#findAllConnectedNodes(node).filter(
+            (node) => !node.missingInputs()
+          )
       );
 
       while (queue.length) {
@@ -115,8 +141,8 @@ export class Scope implements ScopeInterface {
   }
 
   async invokeOnce(
-    node: AbstractNode,
-    inputs: InputValues,
+    node?: AbstractNode,
+    inputs: InputValues = {},
     callbacks: InvokeCallbacks[] = []
   ): Promise<OutputValues> {
     let resolver: undefined | ((outputs: OutputValues) => void) = undefined;
@@ -179,10 +205,12 @@ export class Scope implements ScopeInterface {
   }
 
   async serialize(
-    node: AbstractNode,
+    node?: AbstractNode,
     metadata?: GraphMetadata
   ): Promise<GraphDescriptor> {
-    const queue: AbstractNode[] = this.#findAllConnectedNodes(node);
+    const queue: AbstractNode[] = (node ? [node] : this.#pinnedNodes).flatMap(
+      (node) => this.#findAllConnectedNodes(node)
+    );
 
     const graphs: SubGraphs = {};
 
