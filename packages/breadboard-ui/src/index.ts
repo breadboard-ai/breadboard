@@ -4,7 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ErrorMessage } from "./error.js";
+export { ErrorMessage } from "./error.js";
+export { Toast } from "./toast.js";
+export { Done } from "./done.js";
+
 import { Input } from "./input.js";
 import { Load } from "./load.js";
 import { Output } from "./output.js";
@@ -17,9 +20,7 @@ import {
   MultipartInputImage,
   MultipartInputText,
 } from "./input-multipart.js";
-export { Toast } from "./toast.js";
 import { InputContainer } from "./input-container.js";
-import { Done } from "./done.js";
 import { Diagram } from "./diagram.js";
 import { HistoryEntry } from "./history-entry.js";
 import { Webcam } from "./webcam.js";
@@ -34,12 +35,10 @@ export const register = () => {
   customElements.define("bb-ui", UIController);
   customElements.define("bb-start", Start);
   customElements.define("bb-load", Load);
-  customElements.define("bb-error", ErrorMessage);
   customElements.define("bb-input", Input);
   customElements.define("bb-output", Output);
   customElements.define("bb-progress", Progress);
   customElements.define("bb-result", Result);
-  customElements.define("bb-done", Done);
   customElements.define("bb-multipart-input", MultipartInput);
   customElements.define("bb-multipart-input-image", MultipartInputImage);
   customElements.define("bb-multipart-input-text", MultipartInputText);
