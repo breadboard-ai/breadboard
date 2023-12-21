@@ -30,44 +30,21 @@ export const createHarness = (oldConfig: OldStyleHarnessConfig): Harness => {
   switch (harness) {
     case MAINTHREAD_HARNESS_VALUE: {
       return new MainThreadHarness({
-        type: "server",
-        runtime: {
-          location: "main",
-          kits,
-        },
+        runtime: { location: "main", kits },
         onSecret,
       });
     }
     case PROXY_SERVER_HARNESS_VALUE: {
       return new ProxyServerHarness({
-        type: "server",
-        runtime: {
-          location: "main",
-          kits,
-        },
-        proxy: [
-          {
-            location: "http",
-            url: PROXY_SERVER_URL,
-            nodes: proxy,
-          },
-        ],
+        runtime: { location: "main", kits },
+        proxy: [{ location: "http", url: PROXY_SERVER_URL, nodes: proxy }],
         onSecret,
       });
     }
     case WORKER_HARNESS_VALUE: {
       return new WorkerHarness(WORKER_URL, {
-        type: "client",
-        runtime: {
-          location: "worker",
-          kits,
-        },
-        proxy: [
-          {
-            location: "main",
-            nodes: proxy,
-          },
-        ],
+        runtime: { location: "worker", kits },
+        proxy: [{ location: "main", nodes: proxy }],
         onSecret,
       });
     }
