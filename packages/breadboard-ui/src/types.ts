@@ -14,3 +14,10 @@ export interface ImageHandler {
   start(): Promise<void>;
   stop(): void;
 }
+
+export interface CanvasData {
+  inline_data: {
+    data: string;
+    mime_type: string;
+  };
+}
