@@ -9,3 +9,4 @@ export { ProxyServer, ProxyClient } from "./proxy.js";
 export { RunServer, RunClient } from "./run.js";
 export { defineConfig, hasOrigin, type ProxyServerConfig } from "./config.js";
 export type * from "./protocol.js";
+export type * from "./config.js";

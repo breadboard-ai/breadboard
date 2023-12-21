@@ -38,15 +38,23 @@ export class MainThreadHarness implements Harness {
         },
       });
 
+      const onSecret = this.#config.onSecret;
+      if (!onSecret) {
+        throw new Error("No secret handler provided");
+      }
+
       const SecretAskingKit = new KitBuilder({
         url: "secret-asking-kit",
       }).build({
         secrets: async (inputs) => {
-          return await this.#config.onSecret(inputs as InputValues);
+          return await onSecret(inputs as InputValues);
         },
       });
 
-      const kits = [asRuntimeKit(SecretAskingKit), ...this.#config.kits];
+      const kits = [
+        asRuntimeKit(SecretAskingKit),
+        ...this.#config.runtime.kits,
+      ];
 
       for await (const data of runner.run({
         probe: new LogProbe(),
