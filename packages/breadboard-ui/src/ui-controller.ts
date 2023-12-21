@@ -10,6 +10,7 @@ import { Output, type OutputArgs } from "./output.js";
 import { ResultArgs } from "./result.js";
 import {
   DelayEvent,
+  InputEnterEvent,
   NodeSelectEvent,
   StartEvent,
   type ToastType,
@@ -793,9 +794,12 @@ export class UIController extends HTMLElement implements UI {
   }
 
   async secret(id: string): Promise<string> {
-    const input = new Input(
-      id,
-      {
+    this.#autoShowInput();
+
+    const response: Record<string, string> = await new Promise((resolve) => {
+      const input = new Input();
+      input.id = id;
+      input.args = {
         schema: {
           properties: {
             secret: {
@@ -805,23 +809,30 @@ export class UIController extends HTMLElement implements UI {
             },
           },
         },
-      },
-      { remember: true, secret: true }
-    );
+      };
+      input.remember = true;
+      input.secret = true;
 
-    if (this.#inputContainer.childNodes.length) {
-      this.#inputContainer.insertBefore(input, this.#inputContainer.firstChild);
-    } else {
-      this.#inputContainer.appendChild(input);
-    }
-    this.#autoShowInput();
+      if (this.#inputContainer.childNodes.length) {
+        this.#inputContainer.insertBefore(
+          input,
+          this.#inputContainer.firstChild
+        );
+      } else {
+        this.#inputContainer.appendChild(input);
+      }
 
-    const data = (await input.ask()) as Record<string, string>;
-    input.remove();
+      input.addEventListener(InputEnterEvent.eventName, (evt: Event) => {
+        const inputEvent = evt as InputEnterEvent;
+        resolve(inputEvent.data as Record<string, string>);
+
+        input.remove();
+      });
+    });
 
     this.#createHistoryEntry(HarnessEventType.SECRETS, `secrets`, id);
 
-    return data.secret;
+    return response.secret;
   }
 
   proxyResult(type: HarnessEventType, id: string, data: unknown | null = null) {
@@ -838,16 +849,28 @@ export class UIController extends HTMLElement implements UI {
   }
 
   async input(id: string, args: InputArgs): Promise<Record<string, unknown>> {
-    const input = new Input(id, args);
-    if (this.#inputContainer.childNodes.length) {
-      this.#inputContainer.insertBefore(input, this.#inputContainer.firstChild);
-    } else {
-      this.#inputContainer.appendChild(input);
-    }
-
     this.#autoShowInput();
 
-    const response = (await input.ask()) as Record<string, unknown>;
+    const response: Record<string, unknown> = await new Promise((resolve) => {
+      const input = new Input();
+      input.id = id;
+      input.args = args;
+
+      input.addEventListener(InputEnterEvent.eventName, (evt: Event) => {
+        const inputEvent = evt as InputEnterEvent;
+        resolve(inputEvent.data);
+      });
+
+      if (this.#inputContainer.childNodes.length) {
+        this.#inputContainer.insertBefore(
+          input,
+          this.#inputContainer.firstChild
+        );
+      } else {
+        this.#inputContainer.appendChild(input);
+      }
+    });
+
     this.#createHistoryEntry(HarnessEventType.INPUT, "input", id, {
       args,
       response,
