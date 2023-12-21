@@ -158,7 +158,9 @@
               "default": "false"
             }
           },
-          "required": ["parts"]
+          "required": [
+            "parts"
+          ]
         }
       }
     },
@@ -230,7 +232,9 @@
                         "title": "chunk"
                       }
                     },
-                    "required": ["chunk"]
+                    "required": [
+                      "chunk"
+                    ]
                   }
                 }
               }
@@ -289,7 +293,9 @@
       "id": "secrets-3",
       "type": "secrets",
       "configuration": {
-        "keys": ["GEMINI_KEY"]
+        "keys": [
+          "GEMINI_KEY"
+        ]
       }
     },
     {
