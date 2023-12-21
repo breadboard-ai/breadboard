@@ -200,7 +200,7 @@ export class BaseNode<
         this
       )) as O;
     } else if (handler && typeof handler !== "function" && handler.graph) {
-      result = (await scope.invokeOnce(handler.graph, this.getInputs())) as O;
+      result = (await scope.invokeOnce(this.getInputs(), handler.graph)) as O;
     } else {
       throw new Error(`Can't find handler for ${this.id}`);
     }
@@ -223,7 +223,7 @@ export class BaseNode<
   }
 
   async serialize(metadata?: GraphMetadata): Promise<GraphDescriptor> {
-    return this.#scope.serialize(this as unknown as BaseNode, metadata);
+    return this.#scope.serialize(metadata, this as unknown as BaseNode);
   }
 
   async serializeNode(): Promise<[NodeDescriptor, GraphDescriptor?]> {

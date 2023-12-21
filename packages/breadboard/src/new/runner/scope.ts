@@ -24,15 +24,17 @@ import {
 import { NodeDescriberResult, Schema } from "../../types.js";
 
 export class Scope implements ScopeInterface {
-  #lexicalScope?: ScopeInterface;
-  #dynamicScope?: ScopeInterface;
+  #lexicalScope?: Scope;
+  #dynamicScope?: Scope;
 
   #handlers: NodeHandlers = {};
   #pinnedNodes: AbstractNode[] = [];
 
+  #callbacks: InvokeCallbacks[] = [];
+
   constructor(config: ScopeConfig = {}) {
-    this.#lexicalScope = config.lexicalScope;
-    this.#dynamicScope = config.dynamicScope;
+    this.#lexicalScope = config.lexicalScope as Scope;
+    this.#dynamicScope = config.dynamicScope as Scope;
   }
 
   addHandlers(handlers: NodeHandlers) {
@@ -50,32 +52,22 @@ export class Scope implements ScopeInterface {
       this.#lexicalScope?.getHandler(name)) as unknown as NodeHandler<I, O>;
   }
 
-  /**
-   * Pins a node to this scope, meaning it will be invoked/serialized for
-   * invoke() and serialize() unless those are called with specific nodes.
-   *
-   * Note that while all nodes are created within a scope, the scope is not by
-   * default aware of them. If nodes are created and nothing references them,
-   * then they are garbage collected.
-   *
-   * So there are two ways to reference graphs:
-   *  - keep a reference to any node of the graph, then pass it to invoke() or
-   *    serialize(). This is especially useful in the root scope.
-   *  - create a graph, then pin it to the scope, and from then on refer to that
-   *    scope when referring to a graph. This maps the mental model of nested
-   *    scopes that define graphs. This also allows refering to a set of
-   *    disjoint graphs (in the same scope).
-   *
-   * @param node node to pin to this scope
-   */
   pin(node: AbstractNode) {
     this.#pinnedNodes.push(node);
   }
 
-  async invoke(
-    node?: AbstractNode,
-    callbacks: InvokeCallbacks[] = []
-  ): Promise<void> {
+  addCallbacks(callbacks: InvokeCallbacks) {
+    this.#callbacks.push(callbacks);
+  }
+
+  #getAllCallbacks(): InvokeCallbacks[] {
+    return [
+      ...this.#callbacks,
+      ...(this.#dynamicScope ? this.#dynamicScope.#getAllCallbacks() : []),
+    ];
+  }
+
+  async invoke(node?: AbstractNode): Promise<void> {
     try {
       const queue: AbstractNode[] = (node ? [node] : this.#pinnedNodes).flatMap(
         (node) =>
@@ -83,6 +75,8 @@ export class Scope implements ScopeInterface {
             (node) => !node.missingInputs()
           )
       );
+
+      const callbacks = this.#getAllCallbacks();
 
       while (queue.length) {
         const node = queue.shift() as AbstractNode;
@@ -134,16 +128,16 @@ export class Scope implements ScopeInterface {
       }
     } finally {
       // Call done callback
-      for (const callback of callbacks) {
+      // Note: Only callbacks added to this scope specifically are called
+      for (const callback of this.#callbacks) {
         await callback.done?.();
       }
     }
   }
 
   async invokeOnce(
-    node?: AbstractNode,
     inputs: InputValues = {},
-    callbacks: InvokeCallbacks[] = []
+    node?: AbstractNode
   ): Promise<OutputValues> {
     let resolver: undefined | ((outputs: OutputValues) => void) = undefined;
     const promise = new Promise<OutputValues>((resolve) => {
@@ -166,47 +160,46 @@ export class Scope implements ScopeInterface {
     let lastNode: AbstractNode | undefined = undefined;
     const lastMissingInputs = new Map<string, string>();
 
-    scope.invoke(node, [
-      {
-        after: (node, _inputs, _outputs, distribution) => {
-          // Remember debug information to make the error below more useful.
+    scope.addCallbacks({
+      after: (node, _inputs, _outputs, distribution) => {
+        // Remember debug information to make the error below more useful.
 
-          lastNode = node;
-          for (const { node, missing } of distribution.nodes) {
-            if (missing) {
-              lastMissingInputs.set(node.id, missing.join(", "));
-            } else {
-              lastMissingInputs.delete(node.id);
-            }
+        lastNode = node;
+        for (const { node, missing } of distribution.nodes) {
+          if (missing) {
+            lastMissingInputs.set(node.id, missing.join(", "));
+          } else {
+            lastMissingInputs.delete(node.id);
           }
-        },
-        done: () => {
-          // Make sure we don't wait forever if execution terminates without
-          // reaching an output node.
-          resolver?.({
-            $error: {
-              type: "error",
-              error: new Error(
-                `Output node never reach. Last node was ${
-                  lastNode?.id
-                }.\n\nThese nodes had inputs missing:\n${Array.from(
-                  lastMissingInputs,
-                  ([id, missing]) => `  ${id}: ${missing}`
-                ).join("\n")}`
-              ),
-            },
-          });
-        },
+        }
       },
-      ...callbacks,
-    ]);
+      done: () => {
+        // Make sure we don't wait forever if execution terminates without
+        // reaching an output node.
+        resolver?.({
+          $error: {
+            type: "error",
+            error: new Error(
+              `Output node never reach. Last node was ${
+                lastNode?.id
+              }.\n\nThese nodes had inputs missing:\n${Array.from(
+                lastMissingInputs,
+                ([id, missing]) => `  ${id}: ${missing}`
+              ).join("\n")}`
+            ),
+          },
+        });
+      },
+    });
+
+    scope.invoke(node);
 
     return promise;
   }
 
   async serialize(
-    node?: AbstractNode,
-    metadata?: GraphMetadata
+    metadata?: GraphMetadata,
+    node?: AbstractNode
   ): Promise<GraphDescriptor> {
     const queue: AbstractNode[] = (node ? [node] : this.#pinnedNodes).flatMap(
       (node) => this.#findAllConnectedNodes(node)
