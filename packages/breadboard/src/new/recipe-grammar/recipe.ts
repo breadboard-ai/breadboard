@@ -21,6 +21,7 @@ import {
   InputsForGraphDeclaration,
   GraphDeclarationFunction,
   NodeProxy,
+  NodeFactory,
   InputsMaybeAsValues,
   Lambda,
 } from "./types.js";
@@ -110,7 +111,7 @@ function lambdaFactory(
   if (options.graph) {
     const scope = new BuilderScope({ lexicalScope, serialize: true });
 
-    handler.graph = scope.asScopeFor(() => {
+    scope.asScopeFor(() => {
       const inputNode = new BuilderNode(
         "input",
         scope,
@@ -122,9 +123,29 @@ function lambdaFactory(
         outputSchema ? { schema: outputSchema } : {}
       );
 
+      const createAndPinNode = (
+        type: string,
+        config: InputsMaybeAsValues<InputValues>
+      ) => {
+        const node = new BuilderNode(type, scope, config);
+        scope.pin(node);
+        return node.asProxy();
+      };
+
+      // Create base kit that auto-pins to the scope.
+      const base = {
+        input: createAndPinNode.bind(null, "input") as NodeFactory,
+        output: createAndPinNode.bind(null, "output") as NodeFactory,
+      };
+
       const result = options.graph?.(
-        inputNode.asProxy() as InputsForGraphDeclaration<InputValues>
+        inputNode.asProxy() as InputsForGraphDeclaration<InputValues>,
+        base
       );
+
+      // Nothing returned means that the function must have pinned nodes itself
+      // using the `base` kit supplied above.
+      if (result === undefined) return;
 
       if (result instanceof Promise)
         throw new Error("Graph generation function can't be async");
@@ -148,8 +169,29 @@ function lambdaFactory(
         );
       }
 
-      return actualOutput;
+      // Pin the resulting graph. Note: This might not contain either of the
+      // input or output nodes created above, if e.g. a new input node was
+      // created and an output node was returned.
+      scope.pin(actualOutput);
     })();
+
+    scope.compactPins();
+    const numGraphs = scope.getPinnedNodes().length;
+
+    if (numGraphs !== 1)
+      if (numGraphs === 0)
+        throw new Error(
+          "If not returnin a graph, use `base.input` and `base.output`."
+        );
+      else
+        throw new Error(
+          `Expected exactly one graph, but got ${numGraphs}. Are ${scope
+            .getPinnedNodes()
+            .map((node) => node.id)
+            .join(", ")} maybe disjoint?`
+        );
+
+    handler.graph = scope;
   }
 
   let lambdaNode:

@@ -41,7 +41,7 @@ export type NodeHandler<
   | {
       invoke?: NodeHandlerFunction<I, O>;
       describe?: NodeDescriberFunction;
-      graph?: AbstractNode; // Graphs can be node handlers, too
+      graph?: ScopeInterface; // Pinned graph is the node
     }
   | NodeHandlerFunction<I, O>;
 
@@ -190,6 +190,20 @@ export interface ScopeInterface {
    * @param node node to pin to this scope
    */
   pin(node: AbstractNode): void;
+
+  /**
+   * Reduces set of pinned pins to one per disjoint graph. Call this after
+   * constructing a graph that might have pinned several nodes.
+   */
+  compactPins(): void;
+
+  /**
+   * Returns all pinned nodes in this scope. After calling compactPins(), this
+   * will return one node representing each disjoint graph.
+   *
+   * @returns Array of pinned nodes
+   */
+  getPinnedNodes(): AbstractNode[];
 
   /**
    * Invokes a node, or all pinned nodes if none is specified.
