@@ -528,7 +528,9 @@ export class UIController extends HTMLElement implements UI {
   }
 
   toast(message: string, type: ToastType) {
-    const toast = new Toast(message, type);
+    const toast = new Toast();
+    toast.message = message;
+    toast.type = type;
     document.body.appendChild(toast);
   }
 

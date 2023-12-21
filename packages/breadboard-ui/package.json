@@ -149,6 +149,7 @@
     "node": ">=19.0.0"
   },
   "dependencies": {
-    "@google-labs/breadboard": "0.6.0"
+    "@google-labs/breadboard": "*",
+    "lit": "^3.1.0"
   }
 }

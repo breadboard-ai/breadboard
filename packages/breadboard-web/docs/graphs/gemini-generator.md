@@ -17,8 +17,10 @@ parameters[/"input <br> id='parameters'"/]:::input -- all --> makeBody["jsonata 
 parameters[/"input <br> id='parameters'"/]:::input -- "useStreaming->stream" --> callGeminiAPI["fetch <br> id='callGeminiAPI'"]
 makeURL["urlTemplate <br> id='makeURL'"] -- "url->url" --> callGeminiAPI["fetch <br> id='callGeminiAPI'"]
 makeBody["jsonata <br> id='makeBody'"] -- "result->body" --> callGeminiAPI["fetch <br> id='callGeminiAPI'"]
-formatResponse["jsonata <br> id='formatResponse'"] -- all --> textOutput{{"output <br> id='textOutput'"}}:::output
-formatResponse["jsonata <br> id='formatResponse'"] -- all --> toolCallsOutput{{"output <br> id='toolCallsOutput'"}}:::output
+formatResponse["jsonata <br> id='formatResponse'"] -- "context->context" --> textOutput{{"output <br> id='textOutput'"}}:::output
+formatResponse["jsonata <br> id='formatResponse'"] -- "text->text" --> textOutput{{"output <br> id='textOutput'"}}:::output
+formatResponse["jsonata <br> id='formatResponse'"] -- "context->context" --> toolCallsOutput{{"output <br> id='toolCallsOutput'"}}:::output
+formatResponse["jsonata <br> id='formatResponse'"] -- "toolCalls->toolCalls" --> toolCallsOutput{{"output <br> id='toolCallsOutput'"}}:::output
 chooseMethod["runJavascript <br> id='chooseMethod'"] -- all --> makeURL["urlTemplate <br> id='makeURL'"]
 secrets3("secrets <br> id='secrets-3'"):::secrets -- "GEMINI_KEY->GEMINI_KEY" --> makeURL["urlTemplate <br> id='makeURL'"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
