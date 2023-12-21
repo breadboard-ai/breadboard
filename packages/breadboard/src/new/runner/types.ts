@@ -155,8 +155,67 @@ export interface ScopeInterface {
     name: string
   ): NodeHandler<I, O> | undefined;
 
+  /**
+   * Pins a node to this scope, meaning it will be invoked/serialized for
+   * invoke() and serialize() unless those are called with specific nodes.
+   *
+   * Note that while all nodes are created within a scope, the scope is not by
+   * default aware of them. If nodes are created and nothing references them,
+   * then they are garbage collected.
+   *
+   * So there are two ways to reference graphs:
+   *  - keep a reference to any node of the graph, then pass it to invoke() or
+   *    serialize(). This is especially useful in the root scope.
+   *  - create a graph, then pin it to the scope, and from then on refer to that
+   *    scope when referring to a graph. This maps the mental model of nested
+   *    scopes that define graphs. This also allows refering to a set of
+   *    disjoint graphs (in the same scope).
+   *
+   * @param node node to pin to this scope
+   */
+  pin(node: AbstractNode): void;
+
+  /**
+   * Invokes a node, or all pinned nodes if none is specified.
+   *
+   * @param node Node to invoke, or undefined to invoke all pinned nodes
+   * @returns Promise that resolves when all nodes have been invoked
+   */
+  invoke(node?: AbstractNode): Promise<void>;
+
+  /**
+   * Helper to invoke a graph and return the values of the first `output` node
+   * that is being invoked.
+   *
+   * TODO: The graph actually keeps running after the first output is
+   * encountered. We still need to add a way to abort a graph.
+   *
+   * @param inputs Inputs to be passed to `input` node
+   * @param node Node to invoke, or undefined to invoke all pinned nodes
+   *
+   * @throws If no output node was called before graph terminates
+   */
+  invokeOnce(inputs: InputValues, node?: AbstractNode): Promise<OutputValues>;
+
+  /**
+   * Adds callbacks that are being called before and after each node invocation
+   * and once execution is done.
+   *
+   * `before` and `after` will be called for nodes in subgraphs as well.
+   * `done` only for scope that the callback was added to.
+   *
+   * @param callbacks Callbacks to add to the scope
+   */
+  addCallbacks(callbacks: InvokeCallbacks): void;
+
+  /**
+   * Serializes a node, or all pinned nodes if none is specified.
+   *
+   * @param metadata Metadata to be added to serialized graph
+   * @param node Node to serialize, or undefined to serialize all pinned nodes
+   */
   serialize(
-    node: AbstractNode,
-    metadata?: GraphMetadata
+    metadata?: GraphMetadata,
+    node?: AbstractNode
   ): Promise<GraphDescriptor>;
 }

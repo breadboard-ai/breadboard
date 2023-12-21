@@ -28,14 +28,14 @@ export class BuilderScope extends Scope implements BuilderScopeInterface {
   }
 
   async serialize(
-    node: AbstractNode,
-    metadata?: GraphMetadata
+    metadata?: GraphMetadata,
+    node?: AbstractNode
   ): Promise<GraphDescriptor> {
     return super.serialize(
-      typeof (node as BuilderNodeInterface).unProxy === "function"
+      metadata,
+      node && typeof (node as BuilderNodeInterface).unProxy === "function"
         ? (node as BuilderNodeInterface).unProxy()
-        : node,
-      metadata
+        : node
     );
   }
 
