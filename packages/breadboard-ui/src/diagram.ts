@@ -13,7 +13,6 @@ import {
   assertSVGElement,
 } from "./utils/assertions.js";
 
-const MERMAID_URL = "https://cdn.jsdelivr.net/npm/mermaid@10.6.1/+esm";
 const MERMAID_STYLES = `.node.active > * {
   stroke-width: 4px;
   stroke: #4CE8F6 !important;
@@ -499,8 +498,7 @@ export class Diagram extends HTMLElement {
       diagram += `\nclass ${highlightedNode} active`;
     }
 
-    const module = await import(/* @vite-ignore */ MERMAID_URL);
-    const mermaid = module.default;
+    const { default: mermaid } = await import("mermaid");
     mermaid.initialize({ startOnLoad: false, themeCSS: MERMAID_STYLES });
     const { svg } = await mermaid.render("graphDiv", diagram);
     const root = this.shadowRoot;

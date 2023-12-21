@@ -14,15 +14,13 @@
     "test": "wireit",
     "build": "wireit",
     "build:tsc": "wireit",
-    "build:rollup": "wireit",
     "lint": "wireit"
   },
   "wireit": {
     "build": {
       "dependencies": [
         "../breadboard:build",
-        "build:tsc",
-        "build:rollup"
+        "build:tsc"
       ]
     },
     "typescript-files-and-deps": {
@@ -50,19 +48,6 @@
         "!dist/**/*.min.js{,.map}"
       ],
       "clean": "if-file-deleted"
-    },
-    "build:rollup": {
-      "command": "rollup -c",
-      "dependencies": [
-        "build:tsc"
-      ],
-      "files": [
-        "rollup.config.js",
-        "package.json"
-      ],
-      "output": [
-        "dist/**/*.min.js{,.map}"
-      ]
     },
     "dev": {
       "command": "vite dev",
@@ -150,6 +135,7 @@
   },
   "dependencies": {
     "@google-labs/breadboard": "*",
-    "lit": "^3.1.0"
+    "lit": "^3.1.0",
+    "mermaid": "^10.6.1"
   }
 }
