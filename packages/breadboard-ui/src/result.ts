@@ -9,55 +9,63 @@ export type ResultArgs = {
   result: string;
 };
 
-export class Result extends HTMLElement {
-  constructor(result: ResultArgs) {
-    super();
-    const root = this.attachShadow({ mode: "open" });
-    root.innerHTML = `
-      <style>
-        :host {
-          display: block;
-        }
+import { LitElement, html, css } from "lit";
+import { customElement, property } from "lit/decorators.js";
 
-        details {
-          border-radius: calc(var(--bb-grid-size) * 4);
-          background: rgb(240, 240, 240);
-          list-style: none;
-        }
+@customElement("bb-result")
+export class Result extends LitElement {
+  @property()
+  title: ResultArgs["title"] = "";
 
-        #output-wrapper {
-          border-radius: 0 0 calc(var(--bb-grid-size) * 4) calc(var(--bb-grid-size) * 4);
-          background: rgb(240, 240, 240);
-          padding-bottom: calc(var(--bb-grid-size) * 8);
-        }
+  @property()
+  result: ResultArgs["result"] = "";
 
-        summary {
-          list-style: none;
-          font-size: var(--bb-text-small);
-          font-weight: 500;
-          padding: calc(var(--bb-grid-size) * 3) calc(var(--bb-grid-size) * 8);
-        }
+  static styles = css`
+    :host {
+      display: block;
+    }
 
-        summary::-webkit-details-marker {
-          display: none;
-        }
+    details {
+      border-radius: calc(var(--bb-grid-size) * 4);
+      background: rgb(240, 240, 240);
+      list-style: none;
+    }
 
-        pre {
-          line-height: 1.5;
-          overflow-x: auto;
-          padding: calc(var(--bb-grid-size) * 3) calc(var(--bb-grid-size) * 8);
-          background: rgb(253, 253, 255);
-          font-size: var(--bb-text-medium);
-          margin: 0;
-          white-space: pre-line;
-        }
-      </style>
-      <details>
-        <summary>${result.title}</summary>
-        <div id="output-wrapper">
-          <pre>${result.result}</pre>
-        </div>
-      </details>
-    `;
+    #output-wrapper {
+      border-radius: 0 0 calc(var(--bb-grid-size) * 4)
+        calc(var(--bb-grid-size) * 4);
+      background: rgb(240, 240, 240);
+      padding-bottom: calc(var(--bb-grid-size) * 8);
+    }
+
+    summary {
+      list-style: none;
+      font-size: var(--bb-text-small);
+      font-weight: 500;
+      padding: calc(var(--bb-grid-size) * 3) calc(var(--bb-grid-size) * 8);
+    }
+
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    pre {
+      line-height: 1.5;
+      overflow-x: auto;
+      padding: calc(var(--bb-grid-size) * 3) calc(var(--bb-grid-size) * 8);
+      background: rgb(253, 253, 255);
+      font-size: var(--bb-text-medium);
+      margin: 0;
+      white-space: pre-line;
+    }
+  `;
+
+  render() {
+    return html`<details>
+      <summary>${this.title}</summary>
+      <div id="output-wrapper">
+        <pre>${this.result}</pre>
+      </div>
+    </details>`;
   }
 }
