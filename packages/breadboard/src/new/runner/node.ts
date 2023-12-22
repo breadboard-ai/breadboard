@@ -30,10 +30,6 @@ import { IdVendor } from "../../id.js";
 
 const nodeIdVendor = new IdVendor();
 
-export function nextNodeId(scope: ScopeInterface, type: string) {
-  return nodeIdVendor.vendId(scope, type);
-}
-
 // TODO:BASE Extract base class that isn't opinionated about the syntax. Marking
 // methods that should be base as "TODO:BASE" below, including complications.
 export class BaseNode<
@@ -79,7 +75,7 @@ export class BaseNode<
 
     const { $id, ...rest } = config;
 
-    this.id = $id ?? nextNodeId(scope, this.type);
+    this.id = $id ?? nodeIdVendor.vendId(scope, this.type);
 
     this.configuration = rest as Partial<I>;
 
