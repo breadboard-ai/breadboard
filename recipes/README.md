@@ -4,9 +4,23 @@ This directory contains recipes for Breadboard. Each recipe is a demonstration o
 
 ## Running a Recipe
 
-To run a recipe, run the following command from the root of the repository:
+Note: If you have not already installed the breadboard CLI, you can do so by running the following command:
 
-To run from the CLI:
+```bash
+npm install -g @breadboard/breadboard-cli
+```
+
+or, if you are running from the monorepo:
+
+```bash
+npm i
+npm run build
+npm i
+```
+
+You need to install all the deps, then build the CLI, then install the deps again to install the command. If you plan to run from the mono repo, prepend `npx` to the commands below.
+
+To run a recipe, run the following command from the root of the repository:
 
 ```bash
 breadboard run recipes/<recipe-name>
@@ -21,6 +35,8 @@ breadboard debug recipes/<recipe-name>
 ## Creating a new Recipe
 
 To create a new recipe, create a new directory in this directory. The name of the directory should be the name of the recipe and should contain a `README.md` file that describes the recipe and a TypeScript file that contains the code for the recipe.
+
+TODO: Add more details here.
 
 ## List of Recipes
 
