@@ -715,7 +715,13 @@ export class UIController extends HTMLElement implements UI {
       globalThis.performance.now() - this.#lastHistoryEventTime;
     this.#lastHistoryEventTime = globalThis.performance.now();
 
-    const historyEntry = new HistoryEntry(type, summary, id, data, elapsedTime);
+    const historyEntry = new HistoryEntry();
+    historyEntry.type = type;
+    historyEntry.summary = summary;
+    historyEntry.id = id || "";
+    historyEntry.data = data;
+    historyEntry.elapsedTime = elapsedTime;
+
     this.#historyLog.push({ type, summary, id, data, elapsedTime });
 
     if (historyList.childNodes.length) {
@@ -749,7 +755,13 @@ export class UIController extends HTMLElement implements UI {
     this.#showBoardContainer();
     this.#clearNodeInformation();
 
-    const load = new Load(info);
+    const { title, description = "", version = "", url = "" } = info;
+    const load = new Load();
+
+    load.title = title;
+    load.description = description;
+    load.version = version;
+    load.url = url;
     load.slot = "load";
     this.appendChild(load);
     this.#diagram.reset();
