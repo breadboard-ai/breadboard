@@ -46,7 +46,7 @@ export type HarnessRemoteConfig =
        * script if `type` is "worker", or the URL of the runtime server if
        * `type` is "http".
        */
-      url?: string;
+      url: string;
     }
   | false;
 

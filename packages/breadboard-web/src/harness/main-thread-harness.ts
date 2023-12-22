@@ -14,6 +14,10 @@ import {
 } from "@google-labs/breadboard";
 import { KitBuilder } from "@google-labs/breadboard/kits";
 import { MainThreadRunResult } from "./result";
+import {
+  HTTPClientTransport,
+  ProxyClient,
+} from "@google-labs/breadboard/remote";
 
 export class MainThreadHarness implements Harness {
   #config: HarnessConfig;
@@ -25,6 +29,41 @@ export class MainThreadHarness implements Harness {
   }
 
   async *run(url: string) {
+    let kits = this.#config.kits;
+
+    const onSecret = this.#onSecret;
+
+    // Because we're in the browser, we need to ask for secrets from the user.
+    // Add a special kit that overrides the `secrets` handler to ask the user
+    // for secrets.
+    const secretAskingKit = new KitBuilder({
+      url: "secret-asking-kit",
+    }).build({
+      secrets: async (inputs) => {
+        return await onSecret(inputs as InputValues);
+      },
+    });
+    kits = [asRuntimeKit(secretAskingKit), ...kits];
+
+    // If a proxy is configured, add the proxy kit to the list of kits.
+    // Note, this may override the `secrets` handler from the SecretAskingKit.
+    const proxyConfig = this.#config.proxy?.[0];
+    if (proxyConfig) {
+      if (proxyConfig.location === "http") {
+        if (!proxyConfig.url) {
+          throw new Error("No node proxy server URL provided");
+        }
+        const proxyClient = new ProxyClient(
+          new HTTPClientTransport(proxyConfig.url)
+        );
+        kits = [proxyClient.createProxyKit(proxyConfig.nodes), ...kits];
+      } else {
+        throw new Error(
+          "Only HTTP node proxy server is supported at this time"
+        );
+      }
+    }
+
     try {
       const runner = await Board.load(url);
 
@@ -39,21 +78,6 @@ export class MainThreadHarness implements Harness {
           nodes: runner.nodes,
         },
       });
-
-      const onSecret = this.#onSecret;
-      if (!onSecret) {
-        throw new Error("No secret handler provided");
-      }
-
-      const SecretAskingKit = new KitBuilder({
-        url: "secret-asking-kit",
-      }).build({
-        secrets: async (inputs) => {
-          return await onSecret(inputs as InputValues);
-        },
-      });
-
-      const kits = [asRuntimeKit(SecretAskingKit), ...this.#config.kits];
 
       for await (const data of runner.run({
         probe: new LogProbe(),
