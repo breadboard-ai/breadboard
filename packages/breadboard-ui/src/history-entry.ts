@@ -6,168 +6,156 @@
 
 import { HarnessEventType } from "./types.js";
 
-export class HistoryEntry extends HTMLElement {
-  constructor(
-    type: HarnessEventType,
-    summary: string,
-    id: string | null = null,
-    data: unknown = null,
-    elapsedTime: number
-  ) {
-    super();
+import { LitElement, html, css } from "lit";
+import { customElement, property, state } from "lit/decorators.js";
 
-    const root = this.attachShadow({ mode: "open" });
-    const dataOutput = this.#createDataOutput(data);
-    const idOutput = id || "";
+@customElement("bb-history-entry")
+export class HistoryEntry extends LitElement {
+  @property()
+  type: HarnessEventType = HarnessEventType.DONE;
 
-    root.innerHTML = `
-      <style>
-        :host {
-          display: block;
-          font-size: var(--bb-text-small);
-        }
+  @state()
+  summary = "";
 
-        #container {
-          display: flex;
-          border-top: 1px solid rgb(240, 240, 240);
-          padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 2.5);
-        }
+  @state()
+  data: unknown = null;
 
-        #container summary::before {
-          content: '';
-          box-sizing: border-box;
-          width: calc(var(--bb-grid-size) * 3);
-          height: calc(var(--bb-grid-size) * 3);
-          background: #fff2ccff;
-          border: 1px solid #ffab40;
-          border-radius: 50%;
-          margin-top: calc(var(--bb-grid-size) * 0.5);
-          margin-right: calc(var(--bb-grid-size) * 2);
-          flex: 0 0 auto;
-          pointer-events: none;
-        }
+  @property()
+  elapsedTime = 0;
 
-        #container.progress summary::before {
-          background: radial-gradient(
-            var(--bb-progress-color) 0%,
-            var(--bb-progress-color) 30%,
-            var(--bb-progress-color-faded) 30%,
-            var(--bb-progress-color-faded) 50%,
-            transparent 50%,
-            transparent 100%
-          ),
-            conic-gradient(
-              transparent 0deg,
-              var(--bb-progress-color) 360deg
-            ),
-            linear-gradient(
-              var(--bb-progress-color-faded),
-              var(--bb-progress-color-faded)
-            );
+  static styles = css`
+    :host {
+      display: block;
+      font-size: var(--bb-text-small);
+    }
 
-          border: none;
-          animation: rotate 0.5s linear infinite;
-        }
+    #container {
+      display: flex;
+      border-top: 1px solid rgb(240, 240, 240);
+      padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 2.5);
+    }
 
-        :host(:not(:first-child)) #container.progress {
-          display: none;
-        }
+    #container summary::before {
+      content: "";
+      box-sizing: border-box;
+      width: calc(var(--bb-grid-size) * 3);
+      height: calc(var(--bb-grid-size) * 3);
+      background: #fff2ccff;
+      border: 1px solid #ffab40;
+      border-radius: 50%;
+      margin-top: calc(var(--bb-grid-size) * 0.5);
+      margin-right: calc(var(--bb-grid-size) * 2);
+      flex: 0 0 auto;
+      pointer-events: none;
+    }
 
-        #container.load summary::before {
-          background: rgb(90, 64, 119);
-          border: 1px solid rgb(90, 64, 119);
-        }
+    #container.progress summary::before {
+      background: radial-gradient(
+          var(--bb-progress-color) 0%,
+          var(--bb-progress-color) 30%,
+          var(--bb-progress-color-faded) 30%,
+          var(--bb-progress-color-faded) 50%,
+          transparent 50%,
+          transparent 100%
+        ),
+        conic-gradient(transparent 0deg, var(--bb-progress-color) 360deg),
+        linear-gradient(
+          var(--bb-progress-color-faded),
+          var(--bb-progress-color-faded)
+        );
 
-        #container.error summary::before {
-          background: #CC0000;
-          border: 1px solid #CC0000;
-        }
+      border: none;
+      animation: rotate 0.5s linear infinite;
+    }
 
-        #container.result summary::before {
-          background: #ffa500;
-          border: 1px solid #ffa500;
-        }
+    :host(:not(:first-child)) #container.progress {
+      display: none;
+    }
 
-        #container.input summary::before {
-          background: #c9daf8ff;
-          border: 1px solid #3c78d8;
-        }
+    #container.load summary::before {
+      background: rgb(90, 64, 119);
+      border: 1px solid rgb(90, 64, 119);
+    }
 
-        #container.secrets summary::before {
-          background: #f4cccc;
-          border: 1px solid #db4437;
-        }
+    #container.error summary::before {
+      background: #cc0000;
+      border: 1px solid #cc0000;
+    }
 
-        #container.output summary::before {
-          background: #b6d7a8ff;
-          border: 1px solid #38761d;
-        }
+    #container.result summary::before {
+      background: #ffa500;
+      border: 1px solid #ffa500;
+    }
 
-        #container.done summary::before {
-          background: var(--bb-done-color);
-          border: 1px solid var(--bb-done-color);
-        }
+    #container.input summary::before {
+      background: #c9daf8ff;
+      border: 1px solid #3c78d8;
+    }
 
-        details {
-          flex: 1;
-          list-style: none;
-        }
+    #container.secrets summary::before {
+      background: #f4cccc;
+      border: 1px solid #db4437;
+    }
 
-        summary {
-          display: flex;
-          line-height: calc(var(--bb-grid-size) * 4);
-          cursor: pointer;
-          user-select: none;
-          list-style: none;
-        }
+    #container.output summary::before {
+      background: #b6d7a8ff;
+      border: 1px solid #38761d;
+    }
 
-        summary::-webkit-details-marker {
-          display: none;
-        }
+    #container.done summary::before {
+      background: var(--bb-done-color);
+      border: 1px solid var(--bb-done-color);
+    }
 
-        summary #id {
-          flex: 1;
-          font-style: italic;
-          margin-left: var(--bb-grid-size);
-        }
+    details {
+      flex: 1;
+      list-style: none;
+    }
 
-        summary #id:not(:empty)::before {
-          content: '(';
-        }
+    summary {
+      display: flex;
+      line-height: calc(var(--bb-grid-size) * 4);
+      cursor: pointer;
+      user-select: none;
+      list-style: none;
+    }
 
-        summary #id:not(:empty)::after {
-          content: ')';
-        }
+    summary::-webkit-details-marker {
+      display: none;
+    }
 
-        summary #elapsed-time {
-          color: #A5A5A5;
-        }
+    summary #id {
+      flex: 1;
+      font-style: italic;
+      margin-left: var(--bb-grid-size);
+    }
 
-        pre {
-          white-space: pre-wrap;
-        }
+    summary #id:not(:empty)::before {
+      content: "(";
+    }
 
-        @keyframes rotate {
-          from {
-            transform: rotate(0);
-          }
-        
-          to {
-            transform: rotate(360deg);
-          }
-        }
+    summary #id:not(:empty)::after {
+      content: ")";
+    }
 
-      </style>
-      <div id="container" class="${type}">
-        <details ${type === "output" ? "open" : ""}>
-          <summary>${summary} <span id="id">${idOutput}</span> <span id="elapsed-time">${this.#formatTime(
-      elapsedTime
-    )}<span></summary>
-          <div><pre>${dataOutput}</pre></div>
-        </details>
-      </div>
-    `;
-  }
+    summary #elapsed-time {
+      color: #a5a5a5;
+    }
+
+    pre {
+      white-space: pre-wrap;
+    }
+
+    @keyframes rotate {
+      from {
+        transform: rotate(0);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  `;
 
   #createDataOutput(data: unknown | null) {
     if (data === null) {
@@ -188,5 +176,18 @@ export class HistoryEntry extends HTMLElement {
     }
 
     return time.toFixed(1) + "ms";
+  }
+
+  render() {
+    return html`<div id="container" class="${this.type}">
+    <details ${this.type === "output" ? "open" : ""}>
+      <summary>${this.summary} <span id="id">${
+      this.id || ""
+    }</span> <span id="elapsed-time">${this.#formatTime(
+      this.elapsedTime
+    )}<span></summary>
+      <div><pre>${this.#createDataOutput(this.data)}</pre></div>
+    </details>
+  </div>`;
   }
 }

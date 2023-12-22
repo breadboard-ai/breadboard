@@ -10,6 +10,7 @@ export { Done } from "./done.js";
 export { Input } from "./input.js";
 export { WebcamInput } from "./webcam.js";
 export { DrawableInput } from "./drawable.js";
+export { HistoryEntry } from "./history-entry.js";
 
 import { Load } from "./load.js";
 import { Output } from "./output.js";
@@ -24,10 +25,8 @@ import {
 } from "./input-multipart.js";
 import { InputContainer } from "./input-container.js";
 import { Diagram } from "./diagram.js";
-import { HistoryEntry } from "./history-entry.js";
 
 export const register = () => {
-  customElements.define("bb-history-entry", HistoryEntry);
   customElements.define("bb-diagram", Diagram);
   customElements.define("bb-input-container", InputContainer);
   customElements.define("bb-ui", UIController);
