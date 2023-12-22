@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Harness, HarnessConfig, Result, SecretHandler } from "./types";
+import { Harness, HarnessConfig, SecretHandler } from "./types";
 
 import {
   Board,
@@ -66,7 +66,7 @@ export class LocalHarness implements Harness {
   }
 
   async *run(url: string) {
-    yield* asyncGen<MainThreadRunResult<Result>>(async (next) => {
+    yield* asyncGen<MainThreadRunResult>(async (next) => {
       const kits = this.#configureKits();
 
       try {
