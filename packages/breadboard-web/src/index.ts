@@ -5,7 +5,12 @@
  */
 
 import * as BreadboardUI from "@google-labs/breadboard-ui";
-import { Harness, HarnessRunResult, SecretHandler } from "./harness/types.js";
+import {
+  Harness,
+  HarnessProxyConfig,
+  HarnessRunResult,
+  SecretHandler,
+} from "./harness/types.js";
 import { asRuntimeKit } from "@google-labs/breadboard";
 import Starter from "@google-labs/llm-starter";
 import PaLMKit from "@google-labs/palm-kit";
@@ -25,6 +30,19 @@ const PROXY_NODES = [
   // "credentials",
   // "driveList",
 ];
+
+const WORKER_URL =
+  import.meta.env.MODE === "development" ? "/src/worker.ts" : "/worker.js";
+
+const HARNESS_SWITCH_KEY = "bb-harness";
+
+const PROXY_SERVER_HARNESS_VALUE = "proxy-server";
+const WORKER_HARNESS_VALUE = "worker";
+
+const PROXY_SERVER_URL = import.meta.env.VITE_PROXY_SERVER_URL;
+const DEFAULT_HARNESS = PROXY_SERVER_URL
+  ? PROXY_SERVER_HARNESS_VALUE
+  : WORKER_HARNESS_VALUE;
 
 type PauserCallback = (paused: boolean) => void;
 class Pauser extends EventTarget {
@@ -105,10 +123,7 @@ export class Main {
         const startEvent = evt as BreadboardUI.StartEvent;
         this.setActiveBreadboard(startEvent.url);
 
-        for await (const result of this.#harness.run(
-          startEvent.url,
-          PROXY_NODES
-        )) {
+        for await (const result of this.#harness.run(startEvent.url)) {
           if (
             result.message.type !== "load" &&
             result.message.type !== "beforehandler" &&
@@ -273,6 +288,9 @@ export class Main {
   }
 
   #getHarness() {
+    const harness =
+      globalThis.localStorage.getItem(HARNESS_SWITCH_KEY) ?? DEFAULT_HARNESS;
+
     const onSecret: SecretHandler = async ({ keys }) => {
       if (!keys) return {};
       return Object.fromEntries(
@@ -282,12 +300,36 @@ export class Main {
       );
     };
 
+    const kits = [
+      Starter,
+      Core,
+      Pinecone,
+      PaLMKit,
+      NodeNurseryWeb,
+      JSONKit,
+    ].map((kitConstructor) => asRuntimeKit(kitConstructor));
+
+    const proxy: HarnessProxyConfig[] = [];
+    if (harness === PROXY_SERVER_HARNESS_VALUE) {
+      proxy.push({
+        location: "http",
+        url: PROXY_SERVER_URL,
+        nodes: PROXY_NODES,
+      });
+    } else if (harness === WORKER_HARNESS_VALUE) {
+      proxy.push({
+        location: "main",
+        nodes: PROXY_NODES,
+      });
+    }
     return createHarness({
-      proxy: PROXY_NODES,
+      runtime: {
+        location: harness === WORKER_HARNESS_VALUE ? "worker" : "main",
+        url: harness === WORKER_HARNESS_VALUE ? WORKER_URL : undefined,
+        kits,
+      },
+      proxy,
       onSecret,
-      kits: [Starter, Core, Pinecone, PaLMKit, NodeNurseryWeb, JSONKit].map(
-        (kitConstructor) => asRuntimeKit(kitConstructor)
-      ),
     });
   }
 }

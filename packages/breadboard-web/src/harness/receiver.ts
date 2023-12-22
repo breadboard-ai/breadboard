@@ -37,18 +37,22 @@ export class ProxyReceiver {
   }
 
   #createProxyNodeHandlers(config: HarnessConfig): Record<string, NodeHandler> {
-    const handlers = config.kits.reduce((handlers, kit) => {
+    const handlers = config.runtime.kits.reduce((handlers, kit) => {
       return { ...kit.handlers, ...handlers };
     }, {} as NodeHandlers);
 
-    return config.proxy.reduce<NodeHandlers>((acc, id) => {
+    const proxyConfig = config.proxy?.[0].nodes ?? [];
+    return proxyConfig.reduce<NodeHandlers>((acc, id) => {
+      const nodeType = typeof id === "string" ? id : id.node;
       const handler = {
         invoke: async (inputs: InputValues, context: NodeHandlerContext) => {
-          inputs = await this.#revealSecretsForInput(inputs, config.onSecret);
-          return callHandler(handlers[id], inputs, context);
+          inputs = config.onSecret
+            ? await this.#revealSecretsForInput(inputs, config.onSecret)
+            : inputs;
+          return callHandler(handlers[nodeType], inputs, context);
         },
       } satisfies NodeHandler;
-      return { ...acc, [id]: handler };
+      return { ...acc, [nodeType]: handler };
     }, {} as NodeHandlers);
   }
 

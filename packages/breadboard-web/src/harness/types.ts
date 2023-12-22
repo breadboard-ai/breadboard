@@ -4,17 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  Kit,
-  NodeTypeIdentifier,
-  OutputValues,
-} from "@google-labs/breadboard";
+import type { Kit, OutputValues } from "@google-labs/breadboard";
+import type { NodeProxyConfig } from "@google-labs/breadboard/remote";
 
 export interface Harness {
-  run(
-    url: string,
-    proxyNodes: string[]
-  ): AsyncGenerator<HarnessRunResult, void>;
+  run(url: string): AsyncGenerator<HarnessRunResult, void>;
 }
 
 export type Result = {
@@ -32,8 +26,20 @@ export type SecretHandler = (keys: {
   keys?: string[];
 }) => Promise<OutputValues>;
 
+export type RuntimeLocation = "main" | "worker" | "http";
+
+export type HarnessProxyConfig = {
+  location: RuntimeLocation;
+  url?: string;
+  nodes: NodeProxyConfig;
+};
+
 export type HarnessConfig = {
-  proxy: NodeTypeIdentifier[];
-  kits: Kit[];
-  onSecret: SecretHandler;
+  runtime: {
+    location: RuntimeLocation;
+    url?: string;
+    kits: Kit[];
+  };
+  proxy?: HarnessProxyConfig[];
+  onSecret?: SecretHandler;
 };
