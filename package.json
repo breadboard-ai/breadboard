@@ -49,7 +49,6 @@
         "./packages/breadboard-cli:test",
         "./packages/breadboard-server:test",
         "./packages/breadboard-ui:test",
-        "./packages/breadboard-web:test",
         "./packages/cloud-function:test",
         "./packages/coffee-bot-board:test",
         "./packages/core-kit:test",

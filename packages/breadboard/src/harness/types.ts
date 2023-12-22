@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Kit, OutputValues } from "@google-labs/breadboard";
-import type { NodeProxyConfig } from "@google-labs/breadboard/remote";
+import { NodeProxyConfig } from "../remote/config.js";
+import { Kit, OutputValues } from "../types.js";
 
 export interface Harness {
   run(url: string): AsyncGenerator<HarnessRunResult, void>;

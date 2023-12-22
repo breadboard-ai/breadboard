@@ -4,17 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  type NodeHandlers,
-  callHandler,
+import { callHandler } from "../handler.js";
+import type {
   InputValues,
   NodeHandler,
   NodeHandlerContext,
-} from "@google-labs/breadboard";
-import type { ProxyRequestMessage } from "@google-labs/breadboard/worker";
-
-import { SecretKeeper } from "./secrets";
-import { HarnessConfig, SecretHandler } from "./types";
+  NodeHandlers,
+} from "../types.js";
+import { ProxyRequestMessage } from "../worker/protocol.js";
+import { SecretKeeper } from "./secrets.js";
+import { HarnessConfig, SecretHandler } from "./types.js";
 
 type ProxyResult = {
   nodeType: string;

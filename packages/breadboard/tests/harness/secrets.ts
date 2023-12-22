@@ -4,40 +4,40 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { expect, test } from "vitest";
+import test from "ava";
 
 import {
   generateToken,
   secretReplacer,
   secretScanner,
-} from "../src/harness/secrets.js";
+} from "../../src/harness/secrets.js";
 
-test("generateToken produces a reasonable token", async () => {
+test("generateToken produces a reasonable token", async (t) => {
   const token = generateToken();
-  expect(token).toMatch(/^[0-9a-f]{12}$/);
+  t.regex(token, /^[0-9a-f]{12}$/);
 });
 
-test("secretReplacer finds all tokens", async () => {
+test("secretReplacer finds all tokens", async (t) => {
   const secrets = {
     "123456789abc": "fooValue",
     "123456789def": "barValue",
   };
   const value = "foo:PROXIED_123456789abc, bar:PROXIED_123456789def";
   const replaced = secretReplacer(value, secrets);
-  expect(replaced).toBe("foo:fooValue, bar:barValue");
+  t.is(replaced, "foo:fooValue, bar:barValue");
 });
 
-test("secretReplacer does not replace non-secret values", async () => {
+test("secretReplacer does not replace non-secret values", async (t) => {
   const secrets = {
     "123456789abc": "fooValue",
     "123456789def": "barValue",
   };
   const value = "foo:PROXIED_123456789abc, bar:PROXIED_123456789xyz";
   const replaced = secretReplacer(value, secrets);
-  expect(replaced).toBe("foo:fooValue, bar:PROXIED_123456789xyz");
+  t.is(replaced, "foo:fooValue, bar:PROXIED_123456789xyz");
 });
 
-test("secretReplacer works with nested objects", async () => {
+test("secretReplacer works with nested objects", async (t) => {
   const secrets = {
     "123456789abc": "fooValue",
     "123456789def": "barValue",
@@ -49,7 +49,7 @@ test("secretReplacer works with nested objects", async () => {
     },
   };
   const replaced = secretReplacer(value, secrets);
-  expect(replaced).toEqual({
+  t.deepEqual(replaced, {
     foo: ["fooValue"],
     bar: {
       baz: "barValue",
@@ -57,8 +57,8 @@ test("secretReplacer works with nested objects", async () => {
   });
 });
 
-test("secretScanner finds all secrets", async () => {
+test("secretScanner finds all secrets", async (t) => {
   const value = "foo:PROXIED_123456789abc, bar:PROXIED_123456789def";
   const tokens = secretScanner(value);
-  expect(tokens).toEqual(["123456789abc", "123456789def"]);
+  t.deepEqual(tokens, ["123456789abc", "123456789def"]);
 });

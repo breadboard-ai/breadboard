@@ -6,16 +6,16 @@
 
 import * as BreadboardUI from "@google-labs/breadboard-ui";
 import {
-  Harness,
-  HarnessProxyConfig,
-  HarnessRemoteConfig,
-  HarnessRunResult,
-} from "./harness/types.js";
+  type Harness,
+  type HarnessProxyConfig,
+  type HarnessRemoteConfig,
+  type HarnessRunResult,
+  createHarness,
+} from "@google-labs/breadboard/harness";
 import { asRuntimeKit } from "@google-labs/breadboard";
 import Starter from "@google-labs/llm-starter";
 import PaLMKit from "@google-labs/palm-kit";
 import NodeNurseryWeb from "@google-labs/node-nursery-web";
-import { createHarness } from "./harness/index.js";
 import Core from "@google-labs/core-kit";
 import Pinecone from "@google-labs/pinecone-kit";
 import JSONKit from "@google-labs/json-kit";
