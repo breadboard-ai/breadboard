@@ -4,22 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Harness, HarnessConfig, SecretHandler } from "./types";
-
-import {
-  Board,
-  InputValues,
-  LogProbe,
-  asRuntimeKit,
-  asyncGen,
-} from "@google-labs/breadboard";
-import { KitBuilder } from "@google-labs/breadboard/kits";
-import { MainThreadRunResult } from "./result";
-import {
-  HTTPClientTransport,
-  ProxyClient,
-} from "@google-labs/breadboard/remote";
-import { createOnSecret } from "./secrets";
+import type { Harness, HarnessConfig, SecretHandler } from "./types.js";
+import { MainThreadRunResult } from "./result.js";
+import { createOnSecret } from "./secrets.js";
+import { KitBuilder } from "../kits/builder.js";
+import { InputValues } from "../types.js";
+import { asRuntimeKit } from "../kits/ctors.js";
+import { ProxyClient } from "../remote/proxy.js";
+import { HTTPClientTransport } from "../remote/http.js";
+import { asyncGen } from "../utils/async-gen.js";
+import { Board } from "../board.js";
+import { LogProbe } from "../log.js";
 
 export class LocalHarness implements Harness {
   #config: HarnessConfig;

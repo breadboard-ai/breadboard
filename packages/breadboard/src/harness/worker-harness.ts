@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HostRuntime, RunResult } from "@google-labs/breadboard/worker";
-import { HarnessConfig } from "./types";
-import { ProxyReceiver } from "./receiver";
-import { ProxyPromiseResponse } from "@google-labs/breadboard/remote";
-import { asyncGen } from "@google-labs/breadboard";
-import { createOnSecret } from "./secrets";
+import { HarnessConfig } from "./types.js";
+import { ProxyReceiver } from "./receiver.js";
+import { createOnSecret } from "./secrets.js";
+import { HostRuntime, RunResult } from "../worker/host-runtime.js";
+import { asyncGen } from "../utils/async-gen.js";
+import { ProxyPromiseResponse } from "../remote/protocol.js";
 
 export class WorkerHarness extends HostRuntime {
   #config: HarnessConfig;

@@ -4,9 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Harness, HarnessConfig } from "./types";
-import { LocalHarness } from "./local-harness";
-import { WorkerHarness } from "./worker-harness";
+import { Harness, HarnessConfig } from "./types.js";
+import { LocalHarness } from "./local-harness.js";
+import { WorkerHarness } from "./worker-harness.js";
+
+export type * from "./types.js";
 
 export const createHarness = (config: HarnessConfig): Harness => {
   if (!config.remote) {

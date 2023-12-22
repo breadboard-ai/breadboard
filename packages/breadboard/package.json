@@ -7,7 +7,8 @@
     ".": "./dist/src/index.js",
     "./kits": "./dist/src/kits/index.js",
     "./worker": "./dist/src/worker/index.js",
-    "./remote": "./dist/src/remote/index.js"
+    "./remote": "./dist/src/remote/index.js",
+    "./harness": "./dist/src/harness/index.js"
   },
   "types": "dist/src/index.d.ts",
   "type": "module",
