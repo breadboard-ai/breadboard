@@ -5,7 +5,6 @@
  */
 
 import { base, recipe, code } from "@google-labs/breadboard";
-import { starter } from "@google-labs/llm-starter";
 
 const metaData = {
   title: "Convert String to JSON",
@@ -34,6 +33,7 @@ const toJsonScheme = {
 export default await recipe(() => {
   const input = base.input({ $id: "input", schema: toJsonScheme });
 
+  // Note: `code` means an implicit `invoke` which means you have to add core-kit
   return input
     .to(
       code(({ string, splat }) => {
