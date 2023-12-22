@@ -259,6 +259,18 @@ export class Main {
         break;
       }
 
+      case "secret": {
+        const keys = (data as { keys: string[] }).keys;
+        result.reply(
+          Object.fromEntries(
+            await Promise.all(
+              keys.map(async (key) => [key, await this.#ui.secret(key)])
+            )
+          )
+        );
+        break;
+      }
+
       case "beforehandler": {
         const progressData = data as {
           node: {
