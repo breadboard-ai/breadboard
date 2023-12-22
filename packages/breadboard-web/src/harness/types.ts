@@ -41,5 +41,4 @@ export type HarnessConfig = {
     kits: Kit[];
   };
   proxy?: HarnessProxyConfig[];
-  onSecret?: SecretHandler;
 };

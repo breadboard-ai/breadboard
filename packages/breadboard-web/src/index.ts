@@ -322,14 +322,16 @@ export class Main {
         nodes: PROXY_NODES,
       });
     }
-    return createHarness({
-      runtime: {
-        location: harness === WORKER_HARNESS_VALUE ? "worker" : "main",
-        url: harness === WORKER_HARNESS_VALUE ? WORKER_URL : undefined,
-        kits,
+    return createHarness(
+      {
+        runtime: {
+          location: harness === WORKER_HARNESS_VALUE ? "worker" : "main",
+          url: harness === WORKER_HARNESS_VALUE ? WORKER_URL : undefined,
+          kits,
+        },
+        proxy,
       },
-      proxy,
-      onSecret,
-    });
+      onSecret
+    );
   }
 }

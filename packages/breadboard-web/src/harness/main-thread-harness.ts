@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Harness, HarnessConfig } from "./types";
+import { Harness, HarnessConfig, SecretHandler } from "./types";
 
 import {
   Board,
@@ -17,9 +17,11 @@ import { MainThreadRunResult } from "./result";
 
 export class MainThreadHarness implements Harness {
   #config: HarnessConfig;
+  #onSecret: SecretHandler;
 
-  constructor(config: HarnessConfig) {
+  constructor(config: HarnessConfig, onSecret: SecretHandler) {
     this.#config = config;
+    this.#onSecret = onSecret;
   }
 
   async *run(url: string) {
@@ -38,7 +40,7 @@ export class MainThreadHarness implements Harness {
         },
       });
 
-      const onSecret = this.#config.onSecret;
+      const onSecret = this.#onSecret;
       if (!onSecret) {
         throw new Error("No secret handler provided");
       }

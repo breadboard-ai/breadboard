@@ -6,18 +6,21 @@
 
 import { MainThreadHarness } from "./main-thread-harness";
 import { ProxyServerHarness } from "./proxy-server-harness";
-import { Harness, HarnessConfig } from "./types";
+import { Harness, HarnessConfig, SecretHandler } from "./types";
 import { WorkerHarness } from "./worker-harness";
 
-export const createHarness = (config: HarnessConfig): Harness => {
+export const createHarness = (
+  config: HarnessConfig,
+  onSecret: SecretHandler
+): Harness => {
   if (config.runtime.location === "main") {
     if (config.proxy?.[0]?.location === "http") {
       return new ProxyServerHarness(config);
     }
-    return new MainThreadHarness(config);
+    return new MainThreadHarness(config, onSecret);
   }
   if (config.runtime.location === "worker") {
-    return new WorkerHarness(config);
+    return new WorkerHarness(config, onSecret);
   }
   throw new Error(`Unsupported harness configuration: ${config}`);
 };
