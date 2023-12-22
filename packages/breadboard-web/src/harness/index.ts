@@ -4,20 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { MainThreadHarness } from "./main-thread-harness";
-import { ProxyServerHarness } from "./proxy-server-harness";
-import { Harness, HarnessConfig } from "./types";
+import { Harness, HarnessConfig, SecretHandler } from "./types";
+import { LocalHarness } from "./local-harness";
 import { WorkerHarness } from "./worker-harness";
 
-export const createHarness = (config: HarnessConfig): Harness => {
-  if (config.runtime.location === "main") {
-    if (config.proxy?.[0]?.location === "http") {
-      return new ProxyServerHarness(config);
-    }
-    return new MainThreadHarness(config);
+export const createHarness = (
+  config: HarnessConfig,
+  onSecret: SecretHandler
+): Harness => {
+  if (!config.remote) {
+    return new LocalHarness(config, onSecret);
   }
-  if (config.runtime.location === "worker") {
-    return new WorkerHarness(config);
+  if (config.remote.type === "worker") {
+    return new WorkerHarness(config, onSecret);
   }
   throw new Error(`Unsupported harness configuration: ${config}`);
 };

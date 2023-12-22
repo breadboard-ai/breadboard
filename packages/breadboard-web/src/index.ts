@@ -8,6 +8,7 @@ import * as BreadboardUI from "@google-labs/breadboard-ui";
 import {
   Harness,
   HarnessProxyConfig,
+  HarnessRemoteConfig,
   HarnessRunResult,
   SecretHandler,
 } from "./harness/types.js";
@@ -317,19 +318,12 @@ export class Main {
         nodes: PROXY_NODES,
       });
     } else if (harness === WORKER_HARNESS_VALUE) {
-      proxy.push({
-        location: "main",
-        nodes: PROXY_NODES,
-      });
+      proxy.push({ location: "main", nodes: PROXY_NODES });
     }
-    return createHarness({
-      runtime: {
-        location: harness === WORKER_HARNESS_VALUE ? "worker" : "main",
-        url: harness === WORKER_HARNESS_VALUE ? WORKER_URL : undefined,
-        kits,
-      },
-      proxy,
-      onSecret,
-    });
+    const remote: HarnessRemoteConfig = harness === WORKER_HARNESS_VALUE && {
+      type: "worker",
+      url: WORKER_URL,
+    };
+    return createHarness({ kits, remote, proxy }, onSecret);
   }
 }

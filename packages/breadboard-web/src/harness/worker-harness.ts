@@ -5,24 +5,26 @@
  */
 
 import { HostRuntime, RunResult } from "@google-labs/breadboard/worker";
-import { HarnessConfig } from "./types";
+import { HarnessConfig, SecretHandler } from "./types";
 import { ProxyReceiver } from "./receiver";
 import { ProxyPromiseResponse } from "@google-labs/breadboard/remote";
 
 export class WorkerHarness extends HostRuntime {
   #config: HarnessConfig;
+  #onSecret: SecretHandler;
 
-  constructor(config: HarnessConfig) {
-    const workerURL = config.runtime.url;
+  constructor(config: HarnessConfig, onSecret: SecretHandler) {
+    const workerURL = config.remote && config.remote.url;
     if (!workerURL) {
       throw new Error("Worker harness requires a worker URL");
     }
     super(workerURL);
     this.#config = config;
+    this.#onSecret = onSecret;
   }
 
   override async *run(url: string) {
-    const receiver = new ProxyReceiver(this.#config);
+    const receiver = new ProxyReceiver(this.#config, this.#onSecret);
     const proxyNodes = (this.#config.proxy?.[0]?.nodes ?? []).map((node) => {
       return typeof node === "string" ? node : node.node;
     });

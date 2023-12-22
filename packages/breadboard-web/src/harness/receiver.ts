@@ -25,8 +25,8 @@ export class ProxyReceiver {
   handlers: NodeHandlers;
   secrets = new SecretKeeper();
 
-  constructor(config: HarnessConfig) {
-    const proxyNodeHandlers = this.#createProxyNodeHandlers(config);
+  constructor(config: HarnessConfig, onSecret: SecretHandler) {
+    const proxyNodeHandlers = this.#createProxyNodeHandlers(config, onSecret);
     this.handlers = {
       ...proxyNodeHandlers,
       secrets: async (inputs: InputValues) => {
@@ -36,8 +36,11 @@ export class ProxyReceiver {
     };
   }
 
-  #createProxyNodeHandlers(config: HarnessConfig): Record<string, NodeHandler> {
-    const handlers = config.runtime.kits.reduce((handlers, kit) => {
+  #createProxyNodeHandlers(
+    config: HarnessConfig,
+    onSecret: SecretHandler
+  ): Record<string, NodeHandler> {
+    const handlers = config.kits.reduce((handlers, kit) => {
       return { ...kit.handlers, ...handlers };
     }, {} as NodeHandlers);
 
@@ -46,8 +49,8 @@ export class ProxyReceiver {
       const nodeType = typeof id === "string" ? id : id.node;
       const handler = {
         invoke: async (inputs: InputValues, context: NodeHandlerContext) => {
-          inputs = config.onSecret
-            ? await this.#revealSecretsForInput(inputs, config.onSecret)
+          inputs = onSecret
+            ? await this.#revealSecretsForInput(inputs, onSecret)
             : inputs;
           return callHandler(handlers[nodeType], inputs, context);
         },
