@@ -358,7 +358,9 @@ export class Diagram extends HTMLElement {
     assertRoot(root);
 
     const svgImage = root.querySelector("svg");
-    assertSVGElement(svgImage);
+    if (!svgImage) {
+      return;
+    }
 
     this.#diagramElementDimensions.w = svgImage.clientWidth;
     this.#diagramElementDimensions.h = svgImage.clientHeight;
