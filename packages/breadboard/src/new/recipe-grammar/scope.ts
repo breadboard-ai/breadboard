@@ -5,26 +5,36 @@
  */
 
 import { GraphDescriptor, GraphMetadata } from "@google-labs/breadboard";
-import { BuilderScopeInterface, BuilderNodeInterface } from "./types.js";
+import {
+  BuilderScopeInterface,
+  BuilderNodeInterface,
+  ClosureEdge,
+} from "./types.js";
 import { AbstractNode, ScopeConfig } from "../runner/types.js";
 
 import { Scope } from "../runner/scope.js";
 import { swapCurrentContextScope } from "./default-scope.js";
+import { BuilderNode } from "./node.js";
 
 /**
  * Adds syntactic sugar to support unproxying and serialization of nodes/graphs.
  */
 export class BuilderScope extends Scope implements BuilderScopeInterface {
   #isSerializing: boolean;
+  #closureEdges: ClosureEdge[] = [];
+
+  parentLambdaNode?: BuilderNode;
 
   // TODO:BASE, config of subclasses can have more fields
   constructor(
     config: ScopeConfig & {
       serialize?: boolean;
+      parentLambda?: BuilderNode;
     } = {}
   ) {
     super(config);
     this.#isSerializing = config.serialize ?? false;
+    this.parentLambdaNode = config.parentLambda;
   }
 
   async serialize(
@@ -53,5 +63,13 @@ export class BuilderScope extends Scope implements BuilderScopeInterface {
         swapCurrentContextScope(oldScope);
       }
     }) as T;
+  }
+
+  addClosureEdge(edge: ClosureEdge) {
+    this.#closureEdges.push(edge);
+  }
+
+  getClosureEdges() {
+    return this.#closureEdges;
   }
 }
