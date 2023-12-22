@@ -13,13 +13,13 @@ export const createHarness = (
   config: HarnessConfig,
   onSecret: SecretHandler
 ): Harness => {
-  if (config.runtime.location === "main") {
+  if (!config.remote) {
     if (config.proxy?.[0]?.location === "http") {
       return new ProxyServerHarness(config);
     }
     return new MainThreadHarness(config, onSecret);
   }
-  if (config.runtime.location === "worker") {
+  if (config.remote?.type === "worker") {
     return new WorkerHarness(config, onSecret);
   }
   throw new Error(`Unsupported harness configuration: ${config}`);

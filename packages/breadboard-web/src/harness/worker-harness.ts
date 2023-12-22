@@ -14,7 +14,7 @@ export class WorkerHarness extends HostRuntime {
   #onSecret: SecretHandler;
 
   constructor(config: HarnessConfig, onSecret: SecretHandler) {
-    const workerURL = config.runtime.url;
+    const workerURL = config.remote && config.remote.url;
     if (!workerURL) {
       throw new Error("Worker harness requires a worker URL");
     }

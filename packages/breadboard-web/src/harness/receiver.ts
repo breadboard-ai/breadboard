@@ -40,7 +40,7 @@ export class ProxyReceiver {
     config: HarnessConfig,
     onSecret: SecretHandler
   ): Record<string, NodeHandler> {
-    const handlers = config.runtime.kits.reduce((handlers, kit) => {
+    const handlers = config.kits.reduce((handlers, kit) => {
       return { ...kit.handlers, ...handlers };
     }, {} as NodeHandlers);
 

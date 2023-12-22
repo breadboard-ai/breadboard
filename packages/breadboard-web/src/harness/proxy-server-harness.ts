@@ -47,7 +47,7 @@ export class ProxyServerHarness implements Harness {
       const proxyConfig = this.#config.proxy?.[0].nodes ?? [];
       const proxyKit = proxyClient.createProxyKit(proxyConfig);
 
-      const kits = [proxyKit, ...this.#config.runtime.kits];
+      const kits = [proxyKit, ...this.#config.kits];
 
       for await (const data of runner.run({
         probe: new LogProbe(),

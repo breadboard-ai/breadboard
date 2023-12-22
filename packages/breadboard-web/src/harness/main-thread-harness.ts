@@ -53,10 +53,7 @@ export class MainThreadHarness implements Harness {
         },
       });
 
-      const kits = [
-        asRuntimeKit(SecretAskingKit),
-        ...this.#config.runtime.kits,
-      ];
+      const kits = [asRuntimeKit(SecretAskingKit), ...this.#config.kits];
 
       for await (const data of runner.run({
         probe: new LogProbe(),
