@@ -19,7 +19,7 @@ import {
   ProxyClient,
 } from "@google-labs/breadboard/remote";
 
-export class MainThreadHarness implements Harness {
+export class LocalHarness implements Harness {
   #config: HarnessConfig;
   #onSecret: SecretHandler;
 
@@ -28,14 +28,12 @@ export class MainThreadHarness implements Harness {
     this.#onSecret = onSecret;
   }
 
-  async *run(url: string) {
+  #configureKits() {
     let kits = this.#config.kits;
-
-    const onSecret = this.#onSecret;
-
     // Because we're in the browser, we need to ask for secrets from the user.
     // Add a special kit that overrides the `secrets` handler to ask the user
     // for secrets.
+    const onSecret = this.#onSecret;
     const secretAskingKit = new KitBuilder({
       url: "secret-asking-kit",
     }).build({
@@ -51,7 +49,7 @@ export class MainThreadHarness implements Harness {
     if (proxyConfig) {
       if (proxyConfig.location === "http") {
         if (!proxyConfig.url) {
-          throw new Error("No node proxy server URL provided");
+          throw new Error("No node proxy server URL provided.");
         }
         const proxyClient = new ProxyClient(
           new HTTPClientTransport(proxyConfig.url)
@@ -59,10 +57,15 @@ export class MainThreadHarness implements Harness {
         kits = [proxyClient.createProxyKit(proxyConfig.nodes), ...kits];
       } else {
         throw new Error(
-          "Only HTTP node proxy server is supported at this time"
+          "Only HTTP node proxy server is supported at this time."
         );
       }
     }
+    return kits;
+  }
+
+  async *run(url: string) {
+    const kits = this.#configureKits();
 
     try {
       const runner = await Board.load(url);
@@ -79,10 +82,7 @@ export class MainThreadHarness implements Harness {
         },
       });
 
-      for await (const data of runner.run({
-        probe: new LogProbe(),
-        kits,
-      })) {
+      for await (const data of runner.run({ probe: new LogProbe(), kits })) {
         const { type } = data;
         if (type === "input") {
           const inputResult = new MainThreadRunResult({ type, data });

@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { MainThreadHarness } from "./main-thread-harness";
 import { Harness, HarnessConfig, SecretHandler } from "./types";
+import { LocalHarness } from "./local-harness";
 import { WorkerHarness } from "./worker-harness";
 
 export const createHarness = (
@@ -13,7 +13,7 @@ export const createHarness = (
   onSecret: SecretHandler
 ): Harness => {
   if (!config.remote) {
-    return new MainThreadHarness(config, onSecret);
+    return new LocalHarness(config, onSecret);
   }
   if (config.remote.type === "worker") {
     return new WorkerHarness(config, onSecret);
