@@ -755,7 +755,13 @@ export class UIController extends HTMLElement implements UI {
     this.#showBoardContainer();
     this.#clearNodeInformation();
 
-    const load = new Load(info);
+    const { title, description = "", version = "", url = "" } = info;
+    const load = new Load();
+
+    load.title = title;
+    load.description = description;
+    load.version = version;
+    load.url = url;
     load.slot = "load";
     this.appendChild(load);
     this.#diagram.reset();

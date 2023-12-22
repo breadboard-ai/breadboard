@@ -7,6 +7,9 @@
 import { NodeDescriptor } from "@google-labs/breadboard";
 import { ToastEvent, ToastType } from "./events.js";
 
+import { LitElement, html, css } from "lit";
+import { customElement, property } from "lit/decorators.js";
+
 export type LoadArgs = {
   title: string;
   description?: string;
@@ -16,189 +19,212 @@ export type LoadArgs = {
   nodes?: NodeDescriptor[];
 };
 
-const LOCAL_STORAGE_KEY = "bb-ui-show-diagram";
+const LOCAL_STORAGE_KEY = "bb-load-show-extended-info";
 
-export class Load extends HTMLElement {
-  constructor({ title, description = "", version = "", url = "" }: LoadArgs) {
-    super();
+@customElement("bb-load")
+export class Load extends LitElement {
+  @property()
+  title = "Untitled Board";
 
-    if (!version) {
-      version = "Unversioned";
+  @property()
+  description = "No description provided";
+
+  @property()
+  version = "Unversioned";
+
+  @property()
+  url = "";
+
+  @property({ reflect: true })
+  expanded = localStorage.getItem(LOCAL_STORAGE_KEY) === "open";
+
+  #copying = false;
+
+  static styles = css`
+    :host {
+      display: block;
+      position: relative;
     }
 
-    const show = localStorage.getItem(LOCAL_STORAGE_KEY) ? "open" : "";
-    const root = this.attachShadow({ mode: "open" });
-    root.innerHTML = `
-      <style>
-        :host {
-          display: block;
-          position: relative;
-        }
+    #info {
+      display: none;
+    }
 
-        #info {
-          display: none;
-        }
+    #info.open {
+      display: block;
+    }
 
-        #info.open {
-          display: block;
-        }
+    #toggle {
+      cursor: pointer;
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      right: 0;
+      top: var(--bb-grid-size, 4px);
+      background: var(--bb-icon-expand) center center no-repeat;
+      border: none;
+      font-size: 0;
+    }
 
-        #toggle {
-          cursor: pointer;
-          position: absolute;
-          width: 24px;
-          height: 24px;
-          right: 0;
-          top: var(--bb-grid-size, 4px);
-          background: var(--bb-icon-expand) center center no-repeat;
-          border: none;
-          font-size: 0;
-        }
+    #toggle.collapse {
+      background: var(--bb-icon-collapse) center center no-repeat;
+    }
 
-        #toggle.collapse {
-          background: var(--bb-icon-collapse) center center no-repeat;
-        }
+    h1 {
+      font: var(--bb-text-baseline) var(--bb-font-family);
+      font-weight: 700;
+      margin: calc(var(--bb-grid-size, 4px) * 4) 0;
+    }
 
-        h1 {
-          font: var(--bb-text-baseline) var(--bb-font-family);
-          font-weight: 700;
-          margin: calc(var(--bb-grid-size, 4px) * 4) 0;
-        }
+    h1 > a {
+      text-decoration: none;
+    }
 
-        h1 > a {
-          text-decoration: none;
-        }
+    h1 > button {
+      vertical-align: middle;
+    }
 
-        h1 > button {
-          vertical-align: middle;
-        }
+    dt {
+      font-size: var(--bb-text-medium);
+      font-weight: 700;
+      margin-bottom: calc(var(--bb-grid-size) * 3);
+    }
 
-        dt {
-          font-size: var(--bb-text-medium);
-          font-weight: 700;
-          margin-bottom: calc(var(--bb-grid-size) * 3);
-        }
+    dd {
+      font-size: var(--bb-text-medium);
+      margin: 0;
+      margin-bottom: calc(var(--bb-grid-size) * 5);
+      line-height: 1.5;
+    }
 
-        dd {
-          font-size: var(--bb-text-medium);
-          margin: 0;
-          margin-bottom: calc(var(--bb-grid-size) * 5);
-          line-height: 1.5;
-        }
+    @media (min-width: 640px) {
+      h1 {
+        font: var(--bb-text-large) var(--bb-font-family);
+        font-weight: 700;
+      }
 
-        @media(min-width: 640px) {
-          h1 {
-            font: var(--bb-text-large) var(--bb-font-family);
-            font-weight: 700;
-          }
+      dl {
+        font-size: var(--bb-text-medium);
+      }
 
-          dl {
-            font-size: var(--bb-text-medium);
-          }
+      dt {
+        font-size: var(--bb-text-baseline);
+      }
 
-          dt {
-            font-size: var(--bb-text-baseline);
-          }
+      dd {
+        font-size: var(--bb-text-baseline);
+      }
+    }
 
-          dd {
-            font-size: var(--bb-text-baseline);
-          }
-        }
+    #diagram dd {
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: calc(var(--bb-grid-size) * 8);
+      border-radius: calc(var(--bb-grid-size) * 8);
+    }
 
-        #diagram dd {
-          background: #FFF;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: calc(var(--bb-grid-size) * 8);
-          border-radius: calc(var(--bb-grid-size) * 8);
-        }
+    #diagram-download {
+      width: 24px;
+      height: 24px;
+      font-size: 0;
+      display: inline-block;
+      background: var(--bb-icon-download) center center no-repeat;
+      vertical-align: middle;
+    }
 
-        #diagram-download {
-          width: 24px;
-          height: 24px;
-          font-size: 0;
-          display: inline-block;
-          background: var(--bb-icon-download) center center no-repeat;
-          vertical-align: middle;
-        }
+    #diagram-download:not([href]) {
+      opacity: 0.4;
+    }
 
-        #diagram-download:not([href]) {
-          opacity: 0.4;
-        }
+    #copy-to-clipboard {
+      width: 24px;
+      height: 24px;
+      font-size: 0;
+      display: inline-block;
+      background: var(--bb-icon-copy-to-clipboard) center center no-repeat;
+      vertical-align: middle;
+      border: none;
+      cursor: pointer;
+      transition: opacity var(--bb-easing-duration-out) var(--bb-easing);
+      opacity: 0.5;
+    }
 
-        #copy-to-clipboard {
-          width: 24px;
-          height: 24px;
-          font-size: 0;
-          display: inline-block;
-          background: var(--bb-icon-copy-to-clipboard) center center no-repeat;
-          vertical-align: middle;
-          border: none;
-          cursor: pointer;
-          transition: opacity var(--bb-easing-duration-out) var(--bb-easing);
-          opacity: 0.5;
-        }
+    #copy-to-clipboard:hover {
+      transition: opacity var(--bb-easing-duration-in) var(--bb-easing);
+      opacity: 1;
+    }
 
-        #copy-to-clipboard:hover {
-          transition: opacity var(--bb-easing-duration-in) var(--bb-easing);
-          opacity: 1;
-        }
+    #mermaid {
+      line-height: 1;
+      width: 100%;
+      max-width: 50vw;
+    }
 
-        #mermaid {
-          line-height: 1;
-          width: 100%;
-          max-width: 50vw;
-        }
+    #mermaid:empty::before {
+      content: "Generating board image...";
+    }
+  `;
 
-        #mermaid:empty::before {
-          content: 'Generating board image...';
-        }
-      </style>
-      <h1>${title} <button id="copy-to-clipboard"></h1>
-      <button id="toggle">Toggle</button>
-      <div id="info" class="${show}">
-        <dl>
-          <div>
-            <dt>Version</dt>
-            <dd>${version}</dd>
+  #onToggleExpand() {
+    const root = this.shadowRoot;
+    if (!root) {
+      return;
+    }
 
-            <dt>Description</dt>
-            <dd>${description}</dd>
-          </div>
-        </dl>
-      </div>
-    `;
-
+    const info = root.querySelector("#info");
     const toggle = root.querySelector("#toggle");
-    toggle?.addEventListener("click", () => {
-      const info = root.querySelector("#info");
-      info?.classList.toggle("open");
-      toggle?.classList.toggle("collapse", info?.classList.contains("open"));
+    if (!info || !toggle) {
+      return;
+    }
 
-      if (info?.classList.contains("open")) {
-        localStorage.setItem(LOCAL_STORAGE_KEY, "true");
-      } else {
-        localStorage.removeItem(LOCAL_STORAGE_KEY);
-      }
-    });
+    info.classList.toggle("open");
+    this.expanded = info.classList.contains("open");
 
-    let copying = false;
-    const copyToClipboard = root.querySelector("#copy-to-clipboard");
-    copyToClipboard?.addEventListener("click", async () => {
-      if (copying) {
-        return;
-      }
+    toggle.classList.toggle("collapse", this.expanded);
 
-      copying = true;
-      const linkUrl = new URL(window.location.href);
-      linkUrl.searchParams.set("board", url);
+    if (this.expanded) {
+      localStorage.setItem(LOCAL_STORAGE_KEY, "open");
+    } else {
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+    }
+  }
 
-      await navigator.clipboard.writeText(linkUrl.toString());
-      this.dispatchEvent(
-        new ToastEvent("Board URL copied to clipboard", ToastType.INFORMATION)
-      );
-      copying = false;
-    });
+  async #onCopyToClipboard() {
+    if (this.#copying) {
+      return;
+    }
+
+    this.#copying = true;
+    const linkUrl = new URL(window.location.href);
+    linkUrl.searchParams.set("board", this.url);
+
+    await navigator.clipboard.writeText(linkUrl.toString());
+    this.dispatchEvent(
+      new ToastEvent("Board URL copied to clipboard", ToastType.INFORMATION)
+    );
+    this.#copying = false;
+  }
+
+  render() {
+    return html`
+    <h1>${this.title} <button @click=${
+      this.#onCopyToClipboard
+    } id="copy-to-clipboard"></h1>
+    <button @click=${this.#onToggleExpand} id="toggle" class="${
+      this.expanded ? "collapse" : ""
+    }">Toggle</button>
+    <div id="info" class="${this.expanded ? "open" : ""}">
+      <dl>
+        <div>
+          <dt>Version</dt>
+          <dd>${this.version}</dd>
+
+          <dt>Description</dt>
+          <dd>${this.description}</dd>
+        </div>
+      </dl>
+    </div>`;
   }
 }
