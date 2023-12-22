@@ -13,7 +13,7 @@ import {
 } from "@google-labs/breadboard";
 import type { ProxyRequestMessage } from "@google-labs/breadboard/worker";
 
-import { SecretKeeper } from "../secrets";
+import { SecretKeeper } from "./secrets";
 import { HarnessConfig, SecretHandler } from "./types";
 
 type ProxyResult = {

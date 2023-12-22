@@ -8,7 +8,8 @@ import { HostRuntime, RunResult } from "@google-labs/breadboard/worker";
 import { HarnessConfig } from "./types";
 import { ProxyReceiver } from "./receiver";
 import { ProxyPromiseResponse } from "@google-labs/breadboard/remote";
-import { OutputValues, asyncGen } from "@google-labs/breadboard";
+import { asyncGen } from "@google-labs/breadboard";
+import { createOnSecret } from "./secrets";
 
 export class WorkerHarness extends HostRuntime {
   #config: HarnessConfig;
@@ -24,19 +25,7 @@ export class WorkerHarness extends HostRuntime {
 
   override async *run(url: string) {
     yield* asyncGen<RunResult>(async (next) => {
-      const receiver = new ProxyReceiver(this.#config, async ({ keys }) => {
-        let result: OutputValues = {};
-        await next({
-          message: {
-            type: "secret",
-            data: { keys },
-          },
-          reply(reply: OutputValues) {
-            result = reply;
-          },
-        } as unknown as RunResult);
-        return result;
-      });
+      const receiver = new ProxyReceiver(this.#config, createOnSecret(next));
       const proxyNodes = (this.#config.proxy?.[0]?.nodes ?? []).map((node) => {
         return typeof node === "string" ? node : node.node;
       });

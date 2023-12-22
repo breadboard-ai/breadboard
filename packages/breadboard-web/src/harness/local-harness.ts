@@ -10,7 +10,6 @@ import {
   Board,
   InputValues,
   LogProbe,
-  OutputValues,
   asRuntimeKit,
   asyncGen,
 } from "@google-labs/breadboard";
@@ -20,7 +19,7 @@ import {
   HTTPClientTransport,
   ProxyClient,
 } from "@google-labs/breadboard/remote";
-import { RunResult } from "@google-labs/breadboard/worker";
+import { createOnSecret } from "./secrets";
 
 export class LocalHarness implements Harness {
   #config: HarnessConfig;
@@ -66,19 +65,7 @@ export class LocalHarness implements Harness {
 
   async *run(url: string) {
     yield* asyncGen<MainThreadRunResult>(async (next) => {
-      const kits = this.#configureKits(async ({ keys }) => {
-        let result: OutputValues = {};
-        await next({
-          message: {
-            type: "secret",
-            data: { keys },
-          },
-          reply(reply: OutputValues) {
-            result = reply;
-          },
-        } as unknown as RunResult);
-        return result;
-      });
+      const kits = this.#configureKits(createOnSecret(next));
 
       try {
         const runner = await Board.load(url);
