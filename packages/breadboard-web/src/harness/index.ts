@@ -16,7 +16,7 @@ export const createHarness = (
     return new LocalHarness(config, onSecret);
   }
   if (config.remote.type === "worker") {
-    return new WorkerHarness(config, onSecret);
+    return new WorkerHarness(config);
   }
   throw new Error(`Unsupported harness configuration: ${config}`);
 };

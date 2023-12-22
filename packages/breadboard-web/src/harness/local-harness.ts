@@ -4,13 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Harness, HarnessConfig, SecretHandler } from "./types";
+import { Harness, HarnessConfig, Result, SecretHandler } from "./types";
 
 import {
   Board,
   InputValues,
   LogProbe,
   asRuntimeKit,
+  asyncGen,
 } from "@google-labs/breadboard";
 import { KitBuilder } from "@google-labs/breadboard/kits";
 import { MainThreadRunResult } from "./result";
@@ -65,45 +66,49 @@ export class LocalHarness implements Harness {
   }
 
   async *run(url: string) {
-    const kits = this.#configureKits();
+    yield* asyncGen<MainThreadRunResult<Result>>(async (next) => {
+      const kits = this.#configureKits();
 
-    try {
-      const runner = await Board.load(url);
+      try {
+        const runner = await Board.load(url);
 
-      yield new MainThreadRunResult({
-        type: "load",
-        data: {
-          title: runner.title,
-          description: runner.description,
-          version: runner.version,
-          diagram: runner.mermaid("TD", true),
-          url: url,
-          nodes: runner.nodes,
-        },
-      });
+        await next(
+          new MainThreadRunResult({
+            type: "load",
+            data: {
+              title: runner.title,
+              description: runner.description,
+              version: runner.version,
+              diagram: runner.mermaid("TD", true),
+              url: url,
+              nodes: runner.nodes,
+            },
+          })
+        );
 
-      for await (const data of runner.run({ probe: new LogProbe(), kits })) {
-        const { type } = data;
-        if (type === "input") {
-          const inputResult = new MainThreadRunResult({ type, data });
-          yield inputResult;
-          data.inputs = inputResult.response as InputValues;
-        } else if (type === "output") {
-          yield new MainThreadRunResult({ type, data });
-        } else if (data.type === "beforehandler") {
-          yield new MainThreadRunResult({ type, data });
+        for await (const data of runner.run({ probe: new LogProbe(), kits })) {
+          const { type } = data;
+          if (type === "input") {
+            const inputResult = new MainThreadRunResult({ type, data });
+            await next(inputResult);
+            data.inputs = inputResult.response as InputValues;
+          } else if (type === "output") {
+            await next(new MainThreadRunResult({ type, data }));
+          } else if (data.type === "beforehandler") {
+            await next(new MainThreadRunResult({ type, data }));
+          }
         }
+        await next(new MainThreadRunResult({ type: "end", data: {} }));
+      } catch (e) {
+        let error = e as Error;
+        let message = "";
+        while (error?.cause) {
+          error = (error.cause as { error: Error }).error;
+          message += `\n${error.message}`;
+        }
+        console.error(message, error);
+        await next(new MainThreadRunResult({ type: "error", data: { error } }));
       }
-      yield new MainThreadRunResult({ type: "end", data: {} });
-    } catch (e) {
-      let error = e as Error;
-      let message = "";
-      while (error?.cause) {
-        error = (error.cause as { error: Error }).error;
-        message += `\n${error.message}`;
-      }
-      console.error(message, error);
-      yield new MainThreadRunResult({ type: "error", data: { error } });
-    }
+    });
   }
 }
