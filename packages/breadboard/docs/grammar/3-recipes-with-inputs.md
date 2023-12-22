@@ -1,4 +1,4 @@
-# Recipes with inputs and output,
+# Recipes with inputs and output
 
 We can do this by adding an input node:
 
@@ -24,19 +24,18 @@ it’ll send all inputs)
 For convenience, we can directly build a recipe like this:
 
 ```ts
-const hello = recipe(async (inputs) {
-  return starter.promptTemplate({
-     template: "Hello {{name}}, please ",
-     name: inputs.name })
-  .to(palm.generateText());
+const hello = recipe(({ name }) => {
+  return starter
+    .promptTemplate({ template: "Hello {{name}}, please ", name })
+    .to(palm.generateText());
 });
 
 // We can directly use it:
-const { completion} = await hello({ name: "Universe" });
+const { completion } = await hello({ name: "Universe" });
 
 // Or save it and load it again:
 await writeFile("hello.json", await hello.serialize());
-…
+...
 const hello = recipe("hello.json");
 const { completion } = await hello();
 ```

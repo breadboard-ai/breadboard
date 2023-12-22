@@ -7,7 +7,7 @@ Let's use a slightly modified version of the reverse example from the [codes and
 nodes](4-code-as-nodes.md):
 
 ```ts
-const reverse = recipe((inputs) => {
+const reverse = code((inputs) => {
   for (let key in inputs)
     if (typeof inputs[key] === "string")
       inputs[key] = inputs[key].value.split("").reverse().join("");
@@ -18,11 +18,11 @@ const reverse = recipe((inputs) => {
 This can be passed to another recipe:
 
 ```ts
-const generateWithPreProcessing = recipe(async (inputs) => {
+const generateWithPreProcessing = recipe(({ preProcess, name }) => {
   return starter
     .promptTemplate({
       template: "Mirror, mirror, my name is {{name}}, who is ",
-      name: inputs.preProcess(inputs),
+      name: preProcess({ name }),
     })
     .to(palm.generateText());
 });
@@ -72,12 +72,11 @@ You can even wire nodes from parent recipes to child recipes:
 ```ts
 const reflector = core.passthrough(inputs.reflector);
 
-const promptGenerator = recipe(
+const promptGenerator = recipe(() =>
   starter.promptTemplate({
     template: "{{reflector}}, {{reflector}}, my name is {{name}}, who is ",
-    reflector: reflector
-  })
-);
+    reflector
+  }));
 
 ...
 ```
