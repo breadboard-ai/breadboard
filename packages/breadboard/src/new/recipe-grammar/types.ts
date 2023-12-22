@@ -294,6 +294,14 @@ export type NodeProxy<
   [key in string]: AbstractValue<NodeValue> & ((...args: unknown[]) => unknown);
 } & NodeProxyMethods<I, O>;
 
+export interface ClosureEdge {
+  scope: BuilderScopeInterface;
+  from: BuilderNodeInterface;
+  to: BuilderNodeInterface;
+  out: string;
+  in: string;
+}
+
 export interface BuilderScopeInterface {
   /**
    * Swap global scope with this one, run the function, then restore
@@ -305,4 +313,10 @@ export interface BuilderScopeInterface {
    * Helpers to detect handlers that construct graphs but don't invoke them.
    */
   serializing(): boolean;
+
+  /**
+   * used by recipe() and node.addIncomingEdges() to auto-wire closures
+   */
+  addClosureEdge(edge: ClosureEdge): void;
+  getClosureEdges(): ClosureEdge[];
 }

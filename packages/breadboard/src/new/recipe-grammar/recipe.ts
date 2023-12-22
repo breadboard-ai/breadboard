@@ -24,6 +24,7 @@ import {
   NodeFactory,
   InputsMaybeAsValues,
   Lambda,
+  ClosureEdge,
 } from "./types.js";
 import { NodeHandler, NodeHandlerFunction } from "../runner/types.js";
 
@@ -31,6 +32,7 @@ import { zodToSchema } from "./zod-utils.js";
 import { registerNodeType } from "./kits.js";
 import { getCurrentContextScope } from "./default-scope.js";
 import { BuilderNode } from "./node.js";
+import { nextNodeId } from "../runner/node.js";
 import { BuilderScope } from "./scope.js";
 
 /**
@@ -87,6 +89,7 @@ function lambdaFactory(
     throw new Error("Missing invoke or graph definition function");
 
   const lexicalScope = getCurrentContextScope();
+  const closureEdgesToWire: ClosureEdge[] = [];
 
   // Extract recipe metadata from config. Used in serialize().
   const { url, title, description, version } = options ?? {};
@@ -175,6 +178,27 @@ function lambdaFactory(
       scope.pin(actualOutput);
     })();
 
+    // Add closure wires from parent scopes, if any
+    if (scope.getClosureEdges().length > 0) {
+      // This input node will receive all closure wires into the new graph.
+      const closureInput = new BuilderNode("input", scope, {
+        $id: "closure-input",
+      });
+      scope.pin(closureInput);
+
+      for (const edge of scope.getClosureEdges()) {
+        // Connect closure input to destination node
+        const { to, out, in: in_ } = edge;
+        const wire = `$l-${out}-${to.id}`;
+        to.addIncomingEdge(closureInput, wire, in_, true);
+
+        // Wire upwards. This has to wait until the end of this function because
+        // we first need the lambda node, and that in turn needs to serialize
+        // this graph first.
+        closureEdgesToWire.push({ ...edge, to: closureInput, in: wire });
+      }
+    }
+
     scope.compactPins();
     const numGraphs = scope.getPinnedNodes().length;
 
@@ -212,7 +236,10 @@ function lambdaFactory(
   // (= like a closure, it reads from other nodes in its parent lexical scope),
   // then invoke said lambda by reading the board capability it creates.
   const factory = ((config?: InputsMaybeAsValues<InputValues>) => {
-    if (!lambdaNode || lambdaNode.incoming.length === 0)
+    if (
+      !lambdaNode ||
+      (lambdaNode.incoming.length === 0 && closureEdgesToWire.length == 0)
+    )
       return new BuilderNode(
         handler,
         getCurrentContextScope(),
@@ -293,7 +320,8 @@ function lambdaFactory(
     factory.serialize = async (metadata?: GraphMetadata) => {
       // If there are no incoming wires to the lambda node, it's not a closure
       // and we can just return the original board.
-      if (lambdaNode?.incoming.length === 0) return await serialized;
+      if (lambdaNode?.incoming.length === 0 && closureEdgesToWire.length === 0)
+        return await serialized;
 
       const invoke = new BuilderNode("invoke", getCurrentContextScope(), {
         $recipe: lambdaNode?.asProxy().board,
@@ -307,7 +335,8 @@ function lambdaFactory(
 
   // Return wire from lambdaNode that will generate a BoardCapability
   factory.getBoardCapabilityAsValue = () =>
-    lambdaNode !== undefined && lambdaNode.incoming.length > 0
+    lambdaNode !== undefined &&
+    (lambdaNode.incoming.length > 0 || closureEdgesToWire.length > 0)
       ? lambdaNode.asProxy().board
       : ((async () => ({
           kind: "board",
@@ -328,6 +357,21 @@ function lambdaFactory(
     getLambdaNode().in(inputs);
     return factory as unknown as NodeProxy;
   };
+
+  for (const { scope: fromScope, from, out, in: in_ } of closureEdgesToWire) {
+    // If we reached the source scope, connect source node to lambda
+    if (fromScope === lexicalScope)
+      getLambdaNode().addIncomingEdge(from, out, in_, true);
+    // Otherwise add closure edge to the lambda node's scope
+    else
+      lexicalScope.addClosureEdge({
+        scope: fromScope,
+        from,
+        to: getLambdaNode(),
+        out,
+        in: in_,
+      });
+  }
 
   return factory;
 }

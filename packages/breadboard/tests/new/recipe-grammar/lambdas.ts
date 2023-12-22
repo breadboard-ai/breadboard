@@ -7,6 +7,7 @@
 import test from "ava";
 
 import { recipe, isLambda } from "../../../src/new/recipe-grammar/recipe.js";
+import { base } from "../../../src/new/recipe-grammar/base.js";
 import { isValue } from "../../../src/new/recipe-grammar/value.js";
 import { Serializeable } from "../../../src/new/runner/types.js";
 import {
@@ -125,4 +126,47 @@ test("serialize closure lambda", async (t) => {
     )?.board,
     { kits: [], ...serialized2 }
   );
+});
+
+test("one level auto-wired closure lambda", async (t) => {
+  const graph = recipe(({ foo, bar }) => {
+    const lambda = recipe(({ foo }) => testKit.noop({ foo, bar }));
+    const caller = recipe(({ lambda, foo }) => {
+      return lambda({ foo });
+    });
+    return caller({ lambda, foo });
+  });
+
+  const result = await serializeAndRunGraph(graph, { foo: "bar", bar: "baz" });
+  t.deepEqual(result, { foo: "bar", bar: "baz" });
+});
+
+test("two level auto-wired closure lambda", async (t) => {
+  const graph = recipe(({ foo, bar }) => {
+    const lambda = recipe(({ foo }) => {
+      const lambda2 = recipe(({ foo }) => testKit.noop({ foo, bar }));
+      return lambda2({ foo });
+    });
+    return lambda({ foo });
+  });
+
+  const result = await serializeAndRunGraph(graph, { foo: "bar", bar: "baz" });
+  t.deepEqual(result, { foo: "bar", bar: "baz" });
+});
+
+test("two level nested calling auto-wired closure lambda", async (t) => {
+  const caller = recipe(({ lambda, foo }) => {
+    return lambda({ foo });
+  });
+
+  const graph = recipe(({ foo, bar }) => {
+    const lambda = recipe(({ foo }) => {
+      const lambda = recipe(({ foo }) => testKit.noop({ foo, bar }));
+      return caller({ lambda, foo });
+    });
+    return caller({ lambda, foo });
+  });
+
+  const result = await serializeAndRunGraph(graph, { foo: "bar", bar: "baz" });
+  t.deepEqual(result, { foo: "bar", bar: "baz" });
 });

@@ -85,6 +85,12 @@ export abstract class AbstractNode<
   abstract incoming: EdgeInterface[];
   abstract configuration: Partial<I>;
 
+  abstract addIncomingEdge(
+    from: AbstractNode,
+    out: string,
+    in_: string,
+    constant?: boolean
+  ): void;
   abstract receiveInputs(edge: EdgeInterface, inputs: InputValues): string[];
   abstract missingInputs(): string[] | false;
 
@@ -148,6 +154,14 @@ export interface ScopeConfig {
 }
 
 export interface ScopeInterface {
+  parentLexicalScope?: ScopeInterface;
+  parentDynamicScope?: ScopeInterface;
+
+  /**
+   * Add handlers to this scope. See `getHandler` for resolution order.
+   *
+   * @param handlers handlers to add
+   */
   addHandlers(handlers: NodeHandlers): void;
 
   /**

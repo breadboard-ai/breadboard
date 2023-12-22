@@ -7,18 +7,18 @@
 import test from "ava";
 import { code } from "../../../src/index.js";
 
-test("recipeAsCode works with sync arrow functions", async (t) => {
+test("`code` works with sync arrow functions", async (t) => {
   const fn = await code(() => {
     return { value: 1 };
-  })({}).serialize();
+  })({ $id: "fn" }).serialize();
   t.like(fn, {
     graphs: {
-      "fn-1": {
+      fn: {
         nodes: [
           { type: "input" },
           {
             configuration: {
-              code: `function fn_1() {
+              code: `function fn() {
         return { value: 1 };
     }`,
             },
@@ -29,18 +29,18 @@ test("recipeAsCode works with sync arrow functions", async (t) => {
   });
 });
 
-test("recipeAsCode works with async arrow functions", async (t) => {
+test("`code` works with async arrow functions", async (t) => {
   const fn = await code(async () => {
     return { value: 1 };
-  })({}).serialize();
+  })({ $id: "fn" }).serialize();
   t.like(fn, {
     graphs: {
-      "fn-2": {
+      fn: {
         nodes: [
           { type: "input" },
           {
             configuration: {
-              code: `async function fn_2() {
+              code: `async function fn() {
         return { value: 1 };
     }`,
             },
