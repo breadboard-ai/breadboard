@@ -15,7 +15,6 @@
     "deploy": "npm run build:vite && firebase deploy",
     "build": "wireit",
     "build:vite": "wireit",
-    "test": "wireit",
     "generate:graphs": "wireit",
     "generate:docs": "wireit"
   },
@@ -87,19 +86,6 @@
         "vite.config.ts",
         ".env"
       ]
-    },
-    "test": {
-      "command": "vitest --run",
-      "env": {
-        "FORCE_COLOR": "1"
-      },
-      "dependencies": [
-        "typescript-files-and-deps"
-      ],
-      "files": [
-        "vite.config.ts"
-      ],
-      "output": []
     },
     "generate:graphs": {
       "command": "tsx src/make-graphs.ts",
