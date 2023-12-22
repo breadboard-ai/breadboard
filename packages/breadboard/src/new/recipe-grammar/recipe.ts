@@ -32,7 +32,6 @@ import { zodToSchema } from "./zod-utils.js";
 import { registerNodeType } from "./kits.js";
 import { getCurrentContextScope } from "./default-scope.js";
 import { BuilderNode } from "./node.js";
-import { nextNodeId } from "../runner/node.js";
 import { BuilderScope } from "./scope.js";
 
 /**
