@@ -56,38 +56,62 @@ export class Scope implements ScopeInterface {
     this.#pinnedNodes.push(node);
   }
 
+  compactPins() {
+    const visited = new Set<AbstractNode>();
+    const disjointPins = [];
+
+    for (const node of this.#pinnedNodes) {
+      if (visited.has(node)) continue;
+      disjointPins.push(node);
+      const connected = this.#findAllConnectedNodes(node);
+      connected.forEach((node) => visited.add(node));
+    }
+
+    this.#pinnedNodes = disjointPins;
+  }
+
+  getPinnedNodes(): AbstractNode[] {
+    return this.#pinnedNodes;
+  }
+
   addCallbacks(callbacks: InvokeCallbacks) {
     this.#callbacks.push(callbacks);
   }
 
   #getAllCallbacks(): InvokeCallbacks[] {
+    // Callbacks are called in reverse order that they are added. Important for
+    // the `before` callback, which can override execution with output values.
+    // So while all are called, the last one added that returns something other
+    // than undefined gets precedence.
     return [
       ...this.#callbacks,
       ...(this.#dynamicScope ? this.#dynamicScope.#getAllCallbacks() : []),
     ];
   }
 
-  async invoke(node?: AbstractNode): Promise<void> {
+  async invoke(node?: AbstractNode | AbstractNode[]): Promise<void> {
     try {
-      const queue: AbstractNode[] = (node ? [node] : this.#pinnedNodes).flatMap(
-        (node) =>
-          this.#findAllConnectedNodes(node).filter(
-            (node) => !node.missingInputs()
-          )
+      const queue: AbstractNode[] = (
+        node ? (node instanceof Array ? node : [node]) : this.#pinnedNodes
+      ).flatMap((node) =>
+        this.#findAllConnectedNodes(node).filter(
+          (node) => !node.missingInputs()
+        )
       );
 
       const callbacks = this.#getAllCallbacks();
 
       while (queue.length) {
+        for (const callback of callbacks)
+          if (await callback.abort?.(this)) return;
+
         const node = queue.shift() as AbstractNode;
 
         const inputs = node.getInputs();
 
         let callbackResult: OutputValues | undefined = undefined;
-        for (const callback of callbacks) {
-          callbackResult = await callback.before?.(node, inputs);
-          if (callbackResult) break;
-        }
+        for (const callback of callbacks)
+          callbackResult ??= await callback.before?.(this, node, inputs);
 
         // Invoke node, unless before callback already provided a result.
         const result =
@@ -118,7 +142,7 @@ export class Scope implements ScopeInterface {
         // Call after callback
         distribution.unused = [...unusedPorts];
         for (const callback of callbacks) {
-          await callback.after?.(node, inputs, result, distribution);
+          await callback.after?.(this, node, inputs, result, distribution);
         }
 
         // Abort graph on uncaught errors.
@@ -135,7 +159,7 @@ export class Scope implements ScopeInterface {
     }
   }
 
-  async invokeOnce(
+  invokeOnce(
     inputs: InputValues = {},
     node?: AbstractNode
   ): Promise<OutputValues> {
@@ -153,7 +177,7 @@ export class Scope implements ScopeInterface {
       output: async (inputs: InputValues | PromiseLike<InputValues>) => {
         resolver?.(await inputs);
         resolver = undefined;
-        return {};
+        return inputs;
       },
     });
 
@@ -161,7 +185,11 @@ export class Scope implements ScopeInterface {
     const lastMissingInputs = new Map<string, string>();
 
     scope.addCallbacks({
-      after: (node, _inputs, _outputs, distribution) => {
+      abort: () => {
+        // Once output node was executed, stop execution.
+        return !resolver;
+      },
+      after: (_scope, node, _inputs, _outputs, distribution) => {
         // Remember debug information to make the error below more useful.
 
         lastNode = node;
@@ -192,9 +220,10 @@ export class Scope implements ScopeInterface {
       },
     });
 
-    scope.invoke(node);
+    const runner = scope.invoke(node ?? this.#pinnedNodes);
 
-    return promise;
+    // Wait for both, return output values
+    return Promise.all([promise, runner]).then(([outputs]) => outputs);
   }
 
   async serialize(
