@@ -7,7 +7,6 @@
 import * as BreadboardUI from "@google-labs/breadboard-ui";
 import {
   Harness,
-  HarnessConfig,
   HarnessProxyConfig,
   HarnessRunResult,
   SecretHandler,
@@ -323,8 +322,7 @@ export class Main {
         nodes: PROXY_NODES,
       });
     }
-
-    const config: HarnessConfig = {
+    return createHarness({
       runtime: {
         location: harness === WORKER_HARNESS_VALUE ? "worker" : "main",
         url: harness === WORKER_HARNESS_VALUE ? WORKER_URL : undefined,
@@ -332,8 +330,6 @@ export class Main {
       },
       proxy,
       onSecret,
-    };
-
-    return createHarness(config);
+    });
   }
 }
