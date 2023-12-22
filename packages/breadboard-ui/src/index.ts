@@ -11,8 +11,8 @@ export { Input } from "./input.js";
 export { WebcamInput } from "./webcam.js";
 export { DrawableInput } from "./drawable.js";
 export { HistoryEntry } from "./history-entry.js";
+export { Load } from "./load.js";
 
-import { Load } from "./load.js";
 import { Output } from "./output.js";
 import { Progress } from "./progress.js";
 import { Result } from "./result.js";
@@ -31,7 +31,6 @@ export const register = () => {
   customElements.define("bb-input-container", InputContainer);
   customElements.define("bb-ui", UIController);
   customElements.define("bb-start", Start);
-  customElements.define("bb-load", Load);
   customElements.define("bb-output", Output);
   customElements.define("bb-progress", Progress);
   customElements.define("bb-result", Result);
