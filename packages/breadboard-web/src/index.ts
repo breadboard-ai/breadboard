@@ -182,7 +182,8 @@ export class Main {
       return;
     }
 
-    const start = new Start(args);
+    const start = new Start() as BreadboardUI.Start;
+    start.boards = args.boards;
     header.append(start);
 
     const boardFromUrl = this.#getBoardFromUrl();

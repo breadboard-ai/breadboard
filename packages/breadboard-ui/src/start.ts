@@ -6,80 +6,66 @@
 
 import { StartEvent } from "./events.js";
 
-export type StartArgs = {
-  boards: {
-    title: string;
-    url: string;
-    version: string;
-  }[];
+type Board = {
+  title: string;
+  url: string;
+  version: string;
 };
 
-export class Start extends HTMLElement {
-  static observedAttributes = ["url"];
+export type StartArgs = {
+  boards: Board[];
+};
 
-  constructor({ boards }: StartArgs) {
-    super();
-    const root = this.attachShadow({ mode: "open" });
+import { LitElement, html, css } from "lit";
+import { customElement, property } from "lit/decorators.js";
 
-    root.innerHTML = `
-      <style>
-        :host {
-          display: flex;
-          flex-direction: column;
-          height: 100%;
-        }
+@customElement("bb-start")
+export class Start extends LitElement {
+  @property({ reflect: true })
+  url = "";
 
-        #sample-board-list {
-          width: auto;
-          max-width: 30vw;
-          padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 4);
-          border-radius: 30px;
-          background: rgb(255, 255, 255);
-          border: 1px solid rgb(200, 200, 200);
-        }
-      </style>
+  @property()
+  boards: Board[] = [];
 
-      <select id="sample-board-list">
-        <option class="sample-board" value="" disabled selected>-- Choose a board --</option>
-        ${boards
-          .map(({ title, url }) => {
-            return `<option class="sample-board" value="${url}">${title}</option>`;
-          })
-          .join("")}
-      </select>
-    `;
+  static styles = css`
+    :host {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
 
-    root
-      .querySelector("#sample-board-list")
-      ?.addEventListener("change", (e: Event) => {
-        const target = e.target as HTMLSelectElement;
-        this.dispatchEvent(new StartEvent(target.value));
-      });
+    #sample-board-list {
+      width: auto;
+      max-width: 30vw;
+      padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 4);
+      border-radius: 30px;
+      background: rgb(255, 255, 255);
+      border: 1px solid rgb(200, 200, 200);
+    }
+  `;
+
+  #onBoardChange(evt: Event) {
+    if (!(evt.target instanceof HTMLSelectElement)) {
+      return;
+    }
+
+    this.dispatchEvent(new StartEvent(evt.target.value));
   }
 
-  attributeChangedCallback(
-    name: string,
-    _oldValue: string | null,
-    newValue: string | null
-  ) {
-    const root = this.shadowRoot;
-    if (!root) {
-      throw new Error("Unable to locate shadow root in Start");
-    }
-
-    for (const opt of Array.from(root.querySelectorAll("option"))) {
-      opt.removeAttribute("selected");
-    }
-
-    if (name !== "url" || newValue === null) {
-      return;
-    }
-
-    const activeBoard = root.querySelector(`option[value="${newValue}"]`);
-    if (!activeBoard) {
-      return;
-    }
-
-    activeBoard.setAttribute("selected", "selected");
+  render() {
+    return html`<select @change=${this.#onBoardChange} id="sample-board-list">
+      <option class="sample-board" value="" disabled selected>
+        -- Choose a board --
+      </option>
+      ${this.boards.map(({ title, url }) => {
+        return html`<option
+          ?selected=${url === this.url}
+          class="sample-board"
+          value="${url}"
+        >
+          ${title}
+        </option>`;
+      })}
+    </select>`;
   }
 }

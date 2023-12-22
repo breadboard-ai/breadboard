@@ -4,20 +4,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export class InputContainer extends HTMLElement {
-  constructor() {
-    super();
+import { LitElement, html, css } from "lit";
+import { customElement } from "lit/decorators.js";
 
-    const root = this.attachShadow({ mode: "open" });
-    root.innerHTML = `
-      <style>
-        :host {
-          display: block;
-          padding: calc(var(--bb-grid-size) * 2);
-        }
-      </style>
-      <slot></slot>
-    `;
+@customElement("bb-input-container")
+export class InputContainer extends LitElement {
+  static styles = css`
+    :host {
+      display: block;
+      padding: calc(var(--bb-grid-size) * 2);
+    }
+  `;
+
+  render() {
+    return html`<slot></slot>`;
   }
 
   clearContents() {
