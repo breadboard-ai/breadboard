@@ -10,7 +10,6 @@ import {
   HarnessProxyConfig,
   HarnessRemoteConfig,
   HarnessRunResult,
-  SecretHandler,
 } from "./harness/types.js";
 import { asRuntimeKit } from "@google-labs/breadboard";
 import Starter from "@google-labs/llm-starter";
@@ -304,15 +303,6 @@ export class Main {
     const harness =
       globalThis.localStorage.getItem(HARNESS_SWITCH_KEY) ?? DEFAULT_HARNESS;
 
-    const onSecret: SecretHandler = async ({ keys }) => {
-      if (!keys) return {};
-      return Object.fromEntries(
-        await Promise.all(
-          keys.map(async (key) => [key, await this.#ui.secret(key)])
-        )
-      );
-    };
-
     const kits = [
       Starter,
       Core,
@@ -336,6 +326,6 @@ export class Main {
       type: "worker",
       url: WORKER_URL,
     };
-    return createHarness({ kits, remote, proxy }, onSecret);
+    return createHarness({ kits, remote, proxy });
   }
 }

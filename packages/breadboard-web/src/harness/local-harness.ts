@@ -10,6 +10,7 @@ import {
   Board,
   InputValues,
   LogProbe,
+  OutputValues,
   asRuntimeKit,
   asyncGen,
 } from "@google-labs/breadboard";
@@ -19,22 +20,20 @@ import {
   HTTPClientTransport,
   ProxyClient,
 } from "@google-labs/breadboard/remote";
+import { RunResult } from "@google-labs/breadboard/worker";
 
 export class LocalHarness implements Harness {
   #config: HarnessConfig;
-  #onSecret: SecretHandler;
 
-  constructor(config: HarnessConfig, onSecret: SecretHandler) {
+  constructor(config: HarnessConfig) {
     this.#config = config;
-    this.#onSecret = onSecret;
   }
 
-  #configureKits() {
+  #configureKits(onSecret: SecretHandler) {
     let kits = this.#config.kits;
     // Because we're in the browser, we need to ask for secrets from the user.
     // Add a special kit that overrides the `secrets` handler to ask the user
     // for secrets.
-    const onSecret = this.#onSecret;
     const secretAskingKit = new KitBuilder({
       url: "secret-asking-kit",
     }).build({
@@ -67,7 +66,19 @@ export class LocalHarness implements Harness {
 
   async *run(url: string) {
     yield* asyncGen<MainThreadRunResult>(async (next) => {
-      const kits = this.#configureKits();
+      const kits = this.#configureKits(async ({ keys }) => {
+        let result: OutputValues = {};
+        await next({
+          message: {
+            type: "secret",
+            data: { keys },
+          },
+          reply(reply: OutputValues) {
+            result = reply;
+          },
+        } as unknown as RunResult);
+        return result;
+      });
 
       try {
         const runner = await Board.load(url);
