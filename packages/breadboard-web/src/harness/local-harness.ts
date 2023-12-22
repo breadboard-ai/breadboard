@@ -11,6 +11,7 @@ import {
   InputValues,
   LogProbe,
   asRuntimeKit,
+  asyncGen,
 } from "@google-labs/breadboard";
 import { KitBuilder } from "@google-labs/breadboard/kits";
 import { MainThreadRunResult } from "./result";
@@ -18,22 +19,20 @@ import {
   HTTPClientTransport,
   ProxyClient,
 } from "@google-labs/breadboard/remote";
+import { createOnSecret } from "./secrets";
 
 export class LocalHarness implements Harness {
   #config: HarnessConfig;
-  #onSecret: SecretHandler;
 
-  constructor(config: HarnessConfig, onSecret: SecretHandler) {
+  constructor(config: HarnessConfig) {
     this.#config = config;
-    this.#onSecret = onSecret;
   }
 
-  #configureKits() {
+  #configureKits(onSecret: SecretHandler) {
     let kits = this.#config.kits;
     // Because we're in the browser, we need to ask for secrets from the user.
     // Add a special kit that overrides the `secrets` handler to ask the user
     // for secrets.
-    const onSecret = this.#onSecret;
     const secretAskingKit = new KitBuilder({
       url: "secret-asking-kit",
     }).build({
@@ -65,45 +64,49 @@ export class LocalHarness implements Harness {
   }
 
   async *run(url: string) {
-    const kits = this.#configureKits();
+    yield* asyncGen<MainThreadRunResult>(async (next) => {
+      const kits = this.#configureKits(createOnSecret(next));
 
-    try {
-      const runner = await Board.load(url);
+      try {
+        const runner = await Board.load(url);
 
-      yield new MainThreadRunResult({
-        type: "load",
-        data: {
-          title: runner.title,
-          description: runner.description,
-          version: runner.version,
-          diagram: runner.mermaid("TD", true),
-          url: url,
-          nodes: runner.nodes,
-        },
-      });
+        await next(
+          new MainThreadRunResult({
+            type: "load",
+            data: {
+              title: runner.title,
+              description: runner.description,
+              version: runner.version,
+              diagram: runner.mermaid("TD", true),
+              url: url,
+              nodes: runner.nodes,
+            },
+          })
+        );
 
-      for await (const data of runner.run({ probe: new LogProbe(), kits })) {
-        const { type } = data;
-        if (type === "input") {
-          const inputResult = new MainThreadRunResult({ type, data });
-          yield inputResult;
-          data.inputs = inputResult.response as InputValues;
-        } else if (type === "output") {
-          yield new MainThreadRunResult({ type, data });
-        } else if (data.type === "beforehandler") {
-          yield new MainThreadRunResult({ type, data });
+        for await (const data of runner.run({ probe: new LogProbe(), kits })) {
+          const { type } = data;
+          if (type === "input") {
+            const inputResult = new MainThreadRunResult({ type, data });
+            await next(inputResult);
+            data.inputs = inputResult.response as InputValues;
+          } else if (type === "output") {
+            await next(new MainThreadRunResult({ type, data }));
+          } else if (data.type === "beforehandler") {
+            await next(new MainThreadRunResult({ type, data }));
+          }
         }
+        await next(new MainThreadRunResult({ type: "end", data: {} }));
+      } catch (e) {
+        let error = e as Error;
+        let message = "";
+        while (error?.cause) {
+          error = (error.cause as { error: Error }).error;
+          message += `\n${error.message}`;
+        }
+        console.error(message, error);
+        await next(new MainThreadRunResult({ type: "error", data: { error } }));
       }
-      yield new MainThreadRunResult({ type: "end", data: {} });
-    } catch (e) {
-      let error = e as Error;
-      let message = "";
-      while (error?.cause) {
-        error = (error.cause as { error: Error }).error;
-        message += `\n${error.message}`;
-      }
-      console.error(message, error);
-      yield new MainThreadRunResult({ type: "error", data: { error } });
-    }
+    });
   }
 }

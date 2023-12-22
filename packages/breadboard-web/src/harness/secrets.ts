@@ -5,6 +5,8 @@
  */
 
 import type { NodeValue, OutputValues } from "@google-labs/breadboard";
+import { SecretHandler } from "./types";
+import { RunResult } from "@google-labs/breadboard/worker";
 
 const PROXIED_PREFIX = "PROXIED_";
 
@@ -78,3 +80,21 @@ export class SecretKeeper {
     }, {} as OutputValues);
   }
 }
+
+export const createOnSecret = (
+  next: (result: RunResult) => Promise<void>
+): SecretHandler => {
+  return async ({ keys }) => {
+    let result: OutputValues = {};
+    await next({
+      message: {
+        type: "secret",
+        data: { keys },
+      },
+      reply(reply: OutputValues) {
+        result = reply;
+      },
+    } as unknown as RunResult);
+    return result;
+  };
+};

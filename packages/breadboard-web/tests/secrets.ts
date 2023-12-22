@@ -10,7 +10,7 @@ import {
   generateToken,
   secretReplacer,
   secretScanner,
-} from "../src/secrets.js";
+} from "../src/harness/secrets.js";
 
 test("generateToken produces a reasonable token", async () => {
   const token = generateToken();
