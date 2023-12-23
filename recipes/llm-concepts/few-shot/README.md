@@ -7,7 +7,7 @@ This recipe demonstrates how to integrate few shot learning into a Breadboard us
 ### Inputs
 
 - `few` - An array of strings as examples.
-- `prompt` - The prompt to use for the few shot learning.
+- `promptText` - The prompt to use for the few shot learning.
 
 ### Secrets
 
