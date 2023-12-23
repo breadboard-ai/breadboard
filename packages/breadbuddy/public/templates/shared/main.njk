@@ -18,10 +18,7 @@ import { PaLMKit } from "@google-labs/palm-kit";
 import { Core } from "@google-labs/core-kit";
 import { Starter } from "@google-labs/llm-starter";
 
-import {
-  HostRuntime as HostHarness,
-  RunResult,
-} from "@google-labs/breadboard/worker";
+import { createHarness } from "@google-labs/breadboard/harness";
 
 import { LitElement, html, css } from "lit";
 import { customElement, state } from "lit/decorators.js";
@@ -52,7 +49,17 @@ export class Main extends LitElement {
   private retainedInputs: Array<{ type: string; content: string }> = [];
 
   #renderResult: RunResult | null = null;
-  #harness = new HostHarness(WORKER_URL);
+  #harness = const harness = createHarness({
+    kits: [Starter, Core, PaLMKit].map((kitConstructor) =>
+      Breadboard.asRuntimeKit(kitConstructor)
+    ),
+    remote: {
+      type: "worker",
+      url: WORKER_URL,
+    },
+    proxy: [{ location: "main", nodes: PROXY_NODES }],
+  });
+
   #board = new Breadboard.Board();
   #props: Record<string, Record<string, Record<string, string>>> = {};
   #autoSubmitForm = false;
@@ -127,7 +134,7 @@ export class Main extends LitElement {
     const propsResponse = await fetch("/properties.json");
     this.#props = await propsResponse.json();
 
-    for await (const result of this.#harness.run(url, PROXY_NODES)) {
+    for await (const result of this.#harness.run(url)) {
       await this.#handleEvent(result);
     }
   }
