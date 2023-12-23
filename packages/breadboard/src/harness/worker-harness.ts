@@ -91,18 +91,13 @@ export class WorkerHarness implements Harness {
         }
 
         const message = await this.controller.listen();
-        const { data, type } = message;
+        const { data, type, id } = message;
         if (type === "proxy") {
           try {
-            const handledResult = await receiver.handle(
+            const result = (await receiver.handle(
               data as ProxyPromiseResponse
-            );
-            message.id &&
-              this.controller.reply<ProxyResponseMessage>(
-                message.id,
-                handledResult as OutputValues,
-                type
-              );
+            )) as OutputValues;
+            id && this.controller.reply<ProxyResponseMessage>(id, result, type);
             continue;
           } catch (e) {
             const err = e as Error;
