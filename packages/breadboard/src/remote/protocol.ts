@@ -5,7 +5,7 @@
  */
 
 import { PatchedReadableStream } from "../stream.js";
-import { InputValues, NodeDescriptor, OutputValues } from "../types.js";
+import { InputValues, NodeDescriptor, OutputValues, Schema } from "../types.js";
 
 /**
  * Valid request names: "load", "run", "proxy". A good way to think of
@@ -129,7 +129,7 @@ export type InputPromiseResponse = {
    * expected.
    * @see [InputValues]
    */
-  inputArguments: InputValues;
+  inputArguments: InputValues & { schema?: Schema };
 };
 export type InputPromiseResponseMessage = [
   "input",

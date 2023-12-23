@@ -4,7 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Harness, HarnessConfig, SecretHandler } from "./types.js";
+import type {
+  Harness,
+  HarnessConfig,
+  HarnessRunResult,
+  SecretHandler,
+} from "./types.js";
 import { LocalRunResult } from "./result.js";
 import { createOnSecret } from "./secrets.js";
 import { KitBuilder } from "../kits/builder.js";
@@ -59,7 +64,7 @@ export class LocalHarness implements Harness {
   }
 
   async *run(url: string) {
-    yield* asyncGen<LocalRunResult>(async (next) => {
+    yield* asyncGen<HarnessRunResult>(async (next) => {
       const kits = this.#configureKits(createOnSecret(next));
 
       try {

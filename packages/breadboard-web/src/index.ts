@@ -285,8 +285,8 @@ export class Main {
       }
 
       case "error": {
-        const errorData = data as { error: string };
-        this.#ui.error(errorData.error);
+        const errorData = data as { error: Error };
+        this.#ui.error(errorData.error.message);
         break;
       }
 

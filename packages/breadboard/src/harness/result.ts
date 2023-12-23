@@ -4,17 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { OutputValues } from "../types.js";
 import { MessageController } from "../worker/controller.js";
-import { ControllerMessage } from "../worker/protocol.js";
-import { HarnessRunResult, Result } from "./types.js";
+import { ControllerMessageType } from "../worker/protocol.js";
+import { AnyResult, HarnessRunResult } from "./types.js";
 
-export class LocalRunResult<MessageType extends Result = Result>
-  implements HarnessRunResult
-{
-  message: MessageType;
+export class LocalRunResult implements HarnessRunResult {
+  message: AnyResult;
   response?: unknown;
 
-  constructor(message: MessageType) {
+  constructor(message: AnyResult) {
     this.message = message;
   }
 
@@ -24,17 +23,21 @@ export class LocalRunResult<MessageType extends Result = Result>
 }
 
 export class WorkerRunResult implements HarnessRunResult {
-  controller: MessageController;
-  message: ControllerMessage;
+  #controller: MessageController;
+  message: AnyResult;
 
-  constructor(controller: MessageController, message: ControllerMessage) {
-    this.controller = controller;
+  constructor(controller: MessageController, message: AnyResult) {
+    this.#controller = controller;
     this.message = message;
   }
 
-  reply<T extends ControllerMessage>(reply: unknown) {
+  reply(reply: unknown) {
     if (!this.message.id) return;
     const { id, type } = this.message;
-    this.controller.reply<T>(id, reply as Record<string, unknown>, type);
+    this.#controller.reply(
+      id,
+      reply as OutputValues,
+      type as ControllerMessageType
+    );
   }
 }

@@ -5,21 +5,106 @@
  */
 
 import { NodeProxyConfig } from "../remote/config.js";
-import { Kit, OutputValues } from "../types.js";
+import {
+  BeforehandlerResponse,
+  InputPromiseResponse,
+  LoadResponse,
+  OutputResponse,
+} from "../remote/protocol.js";
+import { InputValues, Kit, OutputValues } from "../types.js";
 
-export interface Harness {
-  run(url: string): AsyncGenerator<HarnessRunResult, void>;
-}
+export type ResultType =
+  /**
+   * The board has been loaded
+   */
+  | "load"
+  /**
+   * The board is asking for input
+   */
+  | "input"
+  /**
+   * The board is sending output
+   */
+  | "output"
+  /**
+   * Sent before a handler for a particular node is handled
+   */
+  | "beforehandler"
+  /**
+   * Sent when the harness is asking for secret
+   */
+  | "secret"
+  /**
+   * Sent when the board run process reports an error
+   */
+  | "error"
+  /**
+   * Sent when the board run finished
+   */
+  | "end"
+  /**
+   * Sent when the harness is shutting down
+   */
+  | "shutdown";
 
-export type Result = {
-  id?: string;
-  type: string;
-  data: unknown;
+export type LoadResult = {
+  type: "load";
+  data: LoadResponse;
 };
+
+export type InputResult = {
+  type: "input";
+  data: InputPromiseResponse;
+};
+
+export type OutputResult = {
+  type: "output";
+  data: OutputResponse;
+};
+
+export type SecretResult = {
+  type: "secret";
+  data: InputValues;
+};
+
+export type BeforehandlerResult = {
+  type: "beforehandler";
+  data: BeforehandlerResponse;
+};
+
+export type ErrorResult = {
+  type: "error";
+  data: { error: Error };
+};
+
+export type EndResult = {
+  type: "end";
+  data: Record<string, never>;
+};
+
+export type ShutdownResult = {
+  type: "shutdown";
+  data: null;
+};
+
+export type AnyResult = (
+  | LoadResult
+  | InputResult
+  | OutputResult
+  | SecretResult
+  | BeforehandlerResult
+  | ErrorResult
+  | EndResult
+  | ShutdownResult
+) & { id?: string };
 
 export interface HarnessRunResult {
   reply(reply: unknown): void;
-  message: Result;
+  message: AnyResult;
+}
+
+export interface Harness {
+  run(url: string): AsyncGenerator<HarnessRunResult, void>;
 }
 
 export type SecretHandler = (keys: {
