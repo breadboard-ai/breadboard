@@ -5,7 +5,6 @@
  */
 
 import type {
-  ControllerMessage,
   LoadRequestMessage,
   LoadResponseMessage,
   ProxyResponseMessage,
@@ -17,22 +16,7 @@ import { OutputValues, asyncGen } from "../index.js";
 import { ProxyReceiver } from "./receiver.js";
 import { createOnSecret } from "./secrets.js";
 import type { ProxyPromiseResponse } from "../remote/protocol.js";
-
-export class WorkerRunResult implements HarnessRunResult {
-  controller: MessageController;
-  message: ControllerMessage;
-
-  constructor(controller: MessageController, message: ControllerMessage) {
-    this.controller = controller;
-    this.message = message;
-  }
-
-  reply<T extends ControllerMessage>(reply: unknown) {
-    if (!this.message.id) return;
-    const { id, type } = this.message;
-    this.controller.reply<T>(id, reply as Record<string, unknown>, type);
-  }
-}
+import { WorkerRunResult } from "./result.js";
 
 const prepareBlobUrl = (url: string) => {
   const code = `import "${url}";`;
@@ -58,7 +42,7 @@ export class WorkerHarness implements Harness {
   }
 
   async *run(url: string) {
-    yield* asyncGen<WorkerRunResult>(async (next) => {
+    yield* asyncGen<HarnessRunResult>(async (next) => {
       if (this.worker && this.transport && this.controller) {
         this.#stop();
         await next(
