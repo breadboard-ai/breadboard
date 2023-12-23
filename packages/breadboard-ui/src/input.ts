@@ -26,7 +26,7 @@ import { WebcamInput } from "./webcam.js";
 import { DrawableInput } from "./drawable.js";
 
 export type InputArgs = {
-  schema: Schema;
+  schema?: Schema;
 };
 
 export type InputData = Record<string, unknown>;

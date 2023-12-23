@@ -11,7 +11,7 @@ import {
   LoadResponse,
   OutputResponse,
 } from "../remote/protocol.js";
-import { InputValues, Kit, OutputValues } from "../types.js";
+import { Kit, OutputValues } from "../types.js";
 
 export type ResultType =
   /**
@@ -64,7 +64,7 @@ export type OutputResult = {
 
 export type SecretResult = {
   type: "secret";
-  data: InputValues;
+  data: { keys: string[] };
 };
 
 export type BeforehandlerResult = {

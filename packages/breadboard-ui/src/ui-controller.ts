@@ -758,7 +758,7 @@ export class UIController extends HTMLElement implements UI {
     const { title, description = "", version = "", url = "" } = info;
     const load = new Load();
 
-    load.title = title;
+    load.title = title || "Untitled";
     load.description = description;
     load.version = version;
     load.url = url;

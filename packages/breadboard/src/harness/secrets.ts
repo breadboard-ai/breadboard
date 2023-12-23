@@ -85,6 +85,7 @@ export const createOnSecret = (
   next: (result: HarnessRunResult) => Promise<void>
 ): SecretHandler => {
   return async ({ keys }) => {
+    if (!keys) return {};
     const result = new LocalRunResult({ type: "secret", data: { keys } });
     await next(result);
     return result.response as OutputValues;
