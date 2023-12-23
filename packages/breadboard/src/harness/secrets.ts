@@ -5,8 +5,8 @@
  */
 
 import type { NodeValue, OutputValues } from "@google-labs/breadboard";
-import { SecretHandler } from "./types.js";
-import { RunResult } from "../worker/host-runtime.js";
+import { HarnessRunResult, SecretHandler } from "./types.js";
+import { LocalRunResult } from "./result.js";
 
 const PROXIED_PREFIX = "PROXIED_";
 
@@ -82,19 +82,11 @@ export class SecretKeeper {
 }
 
 export const createOnSecret = (
-  next: (result: RunResult) => Promise<void>
+  next: (result: HarnessRunResult) => Promise<void>
 ): SecretHandler => {
   return async ({ keys }) => {
-    let result: OutputValues = {};
-    await next({
-      message: {
-        type: "secret",
-        data: { keys },
-      },
-      reply(reply: OutputValues) {
-        result = reply;
-      },
-    } as unknown as RunResult);
-    return result;
+    const result = new LocalRunResult({ type: "secret", data: { keys } });
+    await next(result);
+    return result.response as OutputValues;
   };
 };
