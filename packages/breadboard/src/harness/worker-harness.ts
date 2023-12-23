@@ -12,11 +12,11 @@ import type {
   StartMesssage,
 } from "../worker/protocol.js";
 import { MessageController, WorkerTransport } from "../worker/controller.js";
-import { Harness, HarnessConfig, HarnessRunResult } from "./types.js";
+import type { Harness, HarnessConfig, HarnessRunResult } from "./types.js";
 import { OutputValues, asyncGen } from "../index.js";
 import { ProxyReceiver } from "./receiver.js";
 import { createOnSecret } from "./secrets.js";
-import { ProxyPromiseResponse } from "../remote/protocol.js";
+import type { ProxyPromiseResponse } from "../remote/protocol.js";
 
 export class WorkerRunResult implements HarnessRunResult {
   controller: MessageController;
