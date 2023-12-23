@@ -11,7 +11,12 @@ import {
   LoadResponse,
   OutputResponse,
 } from "../remote/protocol.js";
-import { Kit, OutputValues } from "../types.js";
+import { Kit, NodeDescriptor, OutputValues } from "../types.js";
+
+export type AfterhandlerResponse = {
+  node: NodeDescriptor;
+  outputs: OutputValues;
+};
 
 export type ResultType =
   /**
@@ -27,9 +32,13 @@ export type ResultType =
    */
   | "output"
   /**
-   * Sent before a handler for a particular node is handled
+   * Sent before a handler for a particular node is invoked
    */
   | "beforehandler"
+  /**
+   * Sent after a handler for a particular node is invoked
+   */
+  | "afterhandler"
   /**
    * Sent when the harness is asking for secret
    */
@@ -72,6 +81,11 @@ export type BeforehandlerResult = {
   data: BeforehandlerResponse;
 };
 
+export type AfterhandlerResult = {
+  type: "afterhandler";
+  data: AfterhandlerResponse;
+};
+
 export type ErrorResult = {
   type: "error";
   data: { error: Error };
@@ -93,6 +107,7 @@ export type AnyResult = (
   | OutputResult
   | SecretResult
   | BeforehandlerResult
+  | AfterhandlerResult
   | ErrorResult
   | EndResult
   | ShutdownResult

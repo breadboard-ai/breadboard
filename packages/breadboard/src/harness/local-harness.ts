@@ -19,7 +19,7 @@ import { ProxyClient } from "../remote/proxy.js";
 import { HTTPClientTransport } from "../remote/http.js";
 import { asyncGen } from "../utils/async-gen.js";
 import { Board } from "../board.js";
-import { LogProbe } from "../log.js";
+import { Diagnostics } from "./diagnostics.js";
 
 export class LocalHarness implements Harness {
   #config: HarnessConfig;
@@ -84,7 +84,11 @@ export class LocalHarness implements Harness {
           })
         );
 
-        for await (const data of runner.run({ probe: new LogProbe(), kits })) {
+        const probe = new Diagnostics(async (message) => {
+          await next(new LocalRunResult(message));
+        });
+
+        for await (const data of runner.run({ probe, kits })) {
           const { type } = data;
           if (type === "input") {
             const inputResult = new LocalRunResult({ type, data });
@@ -92,7 +96,9 @@ export class LocalHarness implements Harness {
             data.inputs = inputResult.response as InputValues;
           } else if (type === "output") {
             await next(new LocalRunResult({ type, data }));
-          } else if (data.type === "beforehandler") {
+          } else if (type === "beforehandler") {
+            await next(new LocalRunResult({ type, data }));
+          } else if (type === "afterhandler") {
             await next(new LocalRunResult({ type, data }));
           }
         }

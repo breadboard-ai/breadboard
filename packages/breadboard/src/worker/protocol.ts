@@ -21,6 +21,7 @@ export const VALID_MESSAGE_TYPES = [
   "input",
   "output",
   "beforehandler",
+  "afterhandler",
   "proxy",
   "end",
   "error",

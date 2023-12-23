@@ -96,9 +96,7 @@ export class WorkerHarness implements Harness {
             break;
           }
         }
-        await next(
-          new WorkerRunResult(this.controller, message as unknown as AnyResult)
-        );
+        await next(new WorkerRunResult(this.controller, message as AnyResult));
         if (data && type === "end") {
           break;
         }
