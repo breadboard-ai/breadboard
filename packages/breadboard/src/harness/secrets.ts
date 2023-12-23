@@ -6,7 +6,7 @@
 
 import type { NodeValue, OutputValues } from "@google-labs/breadboard";
 import { SecretHandler } from "./types.js";
-import { RunResult } from "../worker/host-runtime.js";
+import { RunResult } from "./worker-harness.js";
 
 const PROXIED_PREFIX = "PROXIED_";
 
