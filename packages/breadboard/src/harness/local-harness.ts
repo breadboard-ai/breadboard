@@ -5,7 +5,7 @@
  */
 
 import type { Harness, HarnessConfig, SecretHandler } from "./types.js";
-import { MainThreadRunResult } from "./result.js";
+import { LocalRunResult } from "./result.js";
 import { createOnSecret } from "./secrets.js";
 import { KitBuilder } from "../kits/builder.js";
 import { InputValues } from "../types.js";
@@ -59,14 +59,14 @@ export class LocalHarness implements Harness {
   }
 
   async *run(url: string) {
-    yield* asyncGen<MainThreadRunResult>(async (next) => {
+    yield* asyncGen<LocalRunResult>(async (next) => {
       const kits = this.#configureKits(createOnSecret(next));
 
       try {
         const runner = await Board.load(url);
 
         await next(
-          new MainThreadRunResult({
+          new LocalRunResult({
             type: "load",
             data: {
               title: runner.title,
@@ -82,16 +82,16 @@ export class LocalHarness implements Harness {
         for await (const data of runner.run({ probe: new LogProbe(), kits })) {
           const { type } = data;
           if (type === "input") {
-            const inputResult = new MainThreadRunResult({ type, data });
+            const inputResult = new LocalRunResult({ type, data });
             await next(inputResult);
             data.inputs = inputResult.response as InputValues;
           } else if (type === "output") {
-            await next(new MainThreadRunResult({ type, data }));
+            await next(new LocalRunResult({ type, data }));
           } else if (data.type === "beforehandler") {
-            await next(new MainThreadRunResult({ type, data }));
+            await next(new LocalRunResult({ type, data }));
           }
         }
-        await next(new MainThreadRunResult({ type: "end", data: {} }));
+        await next(new LocalRunResult({ type: "end", data: {} }));
       } catch (e) {
         let error = e as Error;
         let message = "";
@@ -100,7 +100,7 @@ export class LocalHarness implements Harness {
           message += `\n${error.message}`;
         }
         console.error(message, error);
-        await next(new MainThreadRunResult({ type: "error", data: { error } }));
+        await next(new LocalRunResult({ type: "error", data: { error } }));
       }
     });
   }

@@ -6,7 +6,7 @@
 
 import { HarnessRunResult, Result } from "./types.js";
 
-export class MainThreadRunResult<MessageType extends Result = Result>
+export class LocalRunResult<MessageType extends Result = Result>
   implements HarnessRunResult
 {
   message: MessageType;
