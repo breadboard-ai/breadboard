@@ -8,11 +8,15 @@ import type {
   ControllerMessage,
   LoadRequestMessage,
   LoadResponseMessage,
+  ProxyResponseMessage,
   StartMesssage,
 } from "./protocol.js";
 import { MessageController, WorkerTransport } from "./controller.js";
 import { HarnessConfig } from "../harness/types.js";
-import { asyncGen } from "../index.js";
+import { OutputValues, asyncGen } from "../index.js";
+import { ProxyReceiver } from "../harness/receiver.js";
+import { createOnSecret } from "../harness/secrets.js";
+import { ProxyPromiseResponse } from "../remote/protocol.js";
 
 export class RunResult {
   controller: MessageController;
@@ -53,7 +57,7 @@ export class HostRuntime {
     this.workerURL = prepareBlobUrl(absoluteURL.href);
   }
 
-  async *run(url: string, proxyNodes: string[]) {
+  async *run(url: string) {
     yield* asyncGen<RunResult>(async (next) => {
       if (this.worker && this.transport && this.controller) {
         this.#stop();
@@ -61,6 +65,11 @@ export class HostRuntime {
           new RunResult(this.controller, { type: "shutdown", data: null })
         );
       }
+
+      const receiver = new ProxyReceiver(this.#config, createOnSecret(next));
+      const proxyNodes = (this.#config.proxy?.[0]?.nodes ?? []).map((node) => {
+        return typeof node === "string" ? node : node.node;
+      });
 
       this.worker = new Worker(this.workerURL, { type: "module" });
       this.transport = new WorkerTransport(this.worker);
@@ -83,6 +92,29 @@ export class HostRuntime {
 
         const message = await this.controller.listen();
         const { data, type } = message;
+        if (type === "proxy") {
+          try {
+            const handledResult = await receiver.handle(
+              data as ProxyPromiseResponse
+            );
+            message.id &&
+              this.controller.reply<ProxyResponseMessage>(
+                message.id,
+                handledResult as OutputValues,
+                type
+              );
+            continue;
+          } catch (e) {
+            const err = e as Error;
+            await next(
+              new RunResult(this.controller, {
+                type: "error",
+                data: err.message,
+              })
+            );
+            break;
+          }
+        }
         await next(new RunResult(this.controller, message));
         if (data && type === "end") {
           break;
