@@ -79,10 +79,8 @@ export class WorkerHarness implements Harness {
         }
 
         const message = await this.controller.listen();
-        console.log("message", message);
         const { data, type, id } = message;
         if (type === "proxy") {
-          console.log("proxy message", data);
           try {
             const result = await receiver.handle(data as ProxyPromiseResponse);
             id && this.controller.reply(id, result.value, type);
