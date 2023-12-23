@@ -11,7 +11,12 @@ import type {
   StartMesssage,
 } from "../worker/protocol.js";
 import { MessageController, WorkerTransport } from "../worker/controller.js";
-import type { Harness, HarnessConfig, HarnessRunResult } from "./types.js";
+import type {
+  AnyResult,
+  Harness,
+  HarnessConfig,
+  HarnessRunResult,
+} from "./types.js";
 import { OutputValues, asyncGen } from "../index.js";
 import { ProxyReceiver } from "./receiver.js";
 import { createOnSecret } from "./secrets.js";
@@ -84,17 +89,19 @@ export class WorkerHarness implements Harness {
             id && this.controller.reply<ProxyResponseMessage>(id, result, type);
             continue;
           } catch (e) {
-            const err = e as Error;
+            const error = e as Error;
             await next(
               new WorkerRunResult(this.controller, {
                 type: "error",
-                data: err.message,
+                data: { error },
               })
             );
             break;
           }
         }
-        await next(new WorkerRunResult(this.controller, message));
+        await next(
+          new WorkerRunResult(this.controller, message as unknown as AnyResult)
+        );
         if (data && type === "end") {
           break;
         }
