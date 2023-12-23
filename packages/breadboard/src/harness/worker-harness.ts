@@ -15,11 +15,7 @@ export class WorkerHarness extends HostRuntime {
   #config: HarnessConfig;
 
   constructor(config: HarnessConfig) {
-    const workerURL = config.remote && config.remote.url;
-    if (!workerURL) {
-      throw new Error("Worker harness requires a worker URL");
-    }
-    super(workerURL);
+    super(config);
     this.#config = config;
   }
 

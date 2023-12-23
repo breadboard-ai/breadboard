@@ -11,6 +11,8 @@ import type {
   StartMesssage,
 } from "./protocol.js";
 import { MessageController, WorkerTransport } from "./controller.js";
+import { HarnessConfig } from "../harness/types.js";
+import { asyncGen } from "../index.js";
 
 export class RunResult {
   controller: MessageController;
@@ -35,46 +37,58 @@ const prepareBlobUrl = (url: string) => {
 };
 
 export class HostRuntime {
+  #config: HarnessConfig;
   workerURL: string;
   worker: Worker | null = null;
   transport: WorkerTransport | null = null;
   controller: MessageController | null = null;
 
-  constructor(workerURL: string) {
+  constructor(config: HarnessConfig) {
+    this.#config = config;
+    const workerURL = config.remote && config.remote.url;
+    if (!workerURL) {
+      throw new Error("Worker harness requires a worker URL");
+    }
     const absoluteURL = new URL(workerURL, location.href);
     this.workerURL = prepareBlobUrl(absoluteURL.href);
   }
 
   async *run(url: string, proxyNodes: string[]) {
-    if (this.worker && this.transport && this.controller) {
-      this.#stop();
-      yield new RunResult(this.controller, { type: "shutdown", data: null });
-    }
-
-    this.worker = new Worker(this.workerURL, { type: "module" });
-    this.transport = new WorkerTransport(this.worker);
-    this.controller = new MessageController(this.transport);
-    yield new RunResult(
-      this.controller,
-      await this.controller.ask<LoadRequestMessage, LoadResponseMessage>(
-        { url, proxyNodes },
-        "load"
-      )
-    );
-
-    this.controller.inform<StartMesssage>({}, "start");
-    for (;;) {
-      if (!this.controller) {
-        break;
+    yield* asyncGen<RunResult>(async (next) => {
+      if (this.worker && this.transport && this.controller) {
+        this.#stop();
+        await next(
+          new RunResult(this.controller, { type: "shutdown", data: null })
+        );
       }
 
-      const message = await this.controller.listen();
-      const { data, type } = message;
-      yield new RunResult(this.controller, message);
-      if (data && type === "end") {
-        break;
+      this.worker = new Worker(this.workerURL, { type: "module" });
+      this.transport = new WorkerTransport(this.worker);
+      this.controller = new MessageController(this.transport);
+      await next(
+        new RunResult(
+          this.controller,
+          await this.controller.ask<LoadRequestMessage, LoadResponseMessage>(
+            { url, proxyNodes },
+            "load"
+          )
+        )
+      );
+
+      this.controller.inform<StartMesssage>({}, "start");
+      for (;;) {
+        if (!this.controller) {
+          break;
+        }
+
+        const message = await this.controller.listen();
+        const { data, type } = message;
+        await next(new RunResult(this.controller, message));
+        if (data && type === "end") {
+          break;
+        }
       }
-    }
+    });
   }
 
   #stop() {
