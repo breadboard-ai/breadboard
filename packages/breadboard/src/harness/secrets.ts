@@ -6,7 +6,7 @@
 
 import type { NodeValue, OutputValues } from "@google-labs/breadboard";
 import { SecretHandler } from "./types.js";
-import { RunResult } from "./worker-harness.js";
+import { WorkerRunResult } from "./worker-harness.js";
 
 const PROXIED_PREFIX = "PROXIED_";
 
@@ -82,7 +82,7 @@ export class SecretKeeper {
 }
 
 export const createOnSecret = (
-  next: (result: RunResult) => Promise<void>
+  next: (result: WorkerRunResult) => Promise<void>
 ): SecretHandler => {
   return async ({ keys }) => {
     let result: OutputValues = {};
@@ -94,7 +94,7 @@ export const createOnSecret = (
       reply(reply: OutputValues) {
         result = reply;
       },
-    } as unknown as RunResult);
+    } as unknown as WorkerRunResult);
     return result;
   };
 };

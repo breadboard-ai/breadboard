@@ -12,13 +12,13 @@ import type {
   StartMesssage,
 } from "../worker/protocol.js";
 import { MessageController, WorkerTransport } from "../worker/controller.js";
-import { Harness, HarnessConfig } from "./types.js";
+import { Harness, HarnessConfig, HarnessRunResult } from "./types.js";
 import { OutputValues, asyncGen } from "../index.js";
 import { ProxyReceiver } from "./receiver.js";
 import { createOnSecret } from "./secrets.js";
 import { ProxyPromiseResponse } from "../remote/protocol.js";
 
-export class RunResult {
+export class WorkerRunResult implements HarnessRunResult {
   controller: MessageController;
   message: ControllerMessage;
 
@@ -58,11 +58,11 @@ export class WorkerHarness implements Harness {
   }
 
   async *run(url: string) {
-    yield* asyncGen<RunResult>(async (next) => {
+    yield* asyncGen<WorkerRunResult>(async (next) => {
       if (this.worker && this.transport && this.controller) {
         this.#stop();
         await next(
-          new RunResult(this.controller, { type: "shutdown", data: null })
+          new WorkerRunResult(this.controller, { type: "shutdown", data: null })
         );
       }
 
@@ -75,7 +75,7 @@ export class WorkerHarness implements Harness {
       this.transport = new WorkerTransport(this.worker);
       this.controller = new MessageController(this.transport);
       await next(
-        new RunResult(
+        new WorkerRunResult(
           this.controller,
           await this.controller.ask<LoadRequestMessage, LoadResponseMessage>(
             { url, proxyNodes },
@@ -107,7 +107,7 @@ export class WorkerHarness implements Harness {
           } catch (e) {
             const err = e as Error;
             await next(
-              new RunResult(this.controller, {
+              new WorkerRunResult(this.controller, {
                 type: "error",
                 data: err.message,
               })
@@ -115,7 +115,7 @@ export class WorkerHarness implements Harness {
             break;
           }
         }
-        await next(new RunResult(this.controller, message));
+        await next(new WorkerRunResult(this.controller, message));
         if (data && type === "end") {
           break;
         }
