@@ -24,6 +24,11 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
+      - run: echo "github.event.inputs.packageName ${{ github.event.inputs.packageName }}"
+      - run: echo "github.event.inputs.packageVersion ${{ github.event.inputs.packageVersion }}"
+      - run: echo "github.event.inputs.milestoneTag ${{ github.event.inputs.milestoneTag }}"
+      - run: echo "ALLOWED_PACKAGES ${ALLOWED_PACKAGES}"
+
       - name: Validate Package Name is in Allowed Packages
         if: ${{ !contains(env.ALLOWED_PACKAGES, github.event.inputs.packageName) }}
         run: |
