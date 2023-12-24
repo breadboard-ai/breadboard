@@ -9,10 +9,18 @@ on:
         type: string
       packageVersion:
         description: "Package Version (e.g., 1.0.0)"
-        required: true
+        required: false
         type: string
-      milestoneTag:
-        description: "Milestone Tag (e.g., graph-runner-m1)"
+      tag:
+        description: "Tag (e.g., graph-runner-m1, graph-runner/v1.0.0)"
+        required: false
+        type: string
+      gitUser:
+        description: "Git User (e.g., github-actions[bot])"
+        required: false
+        type: string
+      gitEmail:
+        description: "Git Email (e.g., github-actions[bot]@users.noreply.github.com)"
         required: false
         type: string
 
@@ -21,6 +29,9 @@ env:
     (
       breadboard
     )
+  DEFAULT_GIT_NAME: "${{ github.actor }}"
+  DEFAULT_GIT_EMAIL: "${{ github.actor }}@users.noreply.github.com"
+  NPM_REGISTRY: https://wombat-dressing-room.appspot.com
 
 jobs:
   publish:
@@ -28,7 +39,7 @@ jobs:
     steps:
       - run: echo "github.event.inputs.packageName ${{ github.event.inputs.packageName }}"
       - run: echo "github.event.inputs.packageVersion ${{ github.event.inputs.packageVersion }}"
-      - run: echo "github.event.inputs.milestoneTag ${{ github.event.inputs.milestoneTag }}"
+      - run: echo "github.event.inputs.tag ${{ github.event.inputs.tag }}"
       - run: echo "ALLOWED_PACKAGES ${ALLOWED_PACKAGES}"
 
       - name: Validate Package Name is in Allowed Packages
@@ -38,24 +49,35 @@ jobs:
             exit 1
           fi
 
-      - if: github.event.inputs.packageVersion == ''
-        name: Do not publish if package version is empty
-        run: exit 0
+      - uses: actions/checkout@v2
 
-      - name: Check package version validity
+      - uses: actions/setup-node@v1
+        with:
+          node-version: "20.x"
+
+      - if: github.event.inputs.packageVersion != ''
+        name: If input package version is not empty, validate package version
         run: |
           if [[ ! ${{ github.event.inputs.packageVersion }} =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "Error: Invalid package version. Package version must be in the format of x.y.z"
             exit 1
           fi
 
-      - name: Checkout Repository
-        uses: actions/checkout@v2
+      - if: github.event.inputs.packageVersion == ''
+        name: If input package version is empty, derive package version from package.json
+        working-directory: packages/${{ github.event.inputs.packageName }}
+        run: echo "PACKAGE_VERSION=$(node -p "require('./package.json').version")" >> "$GITHUB_ENV"
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v1
-        with:
-          node-version: "20.x"
+      - if: github.event.inputs.tag != ''
+        name: Use provided tag if set
+        run: echo "TAG=${{ github.event.inputs.tag }}" >> "$GITHUB_ENV"
+
+      - if: github.event.inputs.tag == ''
+        name: If tag is empty, use '{package}/v{version}'
+        run: echo "TAG=${{ github.event.inputs.packageName }}/v${{ env.PACKAGE_VERSION }}" >> "$GITHUB_ENV"
+
+      - run: echo "PACKAGE_VERSION ${{ env.PACKAGE_VERSION }}"
+      - run: echo "TAG ${{ env.TAG }}"
 
       - name: Install Dependencies
         run: npm ci
@@ -72,25 +94,35 @@ jobs:
       - name: Sync Repository
         run: npm run sync
 
-      - name: Update Package Version
+      - name: Set Package Version
         working-directory: packages/${{ github.event.inputs.packageName }}
-        run: npm version ${{ github.event.inputs.packageVersion }} --no-git-tag-version
+        run: npm version ${{ env PACKAGE_VERSION }} --no-git-tag-version
+
+      - if: github.event.inputs.gitUser != ''
+        run: echo "GIT_USER=${{ github.event.inputs.gitUser }}" >> "$GITHUB_ENV"
+
+      - if: github.event.inputs.gitUser == ''
+        run: echo "GIT_USER=${{ env.DEFAULT_GIT_NAME }}" >> "$GITHUB_ENV"
+
+      - if: github.event.inputs.gitEmail != ''
+        run: echo "GIT_EMAIL=${{ github.event.inputs.gitEmail }}" >> "$GITHUB_ENV"
+
+      - if: github.event.inputs.gitEmail == ''
+        run: echo "GIT_EMAIL=${{ env.DEFAULT_GIT_EMAIL }}" >> "$GITHUB_ENV"
 
       - name: Commit and Push Changes
         run: |
-          git config user.name "${{ github.actor }}"
-          git config user.email "${{ github.actor }}@users.noreply.github.com"
-          git commit -am "[${{ github.event.inputs.packageName }}] Publish ${{ github.event.inputs.packageVersion }}" || echo "No changes to commit"
-          git push
-
-      - name: Tag Milestone
-        run: |
-          git tag ${{ github.event.inputs.milestoneTag }}
-          git push origin ${{ github.event.inputs.milestoneTag }}
+          git config user.name "${{ env.GIT_USER }}"
+          git config user.email "${{ env.GIT_EMAIL }}"
+          git commit -am "${{ env.TAG }}" || echo "No changes to commit"
 
       - name: Publish to NPM
         working-directory: packages/${{ github.event.inputs.packageName }}
-        run: |
-          npm publish --registry https://wombat-dressing-room.appspot.com --access public
+        run: npm publish --registry ${{ env.NPM_REGISTRY }} --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create and push tag
+        run: |
+          git tag ${{ env.TAG }}
+          git push origin ${{ env.TAG }}
