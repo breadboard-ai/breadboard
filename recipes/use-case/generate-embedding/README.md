@@ -17,7 +17,7 @@ This recipe requires the following secrets to be set to be exported as environme
 
 ### Outputs
 
-- `embedding_results` - The search results from Google in JSON format. The format is as described in the [Google Custom Search API](https://developers.google.com/custom-search/v1/reference/rest/v1/Search).
+- `embedding_result` - The embedding from either the PaLM API or the graph specified in `provider`
 
 ### From the CLI
 

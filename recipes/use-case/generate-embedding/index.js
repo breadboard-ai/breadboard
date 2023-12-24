@@ -12,7 +12,7 @@ import { palm } from "@google-labs/palm-kit";
 const metaData = {
   title: "Generate an embedding",
   description:
-    "Generates an embedding using PaLM, but can be used with any embedding provider. if the 'provider' is specified.",
+    "Generates an embedding using PaLM, but can be used with any embedding provider (if the 'provider' is specified.)",
   version: "0.0.3",
 };
 
