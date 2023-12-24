@@ -155,6 +155,7 @@ test("allows pausing and resuming the board", async (t) => {
     for await (const stop of firstBoard.run({ kits: [kit] })) {
       t.is(stop.type, "beforehandler");
       result = stop;
+      console.log(await result.save());
       break;
     }
   }

@@ -5,6 +5,7 @@
  */
 
 import type {
+  ControllerMessageType,
   LoadRequestMessage,
   LoadResponseMessage,
   StartMesssage,
@@ -45,6 +46,13 @@ export class WorkerHarness implements Harness {
     this.workerURL = prepareBlobUrl(absoluteURL.href);
   }
 
+  #skipDiagnosticMessages(type: ControllerMessageType) {
+    return (
+      !this.#config.diagnostics &&
+      (type === "beforehandler" || type === "afterhandler")
+    );
+  }
+
   async *run(url: string) {
     yield* asyncGen<HarnessRunResult>(async (next) => {
       if (this.worker && this.transport && this.controller) {
@@ -79,10 +87,8 @@ export class WorkerHarness implements Harness {
         }
 
         const message = await this.controller.listen();
-        console.log("message", message);
         const { data, type, id } = message;
         if (type === "proxy") {
-          console.log("proxy message", data);
           try {
             const result = await receiver.handle(data as ProxyPromiseResponse);
             id && this.controller.reply(id, result.value, type);
@@ -98,9 +104,10 @@ export class WorkerHarness implements Harness {
             break;
           }
         }
-        await next(
-          new WorkerRunResult(this.controller, message as unknown as AnyResult)
-        );
+        if (this.#skipDiagnosticMessages(type)) {
+          continue;
+        }
+        await next(new WorkerRunResult(this.controller, message as AnyResult));
         if (data && type === "end") {
           break;
         }

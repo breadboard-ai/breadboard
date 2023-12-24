@@ -11,7 +11,12 @@ import {
   LoadResponse,
   OutputResponse,
 } from "../remote/protocol.js";
-import { InputValues, Kit, OutputValues } from "../types.js";
+import { Kit, NodeDescriptor, OutputValues } from "../types.js";
+
+export type AfterhandlerResponse = {
+  node: NodeDescriptor;
+  outputs: OutputValues;
+};
 
 export type ResultType =
   /**
@@ -27,9 +32,13 @@ export type ResultType =
    */
   | "output"
   /**
-   * Sent before a handler for a particular node is handled
+   * Sent before a handler for a particular node is invoked
    */
   | "beforehandler"
+  /**
+   * Sent after a handler for a particular node is invoked
+   */
+  | "afterhandler"
   /**
    * Sent when the harness is asking for secret
    */
@@ -64,12 +73,17 @@ export type OutputResult = {
 
 export type SecretResult = {
   type: "secret";
-  data: InputValues;
+  data: { keys: string[] };
 };
 
 export type BeforehandlerResult = {
   type: "beforehandler";
   data: BeforehandlerResponse;
+};
+
+export type AfterhandlerResult = {
+  type: "afterhandler";
+  data: AfterhandlerResponse;
 };
 
 export type ErrorResult = {
@@ -93,6 +107,7 @@ export type AnyResult = (
   | OutputResult
   | SecretResult
   | BeforehandlerResult
+  | AfterhandlerResult
   | ErrorResult
   | EndResult
   | ShutdownResult
@@ -153,4 +168,9 @@ export type HarnessConfig = {
    * server and a list of nodes that will be proxied to it.
    */
   proxy?: HarnessProxyConfig[];
+  /**
+   * Specifies whether to output diagnostics information.
+   * Defaults to `false`.
+   */
+  diagnostics?: boolean;
 };
