@@ -31,9 +31,7 @@ jobs:
 
       - name: Validate Package Name is in Allowed Packages
         if: ${{ !contains(env.ALLOWED_PACKAGES, github.event.inputs.packageName) }}
-        run: |
-            echo "Package name '${{ github.event.inputs.packageName }}' is not in the list of allowed packages."
-            exit 1
+        run: echo "Package name '${{ github.event.inputs.packageName }}' is not in the list of allowed packages." && exit 1
 
       - if: github.event.inputs.packageVersion == ''
         name: Do not publish if package version is empty
@@ -69,11 +67,9 @@ jobs:
       - name: Sync Repository
         run: npm run sync
 
-      - name: Change Directory to Package
-        run: cd packages/${{ github.event.inputs.packageName }}
-
       - name: Update Package Version
-        run: npm version ${{ github.event.inputs.packageVersion }}
+        working-directory: packages/${{ github.event.inputs.packageName }}
+        run: npm version ${{ github.event.inputs.packageVersion }} --no-git-tag-version
 
       - name: Commit and Push Changes
         run: |
@@ -83,12 +79,13 @@ jobs:
           git push
 
       - name: Tag Milestone
-        if: github.event.inputs.milestoneTag != ''
         run: |
           git tag ${{ github.event.inputs.milestoneTag }}
           git push origin ${{ github.event.inputs.milestoneTag }}
 
       - name: Publish to NPM
-        run: npm publish --registry https://wombat-dressing-room.appspot.com --access public
+        working-directory: packages/${{ github.event.inputs.packageName }}
+        run: |
+          npm publish --registry https://wombat-dressing-room.appspot.com --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
