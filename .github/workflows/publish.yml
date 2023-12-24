@@ -58,6 +58,15 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      - name: Checking the code quality
+        run: npm run lint
+
+      - name: Checking the code formatting
+        run: npm run check:format
+
+      - name: Running tests
+        run: npm run test
+
       - name: Sync Repository
         run: npm run sync
 
