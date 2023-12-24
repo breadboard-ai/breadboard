@@ -20,6 +20,7 @@ import { HTTPClientTransport } from "../remote/http.js";
 import { asyncGen } from "../utils/async-gen.js";
 import { Board } from "../board.js";
 import { Diagnostics } from "./diagnostics.js";
+import { LogProbe } from "../log.js";
 
 export class LocalHarness implements Harness {
   #config: HarnessConfig;
@@ -85,7 +86,7 @@ export class LocalHarness implements Harness {
         );
 
         const probe = new Diagnostics(async (message) => {
-          await next(new LocalRunResult(message));
+          next(new LocalRunResult(message));
         });
 
         for await (const data of runner.run({ probe, kits })) {
