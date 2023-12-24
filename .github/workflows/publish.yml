@@ -24,17 +24,11 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - name: Validate Package Name
+      - name: Validate Package Name is in Allowed Packages
+        if: ${{ !contains(env.ALLOWED_PACKAGES, github.event.inputs.packageName) }}
         run: |
-          if [[ ! " $ALLOWED_PACKAGES " =~ " ${{ github.event.inputs.packageName }} " ]]; then
-
-            echo "Error: Invalid package name"
-            echo "github.event.inputs.packageName: ${{ github.event.inputs.packageName }}"
-
-            echo "ALLOWED_PACKAGES: $ALLOWED_PACKAGES"
-
+            echo "Package name '${{ github.event.inputs.packageName }}' is not in the list of allowed packages."
             exit 1
-          fi
 
       - if: github.event.inputs.packageVersion == ''
         name: Do not publish if package version is empty
