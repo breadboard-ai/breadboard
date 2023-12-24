@@ -75,13 +75,10 @@ jobs:
       - name: Update Package Version
         run: npm version ${{ github.event.inputs.packageVersion }}
 
-      - name: Git config
+      - name: Commit and Push Changes
         run: |
           git config user.name "${{ github.actor }}"
           git config user.email "${{ github.actor }}@users.noreply.github.com"
-
-      - name: Commit and Push Changes
-        run: |
           git commit -am "[${{ github.event.inputs.packageName }}] Publish ${{ github.event.inputs.packageVersion }}" || echo "No changes to commit"
           git push
 
