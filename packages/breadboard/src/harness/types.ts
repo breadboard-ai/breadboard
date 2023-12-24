@@ -119,6 +119,7 @@ export interface HarnessRunResult {
 }
 
 export interface Harness {
+  load(): AsyncGenerator<HarnessRunResult, void>;
   run(): AsyncGenerator<HarnessRunResult, void>;
 }
 

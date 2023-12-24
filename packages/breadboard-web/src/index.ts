@@ -122,6 +122,10 @@ export class Main {
 
         const harness = this.#getHarness(startEvent.url);
 
+        for await (const result of harness.load()) {
+          await this.#handleEvent(result);
+        }
+
         for await (const result of harness.run()) {
           if (
             result.message.type !== "load" &&
