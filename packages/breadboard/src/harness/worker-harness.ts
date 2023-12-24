@@ -53,7 +53,9 @@ export class WorkerHarness implements Harness {
     );
   }
 
-  async *run(url: string) {
+  async *run() {
+    const url = this.#config.url;
+
     yield* asyncGen<HarnessRunResult>(async (next) => {
       if (this.worker && this.transport && this.controller) {
         this.#stop();

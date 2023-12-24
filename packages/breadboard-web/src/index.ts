@@ -6,7 +6,6 @@
 
 import * as BreadboardUI from "@google-labs/breadboard-ui";
 import {
-  type Harness,
   type HarnessProxyConfig,
   type HarnessRemoteConfig,
   type HarnessRunResult,
@@ -79,7 +78,6 @@ const sleep = (time: number) =>
 
 export class Main {
   #ui = BreadboardUI.get();
-  #harness: Harness;
   #hasActiveBoard = false;
   #boardId = 0;
   #delay = 0;
@@ -96,7 +94,6 @@ export class Main {
     }
     config.boards.sort((a, b) => a.title.localeCompare(b.title));
 
-    this.#harness = this.#getHarness();
     BreadboardUI.register();
 
     document.body.addEventListener(
@@ -123,7 +120,9 @@ export class Main {
         const startEvent = evt as BreadboardUI.StartEvent;
         this.setActiveBreadboard(startEvent.url);
 
-        for await (const result of this.#harness.run(startEvent.url)) {
+        const harness = this.#getHarness(startEvent.url);
+
+        for await (const result of harness.run()) {
           if (
             result.message.type !== "load" &&
             result.message.type !== "beforehandler" &&
@@ -284,7 +283,7 @@ export class Main {
     }
   }
 
-  #getHarness() {
+  #getHarness(url: string) {
     const harness =
       globalThis.localStorage.getItem(HARNESS_SWITCH_KEY) ?? DEFAULT_HARNESS;
 
@@ -312,6 +311,6 @@ export class Main {
       url: WORKER_URL,
     };
     const diagnostics = true;
-    return createHarness({ kits, remote, proxy, diagnostics });
+    return createHarness({ url, kits, remote, proxy, diagnostics });
   }
 }

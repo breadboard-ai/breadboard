@@ -119,7 +119,7 @@ export interface HarnessRunResult {
 }
 
 export interface Harness {
-  run(url: string): AsyncGenerator<HarnessRunResult, void>;
+  run(): AsyncGenerator<HarnessRunResult, void>;
 }
 
 export type SecretHandler = (keys: {
@@ -151,6 +151,10 @@ export type HarnessRemoteConfig =
   | false;
 
 export type HarnessConfig = {
+  /**
+   * The URL of the board to run.
+   */
+  url: string;
   /**
    * The kits to use by the runtime.
    */

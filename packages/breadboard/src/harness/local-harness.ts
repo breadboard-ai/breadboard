@@ -63,24 +63,22 @@ export class LocalHarness implements Harness {
     return kits;
   }
 
-  async *run(url: string) {
+  async *run() {
     yield* asyncGen<HarnessRunResult>(async (next) => {
       const kits = this.#configureKits(createOnSecret(next));
 
       try {
+        const url = this.#config.url;
         const runner = await Board.load(url);
+
+        const { title, description, version } = runner;
+        const diagram = runner.mermaid("TD", true);
+        const nodes = runner.nodes;
 
         await next(
           new LocalRunResult({
             type: "load",
-            data: {
-              title: runner.title,
-              description: runner.description,
-              version: runner.version,
-              diagram: runner.mermaid("TD", true),
-              url: url,
-              nodes: runner.nodes,
-            },
+            data: { title, description, version, diagram, url, nodes },
           })
         );
 
