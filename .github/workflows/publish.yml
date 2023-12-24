@@ -56,7 +56,7 @@ jobs:
           node-version: "20.x"
 
       - name: Install Dependencies
-        run: npm install
+        run: npm ci
 
       - name: Sync Repository
         run: npm run sync
