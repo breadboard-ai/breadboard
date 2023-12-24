@@ -18,7 +18,9 @@ on:
 
 env:
   ALLOWED_PACKAGES: |
-    breadboard
+    (
+      breadboard
+    )
 
 jobs:
   publish:
@@ -30,8 +32,11 @@ jobs:
       - run: echo "ALLOWED_PACKAGES ${ALLOWED_PACKAGES}"
 
       - name: Validate Package Name is in Allowed Packages
-        if: ${{ !contains(env.ALLOWED_PACKAGES, github.event.inputs.packageName) }}
-        run: echo "Package name '${{ github.event.inputs.packageName }}' is not in the list of allowed packages." && exit 1
+        run: |
+          if [[ ! $ALLOWED_PACKAGES =~ (^|[[:space:]])${{ github.event.inputs.packageName }}($|[[:space:]]) ]]; then
+            echo "Error: Package name '${{ github.event.inputs.packageName }}' is not in the list of allowed packages: $ALLOWED_PACKAGES"
+            exit 1
+          fi
 
       - if: github.event.inputs.packageVersion == ''
         name: Do not publish if package version is empty
