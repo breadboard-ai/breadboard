@@ -98,10 +98,6 @@ export class LocalHarness implements Harness {
             data.inputs = inputResult.response as InputValues;
           } else if (type === "output") {
             await next(new LocalRunResult({ type, data }));
-          } else if (type === "beforehandler") {
-            await next(new LocalRunResult({ type, data }));
-          } else if (type === "afterhandler") {
-            await next(new LocalRunResult({ type, data }));
           }
         }
         await next(new LocalRunResult({ type: "end", data: {} }));
