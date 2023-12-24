@@ -127,11 +127,7 @@ export class Main {
         }
 
         for await (const result of harness.run()) {
-          if (
-            result.message.type !== "load" &&
-            result.message.type !== "beforehandler" &&
-            result.message.type !== "shutdown"
-          ) {
+          if (result.message.type !== "beforehandler") {
             const currentBoardId = this.#boardId;
             await this.#suspendIfPaused();
             if (currentBoardId !== this.#boardId) {

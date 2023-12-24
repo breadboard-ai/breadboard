@@ -66,10 +66,11 @@ export class LocalHarness implements Harness {
   }
 
   async *load() {
-    if (this.#runner) {
-      throw new Error("Harness already loaded and is ready to run.");
-    }
     yield* asyncGen<HarnessRunResult>(async (next) => {
+      if (this.#runner) {
+        await next(new LocalRunResult({ type: "shutdown", data: null }));
+      }
+
       const url = this.#config.url;
       const runner = await Board.load(url);
 
@@ -89,10 +90,11 @@ export class LocalHarness implements Harness {
 
   async *run() {
     yield* asyncGen<HarnessRunResult>(async (next) => {
-      const kits = this.#configureKits(createOnSecret(next));
       if (!this.#runner) {
         throw new Error("Harness not loaded. Please call 'load' first.");
       }
+
+      const kits = this.#configureKits(createOnSecret(next));
 
       try {
         const probe = this.#config.diagnostics
