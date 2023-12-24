@@ -96,7 +96,7 @@ jobs:
 
       - name: Set Package Version
         working-directory: packages/${{ github.event.inputs.packageName }}
-        run: npm version ${{ env PACKAGE_VERSION }} --no-git-tag-version
+        run: npm version ${{ env.PACKAGE_VERSION }} --no-git-tag-version
 
       - if: github.event.inputs.gitUser != ''
         run: echo "GIT_USER=${{ github.event.inputs.gitUser }}" >> "$GITHUB_ENV"
