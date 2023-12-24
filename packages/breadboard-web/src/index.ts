@@ -311,6 +311,7 @@ export class Main {
       type: "worker",
       url: WORKER_URL,
     };
-    return createHarness({ kits, remote, proxy });
+    const diagnostics = true;
+    return createHarness({ kits, remote, proxy, diagnostics });
   }
 }

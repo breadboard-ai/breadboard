@@ -5,6 +5,7 @@
  */
 
 import type {
+  ControllerMessageType,
   LoadRequestMessage,
   LoadResponseMessage,
   StartMesssage,
@@ -43,6 +44,13 @@ export class WorkerHarness implements Harness {
     }
     const absoluteURL = new URL(workerURL, location.href);
     this.workerURL = prepareBlobUrl(absoluteURL.href);
+  }
+
+  #skipDiagnosticMessages(type: ControllerMessageType) {
+    return (
+      !this.#config.diagnostics &&
+      (type === "beforehandler" || type === "afterhandler")
+    );
   }
 
   async *run(url: string) {
@@ -95,6 +103,9 @@ export class WorkerHarness implements Harness {
             );
             break;
           }
+        }
+        if (this.#skipDiagnosticMessages(type)) {
+          continue;
         }
         await next(new WorkerRunResult(this.controller, message as AnyResult));
         if (data && type === "end") {

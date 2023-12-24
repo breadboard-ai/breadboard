@@ -168,4 +168,9 @@ export type HarnessConfig = {
    * server and a list of nodes that will be proxied to it.
    */
   proxy?: HarnessProxyConfig[];
+  /**
+   * Specifies whether to output diagnostics information.
+   * Defaults to `false`.
+   */
+  diagnostics?: boolean;
 };

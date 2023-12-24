@@ -91,12 +91,11 @@ export class WorkerRuntime {
         asRuntimeKit(kitConstructor)
       );
 
-      for await (const stop of board.run({
-        probe: new Diagnostics(({ type, data }) => {
-          this.#controller.inform(data, type);
-        }),
-        kits,
-      })) {
+      const probe = new Diagnostics(({ type, data }) => {
+        this.#controller.inform(data, type);
+      });
+
+      for await (const stop of board.run({ probe, kits })) {
         if (stop.type === "input") {
           const inputMessage = (await this.#controller.ask<
             InputRequestMessage,
