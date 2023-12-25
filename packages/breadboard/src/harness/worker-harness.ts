@@ -74,12 +74,6 @@ export class WorkerHarness implements Harness {
     yield* asyncGen<HarnessLoadResult>(async (next) => {
       if (this.#run) {
         this.#stop();
-        await next(
-          new WorkerResult(this.#run.controller, {
-            type: "shutdown",
-            data: null,
-          })
-        );
       }
 
       const proxyNodes = (this.#config.proxy?.[0]?.nodes ?? []).map((node) => {

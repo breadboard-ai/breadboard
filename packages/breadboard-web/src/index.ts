@@ -278,9 +278,6 @@ export class Main {
         this.#ui.done();
         this.#hasActiveBoard = false;
         break;
-
-      case "shutdown":
-        break;
     }
   }
 

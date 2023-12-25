@@ -50,11 +50,7 @@ export type ResultType =
   /**
    * Sent when the board run finished
    */
-  | "end"
-  /**
-   * Sent when the harness is shutting down
-   */
-  | "shutdown";
+  | "end";
 
 export type LoadResult = {
   type: "load";
@@ -96,11 +92,6 @@ export type EndResult = {
   data: Record<string, never>;
 };
 
-export type ShutdownResult = {
-  type: "shutdown";
-  data: null;
-};
-
 export type OptionalId = { id?: string };
 
 export type AnyRunResult = (
@@ -114,7 +105,7 @@ export type AnyRunResult = (
 ) &
   OptionalId;
 
-export type AnyLoadResult = (LoadResult | ShutdownResult) & OptionalId;
+export type AnyLoadResult = LoadResult & OptionalId;
 
 export interface HarnessResult<R extends AnyRunResult | AnyLoadResult> {
   reply(reply: unknown): void;

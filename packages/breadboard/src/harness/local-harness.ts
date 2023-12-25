@@ -68,10 +68,6 @@ export class LocalHarness implements Harness {
 
   async *load() {
     yield* asyncGen<HarnessLoadResult>(async (next) => {
-      if (this.#runner) {
-        await next(new LocalResult({ type: "shutdown", data: null }));
-      }
-
       const url = this.#config.url;
       const runner = await Board.load(url);
 
