@@ -8,8 +8,9 @@ import * as BreadboardUI from "@google-labs/breadboard-ui";
 import {
   type HarnessProxyConfig,
   type HarnessRemoteConfig,
-  type HarnessRunResult,
   createHarness,
+  HarnessLoadResult,
+  HarnessRunResult,
 } from "@google-labs/breadboard/harness";
 import { asRuntimeKit } from "@google-labs/breadboard";
 import Starter from "@google-labs/llm-starter";
@@ -225,7 +226,7 @@ export class Main {
     });
   }
 
-  async #handleEvent(result: HarnessRunResult) {
+  async #handleEvent(result: HarnessRunResult | HarnessLoadResult) {
     const { data, type } = result.message;
 
     // Update the graph to the latest.

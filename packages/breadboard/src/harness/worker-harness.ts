@@ -12,16 +12,17 @@ import type {
 } from "../worker/protocol.js";
 import { MessageController, WorkerTransport } from "../worker/controller.js";
 import type {
-  AnyResult,
+  AnyRunResult,
   Harness,
   HarnessConfig,
+  HarnessLoadResult,
   HarnessRunResult,
 } from "./types.js";
 import { asyncGen } from "../index.js";
 import { ProxyReceiver } from "./receiver.js";
 import { createOnSecret } from "./secrets.js";
 import type { ProxyPromiseResponse } from "../remote/protocol.js";
-import { WorkerRunResult } from "./result.js";
+import { WorkerResult } from "./result.js";
 
 const prepareBlobUrl = (url: string) => {
   const code = `import "${url}";`;
@@ -70,11 +71,11 @@ export class WorkerHarness implements Harness {
   async *load() {
     const url = this.#config.url;
 
-    yield* asyncGen<HarnessRunResult>(async (next) => {
+    yield* asyncGen<HarnessLoadResult>(async (next) => {
       if (this.#run) {
         this.#stop();
         await next(
-          new WorkerRunResult(this.#run.controller, {
+          new WorkerResult(this.#run.controller, {
             type: "shutdown",
             data: null,
           })
@@ -88,7 +89,7 @@ export class WorkerHarness implements Harness {
       this.#run = new HarnessRun(this.workerURL);
       const controller = this.#run.controller;
       await next(
-        new WorkerRunResult(
+        new WorkerResult(
           controller,
           await controller.ask<LoadRequestMessage, LoadResponseMessage>(
             { url, proxyNodes },
@@ -123,7 +124,7 @@ export class WorkerHarness implements Harness {
           } catch (e) {
             const error = e as Error;
             await next(
-              new WorkerRunResult(controller, {
+              new WorkerResult(controller, {
                 type: "error",
                 data: { error },
               })
@@ -134,7 +135,7 @@ export class WorkerHarness implements Harness {
         if (this.#skipDiagnosticMessages(type)) {
           continue;
         }
-        await next(new WorkerRunResult(controller, message as AnyResult));
+        await next(new WorkerResult(controller, message as AnyRunResult));
         if (data && type === "end") {
           break;
         }

@@ -101,8 +101,9 @@ export type ShutdownResult = {
   data: null;
 };
 
-export type AnyResult = (
-  | LoadResult
+export type OptionalId = { id?: string };
+
+export type AnyRunResult = (
   | InputResult
   | OutputResult
   | SecretResult
@@ -110,16 +111,21 @@ export type AnyResult = (
   | AfterhandlerResult
   | ErrorResult
   | EndResult
-  | ShutdownResult
-) & { id?: string };
+) &
+  OptionalId;
 
-export interface HarnessRunResult {
+export type AnyLoadResult = (LoadResult | ShutdownResult) & OptionalId;
+
+export interface HarnessResult<R extends AnyRunResult | AnyLoadResult> {
   reply(reply: unknown): void;
-  message: AnyResult;
+  message: R;
 }
 
+export type HarnessRunResult = HarnessResult<AnyRunResult>;
+export type HarnessLoadResult = HarnessResult<AnyLoadResult>;
+
 export interface Harness {
-  load(): AsyncGenerator<HarnessRunResult, void>;
+  load(): AsyncGenerator<HarnessLoadResult, void>;
   run(): AsyncGenerator<HarnessRunResult, void>;
 }
 

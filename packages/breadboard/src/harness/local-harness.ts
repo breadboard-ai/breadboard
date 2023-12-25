@@ -7,10 +7,10 @@
 import type {
   Harness,
   HarnessConfig,
+  HarnessLoadResult,
   HarnessRunResult,
   SecretHandler,
 } from "./types.js";
-import { LocalRunResult } from "./result.js";
 import { createOnSecret } from "./secrets.js";
 import { KitBuilder } from "../kits/builder.js";
 import { InputValues } from "../types.js";
@@ -21,6 +21,7 @@ import { asyncGen } from "../utils/async-gen.js";
 import { Board } from "../board.js";
 import { Diagnostics } from "./diagnostics.js";
 import { BoardRunner } from "../runner.js";
+import { LocalResult } from "./result.js";
 
 export class LocalHarness implements Harness {
   #config: HarnessConfig;
@@ -66,9 +67,9 @@ export class LocalHarness implements Harness {
   }
 
   async *load() {
-    yield* asyncGen<HarnessRunResult>(async (next) => {
+    yield* asyncGen<HarnessLoadResult>(async (next) => {
       if (this.#runner) {
-        await next(new LocalRunResult({ type: "shutdown", data: null }));
+        await next(new LocalResult({ type: "shutdown", data: null }));
       }
 
       const url = this.#config.url;
@@ -80,7 +81,7 @@ export class LocalHarness implements Harness {
 
       this.#runner = runner;
       await next(
-        new LocalRunResult({
+        new LocalResult({
           type: "load",
           data: { title, description, version, diagram, url, nodes },
         })
@@ -99,21 +100,21 @@ export class LocalHarness implements Harness {
       try {
         const probe = this.#config.diagnostics
           ? new Diagnostics(async (message) => {
-              next(new LocalRunResult(message));
+              next(new LocalResult(message));
             })
           : undefined;
 
         for await (const data of this.#runner.run({ probe, kits })) {
           const { type } = data;
           if (type === "input") {
-            const inputResult = new LocalRunResult({ type, data });
+            const inputResult = new LocalResult({ type, data });
             await next(inputResult);
             data.inputs = inputResult.response as InputValues;
           } else if (type === "output") {
-            await next(new LocalRunResult({ type, data }));
+            await next(new LocalResult({ type, data }));
           }
         }
-        await next(new LocalRunResult({ type: "end", data: {} }));
+        await next(new LocalResult({ type: "end", data: {} }));
       } catch (e) {
         let error = e as Error;
         let message = "";
@@ -122,7 +123,7 @@ export class LocalHarness implements Harness {
           message += `\n${error.message}`;
         }
         console.error(message, error);
-        await next(new LocalRunResult({ type: "error", data: { error } }));
+        await next(new LocalResult({ type: "error", data: { error } }));
       }
     });
   }
