@@ -49,7 +49,7 @@ export class HistoryEntry extends LitElement {
       pointer-events: none;
     }
 
-    #container.progress summary::before {
+    #container.beforehandler summary::before {
       background: radial-gradient(
           var(--bb-progress-color) 0%,
           var(--bb-progress-color) 30%,
@@ -68,8 +68,9 @@ export class HistoryEntry extends LitElement {
       animation: rotate 0.5s linear infinite;
     }
 
-    :host(:not(:first-child)) #container.progress {
-      display: none;
+    #container.afterhandler summary::before {
+      background: var(--bb-progress-color);
+      border: 1px solid rgb(90, 64, 119);
     }
 
     #container.load summary::before {

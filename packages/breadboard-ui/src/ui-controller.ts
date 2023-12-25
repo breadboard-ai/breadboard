@@ -734,6 +734,20 @@ export class UIController extends HTMLElement implements UI {
     }
   }
 
+  #updateHistoryEntry(type: HarnessEventType, id: string, data: unknown) {
+    const root = this.shadowRoot;
+    assertRoot(root);
+
+    const historyList = root.querySelector("#history-list");
+    assertHTMLElement(historyList);
+
+    const historyEntry = historyList.querySelector(`#${id}`) as HistoryEntry;
+    assertHTMLElement(historyEntry);
+
+    historyEntry.type = type;
+    historyEntry.data = data;
+  }
+
   #parseNodeInformation(nodes?: NodeDescriptor[]) {
     this.#nodeInfo.clear();
     if (!nodes) {
@@ -790,13 +804,27 @@ export class UIController extends HTMLElement implements UI {
   }
 
   beforehandler(data: BeforehandlerResponse) {
-    const { id, type: message } = data.node;
-    this.#createHistoryEntry(HarnessEventType.PROGRESS, message, id);
+    const {
+      invocationId,
+      node: { id, type },
+    } = data;
+    this.#createHistoryEntry(
+      HarnessEventType.BEFOREHANDLER,
+      type,
+      `${id}_${invocationId}`
+    );
   }
 
   afterhandler(data: AfterhandlerResponse) {
-    const { id, type: message } = data.node;
-    this.#createHistoryEntry(HarnessEventType.PROGRESS, message, id);
+    const {
+      invocationId,
+      node: { id },
+    } = data;
+    this.#updateHistoryEntry(
+      HarnessEventType.AFTERHANDLER,
+      `${id}_${invocationId}`,
+      data.outputs
+    );
   }
 
   async output(values: OutputArgs) {

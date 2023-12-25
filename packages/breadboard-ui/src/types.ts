@@ -5,7 +5,8 @@ export const enum HarnessEventType {
   INPUT_MULTIPART = "input-multi-part",
   LOAD = "load",
   OUTPUT = "output",
-  PROGRESS = "progress",
+  BEFOREHANDLER = "beforehandler",
+  AFTERHANDLER = "afterhandler",
   RESULT = "result",
   SECRETS = "secrets",
 }
