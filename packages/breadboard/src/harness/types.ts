@@ -50,11 +50,7 @@ export type ResultType =
   /**
    * Sent when the board run finished
    */
-  | "end"
-  /**
-   * Sent when the harness is shutting down
-   */
-  | "shutdown";
+  | "end";
 
 export type LoadResult = {
   type: "load";
@@ -96,13 +92,9 @@ export type EndResult = {
   data: Record<string, never>;
 };
 
-export type ShutdownResult = {
-  type: "shutdown";
-  data: null;
-};
+export type OptionalId = { id?: string };
 
-export type AnyResult = (
-  | LoadResult
+export type AnyRunResult = (
   | InputResult
   | OutputResult
   | SecretResult
@@ -110,16 +102,19 @@ export type AnyResult = (
   | AfterhandlerResult
   | ErrorResult
   | EndResult
-  | ShutdownResult
-) & { id?: string };
+) &
+  OptionalId;
 
-export interface HarnessRunResult {
+export interface HarnessResult<R extends AnyRunResult> {
   reply(reply: unknown): void;
-  message: AnyResult;
+  message: R;
 }
 
+export type HarnessRunResult = HarnessResult<AnyRunResult>;
+
 export interface Harness {
-  run(url: string): AsyncGenerator<HarnessRunResult, void>;
+  load(): Promise<LoadResponse>;
+  run(): AsyncGenerator<HarnessRunResult, void>;
 }
 
 export type SecretHandler = (keys: {
@@ -151,6 +146,10 @@ export type HarnessRemoteConfig =
   | false;
 
 export type HarnessConfig = {
+  /**
+   * The URL of the board to run.
+   */
+  url: string;
   /**
    * The kits to use by the runtime.
    */

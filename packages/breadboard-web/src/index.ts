@@ -6,11 +6,10 @@
 
 import * as BreadboardUI from "@google-labs/breadboard-ui";
 import {
-  type Harness,
   type HarnessProxyConfig,
   type HarnessRemoteConfig,
-  type HarnessRunResult,
   createHarness,
+  HarnessRunResult,
 } from "@google-labs/breadboard/harness";
 import { asRuntimeKit } from "@google-labs/breadboard";
 import Starter from "@google-labs/llm-starter";
@@ -79,7 +78,6 @@ const sleep = (time: number) =>
 
 export class Main {
   #ui = BreadboardUI.get();
-  #harness: Harness;
   #hasActiveBoard = false;
   #boardId = 0;
   #delay = 0;
@@ -96,7 +94,6 @@ export class Main {
     }
     config.boards.sort((a, b) => a.title.localeCompare(b.title));
 
-    this.#harness = this.#getHarness();
     BreadboardUI.register();
 
     document.body.addEventListener(
@@ -123,12 +120,12 @@ export class Main {
         const startEvent = evt as BreadboardUI.StartEvent;
         this.setActiveBreadboard(startEvent.url);
 
-        for await (const result of this.#harness.run(startEvent.url)) {
-          if (
-            result.message.type !== "load" &&
-            result.message.type !== "beforehandler" &&
-            result.message.type !== "shutdown"
-          ) {
+        const harness = this.#getHarness(startEvent.url);
+
+        this.#ui.load(await harness.load());
+
+        for await (const result of harness.run()) {
+          if (result.message.type !== "beforehandler") {
             const currentBoardId = this.#boardId;
             await this.#suspendIfPaused();
             if (currentBoardId !== this.#boardId) {
@@ -237,10 +234,6 @@ export class Main {
     }
 
     switch (type) {
-      case "load": {
-        this.#ui.load(data);
-        break;
-      }
       case "output": {
         await this.#ui.output(data);
         break;
@@ -278,13 +271,10 @@ export class Main {
         this.#ui.done();
         this.#hasActiveBoard = false;
         break;
-
-      case "shutdown":
-        break;
     }
   }
 
-  #getHarness() {
+  #getHarness(url: string) {
     const harness =
       globalThis.localStorage.getItem(HARNESS_SWITCH_KEY) ?? DEFAULT_HARNESS;
 
@@ -312,6 +302,6 @@ export class Main {
       url: WORKER_URL,
     };
     const diagnostics = true;
-    return createHarness({ kits, remote, proxy, diagnostics });
+    return createHarness({ url, kits, remote, proxy, diagnostics });
   }
 }

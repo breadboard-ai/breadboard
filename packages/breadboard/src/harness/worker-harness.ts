@@ -12,7 +12,7 @@ import type {
 } from "../worker/protocol.js";
 import { MessageController, WorkerTransport } from "../worker/controller.js";
 import type {
-  AnyResult,
+  AnyRunResult,
   Harness,
   HarnessConfig,
   HarnessRunResult,
@@ -21,7 +21,7 @@ import { asyncGen } from "../index.js";
 import { ProxyReceiver } from "./receiver.js";
 import { createOnSecret } from "./secrets.js";
 import type { ProxyPromiseResponse } from "../remote/protocol.js";
-import { WorkerRunResult } from "./result.js";
+import { WorkerResult } from "./result.js";
 
 const prepareBlobUrl = (url: string) => {
   const code = `import "${url}";`;
@@ -29,12 +29,26 @@ const prepareBlobUrl = (url: string) => {
   return URL.createObjectURL(blob);
 };
 
+class HarnessRun {
+  worker: Worker;
+  transport: WorkerTransport;
+  controller: MessageController;
+
+  constructor(workerURL: string) {
+    this.worker = new Worker(workerURL, { type: "module" });
+    this.transport = new WorkerTransport(this.worker);
+    this.controller = new MessageController(this.transport);
+  }
+
+  terminate() {
+    this.worker.terminate();
+  }
+}
+
 export class WorkerHarness implements Harness {
   #config: HarnessConfig;
+  #run: HarnessRun | null = null;
   workerURL: string;
-  worker: Worker | null = null;
-  transport: WorkerTransport | null = null;
-  controller: MessageController | null = null;
 
   constructor(config: HarnessConfig) {
     this.#config = config;
@@ -53,50 +67,52 @@ export class WorkerHarness implements Harness {
     );
   }
 
-  async *run(url: string) {
+  async load() {
+    const url = this.#config.url;
+
+    if (this.#run) {
+      this.#stop();
+    }
+
+    const proxyNodes = (this.#config.proxy?.[0]?.nodes ?? []).map((node) => {
+      return typeof node === "string" ? node : node.node;
+    });
+
+    this.#run = new HarnessRun(this.workerURL);
+    const controller = this.#run.controller;
+    const result = await controller.ask<
+      LoadRequestMessage,
+      LoadResponseMessage
+    >({ url, proxyNodes }, "load");
+
+    return result.data;
+  }
+
+  async *run() {
+    if (!this.#run) {
+      throw new Error("Harness hasn't been loaded. Please call 'load' first.");
+    }
+    const controller = this.#run.controller;
+
     yield* asyncGen<HarnessRunResult>(async (next) => {
-      if (this.worker && this.transport && this.controller) {
-        this.#stop();
-        await next(
-          new WorkerRunResult(this.controller, { type: "shutdown", data: null })
-        );
-      }
-
       const receiver = new ProxyReceiver(this.#config, createOnSecret(next));
-      const proxyNodes = (this.#config.proxy?.[0]?.nodes ?? []).map((node) => {
-        return typeof node === "string" ? node : node.node;
-      });
-
-      this.worker = new Worker(this.workerURL, { type: "module" });
-      this.transport = new WorkerTransport(this.worker);
-      this.controller = new MessageController(this.transport);
-      await next(
-        new WorkerRunResult(
-          this.controller,
-          await this.controller.ask<LoadRequestMessage, LoadResponseMessage>(
-            { url, proxyNodes },
-            "load"
-          )
-        )
-      );
-
-      this.controller.inform<StartMesssage>({}, "start");
+      controller.inform<StartMesssage>({}, "start");
       for (;;) {
-        if (!this.controller) {
+        if (!controller) {
           break;
         }
 
-        const message = await this.controller.listen();
+        const message = await controller.listen();
         const { data, type, id } = message;
         if (type === "proxy") {
           try {
             const result = await receiver.handle(data as ProxyPromiseResponse);
-            id && this.controller.reply(id, result.value, type);
+            id && controller.reply(id, result.value, type);
             continue;
           } catch (e) {
             const error = e as Error;
             await next(
-              new WorkerRunResult(this.controller, {
+              new WorkerResult(controller, {
                 type: "error",
                 data: { error },
               })
@@ -107,7 +123,7 @@ export class WorkerHarness implements Harness {
         if (this.#skipDiagnosticMessages(type)) {
           continue;
         }
-        await next(new WorkerRunResult(this.controller, message as AnyResult));
+        await next(new WorkerResult(controller, message as AnyRunResult));
         if (data && type === "end") {
           break;
         }
@@ -116,13 +132,11 @@ export class WorkerHarness implements Harness {
   }
 
   #stop() {
-    if (!this.worker) {
+    if (!this.#run) {
       return;
     }
 
-    this.worker.terminate();
-    this.worker = null;
-    this.transport = null;
-    this.controller = null;
+    this.#run.terminate();
+    this.#run = null;
   }
 }
