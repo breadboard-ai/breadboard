@@ -121,7 +121,7 @@ export class BoardRunner implements BreadboardRunner {
     context: NodeHandlerContext = {},
     result?: RunResult
   ): AsyncGenerator<RunResult> {
-    yield* asyncGen(async (next) => {
+    yield* asyncGen<RunResult>(async (next) => {
       const handlers = await BoardRunner.handlersFromBoard(this, context.kits);
       const slots = { ...this.#slots, ...context.slots };
       this.#validators.forEach((validator) => validator.addGraph(this));

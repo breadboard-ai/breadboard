@@ -21,10 +21,10 @@ export const VALID_MESSAGE_TYPES = [
   "input",
   "output",
   "beforehandler",
+  "afterhandler",
   "proxy",
   "end",
   "error",
-  "shutdown",
 ] as const;
 
 export type ControllerMessageType = (typeof VALID_MESSAGE_TYPES)[number];
