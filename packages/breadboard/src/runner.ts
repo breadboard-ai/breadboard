@@ -121,6 +121,7 @@ export class BoardRunner implements BreadboardRunner {
     context: NodeHandlerContext = {},
     result?: RunResult
   ): AsyncGenerator<RunResult> {
+    let invocationId = 0;
     yield* asyncGen<RunResult>(async (next) => {
       const handlers = await BoardRunner.handlersFromBoard(this, context.kits);
       const slots = { ...this.#slots, ...context.slots };
@@ -131,11 +132,17 @@ export class BoardRunner implements BreadboardRunner {
       const requestedInputs = new RequestedInputsManager(context);
 
       for await (const result of machine) {
+        invocationId++;
         const { inputs, descriptor, missingInputs } = result;
 
         if (result.skip) {
           context?.probe?.dispatchEvent(
-            new ProbeEvent("skip", { descriptor, inputs, missingInputs })
+            new ProbeEvent("skip", {
+              descriptor,
+              inputs,
+              missingInputs,
+              invocationId,
+            })
           );
           continue;
         }
@@ -147,6 +154,7 @@ export class BoardRunner implements BreadboardRunner {
               descriptor,
               inputs,
               outputs: await result.outputsPromise,
+              invocationId,
             })
           );
           await bubbleUpInputsIfNeeded(this, context, result);
@@ -155,7 +163,7 @@ export class BoardRunner implements BreadboardRunner {
 
         if (descriptor.type === "output") {
           context.probe?.dispatchEvent(
-            new ProbeEvent("output", { descriptor, inputs })
+            new ProbeEvent("output", { descriptor, inputs, invocationId })
           );
           await next(new OutputStageResult(result));
           continue;
@@ -168,6 +176,7 @@ export class BoardRunner implements BreadboardRunner {
         const beforehandlerDetail: ProbeDetails = {
           descriptor,
           inputs,
+          invocationId,
         };
 
         await next(new BeforeHandlerStageResult(result));
@@ -206,6 +215,7 @@ export class BoardRunner implements BreadboardRunner {
               validatorMetadata: this.#validators.map((validator) =>
                 validator.getValidatorMetadata(descriptor)
               ),
+              invocationId,
             })
           );
         });

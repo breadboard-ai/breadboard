@@ -82,7 +82,6 @@ export class Main {
   #boardId = 0;
   #delay = 0;
   #pauser = new Pauser();
-  #pending = new Map<string, string>();
 
   constructor(config: BreadboardUI.StartArgs) {
     // Remove boards that are still works-in-progress from production builds.
@@ -257,8 +256,12 @@ export class Main {
       }
 
       case "beforehandler": {
-        this.#ui.progress(data.node.id, data.node.type);
-        this.#pending.set(data.node.id, data.node.type);
+        this.#ui.beforehandler(data);
+        break;
+      }
+
+      case "afterhandler": {
+        this.#ui.afterhandler(data);
         break;
       }
 
