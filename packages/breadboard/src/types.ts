@@ -476,6 +476,12 @@ export interface ProbeDetails {
    * increment for each level of nesting.
    */
   nesting?: number;
+  /*
+   * Invocation Id. This is a unique id that is generated for each invocation
+   * of the node. It can be used to correlate events.
+   * The number is unique within a board run.
+   */
+  invocationId: number;
   sources?: string[];
   validatorMetadata?: BreadboardValidatorMetadata[];
 }
