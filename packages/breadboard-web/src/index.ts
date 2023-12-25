@@ -256,11 +256,12 @@ export class Main {
       }
 
       case "beforehandler": {
-        this.#ui.progress(data.node.id, data.node.type);
+        this.#ui.beforehandler(data);
         break;
       }
 
       case "afterhandler": {
+        this.#ui.afterhandler(data);
         break;
       }
 

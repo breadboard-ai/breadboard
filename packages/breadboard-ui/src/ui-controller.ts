@@ -26,9 +26,12 @@ import {
 import { HarnessEventType } from "./types.js";
 import { HistoryEntry } from "./history-entry.js";
 import { NodeConfiguration, NodeDescriptor } from "@google-labs/breadboard";
+import { BeforehandlerResponse } from "@google-labs/breadboard/remote";
+import { AfterhandlerResponse } from "@google-labs/breadboard/harness";
 
 export interface UI {
-  progress(id: string, message: string): void;
+  beforehandler(data: BeforehandlerResponse): void;
+  afterhandler(data: AfterhandlerResponse): void;
   output(values: OutputArgs): void;
   input(id: string, args: InputArgs): Promise<Record<string, unknown>>;
   error(message: string): void;
@@ -786,7 +789,13 @@ export class UIController extends HTMLElement implements UI {
     return this.#diagram.render(this.#currentBoardDiagram, highlightNode);
   }
 
-  progress(id: string, message: string) {
+  beforehandler(data: BeforehandlerResponse) {
+    const { id, type: message } = data.node;
+    this.#createHistoryEntry(HarnessEventType.PROGRESS, message, id);
+  }
+
+  afterhandler(data: AfterhandlerResponse) {
+    const { id, type: message } = data.node;
     this.#createHistoryEntry(HarnessEventType.PROGRESS, message, id);
   }
 
