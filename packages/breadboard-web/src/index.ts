@@ -235,7 +235,6 @@ export class Main {
     switch (type) {
       case "output": {
         await this.#ui.output(data);
-        console.log("output", data);
         break;
       }
 
@@ -258,12 +257,10 @@ export class Main {
 
       case "beforehandler": {
         this.#ui.progress(data.node.id, data.node.type);
-        console.info("beforehandler", data.node.id, data.node.type);
         break;
       }
 
       case "afterhandler": {
-        console.info("afterhandler", data.node.id, data.node.type);
         break;
       }
 
