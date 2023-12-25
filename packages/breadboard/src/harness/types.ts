@@ -15,6 +15,7 @@ import { Kit, NodeDescriptor, OutputValues } from "../types.js";
 
 export type AfterhandlerResponse = {
   node: NodeDescriptor;
+  invocationId: number;
   outputs: OutputValues;
 };
 
