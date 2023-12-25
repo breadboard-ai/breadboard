@@ -15,7 +15,6 @@ import type {
   AnyRunResult,
   Harness,
   HarnessConfig,
-  HarnessLoadResult,
   HarnessRunResult,
 } from "./types.js";
 import { asyncGen } from "../index.js";
@@ -68,30 +67,25 @@ export class WorkerHarness implements Harness {
     );
   }
 
-  async *load() {
+  async load() {
     const url = this.#config.url;
 
-    yield* asyncGen<HarnessLoadResult>(async (next) => {
-      if (this.#run) {
-        this.#stop();
-      }
+    if (this.#run) {
+      this.#stop();
+    }
 
-      const proxyNodes = (this.#config.proxy?.[0]?.nodes ?? []).map((node) => {
-        return typeof node === "string" ? node : node.node;
-      });
-
-      this.#run = new HarnessRun(this.workerURL);
-      const controller = this.#run.controller;
-      await next(
-        new WorkerResult(
-          controller,
-          await controller.ask<LoadRequestMessage, LoadResponseMessage>(
-            { url, proxyNodes },
-            "load"
-          )
-        )
-      );
+    const proxyNodes = (this.#config.proxy?.[0]?.nodes ?? []).map((node) => {
+      return typeof node === "string" ? node : node.node;
     });
+
+    this.#run = new HarnessRun(this.workerURL);
+    const controller = this.#run.controller;
+    const result = await controller.ask<
+      LoadRequestMessage,
+      LoadResponseMessage
+    >({ url, proxyNodes }, "load");
+
+    return result.data;
   }
 
   async *run() {

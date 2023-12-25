@@ -7,11 +7,9 @@
 import { OutputValues } from "../types.js";
 import { MessageController } from "../worker/controller.js";
 import { ControllerMessageType } from "../worker/protocol.js";
-import { AnyLoadResult, AnyRunResult, HarnessResult } from "./types.js";
+import { AnyRunResult, HarnessResult } from "./types.js";
 
-export class LocalResult<R extends AnyRunResult | AnyLoadResult>
-  implements HarnessResult<R>
-{
+export class LocalResult<R extends AnyRunResult> implements HarnessResult<R> {
   message: R;
   response?: unknown;
 
@@ -24,9 +22,7 @@ export class LocalResult<R extends AnyRunResult | AnyLoadResult>
   }
 }
 
-export class WorkerResult<R extends AnyRunResult | AnyLoadResult>
-  implements HarnessResult<R>
-{
+export class WorkerResult<R extends AnyRunResult> implements HarnessResult<R> {
   #controller: MessageController;
   message: R;
 

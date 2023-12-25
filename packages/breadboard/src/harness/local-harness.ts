@@ -7,7 +7,6 @@
 import type {
   Harness,
   HarnessConfig,
-  HarnessLoadResult,
   HarnessRunResult,
   SecretHandler,
 } from "./types.js";
@@ -66,23 +65,16 @@ export class LocalHarness implements Harness {
     return kits;
   }
 
-  async *load() {
-    yield* asyncGen<HarnessLoadResult>(async (next) => {
-      const url = this.#config.url;
-      const runner = await Board.load(url);
+  async load() {
+    const url = this.#config.url;
+    const runner = await Board.load(url);
 
-      const { title, description, version } = runner;
-      const diagram = runner.mermaid("TD", true);
-      const nodes = runner.nodes;
+    const { title, description, version } = runner;
+    const diagram = runner.mermaid("TD", true);
+    const nodes = runner.nodes;
 
-      this.#runner = runner;
-      await next(
-        new LocalResult({
-          type: "load",
-          data: { title, description, version, diagram, url, nodes },
-        })
-      );
-    });
+    this.#runner = runner;
+    return { title, description, version, diagram, url, nodes };
   }
 
   async *run() {

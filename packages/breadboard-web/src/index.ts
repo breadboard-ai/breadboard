@@ -9,7 +9,6 @@ import {
   type HarnessProxyConfig,
   type HarnessRemoteConfig,
   createHarness,
-  HarnessLoadResult,
   HarnessRunResult,
 } from "@google-labs/breadboard/harness";
 import { asRuntimeKit } from "@google-labs/breadboard";
@@ -123,9 +122,7 @@ export class Main {
 
         const harness = this.#getHarness(startEvent.url);
 
-        for await (const result of harness.load()) {
-          await this.#handleEvent(result);
-        }
+        this.#ui.load(await harness.load());
 
         for await (const result of harness.run()) {
           if (result.message.type !== "beforehandler") {
@@ -226,7 +223,7 @@ export class Main {
     });
   }
 
-  async #handleEvent(result: HarnessRunResult | HarnessLoadResult) {
+  async #handleEvent(result: HarnessRunResult) {
     const { data, type } = result.message;
 
     // Update the graph to the latest.
@@ -237,10 +234,6 @@ export class Main {
     }
 
     switch (type) {
-      case "load": {
-        this.#ui.load(data);
-        break;
-      }
       case "output": {
         await this.#ui.output(data);
         break;

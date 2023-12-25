@@ -105,18 +105,15 @@ export type AnyRunResult = (
 ) &
   OptionalId;
 
-export type AnyLoadResult = LoadResult & OptionalId;
-
-export interface HarnessResult<R extends AnyRunResult | AnyLoadResult> {
+export interface HarnessResult<R extends AnyRunResult> {
   reply(reply: unknown): void;
   message: R;
 }
 
 export type HarnessRunResult = HarnessResult<AnyRunResult>;
-export type HarnessLoadResult = HarnessResult<AnyLoadResult>;
 
 export interface Harness {
-  load(): AsyncGenerator<HarnessLoadResult, void>;
+  load(): Promise<LoadResponse>;
   run(): AsyncGenerator<HarnessRunResult, void>;
 }
 
