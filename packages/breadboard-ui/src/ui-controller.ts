@@ -26,9 +26,12 @@ import {
 import { HarnessEventType } from "./types.js";
 import { HistoryEntry } from "./history-entry.js";
 import { NodeConfiguration, NodeDescriptor } from "@google-labs/breadboard";
+import { BeforehandlerResponse } from "@google-labs/breadboard/remote";
+import { AfterhandlerResponse } from "@google-labs/breadboard/harness";
 
 export interface UI {
-  progress(id: string, message: string): void;
+  beforehandler(data: BeforehandlerResponse): void;
+  afterhandler(data: AfterhandlerResponse): void;
   output(values: OutputArgs): void;
   input(id: string, args: InputArgs): Promise<Record<string, unknown>>;
   error(message: string): void;
@@ -731,6 +734,20 @@ export class UIController extends HTMLElement implements UI {
     }
   }
 
+  #updateHistoryEntry(type: HarnessEventType, id: string, data: unknown) {
+    const root = this.shadowRoot;
+    assertRoot(root);
+
+    const historyList = root.querySelector("#history-list");
+    assertHTMLElement(historyList);
+
+    const historyEntry = historyList.querySelector(`#${id}`) as HistoryEntry;
+    assertHTMLElement(historyEntry);
+
+    historyEntry.type = type;
+    historyEntry.data = data;
+  }
+
   #parseNodeInformation(nodes?: NodeDescriptor[]) {
     this.#nodeInfo.clear();
     if (!nodes) {
@@ -786,8 +803,28 @@ export class UIController extends HTMLElement implements UI {
     return this.#diagram.render(this.#currentBoardDiagram, highlightNode);
   }
 
-  progress(id: string, message: string) {
-    this.#createHistoryEntry(HarnessEventType.PROGRESS, message, id);
+  beforehandler(data: BeforehandlerResponse) {
+    const {
+      invocationId,
+      node: { id, type },
+    } = data;
+    this.#createHistoryEntry(
+      HarnessEventType.BEFOREHANDLER,
+      type,
+      `${id}_${invocationId}`
+    );
+  }
+
+  afterhandler(data: AfterhandlerResponse) {
+    const {
+      invocationId,
+      node: { id },
+    } = data;
+    this.#updateHistoryEntry(
+      HarnessEventType.AFTERHANDLER,
+      `${id}_${invocationId}`,
+      data.outputs
+    );
   }
 
   async output(values: OutputArgs) {

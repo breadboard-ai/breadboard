@@ -26,21 +26,16 @@ export class Diagnostics extends EventTarget {
 
   #eventHandler = (event: Event) => {
     const e = event as ProbeEvent;
+    const { descriptor: node, inputs, outputs, invocationId } = e.detail;
     const message =
       e.type === "beforehandler"
         ? ({
             type: "beforehandler",
-            data: {
-              node: e.detail.descriptor,
-              inputs: e.detail.inputs,
-            },
+            data: { node, inputs, invocationId },
           } as BeforehandlerResult)
         : ({
             type: "afterhandler",
-            data: {
-              node: e.detail.descriptor,
-              outputs: e.detail.outputs,
-            },
+            data: { node, outputs, invocationId },
           } as AfterhandlerResult);
     this.#callback(message);
   };

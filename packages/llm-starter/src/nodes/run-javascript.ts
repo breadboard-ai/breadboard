@@ -27,11 +27,15 @@ const environment = (): Environment =>
     ? "browser"
     : "worker";
 
-const runInNode = async (
-  code: string,
-  functionName: string,
-  args: string
-): Promise<string> => {
+const runInNode = async ({
+  code,
+  functionName,
+  args,
+}: {
+  code: string;
+  functionName: string;
+  args: string;
+}): Promise<string> => {
   const vm = await import(/*@vite-ignore*/ "node:vm");
   const codeToRun = `${code}\n${functionName}(${args});`;
   const context = vm.createContext({ console });
@@ -40,11 +44,15 @@ const runInNode = async (
   return JSON.stringify(result);
 };
 
-const runInBrowser = async (
-  code: string,
-  functionName: string,
-  args: string
-): Promise<string> => {
+const runInBrowser = async ({
+  code,
+  functionName,
+  args,
+}: {
+  code: string;
+  functionName: string;
+  args: string;
+}): Promise<string> => {
   const runner = (code: string, functionName: string) => {
     return `${code}\nself.onmessage = () => self.postMessage({ result: JSON.stringify(${functionName}(${args})) });self.onerror = (e) => self.postMessage({ error: e.message })`;
   };
@@ -87,23 +95,75 @@ export type RunJavascriptInputs = InputValues & {
   raw?: boolean;
 };
 
-export const runJavascriptHandler: NodeHandlerFunction = async (
-  inputs: InputValues
-) => {
-  const { code, name, raw, ...args } = inputs as RunJavascriptInputs;
+export function convertToNamedFunction({
+  funcStr,
+  name = DEFAULT_FUNCTION_NAME,
+  throwOnNameMismatch = false,
+}: {
+  funcStr: string;
+  name?: string;
+  throwOnNameMismatch?: boolean;
+}): string {
+  // Regular expressions to identify different types of functions
+  const arrowFuncRegex = /^\s*((?:\((?:.|\n)*?\)|\w+)\s*=>\s*((?:.|\n)*))$/;
+  const namedFuncRegex = /^\s*function\s+[A-Za-z0-9_$]+\s*\(/;
+  const anonymousFuncRegex = /^\s*function\s*\(/;
+
+  // Check if it's an arrow function
+  if (arrowFuncRegex.test(funcStr)) {
+    let [args, body] = funcStr.split("=>").map((s) => s.trim());
+    // Add parentheses around single argument if not present
+    if (!args.startsWith("(")) {
+      args = `(${args})`;
+    }
+    if (!body.startsWith("{")) {
+      // If the body is a single expression, enclose it in braces
+      body = `{ return ${body}; }`;
+    }
+    return `function ${name}${args} ${body}`;
+  }
+  // Check if it's a named function
+  else if (namedFuncRegex.test(funcStr)) {
+    if (throwOnNameMismatch) {
+      const match = funcStr.match(/function\s+([A-Za-z0-9_$]+)\s*\(/);
+      const existingFunctionName = match ? match[1] : null;
+      if (existingFunctionName !== name) {
+        throw new Error(`Function name mismatch: ${existingFunctionName} !== ${name}`);
+      }
+    }
+    return funcStr.replace(namedFuncRegex, `function ${name}(`);
+  }
+  // Check if it's an anonymous function
+  else if (anonymousFuncRegex.test(funcStr)) {
+    return funcStr.replace(anonymousFuncRegex, `function ${name}(`);
+  }
+  // If it's not a recognizable function format
+  else {
+    throw new Error("Invalid function format");
+  }
+}
+
+const DEFAULT_FUNCTION_NAME = "run";
+export const runJavascriptHandler: NodeHandlerFunction = async ({
+  code,
+  name,
+  raw,
+  ...args
+}: InputValues & RunJavascriptInputs) => {
   if (!code) throw new Error("Running JavaScript requires `code` input");
-  const clean = stripCodeBlock(code);
+  code = stripCodeBlock(code);
+  name ??= DEFAULT_FUNCTION_NAME;
+  code = convertToNamedFunction({ funcStr: code, name });
   // A smart helper that senses the environment (browser or node) and uses
   // the appropriate method to run the code.
-  const functionName = name || "run";
   const argsString = JSON.stringify(args);
   const env = environment();
 
   try {
     const result = JSON.parse(
       env === "node"
-        ? await runInNode(clean, functionName, argsString)
-        : await runInBrowser(clean, functionName, argsString)
+        ? await runInNode({ code, functionName: name, args: argsString })
+        : await runInBrowser({ code, functionName: name, args: argsString })
     );
     return raw ? result : { result };
   } catch (e) {

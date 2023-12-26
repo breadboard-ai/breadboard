@@ -64,7 +64,7 @@ test("Interruptible streaming", async (t) => {
     secondRunResults.push(type);
   }
   t.deepEqual(outputs, { hello: "world" });
-  t.deepEqual(secondRunResults, ["beforehandler", "output", "end"]);
+  t.deepEqual(secondRunResults, ["output", "end"]);
 });
 
 test("Continuous streaming", async (t) => {
@@ -91,9 +91,8 @@ test("Continuous streaming", async (t) => {
     { node: { type: "input" }, inputArguments: { foo: "bar" } },
   ]);
   writer.write(["input", { inputs: { hello: "world" } }, ""]);
-  const secondResult = await reader.read();
-  t.assert(!secondResult.done);
-  t.like(secondResult.value, ["beforehandler", { node: { type: "noop" } }]);
+  // second result was "beforehandler", but I removed it because of the
+  // refactoring to use diagnostics.
   const thirdResult = await reader.read();
   t.assert(!thirdResult.done);
   t.like(thirdResult.value, ["output", { outputs: { hello: "world" } }]);

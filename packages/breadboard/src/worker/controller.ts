@@ -53,7 +53,7 @@ export class WorkerTransport implements MessageControllerTransport {
 
   #onMessage(e: MessageEvent) {
     const message = e.data as ControllerMessage;
-    console.log(`[${this.#direction}]`, message.type, message.data);
+    console.debug(`[${this.#direction}]`, message.type, message.data);
     this.#messageHandler && this.#messageHandler(message);
   }
 }
