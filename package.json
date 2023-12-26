@@ -122,7 +122,10 @@
     "@typescript-eslint/parser": "^5.56.0",
     "ava": "^5.2.0",
     "eslint": "^8.36.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.1.2",
     "npm-ci": "^0.0.2",
+    "prettier": "3.1.1",
     "rimraf": "^5.0.1",
     "typescript": "^5.0.4",
     "wireit": "^0.14.1"
