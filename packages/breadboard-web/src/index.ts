@@ -256,12 +256,12 @@ export class Main {
       }
 
       case "graphstart": {
-        console.log("graphstart", data);
+        console.log("graphstart", data.path.join("_"), data);
         break;
       }
 
       case "graphend": {
-        console.log("graphend", data);
+        console.log("graphend", data.path.join("_"), data);
         break;
       }
 

@@ -25,21 +25,21 @@ export class Diagnostics extends EventTarget implements Probe {
   }
 
   async report(message: ProbeMessage): Promise<void> {
-    await this.#callback(message);
+    return this.#callback(message);
   }
 
   #eventHandler = (event: Event) => {
     const e = event as ProbeEvent;
-    const { descriptor: node, inputs, outputs, invocationId } = e.detail;
+    const { descriptor: node, inputs, outputs, path } = e.detail;
     const message =
       e.type === "beforehandler"
         ? ({
             type: "beforehandler",
-            data: { node, inputs, invocationId },
+            data: { node, inputs, path },
           } as BeforehandlerResult)
         : ({
             type: "afterhandler",
-            data: { node, outputs, invocationId },
+            data: { node, outputs, path },
           } as AfterhandlerResult);
     this.#callback(message);
   };

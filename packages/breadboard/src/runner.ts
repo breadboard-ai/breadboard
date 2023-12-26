@@ -121,7 +121,6 @@ export class BoardRunner implements BreadboardRunner {
     context: NodeHandlerContext = {},
     result?: RunResult
   ): AsyncGenerator<RunResult> {
-    let invocationId = 0;
     yield* asyncGen<RunResult>(async (next) => {
       const { probe } = context;
       const handlers = await BoardRunner.handlersFromBoard(this, context.kits);
@@ -132,7 +131,15 @@ export class BoardRunner implements BreadboardRunner {
 
       const requestedInputs = new RequestedInputsManager(context);
 
-      await probe?.report?.({ type: "graphstart", data: { metadata: this } });
+      const invocationPath = context.invocationPath || [];
+
+      await probe?.report?.({
+        type: "graphstart",
+        data: { metadata: this, path: invocationPath },
+      });
+
+      let invocationId = 0;
+      const path = () => [...invocationPath, invocationId];
 
       for await (const result of machine) {
         invocationId++;
@@ -144,7 +151,7 @@ export class BoardRunner implements BreadboardRunner {
               descriptor,
               inputs,
               missingInputs,
-              invocationId,
+              path: path(),
             })
           );
           continue;
@@ -157,7 +164,7 @@ export class BoardRunner implements BreadboardRunner {
               descriptor,
               inputs,
               outputs: await result.outputsPromise,
-              invocationId,
+              path: path(),
             })
           );
           await bubbleUpInputsIfNeeded(this, context, result);
@@ -166,7 +173,7 @@ export class BoardRunner implements BreadboardRunner {
 
         if (descriptor.type === "output") {
           probe?.dispatchEvent(
-            new ProbeEvent("output", { descriptor, inputs, invocationId })
+            new ProbeEvent("output", { descriptor, inputs, path: path() })
           );
           await next(new OutputStageResult(result));
           continue;
@@ -179,7 +186,7 @@ export class BoardRunner implements BreadboardRunner {
         const beforehandlerDetail: ProbeDetails = {
           descriptor,
           inputs,
-          invocationId,
+          path: path(),
         };
 
         await next(new BeforeHandlerStageResult(result));
@@ -199,6 +206,7 @@ export class BoardRunner implements BreadboardRunner {
           slots,
           kits: [...(context.kits || []), ...this.kits],
           requestInput: requestedInputs.createHandler(next, result),
+          invocationPath: path(),
         };
 
         const outputsPromise = (
@@ -218,14 +226,17 @@ export class BoardRunner implements BreadboardRunner {
               validatorMetadata: this.#validators.map((validator) =>
                 validator.getValidatorMetadata(descriptor)
               ),
-              invocationId,
+              path: path(),
             })
           );
         });
 
         result.outputsPromise = outputsPromise;
       }
-      await probe?.report?.({ type: "graphend", data: { metadata: this } });
+      await probe?.report?.({
+        type: "graphend",
+        data: { metadata: this, path: invocationPath },
+      });
     });
   }
 
@@ -262,6 +273,8 @@ export class BoardRunner implements BreadboardRunner {
     try {
       let outputs: OutputValues = {};
 
+      const path = context.invocationPath || [];
+
       for await (const result of this.run(context)) {
         if (result.type === "input") {
           // Pass the inputs to the board. If there are inputs bound to the board
@@ -271,7 +284,10 @@ export class BoardRunner implements BreadboardRunner {
         } else if (result.type === "output") {
           outputs = result.outputs;
           // Exit once we receive the first output.
-          await probe?.report?.({ type: "graphend", data: { metadata: this } });
+          await probe?.report?.({
+            type: "graphend",
+            data: { metadata: this, path },
+          });
           break;
         }
       }

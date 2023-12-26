@@ -805,24 +805,24 @@ export class UIController extends HTMLElement implements UI {
 
   beforehandler(data: BeforehandlerResponse) {
     const {
-      invocationId,
+      path,
       node: { id, type },
     } = data;
     this.#createHistoryEntry(
       HarnessEventType.BEFOREHANDLER,
       type,
-      `${id}_${invocationId}`
+      `${id}_${path.join("_")}`
     );
   }
 
   afterhandler(data: AfterhandlerResponse) {
     const {
-      invocationId,
+      path,
       node: { id },
     } = data;
     this.#updateHistoryEntry(
       HarnessEventType.AFTERHANDLER,
-      `${id}_${invocationId}`,
+      `${id}_${path.join("_")}`,
       data.outputs
     );
   }

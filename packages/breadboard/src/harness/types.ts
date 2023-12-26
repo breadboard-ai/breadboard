@@ -15,7 +15,7 @@ import { Kit, NodeDescriptor, OutputValues, ProbeMessage } from "../types.js";
 
 export type AfterhandlerResponse = {
   node: NodeDescriptor;
-  invocationId: number;
+  path: number[];
   outputs: OutputValues;
 };
 

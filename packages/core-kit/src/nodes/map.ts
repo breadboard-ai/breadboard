@@ -56,9 +56,13 @@ export default async (
   const result = await Promise.all(
     list.map(async (item, index) => {
       // TODO: Express as a multi-turn `run`.
+      const newContext = {
+        ...context,
+        invocationPath: [...(context?.invocationPath || []), index],
+      };
       const outputs = await runnableBoard.runOnce(
         { item, index, list },
-        context
+        newContext
       );
       return outputs;
     })

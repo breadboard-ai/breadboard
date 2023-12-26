@@ -451,6 +451,7 @@ export interface BreadboardValidator {
 
 export type GraphProbeMessageData = {
   metadata: GraphMetadata;
+  path: number[];
 };
 
 export type GraphStartProbeMessage = {
@@ -497,11 +498,12 @@ export interface ProbeDetails {
    */
   nesting?: number;
   /*
-   * Invocation Id. This is a unique id that is generated for each invocation
-   * of the node. It can be used to correlate events.
-   * The number is unique within a board run.
+   * Invocation Path. This is an array of unique node invocation ids that
+   * represents the current place of the node in the graph traversal.
+   * It can be used to correlate events.
+   * The array is unique to the invocation of a node across all board runs.
    */
-  invocationId: number;
+  path: number[];
   sources?: string[];
   validatorMetadata?: BreadboardValidatorMetadata[];
 }
@@ -562,6 +564,7 @@ export interface NodeHandlerContext {
   readonly slots?: BreadboardSlotSpec;
   readonly probe?: Probe;
   readonly requestInput?: (name: string, schema: Schema) => Promise<NodeValue>;
+  readonly invocationPath?: number[];
 }
 
 type Common<To, From> = {
