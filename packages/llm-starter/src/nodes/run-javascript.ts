@@ -95,6 +95,39 @@ export type RunJavascriptInputs = InputValues & {
   raw?: boolean;
 };
 
+export function convertToNamedFunction(funcStr: string, newName: string = DEFAULT_FUNCTION_NAME): string {
+  // Regular expressions to identify different types of functions
+  const arrowFuncRegex = /^\s*((?:\((?:.|\n)*?\)|\w+)\s*=>\s*((?:.|\n)*))$/;
+  const namedFuncRegex = /^\s*function\s+[A-Za-z0-9_$]+\s*\(/;
+  const anonymousFuncRegex = /^\s*function\s*\(/;
+
+  // Check if it's an arrow function
+  if (arrowFuncRegex.test(funcStr)) {
+    let [args, body] = funcStr.split('=>').map(s => s.trim());
+    // Add parentheses around single argument if not present
+    if (!args.startsWith('(')) {
+      args = `(${args})`;
+    }
+    if (!body.startsWith('{')) {
+      // If the body is a single expression, enclose it in braces
+      body = `{ return ${body}; }`;
+    }
+    return `function ${newName}${args} ${body}`;
+  }
+  // Check if it's a named function
+  else if (namedFuncRegex.test(funcStr)) {
+    return funcStr.replace(namedFuncRegex, `function ${newName}(`);
+  }
+  // Check if it's an anonymous function
+  else if (anonymousFuncRegex.test(funcStr)) {
+    return funcStr.replace(anonymousFuncRegex, `function ${newName}(`);
+  }
+  // If it's not a recognizable function format
+  else {
+    throw new Error("Invalid function format");
+  }
+}
+
 const DEFAULT_FUNCTION_NAME = "run";
 export const runJavascriptHandler: NodeHandlerFunction = async ({
   code,
@@ -105,6 +138,7 @@ export const runJavascriptHandler: NodeHandlerFunction = async ({
   if (!code) throw new Error("Running JavaScript requires `code` input");
   code = stripCodeBlock(code);
   name ??= DEFAULT_FUNCTION_NAME;
+  code = convertToNamedFunction(code, name);
   // A smart helper that senses the environment (browser or node) and uses
   // the appropriate method to run the code.
   const argsString = JSON.stringify(args);
