@@ -91,7 +91,7 @@ export class WorkerRuntime {
         asRuntimeKit(kitConstructor)
       );
 
-      const probe = new Diagnostics(({ type, data }) => {
+      const probe = new Diagnostics(async ({ type, data }) => {
         this.#controller.inform(data, type);
       });
 

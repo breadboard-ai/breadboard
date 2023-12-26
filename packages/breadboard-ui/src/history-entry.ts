@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HarnessEventType } from "./types.js";
+import { HistoryEventType } from "./types.js";
 
 import { LitElement, html, css } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
@@ -12,7 +12,10 @@ import { customElement, property, state } from "lit/decorators.js";
 @customElement("bb-history-entry")
 export class HistoryEntry extends LitElement {
   @property()
-  type: HarnessEventType = HarnessEventType.DONE;
+  type: HistoryEventType = HistoryEventType.DONE;
+
+  @state()
+  nodeId = "";
 
   @state()
   summary = "";
@@ -183,7 +186,7 @@ export class HistoryEntry extends LitElement {
     return html`<div id="container" class="${this.type}">
     <details ${this.type === "output" ? "open" : ""}>
       <summary>${this.summary} <span id="id">${
-      this.id || ""
+      this.nodeId || ""
     }</span> <span id="elapsed-time">${this.#formatTime(
       this.elapsedTime
     )}<span></summary>

@@ -107,7 +107,7 @@ export type BeforehandlerResponse = {
    * @see [NodeDescriptor]
    */
   node: NodeDescriptor;
-  invocationId: number;
+  path: number[];
 };
 export type BeforehandlerResponseMessage = [
   "beforehandler",
