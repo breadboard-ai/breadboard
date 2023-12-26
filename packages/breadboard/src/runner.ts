@@ -132,7 +132,7 @@ export class BoardRunner implements BreadboardRunner {
 
       const requestedInputs = new RequestedInputsManager(context);
 
-      await probe?.report?.({ type: "graphstart", metadata: this });
+      await probe?.report?.({ type: "graphstart", data: { metadata: this } });
 
       for await (const result of machine) {
         invocationId++;
@@ -225,7 +225,7 @@ export class BoardRunner implements BreadboardRunner {
 
         result.outputsPromise = outputsPromise;
       }
-      await probe?.report?.({ type: "graphend", metadata: this });
+      await probe?.report?.({ type: "graphend", data: { metadata: this } });
     });
   }
 
@@ -248,6 +248,7 @@ export class BoardRunner implements BreadboardRunner {
     context: NodeHandlerContext = {}
   ): Promise<OutputValues> {
     const args = { ...inputs, ...this.args };
+    const { probe } = context;
 
     if (context.board && context.descriptor) {
       // If called from another node in a parent board, add the parent board's
@@ -270,6 +271,7 @@ export class BoardRunner implements BreadboardRunner {
         } else if (result.type === "output") {
           outputs = result.outputs;
           // Exit once we receive the first output.
+          await probe?.report?.({ type: "graphend", data: { metadata: this } });
           break;
         }
       }

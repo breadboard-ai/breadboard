@@ -449,14 +449,18 @@ export interface BreadboardValidator {
   ): BreadboardValidator;
 }
 
+export type GraphProbeMessageData = {
+  metadata: GraphMetadata;
+};
+
 export type GraphStartProbeMessage = {
   type: "graphstart";
-  metadata: GraphMetadata;
+  data: GraphProbeMessageData;
 };
 
 export type GraphEndProbeMessage = {
   type: "graphend";
-  metadata: GraphDescriptor;
+  data: GraphProbeMessageData;
 };
 
 export type ProbeMessage = GraphStartProbeMessage | GraphEndProbeMessage;

@@ -11,7 +11,7 @@ import {
   LoadResponse,
   OutputResponse,
 } from "../remote/protocol.js";
-import { Kit, NodeDescriptor, OutputValues } from "../types.js";
+import { Kit, NodeDescriptor, OutputValues, ProbeMessage } from "../types.js";
 
 export type AfterhandlerResponse = {
   node: NodeDescriptor;
@@ -103,6 +103,7 @@ export type AnyRunResult = (
   | AfterhandlerResult
   | ErrorResult
   | EndResult
+  | ProbeMessage
 ) &
   OptionalId;
 
