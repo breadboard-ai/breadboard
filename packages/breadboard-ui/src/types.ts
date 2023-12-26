@@ -9,14 +9,23 @@ export const enum HistoryEventType {
   AFTERHANDLER = "afterhandler",
   RESULT = "result",
   SECRETS = "secrets",
+  GRAPHSTART = "graphstart",
+  GRAPHEND = "graphend",
 }
 
-export type HistoryEvent = {
-  type: HistoryEventType;
+export type LooseHistoryEventTypes = Exclude<
+  HistoryEventType,
+  HistoryEventType.GRAPHEND | HistoryEventType.GRAPHSTART
+>;
+
+export type LooseHistoryEvent = {
+  type: LooseHistoryEventTypes;
   summary?: string;
   id?: string | null;
   data?: unknown;
 };
+
+export type HistoryEvent = LooseHistoryEvent;
 
 export interface ImageHandler {
   start(): Promise<void>;
