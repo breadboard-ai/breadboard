@@ -13,7 +13,8 @@
     "ci": "npm ci",
     "check:format": "prettier --check --config .prettierrc packages/**/*.ts",
     "ci:local": "wireit",
-    "generate:docs": "wireit"
+    "generate:docs": "wireit",
+    "prepare": "husky install"
   },
   "wireit": {
     "build": {
