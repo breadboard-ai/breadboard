@@ -95,10 +95,12 @@ export type RunJavascriptInputs = InputValues & {
   raw?: boolean;
 };
 
-export const runJavascriptHandler: NodeHandlerFunction = async (
-  inputs: InputValues
-) => {
-  const { code, name, raw, ...args } = inputs as RunJavascriptInputs;
+export const runJavascriptHandler: NodeHandlerFunction = async ({
+  code,
+  name,
+  raw,
+  ...args
+}: InputValues & RunJavascriptInputs) => {
   if (!code) throw new Error("Running JavaScript requires `code` input");
   const clean = stripCodeBlock(code);
   // A smart helper that senses the environment (browser or node) and uses
