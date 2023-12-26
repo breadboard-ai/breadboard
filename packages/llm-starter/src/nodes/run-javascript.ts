@@ -95,6 +95,7 @@ export type RunJavascriptInputs = InputValues & {
   raw?: boolean;
 };
 
+const DEFAULT_FUNCTION_NAME = "run";
 export const runJavascriptHandler: NodeHandlerFunction = async ({
   code,
   name,
@@ -102,18 +103,18 @@ export const runJavascriptHandler: NodeHandlerFunction = async ({
   ...args
 }: InputValues & RunJavascriptInputs) => {
   if (!code) throw new Error("Running JavaScript requires `code` input");
-  const clean = stripCodeBlock(code);
+  code = stripCodeBlock(code);
+  name ??= DEFAULT_FUNCTION_NAME;
   // A smart helper that senses the environment (browser or node) and uses
   // the appropriate method to run the code.
-  const functionName = name || "run";
   const argsString = JSON.stringify(args);
   const env = environment();
 
   try {
     const result = JSON.parse(
       env === "node"
-        ? await runInNode({ code: clean, functionName, args: argsString })
-        : await runInBrowser({ code: clean, functionName, args: argsString })
+        ? await runInNode({ code, functionName: name, args: argsString })
+        : await runInBrowser({ code, functionName: name, args: argsString })
     );
     return raw ? result : { result };
   } catch (e) {
