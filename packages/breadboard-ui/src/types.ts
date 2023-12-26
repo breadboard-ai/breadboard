@@ -18,14 +18,32 @@ export type LooseHistoryEventTypes = Exclude<
   HistoryEventType.GRAPHEND | HistoryEventType.GRAPHSTART
 >;
 
-export type LooseHistoryEvent = {
-  type: LooseHistoryEventTypes;
+export type PrimordialHistoryEvent = {
+  type: HistoryEventType;
   summary?: string;
   id?: string | null;
   data?: unknown;
 };
 
-export type HistoryEvent = LooseHistoryEvent;
+export type LooseHistoryEvent = PrimordialHistoryEvent & {
+  type: LooseHistoryEventTypes;
+};
+
+export type GraphStartHistoryEvent = PrimordialHistoryEvent & {
+  type: HistoryEventType.GRAPHSTART;
+  data: {
+    path: string[];
+  };
+};
+
+export type GraphEndHistoryEvent = GraphStartHistoryEvent & {
+  type: HistoryEventType.GRAPHEND;
+};
+
+export type HistoryEvent =
+  | LooseHistoryEvent
+  | GraphStartHistoryEvent
+  | GraphEndHistoryEvent;
 
 export interface ImageHandler {
   start(): Promise<void>;
