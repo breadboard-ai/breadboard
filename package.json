@@ -8,6 +8,7 @@
     "test": "wireit",
     "build": "wireit",
     "lint": "wireit",
+    "lint:fix": "wireit",
     "deep-clean:build": "rm -rf node_modules packages/*/node_modules package-lock.json && npm run sync",
     "clean:build": "rimraf -g packages/*/dist packages/*/.wireit",
     "ci": "npm ci",
@@ -115,6 +116,12 @@
         "./packages/llm-starter:generate:docs",
         "./packages/node-nursery:generate:docs"
       ]
+    },
+    "lint:fix": {
+      "command": "npm run lint -- --fix",
+      "env": {
+        "WIREIT_LOGGER": "metrics"
+      }
     }
   },
   "keywords": [],
