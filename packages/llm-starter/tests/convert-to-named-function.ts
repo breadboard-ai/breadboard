@@ -142,3 +142,14 @@ test("handles multiline functions with default arguments", (t) => {
   const result = convertToNamedFunction(multilineFunc, "sum");
   t.is(result, expected);
 });
+
+test("if throwOnNameMismatch is true, throws error for mismatched function name", async (t) => {
+  function foo() {
+    return 42;
+  }
+  const error = t.throws(() =>
+    convertToNamedFunction(foo.toString(), "bar", true)
+  );
+  t.truthy(error);
+  t.truthy(error?.message.includes("Function name mismatch"));
+});

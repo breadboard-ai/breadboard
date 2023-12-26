@@ -95,7 +95,7 @@ export type RunJavascriptInputs = InputValues & {
   raw?: boolean;
 };
 
-export function convertToNamedFunction(funcStr: string, newName: string = DEFAULT_FUNCTION_NAME): string {
+export function convertToNamedFunction(funcStr: string, newName: string = DEFAULT_FUNCTION_NAME, throwOnNameMismatch = false): string {
   // Regular expressions to identify different types of functions
   const arrowFuncRegex = /^\s*((?:\((?:.|\n)*?\)|\w+)\s*=>\s*((?:.|\n)*))$/;
   const namedFuncRegex = /^\s*function\s+[A-Za-z0-9_$]+\s*\(/;
@@ -116,6 +116,13 @@ export function convertToNamedFunction(funcStr: string, newName: string = DEFAUL
   }
   // Check if it's a named function
   else if (namedFuncRegex.test(funcStr)) {
+    if (throwOnNameMismatch) {
+      const match = funcStr.match(/function\s+([A-Za-z0-9_$]+)\s*\(/);
+      const name = match ? match[1] : null;
+      if (name !== newName) {
+        throw new Error(`Function name mismatch: ${name} !== ${newName}`);
+      }
+    }
     return funcStr.replace(namedFuncRegex, `function ${newName}(`);
   }
   // Check if it's an anonymous function
