@@ -46,6 +46,8 @@ interface HistoryLogItem {
   elapsedTime: number;
 }
 
+const pathToId = (path: number[]) => `path-${path.join("-")}`;
+
 export class UIController extends HTMLElement implements UI {
   #inputContainer = new InputContainer();
   #nodeInformation: HTMLElement;
@@ -713,10 +715,23 @@ export class UIController extends HTMLElement implements UI {
       globalThis.performance.now() - this.#lastHistoryEventTime;
     this.#lastHistoryEventTime = globalThis.performance.now();
 
+    const createId = () => {
+      if (
+        type === HistoryEventType.BEFOREHANDLER ||
+        type === HistoryEventType.AFTERHANDLER ||
+        type === HistoryEventType.GRAPHSTART ||
+        type === HistoryEventType.GRAPHEND
+      ) {
+        return pathToId(data.path);
+      }
+      return id || "";
+    };
+
     const historyEntry = new HistoryEntry();
     historyEntry.type = type;
     historyEntry.summary = summary || "";
-    historyEntry.id = id || "";
+    historyEntry.id = createId();
+    historyEntry.nodeId = id || "";
     historyEntry.data = data;
     historyEntry.elapsedTime = elapsedTime;
 
@@ -729,14 +744,19 @@ export class UIController extends HTMLElement implements UI {
     }
   }
 
-  #updateHistoryEntry({ type, id, data }: HistoryEvent) {
+  #updateHistoryEntry({ type, data }: HistoryEvent) {
     const root = this.shadowRoot;
     assertRoot(root);
 
     const historyList = root.querySelector("#history-list");
     assertHTMLElement(historyList);
 
-    const historyEntry = historyList.querySelector(`#${id}`) as HistoryEntry;
+    if (type !== HistoryEventType.AFTERHANDLER) {
+      throw new Error("Only AFTERHANDLER events can be used to update history");
+    }
+
+    const selector = `#${pathToId(data.path)}`;
+    const historyEntry = historyList.querySelector(selector) as HistoryEntry;
     assertHTMLElement(historyEntry);
 
     historyEntry.type = type;
@@ -805,7 +825,8 @@ export class UIController extends HTMLElement implements UI {
     this.#createHistoryEntry({
       type: HistoryEventType.BEFOREHANDLER,
       summary: type,
-      id: `${id}_${path.join("_")}`,
+      id,
+      data: { path },
     });
   }
 
@@ -813,11 +834,12 @@ export class UIController extends HTMLElement implements UI {
     const {
       path,
       node: { id },
+      outputs,
     } = data;
     this.#updateHistoryEntry({
       type: HistoryEventType.AFTERHANDLER,
-      id: `${id}_${path.join("_")}`,
-      data: data.outputs,
+      id,
+      data: { path, outputs },
     });
   }
 

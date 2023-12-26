@@ -13,9 +13,14 @@ export const enum HistoryEventType {
   GRAPHEND = "graphend",
 }
 
+// TODO: Remove all the `Loose` types by tightening up the types for
+// each event.
 export type LooseHistoryEventTypes = Exclude<
   HistoryEventType,
-  HistoryEventType.GRAPHEND | HistoryEventType.GRAPHSTART
+  | HistoryEventType.GRAPHEND
+  | HistoryEventType.GRAPHSTART
+  | HistoryEventType.BEFOREHANDLER
+  | HistoryEventType.AFTERHANDLER
 >;
 
 export type PrimordialHistoryEvent = {
@@ -29,21 +34,36 @@ export type LooseHistoryEvent = PrimordialHistoryEvent & {
   type: LooseHistoryEventTypes;
 };
 
-export type GraphStartHistoryEvent = PrimordialHistoryEvent & {
-  type: HistoryEventType.GRAPHSTART;
-  data: {
-    path: string[];
-  };
+export type DataWithPath = {
+  path: number[];
 };
 
-export type GraphEndHistoryEvent = GraphStartHistoryEvent & {
+export type GraphStartHistoryEvent = PrimordialHistoryEvent & {
+  type: HistoryEventType.GRAPHSTART;
+  data: DataWithPath;
+};
+
+export type GraphEndHistoryEvent = PrimordialHistoryEvent & {
   type: HistoryEventType.GRAPHEND;
+  data: DataWithPath;
+};
+
+export type BeforehandlerHistoryEvent = PrimordialHistoryEvent & {
+  type: HistoryEventType.BEFOREHANDLER;
+  data: DataWithPath;
+};
+
+export type AfterhandlerHistoryEvent = PrimordialHistoryEvent & {
+  type: HistoryEventType.AFTERHANDLER;
+  data: DataWithPath & { outputs: Record<string, unknown> };
 };
 
 export type HistoryEvent =
   | LooseHistoryEvent
   | GraphStartHistoryEvent
-  | GraphEndHistoryEvent;
+  | GraphEndHistoryEvent
+  | BeforehandlerHistoryEvent
+  | AfterhandlerHistoryEvent;
 
 export interface ImageHandler {
   start(): Promise<void>;

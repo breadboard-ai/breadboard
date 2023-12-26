@@ -15,6 +15,9 @@ export class HistoryEntry extends LitElement {
   type: HistoryEventType = HistoryEventType.DONE;
 
   @state()
+  nodeId = "";
+
+  @state()
   summary = "";
 
   @state()
@@ -183,7 +186,7 @@ export class HistoryEntry extends LitElement {
     return html`<div id="container" class="${this.type}">
     <details ${this.type === "output" ? "open" : ""}>
       <summary>${this.summary} <span id="id">${
-      this.id || ""
+      this.nodeId || ""
     }</span> <span id="elapsed-time">${this.#formatTime(
       this.elapsedTime
     )}<span></summary>
