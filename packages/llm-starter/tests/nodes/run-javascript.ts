@@ -100,3 +100,34 @@ test("`computeAdditionalInputs` correctly reacts to arguments", async (t) => {
     what: { title: "what" },
   });
 });
+
+test("real function computes as expected", async (t) => {
+  const code = function run(args: unknown) {
+    return { args };
+  }.toString();
+
+  const result = await handler.invoke({
+    code,
+    raw: true
+  }, {});
+
+  t.deepEqual(result, {
+    args: {}
+  });
+});
+
+test("real function computes as expected with input", async (t) => {
+  const input = "Hello World";
+
+  const code = function run(args: unknown) {
+    return args;
+  }.toString();
+
+  const result = await handler.invoke({
+    input,
+    code,
+    raw: true
+  }, {});
+
+  t.deepEqual(result, { input });
+});
