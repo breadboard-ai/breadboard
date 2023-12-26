@@ -27,11 +27,15 @@ const environment = (): Environment =>
     ? "browser"
     : "worker";
 
-const runInNode = async (
-  code: string,
-  functionName: string,
-  args: string
-): Promise<string> => {
+const runInNode = async ({
+  code,
+  functionName,
+  args,
+}: {
+  code: string;
+  functionName: string;
+  args: string;
+}): Promise<string> => {
   const vm = await import(/*@vite-ignore*/ "node:vm");
   const codeToRun = `${code}\n${functionName}(${args});`;
   const context = vm.createContext({ console });
@@ -40,11 +44,15 @@ const runInNode = async (
   return JSON.stringify(result);
 };
 
-const runInBrowser = async (
-  code: string,
-  functionName: string,
-  args: string
-): Promise<string> => {
+const runInBrowser = async ({
+  code,
+  functionName,
+  args,
+}: {
+  code: string;
+  functionName: string;
+  args: string;
+}): Promise<string> => {
   const runner = (code: string, functionName: string) => {
     return `${code}\nself.onmessage = () => self.postMessage({ result: JSON.stringify(${functionName}(${args})) });self.onerror = (e) => self.postMessage({ error: e.message })`;
   };
@@ -102,8 +110,8 @@ export const runJavascriptHandler: NodeHandlerFunction = async (
   try {
     const result = JSON.parse(
       env === "node"
-        ? await runInNode(clean, functionName, argsString)
-        : await runInBrowser(clean, functionName, argsString)
+        ? await runInNode({ code: clean, functionName, args: argsString })
+        : await runInBrowser({ code: clean, functionName, args: argsString })
     );
     return raw ? result : { result };
   } catch (e) {
