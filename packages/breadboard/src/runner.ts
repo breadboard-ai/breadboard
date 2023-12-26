@@ -123,6 +123,7 @@ export class BoardRunner implements BreadboardRunner {
   ): AsyncGenerator<RunResult> {
     let invocationId = 0;
     yield* asyncGen<RunResult>(async (next) => {
+      const { probe } = context;
       const handlers = await BoardRunner.handlersFromBoard(this, context.kits);
       const slots = { ...this.#slots, ...context.slots };
       this.#validators.forEach((validator) => validator.addGraph(this));
@@ -136,7 +137,7 @@ export class BoardRunner implements BreadboardRunner {
         const { inputs, descriptor, missingInputs } = result;
 
         if (result.skip) {
-          context?.probe?.dispatchEvent(
+          probe?.dispatchEvent(
             new ProbeEvent("skip", {
               descriptor,
               inputs,
@@ -149,7 +150,7 @@ export class BoardRunner implements BreadboardRunner {
 
         if (descriptor.type === "input") {
           await next(new InputStageResult(result));
-          context?.probe?.dispatchEvent(
+          probe?.dispatchEvent(
             new ProbeEvent("input", {
               descriptor,
               inputs,
@@ -162,7 +163,7 @@ export class BoardRunner implements BreadboardRunner {
         }
 
         if (descriptor.type === "output") {
-          context.probe?.dispatchEvent(
+          probe?.dispatchEvent(
             new ProbeEvent("output", { descriptor, inputs, invocationId })
           );
           await next(new OutputStageResult(result));
@@ -182,8 +183,8 @@ export class BoardRunner implements BreadboardRunner {
         await next(new BeforeHandlerStageResult(result));
 
         const shouldInvokeHandler =
-          !context.probe ||
-          context.probe.dispatchEvent(
+          !probe ||
+          probe.dispatchEvent(
             new ProbeEvent("beforehandler", beforehandlerDetail)
           );
 
@@ -207,7 +208,7 @@ export class BoardRunner implements BreadboardRunner {
         ) as Promise<OutputValues>;
 
         outputsPromise.then((outputs) => {
-          context.probe?.dispatchEvent(
+          probe?.dispatchEvent(
             new ProbeEvent("node", {
               descriptor,
               inputs,
