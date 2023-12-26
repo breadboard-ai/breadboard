@@ -95,7 +95,15 @@ export type RunJavascriptInputs = InputValues & {
   raw?: boolean;
 };
 
-export function convertToNamedFunction(funcStr: string, newName: string = DEFAULT_FUNCTION_NAME, throwOnNameMismatch = false): string {
+export function convertToNamedFunction({
+  funcStr,
+  newName = DEFAULT_FUNCTION_NAME,
+  throwOnNameMismatch = false,
+}: {
+  funcStr: string;
+  newName?: string;
+  throwOnNameMismatch?: boolean;
+}): string {
   // Regular expressions to identify different types of functions
   const arrowFuncRegex = /^\s*((?:\((?:.|\n)*?\)|\w+)\s*=>\s*((?:.|\n)*))$/;
   const namedFuncRegex = /^\s*function\s+[A-Za-z0-9_$]+\s*\(/;
@@ -145,7 +153,7 @@ export const runJavascriptHandler: NodeHandlerFunction = async ({
   if (!code) throw new Error("Running JavaScript requires `code` input");
   code = stripCodeBlock(code);
   name ??= DEFAULT_FUNCTION_NAME;
-  code = convertToNamedFunction(code, name);
+  code = convertToNamedFunction({ funcStr: code, newName: name });
   // A smart helper that senses the environment (browser or node) and uses
   // the appropriate method to run the code.
   const argsString = JSON.stringify(args);
