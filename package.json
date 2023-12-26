@@ -129,10 +129,10 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@types/node": "^18.15.5",
-    "@typescript-eslint/eslint-plugin": "^5.56.0",
-    "@typescript-eslint/parser": "^5.56.0",
+    "@typescript-eslint/eslint-plugin": "^6.16.0",
+    "@typescript-eslint/parser": "^6.16.0",
     "ava": "^5.2.0",
-    "eslint": "^8.36.0",
+    "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.1.2",
     "npm-ci": "^0.0.2",
