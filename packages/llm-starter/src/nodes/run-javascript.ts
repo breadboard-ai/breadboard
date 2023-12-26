@@ -20,12 +20,15 @@ const stripCodeBlock = (code: string) =>
 // TODO: Clean this up, this feels like a util of some sort.
 type Environment = "node" | "browser" | "worker";
 
-const environment = (): Environment =>
-  typeof globalThis.process !== "undefined"
-    ? "node"
-    : typeof globalThis.window !== "undefined"
-    ? "browser"
-    : "worker";
+function environment(): Environment {
+  if (typeof globalThis.process !== "undefined") {
+    return "node";
+  } else if (typeof globalThis.window !== "undefined") {
+    return "browser";
+  } else {
+    return "worker";
+  }
+}
 
 const runInNode = async ({
   code,
