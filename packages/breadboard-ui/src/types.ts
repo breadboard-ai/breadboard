@@ -11,6 +11,13 @@ export const enum HistoryEventType {
   SECRETS = "secrets",
 }
 
+export type HistoryEvent = {
+  type: HistoryEventType;
+  summary?: string;
+  id?: string | null;
+  data?: unknown;
+};
+
 export interface ImageHandler {
   start(): Promise<void>;
   stop(): void;

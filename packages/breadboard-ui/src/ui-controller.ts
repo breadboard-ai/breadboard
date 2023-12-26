@@ -23,7 +23,7 @@ import {
   assertRoot,
   assertSelectElement,
 } from "./utils/assertions.js";
-import { HistoryEventType } from "./types.js";
+import { HistoryEventType, HistoryEvent } from "./types.js";
 import { HistoryEntry } from "./history-entry.js";
 import { NodeConfiguration, NodeDescriptor } from "@google-labs/breadboard";
 import { BeforehandlerResponse } from "@google-labs/breadboard/remote";
@@ -698,12 +698,7 @@ export class UIController extends HTMLElement implements UI {
     this.#rememberValue(`ui-input-active`, true);
   }
 
-  #createHistoryEntry(
-    type: HistoryEventType,
-    summary: string,
-    id: string | null = null,
-    data: unknown | null = null
-  ) {
+  #createHistoryEntry({ type, summary = "", id = null, data }: HistoryEvent) {
     if (Number.isNaN(this.#lastHistoryEventTime)) {
       this.#lastHistoryEventTime = globalThis.performance.now();
     }
@@ -720,7 +715,7 @@ export class UIController extends HTMLElement implements UI {
 
     const historyEntry = new HistoryEntry();
     historyEntry.type = type;
-    historyEntry.summary = summary;
+    historyEntry.summary = summary || "";
     historyEntry.id = id || "";
     historyEntry.data = data;
     historyEntry.elapsedTime = elapsedTime;
@@ -734,7 +729,7 @@ export class UIController extends HTMLElement implements UI {
     }
   }
 
-  #updateHistoryEntry(type: HistoryEventType, id: string, data: unknown) {
+  #updateHistoryEntry({ type, id, data }: HistoryEvent) {
     const root = this.shadowRoot;
     assertRoot(root);
 
@@ -787,12 +782,11 @@ export class UIController extends HTMLElement implements UI {
 
     this.#historyLog.length = 0;
     this.#lastHistoryEventTime = globalThis.performance.now();
-    this.#createHistoryEntry(
-      HistoryEventType.LOAD,
-      "Board loaded",
-      undefined,
-      info.url
-    );
+    this.#createHistoryEntry({
+      type: HistoryEventType.LOAD,
+      summary: "Board loaded",
+      data: info.url,
+    });
   }
 
   async renderDiagram(highlightNode = "") {
@@ -808,11 +802,11 @@ export class UIController extends HTMLElement implements UI {
       path,
       node: { id, type },
     } = data;
-    this.#createHistoryEntry(
-      HistoryEventType.BEFOREHANDLER,
-      type,
-      `${id}_${path.join("_")}`
-    );
+    this.#createHistoryEntry({
+      type: HistoryEventType.BEFOREHANDLER,
+      summary: type,
+      id: `${id}_${path.join("_")}`,
+    });
   }
 
   afterhandler(data: AfterhandlerResponse) {
@@ -820,20 +814,20 @@ export class UIController extends HTMLElement implements UI {
       path,
       node: { id },
     } = data;
-    this.#updateHistoryEntry(
-      HistoryEventType.AFTERHANDLER,
-      `${id}_${path.join("_")}`,
-      data.outputs
-    );
+    this.#updateHistoryEntry({
+      type: HistoryEventType.AFTERHANDLER,
+      id: `${id}_${path.join("_")}`,
+      data: data.outputs,
+    });
   }
 
   async output(values: OutputArgs) {
-    this.#createHistoryEntry(
-      HistoryEventType.OUTPUT,
-      "Output",
-      values.node.id,
-      values.outputs
-    );
+    this.#createHistoryEntry({
+      type: HistoryEventType.OUTPUT,
+      summary: "Output",
+      id: values.node.id,
+      data: values.outputs,
+    });
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const outputContainer = this.shadowRoot!.querySelector("#output-list");
     const output = new Output();
@@ -879,22 +873,22 @@ export class UIController extends HTMLElement implements UI {
       });
     });
 
-    this.#createHistoryEntry(HistoryEventType.SECRETS, `secrets`, id);
+    this.#createHistoryEntry({
+      type: HistoryEventType.SECRETS,
+      summary: `secrets`,
+      id,
+    });
 
     return response.secret;
   }
 
-  proxyResult(type: HistoryEventType, id: string, data: unknown | null = null) {
-    this.#createHistoryEntry(type, type, id, data);
-  }
-
   result(value: ResultArgs, id = null) {
-    this.#createHistoryEntry(
-      HistoryEventType.RESULT,
-      value.title,
+    this.#createHistoryEntry({
+      type: HistoryEventType.RESULT,
+      summary: value.title,
       id,
-      value.result || null
-    );
+      data: value.result || null,
+    });
   }
 
   async input(id: string, args: InputArgs): Promise<Record<string, unknown>> {
@@ -920,19 +914,30 @@ export class UIController extends HTMLElement implements UI {
       }
     });
 
-    this.#createHistoryEntry(HistoryEventType.INPUT, "input", id, {
-      args,
-      response,
+    this.#createHistoryEntry({
+      type: HistoryEventType.INPUT,
+      summary: "input",
+      id,
+      data: {
+        args,
+        response,
+      },
     });
 
     return response;
   }
 
   error(message: string) {
-    this.#createHistoryEntry(HistoryEventType.ERROR, message);
+    this.#createHistoryEntry({
+      type: HistoryEventType.ERROR,
+      summary: message,
+    });
   }
 
   done() {
-    this.#createHistoryEntry(HistoryEventType.DONE, "Board finished");
+    this.#createHistoryEntry({
+      type: HistoryEventType.DONE,
+      summary: "Board finished",
+    });
   }
 }
