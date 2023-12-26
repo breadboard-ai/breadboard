@@ -132,6 +132,8 @@ export class BoardRunner implements BreadboardRunner {
 
       const requestedInputs = new RequestedInputsManager(context);
 
+      await probe?.report?.({ type: "graphstart", metadata: this });
+
       for await (const result of machine) {
         invocationId++;
         const { inputs, descriptor, missingInputs } = result;
@@ -223,6 +225,7 @@ export class BoardRunner implements BreadboardRunner {
 
         result.outputsPromise = outputsPromise;
       }
+      await probe?.report?.({ type: "graphend", metadata: this });
     });
   }
 

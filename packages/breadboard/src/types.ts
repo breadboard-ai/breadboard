@@ -449,6 +449,22 @@ export interface BreadboardValidator {
   ): BreadboardValidator;
 }
 
+export type GraphStartProbeMessage = {
+  type: "graphstart";
+  metadata: GraphMetadata;
+};
+
+export type GraphEndProbeMessage = {
+  type: "graphend";
+  metadata: GraphDescriptor;
+};
+
+export type ProbeMessage = GraphStartProbeMessage | GraphEndProbeMessage;
+
+export interface Probe extends EventTarget {
+  report?(message: ProbeMessage): Promise<void>;
+}
+
 /**
  * Details of the `ProbeEvent` event.
  */
@@ -540,7 +556,7 @@ export interface NodeHandlerContext {
   readonly base?: string;
   readonly outerGraph?: GraphDescriptor;
   readonly slots?: BreadboardSlotSpec;
-  readonly probe?: EventTarget;
+  readonly probe?: Probe;
   readonly requestInput?: (name: string, schema: Schema) => Promise<NodeValue>;
 }
 
