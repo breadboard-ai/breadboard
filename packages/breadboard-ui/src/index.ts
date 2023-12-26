@@ -44,6 +44,6 @@ export type { OutputArgs } from "./output.js";
 export type { InputArgs } from "./input.js";
 export type { ResultArgs } from "./result.js";
 export type { StartArgs } from "./start.js";
-export type { HarnessEventType } from "./types.js";
+export type { HistoryEventType as HarnessEventType } from "./types.js";
 
 export { StartEvent, ToastEvent, DelayEvent } from "./events.js";

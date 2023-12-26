@@ -23,7 +23,7 @@ import {
   assertRoot,
   assertSelectElement,
 } from "./utils/assertions.js";
-import { HarnessEventType } from "./types.js";
+import { HistoryEventType } from "./types.js";
 import { HistoryEntry } from "./history-entry.js";
 import { NodeConfiguration, NodeDescriptor } from "@google-labs/breadboard";
 import { BeforehandlerResponse } from "@google-labs/breadboard/remote";
@@ -699,7 +699,7 @@ export class UIController extends HTMLElement implements UI {
   }
 
   #createHistoryEntry(
-    type: HarnessEventType,
+    type: HistoryEventType,
     summary: string,
     id: string | null = null,
     data: unknown | null = null
@@ -734,7 +734,7 @@ export class UIController extends HTMLElement implements UI {
     }
   }
 
-  #updateHistoryEntry(type: HarnessEventType, id: string, data: unknown) {
+  #updateHistoryEntry(type: HistoryEventType, id: string, data: unknown) {
     const root = this.shadowRoot;
     assertRoot(root);
 
@@ -788,7 +788,7 @@ export class UIController extends HTMLElement implements UI {
     this.#historyLog.length = 0;
     this.#lastHistoryEventTime = globalThis.performance.now();
     this.#createHistoryEntry(
-      HarnessEventType.LOAD,
+      HistoryEventType.LOAD,
       "Board loaded",
       undefined,
       info.url
@@ -809,7 +809,7 @@ export class UIController extends HTMLElement implements UI {
       node: { id, type },
     } = data;
     this.#createHistoryEntry(
-      HarnessEventType.BEFOREHANDLER,
+      HistoryEventType.BEFOREHANDLER,
       type,
       `${id}_${path.join("_")}`
     );
@@ -821,7 +821,7 @@ export class UIController extends HTMLElement implements UI {
       node: { id },
     } = data;
     this.#updateHistoryEntry(
-      HarnessEventType.AFTERHANDLER,
+      HistoryEventType.AFTERHANDLER,
       `${id}_${path.join("_")}`,
       data.outputs
     );
@@ -829,7 +829,7 @@ export class UIController extends HTMLElement implements UI {
 
   async output(values: OutputArgs) {
     this.#createHistoryEntry(
-      HarnessEventType.OUTPUT,
+      HistoryEventType.OUTPUT,
       "Output",
       values.node.id,
       values.outputs
@@ -879,18 +879,18 @@ export class UIController extends HTMLElement implements UI {
       });
     });
 
-    this.#createHistoryEntry(HarnessEventType.SECRETS, `secrets`, id);
+    this.#createHistoryEntry(HistoryEventType.SECRETS, `secrets`, id);
 
     return response.secret;
   }
 
-  proxyResult(type: HarnessEventType, id: string, data: unknown | null = null) {
+  proxyResult(type: HistoryEventType, id: string, data: unknown | null = null) {
     this.#createHistoryEntry(type, type, id, data);
   }
 
   result(value: ResultArgs, id = null) {
     this.#createHistoryEntry(
-      HarnessEventType.RESULT,
+      HistoryEventType.RESULT,
       value.title,
       id,
       value.result || null
@@ -920,7 +920,7 @@ export class UIController extends HTMLElement implements UI {
       }
     });
 
-    this.#createHistoryEntry(HarnessEventType.INPUT, "input", id, {
+    this.#createHistoryEntry(HistoryEventType.INPUT, "input", id, {
       args,
       response,
     });
@@ -929,10 +929,10 @@ export class UIController extends HTMLElement implements UI {
   }
 
   error(message: string) {
-    this.#createHistoryEntry(HarnessEventType.ERROR, message);
+    this.#createHistoryEntry(HistoryEventType.ERROR, message);
   }
 
   done() {
-    this.#createHistoryEntry(HarnessEventType.DONE, "Board finished");
+    this.#createHistoryEntry(HistoryEventType.DONE, "Board finished");
   }
 }

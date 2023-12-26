@@ -1,4 +1,4 @@
-export const enum HarnessEventType {
+export const enum HistoryEventType {
   DONE = "done",
   ERROR = "error",
   INPUT = "input",
