@@ -66,6 +66,7 @@
       ]
     },
     "lint": {
+      "command": "eslint . --ext .ts",
       "dependencies": [
         "./packages/breadboard:lint",
         "./packages/breadboard-cli:lint",
@@ -87,7 +88,10 @@
         "./packages/node-nursery-web:lint",
         "./packages/palm-kit:lint",
         "./packages/pinecone-kit:lint"
-      ]
+      ],
+      "env": {
+        "WIREIT_LOGGER": "metrics"
+      }
     },
     "ci:local": {
       "dependencies": [
