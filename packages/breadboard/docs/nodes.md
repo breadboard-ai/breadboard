@@ -40,7 +40,7 @@ result { say: 'Hello, world!' }
 
 ## The `output` node
 
-Use this node to get data out of the board. takes a property bag and sends it back to the applciation that ran the board, unmodified.
+Use this node to get data out of the board. takes a property bag and sends it back to the application that ran the board, unmodified.
 
 ### Example:
 
@@ -100,7 +100,7 @@ board.invoke({ board: lambda })
   .wire("prompt->text", llm);
 ```
 
-wbich behaves like this (note that we now pass a `Board` to `lambda` and that `template` is passed as input to that board via wires into the `lambda` node instead of being directly wired).
+Which behaves like this (note that we now pass a `Board` to `lambda` and that `template` is passed as input to that board via wires into the `lambda` node instead of being directly wired).
 
 ```js
 const template = board.passthrough({ template: "{{foo}}: {{bar}}"});
