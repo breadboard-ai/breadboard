@@ -24,8 +24,7 @@ import {
 } from "./utils/assertions.js";
 import {
   HistoryEventType,
-  HistoryEvent,
-  PrimordialHistoryEvent,
+  AnyHistoryEvent,
   GraphEndHistoryEvent,
   GraphStartHistoryEvent,
   BeforehandlerHistoryEvent,
@@ -55,7 +54,7 @@ interface HistoryLogItem {
 }
 
 const hasPath = (
-  event: PrimordialHistoryEvent
+  event: AnyHistoryEvent
 ): event is
   | GraphEndHistoryEvent
   | GraphStartHistoryEvent
@@ -720,7 +719,7 @@ export class UIController extends HTMLElement implements UI {
     this.#rememberValue(`ui-input-active`, true);
   }
 
-  #createHistoryEntry(event: HistoryEvent) {
+  #createHistoryEntry(event: AnyHistoryEvent) {
     const { type, summary = "", id = null, data } = event;
     if (Number.isNaN(this.#lastHistoryEventTime)) {
       this.#lastHistoryEventTime = globalThis.performance.now();
@@ -770,16 +769,12 @@ export class UIController extends HTMLElement implements UI {
     }
   }
 
-  #updateHistoryEntry({ type, data }: HistoryEvent) {
+  #updateHistoryEntry({ type, data }: AfterhandlerHistoryEvent) {
     const root = this.shadowRoot;
     assertRoot(root);
 
     const historyList = root.querySelector("#history-list");
     assertHTMLElement(historyList);
-
-    if (type !== HistoryEventType.AFTERHANDLER) {
-      throw new Error("Only AFTERHANDLER events can be used to update history");
-    }
 
     const selector = `#${pathToId(data.path)}`;
     const historyEntry = historyList.querySelector(selector) as HistoryEntry;
