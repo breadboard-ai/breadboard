@@ -14,7 +14,6 @@ export const enum HistoryEventType {
   DONE = "done",
   ERROR = "error",
   INPUT = "input",
-  INPUT_MULTIPART = "input-multi-part",
   LOAD = "load",
   OUTPUT = "output",
   BEFOREHANDLER = "beforehandler",
