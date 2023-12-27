@@ -255,6 +255,16 @@ export class Main {
         break;
       }
 
+      case "graphstart": {
+        console.log("graphstart", data.path.join("_"), data);
+        break;
+      }
+
+      case "graphend": {
+        console.log("graphend", data.path.join("_"), data);
+        break;
+      }
+
       case "beforehandler": {
         this.#ui.beforehandler(data);
         break;

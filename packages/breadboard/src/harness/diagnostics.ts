@@ -4,16 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { ProbeEvent } from "../types.js";
+import type { Probe, ProbeEvent, ProbeMessage } from "../types.js";
 import { AfterhandlerResult, BeforehandlerResult } from "./types.js";
 
 export type DiagnosticMesageType = "beforehandler" | "afterhandler";
 
 export type DiagnosticsCallback = (
-  message: BeforehandlerResult | AfterhandlerResult
-) => void;
+  message: BeforehandlerResult | AfterhandlerResult | ProbeMessage
+) => Promise<void>;
 
-export class Diagnostics extends EventTarget {
+export class Diagnostics extends EventTarget implements Probe {
   #callback: DiagnosticsCallback;
 
   constructor(callback: DiagnosticsCallback) {
@@ -24,18 +24,22 @@ export class Diagnostics extends EventTarget {
     this.addEventListener("node", eventHandler);
   }
 
+  async report(message: ProbeMessage): Promise<void> {
+    return this.#callback(message);
+  }
+
   #eventHandler = (event: Event) => {
     const e = event as ProbeEvent;
-    const { descriptor: node, inputs, outputs, invocationId } = e.detail;
+    const { descriptor: node, inputs, outputs, path } = e.detail;
     const message =
       e.type === "beforehandler"
         ? ({
             type: "beforehandler",
-            data: { node, inputs, invocationId },
+            data: { node, inputs, path },
           } as BeforehandlerResult)
         : ({
             type: "afterhandler",
-            data: { node, outputs, invocationId },
+            data: { node, outputs, path },
           } as AfterhandlerResult);
     this.#callback(message);
   };
