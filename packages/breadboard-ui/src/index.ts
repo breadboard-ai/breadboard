@@ -41,9 +41,8 @@ export const get = () => {
 
 export type { LoadArgs } from "./load.js";
 export type { OutputArgs } from "./output.js";
-export type { InputArgs } from "./input.js";
 export type { ResultArgs } from "./result.js";
 export type { StartArgs } from "./start.js";
-export type { HistoryEventType as HarnessEventType } from "./types.js";
+export type { InputArgs } from "./types.js";
 
 export { StartEvent, ToastEvent, DelayEvent } from "./events.js";

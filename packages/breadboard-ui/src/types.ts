@@ -1,3 +1,15 @@
+/**
+ * @license
+ * Copyright 2023 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import { Schema } from "@google-labs/breadboard";
+
+export type InputArgs = {
+  schema?: Schema;
+};
+
 export const enum HistoryEventType {
   DONE = "done",
   ERROR = "error",
@@ -17,12 +29,13 @@ export const enum HistoryEventType {
 // each event.
 export type LooseHistoryEventTypes = Exclude<
   HistoryEventType,
+  | HistoryEventType.DONE
+  | HistoryEventType.ERROR
+  | HistoryEventType.INPUT
   | HistoryEventType.GRAPHEND
   | HistoryEventType.GRAPHSTART
   | HistoryEventType.BEFOREHANDLER
   | HistoryEventType.AFTERHANDLER
-  | HistoryEventType.DONE
-  | HistoryEventType.ERROR
 >;
 
 export type PrimordialHistoryEvent = {
@@ -45,6 +58,14 @@ export type DoneHistoryEvent = SimpleHistoryEvent & {
 };
 export type ErrorHistoryEvent = SimpleHistoryEvent & {
   type: HistoryEventType.ERROR;
+};
+
+export type InputHistoryEvent = PrimordialHistoryEvent & {
+  type: HistoryEventType.INPUT;
+  data: {
+    args: InputArgs;
+    response: Record<string, unknown>;
+  };
 };
 
 export type DataWithPath = {
@@ -72,13 +93,14 @@ export type AfterhandlerHistoryEvent = PrimordialHistoryEvent & {
 };
 
 export type HistoryEvent =
+  | DoneHistoryEvent
+  | ErrorHistoryEvent
+  | InputHistoryEvent
   | LooseHistoryEvent
   | GraphStartHistoryEvent
   | GraphEndHistoryEvent
   | BeforehandlerHistoryEvent
-  | AfterhandlerHistoryEvent
-  | DoneHistoryEvent
-  | ErrorHistoryEvent;
+  | AfterhandlerHistoryEvent;
 
 export interface ImageHandler {
   start(): Promise<void>;

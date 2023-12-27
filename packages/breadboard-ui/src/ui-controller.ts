@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Input, type InputArgs } from "./input.js";
+import { Input } from "./input.js";
 import { Load, type LoadArgs } from "./load.js";
 import { Output, type OutputArgs } from "./output.js";
 import { ResultArgs } from "./result.js";
@@ -31,6 +31,7 @@ import {
   GraphStartHistoryEvent,
   BeforehandlerHistoryEvent,
   AfterhandlerHistoryEvent,
+  InputArgs,
 } from "./types.js";
 import { HistoryEntry } from "./history-entry.js";
 import { NodeConfiguration, NodeDescriptor } from "@google-labs/breadboard";

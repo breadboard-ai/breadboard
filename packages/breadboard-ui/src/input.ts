@@ -24,10 +24,7 @@ import { customElement, property, state } from "lit/decorators.js";
 import { InputEnterEvent } from "./events.js";
 import { WebcamInput } from "./webcam.js";
 import { DrawableInput } from "./drawable.js";
-
-export type InputArgs = {
-  schema?: Schema;
-};
+import { InputArgs } from "./types.js";
 
 export type InputData = Record<string, unknown>;
 
