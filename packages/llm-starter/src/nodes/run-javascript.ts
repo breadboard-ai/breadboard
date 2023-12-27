@@ -256,6 +256,26 @@ export const runJavascriptDescriber: NodeDescriberFunction = async (
   };
 };
 
+export function isValidStringifiedFunction(str: string): boolean {
+  // Remove single-line and multi-line (including JSDoc) comments
+  const commentsPattern = /\/\*[\s\S]*?\*\/|\/\/[^\r\n]*/g;
+  const cleanedStr = str.replace(commentsPattern, '').trim();
+
+  // Check if the string is a function
+  const functionPattern = /^(async\s+)?function(\s+[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*)?\s*\(|^\(\s*\)\s*=>|^\(\s*[^)]+\s*\)\s*=>|^[^=]*=>|\(?\s*function\s*\([\s\S]*\)\s*\)?\s*\(|\(\s*[\s\S]*=>\s*[\s\S]*\)\s*\(/;
+  if (!functionPattern.test(cleanedStr)) {
+    return false;
+  }
+
+  try {
+    // Try to create a new function from the cleaned string
+    new Function(`return ${cleanedStr};`);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
 export default {
   describe: runJavascriptDescriber,
   invoke: runJavascriptHandler,
