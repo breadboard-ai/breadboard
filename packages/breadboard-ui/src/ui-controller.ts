@@ -831,7 +831,7 @@ export class UIController extends HTMLElement implements UI {
     this.#createHistoryEntry({
       type: HistoryEventType.LOAD,
       summary: "Board loaded",
-      data: info.url,
+      data: { url },
     });
   }
 

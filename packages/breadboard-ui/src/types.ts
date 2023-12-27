@@ -30,6 +30,7 @@ export type LooseHistoryEventTypes = Exclude<
   | HistoryEventType.DONE
   | HistoryEventType.ERROR
   | HistoryEventType.INPUT
+  | HistoryEventType.LOAD
   | HistoryEventType.GRAPHEND
   | HistoryEventType.GRAPHSTART
   | HistoryEventType.BEFOREHANDLER
@@ -66,6 +67,11 @@ export type InputHistoryEvent = PrimordialHistoryEvent & {
   };
 };
 
+export type LoadHistoryEvent = PrimordialHistoryEvent & {
+  type: HistoryEventType.LOAD;
+  data: { url: string };
+};
+
 export type DataWithPath = {
   path: number[];
 };
@@ -98,7 +104,8 @@ export type HistoryEvent =
   | GraphStartHistoryEvent
   | GraphEndHistoryEvent
   | BeforehandlerHistoryEvent
-  | AfterhandlerHistoryEvent;
+  | AfterhandlerHistoryEvent
+  | LoadHistoryEvent;
 
 export interface ImageHandler {
   start(): Promise<void>;
