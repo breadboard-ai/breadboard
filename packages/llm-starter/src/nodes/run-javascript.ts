@@ -144,6 +144,7 @@ export function convertToNamedFunction({
     // Do not throw, since it could be a function format that this helped
     // does not yet handle.
     console.warn(`Unrecognized function format: ${funcStr}`);
+    return funcStr;
   }
 }
 
