@@ -4,10 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Input, type InputArgs } from "./input.js";
+import { Input } from "./input.js";
 import { Load, type LoadArgs } from "./load.js";
 import { Output, type OutputArgs } from "./output.js";
-import { ResultArgs } from "./result.js";
 import {
   DelayEvent,
   InputEnterEvent,
@@ -25,12 +24,12 @@ import {
 } from "./utils/assertions.js";
 import {
   HistoryEventType,
-  HistoryEvent,
-  PrimordialHistoryEvent,
+  AnyHistoryEvent,
   GraphEndHistoryEvent,
   GraphStartHistoryEvent,
   BeforehandlerHistoryEvent,
   AfterhandlerHistoryEvent,
+  InputArgs,
 } from "./types.js";
 import { HistoryEntry } from "./history-entry.js";
 import { NodeConfiguration, NodeDescriptor } from "@google-labs/breadboard";
@@ -55,7 +54,7 @@ interface HistoryLogItem {
 }
 
 const hasPath = (
-  event: PrimordialHistoryEvent
+  event: AnyHistoryEvent
 ): event is
   | GraphEndHistoryEvent
   | GraphStartHistoryEvent
@@ -720,7 +719,7 @@ export class UIController extends HTMLElement implements UI {
     this.#rememberValue(`ui-input-active`, true);
   }
 
-  #createHistoryEntry(event: HistoryEvent) {
+  #createHistoryEntry(event: AnyHistoryEvent) {
     const { type, summary = "", id = null, data } = event;
     if (Number.isNaN(this.#lastHistoryEventTime)) {
       this.#lastHistoryEventTime = globalThis.performance.now();
@@ -770,16 +769,12 @@ export class UIController extends HTMLElement implements UI {
     }
   }
 
-  #updateHistoryEntry({ type, data }: HistoryEvent) {
+  #updateHistoryEntry({ type, data }: AfterhandlerHistoryEvent) {
     const root = this.shadowRoot;
     assertRoot(root);
 
     const historyList = root.querySelector("#history-list");
     assertHTMLElement(historyList);
-
-    if (type !== HistoryEventType.AFTERHANDLER) {
-      throw new Error("Only AFTERHANDLER events can be used to update history");
-    }
 
     const selector = `#${pathToId(data.path)}`;
     const historyEntry = historyList.querySelector(selector) as HistoryEntry;
@@ -831,7 +826,7 @@ export class UIController extends HTMLElement implements UI {
     this.#createHistoryEntry({
       type: HistoryEventType.LOAD,
       summary: "Board loaded",
-      data: info.url,
+      data: { url },
     });
   }
 
@@ -874,7 +869,7 @@ export class UIController extends HTMLElement implements UI {
       type: HistoryEventType.OUTPUT,
       summary: "Output",
       id: values.node.id,
-      data: values.outputs,
+      data: { outputs: values.outputs },
     });
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const outputContainer = this.shadowRoot!.querySelector("#output-list");
@@ -928,15 +923,6 @@ export class UIController extends HTMLElement implements UI {
     });
 
     return response.secret;
-  }
-
-  result(value: ResultArgs, id = null) {
-    this.#createHistoryEntry({
-      type: HistoryEventType.RESULT,
-      summary: value.title,
-      id,
-      data: value.result || null,
-    });
   }
 
   async input(id: string, args: InputArgs): Promise<Record<string, unknown>> {

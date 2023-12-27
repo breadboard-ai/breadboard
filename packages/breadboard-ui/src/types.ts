@@ -1,69 +1,97 @@
+/**
+ * @license
+ * Copyright 2023 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import { Schema } from "@google-labs/breadboard";
+
+export type InputArgs = {
+  schema?: Schema;
+};
+
 export const enum HistoryEventType {
   DONE = "done",
   ERROR = "error",
   INPUT = "input",
-  INPUT_MULTIPART = "input-multi-part",
   LOAD = "load",
   OUTPUT = "output",
   BEFOREHANDLER = "beforehandler",
   AFTERHANDLER = "afterhandler",
-  RESULT = "result",
   SECRETS = "secrets",
   GRAPHSTART = "graphstart",
   GRAPHEND = "graphend",
 }
 
-// TODO: Remove all the `Loose` types by tightening up the types for
-// each event.
-export type LooseHistoryEventTypes = Exclude<
-  HistoryEventType,
-  | HistoryEventType.GRAPHEND
-  | HistoryEventType.GRAPHSTART
-  | HistoryEventType.BEFOREHANDLER
-  | HistoryEventType.AFTERHANDLER
->;
-
-export type PrimordialHistoryEvent = {
-  type: HistoryEventType;
+export type HistoryEvent = {
   summary?: string;
-  id?: string | null;
+  id?: string;
   data?: unknown;
 };
 
-export type LooseHistoryEvent = PrimordialHistoryEvent & {
-  type: LooseHistoryEventTypes;
+export type DoneHistoryEvent = HistoryEvent & {
+  type: HistoryEventType.DONE;
+};
+export type ErrorHistoryEvent = HistoryEvent & {
+  type: HistoryEventType.ERROR;
+};
+export type SecretsHistoryEvent = HistoryEvent & {
+  type: HistoryEventType.SECRETS;
+};
+
+export type InputHistoryEvent = HistoryEvent & {
+  type: HistoryEventType.INPUT;
+  data: {
+    args: InputArgs;
+    response: Record<string, unknown>;
+  };
+};
+
+export type LoadHistoryEvent = HistoryEvent & {
+  type: HistoryEventType.LOAD;
+  data: { url: string };
+};
+
+export type OutputHistoryEvent = HistoryEvent & {
+  type: HistoryEventType.OUTPUT;
+  data: { outputs: { schema?: Schema } & Record<string, unknown> };
 };
 
 export type DataWithPath = {
   path: number[];
 };
 
-export type GraphStartHistoryEvent = PrimordialHistoryEvent & {
+export type GraphStartHistoryEvent = HistoryEvent & {
   type: HistoryEventType.GRAPHSTART;
   data: DataWithPath;
 };
 
-export type GraphEndHistoryEvent = PrimordialHistoryEvent & {
+export type GraphEndHistoryEvent = HistoryEvent & {
   type: HistoryEventType.GRAPHEND;
   data: DataWithPath;
 };
 
-export type BeforehandlerHistoryEvent = PrimordialHistoryEvent & {
+export type BeforehandlerHistoryEvent = HistoryEvent & {
   type: HistoryEventType.BEFOREHANDLER;
   data: DataWithPath;
 };
 
-export type AfterhandlerHistoryEvent = PrimordialHistoryEvent & {
+export type AfterhandlerHistoryEvent = HistoryEvent & {
   type: HistoryEventType.AFTERHANDLER;
   data: DataWithPath & { outputs: Record<string, unknown> };
 };
 
-export type HistoryEvent =
-  | LooseHistoryEvent
+export type AnyHistoryEvent =
+  | DoneHistoryEvent
+  | ErrorHistoryEvent
+  | InputHistoryEvent
+  | OutputHistoryEvent
+  | SecretsHistoryEvent
   | GraphStartHistoryEvent
   | GraphEndHistoryEvent
   | BeforehandlerHistoryEvent
-  | AfterhandlerHistoryEvent;
+  | AfterhandlerHistoryEvent
+  | LoadHistoryEvent;
 
 export interface ImageHandler {
   start(): Promise<void>;
