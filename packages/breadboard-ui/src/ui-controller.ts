@@ -7,7 +7,6 @@
 import { Input } from "./input.js";
 import { Load, type LoadArgs } from "./load.js";
 import { Output, type OutputArgs } from "./output.js";
-import { ResultArgs } from "./result.js";
 import {
   DelayEvent,
   InputEnterEvent,
@@ -929,15 +928,6 @@ export class UIController extends HTMLElement implements UI {
     });
 
     return response.secret;
-  }
-
-  result(value: ResultArgs, id = null) {
-    this.#createHistoryEntry({
-      type: HistoryEventType.RESULT,
-      summary: value.title,
-      id,
-      data: value.result || null,
-    });
   }
 
   async input(id: string, args: InputArgs): Promise<Record<string, unknown>> {

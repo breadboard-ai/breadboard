@@ -15,7 +15,6 @@ export { Load } from "./load.js";
 export { InputContainer } from "./input-container.js";
 export { Start } from "./start.js";
 export { Progress } from "./progress.js";
-export { Result } from "./result.js";
 
 import { Output } from "./output.js";
 import { UIController } from "./ui-controller.js";
@@ -41,7 +40,6 @@ export const get = () => {
 
 export type { LoadArgs } from "./load.js";
 export type { OutputArgs } from "./output.js";
-export type { ResultArgs } from "./result.js";
 export type { StartArgs } from "./start.js";
 export type { InputArgs } from "./types.js";
 

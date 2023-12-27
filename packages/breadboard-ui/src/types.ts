@@ -18,7 +18,6 @@ export const enum HistoryEventType {
   OUTPUT = "output",
   BEFOREHANDLER = "beforehandler",
   AFTERHANDLER = "afterhandler",
-  RESULT = "result",
   SECRETS = "secrets",
   GRAPHSTART = "graphstart",
   GRAPHEND = "graphend",
