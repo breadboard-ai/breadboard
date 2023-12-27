@@ -25,12 +25,7 @@ import type {
 } from "./types.js";
 
 import { TraversalMachine } from "./traversal/machine.js";
-import {
-  BeforeHandlerStageResult,
-  InputStageResult,
-  OutputStageResult,
-  RunResult,
-} from "./run.js";
+import { InputStageResult, OutputStageResult, RunResult } from "./run.js";
 import { BoardLoader } from "./loader.js";
 import { runRemote } from "./remote.js";
 import { callHandler } from "./handler.js";
@@ -188,8 +183,6 @@ export class BoardRunner implements BreadboardRunner {
           inputs,
           path: path(),
         };
-
-        await next(new BeforeHandlerStageResult(result));
 
         const shouldInvokeHandler =
           !probe ||

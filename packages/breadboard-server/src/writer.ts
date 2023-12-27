@@ -53,14 +53,6 @@ export class Writer {
     });
   }
 
-  writeBeforeHandler(stop: RunResult) {
-    this.write({
-      type: "beforehandler",
-      data: stop.node,
-      state: undefined,
-    });
-  }
-
   writeDone() {
     this.write({
       type: "done",

@@ -31,10 +31,6 @@ export async function runResultLoop(
     runResult.inputs = inputs;
   }
   for await (const stop of board.run(undefined, runResult)) {
-    if (stop.type === "beforehandler") {
-      writer.writeBeforeHandler(stop);
-      continue;
-    }
     if (stop.type === "input") {
       // TODO: This case is for the "runOnce" invocation, where the board
       // isn't expected to stream outputs and inputs.
