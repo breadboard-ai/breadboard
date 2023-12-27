@@ -150,6 +150,10 @@ export class HistoryEntry extends LitElement {
       white-space: pre-wrap;
     }
 
+    .history {
+      padding-left: calc(var(--bb-grid-size) * 3);
+    }
+
     @keyframes rotate {
       from {
         transform: rotate(0);
@@ -163,7 +167,7 @@ export class HistoryEntry extends LitElement {
 
   #createDataOutput(data: unknown | null) {
     if (data === null) {
-      return "No additional data";
+      return "";
     }
 
     return JSON.stringify(data, null, 2);
@@ -182,15 +186,23 @@ export class HistoryEntry extends LitElement {
     return time.toFixed(1) + "ms";
   }
 
+  #isOpen(type: HistoryEventType) {
+    return (
+      type === HistoryEventType.BEFOREHANDLER ||
+      type === HistoryEventType.OUTPUT
+    );
+  }
+
   render() {
     return html`<div id="container" class="${this.type}">
-    <details ${this.type === "output" ? "open" : ""}>
+    <details ?open=${this.#isOpen(this.type)}>
       <summary>${this.summary} <span id="id">${
       this.nodeId || ""
     }</span> <span id="elapsed-time">${this.#formatTime(
       this.elapsedTime
     )}<span></summary>
-      <div><pre>${this.#createDataOutput(this.data)}</pre></div>
+    <div class="history"><slot></slot></div>
+    <div><pre>${this.#createDataOutput(this.data)}</pre></div>
     </details>
   </div>`;
   }

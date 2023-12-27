@@ -23,7 +23,15 @@ import {
   assertRoot,
   assertSelectElement,
 } from "./utils/assertions.js";
-import { HistoryEventType, HistoryEvent } from "./types.js";
+import {
+  HistoryEventType,
+  HistoryEvent,
+  PrimordialHistoryEvent,
+  GraphEndHistoryEvent,
+  GraphStartHistoryEvent,
+  BeforehandlerHistoryEvent,
+  AfterhandlerHistoryEvent,
+} from "./types.js";
 import { HistoryEntry } from "./history-entry.js";
 import { NodeConfiguration, NodeDescriptor } from "@google-labs/breadboard";
 import { BeforehandlerResponse } from "@google-labs/breadboard/remote";
@@ -45,6 +53,18 @@ interface HistoryLogItem {
   data: unknown | null;
   elapsedTime: number;
 }
+
+const hasPath = (
+  event: PrimordialHistoryEvent
+): event is
+  | GraphEndHistoryEvent
+  | GraphStartHistoryEvent
+  | BeforehandlerHistoryEvent
+  | AfterhandlerHistoryEvent =>
+  event.type === HistoryEventType.BEFOREHANDLER ||
+  event.type === HistoryEventType.AFTERHANDLER ||
+  event.type === HistoryEventType.GRAPHSTART ||
+  event.type === HistoryEventType.GRAPHEND;
 
 const pathToId = (path: number[]) => `path-${path.join("-")}`;
 
@@ -700,7 +720,8 @@ export class UIController extends HTMLElement implements UI {
     this.#rememberValue(`ui-input-active`, true);
   }
 
-  #createHistoryEntry({ type, summary = "", id = null, data }: HistoryEvent) {
+  #createHistoryEntry(event: HistoryEvent) {
+    const { type, summary = "", id = null, data } = event;
     if (Number.isNaN(this.#lastHistoryEventTime)) {
       this.#lastHistoryEventTime = globalThis.performance.now();
     }
@@ -708,7 +729,20 @@ export class UIController extends HTMLElement implements UI {
     const root = this.shadowRoot;
     assertRoot(root);
 
-    const historyList = root.querySelector("#history-list");
+    // find the right parent to insert the new history entry before.
+    const findParent = () => {
+      if (hasPath(event)) {
+        let path = event.data.path;
+        do {
+          path = path.slice(0, -1);
+          const parent = root.querySelector(`#${pathToId(path)}`);
+          if (parent) return parent;
+        } while (path.length);
+      }
+      return root.querySelector("#history-list");
+    };
+
+    const historyList = findParent();
     assertHTMLElement(historyList);
 
     const elapsedTime =
@@ -716,15 +750,7 @@ export class UIController extends HTMLElement implements UI {
     this.#lastHistoryEventTime = globalThis.performance.now();
 
     const createId = () => {
-      if (
-        type === HistoryEventType.BEFOREHANDLER ||
-        type === HistoryEventType.AFTERHANDLER ||
-        type === HistoryEventType.GRAPHSTART ||
-        type === HistoryEventType.GRAPHEND
-      ) {
-        return pathToId(data.path);
-      }
-      return id || "";
+      return hasPath(event) ? pathToId(event.data.path) : id || "";
     };
 
     const historyEntry = new HistoryEntry();
@@ -732,7 +758,7 @@ export class UIController extends HTMLElement implements UI {
     historyEntry.summary = summary || "";
     historyEntry.id = createId();
     historyEntry.nodeId = id || "";
-    historyEntry.data = data;
+    historyEntry.data = hasPath(event) ? null : data;
     historyEntry.elapsedTime = elapsedTime;
 
     this.#historyLog.push({ type, summary, id, data, elapsedTime });
@@ -760,7 +786,7 @@ export class UIController extends HTMLElement implements UI {
     assertHTMLElement(historyEntry);
 
     historyEntry.type = type;
-    historyEntry.data = data;
+    historyEntry.data = data.outputs;
   }
 
   #parseNodeInformation(nodes?: NodeDescriptor[]) {
