@@ -874,7 +874,7 @@ export class UIController extends HTMLElement implements UI {
       type: HistoryEventType.OUTPUT,
       summary: "Output",
       id: values.node.id,
-      data: values.outputs,
+      data: { outputs: values.outputs },
     });
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const outputContainer = this.shadowRoot!.querySelector("#output-list");

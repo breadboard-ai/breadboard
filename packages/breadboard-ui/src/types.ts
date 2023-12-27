@@ -30,6 +30,7 @@ export type LooseHistoryEventTypes = Exclude<
   | HistoryEventType.DONE
   | HistoryEventType.ERROR
   | HistoryEventType.INPUT
+  | HistoryEventType.OUTPUT
   | HistoryEventType.LOAD
   | HistoryEventType.GRAPHEND
   | HistoryEventType.GRAPHSTART
@@ -72,6 +73,11 @@ export type LoadHistoryEvent = PrimordialHistoryEvent & {
   data: { url: string };
 };
 
+export type OutputHistoryEvent = PrimordialHistoryEvent & {
+  type: HistoryEventType.OUTPUT;
+  data: { outputs: { schema?: Schema } & Record<string, unknown> };
+};
+
 export type DataWithPath = {
   path: number[];
 };
@@ -100,6 +106,7 @@ export type HistoryEvent =
   | DoneHistoryEvent
   | ErrorHistoryEvent
   | InputHistoryEvent
+  | OutputHistoryEvent
   | LooseHistoryEvent
   | GraphStartHistoryEvent
   | GraphEndHistoryEvent
