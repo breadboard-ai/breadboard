@@ -31,21 +31,28 @@ const inputSchema = {
     embeddingBoardPath: {
       type: "string",
       title: "string",
-      description: "Location of the board that will generate the embedding",
+      description:
+        "Location of the board that will generate the embedding that wil be used by the RAG board to retrieve the most appropriate context",
     },
     generateTextBoardPath: {
       type: "string",
       title: "string",
-      description: "Location of the board that will generate the response",
+      description:
+        "Location of the board that will generate the response to the prompt that is generated from the query and the retrieved context",
     },
   },
-  required: ["query", "ragBoardPath", "embeddingBoardPath"],
+  required: [
+    "query",
+    "ragBoardPath",
+    "embeddingBoardPath",
+    "generateTextBoardPath",
+  ],
 };
 
 const outputSchema = {
   type: "object",
   properties: {
-    response: {
+    text: {
       type: "string",
       title: "Response",
       description: "Response",
@@ -57,14 +64,14 @@ export default await recipe(() => {
   const input = base.input({ $id: "input", schema: inputSchema });
 
   const generateQueryEmbedding = core.invoke({
-    $id: "generateQueryEmbedding",
+    $id: "generateEmbedding",
     path: input.embeddingBoardPath,
     query: input.query,
   });
 
   // We are expecting dataStore to
-  const retrieveCandidateFromDataStore = core.invoke({
-    $id: "retrieveCandidateFromDataStore",
+  const retrieveCandidateContext = core.invoke({
+    $id: "retrieveCandidateContext",
     path: input.ragBoardPath,
     embedding: generateQueryEmbedding.embedding,
   });
@@ -81,7 +88,7 @@ Answer:`,
 
   prompt.in({
     query: input.query,
-    candidate: retrieveCandidateFromDataStore.candidate,
+    candidate: retrieveCandidateContext.candidate,
   });
 
   return prompt.text

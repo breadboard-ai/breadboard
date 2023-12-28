@@ -6,10 +6,10 @@ This recipe demonstrates how to integrate RAG into a Breadboard application. It 
 
 ### Inputs
 
-- `input` - The query that you want to search for
+- `query` - The query that you want to search for
 - `embeddingBoardPath` - the path to a board that accepts a `query` and returns an `embedding`
 - `ragBoardPath` - the path to a board that accepts an `embedding` and returns a `candidate`
-- `generateTextBoardPath` - the path to a board that accecpts `text` and returns `text`
+- `generateTextBoardPath` - the path to a board that accepts `text` and returns `text`
 
 ### Secrets
 
@@ -21,8 +21,10 @@ This recipe may require secrets to be set for the APIs that the embedding, rag, 
 
 ### From the CLI
 
+This board requires a lot of input boards, so it's easier to test from the repository.
+
 ```bash
-breadboard run recipes/llm-concepts/index.js --kit @google-labs/llm-starter --kit @google-labs/core-kit --kit @google-labs/palm-kit -i "{\"query\":\"Testing\"}"
+breadboard run recipes/llm-concepts/index.js --kit @google-labs/llm-starter --kit @google-labs/core-kit -i "{\"query\":\"Testing\"}"
 ```
 
 ### From the UI
