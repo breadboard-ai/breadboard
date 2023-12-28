@@ -145,8 +145,6 @@
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
     "@types/node": "^18.17.4",
-    "@typescript-eslint/eslint-plugin": "^5.56.0",
-    "@typescript-eslint/parser": "^5.56.0",
     "ava": "^5.2.0",
     "jsonschema": "^1.4.1",
     "rollup": "^4.1.4",
