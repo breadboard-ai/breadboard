@@ -86,9 +86,16 @@ Question: {{query}}
 Answer:`,
   });
 
+  const getBestCandidate = code(({ candidates }) => {
+    // This is a very naieve implementation, but it will do for now.
+    return { candidate: candidates[0] };
+  });
+
   prompt.in({
     query: input.query,
-    candidate: retrieveCandidateContext.candidate,
+    candidate: retrieveCandidateContext.candidates.to(
+      getBestCandidate({ $id: "getBestCandidate" })
+    ),
   });
 
   return prompt.text

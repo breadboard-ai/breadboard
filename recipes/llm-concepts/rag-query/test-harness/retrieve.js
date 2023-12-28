@@ -31,10 +31,15 @@ export default await recipe(() => {
     if (embedding === undefined || embedding == ".") {
       throw new Error("retrieve: embedding is undefined");
     }
-    return { candidate: "This is a test response for context" };
+    return {
+      candidates: [
+        "This is a test response for context",
+        "This is a second test response for context",
+      ],
+    };
   });
 
   return input.embedding
     .to(textNode())
-    .candidate.to(base.output({ $id: "retrieve_result" }));
+    .candidates.to(base.output({ $id: "retrieve_result" }));
 }).serialize(metaData);

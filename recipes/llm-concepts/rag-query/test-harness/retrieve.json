@@ -6,8 +6,8 @@
     {
       "from": "fn-3",
       "to": "retrieve_result",
-      "out": "candidate",
-      "in": "candidate"
+      "out": "candidates",
+      "in": "candidates"
     },
     {
       "from": "input",
@@ -24,13 +24,13 @@
         "schema": {
           "type": "object",
           "properties": {
-            "candidate": {
+            "candidates": {
               "type": "string",
-              "title": "candidate"
+              "title": "candidates"
             }
           },
           "required": [
-            "candidate"
+            "candidates"
           ]
         }
       }
@@ -87,7 +87,7 @@
           "id": "fn-3-run",
           "type": "runJavascript",
           "configuration": {
-            "code": "function fn_3({ embedding }) {\n    if (embedding === undefined || embedding == \".\") {\n      throw new Error(\"retrieve: embedding is undefined\");\n    }\n    return { candidate: \"This is a test response for context\" };\n  }",
+            "code": "function fn_3({ embedding }) {\n    if (embedding === undefined || embedding == \".\") {\n      throw new Error(\"retrieve: embedding is undefined\");\n    }\n    return {\n      candidates: [\n        \"This is a test response for context\",\n        \"This is a second test response for context\",\n      ],\n    };\n  }",
             "name": "fn_3",
             "raw": true
           }
