@@ -18,7 +18,6 @@ import type {
   Kit,
   BreadboardValidator,
   NodeHandlerContext,
-  ProbeDetails,
   BreadboardCapability,
   LambdaNodeInputs,
   LambdaNodeOutputs,
@@ -33,12 +32,6 @@ import { toMermaid } from "./mermaid.js";
 import { SchemaBuilder } from "./schema.js";
 import { RequestedInputsManager, bubbleUpInputsIfNeeded } from "./bubble.js";
 import { asyncGen } from "./utils/async-gen.js";
-
-class ProbeEvent extends CustomEvent<ProbeDetails> {
-  constructor(type: string, detail: ProbeDetails) {
-    super(type, { detail, cancelable: true });
-  }
-}
 
 /**
  * This class is the main entry point for running a board.
@@ -168,17 +161,14 @@ export class BoardRunner implements BreadboardRunner {
         if (!handler)
           throw new Error(`No handler for node type "${descriptor.type}"`);
 
-        const beforehandlerDetail: ProbeDetails = {
-          descriptor,
-          inputs,
-          path: path(),
-        };
-
-        const shouldInvokeHandler =
-          !probe ||
-          probe.dispatchEvent(
-            new ProbeEvent("beforehandler", beforehandlerDetail)
-          );
+        await probe?.report?.({
+          type: "beforehandler",
+          data: {
+            node: descriptor,
+            inputs,
+            path: path(),
+          },
+        });
 
         const newContext: NodeHandlerContext = {
           ...context,
@@ -192,12 +182,10 @@ export class BoardRunner implements BreadboardRunner {
           invocationPath: path(),
         };
 
-        const outputsPromise = (
-          shouldInvokeHandler
-            ? callHandler(handler, inputs, newContext)
-            : beforehandlerDetail.outputs instanceof Promise
-            ? beforehandlerDetail.outputs
-            : Promise.resolve(beforehandlerDetail.outputs)
+        const outputsPromise = callHandler(
+          handler,
+          inputs,
+          newContext
         ) as Promise<OutputValues>;
 
         await probe?.report?.({

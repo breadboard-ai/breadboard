@@ -12,10 +12,8 @@ import { config } from "dotenv";
 
 import { Runner as BoardRunner } from "@google-labs/breadboard";
 import {
-  type ProbeEvent,
   type OutputValues,
   type InputValues,
-  LogProbe,
   asRuntimeKit,
   NodeDescriptor,
 } from "@google-labs/breadboard";

@@ -3,14 +3,11 @@ import { intro, log, text, outro } from "@clack/prompts";
 import {
   type NodeValue,
   Board,
-  LogProbe,
   type BreadboardSlotSpec,
 } from "@google-labs/breadboard";
 
 export const run = async (board: Board, slots?: BreadboardSlotSpec) => {
   intro("Hi! I am coffee bot! What would you like to have today?");
-
-  const probe = process.argv.includes("-v") ? new LogProbe() : undefined;
 
   const ask = async (inputs: Record<string, NodeValue>) => {
     const defaultValue = "<Exit>";
@@ -36,7 +33,7 @@ export const run = async (board: Board, slots?: BreadboardSlotSpec) => {
 
   try {
     // Run the board until it finishes. This may run forever.
-    for await (const stop of board.run({ probe, slots })) {
+    for await (const stop of board.run({ slots })) {
       if (stop.type === "input") {
         stop.inputs = await ask(stop.inputArguments);
       } else if (stop.type === "output") {
