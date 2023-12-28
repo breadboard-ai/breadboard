@@ -464,7 +464,20 @@ export type GraphEndProbeMessage = {
   data: GraphProbeMessageData;
 };
 
-export type ProbeMessage = GraphStartProbeMessage | GraphEndProbeMessage;
+export type SkipProbeMessage = {
+  type: "skip";
+  data: {
+    descriptor: NodeDescriptor;
+    inputs: InputValues;
+    missingInputs: string[];
+    path: number[];
+  };
+};
+
+export type ProbeMessage =
+  | GraphStartProbeMessage
+  | GraphEndProbeMessage
+  | SkipProbeMessage;
 
 export interface Probe extends EventTarget {
   report?(message: ProbeMessage): Promise<void>;

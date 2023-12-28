@@ -141,14 +141,15 @@ export class BoardRunner implements BreadboardRunner {
         const { inputs, descriptor, missingInputs } = result;
 
         if (result.skip) {
-          probe?.dispatchEvent(
-            new ProbeEvent("skip", {
+          await probe?.report?.({
+            type: "skip",
+            data: {
               descriptor,
               inputs,
               missingInputs,
               path: path(),
-            })
-          );
+            },
+          });
           continue;
         }
 
