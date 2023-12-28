@@ -559,43 +559,6 @@ export interface NodeHandlerContext {
   readonly invocationPath?: number[];
 }
 
-type Common<To, From> = {
-  [P in keyof (From | To) as From[P] extends To[P] ? P : never]?:
-    | To[P]
-    | undefined;
-};
-
-type LongOutSpec<From, To> =
-  | `${string & keyof From}->${string & keyof To}`
-  | `${string & keyof From}->${string & keyof To}.`
-  | `${string & keyof From}->${string & keyof To}?`;
-
-type LongInSpec<From, To> =
-  | `${string & keyof From}<-${string & keyof To}`
-  | `${string & keyof From}<-${string & keyof To}.`
-  | `${string & keyof From}<-${string & keyof To}?`;
-
-type ShortOutSpec<From, To> =
-  | `${string & keyof Common<From, To>}`
-  | `${string & keyof Common<From, To>}->`
-  | `${string & keyof Common<From, To>}->.`
-  | `${string & keyof Common<From, To>}->?`;
-
-type ShortInSpec<From, To> =
-  | `<-${string & keyof Common<From, To>}`
-  | `<-${string & keyof Common<From, To>}.`
-  | `<-${string & keyof Common<From, To>}?`;
-
-export type WireOutSpec<From, To> =
-  | LongOutSpec<From, To>
-  | ShortOutSpec<From, To>;
-
-export type WireInSpec<From, To> = LongInSpec<From, To> | ShortInSpec<From, To>;
-
-export type WireSpec<FromIn, FromOut, ToIn, ToOut> =
-  | WireOutSpec<FromOut, ToIn>
-  | WireInSpec<ToOut, FromIn>;
-
 export interface BreadboardNode<Inputs, Outputs> {
   /**
    * Wires the current node to another node.
