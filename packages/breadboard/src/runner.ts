@@ -154,22 +154,11 @@ export class BoardRunner implements BreadboardRunner {
 
         if (descriptor.type === "input") {
           await next(new InputStageResult(result));
-          probe?.dispatchEvent(
-            new ProbeEvent("input", {
-              descriptor,
-              inputs,
-              outputs: await result.outputsPromise,
-              path: path(),
-            })
-          );
           await bubbleUpInputsIfNeeded(this, context, result);
           continue;
         }
 
         if (descriptor.type === "output") {
-          probe?.dispatchEvent(
-            new ProbeEvent("output", { descriptor, inputs, path: path() })
-          );
           await next(new OutputStageResult(result));
           continue;
         }
