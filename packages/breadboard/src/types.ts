@@ -501,6 +501,8 @@ export type ProbeMessage =
   | BeforehandlerProbeMessage
   | AfterhandlerProbeMessage;
 
+// TODO: Remove extending EventTarget once new runner is converted to use
+// reporting.
 export interface Probe extends EventTarget {
   report?(message: ProbeMessage): Promise<void>;
 }
