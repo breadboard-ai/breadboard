@@ -47,9 +47,14 @@ A use case recipe is something that can be directly integrated into a Breadboard
 - [Fetch RSS Feed](./use-case/fetch-rss/README.md)
 - [Fetch ATOM Feed](./use-case/fetch-atom/README.md)
 - [Search Google](./use-case/search-google/README.md)
+- [Generate Embedding](./use-case/generate-embedding/README.md)
+- [Generate Text](./use-case/generate-text/README.md)
+- [Convert String to JSON](./use-case/convert-string-to-json/README.md)
 
 ### Concepts
 
 A concept recipe is something that demonstrates a particular concept in Breadboard, it might not be something that can be used directly in an application, but it is a good starting point.
 
 - [Accumulating Context](./concept/accumulating-context/README.md)
+- [Few-Shot Learning](./concept/few-shot/README.md)
+- [RAG Query](./concept/rag-query/README.md)
