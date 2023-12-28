@@ -13,7 +13,8 @@
     "ci": "npm ci",
     "check:format": "prettier --check --config .prettierrc packages/**/*.ts",
     "ci:local": "wireit",
-    "generate:docs": "wireit"
+    "generate:docs": "wireit",
+    "prepare": "husky install"
   },
   "wireit": {
     "build": {
@@ -122,6 +123,7 @@
     "@typescript-eslint/parser": "^5.56.0",
     "ava": "^5.2.0",
     "eslint": "^8.36.0",
+    "husky": "^8.0.3",
     "npm-ci": "^0.0.2",
     "rimraf": "^5.0.1",
     "typescript": "^5.0.4",
