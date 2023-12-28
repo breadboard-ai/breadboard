@@ -9,7 +9,6 @@ export { BoardRunner } from "./runner.js";
 export { Node } from "./node.js";
 export { SchemaBuilder } from "./schema.js";
 export { LogProbe } from "./log.js";
-export { DebugProbe } from "./debug.js";
 export { RunResult } from "./run.js";
 export type {
   Edge,
