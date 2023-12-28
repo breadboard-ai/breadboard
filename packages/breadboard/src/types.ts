@@ -464,56 +464,48 @@ export type GraphEndProbeMessage = {
   data: GraphProbeMessageData;
 };
 
-export type ProbeMessage = GraphStartProbeMessage | GraphEndProbeMessage;
+export type SkipProbeMessage = {
+  type: "skip";
+  data: {
+    descriptor: NodeDescriptor;
+    inputs: InputValues;
+    missingInputs: string[];
+    path: number[];
+  };
+};
 
+export type BeforehandlerProbeMessage = {
+  type: "beforehandler";
+  data: {
+    node: NodeDescriptor;
+    inputs: InputValues;
+    path: number[];
+  };
+};
+
+export type AfterhandlerProbeMessage = {
+  type: "afterhandler";
+  data: {
+    node: NodeDescriptor;
+    inputs: InputValues;
+    outputs: OutputValues;
+    validatorMetadata?: BreadboardValidatorMetadata[];
+    path: number[];
+  };
+};
+
+export type ProbeMessage =
+  | GraphStartProbeMessage
+  | GraphEndProbeMessage
+  | SkipProbeMessage
+  | BeforehandlerProbeMessage
+  | AfterhandlerProbeMessage;
+
+// TODO: Remove extending EventTarget once new runner is converted to use
+// reporting.
 export interface Probe extends EventTarget {
   report?(message: ProbeMessage): Promise<void>;
 }
-
-/**
- * Details of the `ProbeEvent` event.
- */
-export interface ProbeDetails {
-  /**
-   * Internal representation of the node that is placed on the board.
-   */
-  descriptor: NodeDescriptor;
-  /**
-   * The input values the node was passed.
-   */
-  inputs: InputValues;
-  /**
-   * Any missing inputs that the node was expecting.
-   * This property is only populated for `skip` event.
-   */
-  missingInputs?: string[];
-  /**
-   * The output values the node provided.
-   */
-  outputs?: OutputValues | Promise<OutputValues>;
-  /**
-   * The nesting level of the node.
-   * When a board contains included or slotted boards, this level will
-   * increment for each level of nesting.
-   */
-  nesting?: number;
-  /*
-   * Invocation Path. This is an array of unique node invocation ids that
-   * represents the current place of the node in the graph traversal.
-   * It can be used to correlate events.
-   * The array is unique to the invocation of a node across all board runs.
-   */
-  path: number[];
-  sources?: string[];
-  validatorMetadata?: BreadboardValidatorMetadata[];
-}
-
-/**
- * A probe event that is distpached during board run.
- *
- * See [Chapter 7: Probes](https://github.com/breadboard-ai/breadboard/tree/main/packages/breadboard/docs/tutorial#chapter-7-probes) for more information.
- */
-export type ProbeEvent = CustomEvent<ProbeDetails>;
 
 export interface RunnerLike {
   run(

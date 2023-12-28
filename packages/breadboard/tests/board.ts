@@ -7,32 +7,8 @@
 import test from "ava";
 
 import { Board } from "../src/board.js";
-import type {
-  ProbeEvent,
-  BreadboardCapability,
-  GraphDescriptor,
-} from "../src/types.js";
+import type { BreadboardCapability, GraphDescriptor } from "../src/types.js";
 import { TestKit } from "./helpers/_test-kit.js";
-
-test("correctly skips nodes when asked", async (t) => {
-  const board = new Board();
-  const kit = board.addKit(TestKit);
-  board
-    .input()
-    .wire("*->", kit.noop({ $id: "toSkip" }).wire("*->", board.output()));
-
-  const skipper = new EventTarget();
-  skipper.addEventListener("beforehandler", (event) => {
-    const e = event as ProbeEvent;
-    if (e.detail.descriptor.id === "toSkip") {
-      e.detail.outputs = { instead: "this" };
-      e.preventDefault();
-    }
-  });
-
-  const result = await board.runOnce({ hello: "world" }, { probe: skipper });
-  t.deepEqual(result, { instead: "this" });
-});
 
 test("correctly passes inputs and outputs to included boards", async (t) => {
   const nestedBoard = new Board();
@@ -102,45 +78,6 @@ test("correctly passes inputs and outputs to included boards with a probe", asyn
 
   const result = await board.runOnce({ hello: "world" }, { kits: [nestedKit] });
   t.deepEqual(result, { hello: "world" });
-});
-
-test("correctly skips nodes in nested boards", async (t) => {
-  const nestedBoard = new Board();
-  const nestedKit = nestedBoard.addKit(TestKit);
-  nestedBoard
-    .input()
-    .wire(
-      "*->",
-      nestedKit
-        .noop({ $id: "toSkip" })
-        .wire("*->", nestedBoard.output({ $id: "output" }))
-    );
-
-  const board = new Board();
-  const kit = board.addKit(TestKit);
-  board
-    .input()
-    .wire(
-      "*->",
-      kit
-        .include({ graph: nestedBoard as GraphDescriptor })
-        .wire("*->", board.output())
-    );
-
-  const skipper = new EventTarget();
-  skipper.addEventListener("beforehandler", (event) => {
-    const e = event as ProbeEvent;
-    if (e.detail.descriptor.id === "toSkip") {
-      e.detail.outputs = { instead: "this" };
-      e.preventDefault();
-    }
-  });
-
-  const result = await board.runOnce(
-    { hello: "world" },
-    { probe: skipper, kits: [nestedKit] }
-  );
-  t.deepEqual(result, { instead: "this" });
 });
 
 test("allows pausing and resuming the board", async (t) => {

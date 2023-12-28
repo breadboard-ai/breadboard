@@ -18,7 +18,6 @@ import type {
   Kit,
   BreadboardValidator,
   NodeHandlerContext,
-  ProbeDetails,
   BreadboardCapability,
   LambdaNodeInputs,
   LambdaNodeOutputs,
@@ -33,12 +32,6 @@ import { toMermaid } from "./mermaid.js";
 import { SchemaBuilder } from "./schema.js";
 import { RequestedInputsManager, bubbleUpInputsIfNeeded } from "./bubble.js";
 import { asyncGen } from "./utils/async-gen.js";
-
-class ProbeEvent extends CustomEvent<ProbeDetails> {
-  constructor(type: string, detail: ProbeDetails) {
-    super(type, { detail, cancelable: true });
-  }
-}
 
 /**
  * This class is the main entry point for running a board.
@@ -141,35 +134,25 @@ export class BoardRunner implements BreadboardRunner {
         const { inputs, descriptor, missingInputs } = result;
 
         if (result.skip) {
-          probe?.dispatchEvent(
-            new ProbeEvent("skip", {
+          await probe?.report?.({
+            type: "skip",
+            data: {
               descriptor,
               inputs,
               missingInputs,
               path: path(),
-            })
-          );
+            },
+          });
           continue;
         }
 
         if (descriptor.type === "input") {
           await next(new InputStageResult(result));
-          probe?.dispatchEvent(
-            new ProbeEvent("input", {
-              descriptor,
-              inputs,
-              outputs: await result.outputsPromise,
-              path: path(),
-            })
-          );
           await bubbleUpInputsIfNeeded(this, context, result);
           continue;
         }
 
         if (descriptor.type === "output") {
-          probe?.dispatchEvent(
-            new ProbeEvent("output", { descriptor, inputs, path: path() })
-          );
           await next(new OutputStageResult(result));
           continue;
         }
@@ -178,17 +161,14 @@ export class BoardRunner implements BreadboardRunner {
         if (!handler)
           throw new Error(`No handler for node type "${descriptor.type}"`);
 
-        const beforehandlerDetail: ProbeDetails = {
-          descriptor,
-          inputs,
-          path: path(),
-        };
-
-        const shouldInvokeHandler =
-          !probe ||
-          probe.dispatchEvent(
-            new ProbeEvent("beforehandler", beforehandlerDetail)
-          );
+        await probe?.report?.({
+          type: "beforehandler",
+          data: {
+            node: descriptor,
+            inputs,
+            path: path(),
+          },
+        });
 
         const newContext: NodeHandlerContext = {
           ...context,
@@ -202,26 +182,23 @@ export class BoardRunner implements BreadboardRunner {
           invocationPath: path(),
         };
 
-        const outputsPromise = (
-          shouldInvokeHandler
-            ? callHandler(handler, inputs, newContext)
-            : beforehandlerDetail.outputs instanceof Promise
-            ? beforehandlerDetail.outputs
-            : Promise.resolve(beforehandlerDetail.outputs)
+        const outputsPromise = callHandler(
+          handler,
+          inputs,
+          newContext
         ) as Promise<OutputValues>;
 
-        outputsPromise.then((outputs) => {
-          probe?.dispatchEvent(
-            new ProbeEvent("node", {
-              descriptor,
-              inputs,
-              outputs,
-              validatorMetadata: this.#validators.map((validator) =>
-                validator.getValidatorMetadata(descriptor)
-              ),
-              path: path(),
-            })
-          );
+        await probe?.report?.({
+          type: "afterhandler",
+          data: {
+            node: descriptor,
+            inputs,
+            outputs: await outputsPromise,
+            validatorMetadata: this.#validators.map((validator) =>
+              validator.getValidatorMetadata(descriptor)
+            ),
+            path: path(),
+          },
         });
 
         result.outputsPromise = outputsPromise;

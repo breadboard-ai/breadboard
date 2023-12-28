@@ -276,7 +276,7 @@ export class Main {
       }
 
       case "error": {
-        this.#ui.error(data.error.message);
+        this.#ui.error(data.error);
         break;
       }
 

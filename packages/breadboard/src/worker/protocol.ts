@@ -27,6 +27,7 @@ export const VALID_MESSAGE_TYPES = [
   "error",
   "graphstart",
   "graphend",
+  "skip",
 ] as const;
 
 export type ControllerMessageType = (typeof VALID_MESSAGE_TYPES)[number];

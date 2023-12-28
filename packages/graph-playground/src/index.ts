@@ -9,11 +9,10 @@ import { config } from "dotenv";
 
 import {
   Board,
-  type ProbeEvent,
   type OutputValues,
   type InputValues,
-  LogProbe,
   asRuntimeKit,
+  Probe,
 } from "@google-labs/breadboard";
 import {
   GraphIntegrityValidator,
@@ -29,6 +28,7 @@ import Core from "@google-labs/core-kit";
 import Starter from "@google-labs/llm-starter";
 import Nursery from "@google-labs/node-nursery";
 import Pinecone from "@google-labs/pinecone-kit";
+import { ProbeMessage } from "../../breadboard/dist/src/types.js";
 
 // buffer for input from an external source.
 let input_buffer: string | null = null;
@@ -65,7 +65,6 @@ async function main(args: string[], use_input_handler = false) {
   // Determine base URL for loading graphs, relative to the current working
   // directory.
   const base = `${pathToFileURL(process.cwd()).href}/`;
-  const logEverything = args.includes("--log");
   const validateIntegrity = args.includes("--validate-integrity");
   const logIntegrityLabels = args.includes("--log-integrity-labels");
 
@@ -133,31 +132,36 @@ async function main(args: string[], use_input_handler = false) {
 
   // Use Breadboard probe feature to create a nice note in CLI for
   // every text completion.
-  const probe = logEverything ? new LogProbe() : new EventTarget();
-  probe.addEventListener("node", (event: Event) => {
-    const { detail } = event as ProbeEvent;
-    if (logIntegrityLabels && detail.validatorMetadata?.length) {
-      const label = detail.validatorMetadata
-        .map((m) => m.description)
-        .join(", ");
-      note(
-        `Integrity label for ${detail.descriptor.id} in ${[
-          ...(detail.sources || []),
-          "root",
-        ]
-          .reverse()
-          .join("->")}: ${label}`,
-        "integrity"
-      );
-    }
-    if (detail.descriptor.type !== "generateText") return;
-    const inputs = detail.inputs as OutputValues;
-    const outputs = detail.outputs as OutputValues;
-    const prompt = (inputs.text as string) || "empty prompt";
-    const value = (outputs.completion as string) || "empty response";
-    note(wrap(prompt), "prompt");
-    note(wrap(value), "text completion");
-  });
+  const probe = {
+    report(message: ProbeMessage) {
+      const { type, data } = message;
+      if (type === "afterhandler") {
+        if (logIntegrityLabels && data.validatorMetadata?.length) {
+          const label = data.validatorMetadata
+            .map((m) => m.description)
+            .join(", ");
+          note(
+            `Integrity label for ${data.node.id} in ${[
+              // TODO: I am not sure what the sources are. They are not being
+              // populated anywhere that I can see.
+              // ...(data.sources || []),
+              "root",
+            ]
+              .reverse()
+              .join("->")}: ${label}`,
+            "integrity"
+          );
+        }
+        if (data.node.type !== "generateText") return;
+        const inputs = data.inputs as OutputValues;
+        const outputs = data.outputs as OutputValues;
+        const prompt = (inputs.text as string) || "empty prompt";
+        const value = (outputs.completion as string) || "empty response";
+        note(wrap(prompt), "prompt");
+        note(wrap(value), "text completion");
+      }
+    },
+  } as Probe;
 
   intro("Let's traverse a graph!");
 
