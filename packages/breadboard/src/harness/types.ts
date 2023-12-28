@@ -85,7 +85,7 @@ export type AfterhandlerResult = {
 
 export type ErrorResult = {
   type: "error";
-  data: { error: Error };
+  data: { error: string };
 };
 
 export type EndResult = {

@@ -474,10 +474,22 @@ export type SkipProbeMessage = {
   };
 };
 
+export type AfterhandlerProbeMessage = {
+  type: "afterhandler";
+  data: {
+    node: NodeDescriptor;
+    inputs: InputValues;
+    outputs: OutputValues;
+    validatorMetadata?: BreadboardValidatorMetadata[];
+    path: number[];
+  };
+};
+
 export type ProbeMessage =
   | GraphStartProbeMessage
   | GraphEndProbeMessage
-  | SkipProbeMessage;
+  | SkipProbeMessage
+  | AfterhandlerProbeMessage;
 
 export interface Probe extends EventTarget {
   report?(message: ProbeMessage): Promise<void>;

@@ -114,7 +114,7 @@ export class WorkerHarness implements Harness {
             await next(
               new WorkerResult(controller, {
                 type: "error",
-                data: { error },
+                data: { error: error.message },
               })
             );
             break;

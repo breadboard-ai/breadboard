@@ -118,7 +118,9 @@ export class LocalHarness implements Harness {
           message += `\n${error.message}`;
         }
         console.error(message, error);
-        await next(new LocalResult({ type: "error", data: { error } }));
+        await next(
+          new LocalResult({ type: "error", data: { error: error.message } })
+        );
       }
     });
   }

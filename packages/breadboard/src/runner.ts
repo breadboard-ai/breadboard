@@ -200,18 +200,17 @@ export class BoardRunner implements BreadboardRunner {
             : Promise.resolve(beforehandlerDetail.outputs)
         ) as Promise<OutputValues>;
 
-        outputsPromise.then((outputs) => {
-          probe?.dispatchEvent(
-            new ProbeEvent("node", {
-              descriptor,
-              inputs,
-              outputs,
-              validatorMetadata: this.#validators.map((validator) =>
-                validator.getValidatorMetadata(descriptor)
-              ),
-              path: path(),
-            })
-          );
+        await probe?.report?.({
+          type: "afterhandler",
+          data: {
+            node: descriptor,
+            inputs,
+            outputs: await outputsPromise,
+            validatorMetadata: this.#validators.map((validator) =>
+              validator.getValidatorMetadata(descriptor)
+            ),
+            path: path(),
+          },
         });
 
         result.outputsPromise = outputsPromise;
