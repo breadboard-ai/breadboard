@@ -14,6 +14,7 @@ import {
 import { loadBoard, parseStdin, resolveFilePath, watch } from "./lib/utils.js";
 import * as readline from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
+import { pathToFileURL } from "node:url";
 
 async function runBoard(
   board: BoardRunner,
@@ -31,7 +32,9 @@ async function runBoard(
     }
   }
 
-  for await (const stop of board.run({ kits })) {
+  for await (const stop of board.run({
+    kits,
+  })) {
     if (stop.type === "input") {
       const nodeInputs = stop.inputArguments;
       // we won't mutate the inputs.
@@ -49,8 +52,8 @@ async function runBoard(
           const properties = Object.entries(schema.properties);
 
           for (const [name, property] of properties) {
-            if (name in newInputs == false) {
-              // The required argument is not on the input. Ask for it.
+            if (name in newInputs == false && "default" in property == false) {
+              // The required argument is not on the input *and* there is no default. Ask for it.
               const answer = await rl.question(property.description + " ");
 
               newInputs[name] = answer;
