@@ -2,6 +2,10 @@
 
 This recipe demonstrates how to integrate RAG into a Breadboard application. It doesn't use any specific APIs, rather it orchestrates the data flow between a number of different APIs
 
+## Compiling the recipe
+
+`breadboard make recipes/llm-concepts/rag-query/index.js > recipes/llm-concepts/rag-query/index.json`
+
 ## Running the Recipe
 
 ### Inputs
@@ -39,6 +43,12 @@ Because this board requires a lot of input boards, you can test this directly fr
 
 ```bash
 breadboard run recipes/llm-concepts/rag-query/index.js --kit @google-labs/llm-starter --kit @google-labs/core-kit -i "{\"query\":\"Testing\", \"embeddingBoardPath\":\"./recipes/llm-concepts/rag-query/test-harness/embedding.json\",\"ragBoardPath\":\"./recipes/llm-concepts/rag-query/test-harness/retrieve.json\",\"generateTextBoardPath\":\"./recipes/llm-concepts/rag-query/test-harness/generate-text.json\"}"
+```
+
+JSON recipe:
+
+```bash
+breadboard run recipes/llm-concepts/rag-query/index.json --kit @google-labs/llm-starter --kit @google-labs/core-kit -i "{\"query\":\"Testing\", \"embeddingBoardPath\":\"./recipes/llm-concepts/rag-query/test-harness/embedding.json\",\"ragBoardPath\":\"./recipes/llm-concepts/rag-query/test-harness/retrieve.json\",\"generateTextBoardPath\":\"./recipes/llm-concepts/rag-query/test-harness/generate-text.json\"}"
 ```
 
 ## Code
