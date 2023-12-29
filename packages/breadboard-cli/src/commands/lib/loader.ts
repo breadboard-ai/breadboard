@@ -1,6 +1,6 @@
 import { Board, BoardRunner, GraphDescriptor } from "@google-labs/breadboard";
-import { readFile, stat, unlink, writeFile } from "fs/promises";
-import path, { basename, join } from "path";
+import { stat, unlink, writeFile } from "fs/promises";
+import { basename, join, resolve } from "path";
 
 export type Options = {
   output?: string;
@@ -22,7 +22,7 @@ export abstract class Loader {
 
   async makeFromFile(filePath: string) {
     const board = await this.loadBoardFromModule(
-      path.resolve(process.cwd(), filePath)
+      resolve(process.cwd(), filePath)
     );
     const boardJson = JSON.stringify(board, null, 2);
     return { boardJson, board };
@@ -101,7 +101,7 @@ export abstract class Loader {
 
     // For the import to work it has to be relative to the current working directory.
     const board = await this.loadBoardFromModule(
-      path.resolve(process.cwd(), filePath)
+      resolve(process.cwd(), filePath)
     );
 
     // remove the file
