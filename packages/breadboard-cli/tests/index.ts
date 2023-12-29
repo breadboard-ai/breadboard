@@ -105,6 +105,10 @@ const filenameWithSpaces = path.resolve(
   path.join(testDataDir, "test board.json")
 );
 
+const filenameWithURLencodingSpaces = path.resolve(
+  path.join(testDataDir, "test%20board.json")
+);
+
 const directoryWithSpaces = path.resolve(
   path.join(testDataDir, "test folder", "board.json")
 );
@@ -125,6 +129,10 @@ const testFiles: {
   },
   {
     path: path.resolve(filenameWithSpaces),
+    content: JSON.stringify(testBoardData, null, 2),
+  },
+  {
+    path: path.resolve(filenameWithURLencodingSpaces),
     content: JSON.stringify(testBoardData, null, 2),
   },
   {
@@ -226,6 +234,15 @@ test("can handle a relative file with spaces in the file name", async (t) => {
 
 test("can handle an absolute file with spaces in the name", async (t) => {
   const commandString = ["mermaid", `"${filenameWithSpaces}"`].join(" ");
+  const output = await execCli(commandString);
+  t.true(output.stdout.length > 0);
+  t.true(output.stdout.includes("graph TD"));
+});
+
+test("can handle an absolute file with text that decodeURIComponent might resolve in the name", async (t) => {
+  const commandString = ["mermaid", `"${filenameWithURLencodingSpaces}"`].join(
+    " "
+  );
   const output = await execCli(commandString);
   t.true(output.stdout.length > 0);
   t.true(output.stdout.includes("graph TD"));
