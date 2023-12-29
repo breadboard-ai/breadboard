@@ -57,6 +57,7 @@ program
   .command("run [file]")
   .description("Run a graph.")
   .option("-w, --watch", "Watch the file for changes.")
+  .option("-v, --verbose", "Output events and processing information.")
   .option(
     "-o, --output <path>",
     "If compiling a graph in Typescript (.ts), you MUST specific a location to output the compiled graph."

@@ -6,7 +6,6 @@
 
 import { BoardRunner } from "@google-labs/breadboard";
 import { loadBoard, parseStdin, resolveFilePath, watch } from "./lib/utils.js";
-import path from "path";
 
 export const mermaid = async (
   file: string,
