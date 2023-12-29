@@ -28,13 +28,13 @@ This recipe may require secrets to be set for the APIs that the embedding, rag, 
 This board requires a lot of input boards, so it's easier to test from the repository.
 
 ```bash
-breadboard run recipes/llm-concepts/index.js --kit @google-labs/llm-starter --kit @google-labs/core-kit -i "{\"query\":\"Testing\"}"
+breadboard run recipes/llm-concepts/rag-query/index.js --kit @google-labs/llm-starter --kit @google-labs/core-kit -i "{\"query\":\"Testing\"}"
 ```
 
 ### From the UI
 
 ```bash
-breadboard debug recipes/use-case/generate-embedding/index.js
+breadboard debug recipes/use-case/rag-query/index.js
 ```
 
 ### Testing from the CLI
@@ -42,13 +42,13 @@ breadboard debug recipes/use-case/generate-embedding/index.js
 Because this board requires a lot of input boards, you can test this directly from the repository by running the following commands (note you need to have absolute paths to the boards):
 
 ```bash
-breadboard run recipes/llm-concepts/rag-query/index.js --kit @google-labs/llm-starter --kit @google-labs/core-kit -i "{\"query\":\"Testing\", \"embeddingBoardPath\":\"$(pwd)/recipes/llm-concepts/rag-query/test-harness/embedding.json\",\"ragBoardPath\":\"$(pwd)/recipes/llm-concepts/rag-query/test-harness/retrieve.json\",\"generateTextBoardPath\":\"$(pwd)/recipes/llm-concepts/rag-query/test-harness/generate-text.json\"}"
+breadboard run recipes/llm-concepts/rag-query/index.js --kit @google-labs/llm-starter --kit @google-labs/core-kit -i "{\"query\":\"Testing\", \"embeddingBoardPath\":\"./test-harness/embedding.json\",\"ragBoardPath\":\"./test-harness/retrieve.json\",\"generateTextBoardPath\":\"./test-harness/generate-text.json\"}"
 ```
 
 JSON recipe:
 
 ```bash
-breadboard run recipes/llm-concepts/rag-query/index.json --kit @google-labs/llm-starter --kit @google-labs/core-kit -i "{\"query\":\"Testing\", \"embeddingBoardPath\":\"$(pwd)/recipes/llm-concepts/rag-query/test-harness/embedding.json\",\"ragBoardPath\":\"$(pwd)/recipes/llm-concepts/rag-query/test-harness/retrieve.json\",\"generateTextBoardPath\":\"$(pwd)/recipes/llm-concepts/rag-query/test-harness/generate-text.json\"}"
+breadboard run recipes/llm-concepts/rag-query/index.json --kit @google-labs/llm-starter --kit @google-labs/core-kit -i "{\"query\":\"Testing\", \"embeddingBoardPath\":\"./test-harness/embedding.json\",\"ragBoardPath\":\"./test-harness/retrieve.json\",\"generateTextBoardPath\":\"./test-harness/generate-text.json\"}"
 ```
 
 ## Code

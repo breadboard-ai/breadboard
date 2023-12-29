@@ -1,6 +1,7 @@
 import { Board, BoardRunner, GraphDescriptor } from "@google-labs/breadboard";
 import { stat, unlink, writeFile } from "fs/promises";
 import { basename, join, resolve } from "path";
+import { pathToFileURL } from "url";
 
 export type Options = {
   output?: string;
@@ -38,6 +39,7 @@ export abstract class Loader {
     if (boardLike(board)) {
       // A graph descriptor has been exported.. Possibly a lambda.
       board = await Board.fromGraphDescriptor(board);
+      board.url = pathToFileURL(file); // So that the base url is correct for subsequent invokes
     }
     if (
       board instanceof Board == false &&
