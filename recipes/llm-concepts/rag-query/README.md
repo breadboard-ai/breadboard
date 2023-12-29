@@ -39,16 +39,16 @@ breadboard debug recipes/use-case/generate-embedding/index.js
 
 ### Testing from the CLI
 
-Because this board requires a lot of input boards, you can test this directly from the repository by running:
+Because this board requires a lot of input boards, you can test this directly from the repository by running the following commands (note you need to have absolute paths to the boards):
 
 ```bash
-breadboard run recipes/llm-concepts/rag-query/index.js --kit @google-labs/llm-starter --kit @google-labs/core-kit -i "{\"query\":\"Testing\", \"embeddingBoardPath\":\"./recipes/llm-concepts/rag-query/test-harness/embedding.json\",\"ragBoardPath\":\"./recipes/llm-concepts/rag-query/test-harness/retrieve.json\",\"generateTextBoardPath\":\"./recipes/llm-concepts/rag-query/test-harness/generate-text.json\"}"
+breadboard run recipes/llm-concepts/rag-query/index.js --kit @google-labs/llm-starter --kit @google-labs/core-kit -i "{\"query\":\"Testing\", \"embeddingBoardPath\":\"$(pwd)/recipes/llm-concepts/rag-query/test-harness/embedding.json\",\"ragBoardPath\":\"$(pwd)/recipes/llm-concepts/rag-query/test-harness/retrieve.json\",\"generateTextBoardPath\":\"$(pwd)/recipes/llm-concepts/rag-query/test-harness/generate-text.json\"}"
 ```
 
 JSON recipe:
 
 ```bash
-breadboard run recipes/llm-concepts/rag-query/index.json --kit @google-labs/llm-starter --kit @google-labs/core-kit -i "{\"query\":\"Testing\", \"embeddingBoardPath\":\"./recipes/llm-concepts/rag-query/test-harness/embedding.json\",\"ragBoardPath\":\"./recipes/llm-concepts/rag-query/test-harness/retrieve.json\",\"generateTextBoardPath\":\"./recipes/llm-concepts/rag-query/test-harness/generate-text.json\"}"
+breadboard run recipes/llm-concepts/rag-query/index.json --kit @google-labs/llm-starter --kit @google-labs/core-kit -i "{\"query\":\"Testing\", \"embeddingBoardPath\":\"$(pwd)/recipes/llm-concepts/rag-query/test-harness/embedding.json\",\"ragBoardPath\":\"$(pwd)/recipes/llm-concepts/rag-query/test-harness/retrieve.json\",\"generateTextBoardPath\":\"$(pwd)/recipes/llm-concepts/rag-query/test-harness/generate-text.json\"}"
 ```
 
 ## Code
