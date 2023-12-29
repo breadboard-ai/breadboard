@@ -1,11 +1,12 @@
 import { Board, BoardRunner } from "@google-labs/breadboard";
-import { readFile } from "fs/promises";
 import { Loader } from "../loader.js";
+import { pathToFileURL } from "url";
 
 export class JSONLoader extends Loader {
   async load(filePath: string): Promise<BoardRunner> {
-    const fileContents = await readFile(filePath, "utf-8");
-    const board = await Board.fromGraphDescriptor(JSON.parse(fileContents));
+    const board = await Board.load(filePath, {
+      base: pathToFileURL(process.cwd()).toString(),
+    });
 
     return board;
   }
