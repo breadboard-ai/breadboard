@@ -8,7 +8,6 @@ import { BoardRunner } from "../runner.js";
 import type { InputValues, Kit, KitConstructor } from "../types.js";
 import {
   type LoadResponseMessage,
-  type BeforehandlerMessage,
   type EndMessage,
   type ErrorMessage,
   type InputRequestMessage,
@@ -20,7 +19,7 @@ import {
 import { MessageController } from "./controller.js";
 import { makeProxyKit } from "./proxy.js";
 import { asRuntimeKit } from "../kits/ctors.js";
-import { LogProbe } from "../log.js";
+import { Diagnostics } from "../harness/diagnostics.js";
 
 export class WorkerRuntime {
   #controller: MessageController;
@@ -92,7 +91,11 @@ export class WorkerRuntime {
         asRuntimeKit(kitConstructor)
       );
 
-      for await (const stop of board.run({ probe: new LogProbe(), kits })) {
+      const probe = new Diagnostics(async ({ type, data }) => {
+        this.#controller.inform(data, type);
+      });
+
+      for await (const stop of board.run({ probe, kits })) {
         if (stop.type === "input") {
           const inputMessage = (await this.#controller.ask<
             InputRequestMessage,
@@ -113,13 +116,6 @@ export class WorkerRuntime {
             },
             stop.type
           );
-        } else if (stop.type === "beforehandler") {
-          this.#controller.inform<BeforehandlerMessage>(
-            {
-              node: stop.node,
-            },
-            stop.type
-          );
         }
       }
       this.#controller.inform<EndMessage>({}, "end");
@@ -130,7 +126,7 @@ export class WorkerRuntime {
         error = (error.cause as { error: Error }).error;
         message += `\n${error.message}`;
       }
-      console.error("Error in worker", error);
+      console.error("Error in worker", error.message);
       this.#controller.inform<ErrorMessage>({ error: message }, "error");
     }
   }

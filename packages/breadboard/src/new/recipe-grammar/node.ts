@@ -159,6 +159,42 @@ export class BuilderNode<
     }
   }
 
+  addIncomingEdge(
+    from: AbstractNode,
+    out: string,
+    in_: string,
+    constant?: boolean
+  ) {
+    const fromScope = (from as BuilderNode).#scope;
+
+    // If this is a reguar wire, call super method to add it
+    if (fromScope === this.#scope) {
+      super.addIncomingEdge(from, out, in_, constant);
+      return;
+    }
+
+    // Validate that this is a wire from a parent scope
+    for (
+      let scope = this.#scope as BuilderScope;
+      scope !== fromScope;
+      scope = scope.parentLexicalScope as BuilderScope
+    )
+      if (!scope) throw new Error("Only wires from parent scopes allowed");
+
+    // Don't allow * or empty wires from parent scopes
+    if (out === "*" || out === "")
+      throw new Error("Can't use * or empty wires from parent scopes");
+
+    // Save for recipe() to add to the graph later
+    this.#scope.addClosureEdge({
+      scope: fromScope,
+      from: from as BuilderNode,
+      to: this as BuilderNode,
+      out,
+      in: in_,
+    });
+  }
+
   async invoke(dynamicScope?: ScopeInterface): Promise<O> {
     const scope = new BuilderScope({
       dynamicScope,

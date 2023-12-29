@@ -28,7 +28,7 @@ import { Scope } from "./scope.js";
 
 import { IdVendor } from "../../id.js";
 
-export const nodeIdVendor = new IdVendor();
+const nodeIdVendor = new IdVendor();
 
 // TODO:BASE Extract base class that isn't opinionated about the syntax. Marking
 // methods that should be base as "TODO:BASE" below, including complications.

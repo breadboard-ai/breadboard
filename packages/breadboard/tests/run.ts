@@ -51,7 +51,7 @@ test("correctly saves and loads", async (t) => {
   {
     const firstBoard = await Board.fromGraphDescriptor(board);
     for await (const stop of firstBoard.run({ kits: [kit] })) {
-      t.is(stop.type, "beforehandler");
+      t.is(stop.type, "input");
       runResult = await stop.save();
       break;
     }
@@ -62,7 +62,7 @@ test("correctly saves and loads", async (t) => {
       { kits: [kit] },
       RunResult.load(runResult)
     )) {
-      t.is(stop.type, "input");
+      t.is(stop.type, "output");
       runResult = await stop.save();
       break;
     }
@@ -70,28 +70,6 @@ test("correctly saves and loads", async (t) => {
   {
     const thirdBoard = await Board.fromGraphDescriptor(board);
     for await (const stop of thirdBoard.run(
-      { kits: [kit] },
-      RunResult.load(runResult)
-    )) {
-      t.is(stop.type, "beforehandler");
-      runResult = await stop.save();
-      break;
-    }
-  }
-  {
-    const fourthBoard = await Board.fromGraphDescriptor(board);
-    for await (const stop of fourthBoard.run(
-      { kits: [kit] },
-      RunResult.load(runResult)
-    )) {
-      t.is(stop.type, "output");
-      runResult = await stop.save();
-      break;
-    }
-  }
-  {
-    const fifthBoard = await Board.fromGraphDescriptor(board);
-    for await (const stop of fifthBoard.run(
       { kits: [kit] },
       RunResult.load(runResult)
     )) {
@@ -114,12 +92,6 @@ test("correctly detects exit node", async (t) => {
   {
     const stop = await generator.next();
     t.is(stop.value.type, "input");
-    t.false(stop.value.isAtExitNode());
-  }
-
-  {
-    const stop = await generator.next();
-    t.is(stop.value.type, "beforehandler");
     t.false(stop.value.isAtExitNode());
   }
 

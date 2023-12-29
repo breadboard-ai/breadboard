@@ -61,10 +61,7 @@ test("runResultLoop correctly handles finite graph", async (t) => {
     response.written = "";
     const restoredState = RunResult.load(intermediateState);
     await runResultLoop(writer, board, { text: "hello" }, restoredState);
-    t.is(
-      response.written,
-      '{"type":"beforehandler","data":{"id":"noop","type":"passthrough"}}\n{"type":"output","data":{"text":"hello"}}\n'
-    );
+    t.is(response.written, '{"type":"output","data":{"text":"hello"}}\n');
     t.is(count, 1);
   }
 });

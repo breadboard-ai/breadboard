@@ -24,8 +24,8 @@ import {
 import { NodeDescriberResult, Schema } from "../../types.js";
 
 export class Scope implements ScopeInterface {
-  #lexicalScope?: Scope;
-  #dynamicScope?: Scope;
+  parentLexicalScope?: Scope;
+  parentDynamicScope?: Scope;
 
   #handlers: NodeHandlers = {};
   #pinnedNodes: AbstractNode[] = [];
@@ -33,8 +33,8 @@ export class Scope implements ScopeInterface {
   #callbacks: InvokeCallbacks[] = [];
 
   constructor(config: ScopeConfig = {}) {
-    this.#lexicalScope = config.lexicalScope as Scope;
-    this.#dynamicScope = config.dynamicScope as Scope;
+    this.parentLexicalScope = config.lexicalScope as Scope;
+    this.parentDynamicScope = config.dynamicScope as Scope;
   }
 
   addHandlers(handlers: NodeHandlers) {
@@ -48,8 +48,11 @@ export class Scope implements ScopeInterface {
     O extends OutputValues = OutputValues
   >(name: string): NodeHandler<I, O> | undefined {
     return (this.#handlers[name] ||
-      this.#dynamicScope?.getHandler(name) ||
-      this.#lexicalScope?.getHandler(name)) as unknown as NodeHandler<I, O>;
+      this.parentDynamicScope?.getHandler(name) ||
+      this.parentLexicalScope?.getHandler(name)) as unknown as NodeHandler<
+      I,
+      O
+    >;
   }
 
   pin(node: AbstractNode) {
@@ -85,7 +88,9 @@ export class Scope implements ScopeInterface {
     // than undefined gets precedence.
     return [
       ...this.#callbacks,
-      ...(this.#dynamicScope ? this.#dynamicScope.#getAllCallbacks() : []),
+      ...(this.parentDynamicScope
+        ? this.parentDynamicScope.#getAllCallbacks()
+        : []),
     ];
   }
 

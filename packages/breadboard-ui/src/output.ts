@@ -14,10 +14,10 @@ export type OutputArgs = {
   node: {
     id: string;
     type: string;
-    configuration: unknown;
+    configuration?: unknown;
   };
   outputs: {
-    schema: Schema;
+    schema?: Schema;
   } & Record<string, unknown>;
 };
 

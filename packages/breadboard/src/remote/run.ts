@@ -73,9 +73,6 @@ export class RunServer {
         } else if (stop.type === "output") {
           const { node, outputs } = stop;
           await responses.write(["output", { node, outputs }]);
-        } else if (stop.type === "beforehandler") {
-          const { node } = stop;
-          await responses.write(["beforehandler", { node }]);
         }
       }
       await responses.write(["end", {}]);

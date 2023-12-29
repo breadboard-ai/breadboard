@@ -6,11 +6,10 @@
 
 import * as BreadboardUI from "@google-labs/breadboard-ui";
 import {
-  type Harness,
   type HarnessProxyConfig,
   type HarnessRemoteConfig,
-  type HarnessRunResult,
   createHarness,
+  HarnessRunResult,
 } from "@google-labs/breadboard/harness";
 import { asRuntimeKit } from "@google-labs/breadboard";
 import Starter from "@google-labs/llm-starter";
@@ -79,12 +78,10 @@ const sleep = (time: number) =>
 
 export class Main {
   #ui = BreadboardUI.get();
-  #harness: Harness;
   #hasActiveBoard = false;
   #boardId = 0;
   #delay = 0;
   #pauser = new Pauser();
-  #pending = new Map<string, string>();
 
   constructor(config: BreadboardUI.StartArgs) {
     // Remove boards that are still works-in-progress from production builds.
@@ -96,7 +93,6 @@ export class Main {
     }
     config.boards.sort((a, b) => a.title.localeCompare(b.title));
 
-    this.#harness = this.#getHarness();
     BreadboardUI.register();
 
     document.body.addEventListener(
@@ -123,12 +119,12 @@ export class Main {
         const startEvent = evt as BreadboardUI.StartEvent;
         this.setActiveBreadboard(startEvent.url);
 
-        for await (const result of this.#harness.run(startEvent.url)) {
-          if (
-            result.message.type !== "load" &&
-            result.message.type !== "beforehandler" &&
-            result.message.type !== "shutdown"
-          ) {
+        const harness = this.#getHarness(startEvent.url);
+
+        this.#ui.load(await harness.load());
+
+        for await (const result of harness.run()) {
+          if (result.message.type !== "beforehandler") {
             const currentBoardId = this.#boardId;
             await this.#suspendIfPaused();
             if (currentBoardId !== this.#boardId) {
@@ -229,11 +225,6 @@ export class Main {
   async #handleEvent(result: HarnessRunResult) {
     const { data, type } = result.message;
 
-    if (type === "load") {
-      const loadData = data as BreadboardUI.LoadArgs;
-      this.#ui.load(loadData);
-    }
-
     // Update the graph to the latest.
     if (this.#hasNodeInfo(data)) {
       await this.#ui.renderDiagram(data.node.id);
@@ -243,24 +234,17 @@ export class Main {
 
     switch (type) {
       case "output": {
-        const outputData = data as BreadboardUI.OutputArgs;
-        await this.#ui.output(outputData);
+        await this.#ui.output(data);
         break;
       }
 
       case "input": {
-        const inputData = data as {
-          node: { id: string };
-          inputArguments: BreadboardUI.InputArgs;
-        };
-        result.reply(
-          await this.#ui.input(inputData.node.id, inputData.inputArguments)
-        );
+        result.reply(await this.#ui.input(data.node.id, data.inputArguments));
         break;
       }
 
       case "secret": {
-        const keys = (data as { keys: string[] }).keys;
+        const keys = data.keys;
         result.reply(
           Object.fromEntries(
             await Promise.all(
@@ -271,22 +255,28 @@ export class Main {
         break;
       }
 
+      case "graphstart": {
+        console.log("graphstart", data.path.join("_"), data);
+        break;
+      }
+
+      case "graphend": {
+        console.log("graphend", data.path.join("_"), data);
+        break;
+      }
+
       case "beforehandler": {
-        const progressData = data as {
-          node: {
-            id: string;
-            type: string;
-            configuration: Record<string, unknown> | null;
-          };
-        };
-        this.#ui.progress(progressData.node.id, progressData.node.type);
-        this.#pending.set(progressData.node.id, progressData.node.type);
+        this.#ui.beforehandler(data);
+        break;
+      }
+
+      case "afterhandler": {
+        this.#ui.afterhandler(data);
         break;
       }
 
       case "error": {
-        const errorData = data as { error: string };
-        this.#ui.error(errorData.error);
+        this.#ui.error(data.error);
         break;
       }
 
@@ -294,13 +284,10 @@ export class Main {
         this.#ui.done();
         this.#hasActiveBoard = false;
         break;
-
-      case "shutdown":
-        break;
     }
   }
 
-  #getHarness() {
+  #getHarness(url: string) {
     const harness =
       globalThis.localStorage.getItem(HARNESS_SWITCH_KEY) ?? DEFAULT_HARNESS;
 
@@ -327,6 +314,7 @@ export class Main {
       type: "worker",
       url: WORKER_URL,
     };
-    return createHarness({ kits, remote, proxy });
+    const diagnostics = true;
+    return createHarness({ url, kits, remote, proxy, diagnostics });
   }
 }

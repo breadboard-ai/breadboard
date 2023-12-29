@@ -5,21 +5,118 @@
  */
 
 import { NodeProxyConfig } from "../remote/config.js";
-import { Kit, OutputValues } from "../types.js";
+import {
+  BeforehandlerResponse,
+  InputPromiseResponse,
+  LoadResponse,
+  OutputResponse,
+} from "../remote/protocol.js";
+import { Kit, NodeDescriptor, OutputValues, ProbeMessage } from "../types.js";
 
-export interface Harness {
-  run(url: string): AsyncGenerator<HarnessRunResult, void>;
-}
-
-export type Result = {
-  id?: string;
-  type: string;
-  data: unknown;
+export type AfterhandlerResponse = {
+  node: NodeDescriptor;
+  path: number[];
+  outputs: OutputValues;
 };
 
-export interface HarnessRunResult {
+export type ResultType =
+  /**
+   * The board has been loaded
+   */
+  | "load"
+  /**
+   * The board is asking for input
+   */
+  | "input"
+  /**
+   * The board is sending output
+   */
+  | "output"
+  /**
+   * Sent before a handler for a particular node is invoked
+   */
+  | "beforehandler"
+  /**
+   * Sent after a handler for a particular node is invoked
+   */
+  | "afterhandler"
+  /**
+   * Sent when the harness is asking for secret
+   */
+  | "secret"
+  /**
+   * Sent when the board run process reports an error
+   */
+  | "error"
+  /**
+   * Sent when the board run finished
+   */
+  | "end";
+
+export type LoadResult = {
+  type: "load";
+  data: LoadResponse;
+};
+
+export type InputResult = {
+  type: "input";
+  data: InputPromiseResponse;
+};
+
+export type OutputResult = {
+  type: "output";
+  data: OutputResponse;
+};
+
+export type SecretResult = {
+  type: "secret";
+  data: { keys: string[] };
+};
+
+export type BeforehandlerResult = {
+  type: "beforehandler";
+  data: BeforehandlerResponse;
+};
+
+export type AfterhandlerResult = {
+  type: "afterhandler";
+  data: AfterhandlerResponse;
+};
+
+export type ErrorResult = {
+  type: "error";
+  data: { error: string };
+};
+
+export type EndResult = {
+  type: "end";
+  data: Record<string, never>;
+};
+
+export type OptionalId = { id?: string };
+
+export type AnyRunResult = (
+  | InputResult
+  | OutputResult
+  | SecretResult
+  | BeforehandlerResult
+  | AfterhandlerResult
+  | ErrorResult
+  | EndResult
+  | ProbeMessage
+) &
+  OptionalId;
+
+export interface HarnessResult<R extends AnyRunResult> {
   reply(reply: unknown): void;
-  message: Result;
+  message: R;
+}
+
+export type HarnessRunResult = HarnessResult<AnyRunResult>;
+
+export interface Harness {
+  load(): Promise<LoadResponse>;
+  run(): AsyncGenerator<HarnessRunResult, void>;
 }
 
 export type SecretHandler = (keys: {
@@ -52,6 +149,10 @@ export type HarnessRemoteConfig =
 
 export type HarnessConfig = {
   /**
+   * The URL of the board to run.
+   */
+  url: string;
+  /**
    * The kits to use by the runtime.
    */
   kits: Kit[];
@@ -68,4 +169,9 @@ export type HarnessConfig = {
    * server and a list of nodes that will be proxied to it.
    */
   proxy?: HarnessProxyConfig[];
+  /**
+   * Specifies whether to output diagnostics information.
+   * Defaults to `false`.
+   */
+  diagnostics?: boolean;
 };

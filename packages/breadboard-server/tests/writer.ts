@@ -97,33 +97,6 @@ test("writes output", async (t) => {
   );
 });
 
-test("writes beforehandler", async (t) => {
-  const mockResponse = new MockResponse();
-  const writer = new Writer(mockResponse, async (state) => state);
-  const stop = new RunResult(
-    {
-      descriptor: {
-        id: "test",
-        type: "test",
-      },
-      inputs: {},
-      missingInputs: [],
-      opportunities: [{ from: "test", to: "test", out: "*" }],
-      state: new MockEdgeState(),
-      outputsPromise: Promise.resolve({} as OutputValues),
-      skip: false,
-      newOpportunities: [],
-      pendingOutputs: new Map(),
-    },
-    "beforehandler"
-  );
-  writer.writeBeforeHandler(stop);
-  t.is(
-    mockResponse.written,
-    '{"type":"beforehandler","data":{"id":"test","type":"test"}}\n'
-  );
-});
-
 test("writes done", async (t) => {
   const mockResponse = new MockResponse();
   const writer = new Writer(mockResponse, async (state) => state);

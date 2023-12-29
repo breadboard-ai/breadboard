@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HarnessEventType } from "./types.js";
+import { HistoryEventType } from "./types.js";
 
 import { LitElement, html, css } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
@@ -12,7 +12,10 @@ import { customElement, property, state } from "lit/decorators.js";
 @customElement("bb-history-entry")
 export class HistoryEntry extends LitElement {
   @property()
-  type: HarnessEventType = HarnessEventType.DONE;
+  type: HistoryEventType = HistoryEventType.DONE;
+
+  @state()
+  nodeId = "";
 
   @state()
   summary = "";
@@ -49,7 +52,7 @@ export class HistoryEntry extends LitElement {
       pointer-events: none;
     }
 
-    #container.progress summary::before {
+    #container.beforehandler summary::before {
       background: radial-gradient(
           var(--bb-progress-color) 0%,
           var(--bb-progress-color) 30%,
@@ -68,8 +71,9 @@ export class HistoryEntry extends LitElement {
       animation: rotate 0.5s linear infinite;
     }
 
-    :host(:not(:first-child)) #container.progress {
-      display: none;
+    #container.afterhandler summary::before {
+      background: var(--bb-progress-color);
+      border: 1px solid rgb(90, 64, 119);
     }
 
     #container.load summary::before {
@@ -146,6 +150,10 @@ export class HistoryEntry extends LitElement {
       white-space: pre-wrap;
     }
 
+    .history {
+      padding-left: calc(var(--bb-grid-size) * 3);
+    }
+
     @keyframes rotate {
       from {
         transform: rotate(0);
@@ -159,7 +167,7 @@ export class HistoryEntry extends LitElement {
 
   #createDataOutput(data: unknown | null) {
     if (data === null) {
-      return "No additional data";
+      return "";
     }
 
     return JSON.stringify(data, null, 2);
@@ -178,15 +186,23 @@ export class HistoryEntry extends LitElement {
     return time.toFixed(1) + "ms";
   }
 
+  #isOpen(type: HistoryEventType) {
+    return (
+      type === HistoryEventType.BEFOREHANDLER ||
+      type === HistoryEventType.OUTPUT
+    );
+  }
+
   render() {
     return html`<div id="container" class="${this.type}">
-    <details ${this.type === "output" ? "open" : ""}>
+    <details ?open=${this.#isOpen(this.type)}>
       <summary>${this.summary} <span id="id">${
-      this.id || ""
+      this.nodeId || ""
     }</span> <span id="elapsed-time">${this.#formatTime(
       this.elapsedTime
     )}<span></summary>
-      <div><pre>${this.#createDataOutput(this.data)}</pre></div>
+    <div class="history"><slot></slot></div>
+    <div><pre>${this.#createDataOutput(this.data)}</pre></div>
     </details>
   </div>`;
   }

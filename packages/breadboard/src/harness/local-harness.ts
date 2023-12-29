@@ -4,8 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Harness, HarnessConfig, SecretHandler } from "./types.js";
-import { MainThreadRunResult } from "./result.js";
+import type {
+  Harness,
+  HarnessConfig,
+  HarnessRunResult,
+  SecretHandler,
+} from "./types.js";
 import { createOnSecret } from "./secrets.js";
 import { KitBuilder } from "../kits/builder.js";
 import { InputValues } from "../types.js";
@@ -14,10 +18,13 @@ import { ProxyClient } from "../remote/proxy.js";
 import { HTTPClientTransport } from "../remote/http.js";
 import { asyncGen } from "../utils/async-gen.js";
 import { Board } from "../board.js";
-import { LogProbe } from "../log.js";
+import { Diagnostics } from "./diagnostics.js";
+import { BoardRunner } from "../runner.js";
+import { LocalResult } from "./result.js";
 
 export class LocalHarness implements Harness {
   #config: HarnessConfig;
+  #runner: BoardRunner | undefined;
 
   constructor(config: HarnessConfig) {
     this.#config = config;
@@ -58,40 +65,51 @@ export class LocalHarness implements Harness {
     return kits;
   }
 
-  async *run(url: string) {
-    yield* asyncGen<MainThreadRunResult>(async (next) => {
+  async load() {
+    const url = this.#config.url;
+    const runner = await Board.load(url);
+
+    const { title, description, version } = runner;
+    const diagram = runner.mermaid("TD", true);
+    const nodes = runner.nodes;
+
+    this.#runner = runner;
+    return { title, description, version, diagram, url, nodes };
+  }
+
+  async *run() {
+    yield* asyncGen<HarnessRunResult>(async (next) => {
+      if (!this.#runner) {
+        throw new Error("Harness not loaded. Please call 'load' first.");
+      }
+
       const kits = this.#configureKits(createOnSecret(next));
 
       try {
-        const runner = await Board.load(url);
+        const probe = this.#config.diagnostics
+          ? new Diagnostics(async (message) => {
+              if (
+                message.type === "graphstart" ||
+                message.type === "graphend"
+              ) {
+                await next(new LocalResult(message));
+              } else {
+                next(new LocalResult(message));
+              }
+            })
+          : undefined;
 
-        await next(
-          new MainThreadRunResult({
-            type: "load",
-            data: {
-              title: runner.title,
-              description: runner.description,
-              version: runner.version,
-              diagram: runner.mermaid("TD", true),
-              url: url,
-              nodes: runner.nodes,
-            },
-          })
-        );
-
-        for await (const data of runner.run({ probe: new LogProbe(), kits })) {
+        for await (const data of this.#runner.run({ probe, kits })) {
           const { type } = data;
           if (type === "input") {
-            const inputResult = new MainThreadRunResult({ type, data });
+            const inputResult = new LocalResult({ type, data });
             await next(inputResult);
             data.inputs = inputResult.response as InputValues;
           } else if (type === "output") {
-            await next(new MainThreadRunResult({ type, data }));
-          } else if (data.type === "beforehandler") {
-            await next(new MainThreadRunResult({ type, data }));
+            await next(new LocalResult({ type, data }));
           }
         }
-        await next(new MainThreadRunResult({ type: "end", data: {} }));
+        await next(new LocalResult({ type: "end", data: {} }));
       } catch (e) {
         let error = e as Error;
         let message = "";
@@ -100,7 +118,9 @@ export class LocalHarness implements Harness {
           message += `\n${error.message}`;
         }
         console.error(message, error);
-        await next(new MainThreadRunResult({ type: "error", data: { error } }));
+        await next(
+          new LocalResult({ type: "error", data: { error: error.message } })
+        );
       }
     });
   }
