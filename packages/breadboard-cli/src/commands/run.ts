@@ -14,6 +14,7 @@ import {
 import { loadBoard, parseStdin, resolveFilePath, watch } from "./lib/utils.js";
 import * as readline from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
+import { pathToFileURL } from "node:url";
 
 async function runBoard(
   board: BoardRunner,
@@ -31,7 +32,9 @@ async function runBoard(
     }
   }
 
-  for await (const stop of board.run({ kits })) {
+  for await (const stop of board.run({
+    kits,
+  })) {
     if (stop.type === "input") {
       const nodeInputs = stop.inputArguments;
       // we won't mutate the inputs.

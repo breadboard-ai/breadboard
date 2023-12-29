@@ -13,7 +13,6 @@ import type {
 } from "@google-labs/breadboard";
 import { BoardRunner } from "@google-labs/breadboard";
 import { SchemaBuilder } from "@google-labs/breadboard/kits";
-import { resolve } from "path";
 
 export type InvokeNodeInputs = InputValues & {
   $recipe?: string | BreadboardCapability | GraphDescriptor;
@@ -31,9 +30,6 @@ const getRunnableBoard = async (
   if (board) return await BoardRunner.fromBreadboardCapability(board);
   if (graph) return await BoardRunner.fromGraphDescriptor(graph);
   if (path) {
-    if (path.startsWith("#") == false) {
-      path = resolve(process.cwd(), path);
-    }
     return await BoardRunner.load(path, { base, outerGraph });
   }
   return undefined;
