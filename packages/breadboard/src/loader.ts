@@ -32,7 +32,8 @@ export const resolveURL = (
   const url = new URL(urlString, base);
   const hash = url.hash;
   const href = url.href;
-  const path = url.protocol === "file:" ? url.pathname : undefined;
+  const path =
+    url.protocol === "file:" ? decodeURIComponent(url.pathname) : undefined;
   const baseWithoutHash = base.href.replace(base.hash, "");
   const hrefWithoutHash = href.replace(hash, "");
   if (baseWithoutHash == hrefWithoutHash && hash) {

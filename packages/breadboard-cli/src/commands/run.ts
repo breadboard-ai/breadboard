@@ -14,11 +14,13 @@ import {
 import { loadBoard, parseStdin, resolveFilePath, watch } from "./lib/utils.js";
 import * as readline from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
+import { VerboseLoggingProbe } from "./lib/verbose-logging-probe.js";
 
 async function runBoard(
   board: BoardRunner,
   inputs: InputValues,
   kitDeclarations: string[] | undefined,
+  verbose: boolean,
   pipedInput = false
 ) {
   const kits: Kit[] = [];
@@ -31,7 +33,14 @@ async function runBoard(
     }
   }
 
-  for await (const stop of board.run({ kits })) {
+  const probe = verbose
+    ? new VerboseLoggingProbe(async (data) => console.log(data))
+    : undefined;
+
+  for await (const stop of board.run({
+    kits,
+    probe,
+  })) {
     if (stop.type === "input") {
       const nodeInputs = stop.inputArguments;
       // we won't mutate the inputs.
@@ -49,8 +58,8 @@ async function runBoard(
           const properties = Object.entries(schema.properties);
 
           for (const [name, property] of properties) {
-            if (name in newInputs == false) {
-              // The required argument is not on the input. Ask for it.
+            if (name in newInputs == false && "default" in property == false) {
+              // The required argument is not on the input *and* there is no default. Ask for it.
               const answer = await rl.question(property.description + " ");
 
               newInputs[name] = answer;
@@ -70,6 +79,7 @@ async function runBoard(
 
 export const run = async (file: string, options: Record<string, any>) => {
   const kitDeclarations = options.kit as string[] | undefined;
+  const verbose = "verbose" in options;
   const input =
     "input" in options ? (JSON.parse(options.input) as InputValues) : {};
 
@@ -79,7 +89,7 @@ export const run = async (file: string, options: Record<string, any>) => {
     let board = await loadBoard(filePath, options);
 
     // We always have to run the board once.
-    await runBoard(board, input, kitDeclarations);
+    await runBoard(board, input, kitDeclarations, verbose);
 
     // If we are watching, we need to run the board again when the file changes.
     if ("watch" in options) {
@@ -88,7 +98,7 @@ export const run = async (file: string, options: Record<string, any>) => {
           // Now the board has changed, we need to reload it and run it again.
           board = await loadBoard(filePath, options);
           // We might want to clear the console here.
-          await runBoard(board, input, kitDeclarations);
+          await runBoard(board, input, kitDeclarations, verbose);
         },
       });
     }
@@ -99,6 +109,6 @@ export const run = async (file: string, options: Record<string, any>) => {
     // We should validate it looks like a board...
     const board = await BoardRunner.fromGraphDescriptor(JSON.parse(stdin));
 
-    await runBoard(board, input, kitDeclarations, true);
+    await runBoard(board, input, kitDeclarations, verbose, true);
   }
 };

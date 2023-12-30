@@ -21,6 +21,20 @@ test("resolveURL resolves file URLs", (t) => {
   ]);
 });
 
+test("resolveURL resolves file URLs that have a space in", (t) => {
+  const url = new URL("file:///foo%20bit/bar");
+  const results: ResolverResult[] = [];
+  const resolved = resolveURL(url, "baz", results);
+  t.true(resolved);
+  t.deepEqual(results, [
+    {
+      href: "file:///foo%20bit/baz",
+      location: "/foo bit/baz",
+      type: "file",
+    },
+  ]);
+});
+
 test("resolveURL resolves https URLs", (t) => {
   const url = new URL("https://example.com/foo/bar");
   const results: ResolverResult[] = [];
