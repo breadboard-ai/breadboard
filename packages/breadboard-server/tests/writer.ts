@@ -61,7 +61,8 @@ test("writes input", async (t) => {
       newOpportunities: [],
       pendingOutputs: new Map(),
     },
-    "input"
+    "input",
+    0
   );
   await writer.writeInput(stop);
   t.is(
@@ -88,7 +89,8 @@ test("writes output", async (t) => {
       newOpportunities: [],
       pendingOutputs: new Map(),
     },
-    "output"
+    "output",
+    0
   );
   await writer.writeOutput(stop);
   t.is(
@@ -129,7 +131,8 @@ test("transforms state", async (t) => {
       newOpportunities: [],
       pendingOutputs: new Map(),
     },
-    "output"
+    "output",
+    0
   );
   await writer.writeOutput(stop);
   t.is(
