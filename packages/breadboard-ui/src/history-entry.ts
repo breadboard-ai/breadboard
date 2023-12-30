@@ -52,7 +52,7 @@ export class HistoryEntry extends LitElement {
       pointer-events: none;
     }
 
-    #container.beforehandler summary::before {
+    #container.nodestart summary::before {
       background: radial-gradient(
           var(--bb-progress-color) 0%,
           var(--bb-progress-color) 30%,
@@ -71,7 +71,7 @@ export class HistoryEntry extends LitElement {
       animation: rotate 0.5s linear infinite;
     }
 
-    #container.afterhandler summary::before {
+    #container.nodeend summary::before {
       background: var(--bb-progress-color);
       border: 1px solid rgb(90, 64, 119);
     }
@@ -188,8 +188,7 @@ export class HistoryEntry extends LitElement {
 
   #isOpen(type: HistoryEventType) {
     return (
-      type === HistoryEventType.BEFOREHANDLER ||
-      type === HistoryEventType.OUTPUT
+      type === HistoryEventType.NODESTART || type === HistoryEventType.OUTPUT
     );
   }
 

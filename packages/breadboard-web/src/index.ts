@@ -124,7 +124,7 @@ export class Main {
         this.#ui.load(await harness.load());
 
         for await (const result of harness.run()) {
-          if (result.message.type !== "beforehandler") {
+          if (result.message.type !== "nodestart") {
             const currentBoardId = this.#boardId;
             await this.#suspendIfPaused();
             if (currentBoardId !== this.#boardId) {
@@ -265,13 +265,13 @@ export class Main {
         break;
       }
 
-      case "beforehandler": {
-        this.#ui.beforehandler(data);
+      case "nodestart": {
+        this.#ui.nodestart(data);
         break;
       }
 
-      case "afterhandler": {
-        this.#ui.afterhandler(data);
+      case "nodeend": {
+        this.#ui.nodeend(data);
         break;
       }
 

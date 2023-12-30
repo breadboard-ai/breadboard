@@ -162,7 +162,7 @@ export class BoardRunner implements BreadboardRunner {
           throw new Error(`No handler for node type "${descriptor.type}"`);
 
         await probe?.report?.({
-          type: "beforehandler",
+          type: "nodestart",
           data: {
             node: descriptor,
             inputs,
@@ -189,7 +189,7 @@ export class BoardRunner implements BreadboardRunner {
         ) as Promise<OutputValues>;
 
         await probe?.report?.({
-          type: "afterhandler",
+          type: "nodeend",
           data: {
             node: descriptor,
             inputs,

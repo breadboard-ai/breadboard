@@ -27,18 +27,18 @@ import {
   AnyHistoryEvent,
   GraphEndHistoryEvent,
   GraphStartHistoryEvent,
-  BeforehandlerHistoryEvent,
-  AfterhandlerHistoryEvent,
+  NodeStartHistoryEvent,
+  NodeEndHistoryEvent,
   InputArgs,
 } from "./types.js";
 import { HistoryEntry } from "./history-entry.js";
 import { NodeConfiguration, NodeDescriptor } from "@google-labs/breadboard";
-import { BeforehandlerResponse } from "@google-labs/breadboard/remote";
-import { AfterhandlerResponse } from "@google-labs/breadboard/harness";
+import { NodeStartResponse } from "@google-labs/breadboard/remote";
+import { NodeEndResponse } from "@google-labs/breadboard/harness";
 
 export interface UI {
-  beforehandler(data: BeforehandlerResponse): void;
-  afterhandler(data: AfterhandlerResponse): void;
+  nodestart(data: NodeStartResponse): void;
+  nodeend(data: NodeEndResponse): void;
   output(values: OutputArgs): void;
   input(id: string, args: InputArgs): Promise<Record<string, unknown>>;
   error(message: string): void;
@@ -58,10 +58,10 @@ const hasPath = (
 ): event is
   | GraphEndHistoryEvent
   | GraphStartHistoryEvent
-  | BeforehandlerHistoryEvent
-  | AfterhandlerHistoryEvent =>
-  event.type === HistoryEventType.BEFOREHANDLER ||
-  event.type === HistoryEventType.AFTERHANDLER ||
+  | NodeStartHistoryEvent
+  | NodeEndHistoryEvent =>
+  event.type === HistoryEventType.NODESTART ||
+  event.type === HistoryEventType.NODEEND ||
   event.type === HistoryEventType.GRAPHSTART ||
   event.type === HistoryEventType.GRAPHEND;
 
@@ -769,7 +769,7 @@ export class UIController extends HTMLElement implements UI {
     }
   }
 
-  #updateHistoryEntry({ type, data }: AfterhandlerHistoryEvent) {
+  #updateHistoryEntry({ type, data }: NodeEndHistoryEvent) {
     const root = this.shadowRoot;
     assertRoot(root);
 
@@ -838,27 +838,27 @@ export class UIController extends HTMLElement implements UI {
     return this.#diagram.render(this.#currentBoardDiagram, highlightNode);
   }
 
-  beforehandler(data: BeforehandlerResponse) {
+  nodestart(data: NodeStartResponse) {
     const {
       path,
       node: { id, type },
     } = data;
     this.#createHistoryEntry({
-      type: HistoryEventType.BEFOREHANDLER,
+      type: HistoryEventType.NODESTART,
       summary: type,
       id,
       data: { path },
     });
   }
 
-  afterhandler(data: AfterhandlerResponse) {
+  nodeend(data: NodeEndResponse) {
     const {
       path,
       node: { id },
       outputs,
     } = data;
     this.#updateHistoryEntry({
-      type: HistoryEventType.AFTERHANDLER,
+      type: HistoryEventType.NODEEND,
       id,
       data: { path, outputs },
     });

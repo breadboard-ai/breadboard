@@ -91,8 +91,8 @@ test("Continuous streaming", async (t) => {
     { node: { type: "input" }, inputArguments: { foo: "bar" } },
   ]);
   writer.write(["input", { inputs: { hello: "world" } }, ""]);
-  // second result was "beforehandler", but I removed it because of the
-  // refactoring to use diagnostics.
+  // second result was "beforehandler" (now "nodestart"), but I removed it
+  // because of the refactoring to use diagnostics.
   const thirdResult = await reader.read();
   t.assert(!thirdResult.done);
   t.like(thirdResult.value, ["output", { outputs: { hello: "world" } }]);

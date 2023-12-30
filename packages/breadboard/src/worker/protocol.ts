@@ -5,7 +5,7 @@
  */
 
 import {
-  BeforehandlerResponse,
+  NodeStartResponse,
   ErrorResponse,
   InputPromiseResponse,
   LoadRequest,
@@ -20,8 +20,8 @@ export const VALID_MESSAGE_TYPES = [
   "start",
   "input",
   "output",
-  "beforehandler",
-  "afterhandler",
+  "nodestart",
+  "nodeend",
   "proxy",
   "end",
   "error",
@@ -135,13 +135,13 @@ export type InputResponseMessage = {
 /**
  * The message that is sent by the worker to the host before it runs a node.
  */
-export type BeforehandlerMessage = {
+export type NodeStartMessage = {
   /**
-   * The "beforehandler" type signals to the host that the board is about to
+   * The "nodestart" type signals to the host that the board is about to
    * run a node.
    */
-  type: "beforehandler";
-  data: BeforehandlerResponse;
+  type: "nodestart";
+  data: NodeStartResponse;
 };
 
 /**
