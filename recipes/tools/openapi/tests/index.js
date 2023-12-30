@@ -13,11 +13,16 @@ export default await recipe(() => {
 
   const output = base.output({ $id: "output" });
 
-  const api = input.to(
+  const getBoard = code(({ api }) => {
+    return { board: api.board };
+  });
+
+  const apiBoard = input.to(
     core.invoke({ path: "../index.json", url: input.url })
-  ).listAPIs;
+  );
 
-  core.invoke({ board: api.board }).to(output);
-
-  return output;
+  return core
+    .invoke()
+    .in({ graph: getBoard({ api: apiBoard.listAPIs }).board, url: input.url })
+    .to(output);
 }).serialize(metaData);

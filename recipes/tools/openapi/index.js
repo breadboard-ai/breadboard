@@ -89,16 +89,17 @@ export default await recipe(() => {
   const specRecipe = recipe((api) => {
     const output = base.output({});
     api.item.to(output);
-    return api
+    return api.item
       .to(
-        recipe((i) => {
+        recipe((item) => {
+          const secretSplat = code((itemToSplat) => {
+            return { ...itemToSplat.item };
+          });
+
           return starter
-            .fetch({
-              $id: i.operationId,
-              url: i.url,
-              method: i.method,
-            })
-            .response.as("json")
+            .fetch()
+            .in(secretSplat(item))
+            .response.as("api_json_response")
             .to(base.output({}));
         })
       )
@@ -107,7 +108,7 @@ export default await recipe(() => {
   });
 
   const splatBoards = code(({ list }) => {
-    const opeations = list
+    const operations = list
       .map((item) => {
         return {
           [item.item.operationId]: item.board,
@@ -116,18 +117,15 @@ export default await recipe(() => {
       .reduce((acc, curr) => {
         return { ...acc, ...curr };
       }, {});
-    return { ...opeations };
+    return { ...operations };
   });
 
-  starter
+  return starter
     .fetch({ url: input.url })
     .response.as("json")
     .to(isOpenAPI())
     .json.to(generateAPISpecs())
     .apis.as("list")
     .to(core.map({ board: specRecipe }))
-    .list.to(splatBoards())
-    .to(output);
-
-  return output;
+    .list.to(splatBoards());
 }).serialize(metaData);
