@@ -5,13 +5,8 @@
  */
 
 import type { Probe, ProbeMessage } from "../types.js";
-import { BeforehandlerResult } from "./types.js";
 
-export type DiagnosticMesageType = "beforehandler";
-
-export type DiagnosticsCallback = (
-  message: BeforehandlerResult | ProbeMessage
-) => Promise<void>;
+export type DiagnosticsCallback = (message: ProbeMessage) => Promise<void>;
 
 export class Diagnostics extends EventTarget implements Probe {
   #callback: DiagnosticsCallback;

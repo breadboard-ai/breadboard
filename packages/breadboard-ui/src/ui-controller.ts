@@ -27,17 +27,17 @@ import {
   AnyHistoryEvent,
   GraphEndHistoryEvent,
   GraphStartHistoryEvent,
-  BeforehandlerHistoryEvent,
+  NodeStartHistoryEvent,
   AfterhandlerHistoryEvent,
   InputArgs,
 } from "./types.js";
 import { HistoryEntry } from "./history-entry.js";
 import { NodeConfiguration, NodeDescriptor } from "@google-labs/breadboard";
-import { BeforehandlerResponse } from "@google-labs/breadboard/remote";
+import { NodeStartResponse } from "@google-labs/breadboard/remote";
 import { AfterhandlerResponse } from "@google-labs/breadboard/harness";
 
 export interface UI {
-  beforehandler(data: BeforehandlerResponse): void;
+  nodestart(data: NodeStartResponse): void;
   afterhandler(data: AfterhandlerResponse): void;
   output(values: OutputArgs): void;
   input(id: string, args: InputArgs): Promise<Record<string, unknown>>;
@@ -58,9 +58,9 @@ const hasPath = (
 ): event is
   | GraphEndHistoryEvent
   | GraphStartHistoryEvent
-  | BeforehandlerHistoryEvent
+  | NodeStartHistoryEvent
   | AfterhandlerHistoryEvent =>
-  event.type === HistoryEventType.BEFOREHANDLER ||
+  event.type === HistoryEventType.NODESTART ||
   event.type === HistoryEventType.AFTERHANDLER ||
   event.type === HistoryEventType.GRAPHSTART ||
   event.type === HistoryEventType.GRAPHEND;
@@ -838,13 +838,13 @@ export class UIController extends HTMLElement implements UI {
     return this.#diagram.render(this.#currentBoardDiagram, highlightNode);
   }
 
-  beforehandler(data: BeforehandlerResponse) {
+  nodestart(data: NodeStartResponse) {
     const {
       path,
       node: { id, type },
     } = data;
     this.#createHistoryEntry({
-      type: HistoryEventType.BEFOREHANDLER,
+      type: HistoryEventType.NODESTART,
       summary: type,
       id,
       data: { path },

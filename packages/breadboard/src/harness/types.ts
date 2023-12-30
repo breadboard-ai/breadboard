@@ -6,7 +6,7 @@
 
 import { NodeProxyConfig } from "../remote/config.js";
 import {
-  BeforehandlerResponse,
+  NodeStartResponse,
   InputPromiseResponse,
   LoadResponse,
   OutputResponse,
@@ -35,7 +35,7 @@ export type ResultType =
   /**
    * Sent before a handler for a particular node is invoked
    */
-  | "beforehandler"
+  | "nodestart"
   /**
    * Sent after a handler for a particular node is invoked
    */
@@ -73,9 +73,9 @@ export type SecretResult = {
   data: { keys: string[] };
 };
 
-export type BeforehandlerResult = {
-  type: "beforehandler";
-  data: BeforehandlerResponse;
+export type NodeStartResult = {
+  type: "nodestart";
+  data: NodeStartResponse;
 };
 
 export type AfterhandlerResult = {
@@ -99,7 +99,7 @@ export type AnyRunResult = (
   | InputResult
   | OutputResult
   | SecretResult
-  | BeforehandlerResult
+  | NodeStartResult
   | AfterhandlerResult
   | ErrorResult
   | EndResult

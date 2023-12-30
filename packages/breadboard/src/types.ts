@@ -474,8 +474,8 @@ export type SkipProbeMessage = {
   };
 };
 
-export type BeforehandlerProbeMessage = {
-  type: "beforehandler";
+export type NodeStartProbeMessage = {
+  type: "nodestart";
   data: {
     node: NodeDescriptor;
     inputs: InputValues;
@@ -498,7 +498,7 @@ export type ProbeMessage =
   | GraphStartProbeMessage
   | GraphEndProbeMessage
   | SkipProbeMessage
-  | BeforehandlerProbeMessage
+  | NodeStartProbeMessage
   | AfterhandlerProbeMessage;
 
 // TODO: Remove extending EventTarget once new runner is converted to use

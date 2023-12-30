@@ -16,7 +16,7 @@ export const enum HistoryEventType {
   INPUT = "input",
   LOAD = "load",
   OUTPUT = "output",
-  BEFOREHANDLER = "beforehandler",
+  NODESTART = "nodestart",
   AFTERHANDLER = "afterhandler",
   SECRETS = "secrets",
   GRAPHSTART = "graphstart",
@@ -71,8 +71,8 @@ export type GraphEndHistoryEvent = HistoryEvent & {
   data: DataWithPath;
 };
 
-export type BeforehandlerHistoryEvent = HistoryEvent & {
-  type: HistoryEventType.BEFOREHANDLER;
+export type NodeStartHistoryEvent = HistoryEvent & {
+  type: HistoryEventType.NODESTART;
   data: DataWithPath;
 };
 
@@ -89,7 +89,7 @@ export type AnyHistoryEvent =
   | SecretsHistoryEvent
   | GraphStartHistoryEvent
   | GraphEndHistoryEvent
-  | BeforehandlerHistoryEvent
+  | NodeStartHistoryEvent
   | AfterhandlerHistoryEvent
   | LoadHistoryEvent;
 

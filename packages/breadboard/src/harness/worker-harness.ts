@@ -63,7 +63,7 @@ export class WorkerHarness implements Harness {
   #skipDiagnosticMessages(type: ControllerMessageType) {
     return (
       !this.#config.diagnostics &&
-      (type === "beforehandler" || type === "afterhandler")
+      (type === "nodestart" || type === "afterhandler")
     );
   }
 

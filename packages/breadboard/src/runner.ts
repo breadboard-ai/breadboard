@@ -162,7 +162,7 @@ export class BoardRunner implements BreadboardRunner {
           throw new Error(`No handler for node type "${descriptor.type}"`);
 
         await probe?.report?.({
-          type: "beforehandler",
+          type: "nodestart",
           data: {
             node: descriptor,
             inputs,

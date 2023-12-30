@@ -70,7 +70,7 @@ export type RunRequestType = "run" | "input" | "proxy";
  * These are markers for individual messages within the response,
  * so that the client can identify which message is which.
  */
-export type RunResponseType = "output" | "beforehandler" | "input" | "proxy";
+export type RunResponseType = "output" | "input" | "proxy";
 
 export type RunState = string;
 
@@ -101,7 +101,7 @@ export type OutputResponseMessage = ["output", OutputResponse];
 /**
  * Sent by a server just before a node is about to run.
  */
-export type BeforehandlerResponse = {
+export type NodeStartResponse = {
   /**
    * The description of the node that is about to run.
    * @see [NodeDescriptor]
@@ -109,10 +109,7 @@ export type BeforehandlerResponse = {
   node: NodeDescriptor;
   path: number[];
 };
-export type BeforehandlerResponseMessage = [
-  "beforehandler",
-  BeforehandlerResponse
-];
+export type NodeStartResponseMessage = ["nodestart", NodeStartResponse];
 
 /**
  * Sent by a server to request input.
@@ -252,7 +249,7 @@ export type AnyRunRequestMessage =
 
 export type AnyRunResponseMessage =
   | OutputResponseMessage
-  | BeforehandlerResponseMessage
+  | NodeStartResponseMessage
   | InputPromiseResponseMessage
   | ProxyPromiseResponseMessage
   | EndResponseMessage
