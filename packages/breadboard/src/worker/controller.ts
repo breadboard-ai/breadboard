@@ -53,6 +53,10 @@ export class WorkerTransport implements MessageControllerTransport {
 
   #onMessage(e: MessageEvent) {
     const message = e.data as ControllerMessage;
+    if (!message) {
+      console.debug(`[${this.#direction}]`, "unknown message", e);
+      return;
+    }
     console.debug(`[${this.#direction}]`, message.type, message.data);
     this.#messageHandler && this.#messageHandler(message);
   }
@@ -78,6 +82,9 @@ export class MessageController {
 
   #onMessage(message: ControllerMessage) {
     if (!message.type || !VALID_MESSAGE_TYPES.includes(message.type)) {
+      // This is only used in transition from worker machinery to
+      // remote machinery.
+      if ((message.type as string) === "starttransport") return;
       throw new Error(`Invalid message type "${message.type}"`);
     }
     if (message.id) {

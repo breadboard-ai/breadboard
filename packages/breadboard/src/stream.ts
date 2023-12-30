@@ -102,6 +102,81 @@ export const portToStreams = <Read, Write>(
   };
 };
 
+class WritableResult<Read, Write> {
+  #writer: WritableStreamDefaultWriter<Write>;
+  data: Read;
+
+  constructor(value: Read, writer: WritableStreamDefaultWriter<Write>) {
+    this.#writer = writer;
+    this.data = value;
+  }
+
+  async reply(chunk: Write) {
+    await this.#writer.write(chunk);
+  }
+}
+
+class StreamsAsyncIterator<Read, Write>
+  implements AsyncIterator<WritableResult<Read, Write>, void, unknown>
+{
+  #reader: ReadableStreamDefaultReader<Read>;
+  #writer: WritableStreamDefaultWriter<Write>;
+  constructor(writable: WritableStream<Write>, readable: ReadableStream<Read>) {
+    this.#reader = readable.getReader();
+    this.#writer = writable.getWriter();
+  }
+
+  async next(): Promise<IteratorResult<WritableResult<Read, Write>, void>> {
+    const { done, value } = await this.#reader.read();
+    if (done) {
+      this.#writer.close();
+      return { done, value: undefined };
+    }
+    return {
+      done: false,
+      value: new WritableResult<Read, Write>(value, this.#writer),
+    };
+  }
+
+  async return(): Promise<IteratorResult<WritableResult<Read, Write>, void>> {
+    this.#writer.close();
+    return { done: true, value: undefined };
+  }
+
+  async throw(
+    err: Error
+  ): Promise<IteratorResult<WritableResult<Read, Write>, void>> {
+    this.#writer.abort(err);
+    return { done: true, value: undefined };
+  }
+}
+
+/**
+ * A helper to convert a pair of streams to an async iterable that follows
+ * the following protocol:
+ * - The async iterable yields a `WritableResult` object.
+ * - The `WritableResult` object contains the data from the readable stream.
+ * - The `WritableResult` object has a `reply` method that can be used to
+ *   write a value as a reply to to data in the readable stream.
+ *
+ * This is particularly useful with bi-directional streams, when the two
+ * streams are semantically connected to each other.
+ *
+ * @param writable The writable stream.
+ * @param readable The readable stream.
+ * @returns An async iterable.
+ */
+export const streamsToAsyncIterable = <Read, Write>(
+  writable: WritableStream<Write>,
+  readable: ReadableStream<Read>
+): AsyncIterable<WritableResult<Read, Write>> => {
+  return {
+    [Symbol.asyncIterator]() {
+      return new StreamsAsyncIterator<Read, Write>(writable, readable);
+    },
+  };
+};
+
 // Polyfill to make ReadableStream async iterable
 // See https://bugs.chromium.org/p/chromium/issues/detail?id=929585
 export const patchReadableStream = () => {
