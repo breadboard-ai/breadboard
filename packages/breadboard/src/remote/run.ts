@@ -88,6 +88,7 @@ type Writer = WritableStreamDefaultWriter<AnyRunRequestMessage>;
 class ClientRunResult implements BreadboardRunResult {
   type: RunResultType;
   node: NodeDescriptor;
+  invocationId = 0;
 
   #state?: string;
   #inputArguments: InputValues = {};

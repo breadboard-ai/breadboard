@@ -380,6 +380,11 @@ export interface BreadboardRunResult {
    * graph traversal.
    */
   get state(): TraversalResult;
+  /**
+   * The invocation id of the current node. This is useful for tracking
+   * the node within the run, similar to an "index" property in map/forEach.
+   */
+  get invocationId(): number;
 }
 
 export interface NodeFactory {
