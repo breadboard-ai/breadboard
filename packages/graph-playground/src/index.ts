@@ -135,7 +135,7 @@ async function main(args: string[], use_input_handler = false) {
   const probe = {
     report(message: ProbeMessage) {
       const { type, data } = message;
-      if (type === "afterhandler") {
+      if (type === "nodeend") {
         if (logIntegrityLabels && data.validatorMetadata?.length) {
           const label = data.validatorMetadata
             .map((m) => m.description)

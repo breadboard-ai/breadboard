@@ -189,7 +189,7 @@ export class BoardRunner implements BreadboardRunner {
         ) as Promise<OutputValues>;
 
         await probe?.report?.({
-          type: "afterhandler",
+          type: "nodeend",
           data: {
             node: descriptor,
             inputs,

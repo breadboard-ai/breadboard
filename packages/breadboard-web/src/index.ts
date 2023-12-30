@@ -270,8 +270,8 @@ export class Main {
         break;
       }
 
-      case "afterhandler": {
-        this.#ui.afterhandler(data);
+      case "nodeend": {
+        this.#ui.nodeend(data);
         break;
       }
 

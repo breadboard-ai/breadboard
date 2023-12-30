@@ -13,7 +13,7 @@ import {
 } from "../remote/protocol.js";
 import { Kit, NodeDescriptor, OutputValues, ProbeMessage } from "../types.js";
 
-export type AfterhandlerResponse = {
+export type NodeEndResponse = {
   node: NodeDescriptor;
   path: number[];
   outputs: OutputValues;
@@ -39,7 +39,7 @@ export type ResultType =
   /**
    * Sent after a handler for a particular node is invoked
    */
-  | "afterhandler"
+  | "nodeend"
   /**
    * Sent when the harness is asking for secret
    */
@@ -78,9 +78,9 @@ export type NodeStartResult = {
   data: NodeStartResponse;
 };
 
-export type AfterhandlerResult = {
-  type: "afterhandler";
-  data: AfterhandlerResponse;
+export type NodeEndResult = {
+  type: "nodeend";
+  data: NodeEndResponse;
 };
 
 export type ErrorResult = {
@@ -100,7 +100,7 @@ export type AnyRunResult = (
   | OutputResult
   | SecretResult
   | NodeStartResult
-  | AfterhandlerResult
+  | NodeEndResult
   | ErrorResult
   | EndResult
   | ProbeMessage

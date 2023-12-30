@@ -28,17 +28,17 @@ import {
   GraphEndHistoryEvent,
   GraphStartHistoryEvent,
   NodeStartHistoryEvent,
-  AfterhandlerHistoryEvent,
+  NodeEndHistoryEvent,
   InputArgs,
 } from "./types.js";
 import { HistoryEntry } from "./history-entry.js";
 import { NodeConfiguration, NodeDescriptor } from "@google-labs/breadboard";
 import { NodeStartResponse } from "@google-labs/breadboard/remote";
-import { AfterhandlerResponse } from "@google-labs/breadboard/harness";
+import { NodeEndResponse } from "@google-labs/breadboard/harness";
 
 export interface UI {
   nodestart(data: NodeStartResponse): void;
-  afterhandler(data: AfterhandlerResponse): void;
+  nodeend(data: NodeEndResponse): void;
   output(values: OutputArgs): void;
   input(id: string, args: InputArgs): Promise<Record<string, unknown>>;
   error(message: string): void;
@@ -59,9 +59,9 @@ const hasPath = (
   | GraphEndHistoryEvent
   | GraphStartHistoryEvent
   | NodeStartHistoryEvent
-  | AfterhandlerHistoryEvent =>
+  | NodeEndHistoryEvent =>
   event.type === HistoryEventType.NODESTART ||
-  event.type === HistoryEventType.AFTERHANDLER ||
+  event.type === HistoryEventType.NODEEND ||
   event.type === HistoryEventType.GRAPHSTART ||
   event.type === HistoryEventType.GRAPHEND;
 
@@ -769,7 +769,7 @@ export class UIController extends HTMLElement implements UI {
     }
   }
 
-  #updateHistoryEntry({ type, data }: AfterhandlerHistoryEvent) {
+  #updateHistoryEntry({ type, data }: NodeEndHistoryEvent) {
     const root = this.shadowRoot;
     assertRoot(root);
 
@@ -851,14 +851,14 @@ export class UIController extends HTMLElement implements UI {
     });
   }
 
-  afterhandler(data: AfterhandlerResponse) {
+  nodeend(data: NodeEndResponse) {
     const {
       path,
       node: { id },
       outputs,
     } = data;
     this.#updateHistoryEntry({
-      type: HistoryEventType.AFTERHANDLER,
+      type: HistoryEventType.NODEEND,
       id,
       data: { path, outputs },
     });

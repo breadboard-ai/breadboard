@@ -71,7 +71,7 @@ export class HistoryEntry extends LitElement {
       animation: rotate 0.5s linear infinite;
     }
 
-    #container.afterhandler summary::before {
+    #container.nodeend summary::before {
       background: var(--bb-progress-color);
       border: 1px solid rgb(90, 64, 119);
     }
