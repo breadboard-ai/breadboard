@@ -146,21 +146,6 @@ export class BoardRunner implements BreadboardRunner {
           continue;
         }
 
-        if (descriptor.type === "input") {
-          await next(new InputStageResult(result));
-          await bubbleUpInputsIfNeeded(this, context, result);
-          continue;
-        }
-
-        if (descriptor.type === "output") {
-          await next(new OutputStageResult(result));
-          continue;
-        }
-
-        const handler = handlers[descriptor.type];
-        if (!handler)
-          throw new Error(`No handler for node type "${descriptor.type}"`);
-
         await probe?.report?.({
           type: "nodestart",
           data: {
@@ -170,30 +155,45 @@ export class BoardRunner implements BreadboardRunner {
           },
         });
 
-        const newContext: NodeHandlerContext = {
-          ...context,
-          board: this,
-          descriptor,
-          outerGraph: this.#outerGraph || this,
-          base: this.url,
-          slots,
-          kits: [...(context.kits || []), ...this.kits],
-          requestInput: requestedInputs.createHandler(next, result),
-          invocationPath: path(),
-        };
+        let outputsPromise: Promise<OutputValues> | undefined = undefined;
 
-        const outputsPromise = callHandler(
-          handler,
-          inputs,
-          newContext
-        ) as Promise<OutputValues>;
+        if (descriptor.type === "input") {
+          await next(new InputStageResult(result, invocationId));
+          await bubbleUpInputsIfNeeded(this, context, result);
+          outputsPromise = result.outputsPromise;
+        } else if (descriptor.type === "output") {
+          await next(new OutputStageResult(result, invocationId));
+          outputsPromise = result.outputsPromise;
+        } else {
+          const handler = handlers[descriptor.type];
+          if (!handler)
+            throw new Error(`No handler for node type "${descriptor.type}"`);
+
+          const newContext: NodeHandlerContext = {
+            ...context,
+            board: this,
+            descriptor,
+            outerGraph: this.#outerGraph || this,
+            base: this.url,
+            slots,
+            kits: [...(context.kits || []), ...this.kits],
+            requestInput: requestedInputs.createHandler(next, result),
+            invocationPath: path(),
+          };
+
+          outputsPromise = callHandler(
+            handler,
+            inputs,
+            newContext
+          ) as Promise<OutputValues>;
+        }
 
         await probe?.report?.({
           type: "nodeend",
           data: {
             node: descriptor,
             inputs,
-            outputs: await outputsPromise,
+            outputs: (await outputsPromise) as OutputValues,
             validatorMetadata: this.#validators.map((validator) =>
               validator.getValidatorMetadata(descriptor)
             ),
@@ -247,13 +247,22 @@ export class BoardRunner implements BreadboardRunner {
 
       for await (const result of this.run(context)) {
         if (result.type === "input") {
-          // Pass the inputs to the board. If there are inputs bound to the board
-          // (e.g. from a lambda node that had incoming wires), they will
+          // Pass the inputs to the board. If there are inputs bound to the
+          // board (e.g. from a lambda node that had incoming wires), they will
           // overwrite supplied inputs.
           result.inputs = args;
         } else if (result.type === "output") {
           outputs = result.outputs;
           // Exit once we receive the first output.
+          await probe?.report?.({
+            type: "nodeend",
+            data: {
+              node: result.node,
+              inputs: result.inputs,
+              outputs,
+              path: [...path, result.invocationId],
+            },
+          });
           await probe?.report?.({
             type: "graphend",
             data: { metadata: this, path },

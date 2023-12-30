@@ -40,10 +40,20 @@ export const reviver = (
 export class RunResult implements BreadboardRunResult {
   #type: RunResultType;
   #state: TraversalResult;
+  #invocationId;
 
-  constructor(state: TraversalResult, type: RunResultType) {
+  constructor(
+    state: TraversalResult,
+    type: RunResultType,
+    invocationId: number
+  ) {
     this.#state = state;
     this.#type = type;
+    this.#invocationId = invocationId;
+  }
+
+  get invocationId(): number {
+    return this.#invocationId;
   }
 
   get type(): RunResultType {
@@ -91,13 +101,13 @@ export class RunResult implements BreadboardRunResult {
   static load(stringifiedResult: string): RunResult {
     const { state, type } = JSON.parse(stringifiedResult, reviver);
     const machineResult = MachineResult.fromObject(state);
-    return new RunResult(machineResult, type);
+    return new RunResult(machineResult, type, 0);
   }
 }
 
 export class InputStageResult extends RunResult {
-  constructor(state: TraversalResult) {
-    super(state, "input");
+  constructor(state: TraversalResult, invocationId: number) {
+    super(state, "input", invocationId);
   }
 
   get outputs(): OutputValues {
@@ -106,8 +116,8 @@ export class InputStageResult extends RunResult {
 }
 
 export class OutputStageResult extends RunResult {
-  constructor(state: TraversalResult) {
-    super(state, "output");
+  constructor(state: TraversalResult, invocationId: number) {
+    super(state, "output", invocationId);
   }
 
   get inputArguments(): InputValues {

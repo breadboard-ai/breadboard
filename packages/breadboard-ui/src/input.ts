@@ -396,7 +396,9 @@ export class Input extends LitElement {
             input = html`<select name="${key}" id="${key}">
               ${options.map((option) => {
                 const isSelected = option === property.default;
-                return html`<option ?selected=${isSelected} value=${option}">${option}</option>`;
+                return html`<option ?selected=${isSelected} value=${option}>
+                  ${option}
+                </option>`;
               })}
             </select>`;
           } else if (isBoolean(property)) {
