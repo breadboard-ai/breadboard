@@ -1,0 +1,377 @@
+{
+  "url": "file:///Users/paulkinlan/Code/labs-prototypes/recipes/tools/openapi/index.js",
+  "title": "Create a board from an Open API spec",
+  "description": "Converts an Open API spec to a board.",
+  "version": "0.0.3",
+  "edges": [
+    {
+      "from": "fn-8",
+      "to": "output",
+      "out": "*",
+      "in": ""
+    },
+    {
+      "from": "map-6",
+      "to": "fn-8",
+      "out": "list",
+      "in": "list"
+    },
+    {
+      "from": "fn-5",
+      "to": "map-6",
+      "out": "apis",
+      "in": "list"
+    },
+    {
+      "from": "fn-4",
+      "to": "fn-5",
+      "out": "json",
+      "in": "json"
+    },
+    {
+      "from": "fetch-3",
+      "to": "fn-4",
+      "out": "response",
+      "in": "json"
+    },
+    {
+      "from": "input",
+      "to": "fetch-3",
+      "out": "url",
+      "in": "url"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "board": {
+              "type": "object",
+              "title": "Board",
+              "description": "The board that was created from the Open API spec."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "fn-8",
+      "type": "invoke",
+      "configuration": {
+        "path": "#fn-8"
+      }
+    },
+    {
+      "id": "map-6",
+      "type": "map",
+      "configuration": {
+        "board": {
+          "kind": "board",
+          "board": {
+            "kits": [],
+            "edges": [
+              {
+                "from": "input-1",
+                "to": "output-3",
+                "out": "item",
+                "in": "item"
+              },
+              {
+                "from": "input-1",
+                "to": "lambda-5",
+                "out": "*",
+                "in": ""
+              },
+              {
+                "from": "lambda-5",
+                "to": "output-3",
+                "out": "board",
+                "in": "board"
+              }
+            ],
+            "nodes": [
+              {
+                "id": "output-3",
+                "type": "output",
+                "configuration": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "item": {
+                        "type": "string",
+                        "title": "item"
+                      },
+                      "board": {
+                        "type": "string",
+                        "title": "board"
+                      }
+                    },
+                    "required": [
+                      "item",
+                      "board"
+                    ]
+                  }
+                }
+              },
+              {
+                "id": "input-1",
+                "type": "input",
+                "configuration": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "item": {
+                        "type": "string",
+                        "title": "item"
+                      }
+                    },
+                    "required": [
+                      "item"
+                    ]
+                  }
+                }
+              },
+              {
+                "id": "lambda-5",
+                "type": "lambda",
+                "configuration": {
+                  "board": {
+                    "kind": "board",
+                    "board": {
+                      "kits": [],
+                      "edges": [
+                        {
+                          "to": "output-3",
+                          "out": "response",
+                          "in": "json"
+                        },
+                        {
+                          "from": "input-1",
+                          "out": "url",
+                          "in": "url"
+                        },
+                        {
+                          "from": "input-1",
+                          "out": "method",
+                          "in": "method"
+                        }
+                      ],
+                      "nodes": [
+                        {
+                          "id": "output-3",
+                          "type": "output",
+                          "configuration": {
+                            "schema": {
+                              "type": "object",
+                              "properties": {
+                                "json": {
+                                  "title": "response",
+                                  "description": "The response from the fetch request",
+                                  "type": [
+                                    "string",
+                                    "object"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "json"
+                              ]
+                            }
+                          }
+                        },
+                        {
+                          "type": "fetch",
+                          "configuration": {}
+                        },
+                        {
+                          "id": "input-1",
+                          "type": "input",
+                          "configuration": {
+                            "schema": {
+                              "type": "object",
+                              "properties": {
+                                "url": {
+                                  "title": "url",
+                                  "description": "The URL to fetch",
+                                  "type": "string"
+                                },
+                                "method": {
+                                  "title": "method",
+                                  "description": "The HTTP method to use",
+                                  "type": "string",
+                                  "enum": [
+                                    "GET",
+                                    "POST",
+                                    "PUT",
+                                    "DELETE"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "url",
+                                "method"
+                              ]
+                            }
+                          }
+                        }
+                      ],
+                      "graphs": {}
+                    }
+                  }
+                }
+              }
+            ],
+            "graphs": {}
+          }
+        }
+      }
+    },
+    {
+      "id": "fn-5",
+      "type": "invoke",
+      "configuration": {
+        "path": "#fn-5"
+      }
+    },
+    {
+      "id": "fn-4",
+      "type": "invoke",
+      "configuration": {
+        "path": "#fn-4"
+      }
+    },
+    {
+      "id": "fetch-3",
+      "type": "fetch",
+      "configuration": {}
+    },
+    {
+      "id": "input",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "url": {
+              "type": "string",
+              "title": "Open API URL",
+              "description": "The URL of the Open API spec that you want to convert to a board."
+            }
+          }
+        }
+      }
+    }
+  ],
+  "kits": [],
+  "graphs": {
+    "fn-8": {
+      "edges": [
+        {
+          "from": "fn-8-input",
+          "to": "fn-8-run",
+          "out": "*"
+        },
+        {
+          "from": "fn-8-run",
+          "to": "fn-8-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "fn-8-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "fn-8-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function fn_8({ list }) {\n    const opeations = list\n      .map((item) => {\n        return {\n          [item.item.operationId]: item.board,\n        };\n      })\n      .reduce((acc, curr) => {\n        return { ...acc, ...curr };\n      }, {});\n    return { ...opeations };\n  }",
+            "name": "fn_8",
+            "raw": true
+          }
+        },
+        {
+          "id": "fn-8-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    },
+    "fn-5": {
+      "edges": [
+        {
+          "from": "fn-5-input",
+          "to": "fn-5-run",
+          "out": "*"
+        },
+        {
+          "from": "fn-5-run",
+          "to": "fn-5-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "fn-5-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "fn-5-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function fn_5({ json }) {\n    const { paths } = json;\n    const baseUrl = json.servers[0].url;\n\n    // We can only really handle GET requests right now.\n    const apis = Object.entries(paths)\n      .map(([key, value]) => {\n        return Object.keys(value)\n          .map((method) => {\n            const headers = {\n              //[value[method].operationId]: {\n              operationId: value[method].operationId,\n              url: baseUrl + key,\n              method: method.toUpperCase(),\n              // },\n            };\n\n            return headers;\n          })\n          .flat();\n      })\n      .flat();\n    // .reduce((acc, curr) => {\n    //   return { ...acc, ...curr };\n    // }, {});\n\n    return { apis };\n  }",
+            "name": "fn_5",
+            "raw": true
+          }
+        },
+        {
+          "id": "fn-5-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    },
+    "fn-4": {
+      "edges": [
+        {
+          "from": "fn-4-input",
+          "to": "fn-4-run",
+          "out": "*"
+        },
+        {
+          "from": "fn-4-run",
+          "to": "fn-4-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "fn-4-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "fn-4-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function fn_4({ json }) {\n    if (\"openapi\" in json == false) {\n      throw new Error(\"Not an Open API spec.\");\n    }\n\n    if (\"servers\" in json == false) {\n      throw new Error(\"No servers in Open API spec.\");\n    }\n\n    if (\"paths\" in json == false) {\n      throw new Error(\"No paths in Open API spec.\");\n    }\n\n    return { json };\n  }",
+            "name": "fn_4",
+            "raw": true
+          }
+        },
+        {
+          "id": "fn-4-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    }
+  }
+}
