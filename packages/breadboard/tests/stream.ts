@@ -8,6 +8,7 @@ import test from "ava";
 import {
   portToStreams,
   streamFromAsyncGen,
+  streamFromReader,
   streamsToAsyncIterable,
 } from "../src/stream.js";
 
@@ -110,4 +111,36 @@ test("streamsToAsyncIterable works as expected", async (t) => {
     await value.reply(`number: ${value.data}`);
   }
   t.deepEqual(results, [1, "number: 1", 2, "number: 2", 3, "number: 3"]);
+});
+
+test("streamFromReader produces a regular stream", async (t) => {
+  const readable = new ReadableStream<number>({
+    async pull(controller) {
+      controller.enqueue(1);
+      controller.enqueue(2);
+      controller.enqueue(3);
+      controller.close();
+    },
+  });
+  const mainReader = readable.getReader();
+  {
+    const stream = streamFromReader(mainReader);
+    const subReader = stream.getReader();
+    const value = await subReader.read();
+    t.deepEqual(value, { done: false, value: 1 });
+  }
+  {
+    const stream = streamFromReader(mainReader);
+    const subReader = stream.getReader();
+    const value1 = await subReader.read();
+    t.deepEqual(value1, { done: false, value: 2 });
+    const value2 = await subReader.read();
+    t.deepEqual(value2, { done: false, value: 3 });
+  }
+  {
+    const stream = streamFromReader(mainReader);
+    const subReader = stream.getReader();
+    const value = await subReader.read();
+    t.deepEqual(value, { done: true, value: undefined });
+  }
 });

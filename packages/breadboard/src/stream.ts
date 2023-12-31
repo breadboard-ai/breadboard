@@ -217,3 +217,22 @@ export const streamFromAsyncGen = <T>(
     },
   }) as PatchedReadableStream<T>;
 };
+
+export const streamFromReader = <Read>(
+  reader: ReadableStreamDefaultReader<Read>
+) => {
+  return new ReadableStream(
+    {
+      async pull(controller) {
+        const { value, done } = await reader.read();
+
+        if (done) {
+          controller.close();
+          return;
+        }
+        controller.enqueue(value);
+      },
+    },
+    { highWaterMark: 0 }
+  ) as PatchedReadableStream<Read>;
+};
