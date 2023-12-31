@@ -35,7 +35,7 @@ export const receiveStartTransportMessage = (
   callback: (port: MessagePort) => void
 ) => {
   worker.addEventListener("message", (event) => {
-    if (event.data.type === "starttransport") {
+    if (event.data?.type === "starttransport") {
       callback(event.data.port);
     }
   });
