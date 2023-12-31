@@ -29,7 +29,7 @@ const inputSchema = {
 export default await recipe(() => {
   const input = base.input({ $id: "input", schema: inputSchema });
 
-  const isOpenAPI = code(({ json }) => {
+  const validateIsOpenAPI = code(({ json }) => {
     if ("openapi" in json == false) {
       throw new Error("Not an Open API spec.");
     }
@@ -45,12 +45,17 @@ export default await recipe(() => {
     return { json };
   });
 
+  /*
+    Generate a list of API operations from the given Open API spec that will be used to create the board of boards.
+  */
   const generateAPISpecs = code(({ json }) => {
     const { paths } = json;
     const baseUrl = json.servers[0].url;
 
-    const inferOperationId = (path, method, values) => {
-      // If there is no operation ID, generate one from the path, but format it like a JS function name
+    /*
+      If there is no operation ID, we need to generate one from the path, but format it like a JS function name.
+    */
+    const inferOperationId = (path, method) => {
       let newName = path
         .split("/")
         .map((part) =>
@@ -87,19 +92,22 @@ export default await recipe(() => {
     return { list: apis };
   });
 
+  /*
+    Returns a lambda that will make a request to the given API. This is used in the `core.map` to create a board of boards for each API exposed on the OpenAPI spec.
+  */
   const specRecipe = recipe((api) => {
     const output = base.output({});
     api.item.to(output);
     return api.item
       .to(
         recipe((item) => {
-          const secretSplat = code((itemToSplat) => {
+          const getItem = code((itemToSplat) => {
             return { ...itemToSplat.item };
           });
 
           return starter
             .fetch()
-            .in(secretSplat(item))
+            .in(getItem(item))
             .response.as("api_json_response")
             .to(base.output({}));
         })
@@ -108,7 +116,10 @@ export default await recipe(() => {
       .to(output);
   });
 
-  const splatBoards = code(({ list }) => {
+  /*
+    Because we need a nice interface on the board that calls this, we need to convert from a list to an object. This will then enable something like `core.invoke().API_NAME_YOU_WANT_CALL`.
+  */
+  const convertBoardListToObject = code(({ list }) => {
     const operations = list
       .map((item) => {
         return {
@@ -121,12 +132,15 @@ export default await recipe(() => {
     return { ...operations };
   });
 
-  const fetchJSON = input.to(starter.fetch()).response.as("json");
+  // Get the Open API spec from the given URL
+  const fetchOpenAPISpec = input.to(starter.fetch()).response.as("json");
 
-  fetchJSON.to(isOpenAPI({ $id: "isOpenAPI" }));
+  // Validate that the given URL is an Open API spec that we can parse.
+  // YAML spec files will fail this.
+  fetchOpenAPISpec.to(validateIsOpenAPI({ $id: "isOpenAPI" }));
 
-  return fetchJSON
+  return fetchOpenAPISpec
     .to(generateAPISpecs({ $id: "generateAPISpecs" }))
     .to(core.map({ $id: "createFetchBoards", board: specRecipe }))
-    .to(splatBoards({ $id: "splatBoards" }));
+    .to(convertBoardListToObject({ $id: "convertBoardListToObject" }));
 }).serialize(metaData);
