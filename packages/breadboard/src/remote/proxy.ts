@@ -71,6 +71,10 @@ export class ProxyServer {
     )) {
       const [type] = request.data;
 
+      if (type === "end") {
+        break;
+      }
+
       if (type !== "proxy") {
         request.reply(["error", { error: "Expected proxy request." }]);
         continue;
@@ -151,6 +155,13 @@ export class ProxyClient {
 
   constructor(transport: ProxyClientTransport) {
     this.#transport = transport;
+  }
+
+  shutdownServer() {
+    const stream = this.#transport.createClientStream();
+    const writer = stream.writableRequests.getWriter();
+    writer.write(["end", {}]);
+    writer.close();
   }
 
   async proxy(
