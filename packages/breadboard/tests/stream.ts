@@ -6,6 +6,7 @@
 
 import test from "ava";
 import {
+  portFactoryToStreams,
   portToStreams,
   streamFromAsyncGen,
   streamFromReader,
@@ -173,4 +174,47 @@ test("streamFromWriter produces a regular stream", async (t) => {
   }
   t.deepEqual(results, [1, 2]);
   t.is(writable.locked, true);
+});
+
+test("portFactoryToStreams works as expected", async (t) => {
+  const results: (number | string | undefined)[] = [];
+  let done: () => void;
+  const createPort2 = async () => {
+    const { port1, port2 } = new MessageChannel();
+    const port1streams = portToStreams<string, number>(port1);
+    const writer = port1streams.writable.getWriter();
+    writer.write(1);
+    writer.write(2);
+    writer.write(3);
+    writer.close();
+    const reader = port1streams.readable.getReader();
+    reader.read().then((value) => {
+      results.push(value.value);
+      reader.read().then((value) => {
+        results.push(value.value);
+        reader.read().then((value) => {
+          results.push(value.value);
+          reader.read().then((value) => {
+            results.push(value.value);
+            t.deepEqual(results, ["a", 1, 2, 3, "b", "c", undefined]);
+            done();
+          });
+        });
+      });
+    });
+    return port2;
+  };
+  const port2streams = portFactoryToStreams<number, string>(createPort2);
+  const reader = port2streams.readable.getReader();
+  const writer = port2streams.writable.getWriter();
+  await writer.write("a");
+  results.push((await reader.read()).value);
+  await writer.write("b");
+  results.push((await reader.read()).value);
+  await writer.write("c");
+  results.push((await reader.read()).value);
+  writer.close();
+  return new Promise((resolve) => {
+    done = resolve;
+  });
 });
