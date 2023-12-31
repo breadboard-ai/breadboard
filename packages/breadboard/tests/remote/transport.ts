@@ -82,9 +82,7 @@ test("Continuous streaming", async (t) => {
     AnyRunRequestMessage,
     AnyRunResponseMessage
   >(mockWorkers.host);
-  const server = new RunServer(
-    await WorkerServerTransport.create(mockWorkers.worker)
-  );
+  const server = new RunServer(new WorkerServerTransport(mockWorkers.worker));
 
   // Serve the board.
   server.serve(board);
@@ -115,16 +113,30 @@ test("Continuous streaming", async (t) => {
   t.assert(fifthResult.done);
 });
 
-test("runOnce client can run once", async (t) => {
+test("runOnce client can run once (client starts first)", async (t) => {
   const board = new Board();
   const kit = board.addKit(TestKit);
   board.input({ foo: "bar" }).wire("*", kit.noop().wire("*", board.output()));
 
   const mockWorkers = createMockWorkers();
   const client = new RunClient(new WorkerClientTransport(mockWorkers.host));
-  const server = new RunServer(
-    await WorkerServerTransport.create(mockWorkers.worker)
-  );
+  const server = new RunServer(new WorkerServerTransport(mockWorkers.worker));
+
+  server.serve(board);
+  console.log("HERE");
+  const outputs = await client.runOnce({ hello: "world" });
+
+  t.deepEqual(outputs, { hello: "world" });
+});
+
+test("runOnce client can run once (server starts first)", async (t) => {
+  const board = new Board();
+  const kit = board.addKit(TestKit);
+  board.input({ foo: "bar" }).wire("*", kit.noop().wire("*", board.output()));
+
+  const mockWorkers = createMockWorkers();
+  const server = new RunServer(new WorkerServerTransport(mockWorkers.worker));
+  const client = new RunClient(new WorkerClientTransport(mockWorkers.host));
 
   server.serve(board);
   console.log("HERE");

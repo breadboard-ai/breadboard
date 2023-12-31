@@ -7,6 +7,7 @@
 import {
   PatchedReadableStream,
   PortStreams,
+  portFactoryToStreams,
   portToStreams,
   streamFromReader,
   streamFromWriter,
@@ -66,20 +67,14 @@ export class WorkerClientTransport<Request, Response>
 export class WorkerServerTransport<Request, Response>
   implements ServerTransport<Request, Response>
 {
-  #clientStreams?: PortStreams<Request, Response>;
-  #ready: Promise<void>;
+  #clientStreams: PortStreams<Request, Response>;
 
-  private constructor(worker: Worker) {
-    this.#ready = new Promise((resolve) => {
-      receiveStartTransportMessage(worker, (port) => {
-        this.#clientStreams = portToStreams(port);
-        resolve();
+  constructor(worker: Worker) {
+    this.#clientStreams = portFactoryToStreams<Request, Response>(() => {
+      return new Promise((resolve) => {
+        receiveStartTransportMessage(worker, resolve);
       });
     });
-  }
-
-  async #waitForClient() {
-    await this.#ready;
   }
 
   createServerStream(): ServerBidirectionalStream<Request, Response> {
@@ -91,13 +86,5 @@ export class WorkerServerTransport<Request, Response>
         .readable as PatchedReadableStream<Request>,
       writableResponses: this.#clientStreams.writable,
     };
-  }
-
-  static async create<Request, Response>(
-    worker: Worker
-  ): Promise<WorkerServerTransport<Request, Response>> {
-    const transport = new WorkerServerTransport<Request, Response>(worker);
-    await transport.#waitForClient();
-    return transport;
   }
 }
