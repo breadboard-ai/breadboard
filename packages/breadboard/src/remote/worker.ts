@@ -78,9 +78,6 @@ export class WorkerServerTransport<Request, Response>
   }
 
   createServerStream(): ServerBidirectionalStream<Request, Response> {
-    if (!this.#clientStreams) {
-      throw new Error("The client has not connected yet");
-    }
     return {
       readableRequests: this.#clientStreams
         .readable as PatchedReadableStream<Request>,
