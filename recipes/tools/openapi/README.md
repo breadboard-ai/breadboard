@@ -10,6 +10,10 @@ breadboard run recipes/tools/openapi/index.js --kit @google-labs/llm-starter --k
 
 - url - The url to the OpenAPI spec (JSON only for now)
 
+### Outputs
+
+- board - The generated board that has a list of boards.
+
 ## Compiling the recipe
 
 `breadboard make recipes/tools/openapi/index.js >  recipes/tools/openapi/index.json`

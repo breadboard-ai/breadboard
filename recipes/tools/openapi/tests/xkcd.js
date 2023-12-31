@@ -3,7 +3,7 @@ import { core } from "@google-labs/core-kit";
 
 const metaData = {
   title: "Query the XKCD API via an Open API Spec board",
-  description: "Converts an Open API spec to a board.",
+  description: "Query's the XCD API.",
   version: "0.0.3",
 };
 
