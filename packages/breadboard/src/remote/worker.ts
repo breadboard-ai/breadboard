@@ -8,6 +8,8 @@ import {
   PatchedReadableStream,
   PortStreams,
   portToStreams,
+  streamFromReader,
+  streamFromWriter,
 } from "../stream.js";
 import {
   ClientTransport,
@@ -42,19 +44,21 @@ export const receiveStartTransportMessage = (
 export class WorkerClientTransport<Request, Response>
   implements ClientTransport<Request, Response>
 {
-  #serverStreams: PortStreams<Response, Request>;
+  #reader: ReadableStreamDefaultReader<Response>;
+  #writer: WritableStreamDefaultWriter<Request>;
 
   constructor(worker: Worker) {
     const channel = new MessageChannel();
     worker.postMessage(sendStartTransportMessage(worker, channel.port1));
-    this.#serverStreams = portToStreams(channel.port2);
+    const streams = portToStreams<Response, Request>(channel.port2);
+    this.#reader = streams.readable.getReader();
+    this.#writer = streams.writable.getWriter();
   }
 
   createClientStream() {
     return {
-      writableRequests: this.#serverStreams.writable,
-      readableResponses: this.#serverStreams
-        .readable as PatchedReadableStream<Response>,
+      writableRequests: streamFromWriter(this.#writer),
+      readableResponses: streamFromReader(this.#reader),
     };
   }
 }
