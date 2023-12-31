@@ -26,20 +26,8 @@ const inputSchema = {
   },
 };
 
-const outputSchema = {
-  type: "object",
-  properties: {
-    board: {
-      type: "object",
-      title: "Board",
-      description: "The board that was created from the Open API spec.",
-    },
-  },
-};
-
 export default await recipe(() => {
   const input = base.input({ $id: "input", schema: inputSchema });
-  const output = base.output({ $id: "output", schema: outputSchema });
 
   const isOpenAPI = code(({ json }) => {
     if ("openapi" in json == false) {
@@ -61,17 +49,33 @@ export default await recipe(() => {
     const { paths } = json;
     const baseUrl = json.servers[0].url;
 
-    // We can only really handle GET requests right now.
+    const inferOperationId = (path, method, values) => {
+      // If there is no operation ID, generate one from the path, but format it like a JS function name
+      let newName = path
+        .split("/")
+        .map((part) =>
+          part.length == 0 ? part : part[0].toUpperCase() + part.slice(1)
+        )
+        .join("")
+        .replace(/[.-]/g, "") // Remove dashes and dots
+        .replace(/[{}]/g, ""); // Remove curly braces (need to improve this)
+
+      return `${method}${newName}`;
+    };
+
     const apis = Object.entries(paths)
       .map(([key, value]) => {
         return Object.keys(value)
           .map((method) => {
+            // Operation ID might not exist.
+            const operationId =
+              value[method].operationId ||
+              inferOperationId(key, method, value[method]);
+
             const headers = {
-              //[value[method].operationId]: {
-              operationId: value[method].operationId,
-              url: baseUrl + key,
+              operationId,
+              url: baseUrl.replace(/\/$/, "") + key,
               method: method.toUpperCase(),
-              // },
             };
 
             return headers;
@@ -79,11 +83,8 @@ export default await recipe(() => {
           .flat();
       })
       .flat();
-    // .reduce((acc, curr) => {
-    //   return { ...acc, ...curr };
-    // }, {});
 
-    return { apis };
+    return { list: apis };
   });
 
   const specRecipe = recipe((api) => {
@@ -120,12 +121,12 @@ export default await recipe(() => {
     return { ...operations };
   });
 
-  return starter
-    .fetch({ url: input.url })
-    .response.as("json")
-    .to(isOpenAPI())
-    .json.to(generateAPISpecs())
-    .apis.as("list")
-    .to(core.map({ board: specRecipe }))
-    .list.to(splatBoards());
+  const fetchJSON = input.to(starter.fetch()).response.as("json");
+
+  fetchJSON.to(isOpenAPI({ $id: "isOpenAPI" }));
+
+  return fetchJSON
+    .to(generateAPISpecs({ $id: "generateAPISpecs" }))
+    .to(core.map({ $id: "createFetchBoards", board: specRecipe }))
+    .list.to(splatBoards({ $id: "splatBoards" }));
 }).serialize(metaData);

@@ -5,40 +5,40 @@
   "version": "0.0.3",
   "edges": [
     {
-      "from": "fn-8",
+      "from": "splatBoards",
       "to": "output-2",
       "out": "*",
       "in": ""
     },
     {
-      "from": "map-6",
-      "to": "fn-8",
+      "from": "createFetchBoards",
+      "to": "splatBoards",
       "out": "list",
       "in": "list"
     },
     {
-      "from": "fn-5",
-      "to": "map-6",
-      "out": "apis",
-      "in": "list"
+      "from": "generateAPISpecs",
+      "to": "createFetchBoards",
+      "out": "*",
+      "in": ""
     },
     {
-      "from": "fn-4",
-      "to": "fn-5",
-      "out": "json",
+      "from": "fetch-3",
+      "to": "isOpenAPI",
+      "out": "response",
       "in": "json"
     },
     {
       "from": "fetch-3",
-      "to": "fn-4",
+      "to": "generateAPISpecs",
       "out": "response",
       "in": "json"
     },
     {
       "from": "input",
       "to": "fetch-3",
-      "out": "url",
-      "in": "url"
+      "out": "*",
+      "in": ""
     }
   ],
   "nodes": [
@@ -48,14 +48,14 @@
       "configuration": {}
     },
     {
-      "id": "fn-8",
+      "id": "splatBoards",
       "type": "invoke",
       "configuration": {
-        "path": "#fn-8"
+        "path": "#splatBoards"
       }
     },
     {
-      "id": "map-6",
+      "id": "createFetchBoards",
       "type": "map",
       "configuration": {
         "board": {
@@ -217,7 +217,7 @@
                               "id": "fn-4-run",
                               "type": "runJavascript",
                               "configuration": {
-                                "code": "function fn_4(itemToSplat) {\n            //console.log(itemToSplat);\n            return { ...itemToSplat.item };\n          }",
+                                "code": "function fn_4(itemToSplat) {\n            return { ...itemToSplat.item };\n          }",
                                 "name": "fn_4",
                                 "raw": true
                               }
@@ -241,17 +241,10 @@
       }
     },
     {
-      "id": "fn-5",
+      "id": "generateAPISpecs",
       "type": "invoke",
       "configuration": {
-        "path": "#fn-5"
-      }
-    },
-    {
-      "id": "fn-4",
-      "type": "invoke",
-      "configuration": {
-        "path": "#fn-4"
+        "path": "#generateAPISpecs"
       }
     },
     {
@@ -274,110 +267,117 @@
           }
         }
       }
+    },
+    {
+      "id": "isOpenAPI",
+      "type": "invoke",
+      "configuration": {
+        "path": "#isOpenAPI"
+      }
     }
   ],
   "kits": [],
   "graphs": {
-    "fn-8": {
+    "splatBoards": {
       "edges": [
         {
-          "from": "fn-8-input",
-          "to": "fn-8-run",
+          "from": "splatBoards-input",
+          "to": "splatBoards-run",
           "out": "*"
         },
         {
-          "from": "fn-8-run",
-          "to": "fn-8-output",
+          "from": "splatBoards-run",
+          "to": "splatBoards-output",
           "out": "*"
         }
       ],
       "nodes": [
         {
-          "id": "fn-8-input",
+          "id": "splatBoards-input",
           "type": "input",
           "configuration": {}
         },
         {
-          "id": "fn-8-run",
+          "id": "splatBoards-run",
           "type": "runJavascript",
           "configuration": {
-            "code": "function fn_8({ list }) {\n    const operations = list\n      .map((item) => {\n        return {\n          [item.item.operationId]: item.board,\n        };\n      })\n      .reduce((acc, curr) => {\n        return { ...acc, ...curr };\n      }, {});\n    return { ...operations };\n  }",
-            "name": "fn_8",
+            "code": "function splatBoards({ list }) {\n    const operations = list\n      .map((item) => {\n        return {\n          [item.item.operationId]: item.board,\n        };\n      })\n      .reduce((acc, curr) => {\n        return { ...acc, ...curr };\n      }, {});\n    return { ...operations };\n  }",
+            "name": "splatBoards",
             "raw": true
           }
         },
         {
-          "id": "fn-8-output",
+          "id": "splatBoards-output",
           "type": "output",
           "configuration": {}
         }
       ]
     },
-    "fn-5": {
+    "generateAPISpecs": {
       "edges": [
         {
-          "from": "fn-5-input",
-          "to": "fn-5-run",
+          "from": "generateAPISpecs-input",
+          "to": "generateAPISpecs-run",
           "out": "*"
         },
         {
-          "from": "fn-5-run",
-          "to": "fn-5-output",
+          "from": "generateAPISpecs-run",
+          "to": "generateAPISpecs-output",
           "out": "*"
         }
       ],
       "nodes": [
         {
-          "id": "fn-5-input",
+          "id": "generateAPISpecs-input",
           "type": "input",
           "configuration": {}
         },
         {
-          "id": "fn-5-run",
+          "id": "generateAPISpecs-run",
           "type": "runJavascript",
           "configuration": {
-            "code": "function fn_5({ json }) {\n    const { paths } = json;\n    const baseUrl = json.servers[0].url;\n\n    // We can only really handle GET requests right now.\n    const apis = Object.entries(paths)\n      .map(([key, value]) => {\n        return Object.keys(value)\n          .map((method) => {\n            const headers = {\n              //[value[method].operationId]: {\n              operationId: value[method].operationId,\n              url: baseUrl + key,\n              method: method.toUpperCase(),\n              // },\n            };\n\n            return headers;\n          })\n          .flat();\n      })\n      .flat();\n    // .reduce((acc, curr) => {\n    //   return { ...acc, ...curr };\n    // }, {});\n\n    return { apis };\n  }",
-            "name": "fn_5",
+            "code": "function generateAPISpecs({ json }) {\n    const { paths } = json;\n    const baseUrl = json.servers[0].url;\n\n    const inferOperationId = (path, method, values) => {\n      // If there is no operation ID, generate one from the path, but format it like a JS function name\n      let newName = path\n        .split(\"/\")\n        .map((part) =>\n          part.length == 0 ? part : part[0].toUpperCase() + part.slice(1)\n        )\n        .join(\"\")\n        .replace(/[.-]/g, \"\") // Remove dashes and dots\n        .replace(/[{}]/g, \"\"); // Remove curly braces (need to improve this)\n\n      return `${method}${newName}`;\n    };\n\n    const apis = Object.entries(paths)\n      .map(([key, value]) => {\n        return Object.keys(value)\n          .map((method) => {\n            // Operation ID might not exist.\n            const operationId =\n              value[method].operationId ||\n              inferOperationId(key, method, value[method]);\n\n            const headers = {\n              operationId,\n              url: baseUrl.replace(/\\/$/, \"\") + key,\n              method: method.toUpperCase(),\n            };\n\n            return headers;\n          })\n          .flat();\n      })\n      .flat();\n\n    return { list: apis };\n  }",
+            "name": "generateAPISpecs",
             "raw": true
           }
         },
         {
-          "id": "fn-5-output",
+          "id": "generateAPISpecs-output",
           "type": "output",
           "configuration": {}
         }
       ]
     },
-    "fn-4": {
+    "isOpenAPI": {
       "edges": [
         {
-          "from": "fn-4-input",
-          "to": "fn-4-run",
+          "from": "isOpenAPI-input",
+          "to": "isOpenAPI-run",
           "out": "*"
         },
         {
-          "from": "fn-4-run",
-          "to": "fn-4-output",
+          "from": "isOpenAPI-run",
+          "to": "isOpenAPI-output",
           "out": "*"
         }
       ],
       "nodes": [
         {
-          "id": "fn-4-input",
+          "id": "isOpenAPI-input",
           "type": "input",
           "configuration": {}
         },
         {
-          "id": "fn-4-run",
+          "id": "isOpenAPI-run",
           "type": "runJavascript",
           "configuration": {
-            "code": "function fn_4({ json }) {\n    if (\"openapi\" in json == false) {\n      throw new Error(\"Not an Open API spec.\");\n    }\n\n    if (\"servers\" in json == false) {\n      throw new Error(\"No servers in Open API spec.\");\n    }\n\n    if (\"paths\" in json == false) {\n      throw new Error(\"No paths in Open API spec.\");\n    }\n\n    return { json };\n  }",
-            "name": "fn_4",
+            "code": "function isOpenAPI({ json }) {\n    if (\"openapi\" in json == false) {\n      throw new Error(\"Not an Open API spec.\");\n    }\n\n    if (\"servers\" in json == false) {\n      throw new Error(\"No servers in Open API spec.\");\n    }\n\n    if (\"paths\" in json == false) {\n      throw new Error(\"No paths in Open API spec.\");\n    }\n\n    return { json };\n  }",
+            "name": "isOpenAPI",
             "raw": true
           }
         },
         {
-          "id": "fn-4-output",
+          "id": "isOpenAPI-output",
           "type": "output",
           "configuration": {}
         }
