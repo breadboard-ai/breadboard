@@ -13,8 +13,8 @@
     {
       "from": "createFetchBoards",
       "to": "splatBoards",
-      "out": "list",
-      "in": "list"
+      "out": "*",
+      "in": ""
     },
     {
       "from": "generateAPISpecs",

@@ -128,5 +128,5 @@ export default await recipe(() => {
   return fetchJSON
     .to(generateAPISpecs({ $id: "generateAPISpecs" }))
     .to(core.map({ $id: "createFetchBoards", board: specRecipe }))
-    .list.to(splatBoards({ $id: "splatBoards" }));
+    .to(splatBoards({ $id: "splatBoards" }));
 }).serialize(metaData);
