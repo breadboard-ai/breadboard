@@ -236,3 +236,16 @@ export const streamFromReader = <Read>(
     { highWaterMark: 0 }
   ) as PatchedReadableStream<Read>;
 };
+
+export const streamFromWriter = <Write>(
+  writer: WritableStreamDefaultWriter<Write>
+) => {
+  return new WritableStream<Write>(
+    {
+      async write(chunk) {
+        return writer.write(chunk);
+      },
+    },
+    { highWaterMark: 0 }
+  );
+};

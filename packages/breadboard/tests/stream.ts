@@ -9,6 +9,7 @@ import {
   portToStreams,
   streamFromAsyncGen,
   streamFromReader,
+  streamFromWriter,
   streamsToAsyncIterable,
 } from "../src/stream.js";
 
@@ -143,4 +144,33 @@ test("streamFromReader produces a regular stream", async (t) => {
     const value = await subReader.read();
     t.deepEqual(value, { done: true, value: undefined });
   }
+});
+
+test("streamFromWriter produces a regular stream", async (t) => {
+  const results: number[] = [];
+  const writable = new WritableStream<number>({
+    async write(chunk) {
+      results.push(chunk);
+    },
+  });
+  const mainWriter = writable.getWriter();
+  {
+    const stream = streamFromWriter(mainWriter);
+    const subWriter = stream.getWriter();
+    await subWriter.write(1);
+    await subWriter.close();
+  }
+  {
+    const stream = streamFromWriter(mainWriter);
+    const subWriter = stream.getWriter();
+    await subWriter.write(2);
+    await subWriter.close();
+  }
+  {
+    const stream = streamFromWriter(mainWriter);
+    const subWriter = stream.getWriter();
+    await subWriter.close();
+  }
+  t.deepEqual(results, [1, 2]);
+  t.is(writable.locked, true);
 });
