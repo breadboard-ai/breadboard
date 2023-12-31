@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board } from "../board.js";
 import { callHandler } from "../handler.js";
 import {
   StreamCapability,
@@ -16,8 +15,10 @@ import { asRuntimeKit } from "../kits/ctors.js";
 import { KitBuilder } from "../kits/builder.js";
 import {
   InputValues,
+  Kit,
   NodeDescriptor,
   NodeHandlerContext,
+  NodeHandlers,
   NodeValue,
   OutputValues,
 } from "../types.js";
@@ -51,6 +52,16 @@ const getHandlerConfig = (
   return handlerConfig;
 };
 
+const handlersFromKits = (kits: Kit[]): NodeHandlers => {
+  const handlers: NodeHandlers = {};
+  for (const kit of kits) {
+    for (const [type, handler] of Object.entries(kit.handlers)) {
+      handlers[type] = handler;
+    }
+  }
+  return handlers;
+};
+
 export class ProxyServer {
   #transport: ProxyServerTransport;
 
@@ -58,11 +69,8 @@ export class ProxyServer {
     this.#transport = transport;
   }
 
-  // TODO: Don't serve board, just serve a list of kits.
-  // TODO: Create a VaultKit that wraps nodes that need to be protected.
-  // TODO: Handle VaultKit outside of the ProxyServer? Maybe not.
   async serve(config: ProxyServerConfig) {
-    const { board } = config;
+    const { kits } = config;
     const stream = this.#transport.createServerStream();
 
     for await (const request of streamsToAsyncIterable(
@@ -86,7 +94,7 @@ export class ProxyServer {
 
       const tunnelKit = createTunnelKit(
         readConfig(config),
-        await Board.handlersFromBoard(board)
+        handlersFromKits(kits)
       );
       const handlers = tunnelKit.handlers;
 
@@ -101,8 +109,6 @@ export class ProxyServer {
 
       try {
         const result = await callHandler(handler, inputs, {
-          outerGraph: board,
-          board,
           descriptor: node,
         });
 
