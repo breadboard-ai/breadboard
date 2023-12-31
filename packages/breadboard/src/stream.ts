@@ -102,6 +102,55 @@ export const portToStreams = <Read, Write>(
   };
 };
 
+export const portFactoryToStreams = <Read, Write>(
+  portFactory: () => Promise<MessagePortLike>
+): PortStreams<Read, Write> => {
+  let streams: PortStreams<Read, Write>;
+  const streamsAvailable = new Promise<void>((resolve) => {
+    portFactory().then((port) => {
+      streams = portToStreams(port);
+      resolve();
+    });
+  });
+  const readable = new ReadableStream<Read>({
+    async start() {
+      await streamsAvailable;
+    },
+    pull(controller) {
+      return streams.readable.pipeTo(
+        new WritableStream({
+          write(chunk) {
+            controller.enqueue(chunk);
+          },
+        })
+      );
+    },
+    cancel() {
+      streams.readable.cancel();
+    },
+  });
+  const writable = new WritableStream<Write>({
+    async start() {
+      await streamsAvailable;
+    },
+    async write(chunk) {
+      const writer = streams.writable.getWriter();
+      await writer.write(chunk);
+      writer.releaseLock();
+    },
+    async close() {
+      await streams.writable.close();
+    },
+    async abort(reason) {
+      await streams.writable.abort(reason);
+    },
+  });
+  return {
+    readable,
+    writable,
+  };
+};
+
 class WritableResult<Read, Write> {
   #writer: WritableStreamDefaultWriter<Write>;
   data: Read;
@@ -216,4 +265,36 @@ export const streamFromAsyncGen = <T>(
       controller.enqueue(value);
     },
   }) as PatchedReadableStream<T>;
+};
+
+export const streamFromReader = <Read>(
+  reader: ReadableStreamDefaultReader<Read>
+) => {
+  return new ReadableStream(
+    {
+      async pull(controller) {
+        const { value, done } = await reader.read();
+
+        if (done) {
+          controller.close();
+          return;
+        }
+        controller.enqueue(value);
+      },
+    },
+    { highWaterMark: 0 }
+  ) as PatchedReadableStream<Read>;
+};
+
+export const streamFromWriter = <Write>(
+  writer: WritableStreamDefaultWriter<Write>
+) => {
+  return new WritableStream<Write>(
+    {
+      async write(chunk) {
+        return writer.write(chunk);
+      },
+    },
+    { highWaterMark: 0 }
+  );
 };

@@ -10,6 +10,7 @@ import {
   StreamCapability,
   StreamCapabilityType,
   isStreamCapability,
+  streamsToAsyncIterable,
 } from "../stream.js";
 import { asRuntimeKit } from "../kits/ctors.js";
 import { KitBuilder } from "../kits/builder.js";
@@ -63,80 +64,77 @@ export class ProxyServer {
   async serve(config: ProxyServerConfig) {
     const { board } = config;
     const stream = this.#transport.createServerStream();
-    const reader = stream.readableRequests.getReader();
-    const request = await reader.read();
-    if (request.done) return;
 
-    const writer = stream.writableResponses.getWriter();
+    for await (const request of streamsToAsyncIterable(
+      stream.writableResponses,
+      stream.readableRequests
+    )) {
+      const [type] = request.data;
 
-    const [type] = request.value;
-
-    if (type !== "proxy") {
-      writer.write(["error", { error: "Expected proxy request." }]);
-      writer.close();
-      return;
-    }
-
-    const [, { node, inputs }] = request.value;
-
-    const handlerConfig = getHandlerConfig(node.type, config.proxy);
-
-    const tunnelKit = createTunnelKit(
-      readConfig(config),
-      await Board.handlersFromBoard(board)
-    );
-    const handlers = tunnelKit.handlers;
-
-    const handler = handlerConfig ? handlers[node.type] : undefined;
-    if (!handler) {
-      writer.write([
-        "error",
-        { error: "Can't proxy a node of this node type." },
-      ]);
-      writer.close();
-      return;
-    }
-
-    try {
-      const result = await callHandler(handler, inputs, {
-        outerGraph: board,
-        board,
-        descriptor: node,
-      });
-
-      if (!result) {
-        writer.write(["error", { error: "Handler returned nothing." }]);
-        writer.close();
-        return;
+      if (type === "end") {
+        break;
       }
 
-      // Look for StreamCapability in the result. If it's there, we need to
-      // pipe it to the response.
-      // For now, we'll only support one stream per response, and only
-      // when the stream is at the top level of the response.
-      const streams = Object.values(result).filter((value) =>
-        isStreamCapability(value)
+      if (type !== "proxy") {
+        request.reply(["error", { error: "Expected proxy request." }]);
+        continue;
+      }
+
+      const [, { node, inputs }] = request.data;
+
+      const handlerConfig = getHandlerConfig(node.type, config.proxy);
+
+      const tunnelKit = createTunnelKit(
+        readConfig(config),
+        await Board.handlersFromBoard(board)
       );
-      writer.write(["proxy", { outputs: result }]);
-      if (streams.length > 0) {
-        const stream = (streams[0] as StreamCapability<unknown>).stream;
-        await stream.pipeTo(
-          new WritableStream({
-            write(chunk) {
-              writer.write(["chunk", { chunk }]);
-            },
-            close() {
-              writer.write(["end", {}]);
-              writer.close();
-            },
-          })
-        );
-      } else {
-        writer.close();
+      const handlers = tunnelKit.handlers;
+
+      const handler = handlerConfig ? handlers[node.type] : undefined;
+      if (!handler) {
+        request.reply([
+          "error",
+          { error: "Can't proxy a node of this node type." },
+        ]);
+        continue;
       }
-    } catch (e) {
-      writer.write(["error", { error: (e as Error).message }]);
-      writer.close();
+
+      try {
+        const result = await callHandler(handler, inputs, {
+          outerGraph: board,
+          board,
+          descriptor: node,
+        });
+
+        if (!result) {
+          request.reply(["error", { error: "Handler returned nothing." }]);
+          continue;
+        }
+
+        // Look for StreamCapability in the result. If it's there, we need to
+        // pipe it to the response.
+        // For now, we'll only support one stream per response, and only
+        // when the stream is at the top level of the response.
+        const streams = Object.values(result).filter((value) =>
+          isStreamCapability(value)
+        );
+        request.reply(["proxy", { outputs: result }]);
+        if (streams.length > 0) {
+          const stream = (streams[0] as StreamCapability<unknown>).stream;
+          await stream.pipeTo(
+            new WritableStream({
+              write(chunk) {
+                request.reply(["chunk", { chunk }]);
+              },
+              close() {
+                request.reply(["end", {}]);
+              },
+            })
+          );
+        }
+      } catch (e) {
+        request.reply(["error", { error: (e as Error).message }]);
+      }
     }
   }
 }
@@ -157,6 +155,13 @@ export class ProxyClient {
 
   constructor(transport: ProxyClientTransport) {
     this.#transport = transport;
+  }
+
+  shutdownServer() {
+    const stream = this.#transport.createClientStream();
+    const writer = stream.writableRequests.getWriter();
+    writer.write(["end", {}]);
+    writer.close();
   }
 
   async proxy(

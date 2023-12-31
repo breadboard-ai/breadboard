@@ -7,7 +7,10 @@
 import {
   PatchedReadableStream,
   PortStreams,
+  portFactoryToStreams,
   portToStreams,
+  streamFromReader,
+  streamFromWriter,
 } from "../stream.js";
 import {
   ClientTransport,
@@ -33,7 +36,7 @@ export const receiveStartTransportMessage = (
   callback: (port: MessagePort) => void
 ) => {
   worker.addEventListener("message", (event) => {
-    if (event.data.type === "starttransport") {
+    if (event.data?.type === "starttransport") {
       callback(event.data.port);
     }
   });
@@ -42,19 +45,21 @@ export const receiveStartTransportMessage = (
 export class WorkerClientTransport<Request, Response>
   implements ClientTransport<Request, Response>
 {
-  #serverStreams: PortStreams<Response, Request>;
+  #reader: ReadableStreamDefaultReader<Response>;
+  #writer: WritableStreamDefaultWriter<Request>;
 
   constructor(worker: Worker) {
     const channel = new MessageChannel();
     worker.postMessage(sendStartTransportMessage(worker, channel.port1));
-    this.#serverStreams = portToStreams(channel.port2);
+    const streams = portToStreams<Response, Request>(channel.port2);
+    this.#reader = streams.readable.getReader();
+    this.#writer = streams.writable.getWriter();
   }
 
   createClientStream() {
     return {
-      writableRequests: this.#serverStreams.writable,
-      readableResponses: this.#serverStreams
-        .readable as PatchedReadableStream<Response>,
+      writableRequests: streamFromWriter(this.#writer),
+      readableResponses: streamFromReader(this.#reader),
     };
   }
 }
@@ -62,38 +67,21 @@ export class WorkerClientTransport<Request, Response>
 export class WorkerServerTransport<Request, Response>
   implements ServerTransport<Request, Response>
 {
-  #clientStreams?: PortStreams<Request, Response>;
-  #ready: Promise<void>;
+  #clientStreams: PortStreams<Request, Response>;
 
-  private constructor(worker: Worker) {
-    this.#ready = new Promise((resolve) => {
-      receiveStartTransportMessage(worker, (port) => {
-        this.#clientStreams = portToStreams(port);
-        resolve();
+  constructor(worker: Worker) {
+    this.#clientStreams = portFactoryToStreams<Request, Response>(() => {
+      return new Promise((resolve) => {
+        receiveStartTransportMessage(worker, resolve);
       });
     });
   }
 
-  async #waitForClient() {
-    await this.#ready;
-  }
-
   createServerStream(): ServerBidirectionalStream<Request, Response> {
-    if (!this.#clientStreams) {
-      throw new Error("The client has not connected yet");
-    }
     return {
       readableRequests: this.#clientStreams
         .readable as PatchedReadableStream<Request>,
       writableResponses: this.#clientStreams.writable,
     };
-  }
-
-  static async create<Request, Response>(
-    worker: Worker
-  ): Promise<WorkerServerTransport<Request, Response>> {
-    const transport = new WorkerServerTransport<Request, Response>(worker);
-    await transport.#waitForClient();
-    return transport;
   }
 }

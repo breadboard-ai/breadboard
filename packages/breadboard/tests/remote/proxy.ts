@@ -5,7 +5,10 @@
  */
 
 import test from "ava";
-import { MockHTTPConnection } from "../helpers/_test-transport.js";
+import {
+  MockHTTPConnection,
+  createMockWorkers,
+} from "../helpers/_test-transport.js";
 import { ProxyClient, ProxyServer } from "../../src/remote/proxy.js";
 import {
   HTTPClientTransport,
@@ -15,6 +18,10 @@ import { AnyProxyRequestMessage } from "../../src/remote/protocol.js";
 import { Board } from "../../src/board.js";
 import { MirrorUniverseKit, TestKit } from "../helpers/_test-kit.js";
 import { StreamCapability } from "../../src/stream.js";
+import {
+  WorkerClientTransport,
+  WorkerServerTransport,
+} from "../../src/remote/worker.js";
 
 test("ProxyServer can use HTTPServerTransport", async (t) => {
   const board = new Board();
@@ -197,4 +204,21 @@ test("ProxyServer and ProxyClient correctly handle streams", async (t) => {
     chunks.join(""),
     "Breadboard is a project that helps you make AI recipes. "
   );
+});
+
+test("ProxyClient can shut down ProxyServer", async (t) => {
+  let done: () => void;
+  const mockWorkers = createMockWorkers();
+  const proxyClient = new ProxyClient(
+    new WorkerClientTransport(mockWorkers.host)
+  );
+  const proxyServer = new ProxyServer(
+    new WorkerServerTransport(mockWorkers.worker)
+  );
+  proxyServer.serve({ board: new Board() }).then(() => done());
+  proxyClient.shutdownServer();
+  t.pass();
+  return new Promise((resolve) => {
+    done = resolve;
+  });
 });
