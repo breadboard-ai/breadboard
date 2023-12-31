@@ -23,10 +23,12 @@ import { createOnSecret } from "./secrets.js";
 import type { ProxyPromiseResponse } from "../remote/protocol.js";
 import { WorkerResult } from "./result.js";
 
-const prepareBlobUrl = (url: string) => {
-  const code = `import "${url}";`;
+export const createWorker = (url: string) => {
+  const workerURL = new URL(url, location.href);
+  const code = `import "${workerURL}";`;
   const blob = new Blob([code], { type: "text/javascript" });
-  return URL.createObjectURL(blob);
+  const blobUrl = URL.createObjectURL(blob);
+  return new Worker(blobUrl, { type: "module" });
 };
 
 class HarnessRun {
@@ -35,7 +37,7 @@ class HarnessRun {
   controller: MessageController;
 
   constructor(workerURL: string) {
-    this.worker = new Worker(workerURL, { type: "module" });
+    this.worker = createWorker(workerURL);
     this.transport = new WorkerTransport(this.worker);
     this.controller = new MessageController(this.transport);
   }
@@ -56,8 +58,7 @@ export class WorkerHarness implements Harness {
     if (!workerURL) {
       throw new Error("Worker harness requires a worker URL");
     }
-    const absoluteURL = new URL(workerURL, location.href);
-    this.workerURL = prepareBlobUrl(absoluteURL.href);
+    this.workerURL = workerURL;
   }
 
   #skipDiagnosticMessages(type: ControllerMessageType) {

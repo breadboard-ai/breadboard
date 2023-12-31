@@ -10,6 +10,8 @@ import { WorkerHarness } from "./worker-harness.js";
 
 export type * from "./types.js";
 
+export { createWorker } from "./worker-harness.js";
+
 export const createHarness = (config: HarnessConfig): Harness => {
   if (!config.remote) {
     return new LocalHarness(config);
