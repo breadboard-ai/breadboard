@@ -5,7 +5,10 @@
  */
 
 import test from "ava";
-import { MockHTTPConnection } from "../helpers/_test-transport.js";
+import {
+  MockHTTPConnection,
+  createMockWorkers,
+} from "../helpers/_test-transport.js";
 import { ProxyClient, ProxyServer } from "../../src/remote/proxy.js";
 import {
   HTTPClientTransport,
@@ -15,11 +18,14 @@ import { AnyProxyRequestMessage } from "../../src/remote/protocol.js";
 import { Board } from "../../src/board.js";
 import { MirrorUniverseKit, TestKit } from "../helpers/_test-kit.js";
 import { StreamCapability } from "../../src/stream.js";
+import {
+  WorkerClientTransport,
+  WorkerServerTransport,
+} from "../../src/remote/worker.js";
+import { asRuntimeKit } from "../../src/index.js";
 
 test("ProxyServer can use HTTPServerTransport", async (t) => {
-  const board = new Board();
-  board.addKit(TestKit);
-
+  const kits = [asRuntimeKit(TestKit)];
   const request = {
     body: [
       "proxy",
@@ -41,16 +47,15 @@ test("ProxyServer can use HTTPServerTransport", async (t) => {
   };
   const transport = new HTTPServerTransport(request, response);
   const server = new ProxyServer(transport);
-  await server.serve({ board, proxy: ["noop"] });
+  await server.serve({ kits, proxy: ["noop"] });
 });
 
 test("End-to-end proxy works with HTTP transports", async (t) => {
   const connection = new MockHTTPConnection<AnyProxyRequestMessage>();
   connection.onRequest(async (request, response) => {
-    const serverBoard = new Board();
-    serverBoard.addKit(TestKit);
+    const kits = [asRuntimeKit(TestKit)];
     const server = new ProxyServer(new HTTPServerTransport(request, response));
-    await server.serve({ board: serverBoard, proxy: ["reverser"] });
+    await server.serve({ kits, proxy: ["reverser"] });
   });
   const client = new ProxyClient(
     new HTTPClientTransport("http://example.com", { fetch: connection.fetch })
@@ -65,10 +70,9 @@ test("End-to-end proxy works with HTTP transports", async (t) => {
 test("ProxyClient creates functional proxy kits", async (t) => {
   const connection = new MockHTTPConnection<AnyProxyRequestMessage>();
   connection.onRequest(async (request, response) => {
-    const serverBoard = new Board();
-    serverBoard.addKit(MirrorUniverseKit);
+    const kits = [asRuntimeKit(MirrorUniverseKit)];
     const server = new ProxyServer(new HTTPServerTransport(request, response));
-    await server.serve({ board: serverBoard, proxy: ["reverser"] });
+    await server.serve({ kits, proxy: ["reverser"] });
   });
   const client = new ProxyClient(
     new HTTPClientTransport("http://example.com", { fetch: connection.fetch })
@@ -87,22 +91,13 @@ test("ProxyServer can be configured to tunnel nodes", async (t) => {
   {
     const connection = new MockHTTPConnection<AnyProxyRequestMessage>();
     connection.onRequest(async (request, response) => {
-      const serverBoard = new Board();
-      serverBoard.addKit(TestKit);
+      const kits = [asRuntimeKit(TestKit)];
       const server = new ProxyServer(
         new HTTPServerTransport(request, response)
       );
       await server.serve({
-        board: serverBoard,
-        proxy: [
-          {
-            node: "test",
-            tunnel: {
-              hello: "reverser",
-            },
-          },
-          "reverser",
-        ],
+        kits,
+        proxy: [{ node: "test", tunnel: { hello: "reverser" } }, "reverser"],
       });
     });
     const client = new ProxyClient(
@@ -123,13 +118,12 @@ test("ProxyServer can be configured to tunnel nodes", async (t) => {
   {
     const connection = new MockHTTPConnection<AnyProxyRequestMessage>();
     connection.onRequest(async (request, response) => {
-      const serverBoard = new Board();
-      serverBoard.addKit(TestKit);
+      const kits = [asRuntimeKit(TestKit)];
       const server = new ProxyServer(
         new HTTPServerTransport(request, response)
       );
       await server.serve({
-        board: serverBoard,
+        kits,
         proxy: [
           {
             node: "test",
@@ -166,13 +160,9 @@ test("ProxyServer can be configured to tunnel nodes", async (t) => {
 test("ProxyServer and ProxyClient correctly handle streams", async (t) => {
   const connection = new MockHTTPConnection<AnyProxyRequestMessage>();
   connection.onRequest(async (request, response) => {
-    const serverBoard = new Board();
-    serverBoard.addKit(TestKit);
+    const kits = [asRuntimeKit(TestKit)];
     const server = new ProxyServer(new HTTPServerTransport(request, response));
-    await server.serve({
-      board: serverBoard,
-      proxy: ["streamer"],
-    });
+    await server.serve({ kits, proxy: ["streamer"] });
   });
   const client = new ProxyClient(
     new HTTPClientTransport("http://example.com", { fetch: connection.fetch })
@@ -197,4 +187,21 @@ test("ProxyServer and ProxyClient correctly handle streams", async (t) => {
     chunks.join(""),
     "Breadboard is a project that helps you make AI recipes. "
   );
+});
+
+test("ProxyClient can shut down ProxyServer", async (t) => {
+  let done: () => void;
+  const mockWorkers = createMockWorkers();
+  const proxyClient = new ProxyClient(
+    new WorkerClientTransport(mockWorkers.host)
+  );
+  const proxyServer = new ProxyServer(
+    new WorkerServerTransport(mockWorkers.worker)
+  );
+  proxyServer.serve({ kits: [] }).then(() => done());
+  proxyClient.shutdownServer();
+  t.pass();
+  return new Promise((resolve) => {
+    done = resolve;
+  });
 });

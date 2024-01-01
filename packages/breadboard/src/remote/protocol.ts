@@ -190,8 +190,9 @@ export type ProxyResolveRequestMessage = [
  * Indicates that the board is done running.
  * Can only be the last message in the response stream.
  */
-export type EndResponse = Record<string, never>;
-export type EndResponseMessage = ["end", EndResponse];
+export type End = Record<string, never>;
+export type EndResponseMessage = ["end", End];
+export type EndRequestMessage = ["end", End];
 
 /**
  * Sent by the server when an error occurs.
@@ -235,7 +236,7 @@ export type ProxyChunkResponse = {
 
 export type ProxyChunkResponseMessage = ["chunk", ProxyChunkResponse];
 
-export type AnyProxyRequestMessage = ProxyRequestMessage;
+export type AnyProxyRequestMessage = ProxyRequestMessage | EndRequestMessage;
 export type AnyProxyResponseMessage =
   | ProxyResponseMessage
   | ErrorResponseMessage

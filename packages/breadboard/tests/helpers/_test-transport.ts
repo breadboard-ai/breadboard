@@ -5,11 +5,7 @@
  */
 
 import { ClientTransport, ServerTransport } from "../../src/remote/protocol.js";
-import {
-  PatchedReadableStream,
-  PortStreams,
-  portToStreams,
-} from "../../src/stream.js";
+import { PatchedReadableStream } from "../../src/stream.js";
 import { ServerRequest, ServerResponse } from "../../src/remote/http.js";
 import { TransformStream } from "stream/web";
 
@@ -34,37 +30,6 @@ export class IdentityTransport<Request, Response>
       readableRequests: this.#requestPipe
         .readable as PatchedReadableStream<Request>,
       writableResponses: this.#responsePipe.writable,
-    };
-  }
-}
-
-export class MockWorkerTransport<Request, Response>
-  implements
-    ServerTransport<Request, Response>,
-    ClientTransport<Request, Response>
-{
-  #workerStreams: PortStreams<Request, Response>;
-  #hostStreams: PortStreams<Response, Request>;
-
-  constructor() {
-    const channel = new MessageChannel();
-    this.#workerStreams = portToStreams(channel.port1);
-    this.#hostStreams = portToStreams(channel.port2);
-  }
-
-  createClientStream() {
-    return {
-      writableRequests: this.#hostStreams.writable,
-      readableResponses: this.#hostStreams
-        .readable as PatchedReadableStream<Response>,
-    };
-  }
-
-  createServerStream() {
-    return {
-      readableRequests: this.#workerStreams
-        .readable as PatchedReadableStream<Request>,
-      writableResponses: this.#workerStreams.writable,
     };
   }
 }
@@ -171,3 +136,26 @@ export class MockHTTPConnection<Request> {
     this.#handler = handler;
   }
 }
+
+/**
+ * Creates a pretend Worker to enable end-to-end testing
+ * of WorkerClientTransport and WorkerServerTransport.
+ *
+ * Returns an pair of objects that look like worker and
+ * worker host (both are Worker instances in TS).
+ * The objects implement:
+ * - postMessage
+ * - addEventListener
+ * And act as if they are connected to each other.
+ */
+export const createMockWorkers = () => {
+  const channel = new MessageChannel();
+  const port1 = channel.port1;
+  const port2 = channel.port2;
+  port1.start();
+  port2.start();
+  return {
+    worker: port1 as unknown as Worker,
+    host: port2 as unknown as Worker,
+  };
+};

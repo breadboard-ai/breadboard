@@ -19,7 +19,6 @@ import {
   atob,
   btoa,
 } from "../../src/remote/tunnel.js";
-import { BoardRunner } from "../../src/runner.js";
 import { callHandler } from "../../src/handler.js";
 import { NodeHandlers } from "../../src/types.js";
 
@@ -55,7 +54,7 @@ test("readNodeSpec works as advertised", (t) => {
 
 test("readConfig works as advertised", (t) => {
   const output = readConfig({
-    board: {} as BoardRunner,
+    kits: [],
     proxy: [
       "fetch",
       {
