@@ -230,7 +230,7 @@ export class ProxyClient {
     }
   }
 
-  createProxyKit(args: NodeProxyConfig) {
+  createProxyKit(args: NodeProxyConfig = []) {
     const nodesToProxy = args.map((arg) => {
       if (typeof arg === "string") return arg;
       else return arg.node;

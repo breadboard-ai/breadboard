@@ -9,16 +9,12 @@ import {
   WorkerRuntime,
   WorkerTransport,
 } from "@google-labs/breadboard/worker";
-import { Board, asRuntimeKit } from "@google-labs/breadboard";
-import { Starter } from "@google-labs/llm-starter";
-import { Core } from "@google-labs/core-kit";
-import { Pinecone } from "@google-labs/pinecone-kit";
-import { NodeNurseryWeb } from "@google-labs/node-nursery-web";
-import JSONKit from "@google-labs/json-kit";
+import { Board } from "@google-labs/breadboard";
 import {
   ProxyClient,
   WorkerClientTransport,
 } from "@google-labs/breadboard/remote";
+import { proxyConfig } from "./config";
 
 const worker = self as unknown as Worker;
 
@@ -29,20 +25,7 @@ const url = await runtime.onload();
 
 const runner = await Board.load(url);
 
-const kits = [
-  asRuntimeKit(Starter),
-  asRuntimeKit(Core),
-  asRuntimeKit(Pinecone),
-  asRuntimeKit(NodeNurseryWeb),
-  asRuntimeKit(JSONKit),
-];
-
 const proxyClient = new ProxyClient(new WorkerClientTransport(worker));
-const proxyKit = proxyClient.createProxyKit([
-  "palm-generateText",
-  "palm-embedText",
-  "secrets",
-  "fetch",
-]);
+const proxyKit = proxyClient.createProxyKit(proxyConfig.proxy);
 
-await runtime.run(runner, [proxyKit, ...kits]);
+await runtime.run(runner, [proxyKit, ...proxyConfig.kits]);
