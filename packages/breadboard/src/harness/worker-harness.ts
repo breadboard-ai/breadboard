@@ -18,10 +18,10 @@ import type {
   HarnessRunResult,
 } from "./types.js";
 import { asyncGen } from "../index.js";
-import { ProxyReceiver } from "./receiver.js";
-import { createOnSecret } from "./secrets.js";
-import type { ProxyPromiseResponse } from "../remote/protocol.js";
+import { createOnSecret, createSecretAskingKit } from "./secrets.js";
 import { WorkerResult } from "./result.js";
+import { ProxyServer } from "../remote/proxy.js";
+import { WorkerServerTransport } from "../remote/worker.js";
 
 export const createWorker = (url: string) => {
   const workerURL = new URL(url, location.href);
@@ -35,11 +35,13 @@ class HarnessRun {
   worker: Worker;
   transport: WorkerTransport;
   controller: MessageController;
+  proxyServer: ProxyServer;
 
   constructor(workerURL: string) {
     this.worker = createWorker(workerURL);
     this.transport = new WorkerTransport(this.worker);
     this.controller = new MessageController(this.transport);
+    this.proxyServer = new ProxyServer(new WorkerServerTransport(this.worker));
   }
 
   terminate() {
@@ -83,6 +85,7 @@ export class WorkerHarness implements Harness {
     });
 
     this.#run = new HarnessRun(this.workerURL);
+
     const controller = this.#run.controller;
     const result = await controller.ask<
       LoadRequestMessage,
@@ -99,7 +102,18 @@ export class WorkerHarness implements Harness {
     const controller = this.#run.controller;
 
     yield* asyncGen<HarnessRunResult>(async (next) => {
-      const receiver = new ProxyReceiver(this.#config, createOnSecret(next));
+      const proxy = (this.#config.proxy?.[0]?.nodes ?? []).map((node) => {
+        return typeof node === "string" ? node : node.node;
+      });
+
+      const kits = [
+        ...this.#config.kits,
+        createSecretAskingKit(createOnSecret(next)),
+      ];
+
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      this.#run!.proxyServer.serve({ kits, proxy });
+
       controller.inform<StartMesssage>({}, "start");
       for (;;) {
         if (!controller) {
@@ -107,23 +121,7 @@ export class WorkerHarness implements Harness {
         }
 
         const message = await controller.listen();
-        const { data, type, id } = message;
-        if (type === "proxy") {
-          try {
-            const result = await receiver.handle(data as ProxyPromiseResponse);
-            id && controller.reply(id, result.value, type);
-            continue;
-          } catch (e) {
-            const error = e as Error;
-            await next(
-              new WorkerResult(controller, {
-                type: "error",
-                data: { error: error.message },
-              })
-            );
-            break;
-          }
-        }
+        const { data, type } = message;
         if (this.#skipDiagnosticMessages(type)) {
           continue;
         }

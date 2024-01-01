@@ -22,13 +22,7 @@ export const sendStartTransportMessage = (
   worker: Worker,
   port: MessagePort
 ) => {
-  worker.postMessage(
-    {
-      type: "starttransport",
-      port,
-    },
-    [port]
-  );
+  worker.postMessage({ type: "starttransport", port }, [port]);
 };
 
 export const receiveStartTransportMessage = (

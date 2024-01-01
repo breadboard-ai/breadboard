@@ -5,7 +5,7 @@
  */
 
 import { BoardRunner } from "../runner.js";
-import type { InputValues, Kit, KitConstructor } from "../types.js";
+import type { InputValues, Kit } from "../types.js";
 import {
   type LoadResponseMessage,
   type EndMessage,
@@ -17,8 +17,6 @@ import {
   type InputResponseMessage,
 } from "./protocol.js";
 import { MessageController } from "./controller.js";
-import { makeProxyKit } from "./proxy.js";
-import { asRuntimeKit } from "../kits/ctors.js";
 import { Diagnostics } from "../harness/diagnostics.js";
 
 export class WorkerRuntime {
@@ -61,7 +59,7 @@ export class WorkerRuntime {
     }
   }
 
-  async run(board: BoardRunner, kitConstructors: KitConstructor<Kit>[]) {
+  async run(board: BoardRunner, kits: Kit[]) {
     try {
       if (!this.#loadRequest) {
         throw new Error("The load message must be sent before the run message");
@@ -81,15 +79,6 @@ export class WorkerRuntime {
       );
 
       await this.start();
-
-      const proxyKit = makeProxyKit(
-        this.#loadRequest.data.proxyNodes,
-        this.#controller
-      );
-
-      const kits = [proxyKit, ...kitConstructors].map((kitConstructor) =>
-        asRuntimeKit(kitConstructor)
-      );
 
       const probe = new Diagnostics(async ({ type, data }) => {
         this.#controller.inform(data, type);

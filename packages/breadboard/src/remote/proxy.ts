@@ -72,6 +72,11 @@ export class ProxyServer {
   async serve(config: ProxyServerConfig) {
     const { kits } = config;
     const stream = this.#transport.createServerStream();
+    const tunnelKit = createTunnelKit(
+      readConfig(config),
+      handlersFromKits(kits)
+    );
+    const handlers = tunnelKit.handlers;
 
     for await (const request of streamsToAsyncIterable(
       stream.writableResponses,
@@ -89,14 +94,7 @@ export class ProxyServer {
       }
 
       const [, { node, inputs }] = request.data;
-
       const handlerConfig = getHandlerConfig(node.type, config.proxy);
-
-      const tunnelKit = createTunnelKit(
-        readConfig(config),
-        handlersFromKits(kits)
-      );
-      const handlers = tunnelKit.handlers;
 
       const handler = handlerConfig ? handlers[node.type] : undefined;
       if (!handler) {

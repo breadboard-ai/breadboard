@@ -4,9 +4,26 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { NodeValue, OutputValues } from "@google-labs/breadboard";
+import {
+  asRuntimeKit,
+  type InputValues,
+  type NodeValue,
+  type OutputValues,
+} from "@google-labs/breadboard";
 import { HarnessRunResult, SecretHandler } from "./types.js";
 import { LocalResult } from "./result.js";
+import { KitBuilder } from "../kits/builder.js";
+
+export const createSecretAskingKit = (onSecret: SecretHandler) => {
+  const secretAskingKit = new KitBuilder({
+    url: "secret-asking-kit",
+  }).build({
+    secrets: async (inputs) => {
+      return await onSecret(inputs as InputValues);
+    },
+  });
+  return asRuntimeKit(secretAskingKit);
+};
 
 const PROXIED_PREFIX = "PROXIED_";
 

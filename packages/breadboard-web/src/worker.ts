@@ -9,20 +9,40 @@ import {
   WorkerRuntime,
   WorkerTransport,
 } from "@google-labs/breadboard/worker";
-import { Board } from "@google-labs/breadboard";
+import { Board, asRuntimeKit } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 import { Core } from "@google-labs/core-kit";
 import { Pinecone } from "@google-labs/pinecone-kit";
 import { NodeNurseryWeb } from "@google-labs/node-nursery-web";
 import JSONKit from "@google-labs/json-kit";
+import {
+  ProxyClient,
+  WorkerClientTransport,
+} from "@google-labs/breadboard/remote";
 
-const controller = new MessageController(
-  new WorkerTransport(self as unknown as Worker)
-);
+const worker = self as unknown as Worker;
+
+const controller = new MessageController(new WorkerTransport(worker));
 const runtime = new WorkerRuntime(controller);
 
 const url = await runtime.onload();
 
 const runner = await Board.load(url);
 
-await runtime.run(runner, [Starter, Core, Pinecone, NodeNurseryWeb, JSONKit]);
+const kits = [
+  asRuntimeKit(Starter),
+  asRuntimeKit(Core),
+  asRuntimeKit(Pinecone),
+  asRuntimeKit(NodeNurseryWeb),
+  asRuntimeKit(JSONKit),
+];
+
+const proxyClient = new ProxyClient(new WorkerClientTransport(worker));
+const proxyKit = proxyClient.createProxyKit([
+  "palm-generateText",
+  "palm-embedText",
+  "secrets",
+  "fetch",
+]);
+
+await runtime.run(runner, [proxyKit, ...kits]);
