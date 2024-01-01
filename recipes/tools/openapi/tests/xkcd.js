@@ -10,15 +10,11 @@ const metaData = {
 export default await recipe(() => {
   const input = base.input({ $id: "input" });
 
-  const getBoard = code(({ api }) => {
-    return { graph: api.board };
+  const apiBoard = core.invoke({
+    $id: "xkcdInvoke",
+    path: "../index.json",
+    url: input.url,
   });
 
-  const apiBoard = input.to(
-    core.invoke({ $id: "xkcdInvoke", path: "../index.json", url: input.url })
-  );
-
-  return core
-    .invoke({})
-    .in({ graph: getBoard({ api: apiBoard.getInfo0json }), url: input.url });
+  return core.invoke({}).in({ board: apiBoard.getInfo0json });
 }).serialize(metaData);

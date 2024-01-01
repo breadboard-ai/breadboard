@@ -16,28 +16,19 @@ const metaData = {
 export default await recipe(() => {
   const input = base.input({ $id: "input" });
 
-  const getBoard = code(({ api }) => {
-    return { graph: api.board };
-  });
-
-  const apiBoard = input.to(
-    core.invoke({ path: "../index.json", url: input.url })
-  );
+  const apiBoard = core.invoke({ path: "../index.json", url: input.url });
 
   // This tests the input parameters
-  return core
-    .invoke()
-    .in({
-      graph: getBoard({ api: apiBoard.createEmbedding }),
-      url: input.url,
-      api_inputs: {
-        bearer: "OPENAI_API_KEY",
-        "application/json": {
-          input:
-            "Hello, my name is Paul and I'm not a large language model. I'm a real boy.",
-          model: "text-embedding-ada-002",
-        },
+  return core.invoke().in({
+    board: apiBoard.createEmbedding,
+    api_inputs: {
+      bearer: "OPENAI_API_KEY",
+      "application/json": {
+        input:
+          "Hello, my name is Paul and I'm not a large language model. I'm a real boy.",
+        model: "text-embedding-ada-002",
       },
-    })
-    .in(starter.secrets({ keys: ["OPENAI_API_KEY"] }));
+    },
+    ...starter.secrets({ keys: ["OPENAI_API_KEY"] }),
+  });
 }).serialize(metaData);

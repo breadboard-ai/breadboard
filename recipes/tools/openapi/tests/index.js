@@ -12,18 +12,11 @@ const metaData = {
 export default await recipe(() => {
   const input = base.input({ $id: "input" });
 
-  const getBoard = code(({ api }) => {
-    return { graph: api.board };
-  });
-
-  const apiBoard = input.to(
-    core.invoke({ path: "../index.json", url: input.url })
-  );
+  const apiBoard = core.invoke({ path: "../index.json", url: input.url });
 
   // This tests the input parameters
   return core.invoke().in({
-    graph: getBoard({ api: apiBoard.getAPI }),
-    url: input.url,
+    board: apiBoard.getAPI,
     input: {
       provider: "apis.guru",
       api: "2.2.0",
