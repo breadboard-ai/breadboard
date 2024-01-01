@@ -18,7 +18,7 @@ import type {
   HarnessRunResult,
 } from "./types.js";
 import { asyncGen } from "../index.js";
-import { createOnSecret, createSecretAskingKit } from "./secrets.js";
+import { createSecretAskingKit } from "./secrets.js";
 import { WorkerResult } from "./result.js";
 import { ProxyServer } from "../remote/proxy.js";
 import { WorkerServerTransport } from "../remote/worker.js";
@@ -106,10 +106,7 @@ export class WorkerHarness implements Harness {
         return typeof node === "string" ? node : node.node;
       });
 
-      const kits = [
-        ...this.#config.kits,
-        createSecretAskingKit(createOnSecret(next)),
-      ];
+      const kits = [...this.#config.kits, createSecretAskingKit(next)];
 
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       this.#run!.proxyServer.serve({ kits, proxy });

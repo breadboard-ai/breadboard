@@ -6,20 +6,25 @@
 
 import {
   asRuntimeKit,
-  type InputValues,
   type NodeValue,
   type OutputValues,
 } from "@google-labs/breadboard";
-import { HarnessRunResult, SecretHandler } from "./types.js";
+import { HarnessRunResult } from "./types.js";
 import { LocalResult } from "./result.js";
 import { KitBuilder } from "../kits/builder.js";
 
-export const createSecretAskingKit = (onSecret: SecretHandler) => {
+export const createSecretAskingKit = (
+  next: (result: HarnessRunResult) => Promise<void>
+) => {
   const secretAskingKit = new KitBuilder({
     url: "secret-asking-kit",
   }).build({
     secrets: async (inputs) => {
-      return await onSecret(inputs as InputValues);
+      const { keys } = inputs as { keys: string[] };
+      if (!keys) return {};
+      const result = new LocalResult({ type: "secret", data: { keys } });
+      await next(result);
+      return result.response as OutputValues;
     },
   });
   return asRuntimeKit(secretAskingKit);
@@ -97,14 +102,3 @@ export class SecretKeeper {
     }, {} as OutputValues);
   }
 }
-
-export const createOnSecret = (
-  next: (result: HarnessRunResult) => Promise<void>
-): SecretHandler => {
-  return async ({ keys }) => {
-    if (!keys) return {};
-    const result = new LocalResult({ type: "secret", data: { keys } });
-    await next(result);
-    return result.response as OutputValues;
-  };
-};
