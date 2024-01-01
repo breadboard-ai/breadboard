@@ -10,19 +10,22 @@ import {
   WorkerTransport,
 } from "@google-labs/breadboard/worker";
 import { Board } from "@google-labs/breadboard";
-import { Starter } from "@google-labs/llm-starter";
-import { Core } from "@google-labs/core-kit";
-import { Pinecone } from "@google-labs/pinecone-kit";
-import { NodeNurseryWeb } from "@google-labs/node-nursery-web";
-import JSONKit from "@google-labs/json-kit";
+import {
+  ProxyClient,
+  WorkerClientTransport,
+} from "@google-labs/breadboard/remote";
+import { proxyConfig } from "./config";
 
-const controller = new MessageController(
-  new WorkerTransport(self as unknown as Worker)
-);
+const worker = self as unknown as Worker;
+
+const controller = new MessageController(new WorkerTransport(worker));
 const runtime = new WorkerRuntime(controller);
 
 const url = await runtime.onload();
 
 const runner = await Board.load(url);
 
-await runtime.run(runner, [Starter, Core, Pinecone, NodeNurseryWeb, JSONKit]);
+const proxyClient = new ProxyClient(new WorkerClientTransport(worker));
+const proxyKit = proxyClient.createProxyKit(proxyConfig.proxy);
+
+await runtime.run(runner, [proxyKit, ...proxyConfig.kits]);

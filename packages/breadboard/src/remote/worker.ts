@@ -22,24 +22,20 @@ export const sendStartTransportMessage = (
   worker: Worker,
   port: MessagePort
 ) => {
-  worker.postMessage(
-    {
-      type: "starttransport",
-      port,
-    },
-    [port]
-  );
+  worker.postMessage({ type: "starttransport", port }, [port]);
 };
 
 export const receiveStartTransportMessage = (
   worker: Worker,
   callback: (port: MessagePort) => void
 ) => {
-  worker.addEventListener("message", (event) => {
+  const listener = (event: MessageEvent) => {
     if (event.data?.type === "starttransport") {
       callback(event.data.port);
+      worker.removeEventListener("message", listener);
     }
-  });
+  };
+  worker.addEventListener("message", listener);
 };
 
 export class WorkerClientTransport<Request, Response>

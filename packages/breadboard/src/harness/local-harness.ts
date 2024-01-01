@@ -4,16 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  Harness,
-  HarnessConfig,
-  HarnessRunResult,
-  SecretHandler,
-} from "./types.js";
-import { createOnSecret } from "./secrets.js";
-import { KitBuilder } from "../kits/builder.js";
+import type { Harness, HarnessConfig, HarnessRunResult } from "./types.js";
+import { createSecretAskingKit } from "./secrets.js";
 import { InputValues } from "../types.js";
-import { asRuntimeKit } from "../kits/ctors.js";
 import { ProxyClient } from "../remote/proxy.js";
 import { HTTPClientTransport } from "../remote/http.js";
 import { asyncGen } from "../utils/async-gen.js";
@@ -30,19 +23,12 @@ export class LocalHarness implements Harness {
     this.#config = config;
   }
 
-  #configureKits(onSecret: SecretHandler) {
+  #configureKits(next: (result: HarnessRunResult) => Promise<void>) {
     let kits = this.#config.kits;
     // Because we're in the browser, we need to ask for secrets from the user.
     // Add a special kit that overrides the `secrets` handler to ask the user
     // for secrets.
-    const secretAskingKit = new KitBuilder({
-      url: "secret-asking-kit",
-    }).build({
-      secrets: async (inputs) => {
-        return await onSecret(inputs as InputValues);
-      },
-    });
-    kits = [asRuntimeKit(secretAskingKit), ...kits];
+    kits = [createSecretAskingKit(next), ...kits];
 
     // If a proxy is configured, add the proxy kit to the list of kits.
     // Note, this may override the `secrets` handler from the SecretAskingKit.
@@ -83,7 +69,7 @@ export class LocalHarness implements Harness {
         throw new Error("Harness not loaded. Please call 'load' first.");
       }
 
-      const kits = this.#configureKits(createOnSecret(next));
+      const kits = this.#configureKits(next);
 
       try {
         const probe = this.#config.diagnostics
