@@ -196,6 +196,16 @@ export const TestKit = new KitBuilder({
     );
     return raw ? result : { result };
   },
+  /** Secret node emulator */
+  secret: async (inputs, context) => {
+    const key = (inputs.keys as string[])[0];
+    const value = await context.requestInput?.(key, {
+      title: "Secret",
+      type: "string",
+      format: "password",
+    });
+    return { [key]: value };
+  },
 });
 
 /**

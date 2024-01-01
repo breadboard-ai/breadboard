@@ -41,19 +41,26 @@ export class RunResult implements BreadboardRunResult {
   #type: RunResultType;
   #state: TraversalResult;
   #invocationId;
+  #secret;
 
   constructor(
     state: TraversalResult,
     type: RunResultType,
-    invocationId: number
+    invocationId: number,
+    secret = false
   ) {
     this.#state = state;
     this.#type = type;
     this.#invocationId = invocationId;
+    this.#secret = secret;
   }
 
   get invocationId(): number {
     return this.#invocationId;
+  }
+
+  get secret(): boolean {
+    return this.#secret;
   }
 
   get type(): RunResultType {
@@ -106,8 +113,8 @@ export class RunResult implements BreadboardRunResult {
 }
 
 export class InputStageResult extends RunResult {
-  constructor(state: TraversalResult, invocationId: number) {
-    super(state, "input", invocationId);
+  constructor(state: TraversalResult, invocationId: number, secret = false) {
+    super(state, "input", invocationId, secret);
   }
 
   get outputs(): OutputValues {

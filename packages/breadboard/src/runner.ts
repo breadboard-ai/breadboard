@@ -169,6 +169,8 @@ export class BoardRunner implements BreadboardRunner {
           if (!handler)
             throw new Error(`No handler for node type "${descriptor.type}"`);
 
+          const secret = descriptor.type === "secret";
+
           const newContext: NodeHandlerContext = {
             ...context,
             board: this,
@@ -177,7 +179,7 @@ export class BoardRunner implements BreadboardRunner {
             base: this.url,
             slots,
             kits: [...(context.kits || []), ...this.kits],
-            requestInput: requestedInputs.createHandler(next, result),
+            requestInput: requestedInputs.createHandler(next, result, secret),
             invocationPath: path(),
           };
 

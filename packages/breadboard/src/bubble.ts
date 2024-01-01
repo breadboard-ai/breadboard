@@ -105,6 +105,13 @@ export class InputSchemaReader {
   }
 }
 
+/**
+ * Informs requestInput handler that the input should be treated as a secret.
+ * This information propagates out to the environment, which may choose to
+ * display the input differently or draw from different sources.
+ */
+const SECRET_SYMBOL = Symbol("secret");
+
 export class RequestedInputsManager {
   #context: NodeHandlerContext;
   #cache: Map<string, NodeValue> = new Map();
@@ -115,9 +122,10 @@ export class RequestedInputsManager {
 
   createHandler(
     next: (result: RunResult) => Promise<void>,
-    result: TraversalResult
+    result: TraversalResult,
+    isSecret: boolean
   ) {
-    return async (name: string, schema: Schema) => {
+    return async (name: string, schema: Schema, secret?: symbol) => {
       const cachedValue = this.#cache.get(name);
       if (cachedValue !== undefined) return cachedValue;
       const requestInputResult = {
@@ -126,11 +134,13 @@ export class RequestedInputsManager {
           schema: { type: "object", properties: { [name]: schema } },
         },
       };
-      await next(new InputStageResult(requestInputResult, -1));
+      const treatAsSecret = secret === SECRET_SYMBOL || isSecret;
+      await next(new InputStageResult(requestInputResult, -1, treatAsSecret));
       const outputs = await requestInputResult.outputsPromise;
       let value = outputs && outputs[name];
       if (value === undefined) {
-        value = await this.#context.requestInput?.(name, schema);
+        const symbol = treatAsSecret ? SECRET_SYMBOL : undefined;
+        value = await this.#context.requestInput?.(name, schema, symbol);
       }
       this.#cache.set(name, value);
       return value;

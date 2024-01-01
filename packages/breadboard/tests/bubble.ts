@@ -11,6 +11,8 @@ import {
   createErrorMessage,
 } from "../src/bubble.js";
 import { BreadboardRunner, NodeHandlerContext } from "../src/types.js";
+import { Board } from "../src/board.js";
+import { TestKit } from "./helpers/_test-kit.js";
 
 test("InputSchemaReader works as expected", async (t) => {
   {
@@ -244,5 +246,65 @@ test("createBubbleHandler works as expected", async (t) => {
       ),
       { foo: "bar" }
     );
+  }
+});
+
+test("inputs from 'secret' node are labeled as secrets", async (t) => {
+  const board = new Board();
+  const kit = board.addKit(TestKit);
+  board
+    .input()
+    .wire("*", kit.secret({ keys: ["secret"] }).wire("*", board.output()));
+
+  const iterator = board.run();
+  {
+    const result = await iterator.next();
+    t.is(result.value.secret, false);
+    t.is(result.value.type, "input");
+  }
+  {
+    const result = await iterator.next();
+    t.is(result.value.secret, true);
+    t.is(result.value.type, "input");
+    result.value.inputs = { secret: "foo" };
+  }
+  {
+    const result = await iterator.next();
+    t.is(result.value.secret, false);
+    t.is(result.value.type, "output");
+    t.deepEqual(result.value.outputs, { secret: "foo" });
+  }
+
+  {
+    const value = await board.runOnce({ secret: "bar" });
+    t.deepEqual(value, { secret: "bar" });
+  }
+
+  {
+    const value = await board.runOnce(
+      { secret: "baz" },
+      {
+        requestInput: async (key, schema) => {
+          t.is(key, "secret");
+          t.is(schema.format, "password");
+          return "qux";
+        },
+      }
+    );
+    t.deepEqual(value, { secret: "baz" });
+  }
+
+  {
+    const value = await board.runOnce(
+      {},
+      {
+        requestInput: async (key, schema) => {
+          t.is(key, "secret");
+          t.is(schema.format, "password");
+          return "qux";
+        },
+      }
+    );
+    t.deepEqual(value, { secret: "qux" });
   }
 });
