@@ -80,17 +80,13 @@ export class WorkerHarness implements Harness {
       this.#stop();
     }
 
-    const proxyNodes = (this.#config.proxy?.[0]?.nodes ?? []).map((node) => {
-      return typeof node === "string" ? node : node.node;
-    });
-
     this.#run = new HarnessRun(this.workerURL);
 
     const controller = this.#run.controller;
     const result = await controller.ask<
       LoadRequestMessage,
       LoadResponseMessage
-    >({ url, proxyNodes }, "load");
+    >({ url, proxyNodes: [] }, "load");
 
     return result.data;
   }

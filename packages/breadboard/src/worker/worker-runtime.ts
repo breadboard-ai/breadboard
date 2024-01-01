@@ -39,10 +39,6 @@ export class WorkerRuntime {
       const data = message.data;
       if (!data.url) {
         throw new Error("The load message must include a url");
-      } else if (!data.proxyNodes || !data.proxyNodes.length) {
-        console.warn(
-          "No nodes to proxy were specified. The board may not run correctly"
-        );
       }
       this.#loadRequest = message;
       return message.data.url;
