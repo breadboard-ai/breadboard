@@ -27,7 +27,7 @@ import { TraversalMachine } from "./traversal/machine.js";
 import { InputStageResult, OutputStageResult, RunResult } from "./run.js";
 import { BoardLoader } from "./loader.js";
 import { runRemote } from "./remote.js";
-import { callHandler } from "./handler.js";
+import { callHandler, handlersFromKits } from "./handler.js";
 import { toMermaid } from "./mermaid.js";
 import { SchemaBuilder } from "./schema.js";
 import { RequestedInputsManager, bubbleUpInputsIfNeeded } from "./bubble.js";
@@ -380,16 +380,9 @@ export class BoardRunner implements BreadboardRunner {
     upstreamKits: Kit[] = []
   ): Promise<NodeHandlers> {
     const core = new Core();
-    const kits = [core, ...upstreamKits, ...board.kits];
+    const kits = [core as Kit, ...upstreamKits, ...board.kits];
 
-    return kits.reduce((handlers, kit) => {
-      // If multiple kits have the same handler, the kit earlier in the list
-      // gets precedence, including upstream kits getting precedence over kits
-      // defined in the graph.
-      //
-      // TODO: This means kits are fallback, consider non-fallback as well.
-      return { ...kit.handlers, ...handlers };
-    }, {} as NodeHandlers);
+    return handlersFromKits(kits);
   }
 
   static runRemote = runRemote;

@@ -102,7 +102,7 @@ export class WorkerHarness implements Harness {
         return typeof node === "string" ? node : node.node;
       });
 
-      const kits = [...this.#config.kits, createSecretAskingKit(next)];
+      const kits = [createSecretAskingKit(next), ...this.#config.kits];
 
       this.#run?.proxyServer.serve({ kits, proxy });
 

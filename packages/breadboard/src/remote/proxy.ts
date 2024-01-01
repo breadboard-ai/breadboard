@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { callHandler } from "../handler.js";
+import { callHandler, handlersFromKits } from "../handler.js";
 import {
   StreamCapability,
   StreamCapabilityType,
@@ -15,10 +15,8 @@ import { asRuntimeKit } from "../kits/ctors.js";
 import { KitBuilder } from "../kits/builder.js";
 import {
   InputValues,
-  Kit,
   NodeDescriptor,
   NodeHandlerContext,
-  NodeHandlers,
   NodeValue,
   OutputValues,
 } from "../types.js";
@@ -50,16 +48,6 @@ const getHandlerConfig = (
     };
   }
   return handlerConfig;
-};
-
-const handlersFromKits = (kits: Kit[]): NodeHandlers => {
-  const handlers: NodeHandlers = {};
-  for (const kit of kits) {
-    for (const [type, handler] of Object.entries(kit.handlers)) {
-      handlers[type] = handler;
-    }
-  }
-  return handlers;
 };
 
 export class ProxyServer {
