@@ -104,8 +104,7 @@ export class WorkerHarness implements Harness {
 
       const kits = [...this.#config.kits, createSecretAskingKit(next)];
 
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      this.#run!.proxyServer.serve({ kits, proxy });
+      this.#run?.proxyServer.serve({ kits, proxy });
 
       controller.inform<StartMesssage>({}, "start");
       for (;;) {
