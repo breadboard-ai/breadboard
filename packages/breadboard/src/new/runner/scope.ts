@@ -302,12 +302,12 @@ export class Scope implements ScopeInterface {
     const incomingPorts = Object.fromEntries(
       node.incoming
         .filter((edge) => edge.out !== "" && edge.out !== "*")
-        .map((edge) => [edge.out, {}])
+        .map((edge) => [edge.out, edge.schema ?? {}])
     );
     const outgoingPorts = Object.fromEntries(
       node.outgoing
         .filter((edge) => edge.out !== "" && edge.out !== "*")
-        .map((edge) => [edge.out, {}])
+        .map((edge) => [edge.out, edge.schema ?? {}])
     );
 
     return await node.describe(
