@@ -124,11 +124,6 @@ export class BaseNode<
     return Object.keys(data);
   }
 
-  receiveConstants(constants: InputValues) {
-    this.#constants = { ...this.#constants, ...constants };
-    this.#inputs = { ...this.#inputs, ...constants };
-  }
-
   /**
    * Compute required inputs from edges and compare with present inputs
    *
