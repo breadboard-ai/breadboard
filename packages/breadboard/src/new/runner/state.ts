@@ -9,11 +9,12 @@ import {
   InputValues,
   EdgeInterface,
   StateInterface,
+  NodeValue,
 } from "./types.js";
 
 export class State implements StateInterface {
   queue: AbstractNode[] = [];
-  inputs: Map<AbstractNode, Partial<InputValues>> = new Map();
+  inputs: Map<AbstractNode, Map<string, NodeValue[]>> = new Map();
   constants: Map<AbstractNode, Partial<InputValues>> = new Map();
   controlWires: Map<AbstractNode, AbstractNode[]> = new Map();
   haveRun: Set<AbstractNode> = new Set();
@@ -27,9 +28,18 @@ export class State implements StateInterface {
         : inputs[edge.out] !== undefined
         ? { [edge.in]: inputs[edge.out] }
         : {};
+
+    // Update constants; pverwrite current values if present
     if (edge.constant)
       this.constants.set(edge.to, { ...this.constants.get(edge.to), ...data });
-    this.inputs.set(edge.to, { ...this.inputs.get(edge.to), ...data });
+
+    // Regular inputs: Add to the input queues
+    if (!this.inputs.has(edge.to)) this.inputs.set(edge.to, new Map());
+    const queues = this.inputs.get(edge.to);
+    for (const port of Object.keys(data)) {
+      if (!queues?.has(port)) queues?.set(port, []);
+      queues?.get(port)?.push(data[port]);
+    }
 
     if (edge.in === "")
       this.controlWires.set(edge.to, [
@@ -62,9 +72,10 @@ export class State implements StateInterface {
 
     const presentKeys = new Set([
       ...Object.keys(node.configuration),
-      ...Object.keys(this.inputs.get(node) ?? {}),
       ...Object.keys(this.constants.get(node) ?? {}),
     ]);
+    for (const [port, values] of (this.inputs.get(node) ?? new Map()).entries())
+      if (values.length) presentKeys.add(port);
     if (this.controlWires.get(node)?.length) presentKeys.add("");
 
     const missingInputs = [...requiredKeys].filter(
@@ -74,11 +85,15 @@ export class State implements StateInterface {
   }
 
   shiftInputs<I extends InputValues>(node: AbstractNode<I>): I {
-    const inputs = { ...node.configuration, ...(this.inputs.get(node) as I) };
+    const inputs = { ...node.configuration, ...this.constants.get(node) } as I;
 
-    // Mark as run, clear inputs, reset with constants
+    // Shift inputs from queues
+    const queues = this.inputs.get(node) ?? new Map();
+    for (const [port, values] of queues.entries())
+      if (values.length > 0) inputs[port as keyof I] = values.shift();
+
+    // Mark as run, reset control wires
     this.haveRun.add(node);
-    this.inputs.set(node, this.constants.get(node) ?? {});
     this.controlWires.delete(node);
 
     return inputs;
