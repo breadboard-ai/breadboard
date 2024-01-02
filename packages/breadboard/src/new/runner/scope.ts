@@ -165,6 +165,11 @@ export class Scope implements ScopeInterface {
     node: AbstractNode | false | undefined = undefined,
     state?: StateInterface
   ): Promise<OutputValues> {
+    if ("$state" in inputs) {
+      state = inputs["$state"] as StateInterface;
+      delete inputs["$state"];
+    }
+
     let resolver: undefined | ((outputs: OutputValues) => void) = undefined;
     const promise = new Promise<OutputValues>((resolve) => {
       resolver = resolve;
