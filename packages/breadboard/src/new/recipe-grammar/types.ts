@@ -242,7 +242,7 @@ export type ClosureNodeInterface<
       | Promise<BreadboardCapability>;
   };
 
-export abstract class AbstractValue<T extends NodeValue | unknown = NodeValue>
+export abstract class AbstractValue<T extends NodeValue = NodeValue>
   implements PromiseLike<T | undefined>
 {
   abstract then<TResult1 = T | undefined, TResult2 = never>(
@@ -277,6 +277,13 @@ export abstract class AbstractValue<T extends NodeValue | unknown = NodeValue>
   abstract memoize(): AbstractValue<T>;
 
   abstract invoke(config?: BuilderNodeConfig): NodeProxy;
+
+  abstract isUnknown(): AbstractValue<unknown>;
+  abstract isString(): AbstractValue<string>;
+  abstract isNumber(): AbstractValue<number>;
+  abstract isBoolean(): AbstractValue<boolean>;
+  abstract isArray(): AbstractValue<NodeValue[]>;
+  abstract isObject(): AbstractValue<{ [key: string]: NodeValue }>;
 }
 
 /**

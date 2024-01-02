@@ -172,6 +172,44 @@ export class Value<T extends NodeValue = NodeValue>
     }).asProxy();
   }
 
+  /**
+   * The following are type-casting methods that are useful when a node type
+   * returns generic types but we want to narrow the types to what we know they
+   * are, e.g. a parser node returning the result as raw wires.
+   *
+   * This is also a way to define the schema of a recipe, e.g. by casting input
+   * wires and what is returned.
+   *
+   * Use as `foo.asString()` or `foo.asNumber()`. `isArray` and `isObject` cast
+   * to generic arrays and objects.
+   */
+
+  isUnknown(): AbstractValue<unknown> {
+    return this as unknown as AbstractValue<unknown>;
+  }
+
+  isString(): AbstractValue<string> {
+    return this as unknown as AbstractValue<string>;
+  }
+
+  isNumber(): AbstractValue<number> {
+    return this as unknown as AbstractValue<number>;
+  }
+
+  isBoolean(): AbstractValue<boolean> {
+    return this as unknown as AbstractValue<boolean>;
+  }
+
+  isArray(): AbstractValue<NodeValue[]> {
+    return this as unknown as AbstractValue<NodeValue[]>;
+  }
+
+  isObject(): AbstractValue<{ [key: string]: NodeValue }> {
+    return this as unknown as AbstractValue<{
+      [key: string]: NodeValue;
+    }>;
+  }
+
   #remapKeys(newKeys: KeyMap) {
     const newMap = { ...this.#keymap };
     Object.entries(newKeys).forEach(([fromKey, toKey]) => {
