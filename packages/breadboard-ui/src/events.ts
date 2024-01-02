@@ -69,3 +69,15 @@ export class InputEnterEvent extends Event {
     });
   }
 }
+
+export class BoardUnloadEvent extends Event {
+  static eventName = "breadboardboardunloadevent";
+
+  constructor() {
+    super(BoardUnloadEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}

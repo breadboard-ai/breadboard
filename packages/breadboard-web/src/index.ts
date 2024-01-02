@@ -84,17 +84,26 @@ export class Main {
         const harness = createHarness(createHarnessConfig(startEvent.url));
         this.#ui.load(await harness.load());
 
+        const currentBoardId = this.#boardId;
         for await (const result of harness.run()) {
           if (result.message.type !== "nodestart") {
-            const currentBoardId = this.#boardId;
             await this.#suspendIfPaused();
             if (currentBoardId !== this.#boardId) {
+              console.log("Changed board");
               return;
             }
           }
           await sleep(this.#delay);
           await this.#handleEvent(result);
         }
+      }
+    );
+
+    this.#ui.addEventListener(
+      BreadboardUI.Events.BoardUnloadEvent.eventName,
+      () => {
+        this.setActiveBreadboard(null);
+        this.#boardId++;
       }
     );
 
@@ -120,9 +129,13 @@ export class Main {
     }
   }
 
-  setActiveBreadboard(url: string) {
+  setActiveBreadboard(url: string | null) {
     const pageUrl = new URL(window.location.href);
-    pageUrl.searchParams.set("board", url);
+    if (url === null) {
+      pageUrl.searchParams.delete("board");
+    } else {
+      pageUrl.searchParams.set("board", url);
+    }
     window.history.replaceState(null, "", pageUrl);
 
     this.#ui.url = url;
