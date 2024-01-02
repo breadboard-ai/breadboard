@@ -219,7 +219,8 @@ export interface BuilderNodeInterface<
   addInputsFromNode(
     from: AbstractNode,
     keymap: KeyMap,
-    constant?: boolean
+    constant?: boolean,
+    schema?: Schema
   ): void;
 
   asProxy(): NodeProxy<I, O>;

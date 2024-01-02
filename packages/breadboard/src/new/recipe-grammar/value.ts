@@ -46,13 +46,14 @@ export class Value<T extends NodeValue = NodeValue>
   #scope: BuilderScope;
   #keymap: KeyMap;
   #constant: boolean;
-  #schema: Schema = {};
+  #schema: Schema;
 
   constructor(
     node: BuilderNode<InputValues, OutputValue<T>>,
     scope: BuilderScope,
     keymap: string | KeyMap,
-    constant = false
+    constant = false,
+    schema = {}
   ) {
     super();
     this.#node = node;
@@ -60,6 +61,7 @@ export class Value<T extends NodeValue = NodeValue>
     this.#keymap = typeof keymap === "string" ? { [keymap]: keymap } : keymap;
     (this as unknown as { [key: symbol]: Value<T> })[IsValueSymbol] = this;
     this.#constant = constant;
+    this.#schema = schema;
   }
 
   then<TResult1 = T | undefined, TResult2 = never>(
@@ -109,7 +111,8 @@ export class Value<T extends NodeValue = NodeValue>
     toNode.addInputsFromNode(
       this.#node as unknown as BuilderNodeInterface,
       this.#keymap,
-      this.#constant
+      this.#constant,
+      this.#schema
     );
 
     return (
@@ -140,7 +143,12 @@ export class Value<T extends NodeValue = NodeValue>
 
     if (isValue(inputs)) {
       invertedMap = inputs.#remapKeys(invertedMap);
-      this.#node.addInputsFromNode(inputs.#node, invertedMap);
+      this.#node.addInputsFromNode(
+        inputs.#node,
+        invertedMap,
+        inputs.#constant,
+        inputs.#schema
+      );
     } else if (isBuilderNodeProxy(inputs)) {
       this.#node.addInputsFromNode(inputs.unProxy(), invertedMap);
     } else {
@@ -158,11 +166,17 @@ export class Value<T extends NodeValue = NodeValue>
       newMap = this.#remapKeys(newKey);
     }
 
-    return new Value(this.#node, this.#scope, newMap, this.#constant);
+    return new Value(
+      this.#node,
+      this.#scope,
+      newMap,
+      this.#constant,
+      this.#schema
+    );
   }
 
   memoize() {
-    return new Value(this.#node, this.#scope, this.#keymap, true);
+    return new Value(this.#node, this.#scope, this.#keymap, true, this.#schema);
   }
 
   // Create a node for the lambda that is being sent as this value. At this
