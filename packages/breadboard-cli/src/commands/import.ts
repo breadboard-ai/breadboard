@@ -9,12 +9,24 @@ import { Board, asRuntimeKit } from "@google-labs/breadboard";
 import yaml from "js-yaml";
 import core from "@google-labs/core-kit";
 import starter from "@google-labs/llm-starter";
+import { writeFile } from "fs/promises";
+import path from "path";
 
 export const importGraph = async (
   url: string,
   options: Record<string, string>
 ) => {
   if (URL.canParse(url) == false) throw new Error("Invalid URL");
+
+  const apiPath = options.api;
+  const outputPath = options.output;
+
+  if (apiPath == undefined && outputPath == undefined) {
+    console.error(
+      "You must specify either -a (an API) or a directory to output all of the APIs to."
+    );
+    return;
+  }
 
   let openAPIData = "";
   let json;
@@ -39,14 +51,42 @@ export const importGraph = async (
 
   const openAPIBoard = await Board.fromGraphDescriptor(openapi);
 
-  const board = await openAPIBoard.runOnce(
+  const boards = await openAPIBoard.runOnce(
     { json },
     { kits: [asRuntimeKit(core), asRuntimeKit(starter)] }
   );
 
-  if (board == undefined || board == null) {
-    throw new Error("Unable to run board.");
+  if (boards == undefined || boards == null) {
+    throw new Error("Unable to generate list of boards from an API spec.");
   }
 
-  console.log(JSON.stringify(board));
+  for (const api of Object.keys(boards)) {
+    if (apiPath == api || apiPath == undefined) {
+      const apiRef = boards[api] as { kind: string; board: Board };
+      if (apiRef == undefined) {
+        continue;
+      }
+
+      const board = apiRef;
+      if (outputPath != undefined) {
+        outputBoard(board.board, apiPath, outputPath);
+      } else {
+        console.log(JSON.stringify(board.board, null, 2));
+      }
+    }
+  }
+};
+
+const outputBoard = async (
+  board: unknown,
+  apiPath: string,
+  outputPath: string
+) => {
+  const boardJSON = JSON.stringify(board);
+  const boardName = apiPath;
+  const boardPath = path.join(
+    path.resolve(process.cwd(), outputPath),
+    `${boardName}.json`
+  );
+  writeFile(boardPath, boardJSON, { encoding: "utf-8" });
 };
