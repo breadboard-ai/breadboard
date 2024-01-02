@@ -67,6 +67,9 @@ const hasPath = (
 
 const pathToId = (path: number[]) => `path-${path.join("-")}`;
 
+/**
+ * @deprecated This has been replaced by the UI element in ./ui.ts
+ */
 export class UIController extends HTMLElement implements UI {
   #inputContainer = new InputContainer();
   #nodeInformation: HTMLElement;
