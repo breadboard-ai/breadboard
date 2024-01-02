@@ -74,14 +74,7 @@ export class LocalHarness implements Harness {
       try {
         const probe = this.#config.diagnostics
           ? new Diagnostics(async (message) => {
-              if (
-                message.type === "graphstart" ||
-                message.type === "graphend"
-              ) {
-                await next(new LocalResult(message));
-              } else {
-                next(new LocalResult(message));
-              }
+              await next(new LocalResult(message));
             })
           : undefined;
 

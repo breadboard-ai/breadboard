@@ -98,12 +98,8 @@ export class WorkerHarness implements Harness {
     const controller = this.#run.controller;
 
     yield* asyncGen<HarnessRunResult>(async (next) => {
-      const proxy = (this.#config.proxy?.[0]?.nodes ?? []).map((node) => {
-        return typeof node === "string" ? node : node.node;
-      });
-
-      const kits = [...this.#config.kits, createSecretAskingKit(next)];
-
+      const kits = [createSecretAskingKit(next), ...this.#config.kits];
+      const proxy = this.#config.proxy?.[0]?.nodes;
       this.#run?.proxyServer.serve({ kits, proxy });
 
       controller.inform<StartMesssage>({}, "start");
