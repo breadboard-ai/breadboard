@@ -108,7 +108,7 @@ export interface StateInterface {
   distributeResults(edge: EdgeInterface, inputs: InputValues): string[];
   missingInputs(node: AbstractNode): string[] | false;
 
-  getInputs<I extends InputValues>(node: AbstractNode<I>): I;
+  shiftInputs<I extends InputValues>(node: AbstractNode<I>): I;
 }
 
 export interface OutputDistribution {

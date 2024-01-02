@@ -119,7 +119,7 @@ export class Scope implements ScopeInterface {
 
         const node = state.queue.shift() as AbstractNode;
 
-        const inputs = state.getInputs(node);
+        const inputs = state.shiftInputs(node);
 
         let callbackResult: OutputValues | undefined = undefined;
         for (const callback of callbacks)
@@ -136,8 +136,6 @@ export class Scope implements ScopeInterface {
               },
             };
           }));
-
-        state.hasRun(node);
 
         // Distribute data to outgoing edges
         const unusedPorts = new Set<string>(Object.keys(result));

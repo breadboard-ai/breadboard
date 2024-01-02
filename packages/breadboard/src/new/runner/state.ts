@@ -73,15 +73,15 @@ export class State implements StateInterface {
     return missingInputs.length ? missingInputs : false;
   }
 
-  getInputs<I extends InputValues>(node: AbstractNode<I>): I {
-    return { ...node.configuration, ...(this.inputs.get(node) as I) };
-  }
+  shiftInputs<I extends InputValues>(node: AbstractNode<I>): I {
+    const inputs = { ...node.configuration, ...(this.inputs.get(node) as I) };
 
-  hasRun(node: AbstractNode) {
     // Mark as run, clear inputs, reset with constants
     this.haveRun.add(node);
     this.inputs.set(node, this.constants.get(node) ?? {});
     this.controlWires.delete(node);
+
+    return inputs;
   }
 
   reset() {
