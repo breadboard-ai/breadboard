@@ -89,6 +89,7 @@ export class WorkerRuntime {
             {
               node: stop.node,
               inputArguments: stop.inputArguments,
+              secret: stop.secret,
             },
             stop.type
           )) as { data: InputValues };

@@ -128,6 +128,10 @@ export type InputPromiseResponse = {
    * @see [InputValues]
    */
   inputArguments: InputValues & { schema?: Schema };
+  /**
+   * Whether or not the node is expecting a secret input.
+   */
+  secret: boolean;
 };
 export type InputPromiseResponseMessage = [
   "input",

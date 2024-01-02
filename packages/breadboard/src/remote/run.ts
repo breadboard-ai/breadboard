@@ -58,8 +58,12 @@ export class RunServer {
       for await (const stop of runner.run(context, result)) {
         if (stop.type === "input") {
           const state = await stop.save();
-          const { node, inputArguments } = stop;
-          await responses.write(["input", { node, inputArguments }, state]);
+          const { node, inputArguments, secret } = stop;
+          await responses.write([
+            "input",
+            { node, inputArguments, secret },
+            state,
+          ]);
           request = await requestReader.read();
           if (request.done) {
             await responses.close();
@@ -89,6 +93,7 @@ class ClientRunResult implements BreadboardRunResult {
   type: RunResultType;
   node: NodeDescriptor;
   invocationId = 0;
+  secret = false;
 
   #state?: string;
   #inputArguments: InputValues = {};
@@ -108,6 +113,7 @@ class ClientRunResult implements BreadboardRunResult {
 
     if (type === "input") {
       this.#inputArguments = data.inputArguments;
+      this.secret = data.secret;
     } else if (type === "output") {
       this.#outputs = data.outputs;
     }

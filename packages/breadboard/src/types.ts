@@ -385,6 +385,10 @@ export interface BreadboardRunResult {
    * the node within the run, similar to an "index" property in map/forEach.
    */
   get invocationId(): number;
+  /**
+   * Whether or not the input is marked as a secret.
+   */
+  get secret(): boolean;
 }
 
 export interface NodeFactory {
