@@ -19,7 +19,7 @@ export { UI } from "./ui.js";
 export { BoardList } from "./board-list.js";
 
 import { Output } from "./output.js";
-import { UIController } from "./ui-controller.js";
+import { UIController as DeprecatedUIController } from "./deprecated-ui-controller.js";
 import {
   MultipartInput,
   MultipartInputImage,
@@ -29,15 +29,11 @@ import { Diagram } from "./diagram.js";
 
 export const register = () => {
   customElements.define("bb-diagram", Diagram);
-  customElements.define("bb-ui", UIController);
+  customElements.define("bb-ui", DeprecatedUIController);
   customElements.define("bb-output", Output);
   customElements.define("bb-multipart-input", MultipartInput);
   customElements.define("bb-multipart-input-image", MultipartInputImage);
   customElements.define("bb-multipart-input-text", MultipartInputText);
-};
-
-export const get = () => {
-  return document.querySelector("bb-ui") as UIController;
 };
 
 export type { LoadArgs } from "./load.js";
