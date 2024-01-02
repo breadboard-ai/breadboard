@@ -16,7 +16,7 @@ import {
   NodeEndHistoryEvent,
   NodeStartHistoryEvent,
 } from "./types.js";
-import { InputEnterEvent, ToastType } from "./events.js";
+import { BoardUnloadEvent, InputEnterEvent, ToastType } from "./events.js";
 import { LoadArgs } from "./load.js";
 import { Diagram } from "./diagram.js";
 import { Input } from "./input.js";
@@ -243,37 +243,18 @@ export class UI extends LitElement {
       grid-column: 1 / 3;
     }
 
-    #history:empty::before,
-    #output:empty::before,
-    #input:empty::before {
-      font-size: var(--bb-text-small);
-      padding: calc(var(--bb-grid-size) * 5);
-      padding-left: calc(var(--bb-grid-size) * 3 - 1px);
-    }
-
-    #history:empty::before {
-      content: "No nodes have run yet";
-    }
-
-    #output:empty::before {
-      content: "No board outputs received yet";
-    }
-
-    #input:empty::before {
-      content: "No active board inputs";
-    }
-
     #inputs h1,
     #outputs h1,
     #history h1 {
       font-size: var(--bb-text-small);
-      font-weight: normal;
+      font-weight: bold;
       margin: 0;
       padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 4);
       border-bottom: 1px solid rgb(227, 227, 227);
       position: sticky;
       top: 0;
       background: rgb(255, 255, 255);
+      z-index: 1;
     }
 
     #inputs-list,
@@ -281,6 +262,7 @@ export class UI extends LitElement {
     #history-list {
       scrollbar-gutter: stable;
       overflow-y: auto;
+      font-size: var(--bb-text-small);
     }
 
     #inputs-list,
@@ -319,6 +301,8 @@ export class UI extends LitElement {
 
     this.#diagram = new Diagram();
     this.#lastHistoryEventTime = Number.NaN;
+
+    this.dispatchEvent(new BoardUnloadEvent());
   }
 
   #historyEntryToTemplate(entry: HistoryListEntry): HTMLTemplateResult {
@@ -349,25 +333,31 @@ export class UI extends LitElement {
             <div id="inputs">
               <h1>Inputs</h1>
               <div id="inputs-list">
-                ${this.inputs.map((input) => {
-                  return html`${input}`;
-                })}
+                ${this.inputs.length
+                  ? this.inputs.map((input) => {
+                      return html`${input}`;
+                    })
+                  : html`There are no inputs yet.`}
               </div>
             </div>
             <div id="outputs">
               <h1>Outputs</h1>
               <div id="outputs-list">
-                ${this.outputs.map((output) => {
-                  return html`${output}`;
-                })}
+                ${this.outputs.length
+                  ? this.outputs.map((output) => {
+                      return html`${output}`;
+                    })
+                  : html`There are no outputs yet.`}
               </div>
             </div>
             <div id="history">
               <h1>History</h1>
               <div id="history-list">
-                ${this.historyEntries.map((entry) =>
-                  this.#historyEntryToTemplate(entry)
-                )}
+                ${this.historyEntries.length
+                  ? this.historyEntries.map((entry) =>
+                      this.#historyEntryToTemplate(entry)
+                    )
+                  : html`There are no history entries yet.`}
               </div>
             </div>
           </div>`;

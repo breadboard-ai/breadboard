@@ -10,7 +10,7 @@ import { until } from "lit/directives/until.js";
 import { Board } from "./types.js";
 import { longTermMemory } from "./utils/long-term-memory.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
-import { StartEvent } from "./events.js";
+import { StartEvent, ToastEvent, ToastType } from "./events.js";
 
 @customElement("bb-board-list")
 export class BoardList extends LitElement {
@@ -89,9 +89,12 @@ export class BoardItem extends LitElement {
   @property()
   boardVersion: string | null = null;
 
+  #copying = false;
+
   static styles = css`
     :host {
       display: block;
+      position: relative;
     }
 
     div {
@@ -146,6 +149,30 @@ export class BoardItem extends LitElement {
     :hover a {
       color: #fff;
     }
+
+    #copy-to-clipboard {
+      width: 32px;
+      height: 32px;
+      font-size: 0;
+      display: inline-block;
+      background: var(--bb-icon-copy-to-clipboard) center center no-repeat;
+      vertical-align: middle;
+      border: none;
+      cursor: pointer;
+      transition: opacity var(--bb-easing-duration-out) var(--bb-easing);
+      opacity: 0.5;
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      border-radius: 50%;
+    }
+
+    #copy-to-clipboard:hover {
+      background-color: #ffffffcc;
+      transition: opacity var(--bb-easing-duration-in) var(--bb-easing),
+        background-color var(--bb-easing-duration-in) var(--bb-easing);
+      opacity: 1;
+    }
   `;
 
   #replaceLinks(description: string) {
@@ -177,6 +204,25 @@ export class BoardItem extends LitElement {
     return this.#replaceLinks(info.description);
   }
 
+  async #copyToClipboard(evt: Event) {
+    if (this.#copying || !this.boardUrl) {
+      return;
+    }
+
+    evt.stopImmediatePropagation();
+    evt.preventDefault();
+
+    this.#copying = true;
+    const linkUrl = new URL(window.location.href);
+    linkUrl.searchParams.set("board", this.boardUrl);
+
+    await navigator.clipboard.writeText(linkUrl.toString());
+    this.dispatchEvent(
+      new ToastEvent("Board URL copied to clipboard", ToastType.INFORMATION)
+    );
+    this.#copying = false;
+  }
+
   #onBoardSelect(evt: Event) {
     evt.preventDefault();
 
@@ -191,6 +237,13 @@ export class BoardItem extends LitElement {
   render() {
     return html`<div>
       <a @click=${this.#onBoardSelect} href="?board=${this.boardUrl}">
+        <button
+          id="copy-to-clipboard"
+          @click=${this.#copyToClipboard}
+          title="Copy board URL"
+        >
+          Copy board URL
+        </button>
         <h1>${this.boardTitle}</h1>
         <h2>${this.boardVersion || "Unversioned"}</h2>
         <p>${until(this.#getDescription(), html`Loading...`)}</p>
