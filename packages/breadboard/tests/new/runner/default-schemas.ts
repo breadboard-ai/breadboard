@@ -71,7 +71,12 @@ test("schema derived from noop (no describe)", async (t) => {
 
 test("schema derived from noop, with type casts", async (t) => {
   const graph = recipe(({ foo }) => ({
-    bar: testKit.noop({ foo: foo.isNumber() }).foo.isNumber(),
+    bar: testKit
+      .noop({
+        foo: foo.isNumber().title("The foo").description("A foo-lish number"),
+      })
+      .foo.isNumber()
+      .description("A bar-ish number"),
   }));
 
   const serialized = await graph.serialize();
@@ -84,7 +89,11 @@ test("schema derived from noop, with type casts", async (t) => {
   t.deepEqual(inputSchema, {
     type: "object",
     properties: {
-      foo: { type: "number", title: "foo" },
+      foo: {
+        type: "number",
+        title: "The foo",
+        description: "A foo-lish number",
+      },
     },
     required: ["foo"],
   });
@@ -92,7 +101,7 @@ test("schema derived from noop, with type casts", async (t) => {
   t.deepEqual(outputSchema, {
     type: "object",
     properties: {
-      bar: { type: "number", title: "bar" },
+      bar: { type: "number", title: "bar", description: "A bar-ish number" },
     },
     required: ["bar"],
   });

@@ -233,6 +233,16 @@ export class Value<T extends NodeValue = NodeValue>
     }>;
   }
 
+  title(title: string): AbstractValue<T> {
+    this.#schema.title = title;
+    return this;
+  }
+
+  description(description: string): AbstractValue<T> {
+    this.#schema.description = description;
+    return this;
+  }
+
   #remapKeys(newKeys: KeyMap) {
     const newMap = { ...this.#keymap };
     Object.entries(newKeys).forEach(([fromKey, toKey]) => {
