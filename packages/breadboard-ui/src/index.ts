@@ -15,6 +15,8 @@ export { Load } from "./load.js";
 export { InputContainer } from "./input-container.js";
 export { Start } from "./start.js";
 export { Progress } from "./progress.js";
+export { UI } from "./ui.js";
+export { BoardList } from "./board-list.js";
 
 import { Output } from "./output.js";
 import { UIController } from "./ui-controller.js";
@@ -42,5 +44,6 @@ export type { LoadArgs } from "./load.js";
 export type { OutputArgs } from "./output.js";
 export type { StartArgs } from "./start.js";
 export type { InputArgs } from "./types.js";
+export * as Types from "./types.js";
 
 export { StartEvent, ToastEvent, DelayEvent } from "./events.js";

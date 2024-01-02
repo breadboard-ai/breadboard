@@ -30,7 +30,7 @@ export class Output extends HTMLElement {
         :host {
           display: block;
           border-top: 1px solid rgb(240, 240, 240);
-          padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 4);
+          padding: calc(var(--bb-grid-size) * 2) 0;
         }
 
         #container {
