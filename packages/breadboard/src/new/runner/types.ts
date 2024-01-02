@@ -29,10 +29,7 @@ export type OutputValue<T> = Partial<{ [key: string]: T }>;
 export type NodeHandlerFunction<
   I extends InputValues = InputValues,
   O extends OutputValues = OutputValues
-> = (
-  inputs: PromiseLike<I> & I,
-  node: AbstractNode<I, O>
-) => O | PromiseLike<O>;
+> = (inputs: I, node: AbstractNode<I, O>) => O | PromiseLike<O>;
 
 export type NodeHandler<
   I extends InputValues = InputValues,
@@ -93,12 +90,8 @@ export abstract class AbstractNode<
     constant?: boolean,
     schema?: Schema
   ): void;
-  abstract receiveInputs(edge: EdgeInterface, inputs: InputValues): string[];
-  abstract missingInputs(): string[] | false;
 
-  abstract getInputs(): I;
-
-  abstract invoke(dynamicScope?: ScopeInterface): Promise<O>;
+  abstract invoke(inputs: I, dynamicScope?: ScopeInterface): Promise<O>;
   abstract describe(
     scope?: ScopeInterface,
     inputs?: InputValues,
@@ -109,6 +102,13 @@ export abstract class AbstractNode<
   abstract serialize(metadata?: GraphMetadata): Promise<GraphDescriptor>;
 
   abstract serializeNode(): Promise<[NodeDescriptor, GraphDescriptor?]>;
+}
+
+export interface StateInterface {
+  receiveInputs(edge: EdgeInterface, inputs: InputValues): string[];
+  missingInputs(node: AbstractNode): string[] | false;
+
+  getInputs<I extends InputValues>(node: AbstractNode<I>): I;
 }
 
 export interface OutputDistribution {
@@ -205,7 +205,12 @@ export interface ScopeInterface {
    *
    * @param node node to pin to this scope
    */
-  pin(node: AbstractNode): void;
+  pin<
+    I extends InputValues = InputValues,
+    O extends OutputValues = OutputValues
+  >(
+    node: AbstractNode<I, O>
+  ): void;
 
   /**
    * Reduces set of pinned pins to one per disjoint graph. Call this after

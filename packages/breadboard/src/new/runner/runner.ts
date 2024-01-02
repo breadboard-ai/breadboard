@@ -134,7 +134,7 @@ export class Runner implements BreadboardRunner {
     });
 
     scope.addHandlers({
-      input: async (inputs: InputValues | PromiseLike<InputValues>, node) => {
+      input: async (inputs: InputValues, node: AbstractNode) => {
         let resolver: (outputs: OutputValues) => void;
         const outputsPromise = new Promise<OutputValues>((resolve) => {
           resolver = resolve;

@@ -21,6 +21,7 @@ import {
   ScopeConfig,
 } from "./types.js";
 
+import { State } from "./state.js";
 import { NodeDescriberResult, Schema } from "../../types.js";
 
 export class Scope implements ScopeInterface {
@@ -29,6 +30,7 @@ export class Scope implements ScopeInterface {
 
   #handlers: NodeHandlers = {};
   #pinnedNodes: AbstractNode[] = [];
+  #state?: State;
 
   #callbacks: InvokeCallbacks[] = [];
 
@@ -55,7 +57,10 @@ export class Scope implements ScopeInterface {
     >;
   }
 
-  pin(node: AbstractNode) {
+  pin<
+    I extends InputValues = InputValues,
+    O extends OutputValues = OutputValues
+  >(node: AbstractNode<I, O>) {
     this.#pinnedNodes.push(node);
   }
 
@@ -96,23 +101,25 @@ export class Scope implements ScopeInterface {
 
   async invoke(node?: AbstractNode | AbstractNode[]): Promise<void> {
     try {
-      const queue: AbstractNode[] = (
+      const state = (this.#state ??= new State());
+
+      state.queue = (
         node ? (node instanceof Array ? node : [node]) : this.#pinnedNodes
       ).flatMap((node) =>
-        this.#findAllConnectedNodes(node).filter(
-          (node) => !node.missingInputs()
+        this.#findAllConnectedNodes(node).filter((node) =>
+          state.missingInputs(node)
         )
       );
 
       const callbacks = this.#getAllCallbacks();
 
-      while (queue.length) {
+      while (this.#state.queue.length) {
         for (const callback of callbacks)
           if (await callback.abort?.(this)) return;
 
-        const node = queue.shift() as AbstractNode;
+        const node = state.queue.shift() as AbstractNode;
 
-        const inputs = node.getInputs();
+        const inputs = state.getInputs(node);
 
         let callbackResult: OutputValues | undefined = undefined;
         for (const callback of callbacks)
@@ -121,25 +128,29 @@ export class Scope implements ScopeInterface {
         // Invoke node, unless before callback already provided a result.
         const result =
           callbackResult ??
-          (await node.invoke(this).catch((e) => {
-            return {
-              $error: {
-                type: "error",
-                error: e,
-              },
-            };
-          }));
+          (await node
+            .invoke(inputs as InputValues & PromiseLike<InputValues>, this)
+            .catch((e) => {
+              return {
+                $error: {
+                  type: "error",
+                  error: e,
+                },
+              };
+            }));
+
+        state.hasRun(node);
 
         // Distribute data to outgoing edges
         const unusedPorts = new Set<string>(Object.keys(result));
         const distribution: OutputDistribution = { nodes: [], unused: [] };
         node.outgoing.forEach((edge) => {
-          const ports = edge.to.receiveInputs(edge, result);
+          const ports = state.receiveInputs(edge, result);
           ports.forEach((key) => unusedPorts.delete(key));
 
           // If it's ready to run, add it to the queue
-          const missing = edge.to.missingInputs();
-          if (!missing) queue.push(edge.to);
+          const missing = state.missingInputs(edge.to);
+          if (!missing) state.queue.push(edge.to);
 
           distribution.nodes.push({ node: edge.to, received: ports, missing });
         });

@@ -200,7 +200,7 @@ export class BuilderNode<
     });
   }
 
-  async invoke(dynamicScope?: ScopeInterface): Promise<O> {
+  async invoke(inputs: I, dynamicScope?: ScopeInterface): Promise<O> {
     const scope = new BuilderScope({
       dynamicScope,
       lexicalScope: this.#scope,
@@ -231,10 +231,7 @@ export class BuilderNode<
         const handlerFn =
           typeof handler === "function" ? handler : handler?.invoke;
         if (handlerFn) {
-          result = (await handlerFn(
-            this.getInputs() as PromiseLike<I> & I,
-            this
-          )) as O;
+          result = (await handlerFn(inputs, this)) as O;
         } else if (handler && typeof handler !== "function" && handler.graph) {
           // TODO: This isn't quite right, but good enough for now. Instead what
           // this should be in invoking a graph from a lexical scope in a dynamic
@@ -242,7 +239,7 @@ export class BuilderNode<
           const graphs = handler.graph.getPinnedNodes();
           if (graphs.length !== 1)
             throw new Error("Expected exactly one graph");
-          result = (await scope.invokeOnce(this.getInputs(), graphs[0])) as O;
+          result = (await scope.invokeOnce(inputs, graphs[0])) as O;
         } else {
           throw new Error(`Can't find handler for ${this.id}`);
         }
@@ -269,8 +266,6 @@ export class BuilderNode<
           this.#resolve(result);
           this.#resolve = this.#reject = undefined;
         }
-
-        this.setOutputs(result);
 
         return result;
       } catch (e) {

@@ -4,16 +4,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { AbstractNode, InputValues, EdgeInterface } from "./types.js";
+import {
+  AbstractNode,
+  InputValues,
+  EdgeInterface,
+  StateInterface,
+} from "./types.js";
 
-class State {
+export class State implements StateInterface {
   queue: AbstractNode[] = [];
   inputs: Map<AbstractNode, Partial<InputValues>> = new Map();
   constants: Map<AbstractNode, Partial<InputValues>> = new Map();
   controlWires: Map<AbstractNode, AbstractNode[]> = new Map();
   haveRun: Set<AbstractNode> = new Set();
 
-  receiveInputs(node: AbstractNode, edge: EdgeInterface, inputs: InputValues) {
+  receiveInputs(edge: EdgeInterface, inputs: InputValues) {
     const data =
       edge.out === "*"
         ? inputs
@@ -23,12 +28,12 @@ class State {
         ? { [edge.in]: inputs[edge.out] }
         : {};
     if (edge.constant)
-      this.constants.set(node, { ...this.constants.get(node), ...data });
-    this.inputs.set(node, { ...this.inputs.get(node), ...data });
+      this.constants.set(edge.to, { ...this.constants.get(edge.to), ...data });
+    this.inputs.set(edge.to, { ...this.inputs.get(edge.to), ...data });
 
     if (edge.in === "")
-      this.controlWires.set(node, [
-        ...(this.controlWires.get(node) ?? []),
+      this.controlWires.set(edge.to, [
+        ...(this.controlWires.get(edge.to) ?? []),
         edge.from,
       ]);
 
