@@ -68,3 +68,32 @@ test("schema derived from noop (no describe)", async (t) => {
     required: ["bar"],
   });
 });
+
+test("schema derived from noop, with type casts", async (t) => {
+  const graph = recipe(({ foo }) => ({
+    bar: testKit.noop({ foo: foo.isNumber() }).foo.isNumber(),
+  }));
+
+  const serialized = await graph.serialize();
+
+  const inputSchema = serialized.nodes.find((node) => node.type === "input")
+    ?.configuration?.schema;
+  const outputSchema = serialized.nodes.find((node) => node.type === "output")
+    ?.configuration?.schema;
+
+  t.deepEqual(inputSchema, {
+    type: "object",
+    properties: {
+      foo: { type: "number", title: "foo" },
+    },
+    required: ["foo"],
+  });
+
+  t.deepEqual(outputSchema, {
+    type: "object",
+    properties: {
+      bar: { type: "number", title: "bar" },
+    },
+    required: ["bar"],
+  });
+});

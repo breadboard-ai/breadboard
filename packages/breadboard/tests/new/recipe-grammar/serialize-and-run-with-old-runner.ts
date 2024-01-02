@@ -84,6 +84,39 @@ test("simple inline code", async (t) => {
   t.deepEqual(result, { result: 3 });
 });
 
+test("simple inline code, declare and cast types w/o contradiction", async (t) => {
+  const graph = recipe<{ a: number; b: number }, { result: number }>(
+    (inputs) => {
+      return {
+        result: code<{ a: number; b: number }, { result: number }>(
+          ({ a, b }) => {
+            return { result: a + b };
+          }
+        )({ a: inputs.a.isNumber(), b: inputs.b.isNumber() }).result.isNumber(),
+      };
+    }
+  );
+
+  const result = await serializeAndRunGraph(graph, { a: 1, b: 2 });
+  t.like(result, { result: 3 });
+  t.like(result, { schema: { properties: { result: { type: "number" } } } });
+});
+
+test("simple inline code, cast types and infer in TypeScript", async (t) => {
+  const graph = recipe((inputs) => {
+    return {
+      result: code(({ a, b }) => {
+        // TODO: Get rid of this extra cast, it shouldn't be necessary
+        return { result: (a as number) + (b as number) };
+      })({ a: inputs.a.isNumber(), b: inputs.b.isNumber() }).result.isNumber(),
+    };
+  });
+
+  const result = await serializeAndRunGraph(graph, { a: 1, b: 2 });
+  t.like(result, { result: 3 });
+  t.like(result, { schema: { properties: { result: { type: "number" } } } });
+});
+
 test("simple inline code, single parameter", async (t) => {
   const graph = recipe<{ number: number }, { result: number }>((inputs) => {
     return code<{ number: number }>((inputs) => {
@@ -96,10 +129,10 @@ test("simple inline code, single parameter", async (t) => {
 });
 
 test("simple inline code, single parameter, pick", async (t) => {
-  const graph = recipe<{ number: number }, { result: number }>((inputs) => {
+  const graph = recipe<{ number: number }, { result: number }>(({ number }) => {
     return code<{ number: number }>((inputs) => {
       return { result: -inputs.number };
-    })(inputs.number);
+    })(number);
   });
 
   const result = await serializeAndRunGraph(graph, { number: 3 });
@@ -145,12 +178,10 @@ test("simple inline code, explicit input and output, single parameter, pick", as
 });
 
 test("code recipe called from another recipe", async (t) => {
-  const add = code<{ a: number; b: number }, { result: number }>(
-    async (inputs) => {
-      const { a, b } = await inputs;
-      return { result: a + b };
-    }
-  );
+  const add = code<{ a: number; b: number }, { result: number }>((inputs) => {
+    const { a, b } = inputs;
+    return { result: a + b };
+  });
 
   const graph = recipe<{ a: number; b: number }, { result: number }>(
     (inputs) => {

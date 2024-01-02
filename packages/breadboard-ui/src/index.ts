@@ -15,9 +15,11 @@ export { Load } from "./load.js";
 export { InputContainer } from "./input-container.js";
 export { Start } from "./start.js";
 export { Progress } from "./progress.js";
+export { UI } from "./ui.js";
+export { BoardList } from "./board-list.js";
 
 import { Output } from "./output.js";
-import { UIController } from "./ui-controller.js";
+import { UIController as DeprecatedUIController } from "./deprecated-ui-controller.js";
 import {
   MultipartInput,
   MultipartInputImage,
@@ -27,20 +29,18 @@ import { Diagram } from "./diagram.js";
 
 export const register = () => {
   customElements.define("bb-diagram", Diagram);
-  customElements.define("bb-ui", UIController);
+  customElements.define("bb-ui", DeprecatedUIController);
   customElements.define("bb-output", Output);
   customElements.define("bb-multipart-input", MultipartInput);
   customElements.define("bb-multipart-input-image", MultipartInputImage);
   customElements.define("bb-multipart-input-text", MultipartInputText);
 };
 
-export const get = () => {
-  return document.querySelector("bb-ui") as UIController;
-};
-
 export type { LoadArgs } from "./load.js";
 export type { OutputArgs } from "./output.js";
 export type { StartArgs } from "./start.js";
 export type { InputArgs } from "./types.js";
+export * as Types from "./types.js";
+export * as Events from "./events.js";
 
 export { StartEvent, ToastEvent, DelayEvent } from "./events.js";

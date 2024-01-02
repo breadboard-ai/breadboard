@@ -23,6 +23,12 @@ export const enum HistoryEventType {
   GRAPHEND = "graphend",
 }
 
+export type Board = {
+  title: string;
+  url: string;
+  version: string;
+};
+
 export type HistoryEvent = {
   summary?: string;
   id?: string;
