@@ -7,10 +7,14 @@
 import {
   AbstractNode,
   InputValues,
+  OutputValues,
+  OutputDistribution,
   EdgeInterface,
   StateInterface,
   NodeValue,
 } from "./types.js";
+
+// TODO: To support parallelism, we need to track which nodes are still pending
 
 export class State implements StateInterface {
   queue: AbstractNode[] = [];
@@ -19,36 +23,17 @@ export class State implements StateInterface {
   controlWires: Map<AbstractNode, AbstractNode[]> = new Map();
   haveRun: Set<AbstractNode> = new Set();
 
-  distributeResults(edge: EdgeInterface, inputs: InputValues) {
-    const data =
-      edge.out === "*"
-        ? inputs
-        : edge.out === ""
-        ? {}
-        : inputs[edge.out] !== undefined
-        ? { [edge.in]: inputs[edge.out] }
-        : {};
+  queueUp(node: AbstractNode) {
+    if (!this.queue.includes(node)) this.queue.push(node);
+  }
 
-    // Update constants; pverwrite current values if present
-    if (edge.constant)
-      this.constants.set(edge.to, { ...this.constants.get(edge.to), ...data });
+  next(): AbstractNode {
+    if (!this.queue.length) throw new Error("No nodes in queue");
+    return this.queue.shift() as AbstractNode;
+  }
 
-    // Regular inputs: Add to the input queues
-    if (!this.inputs.has(edge.to)) this.inputs.set(edge.to, new Map());
-    const queues = this.inputs.get(edge.to);
-    for (const port of Object.keys(data)) {
-      if (!queues?.has(port)) queues?.set(port, []);
-      queues?.get(port)?.push(data[port]);
-    }
-
-    if (edge.in === "")
-      this.controlWires.set(edge.to, [
-        ...(this.controlWires.get(edge.to) ?? []),
-        edge.from,
-      ]);
-
-    // return which wires were used
-    return Object.keys(data);
+  done() {
+    return this.queue.length === 0;
   }
 
   /**
@@ -99,11 +84,55 @@ export class State implements StateInterface {
     return inputs;
   }
 
-  reset() {
-    this.queue = [];
-    this.inputs = new Map();
-    this.constants = new Map();
-    this.controlWires = new Map();
-    this.haveRun = new Set();
+  processResult(node: AbstractNode, result: OutputValues): OutputDistribution {
+    const distribution: OutputDistribution = { nodes: [], unused: [] };
+
+    const unusedPorts = new Set<string>(Object.keys(result));
+    for (const edge of node.outgoing) {
+      const ports = this.distributeResults(edge, result);
+      ports.forEach((key) => unusedPorts.delete(key));
+
+      // If it's ready to run, add it to the queue
+      const missing = this.missingInputs(edge.to);
+      if (!missing) this.queueUp(edge.to);
+
+      distribution.nodes.push({ node: edge.to, received: ports, missing });
+    }
+
+    distribution.unused = [...unusedPorts];
+
+    return distribution;
+  }
+
+  distributeResults(edge: EdgeInterface, inputs: InputValues) {
+    const data =
+      edge.out === "*"
+        ? inputs
+        : edge.out === ""
+        ? {}
+        : inputs[edge.out] !== undefined
+        ? { [edge.in]: inputs[edge.out] }
+        : {};
+
+    // Update constants; pverwrite current values if present
+    if (edge.constant)
+      this.constants.set(edge.to, { ...this.constants.get(edge.to), ...data });
+
+    // Regular inputs: Add to the input queues
+    if (!this.inputs.has(edge.to)) this.inputs.set(edge.to, new Map());
+    const queues = this.inputs.get(edge.to);
+    for (const port of Object.keys(data)) {
+      if (!queues?.has(port)) queues?.set(port, []);
+      queues?.get(port)?.push(data[port]);
+    }
+
+    if (edge.in === "")
+      this.controlWires.set(edge.to, [
+        ...(this.controlWires.get(edge.to) ?? []),
+        edge.from,
+      ]);
+
+    // return which wires were used
+    return Object.keys(data);
   }
 }

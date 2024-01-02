@@ -105,10 +105,15 @@ export abstract class AbstractNode<
 }
 
 export interface StateInterface {
-  distributeResults(edge: EdgeInterface, inputs: InputValues): string[];
-  missingInputs(node: AbstractNode): string[] | false;
+  queueUp(node: AbstractNode): void;
+  next(): AbstractNode;
+  done(): boolean;
 
+  processResult(node: AbstractNode, result: OutputValues): OutputDistribution;
+
+  missingInputs(node: AbstractNode): string[] | false;
   shiftInputs<I extends InputValues>(node: AbstractNode<I>): I;
+  distributeResults(edge: EdgeInterface, inputs: InputValues): string[];
 }
 
 export interface OutputDistribution {
@@ -232,7 +237,7 @@ export interface ScopeInterface {
    * @param node Node to invoke, or undefined to invoke all pinned nodes
    * @returns Promise that resolves when all nodes have been invoked
    */
-  invoke(node?: AbstractNode): Promise<void>;
+  invoke(node?: AbstractNode, state?: StateInterface): Promise<void>;
 
   /**
    * Helper to invoke a graph and return the values of the first `output` node

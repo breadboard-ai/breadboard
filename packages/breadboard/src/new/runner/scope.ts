@@ -17,8 +17,8 @@ import {
   AbstractNode,
   ScopeInterface,
   InvokeCallbacks,
-  OutputDistribution,
   ScopeConfig,
+  StateInterface,
 } from "./types.js";
 
 import { State } from "./state.js";
@@ -98,25 +98,26 @@ export class Scope implements ScopeInterface {
     ];
   }
 
-  async invoke(node?: AbstractNode | AbstractNode[]): Promise<void> {
+  async invoke(
+    node?: AbstractNode | AbstractNode[],
+    state: StateInterface = new State()
+  ): Promise<void> {
     try {
-      const state = new State();
-
-      state.queue = (
-        node ? (node instanceof Array ? node : [node]) : this.#pinnedNodes
-      ).flatMap((node) =>
-        this.#findAllConnectedNodes(node).filter(
-          (node) => state.missingInputs(node) === false
+      (node ? (node instanceof Array ? node : [node]) : this.#pinnedNodes)
+        .flatMap((node) =>
+          this.#findAllConnectedNodes(node).filter(
+            (node) => state?.missingInputs(node) === false
+          )
         )
-      );
+        .forEach((node) => state?.queueUp(node));
 
       const callbacks = this.#getAllCallbacks();
 
-      while (state.queue.length) {
+      while (!state.done()) {
         for (const callback of callbacks)
           if (await callback.stop?.(this)) return;
 
-        const node = state.queue.shift() as AbstractNode;
+        const node = state.next();
 
         const inputs = state.shiftInputs(node);
 
@@ -136,28 +137,16 @@ export class Scope implements ScopeInterface {
             };
           }));
 
-        // Distribute data to outgoing edges
-        const unusedPorts = new Set<string>(Object.keys(result));
-        const distribution: OutputDistribution = { nodes: [], unused: [] };
-        node.outgoing.forEach((edge) => {
-          const ports = state.distributeResults(edge, result);
-          ports.forEach((key) => unusedPorts.delete(key));
-
-          // If it's ready to run, add it to the queue
-          const missing = state.missingInputs(edge.to);
-          if (!missing) state.queue.push(edge.to);
-
-          distribution.nodes.push({ node: edge.to, received: ports, missing });
-        });
+        // Distribute data to outgoing edges, queue up nodes that are ready to
+        const distribution = state.processResult(node, result);
 
         // Call after callback
-        distribution.unused = [...unusedPorts];
         for (const callback of callbacks) {
           await callback.after?.(this, node, inputs, result, distribution);
         }
 
         // Abort graph on uncaught errors.
-        if (unusedPorts.has("$error")) {
+        if (distribution.unused.includes("$error")) {
           throw (result["$error"] as { error: Error }).error;
         }
       }
