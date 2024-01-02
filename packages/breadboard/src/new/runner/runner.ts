@@ -273,16 +273,6 @@ export class Runner implements BreadboardRunner {
     // TODO: Implement
   }
 
-  static async fromNode(
-    node: AbstractNode,
-    metadata?: GraphMetadata
-  ): Promise<Runner> {
-    const board = new Runner();
-    Object.assign(board, await node.serialize(metadata));
-    board.#anyNode = node;
-    return board;
-  }
-
   static async fromGraphDescriptor(graph: GraphDescriptor): Promise<Runner> {
     const board = new Runner();
     board.nodes = graph.nodes;
