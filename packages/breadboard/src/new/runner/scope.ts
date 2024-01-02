@@ -30,7 +30,6 @@ export class Scope implements ScopeInterface {
 
   #handlers: NodeHandlers = {};
   #pinnedNodes: AbstractNode[] = [];
-  #state?: State;
 
   #callbacks: InvokeCallbacks[] = [];
 
@@ -101,7 +100,7 @@ export class Scope implements ScopeInterface {
 
   async invoke(node?: AbstractNode | AbstractNode[]): Promise<void> {
     try {
-      const state = (this.#state ??= new State());
+      const state = new State();
 
       state.queue = (
         node ? (node instanceof Array ? node : [node]) : this.#pinnedNodes
