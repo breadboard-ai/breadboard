@@ -20,6 +20,7 @@ import {
   NodeTypeIdentifier,
   KeyMap,
 } from "../runner/types.js";
+import { Schema } from "../../types.js";
 
 import { BuilderNode, isBuilderNodeProxy } from "./node.js";
 import { BuilderScope } from "./scope.js";
@@ -45,12 +46,14 @@ export class Value<T extends NodeValue = NodeValue>
   #scope: BuilderScope;
   #keymap: KeyMap;
   #constant: boolean;
+  #schema: Schema;
 
   constructor(
     node: BuilderNode<InputValues, OutputValue<T>>,
     scope: BuilderScope,
     keymap: string | KeyMap,
-    constant = false
+    constant = false,
+    schema = {}
   ) {
     super();
     this.#node = node;
@@ -58,6 +61,7 @@ export class Value<T extends NodeValue = NodeValue>
     this.#keymap = typeof keymap === "string" ? { [keymap]: keymap } : keymap;
     (this as unknown as { [key: symbol]: Value<T> })[IsValueSymbol] = this;
     this.#constant = constant;
+    this.#schema = schema;
   }
 
   then<TResult1 = T | undefined, TResult2 = never>(
@@ -80,9 +84,10 @@ export class Value<T extends NodeValue = NodeValue>
   asNodeInput(): [
     BuilderNodeInterface<InputValues, OutputValue<T>>,
     { [key: string]: string },
-    boolean
+    boolean,
+    Schema
   ] {
-    return [this.#node.unProxy(), this.#keymap, this.#constant];
+    return [this.#node.unProxy(), this.#keymap, this.#constant, this.#schema];
   }
 
   to<
@@ -106,7 +111,8 @@ export class Value<T extends NodeValue = NodeValue>
     toNode.addInputsFromNode(
       this.#node as unknown as BuilderNodeInterface,
       this.#keymap,
-      this.#constant
+      this.#constant,
+      this.#schema
     );
 
     return (
@@ -137,7 +143,12 @@ export class Value<T extends NodeValue = NodeValue>
 
     if (isValue(inputs)) {
       invertedMap = inputs.#remapKeys(invertedMap);
-      this.#node.addInputsFromNode(inputs.#node, invertedMap);
+      this.#node.addInputsFromNode(
+        inputs.#node,
+        invertedMap,
+        inputs.#constant,
+        inputs.#schema
+      );
     } else if (isBuilderNodeProxy(inputs)) {
       this.#node.addInputsFromNode(inputs.unProxy(), invertedMap);
     } else {
@@ -155,11 +166,17 @@ export class Value<T extends NodeValue = NodeValue>
       newMap = this.#remapKeys(newKey);
     }
 
-    return new Value(this.#node, this.#scope, newMap, this.#constant);
+    return new Value(
+      this.#node,
+      this.#scope,
+      newMap,
+      this.#constant,
+      this.#schema
+    );
   }
 
   memoize() {
-    return new Value(this.#node, this.#scope, this.#keymap, true);
+    return new Value(this.#node, this.#scope, this.#keymap, true, this.#schema);
   }
 
   // Create a node for the lambda that is being sent as this value. At this
@@ -170,6 +187,50 @@ export class Value<T extends NodeValue = NodeValue>
       ...config,
       $recipe: this,
     }).asProxy();
+  }
+
+  /**
+   * The following are type-casting methods that are useful when a node type
+   * returns generic types but we want to narrow the types to what we know they
+   * are, e.g. a parser node returning the result as raw wires.
+   *
+   * This is also a way to define the schema of a recipe, e.g. by casting input
+   * wires and what is returned.
+   *
+   * Use as `foo.asString()` or `foo.asNumber()`. `isArray` and `isObject` cast
+   * to generic arrays and objects.
+   */
+
+  isUnknown(): AbstractValue<unknown> {
+    delete this.#schema.type;
+    return this as unknown as AbstractValue<unknown>;
+  }
+
+  isString(): AbstractValue<string> {
+    this.#schema.type = "string";
+    return this as unknown as AbstractValue<string>;
+  }
+
+  isNumber(): AbstractValue<number> {
+    this.#schema.type = "number";
+    return this as unknown as AbstractValue<number>;
+  }
+
+  isBoolean(): AbstractValue<boolean> {
+    this.#schema.type = "boolean";
+    return this as unknown as AbstractValue<boolean>;
+  }
+
+  isArray(): AbstractValue<NodeValue[]> {
+    this.#schema.type = "array";
+    return this as unknown as AbstractValue<NodeValue[]>;
+  }
+
+  isObject(): AbstractValue<{ [key: string]: NodeValue }> {
+    this.#schema.type = "object";
+    return this as unknown as AbstractValue<{
+      [key: string]: NodeValue;
+    }>;
   }
 
   #remapKeys(newKeys: KeyMap) {

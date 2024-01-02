@@ -330,6 +330,7 @@ export class Scope implements ScopeInterface {
         if (edge.out !== "*" && edge.out !== "") {
           nodes.add(edge.to);
           ports.add(edge.out);
+          if (edge.schema) properties[edge.out] = edge.schema;
         }
 
       // For each node, get the schema and copy over the ports we care about
@@ -339,7 +340,10 @@ export class Scope implements ScopeInterface {
         if (schemaPorts)
           for (const edge of toNode.incoming)
             if (edge.from === node && schemaPorts[edge.in])
-              properties[edge.out] = schemaPorts[edge.in];
+              properties[edge.out] = {
+                ...schemaPorts[edge.in],
+                ...properties[edge.out],
+              };
       }
     } else if (node.type === "output") {
       const nodes = new Set<AbstractNode>();
@@ -349,6 +353,7 @@ export class Scope implements ScopeInterface {
         if (edge.out !== "*" && edge.out !== "") {
           nodes.add(edge.from);
           ports.add(edge.in);
+          if (edge.schema) properties[edge.in] = edge.schema;
         }
 
       // For each node, get the schema and copy over the ports we care about
@@ -358,14 +363,23 @@ export class Scope implements ScopeInterface {
         if (schemaPorts)
           for (const edge of fromNode.outgoing)
             if (edge.to === node && schemaPorts[edge.out])
-              properties[edge.in] = schemaPorts[edge.out];
+              properties[edge.in] = {
+                ...schemaPorts[edge.out],
+                ...properties[edge.in],
+              };
       }
     } else {
       throw new Error("Can't yet derive schema for non-input/output nodes");
     }
 
-    for (const port of ports)
-      if (!properties[port]) properties[port] = { type: "string", title: port };
+    for (const port of ports) {
+      if (!properties[port]) {
+        properties[port] = { type: "string", title: port };
+      } else {
+        properties[port].type ||= "string";
+        properties[port].title ||= port;
+      }
+    }
 
     return {
       type: "object",
