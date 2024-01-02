@@ -70,6 +70,7 @@ export interface EdgeInterface<
   out: string;
   in: string;
   constant?: boolean;
+  schema?: Schema;
 }
 
 export type OptionalIdConfiguration = { $id?: string };
@@ -89,7 +90,8 @@ export abstract class AbstractNode<
     from: AbstractNode,
     out: string,
     in_: string,
-    constant?: boolean
+    constant?: boolean,
+    schema?: Schema
   ): void;
   abstract receiveInputs(edge: EdgeInterface, inputs: InputValues): string[];
   abstract missingInputs(): string[] | false;

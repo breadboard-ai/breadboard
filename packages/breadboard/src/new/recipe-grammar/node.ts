@@ -29,6 +29,7 @@ import {
   OptionalIdConfiguration,
   ScopeInterface,
 } from "../runner/types.js";
+import { Schema } from "../../types.js";
 
 import { BaseNode } from "../runner/node.js";
 import { BuilderScope } from "./scope.js";
@@ -104,7 +105,7 @@ export class BuilderNode<
   addInputsAsValues(values: InputsMaybeAsValues<I>) {
     // Split into constants and nodes
     const constants: Partial<InputValues> = {};
-    const nodes: [AbstractNode, KeyMap, boolean][] = [];
+    const nodes: [AbstractNode, KeyMap, boolean, Schema | undefined][] = [];
 
     Object.entries(values).forEach(([key, value]) => {
       // This turns something returned by recipe() into a BoardCapability, which
@@ -120,6 +121,7 @@ export class BuilderNode<
           isBuilderNodeProxy(value) ? value.unProxy() : value,
           { [key]: key },
           false,
+          undefined, // Defers inference of schema from node to serialization
         ]);
       } else {
         constants[key] = value as NodeValue;
@@ -134,7 +136,8 @@ export class BuilderNode<
   addInputsFromNode(
     from: AbstractNode,
     keymap: KeyMap = { "*": "" },
-    constant?: boolean
+    constant?: boolean,
+    schema?: Schema
   ) {
     const keyPairs = Object.entries(keymap);
     if (keyPairs.length === 0) {
@@ -153,7 +156,8 @@ export class BuilderNode<
           isBuilderNodeProxy(from) ? from.unProxy() : from,
           fromKey,
           toKey,
-          constant
+          constant,
+          schema
         );
       });
     }
@@ -163,13 +167,14 @@ export class BuilderNode<
     from: AbstractNode,
     out: string,
     in_: string,
-    constant?: boolean
+    constant?: boolean,
+    schema?: Schema
   ) {
     const fromScope = (from as BuilderNode).#scope;
 
     // If this is a reguar wire, call super method to add it
     if (fromScope === this.#scope) {
-      super.addIncomingEdge(from, out, in_, constant);
+      super.addIncomingEdge(from, out, in_, constant, schema);
       return;
     }
 
