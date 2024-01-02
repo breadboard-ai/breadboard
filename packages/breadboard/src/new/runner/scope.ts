@@ -113,9 +113,9 @@ export class Scope implements ScopeInterface {
 
       const callbacks = this.#getAllCallbacks();
 
-      while (this.#state.queue.length) {
+      while (state.queue.length) {
         for (const callback of callbacks)
-          if (await callback.abort?.(this)) return;
+          if (await callback.stop?.(this)) return;
 
         const node = state.queue.shift() as AbstractNode;
 
@@ -128,16 +128,14 @@ export class Scope implements ScopeInterface {
         // Invoke node, unless before callback already provided a result.
         const result =
           callbackResult ??
-          (await node
-            .invoke(inputs as InputValues & PromiseLike<InputValues>, this)
-            .catch((e) => {
-              return {
-                $error: {
-                  type: "error",
-                  error: e,
-                },
-              };
-            }));
+          (await node.invoke(inputs, this).catch((e) => {
+            return {
+              $error: {
+                type: "error",
+                error: e,
+              },
+            };
+          }));
 
         state.hasRun(node);
 
@@ -145,7 +143,7 @@ export class Scope implements ScopeInterface {
         const unusedPorts = new Set<string>(Object.keys(result));
         const distribution: OutputDistribution = { nodes: [], unused: [] };
         node.outgoing.forEach((edge) => {
-          const ports = state.receiveInputs(edge, result);
+          const ports = state.distributeResults(edge, result);
           ports.forEach((key) => unusedPorts.delete(key));
 
           // If it's ready to run, add it to the queue
@@ -201,7 +199,7 @@ export class Scope implements ScopeInterface {
     const lastMissingInputs = new Map<string, string>();
 
     scope.addCallbacks({
-      abort: () => {
+      stop: () => {
         // Once output node was executed, stop execution.
         return !resolver;
       },

@@ -6,7 +6,6 @@
 
 import {
   GraphDescriptor,
-  GraphMetadata,
   NodeDescriptor,
   Edge,
   Kit,

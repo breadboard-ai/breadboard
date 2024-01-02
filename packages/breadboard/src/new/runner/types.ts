@@ -105,7 +105,7 @@ export abstract class AbstractNode<
 }
 
 export interface StateInterface {
-  receiveInputs(edge: EdgeInterface, inputs: InputValues): string[];
+  distributeResults(edge: EdgeInterface, inputs: InputValues): string[];
   missingInputs(node: AbstractNode): string[] | false;
 
   getInputs<I extends InputValues>(node: AbstractNode<I>): I;
@@ -123,7 +123,7 @@ export interface OutputDistribution {
 export interface InvokeCallbacks {
   // Called at the top of any iteration.
   // Return true to abort execution.
-  abort?: (scope: ScopeInterface) => boolean | Promise<boolean>;
+  stop?: (scope: ScopeInterface) => boolean | Promise<boolean>;
 
   // Called before a node is invoked.
   // Waits for execution until promise is resolved. (Useful to pause execution)

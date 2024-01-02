@@ -18,7 +18,7 @@ export class State implements StateInterface {
   controlWires: Map<AbstractNode, AbstractNode[]> = new Map();
   haveRun: Set<AbstractNode> = new Set();
 
-  receiveInputs(edge: EdgeInterface, inputs: InputValues) {
+  distributeResults(edge: EdgeInterface, inputs: InputValues) {
     const data =
       edge.out === "*"
         ? inputs
