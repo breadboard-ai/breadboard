@@ -21,9 +21,17 @@ The CLI tools are designed to help you create and debug your breadboard files di
 
 Imports an OpenAPI spec and converts the interface into a breadboard file that you can use.
 
-`npx breadboard import https://raw.githubusercontent.com/breadboard-ai/breadboard/c371c2cd5aca33673e30fc647c920228752e41ee/recipes/tools/openapi/tests/specs/openai.json` - Will import the latest `OpenAI` OpenAPI spec and convert it into a breadboard file.
+`npx breadboard import https://raw.githubusercontent.com/breadboard-ai/breadboard/c371c2cd5aca33673e30fc647c920228752e41ee/recipes/tools/openapi/tests/specs/openai.json -o ./` - Will import the latest `OpenAI` OpenAPI spec and emit a breadboard file for each endpoint in the spec.
+
+`npx breadboard import https://raw.githubusercontent.com/breadboard-ai/breadboard/c371c2cd5aca33673e30fc647c920228752e41ee/recipes/tools/openapi/tests/specs/openai.json -a createEmbeddings` - Will import the latest `OpenAI` OpenAPI spec emit only the named endpoint (in this case `createEmbeddings`)
+
+If you don't specify an API (with `-a`), then you must specify the `-o` (output directory) flag because the tool will create a file for each endpoint in the spec.
+
+The `-o` flag will output to the filesystem and not the terminal.
 
 Note: The code for importing the OpenAPI spec is not complete - for example it doesn't handle all types of auth (currently only Bearer.)
+
+Now you can also do neat things such as ``npx breadboard import https://raw.githubusercontent.com/breadboard-ai/breadboard/c371c2cd5aca33673e30fc647c920228752e41ee/recipes/tools/openapi/tests/specs/openai.json -a createEmbeddings | npx breadboard mermaid`
 
 ### Mermaid
 
