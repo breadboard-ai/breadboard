@@ -113,6 +113,7 @@
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
     "@google-labs/tsconfig": "*",
+    "@types/js-yaml": "^4.0.9",
     "@types/node": "^18.16.3",
     "@types/serve-handler": "^6.1.4",
     "@typescript-eslint/eslint-plugin": "^5.56.0",
@@ -122,6 +123,8 @@
   },
   "dependencies": {
     "@google-labs/breadboard": "*",
+    "@google-labs/core-kit": "^0.1.0",
+    "@google-labs/llm-starter": "^0.3.0",
     "commander": "^11.1.0",
     "esbuild": "^0.19.9",
     "serve": "^14.2.1",

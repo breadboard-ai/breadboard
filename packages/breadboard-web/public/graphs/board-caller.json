@@ -269,18 +269,18 @@
                       "schema": {
                         "type": "object",
                         "properties": {
-                          "function": {
-                            "type": "string",
-                            "title": "function"
-                          },
                           "boardURL": {
                             "type": "string",
                             "title": "boardURL"
+                          },
+                          "function": {
+                            "type": "string",
+                            "title": "function"
                           }
                         },
                         "required": [
-                          "function",
-                          "boardURL"
+                          "boardURL",
+                          "function"
                         ]
                       }
                     }
@@ -301,7 +301,7 @@
                         "properties": {
                           "item": {
                             "type": "string",
-                            "title": "item"
+                            "title": "boardURL"
                           }
                         },
                         "required": [
