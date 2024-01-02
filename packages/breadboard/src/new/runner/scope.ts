@@ -106,8 +106,8 @@ export class Scope implements ScopeInterface {
       state.queue = (
         node ? (node instanceof Array ? node : [node]) : this.#pinnedNodes
       ).flatMap((node) =>
-        this.#findAllConnectedNodes(node).filter((node) =>
-          state.missingInputs(node)
+        this.#findAllConnectedNodes(node).filter(
+          (node) => state.missingInputs(node) === false
         )
       );
 
