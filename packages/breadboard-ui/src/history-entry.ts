@@ -14,13 +14,13 @@ export class HistoryEntry extends LitElement {
   @property()
   type: HistoryEventType = HistoryEventType.DONE;
 
-  @state()
+  @property()
   nodeId = "";
 
-  @state()
+  @property()
   summary = "";
 
-  @state()
+  @property()
   data: unknown = null;
 
   @property()
@@ -34,8 +34,8 @@ export class HistoryEntry extends LitElement {
 
     #container {
       display: flex;
-      border-top: 1px solid rgb(240, 240, 240);
-      padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 2.5);
+      border-bottom: 1px solid rgb(240, 240, 240);
+      padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 3.5);
     }
 
     #container summary::before {
@@ -73,7 +73,7 @@ export class HistoryEntry extends LitElement {
 
     #container.nodeend summary::before {
       background: var(--bb-progress-color);
-      border: 1px solid rgb(90, 64, 119);
+      border: 1px solid #3c78d8;
     }
 
     #container.load summary::before {

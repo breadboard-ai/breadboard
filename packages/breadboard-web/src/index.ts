@@ -11,6 +11,9 @@ import {
 } from "@google-labs/breadboard/harness";
 import { createHarnessConfig } from "./config";
 
+// TODO: Remove once all elements are Lit-based.
+BreadboardUI.register();
+
 type PauserCallback = (paused: boolean) => void;
 class Pauser extends EventTarget {
   #paused = false;
@@ -45,13 +48,12 @@ const sleep = (time: number) =>
   new Promise((resolve) => setTimeout(resolve, time));
 
 export class Main {
-  #ui = BreadboardUI.get();
-  #hasActiveBoard = false;
+  #ui = new BreadboardUI.UI();
   #boardId = 0;
   #delay = 0;
   #pauser = new Pauser();
 
-  constructor(config: BreadboardUI.StartArgs) {
+  constructor(config: { boards: BreadboardUI.Types.Board[] }) {
     // Remove boards that are still works-in-progress from production builds.
     // These boards will have either no version or a version of "0.0.1".
     if (import.meta.env.MODE === "production") {
@@ -61,19 +63,12 @@ export class Main {
     }
     config.boards.sort((a, b) => a.title.localeCompare(b.title));
 
-    BreadboardUI.register();
+    this.#ui.boards = config.boards;
+    document.body.appendChild(this.#ui);
 
     document.body.addEventListener(
       BreadboardUI.StartEvent.eventName,
       async (evt: Event) => {
-        if (this.#hasActiveBoard) {
-          if (
-            !confirm("You already have an active board. Do you want to change?")
-          ) {
-            return;
-          }
-        }
-
         if (this.#pauser.paused) {
           // Setting this to false will "unpause" the current board, allowing it
           // to shut down. But we'll switch the pause back on for the new board.
@@ -81,14 +76,12 @@ export class Main {
           this.#pauser.paused = true;
         }
 
-        this.#hasActiveBoard = true;
         this.#boardId++;
 
         const startEvent = evt as BreadboardUI.StartEvent;
         this.setActiveBreadboard(startEvent.url);
 
         const harness = createHarness(createHarnessConfig(startEvent.url));
-
         this.#ui.load(await harness.load());
 
         for await (const result of harness.run()) {
@@ -121,7 +114,10 @@ export class Main {
       }
     );
 
-    this.start(config);
+    const boardFromUrl = this.#getBoardFromUrl();
+    if (boardFromUrl) {
+      document.body.dispatchEvent(new BreadboardUI.StartEvent(boardFromUrl));
+    }
   }
 
   setActiveBreadboard(url: string) {
@@ -129,32 +125,7 @@ export class Main {
     pageUrl.searchParams.set("board", url);
     window.history.replaceState(null, "", pageUrl);
 
-    // Update the board selector.
-    document.querySelector("bb-start")?.setAttribute("url", url);
-  }
-
-  start(args: BreadboardUI.StartArgs) {
-    const header = document.querySelector("header");
-    if (!header) {
-      return;
-    }
-
-    const Start = customElements.get("bb-start");
-    if (!Start) {
-      console.warn("Start element not defined");
-      return;
-    }
-
-    const start = new Start() as BreadboardUI.Start;
-    start.boards = args.boards;
-    header.append(start);
-
-    const boardFromUrl = this.#getBoardFromUrl();
-    if (boardFromUrl) {
-      document.body.dispatchEvent(new BreadboardUI.StartEvent(boardFromUrl));
-    } else {
-      this.#ui.showIntroContent();
-    }
+    this.#ui.url = url;
   }
 
   #getBoardFromUrl() {
@@ -177,9 +148,9 @@ export class Main {
   async #suspendIfPaused(): Promise<void> {
     return new Promise((resolve) => {
       if (this.#pauser.paused) {
-        this.#ui.showPaused();
+        this.#ui.paused = true;
         this.#pauser.once(() => {
-          this.#ui.hidePaused();
+          this.#ui.paused = false;
           resolve();
         });
 
@@ -250,7 +221,6 @@ export class Main {
 
       case "end":
         this.#ui.done();
-        this.#hasActiveBoard = false;
         break;
     }
   }
