@@ -10,6 +10,7 @@ import {
   BreadboardCapability,
   NodeDescriberFunction,
   GraphMetadata,
+  Schema,
 } from "../../types.js";
 
 import {
@@ -218,7 +219,8 @@ export interface BuilderNodeInterface<
   addInputsFromNode(
     from: AbstractNode,
     keymap: KeyMap,
-    constant?: boolean
+    constant?: boolean,
+    schema?: Schema
   ): void;
 
   asProxy(): NodeProxy<I, O>;
@@ -242,7 +244,7 @@ export type ClosureNodeInterface<
       | Promise<BreadboardCapability>;
   };
 
-export abstract class AbstractValue<T extends NodeValue | unknown = NodeValue>
+export abstract class AbstractValue<T extends NodeValue = NodeValue>
   implements PromiseLike<T | undefined>
 {
   abstract then<TResult1 = T | undefined, TResult2 = never>(
@@ -252,7 +254,12 @@ export abstract class AbstractValue<T extends NodeValue | unknown = NodeValue>
     onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null
   ): PromiseLike<TResult1 | TResult2>;
 
-  abstract asNodeInput(): [AbstractNode, { [key: string]: string }, boolean];
+  abstract asNodeInput(): [
+    AbstractNode,
+    { [key: string]: string },
+    boolean,
+    Schema
+  ];
 
   abstract to<
     ToO extends OutputValues = OutputValues,
@@ -277,6 +284,13 @@ export abstract class AbstractValue<T extends NodeValue | unknown = NodeValue>
   abstract memoize(): AbstractValue<T>;
 
   abstract invoke(config?: BuilderNodeConfig): NodeProxy;
+
+  abstract isUnknown(): AbstractValue<unknown>;
+  abstract isString(): AbstractValue<string>;
+  abstract isNumber(): AbstractValue<number>;
+  abstract isBoolean(): AbstractValue<boolean>;
+  abstract isArray(): AbstractValue<NodeValue[]>;
+  abstract isObject(): AbstractValue<{ [key: string]: NodeValue }>;
 }
 
 /**
