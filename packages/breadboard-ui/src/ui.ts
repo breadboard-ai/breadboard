@@ -16,13 +16,19 @@ import {
   NodeEndHistoryEvent,
   NodeStartHistoryEvent,
 } from "./types.js";
-import { BoardUnloadEvent, InputEnterEvent, ToastType } from "./events.js";
+import {
+  BoardUnloadEvent,
+  InputEnterEvent,
+  NodeSelectEvent,
+  ToastType,
+} from "./events.js";
 import { LoadArgs } from "./load.js";
 import { Diagram } from "./diagram.js";
 import { Input } from "./input.js";
 import { Output, OutputArgs } from "./output.js";
 import { NodeStartResponse } from "@google-labs/breadboard/remote";
 import { NodeEndResponse } from "@google-labs/breadboard/harness";
+import { NodeConfiguration, NodeDescriptor } from "@google-labs/breadboard";
 
 const enum MODE {
   BUILD = "build",
@@ -51,6 +57,12 @@ type HistoryListEntry = {
   data: unknown;
   elapsedTime: number;
   children: HistoryListEntry[];
+};
+
+type ExtendedNodeInformation = {
+  id: string;
+  type: string;
+  configuration: NodeConfiguration | undefined;
 };
 
 // TODO: Change to bb-ui after migration.
@@ -86,9 +98,13 @@ export class UI extends LitElement {
   @state()
   mode = MODE.BUILD;
 
+  @state()
+  selectedNode: ExtendedNodeInformation | null = null;
+
   #subHistoryEntries: Map<string, HistoryListEntry[]> = new Map();
   #diagram = new Diagram();
   #lastHistoryEventTime = Number.NaN;
+  #nodeInfo: Map<string, ExtendedNodeInformation> = new Map();
 
   static styles = css`
     :host {
@@ -269,7 +285,86 @@ export class UI extends LitElement {
     #outputs-list {
       padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 4);
     }
+
+    #node-information {
+      display: flex;
+      flex-direction: column;
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      max-width: calc(var(--bb-grid-size) * 90);
+      max-height: 40%;
+      border-radius: calc(var(--bb-grid-size) * 6);
+      background: rgb(255, 255, 255);
+      padding: calc(var(--bb-grid-size) * 4);
+      border: 1px solid rgb(204, 204, 204);
+      box-shadow: 0 2px 3px 0 rgba(0, 0, 0, 0.13),
+        0 7px 9px 0 rgba(0, 0, 0, 0.16);
+      overflow-y: auto;
+      scrollbar-gutter: stable;
+    }
+
+    #node-information h1 {
+      font-size: var(--bb-text-medium);
+      margin: 0;
+      font-weight: 400;
+      padding: 0 0 0 calc(var(--bb-grid-size) * 8);
+      line-height: calc(var(--bb-grid-size) * 6);
+      cursor: pointer;
+      background: var(--bb-icon-info) 0 0 no-repeat;
+    }
+
+    #node-information dl {
+      margin: calc(var(--bb-grid-size) * 2) 0;
+      padding-right: calc(var(--bb-grid-size) * 5);
+      display: grid;
+      grid-template-columns: fit-content(50px) 1fr;
+      column-gap: calc(var(--bb-grid-size) * 2);
+      row-gap: calc(var(--bb-grid-size) * 1);
+      font-size: var(--bb-text-nano);
+      width: 100%;
+      flex: 1;
+      overflow: auto;
+      scrollbar-gutter: stable;
+    }
+
+    #node-information dd {
+      margin: 0;
+      font-weight: bold;
+    }
+
+    #node-information pre {
+      font-size: var(--bb-text-nano);
+      white-space: pre-wrap;
+      margin: 0;
+    }
+
+    #node-information #close {
+      position: absolute;
+      right: calc(var(--bb-grid-size) * 3);
+      top: calc(var(--bb-grid-size) * 4);
+      width: 24px;
+      height: 24px;
+      background: var(--bb-icon-close) center center no-repeat;
+      border: none;
+      font-size: 0;
+      opacity: 0.5;
+      cursor: pointer;
+    }
+
+    #node-information #close:hover {
+      opacity: 1;
+    }
   `;
+
+  constructor() {
+    super();
+
+    this.#diagram.addEventListener(NodeSelectEvent.eventName, (evt: Event) => {
+      const nodeSelect = evt as NodeSelectEvent;
+      this.selectedNode = this.#nodeInfo.get(nodeSelect.id) || null;
+    });
+  }
 
   toast(message: string, type: ToastType) {
     this.toasts.push({ message, type });
@@ -299,7 +394,9 @@ export class UI extends LitElement {
     this.inputs.length = 0;
     this.outputs.length = 0;
 
-    this.#diagram = new Diagram();
+    this.#nodeInfo.clear();
+
+    this.#diagram.reset();
     this.#lastHistoryEventTime = Number.NaN;
 
     this.dispatchEvent(new BoardUnloadEvent());
@@ -328,6 +425,30 @@ export class UI extends LitElement {
       case MODE.BUILD: {
         return html`<div id="diagram">
             ${this.loadInfo.diagram ? this.#diagram : "No board diagram"}
+            ${this.selectedNode
+              ? html`<div id="node-information">
+                  <h1>Node Information</h1>
+                  <button id="close" @click=${() => (this.selectedNode = null)}>
+                    Close
+                  </button>
+                  <dl>
+                    <dd>ID</dd>
+                    <dt>${this.selectedNode.id}</dt>
+                    <dd>Type</dd>
+                    <dt>${this.selectedNode.type}</dt>
+                    <dd>Configuration</dd>
+                    <dt>
+                      <pre>
+                        ${JSON.stringify(
+                          this.selectedNode.configuration,
+                          null,
+                          2
+                        )}</pre
+                      >
+                    </dt>
+                  </dl>
+                </div>`
+              : nothing}
           </div>
           <div id="graph-info">
             <div id="inputs">
@@ -446,8 +567,28 @@ export class UI extends LitElement {
     this.requestUpdate();
   }
 
+  #parseNodeInformation(nodes?: NodeDescriptor[]) {
+    this.#nodeInfo.clear();
+    if (!nodes) {
+      return;
+    }
+
+    for (const node of nodes) {
+      // The diagram is going to emit IDs without dashes in, so store the config
+      // based on the modified ID here.
+      this.#nodeInfo.set(node.id, {
+        id: node.id,
+        type: node.type,
+        configuration: node.configuration,
+      });
+    }
+  }
+
   async load(loadInfo: LoadArgs) {
     this.loadInfo = loadInfo;
+
+    this.#parseNodeInformation(loadInfo.nodes);
+
     this.#lastHistoryEventTime = globalThis.performance.now();
     this.#createHistoryEntry({
       type: HistoryEventType.LOAD,
