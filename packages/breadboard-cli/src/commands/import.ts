@@ -6,7 +6,7 @@
 
 import openapi from "./boards/openapi.js";
 import { Board, asRuntimeKit } from "@google-labs/breadboard";
-import yaml from "js-yaml";
+import yaml from "yaml";
 import core from "@google-labs/core-kit";
 import starter from "@google-labs/llm-starter";
 import { writeFile } from "fs/promises";
@@ -38,7 +38,7 @@ export const importGraph = async (
   }
 
   try {
-    json = yaml.load(openAPIData);
+    json = yaml.parse(openAPIData);
   } catch (yamlLoadError) {
     try {
       json = JSON.parse(openAPIData);
@@ -69,7 +69,7 @@ export const importGraph = async (
 
       const board = apiRef;
       if (outputPath != undefined) {
-        outputBoard(board.board, apiPath, outputPath);
+        outputBoard(board.board, api, outputPath);
       } else {
         console.log(JSON.stringify(board.board, null, 2));
       }

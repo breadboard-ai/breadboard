@@ -127,7 +127,7 @@
     "@google-labs/llm-starter": "^0.3.0",
     "commander": "^11.1.0",
     "esbuild": "^0.19.9",
-    "js-yaml": "^4.1.0",
-    "serve": "^14.2.1"
+    "serve": "^14.2.1",
+    "yaml": "^2.3.4"
   }
 }

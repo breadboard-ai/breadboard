@@ -21,7 +21,11 @@ The CLI tools are designed to help you create and debug your breadboard files di
 
 Imports an OpenAPI spec and converts the interface into a breadboard file that you can use.
 
-`npx breadboard import https://raw.githubusercontent.com/breadboard-ai/breadboard/c371c2cd5aca33673e30fc647c920228752e41ee/recipes/tools/openapi/tests/specs/openai.json -o ./` - Will import the latest `OpenAI` OpenAPI spec and emit a breadboard file for each endpoint in the spec.
+`npx breadboard import https://raw.githubusercontent.com/breadboard-ai/breadboard/c371c2cd5aca33673e30fc647c920228752e41ee/recipes/tools/openapi/tests/specs/openai.json -o ./` - Will import the latest `OpenAI` OpenAPI JSON spec and emit a breadboard file for each endpoint in the spec.
+
+or
+
+`npx breadboard import https://raw.githubusercontent.com/openai/openai-openapi/master/openapi.yaml -o ./` - Will import the latest `OpenAI` OpenAPI YAML spec and emit a breadboard file for each endpoint in the spec.
 
 `npx breadboard import https://raw.githubusercontent.com/breadboard-ai/breadboard/c371c2cd5aca33673e30fc647c920228752e41ee/recipes/tools/openapi/tests/specs/openai.json -a createEmbeddings` - Will import the latest `OpenAI` OpenAPI spec emit only the named endpoint (in this case `createEmbeddings`)
 
