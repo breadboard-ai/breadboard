@@ -28,7 +28,7 @@ export class LocalHarness implements Harness {
     // Because we're in the browser, we need to ask for secrets from the user.
     // Add a special kit that overrides the `secrets` handler to ask the user
     // for secrets.
-    kits = [createSecretAskingKit(next), ...kits];
+    // kits = [createSecretAskingKit(next), ...kits];
 
     // If a proxy is configured, add the proxy kit to the list of kits.
     // Note, this may override the `secrets` handler from the SecretAskingKit.
@@ -81,6 +81,7 @@ export class LocalHarness implements Harness {
         for await (const data of this.#runner.run({ probe, kits })) {
           const { type } = data;
           if (type === "input") {
+            console.log("local harness input", data);
             const inputResult = new LocalResult({ type, data });
             await next(inputResult);
             data.inputs = inputResult.response as InputValues;

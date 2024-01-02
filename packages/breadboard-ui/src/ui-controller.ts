@@ -40,7 +40,11 @@ export interface UI {
   nodestart(data: NodeStartResponse): void;
   nodeend(data: NodeEndResponse): void;
   output(values: OutputArgs): void;
-  input(id: string, args: InputArgs): Promise<Record<string, unknown>>;
+  input(
+    id: string,
+    args: InputArgs,
+    secret: boolean
+  ): Promise<Record<string, unknown>>;
   error(message: string): void;
   done(): void;
 }
@@ -925,13 +929,21 @@ export class UIController extends HTMLElement implements UI {
     return response.secret;
   }
 
-  async input(id: string, args: InputArgs): Promise<Record<string, unknown>> {
+  async input(
+    id: string,
+    args: InputArgs,
+    secret: boolean
+  ): Promise<Record<string, unknown>> {
     this.#autoShowInput();
 
     const response: Record<string, unknown> = await new Promise((resolve) => {
       const input = new Input();
       input.id = id;
       input.args = args;
+      if (secret) {
+        input.remember = true;
+        input.secret = true;
+      }
 
       input.addEventListener(InputEnterEvent.eventName, (evt: Event) => {
         const inputEvent = evt as InputEnterEvent;

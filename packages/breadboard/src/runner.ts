@@ -169,7 +169,8 @@ export class BoardRunner implements BreadboardRunner {
           if (!handler)
             throw new Error(`No handler for node type "${descriptor.type}"`);
 
-          const secret = descriptor.type === "secret";
+          const secret = descriptor.type === "secrets";
+          console.log("Descriptor type:", descriptor.type, secret);
 
           const newContext: NodeHandlerContext = {
             ...context,

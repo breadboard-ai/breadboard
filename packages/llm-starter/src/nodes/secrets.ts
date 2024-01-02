@@ -13,6 +13,7 @@ import type {
   InputValues,
   NodeDescriberFunction,
   NodeHandler,
+  NodeHandlerContext,
   OutputValues,
 } from "@google-labs/breadboard";
 
@@ -41,13 +42,20 @@ const getEnvironmentValue = async (key: string) => {
   } else if (env === "browser") {
     // How do we avoid namespace clashes?
     return globalThis.localStorage.getItem(key);
-  } else if (env === "worker") {
-    // TODO: Calling main thread is a general pattern, figure out a way to
-    // avoid a special call here. Maybe some Board util?
-    throw new Error(
-      "Secrets are not yet supported in workers. Please proxy these nodes to the main thread."
-    );
   }
+  return undefined;
+};
+
+const getSecret = async (key: string, context?: NodeHandlerContext) => {
+  const value = await getEnvironmentValue(key);
+  console.log("getSecret", key, value, context?.requestInput);
+  if (value) return value;
+  return (await context?.requestInput?.(key, {
+    type: "string",
+    format: "password",
+    title: key,
+    description: `Please enter "${key}".`,
+  })) as string | undefined;
 };
 
 export const requireNonEmpty = (key: string, value?: string | null) => {
@@ -93,13 +101,13 @@ export const secretsDescriber: NodeDescriberFunction = async (
 
 export default {
   describe: secretsDescriber,
-  invoke: async (inputs: InputValues) => {
+  invoke: async (inputs: InputValues, context?: NodeHandlerContext) => {
     const { keys = [] } = inputs as SecretInputs;
     return Object.fromEntries(
       await Promise.all(
         keys.map(async (key) => [
           key,
-          requireNonEmpty(key, await getEnvironmentValue(key)),
+          requireNonEmpty(key, await getSecret(key, context)),
         ])
       )
     ) as OutputValues;

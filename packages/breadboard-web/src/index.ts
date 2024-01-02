@@ -207,7 +207,13 @@ export class Main {
       }
 
       case "input": {
-        result.reply(await this.#ui.input(data.node.id, data.inputArguments));
+        const {
+          node: { id },
+          inputArguments,
+          secret,
+        } = data;
+        console.log("input", id, inputArguments, secret);
+        result.reply(await this.#ui.input(id, inputArguments, secret));
         break;
       }
 

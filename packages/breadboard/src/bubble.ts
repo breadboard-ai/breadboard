@@ -125,6 +125,7 @@ export class RequestedInputsManager {
     result: TraversalResult,
     isSecret: boolean
   ) {
+    console.log("createHandler", isSecret);
     return async (name: string, schema: Schema, secret?: symbol) => {
       const cachedValue = this.#cache.get(name);
       if (cachedValue !== undefined) return cachedValue;
@@ -135,6 +136,7 @@ export class RequestedInputsManager {
         },
       };
       const treatAsSecret = secret === SECRET_SYMBOL || isSecret;
+      console.log("requestInput", name, schema, isSecret, secret);
       await next(new InputStageResult(requestInputResult, -1, treatAsSecret));
       const outputs = await requestInputResult.outputsPromise;
       let value = outputs && outputs[name];
