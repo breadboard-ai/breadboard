@@ -12,6 +12,7 @@ import { debug } from "./commands/debug.js";
 import { mermaid } from "./commands/mermaid.js";
 import { makeGraph } from "./commands/make-graph.js";
 import { run } from "./commands/run.js";
+import { importGraph } from "./commands/import.js";
 
 import { program } from "commander";
 
@@ -30,16 +31,9 @@ program
   .action(debug);
 
 program
-  .command("mermaid [file]")
-  .description(
-    "Watch a breadboard file and output the mermaid diagram when it changes."
-  )
-  .option(
-    "-o, --output <path>",
-    "If compiling a graph in Typescript (.ts), you MUST specific a location to output the compiled graph."
-  )
-  .option("-w, --watch", "Watch the file for changes.")
-  .action(mermaid);
+  .command("import [url]")
+  .description("Imports an OpenAPI spec and creates a dedicated board.")
+  .action(importGraph);
 
 program
   .command("make [file]")
@@ -52,6 +46,18 @@ program
   )
   .option("-w, --watch", "Watch the file for changes.")
   .action(makeGraph);
+
+program
+  .command("mermaid [file]")
+  .description(
+    "Watch a breadboard file and output the mermaid diagram when it changes."
+  )
+  .option(
+    "-o, --output <path>",
+    "If compiling a graph in Typescript (.ts), you MUST specific a location to output the compiled graph."
+  )
+  .option("-w, --watch", "Watch the file for changes.")
+  .action(mermaid);
 
 program
   .command("run [file]")

@@ -17,6 +17,14 @@ The CLI tools are designed to help you create and debug your breadboard files di
 
 `npx breadboard debug ./tests/ --watch` - Brings up the local board hosted in the UI and show all the boards in the folder. If new boards added to the folder then they will be added to the UI. You still need to `F5` or `CMD+R` to refresh the UI
 
+### Import
+
+Imports an OpenAPI spec and converts the interface into a breadboard file that you can use.
+
+`npx breadboard import https://raw.githubusercontent.com/breadboard-ai/breadboard/c371c2cd5aca33673e30fc647c920228752e41ee/recipes/tools/openapi/tests/specs/openai.json` - Will import the latest `OpenAI` OpenAPI spec and convert it into a breadboard file.
+
+Note: The code for importing the OpenAPI spec is not complete - for example it doesn't handle all types of auth (currently only Bearer.)
+
 ### Mermaid
 
 Creates a mermaid diagram from a breadboard file.
