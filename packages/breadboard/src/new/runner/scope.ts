@@ -30,6 +30,7 @@ export class Scope implements ScopeInterface {
 
   #handlers: NodeHandlers = {};
   #pinnedNodes: AbstractNode[] = [];
+  #state?: State;
 
   #callbacks: InvokeCallbacks[] = [];
 
