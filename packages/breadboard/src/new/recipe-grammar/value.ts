@@ -20,6 +20,7 @@ import {
   NodeTypeIdentifier,
   KeyMap,
 } from "../runner/types.js";
+import { Schema } from "../../types.js";
 
 import { BuilderNode, isBuilderNodeProxy } from "./node.js";
 import { BuilderScope } from "./scope.js";
@@ -45,6 +46,7 @@ export class Value<T extends NodeValue = NodeValue>
   #scope: BuilderScope;
   #keymap: KeyMap;
   #constant: boolean;
+  #schema: Schema = {};
 
   constructor(
     node: BuilderNode<InputValues, OutputValue<T>>,
@@ -80,9 +82,10 @@ export class Value<T extends NodeValue = NodeValue>
   asNodeInput(): [
     BuilderNodeInterface<InputValues, OutputValue<T>>,
     { [key: string]: string },
-    boolean
+    boolean,
+    Schema
   ] {
-    return [this.#node.unProxy(), this.#keymap, this.#constant];
+    return [this.#node.unProxy(), this.#keymap, this.#constant, this.#schema];
   }
 
   to<
@@ -185,26 +188,32 @@ export class Value<T extends NodeValue = NodeValue>
    */
 
   isUnknown(): AbstractValue<unknown> {
+    delete this.#schema.type;
     return this as unknown as AbstractValue<unknown>;
   }
 
   isString(): AbstractValue<string> {
+    this.#schema.type = "string";
     return this as unknown as AbstractValue<string>;
   }
 
   isNumber(): AbstractValue<number> {
+    this.#schema.type = "number";
     return this as unknown as AbstractValue<number>;
   }
 
   isBoolean(): AbstractValue<boolean> {
+    this.#schema.type = "boolean";
     return this as unknown as AbstractValue<boolean>;
   }
 
   isArray(): AbstractValue<NodeValue[]> {
+    this.#schema.type = "array";
     return this as unknown as AbstractValue<NodeValue[]>;
   }
 
   isObject(): AbstractValue<{ [key: string]: NodeValue }> {
+    this.#schema.type = "object";
     return this as unknown as AbstractValue<{
       [key: string]: NodeValue;
     }>;

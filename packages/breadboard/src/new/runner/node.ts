@@ -87,7 +87,8 @@ export class BaseNode<
     from: AbstractNode,
     out: string,
     in_: string,
-    constant?: boolean
+    constant?: boolean,
+    schema?: Schema
   ) {
     if ((from as BaseNode).#scope !== this.#scope)
       throw new Error("Can't connect nodes from different scopes");
@@ -97,6 +98,7 @@ export class BaseNode<
       from: from,
       out,
       in: in_,
+      schema,
     };
     if (constant) edge.constant = true;
 

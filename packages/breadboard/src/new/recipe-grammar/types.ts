@@ -10,6 +10,7 @@ import {
   BreadboardCapability,
   NodeDescriberFunction,
   GraphMetadata,
+  Schema,
 } from "../../types.js";
 
 import {
@@ -252,7 +253,12 @@ export abstract class AbstractValue<T extends NodeValue = NodeValue>
     onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null
   ): PromiseLike<TResult1 | TResult2>;
 
-  abstract asNodeInput(): [AbstractNode, { [key: string]: string }, boolean];
+  abstract asNodeInput(): [
+    AbstractNode,
+    { [key: string]: string },
+    boolean,
+    Schema
+  ];
 
   abstract to<
     ToO extends OutputValues = OutputValues,
