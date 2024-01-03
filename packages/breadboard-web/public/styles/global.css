@@ -11,6 +11,7 @@
 html {
   --bb-grid-size: 4px;
   --bb-font-family-header: "Fira Code";
+  --bb-font-family-mono: "Fira Code", "Courier New", Courier, monospace;
   --bb-font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   --bb-font-color: rgb(23, 23, 23);
   --bb-font-color-faded: rgb(59, 59, 59);

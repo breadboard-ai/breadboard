@@ -7,7 +7,7 @@
 import { HistoryEventType } from "./types.js";
 
 import { LitElement, html, css } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
 
 @customElement("bb-history-entry")
 export class HistoryEntry extends LitElement {
@@ -154,6 +154,10 @@ export class HistoryEntry extends LitElement {
       padding-left: calc(var(--bb-grid-size) * 3);
     }
 
+    .data {
+      padding-top: var(--bb-grid-size);
+    }
+
     @keyframes rotate {
       from {
         transform: rotate(0);
@@ -167,10 +171,25 @@ export class HistoryEntry extends LitElement {
 
   #createDataOutput(data: unknown | null) {
     if (data === null) {
-      return "";
+      return "(pending)";
     }
 
-    return JSON.stringify(data, null, 2);
+    if (data === undefined) {
+      return "(no data)";
+    }
+
+    try {
+      if (typeof data !== "object") {
+        throw new Error(typeof data);
+      }
+
+      return html`<bb-json-tree
+        autoExpand="true"
+        .json=${data}
+      ></bb-json-tree>`;
+    } catch (err) {
+      return html`(invalid value type: "${err}")`;
+    }
   }
 
   #formatTime(time: number) {
@@ -201,7 +220,7 @@ export class HistoryEntry extends LitElement {
       this.elapsedTime
     )}<span></summary>
     <div class="history"><slot></slot></div>
-    <div><pre>${this.#createDataOutput(this.data)}</pre></div>
+    <div class="data">${this.#createDataOutput(this.data)}</div>
     </details>
   </div>`;
   }
