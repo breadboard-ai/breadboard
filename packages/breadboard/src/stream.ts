@@ -51,6 +51,35 @@ const findStreams = (value: NodeValue, foundStreams: ReadableStream[]) => {
   }
 };
 
+export const stringifyWithStreams = (value: unknown) => {
+  const foundStreams: ReadableStream[] = [];
+  return {
+    value: JSON.stringify(value, (key, value) => {
+      if (isStreamCapability(value)) {
+        foundStreams.push(value.stream);
+        return { $type: "Stream", id: foundStreams.length - 1 };
+      }
+      return value;
+    }),
+    streams: foundStreams,
+  };
+};
+
+export const parseWithStreams = (
+  value: string,
+  getStream: (id: number) => ReadableStream
+) => {
+  const parsed = JSON.parse(value, (key, value) => {
+    if (typeof value === "object" && value !== null) {
+      if (value.$type === "Stream" && typeof value.id === "number") {
+        return new StreamCapability(getStream(value.id));
+      }
+    }
+    return value;
+  });
+  return parsed;
+};
+
 export const getStreams = (value: NodeValue) => {
   const foundStreams: ReadableStream[] = [];
   findStreams(value, foundStreams);

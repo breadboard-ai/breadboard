@@ -6,13 +6,112 @@
 
 import test from "ava";
 import {
+  StreamCapability,
+  parseWithStreams,
   portFactoryToStreams,
   portToStreams,
   streamFromAsyncGen,
   streamFromReader,
   streamFromWriter,
   streamsToAsyncIterable,
+  stringifyWithStreams,
 } from "../src/stream.js";
+
+test("stringifyWithStreams works as expected", async (t) => {
+  {
+    const stream = new ReadableStream();
+    const value = {
+      a: 1,
+      b: new StreamCapability(stream),
+    };
+    const result = stringifyWithStreams(value);
+    t.deepEqual(result, {
+      value: '{"a":1,"b":{"$type":"Stream","id":0}}',
+      streams: [stream],
+    });
+  }
+  {
+    const stream0 = new ReadableStream();
+    const stream1 = new ReadableStream();
+    const value = {
+      a: 1,
+      b: new StreamCapability(stream0),
+      c: {
+        d: new StreamCapability(stream1),
+      },
+    };
+    const result = stringifyWithStreams(value);
+    t.deepEqual(result, {
+      value:
+        '{"a":1,"b":{"$type":"Stream","id":0},"c":{"d":{"$type":"Stream","id":1}}}',
+      streams: [stream0, stream1],
+    });
+  }
+  {
+    const value = { a: 1, b: { c: 2 } };
+    const result = stringifyWithStreams(value);
+    t.deepEqual(result, {
+      value: '{"a":1,"b":{"c":2}}',
+      streams: [],
+    });
+  }
+});
+
+test("parseWithStreams works as expected", async (t) => {
+  {
+    const stream = new ReadableStream();
+    const value = {
+      a: 1,
+      b: {
+        $type: "Stream",
+        id: 0,
+      },
+    };
+    const result = parseWithStreams(JSON.stringify(value), () => stream);
+    t.deepEqual(result, {
+      a: 1,
+      b: new StreamCapability(stream),
+    });
+  }
+  {
+    const stream0 = new ReadableStream();
+    const stream1 = new ReadableStream();
+    const value = {
+      a: 1,
+      b: {
+        $type: "Stream",
+        id: 0,
+      },
+      c: {
+        d: {
+          $type: "Stream",
+          id: 1,
+        },
+      },
+    };
+    const result = parseWithStreams(JSON.stringify(value), (id) => {
+      if (id === 0) return stream0;
+      if (id === 1) return stream1;
+      t.fail("invalid id");
+      return null as unknown as ReadableStream;
+    });
+    t.deepEqual(result, {
+      a: 1,
+      b: new StreamCapability(stream0),
+      c: {
+        d: new StreamCapability(stream1),
+      },
+    });
+  }
+  {
+    const value = { a: 1, b: { c: 2 } };
+    const result = parseWithStreams(JSON.stringify(value), () => {
+      t.fail("should not be called");
+      return null as unknown as ReadableStream;
+    });
+    t.deepEqual(result, value);
+  }
+});
 
 test("streamFromAsyncGen simple", async (t) => {
   async function* gen() {
