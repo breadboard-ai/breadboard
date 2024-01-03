@@ -498,26 +498,12 @@ export class UI extends LitElement {
     }
 
     const createId = () => {
-      return hasPath(event) ? pathToId(event.data.path) : id || "";
+      return hasPath(event) ? pathToId(event.data.path) : id;
     };
 
     const elapsedTime =
       globalThis.performance.now() - this.#lastHistoryEventTime;
     this.#lastHistoryEventTime = globalThis.performance.now();
-
-    const findParent = () => {
-      if (hasPath(event)) {
-        let path = event.data.path;
-        do {
-          path = path.slice(0, -1);
-          const parent = this.historyEntries.findIndex(
-            (entry) => entry.id === pathToId(path)
-          );
-          if (parent !== -1) return parent;
-        } while (path.length);
-      }
-      return 0;
-    };
 
     const entry: HistoryListEntry = {
       type,
@@ -529,31 +515,35 @@ export class UI extends LitElement {
       children: [],
     };
 
-    const parent = findParent();
-    if (parent === 0) {
-      this.historyEntries.unshift(entry);
+    if (hasPath(event)) {
+      const entryList = this.#findParentHistoryEntry(event.data.path);
+      entryList.push(entry);
     } else {
-      this.historyEntries[parent].children.push(entry);
+      this.historyEntries.push(entry);
     }
 
     this.requestUpdate();
   }
 
-  #updateHistoryEntry({ type, data }: NodeEndHistoryEvent) {
-    const id = pathToId(data.path);
-
+  #findParentHistoryEntry(path: number[]) {
     let entryList = this.historyEntries;
-    for (let idx = 0; idx < data.path.length - 1; idx++) {
-      const id = pathToId(data.path.slice(0, idx + 1));
+    for (let idx = 0; idx < path.length - 1; idx++) {
+      const id = pathToId(path.slice(0, idx + 1));
       const parentId = entryList.findIndex((item) => item.id === id);
       if (parentId === -1) {
         console.warn(`Unable to find ID "${id}"`);
-        break;
+        return this.historyEntries;
       }
 
-      entryList = this.historyEntries[parentId].children;
+      entryList = entryList[parentId].children;
     }
 
+    return entryList;
+  }
+
+  #updateHistoryEntry({ type, data }: NodeEndHistoryEvent) {
+    const id = pathToId(data.path);
+    const entryList = this.#findParentHistoryEntry(data.path);
     const historyEntry = entryList.find((item) => item.id === id);
     if (!historyEntry) {
       return;
