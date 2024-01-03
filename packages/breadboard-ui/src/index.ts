@@ -17,6 +17,7 @@ export { Start } from "./start.js";
 export { Progress } from "./progress.js";
 export { UI } from "./ui.js";
 export { BoardList } from "./board-list.js";
+export { JSONTree } from "./json-tree.js";
 
 import { Output } from "./output.js";
 import { UIController as DeprecatedUIController } from "./deprecated-ui-controller.js";
