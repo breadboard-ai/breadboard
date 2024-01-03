@@ -180,7 +180,7 @@ export class HistoryEntry extends LitElement {
 
     try {
       if (typeof data !== "object") {
-        throw new Error("Invalid value: " + typeof data);
+        throw new Error(typeof data);
       }
 
       return html`<bb-json-tree
@@ -188,7 +188,7 @@ export class HistoryEntry extends LitElement {
         .json=${data}
       ></bb-json-tree>`;
     } catch (err) {
-      return html`(invalid value: ${err})`;
+      return html`(invalid value type: "${err}")`;
     }
   }
 
