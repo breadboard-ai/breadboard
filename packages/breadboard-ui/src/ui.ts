@@ -438,13 +438,10 @@ export class UI extends LitElement {
                     <dt>${this.selectedNode.type}</dt>
                     <dd>Configuration</dd>
                     <dt>
-                      <pre>
-                        ${JSON.stringify(
-                          this.selectedNode.configuration,
-                          null,
-                          2
-                        )}</pre
-                      >
+                      <bb-json-tree
+                        .json=${this.selectedNode.configuration}
+                        autoExpand="true"
+                      ></bb-json-tree>
                     </dt>
                   </dl>
                 </div>`
