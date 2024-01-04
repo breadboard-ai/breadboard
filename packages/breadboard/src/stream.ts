@@ -27,6 +27,7 @@ export class StreamCapability<ChunkType>
 export const isStreamCapability = (object: unknown) => {
   const maybeStream = object as StreamCapabilityType;
   return (
+    maybeStream &&
     maybeStream.kind &&
     maybeStream.kind === STREAM_KIND &&
     maybeStream.stream instanceof ReadableStream
