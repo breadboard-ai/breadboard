@@ -33,6 +33,7 @@ export const isStreamCapability = (object: unknown) => {
   );
 };
 
+// TODO: Remove this once MessageController is gone.
 const findStreams = (value: NodeValue, foundStreams: ReadableStream[]) => {
   if (Array.isArray(value)) {
     value.forEach((item: NodeValue) => {
@@ -117,9 +118,8 @@ export const portToStreams = <Read, Write>(
   });
   const writable = new WritableStream<Write>({
     write(chunk) {
-      const foundStreams: ReadableStream[] = [];
-      findStreams(chunk as NodeValue, foundStreams);
-      port.postMessage(chunk, foundStreams);
+      const stringified = stringifyWithStreams(chunk);
+      port.postMessage(chunk, stringified.streams);
     },
     close() {
       port.postMessage(null, []);

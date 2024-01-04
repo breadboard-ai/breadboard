@@ -7,6 +7,7 @@
 import test from "ava";
 import {
   StreamCapability,
+  isStreamCapability,
   parseWithStreams,
   portFactoryToStreams,
   portToStreams,
@@ -184,6 +185,45 @@ test("portToStreams works as expected", async (t) => {
       if (done) break;
       results.push(value);
     }
+    t.deepEqual(results, [1, 2, 3]);
+  }
+});
+
+test("portToStreams correctly transfers value streams", async (t) => {
+  const { port1, port2 } = new MessageChannel();
+  const port1streams = portToStreams(port1);
+  const port2streams = portToStreams(port2);
+
+  const clientReader = port1streams.readable.getReader();
+  const serverWriter = port2streams.writable.getWriter();
+
+  {
+    const stream = new ReadableStream<number>({
+      async pull(controller) {
+        controller.enqueue(1);
+        controller.enqueue(2);
+        controller.enqueue(3);
+        controller.close();
+      },
+    });
+    await serverWriter.write(new StreamCapability(stream));
+    await serverWriter.close();
+  }
+
+  {
+    const results = [];
+
+    const streamValue = await clientReader.read();
+    t.false(streamValue.done);
+    const stream = streamValue.value;
+    t.true(isStreamCapability(stream));
+    const reader = (stream as StreamCapability<number>).stream.getReader();
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      results.push(value);
+    }
+
     t.deepEqual(results, [1, 2, 3]);
   }
 });
