@@ -12,6 +12,7 @@ import {
   GraphEndHistoryEvent,
   GraphStartHistoryEvent,
   HistoryEventType,
+  HistoryEntry,
   InputArgs,
   NodeEndHistoryEvent,
   NodeStartHistoryEvent,
@@ -49,16 +50,6 @@ const hasPath = (
 
 const pathToId = (path: number[]) => `path-${path.join("-")}`;
 
-type HistoryListEntry = {
-  id: string;
-  type: HistoryEventType;
-  nodeId: string;
-  summary: string;
-  data: unknown;
-  elapsedTime: number;
-  children: HistoryListEntry[];
-};
-
 type ExtendedNodeInformation = {
   id: string;
   type: string;
@@ -93,7 +84,7 @@ export class UI extends LitElement {
   outputs: Output[] = [];
 
   @state()
-  historyEntries: HistoryListEntry[] = [];
+  historyEntries: HistoryEntry[] = [];
 
   @state()
   mode = MODE.BUILD;
@@ -101,7 +92,7 @@ export class UI extends LitElement {
   @state()
   selectedNode: ExtendedNodeInformation | null = null;
 
-  #subHistoryEntries: Map<string, HistoryListEntry[]> = new Map();
+  #subHistoryEntries: Map<string, HistoryEntry[]> = new Map();
   #diagram = new Diagram();
   #lastHistoryEventTime = Number.NaN;
   #nodeInfo: Map<string, ExtendedNodeInformation> = new Map();
@@ -256,6 +247,7 @@ export class UI extends LitElement {
     }
 
     #history {
+      display: grid;
       grid-column: 1 / 3;
     }
 
@@ -402,7 +394,7 @@ export class UI extends LitElement {
     this.dispatchEvent(new BoardUnloadEvent());
   }
 
-  #historyEntryToTemplate(entry: HistoryListEntry): HTMLTemplateResult {
+  #historyEntryToTemplate(entry: HistoryEntry): HTMLTemplateResult {
     return html`<bb-history-entry
       id=${entry.id}
       .nodeId=${entry.nodeId}
@@ -469,14 +461,10 @@ export class UI extends LitElement {
               </div>
             </div>
             <div id="history">
-              <h1>History</h1>
-              <div id="history-list">
-                ${this.historyEntries.length
-                  ? this.historyEntries.map((entry) =>
-                      this.#historyEntryToTemplate(entry)
-                    )
-                  : html`There are no history entries yet.`}
-              </div>
+              <bb-history-tree
+                .history=${this.historyEntries}
+                .lastUpdate=${this.#lastHistoryEventTime}
+              ></bb-history-tree>
             </div>
           </div>`;
       }
@@ -501,16 +489,21 @@ export class UI extends LitElement {
       return hasPath(event) ? pathToId(event.data.path) : id;
     };
 
+    const createGUID = () => {
+      return globalThis.crypto.randomUUID();
+    };
+
     const elapsedTime =
       globalThis.performance.now() - this.#lastHistoryEventTime;
     this.#lastHistoryEventTime = globalThis.performance.now();
 
-    const entry: HistoryListEntry = {
+    const entry: HistoryEntry = {
       type,
       nodeId: id,
       summary,
       data: hasPath(event) ? null : data,
       id: createId(),
+      guid: createGUID(),
       elapsedTime,
       children: [],
     };

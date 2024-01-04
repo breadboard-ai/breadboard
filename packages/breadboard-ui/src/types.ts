@@ -110,3 +110,14 @@ export interface CanvasData {
     mime_type: string;
   };
 }
+
+export type HistoryEntry = {
+  id: string;
+  guid: string;
+  type: HistoryEventType;
+  nodeId: string;
+  summary: string;
+  data: unknown;
+  elapsedTime: number;
+  children: HistoryEntry[];
+};
