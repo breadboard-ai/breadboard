@@ -180,6 +180,7 @@ test("ProxyServer and ProxyClient correctly handle streams", async (t) => {
   const chunks: string[] = [];
   for (;;) {
     const { done, value } = await reader.read();
+    console.log(done, value);
     if (done) break;
     chunks.push(value);
   }

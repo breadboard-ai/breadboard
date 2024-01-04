@@ -4,7 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { PatchedReadableStream, patchReadableStream } from "../stream.js";
+import {
+  PatchedReadableStream,
+  parseWithStreams,
+  patchReadableStream,
+  stringifyWithStreams,
+} from "../stream.js";
 import {
   ClientBidirectionalStream,
   ClientTransport,
@@ -42,6 +47,32 @@ const serverStreamEventDecoder = () => {
   });
 };
 
+export const parseWithStreamsTransform = () => {
+  const siphon = new TransformStream();
+  const writer = siphon.writable.getWriter();
+  return new TransformStream({
+    transform(chunk, controller) {
+      const parsed = parseWithStreams(chunk, (id) => {
+        if (id !== 0) {
+          throw new Error(
+            "HTTPClientTransport does not support multiple streams at the moment."
+          );
+        }
+        return siphon.readable;
+      });
+      // Siphon away chunks into the stream.
+      const [type] = Array.isArray(parsed) ? parsed : [];
+      if (type === "http-stream-chunk") {
+        writer.write(parsed[1].chunk);
+      } else if (type === "http-stream-end") {
+        writer.close();
+      } else {
+        controller.enqueue(parsed as Response);
+      }
+    },
+  });
+};
+
 export class HTTPServerTransport<Request, Response>
   implements ServerTransport<Request, Response>
 {
@@ -74,8 +105,31 @@ export class HTTPServerTransport<Request, Response>
         },
       }) as PatchedReadableStream<Request>,
       writableResponses: new WritableStream({
-        write(chunk) {
-          response.write(`data: ${JSON.stringify(chunk)}\n\n`);
+        async write(chunk) {
+          const stringified = stringifyWithStreams(chunk);
+          response.write(`data: ${stringified.value}\n\n`);
+          if (stringified.streams.length) {
+            if (stringified.streams.length > 1) {
+              throw new Error(
+                "HTTPServerTransport does not support multiple streams at the moment."
+              );
+            }
+            // this chunk has streams, let's send the stream data
+            // along with the chunk.
+            const stream = stringified.streams[0];
+            await stream.pipeTo(
+              new WritableStream({
+                write(chunk) {
+                  const data = ["http-stream-chunk", { chunk }];
+                  response.write(`data: ${JSON.stringify(data)}\n\n`);
+                },
+                close() {
+                  const data = ["http-stream-end", {}];
+                  response.write(`data: ${JSON.stringify(data)}\n\n`);
+                },
+              })
+            );
+          }
         },
         close() {
           response.end();
@@ -205,11 +259,7 @@ export class HTTPClientTransport<Request, Response>
               .pipeThrough(chunkRepairTransform())
               .pipeThrough(serverStreamEventDecoder())
               .pipeThrough(
-                new TransformStream({
-                  transform(chunk, controller) {
-                    controller.enqueue(JSON.parse(chunk) as Response);
-                  },
-                })
+                parseWithStreamsTransform()
               ) as PatchedReadableStream<Response>
           );
           responseResolve = undefined;
