@@ -30,6 +30,7 @@ export class HistoryTree extends LitElement {
 
   #dataByGuid: Map<string, HistoryEntry> = new Map();
   #autoExpand: Set<string> = new Set();
+  #onKeyDownBound = this.#onKeyDown.bind(this);
 
   static styles = css`
     :host {
@@ -373,6 +374,14 @@ export class HistoryTree extends LitElement {
     return time.toFixed(1) + "ms";
   }
 
+  #onKeyDown(evt: KeyboardEvent) {
+    if (evt.key !== "Escape") {
+      return;
+    }
+
+    this.selected = null;
+  }
+
   #convertToHtml(
     entry: HistoryEntry,
     parent = "",
@@ -518,6 +527,16 @@ export class HistoryTree extends LitElement {
         <div id="data">${dataOutput}</div>
       </section>
     </div>`;
+  }
+
+  connectedCallback(): void {
+    super.connectedCallback();
+    window.addEventListener("keydown", this.#onKeyDownBound);
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    window.removeEventListener("keydown", this.#onKeyDownBound);
   }
 
   render() {
