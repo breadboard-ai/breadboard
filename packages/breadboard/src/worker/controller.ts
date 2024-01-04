@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { getStreams } from "../stream.js";
+import {
+  getStreams,
+  parseWithStreams,
+  stringifyWithStreams,
+} from "../stream.js";
 import { InputValues } from "../types.js";
 import {
   type ControllerMessage,
@@ -17,6 +21,11 @@ type ResolveFunction<T extends ControllerMessage = ControllerMessage> = (
 ) => void;
 
 type MessageHandler = (e: ControllerMessage) => void;
+
+const replaceStreams = (data: InputValues): InputValues => {
+  const stringified = stringifyWithStreams(data).value;
+  return parseWithStreams(stringified, () => new ReadableStream());
+};
 
 export interface MessageControllerTransport {
   setMessageHandler(messageHandler: MessageHandler): void;
@@ -47,6 +56,13 @@ export class WorkerTransport implements MessageControllerTransport {
   }
 
   sendMessage<T extends ControllerMessage>(message: T) {
+    const { type } = message;
+    // This is necessary because a stream can only be transferred once,
+    // and both nodeend and nodestart messages need to transfer the same stream,
+    // along with the "output" message
+    if (type === "nodestart" || type === "nodeend") {
+      message.data = replaceStreams(message.data as InputValues);
+    }
     const streams = getStreams(message.data as InputValues);
     this.worker.postMessage(message, streams);
   }

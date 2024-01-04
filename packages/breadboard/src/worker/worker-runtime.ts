@@ -111,7 +111,7 @@ export class WorkerRuntime {
         error = (error.cause as { error: Error }).error;
         message += `\n${error.message}`;
       }
-      console.error("Error in worker", error.message);
+      console.error("Error in worker:", error.message);
       this.#controller.inform<ErrorMessage>({ error: message }, "error");
     }
   }
