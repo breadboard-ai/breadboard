@@ -160,6 +160,16 @@ export class HistoryTree extends LitElement {
       margin: 0 calc(var(--bb-grid-size) * 2) 0 0;
     }
 
+    tr[data-depth="2"] .marker {
+      translate: 4px 0;
+    }
+
+    tr[data-depth="3"] .marker,
+    tr[data-depth="4"] .marker,
+    tr[data-depth="5"] .marker {
+      translate: 8px 0;
+    }
+
     tr .marker::after {
       content: "";
       width: 8px;
@@ -231,12 +241,22 @@ export class HistoryTree extends LitElement {
       background: #fff2ccff;
     }
 
+    tr .marker::before {
+      background: #dadada;
+    }
+
+    tr[data-depth="2"] .marker::before,
+    tr[data-depth="3"] .marker::before,
+    tr[data-depth="4"] .marker::before,
+    tr[data-depth="5"] .marker::before {
+      background: #cbcbcb;
+    }
+
     tr.children.expanded .marker::before,
     tr:not([data-parent=""]) .marker::before {
       content: "";
       width: 2px;
       height: calc(100% + 2px);
-      background: #dadada;
       position: absolute;
       top: -1px;
       left: 50%;
@@ -244,12 +264,14 @@ export class HistoryTree extends LitElement {
       box-sizing: border-box;
     }
 
-    tr.children.expanded .marker::before {
+    tr[data-parent=""].children.expanded .marker::before {
       height: 50%;
       translate: -50% 100%;
     }
 
-    tr.last .marker::before {
+    tr:not(.children) .marker.nodestart::before,
+    tr[data-depth="0"].last .marker:not(.nodestart)::before,
+    tr[data-depth="1"].last .marker:not(.nodestart)::before {
       height: 50%;
     }
 
@@ -354,7 +376,8 @@ export class HistoryTree extends LitElement {
   #convertToHtml(
     entry: HistoryEntry,
     parent = "",
-    last = false
+    last = false,
+    depth = 0
   ): HTMLTemplateResult {
     let dataOutput;
     if (entry.data === null) {
@@ -392,6 +415,7 @@ export class HistoryTree extends LitElement {
         id="${entry.id || nothing}"
         data-parent="${parent}"
         data-guid="${entry.guid}"
+        data-depth="${depth}"
         @click="${this.#selectRow}"
       >
         <td>
@@ -418,7 +442,12 @@ export class HistoryTree extends LitElement {
         <td>${this.#formatTime(entry.elapsedTime)}</td>
       </tr>
       ${entry.children.map((child, idx, items) =>
-        this.#convertToHtml(child, entry.id, idx === items.length - 1)
+        this.#convertToHtml(
+          child,
+          entry.id,
+          idx === items.length - 1,
+          depth + 1
+        )
       )}`;
   }
 
