@@ -158,35 +158,69 @@ test("ProxyServer can be configured to tunnel nodes", async (t) => {
 });
 
 test("ProxyServer and ProxyClient correctly handle streams", async (t) => {
-  const connection = new MockHTTPConnection<AnyProxyRequestMessage>();
-  connection.onRequest(async (request, response) => {
-    const kits = [asRuntimeKit(TestKit)];
-    const server = new ProxyServer(new HTTPServerTransport(request, response));
-    await server.serve({ kits, proxy: ["streamer"] });
-  });
-  const client = new ProxyClient(
-    new HTTPClientTransport("http://example.com", { fetch: connection.fetch })
-  );
-  const board = new Board();
-  const kit = board.addKit(TestKit);
-  board
-    .input({ hello: "world" })
-    .wire("*", kit.streamer().wire("*", board.output()));
-  const kits = [client.createProxyKit(["streamer"]), kit];
-  const outputs = await board.runOnce({ hello: "world" }, { kits });
-  t.like(outputs, { stream: { kind: "stream" } });
-  const stream = (outputs.stream as StreamCapability<string>).stream;
-  const reader = stream.getReader();
-  const chunks: string[] = [];
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    chunks.push(value);
+  {
+    const connection = new MockHTTPConnection<AnyProxyRequestMessage>();
+    connection.onRequest(async (request, response) => {
+      const kits = [asRuntimeKit(TestKit)];
+      const server = new ProxyServer(
+        new HTTPServerTransport(request, response)
+      );
+      await server.serve({ kits, proxy: ["streamer"] });
+    });
+    const client = new ProxyClient(
+      new HTTPClientTransport("http://example.com", { fetch: connection.fetch })
+    );
+    const board = new Board();
+    const kit = board.addKit(TestKit);
+    board
+      .input({ hello: "world" })
+      .wire("*", kit.streamer().wire("*", board.output()));
+    const kits = [client.createProxyKit(["streamer"]), kit];
+    const outputs = await board.runOnce({ hello: "world" }, { kits });
+    t.like(outputs, { stream: { kind: "stream" } });
+    const stream = (outputs.stream as StreamCapability<string>).stream;
+    const reader = stream.getReader();
+    const chunks: string[] = [];
+    for (;;) {
+      const { done, value } = await reader.read();
+      console.log(done, value);
+      if (done) break;
+      chunks.push(value);
+    }
+    t.deepEqual(
+      chunks.join(""),
+      "Breadboard is a project that helps you make AI recipes. "
+    );
   }
-  t.deepEqual(
-    chunks.join(""),
-    "Breadboard is a project that helps you make AI recipes. "
-  );
+  {
+    const mockWorkers = createMockWorkers();
+    const client = new ProxyClient(new WorkerClientTransport(mockWorkers.host));
+    const server = new ProxyServer(
+      new WorkerServerTransport(mockWorkers.worker)
+    );
+    server.serve({ kits: [asRuntimeKit(TestKit)], proxy: ["streamer"] });
+    const board = new Board();
+    const kit = board.addKit(TestKit);
+    board
+      .input({ hello: "world" })
+      .wire("*", kit.streamer().wire("*", board.output()));
+    const kits = [client.createProxyKit(["streamer"]), kit];
+    const outputs = await board.runOnce({ hello: "world" }, { kits });
+    t.like(outputs, { stream: { kind: "stream" } });
+    const stream = (outputs.stream as StreamCapability<string>).stream;
+    const reader = stream.getReader();
+    const chunks: string[] = [];
+    for (;;) {
+      const { done, value } = await reader.read();
+      console.log(done, value);
+      if (done) break;
+      chunks.push(value);
+    }
+    t.deepEqual(
+      chunks.join(""),
+      "Breadboard is a project that helps you make AI recipes. "
+    );
+  }
 });
 
 test("ProxyClient can shut down ProxyServer", async (t) => {

@@ -33,6 +33,7 @@ export const isStreamCapability = (object: unknown) => {
   );
 };
 
+// TODO: Remove this once MessageController is gone.
 const findStreams = (value: NodeValue, foundStreams: ReadableStream[]) => {
   if (Array.isArray(value)) {
     value.forEach((item: NodeValue) => {
@@ -49,6 +50,35 @@ const findStreams = (value: NodeValue, foundStreams: ReadableStream[]) => {
       });
     }
   }
+};
+
+export const stringifyWithStreams = (value: unknown) => {
+  const foundStreams: ReadableStream[] = [];
+  return {
+    value: JSON.stringify(value, (key, value) => {
+      if (isStreamCapability(value)) {
+        foundStreams.push(value.stream);
+        return { $type: "Stream", id: foundStreams.length - 1 };
+      }
+      return value;
+    }),
+    streams: foundStreams,
+  };
+};
+
+export const parseWithStreams = (
+  value: string,
+  getStream: (id: number) => ReadableStream
+) => {
+  const parsed = JSON.parse(value, (key, value) => {
+    if (typeof value === "object" && value !== null) {
+      if (value.$type === "Stream" && typeof value.id === "number") {
+        return new StreamCapability(getStream(value.id));
+      }
+    }
+    return value;
+  });
+  return parsed;
 };
 
 export const getStreams = (value: NodeValue) => {
@@ -88,9 +118,8 @@ export const portToStreams = <Read, Write>(
   });
   const writable = new WritableStream<Write>({
     write(chunk) {
-      const foundStreams: ReadableStream[] = [];
-      findStreams(chunk as NodeValue, foundStreams);
-      port.postMessage(chunk, foundStreams);
+      const stringified = stringifyWithStreams(chunk);
+      port.postMessage(chunk, stringified.streams);
     },
     close() {
       port.postMessage(null, []);

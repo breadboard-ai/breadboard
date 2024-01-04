@@ -5,19 +5,13 @@
  */
 
 import { callHandler, handlersFromKits } from "../handler.js";
-import {
-  StreamCapability,
-  StreamCapabilityType,
-  isStreamCapability,
-  streamsToAsyncIterable,
-} from "../stream.js";
+import { streamsToAsyncIterable } from "../stream.js";
 import { asRuntimeKit } from "../kits/ctors.js";
 import { KitBuilder } from "../kits/builder.js";
 import {
   InputValues,
   NodeDescriptor,
   NodeHandlerContext,
-  NodeValue,
   OutputValues,
 } from "../types.js";
 import { NodeProxyConfig, NodeProxySpec, ProxyServerConfig } from "./config.js";
@@ -102,28 +96,7 @@ export class ProxyServer {
           request.reply(["error", { error: "Handler returned nothing." }]);
           continue;
         }
-
-        // Look for StreamCapability in the result. If it's there, we need to
-        // pipe it to the response.
-        // For now, we'll only support one stream per response, and only
-        // when the stream is at the top level of the response.
-        const streams = Object.values(result).filter((value) =>
-          isStreamCapability(value)
-        );
         request.reply(["proxy", { outputs: result }]);
-        if (streams.length > 0) {
-          const stream = (streams[0] as StreamCapability<unknown>).stream;
-          await stream.pipeTo(
-            new WritableStream({
-              write(chunk) {
-                request.reply(["chunk", { chunk }]);
-              },
-              close() {
-                request.reply(["end", {}]);
-              },
-            })
-          );
-        }
       } catch (e) {
         request.reply(["error", { error: (e as Error).message }]);
       }
@@ -135,12 +108,6 @@ type ProxyClientTransport = ClientTransport<
   AnyProxyRequestMessage,
   AnyProxyResponseMessage
 >;
-
-const isStreamCapabilityLike = (value: NodeValue): boolean => {
-  if (typeof value !== "object" || value === null) return false;
-  const stream = (value as StreamCapabilityType).stream;
-  return typeof stream === "object" && stream !== null;
-};
 
 export class ProxyClient {
   #transport: ProxyClientTransport;
@@ -174,40 +141,7 @@ export class ProxyClient {
     const [type] = result.value;
     if (type === "proxy") {
       const [, { outputs }] = result.value;
-      // Reinflate StreamCapability for the single output that might be
-      // isStreamCapability-like.
-      let foundStream = false;
-      return Object.fromEntries(
-        Object.entries(outputs).map(([name, value]) => {
-          if (foundStream || !isStreamCapabilityLike(value))
-            return [name, value];
-          foundStream = true;
-          const stream = new ReadableStream({
-            async pull(controller) {
-              for (;;) {
-                const result = await reader.read();
-                if (result.done) {
-                  controller.close();
-                  return;
-                }
-                const [type] = result.value;
-                if (type === "chunk") {
-                  const [, { chunk }] = result.value;
-                  controller.enqueue(chunk);
-                } else if (type === "end") {
-                  controller.close();
-                  return;
-                } else {
-                  throw new Error(
-                    `Unexpected proxy failure: unknown response type "${type}".`
-                  );
-                }
-              }
-            },
-          });
-          return [name, new StreamCapability(stream)];
-        })
-      );
+      return outputs;
     } else if (type === "error") {
       const [, { error }] = result.value;
       throw new Error(error);
