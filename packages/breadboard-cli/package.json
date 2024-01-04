@@ -30,7 +30,9 @@
         "FORCE_COLOR": "1"
       },
       "dependencies": [
-        "../breadboard:build:tsc"
+        "../breadboard:build:tsc",
+        "../llm-starter:build:tsc",
+        "../core-kit:build:tsc"
       ],
       "files": [
         "src/**/*.ts",
