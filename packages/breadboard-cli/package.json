@@ -123,8 +123,8 @@
   },
   "dependencies": {
     "@google-labs/breadboard": "*",
-    "@google-labs/core-kit": "^0.1.0",
-    "@google-labs/llm-starter": "^0.3.0",
+    "@google-labs/core-kit": "*",
+    "@google-labs/llm-starter": "*",
     "commander": "^11.1.0",
     "esbuild": "^0.19.9",
     "serve": "^14.2.1",
