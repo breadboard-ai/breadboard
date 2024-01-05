@@ -37,6 +37,12 @@ export class HistoryTree extends LitElement {
       font-size: var(--bb-text-nano, 12px);
       position: relative;
       overflow: auto;
+
+      --depth-1: hsl(48deg, 100%, 98%);
+      --depth-2: hsl(45deg, 100%, 96%);
+      --depth-3: hsl(42deg, 100%, 94%);
+      --depth-4: hsl(39deg, 100%, 92%);
+      --depth-5: hsl(36deg, 100%, 90%);
     }
 
     * {
@@ -126,12 +132,24 @@ export class HistoryTree extends LitElement {
       padding-right: calc(var(--bb-grid-size) * 5);
     }
 
-    tbody tr.children.expanded td {
-      background: #f0f0f0;
+    tbody tr[data-depth="0"].expanded td,
+    tbody tr[data-depth="1"] td {
+      background: var(--depth-1);
     }
 
-    tbody tr:not([data-parent=""]) td {
-      background: #fcfcfc;
+    tbody tr[data-depth="1"].expanded td,
+    tbody tr[data-depth="2"] td {
+      background: var(--depth-2);
+    }
+
+    tbody tr[data-depth="2"].expanded td,
+    tbody tr[data-depth="3"] td {
+      background: var(--depth-3);
+    }
+
+    tbody tr[data-depth="3"].expanded td,
+    tbody tr[data-depth="4"] td {
+      background: var(--depth-4);
     }
 
     tbody tr:not([data-parent=""]) {
@@ -161,16 +179,6 @@ export class HistoryTree extends LitElement {
       margin: 0 calc(var(--bb-grid-size) * 2) 0 0;
     }
 
-    tr[data-depth="2"] .marker {
-      translate: 4px 0;
-    }
-
-    tr[data-depth="3"] .marker,
-    tr[data-depth="4"] .marker,
-    tr[data-depth="5"] .marker {
-      translate: 8px 0;
-    }
-
     tr .marker::after {
       content: "";
       width: 8px;
@@ -186,6 +194,12 @@ export class HistoryTree extends LitElement {
     }
 
     tr .marker.load::after {
+      background: rgb(110, 84, 139);
+      border: 1px solid rgb(90, 64, 119);
+    }
+
+    tr .marker.graphstart::after,
+    tr .marker.graphend::after {
       background: rgb(110, 84, 139);
       border: 1px solid rgb(90, 64, 119);
     }
@@ -246,13 +260,6 @@ export class HistoryTree extends LitElement {
       background: #dadada;
     }
 
-    tr[data-depth="2"] .marker::before,
-    tr[data-depth="3"] .marker::before,
-    tr[data-depth="4"] .marker::before,
-    tr[data-depth="5"] .marker::before {
-      background: #cbcbcb;
-    }
-
     tr.children.expanded .marker::before,
     tr:not([data-parent=""]) .marker::before {
       content: "";
@@ -293,7 +300,23 @@ export class HistoryTree extends LitElement {
     }
 
     tbody tr:hover td {
-      background: #efefef;
+      background: var(--depth-1);
+    }
+
+    tbody tr[data-depth="1"]:hover td {
+      background: var(--depth-2);
+    }
+
+    tbody tr[data-depth="2"]:hover td {
+      background: var(--depth-3);
+    }
+
+    tbody tr[data-depth="3"]:hover td {
+      background: var(--depth-4);
+    }
+
+    tbody tr[data-depth="4"]:hover td {
+      background: var(--depth-5);
     }
 
     #selected {
@@ -386,7 +409,8 @@ export class HistoryTree extends LitElement {
     entry: HistoryEntry,
     parent = "",
     last = false,
-    depth = 0
+    depth = 0,
+    visible = true
   ): HTMLTemplateResult {
     let dataOutput;
     if (entry.data === null) {
@@ -415,9 +439,7 @@ export class HistoryTree extends LitElement {
     return html`<tr
         class="${classMap({
           expanded,
-          visible: this.expandCollapseState.has(parent)
-            ? this.expandCollapseState.get(parent) === STATE.EXPANDED
-            : this.#autoExpand.has(parent),
+          visible,
           children: entry.children.length > 0,
           last: last,
         })}"
@@ -455,7 +477,8 @@ export class HistoryTree extends LitElement {
           child,
           entry.id,
           idx === items.length - 1,
-          depth + 1
+          depth + 1,
+          visible && expanded
         )
       )}`;
   }
@@ -520,7 +543,7 @@ export class HistoryTree extends LitElement {
             id="close"
             title="Close"
           >
-            X</button
+            Close</button
           >${entry.summary} ${entry.nodeId ? html`(${entry.nodeId})` : nothing}
         </header>
 
