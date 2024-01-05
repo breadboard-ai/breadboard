@@ -117,7 +117,8 @@ export class HistoryTree extends LitElement {
       padding-right: calc(var(--bb-grid-size) * 1);
     }
 
-    thead td.id {
+    thead td.id,
+    thead td.initiator {
       width: calc(var(--bb-grid-size) * 30);
     }
 
@@ -183,8 +184,8 @@ export class HistoryTree extends LitElement {
       content: "";
       width: 8px;
       height: 8px;
-      border: 1px solid #333;
-      background: #fff;
+      border: 1px solid #666;
+      background: #eee;
       border-radius: 50%;
       position: absolute;
       top: 50%;
@@ -252,8 +253,8 @@ export class HistoryTree extends LitElement {
     }
 
     tr .marker.nodeend::after {
-      border: 1px solid #ffab40;
-      background: #fff2ccff;
+      border: 1px solid hsl(33.6, 100%, 52.5%);
+      background: hsl(44.7, 100%, 80%);
     }
 
     tr .marker::before {
@@ -407,6 +408,7 @@ export class HistoryTree extends LitElement {
 
   #convertToHtml(
     entry: HistoryEntry,
+    initiator: string | undefined = undefined,
     parent = "",
     last = false,
     depth = 0,
@@ -421,9 +423,15 @@ export class HistoryTree extends LitElement {
       dataOutput = html`${JSON.stringify(entry.data)}`;
     }
 
-    if (entry.type === HistoryEventType.NODESTART) {
+    if (
+      entry.type === HistoryEventType.NODESTART ||
+      entry.type === HistoryEventType.GRAPHSTART
+    ) {
       this.#autoExpand.add(entry.id);
-    } else if (entry.type === HistoryEventType.NODEEND) {
+    } else if (
+      entry.type === HistoryEventType.NODEEND ||
+      entry.type === HistoryEventType.GRAPHEND
+    ) {
       this.#autoExpand.delete(entry.id);
     }
 
@@ -469,12 +477,16 @@ export class HistoryTree extends LitElement {
         <td class="id">
           ${entry.nodeId || html`<span class="empty">(none)</span>`}
         </td>
+        <td class="initiator">
+          ${initiator || html`<span class="empty">(none)</span>`}
+        </td>
         <td class="value">${dataOutput}</td>
         <td>${this.#formatTime(entry.elapsedTime)}</td>
       </tr>
       ${entry.children.map((child, idx, items) =>
         this.#convertToHtml(
           child,
+          entry.nodeId || initiator,
           entry.id,
           idx === items.length - 1,
           depth + 1,
@@ -575,6 +587,7 @@ export class HistoryTree extends LitElement {
           <tr>
             <td>Type</td>
             <td class="id">ID</td>
+            <td class="initiator">Initiator</td>
             <td class="value">Value</td>
             <td>Duration</td>
           </tr>
