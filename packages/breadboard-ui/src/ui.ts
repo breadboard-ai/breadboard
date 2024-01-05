@@ -30,6 +30,7 @@ import { Output, OutputArgs } from "./output.js";
 import { NodeStartResponse } from "@google-labs/breadboard/remote";
 import { NodeEndResponse } from "@google-labs/breadboard/harness";
 import { NodeConfiguration, NodeDescriptor } from "@google-labs/breadboard";
+import { Ref, createRef, ref } from "lit/directives/ref.js";
 
 const enum MODE {
   BUILD = "build",
@@ -102,6 +103,8 @@ export class UI extends LitElement {
   #diagram = new Diagram();
   #lastHistoryEventTime = Number.NaN;
   #nodeInfo: Map<string, ExtendedNodeInformation> = new Map();
+  #gridInfoRef: Ref<HTMLElement> = createRef();
+  #gridInfoBB: DOMRect | null = null;
 
   static styles = css`
     :host {
@@ -109,6 +112,9 @@ export class UI extends LitElement {
       display: grid;
       grid-template-rows: calc(var(--bb-grid-size) * 11) auto;
       grid-template-columns: calc(var(--bb-grid-size) * 16) auto;
+
+      --row-top: 1fr;
+      --row-bottom: 1fr;
     }
 
     * {
@@ -237,9 +243,8 @@ export class UI extends LitElement {
     #graph-info {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr 1fr;
+      grid-template-rows: var(--row-top) 8px var(--row-bottom);
       column-gap: 8px;
-      row-gap: 8px;
       overflow: auto;
     }
 
@@ -252,8 +257,19 @@ export class UI extends LitElement {
       background: rgb(255, 255, 255);
     }
 
+    #inputs,
+    #outputs {
+      display: flex;
+      flex-direction: column;
+    }
+
     #history {
       display: grid;
+      grid-column: 1 / 3;
+    }
+
+    #drag-handle {
+      cursor: ns-resize;
       grid-column: 1 / 3;
     }
 
@@ -445,7 +461,7 @@ export class UI extends LitElement {
                 </div>`
               : nothing}
           </div>
-          <div id="graph-info">
+          <div id="graph-info" ${ref(this.#gridInfoRef)}>
             <div id="inputs">
               <h1>Inputs</h1>
               <div id="inputs-list">
@@ -466,6 +482,12 @@ export class UI extends LitElement {
                   : html`There are no outputs yet.`}
               </div>
             </div>
+            <div
+              id="drag-handle"
+              @pointerdown=${this.#startVerticalResize}
+              @pointermove=${this.#onVerticalResize}
+              @pointerup=${this.#endVerticalResize}
+            ></div>
             <div id="history">
               <bb-history-tree
                 .history=${this.historyEntries}
@@ -483,6 +505,65 @@ export class UI extends LitElement {
         return html`Unknown mode`;
       }
     }
+  }
+
+  firstUpdated() {
+    const rowTop = globalThis.sessionStorage.getItem("grid-row-top");
+    const rowBottom = globalThis.sessionStorage.getItem("grid-row-bottom");
+    if (!(rowTop && rowBottom)) {
+      return;
+    }
+
+    this.#applyGridRowHeight(rowTop, rowBottom);
+  }
+
+  #applyGridRowHeight(rowTop: string, rowBottom: string) {
+    this.style.setProperty("--row-top", rowTop);
+    this.style.setProperty("--row-bottom", rowBottom);
+  }
+
+  #startVerticalResize(evt: PointerEvent) {
+    if (!(evt.target instanceof HTMLElement)) {
+      return;
+    }
+
+    if (!this.#gridInfoRef.value) {
+      return;
+    }
+
+    evt.target.setPointerCapture(evt.pointerId);
+    this.#gridInfoBB = this.#gridInfoRef.value.getBoundingClientRect();
+  }
+
+  #onVerticalResize(evt: PointerEvent) {
+    if (this.#gridInfoBB === null) {
+      return;
+    }
+
+    let normalizedY =
+      (evt.pageY - this.#gridInfoBB.top) / this.#gridInfoBB.height;
+
+    if (normalizedY < 0.1) {
+      normalizedY = 0.1;
+    } else if (normalizedY > 0.9) {
+      normalizedY = 0.9;
+    }
+
+    this.#applyGridRowHeight(`${normalizedY}fr`, `${1 - normalizedY}fr`);
+  }
+
+  #endVerticalResize() {
+    if (!this.#gridInfoBB) {
+      return;
+    }
+
+    this.#gridInfoBB = null;
+
+    const rowTop = this.style.getPropertyValue("--row-top");
+    const rowBottom = this.style.getPropertyValue("--row-bottom");
+
+    globalThis.sessionStorage.setItem("grid-row-top", rowTop);
+    globalThis.sessionStorage.setItem("grid-row-bottom", rowBottom);
   }
 
   #createHistoryEntry(event: AnyHistoryEvent) {

@@ -38,11 +38,11 @@ export class HistoryTree extends LitElement {
       position: relative;
       overflow: auto;
 
-      --depth-1: hsl(48deg, 100%, 98%);
-      --depth-2: hsl(45deg, 100%, 96%);
-      --depth-3: hsl(42deg, 100%, 94%);
-      --depth-4: hsl(39deg, 100%, 92%);
-      --depth-5: hsl(36deg, 100%, 90%);
+      --depth-1: hsl(48deg, 60%, 98%);
+      --depth-2: hsl(45deg, 60%, 96%);
+      --depth-3: hsl(42deg, 60%, 94%);
+      --depth-4: hsl(39deg, 60%, 92%);
+      --depth-5: hsl(36deg, 60%, 90%);
     }
 
     * {
