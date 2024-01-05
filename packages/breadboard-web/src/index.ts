@@ -208,12 +208,12 @@ export class Main {
       }
 
       case "graphstart": {
-        console.log("graphstart", data.path.join("_"), data);
+        this.#ui.graphstart(data);
         break;
       }
 
       case "graphend": {
-        console.log("graphend", data.path.join("_"), data);
+        this.#ui.graphend(data);
         break;
       }
 

@@ -48,7 +48,13 @@ const hasPath = (
   event.type === HistoryEventType.GRAPHSTART ||
   event.type === HistoryEventType.GRAPHEND;
 
-const pathToId = (path: number[]) => `path-${path.join("-")}`;
+const pathToId = (path: number[]) => {
+  if (path.length == 0) {
+    return `path-main-graph`;
+  }
+
+  return `path-${path.join("-")}`;
+};
 
 type ExtendedNodeInformation = {
   id: string;
@@ -510,6 +516,10 @@ export class UI extends LitElement {
 
     if (hasPath(event)) {
       const entryList = this.#findParentHistoryEntry(event.data.path);
+      // Check there isn't already a node with that type.
+      if (entryList.find((sibling) => sibling.id === entry.id)) {
+        return;
+      }
       entryList.push(entry);
     } else {
       this.historyEntries.push(entry);
@@ -534,16 +544,37 @@ export class UI extends LitElement {
     return entryList;
   }
 
-  #updateHistoryEntry({ type, data }: NodeEndHistoryEvent) {
+  #updateHistoryEntry({
+    type,
+    data,
+    summary = "",
+  }: NodeEndHistoryEvent | GraphEndHistoryEvent) {
     const id = pathToId(data.path);
     const entryList = this.#findParentHistoryEntry(data.path);
-    const historyEntry = entryList.find((item) => item.id === id);
-    if (!historyEntry) {
+    const existingEntry = entryList.find((item) => item.id === id);
+    if (!existingEntry) {
+      console.warn(`Unable to find ID "${id}"`);
       return;
     }
 
-    historyEntry.type = type;
-    historyEntry.data = data.outputs;
+    // We may have a nodestart which leads into a graphstart of the same ID, but
+    // we'll then receive a graphend before a nodeend against that same ID. This
+    // can cause UI confusion so we double check here that if we have a graphend
+    // or a nodeend that it tallies with a corresponding graphstart/nodestart.
+    const typesMatch =
+      (existingEntry.type === HistoryEventType.NODESTART &&
+        type === HistoryEventType.NODEEND) ||
+      (existingEntry.type === HistoryEventType.GRAPHSTART &&
+        type === HistoryEventType.GRAPHEND);
+    if (!typesMatch) {
+      return;
+    }
+
+    existingEntry.type = type;
+    existingEntry.data = "outputs" in data ? data.outputs : undefined;
+    if (summary !== "") {
+      existingEntry.summary = summary;
+    }
     this.requestUpdate();
   }
 
@@ -670,6 +701,22 @@ export class UI extends LitElement {
     this.#createHistoryEntry({
       type: HistoryEventType.DONE,
       summary: "Board finished",
+    });
+  }
+
+  graphstart({ path }: { path: number[] }) {
+    this.#createHistoryEntry({
+      type: HistoryEventType.GRAPHSTART,
+      summary: "Board (running)",
+      data: { path },
+    });
+  }
+
+  graphend({ path }: { path: number[] }) {
+    this.#updateHistoryEntry({
+      type: HistoryEventType.GRAPHEND,
+      summary: "Board",
+      data: { path },
     });
   }
 
