@@ -25,7 +25,7 @@ test("schema derived from reverser (has describe)", async (t) => {
   t.deepEqual(inputSchema, {
     type: "object",
     properties: {
-      foo: { type: "string", title: "foo", description: "String to reverse" },
+      foo: { type: "string", title: "foo", description: "Reverse: foo" },
     },
     required: ["foo"],
   });
@@ -34,7 +34,7 @@ test("schema derived from reverser (has describe)", async (t) => {
   t.deepEqual(outputSchema, {
     type: "object",
     properties: {
-      bar: { type: "string", title: "foo", description: "Reversed string" },
+      bar: { type: "string", title: "foo", description: "Reversed: foo" },
     },
     required: ["bar"],
   });
@@ -102,6 +102,39 @@ test("schema derived from noop, with type casts", async (t) => {
     type: "object",
     properties: {
       bar: { type: "number", title: "bar", description: "A bar-ish number" },
+    },
+    required: ["bar"],
+  });
+});
+
+test("schema derived from reverser, with type annotations", async (t) => {
+  const graph = recipe<{ foo: string }>(({ foo }) => ({
+    bar: testKit
+      .reverser({ foo: foo.title("A foo") })
+      .foo.description("Reversed bar"),
+  }));
+
+  const serialized = await graph.serialize();
+
+  const inputSchema = serialized.nodes.find((node) => node.type === "input")
+    ?.configuration?.schema;
+  const outputSchema = serialized.nodes.find((node) => node.type === "output")
+    ?.configuration?.schema;
+
+  t.deepEqual(inputSchema, {
+    type: "object",
+    properties: {
+      foo: { type: "string", title: "A foo", description: "Reverse: A foo" },
+    },
+    required: ["foo"],
+  });
+
+  // Note "A foo" as title, as this is determined by the reverse node,
+  // while description is overriden.
+  t.deepEqual(outputSchema, {
+    type: "object",
+    properties: {
+      bar: { type: "string", title: "A foo", description: "Reversed bar" },
     },
     required: ["bar"],
   });
