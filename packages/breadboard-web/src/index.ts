@@ -66,6 +66,10 @@ export class Main {
     this.#ui.boards = config.boards;
     document.body.appendChild(this.#ui);
 
+    document.body.addEventListener("dblclick", () => {
+      this.#delay = 20000;
+    });
+
     document.body.addEventListener(
       BreadboardUI.StartEvent.eventName,
       async (evt: Event) => {
