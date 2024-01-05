@@ -129,12 +129,12 @@ test("schema derived from reverser, with type annotations", async (t) => {
     required: ["foo"],
   });
 
-  // Note "foo" as title, as this is determined by the reverse node,
+  // Note "A foo" as title, as this is determined by the reverse node,
   // while description is overriden.
   t.deepEqual(outputSchema, {
     type: "object",
     properties: {
-      bar: { type: "string", title: "foo", description: "Reversed bar" },
+      bar: { type: "string", title: "A foo", description: "Reversed bar" },
     },
     required: ["bar"],
   });

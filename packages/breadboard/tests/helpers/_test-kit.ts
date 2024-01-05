@@ -160,7 +160,10 @@ export const TestKit = new KitBuilder({
               type: "string",
               title: inputSchema?.properties?.[port]?.title ?? port,
               description:
-                op + (inputSchema?.properties?.[port]?.description ?? port),
+                op +
+                (inputSchema?.properties?.[port]?.description ??
+                  inputSchema?.properties?.[port]?.title ??
+                  port),
             },
           ])
         ),
