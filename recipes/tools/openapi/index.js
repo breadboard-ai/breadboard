@@ -67,6 +67,31 @@ const generateAPISpecs = code(({ json }) => {
 
   const apis = Object.entries(paths)
     .map(([key, value]) => {
+      // Parse parameters on the path
+      const pathParameters = [];
+
+      if ("parameters" in value) {
+        value.parameters.map((param) => {
+          // We can only manage reference objects for now.
+          if ("$ref" in param) {
+            if (param.$ref.startsWith("#") == false) {
+              return undefined;
+            }
+
+            const pathParts = param.$ref.replace(/^#\//, "").split("/");
+            let obj = json;
+
+            for (const part of pathParts) {
+              obj = obj[part];
+            }
+
+            return obj;
+          } else {
+            return param;
+          }
+        });
+      }
+
       return Object.keys(value)
         .filter((method) => ["post", "get"].includes(method))
         .map((method) => {
@@ -100,6 +125,7 @@ const generateAPISpecs = code(({ json }) => {
                     return param;
                   }
                 });
+          parameters.push(...pathParameters);
 
           const requestBody =
             "requestBody" in data == false
@@ -183,7 +209,7 @@ const createSpecRecipe = recipe((api) => {
     .to(
       recipe((item) => {
         const getItem = code((itemToSplat) => {
-          const { input, api_inputs } = itemToSplat;
+          const { api_inputs } = itemToSplat;
           const { method, parameters, secrets, requestBody } = itemToSplat.item;
           let { url } = itemToSplat.item;
 
@@ -192,7 +218,7 @@ const createSpecRecipe = recipe((api) => {
           if (
             parameters != undefined &&
             parameters.length > 0 &&
-            input == undefined
+            api_inputs == undefined
           ) {
             throw new Error(
               `Missing input for parameters ${JSON.stringify(parameters)}`
@@ -200,22 +226,26 @@ const createSpecRecipe = recipe((api) => {
           }
 
           for (const param of parameters) {
-            if (input && param.name in input == false && param.required) {
+            if (
+              api_inputs &&
+              param.name in api_inputs == false &&
+              param.required
+            ) {
               throw new Error(`Missing required parameter ${param.name}`);
             }
 
-            if (input && param.name in input == false) {
+            if (api_inputs && param.name in api_inputs == false) {
               // Parameter is not required and not in input, so we can skip it.
               continue;
             }
 
             if (param.in == "path") {
               // Replace the path parameter with the value from the input.
-              url = url.replace(`{${param.name}}`, input[param.name]);
+              url = url.replace(`{${param.name}}`, api_inputs[param.name]);
             }
 
             if (param.in == "query") {
-              queryStringParameters[param.name] = input[param.name];
+              queryStringParameters[param.name] = api_inputs[param.name];
             }
           }
 
@@ -226,7 +256,7 @@ const createSpecRecipe = recipe((api) => {
 
           // Create the query string
           const queryString = Object.entries(queryStringParameters)
-            .map((key, value) => {
+            .map(([key, value]) => {
               return `${key}=${value}`;
             })
             .join("&");
@@ -237,9 +267,11 @@ const createSpecRecipe = recipe((api) => {
 
           if (secrets != undefined) {
             // We know that we currently only support Bearer tokens.
-            const envKey = api_inputs.bearer;
-            const envValue = itemToSplat[envKey];
-            headers["Authorization"] = `Bearer ${envValue}`;
+            if ("bearer" in api_inputs.authentication) {
+              const envKey = api_inputs.authentication.bearer;
+              const envValue = itemToSplat[envKey];
+              headers["Authorization"] = `Bearer ${envValue}`;
+            }
           }
 
           let body = undefined;
