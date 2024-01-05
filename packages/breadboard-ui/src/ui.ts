@@ -226,9 +226,17 @@ export class UI extends LitElement {
     #content {
       display: grid;
       grid-template-columns: 1fr 1fr;
+      column-gap: 8px;
       height: calc(100vh - var(--bb-grid-size) * 15);
       margin: 8px;
-      column-gap: 8px;
+    }
+
+    @media (orientation: portrait) {
+      #content {
+        grid-template-columns: initial;
+        grid-template-rows: 0.4fr 0.6fr;
+        row-gap: 8px;
+      }
     }
 
     #diagram {
