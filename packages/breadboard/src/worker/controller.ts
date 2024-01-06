@@ -100,7 +100,7 @@ export class MessageController {
     if (!message.type || !VALID_MESSAGE_TYPES.includes(message.type)) {
       // This is only used in transition from worker machinery to
       // remote machinery.
-      if ((message.type as string) === "starttransport") return;
+      if ((message.type as string) === "port-dispatcher-sendport") return;
       throw new Error(`Invalid message type "${message.type}"`);
     }
     if (message.id) {

@@ -49,7 +49,6 @@ test("parseWithStreamsTransform works as expected", async (t) => {
   t.truthy(result3.value.value);
   t.true(isStreamCapability(result3.value.value));
   const result4 = await reader.read();
-  console.log(result4);
   t.true(result4.done);
   const dataReader = result3.value.value.stream.getReader();
   const dataResult = await dataReader.read();

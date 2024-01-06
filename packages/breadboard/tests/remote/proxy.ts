@@ -19,6 +19,7 @@ import { Board } from "../../src/board.js";
 import { MirrorUniverseKit, TestKit } from "../helpers/_test-kit.js";
 import { StreamCapability } from "../../src/stream.js";
 import {
+  PortDispatcher,
   WorkerClientTransport,
   WorkerServerTransport,
 } from "../../src/remote/worker.js";
@@ -183,7 +184,6 @@ test("ProxyServer and ProxyClient correctly handle streams", async (t) => {
     const chunks: string[] = [];
     for (;;) {
       const { done, value } = await reader.read();
-      console.log(done, value);
       if (done) break;
       chunks.push(value);
     }
@@ -194,9 +194,14 @@ test("ProxyServer and ProxyClient correctly handle streams", async (t) => {
   }
   {
     const mockWorkers = createMockWorkers();
-    const client = new ProxyClient(new WorkerClientTransport(mockWorkers.host));
+    const hostDispatcher = new PortDispatcher(mockWorkers.host);
+    const workerDispatcher = new PortDispatcher(mockWorkers.worker);
+
+    const client = new ProxyClient(
+      new WorkerClientTransport(hostDispatcher.send("proxy"))
+    );
     const server = new ProxyServer(
-      new WorkerServerTransport(mockWorkers.worker)
+      new WorkerServerTransport(workerDispatcher.receive("proxy"))
     );
     server.serve({ kits: [asRuntimeKit(TestKit)], proxy: ["streamer"] });
     const board = new Board();
@@ -212,7 +217,6 @@ test("ProxyServer and ProxyClient correctly handle streams", async (t) => {
     const chunks: string[] = [];
     for (;;) {
       const { done, value } = await reader.read();
-      console.log(done, value);
       if (done) break;
       chunks.push(value);
     }
@@ -226,11 +230,14 @@ test("ProxyServer and ProxyClient correctly handle streams", async (t) => {
 test("ProxyClient can shut down ProxyServer", async (t) => {
   let done: () => void;
   const mockWorkers = createMockWorkers();
+  const hostDispatcher = new PortDispatcher(mockWorkers.host);
+  const workerDispatcher = new PortDispatcher(mockWorkers.worker);
+
   const proxyClient = new ProxyClient(
-    new WorkerClientTransport(mockWorkers.host)
+    new WorkerClientTransport(hostDispatcher.send("proxy"))
   );
   const proxyServer = new ProxyServer(
-    new WorkerServerTransport(mockWorkers.worker)
+    new WorkerServerTransport(workerDispatcher.receive("proxy"))
   );
   proxyServer.serve({ kits: [] }).then(() => done());
   proxyClient.shutdownServer();
