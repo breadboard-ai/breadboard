@@ -9,6 +9,7 @@ import { createMockWorkers } from "../helpers/_test-transport.js";
 import { MirrorUniverseKit, TestKit } from "../helpers/_test-kit.js";
 import { ProxyClient, ProxyServer } from "../../src/remote/proxy.js";
 import {
+  PortDispatcher,
   WorkerClientTransport,
   WorkerServerTransport,
 } from "../../src/remote/worker.js";
@@ -97,5 +98,61 @@ test("Worker transports can handle proxy tunnels", async (t) => {
     const kits = [client.createProxyKit(["test", "reverser"]), kit];
     const outputs = await board.runOnce({ hello: "world" }, { kits });
     t.deepEqual(outputs, { hello: "DEKCOLB_EULAV" });
+  }
+});
+
+test("PortDispatcher works as expected", async (t) => {
+  {
+    const workers = createMockWorkers();
+    const hostDispatcher = new PortDispatcher(workers.host);
+    const workerDispatcher = new PortDispatcher(workers.worker);
+
+    const hostPort = hostDispatcher.send("test");
+    const workerPort = workerDispatcher.receive("test");
+
+    const writer = workerPort.writable.getWriter();
+    writer.write("hello");
+    writer.write("world");
+    writer.close();
+
+    const reader = hostPort.readable.getReader();
+    t.is((await reader.read()).value, "hello");
+    t.is((await reader.read()).value, "world");
+    t.is((await reader.read()).done, true);
+  }
+  {
+    const workers = createMockWorkers();
+    const hostDispatcher = new PortDispatcher(workers.host);
+    const workerDispatcher = new PortDispatcher(workers.worker);
+
+    const workerPort = workerDispatcher.receive("test");
+    const hostPort = hostDispatcher.send("test");
+
+    const writer = workerPort.writable.getWriter();
+    writer.write("hello");
+    writer.write("world");
+    writer.close();
+
+    const reader = hostPort.readable.getReader();
+    t.is((await reader.read()).value, "hello");
+    t.is((await reader.read()).value, "world");
+    t.is((await reader.read()).done, true);
+  }
+  {
+    const workers = createMockWorkers();
+    const hostDispatcher = new PortDispatcher(workers.host);
+    const workerDispatcher = new PortDispatcher(workers.worker);
+
+    const workerPort = workerDispatcher.receive("test");
+    const writer = workerPort.writable.getWriter();
+    writer.write("hello");
+    writer.write("world");
+    writer.close();
+
+    const hostPort = hostDispatcher.send("test");
+    const reader = hostPort.readable.getReader();
+    t.is((await reader.read()).value, "hello");
+    t.is((await reader.read()).value, "world");
+    t.is((await reader.read()).done, true);
   }
 });
