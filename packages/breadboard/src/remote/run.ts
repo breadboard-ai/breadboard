@@ -161,10 +161,7 @@ export class RunClient implements RunnerLike {
     try {
       for await (const response of responses) {
         const [type] = response;
-        if (type === "proxy") {
-          // TODO: Implement proxying.
-          throw new Error("Proxying is not yet implemented.");
-        } else if (type === "end") {
+        if (type === "end" || type === "error") {
           break;
         }
         yield new ClientRunResult(requests, response);
