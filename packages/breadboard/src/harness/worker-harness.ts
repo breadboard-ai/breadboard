@@ -21,7 +21,7 @@ import { asyncGen } from "../index.js";
 import { createSecretAskingKit } from "./secrets.js";
 import { WorkerResult } from "./result.js";
 import { ProxyServer } from "../remote/proxy.js";
-import { WorkerServerTransport } from "../remote/worker.js";
+import { PortDispatcher, WorkerServerTransport } from "../remote/worker.js";
 
 export const createWorker = (url: string) => {
   const workerURL = new URL(url, location.href);
@@ -39,9 +39,12 @@ class HarnessRun {
 
   constructor(workerURL: string) {
     this.worker = createWorker(workerURL);
+    const dispatcher = new PortDispatcher(this.worker);
     this.transport = new WorkerTransport(this.worker);
     this.controller = new MessageController(this.transport);
-    this.proxyServer = new ProxyServer(new WorkerServerTransport(this.worker));
+    this.proxyServer = new ProxyServer(
+      new WorkerServerTransport(dispatcher.receive("proxy"))
+    );
   }
 
   terminate() {

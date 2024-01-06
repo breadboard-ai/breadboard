@@ -18,26 +18,6 @@ import {
   ServerTransport,
 } from "./protocol.js";
 
-export const sendStartTransportMessage = (
-  worker: Worker,
-  port: MessagePort
-) => {
-  worker.postMessage({ type: "starttransport", port }, [port]);
-};
-
-export const receiveStartTransportMessage = (
-  worker: Worker,
-  callback: (port: MessagePort) => void
-) => {
-  const listener = (event: MessageEvent) => {
-    if (event.data?.type === "starttransport") {
-      callback(event.data.port);
-      worker.removeEventListener("message", listener);
-    }
-  };
-  worker.addEventListener("message", listener);
-};
-
 const DISPATCHER_SEND = "port-dispatcher-sendport";
 
 export class PortDispatcher {
@@ -88,10 +68,7 @@ export class WorkerClientTransport<Request, Response>
   #reader: ReadableStreamDefaultReader<Response>;
   #writer: WritableStreamDefaultWriter<Request>;
 
-  constructor(worker: Worker) {
-    const channel = new MessageChannel();
-    worker.postMessage(sendStartTransportMessage(worker, channel.port1));
-    const streams = portToStreams<Response, Request>(channel.port2);
+  constructor(streams: PortStreams<Response, Request>) {
     this.#reader = streams.readable.getReader();
     this.#writer = streams.writable.getWriter();
   }
@@ -109,12 +86,8 @@ export class WorkerServerTransport<Request, Response>
 {
   #clientStreams: PortStreams<Request, Response>;
 
-  constructor(worker: Worker) {
-    this.#clientStreams = portFactoryToStreams<Request, Response>(() => {
-      return new Promise((resolve) => {
-        receiveStartTransportMessage(worker, resolve);
-      });
-    });
+  constructor(streams: PortStreams<Request, Response>) {
+    this.#clientStreams = streams;
   }
 
   createServerStream(): ServerBidirectionalStream<Request, Response> {

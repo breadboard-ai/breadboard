@@ -18,14 +18,20 @@ import { asRuntimeKit } from "../../src/index.js";
 
 test("Worker transports can handle ProxyServer and ProxyClient", async (t) => {
   const workers = createMockWorkers();
+  const hostDispatcher = new PortDispatcher(workers.host);
+  const workerDispatcher = new PortDispatcher(workers.worker);
 
-  const server = new ProxyServer(new WorkerServerTransport(workers.host));
+  const server = new ProxyServer(
+    new WorkerServerTransport(hostDispatcher.receive("test"))
+  );
   server.serve({
     kits: [asRuntimeKit(MirrorUniverseKit)],
     proxy: ["reverser"],
   });
 
-  const client = new ProxyClient(new WorkerClientTransport(workers.worker));
+  const client = new ProxyClient(
+    new WorkerClientTransport(workerDispatcher.send("test"))
+  );
   const board = new Board();
   const kit = board.addKit(TestKit);
   board
@@ -39,7 +45,12 @@ test("Worker transports can handle ProxyServer and ProxyClient", async (t) => {
 test("Worker transports can handle proxy tunnels", async (t) => {
   {
     const workers = createMockWorkers();
-    const server = new ProxyServer(new WorkerServerTransport(workers.host));
+    const hostDispatcher = new PortDispatcher(workers.host);
+    const workerDispatcher = new PortDispatcher(workers.worker);
+
+    const server = new ProxyServer(
+      new WorkerServerTransport(hostDispatcher.receive("test"))
+    );
 
     server.serve({
       kits: [asRuntimeKit(TestKit)],
@@ -53,7 +64,9 @@ test("Worker transports can handle proxy tunnels", async (t) => {
         "reverser",
       ],
     });
-    const client = new ProxyClient(new WorkerClientTransport(workers.worker));
+    const client = new ProxyClient(
+      new WorkerClientTransport(workerDispatcher.send("test"))
+    );
     const board = new Board();
     const kit = board.addKit(TestKit);
     board
@@ -68,7 +81,12 @@ test("Worker transports can handle proxy tunnels", async (t) => {
   }
   {
     const workers = createMockWorkers();
-    const server = new ProxyServer(new WorkerServerTransport(workers.host));
+    const hostDispatcher = new PortDispatcher(workers.host);
+    const workerDispatcher = new PortDispatcher(workers.worker);
+
+    const server = new ProxyServer(
+      new WorkerServerTransport(hostDispatcher.receive("test"))
+    );
     server.serve({
       kits: [asRuntimeKit(TestKit)],
       proxy: [
@@ -86,7 +104,9 @@ test("Worker transports can handle proxy tunnels", async (t) => {
         "reverser",
       ],
     });
-    const client = new ProxyClient(new WorkerClientTransport(workers.worker));
+    const client = new ProxyClient(
+      new WorkerClientTransport(workerDispatcher.send("test"))
+    );
     const board = new Board();
     const kit = board.addKit(TestKit);
     board
