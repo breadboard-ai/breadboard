@@ -181,7 +181,7 @@ export const portFactoryToStreams = <Read, Write>(
   };
 };
 
-class WritableResult<Read, Write> {
+export class WritableResult<Read, Write> {
   #writer: WritableStreamDefaultWriter<Write>;
   data: Read;
 
