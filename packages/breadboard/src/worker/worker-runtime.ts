@@ -45,37 +45,26 @@ export class WorkerRuntime {
   }
 
   async run(board: BoardRunner, kits: Kit[]) {
-    try {
-      if (!this.#loadRequest) {
-        throw new Error("The load message must be sent before the run message");
-      }
-
-      this.#controller.reply<LoadResponseMessage>(
-        this.#loadRequest.id,
-        {
-          title: board.title,
-          description: board.description,
-          version: board.version,
-          diagram: board.mermaid("TD", true),
-          url: this.#loadRequest.data.url,
-          nodes: board.nodes,
-        },
-        "load"
-      );
-
-      const server = new RunServer(
-        new WorkerServerTransport(this.#dispatcher.receive("run"))
-      );
-      await server.serve(board, true, { kits });
-    } catch (e) {
-      let error = e as Error;
-      let message = "";
-      while (error?.cause) {
-        error = (error.cause as { error: Error }).error;
-        message += `\n${error.message}`;
-      }
-      console.error("Error in worker:", error.message);
-      this.#controller.inform<ErrorMessage>({ error: message }, "error");
+    if (!this.#loadRequest) {
+      throw new Error("The load message must be sent before the run message");
     }
+
+    this.#controller.reply<LoadResponseMessage>(
+      this.#loadRequest.id,
+      {
+        title: board.title,
+        description: board.description,
+        version: board.version,
+        diagram: board.mermaid("TD", true),
+        url: this.#loadRequest.data.url,
+        nodes: board.nodes,
+      },
+      "load"
+    );
+
+    const server = new RunServer(
+      new WorkerServerTransport(this.#dispatcher.receive("run"))
+    );
+    await server.serve(board, true, { kits });
   }
 }
