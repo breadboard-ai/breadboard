@@ -47,7 +47,11 @@ export class RunServer {
     this.#transport = transport;
   }
 
-  async serve(runner: BoardRunner, context: NodeHandlerContext = {}) {
+  async serve(
+    runner: BoardRunner,
+    diagnostics = false,
+    context: NodeHandlerContext = {}
+  ) {
     const stream = this.#transport.createServerStream();
     const requestReader = stream.readableRequests.getReader();
     let request = await requestReader.read();
@@ -58,10 +62,12 @@ export class RunServer {
 
     const servingContext = {
       ...context,
-      probe: new Diagnostics(async ({ type, data }) => {
-        const response = [type, data] as AnyRunResponseMessage;
-        await responses.write(response);
-      }),
+      probe: diagnostics
+        ? new Diagnostics(async ({ type, data }) => {
+            const response = [type, data] as AnyRunResponseMessage;
+            await responses.write(response);
+          })
+        : undefined,
     };
 
     try {

@@ -66,7 +66,7 @@ export class WorkerRuntime {
       const server = new RunServer(
         new WorkerServerTransport(this.#dispatcher.receive("run"))
       );
-      await server.serve(board, { kits });
+      await server.serve(board, true, { kits });
     } catch (e) {
       let error = e as Error;
       let message = "";
