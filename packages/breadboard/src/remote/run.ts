@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Diagnostics } from "../harness/diagnostics.js";
 import { RunResult } from "../run.js";
 import { BoardRunner } from "../runner.js";
 import { WritableResult, streamsToAsyncIterable } from "../stream.js";
@@ -53,10 +54,18 @@ export class RunServer {
     if (request.done) return;
 
     const result = resumeRun(request.value);
-
     const responses = stream.writableResponses.getWriter();
+
+    const servingContext = {
+      ...context,
+      probe: new Diagnostics(async ({ type, data }) => {
+        const response = [type, data] as AnyRunResponseMessage;
+        await responses.write(response);
+      }),
+    };
+
     try {
-      for await (const stop of runner.run(context, result)) {
+      for await (const stop of runner.run(servingContext, result)) {
         if (stop.type === "input") {
           const state = await stop.save();
           const { node, inputArguments } = stop;
@@ -88,6 +97,7 @@ class ClientRunResult implements BreadboardRunResult {
   type: RunResultType;
   node: NodeDescriptor;
   invocationId = 0;
+  path?: number[];
 
   #state?: string;
   #inputArguments: InputValues = {};
@@ -105,7 +115,22 @@ class ClientRunResult implements BreadboardRunResult {
     if (type === "error") {
       throw new Error("Server experienced an error", { cause: data.error });
     }
-    this.node = data.node;
+    if (type !== "graphend" && type !== "graphstart" && type !== "end") {
+      this.node = data.node;
+    } else {
+      // TODO: Remove this hack. Currently necessary, because
+      // BreadboardRunResult and ProbeMessages don't mix.
+      this.node = undefined as unknown as NodeDescriptor;
+    }
+
+    if (
+      type === "nodestart" ||
+      type === "nodeend" ||
+      type === "graphend" ||
+      type === "graphstart"
+    ) {
+      this.path = data.path;
+    }
 
     if (type === "input") {
       this.#inputArguments = data.inputArguments;
@@ -141,7 +166,7 @@ class ClientRunResult implements BreadboardRunResult {
   }
 }
 
-export type RunClientTransport = ClientTransport<
+type RunClientTransport = ClientTransport<
   AnyRunRequestMessage,
   AnyRunResponseMessage
 >;

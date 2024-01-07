@@ -22,7 +22,7 @@ const worker = self as unknown as Worker;
 const dispatcher = new PortDispatcher(worker);
 
 const controller = new MessageController(new WorkerTransport(worker));
-const runtime = new WorkerRuntime(controller);
+const runtime = new WorkerRuntime(controller, dispatcher);
 
 const url = await runtime.onload();
 
