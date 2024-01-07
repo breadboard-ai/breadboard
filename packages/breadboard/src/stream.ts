@@ -181,7 +181,7 @@ export const portFactoryToStreams = <Read, Write>(
   };
 };
 
-class WritableResult<Read, Write> {
+export class WritableResult<Read, Write> {
   #writer: WritableStreamDefaultWriter<Write>;
   data: Read;
 
@@ -230,6 +230,10 @@ class StreamsAsyncIterator<Read, Write>
   }
 }
 
+export type AsyncIterableWithStart<T, S> = AsyncIterable<T> & {
+  start: (chunk: S) => Promise<void>;
+};
+
 /**
  * A helper to convert a pair of streams to an async iterable that follows
  * the following protocol:
@@ -248,8 +252,13 @@ class StreamsAsyncIterator<Read, Write>
 export const streamsToAsyncIterable = <Read, Write>(
   writable: WritableStream<Write>,
   readable: ReadableStream<Read>
-): AsyncIterable<WritableResult<Read, Write>> => {
+): AsyncIterableWithStart<WritableResult<Read, Write>, Write> => {
   return {
+    async start(chunk: Write) {
+      const writer = writable.getWriter();
+      await writer.write(chunk);
+      writer.releaseLock();
+    },
     [Symbol.asyncIterator]() {
       return new StreamsAsyncIterator<Read, Write>(writable, readable);
     },

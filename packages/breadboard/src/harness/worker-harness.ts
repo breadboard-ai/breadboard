@@ -8,20 +8,19 @@ import type {
   ControllerMessageType,
   LoadRequestMessage,
   LoadResponseMessage,
-  StartMesssage,
 } from "../worker/protocol.js";
 import { MessageController, WorkerTransport } from "../worker/controller.js";
-import type {
-  AnyRunResult,
-  Harness,
-  HarnessConfig,
-  HarnessRunResult,
-} from "./types.js";
-import { asyncGen } from "../index.js";
+import type { Harness, HarnessConfig, HarnessRunResult } from "./types.js";
+import { InputValues, asyncGen } from "../index.js";
 import { createSecretAskingKit } from "./secrets.js";
-import { WorkerResult } from "./result.js";
+import { LocalResult } from "./result.js";
 import { ProxyServer } from "../remote/proxy.js";
-import { PortDispatcher, WorkerServerTransport } from "../remote/worker.js";
+import {
+  PortDispatcher,
+  WorkerClientTransport,
+  WorkerServerTransport,
+} from "../remote/worker.js";
+import { RunClient } from "../remote/run.js";
 
 export const createWorker = (url: string) => {
   const workerURL = new URL(url, location.href);
@@ -36,6 +35,7 @@ class HarnessRun {
   transport: WorkerTransport;
   controller: MessageController;
   proxyServer: ProxyServer;
+  runClient: RunClient;
 
   constructor(workerURL: string) {
     this.worker = createWorker(workerURL);
@@ -44,6 +44,9 @@ class HarnessRun {
     this.controller = new MessageController(this.transport);
     this.proxyServer = new ProxyServer(
       new WorkerServerTransport(dispatcher.receive("proxy"))
+    );
+    this.runClient = new RunClient(
+      new WorkerClientTransport(dispatcher.send("run"))
     );
   }
 
@@ -98,27 +101,27 @@ export class WorkerHarness implements Harness {
     if (!this.#run) {
       throw new Error("Harness hasn't been loaded. Please call 'load' first.");
     }
-    const controller = this.#run.controller;
 
     yield* asyncGen<HarnessRunResult>(async (next) => {
       const kits = [createSecretAskingKit(next), ...this.#config.kits];
       const proxy = this.#config.proxy?.[0]?.nodes;
-      this.#run?.proxyServer.serve({ kits, proxy });
+      if (!this.#run) {
+        // This is only necessary because TypeScript doesn't know that
+        // `this.#run` is non-null after the `if` statement above.
+        return;
+      }
 
-      controller.inform<StartMesssage>({}, "start");
-      for (;;) {
-        if (!controller) {
-          break;
-        }
+      this.#run.proxyServer.serve({ kits, proxy });
 
-        const message = await controller.listen();
-        const { data, type } = message;
+      for await (const data of this.#run.runClient.run()) {
+        const { type } = data;
         if (this.#skipDiagnosticMessages(type)) {
           continue;
         }
-        await next(new WorkerResult(controller, message as AnyRunResult));
-        if (data && type === "end") {
-          break;
+        const result = new LocalResult({ type, data });
+        await next(result);
+        if (type === "input") {
+          data.inputs = result.response as InputValues;
         }
       }
     });

@@ -5,26 +5,24 @@
  */
 
 import { BoardRunner } from "../runner.js";
-import type { InputValues, Kit } from "../types.js";
+import type { Kit } from "../types.js";
 import {
   type LoadResponseMessage,
-  type EndMessage,
   type ErrorMessage,
-  type InputRequestMessage,
   type LoadRequestMessage,
-  type OutputMessage,
-  type StartMesssage,
-  type InputResponseMessage,
 } from "./protocol.js";
 import { MessageController } from "./controller.js";
-import { Diagnostics } from "../harness/diagnostics.js";
+import { PortDispatcher, WorkerServerTransport } from "../remote/worker.js";
+import { RunServer } from "../remote/run.js";
 
 export class WorkerRuntime {
   #controller: MessageController;
+  #dispatcher: PortDispatcher;
   #loadRequest: LoadRequestMessage | undefined;
 
-  constructor(controller: MessageController) {
+  constructor(controller: MessageController, dispatcher: PortDispatcher) {
     this.#controller = controller;
+    this.#dispatcher = dispatcher;
     self.onerror = (e) => {
       this.#controller.inform<ErrorMessage>(
         { error: `Unhandled error in worker: ${e}` },
@@ -46,15 +44,6 @@ export class WorkerRuntime {
     throw new Error('The only valid first message is the "load" message');
   }
 
-  async start() {
-    const message = (await this.#controller.listen()) as StartMesssage;
-    if (message.type !== "start") {
-      throw new Error(
-        'The only valid message at this point is the "start" message'
-      );
-    }
-  }
-
   async run(board: BoardRunner, kits: Kit[]) {
     try {
       if (!this.#loadRequest) {
@@ -74,36 +63,10 @@ export class WorkerRuntime {
         "load"
       );
 
-      await this.start();
-
-      const probe = new Diagnostics(async ({ type, data }) => {
-        this.#controller.inform(data, type);
-      });
-
-      for await (const stop of board.run({ probe, kits })) {
-        if (stop.type === "input") {
-          const inputMessage = (await this.#controller.ask<
-            InputRequestMessage,
-            InputResponseMessage
-          >(
-            {
-              node: stop.node,
-              inputArguments: stop.inputArguments,
-            },
-            stop.type
-          )) as { data: InputValues };
-          stop.inputs = inputMessage.data;
-        } else if (stop.type === "output") {
-          this.#controller.inform<OutputMessage>(
-            {
-              node: stop.node,
-              outputs: stop.outputs,
-            },
-            stop.type
-          );
-        }
-      }
-      this.#controller.inform<EndMessage>({}, "end");
+      const server = new RunServer(
+        new WorkerServerTransport(this.#dispatcher.receive("run"))
+      );
+      await server.serve(board, true, { kits });
     } catch (e) {
       let error = e as Error;
       let message = "";

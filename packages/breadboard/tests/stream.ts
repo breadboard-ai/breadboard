@@ -254,6 +254,41 @@ test("streamsToAsyncIterable works as expected", async (t) => {
   t.deepEqual(results, [1, "number: 1", 2, "number: 2", 3, "number: 3"]);
 });
 
+test("streamsToAsyncIterable can be used to start communication", async (t) => {
+  const results: (number | string)[] = [];
+  const readable = new ReadableStream<number>({
+    async pull(controller) {
+      controller.enqueue(1);
+      controller.enqueue(2);
+      controller.enqueue(3);
+      controller.close();
+    },
+  });
+  const writable = new WritableStream<string>({
+    async write(chunk) {
+      results.push(chunk);
+    },
+    async close() {
+      t.pass();
+    },
+  });
+  const iterable = streamsToAsyncIterable<number, string>(writable, readable);
+  await iterable.start("start");
+  for await (const value of iterable) {
+    results.push(value.data);
+    await value.reply(`number: ${value.data}`);
+  }
+  t.deepEqual(results, [
+    "start",
+    1,
+    "number: 1",
+    2,
+    "number: 2",
+    3,
+    "number: 3",
+  ]);
+});
+
 test("streamFromReader produces a regular stream", async (t) => {
   const readable = new ReadableStream<number>({
     async pull(controller) {

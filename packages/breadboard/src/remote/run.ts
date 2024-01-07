@@ -4,8 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Diagnostics } from "../harness/diagnostics.js";
 import { RunResult } from "../run.js";
 import { BoardRunner } from "../runner.js";
+import { WritableResult, streamsToAsyncIterable } from "../stream.js";
 import {
   BreadboardRunResult,
   InputValues,
@@ -45,17 +47,31 @@ export class RunServer {
     this.#transport = transport;
   }
 
-  async serve(runner: BoardRunner, context: NodeHandlerContext = {}) {
+  async serve(
+    runner: BoardRunner,
+    diagnostics = false,
+    context: NodeHandlerContext = {}
+  ) {
     const stream = this.#transport.createServerStream();
     const requestReader = stream.readableRequests.getReader();
     let request = await requestReader.read();
     if (request.done) return;
 
     const result = resumeRun(request.value);
-
     const responses = stream.writableResponses.getWriter();
+
+    const servingContext = {
+      ...context,
+      probe: diagnostics
+        ? new Diagnostics(async ({ type, data }) => {
+            const response = [type, data] as AnyRunResponseMessage;
+            await responses.write(response);
+          })
+        : undefined,
+    };
+
     try {
-      for await (const stop of runner.run(context, result)) {
+      for await (const stop of runner.run(servingContext, result)) {
         if (stop.type === "input") {
           const state = await stop.save();
           const { node, inputArguments } = stop;
@@ -83,28 +99,44 @@ export class RunServer {
   }
 }
 
-type Writer = WritableStreamDefaultWriter<AnyRunRequestMessage>;
-
 class ClientRunResult implements BreadboardRunResult {
   type: RunResultType;
   node: NodeDescriptor;
   invocationId = 0;
+  path?: number[];
 
   #state?: string;
   #inputArguments: InputValues = {};
   #outputs: OutputValues = {};
-  #requests: Writer;
+  #result: WritableResult<AnyRunResponseMessage, AnyRunRequestMessage>;
 
-  constructor(requests: Writer, response: AnyRunResponseMessage) {
-    this.#requests = requests;
+  constructor(
+    result: WritableResult<AnyRunResponseMessage, AnyRunRequestMessage>
+  ) {
+    this.#result = result;
 
-    const [type, data, state] = response;
+    const [type, data, state] = result.data;
     this.#state = state;
     this.type = type as RunResultType;
     if (type === "error") {
       throw new Error("Server experienced an error", { cause: data.error });
     }
-    this.node = data.node;
+    if (type !== "graphend" && type !== "graphstart" && type !== "end") {
+      this.node = data.node;
+    } else {
+      // TODO: Remove this hack. Currently necessary, because
+      // BreadboardRunResult and ProbeMessages don't mix.
+      this.node = undefined as unknown as NodeDescriptor;
+    }
+
+    if (
+      type === "nodestart" ||
+      type === "nodeend" ||
+      type === "graphend" ||
+      type === "graphstart"
+    ) {
+      this.path = data.path;
+    }
 
     if (type === "input") {
       this.#inputArguments = data.inputArguments;
@@ -122,7 +154,7 @@ class ClientRunResult implements BreadboardRunResult {
   set inputs(inputs: InputValues) {
     if (this.type !== "input") return;
     this.#checkState();
-    this.#requests.write(["input", { inputs }, this.#state || ""]);
+    this.#result.reply(["input", { inputs }, this.#state || ""]);
   }
 
   get outputs(): OutputValues {
@@ -140,7 +172,7 @@ class ClientRunResult implements BreadboardRunResult {
   }
 }
 
-export type RunClientTransport = ClientTransport<
+type RunClientTransport = ClientTransport<
   AnyRunRequestMessage,
   AnyRunResponseMessage
 >;
@@ -154,21 +186,13 @@ export class RunClient implements RunnerLike {
 
   async *run(): AsyncGenerator<BreadboardRunResult> {
     const stream = this.#transport.createClientStream();
-    const responses = stream.readableResponses;
-    const requests = stream.writableRequests.getWriter();
-
-    await requests.write(["run", {}]);
-    try {
-      for await (const response of responses) {
-        const [type] = response;
-        if (type === "end" || type === "error") {
-          break;
-        }
-        yield new ClientRunResult(requests, response);
-      }
-    } finally {
-      await responses.cancel();
-      await requests.close();
+    const server = streamsToAsyncIterable(
+      stream.writableRequests,
+      stream.readableResponses
+    );
+    await server.start(["run", {}]);
+    for await (const response of server) {
+      yield new ClientRunResult(response);
     }
   }
 

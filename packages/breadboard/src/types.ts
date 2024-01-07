@@ -472,7 +472,7 @@ export type GraphEndProbeMessage = {
 export type SkipProbeMessage = {
   type: "skip";
   data: {
-    descriptor: NodeDescriptor;
+    node: NodeDescriptor;
     inputs: InputValues;
     missingInputs: string[];
     path: number[];

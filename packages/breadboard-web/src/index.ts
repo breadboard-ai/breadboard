@@ -151,7 +151,7 @@ export class Main {
     }
 
     const possibleData = data as { node: { id: string } };
-    if ("node" in possibleData) {
+    if ("node" in possibleData && possibleData.node) {
       return true;
     }
 

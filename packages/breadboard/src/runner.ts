@@ -137,7 +137,7 @@ export class BoardRunner implements BreadboardRunner {
           await probe?.report?.({
             type: "skip",
             data: {
-              descriptor,
+              node: descriptor,
               inputs,
               missingInputs,
               path: path(),
