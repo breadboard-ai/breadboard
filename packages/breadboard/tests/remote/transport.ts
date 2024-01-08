@@ -18,6 +18,7 @@ import {
 } from "../helpers/_test-transport.js";
 import { RunClient, RunServer } from "../../src/remote/run.js";
 import {
+  PortDispatcher,
   WorkerClientTransport,
   WorkerServerTransport,
 } from "../../src/remote/worker.js";
@@ -78,11 +79,17 @@ test("Continuous streaming", async (t) => {
 
   // Set up the transports.
   const mockWorkers = createMockWorkers();
+
+  const hostDispatcher = new PortDispatcher(mockWorkers.host);
+  const workerDispatcher = new PortDispatcher(mockWorkers.worker);
+
   const clientTransport = new WorkerClientTransport<
     AnyRunRequestMessage,
     AnyRunResponseMessage
-  >(mockWorkers.host);
-  const server = new RunServer(new WorkerServerTransport(mockWorkers.worker));
+  >(hostDispatcher.send("test"));
+  const server = new RunServer(
+    new WorkerServerTransport(workerDispatcher.receive("test"))
+  );
 
   // Serve the board.
   server.serve(board);
@@ -119,11 +126,17 @@ test("runOnce client can run once (client starts first)", async (t) => {
   board.input({ foo: "bar" }).wire("*", kit.noop().wire("*", board.output()));
 
   const mockWorkers = createMockWorkers();
-  const client = new RunClient(new WorkerClientTransport(mockWorkers.host));
-  const server = new RunServer(new WorkerServerTransport(mockWorkers.worker));
+  const hostDispatcher = new PortDispatcher(mockWorkers.host);
+  const workerDispatcher = new PortDispatcher(mockWorkers.worker);
+
+  const client = new RunClient(
+    new WorkerClientTransport(hostDispatcher.send("test"))
+  );
+  const server = new RunServer(
+    new WorkerServerTransport(workerDispatcher.receive("test"))
+  );
 
   server.serve(board);
-  console.log("HERE");
   const outputs = await client.runOnce({ hello: "world" });
 
   t.deepEqual(outputs, { hello: "world" });
@@ -135,11 +148,17 @@ test("runOnce client can run once (server starts first)", async (t) => {
   board.input({ foo: "bar" }).wire("*", kit.noop().wire("*", board.output()));
 
   const mockWorkers = createMockWorkers();
-  const server = new RunServer(new WorkerServerTransport(mockWorkers.worker));
-  const client = new RunClient(new WorkerClientTransport(mockWorkers.host));
+  const hostDispatcher = new PortDispatcher(mockWorkers.host);
+  const workerDispatcher = new PortDispatcher(mockWorkers.worker);
+
+  const server = new RunServer(
+    new WorkerServerTransport(workerDispatcher.receive("test"))
+  );
+  const client = new RunClient(
+    new WorkerClientTransport(hostDispatcher.send("test"))
+  );
 
   server.serve(board);
-  console.log("HERE");
   const outputs = await client.runOnce({ hello: "world" });
 
   t.deepEqual(outputs, { hello: "world" });

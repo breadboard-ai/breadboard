@@ -5,7 +5,15 @@
  */
 
 import { PatchedReadableStream } from "../stream.js";
-import { InputValues, NodeDescriptor, OutputValues, Schema } from "../types.js";
+import {
+  GraphProbeMessageData,
+  InputValues,
+  NodeDescriptor,
+  NodeEndProbeMessage,
+  OutputValues,
+  Schema,
+  SkipProbeMessage,
+} from "../types.js";
 
 /**
  * Valid request names: "load", "run", "proxy". A good way to think of
@@ -24,10 +32,6 @@ export type LoadRequest = {
    * The url of the board to load.
    */
   url: string;
-  /**
-   * The list of nodes to proxy.
-   */
-  proxyNodes: string[];
 };
 
 /**
@@ -110,6 +114,14 @@ export type NodeStartResponse = {
   path: number[];
 };
 export type NodeStartResponseMessage = ["nodestart", NodeStartResponse];
+
+export type NodeEndResponseMessage = ["nodeend", NodeEndProbeMessage["data"]];
+
+export type GraphStartResponseMessage = ["graphstart", GraphProbeMessageData];
+
+export type GraphEndResponseMessage = ["graphend", GraphProbeMessageData];
+
+export type SkipResponseMessage = ["skip", SkipProbeMessage["data"]];
 
 /**
  * Sent by a server to request input.
@@ -251,6 +263,10 @@ export type AnyRunRequestMessage =
 export type AnyRunResponseMessage =
   | OutputResponseMessage
   | NodeStartResponseMessage
+  | NodeEndResponseMessage
+  | GraphStartResponseMessage
+  | GraphEndResponseMessage
+  | SkipResponseMessage
   | InputPromiseResponseMessage
   | ProxyPromiseResponseMessage
   | EndResponseMessage
