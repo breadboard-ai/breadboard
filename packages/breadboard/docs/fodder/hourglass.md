@@ -18,6 +18,20 @@ At the waist of the hourglass, there's a common format that we use to represent 
 
 ## The backends
 
-The backends, are typically runtimes: they take the recipe, expressed in the common format and run it. At this moment, there’s only a Javascript runtime that runs in both Node and Web environments. We hope that the number of runtimes expands. For instance, wouldn’t it be cool to load a Breadboard recipe within a colab? Or maybe run it in C++? Breadboard strives for all of these options to be feasible.
+The backends, are typically runtimes: they take the recipe, expressed in the common format and run it. At this moment, there’s a Javascript runtime that runs in both Node and Web environments. We hope that the number of runtimes expands. For instance, wouldn’t it be cool to load a Breadboard recipe within a colab? Or maybe run it in C++? Breadboard strives for all of these options to be feasible.
 
 Runtimes aren’t the only kinds of backends. For instance, there may be an analysis backend, which studies the topography of the recipe and makes some judgments about its integrity or other kinds of properties. What sorts of inputs does this recipe take? What are its outputs? What are the runtime characteristics of this recipe?
+
+## Mixing and matching
+
+Because the backends and frontends are separated from each other by the common protocol,
+we can mix and match them in Breadboard. For example, we can write a recipe in Python and debug it in the browser with JavaScript runtime. Or we could write a recipe in JavaScript and run it in a C++ runtime. The possibilities are only limited by the number of combinations of frontends and backends.
+
+## The hourglass principle
+
+Sometimes, it can be difficult to separate out the frontend and the backend. For example,
+imagine a visual designer that allows you to edit, debug, and run the graph. Where do frontends begin and end there?
+
+Or as another example, we could easily just stitch nodes together and run them in JavaScript, without ever having to serialize the logic into the common format. In this case, the backend and the frontend become impossible to separate.
+
+Sometimes this is the right solution, but to ensure that the hourglass model retains its power of flexibility, we should apply the "hourglass principle": prefer and encourage separation of the backend and the frontend in both UX and developer experience. Ideally, frontends only produce the common format, and backends only consume it.
