@@ -88,6 +88,17 @@ export const getStreams = (value: NodeValue) => {
   return foundStreams;
 };
 
+/**
+ * Stubs out all streams in the input values with empty streams.
+ * This is useful when we don't want the streams to be transferred.
+ * @param data
+ * @returns
+ */
+export const stubOutStreams = (data: unknown): unknown => {
+  const stringified = stringifyWithStreams(data).value;
+  return parseWithStreams(stringified, () => new ReadableStream());
+};
+
 export type PatchedReadableStream<T> = ReadableStream<T> & AsyncIterable<T>;
 
 interface MessagePortLike {
