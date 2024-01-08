@@ -308,6 +308,14 @@ export class UI extends LitElement {
       padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 4);
     }
 
+    bb-output {
+      border-bottom: 1px solid #aaa;
+    }
+
+    bb-output:last-of-type {
+      border-bottom: none;
+    }
+
     #node-information {
       display: flex;
       flex-direction: column;
@@ -733,10 +741,7 @@ export class UI extends LitElement {
       data: { outputs: values.outputs },
     });
 
-    const output = new Output();
-    await output.display(values.outputs);
-
-    this.outputs.unshift(output);
+    this.outputs.unshift(new Output(values.outputs));
     this.requestUpdate();
   }
 
