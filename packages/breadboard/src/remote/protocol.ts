@@ -6,9 +6,7 @@
 
 import { PatchedReadableStream } from "../stream.js";
 import {
-  GraphEndProbeMessage,
   GraphProbeMessageData,
-  GraphStartProbeMessage,
   InputValues,
   NodeDescriptor,
   NodeEndProbeMessage,
@@ -34,10 +32,6 @@ export type LoadRequest = {
    * The url of the board to load.
    */
   url: string;
-  /**
-   * The list of nodes to proxy.
-   */
-  proxyNodes: string[];
 };
 
 /**

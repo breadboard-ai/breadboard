@@ -4,14 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  ControllerMessageType,
-  LoadRequestMessage,
-  LoadResponseMessage,
-} from "../worker/protocol.js";
+import type { LoadRequestMessage } from "../worker/protocol.js";
 import { MessageController, WorkerTransport } from "../worker/controller.js";
 import type { Harness, HarnessConfig, HarnessRunResult } from "./types.js";
-import { InputValues, asyncGen } from "../index.js";
+import { Board, InputValues, asyncGen } from "../index.js";
 import { createSecretAskingKit } from "./secrets.js";
 import { LocalResult } from "./result.js";
 import { ProxyServer } from "../remote/proxy.js";
@@ -21,6 +17,7 @@ import {
   WorkerServerTransport,
 } from "../remote/worker.js";
 import { RunClient } from "../remote/run.js";
+import { AnyRunResponseMessage } from "../remote/protocol.js";
 
 export const createWorker = (url: string) => {
   const workerURL = new URL(url, location.href);
@@ -69,7 +66,7 @@ export class WorkerHarness implements Harness {
     this.workerURL = workerURL;
   }
 
-  #skipDiagnosticMessages(type: ControllerMessageType) {
+  #skipDiagnosticMessages(type: AnyRunResponseMessage[0]) {
     return (
       !this.#config.diagnostics &&
       (type === "nodestart" ||
@@ -86,15 +83,18 @@ export class WorkerHarness implements Harness {
       this.#stop();
     }
 
+    const runner = await Board.load(url);
+
+    const { title, description, version } = runner;
+    const diagram = runner.mermaid("TD", true);
+    const nodes = runner.nodes;
+
     this.#run = new HarnessRun(this.workerURL);
 
     const controller = this.#run.controller;
-    const result = await controller.ask<
-      LoadRequestMessage,
-      LoadResponseMessage
-    >({ url, proxyNodes: [] }, "load");
+    controller.inform<LoadRequestMessage>({ url }, "load");
 
-    return result.data;
+    return { title, description, version, diagram, url, nodes };
   }
 
   async *run() {

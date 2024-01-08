@@ -7,7 +7,11 @@
 import { Diagnostics } from "../harness/diagnostics.js";
 import { RunResult } from "../run.js";
 import { BoardRunner } from "../runner.js";
-import { WritableResult, streamsToAsyncIterable } from "../stream.js";
+import {
+  WritableResult,
+  streamsToAsyncIterable,
+  stubOutStreams,
+} from "../stream.js";
 import {
   BreadboardRunResult,
   InputValues,
@@ -64,7 +68,10 @@ export class RunServer {
       ...context,
       probe: diagnostics
         ? new Diagnostics(async ({ type, data }) => {
-            const response = [type, data] as AnyRunResponseMessage;
+            const response = [
+              type,
+              stubOutStreams(data),
+            ] as AnyRunResponseMessage;
             await responses.write(response);
           })
         : undefined,
@@ -94,7 +101,15 @@ export class RunServer {
       await responses.write(["end", {}]);
       await responses.close();
     } catch (e) {
-      await responses.abort(e);
+      let error = e as Error;
+      let message = "";
+      while (error?.cause) {
+        error = (error.cause as { error: Error }).error;
+        message += `\n${error.message}`;
+      }
+      console.error("Run Server error:", error.message);
+      await responses.write(["error", { error: message }]);
+      await responses.close();
     }
   }
 }

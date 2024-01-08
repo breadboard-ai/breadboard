@@ -79,7 +79,6 @@ export class WorkerTransport implements MessageControllerTransport {
 }
 
 export class MessageController {
-  mailboxes: Record<string, ResolveFunction<RoundTripControllerMessage>> = {};
   receivedMessages: ControllerMessage[] = [];
   #listener?: ResolveFunction;
   #transport: MessageControllerTransport;
@@ -103,32 +102,11 @@ export class MessageController {
       if ((message.type as string) === "port-dispatcher-sendport") return;
       throw new Error(`Invalid message type "${message.type}"`);
     }
-    if (message.id) {
-      const roundTripMessage = message as RoundTripControllerMessage;
-      const resolve = this.mailboxes[message.id];
-      if (resolve) {
-        // Since resolve exists, this is a response.
-        resolve(roundTripMessage);
-        return;
-      }
-    }
     if (this.#listener) {
       this.#listener(message);
     } else {
       this.receivedMessages.push(message);
     }
-  }
-
-  async ask<
-    T extends RoundTripControllerMessage,
-    Res extends RoundTripControllerMessage
-  >(data: T["data"], type: T["type"]): Promise<Res> {
-    const id = Math.random().toString(36).substring(2, 9);
-    this.#transport.sendRoundTripMessage({ id, type, data });
-    return new Promise((resolve) => {
-      this.mailboxes[id] =
-        resolve as ResolveFunction<RoundTripControllerMessage>;
-    });
   }
 
   async listen(): Promise<ControllerMessage> {
@@ -145,13 +123,5 @@ export class MessageController {
 
   inform<T extends ControllerMessage>(data: T["data"], type: T["type"]) {
     this.#transport.sendMessage({ type, data });
-  }
-
-  reply<T extends ControllerMessage>(
-    id: string,
-    data: T["data"],
-    type: T["type"]
-  ) {
-    this.#transport.sendRoundTripMessage({ id, type, data });
   }
 }
