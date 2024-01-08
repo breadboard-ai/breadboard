@@ -4,10 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  ControllerMessageType,
-  LoadRequestMessage,
-} from "../worker/protocol.js";
+import type { LoadRequestMessage } from "../worker/protocol.js";
 import { MessageController, WorkerTransport } from "../worker/controller.js";
 import type { Harness, HarnessConfig, HarnessRunResult } from "./types.js";
 import { Board, InputValues, asyncGen } from "../index.js";
@@ -20,6 +17,7 @@ import {
   WorkerServerTransport,
 } from "../remote/worker.js";
 import { RunClient } from "../remote/run.js";
+import { AnyRunResponseMessage } from "../remote/protocol.js";
 
 export const createWorker = (url: string) => {
   const workerURL = new URL(url, location.href);
@@ -68,7 +66,7 @@ export class WorkerHarness implements Harness {
     this.workerURL = workerURL;
   }
 
-  #skipDiagnosticMessages(type: ControllerMessageType) {
+  #skipDiagnosticMessages(type: AnyRunResponseMessage[0]) {
     return (
       !this.#config.diagnostics &&
       (type === "nodestart" ||
