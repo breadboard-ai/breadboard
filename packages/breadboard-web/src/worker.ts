@@ -30,8 +30,6 @@ const url = await runtime.onload();
 
 const runner = await Board.load(url);
 
-await runtime.sendBoardInfo(runner);
-
 const proxyClient = new ProxyClient(
   new WorkerClientTransport(dispatcher.send("proxy"))
 );

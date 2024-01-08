@@ -7,11 +7,10 @@
 import type {
   ControllerMessageType,
   LoadRequestMessage,
-  LoadResponseMessage,
 } from "../worker/protocol.js";
 import { MessageController, WorkerTransport } from "../worker/controller.js";
 import type { Harness, HarnessConfig, HarnessRunResult } from "./types.js";
-import { InputValues, asyncGen } from "../index.js";
+import { Board, InputValues, asyncGen } from "../index.js";
 import { createSecretAskingKit } from "./secrets.js";
 import { LocalResult } from "./result.js";
 import { ProxyServer } from "../remote/proxy.js";
@@ -86,15 +85,18 @@ export class WorkerHarness implements Harness {
       this.#stop();
     }
 
+    const runner = await Board.load(url);
+
+    const { title, description, version } = runner;
+    const diagram = runner.mermaid("TD", true);
+    const nodes = runner.nodes;
+
     this.#run = new HarnessRun(this.workerURL);
 
     const controller = this.#run.controller;
-    const result = await controller.ask<
-      LoadRequestMessage,
-      LoadResponseMessage
-    >({ url, proxyNodes: [] }, "load");
+    controller.inform<LoadRequestMessage>({ url }, "load");
 
-    return result.data;
+    return { title, description, version, diagram, url, nodes };
   }
 
   async *run() {
