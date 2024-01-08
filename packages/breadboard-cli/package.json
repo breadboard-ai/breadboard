@@ -35,6 +35,7 @@
         "../core-kit:build:tsc"
       ],
       "files": [
+        "src/**/*.js",
         "src/**/*.ts",
         "tests/**/*.ts",
         "tsconfig.json",
