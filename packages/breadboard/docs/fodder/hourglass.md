@@ -2,6 +2,8 @@
 
 The layering in the Breadboard project is organized around the concept of an hourglass: lots of producers at the top layers, single protocol in the middle (the waist), and lots of consumers at the bottom layers.
 
+![Breadboard Hourglass](./images/hourglass.png)
+
 The items in top layers are called the "frontends", to borrow from [compiler lingo](https://en.wikipedia.org/wiki/Compiler#Front_end). The waist is represented by the common format that connects top and bottom layers. Items in the bottom layers are called the "backends".
 
 ## The frontends
@@ -12,7 +14,7 @@ Nothing stops someone from building a Python or Go or Kotlin or any other kind o
 
 ## The common format
 
-At the waist of the hourglass, there's a common format that we use to represent any AI recipe. It's a JSON object whose structure is defined by the [GraphDescriptor](https://github.com/breadboard-ai/breadboard/blob/fba76cfcdf90699bb81c41f0136aedce14e1ee1d/packages/breadboard/src/types.ts) type. Very loosely, it contains the metadata for the recipe (title, description, etc.) a list of nodes that make up the recipe, and a list of edges that connect the nodes together.
+At the waist of the hourglass, there's a common format that we use to represent any AI recipe. It's a JSON object whose structure is defined by the [GraphDescriptor](https://github.com/breadboard-ai/breadboard/blob/fba76cfcdf90699bb81c41f0136aedce14e1ee1d/packages/breadboard/src/types.ts) type. Very loosely, it contains the metadata for the recipe (title, description, etc.) a list of nodes that make up the recipe, and a list of edges that connect the nodes together. The name `GraphDescriptor` hints at the fact that the common format is a representation of a directed graph, with nodes as vertices. In Breadboard, this graph can contain cycles, so it's not a [DAG](https://en.wikipedia.org/wiki/Directed_acyclic_graph), but rather a DGC (Directed Graph with Cycles).
 
 ## The backends
 
