@@ -4,20 +4,23 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HarnessEventType } from "./types.js";
+import { HistoryEventType } from "./types.js";
 
 import { LitElement, html, css } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
 
 @customElement("bb-history-entry")
 export class HistoryEntry extends LitElement {
   @property()
-  type: HarnessEventType = HarnessEventType.DONE;
+  type: HistoryEventType = HistoryEventType.DONE;
 
-  @state()
+  @property()
+  nodeId = "";
+
+  @property()
   summary = "";
 
-  @state()
+  @property()
   data: unknown = null;
 
   @property()
@@ -31,8 +34,8 @@ export class HistoryEntry extends LitElement {
 
     #container {
       display: flex;
-      border-top: 1px solid rgb(240, 240, 240);
-      padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 2.5);
+      border-bottom: 1px solid rgb(240, 240, 240);
+      padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 3.5);
     }
 
     #container summary::before {
@@ -49,7 +52,7 @@ export class HistoryEntry extends LitElement {
       pointer-events: none;
     }
 
-    #container.beforehandler summary::before {
+    #container.nodestart summary::before {
       background: radial-gradient(
           var(--bb-progress-color) 0%,
           var(--bb-progress-color) 30%,
@@ -68,9 +71,9 @@ export class HistoryEntry extends LitElement {
       animation: rotate 0.5s linear infinite;
     }
 
-    #container.afterhandler summary::before {
+    #container.nodeend summary::before {
       background: var(--bb-progress-color);
-      border: 1px solid rgb(90, 64, 119);
+      border: 1px solid #3c78d8;
     }
 
     #container.load summary::before {
@@ -147,6 +150,14 @@ export class HistoryEntry extends LitElement {
       white-space: pre-wrap;
     }
 
+    .history {
+      padding-left: calc(var(--bb-grid-size) * 3);
+    }
+
+    .data {
+      padding-top: var(--bb-grid-size);
+    }
+
     @keyframes rotate {
       from {
         transform: rotate(0);
@@ -160,10 +171,25 @@ export class HistoryEntry extends LitElement {
 
   #createDataOutput(data: unknown | null) {
     if (data === null) {
-      return "No additional data";
+      return "(pending)";
     }
 
-    return JSON.stringify(data, null, 2);
+    if (data === undefined) {
+      return "(no data)";
+    }
+
+    try {
+      if (typeof data !== "object") {
+        throw new Error(typeof data);
+      }
+
+      return html`<bb-json-tree
+        autoExpand="true"
+        .json=${data}
+      ></bb-json-tree>`;
+    } catch (err) {
+      return html`(invalid value type: "${err}")`;
+    }
   }
 
   #formatTime(time: number) {
@@ -179,15 +205,22 @@ export class HistoryEntry extends LitElement {
     return time.toFixed(1) + "ms";
   }
 
+  #isOpen(type: HistoryEventType) {
+    return (
+      type === HistoryEventType.NODESTART || type === HistoryEventType.OUTPUT
+    );
+  }
+
   render() {
     return html`<div id="container" class="${this.type}">
-    <details ${this.type === "output" ? "open" : ""}>
+    <details ?open=${this.#isOpen(this.type)}>
       <summary>${this.summary} <span id="id">${
-      this.id || ""
+      this.nodeId || ""
     }</span> <span id="elapsed-time">${this.#formatTime(
       this.elapsedTime
     )}<span></summary>
-      <div><pre>${this.#createDataOutput(this.data)}</pre></div>
+    <div class="history"><slot></slot></div>
+    <div class="data">${this.#createDataOutput(this.data)}</div>
     </details>
   </div>`;
   }

@@ -24,10 +24,7 @@ import { customElement, property, state } from "lit/decorators.js";
 import { InputEnterEvent } from "./events.js";
 import { WebcamInput } from "./webcam.js";
 import { DrawableInput } from "./drawable.js";
-
-export type InputArgs = {
-  schema?: Schema;
-};
+import { InputArgs } from "./types.js";
 
 export type InputData = Record<string, unknown>;
 
@@ -399,7 +396,9 @@ export class Input extends LitElement {
             input = html`<select name="${key}" id="${key}">
               ${options.map((option) => {
                 const isSelected = option === property.default;
-                return html`<option ?selected=${isSelected} value=${option}">${option}</option>`;
+                return html`<option ?selected=${isSelected} value=${option}>
+                  ${option}
+                </option>`;
               })}
             </select>`;
           } else if (isBoolean(property)) {

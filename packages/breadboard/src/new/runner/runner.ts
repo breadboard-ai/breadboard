@@ -46,7 +46,7 @@ function createProbeCallbacks(probe: EventTarget): InvokeCallbacks {
         outputs: Promise.resolve({}),
       };
       const shouldInvokeHandler = probe.dispatchEvent(
-        new CustomEvent("beforehandler", {
+        new CustomEvent("nodestart", {
           detail,
           cancelable: true,
         })

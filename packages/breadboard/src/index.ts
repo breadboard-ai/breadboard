@@ -8,8 +8,6 @@ export { Board } from "./board.js";
 export { BoardRunner } from "./runner.js";
 export { Node } from "./node.js";
 export { SchemaBuilder } from "./schema.js";
-export { LogProbe } from "./log.js";
-export { DebugProbe } from "./debug.js";
 export { RunResult } from "./run.js";
 export type {
   Edge,
@@ -22,6 +20,8 @@ export type {
   NodeHandler,
   NodeHandlerFunction,
   InputValues,
+  Probe,
+  ProbeMessage,
   OutputValues,
   NodeHandlers,
   NodeIdentifier,
@@ -33,7 +33,6 @@ export type {
   ErrorCapability,
   TraversalResult,
   SubGraphs,
-  ProbeEvent,
   Schema,
   Kit,
   NodeFactory,

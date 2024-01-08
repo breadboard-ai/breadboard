@@ -128,7 +128,9 @@ export function convertToNamedFunction({
       const match = funcStr.match(/function\s+([A-Za-z0-9_$]+)\s*\(/);
       const existingFunctionName = match ? match[1] : null;
       if (existingFunctionName !== name) {
-        throw new Error(`Function name mismatch: ${existingFunctionName} !== ${name}`);
+        throw new Error(
+          `Function name mismatch: ${existingFunctionName} !== ${name}`
+        );
       }
     }
     return funcStr.replace(namedFuncRegex, `function ${name}(`);
@@ -139,7 +141,10 @@ export function convertToNamedFunction({
   }
   // If it's not a recognizable function format
   else {
-    throw new Error("Invalid function format");
+    // Do not throw, since it could be a function format that this helped
+    // does not yet handle.
+    console.warn(`Unrecognized function format: ${funcStr}`);
+    return funcStr;
   }
 }
 

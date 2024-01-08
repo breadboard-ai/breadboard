@@ -341,7 +341,7 @@ export interface Kit extends KitDescriptor {
 
 export type BreadboardSlotSpec = Record<string, GraphDescriptor>;
 
-export type RunResultType = "input" | "output" | "beforehandler";
+export type RunResultType = "input" | "output";
 
 export interface BreadboardRunResult {
   /**
@@ -380,6 +380,11 @@ export interface BreadboardRunResult {
    * graph traversal.
    */
   get state(): TraversalResult;
+  /**
+   * The invocation id of the current node. This is useful for tracking
+   * the node within the run, similar to an "index" property in map/forEach.
+   */
+  get invocationId(): number;
 }
 
 export interface NodeFactory {
@@ -449,49 +454,63 @@ export interface BreadboardValidator {
   ): BreadboardValidator;
 }
 
-/**
- * Details of the `ProbeEvent` event.
- */
-export interface ProbeDetails {
-  /**
-   * Internal representation of the node that is placed on the board.
-   */
-  descriptor: NodeDescriptor;
-  /**
-   * The input values the node was passed.
-   */
-  inputs: InputValues;
-  /**
-   * Any missing inputs that the node was expecting.
-   * This property is only populated for `skip` event.
-   */
-  missingInputs?: string[];
-  /**
-   * The output values the node provided.
-   */
-  outputs?: OutputValues | Promise<OutputValues>;
-  /**
-   * The nesting level of the node.
-   * When a board contains included or slotted boards, this level will
-   * increment for each level of nesting.
-   */
-  nesting?: number;
-  /*
-   * Invocation Id. This is a unique id that is generated for each invocation
-   * of the node. It can be used to correlate events.
-   * The number is unique within a board run.
-   */
-  invocationId: number;
-  sources?: string[];
-  validatorMetadata?: BreadboardValidatorMetadata[];
-}
+export type GraphProbeMessageData = {
+  metadata: GraphMetadata;
+  path: number[];
+};
 
-/**
- * A probe event that is distpached during board run.
- *
- * See [Chapter 7: Probes](https://github.com/breadboard-ai/breadboard/tree/main/packages/breadboard/docs/tutorial#chapter-7-probes) for more information.
- */
-export type ProbeEvent = CustomEvent<ProbeDetails>;
+export type GraphStartProbeMessage = {
+  type: "graphstart";
+  data: GraphProbeMessageData;
+};
+
+export type GraphEndProbeMessage = {
+  type: "graphend";
+  data: GraphProbeMessageData;
+};
+
+export type SkipProbeMessage = {
+  type: "skip";
+  data: {
+    node: NodeDescriptor;
+    inputs: InputValues;
+    missingInputs: string[];
+    path: number[];
+  };
+};
+
+export type NodeStartProbeMessage = {
+  type: "nodestart";
+  data: {
+    node: NodeDescriptor;
+    inputs: InputValues;
+    path: number[];
+  };
+};
+
+export type NodeEndProbeMessage = {
+  type: "nodeend";
+  data: {
+    node: NodeDescriptor;
+    inputs: InputValues;
+    outputs: OutputValues;
+    validatorMetadata?: BreadboardValidatorMetadata[];
+    path: number[];
+  };
+};
+
+export type ProbeMessage =
+  | GraphStartProbeMessage
+  | GraphEndProbeMessage
+  | SkipProbeMessage
+  | NodeStartProbeMessage
+  | NodeEndProbeMessage;
+
+// TODO: Remove extending EventTarget once new runner is converted to use
+// reporting.
+export interface Probe extends EventTarget {
+  report?(message: ProbeMessage): Promise<void>;
+}
 
 export interface RunnerLike {
   run(
@@ -540,46 +559,10 @@ export interface NodeHandlerContext {
   readonly base?: string;
   readonly outerGraph?: GraphDescriptor;
   readonly slots?: BreadboardSlotSpec;
-  readonly probe?: EventTarget;
+  readonly probe?: Probe;
   readonly requestInput?: (name: string, schema: Schema) => Promise<NodeValue>;
+  readonly invocationPath?: number[];
 }
-
-type Common<To, From> = {
-  [P in keyof (From | To) as From[P] extends To[P] ? P : never]?:
-    | To[P]
-    | undefined;
-};
-
-type LongOutSpec<From, To> =
-  | `${string & keyof From}->${string & keyof To}`
-  | `${string & keyof From}->${string & keyof To}.`
-  | `${string & keyof From}->${string & keyof To}?`;
-
-type LongInSpec<From, To> =
-  | `${string & keyof From}<-${string & keyof To}`
-  | `${string & keyof From}<-${string & keyof To}.`
-  | `${string & keyof From}<-${string & keyof To}?`;
-
-type ShortOutSpec<From, To> =
-  | `${string & keyof Common<From, To>}`
-  | `${string & keyof Common<From, To>}->`
-  | `${string & keyof Common<From, To>}->.`
-  | `${string & keyof Common<From, To>}->?`;
-
-type ShortInSpec<From, To> =
-  | `<-${string & keyof Common<From, To>}`
-  | `<-${string & keyof Common<From, To>}.`
-  | `<-${string & keyof Common<From, To>}?`;
-
-export type WireOutSpec<From, To> =
-  | LongOutSpec<From, To>
-  | ShortOutSpec<From, To>;
-
-export type WireInSpec<From, To> = LongInSpec<From, To> | ShortInSpec<From, To>;
-
-export type WireSpec<FromIn, FromOut, ToIn, ToOut> =
-  | WireOutSpec<FromOut, ToIn>
-  | WireInSpec<ToOut, FromIn>;
 
 export interface BreadboardNode<Inputs, Outputs> {
   /**

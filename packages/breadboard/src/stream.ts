@@ -27,12 +27,14 @@ export class StreamCapability<ChunkType>
 export const isStreamCapability = (object: unknown) => {
   const maybeStream = object as StreamCapabilityType;
   return (
+    maybeStream &&
     maybeStream.kind &&
     maybeStream.kind === STREAM_KIND &&
     maybeStream.stream instanceof ReadableStream
   );
 };
 
+// TODO: Remove this once MessageController is gone.
 const findStreams = (value: NodeValue, foundStreams: ReadableStream[]) => {
   if (Array.isArray(value)) {
     value.forEach((item: NodeValue) => {
@@ -51,10 +53,50 @@ const findStreams = (value: NodeValue, foundStreams: ReadableStream[]) => {
   }
 };
 
+export const stringifyWithStreams = (value: unknown) => {
+  const foundStreams: ReadableStream[] = [];
+  return {
+    value: JSON.stringify(value, (key, value) => {
+      if (isStreamCapability(value)) {
+        foundStreams.push(value.stream);
+        return { $type: "Stream", id: foundStreams.length - 1 };
+      }
+      return value;
+    }),
+    streams: foundStreams,
+  };
+};
+
+export const parseWithStreams = (
+  value: string,
+  getStream: (id: number) => ReadableStream
+) => {
+  const parsed = JSON.parse(value, (key, value) => {
+    if (typeof value === "object" && value !== null) {
+      if (value.$type === "Stream" && typeof value.id === "number") {
+        return new StreamCapability(getStream(value.id));
+      }
+    }
+    return value;
+  });
+  return parsed;
+};
+
 export const getStreams = (value: NodeValue) => {
   const foundStreams: ReadableStream[] = [];
   findStreams(value, foundStreams);
   return foundStreams;
+};
+
+/**
+ * Stubs out all streams in the input values with empty streams.
+ * This is useful when we don't want the streams to be transferred.
+ * @param data
+ * @returns
+ */
+export const stubOutStreams = (data: unknown): unknown => {
+  const stringified = stringifyWithStreams(data).value;
+  return parseWithStreams(stringified, () => new ReadableStream());
 };
 
 export type PatchedReadableStream<T> = ReadableStream<T> & AsyncIterable<T>;
@@ -88,9 +130,8 @@ export const portToStreams = <Read, Write>(
   });
   const writable = new WritableStream<Write>({
     write(chunk) {
-      const foundStreams: ReadableStream[] = [];
-      findStreams(chunk as NodeValue, foundStreams);
-      port.postMessage(chunk, foundStreams);
+      const stringified = stringifyWithStreams(chunk);
+      port.postMessage(chunk, stringified.streams);
     },
     close() {
       port.postMessage(null, []);
@@ -99,6 +140,139 @@ export const portToStreams = <Read, Write>(
   return {
     readable,
     writable,
+  };
+};
+
+export const portFactoryToStreams = <Read, Write>(
+  portFactory: () => Promise<MessagePortLike>
+): PortStreams<Read, Write> => {
+  let streams: PortStreams<Read, Write>;
+  const streamsAvailable = new Promise<void>((resolve) => {
+    portFactory().then((port) => {
+      streams = portToStreams(port);
+      resolve();
+    });
+  });
+  const readable = new ReadableStream<Read>({
+    async start() {
+      await streamsAvailable;
+    },
+    pull(controller) {
+      return streams.readable.pipeTo(
+        new WritableStream({
+          write(chunk) {
+            controller.enqueue(chunk);
+          },
+        })
+      );
+    },
+    cancel() {
+      streams.readable.cancel();
+    },
+  });
+  const writable = new WritableStream<Write>({
+    async start() {
+      await streamsAvailable;
+    },
+    async write(chunk) {
+      const writer = streams.writable.getWriter();
+      await writer.write(chunk);
+      writer.releaseLock();
+    },
+    async close() {
+      await streams.writable.close();
+    },
+    async abort(reason) {
+      await streams.writable.abort(reason);
+    },
+  });
+  return {
+    readable,
+    writable,
+  };
+};
+
+export class WritableResult<Read, Write> {
+  #writer: WritableStreamDefaultWriter<Write>;
+  data: Read;
+
+  constructor(value: Read, writer: WritableStreamDefaultWriter<Write>) {
+    this.#writer = writer;
+    this.data = value;
+  }
+
+  async reply(chunk: Write) {
+    await this.#writer.write(chunk);
+  }
+}
+
+class StreamsAsyncIterator<Read, Write>
+  implements AsyncIterator<WritableResult<Read, Write>, void, unknown>
+{
+  #reader: ReadableStreamDefaultReader<Read>;
+  #writer: WritableStreamDefaultWriter<Write>;
+  constructor(writable: WritableStream<Write>, readable: ReadableStream<Read>) {
+    this.#reader = readable.getReader();
+    this.#writer = writable.getWriter();
+  }
+
+  async next(): Promise<IteratorResult<WritableResult<Read, Write>, void>> {
+    const { done, value } = await this.#reader.read();
+    if (done) {
+      this.#writer.close();
+      return { done, value: undefined };
+    }
+    return {
+      done: false,
+      value: new WritableResult<Read, Write>(value, this.#writer),
+    };
+  }
+
+  async return(): Promise<IteratorResult<WritableResult<Read, Write>, void>> {
+    this.#writer.close();
+    return { done: true, value: undefined };
+  }
+
+  async throw(
+    err: Error
+  ): Promise<IteratorResult<WritableResult<Read, Write>, void>> {
+    this.#writer.abort(err);
+    return { done: true, value: undefined };
+  }
+}
+
+export type AsyncIterableWithStart<T, S> = AsyncIterable<T> & {
+  start: (chunk: S) => Promise<void>;
+};
+
+/**
+ * A helper to convert a pair of streams to an async iterable that follows
+ * the following protocol:
+ * - The async iterable yields a `WritableResult` object.
+ * - The `WritableResult` object contains the data from the readable stream.
+ * - The `WritableResult` object has a `reply` method that can be used to
+ *   write a value as a reply to to data in the readable stream.
+ *
+ * This is particularly useful with bi-directional streams, when the two
+ * streams are semantically connected to each other.
+ *
+ * @param writable The writable stream.
+ * @param readable The readable stream.
+ * @returns An async iterable.
+ */
+export const streamsToAsyncIterable = <Read, Write>(
+  writable: WritableStream<Write>,
+  readable: ReadableStream<Read>
+): AsyncIterableWithStart<WritableResult<Read, Write>, Write> => {
+  return {
+    async start(chunk: Write) {
+      const writer = writable.getWriter();
+      await writer.write(chunk);
+      writer.releaseLock();
+    },
+    [Symbol.asyncIterator]() {
+      return new StreamsAsyncIterator<Read, Write>(writable, readable);
+    },
   };
 };
 
@@ -141,4 +315,36 @@ export const streamFromAsyncGen = <T>(
       controller.enqueue(value);
     },
   }) as PatchedReadableStream<T>;
+};
+
+export const streamFromReader = <Read>(
+  reader: ReadableStreamDefaultReader<Read>
+) => {
+  return new ReadableStream(
+    {
+      async pull(controller) {
+        const { value, done } = await reader.read();
+
+        if (done) {
+          controller.close();
+          return;
+        }
+        controller.enqueue(value);
+      },
+    },
+    { highWaterMark: 0 }
+  ) as PatchedReadableStream<Read>;
+};
+
+export const streamFromWriter = <Write>(
+  writer: WritableStreamDefaultWriter<Write>
+) => {
+  return new WritableStream<Write>(
+    {
+      async write(chunk) {
+        return writer.write(chunk);
+      },
+    },
+    { highWaterMark: 0 }
+  );
 };

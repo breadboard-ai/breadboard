@@ -4,40 +4,47 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  ControllerMessageType,
-  LoadRequestMessage,
-  LoadResponseMessage,
-  StartMesssage,
-} from "../worker/protocol.js";
+import type { LoadRequestMessage } from "../worker/protocol.js";
 import { MessageController, WorkerTransport } from "../worker/controller.js";
-import type {
-  AnyRunResult,
-  Harness,
-  HarnessConfig,
-  HarnessRunResult,
-} from "./types.js";
-import { asyncGen } from "../index.js";
-import { ProxyReceiver } from "./receiver.js";
-import { createOnSecret } from "./secrets.js";
-import type { ProxyPromiseResponse } from "../remote/protocol.js";
-import { WorkerResult } from "./result.js";
+import type { Harness, HarnessConfig, HarnessRunResult } from "./types.js";
+import { Board, InputValues, asyncGen } from "../index.js";
+import { createSecretAskingKit } from "./secrets.js";
+import { LocalResult } from "./result.js";
+import { ProxyServer } from "../remote/proxy.js";
+import {
+  PortDispatcher,
+  WorkerClientTransport,
+  WorkerServerTransport,
+} from "../remote/worker.js";
+import { RunClient } from "../remote/run.js";
+import { AnyRunResponseMessage } from "../remote/protocol.js";
 
-const prepareBlobUrl = (url: string) => {
-  const code = `import "${url}";`;
+export const createWorker = (url: string) => {
+  const workerURL = new URL(url, location.href);
+  const code = `import "${workerURL}";`;
   const blob = new Blob([code], { type: "text/javascript" });
-  return URL.createObjectURL(blob);
+  const blobUrl = URL.createObjectURL(blob);
+  return new Worker(blobUrl, { type: "module" });
 };
 
 class HarnessRun {
   worker: Worker;
   transport: WorkerTransport;
   controller: MessageController;
+  proxyServer: ProxyServer;
+  runClient: RunClient;
 
   constructor(workerURL: string) {
-    this.worker = new Worker(workerURL, { type: "module" });
+    this.worker = createWorker(workerURL);
+    const dispatcher = new PortDispatcher(this.worker);
     this.transport = new WorkerTransport(this.worker);
     this.controller = new MessageController(this.transport);
+    this.proxyServer = new ProxyServer(
+      new WorkerServerTransport(dispatcher.receive("proxy"))
+    );
+    this.runClient = new RunClient(
+      new WorkerClientTransport(dispatcher.send("run"))
+    );
   }
 
   terminate() {
@@ -56,14 +63,16 @@ export class WorkerHarness implements Harness {
     if (!workerURL) {
       throw new Error("Worker harness requires a worker URL");
     }
-    const absoluteURL = new URL(workerURL, location.href);
-    this.workerURL = prepareBlobUrl(absoluteURL.href);
+    this.workerURL = workerURL;
   }
 
-  #skipDiagnosticMessages(type: ControllerMessageType) {
+  #skipDiagnosticMessages(type: AnyRunResponseMessage[0]) {
     return (
       !this.#config.diagnostics &&
-      (type === "beforehandler" || type === "afterhandler")
+      (type === "nodestart" ||
+        type === "nodeend" ||
+        type === "graphstart" ||
+        type === "graphend")
     );
   }
 
@@ -74,58 +83,45 @@ export class WorkerHarness implements Harness {
       this.#stop();
     }
 
-    const proxyNodes = (this.#config.proxy?.[0]?.nodes ?? []).map((node) => {
-      return typeof node === "string" ? node : node.node;
-    });
+    const runner = await Board.load(url);
+
+    const { title, description, version } = runner;
+    const diagram = runner.mermaid("TD", true);
+    const nodes = runner.nodes;
 
     this.#run = new HarnessRun(this.workerURL);
-    const controller = this.#run.controller;
-    const result = await controller.ask<
-      LoadRequestMessage,
-      LoadResponseMessage
-    >({ url, proxyNodes }, "load");
 
-    return result.data;
+    const controller = this.#run.controller;
+    controller.inform<LoadRequestMessage>({ url }, "load");
+
+    return { title, description, version, diagram, url, nodes };
   }
 
   async *run() {
     if (!this.#run) {
       throw new Error("Harness hasn't been loaded. Please call 'load' first.");
     }
-    const controller = this.#run.controller;
 
     yield* asyncGen<HarnessRunResult>(async (next) => {
-      const receiver = new ProxyReceiver(this.#config, createOnSecret(next));
-      controller.inform<StartMesssage>({}, "start");
-      for (;;) {
-        if (!controller) {
-          break;
-        }
+      const kits = [createSecretAskingKit(next), ...this.#config.kits];
+      const proxy = this.#config.proxy?.[0]?.nodes;
+      if (!this.#run) {
+        // This is only necessary because TypeScript doesn't know that
+        // `this.#run` is non-null after the `if` statement above.
+        return;
+      }
 
-        const message = await controller.listen();
-        const { data, type, id } = message;
-        if (type === "proxy") {
-          try {
-            const result = await receiver.handle(data as ProxyPromiseResponse);
-            id && controller.reply(id, result.value, type);
-            continue;
-          } catch (e) {
-            const error = e as Error;
-            await next(
-              new WorkerResult(controller, {
-                type: "error",
-                data: { error },
-              })
-            );
-            break;
-          }
-        }
+      this.#run.proxyServer.serve({ kits, proxy });
+
+      for await (const data of this.#run.runClient.run()) {
+        const { type } = data;
         if (this.#skipDiagnosticMessages(type)) {
           continue;
         }
-        await next(new WorkerResult(controller, message as AnyRunResult));
-        if (data && type === "end") {
-          break;
+        const result = new LocalResult({ type, data });
+        await next(result);
+        if (type === "input") {
+          data.inputs = result.response as InputValues;
         }
       }
     });

@@ -12,10 +12,8 @@ import { config } from "dotenv";
 
 import { Runner as BoardRunner } from "@google-labs/breadboard";
 import {
-  type ProbeEvent,
   type OutputValues,
   type InputValues,
-  LogProbe,
   asRuntimeKit,
   NodeDescriptor,
 } from "@google-labs/breadboard";
@@ -34,6 +32,7 @@ import Starter from "@google-labs/llm-starter";
 import Nursery from "@google-labs/node-nursery";
 import Pinecone from "@google-labs/pinecone-kit";
 import Palm from "@google-labs/palm-kit";
+import { LogProbe, ProbeEvent } from "./probe";
 
 // buffer for input from an external source.
 let input_buffer: string | null = null;

@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { BoardRunner } from "../runner.js";
-import { NodeTypeIdentifier } from "../types.js";
+import { Kit, NodeTypeIdentifier } from "../types.js";
 
 /**
  * A detailed specification for ProxyServer and ProxyClient.
@@ -92,10 +91,9 @@ export type NodeProxyConfig = (NodeTypeIdentifier | NodeProxySpec)[];
 
 export type ProxyServerConfig = {
   /**
-   * The board to run. This board will used to provide the handlers for the
-   * nodes that are proxied.
+   * The kits to use to provide the handlers for the nodes that are proxied.
    */
-  board: BoardRunner;
+  kits: Kit[];
   /**
    * The proxy configuration. This is an array of node types or node specs.
    * @see NodeProxySpec for more details.

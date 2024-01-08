@@ -61,7 +61,8 @@ test("writes input", async (t) => {
       newOpportunities: [],
       pendingOutputs: new Map(),
     },
-    "input"
+    "input",
+    0
   );
   await writer.writeInput(stop);
   t.is(
@@ -88,39 +89,13 @@ test("writes output", async (t) => {
       newOpportunities: [],
       pendingOutputs: new Map(),
     },
-    "output"
+    "output",
+    0
   );
   await writer.writeOutput(stop);
   t.is(
     mockResponse.written,
     '{"type":"output","data":{},"state":"{\\"state\\":{\\"descriptor\\":{\\"id\\":\\"test\\",\\"type\\":\\"test\\"},\\"inputs\\":{},\\"missingInputs\\":[],\\"opportunities\\":[{\\"from\\":\\"test\\",\\"to\\":\\"test\\",\\"out\\":\\"*\\"}],\\"state\\":{\\"state\\":{\\"$type\\":\\"Map\\",\\"value\\":[]},\\"constants\\":{\\"$type\\":\\"Map\\",\\"value\\":[]}},\\"outputsPromise\\":{},\\"skip\\":false,\\"newOpportunities\\":[],\\"pendingOutputs\\":{\\"$type\\":\\"Map\\",\\"value\\":[]}},\\"type\\":\\"output\\"}"}\n'
-  );
-});
-
-test("writes beforehandler", async (t) => {
-  const mockResponse = new MockResponse();
-  const writer = new Writer(mockResponse, async (state) => state);
-  const stop = new RunResult(
-    {
-      descriptor: {
-        id: "test",
-        type: "test",
-      },
-      inputs: {},
-      missingInputs: [],
-      opportunities: [{ from: "test", to: "test", out: "*" }],
-      state: new MockEdgeState(),
-      outputsPromise: Promise.resolve({} as OutputValues),
-      skip: false,
-      newOpportunities: [],
-      pendingOutputs: new Map(),
-    },
-    "beforehandler"
-  );
-  writer.writeBeforeHandler(stop);
-  t.is(
-    mockResponse.written,
-    '{"type":"beforehandler","data":{"id":"test","type":"test"}}\n'
   );
 });
 
@@ -156,7 +131,8 @@ test("transforms state", async (t) => {
       newOpportunities: [],
       pendingOutputs: new Map(),
     },
-    "output"
+    "output",
+    0
   );
   await writer.writeOutput(stop);
   t.is(

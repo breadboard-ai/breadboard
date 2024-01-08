@@ -6,16 +6,16 @@
 
 import { NodeProxyConfig } from "../remote/config.js";
 import {
-  BeforehandlerResponse,
+  NodeStartResponse,
   InputPromiseResponse,
   LoadResponse,
   OutputResponse,
 } from "../remote/protocol.js";
-import { Kit, NodeDescriptor, OutputValues } from "../types.js";
+import { Kit, NodeDescriptor, OutputValues, ProbeMessage } from "../types.js";
 
-export type AfterhandlerResponse = {
+export type NodeEndResponse = {
   node: NodeDescriptor;
-  invocationId: number;
+  path: number[];
   outputs: OutputValues;
 };
 
@@ -35,11 +35,11 @@ export type ResultType =
   /**
    * Sent before a handler for a particular node is invoked
    */
-  | "beforehandler"
+  | "nodestart"
   /**
    * Sent after a handler for a particular node is invoked
    */
-  | "afterhandler"
+  | "nodeend"
   /**
    * Sent when the harness is asking for secret
    */
@@ -73,19 +73,19 @@ export type SecretResult = {
   data: { keys: string[] };
 };
 
-export type BeforehandlerResult = {
-  type: "beforehandler";
-  data: BeforehandlerResponse;
+export type NodeStartResult = {
+  type: "nodestart";
+  data: NodeStartResponse;
 };
 
-export type AfterhandlerResult = {
-  type: "afterhandler";
-  data: AfterhandlerResponse;
+export type NodeEndResult = {
+  type: "nodeend";
+  data: NodeEndResponse;
 };
 
 export type ErrorResult = {
   type: "error";
-  data: { error: Error };
+  data: { error: string };
 };
 
 export type EndResult = {
@@ -99,10 +99,11 @@ export type AnyRunResult = (
   | InputResult
   | OutputResult
   | SecretResult
-  | BeforehandlerResult
-  | AfterhandlerResult
+  | NodeStartResult
+  | NodeEndResult
   | ErrorResult
   | EndResult
+  | ProbeMessage
 ) &
   OptionalId;
 

@@ -29,10 +29,18 @@ const getTransformer = async (
     const runnableBoard = await Board.fromBreadboardCapability(
       board as BreadboardCapability
     );
+    // Because stream transformers run outside of the normal board lifecycle,
+    // they will not have access to `probe` capabilities and thus will not
+    // send diagnostics back.
+    // We need to figure out how enable this.
     return {
       async transform(chunk, controller) {
         const inputs = { chunk };
-        const result = await runnableBoard.runOnce(inputs, context);
+        const result = await runnableBoard.runOnce(inputs, {
+          ...context,
+          // TODO: figure out how to send diagnostics from streams transformer.
+          probe: undefined,
+        });
         controller.enqueue({ chunk: result.chunk });
       },
     };

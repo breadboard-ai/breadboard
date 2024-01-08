@@ -84,12 +84,11 @@ export class Diagram extends HTMLElement {
           background-color: rgb(244, 247, 252);
           background-image: var(--bb-grid-pattern);
           background-position: var(--diagram-x, 0) var(--diagram-y, 0);
-          display: block;
-          width: 100%;
-          height: 100%;
+          overflow: auto;
           position: relative;
           user-select: none;
           pointer-events: auto;
+          width: 100%;
         }
 
         :host(.pan) {

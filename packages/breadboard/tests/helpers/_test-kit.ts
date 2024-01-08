@@ -149,22 +149,30 @@ export const TestKit = new KitBuilder({
         ...Object.keys(inputSchema?.properties ?? {}),
       ];
 
-      const schema = (description: string) => ({
+      const schema = (op: string) => ({
         title: "Reverser",
         description: "Reverses the provided string inputs",
         type: "object",
         properties: Object.fromEntries(
           ports.map((port) => [
             port,
-            { type: "string", title: port, description },
+            {
+              type: "string",
+              title: inputSchema?.properties?.[port]?.title ?? port,
+              description:
+                op +
+                (inputSchema?.properties?.[port]?.description ??
+                  inputSchema?.properties?.[port]?.title ??
+                  port),
+            },
           ])
         ),
         additonalProperties: Object.entries(inputs ?? {}).length === 0,
       });
 
       return {
-        inputSchema: schema("String to reverse"),
-        outputSchema: schema("Reversed string"),
+        inputSchema: schema("Reverse: "),
+        outputSchema: schema("Reversed: "),
       };
     },
   },

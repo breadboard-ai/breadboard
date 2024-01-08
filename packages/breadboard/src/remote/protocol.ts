@@ -5,7 +5,15 @@
  */
 
 import { PatchedReadableStream } from "../stream.js";
-import { InputValues, NodeDescriptor, OutputValues, Schema } from "../types.js";
+import {
+  GraphProbeMessageData,
+  InputValues,
+  NodeDescriptor,
+  NodeEndProbeMessage,
+  OutputValues,
+  Schema,
+  SkipProbeMessage,
+} from "../types.js";
 
 /**
  * Valid request names: "load", "run", "proxy". A good way to think of
@@ -24,10 +32,6 @@ export type LoadRequest = {
    * The url of the board to load.
    */
   url: string;
-  /**
-   * The list of nodes to proxy.
-   */
-  proxyNodes: string[];
 };
 
 /**
@@ -70,7 +74,7 @@ export type RunRequestType = "run" | "input" | "proxy";
  * These are markers for individual messages within the response,
  * so that the client can identify which message is which.
  */
-export type RunResponseType = "output" | "beforehandler" | "input" | "proxy";
+export type RunResponseType = "output" | "input" | "proxy";
 
 export type RunState = string;
 
@@ -101,18 +105,23 @@ export type OutputResponseMessage = ["output", OutputResponse];
 /**
  * Sent by a server just before a node is about to run.
  */
-export type BeforehandlerResponse = {
+export type NodeStartResponse = {
   /**
    * The description of the node that is about to run.
    * @see [NodeDescriptor]
    */
   node: NodeDescriptor;
-  invocationId: number;
+  path: number[];
 };
-export type BeforehandlerResponseMessage = [
-  "beforehandler",
-  BeforehandlerResponse
-];
+export type NodeStartResponseMessage = ["nodestart", NodeStartResponse];
+
+export type NodeEndResponseMessage = ["nodeend", NodeEndProbeMessage["data"]];
+
+export type GraphStartResponseMessage = ["graphstart", GraphProbeMessageData];
+
+export type GraphEndResponseMessage = ["graphend", GraphProbeMessageData];
+
+export type SkipResponseMessage = ["skip", SkipProbeMessage["data"]];
 
 /**
  * Sent by a server to request input.
@@ -193,8 +202,9 @@ export type ProxyResolveRequestMessage = [
  * Indicates that the board is done running.
  * Can only be the last message in the response stream.
  */
-export type EndResponse = Record<string, never>;
-export type EndResponseMessage = ["end", EndResponse];
+export type End = Record<string, never>;
+export type EndResponseMessage = ["end", End];
+export type EndRequestMessage = ["end", End];
 
 /**
  * Sent by the server when an error occurs.
@@ -238,7 +248,7 @@ export type ProxyChunkResponse = {
 
 export type ProxyChunkResponseMessage = ["chunk", ProxyChunkResponse];
 
-export type AnyProxyRequestMessage = ProxyRequestMessage;
+export type AnyProxyRequestMessage = ProxyRequestMessage | EndRequestMessage;
 export type AnyProxyResponseMessage =
   | ProxyResponseMessage
   | ErrorResponseMessage
@@ -252,7 +262,11 @@ export type AnyRunRequestMessage =
 
 export type AnyRunResponseMessage =
   | OutputResponseMessage
-  | BeforehandlerResponseMessage
+  | NodeStartResponseMessage
+  | NodeEndResponseMessage
+  | GraphStartResponseMessage
+  | GraphEndResponseMessage
+  | SkipResponseMessage
   | InputPromiseResponseMessage
   | ProxyPromiseResponseMessage
   | EndResponseMessage

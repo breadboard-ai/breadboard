@@ -18,32 +18,20 @@ import type {
   Kit,
   BreadboardValidator,
   NodeHandlerContext,
-  ProbeDetails,
   BreadboardCapability,
   LambdaNodeInputs,
   LambdaNodeOutputs,
 } from "./types.js";
 
 import { TraversalMachine } from "./traversal/machine.js";
-import {
-  BeforeHandlerStageResult,
-  InputStageResult,
-  OutputStageResult,
-  RunResult,
-} from "./run.js";
+import { InputStageResult, OutputStageResult, RunResult } from "./run.js";
 import { BoardLoader } from "./loader.js";
 import { runRemote } from "./remote.js";
-import { callHandler } from "./handler.js";
+import { callHandler, handlersFromKits } from "./handler.js";
 import { toMermaid } from "./mermaid.js";
 import { SchemaBuilder } from "./schema.js";
 import { RequestedInputsManager, bubbleUpInputsIfNeeded } from "./bubble.js";
 import { asyncGen } from "./utils/async-gen.js";
-
-class ProbeEvent extends CustomEvent<ProbeDetails> {
-  constructor(type: string, detail: ProbeDetails) {
-    super(type, { detail, cancelable: true });
-  }
-}
 
 /**
  * This class is the main entry point for running a board.
@@ -121,8 +109,8 @@ export class BoardRunner implements BreadboardRunner {
     context: NodeHandlerContext = {},
     result?: RunResult
   ): AsyncGenerator<RunResult> {
-    let invocationId = 0;
     yield* asyncGen<RunResult>(async (next) => {
+      const { probe } = context;
       const handlers = await BoardRunner.handlersFromBoard(this, context.kits);
       const slots = { ...this.#slots, ...context.slots };
       this.#validators.forEach((validator) => validator.addGraph(this));
@@ -131,97 +119,94 @@ export class BoardRunner implements BreadboardRunner {
 
       const requestedInputs = new RequestedInputsManager(context);
 
+      const invocationPath = context.invocationPath || [];
+
+      await probe?.report?.({
+        type: "graphstart",
+        data: { metadata: this, path: invocationPath },
+      });
+
+      let invocationId = 0;
+      const path = () => [...invocationPath, invocationId];
+
       for await (const result of machine) {
         invocationId++;
         const { inputs, descriptor, missingInputs } = result;
 
         if (result.skip) {
-          context?.probe?.dispatchEvent(
-            new ProbeEvent("skip", {
-              descriptor,
+          await probe?.report?.({
+            type: "skip",
+            data: {
+              node: descriptor,
               inputs,
               missingInputs,
-              invocationId,
-            })
-          );
+              path: path(),
+            },
+          });
           continue;
         }
+
+        await probe?.report?.({
+          type: "nodestart",
+          data: {
+            node: descriptor,
+            inputs,
+            path: path(),
+          },
+        });
+
+        let outputsPromise: Promise<OutputValues> | undefined = undefined;
 
         if (descriptor.type === "input") {
-          await next(new InputStageResult(result));
-          context?.probe?.dispatchEvent(
-            new ProbeEvent("input", {
-              descriptor,
-              inputs,
-              outputs: await result.outputsPromise,
-              invocationId,
-            })
-          );
+          await next(new InputStageResult(result, invocationId));
           await bubbleUpInputsIfNeeded(this, context, result);
-          continue;
+          outputsPromise = result.outputsPromise;
+        } else if (descriptor.type === "output") {
+          await next(new OutputStageResult(result, invocationId));
+          outputsPromise = result.outputsPromise;
+        } else {
+          const handler = handlers[descriptor.type];
+          if (!handler)
+            throw new Error(`No handler for node type "${descriptor.type}"`);
+
+          const newContext: NodeHandlerContext = {
+            ...context,
+            board: this,
+            descriptor,
+            outerGraph: this.#outerGraph || this,
+            base: this.url,
+            slots,
+            kits: [...(context.kits || []), ...this.kits],
+            requestInput: requestedInputs.createHandler(next, result),
+            invocationPath: path(),
+          };
+
+          outputsPromise = callHandler(
+            handler,
+            inputs,
+            newContext
+          ) as Promise<OutputValues>;
         }
 
-        if (descriptor.type === "output") {
-          context.probe?.dispatchEvent(
-            new ProbeEvent("output", { descriptor, inputs, invocationId })
-          );
-          await next(new OutputStageResult(result));
-          continue;
-        }
-
-        const handler = handlers[descriptor.type];
-        if (!handler)
-          throw new Error(`No handler for node type "${descriptor.type}"`);
-
-        const beforehandlerDetail: ProbeDetails = {
-          descriptor,
-          inputs,
-          invocationId,
-        };
-
-        await next(new BeforeHandlerStageResult(result));
-
-        const shouldInvokeHandler =
-          !context.probe ||
-          context.probe.dispatchEvent(
-            new ProbeEvent("beforehandler", beforehandlerDetail)
-          );
-
-        const newContext: NodeHandlerContext = {
-          ...context,
-          board: this,
-          descriptor,
-          outerGraph: this.#outerGraph || this,
-          base: this.url,
-          slots,
-          kits: [...(context.kits || []), ...this.kits],
-          requestInput: requestedInputs.createHandler(next, result),
-        };
-
-        const outputsPromise = (
-          shouldInvokeHandler
-            ? callHandler(handler, inputs, newContext)
-            : beforehandlerDetail.outputs instanceof Promise
-            ? beforehandlerDetail.outputs
-            : Promise.resolve(beforehandlerDetail.outputs)
-        ) as Promise<OutputValues>;
-
-        outputsPromise.then((outputs) => {
-          context.probe?.dispatchEvent(
-            new ProbeEvent("node", {
-              descriptor,
-              inputs,
-              outputs,
-              validatorMetadata: this.#validators.map((validator) =>
-                validator.getValidatorMetadata(descriptor)
-              ),
-              invocationId,
-            })
-          );
+        await probe?.report?.({
+          type: "nodeend",
+          data: {
+            node: descriptor,
+            inputs,
+            outputs: (await outputsPromise) as OutputValues,
+            validatorMetadata: this.#validators.map((validator) =>
+              validator.getValidatorMetadata(descriptor)
+            ),
+            path: path(),
+          },
         });
 
         result.outputsPromise = outputsPromise;
       }
+      await probe?.report?.({
+        type: "graphend",
+        data: { metadata: this, path: invocationPath },
+      });
     });
   }
 
@@ -244,6 +229,7 @@ export class BoardRunner implements BreadboardRunner {
     context: NodeHandlerContext = {}
   ): Promise<OutputValues> {
     const args = { ...inputs, ...this.args };
+    const { probe } = context;
 
     if (context.board && context.descriptor) {
       // If called from another node in a parent board, add the parent board's
@@ -257,15 +243,30 @@ export class BoardRunner implements BreadboardRunner {
     try {
       let outputs: OutputValues = {};
 
+      const path = context.invocationPath || [];
+
       for await (const result of this.run(context)) {
         if (result.type === "input") {
-          // Pass the inputs to the board. If there are inputs bound to the board
-          // (e.g. from a lambda node that had incoming wires), they will
+          // Pass the inputs to the board. If there are inputs bound to the
+          // board (e.g. from a lambda node that had incoming wires), they will
           // overwrite supplied inputs.
           result.inputs = args;
         } else if (result.type === "output") {
           outputs = result.outputs;
           // Exit once we receive the first output.
+          await probe?.report?.({
+            type: "nodeend",
+            data: {
+              node: result.node,
+              inputs: result.inputs,
+              outputs,
+              path: [...path, result.invocationId],
+            },
+          });
+          await probe?.report?.({
+            type: "graphend",
+            data: { metadata: this, path },
+          });
           break;
         }
       }
@@ -379,16 +380,9 @@ export class BoardRunner implements BreadboardRunner {
     upstreamKits: Kit[] = []
   ): Promise<NodeHandlers> {
     const core = new Core();
-    const kits = [core, ...upstreamKits, ...board.kits];
+    const kits = [core as Kit, ...upstreamKits, ...board.kits];
 
-    return kits.reduce((handlers, kit) => {
-      // If multiple kits have the same handler, the kit earlier in the list
-      // gets precedence, including upstream kits getting precedence over kits
-      // defined in the graph.
-      //
-      // TODO: This means kits are fallback, consider non-fallback as well.
-      return { ...kit.handlers, ...handlers };
-    }, {} as NodeHandlers);
+    return handlersFromKits(kits);
   }
 
   static runRemote = runRemote;
