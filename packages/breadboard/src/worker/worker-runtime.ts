@@ -5,24 +5,19 @@
  */
 
 import { BoardRunner } from "../runner.js";
-import type { Kit } from "../types.js";
 import {
   type LoadResponseMessage,
   type ErrorMessage,
   type LoadRequestMessage,
 } from "./protocol.js";
 import { MessageController } from "./controller.js";
-import { PortDispatcher, WorkerServerTransport } from "../remote/worker.js";
-import { RunServer } from "../remote/run.js";
 
 export class WorkerRuntime {
   #controller: MessageController;
-  #dispatcher: PortDispatcher;
   #loadRequest: LoadRequestMessage | undefined;
 
-  constructor(controller: MessageController, dispatcher: PortDispatcher) {
+  constructor(controller: MessageController) {
     this.#controller = controller;
-    this.#dispatcher = dispatcher;
     self.onerror = (e) => {
       this.#controller.inform<ErrorMessage>(
         { error: `Unhandled error in worker: ${e}` },
@@ -44,7 +39,7 @@ export class WorkerRuntime {
     throw new Error('The only valid first message is the "load" message');
   }
 
-  async run(board: BoardRunner, kits: Kit[]) {
+  async sendBoardInfo(board: BoardRunner) {
     if (!this.#loadRequest) {
       throw new Error("The load message must be sent before the run message");
     }
@@ -61,10 +56,5 @@ export class WorkerRuntime {
       },
       "load"
     );
-
-    const server = new RunServer(
-      new WorkerServerTransport(this.#dispatcher.receive("run"))
-    );
-    await server.serve(board, true, { kits });
   }
 }
