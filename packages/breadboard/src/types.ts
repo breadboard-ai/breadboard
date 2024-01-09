@@ -485,7 +485,7 @@ export type NodeStartProbeMessage = {
     node: NodeDescriptor;
     inputs: InputValues;
     path: number[];
-    state: string;
+    state: string | TraversalResult;
   };
 };
 

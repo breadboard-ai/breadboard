@@ -53,6 +53,8 @@ export type {
   KitConstructor,
   GenericKit,
   LambdaNodeOutputs,
+  QueuedNodeValuesState,
+  NodeValuesQueuesMap,
 } from "./types.js";
 export { TraversalMachine } from "./traversal/machine.js";
 export { MachineResult } from "./traversal/result.js";
