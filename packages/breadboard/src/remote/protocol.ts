@@ -13,6 +13,7 @@ import {
   OutputValues,
   Schema,
   SkipProbeMessage,
+  TraversalResult,
 } from "../types.js";
 
 /**
@@ -112,6 +113,7 @@ export type NodeStartResponse = {
    */
   node: NodeDescriptor;
   path: number[];
+  state?: string | TraversalResult;
 };
 export type NodeStartResponseMessage = [
   "nodestart",

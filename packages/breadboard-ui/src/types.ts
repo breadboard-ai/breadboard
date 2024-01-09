@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Schema } from "@google-labs/breadboard";
+import { Schema, TraversalResult } from "@google-labs/breadboard";
 
 export type InputArgs = {
   schema?: Schema;
@@ -67,6 +67,11 @@ export type DataWithPath = {
   path: number[];
 };
 
+export type DataWithPathAndState = {
+  path: number[];
+  state?: string | TraversalResult;
+};
+
 export type GraphStartHistoryEvent = HistoryEvent & {
   type: HistoryEventType.GRAPHSTART;
   data: DataWithPath;
@@ -79,12 +84,15 @@ export type GraphEndHistoryEvent = HistoryEvent & {
 
 export type NodeStartHistoryEvent = HistoryEvent & {
   type: HistoryEventType.NODESTART;
-  data: DataWithPath;
+  data: DataWithPathAndState;
 };
 
 export type NodeEndHistoryEvent = HistoryEvent & {
   type: HistoryEventType.NODEEND;
-  data: DataWithPath & { outputs: Record<string, unknown> };
+  data: {
+    path: number[];
+    outputs: Record<string, unknown>;
+  };
 };
 
 export type AnyHistoryEvent =
@@ -117,7 +125,10 @@ export type HistoryEntry = {
   type: HistoryEventType;
   nodeId: string;
   summary: string;
-  data: unknown;
+  data:
+    | { inputs: Record<string, unknown>; outputs: Record<string, unknown> }
+    | null
+    | undefined;
   elapsedTime: number;
   children: HistoryEntry[];
 };

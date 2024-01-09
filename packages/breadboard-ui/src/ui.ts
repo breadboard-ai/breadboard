@@ -29,7 +29,11 @@ import { Input } from "./input.js";
 import { Output, OutputArgs } from "./output.js";
 import { NodeStartResponse } from "@google-labs/breadboard/remote";
 import { NodeEndResponse } from "@google-labs/breadboard/harness";
-import { NodeConfiguration, NodeDescriptor } from "@google-labs/breadboard";
+import {
+  NodeConfiguration,
+  NodeDescriptor,
+  TraversalResult,
+} from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 
 const enum MODE {
@@ -49,6 +53,9 @@ const hasPath = (
   event.type === HistoryEventType.GRAPHSTART ||
   event.type === HistoryEventType.GRAPHEND;
 
+const hasState = (event: AnyHistoryEvent): event is NodeStartHistoryEvent =>
+  event.type === HistoryEventType.NODESTART;
+
 const pathToId = (path: number[]) => {
   if (path.length == 0) {
     return `path-main-graph`;
@@ -61,6 +68,12 @@ type ExtendedNodeInformation = {
   id: string;
   type: string;
   configuration: NodeConfiguration | undefined;
+};
+
+const isTraversalResult = (
+  value: string | TraversalResult | undefined
+): value is TraversalResult => {
+  return typeof value === "object";
 };
 
 // TODO: Change to bb-ui after migration.
@@ -596,6 +609,28 @@ export class UI extends LitElement {
       return globalThis.crypto.randomUUID();
     };
 
+    const createData = (): HistoryEntry["data"] => {
+      if (hasPath(event)) {
+        if (hasState(event) && typeof event.data.state === "object") {
+          const nodeValues = event.data.state.state.state.get(id);
+          if (!nodeValues) {
+            return null;
+          }
+
+          const nodeValue: Record<string, unknown[]> = {};
+          for (const [key, value] of nodeValues.entries()) {
+            nodeValue[key] = value;
+          }
+
+          return { inputs: nodeValue, outputs: {} };
+        }
+
+        return undefined;
+      }
+
+      return data as HistoryEntry["data"];
+    };
+
     const elapsedTime =
       globalThis.performance.now() - this.#lastHistoryEventTime;
     this.#lastHistoryEventTime = globalThis.performance.now();
@@ -604,7 +639,7 @@ export class UI extends LitElement {
       type,
       nodeId: id,
       summary,
-      data: hasPath(event) ? null : data,
+      data: createData(),
       id: createId(),
       guid: createGUID(),
       elapsedTime,
@@ -613,10 +648,22 @@ export class UI extends LitElement {
 
     if (hasPath(event)) {
       const entryList = this.#findParentHistoryEntry(event.data.path);
-      // Check there isn't already a node with that type.
-      if (entryList.find((sibling) => sibling.id === entry.id)) {
-        return;
+      if (type === HistoryEventType.GRAPHSTART) {
+        // If this is a graph start and there is a corresponding nodestart with
+        // the same path we will adjust the positions so that the graphstart
+        // appears just before the nodestart. This tends to match the mental
+        // model a bit closer, where we think of a board starting before the
+        // nodes it contains.
+        const existingNodeStartEntryIdx = entryList.findIndex(
+          (sibling) => sibling.id === pathToId(event.data.path)
+        );
+        if (existingNodeStartEntryIdx !== -1) {
+          entry.id += "_gs";
+          entryList.splice(existingNodeStartEntryIdx, 0, entry);
+          return;
+        }
       }
+
       entryList.push(entry);
     } else {
       this.historyEntries.push(entry);
@@ -641,11 +688,7 @@ export class UI extends LitElement {
     return entryList;
   }
 
-  #updateHistoryEntry({
-    type,
-    data,
-    summary = "",
-  }: NodeEndHistoryEvent | GraphEndHistoryEvent) {
+  #updateHistoryEntry({ type, data, summary = "" }: NodeEndHistoryEvent) {
     const id = pathToId(data.path);
     const entryList = this.#findParentHistoryEntry(data.path);
     const existingEntry = entryList.find((item) => item.id === id);
@@ -659,16 +702,23 @@ export class UI extends LitElement {
     // can cause UI confusion so we double check here that if we have a graphend
     // or a nodeend that it tallies with a corresponding graphstart/nodestart.
     const typesMatch =
-      (existingEntry.type === HistoryEventType.NODESTART &&
-        type === HistoryEventType.NODEEND) ||
-      (existingEntry.type === HistoryEventType.GRAPHSTART &&
-        type === HistoryEventType.GRAPHEND);
+      existingEntry.type === HistoryEventType.NODESTART &&
+      type === HistoryEventType.NODEEND;
     if (!typesMatch) {
       return;
     }
 
     existingEntry.type = type;
-    existingEntry.data = "outputs" in data ? data.outputs : undefined;
+
+    if (existingEntry.data && "outputs" in data) {
+      existingEntry.data.outputs = data.outputs;
+    }
+
+    // Set any 'pending' values to none.
+    if (existingEntry.data === null) {
+      existingEntry.data = undefined;
+    }
+
     if (summary !== "") {
       existingEntry.summary = summary;
     }
@@ -700,7 +750,7 @@ export class UI extends LitElement {
     this.#lastHistoryEventTime = globalThis.performance.now();
     this.#createHistoryEntry({
       type: HistoryEventType.LOAD,
-      summary: "Board loaded",
+      summary: "Initialized",
       data: { url: loadInfo.url || "" },
     });
   }
@@ -720,27 +770,10 @@ export class UI extends LitElement {
       this.requestUpdate();
     });
 
-    this.#createHistoryEntry({
-      type: HistoryEventType.INPUT,
-      summary: "input",
-      id,
-      data: {
-        args,
-        response,
-      },
-    });
-
     return response;
   }
 
-  async output(values: OutputArgs) {
-    this.#createHistoryEntry({
-      type: HistoryEventType.OUTPUT,
-      summary: "Output",
-      id: values.node.id,
-      data: { outputs: values.outputs },
-    });
-
+  async output(id: string, values: OutputArgs) {
     this.outputs.unshift(new Output(values.outputs));
     this.requestUpdate();
   }
@@ -775,12 +808,6 @@ export class UI extends LitElement {
       });
     });
 
-    this.#createHistoryEntry({
-      type: HistoryEventType.SECRETS,
-      summary: `secrets`,
-      id,
-    });
-
     return response.secret;
   }
 
@@ -794,49 +821,48 @@ export class UI extends LitElement {
   done() {
     this.#createHistoryEntry({
       type: HistoryEventType.DONE,
-      summary: "Board finished",
+      summary: "Complete",
     });
   }
 
   graphstart({ path }: { path: number[] }) {
     this.#createHistoryEntry({
       type: HistoryEventType.GRAPHSTART,
-      summary: "Board (running)",
+      summary: "Board started",
       data: { path },
     });
   }
 
   graphend({ path }: { path: number[] }) {
-    this.#updateHistoryEntry({
+    this.#createHistoryEntry({
       type: HistoryEventType.GRAPHEND,
-      summary: "Board",
+      summary: "Board completed",
       data: { path },
     });
   }
 
   nodestart(data: NodeStartResponse) {
     const {
-      path,
       node: { id, type },
     } = data;
+
     this.#createHistoryEntry({
       type: HistoryEventType.NODESTART,
       summary: type,
       id,
-      data: { path },
+      data,
     });
   }
 
   nodeend(data: NodeEndResponse) {
     const {
-      path,
       node: { id },
-      outputs,
     } = data;
+
     this.#updateHistoryEntry({
       type: HistoryEventType.NODEEND,
       id,
-      data: { path, outputs },
+      data,
     });
   }
 
