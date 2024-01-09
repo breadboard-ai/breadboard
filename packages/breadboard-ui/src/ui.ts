@@ -575,7 +575,7 @@ export class UI extends LitElement {
     const getNodeData = (): HistoryEntry["graphNodeData"] => {
       if (hasPath(event)) {
         if (hasState(event) && typeof event.data.state === "object") {
-          const id = hasPath(event) ? pathToId(event.data.path) : "";
+          const id = hasPath(event) ? event.data.node.id : "";
           const nodeValues = event.data.state.state.state.get(id);
           if (!nodeValues) {
             return null;
