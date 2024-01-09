@@ -619,7 +619,9 @@ export class UI extends LitElement {
       if (type === HistoryEventType.GRAPHSTART) {
         // If this is a graph start and there is a corresponding nodestart with
         // the same path we will adjust the positions so that the graphstart
-        // appears just before the nodestart. This has a nicer semantic meaning.
+        // appears just before the nodestart. This tends to match the mental
+        // model a bit closer, where we think of a board starting before the
+        // nodes it contains.
         const existingNodeStartEntryIdx = entryList.findIndex(
           (sibling) => sibling.id === pathToId(event.data.path)
         );
