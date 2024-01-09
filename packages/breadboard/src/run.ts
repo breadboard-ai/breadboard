@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { MachineResult } from "./traversal/result.js";
-import { TraversalMachine } from "./traversal/machine.js";
+import { loadRunnerState, saveRunnerState } from "./serialization.js";
 import type {
   InputValues,
   NodeDescriptor,
@@ -14,28 +13,6 @@ import type {
   BreadboardRunResult,
   RunResultType,
 } from "./types.js";
-
-export const replacer = (key: string, value: unknown) => {
-  if (!(value instanceof Map)) return value;
-
-  return {
-    $type: "Map",
-    value: Array.from(value.entries()),
-  };
-};
-
-export const reviver = (
-  key: string,
-  value: unknown & {
-    $type?: string;
-    value: Iterable<readonly [string, unknown]>;
-  }
-) => {
-  const { $type } = (value || {}) as { $type?: string };
-  return $type == "Map" && value.value
-    ? new Map<string, unknown>(value.value)
-    : value;
-};
 
 export class RunResult implements BreadboardRunResult {
   #type: RunResultType;
@@ -81,13 +58,7 @@ export class RunResult implements BreadboardRunResult {
   }
 
   async save() {
-    return JSON.stringify(
-      {
-        state: await TraversalMachine.prepareToSafe(this.#state),
-        type: this.#type,
-      },
-      replacer
-    );
+    return saveRunnerState(this.#type, this.#state);
   }
 
   isAtExitNode(): boolean {
@@ -99,9 +70,8 @@ export class RunResult implements BreadboardRunResult {
   }
 
   static load(stringifiedResult: string): RunResult {
-    const { state, type } = JSON.parse(stringifiedResult, reviver);
-    const machineResult = MachineResult.fromObject(state);
-    return new RunResult(machineResult, type, 0);
+    const { state, type } = loadRunnerState(stringifiedResult);
+    return new RunResult(state, type, 0);
   }
 }
 

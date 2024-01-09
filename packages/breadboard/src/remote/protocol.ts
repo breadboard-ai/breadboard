@@ -83,7 +83,7 @@ export type RunState = string;
  * It basically just pokes the server to start running.
  */
 export type RunRequest = Record<string, never>;
-export type RunRequestMessage = ["run", RunRequest];
+export type RunRequestMessage = ["run", RunRequest, RunState?];
 
 /**
  * Sent by a server to supply outputs.
@@ -113,7 +113,11 @@ export type NodeStartResponse = {
   node: NodeDescriptor;
   path: number[];
 };
-export type NodeStartResponseMessage = ["nodestart", NodeStartResponse];
+export type NodeStartResponseMessage = [
+  "nodestart",
+  NodeStartResponse,
+  RunState
+];
 
 export type NodeEndResponseMessage = ["nodeend", NodeEndProbeMessage["data"]];
 

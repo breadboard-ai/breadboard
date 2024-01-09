@@ -97,7 +97,7 @@ export class WorkerHarness implements Harness {
     return { title, description, version, diagram, url, nodes };
   }
 
-  async *run() {
+  async *run(state?: string) {
     if (!this.#run) {
       throw new Error("Harness hasn't been loaded. Please call 'load' first.");
     }
@@ -113,7 +113,7 @@ export class WorkerHarness implements Harness {
 
       this.#run.proxyServer.serve({ kits, proxy });
 
-      for await (const data of this.#run.runClient.run()) {
+      for await (const data of this.#run.runClient.run(state)) {
         const { type } = data;
         if (this.#skipDiagnosticMessages(type)) {
           continue;
