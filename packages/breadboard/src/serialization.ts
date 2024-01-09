@@ -9,11 +9,7 @@ import { TraversalResult } from "./types.js";
 
 export const replacer = (key: string, value: unknown) => {
   if (!(value instanceof Map)) return value;
-
-  return {
-    $type: "Map",
-    value: Array.from(value.entries()),
-  };
+  return { $type: "Map", value: Array.from(value.entries()) };
 };
 
 export const reviver = (
@@ -33,13 +29,8 @@ export const saveRunnerState = async (
   type: string,
   result: TraversalResult
 ) => {
-  return JSON.stringify(
-    {
-      state: await TraversalMachine.prepareToSafe(result),
-      type,
-    },
-    replacer
-  );
+  const state = await TraversalMachine.prepareToSafe(result);
+  return JSON.stringify({ state, type }, replacer);
 };
 
 export const loadRunnerState = (stringifiedState: string) => {

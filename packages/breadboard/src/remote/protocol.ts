@@ -112,8 +112,13 @@ export type NodeStartResponse = {
    */
   node: NodeDescriptor;
   path: number[];
+  state: string;
 };
-export type NodeStartResponseMessage = ["nodestart", NodeStartResponse];
+export type NodeStartResponseMessage = [
+  "nodestart",
+  NodeStartResponse,
+  RunState
+];
 
 export type NodeEndResponseMessage = ["nodeend", NodeEndProbeMessage["data"]];
 

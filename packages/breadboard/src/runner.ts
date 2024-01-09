@@ -32,6 +32,7 @@ import { toMermaid } from "./mermaid.js";
 import { SchemaBuilder } from "./schema.js";
 import { RequestedInputsManager, bubbleUpInputsIfNeeded } from "./bubble.js";
 import { asyncGen } from "./utils/async-gen.js";
+import { saveRunnerState } from "./serialization.js";
 
 /**
  * This class is the main entry point for running a board.
@@ -152,6 +153,7 @@ export class BoardRunner implements BreadboardRunner {
             node: descriptor,
             inputs,
             path: path(),
+            state: await saveRunnerState("nodestart", result),
           },
         });
 
