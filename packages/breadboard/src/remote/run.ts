@@ -19,13 +19,13 @@ import {
   NodeHandlerContext,
   OutputValues,
   RunResultType,
-  RunnerLike,
   TraversalResult,
 } from "../types.js";
 import {
   AnyRunRequestMessage,
   AnyRunResponseMessage,
   ClientTransport,
+  RunRequestMessage,
   ServerTransport,
 } from "./protocol.js";
 
@@ -192,20 +192,22 @@ type RunClientTransport = ClientTransport<
   AnyRunResponseMessage
 >;
 
-export class RunClient implements RunnerLike {
+export class RunClient {
   #transport: RunClientTransport;
 
   constructor(clientTransport: RunClientTransport) {
     this.#transport = clientTransport;
   }
 
-  async *run(): AsyncGenerator<BreadboardRunResult> {
+  async *run(state?: string): AsyncGenerator<BreadboardRunResult> {
     const stream = this.#transport.createClientStream();
     const server = streamsToAsyncIterable(
       stream.writableRequests,
       stream.readableResponses
     );
-    await server.start(["run", {}]);
+    const request = ["run", {}] as RunRequestMessage;
+    state && request.push(state);
+    await server.start(request);
     for await (const response of server) {
       yield new ClientRunResult(response);
     }

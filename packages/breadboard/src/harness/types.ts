@@ -116,7 +116,7 @@ export type HarnessRunResult = HarnessResult<AnyRunResult>;
 
 export interface Harness {
   load(): Promise<LoadResponse>;
-  run(): AsyncGenerator<HarnessRunResult, void>;
+  run(state?: string): AsyncGenerator<HarnessRunResult, void>;
 }
 
 export type SecretHandler = (keys: {
