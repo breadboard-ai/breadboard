@@ -6,9 +6,10 @@
 
 import test from "ava";
 
-import { RunResult, replacer, reviver } from "../src/run.js";
+import { RunResult } from "../src/run.js";
 import { Board } from "../src/board.js";
 import { TestKit } from "./helpers/_test-kit.js";
+import { replacer, reviver } from "../src/serialization.js";
 
 test("replacer correctly serializes Maps", async (t) => {
   t.is(JSON.stringify({}, replacer), "{}");
