@@ -568,54 +568,14 @@ export class UI extends LitElement {
   }
 
   #createHistoryEntry(event: AnyRunResult) {
-    const { type, data } = event;
-
     if (Number.isNaN(this.#lastHistoryEventTime)) {
       this.#lastHistoryEventTime = globalThis.performance.now();
     }
 
-    const getGraphNodeId = () => {
-      return type === "nodestart" || type === "nodeend"
-        ? event.data.node.id
-        : "";
-    };
-
-    const getGraphNodeType = () => {
-      switch (type) {
-        case "graphstart":
-          return "Board started";
-        case "graphend":
-          return "Board finished";
-        case "error":
-          return "Error";
-        case "skip":
-          return "Skip";
-        case "end":
-          return "Complete";
-        case "input":
-          return "Input";
-        case "output":
-          return "Output";
-        case "secret":
-          return "Secret";
-        default:
-          return event.data.node.type;
-      }
-    };
-
-    const getId = () => {
-      const id = getGraphNodeId();
-      return hasPath(event) ? pathToId(event.data.path) : id;
-    };
-
-    const getGUID = () => {
-      return globalThis.crypto.randomUUID();
-    };
-
-    const getNodeData = (): HistoryEntry["data"] => {
+    const getNodeData = (): HistoryEntry["graphNodeData"] => {
       if (hasPath(event)) {
         if (hasState(event) && typeof event.data.state === "object") {
-          const id = getGraphNodeId();
+          const id = hasPath(event) ? pathToId(event.data.path) : "";
           const nodeValues = event.data.state.state.state.get(id);
           if (!nodeValues) {
             return null;
@@ -632,7 +592,7 @@ export class UI extends LitElement {
         return undefined;
       }
 
-      return data as HistoryEntry["data"];
+      return { inputs: event.data, outputs: {} };
     };
 
     const elapsedTime =
@@ -640,19 +600,17 @@ export class UI extends LitElement {
     this.#lastHistoryEventTime = globalThis.performance.now();
 
     const entry: HistoryEntry = {
-      type,
-      graphNodeId: getGraphNodeId(),
-      graphNodeType: getGraphNodeType(),
-      data: getNodeData(),
-      id: getId(),
-      guid: getGUID(),
+      ...event,
+      graphNodeData: getNodeData(),
+      id: hasPath(event) ? pathToId(event.data.path) : "",
+      guid: globalThis.crypto.randomUUID(),
       elapsedTime,
       children: [],
     };
 
     if (hasPath(event)) {
       const entryList = this.#findParentHistoryEntry(event.data.path);
-      if (type === HistoryEventType.GRAPHSTART) {
+      if (event.type === HistoryEventType.GRAPHSTART) {
         // If this is a graph start and there is a corresponding nodestart with
         // the same path we will adjust the positions so that the graphstart
         // appears just before the nodestart. This tends to match the mental
@@ -661,6 +619,7 @@ export class UI extends LitElement {
         const existingNodeStartEntryIdx = entryList.findIndex(
           (sibling) => sibling.id === pathToId(event.data.path)
         );
+
         if (existingNodeStartEntryIdx !== -1) {
           entry.id += "_gs";
           entryList.splice(existingNodeStartEntryIdx, 0, entry);
@@ -692,9 +651,9 @@ export class UI extends LitElement {
     return entryList;
   }
 
-  #updateHistoryEntry({ type, data }: NodeEndResult) {
-    const id = pathToId(data.path);
-    const entryList = this.#findParentHistoryEntry(data.path);
+  #updateHistoryEntry(event: NodeEndResult) {
+    const id = pathToId(event.data.path);
+    const entryList = this.#findParentHistoryEntry(event.data.path);
     const existingEntry = entryList.find((item) => item.id === id);
     if (!existingEntry) {
       console.warn(`Unable to find ID "${id}"`);
@@ -707,20 +666,20 @@ export class UI extends LitElement {
     // or a nodeend that it tallies with a corresponding graphstart/nodestart.
     const typesMatch =
       existingEntry.type === HistoryEventType.NODESTART &&
-      type === HistoryEventType.NODEEND;
+      event.type === HistoryEventType.NODEEND;
     if (!typesMatch) {
       return;
     }
 
-    existingEntry.type = type;
+    (existingEntry as unknown as NodeEndResult).type = event.type;
 
-    if (existingEntry.data && "outputs" in data) {
-      existingEntry.data.outputs = data.outputs;
+    if (existingEntry.graphNodeData && "outputs" in event.data) {
+      existingEntry.graphNodeData.outputs = event.data.outputs;
     }
 
     // Set any 'pending' values to none.
-    if (existingEntry.data === null) {
-      existingEntry.data = undefined;
+    if (existingEntry.graphNodeData === null) {
+      existingEntry.graphNodeData = undefined;
     }
 
     this.requestUpdate();

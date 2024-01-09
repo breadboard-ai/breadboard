@@ -402,6 +402,46 @@ export class HistoryTree extends LitElement {
     this.selected = null;
   }
 
+  #getTypeLabel(entry: HistoryEntry) {
+    switch (entry.type) {
+      case "graphstart":
+        return "Board started";
+        break;
+      case "graphend":
+        return "Board finished";
+        break;
+      case "error":
+        return "Error";
+        break;
+      case "skip":
+        return "Skip";
+        break;
+      case "end":
+        return "Complete";
+        break;
+      case "input":
+        return "Input";
+        break;
+      case "output":
+        return "Output";
+        break;
+      case "secret":
+        return "Secret";
+        break;
+      default:
+        return entry.data.node.type;
+        break;
+    }
+  }
+
+  #getNodeId(entry: HistoryEntry) {
+    if (entry.type === "nodestart" || entry.type === "nodeend") {
+      return entry.data.node.id;
+    }
+
+    return "";
+  }
+
   #convertToHtml(
     entry: HistoryEntry,
     initiator: string | undefined = undefined,
@@ -411,12 +451,12 @@ export class HistoryTree extends LitElement {
     visible = true
   ): HTMLTemplateResult {
     let dataOutput;
-    if (entry.data === null) {
+    if (entry.graphNodeData === null) {
       dataOutput = html`<span class="empty">(pending)</span>`;
-    } else if (entry.data === undefined) {
+    } else if (entry.graphNodeData === undefined) {
       dataOutput = html`<span class="empty">(none)</span>`;
     } else {
-      dataOutput = html`${JSON.stringify(entry.data)}`;
+      dataOutput = html`${JSON.stringify(entry.graphNodeData)}`;
     }
 
     if (entry.type === HistoryEventType.NODESTART) {
@@ -434,8 +474,9 @@ export class HistoryTree extends LitElement {
       ? this.expandCollapseState.get(entry.id) === STATE.EXPANDED
       : this.#autoExpand.has(entry.id);
 
-    const typeLabel = entry.graphNodeType;
+    const typeLabel = this.#getTypeLabel(entry);
     const entryClass = typeLabel.replaceAll(/\s/gim, "-").toLocaleLowerCase();
+    const nodeId = this.#getNodeId(entry);
 
     return html`<tr
         class="${classMap({
@@ -471,9 +512,7 @@ export class HistoryTree extends LitElement {
           ></span>
           ${typeLabel}
         </td>
-        <td class="id">
-          ${entry.graphNodeId || html`<span class="empty">(none)</span>`}
-        </td>
+        <td class="id">${nodeId || html`<span class="empty">(none)</span>`}</td>
         <td class="initiator">
           ${initiator || html`<span class="empty">(none)</span>`}
         </td>
@@ -483,7 +522,7 @@ export class HistoryTree extends LitElement {
       ${entry.children.map((child, idx, items) =>
         this.#convertToHtml(
           child,
-          entry.graphNodeId || initiator,
+          nodeId || initiator,
           entry.id,
           idx === items.length - 1,
           depth + 1,
@@ -533,17 +572,19 @@ export class HistoryTree extends LitElement {
 
   #convertSelectedToHtml(entry: HistoryEntry) {
     let dataOutput;
-    if (entry.data === null) {
+    if (entry.graphNodeData === null) {
       dataOutput = html`<span class="empty">(pending)</span>`;
-    } else if (entry.data === undefined) {
+    } else if (entry.graphNodeData === undefined) {
       dataOutput = html`<span class="empty">(none)</span>`;
     } else {
       dataOutput = html`<bb-json-tree
-        .json=${entry.data}
+        .json=${entry.graphNodeData}
         autoExpand="true"
       ></bb-json-tree>`;
     }
 
+    const typeLabel = this.#getTypeLabel(entry);
+    const nodeId = this.#getNodeId(entry);
     return html`<div id="selected">
       <section id="content">
         <header>
@@ -553,8 +594,7 @@ export class HistoryTree extends LitElement {
             title="Close"
           >
             Close</button
-          >${entry.graphNodeType}
-          ${entry.graphNodeId ? html`(${entry.graphNodeId})` : nothing}
+          >${typeLabel} ${nodeId ? html`(${nodeId})` : nothing}
         </header>
 
         <div id="data">${dataOutput}</div>

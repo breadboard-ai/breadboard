@@ -48,13 +48,10 @@ export interface CanvasData {
   };
 }
 
-export type HistoryEntry = {
+export type HistoryEntry = AnyRunResult & {
   id: string;
   guid: string;
-  type: AnyRunResult["type"];
-  graphNodeId: string;
-  graphNodeType: string;
-  data:
+  graphNodeData:
     | { inputs: Record<string, unknown>; outputs: Record<string, unknown> }
     | null
     | undefined;
