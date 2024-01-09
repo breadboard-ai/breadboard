@@ -194,9 +194,9 @@ export class HistoryTree extends LitElement {
       box-sizing: border-box;
     }
 
-    tr .marker.load::after {
-      background: rgb(110, 84, 139);
-      border: 1px solid rgb(90, 64, 119);
+    tr .marker.nodeend::after {
+      border: 1px solid hsl(33.6, 100%, 52.5%);
+      background: hsl(44.7, 100%, 80%);
     }
 
     tr .marker.graphstart::after,
@@ -230,6 +230,7 @@ export class HistoryTree extends LitElement {
       border: 1px solid #38761d;
     }
 
+    tr .marker.load::after,
     tr .marker.done::after {
       background: var(--bb-done-color);
       border: 1px solid var(--bb-done-color);
@@ -250,11 +251,6 @@ export class HistoryTree extends LitElement {
 
       border: none;
       animation: rotate 0.5s linear infinite;
-    }
-
-    tr .marker.nodeend::after {
-      border: 1px solid hsl(33.6, 100%, 52.5%);
-      background: hsl(44.7, 100%, 80%);
     }
 
     tr .marker::before {
@@ -423,15 +419,9 @@ export class HistoryTree extends LitElement {
       dataOutput = html`${JSON.stringify(entry.data)}`;
     }
 
-    if (
-      entry.type === HistoryEventType.NODESTART ||
-      entry.type === HistoryEventType.GRAPHSTART
-    ) {
+    if (entry.type === HistoryEventType.NODESTART) {
       this.#autoExpand.add(entry.id);
-    } else if (
-      entry.type === HistoryEventType.NODEEND ||
-      entry.type === HistoryEventType.GRAPHEND
-    ) {
+    } else if (entry.type === HistoryEventType.NODEEND) {
       this.#autoExpand.delete(entry.id);
     }
 
@@ -443,6 +433,10 @@ export class HistoryTree extends LitElement {
     const expanded = this.expandCollapseState.has(entry.id)
       ? this.expandCollapseState.get(entry.id) === STATE.EXPANDED
       : this.#autoExpand.has(entry.id);
+
+    const entryClass = entry.summary
+      .replaceAll(/\s/gim, "-")
+      .toLocaleLowerCase();
 
     return html`<tr
         class="${classMap({
@@ -470,7 +464,11 @@ export class HistoryTree extends LitElement {
               : nothing}</span
           >
           <span
-            class="${classMap({ marker: true, [entry.type]: true })}"
+            class="${classMap({
+              marker: true,
+              [entry.type]: true,
+              [entryClass]: true,
+            })}"
           ></span>
           ${entry.summary}
         </td>

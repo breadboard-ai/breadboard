@@ -84,7 +84,10 @@ export type NodeStartHistoryEvent = HistoryEvent & {
 
 export type NodeEndHistoryEvent = HistoryEvent & {
   type: HistoryEventType.NODEEND;
-  data: DataWithPath & { outputs: Record<string, unknown> };
+  data: DataWithPath & {
+    outputs: Record<string, unknown>;
+    inputs: Record<string, unknown>;
+  };
 };
 
 export type AnyHistoryEvent =

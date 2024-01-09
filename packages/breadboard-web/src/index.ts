@@ -186,7 +186,7 @@ export class Main {
 
     switch (type) {
       case "output": {
-        await this.#ui.output(data);
+        await this.#ui.output(data.node.id, data);
         break;
       }
 
