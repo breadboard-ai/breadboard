@@ -175,7 +175,8 @@ export class Main {
   }
 
   async #handleEvent(result: HarnessRunResult) {
-    const { data, type } = result.message;
+    const { message } = result;
+    const { data, type } = message;
 
     // Update the graph to the latest.
     if (this.#hasNodeInfo(data)) {
@@ -208,32 +209,32 @@ export class Main {
       }
 
       case "graphstart": {
-        this.#ui.graphstart(data);
+        this.#ui.graphstart(message);
         break;
       }
 
       case "graphend": {
-        this.#ui.graphend(data);
+        this.#ui.graphend(message);
         break;
       }
 
       case "nodestart": {
-        this.#ui.nodestart(data);
+        this.#ui.nodestart(message);
         break;
       }
 
       case "nodeend": {
-        this.#ui.nodeend(data);
+        this.#ui.nodeend(message);
         break;
       }
 
       case "error": {
-        this.#ui.error(data.error);
+        this.#ui.error(message);
         break;
       }
 
       case "end":
-        this.#ui.done();
+        this.#ui.done(message);
         break;
     }
   }

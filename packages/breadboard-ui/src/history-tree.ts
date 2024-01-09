@@ -231,7 +231,7 @@ export class HistoryTree extends LitElement {
     }
 
     tr .marker.load::after,
-    tr .marker.done::after {
+    tr .marker.end::after {
       background: var(--bb-done-color);
       border: 1px solid var(--bb-done-color);
     }
@@ -434,9 +434,8 @@ export class HistoryTree extends LitElement {
       ? this.expandCollapseState.get(entry.id) === STATE.EXPANDED
       : this.#autoExpand.has(entry.id);
 
-    const entryClass = entry.summary
-      .replaceAll(/\s/gim, "-")
-      .toLocaleLowerCase();
+    const typeLabel = entry.graphNodeType;
+    const entryClass = typeLabel.replaceAll(/\s/gim, "-").toLocaleLowerCase();
 
     return html`<tr
         class="${classMap({
@@ -470,10 +469,10 @@ export class HistoryTree extends LitElement {
               [entryClass]: true,
             })}"
           ></span>
-          ${entry.summary}
+          ${typeLabel}
         </td>
         <td class="id">
-          ${entry.nodeId || html`<span class="empty">(none)</span>`}
+          ${entry.graphNodeId || html`<span class="empty">(none)</span>`}
         </td>
         <td class="initiator">
           ${initiator || html`<span class="empty">(none)</span>`}
@@ -484,7 +483,7 @@ export class HistoryTree extends LitElement {
       ${entry.children.map((child, idx, items) =>
         this.#convertToHtml(
           child,
-          entry.nodeId || initiator,
+          entry.graphNodeId || initiator,
           entry.id,
           idx === items.length - 1,
           depth + 1,
@@ -554,7 +553,8 @@ export class HistoryTree extends LitElement {
             title="Close"
           >
             Close</button
-          >${entry.summary} ${entry.nodeId ? html`(${entry.nodeId})` : nothing}
+          >${entry.graphNodeType}
+          ${entry.graphNodeId ? html`(${entry.graphNodeId})` : nothing}
         </header>
 
         <div id="data">${dataOutput}</div>
