@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { type Schema } from "@google-labs/breadboard";
+import { NodeValue, type Schema } from "@google-labs/breadboard";
 import {
   createMultipartInput,
   getMultipartValue,
@@ -14,13 +14,14 @@ import { ShortTermMemory } from "./utils/short-term-memory.js";
 import {
   isBoolean,
   isDrawable,
-  isImage,
+  isMultipartImage,
   isMultiline,
   isSelect,
   isWebcam,
+  isMultipartText,
 } from "./utils/index.js";
-import { LitElement, html, css } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { LitElement, html, css, HTMLTemplateResult } from "lit";
+import { customElement, property } from "lit/decorators.js";
 import { InputEnterEvent } from "./events.js";
 import { WebcamInput } from "./webcam.js";
 import { DrawableInput } from "./drawable.js";
@@ -48,23 +49,17 @@ const parseValue = (type: Schema["type"], input: HTMLInputElement) => {
 
 @customElement("bb-input")
 export class Input extends LitElement {
-  @property({ reflect: true })
-  id = "";
-
-  @state()
+  @property({ reflect: false })
   remember = false;
 
-  @state()
+  @property({ reflect: false })
   secret = false;
 
-  @state()
-  args: InputArgs | null = null;
+  @property({ reflect: false })
+  configuration: InputArgs | null = null;
 
-  @state()
-  processedValues: Record<
-    string,
-    { type: unknown[]; value: unknown[]; title: string }
-  > | null = null;
+  @property({ reflect: false })
+  processedValues: Record<string, NodeValue> | null = null;
 
   #memory = new ShortTermMemory();
 
@@ -77,7 +72,7 @@ export class Input extends LitElement {
 
     * {
       box-sizing: border-box;
-      font-size: var(--bb-text-medium);
+      font-size: var(--bb-text-nano);
     }
 
     form,
@@ -180,7 +175,7 @@ export class Input extends LitElement {
       color: var(--bb-font-color-faded);
       display: flex;
       align-items: center;
-      font-size: var(--bb-text-medium);
+      font-size: var(--bb-text-nano);
       height: auto;
     }
 
@@ -243,12 +238,16 @@ export class Input extends LitElement {
       return;
     }
 
-    if (!this.args || !this.args.schema || !this.args.schema.properties) {
+    if (
+      !this.configuration ||
+      !this.configuration.schema ||
+      !this.configuration.schema.properties
+    ) {
       console.warn(`Unable to process form: no input Schema detected`);
       return;
     }
 
-    const { schema } = this.args;
+    const { schema } = this.configuration;
     const { properties } = schema;
     const form = evt.target;
 
@@ -257,27 +256,16 @@ export class Input extends LitElement {
     }
 
     const data: InputData = {};
-    const processedValues: typeof this.processedValues = {};
 
     for (const [key, property] of Object.entries(properties)) {
       if (isMultipart(property)) {
         const values = await getMultipartValue(form, key);
         data[key] = values.value;
-        processedValues[key] = {
-          value: values.value,
-          type: values.type,
-          title: property.title || "Untitled property",
-        };
       } else {
         const input = form[key];
         if (input && input.value) {
           const parsedValue = parseValue(property.type, input);
           data[key] = parsedValue;
-          processedValues[key] = {
-            value: [{ text: parsedValue }],
-            type: ["string"],
-            title: property.title || "Untitled property",
-          };
         } else {
           // Custom elements don't look like form elements, so they need to be
           // processed separately.
@@ -292,11 +280,6 @@ export class Input extends LitElement {
           if (isImage) {
             const value = element.value;
             data[key] = value;
-            processedValues[key] = {
-              value: [value],
-              type: ["image"],
-              title: property.title || "Untitled property",
-            };
           }
         }
       }
@@ -307,16 +290,15 @@ export class Input extends LitElement {
       this.#memory.rememberSaving(properties);
     }
 
-    this.processedValues = processedValues;
     this.dispatchEvent(new InputEnterEvent(data));
   }
 
   render() {
-    if (!this.args || !this.args.schema) {
+    if (!this.configuration || !this.configuration.schema) {
       return html`Unable to render: no input Schema detected`;
     }
 
-    const { schema } = this.args;
+    const { schema } = this.configuration;
     const { properties } = schema;
     const values = this.#getRememberedValues();
 
@@ -324,54 +306,71 @@ export class Input extends LitElement {
       return html`Unable to render: no input Schema detected`;
     }
 
+    // Special case for when we have – say – a secret stored. Here we neither
+    // render the form, nor the retrieved value, but instead we just dispatch
+    // the event with the value in and stop rendering.
     if (this.remember && this.#memory.didSave(properties)) {
       this.dispatchEvent(new InputEnterEvent(values));
       return;
     }
 
     if (this.processedValues) {
-      return this.#renderProcessedValues();
+      return this.#renderProcessedValues(properties, this.processedValues);
     }
 
     return this.#renderForm(properties, values);
   }
 
-  #renderProcessedValues() {
+  #renderProcessedValues(
+    properties: Record<string, Schema>,
+    processedValues: Record<string, NodeValue>
+  ) {
     if (!this.processedValues) {
       return;
     }
 
+    const renderProperty = (
+      key: string,
+      property: Schema,
+      value: unknown
+    ): HTMLTemplateResult => {
+      // Only recursively render when the items themselves are an array.
+      if (Array.isArray(property.items)) {
+        const items = property.items as Schema[];
+        const values = value as unknown[];
+        return html`${items.map((item, idx) =>
+          renderProperty(key, item, values[idx])
+        )}`;
+      }
+
+      if (isMultipartImage(property)) {
+        const data = value as {
+          inline_data: { mime_type: string; data: string };
+        };
+        const src = `data:${data.inline_data.mime_type};base64,${data.inline_data.data}`;
+        return html`<div class="parsed-value">
+          <img src="${src}" />
+        </div>`;
+      } else if (isMultipartText(property)) {
+        return html`<div class="parsed-value">
+          ${(value as { text: string }).text}
+        </div>`;
+      } else if (typeof value === "object") {
+        return html`<div class="parsed-value">
+          <bb-json-tree .json=${value}></bb-json-tree>
+        </div>`;
+      } else {
+        return html`<div class="parsed-value">${value}</div>`;
+      }
+    };
+
     return html`<div id="choice-container">
-      ${Object.entries(this.processedValues).map(
-        ([key, { title, type, value }]) => {
-          return html`
-            <label for="${key}">${title}</label>
-            ${value.map((v, index) => {
-              switch (type[index]) {
-                case "string": {
-                  const data = v as {
-                    text: string;
-                  };
-                  return html`<div class="parsed-value">${data.text}</div>`;
-                }
+      ${Object.entries(properties).map(([key, property]) => {
+        const label = html`<label for="${key}">${property.title}</label>`;
+        const value = renderProperty(key, property, processedValues[key]);
 
-                case "image": {
-                  const data = v as {
-                    inline_data: { mime_type: string; data: string };
-                  };
-
-                  const src = `data:${data.inline_data.mime_type};base64,${data.inline_data.data}`;
-                  return html`<div class="parsed-value parsed-value-image">
-                    <img src="${src}" />
-                  </div>`;
-                }
-              }
-
-              return html`Unknown type`;
-            })}
-          `;
-        }
-      )}
+        return html`${label}${value}`;
+      })}
     </div>`;
   }
 
@@ -381,7 +380,7 @@ export class Input extends LitElement {
         ${Object.entries(properties).map(([key, property]) => {
           const label = html`<label for="${key}">${property.title}</label>`;
           let input;
-          if (isImage(property)) {
+          if (isMultipartImage(property)) {
             // Webcam input.
             if (isWebcam(property)) {
               input = html`<bb-webcam-input id="${key}"></bb-webcam-input>`;
