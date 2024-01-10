@@ -17,13 +17,6 @@ import {
 } from "../types.js";
 
 /**
- * Valid request names: "load", "run", "proxy". A good way to think of
- * these is as a roughly equivalent to the paths in the url.
- * For example, "/load" is a "load" request.
- */
-export type RequestName = "load" | "run" | "proxy";
-
-/**
  * Sent by the client to request loading a board. This is an optional request
  * that may not be implemented in some environments (for example, a cloud
  * function that can only run one board).
@@ -65,17 +58,6 @@ export type LoadResponse = {
    */
   nodes?: NodeDescriptor[];
 };
-
-/**
- * These are markers for individual messages within the request,
- * so that the server can identify which message is which.
- */
-export type RunRequestType = "run" | "input" | "proxy";
-/**
- * These are markers for individual messages within the response,
- * so that the client can identify which message is which.
- */
-export type RunResponseType = "output" | "input" | "proxy";
 
 export type RunState = string;
 
