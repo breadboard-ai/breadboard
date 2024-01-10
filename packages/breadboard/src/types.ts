@@ -502,6 +502,7 @@ export type NodeEndResponse = {
   outputs: OutputValues;
   validatorMetadata?: BreadboardValidatorMetadata[];
   path: number[];
+  state?: TraversalResult;
 };
 
 /**

@@ -4,9 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
+import {
+  LitElement,
+  html,
+  css,
+  HTMLTemplateResult,
+  nothing,
+  TemplateResult,
+} from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { Board, HistoryEventType, HistoryEntry, InputArgs } from "./types.js";
+import { Board, HistoryEventType, HistoryEntry } from "./types.js";
 import {
   BoardUnloadEvent,
   InputEnterEvent,
@@ -19,22 +26,36 @@ import { Input } from "./input.js";
 import { Output, OutputArgs } from "./output.js";
 import {
   AnyRunResult,
-  EndResult,
-  ErrorResult,
+  InputResult,
   NodeEndResult,
   NodeStartResult,
+  OutputResult,
 } from "@google-labs/breadboard/harness";
 import {
   NodeConfiguration,
   NodeDescriptor,
+  NodeValue,
   ProbeMessage,
+  TraversalResult,
 } from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 
-const enum MODE {
-  BUILD = "build",
-  PREVIEW = "preview",
-}
+type ExtendedNodeInformation = {
+  id: string;
+  type: string;
+  configuration: NodeConfiguration | undefined;
+};
+
+type RunResultWithNodeInfo =
+  | InputResult
+  | OutputResult
+  | NodeStartResult
+  | NodeEndResult;
+const hasNodeInfo = (event: AnyRunResult): event is RunResultWithNodeInfo =>
+  event.type === "input" ||
+  event.type === "output" ||
+  event.type === "nodestart" ||
+  event.type === "nodeend";
 
 type RunResultWithPath = ProbeMessage | NodeStartResult | NodeEndResult;
 const hasPath = (event: AnyRunResult): event is RunResultWithPath =>
@@ -43,7 +64,8 @@ const hasPath = (event: AnyRunResult): event is RunResultWithPath =>
   event.type === "graphstart" ||
   event.type === "graphend";
 
-const hasState = (event: AnyRunResult): event is NodeStartResult =>
+type RunResultWithState = NodeStartResult;
+const hasStateInfo = (event: AnyRunResult): event is RunResultWithState =>
   event.type === "nodestart";
 
 const pathToId = (path: number[], type: RunResultWithPath["type"]) => {
@@ -59,11 +81,12 @@ const pathToId = (path: number[], type: RunResultWithPath["type"]) => {
   return `path-${path.join("-")}`;
 };
 
-type ExtendedNodeInformation = {
-  id: string;
-  type: string;
-  configuration: NodeConfiguration | undefined;
-};
+const enum MODE {
+  BUILD = "build",
+  PREVIEW = "preview",
+}
+
+type inputCallback = (data: Record<string, unknown>) => void;
 
 // TODO: Change to bb-ui after migration.
 @customElement("bb-ui-manager")
@@ -101,12 +124,16 @@ export class UI extends LitElement {
   @state()
   selectedNode: ExtendedNodeInformation | null = null;
 
+  @state()
+  messages: AnyRunResult[] = [];
+
   #subHistoryEntries: Map<string, HistoryEntry[]> = new Map();
   #diagram = new Diagram();
   #lastHistoryEventTime = Number.NaN;
   #nodeInfo: Map<string, ExtendedNodeInformation> = new Map();
   #gridInfoRef: Ref<HTMLElement> = createRef();
   #gridInfoBB: DOMRect | null = null;
+  #handlers: Map<string, inputCallback[]> = new Map();
 
   static styles = css`
     :host {
@@ -425,6 +452,7 @@ export class UI extends LitElement {
     this.toasts.length = 0;
     this.inputs.length = 0;
     this.outputs.length = 0;
+    this.messages.length = 0;
 
     this.#nodeInfo.clear();
 
@@ -432,83 +460,6 @@ export class UI extends LitElement {
     this.#lastHistoryEventTime = Number.NaN;
 
     this.dispatchEvent(new BoardUnloadEvent());
-  }
-
-  #getContent() {
-    if (!this.loadInfo) {
-      return html`Loading board...`;
-    }
-
-    switch (this.mode) {
-      case MODE.BUILD: {
-        return html`<div id="diagram">
-            ${this.loadInfo.diagram ? this.#diagram : "No board diagram"}
-            ${this.selectedNode
-              ? html`<div id="node-information">
-                  <h1>Node Information</h1>
-                  <button id="close" @click=${() => (this.selectedNode = null)}>
-                    Close
-                  </button>
-                  <dl>
-                    <dd>ID</dd>
-                    <dt>${this.selectedNode.id}</dt>
-                    <dd>Type</dd>
-                    <dt>${this.selectedNode.type}</dt>
-                    <dd>Configuration</dd>
-                    <dt>
-                      <bb-json-tree
-                        .json=${this.selectedNode.configuration}
-                        autoExpand="true"
-                      ></bb-json-tree>
-                    </dt>
-                  </dl>
-                </div>`
-              : nothing}
-          </div>
-          <div id="graph-info" ${ref(this.#gridInfoRef)}>
-            <div id="inputs">
-              <h1>Inputs</h1>
-              <div id="inputs-list">
-                ${this.inputs.length
-                  ? this.inputs.map((input) => {
-                      return html`${input}`;
-                    })
-                  : html`There are no inputs yet.`}
-              </div>
-            </div>
-            <div id="outputs">
-              <h1>Outputs</h1>
-              <div id="outputs-list">
-                ${this.outputs.length
-                  ? this.outputs.map((output) => {
-                      return html`${output}`;
-                    })
-                  : html`There are no outputs yet.`}
-              </div>
-            </div>
-            <div
-              id="drag-handle"
-              @pointerdown=${this.#startVerticalResize}
-              @pointermove=${this.#onVerticalResize}
-              @pointerup=${this.#endVerticalResize}
-            ></div>
-            <div id="history">
-              <bb-history-tree
-                .history=${this.historyEntries}
-                .lastUpdate=${this.#lastHistoryEventTime}
-              ></bb-history-tree>
-            </div>
-          </div>`;
-      }
-
-      case MODE.PREVIEW: {
-        return html`Coming soon...`;
-      }
-
-      default: {
-        return html`Unknown mode`;
-      }
-    }
   }
 
   firstUpdated() {
@@ -570,14 +521,14 @@ export class UI extends LitElement {
     globalThis.sessionStorage.setItem("grid-row-bottom", rowBottom);
   }
 
-  #createHistoryEntry(event: AnyRunResult) {
+  #createHistoryEntry(event: AnyRunResult): void {
     if (Number.isNaN(this.#lastHistoryEventTime)) {
       this.#lastHistoryEventTime = globalThis.performance.now();
     }
 
     const getNodeData = (): HistoryEntry["graphNodeData"] => {
       if (hasPath(event)) {
-        if (hasState(event) && typeof event.data.state === "object") {
+        if (hasStateInfo(event) && typeof event.data.state === "object") {
           const id = hasPath(event) ? event.data.node.id : "";
           const nodeValues = event.data.state.state.state.get(id);
           if (!nodeValues) {
@@ -629,8 +580,6 @@ export class UI extends LitElement {
     } else {
       this.historyEntries.push(entry);
     }
-
-    this.requestUpdate();
   }
 
   #findParentHistoryEntry(path: number[], type: RunResultWithPath["type"]) {
@@ -685,7 +634,6 @@ export class UI extends LitElement {
     }
 
     this.#lastHistoryEventTime = globalThis.performance.now();
-    this.requestUpdate();
   }
 
   #parseNodeInformation(nodes?: NodeDescriptor[]) {
@@ -711,84 +659,267 @@ export class UI extends LitElement {
     this.#lastHistoryEventTime = globalThis.performance.now();
   }
 
-  async input(id: string, args: InputArgs): Promise<Record<string, unknown>> {
-    const response: Record<string, unknown> = await new Promise((resolve) => {
-      const input = new Input();
-      input.id = id;
-      input.args = args;
+  async #registerInputHandler(id: string): Promise<Record<string, unknown>> {
+    const handlers = this.#handlers.get(id);
+    if (!handlers) {
+      return Promise.reject(`Unable to set up handler for input ${id}`);
+    }
 
-      input.addEventListener(InputEnterEvent.eventName, (evt: Event) => {
-        const inputEvent = evt as InputEnterEvent;
-        resolve(inputEvent.data);
+    return new Promise((resolve) => {
+      handlers.push((data: Record<string, unknown>) => {
+        resolve(data);
       });
-
-      this.inputs.unshift(input);
-      this.requestUpdate();
     });
-
-    return response;
   }
 
-  async output(id: string, values: OutputArgs) {
+  async #registerSecretsHandler(
+    keys: string[]
+  ): Promise<Record<string, unknown>> {
+    const values = await Promise.all(
+      keys.map((key) => {
+        return new Promise<[string, unknown]>((resolve) => {
+          const callback = ({ secret }: Record<string, unknown>) => {
+            resolve([key, secret]);
+          };
+          this.#handlers.set(key, [callback]);
+        });
+      })
+    );
+
+    return Object.fromEntries(values);
+  }
+
+  async output(values: OutputArgs) {
     this.outputs.unshift(new Output(values.outputs));
+  }
+
+  async handleStateChange(
+    message: AnyRunResult
+  ): Promise<Record<string, unknown> | void> {
+    const nodeId = hasNodeInfo(message) ? message.data.node.id : "";
+    await this.renderDiagram(nodeId);
+
+    // Store it for later, render, then actually handle the work.
+    this.messages.push(message);
     this.requestUpdate();
+
+    const { data, type } = message;
+    switch (type) {
+      case "nodestart": {
+        this.#handlers.clear();
+        this.#handlers.set(message.data.node.id, []);
+        return this.#createHistoryEntry(message);
+      }
+
+      case "nodeend": {
+        this.#handlers.clear();
+        return this.#updateHistoryEntry(message);
+      }
+
+      case "input": {
+        return this.#registerInputHandler(data.node.id);
+      }
+
+      case "secret": {
+        this.#handlers.clear();
+        return this.#registerSecretsHandler(data.keys);
+      }
+
+      case "output": {
+        return this.output(data);
+      }
+
+      case "skip": {
+        // TODO: Allow users to toggle skips.
+        return;
+      }
+
+      default: {
+        return this.#createHistoryEntry(message);
+      }
+    }
   }
 
-  async secret(id: string): Promise<string> {
-    const response: Record<string, string> = await new Promise((resolve) => {
-      const input = new Input();
-      input.id = id;
-      input.args = {
-        schema: {
-          properties: {
-            secret: {
-              title: id,
-              description: `Enter ${id}`,
-              type: "string",
-            },
-          },
-        },
-      };
-      input.remember = true;
-      input.secret = true;
+  #obtainProcessedValuesIfAvailable(
+    idx: number,
+    id: string
+  ): Record<string, NodeValue> | null {
+    for (let i = idx; i < this.messages.length; i++) {
+      const message = this.messages[i];
+      if (message.type === "nodeend" && message.data.node.id === id) {
+        return message.data.outputs;
+      }
+    }
 
-      this.inputs.push(input);
-      this.requestUpdate();
-
-      input.addEventListener(InputEnterEvent.eventName, (evt: Event) => {
-        const inputEvent = evt as InputEnterEvent;
-        resolve(inputEvent.data as Record<string, string>);
-
-        this.inputs.splice(this.inputs.indexOf(input), 1);
-        this.requestUpdate();
-      });
-    });
-
-    return response.secret;
+    return null;
   }
 
-  error(message: ErrorResult) {
-    this.#createHistoryEntry(message);
-  }
+  #renderContent() {
+    if (!this.loadInfo) {
+      return html`Loading board...`;
+    }
 
-  done(message: EndResult) {
-    this.#createHistoryEntry(message);
-  }
+    type InputDescription = {
+      id: string;
+      configuration?: NodeConfiguration;
+      remember: boolean;
+      secret: boolean;
+    };
 
-  graphstart(message: ProbeMessage) {
-    this.#createHistoryEntry(message);
-  }
+    const createInput = (
+      idx: number,
+      { id, configuration, secret, remember }: InputDescription
+    ) => {
+      const processedValues = this.#obtainProcessedValuesIfAvailable(idx, id);
+      return html`<bb-input
+        id="${id}"
+        .secret=${secret}
+        .remember=${remember}
+        .configuration=${configuration}
+        .processedValues=${processedValues}
+        @breadboardinputenterevent=${(event: InputEnterEvent) => {
+          // Notify any pending handlers that the input has arrived.
+          const data = event.data;
+          const handlers = this.#handlers.get(id) || [];
+          for (const handler of handlers) {
+            handler.call(null, data);
+          }
+        }}
+      ></bb-input>`;
+    };
 
-  graphend(message: ProbeMessage) {
-    this.#createHistoryEntry(message);
-  }
+    const inputs: TemplateResult[] = [];
+    // Infer from the messages received which inputs need to be shown.
+    for (let idx = this.messages.length - 1; idx >= 0; idx--) {
+      const message = this.messages[idx];
+      if (message.type !== "nodestart" && message.type !== "secret") {
+        continue;
+      }
 
-  nodestart(message: NodeStartResult) {
-    this.#createHistoryEntry(message);
-  }
+      // Capture all secrets.
+      if (message.type === "secret") {
+        for (const id of message.data.keys) {
+          inputs.push(
+            createInput(idx, {
+              id,
+              configuration: {
+                schema: {
+                  properties: {
+                    secret: {
+                      title: id,
+                      description: `Enter ${id}`,
+                      type: "string",
+                    },
+                  },
+                },
+              },
+              remember: true,
+              secret: true,
+            })
+          );
+        }
+        continue;
+      }
 
-  nodeend(message: NodeEndResult) {
-    this.#updateHistoryEntry(message);
+      // Capture all inputs that require user interaction.
+      if (message.type === "nodestart" && message.data.node.type === "input") {
+        let requiresUserInteraction = false;
+        for (let n = idx; n < this.messages.length; n++) {
+          // If we land on an input message before the nodeend then we know this
+          // node requires user interaction and should be retained.
+          const nextMessage = this.messages[n];
+          if (
+            nextMessage.type === "input" &&
+            nextMessage.data.node.id === message.data.node.id
+          ) {
+            requiresUserInteraction = true;
+          }
+
+          if (nextMessage.type === "nodeend") {
+            break;
+          }
+        }
+
+        if (!requiresUserInteraction) {
+          continue;
+        }
+        inputs.push(
+          createInput(idx, {
+            id: message.data.node.id,
+            configuration: message.data.node.configuration,
+            remember: false,
+            secret: false,
+          })
+        );
+      }
+    }
+
+    switch (this.mode) {
+      case MODE.BUILD: {
+        return html`<div id="diagram">
+            ${this.loadInfo.diagram ? this.#diagram : "No board diagram"}
+            ${this.selectedNode
+              ? html`<div id="node-information">
+                  <h1>Node Information</h1>
+                  <button id="close" @click=${() => (this.selectedNode = null)}>
+                    Close
+                  </button>
+                  <dl>
+                    <dd>ID</dd>
+                    <dt>${this.selectedNode.id}</dt>
+                    <dd>Type</dd>
+                    <dt>${this.selectedNode.type}</dt>
+                    <dd>Configuration</dd>
+                    <dt>
+                      <bb-json-tree
+                        .json=${this.selectedNode.configuration}
+                        autoExpand="true"
+                      ></bb-json-tree>
+                    </dt>
+                  </dl>
+                </div>`
+              : nothing}
+          </div>
+          <div id="graph-info" ${ref(this.#gridInfoRef)}>
+            <div id="inputs">
+              <h1>Inputs</h1>
+              <div id="inputs-list">
+                ${inputs.length ? inputs : html`There are no inputs yet.`}
+              </div>
+            </div>
+            <div id="outputs">
+              <h1>Outputs</h1>
+              <div id="outputs-list">
+                ${this.outputs.length
+                  ? this.outputs.map((output) => {
+                      return html`${output}`;
+                    })
+                  : html`There are no outputs yet.`}
+              </div>
+            </div>
+            <div
+              id="drag-handle"
+              @pointerdown=${this.#startVerticalResize}
+              @pointermove=${this.#onVerticalResize}
+              @pointerup=${this.#endVerticalResize}
+            ></div>
+            <div id="history">
+              <bb-history-tree
+                .history=${this.historyEntries}
+                .lastUpdate=${this.#lastHistoryEventTime}
+              ></bb-history-tree>
+            </div>
+          </div>`;
+      }
+
+      case MODE.PREVIEW: {
+        return html`Coming soon...`;
+      }
+
+      default: {
+        return html`Unknown mode`;
+      }
+    }
   }
 
   render() {
@@ -818,7 +949,7 @@ export class UI extends LitElement {
             Preview
           </button>
         </div>
-        <div id="content" class="${this.mode}">${this.#getContent()}</div>`;
+        <div id="content" class="${this.mode}">${this.#renderContent()}</div>`;
     } else {
       tmpl = html`<header>
           <a href="/"><h1 id="title">Breadboard Playground</h1></a>

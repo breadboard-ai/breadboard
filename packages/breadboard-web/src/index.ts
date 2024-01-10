@@ -94,7 +94,11 @@ export class Main {
             }
           }
           await sleep(this.#delay);
-          await this.#handleEvent(result);
+
+          const answer = await this.#ui.handleStateChange(result.message);
+          if (answer) {
+            result.reply(answer);
+          }
         }
       }
     );
@@ -145,19 +149,6 @@ export class Main {
     return new URL(window.location.href).searchParams.get("board");
   }
 
-  #hasNodeInfo(data: unknown): data is { node: { id: string } } {
-    if (data === null) {
-      return false;
-    }
-
-    const possibleData = data as { node: { id: string } };
-    if ("node" in possibleData && possibleData.node) {
-      return true;
-    }
-
-    return false;
-  }
-
   async #suspendIfPaused(): Promise<void> {
     return new Promise((resolve) => {
       if (this.#pauser.paused) {
@@ -172,70 +163,5 @@ export class Main {
 
       resolve();
     });
-  }
-
-  async #handleEvent(result: HarnessRunResult) {
-    const { message } = result;
-    const { data, type } = message;
-
-    // Update the graph to the latest.
-    if (this.#hasNodeInfo(data)) {
-      await this.#ui.renderDiagram(data.node.id);
-    } else {
-      await this.#ui.renderDiagram();
-    }
-
-    switch (type) {
-      case "output": {
-        await this.#ui.output(data.node.id, data);
-        break;
-      }
-
-      case "input": {
-        result.reply(await this.#ui.input(data.node.id, data.inputArguments));
-        break;
-      }
-
-      case "secret": {
-        const keys = data.keys;
-        result.reply(
-          Object.fromEntries(
-            await Promise.all(
-              keys.map(async (key) => [key, await this.#ui.secret(key)])
-            )
-          )
-        );
-        break;
-      }
-
-      case "graphstart": {
-        this.#ui.graphstart(message);
-        break;
-      }
-
-      case "graphend": {
-        this.#ui.graphend(message);
-        break;
-      }
-
-      case "nodestart": {
-        this.#ui.nodestart(message);
-        break;
-      }
-
-      case "nodeend": {
-        this.#ui.nodeend(message);
-        break;
-      }
-
-      case "error": {
-        this.#ui.error(message);
-        break;
-      }
-
-      case "end":
-        this.#ui.done(message);
-        break;
-    }
   }
 }
