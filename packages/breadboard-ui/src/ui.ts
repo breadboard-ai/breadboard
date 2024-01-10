@@ -650,6 +650,10 @@ export class UI extends LitElement {
   }
 
   #updateHistoryEntry(event: NodeEndResult) {
+    if (Number.isNaN(this.#lastHistoryEventTime)) {
+      this.#lastHistoryEventTime = globalThis.performance.now();
+    }
+
     const id = pathToId(event.data.path, event.type);
     const entryList = this.#findParentHistoryEntry(event.data.path, event.type);
     const existingEntry = entryList.find((item) => item.id === id);
@@ -680,6 +684,7 @@ export class UI extends LitElement {
       existingEntry.graphNodeData = undefined;
     }
 
+    this.#lastHistoryEventTime = globalThis.performance.now();
     this.requestUpdate();
   }
 
