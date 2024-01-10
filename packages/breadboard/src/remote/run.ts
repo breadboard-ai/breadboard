@@ -155,7 +155,7 @@ class ClientRunResult implements BreadboardRunResult {
 
     if (type === "input") {
       this.#inputArguments = data.inputArguments;
-    } else if (type === "output") {
+    } else if (type === "output" || type == "nodeend") {
       this.#outputs = data.outputs;
     }
   }
