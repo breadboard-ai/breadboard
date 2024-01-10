@@ -30,6 +30,11 @@ export class BreadboardSiteHeader extends LitElement {
     nav {
       font-family: sans-serif;
       text-decoration: none;
+      display: flex;
+      align-items: center;
+    }
+    nav > a {
+      padding: 8px 12px;
     }
   `;
 
@@ -48,6 +53,14 @@ export class BreadboardSiteHeader extends LitElement {
         <nav>
           <a href="/docs/">Docs</a>
           <a href="/playground/">Playground</a>
+          <a
+            href="https://github.com/breadboard-ai/breadboard/"
+            target="_blank"
+            rel="noopener"
+            title="Breadboard on GitHub"
+            aria-label="Breadboard on GitHub"
+            ><img src="/static/github.svg" />
+          </a>
         </nav>
       </header>
     `;
