@@ -69,10 +69,7 @@ export class MessageController {
 
   #onMessage(message: ControllerMessage) {
     if (!message.type || !VALID_MESSAGE_TYPES.includes(message.type)) {
-      // This is only used in transition from worker machinery to
-      // remote machinery.
-      if ((message.type as string) === "port-dispatcher-sendport") return;
-      throw new Error(`Invalid message type "${message.type}"`);
+      return;
     }
     if (this.#listener) {
       this.#listener(message);
