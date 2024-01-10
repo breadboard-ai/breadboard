@@ -99,23 +99,24 @@ export class Scope implements ScopeInterface {
   }
 
   async invoke(
-    node?: AbstractNode | AbstractNode[],
+    node?: AbstractNode | AbstractNode[] | false,
     state: StateInterface = new State()
   ): Promise<void> {
     try {
-      (node ? (node instanceof Array ? node : [node]) : this.#pinnedNodes)
-        .flatMap((node) =>
-          this.#findAllConnectedNodes(node).filter(
-            (node) => state?.missingInputs(node) === false
+      if (node !== false)
+        (node ? (node instanceof Array ? node : [node]) : this.#pinnedNodes)
+          .flatMap((node) =>
+            this.#findAllConnectedNodes(node).filter(
+              (node) => state?.missingInputs(node) === false
+            )
           )
-        )
-        .forEach((node) => state?.queueUp(node));
+          .forEach((node) => state?.queueUp(node));
 
       const callbacks = this.#getAllCallbacks();
 
       while (!state.done()) {
         for (const callback of callbacks)
-          if (await callback.stop?.(this)) return;
+          if (await callback.stop?.(this, state)) return;
 
         const node = state.next();
 
@@ -159,10 +160,16 @@ export class Scope implements ScopeInterface {
     }
   }
 
-  invokeOnce(
+  invokeOneRound(
     inputs: InputValues = {},
-    node?: AbstractNode
+    node: AbstractNode | false | undefined = undefined,
+    state?: StateInterface
   ): Promise<OutputValues> {
+    if ("$state" in inputs) {
+      state = inputs["$state"] as StateInterface;
+      delete inputs["$state"];
+    }
+
     let resolver: undefined | ((outputs: OutputValues) => void) = undefined;
     const promise = new Promise<OutputValues>((resolve) => {
       resolver = resolve;
@@ -184,9 +191,12 @@ export class Scope implements ScopeInterface {
     let lastNode: AbstractNode | undefined = undefined;
     const lastMissingInputs = new Map<string, string>();
 
+    let stopState: StateInterface | undefined = undefined;
+
     scope.addCallbacks({
-      stop: () => {
+      stop: (_scope, state) => {
         // Once output node was executed, stop execution.
+        if (!resolver) stopState = state;
         return !resolver;
       },
       after: (_scope, node, _inputs, _outputs, distribution) => {
@@ -220,10 +230,16 @@ export class Scope implements ScopeInterface {
       },
     });
 
-    const runner = scope.invoke(node ?? this.#pinnedNodes);
+    const runner = scope.invoke(
+      node !== undefined ? node : this.#pinnedNodes,
+      state
+    );
 
-    // Wait for both, return output values
-    return Promise.all([promise, runner]).then(([outputs]) => outputs);
+    // Wait for both, return output values, and last state if stopped.
+    return Promise.all([promise, runner]).then(([outputs]) => ({
+      ...outputs,
+      ...(stopState ? { $state: stopState } : {}),
+    }));
   }
 
   async serialize(

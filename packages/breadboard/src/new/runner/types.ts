@@ -128,7 +128,11 @@ export interface OutputDistribution {
 export interface InvokeCallbacks {
   // Called at the top of any iteration.
   // Return true to abort execution.
-  stop?: (scope: ScopeInterface) => boolean | Promise<boolean>;
+  // Use `state` to continue later.
+  stop?: (
+    scope: ScopeInterface,
+    state: StateInterface
+  ) => boolean | Promise<boolean>;
 
   // Called before a node is invoked.
   // Waits for execution until promise is resolved. (Useful to pause execution)
@@ -248,7 +252,11 @@ export interface ScopeInterface {
    *
    * @throws If no output node was called before graph terminates
    */
-  invokeOnce(inputs: InputValues, node?: AbstractNode): Promise<OutputValues>;
+  invokeOneRound(
+    inputs: InputValues,
+    node?: AbstractNode,
+    state?: StateInterface
+  ): Promise<OutputValues>;
 
   /**
    * Adds callbacks that are being called before and after each node invocation

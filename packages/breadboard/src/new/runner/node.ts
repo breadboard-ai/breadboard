@@ -129,7 +129,7 @@ export class BaseNode<
       // scope. This requires moving state management into the dyanmic scope.
       const graphs = handler.graph.getPinnedNodes();
       if (graphs.length !== 1) throw new Error("Expected exactly one graph");
-      result = (await scope.invokeOnce(inputs, graphs[0])) as O;
+      result = (await scope.invokeOneRound(inputs, graphs[0])) as O;
     } else {
       throw new Error(`Can't find handler for ${this.id}`);
     }

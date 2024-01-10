@@ -34,8 +34,9 @@ test("abort once the first output is called", async (t) => {
 
   scope.addHandlers(handlers);
 
-  const result = await scope.invokeOnce({ foo: "success" });
+  const result = await scope.invokeOneRound({ foo: "success" });
 
-  t.deepEqual(result, { bar: "success" });
+  t.like(result, { bar: "success" });
+  t.like(result, { $state: { queue: [noop2] } });
   t.is(noopCalls, 1);
 });
