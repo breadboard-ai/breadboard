@@ -405,32 +405,29 @@ export class HistoryTree extends LitElement {
   #getTypeLabel(entry: HistoryEntry) {
     switch (entry.type) {
       case "graphstart":
+        if (entry.data.path.length > 0) {
+          return "Inner board started";
+        }
         return "Board started";
-        break;
       case "graphend":
+        if (entry.data.path.length > 0) {
+          return "Inner board finished";
+        }
         return "Board finished";
-        break;
       case "error":
         return "Error";
-        break;
       case "skip":
         return "Skip";
-        break;
       case "end":
         return "Complete";
-        break;
       case "input":
         return "Input";
-        break;
       case "output":
         return "Output";
-        break;
       case "secret":
         return "Secret";
-        break;
       default:
         return entry.data.node.type;
-        break;
     }
   }
 
