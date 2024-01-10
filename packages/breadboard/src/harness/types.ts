@@ -99,8 +99,6 @@ export type AnyRunResult = (
   | InputResult
   | OutputResult
   | SecretResult
-  | NodeStartResult
-  | NodeEndResult
   | ErrorResult
   | EndResult
   | ProbeMessage
