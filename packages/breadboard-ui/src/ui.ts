@@ -28,7 +28,6 @@ import {
   NodeConfiguration,
   NodeDescriptor,
   ProbeMessage,
-  TraversalResult,
 } from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 
@@ -37,9 +36,8 @@ const enum MODE {
   PREVIEW = "preview",
 }
 
-const hasPath = (
-  event: AnyRunResult
-): event is ProbeMessage | NodeStartResult | NodeEndResult =>
+type RunResultWithPath = ProbeMessage | NodeStartResult | NodeEndResult;
+const hasPath = (event: AnyRunResult): event is RunResultWithPath =>
   event.type === "nodestart" ||
   event.type === "nodeend" ||
   event.type === "graphstart" ||
@@ -48,9 +46,14 @@ const hasPath = (
 const hasState = (event: AnyRunResult): event is NodeStartResult =>
   event.type === "nodestart";
 
-const pathToId = (path: number[]) => {
-  if (path.length == 0) {
-    return `path-main-graph`;
+const pathToId = (path: number[], type: RunResultWithPath["type"]) => {
+  const isGraphNode = type === "graphstart" || type === "graphend";
+  if (path.length == 0 && isGraphNode) {
+    if (type === "graphstart") {
+      return `path-main-graph-start`;
+    } else {
+      return `path-main-graph-end`;
+    }
   }
 
   return `path-${path.join("-")}`;
@@ -602,29 +605,24 @@ export class UI extends LitElement {
     const entry: HistoryEntry = {
       ...event,
       graphNodeData: getNodeData(),
-      id: hasPath(event) ? pathToId(event.data.path) : "",
+      id: hasPath(event) ? pathToId(event.data.path, event.type) : "",
       guid: globalThis.crypto.randomUUID(),
       elapsedTime,
       children: [],
     };
 
     if (hasPath(event)) {
-      const entryList = this.#findParentHistoryEntry(event.data.path);
-      if (event.type === HistoryEventType.GRAPHSTART) {
-        // If this is a graph start and there is a corresponding nodestart with
-        // the same path we will adjust the positions so that the graphstart
-        // appears just before the nodestart. This tends to match the mental
-        // model a bit closer, where we think of a board starting before the
-        // nodes it contains.
-        const existingNodeStartEntryIdx = entryList.findIndex(
-          (sibling) => sibling.id === pathToId(event.data.path)
-        );
+      let entryList = this.#findParentHistoryEntry(event.data.path, event.type);
+      const existingNode = entryList.find(
+        (sibling) => sibling.id === pathToId(event.data.path, event.type)
+      );
 
-        if (existingNodeStartEntryIdx !== -1) {
-          entry.id += "_gs";
-          entryList.splice(existingNodeStartEntryIdx, 0, entry);
-          return;
-        }
+      // If there is an existing node, and this is either a graphstart/end node
+      // then append an ID to it and make it a child of the existing one.
+      if (existingNode) {
+        event.data.path.push(existingNode.children.length);
+        entry.id = pathToId(event.data.path, event.type);
+        entryList = existingNode.children;
       }
 
       entryList.push(entry);
@@ -635,10 +633,10 @@ export class UI extends LitElement {
     this.requestUpdate();
   }
 
-  #findParentHistoryEntry(path: number[]) {
+  #findParentHistoryEntry(path: number[], type: RunResultWithPath["type"]) {
     let entryList = this.historyEntries;
     for (let idx = 0; idx < path.length - 1; idx++) {
-      const id = pathToId(path.slice(0, idx + 1));
+      const id = pathToId(path.slice(0, idx + 1), type);
       const parentId = entryList.findIndex((item) => item.id === id);
       if (parentId === -1) {
         console.warn(`Unable to find ID "${id}"`);
@@ -652,8 +650,8 @@ export class UI extends LitElement {
   }
 
   #updateHistoryEntry(event: NodeEndResult) {
-    const id = pathToId(event.data.path);
-    const entryList = this.#findParentHistoryEntry(event.data.path);
+    const id = pathToId(event.data.path, event.type);
+    const entryList = this.#findParentHistoryEntry(event.data.path, event.type);
     const existingEntry = entryList.find((item) => item.id === id);
     if (!existingEntry) {
       console.warn(`Unable to find ID "${id}"`);

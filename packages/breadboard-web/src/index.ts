@@ -209,21 +209,25 @@ export class Main {
       }
 
       case "graphstart": {
+        console.log("graphstart", message.data.path, message);
         this.#ui.graphstart(message);
         break;
       }
 
       case "graphend": {
+        console.log("graphend", message.data.path, message);
         this.#ui.graphend(message);
         break;
       }
 
       case "nodestart": {
+        console.log("nodestart", message.data.path, message);
         this.#ui.nodestart(message);
         break;
       }
 
       case "nodeend": {
+        console.log("nodeend", message.data.path, message);
         this.#ui.nodeend(message);
         break;
       }

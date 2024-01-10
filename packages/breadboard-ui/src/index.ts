@@ -10,7 +10,6 @@ export { Done } from "./done.js";
 export { Input } from "./input.js";
 export { WebcamInput } from "./webcam.js";
 export { DrawableInput } from "./drawable.js";
-export { HistoryEntry } from "./history-entry.js";
 export { Load } from "./load.js";
 export { InputContainer } from "./input-container.js";
 export { Start } from "./start.js";
