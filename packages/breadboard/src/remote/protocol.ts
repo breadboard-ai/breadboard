@@ -133,7 +133,7 @@ export type SkipResponseMessage = ["skip", SkipProbeMessage["data"]];
  * Sent by a server to request input.
  * Can only be the last message in the response stream.
  */
-export type InputPromiseResponse = {
+export type InputResponse = {
   /**
    * The description of the node that is requesting input.
    * @see [NodeDescriptor]
@@ -147,11 +147,7 @@ export type InputPromiseResponse = {
    */
   inputArguments: InputValues & { schema?: Schema };
 };
-export type InputPromiseResponseMessage = [
-  "input",
-  InputPromiseResponse,
-  RunState
-];
+export type InputResponseMessage = ["input", InputResponse, RunState];
 
 /**
  * Sent by the client to provide inputs, requested by the server.
@@ -273,7 +269,7 @@ export type AnyRunResponseMessage =
   | GraphStartResponseMessage
   | GraphEndResponseMessage
   | SkipResponseMessage
-  | InputPromiseResponseMessage
+  | InputResponseMessage
   | ProxyPromiseResponseMessage
   | EndResponseMessage
   | ErrorResponseMessage;

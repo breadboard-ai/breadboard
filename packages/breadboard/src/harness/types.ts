@@ -7,7 +7,7 @@
 import { NodeProxyConfig } from "../remote/config.js";
 import {
   NodeStartResponse,
-  InputPromiseResponse,
+  InputResponse,
   LoadResponse,
   OutputResponse,
 } from "../remote/protocol.js";
@@ -60,7 +60,7 @@ export type LoadResult = {
 
 export type InputResult = {
   type: "input";
-  data: InputPromiseResponse;
+  data: InputResponse;
 };
 
 export type OutputResult = {

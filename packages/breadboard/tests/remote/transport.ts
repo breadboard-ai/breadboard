@@ -8,7 +8,7 @@ import test from "ava";
 import {
   AnyRunRequestMessage,
   AnyRunResponseMessage,
-  InputPromiseResponseMessage,
+  InputResponseMessage,
 } from "../../src/remote/protocol.js";
 import { Board } from "../../src/board.js";
 import { TestKit } from "../helpers/_test-kit.js";
@@ -44,7 +44,7 @@ test("Interruptible streaming", async (t) => {
 
   let intermediateState;
   for await (const result of await run(["run", {}])) {
-    const [type, response, state] = result as InputPromiseResponseMessage;
+    const [type, response, state] = result as InputResponseMessage;
     t.is(type, "input");
     t.is(response.node.type, "input");
     t.deepEqual(response.inputArguments, { foo: "bar" });
