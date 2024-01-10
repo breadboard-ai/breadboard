@@ -6,14 +6,15 @@
 
 import { PatchedReadableStream } from "../stream.js";
 import {
-  GraphProbeMessageData,
+  GraphProbeData,
+  InputResponse,
   InputValues,
   NodeDescriptor,
   NodeEndProbeMessage,
+  NodeStartResponse,
+  OutputResponse,
   OutputValues,
-  Schema,
   SkipProbeMessage,
-  TraversalResult,
 } from "../types.js";
 
 /**
@@ -68,35 +69,8 @@ export type RunState = string;
 export type RunRequest = Record<string, never>;
 export type RunRequestMessage = ["run", RunRequest, RunState?];
 
-/**
- * Sent by a server to supply outputs.
- */
-export type OutputResponse = {
-  /**
-   * The description of the node that is providing output.
-   * @see [NodeDescriptor]
-   */
-  node: NodeDescriptor;
-  /**
-   * The output values that the node is providing.
-   * @see [OutputValues]
-   */
-  outputs: OutputValues;
-};
 export type OutputResponseMessage = ["output", OutputResponse];
 
-/**
- * Sent by a server just before a node is about to run.
- */
-export type NodeStartResponse = {
-  /**
-   * The description of the node that is about to run.
-   * @see [NodeDescriptor]
-   */
-  node: NodeDescriptor;
-  path: number[];
-  state?: string | TraversalResult;
-};
 export type NodeStartResponseMessage = [
   "nodestart",
   NodeStartResponse,
@@ -105,30 +79,12 @@ export type NodeStartResponseMessage = [
 
 export type NodeEndResponseMessage = ["nodeend", NodeEndProbeMessage["data"]];
 
-export type GraphStartResponseMessage = ["graphstart", GraphProbeMessageData];
+export type GraphStartResponseMessage = ["graphstart", GraphProbeData];
 
-export type GraphEndResponseMessage = ["graphend", GraphProbeMessageData];
+export type GraphEndResponseMessage = ["graphend", GraphProbeData];
 
 export type SkipResponseMessage = ["skip", SkipProbeMessage["data"]];
 
-/**
- * Sent by a server to request input.
- * Can only be the last message in the response stream.
- */
-export type InputResponse = {
-  /**
-   * The description of the node that is requesting input.
-   * @see [NodeDescriptor]
-   */
-  node: NodeDescriptor;
-  /**
-   * The input arguments that were given to the node that is requesting input.
-   * These arguments typically contain the schema of the inputs that are
-   * expected.
-   * @see [InputValues]
-   */
-  inputArguments: InputValues & { schema?: Schema };
-};
 export type InputResponseMessage = ["input", InputResponse, RunState];
 
 /**
@@ -255,11 +211,6 @@ export type AnyRunResponseMessage =
   | ProxyPromiseResponseMessage
   | EndResponseMessage
   | ErrorResponseMessage;
-
-// export type RunResponseStream = PatchedReadableStream<AnyRunResponseMessage>;
-// export type RunRequestStream = PatchedReadableStream<AnyRunRequestMessage>;
-// export type WritableRunRequestStream = WritableStream<AnyRunRequestMessage>;
-// export type WritableRunResponseStream = WritableStream<AnyRunResponseMessage>;
 
 export interface ClientBidirectionalStream<Request, Response> {
   writableRequests: WritableStream<Request>;

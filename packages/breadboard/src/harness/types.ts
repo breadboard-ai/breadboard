@@ -5,13 +5,16 @@
  */
 
 import { NodeProxyConfig } from "../remote/config.js";
+import { LoadResponse } from "../remote/protocol.js";
 import {
-  NodeStartResponse,
   InputResponse,
-  LoadResponse,
+  Kit,
+  NodeDescriptor,
+  NodeStartResponse,
   OutputResponse,
-} from "../remote/protocol.js";
-import { Kit, NodeDescriptor, OutputValues, ProbeMessage } from "../types.js";
+  OutputValues,
+  ProbeMessage,
+} from "../types.js";
 
 export type NodeEndResponse = {
   node: NodeDescriptor;

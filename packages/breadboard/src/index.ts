@@ -24,7 +24,7 @@ export type {
   GenericKit,
   GraphDescriptor,
   GraphMetadata,
-  GraphProbeMessageData,
+  GraphProbeData as GraphProbeMessageData,
   InputValues,
   Kit,
   KitConstructor,

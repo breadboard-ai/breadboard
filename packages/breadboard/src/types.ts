@@ -454,19 +454,19 @@ export interface BreadboardValidator {
   ): BreadboardValidator;
 }
 
-export type GraphProbeMessageData = {
+export type GraphProbeData = {
   metadata: GraphMetadata;
   path: number[];
 };
 
 export type GraphStartProbeMessage = {
   type: "graphstart";
-  data: GraphProbeMessageData;
+  data: GraphProbeData;
 };
 
 export type GraphEndProbeMessage = {
   type: "graphend";
-  data: GraphProbeMessageData;
+  data: GraphProbeData;
 };
 
 export type SkipProbeMessage = {
@@ -481,12 +481,7 @@ export type SkipProbeMessage = {
 
 export type NodeStartProbeMessage = {
   type: "nodestart";
-  data: {
-    node: NodeDescriptor;
-    inputs: InputValues;
-    path: number[];
-    state: string | TraversalResult;
-  };
+  data: NodeStartResponse;
 };
 
 export type NodeEndProbeMessage = {
@@ -506,6 +501,54 @@ export type ProbeMessage =
   | SkipProbeMessage
   | NodeStartProbeMessage
   | NodeEndProbeMessage;
+
+/**
+ * Sent by the runner to supply outputs.
+ */
+export type OutputResponse = {
+  /**
+   * The description of the node that is providing output.
+   * @see [NodeDescriptor]
+   */
+  node: NodeDescriptor;
+  /**
+   * The output values that the node is providing.
+   * @see [OutputValues]
+   */
+  outputs: OutputValues;
+};
+
+/**
+ * Sent by the runner just before a node is about to run.
+ */
+export type NodeStartResponse = {
+  /**
+   * The description of the node that is about to run.
+   * @see [NodeDescriptor]
+   */
+  node: NodeDescriptor;
+  inputs: InputValues;
+  path: number[];
+  state?: string | TraversalResult;
+};
+
+/**
+ * Sent by the runner to request input.
+ */
+export type InputResponse = {
+  /**
+   * The description of the node that is requesting input.
+   * @see [NodeDescriptor]
+   */
+  node: NodeDescriptor;
+  /**
+   * The input arguments that were given to the node that is requesting input.
+   * These arguments typically contain the schema of the inputs that are
+   * expected.
+   * @see [InputValues]
+   */
+  inputArguments: InputValues & { schema?: Schema };
+};
 
 // TODO: Remove extending EventTarget once new runner is converted to use
 // reporting.
