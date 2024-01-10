@@ -36,7 +36,6 @@ import {
   NodeDescriptor,
   NodeValue,
   ProbeMessage,
-  TraversalResult,
 } from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 
@@ -88,7 +87,6 @@ const enum MODE {
 
 type inputCallback = (data: Record<string, unknown>) => void;
 
-// TODO: Change to bb-ui after migration.
 @customElement("bb-ui-manager")
 export class UI extends LitElement {
   @property()
