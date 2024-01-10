@@ -4,17 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  getStreams,
-  parseWithStreams,
-  stringifyWithStreams,
-} from "../stream.js";
 import { InputValues } from "../types.js";
-import {
-  type ControllerMessage,
-  type RoundTripControllerMessage,
-  VALID_MESSAGE_TYPES,
-} from "./protocol.js";
+import { type ControllerMessage, VALID_MESSAGE_TYPES } from "./protocol.js";
 
 type ResolveFunction<T extends ControllerMessage = ControllerMessage> = (
   value: T
@@ -22,15 +13,9 @@ type ResolveFunction<T extends ControllerMessage = ControllerMessage> = (
 
 type MessageHandler = (e: ControllerMessage) => void;
 
-const replaceStreams = (data: InputValues): InputValues => {
-  const stringified = stringifyWithStreams(data).value;
-  return parseWithStreams(stringified, () => new ReadableStream());
-};
-
 export interface MessageControllerTransport {
   setMessageHandler(messageHandler: MessageHandler): void;
   sendMessage<T extends ControllerMessage>(message: T): void;
-  sendRoundTripMessage<T extends RoundTripControllerMessage>(message: T): void;
 }
 
 export class WorkerTransport implements MessageControllerTransport {
@@ -50,21 +35,8 @@ export class WorkerTransport implements MessageControllerTransport {
     this.#messageHandler = messageHandler;
   }
 
-  sendRoundTripMessage<T extends RoundTripControllerMessage>(message: T) {
-    const streams = getStreams(message.data as InputValues);
-    this.worker.postMessage(message, streams);
-  }
-
   sendMessage<T extends ControllerMessage>(message: T) {
-    const { type } = message;
-    // This is necessary because a stream can only be transferred once,
-    // and both nodeend and nodestart messages need to transfer the same stream,
-    // along with the "output" message
-    if (type === "nodestart" || type === "nodeend") {
-      message.data = replaceStreams(message.data as InputValues);
-    }
-    const streams = getStreams(message.data as InputValues);
-    this.worker.postMessage(message, streams);
+    this.worker.postMessage(message, message.data as InputValues);
   }
 
   #onMessage(e: MessageEvent) {
@@ -97,10 +69,7 @@ export class MessageController {
 
   #onMessage(message: ControllerMessage) {
     if (!message.type || !VALID_MESSAGE_TYPES.includes(message.type)) {
-      // This is only used in transition from worker machinery to
-      // remote machinery.
-      if ((message.type as string) === "port-dispatcher-sendport") return;
-      throw new Error(`Invalid message type "${message.type}"`);
+      return;
     }
     if (this.#listener) {
       this.#listener(message);

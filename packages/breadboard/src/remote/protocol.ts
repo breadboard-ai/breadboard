@@ -6,22 +6,17 @@
 
 import { PatchedReadableStream } from "../stream.js";
 import {
-  GraphProbeMessageData,
+  ErrorResponse,
+  GraphProbeData,
+  InputResponse,
   InputValues,
   NodeDescriptor,
   NodeEndProbeMessage,
+  NodeStartResponse,
+  OutputResponse,
   OutputValues,
-  Schema,
   SkipProbeMessage,
-  TraversalResult,
 } from "../types.js";
-
-/**
- * Valid request names: "load", "run", "proxy". A good way to think of
- * these is as a roughly equivalent to the paths in the url.
- * For example, "/load" is a "load" request.
- */
-export type RequestName = "load" | "run" | "proxy";
 
 /**
  * Sent by the client to request loading a board. This is an optional request
@@ -66,17 +61,6 @@ export type LoadResponse = {
   nodes?: NodeDescriptor[];
 };
 
-/**
- * These are markers for individual messages within the request,
- * so that the server can identify which message is which.
- */
-export type RunRequestType = "run" | "input" | "proxy";
-/**
- * These are markers for individual messages within the response,
- * so that the client can identify which message is which.
- */
-export type RunResponseType = "output" | "input" | "proxy";
-
 export type RunState = string;
 
 /**
@@ -86,35 +70,8 @@ export type RunState = string;
 export type RunRequest = Record<string, never>;
 export type RunRequestMessage = ["run", RunRequest, RunState?];
 
-/**
- * Sent by a server to supply outputs.
- */
-export type OutputResponse = {
-  /**
-   * The description of the node that is providing output.
-   * @see [NodeDescriptor]
-   */
-  node: NodeDescriptor;
-  /**
-   * The output values that the node is providing.
-   * @see [OutputValues]
-   */
-  outputs: OutputValues;
-};
 export type OutputResponseMessage = ["output", OutputResponse];
 
-/**
- * Sent by a server just before a node is about to run.
- */
-export type NodeStartResponse = {
-  /**
-   * The description of the node that is about to run.
-   * @see [NodeDescriptor]
-   */
-  node: NodeDescriptor;
-  path: number[];
-  state?: string | TraversalResult;
-};
 export type NodeStartResponseMessage = [
   "nodestart",
   NodeStartResponse,
@@ -123,35 +80,13 @@ export type NodeStartResponseMessage = [
 
 export type NodeEndResponseMessage = ["nodeend", NodeEndProbeMessage["data"]];
 
-export type GraphStartResponseMessage = ["graphstart", GraphProbeMessageData];
+export type GraphStartResponseMessage = ["graphstart", GraphProbeData];
 
-export type GraphEndResponseMessage = ["graphend", GraphProbeMessageData];
+export type GraphEndResponseMessage = ["graphend", GraphProbeData];
 
 export type SkipResponseMessage = ["skip", SkipProbeMessage["data"]];
 
-/**
- * Sent by a server to request input.
- * Can only be the last message in the response stream.
- */
-export type InputPromiseResponse = {
-  /**
-   * The description of the node that is requesting input.
-   * @see [NodeDescriptor]
-   */
-  node: NodeDescriptor;
-  /**
-   * The input arguments that were given to the node that is requesting input.
-   * These arguments typically contain the schema of the inputs that are
-   * expected.
-   * @see [InputValues]
-   */
-  inputArguments: InputValues & { schema?: Schema };
-};
-export type InputPromiseResponseMessage = [
-  "input",
-  InputPromiseResponse,
-  RunState
-];
+export type InputResponseMessage = ["input", InputResponse, RunState];
 
 /**
  * Sent by the client to provide inputs, requested by the server.
@@ -212,17 +147,6 @@ export type End = Record<string, never>;
 export type EndResponseMessage = ["end", End];
 export type EndRequestMessage = ["end", End];
 
-/**
- * Sent by the server when an error occurs.
- * Error response also indicates that the board is done running.
- * Can only be the last message in the response stream.
- */
-export type ErrorResponse = {
-  /**
-   * The error message.
-   */
-  error: string;
-};
 export type ErrorResponseMessage = ["error", ErrorResponse];
 
 /**
@@ -273,15 +197,10 @@ export type AnyRunResponseMessage =
   | GraphStartResponseMessage
   | GraphEndResponseMessage
   | SkipResponseMessage
-  | InputPromiseResponseMessage
+  | InputResponseMessage
   | ProxyPromiseResponseMessage
   | EndResponseMessage
   | ErrorResponseMessage;
-
-// export type RunResponseStream = PatchedReadableStream<AnyRunResponseMessage>;
-// export type RunRequestStream = PatchedReadableStream<AnyRunRequestMessage>;
-// export type WritableRunRequestStream = WritableStream<AnyRunRequestMessage>;
-// export type WritableRunResponseStream = WritableStream<AnyRunResponseMessage>;
 
 export interface ClientBidirectionalStream<Request, Response> {
   writableRequests: WritableStream<Request>;
