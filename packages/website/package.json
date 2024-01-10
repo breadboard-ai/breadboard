@@ -1,5 +1,5 @@
 {
-  "name": "@google-labs/internal-website",
+  "name": "@google-labs/breadboard-website",
   "private": true,
   "version": "1.0.0",
   "description": "The public documentation website for Breadboard",
