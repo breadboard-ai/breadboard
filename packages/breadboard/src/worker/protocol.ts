@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ErrorResponse, LoadRequest } from "../remote/protocol.js";
+import { LoadRequest } from "../remote/protocol.js";
+import { ErrorResponse } from "../types.js";
 
 export const VALID_MESSAGE_TYPES = ["load", "error"] as const;
 

@@ -486,13 +486,7 @@ export type NodeStartProbeMessage = {
 
 export type NodeEndProbeMessage = {
   type: "nodeend";
-  data: {
-    node: NodeDescriptor;
-    inputs: InputValues;
-    outputs: OutputValues;
-    validatorMetadata?: BreadboardValidatorMetadata[];
-    path: number[];
-  };
+  data: NodeEndResponse;
 };
 
 export type ProbeMessage =
@@ -501,6 +495,14 @@ export type ProbeMessage =
   | SkipProbeMessage
   | NodeStartProbeMessage
   | NodeEndProbeMessage;
+
+export type NodeEndResponse = {
+  node: NodeDescriptor;
+  inputs: InputValues;
+  outputs: OutputValues;
+  validatorMetadata?: BreadboardValidatorMetadata[];
+  path: number[];
+};
 
 /**
  * Sent by the runner to supply outputs.
@@ -548,6 +550,17 @@ export type InputResponse = {
    * @see [InputValues]
    */
   inputArguments: InputValues & { schema?: Schema };
+};
+
+/**
+ * Sent by the runner when an error occurs.
+ * Error response also indicates that the board is done running.
+ */
+export type ErrorResponse = {
+  /**
+   * The error message.
+   */
+  error: string;
 };
 
 // TODO: Remove extending EventTarget once new runner is converted to use

@@ -7,20 +7,15 @@
 import { NodeProxyConfig } from "../remote/config.js";
 import { LoadResponse } from "../remote/protocol.js";
 import {
+  ErrorResponse,
   InputResponse,
   Kit,
-  NodeDescriptor,
+  NodeEndResponse,
   NodeStartResponse,
   OutputResponse,
   OutputValues,
   ProbeMessage,
 } from "../types.js";
-
-export type NodeEndResponse = {
-  node: NodeDescriptor;
-  path: number[];
-  outputs: OutputValues;
-};
 
 export type ResultType =
   /**
@@ -88,7 +83,7 @@ export type NodeEndResult = {
 
 export type ErrorResult = {
   type: "error";
-  data: { error: string };
+  data: ErrorResponse;
 };
 
 export type EndResult = {

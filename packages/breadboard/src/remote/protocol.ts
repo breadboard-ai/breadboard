@@ -6,6 +6,7 @@
 
 import { PatchedReadableStream } from "../stream.js";
 import {
+  ErrorResponse,
   GraphProbeData,
   InputResponse,
   InputValues,
@@ -146,17 +147,6 @@ export type End = Record<string, never>;
 export type EndResponseMessage = ["end", End];
 export type EndRequestMessage = ["end", End];
 
-/**
- * Sent by the server when an error occurs.
- * Error response also indicates that the board is done running.
- * Can only be the last message in the response stream.
- */
-export type ErrorResponse = {
-  /**
-   * The error message.
-   */
-  error: string;
-};
 export type ErrorResponseMessage = ["error", ErrorResponse];
 
 /**
