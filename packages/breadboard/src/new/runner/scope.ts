@@ -17,10 +17,11 @@ import {
   AbstractNode,
   ScopeInterface,
   InvokeCallbacks,
-  OutputDistribution,
   ScopeConfig,
+  StateInterface,
 } from "./types.js";
 
+import { State } from "./state.js";
 import { NodeDescriberResult, Schema } from "../../types.js";
 
 export class Scope implements ScopeInterface {
@@ -55,7 +56,10 @@ export class Scope implements ScopeInterface {
     >;
   }
 
-  pin(node: AbstractNode) {
+  pin<
+    I extends InputValues = InputValues,
+    O extends OutputValues = OutputValues
+  >(node: AbstractNode<I, O>) {
     this.#pinnedNodes.push(node);
   }
 
@@ -94,25 +98,28 @@ export class Scope implements ScopeInterface {
     ];
   }
 
-  async invoke(node?: AbstractNode | AbstractNode[]): Promise<void> {
+  async invoke(
+    node?: AbstractNode | AbstractNode[],
+    state: StateInterface = new State()
+  ): Promise<void> {
     try {
-      const queue: AbstractNode[] = (
-        node ? (node instanceof Array ? node : [node]) : this.#pinnedNodes
-      ).flatMap((node) =>
-        this.#findAllConnectedNodes(node).filter(
-          (node) => !node.missingInputs()
+      (node ? (node instanceof Array ? node : [node]) : this.#pinnedNodes)
+        .flatMap((node) =>
+          this.#findAllConnectedNodes(node).filter(
+            (node) => state?.missingInputs(node) === false
+          )
         )
-      );
+        .forEach((node) => state?.queueUp(node));
 
       const callbacks = this.#getAllCallbacks();
 
-      while (queue.length) {
+      while (!state.done()) {
         for (const callback of callbacks)
-          if (await callback.abort?.(this)) return;
+          if (await callback.stop?.(this)) return;
 
-        const node = queue.shift() as AbstractNode;
+        const node = state.next();
 
-        const inputs = node.getInputs();
+        const inputs = state.shiftInputs(node);
 
         let callbackResult: OutputValues | undefined = undefined;
         for (const callback of callbacks)
@@ -121,7 +128,7 @@ export class Scope implements ScopeInterface {
         // Invoke node, unless before callback already provided a result.
         const result =
           callbackResult ??
-          (await node.invoke(this).catch((e) => {
+          (await node.invoke(inputs, this).catch((e) => {
             return {
               $error: {
                 type: "error",
@@ -130,28 +137,16 @@ export class Scope implements ScopeInterface {
             };
           }));
 
-        // Distribute data to outgoing edges
-        const unusedPorts = new Set<string>(Object.keys(result));
-        const distribution: OutputDistribution = { nodes: [], unused: [] };
-        node.outgoing.forEach((edge) => {
-          const ports = edge.to.receiveInputs(edge, result);
-          ports.forEach((key) => unusedPorts.delete(key));
-
-          // If it's ready to run, add it to the queue
-          const missing = edge.to.missingInputs();
-          if (!missing) queue.push(edge.to);
-
-          distribution.nodes.push({ node: edge.to, received: ports, missing });
-        });
+        // Distribute data to outgoing edges, queue up nodes that are ready to
+        const distribution = state.processResult(node, result);
 
         // Call after callback
-        distribution.unused = [...unusedPorts];
         for (const callback of callbacks) {
           await callback.after?.(this, node, inputs, result, distribution);
         }
 
         // Abort graph on uncaught errors.
-        if (unusedPorts.has("$error")) {
+        if (distribution.unused.includes("$error")) {
           throw (result["$error"] as { error: Error }).error;
         }
       }
@@ -190,7 +185,7 @@ export class Scope implements ScopeInterface {
     const lastMissingInputs = new Map<string, string>();
 
     scope.addCallbacks({
-      abort: () => {
+      stop: () => {
         // Once output node was executed, stop execution.
         return !resolver;
       },

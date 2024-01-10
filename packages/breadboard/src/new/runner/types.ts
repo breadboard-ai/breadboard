@@ -29,10 +29,7 @@ export type OutputValue<T> = Partial<{ [key: string]: T }>;
 export type NodeHandlerFunction<
   I extends InputValues = InputValues,
   O extends OutputValues = OutputValues
-> = (
-  inputs: PromiseLike<I> & I,
-  node: AbstractNode<I, O>
-) => O | PromiseLike<O>;
+> = (inputs: I, node: AbstractNode<I, O>) => O | PromiseLike<O>;
 
 export type NodeHandler<
   I extends InputValues = InputValues,
@@ -93,12 +90,8 @@ export abstract class AbstractNode<
     constant?: boolean,
     schema?: Schema
   ): void;
-  abstract receiveInputs(edge: EdgeInterface, inputs: InputValues): string[];
-  abstract missingInputs(): string[] | false;
 
-  abstract getInputs(): I;
-
-  abstract invoke(dynamicScope?: ScopeInterface): Promise<O>;
+  abstract invoke(inputs: I, dynamicScope?: ScopeInterface): Promise<O>;
   abstract describe(
     scope?: ScopeInterface,
     inputs?: InputValues,
@@ -109,6 +102,18 @@ export abstract class AbstractNode<
   abstract serialize(metadata?: GraphMetadata): Promise<GraphDescriptor>;
 
   abstract serializeNode(): Promise<[NodeDescriptor, GraphDescriptor?]>;
+}
+
+export interface StateInterface {
+  queueUp(node: AbstractNode): void;
+  next(): AbstractNode;
+  done(): boolean;
+
+  processResult(node: AbstractNode, result: OutputValues): OutputDistribution;
+
+  missingInputs(node: AbstractNode): string[] | false;
+  shiftInputs<I extends InputValues>(node: AbstractNode<I>): I;
+  distributeResults(edge: EdgeInterface, inputs: InputValues): string[];
 }
 
 export interface OutputDistribution {
@@ -123,7 +128,7 @@ export interface OutputDistribution {
 export interface InvokeCallbacks {
   // Called at the top of any iteration.
   // Return true to abort execution.
-  abort?: (scope: ScopeInterface) => boolean | Promise<boolean>;
+  stop?: (scope: ScopeInterface) => boolean | Promise<boolean>;
 
   // Called before a node is invoked.
   // Waits for execution until promise is resolved. (Useful to pause execution)
@@ -205,7 +210,12 @@ export interface ScopeInterface {
    *
    * @param node node to pin to this scope
    */
-  pin(node: AbstractNode): void;
+  pin<
+    I extends InputValues = InputValues,
+    O extends OutputValues = OutputValues
+  >(
+    node: AbstractNode<I, O>
+  ): void;
 
   /**
    * Reduces set of pinned pins to one per disjoint graph. Call this after
@@ -227,7 +237,7 @@ export interface ScopeInterface {
    * @param node Node to invoke, or undefined to invoke all pinned nodes
    * @returns Promise that resolves when all nodes have been invoked
    */
-  invoke(node?: AbstractNode): Promise<void>;
+  invoke(node?: AbstractNode, state?: StateInterface): Promise<void>;
 
   /**
    * Helper to invoke a graph and return the values of the first `output` node

@@ -47,11 +47,6 @@ export class BaseNode<
 
   #handler?: NodeHandler<InputValues, OutputValues>;
 
-  #inputs: Partial<I>;
-  #constants: Partial<I> = {};
-  #incomingControlWires: AbstractNode[] = [];
-  #outputs?: O;
-
   #scope: ScopeInterface;
 
   constructor(
@@ -78,9 +73,6 @@ export class BaseNode<
     this.id = $id ?? nodeIdVendor.vendId(scope, this.type);
 
     this.configuration = rest as Partial<I>;
-
-    this.#inputs = {};
-    this.#constants = {};
   }
 
   addIncomingEdge(
@@ -106,73 +98,6 @@ export class BaseNode<
     from.outgoing.push(edge);
   }
 
-  receiveInputs(edge: EdgeInterface, inputs: InputValues) {
-    const data =
-      edge.out === "*"
-        ? inputs
-        : edge.out === ""
-        ? {}
-        : inputs[edge.out] !== undefined
-        ? { [edge.in]: inputs[edge.out] }
-        : {};
-    if (edge.constant) this.#constants = { ...this.#constants, ...data };
-    this.#inputs = { ...this.#inputs, ...data };
-
-    if (edge.in === "") this.#incomingControlWires.push(edge.from);
-
-    // return which wires were used
-    return Object.keys(data);
-  }
-
-  receiveConstants(constants: InputValues) {
-    this.#constants = { ...this.#constants, ...constants };
-    this.#inputs = { ...this.#inputs, ...constants };
-  }
-
-  /**
-   * Compute required inputs from edges and compare with present inputs
-   *
-   * Required inputs are
-   *  - for all named incoming edges, the presence of any data, irrespective of
-   *    which node they come from
-   *  - at least one of the incoming empty or * wires, if present (TODO: Is that
-   *    correct?)
-   *  - data from at least one node if it already ran (#this.outputs not empty)
-   *
-   * @returns false if none are missing, otherwise string[] of missing inputs.
-   * NOTE: A node with no incoming wires returns an empty array after  first
-   * run.
-   */
-  missingInputs(): string[] | false {
-    if (this.incoming.length === 0 && this.#outputs) return [];
-
-    const requiredKeys = new Set(this.incoming.map((edge) => edge.in));
-
-    const presentKeys = new Set([
-      ...Object.keys(this.configuration),
-      ...Object.keys(this.#inputs),
-      ...Object.keys(this.#constants),
-    ]);
-    if (this.#incomingControlWires.length) presentKeys.add("");
-
-    const missingInputs = [...requiredKeys].filter(
-      (key) => !presentKeys.has(key)
-    );
-    return missingInputs.length ? missingInputs : false;
-  }
-
-  getInputs(): I {
-    return { ...this.configuration, ...(this.#inputs as I) };
-  }
-
-  setOutputs(outputs: O) {
-    this.#outputs = outputs;
-
-    // Clear inputs, reset with constants
-    this.#inputs = { ...this.#constants };
-    this.#incomingControlWires = [];
-  }
-
   #getHandlerDescribe(scope: ScopeInterface) {
     const handler = this.#handler ?? scope.getHandler(this.type);
     return handler && typeof handler !== "function"
@@ -186,7 +111,7 @@ export class BaseNode<
   //
   // The logic from BuilderNode.invoke should be somehow called from here, for
   // deserialized nodes that require the Builder environment.
-  async invoke(dynamicScope?: Scope): Promise<O> {
+  async invoke(inputs: I, dynamicScope?: Scope): Promise<O> {
     const scope = dynamicScope ?? (this.#scope as Scope);
 
     const handler: NodeHandler | undefined =
@@ -197,22 +122,17 @@ export class BaseNode<
     const handlerFn = typeof handler === "function" ? handler : handler?.invoke;
 
     if (handlerFn) {
-      result = (await handlerFn(
-        this.getInputs() as I & PromiseLike<I>,
-        this
-      )) as O;
+      result = (await handlerFn(inputs, this)) as O;
     } else if (handler && typeof handler !== "function" && handler.graph) {
       // TODO: This isn't quite right, but good enough for now. Instead what
       // this should be in invoking a graph from a lexical scope in a dynamic
       // scope. This requires moving state management into the dyanmic scope.
       const graphs = handler.graph.getPinnedNodes();
       if (graphs.length !== 1) throw new Error("Expected exactly one graph");
-      result = (await scope.invokeOnce(this.getInputs(), graphs[0])) as O;
+      result = (await scope.invokeOnce(inputs, graphs[0])) as O;
     } else {
       throw new Error(`Can't find handler for ${this.id}`);
     }
-
-    this.setOutputs(result);
 
     return result;
   }

@@ -6,7 +6,6 @@
 
 import {
   GraphDescriptor,
-  GraphMetadata,
   NodeDescriptor,
   Edge,
   Kit,
@@ -134,7 +133,7 @@ export class Runner implements BreadboardRunner {
     });
 
     scope.addHandlers({
-      input: async (inputs: InputValues | PromiseLike<InputValues>, node) => {
+      input: async (inputs: InputValues, node: AbstractNode) => {
         let resolver: (outputs: OutputValues) => void;
         const outputsPromise = new Promise<OutputValues>((resolve) => {
           resolver = resolve;
@@ -271,16 +270,6 @@ export class Runner implements BreadboardRunner {
 
   addValidator(_: BreadboardValidator): void {
     // TODO: Implement
-  }
-
-  static async fromNode(
-    node: AbstractNode,
-    metadata?: GraphMetadata
-  ): Promise<Runner> {
-    const board = new Runner();
-    Object.assign(board, await node.serialize(metadata));
-    board.#anyNode = node;
-    return board;
   }
 
   static async fromGraphDescriptor(graph: GraphDescriptor): Promise<Runner> {
