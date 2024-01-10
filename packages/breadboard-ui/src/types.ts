@@ -4,9 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphProbeMessageData, Schema } from "@google-labs/breadboard";
-import { AnyRunResult, NodeEndResponse } from "@google-labs/breadboard/harness";
-import { NodeStartResponse } from "@google-labs/breadboard/remote";
+import {
+  GraphProbeData,
+  NodeEndResponse,
+  NodeStartResponse,
+  Schema,
+} from "@google-labs/breadboard";
+import { AnyRunResult } from "@google-labs/breadboard/harness";
 
 export type InputArgs = {
   schema?: Schema;
@@ -32,7 +36,7 @@ export type Board = {
 };
 
 export type AnyHistoryEvent =
-  | GraphProbeMessageData
+  | GraphProbeData
   | NodeStartResponse
   | NodeEndResponse;
 
