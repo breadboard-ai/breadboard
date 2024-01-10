@@ -214,7 +214,7 @@ export class Runner implements BreadboardRunner {
     // TODO: One big difference to before: This will keep running forever, even
     // after the first output is encountered. We need to add a way to abort the
     // run.
-    return scope.invokeToNextOutput(
+    return scope.invokeOneRound(
       args,
       this.#anyNode
     ) as Promise<OriginalOutputValues>;

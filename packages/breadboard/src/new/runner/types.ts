@@ -252,7 +252,7 @@ export interface ScopeInterface {
    *
    * @throws If no output node was called before graph terminates
    */
-  invokeToNextOutput(
+  invokeOneRound(
     inputs: InputValues,
     node?: AbstractNode,
     state?: StateInterface

@@ -160,7 +160,7 @@ export class Scope implements ScopeInterface {
     }
   }
 
-  invokeToNextOutput(
+  invokeOneRound(
     inputs: InputValues = {},
     node: AbstractNode | false | undefined = undefined,
     state?: StateInterface
