@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "_site/js/",
+    "rootDir": "src/js/",
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"]
+  },
+  "include": ["src/js/**/*"],
+  "extends": "@google-labs/tsconfig/base.json"
+}

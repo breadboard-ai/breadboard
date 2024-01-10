@@ -23,16 +23,44 @@
   "wireit": {
     "build": {
       "dependencies": [
+        "build:js",
+        "build:static",
         "build:eleventy"
+      ]
+    },
+    "build:js": {
+      "command": "tsc -b",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "files": [
+        "src/js/",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
+      ],
+      "output": [
+        "_site/js/",
+        "tsconfig.tsbuildinfo"
+      ]
+    },
+    "build:static": {
+      "command": "cp -R src/static _site",
+      "files": [
+        "src/static/"
+      ],
+      "output": [
+        "_site/static/"
       ]
     },
     "build:eleventy": {
       "command": "eleventy --input=src/",
       "files": [
-        "src/"
+        "src/*.html",
+        "src/docs/"
       ],
       "output": [
-        "_site/"
+        "_site/*.html",
+        "_site/docs/"
       ]
     },
     "serve": {
@@ -40,7 +68,7 @@
       "service": true,
       "dependencies": [
         {
-          "script": "build:eleventy",
+          "script": "build",
           "cascade": false
         }
       ],
@@ -48,7 +76,8 @@
     }
   },
   "dependencies": {
-    "@11ty/eleventy": "^2.0.1"
+    "@11ty/eleventy": "^2.0.1",
+    "lit": "^3.1.1"
   },
   "devDependencies": {
     "@web/dev-server": "^0.4.1"
