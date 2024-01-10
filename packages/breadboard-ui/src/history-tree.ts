@@ -8,6 +8,7 @@ import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { HistoryEntry, HistoryEventType } from "./types.js";
 import { classMap } from "lit/directives/class-map.js";
+import { keyed } from "lit/directives/keyed.js";
 
 const enum STATE {
   COLLAPSED = "collapsed",
@@ -574,10 +575,13 @@ export class HistoryTree extends LitElement {
     } else if (entry.graphNodeData === undefined) {
       dataOutput = html`<span class="empty">(none)</span>`;
     } else {
-      dataOutput = html`<bb-json-tree
-        .json=${entry.graphNodeData}
-        autoExpand="true"
-      ></bb-json-tree>`;
+      dataOutput = html`${keyed(
+        this.lastUpdate,
+        html`<bb-json-tree
+          .json=${entry.graphNodeData}
+          autoExpand="true"
+        ></bb-json-tree>`
+      )}`;
     }
 
     const typeLabel = this.#getTypeLabel(entry);
