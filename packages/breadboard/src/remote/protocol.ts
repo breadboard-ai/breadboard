@@ -13,7 +13,7 @@ import {
   InputValues,
   NodeDescriptor,
   NodeEndProbeMessage,
-  NodeStartResponse,
+  NodeStartProbeMessage,
   OutputResponse,
   OutputValues,
   SkipProbeMessage,
@@ -64,7 +64,7 @@ export type LoadResponse = {
 
 export type RunState = string;
 
-type GenericResult = { type: unknown; data: unknown };
+type GenericResult = { type: string; data: unknown };
 
 type RemoteMessage<T extends GenericResult> = [T["type"], T["data"], RunState?];
 
@@ -76,20 +76,6 @@ export type RunRequest = Record<string, never>;
 export type RunRequestMessage = ["run", RunRequest, RunState?];
 
 export type OutputResponseMessage = ["output", OutputResponse];
-
-export type NodeStartResponseMessage = [
-  "nodestart",
-  NodeStartResponse,
-  RunState
-];
-
-export type NodeEndResponseMessage = RemoteMessage<NodeEndProbeMessage>;
-
-export type GraphStartResponseMessage = RemoteMessage<GraphStartProbeMessage>;
-
-export type GraphEndResponseMessage = RemoteMessage<GraphEndProbeMessage>;
-
-export type SkipResponseMessage = RemoteMessage<SkipProbeMessage>;
 
 export type InputResponseMessage = ["input", InputResponse, RunState];
 
@@ -197,11 +183,11 @@ export type AnyRunRequestMessage =
 
 export type AnyRunResponseMessage =
   | OutputResponseMessage
-  | NodeStartResponseMessage
-  | NodeEndResponseMessage
-  | GraphStartResponseMessage
-  | GraphEndResponseMessage
-  | SkipResponseMessage
+  | RemoteMessage<NodeStartProbeMessage>
+  | RemoteMessage<NodeEndProbeMessage>
+  | RemoteMessage<GraphStartProbeMessage>
+  | RemoteMessage<GraphEndProbeMessage>
+  | RemoteMessage<SkipProbeMessage>
   | InputResponseMessage
   | ProxyPromiseResponseMessage
   | EndResponseMessage
