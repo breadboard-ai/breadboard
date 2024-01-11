@@ -178,8 +178,7 @@ export type AnyProxyResponseMessage =
 
 export type AnyRunRequestMessage =
   | RunRequestMessage
-  | InputResolveRequestMessage
-  | ProxyResolveRequestMessage;
+  | InputResolveRequestMessage;
 
 export type AnyRunResponseMessage =
   | OutputResponseMessage
@@ -189,7 +188,6 @@ export type AnyRunResponseMessage =
   | RemoteMessage<GraphEndProbeMessage>
   | RemoteMessage<SkipProbeMessage>
   | InputResponseMessage
-  | ProxyPromiseResponseMessage
   | EndResponseMessage
   | ErrorResponseMessage;
 

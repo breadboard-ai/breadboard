@@ -6,6 +6,7 @@
 
 import { NodeProxyConfig } from "../remote/config.js";
 import { LoadResponse } from "../remote/protocol.js";
+import { AnyClientRunResult, ClientRunResult } from "../remote/run.js";
 import {
   ErrorResponse,
   InputResponse,
@@ -71,12 +72,9 @@ export type AnyRunResult =
   | EndResult
   | ProbeMessage;
 
-export interface HarnessResult<R extends AnyRunResult> {
-  reply(reply: unknown): void;
-  message: R;
-}
-
-export type HarnessRunResult = HarnessResult<AnyRunResult>;
+export type HarnessRunResult =
+  | AnyClientRunResult
+  | ClientRunResult<SecretResult>;
 
 export interface Harness {
   load(): Promise<LoadResponse>;

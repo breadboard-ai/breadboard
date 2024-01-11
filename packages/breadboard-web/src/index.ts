@@ -5,11 +5,9 @@
  */
 
 import * as BreadboardUI from "@google-labs/breadboard-ui";
-import {
-  createHarness,
-  HarnessRunResult,
-} from "@google-labs/breadboard/harness";
+import { createHarness } from "@google-labs/breadboard/harness";
 import { createHarnessConfig } from "./config";
+import { InputValues } from "@google-labs/breadboard";
 
 // TODO: Remove once all elements are Lit-based.
 BreadboardUI.register();
@@ -86,7 +84,7 @@ export class Main {
 
         const currentBoardId = this.#boardId;
         for await (const result of harness.run()) {
-          if (result.message.type !== "nodestart") {
+          if (result.type !== "nodestart") {
             await this.#suspendIfPaused();
             if (currentBoardId !== this.#boardId) {
               console.log("Changed board");
@@ -95,9 +93,9 @@ export class Main {
           }
           await sleep(this.#delay);
 
-          const answer = await this.#ui.handleStateChange(result.message);
+          const answer = await this.#ui.handleStateChange(result);
           if (answer) {
-            result.reply(answer);
+            result.reply({ inputs: answer as InputValues });
           }
         }
       }

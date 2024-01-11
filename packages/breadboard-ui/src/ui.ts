@@ -27,13 +27,13 @@ import { Output, OutputArgs } from "./output.js";
 import {
   AnyRunResult,
   InputResult,
-  NodeEndResult,
-  NodeStartResult,
   OutputResult,
 } from "@google-labs/breadboard/harness";
 import {
   NodeConfiguration,
   NodeDescriptor,
+  NodeEndProbeMessage,
+  NodeStartProbeMessage,
   NodeValue,
   ProbeMessage,
 } from "@google-labs/breadboard";
@@ -48,22 +48,25 @@ type ExtendedNodeInformation = {
 type RunResultWithNodeInfo =
   | InputResult
   | OutputResult
-  | NodeStartResult
-  | NodeEndResult;
+  | NodeStartProbeMessage
+  | NodeEndProbeMessage;
 const hasNodeInfo = (event: AnyRunResult): event is RunResultWithNodeInfo =>
   event.type === "input" ||
   event.type === "output" ||
   event.type === "nodestart" ||
   event.type === "nodeend";
 
-type RunResultWithPath = ProbeMessage | NodeStartResult | NodeEndResult;
+type RunResultWithPath =
+  | ProbeMessage
+  | NodeStartProbeMessage
+  | NodeEndProbeMessage;
 const hasPath = (event: AnyRunResult): event is RunResultWithPath =>
   event.type === "nodestart" ||
   event.type === "nodeend" ||
   event.type === "graphstart" ||
   event.type === "graphend";
 
-type RunResultWithState = NodeStartResult;
+type RunResultWithState = NodeStartProbeMessage;
 const hasStateInfo = (event: AnyRunResult): event is RunResultWithState =>
   event.type === "nodestart";
 
@@ -596,7 +599,7 @@ export class UI extends LitElement {
     return entryList;
   }
 
-  #updateHistoryEntry(event: NodeEndResult) {
+  #updateHistoryEntry(event: NodeStartProbeMessage | NodeEndProbeMessage) {
     if (Number.isNaN(this.#lastHistoryEventTime)) {
       this.#lastHistoryEventTime = globalThis.performance.now();
     }
@@ -620,7 +623,7 @@ export class UI extends LitElement {
       return;
     }
 
-    (existingEntry as unknown as NodeEndResult).type = event.type;
+    (existingEntry as unknown as NodeEndProbeMessage).type = event.type;
 
     if (existingEntry.graphNodeData && "outputs" in event.data) {
       existingEntry.graphNodeData.outputs = event.data.outputs;

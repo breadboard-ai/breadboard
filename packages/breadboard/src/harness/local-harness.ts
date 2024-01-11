@@ -6,14 +6,18 @@
 
 import type { Harness, HarnessConfig, HarnessRunResult } from "./types.js";
 import { createSecretAskingKit } from "./secrets.js";
-import { InputValues } from "../types.js";
 import { ProxyClient } from "../remote/proxy.js";
 import { HTTPClientTransport } from "../remote/http.js";
 import { asyncGen } from "../utils/async-gen.js";
 import { Board } from "../board.js";
 import { Diagnostics } from "./diagnostics.js";
 import { BoardRunner } from "../runner.js";
-import { LocalResult } from "./result.js";
+import {
+  endResult,
+  errorResult,
+  fromProbe,
+  fromRunnerResult,
+} from "./result.js";
 
 export class LocalHarness implements Harness {
   #config: HarnessConfig;
@@ -74,21 +78,14 @@ export class LocalHarness implements Harness {
       try {
         const probe = this.#config.diagnostics
           ? new Diagnostics(async (message) => {
-              await next(new LocalResult(message));
+              await next(fromProbe(message));
             })
           : undefined;
 
         for await (const data of this.#runner.run({ probe, kits })) {
-          const { type } = data;
-          if (type === "input") {
-            const inputResult = new LocalResult({ type, data });
-            await next(inputResult);
-            data.inputs = inputResult.response as InputValues;
-          } else if (type === "output") {
-            await next(new LocalResult({ type, data }));
-          }
+          await next(fromRunnerResult(data));
         }
-        await next(new LocalResult({ type: "end", data: {} }));
+        await next(endResult());
       } catch (e) {
         let error = e as Error;
         let message = "";
@@ -97,9 +94,7 @@ export class LocalHarness implements Harness {
           message += `\n${error.message}`;
         }
         console.error(message, error);
-        await next(
-          new LocalResult({ type: "error", data: { error: error.message } })
-        );
+        await next(errorResult(message));
       }
     });
   }
