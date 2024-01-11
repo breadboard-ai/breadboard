@@ -4,56 +4,34 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as BreadboardUI from "@google-labs/breadboard-ui";
-import {
-  createHarness,
-  HarnessRunResult,
-} from "@google-labs/breadboard/harness";
+import { createHarness } from "@google-labs/breadboard/harness";
 import { createHarnessConfig } from "./config";
+import { createRef, ref, type Ref } from "lit/directives/ref.js";
+import { customElement, property } from "lit/decorators.js";
+import { LitElement, html, css } from "lit";
+import * as BreadboardUI from "@google-labs/breadboard-ui";
 
 // TODO: Remove once all elements are Lit-based.
 BreadboardUI.register();
 
-type PauserCallback = (paused: boolean) => void;
-class Pauser extends EventTarget {
-  #paused = false;
-  #subscribers: PauserCallback[] = [];
+@customElement("bb-main")
+export class Main extends LitElement {
+  @property({ reflect: false })
+  config: { boards: BreadboardUI.Types.Board[] };
 
-  set paused(value: boolean) {
-    this.#paused = value;
-    this.#notify();
-  }
-
-  get paused() {
-    return this.#paused;
-  }
-
-  #notify() {
-    while (this.#subscribers.length) {
-      const sub = this.#subscribers.pop();
-      if (!sub) {
-        break;
-      }
-
-      sub.call(null, this.#paused);
-    }
-  }
-
-  once(callback: () => void) {
-    this.#subscribers.push(callback);
-  }
-}
-
-const sleep = (time: number) =>
-  new Promise((resolve) => setTimeout(resolve, time));
-
-export class Main {
-  #ui = new BreadboardUI.UI();
+  #uiRef: Ref<BreadboardUI.UI> = createRef();
   #boardId = 0;
   #delay = 0;
-  #pauser = new Pauser();
+
+  static styles = css`
+    :host {
+      display: block;
+    }
+  `;
 
   constructor(config: { boards: BreadboardUI.Types.Board[] }) {
+    super();
+
     // Remove boards that are still works-in-progress from production builds.
     // These boards will have either no version or a version of "0.0.1".
     if (import.meta.env.MODE === "production") {
@@ -62,78 +40,53 @@ export class Main {
       );
     }
     config.boards.sort((a, b) => a.title.localeCompare(b.title));
-
-    this.#ui.boards = config.boards;
-    document.body.appendChild(this.#ui);
+    this.config = config;
 
     document.body.addEventListener(
       BreadboardUI.StartEvent.eventName,
       async (evt: Event) => {
-        if (this.#pauser.paused) {
-          // Setting this to false will "unpause" the current board, allowing it
-          // to shut down. But we'll switch the pause back on for the new board.
-          this.#pauser.paused = false;
-          this.#pauser.paused = true;
+        const ui = this.#uiRef.value;
+        if (!ui) {
+          return;
         }
 
         this.#boardId++;
 
         const startEvent = evt as BreadboardUI.StartEvent;
-        this.setActiveBreadboard(startEvent.url);
+        this.#setActiveBreadboard(startEvent.url);
 
         const harness = createHarness(createHarnessConfig(startEvent.url));
-        this.#ui.load(await harness.load());
+        ui.url = startEvent.url;
+        ui.load(await harness.load());
 
         const currentBoardId = this.#boardId;
         for await (const result of harness.run()) {
-          if (result.message.type !== "nodestart") {
-            await this.#suspendIfPaused();
-            if (currentBoardId !== this.#boardId) {
-              console.log("Changed board");
-              return;
-            }
+          if (this.#delay !== 0) {
+            await new Promise((r) => setTimeout(r, this.#delay));
           }
-          await sleep(this.#delay);
 
-          const answer = await this.#ui.handleStateChange(result.message);
+          if (currentBoardId !== this.#boardId) {
+            return;
+          }
+
+          const answer = await ui.handleStateChange(result.message);
           if (answer) {
             result.reply(answer);
           }
         }
       }
     );
+  }
 
-    this.#ui.addEventListener(
-      BreadboardUI.Events.BoardUnloadEvent.eventName,
-      () => {
-        this.setActiveBreadboard(null);
-        this.#boardId++;
-      }
-    );
-
-    this.#ui.addEventListener(
-      BreadboardUI.ToastEvent.eventName,
-      (evt: Event) => {
-        const toastEvent = evt as BreadboardUI.ToastEvent;
-        this.#ui.toast(toastEvent.message, toastEvent.toastType);
-      }
-    );
-
-    this.#ui.addEventListener(
-      BreadboardUI.DelayEvent.eventName,
-      (evt: Event) => {
-        const delayEvent = evt as BreadboardUI.DelayEvent;
-        this.#delay = delayEvent.duration;
-      }
-    );
-
-    const boardFromUrl = this.#getBoardFromUrl();
+  protected firstUpdated(): void {
+    const currentUrl = new URL(window.location.href);
+    const boardFromUrl = currentUrl.searchParams.get("board");
     if (boardFromUrl) {
       document.body.dispatchEvent(new BreadboardUI.StartEvent(boardFromUrl));
     }
   }
 
-  setActiveBreadboard(url: string | null) {
+  #setActiveBreadboard(url: string | null) {
     const pageUrl = new URL(window.location.href);
     if (url === null) {
       pageUrl.searchParams.delete("board");
@@ -141,27 +94,26 @@ export class Main {
       pageUrl.searchParams.set("board", url);
     }
     window.history.replaceState(null, "", pageUrl);
-
-    this.#ui.url = url;
   }
 
-  #getBoardFromUrl() {
-    return new URL(window.location.href).searchParams.get("board");
-  }
+  render() {
+    return html`<bb-ui-manager
+      ${ref(this.#uiRef)}
+      @breadboardboardunloadevent=${() => {
+        this.#setActiveBreadboard(null);
+        this.#boardId++;
+      }}
+      @breadboardtoastevent=${(toastEvent: BreadboardUI.ToastEvent) => {
+        if (!this.#uiRef.value) {
+          return;
+        }
 
-  async #suspendIfPaused(): Promise<void> {
-    return new Promise((resolve) => {
-      if (this.#pauser.paused) {
-        this.#ui.paused = true;
-        this.#pauser.once(() => {
-          this.#ui.paused = false;
-          resolve();
-        });
-
-        return;
-      }
-
-      resolve();
-    });
+        this.#uiRef.value.toast(toastEvent.message, toastEvent.toastType);
+      }}
+      @breadboarddelayevent=${(delayEvent: BreadboardUI.DelayEvent) => {
+        this.#delay = delayEvent.duration;
+      }}
+      .boards=${this.config.boards}
+    ></bb-ui-manager>`;
   }
 }
