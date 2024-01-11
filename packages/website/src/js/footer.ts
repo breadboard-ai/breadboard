@@ -15,7 +15,6 @@ export class BreadboardSiteFooter extends LitElement {
       align-items: center;
       justify-content: space-between;
       padding: 16px;
-      font-family: sans-serif;
       border-top: 1px solid #ccc;
     }
   `;
