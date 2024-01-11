@@ -100,10 +100,11 @@ export class TraversalControls extends LitElement {
   render() {
     return html`<button
         id="before"
+        title="Step back"
         ?disabled="${this.value <= this.min}"
         @click=${this.#requestPrevious}
       >
-        &lt;
+        Back
       </button>
       <input
         @input=${this.#requestValue}
@@ -114,10 +115,11 @@ export class TraversalControls extends LitElement {
       />
       <button
         id="next"
+        title="Step forward"
         ?disabled=${this.value >= this.max}
         @click=${this.#requestNext}
       >
-        &gt;
+        Forward
       </button>
       <div id="value">${this.value} / <span id="max">${this.max}</span></div>`;
   }
