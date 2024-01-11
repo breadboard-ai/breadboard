@@ -9,16 +9,58 @@ import { customElement, property, state } from "lit/decorators.js";
 import { HistoryEntry, HistoryEventType } from "./types.js";
 import { classMap } from "lit/directives/class-map.js";
 import { keyed } from "lit/directives/keyed.js";
+import {
+  AnyRunResult,
+  NodeEndResult,
+  NodeStartResult,
+} from "@google-labs/breadboard/harness";
+import { ProbeMessage } from "@google-labs/breadboard";
 
 const enum STATE {
   COLLAPSED = "collapsed",
   EXPANDED = "expanded",
 }
 
+type RunResultWithPath = ProbeMessage | NodeStartResult | NodeEndResult;
+const hasPath = (event: AnyRunResult): event is RunResultWithPath =>
+  event.type === "nodestart" ||
+  event.type === "nodeend" ||
+  event.type === "graphstart" ||
+  event.type === "graphend";
+
+type RunResultWithState = NodeStartResult;
+const hasStateInfo = (event: AnyRunResult): event is RunResultWithState =>
+  event.type === "nodestart";
+
+const pathToId = (path: number[], type: RunResultWithPath["type"]) => {
+  const isGraphNode = type === "graphstart" || type === "graphend";
+  if (path.length == 0 && isGraphNode) {
+    if (type === "graphstart") {
+      return `path-main-graph-start`;
+    } else {
+      return `path-main-graph-end`;
+    }
+  }
+
+  return `path-${path.join("-")}`;
+};
+
+const isValidHistoryEntry = (event: AnyRunResult): boolean => {
+  return (
+    event.type === "nodestart" ||
+    event.type === "nodeend" ||
+    event.type === "graphstart" ||
+    event.type === "graphend"
+  );
+};
+
 @customElement("bb-history-tree")
 export class HistoryTree extends LitElement {
   @property({ reflect: false })
-  history: HistoryEntry[] | null = null;
+  messages: AnyRunResult[] | null = null;
+
+  @property({ reflect: true })
+  messagePosition = 0;
 
   @property()
   lastUpdate: number = Number.NaN;
@@ -613,12 +655,147 @@ export class HistoryTree extends LitElement {
     window.removeEventListener("keydown", this.#onKeyDownBound);
   }
 
+  #createHistoryEntry(event: AnyRunResult): HistoryEntry {
+    const getNodeData = (): HistoryEntry["graphNodeData"] => {
+      if (hasPath(event)) {
+        if (hasStateInfo(event) && typeof event.data.state === "object") {
+          const id = hasPath(event) ? event.data.node.id : "";
+          const nodeValues = event.data.state.state.state.get(id);
+          if (!nodeValues) {
+            return null;
+          }
+
+          const nodeValue: Record<string, unknown[]> = {};
+          for (const [key, value] of nodeValues.entries()) {
+            nodeValue[key] = value;
+          }
+
+          return { inputs: nodeValue, outputs: {} };
+        }
+
+        return undefined;
+      }
+
+      return { inputs: event.data, outputs: {} };
+    };
+
+    const elapsedTime = 0;
+    // globalThis.performance.now() - this.#lastHistoryEventTime;
+
+    return {
+      ...event,
+      graphNodeData: getNodeData(),
+      id: hasPath(event) ? pathToId(event.data.path, event.type) : "",
+      guid: globalThis.crypto.randomUUID(),
+      elapsedTime,
+      children: [],
+    };
+  }
+
+  #findParentHistoryEntry(
+    path: number[],
+    type: RunResultWithPath["type"],
+    entries: HistoryEntry[]
+  ) {
+    let entryList = entries;
+    for (let idx = 0; idx < path.length - 1; idx++) {
+      const id = pathToId(path.slice(0, idx + 1), type);
+      const parentId = entryList.findIndex((item) => item.id === id);
+      if (parentId === -1) {
+        console.warn(`Unable to find ID "${id}"`);
+        return entries;
+      }
+
+      entryList = entryList[parentId].children;
+    }
+
+    return entryList;
+  }
+
+  #updateHistoryEntry(event: NodeEndResult, entries: HistoryEntry[]) {
+    const id = pathToId(event.data.path, event.type);
+    const entryList = this.#findParentHistoryEntry(
+      event.data.path,
+      event.type,
+      entries
+    );
+    const existingEntry = entryList.find((item) => item.id === id);
+    if (!existingEntry) {
+      console.warn(`Unable to find ID "${id}"`);
+      return;
+    }
+
+    // We may have a nodestart which leads into a graphstart of the same ID, but
+    // we'll then receive a graphend before a nodeend against that same ID. This
+    // can cause UI confusion so we double check here that if we have a graphend
+    // or a nodeend that it tallies with a corresponding graphstart/nodestart.
+    const typesMatch =
+      existingEntry.type === HistoryEventType.NODESTART &&
+      event.type === HistoryEventType.NODEEND;
+    if (!typesMatch) {
+      return;
+    }
+
+    (existingEntry as unknown as NodeEndResult).type = event.type;
+
+    if (existingEntry.graphNodeData && "outputs" in event.data) {
+      existingEntry.graphNodeData.outputs = event.data.outputs;
+    }
+
+    // Set any 'pending' values to none.
+    if (existingEntry.graphNodeData === null) {
+      existingEntry.graphNodeData = undefined;
+    }
+
+    // this.#lastHistoryEventTime = globalThis.performance.now();
+  }
+
   render() {
-    if (this.history === null) {
+    if (this.messages === null) {
       return html`There are no history entries yet.`;
     }
 
     this.#dataByGuid.clear();
+
+    const entries: HistoryEntry[] = [];
+    for (let m = 0; m < this.messagePosition; m++) {
+      const message = this.messages[m];
+
+      // Not all messages are shown in the history, so just skip over them here.
+      // TODO: Make this configurable.
+      if (!isValidHistoryEntry(message)) {
+        continue;
+      }
+
+      if (message.type === "nodeend") {
+        this.#updateHistoryEntry(message, entries);
+        continue;
+      }
+
+      const entry = this.#createHistoryEntry(message);
+      if (hasPath(message)) {
+        let entryList = this.#findParentHistoryEntry(
+          message.data.path,
+          message.type,
+          entries
+        );
+        const existingNode = entryList.find(
+          (sibling) => sibling.id === pathToId(message.data.path, message.type)
+        );
+
+        // If there is an existing node, and this is either a graphstart/end node
+        // then append an ID to it and make it a child of the existing one.
+        if (existingNode) {
+          message.data.path.push(existingNode.children.length);
+          entry.id = pathToId(message.data.path, message.type);
+          entryList = existingNode.children;
+        }
+
+        entryList.push(entry);
+      } else {
+        entries.push(entry);
+      }
+    }
 
     return html`<div id="history-list">
       <table cellspacing="0" cellpadding="0">
@@ -632,9 +809,13 @@ export class HistoryTree extends LitElement {
           </tr>
         </thead>
         <tbody>
-          ${this.history.map((entry) => {
-            return this.#convertToHtml(entry);
-          })}
+          ${entries.length === 0
+            ? html`<tr data-parent="">
+                <td colspan="5">No entries</td>
+              </tr>`
+            : entries.map((entry) => {
+                return this.#convertToHtml(entry);
+              })}
         </tbody>
       </table>
       <div>

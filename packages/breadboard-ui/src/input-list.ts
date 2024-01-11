@@ -14,6 +14,9 @@ export class InputList extends LitElement {
   @property({ reflect: false })
   messages: AnyRunResult[] | null = null;
 
+  @property({ reflect: true })
+  messagePosition = 0;
+
   @property()
   lastUpdate: number = Number.NaN;
 
@@ -56,7 +59,7 @@ export class InputList extends LitElement {
     // Infer from the messages received which inputs need to be shown to the
     // user.
     const inputs: InputDescription[] = [];
-    for (let idx = this.messages.length - 1; idx >= 0; idx--) {
+    for (let idx = this.messagePosition - 1; idx >= 0; idx--) {
       const message = this.messages[idx];
       if (message.type !== "nodestart" && message.type !== "secret") {
         continue;
