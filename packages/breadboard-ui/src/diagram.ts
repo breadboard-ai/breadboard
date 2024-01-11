@@ -447,6 +447,13 @@ export class Diagram extends HTMLElement {
     const viewBoxWidth = this.#diagramDimensions.w;
     const viewBoxHeight = this.#diagramDimensions.h;
 
+    if (
+      this.#diagramElementDimensions.w === 0 ||
+      this.#diagramElementDimensions.h === 0
+    ) {
+      return;
+    }
+
     const innerGraphic = svgImage.querySelector("g");
     assertSVGElement(innerGraphic);
     innerGraphic.style.transformOrigin = `${this.#transformOrigin.x} ${
