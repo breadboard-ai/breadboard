@@ -4,14 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  LitElement,
-  html,
-  css,
-  HTMLTemplateResult,
-  nothing,
-  TemplateResult,
-} from "lit";
+import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { Board, HistoryEventType, HistoryEntry } from "./types.js";
 import {
@@ -34,10 +27,10 @@ import {
 import {
   NodeConfiguration,
   NodeDescriptor,
-  NodeValue,
   ProbeMessage,
 } from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
+import { longTermMemory } from "./utils/long-term-memory.js";
 
 type ExtendedNodeInformation = {
   id: string;
@@ -86,6 +79,11 @@ const enum MODE {
 }
 
 type inputCallback = (data: Record<string, unknown>) => void;
+type UIConfig = {
+  showAllInputs: boolean;
+};
+
+const CONFIG_MEMORY_KEY = "ui-config";
 
 @customElement("bb-ui-manager")
 export class UI extends LitElement {
@@ -125,6 +123,11 @@ export class UI extends LitElement {
   @state()
   messages: AnyRunResult[] = [];
 
+  @state()
+  config: UIConfig = {
+    showAllInputs: false,
+  };
+
   #subHistoryEntries: Map<string, HistoryEntry[]> = new Map();
   #diagram = new Diagram();
   #lastHistoryEventTime = Number.NaN;
@@ -132,6 +135,8 @@ export class UI extends LitElement {
   #gridInfoRef: Ref<HTMLElement> = createRef();
   #gridInfoBB: DOMRect | null = null;
   #handlers: Map<string, inputCallback[]> = new Map();
+  #memory = longTermMemory;
+  #isUpdatingMemory = false;
 
   static styles = css`
     :host {
@@ -148,14 +153,14 @@ export class UI extends LitElement {
       box-sizing: border-box;
     }
 
-    header {
+    :host > header {
       padding: calc(var(--bb-grid-size) * 6) calc(var(--bb-grid-size) * 8)
         calc(var(--bb-grid-size) * 0) calc(var(--bb-grid-size) * 8);
       font-size: var(--bb-text-default);
       grid-column: 1 / 3;
     }
 
-    header a {
+    :host > header a {
       text-decoration: none;
     }
 
@@ -308,7 +313,7 @@ export class UI extends LitElement {
       grid-column: 1 / 3;
     }
 
-    #inputs h1,
+    #inputs header,
     #outputs h1,
     #history h1 {
       font-size: var(--bb-text-small);
@@ -320,6 +325,25 @@ export class UI extends LitElement {
       top: 0;
       background: rgb(255, 255, 255);
       z-index: 1;
+    }
+
+    #inputs header {
+      display: flex;
+    }
+
+    #inputs header h1 {
+      font-size: var(--bb-text-small);
+      font-weight: bold;
+      margin: 0;
+      flex: 1;
+    }
+
+    #inputs #input-options {
+      display: flex;
+    }
+
+    #inputs #input-options input {
+      margin: 0 var(--bb-grid-size);
     }
 
     #inputs-list,
@@ -421,6 +445,14 @@ export class UI extends LitElement {
       const nodeSelect = evt as NodeSelectEvent;
       this.selectedNode = this.#nodeInfo.get(nodeSelect.id) || null;
     });
+
+    this.#memory.retrieve(CONFIG_MEMORY_KEY).then((value) => {
+      if (!value) {
+        return;
+      }
+
+      this.config = JSON.parse(value) as UIConfig;
+    });
   }
 
   toast(message: string, type: ToastType) {
@@ -520,10 +552,6 @@ export class UI extends LitElement {
   }
 
   #createHistoryEntry(event: AnyRunResult): void {
-    if (Number.isNaN(this.#lastHistoryEventTime)) {
-      this.#lastHistoryEventTime = globalThis.performance.now();
-    }
-
     const getNodeData = (): HistoryEntry["graphNodeData"] => {
       if (hasPath(event)) {
         if (hasStateInfo(event) && typeof event.data.state === "object") {
@@ -549,7 +577,6 @@ export class UI extends LitElement {
 
     const elapsedTime =
       globalThis.performance.now() - this.#lastHistoryEventTime;
-    this.#lastHistoryEventTime = globalThis.performance.now();
 
     const entry: HistoryEntry = {
       ...event,
@@ -597,10 +624,6 @@ export class UI extends LitElement {
   }
 
   #updateHistoryEntry(event: NodeEndResult) {
-    if (Number.isNaN(this.#lastHistoryEventTime)) {
-      this.#lastHistoryEventTime = globalThis.performance.now();
-    }
-
     const id = pathToId(event.data.path, event.type);
     const entryList = this.#findParentHistoryEntry(event.data.path, event.type);
     const existingEntry = entryList.find((item) => item.id === id);
@@ -694,6 +717,8 @@ export class UI extends LitElement {
   async handleStateChange(
     message: AnyRunResult
   ): Promise<Record<string, unknown> | void> {
+    this.#lastHistoryEventTime = globalThis.performance.now();
+
     const nodeId = hasNodeInfo(message) ? message.data.node.id : "";
     await this.renderDiagram(nodeId);
 
@@ -738,118 +763,22 @@ export class UI extends LitElement {
     }
   }
 
-  #obtainProcessedValuesIfAvailable(
-    idx: number,
-    id: string
-  ): Record<string, NodeValue> | null {
-    for (let i = idx; i < this.messages.length; i++) {
-      const message = this.messages[i];
-      if (message.type === "nodeend" && message.data.node.id === id) {
-        return message.data.outputs;
-      }
+  async #toggleConfigOption(key: keyof UIConfig) {
+    if (this.#isUpdatingMemory) {
+      return;
     }
 
-    return null;
+    this.#isUpdatingMemory = true;
+    this.config[key] = !this.config[key];
+    await this.#memory.store(CONFIG_MEMORY_KEY, JSON.stringify(this.config));
+    this.#isUpdatingMemory = false;
+
+    this.requestUpdate();
   }
 
   #renderContent() {
     if (!this.loadInfo) {
       return html`Loading board...`;
-    }
-
-    type InputDescription = {
-      id: string;
-      configuration?: NodeConfiguration;
-      remember: boolean;
-      secret: boolean;
-    };
-
-    const createInput = (
-      idx: number,
-      { id, configuration, secret, remember }: InputDescription
-    ) => {
-      const processedValues = this.#obtainProcessedValuesIfAvailable(idx, id);
-      return html`<bb-input
-        id="${id}"
-        .secret=${secret}
-        .remember=${remember}
-        .configuration=${configuration}
-        .processedValues=${processedValues}
-        @breadboardinputenterevent=${(event: InputEnterEvent) => {
-          // Notify any pending handlers that the input has arrived.
-          const data = event.data;
-          const handlers = this.#handlers.get(id) || [];
-          for (const handler of handlers) {
-            handler.call(null, data);
-          }
-        }}
-      ></bb-input>`;
-    };
-
-    const inputs: TemplateResult[] = [];
-    // Infer from the messages received which inputs need to be shown.
-    for (let idx = this.messages.length - 1; idx >= 0; idx--) {
-      const message = this.messages[idx];
-      if (message.type !== "nodestart" && message.type !== "secret") {
-        continue;
-      }
-
-      // Capture all secrets.
-      if (message.type === "secret") {
-        for (const id of message.data.keys) {
-          inputs.push(
-            createInput(idx, {
-              id,
-              configuration: {
-                schema: {
-                  properties: {
-                    secret: {
-                      title: id,
-                      description: `Enter ${id}`,
-                      type: "string",
-                    },
-                  },
-                },
-              },
-              remember: true,
-              secret: true,
-            })
-          );
-        }
-        continue;
-      }
-
-      // Capture all inputs that require user interaction.
-      if (message.type === "nodestart" && message.data.node.type === "input") {
-        let requiresUserInteraction = false;
-        for (let n = idx; n < this.messages.length; n++) {
-          // If we land on an input message before the nodeend then we know this
-          // node requires user interaction and should be retained.
-          const nextMessage = this.messages[n];
-          if (
-            nextMessage.type === "input" &&
-            nextMessage.data.node.id === message.data.node.id
-          ) {
-            requiresUserInteraction = true;
-          }
-
-          if (nextMessage.type === "nodeend") {
-            break;
-          }
-        }
-
-        if (!requiresUserInteraction) {
-          continue;
-        }
-        inputs.push(
-          createInput(idx, {
-            id: message.data.node.id,
-            configuration: message.data.node.configuration,
-            remember: false,
-            secret: false,
-          })
-        );
-      }
     }
 
     switch (this.mode) {
@@ -879,13 +808,41 @@ export class UI extends LitElement {
               : nothing}
           </div>
           <div id="graph-info" ${ref(this.#gridInfoRef)}>
-            <div id="inputs">
-              <h1>Inputs</h1>
+            <section id="inputs">
+              <header>
+                <h1>Inputs</h1>
+                <div id="input-options">
+                  <label for="show-all-inputs">Show all inputs</label>
+                  <input
+                    type="checkbox"
+                    id="show-all-inputs"
+                    ?checked=${this.config.showAllInputs}
+                    @input=${() => this.#toggleConfigOption("showAllInputs")}
+                  />
+                </div>
+              </header>
               <div id="inputs-list">
-                ${inputs.length ? inputs : html`There are no inputs yet.`}
+                <bb-input-list
+                  .showAllInputs=${this.config.showAllInputs}
+                  .messages=${this.messages}
+                  .lastUpdate=${this.#lastHistoryEventTime}
+                  @breadboardinputenterevent=${(event: InputEnterEvent) => {
+                    // Notify any pending handlers that the input has arrived.
+                    const data = event.data;
+                    const handlers = this.#handlers.get(event.id) || [];
+                    if (handlers.length === 0) {
+                      console.warn(
+                        `Received event for ${event.id} but no handlers were found`
+                      );
+                    }
+                    for (const handler of handlers) {
+                      handler.call(null, data);
+                    }
+                  }}
+                ></bb-input-list>
               </div>
-            </div>
-            <div id="outputs">
+            </section>
+            <section id="outputs">
               <h1>Outputs</h1>
               <div id="outputs-list">
                 ${this.outputs.length
@@ -894,7 +851,7 @@ export class UI extends LitElement {
                     })
                   : html`There are no outputs yet.`}
               </div>
-            </div>
+            </section>
             <div
               id="drag-handle"
               @pointerdown=${this.#startVerticalResize}

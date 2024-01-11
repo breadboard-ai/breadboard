@@ -61,7 +61,7 @@ export class NodeSelectEvent extends Event {
 export class InputEnterEvent extends Event {
   static eventName = "breadboardinputenterevent";
 
-  constructor(public data: Record<string, unknown>) {
+  constructor(public id: string, public data: Record<string, unknown>) {
     super(InputEnterEvent.eventName, {
       bubbles: true,
       cancelable: true,

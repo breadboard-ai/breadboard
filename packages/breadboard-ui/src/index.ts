@@ -18,6 +18,7 @@ export { UI } from "./ui.js";
 export { BoardList } from "./board-list.js";
 export { JSONTree } from "./json-tree.js";
 export { HistoryTree } from "./history-tree.js";
+export { InputList } from "./input-list.js";
 
 export { Output } from "./output.js";
 import {
