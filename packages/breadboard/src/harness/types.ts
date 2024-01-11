@@ -10,8 +10,6 @@ import {
   ErrorResponse,
   InputResponse,
   Kit,
-  NodeEndResponse,
-  NodeStartResponse,
   OutputResponse,
   OutputValues,
   ProbeMessage,
@@ -71,16 +69,6 @@ export type SecretResult = {
   data: { keys: string[] };
 };
 
-export type NodeStartResult = {
-  type: "nodestart";
-  data: NodeStartResponse;
-};
-
-export type NodeEndResult = {
-  type: "nodeend";
-  data: NodeEndResponse;
-};
-
 export type ErrorResult = {
   type: "error";
   data: ErrorResponse;
@@ -97,8 +85,6 @@ export type AnyRunResult = (
   | InputResult
   | OutputResult
   | SecretResult
-  | NodeStartResult
-  | NodeEndResult
   | ErrorResult
   | EndResult
   | ProbeMessage

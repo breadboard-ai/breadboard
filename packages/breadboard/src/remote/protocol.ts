@@ -7,7 +7,8 @@
 import { PatchedReadableStream } from "../stream.js";
 import {
   ErrorResponse,
-  GraphProbeData,
+  GraphEndProbeMessage,
+  GraphStartProbeMessage,
   InputResponse,
   InputValues,
   NodeDescriptor,
@@ -63,6 +64,10 @@ export type LoadResponse = {
 
 export type RunState = string;
 
+type GenericResult = { type: unknown; data: unknown };
+
+type RemoteMessage<T extends GenericResult> = [T["type"], T["data"], RunState?];
+
 /**
  * A run request is an empty object.
  * It basically just pokes the server to start running.
@@ -78,13 +83,13 @@ export type NodeStartResponseMessage = [
   RunState
 ];
 
-export type NodeEndResponseMessage = ["nodeend", NodeEndProbeMessage["data"]];
+export type NodeEndResponseMessage = RemoteMessage<NodeEndProbeMessage>;
 
-export type GraphStartResponseMessage = ["graphstart", GraphProbeData];
+export type GraphStartResponseMessage = RemoteMessage<GraphStartProbeMessage>;
 
-export type GraphEndResponseMessage = ["graphend", GraphProbeData];
+export type GraphEndResponseMessage = RemoteMessage<GraphEndProbeMessage>;
 
-export type SkipResponseMessage = ["skip", SkipProbeMessage["data"]];
+export type SkipResponseMessage = RemoteMessage<SkipProbeMessage>;
 
 export type InputResponseMessage = ["input", InputResponse, RunState];
 
