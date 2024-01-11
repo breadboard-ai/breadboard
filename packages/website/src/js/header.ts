@@ -11,6 +11,9 @@ import { customElement } from "lit/decorators.js";
 export class BreadboardSiteHeader extends LitElement {
   static styles = css`
     header {
+      position: sticky;
+      top: 0;
+      background: #fff;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -24,11 +27,9 @@ export class BreadboardSiteHeader extends LitElement {
     h1 {
       font-size: 24px;
       margin-left: 10px;
-      font-family: sans-serif;
       font-weight: normal;
     }
     nav {
-      font-family: sans-serif;
       text-decoration: none;
       display: flex;
       align-items: center;

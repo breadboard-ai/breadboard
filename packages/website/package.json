@@ -55,12 +55,14 @@
     "build:eleventy": {
       "command": "eleventy --input=src/",
       "files": [
-        "src/*.html",
-        "src/docs/"
+        "src/",
+        "!src/js/",
+        "!src/static/"
       ],
       "output": [
-        "_site/*.html",
-        "_site/docs/"
+        "_site/",
+        "!_site/js/",
+        "!_site/static/"
       ]
     },
     "serve": {
