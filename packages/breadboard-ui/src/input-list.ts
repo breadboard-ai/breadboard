@@ -34,7 +34,7 @@ export class InputList extends LitElement {
     id: string,
     messages: AnyRunResult[]
   ): Record<string, NodeValue> | null {
-    for (let i = idx; i < messages.length; i++) {
+    for (let i = idx; i < this.messagePosition; i++) {
       const message = messages[i];
       if (message.type === "nodeend" && message.data.node.id === id) {
         return message.data.outputs;

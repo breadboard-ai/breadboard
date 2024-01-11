@@ -50,7 +50,8 @@ const isValidHistoryEntry = (event: AnyRunResult): boolean => {
     event.type === "nodestart" ||
     event.type === "nodeend" ||
     event.type === "graphstart" ||
-    event.type === "graphend"
+    event.type === "graphend" ||
+    event.type === "end"
   );
 };
 

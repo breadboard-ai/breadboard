@@ -10,6 +10,7 @@ import { Board, HistoryEventType, HistoryEntry, STATUS } from "./types.js";
 import {
   BoardUnloadEvent,
   InputEnterEvent,
+  MessageTraversalEvent,
   NodeSelectEvent,
   ToastType,
 } from "./events.js";
@@ -40,11 +41,12 @@ type RunResultWithNodeInfo =
   | OutputResult
   | NodeStartResult
   | NodeEndResult;
-const hasNodeInfo = (event: AnyRunResult): event is RunResultWithNodeInfo =>
-  event.type === "input" ||
-  event.type === "output" ||
-  event.type === "nodestart" ||
-  event.type === "nodeend";
+const hasNodeInfo = (event?: AnyRunResult): event is RunResultWithNodeInfo =>
+  typeof event === "object" &&
+  (event.type === "input" ||
+    event.type === "output" ||
+    event.type === "nodestart" ||
+    event.type === "nodeend");
 
 const enum MODE {
   BUILD = "build",
@@ -268,22 +270,16 @@ export class UI extends LitElement {
       justify-content: flex-end;
     }
 
-    #position,
     #run-status {
-      font-size: var(--bb-text-nano);
-
+      font-size: var(--bb-text-pico);
       margin-left: calc(var(--bb-grid-size) * 2);
       text-transform: uppercase;
       text-align: center;
       background: #eee;
-      border-radius: calc(var(--bb-grid-size) * 2);
+      border-radius: calc(var(--bb-grid-size) * 3);
       padding: var(--bb-grid-size);
       font-weight: bold;
       border: 1px solid rgb(230 230 230);
-    }
-
-    #position {
-      min-width: 60px;
     }
 
     #run-status {
@@ -636,9 +632,6 @@ export class UI extends LitElement {
   ): Promise<Record<string, unknown> | void> {
     this.#lastHistoryEventTime = globalThis.performance.now();
 
-    const nodeId = hasNodeInfo(message) ? message.data.node.id : "";
-    await this.renderDiagram(nodeId);
-
     // Store it for later, render, then actually handle the work.
     this.messages.push(message);
     if (this.status === STATUS.RUNNING) {
@@ -694,6 +687,11 @@ export class UI extends LitElement {
 
     switch (this.mode) {
       case MODE.BUILD: {
+        // TODO: Figure out the await part of this rendering.
+        const message = this.messages[this.#messagePosition - 1];
+        const nodeId = hasNodeInfo(message) ? message.data.node.id : "";
+        this.renderDiagram(nodeId);
+
         return html`<div id="diagram">
             ${this.loadInfo.diagram ? this.#diagram : "No board diagram"}
             ${this.selectedNode
@@ -720,10 +718,20 @@ export class UI extends LitElement {
           </div>
           <div id="rhs">
             <div id="controls">
-              <div id="position">
-                ${Math.min(this.#messagePosition, this.messages.length)} /
-                ${this.messages.length}
-              </div>
+              <bb-traversal-controls
+                id="position"
+                @breadboardmessagetraversal=${(evt: MessageTraversalEvent) => {
+                  if (evt.index < 0 || evt.index > this.messages.length) {
+                    return;
+                  }
+
+                  this.#messagePosition = evt.index;
+                  this.requestUpdate();
+                }}
+                .value=${this.#messagePosition}
+                .max=${this.messages.length}
+              ></bb-traversal-controls>
+
               <div id="run-status" class=${classMap({ [this.status]: true })}>
                 ${this.status}
               </div>
@@ -767,11 +775,10 @@ export class UI extends LitElement {
               <section id="outputs">
                 <h1>Outputs</h1>
                 <div id="outputs-list">
-                  ${this.outputs.length
-                    ? this.outputs.map((output) => {
-                        return html`${output}`;
-                      })
-                    : html`There are no outputs yet.`}
+                  <bb-output-list
+                    .messages=${this.messages}
+                    .messagePosition=${this.#messagePosition}
+                  ></bb-output-list>
                 </div>
               </section>
               <div

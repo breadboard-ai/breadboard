@@ -81,3 +81,15 @@ export class BoardUnloadEvent extends Event {
     });
   }
 }
+
+export class MessageTraversalEvent extends Event {
+  static eventName = "breadboardmessagetraversal";
+
+  constructor(public index: number) {
+    super(MessageTraversalEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
