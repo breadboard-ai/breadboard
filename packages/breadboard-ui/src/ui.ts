@@ -6,7 +6,7 @@
 
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { Board, HistoryEventType, HistoryEntry } from "./types.js";
+import { Board, HistoryEventType, HistoryEntry, STATUS } from "./types.js";
 import {
   BoardUnloadEvent,
   InputEnterEvent,
@@ -24,13 +24,10 @@ import {
   NodeStartResult,
   OutputResult,
 } from "@google-labs/breadboard/harness";
-import {
-  NodeConfiguration,
-  NodeDescriptor,
-  ProbeMessage,
-} from "@google-labs/breadboard";
+import { NodeConfiguration, NodeDescriptor } from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { longTermMemory } from "./utils/long-term-memory.js";
+import { classMap } from "lit/directives/class-map.js";
 
 type ExtendedNodeInformation = {
   id: string;
@@ -48,30 +45,6 @@ const hasNodeInfo = (event: AnyRunResult): event is RunResultWithNodeInfo =>
   event.type === "output" ||
   event.type === "nodestart" ||
   event.type === "nodeend";
-
-type RunResultWithPath = ProbeMessage | NodeStartResult | NodeEndResult;
-const hasPath = (event: AnyRunResult): event is RunResultWithPath =>
-  event.type === "nodestart" ||
-  event.type === "nodeend" ||
-  event.type === "graphstart" ||
-  event.type === "graphend";
-
-type RunResultWithState = NodeStartResult;
-const hasStateInfo = (event: AnyRunResult): event is RunResultWithState =>
-  event.type === "nodestart";
-
-const pathToId = (path: number[], type: RunResultWithPath["type"]) => {
-  const isGraphNode = type === "graphstart" || type === "graphend";
-  if (path.length == 0 && isGraphNode) {
-    if (type === "graphstart") {
-      return `path-main-graph-start`;
-    } else {
-      return `path-main-graph-end`;
-    }
-  }
-
-  return `path-${path.join("-")}`;
-};
 
 const enum MODE {
   BUILD = "build",
@@ -98,6 +71,9 @@ export class UI extends LitElement {
 
   @property({ reflect: true })
   url: string | null = "";
+
+  @property({ reflect: true })
+  status = STATUS.RUNNING;
 
   @property()
   boards: Board[] = [];
@@ -137,6 +113,7 @@ export class UI extends LitElement {
   #handlers: Map<string, inputCallback[]> = new Map();
   #memory = longTermMemory;
   #isUpdatingMemory = false;
+  #messagePosition = 0;
 
   static styles = css`
     :host {
@@ -278,6 +255,51 @@ export class UI extends LitElement {
       border: 1px solid rgb(227, 227, 227);
       border-radius: calc(var(--bb-grid-size) * 5);
       display: flex;
+    }
+
+    #rhs {
+      display: grid;
+      grid-template-rows: calc(var(--bb-grid-size) * 10) auto;
+    }
+
+    #controls {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    #position,
+    #run-status {
+      font-size: var(--bb-text-nano);
+
+      margin-left: calc(var(--bb-grid-size) * 2);
+      text-transform: uppercase;
+      text-align: center;
+      background: #eee;
+      border-radius: calc(var(--bb-grid-size) * 2);
+      padding: var(--bb-grid-size);
+      font-weight: bold;
+      border: 1px solid rgb(230 230 230);
+    }
+
+    #position {
+      min-width: 60px;
+    }
+
+    #run-status {
+      width: 70px;
+    }
+
+    #run-status.running {
+      border: 1px solid rgb(174 206 161);
+      color: rgb(31 56 21);
+      background: rgb(223 239 216);
+    }
+
+    #run-status.paused {
+      border: 1px solid rgb(248 193 122);
+      color: rgb(192 116 19);
+      background: rgb(255, 242, 204);
     }
 
     #graph-info {
@@ -483,6 +505,7 @@ export class UI extends LitElement {
     this.inputs.length = 0;
     this.outputs.length = 0;
     this.messages.length = 0;
+    this.#messagePosition = 0;
 
     this.#nodeInfo.clear();
 
@@ -549,112 +572,6 @@ export class UI extends LitElement {
 
     globalThis.sessionStorage.setItem("grid-row-top", rowTop);
     globalThis.sessionStorage.setItem("grid-row-bottom", rowBottom);
-  }
-
-  #createHistoryEntry(event: AnyRunResult): void {
-    const getNodeData = (): HistoryEntry["graphNodeData"] => {
-      if (hasPath(event)) {
-        if (hasStateInfo(event) && typeof event.data.state === "object") {
-          const id = hasPath(event) ? event.data.node.id : "";
-          const nodeValues = event.data.state.state.state.get(id);
-          if (!nodeValues) {
-            return null;
-          }
-
-          const nodeValue: Record<string, unknown[]> = {};
-          for (const [key, value] of nodeValues.entries()) {
-            nodeValue[key] = value;
-          }
-
-          return { inputs: nodeValue, outputs: {} };
-        }
-
-        return undefined;
-      }
-
-      return { inputs: event.data, outputs: {} };
-    };
-
-    const elapsedTime =
-      globalThis.performance.now() - this.#lastHistoryEventTime;
-
-    const entry: HistoryEntry = {
-      ...event,
-      graphNodeData: getNodeData(),
-      id: hasPath(event) ? pathToId(event.data.path, event.type) : "",
-      guid: globalThis.crypto.randomUUID(),
-      elapsedTime,
-      children: [],
-    };
-
-    if (hasPath(event)) {
-      let entryList = this.#findParentHistoryEntry(event.data.path, event.type);
-      const existingNode = entryList.find(
-        (sibling) => sibling.id === pathToId(event.data.path, event.type)
-      );
-
-      // If there is an existing node, and this is either a graphstart/end node
-      // then append an ID to it and make it a child of the existing one.
-      if (existingNode) {
-        event.data.path.push(existingNode.children.length);
-        entry.id = pathToId(event.data.path, event.type);
-        entryList = existingNode.children;
-      }
-
-      entryList.push(entry);
-    } else {
-      this.historyEntries.push(entry);
-    }
-  }
-
-  #findParentHistoryEntry(path: number[], type: RunResultWithPath["type"]) {
-    let entryList = this.historyEntries;
-    for (let idx = 0; idx < path.length - 1; idx++) {
-      const id = pathToId(path.slice(0, idx + 1), type);
-      const parentId = entryList.findIndex((item) => item.id === id);
-      if (parentId === -1) {
-        console.warn(`Unable to find ID "${id}"`);
-        return this.historyEntries;
-      }
-
-      entryList = entryList[parentId].children;
-    }
-
-    return entryList;
-  }
-
-  #updateHistoryEntry(event: NodeEndResult) {
-    const id = pathToId(event.data.path, event.type);
-    const entryList = this.#findParentHistoryEntry(event.data.path, event.type);
-    const existingEntry = entryList.find((item) => item.id === id);
-    if (!existingEntry) {
-      console.warn(`Unable to find ID "${id}"`);
-      return;
-    }
-
-    // We may have a nodestart which leads into a graphstart of the same ID, but
-    // we'll then receive a graphend before a nodeend against that same ID. This
-    // can cause UI confusion so we double check here that if we have a graphend
-    // or a nodeend that it tallies with a corresponding graphstart/nodestart.
-    const typesMatch =
-      existingEntry.type === HistoryEventType.NODESTART &&
-      event.type === HistoryEventType.NODEEND;
-    if (!typesMatch) {
-      return;
-    }
-
-    (existingEntry as unknown as NodeEndResult).type = event.type;
-
-    if (existingEntry.graphNodeData && "outputs" in event.data) {
-      existingEntry.graphNodeData.outputs = event.data.outputs;
-    }
-
-    // Set any 'pending' values to none.
-    if (existingEntry.graphNodeData === null) {
-      existingEntry.graphNodeData = undefined;
-    }
-
-    this.#lastHistoryEventTime = globalThis.performance.now();
   }
 
   #parseNodeInformation(nodes?: NodeDescriptor[]) {
@@ -724,6 +641,9 @@ export class UI extends LitElement {
 
     // Store it for later, render, then actually handle the work.
     this.messages.push(message);
+    if (this.status === STATUS.RUNNING) {
+      this.#messagePosition = this.messages.length;
+    }
     this.requestUpdate();
 
     const { data, type } = message;
@@ -731,12 +651,12 @@ export class UI extends LitElement {
       case "nodestart": {
         this.#handlers.clear();
         this.#handlers.set(message.data.node.id, []);
-        return this.#createHistoryEntry(message);
+        return;
       }
 
       case "nodeend": {
         this.#handlers.clear();
-        return this.#updateHistoryEntry(message);
+        return;
       }
 
       case "input": {
@@ -750,15 +670,6 @@ export class UI extends LitElement {
 
       case "output": {
         return this.output(data);
-      }
-
-      case "skip": {
-        // TODO: Allow users to toggle skips.
-        return;
-      }
-
-      default: {
-        return this.#createHistoryEntry(message);
       }
     }
   }
@@ -807,62 +718,75 @@ export class UI extends LitElement {
                 </div>`
               : nothing}
           </div>
-          <div id="graph-info" ${ref(this.#gridInfoRef)}>
-            <section id="inputs">
-              <header>
-                <h1>Inputs</h1>
-                <div id="input-options">
-                  <label for="show-all-inputs">Show all inputs</label>
-                  <input
-                    type="checkbox"
-                    id="show-all-inputs"
-                    ?checked=${this.config.showAllInputs}
-                    @input=${() => this.#toggleConfigOption("showAllInputs")}
-                  />
+          <div id="rhs">
+            <div id="controls">
+              <div id="position">
+                ${Math.min(this.#messagePosition, this.messages.length)} /
+                ${this.messages.length}
+              </div>
+              <div id="run-status" class=${classMap({ [this.status]: true })}>
+                ${this.status}
+              </div>
+            </div>
+            <div id="graph-info" ${ref(this.#gridInfoRef)}>
+              <section id="inputs">
+                <header>
+                  <h1>Inputs</h1>
+                  <div id="input-options">
+                    <label for="show-all-inputs">Show all inputs</label>
+                    <input
+                      type="checkbox"
+                      id="show-all-inputs"
+                      ?checked=${this.config.showAllInputs}
+                      @input=${() => this.#toggleConfigOption("showAllInputs")}
+                    />
+                  </div>
+                </header>
+                <div id="inputs-list">
+                  <bb-input-list
+                    .showAllInputs=${this.config.showAllInputs}
+                    .messages=${this.messages}
+                    .lastUpdate=${this.#lastHistoryEventTime}
+                    .messagePosition=${this.#messagePosition}
+                    @breadboardinputenterevent=${(event: InputEnterEvent) => {
+                      // Notify any pending handlers that the input has arrived.
+                      const data = event.data;
+                      const handlers = this.#handlers.get(event.id) || [];
+                      if (handlers.length === 0) {
+                        console.warn(
+                          `Received event for ${event.id} but no handlers were found`
+                        );
+                      }
+                      for (const handler of handlers) {
+                        handler.call(null, data);
+                      }
+                    }}
+                  ></bb-input-list>
                 </div>
-              </header>
-              <div id="inputs-list">
-                <bb-input-list
-                  .showAllInputs=${this.config.showAllInputs}
+              </section>
+              <section id="outputs">
+                <h1>Outputs</h1>
+                <div id="outputs-list">
+                  ${this.outputs.length
+                    ? this.outputs.map((output) => {
+                        return html`${output}`;
+                      })
+                    : html`There are no outputs yet.`}
+                </div>
+              </section>
+              <div
+                id="drag-handle"
+                @pointerdown=${this.#startVerticalResize}
+                @pointermove=${this.#onVerticalResize}
+                @pointerup=${this.#endVerticalResize}
+              ></div>
+              <div id="history">
+                <bb-history-tree
                   .messages=${this.messages}
+                  .messagePosition=${this.#messagePosition}
                   .lastUpdate=${this.#lastHistoryEventTime}
-                  @breadboardinputenterevent=${(event: InputEnterEvent) => {
-                    // Notify any pending handlers that the input has arrived.
-                    const data = event.data;
-                    const handlers = this.#handlers.get(event.id) || [];
-                    if (handlers.length === 0) {
-                      console.warn(
-                        `Received event for ${event.id} but no handlers were found`
-                      );
-                    }
-                    for (const handler of handlers) {
-                      handler.call(null, data);
-                    }
-                  }}
-                ></bb-input-list>
+                ></bb-history-tree>
               </div>
-            </section>
-            <section id="outputs">
-              <h1>Outputs</h1>
-              <div id="outputs-list">
-                ${this.outputs.length
-                  ? this.outputs.map((output) => {
-                      return html`${output}`;
-                    })
-                  : html`There are no outputs yet.`}
-              </div>
-            </section>
-            <div
-              id="drag-handle"
-              @pointerdown=${this.#startVerticalResize}
-              @pointermove=${this.#onVerticalResize}
-              @pointerup=${this.#endVerticalResize}
-            ></div>
-            <div id="history">
-              <bb-history-tree
-                .history=${this.historyEntries}
-                .lastUpdate=${this.#lastHistoryEventTime}
-              ></bb-history-tree>
             </div>
           </div>`;
       }

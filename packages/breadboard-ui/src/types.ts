@@ -62,3 +62,8 @@ export type HistoryEntry = AnyRunResult & {
   elapsedTime: number;
   children: HistoryEntry[];
 };
+
+export const enum STATUS {
+  RUNNING = "running",
+  PAUSED = "paused",
+}
