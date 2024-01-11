@@ -63,7 +63,8 @@ export type HistoryEntry = AnyRunResult & {
   children: HistoryEntry[];
 };
 
-export const enum STATUS {
+export enum STATUS {
   RUNNING = "running",
   PAUSED = "paused",
+  STOPPED = "stopped",
 }

@@ -19,6 +19,9 @@ export class Main extends LitElement {
   @property({ reflect: false })
   config: { boards: BreadboardUI.Types.Board[] };
 
+  @property({ reflect: true })
+  status = BreadboardUI.Types.STATUS.RUNNING;
+
   #uiRef: Ref<BreadboardUI.UI> = createRef();
   #boardId = 0;
   #delay = 0;
@@ -56,6 +59,8 @@ export class Main extends LitElement {
         this.#setActiveBreadboard(startEvent.url);
 
         const harness = createHarness(createHarnessConfig(startEvent.url));
+        this.status = BreadboardUI.Types.STATUS.RUNNING;
+
         ui.url = startEvent.url;
         ui.load(await harness.load());
 
@@ -73,7 +78,14 @@ export class Main extends LitElement {
           if (answer) {
             result.reply(answer);
           }
+
+          // @ts-expect-error Status can change between for-await steps.
+          if (this.status === BreadboardUI.Types.STATUS.PAUSED) {
+            // TODO: Handle resume behavior.
+          }
         }
+
+        this.status = BreadboardUI.Types.STATUS.STOPPED;
       }
     );
   }
@@ -99,6 +111,10 @@ export class Main extends LitElement {
   render() {
     return html`<bb-ui-manager
       ${ref(this.#uiRef)}
+      .status=${this.status}
+      @breadboardmessagetraversal=${() => {
+        this.status = BreadboardUI.Types.STATUS.PAUSED;
+      }}
       @breadboardboardunloadevent=${() => {
         this.#setActiveBreadboard(null);
         this.#boardId++;

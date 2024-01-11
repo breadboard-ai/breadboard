@@ -4,23 +4,25 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export { ErrorMessage } from "./error.js";
-export { Toast } from "./toast.js";
-export { Done } from "./done.js";
-export { Input } from "./input.js";
-export { WebcamInput } from "./webcam.js";
-export { DrawableInput } from "./drawable.js";
-export { Load } from "./load.js";
-export { InputContainer } from "./input-container.js";
-export { Start } from "./start.js";
-export { Progress } from "./progress.js";
-export { UI } from "./ui.js";
 export { BoardList } from "./board-list.js";
-export { JSONTree } from "./json-tree.js";
+export { Done } from "./done.js";
+export { DrawableInput } from "./drawable.js";
+export { ErrorMessage } from "./error.js";
 export { HistoryTree } from "./history-tree.js";
+export { Input } from "./input.js";
+export { InputContainer } from "./input-container.js";
 export { InputList } from "./input-list.js";
-
+export { JSONTree } from "./json-tree.js";
+export { Load } from "./load.js";
 export { Output } from "./output.js";
+export { OutputList } from "./output-list.js";
+export { Progress } from "./progress.js";
+export { Start } from "./start.js";
+export { Toast } from "./toast.js";
+export { TraversalControls } from "./traversal-controls.js";
+export { UI } from "./ui.js";
+export { WebcamInput } from "./webcam.js";
+
 import {
   MultipartInput,
   MultipartInputImage,
