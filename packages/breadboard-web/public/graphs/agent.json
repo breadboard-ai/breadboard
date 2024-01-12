@@ -1,0 +1,118 @@
+{
+  "title": "Agent",
+  "description": "A prototype of an agent-like board",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "generate",
+      "to": "output-2",
+      "out": "text",
+      "in": "result"
+    },
+    {
+      "from": "generate",
+      "to": "output-2",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "prompt",
+      "to": "generate",
+      "out": "prompt",
+      "in": "text"
+    },
+    {
+      "from": "input-1",
+      "to": "prompt",
+      "out": "template",
+      "in": "template"
+    },
+    {
+      "from": "input-1",
+      "to": "prompt",
+      "out": "topic",
+      "in": "topic"
+    },
+    {
+      "from": "input-1",
+      "to": "generate",
+      "out": "generator",
+      "in": "path"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "result": {
+              "type": "string",
+              "title": "result"
+            },
+            "context": {
+              "type": "string",
+              "title": "context"
+            }
+          },
+          "required": [
+            "result",
+            "context"
+          ]
+        }
+      }
+    },
+    {
+      "id": "generate",
+      "type": "invoke",
+      "configuration": {}
+    },
+    {
+      "id": "prompt",
+      "type": "promptTemplate",
+      "configuration": {}
+    },
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "template": {
+              "title": "Template",
+              "description": "The template with placeholders to fill in.",
+              "type": "string",
+              "examples": [
+                "You are the most amazing poet who specializes in two-line rhyming poems.\n  Given any topic, you can quickly whip up a two-line rhyming poem about it.\n  Ready?\n\n  The topic is: {{topic}}"
+              ]
+            },
+            "topic": {
+              "title": "Instruction",
+              "examples": [
+                "The universe within us"
+              ],
+              "type": "string"
+            },
+            "generator": {
+              "title": "Generator",
+              "description": "The path to the board to invoke.",
+              "type": "string",
+              "examples": [
+                "gemini-generator.json"
+              ]
+            }
+          },
+          "required": [
+            "template",
+            "topic",
+            "generator"
+          ]
+        }
+      }
+    }
+  ],
+  "graphs": {}
+}
