@@ -243,6 +243,11 @@ export class Value<T extends NodeValue = NodeValue>
     return this;
   }
 
+  examples(...examples: string[]): AbstractValue<T> {
+    this.#schema.examples = examples;
+    return this;
+  }
+
   #remapKeys(newKeys: KeyMap) {
     const newMap = { ...this.#keymap };
     Object.entries(newKeys).forEach(([fromKey, toKey]) => {
