@@ -204,7 +204,7 @@ function lambdaFactory(
     if (numGraphs !== 1)
       if (numGraphs === 0)
         throw new Error(
-          "If not returnin a graph, use `base.input` and `base.output`."
+          "If not returning a graph, use `base.input` and `base.output`."
         );
       else
         throw new Error(

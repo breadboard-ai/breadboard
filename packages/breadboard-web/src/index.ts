@@ -4,54 +4,38 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as BreadboardUI from "@google-labs/breadboard-ui";
 import { createHarness } from "@google-labs/breadboard/harness";
 import { createHarnessConfig } from "./config";
+import { createRef, ref, type Ref } from "lit/directives/ref.js";
+import { customElement, property } from "lit/decorators.js";
+import { LitElement, html, css } from "lit";
+import * as BreadboardUI from "@google-labs/breadboard-ui";
 import { InputValues } from "@google-labs/breadboard";
 
 // TODO: Remove once all elements are Lit-based.
 BreadboardUI.register();
 
-type PauserCallback = (paused: boolean) => void;
-class Pauser extends EventTarget {
-  #paused = false;
-  #subscribers: PauserCallback[] = [];
+@customElement("bb-main")
+export class Main extends LitElement {
+  @property({ reflect: false })
+  config: { boards: BreadboardUI.Types.Board[] };
 
-  set paused(value: boolean) {
-    this.#paused = value;
-    this.#notify();
-  }
-
-  get paused() {
-    return this.#paused;
-  }
-
-  #notify() {
-    while (this.#subscribers.length) {
-      const sub = this.#subscribers.pop();
-      if (!sub) {
-        break;
-      }
-
-      sub.call(null, this.#paused);
-    }
-  }
-
-  once(callback: () => void) {
-    this.#subscribers.push(callback);
-  }
-}
-
-const sleep = (time: number) =>
-  new Promise((resolve) => setTimeout(resolve, time));
-
-export class Main {
-  #ui = new BreadboardUI.UI();
+  #uiRef: Ref<BreadboardUI.UI> = createRef();
   #boardId = 0;
   #delay = 0;
-  #pauser = new Pauser();
+  #status = BreadboardUI.Types.STATUS.STOPPED;
+  #statusObservers: Array<(value: BreadboardUI.Types.STATUS) => void> = [];
+  #bootWithUrl: string | null = null;
+
+  static styles = css`
+    :host {
+      display: block;
+    }
+  `;
 
   constructor(config: { boards: BreadboardUI.Types.Board[] }) {
+    super();
+
     // Remove boards that are still works-in-progress from production builds.
     // These boards will have either no version or a version of "0.0.1".
     if (import.meta.env.MODE === "production") {
@@ -59,81 +43,94 @@ export class Main {
         (board) => board.version && board.version !== "0.0.1"
       );
     }
+
     config.boards.sort((a, b) => a.title.localeCompare(b.title));
+    this.config = config;
 
-    this.#ui.boards = config.boards;
-    document.body.appendChild(this.#ui);
-
-    document.body.addEventListener(
-      BreadboardUI.StartEvent.eventName,
-      async (evt: Event) => {
-        if (this.#pauser.paused) {
-          // Setting this to false will "unpause" the current board, allowing it
-          // to shut down. But we'll switch the pause back on for the new board.
-          this.#pauser.paused = false;
-          this.#pauser.paused = true;
-        }
-
-        this.#boardId++;
-
-        const startEvent = evt as BreadboardUI.StartEvent;
-        this.setActiveBreadboard(startEvent.url);
-
-        const harness = createHarness(createHarnessConfig(startEvent.url));
-        this.#ui.load(await harness.load());
-
-        const currentBoardId = this.#boardId;
-        for await (const result of harness.run()) {
-          if (result.type !== "nodestart") {
-            await this.#suspendIfPaused();
-            if (currentBoardId !== this.#boardId) {
-              console.log("Changed board");
-              return;
-            }
-          }
-          await sleep(this.#delay);
-
-          const answer = (await this.#ui.handleStateChange(
-            result
-          )) as InputValues;
-          if (answer) {
-            result.reply({ inputs: answer });
-          }
-        }
-      }
-    );
-
-    this.#ui.addEventListener(
-      BreadboardUI.Events.BoardUnloadEvent.eventName,
-      () => {
-        this.setActiveBreadboard(null);
-        this.#boardId++;
-      }
-    );
-
-    this.#ui.addEventListener(
-      BreadboardUI.ToastEvent.eventName,
-      (evt: Event) => {
-        const toastEvent = evt as BreadboardUI.ToastEvent;
-        this.#ui.toast(toastEvent.message, toastEvent.toastType);
-      }
-    );
-
-    this.#ui.addEventListener(
-      BreadboardUI.DelayEvent.eventName,
-      (evt: Event) => {
-        const delayEvent = evt as BreadboardUI.DelayEvent;
-        this.#delay = delayEvent.duration;
-      }
-    );
-
-    const boardFromUrl = this.#getBoardFromUrl();
-    if (boardFromUrl) {
-      document.body.dispatchEvent(new BreadboardUI.StartEvent(boardFromUrl));
+    const currentUrl = new URL(window.location.href);
+    const boardFromUrl = currentUrl.searchParams.get("board");
+    if (!boardFromUrl) {
+      return;
     }
+    this.#bootWithUrl = boardFromUrl;
   }
 
-  setActiveBreadboard(url: string | null) {
+  get status() {
+    return this.#status;
+  }
+
+  set status(status: BreadboardUI.Types.STATUS) {
+    this.#status = status;
+    this.requestUpdate();
+  }
+
+  async #onStartBoard(startEvent: BreadboardUI.StartEvent) {
+    this.#boardId++;
+    this.#setActiveBreadboard(startEvent.url);
+
+    const harness = createHarness(createHarnessConfig(startEvent.url));
+    this.status = BreadboardUI.Types.STATUS.RUNNING;
+
+    if (!this.#uiRef.value) {
+      console.warn("No UI found");
+      return;
+    }
+
+    const ui = this.#uiRef.value;
+    ui.url = startEvent.url;
+    ui.load(await harness.load());
+
+    const currentBoardId = this.#boardId;
+    for await (const result of harness.run()) {
+      if (this.#delay !== 0) {
+        await new Promise((r) => setTimeout(r, this.#delay));
+      }
+
+      if (currentBoardId !== this.#boardId) {
+        return;
+      }
+
+      const answer = await ui.handleStateChange(result);
+      await this.#waitIfPaused(answer);
+
+      if (answer) {
+        result.reply(answer);
+      }
+    }
+
+    this.status = BreadboardUI.Types.STATUS.STOPPED;
+  }
+
+  #waitIfPaused(answer: unknown) {
+    // We can use the answer as a signal for whether or not to proceed. In cases
+    // where user input is not required, the answer will be void/undefined, and
+    // we should honor the pause signal. When a user submits an answer (which
+    // they can only do for the most recent message going to the UI) then its
+    // value will not be void/undefined, and we can treat that as a signal to
+    // unpause.
+    const shouldUnpause = typeof answer !== "undefined";
+    if (shouldUnpause && this.status === BreadboardUI.Types.STATUS.PAUSED) {
+      if (confirm("Are you sure you wish to resume?")) {
+        this.status = BreadboardUI.Types.STATUS.RUNNING;
+      }
+    }
+
+    if (this.status !== BreadboardUI.Types.STATUS.PAUSED) {
+      return Promise.resolve();
+    }
+
+    return new Promise<void>((resolve) => {
+      this.#statusObservers.push((status: BreadboardUI.Types.STATUS) => {
+        if (status !== BreadboardUI.Types.STATUS.RUNNING) {
+          return;
+        }
+
+        resolve();
+      });
+    });
+  }
+
+  #setActiveBreadboard(url: string | null) {
     const pageUrl = new URL(window.location.href);
     if (url === null) {
       pageUrl.searchParams.delete("board");
@@ -141,27 +138,50 @@ export class Main {
       pageUrl.searchParams.set("board", url);
     }
     window.history.replaceState(null, "", pageUrl);
-
-    this.#ui.url = url;
   }
 
-  #getBoardFromUrl() {
-    return new URL(window.location.href).searchParams.get("board");
-  }
+  render() {
+    return html`<bb-ui-manager
+      ${ref(this.#uiRef)}
+      .status=${this.status}
+      .bootWithUrl=${this.#bootWithUrl}
+      @breadboardstart=${this.#onStartBoard}
+      @breadboardmessagetraversal=${() => {
+        if (this.status !== BreadboardUI.Types.STATUS.RUNNING) {
+          return;
+        }
 
-  async #suspendIfPaused(): Promise<void> {
-    return new Promise((resolve) => {
-      if (this.#pauser.paused) {
-        this.#ui.paused = true;
-        this.#pauser.once(() => {
-          this.#ui.paused = false;
-          resolve();
-        });
+        this.status = BreadboardUI.Types.STATUS.PAUSED;
 
-        return;
-      }
+        if (this.#uiRef.value) {
+          this.#uiRef.value.toast(
+            "Board paused",
+            "information" as BreadboardUI.Events.ToastType
+          );
+        }
+      }}
+      @breadboardboardunload=${() => {
+        this.#setActiveBreadboard(null);
 
-      resolve();
-    });
+        this.#boardId++;
+        if (!this.#uiRef.value) {
+          console.warn("Unable to find UI");
+          return;
+        }
+        this.#uiRef.value.bootWithUrl = null;
+        this.#uiRef.value.url = null;
+      }}
+      @breadboardtoast=${(toastEvent: BreadboardUI.ToastEvent) => {
+        if (!this.#uiRef.value) {
+          return;
+        }
+
+        this.#uiRef.value.toast(toastEvent.message, toastEvent.toastType);
+      }}
+      @breadboarddelay=${(delayEvent: BreadboardUI.DelayEvent) => {
+        this.#delay = delayEvent.duration;
+      }}
+      .boards=${this.config.boards}
+    ></bb-ui-manager>`;
   }
 }

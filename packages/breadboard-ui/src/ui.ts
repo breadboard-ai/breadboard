@@ -4,20 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  LitElement,
-  html,
-  css,
-  HTMLTemplateResult,
-  nothing,
-  TemplateResult,
-} from "lit";
+import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { Board, HistoryEventType, HistoryEntry } from "./types.js";
+import { Board, HistoryEntry, STATUS } from "./types.js";
 import {
   BoardUnloadEvent,
   InputEnterEvent,
+  MessageTraversalEvent,
   NodeSelectEvent,
+  ToastEvent,
   ToastType,
 } from "./events.js";
 import { LoadArgs } from "./load.js";
@@ -39,6 +34,8 @@ import {
   ProbeMessage,
 } from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
+import { longTermMemory } from "./utils/long-term-memory.js";
+import { classMap } from "lit/directives/class-map.js";
 
 type ExtendedNodeInformation = {
   id: string;
@@ -90,6 +87,11 @@ const enum MODE {
 }
 
 type inputCallback = (data: Record<string, unknown>) => void;
+type UIConfig = {
+  showAllInputs: boolean;
+};
+
+const CONFIG_MEMORY_KEY = "ui-config";
 
 @customElement("bb-ui-manager")
 export class UI extends LitElement {
@@ -99,11 +101,17 @@ export class UI extends LitElement {
   @property({ reflect: true })
   paused = false;
 
+  @property({ reflect: true })
+  bootWithUrl: string | null = null;
+
   @property()
   highlightedDiagramNode = "";
 
   @property({ reflect: true })
   url: string | null = "";
+
+  @property({ reflect: true })
+  status = STATUS.RUNNING;
 
   @property()
   boards: Board[] = [];
@@ -129,6 +137,11 @@ export class UI extends LitElement {
   @state()
   messages: AnyRunResult[] = [];
 
+  @state()
+  config: UIConfig = {
+    showAllInputs: false,
+  };
+
   #subHistoryEntries: Map<string, HistoryEntry[]> = new Map();
   #diagram = new Diagram();
   #lastHistoryEventTime = Number.NaN;
@@ -136,6 +149,9 @@ export class UI extends LitElement {
   #gridInfoRef: Ref<HTMLElement> = createRef();
   #gridInfoBB: DOMRect | null = null;
   #handlers: Map<string, inputCallback[]> = new Map();
+  #memory = longTermMemory;
+  #isUpdatingMemory = false;
+  #messagePosition = 0;
 
   static styles = css`
     :host {
@@ -152,14 +168,14 @@ export class UI extends LitElement {
       box-sizing: border-box;
     }
 
-    header {
+    :host > header {
       padding: calc(var(--bb-grid-size) * 6) calc(var(--bb-grid-size) * 8)
         calc(var(--bb-grid-size) * 0) calc(var(--bb-grid-size) * 8);
       font-size: var(--bb-text-default);
       grid-column: 1 / 3;
     }
 
-    header a {
+    :host > header a {
       text-decoration: none;
     }
 
@@ -279,6 +295,46 @@ export class UI extends LitElement {
       display: flex;
     }
 
+    #rhs {
+      display: grid;
+      grid-template-rows: calc(var(--bb-grid-size) * 10) auto;
+      overflow: auto;
+    }
+
+    #controls {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    #run-status {
+      font-size: var(--bb-text-pico);
+      margin-left: calc(var(--bb-grid-size) * 2);
+      text-transform: uppercase;
+      text-align: center;
+      background: #eee;
+      border-radius: calc(var(--bb-grid-size) * 3);
+      padding: var(--bb-grid-size);
+      font-weight: bold;
+      border: 1px solid rgb(230 230 230);
+    }
+
+    #run-status {
+      width: 70px;
+    }
+
+    #run-status.running {
+      border: 1px solid rgb(174 206 161);
+      color: rgb(31 56 21);
+      background: rgb(223 239 216);
+    }
+
+    #run-status.paused {
+      border: 1px solid rgb(248 193 122);
+      color: rgb(192 116 19);
+      background: rgb(255, 242, 204);
+    }
+
     #graph-info {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -312,7 +368,7 @@ export class UI extends LitElement {
       grid-column: 1 / 3;
     }
 
-    #inputs h1,
+    #inputs header,
     #outputs h1,
     #history h1 {
       font-size: var(--bb-text-small);
@@ -324,6 +380,25 @@ export class UI extends LitElement {
       top: 0;
       background: rgb(255, 255, 255);
       z-index: 1;
+    }
+
+    #inputs header {
+      display: flex;
+    }
+
+    #inputs header h1 {
+      font-size: var(--bb-text-small);
+      font-weight: bold;
+      margin: 0;
+      flex: 1;
+    }
+
+    #inputs #input-options {
+      display: flex;
+    }
+
+    #inputs #input-options input {
+      margin: 0 var(--bb-grid-size);
     }
 
     #inputs-list,
@@ -425,6 +500,14 @@ export class UI extends LitElement {
       const nodeSelect = evt as NodeSelectEvent;
       this.selectedNode = this.#nodeInfo.get(nodeSelect.id) || null;
     });
+
+    this.#memory.retrieve(CONFIG_MEMORY_KEY).then((value) => {
+      if (!value) {
+        return;
+      }
+
+      this.config = JSON.parse(value) as UIConfig;
+    });
   }
 
   toast(message: string, type: ToastType) {
@@ -455,6 +538,7 @@ export class UI extends LitElement {
     this.inputs.length = 0;
     this.outputs.length = 0;
     this.messages.length = 0;
+    this.#messagePosition = 0;
 
     this.#nodeInfo.clear();
 
@@ -698,11 +782,13 @@ export class UI extends LitElement {
   async handleStateChange(
     message: HarnessRunResult
   ): Promise<Record<string, unknown> | void> {
-    const nodeId = hasNodeInfo(message) ? message.data.node.id : "";
-    await this.renderDiagram(nodeId);
+    this.#lastHistoryEventTime = globalThis.performance.now();
 
     // Store it for later, render, then actually handle the work.
     this.messages.push(message);
+    if (this.status === STATUS.RUNNING) {
+      this.#messagePosition = this.messages.length;
+    }
     this.requestUpdate();
 
     const { data, type } = message;
@@ -710,12 +796,12 @@ export class UI extends LitElement {
       case "nodestart": {
         this.#handlers.clear();
         this.#handlers.set(message.data.node.id, []);
-        return this.#createHistoryEntry(message);
+        return;
       }
 
       case "nodeend": {
         this.#handlers.clear();
-        return this.#updateHistoryEntry(message);
+        return;
       }
 
       case "input": {
@@ -730,30 +816,20 @@ export class UI extends LitElement {
       case "output": {
         return this.output(data);
       }
-
-      case "skip": {
-        // TODO: Allow users to toggle skips.
-        return;
-      }
-
-      default: {
-        return this.#createHistoryEntry(message);
-      }
     }
   }
 
-  #obtainProcessedValuesIfAvailable(
-    idx: number,
-    id: string
-  ): Record<string, NodeValue> | null {
-    for (let i = idx; i < this.messages.length; i++) {
-      const message = this.messages[i];
-      if (message.type === "nodeend" && message.data.node.id === id) {
-        return message.data.outputs;
-      }
+  async #toggleConfigOption(key: keyof UIConfig) {
+    if (this.#isUpdatingMemory) {
+      return;
     }
 
-    return null;
+    this.#isUpdatingMemory = true;
+    this.config[key] = !this.config[key];
+    await this.#memory.store(CONFIG_MEMORY_KEY, JSON.stringify(this.config));
+    this.#isUpdatingMemory = false;
+
+    this.requestUpdate();
   }
 
   #renderContent() {
@@ -761,103 +837,13 @@ export class UI extends LitElement {
       return html`Loading board...`;
     }
 
-    type InputDescription = {
-      id: string;
-      configuration?: NodeConfiguration;
-      remember: boolean;
-      secret: boolean;
-    };
-
-    const createInput = (
-      idx: number,
-      { id, configuration, secret, remember }: InputDescription
-    ) => {
-      const processedValues = this.#obtainProcessedValuesIfAvailable(idx, id);
-      return html`<bb-input
-        id="${id}"
-        .secret=${secret}
-        .remember=${remember}
-        .configuration=${configuration}
-        .processedValues=${processedValues}
-        @breadboardinputenterevent=${(event: InputEnterEvent) => {
-          // Notify any pending handlers that the input has arrived.
-          const data = event.data;
-          const handlers = this.#handlers.get(id) || [];
-          for (const handler of handlers) {
-            handler.call(null, data);
-          }
-        }}
-      ></bb-input>`;
-    };
-
-    const inputs: TemplateResult[] = [];
-    // Infer from the messages received which inputs need to be shown.
-    for (let idx = this.messages.length - 1; idx >= 0; idx--) {
-      const message = this.messages[idx];
-      if (message.type !== "nodestart" && message.type !== "secret") {
-        continue;
-      }
-
-      // Capture all secrets.
-      if (message.type === "secret") {
-        for (const id of message.data.keys) {
-          inputs.push(
-            createInput(idx, {
-              id,
-              configuration: {
-                schema: {
-                  properties: {
-                    secret: {
-                      title: id,
-                      description: `Enter ${id}`,
-                      type: "string",
-                    },
-                  },
-                },
-              },
-              remember: true,
-              secret: true,
-            })
-          );
-        }
-        continue;
-      }
-
-      // Capture all inputs that require user interaction.
-      if (message.type === "nodestart" && message.data.node.type === "input") {
-        let requiresUserInteraction = false;
-        for (let n = idx; n < this.messages.length; n++) {
-          // If we land on an input message before the nodeend then we know this
-          // node requires user interaction and should be retained.
-          const nextMessage = this.messages[n];
-          if (
-            nextMessage.type === "input" &&
-            nextMessage.data.node.id === message.data.node.id
-          ) {
-            requiresUserInteraction = true;
-          }
-
-          if (nextMessage.type === "nodeend") {
-            break;
-          }
-        }
-
-        if (!requiresUserInteraction) {
-          continue;
-        }
-        inputs.push(
-          createInput(idx, {
-            id: message.data.node.id,
-            configuration: message.data.node.configuration,
-            remember: false,
-            secret: false,
-          })
-        );
-      }
-    }
-
     switch (this.mode) {
       case MODE.BUILD: {
+        // TODO: Figure out the await part of this rendering.
+        const message = this.messages[this.#messagePosition - 1];
+        const nodeId = hasNodeInfo(message) ? message.data.node.id : "";
+        this.renderDiagram(nodeId);
+
         return html`<div id="diagram">
             ${this.loadInfo.diagram ? this.#diagram : "No board diagram"}
             ${this.selectedNode
@@ -882,34 +868,97 @@ export class UI extends LitElement {
                 </div>`
               : nothing}
           </div>
-          <div id="graph-info" ${ref(this.#gridInfoRef)}>
-            <div id="inputs">
-              <h1>Inputs</h1>
-              <div id="inputs-list">
-                ${inputs.length ? inputs : html`There are no inputs yet.`}
+          <div id="rhs">
+            <div id="controls">
+              <bb-traversal-controls
+                id="position"
+                @breadboardmessagetraversal=${(evt: MessageTraversalEvent) => {
+                  if (evt.index < 0 || evt.index > this.messages.length) {
+                    return;
+                  }
+
+                  this.#messagePosition = evt.index;
+                  this.requestUpdate();
+                }}
+                .value=${this.#messagePosition}
+                .max=${this.messages.length}
+              ></bb-traversal-controls>
+
+              <div id="run-status" class=${classMap({ [this.status]: true })}>
+                ${this.status}
               </div>
             </div>
-            <div id="outputs">
-              <h1>Outputs</h1>
-              <div id="outputs-list">
-                ${this.outputs.length
-                  ? this.outputs.map((output) => {
-                      return html`${output}`;
-                    })
-                  : html`There are no outputs yet.`}
+            <div id="graph-info" ${ref(this.#gridInfoRef)}>
+              <section id="inputs">
+                <header>
+                  <h1>Inputs</h1>
+                  <div id="input-options">
+                    <label for="show-all-inputs">Show all inputs</label>
+                    <input
+                      type="checkbox"
+                      id="show-all-inputs"
+                      ?checked=${this.config.showAllInputs}
+                      @input=${() => this.#toggleConfigOption("showAllInputs")}
+                    />
+                  </div>
+                </header>
+                <div id="inputs-list">
+                  <bb-input-list
+                    .showAllInputs=${this.config.showAllInputs}
+                    .messages=${this.messages}
+                    .lastUpdate=${this.#lastHistoryEventTime}
+                    .messagePosition=${this.#messagePosition}
+                    @breadboardinputenter=${(event: InputEnterEvent) => {
+                      // Notify any pending handlers that the input has arrived.
+                      if (this.#messagePosition !== this.messages.length) {
+                        // The user has attempted to provide input for a stale
+                        // request.
+                        // TODO: Enable resuming from this point.
+                        this.dispatchEvent(
+                          new ToastEvent(
+                            "Unable to submit: board evaluation has already passed this point",
+                            ToastType.ERROR
+                          )
+                        );
+                        return;
+                      }
+
+                      const data = event.data;
+                      const handlers = this.#handlers.get(event.id) || [];
+                      if (handlers.length === 0) {
+                        console.warn(
+                          `Received event for ${event.id} but no handlers were found`
+                        );
+                      }
+                      for (const handler of handlers) {
+                        handler.call(null, data);
+                      }
+                    }}
+                  ></bb-input-list>
+                </div>
+              </section>
+              <section id="outputs">
+                <h1>Outputs</h1>
+                <div id="outputs-list">
+                  <bb-output-list
+                    .messages=${this.messages}
+                    .messagePosition=${this.#messagePosition}
+                  ></bb-output-list>
+                </div>
+              </section>
+              <div
+                id="drag-handle"
+                @pointerdown=${this.#startVerticalResize}
+                @pointermove=${this.#onVerticalResize}
+                @pointerup=${this.#endVerticalResize}
+              ></div>
+              <div id="history">
+                <bb-history-tree
+                  .messages=${this.messages}
+                  .messagePosition=${this.#messagePosition}
+                  .lastUpdate=${this.#lastHistoryEventTime}
+                ></bb-history-tree>
               </div>
-            </div>
-            <div
-              id="drag-handle"
-              @pointerdown=${this.#startVerticalResize}
-              @pointermove=${this.#onVerticalResize}
-              @pointerup=${this.#endVerticalResize}
-            ></div>
-            <div id="history">
-              <bb-history-tree
-                .history=${this.historyEntries}
-                .lastUpdate=${this.#lastHistoryEventTime}
-              ></bb-history-tree>
             </div>
           </div>`;
       }
@@ -956,7 +1005,10 @@ export class UI extends LitElement {
       tmpl = html`<header>
           <a href="/"><h1 id="title">Breadboard Playground</h1></a>
         </header>
-        <bb-board-list .boards=${this.boards}></bb-board-list>`;
+        <bb-board-list
+          .boards=${this.boards}
+          .bootWithUrl=${this.bootWithUrl}
+        ></bb-board-list>`;
     }
 
     return html`${tmpl} ${toasts}`;

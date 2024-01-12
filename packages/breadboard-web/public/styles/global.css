@@ -32,6 +32,7 @@ html {
   --bb-text-medium: 0.875rem;
   --bb-text-small: 0.75rem;
   --bb-text-nano: 0.7rem;
+  --bb-text-pico: 0.65rem;
   --bb-easing: cubic-bezier(0, 0, 0.3, 1);
   --bb-easing-duration-in: 0.15s;
   --bb-easing-duration-out: 0.3s;
@@ -39,6 +40,7 @@ html {
   --bb-icon-add-photo: url(/third_party/icons/add-photo.svg);
   --bb-icon-arrow: url(/third_party/icons/arrow.svg);
   --bb-icon-arrow-back-white: url(/third_party/icons/arrow-back-white.svg);
+  --bb-icon-before: url(/third_party/icons/before.svg);
   --bb-icon-board: url(/third_party/icons/board.svg);
   --bb-icon-close: url(/third_party/icons/close.svg);
   --bb-icon-collapse: url(/third_party/icons/collapse.svg);
@@ -52,6 +54,7 @@ html {
   --bb-icon-history: url(/third_party/icons/history.svg);
   --bb-icon-info: url(/third_party/icons/info.svg);
   --bb-icon-input: url(/third_party/icons/input.svg);
+  --bb-icon-next: url(/third_party/icons/next.svg);
   --bb-icon-output: url(/third_party/icons/output.svg);
   --bb-icon-pan: url(/third_party/icons/pan.svg);
   --bb-icon-preview: url(/third_party/icons/preview.svg);

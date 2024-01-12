@@ -298,7 +298,7 @@ export class Input extends LitElement {
       this.#memory.rememberSaving(properties);
     }
 
-    this.dispatchEvent(new InputEnterEvent(data));
+    this.dispatchEvent(new InputEnterEvent(this.id, data));
   }
 
   render() {
@@ -318,7 +318,7 @@ export class Input extends LitElement {
     // render the form, nor the retrieved value, but instead we just dispatch
     // the event with the value in and stop rendering.
     if (this.remember && this.#memory.didSave(properties)) {
-      this.dispatchEvent(new InputEnterEvent(values));
+      this.dispatchEvent(new InputEnterEvent(this.id, values));
       return;
     }
 
