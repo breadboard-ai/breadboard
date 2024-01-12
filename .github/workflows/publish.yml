@@ -28,6 +28,7 @@ env:
   ALLOWED_PACKAGES: |
     (
       breadboard
+      breadboard-cli
     )
   DEFAULT_GIT_NAME: "${{ github.actor }}"
   DEFAULT_GIT_EMAIL: "${{ github.actor }}@users.noreply.github.com"
