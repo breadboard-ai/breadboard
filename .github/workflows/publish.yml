@@ -55,9 +55,9 @@ jobs:
             exit 1
           fi
 
-      - uses: actions/checkout@main
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@main
+      - uses: actions/setup-node@v4
         with:
           node-version: "20.x"
           registry-url: ${{ env.NPM_REGISTRY }}
@@ -97,9 +97,6 @@ jobs:
 
       - name: Running tests
         run: npm run test
-
-      - name: Sync Repository
-        run: npm run sync
 
       - if: github.event.inputs.packageVersion != ''
         name: Set Package Version
