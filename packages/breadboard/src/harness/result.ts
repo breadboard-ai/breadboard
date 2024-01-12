@@ -4,28 +4,22 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { loadRunnerState } from "../serialization.js";
 import { BreadboardRunResult, ProbeMessage } from "../types.js";
 import { HarnessRunResult } from "./types.js";
 
-// import { AnyRunResult } from "./types.js";
-
-// export class LocalResult<R extends AnyRunResult> implements HarnessResult<R> {
-//   message: R;
-//   response?: unknown;
-
-//   constructor(message: R) {
-//     this.message = message;
-//   }
-
-//   reply(reply: unknown) {
-//     this.response = reply;
-//   }
-// }
-
 export const fromProbe = <Probe extends ProbeMessage>(probe: Probe) => {
+  const loadStateIfAny = () => {
+    if (probe.type === "nodestart") {
+      return loadRunnerState(probe.data.state as string).state;
+    }
+    return undefined;
+  };
+  const state = loadStateIfAny();
   return {
     type: probe.type,
     data: probe.data,
+    state,
     reply: async () => {
       // Do nothing
     },
@@ -45,7 +39,7 @@ export const fromRunnerResult = <Result extends BreadboardRunResult>(
         inputArguments,
       },
       reply: async (value) => {
-        result.inputs = value;
+        result.inputs = value.inputs;
       },
     } as HarnessRunResult;
   } else if (type === "output") {
