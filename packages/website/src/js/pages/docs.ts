@@ -36,6 +36,7 @@ export class BreadboardSiteDocs extends LitElement {
         <nav>
           <ul>
             <li><a href="/docs/">Intro</a></li>
+            <li><a href="/docs/getting-started/">Getting Started</a></li>
             <li><a href="/docs/concepts/">Concepts</a></li>
           </ul>
         </nav>
