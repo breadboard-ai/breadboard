@@ -7,31 +7,28 @@
 import { Diagnostics } from "../harness/diagnostics.js";
 import { RunResult } from "../run.js";
 import { BoardRunner } from "../runner.js";
+import { loadRunnerState } from "../serialization.js";
 import {
   WritableResult,
   streamsToAsyncIterable,
   stubOutStreams,
 } from "../stream.js";
-import {
-  BreadboardRunResult,
-  InputValues,
-  NodeDescriptor,
-  NodeHandlerContext,
-  OutputValues,
-  RunResultType,
-  TraversalResult,
-} from "../types.js";
+import { InputValues, NodeHandlerContext, OutputValues } from "../types.js";
 import {
   AnyRunRequestMessage,
   AnyRunResponseMessage,
   ClientTransport,
+  InputResolveRequest,
   RunRequestMessage,
+  RunState,
   ServerTransport,
 } from "./protocol.js";
 
 const resumeRun = (request: AnyRunRequestMessage) => {
   const [type, , state] = request;
-  const result = state ? RunResult.load(state) : undefined;
+  // TODO: state is probably not a string here,
+  // it can also be a traversal result
+  const result = state ? RunResult.load(state as string) : undefined;
   if (result && type === "input") {
     const [, inputs] = request;
     result.inputs = inputs.inputs;
@@ -114,83 +111,55 @@ export class RunServer {
   }
 }
 
-class ClientRunResult implements BreadboardRunResult {
-  type: RunResultType;
-  node: NodeDescriptor;
-  invocationId = 0;
-  path?: number[];
-
-  #state?: string;
-  #inputArguments: InputValues = {};
-  #outputs: OutputValues = {};
-  #result: WritableResult<AnyRunResponseMessage, AnyRunRequestMessage>;
-
-  constructor(
-    result: WritableResult<AnyRunResponseMessage, AnyRunRequestMessage>
-  ) {
-    this.#result = result;
-
-    const [type, data, state] = result.data;
-    this.#state = state;
-    this.type = type as RunResultType;
-    if (type === "error") {
-      throw new Error("Server experienced an error", { cause: data.error });
-    }
-    if (type !== "graphend" && type !== "graphstart" && type !== "end") {
-      this.node = data.node;
-    } else {
-      // TODO: Remove this hack. Currently necessary, because
-      // BreadboardRunResult and ProbeMessages don't mix.
-      this.node = undefined as unknown as NodeDescriptor;
-    }
-
-    if (
-      type === "nodestart" ||
-      type === "nodeend" ||
-      type === "graphend" ||
-      type === "graphstart"
-    ) {
-      this.path = data.path;
-    }
-
-    if (type === "input") {
-      this.#inputArguments = data.inputArguments;
-    } else if (type === "output" || type == "nodeend") {
-      this.#outputs = data.outputs;
-    }
-  }
-
-  #checkState() {
-    if (!this.#state) {
-      throw new Error("State was not supplied for this ClientRunResult.");
-    }
-  }
-
-  set inputs(inputs: InputValues) {
-    if (this.type !== "input") return;
-    this.#checkState();
-    this.#result.reply(["input", { inputs }, this.#state || ""]);
-  }
-
-  get outputs(): OutputValues {
-    return this.#outputs;
-  }
-
-  get inputArguments(): InputValues {
-    return this.#inputArguments;
-  }
-
-  get state(): TraversalResult {
-    this.#checkState();
-    const runResult = RunResult.load(this.#state || "");
-    return runResult.state;
-  }
-}
-
 type RunClientTransport = ClientTransport<
   AnyRunRequestMessage,
   AnyRunResponseMessage
 >;
+
+type ReplyFunction = {
+  reply: (chunk: AnyRunRequestMessage[1]) => Promise<void>;
+};
+
+type ClientRunResultFromMessage<ResponseMessage> = ResponseMessage extends [
+  string,
+  object,
+  RunState?
+]
+  ? {
+      type: ResponseMessage[0];
+      data: ResponseMessage[1];
+      state?: RunState;
+    } & ReplyFunction
+  : never;
+
+export type AnyClientRunResult =
+  ClientRunResultFromMessage<AnyRunResponseMessage>;
+
+export type ClientRunResult<T> = T & ReplyFunction;
+
+const createRunResult = (
+  response: WritableResult<AnyRunResponseMessage, AnyRunRequestMessage>
+): AnyClientRunResult => {
+  const [type, data, state] = response.data;
+  const reply = async (chunk: AnyRunRequestMessage[1]) => {
+    if (type !== "input") {
+      throw new Error(
+        "For now, we cannot reply to messages other than 'input'."
+      );
+    }
+    await response.reply([type, chunk as InputResolveRequest, state]);
+  };
+  const inflateState = (state?: RunState) => {
+    if (!state) return undefined;
+    return typeof state === "string" ? loadRunnerState(state).state : state;
+  };
+  return {
+    type,
+    data,
+    state: inflateState(state),
+    reply,
+  } as AnyClientRunResult;
+};
 
 export class RunClient {
   #transport: RunClientTransport;
@@ -199,7 +168,7 @@ export class RunClient {
     this.#transport = clientTransport;
   }
 
-  async *run(state?: string): AsyncGenerator<BreadboardRunResult> {
+  async *run(state?: string): AsyncGenerator<AnyClientRunResult> {
     const stream = this.#transport.createClientStream();
     const server = streamsToAsyncIterable(
       stream.writableRequests,
@@ -209,7 +178,7 @@ export class RunClient {
     state && request.push(state);
     await server.start(request);
     for await (const response of server) {
-      yield new ClientRunResult(response);
+      yield createRunResult(response);
     }
   }
 
@@ -217,10 +186,11 @@ export class RunClient {
     let outputs;
 
     for await (const stop of this.run()) {
-      if (stop.type === "input") {
-        stop.inputs = inputs;
-      } else if (stop.type === "output") {
-        outputs = stop.outputs;
+      const { type, data } = stop;
+      if (type === "input") {
+        stop.reply({ inputs });
+      } else if (type === "output") {
+        outputs = data.outputs;
         break;
       }
     }

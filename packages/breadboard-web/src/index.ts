@@ -10,6 +10,7 @@ import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { customElement, property } from "lit/decorators.js";
 import { LitElement, html, css } from "lit";
 import * as BreadboardUI from "@google-labs/breadboard-ui";
+import { InputResolveRequest } from "@google-labs/breadboard/remote";
 
 // TODO: Remove once all elements are Lit-based.
 BreadboardUI.register();
@@ -89,11 +90,11 @@ export class Main extends LitElement {
         return;
       }
 
-      const answer = await ui.handleStateChange(result.message);
+      const answer = await ui.handleStateChange(result);
       await this.#waitIfPaused(answer);
 
       if (answer) {
-        result.reply(answer);
+        result.reply({ inputs: answer } as InputResolveRequest);
       }
     }
 

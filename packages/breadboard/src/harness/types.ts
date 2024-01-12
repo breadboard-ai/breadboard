@@ -6,111 +6,75 @@
 
 import { NodeProxyConfig } from "../remote/config.js";
 import { LoadResponse } from "../remote/protocol.js";
+import { AnyClientRunResult, ClientRunResult } from "../remote/run.js";
 import {
   ErrorResponse,
   InputResponse,
   Kit,
-  NodeEndResponse,
-  NodeStartResponse,
   OutputResponse,
   OutputValues,
   ProbeMessage,
 } from "../types.js";
 
-export type ResultType =
-  /**
-   * The board has been loaded
-   */
-  | "load"
-  /**
-   * The board is asking for input
-   */
-  | "input"
-  /**
-   * The board is sending output
-   */
-  | "output"
-  /**
-   * Sent before a handler for a particular node is invoked
-   */
-  | "nodestart"
-  /**
-   * Sent after a handler for a particular node is invoked
-   */
-  | "nodeend"
-  /**
-   * Sent when the harness is asking for secret
-   */
-  | "secret"
-  /**
-   * Sent when the board run process reports an error
-   */
-  | "error"
-  /**
-   * Sent when the board run finished
-   */
-  | "end";
-
+/**
+ * The board has been loaded
+ */
 export type LoadResult = {
   type: "load";
   data: LoadResponse;
 };
 
+/**
+ * The board is asking for input
+ */
 export type InputResult = {
   type: "input";
   data: InputResponse;
 };
 
+/**
+ * The board is sending output
+ */
 export type OutputResult = {
   type: "output";
   data: OutputResponse;
 };
 
+/**
+ * Sent when the harness is asking for secret
+ */
 export type SecretResult = {
   type: "secret";
   data: { keys: string[] };
 };
 
-export type NodeStartResult = {
-  type: "nodestart";
-  data: NodeStartResponse;
-};
-
-export type NodeEndResult = {
-  type: "nodeend";
-  data: NodeEndResponse;
-};
-
+/**
+ * Sent when the board run process reports an error
+ */
 export type ErrorResult = {
   type: "error";
   data: ErrorResponse;
 };
 
+/**
+ * Sent when the board run finished
+ */
 export type EndResult = {
   type: "end";
   data: Record<string, never>;
 };
 
-export type OptionalId = { id?: string };
-
-export type AnyRunResult = (
+export type AnyRunResult =
   | InputResult
   | OutputResult
   | SecretResult
-  | NodeStartResult
-  | NodeEndResult
   | ErrorResult
   | EndResult
-  | ProbeMessage
-) &
-  OptionalId;
+  | ProbeMessage;
 
-export interface HarnessResult<R extends AnyRunResult> {
-  reply(reply: unknown): void;
-  message: R;
-}
-
-export type HarnessRunResult = HarnessResult<AnyRunResult>;
+export type HarnessRunResult =
+  | AnyClientRunResult
+  | ClientRunResult<SecretResult>;
 
 export interface Harness {
   load(): Promise<LoadResponse>;

@@ -20,13 +20,17 @@ import { Diagram } from "./diagram.js";
 import { Input } from "./input.js";
 import { Output, OutputArgs } from "./output.js";
 import {
-  AnyRunResult,
+  HarnessRunResult,
   InputResult,
-  NodeEndResult,
-  NodeStartResult,
   OutputResult,
 } from "@google-labs/breadboard/harness";
-import { NodeConfiguration, NodeDescriptor } from "@google-labs/breadboard";
+import { ClientRunResult } from "@google-labs/breadboard/remote";
+import {
+  NodeConfiguration,
+  NodeDescriptor,
+  NodeEndProbeMessage,
+  NodeStartProbeMessage,
+} from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { longTermMemory } from "./utils/long-term-memory.js";
 import { classMap } from "lit/directives/class-map.js";
@@ -38,11 +42,13 @@ type ExtendedNodeInformation = {
 };
 
 type RunResultWithNodeInfo =
-  | InputResult
-  | OutputResult
-  | NodeStartResult
-  | NodeEndResult;
-const hasNodeInfo = (event?: AnyRunResult): event is RunResultWithNodeInfo =>
+  | ClientRunResult<InputResult>
+  | ClientRunResult<OutputResult>
+  | ClientRunResult<NodeStartProbeMessage>
+  | ClientRunResult<NodeEndProbeMessage>;
+const hasNodeInfo = (
+  event?: HarnessRunResult
+): event is RunResultWithNodeInfo =>
   typeof event === "object" &&
   (event.type === "input" ||
     event.type === "output" ||
@@ -103,7 +109,7 @@ export class UI extends LitElement {
   selectedNode: ExtendedNodeInformation | null = null;
 
   @state()
-  messages: AnyRunResult[] = [];
+  messages: HarnessRunResult[] = [];
 
   @state()
   config: UIConfig = {
@@ -633,7 +639,7 @@ export class UI extends LitElement {
   }
 
   async handleStateChange(
-    message: AnyRunResult
+    message: HarnessRunResult
   ): Promise<Record<string, unknown> | void> {
     this.#lastHistoryEventTime = globalThis.performance.now();
 

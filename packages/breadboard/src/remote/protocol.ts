@@ -7,15 +7,17 @@
 import { PatchedReadableStream } from "../stream.js";
 import {
   ErrorResponse,
-  GraphProbeData,
+  GraphEndProbeMessage,
+  GraphStartProbeMessage,
   InputResponse,
   InputValues,
   NodeDescriptor,
   NodeEndProbeMessage,
-  NodeStartResponse,
+  NodeStartProbeMessage,
   OutputResponse,
   OutputValues,
   SkipProbeMessage,
+  TraversalResult,
 } from "../types.js";
 
 /**
@@ -61,7 +63,11 @@ export type LoadResponse = {
   nodes?: NodeDescriptor[];
 };
 
-export type RunState = string;
+export type RunState = string | TraversalResult;
+
+type GenericResult = { type: string; data: unknown };
+
+type RemoteMessage<T extends GenericResult> = [T["type"], T["data"], RunState?];
 
 /**
  * A run request is an empty object.
@@ -71,20 +77,6 @@ export type RunRequest = Record<string, never>;
 export type RunRequestMessage = ["run", RunRequest, RunState?];
 
 export type OutputResponseMessage = ["output", OutputResponse];
-
-export type NodeStartResponseMessage = [
-  "nodestart",
-  NodeStartResponse,
-  RunState
-];
-
-export type NodeEndResponseMessage = ["nodeend", NodeEndProbeMessage["data"]];
-
-export type GraphStartResponseMessage = ["graphstart", GraphProbeData];
-
-export type GraphEndResponseMessage = ["graphend", GraphProbeData];
-
-export type SkipResponseMessage = ["skip", SkipProbeMessage["data"]];
 
 export type InputResponseMessage = ["input", InputResponse, RunState];
 
@@ -187,18 +179,16 @@ export type AnyProxyResponseMessage =
 
 export type AnyRunRequestMessage =
   | RunRequestMessage
-  | InputResolveRequestMessage
-  | ProxyResolveRequestMessage;
+  | InputResolveRequestMessage;
 
 export type AnyRunResponseMessage =
   | OutputResponseMessage
-  | NodeStartResponseMessage
-  | NodeEndResponseMessage
-  | GraphStartResponseMessage
-  | GraphEndResponseMessage
-  | SkipResponseMessage
+  | RemoteMessage<NodeStartProbeMessage>
+  | RemoteMessage<NodeEndProbeMessage>
+  | RemoteMessage<GraphStartProbeMessage>
+  | RemoteMessage<GraphEndProbeMessage>
+  | RemoteMessage<SkipProbeMessage>
   | InputResponseMessage
-  | ProxyPromiseResponseMessage
   | EndResponseMessage
   | ErrorResponseMessage;
 

@@ -7,9 +7,8 @@
 import type { LoadRequestMessage } from "../worker/protocol.js";
 import { MessageController, WorkerTransport } from "../worker/controller.js";
 import type { Harness, HarnessConfig, HarnessRunResult } from "./types.js";
-import { Board, InputValues, asyncGen } from "../index.js";
+import { Board, asyncGen } from "../index.js";
 import { createSecretAskingKit } from "./secrets.js";
-import { LocalResult } from "./result.js";
 import { ProxyServer } from "../remote/proxy.js";
 import {
   PortDispatcher,
@@ -118,11 +117,7 @@ export class WorkerHarness implements Harness {
         if (this.#skipDiagnosticMessages(type)) {
           continue;
         }
-        const result = new LocalResult({ type, data });
-        await next(result);
-        if (type === "input") {
-          data.inputs = result.response as InputValues;
-        }
+        await next(data);
       }
     });
   }
