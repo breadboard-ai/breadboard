@@ -17,8 +17,10 @@ functions in traditional programs.
 ### Ports
 
 A _port_ is a named input or output of a node. Nodes can have any number of
-ports. Input ports are analogous to the parameters of a traditional function.
-Output ports are analogous to the results returned by a traditional function.
+ports. Ports can be _source ports_ (data flows _out_), or _destination ports_
+(data flows _in_). Source ports are analogous to the parameters of a traditional
+function. Destination ports are analogous to the results returned by a
+traditional function.
 
 ### Edges
 

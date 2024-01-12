@@ -33,6 +33,9 @@
       "env": {
         "FORCE_COLOR": "1"
       },
+      "dependencies": [
+        "build:eleventy"
+      ],
       "files": [
         "src/js/",
         "tsconfig.json",
@@ -45,6 +48,9 @@
     },
     "build:static": {
       "command": "cp -R src/static _site",
+      "dependencies": [
+        "build:eleventy"
+      ],
       "files": [
         "src/static/"
       ],
