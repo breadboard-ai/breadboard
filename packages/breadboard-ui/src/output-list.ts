@@ -35,7 +35,7 @@ export class OutputList extends LitElement {
         continue;
       }
 
-      const output = new Output(message.data);
+      const output = new Output(message.data.outputs);
       outputs.unshift(output);
     }
 

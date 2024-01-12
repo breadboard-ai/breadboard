@@ -5,7 +5,7 @@
  */
 
 export class StartEvent extends Event {
-  static eventName = "breadboardstartevent";
+  static eventName = "breadboardstart";
 
   constructor(public url: string) {
     super(StartEvent.eventName, {
@@ -23,7 +23,7 @@ export const enum ToastType {
 }
 
 export class ToastEvent extends Event {
-  static eventName = "breadboardtoastevent";
+  static eventName = "breadboardtoast";
 
   constructor(public message: string, public toastType: ToastType) {
     super(ToastEvent.eventName, {
@@ -35,7 +35,7 @@ export class ToastEvent extends Event {
 }
 
 export class DelayEvent extends Event {
-  static eventName = "breadboarddelayevent";
+  static eventName = "breadboarddelay";
 
   constructor(public duration: number) {
     super(DelayEvent.eventName, {
@@ -47,7 +47,7 @@ export class DelayEvent extends Event {
 }
 
 export class NodeSelectEvent extends Event {
-  static eventName = "breadboardnodeselectevent";
+  static eventName = "breadboardnodeselect";
 
   constructor(public id: string) {
     super(NodeSelectEvent.eventName, {
@@ -59,7 +59,7 @@ export class NodeSelectEvent extends Event {
 }
 
 export class InputEnterEvent extends Event {
-  static eventName = "breadboardinputenterevent";
+  static eventName = "breadboardinputenter";
 
   constructor(public id: string, public data: Record<string, unknown>) {
     super(InputEnterEvent.eventName, {
@@ -71,7 +71,7 @@ export class InputEnterEvent extends Event {
 }
 
 export class BoardUnloadEvent extends Event {
-  static eventName = "breadboardboardunloadevent";
+  static eventName = "breadboardboardunload";
 
   constructor() {
     super(BoardUnloadEvent.eventName, {
@@ -87,6 +87,18 @@ export class MessageTraversalEvent extends Event {
 
   constructor(public index: number) {
     super(MessageTraversalEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+export class ResumeEvent extends Event {
+  static eventName = "breadboardresume";
+
+  constructor() {
+    super(ResumeEvent.eventName, {
       bubbles: true,
       cancelable: true,
       composed: true,

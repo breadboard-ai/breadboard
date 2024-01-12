@@ -19,12 +19,12 @@ export class Main extends LitElement {
   @property({ reflect: false })
   config: { boards: BreadboardUI.Types.Board[] };
 
-  @property({ reflect: true })
-  status = BreadboardUI.Types.STATUS.RUNNING;
-
   #uiRef: Ref<BreadboardUI.UI> = createRef();
   #boardId = 0;
   #delay = 0;
+  #status = BreadboardUI.Types.STATUS.STOPPED;
+  #statusObservers: Array<(value: BreadboardUI.Types.STATUS) => void> = [];
+  #bootWithUrl: string | null = null;
 
   static styles = css`
     :host {
@@ -42,60 +42,91 @@ export class Main extends LitElement {
         (board) => board.version && board.version !== "0.0.1"
       );
     }
+
     config.boards.sort((a, b) => a.title.localeCompare(b.title));
     this.config = config;
 
-    document.body.addEventListener(
-      BreadboardUI.StartEvent.eventName,
-      async (evt: Event) => {
-        const ui = this.#uiRef.value;
-        if (!ui) {
+    const currentUrl = new URL(window.location.href);
+    const boardFromUrl = currentUrl.searchParams.get("board");
+    if (!boardFromUrl) {
+      return;
+    }
+    this.#bootWithUrl = boardFromUrl;
+  }
+
+  get status() {
+    return this.#status;
+  }
+
+  set status(status: BreadboardUI.Types.STATUS) {
+    this.#status = status;
+    this.requestUpdate();
+  }
+
+  async #onStartBoard(startEvent: BreadboardUI.StartEvent) {
+    this.#boardId++;
+    this.#setActiveBreadboard(startEvent.url);
+
+    const harness = createHarness(createHarnessConfig(startEvent.url));
+    this.status = BreadboardUI.Types.STATUS.RUNNING;
+
+    if (!this.#uiRef.value) {
+      console.warn("No UI found");
+      return;
+    }
+
+    const ui = this.#uiRef.value;
+    ui.url = startEvent.url;
+    ui.load(await harness.load());
+
+    const currentBoardId = this.#boardId;
+    for await (const result of harness.run()) {
+      if (this.#delay !== 0) {
+        await new Promise((r) => setTimeout(r, this.#delay));
+      }
+
+      if (currentBoardId !== this.#boardId) {
+        return;
+      }
+
+      const answer = await ui.handleStateChange(result.message);
+      await this.#waitIfPaused(answer);
+
+      if (answer) {
+        result.reply(answer);
+      }
+    }
+
+    this.status = BreadboardUI.Types.STATUS.STOPPED;
+  }
+
+  #waitIfPaused(answer: unknown) {
+    // We can use the answer as a signal for whether or not to proceed. In cases
+    // where user input is not required, the answer will be void/undefined, and
+    // we should honor the pause signal. When a user submits an answer (which
+    // they can only do for the most recent message going to the UI) then its
+    // value will not be void/undefined, and we can treat that as a signal to
+    // unpause.
+    const shouldUnpause = typeof answer !== "undefined";
+    if (shouldUnpause && this.status === BreadboardUI.Types.STATUS.PAUSED) {
+      if (confirm("Are you sure you wish to resume?")) {
+        this.status = BreadboardUI.Types.STATUS.RUNNING;
+      }
+    }
+
+    if (this.status !== BreadboardUI.Types.STATUS.PAUSED) {
+      return Promise.resolve();
+    }
+
+    return new Promise<void>((resolve) => {
+      this.#statusObservers.push((status: BreadboardUI.Types.STATUS) => {
+        if (status !== BreadboardUI.Types.STATUS.RUNNING) {
           return;
         }
 
-        this.#boardId++;
-
-        const startEvent = evt as BreadboardUI.StartEvent;
-        this.#setActiveBreadboard(startEvent.url);
-
-        const harness = createHarness(createHarnessConfig(startEvent.url));
-        this.status = BreadboardUI.Types.STATUS.RUNNING;
-
-        ui.url = startEvent.url;
-        ui.load(await harness.load());
-
-        const currentBoardId = this.#boardId;
-        for await (const result of harness.run()) {
-          if (this.#delay !== 0) {
-            await new Promise((r) => setTimeout(r, this.#delay));
-          }
-
-          if (currentBoardId !== this.#boardId) {
-            return;
-          }
-
-          const answer = await ui.handleStateChange(result.message);
-          if (answer) {
-            result.reply(answer);
-          }
-
-          // @ts-expect-error Status can change between for-await steps.
-          if (this.status === BreadboardUI.Types.STATUS.PAUSED) {
-            // TODO: Handle resume behavior.
-          }
-        }
-
-        this.status = BreadboardUI.Types.STATUS.STOPPED;
-      }
-    );
-  }
-
-  protected firstUpdated(): void {
-    const currentUrl = new URL(window.location.href);
-    const boardFromUrl = currentUrl.searchParams.get("board");
-    if (boardFromUrl) {
-      document.body.dispatchEvent(new BreadboardUI.StartEvent(boardFromUrl));
-    }
+        resolve();
+      });
+    });
   }
 
   #setActiveBreadboard(url: string | null) {
@@ -112,21 +143,41 @@ export class Main extends LitElement {
     return html`<bb-ui-manager
       ${ref(this.#uiRef)}
       .status=${this.status}
+      .bootWithUrl=${this.#bootWithUrl}
+      @breadboardstart=${this.#onStartBoard}
       @breadboardmessagetraversal=${() => {
+        if (this.status !== BreadboardUI.Types.STATUS.RUNNING) {
+          return;
+        }
+
         this.status = BreadboardUI.Types.STATUS.PAUSED;
+
+        if (this.#uiRef.value) {
+          this.#uiRef.value.toast(
+            "Board paused",
+            "information" as BreadboardUI.Events.ToastType
+          );
+        }
       }}
-      @breadboardboardunloadevent=${() => {
+      @breadboardboardunload=${() => {
         this.#setActiveBreadboard(null);
+
         this.#boardId++;
+        if (!this.#uiRef.value) {
+          console.warn("Unable to find UI");
+          return;
+        }
+        this.#uiRef.value.bootWithUrl = null;
+        this.#uiRef.value.url = null;
       }}
-      @breadboardtoastevent=${(toastEvent: BreadboardUI.ToastEvent) => {
+      @breadboardtoast=${(toastEvent: BreadboardUI.ToastEvent) => {
         if (!this.#uiRef.value) {
           return;
         }
 
         this.#uiRef.value.toast(toastEvent.message, toastEvent.toastType);
       }}
-      @breadboarddelayevent=${(delayEvent: BreadboardUI.DelayEvent) => {
+      @breadboarddelay=${(delayEvent: BreadboardUI.DelayEvent) => {
         this.#delay = delayEvent.duration;
       }}
       .boards=${this.config.boards}
