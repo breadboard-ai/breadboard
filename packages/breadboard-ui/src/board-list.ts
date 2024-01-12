@@ -17,6 +17,9 @@ export class BoardList extends LitElement {
   @property()
   boards: Board[] = [];
 
+  @property()
+  bootWithUrl: string | null = null;
+
   static styles = css`
     :host {
       display: block;
@@ -72,6 +75,14 @@ export class BoardList extends LitElement {
         ></bb-board-item>`;
       })}
     </div>`;
+  }
+
+  protected firstUpdated(): void {
+    if (!this.bootWithUrl) {
+      return;
+    }
+
+    this.dispatchEvent(new StartEvent(this.bootWithUrl));
   }
 }
 

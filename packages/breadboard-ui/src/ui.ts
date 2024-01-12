@@ -6,12 +6,13 @@
 
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { Board, HistoryEventType, HistoryEntry, STATUS } from "./types.js";
+import { Board, HistoryEntry, STATUS } from "./types.js";
 import {
   BoardUnloadEvent,
   InputEnterEvent,
   MessageTraversalEvent,
   NodeSelectEvent,
+  ToastEvent,
   ToastType,
 } from "./events.js";
 import { LoadArgs } from "./load.js";
@@ -67,6 +68,9 @@ export class UI extends LitElement {
 
   @property({ reflect: true })
   paused = false;
+
+  @property({ reflect: true })
+  bootWithUrl: string | null = null;
 
   @property()
   highlightedDiagramNode = "";
@@ -262,6 +266,7 @@ export class UI extends LitElement {
     #rhs {
       display: grid;
       grid-template-rows: calc(var(--bb-grid-size) * 10) auto;
+      overflow: auto;
     }
 
     #controls {
@@ -756,8 +761,21 @@ export class UI extends LitElement {
                     .messages=${this.messages}
                     .lastUpdate=${this.#lastHistoryEventTime}
                     .messagePosition=${this.#messagePosition}
-                    @breadboardinputenterevent=${(event: InputEnterEvent) => {
+                    @breadboardinputenter=${(event: InputEnterEvent) => {
                       // Notify any pending handlers that the input has arrived.
+                      if (this.#messagePosition !== this.messages.length) {
+                        // The user has attempted to provide input for a stale
+                        // request.
+                        // TODO: Enable resuming from this point.
+                        this.dispatchEvent(
+                          new ToastEvent(
+                            "Unable to submit: board evaluation has already passed this point",
+                            ToastType.ERROR
+                          )
+                        );
+                        return;
+                      }
+
                       const data = event.data;
                       const handlers = this.#handlers.get(event.id) || [];
                       if (handlers.length === 0) {
@@ -840,7 +858,10 @@ export class UI extends LitElement {
       tmpl = html`<header>
           <a href="/"><h1 id="title">Breadboard Playground</h1></a>
         </header>
-        <bb-board-list .boards=${this.boards}></bb-board-list>`;
+        <bb-board-list
+          .boards=${this.boards}
+          .bootWithUrl=${this.bootWithUrl}
+        ></bb-board-list>`;
     }
 
     return html`${tmpl} ${toasts}`;
