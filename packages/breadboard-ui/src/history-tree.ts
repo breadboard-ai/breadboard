@@ -11,24 +11,27 @@ import { classMap } from "lit/directives/class-map.js";
 import { keyed } from "lit/directives/keyed.js";
 import {
   AnyRunResult,
-  NodeEndResult,
-  NodeStartResult,
+  HarnessRunResult,
 } from "@google-labs/breadboard/harness";
-import { ProbeMessage } from "@google-labs/breadboard";
+import {
+  NodeEndProbeMessage,
+  NodeStartProbeMessage,
+  ProbeMessage,
+} from "@google-labs/breadboard";
 
 const enum STATE {
   COLLAPSED = "collapsed",
   EXPANDED = "expanded",
 }
 
-type RunResultWithPath = ProbeMessage | NodeStartResult | NodeEndResult;
+type RunResultWithPath = ProbeMessage;
 const hasPath = (event: AnyRunResult): event is RunResultWithPath =>
   event.type === "nodestart" ||
   event.type === "nodeend" ||
   event.type === "graphstart" ||
   event.type === "graphend";
 
-type RunResultWithState = NodeStartResult;
+type RunResultWithState = NodeStartProbeMessage;
 const hasStateInfo = (event: AnyRunResult): event is RunResultWithState =>
   event.type === "nodestart";
 
@@ -58,7 +61,7 @@ const isValidHistoryEntry = (event: AnyRunResult): boolean => {
 @customElement("bb-history-tree")
 export class HistoryTree extends LitElement {
   @property({ reflect: false })
-  messages: AnyRunResult[] | null = null;
+  messages: HarnessRunResult[] | null = null;
 
   @property({ reflect: true })
   messagePosition = 0;
@@ -656,12 +659,12 @@ export class HistoryTree extends LitElement {
     window.removeEventListener("keydown", this.#onKeyDownBound);
   }
 
-  #createHistoryEntry(event: AnyRunResult): HistoryEntry {
+  #createHistoryEntry(event: HarnessRunResult): HistoryEntry {
     const getNodeData = (): HistoryEntry["graphNodeData"] => {
       if (hasPath(event)) {
-        if (hasStateInfo(event) && typeof event.data.state === "object") {
+        if (hasStateInfo(event) && typeof event.state === "object") {
           const id = hasPath(event) ? event.data.node.id : "";
-          const nodeValues = event.data.state.state.state.get(id);
+          const nodeValues = event.state.state.state.get(id);
           if (!nodeValues) {
             return null;
           }
@@ -713,7 +716,7 @@ export class HistoryTree extends LitElement {
     return entryList;
   }
 
-  #updateHistoryEntry(event: NodeEndResult, entries: HistoryEntry[]) {
+  #updateHistoryEntry(event: NodeEndProbeMessage, entries: HistoryEntry[]) {
     const id = pathToId(event.data.path, event.type);
     const entryList = this.#findParentHistoryEntry(
       event.data.path,
@@ -737,7 +740,7 @@ export class HistoryTree extends LitElement {
       return;
     }
 
-    (existingEntry as unknown as NodeEndResult).type = event.type;
+    (existingEntry as unknown as NodeEndProbeMessage).type = event.type;
 
     if (existingEntry.graphNodeData && "outputs" in event.data) {
       existingEntry.graphNodeData.outputs = event.data.outputs;

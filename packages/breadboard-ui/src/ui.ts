@@ -20,18 +20,16 @@ import { Diagram } from "./diagram.js";
 import { Input } from "./input.js";
 import { Output, OutputArgs } from "./output.js";
 import {
-  AnyRunResult,
   HarnessRunResult,
   InputResult,
   OutputResult,
 } from "@google-labs/breadboard/harness";
+import { ClientRunResult } from "@google-labs/breadboard/remote";
 import {
   NodeConfiguration,
   NodeDescriptor,
   NodeEndProbeMessage,
   NodeStartProbeMessage,
-  NodeValue,
-  ProbeMessage,
 } from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { longTermMemory } from "./utils/long-term-memory.js";
@@ -44,42 +42,18 @@ type ExtendedNodeInformation = {
 };
 
 type RunResultWithNodeInfo =
-  | InputResult
-  | OutputResult
-  | NodeStartProbeMessage
-  | NodeEndProbeMessage;
-const hasNodeInfo = (event: AnyRunResult): event is RunResultWithNodeInfo =>
-  event.type === "input" ||
-  event.type === "output" ||
-  event.type === "nodestart" ||
-  event.type === "nodeend";
-
-type RunResultWithPath =
-  | ProbeMessage
-  | NodeStartProbeMessage
-  | NodeEndProbeMessage;
-const hasPath = (event: AnyRunResult): event is RunResultWithPath =>
-  event.type === "nodestart" ||
-  event.type === "nodeend" ||
-  event.type === "graphstart" ||
-  event.type === "graphend";
-
-type RunResultWithState = NodeStartProbeMessage;
-const hasStateInfo = (event: AnyRunResult): event is RunResultWithState =>
-  event.type === "nodestart";
-
-const pathToId = (path: number[], type: RunResultWithPath["type"]) => {
-  const isGraphNode = type === "graphstart" || type === "graphend";
-  if (path.length == 0 && isGraphNode) {
-    if (type === "graphstart") {
-      return `path-main-graph-start`;
-    } else {
-      return `path-main-graph-end`;
-    }
-  }
-
-  return `path-${path.join("-")}`;
-};
+  | ClientRunResult<InputResult>
+  | ClientRunResult<OutputResult>
+  | ClientRunResult<NodeStartProbeMessage>
+  | ClientRunResult<NodeEndProbeMessage>;
+const hasNodeInfo = (
+  event?: HarnessRunResult
+): event is RunResultWithNodeInfo =>
+  typeof event === "object" &&
+  (event.type === "input" ||
+    event.type === "output" ||
+    event.type === "nodestart" ||
+    event.type === "nodeend");
 
 const enum MODE {
   BUILD = "build",
@@ -135,7 +109,7 @@ export class UI extends LitElement {
   selectedNode: ExtendedNodeInformation | null = null;
 
   @state()
-  messages: AnyRunResult[] = [];
+  messages: HarnessRunResult[] = [];
 
   @state()
   config: UIConfig = {
@@ -605,121 +579,6 @@ export class UI extends LitElement {
 
     globalThis.sessionStorage.setItem("grid-row-top", rowTop);
     globalThis.sessionStorage.setItem("grid-row-bottom", rowBottom);
-  }
-
-  #createHistoryEntry(event: HarnessRunResult): void {
-    if (Number.isNaN(this.#lastHistoryEventTime)) {
-      this.#lastHistoryEventTime = globalThis.performance.now();
-    }
-
-    const getNodeData = (): HistoryEntry["graphNodeData"] => {
-      if (hasPath(event)) {
-        if (hasStateInfo(event) && typeof event.state === "object") {
-          const id = hasPath(event) ? event.data.node.id : "";
-          const nodeValues = event.state.state.state.get(id);
-          if (!nodeValues) {
-            return null;
-          }
-
-          const nodeValue: Record<string, unknown[]> = {};
-          for (const [key, value] of nodeValues.entries()) {
-            nodeValue[key] = value;
-          }
-
-          return { inputs: nodeValue, outputs: {} };
-        }
-
-        return undefined;
-      }
-
-      return { inputs: event.data, outputs: {} };
-    };
-
-    const elapsedTime =
-      globalThis.performance.now() - this.#lastHistoryEventTime;
-    this.#lastHistoryEventTime = globalThis.performance.now();
-
-    const entry: HistoryEntry = {
-      ...event,
-      graphNodeData: getNodeData(),
-      id: hasPath(event) ? pathToId(event.data.path, event.type) : "",
-      guid: globalThis.crypto.randomUUID(),
-      elapsedTime,
-      children: [],
-    };
-
-    if (hasPath(event)) {
-      let entryList = this.#findParentHistoryEntry(event.data.path, event.type);
-      const existingNode = entryList.find(
-        (sibling) => sibling.id === pathToId(event.data.path, event.type)
-      );
-
-      // If there is an existing node, and this is either a graphstart/end node
-      // then append an ID to it and make it a child of the existing one.
-      if (existingNode) {
-        event.data.path.push(existingNode.children.length);
-        entry.id = pathToId(event.data.path, event.type);
-        entryList = existingNode.children;
-      }
-
-      entryList.push(entry);
-    } else {
-      this.historyEntries.push(entry);
-    }
-  }
-
-  #findParentHistoryEntry(path: number[], type: RunResultWithPath["type"]) {
-    let entryList = this.historyEntries;
-    for (let idx = 0; idx < path.length - 1; idx++) {
-      const id = pathToId(path.slice(0, idx + 1), type);
-      const parentId = entryList.findIndex((item) => item.id === id);
-      if (parentId === -1) {
-        console.warn(`Unable to find ID "${id}"`);
-        return this.historyEntries;
-      }
-
-      entryList = entryList[parentId].children;
-    }
-
-    return entryList;
-  }
-
-  #updateHistoryEntry(event: NodeStartProbeMessage | NodeEndProbeMessage) {
-    if (Number.isNaN(this.#lastHistoryEventTime)) {
-      this.#lastHistoryEventTime = globalThis.performance.now();
-    }
-
-    const id = pathToId(event.data.path, event.type);
-    const entryList = this.#findParentHistoryEntry(event.data.path, event.type);
-    const existingEntry = entryList.find((item) => item.id === id);
-    if (!existingEntry) {
-      console.warn(`Unable to find ID "${id}"`);
-      return;
-    }
-
-    // We may have a nodestart which leads into a graphstart of the same ID, but
-    // we'll then receive a graphend before a nodeend against that same ID. This
-    // can cause UI confusion so we double check here that if we have a graphend
-    // or a nodeend that it tallies with a corresponding graphstart/nodestart.
-    const typesMatch =
-      existingEntry.type === HistoryEventType.NODESTART &&
-      event.type === HistoryEventType.NODEEND;
-    if (!typesMatch) {
-      return;
-    }
-
-    (existingEntry as unknown as NodeEndProbeMessage).type = event.type;
-
-    if (existingEntry.graphNodeData && "outputs" in event.data) {
-      existingEntry.graphNodeData.outputs = event.data.outputs;
-    }
-
-    // Set any 'pending' values to none.
-    if (existingEntry.graphNodeData === null) {
-      existingEntry.graphNodeData = undefined;
-    }
-
-    this.#lastHistoryEventTime = globalThis.performance.now();
   }
 
   #parseNodeInformation(nodes?: NodeDescriptor[]) {
