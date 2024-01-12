@@ -4,7 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       packageName:
-        description: "Package Name (e.g., graph-runner)"
+        description: "Package Name (e.g., @google-labs/graph-runner)"
+        required: true
+        type: string
+      packageDir:
+        description: "Package directory relative to the root of the mono repo (e.g. packages/graph-runner)"
         required: true
         type: string
       packageVersion:
@@ -12,7 +16,7 @@ on:
         required: false
         type: string
       tag:
-        description: "Tag (e.g., graph-runner-m1, graph-runner/v1.0.0)"
+        description: "Tag (e.g., @google-labs/graph-runner-m1, @google-labs/graph-runner/v1.0.0)"
         required: false
         type: string
       gitUser:
@@ -39,6 +43,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: echo "github.event.inputs.packageName ${{ github.event.inputs.packageName }}"
+      - run: echo "github.event.inputs.packageDir ${{ github.event.inputs.packageDir }}"
       - run: echo "github.event.inputs.packageVersion ${{ github.event.inputs.packageVersion }}"
       - run: echo "github.event.inputs.tag ${{ github.event.inputs.tag }}"
       - run: echo "ALLOWED_PACKAGES ${ALLOWED_PACKAGES}"
@@ -66,7 +71,7 @@ jobs:
 
       - if: github.event.inputs.packageVersion == ''
         name: If input package version is empty, derive package version from package.json
-        working-directory: packages/${{ github.event.inputs.packageName }}
+        working-directory: ${{ github.event.inputs.packageDir }}
         run: echo "PACKAGE_VERSION=$(node -p "require('./package.json').version")" >> "$GITHUB_ENV"
 
       - if: github.event.inputs.tag != ''
@@ -97,7 +102,7 @@ jobs:
 
       - if: github.event.inputs.packageVersion != ''
         name: Set Package Version
-        working-directory: packages/${{ github.event.inputs.packageName }}
+        working-directory: ${{ github.event.inputs.packageDir }}
         run: npm version ${{ env.PACKAGE_VERSION }} --no-git-tag-version
 
       - if: github.event.inputs.gitUser != ''
@@ -119,7 +124,7 @@ jobs:
           git commit -am "${{ env.TAG }}" || echo "No changes to commit"
 
       - name: Publish to NPM
-        working-directory: packages/${{ github.event.inputs.packageName }}
+        working-directory: ${{ github.event.inputs.packageDir }}
         run: npm publish --registry ${{ env.NPM_REGISTRY }} --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
