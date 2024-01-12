@@ -1,6 +1,5 @@
 {
   "name": "@google-labs/breadboard-cli",
-  "private": true,
   "version": "0.0.1",
   "description": "A suite of tools for interacting with the Breadboard.",
   "bin": {
