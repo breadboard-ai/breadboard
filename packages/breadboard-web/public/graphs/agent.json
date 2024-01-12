@@ -1,0 +1,141 @@
+{
+  "title": "Agent",
+  "description": "A prototype of an agent-like board",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "assemble",
+      "to": "output-2",
+      "out": "result",
+      "in": "context"
+    },
+    {
+      "from": "generate",
+      "to": "assemble",
+      "out": "context",
+      "in": "generated"
+    },
+    {
+      "from": "prompt",
+      "to": "generate",
+      "out": "prompt",
+      "in": "text"
+    },
+    {
+      "from": "prompt",
+      "to": "assemble",
+      "out": "prompt",
+      "in": "text"
+    },
+    {
+      "from": "input-1",
+      "to": "prompt",
+      "out": "template",
+      "in": "template"
+    },
+    {
+      "from": "input-1",
+      "to": "prompt",
+      "out": "topic",
+      "in": "topic"
+    },
+    {
+      "from": "input-1",
+      "to": "generate",
+      "out": "generator",
+      "in": "path"
+    },
+    {
+      "from": "input-1",
+      "to": "assemble",
+      "out": "context",
+      "in": "context"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "title": "result",
+              "description": "The result of the Jsonata expression",
+              "type": "string"
+            }
+          },
+          "required": [
+            "context"
+          ]
+        }
+      }
+    },
+    {
+      "id": "assemble",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "$append(context ? context, $append([\n      {\n          \"role\": \"user\",\n          \"parts\": [\n              {\n                  \"text\": text\n              }\n          ]\n      }\n  ], [generated]))"
+      }
+    },
+    {
+      "id": "generate",
+      "type": "invoke",
+      "configuration": {}
+    },
+    {
+      "id": "prompt",
+      "type": "promptTemplate",
+      "configuration": {}
+    },
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "template": {
+              "title": "Template",
+              "description": "The template with placeholders to fill in.",
+              "type": "string",
+              "examples": [
+                "\nYou are a brilliant poet who specializes in two-line rhyming poems.\nGiven any topic, you can quickly whip up a two-line rhyming poem about it.\nReady?\n\nThe topic is: {{topic}}"
+              ]
+            },
+            "topic": {
+              "title": "Topic",
+              "examples": [
+                "The universe within us"
+              ],
+              "type": "string"
+            },
+            "generator": {
+              "title": "Generator",
+              "description": "The path to the board to invoke.",
+              "type": "string",
+              "examples": [
+                "gemini-generator.json"
+              ]
+            },
+            "context": {
+              "title": "Context",
+              "type": "array",
+              "examples": [
+                "[]"
+              ]
+            }
+          },
+          "required": [
+            "template",
+            "topic",
+            "generator",
+            "context"
+          ]
+        }
+      }
+    }
+  ],
+  "graphs": {}
+}
