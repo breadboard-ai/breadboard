@@ -26,6 +26,7 @@ import { Input } from "./input.js";
 import { Output, OutputArgs } from "./output.js";
 import {
   AnyRunResult,
+  HarnessRunResult,
   InputResult,
   OutputResult,
 } from "@google-labs/breadboard/harness";
@@ -522,16 +523,16 @@ export class UI extends LitElement {
     globalThis.sessionStorage.setItem("grid-row-bottom", rowBottom);
   }
 
-  #createHistoryEntry(event: AnyRunResult): void {
+  #createHistoryEntry(event: HarnessRunResult): void {
     if (Number.isNaN(this.#lastHistoryEventTime)) {
       this.#lastHistoryEventTime = globalThis.performance.now();
     }
 
     const getNodeData = (): HistoryEntry["graphNodeData"] => {
       if (hasPath(event)) {
-        if (hasStateInfo(event) && typeof event.data.state === "object") {
+        if (hasStateInfo(event) && typeof event.state === "object") {
           const id = hasPath(event) ? event.data.node.id : "";
-          const nodeValues = event.data.state.state.state.get(id);
+          const nodeValues = event.state.state.state.get(id);
           if (!nodeValues) {
             return null;
           }
@@ -695,7 +696,7 @@ export class UI extends LitElement {
   }
 
   async handleStateChange(
-    message: AnyRunResult
+    message: HarnessRunResult
   ): Promise<Record<string, unknown> | void> {
     const nodeId = hasNodeInfo(message) ? message.data.node.id : "";
     await this.renderDiagram(nodeId);

@@ -33,8 +33,8 @@ export const saveRunnerState = async (
   return JSON.stringify({ state, type }, replacer);
 };
 
-export const loadRunnerState = (stringifiedState: string) => {
-  const { state: o, type } = JSON.parse(stringifiedState, reviver);
+export const loadRunnerState = (s: string) => {
+  const { state: o, type } = JSON.parse(s, reviver);
   const state = MachineResult.fromObject(o);
   return { state, type };
 };

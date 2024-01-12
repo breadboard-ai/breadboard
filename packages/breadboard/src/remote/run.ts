@@ -7,6 +7,7 @@
 import { Diagnostics } from "../harness/diagnostics.js";
 import { RunResult } from "../run.js";
 import { BoardRunner } from "../runner.js";
+import { loadRunnerState } from "../serialization.js";
 import {
   WritableResult,
   streamsToAsyncIterable,
@@ -25,7 +26,9 @@ import {
 
 const resumeRun = (request: AnyRunRequestMessage) => {
   const [type, , state] = request;
-  const result = state ? RunResult.load(state) : undefined;
+  // TODO: state is probably not a string here,
+  // it can also be a traversal result
+  const result = state ? RunResult.load(state as string) : undefined;
   if (result && type === "input") {
     const [, inputs] = request;
     result.inputs = inputs.inputs;
@@ -89,7 +92,6 @@ export class RunServer {
           }
         } else if (stop.type === "output") {
           const { node, outputs } = stop;
-          console.log("output", { node, outputs });
           await responses.write(["output", { node, outputs }]);
         }
       }
@@ -147,7 +149,16 @@ const createRunResult = (
     }
     await response.reply([type, chunk as InputResolveRequest, state]);
   };
-  return { type, data, state, reply } as AnyClientRunResult;
+  const inflateState = (state?: RunState) => {
+    if (!state) return undefined;
+    return typeof state === "string" ? loadRunnerState(state).state : state;
+  };
+  return {
+    type,
+    data,
+    state: inflateState(state),
+    reply,
+  } as AnyClientRunResult;
 };
 
 export class RunClient {

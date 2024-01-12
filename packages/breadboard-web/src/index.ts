@@ -93,9 +93,11 @@ export class Main {
           }
           await sleep(this.#delay);
 
-          const answer = await this.#ui.handleStateChange(result);
+          const answer = (await this.#ui.handleStateChange(
+            result
+          )) as InputValues;
           if (answer) {
-            result.reply({ inputs: answer as InputValues });
+            result.reply({ inputs: answer });
           }
         }
       }

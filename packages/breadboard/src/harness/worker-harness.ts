@@ -117,7 +117,6 @@ export class WorkerHarness implements Harness {
         if (this.#skipDiagnosticMessages(type)) {
           continue;
         }
-        console.log("Harness received:", data);
         await next(data);
       }
     });

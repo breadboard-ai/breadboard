@@ -17,6 +17,7 @@ import {
   OutputResponse,
   OutputValues,
   SkipProbeMessage,
+  TraversalResult,
 } from "../types.js";
 
 /**
@@ -62,7 +63,7 @@ export type LoadResponse = {
   nodes?: NodeDescriptor[];
 };
 
-export type RunState = string;
+export type RunState = string | TraversalResult;
 
 type GenericResult = { type: string; data: unknown };
 
