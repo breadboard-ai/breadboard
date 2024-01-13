@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { LoadRequestMessage } from "../worker/protocol.js";
-import { MessageController, WorkerTransport } from "../worker/controller.js";
 import type { Harness, HarnessConfig, HarnessRunResult } from "./types.js";
 import { Board, asyncGen } from "../index.js";
 import { createSecretAskingKit } from "./secrets.js";
@@ -17,6 +15,7 @@ import {
 } from "../remote/worker.js";
 import { RunClient } from "../remote/run.js";
 import { AnyRunResponseMessage } from "../remote/protocol.js";
+import { InitClient } from "../remote/init.js";
 
 export const createWorker = (url: string) => {
   const workerURL = new URL(url, location.href);
@@ -28,16 +27,16 @@ export const createWorker = (url: string) => {
 
 class HarnessRun {
   worker: Worker;
-  transport: WorkerTransport;
-  controller: MessageController;
+  initClient: InitClient;
   proxyServer: ProxyServer;
   runClient: RunClient;
 
   constructor(workerURL: string) {
     this.worker = createWorker(workerURL);
     const dispatcher = new PortDispatcher(this.worker);
-    this.transport = new WorkerTransport(this.worker);
-    this.controller = new MessageController(this.transport);
+    this.initClient = new InitClient(
+      new WorkerClientTransport(dispatcher.send("load"))
+    );
     this.proxyServer = new ProxyServer(
       new WorkerServerTransport(dispatcher.receive("proxy"))
     );
@@ -90,9 +89,7 @@ export class WorkerHarness implements Harness {
 
     this.#run = new HarnessRun(this.workerURL);
 
-    const controller = this.#run.controller;
-    controller.inform<LoadRequestMessage>({ url }, "load");
-
+    await this.#run.initClient.load(url);
     return { title, description, version, diagram, url, nodes };
   }
 

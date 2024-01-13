@@ -4,13 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  MessageController,
-  WorkerRuntime,
-  WorkerTransport,
-} from "@google-labs/breadboard/worker";
 import { Board } from "@google-labs/breadboard";
 import {
+  InitServer,
   PortDispatcher,
   ProxyClient,
   RunServer,
@@ -23,11 +19,10 @@ const worker = self as unknown as Worker;
 
 const dispatcher = new PortDispatcher(worker);
 
-const controller = new MessageController(new WorkerTransport(worker));
-const runtime = new WorkerRuntime(controller);
-
-const url = await runtime.onload();
-
+const initServer = new InitServer(
+  new WorkerServerTransport(dispatcher.receive("load"))
+);
+const url = await initServer.serve();
 const runner = await Board.load(url);
 
 const proxyClient = new ProxyClient(

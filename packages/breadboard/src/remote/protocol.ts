@@ -17,7 +17,6 @@ import {
   OutputResponse,
   OutputValues,
   SkipProbeMessage,
-  TraversalResult,
 } from "../types.js";
 
 /**
@@ -63,7 +62,7 @@ export type LoadResponse = {
   nodes?: NodeDescriptor[];
 };
 
-export type RunState = string | TraversalResult;
+export type RunState = string;
 
 type GenericResult = { type: string; data: unknown };
 
@@ -75,59 +74,16 @@ type RemoteMessage<T extends GenericResult> = [T["type"], T["data"], RunState?];
  */
 export type RunRequest = Record<string, never>;
 export type RunRequestMessage = ["run", RunRequest, RunState?];
-
 export type OutputResponseMessage = ["output", OutputResponse];
-
 export type InputResponseMessage = ["input", InputResponse, RunState];
 
 /**
  * Sent by the client to provide inputs, requested by the server.
  */
-export type InputResolveRequest = {
-  inputs: InputValues;
-};
+export type InputResolveRequest = { inputs: InputValues };
 export type InputResolveRequestMessage = [
   "input",
   InputResolveRequest,
-  RunState
-];
-
-/**
- * Sent by the server to request to proxy a node.
- * Can only be the last message in the response stream.
- */
-export type ProxyPromiseResponse = {
-  /**
-   * The description of the node to be proxied.
-   * @see [NodeDescriptor]
-   */
-  node: NodeDescriptor;
-  /**
-   * The input values that the board is providing to the node.
-   * @see [InputValues]
-   */
-  inputs: InputValues;
-};
-export type ProxyPromiseResponseMessage = [
-  "proxy",
-  ProxyPromiseResponse,
-  RunState
-];
-
-/**
- * Sent by the client to provide outputs of the proxied node.
- */
-export type ProxyResolveRequest = {
-  /**
-   * The output values that the host is providing to the board in lieu of
-   * the proxied node.
-   * @see [OutputValues]
-   */
-  outputs: OutputValues;
-};
-export type ProxyResolveRequestMessage = [
-  "proxy",
-  ProxyResolveRequest,
   RunState
 ];
 
@@ -142,32 +98,37 @@ export type EndRequestMessage = ["end", End];
 export type ErrorResponseMessage = ["error", ErrorResponse];
 
 /**
- * This is a bit redundant, but for consistency of the interface, this
- * marks a client message a proxy request.
- */
-export type ProxyRequestType = "proxy";
-/**
- * This is a bit redundant, but for consistency of the interface, this
- * marks a server message a proxy response.
- */
-export type ProxyResponseType = "proxy";
-
-/**
  * Sent by the client to request to proxy a node.
  */
-export type ProxyRequest = ProxyPromiseResponse;
+export type ProxyRequest = {
+  /**
+   * The description of the node to be proxied.
+   * @see [NodeDescriptor]
+   */
+  node: NodeDescriptor;
+  /**
+   * The input values that the board is providing to the node.
+   * @see [InputValues]
+   */
+  inputs: InputValues;
+};
+
 /**
  * Sent by the server to respond to respond with the proxy results.
  */
-export type ProxyResponse = ProxyResolveRequest;
+export type ProxyResponse = {
+  /**
+   * The output values that the host is providing to the board in lieu of
+   * the proxied node.
+   * @see [OutputValues]
+   */
+  outputs: OutputValues;
+};
 
 export type ProxyRequestMessage = ["proxy", ProxyRequest];
 export type ProxyResponseMessage = ["proxy", ProxyResponse];
 
-export type ProxyChunkResponse = {
-  chunk: unknown;
-};
-
+export type ProxyChunkResponse = { chunk: unknown };
 export type ProxyChunkResponseMessage = ["chunk", ProxyChunkResponse];
 
 export type AnyProxyRequestMessage = ProxyRequestMessage | EndRequestMessage;
