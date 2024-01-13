@@ -97,7 +97,7 @@
     "@google-labs/tsconfig": "*"
   },
   "dependencies": {
-    "@google-labs/breadboard": "^0.6.0",
+    "@google-labs/breadboard": "^0.7.0",
     "@google-labs/palm-lite": "^0.0.3"
   }
 }

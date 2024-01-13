@@ -1,6 +1,6 @@
 {
   "name": "@google-labs/breadboard-cli",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "A suite of tools for interacting with the Breadboard.",
   "bin": {
     "breadboard": "dist/src/index.js"
