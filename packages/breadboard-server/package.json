@@ -121,6 +121,6 @@
   },
   "dependencies": {
     "@google-cloud/firestore": "^6.7.0",
-    "@google-labs/breadboard": "^0.6.0"
+    "@google-labs/breadboard": "^0.7.0"
   }
 }

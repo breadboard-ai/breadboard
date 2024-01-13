@@ -115,7 +115,7 @@
     "typescript": "^5.0.4"
   },
   "dependencies": {
-    "@google-labs/breadboard": "^0.6.0",
+    "@google-labs/breadboard": "^0.7.0",
     "@rgrove/parse-xml": "^4.1.0",
     "jsonata": "^2.0.3",
     "url-template": "^3.1.0"
