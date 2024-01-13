@@ -243,6 +243,11 @@ export class Value<T extends NodeValue = NodeValue>
     return this;
   }
 
+  format(format: string): AbstractValue<T> {
+    this.#schema.format = format;
+    return this;
+  }
+
   examples(...examples: string[]): AbstractValue<T> {
     this.#schema.examples = examples;
     return this;

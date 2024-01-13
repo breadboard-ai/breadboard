@@ -10,12 +10,17 @@ import { starter } from "@google-labs/llm-starter";
 
 export default await recipe(({ topic, template, generator, context }) => {
   topic.title("Topic").examples("The universe within us");
-  template.title("Template").examples(`
+  template
+    .title("Template")
+    .examples(
+      `
   You are a brilliant poet who specializes in two-line rhyming poems.
   Given any topic, you can quickly whip up a two-line rhyming poem about it.
   Ready?
   
-  The topic is: {{topic}}`);
+  The topic is: {{topic}}`
+    )
+    .format("multiline");
   generator.title("Generator").examples("gemini-generator.json");
   context.title("Context").isArray().examples("[]");
 

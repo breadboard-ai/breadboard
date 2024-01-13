@@ -102,7 +102,8 @@
               "type": "string",
               "examples": [
                 "\n  You are a brilliant poet who specializes in two-line rhyming poems.\n  Given any topic, you can quickly whip up a two-line rhyming poem about it.\n  Ready?\n  \n  The topic is: {{topic}}"
-              ]
+              ],
+              "format": "multiline"
             },
             "topic": {
               "title": "Topic",
