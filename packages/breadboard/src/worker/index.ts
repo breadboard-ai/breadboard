@@ -5,7 +5,6 @@
  */
 
 export { MessageController, WorkerTransport } from "./controller.js";
-export { WorkerRuntime } from "./worker-runtime.js";
 export type {
   ControllerMessage,
   ErrorMessage,
