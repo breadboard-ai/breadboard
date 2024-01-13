@@ -22,9 +22,8 @@ const dispatcher = new PortDispatcher(worker);
 const loadServer = new LoadServer(
   new WorkerServerTransport(dispatcher.receive("load"))
 );
-const runner = await loadServer.serve(async (url) => {
-  return Board.load(url);
-});
+const url = await loadServer.serve();
+const runner = await Board.load(url);
 
 const proxyClient = new ProxyClient(
   new WorkerClientTransport(dispatcher.send("proxy"))

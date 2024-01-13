@@ -12,7 +12,6 @@ import {
   WorkerClientTransport,
   WorkerServerTransport,
 } from "../../src/remote/worker.js";
-import { Board } from "../../src/index.js";
 
 test("LoadServer and LoadClient work together", async (t) => {
   const mockWorkers = createMockWorkers();
@@ -26,22 +25,9 @@ test("LoadServer and LoadClient work together", async (t) => {
   );
 
   const url = "https://example.com";
-  server.serve(async (url) => {
-    t.is(url, url);
-    return new Board({
-      title: "test title",
-      description: "test description",
-      version: "1.0.0",
-    });
-  });
+  client.load(url);
 
-  const response = await client.load(url);
-  t.deepEqual(response, {
-    title: "test title",
-    description: "test description",
-    version: "1.0.0",
-    url,
-    diagram: "graph TD;\n",
-    nodes: [],
-  });
+  await server.serve();
+
+  t.is(url, url);
 });

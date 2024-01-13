@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { BoardRunner } from "../runner.js";
 import {
   ClientTransport,
   LoadRequest,
@@ -19,32 +18,14 @@ export class LoadServer {
     this.#transport = transport;
   }
 
-  async serve(loader: (url: string) => Promise<BoardRunner>) {
+  async serve() {
     const stream = this.#transport.createServerStream();
     const reader = stream.readableRequests.getReader();
     const request = await reader.read();
     if (request.done) {
       throw new Error("Client closed stream without sending a request.");
     }
-    const { url } = request.value;
-    const runner = await loader(url);
-
-    const { title, description, version } = runner;
-    const diagram = runner.mermaid("TD", true);
-    const nodes = runner.nodes;
-
-    const response: LoadResponse = {
-      title,
-      description,
-      version,
-      diagram,
-      url,
-      nodes,
-    };
-
-    const writer = stream.writableResponses.getWriter();
-    await writer.write(response);
-    return runner;
+    return request.value.url;
   }
 }
 
@@ -60,12 +41,5 @@ export class LoadClient {
     const writer = stream.writableRequests.getWriter();
     await writer.write({ url });
     await writer.close();
-
-    const reader = stream.readableResponses.getReader();
-    const response = await reader.read();
-    if (response.done) {
-      throw new Error("Server closed stream without sending a response.");
-    }
-    return response.value;
   }
 }
