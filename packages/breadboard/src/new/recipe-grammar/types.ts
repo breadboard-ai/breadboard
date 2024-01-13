@@ -293,6 +293,7 @@ export abstract class AbstractValue<T extends NodeValue = NodeValue>
   abstract isObject(): AbstractValue<{ [key: string]: NodeValue }>;
 
   abstract title(title: string): AbstractValue<T>;
+  abstract format(format: string): AbstractValue<T>;
   abstract description(description: string): AbstractValue<T>;
   abstract examples(...examples: string[]): AbstractValue<T>;
 }

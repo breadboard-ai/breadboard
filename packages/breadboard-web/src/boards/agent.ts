@@ -8,24 +8,26 @@ import { recipe } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { starter } from "@google-labs/llm-starter";
 
-export default await recipe(({ topic, template, generator, context }) => {
-  const prompt = starter.promptTemplate({
-    $id: "prompt",
-    template: template.title("Template").isString().examples(`
-You are a brilliant poet who specializes in two-line rhyming poems.
-Given any topic, you can quickly whip up a two-line rhyming poem about it.
-Ready?
+export default await recipe(({ text, generator, context }) => {
+  text
+    .title("Text")
+    .examples(
+      `
+  You are a brilliant poet who specializes in two-line rhyming poems.
+  Given any topic, you can quickly whip up a two-line rhyming poem about it.
+  Ready?
+  
+  The topic is: the universe within us`
+    )
+    .format("multiline");
+  generator.title("Generator").examples("gemini-generator.json");
+  context.title("Context").isArray().examples("[]");
 
-The topic is: {{topic}}`),
-    topic: topic.title("Topic").examples("The universe within us"),
-  });
   const generate = core.invoke({
     $id: "generate",
-    text: prompt.prompt,
-    path: generator
-      .isString()
-      .title("Generator")
-      .examples("gemini-generator.json"),
+    text,
+    context,
+    path: generator.isString(),
   });
 
   const assemble = starter.jsonata({
@@ -33,16 +35,12 @@ The topic is: {{topic}}`),
     expression: `$append(context ? context, $append([
       {
           "role": "user",
-          "parts": [
-              {
-                  "text": text
-              }
-          ]
+          "parts": [ { "text": text } ]
       }
   ], [generated]))`,
     generated: generate.context,
-    text: prompt.prompt,
-    context: context.title("Context").isArray().examples("[]"),
+    text,
+    context,
   });
 
   return { context: assemble.result };
