@@ -8,30 +8,25 @@ import { recipe } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { starter } from "@google-labs/llm-starter";
 
-export default await recipe(({ topic, template, generator, context }) => {
-  topic.title("Topic").examples("The universe within us");
-  template
-    .title("Template")
+export default await recipe(({ text, generator, context }) => {
+  text
+    .title("Text")
     .examples(
       `
   You are a brilliant poet who specializes in two-line rhyming poems.
   Given any topic, you can quickly whip up a two-line rhyming poem about it.
   Ready?
   
-  The topic is: {{topic}}`
+  The topic is: the universe within us`
     )
     .format("multiline");
   generator.title("Generator").examples("gemini-generator.json");
   context.title("Context").isArray().examples("[]");
 
-  const prompt = starter.promptTemplate({
-    $id: "prompt",
-    template: template.isString(),
-    topic,
-  });
   const generate = core.invoke({
     $id: "generate",
-    text: prompt.prompt,
+    text,
+    context,
     path: generator.isString(),
   });
 
@@ -44,7 +39,7 @@ export default await recipe(({ topic, template, generator, context }) => {
       }
   ], [generated]))`,
     generated: generate.context,
-    text: prompt.prompt,
+    text,
     context,
   });
 

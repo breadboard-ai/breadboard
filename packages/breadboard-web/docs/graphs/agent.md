@@ -5,11 +5,10 @@
 graph TD;
 assemble["jsonata <br> id='assemble'"] -- "result->context" --> output2{{"output <br> id='output-2'"}}:::output
 generate["invoke <br> id='generate'"] -- "context->generated" --> assemble["jsonata <br> id='assemble'"]
-prompt["promptTemplate <br> id='prompt'"] -- "prompt->text" --> generate["invoke <br> id='generate'"]
-prompt["promptTemplate <br> id='prompt'"] -- "prompt->text" --> assemble["jsonata <br> id='assemble'"]
-input1[/"input <br> id='input-1'"/]:::input -- "template->template" --> prompt["promptTemplate <br> id='prompt'"]
-input1[/"input <br> id='input-1'"/]:::input -- "topic->topic" --> prompt["promptTemplate <br> id='prompt'"]
+input1[/"input <br> id='input-1'"/]:::input -- "text->text" --> generate["invoke <br> id='generate'"]
+input1[/"input <br> id='input-1'"/]:::input -- "context->context" --> generate["invoke <br> id='generate'"]
 input1[/"input <br> id='input-1'"/]:::input -- "generator->path" --> generate["invoke <br> id='generate'"]
+input1[/"input <br> id='input-1'"/]:::input -- "text->text" --> assemble["jsonata <br> id='assemble'"]
 input1[/"input <br> id='input-1'"/]:::input -- "context->context" --> assemble["jsonata <br> id='assemble'"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
