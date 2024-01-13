@@ -6,7 +6,7 @@
 
 import { Board } from "@google-labs/breadboard";
 import {
-  LoadServer,
+  InitServer,
   PortDispatcher,
   ProxyClient,
   RunServer,
@@ -19,10 +19,10 @@ const worker = self as unknown as Worker;
 
 const dispatcher = new PortDispatcher(worker);
 
-const loadServer = new LoadServer(
+const initServer = new InitServer(
   new WorkerServerTransport(dispatcher.receive("load"))
 );
-const url = await loadServer.serve();
+const url = await initServer.serve();
 const runner = await Board.load(url);
 
 const proxyClient = new ProxyClient(

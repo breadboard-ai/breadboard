@@ -15,7 +15,7 @@ import {
 } from "../remote/worker.js";
 import { RunClient } from "../remote/run.js";
 import { AnyRunResponseMessage } from "../remote/protocol.js";
-import { LoadClient } from "../remote/load.js";
+import { InitClient } from "../remote/init.js";
 
 export const createWorker = (url: string) => {
   const workerURL = new URL(url, location.href);
@@ -27,14 +27,14 @@ export const createWorker = (url: string) => {
 
 class HarnessRun {
   worker: Worker;
-  loadClient: LoadClient;
+  initClient: InitClient;
   proxyServer: ProxyServer;
   runClient: RunClient;
 
   constructor(workerURL: string) {
     this.worker = createWorker(workerURL);
     const dispatcher = new PortDispatcher(this.worker);
-    this.loadClient = new LoadClient(
+    this.initClient = new InitClient(
       new WorkerClientTransport(dispatcher.send("load"))
     );
     this.proxyServer = new ProxyServer(
@@ -89,7 +89,7 @@ export class WorkerHarness implements Harness {
 
     this.#run = new HarnessRun(this.workerURL);
 
-    await this.#run.loadClient.load(url);
+    await this.#run.initClient.load(url);
     return { title, description, version, diagram, url, nodes };
   }
 

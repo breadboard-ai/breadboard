@@ -11,7 +11,7 @@ import {
   ServerTransport,
 } from "./protocol.js";
 
-export class LoadServer {
+export class InitServer {
   #transport: ServerTransport<LoadRequest, LoadResponse>;
 
   constructor(transport: ServerTransport<LoadRequest, LoadResponse>) {
@@ -29,7 +29,7 @@ export class LoadServer {
   }
 }
 
-export class LoadClient {
+export class InitClient {
   #transport: ClientTransport<LoadRequest, LoadResponse>;
 
   constructor(transport: ClientTransport<LoadRequest, LoadResponse>) {
