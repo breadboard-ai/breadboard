@@ -24,7 +24,7 @@ export class LoadServer {
     const reader = stream.readableRequests.getReader();
     const request = await reader.read();
     if (request.done) {
-      return;
+      throw new Error("Client closed stream without sending a request.");
     }
     const { url } = request.value;
     const runner = await loader(url);
@@ -44,6 +44,7 @@ export class LoadServer {
 
     const writer = stream.writableResponses.getWriter();
     await writer.write(response);
+    return runner;
   }
 }
 
