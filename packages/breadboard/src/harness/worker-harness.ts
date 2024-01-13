@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { WorkerTransport } from "../worker/controller.js";
 import type { Harness, HarnessConfig, HarnessRunResult } from "./types.js";
 import { Board, asyncGen } from "../index.js";
 import { createSecretAskingKit } from "./secrets.js";
@@ -28,7 +27,6 @@ export const createWorker = (url: string) => {
 
 class HarnessRun {
   worker: Worker;
-  transport: WorkerTransport;
   loadClient: LoadClient;
   proxyServer: ProxyServer;
   runClient: RunClient;
@@ -36,7 +34,6 @@ class HarnessRun {
   constructor(workerURL: string) {
     this.worker = createWorker(workerURL);
     const dispatcher = new PortDispatcher(this.worker);
-    this.transport = new WorkerTransport(this.worker);
     this.loadClient = new LoadClient(
       new WorkerClientTransport(dispatcher.send("load"))
     );
