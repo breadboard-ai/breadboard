@@ -4,11 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Board, asyncGen } from "../index.js";
 import { loadRunnerState } from "../serialization.js";
-import { BreadboardRunResult, ProbeMessage } from "../types.js";
-import { HarnessRunResult } from "./types.js";
+import { BreadboardRunResult, Kit, ProbeMessage } from "../types.js";
+import { Diagnostics } from "./diagnostics.js";
+import { HarnessConfig, HarnessRunResult } from "./types.js";
 
-export const fromProbe = <Probe extends ProbeMessage>(probe: Probe) => {
+const fromProbe = <Probe extends ProbeMessage>(probe: Probe) => {
   const loadStateIfAny = () => {
     if (probe.type === "nodestart") {
       return loadRunnerState(probe.data.state as string).state;
@@ -26,7 +28,7 @@ export const fromProbe = <Probe extends ProbeMessage>(probe: Probe) => {
   } as HarnessRunResult;
 };
 
-export const fromRunnerResult = <Result extends BreadboardRunResult>(
+const fromRunnerResult = <Result extends BreadboardRunResult>(
   result: Result
 ) => {
   const { type, node } = result;
@@ -58,7 +60,7 @@ export const fromRunnerResult = <Result extends BreadboardRunResult>(
   throw new Error(`Unknown result type "${type}".`);
 };
 
-export const endResult = () => {
+const endResult = () => {
   return {
     type: "end",
     data: {},
@@ -68,7 +70,7 @@ export const endResult = () => {
   } as HarnessRunResult;
 };
 
-export const errorResult = (error: string) => {
+const errorResult = (error: string) => {
   return {
     type: "error",
     data: { error },
@@ -77,3 +79,31 @@ export const errorResult = (error: string) => {
     },
   } as HarnessRunResult;
 };
+
+export async function* runLocally(config: HarnessConfig, kits: Kit[]) {
+  yield* asyncGen<HarnessRunResult>(async (next) => {
+    const runner = await Board.load(config.url);
+
+    try {
+      const probe = config.diagnostics
+        ? new Diagnostics(async (message) => {
+            await next(fromProbe(message));
+          })
+        : undefined;
+
+      for await (const data of runner.run({ probe, kits })) {
+        await next(fromRunnerResult(data));
+      }
+      await next(endResult());
+    } catch (e) {
+      let error = e as Error;
+      let message = "";
+      while (error?.cause) {
+        error = (error.cause as { error: Error }).error;
+        message += `\n${error.message}`;
+      }
+      console.error(message, error);
+      await next(errorResult(message));
+    }
+  });
+}
