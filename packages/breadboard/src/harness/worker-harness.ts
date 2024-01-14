@@ -5,7 +5,7 @@
  */
 
 import type { Harness, HarnessConfig, HarnessRunResult } from "./types.js";
-import { Board, asyncGen } from "../index.js";
+import { asyncGen } from "../index.js";
 import { createSecretAskingKit } from "./secrets.js";
 import { ProxyServer } from "../remote/proxy.js";
 import {
@@ -14,7 +14,6 @@ import {
   WorkerServerTransport,
 } from "../remote/worker.js";
 import { RunClient } from "../remote/run.js";
-import { AnyRunResponseMessage } from "../remote/protocol.js";
 import { InitClient } from "../remote/init.js";
 
 export const createWorker = (url: string) => {
@@ -25,106 +24,41 @@ export const createWorker = (url: string) => {
   return new Worker(blobUrl, { type: "module" });
 };
 
-class HarnessRun {
-  worker: Worker;
-  initClient: InitClient;
-  proxyServer: ProxyServer;
-  runClient: RunClient;
-
-  constructor(workerURL: string) {
-    this.worker = createWorker(workerURL);
-    const dispatcher = new PortDispatcher(this.worker);
-    this.initClient = new InitClient(
-      new WorkerClientTransport(dispatcher.send("load"))
-    );
-    this.proxyServer = new ProxyServer(
-      new WorkerServerTransport(dispatcher.receive("proxy"))
-    );
-    this.runClient = new RunClient(
-      new WorkerClientTransport(dispatcher.send("run"))
-    );
-  }
-
-  terminate() {
-    this.worker.terminate();
-  }
-}
-
 export class WorkerHarness implements Harness {
   #config: HarnessConfig;
-  #run: HarnessRun | null = null;
-  workerURL: string;
 
   constructor(config: HarnessConfig) {
     this.#config = config;
-    const workerURL = config.remote && config.remote.url;
-    if (!workerURL) {
-      throw new Error("Worker harness requires a worker URL");
-    }
-    this.workerURL = workerURL;
-  }
-
-  #skipDiagnosticMessages(type: AnyRunResponseMessage[0]) {
-    return (
-      !this.#config.diagnostics &&
-      (type === "nodestart" ||
-        type === "nodeend" ||
-        type === "graphstart" ||
-        type === "graphend")
-    );
-  }
-
-  async load() {
-    const url = this.#config.url;
-
-    if (this.#run) {
-      this.#stop();
-    }
-
-    const runner = await Board.load(url);
-
-    const { title, description, version } = runner;
-    const diagram = runner.mermaid("TD", true);
-    const nodes = runner.nodes;
-
-    this.#run = new HarnessRun(this.workerURL);
-
-    await this.#run.initClient.load(url);
-    return { title, description, version, diagram, url, nodes };
   }
 
   async *run(state?: string) {
-    if (!this.#run) {
-      throw new Error("Harness hasn't been loaded. Please call 'load' first.");
+    const workerURL = this.#config.remote && this.#config.remote.url;
+    if (!workerURL) {
+      throw new Error("Worker harness requires a worker URL");
     }
+
+    const worker = createWorker(workerURL);
+    const dispatcher = new PortDispatcher(worker);
+    const initClient = new InitClient(
+      new WorkerClientTransport(dispatcher.send("load"))
+    );
+    const proxyServer = new ProxyServer(
+      new WorkerServerTransport(dispatcher.receive("proxy"))
+    );
+    const runClient = new RunClient(
+      new WorkerClientTransport(dispatcher.send("run"))
+    );
+
+    await initClient.load(this.#config.url);
 
     yield* asyncGen<HarnessRunResult>(async (next) => {
       const kits = [createSecretAskingKit(next), ...this.#config.kits];
       const proxy = this.#config.proxy?.[0]?.nodes;
-      if (!this.#run) {
-        // This is only necessary because TypeScript doesn't know that
-        // `this.#run` is non-null after the `if` statement above.
-        return;
-      }
+      proxyServer.serve({ kits, proxy });
 
-      this.#run.proxyServer.serve({ kits, proxy });
-
-      for await (const data of this.#run.runClient.run(state)) {
-        const { type } = data;
-        if (this.#skipDiagnosticMessages(type)) {
-          continue;
-        }
+      for await (const data of runClient.run(state)) {
         await next(data);
       }
     });
-  }
-
-  #stop() {
-    if (!this.#run) {
-      return;
-    }
-
-    this.#run.terminate();
-    this.#run = null;
   }
 }

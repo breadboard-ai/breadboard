@@ -4,13 +4,25 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { createHarness } from "@google-labs/breadboard/harness";
+import { createHarness, HarnessConfig } from "@google-labs/breadboard/harness";
 import { createHarnessConfig } from "./config";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { customElement, property } from "lit/decorators.js";
 import { LitElement, html, css } from "lit";
 import * as BreadboardUI from "@google-labs/breadboard-ui";
 import { InputResolveRequest } from "@google-labs/breadboard/remote";
+import { Board } from "@google-labs/breadboard";
+
+export const getBoardInfo = async (config: HarnessConfig) => {
+  const url = config.url;
+  const runner = await Board.load(url);
+
+  const { title, description, version } = runner;
+  const diagram = runner.mermaid("TD", true);
+  const nodes = runner.nodes;
+
+  return { title, description, version, diagram, url, nodes };
+};
 
 // TODO: Remove once all elements are Lit-based.
 BreadboardUI.register();
@@ -68,7 +80,8 @@ export class Main extends LitElement {
     this.#boardId++;
     this.#setActiveBreadboard(startEvent.url);
 
-    const harness = createHarness(createHarnessConfig(startEvent.url));
+    const config = createHarnessConfig(startEvent.url);
+    const harness = createHarness(config);
     this.status = BreadboardUI.Types.STATUS.RUNNING;
 
     if (!this.#uiRef.value) {
@@ -78,7 +91,7 @@ export class Main extends LitElement {
 
     const ui = this.#uiRef.value;
     ui.url = startEvent.url;
-    ui.load(await harness.load());
+    ui.load(await getBoardInfo(config));
 
     const currentBoardId = this.#boardId;
     for await (const result of harness.run()) {

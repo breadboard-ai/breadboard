@@ -46,6 +46,12 @@ export type ServeConfig = {
    * created and and a proxy client will be started.
    */
   kits: (Kit | ProxyKitConfig)[];
+  /**
+   * Whether to enable diagnostics. Defaults to false.
+   * When diagnostics are enabled, the server will send graphstart/graphend and
+   * nodestart/nodeend messages to the client.
+   */
+  diagnostics?: boolean;
 };
 
 const isProxyKitConfig = (
@@ -132,7 +138,7 @@ export const serve = async (config: ServeConfig) => {
   const server = new RunServer(factory.server("run"));
   const url = await getBoardURL(config, factory);
   const runner = await Board.load(url);
-  return server.serve(runner, true, { kits });
+  return server.serve(runner, !!config.diagnostics, { kits });
 };
 
 /**

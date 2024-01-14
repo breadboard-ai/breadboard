@@ -77,7 +77,6 @@ export type HarnessRunResult =
   | ClientRunResult<SecretResult>;
 
 export interface Harness {
-  load(): Promise<LoadResponse>;
   run(state?: string): AsyncGenerator<HarnessRunResult, void>;
 }
 
