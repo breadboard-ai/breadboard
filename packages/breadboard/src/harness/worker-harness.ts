@@ -5,7 +5,7 @@
  */
 
 import type { Harness, HarnessConfig, HarnessRunResult } from "./types.js";
-import { Board, asyncGen } from "../index.js";
+import { asyncGen } from "../index.js";
 import { createSecretAskingKit } from "./secrets.js";
 import { ProxyServer } from "../remote/proxy.js";
 import {
@@ -35,18 +35,6 @@ export class WorkerHarness implements Harness {
       throw new Error("Worker harness requires a worker URL");
     }
     this.workerURL = workerURL;
-  }
-
-  async load() {
-    const url = this.#config.url;
-
-    const runner = await Board.load(url);
-
-    const { title, description, version } = runner;
-    const diagram = runner.mermaid("TD", true);
-    const nodes = runner.nodes;
-
-    return { title, description, version, diagram, url, nodes };
   }
 
   async *run(state?: string) {

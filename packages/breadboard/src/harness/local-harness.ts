@@ -11,7 +11,6 @@ import { HTTPClientTransport } from "../remote/http.js";
 import { asyncGen } from "../utils/async-gen.js";
 import { Board } from "../board.js";
 import { Diagnostics } from "./diagnostics.js";
-import { BoardRunner } from "../runner.js";
 import {
   endResult,
   errorResult,
@@ -21,7 +20,6 @@ import {
 
 export class LocalHarness implements Harness {
   #config: HarnessConfig;
-  #runner: BoardRunner | undefined;
 
   constructor(config: HarnessConfig) {
     this.#config = config;
@@ -55,24 +53,10 @@ export class LocalHarness implements Harness {
     return kits;
   }
 
-  async load() {
-    const url = this.#config.url;
-    const runner = await Board.load(url);
-
-    const { title, description, version } = runner;
-    const diagram = runner.mermaid("TD", true);
-    const nodes = runner.nodes;
-
-    this.#runner = runner;
-    return { title, description, version, diagram, url, nodes };
-  }
-
   async *run() {
-    yield* asyncGen<HarnessRunResult>(async (next) => {
-      if (!this.#runner) {
-        throw new Error("Harness not loaded. Please call 'load' first.");
-      }
+    const runner = await Board.load(this.#config.url);
 
+    yield* asyncGen<HarnessRunResult>(async (next) => {
       const kits = this.#configureKits(next);
 
       try {
@@ -82,7 +66,7 @@ export class LocalHarness implements Harness {
             })
           : undefined;
 
-        for await (const data of this.#runner.run({ probe, kits })) {
+        for await (const data of runner.run({ probe, kits })) {
           await next(fromRunnerResult(data));
         }
         await next(endResult());
