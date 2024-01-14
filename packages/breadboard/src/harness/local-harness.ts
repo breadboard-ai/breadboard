@@ -12,23 +12,20 @@ import { asyncGen } from "../utils/async-gen.js";
 import { runLocally } from "./local.js";
 
 const configureKits = (config: HarnessConfig) => {
-  let kits = config.kits;
   // If a proxy is configured, add the proxy kit to the list of kits.
   const proxyConfig = config.proxy?.[0];
-  if (proxyConfig) {
-    if (proxyConfig.location === "http") {
-      if (!proxyConfig.url) {
-        throw new Error("No node proxy server URL provided.");
-      }
-      const proxyClient = new ProxyClient(
-        new HTTPClientTransport(proxyConfig.url)
-      );
-      kits = [proxyClient.createProxyKit(proxyConfig.nodes), ...kits];
-    } else {
-      throw new Error("Only HTTP node proxy server is supported at this time.");
-    }
+  if (!proxyConfig) return config.kits;
+
+  if (proxyConfig.location !== "http") {
+    throw new Error("Only HTTP node proxy server is supported at this time.");
   }
-  return kits;
+
+  if (!proxyConfig.url) {
+    throw new Error("No node proxy server URL provided.");
+  }
+
+  const proxyClient = new ProxyClient(new HTTPClientTransport(proxyConfig.url));
+  return [proxyClient.createProxyKit(proxyConfig.nodes), ...config.kits];
 };
 
 export class LocalHarness implements Harness {
