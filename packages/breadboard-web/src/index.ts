@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { createHarness, HarnessConfig } from "@google-labs/breadboard/harness";
+import { createHarness } from "@google-labs/breadboard/harness";
 import { createHarnessConfig } from "./config";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { customElement, property } from "lit/decorators.js";
@@ -13,8 +13,7 @@ import * as BreadboardUI from "@google-labs/breadboard-ui";
 import { InputResolveRequest } from "@google-labs/breadboard/remote";
 import { Board } from "@google-labs/breadboard";
 
-export const getBoardInfo = async (config: HarnessConfig) => {
-  const url = config.url;
+export const getBoardInfo = async (url: string) => {
   const runner = await Board.load(url);
 
   const { title, description, version } = runner;
@@ -80,8 +79,6 @@ export class Main extends LitElement {
     this.#boardId++;
     this.#setActiveBreadboard(startEvent.url);
 
-    const config = createHarnessConfig(startEvent.url);
-    const harness = createHarness(config);
     this.status = BreadboardUI.Types.STATUS.RUNNING;
 
     if (!this.#uiRef.value) {
@@ -91,9 +88,11 @@ export class Main extends LitElement {
 
     const ui = this.#uiRef.value;
     ui.url = startEvent.url;
-    ui.load(await getBoardInfo(config));
+    ui.load(await getBoardInfo(ui.url));
 
     const currentBoardId = this.#boardId;
+
+    const harness = createHarness(createHarnessConfig(startEvent.url));
     for await (const result of harness.run()) {
       if (this.#delay !== 0) {
         await new Promise((r) => setTimeout(r, this.#delay));
