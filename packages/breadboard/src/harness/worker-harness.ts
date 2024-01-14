@@ -51,7 +51,6 @@ class HarnessRun {
 
 export class WorkerHarness implements Harness {
   #config: HarnessConfig;
-  #run: HarnessRun | null = null;
   workerURL: string;
 
   constructor(config: HarnessConfig) {
@@ -66,50 +65,28 @@ export class WorkerHarness implements Harness {
   async load() {
     const url = this.#config.url;
 
-    if (this.#run) {
-      this.#stop();
-    }
-
     const runner = await Board.load(url);
 
     const { title, description, version } = runner;
     const diagram = runner.mermaid("TD", true);
     const nodes = runner.nodes;
 
-    this.#run = new HarnessRun(this.workerURL);
-
-    await this.#run.initClient.load(url);
     return { title, description, version, diagram, url, nodes };
   }
 
   async *run(state?: string) {
-    if (!this.#run) {
-      throw new Error("Harness hasn't been loaded. Please call 'load' first.");
-    }
+    const harnessRun = new HarnessRun(this.workerURL);
+
+    await harnessRun.initClient.load(this.#config.url);
 
     yield* asyncGen<HarnessRunResult>(async (next) => {
       const kits = [createSecretAskingKit(next), ...this.#config.kits];
       const proxy = this.#config.proxy?.[0]?.nodes;
-      if (!this.#run) {
-        // This is only necessary because TypeScript doesn't know that
-        // `this.#run` is non-null after the `if` statement above.
-        return;
-      }
+      harnessRun.proxyServer.serve({ kits, proxy });
 
-      this.#run.proxyServer.serve({ kits, proxy });
-
-      for await (const data of this.#run.runClient.run(state)) {
+      for await (const data of harnessRun.runClient.run(state)) {
         await next(data);
       }
     });
-  }
-
-  #stop() {
-    if (!this.#run) {
-      return;
-    }
-
-    this.#run.terminate();
-    this.#run = null;
   }
 }
