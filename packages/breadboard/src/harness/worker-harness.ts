@@ -26,19 +26,18 @@ export const createWorker = (url: string) => {
 
 export class WorkerHarness implements Harness {
   #config: HarnessConfig;
-  workerURL: string;
 
   constructor(config: HarnessConfig) {
     this.#config = config;
-    const workerURL = config.remote && config.remote.url;
-    if (!workerURL) {
-      throw new Error("Worker harness requires a worker URL");
-    }
-    this.workerURL = workerURL;
   }
 
   async *run(state?: string) {
-    const worker = createWorker(this.workerURL);
+    const workerURL = this.#config.remote && this.#config.remote.url;
+    if (!workerURL) {
+      throw new Error("Worker harness requires a worker URL");
+    }
+
+    const worker = createWorker(workerURL);
     const dispatcher = new PortDispatcher(worker);
     const initClient = new InitClient(
       new WorkerClientTransport(dispatcher.send("load"))
