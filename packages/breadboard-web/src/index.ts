@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { createHarness } from "@google-labs/breadboard/harness";
-import { createHarnessConfig } from "./config";
+import { run } from "@google-labs/breadboard/harness";
+import { createRunConfig } from "./config";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { customElement, property } from "lit/decorators.js";
 import { LitElement, html, css } from "lit";
@@ -92,8 +92,7 @@ export class Main extends LitElement {
 
     const currentBoardId = this.#boardId;
 
-    const harness = createHarness(createHarnessConfig(startEvent.url));
-    for await (const result of harness.run()) {
+    for await (const result of run(createRunConfig(startEvent.url))) {
       if (this.#delay !== 0) {
         await new Promise((r) => setTimeout(r, this.#delay));
       }
