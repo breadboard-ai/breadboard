@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.2] - 2024-01-14
+
+- Update build. Oops.
+
 ## [0.1.1] - 2024-01-14
 
 - Update dependencies.
