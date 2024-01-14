@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.3.1] - 2024-01-14
+
+- Update dependencies and type info for new syntax.
+
 ## [0.3.0] - 2023-12-06
 
 - The `generateText` and `embedText` moved to `palm-kit`.
