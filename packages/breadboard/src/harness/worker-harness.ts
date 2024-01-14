@@ -24,31 +24,6 @@ export const createWorker = (url: string) => {
   return new Worker(blobUrl, { type: "module" });
 };
 
-class HarnessRun {
-  worker: Worker;
-  initClient: InitClient;
-  proxyServer: ProxyServer;
-  runClient: RunClient;
-
-  constructor(workerURL: string) {
-    this.worker = createWorker(workerURL);
-    const dispatcher = new PortDispatcher(this.worker);
-    this.initClient = new InitClient(
-      new WorkerClientTransport(dispatcher.send("load"))
-    );
-    this.proxyServer = new ProxyServer(
-      new WorkerServerTransport(dispatcher.receive("proxy"))
-    );
-    this.runClient = new RunClient(
-      new WorkerClientTransport(dispatcher.send("run"))
-    );
-  }
-
-  terminate() {
-    this.worker.terminate();
-  }
-}
-
 export class WorkerHarness implements Harness {
   #config: HarnessConfig;
   workerURL: string;
@@ -75,16 +50,26 @@ export class WorkerHarness implements Harness {
   }
 
   async *run(state?: string) {
-    const harnessRun = new HarnessRun(this.workerURL);
+    const worker = createWorker(this.workerURL);
+    const dispatcher = new PortDispatcher(worker);
+    const initClient = new InitClient(
+      new WorkerClientTransport(dispatcher.send("load"))
+    );
+    const proxyServer = new ProxyServer(
+      new WorkerServerTransport(dispatcher.receive("proxy"))
+    );
+    const runClient = new RunClient(
+      new WorkerClientTransport(dispatcher.send("run"))
+    );
 
-    await harnessRun.initClient.load(this.#config.url);
+    await initClient.load(this.#config.url);
 
     yield* asyncGen<HarnessRunResult>(async (next) => {
       const kits = [createSecretAskingKit(next), ...this.#config.kits];
       const proxy = this.#config.proxy?.[0]?.nodes;
-      harnessRun.proxyServer.serve({ kits, proxy });
+      proxyServer.serve({ kits, proxy });
 
-      for await (const data of harnessRun.runClient.run(state)) {
+      for await (const data of runClient.run(state)) {
         await next(data);
       }
     });
