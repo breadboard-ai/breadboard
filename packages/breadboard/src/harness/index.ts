@@ -10,6 +10,9 @@ import { WorkerHarness } from "./worker-harness.js";
 
 export type * from "./types.js";
 
+export { serve, defineServeConfig } from "./serve.js";
+export type * from "./serve.js";
+
 export { createWorker } from "./worker-harness.js";
 export { createSecretAskingKit } from "./secrets.js";
 

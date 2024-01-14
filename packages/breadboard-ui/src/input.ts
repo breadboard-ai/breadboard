@@ -442,9 +442,8 @@ export class Input extends LitElement {
                     name="${key}"
                     id="${key}"
                     placeholder="${property.description || ""}"
-                  >
-${value}</textarea
-                  >
+                    .value=${value}
+                  ></textarea>
                 </div>`;
               } else {
                 // Single line input.
