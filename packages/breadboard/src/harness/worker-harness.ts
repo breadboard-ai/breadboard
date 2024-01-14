@@ -14,7 +14,6 @@ import {
   WorkerServerTransport,
 } from "../remote/worker.js";
 import { RunClient } from "../remote/run.js";
-import { AnyRunResponseMessage } from "../remote/protocol.js";
 import { InitClient } from "../remote/init.js";
 
 export const createWorker = (url: string) => {
@@ -64,16 +63,6 @@ export class WorkerHarness implements Harness {
     this.workerURL = workerURL;
   }
 
-  #skipDiagnosticMessages(type: AnyRunResponseMessage[0]) {
-    return (
-      !this.#config.diagnostics &&
-      (type === "nodestart" ||
-        type === "nodeend" ||
-        type === "graphstart" ||
-        type === "graphend")
-    );
-  }
-
   async load() {
     const url = this.#config.url;
 
@@ -110,10 +99,6 @@ export class WorkerHarness implements Harness {
       this.#run.proxyServer.serve({ kits, proxy });
 
       for await (const data of this.#run.runClient.run(state)) {
-        const { type } = data;
-        if (this.#skipDiagnosticMessages(type)) {
-          continue;
-        }
         await next(data);
       }
     });

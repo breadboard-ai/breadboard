@@ -70,4 +70,5 @@ export const createHarnessConfig = (url: string) => {
 export const serveConfig = defineServeConfig({
   transport: "worker",
   kits: [{ proxy: PROXY_NODES }, ...kits],
+  diagnostics: true,
 });
