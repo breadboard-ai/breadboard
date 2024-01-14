@@ -1,6 +1,6 @@
 {
   "name": "@google-labs/json-kit",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A Breadboard Kit containing nodes that facilitate wrangling JSON objects",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
