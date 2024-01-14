@@ -1,6 +1,6 @@
 {
   "name": "@google-labs/llm-starter",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "LLM Starter Kit for the Breadboard library",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
