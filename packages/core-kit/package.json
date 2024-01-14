@@ -1,6 +1,6 @@
 {
   "name": "@google-labs/core-kit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A Breadboard Kit containing nodes that enable composition and reuse of boards.",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
