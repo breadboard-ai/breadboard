@@ -17,9 +17,8 @@ import {
 } from "./events.js";
 import { LoadArgs } from "./load.js";
 import { Diagram } from "./diagram.js";
-import { Input } from "./input.js";
-import { Output, OutputArgs } from "./output.js";
 import {
+  AnyRunResult,
   HarnessRunResult,
   InputResult,
   OutputResult,
@@ -66,6 +65,7 @@ type UIConfig = {
 };
 
 const CONFIG_MEMORY_KEY = "ui-config";
+const DIAGRAM_DEBOUNCE_RENDER_TIMEOUT = 60;
 
 @customElement("bb-ui-manager")
 export class UI extends LitElement {
@@ -73,13 +73,7 @@ export class UI extends LitElement {
   loadInfo: LoadArgs | null = null;
 
   @property({ reflect: true })
-  paused = false;
-
-  @property({ reflect: true })
   bootWithUrl: string | null = null;
-
-  @property()
-  highlightedDiagramNode = "";
 
   @property({ reflect: true })
   url: string | null = "";
@@ -92,12 +86,6 @@ export class UI extends LitElement {
 
   @state()
   toasts: Array<{ message: string; type: ToastType }> = [];
-
-  @state()
-  inputs: Input[] = [];
-
-  @state()
-  outputs: Output[] = [];
 
   @state()
   historyEntries: HistoryEntry[] = [];
@@ -116,16 +104,21 @@ export class UI extends LitElement {
     showAllInputs: false,
   };
 
-  #subHistoryEntries: Map<string, HistoryEntry[]> = new Map();
   #diagram = new Diagram();
-  #lastHistoryEventTime = Number.NaN;
   #nodeInfo: Map<string, ExtendedNodeInformation> = new Map();
-  #gridInfoRef: Ref<HTMLElement> = createRef();
-  #gridInfoBB: DOMRect | null = null;
+  #timelineRef: Ref<HTMLElement> = createRef();
+  #inputRef: Ref<HTMLElement> = createRef();
+  #historyRef: Ref<HTMLElement> = createRef();
+  #targetElementDivisions: number[] | null = null;
+  #resizeTarget: string | null = null;
+  #resizeBB: DOMRect | null = null;
   #handlers: Map<string, inputCallback[]> = new Map();
   #memory = longTermMemory;
   #isUpdatingMemory = false;
   #messagePosition = 0;
+  #messageDurations: Map<AnyRunResult, number> = new Map();
+  #renderTimeout = 0;
+  #rendering = false;
 
   static styles = css`
     :host {
@@ -134,8 +127,9 @@ export class UI extends LitElement {
       grid-template-rows: calc(var(--bb-grid-size) * 11) auto;
       grid-template-columns: calc(var(--bb-grid-size) * 16) auto;
 
-      --row-top: 1fr;
-      --row-bottom: 1fr;
+      --rhs-top: 10fr;
+      --rhs-mid: 45fr;
+      --rhs-bottom: 45fr;
     }
 
     * {
@@ -271,7 +265,11 @@ export class UI extends LitElement {
 
     #rhs {
       display: grid;
-      grid-template-rows: calc(var(--bb-grid-size) * 10) auto;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: var(--rhs-top) 8px var(--rhs-mid) 8px var(
+          --rhs-bottom
+        );
+      column-gap: calc(var(--bb-grid-size) * 2);
       overflow: auto;
     }
 
@@ -291,6 +289,8 @@ export class UI extends LitElement {
       padding: var(--bb-grid-size);
       font-weight: bold;
       border: 1px solid rgb(230 230 230);
+      margin-top: -3px;
+      height: 22px;
     }
 
     #run-status {
@@ -309,16 +309,9 @@ export class UI extends LitElement {
       background: rgb(255, 242, 204);
     }
 
-    #graph-info {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: var(--row-top) 8px var(--row-bottom);
-      column-gap: 8px;
-      overflow: auto;
-    }
-
     #inputs,
     #outputs,
+    #timeline,
     #history {
       border: 1px solid rgb(227, 227, 227);
       border-radius: calc(var(--bb-grid-size) * 5);
@@ -326,10 +319,15 @@ export class UI extends LitElement {
       background: rgb(255, 255, 255);
     }
 
+    #timeline,
     #inputs,
     #outputs {
       display: flex;
       flex-direction: column;
+    }
+
+    #timeline {
+      grid-column: 1 / 3;
     }
 
     #history {
@@ -337,9 +335,15 @@ export class UI extends LitElement {
       grid-column: 1 / 3;
     }
 
-    #drag-handle {
+    .drag-handle {
       cursor: ns-resize;
       grid-column: 1 / 3;
+    }
+
+    #timeline h1 {
+      font-size: var(--bb-text-small);
+      font-weight: bold;
+      margin: 0;
     }
 
     #inputs header,
@@ -356,10 +360,18 @@ export class UI extends LitElement {
       z-index: 1;
     }
 
+    #timeline header {
+      height: calc(var(--bb-grid-size) * 8);
+      padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 4);
+      border-bottom: 1px solid rgb(227, 227, 227);
+    }
+
+    #timeline header,
     #inputs header {
       display: flex;
     }
 
+    #timeline header h1,
     #inputs header h1 {
       font-size: var(--bb-text-small);
       font-weight: bold;
@@ -386,14 +398,6 @@ export class UI extends LitElement {
     #inputs-list,
     #outputs-list {
       padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 4);
-    }
-
-    bb-output {
-      border-bottom: 1px solid #aaa;
-    }
-
-    bb-output:last-of-type {
-      border-bottom: none;
     }
 
     #node-information {
@@ -465,6 +469,25 @@ export class UI extends LitElement {
     #node-information #close:hover {
       opacity: 1;
     }
+
+    #value {
+      min-width: 60px;
+      display: flex;
+      background: #d1cbff;
+      border-radius: calc(var(--bb-grid-size) * 3);
+      font-size: var(--bb-text-small);
+      font-weight: bold;
+      height: calc(var(--bb-grid-size) * 5);
+      align-items: center;
+      justify-content: center;
+      margin-left: calc(var(--bb-grid-size) * 2);
+      margin-top: calc(var(--bb-grid-size) * -0.5);
+    }
+
+    #max {
+      font-size: var(--bb-text-pico);
+      font-weight: normal;
+    }
   `;
 
   constructor() {
@@ -506,35 +529,30 @@ export class UI extends LitElement {
 
     this.url = null;
     this.loadInfo = null;
-    this.historyEntries.length = 0;
-    this.#subHistoryEntries.clear();
     this.toasts.length = 0;
-    this.inputs.length = 0;
-    this.outputs.length = 0;
     this.messages.length = 0;
     this.#messagePosition = 0;
 
+    this.#messageDurations.clear();
     this.#nodeInfo.clear();
 
     this.#diagram.reset();
-    this.#lastHistoryEventTime = Number.NaN;
 
     this.dispatchEvent(new BoardUnloadEvent());
   }
 
   firstUpdated() {
-    const rowTop = globalThis.sessionStorage.getItem("grid-row-top");
-    const rowBottom = globalThis.sessionStorage.getItem("grid-row-bottom");
-    if (!(rowTop && rowBottom)) {
-      return;
-    }
+    const rowTop = globalThis.sessionStorage.getItem("rhs-top") || "10fr";
+    const rowMid = globalThis.sessionStorage.getItem("rhs-mid") || "45fr";
+    const rowBottom = globalThis.sessionStorage.getItem("rhs-bottom") || "45fr";
 
-    this.#applyGridRowHeight(rowTop, rowBottom);
+    this.#applyGridRowHeight(rowTop, rowMid, rowBottom);
   }
 
-  #applyGridRowHeight(rowTop: string, rowBottom: string) {
-    this.style.setProperty("--row-top", rowTop);
-    this.style.setProperty("--row-bottom", rowBottom);
+  #applyGridRowHeight(rowTop: string, rowMid: string, rowBottom: string) {
+    this.style.setProperty(`--rhs-top`, rowTop);
+    this.style.setProperty(`--rhs-mid`, rowMid);
+    this.style.setProperty(`--rhs-bottom`, rowBottom);
   }
 
   #startVerticalResize(evt: PointerEvent) {
@@ -542,43 +560,112 @@ export class UI extends LitElement {
       return;
     }
 
-    if (!this.#gridInfoRef.value) {
+    evt.target.setPointerCapture(evt.pointerId);
+
+    this.#resizeTarget = evt.target.dataset.control || null;
+    if (
+      !(
+        this.#resizeTarget &&
+        this.#inputRef.value &&
+        this.#historyRef.value &&
+        this.#timelineRef.value
+      )
+    ) {
       return;
     }
 
-    evt.target.setPointerCapture(evt.pointerId);
-    this.#gridInfoBB = this.#gridInfoRef.value.getBoundingClientRect();
+    const rhsTop = this.style.getPropertyValue("--rhs-top") || "10fr";
+    const rhsMid = this.style.getPropertyValue("--rhs-mid") || "45fr";
+    const rhsBottom = this.style.getPropertyValue("--rhs-bottom") || "45fr";
+
+    this.#targetElementDivisions = [
+      parseFloat(rhsTop),
+      parseFloat(rhsMid),
+      parseFloat(rhsBottom),
+    ];
+
+    const timelineBB = this.#timelineRef.value.getBoundingClientRect();
+    const inputBB = this.#inputRef.value.getBoundingClientRect();
+    const historyBB = this.#historyRef.value.getBoundingClientRect();
+
+    switch (this.#resizeTarget) {
+      case "upper":
+        this.#resizeBB = new DOMRect(
+          timelineBB.x,
+          timelineBB.top,
+          timelineBB.width,
+          inputBB.bottom - timelineBB.top
+        );
+        break;
+
+      case "lower":
+        this.#resizeBB = new DOMRect(
+          inputBB.x,
+          inputBB.top,
+          historyBB.width,
+          historyBB.bottom - inputBB.top
+        );
+        break;
+
+      default:
+        console.warn(`Unexpected resize target: ${this.#resizeTarget}`);
+        break;
+    }
   }
 
   #onVerticalResize(evt: PointerEvent) {
-    if (this.#gridInfoBB === null) {
+    if (
+      this.#resizeBB === null ||
+      this.#resizeTarget === null ||
+      this.#targetElementDivisions === null
+    ) {
       return;
     }
 
-    let normalizedY =
-      (evt.pageY - this.#gridInfoBB.top) / this.#gridInfoBB.height;
-
+    let normalizedY = (evt.pageY - this.#resizeBB.top) / this.#resizeBB.height;
     if (normalizedY < 0.1) {
       normalizedY = 0.1;
     } else if (normalizedY > 0.9) {
       normalizedY = 0.9;
     }
 
-    this.#applyGridRowHeight(`${normalizedY}fr`, `${1 - normalizedY}fr`);
+    let top = this.#targetElementDivisions[0];
+    let mid = this.#targetElementDivisions[1];
+    let bottom = this.#targetElementDivisions[2];
+
+    switch (this.#resizeTarget) {
+      case "upper": {
+        const total = top + mid;
+        top = normalizedY * total;
+        mid = (1 - normalizedY) * total;
+        break;
+      }
+
+      case "lower": {
+        const total = mid + bottom;
+        mid = normalizedY * total;
+        bottom = (1 - normalizedY) * total;
+        break;
+      }
+    }
+
+    this.#applyGridRowHeight(`${top}fr`, `${mid}fr`, `${bottom}fr`);
   }
 
   #endVerticalResize() {
-    if (!this.#gridInfoBB) {
+    if (!this.#resizeBB) {
       return;
     }
 
-    this.#gridInfoBB = null;
+    this.#resizeBB = null;
 
-    const rowTop = this.style.getPropertyValue("--row-top");
-    const rowBottom = this.style.getPropertyValue("--row-bottom");
+    const rhsTop = this.style.getPropertyValue("--rhs-top");
+    const rhsMid = this.style.getPropertyValue("--rhs-mid");
+    const rhsBottom = this.style.getPropertyValue("--rhs-bottom");
 
-    globalThis.sessionStorage.setItem("grid-row-top", rowTop);
-    globalThis.sessionStorage.setItem("grid-row-bottom", rowBottom);
+    globalThis.sessionStorage.setItem("rhs-top", rhsTop);
+    globalThis.sessionStorage.setItem("rhs-mid", rhsMid);
+    globalThis.sessionStorage.setItem("rhs-bottom", rhsBottom);
   }
 
   #parseNodeInformation(nodes?: NodeDescriptor[]) {
@@ -601,7 +688,6 @@ export class UI extends LitElement {
   async load(loadInfo: LoadArgs) {
     this.loadInfo = loadInfo;
     this.#parseNodeInformation(loadInfo.nodes);
-    this.#lastHistoryEventTime = globalThis.performance.now();
   }
 
   async #registerInputHandler(id: string): Promise<Record<string, unknown>> {
@@ -634,46 +720,44 @@ export class UI extends LitElement {
     return Object.fromEntries(values);
   }
 
-  async output(values: OutputArgs) {
-    this.outputs.unshift(new Output(values.outputs));
-  }
-
   async handleStateChange(
-    message: HarnessRunResult
+    message: HarnessRunResult,
+    duration: number
   ): Promise<Record<string, unknown> | void> {
-    this.#lastHistoryEventTime = globalThis.performance.now();
-
     // Store it for later, render, then actually handle the work.
     this.messages.push(message);
     if (this.status === STATUS.RUNNING) {
-      this.#messagePosition = this.messages.length;
+      this.#messagePosition = this.messages.length - 1;
     }
+    this.#messageDurations.set(message, duration);
     this.requestUpdate();
 
     const { data, type } = message;
     switch (type) {
       case "nodestart": {
-        this.#handlers.clear();
-        this.#handlers.set(message.data.node.id, []);
+        console.log(
+          `Initialize input handlers for input(id="${data.node.id}")`
+        );
+        if (!this.#handlers.has(data.node.id)) {
+          this.#handlers.set(data.node.id, []);
+        }
         return;
       }
 
       case "nodeend": {
-        this.#handlers.clear();
+        console.log(`Clear input handlers for input(id="${data.node.id}")`);
+        this.#handlers.delete(data.node.id);
         return;
       }
 
       case "input": {
+        console.log(`Input (id="${data.node.id}") requested`);
         return this.#registerInputHandler(data.node.id);
       }
 
       case "secret": {
-        this.#handlers.clear();
+        console.log(`Secrets (${data.keys.join(", ")}) requested`);
         return this.#registerSecretsHandler(data.keys);
-      }
-
-      case "output": {
-        return this.output(data);
       }
     }
   }
@@ -691,6 +775,25 @@ export class UI extends LitElement {
     this.requestUpdate();
   }
 
+  #scheduleDiagramRender() {
+    // We do a debounced render here because rendering the Mermaid chart it very
+    // expensive, and we can't keep on top of the animation if we render it on
+    // demand.
+    clearTimeout(this.#renderTimeout);
+    this.#renderTimeout = window.setTimeout(async () => {
+      if (this.#rendering) {
+        this.#scheduleDiagramRender();
+        return;
+      }
+
+      const message = this.messages[this.#messagePosition];
+      const nodeId = hasNodeInfo(message) ? message.data.node.id : "";
+      this.#rendering = true;
+      await this.renderDiagram(nodeId);
+      this.#rendering = false;
+    }, DIAGRAM_DEBOUNCE_RENDER_TIMEOUT);
+  }
+
   #renderContent() {
     if (!this.loadInfo) {
       return html`Loading board...`;
@@ -698,39 +801,54 @@ export class UI extends LitElement {
 
     switch (this.mode) {
       case MODE.BUILD: {
-        // TODO: Figure out the await part of this rendering.
-        const message = this.messages[this.#messagePosition - 1];
-        const nodeId = hasNodeInfo(message) ? message.data.node.id : "";
-        this.renderDiagram(nodeId);
+        this.#scheduleDiagramRender();
 
         return html`<div id="diagram">
             ${this.loadInfo.diagram ? this.#diagram : "No board diagram"}
-            ${this.selectedNode
-              ? html`<div id="node-information">
-                  <h1>Node Information</h1>
-                  <button id="close" @click=${() => (this.selectedNode = null)}>
-                    Close
-                  </button>
-                  <dl>
-                    <dd>ID</dd>
-                    <dt>${this.selectedNode.id}</dt>
-                    <dd>Type</dd>
-                    <dt>${this.selectedNode.type}</dt>
-                    <dd>Configuration</dd>
-                    <dt>
-                      <bb-json-tree
-                        .json=${this.selectedNode.configuration}
-                        autoExpand="true"
-                      ></bb-json-tree>
-                    </dt>
-                  </dl>
-                </div>`
-              : nothing}
+            ${
+              this.selectedNode
+                ? html`<div id="node-information">
+                    <h1>Node Information</h1>
+                    <button
+                      id="close"
+                      @click=${() => (this.selectedNode = null)}
+                    >
+                      Close
+                    </button>
+                    <dl>
+                      <dd>ID</dd>
+                      <dt>${this.selectedNode.id}</dt>
+                      <dd>Type</dd>
+                      <dt>${this.selectedNode.type}</dt>
+                      <dd>Configuration</dd>
+                      <dt>
+                        <bb-json-tree
+                          .json=${this.selectedNode.configuration}
+                          autoExpand="true"
+                        ></bb-json-tree>
+                      </dt>
+                    </dl>
+                  </div>`
+                : nothing
+            }
           </div>
           <div id="rhs">
-            <div id="controls">
-              <bb-traversal-controls
-                id="position"
+            <section id="timeline" ${ref(this.#timelineRef)}>
+              <header>
+                <h1>Events</h1>
+                <div id="value">${Math.min(
+                  this.messages.length,
+                  this.#messagePosition + 1
+                )} /
+                <span id="max">&nbsp;${this.messages.length}</span></div>
+                <div id="run-status" class=${classMap({ [this.status]: true })}>
+                  ${this.status}
+                </div>
+              </header>
+              <bb-timeline-controls
+                .messages=${this.messages}
+                .messagePosition=${this.#messagePosition}
+                .messageDurations=${this.#messageDurations}
                 @breadboardmessagetraversal=${(evt: MessageTraversalEvent) => {
                   if (evt.index < 0 || evt.index > this.messages.length) {
                     return;
@@ -739,16 +857,16 @@ export class UI extends LitElement {
                   this.#messagePosition = evt.index;
                   this.requestUpdate();
                 }}
-                .value=${this.#messagePosition}
-                .max=${this.messages.length}
-              ></bb-traversal-controls>
-
-              <div id="run-status" class=${classMap({ [this.status]: true })}>
-                ${this.status}
-              </div>
-            </div>
-            <div id="graph-info" ${ref(this.#gridInfoRef)}>
-              <section id="inputs">
+              ></bb-timeline-controls>
+            </section>
+            <div
+              class="drag-handle"
+              data-control="upper"
+              @pointerdown=${this.#startVerticalResize}
+              @pointermove=${this.#onVerticalResize}
+              @pointerup=${this.#endVerticalResize}
+            ></div>
+            <section id="inputs" ${ref(this.#inputRef)}>
                 <header>
                   <h1>Inputs</h1>
                   <div id="input-options">
@@ -765,11 +883,10 @@ export class UI extends LitElement {
                   <bb-input-list
                     .showAllInputs=${this.config.showAllInputs}
                     .messages=${this.messages}
-                    .lastUpdate=${this.#lastHistoryEventTime}
                     .messagePosition=${this.#messagePosition}
                     @breadboardinputenter=${(event: InputEnterEvent) => {
                       // Notify any pending handlers that the input has arrived.
-                      if (this.#messagePosition !== this.messages.length) {
+                      if (this.#messagePosition < this.messages.length - 1) {
                         // The user has attempted to provide input for a stale
                         // request.
                         // TODO: Enable resuming from this point.
@@ -786,7 +903,7 @@ export class UI extends LitElement {
                       const handlers = this.#handlers.get(event.id) || [];
                       if (handlers.length === 0) {
                         console.warn(
-                          `Received event for ${event.id} but no handlers were found`
+                          `Received event for input(id="${event.id}") but no handlers were found`
                         );
                       }
                       for (const handler of handlers) {
@@ -806,19 +923,19 @@ export class UI extends LitElement {
                 </div>
               </section>
               <div
-                id="drag-handle"
+                class="drag-handle"
+                data-control="lower"
                 @pointerdown=${this.#startVerticalResize}
                 @pointermove=${this.#onVerticalResize}
                 @pointerup=${this.#endVerticalResize}
               ></div>
-              <div id="history">
+              <div id="history" ${ref(this.#historyRef)}>
                 <bb-history-tree
                   .messages=${this.messages}
                   .messagePosition=${this.#messagePosition}
-                  .lastUpdate=${this.#lastHistoryEventTime}
                 ></bb-history-tree>
               </div>
-            </div>
+            </section>
           </div>`;
       }
 

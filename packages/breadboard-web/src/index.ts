@@ -92,7 +92,10 @@ export class Main extends LitElement {
 
     const currentBoardId = this.#boardId;
 
+    let lastEventTime = globalThis.performance.now();
     for await (const result of run(createRunConfig(startEvent.url))) {
+      // TODO(https://github.com/breadboard-ai/breadboard/issues/366)
+      const runDuration = globalThis.performance.now() - lastEventTime;
       if (this.#delay !== 0) {
         await new Promise((r) => setTimeout(r, this.#delay));
       }
@@ -101,11 +104,14 @@ export class Main extends LitElement {
         return;
       }
 
-      const answer = await ui.handleStateChange(result);
+      const answer = await ui.handleStateChange(result, runDuration);
       await this.#waitIfPaused(answer);
 
+      // We reset the time here because we don't want to include the user input
+      // round trip in the "board time".
+      lastEventTime = globalThis.performance.now();
       if (answer) {
-        result.reply({ inputs: answer } as InputResolveRequest);
+        await result.reply({ inputs: answer } as InputResolveRequest);
       }
     }
 

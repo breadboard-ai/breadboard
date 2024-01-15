@@ -59,7 +59,6 @@ export type HistoryEntry = AnyRunResult & {
     | { inputs: Record<string, unknown>; outputs: Record<string, unknown> }
     | null
     | undefined;
-  elapsedTime: number;
   children: HistoryEntry[];
 };
 

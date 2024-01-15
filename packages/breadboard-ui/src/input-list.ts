@@ -59,9 +59,12 @@ export class InputList extends LitElement {
     // Infer from the messages received which inputs need to be shown to the
     // user.
     const inputs: InputDescription[] = [];
-    for (let idx = this.messagePosition - 1; idx >= 0; idx--) {
+    for (let idx = this.messagePosition; idx >= 0; idx--) {
       const message = this.messages[idx];
-      if (message.type !== "nodestart" && message.type !== "secret") {
+      if (
+        !message ||
+        (message.type !== "nodestart" && message.type !== "secret")
+      ) {
         continue;
       }
 
@@ -135,6 +138,8 @@ export class InputList extends LitElement {
     if (!inputs.length) {
       return html`There are no inputs yet.`;
     }
+
+    console.log(inputs);
 
     return html`${inputs.map(({ id, secret, remember, configuration }, idx) => {
       if (!this.messages) {

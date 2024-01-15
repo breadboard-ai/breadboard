@@ -428,19 +428,6 @@ export class HistoryTree extends LitElement {
     }
   `;
 
-  #formatTime(time: number) {
-    if (time === 0) {
-      return "-";
-    }
-
-    if (time > 1000) {
-      time /= 1000;
-      return time.toFixed(2) + "s";
-    }
-
-    return time.toFixed(1) + "ms";
-  }
-
   #onKeyDown(evt: KeyboardEvent) {
     if (evt.key !== "Escape") {
       return;
@@ -561,7 +548,6 @@ export class HistoryTree extends LitElement {
           ${initiator || html`<span class="empty">(none)</span>`}
         </td>
         <td class="value">${dataOutput}</td>
-        <td>${this.#formatTime(entry.elapsedTime)}</td>
       </tr>
       ${entry.children.map((child, idx, items) =>
         this.#convertToHtml(
@@ -683,15 +669,11 @@ export class HistoryTree extends LitElement {
       return { inputs: event.data, outputs: {} };
     };
 
-    const elapsedTime = 0;
-    // globalThis.performance.now() - this.#lastHistoryEventTime;
-
     return {
       ...event,
       graphNodeData: getNodeData(),
       id: hasPath(event) ? pathToId(event.data.path, event.type) : "",
       guid: globalThis.crypto.randomUUID(),
-      elapsedTime,
       children: [],
     };
   }
@@ -750,8 +732,6 @@ export class HistoryTree extends LitElement {
     if (existingEntry.graphNodeData === null) {
       existingEntry.graphNodeData = undefined;
     }
-
-    // this.#lastHistoryEventTime = globalThis.performance.now();
   }
 
   render() {
@@ -762,12 +742,12 @@ export class HistoryTree extends LitElement {
     this.#dataByGuid.clear();
 
     const entries: HistoryEntry[] = [];
-    for (let m = 0; m < this.messagePosition; m++) {
+    for (let m = 0; m <= this.messagePosition; m++) {
       const message = this.messages[m];
 
       // Not all messages are shown in the history, so just skip over them here.
       // TODO: Make this configurable.
-      if (!isValidHistoryEntry(message)) {
+      if (!message || !isValidHistoryEntry(message)) {
         continue;
       }
 
@@ -809,13 +789,12 @@ export class HistoryTree extends LitElement {
             <td class="id">ID</td>
             <td class="initiator">Initiator</td>
             <td class="value">Value</td>
-            <td>Duration</td>
           </tr>
         </thead>
         <tbody>
           ${entries.length === 0
             ? html`<tr data-parent="">
-                <td colspan="5">No entries</td>
+                <td colspan="4">No entries</td>
               </tr>`
             : entries.map((entry) => {
                 return this.#convertToHtml(entry);

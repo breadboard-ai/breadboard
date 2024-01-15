@@ -20,6 +20,7 @@ export { Progress } from "./progress.js";
 export { Start } from "./start.js";
 export { Toast } from "./toast.js";
 export { TraversalControls } from "./traversal-controls.js";
+export { TimelineControls } from "./timeline-controls.js";
 export { UI } from "./ui.js";
 export { WebcamInput } from "./webcam.js";
 

@@ -29,9 +29,9 @@ export class OutputList extends LitElement {
     }
 
     const outputs: Output[] = [];
-    for (let idx = 0; idx < this.messagePosition; idx++) {
+    for (let idx = 0; idx <= this.messagePosition; idx++) {
       const message = this.messages[idx];
-      if (message.type !== "output") {
+      if (!message || message.type !== "output") {
         continue;
       }
 
