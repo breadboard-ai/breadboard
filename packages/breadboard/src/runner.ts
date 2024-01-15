@@ -161,7 +161,7 @@ export class BoardRunner implements BreadboardRunner {
 
         if (descriptor.type === "input") {
           await next(new InputStageResult(result, invocationId));
-          await bubbleUpInputsIfNeeded(this, context, result);
+          await bubbleUpInputsIfNeeded(this, context, descriptor, result);
           outputsPromise = result.outputsPromise;
         } else if (descriptor.type === "output") {
           await next(new OutputStageResult(result, invocationId));

@@ -6,6 +6,7 @@
 
 import { LitElement, html, css, nothing, HTMLTemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
+import { ToastEvent, ToastType } from "./events.js";
 
 type JSONObjectValue = number | string | boolean | JSONObject;
 
@@ -21,12 +22,43 @@ export class JSONTree extends LitElement {
   @property({ reflect: true })
   autoExpand = false;
 
+  #copying = false;
+
   static styles = css`
     :host {
       font-family: var(--bb-font-family-mono, monospace);
       font-size: var(--bb-text-nano, 11px);
       cursor: default;
       --bb-grid-size: 4px;
+      position: relative;
+      display: block;
+    }
+
+    #copy-to-clipboard {
+      width: 24px;
+      height: 24px;
+      font-size: 0;
+      background: var(--bb-icon-copy-to-clipboard) center center no-repeat;
+      vertical-align: middle;
+      border: none;
+      cursor: pointer;
+      transition: opacity var(--bb-easing-duration-out) var(--bb-easing);
+      opacity: 0.5;
+      position: absolute;
+      top: 0;
+      right: 0;
+      border-radius: 50%;
+    }
+
+    #copy-to-clipboard:hover {
+      background-color: #ffffffcc;
+      transition: opacity var(--bb-easing-duration-in) var(--bb-easing),
+        background-color var(--bb-easing-duration-in) var(--bb-easing);
+      opacity: 1;
+    }
+
+    :host(:hover) #copy-to-clipboard {
+      display: block;
     }
 
     summary,
@@ -85,6 +117,23 @@ export class JSONTree extends LitElement {
     return value;
   }
 
+  async #copyToClipboard(evt: Event) {
+    if (this.#copying || !this.json) {
+      return;
+    }
+
+    evt.stopImmediatePropagation();
+    evt.preventDefault();
+
+    this.#copying = true;
+
+    await navigator.clipboard.writeText(JSON.stringify(this.json, null, 2));
+    this.dispatchEvent(
+      new ToastEvent("JSON copied to clipboard", ToastType.INFORMATION)
+    );
+    this.#copying = false;
+  }
+
   #convertToHtml(obj: JSONObject) {
     const entries = Object.entries(obj);
     if (entries.length === 0) {
@@ -121,6 +170,13 @@ export class JSONTree extends LitElement {
 
     return html`{
       <div>${this.#convertToHtml(this.json)}</div>
-      }`;
+      }
+      <button
+        id="copy-to-clipboard"
+        @click=${this.#copyToClipboard}
+        title="Copy JSON to Clipboard"
+      >
+        Copy
+      </button>`;
   }
 }

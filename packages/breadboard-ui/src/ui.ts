@@ -136,6 +136,10 @@ export class UI extends LitElement {
       box-sizing: border-box;
     }
 
+    bb-toast {
+      z-index: 100;
+    }
+
     :host > header {
       padding: calc(var(--bb-grid-size) * 6) calc(var(--bb-grid-size) * 8)
         calc(var(--bb-grid-size) * 0) calc(var(--bb-grid-size) * 8);
