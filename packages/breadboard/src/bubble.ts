@@ -8,6 +8,7 @@ import { InputStageResult, RunResult } from "./run.js";
 import {
   GraphMetadata,
   InputValues,
+  NodeDescriptor,
   NodeHandlerContext,
   NodeValue,
   OutputValues,
@@ -30,6 +31,7 @@ export const createErrorMessage = (
 export const bubbleUpInputsIfNeeded = async (
   metadata: GraphMetadata,
   context: NodeHandlerContext,
+  descriptor: NodeDescriptor,
   result: TraversalResult
 ): Promise<void> => {
   // If we have no way to bubble up inputs, we just return and not
@@ -38,12 +40,15 @@ export const bubbleUpInputsIfNeeded = async (
 
   const outputs = (await result.outputsPromise) ?? {};
   const reader = new InputSchemaReader(outputs, result.inputs);
-  result.outputsPromise = reader.read(createBubbleHandler(metadata, context));
+  result.outputsPromise = reader.read(
+    createBubbleHandler(metadata, context, descriptor)
+  );
 };
 
 export const createBubbleHandler = (
   metadata: GraphMetadata,
-  context: NodeHandlerContext
+  context: NodeHandlerContext,
+  descriptor: NodeDescriptor
 ) => {
   return (async (name, schema, required) => {
     if (required) {
@@ -55,7 +60,7 @@ export const createBubbleHandler = (
       }
       return schema.default;
     }
-    const value = await context.requestInput?.(name, schema);
+    const value = await context.requestInput?.(name, schema, descriptor);
     if (value === undefined) {
       throw new Error(createErrorMessage(name, metadata, required));
     }
@@ -117,20 +122,22 @@ export class RequestedInputsManager {
     next: (result: RunResult) => Promise<void>,
     result: TraversalResult
   ) {
-    return async (name: string, schema: Schema) => {
+    return async (name: string, schema: Schema, descriptor: NodeDescriptor) => {
       const cachedValue = this.#cache.get(name);
       if (cachedValue !== undefined) return cachedValue;
       const requestInputResult = {
         ...result,
+        descriptor,
         inputs: {
           schema: { type: "object", properties: { [name]: schema } },
         },
       };
+      console.log("requestInputResult", requestInputResult);
       await next(new InputStageResult(requestInputResult, -1));
       const outputs = await requestInputResult.outputsPromise;
       let value = outputs && outputs[name];
       if (value === undefined) {
-        value = await this.#context.requestInput?.(name, schema);
+        value = await this.#context.requestInput?.(name, schema, descriptor);
       }
       this.#cache.set(name, value);
       return value;

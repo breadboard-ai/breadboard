@@ -136,6 +136,10 @@ export class UI extends LitElement {
       box-sizing: border-box;
     }
 
+    bb-toast {
+      z-index: 100;
+    }
+
     :host > header {
       padding: calc(var(--bb-grid-size) * 6) calc(var(--bb-grid-size) * 8)
         calc(var(--bb-grid-size) * 0) calc(var(--bb-grid-size) * 8);
@@ -752,6 +756,7 @@ export class UI extends LitElement {
 
       case "input": {
         console.log(`Input (id="${data.node.id}") requested`);
+        console.log("DATA", data.inputArguments);
         return this.#registerInputHandler(data.node.id);
       }
 
