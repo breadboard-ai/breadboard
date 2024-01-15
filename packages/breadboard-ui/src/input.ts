@@ -75,6 +75,10 @@ export class Input extends LitElement {
       font-size: var(--bb-text-nano);
     }
 
+    bb-json-tree {
+      width: 100%;
+    }
+
     form,
     #choice-container {
       flex: 1;
