@@ -60,8 +60,11 @@ export default await recipe(({ text, schema, generator, context }) => {
     $id: "format",
     template: `{{text}}
 
-Reply as valid JSON of the following format:
-{{schemish}}`,
+Reply as valid JSON only of the following format:
+{{schemish}}
+
+\`\`\`json
+`,
     text,
     schemish: schemish,
   });
@@ -70,7 +73,9 @@ Reply as valid JSON of the following format:
     $id: "agent",
     text: format.prompt,
     context,
-    path: generator.isString(),
+    stopSequences: ["```"],
+    path: "agent.json",
+    generator,
   });
 
   const validate = json.validateJson({

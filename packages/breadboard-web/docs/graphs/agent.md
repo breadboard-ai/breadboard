@@ -8,6 +8,7 @@ generate["invoke <br> id='generate'"] -- "context->generated" --> assemble["json
 generate["invoke <br> id='generate'"] -- "text->text" --> output2{{"output <br> id='output-2'"}}:::output
 input1[/"input <br> id='input-1'"/]:::input -- "text->text" --> generate["invoke <br> id='generate'"]
 input1[/"input <br> id='input-1'"/]:::input -- "context->context" --> generate["invoke <br> id='generate'"]
+input1[/"input <br> id='input-1'"/]:::input -- "stopSequences->stopSequences" --> generate["invoke <br> id='generate'"]
 input1[/"input <br> id='input-1'"/]:::input -- "generator->path" --> generate["invoke <br> id='generate'"]
 input1[/"input <br> id='input-1'"/]:::input -- "text->text" --> assemble["jsonata <br> id='assemble'"]
 input1[/"input <br> id='input-1'"/]:::input -- "context->context" --> assemble["jsonata <br> id='assemble'"]
