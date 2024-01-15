@@ -139,8 +139,6 @@ export class InputList extends LitElement {
       return html`There are no inputs yet.`;
     }
 
-    console.log(inputs);
-
     return html`${inputs.map(({ id, secret, remember, configuration }, idx) => {
       if (!this.messages) {
         return nothing;
