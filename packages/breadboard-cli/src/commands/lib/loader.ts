@@ -6,6 +6,7 @@ import { pathToFileURL } from "url";
 export type Options = {
   output?: string;
   watch?: boolean;
+  save?: boolean;
 };
 
 const boardLike = (

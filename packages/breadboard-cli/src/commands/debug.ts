@@ -33,7 +33,7 @@ export const debug = async (file: string, options: Record<string, any>) => {
       onChange: async (filename: string) => {
         // Refresh the list of boards that are passed in at the start of the server.
         console.log(`${filename} changed. Refreshing boards...`);
-        boards = await loadBoards(file);
+        boards = await loadBoards(file, options);
 
         // Notify all the clients that the board has changed.
         Object.values(clients).forEach((clientResponse) => {
@@ -43,7 +43,7 @@ export const debug = async (file: string, options: Record<string, any>) => {
       onRename: async () => {
         // Refresh the list of boards that are passed in at the start of the server.
         console.log(`Refreshing boards...`);
-        boards = await loadBoards(file);
+        boards = await loadBoards(file, options);
       },
     });
   }
@@ -55,7 +55,7 @@ export const debug = async (file: string, options: Record<string, any>) => {
     if (requestURL.pathname === "/local-boards.json") {
       // Generate a list of boards that are valid at runtime.
       // Cache until things change.
-      boards = await loadBoards(file);
+      boards = await loadBoards(file, options);
 
       const boardsData = JSON.stringify(
         boards.map((board) => ({

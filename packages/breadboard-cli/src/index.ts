@@ -25,8 +25,9 @@ program
   )
   .option(
     "-o, --output <path>",
-    "If compiling a graph in Typescript (.ts), you MUST specific a location to output the compiled graph."
+    "If compiling a graph in Typescript (.ts), you can control the output of the compiled graph."
   )
+  .option("-n, --no-save", "Do not save the compiled graph to disk.")
   .option("-w, --watch", "Watch the file for changes.")
   .action(debug);
 
@@ -62,7 +63,7 @@ program
   )
   .option(
     "-o, --output <path>",
-    "If compiling a graph in Typescript (.ts), you MUST specific a location to output the compiled graph."
+    "If compiling a graph in Typescript (.ts), you can control the output of the compiled graph."
   )
   .option("-w, --watch", "Watch the file for changes.")
   .action(mermaid);
@@ -72,9 +73,10 @@ program
   .description("Run a graph.")
   .option("-w, --watch", "Watch the file for changes.")
   .option("-v, --verbose", "Output events and processing information.")
+  .option("-n, --no-save", "Do not write the compiled graph to disk.")
   .option(
     "-o, --output <path>",
-    "If compiling a graph in Typescript (.ts), you MUST specific a location to output the compiled graph."
+    "If compiling a graph in Typescript (.ts), you can control the output of the compiled graph."
   )
   .option("-k, --kit <kit...>", "The kit to use.")
   .option(
