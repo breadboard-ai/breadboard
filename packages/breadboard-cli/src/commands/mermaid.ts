@@ -6,11 +6,9 @@
 
 import { BoardRunner } from "@google-labs/breadboard";
 import { loadBoard, parseStdin, resolveFilePath, watch } from "./lib/utils.js";
+import { MermaidOptions } from "./commandTypes.js";
 
-export const mermaid = async (
-  file: string,
-  options: Record<string, string>
-) => {
+export const mermaid = async (file: string, options: MermaidOptions) => {
   if (file != undefined) {
     const filePath = resolveFilePath(file);
     let board = await loadBoard(filePath, options);

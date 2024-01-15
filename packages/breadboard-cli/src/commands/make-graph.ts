@@ -7,11 +7,9 @@
 import path, { extname } from "path";
 import { Loaders } from "./lib/loaders/index.js";
 import { resolveFilePath, watch } from "./lib/utils.js";
+import { MakeOptions } from "./commandTypes.js";
 
-export const makeGraph = async (
-  file: string,
-  options: Record<string, string>
-) => {
+export const makeGraph = async (file: string, options: MakeOptions) => {
   const filePath = resolveFilePath(file);
 
   if (

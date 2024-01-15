@@ -25,7 +25,8 @@ program
   )
   .option(
     "-o, --output <path>",
-    "If compiling a graph in Typescript (.ts), you can control the output of the compiled graph."
+    "If compiling a graph in Typescript (.ts), you can control the output directory of the compiled graph (current directory by default.)",
+    process.cwd()
   )
   .option("-n, --no-save", "Do not save the compiled graph to disk.")
   .option("-w, --watch", "Watch the file for changes.")
@@ -40,7 +41,8 @@ program
   )
   .option(
     "-o, --output <path>",
-    "The path where the boards will be output the board(s) to"
+    "The path where the boards will be output the board(s) to (current directory by default.)",
+    process.cwd()
   )
   .action(importGraph);
 
@@ -51,7 +53,8 @@ program
   )
   .option(
     "-o, --output <path>",
-    "If compiling a graph in Typescript (.ts), you MUST specific a location to output the compiled graph."
+    "If compiling a graph in Typescript (.ts), you can control the output directory of the compiled graph (current directory by default.)",
+    process.cwd()
   )
   .option("-w, --watch", "Watch the file for changes.")
   .action(makeGraph);
@@ -63,7 +66,8 @@ program
   )
   .option(
     "-o, --output <path>",
-    "If compiling a graph in Typescript (.ts), you can control the output of the compiled graph."
+    "If compiling a graph in Typescript (.ts), you can control the output directory of the compiled graph (current directory by default.)",
+    process.cwd()
   )
   .option("-w, --watch", "Watch the file for changes.")
   .action(mermaid);
@@ -76,7 +80,8 @@ program
   .option("-n, --no-save", "Do not write the compiled graph to disk.")
   .option(
     "-o, --output <path>",
-    "If compiling a graph in Typescript (.ts), you can control the output of the compiled graph."
+    "If compiling a graph in Typescript (.ts), you can control the output directory of the compiled graph (current directory by default.)",
+    process.cwd()
   )
   .option("-k, --kit <kit...>", "The kit to use.")
   .option(

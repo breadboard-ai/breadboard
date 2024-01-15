@@ -73,7 +73,6 @@ export const loadBoard = async (
   options: Options
 ): Promise<BoardRunner> => {
   const loaderType = extname(file).slice(1) as "js" | "ts" | "yaml" | "json";
-  const baseName = path.basename(file);
   const save = "save" in options ? options["save"] : true;
 
   const loader = new Loaders(loaderType);
@@ -82,10 +81,7 @@ export const loadBoard = async (
     const boardJson = JSON.stringify(board, null, 2);
     const pathInfo = path.parse(file);
     await writeFile(
-      path.join(
-        `${path.resolve(process.cwd(), pathInfo.dir)}`,
-        `${pathInfo.name}.json`
-      ),
+      path.join(options.output, `${pathInfo.name}.json`),
       boardJson
     );
   }

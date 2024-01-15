@@ -11,12 +11,13 @@ import { fileURLToPath, pathToFileURL } from "url";
 import { BoardMetaData, loadBoards, watch } from "./lib/utils.js";
 import { stat } from "fs/promises";
 import { createReadStream } from "fs";
+import { DebugOptions } from "./commandTypes.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const clients: Record<string, http.ServerResponse> = {};
 
-export const debug = async (file: string, options: Record<string, any>) => {
+export const debug = async (file: string, options: DebugOptions) => {
   const distDir = join(__dirname, "..", "..", "ui");
   let boards: Array<BoardMetaData> = [];
 

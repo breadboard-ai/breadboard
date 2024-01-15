@@ -4,7 +4,7 @@ import { basename, join, resolve } from "path";
 import { pathToFileURL } from "url";
 
 export type Options = {
-  output?: string;
+  output: string;
   watch?: boolean;
   save?: boolean;
 };
