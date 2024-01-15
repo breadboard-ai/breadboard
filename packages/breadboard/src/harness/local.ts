@@ -8,7 +8,8 @@ import { Board, asyncGen } from "../index.js";
 import { loadRunnerState } from "../serialization.js";
 import { BreadboardRunResult, Kit, ProbeMessage } from "../types.js";
 import { Diagnostics } from "./diagnostics.js";
-import { RunConfig, HarnessRunResult } from "./types.js";
+import { RunConfig } from "./run.js";
+import { HarnessRunResult } from "./types.js";
 
 const fromProbe = <Probe extends ProbeMessage>(probe: Probe) => {
   const loadStateIfAny = () => {

@@ -6,24 +6,14 @@
 
 import { Board } from "../board.js";
 import { InitServer } from "../remote/init.js";
-import { ProxyClient } from "../remote/proxy.js";
 import { RunServer } from "../remote/run.js";
 import {
   PortDispatcher,
   WorkerClientTransport,
   WorkerServerTransport,
 } from "../remote/worker.js";
-import { Kit } from "../types.js";
-
-/**
- * The configuration for a proxy kit.
- */
-export type ProxyKitConfig = {
-  /**
-   * The list of nodes to proxy.
-   */
-  proxy: string[] | undefined;
-};
+import { KitConfig, configureKits } from "./kits.js";
+import { TransportFactory } from "./types.js";
 
 /**
  * The Breadboard Serve configuration.
@@ -45,32 +35,13 @@ export type ServeConfig = {
    * If the kit is specified as a proxy configuration, a proxy kit will be
    * created and and a proxy client will be started.
    */
-  kits: (Kit | ProxyKitConfig)[];
+  kits: KitConfig[];
   /**
    * Whether to enable diagnostics. Defaults to false.
    * When diagnostics are enabled, the server will send graphstart/graphend and
    * nodestart/nodeend messages to the client.
    */
   diagnostics?: boolean;
-};
-
-const isProxyKitConfig = (
-  kitOrConfig: Kit | ProxyKitConfig
-): kitOrConfig is ProxyKitConfig => {
-  return "proxy" in kitOrConfig;
-};
-
-const configureKits = (
-  kits: (Kit | ProxyKitConfig)[],
-  factory: TransportFactory
-) => {
-  return kits.map((kit) => {
-    if (isProxyKitConfig(kit)) {
-      const proxyClient = new ProxyClient(factory.client("proxy"));
-      return proxyClient.createProxyKit(kit.proxy);
-    }
-    return kit;
-  });
 };
 
 const isInWorker = () => {
@@ -88,7 +59,7 @@ const maybeCreateWorker = () => {
   throw new Error("Not implemented");
 };
 
-class TransportFactory {
+class WorkerTransportFactory {
   #dispatcher: PortDispatcher;
 
   constructor(dispatcher: PortDispatcher) {
@@ -129,7 +100,7 @@ export const serve = async (config: ServeConfig) => {
   }
   const inWorker = isInWorker();
   const worker = inWorker ? (self as unknown as Worker) : maybeCreateWorker();
-  const factory = new TransportFactory(new PortDispatcher(worker));
+  const factory = new WorkerTransportFactory(new PortDispatcher(worker));
   const kits = configureKits(config.kits, factory);
   // TODO: Figure out how to initalize.
   const isRunServer = true;
