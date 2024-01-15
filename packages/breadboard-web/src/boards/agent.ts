@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2023 Google LLC
+ * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -43,7 +43,7 @@ export default await recipe(({ text, generator, context }) => {
     context,
   });
 
-  return { context: assemble.result };
+  return { context: assemble.result, text: generate.text };
 }).serialize({
   title: "Agent",
   description: "A prototype of an agent-like board",
