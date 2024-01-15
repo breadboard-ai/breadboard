@@ -756,7 +756,6 @@ export class UI extends LitElement {
 
       case "input": {
         console.log(`Input (id="${data.node.id}") requested`);
-        console.log("DATA", data.inputArguments);
         return this.#registerInputHandler(data.node.id);
       }
 
