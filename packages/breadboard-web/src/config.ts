@@ -45,7 +45,7 @@ const kits = [Starter, Core, Pinecone, PaLMKit, NodeNurseryWeb, JSONKit].map(
   (kitConstructor) => asRuntimeKit(kitConstructor)
 );
 
-export const createHarnessConfig = (url: string) => {
+export const createRunConfig = (url: string) => {
   const harness =
     globalThis.localStorage.getItem(HARNESS_SWITCH_KEY) ?? DEFAULT_HARNESS;
 
