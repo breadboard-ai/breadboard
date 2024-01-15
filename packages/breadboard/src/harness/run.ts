@@ -9,10 +9,10 @@ import { HTTPClientTransport } from "../remote/http.js";
 import { ProxyClient } from "../remote/proxy.js";
 import { runLocally } from "./local.js";
 import { createSecretAskingKit } from "./secrets.js";
-import { HarnessConfig, HarnessRunResult } from "./types.js";
+import { RunConfig, HarnessRunResult } from "./types.js";
 import { runInWorker } from "./worker.js";
 
-const configureKits = (config: HarnessConfig) => {
+const configureKits = (config: RunConfig) => {
   // If a proxy is configured, add the proxy kit to the list of kits.
   const proxyConfig = config.proxy?.[0];
   if (!proxyConfig) return config.kits;
@@ -29,7 +29,7 @@ const configureKits = (config: HarnessConfig) => {
   return [proxyClient.createProxyKit(proxyConfig.nodes), ...config.kits];
 };
 
-export async function* run(config: HarnessConfig) {
+export async function* run(config: RunConfig) {
   if (!config.remote) {
     yield* asyncGen<HarnessRunResult>(async (next) => {
       const kits = [createSecretAskingKit(next), ...configureKits(config)];

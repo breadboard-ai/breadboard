@@ -104,7 +104,7 @@ export type HarnessRemoteConfig =
     }
   | false;
 
-export type HarnessConfig = {
+export type RunConfig = {
   /**
    * The URL of the board to run.
    */
