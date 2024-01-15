@@ -78,12 +78,12 @@ export const loadBoard = async (
   const loader = new Loaders(loaderType);
   const board = await loader.load(file, options);
   if (save && loaderType !== "json") {
-    const boardJson = JSON.stringify(board, null, 2);
     const pathInfo = path.parse(file);
-    await writeFile(
-      path.join(options.output, `${pathInfo.name}.json`),
-      boardJson
-    );
+    const boardClone = JSON.parse(JSON.stringify(board));
+    const outputFilePath = path.join(options.output, `${pathInfo.name}.json`);
+    boardClone.url = pathToFileURL(outputFilePath); // So that the base url is correct for subsequent invokes
+    const boardJson = JSON.stringify(boardClone, null, 2);
+    await writeFile(outputFilePath, boardJson);
   }
   return board;
 };
