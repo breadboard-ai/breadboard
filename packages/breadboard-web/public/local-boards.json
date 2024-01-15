@@ -103,6 +103,11 @@
     "version": "0.0.3"
   },
   {
+    "title": "Team Builder",
+    "url": "/graphs/team-builder.json",
+    "version": "0.0.1"
+  },
+  {
     "title": "Text Generator",
     "url": "/graphs/text-generator.json",
     "version": "0.0.2"
