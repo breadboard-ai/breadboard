@@ -5,20 +5,19 @@
  */
 
 import { LocalHarness } from "./local-harness.js";
-import { Harness, HarnessConfig } from "./types.js";
-import { WorkerHarness } from "./worker-harness.js";
-
-const createHarness = (config: HarnessConfig): Harness => {
-  if (!config.remote) {
-    return new LocalHarness(config);
-  }
-  if (config.remote.type === "worker") {
-    return new WorkerHarness(config);
-  }
-  throw new Error(`Unsupported harness configuration: ${config}`);
-};
+import { HarnessConfig } from "./types.js";
+import { runInWorker } from "./worker-harness.js";
 
 export const run = (config: HarnessConfig) => {
-  const harness = createHarness(config);
-  return harness.run();
+  if (!config.remote) {
+    return new LocalHarness(config).run();
+  }
+  if (config.remote.type === "worker") {
+    const workerURL = config.remote && config.remote.url;
+    if (!workerURL) {
+      throw new Error("Worker harness requires a worker URL");
+    }
+    return runInWorker(workerURL, config);
+  }
+  throw new Error(`Unsupported harness configuration: ${config}`);
 };

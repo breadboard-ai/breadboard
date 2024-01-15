@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Harness, HarnessConfig, HarnessRunResult } from "./types.js";
+import type { HarnessConfig, HarnessRunResult } from "./types.js";
 import { asyncGen } from "../index.js";
 import { createSecretAskingKit } from "./secrets.js";
 import { ProxyServer } from "../remote/proxy.js";
@@ -24,41 +24,32 @@ export const createWorker = (url: string) => {
   return new Worker(blobUrl, { type: "module" });
 };
 
-export class WorkerHarness implements Harness {
-  #config: HarnessConfig;
+export async function* runInWorker(
+  workerURL: string,
+  config: HarnessConfig,
+  state?: string
+) {
+  const worker = createWorker(workerURL);
+  const dispatcher = new PortDispatcher(worker);
+  const initClient = new InitClient(
+    new WorkerClientTransport(dispatcher.send("load"))
+  );
+  const proxyServer = new ProxyServer(
+    new WorkerServerTransport(dispatcher.receive("proxy"))
+  );
+  const runClient = new RunClient(
+    new WorkerClientTransport(dispatcher.send("run"))
+  );
 
-  constructor(config: HarnessConfig) {
-    this.#config = config;
-  }
+  await initClient.load(config.url);
 
-  async *run(state?: string) {
-    const workerURL = this.#config.remote && this.#config.remote.url;
-    if (!workerURL) {
-      throw new Error("Worker harness requires a worker URL");
+  yield* asyncGen<HarnessRunResult>(async (next) => {
+    const kits = [createSecretAskingKit(next), ...config.kits];
+    const proxy = config.proxy?.[0]?.nodes;
+    proxyServer.serve({ kits, proxy });
+
+    for await (const data of runClient.run(state)) {
+      await next(data);
     }
-
-    const worker = createWorker(workerURL);
-    const dispatcher = new PortDispatcher(worker);
-    const initClient = new InitClient(
-      new WorkerClientTransport(dispatcher.send("load"))
-    );
-    const proxyServer = new ProxyServer(
-      new WorkerServerTransport(dispatcher.receive("proxy"))
-    );
-    const runClient = new RunClient(
-      new WorkerClientTransport(dispatcher.send("run"))
-    );
-
-    await initClient.load(this.#config.url);
-
-    yield* asyncGen<HarnessRunResult>(async (next) => {
-      const kits = [createSecretAskingKit(next), ...this.#config.kits];
-      const proxy = this.#config.proxy?.[0]?.nodes;
-      proxyServer.serve({ kits, proxy });
-
-      for await (const data of runClient.run(state)) {
-        await next(data);
-      }
-    });
-  }
+  });
 }
