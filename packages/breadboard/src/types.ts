@@ -618,7 +618,11 @@ export interface NodeHandlerContext {
   readonly outerGraph?: GraphDescriptor;
   readonly slots?: BreadboardSlotSpec;
   readonly probe?: Probe;
-  readonly requestInput?: (name: string, schema: Schema) => Promise<NodeValue>;
+  readonly requestInput?: (
+    name: string,
+    schema: Schema,
+    node: NodeDescriptor
+  ) => Promise<NodeValue>;
   readonly invocationPath?: number[];
 }
 
