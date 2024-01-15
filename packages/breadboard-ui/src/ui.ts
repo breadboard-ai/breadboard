@@ -736,7 +736,7 @@ export class UI extends LitElement {
     switch (type) {
       case "nodestart": {
         console.log(
-          `Initialize input handlers for input(id="${data.node.id}")`
+          `Initialize nodestart handlers for (id="${data.node.id}", type="${data.node.type}")`
         );
         if (!this.#handlers.has(data.node.id)) {
           this.#handlers.set(data.node.id, []);
@@ -745,7 +745,7 @@ export class UI extends LitElement {
       }
 
       case "nodeend": {
-        console.log(`Clear input handlers for input(id="${data.node.id}")`);
+        console.log(`Clear nodestart handlers for input(id="${data.node.id}")`);
         this.#handlers.delete(data.node.id);
         return;
       }
