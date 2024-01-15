@@ -122,9 +122,10 @@ export class RequestedInputsManager {
     next: (result: RunResult) => Promise<void>,
     result: TraversalResult
   ) {
-    return async (name: string, schema: Schema, descriptor: NodeDescriptor) => {
+    return async (name: string, schema: Schema, node: NodeDescriptor) => {
       const cachedValue = this.#cache.get(name);
       if (cachedValue !== undefined) return cachedValue;
+      const descriptor = { id: node.id, type: node.type };
       const requestInputResult = {
         ...result,
         descriptor,
