@@ -20,9 +20,6 @@ export class InputList extends LitElement {
   @property()
   lastUpdate: number = Number.NaN;
 
-  @property()
-  showAllInputs = false;
-
   static styles = css`
     :host {
       display: block;
@@ -61,10 +58,7 @@ export class InputList extends LitElement {
     const inputs: InputDescription[] = [];
     for (let idx = this.messagePosition; idx >= 0; idx--) {
       const message = this.messages[idx];
-      if (
-        !message ||
-        (message.type !== "nodestart" && message.type !== "secret")
-      ) {
+      if (!message || (message.type !== "input" && message.type !== "secret")) {
         continue;
       }
 
@@ -96,39 +90,10 @@ export class InputList extends LitElement {
       }
 
       // Capture all inputs.
-      if (message.type === "nodestart" && message.data.node.type === "input") {
-        // It may be that the user wants to see all inputs, and not just those
-        // that require user interaction. If that's not the case, though, we now
-        // need to track forward through any future messsages to decide if
-        // there is an `input` event. If there is then this require(s|d) user
-        // interaction and should be retained in the UI.
-        if (!this.showAllInputs) {
-          let inputShouldBeRetained = false;
-          for (let n = idx + 1; n < this.messages.length; n++) {
-            const nextMessage = this.messages[n];
-
-            // If we land on an input message before the nodeend then we know
-            // this node requires user interaction and should be retained.
-            if (
-              nextMessage.type === "input" &&
-              nextMessage.data.node.id === message.data.node.id
-            ) {
-              inputShouldBeRetained = true;
-            }
-
-            if (nextMessage.type === "nodeend") {
-              break;
-            }
-          }
-
-          if (!inputShouldBeRetained) {
-            continue;
-          }
-        }
-
+      if (message.type === "input") {
         inputs.push({
           id: message.data.node.id,
-          configuration: message.data.node.configuration,
+          configuration: message.data.inputArguments,
           remember: false,
           secret: false,
         });
