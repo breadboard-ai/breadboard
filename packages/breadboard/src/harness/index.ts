@@ -11,5 +11,5 @@ export { run } from "./run.js";
 
 export type * from "./serve.js";
 
-export { createWorker } from "./worker-harness.js";
+export { createWorker } from "./worker.js";
 export { createSecretAskingKit } from "./secrets.js";

@@ -76,10 +76,6 @@ export type HarnessRunResult =
   | AnyClientRunResult
   | ClientRunResult<SecretResult>;
 
-export interface Harness {
-  run(state?: string): AsyncGenerator<HarnessRunResult, void>;
-}
-
 export type SecretHandler = (keys: {
   keys?: string[];
 }) => Promise<OutputValues>;

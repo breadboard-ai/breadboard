@@ -18,9 +18,10 @@ const fromProbe = <Probe extends ProbeMessage>(probe: Probe) => {
     return undefined;
   };
   const state = loadStateIfAny();
+  const data = structuredClone(probe.data);
   return {
     type: probe.type,
-    data: probe.data,
+    data,
     state,
     reply: async () => {
       // Do nothing

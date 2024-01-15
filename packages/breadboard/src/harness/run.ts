@@ -10,7 +10,7 @@ import { ProxyClient } from "../remote/proxy.js";
 import { runLocally } from "./local.js";
 import { createSecretAskingKit } from "./secrets.js";
 import { HarnessConfig, HarnessRunResult } from "./types.js";
-import { runInWorker } from "./worker-harness.js";
+import { runInWorker } from "./worker.js";
 
 const configureKits = (config: HarnessConfig) => {
   // If a proxy is configured, add the proxy kit to the list of kits.
@@ -45,6 +45,8 @@ export async function* run(config: HarnessConfig) {
     }
     yield* runInWorker(workerURL, config);
   } else {
-    throw new Error(`Unsupported harness configuration: ${config}`);
+    throw new Error(
+      `Unsupported harness configuration: ${JSON.stringify(config, null, 2)}`
+    );
   }
 }
