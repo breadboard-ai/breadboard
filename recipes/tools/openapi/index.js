@@ -265,13 +265,12 @@ const createSpecRecipe = recipe((api) => {
             url = `${url}?${queryString}`;
           }
 
-          if (secrets != undefined) {
-            // We know that we currently only support Bearer tokens.
-            if ("bearer" in api_inputs.authentication) {
-              const envKey = api_inputs.authentication.bearer;
-              const envValue = itemToSplat[envKey];
-              headers["Authorization"] = `Bearer ${envValue}`;
-            }
+          // Many APIs will require an authentication token but they don't define it in the Open API spec. If the user has provided a secret, we will use that.
+          // We know that we currently only support Bearer tokens.
+          if ("bearer" in api_inputs.authentication) {
+            const envKey = api_inputs.authentication.bearer;
+            const envValue = itemToSplat[envKey];
+            headers["Authorization"] = `Bearer ${envValue}`;
           }
 
           let body = undefined;
