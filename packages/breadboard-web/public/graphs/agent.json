@@ -16,6 +16,12 @@
       "in": "generated"
     },
     {
+      "from": "generate",
+      "to": "output-2",
+      "out": "text",
+      "in": "text"
+    },
+    {
       "from": "input-1",
       "to": "generate",
       "out": "text",
@@ -58,10 +64,15 @@
               "title": "result",
               "description": "The result of the Jsonata expression",
               "type": "string"
+            },
+            "text": {
+              "type": "string",
+              "title": "text"
             }
           },
           "required": [
-            "context"
+            "context",
+            "text"
           ]
         }
       }

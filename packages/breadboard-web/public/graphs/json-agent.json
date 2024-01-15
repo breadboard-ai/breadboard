@@ -1,0 +1,191 @@
+{
+  "title": "JSON Agent",
+  "description": "An agent-like board that outputs structured data (JSON)",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "validate",
+      "to": "validationError",
+      "out": "$error",
+      "in": "$error"
+    },
+    {
+      "from": "validate",
+      "to": "output-2",
+      "out": "json",
+      "in": "json"
+    },
+    {
+      "from": "agent",
+      "to": "validate",
+      "out": "text",
+      "in": "json"
+    },
+    {
+      "from": "agent",
+      "to": "output-2",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "input-1",
+      "to": "schemish",
+      "out": "schema",
+      "in": "schema"
+    },
+    {
+      "from": "input-1",
+      "to": "format",
+      "out": "text",
+      "in": "text"
+    },
+    {
+      "from": "input-1",
+      "to": "agent",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "input-1",
+      "to": "agent",
+      "out": "generator",
+      "in": "path"
+    },
+    {
+      "from": "input-1",
+      "to": "validate",
+      "out": "schema",
+      "in": "schema"
+    },
+    {
+      "from": "format",
+      "to": "agent",
+      "out": "prompt",
+      "in": "text"
+    },
+    {
+      "from": "schemish",
+      "to": "format",
+      "out": "schemish",
+      "in": "schemish"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "json": {
+              "type": "string",
+              "title": "json"
+            },
+            "context": {
+              "type": "string",
+              "title": "context"
+            }
+          },
+          "required": [
+            "json",
+            "context"
+          ]
+        }
+      }
+    },
+    {
+      "id": "validate",
+      "type": "validateJson",
+      "configuration": {}
+    },
+    {
+      "id": "agent",
+      "type": "invoke",
+      "configuration": {}
+    },
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "schema": {
+              "title": "Schema",
+              "examples": [
+                "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"descriptions\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"title\": {\n            \"type\": \"string\",\n            \"description\": \"expert's title\"\n          },\n          \"responsibilities\": {\n            \"type\": \"array\",\n            \"items\": {\n              \"type\": \"string\",\n              \"description\": \"expert's responsibilities\"\n            }\n          }\n        }\n      }\n    }\n  }\n}"
+              ],
+              "type": "object",
+              "format": "multiline"
+            },
+            "text": {
+              "title": "Text",
+              "description": "The value to substitute for the parameter \"text\"",
+              "type": [
+                "string",
+                "object"
+              ],
+              "examples": [
+                "You are building a team of skilled experts to create high quality rhyming poems that will be used as lyrics for jingles in TV commercials. These experts can only read text and produce text. Creating melodies and producing music is not their responsibility. The experts will work as a team, collaborating, creating, reviewing, critiquing, and iteratively improving the quality of the poems.\n\nPlease identify the necessary job descriptions of these experts."
+              ],
+              "format": "multiline"
+            },
+            "context": {
+              "title": "Context",
+              "type": "array",
+              "examples": [
+                "[]"
+              ]
+            },
+            "generator": {
+              "title": "Generator",
+              "description": "The path to the board to invoke.",
+              "type": "string",
+              "examples": [
+                "gemini-generator.json"
+              ]
+            }
+          },
+          "required": [
+            "schema",
+            "text",
+            "context",
+            "generator"
+          ]
+        }
+      }
+    },
+    {
+      "id": "validationError",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "$error": {
+              "type": "string",
+              "title": "$error"
+            }
+          },
+          "required": [
+            "$error"
+          ]
+        }
+      }
+    },
+    {
+      "id": "format",
+      "type": "promptTemplate",
+      "configuration": {
+        "template": "{{text}}\n\nReply as valid JSON of the following format:\n{{schemish}}"
+      }
+    },
+    {
+      "id": "schemish",
+      "type": "schemish",
+      "configuration": {}
+    }
+  ],
+  "graphs": {}
+}

@@ -1,0 +1,125 @@
+{
+  "title": "Team Builder",
+  "description": "Build a team of experts",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "jobDescriptions",
+      "to": "output-2",
+      "out": "json",
+      "in": "text"
+    },
+    {
+      "from": "input-1",
+      "to": "jobDescriptionsPrompt",
+      "out": "purpose",
+      "in": "purpose"
+    },
+    {
+      "from": "input-1",
+      "to": "jobDescriptions",
+      "out": "generator",
+      "in": "generator"
+    },
+    {
+      "from": "jobDescriptionsPrompt",
+      "to": "jobDescriptions",
+      "out": "prompt",
+      "in": "text"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "text"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
+    },
+    {
+      "id": "jobDescriptions",
+      "type": "invoke",
+      "configuration": {
+        "path": "json-agent.json",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "descriptions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "expert's title"
+                  },
+                  "responsibilities": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "description": "expert's responsibilities"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "context": []
+      }
+    },
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "purpose": {
+              "title": "Purpose",
+              "description": "The value to substitute for the parameter \"purpose\"",
+              "type": [
+                "string",
+                "object"
+              ],
+              "examples": [
+                "Create high quality rhyming poems that will be used as lyrics for jingles in TV commercials. Creating melodies and producing music is not part of job."
+              ],
+              "format": "multiline"
+            },
+            "generator": {
+              "title": "Generator",
+              "examples": [
+                "gemini-generator.json"
+              ],
+              "type": "string"
+            }
+          },
+          "required": [
+            "purpose",
+            "generator"
+          ]
+        }
+      }
+    },
+    {
+      "id": "jobDescriptionsPrompt",
+      "type": "promptTemplate",
+      "configuration": {
+        "template": "You are building a team of expert LLM-based agents for the following purpose:\n      \n{{purpose}}\n\nThese expert agents can only read text and produce text. The experts will work as a team, collaborating, creating, reviewing, critiquing, and iteratively improving the quality of the poems.\n\nPlease identify the necessary job descriptions of these experts."
+      }
+    }
+  ],
+  "graphs": {}
+}

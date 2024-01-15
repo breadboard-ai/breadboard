@@ -5,6 +5,7 @@
 graph TD;
 assemble["jsonata <br> id='assemble'"] -- "result->context" --> output2{{"output <br> id='output-2'"}}:::output
 generate["invoke <br> id='generate'"] -- "context->generated" --> assemble["jsonata <br> id='assemble'"]
+generate["invoke <br> id='generate'"] -- "text->text" --> output2{{"output <br> id='output-2'"}}:::output
 input1[/"input <br> id='input-1'"/]:::input -- "text->text" --> generate["invoke <br> id='generate'"]
 input1[/"input <br> id='input-1'"/]:::input -- "context->context" --> generate["invoke <br> id='generate'"]
 input1[/"input <br> id='input-1'"/]:::input -- "generator->path" --> generate["invoke <br> id='generate'"]
