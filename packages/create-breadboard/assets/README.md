@@ -1,6 +1,6 @@
 # Welcome to your Breadboard starter project
 
-The simplest way to start is to use the Breadboard UI. You can do this by running `npm run debug` and then opening the browser to `http://localhost:3000`.
+The simplest way to start is to use the Breadboard UI. You can do this by running `npm run debug recipes/` and then opening the browser to `http://localhost:3000`.
 
 You can create and edit boards directly in the `recipes/` folder and the changes will be automatically built and be available in the UI.
 
