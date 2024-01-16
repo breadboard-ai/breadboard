@@ -40,6 +40,9 @@ export class TimelineControls extends LitElement {
   @property({ reflect: true })
   messagePosition = 0;
 
+  @property({ reflect: true })
+  narrow = false;
+
   #timeline = new Map<TrackName, Map<ColumnIdx, MessageIdx>>();
   #onPointerDownBound = this.#onPointerDown.bind(this);
   #onPointerMoveBound = this.#onPointerMove.bind(this);
@@ -53,8 +56,19 @@ export class TimelineControls extends LitElement {
       overflow: auto;
       position: relative;
       user-select: none;
-      --size: 18px;
+      --entry-padding-x: 3px;
+      --entry-padding-y: 3px;
+      --entry-width: 18px;
+      --entry-height: 18px;
       --header-width: 120px;
+      --entry-dot-size: 8px;
+    }
+
+    #tracks.narrow {
+      --entry-padding-x: 1px;
+      --entry-width: 12px;
+      --entry-height: 18px;
+      --entry-dot-size: 6px;
     }
 
     #tracks {
@@ -64,9 +78,9 @@ export class TimelineControls extends LitElement {
     #marker {
       position: absolute;
       top: 0;
-      left: calc(var(--header-width) + var(--x) * var(--size));
-      height: max(100%, calc(var(--rows) * var(--size)));
-      width: var(--size);
+      left: calc(var(--header-width) + var(--x) * var(--entry-width));
+      height: max(100%, calc(var(--rows) * var(--entry-height)));
+      width: var(--entry-width);
       background: rgba(113, 106, 162, 0.08);
       z-index: 1;
     }
@@ -84,14 +98,17 @@ export class TimelineControls extends LitElement {
 
     .filler,
     .track {
-      height: calc(var(--size) - 1px);
+      height: calc(var(--entry-height) - 1px);
       font-size: var(--bb-text-pico);
-      width: max(100%, calc(var(--header-width) + var(--count) * var(--size)));
+      width: max(
+        100%,
+        calc(var(--header-width) + var(--count) * var(--entry-width))
+      );
       border-bottom: 1px solid #f3f3f3;
     }
 
     .filler {
-      height: calc(100% - var(--rows) * var(--size) - 1px);
+      height: calc(100% - var(--rows) * var(--entry-height) - 1px);
       border-bottom: none;
     }
 
@@ -116,13 +133,20 @@ export class TimelineControls extends LitElement {
     }
 
     .entry {
-      left: calc(var(--header-width) - 1px + var(--x) * var(--size));
-      top: calc(-1px + var(--y) * 18px);
+      left: calc(var(--header-width) - 1px + var(--x) * var(--entry-width));
+      top: calc(-1px + var(--y) * var(--entry-height));
       position: absolute;
-      width: calc(var(--size) + 1px);
-      height: calc(var(--size) + 1px);
+      width: calc(var(--entry-width) + 1px);
+      height: calc(var(--entry-height) + 1px);
       box-sizing: border-box;
       border: 1px solid transparent;
+
+      --entry-background-height: calc(
+        var(--entry-height) - var(--entry-padding-y) * 2
+      );
+      --entry-background-cap-width: calc(
+        var(--entry-width) - var(--entry-padding-x)
+      );
     }
 
     .entry.nodestart,
@@ -138,24 +162,27 @@ export class TimelineControls extends LitElement {
 
     .entry.nodestart::before {
       content: "";
-      width: 16px;
+      width: var(--entry-background-cap-width);
       position: absolute;
       background: rgb(253 243 213);
       border-radius: 20px 0 0 20px;
-      height: 12px;
-      left: 3px;
+      height: var(--entry-background-height);
+      left: var(--entry-padding-x);
       top: 50%;
       translate: 0 -50%;
     }
 
     .entry.nodeend::before {
       content: "";
-      width: calc(var(--backfill, 0) * var(--size) + 16px);
+      width: calc(
+        var(--backfill, 0) * var(--entry-width) +
+          var(--entry-background-cap-width) - 1px
+      );
       position: absolute;
       background: rgb(253 243 213);
       border-radius: 0 20px 20px 0;
-      height: 12px;
-      left: calc(var(--backfill, 0) * var(--size) * -1);
+      height: var(--entry-background-height);
+      left: calc(var(--backfill, 0) * var(--entry-width) * -1);
       top: 50%;
       translate: 0 -50%;
     }
@@ -165,7 +192,7 @@ export class TimelineControls extends LitElement {
       width: calc(100% + 1px);
       position: absolute;
       background: rgb(253 243 213);
-      height: 12px;
+      height: var(--entry-background-height);
       left: 0;
       top: 50%;
       translate: 0 -50%;
@@ -199,8 +226,8 @@ export class TimelineControls extends LitElement {
 
     .entry::after {
       content: "";
-      width: 8px;
-      height: 8px;
+      width: var(--entry-dot-size);
+      height: var(--entry-dot-size);
       border: 1px solid #666;
       background: #eee;
       border-radius: 50%;
@@ -257,9 +284,9 @@ export class TimelineControls extends LitElement {
 
     .drag-receiver {
       position: absolute;
-      width: var(--size);
+      width: var(--entry-width);
       top: 0;
-      left: calc(var(--header-width) + var(--x) * var(--size));
+      left: calc(var(--header-width) + var(--x) * var(--entry-width));
       height: 100%;
       z-index: 5;
     }
@@ -315,7 +342,7 @@ export class TimelineControls extends LitElement {
 
   render() {
     if (!this.messages) {
-      return html`<div class="track"></div>`;
+      return nothing;
     }
 
     this.#timeline.clear();
@@ -366,7 +393,11 @@ export class TimelineControls extends LitElement {
       column++;
     }
 
-    return html`<div id="tracks" style=${styleMap({ ["--count"]: column })}>
+    return html`<div
+      id="tracks"
+      class=${classMap({ narrow: this.narrow })}
+      style=${styleMap({ ["--count"]: column })}
+    >
       ${map(this.#timeline.entries(), ([trackName, entries], row) => {
         let currentType = "";
         let lastNodeType = "";
