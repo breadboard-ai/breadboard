@@ -7,16 +7,16 @@
  */
 
 import create from "base-create";
-import * as fs from 'fs';
-import * as path from 'path'
-import { fileURLToPath } from 'url';
+import * as fs from "fs";
+import * as path from "path";
+import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 console.log(__dirname, __filename);
 
-type Asset = { path: string, contents: string };
+type Asset = { path: string; contents: string };
 
 const generateAssetList = (dir: string, base: string): Asset[] => {
   const files = fs.readdirSync(dir);
@@ -27,7 +27,7 @@ const generateAssetList = (dir: string, base: string): Asset[] => {
     if (fs.statSync(filePath).isFile()) {
       assetList.push({
         path: filePath.substring(base.length + 1), // file is relative to dir.
-        contents: fs.readFileSync(filePath, { encoding: "utf-8" })
+        contents: fs.readFileSync(filePath, { encoding: "utf-8" }),
       });
     }
     // recursively add file paths to asset list if it is a directory
@@ -40,46 +40,44 @@ const generateAssetList = (dir: string, base: string): Asset[] => {
 };
 
 const run = () => {
-
   const { name } = create({
     // optional deps to install
-    dependencies: ["@google-labs/breadboard", "@google-labs/breadboard-ui", "@google-labs/llm-starter", "@google-labs/core-kit"], // We can only include deps that have been published.
+    dependencies: [
+      "@google-labs/breadboard",
+      "@google-labs/breadboard-cli",
+      "@google-labs/llm-starter",
+      "@google-labs/core-kit",
+      "@google-labs/json-kit",
+      "@google-labs/palm-kit",
+    ], // We can only include deps that have been published.
     // optional dev deps to install
     devDependencies: [
-      "@esbuild-plugins/node-globals-polyfill",
-      // "@google-labs/tsconfig", // Not public
       "@types/node",
       "@typescript-eslint/eslint-plugin",
       "@typescript-eslint/parser",
-      "dotenv",
-      "tsx",
-      "typescript",
-      "vite",
-      "vite-plugin-full-reload",
-      "vite-plugin-watch-and-run"
     ],
     package: {
       main: "./dist/src/index.js",
-      exports: {
-        ".": "./dist/src/runtime.js",
-        "./worker": "./dist/src/worker.js"
-      },
       type: "module",
       // these will merge with scripts like `test` from `npm init`
       scripts: {
-        "dev": "npm run generate:graphs && vite",
-        "build:vite": "FORCE_COLOR=1 vite build",
-        "generate:graphs": "tsx src/make-graphs.ts",
-        "generate:docs": "typedoc --plugin typedoc-plugin-markdown"
+        debug: "npx breadboard debug recipes/ -o recipes/ --watch",
+        recipe:
+          "npx breadboard run $npm_config_recipe --kit @google-labs/llm-starter --kit @google-labs/core-kit --kit @google-labs/json-kit --kit @google-labs/palm-kit",
       },
       files: ["dist/src"],
     },
-    files: generateAssetList(path.resolve(__dirname, "..", "..", "..", "assets", "vite"), path.resolve(__dirname, "..", "..", "..", "assets", "vite")),
+    files: generateAssetList(
+      path.resolve(__dirname, "..", "..", "..", "assets"),
+      path.resolve(__dirname, "..", "..", "..", "assets")
+    ),
     skipGitignore: false,
     skipReadme: true,
   });
 
-  console.log(`Created ${name}!. Enter the project directory and run: \`npm run dev\``);
-}
+  console.log(
+    `Created ${name}!. Enter the project directory and run: \`npm run debug\``
+  );
+};
 
 export { run };
