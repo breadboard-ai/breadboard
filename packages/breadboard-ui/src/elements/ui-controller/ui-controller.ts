@@ -80,6 +80,9 @@ export class UI extends LitElement {
   @property()
   boards: Board[] = [];
 
+  @property()
+  visualizer: "mermaid" | "visualblocks" = "mermaid";
+
   @state()
   historyEntries: HistoryEntry[] = [];
 
@@ -94,7 +97,10 @@ export class UI extends LitElement {
     showNarrowTimeline: false,
   };
 
-  #diagram = new Diagram();
+  #diagram?: HTMLElement & {
+    render: (diagram: LoadArgs, highlightedNode: string) => void;
+    reset: () => void;
+  };
   #nodeInfo: Map<string, ExtendedNodeInformation> = new Map();
   #timelineRef: Ref<HTMLElement> = createRef();
   #inputRef: Ref<HTMLElement> = createRef();
@@ -114,11 +120,6 @@ export class UI extends LitElement {
 
   constructor() {
     super();
-
-    this.#diagram.addEventListener(NodeSelectEvent.eventName, (evt: Event) => {
-      const nodeSelect = evt as NodeSelectEvent;
-      this.selectedNode = this.#nodeInfo.get(nodeSelect.id) || null;
-    });
 
     this.#memory.retrieve(CONFIG_MEMORY_KEY).then((value) => {
       if (!value) {
@@ -143,11 +144,11 @@ export class UI extends LitElement {
   }
 
   async renderDiagram(highlightedDiagramNode = "") {
-    if (!this.loadInfo || !this.loadInfo.diagram) {
+    if (!this.loadInfo || !this.loadInfo.diagram || !this.#diagram) {
       return;
     }
 
-    return this.#diagram.render(this.loadInfo.diagram, highlightedDiagramNode);
+    return this.#diagram.render(this.loadInfo, highlightedDiagramNode);
   }
 
   unloadCurrentBoard() {
@@ -160,10 +161,25 @@ export class UI extends LitElement {
     this.#messageDurations.clear();
     this.#nodeInfo.clear();
 
-    this.#diagram.reset();
+    this.#diagram?.reset();
+  }
+
+  #setupDiagram() {
+    if (this.visualizer === "mermaid") {
+      this.#diagram = new Diagram();
+      this.style.setProperty("--diagram-display", "flex");
+    } else {
+      this.#diagram = document.createElement('visual-breadboard') as any;
+      this.style.setProperty("--diagram-display", "block");
+    }
+    this.#diagram!.addEventListener(NodeSelectEvent.eventName, (evt: Event) => {
+      const nodeSelect = evt as NodeSelectEvent;
+      this.selectedNode = this.#nodeInfo.get(nodeSelect.id) || null;
+    });
   }
 
   firstUpdated() {
+    this.#setupDiagram();
     const rowTop = globalThis.sessionStorage.getItem("rhs-top") || "10fr";
     const rowMid = globalThis.sessionStorage.getItem("rhs-mid") || "45fr";
     const rowBottom = globalThis.sessionStorage.getItem("rhs-bottom") || "45fr";

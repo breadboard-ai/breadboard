@@ -16,6 +16,7 @@ export const styles = css`
     column-gap: 8px;
     height: 100%;
     margin: 8px;
+    --diagram-display: flex;
   }
 
   @media (orientation: portrait) {
@@ -32,7 +33,7 @@ export const styles = css`
     overflow: auto;
     border: 1px solid rgb(227, 227, 227);
     border-radius: calc(var(--bb-grid-size) * 5);
-    display: flex;
+    display: var(--diagram-display);
   }
 
   #rhs {

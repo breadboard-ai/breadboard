@@ -5,6 +5,7 @@
  */
 
 import { NodeSelectEvent } from "../../events/events.js";
+import { LoadArgs } from "../../types/types.js";
 import {
   assertHTMLElement,
   assertMouseWheelEvent,
@@ -500,7 +501,14 @@ export class Diagram extends HTMLElement {
     this.#translation.y = 0;
   }
 
-  async render(diagram: string, highlightedNode: string) {
+  async render(diagram: string | LoadArgs, highlightedNode: string) {
+    if (!(typeof diagram === 'string')) {
+      if (!diagram.diagram) {
+        throw new Error('No diagram string provided');
+      }
+      diagram = diagram.diagram;
+    }
+
     highlightedNode = highlightedNode.replace(/-/g, "");
     if (highlightedNode) {
       diagram += `\nclass ${highlightedNode} active`;

@@ -11,7 +11,7 @@ import { customElement, property, state } from "lit/decorators.js";
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import * as BreadboardUI from "@google-labs/breadboard-ui";
 import { InputResolveRequest } from "@google-labs/breadboard/remote";
-import { Board } from "@google-labs/breadboard";
+import { Board, GraphDescriptor } from "@google-labs/breadboard";
 import { cache } from "lit/directives/cache.js";
 
 export const getBoardInfo = async (url: string) => {
@@ -20,8 +20,9 @@ export const getBoardInfo = async (url: string) => {
   const { title, description, version } = runner;
   const diagram = runner.mermaid("TD", true);
   const nodes = runner.nodes;
+  const graphDescriptor: GraphDescriptor = runner;
 
-  return { title, description, version, diagram, url, nodes };
+  return { title, description, version, diagram, url, graphDescriptor, nodes };
 };
 
 const enum MODE {
@@ -59,6 +60,7 @@ export class Main extends LitElement {
   #status = BreadboardUI.Types.STATUS.STOPPED;
   #statusObservers: Array<(value: BreadboardUI.Types.STATUS) => void> = [];
   #bootWithUrl: string | null = null;
+  #visualizer: "mermaid" | "visualblocks" = "mermaid";
 
   static styles = css`
     :host {
@@ -244,6 +246,10 @@ export class Main extends LitElement {
     this.embed = currentUrl.searchParams.get("embed") !== null;
     if (boardFromUrl) {
       this.#bootWithUrl = boardFromUrl;
+    }
+    const visualizer = currentUrl.searchParams.get("visualizer");
+    if (visualizer === "mermaid" || visualizer === "visualblocks") {
+      this.#visualizer = visualizer;
     }
 
     if (modeFromUrl) {
@@ -431,6 +437,7 @@ export class Main extends LitElement {
             .loadInfo=${this.loadInfo}
             .status=${this.status}
             .bootWithUrl=${this.#bootWithUrl}
+            .visualizer=${this.#visualizer}
             @breadboardmessagetraversal=${() => {
               if (this.status !== BreadboardUI.Types.STATUS.RUNNING) {
                 return;

@@ -5,6 +5,7 @@
  */
 
 import {
+  GraphDescriptor,
   GraphProbeData,
   NodeDescriptor,
   NodeEndResponse,
@@ -70,6 +71,7 @@ export type LoadArgs = {
   description?: string;
   version?: string;
   diagram?: string;
+  graphDescriptor?: GraphDescriptor;
   url?: string;
   nodes?: NodeDescriptor[];
 };
