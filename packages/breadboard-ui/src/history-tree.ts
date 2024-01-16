@@ -136,7 +136,6 @@ export class HistoryTree extends LitElement {
 
     thead td:last-of-type {
       padding-right: calc(var(--bb-grid-size) * 5);
-      width: calc(var(--bb-grid-size) * 25);
     }
 
     thead td {
@@ -170,7 +169,6 @@ export class HistoryTree extends LitElement {
     }
 
     td:last-of-type {
-      text-align: right;
       padding-right: calc(var(--bb-grid-size) * 5);
     }
 

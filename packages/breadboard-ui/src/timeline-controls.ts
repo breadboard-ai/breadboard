@@ -12,6 +12,8 @@ import { map } from "lit/directives/map.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { classMap } from "lit/directives/class-map.js";
 import { MessageTraversalEvent } from "./events.js";
+import { repeat } from "lit/directives/repeat.js";
+import { guard } from "lit/directives/guard.js";
 
 type RunResultWithPath = ProbeMessage;
 const hasPath = (event: AnyRunResult): event is RunResultWithPath =>
@@ -66,9 +68,9 @@ export class TimelineControls extends LitElement {
 
     #tracks.narrow {
       --entry-padding-x: 1px;
-      --entry-width: 12px;
+      --entry-width: 6px;
       --entry-height: 18px;
-      --entry-dot-size: 6px;
+      --entry-dot-size: 2px;
     }
 
     #tracks {
@@ -393,75 +395,76 @@ export class TimelineControls extends LitElement {
       column++;
     }
 
-    return html`<div
-      id="tracks"
-      class=${classMap({ narrow: this.narrow })}
-      style=${styleMap({ ["--count"]: column })}
-    >
-      ${map(this.#timeline.entries(), ([trackName, entries], row) => {
-        let currentType = "";
-        let lastNodeType = "";
-        let lastNodeColumn = 0;
-        return html`<div class="track">
-          <div class="header">
-            ${trackName === "root" ? "Main Board" : `Sub Board (${trackName})`}
-          </div>
-          ${map(entries, ([column, messageIdx]) => {
-            if (!this.messages) {
-              return nothing;
-            }
+    const timeline = () => html` ${repeat(
+        this.#timeline.entries(),
+        (trackName) => trackName,
+        ([trackName, entries], row) => {
+          let currentType = "";
+          let lastNodeType = "";
+          let lastNodeColumn = 0;
+          return html`<div class="track">
+            <div class="header">
+              ${trackName === "root"
+                ? "Main Board"
+                : `Sub Board (${trackName})`}
+            </div>
+            ${map(entries, ([column, messageIdx]) => {
+              if (!this.messages) {
+                return nothing;
+              }
 
-            const message = this.messages[messageIdx];
-            if (message.type === "nodestart") {
-              currentType = message.data.node.type;
-              lastNodeColumn = column;
-            }
+              const message = this.messages[messageIdx];
+              if (message.type === "nodestart") {
+                currentType = message.data.node.type;
+                lastNodeColumn = column;
+              }
 
-            const styles: {
-              "--x": number;
-              "--y": number;
-              "--backfill"?: number;
-            } = { ["--x"]: column, ["--y"]: row };
+              const styles: {
+                "--x": number;
+                "--y": number;
+                "--backfill"?: number;
+              } = { ["--x"]: column, ["--y"]: row };
 
-            // Special-case: the last node was a nodestart, but it doesn't have an
-            // adjacent index. This implies that it's something like an invoke
-            // node and therefore the start of a subgraph. As such we prefill
-            // the gap so that it implies the continuation of the invoke on the
-            // parent board.
-            if (
-              message.type === "nodeend" &&
-              lastNodeType === "nodestart" &&
-              lastNodeColumn !== column - 1
-            ) {
-              const backfill = column - lastNodeColumn - 1;
-              styles["--backfill"] = backfill;
-            }
+              // Special-case: the last node was a nodestart, but it doesn't have an
+              // adjacent index. This implies that it's something like an invoke
+              // node and therefore the start of a subgraph. As such we prefill
+              // the gap so that it implies the continuation of the invoke on the
+              // parent board.
+              if (
+                message.type === "nodeend" &&
+                lastNodeType === "nodestart" &&
+                lastNodeColumn !== column - 1
+              ) {
+                const backfill = column - lastNodeColumn - 1;
+                styles["--backfill"] = backfill;
+              }
 
-            const tmpl = html`<div
-                class=${classMap({
-                  entry: true,
-                  [message.type]: true,
-                  [currentType]: true,
-                })}
-                style=${styleMap(styles)}
-              ></div>
-              <div
-                class="drag-receiver"
-                data-idx=${messageIdx}
-                style=${styleMap({ ["--x"]: column })}
-                title="${"id" in message ? message.id : ""}"
-              ></div>`;
+              const tmpl = html`<div
+                  class=${classMap({
+                    entry: true,
+                    [message.type]: true,
+                    [currentType]: true,
+                  })}
+                  style=${styleMap(styles)}
+                ></div>
+                <div
+                  class="drag-receiver"
+                  data-idx=${messageIdx}
+                  style=${styleMap({ ["--x"]: column })}
+                  title="${"id" in message ? message.id : ""}"
+                ></div>`;
 
-            if (message.type === "nodeend") {
-              currentType = "";
-            }
+              if (message.type === "nodeend") {
+                currentType = "";
+              }
 
-            lastNodeType = message.type;
+              lastNodeType = message.type;
 
-            return tmpl;
-          })}
-        </div>`;
-      })}
+              return tmpl;
+            })}
+          </div>`;
+        }
+      )}
       <div
         class="filler"
         style=${styleMap({
@@ -469,14 +472,23 @@ export class TimelineControls extends LitElement {
         })}
       >
         <div class="header"></div>
-      </div>
-      <div
-        id="marker"
-        style=${styleMap({
-          ["--x"]: markerX,
-          ["--rows"]: rows,
-        })}
-      ></div>
+      </div>`;
+
+    const marker = () => html`<div
+      id="marker"
+      style=${styleMap({
+        ["--x"]: markerX,
+        ["--rows"]: rows,
+      })}
+    ></div>`;
+
+    return html`<div
+      id="tracks"
+      class=${classMap({ narrow: this.narrow })}
+      style=${styleMap({ ["--count"]: column })}
+    >
+      ${guard([this.messages.length], timeline)}
+      ${guard([this.messagePosition], marker)};
     </div>`;
   }
 }
