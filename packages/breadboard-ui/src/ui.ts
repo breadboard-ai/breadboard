@@ -60,9 +60,6 @@ const enum MODE {
 }
 
 type inputCallback = (data: Record<string, unknown>) => void;
-type UIConfig = {
-  showAllInputs: boolean;
-};
 
 const CONFIG_MEMORY_KEY = "ui-config";
 const DIAGRAM_DEBOUNCE_RENDER_TIMEOUT = 60;
@@ -98,11 +95,6 @@ export class UI extends LitElement {
 
   @state()
   messages: HarnessRunResult[] = [];
-
-  @state()
-  config: UIConfig = {
-    showAllInputs: false,
-  };
 
   #diagram = new Diagram();
   #nodeInfo: Map<string, ExtendedNodeInformation> = new Map();
@@ -501,14 +493,6 @@ export class UI extends LitElement {
       const nodeSelect = evt as NodeSelectEvent;
       this.selectedNode = this.#nodeInfo.get(nodeSelect.id) || null;
     });
-
-    this.#memory.retrieve(CONFIG_MEMORY_KEY).then((value) => {
-      if (!value) {
-        return;
-      }
-
-      this.config = JSON.parse(value) as UIConfig;
-    });
   }
 
   toast(message: string, type: ToastType) {
@@ -766,19 +750,6 @@ export class UI extends LitElement {
     }
   }
 
-  async #toggleConfigOption(key: keyof UIConfig) {
-    if (this.#isUpdatingMemory) {
-      return;
-    }
-
-    this.#isUpdatingMemory = true;
-    this.config[key] = !this.config[key];
-    await this.#memory.store(CONFIG_MEMORY_KEY, JSON.stringify(this.config));
-    this.#isUpdatingMemory = false;
-
-    this.requestUpdate();
-  }
-
   #scheduleDiagramRender() {
     // We do a debounced render here because rendering the Mermaid chart it very
     // expensive, and we can't keep on top of the animation if we render it on
@@ -873,19 +844,9 @@ export class UI extends LitElement {
             <section id="inputs" ${ref(this.#inputRef)}>
                 <header>
                   <h1>Inputs</h1>
-                  <div id="input-options">
-                    <label for="show-all-inputs">Show all inputs</label>
-                    <input
-                      type="checkbox"
-                      id="show-all-inputs"
-                      ?checked=${this.config.showAllInputs}
-                      @input=${() => this.#toggleConfigOption("showAllInputs")}
-                    />
-                  </div>
                 </header>
                 <div id="inputs-list">
                   <bb-input-list
-                    .showAllInputs=${this.config.showAllInputs}
                     .messages=${this.messages}
                     .messagePosition=${this.#messagePosition}
                     @breadboardinputenter=${(event: InputEnterEvent) => {

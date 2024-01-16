@@ -12,11 +12,9 @@ import starter from "@google-labs/llm-starter";
 import { readFile, stat, writeFile } from "fs/promises";
 import path from "path";
 import { pathToFileURL } from "url";
+import { ImportOptions } from "./commandTypes.js";
 
-export const importGraph = async (
-  url: string,
-  options: Record<string, string>
-) => {
+export const importGraph = async (url: string, options: ImportOptions) => {
   if (URL.canParse(url) == false) {
     const fileStat = await stat(path.resolve(process.cwd(), url));
     if (fileStat != undefined && fileStat.isFile()) {
