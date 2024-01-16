@@ -34,6 +34,10 @@ export class JSONTree extends LitElement {
       display: block;
     }
 
+    #top-level {
+      width: calc(100% - 32px);
+    }
+
     #copy-to-clipboard {
       width: 24px;
       height: 24px;
@@ -169,7 +173,7 @@ export class JSONTree extends LitElement {
     }
 
     return html`{
-      <div>${this.#convertToHtml(this.json)}</div>
+      <div id="top-level">${this.#convertToHtml(this.json)}</div>
       }
       <button
         id="copy-to-clipboard"
