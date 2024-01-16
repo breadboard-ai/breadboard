@@ -64,6 +64,10 @@ type inputCallback = (data: Record<string, unknown>) => void;
 const CONFIG_MEMORY_KEY = "ui-config";
 const DIAGRAM_DEBOUNCE_RENDER_TIMEOUT = 60;
 
+type UIConfig = {
+  showNarrowTimeline: boolean;
+};
+
 @customElement("bb-ui-manager")
 export class UI extends LitElement {
   @property()
@@ -95,6 +99,11 @@ export class UI extends LitElement {
 
   @state()
   messages: HarnessRunResult[] = [];
+
+  @state()
+  config: UIConfig = {
+    showNarrowTimeline: false,
+  };
 
   #diagram = new Diagram();
   #nodeInfo: Map<string, ExtendedNodeInformation> = new Map();
@@ -356,15 +365,22 @@ export class UI extends LitElement {
       z-index: 1;
     }
 
+    #inputs header {
+      display: flex;
+      align-items: center;
+    }
+
     #timeline header {
-      height: calc(var(--bb-grid-size) * 8);
+      display: flex;
       padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 4);
       border-bottom: 1px solid rgb(227, 227, 227);
     }
 
-    #timeline header,
-    #inputs header {
-      display: flex;
+    #timeline label[for="narrow"],
+    #narrow {
+      font-size: var(--bb-text-small);
+      margin: 0 var(--bb-grid-size) * 2);
+      align-self: center;
     }
 
     #timeline header h1,
@@ -373,6 +389,7 @@ export class UI extends LitElement {
       font-weight: bold;
       margin: 0;
       flex: 1;
+      align-self: center;
     }
 
     #inputs #input-options {
@@ -493,6 +510,27 @@ export class UI extends LitElement {
       const nodeSelect = evt as NodeSelectEvent;
       this.selectedNode = this.#nodeInfo.get(nodeSelect.id) || null;
     });
+
+    this.#memory.retrieve(CONFIG_MEMORY_KEY).then((value) => {
+      if (!value) {
+        return;
+      }
+
+      this.config = JSON.parse(value) as UIConfig;
+    });
+  }
+
+  async #toggleConfigOption(key: keyof UIConfig) {
+    if (this.#isUpdatingMemory) {
+      return;
+    }
+
+    this.#isUpdatingMemory = true;
+    this.config[key] = !this.config[key];
+    await this.#memory.store(CONFIG_MEMORY_KEY, JSON.stringify(this.config));
+    this.#isUpdatingMemory = false;
+
+    this.requestUpdate();
   }
 
   toast(message: string, type: ToastType) {
@@ -811,6 +849,14 @@ export class UI extends LitElement {
             <section id="timeline" ${ref(this.#timelineRef)}>
               <header>
                 <h1>Events</h1>
+                <label for="narrow">Narrow</label>
+                <input
+                  name="narrow"
+                  id="narrow"
+                  type="checkbox"
+                  ?checked=${this.config.showNarrowTimeline}
+                  @input=${() =>
+                    this.#toggleConfigOption("showNarrowTimeline")}/>
                 <div id="value">${Math.min(
                   this.messages.length,
                   this.#messagePosition + 1
@@ -824,6 +870,7 @@ export class UI extends LitElement {
                 .messages=${this.messages}
                 .messagePosition=${this.#messagePosition}
                 .messageDurations=${this.#messageDurations}
+                .narrow=${this.config.showNarrowTimeline}
                 @breadboardmessagetraversal=${(evt: MessageTraversalEvent) => {
                   if (evt.index < 0 || evt.index > this.messages.length) {
                     return;
