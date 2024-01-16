@@ -7,7 +7,7 @@
 import { LitElement, html, css } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
-import { CanvasData } from "./types.js";
+import { CanvasData } from "../../../types/types.js";
 
 @customElement("bb-drawable-input")
 export class DrawableInput extends LitElement {

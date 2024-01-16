@@ -7,7 +7,7 @@
 import { AnyRunResult } from "@google-labs/breadboard/harness";
 import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { Output } from "./output.js";
+import { Output } from "../output.js";
 
 @customElement("bb-output-list")
 export class OutputList extends LitElement {

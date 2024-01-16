@@ -31,7 +31,7 @@ export class Main extends LitElement {
   @property({ reflect: false })
   config: { boards: BreadboardUI.Types.Board[] };
 
-  #uiRef: Ref<BreadboardUI.UI> = createRef();
+  #uiRef: Ref<BreadboardUI.Elements.UI> = createRef();
   #boardId = 0;
   #delay = 0;
   #status = BreadboardUI.Types.STATUS.STOPPED;
@@ -75,7 +75,7 @@ export class Main extends LitElement {
     this.requestUpdate();
   }
 
-  async #onStartBoard(startEvent: BreadboardUI.StartEvent) {
+  async #onStartBoard(startEvent: BreadboardUI.Events.StartEvent) {
     this.#boardId++;
     this.#setActiveBreadboard(startEvent.url);
 
@@ -158,7 +158,7 @@ export class Main extends LitElement {
   }
 
   render() {
-    return html`<bb-ui-manager
+    return html`<bb-ui-controller
       ${ref(this.#uiRef)}
       .status=${this.status}
       .bootWithUrl=${this.#bootWithUrl}
@@ -188,17 +188,17 @@ export class Main extends LitElement {
         this.#uiRef.value.bootWithUrl = null;
         this.#uiRef.value.url = null;
       }}
-      @breadboardtoast=${(toastEvent: BreadboardUI.ToastEvent) => {
+      @breadboardtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
         if (!this.#uiRef.value) {
           return;
         }
 
         this.#uiRef.value.toast(toastEvent.message, toastEvent.toastType);
       }}
-      @breadboarddelay=${(delayEvent: BreadboardUI.DelayEvent) => {
+      @breadboarddelay=${(delayEvent: BreadboardUI.Events.DelayEvent) => {
         this.#delay = delayEvent.duration;
       }}
       .boards=${this.config.boards}
-    ></bb-ui-manager>`;
+    ></bb-ui-controller>`;
   }
 }
