@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NodeSelectEvent } from "./events.js";
+import { NodeSelectEvent } from "../../events/events.js";
 import {
   assertHTMLElement,
   assertMouseWheelEvent,
   assertPointerEvent,
   assertRoot,
   assertSVGElement,
-} from "./utils/assertions.js";
+} from "../../utils/assertions.js";
 
 const MERMAID_STYLES = `.node.active > * {
   stroke-width: 4px;

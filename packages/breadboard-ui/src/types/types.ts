@@ -6,15 +6,12 @@
 
 import {
   GraphProbeData,
+  NodeDescriptor,
   NodeEndResponse,
   NodeStartResponse,
   Schema,
 } from "@google-labs/breadboard";
 import { AnyRunResult } from "@google-labs/breadboard/harness";
-
-export type InputArgs = {
-  schema?: Schema;
-};
 
 export const enum HistoryEventType {
   DONE = "done",
@@ -67,3 +64,31 @@ export enum STATUS {
   PAUSED = "paused",
   STOPPED = "stopped",
 }
+
+export type LoadArgs = {
+  title?: string;
+  description?: string;
+  version?: string;
+  diagram?: string;
+  url?: string;
+  nodes?: NodeDescriptor[];
+};
+
+export type StartArgs = {
+  boards: Board[];
+};
+
+export type InputArgs = {
+  schema?: Schema;
+};
+
+export type OutputArgs = {
+  node: {
+    id: string;
+    type: string;
+    configuration?: unknown;
+  };
+  outputs: {
+    schema?: Schema;
+  } & Record<string, unknown>;
+};

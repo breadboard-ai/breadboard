@@ -11,7 +11,7 @@ import { ProbeMessage } from "@google-labs/breadboard";
 import { map } from "lit/directives/map.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { classMap } from "lit/directives/class-map.js";
-import { MessageTraversalEvent } from "./events.js";
+import { MessageTraversalEvent } from "../../events/events.js";
 import { repeat } from "lit/directives/repeat.js";
 import { guard } from "lit/directives/guard.js";
 

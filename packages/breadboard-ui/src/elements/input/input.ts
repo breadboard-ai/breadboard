@@ -9,8 +9,8 @@ import {
   createMultipartInput,
   getMultipartValue,
   isMultipart,
-} from "./input-multipart.js";
-import { ShortTermMemory } from "./utils/short-term-memory.js";
+} from "./input-multipart/input-multipart.js";
+import { ShortTermMemory } from "../../utils/short-term-memory.js";
 import {
   isBoolean,
   isDrawable,
@@ -19,13 +19,13 @@ import {
   isSelect,
   isWebcam,
   isMultipartText,
-} from "./utils/index.js";
+} from "../../utils/index.js";
 import { LitElement, html, css, HTMLTemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { InputEnterEvent } from "./events.js";
-import { WebcamInput } from "./webcam.js";
-import { DrawableInput } from "./drawable.js";
-import { InputArgs } from "./types.js";
+import { InputEnterEvent } from "../../events/events.js";
+import { WebcamInput } from "./webcam/webcam.js";
+import { DrawableInput } from "./drawable/drawable.js";
+import { InputArgs } from "../../types/types.js";
 
 export type InputData = Record<string, unknown>;
 

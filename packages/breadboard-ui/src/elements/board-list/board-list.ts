@@ -7,10 +7,10 @@
 import { LitElement, html, css } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { until } from "lit/directives/until.js";
-import { Board } from "./types.js";
-import { longTermMemory } from "./utils/long-term-memory.js";
+import { Board } from "../../types/types.js";
+import { longTermMemory } from "../../utils/long-term-memory.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
-import { StartEvent, ToastEvent, ToastType } from "./events.js";
+import { StartEvent, ToastEvent, ToastType } from "../../events/events.js";
 
 @customElement("bb-board-list")
 export class BoardList extends LitElement {

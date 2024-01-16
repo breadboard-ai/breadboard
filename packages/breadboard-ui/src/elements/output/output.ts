@@ -7,23 +7,12 @@
 import type {
   OutputValues,
   StreamCapabilityType,
-  Schema,
 } from "@google-labs/breadboard";
 
-export type OutputArgs = {
-  node: {
-    id: string;
-    type: string;
-    configuration?: unknown;
-  };
-  outputs: {
-    schema?: Schema;
-  } & Record<string, unknown>;
-};
-
-import { LitElement, html, css, nothing, HTMLTemplateResult } from "lit";
+import { LitElement, html, css, HTMLTemplateResult } from "lit";
 import { customElement } from "lit/decorators.js";
 import { until } from "lit/directives/until.js";
+import { OutputArgs } from "../../types/types.js";
 
 type ChunkOutputs = OutputValues & { chunk: string };
 
