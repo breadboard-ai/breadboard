@@ -48,6 +48,7 @@ const run = () => {
       "@google-labs/llm-starter",
       "@google-labs/core-kit",
       "@google-labs/json-kit",
+      "@google-labs/palm-kit",
     ], // We can only include deps that have been published.
     // optional dev deps to install
     devDependencies: [
@@ -61,7 +62,8 @@ const run = () => {
       // these will merge with scripts like `test` from `npm init`
       scripts: {
         debug: "npx breadboard debug recipes/ -o recipes/ --watch",
-        recipe: "npx breadboard run",
+        recipe:
+          "npx breadboard run $npm_config_recipe --kit @google-labs/llm-starter --kit @google-labs/core-kit --kit @google-labs/json-kit --kit @google-labs/palm-kit",
       },
       files: ["dist/src"],
     },
