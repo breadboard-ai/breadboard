@@ -115,9 +115,9 @@ Please identify the necessary job descriptions of these experts.`,
         $id: "promptTemplate",
         template: `You are an expert in creating perfect system prompts for LLM agents from job descriptions. Create a prompt for the the following job description: {{item}}
         
-        Reply in plain text that is ready to paste into the LLM prompt field.
+Reply in plain text that is ready to paste into the LLM prompt field.
         
-        PROMPT:`,
+PROMPT:`,
         item,
       });
       const generatePrompt = core.invoke({
