@@ -84,12 +84,6 @@ export class HistoryTree extends LitElement {
       font-size: var(--bb-text-nano, 12px);
       position: relative;
       overflow: auto;
-
-      --depth-1: hsl(48deg, 60%, 98%);
-      --depth-2: hsl(45deg, 60%, 96%);
-      --depth-3: hsl(42deg, 60%, 94%);
-      --depth-4: hsl(39deg, 60%, 92%);
-      --depth-5: hsl(36deg, 60%, 90%);
     }
 
     * {
@@ -182,22 +176,22 @@ export class HistoryTree extends LitElement {
 
     tbody tr[data-depth="0"].expanded td,
     tbody tr[data-depth="1"] td {
-      background: var(--depth-1);
+      background: var(--bb-depth-1);
     }
 
     tbody tr[data-depth="1"].expanded td,
     tbody tr[data-depth="2"] td {
-      background: var(--depth-2);
+      background: var(--bb-depth-2);
     }
 
     tbody tr[data-depth="2"].expanded td,
     tbody tr[data-depth="3"] td {
-      background: var(--depth-3);
+      background: var(--bb-depth-3);
     }
 
     tbody tr[data-depth="3"].expanded td,
     tbody tr[data-depth="4"] td {
-      background: var(--depth-4);
+      background: var(--bb-depth-4);
     }
 
     tbody tr:not([data-parent=""]) {
@@ -344,23 +338,23 @@ export class HistoryTree extends LitElement {
     }
 
     tbody tr:hover td {
-      background: var(--depth-1);
+      background: var(--bb-depth-1);
     }
 
     tbody tr[data-depth="1"]:hover td {
-      background: var(--depth-2);
+      background: var(--bb-depth-2);
     }
 
     tbody tr[data-depth="2"]:hover td {
-      background: var(--depth-3);
+      background: var(--bb-depth-3);
     }
 
     tbody tr[data-depth="3"]:hover td {
-      background: var(--depth-4);
+      background: var(--bb-depth-4);
     }
 
     tbody tr[data-depth="4"]:hover td {
-      background: var(--depth-5);
+      background: var(--bb-depth-5);
     }
 
     #selected {
