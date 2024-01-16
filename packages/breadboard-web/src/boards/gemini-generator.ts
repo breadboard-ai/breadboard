@@ -154,6 +154,15 @@ const parametersSchema = {
       description: "Whether to stream the output",
       default: "false",
     },
+    stopSequences: {
+      type: "array",
+      title: "Stop Sequences",
+      description: "An array of strings that will stop the output",
+      items: {
+        type: "string",
+      },
+      default: "[]",
+    },
   },
   required: ["text"],
 } satisfies Schema;
@@ -245,7 +254,10 @@ export default await recipe(() => {
               }
           ]);
       text ? {
-          "contents": $context, 
+          "contents": $context,
+          "generationConfig": stopSequences ? {
+            "stopSequences": stopSequences
+          },
           "tools": tools ? {
             "function_declarations": tools
           }

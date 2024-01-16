@@ -36,6 +36,12 @@
     {
       "from": "input-1",
       "to": "generate",
+      "out": "stopSequences",
+      "in": "stopSequences"
+    },
+    {
+      "from": "input-1",
+      "to": "generate",
       "out": "generator",
       "in": "path"
     },
@@ -111,6 +117,10 @@
                 "[]"
               ]
             },
+            "stopSequences": {
+              "type": "string",
+              "title": "stopSequences"
+            },
             "generator": {
               "title": "Generator",
               "description": "The path to the board to invoke.",
@@ -123,6 +133,7 @@
           "required": [
             "text",
             "context",
+            "stopSequences",
             "generator"
           ]
         }

@@ -234,6 +234,15 @@
               "title": "Stream",
               "description": "Whether to stream the output",
               "default": "false"
+            },
+            "stopSequences": {
+              "type": "array",
+              "title": "Stop Sequences",
+              "description": "An array of strings that will stop the output",
+              "items": {
+                "type": "string"
+              },
+              "default": "[]"
             }
           },
           "required": [
@@ -253,7 +262,7 @@
       "id": "makeBody",
       "type": "jsonata",
       "configuration": {
-        "expression": "(\n      $context := $append(\n          context ? context, [\n              {\n                  \"role\": \"user\",\n                  \"parts\": [\n                      {\n                          \"text\": text\n                      }\n                  ]\n              }\n          ]);\n      text ? {\n          \"contents\": $context, \n          \"tools\": tools ? {\n            \"function_declarations\": tools\n          }\n      } : {\n          \"$error\": \"`text` input is required\"\n      }\n    )"
+        "expression": "(\n      $context := $append(\n          context ? context, [\n              {\n                  \"role\": \"user\",\n                  \"parts\": [\n                      {\n                          \"text\": text\n                      }\n                  ]\n              }\n          ]);\n      text ? {\n          \"contents\": $context,\n          \"generationConfig\": stopSequences ? {\n            \"stopSequences\": stopSequences\n          },\n          \"tools\": tools ? {\n            \"function_declarations\": tools\n          }\n      } : {\n          \"$error\": \"`text` input is required\"\n      }\n    )"
       }
     },
     {

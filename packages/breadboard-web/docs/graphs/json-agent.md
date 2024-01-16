@@ -10,7 +10,7 @@ agent["invoke <br> id='agent'"] -- "context->context" --> output2{{"output <br> 
 input1[/"input <br> id='input-1'"/]:::input -- "schema->schema" --> schemish["schemish <br> id='schemish'"]
 input1[/"input <br> id='input-1'"/]:::input -- "text->text" --> format["promptTemplate <br> id='format'"]
 input1[/"input <br> id='input-1'"/]:::input -- "context->context" --> agent["invoke <br> id='agent'"]
-input1[/"input <br> id='input-1'"/]:::input -- "generator->path" --> agent["invoke <br> id='agent'"]
+input1[/"input <br> id='input-1'"/]:::input -- "generator->generator" --> agent["invoke <br> id='agent'"]
 input1[/"input <br> id='input-1'"/]:::input -- "schema->schema" --> validate["validateJson <br> id='validate'"]
 format["promptTemplate <br> id='format'"] -- "prompt->text" --> agent["invoke <br> id='agent'"]
 schemish["schemish <br> id='schemish'"] -- "schemish->schemish" --> format["promptTemplate <br> id='format'"]

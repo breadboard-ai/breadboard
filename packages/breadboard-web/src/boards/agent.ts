@@ -8,7 +8,7 @@ import { recipe } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { starter } from "@google-labs/llm-starter";
 
-export default await recipe(({ text, generator, context }) => {
+export default await recipe(({ text, generator, context, stopSequences }) => {
   text
     .title("Text")
     .examples(
@@ -27,6 +27,7 @@ export default await recipe(({ text, generator, context }) => {
     $id: "generate",
     text,
     context,
+    stopSequences,
     path: generator.isString(),
   });
 
