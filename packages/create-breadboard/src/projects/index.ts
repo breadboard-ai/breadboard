@@ -54,16 +54,13 @@ const run = () => {
       "@types/node",
       "@typescript-eslint/eslint-plugin",
       "@typescript-eslint/parser",
-      "dotenv",
-      "tsx",
-      "typescript",
     ],
     package: {
       main: "./dist/src/index.js",
       type: "module",
       // these will merge with scripts like `test` from `npm init`
       scripts: {
-        debug: "npx breadboard debug recipes/",
+        debug: "npx breadboard debug recipes/ -o recipes/ --watch",
         recipe: "npx breadboard run",
       },
       files: ["dist/src"],
@@ -77,7 +74,7 @@ const run = () => {
   });
 
   console.log(
-    `Created ${name}!. Enter the project directory and run: \`npm run dev\``
+    `Created ${name}!. Enter the project directory and run: \`npm run debug\``
   );
 };
 
