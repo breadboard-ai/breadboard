@@ -127,7 +127,10 @@ export class Input extends LitElement {
       flex: 1;
       width: 100%;
       overflow: hidden;
-      border-radius: calc(var(--bb-grid-size) * 3);
+      border-radius: var(
+        --bb-input-border-radius,
+        calc(var(--bb-grid-size) * 3)
+      );
       border: 1px solid rgb(209, 209, 209);
       min-height: calc(var(--bb-grid-size) * 50);
     }
