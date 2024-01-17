@@ -13,6 +13,7 @@ import * as BreadboardUI from "@google-labs/breadboard-ui";
 import { InputResolveRequest } from "@google-labs/breadboard/remote";
 import { Board } from "@google-labs/breadboard";
 import { cache } from "lit/directives/cache.js";
+import { StartEvent } from "../../breadboard-ui/dist/src/events/events";
 
 export const getBoardInfo = async (url: string) => {
   const runner = await Board.load(url);
@@ -257,6 +258,28 @@ export class Main extends LitElement {
           break;
       }
     }
+
+    window.addEventListener('popstate', (evt) => {
+      // TODO: If routing gets more complicated than two pages, revise this.
+      const pageUrl = new URL(window.location.href);
+
+      const boardUrl = pageUrl.searchParams.get("board");
+      if (boardUrl) {
+        this.#boardId++;
+        this.url = boardUrl;
+        this.status = BreadboardUI.Types.STATUS.RUNNING;
+      } else {
+        if (!confirm("Are you sure you want to change boards?")) {
+          return;
+        }
+        this.url = null;
+        this.loadInfo = null;
+        this.#bootWithUrl = null;
+
+        this.#boardId++;
+        this.#uiRef.value?.unloadCurrentBoard();
+      }
+    });
   }
 
   get status() {
@@ -368,7 +391,7 @@ export class Main extends LitElement {
     } else {
       pageUrl.searchParams.set("board", url);
     }
-    window.history.replaceState(null, "", pageUrl);
+    window.history.pushState(null, "", pageUrl);
   }
 
   #setActiveMode(mode: string | null) {
@@ -378,7 +401,7 @@ export class Main extends LitElement {
     } else {
       pageUrl.searchParams.set("mode", mode);
     }
-    window.history.replaceState(null, "", pageUrl);
+    window.history.pushState(null, "", pageUrl);
   }
 
   #setEmbed(embed: boolean | null) {
@@ -388,7 +411,7 @@ export class Main extends LitElement {
     } else {
       pageUrl.searchParams.set("embed", `${embed}`);
     }
-    window.history.replaceState(null, "", pageUrl);
+    window.history.pushState(null, "", pageUrl);
   }
 
   toast(message: string, type: BreadboardUI.Events.ToastType) {
@@ -409,10 +432,7 @@ export class Main extends LitElement {
     this.#setActiveBreadboard(null);
 
     this.#boardId++;
-    if (!this.#uiRef.value) {
-      return;
-    }
-    this.#uiRef.value.unloadCurrentBoard();
+    this.#uiRef.value?.unloadCurrentBoard();
   }
 
   render() {
