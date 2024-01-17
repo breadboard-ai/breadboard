@@ -8,14 +8,7 @@ import { run } from "@google-labs/breadboard/harness";
 import { createRunConfig } from "./config";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 import { customElement, property, state } from "lit/decorators.js";
-import {
-  LitElement,
-  html,
-  css,
-  HTMLTemplateResult,
-  nothing,
-  PropertyValueMap,
-} from "lit";
+import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import * as BreadboardUI from "@google-labs/breadboard-ui";
 import { InputResolveRequest } from "@google-labs/breadboard/remote";
 import { Board } from "@google-labs/breadboard";
@@ -373,11 +366,11 @@ export class Main extends LitElement {
 
     this.url = null;
     this.loadInfo = null;
+    this.#bootWithUrl = null;
     this.#setActiveBreadboard(null);
 
     this.#boardId++;
     if (!this.#uiRef.value) {
-      console.warn("Unable to find UI");
       return;
     }
     this.#uiRef.value.unloadCurrentBoard();
@@ -434,17 +427,14 @@ export class Main extends LitElement {
                   return;
                 }
 
-                this.#previewRef.value.src = "/preview.html";
+                this.#previewRef.value.src = `/preview.html?board=${this.url}`;
               }}
             >
               Reload
             </button>
             <iframe
               ${ref(this.#previewRef)}
-              src="/preview.html"
-              credentialless
-              reffererpolicy="no-referrer"
-              sandbox="allow-forms allow-scripts"
+              src="/preview.html?board=${this.url}"
             ></iframe>`;
           break;
         }
