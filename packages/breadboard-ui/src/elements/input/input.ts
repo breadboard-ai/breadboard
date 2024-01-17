@@ -72,7 +72,7 @@ export class Input extends LitElement {
 
     * {
       box-sizing: border-box;
-      font-size: var(--bb-text-nano);
+      font-size: var(--bb-input-font-size, var(--bb-text-nano));
     }
 
     bb-json-tree {
@@ -91,13 +91,14 @@ export class Input extends LitElement {
       row-gap: calc(var(--bb-grid-size) * 2);
       flex: 1;
       margin: calc(var(--bb-grid-size) * 2) 0;
-      border: 1px solid rgb(200, 200, 200);
+      border: var(--bb-input-fieldset-border, 1px solid rgb(200, 200, 200));
       border-radius: var(--bb-grid-size);
       position: relative;
       padding-bottom: calc(var(--bb-grid-size) * 3);
     }
 
     legend {
+      display: var(--bb-input-legend-display, block);
       padding: 0 calc(var(--bb-grid-size) * 2);
     }
 
@@ -138,9 +139,12 @@ export class Input extends LitElement {
     textarea,
     .parsed-value {
       grid-column: 1 / 5;
-      border-radius: calc(var(--bb-grid-size) * 3);
+      border-radius: var(
+        --bb-input-border-radius,
+        calc(var(--bb-grid-size) * 3)
+      );
       background: rgb(255, 255, 255);
-      padding: calc(var(--bb-grid-size) * 2);
+      padding: var(--bb-input-padding, calc(var(--bb-grid-size) * 2));
       width: 100%;
       border: 1px solid rgb(209, 209, 209);
     }
