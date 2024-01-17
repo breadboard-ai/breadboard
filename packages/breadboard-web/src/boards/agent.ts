@@ -22,6 +22,7 @@ export default await recipe(({ text, generator, context, stopSequences }) => {
     .format("multiline");
   generator.title("Generator").examples("gemini-generator.json");
   context.title("Context").isArray().examples("[]");
+  stopSequences.title("Stop Sequences").isArray().optional().examples("[]");
 
   const generate = core.invoke({
     $id: "generate",
