@@ -17,6 +17,7 @@ export default defineConfig(async (_) => {
         entry: {
           worker: "src/worker.ts",
           sample: "./index.html",
+          preview: "./preview.html",
         },
         name: "Breadboard Web Runtime",
         formats: ["es"],
