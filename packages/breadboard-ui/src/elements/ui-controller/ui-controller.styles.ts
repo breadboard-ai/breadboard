@@ -6,137 +6,20 @@
 import { css } from "lit";
 
 export const styles = css`
-  :host {
-    flex: 1 0 auto;
-    display: grid;
-    grid-template-rows: calc(var(--bb-grid-size) * 11) auto;
-    grid-template-columns: calc(var(--bb-grid-size) * 16) auto;
-
-    --rhs-top: 10fr;
-    --rhs-mid: 45fr;
-    --rhs-bottom: 45fr;
-  }
-
   * {
     box-sizing: border-box;
   }
 
-  bb-toast {
-    z-index: 100;
-  }
-
-  :host > header {
-    padding: calc(var(--bb-grid-size) * 6) calc(var(--bb-grid-size) * 8)
-      calc(var(--bb-grid-size) * 0) calc(var(--bb-grid-size) * 8);
-    font-size: var(--bb-text-default);
-    grid-column: 1 / 3;
-  }
-
-  :host > header a {
-    text-decoration: none;
-  }
-
-  #header-bar {
-    background: rgb(113, 106, 162);
-    display: flex;
-    align-items: center;
-    color: rgb(255, 255, 255);
-    box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.24);
-    grid-column: 1 / 3;
-    z-index: 1;
-  }
-
-  bb-board-list {
-    grid-column: 1 / 3;
-  }
-
-  #header-bar a {
-    font-size: 0;
-    display: block;
-    width: 16px;
-    height: 16px;
-    background: var(--bb-icon-arrow-back-white) center center no-repeat;
-    margin: 0 calc(var(--bb-grid-size) * 5);
-  }
-
-  #header-bar h1 {
-    font-size: var(--bb-text-default);
-    font-weight: normal;
-  }
-
-  #title {
-    font: var(--bb-text-baseline) var(--bb-font-family-header);
-    color: rgb(90, 64, 119);
-    margin: 0;
-    display: inline;
-  }
-
-  #side-bar {
-    background: rgb(255, 255, 255);
-    box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.24);
-    align-items: center;
-    display: flex;
-    flex-direction: column;
-    padding: calc(var(--bb-grid-size) * 2);
-  }
-
-  #side-bar button {
-    width: 100%;
-    font-size: var(--bb-text-small);
-    color: rgb(57, 57, 57);
-    text-align: center;
-    background: none;
-    cursor: pointer;
-    margin: calc(var(--bb-grid-size) * 2) 0;
-    padding-top: 32px;
-    border: none;
-    opacity: 0.5;
-    position: relative;
-  }
-
-  #side-bar button:hover,
-  #side-bar button[active] {
-    opacity: 1;
-  }
-
-  #side-bar button[active] {
-    pointer-events: none;
-  }
-
-  #side-bar button::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 30px;
-    border-radius: 14px;
-    background-position: center center;
-    background-repeat: no-repeat;
-  }
-
-  #side-bar #select-build::before {
-    background-image: var(--bb-icon-board);
-  }
-
-  #side-bar #select-preview::before {
-    background-image: var(--bb-icon-preview);
-  }
-
-  #side-bar button[active]::before {
-    background-color: rgb(240, 231, 249);
-  }
-
-  #content {
+  :host {
     display: grid;
     grid-template-columns: 1fr 1fr;
     column-gap: 8px;
-    height: calc(100vh - var(--bb-grid-size) * 15);
+    height: 100%;
     margin: 8px;
   }
 
   @media (orientation: portrait) {
-    #content {
+    :host {
       grid-template-columns: initial;
       grid-template-rows: 0.4fr 0.6fr;
       row-gap: 8px;
