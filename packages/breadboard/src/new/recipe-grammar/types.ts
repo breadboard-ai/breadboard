@@ -296,6 +296,8 @@ export abstract class AbstractValue<T extends NodeValue = NodeValue>
   abstract format(format: string): AbstractValue<T>;
   abstract description(description: string): AbstractValue<T>;
   abstract examples(...examples: string[]): AbstractValue<T>;
+  abstract default(value: string): AbstractValue<T>;
+  abstract optional(): AbstractValue<T>;
 }
 
 /**

@@ -118,8 +118,11 @@
               ]
             },
             "stopSequences": {
-              "type": "string",
-              "title": "stopSequences"
+              "title": "Stop Sequences",
+              "type": "array",
+              "examples": [
+                "[]"
+              ]
             },
             "generator": {
               "title": "Generator",
@@ -133,7 +136,6 @@
           "required": [
             "text",
             "context",
-            "stopSequences",
             "generator"
           ]
         }
