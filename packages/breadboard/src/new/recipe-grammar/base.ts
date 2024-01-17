@@ -41,7 +41,7 @@ export const base = {
     } & InputsMaybeAsValues<z.infer<T>>
   ) => NodeProxy<Record<string, never>, z.infer<T>>) &
     ((
-      config: {
+      config?: {
         schema?: Schema;
         $id?: string;
       } & InputsMaybeAsValues<InputValues>
@@ -53,7 +53,7 @@ export const base = {
     } & InputsMaybeAsValues<z.infer<T>>
   ) => NodeProxy<z.infer<T>, Record<string, never>>) &
     ((
-      config: {
+      config?: {
         schema?: Schema;
         $id?: string;
       } & InputsMaybeAsValues<InputValues>
