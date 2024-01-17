@@ -4,11 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, HTMLTemplateResult, nothing } from "lit";
+import { LitElement, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { Board, HistoryEntry, LoadArgs, STATUS } from "../../types/types.js";
 import {
-  BoardUnloadEvent,
   InputEnterEvent,
   MessageTraversalEvent,
   NodeSelectEvent,
@@ -58,6 +57,7 @@ type inputCallback = (data: Record<string, unknown>) => void;
 
 const CONFIG_MEMORY_KEY = "ui-config";
 const DIAGRAM_DEBOUNCE_RENDER_TIMEOUT = 60;
+const VISUALBLOCKS_URL = "https://storage.googleapis.com/tfweb/visual-breadboard/visual_breadboard_bin_202401161150.js";
 
 type UIConfig = {
   showNarrowTimeline: boolean;
@@ -80,6 +80,9 @@ export class UI extends LitElement {
   @property()
   boards: Board[] = [];
 
+  @property()
+  visualizer: "mermaid" | "visualblocks" = "mermaid";
+
   @state()
   historyEntries: HistoryEntry[] = [];
 
@@ -94,7 +97,10 @@ export class UI extends LitElement {
     showNarrowTimeline: false,
   };
 
-  #diagram = new Diagram();
+  #diagram?: HTMLElement & {
+    render: (diagram: LoadArgs, highlightedNode: string) => void;
+    reset: () => void;
+  };
   #nodeInfo: Map<string, ExtendedNodeInformation> = new Map();
   #timelineRef: Ref<HTMLElement> = createRef();
   #inputRef: Ref<HTMLElement> = createRef();
@@ -114,11 +120,6 @@ export class UI extends LitElement {
 
   constructor() {
     super();
-
-    this.#diagram.addEventListener(NodeSelectEvent.eventName, (evt: Event) => {
-      const nodeSelect = evt as NodeSelectEvent;
-      this.selectedNode = this.#nodeInfo.get(nodeSelect.id) || null;
-    });
 
     this.#memory.retrieve(CONFIG_MEMORY_KEY).then((value) => {
       if (!value) {
@@ -143,11 +144,11 @@ export class UI extends LitElement {
   }
 
   async renderDiagram(highlightedDiagramNode = "") {
-    if (!this.loadInfo || !this.loadInfo.diagram) {
+    if (!this.loadInfo || !this.loadInfo.diagram || !this.#diagram) {
       return;
     }
 
-    return this.#diagram.render(this.loadInfo.diagram, highlightedDiagramNode);
+    return this.#diagram.render(this.loadInfo, highlightedDiagramNode);
   }
 
   unloadCurrentBoard() {
@@ -160,10 +161,28 @@ export class UI extends LitElement {
     this.#messageDurations.clear();
     this.#nodeInfo.clear();
 
-    this.#diagram.reset();
+    this.#diagram?.reset();
+  }
+
+  async #setupDiagram() {
+    if (this.visualizer === "mermaid") {
+      this.#diagram = new Diagram();
+      this.style.setProperty("--diagram-display", "flex");
+    } else { // visualizer === "visualblocks"
+      // Load the visualblocks bundle
+      await loadScript(VISUALBLOCKS_URL);
+      this.#diagram = document.createElement('visual-breadboard') as any;
+      this.style.setProperty("--diagram-display", "block");
+    }
+
+    this.#diagram!.addEventListener(NodeSelectEvent.eventName, (evt: Event) => {
+      const nodeSelect = evt as NodeSelectEvent;
+      this.selectedNode = this.#nodeInfo.get(nodeSelect.id) || null;
+    });
   }
 
   firstUpdated() {
+    this.#setupDiagram();
     const rowTop = globalThis.sessionStorage.getItem("rhs-top") || "10fr";
     const rowMid = globalThis.sessionStorage.getItem("rhs-mid") || "45fr";
     const rowBottom = globalThis.sessionStorage.getItem("rhs-bottom") || "45fr";
@@ -408,11 +427,18 @@ export class UI extends LitElement {
       return html`Loading board...`;
     }
 
-    this.#scheduleDiagramRender();
+    if (this.#diagram) {
+      this.#scheduleDiagramRender();
+    }
+
+    let maybeDiagram = this.#diagram ?? "Loading..."
+    if ((this.visualizer === "mermaid" && !this.loadInfo.diagram)) {
+      maybeDiagram = "No board diagram";
+    }
 
     return html`
       <div id="diagram">
-        ${this.loadInfo.diagram ? this.#diagram : "No board diagram"}
+        ${maybeDiagram}
         ${
           this.selectedNode
             ? html`<div id="node-information">
@@ -541,4 +567,14 @@ export class UI extends LitElement {
         </section>
       </div>`;
   }
+}
+
+function loadScript(url: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = url;
+    script.onload = () => {resolve(); };
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
 }
