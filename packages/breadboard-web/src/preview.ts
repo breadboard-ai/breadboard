@@ -9,7 +9,7 @@ import { createRunConfig } from "./config";
 import { customElement, state } from "lit/decorators.js";
 import { HTMLTemplateResult, LitElement, css, html, nothing } from "lit";
 import * as BreadboardUI from "@google-labs/breadboard-ui";
-import { Board, type InputValues } from "@google-labs/breadboard";
+import { Board, Schema, type InputValues } from "@google-labs/breadboard";
 
 export const getBoardInfo = async (url: string) => {
   const runner = await Board.load(url);
@@ -33,6 +33,8 @@ export class Preview extends LitElement {
 
   #config: ReturnType<typeof createRunConfig> | null = null;
   #url: string | null = null;
+  #hasOutputs = false;
+  #outputs: HTMLTemplateResult[] = [];
 
   static styles = css`
     :host {
@@ -59,14 +61,16 @@ export class Preview extends LitElement {
       flex: 1 0 auto;
       max-width: 960px;
       margin: 0 auto;
+      width: 100%;
     }
 
     h1 {
       font-size: 24px;
       margin: 0;
-      padding: 24px 36px 0 36px;
+      padding: 24px calc(var(--bb-grid-size) * 2);
       font-weight: normal;
       text-transform: uppercase;
+      color: var(--bb-accent-color);
     }
 
     footer {
@@ -82,14 +86,14 @@ export class Preview extends LitElement {
 
     @media (min-width: 600px) {
       h1 {
-        padding: 32px 36px;
+        padding: 32px calc(var(--bb-grid-size) * 2);
         font-size: 32px;
       }
     }
 
     @media (min-width: 900px) {
       h1 {
-        padding: 40px 36px;
+        padding: 40px calc(var(--bb-grid-size) * 2);
         font-size: 40px;
       }
     }
@@ -107,6 +111,17 @@ export class Preview extends LitElement {
 
     .error {
       color: #cc0011;
+    }
+
+    .output-item {
+      margin-bottom: 32px;
+      font-size: var(--bb-text-medium);
+    }
+
+    .output-item h1 {
+      padding: 0;
+      margin: 0 0 8px;
+      font-size: var(--bb-text-large);
     }
   `;
 
@@ -130,6 +145,47 @@ export class Preview extends LitElement {
     this.#config.diagnostics = false;
 
     this.#runBoard();
+  }
+
+  #renderOutput(output: Record<string, unknown>) {
+    console.log(output);
+    const schema = output.schema as Schema;
+    if (!schema || !schema.properties) {
+      return html`<bb-json-tree
+        .json=${output}
+        .autoExpand=${true}
+      ></bb-json-tree>`;
+    }
+
+    switch (schema.type) {
+      case "object": {
+        return html`${Object.entries(schema.properties).map(
+          ([property, schema]) => {
+            const value = output[property];
+            const valueTmpl =
+              typeof value === "object"
+                ? html`<bb-json-tree
+                    .json=${value}
+                    .autoExpand=${true}
+                  ></bb-json-tree>`
+                : html`${value}`;
+
+            return html`<section class="output-item">
+              <h1 title="${schema.description || "Undescribed property"}">
+                ${schema.title || "Untitled property"}
+              </h1>
+              <div>${valueTmpl}</div>
+            </section>`;
+          }
+        )}`;
+      }
+
+      default:
+        return html`<bb-json-tree
+          .json=${output}
+          .autoExpand=${true}
+        ></bb-json-tree>`;
+    }
   }
 
   async #handleStateChange(
@@ -202,16 +258,22 @@ export class Preview extends LitElement {
         return Promise.resolve(void 0);
 
       case "output":
-        this.uiElement = html`<div class="output">
-          ${result.data.outputs.text}
-        </div>`;
+        this.uiElement = nothing;
+        this.#hasOutputs = true;
+        this.#outputs.unshift(this.#renderOutput(result.data.outputs));
+        this.requestUpdate();
         return Promise.resolve(void 0);
 
       case "graphstart":
       case "graphend":
       case "nodeend":
       case "skip":
+        return Promise.resolve(void 0);
+
       case "end":
+        if (!this.#hasOutputs) {
+          this.uiElement = html`<div class="output">All done!</div>`;
+        }
         return Promise.resolve(void 0);
 
       case "nodestart":
@@ -243,7 +305,7 @@ export class Preview extends LitElement {
 
     return html`<main>
         <h1>${this.boardInfo?.title}</h1>
-        ${this.uiElement}
+        ${this.uiElement} ${this.#outputs}
       </main>
       <footer>Made with Breadboard</footer>`;
   }
