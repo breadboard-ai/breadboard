@@ -4,12 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, HTMLTemplateResult, nothing } from "lit";
+import { LitElement, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { until } from 'lit/directives/until.js';
 import { Board, HistoryEntry, LoadArgs, STATUS } from "../../types/types.js";
 import {
-  BoardUnloadEvent,
   InputEnterEvent,
   MessageTraversalEvent,
   NodeSelectEvent,
