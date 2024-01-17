@@ -47,6 +47,9 @@ export class Main extends LitElement {
   mode = MODE.BUILD;
 
   @state()
+  embed = false;
+
+  @state()
   toasts: Array<{ message: string; type: BreadboardUI.Events.ToastType }> = [];
 
   #uiRef: Ref<BreadboardUI.Elements.UI> = createRef();
@@ -198,6 +201,27 @@ export class Main extends LitElement {
       border-radius: calc(var(--bb-grid-size) * 5);
       border: 1px solid rgb(227, 227, 227);
     }
+
+    #embed {
+      display: grid;
+      grid-template-rows: calc(var(--bb-grid-size) * 10) auto;
+      grid-column: 1/3;
+      grid-row: 1/3;
+    }
+
+    #embed iframe {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+      border-radius: 0;
+    }
+
+    #embed header {
+      display: flex;
+      padding: 0 calc(var(--bb-grid-size) * 9);
+      align-items: center;
+    }
   `;
 
   constructor(config: { boards: BreadboardUI.Types.Board[] }) {
@@ -217,6 +241,7 @@ export class Main extends LitElement {
     const currentUrl = new URL(window.location.href);
     const boardFromUrl = currentUrl.searchParams.get("board");
     const modeFromUrl = currentUrl.searchParams.get("mode");
+    this.embed = currentUrl.searchParams.get("embed") !== null;
     if (boardFromUrl) {
       this.#bootWithUrl = boardFromUrl;
     }
@@ -259,20 +284,24 @@ export class Main extends LitElement {
       this.#setActiveMode(this.mode);
     }
 
+    if (!this.url) {
+      return;
+    }
+
+    this.loadInfo = await getBoardInfo(this.url);
+
     if (this.mode === MODE.BUILD) {
       await this.#startHarnessIfNeeded();
     }
   }
 
   async #startHarnessIfNeeded() {
-    // No URL, no UI, or an already-running board means we should stop.
-    if (!this.url || !this.#uiRef.value || this.loadInfo) {
+    if (!(this.url && this.#uiRef.value && this.loadInfo)) {
       return;
     }
 
     const ui = this.#uiRef.value;
     ui.url = this.url;
-    this.loadInfo = await getBoardInfo(this.url);
     ui.load(this.loadInfo);
 
     const currentBoardId = this.#boardId;
@@ -348,6 +377,16 @@ export class Main extends LitElement {
       pageUrl.searchParams.delete("mode");
     } else {
       pageUrl.searchParams.set("mode", mode);
+    }
+    window.history.replaceState(null, "", pageUrl);
+  }
+
+  #setEmbed(embed: boolean | null) {
+    const pageUrl = new URL(window.location.href);
+    if (embed === null || embed === false) {
+      pageUrl.searchParams.delete("embed");
+    } else {
+      pageUrl.searchParams.set("embed", `${embed}`);
     }
     window.history.replaceState(null, "", pageUrl);
   }
@@ -465,6 +504,22 @@ export class Main extends LitElement {
           </button>
         </div>
         <div id="content" class="${this.mode}">${cache(content)}</div>`;
+
+      if (this.embed) {
+        tmpl = html`<main id="embed">
+          <header>
+            <button
+              @click=${() => {
+                this.#setEmbed(null);
+                this.embed = false;
+              }}
+            >
+              View in Debugger
+            </button>
+          </header>
+          <iframe src="/preview.html?board=${this.url}&embed=true"></iframe>
+        </main>`;
+      }
     } else {
       tmpl = html`<header>
           <a href="/"><h1 id="title">Breadboard Playground</h1></a>
