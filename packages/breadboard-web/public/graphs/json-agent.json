@@ -103,9 +103,6 @@
       "id": "agent",
       "type": "invoke",
       "configuration": {
-        "stopSequences": [
-          "```"
-        ],
         "path": "agent.json"
       }
     },
@@ -182,7 +179,7 @@
       "id": "format",
       "type": "promptTemplate",
       "configuration": {
-        "template": "{{text}}\n\nReply as valid JSON only of the following format:\n{{schemish}}\n\n```json\n"
+        "template": "{{text}}\n\nReply as valid JSON of the following format:\n\n```json\n{{schemish}}\n```\n"
       }
     },
     {

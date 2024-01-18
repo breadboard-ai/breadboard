@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2023 Google LLC
+ * Copyright 2024 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -45,6 +45,11 @@ export default await recipe(({ specs, generator }) => {
     );
   generator.title("Generator").examples(gemini);
 
+  const defaults = {
+    path: jsonAgent,
+    generator,
+  };
+
   const requirementsExtractor = core.invoke({
     $id: "requiremenstExtractor",
     text: starter.promptTemplate({
@@ -54,9 +59,8 @@ export default await recipe(({ specs, generator }) => {
       specs,
     }).prompt,
     context: [],
-    path: jsonAgent,
     schema: requirementsSchema,
-    generator,
+    ...defaults,
   });
 
   const adWriter = core.invoke({
@@ -64,8 +68,7 @@ export default await recipe(({ specs, generator }) => {
     text: `Write ad copy that conforms to the requirements above`,
     context: requirementsExtractor,
     schema: adSchema,
-    path: jsonAgent,
-    generator,
+    ...defaults,
   });
 
   const customer = core.invoke({
@@ -73,15 +76,13 @@ export default await recipe(({ specs, generator }) => {
     text: `Imagine you are a customer. You are a middle-aged homeowner from rural Midwest. You are overrun with ads and are weary of being scammed. You just want to work with someone local and trustworty. Review this and offer three improvements that would increase the likelihood of you trusting the ad.`,
     context: adWriter,
     schema: requirementsSchema,
-    path: jsonAgent,
-    generator,
+    ...defaults,
   });
 
   const requirementsExtractor2 = core.invoke({
     $id: "requirementsExtractor2",
     text: `Incorporate all feedback above into new, improved requirements`,
     context: customer,
-    path: jsonAgent,
     schema: {
       type: "object",
       properties: {
@@ -94,7 +95,7 @@ export default await recipe(({ specs, generator }) => {
         },
       },
     } satisfies Schema,
-    generator,
+    ...defaults,
   });
 
   const contextRestart = starter.jsonata({
@@ -112,16 +113,14 @@ export default await recipe(({ specs, generator }) => {
       {{requirements}}`,
       requirements: contextRestart.result,
     }),
-    path: jsonAgent,
     schema: adSchema,
-    generator,
+    ...defaults,
   });
 
   const adExec = core.invoke({
     $id: "adExec",
     text: `You are a Google Ads Search Professional. Given the above prompt and response, generate 3 point constructive critique of the response that I can action to make the output even better and more effective given the prompt.`,
     context: adWriter2,
-    path: jsonAgent,
     schema: {
       type: "object",
       properties: {
@@ -134,16 +133,15 @@ export default await recipe(({ specs, generator }) => {
         },
       },
     } satisfies Schema,
-    generator,
+    ...defaults,
   });
 
   const improver = core.invoke({
     $id: "improver",
     text: `Given the 3 point critique try to generate a new response.`,
     context: adExec,
-    path: jsonAgent,
     schema: adSchema,
-    generator,
+    ...defaults,
   });
 
   // const promptImprover = core.invoke({

@@ -123,7 +123,6 @@
       "type": "invoke",
       "configuration": {
         "text": "Given the 3 point critique try to generate a new response.",
-        "path": "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/breadboard-web/public/graphs/json-agent.json",
         "schema": {
           "type": "object",
           "properties": {
@@ -132,7 +131,8 @@
               "description": "the ad copy"
             }
           }
-        }
+        },
+        "path": "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/breadboard-web/public/graphs/json-agent.json"
       }
     },
     {
@@ -140,7 +140,6 @@
       "type": "invoke",
       "configuration": {
         "text": "You are a Google Ads Search Professional. Given the above prompt and response, generate 3 point constructive critique of the response that I can action to make the output even better and more effective given the prompt.",
-        "path": "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/breadboard-web/public/graphs/json-agent.json",
         "schema": {
           "type": "object",
           "properties": {
@@ -152,7 +151,8 @@
               }
             }
           }
-        }
+        },
+        "path": "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/breadboard-web/public/graphs/json-agent.json"
       }
     },
     {
@@ -194,7 +194,6 @@
       "type": "invoke",
       "configuration": {
         "context": [],
-        "path": "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/breadboard-web/public/graphs/json-agent.json",
         "schema": {
           "type": "object",
           "properties": {
@@ -203,7 +202,8 @@
               "description": "the ad copy"
             }
           }
-        }
+        },
+        "path": "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/breadboard-web/public/graphs/json-agent.json"
       }
     },
     {
@@ -218,7 +218,6 @@
       "type": "invoke",
       "configuration": {
         "context": [],
-        "path": "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/breadboard-web/public/graphs/json-agent.json",
         "schema": {
           "type": "object",
           "properties": {
@@ -230,7 +229,8 @@
               }
             }
           }
-        }
+        },
+        "path": "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/breadboard-web/public/graphs/json-agent.json"
       }
     },
     {
@@ -275,7 +275,6 @@
       "type": "invoke",
       "configuration": {
         "text": "Incorporate all feedback above into new, improved requirements",
-        "path": "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/breadboard-web/public/graphs/json-agent.json",
         "schema": {
           "type": "object",
           "properties": {
@@ -287,7 +286,8 @@
               }
             }
           }
-        }
+        },
+        "path": "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/breadboard-web/public/graphs/json-agent.json"
       }
     },
     {
