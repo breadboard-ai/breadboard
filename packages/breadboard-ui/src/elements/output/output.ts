@@ -5,7 +5,7 @@
  */
 
 import {
-  tee,
+  clone,
   type OutputValues,
   type StreamCapabilityType,
 } from "@google-labs/breadboard";
@@ -48,13 +48,12 @@ export class Output extends LitElement {
         Object.entries(schema.properties).map(async ([key, property], idx) => {
           if (property.type === "object" && property.format === "stream") {
             let value = "";
-            await tee(data[key] as StreamCapabilityType).pipeTo(
+            await clone(data[key] as StreamCapabilityType).pipeTo(
               new WritableStream({
                 write(chunk) {
                   // For now, presume that the chunk is an `OutputValues` object
                   // and the relevant item is keyed as `chunk`.
                   const outputs = chunk as ChunkOutputs;
-                  console.log("chunk", outputs.chunk);
                   value += outputs.chunk;
                 },
               })
