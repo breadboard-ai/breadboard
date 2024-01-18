@@ -4,9 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  OutputValues,
-  StreamCapabilityType,
+import {
+  tee,
+  type OutputValues,
+  type StreamCapabilityType,
 } from "@google-labs/breadboard";
 
 import { LitElement, html, css, HTMLTemplateResult } from "lit";
@@ -47,13 +48,13 @@ export class Output extends LitElement {
         Object.entries(schema.properties).map(async ([key, property], idx) => {
           if (property.type === "object" && property.format === "stream") {
             let value = "";
-            const stream = (data[key] as StreamCapabilityType).stream;
-            await stream.pipeTo(
+            await tee(data[key] as StreamCapabilityType).pipeTo(
               new WritableStream({
                 write(chunk) {
                   // For now, presume that the chunk is an `OutputValues` object
                   // and the relevant item is keyed as `chunk`.
                   const outputs = chunk as ChunkOutputs;
+                  console.log("chunk", outputs.chunk);
                   value += outputs.chunk;
                 },
               })
