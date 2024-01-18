@@ -24,7 +24,7 @@ export class StreamCapability<ChunkType>
   }
 }
 
-export const tee = (streamCapability: StreamCapabilityType) => {
+export const clone = (streamCapability: StreamCapabilityType) => {
   const [leave, take] = streamCapability.stream.tee();
   streamCapability.stream = leave;
   return take;
