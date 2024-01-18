@@ -33,6 +33,7 @@ import { SchemaBuilder } from "./schema.js";
 import { RequestedInputsManager, bubbleUpInputsIfNeeded } from "./bubble.js";
 import { asyncGen } from "./utils/async-gen.js";
 import { saveRunnerState } from "./serialization.js";
+import { StackManager } from "./stack.js";
 
 /**
  * This class is the main entry point for running a board.
@@ -122,12 +123,15 @@ export class BoardRunner implements BreadboardRunner {
 
       const invocationPath = context.invocationPath || [];
 
+      const stack = new StackManager(context.state);
+
       await probe?.report?.({
         type: "graphstart",
         data: { metadata: this, path: invocationPath },
       });
 
       let invocationId = 0;
+      stack.onGraphStart();
       const path = () => [...invocationPath, invocationId];
 
       for await (const result of machine) {
@@ -146,6 +150,8 @@ export class BoardRunner implements BreadboardRunner {
           });
           continue;
         }
+
+        stack.onNodeStart(result);
 
         await probe?.report?.({
           type: "nodestart",
@@ -181,6 +187,7 @@ export class BoardRunner implements BreadboardRunner {
             kits: [...(context.kits || []), ...this.kits],
             requestInput: requestedInputs.createHandler(next, result),
             invocationPath: path(),
+            state: stack.state(),
           };
 
           outputsPromise = callHandler(
@@ -189,6 +196,8 @@ export class BoardRunner implements BreadboardRunner {
             newContext
           ) as Promise<OutputValues>;
         }
+
+        stack.onNodeEnd();
 
         await probe?.report?.({
           type: "nodeend",
@@ -205,6 +214,9 @@ export class BoardRunner implements BreadboardRunner {
 
         result.outputsPromise = outputsPromise;
       }
+
+      stack.onGraphEnd();
+
       await probe?.report?.({
         type: "graphend",
         data: { metadata: this, path: invocationPath },
