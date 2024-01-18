@@ -4,18 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, HTMLTemplateResult, nothing } from "lit";
+import { LitElement, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { Board, HistoryEntry, LoadArgs, STATUS } from "../../types/types.js";
 import {
-  BoardUnloadEvent,
   InputEnterEvent,
   MessageTraversalEvent,
   NodeSelectEvent,
   ToastEvent,
   ToastType,
 } from "../../events/events.js";
-import { Diagram } from "../diagram/diagram.js";
 import {
   AnyRunResult,
   HarnessRunResult,
@@ -33,6 +31,7 @@ import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { longTermMemory } from "../../utils/long-term-memory.js";
 import { classMap } from "lit/directives/class-map.js";
 import { styles as uiControllerStyles } from "./ui-controller.styles.js";
+import { until } from "lit/directives/until.js";
 
 type ExtendedNodeInformation = {
   id: string;
@@ -54,18 +53,20 @@ const hasNodeInfo = (
     event.type === "nodestart" ||
     event.type === "nodeend");
 
-const enum MODE {
-  BUILD = "build",
-  PREVIEW = "preview",
-}
-
 type inputCallback = (data: Record<string, unknown>) => void;
 
 const CONFIG_MEMORY_KEY = "ui-config";
 const DIAGRAM_DEBOUNCE_RENDER_TIMEOUT = 60;
+const VISUALBLOCKS_URL =
+  "https://storage.googleapis.com/tfweb/visual-breadboard/visual_breadboard_bin_202401161150.js";
 
 type UIConfig = {
   showNarrowTimeline: boolean;
+};
+
+type DiagramElement = HTMLElement & {
+  render: (diagram: LoadArgs, highlightedNode: string) => void;
+  reset: () => void;
 };
 
 @customElement("bb-ui-controller")
@@ -85,14 +86,11 @@ export class UI extends LitElement {
   @property()
   boards: Board[] = [];
 
-  @state()
-  toasts: Array<{ message: string; type: ToastType }> = [];
+  @property()
+  visualizer: "mermaid" | "visualblocks" = "mermaid";
 
   @state()
   historyEntries: HistoryEntry[] = [];
-
-  @state()
-  mode = MODE.BUILD;
 
   @state()
   selectedNode: ExtendedNodeInformation | null = null;
@@ -105,7 +103,7 @@ export class UI extends LitElement {
     showNarrowTimeline: false,
   };
 
-  #diagram = new Diagram();
+  #diagram: Ref<DiagramElement> = createRef();
   #nodeInfo: Map<string, ExtendedNodeInformation> = new Map();
   #timelineRef: Ref<HTMLElement> = createRef();
   #inputRef: Ref<HTMLElement> = createRef();
@@ -120,16 +118,12 @@ export class UI extends LitElement {
   #messageDurations: Map<AnyRunResult, number> = new Map();
   #renderTimeout = 0;
   #rendering = false;
+  #requestedVB = false;
 
   static styles = uiControllerStyles;
 
   constructor() {
     super();
-
-    this.#diagram.addEventListener(NodeSelectEvent.eventName, (evt: Event) => {
-      const nodeSelect = evt as NodeSelectEvent;
-      this.selectedNode = this.#nodeInfo.get(nodeSelect.id) || null;
-    });
 
     this.#memory.retrieve(CONFIG_MEMORY_KEY).then((value) => {
       if (!value) {
@@ -153,41 +147,41 @@ export class UI extends LitElement {
     this.requestUpdate();
   }
 
-  toast(message: string, type: ToastType) {
-    this.toasts.push({ message, type });
-    this.requestUpdate();
-  }
-
   async renderDiagram(highlightedDiagramNode = "") {
-    if (!this.loadInfo || !this.loadInfo.diagram) {
+    if (!this.loadInfo || !this.loadInfo.diagram || !this.#diagram.value) {
       return;
     }
 
-    return this.#diagram.render(this.loadInfo.diagram, highlightedDiagramNode);
+    if (!("render" in this.#diagram.value)) {
+      return;
+    }
+
+    return this.#diagram.value.render(this.loadInfo, highlightedDiagramNode);
   }
 
-  #unloadCurrentBoard(evt: Event) {
-    evt.preventDefault();
-
-    if (!confirm("Are you sure you want to change boards?")) {
-      return;
-    }
-
+  unloadCurrentBoard() {
     this.url = null;
+    this.bootWithUrl = null;
     this.loadInfo = null;
-    this.toasts.length = 0;
     this.messages.length = 0;
     this.#messagePosition = 0;
 
     this.#messageDurations.clear();
     this.#nodeInfo.clear();
 
-    this.#diagram.reset();
-
-    this.dispatchEvent(new BoardUnloadEvent());
+    if (!this.#diagram.value) {
+      return;
+    }
+    this.#diagram.value.reset();
   }
 
   firstUpdated() {
+    if (this.visualizer === "mermaid") {
+      this.style.setProperty("--diagram-display", "flex");
+    } else {
+      this.style.setProperty("--diagram-display", "block");
+    }
+
     const rowTop = globalThis.sessionStorage.getItem("rhs-top") || "10fr";
     const rowMid = globalThis.sessionStorage.getItem("rhs-mid") || "45fr";
     const rowBottom = globalThis.sessionStorage.getItem("rhs-bottom") || "45fr";
@@ -427,198 +421,174 @@ export class UI extends LitElement {
     }, DIAGRAM_DEBOUNCE_RENDER_TIMEOUT);
   }
 
-  #renderContent() {
+  render() {
     if (!this.loadInfo) {
       return html`Loading board...`;
     }
 
-    switch (this.mode) {
-      case MODE.BUILD: {
-        this.#scheduleDiagramRender();
+    this.#scheduleDiagramRender();
 
-        return html`<div id="diagram">
-            ${this.loadInfo.diagram ? this.#diagram : "No board diagram"}
-            ${
-              this.selectedNode
-                ? html`<div id="node-information">
-                    <h1>Node Information</h1>
-                    <button
-                      id="close"
-                      @click=${() => (this.selectedNode = null)}
-                    >
-                      Close
-                    </button>
-                    <dl>
-                      <dd>ID</dd>
-                      <dt>${this.selectedNode.id}</dt>
-                      <dd>Type</dd>
-                      <dt>${this.selectedNode.type}</dt>
-                      <dd>Configuration</dd>
-                      <dt>
-                        <bb-json-tree
-                          .json=${this.selectedNode.configuration}
-                          autoExpand="true"
-                        ></bb-json-tree>
-                      </dt>
-                    </dl>
-                  </div>`
-                : nothing
-            }
-          </div>
-          <div id="rhs">
-            <section id="timeline" ${ref(this.#timelineRef)}>
-              <header>
-                <h1>Events</h1>
-                <label for="narrow">Narrow</label>
-                <input
-                  name="narrow"
-                  id="narrow"
-                  type="checkbox"
-                  ?checked=${this.config.showNarrowTimeline}
-                  @input=${() =>
-                    this.#toggleConfigOption("showNarrowTimeline")}/>
-                <div id="value">${Math.min(
-                  this.messages.length,
-                  this.#messagePosition + 1
-                )} /
-                <span id="max">&nbsp;${this.messages.length}</span></div>
-                <div id="run-status" class=${classMap({ [this.status]: true })}>
-                  ${this.status}
-                </div>
-              </header>
-              <bb-timeline-controls
+    const loadVisualBreadboard = async () => {
+      if (!this.#requestedVB) {
+        this.#requestedVB = true;
+        await loadScript(VISUALBLOCKS_URL);
+        this.#scheduleDiagramRender();
+      }
+      return html`<visual-breadboard
+        ${ref(this.#diagram)}
+      ></visual-breadboard>`;
+    };
+
+    return html`
+      <div id="diagram">
+        ${
+          this.visualizer === "mermaid"
+            ? html`<bb-diagram
+                ${ref(this.#diagram)}
+                @breadboardnodeselect=${(evt: NodeSelectEvent) => {
+                  this.selectedNode = this.#nodeInfo.get(evt.id) || null;
+                }}
+              ></bb-diagram>`
+            : html`${until(loadVisualBreadboard(), html`Loading...`)}`
+        }
+        ${
+          this.selectedNode
+            ? html`<div id="node-information">
+                <h1>Node Information</h1>
+                <button id="close" @click=${() => (this.selectedNode = null)}>
+                  Close
+                </button>
+                <dl>
+                  <dd>ID</dd>
+                  <dt>${this.selectedNode.id}</dt>
+                  <dd>Type</dd>
+                  <dt>${this.selectedNode.type}</dt>
+                  <dd>Configuration</dd>
+                  <dt>
+                    <bb-json-tree
+                      .json=${this.selectedNode.configuration}
+                      autoExpand="true"
+                    ></bb-json-tree>
+                  </dt>
+                </dl>
+              </div>`
+            : nothing
+        }
+      </div>
+      <div id="rhs">
+        <section id="timeline" ${ref(this.#timelineRef)}>
+          <header>
+            <h1>Events</h1>
+            <label for="narrow">Narrow</label>
+            <input
+              name="narrow"
+              id="narrow"
+              type="checkbox"
+              ?checked=${this.config.showNarrowTimeline}
+              @input=${() => this.#toggleConfigOption("showNarrowTimeline")}/>
+            <div id="value">${Math.min(
+              this.messages.length,
+              this.#messagePosition + 1
+            )} /
+            <span id="max">&nbsp;${this.messages.length}</span></div>
+            <div id="run-status" class=${classMap({ [this.status]: true })}>
+              ${this.status}
+            </div>
+          </header>
+          <bb-timeline-controls
+            .messages=${this.messages}
+            .messagePosition=${this.#messagePosition}
+            .messageDurations=${this.#messageDurations}
+            .narrow=${this.config.showNarrowTimeline}
+            @breadboardmessagetraversal=${(evt: MessageTraversalEvent) => {
+              if (evt.index < 0 || evt.index > this.messages.length) {
+                return;
+              }
+
+              this.#messagePosition = evt.index;
+              this.requestUpdate();
+            }}
+          ></bb-timeline-controls>
+        </section>
+        <div
+          class="drag-handle"
+          data-control="upper"
+          @pointerdown=${this.#startVerticalResize}
+          @pointermove=${this.#onVerticalResize}
+          @pointerup=${this.#endVerticalResize}
+        ></div>
+        <section id="inputs" ${ref(this.#inputRef)}>
+            <header>
+              <h1>Inputs</h1>
+            </header>
+            <div id="inputs-list">
+              <bb-input-list
                 .messages=${this.messages}
                 .messagePosition=${this.#messagePosition}
-                .messageDurations=${this.#messageDurations}
-                .narrow=${this.config.showNarrowTimeline}
-                @breadboardmessagetraversal=${(evt: MessageTraversalEvent) => {
-                  if (evt.index < 0 || evt.index > this.messages.length) {
+                @breadboardinputenter=${(event: InputEnterEvent) => {
+                  // Notify any pending handlers that the input has arrived.
+                  if (this.#messagePosition < this.messages.length - 1) {
+                    // The user has attempted to provide input for a stale
+                    // request.
+                    // TODO: Enable resuming from this point.
+                    this.dispatchEvent(
+                      new ToastEvent(
+                        "Unable to submit: board evaluation has already passed this point",
+                        ToastType.ERROR
+                      )
+                    );
                     return;
                   }
 
-                  this.#messagePosition = evt.index;
-                  this.requestUpdate();
+                  const data = event.data;
+                  const handlers = this.#handlers.get(event.id) || [];
+                  if (handlers.length === 0) {
+                    console.warn(
+                      `Received event for input(id="${event.id}") but no handlers were found`
+                    );
+                  }
+                  for (const handler of handlers) {
+                    handler.call(null, data);
+                  }
                 }}
-              ></bb-timeline-controls>
-            </section>
-            <div
-              class="drag-handle"
-              data-control="upper"
-              @pointerdown=${this.#startVerticalResize}
-              @pointermove=${this.#onVerticalResize}
-              @pointerup=${this.#endVerticalResize}
-            ></div>
-            <section id="inputs" ${ref(this.#inputRef)}>
-                <header>
-                  <h1>Inputs</h1>
-                </header>
-                <div id="inputs-list">
-                  <bb-input-list
-                    .messages=${this.messages}
-                    .messagePosition=${this.#messagePosition}
-                    @breadboardinputenter=${(event: InputEnterEvent) => {
-                      // Notify any pending handlers that the input has arrived.
-                      if (this.#messagePosition < this.messages.length - 1) {
-                        // The user has attempted to provide input for a stale
-                        // request.
-                        // TODO: Enable resuming from this point.
-                        this.dispatchEvent(
-                          new ToastEvent(
-                            "Unable to submit: board evaluation has already passed this point",
-                            ToastType.ERROR
-                          )
-                        );
-                        return;
-                      }
-
-                      const data = event.data;
-                      const handlers = this.#handlers.get(event.id) || [];
-                      if (handlers.length === 0) {
-                        console.warn(
-                          `Received event for input(id="${event.id}") but no handlers were found`
-                        );
-                      }
-                      for (const handler of handlers) {
-                        handler.call(null, data);
-                      }
-                    }}
-                  ></bb-input-list>
-                </div>
-              </section>
-              <section id="outputs">
-                <h1>Outputs</h1>
-                <div id="outputs-list">
-                  <bb-output-list
-                    .messages=${this.messages}
-                    .messagePosition=${this.#messagePosition}
-                  ></bb-output-list>
-                </div>
-              </section>
-              <div
-                class="drag-handle"
-                data-control="lower"
-                @pointerdown=${this.#startVerticalResize}
-                @pointermove=${this.#onVerticalResize}
-                @pointerup=${this.#endVerticalResize}
-              ></div>
-              <div id="history" ${ref(this.#historyRef)}>
-                <bb-history-tree
-                  .messages=${this.messages}
-                  .messagePosition=${this.#messagePosition}
-                ></bb-history-tree>
-              </div>
-            </section>
-          </div>`;
-      }
-
-      case MODE.PREVIEW: {
-        return html`Coming soon...`;
-      }
-
-      default: {
-        return html`Unknown mode`;
-      }
-    }
+              ></bb-input-list>
+            </div>
+          </section>
+          <section id="outputs">
+            <h1>Outputs</h1>
+            <div id="outputs-list">
+              <bb-output-list
+                .messages=${this.messages}
+                .messagePosition=${this.#messagePosition}
+              ></bb-output-list>
+            </div>
+          </section>
+          <div
+            class="drag-handle"
+            data-control="lower"
+            @pointerdown=${this.#startVerticalResize}
+            @pointermove=${this.#onVerticalResize}
+            @pointerup=${this.#endVerticalResize}
+          ></div>
+          <div id="history" ${ref(this.#historyRef)}>
+            <bb-history-tree
+              .messages=${this.messages}
+              .messagePosition=${this.#messagePosition}
+            ></bb-history-tree>
+          </div>
+        </section>
+      </div>`;
   }
+}
 
-  render() {
-    const toasts = html`${this.toasts.map(({ message, type }) => {
-      return html`<bb-toast .message=${message} .type=${type}></bb-toast>`;
-    })}`;
-
-    let tmpl: HTMLTemplateResult | symbol = nothing;
-    if (this.url) {
-      tmpl = html`<div id="header-bar">
-          <a href="/" @click=${this.#unloadCurrentBoard}>Back to list</a>
-          <h1>${this.loadInfo?.title || "Loading board"}</h1>
-        </div>
-        <div id="side-bar">
-          <button
-            id="select-build"
-            ?active=${this.mode === MODE.BUILD}
-            @click=${() => (this.mode = MODE.BUILD)}
-          >
-            Build
-          </button>
-          <button
-            id="select-preview"
-            ?active=${this.mode === MODE.PREVIEW}
-            @click=${() => (this.mode = MODE.PREVIEW)}
-          >
-            Preview
-          </button>
-        </div>
-        <div id="content" class="${this.mode}">${this.#renderContent()}</div>`;
-    } else {
-      tmpl = html`<header>
-          <a href="/"><h1 id="title">Breadboard Playground</h1></a>
-        </header>
-        <bb-board-list
-          .boards=${this.boards}
-          .bootWithUrl=${this.bootWithUrl}
-        ></bb-board-list>`;
-    }
-
-    return html`${tmpl} ${toasts}`;
-  }
+function loadScript(url: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = url;
+    script.onload = () => {
+      resolve();
+    };
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
 }

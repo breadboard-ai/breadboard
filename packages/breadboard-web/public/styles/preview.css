@@ -8,10 +8,24 @@
   box-sizing: border-box;
 }
 
+@font-face {
+  font-family: "FiraCode";
+  font-weight: normal;
+  font-style: normal;
+  src: url("/third_party/firacode/FiraCode-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "FiraCode";
+  font-weight: bold;
+  font-style: bold;
+  src: url("/third_party/firacode/FiraCode-Bold.woff2") format("woff2");
+}
+
 html {
   --bb-grid-size: 4px;
-  --bb-font-family-header: "Fira Code";
-  --bb-font-family-mono: "Fira Code", "Courier New", Courier, monospace;
+  --bb-font-family-header: "FiraCode";
+  --bb-font-family-mono: "FiraCode", "Courier New", Courier, monospace;
   --bb-font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   --bb-font-color: rgb(23, 23, 23);
   --bb-font-color-faded: rgb(59, 59, 59);
@@ -84,13 +98,15 @@ body {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: rgb(253, 253, 253);
-}
+  background-color: rgb(244, 247, 252);
+  background-image: var(--bb-grid-pattern);
 
-#dgraphDiv {
-  position: fixed;
-  opacity: 0;
-  top: 0;
-  left: 0;
-  pointer-events: none;
+  --bb-font-family: "FiraCode", Arial, Helvetica, sans-serif;
+  --bb-submit-input-text-transform: uppercase;
+  --bb-input-font-size: 16px;
+  --bb-input-padding: 16px 24px;
+  --bb-input-border-radius: 32px;
+  --bb-accent-color: #6b5484;
+  --bb-input-legend-display: none;
+  --bb-input-fieldset-border: none;
 }

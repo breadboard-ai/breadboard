@@ -24,6 +24,19 @@ import {
 import { State } from "./state.js";
 import { NodeDescriberResult, Schema } from "../../types.js";
 
+const buildRequiredPropertyList = (properties: Record<string, Schema>) => {
+  return Object.entries(properties)
+    .map(([key, value]) => {
+      const mayHaveOptional = value as Record<string, unknown>;
+      if (mayHaveOptional.$optional) {
+        delete mayHaveOptional.$optional;
+        return undefined;
+      }
+      return key;
+    })
+    .filter(Boolean) as string[];
+};
+
 export class Scope implements ScopeInterface {
   parentLexicalScope?: Scope;
   parentDynamicScope?: Scope;
@@ -392,10 +405,8 @@ export class Scope implements ScopeInterface {
       }
     }
 
-    return {
-      type: "object",
-      properties,
-      required: Object.keys(properties),
-    } satisfies Schema;
+    const required = buildRequiredPropertyList(properties);
+
+    return { type: "object", properties, required } satisfies Schema;
   }
 }

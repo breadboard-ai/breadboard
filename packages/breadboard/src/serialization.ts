@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { MachineResult, TraversalMachine } from "./index.js";
+import { TraversalMachine } from "./traversal/machine.js";
+import { MachineResult } from "./traversal/result.js";
 import { TraversalResult } from "./types.js";
 
 export const replacer = (key: string, value: unknown) => {

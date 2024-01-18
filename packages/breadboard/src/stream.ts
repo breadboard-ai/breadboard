@@ -24,6 +24,12 @@ export class StreamCapability<ChunkType>
   }
 }
 
+export const clone = (streamCapability: StreamCapabilityType) => {
+  const [leave, take] = streamCapability.stream.tee();
+  streamCapability.stream = leave;
+  return take;
+};
+
 export const isStreamCapability = (object: unknown) => {
   const maybeStream = object as StreamCapabilityType;
   return (
