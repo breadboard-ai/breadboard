@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { saveRunnerState } from "./serialization.js";
 import { RunStack, TraversalResult } from "./types.js";
+
+// TODO: Support stream serialization somehow.
+// see https://github.com/breadboard-ai/breadboard/issues/423
 
 export class StackManager {
   #stack: RunStack;
@@ -37,11 +41,14 @@ export class StackManager {
     // TODO: implement
   }
 
-  state(): RunStack {
+  async state(): Promise<RunStack> {
     // Assemble the stack from existing pieces.
     const stack = structuredClone(this.#stack);
     if (this.#result) {
-      stack[stack.length - 1].state = structuredClone(this.#result);
+      stack[stack.length - 1].state = await saveRunnerState(
+        "nodestart",
+        this.#result
+      );
     }
     return stack;
   }

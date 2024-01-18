@@ -593,7 +593,7 @@ export type RunStackEntry = {
   /**
    * The state of the graph traversal at the time of the invocation.
    */
-  state?: TraversalResult;
+  state?: string;
 };
 
 /**

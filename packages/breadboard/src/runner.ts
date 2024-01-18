@@ -152,6 +152,7 @@ export class BoardRunner implements BreadboardRunner {
         }
 
         stack.onNodeStart(result);
+        console.log("PATH", JSON.stringify(path()));
 
         await probe?.report?.({
           type: "nodestart",
@@ -187,7 +188,7 @@ export class BoardRunner implements BreadboardRunner {
             kits: [...(context.kits || []), ...this.kits],
             requestInput: requestedInputs.createHandler(next, result),
             invocationPath: path(),
-            state: stack.state(),
+            state: await stack.state(),
           };
 
           outputsPromise = callHandler(
