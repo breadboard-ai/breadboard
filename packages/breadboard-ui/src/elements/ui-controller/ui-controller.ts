@@ -57,7 +57,8 @@ type inputCallback = (data: Record<string, unknown>) => void;
 
 const CONFIG_MEMORY_KEY = "ui-config";
 const DIAGRAM_DEBOUNCE_RENDER_TIMEOUT = 60;
-const VISUALBLOCKS_URL = "https://storage.googleapis.com/tfweb/visual-breadboard/visual_breadboard_bin_202401161150.js";
+const VISUALBLOCKS_URL =
+  "https://storage.googleapis.com/tfweb/visual-breadboard/visual_breadboard_bin_202401161150.js";
 
 type UIConfig = {
   showNarrowTimeline: boolean;
@@ -168,11 +169,13 @@ export class UI extends LitElement {
     if (this.visualizer === "mermaid") {
       this.#diagram = new Diagram();
       this.style.setProperty("--diagram-display", "flex");
-    } else { // visualizer === "visualblocks"
+    } else {
+      // visualizer === "visualblocks"
       // Load the visualblocks bundle
       await loadScript(VISUALBLOCKS_URL);
-      this.#diagram = document.createElement('visual-breadboard') as any;
+      this.#diagram = document.createElement("visual-breadboard") as any;
       this.style.setProperty("--diagram-display", "block");
+      this.requestUpdate();
     }
 
     this.#diagram!.addEventListener(NodeSelectEvent.eventName, (evt: Event) => {
@@ -431,8 +434,8 @@ export class UI extends LitElement {
       this.#scheduleDiagramRender();
     }
 
-    let maybeDiagram = this.#diagram ?? "Loading..."
-    if ((this.visualizer === "mermaid" && !this.loadInfo.diagram)) {
+    let maybeDiagram = this.#diagram ?? "Loading...";
+    if (this.visualizer === "mermaid" && !this.loadInfo.diagram) {
       maybeDiagram = "No board diagram";
     }
 
@@ -571,9 +574,11 @@ export class UI extends LitElement {
 
 function loadScript(url: string): Promise<void> {
   return new Promise((resolve, reject) => {
-    const script = document.createElement('script');
+    const script = document.createElement("script");
     script.src = url;
-    script.onload = () => {resolve(); };
+    script.onload = () => {
+      resolve();
+    };
     script.onerror = reject;
     document.head.appendChild(script);
   });
