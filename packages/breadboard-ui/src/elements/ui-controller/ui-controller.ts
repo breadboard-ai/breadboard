@@ -14,7 +14,6 @@ import {
   ToastEvent,
   ToastType,
 } from "../../events/events.js";
-import { Diagram } from "../diagram/diagram.js";
 import {
   AnyRunResult,
   HarnessRunResult,
@@ -32,6 +31,7 @@ import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { longTermMemory } from "../../utils/long-term-memory.js";
 import { classMap } from "lit/directives/class-map.js";
 import { styles as uiControllerStyles } from "./ui-controller.styles.js";
+import { until } from "lit/directives/until.js";
 
 type ExtendedNodeInformation = {
   id: string;
@@ -62,6 +62,11 @@ const VISUALBLOCKS_URL =
 
 type UIConfig = {
   showNarrowTimeline: boolean;
+};
+
+type DiagramElement = HTMLElement & {
+  render: (diagram: LoadArgs, highlightedNode: string) => void;
+  reset: () => void;
 };
 
 @customElement("bb-ui-controller")
@@ -98,10 +103,7 @@ export class UI extends LitElement {
     showNarrowTimeline: false,
   };
 
-  #diagram?: HTMLElement & {
-    render: (diagram: LoadArgs, highlightedNode: string) => void;
-    reset: () => void;
-  };
+  #diagram: Ref<DiagramElement> = createRef();
   #nodeInfo: Map<string, ExtendedNodeInformation> = new Map();
   #timelineRef: Ref<HTMLElement> = createRef();
   #inputRef: Ref<HTMLElement> = createRef();
@@ -116,6 +118,7 @@ export class UI extends LitElement {
   #messageDurations: Map<AnyRunResult, number> = new Map();
   #renderTimeout = 0;
   #rendering = false;
+  #requestedVB = false;
 
   static styles = uiControllerStyles;
 
@@ -145,11 +148,15 @@ export class UI extends LitElement {
   }
 
   async renderDiagram(highlightedDiagramNode = "") {
-    if (!this.loadInfo || !this.loadInfo.diagram || !this.#diagram) {
+    if (!this.loadInfo || !this.loadInfo.diagram || !this.#diagram.value) {
       return;
     }
 
-    return this.#diagram.render(this.loadInfo, highlightedDiagramNode);
+    if (!("render" in this.#diagram.value)) {
+      return;
+    }
+
+    return this.#diagram.value.render(this.loadInfo, highlightedDiagramNode);
   }
 
   unloadCurrentBoard() {
@@ -162,30 +169,19 @@ export class UI extends LitElement {
     this.#messageDurations.clear();
     this.#nodeInfo.clear();
 
-    this.#diagram?.reset();
-  }
-
-  async #setupDiagram() {
-    if (this.visualizer === "mermaid") {
-      this.#diagram = new Diagram();
-      this.style.setProperty("--diagram-display", "flex");
-    } else {
-      // visualizer === "visualblocks"
-      // Load the visualblocks bundle
-      await loadScript(VISUALBLOCKS_URL);
-      this.#diagram = document.createElement("visual-breadboard") as any;
-      this.style.setProperty("--diagram-display", "block");
-      this.requestUpdate();
+    if (!this.#diagram.value) {
+      return;
     }
-
-    this.#diagram!.addEventListener(NodeSelectEvent.eventName, (evt: Event) => {
-      const nodeSelect = evt as NodeSelectEvent;
-      this.selectedNode = this.#nodeInfo.get(nodeSelect.id) || null;
-    });
+    this.#diagram.value.reset();
   }
 
   firstUpdated() {
-    this.#setupDiagram();
+    if (this.visualizer === "mermaid") {
+      this.style.setProperty("--diagram-display", "flex");
+    } else {
+      this.style.setProperty("--diagram-display", "block");
+    }
+
     const rowTop = globalThis.sessionStorage.getItem("rhs-top") || "10fr";
     const rowMid = globalThis.sessionStorage.getItem("rhs-mid") || "45fr";
     const rowBottom = globalThis.sessionStorage.getItem("rhs-bottom") || "45fr";
@@ -430,18 +426,31 @@ export class UI extends LitElement {
       return html`Loading board...`;
     }
 
-    if (this.#diagram) {
-      this.#scheduleDiagramRender();
-    }
+    this.#scheduleDiagramRender();
 
-    let maybeDiagram = this.#diagram ?? "Loading...";
-    if (this.visualizer === "mermaid" && !this.loadInfo.diagram) {
-      maybeDiagram = "No board diagram";
-    }
+    const loadVisualBreadboard = async () => {
+      if (!this.#requestedVB) {
+        this.#requestedVB = true;
+        await loadScript(VISUALBLOCKS_URL);
+        this.#scheduleDiagramRender();
+      }
+      return html`<visual-breadboard
+        ${ref(this.#diagram)}
+      ></visual-breadboard>`;
+    };
 
     return html`
       <div id="diagram">
-        ${maybeDiagram}
+        ${
+          this.visualizer === "mermaid"
+            ? html`<bb-diagram
+                ${ref(this.#diagram)}
+                @breadboardnodeselect=${(evt: NodeSelectEvent) => {
+                  this.selectedNode = this.#nodeInfo.get(evt.id) || null;
+                }}
+              ></bb-diagram>`
+            : html`${until(loadVisualBreadboard(), html`Loading...`)}`
+        }
         ${
           this.selectedNode
             ? html`<div id="node-information">
