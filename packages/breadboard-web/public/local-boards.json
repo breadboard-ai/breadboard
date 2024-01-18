@@ -20,6 +20,11 @@
     "version": "0.0.6"
   },
   {
+    "title": "Data Board",
+    "url": "/graphs/data-board.json",
+    "version": "0.0.1"
+  },
+  {
     "title": "Gemini Pro Generator",
     "url": "/graphs/gemini-generator.json",
     "version": "0.0.2"
