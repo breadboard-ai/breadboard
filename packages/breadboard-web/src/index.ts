@@ -13,7 +13,6 @@ import * as BreadboardUI from "@google-labs/breadboard-ui";
 import { InputResolveRequest } from "@google-labs/breadboard/remote";
 import { Board, GraphDescriptor } from "@google-labs/breadboard";
 import { cache } from "lit/directives/cache.js";
-import { StartEvent } from "../../breadboard-ui/dist/src/events/events";
 
 export const getBoardInfo = async (url: string) => {
   const runner = await Board.load(url);
