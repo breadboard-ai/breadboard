@@ -30,7 +30,7 @@
         "FORCE_COLOR": "1"
       },
       "dependencies": [
-        "../breadboard-web:build"
+        "../breadboard-web:build:tsc"
       ],
       "files": [
         "vite.config.ts",

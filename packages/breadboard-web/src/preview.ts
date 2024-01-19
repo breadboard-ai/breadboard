@@ -6,7 +6,7 @@
 
 import { HarnessRunResult, run } from "@google-labs/breadboard/harness";
 import { createRunConfig } from "./config";
-import { customElement, state } from "lit/decorators.js";
+import { customElement, property, state } from "lit/decorators.js";
 import { HTMLTemplateResult, LitElement, css, html, nothing } from "lit";
 import * as BreadboardUI from "@google-labs/breadboard-ui";
 import {
@@ -34,14 +34,14 @@ BreadboardUI.register();
 
 @customElement("bb-preview")
 export class Preview extends LitElement {
+  @property({ reflect: true })
+  embed = false;
+
   @state()
   uiElement: HTMLTemplateResult | symbol = nothing;
 
   @state()
   boardInfo: Awaited<ReturnType<typeof getBoardInfo>> | null = null;
-
-  @state()
-  embed = false;
 
   #config: ReturnType<typeof createRunConfig> | null = null;
   #url: string | null = null;
