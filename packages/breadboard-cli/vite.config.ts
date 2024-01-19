@@ -9,6 +9,10 @@ if (import.meta.resolve) {
     "@google-labs/breadboard-web/public"
   );
   breadboardWebPublic = fileURLToPath(publicPath);
+} else {
+  console.warn(
+    "Unable to resolve breadboard-web resources - you may need a newer nodejs runtime"
+  );
 }
 
 export default defineConfig({
