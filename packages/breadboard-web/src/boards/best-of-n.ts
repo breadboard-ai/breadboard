@@ -8,10 +8,8 @@ import { Schema, code, recipe } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { starter } from "@google-labs/llm-starter";
 
-const gemini =
-  "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/breadboard-web/public/graphs/gemini-generator.json";
-const jsonAgent =
-  "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/breadboard-web/public/graphs/json-agent.json";
+const gemini = "/graphs/gemini-generator.json";
+const jsonAgent = "/graphs/json-agent.json";
 
 const adSchema = JSON.stringify({
   type: "object",
@@ -120,5 +118,5 @@ export default await recipe(
   title: "Best of N",
   description:
     "Apply the `agent` to `task` in parallel of `n` attempts, then return the best response that fits the task",
-  version: "0.0.1",
+  version: "0.0.2",
 });

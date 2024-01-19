@@ -1,7 +1,7 @@
 {
   "title": "Agent",
   "description": "A prototype of an agent-like board",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "edges": [
     {
       "from": "assemble",
@@ -120,9 +120,7 @@
             "stopSequences": {
               "title": "Stop Sequences",
               "type": "array",
-              "examples": [
-                "[]"
-              ]
+              "default": "[]"
             },
             "generator": {
               "title": "Generator",
