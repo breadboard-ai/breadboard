@@ -5,9 +5,18 @@
   "description": "The Web runtime for Breadboard",
   "main": "./build/index.js",
   "exports": {
-    ".": "./build/index.js",
-    "./preview.js": "./build/preview.js",
-    "./config.js": "./build/config.js",
+    ".": {
+      "default": "./build/index.js",
+      "types": "./build.index.d.ts"
+    },
+    "./preview.js": {
+      "default": "./build/preview.js",
+      "types": "./build/preview.d.ts"
+    },
+    "./config.js": {
+      "default": "./build/config.js",
+      "types": "./build/config.d.ts"
+    },
     "./public": "./public",
     "./index.html": "./index.html",
     "./preview.html": "./preview.html"
