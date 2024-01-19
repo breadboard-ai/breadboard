@@ -141,16 +141,19 @@ export type AnyRunRequestMessage =
   | RunRequestMessage
   | InputResolveRequestMessage;
 
-export type AnyRunResponseMessage =
-  | OutputResponseMessage
+export type AnyProbeMessage =
   | RemoteMessage<NodeStartProbeMessage>
   | RemoteMessage<NodeEndProbeMessage>
   | RemoteMessage<GraphStartProbeMessage>
   | RemoteMessage<GraphEndProbeMessage>
-  | RemoteMessage<SkipProbeMessage>
+  | RemoteMessage<SkipProbeMessage>;
+
+export type AnyRunResponseMessage =
+  | OutputResponseMessage
   | InputResponseMessage
   | EndResponseMessage
-  | ErrorResponseMessage;
+  | ErrorResponseMessage
+  | AnyProbeMessage;
 
 export interface ClientBidirectionalStream<Request, Response> {
   writableRequests: WritableStream<Request>;

@@ -7,7 +7,6 @@
 import { Diagnostics } from "../harness/diagnostics.js";
 import { RunResult } from "../run.js";
 import { BoardRunner } from "../runner.js";
-import { loadRunnerState } from "../serialization.js";
 import {
   WritableResult,
   streamsToAsyncIterable,
@@ -20,6 +19,7 @@ import {
   RunState,
 } from "../types.js";
 import {
+  AnyProbeMessage,
   AnyRunRequestMessage,
   AnyRunResponseMessage,
   ClientTransport,
@@ -147,6 +147,9 @@ type ClientRunResultFromMessage<ResponseMessage> = ResponseMessage extends [
 export type AnyClientRunResult =
   ClientRunResultFromMessage<AnyRunResponseMessage>;
 
+export type AnyProbeClientRunResult =
+  ClientRunResultFromMessage<AnyProbeMessage>;
+
 export type ClientRunResult<T> = T & ReplyFunction;
 
 const createRunResult = (
@@ -161,14 +164,10 @@ const createRunResult = (
     }
     await response.reply([type, chunk as InputResolveRequest, state]);
   };
-  const inflateState = (state?: RunState) => {
-    if (!state) return undefined;
-    return typeof state === "string" ? loadRunnerState(state).state : state;
-  };
   return {
     type,
     data,
-    state: inflateState(state),
+    state,
     reply,
   } as AnyClientRunResult;
 };

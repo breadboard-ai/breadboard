@@ -5,7 +5,6 @@
  */
 
 import { Board, asyncGen } from "../index.js";
-import { loadRunnerState } from "../serialization.js";
 import { BreadboardRunResult, Kit, ProbeMessage } from "../types.js";
 import { Diagnostics } from "./diagnostics.js";
 import { RunConfig } from "./run.js";
@@ -15,7 +14,6 @@ const fromProbe = <Probe extends ProbeMessage>(probe: Probe) => {
   const loadStateIfAny = () => {
     if (probe.type === "nodestart") {
       return probe.state;
-      // return loadRunnerState(probe.state as string).state;
     }
     return undefined;
   };

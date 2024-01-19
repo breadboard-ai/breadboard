@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { saveRunnerState } from "./serialization.js";
+import { MachineResult } from "./index.js";
+import { loadRunnerState, saveRunnerState } from "./serialization.js";
 import { RunState, TraversalResult } from "./types.js";
 
 // TODO: Support stream serialization somehow.
@@ -47,3 +48,10 @@ export class StackManager {
     return stack;
   }
 }
+
+export const traversalResultFromStack = (
+  stack: RunState
+): MachineResult | undefined => {
+  const { state } = stack[stack.length - 1];
+  return state ? loadRunnerState(state).state : undefined;
+};

@@ -13,6 +13,7 @@ export { SchemaBuilder } from "./schema.js";
 export { RunResult } from "./run.js";
 export { TraversalMachine } from "./traversal/machine.js";
 export { MachineResult } from "./traversal/result.js";
+export { traversalResultFromStack } from "./stack.js";
 export { toMermaid } from "./mermaid.js";
 export { callHandler } from "./handler.js";
 export { asRuntimeKit } from "./kits/ctors.js";

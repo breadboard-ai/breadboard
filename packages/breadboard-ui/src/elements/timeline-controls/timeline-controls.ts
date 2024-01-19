@@ -6,8 +6,10 @@
 
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { AnyRunResult } from "@google-labs/breadboard/harness";
-import { ProbeMessage } from "@google-labs/breadboard";
+import {
+  HarnessProbeResult,
+  HarnessRunResult,
+} from "@google-labs/breadboard/harness";
 import { map } from "lit/directives/map.js";
 import { styleMap } from "lit/directives/style-map.js";
 import { classMap } from "lit/directives/class-map.js";
@@ -15,8 +17,8 @@ import { MessageTraversalEvent } from "../../events/events.js";
 import { repeat } from "lit/directives/repeat.js";
 import { guard } from "lit/directives/guard.js";
 
-type RunResultWithPath = ProbeMessage;
-const hasPath = (event: AnyRunResult): event is RunResultWithPath =>
+type RunResultWithPath = HarnessProbeResult;
+const hasPath = (event: HarnessRunResult): event is RunResultWithPath =>
   event.type === "nodestart" ||
   event.type === "nodeend" ||
   event.type === "graphstart" ||
@@ -37,7 +39,7 @@ type MessageIdx = number;
 @customElement("bb-timeline-controls")
 export class TimelineControls extends LitElement {
   @property({ reflect: false })
-  messages: AnyRunResult[] | null = null;
+  messages: HarnessRunResult[] | null = null;
 
   @property({ reflect: true })
   messagePosition = 0;
