@@ -58,7 +58,7 @@ type inputCallback = (data: Record<string, unknown>) => void;
 const CONFIG_MEMORY_KEY = "ui-config";
 const DIAGRAM_DEBOUNCE_RENDER_TIMEOUT = 60;
 const VISUALBLOCKS_URL =
-  "https://storage.googleapis.com/tfweb/visual-breadboard/visual_breadboard_bin_202401161150.js";
+  "https://storage.googleapis.com/tfweb/visual-breadboard/visual_breadboard_20240118164814/visual_breadboard_bin.js";
 
 type UIConfig = {
   showNarrowTimeline: boolean;
@@ -431,7 +431,9 @@ export class UI extends LitElement {
     const loadVisualBreadboard = async () => {
       if (!this.#requestedVB) {
         this.#requestedVB = true;
-        await loadScript(VISUALBLOCKS_URL);
+        if (customElements.get('visual-breadboard') == null) {
+          await loadScript(VISUALBLOCKS_URL);
+        }
         this.#scheduleDiagramRender();
       }
       return html`<visual-breadboard
