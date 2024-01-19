@@ -14,7 +14,7 @@ import { HarnessRunResult } from "./types.js";
 const fromProbe = <Probe extends ProbeMessage>(probe: Probe) => {
   const loadStateIfAny = () => {
     if (probe.type === "nodestart") {
-      return loadRunnerState(probe.data.state as string).state;
+      return loadRunnerState(probe.state as string).state;
     }
     return undefined;
   };

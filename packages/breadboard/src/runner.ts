@@ -160,8 +160,8 @@ export class BoardRunner implements BreadboardRunner {
             node: descriptor,
             inputs,
             path: path(),
-            state: await saveRunnerState("nodestart", result),
           },
+          state: await saveRunnerState("nodestart", result),
         });
 
         let outputsPromise: Promise<OutputValues> | undefined = undefined;

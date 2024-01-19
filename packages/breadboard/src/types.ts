@@ -482,6 +482,7 @@ export type SkipProbeMessage = {
 export type NodeStartProbeMessage = {
   type: "nodestart";
   data: NodeStartResponse;
+  state: string;
 };
 
 export type NodeEndProbeMessage = {
@@ -502,7 +503,6 @@ export type NodeEndResponse = {
   outputs: OutputValues;
   validatorMetadata?: BreadboardValidatorMetadata[];
   path: number[];
-  state?: TraversalResult;
 };
 
 /**
@@ -532,7 +532,6 @@ export type NodeStartResponse = {
   node: NodeDescriptor;
   inputs: InputValues;
   path: number[];
-  state?: string | TraversalResult;
 };
 
 /**

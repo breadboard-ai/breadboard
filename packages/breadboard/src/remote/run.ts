@@ -69,10 +69,11 @@ export class RunServer {
     const servingContext = {
       ...context,
       probe: diagnostics
-        ? new Diagnostics(async ({ type, data }) => {
+        ? new Diagnostics(async (message) => {
+            const { type, data } = message;
             const response = [type, stubOutStreams(data)];
             if (type == "nodestart") {
-              response.push(data.state);
+              response.push(message.state);
             }
             await responses.write(response as AnyRunResponseMessage);
           })
