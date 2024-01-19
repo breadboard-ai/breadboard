@@ -47,6 +47,7 @@
       },
       "dependencies": [
         "../breadboard:build:tsc",
+        "../breadboard-web:build:tsc",
         "../llm-starter:build:tsc",
         "../core-kit:build:tsc"
       ],
