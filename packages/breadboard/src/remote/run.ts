@@ -13,12 +13,7 @@ import {
   streamsToAsyncIterable,
   stubOutStreams,
 } from "../stream.js";
-import {
-  InputValues,
-  NodeHandlerContext,
-  OutputValues,
-  TraversalResult,
-} from "../types.js";
+import { InputValues, NodeHandlerContext, OutputValues } from "../types.js";
 import {
   AnyRunRequestMessage,
   AnyRunResponseMessage,
@@ -134,7 +129,7 @@ type ClientRunResultFromMessage<ResponseMessage> = ResponseMessage extends [
   ? {
       type: ResponseMessage[0];
       data: ResponseMessage[1];
-      state?: TraversalResult;
+      state?: RunState;
     } & ReplyFunction
   : never;
 

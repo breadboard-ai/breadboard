@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { RunState } from "./remote/protocol.js";
+
 export type Schema = {
   title?: string;
   description?: string;
@@ -482,7 +484,7 @@ export type SkipProbeMessage = {
 export type NodeStartProbeMessage = {
   type: "nodestart";
   data: NodeStartResponse;
-  state: string;
+  state: RunState;
 };
 
 export type NodeEndProbeMessage = {

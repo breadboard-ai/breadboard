@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { RunState } from "./remote/protocol.js";
 import type { NodeValue } from "./types.js";
 
 // Polyfill to make ReadableStream async iterable
@@ -28,7 +29,7 @@ ReadableStream.prototype[Symbol.asyncIterator] ||
 
 export type RemoteRunResult = {
   inputs: NodeValue;
-  state: string;
+  state: RunState;
 };
 
 class BoardStreamer<ResponseType = unknown>
