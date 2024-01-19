@@ -3,18 +3,32 @@
   "private": true,
   "version": "0.0.1",
   "description": "The Web runtime for Breadboard",
-  "main": "./dist/src/index.js",
+  "main": "./build/index.js",
   "exports": {
-    ".": "./dist/src/runtime.js",
-    "./worker": "./dist/src/worker.js"
+    ".": {
+      "default": "./build/index.js",
+      "types": "./build.index.d.ts"
+    },
+    "./preview.js": {
+      "default": "./build/preview.js",
+      "types": "./build/preview.d.ts"
+    },
+    "./config.js": {
+      "default": "./build/config.js",
+      "types": "./build/config.d.ts"
+    },
+    "./public": "./public",
+    "./index.html": "./index.html",
+    "./preview.html": "./preview.html"
   },
-  "types": "dist/src/index.d.ts",
+  "types": "build/index.d.ts",
   "type": "module",
   "scripts": {
     "dev": "wireit",
     "deploy": "npm run build:vite && firebase deploy",
     "build": "wireit",
     "build:vite": "wireit",
+    "build:tsc": "wireit",
     "generate:graphs": "wireit",
     "generate:docs": "wireit"
   },
@@ -30,6 +44,7 @@
         "../palm-kit:build",
         "../pinecone-kit:build",
         "build:vite",
+        "build:tsc",
         "generate:graphs"
       ]
     },
@@ -50,6 +65,21 @@
         "tsconfig.json",
         "../../core/tsconfig/base.json"
       ]
+    },
+    "build:tsc": {
+      "command": "tsc -b",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "typescript-files-and-deps"
+      ],
+      "files": [],
+      "output": [
+        "build/",
+        "!build/**/*.min.js{,.map}"
+      ],
+      "clean": "if-file-deleted"
     },
     "build:vite": {
       "command": "vite build",
@@ -118,7 +148,9 @@
     "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },
   "files": [
-    "dist/src"
+    "public",
+    "index.html",
+    "preview.html"
   ],
   "ava": {
     "timeout": "30s",

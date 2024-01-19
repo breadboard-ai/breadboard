@@ -13,6 +13,7 @@
     "test": "wireit",
     "build": "wireit",
     "build:tsc": "wireit",
+    "build:debugger": "wireit",
     "lint": "wireit"
   },
   "wireit": {
@@ -20,7 +21,23 @@
       "dependencies": [
         "../breadboard:build",
         "build:tsc",
-        "build:breadboard-web"
+        "build:debugger"
+      ]
+    },
+    "build:debugger": {
+      "command": "vite build",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "../breadboard-web:build"
+      ],
+      "files": [
+        "vite.config.ts",
+        "index.html"
+      ],
+      "output": [
+        "dist/debugger"
       ]
     },
     "build:tsc": {
@@ -42,22 +59,6 @@
       ],
       "output": [
         "dist/"
-      ],
-      "clean": "if-file-deleted"
-    },
-    "build:breadboard-web": {
-      "command": "mkdir -p dist/ui && cp -r ../breadboard-web/dist/ dist/ui/",
-      "env": {
-        "FORCE_COLOR": "1"
-      },
-      "dependencies": [
-        "../breadboard-web:build"
-      ],
-      "files": [
-        "../breadboard-web/dist/**/*"
-      ],
-      "output": [
-        "dist/ui/"
       ],
       "clean": "if-file-deleted"
     },
@@ -125,6 +126,7 @@
   },
   "dependencies": {
     "@google-labs/breadboard": "*",
+    "@google-labs/breadboard-web": "*",
     "@google-labs/core-kit": "*",
     "@google-labs/llm-starter": "*",
     "commander": "^11.1.0",

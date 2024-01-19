@@ -7,9 +7,14 @@
 export type * from "./types.js";
 
 export { serve, defineServeConfig } from "./serve.js";
-export { run } from "./run.js";
+export {
+  run,
+  type HarnessProxyConfig,
+  type HarnessRemoteConfig,
+} from "./run.js";
 
 export type * from "./serve.js";
+export { type KitConfig } from "./kits.js";
 
 export { createWorker } from "./worker.js";
 export { createSecretAskingKit } from "./secrets.js";
