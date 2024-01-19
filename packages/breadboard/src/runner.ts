@@ -32,7 +32,6 @@ import { toMermaid } from "./mermaid.js";
 import { SchemaBuilder } from "./schema.js";
 import { RequestedInputsManager, bubbleUpInputsIfNeeded } from "./bubble.js";
 import { asyncGen } from "./utils/async-gen.js";
-import { saveRunnerState } from "./serialization.js";
 import { StackManager } from "./stack.js";
 
 /**
@@ -152,7 +151,6 @@ export class BoardRunner implements BreadboardRunner {
         }
 
         stack.onNodeStart(result);
-        console.log("PATH", JSON.stringify(path()));
 
         await probe?.report?.({
           type: "nodestart",
@@ -161,13 +159,15 @@ export class BoardRunner implements BreadboardRunner {
             inputs,
             path: path(),
           },
-          state: await saveRunnerState("nodestart", result),
+          state: await stack.state(),
         });
 
         let outputsPromise: Promise<OutputValues> | undefined = undefined;
 
         if (descriptor.type === "input") {
-          await next(new InputStageResult(result, invocationId));
+          await next(
+            new InputStageResult(result, await stack.state(), invocationId)
+          );
           await bubbleUpInputsIfNeeded(this, context, descriptor, result);
           outputsPromise = result.outputsPromise;
         } else if (descriptor.type === "output") {

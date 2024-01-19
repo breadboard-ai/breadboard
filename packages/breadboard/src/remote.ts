@@ -91,7 +91,7 @@ export async function* runRemote(url: string) {
     const stream = await post(url, inputs, state);
     if (!stream) break;
     for await (const result of stream) {
-      state = result.state;
+      state = JSON.stringify(result.state);
       yield result;
       inputs = result.inputs;
     }

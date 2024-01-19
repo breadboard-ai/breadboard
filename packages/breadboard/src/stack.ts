@@ -5,43 +5,37 @@
  */
 
 import { saveRunnerState } from "./serialization.js";
-import { RunStack, TraversalResult } from "./types.js";
+import { RunState, TraversalResult } from "./types.js";
 
 // TODO: Support stream serialization somehow.
 // see https://github.com/breadboard-ai/breadboard/issues/423
 
 export class StackManager {
-  #stack: RunStack;
+  #stack: RunState;
   #result?: TraversalResult;
 
-  constructor(stack?: RunStack) {
+  constructor(stack?: RunState) {
     this.#stack = structuredClone(stack) || [];
   }
 
   onGraphStart(): void {
     this.#stack.push({ graph: 0, node: 0 });
-    console.log("onGraphStart", structuredClone(this.#stack));
-    // TODO: implement
   }
 
   onNodeStart(result: TraversalResult): void {
     this.#stack[this.#stack.length - 1].node++;
     this.#result = result;
-    console.log("onNodeStart", structuredClone(this.#stack));
-    // TODO: implement
   }
 
   onNodeEnd(): void {
-    console.log("onNodeEnd", structuredClone(this.#stack));
     // TODO: implement
   }
 
   onGraphEnd(): void {
-    console.log("onGraphEnd", structuredClone(this.#stack));
     // TODO: implement
   }
 
-  async state(): Promise<RunStack> {
+  async state(): Promise<RunState> {
     // Assemble the stack from existing pieces.
     const stack = structuredClone(this.#stack);
     if (this.#result) {

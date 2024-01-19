@@ -454,7 +454,39 @@ export interface BreadboardValidator {
   ): BreadboardValidator;
 }
 
-export type RunState = string;
+/**
+ * Sequential number of the invocation of a node.
+ * Useful for understanding the relative position of a
+ * given invocation of node within the run.
+ */
+export type InvocationId = number;
+
+/**
+ * Information about a given invocation of a graph and
+ * node within the graph.
+ */
+export type RunStackEntry = {
+  /**
+   * The invocation id of the graph.
+   */
+  graph: InvocationId;
+  /**
+   * The invocation id of the node within that graph.
+   */
+  node: InvocationId;
+  /**
+   * The state of the graph traversal at the time of the invocation.
+   */
+  state?: string;
+};
+
+/**
+ * A stack of all invocations of graphs and nodes within the graphs.
+ * The stack is ordered from the outermost graph to the innermost graph
+ * that is currently being run.
+ * Can be used to understand the current state of the run.
+ */
+export type RunState = RunStackEntry[];
 
 export type GraphProbeData = {
   metadata: GraphMetadata;
@@ -571,40 +603,6 @@ export interface Probe extends EventTarget {
   report?(message: ProbeMessage): Promise<void>;
 }
 
-/**
- * Sequential number of the invocation of a node.
- * Useful for understanding the relative position of a
- * given invocation of node within the run.
- */
-export type InvocationId = number;
-
-/**
- * Information about a given invocation of a graph and
- * node within the graph.
- */
-export type RunStackEntry = {
-  /**
-   * The invocation id of the graph.
-   */
-  graph: InvocationId;
-  /**
-   * The invocation id of the node within that graph.
-   */
-  node: InvocationId;
-  /**
-   * The state of the graph traversal at the time of the invocation.
-   */
-  state?: string;
-};
-
-/**
- * A stack of all invocations of graphs and nodes within the graphs.
- * The stack is ordered from the outermost graph to the innermost graph
- * that is currently being run.
- * Can be used to understand the current state of the run.
- */
-export type RunStack = RunStackEntry[];
-
 export interface RunnerLike {
   run(
     context?: NodeHandlerContext,
@@ -659,7 +657,7 @@ export interface NodeHandlerContext {
     node: NodeDescriptor
   ) => Promise<NodeValue>;
   readonly invocationPath?: number[];
-  readonly state?: RunStack;
+  readonly state?: RunState;
 }
 
 export interface BreadboardNode<Inputs, Outputs> {
