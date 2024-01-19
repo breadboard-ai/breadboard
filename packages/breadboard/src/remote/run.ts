@@ -13,13 +13,17 @@ import {
   streamsToAsyncIterable,
   stubOutStreams,
 } from "../stream.js";
-import { InputValues, NodeHandlerContext, OutputValues } from "../types.js";
+import {
+  InputValues,
+  NodeHandlerContext,
+  OutputValues,
+  RunState,
+} from "../types.js";
 import {
   AnyRunRequestMessage,
   AnyRunResponseMessage,
   ClientTransport,
   InputResolveRequest,
-  RunState,
   RunRequestMessage,
   ServerTransport,
 } from "./protocol.js";

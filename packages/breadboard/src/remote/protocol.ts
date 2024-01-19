@@ -16,6 +16,7 @@ import {
   NodeStartProbeMessage,
   OutputResponse,
   OutputValues,
+  RunState,
   SkipProbeMessage,
 } from "../types.js";
 
@@ -61,8 +62,6 @@ export type LoadResponse = {
    */
   nodes?: NodeDescriptor[];
 };
-
-export type RunState = string;
 
 type GenericResult = { type: string; data: unknown };
 

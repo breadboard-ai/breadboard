@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { RunState } from "./remote/protocol.js";
-
 export type Schema = {
   title?: string;
   description?: string;
@@ -455,6 +453,8 @@ export interface BreadboardValidator {
     actualInputs?: string[]
   ): BreadboardValidator;
 }
+
+export type RunState = string;
 
 export type GraphProbeData = {
   metadata: GraphMetadata;

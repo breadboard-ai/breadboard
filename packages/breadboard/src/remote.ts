@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { RunState } from "./remote/protocol.js";
-import type { NodeValue } from "./types.js";
+import type { NodeValue, RunState } from "./types.js";
 
 // Polyfill to make ReadableStream async iterable
 // See https://bugs.chromium.org/p/chromium/issues/detail?id=929585
