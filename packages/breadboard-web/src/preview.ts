@@ -9,7 +9,17 @@ import { createRunConfig } from "./config";
 import { customElement, state } from "lit/decorators.js";
 import { HTMLTemplateResult, LitElement, css, html, nothing } from "lit";
 import * as BreadboardUI from "@google-labs/breadboard-ui";
-import { Board, Schema, type InputValues } from "@google-labs/breadboard";
+import {
+  Board,
+  Schema,
+  type InputValues,
+  clone,
+  StreamCapabilityType,
+  OutputValues,
+} from "@google-labs/breadboard";
+import { until } from "lit/directives/until.js";
+
+type ChunkOutputs = OutputValues & { chunk: string };
 
 export const getBoardInfo = async (url: string) => {
   const runner = await Board.load(url);
@@ -123,6 +133,49 @@ export class Preview extends LitElement {
       margin: 0 0 8px;
       font-size: var(--bb-text-large);
     }
+
+    .working {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-bottom: 48px;
+      position: relative;
+    }
+
+    .working::after {
+      content: "";
+      display: block;
+      width: 12px;
+      border-radius: 50%;
+      background: var(--bb-accent-color);
+      height: 12px;
+      position: absolute;
+      bottom: 23px;
+      animation: sideToSide 0.6s cubic-bezier(0.75, 0, 0.25, 1) infinite
+        alternate;
+    }
+
+    .working::before {
+      content: "";
+      display: block;
+      width: 100px;
+      border-radius: 32px;
+      background: #fff;
+      border: 1px solid rgb(209, 209, 209);
+      height: 16px;
+      position: absolute;
+      bottom: 20px;
+    }
+
+    @keyframes sideToSide {
+      0% {
+        translate: calc(-50px + 6px + 2px) 0;
+      }
+
+      100% {
+        translate: calc(50px - 6px - 2px) 0;
+      }
+    }
   `;
 
   constructor() {
@@ -148,7 +201,6 @@ export class Preview extends LitElement {
   }
 
   #renderOutput(output: Record<string, unknown>) {
-    console.log(output);
     const schema = output.schema as Schema;
     if (!schema || !schema.properties) {
       return html`<bb-json-tree
@@ -157,35 +209,44 @@ export class Preview extends LitElement {
       ></bb-json-tree>`;
     }
 
-    switch (schema.type) {
-      case "object": {
-        return html`${Object.entries(schema.properties).map(
-          ([property, schema]) => {
-            const value = output[property];
-            const valueTmpl =
-              typeof value === "object"
-                ? html`<bb-json-tree
-                    .json=${value}
-                    .autoExpand=${true}
-                  ></bb-json-tree>`
-                : html`${value}`;
+    return html`${Object.entries(schema.properties).map(
+      ([property, schema]) => {
+        const value = output[property];
+        let valueTmpl;
+        if (schema.format === "stream") {
+          let value = "";
+          const streamedValue = clone(output[property] as StreamCapabilityType)
+            .pipeTo(
+              new WritableStream({
+                write(chunk) {
+                  // For now, presume that the chunk is an `OutputValues` object
+                  // and the relevant item is keyed as `chunk`.
+                  const outputs = chunk as ChunkOutputs;
+                  value += outputs.chunk;
+                },
+              })
+            )
+            .then(() => html`${value}`);
 
-            return html`<section class="output-item">
-              <h1 title="${schema.description || "Undescribed property"}">
-                ${schema.title || "Untitled property"}
-              </h1>
-              <div>${valueTmpl}</div>
-            </section>`;
-          }
-        )}`;
+          valueTmpl = html`${until(streamedValue, html`Loading...`)}`;
+        } else {
+          valueTmpl =
+            typeof value === "object"
+              ? html`<bb-json-tree
+                  .json=${value}
+                  .autoExpand=${true}
+                ></bb-json-tree>`
+              : html`${value}`;
+        }
+
+        return html`<section class="output-item">
+          <h1 title="${schema.description || "Undescribed property"}">
+            ${schema.title || "Untitled property"}
+          </h1>
+          <div>${valueTmpl}</div>
+        </section>`;
       }
-
-      default:
-        return html`<bb-json-tree
-          .json=${output}
-          .autoExpand=${true}
-        ></bb-json-tree>`;
-    }
+    )}`;
   }
 
   async #handleStateChange(
