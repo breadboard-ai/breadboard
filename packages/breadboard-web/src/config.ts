@@ -8,6 +8,7 @@ import { asRuntimeKit } from "@google-labs/breadboard";
 import {
   HarnessProxyConfig,
   HarnessRemoteConfig,
+  KitConfig,
   defineServeConfig,
 } from "@google-labs/breadboard/harness";
 import Core from "@google-labs/core-kit";
@@ -69,6 +70,6 @@ export const createRunConfig = (url: string) => {
 
 export const serveConfig = defineServeConfig({
   transport: "worker",
-  kits: [{ proxy: PROXY_NODES }, ...kits],
+  kits: [{ proxy: PROXY_NODES } as KitConfig, ...kits],
   diagnostics: true,
 });

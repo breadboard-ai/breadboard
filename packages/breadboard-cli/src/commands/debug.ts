@@ -5,7 +5,7 @@
  */
 
 import http from "http";
-import { dirname, join, relative } from "path";
+import { dirname, extname, join, relative } from "path";
 import handler from "serve-handler";
 import { fileURLToPath, pathToFileURL } from "url";
 import { BoardMetaData, loadBoards, watch } from "./lib/utils.js";
@@ -18,7 +18,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const clients: Record<string, http.ServerResponse> = {};
 
 export const debug = async (file: string, options: DebugOptions) => {
-  const distDir = join(__dirname, "..", "..", "ui");
+  const distDir = join(__dirname, "..", "..", "debugger");
   let boards: Array<BoardMetaData> = [];
 
   if (file == undefined) {
@@ -114,7 +114,21 @@ evtSource.addEventListener("update", () => { window.location.reload(); });</scri
       }
     }
 
-    const board = boards.find((board) => board.url == requestURL.pathname);
+    let board = boards.find((board) => board.url == requestURL.pathname);
+    if (!board && extname(requestURL.pathname) === ".json") {
+      // Attempt to load the board and append it to the list of boards.
+      const possibleBoardPath = join(process.cwd(), requestURL.pathname);
+      const newBoards = await loadBoards(possibleBoardPath, options);
+      if (newBoards.length === 0) {
+        response.writeHead(404);
+        return response.end("Board not found");
+      }
+
+      // Save for future retrieval.
+      const [newBoard] = newBoards;
+      boards.push(newBoard);
+      board = newBoard;
+    }
 
     // We only want to serve the file that is being debugged... nothing else.
     if (board) {
@@ -127,7 +141,10 @@ evtSource.addEventListener("update", () => { window.location.reload(); });</scri
       return response.end(boardData);
     }
 
-    return handler(request, response, { public: distDir });
+    return handler(request, response, {
+      public: distDir,
+      cleanUrls: ["/preview"],
+    });
   });
 
   server.listen(3000, () => {
