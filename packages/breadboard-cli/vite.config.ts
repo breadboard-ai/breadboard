@@ -1,5 +1,7 @@
 import { defineConfig } from "vitest/config";
 import { fileURLToPath } from "url";
+import { createRequire } from "module";
+import { dirname, join } from "path";
 
 // Carry through the breadboard-web public dir as the public dir for the
 // debugger here. It's essentially a passthrough.
@@ -10,9 +12,9 @@ if (import.meta.resolve) {
   );
   breadboardWebPublic = fileURLToPath(publicPath);
 } else {
-  console.warn(
-    "Unable to resolve breadboard-web resources - you may need a newer nodejs runtime"
-  );
+  const require = createRequire(import.meta.url);
+  const breadboardWebIndex = require.resolve("@google-labs/breadboard-web");
+  breadboardWebPublic = join(dirname(breadboardWebIndex), "..", "public");
 }
 
 export default defineConfig({
