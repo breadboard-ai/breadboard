@@ -429,11 +429,9 @@ export class UI extends LitElement {
     this.#scheduleDiagramRender();
 
     const loadVisualBreadboard = async () => {
-      if (!this.#requestedVB) {
+      if (!this.#requestedVB && customElements.get('visual-breadboard') == null) {
         this.#requestedVB = true;
-        if (customElements.get('visual-breadboard') == null) {
-          await loadScript(VISUALBLOCKS_URL);
-        }
+        await loadScript(VISUALBLOCKS_URL);
         this.#scheduleDiagramRender();
       }
       return html`<visual-breadboard
