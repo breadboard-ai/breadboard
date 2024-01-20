@@ -26,7 +26,7 @@ const urlSchema = {
   required: ["text"],
 };
 
-export default await recipe(async () => {
+export default await recipe(() => {
   const fetchFeed = base
     .input({ $id: "input", schema: urlSchema })
     .url.to(

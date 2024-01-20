@@ -22,6 +22,7 @@ import {
   WorkerClientTransport,
   WorkerServerTransport,
 } from "../../src/remote/worker.js";
+import { RunState } from "../../src/types.js";
 
 test("Interruptible streaming", async (t) => {
   const board = new Board();
@@ -58,7 +59,7 @@ test("Interruptible streaming", async (t) => {
     {
       inputs: { hello: "world" },
     },
-    intermediateState as string,
+    intermediateState as RunState,
   ])) {
     const [type, , state] = result;
     if (type === "output") {
@@ -107,7 +108,7 @@ test("Continuous streaming", async (t) => {
     "input",
     { node: { type: "input" }, inputArguments: { foo: "bar" } },
   ]);
-  writer.write(["input", { inputs: { hello: "world" } }, ""]);
+  writer.write(["input", { inputs: { hello: "world" } }, undefined as never]);
   // second result was "beforehandler" (now "nodestart"), but I removed it
   // because of the refactoring to use diagnostics.
   const thirdResult = await reader.read();

@@ -12,7 +12,7 @@ import { starter } from "@google-labs/llm-starter";
 const metadata = {
   title: "JSON Agent",
   description: "An agent-like board that outputs structured data (JSON)",
-  version: "0.0.1",
+  version: "0.0.2",
 };
 
 const sampleText = `You are building a team of skilled experts to create high quality rhyming poems that will be used as lyrics for jingles in TV commercials. These experts can only read text and produce text. Creating melodies and producing music is not their responsibility. The experts will work as a team, collaborating, creating, reviewing, critiquing, and iteratively improving the quality of the poems.

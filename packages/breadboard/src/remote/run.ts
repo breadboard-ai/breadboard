@@ -7,7 +7,6 @@
 import { Diagnostics } from "../harness/diagnostics.js";
 import { RunResult } from "../run.js";
 import { BoardRunner } from "../runner.js";
-import { loadRunnerState } from "../serialization.js";
 import {
   WritableResult,
   streamsToAsyncIterable,
@@ -17,24 +16,31 @@ import {
   InputValues,
   NodeHandlerContext,
   OutputValues,
-  TraversalResult,
+  RunState,
 } from "../types.js";
 import {
+  AnyProbeMessage,
   AnyRunRequestMessage,
   AnyRunResponseMessage,
   ClientTransport,
   InputResolveRequest,
-  RunState,
   RunRequestMessage,
   ServerTransport,
 } from "./protocol.js";
 
 const resumeRun = (request: AnyRunRequestMessage) => {
   const [type, , state] = request;
-  // TODO: state is probably not a string here,
-  // it can also be a traversal result
-  const result = state ? RunResult.load(state as string) : undefined;
-  if (result && type === "input") {
+  console.log("resumeRun", type, state);
+
+  // There may not be any state to resume from.
+  if (!state) return undefined;
+
+  if (state.length > 1) {
+    throw new Error("I don't yet know how to resume from nested subgraphs.");
+  }
+
+  const result = RunResult.load(state[0].state as string);
+  if (type === "input") {
     const [, inputs] = request;
     result.inputs = inputs.inputs;
   }
@@ -69,10 +75,11 @@ export class RunServer {
     const servingContext = {
       ...context,
       probe: diagnostics
-        ? new Diagnostics(async ({ type, data }) => {
+        ? new Diagnostics(async (message) => {
+            const { type, data } = message;
             const response = [type, stubOutStreams(data)];
             if (type == "nodestart") {
-              response.push(data.state);
+              response.push(message.state);
             }
             await responses.write(response as AnyRunResponseMessage);
           })
@@ -82,7 +89,7 @@ export class RunServer {
     try {
       for await (const stop of runner.run(servingContext, result)) {
         if (stop.type === "input") {
-          const state = await stop.save();
+          const state = stop.runState as RunState;
           const { node, inputArguments } = stop;
           await responses.write(["input", { node, inputArguments }, state]);
           request = await requestReader.read();
@@ -133,12 +140,15 @@ type ClientRunResultFromMessage<ResponseMessage> = ResponseMessage extends [
   ? {
       type: ResponseMessage[0];
       data: ResponseMessage[1];
-      state?: TraversalResult;
+      state?: RunState;
     } & ReplyFunction
   : never;
 
 export type AnyClientRunResult =
   ClientRunResultFromMessage<AnyRunResponseMessage>;
+
+export type AnyProbeClientRunResult =
+  ClientRunResultFromMessage<AnyProbeMessage>;
 
 export type ClientRunResult<T> = T & ReplyFunction;
 
@@ -154,14 +164,10 @@ const createRunResult = (
     }
     await response.reply([type, chunk as InputResolveRequest, state]);
   };
-  const inflateState = (state?: RunState) => {
-    if (!state) return undefined;
-    return typeof state === "string" ? loadRunnerState(state).state : state;
-  };
   return {
     type,
     data,
-    state: inflateState(state),
+    state,
     reply,
   } as AnyClientRunResult;
 };
@@ -173,7 +179,7 @@ export class RunClient {
     this.#transport = clientTransport;
   }
 
-  async *run(state?: string): AsyncGenerator<AnyClientRunResult> {
+  async *run(state?: RunState): AsyncGenerator<AnyClientRunResult> {
     const stream = this.#transport.createClientStream();
     const server = streamsToAsyncIterable(
       stream.writableRequests,

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { NodeValue } from "./types.js";
+import type { NodeValue, RunState } from "./types.js";
 
 // Polyfill to make ReadableStream async iterable
 // See https://bugs.chromium.org/p/chromium/issues/detail?id=929585
@@ -28,7 +28,7 @@ ReadableStream.prototype[Symbol.asyncIterator] ||
 
 export type RemoteRunResult = {
   inputs: NodeValue;
-  state: string;
+  state: RunState;
 };
 
 class BoardStreamer<ResponseType = unknown>
@@ -91,7 +91,7 @@ export async function* runRemote(url: string) {
     const stream = await post(url, inputs, state);
     if (!stream) break;
     for await (const result of stream) {
-      state = result.state;
+      state = JSON.stringify(result.state);
       yield result;
       inputs = result.inputs;
     }

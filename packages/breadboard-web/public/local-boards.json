@@ -7,12 +7,12 @@
   {
     "title": "Agent",
     "url": "/graphs/agent.json",
-    "version": "0.0.1"
+    "version": "0.0.2"
   },
   {
     "title": "Best of N",
     "url": "/graphs/best-of-n.json",
-    "version": "0.0.1"
+    "version": "0.0.2"
   },
   {
     "title": "Board as Function",
@@ -27,7 +27,7 @@
   {
     "title": "Data Board",
     "url": "/graphs/data-board.json",
-    "version": "0.0.1"
+    "version": "0.0.2"
   },
   {
     "title": "Gemini Pro Generator",
@@ -47,7 +47,7 @@
   {
     "title": "JSON Agent",
     "url": "/graphs/json-agent.json",
-    "version": "0.0.1"
+    "version": "0.0.2"
   },
   {
     "title": "JSON Generator",

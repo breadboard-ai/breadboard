@@ -454,6 +454,40 @@ export interface BreadboardValidator {
   ): BreadboardValidator;
 }
 
+/**
+ * Sequential number of the invocation of a node.
+ * Useful for understanding the relative position of a
+ * given invocation of node within the run.
+ */
+export type InvocationId = number;
+
+/**
+ * Information about a given invocation of a graph and
+ * node within the graph.
+ */
+export type RunStackEntry = {
+  /**
+   * The invocation id of the graph.
+   */
+  graph: InvocationId;
+  /**
+   * The invocation id of the node within that graph.
+   */
+  node: InvocationId;
+  /**
+   * The state of the graph traversal at the time of the invocation.
+   */
+  state?: string;
+};
+
+/**
+ * A stack of all invocations of graphs and nodes within the graphs.
+ * The stack is ordered from the outermost graph to the innermost graph
+ * that is currently being run.
+ * Can be used to understand the current state of the run.
+ */
+export type RunState = RunStackEntry[];
+
 export type GraphProbeData = {
   metadata: GraphMetadata;
   path: number[];
@@ -482,6 +516,7 @@ export type SkipProbeMessage = {
 export type NodeStartProbeMessage = {
   type: "nodestart";
   data: NodeStartResponse;
+  state: RunState;
 };
 
 export type NodeEndProbeMessage = {
@@ -502,7 +537,6 @@ export type NodeEndResponse = {
   outputs: OutputValues;
   validatorMetadata?: BreadboardValidatorMetadata[];
   path: number[];
-  state?: TraversalResult;
 };
 
 /**
@@ -532,7 +566,6 @@ export type NodeStartResponse = {
   node: NodeDescriptor;
   inputs: InputValues;
   path: number[];
-  state?: string | TraversalResult;
 };
 
 /**
@@ -624,6 +657,7 @@ export interface NodeHandlerContext {
     node: NodeDescriptor
   ) => Promise<NodeValue>;
   readonly invocationPath?: number[];
+  readonly state?: RunState;
 }
 
 export interface BreadboardNode<Inputs, Outputs> {
