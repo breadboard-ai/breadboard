@@ -314,8 +314,7 @@ export class Main extends LitElement {
 
     let lastEventTime = globalThis.performance.now();
     for await (const result of run(createRunConfig(this.url))) {
-      // TODO(https://github.com/breadboard-ai/breadboard/issues/366)
-      const runDuration = globalThis.performance.now() - lastEventTime;
+      const runDuration = result.data.timestamp - lastEventTime;
       if (this.#delay !== 0) {
         await new Promise((r) => setTimeout(r, this.#delay));
       }

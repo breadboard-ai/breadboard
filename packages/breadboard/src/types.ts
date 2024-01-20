@@ -385,6 +385,10 @@ export interface BreadboardRunResult {
    * the node within the run, similar to an "index" property in map/forEach.
    */
   get invocationId(): number;
+  /**
+   * The timestamp of when this result was issued.
+   */
+  get timestamp(): number;
 }
 
 export interface NodeFactory {
@@ -491,6 +495,7 @@ export type RunState = RunStackEntry[];
 export type GraphProbeData = {
   metadata: GraphMetadata;
   path: number[];
+  timestamp: number;
 };
 
 export type GraphStartProbeMessage = {
@@ -510,6 +515,7 @@ export type SkipProbeMessage = {
     inputs: InputValues;
     missingInputs: string[];
     path: number[];
+    timestamp: number;
   };
 };
 
@@ -531,14 +537,6 @@ export type ProbeMessage =
   | NodeStartProbeMessage
   | NodeEndProbeMessage;
 
-export type NodeEndResponse = {
-  node: NodeDescriptor;
-  inputs: InputValues;
-  outputs: OutputValues;
-  validatorMetadata?: BreadboardValidatorMetadata[];
-  path: number[];
-};
-
 /**
  * Sent by the runner to supply outputs.
  */
@@ -553,6 +551,7 @@ export type OutputResponse = {
    * @see [OutputValues]
    */
   outputs: OutputValues;
+  timestamp: number;
 };
 
 /**
@@ -566,6 +565,16 @@ export type NodeStartResponse = {
   node: NodeDescriptor;
   inputs: InputValues;
   path: number[];
+  timestamp: number;
+};
+
+export type NodeEndResponse = {
+  node: NodeDescriptor;
+  inputs: InputValues;
+  outputs: OutputValues;
+  validatorMetadata?: BreadboardValidatorMetadata[];
+  path: number[];
+  timestamp: number;
 };
 
 /**
@@ -584,6 +593,7 @@ export type InputResponse = {
    * @see [InputValues]
    */
   inputArguments: InputValues & { schema?: Schema };
+  timestamp: number;
 };
 
 /**
@@ -595,6 +605,7 @@ export type ErrorResponse = {
    * The error message.
    */
   error: string;
+  timestamp: number;
 };
 
 // TODO: Remove extending EventTarget once new runner is converted to use

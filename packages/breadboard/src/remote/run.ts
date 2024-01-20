@@ -12,6 +12,7 @@ import {
   streamsToAsyncIterable,
   stubOutStreams,
 } from "../stream.js";
+import { timestamp } from "../timestamp.js";
 import {
   InputValues,
   NodeHandlerContext,
@@ -90,8 +91,12 @@ export class RunServer {
       for await (const stop of runner.run(servingContext, result)) {
         if (stop.type === "input") {
           const state = stop.runState as RunState;
-          const { node, inputArguments } = stop;
-          await responses.write(["input", { node, inputArguments }, state]);
+          const { node, inputArguments, timestamp } = stop;
+          await responses.write([
+            "input",
+            { node, inputArguments, timestamp },
+            state,
+          ]);
           request = await requestReader.read();
           if (request.done) {
             await responses.close();
@@ -103,11 +108,11 @@ export class RunServer {
             }
           }
         } else if (stop.type === "output") {
-          const { node, outputs } = stop;
-          await responses.write(["output", { node, outputs }]);
+          const { node, outputs, timestamp } = stop;
+          await responses.write(["output", { node, outputs, timestamp }]);
         }
       }
-      await responses.write(["end", {}]);
+      await responses.write(["end", { timestamp: timestamp() }]);
       await responses.close();
     } catch (e) {
       let error = e as Error;
@@ -117,7 +122,10 @@ export class RunServer {
         message += `\n${error.message}`;
       }
       console.error("Run Server error:", error.message);
-      await responses.write(["error", { error: message }]);
+      await responses.write([
+        "error",
+        { error: message, timestamp: timestamp() },
+      ]);
       await responses.close();
     }
   }

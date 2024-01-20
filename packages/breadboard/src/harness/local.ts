@@ -5,6 +5,7 @@
  */
 
 import { Board, asyncGen } from "../index.js";
+import { timestamp } from "../timestamp.js";
 import { BreadboardRunResult, Kit, ProbeMessage } from "../types.js";
 import { Diagnostics } from "./diagnostics.js";
 import { RunConfig } from "./run.js";
@@ -32,7 +33,7 @@ const fromProbe = <Probe extends ProbeMessage>(probe: Probe) => {
 const fromRunnerResult = <Result extends BreadboardRunResult>(
   result: Result
 ) => {
-  const { type, node } = result;
+  const { type, node, timestamp } = result;
   if (type === "input") {
     const { inputArguments } = result;
     return {
@@ -52,6 +53,7 @@ const fromRunnerResult = <Result extends BreadboardRunResult>(
       data: {
         node,
         outputs,
+        timestamp,
       },
       reply: async () => {
         // Do nothing
@@ -64,7 +66,7 @@ const fromRunnerResult = <Result extends BreadboardRunResult>(
 const endResult = () => {
   return {
     type: "end",
-    data: {},
+    data: { timestamp: timestamp() },
     reply: async () => {
       // Do nothing
     },
@@ -74,7 +76,7 @@ const endResult = () => {
 const errorResult = (error: string) => {
   return {
     type: "error",
-    data: { error },
+    data: { error, timestamp: timestamp() },
     reply: async () => {
       // Do nothing
     },
