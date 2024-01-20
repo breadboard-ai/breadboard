@@ -34,7 +34,9 @@
       ],
       "files": [
         "vite.config.ts",
-        "index.html"
+        "debugger/index.html",
+        "debugger/preview.html",
+        "debugger/worker.ts"
       ],
       "output": [
         "dist/debugger"
