@@ -26,6 +26,7 @@ export default defineConfig({
         index: "./index.html",
         preview: "./preview.html",
         worker: "./worker.ts",
+        boards: "./boards.ts",
       },
       name: "Breadboard Debugger Runtime",
       formats: ["es"],

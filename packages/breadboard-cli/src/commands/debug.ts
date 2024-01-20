@@ -118,16 +118,14 @@ evtSource.addEventListener("update", () => { window.location.reload(); });</scri
     if (!board && extname(requestURL.pathname) === ".json") {
       // Attempt to load the board and append it to the list of boards.
       const possibleBoardPath = join(process.cwd(), requestURL.pathname);
-      const newBoards = await loadBoards(possibleBoardPath, options);
-      if (newBoards.length === 0) {
-        response.writeHead(404);
-        return response.end("Board not found");
+      try {
+        const newBoards = await loadBoards(possibleBoardPath, options);
+        const [newBoard] = newBoards;
+        boards.push(newBoard);
+        board = newBoard;
+      } catch (err) {
+        // This board was not found.
       }
-
-      // Save for future retrieval.
-      const [newBoard] = newBoards;
-      boards.push(newBoard);
-      board = newBoard;
     }
 
     // We only want to serve the file that is being debugged... nothing else.

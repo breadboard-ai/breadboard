@@ -1,25 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Debugger</title>
+    <link rel="stylesheet" href="/styles/global.css" />
+  </head>
+  <body>
+    <script type="module">
+      import { Main } from "@google-labs/breadboard-web";
+      import Boards from "./boards.ts";
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Debugger</title>
-  <link rel="stylesheet" href="/styles/global.css" />
-</head>
+      const localBoards = Boards.Boards;
 
-<body>
-  <script type="module">
-    import { Main } from "@google-labs/breadboard-web";
-    const localBoards = await (await fetch("/local-boards.json")).json();
+      const config = {
+        boards: [...localBoards],
+      };
 
-    const config = {
-      boards: localBoards,
-    };
-
-    const main = new Main(config);
-    document.body.appendChild(main);
-  </script>
-</body>
-
+      const main = new Main(config);
+      document.body.appendChild(main);
+    </script>
+  </body>
 </html>

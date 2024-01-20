@@ -18,6 +18,7 @@
       "types": "./build/config.d.ts"
     },
     "./public": "./public",
+    "./local-boards.json": "./public/local-boards.json",
     "./index.html": "./index.html",
     "./preview.html": "./preview.html"
   },
