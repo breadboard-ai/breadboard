@@ -22,6 +22,7 @@ import {
   ServerTransport,
 } from "./protocol.js";
 import { createTunnelKit, readConfig } from "./tunnel.js";
+import { timestamp } from "../timestamp.js";
 
 type ProxyServerTransport = ServerTransport<
   AnyProxyRequestMessage,
@@ -71,7 +72,10 @@ export class ProxyServer {
       }
 
       if (type !== "proxy") {
-        request.reply(["error", { error: "Expected proxy request." }]);
+        request.reply([
+          "error",
+          { error: "Expected proxy request.", timestamp: timestamp() },
+        ]);
         continue;
       }
 
@@ -82,7 +86,10 @@ export class ProxyServer {
       if (!handler) {
         request.reply([
           "error",
-          { error: "Can't proxy a node of this node type." },
+          {
+            error: "Can't proxy a node of this node type.",
+            timestamp: timestamp(),
+          },
         ]);
         continue;
       }
@@ -93,12 +100,18 @@ export class ProxyServer {
         });
 
         if (!result) {
-          request.reply(["error", { error: "Handler returned nothing." }]);
+          request.reply([
+            "error",
+            { error: "Handler returned nothing.", timestamp: timestamp() },
+          ]);
           continue;
         }
         request.reply(["proxy", { outputs: result }]);
       } catch (e) {
-        request.reply(["error", { error: (e as Error).message }]);
+        request.reply([
+          "error",
+          { error: (e as Error).message, timestamp: timestamp() },
+        ]);
       }
     }
   }
@@ -119,7 +132,7 @@ export class ProxyClient {
   shutdownServer() {
     const stream = this.#transport.createClientStream();
     const writer = stream.writableRequests.getWriter();
-    writer.write(["end", {}]);
+    writer.write(["end", { timestamp: timestamp() }]);
     writer.close();
   }
 

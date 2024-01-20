@@ -8,6 +8,7 @@ import { asRuntimeKit, type OutputValues } from "@google-labs/breadboard";
 import { SecretResult } from "./types.js";
 import { KitBuilder } from "../kits/builder.js";
 import { ClientRunResult } from "../remote/run.js";
+import { timestamp } from "../timestamp.js";
 
 export const createSecretAskingKit = (
   next: (result: ClientRunResult<SecretResult>) => Promise<void>
@@ -21,7 +22,7 @@ export const createSecretAskingKit = (
       let outputs = {};
       await next({
         type: "secret",
-        data: { keys },
+        data: { keys, timestamp: timestamp() },
         reply: async (value) => {
           outputs = value.inputs;
         },

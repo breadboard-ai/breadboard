@@ -90,7 +90,7 @@ export type InputResolveRequestMessage = [
  * Indicates that the board is done running.
  * Can only be the last message in the response stream.
  */
-export type End = Record<string, never>;
+export type End = { timestamp: number };
 export type EndResponseMessage = ["end", End];
 export type EndRequestMessage = ["end", End];
 
