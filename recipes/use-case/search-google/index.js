@@ -26,7 +26,7 @@ const queryScheme = {
   required: ["text"],
 };
 
-export default await recipe(async () => {
+export default await recipe(() => {
   const query = base.input({ $id: "input", schema: queryScheme });
 
   return starter

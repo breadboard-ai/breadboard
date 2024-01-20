@@ -9,7 +9,7 @@
     "build": "wireit",
     "lint": "wireit",
     "deep-clean:build": "rm -rf node_modules packages/*/node_modules package-lock.json && npm run sync",
-    "clean:build": "rimraf -g packages/*/dist packages/*/.wireit",
+    "clean:build": "rimraf -g packages/*/dist packages/*/build packages/*/.wireit",
     "ci": "npm ci",
     "check:format": "prettier --check --config .prettierrc packages/**/*.ts",
     "ci:local": "wireit",

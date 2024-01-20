@@ -22,6 +22,7 @@ export {
   isStreamCapability,
   patchReadableStream,
   streamFromAsyncGen,
+  clone,
   type StreamCapabilityType,
   type PatchedReadableStream,
 } from "./stream.js";

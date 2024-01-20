@@ -6,13 +6,12 @@
     "skipLibCheck": true,
     "experimentalDecorators": true,
     "useDefineForClassFields": false,
+    "outDir": "build",
 
     /* Bundler mode */
     "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true,
 
     /* Linting */
     "strict": true,
@@ -20,15 +19,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src/**/*", "tests/**/*.ts"],
-  "extends": "@google-labs/tsconfig/base.json",
-  "typedocOptions": {
-    "entryPoints": "./src/index.ts",
-    "out": "./docs/api",
-    "githubPages": false,
-    "readme": "none",
-    "sort": "source-order",
-    "excludeNotDocumented": true,
-    "hideInPageTOC": true
-  }
+  "include": ["src/**/*.ts", "tests/**/*.ts"],
+  "extends": "@google-labs/tsconfig/base.json"
 }
