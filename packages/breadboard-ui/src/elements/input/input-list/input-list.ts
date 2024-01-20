@@ -5,14 +5,14 @@
  */
 
 import { NodeConfiguration, NodeValue } from "@google-labs/breadboard";
-import { AnyRunResult } from "@google-labs/breadboard/harness";
+import { HarnessRunResult } from "@google-labs/breadboard/harness";
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 
 @customElement("bb-input-list")
 export class InputList extends LitElement {
   @property({ reflect: false })
-  messages: AnyRunResult[] | null = null;
+  messages: HarnessRunResult[] | null = null;
 
   @property({ reflect: true })
   messagePosition = 0;
@@ -29,7 +29,7 @@ export class InputList extends LitElement {
   #obtainProcessedValuesIfAvailable(
     idx: number,
     id: string,
-    messages: AnyRunResult[]
+    messages: HarnessRunResult[]
   ): Record<string, NodeValue> | null {
     for (let i = idx; i < this.messagePosition; i++) {
       const message = messages[i];

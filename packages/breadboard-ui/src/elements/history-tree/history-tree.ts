@@ -10,30 +10,31 @@ import { HistoryEntry, HistoryEventType } from "../../types/types.js";
 import { classMap } from "lit/directives/class-map.js";
 import { keyed } from "lit/directives/keyed.js";
 import {
-  AnyRunResult,
   HarnessRunResult,
+  HarnessProbeResult,
 } from "@google-labs/breadboard/harness";
 import {
   NodeEndProbeMessage,
   NodeStartProbeMessage,
-  ProbeMessage,
+  traversalResultFromStack,
 } from "@google-labs/breadboard";
 import { styles as historyTreeStyles } from "./history-tree.styles.js";
+import { ClientRunResult } from "@google-labs/breadboard/remote";
 
 const enum STATE {
   COLLAPSED = "collapsed",
   EXPANDED = "expanded",
 }
 
-type RunResultWithPath = ProbeMessage;
-const hasPath = (event: AnyRunResult): event is RunResultWithPath =>
+type RunResultWithPath = HarnessProbeResult;
+const hasPath = (event: HarnessRunResult): event is RunResultWithPath =>
   event.type === "nodestart" ||
   event.type === "nodeend" ||
   event.type === "graphstart" ||
   event.type === "graphend";
 
-type RunResultWithState = NodeStartProbeMessage;
-const hasStateInfo = (event: AnyRunResult): event is RunResultWithState =>
+type RunResultWithState = ClientRunResult<NodeStartProbeMessage>;
+const hasStateInfo = (event: HarnessRunResult): event is RunResultWithState =>
   event.type === "nodestart";
 
 const pathToId = (path: number[], type: RunResultWithPath["type"]) => {
@@ -49,7 +50,7 @@ const pathToId = (path: number[], type: RunResultWithPath["type"]) => {
   return `path-${path.join("-")}`;
 };
 
-const isValidHistoryEntry = (event: AnyRunResult): boolean => {
+const isValidHistoryEntry = (event: HarnessRunResult): boolean => {
   return (
     event.type === "nodestart" ||
     event.type === "nodeend" ||
@@ -304,7 +305,11 @@ export class HistoryTree extends LitElement {
       if (hasPath(event)) {
         if (hasStateInfo(event) && typeof event.state === "object") {
           const id = hasPath(event) ? event.data.node.id : "";
-          const nodeValues = event.state.state.state.get(id);
+          const traversalResult = traversalResultFromStack(event.state);
+          if (!traversalResult) {
+            return null;
+          }
+          const nodeValues = traversalResult.state.state.get(id);
           if (!nodeValues) {
             return null;
           }

@@ -134,7 +134,7 @@ export class RequestedInputsManager {
         },
       };
       console.log("requestInputResult", requestInputResult);
-      await next(new InputStageResult(requestInputResult, -1));
+      await next(new InputStageResult(requestInputResult, undefined, -1));
       const outputs = await requestInputResult.outputsPromise;
       let value = outputs && outputs[name];
       if (value === undefined) {

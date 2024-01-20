@@ -62,6 +62,7 @@ test("writes input", async (t) => {
       pendingOutputs: new Map(),
     },
     "input",
+    undefined,
     0
   );
   await writer.writeInput(stop);
@@ -90,6 +91,7 @@ test("writes output", async (t) => {
       pendingOutputs: new Map(),
     },
     "output",
+    undefined,
     0
   );
   await writer.writeOutput(stop);
@@ -132,6 +134,7 @@ test("transforms state", async (t) => {
       pendingOutputs: new Map(),
     },
     "output",
+    undefined,
     0
   );
   await writer.writeOutput(stop);

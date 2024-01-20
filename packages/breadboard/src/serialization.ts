@@ -30,7 +30,7 @@ export const saveRunnerState = async (
   type: string,
   result: TraversalResult
 ) => {
-  const state = await TraversalMachine.prepareToSafe(result);
+  const state = await TraversalMachine.prepareToSave(result);
   return JSON.stringify({ state, type }, replacer);
 };
 
