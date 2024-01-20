@@ -12,20 +12,26 @@ import type {
   TraversalResult,
   BreadboardRunResult,
   RunResultType,
+  RunState,
 } from "./types.js";
 
 export class RunResult implements BreadboardRunResult {
   #type: RunResultType;
   #state: TraversalResult;
+  // TODO: Remove #state and rename this to #state
+  #runState: RunState | undefined;
+  // TODO: Remove this once RunState machinery works
   #invocationId;
 
   constructor(
     state: TraversalResult,
     type: RunResultType,
+    runState: RunState | undefined,
     invocationId: number
   ) {
     this.#state = state;
     this.#type = type;
+    this.#runState = runState;
     this.#invocationId = invocationId;
   }
 
@@ -61,6 +67,10 @@ export class RunResult implements BreadboardRunResult {
     return saveRunnerState(this.#type, this.#state);
   }
 
+  get runState(): RunState | undefined {
+    return this.#runState;
+  }
+
   isAtExitNode(): boolean {
     return (
       this.#state.newOpportunities.length === 0 &&
@@ -71,13 +81,17 @@ export class RunResult implements BreadboardRunResult {
 
   static load(stringifiedResult: string): RunResult {
     const { state, type } = loadRunnerState(stringifiedResult);
-    return new RunResult(state, type, 0);
+    return new RunResult(state, type, undefined, 0);
   }
 }
 
 export class InputStageResult extends RunResult {
-  constructor(state: TraversalResult, invocationId: number) {
-    super(state, "input", invocationId);
+  constructor(
+    state: TraversalResult,
+    runState: RunState | undefined,
+    invocationId: number
+  ) {
+    super(state, "input", runState, invocationId);
   }
 
   get outputs(): OutputValues {
@@ -87,7 +101,7 @@ export class InputStageResult extends RunResult {
 
 export class OutputStageResult extends RunResult {
   constructor(state: TraversalResult, invocationId: number) {
-    super(state, "output", invocationId);
+    super(state, "output", undefined, invocationId);
   }
 
   get inputArguments(): InputValues {

@@ -1,7 +1,7 @@
 {
   "title": "Data Board",
   "description": "A prototype of a conversation of multiple agents",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "edges": [
     {
       "from": "improver",
@@ -132,7 +132,7 @@
             }
           }
         },
-        "path": "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/breadboard-web/public/graphs/json-agent.json"
+        "path": "/graphs/json-agent.json"
       }
     },
     {
@@ -152,7 +152,7 @@
             }
           }
         },
-        "path": "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/breadboard-web/public/graphs/json-agent.json"
+        "path": "/graphs/json-agent.json"
       }
     },
     {
@@ -177,7 +177,7 @@
             "generator": {
               "title": "Generator",
               "examples": [
-                "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/breadboard-web/public/graphs/gemini-generator.json"
+                "/graphs/gemini-generator.json"
               ],
               "type": "string"
             }
@@ -203,7 +203,7 @@
             }
           }
         },
-        "path": "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/breadboard-web/public/graphs/json-agent.json"
+        "path": "/graphs/json-agent.json"
       }
     },
     {
@@ -230,7 +230,7 @@
             }
           }
         },
-        "path": "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/breadboard-web/public/graphs/json-agent.json"
+        "path": "/graphs/json-agent.json"
       }
     },
     {
@@ -247,7 +247,7 @@
             }
           }
         },
-        "path": "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/breadboard-web/public/graphs/json-agent.json"
+        "path": "/graphs/json-agent.json"
       }
     },
     {
@@ -267,7 +267,7 @@
             }
           }
         },
-        "path": "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/breadboard-web/public/graphs/json-agent.json"
+        "path": "/graphs/json-agent.json"
       }
     },
     {
@@ -287,7 +287,7 @@
             }
           }
         },
-        "path": "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/breadboard-web/public/graphs/json-agent.json"
+        "path": "/graphs/json-agent.json"
       }
     },
     {

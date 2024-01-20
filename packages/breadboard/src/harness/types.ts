@@ -9,13 +9,16 @@ import {
   LoadResponse,
   ServerTransport,
 } from "../remote/protocol.js";
-import { AnyClientRunResult, ClientRunResult } from "../remote/run.js";
+import {
+  AnyClientRunResult,
+  AnyProbeClientRunResult,
+  ClientRunResult,
+} from "../remote/run.js";
 import {
   ErrorResponse,
   InputResponse,
   OutputResponse,
   OutputValues,
-  ProbeMessage,
 } from "../types.js";
 
 /**
@@ -66,17 +69,11 @@ export type EndResult = {
   data: Record<string, never>;
 };
 
-export type AnyRunResult =
-  | InputResult
-  | OutputResult
-  | SecretResult
-  | ErrorResult
-  | EndResult
-  | ProbeMessage;
-
 export type HarnessRunResult =
   | AnyClientRunResult
   | ClientRunResult<SecretResult>;
+
+export type HarnessProbeResult = AnyProbeClientRunResult;
 
 export type SecretHandler = (keys: {
   keys?: string[];

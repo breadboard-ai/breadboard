@@ -12,7 +12,7 @@ import {
   NodeStartResponse,
   Schema,
 } from "@google-labs/breadboard";
-import { AnyRunResult } from "@google-labs/breadboard/harness";
+import { HarnessRunResult } from "@google-labs/breadboard/harness";
 
 export const enum HistoryEventType {
   DONE = "done",
@@ -50,7 +50,7 @@ export interface CanvasData {
   };
 }
 
-export type HistoryEntry = AnyRunResult & {
+export type HistoryEntry = HarnessRunResult & {
   id: string;
   guid: string;
   graphNodeData:

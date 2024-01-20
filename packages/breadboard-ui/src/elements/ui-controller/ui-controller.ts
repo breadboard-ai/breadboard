@@ -15,7 +15,6 @@ import {
   ToastType,
 } from "../../events/events.js";
 import {
-  AnyRunResult,
   HarnessRunResult,
   InputResult,
   OutputResult,
@@ -115,7 +114,7 @@ export class UI extends LitElement {
   #memory = longTermMemory;
   #isUpdatingMemory = false;
   #messagePosition = 0;
-  #messageDurations: Map<AnyRunResult, number> = new Map();
+  #messageDurations: Map<HarnessRunResult, number> = new Map();
   #renderTimeout = 0;
   #rendering = false;
   #requestedVB = false;

@@ -5,7 +5,7 @@
  */
 
 import type { HarnessRunResult } from "./types.js";
-import { asyncGen } from "../index.js";
+import { RunState, asyncGen } from "../index.js";
 import { createSecretAskingKit } from "./secrets.js";
 import { ProxyServer } from "../remote/proxy.js";
 import {
@@ -28,7 +28,7 @@ export const createWorker = (url: string) => {
 export async function* runInWorker(
   workerURL: string,
   config: RunConfig,
-  state?: string
+  state?: RunState
 ) {
   const worker = createWorker(workerURL);
   const dispatcher = new PortDispatcher(worker);

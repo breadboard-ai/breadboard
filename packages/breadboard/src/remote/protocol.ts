@@ -16,6 +16,7 @@ import {
   NodeStartProbeMessage,
   OutputResponse,
   OutputValues,
+  RunState,
   SkipProbeMessage,
 } from "../types.js";
 
@@ -61,8 +62,6 @@ export type LoadResponse = {
    */
   nodes?: NodeDescriptor[];
 };
-
-export type RunState = string;
 
 type GenericResult = { type: string; data: unknown };
 
@@ -142,16 +141,19 @@ export type AnyRunRequestMessage =
   | RunRequestMessage
   | InputResolveRequestMessage;
 
-export type AnyRunResponseMessage =
-  | OutputResponseMessage
+export type AnyProbeMessage =
   | RemoteMessage<NodeStartProbeMessage>
   | RemoteMessage<NodeEndProbeMessage>
   | RemoteMessage<GraphStartProbeMessage>
   | RemoteMessage<GraphEndProbeMessage>
-  | RemoteMessage<SkipProbeMessage>
+  | RemoteMessage<SkipProbeMessage>;
+
+export type AnyRunResponseMessage =
+  | OutputResponseMessage
   | InputResponseMessage
   | EndResponseMessage
-  | ErrorResponseMessage;
+  | ErrorResponseMessage
+  | AnyProbeMessage;
 
 export interface ClientBidirectionalStream<Request, Response> {
   writableRequests: WritableStream<Request>;
