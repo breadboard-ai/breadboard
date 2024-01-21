@@ -114,9 +114,9 @@ TODO: Brief overview of useful kits and nodes:
 - `core` kit
   - `invoke` node
   - `map` node
+  - `jsonata` node
 - `starter` kit
   - `fetch` node
-  - `jsonata` node
   - `promptTemplate` node
   - `secrets` node
   - `urlTemplate` node
