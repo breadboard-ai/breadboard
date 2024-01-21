@@ -13,6 +13,7 @@ import {
   NewNodeFactory as NodeFactory,
   addKit,
 } from "@google-labs/breadboard";
+import jsonata from "./nodes/jsonata.js";
 
 const JSONKit = new KitBuilder({
   title: "JSON Kit",
@@ -23,6 +24,7 @@ const JSONKit = new KitBuilder({
 }).build({
   validateJson,
   schemish,
+  jsonata,
 });
 
 export default JSONKit;
@@ -35,4 +37,13 @@ export const json = addKit(JSONKit) as unknown as {
     { json: NodeValue } | { $error: NodeValue }
   >;
   schemish: NodeFactory<{ schema: NodeValue }, { schemish: NodeValue }>;
+  jsonata: NodeFactory<
+    {
+      expression: string;
+      json: string;
+      raw: boolean;
+      [key: string]: NodeValue;
+    },
+    { result: string; [key: string]: NodeValue }
+  >;
 };
