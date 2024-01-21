@@ -293,21 +293,25 @@ The resulting JSON string can be trivially saved into a file:
 ```js
 import { writeFile } from "fs/promises";
 
-await writeFile("./docs/tutorial/tutorial-4.json", json);
+await writeFile("/path/to/board.json", json);
 ```
 
-... and loaded from file with `Board.load`:
+We can then load the serialized board from a file with `Board.load`:
 
 ```js
-const board2 = await Board.load("./docs/tutorial/tutorial-4.json");
+const board2 = await Board.load("/path/to/board.json");
 ```
 
 Once we have the new board loaded, we can run it (note that the kits that the loaded board depends on
-must now be provided):
+as well as the secrets it needs must now be provided):
 
 ```js
 import { Board, asRuntimeKit } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
+import { PaLMKit } from "@google-labs/palm-kit";
+import { config } from "dotenv";
+
+config();
 
 const result = await board2.runOnce(
   { say: "Hi, how are you?" },
