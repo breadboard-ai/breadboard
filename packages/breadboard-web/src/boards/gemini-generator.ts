@@ -12,6 +12,7 @@ import {
   recipe,
 } from "@google-labs/breadboard";
 import { starter } from "@google-labs/llm-starter";
+import { json } from "@google-labs/json-kit";
 import { nursery } from "@google-labs/node-nursery-web";
 
 type TextPartType = {
@@ -239,7 +240,7 @@ export default await recipe(() => {
     ...chooseMethod,
   });
 
-  const makeBody = starter.jsonata({
+  const makeBody = json.jsonata({
     $id: "makeBody",
     expression: `(
       $context := $append(
@@ -276,7 +277,7 @@ export default await recipe(() => {
     body: makeBody.result,
   });
 
-  const formatResponse = starter.jsonata({
+  const formatResponse = json.jsonata({
     $id: "formatResponse",
     expression: `
   response.candidates[0].content.parts.{
@@ -291,7 +292,7 @@ export default await recipe(() => {
   const streamTransform = nursery.transformStream({
     $id: "streamTransform",
     board: recipe(() => {
-      const transformChunk = starter.jsonata({
+      const transformChunk = json.jsonata({
         $id: "transformChunk",
         expression:
           "candidates[0].content.parts.text ? $join(candidates[0].content.parts.text) : ''",

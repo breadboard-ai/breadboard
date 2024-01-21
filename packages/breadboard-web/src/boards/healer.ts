@@ -6,6 +6,7 @@
 
 import { Board, Schema } from "@google-labs/breadboard";
 import Core from "@google-labs/core-kit";
+import JSONKit from "@google-labs/json-kit";
 import { Starter } from "@google-labs/llm-starter";
 
 const board = new Board({
@@ -16,6 +17,7 @@ const board = new Board({
 });
 const starter = board.addKit(Starter);
 const core = board.addKit(Core);
+const json = board.addKit(JSONKit);
 
 const brokenJSON = `{
   first_answer: "to live",
@@ -92,7 +94,7 @@ const startCycle = core.passthrough({ $id: "startCycle" });
 validate.wire("error->", startCycle);
 
 // Reports whether or not the cycle is the first time through.
-const isFirstTime = starter.jsonata({
+const isFirstTime = json.jsonata({
   $id: "first",
   expression: `{
     "error": error,

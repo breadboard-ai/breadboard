@@ -246,6 +246,9 @@
     },
     {
       "url": "npm:@google-labs/core-kit"
+    },
+    {
+      "url": "npm:@google-labs/json-kit"
     }
   ]
 }

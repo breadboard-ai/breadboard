@@ -5,7 +5,6 @@
  */
 
 import { Board, Schema } from "@google-labs/breadboard";
-import Starter from "@google-labs/llm-starter";
 import JSONKit from "@google-labs/json-kit";
 
 const board = new Board({
@@ -14,7 +13,6 @@ const board = new Board({
     "A very simple example of a validator board: it validates JSON against a schema. All validators share the same shape: `text` in, `text` out (if valid) or `error` out (if invalid).",
   version: "0.0.1",
 });
-const starter = board.addKit(Starter);
 const json = board.addKit(JSONKit);
 
 const brokenJSON = `{
@@ -109,7 +107,7 @@ board
   })
   .wire("text<-json", validator);
 
-const formatValidationError = starter
+const formatValidationError = json
   .jsonata({
     $id: "formatValidationError",
     expression: `"JSON Validation Error: " & \`$error\`.error.message & "
@@ -120,14 +118,14 @@ When validaing against this schema:
   .wire("<-schema", parameters)
   .wire("<-$error", validator);
 
-const formatParsingError = starter
+const formatParsingError = json
   .jsonata({
     $id: "formatParsingError",
     expression: `"JSON Parsing Error: " & \`$error\`.error.message`,
   })
   .wire("<-$error", validator);
 
-starter
+json
   .jsonata({
     $id: "parseErrorType",
     expression: `{ error.type: true }`,

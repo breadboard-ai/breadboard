@@ -6,6 +6,7 @@
 
 import { GraphMetadata, Schema, base, recipe } from "@google-labs/breadboard";
 import { starter } from "@google-labs/llm-starter";
+import { json } from "@google-labs/json-kit";
 import { nursery } from "@google-labs/node-nursery-web";
 import { chunkTransformer } from "./openai-chunk-transformer";
 
@@ -148,7 +149,7 @@ export default await recipe(() => {
   });
 
   const formatParameters = input.to(
-    starter.jsonata({
+    json.jsonata({
       $id: "formatParameters",
       expression: `(
         $context := $append(
@@ -194,7 +195,7 @@ export default await recipe(() => {
     })
   );
 
-  const getResponse = starter.jsonata({
+  const getResponse = json.jsonata({
     $id: "getResponse",
     expression: `choices[0].message.{
       "text": $boolean(content) ? content,
@@ -204,7 +205,7 @@ export default await recipe(() => {
     json: fetch.response,
   });
 
-  const getNewContext = starter.jsonata({
+  const getNewContext = json.jsonata({
     $id: "getNewContext",
     expression: `$append(messages, response.choices[0].message)`,
     messages: formatParameters.context,

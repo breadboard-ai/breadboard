@@ -5,8 +5,8 @@
  */
 
 import { Board } from "@google-labs/breadboard";
-import { Starter } from "@google-labs/llm-starter";
 import { Core } from "@google-labs/core-kit";
+import JSONKit from "@google-labs/json-kit";
 
 const board = new Board({
   title: "Pinecone API query invocation",
@@ -15,15 +15,14 @@ const board = new Board({
   version: "0.0.1",
 });
 
-const starter = board.addKit(Starter);
 const core = board.addKit(Core);
+const json = board.addKit(JSONKit);
 
 // TODO: Make topK and other properties configurable.
-const body = starter.jsonata({
-    expression: "{ \"vector\": $, \"topK\": 10, \"includeMetadata\": true }",
-    $id: "make-body",
-  },
-);
+const body = json.jsonata({
+  expression: '{ "vector": $, "topK": 10, "includeMetadata": true }',
+  $id: "make-body",
+});
 
 const apiCall = core
   .include({ $id: "vector", $ref: "#vector" })
