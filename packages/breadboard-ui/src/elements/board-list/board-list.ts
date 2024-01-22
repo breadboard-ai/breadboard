@@ -8,7 +8,6 @@ import { LitElement, html, css } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { until } from "lit/directives/until.js";
 import { Board } from "../../types/types.js";
-import { longTermMemory } from "../../utils/long-term-memory.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import { StartEvent, ToastEvent, ToastType } from "../../events/events.js";
 
@@ -198,21 +197,9 @@ export class BoardItem extends LitElement {
     if (!this.boardUrl || !this.boardTitle) {
       return Promise.resolve("Unable to load description");
     }
-
-    const titleForKey = this.boardTitle
-      .replace(/\W/gim, "-")
-      .toLocaleLowerCase();
-    const key = `${titleForKey}-${this.boardVersion}`;
-    const value = await longTermMemory.retrieve(key);
-    if (value !== null) {
-      return this.#replaceLinks(value || "No description");
-    }
-
     const response = await fetch(this.boardUrl);
     const info = await response.json();
-    longTermMemory.store(key, info.description || "");
-
-    return this.#replaceLinks(info.description);
+    return this.#replaceLinks(info.description || "No description");
   }
 
   async #copyToClipboard(evt: Event) {
