@@ -8,7 +8,7 @@ import OpenAPI from "./boards/openapi.js";
 import { Board, asRuntimeKit } from "@google-labs/breadboard";
 import yaml from "yaml";
 import core from "@google-labs/core-kit";
-import starter from "@google-labs/llm-starter";
+import templates from "@google-labs/template-kit";
 import { readFile, stat, writeFile } from "fs/promises";
 import path from "path";
 import { pathToFileURL } from "url";
@@ -66,7 +66,7 @@ export const importGraph = async (url: string, options: ImportOptions) => {
 
   const boards = await openAPIBoard.runOnce(
     { json },
-    { kits: [asRuntimeKit(core), asRuntimeKit(starter)] }
+    { kits: [asRuntimeKit(core), asRuntimeKit(templates)] }
   );
 
   if (boards == undefined || boards == null) {

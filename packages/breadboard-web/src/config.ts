@@ -13,7 +13,7 @@ import {
 } from "@google-labs/breadboard/harness";
 import Core from "@google-labs/core-kit";
 import JSONKit from "@google-labs/json-kit";
-import Starter from "@google-labs/llm-starter";
+import TemplateKit from "@google-labs/template-kit";
 import NodeNurseryWeb from "@google-labs/node-nursery-web";
 import PaLMKit from "@google-labs/palm-kit";
 import Pinecone from "@google-labs/pinecone-kit";
@@ -42,9 +42,14 @@ const DEFAULT_HARNESS = PROXY_SERVER_URL
   ? PROXY_SERVER_HARNESS_VALUE
   : WORKER_HARNESS_VALUE;
 
-const kits = [Starter, Core, Pinecone, PaLMKit, NodeNurseryWeb, JSONKit].map(
-  (kitConstructor) => asRuntimeKit(kitConstructor)
-);
+const kits = [
+  TemplateKit,
+  Core,
+  Pinecone,
+  PaLMKit,
+  NodeNurseryWeb,
+  JSONKit,
+].map((kitConstructor) => asRuntimeKit(kitConstructor));
 
 export const createRunConfig = (url: string) => {
   const harness =
