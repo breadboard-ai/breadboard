@@ -16,7 +16,8 @@ NOTE: Breadboard is built to be flexible, you can [build a kit](./build-a-kit.md
   - `import` use `path` or `graph` to create a lambda board returning `board` which could be used in `invoke`
   - `invoke` use `path`, `graph`, or `board` to run another board passing other inputs and output properties
   - `reflect` returns a `graph` representation of the current board
-  - `fetch` use (`url`, `headers`, `raw` (true=text, false=JSON)) to fetch a url and returns `response`
+  - `fetch` use (`url`, `headers`, `raw` (true=text, false=JSON)) to fetch a url and returns `response`.
+  - `secrets` access environment variables within your board
 - [google-labs/json-kit](https://github.com/breadboard-ai/breadboard/tree/main/packages/json-kit)
   provides tools for working with JSON.
   It exposes the following key node handlers (see docs for more):
@@ -26,7 +27,6 @@ NOTE: Breadboard is built to be flexible, you can [build a kit](./build-a-kit.md
   - `xmlToJson` take `xml` and return `json`, using `alt-json` convention that is described in https://developers.google.com/gdata/docs/json.
 - [google-labs/llm-starter](https://github.com/breadboard-ai/breadboard/tree/main/packages/llm-starter)
   It exposes the following key node handlers (see docs for more):
-  - `secrets` access environment variables within your board
   - `promptTemplate` use a `template` and `{{var}}` variables to return a `prompt` string
   - `urlTemplate` use a `template` and `{var}` variables to return a `url` string (based on [URI template spec](https://tools.ietf.org/html/rfc6570))
 

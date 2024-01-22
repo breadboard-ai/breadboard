@@ -115,9 +115,9 @@ TODO: Brief overview of useful kits and nodes:
   - `invoke` node
   - `map` node
   - `fetch` node
+  - `secrets` node
 - `starter` kit
   - `promptTemplate` node
-  - `secrets` node
   - `urlTemplate` node
 - `json` kit
   - `schemish` node
