@@ -35,7 +35,7 @@ export default await recipe(() => {
   const input = base.input({ $id: "input" });
 
   return core.invoke({
-    path: "../createEmbedding.json",
+    path: "./spec/createEmbedding.json",
     input: input.api_inputs,
     ...input,
     ...starter.secrets({ keys: ["MISTRAL_API_KEY"] }),
