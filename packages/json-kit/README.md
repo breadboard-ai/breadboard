@@ -61,3 +61,44 @@ We will get this output:
 #### Implementation:
 
 - [src/nodes/jsonata.ts](src/nodes/jsonata.ts)
+
+### The `xmlToJson` node
+
+Use this node to convert XML to JSON. Most nodes in the starter kit are designed to work with JSON, so this node is useful when you have XML data.
+
+This nodes takes one required `xml` property, which it treats as XML and converts to it to JSON as the `json` output property. The format of JSON follows the `alt-json` convention that is described in https://developers.google.com/gdata/docs/json.
+
+#### Example:
+
+If we send the following inputs to `xml-to-json`:
+
+```json
+{
+  "xml": "<root><question>How old is planet Earth?</question><thought>I wonder how old planet Earth is?</thought></root>"
+}
+```
+
+We will get this output:
+
+```json
+{
+  "json": {
+    "root": {
+      "question": { "$t": "How old is planet Earth?" },
+      "thought": { "$t": "I wonder how old planet Earth is?" }
+    }
+  }
+}
+```
+
+#### Inputs:
+
+- `xml` - required, must contain a string that represents XML.
+
+#### Outputs:
+
+- `json` - the result of converting XML to JSON.
+
+#### Implementation:
+
+- [src/nodes/xml-to-json.ts](src/nodes/xml-to-json.ts)

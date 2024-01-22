@@ -14,7 +14,6 @@ NOTE: Breadboard is built to be flexible, you can [build a kit](./build-a-kit.md
   - `promptTemplate` use a `template` and `{{var}}` variables to return a `prompt` string
   - `urlTemplate` use a `template` and `{var}` variables to return a `url` string (based on [URI template spec](https://tools.ietf.org/html/rfc6570))
   - `fetch` use (`url`, `headers`, `raw` (true=text, false=JSON)) to fetch a url and returns `response`
-  - `xmlToJson` use `xml` and return `json`
 - [google-labs/core-kit](https://github.com/breadboard-ai/breadboard/tree/main/packages/core-kit)
   provides many useful tools for breadboard development as well as more sophisticated board builders.
   It exposes the following key node handlers (see docs for more):
@@ -29,6 +28,7 @@ NOTE: Breadboard is built to be flexible, you can [build a kit](./build-a-kit.md
   - `schemish` use `schema` to create and return a `schemish` schema
   - `validateJson` use `json` and `schema` to validate and return `result`
   - `jsonata` use a [JSONata](https://jsonata.org/) `expression` and `json` to extract and return a `result`
+  - `xmlToJson` take `xml` and return `json`, using `alt-json` convention that is described in https://developers.google.com/gdata/docs/json.
 
 ## LLM Model Inference
 
