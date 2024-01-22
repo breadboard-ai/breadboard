@@ -5,14 +5,9 @@
  */
 
 import { KitBuilder } from "@google-labs/breadboard/kits";
-import fetch from "./nodes/fetch.js";
-import jsonata from "./nodes/jsonata.js";
 import promptTemplate from "./nodes/prompt-template.js";
-import runJavascript from "./nodes/run-javascript.js";
-import secrets from "./nodes/secrets.js";
 
 import urlTemplate from "./nodes/url-template.js";
-import xmlToJson from "./nodes/xml-to-json.js";
 
 const builder = new KitBuilder({
   title: "LLM Starter Kit",
@@ -23,13 +18,8 @@ const builder = new KitBuilder({
 });
 
 export const Starter = builder.build({
-  fetch,
-  jsonata,
   promptTemplate,
-  runJavascript,
-  secrets,
   urlTemplate,
-  xmlToJson,
 });
 
 export type Starter = InstanceType<typeof Starter>;
@@ -56,25 +46,5 @@ export const starter = addKit(Starter) as unknown as {
   urlTemplate: NodeFactory<
     { template: string; [key: string]: NodeValue },
     { url: string }
-  >;
-  secrets: NodeFactory<{ keys: string[] }, { [k: string]: string }>;
-  runJavascript: NodeFactory<
-    {
-      code: string;
-      name: string;
-      raw: boolean;
-      [key: string]: NodeValue;
-    },
-    { result: unknown; [k: string]: unknown }
-  >;
-  fetch: NodeFactory<{ url: string }, { response: string }>;
-  jsonata: NodeFactory<
-    {
-      expression: string;
-      json: string;
-      raw: boolean;
-      [key: string]: NodeValue;
-    },
-    { result: string; [key: string]: NodeValue }
   >;
 };

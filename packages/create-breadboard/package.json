@@ -1,6 +1,6 @@
 {
   "name": "@google-labs/create-breadboard",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "A starter kit for your Breadboard projects",
   "main": "dist/src/index.js",
   "bin": {
@@ -77,9 +77,6 @@
     "@typescript-eslint/eslint-plugin": "^5.56.0",
     "@typescript-eslint/parser": "^5.56.0",
     "typescript": "^5.0.4"
-  },
-  "dependencies": {
-    "base-create": "^3.0.8"
   },
   "types": "./dist/src/index.d.ts"
 }

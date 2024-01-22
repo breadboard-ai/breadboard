@@ -7,6 +7,7 @@
 import { Schema, recipe } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { starter } from "@google-labs/llm-starter";
+import { json } from "@google-labs/json-kit";
 
 const gemini = "/graphs/gemini-generator.json";
 const jsonAgent = "/graphs/json-agent.json";
@@ -96,7 +97,7 @@ export default await recipe(({ specs, generator }) => {
     ...defaults,
   });
 
-  const contextRestart = starter.jsonata({
+  const contextRestart = json.jsonata({
     $id: "contextRestart",
     expression: `$`,
     json: requirementsExtractor2.json.isString(),

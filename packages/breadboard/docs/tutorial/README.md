@@ -160,7 +160,7 @@ Now, we have not one, but two wires on the board, connecting our three nodes. Th
 To make this program go, we need another node and a wire. The PaLM API behind the `generateText` node requires an API key, so we'll add a `secrets` node to the board:
 
 ```js
-const secrets = starter.secrets({ keys: ["PALM_KEY"] });
+const secrets = core.secrets({ keys: ["PALM_KEY"] });
 ```
 
 The `secrets` node reaches into our program's environment and gets the environment variable that is named `PALM_KEY`, as we specified in its argument. A `secrets` node could look for any other environment variables, we just need to specify which ones. For now, we only need the `PALM_KEY`.
@@ -224,7 +224,7 @@ First, the `wire` method returns the node itself, allowing us to wire the same n
 const input = board.input();
 const output = board.output();
 const generateText = palm.generateText();
-const secrets = starter.secrets({ keys: ["PALM_KEY"] });
+const secrets = core.secrets({ keys: ["PALM_KEY"] });
 
 input.wire("say->text", generateText).wire("say->", output);
 generateText.wire("completion->hear", output);
@@ -293,21 +293,25 @@ The resulting JSON string can be trivially saved into a file:
 ```js
 import { writeFile } from "fs/promises";
 
-await writeFile("./docs/tutorial/tutorial-4.json", json);
+await writeFile("/path/to/board.json", json);
 ```
 
-... and loaded from file with `Board.load`:
+We can then load the serialized board from a file with `Board.load`:
 
 ```js
-const board2 = await Board.load("./docs/tutorial/tutorial-4.json");
+const board2 = await Board.load("/path/to/board.json");
 ```
 
 Once we have the new board loaded, we can run it (note that the kits that the loaded board depends on
-must now be provided):
+as well as the secrets it needs must now be provided):
 
 ```js
 import { Board, asRuntimeKit } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
+import { PaLMKit } from "@google-labs/palm-kit";
+import { config } from "dotenv";
+
+config();
 
 const result = await board2.runOnce(
   { say: "Hi, how are you?" },

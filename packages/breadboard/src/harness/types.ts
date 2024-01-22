@@ -50,7 +50,7 @@ export type OutputResult = {
  */
 export type SecretResult = {
   type: "secret";
-  data: { keys: string[] };
+  data: { keys: string[]; timestamp: number };
 };
 
 /**

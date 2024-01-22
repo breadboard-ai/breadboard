@@ -67,13 +67,14 @@
           "type": "object",
           "properties": {
             "context": {
-              "title": "result",
-              "description": "The result of the Jsonata expression",
-              "type": "string"
+              "title": "Context",
+              "description": "Agent context after generation",
+              "type": "object"
             },
             "text": {
+              "title": "Output",
               "type": "string",
-              "title": "text"
+              "description": "Agent's output"
             }
           },
           "required": [

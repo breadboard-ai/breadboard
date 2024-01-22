@@ -7,6 +7,7 @@
 import { Schema, recipe } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { starter } from "@google-labs/llm-starter";
+import { json } from "@google-labs/json-kit";
 
 const metadata = {
   title: "Team Builder",
@@ -101,7 +102,7 @@ Please identify the necessary job descriptions of these experts.`,
     }).prompt,
   });
 
-  const splitJobDescriptions = starter.jsonata({
+  const splitJobDescriptions = json.jsonata({
     $id: "splitJobDescriptions",
     expression: "descriptions",
     json: jobDescriptions.json.isString(),

@@ -5,6 +5,7 @@
  */
 
 import { loadRunnerState, saveRunnerState } from "./serialization.js";
+import { timestamp } from "./timestamp.js";
 import type {
   InputValues,
   NodeDescriptor,
@@ -69,6 +70,10 @@ export class RunResult implements BreadboardRunResult {
 
   get runState(): RunState | undefined {
     return this.#runState;
+  }
+
+  get timestamp(): number {
+    return timestamp();
   }
 
   isAtExitNode(): boolean {

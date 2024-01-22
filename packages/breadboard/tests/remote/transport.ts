@@ -116,7 +116,7 @@ test("Continuous streaming", async (t) => {
   t.like(thirdResult.value, ["output", { outputs: { hello: "world" } }]);
   const fourthResult = await reader.read();
   t.assert(!fourthResult.done);
-  t.like(fourthResult.value, ["end", {}]);
+  t.like(fourthResult.value, ["end"]);
   const fifthResult = await reader.read();
   t.assert(fifthResult.done);
 });

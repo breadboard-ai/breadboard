@@ -6,7 +6,7 @@
 
 import { recipe } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
-import { starter } from "@google-labs/llm-starter";
+import { json } from "@google-labs/json-kit";
 
 export default await recipe(({ text, generator, context, stopSequences }) => {
   text
@@ -24,7 +24,7 @@ export default await recipe(({ text, generator, context, stopSequences }) => {
   context.title("Context").isArray().examples("[]");
   stopSequences.title("Stop Sequences").isArray().optional().default("[]");
 
-  const generate = core.invoke({
+  const { context: generated, text: output } = core.invoke({
     $id: "generate",
     text,
     context,
@@ -32,7 +32,7 @@ export default await recipe(({ text, generator, context, stopSequences }) => {
     path: generator.isString(),
   });
 
-  const assemble = starter.jsonata({
+  const { result } = json.jsonata({
     $id: "assemble",
     expression: `$append(context ? context, $append([
       {
@@ -40,12 +40,18 @@ export default await recipe(({ text, generator, context, stopSequences }) => {
           "parts": [ { "text": text } ]
       }
   ], [generated]))`,
-    generated: generate.context,
+    generated,
     text,
     context,
   });
 
-  return { context: assemble.result, text: generate.text };
+  result
+    .title("Context")
+    .isObject()
+    .description("Agent context after generation");
+  output.title("Output").isString().description("Agent's output");
+
+  return { context: result, text: output };
 }).serialize({
   title: "Agent",
   description: "A prototype of an agent-like board",

@@ -6,7 +6,7 @@
 
 import test from "ava";
 
-import { jsonataDescriber } from "../../src/nodes/jsonata.js";
+import { jsonataDescriber } from "../src/nodes/jsonata.js";
 
 test("`jsonataDescriber` correctly reacts to `raw = false`", async (t) => {
   const result = await jsonataDescriber();

@@ -6,7 +6,7 @@
 
 import test from "ava";
 
-import xmlToJson from "../../src/nodes/xml-to-json.js";
+import xmlToJson from "../src/nodes/xml-to-json.js";
 
 test("xml-to-json can parse documents without processing instructions", async (t) => {
   const xml = `<foo><bar>baz</bar></foo>`;

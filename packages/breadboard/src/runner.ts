@@ -33,6 +33,7 @@ import { SchemaBuilder } from "./schema.js";
 import { RequestedInputsManager, bubbleUpInputsIfNeeded } from "./bubble.js";
 import { asyncGen } from "./utils/async-gen.js";
 import { StackManager } from "./stack.js";
+import { timestamp } from "./timestamp.js";
 
 /**
  * This class is the main entry point for running a board.
@@ -126,7 +127,7 @@ export class BoardRunner implements BreadboardRunner {
 
       await probe?.report?.({
         type: "graphstart",
-        data: { metadata: this, path: invocationPath },
+        data: { metadata: this, path: invocationPath, timestamp: timestamp() },
       });
 
       let invocationId = 0;
@@ -145,6 +146,7 @@ export class BoardRunner implements BreadboardRunner {
               inputs,
               missingInputs,
               path: path(),
+              timestamp: timestamp(),
             },
           });
           continue;
@@ -158,6 +160,7 @@ export class BoardRunner implements BreadboardRunner {
             node: descriptor,
             inputs,
             path: path(),
+            timestamp: timestamp(),
           },
           state: await stack.state(),
         });
@@ -210,6 +213,7 @@ export class BoardRunner implements BreadboardRunner {
               validator.getValidatorMetadata(descriptor)
             ),
             path: path(),
+            timestamp: timestamp(),
           },
         });
 
@@ -220,7 +224,7 @@ export class BoardRunner implements BreadboardRunner {
 
       await probe?.report?.({
         type: "graphend",
-        data: { metadata: this, path: invocationPath },
+        data: { metadata: this, path: invocationPath, timestamp: timestamp() },
       });
     });
   }
@@ -276,11 +280,12 @@ export class BoardRunner implements BreadboardRunner {
               inputs: result.inputs,
               outputs,
               path: [...path, result.invocationId],
+              timestamp: timestamp(),
             },
           });
           await probe?.report?.({
             type: "graphend",
-            data: { metadata: this, path },
+            data: { metadata: this, path, timestamp: timestamp() },
           });
           break;
         }

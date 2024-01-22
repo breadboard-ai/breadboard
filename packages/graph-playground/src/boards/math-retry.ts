@@ -38,7 +38,8 @@ math
     "text->question",
     kit
       .promptTemplate({
-        template: "Translate the math problem below into a JavaScript function named `compute` that can be executed to provide the answer to the problem\nMath Problem: {{question}}\nSolution:",
+        template:
+          "Translate the math problem below into a JavaScript function named `compute` that can be executed to provide the answer to the problem\nMath Problem: {{question}}\nSolution:",
         $id: "math-function",
       })
       .wire(
@@ -50,8 +51,8 @@ math
             math.lambda((board, input, output) => {
               const completion = palm
                 .generateText({ $id: "math-function-generator" })
-                .wire("<-PALM_KEY", kit.secrets({ keys: ["PALM_KEY"] }));
-              const compute = kit.runJavascript({
+                .wire("<-PALM_KEY", core.secrets({ keys: ["PALM_KEY"] }));
+              const compute = core.runJavascript({
                 name: "compute",
                 $id: "compute",
               });
