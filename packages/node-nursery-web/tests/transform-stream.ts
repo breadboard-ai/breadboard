@@ -18,7 +18,7 @@ import {
   callHandler,
 } from "@google-labs/breadboard";
 import NodeNurseryWeb from "../src/index.js";
-import Starter from "@google-labs/llm-starter";
+import Core from "@google-labs/core-kit";
 
 const toArray = async <T>(stream: ReadableStream<T>) => {
   const results: T[] = [];
@@ -108,7 +108,7 @@ test("transform works in a board", async (t) => {
     "stream->",
     nursery
       .transformStream((board, input, output) => {
-        const starter = board.addKit(Starter);
+        const core = board.addKit(Core);
 
         function run({ chunk }: { chunk: number }): string {
           return `number: ${chunk}`;
@@ -116,7 +116,7 @@ test("transform works in a board", async (t) => {
 
         input.wire(
           "chunk->",
-          starter
+          core
             .runJavascript({
               name: "run",
               code: run.toString(),
@@ -141,7 +141,7 @@ test("transform works in a board", async (t) => {
       stream: new StreamCapability<number>(stream),
     },
     {
-      kits: [asRuntimeKit(Starter)],
+      kits: [asRuntimeKit(Core)],
     }
   )) as {
     stream: StreamCapabilityType<number>;

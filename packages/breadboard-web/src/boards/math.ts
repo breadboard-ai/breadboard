@@ -66,7 +66,7 @@ Solution:`,
     path: input.generator as V<string>,
     text: template.prompt,
   });
-  return starter
+  return core
     .runJavascript({
       $id: "compute",
       name: "compute",

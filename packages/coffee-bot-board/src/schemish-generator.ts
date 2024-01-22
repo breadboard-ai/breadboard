@@ -37,7 +37,7 @@ function gate({ allow, value }: { allow: boolean; value: NodeValue }) {
   return { $error: value };
 }
 
-const shouldRecover = kit.runJavascript({
+const shouldRecover = core.runJavascript({
   $id: "shouldRecover",
   name: "gate",
   code: gate.toString(),

@@ -9,6 +9,7 @@ import { recipe } from "@google-labs/breadboard";
 
 import { starter } from "@google-labs/llm-starter";
 import { palm } from "@google-labs/palm-kit";
+import { core } from "@google-labs/core-kit";
 
 export const graph = recipe(
   {
@@ -34,7 +35,7 @@ export const graph = recipe(
         })
       )
       .completion.as("code")
-      .to(starter.runJavascript());
+      .to(core.runJavascript());
   }
 );
 

@@ -6,7 +6,6 @@
 
 import { KitBuilder } from "@google-labs/breadboard/kits";
 import promptTemplate from "./nodes/prompt-template.js";
-import runJavascript from "./nodes/run-javascript.js";
 import secrets from "./nodes/secrets.js";
 
 import urlTemplate from "./nodes/url-template.js";
@@ -21,7 +20,6 @@ const builder = new KitBuilder({
 
 export const Starter = builder.build({
   promptTemplate,
-  runJavascript,
   secrets,
   urlTemplate,
 });
@@ -52,13 +50,4 @@ export const starter = addKit(Starter) as unknown as {
     { url: string }
   >;
   secrets: NodeFactory<{ keys: string[] }, { [k: string]: string }>;
-  runJavascript: NodeFactory<
-    {
-      code: string;
-      name: string;
-      raw: boolean;
-      [key: string]: NodeValue;
-    },
-    { result: unknown; [k: string]: unknown }
-  >;
 };

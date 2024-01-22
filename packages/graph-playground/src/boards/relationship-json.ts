@@ -118,7 +118,7 @@ jsonPrompt
 
               const validator = json.validateJson({ schema });
 
-              const agechecker = kit.runJavascript({
+              const agechecker = core.runJavascript({
                 name: "checker",
                 code: checker.toString(),
                 raw: true,

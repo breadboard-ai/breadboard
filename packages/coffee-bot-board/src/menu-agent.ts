@@ -49,7 +49,7 @@ board.input().wire(
       .wire("<-PALM_KEY", kit.secrets({ keys: ["PALM_KEY"] }))
       .wire(
         "completion->",
-        kit
+        core
           .runJavascript({
             $id: "parseResponse",
             name: "parseResponse",
