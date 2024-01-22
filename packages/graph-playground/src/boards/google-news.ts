@@ -5,12 +5,14 @@
  */
 
 import { Board } from "@google-labs/breadboard";
+import Core from "@google-labs/core-kit";
 import JSONKit from "@google-labs/json-kit";
 import { Starter } from "@google-labs/llm-starter";
 import { PaLMKit } from "@google-labs/palm-kit";
 
 const board = new Board();
 const kit = board.addKit(Starter);
+const core = board.addKit(Core);
 const json = board.addKit(JSONKit);
 const palm = board.addKit(PaLMKit);
 
@@ -37,7 +39,7 @@ input.wire(
     })
     .wire(
       "url->",
-      kit.fetch({ raw: true }).wire(
+      core.fetch({ raw: true }).wire(
         "response->xml",
         json.xmlToJson().wire(
           "json->",

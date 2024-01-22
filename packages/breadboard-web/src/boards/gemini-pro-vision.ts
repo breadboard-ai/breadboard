@@ -12,6 +12,7 @@ import {
   code,
 } from "@google-labs/breadboard";
 import { starter } from "@google-labs/llm-starter";
+import { core } from "@google-labs/core-kit";
 import { json } from "@google-labs/json-kit";
 import { nursery } from "@google-labs/node-nursery-web";
 
@@ -122,7 +123,7 @@ export default await recipe(() => {
     sseOption: chooseMethod,
   });
 
-  const fetch = starter.fetch({
+  const fetch = core.fetch({
     method: "POST",
     stream: parameters.useStreaming,
     url: makeUrl.url,

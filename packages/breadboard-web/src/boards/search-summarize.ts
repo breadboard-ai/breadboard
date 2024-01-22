@@ -65,7 +65,7 @@ export default await recipe(() => {
         query: parameters.text,
       })
     )
-    .url.to(starter.fetch({ $id: "search" }))
+    .url.to(core.fetch({ $id: "search" }))
     .response.as("json")
     .to(
       json.jsonata({

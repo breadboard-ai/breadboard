@@ -6,6 +6,7 @@
 
 import { GraphMetadata, Schema, base, recipe } from "@google-labs/breadboard";
 import { starter } from "@google-labs/llm-starter";
+import { core } from "@google-labs/core-kit";
 import { json } from "@google-labs/json-kit";
 import { nursery } from "@google-labs/node-nursery-web";
 import { chunkTransformer } from "./openai-chunk-transformer";
@@ -70,7 +71,7 @@ export default await recipe(() => {
     schema: streamOutputSchema,
   });
 
-  const fetch = starter.fetch({
+  const fetch = core.fetch({
     $id: "openai",
     url: "https://api.openai.com/v1/chat/completions",
     method: "POST",

@@ -62,13 +62,12 @@ const board = new Board({
     "This board is a simple example of loading chunked data into Pinecone.",
   version: "0.0.1",
 });
-const kit = board.addKit(Starter);
 const core = board.addKit(Core);
 const json = board.addKit(JSONKit);
 
 board.input({ $id: "url" }).wire(
   "text->url",
-  kit
+  core
     .fetch({
       $id: "load-chunks",
       raw: false,

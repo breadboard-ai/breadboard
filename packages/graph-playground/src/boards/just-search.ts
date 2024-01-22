@@ -5,12 +5,14 @@
  */
 
 import { Board } from "@google-labs/breadboard";
+import Core from "@google-labs/core-kit";
 import JSONKit from "@google-labs/json-kit";
 import { Starter } from "@google-labs/llm-starter";
 
 const board = new Board();
 const kit = board.addKit(Starter);
 const json = board.addKit(JSONKit);
+const core = board.addKit(Core);
 
 const secrets = kit.secrets({
   keys: ["PALM_KEY", "GOOGLE_CSE_ID"],
@@ -41,7 +43,7 @@ board
       .wire("<-GOOGLE_CSE_ID.", secrets)
       .wire(
         "url",
-        kit
+        core
           .fetch()
           .wire(
             "response->json",
