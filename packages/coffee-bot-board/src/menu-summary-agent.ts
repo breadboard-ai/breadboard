@@ -21,7 +21,9 @@ const kit = menuSummaryAgent.addKit(Starter);
 const core = menuSummaryAgent.addKit(Core);
 const palm = menuSummaryAgent.addKit(PaLMKit);
 
-const menu = kit.promptTemplate(await maker.prompt("menu-summary-agent", "menuSummaryAgent"));
+const menu = kit.promptTemplate(
+  await maker.prompt("menu-summary-agent", "menuSummaryAgent")
+);
 
 menu.wire("<-menu.", core.passthrough(await maker.part("menu", "txt")));
 
@@ -45,7 +47,7 @@ menuSummaryAgent.input().wire(
       .wire("<-PALM_KEY", kit.secrets({ keys: ["PALM_KEY"] }))
       .wire(
         "completion->",
-        kit
+        core
           .runJavascript({
             name: "formatOutput",
             $id: "formatOutput",

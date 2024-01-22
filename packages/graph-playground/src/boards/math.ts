@@ -5,6 +5,7 @@
  */
 
 import { Board } from "@google-labs/breadboard";
+import Core from "@google-labs/core-kit";
 import { Starter } from "@google-labs/llm-starter";
 import { PaLMKit } from "@google-labs/palm-kit";
 
@@ -15,6 +16,7 @@ const math = new Board({
   version: "0.0.1",
 });
 const kit = math.addKit(Starter);
+const core = math.addKit(Core);
 const palm = math.addKit(PaLMKit);
 
 math
@@ -46,7 +48,7 @@ math
           .generateText({ $id: "math-function-generator" })
           .wire(
             "completion->code",
-            kit
+            core
               .runJavascript({
                 name: "compute",
                 $id: "compute",

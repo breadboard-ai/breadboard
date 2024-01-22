@@ -134,7 +134,7 @@ const math = kit
       .generateText({ $id: "math-function-completion" })
       .wire(
         "completion->code",
-        kit.runJavascript({
+        core.runJavascript({
           name: "compute",
           $id: "compute",
         })

@@ -225,7 +225,7 @@ export default await recipe(() => {
     return { method, sseOption };
   }
 
-  const chooseMethod = starter.runJavascript({
+  const chooseMethod = core.runJavascript({
     $id: "chooseMethod",
     name: "chooseMethodFunction",
     code: chooseMethodFunction.toString(),

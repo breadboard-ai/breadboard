@@ -9,6 +9,7 @@ import { recipe, V } from "@google-labs/breadboard";
 
 import { starter } from "@google-labs/llm-starter";
 import { palm } from "@google-labs/palm-kit";
+import { core } from "@google-labs/core-kit";
 
 export const graph = recipe(
   {
@@ -30,7 +31,7 @@ export const graph = recipe(
       text: prompt,
       PALM_KEY: starter.secrets({ keys: ["PALM_KEY"] }).PALM_KEY,
     });
-    const { result } = starter.runJavascript({
+    const { result } = core.runJavascript({
       code: completion,
     });
     return { result: result as V<string> };
