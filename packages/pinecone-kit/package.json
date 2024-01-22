@@ -18,6 +18,7 @@
         "../breadboard:build",
         "../core-kit:build",
         "../llm-starter:build",
+        "../template-kit:build",
         "build:tsc",
         "build:prepare"
       ]
@@ -30,7 +31,8 @@
       "dependencies": [
         "../breadboard:build:tsc",
         "../core-kit:build:tsc",
-        "../llm-starter:build:tsc"
+        "../llm-starter:build:tsc",
+        "../template-kit:build:tsc"
       ],
       "files": [
         "src/**/*.ts",

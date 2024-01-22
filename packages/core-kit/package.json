@@ -16,6 +16,7 @@
       "dependencies": [
         "../breadboard:build",
         "../llm-starter:build",
+        "../template-kit:build",
         "build:tsc"
       ]
     },
@@ -26,7 +27,8 @@
       },
       "dependencies": [
         "../breadboard:build:tsc",
-        "../llm-starter:build:tsc"
+        "../llm-starter:build:tsc",
+        "../template-kit:build:tsc"
       ],
       "files": [
         "src/**/*.ts",

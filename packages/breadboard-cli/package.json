@@ -51,6 +51,7 @@
         "../breadboard:build:tsc",
         "../breadboard-web:build:tsc",
         "../llm-starter:build:tsc",
+        "../template-kit:build:tsc",
         "../core-kit:build:tsc"
       ],
       "files": [

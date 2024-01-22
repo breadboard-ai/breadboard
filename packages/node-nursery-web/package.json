@@ -18,6 +18,7 @@
       "dependencies": [
         "../breadboard:build",
         "../llm-starter:build",
+        "../template-kit:build",
         "build:tsc"
       ]
     },

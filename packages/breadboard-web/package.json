@@ -41,6 +41,7 @@
         "../core-kit:build",
         "../json-kit:build",
         "../llm-starter:build",
+        "../template-kit:build",
         "../node-nursery-web:build",
         "../palm-kit:build",
         "../pinecone-kit:build",
@@ -56,6 +57,7 @@
         "../core-kit:build:tsc",
         "../json-kit:build:tsc",
         "../llm-starter:build:tsc",
+        "../template-kit:build:tsc",
         "../node-nursery-web:build:tsc",
         "../palm-kit:build:tsc",
         "../pinecone-kit:build:tsc"

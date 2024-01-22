@@ -36,6 +36,7 @@
         "./packages/hello-world:build",
         "./packages/json-kit:build",
         "./packages/llm-starter:build",
+        "./packages/template-kit:build",
         "./packages/node-nursery:build",
         "./packages/node-nursery-web:build",
         "./packages/palm-kit:build",
@@ -59,6 +60,7 @@
         "./packages/hello-world:test",
         "./packages/json-kit:test",
         "./packages/llm-starter:test",
+        "./packages/template-kit:test",
         "./packages/node-nursery:test",
         "./packages/node-nursery-web:test",
         "./packages/palm-kit:test",
@@ -83,6 +85,7 @@
         "./packages/hello-world:lint",
         "./packages/json-kit:lint",
         "./packages/llm-starter:lint",
+        "./packages/template-kit:lint",
         "./packages/node-nursery:lint",
         "./packages/node-nursery-web:lint",
         "./packages/palm-kit:lint",
@@ -109,6 +112,7 @@
         "./packages/graph-playground:generate:docs",
         "./packages/graph-runner:generate:docs",
         "./packages/llm-starter:generate:docs",
+        "./packages/template-kit:generate:docs",
         "./packages/node-nursery:generate:docs"
       ]
     }

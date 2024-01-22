@@ -15,6 +15,7 @@
       "dependencies": [
         "../../breadboard:build",
         "../../llm-starter:build",
+        "../../template-kit:build",
         "../../palm-kit:build",
         "build:rollup",
         "build:tsc"
@@ -24,6 +25,7 @@
       "dependencies": [
         "../../breadboard:build:tsc",
         "../../llm-starter:build:tsc",
+        "../../template-kit:build:tsc",
         "../../palm-kit:build:tsc"
       ],
       "files": [

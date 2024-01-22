@@ -25,6 +25,7 @@
         "../graph-integrity:build",
         "../json-kit:build",
         "../llm-starter:build",
+        "../template-kit:build",
         "../node-nursery:build",
         "../palm-kit:build",
         "../pinecone-kit:build",
@@ -42,6 +43,7 @@
         "../graph-integrity:build:tsc",
         "../json-kit:build:tsc",
         "../llm-starter:build:tsc",
+        "../template-kit:build:tsc",
         "../node-nursery:build:tsc",
         "../palm-kit:build:tsc",
         "../pinecone-kit:build:tsc"
