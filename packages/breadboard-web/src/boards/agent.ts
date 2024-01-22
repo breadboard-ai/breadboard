@@ -6,7 +6,7 @@
 
 import { recipe } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
-import { starter } from "@google-labs/llm-starter";
+import { json } from "@google-labs/json-kit";
 
 export default await recipe(({ text, generator, context, stopSequences }) => {
   text
@@ -32,7 +32,7 @@ export default await recipe(({ text, generator, context, stopSequences }) => {
     path: generator.isString(),
   });
 
-  const { result } = starter.jsonata({
+  const { result } = json.jsonata({
     $id: "assemble",
     expression: `$append(context ? context, $append([
       {

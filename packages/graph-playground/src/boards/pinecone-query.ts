@@ -8,6 +8,7 @@ import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
 import { Pinecone } from "@google-labs/pinecone-kit";
 import { PaLMKit } from "@google-labs/palm-kit";
+import JSONKit from "@google-labs/json-kit";
 
 const board = new Board({
   title: "Retrieval-augmented generation with Pinecone",
@@ -18,6 +19,7 @@ const board = new Board({
 const starter = board.addKit(Starter);
 const pinecone = board.addKit(Pinecone);
 const palm = board.addKit(PaLMKit);
+const json = board.addKit(JSONKit);
 
 const template = starter.promptTemplate({
   template: `
@@ -63,7 +65,7 @@ board
           .query()
           .wire(
             "response->json",
-            starter
+            json
               .jsonata({ expression: "$join(matches.metadata.text, '\n\n')" })
               .wire("result->context", template)
           )

@@ -116,14 +116,14 @@ TODO: Brief overview of useful kits and nodes:
   - `map` node
 - `starter` kit
   - `fetch` node
-  - `jsonata` node
   - `promptTemplate` node
   - `secrets` node
   - `urlTemplate` node
-  - `xmlToJson` node
 - `json` kit
   - `schemish` node
   - `validateJson` node
+  - `jsonata` node
+  - `xmlToJson` node
 
 TODO: Guide the reader to build a board that uses promptTemplate to embed reversed string into a template.
 

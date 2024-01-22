@@ -9,6 +9,7 @@ import Core from "@google-labs/core-kit";
 import { Starter } from "@google-labs/llm-starter";
 import Pinecone from "@google-labs/pinecone-kit";
 import { PaLMKit } from "@google-labs/palm-kit";
+import JSONKit from "@google-labs/json-kit";
 
 const PINECONE_BATCH_SIZE = 40;
 
@@ -16,42 +17,42 @@ const generateEmbeddings: LambdaFunction = (board, input, output) => {
   const starter = board.addKit(Starter);
   const core = board.addKit(Core);
   const palm = board.addKit(PaLMKit);
+  const json = board.addKit(JSONKit);
   const merge = core.append({ $id: "merge" });
   input
     .wire(
       "item->json",
-      starter.jsonata({ expression: "metadata.text" }).wire(
+      json.jsonata({ expression: "metadata.text" }).wire(
         "result->text",
         palm
           .embedText()
           .wire("embedding->", merge)
-          .wire("<-PALM_KEY", starter.secrets({ keys: ["PALM_KEY"] })),
+          .wire("<-PALM_KEY", starter.secrets({ keys: ["PALM_KEY"] }))
       )
     )
     .wire("item->accumulator", merge.wire("accumulator->item", output));
 };
 
 const processBatch: LambdaFunction = (board, input, output) => {
-  const starter = board.addKit(Starter);
   const core = board.addKit(Core);
   const pinecone = board.addKit(Pinecone);
+  const json = board.addKit(JSONKit);
 
   input.wire(
     "item->list",
-    core
-      .map({ board: generateEmbeddings, $id: "generate-embeddings" })
-      .wire(
-        "list->json",
-        starter
-          .jsonata({
-            expression: "{ \"vectors\": item.[ { \"id\": id, \"values\": embedding, \"metadata\": metadata } ]}",
-            $id: "format-to-api",
-          })
-          .wire(
-            "result->vectors",
-            pinecone.upsert().wire("response->item", output)
-          )
-      )
+    core.map({ board: generateEmbeddings, $id: "generate-embeddings" }).wire(
+      "list->json",
+      json
+        .jsonata({
+          expression:
+            '{ "vectors": item.[ { "id": id, "values": embedding, "metadata": metadata } ]}',
+          $id: "format-to-api",
+        })
+        .wire(
+          "result->vectors",
+          pinecone.upsert().wire("response->item", output)
+        )
+    )
   );
 };
 
@@ -63,33 +64,33 @@ const board = new Board({
 });
 const kit = board.addKit(Starter);
 const core = board.addKit(Core);
+const json = board.addKit(JSONKit);
 
-board
-  .input({ $id: "url" })
-  .wire(
-    "text->url",
-    kit
-      .fetch({
-        $id: "load-chunks",
-        raw: false,
-      })
-      .wire(
-        "response->json",
-        kit
-          .jsonata({
-            expression: "content.$zip($keys(),*).{\"id\": $[0],\"metadata\": {\"text\": text,\"url\": info.url,\"title\": info.title,\"description\":info.description}}",
-            $id: "get-content",
-          })
-          .wire(
-            "result->list",
-            core
-              .batch({ size: PINECONE_BATCH_SIZE })
-              .wire(
-                "list->",
-                core.map(processBatch).wire("list->text", board.output())
-              )
-          )
-      )
-  );
+board.input({ $id: "url" }).wire(
+  "text->url",
+  kit
+    .fetch({
+      $id: "load-chunks",
+      raw: false,
+    })
+    .wire(
+      "response->json",
+      json
+        .jsonata({
+          expression:
+            'content.$zip($keys(),*).{"id": $[0],"metadata": {"text": text,"url": info.url,"title": info.title,"description":info.description}}',
+          $id: "get-content",
+        })
+        .wire(
+          "result->list",
+          core
+            .batch({ size: PINECONE_BATCH_SIZE })
+            .wire(
+              "list->",
+              core.map(processBatch).wire("list->text", board.output())
+            )
+        )
+    )
+);
 
 export default board;

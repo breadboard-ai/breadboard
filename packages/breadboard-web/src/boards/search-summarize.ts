@@ -13,6 +13,7 @@ import {
 } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { starter } from "@google-labs/llm-starter";
+import { json } from "@google-labs/json-kit";
 
 const metadata = {
   title: "The Search Summarizer Recipe",
@@ -67,7 +68,7 @@ export default await recipe(() => {
     .url.to(starter.fetch({ $id: "search" }))
     .response.as("json")
     .to(
-      starter.jsonata({
+      json.jsonata({
         $id: "getSnippets",
         expression: "$join(items.snippet, '\n')",
       })

@@ -12,7 +12,7 @@ import {
   recipe,
 } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
-import { starter } from "@google-labs/llm-starter";
+import { json } from "@google-labs/json-kit";
 
 const metadata = {
   title: "Board Caller",
@@ -108,7 +108,7 @@ export default await recipe(() => {
       list: boards as V<string[]>,
     });
 
-    return starter
+    return json
       .jsonata({
         $id: "formatResults",
         expression: `{
@@ -132,7 +132,7 @@ export default await recipe(() => {
     tools: formatFunctionDeclarations,
   });
 
-  const getBoardArgs = starter.jsonata({
+  const getBoardArgs = json.jsonata({
     $id: "getBoardArgs",
     expression: `$merge([{
         "path": $lookup(urlMap, toolCalls[0].name)
@@ -151,13 +151,13 @@ export default await recipe(() => {
     ...getBoardArgs,
   });
 
-  const hoistOutputs = starter.jsonata({
+  const hoistOutputs = json.jsonata({
     $id: "hoistOutputs",
     expression: `$ ~> | ** | {}, "schema" |`,
     ...callBoardAsTool,
   });
 
-  const formatOutput = starter.jsonata({
+  const formatOutput = json.jsonata({
     $id: "formatOutput",
     expression: `{
       "result": result,

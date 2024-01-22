@@ -6,6 +6,7 @@
 
 import { Board } from "@google-labs/breadboard";
 import { Core } from "@google-labs/core-kit";
+import JSONKit from "@google-labs/json-kit";
 import { Starter } from "@google-labs/llm-starter";
 import { NodeNurseryWeb } from "@google-labs/node-nursery-web";
 
@@ -17,8 +18,9 @@ const board = new Board({
 const starter = board.addKit(Starter);
 const nursery = board.addKit(NodeNurseryWeb);
 const core = board.addKit(Core);
+const json = board.addKit(JSONKit);
 
-const parseDriveList = starter.jsonata({
+const parseDriveList = json.jsonata({
   expression: '$join(result.files.name, "\n")',
   $id: "parseDriveList",
 });

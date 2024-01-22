@@ -7,6 +7,7 @@
 import { Schema, code, recipe } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { starter } from "@google-labs/llm-starter";
+import { json } from "@google-labs/json-kit";
 
 const gemini = "/graphs/gemini-generator.json";
 const jsonAgent = "/graphs/json-agent.json";
@@ -56,7 +57,7 @@ export default await recipe(
       list: createList.list,
     });
 
-    const makeNicerList = starter.jsonata({
+    const makeNicerList = json.jsonata({
       expression: `item ~> $map(function ($v, $i) { { "title": "choice " & $i, "content": $v } })`,
       json: generateN.list.isString(),
     });
@@ -104,7 +105,7 @@ export default await recipe(
       context: [],
     });
 
-    const pickFirst = starter.jsonata({
+    const pickFirst = json.jsonata({
       $id: "pickFirst",
       expression:
         "($index := $split((**.choice)[0], ' ')[1];list[0][0][$index]).item",

@@ -6,6 +6,7 @@
 
 import { GraphMetadata, Schema, base, recipe } from "@google-labs/breadboard";
 import { starter } from "@google-labs/llm-starter";
+import { json } from "@google-labs/json-kit";
 import { nursery } from "@google-labs/node-nursery-web";
 import { chunkTransformer } from "./openai-chunk-transformer";
 
@@ -74,7 +75,7 @@ export default await recipe(() => {
     url: "https://api.openai.com/v1/chat/completions",
     method: "POST",
     stream: input.useStreaming,
-    headers: starter.jsonata({
+    headers: json.jsonata({
       $id: "makeHeaders",
       expression: `{
         "Content-Type": "application/json",
@@ -83,7 +84,7 @@ export default await recipe(() => {
       OPENAI_API_KEY: starter.secrets({ keys: ["OPENAI_API_KEY"] }),
     }).result,
     body: input.to(
-      starter.jsonata({
+      json.jsonata({
         $id: "makeBody",
         expression: `{
           "model": "gpt-4-vision-preview",
@@ -108,7 +109,7 @@ export default await recipe(() => {
     ).result,
   });
 
-  starter
+  json
     .jsonata({
       $id: "getResponse",
       expression: `choices[0].message.content`,

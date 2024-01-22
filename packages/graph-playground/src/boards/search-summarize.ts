@@ -5,6 +5,7 @@
  */
 
 import { Board } from "@google-labs/breadboard";
+import JSONKit from "@google-labs/json-kit";
 import { Starter } from "@google-labs/llm-starter";
 import { PaLMKit } from "@google-labs/palm-kit";
 
@@ -16,6 +17,7 @@ const searchSummarize = new Board({
 });
 const kit = searchSummarize.addKit(Starter);
 const palm = searchSummarize.addKit(PaLMKit);
+const json = searchSummarize.addKit(JSONKit);
 
 const completion = palm.generateText().wire(
   "completion->text",
@@ -31,15 +33,15 @@ const completion = palm.generateText().wire(
       },
       required: ["text"],
     },
-  }),
+  })
 );
 
 const summarizingTemplate = kit
   .promptTemplate({
-      template: "Use context below to answer this question:\n\n##Question:\n{{question}}\n\n## Context {{context}}\n\\n## Answer:\n",
-      $id: "summarizing-template",
-    },
-  )
+    template:
+      "Use context below to answer this question:\n\n##Question:\n{{question}}\n\n## Context {{context}}\n\\n## Answer:\n",
+    $id: "summarizing-template",
+  })
   .wire("prompt->text", completion);
 
 const searchURLTemplate = kit
@@ -53,10 +55,10 @@ const searchURLTemplate = kit
       .fetch()
       .wire(
         "response->json",
-        kit
+        json
           .jsonata({ expression: "$join(items.snippet, '\n')" })
-          .wire("result->context", summarizingTemplate),
-      ),
+          .wire("result->context", summarizingTemplate)
+      )
   );
 
 kit

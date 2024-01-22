@@ -9,12 +9,14 @@ import { Starter } from "@google-labs/llm-starter";
 import { ReActHelper } from "../react.js";
 import { Core } from "@google-labs/core-kit";
 import { PaLMKit } from "@google-labs/palm-kit";
+import JSONKit from "@google-labs/json-kit";
 
 const board = new Board();
 const core = board.addKit(Core);
 const kit = board.addKit(Starter);
 const reAct = board.addKit(ReActHelper);
 const palm = board.addKit(PaLMKit);
+const json = board.addKit(JSONKit);
 
 /**
  * This is a plain ReAct implementation. It's very verbose, and is meant
@@ -122,7 +124,8 @@ const reActCompletion = palm
 // `math.ts`, but is now participating in the larger ReAct board.
 const math = kit
   .promptTemplate({
-    template: "Translate the math problem below into a JavaScript function named `compute` that can be executed to provide the answer to the problem\nMath Problem: {{question}}\nSolution:",
+    template:
+      "Translate the math problem below into a JavaScript function named `compute` that can be executed to provide the answer to the problem\nMath Problem: {{question}}\nSolution:",
     $id: "math-function",
   })
   .wire(
@@ -131,11 +134,10 @@ const math = kit
       .generateText({ $id: "math-function-completion" })
       .wire(
         "completion->code",
-        kit
-          .runJavascript({
-            name: "compute",
-            $id: "compute",
-          })
+        kit.runJavascript({
+          name: "compute",
+          $id: "compute",
+        })
       )
       .wire("<-PALM_KEY.", secrets)
   );
@@ -150,7 +152,8 @@ const search = () => {
 
   const summarizingTemplate = kit
     .promptTemplate({
-      template: "Use context below to answer this question:\n\n##Question:\n{{question}}\n\n## Context {{context}}\n\\n## Answer:\n",
+      template:
+        "Use context below to answer this question:\n\n##Question:\n{{question}}\n\n## Context {{context}}\n\\n## Answer:\n",
       $id: "summarizing-template",
     })
     .wire("prompt->text", completion);
@@ -167,10 +170,10 @@ const search = () => {
         .fetch()
         .wire(
           "response->json",
-          kit
+          json
             .jsonata({ expression: "$join(items.snippet, '\n')" })
-            .wire("result->context", summarizingTemplate),
-        ),
+            .wire("result->context", summarizingTemplate)
+        )
     );
 
   return core

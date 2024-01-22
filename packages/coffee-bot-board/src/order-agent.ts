@@ -15,6 +15,7 @@ import { PromptMaker } from "./template.js";
 
 import { schemishGenerator } from "./schemish-generator.js";
 import { Core } from "@google-labs/core-kit";
+import JSONKit from "@google-labs/json-kit";
 
 const BASE = "v2-multi-agent";
 
@@ -22,14 +23,19 @@ const maker = new PromptMaker(BASE);
 const board = new Board();
 const kit = board.addKit(Starter);
 const core = board.addKit(Core);
+const json = board.addKit(JSONKit);
 
 const prologuePrompt = kit
-  .promptTemplate(await maker.prompt("order-agent-prologue", "orderAgentPrologue"))
+  .promptTemplate(
+    await maker.prompt("order-agent-prologue", "orderAgentPrologue")
+  )
   .wire("<-tools.", core.passthrough(await maker.part("tools", "json")));
 
 const schema = core.passthrough(await maker.jsonPart("order-schema"));
 
-const epiloguePrompt = kit.promptTemplate(await maker.prompt("order-agent-epilogue", "orderAgentEpilogue"));
+const epiloguePrompt = kit.promptTemplate(
+  await maker.prompt("order-agent-epilogue", "orderAgentEpilogue")
+);
 
 const customerMemory = core.append({ $id: "customerMemory" });
 const agentMemory = core.append({ $id: "agentMemory" });
@@ -48,7 +54,7 @@ epiloguePrompt
 
 const checkMenuTool = core.passthrough().wire(
   "checkMenu->json",
-  kit.jsonata({ expression: "actionInput" }).wire(
+  json.jsonata({ expression: "actionInput" }).wire(
     "result->customer",
     core
       .slot({ slot: "checkMenu" })
@@ -60,7 +66,7 @@ const checkMenuTool = core.passthrough().wire(
 
 const summarizeMenuTool = core.passthrough().wire(
   "summarizeMenu->json",
-  kit.jsonata({ expression: "actionInput" }).wire(
+  json.jsonata({ expression: "actionInput" }).wire(
     "result->customer",
     core
       .slot({ slot: "summarizeMenu" })
@@ -74,7 +80,7 @@ const customerTool = core
   .passthrough()
   .wire(
     "customer->json",
-    kit
+    json
       .jsonata({ expression: "actionInput" })
       .wire(
         "result->message",
