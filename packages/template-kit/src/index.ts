@@ -16,14 +16,14 @@ const builder = new KitBuilder({
   url: "npm:@google-labs/template-kit",
 });
 
-export const Starter = builder.build({
+export const TemplateKit = builder.build({
   promptTemplate,
   urlTemplate,
 });
 
-export type Starter = InstanceType<typeof Starter>;
+export type TemplateKit = InstanceType<typeof TemplateKit>;
 
-export default Starter;
+export default TemplateKit;
 
 /**
  * This is a wrapper around existing kits for the new syntax to add types.
@@ -37,7 +37,7 @@ import {
   NewNodeFactory as NodeFactory,
 } from "@google-labs/breadboard";
 
-export const starter = addKit(Starter) as unknown as {
+export const templates = addKit(TemplateKit) as unknown as {
   promptTemplate: NodeFactory<
     { template: string; [key: string]: NodeValue },
     { prompt: string }
