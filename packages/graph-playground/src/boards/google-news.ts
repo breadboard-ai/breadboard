@@ -39,7 +39,7 @@ input.wire(
       "url->",
       kit.fetch({ raw: true }).wire(
         "response->xml",
-        kit.xmlToJson().wire(
+        json.xmlToJson().wire(
           "json->",
           json
             .jsonata({

@@ -11,7 +11,6 @@ import runJavascript from "./nodes/run-javascript.js";
 import secrets from "./nodes/secrets.js";
 
 import urlTemplate from "./nodes/url-template.js";
-import xmlToJson from "./nodes/xml-to-json.js";
 
 const builder = new KitBuilder({
   title: "LLM Starter Kit",
@@ -27,7 +26,6 @@ export const Starter = builder.build({
   runJavascript,
   secrets,
   urlTemplate,
-  xmlToJson,
 });
 
 export type Starter = InstanceType<typeof Starter>;

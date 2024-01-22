@@ -14,6 +14,7 @@ import {
   addKit,
 } from "@google-labs/breadboard";
 import jsonata from "./nodes/jsonata.js";
+import xmlToJson from "./nodes/xml-to-json.js";
 
 const JSONKit = new KitBuilder({
   title: "JSON Kit",
@@ -25,6 +26,7 @@ const JSONKit = new KitBuilder({
   validateJson,
   schemish,
   jsonata,
+  xmlToJson,
 });
 
 export default JSONKit;
@@ -46,4 +48,5 @@ export const json = addKit(JSONKit) as unknown as {
     },
     { result: string; [key: string]: NodeValue }
   >;
+  xmlToJson: NodeFactory<{ xml: string }, { json: NodeValue }>;
 };
