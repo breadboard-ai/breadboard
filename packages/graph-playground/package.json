@@ -171,6 +171,7 @@
     "@google-labs/core-kit": "*",
     "@google-labs/palm-kit": "*",
     "@google-labs/json-kit": "*",
+    "@google-labs/template-kit": "*",
     "@google-labs/graph-integrity": "*",
     "@google-labs/llm-starter": "*",
     "@google-labs/pinecone-kit": "*",

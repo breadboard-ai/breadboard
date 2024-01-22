@@ -141,6 +141,7 @@
     "@google-labs/breadboard": "*",
     "@google-labs/core-kit": "*",
     "@google-labs/palm-kit": "*",
+    "@google-labs/template-kit": "*",
     "@google-labs/llm-starter": "*",
     "@google-labs/json-kit": "*",
     "@google-labs/node-nursery": "*",

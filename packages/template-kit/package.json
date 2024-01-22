@@ -1,7 +1,7 @@
 {
   "name": "@google-labs/template-kit",
   "private": true,
-  "version": "0.0.1",
+  "version": "0.3.0",
   "description": "Breadboard Kit that contains nodes for various sorts of templating",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",

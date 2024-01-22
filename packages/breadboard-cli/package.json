@@ -132,6 +132,7 @@
     "@google-labs/breadboard": "*",
     "@google-labs/breadboard-web": "*",
     "@google-labs/core-kit": "*",
+    "@google-labs/template-kit": "*",
     "@google-labs/llm-starter": "*",
     "commander": "^11.1.0",
     "esbuild": "^0.19.9",

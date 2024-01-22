@@ -117,6 +117,7 @@
     "ava": "^5.2.0",
     "typescript": "^5.0.4",
     "@google-labs/tsconfig": "*",
+    "@google-labs/template-kit": "*",
     "@google-labs/llm-starter": "*"
   },
   "dependencies": {
