@@ -31,6 +31,7 @@ import { longTermMemory } from "../../utils/long-term-memory.js";
 import { classMap } from "lit/directives/class-map.js";
 import { styles as uiControllerStyles } from "./ui-controller.styles.js";
 import { until } from "lit/directives/until.js";
+import { guard } from "lit/directives/guard.js";
 
 type ExtendedNodeInformation = {
   id: string;
@@ -428,7 +429,10 @@ export class UI extends LitElement {
     this.#scheduleDiagramRender();
 
     const loadVisualBreadboard = async () => {
-      if (!this.#requestedVB && customElements.get('visual-breadboard') == null) {
+      if (
+        !this.#requestedVB &&
+        customElements.get("visual-breadboard") == null
+      ) {
         this.#requestedVB = true;
         await loadScript(VISUALBLOCKS_URL);
         this.#scheduleDiagramRender();
@@ -448,7 +452,9 @@ export class UI extends LitElement {
                   this.selectedNode = this.#nodeInfo.get(evt.id) || null;
                 }}
               ></bb-diagram>`
-            : html`${until(loadVisualBreadboard(), html`Loading...`)}`
+            : html`${guard([this.#requestedVB], () => {
+                return until(loadVisualBreadboard(), html`Loading...`);
+              })}`
         }
         ${
           this.selectedNode
