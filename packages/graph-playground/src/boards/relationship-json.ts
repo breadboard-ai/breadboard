@@ -6,7 +6,7 @@
 
 import { Board } from "@google-labs/breadboard";
 import { Core } from "@google-labs/core-kit";
-import { Starter } from "@google-labs/llm-starter";
+import { TemplateKit } from "@google-labs/template-kit";
 import { PaLMKit } from "@google-labs/palm-kit";
 import JSONKit from "@google-labs/json-kit";
 
@@ -16,7 +16,7 @@ const jsonPrompt = new Board({
     "Asks a question and then asks for a JSON object as an answer. The JSON object is validated against a schema.",
   version: "0.0.1",
 });
-const kit = jsonPrompt.addKit(Starter);
+const kit = jsonPrompt.addKit(TemplateKit);
 const core = jsonPrompt.addKit(Core);
 const json = jsonPrompt.addKit(JSONKit);
 const palm = jsonPrompt.addKit(PaLMKit);

@@ -12,7 +12,7 @@ import {
   recipe,
 } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
-import { starter } from "@google-labs/llm-starter";
+import { templates } from "@google-labs/template-kit";
 import { json } from "@google-labs/json-kit";
 
 const metadata = {
@@ -58,7 +58,7 @@ export default await recipe(() => {
   return core
     .secrets({ keys: ["API_KEY", "GOOGLE_CSE_ID"] })
     .to(
-      starter.urlTemplate({
+      templates.urlTemplate({
         $id: "customSearchURL",
         template:
           "https://www.googleapis.com/customsearch/v1?key={API_KEY}&cx={GOOGLE_CSE_ID}&q={query}",
@@ -75,7 +75,7 @@ export default await recipe(() => {
     )
     .result.as("context")
     .to(
-      starter.promptTemplate({
+      templates.promptTemplate({
         template:
           "Use context below to answer this question:\n\n##Question:\n{{question}}\n\n## Context {{context}}\n\\n## Answer:\n",
         $id: "summarizing-template",

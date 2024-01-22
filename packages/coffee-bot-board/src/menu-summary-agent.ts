@@ -7,7 +7,7 @@
 import { config } from "dotenv";
 
 import { Board } from "@google-labs/breadboard";
-import { Starter } from "@google-labs/llm-starter";
+import { TemplateKit } from "@google-labs/template-kit";
 import { Core } from "@google-labs/core-kit";
 import { PaLMKit } from "@google-labs/palm-kit";
 
@@ -17,7 +17,7 @@ config();
 
 const maker = new PromptMaker("v2-multi-agent");
 export const menuSummaryAgent = new Board();
-const kit = menuSummaryAgent.addKit(Starter);
+const kit = menuSummaryAgent.addKit(TemplateKit);
 const core = menuSummaryAgent.addKit(Core);
 const palm = menuSummaryAgent.addKit(PaLMKit);
 

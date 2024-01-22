@@ -9,7 +9,7 @@ import {
   Board,
   GraphDescriptor,
 } from "@google-labs/breadboard";
-import { Starter } from "@google-labs/llm-starter";
+import { TemplateKit } from "@google-labs/template-kit";
 
 import { PromptMaker } from "./template.js";
 
@@ -21,7 +21,7 @@ const BASE = "v2-multi-agent";
 
 const maker = new PromptMaker(BASE);
 const board = new Board();
-const kit = board.addKit(Starter);
+const kit = board.addKit(TemplateKit);
 const core = board.addKit(Core);
 const json = board.addKit(JSONKit);
 

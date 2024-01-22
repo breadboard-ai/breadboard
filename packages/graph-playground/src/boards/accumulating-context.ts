@@ -5,7 +5,7 @@
  */
 
 import { Board } from "@google-labs/breadboard";
-import { Starter } from "@google-labs/llm-starter";
+import { TemplateKit } from "@google-labs/template-kit";
 import { Core } from "@google-labs/core-kit";
 import { PaLMKit } from "@google-labs/palm-kit";
 
@@ -15,7 +15,7 @@ const board = new Board({
     'An example of a board that implements a multi-turn experience: a very simple chat bot that accumulates context of the conversations. Tell it "I am hungry" or something like this and then give simple replies, like "bbq". It should be able to infer what you\'re asking for based on the conversation context. All replies are pure hallucinations, but should give you a sense of how a Breadboard API endpoint for a board with cycles looks like.',
   version: "0.0.1",
 });
-const kit = board.addKit(Starter);
+const kit = board.addKit(TemplateKit);
 const core = board.addKit(Core);
 const palm = board.addKit(PaLMKit);
 

@@ -6,7 +6,7 @@
 
 import { Board } from "@google-labs/breadboard";
 import Core from "@google-labs/core-kit";
-import { Starter } from "@google-labs/llm-starter";
+import { TemplateKit } from "@google-labs/template-kit";
 import { PaLMKit } from "@google-labs/palm-kit";
 
 const math = new Board({
@@ -15,7 +15,7 @@ const math = new Board({
     "A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.",
   version: "0.0.1",
 });
-const kit = math.addKit(Starter);
+const kit = math.addKit(TemplateKit);
 const core = math.addKit(Core);
 const palm = math.addKit(PaLMKit);
 

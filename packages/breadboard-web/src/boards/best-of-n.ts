@@ -6,7 +6,7 @@
 
 import { Schema, code, recipe } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
-import { starter } from "@google-labs/llm-starter";
+import { templates } from "@google-labs/template-kit";
 import { json } from "@google-labs/json-kit";
 
 const gemini = "/graphs/gemini-generator.json";
@@ -65,7 +65,7 @@ export default await recipe(
     const rank = core.invoke({
       $id: "rank",
       path: agent.isString(),
-      text: starter.promptTemplate({
+      text: templates.promptTemplate({
         template: `You are a ranking expert. Given {{n}} choices of the output, you are to rank these choices in the order (starting with the best) of matching the requirements of the task described below:
         
         TASK:

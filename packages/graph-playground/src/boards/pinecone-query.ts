@@ -5,7 +5,7 @@
  */
 
 import { Board } from "@google-labs/breadboard";
-import { Starter } from "@google-labs/llm-starter";
+import { TemplateKit } from "@google-labs/template-kit";
 import { Pinecone } from "@google-labs/pinecone-kit";
 import { PaLMKit } from "@google-labs/palm-kit";
 import JSONKit from "@google-labs/json-kit";
@@ -17,13 +17,13 @@ const board = new Board({
     "This board implements the simplest possible retrieval-augmented generation (RAG) system using Pinecone store. The store was generated with [pinecone-load](https://github.com/breadboard-ai/breadboard/blob/main/packages/graph-playground/graphs/pinecone-load.json).",
   version: "0.0.1",
 });
-const starter = board.addKit(Starter);
+const templates = board.addKit(TemplateKit);
 const pinecone = board.addKit(Pinecone);
 const palm = board.addKit(PaLMKit);
 const json = board.addKit(JSONKit);
 const core = board.addKit(Core);
 
-const template = starter.promptTemplate({
+const template = templates.promptTemplate({
   template: `
 Analyze the question and the knowledge base, provided below.
 

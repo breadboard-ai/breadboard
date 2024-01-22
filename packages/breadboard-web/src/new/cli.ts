@@ -28,7 +28,7 @@ import {
 // import { ReActHelper } from "./react.js";
 import { pathToFileURL } from "url";
 import Core from "@google-labs/core-kit";
-import Starter from "@google-labs/llm-starter";
+import TemplateKit from "@google-labs/template-kit";
 import Nursery from "@google-labs/node-nursery";
 import Pinecone from "@google-labs/pinecone-kit";
 import Palm from "@google-labs/palm-kit";
@@ -264,7 +264,7 @@ async function main(args: string[], use_input_handler = false) {
   }
 
   const kits = [
-    asRuntimeKit(Starter),
+    asRuntimeKit(TemplateKit),
     asRuntimeKit(Core),
     asRuntimeKit(Nursery),
     asRuntimeKit(Pinecone),

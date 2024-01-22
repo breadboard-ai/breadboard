@@ -7,7 +7,7 @@
 import { Board, Schema } from "@google-labs/breadboard";
 import Core from "@google-labs/core-kit";
 import JSONKit from "@google-labs/json-kit";
-import { Starter } from "@google-labs/llm-starter";
+import { TemplateKit } from "@google-labs/template-kit";
 
 const board = new Board({
   title: "Healer",
@@ -15,7 +15,7 @@ const board = new Board({
     "Try to heal broken text by generating new text that fixes the errors supplied by the validator",
   version: "0.0.1",
 });
-const starter = board.addKit(Starter);
+const templates = board.addKit(TemplateKit);
 const core = board.addKit(Core);
 const json = board.addKit(JSONKit);
 
@@ -123,7 +123,7 @@ const otherTimePremble = core.passthrough({
   preamble: `Nice job, validation error fixer bot! However, you didn't get it quite right `,
 });
 
-const tryTemplate = starter.promptTemplate({
+const tryTemplate = templates.promptTemplate({
   $id: "tryTemplate",
   template: `
 {{preamble}}

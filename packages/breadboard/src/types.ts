@@ -135,7 +135,7 @@ export type Edge = {
  * Represents references to a "kit": a collection of `NodeHandlers`.
  * The basic permise here is that people can publish kits with interesting
  * handlers, and then graphs can specify which ones they use.
- * The `@google-labs/llm-starter` package is an example of kit.
+ * The `@google-labs/core-kit` package is an example of kit.
  */
 export type KitReference = {
   /**

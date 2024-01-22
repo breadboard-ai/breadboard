@@ -7,7 +7,7 @@
 import { Board, Schema } from "@google-labs/breadboard";
 import Core from "@google-labs/core-kit";
 import JSONKit from "@google-labs/json-kit";
-import Starter from "@google-labs/llm-starter";
+import TemplateKit from "@google-labs/template-kit";
 
 const board = new Board({
   title: "JSON Generator",
@@ -17,7 +17,7 @@ const board = new Board({
 });
 const core = board.addKit(Core);
 const json = board.addKit(JSONKit);
-const starter = board.addKit(Starter);
+const templates = board.addKit(TemplateKit);
 
 const sampleSchema = {
   type: "object",
@@ -111,7 +111,7 @@ const errorOutput = board.output({
 
 const schemish = json.schemish().wire("<-schema", parameters);
 
-const formatTemplate = starter
+const formatTemplate = templates
   .promptTemplate({
     $id: "formatTemplate",
     template: `Respond in valid JSON of the following structure:
@@ -122,7 +122,7 @@ RESPONSE:`,
   })
   .wire("<-schemish", schemish);
 
-const generatorTemplate = starter
+const generatorTemplate = templates
   .promptTemplate({
     $id: "generatorTemplate",
   })
@@ -148,7 +148,7 @@ const errorRetryFormatter = json.jsonata({
   expression: "$string($.error, true)",
 });
 
-const retryTemplate = starter.promptTemplate({
+const retryTemplate = templates.promptTemplate({
   $id: "retryTemplate",
   template: `The following output failed to parse as valid JSON:"
 {{json}}

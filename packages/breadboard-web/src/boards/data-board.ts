@@ -6,7 +6,7 @@
 
 import { Schema, recipe } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
-import { starter } from "@google-labs/llm-starter";
+import { templates } from "@google-labs/template-kit";
 import { json } from "@google-labs/json-kit";
 
 const gemini = "/graphs/gemini-generator.json";
@@ -51,7 +51,7 @@ export default await recipe(({ specs, generator }) => {
 
   const requirementsExtractor = core.invoke({
     $id: "requiremenstExtractor",
-    text: starter.promptTemplate({
+    text: templates.promptTemplate({
       template: `Given the following specs, extract requirements for writing an ad copy:
       
       {{specs}}`,
@@ -106,7 +106,7 @@ export default await recipe(({ specs, generator }) => {
   const adWriter2 = core.invoke({
     $id: "adWriter2",
     context: [],
-    text: starter.promptTemplate({
+    text: templates.promptTemplate({
       template: `Write ad copy that conforms to the requirements below
       
       {{requirements}}`,
