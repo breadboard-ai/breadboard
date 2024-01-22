@@ -8,7 +8,6 @@ import { LitElement, html, css } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { until } from "lit/directives/until.js";
 import { Board } from "../../types/types.js";
-import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import { StartEvent, ToastEvent, ToastType } from "../../events/events.js";
 
 @customElement("bb-board-list")
@@ -186,11 +185,24 @@ export class BoardItem extends LitElement {
   `;
 
   #replaceLinks(description: string) {
-    const updatedDescription = description.replaceAll(
-      /\[(.*?)\]\((.*?)\)/gim,
-      '<a href="$2">$1</a>'
-    );
-    return unsafeHTML(updatedDescription);
+    // Safely extract markdown links and make them real HTML links. Any other
+    // HTML will remain safely escaped.
+    const parts = [];
+    let lastIndex = 0;
+    for (const match of description.matchAll(/\[(.*?)\]\((.*?)\)/gim)) {
+      const index = match.index;
+      if (index === undefined) {
+        continue;
+      }
+      const precedingText = description.slice(lastIndex, index);
+      parts.push(precedingText);
+      const [fullMatch, linkLabel, linkUrl] = match;
+      parts.push(html`<a href="${linkUrl}">${linkLabel}</a>`);
+      lastIndex = index + fullMatch.length;
+    }
+    const remainingText = description.slice(lastIndex);
+    parts.push(remainingText);
+    return parts;
   }
 
   async #getDescription() {
