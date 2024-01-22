@@ -99,7 +99,7 @@ function route({ completion }: { completion: NodeValue }) {
   return { [data.action]: data, tool: data.action };
 }
 
-const toolRouter = kit
+const toolRouter = core
   .runJavascript({
     $id: "toolRouter",
     name: "route",

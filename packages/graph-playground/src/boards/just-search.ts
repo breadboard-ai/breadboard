@@ -14,7 +14,7 @@ const kit = board.addKit(Starter);
 const json = board.addKit(JSONKit);
 const core = board.addKit(Core);
 
-const secrets = kit.secrets({
+const secrets = core.secrets({
   keys: ["PALM_KEY", "GOOGLE_CSE_ID"],
 });
 

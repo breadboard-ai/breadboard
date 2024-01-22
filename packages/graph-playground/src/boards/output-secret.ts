@@ -5,11 +5,11 @@
  */
 
 import { Board } from "@google-labs/breadboard";
-import { Starter } from "@google-labs/llm-starter";
+import Core from "@google-labs/core-kit";
 
 const board = new Board();
-const kit = board.addKit(Starter);
+const core = board.addKit(Core);
 
-kit.secrets({ keys: ["PALM_KEY"] }).wire("PALM_KEY", board.output());
+core.secrets({ keys: ["PALM_KEY"] }).wire("PALM_KEY", board.output());
 
 export default board;

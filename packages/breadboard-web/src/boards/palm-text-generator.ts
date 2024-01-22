@@ -5,7 +5,7 @@
  */
 
 import { Schema, V, base, recipe, code } from "@google-labs/breadboard";
-import { starter } from "@google-labs/llm-starter";
+import { core } from "@google-labs/core-kit";
 import { palm } from "@google-labs/palm-kit";
 
 const metadata = {
@@ -56,7 +56,7 @@ export default await recipe(() => {
   const generateText = palm.generateText({
     $id: "generateText",
     text: parameters.text as V<string>,
-    PALM_KEY: starter.secrets({ keys: ["PALM_KEY"] }),
+    PALM_KEY: core.secrets({ keys: ["PALM_KEY"] }),
   });
 
   const textOutput = base.output({

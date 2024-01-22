@@ -12,7 +12,7 @@ import handler, {
   RunJavascriptOutputs,
   computeAdditionalInputs,
   computeOutputSchema,
-} from "../../src/nodes/run-javascript.js";
+} from "../src/nodes/run-javascript.js";
 
 test("runJavascript runs code", async (t) => {
   const runJavascript = handler.invoke;
@@ -106,13 +106,16 @@ test("real function computes as expected", async (t) => {
     return { args };
   }.toString();
 
-  const result = await handler.invoke({
-    code,
-    raw: true
-  }, {});
+  const result = await handler.invoke(
+    {
+      code,
+      raw: true,
+    },
+    {}
+  );
 
   t.deepEqual(result, {
-    args: {}
+    args: {},
   });
 });
 
@@ -123,11 +126,14 @@ test("real function computes as expected with input", async (t) => {
     return args;
   }.toString();
 
-  const result = await handler.invoke({
-    input,
-    code,
-    raw: true
-  }, {});
+  const result = await handler.invoke(
+    {
+      input,
+      code,
+      raw: true,
+    },
+    {}
+  );
 
   t.deepEqual(result, { input });
 });
@@ -137,13 +143,16 @@ test("arrow function computes as expected", async (t) => {
     return { args };
   }).toString();
 
-  const result = await handler.invoke({
-    code,
-    raw: true
-  }, {});
+  const result = await handler.invoke(
+    {
+      code,
+      raw: true,
+    },
+    {}
+  );
 
   t.deepEqual(result, {
-    args: {}
+    args: {},
   });
 });
 
@@ -154,11 +163,14 @@ test("arrow function computes as expected with input", async (t) => {
     return args;
   }).toString();
 
-  const result = await handler.invoke({
-    input,
-    code,
-    raw: true
-  }, {});
+  const result = await handler.invoke(
+    {
+      input,
+      code,
+      raw: true,
+    },
+    {}
+  );
 
   t.deepEqual(result, { input });
 });
@@ -168,13 +180,16 @@ test("anonymous function computes as expected", async (t) => {
     return { args };
   }.toString();
 
-  const result = await handler.invoke({
-    code,
-    raw: true
-  }, {});
+  const result = await handler.invoke(
+    {
+      code,
+      raw: true,
+    },
+    {}
+  );
 
   t.deepEqual(result, {
-    args: {}
+    args: {},
   });
 });
 
@@ -185,11 +200,14 @@ test("anonymous function computes as expected with input", async (t) => {
     return args;
   }.toString();
 
-  const result = await handler.invoke({
-    input,
-    code,
-    raw: true
-  }, {});
+  const result = await handler.invoke(
+    {
+      input,
+      code,
+      raw: true,
+    },
+    {}
+  );
 
   t.deepEqual(result, { input });
 });
@@ -199,13 +217,16 @@ test("named function computes as expected", async (t) => {
     return { args };
   }.toString();
 
-  const result = await handler.invoke({
-    code,
-    raw: true
-  }, {});
+  const result = await handler.invoke(
+    {
+      code,
+      raw: true,
+    },
+    {}
+  );
 
   t.deepEqual(result, {
-    args: {}
+    args: {},
   });
 });
 
@@ -216,11 +237,14 @@ test("named function computes as expected with input", async (t) => {
     return args;
   }.toString();
 
-  const result = await handler.invoke({
-    input,
-    code,
-    raw: true
-  }, {});
+  const result = await handler.invoke(
+    {
+      input,
+      code,
+      raw: true,
+    },
+    {}
+  );
 
   t.deepEqual(result, { input });
 });
@@ -230,14 +254,17 @@ test("anonymous function computes as expected when a name is provided", async (t
     return { args };
   }.toString();
 
-  const result = await handler.invoke({
-    code,
-    name: "test",
-    raw: true
-  }, {});
+  const result = await handler.invoke(
+    {
+      code,
+      name: "test",
+      raw: true,
+    },
+    {}
+  );
 
   t.deepEqual(result, {
-    args: {}
+    args: {},
   });
 });
 
@@ -246,14 +273,17 @@ test("arrow function computes as expected when a name is provided", async (t) =>
     return { args };
   }).toString();
 
-  const result = await handler.invoke({
-    code,
-    name: "test",
-    raw: true
-  }, {});
+  const result = await handler.invoke(
+    {
+      code,
+      name: "test",
+      raw: true,
+    },
+    {}
+  );
 
   t.deepEqual(result, {
-    args: {}
+    args: {},
   });
 });
 
@@ -262,14 +292,17 @@ test("named function computes as expected when a name is provided", async (t) =>
     return { args };
   }.toString();
 
-  const result = await handler.invoke({
-    code,
-    name: "test",
-    raw: true
-  }, {});
+  const result = await handler.invoke(
+    {
+      code,
+      name: "test",
+      raw: true,
+    },
+    {}
+  );
 
   t.deepEqual(result, {
-    args: {}
+    args: {},
   });
 });
 
@@ -278,14 +311,17 @@ test("named function computes as expected when a name is provided and the functi
     return { args };
   }
 
-  const result = await handler.invoke({
-    code: fn.toString(),
-    name: "test",
-    raw: true
-  }, {});
+  const result = await handler.invoke(
+    {
+      code: fn.toString(),
+      name: "test",
+      raw: true,
+    },
+    {}
+  );
 
   t.deepEqual(result, {
-    args: {}
+    args: {},
   });
 });
 
@@ -295,12 +331,15 @@ test("named function computes as expected when a name is provided and the functi
     return { args };
   };
 
-  const result = await handler.invoke({
-    input,
-    code: fn.toString(),
-    name: "test",
-    raw: true
-  }, {});
+  const result = await handler.invoke(
+    {
+      input,
+      code: fn.toString(),
+      name: "test",
+      raw: true,
+    },
+    {}
+  );
 
   t.deepEqual(result, { args: { input } });
 });

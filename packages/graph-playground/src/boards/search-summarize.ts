@@ -63,7 +63,7 @@ const searchURLTemplate = kit
       )
   );
 
-kit
+core
   .secrets({ keys: ["PALM_KEY", "API_KEY", "GOOGLE_CSE_ID"] })
   .wire("PALM_KEY", completion)
   .wire("API_KEY", searchURLTemplate)

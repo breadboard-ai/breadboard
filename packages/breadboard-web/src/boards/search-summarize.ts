@@ -55,7 +55,7 @@ const outputSchema = {
 export default await recipe(() => {
   const parameters = base.input({ $id: "parameters", schema: inputSchema });
 
-  return starter
+  return core
     .secrets({ keys: ["API_KEY", "GOOGLE_CSE_ID"] })
     .to(
       starter.urlTemplate({

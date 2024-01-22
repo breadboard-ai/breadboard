@@ -7,7 +7,6 @@
 import { Board } from "@google-labs/breadboard";
 import { Core } from "@google-labs/core-kit";
 import JSONKit from "@google-labs/json-kit";
-import { Starter } from "@google-labs/llm-starter";
 import { NodeNurseryWeb } from "@google-labs/node-nursery-web";
 
 const board = new Board({
@@ -15,7 +14,6 @@ const board = new Board({
   description: "First attempt at a Google Drive node",
   version: "0.0.1",
 });
-const starter = board.addKit(Starter);
 const nursery = board.addKit(NodeNurseryWeb);
 const core = board.addKit(Core);
 const json = board.addKit(JSONKit);
@@ -43,9 +41,9 @@ nursery
   .credentials({
     $id: "credentials",
   })
-  .wire("<-API_KEY", starter.secrets({ keys: ["API_KEY"] }))
-  .wire("<-AUTH_DOMAIN", starter.secrets({ keys: ["AUTH_DOMAIN"] }))
-  .wire("<-PROJECT_ID", starter.secrets({ keys: ["PROJECT_ID"] }))
+  .wire("<-API_KEY", core.secrets({ keys: ["API_KEY"] }))
+  .wire("<-AUTH_DOMAIN", core.secrets({ keys: ["AUTH_DOMAIN"] }))
+  .wire("<-PROJECT_ID", core.secrets({ keys: ["PROJECT_ID"] }))
   .wire(
     "<-scopes",
     core.passthrough({

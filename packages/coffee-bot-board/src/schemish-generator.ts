@@ -37,7 +37,7 @@ function gate({ allow, value }: { allow: boolean; value: NodeValue }) {
   return { $error: value };
 }
 
-const shouldRecover = kit.runJavascript({
+const shouldRecover = core.runJavascript({
   $id: "shouldRecover",
   name: "gate",
   code: gate.toString(),
@@ -140,7 +140,7 @@ const generator = palm
       },
     ],
   })
-  .wire("<-PALM_KEY.", kit.secrets({ keys: ["PALM_KEY"] }))
+  .wire("<-PALM_KEY.", core.secrets({ keys: ["PALM_KEY"] }))
   .wire("completion->json", validateJson)
   .wire("filters->value", shouldRecover);
 

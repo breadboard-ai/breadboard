@@ -27,7 +27,7 @@ const json = board.addKit(JSONKit);
  */
 
 // The single node where all the important keys come from.
-const secrets = kit.secrets({
+const secrets = core.secrets({
   keys: ["PALM_KEY", "GOOGLE_CSE_ID"],
 });
 
@@ -134,7 +134,7 @@ const math = kit
       .generateText({ $id: "math-function-completion" })
       .wire(
         "completion->code",
-        kit.runJavascript({
+        core.runJavascript({
           name: "compute",
           $id: "compute",
         })
