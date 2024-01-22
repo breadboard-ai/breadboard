@@ -8,7 +8,7 @@ Note: If you are testing locally without publishing the module, then you need to
 
 ## Usage
 
-If you are running from inside the breadboard repo, then you can run and you want to use the latest versions of breadboard (i.e. not the published versions) then you _MUST_ use the `--workspace` command.
+If you are running from inside the breadboard repo, and you want to use the latest versions of breadboard (i.e. not the published versions) then you _MUST_ use the `--workspace` command.
 
 ```bash
 npm init @google-labs/breadboard ../testing --workspace=./packages/create-breadboard
@@ -21,3 +21,5 @@ If you are running from outside the breadboard repo, then you can run:
 ```bash
 npm init @google-labs/breadboard your-project-name
 ```
+
+This will install `@google-labs/breadboard` from npm and create a new project in the `your-project-name` folder.
