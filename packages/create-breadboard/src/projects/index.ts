@@ -7,8 +7,7 @@
  */
 
 import { create } from "../utils/create.js";
-import * as fs from "fs";
-import { stat } from "fs/promises";
+import { stat, readFile, readdir } from "fs/promises";
 import * as path from "path";
 import { fileURLToPath } from "url";
 
@@ -26,7 +25,7 @@ const generateAssetList = async (
     root = dir;
   }
 
-  const files = fs.readdirSync(dir);
+  const files = await readdir(dir);
   const assetList: Asset[] = [];
   for (const file of files) {
     const filePath = path.join(dir, file);
@@ -35,7 +34,7 @@ const generateAssetList = async (
     if (fileStat.isFile()) {
       assetList.push({
         path: filePath.substring(root.length + 1), // file is relative to dir.
-        contents: fs.readFileSync(filePath, { encoding: "utf-8" }),
+        contents: await readFile(filePath, { encoding: "utf-8" }),
       });
     }
     // recursively add file paths to asset list if it is a directory
