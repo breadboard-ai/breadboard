@@ -50,7 +50,6 @@ type tmp = {
 type Asset = { path: string; contents: string | ((...args: any[]) => string) };
 
 const startCwd = process.cwd();
-const __dirname = path.dirname(new URL(import.meta.url).pathname);
 
 const fileExists = async (path: string) => {
   try {
@@ -174,7 +173,7 @@ const createPackage = async (options: CreatePackageOptions) => {
     dependencies,
     devDependencies,
     package: packageInfo = {},
-    files,
+    files = [],
   } = options;
 
   const cwd = process.cwd();
@@ -195,13 +194,10 @@ const createPackage = async (options: CreatePackageOptions) => {
     process.exit(1);
   }
 
+  // The project name will be either the directory name or the name provided in the options.
   options.name = options.name || path.basename(packageDir);
 
   const createFileParams = makeCreateFileParams(options);
-
-  const { nameWithScope, dirName } = createFileParams;
-
-  const appCwd = path.join(process.cwd(), packageDir);
 
   console.log(
     chalk.green.bold(`Creating "project" directory:`),
@@ -211,10 +207,6 @@ const createPackage = async (options: CreatePackageOptions) => {
   await mkdir(packageDir, { recursive: true });
 
   process.chdir(packageDir);
-
-  if (files == undefined) {
-    throw new Error("files is undefined");
-  }
 
   runCommand(`npm init -y`);
 
@@ -235,7 +227,7 @@ const createPackage = async (options: CreatePackageOptions) => {
     });
   }
 
-  newPackage.name = nameWithScope;
+  newPackage.name = createFileParams.nameWithScope;
 
   await createFiles(files, { options, params: createFileParams });
 
@@ -265,12 +257,6 @@ const createPackage = async (options: CreatePackageOptions) => {
 
 const create = async (options: CreatePackageOptions) => {
   const result = await createPackage(options);
-
-  console.log(
-    chalk.green.bold(
-      `Done! You can now \`cd ${result.packageDir}\` to start working on your project.`
-    )
-  );
 
   return result;
 };
