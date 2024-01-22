@@ -10,11 +10,10 @@ import promptTemplate from "./nodes/prompt-template.js";
 import urlTemplate from "./nodes/url-template.js";
 
 const builder = new KitBuilder({
-  title: "LLM Starter Kit",
-  description:
-    "A kit that provides a few necessary components for wiring boards that use PaLM API.",
+  title: "Template Kit",
+  description: "A kit that contains nodes for various sorts of templating.",
   version: "0.0.1",
-  url: "npm:@google-labs/llm-starter",
+  url: "npm:@google-labs/template-kit",
 });
 
 export const Starter = builder.build({
