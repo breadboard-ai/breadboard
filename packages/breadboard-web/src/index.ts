@@ -264,7 +264,7 @@ export class Main extends LitElement {
       }
     }
 
-    window.addEventListener('popstate', (evt) => {
+    window.addEventListener('popstate', () => {
       // TODO: If routing gets more complicated than two pages, revise this.
       const pageUrl = new URL(window.location.href);
 
