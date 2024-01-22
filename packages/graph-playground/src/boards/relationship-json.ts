@@ -113,7 +113,7 @@ jsonPrompt
             "lambda<-board",
             jsonPrompt.lambda((_, input, output) => {
               const completion = palm.generateText({
-                PALM_KEY: kit.secrets({ keys: ["PALM_KEY"] }),
+                PALM_KEY: core.secrets({ keys: ["PALM_KEY"] }),
               });
 
               const validator = json.validateJson({ schema });

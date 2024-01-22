@@ -5,6 +5,7 @@
  */
 
 import { Board } from "@google-labs/breadboard";
+import Core from "@google-labs/core-kit";
 import JSONKit from "@google-labs/json-kit";
 import { Starter } from "@google-labs/llm-starter";
 import { PaLMKit } from "@google-labs/palm-kit";
@@ -16,6 +17,7 @@ const board = new Board({
   version: "0.0.1",
 });
 const starter = board.addKit(Starter);
+const core = board.addKit(Core);
 const palm = board.addKit(PaLMKit);
 const json = board.addKit(JSONKit);
 
@@ -95,7 +97,7 @@ askForTemplate.wire(
         "prompt->text",
         questionGenerator
           .wire("completion->text", printResults)
-          .wire("<-PALM_KEY", starter.secrets({ keys: ["PALM_KEY"] }))
+          .wire("<-PALM_KEY", core.secrets({ keys: ["PALM_KEY"] }))
       )
     )
   )

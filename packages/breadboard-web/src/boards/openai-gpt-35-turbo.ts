@@ -5,7 +5,6 @@
  */
 
 import { GraphMetadata, Schema, base, recipe } from "@google-labs/breadboard";
-import { starter } from "@google-labs/llm-starter";
 import { core } from "@google-labs/core-kit";
 import { json } from "@google-labs/json-kit";
 import { nursery } from "@google-labs/node-nursery-web";
@@ -184,7 +183,7 @@ export default await recipe(() => {
         }
       )`,
       raw: true,
-      OPENAI_API_KEY: starter.secrets({ keys: ["OPENAI_API_KEY"] }),
+      OPENAI_API_KEY: core.secrets({ keys: ["OPENAI_API_KEY"] }),
     })
   );
 

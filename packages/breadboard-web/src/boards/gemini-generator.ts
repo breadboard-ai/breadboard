@@ -237,7 +237,7 @@ export default await recipe(() => {
     $id: "makeURL",
     template:
       "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:{method}?key={GEMINI_KEY}{+sseOption}",
-    GEMINI_KEY: starter.secrets({ keys: ["GEMINI_KEY"] }),
+    GEMINI_KEY: core.secrets({ keys: ["GEMINI_KEY"] }),
     ...chooseMethod,
   });
 
