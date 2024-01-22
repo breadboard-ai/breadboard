@@ -5,6 +5,7 @@
  */
 
 import { Board } from "@google-labs/breadboard";
+import JSONKit from "@google-labs/json-kit";
 import { Starter } from "@google-labs/llm-starter";
 import { PaLMKit } from "@google-labs/palm-kit";
 
@@ -16,6 +17,7 @@ const board = new Board({
 });
 const starter = board.addKit(Starter);
 const palm = board.addKit(PaLMKit);
+const json = board.addKit(JSONKit);
 
 const askForTemplate = board.input({
   $id: "askForTemplate",
@@ -73,11 +75,11 @@ Reply as valid JSON in the following format:
 JSON:
 {{result}}
 
-Question:`
+Question:`,
 });
 
-const promptStuffer = starter.jsonata({
-  expression: "{ \"prompt\": $ }",
+const promptStuffer = json.jsonata({
+  expression: '{ "prompt": $ }',
   $id: "promptStuffer",
 });
 
@@ -93,7 +95,7 @@ askForTemplate.wire(
         "prompt->text",
         questionGenerator
           .wire("completion->text", printResults)
-          .wire("<-PALM_KEY", starter.secrets({ keys: ["PALM_KEY"] })),
+          .wire("<-PALM_KEY", starter.secrets({ keys: ["PALM_KEY"] }))
       )
     )
   )

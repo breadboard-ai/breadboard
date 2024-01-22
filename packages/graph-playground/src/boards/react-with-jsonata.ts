@@ -6,6 +6,7 @@
 
 import { Board } from "@google-labs/breadboard";
 import { Core } from "@google-labs/core-kit";
+import JSONKit from "@google-labs/json-kit";
 import { Starter } from "@google-labs/llm-starter";
 import { PaLMKit } from "@google-labs/palm-kit";
 
@@ -13,6 +14,7 @@ const board = new Board();
 const core = board.addKit(Core);
 const kit = board.addKit(Starter);
 const palm = board.addKit(PaLMKit);
+const json = board.addKit(JSONKit);
 
 /**
  * This another iteration on the original (`react.ts`) ReAct
@@ -35,13 +37,13 @@ const secrets = kit.secrets({ keys: ["PALM_KEY", "GOOGLE_CSE_ID"] });
 
 // This is the jsonata node that extracts the tool names
 // from the reflected graph.
-const tools = kit.jsonata({
+const tools = json.jsonata({
   expression: "nodes.configuration.description.%.%.[id] ~> $join(', ')",
 });
 
 // This is the jsonata node that extracts the tool descriptions
 // from the reflected graph.
-const descriptions = kit.jsonata({
+const descriptions = json.jsonata({
   expression:
     "nodes.configuration.description.%.%.[id &  ': ' & configuration.description] ~> $join('\n')",
 });
@@ -167,7 +169,7 @@ reActTemplate.wire(
   reActCompletion
     .wire(
       "completion->json",
-      kit
+      json
         .jsonata({
           expression:
             "($f := function($line, $str) { $contains($line, $str) ? $substring($line, $length($str)) }; $merge(($split('\n')[[1..2]]) @ $line.$.{'action': $f($line, 'Action: '), 'input': $f($line, 'Action Input: '),'answer': $f($line, 'Final Answer: ') }).{ action: input,'answer': answer})",

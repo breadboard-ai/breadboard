@@ -6,6 +6,7 @@
 
 import { Board } from "@google-labs/breadboard";
 import { Starter } from "@google-labs/llm-starter";
+import JSONKit from "@google-labs/json-kit";
 
 const board = new Board({
   title: "Pinecone API configuration helper",
@@ -15,15 +16,22 @@ const board = new Board({
 });
 
 const starter = board.addKit(Starter);
+const json = board.addKit(JSONKit);
 
-starter
+json
   .jsonata({
     expression: "$",
     $id: "start",
   })
   .wire("<-PINECONE_INDEX", starter.secrets({ keys: ["PINECONE_INDEX"] }))
-  .wire("<-PINECONE_PROJECT_ID", starter.secrets({ keys: ["PINECONE_PROJECT_ID"] }))
-  .wire("<-PINECONE_ENVIRONMENT", starter.secrets({ keys: ["PINECONE_ENVIRONMENT"] }))
+  .wire(
+    "<-PINECONE_PROJECT_ID",
+    starter.secrets({ keys: ["PINECONE_PROJECT_ID"] })
+  )
+  .wire(
+    "<-PINECONE_ENVIRONMENT",
+    starter.secrets({ keys: ["PINECONE_ENVIRONMENT"] })
+  )
   .wire("<-PINECONE_API_KEY", starter.secrets({ keys: ["PINECONE_API_KEY"] }))
   .wire(
     "result->config",

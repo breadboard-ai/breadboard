@@ -5,11 +5,13 @@
  */
 
 import { Board } from "@google-labs/breadboard";
+import JSONKit from "@google-labs/json-kit";
 import { Starter } from "@google-labs/llm-starter";
 import { Nursery } from "@google-labs/node-nursery";
 
 const findFileBySimilarity = new Board();
 const kit = findFileBySimilarity.addKit(Starter);
+const json = findFileBySimilarity.addKit(JSONKit);
 const nursery = findFileBySimilarity.addKit(Nursery);
 
 const vectorDatabase = nursery.createVectorDatabase();
@@ -38,7 +40,9 @@ findFileBySimilarity
         .wire("<-PALM_KEY", kit.secrets({ keys: ["PALM_KEY"] }))
         .wire(
           "<-cache",
-          nursery.cache().wire("path<-CACHE_DB", kit.secrets({ keys: ["CACHE_DB"] })),
+          nursery
+            .cache()
+            .wire("path<-CACHE_DB", kit.secrets({ keys: ["CACHE_DB"] }))
         )
         .wire(
           "documents",
@@ -73,7 +77,7 @@ findFileBySimilarity
         "embedding",
         queryVectorDatabase.wire(
           "results->json",
-          kit
+          json
             .jsonata({
               expression: `
               $join(
@@ -81,9 +85,9 @@ findFileBySimilarity
                   $v.document.id & ": " & $string($v.similarity)
                 }),
                 "\n"
-              )`
+              )`,
             })
-            .wire("result->text", findFileBySimilarity.output()),
+            .wire("result->text", findFileBySimilarity.output())
         )
       )
   );

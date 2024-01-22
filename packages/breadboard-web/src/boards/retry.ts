@@ -6,6 +6,7 @@
 
 import { Board, Schema } from "@google-labs/breadboard";
 import Core from "@google-labs/core-kit";
+import JSONKit from "@google-labs/json-kit";
 import { Starter } from "@google-labs/llm-starter";
 
 const retry = new Board({
@@ -16,6 +17,7 @@ const retry = new Board({
 });
 const kit = retry.addKit(Starter);
 const core = retry.addKit(Core);
+const json = retry.addKit(JSONKit);
 
 const parameters = retry.input({
   $id: "parameters",
@@ -71,7 +73,7 @@ core
   .passthrough({ $id: "dontUseStreaming", useStreaming: false })
   .wire("useStreaming->", generatorCaller);
 
-const countdown = kit.jsonata({
+const countdown = json.jsonata({
   expression: '{ "tries": tries - 1, (tries > 0 ? "data" : "done") : data }',
   $id: "countdown",
   tries: 5,
@@ -80,7 +82,7 @@ const countdown = kit.jsonata({
 parameters.wire("tries->", countdown); // Initial value, defaults to 5 (see above)
 countdown.wire("tries->", countdown); // Loop back last value
 
-const errorParser = kit.jsonata({
+const errorParser = json.jsonata({
   expression:
     '{ "error": $exists(error.stack) ? error.stack : error.message, "completion": inputs.completion }',
   $id: "errorParser",

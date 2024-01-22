@@ -5,7 +5,6 @@
  */
 
 import { base, recipe, code } from "@google-labs/breadboard";
-import { starter } from "@google-labs/llm-starter";
 import { core } from "@google-labs/core-kit";
 
 const metaData = {
@@ -291,7 +290,7 @@ const createSpecRecipe = recipe((api) => {
 
         const itemData = getItem(item);
 
-        return starter
+        return core
           .fetch()
           .in(itemData)
           .response.as("api_json_response")

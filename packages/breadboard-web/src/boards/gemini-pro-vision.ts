@@ -12,6 +12,8 @@ import {
   code,
 } from "@google-labs/breadboard";
 import { starter } from "@google-labs/llm-starter";
+import { core } from "@google-labs/core-kit";
+import { json } from "@google-labs/json-kit";
 import { nursery } from "@google-labs/node-nursery-web";
 
 const metadata = {
@@ -92,7 +94,7 @@ const textOutputSchema = {
 export default await recipe(() => {
   const parameters = base.input({ $id: "parameters", schema: inputSchema });
 
-  const makeBody = starter.jsonata({
+  const makeBody = json.jsonata({
     $id: "makeBody",
     expression: `{ "contents": { "parts": $.parts }}`,
     parts: parameters,
@@ -121,7 +123,7 @@ export default await recipe(() => {
     sseOption: chooseMethod,
   });
 
-  const fetch = starter.fetch({
+  const fetch = core.fetch({
     method: "POST",
     stream: parameters.useStreaming,
     url: makeUrl.url,
@@ -131,7 +133,7 @@ export default await recipe(() => {
   fetch.$error
     .as("json")
     .to(
-      starter.jsonata({
+      json.jsonata({
         $id: "formatError",
         expression: "error.message",
       })
@@ -170,7 +172,7 @@ export default await recipe(() => {
     stream: chunkToText,
   });
 
-  return starter
+  return json
     .jsonata({
       $id: "formatOutput",
       expression: "$join(candidates.content.parts.text)",

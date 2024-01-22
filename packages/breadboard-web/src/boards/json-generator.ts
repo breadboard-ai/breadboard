@@ -144,7 +144,7 @@ const validateTwice = json
   .validateJson({ $id: "validateTwice" })
   .wire("<-schema", parameters);
 
-const errorRetryFormatter = starter.jsonata({
+const errorRetryFormatter = json.jsonata({
   expression: "$string($.error, true)",
 });
 
@@ -157,7 +157,7 @@ The error was:
 Please reply with the corrected JSON.`,
 });
 
-const errorOutputFormatter = starter
+const errorOutputFormatter = json
   .jsonata({
     $id: "errorFormatter",
     expression: `{
