@@ -46,7 +46,7 @@ board.input().wire(
         stopSequences: ["Customer:"],
       })
       .wire("$error->", board.output({ $id: "error" }))
-      .wire("<-PALM_KEY", kit.secrets({ keys: ["PALM_KEY"] }))
+      .wire("<-PALM_KEY", core.secrets({ keys: ["PALM_KEY"] }))
       .wire(
         "completion->",
         core

@@ -140,7 +140,7 @@ const generator = palm
       },
     ],
   })
-  .wire("<-PALM_KEY.", kit.secrets({ keys: ["PALM_KEY"] }))
+  .wire("<-PALM_KEY.", core.secrets({ keys: ["PALM_KEY"] }))
   .wire("completion->json", validateJson)
   .wire("filters->value", shouldRecover);
 

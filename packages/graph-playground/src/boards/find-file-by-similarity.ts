@@ -5,14 +5,14 @@
  */
 
 import { Board } from "@google-labs/breadboard";
+import Core from "@google-labs/core-kit";
 import JSONKit from "@google-labs/json-kit";
-import { Starter } from "@google-labs/llm-starter";
 import { Nursery } from "@google-labs/node-nursery";
 
 const findFileBySimilarity = new Board();
-const kit = findFileBySimilarity.addKit(Starter);
 const json = findFileBySimilarity.addKit(JSONKit);
 const nursery = findFileBySimilarity.addKit(Nursery);
+const core = findFileBySimilarity.addKit(Core);
 
 const vectorDatabase = nursery.createVectorDatabase();
 const queryVectorDatabase = nursery.queryVectorDatabase();
@@ -37,12 +37,12 @@ findFileBySimilarity
       "documents",
       nursery
         .embedDocs()
-        .wire("<-PALM_KEY", kit.secrets({ keys: ["PALM_KEY"] }))
+        .wire("<-PALM_KEY", core.secrets({ keys: ["PALM_KEY"] }))
         .wire(
           "<-cache",
           nursery
             .cache()
-            .wire("path<-CACHE_DB", kit.secrets({ keys: ["CACHE_DB"] }))
+            .wire("path<-CACHE_DB", core.secrets({ keys: ["CACHE_DB"] }))
         )
         .wire(
           "documents",
@@ -72,7 +72,7 @@ findFileBySimilarity
     "text",
     nursery
       .embedString()
-      .wire("<-PALM_KEY", kit.secrets({ keys: ["PALM_KEY"] }))
+      .wire("<-PALM_KEY", core.secrets({ keys: ["PALM_KEY"] }))
       .wire(
         "embedding",
         queryVectorDatabase.wire(

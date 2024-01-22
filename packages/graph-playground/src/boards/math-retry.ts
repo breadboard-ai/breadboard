@@ -51,7 +51,7 @@ math
             math.lambda((board, input, output) => {
               const completion = palm
                 .generateText({ $id: "math-function-generator" })
-                .wire("<-PALM_KEY", kit.secrets({ keys: ["PALM_KEY"] }));
+                .wire("<-PALM_KEY", core.secrets({ keys: ["PALM_KEY"] }));
               const compute = core.runJavascript({
                 name: "compute",
                 $id: "compute",

@@ -31,7 +31,7 @@ export const graph = recipe(
       .prompt.as("text")
       .to(
         palm.generateText({
-          PALM_KEY: starter.secrets({ keys: ["PALM_KEY"] }).PALM_KEY,
+          PALM_KEY: core.secrets({ keys: ["PALM_KEY"] }).PALM_KEY,
         })
       )
       .completion.as("code")

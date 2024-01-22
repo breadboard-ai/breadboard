@@ -160,7 +160,7 @@ Now, we have not one, but two wires on the board, connecting our three nodes. Th
 To make this program go, we need another node and a wire. The PaLM API behind the `generateText` node requires an API key, so we'll add a `secrets` node to the board:
 
 ```js
-const secrets = starter.secrets({ keys: ["PALM_KEY"] });
+const secrets = core.secrets({ keys: ["PALM_KEY"] });
 ```
 
 The `secrets` node reaches into our program's environment and gets the environment variable that is named `PALM_KEY`, as we specified in its argument. A `secrets` node could look for any other environment variables, we just need to specify which ones. For now, we only need the `PALM_KEY`.
@@ -224,7 +224,7 @@ First, the `wire` method returns the node itself, allowing us to wire the same n
 const input = board.input();
 const output = board.output();
 const generateText = palm.generateText();
-const secrets = starter.secrets({ keys: ["PALM_KEY"] });
+const secrets = core.secrets({ keys: ["PALM_KEY"] });
 
 input.wire("say->text", generateText).wire("say->", output);
 generateText.wire("completion->hear", output);

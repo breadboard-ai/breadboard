@@ -9,6 +9,7 @@ import { Starter } from "@google-labs/llm-starter";
 import { Pinecone } from "@google-labs/pinecone-kit";
 import { PaLMKit } from "@google-labs/palm-kit";
 import JSONKit from "@google-labs/json-kit";
+import Core from "@google-labs/core-kit";
 
 const board = new Board({
   title: "Retrieval-augmented generation with Pinecone",
@@ -20,6 +21,7 @@ const starter = board.addKit(Starter);
 const pinecone = board.addKit(Pinecone);
 const palm = board.addKit(PaLMKit);
 const json = board.addKit(JSONKit);
+const core = board.addKit(Core);
 
 const template = starter.promptTemplate({
   template: `
@@ -58,7 +60,7 @@ board
     "text->",
     palm
       .embedText()
-      .wire("<-PALM_KEY", starter.secrets({ keys: ["PALM_KEY"] }))
+      .wire("<-PALM_KEY", core.secrets({ keys: ["PALM_KEY"] }))
       .wire(
         "embedding->",
         pinecone
@@ -77,7 +79,7 @@ template.wire(
   "prompt->text",
   palm
     .generateText()
-    .wire("<-PALM_KEY", starter.secrets({ keys: ["PALM_KEY"] }))
+    .wire("<-PALM_KEY", core.secrets({ keys: ["PALM_KEY"] }))
     .wire("completion->text", board.output({ $id: "rag" }))
 );
 

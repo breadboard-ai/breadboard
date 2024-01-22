@@ -29,7 +29,7 @@ export const graph = recipe(
     });
     const { completion } = palm.generateText({
       text: prompt,
-      PALM_KEY: starter.secrets({ keys: ["PALM_KEY"] }).PALM_KEY,
+      PALM_KEY: core.secrets({ keys: ["PALM_KEY"] }).PALM_KEY,
     });
     const { result } = core.runJavascript({
       code: completion,

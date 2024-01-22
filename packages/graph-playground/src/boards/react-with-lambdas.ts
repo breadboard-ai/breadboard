@@ -68,7 +68,7 @@ const input = board.input({
 });
 
 // The single node where all the important keys come from.
-const secrets = kit.secrets({ keys: ["PALM_KEY", "GOOGLE_CSE_ID"] });
+const secrets = core.secrets({ keys: ["PALM_KEY", "GOOGLE_CSE_ID"] });
 
 // This is the jsonata node that extracts the tool names
 // from the reflected graph.
