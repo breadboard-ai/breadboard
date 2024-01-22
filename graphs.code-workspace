@@ -1,12 +1,56 @@
 {
   "folders": [
     {
-      "name": "graph-playground",
-      "path": "packages/graph-playground"
-    },
-    {
       "name": "breadboard",
       "path": "packages/breadboard"
+    },
+    {
+      "name": "breadboard-cli",
+      "path": "packages/breadboard-cli"
+    },
+    {
+      "name": "breadboard-ui",
+      "path": "packages/breadboard-ui"
+    },
+    {
+      "name": "breadboard-web",
+      "path": "packages/breadboard-web"
+    },
+    {
+      "name": "core-kit",
+      "path": "packages/core-kit"
+    },
+    {
+      "name": "json-kit",
+      "path": "packages/json-kit"
+    },
+    {
+      "name": "palm-kit",
+      "path": "packages/palm-kit"
+    },
+    {
+      "name": "create-breadboard",
+      "path": "packages/create-breadboard"
+    },
+    {
+      "name": "node-nursery-web",
+      "path": "packages/node-nursery-web"
+    },
+    {
+      "name": "node-proxy-server",
+      "path": "packages/node-proxy-server"
+    },
+    {
+      "name": "breadbuddy",
+      "path": "packages/breadbuddy"
+    },
+    {
+      "name": "pinecone-kit",
+      "path": "packages/pinecone-kit"
+    },
+    {
+      "name": "graph-playground",
+      "path": "packages/graph-playground"
     },
     {
       "name": "llm-starter",
@@ -21,10 +65,6 @@
       "path": "packages/node-nursery"
     },
     {
-      "name": "node-nursery-web",
-      "path": "packages/node-nursery-web"
-    },
-    {
       "name": "coffee-bot-board",
       "path": "packages/coffee-bot-board"
     },
@@ -35,36 +75,6 @@
     {
       "name": "breadboard-server",
       "path": "packages/breadboard-server"
-    },
-    {
-      "name": "pinecone-kit",
-      "path": "packages/pinecone-kit"
-    },
-    {
-      "name": "breadboard-web",
-      "path": "packages/breadboard-web"
-    },
-    {
-      "name": "core-kit",
-      "path": "packages/core-kit"
-    },
-    {
-      "path": "packages/palm-kit"
-    },
-    {
-      "path": "packages/node-proxy-server"
-    },
-    {
-      "path": "packages/json-kit"
-    },
-    {
-      "path": "packages/breadboard-ui"
-    },
-    {
-      "path": "packages/breadboard-cli"
-    },
-    {
-      "path": "packages/breadbuddy"
     }
   ],
   "settings": {}
