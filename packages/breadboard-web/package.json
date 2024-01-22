@@ -25,7 +25,8 @@
   "types": "build/index.d.ts",
   "type": "module",
   "scripts": {
-    "dev": "wireit",
+    "dev": "npm run serve --watch",
+    "serve": "wireit",
     "deploy": "npm run build:vite && firebase deploy",
     "build": "wireit",
     "build:vite": "wireit",
@@ -100,7 +101,7 @@
         "dist/"
       ]
     },
-    "dev": {
+    "serve": {
       "command": "vite",
       "service": true,
       "dependencies": [
