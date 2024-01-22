@@ -178,7 +178,7 @@ const createPackage = async (options: CreatePackageOptions) => {
 
   const cwd = process.cwd();
 
-  let packageDir = path.resolve(process.cwd(), process.argv[2]);
+  const packageDir = path.resolve(process.cwd(), process.argv[2]);
 
   if (!packageDir) {
     console.error(chalk.red("Must provide directory as an argument."));
