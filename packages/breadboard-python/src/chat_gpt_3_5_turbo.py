@@ -5,36 +5,10 @@ from typing import Optional
 from import_node import import_breadboard_js
 Starter = import_breadboard_js("@google-labs/llm-starter")
 
-# TODO: Build a dataclass-like object that can be partially initialized.
-class JsonataOutput(AttrDict):
-  result: str = Field(description="Mocked result field")
-  context: str = Field(description="Mocked context field")
-  text: str = Field(description="Mocked text field")
-
-
-class FetchOutput(AttrDict):
-  response: str = Field(description="Mocked response field")
-
 class TransformOutput(AttrDict):
   stream: SchemaObject = Field(description="Mocked stream field")
 class ChunkTransformerOutput(AttrDict):
   result: str = Field(description="Mocked result field")
-
-# TODO: Jsonata can get special handling to parse output values.
-class Starter_Jsonata(Board):
-  type = "jsonata"
-  def describe(self, input):
-    self.output = JsonataOutput()
-    return self.output
-
-class Starter_Secrets(Board):
-  type = "secrets"
-
-class Starter_Fetch(Board):
-  type = "fetch"
-  def describe(self, input):
-    self.output = FetchOutput()
-    return self.output
   
 class Nursery_transformStream(Board):
   type = "transformStream"
@@ -182,12 +156,12 @@ class OpenAiGpt_3_5_Turbo(Board[InputSchema, OutputSchema]):
       raw=True,
       OPENAI_API_KEY=Starter.secrets(keys=["OPENAI_API_KEY"]),
     )
-    self.fetch = Starter_Fetch(
+    self.fetch = Starter.fetch(
       id="callOpenAI",
       url="https://api.openai.com/v1/chat/completions",
       method="POST",
     )
-    self.getResponse = Starter_Jsonata(
+    self.getResponse = Starter.jsonata(
       id="getResponse",
       expression="""choices[0].message.{
       "text": $boolean(content) ? content,
@@ -196,7 +170,7 @@ class OpenAiGpt_3_5_Turbo(Board[InputSchema, OutputSchema]):
       raw=True,
       #json=UNFILLED,
     )
-    self.getNewContext = Starter_Jsonata(
+    self.getNewContext = Starter.jsonata(
       id="getNewContext",
       expression="$append(messages, response.choices[0].message)",
       #messages=UNFILLED
@@ -207,12 +181,12 @@ class OpenAiGpt_3_5_Turbo(Board[InputSchema, OutputSchema]):
     self.fetch = self.fetch(formatParameters)
     self.getResponse = self.getResponse(json=self.fetch.response)
     self.getNewContext = self.getNewContext(messages=self.formatParameters.context)
-    transformStream = Nursery_transformStream(board=ChunkTransformer(), stream=self.fetch)
+    self.streamTransform = Nursery_transformStream(board=ChunkTransformer(), stream=self.fetch)
 
     self.output = AttrDict()
     self.output.textOutput = AttrDict(text=self.getResponse.text, context=self.getNewContext.result)
     self.output.toolCallsOutput = AttrDict(toolCalls=self.getResponse.tool_calls, context=self.getNewContext.result)
-    self.output.streamOutput = AttrDict(**{"*":transformStream})
+    self.output.streamOutput = AttrDict(**{"*":self.streamTransform})
     return self.output
   
 print("Starting")

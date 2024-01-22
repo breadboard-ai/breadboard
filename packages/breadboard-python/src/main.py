@@ -56,18 +56,7 @@ class SchemaObject(BaseModel):
     if "$defs" in output:
       output.pop("$defs")
     return output
-  
-  """
-  def __get_pydantic_core_schema__(
-    self,
-    source: Type[Any],
-    handler: GetCoreSchemaHandler,
-  ) -> core_schema.CoreSchema:
-    schema = handler(source)
-    schema.pop("title")
-    return schema
-  """
-  
+
   @classmethod
   def __get_pydantic_json_schema__(
     cls, core_schema: core_schema.JsonSchema, handler: GetJsonSchemaHandler
@@ -85,6 +74,24 @@ class SchemaObject(BaseModel):
     return json_schema
     
 
+
+class ImportedSchemaObject(SchemaObject):
+  @classmethod
+  def __get_pydantic_json_schema__(
+    cls, core_schema: core_schema.JsonSchema, handler: GetJsonSchemaHandler
+  ) -> JsonSchemaValue:
+    json_schema = handler(core_schema)
+    json_schema = handler.resolve_ref_schema(json_schema)
+    if cls == "toolCalls":
+      pass
+    if cls == "toolCallsOutput":
+      pass
+    # Remove "title" to make schema look like a normal Object.
+    json_schema.pop("title")
+        
+    return json_schema
+  
+
 T = TypeVar('T', bound=SchemaObject)
 S = TypeVar('S', bound=SchemaObject)
 
@@ -92,33 +99,63 @@ UNINITIALIZED = None
 
 from pydantic import create_model
 
+def _parse_type_str(type: str):
+  if type == "string":
+    return str
+  if type == "boolean":
+    return bool
+  if type == "object":
+    return SchemaObject
 
-"""
-WIP:
-def _get
+def _parse_type(schema):
+  if "type" in schema:
+    type = schema["type"]
+  elif "properties" in schema:
+    type = "object"
+  elif "items" in schema:
+    type = "array"
+  else:
+    type = "any"
+  
+  if type == "string":
+    return str
+  if type == "object":
+    raise Exception("Many possibilities for object.")
+    #return SchemaObject # This can be any type of SchemaObject.
+  if type == "array":
+    inner_schema = schema["items"]
+    inner_type = _parse_type(inner_schema)
+    return List[inner_type]
+  if type == "boolean":
+    return bool
+  if isinstance(type, list):
+    types = tuple(_parse_type_str(x) for x in schema["type"])
+    return Union[types]
+  if type == "any":
+    return Any
+  raise Exception(f"Unsupported type for schema: {schema}")
 
-def convert_from_json_to_pydantic(schema):
+def convert_from_json_to_pydantic(name, schema):
   # 
-  output = {}
   if "properties" in schema and "type" in schema and schema["type"] != "object":
     raise Exception(f"Expected type to be object. Got {schema['type']} instead.")
 
+  obj = None
   if "properties" in schema:
     type = "object"
-    for k, v in schema["properties"]:
-      output[k] = convert_from_json_to_pydantic(v)
-  if "type" in schema:
-    type = schema["type"]
-  if type == "array":
-    inner_type = schema["items"]["type"]
 
+    output = {}
+    for k, v in schema["properties"].items():
+      output[k] = convert_from_json_to_pydantic(k, v)
+    obj = create_model(name, __base__=ImportedSchemaObject, **output)
+  elif schema.get("type") == "object":
+    obj = SchemaObject
+  args = {}
+  for k, v in schema.items():
+    if k != "type" and k != "properties" and k != "items":
+      args[k] = v
+  return (obj if obj else _parse_type(schema), Field(**args))
 
-def convert_to_pydantic(name, attr_dict):
-  return create_model(
-    name,
-    **attr_dict
-  )
-"""
   
 """
 Contains a blob of things. Some can be initialized, some may not.
@@ -232,11 +269,12 @@ class Board(Generic[T, S]):
     self.loaded = False
 
     for k, v in kwargs.items():
-      if self.input_schema and k not in self.input_schema.model_fields:
-        raise Exception(f"Unknown keyword: {k}")
       if k == "id":
         self.id = v
         continue
+      if self.input_schema and k not in self.input_schema.model_fields:
+        print(f"Unknown keyword: {k} for {self.id}")
+        #raise Exception(f"Unknown keyword: {k}")
       self.inputs[k] = v
 
     self.output: AttrDict = AttrDict({} if not self.output_schema else self.output_schema.model_fields)
@@ -384,31 +422,6 @@ class Board(Generic[T, S]):
 
     for name, component in all_components:
       output["nodes"].extend(iterate_component(name, component))
-      """
-      if not isinstance(component, Board):
-        continue
-      node = {
-        "id": component.get_or_assign_id(name),
-        "type": component.type,
-        "configuration": component.get_configuration(),
-      }
-      output["nodes"].append(node)
-      """
-      
-    # TODO: Handle shared deps. This happens when a dep is locally instantiated but not set as an attribute.
-    # Then that dep Board is used as input for multiple components.
-    for name, component in all_components:
-      """
-      deps = {k: v  for k, v in component.inputs.items() if isinstance(v, Board)}
-      for k, v in deps.items():
-        node = {
-          "id": v.get_or_assign_id(),
-          "type": v.type,
-          "configuration": v.get_configuration(),
-        }
-        output["nodes"].append(node)
-      """
-      pass
 
     output["edges"] = []
 
@@ -468,42 +481,6 @@ class Board(Generic[T, S]):
 
     for name, component in all_components:
       output["edges"].extend(iterate_component_edges(name, component))
-    """
-    for name, component in all_components:
-      # Populate wildcard deps. Can they be nested? Probably not?
-      board_deps = {k: v  for k, v in component.get_inputs().items() if isinstance(v, Board)}
-      for k, v in board_deps.items():
-        edge = {
-          "from": v.get_or_assign_id(required=True),
-          "to": component.get_or_assign_id(required=True),
-          "out": k,
-          "in": "" if k == "*" else k,
-        }
-        print(f"KEX: Out of curiosity, what is k for wildcard? It's {k}")
-        output["edges"].append(edge)
-
-      # Populate specific field deps
-      field_deps = {k: v  for k, v in component.get_inputs().items() if isinstance(v, Tuple)}
-      for k, v in field_deps.items():
-        # TODO: Specifically for input, the "from" should be the input node, not from parent Board.
-        if v[1] == self:
-          edge = {
-            "from": v[1].get_or_assign_id(required=True),
-            "to": component.get_or_assign_id(required=True),
-            "out": get_field_name(v[0], self.inputs),
-            "in": k,
-          }
-        else:
-          edge = {
-            "from": v[1].get_or_assign_id(required=True),
-            # TODO: This is a hacky way to determine node id. AttrDict should be assigned the id.
-            "to": component.get_or_assign_id(required=True) if isinstance(component, Board) else name,
-            "out": get_field_name(v[0], v[1].output),
-            "in": k,
-          }
-        output["edges"].append(edge)
-        # TODO: Populate all output edges
-    """
     # iterate through all components.
     # see if any input is explicitly an output.
     return output

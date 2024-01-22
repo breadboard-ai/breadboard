@@ -1,4 +1,4 @@
-from main import AttrDict, Board
+from main import AttrDict, Board, convert_from_json_to_pydantic
 from javascript import require
 import javascript
 import json
@@ -12,8 +12,11 @@ class ImportedBoard(Board):
     self.output_schema = schema["outputSchema"]
 
 def import_breadboard_js(package_name):
-  #kit_package = require(package_name)
-  kit_package = require("../../llm-starter/dist/src/index.js")
+  
+  if package_name == "@google-labs/llm-starter":
+    kit_package = require("../../llm-starter/dist/src/index.js")
+  else:
+    kit_package = require(package_name)
   a = kit_package()
   handlers = a.handlers
 
@@ -26,6 +29,8 @@ def import_breadboard_js(package_name):
     output_schema = schema["outputSchema"]
     print(schema)
     print(f"KEX: received a handler: {handler_name}")
+    input_schema, input_field = convert_from_json_to_pydantic("Input" + handler_name, input_schema)
+    output_schema, output_field = convert_from_json_to_pydantic("Output" + handler_name, output_schema)
 
     # TODO: Convert input_schema and output_schema from dicts into actual schemas.
     class ImportedClass(Board[input_schema, output_schema]):
@@ -33,10 +38,14 @@ def import_breadboard_js(package_name):
       title = f"Auto-imported {handler_name}"
       description = f"This board is auto-imported from {package_name}"
       version = "0.?"
-      def describe(self):
+      def describe(self, input):
         self.output = AttrDict(output_schema)
         return self.output
-    
+      def get_configuration(self):
+        config = super().get_configuration()
+        config.pop("schema")
+        return config
+
     output[handler_name] = ImportedClass
   print(output)
   return output
