@@ -12,6 +12,7 @@ import {
   recipe,
 } from "@google-labs/breadboard";
 import { starter } from "@google-labs/llm-starter";
+import { core } from "@google-labs/core-kit";
 import { json } from "@google-labs/json-kit";
 import { nursery } from "@google-labs/node-nursery-web";
 
@@ -269,7 +270,7 @@ export default await recipe(() => {
     ...parameters,
   });
 
-  const fetch = starter.fetch({
+  const fetch = core.fetch({
     $id: "callGeminiAPI",
     method: "POST",
     stream: parameters.useStreaming,

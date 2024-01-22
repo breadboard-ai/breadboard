@@ -5,6 +5,7 @@
  */
 
 import { Board } from "@google-labs/breadboard";
+import Core from "@google-labs/core-kit";
 import JSONKit from "@google-labs/json-kit";
 import { Starter } from "@google-labs/llm-starter";
 import { PaLMKit } from "@google-labs/palm-kit";
@@ -16,6 +17,7 @@ const searchSummarize = new Board({
   version: "0.0.1",
 });
 const kit = searchSummarize.addKit(Starter);
+const core = searchSummarize.addKit(Core);
 const palm = searchSummarize.addKit(PaLMKit);
 const json = searchSummarize.addKit(JSONKit);
 
@@ -51,7 +53,7 @@ const searchURLTemplate = kit
   })
   .wire(
     "url",
-    kit
+    core
       .fetch()
       .wire(
         "response->json",

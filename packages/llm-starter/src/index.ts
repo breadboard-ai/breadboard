@@ -5,7 +5,6 @@
  */
 
 import { KitBuilder } from "@google-labs/breadboard/kits";
-import fetch from "./nodes/fetch.js";
 import promptTemplate from "./nodes/prompt-template.js";
 import runJavascript from "./nodes/run-javascript.js";
 import secrets from "./nodes/secrets.js";
@@ -21,7 +20,6 @@ const builder = new KitBuilder({
 });
 
 export const Starter = builder.build({
-  fetch,
   promptTemplate,
   runJavascript,
   secrets,
@@ -63,5 +61,4 @@ export const starter = addKit(Starter) as unknown as {
     },
     { result: unknown; [k: string]: unknown }
   >;
-  fetch: NodeFactory<{ url: string }, { response: string }>;
 };

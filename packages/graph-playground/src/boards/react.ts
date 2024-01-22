@@ -166,7 +166,7 @@ const search = () => {
     .wire("<-GOOGLE_CSE_ID.", secrets)
     .wire(
       "url",
-      kit
+      core
         .fetch()
         .wire(
           "response->json",

@@ -230,3 +230,39 @@ result {
 ### Outputs
 
 - `graph` -- JSON representation of the board
+
+### The `fetch` node
+
+Use this node to fetch data from the Internet. Practically, this is a wrapper around [`fetch`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)
+
+#### Example:
+
+If we would like to fetch data from `https://example.com`, we would send the following inputs to `fetch`:
+
+```json
+{
+  "url": "https://example.com"
+}
+```
+
+And receive this output:
+
+```json
+{
+  "response": "<response from https://example.com>"
+}
+```
+
+#### Inputs:
+
+- `url` -- required, URL to fetch. For now, this node can only make a GET request.
+- `headers` -- object (optional), a set of headers to be passed to the request.
+- `raw` boolean (optional), specifies whether or not to return raw text (`true`) or parse the response as JSON (`false`). The default value is `false`.
+
+#### Outputs:
+
+- `response` -- the response from the server. If `raw` is `false`, the response will be parsed as JSON.
+
+#### Implementation:
+
+- [src/nodes/fetch.ts](src/nodes/fetch.ts)
