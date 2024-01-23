@@ -22,6 +22,7 @@
     { "path": "packages/node-proxy-server" },
     { "path": "packages/palm-kit" },
     { "path": "packages/pinecone-kit" },
-    { "path": "packages/json-kit" }
+    { "path": "packages/json-kit" },
+    { "path": "packages/template-kit" }
   ]
 }

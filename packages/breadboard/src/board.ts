@@ -185,18 +185,18 @@ export class Board extends BoardRunner implements Breadboard {
    * Adds a new kit to the board.
    *
    * Kits are collections of nodes that are bundled together for a specific
-   * purpose. For example, the [LLM Starter Kit](https://github.com/breadboard-ai/breadboard/tree/main/packages/llm-starter) provides a few nodes that
-   * are useful for making generative AI applications.
+   * purpose. For example, the [Core Kit](https://github.com/breadboard-ai/breadboard/tree/main/packages/core) provides a nodes that
+   * are useful for making boards.
    *
    * Typically, kits are distributed as NPM packages. To add a kit to the board,
    * simply install it using `npm` or `yarn`, and then add it to the board:
    *
    * ```js
    * import { Board } from "@google-labs/breadboard";
-   * import { Starter } from "@google-labs/llm-starter";
+   * import { Core } from "@google-labs/core-kit";
    *
    * const board = new Board();
-   * const kit = board.addKit(Starter);
+   * const kit = board.addKit(Core);
    * ```
    *
    * @param ctr - the kit constructor.

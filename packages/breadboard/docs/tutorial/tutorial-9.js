@@ -10,14 +10,14 @@ import { config } from "dotenv";
 
 import { Board } from "@google-labs/breadboard";
 import { Core } from "@google-labs/core-kit";
-import { Starter } from "@google-labs/llm-starter";
+import { TemplateKit } from "@google-labs/template-kit";
 import { PaLMKit } from "@google-labs/palm-kit";
 
 config();
 
 const board = new Board();
 const core = board.addKit(Core);
-const starter = board.addKit(Starter);
+const templates = board.addKit(TemplateKit);
 const palm = board.addKit(PaLMKit);
 
 const input = board.input();
@@ -32,9 +32,9 @@ const completion = palm
   .generateText()
   .wire("completion->hear", output)
   .wire("completion->assistant", history)
-  .wire("<-PALM_KEY.", starter.secrets({ keys: ["PALM_KEY"] }));
+  .wire("<-PALM_KEY.", core.secrets({ keys: ["PALM_KEY"] }));
 
-starter
+templates
   .promptTemplate({
     template:
       "This is a conversation between a friendly assistant and their user.\n" +

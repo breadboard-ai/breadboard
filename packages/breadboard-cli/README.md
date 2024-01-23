@@ -67,4 +67,4 @@ You can also pass in your own input with the `-i` flag: `npx breadboard run pack
 
 If your board has kits, then you can pass in the kit name with the `--kit` flag (specify --kit for each kit you want to use)
 
-`npx breadboard run boards/news.json -i "{\"topic\": \"Paul Kinlan\"}" --kit "@google-labs/llm-starter"`
+`npx breadboard run boards/news.json -i "{\"topic\": \"Paul Kinlan\"}" --kit "@google-labs/core-kit"`

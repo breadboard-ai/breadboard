@@ -7,7 +7,7 @@
 import { Board } from "@google-labs/breadboard";
 import Core from "@google-labs/core-kit";
 import JSONKit from "@google-labs/json-kit";
-import { Starter } from "@google-labs/llm-starter";
+import { TemplateKit } from "@google-labs/template-kit";
 import { PaLMKit } from "@google-labs/palm-kit";
 
 const searchSummarize = new Board({
@@ -16,7 +16,7 @@ const searchSummarize = new Board({
     "A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.",
   version: "0.0.1",
 });
-const kit = searchSummarize.addKit(Starter);
+const kit = searchSummarize.addKit(TemplateKit);
 const core = searchSummarize.addKit(Core);
 const palm = searchSummarize.addKit(PaLMKit);
 const json = searchSummarize.addKit(JSONKit);

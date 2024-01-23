@@ -7,7 +7,7 @@
 import { Schema, base, recipe } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { json } from "@google-labs/json-kit";
-import { starter } from "@google-labs/llm-starter";
+import { templates } from "@google-labs/template-kit";
 
 const metadata = {
   title: "JSON Agent",
@@ -56,7 +56,7 @@ export default await recipe(({ text, schema, generator, context }) => {
 
   const schemish = json.schemish({ $id: "schemish", schema });
 
-  const format = starter.promptTemplate({
+  const format = templates.promptTemplate({
     $id: "format",
     template: `{{text}}
 

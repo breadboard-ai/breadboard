@@ -52,7 +52,7 @@ const run = async () => {
     dependencies: [
       "@google-labs/breadboard",
       "@google-labs/breadboard-cli",
-      "@google-labs/llm-starter",
+      "@google-labs/template-kit",
       "@google-labs/core-kit",
       "@google-labs/json-kit",
       "@google-labs/palm-kit",
@@ -70,7 +70,7 @@ const run = async () => {
       scripts: {
         debug: "npx breadboard debug recipes/ -o recipes/ --watch",
         recipe:
-          "npx breadboard run $npm_config_recipe --kit @google-labs/llm-starter --kit @google-labs/core-kit --kit @google-labs/json-kit --kit @google-labs/palm-kit",
+          "npx breadboard run $npm_config_recipe --kit @google-labs/template-kit --kit @google-labs/core-kit --kit @google-labs/json-kit --kit @google-labs/palm-kit",
       },
       files: ["dist/src"],
     },

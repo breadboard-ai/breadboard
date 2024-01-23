@@ -1,9 +1,5 @@
 # Changelog
 
-## [0.3.2] - 2024-01-22
-
-- Deprecated. See [Issue 177](https://github.com/breadboard-ai/breadboard/issues/177) for details.
-
 ## [0.3.1] - 2024-01-14
 
 - Update dependencies and type info for new syntax.

@@ -6,11 +6,11 @@
 
 import { asRuntimeKit } from "@google-labs/breadboard";
 import { defineConfig, hasOrigin } from "@google-labs/breadboard/remote";
-import Starter from "@google-labs/llm-starter";
+import TemplateKit from "@google-labs/template-kit";
 import PaLMKit from "@google-labs/palm-kit";
 
 export default defineConfig({
-  kits: [asRuntimeKit(Starter), asRuntimeKit(PaLMKit)],
+  kits: [asRuntimeKit(TemplateKit), asRuntimeKit(PaLMKit)],
   proxy: [
     "fetch",
     "palm-generateText",

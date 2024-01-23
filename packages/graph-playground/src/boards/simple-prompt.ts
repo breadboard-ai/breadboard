@@ -6,7 +6,7 @@
 
 import { Board } from "@google-labs/breadboard";
 import Core from "@google-labs/core-kit";
-import { Starter } from "@google-labs/llm-starter";
+import { TemplateKit } from "@google-labs/template-kit";
 import { PaLMKit } from "@google-labs/palm-kit";
 
 const simplePrompt = new Board({
@@ -15,7 +15,7 @@ const simplePrompt = new Board({
     "Possibly the simplest meta-reasoning prompt. When asked a question, it encourages the LLM to analyze the question instead of answering it and provide steps to arrive at the solution",
   version: "0.0.1",
 });
-const kit = simplePrompt.addKit(Starter);
+const kit = simplePrompt.addKit(TemplateKit);
 const core = simplePrompt.addKit(Core);
 const palm = simplePrompt.addKit(PaLMKit);
 

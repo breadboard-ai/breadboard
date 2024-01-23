@@ -6,11 +6,11 @@
 
 import { Board } from "@google-labs/breadboard";
 import Core from "@google-labs/core-kit";
-import { Starter } from "@google-labs/llm-starter";
+import { TemplateKit } from "@google-labs/template-kit";
 import { PaLMKit } from "@google-labs/palm-kit";
 
 const autoSimplePrompt = new Board();
-const kit = autoSimplePrompt.addKit(Starter);
+const kit = autoSimplePrompt.addKit(TemplateKit);
 const palm = autoSimplePrompt.addKit(PaLMKit);
 const core = autoSimplePrompt.addKit(Core);
 

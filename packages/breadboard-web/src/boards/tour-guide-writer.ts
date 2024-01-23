@@ -6,7 +6,7 @@
 
 import { Schema, V, base, recipe, code } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
-import { starter } from "@google-labs/llm-starter";
+import { templates } from "@google-labs/template-kit";
 
 const metadata = {
   title: "Tour Guide Writer",
@@ -50,7 +50,7 @@ const graph = recipe(() => {
 
   const output = base.output({ $id: "guide", schema: outputSchema });
 
-  const travelItinerary = starter.promptTemplate({
+  const travelItinerary = templates.promptTemplate({
     template: `[Place] Seattle, WA
   [Top ten place-based experiences with no duplicates]
   1) See the city from the Space Needle
@@ -120,7 +120,7 @@ const graph = recipe(() => {
   travelItinerary.prompt.as("text").to(travelItineraryGenerator);
 
   const createGuide = recipe(({ location, generator }) => {
-    const guideTemplate = starter.promptTemplate({
+    const guideTemplate = templates.promptTemplate({
       template: `[City] Paris, France
     [Activity] Have a picnic in the Luxembourg Gardens
     [Experiential story] Grab a baguette, some cheese and bottle of wine and head over to Luxembourg Gardens. You'll enjoy an even stroll, a great chance to people watch, and a charming free evening that is quintessentially Parisian.

@@ -6,7 +6,7 @@
 
 import { Board, asRuntimeKit } from "@google-labs/breadboard";
 import { Core } from "@google-labs/core-kit";
-import { Starter } from "@google-labs/llm-starter";
+import { TemplatesKit } from "@google-labs/template-kit";
 import { PaLMKit } from "@google-labs/palm-kit";
 
 import { config } from "dotenv";
@@ -25,6 +25,12 @@ const board = await Board.load(NEWS_SUMMARIZER_URL, { slotted: { news } });
 
 const result = await board.runOnce(
   { topic: "Latest news on breadboards" },
-  { kits: [asRuntimeKit(Core), asRuntimeKit(Starter), asRuntimeKit(PaLMKit)] }
+  {
+    kits: [
+      asRuntimeKit(Core),
+      asRuntimeKit(TemplatesKit),
+      asRuntimeKit(PaLMKit),
+    ],
+  }
 );
 console.log("result", result);

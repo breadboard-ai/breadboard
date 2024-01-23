@@ -1,5 +1,8 @@
 # Breadboard Tutorial
 
+> [!WARNING]
+> We are transitioning to new syntax and this tutorial is out of date. Please bear with us as we update it.
+
 If you like learning by starting with simple examples that get more complex with each chapter, this guide might be a good fit.
 
 Pre-requisites:
@@ -24,7 +27,7 @@ Each chapter is also available as a [Replit](https://replit.com/) project. Look 
 2. Install dependencies:
 
    ```sh
-   npm install @google-labs/breadboard @google-labs/llm-starter @google-labs/palm-kit
+   npm install @google-labs/breadboard @google-labs/template-starter @google-labs/palm-kit @google-labs/json-kit
    ```
 
    If you run into version warnings, [upgrade your node installation](https://nodejs.org).

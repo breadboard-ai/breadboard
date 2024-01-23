@@ -5,14 +5,14 @@
  */
 
 import { Board } from "@google-labs/breadboard";
-import { Starter } from "@google-labs/llm-starter";
+import { TemplateKit } from "@google-labs/template-kit";
 import { ReActHelper } from "../react.js";
 import { Core } from "@google-labs/core-kit";
 import { PaLMKit } from "@google-labs/palm-kit";
 
 const board = new Board();
 const core = board.addKit(Core);
-const kit = board.addKit(Starter);
+const kit = board.addKit(TemplateKit);
 const reAct = board.addKit(ReActHelper);
 const palm = board.addKit(PaLMKit);
 

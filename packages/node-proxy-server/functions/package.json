@@ -14,7 +14,7 @@
     "build": {
       "dependencies": [
         "../../breadboard:build",
-        "../../llm-starter:build",
+        "../../template-kit:build",
         "../../palm-kit:build",
         "build:rollup",
         "build:tsc"
@@ -23,7 +23,7 @@
     "typescript-files-and-deps": {
       "dependencies": [
         "../../breadboard:build:tsc",
-        "../../llm-starter:build:tsc",
+        "../../template-kit:build:tsc",
         "../../palm-kit:build:tsc"
       ],
       "files": [
@@ -78,7 +78,7 @@
   },
   "devDependencies": {
     "@google-labs/breadboard": "*",
-    "@google-labs/llm-starter": "*",
+    "@google-labs/template-kit": "*",
     "@google-labs/palm-kit": "*",
     "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-json": "^6.0.1",
