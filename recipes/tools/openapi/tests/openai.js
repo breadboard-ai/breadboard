@@ -13,8 +13,22 @@ const metaData = {
   version: "0.0.3",
 };
 
+const inputSchema = {
+  type: "object",
+  properties: {
+    url: {
+      type: "string",
+      title: "Open API Spec",
+      default: "https://raw.githubusercontent.com/breadboard-ai/breadboard/c371c2cd5aca33673e30fc647c920228752e41ee/recipes/tools/openapi/tests/specs/openai.json"
+    }
+  }
+};
+
 export default await recipe(() => {
-  const input = base.input({ $id: "input" });
+  const input = base.input({ 
+    $id: "input",
+    schema: inputSchema
+  });
 
   const apiBoard = core.invoke({ path: "../index.json", url: input.url });
 

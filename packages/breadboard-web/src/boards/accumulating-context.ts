@@ -6,7 +6,7 @@
 
 import { z } from "zod";
 
-import { V, base } from "@google-labs/breadboard";
+import { V, base, Schema } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { starter } from "@google-labs/llm-starter";
 
@@ -24,7 +24,7 @@ const input = base.input({
   $id: "userRequest",
   schema: z.object({
     text: z.string().describe("User: Type here to chat with the assistant"),
-  }),
+  }) satisfies Schema,
 });
 
 parameters.as({}).to(input);
