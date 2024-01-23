@@ -15,7 +15,7 @@
     "build": {
       "dependencies": [
         "../breadboard:build",
-        "../llm-starter:build",
+        "../template-kit:build",
         "build:tsc"
       ]
     },
@@ -26,7 +26,7 @@
       },
       "dependencies": [
         "../breadboard:build:tsc",
-        "../llm-starter:build:tsc"
+        "../template-kit:build:tsc"
       ],
       "files": [
         "src/**/*.ts",
@@ -97,7 +97,7 @@
     "ava": "^5.2.0",
     "typescript": "^5.0.4",
     "@google-labs/tsconfig": "*",
-    "@google-labs/llm-starter": "*"
+    "@google-labs/template-kit": "*"
   },
   "dependencies": {
     "@google-labs/breadboard": "^0.7.0"

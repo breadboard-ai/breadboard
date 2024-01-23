@@ -50,7 +50,7 @@
       "dependencies": [
         "../breadboard:build:tsc",
         "../breadboard-web:build:tsc",
-        "../llm-starter:build:tsc",
+        "../template-kit:build:tsc",
         "../core-kit:build:tsc"
       ],
       "files": [
@@ -131,7 +131,7 @@
     "@google-labs/breadboard": "*",
     "@google-labs/breadboard-web": "*",
     "@google-labs/core-kit": "*",
-    "@google-labs/llm-starter": "*",
+    "@google-labs/template-kit": "*",
     "commander": "^11.1.0",
     "esbuild": "^0.19.9",
     "serve": "^14.2.1",

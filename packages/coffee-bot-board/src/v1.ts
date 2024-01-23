@@ -7,7 +7,7 @@
 import { writeFile } from "fs/promises";
 
 import { Board } from "@google-labs/breadboard";
-import { Starter } from "@google-labs/llm-starter";
+import { TemplateKit } from "@google-labs/template-kit";
 import { PaLMKit } from "@google-labs/palm-kit";
 import { Core } from "@google-labs/core-kit";
 
@@ -17,7 +17,7 @@ import { Template } from "./template.js";
 config();
 
 const board = new Board();
-const kit = board.addKit(Starter);
+const kit = board.addKit(TemplateKit);
 const core = board.addKit(Core);
 const palm = board.addKit(PaLMKit);
 

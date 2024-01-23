@@ -8,7 +8,7 @@ import { z } from "zod";
 
 import { V, base } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
-import { starter } from "@google-labs/llm-starter";
+import { templates } from "@google-labs/template-kit";
 
 const parameters = base.input({
   $id: "parameters",
@@ -29,7 +29,7 @@ const input = base.input({
 
 parameters.as({}).to(input);
 
-const prompt = starter.promptTemplate({
+const prompt = templates.promptTemplate({
   template:
     "This is a conversation between a friendly assistant and their user. You are the assistant and your job is to try to be helpful, empathetic, and fun.\n{{context}}\n\n== Current Conversation\nuser: {{question}}\nassistant:",
   context: "",

@@ -13,7 +13,7 @@ import {
 } from "@google-labs/breadboard";
 import yaml from "yaml";
 import CoreKit, { core } from "@google-labs/core-kit";
-import starter from "@google-labs/llm-starter";
+import templates from "@google-labs/template-kit";
 import { readFile, stat, writeFile } from "fs/promises";
 import path from "path";
 import { pathToFileURL } from "url";
@@ -71,7 +71,7 @@ export const importGraph = async (url: string, options: ImportOptions) => {
 
   const boards = await openAPIBoard.runOnce(
     { json },
-    { kits: [asRuntimeKit(CoreKit), asRuntimeKit(starter)] }
+    { kits: [asRuntimeKit(CoreKit), asRuntimeKit(templates)] }
   );
 
   if (boards == undefined || boards == null) {

@@ -7,7 +7,7 @@
 import { z } from "zod";
 import { recipe } from "@google-labs/breadboard";
 
-import { starter } from "@google-labs/llm-starter";
+import { templates } from "@google-labs/template-kit";
 import { palm } from "@google-labs/palm-kit";
 import { core } from "@google-labs/core-kit";
 
@@ -22,7 +22,7 @@ export const graph = recipe(
     title: "Math, chain style graph",
   },
   ({ question }) => {
-    return starter
+    return templates
       .promptTemplate({
         template:
           "Write a Javascript function called `run` to compute the result for this question:\nQuestion: {{question}}\nCode: ",

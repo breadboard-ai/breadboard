@@ -6,7 +6,7 @@
 
 import { Schema, recipe } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
-import { starter } from "@google-labs/llm-starter";
+import { templates } from "@google-labs/template-kit";
 import { json } from "@google-labs/json-kit";
 
 const metadata = {
@@ -77,7 +77,7 @@ export default await recipe(({ purpose, generator }) => {
     schema: jobDescriptionsSchema,
     context: [],
     generator,
-    text: starter.promptTemplate({
+    text: templates.promptTemplate({
       $id: "jobDescriptionsPrompt",
       template: `You are building a team of expert LLM-based agents for the following purpose:
       
@@ -96,7 +96,7 @@ Please identify the necessary job descriptions of these experts.`,
     context: jobDescriptions.context,
     schema: workflowSchema,
     generator,
-    text: starter.promptTemplate({
+    text: templates.promptTemplate({
       $id: "workflowPrompt",
       template: `Now, describe how these agents interact in the form of a workflow. The workflow is defined as a list of pairs of agents. Each pair represents the flow of work from one agent to another.`,
     }).prompt,
@@ -112,7 +112,7 @@ Please identify the necessary job descriptions of these experts.`,
     $id: "createPrompts",
     list: splitJobDescriptions.result.isArray(),
     board: recipe(({ item, generator }) => {
-      const promptTemplate = starter.promptTemplate({
+      const promptTemplate = templates.promptTemplate({
         $id: "promptTemplate",
         template: `You are an expert in creating perfect system prompts for LLM agents from job descriptions. Create a prompt for the the following job description: {{item}}
         

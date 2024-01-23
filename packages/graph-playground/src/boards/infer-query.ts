@@ -7,7 +7,7 @@
 import { Board } from "@google-labs/breadboard";
 import Core from "@google-labs/core-kit";
 import JSONKit from "@google-labs/json-kit";
-import { Starter } from "@google-labs/llm-starter";
+import { TemplateKit } from "@google-labs/template-kit";
 import { PaLMKit } from "@google-labs/palm-kit";
 
 const board = new Board({
@@ -16,7 +16,7 @@ const board = new Board({
     "This board is a prototype to infer the query from the original prompt for  retrieval-augmented generation (RAG). The basic idea is that the user provides a template with a placeholder for the retrieved data, and the query to retrieve this data is inferred from the template itself.",
   version: "0.0.1",
 });
-const starter = board.addKit(Starter);
+const templates = board.addKit(TemplateKit);
 const core = board.addKit(Core);
 const palm = board.addKit(PaLMKit);
 const json = board.addKit(JSONKit);
@@ -53,13 +53,13 @@ const printResults = board.output({
 
 const contextPlaceholder = "CONTEXT GOES HERE";
 
-const promptToInfer = starter.promptTemplate({
+const promptToInfer = templates.promptTemplate({
   $id: "promptToInfer",
   template: undefined,
   context: `\n\n${contextPlaceholder}\n\n`,
 });
 
-const inferringPrompt = starter.promptTemplate({
+const inferringPrompt = templates.promptTemplate({
   $id: "inferringPrompt",
   template: `
 The JSON below represents a prompt that the user wants to populate with more context to better answer questions within the prompt. The context will supplied by a search engine and will be inserted in place of the "${contextPlaceholder}" placeholder.

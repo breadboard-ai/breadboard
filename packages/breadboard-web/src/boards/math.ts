@@ -6,7 +6,7 @@
 
 import { Schema, V, base, recipe } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
-import { starter } from "@google-labs/llm-starter";
+import { templates } from "@google-labs/template-kit";
 
 const metadata = {
   title: "The Calculator Recipe",
@@ -48,7 +48,7 @@ const outputSchema = {
 
 export default await recipe(() => {
   const input = base.input({ $id: "math-question", schema: inputSchema });
-  const template = starter.promptTemplate({
+  const template = templates.promptTemplate({
     template: `Translate the math problem below into a self-contained,
 zero-argument JavaScript function named \`compute\` that can be executed
 to provide the answer to the problem. 

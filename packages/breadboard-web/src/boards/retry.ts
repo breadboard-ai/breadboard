@@ -7,7 +7,7 @@
 import { Board, Schema } from "@google-labs/breadboard";
 import Core from "@google-labs/core-kit";
 import JSONKit from "@google-labs/json-kit";
-import { Starter } from "@google-labs/llm-starter";
+import { TemplateKit } from "@google-labs/template-kit";
 
 const retry = new Board({
   title: "Retry",
@@ -15,7 +15,7 @@ const retry = new Board({
     "Run `board` up to `tries` (default 5) times, appending prior attempts and error messages to the prompt.",
   version: "0.0.1",
 });
-const kit = retry.addKit(Starter);
+const templates = retry.addKit(TemplateKit);
 const core = retry.addKit(Core);
 const json = retry.addKit(JSONKit);
 
@@ -89,7 +89,7 @@ const errorParser = json.jsonata({
   raw: true,
 });
 
-const retryPrompt = kit.promptTemplate({
+const retryPrompt = templates.promptTemplate({
   template:
     "{{text}}{{completion}}\n\nThis error occured:\n{{error}}\n\nPlease try again:\n",
   $id: "retryPrompt",

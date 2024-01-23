@@ -7,7 +7,7 @@
 import { Board } from "@google-labs/breadboard";
 import Core from "@google-labs/core-kit";
 import JSONKit from "@google-labs/json-kit";
-import { Starter } from "@google-labs/llm-starter";
+import { TemplateKit } from "@google-labs/template-kit";
 
 const board = new Board({
   title: "Pinecone API vector call builder",
@@ -16,7 +16,7 @@ const board = new Board({
   version: "0.0.1",
 });
 
-const starter = board.addKit(Starter);
+const templates = board.addKit(TemplateKit);
 const core = board.addKit(Core);
 const json = board.addKit(JSONKit);
 
@@ -98,7 +98,7 @@ core
   .wire("headers<-result", headers)
   .wire(
     "<-url",
-    starter
+    templates
       .urlTemplate({
         $id: "make-pinecone-url",
         template:

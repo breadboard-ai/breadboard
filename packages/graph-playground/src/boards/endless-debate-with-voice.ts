@@ -6,7 +6,7 @@
 
 import { Board } from "@google-labs/breadboard";
 import { Core } from "@google-labs/core-kit";
-import { Starter } from "@google-labs/llm-starter";
+import { TemplateKit } from "@google-labs/template-kit";
 import { PaLMKit } from "@google-labs/palm-kit";
 
 const board = new Board({
@@ -15,7 +15,7 @@ const board = new Board({
     "A simple board that demonstrates how to create a conversation loop. It's a debate between a scientist named Albert and a philosopher named Friedrich. Albert is warm, funny, and inquisitve. Friedrich is  disagreeable, brooding, skeptical, and sarcastic.\n\nTo give replies a bit more variability, a concept of `voice` is introduced: each reply is independently reinterpreted to give it a bit more variety and avoid the trap of the dialog becoming too mechanical and predictable.\nThis board goes on forever, so you'll have to reload or close the page (or press Ctrl+C in console) to end it.",
   version: "0.0.1",
 });
-const kit = board.addKit(Starter);
+const kit = board.addKit(TemplateKit);
 const core = board.addKit(Core);
 const palm = board.addKit(PaLMKit);
 

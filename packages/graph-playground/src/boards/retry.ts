@@ -7,7 +7,7 @@
 import { Board } from "@google-labs/breadboard";
 import Core from "@google-labs/core-kit";
 import JSONKit from "@google-labs/json-kit";
-import { Starter } from "@google-labs/llm-starter";
+import { TemplateKit } from "@google-labs/template-kit";
 
 const retry = new Board({
   title: "Retry",
@@ -15,7 +15,7 @@ const retry = new Board({
     "Run `lambda` up to `tries` (default 5) times, appending prior attempts and error messages to the prompt.",
   version: "0.0.1",
 });
-const kit = retry.addKit(Starter);
+const kit = retry.addKit(TemplateKit);
 const core = retry.addKit(Core);
 const json = retry.addKit(JSONKit);
 

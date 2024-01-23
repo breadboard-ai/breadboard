@@ -6,6 +6,6 @@
 
 import test from "ava";
 
-test("llm-starter", async (t) => {
+test("template-kit", async (t) => {
   t.pass();
 });

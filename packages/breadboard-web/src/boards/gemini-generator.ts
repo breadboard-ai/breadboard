@@ -11,7 +11,7 @@ import {
   base,
   recipe,
 } from "@google-labs/breadboard";
-import { starter } from "@google-labs/llm-starter";
+import { templates } from "@google-labs/template-kit";
 import { core } from "@google-labs/core-kit";
 import { json } from "@google-labs/json-kit";
 import { nursery } from "@google-labs/node-nursery-web";
@@ -233,7 +233,7 @@ export default await recipe(() => {
     useStreaming: parameters,
   });
 
-  const makeUrl = starter.urlTemplate({
+  const makeUrl = templates.urlTemplate({
     $id: "makeURL",
     template:
       "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:{method}?key={GEMINI_KEY}{+sseOption}",

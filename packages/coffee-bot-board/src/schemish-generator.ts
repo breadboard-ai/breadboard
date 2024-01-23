@@ -5,7 +5,7 @@
  */
 
 import { type NodeValue, Board } from "@google-labs/breadboard";
-import { Starter } from "@google-labs/llm-starter";
+import { TemplateKit } from "@google-labs/template-kit";
 import { Core } from "@google-labs/core-kit";
 import { PaLMKit } from "@google-labs/palm-kit";
 import JSONKit from "@google-labs/json-kit";
@@ -23,7 +23,7 @@ const board = new Board({
   version: "0.0.1",
 });
 const core = board.addKit(Core);
-const kit = board.addKit(Starter);
+const kit = board.addKit(TemplateKit);
 const json = board.addKit(JSONKit);
 const palm = board.addKit(PaLMKit);
 

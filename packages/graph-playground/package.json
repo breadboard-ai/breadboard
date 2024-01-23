@@ -24,7 +24,7 @@
         "../core-kit:build",
         "../graph-integrity:build",
         "../json-kit:build",
-        "../llm-starter:build",
+        "../template-kit:build",
         "../node-nursery:build",
         "../palm-kit:build",
         "../pinecone-kit:build",
@@ -41,7 +41,7 @@
         "../core-kit:build:tsc",
         "../graph-integrity:build:tsc",
         "../json-kit:build:tsc",
-        "../llm-starter:build:tsc",
+        "../template-kit:build:tsc",
         "../node-nursery:build:tsc",
         "../palm-kit:build:tsc",
         "../pinecone-kit:build:tsc"
@@ -169,8 +169,8 @@
     "@google-labs/core-kit": "*",
     "@google-labs/palm-kit": "*",
     "@google-labs/json-kit": "*",
+    "@google-labs/template-kit": "*",
     "@google-labs/graph-integrity": "*",
-    "@google-labs/llm-starter": "*",
     "@google-labs/pinecone-kit": "*",
     "@google-labs/node-nursery": "*",
     "dotenv": "^16.3.1"

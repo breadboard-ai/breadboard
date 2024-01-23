@@ -119,7 +119,7 @@
   "dependencies": {
     "@google-labs/breadboard": "*",
     "@google-labs/core-kit": "*",
-    "@google-labs/llm-starter": "*",
+    "@google-labs/template-kit": "*",
     "@google-labs/palm-lite": "^0.0.3",
     "@google-labs/chunker": "^0.0.1",
     "json-stable-stringify": "^1.0.2",
