@@ -6,41 +6,48 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import create from "base-create";
-import * as fs from "fs";
+import { create } from "../utils/create.js";
+import { stat, readFile, readdir } from "fs/promises";
 import * as path from "path";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-console.log(__dirname, __filename);
-
 type Asset = { path: string; contents: string };
 
-const generateAssetList = (dir: string, base: string): Asset[] => {
-  const files = fs.readdirSync(dir);
+const generateAssetList = async (
+  dir: string,
+  root?: string
+): Promise<Asset[]> => {
+  if (root == undefined) {
+    // On the first iteration, set the base to the root dir.
+    root = dir;
+  }
+
+  const files = await readdir(dir);
   const assetList: Asset[] = [];
   for (const file of files) {
     const filePath = path.join(dir, file);
+    const fileStat = await stat(filePath);
     // add file path to asset list if it is a file
-    if (fs.statSync(filePath).isFile()) {
+    if (fileStat.isFile()) {
       assetList.push({
-        path: filePath.substring(base.length + 1), // file is relative to dir.
-        contents: fs.readFileSync(filePath, { encoding: "utf-8" }),
+        path: filePath.substring(root.length + 1), // file is relative to dir.
+        contents: await readFile(filePath, { encoding: "utf-8" }),
       });
     }
     // recursively add file paths to asset list if it is a directory
-    if (fs.statSync(filePath).isDirectory()) {
-      assetList.push(...generateAssetList(filePath, base));
+    if (fileStat.isDirectory()) {
+      assetList.push(...(await generateAssetList(filePath, root)));
     }
   }
 
   return assetList;
 };
 
-const run = () => {
-  const { name } = create({
+const run = async () => {
+  const { name } = await create({
     // optional deps to install
     dependencies: [
       "@google-labs/breadboard",
@@ -67,9 +74,8 @@ const run = () => {
       },
       files: ["dist/src"],
     },
-    files: generateAssetList(
-      path.resolve(__dirname, "..", "..", "..", "assets"),
-      path.resolve(__dirname, "..", "..", "..", "assets")
+    files: await generateAssetList(
+      path.resolve(__dirname, path.join("..", "..", "..", "assets"))
     ),
     skipGitignore: false,
     skipReadme: true,
