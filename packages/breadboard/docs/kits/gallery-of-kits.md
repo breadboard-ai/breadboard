@@ -25,7 +25,7 @@ NOTE: Breadboard is built to be flexible, you can [build a kit](./build-a-kit.md
   - `validateJson` use `json` and `schema` to validate and return `result`
   - `jsonata` use a [JSONata](https://jsonata.org/) `expression` and `json` to extract and return a `result`
   - `xmlToJson` take `xml` and return `json`, using `alt-json` convention that is described in https://developers.google.com/gdata/docs/json.
-- [google-labs/llm-starter](https://github.com/breadboard-ai/breadboard/tree/main/packages/llm-starter)
+- [google-labs/template-kit](https://github.com/breadboard-ai/breadboard/tree/main/packages/template-kit)
   It exposes the following key node handlers (see docs for more):
   - `promptTemplate` use a `template` and `{{var}}` variables to return a `prompt` string
   - `urlTemplate` use a `template` and `{var}` variables to return a `url` string (based on [URI template spec](https://tools.ietf.org/html/rfc6570))

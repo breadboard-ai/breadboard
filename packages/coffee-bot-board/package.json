@@ -21,7 +21,6 @@
         "../breadboard:build",
         "../core-kit:build",
         "../json-kit:build",
-        "../llm-starter:build",
         "../template-kit:build",
         "../palm-kit:build",
         "build:tsc"
@@ -36,7 +35,6 @@
         "../breadboard:build:tsc",
         "../core-kit:build:tsc",
         "../json-kit:build:tsc",
-        "../llm-starter:build:tsc",
         "../template-kit:build:tsc",
         "../palm-kit:build:tsc"
       ],
@@ -142,7 +140,6 @@
     "@google-labs/core-kit": "*",
     "@google-labs/palm-kit": "*",
     "@google-labs/template-kit": "*",
-    "@google-labs/llm-starter": "*",
     "@google-labs/json-kit": "*",
     "@google-labs/node-nursery": "*",
     "dotenv": "^16.3.1"
