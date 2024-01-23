@@ -6,7 +6,7 @@
 
 import { Board } from "@google-labs/breadboard";
 import { Core } from "@google-labs/core-kit";
-import { Starter } from "@google-labs/llm-starter";
+import { TemplateKit } from "@google-labs/template-kit";
 import { PaLMKit } from "@google-labs/palm-kit";
 
 import { writeFile } from "fs/promises";
@@ -21,10 +21,10 @@ config();
 
 const board = new Board();
 const core = board.addKit(Core);
-const starter = board.addKit(Starter);
+const templates = board.addKit(TemplateKit);
 const palm = board.addKit(PaLMKit);
 
-const template = starter.promptTemplate({
+const template = templates.promptTemplate({
   template:
     "Use the news headlines below to write a few sentences to " +
     "summarize the latest news on this topic:\n\n##Topic:\n" +
@@ -40,7 +40,7 @@ input.wire(
       "prompt->text",
       palm
         .generateText()
-        .wire("<-PALM_KEY.", starter.secrets({ keys: ["PALM_KEY"] }))
+        .wire("<-PALM_KEY.", core.secrets({ keys: ["PALM_KEY"] }))
         .wire("completion->summary", board.output())
     )
   )

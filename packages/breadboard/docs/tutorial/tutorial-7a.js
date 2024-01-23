@@ -5,7 +5,7 @@
  */
 
 import { Board, LogProbe } from "@google-labs/breadboard";
-import { Starter } from "@google-labs/llm-starter";
+import { Core } from "@google-labs/core-kit";
 import { PaLMKit } from "@google-labs/palm-kit";
 
 import { config } from "dotenv";
@@ -14,7 +14,7 @@ config();
 
 const board = new Board();
 // add kits to the board
-const starter = board.addKit(Starter);
+const core = board.addKit(Core);
 const palm = board.addKit(PaLMKit);
 
 const output = board.output();
@@ -26,7 +26,7 @@ board
     palm
       .generateText()
       .wire("completion->hear", output)
-      .wire("<-PALM_KEY", starter.secrets({ keys: ["PALM_KEY"] }))
+      .wire("<-PALM_KEY", core.secrets({ keys: ["PALM_KEY"] }))
   );
 
 const result = await board.runOnce(
