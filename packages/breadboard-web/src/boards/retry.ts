@@ -6,7 +6,8 @@
 
 import { Board, Schema } from "@google-labs/breadboard";
 import Core from "@google-labs/core-kit";
-import { Starter } from "@google-labs/llm-starter";
+import JSONKit from "@google-labs/json-kit";
+import { TemplateKit } from "@google-labs/template-kit";
 
 const retry = new Board({
   title: "Retry",
@@ -14,8 +15,9 @@ const retry = new Board({
     "Run `board` up to `tries` (default 5) times, appending prior attempts and error messages to the prompt.",
   version: "0.0.1",
 });
-const kit = retry.addKit(Starter);
+const templates = retry.addKit(TemplateKit);
 const core = retry.addKit(Core);
+const json = retry.addKit(JSONKit);
 
 const parameters = retry.input({
   $id: "parameters",
@@ -71,7 +73,7 @@ core
   .passthrough({ $id: "dontUseStreaming", useStreaming: false })
   .wire("useStreaming->", generatorCaller);
 
-const countdown = kit.jsonata({
+const countdown = json.jsonata({
   expression: '{ "tries": tries - 1, (tries > 0 ? "data" : "done") : data }',
   $id: "countdown",
   tries: 5,
@@ -80,14 +82,14 @@ const countdown = kit.jsonata({
 parameters.wire("tries->", countdown); // Initial value, defaults to 5 (see above)
 countdown.wire("tries->", countdown); // Loop back last value
 
-const errorParser = kit.jsonata({
+const errorParser = json.jsonata({
   expression:
     '{ "error": $exists(error.stack) ? error.stack : error.message, "completion": inputs.completion }',
   $id: "errorParser",
   raw: true,
 });
 
-const retryPrompt = kit.promptTemplate({
+const retryPrompt = templates.promptTemplate({
   template:
     "{{text}}{{completion}}\n\nThis error occured:\n{{error}}\n\nPlease try again:\n",
   $id: "retryPrompt",

@@ -5,7 +5,9 @@
  */
 
 import { Board } from "@google-labs/breadboard";
-import { Starter } from "@google-labs/llm-starter";
+import { TemplateKit } from "@google-labs/template-kit";
+import { Core } from "@google-labs/core-kit";
+import { JSONKit } from "@google-labs/json-kit";
 import { writeFile } from "fs/promises";
 
 import * as path from "path";
@@ -13,24 +15,26 @@ import { fileURLToPath } from "url";
 const __dir = path.dirname(fileURLToPath(import.meta.url));
 
 const board = new Board();
-const starter = board.addKit(Starter);
+const core = board.addKit(Core);
+const templates = board.addKit(TemplateKit);
+const jsonKit = board.addKit(JSONKit);
 
 const input = board.input({ message: "Enter news topic" });
 
 input.wire(
   "topic->query",
-  starter
+  templates
     .urlTemplate({
       template:
         "https://news.google.com/rss/search?q={{query}}&hl=en-US&gl=US&ceid=US:en",
     })
     .wire(
       "url->",
-      starter.fetch({ raw: true }).wire(
+      core.fetch({ raw: true }).wire(
         "response->xml",
-        starter.xmlToJson().wire(
+        jsonKit.xmlToJson().wire(
           "json->",
-          starter
+          jsonKit
             .jsonata({
               expression: "$join((rss.channel.item.title.`$t`)[[1..20]], '\n')",
             })

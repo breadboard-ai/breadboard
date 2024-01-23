@@ -32,6 +32,8 @@ import { toMermaid } from "./mermaid.js";
 import { SchemaBuilder } from "./schema.js";
 import { RequestedInputsManager, bubbleUpInputsIfNeeded } from "./bubble.js";
 import { asyncGen } from "./utils/async-gen.js";
+import { StackManager } from "./stack.js";
+import { timestamp } from "./timestamp.js";
 
 /**
  * This class is the main entry point for running a board.
@@ -121,12 +123,15 @@ export class BoardRunner implements BreadboardRunner {
 
       const invocationPath = context.invocationPath || [];
 
+      const stack = new StackManager(context.state);
+
       await probe?.report?.({
         type: "graphstart",
-        data: { metadata: this, path: invocationPath },
+        data: { metadata: this, path: invocationPath, timestamp: timestamp() },
       });
 
       let invocationId = 0;
+      stack.onGraphStart();
       const path = () => [...invocationPath, invocationId];
 
       for await (const result of machine) {
@@ -141,10 +146,13 @@ export class BoardRunner implements BreadboardRunner {
               inputs,
               missingInputs,
               path: path(),
+              timestamp: timestamp(),
             },
           });
           continue;
         }
+
+        stack.onNodeStart(result);
 
         await probe?.report?.({
           type: "nodestart",
@@ -152,14 +160,18 @@ export class BoardRunner implements BreadboardRunner {
             node: descriptor,
             inputs,
             path: path(),
+            timestamp: timestamp(),
           },
+          state: await stack.state(),
         });
 
         let outputsPromise: Promise<OutputValues> | undefined = undefined;
 
         if (descriptor.type === "input") {
-          await next(new InputStageResult(result, invocationId));
-          await bubbleUpInputsIfNeeded(this, context, result);
+          await next(
+            new InputStageResult(result, await stack.state(), invocationId)
+          );
+          await bubbleUpInputsIfNeeded(this, context, descriptor, result);
           outputsPromise = result.outputsPromise;
         } else if (descriptor.type === "output") {
           await next(new OutputStageResult(result, invocationId));
@@ -179,6 +191,7 @@ export class BoardRunner implements BreadboardRunner {
             kits: [...(context.kits || []), ...this.kits],
             requestInput: requestedInputs.createHandler(next, result),
             invocationPath: path(),
+            state: await stack.state(),
           };
 
           outputsPromise = callHandler(
@@ -187,6 +200,8 @@ export class BoardRunner implements BreadboardRunner {
             newContext
           ) as Promise<OutputValues>;
         }
+
+        stack.onNodeEnd();
 
         await probe?.report?.({
           type: "nodeend",
@@ -198,14 +213,18 @@ export class BoardRunner implements BreadboardRunner {
               validator.getValidatorMetadata(descriptor)
             ),
             path: path(),
+            timestamp: timestamp(),
           },
         });
 
         result.outputsPromise = outputsPromise;
       }
+
+      stack.onGraphEnd();
+
       await probe?.report?.({
         type: "graphend",
-        data: { metadata: this, path: invocationPath },
+        data: { metadata: this, path: invocationPath, timestamp: timestamp() },
       });
     });
   }
@@ -261,11 +280,12 @@ export class BoardRunner implements BreadboardRunner {
               inputs: result.inputs,
               outputs,
               path: [...path, result.invocationId],
+              timestamp: timestamp(),
             },
           });
           await probe?.report?.({
             type: "graphend",
-            data: { metadata: this, path },
+            data: { metadata: this, path, timestamp: timestamp() },
           });
           break;
         }

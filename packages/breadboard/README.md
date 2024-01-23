@@ -18,6 +18,10 @@ This library's design emphasizes two key properties:
 
 Breadboard requires [Node](https://nodejs.org/) version >=v19.0.0.
 
+> [!WARNING]
+> The library is in active development, and we're transitioning to new syntax. Stuff below will likely be out of date.
+> Please bear with us.
+
 ## Installing the library
 
 To install breadboard, run:
@@ -26,14 +30,11 @@ To install breadboard, run:
 npm install @google-labs/breadboard
 ```
 
-You will also need the [LLM Starter Kit](https://github.com/breadboard-ai/breadboard/tree/main/packages/llm-starter):
+You will also need the [Core Kit](https://github.com/breadboard-ai/breadboard/tree/main/packages/core-kit):
 
 ```sh
-npm install @google-labs/llm-starter
+npm install @google-labs/core-kit
 ```
-
-The LLM Starter Kit comes with Breadboard nodes helpful for building LLM-based applications including the
-[promptTemplate node](https://github.com/breadboard-ai/breadboard/tree/main/packages/llm-starter#the-prompttemplate-node), [append node](https://github.com/breadboard-ai/breadboard/tree/main/packages/llm-starter#the-append-node), [generateText node](https://github.com/breadboard-ai/breadboard/tree/main/packages/llm-starter#the-generatetext-node), and more.
 
 ## Using breadboard
 

@@ -5,7 +5,8 @@
  */
 
 import { Schema, V, base, recipe } from "@google-labs/breadboard";
-import { starter } from "@google-labs/llm-starter";
+import { core } from "@google-labs/core-kit";
+import { json } from "@google-labs/json-kit";
 
 const metadata = {
   title: "Board as Function",
@@ -45,7 +46,7 @@ export default await recipe(() => {
   const input = base.input({ $id: "input", schema: inputSchema });
   const output = base.output({ $id: "output", schema: outputSchema });
 
-  const getFunctionSignature = starter.jsonata({
+  const getFunctionSignature = json.jsonata({
     $id: "getFunctionSignature",
     expression: `
     (
@@ -73,7 +74,7 @@ export default await recipe(() => {
     raw: true,
   });
 
-  starter
+  core
     .fetch({ $id: "getBoard", url: input.boardURL as V<string> })
     .response.as("json")
     .to(getFunctionSignature)

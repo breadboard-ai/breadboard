@@ -8,7 +8,7 @@ import test from "ava";
 import {
   AnyRunRequestMessage,
   AnyRunResponseMessage,
-  InputPromiseResponseMessage,
+  InputResponseMessage,
 } from "../../src/remote/protocol.js";
 import { Board } from "../../src/board.js";
 import { TestKit } from "../helpers/_test-kit.js";
@@ -22,6 +22,7 @@ import {
   WorkerClientTransport,
   WorkerServerTransport,
 } from "../../src/remote/worker.js";
+import { RunState } from "../../src/types.js";
 
 test("Interruptible streaming", async (t) => {
   const board = new Board();
@@ -44,7 +45,7 @@ test("Interruptible streaming", async (t) => {
 
   let intermediateState;
   for await (const result of await run(["run", {}])) {
-    const [type, response, state] = result as InputPromiseResponseMessage;
+    const [type, response, state] = result as InputResponseMessage;
     t.is(type, "input");
     t.is(response.node.type, "input");
     t.deepEqual(response.inputArguments, { foo: "bar" });
@@ -58,7 +59,7 @@ test("Interruptible streaming", async (t) => {
     {
       inputs: { hello: "world" },
     },
-    intermediateState as string,
+    intermediateState as RunState,
   ])) {
     const [type, , state] = result;
     if (type === "output") {
@@ -107,7 +108,7 @@ test("Continuous streaming", async (t) => {
     "input",
     { node: { type: "input" }, inputArguments: { foo: "bar" } },
   ]);
-  writer.write(["input", { inputs: { hello: "world" } }, ""]);
+  writer.write(["input", { inputs: { hello: "world" } }, undefined as never]);
   // second result was "beforehandler" (now "nodestart"), but I removed it
   // because of the refactoring to use diagnostics.
   const thirdResult = await reader.read();
@@ -115,7 +116,7 @@ test("Continuous streaming", async (t) => {
   t.like(thirdResult.value, ["output", { outputs: { hello: "world" } }]);
   const fourthResult = await reader.read();
   t.assert(!fourthResult.done);
-  t.like(fourthResult.value, ["end", {}]);
+  t.like(fourthResult.value, ["end"]);
   const fifthResult = await reader.read();
   t.assert(fifthResult.done);
 });

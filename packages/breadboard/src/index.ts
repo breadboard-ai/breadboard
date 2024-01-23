@@ -4,58 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+export type * from "./types.js";
+
 export { Board } from "./board.js";
 export { BoardRunner } from "./runner.js";
 export { Node } from "./node.js";
 export { SchemaBuilder } from "./schema.js";
 export { RunResult } from "./run.js";
-export type {
-  Edge,
-  GraphMetadata,
-  GraphDescriptor,
-  NodeConfiguration,
-  NodeDescriptor,
-  NodeDescriberFunction,
-  NodeDescriberResult,
-  NodeHandler,
-  NodeHandlerFunction,
-  InputValues,
-  Probe,
-  ProbeMessage,
-  OutputValues,
-  NodeHandlers,
-  NodeIdentifier,
-  NodeTypeIdentifier,
-  KitDescriptor,
-  KitReference,
-  NodeValue,
-  Capability,
-  ErrorCapability,
-  TraversalResult,
-  SubGraphs,
-  Schema,
-  Kit,
-  NodeFactory,
-  BreadboardValidator,
-  BreadboardValidatorMetadata,
-  BreadboardSlotSpec,
-  BreadboardNode,
-  BreadboardCapability,
-  BreadboardRunner,
-  BreadboardRunResult,
-  NodeHandlerContext,
-  OptionalIdConfiguration,
-  NodeConfigurationConstructor,
-  LambdaFunction,
-  LambdaNodeInputs,
-  ConfigOrLambda,
-  RunResultType,
-  KitConstructor,
-  GenericKit,
-  LambdaNodeOutputs,
-} from "./types.js";
 export { TraversalMachine } from "./traversal/machine.js";
 export { MachineResult } from "./traversal/result.js";
+export { traversalResultFromStack } from "./stack.js";
 export { toMermaid } from "./mermaid.js";
 export { callHandler } from "./handler.js";
 export { asRuntimeKit } from "./kits/ctors.js";
@@ -64,6 +22,7 @@ export {
   isStreamCapability,
   patchReadableStream,
   streamFromAsyncGen,
+  clone,
   type StreamCapabilityType,
   type PatchedReadableStream,
 } from "./stream.js";

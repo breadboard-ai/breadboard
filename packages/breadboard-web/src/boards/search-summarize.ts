@@ -12,7 +12,8 @@ import {
   recipe,
 } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
-import { starter } from "@google-labs/llm-starter";
+import { templates } from "@google-labs/template-kit";
+import { json } from "@google-labs/json-kit";
 
 const metadata = {
   title: "The Search Summarizer Recipe",
@@ -54,27 +55,27 @@ const outputSchema = {
 export default await recipe(() => {
   const parameters = base.input({ $id: "parameters", schema: inputSchema });
 
-  return starter
+  return core
     .secrets({ keys: ["API_KEY", "GOOGLE_CSE_ID"] })
     .to(
-      starter.urlTemplate({
+      templates.urlTemplate({
         $id: "customSearchURL",
         template:
           "https://www.googleapis.com/customsearch/v1?key={API_KEY}&cx={GOOGLE_CSE_ID}&q={query}",
         query: parameters.text,
       })
     )
-    .url.to(starter.fetch({ $id: "search" }))
+    .url.to(core.fetch({ $id: "search" }))
     .response.as("json")
     .to(
-      starter.jsonata({
+      json.jsonata({
         $id: "getSnippets",
         expression: "$join(items.snippet, '\n')",
       })
     )
     .result.as("context")
     .to(
-      starter.promptTemplate({
+      templates.promptTemplate({
         template:
           "Use context below to answer this question:\n\n##Question:\n{{question}}\n\n## Context {{context}}\n\\n## Answer:\n",
         $id: "summarizing-template",

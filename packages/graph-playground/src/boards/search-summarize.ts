@@ -5,7 +5,9 @@
  */
 
 import { Board } from "@google-labs/breadboard";
-import { Starter } from "@google-labs/llm-starter";
+import Core from "@google-labs/core-kit";
+import JSONKit from "@google-labs/json-kit";
+import { TemplateKit } from "@google-labs/template-kit";
 import { PaLMKit } from "@google-labs/palm-kit";
 
 const searchSummarize = new Board({
@@ -14,8 +16,10 @@ const searchSummarize = new Board({
     "A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.",
   version: "0.0.1",
 });
-const kit = searchSummarize.addKit(Starter);
+const kit = searchSummarize.addKit(TemplateKit);
+const core = searchSummarize.addKit(Core);
 const palm = searchSummarize.addKit(PaLMKit);
+const json = searchSummarize.addKit(JSONKit);
 
 const completion = palm.generateText().wire(
   "completion->text",
@@ -31,15 +35,15 @@ const completion = palm.generateText().wire(
       },
       required: ["text"],
     },
-  }),
+  })
 );
 
 const summarizingTemplate = kit
   .promptTemplate({
-      template: "Use context below to answer this question:\n\n##Question:\n{{question}}\n\n## Context {{context}}\n\\n## Answer:\n",
-      $id: "summarizing-template",
-    },
-  )
+    template:
+      "Use context below to answer this question:\n\n##Question:\n{{question}}\n\n## Context {{context}}\n\\n## Answer:\n",
+    $id: "summarizing-template",
+  })
   .wire("prompt->text", completion);
 
 const searchURLTemplate = kit
@@ -49,17 +53,17 @@ const searchURLTemplate = kit
   })
   .wire(
     "url",
-    kit
+    core
       .fetch()
       .wire(
         "response->json",
-        kit
+        json
           .jsonata({ expression: "$join(items.snippet, '\n')" })
-          .wire("result->context", summarizingTemplate),
-      ),
+          .wire("result->context", summarizingTemplate)
+      )
   );
 
-kit
+core
   .secrets({ keys: ["PALM_KEY", "API_KEY", "GOOGLE_CSE_ID"] })
   .wire("PALM_KEY", completion)
   .wire("API_KEY", searchURLTemplate)

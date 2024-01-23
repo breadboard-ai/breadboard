@@ -5,7 +5,7 @@
  */
 
 import { Board, Schema } from "@google-labs/breadboard";
-import { Starter } from "@google-labs/llm-starter";
+import Core from "@google-labs/core-kit";
 import { PaLMKit } from "@google-labs/palm-kit";
 
 const simplest = new Board({
@@ -14,11 +14,11 @@ const simplest = new Board({
     "This is as simple as it gets: the recipe takes a prompt as input and generates a response as output.",
   version: "0.0.2",
 });
-const kit = simplest.addKit(Starter);
+const core = simplest.addKit(Core);
 const palm = simplest.addKit(PaLMKit);
 
 const completion = palm.generateText();
-kit.secrets({ keys: ["PALM_KEY"] }).wire("PALM_KEY", completion);
+core.secrets({ keys: ["PALM_KEY"] }).wire("PALM_KEY", completion);
 simplest
   .input({
     $id: "prompt",

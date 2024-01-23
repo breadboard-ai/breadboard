@@ -18,8 +18,12 @@ export function isBoolean(schema: Schema) {
   return schema.type == "boolean";
 }
 
-export function isImage(schema: Schema) {
-  return typeof schema.type === "string" && schema.type.startsWith("image");
+export function isMultipartImage(schema: Schema) {
+  return schema.type === "object" && schema.format?.startsWith("image");
+}
+
+export function isMultipartText(schema: Schema) {
+  return schema.type === "object" && schema.format?.startsWith("text");
 }
 
 export function isWebcam(schema: Schema) {

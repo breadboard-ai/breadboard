@@ -13,8 +13,10 @@ import { mermaid } from "./commands/mermaid.js";
 import { makeGraph } from "./commands/make-graph.js";
 import { run } from "./commands/run.js";
 import { importGraph } from "./commands/import.js";
+import { bundle } from "./commands/bundle.js";
 
 import { program } from "commander";
+import path from "path";
 
 program.version("0.0.1");
 
@@ -25,10 +27,25 @@ program
   )
   .option(
     "-o, --output <path>",
-    "If compiling a graph in Typescript (.ts), you MUST specific a location to output the compiled graph."
+    "If compiling a graph in Typescript (.ts), you can control the output directory of the compiled graph (current directory by default.)",
+    process.cwd()
   )
+  .option("-n, --no-save", "Do not save the compiled graph to disk.")
   .option("-w, --watch", "Watch the file for changes.")
   .action(debug);
+
+program
+  .command("bundle [file]")
+  .description("Generates a deployable bundle.")
+  .option(
+    "-o, --output <path>",
+    "Sets the output directory of the compiled graph (current directory by default.)",
+    path.join(
+      process.cwd(),
+      `build-${new Date().toISOString().replaceAll(/\W/gim, "-")}`
+    )
+  )
+  .action(bundle);
 
 program
   .command("import [url]")
@@ -39,7 +56,8 @@ program
   )
   .option(
     "-o, --output <path>",
-    "The path where the boards will be output the board(s) to"
+    "The path where the boards will be output the board(s) to (current directory by default.)",
+    process.cwd()
   )
   .action(importGraph);
 
@@ -50,7 +68,8 @@ program
   )
   .option(
     "-o, --output <path>",
-    "If compiling a graph in Typescript (.ts), you MUST specific a location to output the compiled graph."
+    "If compiling a graph in Typescript (.ts), you can control the output directory of the compiled graph (current directory by default.)",
+    process.cwd()
   )
   .option("-w, --watch", "Watch the file for changes.")
   .action(makeGraph);
@@ -62,7 +81,8 @@ program
   )
   .option(
     "-o, --output <path>",
-    "If compiling a graph in Typescript (.ts), you MUST specific a location to output the compiled graph."
+    "If compiling a graph in Typescript (.ts), you can control the output directory of the compiled graph (current directory by default.)",
+    process.cwd()
   )
   .option("-w, --watch", "Watch the file for changes.")
   .action(mermaid);
@@ -72,9 +92,11 @@ program
   .description("Run a graph.")
   .option("-w, --watch", "Watch the file for changes.")
   .option("-v, --verbose", "Output events and processing information.")
+  .option("-n, --no-save", "Do not write the compiled graph to disk.")
   .option(
     "-o, --output <path>",
-    "If compiling a graph in Typescript (.ts), you MUST specific a location to output the compiled graph."
+    "If compiling a graph in Typescript (.ts), you can control the output directory of the compiled graph (current directory by default.)",
+    process.cwd()
   )
   .option("-k, --kit <kit...>", "The kit to use.")
   .option(

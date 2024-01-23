@@ -1,6 +1,6 @@
 {
   "name": "@google-labs/core-kit",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "A Breadboard Kit containing nodes that enable composition and reuse of boards.",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
@@ -15,7 +15,7 @@
     "build": {
       "dependencies": [
         "../breadboard:build",
-        "../llm-starter:build",
+        "../template-kit:build",
         "build:tsc"
       ]
     },
@@ -26,7 +26,7 @@
       },
       "dependencies": [
         "../breadboard:build:tsc",
-        "../llm-starter:build:tsc"
+        "../template-kit:build:tsc"
       ],
       "files": [
         "src/**/*.ts",
@@ -64,7 +64,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/breadboard-ai/breadboard"
+    "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },
   "files": [
     "dist/src"
@@ -97,9 +97,9 @@
     "ava": "^5.2.0",
     "typescript": "^5.0.4",
     "@google-labs/tsconfig": "*",
-    "@google-labs/llm-starter": "*"
+    "@google-labs/template-kit": "*"
   },
   "dependencies": {
-    "@google-labs/breadboard": "^0.6.0"
+    "@google-labs/breadboard": "^0.7.0"
   }
 }

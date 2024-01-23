@@ -158,6 +158,20 @@ test("simple inline code, explicit input and output, single parameter", async (t
   t.like(result, { result: "bar!!" });
 });
 
+test("simple inline code, explicit input and output, single parameter, no schema", async (t) => {
+  const graph = recipe((_, base) => {
+    const inputs = base.input();
+    const neg = code(({ foo }) => {
+      return { result: `${foo}!!` };
+    })(inputs);
+    const outputs = base.output();
+    neg.result.to(outputs);
+  });
+
+  const result = await serializeAndRunGraph(graph, { foo: "bar" });
+  t.like(result, { result: "bar!!" });
+});
+
 test("simple inline code, explicit input and output, single parameter, pick", async (t) => {
   const graph = recipe((_, base) => {
     const inputs = base.input({

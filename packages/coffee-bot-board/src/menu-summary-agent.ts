@@ -7,7 +7,7 @@
 import { config } from "dotenv";
 
 import { Board } from "@google-labs/breadboard";
-import { Starter } from "@google-labs/llm-starter";
+import { TemplateKit } from "@google-labs/template-kit";
 import { Core } from "@google-labs/core-kit";
 import { PaLMKit } from "@google-labs/palm-kit";
 
@@ -17,11 +17,13 @@ config();
 
 const maker = new PromptMaker("v2-multi-agent");
 export const menuSummaryAgent = new Board();
-const kit = menuSummaryAgent.addKit(Starter);
+const kit = menuSummaryAgent.addKit(TemplateKit);
 const core = menuSummaryAgent.addKit(Core);
 const palm = menuSummaryAgent.addKit(PaLMKit);
 
-const menu = kit.promptTemplate(await maker.prompt("menu-summary-agent", "menuSummaryAgent"));
+const menu = kit.promptTemplate(
+  await maker.prompt("menu-summary-agent", "menuSummaryAgent")
+);
 
 menu.wire("<-menu.", core.passthrough(await maker.part("menu", "txt")));
 
@@ -42,10 +44,10 @@ menuSummaryAgent.input().wire(
         stopSequences: ["Customer:"],
       })
       .wire("filters->error", menuSummaryAgent.output({ $id: "error" }))
-      .wire("<-PALM_KEY", kit.secrets({ keys: ["PALM_KEY"] }))
+      .wire("<-PALM_KEY", core.secrets({ keys: ["PALM_KEY"] }))
       .wire(
         "completion->",
-        kit
+        core
           .runJavascript({
             name: "formatOutput",
             $id: "formatOutput",

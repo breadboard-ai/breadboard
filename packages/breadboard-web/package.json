@@ -3,18 +3,34 @@
   "private": true,
   "version": "0.0.1",
   "description": "The Web runtime for Breadboard",
-  "main": "./dist/src/index.js",
+  "main": "./build/index.js",
   "exports": {
-    ".": "./dist/src/runtime.js",
-    "./worker": "./dist/src/worker.js"
+    ".": {
+      "default": "./build/index.js",
+      "types": "./build.index.d.ts"
+    },
+    "./preview.js": {
+      "default": "./build/preview.js",
+      "types": "./build/preview.d.ts"
+    },
+    "./config.js": {
+      "default": "./build/config.js",
+      "types": "./build/config.d.ts"
+    },
+    "./public": "./public",
+    "./local-boards.json": "./public/local-boards.json",
+    "./index.html": "./index.html",
+    "./preview.html": "./preview.html"
   },
-  "types": "dist/src/index.d.ts",
+  "types": "build/index.d.ts",
   "type": "module",
   "scripts": {
-    "dev": "wireit",
+    "dev": "npm run serve --watch",
+    "serve": "wireit",
     "deploy": "npm run build:vite && firebase deploy",
     "build": "wireit",
     "build:vite": "wireit",
+    "build:tsc": "wireit",
     "generate:graphs": "wireit",
     "generate:docs": "wireit"
   },
@@ -25,11 +41,12 @@
         "../breadboard-ui:build",
         "../core-kit:build",
         "../json-kit:build",
-        "../llm-starter:build",
+        "../template-kit:build",
         "../node-nursery-web:build",
         "../palm-kit:build",
         "../pinecone-kit:build",
         "build:vite",
+        "build:tsc",
         "generate:graphs"
       ]
     },
@@ -39,7 +56,7 @@
         "../breadboard-ui:build:tsc",
         "../core-kit:build:tsc",
         "../json-kit:build:tsc",
-        "../llm-starter:build:tsc",
+        "../template-kit:build:tsc",
         "../node-nursery-web:build:tsc",
         "../palm-kit:build:tsc",
         "../pinecone-kit:build:tsc"
@@ -50,6 +67,21 @@
         "tsconfig.json",
         "../../core/tsconfig/base.json"
       ]
+    },
+    "build:tsc": {
+      "command": "tsc -b",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "typescript-files-and-deps"
+      ],
+      "files": [],
+      "output": [
+        "build/",
+        "!build/**/*.min.js{,.map}"
+      ],
+      "clean": "if-file-deleted"
     },
     "build:vite": {
       "command": "vite build",
@@ -69,7 +101,7 @@
         "dist/"
       ]
     },
-    "dev": {
+    "serve": {
       "command": "vite",
       "service": true,
       "dependencies": [
@@ -115,10 +147,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/breadboard-ai/breadboard"
+    "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },
   "files": [
-    "dist/src"
+    "public",
+    "index.html",
+    "preview.html"
   ],
   "ava": {
     "timeout": "30s",
@@ -163,10 +197,11 @@
     "@google-labs/breadboard-ui": "*",
     "@google-labs/core-kit": "*",
     "@google-labs/json-kit": "*",
-    "@google-labs/llm-starter": "*",
+    "@google-labs/template-kit": "*",
     "@google-labs/node-nursery-web": "*",
     "@google-labs/palm-kit": "*",
     "@google-labs/pinecone-kit": "*",
+    "lit": "^3.1.1",
     "zod": "^3.22.4",
     "zod-to-json-schema": "^3.22.0"
   }

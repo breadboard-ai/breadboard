@@ -5,14 +5,14 @@
  */
 
 import { Board } from "@google-labs/breadboard";
-import { Starter } from "@google-labs/llm-starter";
+import { TemplateKit } from "@google-labs/template-kit";
 import { ReActHelper } from "../react.js";
 import { Core } from "@google-labs/core-kit";
 import { PaLMKit } from "@google-labs/palm-kit";
 
 const board = new Board();
 const core = board.addKit(Core);
-const kit = board.addKit(Starter);
+const kit = board.addKit(TemplateKit);
 const reAct = board.addKit(ReActHelper);
 const palm = board.addKit(PaLMKit);
 
@@ -28,7 +28,7 @@ const REPO_URL =
   "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/graph-playground/graphs";
 
 // The single node where all the important keys come from.
-const secrets = kit.secrets({
+const secrets = core.secrets({
   keys: ["PALM_KEY", "GOOGLE_CSE_ID"],
 });
 

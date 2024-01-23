@@ -8,11 +8,12 @@ import { asRuntimeKit } from "@google-labs/breadboard";
 import {
   HarnessProxyConfig,
   HarnessRemoteConfig,
+  KitConfig,
+  defineServeConfig,
 } from "@google-labs/breadboard/harness";
-import { defineConfig } from "@google-labs/breadboard/remote";
 import Core from "@google-labs/core-kit";
 import JSONKit from "@google-labs/json-kit";
-import Starter from "@google-labs/llm-starter";
+import TemplateKit from "@google-labs/template-kit";
 import NodeNurseryWeb from "@google-labs/node-nursery-web";
 import PaLMKit from "@google-labs/palm-kit";
 import Pinecone from "@google-labs/pinecone-kit";
@@ -41,16 +42,16 @@ const DEFAULT_HARNESS = PROXY_SERVER_URL
   ? PROXY_SERVER_HARNESS_VALUE
   : WORKER_HARNESS_VALUE;
 
-const kits = [Starter, Core, Pinecone, PaLMKit, NodeNurseryWeb, JSONKit].map(
-  (kitConstructor) => asRuntimeKit(kitConstructor)
-);
+const kits = [
+  TemplateKit,
+  Core,
+  Pinecone,
+  PaLMKit,
+  NodeNurseryWeb,
+  JSONKit,
+].map((kitConstructor) => asRuntimeKit(kitConstructor));
 
-export const proxyConfig = defineConfig({
-  kits,
-  proxy: PROXY_NODES,
-});
-
-export const createHarnessConfig = (url: string) => {
+export const createRunConfig = (url: string) => {
   const harness =
     globalThis.localStorage.getItem(HARNESS_SWITCH_KEY) ?? DEFAULT_HARNESS;
 
@@ -71,3 +72,9 @@ export const createHarnessConfig = (url: string) => {
   const diagnostics = true;
   return { url, kits, remote, proxy, diagnostics };
 };
+
+export const serveConfig = defineServeConfig({
+  transport: "worker",
+  kits: [{ proxy: PROXY_NODES } as KitConfig, ...kits],
+  diagnostics: true,
+});

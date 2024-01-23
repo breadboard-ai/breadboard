@@ -15,6 +15,7 @@ import { loadBoard, parseStdin, resolveFilePath, watch } from "./lib/utils.js";
 import * as readline from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
 import { VerboseLoggingProbe } from "./lib/verbose-logging-probe.js";
+import { RunOptions } from "./commandTypes.js";
 
 async function runBoard(
   board: BoardRunner,
@@ -77,11 +78,10 @@ async function runBoard(
   }
 }
 
-export const run = async (file: string, options: Record<string, any>) => {
+export const run = async (file: string, options: RunOptions) => {
   const kitDeclarations = options.kit as string[] | undefined;
   const verbose = "verbose" in options;
-  const input =
-    "input" in options ? (JSON.parse(options.input) as InputValues) : {};
+  const input = options.input ? (JSON.parse(options.input) as InputValues) : {};
 
   if (file != undefined) {
     const filePath = resolveFilePath(file);

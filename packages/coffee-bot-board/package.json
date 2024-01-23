@@ -21,7 +21,7 @@
         "../breadboard:build",
         "../core-kit:build",
         "../json-kit:build",
-        "../llm-starter:build",
+        "../template-kit:build",
         "../palm-kit:build",
         "build:tsc"
       ]
@@ -35,7 +35,7 @@
         "../breadboard:build:tsc",
         "../core-kit:build:tsc",
         "../json-kit:build:tsc",
-        "../llm-starter:build:tsc",
+        "../template-kit:build:tsc",
         "../palm-kit:build:tsc"
       ],
       "files": [
@@ -99,7 +99,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/breadboard-ai/breadboard"
+    "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },
   "files": [
     "dist/src"
@@ -139,7 +139,7 @@
     "@google-labs/breadboard": "*",
     "@google-labs/core-kit": "*",
     "@google-labs/palm-kit": "*",
-    "@google-labs/llm-starter": "*",
+    "@google-labs/template-kit": "*",
     "@google-labs/json-kit": "*",
     "@google-labs/node-nursery": "*",
     "dotenv": "^16.3.1"

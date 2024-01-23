@@ -5,7 +5,7 @@
  */
 
 import { Board } from "@google-labs/breadboard";
-import { Starter } from "@google-labs/llm-starter";
+import { TemplateKit } from "@google-labs/template-kit";
 import { Core } from "@google-labs/core-kit";
 import { PaLMKit } from "@google-labs/palm-kit";
 
@@ -15,7 +15,7 @@ const board = new Board({
     'An example of a board that implements a multi-turn experience: a very simple chat bot that accumulates context of the conversations. Tell it "I am hungry" or something like this and then give simple replies, like "bbq". It should be able to infer what you\'re asking for based on the conversation context. All replies are pure hallucinations, but should give you a sense of how a Breadboard API endpoint for a board with cycles looks like.',
   version: "0.0.1",
 });
-const kit = board.addKit(Starter);
+const kit = board.addKit(TemplateKit);
 const core = board.addKit(Core);
 const palm = board.addKit(PaLMKit);
 
@@ -39,7 +39,8 @@ const input = board.input({
 // Store prompt node for the same reason.
 const prompt = kit.promptTemplate({
   $id: "assistant",
-  template: "This is a conversation between a friendly assistant and their user. You are the assistant and your job is to try to be helpful, empathetic, and fun.\n{{context}}\n\n== Current Conversation\nuser: {{question}}\nassistant:",
+  template:
+    "This is a conversation between a friendly assistant and their user. You are the assistant and your job is to try to be helpful, empathetic, and fun.\n{{context}}\n\n== Current Conversation\nuser: {{question}}\nassistant:",
   context: "",
 });
 
@@ -61,7 +62,7 @@ core.passthrough({ $id: "start" }).wire(
         "prompt->text",
         palm
           .generateText({ $id: "generator" })
-          .wire("<-PALM_KEY.", kit.secrets({ keys: ["PALM_KEY"] }))
+          .wire("<-PALM_KEY.", core.secrets({ keys: ["PALM_KEY"] }))
           .wire(
             "completion->assistant",
             conversationMemory.wire("accumulator->context", prompt)

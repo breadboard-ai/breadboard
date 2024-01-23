@@ -4,174 +4,82 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NodeProxyConfig } from "../remote/config.js";
 import {
-  NodeStartResponse,
-  InputPromiseResponse,
+  ClientTransport,
   LoadResponse,
-  OutputResponse,
+  ServerTransport,
 } from "../remote/protocol.js";
-import { Kit, NodeDescriptor, OutputValues, ProbeMessage } from "../types.js";
+import {
+  AnyClientRunResult,
+  AnyProbeClientRunResult,
+  ClientRunResult,
+} from "../remote/run.js";
+import {
+  ErrorResponse,
+  InputResponse,
+  OutputResponse,
+  OutputValues,
+} from "../types.js";
 
-export type NodeEndResponse = {
-  node: NodeDescriptor;
-  path: number[];
-  outputs: OutputValues;
-};
-
-export type ResultType =
-  /**
-   * The board has been loaded
-   */
-  | "load"
-  /**
-   * The board is asking for input
-   */
-  | "input"
-  /**
-   * The board is sending output
-   */
-  | "output"
-  /**
-   * Sent before a handler for a particular node is invoked
-   */
-  | "nodestart"
-  /**
-   * Sent after a handler for a particular node is invoked
-   */
-  | "nodeend"
-  /**
-   * Sent when the harness is asking for secret
-   */
-  | "secret"
-  /**
-   * Sent when the board run process reports an error
-   */
-  | "error"
-  /**
-   * Sent when the board run finished
-   */
-  | "end";
-
+/**
+ * The board has been loaded
+ */
 export type LoadResult = {
   type: "load";
   data: LoadResponse;
 };
 
+/**
+ * The board is asking for input
+ */
 export type InputResult = {
   type: "input";
-  data: InputPromiseResponse;
+  data: InputResponse;
 };
 
+/**
+ * The board is sending output
+ */
 export type OutputResult = {
   type: "output";
   data: OutputResponse;
 };
 
+/**
+ * Sent when the harness is asking for secret
+ */
 export type SecretResult = {
   type: "secret";
-  data: { keys: string[] };
+  data: { keys: string[]; timestamp: number };
 };
 
-export type NodeStartResult = {
-  type: "nodestart";
-  data: NodeStartResponse;
-};
-
-export type NodeEndResult = {
-  type: "nodeend";
-  data: NodeEndResponse;
-};
-
+/**
+ * Sent when the board run process reports an error
+ */
 export type ErrorResult = {
   type: "error";
-  data: { error: string };
+  data: ErrorResponse;
 };
 
+/**
+ * Sent when the board run finished
+ */
 export type EndResult = {
   type: "end";
   data: Record<string, never>;
 };
 
-export type OptionalId = { id?: string };
+export type HarnessRunResult =
+  | AnyClientRunResult
+  | ClientRunResult<SecretResult>;
 
-export type AnyRunResult = (
-  | InputResult
-  | OutputResult
-  | SecretResult
-  | NodeStartResult
-  | NodeEndResult
-  | ErrorResult
-  | EndResult
-  | ProbeMessage
-) &
-  OptionalId;
-
-export interface HarnessResult<R extends AnyRunResult> {
-  reply(reply: unknown): void;
-  message: R;
-}
-
-export type HarnessRunResult = HarnessResult<AnyRunResult>;
-
-export interface Harness {
-  load(): Promise<LoadResponse>;
-  run(): AsyncGenerator<HarnessRunResult, void>;
-}
+export type HarnessProbeResult = AnyProbeClientRunResult;
 
 export type SecretHandler = (keys: {
   keys?: string[];
 }) => Promise<OutputValues>;
 
-export type ProxyLocation = "main" | "worker" | "http";
-
-export type HarnessProxyConfig = {
-  location: ProxyLocation;
-  url?: string;
-  nodes: NodeProxyConfig;
-};
-
-export type HarnessRemoteConfig =
-  | {
-      /**
-       * The type of the remote runtime. Can be "http" or "worker".
-       * Currently, only "worker" is supported.
-       */
-      type: "http" | "worker";
-      /**
-       * The URL of the remote runtime. Specifies the URL of the worker
-       * script if `type` is "worker", or the URL of the runtime server if
-       * `type` is "http".
-       */
-      url: string;
-    }
-  | false;
-
-export type HarnessConfig = {
-  /**
-   * The URL of the board to run.
-   */
-  url: string;
-  /**
-   * The kits to use by the runtime.
-   */
-  kits: Kit[];
-  /**
-   * Specifies the remote environment in which to run the harness.
-   * In this situation, the harness creates a runtime client, and relies
-   * on the remote environment to act as the runtime server
-   * If `remote` is not specified or is "false", this harness runs the board
-   * itself, acting as a server (there is no need for a client).
-   */
-  remote?: HarnessRemoteConfig;
-  /**
-   * Specifies a list of node proxies to use. Each item specifies a proxy
-   * server and a list of nodes that will be proxied to it.
-   */
-  proxy?: HarnessProxyConfig[];
-  /**
-   * Specifies whether to output diagnostics information.
-   * Defaults to `false`.
-   */
-  diagnostics?: boolean;
+export type TransportFactory = {
+  client<Request, Response>(label: string): ClientTransport<Request, Response>;
+  server<Request, Response>(label: string): ServerTransport<Request, Response>;
 };

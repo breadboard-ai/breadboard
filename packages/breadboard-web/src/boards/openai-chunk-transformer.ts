@@ -5,14 +5,14 @@
  */
 
 import { V, base, recipe } from "@google-labs/breadboard";
-import { starter } from "@google-labs/llm-starter";
+import { json } from "@google-labs/json-kit";
 
 /**
  * A recipe for chunking OpenaAI output streams into text chunks.
  */
 export const chunkTransformer = recipe(() => {
   const input = base.input({ $id: "chunk" });
-  const transformCompletion = starter.jsonata({
+  const transformCompletion = json.jsonata({
     $id: "transformCompletion",
     expression: 'choices[0].delta.content ? choices[0].delta.content : ""',
     json: input.chunk as V<string>,

@@ -4,19 +4,26 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import openapi from "./boards/openapi.js";
+import OpenAPI from "./boards/openapi.js";
 import { Board, asRuntimeKit } from "@google-labs/breadboard";
 import yaml from "yaml";
 import core from "@google-labs/core-kit";
-import starter from "@google-labs/llm-starter";
-import { writeFile } from "fs/promises";
+import templates from "@google-labs/template-kit";
+import { readFile, stat, writeFile } from "fs/promises";
 import path from "path";
+import { pathToFileURL } from "url";
+import { ImportOptions } from "./commandTypes.js";
 
-export const importGraph = async (
-  url: string,
-  options: Record<string, string>
-) => {
-  if (URL.canParse(url) == false) throw new Error("Invalid URL");
+export const importGraph = async (url: string, options: ImportOptions) => {
+  if (URL.canParse(url) == false) {
+    const fileStat = await stat(path.resolve(process.cwd(), url));
+    if (fileStat != undefined && fileStat.isFile()) {
+      // We think it's a file.
+      url = pathToFileURL(url).toString();
+    } else {
+      throw new Error("Invalid URL");
+    }
+  }
 
   const apiPath = options.api;
   const outputPath = options.output;
@@ -32,7 +39,13 @@ export const importGraph = async (
   let json;
 
   try {
-    openAPIData = await (await fetch(url)).text();
+    if (url.startsWith("file://")) {
+      openAPIData = await readFile(url.replace("file://", ""), {
+        encoding: "utf-8",
+      });
+    } else {
+      openAPIData = await (await fetch(url)).text();
+    }
   } catch (e) {
     throw new Error(`Unable to fetch OpenAPI spec from ${url}`);
   }
@@ -49,11 +62,11 @@ export const importGraph = async (
     }
   }
 
-  const openAPIBoard = await Board.fromGraphDescriptor(openapi);
+  const openAPIBoard = await Board.fromGraphDescriptor(OpenAPI);
 
   const boards = await openAPIBoard.runOnce(
     { json },
-    { kits: [asRuntimeKit(core), asRuntimeKit(starter)] }
+    { kits: [asRuntimeKit(core), asRuntimeKit(templates)] }
   );
 
   if (boards == undefined || boards == null) {

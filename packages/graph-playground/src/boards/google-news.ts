@@ -5,11 +5,15 @@
  */
 
 import { Board } from "@google-labs/breadboard";
-import { Starter } from "@google-labs/llm-starter";
+import Core from "@google-labs/core-kit";
+import JSONKit from "@google-labs/json-kit";
+import { TemplateKit } from "@google-labs/template-kit";
 import { PaLMKit } from "@google-labs/palm-kit";
 
 const board = new Board();
-const kit = board.addKit(Starter);
+const kit = board.addKit(TemplateKit);
+const core = board.addKit(Core);
+const json = board.addKit(JSONKit);
 const palm = board.addKit(PaLMKit);
 
 const input = board.input({
@@ -30,16 +34,19 @@ input.wire(
   "text->query",
   kit
     .urlTemplate({
-      template: "https://news.google.com/rss/search?q={query}&hl=en-US&gl=US&ceid=US:en",
+      template:
+        "https://news.google.com/rss/search?q={query}&hl=en-US&gl=US&ceid=US:en",
     })
     .wire(
       "url->",
-      kit.fetch({ raw: true }).wire(
+      core.fetch({ raw: true }).wire(
         "response->xml",
-        kit.xmlToJson().wire(
+        json.xmlToJson().wire(
           "json->",
-          kit
-            .jsonata({ expression: "$join((rss.channel.item.title.`$t`)[[1..20]], '\n')" })
+          json
+            .jsonata({
+              expression: "$join((rss.channel.item.title.`$t`)[[1..20]], '\n')",
+            })
             .wire(
               "result->headlines",
               kit
@@ -54,7 +61,7 @@ input.wire(
                   "prompt->text",
                   palm
                     .generateText()
-                    .wire("<-PALM_KEY.", kit.secrets({ keys: ["PALM_KEY"] }))
+                    .wire("<-PALM_KEY.", core.secrets({ keys: ["PALM_KEY"] }))
                     .wire("completion->text", board.output())
                 )
             )

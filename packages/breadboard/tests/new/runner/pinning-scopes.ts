@@ -77,7 +77,7 @@ test("pin node and invokeOnce scope", async (t) => {
 
   scope.addHandlers(handlers);
 
-  const result = await scope.invokeOnce({ foo: "success" });
+  const result = await scope.invokeOneRound({ foo: "success" });
 
   t.deepEqual(result, { bar: "success" });
 });

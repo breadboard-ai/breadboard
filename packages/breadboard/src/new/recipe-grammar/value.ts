@@ -243,6 +243,26 @@ export class Value<T extends NodeValue = NodeValue>
     return this;
   }
 
+  format(format: string): AbstractValue<T> {
+    this.#schema.format = format;
+    return this;
+  }
+
+  examples(...examples: string[]): AbstractValue<T> {
+    this.#schema.examples = examples;
+    return this;
+  }
+
+  default(value: string): AbstractValue<T> {
+    this.#schema.default = value;
+    return this;
+  }
+
+  optional(): AbstractValue<T> {
+    (this.#schema as Record<string, unknown>).$optional = true;
+    return this;
+  }
+
   #remapKeys(newKeys: KeyMap) {
     const newMap = { ...this.#keymap };
     Object.entries(newKeys).forEach(([fromKey, toKey]) => {

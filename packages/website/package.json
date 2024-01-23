@@ -1,5 +1,5 @@
 {
-  "name": "@google-labs/internal-website",
+  "name": "@google-labs/breadboard-website",
   "private": true,
   "version": "1.0.0",
   "description": "The public documentation website for Breadboard",
@@ -8,7 +8,7 @@
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/breadboard-ai/breadboard"
+    "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },
   "bugs": {
     "url": "https://github.com/breadboard-ai/breadboard/issues"
@@ -23,16 +23,52 @@
   "wireit": {
     "build": {
       "dependencies": [
+        "build:js",
+        "build:static",
         "build:eleventy"
+      ]
+    },
+    "build:js": {
+      "command": "tsc -b",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "build:eleventy"
+      ],
+      "files": [
+        "src/js/",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
+      ],
+      "output": [
+        "_site/js/",
+        "tsconfig.tsbuildinfo"
+      ]
+    },
+    "build:static": {
+      "command": "cp -R src/static _site",
+      "dependencies": [
+        "build:eleventy"
+      ],
+      "files": [
+        "src/static/"
+      ],
+      "output": [
+        "_site/static/"
       ]
     },
     "build:eleventy": {
       "command": "eleventy --input=src/",
       "files": [
-        "src/"
+        "src/",
+        "!src/js/",
+        "!src/static/"
       ],
       "output": [
-        "_site/"
+        "_site/",
+        "!_site/js/",
+        "!_site/static/"
       ]
     },
     "serve": {
@@ -40,7 +76,7 @@
       "service": true,
       "dependencies": [
         {
-          "script": "build:eleventy",
+          "script": "build",
           "cascade": false
         }
       ],
@@ -48,7 +84,8 @@
     }
   },
   "dependencies": {
-    "@11ty/eleventy": "^2.0.1"
+    "@11ty/eleventy": "^2.0.1",
+    "lit": "^3.1.1"
   },
   "devDependencies": {
     "@web/dev-server": "^0.4.1"

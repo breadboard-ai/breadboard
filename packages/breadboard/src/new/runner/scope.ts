@@ -17,11 +17,25 @@ import {
   AbstractNode,
   ScopeInterface,
   InvokeCallbacks,
-  OutputDistribution,
   ScopeConfig,
+  StateInterface,
 } from "./types.js";
 
+import { State } from "./state.js";
 import { NodeDescriberResult, Schema } from "../../types.js";
+
+const buildRequiredPropertyList = (properties: Record<string, Schema>) => {
+  return Object.entries(properties)
+    .map(([key, value]) => {
+      const mayHaveOptional = value as Record<string, unknown>;
+      if (mayHaveOptional.$optional) {
+        delete mayHaveOptional.$optional;
+        return undefined;
+      }
+      return key;
+    })
+    .filter(Boolean) as string[];
+};
 
 export class Scope implements ScopeInterface {
   parentLexicalScope?: Scope;
@@ -55,7 +69,10 @@ export class Scope implements ScopeInterface {
     >;
   }
 
-  pin(node: AbstractNode) {
+  pin<
+    I extends InputValues = InputValues,
+    O extends OutputValues = OutputValues
+  >(node: AbstractNode<I, O>) {
     this.#pinnedNodes.push(node);
   }
 
@@ -94,25 +111,29 @@ export class Scope implements ScopeInterface {
     ];
   }
 
-  async invoke(node?: AbstractNode | AbstractNode[]): Promise<void> {
+  async invoke(
+    node?: AbstractNode | AbstractNode[] | false,
+    state: StateInterface = new State()
+  ): Promise<void> {
     try {
-      const queue: AbstractNode[] = (
-        node ? (node instanceof Array ? node : [node]) : this.#pinnedNodes
-      ).flatMap((node) =>
-        this.#findAllConnectedNodes(node).filter(
-          (node) => !node.missingInputs()
-        )
-      );
+      if (node !== false)
+        (node ? (node instanceof Array ? node : [node]) : this.#pinnedNodes)
+          .flatMap((node) =>
+            this.#findAllConnectedNodes(node).filter(
+              (node) => state?.missingInputs(node) === false
+            )
+          )
+          .forEach((node) => state?.queueUp(node));
 
       const callbacks = this.#getAllCallbacks();
 
-      while (queue.length) {
+      while (!state.done()) {
         for (const callback of callbacks)
-          if (await callback.abort?.(this)) return;
+          if (await callback.stop?.(this, state)) return;
 
-        const node = queue.shift() as AbstractNode;
+        const node = state.next();
 
-        const inputs = node.getInputs();
+        const inputs = state.shiftInputs(node);
 
         let callbackResult: OutputValues | undefined = undefined;
         for (const callback of callbacks)
@@ -121,7 +142,7 @@ export class Scope implements ScopeInterface {
         // Invoke node, unless before callback already provided a result.
         const result =
           callbackResult ??
-          (await node.invoke(this).catch((e) => {
+          (await node.invoke(inputs, this).catch((e) => {
             return {
               $error: {
                 type: "error",
@@ -130,28 +151,16 @@ export class Scope implements ScopeInterface {
             };
           }));
 
-        // Distribute data to outgoing edges
-        const unusedPorts = new Set<string>(Object.keys(result));
-        const distribution: OutputDistribution = { nodes: [], unused: [] };
-        node.outgoing.forEach((edge) => {
-          const ports = edge.to.receiveInputs(edge, result);
-          ports.forEach((key) => unusedPorts.delete(key));
-
-          // If it's ready to run, add it to the queue
-          const missing = edge.to.missingInputs();
-          if (!missing) queue.push(edge.to);
-
-          distribution.nodes.push({ node: edge.to, received: ports, missing });
-        });
+        // Distribute data to outgoing edges, queue up nodes that are ready to
+        const distribution = state.processResult(node, result);
 
         // Call after callback
-        distribution.unused = [...unusedPorts];
         for (const callback of callbacks) {
           await callback.after?.(this, node, inputs, result, distribution);
         }
 
         // Abort graph on uncaught errors.
-        if (unusedPorts.has("$error")) {
+        if (distribution.unused.includes("$error")) {
           throw (result["$error"] as { error: Error }).error;
         }
       }
@@ -164,10 +173,16 @@ export class Scope implements ScopeInterface {
     }
   }
 
-  invokeOnce(
+  invokeOneRound(
     inputs: InputValues = {},
-    node?: AbstractNode
+    node: AbstractNode | false | undefined = undefined,
+    state?: StateInterface
   ): Promise<OutputValues> {
+    if ("$state" in inputs) {
+      state = inputs["$state"] as StateInterface;
+      delete inputs["$state"];
+    }
+
     let resolver: undefined | ((outputs: OutputValues) => void) = undefined;
     const promise = new Promise<OutputValues>((resolve) => {
       resolver = resolve;
@@ -189,9 +204,12 @@ export class Scope implements ScopeInterface {
     let lastNode: AbstractNode | undefined = undefined;
     const lastMissingInputs = new Map<string, string>();
 
+    let stopState: StateInterface | undefined = undefined;
+
     scope.addCallbacks({
-      abort: () => {
+      stop: (_scope, state) => {
         // Once output node was executed, stop execution.
+        if (!resolver) stopState = state;
         return !resolver;
       },
       after: (_scope, node, _inputs, _outputs, distribution) => {
@@ -225,10 +243,16 @@ export class Scope implements ScopeInterface {
       },
     });
 
-    const runner = scope.invoke(node ?? this.#pinnedNodes);
+    const runner = scope.invoke(
+      node !== undefined ? node : this.#pinnedNodes,
+      state
+    );
 
-    // Wait for both, return output values
-    return Promise.all([promise, runner]).then(([outputs]) => outputs);
+    // Wait for both, return output values, and last state if stopped.
+    return Promise.all([promise, runner]).then(([outputs]) => ({
+      ...outputs,
+      ...(stopState ? { $state: stopState } : {}),
+    }));
   }
 
   async serialize(
@@ -381,10 +405,8 @@ export class Scope implements ScopeInterface {
       }
     }
 
-    return {
-      type: "object",
-      properties,
-      required: Object.keys(properties),
-    } satisfies Schema;
+    const required = buildRequiredPropertyList(properties);
+
+    return { type: "object", properties, required } satisfies Schema;
   }
 }

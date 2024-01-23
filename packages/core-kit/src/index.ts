@@ -15,6 +15,9 @@ import slot from "./nodes/slot.js";
 import map from "./nodes/map.js";
 import batch from "./nodes/batch.js";
 import append from "./nodes/append.js";
+import fetch from "./nodes/fetch.js";
+import runJavascript from "./nodes/run-javascript.js";
+import secrets from "./nodes/secrets.js";
 
 const builder = new KitBuilder({
   title: "Core Kit",
@@ -156,6 +159,9 @@ export const Core = builder.build({
    */
   map,
   batch,
+  fetch,
+  runJavascript,
+  secrets,
 });
 
 export type Core = InstanceType<typeof Core>;
@@ -198,5 +204,16 @@ export const core = addKit(Core) as unknown as {
     },
     { list: NodeValue[] }
   >;
+  fetch: NodeFactory<{ url: string }, { response: string }>;
+  runJavascript: NodeFactory<
+    {
+      code: string;
+      name: string;
+      raw: boolean;
+      [key: string]: NodeValue;
+    },
+    { result: unknown; [k: string]: unknown }
+  >;
+  secrets: NodeFactory<{ keys: string[] }, { [k: string]: string }>;
   // TODO: Other Core nodes.
 };

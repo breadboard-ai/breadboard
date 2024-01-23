@@ -7,7 +7,7 @@
 import { config } from "dotenv";
 
 import { Board } from "@google-labs/breadboard";
-import { Starter } from "@google-labs/llm-starter";
+import { TemplateKit } from "@google-labs/template-kit";
 import { Core } from "@google-labs/core-kit";
 import { PaLMKit } from "@google-labs/palm-kit";
 
@@ -17,7 +17,7 @@ config();
 
 const maker = new PromptMaker("v2-multi-agent");
 const board = new Board();
-const kit = board.addKit(Starter);
+const kit = board.addKit(TemplateKit);
 const core = board.addKit(Core);
 const palm = board.addKit(PaLMKit);
 
@@ -46,10 +46,10 @@ board.input().wire(
         stopSequences: ["Customer:"],
       })
       .wire("$error->", board.output({ $id: "error" }))
-      .wire("<-PALM_KEY", kit.secrets({ keys: ["PALM_KEY"] }))
+      .wire("<-PALM_KEY", core.secrets({ keys: ["PALM_KEY"] }))
       .wire(
         "completion->",
-        kit
+        core
           .runJavascript({
             $id: "parseResponse",
             name: "parseResponse",

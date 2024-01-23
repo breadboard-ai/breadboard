@@ -6,7 +6,7 @@
 
 import { BoardRunner, GraphDescriptor } from "@google-labs/breadboard";
 import { watch as fsWatch } from "fs";
-import { opendir, readFile, stat } from "fs/promises";
+import { opendir, readFile, stat, writeFile } from "fs/promises";
 import { join } from "node:path";
 import { stdin as input } from "node:process";
 import * as readline from "node:readline/promises";
@@ -73,9 +73,19 @@ export const loadBoard = async (
   options: Options
 ): Promise<BoardRunner> => {
   const loaderType = extname(file).slice(1) as "js" | "ts" | "yaml" | "json";
+  const save = "save" in options ? options["save"] : true;
 
   const loader = new Loaders(loaderType);
-  return await loader.load(file, options);
+  const board = await loader.load(file, options);
+  if (save && loaderType !== "json") {
+    const pathInfo = path.parse(file);
+    const boardClone = JSON.parse(JSON.stringify(board));
+    const outputFilePath = path.join(options.output, `${pathInfo.name}.json`);
+    boardClone.url = pathToFileURL(outputFilePath); // So that the base url is correct for subsequent invokes
+    const boardJson = JSON.stringify(boardClone, null, 2);
+    await writeFile(outputFilePath, boardJson);
+  }
+  return board;
 };
 
 export const parseStdin = async (): Promise<string> => {
@@ -89,7 +99,8 @@ export const parseStdin = async (): Promise<string> => {
 };
 
 export const loadBoards = async (
-  path: string
+  path: string,
+  options: Options
 ): Promise<Array<BoardMetaData>> => {
   const fileStat = await stat(path);
   const fileUrl = pathToFileURL(path);
@@ -116,7 +127,7 @@ export const loadBoards = async (
     (path.endsWith(".js") || path.endsWith(".ts") || path.endsWith(".yaml"))
   ) {
     // Compile the JS, TS or YAML.
-    const board = await loadBoard(path, { watch: false });
+    const board = await loadBoard(path, options);
 
     return [
       {
@@ -149,7 +160,7 @@ export const loadBoards = async (
           dirent.name.endsWith(".ts") ||
           dirent.name.endsWith(".yaml"))
       ) {
-        const board = await loadBoard(dirent.path, { watch: false });
+        const board = await loadBoard(dirent.path, options);
         boards.push({
           ...board,
           title: board.title ?? join("/", path, dirent.name),

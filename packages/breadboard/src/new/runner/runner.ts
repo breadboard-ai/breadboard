@@ -6,7 +6,6 @@
 
 import {
   GraphDescriptor,
-  GraphMetadata,
   NodeDescriptor,
   Edge,
   Kit,
@@ -134,7 +133,7 @@ export class Runner implements BreadboardRunner {
     });
 
     scope.addHandlers({
-      input: async (inputs: InputValues | PromiseLike<InputValues>, node) => {
+      input: async (inputs: InputValues, node: AbstractNode) => {
         let resolver: (outputs: OutputValues) => void;
         const outputsPromise = new Promise<OutputValues>((resolve) => {
           resolver = resolve;
@@ -195,43 +194,10 @@ export class Runner implements BreadboardRunner {
     }
   }
 
-  // This is mostly copy & pasted from the original
-  async runOnce(
-    inputs: OriginalInputValues,
-    context?: NodeHandlerContext
-  ): Promise<OriginalOutputValues> {
-    const args = { ...inputs, ...this.args };
-
-    try {
-      let outputs: OriginalOutputValues = {};
-
-      for await (const result of this.run(context ?? {})) {
-        if (result.type === "input") {
-          // Pass the inputs to the board. If there are inputs bound to the board
-          // (e.g. from a lambda node that had incoming wires), they will
-          // overwrite supplied inputs.
-          result.inputs = args;
-        } else if (result.type === "output") {
-          outputs = result.outputs;
-          // Exit once we receive the first output.
-          break;
-        }
-      }
-      return outputs;
-    } catch (e) {
-      // Unwrap unhandled error (handled errors are just outputs of the board!)
-      if ((e as { cause: string }).cause)
-        return Promise.resolve({
-          $error: (e as { cause: string }).cause,
-        } as OriginalOutputValues);
-      else throw e;
-    }
-  }
-
   // To discuss: This is the same as runOnce() above, but implemented in
   // parallel to run(), using different (and very simple) proxied input and
   // output nodes.
-  async runOnce2(
+  async runOnce(
     inputs: OriginalInputValues,
     context?: NodeHandlerContext
   ): Promise<OriginalOutputValues> {
@@ -243,44 +209,19 @@ export class Runner implements BreadboardRunner {
     const scope = new Scope({ lexicalScope: this.#scope });
 
     context?.kits?.forEach((kit) => scope.addHandlers(handlersFromKit(kit)));
-
-    let resolver: (outputs: OriginalOutputValues) => void;
-    const promise = new Promise<OriginalOutputValues>((resolve) => {
-      resolver = resolve;
-    });
-
-    scope.addHandlers({
-      input: async () => {
-        return args as InputValues;
-      },
-      output: async (inputs: InputValues | PromiseLike<InputValues>) => {
-        resolver((await inputs) as OriginalOutputValues);
-        return {};
-      },
-    });
-
     if (context?.probe) scope.addCallbacks(createProbeCallbacks(context.probe));
 
     // TODO: One big difference to before: This will keep running forever, even
     // after the first output is encountered. We need to add a way to abort the
     // run.
-    scope.invoke(this.#anyNode);
-
-    return promise;
+    return scope.invokeOneRound(
+      args,
+      this.#anyNode
+    ) as Promise<OriginalOutputValues>;
   }
 
   addValidator(_: BreadboardValidator): void {
     // TODO: Implement
-  }
-
-  static async fromNode(
-    node: AbstractNode,
-    metadata?: GraphMetadata
-  ): Promise<Runner> {
-    const board = new Runner();
-    Object.assign(board, await node.serialize(metadata));
-    board.#anyNode = node;
-    return board;
   }
 
   static async fromGraphDescriptor(graph: GraphDescriptor): Promise<Runner> {

@@ -1,12 +1,11 @@
 {
   "name": "@google-labs/breadboard",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "A library for rapid generative AI application prototyping",
   "main": "./dist/src/index.js",
   "exports": {
     ".": "./dist/src/index.js",
     "./kits": "./dist/src/kits/index.js",
-    "./worker": "./dist/src/worker/index.js",
     "./remote": "./dist/src/remote/index.js",
     "./harness": "./dist/src/harness/index.js"
   },
@@ -111,7 +110,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/breadboard-ai/breadboard"
+    "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },
   "files": [
     "dist/src",

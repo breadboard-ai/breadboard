@@ -11,7 +11,9 @@ import {
   base,
   recipe,
 } from "@google-labs/breadboard";
-import { starter } from "@google-labs/llm-starter";
+import { templates } from "@google-labs/template-kit";
+import { core } from "@google-labs/core-kit";
+import { json } from "@google-labs/json-kit";
 import { nursery } from "@google-labs/node-nursery-web";
 
 type TextPartType = {
@@ -154,6 +156,15 @@ const parametersSchema = {
       description: "Whether to stream the output",
       default: "false",
     },
+    stopSequences: {
+      type: "array",
+      title: "Stop Sequences",
+      description: "An array of strings that will stop the output",
+      items: {
+        type: "string",
+      },
+      default: "[]",
+    },
   },
   required: ["text"],
 } satisfies Schema;
@@ -214,7 +225,7 @@ export default await recipe(() => {
     return { method, sseOption };
   }
 
-  const chooseMethod = starter.runJavascript({
+  const chooseMethod = core.runJavascript({
     $id: "chooseMethod",
     name: "chooseMethodFunction",
     code: chooseMethodFunction.toString(),
@@ -222,15 +233,15 @@ export default await recipe(() => {
     useStreaming: parameters,
   });
 
-  const makeUrl = starter.urlTemplate({
+  const makeUrl = templates.urlTemplate({
     $id: "makeURL",
     template:
       "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:{method}?key={GEMINI_KEY}{+sseOption}",
-    GEMINI_KEY: starter.secrets({ keys: ["GEMINI_KEY"] }),
+    GEMINI_KEY: core.secrets({ keys: ["GEMINI_KEY"] }),
     ...chooseMethod,
   });
 
-  const makeBody = starter.jsonata({
+  const makeBody = json.jsonata({
     $id: "makeBody",
     expression: `(
       $context := $append(
@@ -245,7 +256,10 @@ export default await recipe(() => {
               }
           ]);
       text ? {
-          "contents": $context, 
+          "contents": $context,
+          "generationConfig": stopSequences ? {
+            "stopSequences": stopSequences
+          },
           "tools": tools ? {
             "function_declarations": tools
           }
@@ -256,7 +270,7 @@ export default await recipe(() => {
     ...parameters,
   });
 
-  const fetch = starter.fetch({
+  const fetch = core.fetch({
     $id: "callGeminiAPI",
     method: "POST",
     stream: parameters.useStreaming,
@@ -264,7 +278,7 @@ export default await recipe(() => {
     body: makeBody.result,
   });
 
-  const formatResponse = starter.jsonata({
+  const formatResponse = json.jsonata({
     $id: "formatResponse",
     expression: `
   response.candidates[0].content.parts.{
@@ -279,7 +293,7 @@ export default await recipe(() => {
   const streamTransform = nursery.transformStream({
     $id: "streamTransform",
     board: recipe(() => {
-      const transformChunk = starter.jsonata({
+      const transformChunk = json.jsonata({
         $id: "transformChunk",
         expression:
           "candidates[0].content.parts.text ? $join(candidates[0].content.parts.text) : ''",

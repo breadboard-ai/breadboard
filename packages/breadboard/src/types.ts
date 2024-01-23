@@ -135,7 +135,7 @@ export type Edge = {
  * Represents references to a "kit": a collection of `NodeHandlers`.
  * The basic permise here is that people can publish kits with interesting
  * handlers, and then graphs can specify which ones they use.
- * The `@google-labs/llm-starter` package is an example of kit.
+ * The `@google-labs/core-kit` package is an example of kit.
  */
 export type KitReference = {
   /**
@@ -385,6 +385,10 @@ export interface BreadboardRunResult {
    * the node within the run, similar to an "index" property in map/forEach.
    */
   get invocationId(): number;
+  /**
+   * The timestamp of when this result was issued.
+   */
+  get timestamp(): number;
 }
 
 export interface NodeFactory {
@@ -454,19 +458,54 @@ export interface BreadboardValidator {
   ): BreadboardValidator;
 }
 
-export type GraphProbeMessageData = {
+/**
+ * Sequential number of the invocation of a node.
+ * Useful for understanding the relative position of a
+ * given invocation of node within the run.
+ */
+export type InvocationId = number;
+
+/**
+ * Information about a given invocation of a graph and
+ * node within the graph.
+ */
+export type RunStackEntry = {
+  /**
+   * The invocation id of the graph.
+   */
+  graph: InvocationId;
+  /**
+   * The invocation id of the node within that graph.
+   */
+  node: InvocationId;
+  /**
+   * The state of the graph traversal at the time of the invocation.
+   */
+  state?: string;
+};
+
+/**
+ * A stack of all invocations of graphs and nodes within the graphs.
+ * The stack is ordered from the outermost graph to the innermost graph
+ * that is currently being run.
+ * Can be used to understand the current state of the run.
+ */
+export type RunState = RunStackEntry[];
+
+export type GraphProbeData = {
   metadata: GraphMetadata;
   path: number[];
+  timestamp: number;
 };
 
 export type GraphStartProbeMessage = {
   type: "graphstart";
-  data: GraphProbeMessageData;
+  data: GraphProbeData;
 };
 
 export type GraphEndProbeMessage = {
   type: "graphend";
-  data: GraphProbeMessageData;
+  data: GraphProbeData;
 };
 
 export type SkipProbeMessage = {
@@ -476,27 +515,19 @@ export type SkipProbeMessage = {
     inputs: InputValues;
     missingInputs: string[];
     path: number[];
+    timestamp: number;
   };
 };
 
 export type NodeStartProbeMessage = {
   type: "nodestart";
-  data: {
-    node: NodeDescriptor;
-    inputs: InputValues;
-    path: number[];
-  };
+  data: NodeStartResponse;
+  state: RunState;
 };
 
 export type NodeEndProbeMessage = {
   type: "nodeend";
-  data: {
-    node: NodeDescriptor;
-    inputs: InputValues;
-    outputs: OutputValues;
-    validatorMetadata?: BreadboardValidatorMetadata[];
-    path: number[];
-  };
+  data: NodeEndResponse;
 };
 
 export type ProbeMessage =
@@ -505,6 +536,77 @@ export type ProbeMessage =
   | SkipProbeMessage
   | NodeStartProbeMessage
   | NodeEndProbeMessage;
+
+/**
+ * Sent by the runner to supply outputs.
+ */
+export type OutputResponse = {
+  /**
+   * The description of the node that is providing output.
+   * @see [NodeDescriptor]
+   */
+  node: NodeDescriptor;
+  /**
+   * The output values that the node is providing.
+   * @see [OutputValues]
+   */
+  outputs: OutputValues;
+  timestamp: number;
+};
+
+/**
+ * Sent by the runner just before a node is about to run.
+ */
+export type NodeStartResponse = {
+  /**
+   * The description of the node that is about to run.
+   * @see [NodeDescriptor]
+   */
+  node: NodeDescriptor;
+  inputs: InputValues;
+  path: number[];
+  timestamp: number;
+};
+
+export type NodeEndResponse = {
+  node: NodeDescriptor;
+  inputs: InputValues;
+  outputs: OutputValues;
+  validatorMetadata?: BreadboardValidatorMetadata[];
+  path: number[];
+  timestamp: number;
+};
+
+/**
+ * Sent by the runner to request input.
+ */
+export type InputResponse = {
+  /**
+   * The description of the node that is requesting input.
+   * @see [NodeDescriptor]
+   */
+  node: NodeDescriptor;
+  /**
+   * The input arguments that were given to the node that is requesting input.
+   * These arguments typically contain the schema of the inputs that are
+   * expected.
+   * @see [InputValues]
+   */
+  inputArguments: InputValues & { schema?: Schema };
+  timestamp: number;
+};
+
+/**
+ * Sent by the runner when an error occurs.
+ * Error response also indicates that the board is done running.
+ */
+export type ErrorResponse = {
+  /**
+   * The error message.
+   */
+  error: string;
+  timestamp: number;
+};
 
 // TODO: Remove extending EventTarget once new runner is converted to use
 // reporting.
@@ -560,8 +662,13 @@ export interface NodeHandlerContext {
   readonly outerGraph?: GraphDescriptor;
   readonly slots?: BreadboardSlotSpec;
   readonly probe?: Probe;
-  readonly requestInput?: (name: string, schema: Schema) => Promise<NodeValue>;
+  readonly requestInput?: (
+    name: string,
+    schema: Schema,
+    node: NodeDescriptor
+  ) => Promise<NodeValue>;
   readonly invocationPath?: number[];
+  readonly state?: RunState;
 }
 
 export interface BreadboardNode<Inputs, Outputs> {
