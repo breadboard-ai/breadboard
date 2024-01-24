@@ -1,0 +1,333 @@
+{
+  "title": "Gemini Pro Vision",
+  "description": "A simple example of using `gemini-pro-vision` model",
+  "version": "0.0.2",
+  "edges": [
+    {
+      "from": "formatOutput",
+      "to": "textOutput",
+      "out": "result",
+      "in": "result"
+    },
+    {
+      "from": "fetch-4",
+      "to": "formatError",
+      "out": "$error",
+      "in": "json"
+    },
+    {
+      "from": "fetch-4",
+      "to": "chunkToText",
+      "out": "stream",
+      "in": "stream"
+    },
+    {
+      "from": "fetch-4",
+      "to": "formatOutput",
+      "out": "response",
+      "in": "json"
+    },
+    {
+      "from": "parameters",
+      "to": "makeBody",
+      "out": "parts",
+      "in": "parts"
+    },
+    {
+      "from": "parameters",
+      "to": "chooseMethod",
+      "out": "useStreaming",
+      "in": "useStreaming"
+    },
+    {
+      "from": "parameters",
+      "to": "fetch-4",
+      "out": "useStreaming",
+      "in": "stream"
+    },
+    {
+      "from": "makeURL",
+      "to": "fetch-4",
+      "out": "url",
+      "in": "url"
+    },
+    {
+      "from": "makeBody",
+      "to": "fetch-4",
+      "out": "result",
+      "in": "body"
+    },
+    {
+      "from": "formatError",
+      "to": "errorOutput",
+      "out": "result",
+      "in": "error"
+    },
+    {
+      "from": "chunkToText",
+      "to": "streamOutput",
+      "out": "stream",
+      "in": "stream"
+    },
+    {
+      "from": "chooseMethod",
+      "to": "makeURL",
+      "out": "method",
+      "in": "method"
+    },
+    {
+      "from": "chooseMethod",
+      "to": "makeURL",
+      "out": "sseOption",
+      "in": "sseOption"
+    },
+    {
+      "from": "secrets-3",
+      "to": "makeURL",
+      "out": "GEMINI_KEY",
+      "in": "GEMINI_KEY"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "textOutput",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "result": {
+              "type": "string",
+              "title": "Result"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "formatOutput",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "$join(candidates.content.parts.text)"
+      }
+    },
+    {
+      "id": "fetch-4",
+      "type": "fetch",
+      "configuration": {
+        "method": "POST"
+      }
+    },
+    {
+      "id": "parameters",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "parts": {
+              "type": "array",
+              "format": "multipart",
+              "title": "Content",
+              "description": "Add content here",
+              "minItems": 1,
+              "items": [
+                {
+                  "type": "object",
+                  "title": "Text",
+                  "format": "text_part",
+                  "description": "A text part, which consists of plain text",
+                  "properties": {
+                    "text": {
+                      "type": "string"
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "title": "Image",
+                  "format": "image_part",
+                  "description": "An image part. Can be a JPEG or PNG image"
+                }
+              ]
+            },
+            "useStreaming": {
+              "type": "boolean",
+              "title": "Stream",
+              "description": "Whether to stream the output",
+              "default": "false"
+            }
+          },
+          "required": [
+            "parts"
+          ]
+        }
+      }
+    },
+    {
+      "id": "makeURL",
+      "type": "urlTemplate",
+      "configuration": {
+        "template": "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:{method}?key={GEMINI_KEY}{+sseOption}"
+      }
+    },
+    {
+      "id": "makeBody",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "{ \"contents\": { \"parts\": $.parts }}"
+      }
+    },
+    {
+      "id": "formatError",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "error.message"
+      }
+    },
+    {
+      "id": "chunkToText",
+      "type": "transformStream",
+      "configuration": {
+        "board": {
+          "kind": "board",
+          "board": {
+            "kits": [],
+            "edges": [
+              {
+                "from": "fn-4",
+                "to": "output-5",
+                "out": "*",
+                "in": ""
+              },
+              {
+                "from": "input-3",
+                "to": "fn-4",
+                "out": "chunk",
+                "in": "chunk"
+              }
+            ],
+            "nodes": [
+              {
+                "id": "output-5",
+                "type": "output",
+                "configuration": {}
+              },
+              {
+                "id": "fn-4",
+                "type": "invoke",
+                "configuration": {
+                  "path": "#fn-4"
+                }
+              },
+              {
+                "id": "input-3",
+                "type": "input",
+                "configuration": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "chunk": {
+                        "type": "string",
+                        "title": "chunk"
+                      }
+                    },
+                    "required": [
+                      "chunk"
+                    ]
+                  }
+                }
+              }
+            ],
+            "graphs": {
+              "fn-4": {
+                "edges": [
+                  {
+                    "from": "fn-4-input",
+                    "to": "fn-4-run",
+                    "out": "*"
+                  },
+                  {
+                    "from": "fn-4-run",
+                    "to": "fn-4-output",
+                    "out": "*"
+                  }
+                ],
+                "nodes": [
+                  {
+                    "id": "fn-4-input",
+                    "type": "input",
+                    "configuration": {}
+                  },
+                  {
+                    "id": "fn-4-run",
+                    "type": "runJavascript",
+                    "configuration": {
+                      "code": "function fn_4({chunk}) {return{chunk:chunk.candidates[0].content.parts[0].text}}",
+                      "name": "fn_4",
+                      "raw": true
+                    }
+                  },
+                  {
+                    "id": "fn-4-output",
+                    "type": "output",
+                    "configuration": {}
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "chooseMethod",
+      "type": "runJavascript",
+      "configuration": {
+        "name": "chooseMethodFunction",
+        "code": "function chooseMethodFunction({useStreaming}){const method=useStreaming?\"streamGenerateContent\":\"generateContent\";const sseOption=useStreaming?\"&alt=sse\":\"\";return{method,sseOption}}",
+        "raw": true
+      }
+    },
+    {
+      "id": "secrets-3",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "GEMINI_KEY"
+        ]
+      }
+    },
+    {
+      "id": "errorOutput",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "error": {
+              "type": "string",
+              "title": "Error"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "streamOutput",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "stream": {
+              "type": "object",
+              "title": "Result",
+              "format": "stream"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "graphs": {}
+}

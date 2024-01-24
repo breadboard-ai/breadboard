@@ -1,0 +1,234 @@
+{
+  "title": "OpenAI GPT 4 Vision Preview",
+  "description": "This board is the simplest possible invocation of OpenAI's GPT 4 Vision Preview API to generate text from multipart inputs.",
+  "version": "0.0.2",
+  "edges": [
+    {
+      "from": "streamTransform",
+      "to": "streamOutput",
+      "out": "*",
+      "in": ""
+    },
+    {
+      "from": "openai",
+      "to": "getResponse",
+      "out": "response",
+      "in": "json"
+    },
+    {
+      "from": "openai",
+      "to": "streamTransform",
+      "out": "stream",
+      "in": "stream"
+    },
+    {
+      "from": "input",
+      "to": "makeBody",
+      "out": "*",
+      "in": ""
+    },
+    {
+      "from": "input",
+      "to": "openai",
+      "out": "useStreaming",
+      "in": "stream"
+    },
+    {
+      "from": "makeHeaders",
+      "to": "openai",
+      "out": "result",
+      "in": "headers"
+    },
+    {
+      "from": "makeBody",
+      "to": "openai",
+      "out": "result",
+      "in": "body"
+    },
+    {
+      "from": "getResponse",
+      "to": "textOutput",
+      "out": "result",
+      "in": "text"
+    },
+    {
+      "from": "secrets-3",
+      "to": "makeHeaders",
+      "out": "OPENAI_API_KEY",
+      "in": "OPENAI_API_KEY"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "streamOutput",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "stream": {
+              "type": "object",
+              "title": "Stream",
+              "format": "stream",
+              "description": "The generated text"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "streamTransform",
+      "type": "transformStream",
+      "configuration": {
+        "board": {
+          "kind": "board",
+          "board": {
+            "kits": [],
+            "edges": [
+              {
+                "from": "transformCompletion",
+                "to": "result",
+                "out": "result",
+                "in": "chunk"
+              },
+              {
+                "from": "chunk",
+                "to": "transformCompletion",
+                "out": "chunk",
+                "in": "json"
+              }
+            ],
+            "nodes": [
+              {
+                "id": "result",
+                "type": "output",
+                "configuration": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "chunk": {
+                        "title": "result",
+                        "description": "The result of the Jsonata expression",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "chunk"
+                    ]
+                  }
+                }
+              },
+              {
+                "id": "transformCompletion",
+                "type": "jsonata",
+                "configuration": {
+                  "expression": "choices[0].delta.content ? choices[0].delta.content : \"\""
+                }
+              },
+              {
+                "id": "chunk",
+                "type": "input",
+                "configuration": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "chunk": {
+                        "title": "json",
+                        "description": "The JSON object to evaluate",
+                        "type": [
+                          "object",
+                          "string"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "chunk"
+                    ]
+                  }
+                }
+              }
+            ],
+            "graphs": {}
+          }
+        }
+      }
+    },
+    {
+      "id": "openai",
+      "type": "fetch",
+      "configuration": {
+        "url": "https://api.openai.com/v1/chat/completions",
+        "method": "POST"
+      }
+    },
+    {
+      "id": "input",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "content": {
+              "type": "array",
+              "title": "Content",
+              "format": "multipart"
+            },
+            "useStreaming": {
+              "type": "boolean",
+              "title": "Stream",
+              "description": "Whether to stream the output",
+              "default": "false"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "makeHeaders",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "{\n        \"Content-Type\": \"application/json\",\n        \"Authorization\": \"Bearer \" & $.OPENAI_API_KEY\n      }"
+      }
+    },
+    {
+      "id": "makeBody",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "{\n          \"model\": \"gpt-4-vision-preview\",\n          \"messages\": [\n            {\n              \"role\": \"user\",\n              \"content\": $.content.{\n                \"type\": $keys($) = \"text\" ? \"text\" : \"image_url\" ,\n                \"text\": $.text,\n                \"image_url\": \"data:\" & $.inline_data.mime_type & \";base64,\" & $.inline_data.data\n              }\n            }\n          ],\n          \"stream\": $.useStreaming,\n          \"temperature\": 1,\n          \"max_tokens\": 256,\n          \"top_p\": 1,\n          \"frequency_penalty\": 0,\n          \"presence_penalty\": 0\n    }"
+      }
+    },
+    {
+      "id": "getResponse",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "choices[0].message.content"
+      }
+    },
+    {
+      "id": "secrets-3",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "OPENAI_API_KEY"
+        ]
+      }
+    },
+    {
+      "id": "textOutput",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Text",
+              "description": "The generated text"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "graphs": {}
+}
