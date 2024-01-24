@@ -258,8 +258,8 @@ export class Runner implements BreadboardRunner {
 
   static async load(
     url: string,
-    options?: {
-      base?: string;
+    options: {
+      base: URL;
       outerGraph?: GraphDescriptor;
     }
   ): Promise<Runner> {

@@ -24,7 +24,7 @@ import { classMap } from "lit/directives/class-map.js";
 type ChunkOutputs = OutputValues & { chunk: string };
 
 export const getBoardInfo = async (url: string) => {
-  const runner = await Board.load(url);
+  const runner = await Board.load(url, { base: new URL(window.location.href) });
   const { title, description, version } = runner;
   return { title, description, version };
 };

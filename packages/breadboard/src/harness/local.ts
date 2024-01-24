@@ -10,6 +10,7 @@ import { BreadboardRunResult, Kit, ProbeMessage } from "../types.js";
 import { Diagnostics } from "./diagnostics.js";
 import { RunConfig } from "./run.js";
 import { HarnessRunResult } from "./types.js";
+import { baseURL } from "./url.js";
 
 const fromProbe = <Probe extends ProbeMessage>(probe: Probe) => {
   const loadStateIfAny = () => {
@@ -85,7 +86,8 @@ const errorResult = (error: string) => {
 
 export async function* runLocally(config: RunConfig, kits: Kit[]) {
   yield* asyncGen<HarnessRunResult>(async (next) => {
-    const runner = await Board.load(config.url);
+    const base = baseURL(config);
+    const runner = await Board.load(config.url, { base });
 
     try {
       const probe = config.diagnostics

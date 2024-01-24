@@ -63,6 +63,7 @@ export const TestKit = new KitBuilder({
   invoke: {
     invoke: async (inputs: InvokeInputValues, context: NodeHandlerContext) => {
       const { $recipe, ...args } = inputs;
+      const base = context.base || new URL(import.meta.url);
 
       if ($recipe) {
         const board =
@@ -72,7 +73,7 @@ export const TestKit = new KitBuilder({
               )
             : typeof $recipe === "string"
             ? await Board.load($recipe, {
-                base: context.base,
+                base,
                 outerGraph: context.outerGraph,
               })
             : undefined;
@@ -87,7 +88,7 @@ export const TestKit = new KitBuilder({
           ? await Board.fromBreadboardCapability(board)
           : path
           ? await Board.load(path, {
-              base: context.base,
+              base,
               outerGraph: context.outerGraph,
             })
           : undefined;

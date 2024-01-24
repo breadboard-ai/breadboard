@@ -70,10 +70,12 @@ export class GraphToKitAdapter {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const board = this.runner!;
 
+        const base = board.url ? new URL(board.url) : new URL(import.meta.url);
+
         return callHandler(handler, inputs, {
           ...context,
           outerGraph: board,
-          base: board.url,
+          base,
           // Add this board's kits, so they are available to subgraphs
           kits: [...(context.kits || []), ...board.kits],
         });
