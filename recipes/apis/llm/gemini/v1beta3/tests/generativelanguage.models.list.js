@@ -23,7 +23,7 @@ export default await recipe(() => {
   const input = base.input({ $id: "input" });
 
   return core.invoke({
-    path: "../generativelanguage.models.embedText.json",
+    path: "./spec/generativelanguage.models.embedText.json",
     input: input.api_inputs,
     ...input,
     ...starter.secrets({ keys: ["GEMINI_API_KEY"] }),
