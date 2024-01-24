@@ -120,7 +120,7 @@
               ],
               "type": "object",
               "format": "multiline",
-              "default": "{\"type\":\"object\",\"properties\":{\"response\":{\"type\":\"string\",\"description\":\"The generated response\"}}}"
+              "default": "{}"
             },
             "text": {
               "title": "Text",

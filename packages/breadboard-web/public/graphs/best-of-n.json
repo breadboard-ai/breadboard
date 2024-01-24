@@ -77,12 +77,6 @@
     },
     {
       "from": "input-1",
-      "to": "lambda-4",
-      "out": "schema",
-      "in": "schema"
-    },
-    {
-      "from": "input-1",
       "to": "promptTemplate-6",
       "out": "text",
       "in": "text"
@@ -200,12 +194,6 @@
               {
                 "from": "input-1",
                 "to": "invokeAgent",
-                "out": "schema",
-                "in": "schema"
-              },
-              {
-                "from": "input-1",
-                "to": "invokeAgent",
                 "out": "agent",
                 "in": "path"
               }
@@ -247,10 +235,6 @@
                         "type": "string",
                         "title": "text"
                       },
-                      "schema": {
-                        "type": "string",
-                        "title": "schema"
-                      },
                       "agent": {
                         "title": "path",
                         "description": "The path to the board to invoke.",
@@ -259,7 +243,6 @@
                     },
                     "required": [
                       "text",
-                      "schema",
                       "agent"
                     ]
                   }
@@ -319,21 +302,12 @@
               "examples": [
                 "Given the following specs, extract requirements for writing an ad copy:\n    \n  This ad is for my lawn care company that will fit into an inch of newspaper copy. It's called \"Max's Lawn Care\" and it should use the slogan \"I care about your lawn.\" Emphasize the folksiness of it being a local, sole proprietorship that I started after graduating from high school."
               ]
-            },
-            "schema": {
-              "title": "Schema",
-              "type": "object",
-              "examples": [
-                "{\"type\":\"object\",\"properties\":{\"ad\":{\"type\":\"string\",\"description\":\"the ad copy\"}}}"
-              ],
-              "format": "multiline"
             }
           },
           "required": [
             "n",
             "agent",
-            "text",
-            "schema"
+            "text"
           ]
         }
       }

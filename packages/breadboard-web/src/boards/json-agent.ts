@@ -48,16 +48,6 @@ const sampleSchema = JSON.stringify(
   2
 );
 
-const defaultSchema = JSON.stringify({
-  type: "object",
-  properties: {
-    response: {
-      type: "string",
-      description: "The generated response",
-    },
-  },
-} satisfies Schema);
-
 export default await recipe(({ text, schema, generator, context }) => {
   text.title("Text").examples(sampleText).format("multiline");
   schema
@@ -66,7 +56,8 @@ export default await recipe(({ text, schema, generator, context }) => {
     .isObject()
     .format("multiline")
     .optional()
-    .default(defaultSchema);
+    .default("{}");
+
   generator.title("Generator").optional().default("gemini-generator.json");
   context.title("Context").isArray().examples("[]");
 

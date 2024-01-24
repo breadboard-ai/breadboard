@@ -11,17 +11,7 @@ import { json } from "@google-labs/json-kit";
 
 const jsonAgent = "/graphs/json-agent.json";
 
-const adSchema = JSON.stringify({
-  type: "object",
-  properties: {
-    ad: {
-      type: "string",
-      description: "the ad copy",
-    },
-  },
-} satisfies Schema);
-
-export default await recipe(({ agent, schema, context, text, n }) => {
+export default await recipe(({ agent, context, text, n }) => {
   text.title("Task").description("The task to perform").format("multiline")
     .examples(`Given the following specs, extract requirements for writing an ad copy:
     
@@ -30,7 +20,6 @@ export default await recipe(({ agent, schema, context, text, n }) => {
     .title("Agent")
     .description("Agent to apply to the task")
     .examples(jsonAgent);
-  schema.title("Schema").isObject().examples(adSchema).format("multiline");
   context.title("Context").isArray().examples("[]");
   n.title("Number of parallel attemps").isNumber().examples("4");
 
@@ -40,16 +29,15 @@ export default await recipe(({ agent, schema, context, text, n }) => {
 
   const generateN = core.map({
     $id: "generateN",
-    board: recipe(({ text, schema, agent }) => {
+    board: recipe(({ text, agent }) => {
       const invokeAgent = core.invoke({
         $id: "invokeAgent",
         text,
-        schema,
         context: [],
         path: agent.isString(),
       });
       return { item: invokeAgent.json };
-    }).in({ agent, text, schema }),
+    }).in({ agent, text }),
     list: createList.list,
   });
 
