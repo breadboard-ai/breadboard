@@ -15,6 +15,8 @@ def import_breadboard_js(package_name):
   
   if package_name == "@google-labs/llm-starter":
     kit_package = require("../../llm-starter/dist/src/index.js")
+  elif package_name == "@google-labs/node-nursery-web":
+    kit_package = require("../../node-nursery-web/dist/src/index.js")
   else:
     kit_package = require(package_name)
   a = kit_package()
@@ -22,6 +24,8 @@ def import_breadboard_js(package_name):
 
   output = AttrDict()
   for handler_name in handlers:
+    if handlers[handler_name].describe is None:
+      continue
     b = handlers[handler_name].describe()
     res = javascript.eval_js('''JSON.stringify(await b)''')
     schema = json.loads(res)

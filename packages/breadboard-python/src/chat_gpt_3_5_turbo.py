@@ -1,14 +1,17 @@
 from main import Board, Field, SchemaObject, List, AttrDict
 import json
-from typing import Optional
+from typing import Optional, Union
 
 from import_node import import_breadboard_js
 Starter = import_breadboard_js("@google-labs/llm-starter")
+Nursery = import_breadboard_js("@google-labs/node-nursery-web")
 
 class TransformOutput(AttrDict):
   stream: SchemaObject = Field(description="Mocked stream field")
-class ChunkTransformerOutput(AttrDict):
-  result: str = Field(description="Mocked result field")
+class ChunkTransformerOutput(SchemaObject):
+  chunk: str = Field(description="The result of the Jsonata expression", title="result", required=True)
+class ChunkTransformerInput(SchemaObject):
+  chunk: Union[str, SchemaObject] = Field(description="The JSON object to evaluate", title="json", required=True)
   
 class Nursery_transformStream(Board):
   type = "transformStream"
@@ -19,13 +22,19 @@ class Nursery_transformStream(Board):
     self.output = TransformOutput()
     return self.output
 
-
-class ChunkTransformer(Board):
-  type = "lambda"
+class ChunkTransformer(Board[ChunkTransformerInput ,ChunkTransformerOutput]):
+  title = None
+  description = None
+  version = None
+  type = "board"
   def describe(self, input):
-    # TODO: Why doesn't this ever run?
-    raise Exception("YOoo")
-    self.output = ChunkTransformerOutput()
+    transformCompletion = Starter.jsonata(
+      id="transformCompletion",
+      expression='choices[0].delta.content ? choices[0].delta.content : ""',
+      json=input.chunk
+    )
+    self.output = AttrDict()
+    self.output.chunk = transformCompletion.result
     return self.output
 
 
@@ -181,7 +190,7 @@ class OpenAiGpt_3_5_Turbo(Board[InputSchema, OutputSchema]):
     self.fetch = self.fetch(formatParameters)
     self.getResponse = self.getResponse(json=self.fetch.response)
     self.getNewContext = self.getNewContext(messages=self.formatParameters.context)
-    self.streamTransform = Nursery_transformStream(board=ChunkTransformer(), stream=self.fetch)
+    self.streamTransform = Nursery_transformStream(board=ChunkTransformer, stream=self.fetch)
 
     self.output = AttrDict()
     self.output.textOutput = AttrDict(text=self.getResponse.text, context=self.getNewContext.result)

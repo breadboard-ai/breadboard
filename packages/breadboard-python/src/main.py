@@ -10,6 +10,7 @@ from typing import List, TypeVar, Generic, get_args, Optional, Union, Dict
 from jsonref import replace_refs
 from dataclasses import dataclass
 
+import inspect
 import json_fix
 
 
@@ -47,12 +48,24 @@ def update_json_schema(json_schema, handler: GetJsonSchemaHandler):
     json_schema.pop("properties")
   return json_schema
 
+def update_final_json_schema(json_schema):
+  if "anyOf" in json_schema:
+    assert "type" not in json_schema, f"Unexpectedly type and anyOf both are in json_schema: {json_schema}"
+    types = [x["type"] for x in json_schema["anyOf"]]
+    json_schema["type"] = types
+    json_schema.pop("anyOf")
+  if "properties" in json_schema:
+    for k, v in json_schema["properties"].items():
+      update_final_json_schema(v)
+  return json_schema
+
 class SchemaObject(BaseModel):
   @classmethod
   def __json__(cls):
     # Populate the references, remove definitions.
     output = cls.model_json_schema()
     output = replace_refs(output, lazy_load=False)
+    output = update_final_json_schema(output)
     if "$defs" in output:
       output.pop("$defs")
     return output
@@ -160,6 +173,7 @@ def convert_from_json_to_pydantic(name, schema):
 """
 Contains a blob of things. Some can be initialized, some may not.
 Wildcard "*" means everything.
+Can be passed in dict (as part of inputs/outputs), Board, Tuple, and ModelMetaclass (representing schema field)
 """
 class AttrDict(dict):
   __id = None
@@ -195,7 +209,10 @@ class AttrDict(dict):
   def __contains__(self, item):
     if item == "*":
       return True
-    return super().__contains__(item)
+    if super().__contains__(item):
+      return True
+    if super().__contains__("*") and isinstance(self["*"], dict):
+      return item in self["*"]
 
   def __getattr__(self, item):
     if item == "__id":
@@ -203,6 +220,11 @@ class AttrDict(dict):
     if item not in self:
       return UNINITIALIZED
     return self[item]
+  
+  def __getitem__(self, item):
+    if not super().__contains__(item):
+      return super().__getitem__("*")[item]
+    return super().__getitem__(item)
 
   def get_inputs(self) -> Dict[str, "Board"]:
     return self
@@ -214,10 +236,18 @@ class AttrDict(dict):
 
   def __hash__(self):
     return hash(frozenset(self))
+  
+def resolve_dict(d):
+  if "*" in d and isinstance(d["*"], dict):
+    return d | d["*"]
+  return d
 
 def get_field_name(field: FieldInfo, blob):
-  for k, v in blob.items():
+  """Looks for the field in the blob. If not, checks if field already contains it."""
+  for k, v in resolve_dict(blob).items():
     if type(v) == tuple and v[0] == field:
+      return k
+    if v == field:
       return k
   # TODO: FOr wildcard matching, just look for name in fieldinfo.
   if "name" in field._attributes_set:
@@ -277,8 +307,7 @@ class Board(Generic[T, S]):
         #raise Exception(f"Unknown keyword: {k}")
       self.inputs[k] = v
 
-    self.output: AttrDict = AttrDict({} if not self.output_schema else self.output_schema.model_fields)
-    #self.__load__()
+    self.output: AttrDict = AttrDict() if not self.output_schema or not self.output_schema.model_fields else AttrDict(self.output_schema.model_fields)
 
   def __setattr__(self, name, value):
     super().__setattr__(name, value)
@@ -342,6 +371,12 @@ class Board(Generic[T, S]):
       if "schema" in config:
         raise Exception(f"Already have 'schema' key populated in config. This is a reserved field name. Config: {config}")
       config["schema"] = self.input_schema.__json__()
+    for k, v in config.items():
+      if inspect.isclass(v):
+        if issubclass(v, Board):
+          v = v()
+          blob = v.__json__()
+          config[k] = {"board": blob, "kind": "board"}
     return config
   
   def get_or_assign_id(self, default_name = None, required=False):
@@ -365,14 +400,18 @@ class Board(Generic[T, S]):
   def __json__(self):
     self.__load__()
     output = {}
-    output["title"] = self.title
-    output["description"] = self.description
-    output["version"] = self.version
+    if self.title is not None:
+      output["title"] = self.title
+    if self.description is not None:
+      output["description"] = self.description
+    if self.version is not None:
+      output["version"] = self.version
     # TODO: Find out what graphs are.
     output["graphs"] = {}
     output["nodes"] = []
     
     # Populate input node.
+    # TODO: Handle nested and un-nested input/output schemas.
     node = {"id": self.get_or_assign_id("input"), "type": "input", "configuration": {}}
     if self.input_schema:
       node["configuration"]["schema"] = self.input_schema.__json__()
@@ -380,17 +419,16 @@ class Board(Generic[T, S]):
 
     # Populate output node.
     if self.output_schema:
+      node = {"id": self.get_or_assign_id("output")}
       for output_field_name, output_field_info in self.output_schema.model_fields.items():
         child_schema = output_field_info.annotation
         if isinstance(child_schema, ModelMetaclass):
           self.output[output_field_name].get_or_assign_id(output_field_name)
           node = {"id": output_field_name, "type": "output", "configuration": {"schema": child_schema.__json__()}}
         else:
-          print(type(child_schema))
-          raise Exception("TODO: Haven't implemented none schemaobject")
+          node = {"id": output_field_name, "type": "output", "configuration": {"schema": self.output_schema.__json__()}}
         output["nodes"].append(node)
 
-    # TODO: Populate all output nodes
     all_components = [(k, v) for k, v in self.components.items()] + [(k, v) for k, v in self.output.items()]
 
     # Component can be a Board or an AttrDict.
@@ -411,6 +449,10 @@ class Board(Generic[T, S]):
 
       elif isinstance(component, AttrDict):
         inputs = component
+      elif isinstance(component, Tuple):
+        print("Encountered fieldinfo while iterating components.")
+        nodes.extend(iterate_component(component[1].id, component[1]))
+        return nodes
       else:
         raise Exception("Unexpected component type.")
       for k, v in inputs.items():
@@ -436,6 +478,27 @@ class Board(Generic[T, S]):
         inputs = component.inputs
       elif isinstance(component, AttrDict):
         inputs = component
+      elif isinstance(component, Tuple):
+        print("Encountered fieldinfo while iterating component edges")
+        if component[1] == self:
+          edge = {
+            "from": component[1].get_or_assign_id(required=True),
+            # TODO: Check if this should actually ahppen
+            "to": get_field_name(component[0], {}),
+            "out": get_field_name(component[0], {}),
+            "in": name,
+          }
+        else:
+          edge = {
+            "from": component[1].get_or_assign_id(required=True),
+            # TODO: This seems wrong way to determine "to".
+            "to": get_field_name(component[0], component[1].output),
+            "out": get_field_name(component[0], component[1].output),
+            "in": name,
+          }
+        edges.append(edge)
+        edges.extend(iterate_component_edges(component[1].id, component[1]))
+        return edges
       else:
         raise Exception("Unexpected component type.")
       for k, v in inputs.items():
@@ -512,7 +575,7 @@ class Board(Generic[T, S]):
         raise Exception("Unexpected type for arg")
     
     self.inputs = self.inputs | all_inputs
-    inputs = AttrDict(self._get_resolved_inputs())
+    inputs = AttrDict(**self._get_resolved_inputs())
     inputs.get_or_assign_id("input")
     self.output = self.describe(inputs)
     self.loaded = False
