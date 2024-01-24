@@ -1,0 +1,304 @@
+{
+  "title": "OpenAI GPT-3.5-turbo",
+  "description": "This board is the simplest possible invocation of OpenAI's GPT-3.5 API to generate text.",
+  "version": "0.0.2",
+  "edges": [
+    {
+      "from": "streamTransform",
+      "to": "streamOutput",
+      "out": "*",
+      "in": ""
+    },
+    {
+      "from": "callOpenAI",
+      "to": "getResponse",
+      "out": "response",
+      "in": "json"
+    },
+    {
+      "from": "callOpenAI",
+      "to": "streamTransform",
+      "out": "stream",
+      "in": "stream"
+    },
+    {
+      "from": "formatParameters",
+      "to": "callOpenAI",
+      "out": "*",
+      "in": ""
+    },
+    {
+      "from": "formatParameters",
+      "to": "getNewContext",
+      "out": "context",
+      "in": "messages"
+    },
+    {
+      "from": "getResponse",
+      "to": "textOutput",
+      "out": "text",
+      "in": "text"
+    },
+    {
+      "from": "getResponse",
+      "to": "toolCallsOutput",
+      "out": "tool_calls",
+      "in": "toolCalls"
+    },
+    {
+      "from": "secrets-3",
+      "to": "formatParameters",
+      "out": "OPENAI_API_KEY",
+      "in": "OPENAI_API_KEY"
+    },
+    {
+      "from": "input",
+      "to": "formatParameters",
+      "out": "*",
+      "in": ""
+    },
+    {
+      "from": "getNewContext",
+      "to": "textOutput",
+      "out": "result",
+      "in": "context"
+    },
+    {
+      "from": "getNewContext",
+      "to": "toolCallsOutput",
+      "out": "result",
+      "in": "context"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "streamOutput",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "stream": {
+              "type": "object",
+              "title": "Stream",
+              "format": "stream",
+              "description": "The generated text"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "streamTransform",
+      "type": "transformStream",
+      "configuration": {
+        "board": {
+          "kind": "board",
+          "board": {
+            "kits": [],
+            "edges": [
+              {
+                "from": "transformCompletion",
+                "to": "result",
+                "out": "result",
+                "in": "chunk"
+              },
+              {
+                "from": "chunk",
+                "to": "transformCompletion",
+                "out": "chunk",
+                "in": "json"
+              }
+            ],
+            "nodes": [
+              {
+                "id": "result",
+                "type": "output",
+                "configuration": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "chunk": {
+                        "title": "result",
+                        "description": "The result of the Jsonata expression",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "chunk"
+                    ]
+                  }
+                }
+              },
+              {
+                "id": "transformCompletion",
+                "type": "jsonata",
+                "configuration": {
+                  "expression": "choices[0].delta.content ? choices[0].delta.content : \"\""
+                }
+              },
+              {
+                "id": "chunk",
+                "type": "input",
+                "configuration": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "chunk": {
+                        "title": "json",
+                        "description": "The JSON object to evaluate",
+                        "type": [
+                          "object",
+                          "string"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "chunk"
+                    ]
+                  }
+                }
+              }
+            ],
+            "graphs": {}
+          }
+        }
+      }
+    },
+    {
+      "id": "callOpenAI",
+      "type": "fetch",
+      "configuration": {
+        "url": "https://api.openai.com/v1/chat/completions",
+        "method": "POST"
+      }
+    },
+    {
+      "id": "formatParameters",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "(\n        $context := $append(\n            context ? context, [\n                {\n                    \"role\": \"user\",\n                    \"content\": text\n                }\n            ]);\n        OPENAI_API_KEY ? text ? {\n            \"headers\": {\n                \"Content-Type\": \"application/json\",\n                \"Authorization\": \"Bearer \" & OPENAI_API_KEY\n            },\n            \"body\": {\n                \"model\": \"gpt-3.5-turbo-1106\",\n                \"messages\": $context,\n                \"stream\": useStreaming,\n                \"temperature\": 1,\n                \"top_p\": 1,\n                \"tools\": tools ? [tools.{ \"type\": \"function\", \"function\": $ }],\n                \"frequency_penalty\": 0,\n                \"presence_penalty\": 0\n            },\n            \"stream\": useStreaming,\n            \"context\": $context\n        } : {\n            \"$error\": \"`text` input is required\"\n        } : {\n            \"$error\": \"`OPENAI_API_KEY` input is required\"\n        }\n      )",
+        "raw": true
+      }
+    },
+    {
+      "id": "getResponse",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "choices[0].message.{\n      \"text\": $boolean(content) ? content,\n      \"tool_calls\": tool_calls.function ~> | $ | { \"args\": $eval(arguments) }, \"arguments\" |\n    }",
+        "raw": true
+      }
+    },
+    {
+      "id": "secrets-3",
+      "type": "secrets",
+      "configuration": {
+        "keys": [
+          "OPENAI_API_KEY"
+        ]
+      }
+    },
+    {
+      "id": "input",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Text",
+              "description": "The text to generate",
+              "examples": [
+                "What is the correct term for the paddle in cricket?"
+              ]
+            },
+            "tools": {
+              "type": "array",
+              "title": "Tools",
+              "description": "An array of functions to use for tool-calling",
+              "items": {
+                "type": "string"
+              },
+              "default": "[]",
+              "examples": [
+                "[\n  {\n    \"name\": \"The_Calculator_Recipe\",\n    \"description\": \"A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.\",\n    \"parameters\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"text\": {\n          \"type\": \"string\",\n          \"description\": \"Ask a math question\"\n        }\n      },\n      \"required\": [\n        \"text\"\n      ]\n    }\n  },\n  {\n    \"name\": \"The_Search_Summarizer_Recipe\",\n    \"description\": \"A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.\",\n    \"parameters\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"text\": {\n          \"type\": \"string\",\n          \"description\": \"What would you like to search for?\"\n        }\n      },\n      \"required\": [\n        \"text\"\n      ]\n    }\n  }\n]"
+              ]
+            },
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "description": "An array of messages to use as conversation context",
+              "items": {
+                "type": "object"
+              },
+              "default": "[]",
+              "examples": [
+                "[\n  {\n    \"role\": \"system\",\n    \"content\": \"You are a pirate. Please talk like a pirate.\"\n  }\n]"
+              ]
+            },
+            "useStreaming": {
+              "type": "boolean",
+              "title": "Stream",
+              "description": "Whether to stream the output",
+              "default": "false"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
+    },
+    {
+      "id": "getNewContext",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "$append(messages, response.choices[0].message)"
+      }
+    },
+    {
+      "id": "textOutput",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Text",
+              "description": "The generated text"
+            },
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "description": "The conversation context"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "toolCallsOutput",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "toolCalls": {
+              "type": "object",
+              "title": "Tool Calls",
+              "description": "The generated tool calls"
+            },
+            "context": {
+              "type": "array",
+              "title": "Context",
+              "description": "The conversation context"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "graphs": {}
+}
