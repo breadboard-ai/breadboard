@@ -1,0 +1,106 @@
+{
+  "title": "The Calculator Recipe",
+  "description": "A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.",
+  "version": "0.0.2",
+  "edges": [
+    {
+      "from": "compute",
+      "to": "answer",
+      "out": "*",
+      "in": ""
+    },
+    {
+      "from": "generator",
+      "to": "compute",
+      "out": "text",
+      "in": "code"
+    },
+    {
+      "from": "math-question",
+      "to": "math-function",
+      "out": "question",
+      "in": "question"
+    },
+    {
+      "from": "math-question",
+      "to": "generator",
+      "out": "generator",
+      "in": "path"
+    },
+    {
+      "from": "math-function",
+      "to": "generator",
+      "out": "prompt",
+      "in": "text"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "answer",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "result": {
+              "type": "string",
+              "title": "Answer",
+              "description": "The answer to the math problem"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
+    },
+    {
+      "id": "compute",
+      "type": "runJavascript",
+      "configuration": {
+        "name": "compute"
+      }
+    },
+    {
+      "id": "generator",
+      "type": "invoke",
+      "configuration": {}
+    },
+    {
+      "id": "math-question",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "question": {
+              "type": "string",
+              "title": "Math problem",
+              "description": "Ask a math question",
+              "examples": [
+                "What is the square root of pi?"
+              ]
+            },
+            "generator": {
+              "type": "string",
+              "title": "Generator",
+              "description": "The URL of the generator to call",
+              "default": "/graphs/text-generator.json"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
+    },
+    {
+      "id": "math-function",
+      "type": "promptTemplate",
+      "configuration": {
+        "template": "Translate the math problem below into a self-contained,\nzero-argument JavaScript function named `compute` that can be executed\nto provide the answer to the problem. \n\nDo not use any dependencies or libraries.\n\nMath Problem: {{question}}\n\nSolution:"
+      }
+    }
+  ],
+  "graphs": {}
+}

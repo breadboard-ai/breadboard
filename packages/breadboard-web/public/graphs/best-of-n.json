@@ -1,0 +1,417 @@
+{
+  "title": "Best of N",
+  "description": "Apply the `agent` to `task` in parallel of `n` attempts, then return the best response that fits the task",
+  "version": "0.0.2",
+  "edges": [
+    {
+      "from": "pickFirst",
+      "to": "output-2",
+      "out": "result",
+      "in": "best"
+    },
+    {
+      "from": "generateN",
+      "to": "jsonata-5",
+      "out": "list",
+      "in": "json"
+    },
+    {
+      "from": "generateN",
+      "to": "pickFirst",
+      "out": "list",
+      "in": "list"
+    },
+    {
+      "from": "generateN",
+      "to": "output-2",
+      "out": "list",
+      "in": "list"
+    },
+    {
+      "from": "rank",
+      "to": "pickFirst",
+      "out": "json",
+      "in": "rank"
+    },
+    {
+      "from": "rank",
+      "to": "output-2",
+      "out": "json",
+      "in": "rank"
+    },
+    {
+      "from": "lambda-4",
+      "to": "generateN",
+      "out": "board",
+      "in": "board"
+    },
+    {
+      "from": "createList",
+      "to": "generateN",
+      "out": "list",
+      "in": "list"
+    },
+    {
+      "from": "jsonata-5",
+      "to": "promptTemplate-6",
+      "out": "result",
+      "in": "list"
+    },
+    {
+      "from": "input-1",
+      "to": "createList",
+      "out": "n",
+      "in": "n"
+    },
+    {
+      "from": "input-1",
+      "to": "lambda-4",
+      "out": "generator",
+      "in": "generator"
+    },
+    {
+      "from": "input-1",
+      "to": "lambda-4",
+      "out": "agent",
+      "in": "agent"
+    },
+    {
+      "from": "input-1",
+      "to": "lambda-4",
+      "out": "text",
+      "in": "text"
+    },
+    {
+      "from": "input-1",
+      "to": "lambda-4",
+      "out": "schema",
+      "in": "schema"
+    },
+    {
+      "from": "input-1",
+      "to": "promptTemplate-6",
+      "out": "text",
+      "in": "text"
+    },
+    {
+      "from": "input-1",
+      "to": "promptTemplate-6",
+      "out": "n",
+      "in": "n"
+    },
+    {
+      "from": "input-1",
+      "to": "rank",
+      "out": "agent",
+      "in": "path"
+    },
+    {
+      "from": "input-1",
+      "to": "rank",
+      "out": "generator",
+      "in": "generator"
+    },
+    {
+      "from": "promptTemplate-6",
+      "to": "rank",
+      "out": "text",
+      "in": "text"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "best": {
+              "title": "result",
+              "description": "The result of the Jsonata expression",
+              "type": "string"
+            },
+            "list": {
+              "type": "string",
+              "title": "list"
+            },
+            "rank": {
+              "type": "string",
+              "title": "rank"
+            }
+          },
+          "required": [
+            "best",
+            "list",
+            "rank"
+          ]
+        }
+      }
+    },
+    {
+      "id": "pickFirst",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "($index := $split((**.choice)[0], ' ')[1];list[0][0][$index]).item"
+      }
+    },
+    {
+      "id": "generateN",
+      "type": "map",
+      "configuration": {}
+    },
+    {
+      "id": "rank",
+      "type": "invoke",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "ranking": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "choice": {
+                    "type": "string",
+                    "description": "Title of ranked choice"
+                  },
+                  "justification": {
+                    "type": "string",
+                    "description": "Detailed justification of why this is the right position within ranking"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "context": []
+      }
+    },
+    {
+      "id": "lambda-4",
+      "type": "lambda",
+      "configuration": {
+        "board": {
+          "kind": "board",
+          "board": {
+            "kits": [],
+            "edges": [
+              {
+                "from": "invokeAgent",
+                "to": "output-2",
+                "out": "json",
+                "in": "item"
+              },
+              {
+                "from": "input-1",
+                "to": "invokeAgent",
+                "out": "text",
+                "in": "text"
+              },
+              {
+                "from": "input-1",
+                "to": "invokeAgent",
+                "out": "schema",
+                "in": "schema"
+              },
+              {
+                "from": "input-1",
+                "to": "invokeAgent",
+                "out": "generator",
+                "in": "generator"
+              },
+              {
+                "from": "input-1",
+                "to": "invokeAgent",
+                "out": "agent",
+                "in": "path"
+              }
+            ],
+            "nodes": [
+              {
+                "id": "output-2",
+                "type": "output",
+                "configuration": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "item": {
+                        "type": "string",
+                        "title": "item"
+                      }
+                    },
+                    "required": [
+                      "item"
+                    ]
+                  }
+                }
+              },
+              {
+                "id": "invokeAgent",
+                "type": "invoke",
+                "configuration": {
+                  "context": []
+                }
+              },
+              {
+                "id": "input-1",
+                "type": "input",
+                "configuration": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "text": {
+                        "type": "string",
+                        "title": "text"
+                      },
+                      "schema": {
+                        "type": "string",
+                        "title": "schema"
+                      },
+                      "generator": {
+                        "type": "string",
+                        "title": "generator"
+                      },
+                      "agent": {
+                        "title": "path",
+                        "description": "The path to the board to invoke.",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "text",
+                      "schema",
+                      "generator",
+                      "agent"
+                    ]
+                  }
+                }
+              }
+            ],
+            "graphs": {}
+          }
+        }
+      }
+    },
+    {
+      "id": "createList",
+      "type": "invoke",
+      "configuration": {
+        "path": "#createList"
+      }
+    },
+    {
+      "id": "jsonata-5",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "item ~> $map(function ($v, $i) { { \"title\": \"choice \" & $i, \"content\": $v } })"
+      }
+    },
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "n": {
+              "title": "Number of parallel attemps",
+              "description": "The value to substitute for the parameter \"n\"",
+              "type": "number",
+              "examples": [
+                "4"
+              ]
+            },
+            "generator": {
+              "title": "Generator",
+              "examples": [
+                "/graphs/gemini-generator.json"
+              ],
+              "type": "string"
+            },
+            "agent": {
+              "title": "Agent",
+              "description": "Agent to apply to the task",
+              "type": "string",
+              "examples": [
+                "/graphs/json-agent.json"
+              ]
+            },
+            "text": {
+              "title": "Task",
+              "description": "The task to perform",
+              "type": [
+                "string",
+                "object"
+              ],
+              "format": "multiline",
+              "examples": [
+                "Given the following specs, extract requirements for writing an ad copy:\n    \n  This ad is for my lawn care company that will fit into an inch of newspaper copy. It's called \"Max's Lawn Care\" and it should use the slogan \"I care about your lawn.\" Emphasize the folksiness of it being a local, sole proprietorship that I started after graduating from high school."
+              ]
+            },
+            "schema": {
+              "title": "Schema",
+              "type": "object",
+              "examples": [
+                "{\"type\":\"object\",\"properties\":{\"ad\":{\"type\":\"string\",\"description\":\"the ad copy\"}}}"
+              ],
+              "format": "multiline"
+            }
+          },
+          "required": [
+            "n",
+            "generator",
+            "agent",
+            "text",
+            "schema"
+          ]
+        }
+      }
+    },
+    {
+      "id": "promptTemplate-6",
+      "type": "promptTemplate",
+      "configuration": {
+        "template": "You are a ranking expert. Given {{n}} choices of the output, you are to rank these choices in the order (starting with the best) of matching the requirements of the task described below:\n        \n        TASK:\n        \n        {{text}}\n        \n        CHOICES:\n        \n        {{list}}"
+      }
+    }
+  ],
+  "graphs": {
+    "createList": {
+      "edges": [
+        {
+          "from": "createList-input",
+          "to": "createList-run",
+          "out": "*"
+        },
+        {
+          "from": "createList-run",
+          "to": "createList-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "createList-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "createList-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function createList({n:n2}) {return{list:[...Array(n2).keys()]}}",
+            "name": "createList",
+            "raw": true
+          }
+        },
+        {
+          "id": "createList-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    }
+  }
+}
