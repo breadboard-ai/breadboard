@@ -3,21 +3,14 @@ from pydantic.fields import FieldInfo
 from pydantic_core import core_schema
 from pydantic.json_schema import GetJsonSchemaHandler, JsonSchemaValue
 from pydantic._internal._model_construction import ModelMetaclass
-from typing import Any, Self, Type, Tuple, TypeAlias
+from typing import Any, Self, Tuple, TypeAlias
 
-from pydantic import BaseModel, GetCoreSchemaHandler
+from pydantic import BaseModel
 from typing import List, TypeVar, Generic, get_args, Optional, Union, Dict
 from jsonref import replace_refs
-from dataclasses import dataclass
 
 import inspect
 import json_fix
-
-
-"""
-Defines an InputSchema or an OutputSchema.
-Should be an AttrDict blob?
-"""
 
 def update_json_schema(json_schema, handler: GetJsonSchemaHandler):
   #json_schema = handler.resolve_ref_schema(json_schema)

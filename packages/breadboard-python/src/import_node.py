@@ -25,18 +25,17 @@ def import_breadboard_js(package_name):
   output = AttrDict()
   for handler_name in handlers:
     if handlers[handler_name].describe is None:
-      continue
-    b = handlers[handler_name].describe()
-    res = javascript.eval_js('''JSON.stringify(await b)''')
-    schema = json.loads(res)
-    input_schema = schema["inputSchema"]
-    output_schema = schema["outputSchema"]
-    print(schema)
-    print(f"KEX: received a handler: {handler_name}")
-    input_schema, input_field = convert_from_json_to_pydantic("Input" + handler_name, input_schema)
-    output_schema, output_field = convert_from_json_to_pydantic("Output" + handler_name, output_schema)
+      input_schema = {}
+      output_schema = {}
+    else:
+      b = handlers[handler_name].describe()
+      res = javascript.eval_js('''JSON.stringify(await b)''')
+      schema = json.loads(res)
+      input_schema = schema["inputSchema"]
+      output_schema = schema["outputSchema"]
+      input_schema, input_field = convert_from_json_to_pydantic("Input" + handler_name, input_schema)
+      output_schema, output_field = convert_from_json_to_pydantic("Output" + handler_name, output_schema)
 
-    # TODO: Convert input_schema and output_schema from dicts into actual schemas.
     class ImportedClass(Board[input_schema, output_schema]):
       type = handler_name
       title = f"Auto-imported {handler_name}"
@@ -47,7 +46,8 @@ def import_breadboard_js(package_name):
         return self.output
       def get_configuration(self):
         config = super().get_configuration()
-        config.pop("schema")
+        if "schema" in config:
+          config.pop("schema")
         return config
 
     output[handler_name] = ImportedClass
