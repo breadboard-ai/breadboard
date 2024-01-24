@@ -1,6 +1,6 @@
 {
-  "title": "Data Board",
-  "description": "A prototype of a conversation of multiple agents",
+  "title": "Ad Writer",
+  "description": "An example of chain of agents working on writing an ad",
   "version": "0.0.2",
   "edges": [
     {
@@ -66,8 +66,8 @@
     {
       "from": "input-1",
       "to": "promptTemplate-3",
-      "out": "specs",
-      "in": "specs"
+      "out": "text",
+      "in": "text"
     }
   ],
   "nodes": [
@@ -225,7 +225,7 @@
       "id": "promptTemplate-3",
       "type": "promptTemplate",
       "configuration": {
-        "template": "Given the following specs, extract requirements for writing an ad copy:\n      \n      {{specs}}"
+        "template": "Given the following specs, extract requirements for writing an ad copy:\n      \n      {{text}}"
       }
     },
     {
@@ -235,9 +235,9 @@
         "schema": {
           "type": "object",
           "properties": {
-            "specs": {
+            "text": {
               "title": "Ad specs",
-              "description": "The value to substitute for the parameter \"specs\"",
+              "description": "The value to substitute for the parameter \"text\"",
               "type": [
                 "string",
                 "object"
@@ -249,7 +249,7 @@
             }
           },
           "required": [
-            "specs"
+            "text"
           ]
         }
       }

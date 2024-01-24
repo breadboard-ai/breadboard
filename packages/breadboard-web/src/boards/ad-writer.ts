@@ -34,8 +34,8 @@ const requirementsSchema = {
   },
 } satisfies Schema;
 
-export default await recipe(({ specs }) => {
-  specs
+export default await recipe(({ text }) => {
+  text
     .title("Ad specs")
     .format("multiline")
     .examples(
@@ -51,8 +51,8 @@ export default await recipe(({ specs }) => {
     text: templates.promptTemplate({
       template: `Given the following specs, extract requirements for writing an ad copy:
       
-      {{specs}}`,
-      specs,
+      {{text}}`,
+      text,
     }).prompt,
     context: [],
     schema: requirementsSchema,
@@ -194,7 +194,7 @@ export default await recipe(({ specs }) => {
 
   return { ...improver };
 }).serialize({
-  title: "Data Board",
-  description: "A prototype of a conversation of multiple agents",
+  title: "Ad Writer",
+  description: "An example of chain of agents working on writing an ad",
   version: "0.0.2",
 });

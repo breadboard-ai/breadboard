@@ -20,7 +20,7 @@ export default await recipe(({ text, generator, context, stopSequences }) => {
   The topic is: the universe within us`
     )
     .format("multiline");
-  generator.title("Generator").examples("gemini-generator.json");
+  generator.title("Generator").optional().default("gemini-generator.json");
   context.title("Context").isArray().examples("[]");
   stopSequences.title("Stop Sequences").isArray().optional().default("[]");
 
@@ -55,5 +55,5 @@ export default await recipe(({ text, generator, context, stopSequences }) => {
 }).serialize({
   title: "Agent",
   description: "A prototype of an agent-like board",
-  version: "0.0.2",
+  version: "0.0.3",
 });

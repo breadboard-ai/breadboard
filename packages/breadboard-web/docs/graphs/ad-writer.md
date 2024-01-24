@@ -1,4 +1,4 @@
-## data-board.ts
+## ad-writer.ts
 
 ```mermaid
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
@@ -13,7 +13,7 @@ customer["invoke <br> id='customer'"] -- "context->context" --> requirementsExtr
 adWriter["invoke <br> id='adWriter'"] -- "context->context" --> customer["invoke <br> id='customer'"]
 requiremenstExtractor["invoke <br> id='requiremenstExtractor'"] -- "context->context" --> adWriter["invoke <br> id='adWriter'"]
 promptTemplate3["promptTemplate <br> id='promptTemplate-3'"] -- "prompt->text" --> requiremenstExtractor["invoke <br> id='requiremenstExtractor'"]
-input1[/"input <br> id='input-1'"/]:::input -- "specs->specs" --> promptTemplate3["promptTemplate <br> id='promptTemplate-3'"]
+input1[/"input <br> id='input-1'"/]:::input -- "text->text" --> promptTemplate3["promptTemplate <br> id='promptTemplate-3'"]
 classDef default stroke:#ffab40,fill:#fff2ccff,color:#000
 classDef input stroke:#3c78d8,fill:#c9daf8ff,color:#000
 classDef output stroke:#38761d,fill:#b6d7a8ff,color:#000

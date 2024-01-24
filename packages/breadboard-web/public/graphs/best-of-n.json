@@ -66,12 +66,6 @@
     {
       "from": "input-1",
       "to": "lambda-4",
-      "out": "generator",
-      "in": "generator"
-    },
-    {
-      "from": "input-1",
-      "to": "lambda-4",
       "out": "agent",
       "in": "agent"
     },
@@ -104,12 +98,6 @@
       "to": "rank",
       "out": "agent",
       "in": "path"
-    },
-    {
-      "from": "input-1",
-      "to": "rank",
-      "out": "generator",
-      "in": "generator"
     },
     {
       "from": "promptTemplate-6",
@@ -218,12 +206,6 @@
               {
                 "from": "input-1",
                 "to": "invokeAgent",
-                "out": "generator",
-                "in": "generator"
-              },
-              {
-                "from": "input-1",
-                "to": "invokeAgent",
                 "out": "agent",
                 "in": "path"
               }
@@ -269,10 +251,6 @@
                         "type": "string",
                         "title": "schema"
                       },
-                      "generator": {
-                        "type": "string",
-                        "title": "generator"
-                      },
                       "agent": {
                         "title": "path",
                         "description": "The path to the board to invoke.",
@@ -282,7 +260,6 @@
                     "required": [
                       "text",
                       "schema",
-                      "generator",
                       "agent"
                     ]
                   }
@@ -323,13 +300,6 @@
                 "4"
               ]
             },
-            "generator": {
-              "title": "Generator",
-              "examples": [
-                "/graphs/gemini-generator.json"
-              ],
-              "type": "string"
-            },
             "agent": {
               "title": "Agent",
               "description": "Agent to apply to the task",
@@ -361,7 +331,6 @@
           },
           "required": [
             "n",
-            "generator",
             "agent",
             "text",
             "schema"
