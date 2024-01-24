@@ -325,3 +325,37 @@ We will get:
 #### Implementation:
 
 - [src/nodes/run-javascript.ts](src/nodes/run-javascript.ts)
+
+### The `secrets` node
+
+Use this node to access secrets, such as API keys or other valuable bits of information that you might not want to store in the graph itself. The node takes in an array of strings named `keys`, matches the process environment values, and returns them as outputs. This enables connecting edges from environment variables.
+
+#### Example:
+
+Use this node to pass the `PALM_KEY` environment variable to the `text-completion` node. The input:
+
+```json
+{
+  "keys": ["PALM_KEY"]
+}
+```
+
+Will produce this output:
+
+```json
+{
+  "PALM_KEY": "<value of the API key from the environment>"
+}
+```
+
+#### Inputs:
+
+- `keys` - required, must contain an array of strings that represent the keys to look up in the environment. If not supplied, empty output is returned.
+
+#### Outputs:
+
+- one output for each key that was found in the environment.
+
+#### Implementation:
+
+- [src/nodes/secrets.ts](src/nodes/secrets.ts)

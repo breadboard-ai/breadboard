@@ -40,13 +40,13 @@ export const json = addKit(JSONKit) as unknown as {
   >;
   schemish: NodeFactory<{ schema: NodeValue }, { schemish: NodeValue }>;
   jsonata: NodeFactory<
-    {
-      expression: string;
-      json: string;
-      raw: boolean;
-      [key: string]: NodeValue;
-    },
-    { result: string; [key: string]: NodeValue }
+    | {
+        expression: string;
+        json: string;
+        raw: boolean;
+      }
+    | { expression: string; [key: string]: NodeValue; raw: boolean },
+    { result: string } | { [key: string]: NodeValue }
   >;
   xmlToJson: NodeFactory<{ xml: string }, { json: NodeValue }>;
 };
