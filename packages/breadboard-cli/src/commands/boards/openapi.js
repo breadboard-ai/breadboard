@@ -189,128 +189,172 @@ const generateAPISpecs = code(({ json }) => {
 /*
   Returns a lambda that will make a request to the given API. This is used in the `core.map` to create a board of boards for each API exposed on the OpenAPI spec.
 */
-const createSpecRecipe = recipe((api) => {
+const createSpecRecipe = recipe((apiSpec) => {
   const output = base.output({});
-  api.item.to(output);
-  return api.item
-    .to(
-      recipe(() => {
-        const getItem = code((itemToSplat) => {
-          const { api_inputs } = itemToSplat;
-          const { method, parameters, secrets, requestBody } = itemToSplat.item;
-          let { url } = itemToSplat.item;
 
-          const queryStringParameters = {};
+  const createBoardInputs = code(({ item }) => {
+    const { parameters } = item;
 
-          if (
-            parameters != undefined &&
-            parameters.length > 0 &&
-            api_inputs == undefined
-          ) {
-            throw new Error(
-              `Missing input for parameters ${JSON.stringify(parameters)}`
-            );
-          }
+    if (parameters.length == 0) {
+      return {
+        graph: {
+          nodes: [
+            { id: "input", type: "input" },
+            { id: "output", type: "output" },
+          ],
+          edges: [{ from: "input", out: "*", to: "output", in: "" }],
+        },
+      };
+    }
 
-          for (const param of parameters) {
-            if (
-              api_inputs &&
-              param.name in api_inputs == false &&
-              param.required
-            ) {
-              throw new Error(`Missing required parameter ${param.name}`);
-            }
+    const nodes = parameters.map((param) => {
+      const schema = { ...param.schema };
+      schema.title = param.name;
+      schema.description = param.description || param.schema.title;
+      schema.required = param.required;
 
-            if (api_inputs && param.name in api_inputs == false) {
-              // Parameter is not required and not in input, so we can skip it.
-              continue;
-            }
-
-            if (param.in == "path") {
-              // Replace the path parameter with the value from the input.
-              url = url.replace(`{${param.name}}`, api_inputs[param.name]);
-            }
-
-            if (param.in == "query") {
-              queryStringParameters[param.name] = api_inputs[param.name];
-            }
-          }
-
-          // // If the method is POST or PUT, then we need to add the requestBody to the body.
-
-          // We are going to want to add in the secret somehow
-          const headers = {};
-
-          // Create the query string
-          const queryString = Object.entries(queryStringParameters)
-            .map(([key, value]) => {
-              return `${key}=${value}`;
-            })
-            .join("&");
-
-          if (queryString.length > 0) {
-            url = `${url}?${queryString}`;
-          }
-
-          // Many APIs will require an authentication token but they don't define it in the Open API spec. If the user has provided a secret, we will use that.
-          // We know that we currently only support Bearer tokens.
-          if ("bearer" in api_inputs.authentication) {
-            const envKey = api_inputs.authentication.bearer;
-            const envValue = itemToSplat[envKey];
-            headers["Authorization"] = `Bearer ${envValue}`;
-          }
-
-          let body = undefined;
-
-          if (requestBody) {
-            // We know the method needs a request Body.
-            // Find the first input that matches the valid required schema of the API.
-            let requestContentType;
-
-            for (const requiredContentType of Object.keys(requestBody)) {
-              if (requiredContentType in api_inputs) {
-                body = api_inputs[requiredContentType];
-                requestContentType = requiredContentType;
-                break;
-              }
-            }
-
-            if (body == undefined) {
-              throw new Error(
-                `Missing required request body for ${JSON.stringify(
-                  requestBody
-                )}`
-              );
-            }
-
-            headers["Content-Type"] = requestContentType;
-          }
-          return { url, method, headers, body, queryString };
-        });
-
-        const item = base.input({
-          $id: "input",
+      return {
+        id: `input-${param.name}`,
+        type: "input",
+        configuration: {
           schema: {
             type: "object",
-            title: "input",
-            description: "What inputs do you want to pass to the API? (JSON)",
-            properties: {
-              api_inputs: {
-                type: "object",
-              },
-            },
+            properties: { [param.name]: schema },
           },
-        });
+        },
+      };
+    });
 
-        return item
-          .to(getItem)
-          .to(core.fetch())
-          .response.as("api_json_response")
-          .to(base.output({}));
-      })
-    )
-    .as("board")
-    .to(output);
+    nodes.push({ id: "output", type: "output" });
+
+    const graph = {
+      title: `API Inputs for ${item.operationId}`,
+      url: "#",
+      nodes,
+      edges: parameters.map((param) => {
+        return {
+          from: `input-${param.name}`,
+          out: "*",
+          to: "output",
+          in: "",
+        };
+      }),
+    };
+
+    return { graph };
+  });
+
+  const graphInputs = apiSpec.item.to(
+    createBoardInputs({
+      $id: "createBoardInputs",
+    })
+  );
+
+  const APIEndpoint = recipe(({ item, graph }) => {
+    const api_inputs = core.invoke({ $id: "APIInput", graph: graph });
+
+    const createFetchParameters = code(({ item, api_inputs }) => {
+      const { method, parameters, secrets, requestBody } = item; //itemToSplat.item;
+      let { url } = item; //itemToSplat.item;
+
+      const queryStringParameters = {};
+
+      if (typeof api_inputs == "string") {
+        api_inputs = JSON.parse(api_inputs);
+      }
+
+      if (
+        parameters != undefined &&
+        parameters.length > 0 &&
+        api_inputs == undefined
+      ) {
+        throw new Error(
+          `Missing input for parameters ${JSON.stringify(parameters)}`
+        );
+      }
+
+      for (const param of parameters) {
+        if (api_inputs && param.name in api_inputs == false && param.required) {
+          throw new Error(`Missing required parameter ${param.name}`);
+        }
+
+        if (api_inputs && param.name in api_inputs == false) {
+          // Parameter is not required and not in input, so we can skip it.
+          continue;
+        }
+
+        if (param.in == "path") {
+          // Replace the path parameter with the value from the input.
+          url = url.replace(`{${param.name}}`, api_inputs[param.name]);
+        }
+
+        if (param.in == "query") {
+          queryStringParameters[param.name] = api_inputs[param.name];
+        }
+      }
+
+      // // If the method is POST or PUT, then we need to add the requestBody to the body.
+
+      // We are going to want to add in the secret somehow
+      const headers = {};
+
+      // Create the query string
+      const queryString = Object.entries(queryStringParameters)
+        .map(([key, value]) => {
+          return `${key}=${value}`;
+        })
+        .join("&");
+
+      if (queryString.length > 0) {
+        url = `${url}?${queryString}`;
+      }
+
+      // Many APIs will require an authentication token but they don't define it in the Open API spec. If the user has provided a secret, we will use that.
+      // We know that we currently only support Bearer tokens.
+      if ("bearer" in api_inputs.authentication) {
+        const envKey = api_inputs.authentication.bearer;
+        const envValue = item[envKey];
+        headers["Authorization"] = `Bearer ${envValue}`;
+      }
+
+      let body = undefined;
+
+      if (requestBody) {
+        // We know the method needs a request Body.
+        // Find the first input that matches the valid required schema of the API.
+        let requestContentType;
+
+        for (const requiredContentType of Object.keys(requestBody)) {
+          if (requiredContentType in api_inputs) {
+            body = api_inputs[requiredContentType];
+            requestContentType = requiredContentType;
+            break;
+          }
+        }
+
+        if (body == undefined) {
+          throw new Error(
+            `Missing required request body for ${JSON.stringify(requestBody)}`
+          );
+        }
+
+        headers["Content-Type"] = requestContentType;
+      }
+      return { url, method, headers, body, queryString };
+    });
+
+    return item
+      .to(createFetchParameters({ api_inputs }))
+      .to(core.fetch())
+      .response.as("api_json_response")
+      .to(base.output({}));
+  });
+
+  apiSpec.item.to(output);
+  graphInputs.to(output);
+  graphInputs.to(APIEndpoint);
+
+  return apiSpec.item.to(APIEndpoint).as("board").to(output);
 });
 
 /*
@@ -320,7 +364,7 @@ const convertBoardListToObject = code(({ list }) => {
   const operations = list
     .map((item) => {
       return {
-        [item.item.operationId]: item.board,
+        [item.item.operationId]: item,
       };
     })
     .reduce((acc, curr) => {
@@ -331,7 +375,6 @@ const convertBoardListToObject = code(({ list }) => {
 
 export default await recipe(({ json }) => {
   // Get the Open API spec from the given URL.
-
   return validateIsOpenAPI({ $id: "isOpenAPI", json })
     .to(generateAPISpecs({ $id: "generateAPISpecs" }))
     .to(core.map({ $id: "createFetchBoards", board: createSpecRecipe }))
