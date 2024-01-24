@@ -9,8 +9,22 @@ const metaData = {
   version: "0.0.3",
 };
 
+const inputSchema = {
+  type: "object",
+  properties: {
+    url: {
+      type: "string",
+      title: "Open API spec",
+      default: "https://api.apis.guru/v2/specs/apis.guru/2.2.0/openapi.json"
+    }
+  }
+};
+
 export default await recipe(() => {
-  const input = base.input({ $id: "input" });
+  const input = base.input({
+    $id: "input",
+    schema: inputSchema
+  });
 
   const apiBoard = core.invoke({ path: "../index.json", url: input.url });
 

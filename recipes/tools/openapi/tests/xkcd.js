@@ -7,8 +7,22 @@ const metaData = {
   version: "0.0.3",
 };
 
+const inputSchema = {
+  type: "object",
+  properties: {
+    url: {
+      type: "string",
+      title: "XKCD API URL",
+      default: "https://xkcd.com/614",
+    },
+  },
+};
+
 export default await recipe(() => {
-  const input = base.input({ $id: "input" });
+  const input = base.input({
+    $id: "input",
+    schema: inputSchema
+});
 
   const apiBoard = core.invoke({
     $id: "xkcdInvoke",

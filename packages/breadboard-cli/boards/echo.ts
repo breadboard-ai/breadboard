@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Board } from "@google-labs/breadboard";
+import { Board, Schema } from "@google-labs/breadboard";
 
 const board = new Board({
   title: "Echo",
@@ -23,7 +23,7 @@ const query = board.input({
         description: "What shall I say back to you?",
       },
     },
-  },
+  } satisfies Schema,
 });
 
 query.wire("text->text", board.output());
