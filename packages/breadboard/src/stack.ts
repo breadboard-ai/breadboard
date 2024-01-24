@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { MachineResult } from "./index.js";
 import { loadRunnerState, saveRunnerState } from "./serialization.js";
+import { MachineResult } from "./traversal/result.js";
 import { RunState, TraversalResult } from "./types.js";
 
 // TODO: Support stream serialization somehow.
