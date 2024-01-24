@@ -658,7 +658,7 @@ export interface NodeHandlerContext {
   readonly board?: BreadboardRunner;
   readonly descriptor?: NodeDescriptor;
   readonly kits?: Kit[];
-  readonly base?: string;
+  readonly base?: URL;
   readonly outerGraph?: GraphDescriptor;
   readonly slots?: BreadboardSlotSpec;
   readonly probe?: Probe;

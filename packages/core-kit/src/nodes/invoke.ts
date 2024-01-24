@@ -21,17 +21,31 @@ export type InvokeNodeInputs = InputValues & {
   graph?: GraphDescriptor;
 };
 
+export const relativeBaseURL = (context: NodeHandlerContext) => {
+  const invokingBoardURL = context.board?.url;
+  if (invokingBoardURL) return new URL(invokingBoardURL);
+  if (context.base) return context.base;
+  return new URL(import.meta.url);
+};
+
+export const loadBoardFromPath = async (
+  path: string,
+  context: NodeHandlerContext
+) => {
+  const base = relativeBaseURL(context);
+  const outerGraph = context.outerGraph;
+  return await BoardRunner.load(path, { base, outerGraph });
+};
+
 const getRunnableBoard = async (
-  { base, outerGraph }: NodeHandlerContext,
+  context: NodeHandlerContext,
   path?: string,
   board?: BreadboardCapability,
   graph?: GraphDescriptor
 ): Promise<BoardRunner | undefined> => {
   if (board) return await BoardRunner.fromBreadboardCapability(board);
   if (graph) return await BoardRunner.fromGraphDescriptor(graph);
-  if (path) {
-    return await BoardRunner.load(path, { base, outerGraph });
-  }
+  if (path) return await loadBoardFromPath(path, context);
   return undefined;
 };
 
@@ -102,7 +116,7 @@ export default {
       if (isGraphDescriptor($recipe))
         board = await BoardRunner.fromGraphDescriptor($recipe);
       if (typeof $recipe === "string") {
-        board = await BoardRunner.load($recipe, context);
+        board = await loadBoardFromPath($recipe, context);
       } else {
         board = undefined;
       }

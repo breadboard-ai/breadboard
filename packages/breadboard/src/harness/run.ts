@@ -43,6 +43,12 @@ export type RunConfig = {
    */
   url: string;
   /**
+   * The base URL relative to which to load the board.
+   * If ran in a browser, defaults to the current URL.
+   * Otherwise, defaults to invoking module's URL.
+   */
+  base?: URL;
+  /**
    * The kits to use by the runtime.
    */
   kits: Kit[];

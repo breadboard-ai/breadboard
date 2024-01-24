@@ -68,7 +68,7 @@ async function main(args: string[], use_input_handler = false) {
   const graph = args[0];
   // Determine base URL for loading graphs, relative to the current working
   // directory.
-  const base = `${pathToFileURL(process.cwd()).href}/`;
+  const base = new URL(`${pathToFileURL(process.cwd()).href}/`);
   const logEverything = args.includes("--log");
   const validateIntegrity = args.includes("--validate-integrity");
   const logIntegrityLabels = args.includes("--log-integrity-labels");

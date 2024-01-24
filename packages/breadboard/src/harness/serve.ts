@@ -14,6 +14,7 @@ import {
 } from "../remote/worker.js";
 import { KitConfig, configureKits } from "./kits.js";
 import { TransportFactory } from "./types.js";
+import { baseURL } from "./url.js";
 
 /**
  * The Breadboard Serve configuration.
@@ -28,6 +29,12 @@ export type ServeConfig = {
    * client for the URL.
    */
   url?: string;
+  /**
+   * The base URL relative to which to load the board.
+   * If ran in a browser, defaults to the current URL.
+   * Otherwise, defaults to invoking module's URL.
+   */
+  base?: URL;
   /**
    * The kits to use for serving breadboard. Accepts an array of kits or
    * proxy configurations.
@@ -108,7 +115,8 @@ export const serve = async (config: ServeConfig) => {
 
   const server = new RunServer(factory.server("run"));
   const url = await getBoardURL(config, factory);
-  const runner = await Board.load(url);
+  const base = baseURL(config);
+  const runner = await Board.load(url, { base });
   return server.serve(runner, !!config.diagnostics, { kits });
 };
 

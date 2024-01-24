@@ -66,12 +66,13 @@ export default {
     const slottedWithUrls: BreadboardSlotSpec = {};
     if (slotted) {
       for (const key in slotted) {
-        slottedWithUrls[key] = { url: context.base, ...slotted[key] };
+        slottedWithUrls[key] = { url: context.base?.href, ...slotted[key] };
       }
     }
 
     // TODO: Please fix the $ref/path mess.
     const source = path || $ref || "";
+    const base = context.base || new URL(import.meta.url);
 
     const runnableBoard = board
       ? await BoardRunner.fromBreadboardCapability(board)
@@ -79,7 +80,7 @@ export default {
       ? await BoardRunner.fromGraphDescriptor(graph)
       : await BoardRunner.load(source, {
           slotted: slottedWithUrls,
-          base: context.base,
+          base,
           outerGraph: context.outerGraph,
         });
 

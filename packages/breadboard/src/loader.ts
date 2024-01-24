@@ -7,7 +7,7 @@
 import { GraphDescriptor, SubGraphs } from "./types.js";
 
 export type BoardLoaderArguments = {
-  base?: string;
+  base: URL;
   graphs?: SubGraphs;
 };
 
@@ -96,7 +96,7 @@ export class BoardLoader {
   #graphs?: SubGraphs;
 
   constructor({ base, graphs }: BoardLoaderArguments) {
-    this.#base = new URL(base ?? import.meta.url);
+    this.#base = base;
     this.#graphs = graphs;
   }
 

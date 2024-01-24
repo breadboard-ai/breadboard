@@ -78,7 +78,9 @@ export const handleNonPostRequest = (
 export const makeCloudFunction = (url: string) => {
   return async (req: ServerRequest, res: ServerResponse) => {
     // TODO: Handle loading errors here.
-    const board = await BoardRunner.load(url);
+    const board = await BoardRunner.load(url, {
+      base: new URL(import.meta.url),
+    });
 
     if (handleNonPostRequest(board, req, res)) return;
 
