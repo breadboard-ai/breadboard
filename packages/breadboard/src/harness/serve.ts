@@ -32,7 +32,6 @@ export type ServeConfig = {
   /**
    * The base URL relative to which to load the board.
    * If ran in a browser, defaults to the current URL.
-   * If ran in a worker, defaults to the worker's URL.
    * Otherwise, defaults to invoking module's URL.
    */
   base?: URL;
