@@ -189,12 +189,18 @@ export const core = addKit(Core) as unknown as {
     { accumulator: NodeValue }
   >;
   invoke: NodeFactory<
-    {
-      path?: string;
-      graph?: string;
-      board?: NodeValue;
-      [key: string]: NodeValue;
-    },
+    | {
+        path: string;
+        [key: string]: NodeValue;
+      }
+    | {
+        graph: string;
+        [key: string]: NodeValue;
+      }
+    | {
+        board: NodeValue;
+        [key: string]: NodeValue;
+      },
     { [key: string]: unknown }
   >;
   map: NodeFactory<
