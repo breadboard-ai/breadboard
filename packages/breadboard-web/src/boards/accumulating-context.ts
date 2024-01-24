@@ -22,10 +22,16 @@ const parameters = base.input({
 
 const input = base.input({
   $id: "userRequest",
-  schema: z.object({
-    text: z.string().describe("User: Type here to chat with the assistant"),
-  }) satisfies Schema,
-});
+  schema: {
+    type: "object",
+    properties: {
+      text: {
+        type: "string",
+        description: "User: Type here to chat with the assistant",
+      }
+    }
+  } satisfies Schema
+})
 
 parameters.as({}).to(input);
 
