@@ -111,6 +111,7 @@ export class BoardRunner implements BreadboardRunner {
     context: NodeHandlerContext = {},
     result?: RunResult
   ): AsyncGenerator<RunResult> {
+    const base = context.base || new URL(this.url || "", import.meta.url);
     yield* asyncGen<RunResult>(async (next) => {
       const { probe } = context;
       const handlers = await BoardRunner.handlersFromBoard(this, context.kits);
@@ -186,7 +187,7 @@ export class BoardRunner implements BreadboardRunner {
             board: this,
             descriptor,
             outerGraph: this.#outerGraph || this,
-            base: this.url,
+            base,
             slots,
             kits: [...(context.kits || []), ...this.kits],
             requestInput: requestedInputs.createHandler(next, result),
@@ -348,9 +349,9 @@ export class BoardRunner implements BreadboardRunner {
    */
   static async load(
     url: string,
-    options?: {
+    options: {
+      base: URL;
       slotted?: BreadboardSlotSpec;
-      base?: string;
       outerGraph?: GraphDescriptor;
     }
   ): Promise<BoardRunner> {

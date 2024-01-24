@@ -38,10 +38,46 @@ import {
 } from "@google-labs/breadboard";
 
 export const templates = addKit(TemplateKit) as unknown as {
+  /**
+   * Use this node to populate simple handlebar-style templates. A required
+   * input is `template`, which is a string that contains the template prompt
+   * template. The template can contain zero or more placeholders that will be
+   * replaced with values from inputs. Specify placeholders as `{{inputName}}`
+   * in the template. The placeholders in the template must match the inputs
+   * wired into this node. The node will replace all placeholders with values
+   * from the input property bag and pass the result along as the `prompt`
+   * output property.
+   */
   promptTemplate: NodeFactory<
-    { template: string; [key: string]: NodeValue },
-    { prompt: string }
+    {
+      /**
+       * The template to use for the prompt.
+       */
+      template: string;
+      /**
+       * The values to fill in the template.
+       */
+      [key: string]: NodeValue;
+    },
+    | {
+        /**
+         * The result of template with placeholders being replaced with values.
+         */
+        prompt: string;
+      }
+    | {
+        /**
+         * The result of template with placeholders being replaced with values.
+         */
+        text: string;
+      }
   >;
+  /**
+   * Use this node to safely construct URLs. This node relies on the
+   * [URI template specification](https://tools.ietf.org/html/rfc6570) to
+   * construct URLs, so the syntax is using single curly braces instead of
+   * double curly braces.
+   */
   urlTemplate: NodeFactory<
     { template: string; [key: string]: NodeValue },
     { url: string }
