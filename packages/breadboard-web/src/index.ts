@@ -15,7 +15,7 @@ import { Board, GraphDescriptor } from "@google-labs/breadboard";
 import { cache } from "lit/directives/cache.js";
 
 export const getBoardInfo = async (url: string) => {
-  const runner = await Board.load(url);
+  const runner = await Board.load(url, { base: new URL(window.location.href) });
 
   const { title, description, version } = runner;
   const diagram = runner.mermaid("TD", true);

@@ -5,7 +5,7 @@ import { pathToFileURL } from "url";
 export class JSONLoader extends Loader {
   async load(filePath: string): Promise<BoardRunner> {
     const board = await Board.load(filePath, {
-      base: pathToFileURL(process.cwd()).toString(),
+      base: new URL(pathToFileURL(process.cwd()).toString()),
     });
 
     return board;
