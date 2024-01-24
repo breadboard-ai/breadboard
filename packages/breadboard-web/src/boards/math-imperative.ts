@@ -28,7 +28,7 @@ export const graph = recipe(
       question: question,
     });
     const { completion } = palm.generateText({
-      text: prompt,
+      text: prompt.isString(),
       PALM_KEY: core.secrets({ keys: ["PALM_KEY"] }).PALM_KEY,
     });
     const { result } = core.runJavascript({
