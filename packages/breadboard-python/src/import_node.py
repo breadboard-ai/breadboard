@@ -1,24 +1,15 @@
 from main import AttrDict, Board, convert_from_json_to_pydantic
-from javascript import require
+from javascript import require as require_js
 import javascript
 import json
 
-
-
-class ImportedBoard(Board):
-  def __init__(self, name, schema):
-    self.type = name
-    self.input_schema = schema["inputSchema"]
-    self.output_schema = schema["outputSchema"]
-
-def import_breadboard_js(package_name):
-  
+def require(package_name):
   if package_name == "@google-labs/llm-starter":
-    kit_package = require("../../llm-starter/dist/src/index.js")
+    kit_package = require_js("../../llm-starter/dist/src/index.js")
   elif package_name == "@google-labs/node-nursery-web":
-    kit_package = require("../../node-nursery-web/dist/src/index.js")
+    kit_package = require_js("../../node-nursery-web/dist/src/index.js")
   else:
-    kit_package = require(package_name)
+    kit_package = require_js(package_name)
   a = kit_package()
   handlers = a.handlers
 
@@ -51,5 +42,4 @@ def import_breadboard_js(package_name):
         return config
 
     output[handler_name] = ImportedClass
-  print(output)
   return output
