@@ -216,6 +216,57 @@ The main reason we need to run `npm run build` is because in the monorepo, we ne
 [Vite](https://vitejs.dev/) is currently brought up in the `breadboard-web` dir. Use it as a template for other front-end TypeScript packages. Alternatively, you can use `npm init @google-labs/breadboard [project-name]` to
 create a new front-end project.
 
+## Sending PRs
+
+This repo protects the `main` branch, which means all changes must go through a
+GitHub PR. This enforces that all tests pass and packages builds before any
+change lands, and provides an opportunity for code review.
+
+> [!TIP] The [GitHub CLI](https://cli.github.com/) makes it easy to send PRs by
+> typing `gh pr create`. You can use the `--fill` or `-f` flag to automatically
+> populate the title and description from your commits. See the [create command
+> documentation](https://cli.github.com/manual/gh_pr_create) for more
+> information.
+
+### Changesets
+
+This repo uses [Changesets](https://github.com/changesets/changesets) to ease
+the burden of releasing of NPM packages. The benefits are that it publishes
+multiple packages at once, understands the dependencies between all packages in
+the monorepo, automatically updates the `package.json` and `CHANGELOG.md` files,
+and automatically creates release tags.
+
+> [!TIP]
+> If you need to publish NPM packages, see the [Publishing NPM
+> packages](#publishing-npm-packages) section below.
+
+After sending a PR, you may receive a comment from
+[**changeset-bot**](https://github.com/apps/changeset-bot) that looks like this:
+
+![changeset-bot comment](https://user-images.githubusercontent.com/11481355/66183943-dc418680-e6bd-11e9-998d-e43f90a974bd.png)
+
+This bot is telling you that your PR does not contain a [Changeset
+file](https://github.com/changesets/changesets/blob/main/docs/detailed-explanation.md).
+Changeset files are how Changesets understands which packages need to be
+released at any given time, along with the kind of version bump that is needed
+for them.
+
+The easiest way to create a Changeset file for your PR is to run this command:
+
+```
+npx changeset
+```
+
+This command will prompt you with an interactive list of packages. Select the
+packages that your PR affects and indicate whether the changes are
+[semver](https://semver.org/) `major` (breaking), `minor` (new features), or
+`patch` (bug fixes).
+
+> [!NOTE] If your change only affects **unpublished** packages, then you can
+> safely skip adding a changeset file and ignore the bot.
+
+Then just push the generated changeset file to your PR!
+
 ## Publishing NPM packages
 
 To publish an NPM package, you have to be a Googler. This is unlikely
