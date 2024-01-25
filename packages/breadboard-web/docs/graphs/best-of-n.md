@@ -4,7 +4,7 @@
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
 pickFirst["jsonata <br> id='pickFirst'"] -- "result->best" --> output2{{"output <br> id='output-2'"}}:::output
-generateN["map <br> id='generateN'"] -- "list->json" --> jsonata5["jsonata <br> id='jsonata-5'"]
+generateN["map <br> id='generateN'"] -- "list->json" --> presentChoices["jsonata <br> id='presentChoices'"]
 generateN["map <br> id='generateN'"] -- "list->list" --> pickFirst["jsonata <br> id='pickFirst'"]
 generateN["map <br> id='generateN'"] -- "list->list" --> output2{{"output <br> id='output-2'"}}:::output
 rank["invoke <br> id='rank'"] -- "json->rank" --> pickFirst["jsonata <br> id='pickFirst'"]
@@ -18,14 +18,13 @@ end
 sg_lambda4:::slotted -- "lamdba->lamdba" --o lambda4
 
 createList["invoke <br> id='createList'"] -- "list->list" --> generateN["map <br> id='generateN'"]
-jsonata5["jsonata <br> id='jsonata-5'"] -- "result->list" --> promptTemplate6["promptTemplate <br> id='promptTemplate-6'"]
+presentChoices["jsonata <br> id='presentChoices'"] -- "result->list" --> promptTemplate5["promptTemplate <br> id='promptTemplate-5'"]
+promptTemplate5["promptTemplate <br> id='promptTemplate-5'"] -- "text->text" --> rank["invoke <br> id='rank'"]
 input1[/"input <br> id='input-1'"/]:::input -- "n->n" --> createList["invoke <br> id='createList'"]
 input1[/"input <br> id='input-1'"/]:::input -- "agent->agent" --> lambda4["lambda <br> id='lambda-4'"]
 input1[/"input <br> id='input-1'"/]:::input -- "text->text" --> lambda4["lambda <br> id='lambda-4'"]
-input1[/"input <br> id='input-1'"/]:::input -- "text->text" --> promptTemplate6["promptTemplate <br> id='promptTemplate-6'"]
-input1[/"input <br> id='input-1'"/]:::input -- "n->n" --> promptTemplate6["promptTemplate <br> id='promptTemplate-6'"]
-input1[/"input <br> id='input-1'"/]:::input -- "agent->path" --> rank["invoke <br> id='rank'"]
-promptTemplate6["promptTemplate <br> id='promptTemplate-6'"] -- "text->text" --> rank["invoke <br> id='rank'"]
+input1[/"input <br> id='input-1'"/]:::input -- "text->text" --> promptTemplate5["promptTemplate <br> id='promptTemplate-5'"]
+input1[/"input <br> id='input-1'"/]:::input -- "n->n" --> promptTemplate5["promptTemplate <br> id='promptTemplate-5'"]
 
 subgraph sg_createList [createList]
 createList_createListinput[/"input <br> id='createList-input'"/]:::input -- all --> createList_createListrun["runJavascript <br> id='createList-run'"]

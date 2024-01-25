@@ -9,17 +9,21 @@ import { core } from "@google-labs/core-kit";
 import { templates } from "@google-labs/template-kit";
 import { json } from "@google-labs/json-kit";
 
+const sampleAgent = "/graphs/ad-writer.json";
 const jsonAgent = "/graphs/json-agent.json";
 
 export default await recipe(({ agent, context, text, n }) => {
-  text.title("Task").description("The task to perform").format("multiline")
-    .examples(`Given the following specs, extract requirements for writing an ad copy:
-    
-  This ad is for my lawn care company that will fit into an inch of newspaper copy. It's called "Max's Lawn Care" and it should use the slogan "I care about your lawn." Emphasize the folksiness of it being a local, sole proprietorship that I started after graduating from high school.`);
+  text
+    .title("Task")
+    .description("The task to perform")
+    .format("multiline")
+    .examples(
+      `This ad is for my lawn care company that will fit into an inch of newspaper copy. It's called "Max's Lawn Care" and it should use the slogan "I care about your lawn." Emphasize the folksiness of it being a local, sole proprietorship that I started after graduating from high school.`
+    );
   agent
     .title("Agent")
     .description("Agent to apply to the task")
-    .examples(jsonAgent);
+    .examples(sampleAgent);
   context.title("Context").isArray().examples("[]");
   n.title("Number of parallel attemps").isNumber().examples("4");
 
@@ -42,13 +46,14 @@ export default await recipe(({ agent, context, text, n }) => {
   });
 
   const makeNicerList = json.jsonata({
+    $id: "presentChoices",
     expression: `item ~> $map(function ($v, $i) { { "title": "choice " & $i, "content": $v } })`,
     json: generateN.list.isString(),
   });
 
   const rank = core.invoke({
     $id: "rank",
-    path: agent.isString(),
+    path: jsonAgent,
     text: templates.promptTemplate({
       template: `You are a ranking expert. Given {{n}} choices of the output, you are to rank these choices in the order (starting with the best) of matching the requirements of the task described below:
         
