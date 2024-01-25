@@ -291,9 +291,21 @@ export async function activate(context: vscode.ExtensionContext) {
 
                 body {
                   background: #FFF;
+                }
+
+                main {
+                  box-sizing: border-box;
+                  width: 100%;
+                  height: 100%;
                   display: flex;
                   align-items: center;
                   justify-content: center;
+                  padding: 32px;
+                }
+
+                svg {
+                  width: 100%;
+                  height: 100%;
                 }
               </style>
             </head>
