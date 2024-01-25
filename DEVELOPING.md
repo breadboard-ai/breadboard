@@ -316,6 +316,10 @@ package.
    command to publish all changes and generate release tags (e.g.
    `@google-labs/breadboard@0.8.0`).
 
+   ```bash
+   npx changeset publish
+   ```
+
 6. Push the release tags added in step 5 to GitHub so that they are associated
    with the commit from step 2.
 
