@@ -133,7 +133,7 @@ export class RequestedInputsManager {
           schema: { type: "object", properties: { [name]: schema } },
         },
       };
-      console.log("requestInputResult", requestInputResult);
+      //console.log("requestInputResult", requestInputResult);
       await next(new InputStageResult(requestInputResult, undefined, -1));
       const outputs = await requestInputResult.outputsPromise;
       let value = outputs && outputs[name];
