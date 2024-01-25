@@ -1,5 +1,6 @@
 {
-  "name": "breadboard-debugger",
+  "name": "@google-labs/breadboard-extension",
+  "private": true,
   "displayName": "Breadboard Debugger",
   "version": "0.0.1",
   "description": "A Breadboard debugger extension for VSCode.",
