@@ -11,7 +11,7 @@
     },
     {
       "from": "generateN",
-      "to": "jsonata-5",
+      "to": "presentChoices",
       "out": "list",
       "in": "json"
     },
@@ -52,22 +52,22 @@
       "in": "list"
     },
     {
-      "from": "jsonata-5",
-      "to": "promptTemplate-6",
+      "from": "presentChoices",
+      "to": "promptTemplate-5",
       "out": "result",
       "in": "list"
+    },
+    {
+      "from": "promptTemplate-5",
+      "to": "rank",
+      "out": "text",
+      "in": "text"
     },
     {
       "from": "input-1",
       "to": "createList",
       "out": "n",
       "in": "n"
-    },
-    {
-      "from": "input-1",
-      "to": "lambda-4",
-      "out": "generator",
-      "in": "generator"
     },
     {
       "from": "input-1",
@@ -83,39 +83,15 @@
     },
     {
       "from": "input-1",
-      "to": "lambda-4",
-      "out": "schema",
-      "in": "schema"
-    },
-    {
-      "from": "input-1",
-      "to": "promptTemplate-6",
+      "to": "promptTemplate-5",
       "out": "text",
       "in": "text"
     },
     {
       "from": "input-1",
-      "to": "promptTemplate-6",
+      "to": "promptTemplate-5",
       "out": "n",
       "in": "n"
-    },
-    {
-      "from": "input-1",
-      "to": "rank",
-      "out": "agent",
-      "in": "path"
-    },
-    {
-      "from": "input-1",
-      "to": "rank",
-      "out": "generator",
-      "in": "generator"
-    },
-    {
-      "from": "promptTemplate-6",
-      "to": "rank",
-      "out": "text",
-      "in": "text"
     }
   ],
   "nodes": [
@@ -164,6 +140,7 @@
       "id": "rank",
       "type": "invoke",
       "configuration": {
+        "path": "/graphs/json-agent.json",
         "schema": {
           "type": "object",
           "properties": {
@@ -212,18 +189,6 @@
               {
                 "from": "input-1",
                 "to": "invokeAgent",
-                "out": "schema",
-                "in": "schema"
-              },
-              {
-                "from": "input-1",
-                "to": "invokeAgent",
-                "out": "generator",
-                "in": "generator"
-              },
-              {
-                "from": "input-1",
-                "to": "invokeAgent",
                 "out": "agent",
                 "in": "path"
               }
@@ -265,14 +230,6 @@
                         "type": "string",
                         "title": "text"
                       },
-                      "schema": {
-                        "type": "string",
-                        "title": "schema"
-                      },
-                      "generator": {
-                        "type": "string",
-                        "title": "generator"
-                      },
                       "agent": {
                         "title": "path",
                         "description": "The path to the board to invoke.",
@@ -281,8 +238,6 @@
                     },
                     "required": [
                       "text",
-                      "schema",
-                      "generator",
                       "agent"
                     ]
                   }
@@ -302,10 +257,17 @@
       }
     },
     {
-      "id": "jsonata-5",
+      "id": "presentChoices",
       "type": "jsonata",
       "configuration": {
         "expression": "item ~> $map(function ($v, $i) { { \"title\": \"choice \" & $i, \"content\": $v } })"
+      }
+    },
+    {
+      "id": "promptTemplate-5",
+      "type": "promptTemplate",
+      "configuration": {
+        "template": "You are a ranking expert. Given {{n}} choices of the output, you are to rank these choices in the order (starting with the best) of matching the requirements of the task described below:\n        \n        TASK:\n        \n        {{text}}\n        \n        CHOICES:\n        \n        {{list}}"
       }
     },
     {
@@ -323,20 +285,13 @@
                 "4"
               ]
             },
-            "generator": {
-              "title": "Generator",
-              "examples": [
-                "/graphs/gemini-generator.json"
-              ],
-              "type": "string"
-            },
             "agent": {
               "title": "Agent",
               "description": "Agent to apply to the task",
-              "type": "string",
               "examples": [
-                "/graphs/json-agent.json"
-              ]
+                "/graphs/ad-writer.json"
+              ],
+              "type": "string"
             },
             "text": {
               "title": "Task",
@@ -347,33 +302,16 @@
               ],
               "format": "multiline",
               "examples": [
-                "Given the following specs, extract requirements for writing an ad copy:\n    \n  This ad is for my lawn care company that will fit into an inch of newspaper copy. It's called \"Max's Lawn Care\" and it should use the slogan \"I care about your lawn.\" Emphasize the folksiness of it being a local, sole proprietorship that I started after graduating from high school."
+                "This ad is for my lawn care company that will fit into an inch of newspaper copy. It's called \"Max's Lawn Care\" and it should use the slogan \"I care about your lawn.\" Emphasize the folksiness of it being a local, sole proprietorship that I started after graduating from high school."
               ]
-            },
-            "schema": {
-              "title": "Schema",
-              "type": "object",
-              "examples": [
-                "{\"type\":\"object\",\"properties\":{\"ad\":{\"type\":\"string\",\"description\":\"the ad copy\"}}}"
-              ],
-              "format": "multiline"
             }
           },
           "required": [
             "n",
-            "generator",
             "agent",
-            "text",
-            "schema"
+            "text"
           ]
         }
-      }
-    },
-    {
-      "id": "promptTemplate-6",
-      "type": "promptTemplate",
-      "configuration": {
-        "template": "You are a ranking expert. Given {{n}} choices of the output, you are to rank these choices in the order (starting with the best) of matching the requirements of the task described below:\n        \n        TASK:\n        \n        {{text}}\n        \n        CHOICES:\n        \n        {{list}}"
       }
     }
   ],
