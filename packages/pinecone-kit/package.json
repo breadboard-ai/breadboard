@@ -1,5 +1,8 @@
 {
   "name": "@google-labs/pinecone-kit",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
   "private": true,
   "version": "0.0.2",
   "description": "A collection of Breadboard nodes for working with Pinecone",

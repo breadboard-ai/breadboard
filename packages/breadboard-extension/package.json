@@ -1,5 +1,8 @@
 {
   "name": "@google-labs/breadboard-extension",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
   "private": true,
   "displayName": "Breadboard Debugger",
   "version": "0.0.2",

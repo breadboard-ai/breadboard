@@ -1,5 +1,8 @@
 {
   "name": "@google-labs/coffee-bot-board",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
   "private": true,
   "version": "0.0.2",
   "description": "A Breadboard implementation of a helpful bot that helps with ordering coffee",

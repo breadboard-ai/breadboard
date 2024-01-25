@@ -1,5 +1,8 @@
 {
   "name": "@google-labs/palm-kit",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
   "version": "0.0.2",
   "description": "A Breadboard Kit with nodes to access PaLM APIs.",
   "main": "./dist/src/index.js",

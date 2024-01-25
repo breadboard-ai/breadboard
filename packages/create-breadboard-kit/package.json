@@ -1,5 +1,8 @@
 {
   "name": "@google-labs/create-breadboard-kit",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
   "version": "0.0.2",
   "description": "A starter kit for your breadboard kits",
   "main": "dist/src/index.js",

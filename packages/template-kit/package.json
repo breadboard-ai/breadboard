@@ -1,5 +1,8 @@
 {
   "name": "@google-labs/template-kit",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
   "version": "0.1.1",
   "description": "Breadboard Kit that contains nodes for various sorts of templating",
   "main": "./dist/src/index.js",

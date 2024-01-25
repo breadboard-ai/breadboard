@@ -1,5 +1,8 @@
 {
   "name": "@google-labs/breadboard-cli",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
   "version": "0.1.1",
   "description": "A suite of tools for interacting with the Breadboard.",
   "bin": {

@@ -1,5 +1,8 @@
 {
   "name": "@google-labs/core-kit",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
   "version": "0.1.3",
   "description": "A Breadboard Kit containing nodes that enable composition and reuse of boards.",
   "main": "./dist/src/index.js",

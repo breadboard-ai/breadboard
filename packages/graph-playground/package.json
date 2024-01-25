@@ -1,5 +1,8 @@
 {
   "name": "@google-labs/graph-playground",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
   "private": true,
   "version": "0.0.2",
   "description": "Playing with graph structures",

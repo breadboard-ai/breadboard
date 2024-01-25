@@ -1,5 +1,8 @@
 {
   "name": "@google-labs/node-nursery-web",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
   "private": true,
   "version": "0.0.2",
   "description": "A Nursery for new nodes that run in both Web and Node environments. Move to other kits to publish.",

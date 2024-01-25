@@ -1,5 +1,8 @@
 {
   "name": "@google-labs/breadboard-website",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
   "private": true,
   "version": "1.0.0",
   "description": "The public documentation website for Breadboard",

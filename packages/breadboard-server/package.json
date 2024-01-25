@@ -1,5 +1,8 @@
 {
   "name": "@google-labs/breadboard-server",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
   "version": "0.1.4",
   "description": "Scaffolding for running Breadboard as a server",
   "main": "./dist/src/index.js",

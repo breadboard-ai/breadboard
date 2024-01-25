@@ -3,6 +3,9 @@
   "version": "0.0.2",
   "type": "module",
   "name": "@google-labs/breadbuddy",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
   "description": "Google Labs repo for making app prototypes from a Breadboard",
   "scripts": {
     "prepack": "npm run build",

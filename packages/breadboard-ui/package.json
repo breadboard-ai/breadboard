@@ -1,5 +1,8 @@
 {
   "name": "@google-labs/breadboard-ui",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
   "version": "0.0.3",
   "description": "The UI components for @google-labs/breadboard",
   "main": "./dist/src/index.js",

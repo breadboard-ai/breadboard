@@ -1,5 +1,8 @@
 {
   "name": "@google-labs/llm-starter",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
   "version": "0.3.3",
   "description": "LLM Starter Kit for the Breadboard library",
   "main": "./dist/src/index.js",
