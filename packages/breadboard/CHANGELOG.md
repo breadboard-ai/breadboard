@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.0
+
+### Minor Changes
+
+- af00e58: Various changes. First release managed by Changesets.
+
 ## [0.6.0] - 2023-12-06
 
 - Bug fixes
