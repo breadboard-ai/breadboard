@@ -31,6 +31,12 @@
         "title": "Debug Board",
         "category": "Breadboard",
         "enablement": "!inDebugMode && resourceExtname == .json"
+      },
+      {
+        "command": "breaboard.renderBoard",
+        "title": "Render Board",
+        "category": "Breadboard",
+        "enablement": "resourceExtname == .ts"
       }
     ],
     "debuggers": [
@@ -95,7 +101,7 @@
         "FORCE_COLOR": "1"
       },
       "dependencies": [
-        "../breadboard:build",
+        "../breadboard:build:tsc",
         "extension-files"
       ],
       "files": [
@@ -108,7 +114,7 @@
       "output": [
         "dist/"
       ],
-      "clean": "if-file-deleted"
+      "clean": true
     },
     "lint": {
       "command": "eslint . --ext .ts",
@@ -153,17 +159,21 @@
     "url": "https://github.com/breadboard-ai/breadboard/issues"
   },
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
-  "devDependencies": {
-    "typescript": "^5.0.4"
-  },
   "dependencies": {
     "@google-labs/breadboard": "*",
+    "@google-labs/core-kit": "*",
+    "@google-labs/json-kit": "*",
+    "@google-labs/template-kit": "*",
+    "@google-labs/node-nursery-web": "*",
+    "@google-labs/palm-kit": "*",
     "@types/node": "^20.11.5",
     "@types/vscode": "^1.85.0",
     "@vscode/debugadapter": "^1.64.0",
     "@vscode/vsce": "^2.22.0",
     "dotenv": "^16.3.2",
     "esbuild": "^0.19.11",
-    "rimraf": "^5.0.5"
+    "mermaid": "^10.7.0",
+    "rimraf": "^5.0.5",
+    "typescript": "^5.3.3"
   }
 }
