@@ -1,7 +1,7 @@
 {
   "title": "Agent",
   "description": "A prototype of an agent-like board",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "edges": [
     {
       "from": "assemble",
@@ -127,15 +127,12 @@
               "title": "Generator",
               "description": "The path to the board to invoke.",
               "type": "string",
-              "examples": [
-                "gemini-generator.json"
-              ]
+              "default": "gemini-generator.json"
             }
           },
           "required": [
             "text",
-            "context",
-            "generator"
+            "context"
           ]
         }
       }

@@ -5,9 +5,14 @@
     "version": "0.0.2"
   },
   {
+    "title": "Ad Writer",
+    "url": "/graphs/ad-writer.json",
+    "version": "0.0.2"
+  },
+  {
     "title": "Agent",
     "url": "/graphs/agent.json",
-    "version": "0.0.2"
+    "version": "0.0.3"
   },
   {
     "title": "Best of N",
@@ -32,7 +37,7 @@
   {
     "title": "Data Board",
     "url": "/graphs/data-board.json",
-    "version": "0.0.2"
+    "version": "0.0.3"
   },
   {
     "title": "Gemini Pro Generator",
@@ -52,7 +57,7 @@
   {
     "title": "JSON Agent",
     "url": "/graphs/json-agent.json",
-    "version": "0.0.2"
+    "version": "0.0.3"
   },
   {
     "title": "JSON Generator",

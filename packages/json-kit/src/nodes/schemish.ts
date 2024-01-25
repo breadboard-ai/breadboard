@@ -12,6 +12,9 @@ import type {
 } from "@google-labs/breadboard";
 
 export const convert = (schema: Schema): NodeValue => {
+  if (!schema.type) {
+    return "Any JSON object";
+  }
   if (schema.type === "string" || schema.type === "number") {
     const result = `${schema.type}, ${schema.description}`;
     const { enum: validValues } = schema;

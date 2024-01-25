@@ -1,7 +1,7 @@
 {
   "title": "JSON Agent",
   "description": "An agent-like board that outputs structured data (JSON)",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "edges": [
     {
       "from": "validate",
@@ -119,7 +119,8 @@
                 "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"descriptions\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"title\": {\n            \"type\": \"string\",\n            \"description\": \"expert's title\"\n          },\n          \"responsibilities\": {\n            \"type\": \"array\",\n            \"items\": {\n              \"type\": \"string\",\n              \"description\": \"expert's responsibilities\"\n            }\n          }\n        }\n      }\n    }\n  }\n}"
               ],
               "type": "object",
-              "format": "multiline"
+              "format": "multiline",
+              "default": "{}"
             },
             "text": {
               "title": "Text",
@@ -142,17 +143,13 @@
             },
             "generator": {
               "title": "Generator",
-              "examples": [
-                "gemini-generator.json"
-              ],
+              "default": "gemini-generator.json",
               "type": "string"
             }
           },
           "required": [
-            "schema",
             "text",
-            "context",
-            "generator"
+            "context"
           ]
         }
       }

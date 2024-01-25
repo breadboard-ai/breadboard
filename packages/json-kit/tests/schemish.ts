@@ -89,3 +89,9 @@ test("converts a schema with enums", (t) => {
   const result = convert(schema);
   t.deepEqual(result, `string, The type of order. (one of: "drink", "food")`);
 });
+
+test("can handle an empty schema", (t) => {
+  const schema = {};
+  const result = convert(schema);
+  t.deepEqual(result, "Any JSON object");
+});
