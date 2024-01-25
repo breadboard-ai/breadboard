@@ -218,56 +218,61 @@ create a new front-end project.
 
 ## Publishing NPM packages
 
-Currently, to publish an NPM package, you have to be a Googler. This is unlikely to change in the future. Having said that, here are the steps to publish a package
+To publish an NPM package, you have to be a Googler. This is unlikely
+to change in the future. Having said that, here are the steps to publish a
+package.
 
-1. At the root of the repository, run:
+1. At the root of the repository, ensure you are synchronized to the tip of
+   `main` and create a new release branch.
 
-```bash
-git pull
-npm run sync
-```
+   ```bash
+   git checkout main
+   git pull
+   git checkout -b release
+   ```
 
-2. Change directory to the package to be published. For example:
+2. Use the Changesets
+   [version](https://github.com/changesets/changesets/blob/main/docs/command-line-options.md#version)
+   command to find all packages that need releasing and automatically update
+   their `package.json` and `CHANGELOG.md` files. Note that Changesets
+   automatically bumps the semver constraints for dependent packages when
+   needed, so there is no need to manually edit any `package.json` files.
 
-```
-cd packages/graph-runner
-```
+   ```bash
+   npx changeset version
+   ```
 
-3. Update `package.json` of this package with the version bump. Follow the [semver](https://semver.org/) guidance. Basically, minor fixes increment the patch version (third number) and everything else increments the minor version (second number).
+3. Check what is planned to be published by looking at the latest commit which
+   Changesets created in the previous step. Make sure it looks reasonable, and
+   send a PR with the changes so that others can see what will be published.
+   Wait for the PR to pass CI.
 
-4. Update `CHANGELOG.md` file to summarize the changes since the last release. You can see the list of changes by looking at the packge directory commit history on Github. For example, for `packages/graph-runner`, commit history is at [https://github.com/breadboard-ai/breadboard/commits/main/packages/graph-runner](commits/main/packages/graph-runner). Follow the convention in the changelog doc. It is loosely inspired by [keepachangelog.com](https://keepachangelog.com/en/1.1.0/)
+   ```bash
+   git show
+   gh pr create -f
+   ```
 
-5. If there are version dependencies on the newly-published package in this monorepo, update their respective `package.json` entries to point to the new version and re-run `npm i`.
+4. Generate a token for the Google NPM release proxy registry. Running the
+   command below will open a browser window. Select _24 hour temporary token_
+   after which the command should exit by itself.
 
-6. If this publication corresponds to a change in milestone, change the milestone value of the shield in the `README.md` of the package. Some packages might not have a shield. Consider adding it.
+   ```bash
+   npm login --registry https://wombat-dressing-room.appspot.com
+   ```
 
-7. Commit changes with the title: `` [<package-name>] Publish  `<version>`. `` and push them to Github.
+5. Use the Changesets
+   [publish](https://github.com/changesets/changesets/blob/main/docs/command-line-options.md#publish)
+   command to publish all changes and generate release tags (e.g.
+   `@google-labs/breadboard@0.8.0`).
 
-8. If new milestone tag was added:
+6. Push the release tags added in step 5 to GitHub so that they are associated
+   with the commit from step 2.
 
-Tag the milestone:
+   ```bash
+   git push --follow-tags
+   ```
 
-```bash
-git tag <package>-<milestone> # example: breadboard-m1
-```
-
-Push tags
-
-```bash
-git push <remote> --tags
-```
-
-9. Log into the [wombat NPM proxy](https://opensource.googleblog.com/2020/01/wombat-dressing-room-npm-publication_10.html):
-
-```bash
-npm login --registry https://wombat-dressing-room.appspot.com
-```
-
-10. Publish to npm:
-
-```bash
-npm publish --registry https://wombat-dressing-room.appspot.com --access public
-```
+7. Merge the PR from step 3. You're done!
 
 ## Updating Generated API Docs
 
