@@ -117,7 +117,7 @@ export class BreadboardLoader {
       }
     });
 
-    // Step 5. Post the graph over to the web view for rendering.
+    // Step 5. Return the descriptor.
     return descriptor;
   }
 
