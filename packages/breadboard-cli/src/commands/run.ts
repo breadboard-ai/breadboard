@@ -61,12 +61,14 @@ async function runBoard(
           for (const [name, property] of properties) {
             if (name in newInputs == false && "default" in property == false) {
               // The required argument is not on the input *and* there is no default. Ask for it.
-              const answer = await rl.question(property.description + " ");
+              const answer = await rl.question(
+                `(${name}) ${property.description}:`
+              );
 
               newInputs[name] = answer;
             }
-            stop.inputs = newInputs;
           }
+          stop.inputs = newInputs;
         }
 
         rl.close();
