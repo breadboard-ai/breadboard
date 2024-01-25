@@ -6,6 +6,7 @@
 
 import { base, recipe, code } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
+import { title } from "process";
 
 const metaData = {
   title: "Create a board from an Open API spec",
@@ -240,21 +241,25 @@ const createSpecRecipe = recipe((apiSpec) => {
         configuration: {
           schema: {
             type: "object",
-            properties: item.requestBody["application/json"].schema.properties,
+            properties: {
+              requestBody: {
+                type: "object",
+                title: "requestBody",
+                description:
+                  item.requestBody["application/json"].description ||
+                  "The request body for the API call (JSON)",
+              },
+            },
           },
         },
       });
 
-      for (const requestBodyKey of Object.keys(
-        item.requestBody["application/json"].schema.properties
-      )) {
-        edges.push({
-          from: "input-requestBody",
-          out: requestBodyKey,
-          to: "output",
-          in: requestBodyKey,
-        });
-      }
+      edges.push({
+        from: "input-requestBody",
+        out: "requestBody",
+        to: "output",
+        in: "requestBody",
+      });
     }
 
     if ("secrets" in item && item.secrets != undefined) {
@@ -313,9 +318,6 @@ const createSpecRecipe = recipe((apiSpec) => {
     const output = base.output({});
 
     const createFetchParameters = code(({ item, api_inputs }) => {
-      debugger;
-      console.log("ITEM", item);
-      console.log("API INPUTS", api_inputs);
       const { method, parameters, secrets, requestBody, info } = item;
 
       let { url } = item;
@@ -373,12 +375,10 @@ const createSpecRecipe = recipe((apiSpec) => {
       }
 
       // Many APIs will require an authentication token but they don't define it in the Open API spec. If the user has provided a secret, we will use that.
-      console.log("SECRETS", secrets);
       if (secrets != undefined && secrets[1].scheme == "bearer") {
         const envKey = `${item.info.title
           .replace(/[^a-zA-Z0-9]+/g, "_")
           .toUpperCase()}_KEY`;
-        console.log(envKey, item);
         const envValue = api_inputs[envKey];
 
         headers["Authorization"] = `Bearer ${envValue}`;
@@ -391,20 +391,10 @@ const createSpecRecipe = recipe((apiSpec) => {
         // Find the first input that matches the valid required schema of the API.
         let requestContentType;
 
-        for (const requiredContentType of Object.keys(requestBody)) {
-          if (requiredContentType in api_inputs) {
-            body = api_inputs[requiredContentType];
-            requestContentType = requiredContentType;
-            break;
-          } else {
-            body = {};
-            for (const key of Object.keys(
-              requestBody[requiredContentType].schema.properties
-            )) {
-              body[key] = api_inputs[key];
-            }
-            break;
-          }
+        // We can only handle JSON
+        if ("requestBody" in api_inputs) {
+          body = JSON.parse(api_inputs["requestBody"]);
+          requestContentType = "application/json";
         }
 
         if (body == undefined) {
