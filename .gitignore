@@ -123,3 +123,4 @@ build
 *.local.md
 
 .wireit
+*.vsix

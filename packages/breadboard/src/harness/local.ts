@@ -104,8 +104,15 @@ export async function* runLocally(config: RunConfig, kits: Kit[]) {
       let error = e as Error;
       let message = "";
       while (error?.cause) {
-        error = (error.cause as { error: Error }).error;
-        message += `\n${error.message}`;
+        // In the event we get a cause that has no inner error, we will
+        // propagate the cause instead.
+        error = (error.cause as { error: Error | undefined }).error ?? {
+          name: "Unexpected Error",
+          message: JSON.stringify(error.cause, null, 2),
+        };
+        if (error && "message" in error) {
+          message += `\n${error.message}`;
+        }
       }
       console.error(message, error);
       await next(errorResult(message));

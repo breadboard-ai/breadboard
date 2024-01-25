@@ -230,6 +230,10 @@ export class BoardRunner implements BreadboardRunner {
     });
   }
 
+  get validators() {
+    return this.#validators;
+  }
+
   /**
    * A simplified version of `run` that runs the board until the board provides
    * an output, and returns that output.
@@ -254,7 +258,7 @@ export class BoardRunner implements BreadboardRunner {
     if (context.board && context.descriptor) {
       // If called from another node in a parent board, add the parent board's
       // validators to the board, with the current arguments.
-      for (const validator of (context.board as this).#validators)
+      for (const validator of (context.board as this).validators)
         this.addValidator(
           validator.getSubgraphValidator(context.descriptor, Object.keys(args))
         );
