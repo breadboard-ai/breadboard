@@ -15,6 +15,7 @@
   },
   "type": "module",
   "scripts": {
+    "prepack": "npm run build",
     "build": "wireit",
     "build:eleventy": "wireit",
     "serve": "wireit",

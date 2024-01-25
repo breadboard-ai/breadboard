@@ -2,6 +2,7 @@
   "name": "functions",
   "type": "module",
   "scripts": {
+    "prepack": "npm run build",
     "build": "wireit",
     "build:tsc": "wireit",
     "build:rollup": "wireit",

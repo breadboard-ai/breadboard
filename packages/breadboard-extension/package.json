@@ -11,6 +11,7 @@
   "icon": "./icon.png",
   "type": "commonjs",
   "scripts": {
+    "prepack": "npm run build",
     "test": "wireit",
     "build": "wireit",
     "build:tsc": "wireit",

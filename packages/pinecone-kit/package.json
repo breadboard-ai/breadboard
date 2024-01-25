@@ -8,6 +8,7 @@
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
+    "prepack": "npm run build",
     "build": "wireit",
     "test": "wireit",
     "lint": "wireit"

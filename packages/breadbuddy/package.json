@@ -5,6 +5,7 @@
   "name": "@google-labs/breadbuddy",
   "description": "Google Labs repo for making app prototypes from a Breadboard",
   "scripts": {
+    "prepack": "npm run build",
     "dev": "wireit",
     "build": "wireit",
     "build:vite": "wireit",

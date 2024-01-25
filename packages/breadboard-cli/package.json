@@ -10,6 +10,7 @@
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
+    "prepack": "npm run build",
     "test": "wireit",
     "build": "wireit",
     "build:tsc": "wireit",

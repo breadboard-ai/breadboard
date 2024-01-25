@@ -8,6 +8,7 @@
   },
   "type": "module",
   "scripts": {
+    "prepack": "npm run build",
     "copy-assets": "wireit",
     "build": "wireit",
     "lint": "wireit"

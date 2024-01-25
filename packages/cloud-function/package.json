@@ -6,6 +6,7 @@
   "main": "./src/index.js",
   "type": "module",
   "scripts": {
+    "prepack": "npm run build",
     "build": "wireit",
     "deploy": "wireit",
     "dev": "wireit",

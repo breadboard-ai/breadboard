@@ -25,6 +25,7 @@
   "types": "build/index.d.ts",
   "type": "module",
   "scripts": {
+    "prepack": "npm run build",
     "dev": "npm run serve --watch",
     "serve": "wireit",
     "deploy": "npm run build:vite && firebase deploy",
