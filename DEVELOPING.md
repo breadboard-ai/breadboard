@@ -216,58 +216,114 @@ The main reason we need to run `npm run build` is because in the monorepo, we ne
 [Vite](https://vitejs.dev/) is currently brought up in the `breadboard-web` dir. Use it as a template for other front-end TypeScript packages. Alternatively, you can use `npm init @google-labs/breadboard [project-name]` to
 create a new front-end project.
 
+## Sending PRs
+
+This repo protects the `main` branch, which means all changes must go through a
+GitHub PR. This enforces that all tests pass and packages builds before any
+change lands, and provides an opportunity for code review.
+
+> [!TIP] The [GitHub CLI](https://cli.github.com/) makes it easy to send PRs by
+> typing `gh pr create`. You can use the `--fill` or `-f` flag to automatically
+> populate the title and description from your commits. See the [create command
+> documentation](https://cli.github.com/manual/gh_pr_create) for more
+> information.
+
+### Changesets
+
+This repo uses [Changesets](https://github.com/changesets/changesets) to ease
+the burden of releasing of NPM packages. The benefits are that it publishes
+multiple packages at once, understands the dependencies between all packages in
+the monorepo, automatically updates the `package.json` and `CHANGELOG.md` files,
+and automatically creates release tags.
+
+> [!TIP]
+> If you need to publish NPM packages, see the [Publishing NPM
+> packages](#publishing-npm-packages) section below.
+
+After sending a PR, you may receive a comment from
+[**changeset-bot**](https://github.com/apps/changeset-bot) that looks like this:
+
+![changeset-bot comment](https://user-images.githubusercontent.com/11481355/66183943-dc418680-e6bd-11e9-998d-e43f90a974bd.png)
+
+This bot is telling you that your PR does not contain a [Changeset
+file](https://github.com/changesets/changesets/blob/main/docs/detailed-explanation.md).
+Changeset files are how Changesets understands which packages need to be
+released at any given time, along with the kind of version bump that is needed
+for them.
+
+The easiest way to create a Changeset file for your PR is to run this command:
+
+```
+npx changeset
+```
+
+This command will prompt you with an interactive list of packages. Select the
+packages that your PR affects and indicate whether the changes are
+[semver](https://semver.org/) `major` (breaking), `minor` (new features), or
+`patch` (bug fixes).
+
+> [!NOTE] If your change only affects **unpublished** packages, then you can
+> safely skip adding a changeset file and ignore the bot.
+
+Then just push the generated changeset file to your PR!
+
 ## Publishing NPM packages
 
-Currently, to publish an NPM package, you have to be a Googler. This is unlikely to change in the future. Having said that, here are the steps to publish a package
+To publish an NPM package, you have to be a Googler. This is unlikely
+to change in the future. Having said that, here are the steps to publish a
+package.
 
-1. At the root of the repository, run:
+1. At the root of the repository, ensure you are synchronized to the tip of
+   `main` and create a new release branch.
 
-```bash
-git pull
-npm run sync
-```
+   ```bash
+   git checkout main
+   git pull
+   git checkout -b release
+   ```
 
-2. Change directory to the package to be published. For example:
+2. Use the Changesets
+   [version](https://github.com/changesets/changesets/blob/main/docs/command-line-options.md#version)
+   command to find all packages that need releasing and automatically update
+   their `package.json` and `CHANGELOG.md` files. Note that Changesets
+   automatically bumps the semver constraints for dependent packages when
+   needed, so there is no need to manually edit any `package.json` files.
 
-```
-cd packages/graph-runner
-```
+   ```bash
+   npx changeset version
+   ```
 
-3. Update `package.json` of this package with the version bump. Follow the [semver](https://semver.org/) guidance. Basically, minor fixes increment the patch version (third number) and everything else increments the minor version (second number).
+3. Check what is planned to be published by looking at the latest commit which
+   Changesets created in the previous step. Make sure it looks reasonable, and
+   send a PR with the changes so that others can see what will be published.
+   Wait for the PR to pass CI.
 
-4. Update `CHANGELOG.md` file to summarize the changes since the last release. You can see the list of changes by looking at the packge directory commit history on Github. For example, for `packages/graph-runner`, commit history is at [https://github.com/breadboard-ai/breadboard/commits/main/packages/graph-runner](commits/main/packages/graph-runner). Follow the convention in the changelog doc. It is loosely inspired by [keepachangelog.com](https://keepachangelog.com/en/1.1.0/)
+   ```bash
+   git show
+   gh pr create -f
+   ```
 
-5. If there are version dependencies on the newly-published package in this monorepo, update their respective `package.json` entries to point to the new version and re-run `npm i`.
+4. Generate a token for the Google NPM release proxy registry. Running the
+   command below will open a browser window. Select _24 hour temporary token_
+   after which the command should exit by itself.
 
-6. If this publication corresponds to a change in milestone, change the milestone value of the shield in the `README.md` of the package. Some packages might not have a shield. Consider adding it.
+   ```bash
+   npm login --registry https://wombat-dressing-room.appspot.com
+   ```
 
-7. Commit changes with the title: `` [<package-name>] Publish  `<version>`. `` and push them to Github.
+5. Use the Changesets
+   [publish](https://github.com/changesets/changesets/blob/main/docs/command-line-options.md#publish)
+   command to publish all changes and generate release tags (e.g.
+   `@google-labs/breadboard@0.8.0`).
 
-8. If new milestone tag was added:
+6. Push the release tags added in step 5 to GitHub so that they are associated
+   with the commit from step 2.
 
-Tag the milestone:
+   ```bash
+   git push --follow-tags
+   ```
 
-```bash
-git tag <package>-<milestone> # example: breadboard-m1
-```
-
-Push tags
-
-```bash
-git push <remote> --tags
-```
-
-9. Log into the [wombat NPM proxy](https://opensource.googleblog.com/2020/01/wombat-dressing-room-npm-publication_10.html):
-
-```bash
-npm login --registry https://wombat-dressing-room.appspot.com
-```
-
-10. Publish to npm:
-
-```bash
-npm publish --registry https://wombat-dressing-room.appspot.com --access public
-```
+7. Merge the PR from step 3. You're done!
 
 ## Updating Generated API Docs
 
