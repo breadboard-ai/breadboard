@@ -55,7 +55,7 @@ export const createBubbleHandler = (
       throw new Error(createErrorMessage(name, metadata, required));
     }
     if (schema.default !== undefined) {
-      if (schema.type !== "string") {
+      if ("type" in schema && schema.type !== "string") {
         return JSON.parse(schema.default);
       }
       return schema.default;
