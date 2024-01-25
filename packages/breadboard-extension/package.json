@@ -1,0 +1,169 @@
+{
+  "name": "breadboard-debugger",
+  "displayName": "Breadboard Debugger",
+  "version": "0.0.1",
+  "description": "A Breadboard debugger extension for VSCode.",
+  "main": "./dist/extension.js",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "icon": "./icon.png",
+  "type": "commonjs",
+  "scripts": {
+    "test": "wireit",
+    "build": "wireit",
+    "build:tsc": "wireit",
+    "build:debugger": "wireit",
+    "lint": "wireit",
+    "package": "wireit",
+    "package-list": "vsce ls --no-dependencies --ignoreFile .packageignore"
+  },
+  "activationEvents": [
+    "onDebug"
+  ],
+  "categories": [
+    "Debuggers"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "breaboard.runBoard",
+        "title": "Debug Board",
+        "category": "Breadboard",
+        "enablement": "!inDebugMode && resourceExtname == .json"
+      }
+    ],
+    "debuggers": [
+      {
+        "type": "breadboard",
+        "languages": [
+          "json"
+        ],
+        "label": "Breadboard Debug",
+        "runtime": "node",
+        "configurationAttributes": {
+          "launch": {
+            "required": [
+              "board"
+            ],
+            "properties": {
+              "board": {
+                "type": "string",
+                "description": "The board to debug",
+                "default": "${workspaceFolder}/${command:AskForBoard}"
+              },
+              "stopOnEntry": {
+                "type": "boolean",
+                "description": "Pause execution on board load",
+                "default": true
+              }
+            }
+          }
+        },
+        "configurationSnippets": [
+          {
+            "label": "Breadboard: Debug Board",
+            "description": "Configure a Breadboard Debug",
+            "body": {
+              "type": "breadboard",
+              "request": "launch",
+              "name": "Debug board",
+              "board": "${workspaceFolder}/${command:AskForBoard}",
+              "stopOnEntry": true
+            }
+          }
+        ],
+        "initialConfigurations": [
+          {
+            "type": "breadboard",
+            "request": "launch",
+            "name": "Debug Board",
+            "board": "${workspaceFolder}/${command:AskForBoard}",
+            "stopOnEntry": true
+          }
+        ],
+        "variables": {
+          "AskForBoard": "breadboard.getBoardPath"
+        }
+      }
+    ]
+  },
+  "wireit": {
+    "build": {
+      "command": "node build.mjs",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "../breadboard:build",
+        "extension-files"
+      ],
+      "files": [
+        "src/**/*.js",
+        "src/**/*.ts",
+        "tests/**/*.ts",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
+      ],
+      "output": [
+        "dist/"
+      ],
+      "clean": "if-file-deleted"
+    },
+    "lint": {
+      "command": "eslint . --ext .ts",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "files": [
+        "src/**/*.ts",
+        "tests/**/*.ts"
+      ],
+      "output": []
+    },
+    "extension-files": {
+      "files": [
+        "dist/**/*.*",
+        ".packageignore"
+      ]
+    },
+    "package": {
+      "command": "vsce package --no-dependencies --ignoreFile .packageignore --out debugger.vsix",
+      "files": [
+        "dist/**/*.*"
+      ],
+      "dependencies": [
+        "build",
+        "extension-files"
+      ],
+      "output": [
+        "debugger.vsix"
+      ],
+      "clean": true
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/breadboard-ai/breadboard.git"
+  },
+  "keywords": [],
+  "author": "Google Labs Team",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/breadboard-ai/breadboard/issues"
+  },
+  "homepage": "https://github.com/breadboard-ai/breadboard#readme",
+  "devDependencies": {
+    "typescript": "^5.0.4"
+  },
+  "dependencies": {
+    "@google-labs/breadboard": "*",
+    "@types/node": "^20.11.5",
+    "@types/vscode": "^1.85.0",
+    "@vscode/debugadapter": "^1.64.0",
+    "@vscode/vsce": "^2.22.0",
+    "dotenv": "^16.3.2",
+    "esbuild": "^0.19.11",
+    "rimraf": "^5.0.5"
+  }
+}
