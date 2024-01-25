@@ -5,6 +5,13 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "type": "breadboard",
+      "name": "Debug board",
+      "board": "${workspaceFolder}/${command:AskForBoard}",
+      "stopOnEntry": true,
+      "request": "launch"
+    },
+    {
       "name": "Attach",
       "port": 9229,
       "request": "attach",

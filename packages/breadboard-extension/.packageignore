@@ -1,0 +1,12 @@
+# Files ignored by the VS Code Extension Packager
+node_modules
+.wireit
+src
+build.mjs
+tsconfig.json
+.packageignore
+**/*.ts.map
+.rollup.cache
+rollup.config.mjs
+*.tsbuildinfo
+*.vsix
