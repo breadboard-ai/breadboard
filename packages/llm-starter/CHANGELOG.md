@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.3
+
+### Patch Changes
+
+- Updated dependencies [af00e58]
+  - @google-labs/breadboard@0.8.0
+
 ## [0.3.2] - 2024-01-22
 
 - Deprecated. See [Issue 177](https://github.com/breadboard-ai/breadboard/issues/177) for details.

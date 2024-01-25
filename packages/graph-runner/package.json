@@ -1,5 +1,8 @@
 {
   "name": "@google-labs/graph-runner",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
   "version": "0.2.0",
   "description": "Reference implementation of generative app composition graph traversal",
   "main": "./dist/src/index.js",

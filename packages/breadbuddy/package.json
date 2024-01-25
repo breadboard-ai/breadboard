@@ -1,8 +1,11 @@
 {
   "private": true,
-  "version": "0.0.1",
+  "version": "0.0.2",
   "type": "module",
   "name": "@google-labs/breadbuddy",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
   "description": "Google Labs repo for making app prototypes from a Breadboard",
   "scripts": {
     "prepack": "npm run build",
@@ -84,7 +87,7 @@
     "wireit": "^0.14.1"
   },
   "dependencies": {
-    "@google-labs/breadboard": "^0.7.0",
+    "@google-labs/breadboard": "^0.8.0",
     "@lit/task": "^1.0.0",
     "jszip": "^3.10.1",
     "lit": "^3.1.0",

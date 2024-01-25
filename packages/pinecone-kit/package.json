@@ -1,7 +1,10 @@
 {
   "name": "@google-labs/pinecone-kit",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
   "private": true,
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A collection of Breadboard nodes for working with Pinecone",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
@@ -116,10 +119,10 @@
     "ava": "^5.2.0",
     "typescript": "^5.0.4",
     "@google-labs/tsconfig": "^0.0.1",
-    "@google-labs/template-kit": "^0.1.0"
+    "@google-labs/template-kit": "^0.1.1"
   },
   "dependencies": {
-    "@google-labs/breadboard": "^0.7.0",
-    "@google-labs/core-kit": "^0.1.2"
+    "@google-labs/breadboard": "^0.8.0",
+    "@google-labs/core-kit": "^0.1.3"
   }
 }
