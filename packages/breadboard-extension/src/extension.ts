@@ -192,8 +192,11 @@ export async function activate(context: vscode.ExtensionContext) {
             return;
           }
 
+          // Step 1. Load in the file contents.
           const fileContents = await vscode.workspace.fs.readFile(resource);
           const typeScriptContents = fileContents.toString();
+
+          // Step 2. Transpile using the TypeScript Compiler.
           const result = ts.transpileModule(typeScriptContents, {
             compilerOptions: {
               module: ts.ModuleKind.CommonJS,
@@ -201,6 +204,7 @@ export async function activate(context: vscode.ExtensionContext) {
             },
           });
 
+          // Step 3. Wrap it into something that looks like an iife.
           const code = `(async (require) => {
             const exports = globalThis.exports || {};
             ${result.outputText}
@@ -217,6 +221,8 @@ export async function activate(context: vscode.ExtensionContext) {
             palmKit,
           ] = mods;
 
+          // Step 4. Try running the code. Where kits are requested, hand in the
+          // ones we already loaded here.
           try {
             const descriptor = await vm.runInNewContext(code, {
               filename: "board.js",
@@ -260,6 +266,7 @@ export async function activate(context: vscode.ExtensionContext) {
               boardDesription.title || "Untitled Board"
             })`;
 
+            // Step 5. Post the graph over to the web view for rendering.
             const graph = breadboard.toMermaid(descriptor);
             panel.webview.postMessage({ graph });
           } catch (err) {
