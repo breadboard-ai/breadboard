@@ -7,6 +7,7 @@
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
+    "prepack": "npm run build",
     "build": "wireit",
     "test": "wireit",
     "lint": "wireit"
@@ -96,8 +97,8 @@
     "@types/node": "^18.16.3",
     "ava": "^5.2.0",
     "typescript": "^5.0.4",
-    "@google-labs/tsconfig": "*",
-    "@google-labs/template-kit": "*"
+    "@google-labs/tsconfig": "^0.0.1",
+    "@google-labs/template-kit": "^0.1.0"
   },
   "dependencies": {
     "@google-labs/breadboard": "^0.7.0"

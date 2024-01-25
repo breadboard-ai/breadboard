@@ -7,6 +7,7 @@
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
+    "prepack": "npm run build",
     "generate:docs": "wireit",
     "test": "wireit",
     "build": "wireit",
@@ -105,7 +106,7 @@
   "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/llm-starter#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
-    "@google-labs/tsconfig": "*",
+    "@google-labs/tsconfig": "^0.0.1",
     "@types/node": "^18.16.3",
     "@typescript-eslint/eslint-plugin": "^5.56.0",
     "@typescript-eslint/parser": "^5.56.0",

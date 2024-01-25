@@ -5,6 +5,7 @@
   "name": "@google-labs/breadbuddy",
   "description": "Google Labs repo for making app prototypes from a Breadboard",
   "scripts": {
+    "prepack": "npm run build",
     "dev": "wireit",
     "build": "wireit",
     "build:vite": "wireit",
@@ -71,7 +72,7 @@
   "author": "Google Labs Team",
   "license": "Apache-2.0",
   "devDependencies": {
-    "@google-labs/tsconfig": "*",
+    "@google-labs/tsconfig": "^0.0.1",
     "@types/node": "^20.10.4",
     "@types/nunjucks": "^3.2.6",
     "@typescript-eslint/eslint-plugin": "^5.56.0",
@@ -83,7 +84,7 @@
     "wireit": "^0.14.1"
   },
   "dependencies": {
-    "@google-labs/breadboard": "*",
+    "@google-labs/breadboard": "^0.7.0",
     "@lit/task": "^1.0.0",
     "jszip": "^3.10.1",
     "lit": "^3.1.0",
