@@ -8,6 +8,7 @@
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
+    "prepack": "npm run build",
     "serve": "wireit",
     "dev": "npm run serve --watch",
     "lint": "wireit",
@@ -65,11 +66,11 @@
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
+    "@google-labs/tsconfig": "^0.0.1",
+    "@types/node": "^18.16.3",
     "@typescript-eslint/eslint-plugin": "^5.56.0",
     "@typescript-eslint/parser": "^5.56.0",
-    "@types/node": "^18.16.3",
     "ava": "^5.2.0",
-    "typescript": "^5.0.4",
-    "@google-labs/tsconfig": "*"
+    "typescript": "^5.0.4"
   }
 }

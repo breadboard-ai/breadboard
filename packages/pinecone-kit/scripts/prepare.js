@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { writeFile, readdir } from "fs/promises";
+import { writeFile, mkdir } from "fs/promises";
 
 const BOARD_DIR = "./dist/src/boards";
 const SOURCE_DIR = "./src/boards";
@@ -22,7 +22,7 @@ const writeMermaid = async (file, mermaid) => {
   const output = `# ${title}
   - Original: [\`${boardName}\`](${boardURL})
   - Graph: [\`${graphName}\`](${graphURL})
-  
+
   \`\`\`mermaid
   ${mermaid}
   \`\`\``;
@@ -35,6 +35,11 @@ const writeJSON = async (file, graph) => {
     JSON.stringify(graph, null, 2)
   );
 };
+
+await Promise.all([
+  mkdir(DOC_DIR, { recursive: true }),
+  mkdir(GRAPH_DIR, { recursive: true }),
+]);
 
 await Promise.all(
   boardFiles.map(async (file) => {

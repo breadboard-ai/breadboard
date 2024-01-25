@@ -25,6 +25,7 @@
   "types": "build/index.d.ts",
   "type": "module",
   "scripts": {
+    "prepack": "npm run build",
     "dev": "npm run serve --watch",
     "serve": "wireit",
     "deploy": "npm run build:vite && firebase deploy",
@@ -177,7 +178,7 @@
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
     "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
-    "@google-labs/tsconfig": "*",
+    "@google-labs/tsconfig": "^0.0.1",
     "@types/node": "^18.16.3",
     "@typescript-eslint/eslint-plugin": "^5.56.0",
     "@typescript-eslint/parser": "^5.56.0",
@@ -193,14 +194,14 @@
     "vitest": "^0.34.6"
   },
   "dependencies": {
-    "@google-labs/breadboard": "*",
-    "@google-labs/breadboard-ui": "*",
-    "@google-labs/core-kit": "*",
-    "@google-labs/json-kit": "*",
-    "@google-labs/template-kit": "*",
-    "@google-labs/node-nursery-web": "*",
-    "@google-labs/palm-kit": "*",
-    "@google-labs/pinecone-kit": "*",
+    "@google-labs/breadboard": "^0.7.0",
+    "@google-labs/breadboard-ui": "^0.0.2",
+    "@google-labs/core-kit": "^0.1.2",
+    "@google-labs/json-kit": "^0.0.2",
+    "@google-labs/node-nursery-web": "^0.0.1",
+    "@google-labs/palm-kit": "^0.0.1",
+    "@google-labs/pinecone-kit": "^0.0.1",
+    "@google-labs/template-kit": "^0.1.0",
     "lit": "^3.1.1",
     "zod": "^3.22.4",
     "zod-to-json-schema": "^3.22.0"

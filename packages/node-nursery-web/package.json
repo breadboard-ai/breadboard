@@ -8,6 +8,7 @@
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
+    "prepack": "npm run build",
     "test": "wireit",
     "build": "wireit",
     "build:tsc": "wireit",
@@ -93,19 +94,19 @@
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
-    "@google-labs/tsconfig": "*",
+    "@google-labs/core-kit": "^0.1.2",
+    "@google-labs/template-kit": "^0.1.0",
+    "@google-labs/tsconfig": "^0.0.1",
     "@types/gapi": "^0.0.46",
     "@types/node": "^18.16.3",
     "@typescript-eslint/eslint-plugin": "^5.56.0",
     "@typescript-eslint/parser": "^5.56.0",
     "ava": "^5.2.0",
     "npm": "^10.2.1",
-    "typescript": "^5.0.4",
-    "@google-labs/template-kit": "*",
-    "@google-labs/core-kit": "*"
+    "typescript": "^5.0.4"
   },
   "dependencies": {
-    "@google-labs/breadboard": "*",
+    "@google-labs/breadboard": "^0.7.0",
     "firebase": "^10.5.2"
   }
 }

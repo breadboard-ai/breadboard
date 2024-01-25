@@ -9,6 +9,7 @@
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
+    "prepack": "npm run build",
     "generate:docs": "wireit",
     "dev": "wireit",
     "test": "wireit",
@@ -118,7 +119,7 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/breadboard#readme",
   "devDependencies": {
-    "@google-labs/tsconfig": "*",
+    "@google-labs/tsconfig": "^0.0.1",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
     "@types/node": "^18.17.4",
@@ -133,7 +134,7 @@
     "node": ">=19.0.0"
   },
   "dependencies": {
-    "@google-labs/breadboard": "*",
+    "@google-labs/breadboard": "^0.7.0",
     "lit": "^3.1.0",
     "mermaid": "^10.6.1"
   }

@@ -8,6 +8,7 @@
   },
   "type": "module",
   "scripts": {
+    "prepack": "npm run build",
     "copy-assets": "wireit",
     "build": "wireit",
     "lint": "wireit"
@@ -71,12 +72,15 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
-    "@google-labs/tsconfig": "*",
+    "@google-labs/tsconfig": "^0.0.1",
     "@types/node": "^18.18.8",
     "@types/semver": "^7.5.4",
     "@typescript-eslint/eslint-plugin": "^5.56.0",
     "@typescript-eslint/parser": "^5.56.0",
     "typescript": "^5.0.4"
   },
-  "types": "./dist/src/index.d.ts"
+  "types": "./dist/src/index.d.ts",
+  "dependencies": {
+    "chalk": "^5.3.0"
+  }
 }
