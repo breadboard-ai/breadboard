@@ -33,7 +33,7 @@ const validateIsOpenAPI = code(({ json }) => {
   Generate a list of API operations from the given Open API spec that will be used to create the board of boards.
 */
 const generateAPISpecs = code(({ json }) => {
-  const { paths } = json;
+  const { paths, info } = json;
   const baseUrl = json.servers[0].url;
 
   /*
@@ -134,7 +134,10 @@ const generateAPISpecs = code(({ json }) => {
                         obj = obj[part];
                       }
 
-                      contentType.schema = obj;
+                      if ("description" in obj == false) {
+                        obj.description = `Request POST data (format: ${contentType})`;
+                      }
+                      return { [contentType]: { schema: obj } };
                     }
                     return { [contentType]: reqeustParams };
                   })
@@ -175,6 +178,7 @@ const generateAPISpecs = code(({ json }) => {
             parameters,
             requestBody,
             secrets,
+            info,
           };
 
           return headers;
@@ -194,18 +198,6 @@ const createSpecRecipe = recipe((apiSpec) => {
 
   const createBoardInputs = code(({ item }) => {
     const { parameters } = item;
-
-    if (parameters.length == 0) {
-      return {
-        graph: {
-          nodes: [
-            { id: "input", type: "input" },
-            { id: "output", type: "output" },
-          ],
-          edges: [{ from: "input", out: "*", to: "output", in: "" }],
-        },
-      };
-    }
 
     const nodes = parameters.map((param) => {
       const schema = { ...param.schema };
@@ -227,18 +219,78 @@ const createSpecRecipe = recipe((apiSpec) => {
 
     nodes.push({ id: "output", type: "output" });
 
+    const edges = parameters.map((param) => {
+      return {
+        from: `input-${param.name}`,
+        out: param.name,
+        to: "output",
+        in: param.name,
+      };
+    });
+
+    if (
+      "requestBody" in item &&
+      item.requestBody != undefined &&
+      "application/json" in item.requestBody
+    ) {
+      // Only support JSON Schema for now.  If you need XML, talk to Paul.
+      nodes.push({
+        id: "input-requestBody",
+        type: "input",
+        configuration: {
+          schema: {
+            type: "object",
+            properties: item.requestBody["application/json"].schema.properties,
+          },
+        },
+      });
+
+      for (const requestBodyKey of Object.keys(
+        item.requestBody["application/json"].schema.properties
+      )) {
+        edges.push({
+          from: "input-requestBody",
+          out: requestBodyKey,
+          to: "output",
+          in: requestBodyKey,
+        });
+      }
+    }
+
+    if ("secrets" in item && item.secrets != undefined) {
+      const apiKeyName = `${item.info.title
+        .replace(/[^a-zA-Z0-9]+/g, "_")
+        .toUpperCase()}_KEY`;
+
+      nodes.push({
+        id: "input-secrets",
+        type: "secrets",
+        configuration: {
+          keys: [apiKeyName],
+        },
+      });
+
+      edges.push({
+        from: "input-secrets",
+        out: apiKeyName,
+        to: "output",
+        in: apiKeyName,
+      });
+    }
+
+    if (nodes.length == 0) {
+      nodes.push({ id: "input", type: "input" });
+    }
+
+    if (edges.length == 0) {
+      edges.push({ from: `input`, out: "*", to: "output", in: "" });
+    }
+
     const graph = {
       title: `API Inputs for ${item.operationId}`,
       url: "#",
       nodes,
-      edges: parameters.map((param) => {
-        return {
-          from: `input-${param.name}`,
-          out: "*",
-          to: "output",
-          in: "",
-        };
-      }),
+      edges,
     };
 
     return { graph };
@@ -251,11 +303,22 @@ const createSpecRecipe = recipe((apiSpec) => {
   );
 
   const APIEndpoint = recipe(({ item, graph }) => {
-    const api_inputs = core.invoke({ $id: "APIInput", graph: graph });
+    const toAPIInputs = code((item) => {
+      return { api_inputs: item };
+    });
+
+    const api_inputs = core
+      .invoke({ $id: "APIInput", graph: graph })
+      .to(toAPIInputs({ $id: "toAPIInputs" }));
+    const output = base.output({});
 
     const createFetchParameters = code(({ item, api_inputs }) => {
-      const { method, parameters, secrets, requestBody } = item; //itemToSplat.item;
-      let { url } = item; //itemToSplat.item;
+      debugger;
+      console.log("ITEM", item);
+      console.log("API INPUTS", api_inputs);
+      const { method, parameters, secrets, requestBody, info } = item;
+
+      let { url } = item;
 
       const queryStringParameters = {};
 
@@ -310,10 +373,14 @@ const createSpecRecipe = recipe((apiSpec) => {
       }
 
       // Many APIs will require an authentication token but they don't define it in the Open API spec. If the user has provided a secret, we will use that.
-      // We know that we currently only support Bearer tokens.
-      if ("bearer" in api_inputs.authentication) {
-        const envKey = api_inputs.authentication.bearer;
-        const envValue = item[envKey];
+      console.log("SECRETS", secrets);
+      if (secrets != undefined && secrets[1].scheme == "bearer") {
+        const envKey = `${item.info.title
+          .replace(/[^a-zA-Z0-9]+/g, "_")
+          .toUpperCase()}_KEY`;
+        console.log(envKey, item);
+        const envValue = api_inputs[envKey];
+
         headers["Authorization"] = `Bearer ${envValue}`;
       }
 
@@ -329,6 +396,14 @@ const createSpecRecipe = recipe((apiSpec) => {
             body = api_inputs[requiredContentType];
             requestContentType = requiredContentType;
             break;
+          } else {
+            body = {};
+            for (const key of Object.keys(
+              requestBody[requiredContentType].schema.properties
+            )) {
+              body[key] = api_inputs[key];
+            }
+            break;
           }
         }
 
@@ -343,11 +418,14 @@ const createSpecRecipe = recipe((apiSpec) => {
       return { url, method, headers, body, queryString };
     });
 
-    return item
-      .to(createFetchParameters({ api_inputs }))
+    return createFetchParameters({
+      $id: "createFetchParameters",
+      item,
+      api_inputs,
+    })
       .to(core.fetch())
       .response.as("api_json_response")
-      .to(base.output({}));
+      .to(output);
   });
 
   apiSpec.item.to(output);
