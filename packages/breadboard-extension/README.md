@@ -1,19 +1,18 @@
 # Breadboard Extension
 
-This is a VS Code extension for Breadboard. It is currently an unpublished
-extension that you build and install yourself.
+This is a VS Code extension for Breadboard. It is currently an unpublished extension that you build and install yourself.
 
 ## Installation
 
 1. Build the extension: `npm run package`
 2. Locate the `debugger.vsix` in VS Code, right click and choose "Install Extension VSIX". Alternatively go to your Extensions in VS Code, head to the overflow menu (`...`) and choose "Install Extension VSIX..."
 
-## Usage
+## Usage - Debugger
 
 Currently the extension supports the JSON boards, though the plan is to support TypeScript board debugging, too. Head to a JSON board and either:
 
 1. Hit F5 to start the debugger.
-2. Cmd + Shift + P and choose "Breadboard: Debug Board"
+2. Cmd/Ctrl + Shift + P and choose "Breadboard: Debug Board"
 
 The board will be loaded into the debugger and paused. You should get the board details in the variables view and you can either hit Continue to run the board until it ends (or hits a breakpoint - see below), or you can step through. Note that all the step functions move to the next node; we don't currently support stepping in, out, or over directly.
 
@@ -24,6 +23,10 @@ If you want to use breakpoints, you can set a function breakpoint in the debugge
 ### Secrets
 
 If you keep a `.env` file in your workspace it will be loaded by the runtime when a debugging session begins. It will be used for autofilling secrets wherever possible.
+
+## Usage - Graph Rendering
+
+You can also use the extension to render graphs while you edit the TypeScript. To do this from a TypeScript board description, press Cmd/Ctrl + Shift + P and choose "Breadboard: Render Board". As the TypeScript file is updated the board should re-render.
 
 ## Development
 
