@@ -1,7 +1,10 @@
 {
   "name": "@google-labs/breadboard-web",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
   "private": true,
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "The Web runtime for Breadboard",
   "main": "./build/index.js",
   "exports": {
@@ -194,14 +197,14 @@
     "vitest": "^0.34.6"
   },
   "dependencies": {
-    "@google-labs/breadboard": "^0.7.0",
-    "@google-labs/breadboard-ui": "^0.0.2",
-    "@google-labs/core-kit": "^0.1.2",
-    "@google-labs/json-kit": "^0.0.2",
-    "@google-labs/node-nursery-web": "^0.0.1",
-    "@google-labs/palm-kit": "^0.0.1",
-    "@google-labs/pinecone-kit": "^0.0.1",
-    "@google-labs/template-kit": "^0.1.0",
+    "@google-labs/breadboard": "^0.8.0",
+    "@google-labs/breadboard-ui": "^0.0.3",
+    "@google-labs/core-kit": "^0.1.3",
+    "@google-labs/json-kit": "^0.0.3",
+    "@google-labs/node-nursery-web": "^0.0.2",
+    "@google-labs/palm-kit": "^0.0.2",
+    "@google-labs/pinecone-kit": "^0.0.2",
+    "@google-labs/template-kit": "^0.1.1",
     "lit": "^3.1.1",
     "zod": "^3.22.4",
     "zod-to-json-schema": "^3.22.0"

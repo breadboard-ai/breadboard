@@ -1,7 +1,10 @@
 {
   "name": "@google-labs/cloud-function",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
   "private": true,
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Experimenting with Breadboard and Cloud Functions",
   "main": "./src/index.js",
   "type": "module",
@@ -80,9 +83,9 @@
     "ava": "^5.2.0"
   },
   "dependencies": {
-    "@google-labs/breadboard-server": "^0.1.3",
-    "@google-labs/breadboard": "^0.7.0",
-    "@google-labs/template-kit": "^0.1.0",
+    "@google-labs/breadboard-server": "^0.1.4",
+    "@google-labs/breadboard": "^0.8.0",
+    "@google-labs/template-kit": "^0.1.1",
     "dotenv": "^16.3.1"
   }
 }

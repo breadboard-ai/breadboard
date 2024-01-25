@@ -1,5 +1,8 @@
 {
   "name": "@google-labs/discovery-types",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
   "private": true,
   "version": "0.0.1",
   "description": "Simplest possible Discovery doc-to-TypeScript definitions converter",

@@ -1,6 +1,9 @@
 {
   "name": "@google-labs/template-kit",
-  "version": "0.1.0",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
+  "version": "0.1.1",
   "description": "Breadboard Kit that contains nodes for various sorts of templating",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
@@ -114,7 +117,7 @@
     "@google-labs/tsconfig": "^0.0.1"
   },
   "dependencies": {
-    "@google-labs/breadboard": "^0.7.0",
+    "@google-labs/breadboard": "^0.8.0",
     "url-template": "^3.1.0"
   },
   "engines": {

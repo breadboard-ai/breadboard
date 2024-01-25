@@ -1,5 +1,8 @@
 {
   "name": "@google-labs/node-proxy-server",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
   "private": true,
   "version": "0.0.1",
   "description": "A sample implementation of a Breadboard Node proxy server",

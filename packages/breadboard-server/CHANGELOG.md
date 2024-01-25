@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.4
+
+### Patch Changes
+
+- Updated dependencies [af00e58]
+  - @google-labs/breadboard@0.8.0
+
 ## [0.1.3] - 2023-09-15
 
 - Fixed a bug in frontend, where numbers might be sent to `markdownToHtml` instead of strings.
