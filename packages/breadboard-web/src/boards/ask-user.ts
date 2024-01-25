@@ -68,7 +68,10 @@ export default await recipe(({ context, title, description }) => {
     text: input.text.isString(),
   });
 
-  return { context: appendContext.context.isArray().title("Context") };
+  return {
+    context: appendContext.context.isArray().title("Context"),
+    text: input.text.title("Text"),
+  };
 }).serialize({
   title: "Ask User",
   description: "A building block for the nascent agent framework",

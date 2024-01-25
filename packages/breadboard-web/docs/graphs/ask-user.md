@@ -4,10 +4,11 @@
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
 appendContext["invoke <br> id='appendContext'"] -- "context->context" --> output2{{"output <br> id='output-2'"}}:::output
+input[/"input <br> id='input'"/]:::input -- "text->text" --> appendContext["invoke <br> id='appendContext'"]
+input[/"input <br> id='input'"/]:::input -- "text->text" --> output2{{"output <br> id='output-2'"}}:::output
 input1[/"input <br> id='input-1'"/]:::input -- "title->title" --> createSchema["invoke <br> id='createSchema'"]
 input1[/"input <br> id='input-1'"/]:::input -- "description->description" --> createSchema["invoke <br> id='createSchema'"]
 input1[/"input <br> id='input-1'"/]:::input -- "context->context" --> appendContext["invoke <br> id='appendContext'"]
-input[/"input <br> id='input'"/]:::input -- "text->text" --> appendContext["invoke <br> id='appendContext'"]
 createSchema["invoke <br> id='createSchema'"] -- "schema->schema" --> input[/"input <br> id='input'"/]:::input
 
 subgraph sg_appendContext [appendContext]

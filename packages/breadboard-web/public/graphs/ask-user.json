@@ -10,6 +10,18 @@
       "in": "context"
     },
     {
+      "from": "input",
+      "to": "appendContext",
+      "out": "text",
+      "in": "text"
+    },
+    {
+      "from": "input",
+      "to": "output-2",
+      "out": "text",
+      "in": "text"
+    },
+    {
       "from": "input-1",
       "to": "createSchema",
       "out": "title",
@@ -26,12 +38,6 @@
       "to": "appendContext",
       "out": "context",
       "in": "context"
-    },
-    {
-      "from": "input",
-      "to": "appendContext",
-      "out": "text",
-      "in": "text"
     },
     {
       "from": "createSchema",
@@ -51,10 +57,15 @@
             "context": {
               "type": "array",
               "title": "Context"
+            },
+            "text": {
+              "title": "Text",
+              "type": "string"
             }
           },
           "required": [
-            "context"
+            "context",
+            "text"
           ]
         }
       }
@@ -64,6 +75,24 @@
       "type": "invoke",
       "configuration": {
         "path": "#appendContext"
+      }
+    },
+    {
+      "id": "input",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "title": "Text",
+              "type": "string"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
       }
     },
     {
@@ -93,24 +122,6 @@
             }
           },
           "required": []
-        }
-      }
-    },
-    {
-      "id": "input",
-      "type": "input",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "text": {
-              "type": "string",
-              "title": "text"
-            }
-          },
-          "required": [
-            "text"
-          ]
         }
       }
     },

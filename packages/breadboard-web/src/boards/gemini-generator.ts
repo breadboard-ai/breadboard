@@ -166,6 +166,7 @@ const parametersSchema = {
       default: "[]",
     },
   },
+  // TODO: Make text not required when context ends with user turn
   required: ["text"],
 } satisfies Schema;
 
@@ -245,7 +246,7 @@ export default await recipe(() => {
     $id: "makeBody",
     expression: `(
       $context := $append(
-          context ? context, [
+          context ? context, context[-1].role!="user" ? [
               {
                   "role": "user",
                   "parts": [
