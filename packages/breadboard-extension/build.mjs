@@ -10,9 +10,9 @@ import { rimrafSync } from "rimraf";
 rimrafSync("dist");
 
 esbuild.build({
-  entryPoints: ["./src/extension.ts"],
+  entryPoints: ["./src/extension.ts", "./src/renderer.ts"],
   platform: "node",
-  outfile: "dist/extension.js",
+  outdir: "dist",
   format: "cjs",
   target: "node18",
   bundle: true,
