@@ -60,6 +60,6 @@ export default await recipe(({ generator, context, stopSequences }) => {
   return { context: result, text: output };
 }).serialize({
   title: "Agent",
-  description: "A prototype of an agent-like board",
+  description: "The essential building block for the emerging Agent Framework",
   version: "0.0.3",
 });
