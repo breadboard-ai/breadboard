@@ -9,6 +9,10 @@
       "path": "packages/breadboard-cli"
     },
     {
+      "name": "breadboard-extension",
+      "path": "packages/breadboard-extension"
+    },
+    {
       "name": "breadboard-ui",
       "path": "packages/breadboard-ui"
     },
@@ -77,6 +81,7 @@
       "path": "packages/breadboard-server"
     },
     {
+      "name": "template-kit",
       "path": "packages/template-kit"
     }
   ],

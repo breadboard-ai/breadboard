@@ -246,7 +246,7 @@ export default await recipe(() => {
     $id: "makeBody",
     expression: `(
       $context := $append(
-          context ? context, context[-1].role!="user" ? [
+          context ? context, $not(context) or context[-1].role!="user" ? [
               {
                   "role": "user",
                   "parts": [
