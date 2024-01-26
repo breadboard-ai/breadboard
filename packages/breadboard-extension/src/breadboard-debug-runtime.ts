@@ -22,6 +22,7 @@ import {
 import * as fs from "fs/promises";
 import * as vscode from "vscode";
 import path from "path";
+import { BreadboardLoader } from "./breadboard-loader";
 
 /**
  * Responsible for invoking Breadboard against a given board. Emits events to,
@@ -58,12 +59,24 @@ export class BreadboardDebugRuntime extends EventEmitter {
     this.#info(`Beginning debug of board ${args.board}`);
 
     const debug = !args.noDebug;
-    const url = `file://${args.board}`;
-    const base = new URL(url);
+    let boardUrl = args.board;
+    if (boardUrl.endsWith(".ts")) {
+      // Handle the TypeScript case by transpiling on the fly and creating a
+      // temporary URL.
+      const loader = new BreadboardLoader();
+      const descriptor = await loader.loadBoardFromResource(
+        vscode.Uri.parse(boardUrl)
+      );
+      const data = new Blob([JSON.stringify(descriptor)], {
+        type: "application/json",
+      });
+      boardUrl = URL.createObjectURL(data);
+    }
 
     // Must be a dynamic import so it can be mapped to a require.
     const { Board } = await import("@google-labs/breadboard");
-    const boardData = await Board.load(args.board, {
+    const base = new URL(`file://${args.board}`);
+    const boardData = await Board.load(boardUrl, {
       base,
     });
 
@@ -91,7 +104,12 @@ export class BreadboardDebugRuntime extends EventEmitter {
       }
     }
 
-    await this.#run(url, base, debug);
+    await this.#run(boardUrl, base, debug);
+
+    if (boardUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(boardUrl);
+    }
+
     this.#exit();
   }
 
