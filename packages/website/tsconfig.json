@@ -1,11 +1,12 @@
 {
   "compilerOptions": {
     "composite": true,
-    "outDir": "_site/js/",
+    "outDir": "dist/tsc/",
     "rootDir": "src/js/",
     "experimentalDecorators": true,
     "useDefineForClassFields": false,
-    "lib": ["ES2022", "DOM", "DOM.Iterable"]
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "tsBuildInfoFile": "dist/tsc/.tsbuildinfo"
   },
   "include": ["src/js/**/*"],
   "extends": "@google-labs/tsconfig/base.json"
