@@ -3,6 +3,7 @@ import { Options } from "./lib/loader.js";
 export type RunOptions = Options & {
   kit?: string[];
   input?: string;
+  inputFile?: string;
   verbose?: boolean;
 };
 

@@ -29,7 +29,7 @@ export default await recipe(() => {
   const input = base.input({ $id: "input" });
 
   return core.invoke({
-    path: "../listModels.json",
+    path: "./spec/listModels.json",
     input: input.api_inputs,
     ...input,
     ...starter.secrets({ keys: ["MISTRAL_API_KEY"] }),

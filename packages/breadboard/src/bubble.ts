@@ -55,7 +55,7 @@ export const createBubbleHandler = (
       throw new Error(createErrorMessage(name, metadata, required));
     }
     if (schema.default !== undefined) {
-      if (schema.type !== "string") {
+      if ("type" in schema && schema.type !== "string") {
         return JSON.parse(schema.default);
       }
       return schema.default;
@@ -133,7 +133,7 @@ export class RequestedInputsManager {
           schema: { type: "object", properties: { [name]: schema } },
         },
       };
-      console.log("requestInputResult", requestInputResult);
+      //console.log("requestInputResult", requestInputResult);
       await next(new InputStageResult(requestInputResult, undefined, -1));
       const outputs = await requestInputResult.outputsPromise;
       let value = outputs && outputs[name];

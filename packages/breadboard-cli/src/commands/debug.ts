@@ -53,7 +53,7 @@ export const debug = async (file: string, options: DebugOptions) => {
     const requestURL = new URL(request.url ?? "", "http://localhost:3000");
 
     // We should think about a simple router here.. Right now we share a lot of state.
-    if (requestURL.pathname === "/local-boards.json") {
+    if (requestURL.pathname === "/boards.js") {
       // Generate a list of boards that are valid at runtime.
       // Cache until things change.
       boards = await loadBoards(file, options);
@@ -66,12 +66,14 @@ export const debug = async (file: string, options: DebugOptions) => {
         }))
       );
 
+      const responseText = `const r = ${boardsData}; export default { Boards: r };`;
+
       response.writeHead(200, {
-        "Content-Type": "application/json",
-        "Content-Length": boardsData.length,
+        "Content-Type": "application/javascript",
+        "Content-Length": responseText.length,
       });
 
-      return response.end(boardsData);
+      return response.end(responseText);
     }
 
     if ("watch" in options) {
@@ -133,7 +135,6 @@ evtSource.addEventListener("update", () => { window.location.reload(); });</scri
       const boardData = JSON.stringify(board);
       response.writeHead(200, {
         "Content-Type": "application/json",
-        "Content-Length": boardData.length,
       });
 
       return response.end(boardData);

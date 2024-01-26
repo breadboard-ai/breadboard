@@ -5,9 +5,14 @@
  */
 
 import OpenAPI from "./boards/openapi.js";
-import { Board, asRuntimeKit } from "@google-labs/breadboard";
+import {
+  Board,
+  asRuntimeKit,
+  GraphDescriptor,
+  BreadboardNode,
+} from "@google-labs/breadboard";
 import yaml from "yaml";
-import core from "@google-labs/core-kit";
+import CoreKit, { core } from "@google-labs/core-kit";
 import templates from "@google-labs/template-kit";
 import { readFile, stat, writeFile } from "fs/promises";
 import path from "path";
@@ -66,7 +71,7 @@ export const importGraph = async (url: string, options: ImportOptions) => {
 
   const boards = await openAPIBoard.runOnce(
     { json },
-    { kits: [asRuntimeKit(core), asRuntimeKit(templates)] }
+    { kits: [asRuntimeKit(CoreKit), asRuntimeKit(templates)] }
   );
 
   if (boards == undefined || boards == null) {
@@ -75,16 +80,16 @@ export const importGraph = async (url: string, options: ImportOptions) => {
 
   for (const api of Object.keys(boards)) {
     if (apiPath == api || apiPath == undefined) {
-      const apiRef = boards[api] as { kind: string; board: Board };
+      const apiRef = boards[api] as { board: { kind: string; board: Board } };
       if (apiRef == undefined) {
         continue;
       }
 
       const board = apiRef;
       if (outputPath != undefined) {
-        outputBoard(board.board, api, outputPath);
+        outputBoard(board.board.board, api, outputPath);
       } else {
-        console.log(JSON.stringify(board.board, null, 2));
+        console.log(JSON.stringify(board.board.board, null, 2));
       }
     }
   }
