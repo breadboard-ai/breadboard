@@ -98,7 +98,7 @@
       ]
     },
     "build:rollup": {
-      "command": "rollup --format=esm --chunkFileNames=shared/[hash].js --plugin=@rollup/plugin-node-resolve --dir=dist/rollup/pages/ dist/tsc/pages/*.js",
+      "command": "rollup --format=esm --chunkFileNames=shared/[hash].js --plugin=@rollup/plugin-node-resolve --plugin=@rollup/plugin-terser --dir=dist/rollup/pages/ dist/tsc/pages/*.js",
       "dependencies": [
         "build:tsc"
       ],
