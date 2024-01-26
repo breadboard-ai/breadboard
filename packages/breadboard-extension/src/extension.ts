@@ -62,8 +62,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(
     vscode.commands.registerCommand(
-      "breaboard.runBoard",
-      (resource: vscode.Uri) => {
+      "breaboard.debugBoard",
+      async (resource: vscode.Uri) => {
         let fileForDebuggging = resource;
         if (!fileForDebuggging && vscode.window.activeTextEditor) {
           fileForDebuggging = vscode.window.activeTextEditor.document.uri;

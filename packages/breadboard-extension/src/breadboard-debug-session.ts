@@ -113,7 +113,49 @@ export class BreadboardDebugSession extends LoggingDebugSession {
     this.#boardName = path.basename(args.board);
     this.#boardPath = args.board;
 
-    await this.#runtime.initialize(args);
+    let boardLocations: string | undefined = vscode.workspace
+      .getConfiguration()
+      .get("breadboard.boardLocations");
+
+    if (!boardLocations) {
+      const locations = await vscode.workspace.findFiles(
+        "packages/breadboard-web/public/graphs/*.json"
+      );
+
+      const value = await vscode.window.showInformationMessage(
+        "You need to choose your board locations",
+        "Okay",
+        "No thanks"
+      );
+
+      if (value !== "Okay") {
+        vscode.window.showErrorMessage(
+          "No board locations provided - stopping"
+        );
+      }
+
+      const boardPath = await vscode.window.showOpenDialog({
+        canSelectFiles: false,
+        canSelectFolders: true,
+        canSelectMany: false,
+        defaultUri: locations[0],
+        title: "Please select board locations",
+      });
+
+      if (!boardPath || boardPath.length === 0) {
+        vscode.window.showErrorMessage(
+          "No board locations provided - stopping"
+        );
+        return;
+      }
+
+      boardLocations = boardPath[0].path;
+      vscode.workspace
+        .getConfiguration()
+        .update("breadboard.boardLocations", boardLocations);
+    }
+
+    await this.#runtime.initialize(args, boardLocations);
     this.sendResponse(response);
   }
 
