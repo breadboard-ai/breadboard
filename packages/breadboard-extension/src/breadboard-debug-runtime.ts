@@ -60,9 +60,9 @@ export class BreadboardDebugRuntime extends EventEmitter {
 
     const debug = !args.noDebug;
     let boardUrl = args.board;
-    if (boardUrl.endsWith(".ts")) {
-      // Handle the TypeScript case by transpiling on the fly and creating a
-      // temporary URL.
+    if (boardUrl.endsWith(".ts") || boardUrl.endsWith(".js")) {
+      // Handle the TypeScript/JavaScript case by transpiling on the fly and
+      // creating a temporary URL.
       const loader = new BreadboardLoader();
       const descriptor = await loader.loadBoardFromResource(
         vscode.Uri.parse(boardUrl)
