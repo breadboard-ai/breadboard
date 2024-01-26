@@ -20,67 +20,110 @@
   "scripts": {
     "prepack": "npm run build",
     "build": "wireit",
+    "build:dev": "wireit",
+    "build:dev:prepare": "wireit",
+    "build:prod": "wireit",
     "build:eleventy": "wireit",
-    "serve": "wireit",
-    "dev": "npm run serve --watch"
+    "build:tsc": "wireit",
+    "build:rollup": "wireit",
+    "serve:dev": "wireit",
+    "serve:prod": "wireit",
+    "dev": "npm run serve:dev --watch"
   },
   "wireit": {
     "build": {
       "dependencies": [
-        "build:js",
-        "build:static",
-        "build:eleventy"
+        "build:dev",
+        "build:prod"
       ]
     },
-    "build:js": {
-      "command": "tsc -b",
-      "env": {
-        "FORCE_COLOR": "1"
-      },
+    "build:dev": {
+      "command": "cp -R dist/eleventy/* dist/dev/",
       "dependencies": [
-        "build:eleventy"
+        "build:dev:prepare",
+        "build:eleventy",
+        "build:tsc"
       ],
-      "files": [
-        "src/js/",
-        "tsconfig.json",
-        "../../core/tsconfig/base.json"
-      ],
+      "files": [],
       "output": [
-        "_site/js/",
-        "tsconfig.tsbuildinfo"
+        "dist/dev/",
+        "!dist/dev/js",
+        "!dist/dev/static"
       ]
     },
-    "build:static": {
-      "command": "cp -R src/static _site",
+    "build:dev:prepare": {
+      "command": "mkdir -p dist/dev && ln -s ../tsc dist/dev/js && ln -s ../../src/static dist/dev/static",
+      "files": [],
+      "output": [
+        "dist/dev/js",
+        "dist/dev/static"
+      ]
+    },
+    "build:prod": {
+      "command": "cp -R dist/eleventy/ dist/prod/ && cp -R src/static/ dist/prod/static/ && cp -R dist/rollup/ dist/prod/js",
       "dependencies": [
-        "build:eleventy"
+        "build:eleventy",
+        "build:rollup"
       ],
       "files": [
         "src/static/"
       ],
       "output": [
-        "_site/static/"
+        "dist/prod/"
       ]
     },
     "build:eleventy": {
-      "command": "eleventy --input=src/",
+      "command": "eleventy --input=src/ --output=dist/eleventy/",
       "files": [
         "src/",
         "!src/js/",
         "!src/static/"
       ],
       "output": [
-        "_site/",
-        "!_site/js/",
-        "!_site/static/"
+        "dist/eleventy/"
       ]
     },
-    "serve": {
-      "command": "web-dev-server --root-dir _site/ --node-resolve --watch",
+    "build:tsc": {
+      "command": "tsc -b",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "files": [
+        "src/js/",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
+      ],
+      "output": [
+        "dist/tsc/"
+      ]
+    },
+    "build:rollup": {
+      "command": "rollup --format=esm --chunkFileNames=shared/[hash].js --plugin=@rollup/plugin-node-resolve --plugin=@rollup/plugin-terser --dir=dist/rollup/pages/ dist/tsc/pages/*.js",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
+      "output": [
+        "dist/rollup/"
+      ]
+    },
+    "serve:dev": {
+      "command": "web-dev-server --root-dir dist/dev/ --node-resolve --watch",
       "service": true,
       "dependencies": [
         {
-          "script": "build",
+          "script": "build:dev",
+          "cascade": false
+        }
+      ],
+      "files": []
+    },
+    "serve:prod": {
+      "command": "web-dev-server --root-dir dist/prod/ --watch",
+      "service": true,
+      "dependencies": [
+        {
+          "script": "build:prod",
           "cascade": false
         }
       ],
@@ -89,9 +132,7 @@
   },
   "dependencies": {
     "@11ty/eleventy": "^2.0.1",
+    "@web/dev-server": "^0.4.1",
     "lit": "^3.1.1"
-  },
-  "devDependencies": {
-    "@web/dev-server": "^0.4.1"
   }
 }

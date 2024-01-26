@@ -120,6 +120,8 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@changesets/cli": "^2.27.1",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-terser": "^0.4.4",
     "@types/node": "^18.15.5",
     "@typescript-eslint/eslint-plugin": "^5.56.0",
     "@typescript-eslint/parser": "^5.56.0",
@@ -127,8 +129,9 @@
     "eslint": "^8.36.0",
     "npm-ci": "^0.0.2",
     "rimraf": "^5.0.1",
+    "rollup": "^4.9.6",
     "typescript": "^5.0.4",
-    "wireit": "^0.14.1"
+    "wireit": "^0.14.4"
   },
   "workspaces": [
     "./core/*",
