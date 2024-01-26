@@ -1,5 +1,5 @@
 {
-  "name": "@google-labs/breadboard-extension",
+  "name": "breadboard-extension",
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
