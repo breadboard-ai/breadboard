@@ -24,12 +24,6 @@
     {
       "from": "input-1",
       "to": "generate",
-      "out": "text",
-      "in": "text"
-    },
-    {
-      "from": "input-1",
-      "to": "generate",
       "out": "context",
       "in": "context"
     },
@@ -44,12 +38,6 @@
       "to": "generate",
       "out": "generator",
       "in": "path"
-    },
-    {
-      "from": "input-1",
-      "to": "assemble",
-      "out": "text",
-      "in": "text"
     },
     {
       "from": "input-1",
@@ -88,13 +76,15 @@
       "id": "assemble",
       "type": "jsonata",
       "configuration": {
-        "expression": "$append(context ? context, $append([\n      {\n          \"role\": \"user\",\n          \"parts\": [ { \"text\": text } ]\n      }\n  ], [generated]))"
+        "expression": "$append(context ? context, [generated])"
       }
     },
     {
       "id": "generate",
       "type": "invoke",
-      "configuration": {}
+      "configuration": {
+        "text": "unused"
+      }
     },
     {
       "id": "input-1",
@@ -103,19 +93,12 @@
         "schema": {
           "type": "object",
           "properties": {
-            "text": {
-              "title": "Text",
-              "examples": [
-                "\n  You are a brilliant poet who specializes in two-line rhyming poems.\n  Given any topic, you can quickly whip up a two-line rhyming poem about it.\n  Ready?\n  \n  The topic is: the universe within us"
-              ],
-              "format": "multiline",
-              "type": "string"
-            },
             "context": {
               "title": "Context",
               "type": "array",
+              "format": "multiline",
               "examples": [
-                "[]"
+                "[\n  {\n    \"role\": \"user\",\n    \"parts\": [\n      {\n        \"text\": \"You are a brilliant poet who specializes in two-line rhyming poems.\\nGiven any topic, you can quickly whip up a two-line rhyming poem about it.\\nReady?\\n        \\nThe topic is: the universe within us\"\n      }\n    ]\n  }\n]"
               ]
             },
             "stopSequences": {
@@ -131,7 +114,6 @@
             }
           },
           "required": [
-            "text",
             "context"
           ]
         }

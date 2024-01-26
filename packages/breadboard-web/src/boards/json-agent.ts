@@ -8,6 +8,7 @@ import { Schema, base, recipe } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { json } from "@google-labs/json-kit";
 import { templates } from "@google-labs/template-kit";
+import { contextAppender } from "./ask-user.js";
 
 const metadata = {
   title: "JSON Agent",
@@ -77,10 +78,15 @@ Reply as valid JSON of the following format:
     schemish: schemish,
   });
 
+  const appender = contextAppender({
+    $id: "appendContext",
+    text: format.text.isString(),
+    context: context.isArray(),
+  });
+
   const agent = core.invoke({
     $id: "agent",
-    text: format.prompt,
-    context,
+    context: appender.context,
     path: "agent.json",
     generator,
   });

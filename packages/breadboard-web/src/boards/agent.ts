@@ -8,40 +8,46 @@ import { recipe } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { json } from "@google-labs/json-kit";
 
-export default await recipe(({ text, generator, context, stopSequences }) => {
-  text
-    .title("Text")
-    .examples(
-      `
-  You are a brilliant poet who specializes in two-line rhyming poems.
-  Given any topic, you can quickly whip up a two-line rhyming poem about it.
-  Ready?
-  
-  The topic is: the universe within us`
-    )
-    .format("multiline");
+const sampleContext = JSON.stringify(
+  [
+    {
+      role: "user",
+      parts: [
+        {
+          text: `You are a brilliant poet who specializes in two-line rhyming poems.
+Given any topic, you can quickly whip up a two-line rhyming poem about it.
+Ready?
+        
+The topic is: the universe within us`,
+        },
+      ],
+    },
+  ],
+  null,
+  2
+);
+
+export default await recipe(({ generator, context, stopSequences }) => {
   generator.title("Generator").optional().default("gemini-generator.json");
-  context.title("Context").isArray().examples("[]");
+  context
+    .title("Context")
+    .isArray()
+    .format("multiline")
+    .examples(sampleContext);
   stopSequences.title("Stop Sequences").isArray().optional().default("[]");
 
   const { context: generated, text: output } = core.invoke({
     $id: "generate",
-    text,
     context,
     stopSequences,
+    text: "unused", // A gross hack (see TODO in gemini-generator.ts)
     path: generator.isString(),
   });
 
   const { result } = json.jsonata({
     $id: "assemble",
-    expression: `$append(context ? context, $append([
-      {
-          "role": "user",
-          "parts": [ { "text": text } ]
-      }
-  ], [generated]))`,
+    expression: `$append(context ? context, [generated])`,
     generated,
-    text,
     context,
   });
 

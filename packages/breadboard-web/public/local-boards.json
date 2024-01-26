@@ -15,6 +15,11 @@
     "version": "0.0.3"
   },
   {
+    "title": "Ask User",
+    "url": "/graphs/ask-user.json",
+    "version": "0.0.1"
+  },
+  {
     "title": "Best of N",
     "url": "/graphs/best-of-n.json",
     "version": "0.0.2"

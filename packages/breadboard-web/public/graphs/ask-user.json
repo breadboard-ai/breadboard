@@ -1,0 +1,208 @@
+{
+  "title": "Ask User",
+  "description": "A building block for the nascent agent framework",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "appendContext",
+      "to": "output-2",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "input",
+      "to": "appendContext",
+      "out": "text",
+      "in": "text"
+    },
+    {
+      "from": "input",
+      "to": "output-2",
+      "out": "text",
+      "in": "text"
+    },
+    {
+      "from": "input-1",
+      "to": "createSchema",
+      "out": "title",
+      "in": "title"
+    },
+    {
+      "from": "input-1",
+      "to": "createSchema",
+      "out": "description",
+      "in": "description"
+    },
+    {
+      "from": "input-1",
+      "to": "appendContext",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "createSchema",
+      "to": "input",
+      "out": "schema",
+      "in": "schema"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context"
+            },
+            "text": {
+              "title": "Text",
+              "type": "string"
+            }
+          },
+          "required": [
+            "context",
+            "text"
+          ]
+        }
+      }
+    },
+    {
+      "id": "appendContext",
+      "type": "invoke",
+      "configuration": {
+        "path": "#appendContext"
+      }
+    },
+    {
+      "id": "input",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "title": "Text",
+              "type": "string"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
+    },
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "title": "Title",
+              "description": "The title to ask",
+              "default": "User",
+              "type": "string"
+            },
+            "description": {
+              "title": "Description",
+              "description": "The description of what to ask",
+              "default": "User's question or request",
+              "type": "string"
+            },
+            "context": {
+              "title": "Context",
+              "description": "Incoming conversation context",
+              "default": "[]",
+              "type": "array"
+            }
+          },
+          "required": []
+        }
+      }
+    },
+    {
+      "id": "createSchema",
+      "type": "invoke",
+      "configuration": {
+        "path": "#createSchema"
+      }
+    }
+  ],
+  "graphs": {
+    "appendContext": {
+      "edges": [
+        {
+          "from": "appendContext-input",
+          "to": "appendContext-run",
+          "out": "*"
+        },
+        {
+          "from": "appendContext-run",
+          "to": "appendContext-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "appendContext-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "appendContext-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function appendContext({context,text}) {return{context:[...context||[],{role:\"user\",parts:[{text}]}]}}",
+            "name": "appendContext",
+            "raw": true
+          }
+        },
+        {
+          "id": "appendContext-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    },
+    "createSchema": {
+      "edges": [
+        {
+          "from": "createSchema-input",
+          "to": "createSchema-run",
+          "out": "*"
+        },
+        {
+          "from": "createSchema-run",
+          "to": "createSchema-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "createSchema-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "createSchema-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function createSchema({title,description}) {const schema2={type:\"object\",properties:{text:{title,description}}};return{schema:schema2}}",
+            "name": "createSchema",
+            "raw": true
+          }
+        },
+        {
+          "id": "createSchema-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    }
+  }
+}
