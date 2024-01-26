@@ -35,7 +35,7 @@
         "command": "breaboard.runBoard",
         "title": "Debug Board",
         "category": "Breadboard",
-        "enablement": "!inDebugMode && resourceExtname == .json"
+        "enablement": "!inDebugMode && (resourceExtname == .json || resourceExtname == .ts)"
       },
       {
         "command": "breaboard.renderBoard",
