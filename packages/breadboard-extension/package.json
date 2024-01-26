@@ -32,7 +32,7 @@
   "contributes": {
     "commands": [
       {
-        "command": "breaboard.runBoard",
+        "command": "breaboard.debugBoard",
         "title": "Debug Board",
         "category": "Breadboard",
         "enablement": "!inDebugMode && (resourceExtname == .json || resourceExtname == .ts || resourceExtname == .js)"
@@ -42,6 +42,18 @@
         "title": "Render Board",
         "category": "Breadboard",
         "enablement": "resourceExtname == .ts"
+      }
+    ],
+    "configuration": [
+      {
+        "title": "Breadboard",
+        "properties": {
+          "breadboard.boardLocations": {
+            "type": "string",
+            "default": null,
+            "description": "The location of your boards"
+          }
+        }
       }
     ],
     "debuggers": [

@@ -40,7 +40,7 @@ export class BreadboardLoader {
       {
         location: vscode.ProgressLocation.Notification,
         cancellable: false,
-        title: "Loading renderer...",
+        title: "Loading Breadboard & kits...",
       },
       async () => {
         return await Promise.all([

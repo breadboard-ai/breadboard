@@ -53,7 +53,10 @@ export class BreadboardDebugRuntime extends EventEmitter {
     };
   }
 
-  async initialize(args: BreadboardLaunchRequestArguments) {
+  async initialize(
+    args: BreadboardLaunchRequestArguments,
+    boardLocations: string
+  ) {
     await this.#loadEnvIfPossible(args.board);
 
     this.#info(`Beginning debug of board ${args.board}`);
@@ -104,7 +107,7 @@ export class BreadboardDebugRuntime extends EventEmitter {
       }
     }
 
-    await this.#run(boardUrl, base, debug);
+    await this.#run(boardUrl, base, debug, boardLocations);
 
     if (boardUrl.startsWith("blob:")) {
       URL.revokeObjectURL(boardUrl);
@@ -113,7 +116,7 @@ export class BreadboardDebugRuntime extends EventEmitter {
     this.#exit();
   }
 
-  async #run(url: string, base: URL, debug: boolean) {
+  async #run(url: string, base: URL, debug: boolean, boardLocations: string) {
     const { asRuntimeKit } = await import("@google-labs/breadboard");
     const { run } = await import("@google-labs/breadboard/harness");
 
@@ -272,11 +275,18 @@ export class BreadboardDebugRuntime extends EventEmitter {
                   return;
                 }
 
+                // Attempt to wrangle something ending in .json to a file path.
+                // FIXME: This is brittle and only works when user input is req.
+                let value = input.examples?.join("") ?? input.default ?? "";
+                if (value.endsWith(".json")) {
+                  value = new URL(`${boardLocations}/${value}`, base).href;
+                }
+
                 let userInput: NodeValue = await vscode.window.showInputBox({
                   title: input.title,
                   ignoreFocusOut: true,
                   prompt: input.description ?? input.title,
-                  value: input.examples?.join("") ?? input.default ?? "",
+                  value,
                 });
 
                 if (userInput === undefined) {

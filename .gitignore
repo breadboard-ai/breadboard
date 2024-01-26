@@ -124,3 +124,6 @@ build
 
 .wireit
 *.vsix
+
+# User-specific configuration
+.vscode/settings.json
