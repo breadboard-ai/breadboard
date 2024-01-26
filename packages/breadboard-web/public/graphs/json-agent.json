@@ -41,7 +41,7 @@
     },
     {
       "from": "input-1",
-      "to": "agent",
+      "to": "appendContext",
       "out": "context",
       "in": "context"
     },
@@ -58,16 +58,22 @@
       "in": "schema"
     },
     {
-      "from": "format",
+      "from": "appendContext",
       "to": "agent",
-      "out": "prompt",
-      "in": "text"
+      "out": "context",
+      "in": "context"
     },
     {
       "from": "schemish",
       "to": "format",
       "out": "schemish",
       "in": "schemish"
+    },
+    {
+      "from": "format",
+      "to": "appendContext",
+      "out": "text",
+      "in": "text"
     }
   ],
   "nodes": [
@@ -173,17 +179,60 @@
       }
     },
     {
-      "id": "format",
-      "type": "promptTemplate",
+      "id": "appendContext",
+      "type": "invoke",
       "configuration": {
-        "template": "{{text}}\n\nReply as valid JSON of the following format:\n\n```json\n{{schemish}}\n```\n"
+        "path": "#appendContext"
       }
     },
     {
       "id": "schemish",
       "type": "schemish",
       "configuration": {}
+    },
+    {
+      "id": "format",
+      "type": "promptTemplate",
+      "configuration": {
+        "template": "{{text}}\n\nReply as valid JSON of the following format:\n\n```json\n{{schemish}}\n```\n"
+      }
     }
   ],
-  "graphs": {}
+  "graphs": {
+    "appendContext": {
+      "edges": [
+        {
+          "from": "appendContext-input",
+          "to": "appendContext-run",
+          "out": "*"
+        },
+        {
+          "from": "appendContext-run",
+          "to": "appendContext-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "appendContext-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "appendContext-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function appendContext({context,text}) {return{context:[...context||[],{role:\"user\",parts:[{text}]}]}}",
+            "name": "appendContext",
+            "raw": true
+          }
+        },
+        {
+          "id": "appendContext-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    }
+  }
 }
