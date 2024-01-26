@@ -27,8 +27,8 @@ export class InputList extends LitElement {
   `;
 
   #obtainProcessedValuesIfAvailable(
-    idx: number,
     id: string,
+    idx: number,
     messages: HarnessRunResult[]
   ): Record<string, NodeValue> | null {
     for (let i = idx; i < this.messagePosition; i++) {
@@ -51,6 +51,7 @@ export class InputList extends LitElement {
       configuration?: NodeConfiguration;
       remember: boolean;
       secret: boolean;
+      processedValues: Record<string, NodeValue> | null;
     };
 
     // Infer from the messages received which inputs need to be shown to the
@@ -84,43 +85,49 @@ export class InputList extends LitElement {
             },
             remember: true,
             secret: true,
+            processedValues: null,
           });
         }
         continue;
       }
 
       // Capture all inputs.
-      if (message.type === "input") {
-        inputs.push({
-          id: message.data.node.id,
-          configuration: message.data.inputArguments,
-          remember: false,
-          secret: false,
-        });
+      if (message.type !== "input") {
+        continue;
       }
+      const processedValues = this.#obtainProcessedValuesIfAvailable(
+        message.data.node.id,
+        idx,
+        this.messages
+      );
+
+      inputs.push({
+        id: message.data.node.id,
+        configuration: message.data.inputArguments,
+        remember: false,
+        secret: false,
+        processedValues,
+      });
     }
 
     if (!inputs.length) {
       return html`There are no inputs yet.`;
     }
 
-    return html`${inputs.map(({ id, secret, remember, configuration }, idx) => {
-      if (!this.messages) {
-        return nothing;
-      }
+    return html`${inputs.map(
+      ({ id, secret, remember, configuration, processedValues }) => {
+        if (!this.messages) {
+          return nothing;
+        }
 
-      const processedValues = this.#obtainProcessedValuesIfAvailable(
-        idx,
-        id,
-        this.messages
-      );
-      return html`<bb-input
-        id="${id}"
-        .secret=${secret}
-        .remember=${remember}
-        .configuration=${configuration}
-        .processedValues=${processedValues}
-      ></bb-input>`;
-    })}`;
+        return html`<bb-input
+          id="${id}"
+          .secret=${secret}
+          .remember=${remember}
+          .configuration=${configuration}
+          .processedValues=${processedValues}
+        ></bb-input>`;
+      }
+    )}`;
   }
 }
