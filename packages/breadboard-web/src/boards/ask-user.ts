@@ -26,7 +26,7 @@ type AppenderOutputs = { context: unknown[] };
 /**
  * Appends user input to the context of the conversation.
  */
-const contextAppender = code<AppenderInputs, AppenderOutputs>(
+export const contextAppender = code<AppenderInputs, AppenderOutputs>(
   ({ context, text }) => {
     return {
       context: [...(context || []), { role: "user", parts: [{ text }] }],
