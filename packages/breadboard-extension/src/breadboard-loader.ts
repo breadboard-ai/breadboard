@@ -69,6 +69,7 @@ export class BreadboardLoader {
       compilerOptions: {
         module: ts.ModuleKind.CommonJS,
         target: ts.ScriptTarget.ESNext,
+        allowJs: true,
       },
     });
 
