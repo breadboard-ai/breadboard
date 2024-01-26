@@ -62,6 +62,7 @@ export class BreadboardDebugRuntime extends EventEmitter {
     this.#info(`Beginning debug of board ${args.board}`);
 
     const debug = !args.noDebug;
+
     let boardUrl = args.board;
     if (boardUrl.endsWith(".ts") || boardUrl.endsWith(".js")) {
       // Handle the TypeScript/JavaScript case by transpiling on the fly and

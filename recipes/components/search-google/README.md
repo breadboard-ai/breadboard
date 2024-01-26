@@ -22,13 +22,13 @@ This recipe requires the following secrets to be set to be exported as environme
 ### From the CLI
 
 ```bash
-breadboard run recipes/use-case/search-google/index.js --kit @google-labs/llm-starter -i "{\"query\":\"Testing\"}"
+breadboard run recipes/components/search-google/index.js --kit @google-labs/llm-starter -i "{\"query\":\"Testing\"}"
 ```
 
 ### From the UI
 
 ```bash
-breadboard debug recipes/use-case/search-google/index.js
+breadboard debug recipes/components/search-google/index.js
 ```
 
 ## Code

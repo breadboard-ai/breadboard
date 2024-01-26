@@ -1,28 +1,28 @@
-# Fetch ATOM Feed
+# Fetch RSS Feed
 
-This recipe demonstrates how to fetch an ATOM feed return the items and metadata.
+This recipe demonstrates how to fetch an RSS feed return the items and metadata.
 
 ## Running the Recipe
 
 ### Inputs
 
-- `url` - The URL of the ATOM feed
+- `url` - The URL of the RSS feed
 
 ### Outputs
 
-- `feedItems` - An array of items from the ATOM feed
-- `feedMetaData` - Metadata about the ATOM feed
+- `feedItems` - An array of items from the RSS feed
+- `feedMetaData` - Metadata about the RSS feed
 
 ### From the CLI
 
 ```bash
-breadboard run recipes/use-case/fetch-atom/index.js --kit @google-labs/llm-starter -i {\"url\":\"https://blog.chromium.org/feeds/posts/default\"}"
+breadboard run recipes/components/fetch-rss/index.js --kit @google-labs/llm-starter -i {\"url\":\"https://paul.kinlan.me/index.xml\"}"
 ```
 
 ### From the UI
 
 ```bash
-breadboard debug recipes/use-case/fetch-atom/index.js
+breadboard debug recipes/components/fetch-rss/index.js
 ```
 
 ## Code
