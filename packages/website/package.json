@@ -38,7 +38,7 @@
       ]
     },
     "build:dev": {
-      "command": "cp -R dist/eleventy/* dist/dev/",
+      "command": "cp -R dist/eleventy/* dist/dev/breadboard/",
       "dependencies": [
         "build:dev:prepare",
         "build:eleventy",
@@ -47,20 +47,20 @@
       "files": [],
       "output": [
         "dist/dev/",
-        "!dist/dev/js",
-        "!dist/dev/static"
+        "!dist/dev/breadboard/js",
+        "!dist/dev/breadboard/static"
       ]
     },
     "build:dev:prepare": {
-      "command": "mkdir -p dist/dev && ln -s ../tsc dist/dev/js && ln -s ../../src/static dist/dev/static",
+      "command": "mkdir -p dist/dev/breadboard && ln -s ../../tsc dist/dev/breadboard/js && ln -s ../../../src/static dist/dev/breadboard/static",
       "files": [],
       "output": [
-        "dist/dev/js",
-        "dist/dev/static"
+        "dist/dev/breadboard/js",
+        "dist/dev/breadboard/static"
       ]
     },
     "build:prod": {
-      "command": "cp -R dist/eleventy/ dist/prod/ && cp -R src/static/ dist/prod/static/ && cp -R dist/rollup/ dist/prod/js",
+      "command": "mkdir -p dist/prod && cp -R dist/eleventy/ dist/prod/breadboard && cp -R src/static/ dist/prod/breadboard/static/ && cp -R dist/rollup/ dist/prod/breadboard/js",
       "dependencies": [
         "build:eleventy",
         "build:rollup"
@@ -108,7 +108,7 @@
       ]
     },
     "serve:dev": {
-      "command": "web-dev-server --root-dir dist/dev/ --node-resolve --watch",
+      "command": "web-dev-server --root-dir dist/dev/ --node-resolve --watch --open /breadboard/",
       "service": true,
       "dependencies": [
         {
@@ -119,7 +119,7 @@
       "files": []
     },
     "serve:prod": {
-      "command": "web-dev-server --root-dir dist/prod/ --watch",
+      "command": "web-dev-server --root-dir dist/prod/ --watch --open /breadboard/",
       "service": true,
       "dependencies": [
         {

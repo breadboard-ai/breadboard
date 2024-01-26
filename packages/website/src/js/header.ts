@@ -42,9 +42,9 @@ export class BreadboardSiteHeader extends LitElement {
   render() {
     return html`
       <header>
-        <a id="logo" href="/">
+        <a id="logo" href="">
           <img
-            src="/static/breadboard.png"
+            src="static/breadboard.png"
             alt="Breadboard logo"
             width="30px"
             height="30px"
@@ -52,15 +52,15 @@ export class BreadboardSiteHeader extends LitElement {
           <h1>Breadboard</h1>
         </a>
         <nav>
-          <a href="/docs/">Docs</a>
-          <a href="/playground/">Playground</a>
+          <a href="docs/">Docs</a>
+          <a href="playground/">Playground</a>
           <a
             href="https://github.com/breadboard-ai/breadboard/"
             target="_blank"
             rel="noopener"
             title="Breadboard on GitHub"
             aria-label="Breadboard on GitHub"
-            ><img src="/static/github.svg" />
+            ><img src="static/github.svg" />
           </a>
         </nav>
       </header>
