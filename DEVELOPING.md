@@ -222,7 +222,8 @@ This repo protects the `main` branch, which means all changes must go through a
 GitHub PR. This enforces that all tests pass and packages builds before any
 change lands, and provides an opportunity for code review.
 
-> [!TIP] The [GitHub CLI](https://cli.github.com/) makes it easy to send PRs by
+> [!TIP]
+> The [GitHub CLI](https://cli.github.com/) makes it easy to send PRs by
 > typing `gh pr create`. You can use the `--fill` or `-f` flag to automatically
 > populate the title and description from your commits. See the [create command
 > documentation](https://cli.github.com/manual/gh_pr_create) for more
@@ -262,7 +263,8 @@ packages that your PR affects and indicate whether the changes are
 [semver](https://semver.org/) `major` (breaking), `minor` (new features), or
 `patch` (bug fixes).
 
-> [!NOTE] If your change only affects **unpublished** packages, then you can
+> [!NOTE]
+> If your change only affects **unpublished** packages, then you can
 > safely skip adding a changeset file and ignore the bot.
 
 Then just push the generated changeset file to your PR!
