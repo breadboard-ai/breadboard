@@ -393,7 +393,10 @@ const createSpecRecipe = recipe((apiSpec) => {
 
         // We can only handle JSON
         if ("requestBody" in api_inputs) {
-          body = JSON.parse(api_inputs["requestBody"]);
+          body =
+            typeof api_inputs["requestBody"] == "string"
+              ? JSON.parse(api_inputs["requestBody"])
+              : api_inputs["requestBody"];
           requestContentType = "application/json";
         }
 
