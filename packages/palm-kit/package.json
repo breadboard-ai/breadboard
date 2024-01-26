@@ -1,12 +1,16 @@
 {
   "name": "@google-labs/palm-kit",
-  "version": "0.0.1",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
+  "version": "0.0.2",
   "description": "A Breadboard Kit with nodes to access PaLM APIs.",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
+    "prepack": "npm run build",
     "build": "wireit",
     "test": "wireit",
     "lint": "wireit"
@@ -94,10 +98,10 @@
     "@types/node": "^18.16.3",
     "ava": "^5.2.0",
     "typescript": "^5.0.4",
-    "@google-labs/tsconfig": "*"
+    "@google-labs/tsconfig": "^0.0.1"
   },
   "dependencies": {
-    "@google-labs/breadboard": "^0.7.0",
+    "@google-labs/breadboard": "^0.8.0",
     "@google-labs/palm-lite": "^0.0.3"
   }
 }

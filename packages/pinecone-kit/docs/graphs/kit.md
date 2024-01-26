@@ -1,7 +1,7 @@
 # kit
   - Original: [`kit.ts`](../../src/boards/kit.ts)
   - Graph: [`kit.json`](../../graphs/kit.json)
-  
+
   ```mermaid
   %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;

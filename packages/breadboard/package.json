@@ -1,6 +1,9 @@
 {
   "name": "@google-labs/breadboard",
-  "version": "0.7.0",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
+  "version": "0.8.0",
   "description": "A library for rapid generative AI application prototyping",
   "main": "./dist/src/index.js",
   "exports": {
@@ -140,7 +143,7 @@
   "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/breadboard#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
-    "@google-labs/tsconfig": "*",
+    "@google-labs/tsconfig": "^0.0.1",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
     "@types/node": "^18.17.4",

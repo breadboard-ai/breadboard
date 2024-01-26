@@ -1,5 +1,8 @@
 {
   "name": "@google-labs/create-breadboard-kit",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
   "version": "0.0.2",
   "description": "A starter kit for your breadboard kits",
   "main": "dist/src/index.js",
@@ -8,6 +11,7 @@
   },
   "type": "module",
   "scripts": {
+    "prepack": "npm run build",
     "copy-assets": "wireit",
     "build": "wireit",
     "build:tsc": "wireit",
@@ -72,7 +76,7 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
-    "@google-labs/tsconfig": "*",
+    "@google-labs/tsconfig": "^0.0.1",
     "@types/node": "^18.18.8",
     "@types/semver": "^7.5.4",
     "@typescript-eslint/eslint-plugin": "^5.56.0",

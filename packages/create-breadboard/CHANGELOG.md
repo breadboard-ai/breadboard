@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.9
+
+### Patch Changes
+
+- af00e58: Add missing chalk dependency
+
 ## [0.0.7] - 2023-11-24
 
 - Fixing an asset folder location issue that was causing the `npm init` command to fail.

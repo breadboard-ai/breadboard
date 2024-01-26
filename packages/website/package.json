@@ -1,5 +1,8 @@
 {
   "name": "@google-labs/breadboard-website",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
   "private": true,
   "version": "1.0.0",
   "description": "The public documentation website for Breadboard",
@@ -15,6 +18,7 @@
   },
   "type": "module",
   "scripts": {
+    "prepack": "npm run build",
     "build": "wireit",
     "build:eleventy": "wireit",
     "serve": "wireit",
