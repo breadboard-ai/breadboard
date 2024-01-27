@@ -399,6 +399,11 @@ export class UI extends LitElement {
         console.log(`Secrets (${data.keys.join(", ")}) requested`);
         return this.#registerSecretsHandler(data.keys);
       }
+
+      case "error": {
+        console.error(`Error:`, data.error);
+        return;
+      }
     }
   }
 
