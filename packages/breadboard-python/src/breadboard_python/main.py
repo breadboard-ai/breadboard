@@ -3,21 +3,14 @@ from pydantic.fields import FieldInfo
 from pydantic_core import core_schema
 from pydantic.json_schema import GetJsonSchemaHandler, JsonSchemaValue
 from pydantic._internal._model_construction import ModelMetaclass
-from typing import Any, Self, Type, Tuple, TypeAlias
+from typing import Any, Self, Tuple, TypeAlias
 
-from pydantic import BaseModel, GetCoreSchemaHandler
+from pydantic import BaseModel
 from typing import List, TypeVar, Generic, get_args, Optional, Union, Dict
 from jsonref import replace_refs
-from dataclasses import dataclass
 
 import inspect
 import json_fix
-
-
-"""
-Defines an InputSchema or an OutputSchema.
-Should be an AttrDict blob?
-"""
 
 def update_json_schema(json_schema, handler: GetJsonSchemaHandler):
   #json_schema = handler.resolve_ref_schema(json_schema)
@@ -146,6 +139,8 @@ def _parse_type(schema):
     return Union[types]
   if type == "any":
     return Any
+  return Any
+  print(f"WARNING: unknown type: {schema}")
   raise Exception(f"Unsupported type for schema: {schema}")
 
 def convert_from_json_to_pydantic(name, schema):
@@ -238,8 +233,11 @@ class AttrDict(dict):
     return hash(frozenset(self))
   
 def resolve_dict(d):
-  if "*" in d and isinstance(d["*"], dict):
-    return d | d["*"]
+  try:
+    if "*" in d and isinstance(d["*"], dict):
+      return d | d["*"]
+  except KeyError:
+    return d
   return d
 
 def get_field_name(field: FieldInfo, blob):
@@ -303,8 +301,8 @@ class Board(Generic[T, S]):
         self.id = v
         continue
       if self.input_schema and k not in self.input_schema.model_fields:
-        print(f"Unknown keyword: {k} for {self.id}")
-        #raise Exception(f"Unknown keyword: {k}")
+        pass
+        #print(f"Unknown keyword: {k} for {self.id}")
       self.inputs[k] = v
 
     self.output: AttrDict = AttrDict() if not self.output_schema or not self.output_schema.model_fields else AttrDict(self.output_schema.model_fields)
@@ -326,6 +324,8 @@ class Board(Generic[T, S]):
     self.loaded = False
 
   def __getattr__(self, name):
+    if name == "_ImportedClass__package_name":
+      return super().__getattr__(name)
     if name in self.output:
       v = self.output[name]
     elif "*" in self.output: # when this Board outputs wildcard.
@@ -431,6 +431,8 @@ class Board(Generic[T, S]):
 
     all_components = [(k, v) for k, v in self.components.items()] + [(k, v) for k, v in self.output.items()]
 
+    kits = set()
+
     # Component can be a Board or an AttrDict.
     already_visited_nodes = set()
     def iterate_component(name, component, assign_name=True) -> List[Dict]:
@@ -447,10 +449,15 @@ class Board(Generic[T, S]):
           }
           nodes.append(node)
 
+        # check for kit
+        package_name = getattr(component, "_ImportedClass__package_name", None)
+        if package_name:
+          kits.add(package_name)
+
       elif isinstance(component, AttrDict):
         inputs = component
       elif isinstance(component, Tuple):
-        print("Encountered fieldinfo while iterating components.")
+        #print("Encountered fieldinfo while iterating components.")
         nodes.extend(iterate_component(component[1].id, component[1]))
         return nodes
       else:
@@ -479,7 +486,7 @@ class Board(Generic[T, S]):
       elif isinstance(component, AttrDict):
         inputs = component
       elif isinstance(component, Tuple):
-        print("Encountered fieldinfo while iterating component edges")
+        #print("Encountered fieldinfo while iterating component edges")
         if component[1] == self:
           edge = {
             "from": component[1].get_or_assign_id(required=True),
@@ -544,8 +551,7 @@ class Board(Generic[T, S]):
 
     for name, component in all_components:
       output["edges"].extend(iterate_component_edges(name, component))
-    # iterate through all components.
-    # see if any input is explicitly an output.
+    output["kits"] = [{"url": f"npm:{x}"} for x in kits]
     return output
   
   def _get_resolved_inputs(self):
