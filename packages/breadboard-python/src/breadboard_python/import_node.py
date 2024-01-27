@@ -1,15 +1,10 @@
-from main import AttrDict, Board, convert_from_json_to_pydantic
+from .main import AttrDict, Board, convert_from_json_to_pydantic
 from javascript import require as require_js
 import javascript
 import json
 
 def require(package_name):
-  if package_name == "@google-labs/llm-starter":
-    kit_package = require_js("../../llm-starter/dist/src/index.js")
-  elif package_name == "@google-labs/node-nursery-web":
-    kit_package = require_js("../../node-nursery-web/dist/src/index.js")
-  else:
-    kit_package = require_js(package_name)
+  kit_package = require_js(package_name)
   a = kit_package()
   handlers = a.handlers
 
@@ -40,6 +35,15 @@ def require(package_name):
         if "schema" in config:
           config.pop("schema")
         return config
+      
+      __package_name = package_name
+      
+      """
+      def __getattr__(self, name):
+        if name == "__package_name":
+          return super(Board, self).__getattr__(name)
+        return super().__getattr__(name)
+      """
 
     output[handler_name] = ImportedClass
   return output

@@ -190,7 +190,7 @@ class OpenAiGpt_3_5_Turbo(Board[InputSchema, OutputSchema]):
     self.fetch = self.fetch(formatParameters)
     self.getResponse = self.getResponse(json=self.fetch.response)
     self.getNewContext = self.getNewContext(messages=self.formatParameters.context)
-    self.streamTransform = Nursery_transformStream(board=ChunkTransformer, stream=self.fetch)
+    self.streamTransform = Nursery.transformStream(board=ChunkTransformer, stream=self.fetch)
 
     self.output = AttrDict()
     self.output.textOutput = AttrDict(text=self.getResponse.text, context=self.getNewContext.result)
