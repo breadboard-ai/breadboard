@@ -13,6 +13,7 @@ import passthrough from "./nodes/passthrough.js";
 import reflect from "./nodes/reflect.js";
 import slot from "./nodes/slot.js";
 import map from "./nodes/map.js";
+import reduce, { ReduceInputs, ReduceOutputs } from "./nodes/reduce.js";
 import batch from "./nodes/batch.js";
 import append from "./nodes/append.js";
 import fetch from "./nodes/fetch.js";
@@ -158,6 +159,7 @@ export const Core = builder.build({
    * See #127 for more information.
    */
   map,
+  reduce,
   batch,
   fetch,
   runJavascript,
@@ -210,6 +212,7 @@ export const core = addKit(Core) as unknown as {
     },
     { list: NodeValue[] }
   >;
+  reduce: NodeFactory<ReduceInputs, ReduceOutputs>;
   fetch: NodeFactory<{ url: string }, { response: string }>;
   runJavascript: NodeFactory<
     {
