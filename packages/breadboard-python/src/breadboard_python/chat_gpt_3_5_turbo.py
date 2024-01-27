@@ -2,9 +2,9 @@ from main import Board, Field, SchemaObject, List, AttrDict
 import json
 from typing import Optional, Union
 
-from import_node import import_breadboard_js
-Starter = import_breadboard_js("@google-labs/llm-starter")
-Nursery = import_breadboard_js("@google-labs/node-nursery-web")
+from import_node import require
+Starter = require("@google-labs/llm-starter")
+Nursery = require("@google-labs/node-nursery-web")
 
 class TransformOutput(AttrDict):
   stream: SchemaObject = Field(description="Mocked stream field")
@@ -190,7 +190,7 @@ class OpenAiGpt_3_5_Turbo(Board[InputSchema, OutputSchema]):
     self.fetch = self.fetch(formatParameters)
     self.getResponse = self.getResponse(json=self.fetch.response)
     self.getNewContext = self.getNewContext(messages=self.formatParameters.context)
-    self.streamTransform = Nursery_transformStream(board=ChunkTransformer, stream=self.fetch)
+    self.streamTransform = Nursery.transformStream(board=ChunkTransformer, stream=self.fetch)
 
     self.output = AttrDict()
     self.output.textOutput = AttrDict(text=self.getResponse.text, context=self.getNewContext.result)
