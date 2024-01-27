@@ -1,0 +1,82 @@
+{
+  "title": "Agent Chain",
+  "description": "A configurable chain of agents. Each agent passes their work to the next agent in the chain. Useful for simulating waterfall processes.",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "input-1",
+      "to": "output-2",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "input-1",
+      "to": "output-2",
+      "out": "spec",
+      "in": "spec"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "title": "Context",
+              "type": "array",
+              "examples": [
+                "[]"
+              ]
+            },
+            "spec": {
+              "title": "Chain spec",
+              "type": "array",
+              "format": "multiline",
+              "examples": [
+                "[\n  {\n    \"prompt\": \"Given the following specs, extract requirements for writing an ad copy:\\n    \\n    This ad is for my lawn care company that will fit into an inch of newspaper copy. It's called \\\"Max's Lawn Care\\\" and it should use the slogan \\\"I care about your lawn.\\\" Emphasize the folksiness of it being a local, sole proprietorship that I started after graduating from high school.\",\n    \"schema\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"requirements\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\",\n            \"description\": \"an ad requirement\"\n          }\n        }\n      }\n    }\n  },\n  {\n    \"prompt\": \"Write ad copy that conforms to the requirements above\",\n    \"schema\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"ad\": {\n          \"type\": \"string\",\n          \"description\": \"the ad copy\"\n        }\n      }\n    }\n  }\n]"
+              ]
+            }
+          },
+          "required": [
+            "context",
+            "spec"
+          ]
+        }
+      }
+    },
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "title": "Context",
+              "type": "array",
+              "examples": [
+                "[]"
+              ]
+            },
+            "spec": {
+              "title": "Chain spec",
+              "type": "array",
+              "format": "multiline",
+              "examples": [
+                "[\n  {\n    \"prompt\": \"Given the following specs, extract requirements for writing an ad copy:\\n    \\n    This ad is for my lawn care company that will fit into an inch of newspaper copy. It's called \\\"Max's Lawn Care\\\" and it should use the slogan \\\"I care about your lawn.\\\" Emphasize the folksiness of it being a local, sole proprietorship that I started after graduating from high school.\",\n    \"schema\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"requirements\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\",\n            \"description\": \"an ad requirement\"\n          }\n        }\n      }\n    }\n  },\n  {\n    \"prompt\": \"Write ad copy that conforms to the requirements above\",\n    \"schema\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"ad\": {\n          \"type\": \"string\",\n          \"description\": \"the ad copy\"\n        }\n      }\n    }\n  }\n]"
+              ]
+            }
+          },
+          "required": [
+            "context",
+            "spec"
+          ]
+        }
+      }
+    }
+  ],
+  "graphs": {}
+}
