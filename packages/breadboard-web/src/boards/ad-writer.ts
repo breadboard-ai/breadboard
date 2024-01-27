@@ -9,7 +9,7 @@ import { core } from "@google-labs/core-kit";
 import { templates } from "@google-labs/template-kit";
 import { json } from "@google-labs/json-kit";
 
-const jsonAgent = "/graphs/json-agent.json";
+const jsonAgent = "json-agent.json";
 
 const adSchema = {
   type: "object",
@@ -42,12 +42,9 @@ export default await recipe(({ text }) => {
       `This ad is for my lawn care company that will fit into an inch of newspaper copy. It's called "Max's Lawn Care" and it should use the slogan "I care about your lawn." Emphasize the folksiness of it being a local, sole proprietorship that I started after graduating from high school.`
     );
 
-  const defaults = {
-    path: jsonAgent,
-  };
-
   const requirementsExtractor = core.invoke({
     $id: "requiremenstExtractor",
+    path: jsonAgent,
     text: templates.promptTemplate({
       template: `Given the following specs, extract requirements for writing an ad copy:
       
@@ -56,27 +53,27 @@ export default await recipe(({ text }) => {
     }).prompt,
     context: [],
     schema: requirementsSchema,
-    ...defaults,
   });
 
   const adWriter = core.invoke({
     $id: "adWriter",
+    path: jsonAgent,
     text: `Write ad copy that conforms to the requirements above`,
     context: requirementsExtractor,
     schema: adSchema,
-    ...defaults,
   });
 
   const customer = core.invoke({
     $id: "customer",
+    path: jsonAgent,
     text: `Imagine you are a customer. You are a middle-aged homeowner from rural Midwest. You are overrun with ads and are weary of being scammed. You just want to work with someone local and trustworty. Review this and offer three improvements that would increase the likelihood of you trusting the ad.`,
     context: adWriter,
     schema: requirementsSchema,
-    ...defaults,
   });
 
   const requirementsExtractor2 = core.invoke({
     $id: "requirementsExtractor2",
+    path: jsonAgent,
     text: `Incorporate all feedback above into new, improved requirements`,
     context: customer,
     schema: {
@@ -91,7 +88,6 @@ export default await recipe(({ text }) => {
         },
       },
     } satisfies Schema,
-    ...defaults,
   });
 
   // TODO: Do something more componenty here. Is restarting context a board?
@@ -103,6 +99,7 @@ export default await recipe(({ text }) => {
 
   const adWriter2 = core.invoke({
     $id: "adWriter2",
+    path: jsonAgent,
     context: [],
     text: templates.promptTemplate({
       template: `Write ad copy that conforms to the requirements below
@@ -111,11 +108,11 @@ export default await recipe(({ text }) => {
       requirements: contextRestart.result,
     }),
     schema: adSchema,
-    ...defaults,
   });
 
   const adExec = core.invoke({
     $id: "adExec",
+    path: jsonAgent,
     text: `You are a Google Ads Search Professional. Given the above prompt and response, generate 3 point constructive critique of the response that I can action to make the output even better and more effective given the prompt.`,
     context: adWriter2,
     schema: {
@@ -130,15 +127,14 @@ export default await recipe(({ text }) => {
         },
       },
     } satisfies Schema,
-    ...defaults,
   });
 
   const improver = core.invoke({
     $id: "improver",
+    path: jsonAgent,
     text: `Given the 3 point critique try to generate a new response.`,
     context: adExec,
     schema: adSchema,
-    ...defaults,
   });
 
   // const promptImprover = core.invoke({

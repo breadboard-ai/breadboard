@@ -40,7 +40,7 @@
       "id": "gemini",
       "type": "invoke",
       "configuration": {
-        "path": "/graphs/gemini-generator.json"
+        "path": "gemini-generator.json"
       }
     },
     {

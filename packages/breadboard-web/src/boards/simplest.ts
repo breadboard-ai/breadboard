@@ -35,7 +35,7 @@ const outputSchema = {
 export default await recipe(() => {
   return base
     .input({ $id: "text", schema: inputSchema })
-    .to(core.invoke({ $id: "gemini", path: "/graphs/gemini-generator.json" }))
+    .to(core.invoke({ $id: "gemini", path: "gemini-generator.json" }))
     .to(base.output({ $id: "response", schema: outputSchema }));
 }).serialize({
   title: "The simplest LLM-based recipe",

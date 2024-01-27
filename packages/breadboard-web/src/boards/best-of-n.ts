@@ -9,8 +9,8 @@ import { core } from "@google-labs/core-kit";
 import { templates } from "@google-labs/template-kit";
 import { json } from "@google-labs/json-kit";
 
-const sampleAgent = "/graphs/ad-writer.json";
-const jsonAgent = "/graphs/json-agent.json";
+const sampleAgent = "ad-writer.json";
+const jsonAgent = "json-agent.json";
 
 type ErrorFilterInputs = { list: unknown[] };
 type ErrorFilterOutputs = { list: unknown[]; n: number };

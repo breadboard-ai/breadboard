@@ -293,7 +293,7 @@
             "generator": {
               "title": "Generator",
               "examples": [
-                "/graphs/gemini-generator.json"
+                "gemini-generator.json"
               ],
               "type": "string"
             }

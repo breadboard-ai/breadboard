@@ -16,7 +16,7 @@ const parameters = base.input({
     generator: z
       .string()
       .describe("Generator: Text generator to use")
-      .default("/graphs/text-generator.json"),
+      .default("text-generator.json"),
   }),
 });
 

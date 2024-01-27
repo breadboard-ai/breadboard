@@ -148,7 +148,7 @@
       "id": "rank",
       "type": "invoke",
       "configuration": {
-        "path": "/graphs/json-agent.json",
+        "path": "json-agent.json",
         "schema": {
           "type": "object",
           "properties": {
@@ -301,7 +301,7 @@
               "title": "Agent",
               "description": "Agent to apply to the task",
               "examples": [
-                "/graphs/ad-writer.json"
+                "ad-writer.json"
               ],
               "type": "string"
             },
