@@ -157,7 +157,7 @@ export class ProxyClient {
       return outputs;
     } else if (type === "error") {
       const [, { error }] = result.value;
-      throw new Error(error);
+      throw new Error(JSON.stringify(error));
     } else {
       throw new Error(
         `Unexpected proxy failure: unknown response type "${type}".`
