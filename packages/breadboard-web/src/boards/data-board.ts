@@ -18,8 +18,8 @@ export default await recipe(({ text, n }) => {
 
   const { best, list, rank } = core.invoke({
     $id: "bestOfN",
-    path: "/graphs/best-of-n.json",
-    agent: "/graphs/ad-writer.json",
+    path: "best-of-n.json",
+    agent: "ad-writer.json",
     context: [],
     n,
     text,

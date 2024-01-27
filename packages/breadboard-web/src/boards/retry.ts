@@ -39,7 +39,7 @@ const parameters = retry.input({
         type: "board",
         title: "Board",
         description: "The board to retry.",
-        default: "/graphs/text-generator.json",
+        default: "text-generator.json",
       },
     },
     required: ["text", "gnerator", "validator"],

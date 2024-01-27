@@ -21,7 +21,7 @@ const inputSchema = {
       type: "string",
       title: "Board URL",
       description: "The URL of the board to convert to a function call",
-      default: "/graphs/board-as-function.json",
+      default: "board-as-function.json",
     },
   },
 } satisfies Schema;

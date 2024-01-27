@@ -10,19 +10,25 @@
       "in": "best"
     },
     {
-      "from": "generateN",
+      "from": "filterErrors",
       "to": "presentChoices",
       "out": "list",
       "in": "json"
     },
     {
-      "from": "generateN",
+      "from": "filterErrors",
+      "to": "promptTemplate-5",
+      "out": "n",
+      "in": "n"
+    },
+    {
+      "from": "filterErrors",
       "to": "pickFirst",
       "out": "list",
       "in": "list"
     },
     {
-      "from": "generateN",
+      "from": "filterErrors",
       "to": "output-2",
       "out": "list",
       "in": "list"
@@ -40,14 +46,8 @@
       "in": "rank"
     },
     {
-      "from": "lambda-4",
-      "to": "generateN",
-      "out": "board",
-      "in": "board"
-    },
-    {
-      "from": "createList",
-      "to": "generateN",
+      "from": "generateN",
+      "to": "filterErrors",
       "out": "list",
       "in": "list"
     },
@@ -62,6 +62,18 @@
       "to": "rank",
       "out": "text",
       "in": "text"
+    },
+    {
+      "from": "lambda-4",
+      "to": "generateN",
+      "out": "board",
+      "in": "board"
+    },
+    {
+      "from": "createList",
+      "to": "generateN",
+      "out": "list",
+      "in": "list"
     },
     {
       "from": "input-1",
@@ -86,12 +98,6 @@
       "to": "promptTemplate-5",
       "out": "text",
       "in": "text"
-    },
-    {
-      "from": "input-1",
-      "to": "promptTemplate-5",
-      "out": "n",
-      "in": "n"
     }
   ],
   "nodes": [
@@ -132,15 +138,17 @@
       }
     },
     {
-      "id": "generateN",
-      "type": "map",
-      "configuration": {}
+      "id": "filterErrors",
+      "type": "invoke",
+      "configuration": {
+        "path": "#filterErrors"
+      }
     },
     {
       "id": "rank",
       "type": "invoke",
       "configuration": {
-        "path": "/graphs/json-agent.json",
+        "path": "json-agent.json",
         "schema": {
           "type": "object",
           "properties": {
@@ -163,6 +171,25 @@
           }
         },
         "context": []
+      }
+    },
+    {
+      "id": "generateN",
+      "type": "map",
+      "configuration": {}
+    },
+    {
+      "id": "presentChoices",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "item ~> $map(function ($v, $i) { { \"title\": \"choice \" & $i, \"content\": $v } })"
+      }
+    },
+    {
+      "id": "promptTemplate-5",
+      "type": "promptTemplate",
+      "configuration": {
+        "template": "You are a ranking expert. Given {{n}} choices of the output, you are to rank these choices in the order (starting with the best) of matching the requirements of the task described below:\n        \n        TASK:\n        \n        {{text}}\n        \n        CHOICES:\n        \n        {{list}}"
       }
     },
     {
@@ -257,20 +284,6 @@
       }
     },
     {
-      "id": "presentChoices",
-      "type": "jsonata",
-      "configuration": {
-        "expression": "item ~> $map(function ($v, $i) { { \"title\": \"choice \" & $i, \"content\": $v } })"
-      }
-    },
-    {
-      "id": "promptTemplate-5",
-      "type": "promptTemplate",
-      "configuration": {
-        "template": "You are a ranking expert. Given {{n}} choices of the output, you are to rank these choices in the order (starting with the best) of matching the requirements of the task described below:\n        \n        TASK:\n        \n        {{text}}\n        \n        CHOICES:\n        \n        {{list}}"
-      }
-    },
-    {
       "id": "input-1",
       "type": "input",
       "configuration": {
@@ -279,7 +292,6 @@
           "properties": {
             "n": {
               "title": "Number of parallel attemps",
-              "description": "The value to substitute for the parameter \"n\"",
               "type": "number",
               "examples": [
                 "4"
@@ -289,7 +301,7 @@
               "title": "Agent",
               "description": "Agent to apply to the task",
               "examples": [
-                "/graphs/ad-writer.json"
+                "ad-writer.json"
               ],
               "type": "string"
             },
@@ -316,6 +328,41 @@
     }
   ],
   "graphs": {
+    "filterErrors": {
+      "edges": [
+        {
+          "from": "filterErrors-input",
+          "to": "filterErrors-run",
+          "out": "*"
+        },
+        {
+          "from": "filterErrors-run",
+          "to": "filterErrors-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "filterErrors-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "filterErrors-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function filterErrors({list}) {const listWithErrors=list;const filtered=listWithErrors.filter(item=>!item.$error);return{list:filtered,n:filtered.length}}",
+            "name": "filterErrors",
+            "raw": true
+          }
+        },
+        {
+          "id": "filterErrors-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    },
     "createList": {
       "edges": [
         {

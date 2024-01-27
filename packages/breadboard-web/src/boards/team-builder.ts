@@ -69,7 +69,7 @@ export default await recipe(({ purpose, generator }) => {
       "Create high quality rhyming poems that will be used as lyrics for jingles in TV commercials. Creating melodies and producing music is not part of job."
     )
     .format("multiline");
-  generator.title("Generator").examples("/graphs/gemini-generator.json");
+  generator.title("Generator").examples("gemini-generator.json");
 
   const jobDescriptions = core.invoke({
     $id: "jobDescriptions",
