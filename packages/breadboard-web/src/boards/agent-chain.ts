@@ -1,6 +1,8 @@
 import { Schema, code, recipe } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 
+const JSON_AGENT = "json-agent.json";
+
 type ChainDescription = {
   prompt: string;
   schema: Schema;
@@ -44,6 +46,24 @@ const sampleChainSpec = JSON.stringify(
   2
 );
 
+const argMaker = code(({ item }) => {
+  const { prompt, schema } = item as ChainDescription;
+  return { text: prompt, schema };
+});
+
+const agentRunner = recipe(({ accumulator, item }) => {
+  const { text, schema } = argMaker({ $id: "makeAgentArgs", item });
+
+  const agent = core.invoke({
+    $id: "agent",
+    path: JSON_AGENT,
+    context: accumulator,
+    text,
+    schema,
+  });
+  return { accumulator: agent.context };
+});
+
 export default await recipe(({ context, spec }) => {
   context.title("Context").isArray().examples("[]");
   spec
@@ -55,16 +75,18 @@ export default await recipe(({ context, spec }) => {
   const reducer = core.reduce({
     $id: "reducer",
     list: spec.isArray(),
-    board: code(({ accumulator, item }) => {
-      const acc = (accumulator as unknown[]) || [];
-      return { accumulator: [...acc, item] };
-    }),
+    accumulator: [],
+    board: agentRunner,
   });
 
-  return { context, spec, list: reducer.accumulator };
+  return {
+    context: reducer.accumulator
+      .title("Context")
+      .description("The context that is the result of the agent chain run"),
+  };
 }).serialize({
   title: "Agent Chain",
   description:
     "A configurable chain of agents. Each agent passes their work to the next agent in the chain. Useful for simulating waterfall processes.",
-  version: "0.0.1",
+  version: "0.0.2",
 });

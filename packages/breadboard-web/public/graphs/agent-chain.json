@@ -1,30 +1,18 @@
 {
   "title": "Agent Chain",
   "description": "A configurable chain of agents. Each agent passes their work to the next agent in the chain. Useful for simulating waterfall processes.",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "edges": [
-    {
-      "from": "input-1",
-      "to": "reducer",
-      "out": "spec",
-      "in": "list"
-    },
-    {
-      "from": "input-1",
-      "to": "output-2",
-      "out": "context",
-      "in": "context"
-    },
-    {
-      "from": "input-1",
-      "to": "output-2",
-      "out": "spec",
-      "in": "spec"
-    },
     {
       "from": "reducer",
       "to": "output-2",
       "out": "accumulator",
+      "in": "context"
+    },
+    {
+      "from": "input-1",
+      "to": "reducer",
+      "out": "spec",
       "in": "list"
     }
   ],
@@ -38,29 +26,152 @@
           "properties": {
             "context": {
               "title": "Context",
-              "type": "array",
-              "examples": [
-                "[]"
-              ]
-            },
-            "spec": {
-              "title": "Chain spec",
-              "type": "array",
-              "format": "multiline",
-              "examples": [
-                "[\n  {\n    \"prompt\": \"Given the following specs, extract requirements for writing an ad copy:\\n    \\n    This ad is for my lawn care company that will fit into an inch of newspaper copy. It's called \\\"Max's Lawn Care\\\" and it should use the slogan \\\"I care about your lawn.\\\" Emphasize the folksiness of it being a local, sole proprietorship that I started after graduating from high school.\",\n    \"schema\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"requirements\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\",\n            \"description\": \"an ad requirement\"\n          }\n        }\n      }\n    }\n  },\n  {\n    \"prompt\": \"Write ad copy that conforms to the requirements above\",\n    \"schema\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"ad\": {\n          \"type\": \"string\",\n          \"description\": \"the ad copy\"\n        }\n      }\n    }\n  }\n]"
-              ]
-            },
-            "list": {
-              "type": "string",
-              "title": "list"
+              "description": "The context that is the result of the agent chain run",
+              "type": "string"
             }
           },
           "required": [
-            "context",
-            "spec",
-            "list"
+            "context"
           ]
+        }
+      }
+    },
+    {
+      "id": "reducer",
+      "type": "reduce",
+      "configuration": {
+        "accumulator": [],
+        "board": {
+          "kind": "board",
+          "board": {
+            "kits": [],
+            "edges": [
+              {
+                "from": "agent",
+                "to": "output-2",
+                "out": "context",
+                "in": "accumulator"
+              },
+              {
+                "from": "input-1",
+                "to": "makeAgentArgs",
+                "out": "item",
+                "in": "item"
+              },
+              {
+                "from": "input-1",
+                "to": "agent",
+                "out": "accumulator",
+                "in": "context"
+              },
+              {
+                "from": "makeAgentArgs",
+                "to": "agent",
+                "out": "text",
+                "in": "text"
+              },
+              {
+                "from": "makeAgentArgs",
+                "to": "agent",
+                "out": "schema",
+                "in": "schema"
+              }
+            ],
+            "nodes": [
+              {
+                "id": "output-2",
+                "type": "output",
+                "configuration": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "accumulator": {
+                        "type": "string",
+                        "title": "accumulator"
+                      }
+                    },
+                    "required": [
+                      "accumulator"
+                    ]
+                  }
+                }
+              },
+              {
+                "id": "agent",
+                "type": "invoke",
+                "configuration": {
+                  "path": "json-agent.json"
+                }
+              },
+              {
+                "id": "input-1",
+                "type": "input",
+                "configuration": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "item": {
+                        "type": "string",
+                        "title": "item"
+                      },
+                      "accumulator": {
+                        "type": "string",
+                        "title": "accumulator"
+                      }
+                    },
+                    "required": [
+                      "item",
+                      "accumulator"
+                    ]
+                  }
+                }
+              },
+              {
+                "id": "makeAgentArgs",
+                "type": "invoke",
+                "configuration": {
+                  "path": "#makeAgentArgs"
+                }
+              }
+            ],
+            "graphs": {
+              "makeAgentArgs": {
+                "edges": [
+                  {
+                    "from": "makeAgentArgs-input",
+                    "to": "makeAgentArgs-run",
+                    "out": "*"
+                  },
+                  {
+                    "from": "makeAgentArgs-run",
+                    "to": "makeAgentArgs-output",
+                    "out": "*"
+                  }
+                ],
+                "nodes": [
+                  {
+                    "id": "makeAgentArgs-input",
+                    "type": "input",
+                    "configuration": {}
+                  },
+                  {
+                    "id": "makeAgentArgs-run",
+                    "type": "runJavascript",
+                    "configuration": {
+                      "code": "function makeAgentArgs({item}) {const{prompt,schema}=item;return{text:prompt,schema}}",
+                      "name": "makeAgentArgs",
+                      "raw": true
+                    }
+                  },
+                  {
+                    "id": "makeAgentArgs-output",
+                    "type": "output",
+                    "configuration": {}
+                  }
+                ]
+              }
+            }
+          }
         }
       }
     },
@@ -78,64 +189,11 @@
               "examples": [
                 "[\n  {\n    \"prompt\": \"Given the following specs, extract requirements for writing an ad copy:\\n    \\n    This ad is for my lawn care company that will fit into an inch of newspaper copy. It's called \\\"Max's Lawn Care\\\" and it should use the slogan \\\"I care about your lawn.\\\" Emphasize the folksiness of it being a local, sole proprietorship that I started after graduating from high school.\",\n    \"schema\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"requirements\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\",\n            \"description\": \"an ad requirement\"\n          }\n        }\n      }\n    }\n  },\n  {\n    \"prompt\": \"Write ad copy that conforms to the requirements above\",\n    \"schema\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"ad\": {\n          \"type\": \"string\",\n          \"description\": \"the ad copy\"\n        }\n      }\n    }\n  }\n]"
               ]
-            },
-            "context": {
-              "title": "Context",
-              "type": "array",
-              "examples": [
-                "[]"
-              ]
             }
           },
           "required": [
-            "spec",
-            "context"
+            "spec"
           ]
-        }
-      }
-    },
-    {
-      "id": "reducer",
-      "type": "reduce",
-      "configuration": {
-        "board": {
-          "kind": "board",
-          "board": {
-            "kits": [],
-            "edges": [
-              {
-                "from": "fn-3-input",
-                "to": "fn-3-run",
-                "out": "*"
-              },
-              {
-                "from": "fn-3-run",
-                "to": "fn-3-output",
-                "out": "*"
-              }
-            ],
-            "nodes": [
-              {
-                "id": "fn-3-input",
-                "type": "input",
-                "configuration": {}
-              },
-              {
-                "id": "fn-3-run",
-                "type": "runJavascript",
-                "configuration": {
-                  "code": "function fn_3({accumulator,item}) {console.log(\"accumulator\",accumulator,item);const acc=accumulator||[];return{accumulator:[...acc,item]}}",
-                  "name": "fn_3",
-                  "raw": true
-                }
-              },
-              {
-                "id": "fn-3-output",
-                "type": "output",
-                "configuration": {}
-              }
-            ]
-          }
         }
       }
     }
