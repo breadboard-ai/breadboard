@@ -604,7 +604,7 @@ export type ErrorResponse = {
   /**
    * The error message.
    */
-  error: string;
+  error: string | object;
   timestamp: number;
 };
 

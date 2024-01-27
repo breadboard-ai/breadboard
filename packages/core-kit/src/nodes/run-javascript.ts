@@ -83,7 +83,7 @@ const runInBrowser = async ({
       }
     };
     worker.onerror = (e) => {
-      reject(new Error(e.toString()));
+      reject(new Error(e.message));
     };
   });
   worker.postMessage("please");

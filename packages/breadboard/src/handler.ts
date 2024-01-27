@@ -9,16 +9,32 @@ import type {
   Kit,
   NodeHandler,
   NodeHandlerContext,
+  NodeHandlerFunction,
   NodeHandlers,
+  OutputValues,
 } from "./types.js";
+
+const getHandlerFunction = (handler: NodeHandler): NodeHandlerFunction => {
+  if (handler instanceof Function) return handler;
+  if (handler.invoke) return handler.invoke;
+  throw new Error("Invalid handler");
+};
 
 export const callHandler = async (
   handler: NodeHandler,
   inputs: InputValues,
   context: NodeHandlerContext
-) => {
-  if (handler instanceof Function) return handler(inputs, context);
-  if (handler.invoke) return handler.invoke(inputs, context);
+): Promise<OutputValues | void> => {
+  // if (handler instanceof Function) return handler(inputs, context);
+  // if (handler.invoke) return handler.invoke(inputs, context);
+  const handlerFunction = getHandlerFunction(handler);
+  return new Promise((resolve) => {
+    handlerFunction(inputs, context)
+      .then(resolve)
+      .catch((error) => {
+        resolve({ $error: { error } });
+      });
+  });
 };
 
 export const handlersFromKits = (kits: Kit[]): NodeHandlers => {
