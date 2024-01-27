@@ -14,6 +14,7 @@ import {
 } from "../stream.js";
 import { timestamp } from "../timestamp.js";
 import {
+  ErrorObject,
   InputValues,
   NodeHandlerContext,
   OutputValues,
@@ -115,13 +116,15 @@ export class RunServer {
       await responses.write(["end", { timestamp: timestamp() }]);
       await responses.close();
     } catch (e) {
-      let error = e as Error;
-      let message = "";
-      while (error?.cause) {
-        error = (error.cause as { error: Error }).error;
-        message += `\n${error.message}`;
+      const error = e as Error;
+      let message;
+      if (error?.cause) {
+        const { cause } = error as { cause: ErrorObject };
+        message = cause;
+      } else {
+        message = error.message;
       }
-      console.error("Run Server error:", error.message);
+      console.error("Run Server error:", message);
       await responses.write([
         "error",
         { error: message, timestamp: timestamp() },
