@@ -6,14 +6,10 @@
 
 import test from "ava";
 
-import reduce, {
-  ReduceFunctionInputs,
-  ReduceInputs,
-} from "../src/nodes/reduce.js";
+import reduce, { ReduceFunctionInputs } from "../src/nodes/reduce.js";
 import Core, { core } from "../src/index.js";
 import {
   Board,
-  Capability,
   InputValues,
   asRuntimeKit,
   code,
