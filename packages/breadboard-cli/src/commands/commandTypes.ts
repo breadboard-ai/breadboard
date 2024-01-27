@@ -4,6 +4,7 @@ export type RunOptions = Options & {
   kit?: string[];
   input?: string;
   inputFile?: string;
+  base?: string; // The optional base URL for the board
   verbose?: boolean;
 };
 

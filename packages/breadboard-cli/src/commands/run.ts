@@ -16,14 +16,15 @@ import * as readline from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
 import { VerboseLoggingProbe } from "./lib/verbose-logging-probe.js";
 import { RunOptions } from "./commandTypes.js";
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import { pathToFileURL } from "url";
+import path from "path";
 
 async function runBoard(
   board: BoardRunner,
   inputs: InputValues,
   kitDeclarations: string[] | undefined,
-  verbose: boolean,
+  options: RunOptions,
   pipedInput = false
 ) {
   const kits: Kit[] = [];
@@ -36,11 +37,12 @@ async function runBoard(
     }
   }
 
-  const probe = verbose
+  const probe = options.verbose
     ? new VerboseLoggingProbe(async (data) => console.log(data))
     : undefined;
 
   for await (const stop of board.run({
+    base: pathToFileURL(options.base),
     kits,
     probe,
   })) {
@@ -97,6 +99,13 @@ const loadInputFile = async (filePath: string): Promise<InputValues> => {
 export const run = async (file: string, options: RunOptions) => {
   const kitDeclarations = options.kit as string[] | undefined;
   const verbose = "verbose" in options;
+  options.base = path.resolve(process.cwd(), options.base) ?? process.cwd();
+
+  if ((await stat(options.base)).isDirectory() == false) {
+    console.error(
+      `The base directory ${options.base} does not exist or is not a directory.`
+    );
+  }
   // Prefer an input from a file over a string
   const input = options.inputFile
     ? await loadInputFile(options.inputFile)
@@ -110,7 +119,7 @@ export const run = async (file: string, options: RunOptions) => {
     let board = await loadBoard(filePath, options);
 
     // We always have to run the board once.
-    await runBoard(board, input, kitDeclarations, verbose);
+    await runBoard(board, input, kitDeclarations, options);
 
     // If we are watching, we need to run the board again when the file changes.
     if ("watch" in options) {
@@ -119,7 +128,7 @@ export const run = async (file: string, options: RunOptions) => {
           // Now the board has changed, we need to reload it and run it again.
           board = await loadBoard(filePath, options);
           // We might want to clear the console here.
-          await runBoard(board, input, kitDeclarations, verbose);
+          await runBoard(board, input, kitDeclarations, options);
         },
       });
     }
@@ -130,6 +139,6 @@ export const run = async (file: string, options: RunOptions) => {
     // We should validate it looks like a board...
     const board = await BoardRunner.fromGraphDescriptor(JSON.parse(stdin));
 
-    await runBoard(board, input, kitDeclarations, verbose, true);
+    await runBoard(board, input, kitDeclarations, options, true);
   }
 };

@@ -90,6 +90,10 @@ program
 program
   .command("run [file]")
   .description("Run a graph.")
+  .option(
+    "-b, --base <input>",
+    "The base directory to resolve relative paths from each board"
+  )
   .option("-w, --watch", "Watch the file for changes.")
   .option("-v, --verbose", "Output events and processing information.")
   .option("-n, --no-save", "Do not write the compiled graph to disk.")
