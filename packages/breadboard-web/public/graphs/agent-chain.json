@@ -1,0 +1,202 @@
+{
+  "title": "Agent Chain",
+  "description": "A configurable chain of agents. Each agent passes their work to the next agent in the chain. Useful for simulating waterfall processes.",
+  "version": "0.0.2",
+  "edges": [
+    {
+      "from": "reducer",
+      "to": "output-2",
+      "out": "accumulator",
+      "in": "context"
+    },
+    {
+      "from": "input-1",
+      "to": "reducer",
+      "out": "spec",
+      "in": "list"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "title": "Context",
+              "description": "The context that is the result of the agent chain run",
+              "type": "string"
+            }
+          },
+          "required": [
+            "context"
+          ]
+        }
+      }
+    },
+    {
+      "id": "reducer",
+      "type": "reduce",
+      "configuration": {
+        "accumulator": [],
+        "board": {
+          "kind": "board",
+          "board": {
+            "kits": [],
+            "edges": [
+              {
+                "from": "agent",
+                "to": "output-2",
+                "out": "context",
+                "in": "accumulator"
+              },
+              {
+                "from": "input-1",
+                "to": "makeAgentArgs",
+                "out": "item",
+                "in": "item"
+              },
+              {
+                "from": "input-1",
+                "to": "agent",
+                "out": "accumulator",
+                "in": "context"
+              },
+              {
+                "from": "makeAgentArgs",
+                "to": "agent",
+                "out": "text",
+                "in": "text"
+              },
+              {
+                "from": "makeAgentArgs",
+                "to": "agent",
+                "out": "schema",
+                "in": "schema"
+              }
+            ],
+            "nodes": [
+              {
+                "id": "output-2",
+                "type": "output",
+                "configuration": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "accumulator": {
+                        "type": "string",
+                        "title": "accumulator"
+                      }
+                    },
+                    "required": [
+                      "accumulator"
+                    ]
+                  }
+                }
+              },
+              {
+                "id": "agent",
+                "type": "invoke",
+                "configuration": {
+                  "path": "json-agent.json"
+                }
+              },
+              {
+                "id": "input-1",
+                "type": "input",
+                "configuration": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "item": {
+                        "type": "string",
+                        "title": "item"
+                      },
+                      "accumulator": {
+                        "type": "string",
+                        "title": "accumulator"
+                      }
+                    },
+                    "required": [
+                      "item",
+                      "accumulator"
+                    ]
+                  }
+                }
+              },
+              {
+                "id": "makeAgentArgs",
+                "type": "invoke",
+                "configuration": {
+                  "path": "#makeAgentArgs"
+                }
+              }
+            ],
+            "graphs": {
+              "makeAgentArgs": {
+                "edges": [
+                  {
+                    "from": "makeAgentArgs-input",
+                    "to": "makeAgentArgs-run",
+                    "out": "*"
+                  },
+                  {
+                    "from": "makeAgentArgs-run",
+                    "to": "makeAgentArgs-output",
+                    "out": "*"
+                  }
+                ],
+                "nodes": [
+                  {
+                    "id": "makeAgentArgs-input",
+                    "type": "input",
+                    "configuration": {}
+                  },
+                  {
+                    "id": "makeAgentArgs-run",
+                    "type": "runJavascript",
+                    "configuration": {
+                      "code": "function makeAgentArgs({item}) {const{prompt,schema}=item;return{text:prompt,schema}}",
+                      "name": "makeAgentArgs",
+                      "raw": true
+                    }
+                  },
+                  {
+                    "id": "makeAgentArgs-output",
+                    "type": "output",
+                    "configuration": {}
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "spec": {
+              "title": "Chain spec",
+              "type": "array",
+              "format": "multiline",
+              "examples": [
+                "[\n  {\n    \"prompt\": \"Given the following specs, extract requirements for writing an ad copy:\\n    \\n    This ad is for my lawn care company that will fit into an inch of newspaper copy. It's called \\\"Max's Lawn Care\\\" and it should use the slogan \\\"I care about your lawn.\\\" Emphasize the folksiness of it being a local, sole proprietorship that I started after graduating from high school.\",\n    \"schema\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"requirements\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\",\n            \"description\": \"an ad requirement\"\n          }\n        }\n      }\n    }\n  },\n  {\n    \"prompt\": \"Write ad copy that conforms to the requirements above\",\n    \"schema\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"ad\": {\n          \"type\": \"string\",\n          \"description\": \"the ad copy\"\n        }\n      }\n    }\n  }\n]"
+              ]
+            }
+          },
+          "required": [
+            "spec"
+          ]
+        }
+      }
+    }
+  ],
+  "graphs": {}
+}
