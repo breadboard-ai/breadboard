@@ -5,6 +5,12 @@
   "edges": [
     {
       "from": "input-1",
+      "to": "reducer",
+      "out": "spec",
+      "in": "list"
+    },
+    {
+      "from": "input-1",
       "to": "output-2",
       "out": "context",
       "in": "context"
@@ -14,6 +20,12 @@
       "to": "output-2",
       "out": "spec",
       "in": "spec"
+    },
+    {
+      "from": "reducer",
+      "to": "output-2",
+      "out": "accumulator",
+      "in": "list"
     }
   ],
   "nodes": [
@@ -38,11 +50,16 @@
               "examples": [
                 "[\n  {\n    \"prompt\": \"Given the following specs, extract requirements for writing an ad copy:\\n    \\n    This ad is for my lawn care company that will fit into an inch of newspaper copy. It's called \\\"Max's Lawn Care\\\" and it should use the slogan \\\"I care about your lawn.\\\" Emphasize the folksiness of it being a local, sole proprietorship that I started after graduating from high school.\",\n    \"schema\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"requirements\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\",\n            \"description\": \"an ad requirement\"\n          }\n        }\n      }\n    }\n  },\n  {\n    \"prompt\": \"Write ad copy that conforms to the requirements above\",\n    \"schema\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"ad\": {\n          \"type\": \"string\",\n          \"description\": \"the ad copy\"\n        }\n      }\n    }\n  }\n]"
               ]
+            },
+            "list": {
+              "type": "string",
+              "title": "list"
             }
           },
           "required": [
             "context",
-            "spec"
+            "spec",
+            "list"
           ]
         }
       }
@@ -54,13 +71,6 @@
         "schema": {
           "type": "object",
           "properties": {
-            "context": {
-              "title": "Context",
-              "type": "array",
-              "examples": [
-                "[]"
-              ]
-            },
             "spec": {
               "title": "Chain spec",
               "type": "array",
@@ -68,12 +78,64 @@
               "examples": [
                 "[\n  {\n    \"prompt\": \"Given the following specs, extract requirements for writing an ad copy:\\n    \\n    This ad is for my lawn care company that will fit into an inch of newspaper copy. It's called \\\"Max's Lawn Care\\\" and it should use the slogan \\\"I care about your lawn.\\\" Emphasize the folksiness of it being a local, sole proprietorship that I started after graduating from high school.\",\n    \"schema\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"requirements\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\",\n            \"description\": \"an ad requirement\"\n          }\n        }\n      }\n    }\n  },\n  {\n    \"prompt\": \"Write ad copy that conforms to the requirements above\",\n    \"schema\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"ad\": {\n          \"type\": \"string\",\n          \"description\": \"the ad copy\"\n        }\n      }\n    }\n  }\n]"
               ]
+            },
+            "context": {
+              "title": "Context",
+              "type": "array",
+              "examples": [
+                "[]"
+              ]
             }
           },
           "required": [
-            "context",
-            "spec"
+            "spec",
+            "context"
           ]
+        }
+      }
+    },
+    {
+      "id": "reducer",
+      "type": "reduce",
+      "configuration": {
+        "board": {
+          "kind": "board",
+          "board": {
+            "kits": [],
+            "edges": [
+              {
+                "from": "fn-3-input",
+                "to": "fn-3-run",
+                "out": "*"
+              },
+              {
+                "from": "fn-3-run",
+                "to": "fn-3-output",
+                "out": "*"
+              }
+            ],
+            "nodes": [
+              {
+                "id": "fn-3-input",
+                "type": "input",
+                "configuration": {}
+              },
+              {
+                "id": "fn-3-run",
+                "type": "runJavascript",
+                "configuration": {
+                  "code": "function fn_3({accumulator,item}) {console.log(\"accumulator\",accumulator,item);const acc=accumulator||[];return{accumulator:[...acc,item]}}",
+                  "name": "fn_3",
+                  "raw": true
+                }
+              },
+              {
+                "id": "fn-3-output",
+                "type": "output",
+                "configuration": {}
+              }
+            ]
+          }
         }
       }
     }

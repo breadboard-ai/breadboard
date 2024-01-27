@@ -1,4 +1,5 @@
-import { Schema, recipe } from "@google-labs/breadboard";
+import { Schema, code, recipe } from "@google-labs/breadboard";
+import { core } from "@google-labs/core-kit";
 
 type ChainDescription = {
   prompt: string;
@@ -50,7 +51,17 @@ export default await recipe(({ context, spec }) => {
     .isArray()
     .format("multiline")
     .examples(sampleChainSpec);
-  return { context, spec };
+
+  const reducer = core.reduce({
+    $id: "reducer",
+    list: spec.isArray(),
+    board: code(({ accumulator, item }) => {
+      const acc = (accumulator as unknown[]) || [];
+      return { accumulator: [...acc, item] };
+    }),
+  });
+
+  return { context, spec, list: reducer.accumulator };
 }).serialize({
   title: "Agent Chain",
   description:
