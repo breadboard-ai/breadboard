@@ -596,15 +596,30 @@ export type InputResponse = {
   timestamp: number;
 };
 
+export type ErrorObject = {
+  /**
+   * The error message. Can be a string or a more detailed object. For
+   * example, fetch errors may return a JSON response from the server.
+   */
+  error: string | object;
+  /**
+   * The node that threw the error.
+   */
+  descriptor: NodeDescriptor;
+  /**
+   * The inputs that were passed to the node that threw the error.
+   */
+  inputs: InputValues;
+};
 /**
  * Sent by the runner when an error occurs.
  * Error response also indicates that the board is done running.
  */
 export type ErrorResponse = {
   /**
-   * The error message.
+   * The error message string or a more detailed error object
    */
-  error: string | object;
+  error: string | ErrorObject;
   timestamp: number;
 };
 
