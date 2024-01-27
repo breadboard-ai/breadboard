@@ -14,8 +14,8 @@ import {
 } from "../stream.js";
 import { timestamp } from "../timestamp.js";
 import {
+  ErrorObject,
   InputValues,
-  NodeDescriptor,
   NodeHandlerContext,
   OutputValues,
   RunState,
@@ -119,8 +119,7 @@ export class RunServer {
       const error = e as Error;
       let message;
       if (error?.cause) {
-        type Cause = { error: string; descriptor: NodeDescriptor };
-        const { cause } = error as { cause: Cause };
+        const { cause } = error as { cause: ErrorObject };
         message = cause;
       } else {
         message = error.message;
