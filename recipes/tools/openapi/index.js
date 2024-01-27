@@ -207,7 +207,7 @@ const createSpecRecipe = recipe((api) => {
   api.item.to(output);
   return api.item
     .to(
-      recipe((item) => {
+      recipe(() => {
         const getItem = code((itemToSplat) => {
           const { api_inputs } = itemToSplat;
           const { method, parameters, secrets, requestBody } = itemToSplat.item;
@@ -301,11 +301,23 @@ const createSpecRecipe = recipe((api) => {
           return { url, method, headers, body, queryString };
         });
 
-        const itemData = getItem(item);
+        const item = base.input({
+          $id: "input",
+          schema: {
+            type: "object",
+            title: "input",
+            description: "What inputs do you want to pass to the API? (JSON)",
+            properties: {
+              api_inputs: {
+                type: "object",
+              },
+            },
+          },
+        });
 
-        return starter
-          .fetch()
-          .in(itemData)
+        return item
+          .to(getItem)
+          .to(core.fetch())
           .response.as("api_json_response")
           .to(base.output({}));
       })

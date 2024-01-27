@@ -34,7 +34,7 @@ const inputSchema = {
       type: "string",
       title: "Generator",
       description: "The URL of the generator to call",
-      default: "/graphs/text-generator.json",
+      default: "text-generator.json",
     },
   },
   required: ["text"],

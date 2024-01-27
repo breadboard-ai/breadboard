@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as ts from "typescript";
+import ts from "typescript";
 import vm from "node:vm";
 import * as vscode from "vscode";
 
@@ -40,7 +40,7 @@ export class BreadboardLoader {
       {
         location: vscode.ProgressLocation.Notification,
         cancellable: false,
-        title: "Loading renderer...",
+        title: "Loading Breadboard & kits...",
       },
       async () => {
         return await Promise.all([
@@ -69,6 +69,7 @@ export class BreadboardLoader {
       compilerOptions: {
         module: ts.ModuleKind.CommonJS,
         target: ts.ScriptTarget.ESNext,
+        allowJs: true,
       },
     });
 
@@ -132,12 +133,6 @@ export class BreadboardLoader {
   }
 
   async loadBoardFromResource(resource: vscode.Uri) {
-    if (!this.#mods) {
-      this.#mods = await this.#lazyLoadModulesIfNeeded();
-    }
-
-    const [breadboard] = this.#mods;
-    const descriptor = await this.#loadFromResource(resource);
-    return breadboard.Board.fromGraphDescriptor(descriptor);
+    return this.#loadFromResource(resource);
   }
 }

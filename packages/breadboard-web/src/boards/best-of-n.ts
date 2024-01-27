@@ -9,8 +9,17 @@ import { core } from "@google-labs/core-kit";
 import { templates } from "@google-labs/template-kit";
 import { json } from "@google-labs/json-kit";
 
-const sampleAgent = "/graphs/ad-writer.json";
-const jsonAgent = "/graphs/json-agent.json";
+const sampleAgent = "ad-writer.json";
+const jsonAgent = "json-agent.json";
+
+type ErrorFilterInputs = { list: unknown[] };
+type ErrorFilterOutputs = { list: unknown[]; n: number };
+
+const errorFilter = code<ErrorFilterInputs, ErrorFilterOutputs>(({ list }) => {
+  const listWithErrors = list as { $error?: string }[];
+  const filtered = listWithErrors.filter((item) => !item.$error);
+  return { list: filtered, n: filtered.length };
+});
 
 export default await recipe(({ agent, context, text, n }) => {
   text
@@ -45,10 +54,15 @@ export default await recipe(({ agent, context, text, n }) => {
     list: createList.list,
   });
 
+  const filterErrors = errorFilter({
+    $id: "filterErrors",
+    list: generateN.list,
+  });
+
   const makeNicerList = json.jsonata({
     $id: "presentChoices",
     expression: `item ~> $map(function ($v, $i) { { "title": "choice " & $i, "content": $v } })`,
-    json: generateN.list.isString(),
+    json: filterErrors.list,
   });
 
   const rank = core.invoke({
@@ -65,7 +79,7 @@ export default await recipe(({ agent, context, text, n }) => {
         
         {{list}}`,
       text,
-      n,
+      n: filterErrors.n,
       list: makeNicerList.result,
     }),
     schema: {
@@ -98,10 +112,10 @@ export default await recipe(({ agent, context, text, n }) => {
     expression:
       "($index := $split((**.choice)[0], ' ')[1];list[0][0][$index]).item",
     rank: rank.json.isString(),
-    list: generateN.list,
+    list: filterErrors.list,
   });
 
-  return { best: pickFirst.result, list: generateN.list, rank: rank.json };
+  return { best: pickFirst.result, list: filterErrors.list, rank: rank.json };
 }).serialize({
   title: "Best of N",
   description:

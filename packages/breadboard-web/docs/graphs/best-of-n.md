@@ -4,11 +4,15 @@
 %%{init: 'themeVariables': { 'fontFamily': 'Fira Code, monospace' }}%%
 graph TD;
 pickFirst["jsonata <br> id='pickFirst'"] -- "result->best" --> output2{{"output <br> id='output-2'"}}:::output
-generateN["map <br> id='generateN'"] -- "list->json" --> presentChoices["jsonata <br> id='presentChoices'"]
-generateN["map <br> id='generateN'"] -- "list->list" --> pickFirst["jsonata <br> id='pickFirst'"]
-generateN["map <br> id='generateN'"] -- "list->list" --> output2{{"output <br> id='output-2'"}}:::output
+filterErrors["invoke <br> id='filterErrors'"] -- "list->json" --> presentChoices["jsonata <br> id='presentChoices'"]
+filterErrors["invoke <br> id='filterErrors'"] -- "n->n" --> promptTemplate5["promptTemplate <br> id='promptTemplate-5'"]
+filterErrors["invoke <br> id='filterErrors'"] -- "list->list" --> pickFirst["jsonata <br> id='pickFirst'"]
+filterErrors["invoke <br> id='filterErrors'"] -- "list->list" --> output2{{"output <br> id='output-2'"}}:::output
 rank["invoke <br> id='rank'"] -- "json->rank" --> pickFirst["jsonata <br> id='pickFirst'"]
 rank["invoke <br> id='rank'"] -- "json->rank" --> output2{{"output <br> id='output-2'"}}:::output
+generateN["map <br> id='generateN'"] -- "list->list" --> filterErrors["invoke <br> id='filterErrors'"]
+presentChoices["jsonata <br> id='presentChoices'"] -- "result->list" --> promptTemplate5["promptTemplate <br> id='promptTemplate-5'"]
+promptTemplate5["promptTemplate <br> id='promptTemplate-5'"] -- "text->text" --> rank["invoke <br> id='rank'"]
 lambda4["lambda <br> id='lambda-4'"] -- "board->board" --> generateN["map <br> id='generateN'"]
 subgraph sg_lambda4 [lambda-4]
 lambda4_invokeAgent["invoke <br> id='invokeAgent'"] -- "json->item" --> lambda4_output2{{"output <br> id='output-2'"}}:::output
@@ -18,13 +22,16 @@ end
 sg_lambda4:::slotted -- "lamdba->lamdba" --o lambda4
 
 createList["invoke <br> id='createList'"] -- "list->list" --> generateN["map <br> id='generateN'"]
-presentChoices["jsonata <br> id='presentChoices'"] -- "result->list" --> promptTemplate5["promptTemplate <br> id='promptTemplate-5'"]
-promptTemplate5["promptTemplate <br> id='promptTemplate-5'"] -- "text->text" --> rank["invoke <br> id='rank'"]
 input1[/"input <br> id='input-1'"/]:::input -- "n->n" --> createList["invoke <br> id='createList'"]
 input1[/"input <br> id='input-1'"/]:::input -- "agent->agent" --> lambda4["lambda <br> id='lambda-4'"]
 input1[/"input <br> id='input-1'"/]:::input -- "text->text" --> lambda4["lambda <br> id='lambda-4'"]
 input1[/"input <br> id='input-1'"/]:::input -- "text->text" --> promptTemplate5["promptTemplate <br> id='promptTemplate-5'"]
-input1[/"input <br> id='input-1'"/]:::input -- "n->n" --> promptTemplate5["promptTemplate <br> id='promptTemplate-5'"]
+
+subgraph sg_filterErrors [filterErrors]
+filterErrors_filterErrorsinput[/"input <br> id='filterErrors-input'"/]:::input -- all --> filterErrors_filterErrorsrun["runJavascript <br> id='filterErrors-run'"]
+filterErrors_filterErrorsrun["runJavascript <br> id='filterErrors-run'"] -- all --> filterErrors_filterErrorsoutput{{"output <br> id='filterErrors-output'"}}:::output
+end
+
 
 subgraph sg_createList [createList]
 createList_createListinput[/"input <br> id='createList-input'"/]:::input -- all --> createList_createListrun["runJavascript <br> id='createList-run'"]

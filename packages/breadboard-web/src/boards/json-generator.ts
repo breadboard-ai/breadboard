@@ -61,7 +61,7 @@ const parameters = board.input({
         title: "Text Generator",
         // TODO: Somehow convey the expected API of the graph
         description: "The underlying text generator to use.",
-        default: "/graphs/text-generator.json",
+        default: "text-generator.json",
       },
       template: {
         type: "text",

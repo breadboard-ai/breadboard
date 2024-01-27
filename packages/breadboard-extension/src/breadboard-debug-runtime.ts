@@ -22,6 +22,7 @@ import {
 import * as fs from "fs/promises";
 import * as vscode from "vscode";
 import path from "path";
+import { BreadboardLoader } from "./breadboard-loader";
 
 /**
  * Responsible for invoking Breadboard against a given board. Emits events to,
@@ -52,18 +53,34 @@ export class BreadboardDebugRuntime extends EventEmitter {
     };
   }
 
-  async initialize(args: BreadboardLaunchRequestArguments) {
+  async initialize(
+    args: BreadboardLaunchRequestArguments,
+    boardLocations: string
+  ) {
     await this.#loadEnvIfPossible(args.board);
 
     this.#info(`Beginning debug of board ${args.board}`);
 
     const debug = !args.noDebug;
-    const url = `file://${args.board}`;
-    const base = new URL(url);
+
+    let boardUrl = args.board;
+    if (boardUrl.endsWith(".ts") || boardUrl.endsWith(".js")) {
+      // Handle the TypeScript/JavaScript case by transpiling on the fly and
+      // creating a temporary URL.
+      const loader = new BreadboardLoader();
+      const descriptor = await loader.loadBoardFromResource(
+        vscode.Uri.parse(boardUrl)
+      );
+      const data = new Blob([JSON.stringify(descriptor)], {
+        type: "application/json",
+      });
+      boardUrl = URL.createObjectURL(data);
+    }
 
     // Must be a dynamic import so it can be mapped to a require.
     const { Board } = await import("@google-labs/breadboard");
-    const boardData = await Board.load(args.board, {
+    const base = new URL(`file://${args.board}`);
+    const boardData = await Board.load(boardUrl, {
       base,
     });
 
@@ -91,11 +108,16 @@ export class BreadboardDebugRuntime extends EventEmitter {
       }
     }
 
-    await this.#run(url, base, debug);
+    await this.#run(boardUrl, base, debug, boardLocations);
+
+    if (boardUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(boardUrl);
+    }
+
     this.#exit();
   }
 
-  async #run(url: string, base: URL, debug: boolean) {
+  async #run(url: string, base: URL, debug: boolean, boardLocations: string) {
     const { asRuntimeKit } = await import("@google-labs/breadboard");
     const { run } = await import("@google-labs/breadboard/harness");
 
@@ -254,11 +276,18 @@ export class BreadboardDebugRuntime extends EventEmitter {
                   return;
                 }
 
+                // Attempt to wrangle something ending in .json to a file path.
+                // FIXME: This is brittle and only works when user input is req.
+                let value = input.examples?.join("") ?? input.default ?? "";
+                if (value.endsWith(".json")) {
+                  value = new URL(`${boardLocations}/${value}`, base).href;
+                }
+
                 let userInput: NodeValue = await vscode.window.showInputBox({
                   title: input.title,
                   ignoreFocusOut: true,
                   prompt: input.description ?? input.title,
-                  value: input.examples?.join("") ?? input.default ?? "",
+                  value,
                 });
 
                 if (userInput === undefined) {

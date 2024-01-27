@@ -16,6 +16,8 @@ import * as readline from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
 import { VerboseLoggingProbe } from "./lib/verbose-logging-probe.js";
 import { RunOptions } from "./commandTypes.js";
+import { readFile } from "node:fs/promises";
+import { pathToFileURL } from "url";
 
 async function runBoard(
   board: BoardRunner,
@@ -45,7 +47,7 @@ async function runBoard(
     if (stop.type === "input") {
       const nodeInputs = stop.inputArguments;
       // we won't mutate the inputs.
-      const newInputs = inputs;
+      const newInputs = { ...board.args, ...inputs };
       const schema = nodeInputs.schema as Schema;
 
       /* 
@@ -59,29 +61,48 @@ async function runBoard(
           const properties = Object.entries(schema.properties);
 
           for (const [name, property] of properties) {
-            if (name in newInputs == false && "default" in property == false) {
-              // The required argument is not on the input *and* there is no default. Ask for it.
-              const answer = await rl.question(property.description + " ");
+            if (name in newInputs == false) {
+              let answer;
+              if ("default" in property == false) {
+                // The required argument is not on the input *and* there is no default. Ask for it.
+                answer = await rl.question(
+                  `(${name}) ${property.description}:`
+                );
+              } else {
+                answer = property.default;
+              }
 
               newInputs[name] = answer;
             }
           }
+          stop.inputs = newInputs;
         }
 
         rl.close();
       }
-
-      stop.inputs = newInputs;
     } else if (stop.type === "output") {
       console.log(stop.outputs);
     }
   }
 }
 
+const loadInputFile = async (filePath: string): Promise<InputValues> => {
+  const fileUrl = pathToFileURL(filePath);
+
+  return JSON.parse(
+    await readFile(fileUrl.pathname, { encoding: "utf-8" })
+  ) as InputValues;
+};
+
 export const run = async (file: string, options: RunOptions) => {
   const kitDeclarations = options.kit as string[] | undefined;
   const verbose = "verbose" in options;
-  const input = options.input ? (JSON.parse(options.input) as InputValues) : {};
+  // Prefer an input from a file over a string
+  const input = options.inputFile
+    ? await loadInputFile(options.inputFile)
+    : options.input
+    ? (JSON.parse(options.input) as InputValues)
+    : {};
 
   if (file != undefined) {
     const filePath = resolveFilePath(file);

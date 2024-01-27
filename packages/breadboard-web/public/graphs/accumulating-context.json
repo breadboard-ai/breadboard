@@ -96,7 +96,7 @@
             "generator": {
               "type": "string",
               "description": "Text generator to use",
-              "default": "/graphs/text-generator.json",
+              "default": "text-generator.json",
               "title": "Generator"
             }
           },
