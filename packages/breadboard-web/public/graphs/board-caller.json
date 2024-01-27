@@ -289,7 +289,7 @@
                     "id": "boardToFunction",
                     "type": "invoke",
                     "configuration": {
-                      "path": "/graphs/board-as-function.json"
+                      "path": "board-as-function.json"
                     }
                   },
                   {

@@ -50,13 +50,13 @@ const parameters = board.input({
         type: "board",
         title: "Text Generator",
         description: "The text generator to use for healing.",
-        default: "/graphs/text-generator.json",
+        default: "text-generator.json",
       },
       validator: {
         type: "board",
         title: "Text Validator",
         description: "The text validator to use for healing.",
-        default: "/graphs/json-validator.json",
+        default: "json-validator.json",
       },
       tries: {
         type: "number",

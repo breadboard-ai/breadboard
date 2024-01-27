@@ -97,7 +97,7 @@ export default await recipe(() => {
         // for each URL, invoke board-as-function.
         const boardToFunction = core.invoke({
           $id: "boardToFunction",
-          path: "/graphs/board-as-function.json",
+          path: "board-as-function.json",
           boardURL: item,
         });
         return {

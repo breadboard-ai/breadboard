@@ -80,6 +80,7 @@
       "id": "improver",
       "type": "invoke",
       "configuration": {
+        "path": "json-agent.json",
         "text": "Given the 3 point critique try to generate a new response.",
         "schema": {
           "type": "object",
@@ -89,14 +90,14 @@
               "description": "the ad copy"
             }
           }
-        },
-        "path": "/graphs/json-agent.json"
+        }
       }
     },
     {
       "id": "adExec",
       "type": "invoke",
       "configuration": {
+        "path": "json-agent.json",
         "text": "You are a Google Ads Search Professional. Given the above prompt and response, generate 3 point constructive critique of the response that I can action to make the output even better and more effective given the prompt.",
         "schema": {
           "type": "object",
@@ -109,14 +110,14 @@
               }
             }
           }
-        },
-        "path": "/graphs/json-agent.json"
+        }
       }
     },
     {
       "id": "adWriter2",
       "type": "invoke",
       "configuration": {
+        "path": "json-agent.json",
         "context": [],
         "schema": {
           "type": "object",
@@ -126,8 +127,7 @@
               "description": "the ad copy"
             }
           }
-        },
-        "path": "/graphs/json-agent.json"
+        }
       }
     },
     {
@@ -148,6 +148,7 @@
       "id": "requirementsExtractor2",
       "type": "invoke",
       "configuration": {
+        "path": "json-agent.json",
         "text": "Incorporate all feedback above into new, improved requirements",
         "schema": {
           "type": "object",
@@ -160,14 +161,14 @@
               }
             }
           }
-        },
-        "path": "/graphs/json-agent.json"
+        }
       }
     },
     {
       "id": "customer",
       "type": "invoke",
       "configuration": {
+        "path": "json-agent.json",
         "text": "Imagine you are a customer. You are a middle-aged homeowner from rural Midwest. You are overrun with ads and are weary of being scammed. You just want to work with someone local and trustworty. Review this and offer three improvements that would increase the likelihood of you trusting the ad.",
         "schema": {
           "type": "object",
@@ -180,14 +181,14 @@
               }
             }
           }
-        },
-        "path": "/graphs/json-agent.json"
+        }
       }
     },
     {
       "id": "adWriter",
       "type": "invoke",
       "configuration": {
+        "path": "json-agent.json",
         "text": "Write ad copy that conforms to the requirements above",
         "schema": {
           "type": "object",
@@ -197,14 +198,14 @@
               "description": "the ad copy"
             }
           }
-        },
-        "path": "/graphs/json-agent.json"
+        }
       }
     },
     {
       "id": "requiremenstExtractor",
       "type": "invoke",
       "configuration": {
+        "path": "json-agent.json",
         "context": [],
         "schema": {
           "type": "object",
@@ -217,8 +218,7 @@
               }
             }
           }
-        },
-        "path": "/graphs/json-agent.json"
+        }
       }
     },
     {

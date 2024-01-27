@@ -28,7 +28,7 @@ const inputSchema = {
       type: "board",
       title: "Text Generator",
       description: "The text generator to use for writing the tour guide",
-      examples: ["/graphs/text-generator.json"],
+      examples: ["text-generator.json"],
     },
   },
   required: ["location"],
