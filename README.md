@@ -16,7 +16,7 @@ This library's design emphasizes two key properties:
 
 ## Documentation
 
-The documentation is a bit of a work in progress. The best place to start Here are is the [Getting started guide](https://github.com/breadboard-ai/breadboard/blob/main/packages/breadboard/docs/fodder/happy-path.md), although it is still incomplete. Please bear with us as we bring our words up to speed with our thoughts/actions.
+The documentation is a bit of a work in progress. The best place to start is the [Getting started guide](https://github.com/breadboard-ai/breadboard/blob/main/packages/breadboard/docs/fodder/happy-path.md), although it is still incomplete. Please bear with us as we bring our words up to speed with our thoughts/actions.
 
 ## Monorepo
 
