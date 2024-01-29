@@ -7,7 +7,7 @@
 import { z } from "zod";
 import test from "ava";
 
-import { board, code } from "../../../src/new/recipe-grammar/recipe.js";
+import { board, code } from "../../../src/new/grammar/board.js";
 import { Serializeable } from "../../../src/new/runner/types.js";
 import {
   InputValues,

@@ -34,7 +34,7 @@ import { Schema } from "../../types.js";
 import { BaseNode } from "../runner/node.js";
 import { BuilderScope } from "./scope.js";
 import { Value, isValue } from "./value.js";
-import { isLambda } from "./recipe.js";
+import { isLambda } from "./board.js";
 
 export class BuilderNode<
     I extends InputValues = InputValues,

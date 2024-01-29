@@ -6,8 +6,8 @@
 
 import test from "ava";
 
-import { board, isLambda } from "../../../src/new/recipe-grammar/recipe.js";
-import { isValue } from "../../../src/new/recipe-grammar/value.js";
+import { board, isLambda } from "../../../src/new/grammar/board.js";
+import { isValue } from "../../../src/new/grammar/value.js";
 import { Serializeable } from "../../../src/new/runner/types.js";
 import {
   InputValues,

@@ -8,7 +8,7 @@ import test from "ava";
 
 import { z } from "zod";
 
-import { board, code } from "../../../src/new/recipe-grammar/recipe.js";
+import { board, code } from "../../../src/new/grammar/board.js";
 
 test("zod + graph, w/ nested code board", async (t) => {
   const graph = board(

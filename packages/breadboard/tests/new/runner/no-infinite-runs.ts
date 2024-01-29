@@ -6,7 +6,7 @@
 
 import test from "ava";
 
-import { board } from "../../../src/new/recipe-grammar/recipe.js";
+import { board } from "../../../src/new/grammar/board.js";
 
 import { testKit } from "../../helpers/_test-kit.js";
 
