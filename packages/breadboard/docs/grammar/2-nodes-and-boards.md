@@ -112,4 +112,4 @@ node!
 
 But this would be more useful if I can pass parameters. We’ll look at that next:
 
-Next: [Boards with inputs](3-recipes-with-inputs.md)
+Next: [Boards with inputs](3-boards-with-inputs.md)

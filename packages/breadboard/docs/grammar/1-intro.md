@@ -17,4 +17,4 @@ TODO: Maybe something about installing things. Recommending the `npm init` (or
 analogous) path, but also offering "install as libary" (implicitly as in how
 you'd add it to an existing project)
 
-Next: [Nodes and Boards](2-nodes-and-recipes.md)
+Next: [Nodes and Boards](2-nodes-and-boards.md)
