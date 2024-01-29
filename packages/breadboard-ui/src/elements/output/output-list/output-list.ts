@@ -8,6 +8,8 @@ import { HarnessRunResult } from "@google-labs/breadboard/harness";
 import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Output } from "../output.js";
+import { BoardError } from "../error.js";
+import { ErrorObject } from "@google-labs/breadboard";
 
 @customElement("bb-output-list")
 export class OutputList extends LitElement {
@@ -28,14 +30,34 @@ export class OutputList extends LitElement {
       return;
     }
 
-    const outputs: Output[] = [];
+    const outputs: Array<Output | BoardError> = [];
     for (let idx = 0; idx <= this.messagePosition; idx++) {
       const message = this.messages[idx];
-      if (!message || message.type !== "output") {
+      if (!message || (message.type !== "output" && message.type !== "error")) {
         continue;
       }
 
-      const output = new Output(message.data.outputs);
+      let output: Output | BoardError;
+      if (message.type === "output") {
+        output = new Output(message.data.outputs);
+      } else {
+        output = new BoardError();
+        if (typeof message.data.error === "string") {
+          output.message = message.data.error.toString();
+        } else {
+          let messageOutput = "";
+          let error = message.data.error;
+          while (typeof error === "object") {
+            if (error && "message" in error) {
+              messageOutput += `${error.message}\n`;
+            }
+
+            error = error.error as ErrorObject;
+          }
+
+          output.message = messageOutput;
+        }
+      }
       outputs.unshift(output);
     }
 
