@@ -1,8 +1,8 @@
 # Fetch ATOM Feed
 
-This recipe demonstrates how to convert a string to JSON so that it can be used in a Breadboard.
+This board demonstrates how to convert a string to JSON so that it can be used in a Breadboard.
 
-## Running the Recipe
+## Running the Board
 
 ### Inputs
 

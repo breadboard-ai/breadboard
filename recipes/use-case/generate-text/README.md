@@ -1,8 +1,8 @@
 # Generate Text
 
-This recipe demonstrates how to generate a text based on a prompt. By default it will use the PaLM API, but you can use any API that takes a prompt and returns a response.
+This board demonstrates how to generate a text based on a prompt. By default it will use the PaLM API, but you can use any API that takes a prompt and returns a response.
 
-## Running the Recipe
+## Running the Board
 
 ### Inputs
 
@@ -11,7 +11,7 @@ This recipe demonstrates how to generate a text based on a prompt. By default it
 
 ### Secrets
 
-This recipe requires the following secrets to be set to be exported as environment variables:
+This board requires the following secrets to be set to be exported as environment variables:
 
 - `PALM_KEY` - The key for the PaLM API.
 

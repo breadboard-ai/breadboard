@@ -1,6 +1,6 @@
-# Generate a board / recipe from an OpenAPI spec
+# Generate a board from an OpenAPI spec
 
-## Running the Recipe
+## Running the Board
 
 ```bash
 breadboard run recipes/tools/openapi/index.js --kit @google-labs/llm-starter --kit @google-labs/core-kit -i "{\"url\":\"https://api.apis.guru/v2/specs/apis.guru/2.2.0/openapi.json\"}"
@@ -14,6 +14,6 @@ breadboard run recipes/tools/openapi/index.js --kit @google-labs/llm-starter --k
 
 - board - The generated board that has a list of boards.
 
-## Compiling the recipe
+## Compiling the board
 
 `breadboard make recipes/tools/openapi/index.js >  recipes/tools/openapi/index.json`

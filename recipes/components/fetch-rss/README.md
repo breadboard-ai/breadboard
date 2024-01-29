@@ -1,8 +1,8 @@
 # Fetch RSS Feed
 
-This recipe demonstrates how to fetch an RSS feed return the items and metadata.
+This board demonstrates how to fetch an RSS feed return the items and metadata.
 
-## Running the Recipe
+## Running the Board
 
 ### Inputs
 

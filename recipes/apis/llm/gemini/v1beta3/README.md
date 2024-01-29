@@ -1,10 +1,10 @@
 # Gemini API
 
-This is a set of recipes that demonstrate how to use the Gemini API.
+This is a set of boards that demonstrate how to use the Gemini API.
 
 ## embedText
 
-### Running the Recipe
+### Running the Board
 
 ### Inputs
 

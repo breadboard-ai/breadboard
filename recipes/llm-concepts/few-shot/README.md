@@ -1,8 +1,8 @@
 # Few Shot
 
-This recipe demonstrates how to integrate few shot learning into a Breadboard using the PaLM API. While this can be done easily with a normal prompt, this board has two inputs: `few` and `prompt. This lets you more easily pull the two bits of data from two different sources
+This board demonstrates how to integrate few shot learning into a Breadboard using the PaLM API. While this can be done easily with a normal prompt, this board has two inputs: `few` and `prompt. This lets you more easily pull the two bits of data from two different sources
 
-## Running the Recipe
+## Running the Board
 
 ### Inputs
 
@@ -11,7 +11,7 @@ This recipe demonstrates how to integrate few shot learning into a Breadboard us
 
 ### Secrets
 
-This recipe requires the following secrets to be set to be exported as environment variables:
+This board requires the following secrets to be set to be exported as environment variables:
 
 - `PALM_KEY` - The key for the PaLM API.
 

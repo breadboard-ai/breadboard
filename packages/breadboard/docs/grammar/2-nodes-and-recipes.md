@@ -1,4 +1,4 @@
-# From nodes to recipes
+# From nodes to boards
 
 The core building block is a node. For convenience they come bundled in kits.
 
@@ -51,7 +51,7 @@ const result = await completion; // awaits the result of the entire chain
 (Sidebar: See how you can `await` the entire result or just individual fields.
 Either works.)
 
-We’ve just created the first recipe composed of two nodes!
+We’ve just created the first board composed of two nodes!
 
 This also works as one expression:
 
@@ -101,15 +101,15 @@ npx …
 And of course, you can use them in new places:
 
 ```ts
-import { recipe } from "breadboard-ai";
+import { board } from "breadboard-ai";
 
-const hello = recipe("hello.json");
+const hello = board("hello.json");
 const { completion } = await hello();
 ```
 
-So this is how you create reusable building blocks! Any recipe can be used as a
+So this is how you create reusable building blocks! Any board can be used as a
 node!
 
 But this would be more useful if I can pass parameters. We’ll look at that next:
 
-Next: [Recipes with inputs](3-recipes-with-inputs.md)
+Next: [Boards with inputs](3-recipes-with-inputs.md)

@@ -1,4 +1,4 @@
-# Recipes with inputs and output
+# Boards with inputs and output
 
 We can do this by adding an input node:
 
@@ -21,10 +21,10 @@ const { completion } = await hello({ name: "Universe" });
 just the `name` field to the next node. You can also omit `.name` there and then
 it’ll send all inputs)
 
-For convenience, we can directly build a recipe like this:
+For convenience, we can directly build a board like this:
 
 ```ts
-const hello = recipe(({ name }) => {
+const hello = board(({ name }) => {
   return starter
     .promptTemplate({ template: "Hello {{name}}, please ", name })
     .to(palm.generateText());
@@ -36,7 +36,7 @@ const { completion } = await hello({ name: "Universe" });
 // Or save it and load it again:
 await writeFile("hello.json", await hello.serialize());
 ...
-const hello = recipe("hello.json");
+const hello = board("hello.json");
 const { completion } = await hello();
 ```
 
@@ -49,6 +49,6 @@ more complex.
 
 TODO: Add Zod examples
 
-Next we’ll see how we can create recipes that are just regular code:
+Next we’ll see how we can create boards that are just regular code:
 
 Next: [Code as Nodes](4-code-as-nodes.md)

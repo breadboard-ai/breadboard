@@ -1,8 +1,8 @@
-# Recipes
+# Boards
 
-This directory contains recipes for Breadboard. Each recipe is a demonstration of what how you can use Breadboard to solve a particular problem. Many of these recipes can be included directly inside boards.
+This directory contains boards for Breadboard. Each board is a demonstration of what how you can use Breadboard to solve a particular problem. Many of these boards can be included directly inside boards.
 
-## Running a Recipe
+## Running a Board
 
 Note: If you have not already installed the breadboard CLI, you can do so by running the following command:
 
@@ -20,29 +20,29 @@ npm i
 
 You need to install all the deps, then build the CLI, then install the deps again to install the command. If you plan to run from the mono repo, prepend `npx` to the commands below.
 
-To run a recipe, run the following command from the root of the repository:
+To run a board, run the following command from the root of the repository:
 
 ```bash
-breadboard run recipes/<recipe-name>
+breadboard run recipes/<board-name>
 ```
 
 To run from the UI:
 
 ```bash
-breadboard debug recipes/<recipe-name>
+breadboard debug recipes/<board-name>
 ```
 
-## Creating a new Recipe
+## Creating a new Board
 
-To create a new recipe, create a new directory in this directory. The name of the directory should be the name of the recipe and should contain a `README.md` file that describes the recipe and a TypeScript file that contains the code for the recipe.
+To create a new board, create a new directory in this directory. The name of the directory should be the name of the board and should contain a `README.md` file that describes the board and a TypeScript file that contains the code for the board.
 
 TODO: Add more details here.
 
-## List of Recipes
+## List of Boards
 
 ### Use Cases
 
-A use case recipe is something that can be directly integrated into a Breadboard to solve a particular problem. These recipes are designed to be used as-is and have no dependencies on other recipes.
+A use case board is something that can be directly integrated into a Breadboard to solve a particular problem. These boards are designed to be used as-is and have no dependencies on other boards.
 
 - [Fetch RSS Feed](./use-case/fetch-rss/README.md)
 - [Fetch ATOM Feed](./use-case/fetch-atom/README.md)
@@ -53,7 +53,7 @@ A use case recipe is something that can be directly integrated into a Breadboard
 
 ### Concepts
 
-A concept recipe is something that demonstrates a particular concept in Breadboard, it might not be something that can be used directly in an application, but it is a good starting point.
+A concept board is something that demonstrates a particular concept in Breadboard, it might not be something that can be used directly in an application, but it is a good starting point.
 
 - [Accumulating Context](./concept/accumulating-context/README.md)
 - [Few-Shot Learning](./concept/few-shot/README.md)

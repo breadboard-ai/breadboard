@@ -1,8 +1,8 @@
 # Search Google
 
-This recipe demonstrates how to search Google using the Google Custom Search API.
+This board demonstrates how to search Google using the Google Custom Search API.
 
-## Running the Recipe
+## Running the Board
 
 ### Inputs
 
@@ -10,7 +10,7 @@ This recipe demonstrates how to search Google using the Google Custom Search API
 
 ### Secrets
 
-This recipe requires the following secrets to be set to be exported as environment variables:
+This board requires the following secrets to be set to be exported as environment variables:
 
 - `GOOGLE_CSE_ID` - The Google Custom Search Engine ID. You can get this from the [Google Custom Search Engine Console](https://cse.google.com/cse/all).
 - `PALM_KEY` - The key for the PaLM API.
