@@ -7,15 +7,15 @@
 /**
  * Closure
  *
- * When a `recipe()` turns into a closure because data is wired in, The behavior
+ * When a `board()` turns into a closure because data is wired in, The behavior
  * changes:
  *
- * As soon as the first input is wired to what is returned by `recipe()`, e.g.
- * by calling `myRecipe.in({ ...})` or `otherNode.to(myRecipe)`, a `closure`
- * node is being created (in the lexical scope where `recipe` was called), and
+ * As soon as the first input is wired to what is returned by `board()`, e.g.
+ * by calling `myBoard.in({ ...})` or `otherNode.to(myBoard)`, a `closure`
+ * node is being created (in the lexical scope where `board` was called), and
  * those wires go into it. The `closure` node will have a `$board` output,
  * formatted as `BoardCapability` that includes the serialized graph of the node
- * that the recipe was originally about and with all the incoming inputs in
+ * that the board was originally about and with all the incoming inputs in
  * `args` of the serialized graph.
  *
  * If passed as an input to another node, it appears as if it was a
@@ -34,8 +34,8 @@
  * If serialized, it'll return the graph hanging off the `invoke` node above.
  *
  * Note that if you want to return the serialized graph of the closure, then you
- * can create a recipe around the definition and return an output `{ myRecipe }`
- * and run the the outer recipe. This will compute the additional input values
- * and add them. `await`ing the output of the outer recipe automatically
+ * can create a board around the definition and return an output `{ myBoard }`
+ * and run the the outer board. This will compute the additional input values
+ * and add them. `await`ing the output of the outer board automatically
  * serializes the closure graph if it wasn't already.
  */

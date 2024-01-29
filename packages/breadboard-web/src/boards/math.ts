@@ -9,7 +9,7 @@ import { core } from "@google-labs/core-kit";
 import { templates } from "@google-labs/template-kit";
 
 const metadata = {
-  title: "The Calculator Recipe",
+  title: "The Calculator Board",
   description:
     "A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.",
   version: "0.0.2",

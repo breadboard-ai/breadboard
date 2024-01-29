@@ -194,7 +194,7 @@ export class Value<T extends NodeValue = NodeValue>
    * returns generic types but we want to narrow the types to what we know they
    * are, e.g. a parser node returning the result as raw wires.
    *
-   * This is also a way to define the schema of a recipe, e.g. by casting input
+   * This is also a way to define the schema of a board, e.g. by casting input
    * wires and what is returned.
    *
    * Use as `foo.asString()` or `foo.asNumber()`. `isArray` and `isObject` cast

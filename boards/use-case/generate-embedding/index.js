@@ -36,11 +36,11 @@ const embeddingScheme = {
 
 export default await board(() => {
   // Either use the default embedding provider or use a custom one (specified by provider)
-  const embeddingApi = code(({ provider, palmRecipe }) => {
+  const embeddingApi = code(({ provider, palmBoard }) => {
     // The provider must return a "embedding"
     if (provider === undefined || provider == ".") {
       return {
-        graph: palmRecipe,
+        graph: palmBoard,
       };
     }
     return { path: provider };
@@ -48,8 +48,8 @@ export default await board(() => {
 
   const input = base.input({ $id: "input", schema: embeddingScheme });
 
-  // Because `code` can't return a recipe, we have to create it here and then pass it in.
-  const palmRecipe = board(({ input }) => {
+  // Because `code` can't return a board, we have to create it here and then pass it in.
+  const palmBoard = board(({ input }) => {
     const secrets = starter.secrets({
       keys: ["PALM_KEY"],
     });
@@ -57,7 +57,7 @@ export default await board(() => {
   }).serialize();
 
   const embedding = embeddingApi({
-    palmRecipe,
+    palmBoard,
   });
 
   return input

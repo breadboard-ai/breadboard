@@ -191,7 +191,7 @@ test("simple inline code, explicit input and output, single parameter, pick", as
   t.like(result, { result: "bar!!" });
 });
 
-test("code recipe called from another recipe", async (t) => {
+test("code board called from another board", async (t) => {
   const add = code<{ a: number; b: number }, { result: number }>((inputs) => {
     const { a, b } = inputs;
     return { result: a + b };

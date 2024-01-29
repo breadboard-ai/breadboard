@@ -10,7 +10,7 @@ import { templates } from "@google-labs/template-kit";
 import { json } from "@google-labs/json-kit";
 
 const metadata = {
-  title: "The Search Summarizer Recipe",
+  title: "The Search Summarizer Board",
   description:
     "A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.",
   version: "0.1.1",

@@ -12,13 +12,13 @@ class ChunkTransformerOutput(SchemaObject):
   chunk: str = Field(description="The result of the Jsonata expression", title="result", required=True)
 class ChunkTransformerInput(SchemaObject):
   chunk: Union[str, SchemaObject] = Field(description="The JSON object to evaluate", title="json", required=True)
-  
+
 class Nursery_transformStream(Board):
   type = "transformStream"
   def describe(self, input):
     # TODO: Why doesn't this ever run? Load needs to happen in initializer.
     raise Exception("YOoo")
-  
+
     self.output = TransformOutput()
     return self.output
 
@@ -40,7 +40,7 @@ class ChunkTransformer(Board[ChunkTransformerInput ,ChunkTransformerOutput]):
 
 toolsExample = [
   {
-    "name": "The_Calculator_Recipe",
+    "name": "The_Calculator_Board",
     "description":
       "A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.",
     "parameters": {
@@ -55,7 +55,7 @@ toolsExample = [
     },
   },
   {
-    "name": "The_Search_Summarizer_Recipe",
+    "name": "The_Search_Summarizer_Board",
     "description":
       "A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.",
     "parameters": {
@@ -197,7 +197,7 @@ class OpenAiGpt_3_5_Turbo(Board[InputSchema, OutputSchema]):
     self.output.toolCallsOutput = AttrDict(toolCalls=self.getResponse.tool_calls, context=self.getNewContext.result)
     self.output.streamOutput = AttrDict(**{"*":self.streamTransform})
     return self.output
-  
+
 print("Starting")
 
 a = OpenAiGpt_3_5_Turbo()
@@ -224,7 +224,7 @@ def ordered(obj):
     return sorted([ordered(x) for x in obj], key=sort_fun)
   else:
     return obj
-    
+
 def revert_back(obj):
   if isinstance(obj, list):
     if len(obj) > 0 and isinstance(obj[0], tuple):
@@ -236,13 +236,13 @@ def revert_back(obj):
   else:
     return obj
 
-    
+
 import jsondiff
 from prettydiff import print_diff
 comparison_path = "/usr/local/google/home/kevxiao/breadboard/packages/breadboard-web/public/graphs/openai-gpt-35-turbo.json"
 with open(comparison_path) as f:
   expected = revert_back(ordered(json.load(f)))
-  
+
 actual = revert_back(ordered(json.loads(json.dumps(a))))
 print_diff(actual, expected)
 print(type(expected))

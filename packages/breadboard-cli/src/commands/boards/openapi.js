@@ -194,7 +194,7 @@ const generateAPISpecs = code(({ json }) => {
 /*
   Returns a lambda that will make a request to the given API. This is used in the `core.map` to create a board of boards for each API exposed on the OpenAPI spec.
 */
-const createSpecRecipe = board((apiSpec) => {
+const createSpecBoard = board((apiSpec) => {
   const output = base.output({});
 
   const createBoardInputs = code(({ item }) => {
@@ -448,6 +448,6 @@ export default await board(({ json }) => {
   // Get the Open API spec from the given URL.
   return validateIsOpenAPI({ $id: "isOpenAPI", json })
     .to(generateAPISpecs({ $id: "generateAPISpecs" }))
-    .to(core.map({ $id: "createFetchBoards", board: createSpecRecipe }))
+    .to(core.map({ $id: "createFetchBoards", board: createSpecBoard }))
     .to(convertBoardListToObject({ $id: "convertBoardListToObject" }));
 }).serialize(metaData);

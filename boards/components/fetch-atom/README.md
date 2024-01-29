@@ -1,6 +1,6 @@
 # Fetch ATOM Feed
 
-This recipe demonstrates how to fetch an ATOM feed return the items and metadata.
+This board demonstrates how to fetch an ATOM feed return the items and metadata.
 
 ## Running the Board
 

@@ -35,7 +35,7 @@ import { BuilderNode } from "./node.js";
 import { BuilderScope } from "./scope.js";
 
 /**
- * Implementation of the overloaded recipe function.
+ * Implementation of the overloaded board function.
  */
 export const recipe: BoardFactory = (
   optionsOrFn:
@@ -60,7 +60,7 @@ export const board = recipe;
 
 /**
  * Explicit implementations of the overloaded variants, also splitting
- * graph generation and code recipes.
+ * graph generation and code boards.
  */
 export const code = <
   I extends InputValues = InputValues,
@@ -92,7 +92,7 @@ function lambdaFactory(
   const lexicalScope = getCurrentContextScope();
   const closureEdgesToWire: ClosureEdge[] = [];
 
-  // Extract recipe metadata from config. Used in serialize().
+  // Extract board metadata from config. Used in serialize().
   const { url, title, description, version } = options ?? {};
   const configMetadata: GraphMetadata = {
     ...(url ? { url } : {}),

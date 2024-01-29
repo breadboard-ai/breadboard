@@ -12,7 +12,7 @@ import { board } from "../../../src/new/grammar/board.js";
 
 import { testKit } from "../../helpers/_test-kit.js";
 
-test("metadata in recipe constructor", async (t) => {
+test("metadata in board constructor", async (t) => {
   const graph = board(
     {
       input: z.object({ foo: z.string() }),

@@ -14,7 +14,7 @@ const REPO_URL =
 const tools = new Board();
 
 // Include a a `search-summarize` breadboard from a URL.
-// The `$id` and `description` are important, because they help ReAct recipe
+// The `$id` and `description` are important, because they help ReAct board
 // figure out the purpose of each tool.
 const search = tools.include(`${REPO_URL}/search-summarize.json`, {
   $id: "search",
@@ -31,7 +31,7 @@ const math = tools.include(`${REPO_URL}/math.json`, {
 
 // Wire the breadboard:
 // - Wire input to the `search` and `math` include nodes.
-// - Additionally, wire input to `reflect` node, which allows the ReAct recipe
+// - Additionally, wire input to `reflect` node, which allows the ReAct board
 // to introspect the graph (and get access to `description` and `$id`
 // properties above)
 // - Finally, wire the all of the nodes to outputs.

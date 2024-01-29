@@ -182,7 +182,7 @@ export const TestKit = new KitBuilder({
    * streams.
    */
   streamer: async () => {
-    const words = "Breadboard is a project that helps you make AI recipes.";
+    const words = "Breadboard is a project that helps you make AI boards.";
     const stream = new ReadableStream({
       start(controller) {
         for (const word of words.split(" ")) {
@@ -194,7 +194,7 @@ export const TestKit = new KitBuilder({
     return { stream: new StreamCapability(stream) };
   },
   /**
-   * Unsafe JS runner. Needed to test serializing recipes that are pure code.
+   * Unsafe JS runner. Needed to test serializing boards that are pure code.
    */
   runJavascript: async (inputs) => {
     const { code, name, raw, ...rest } = inputs;
@@ -229,7 +229,7 @@ export const MirrorUniverseKit = new KitBuilder({
 });
 
 /**
- * Recipe grammar versions of the above, with types.
+ * Board grammar versions of the above, with types.
  */
 import {
   addKit,

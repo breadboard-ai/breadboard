@@ -39,7 +39,7 @@ either
 - add a URL to the kit, e.g. `makeKit({ name: “myExample”, url: “https://…”},
 {...})`
 - add a destination path, e.g. `await reverseHello.serialize({ baseURI:
-recipes/” })`
+boards/” })`
 
 (TODO: should we also add `serializeAndWriteFile` that automatically figures out
 the paths?)

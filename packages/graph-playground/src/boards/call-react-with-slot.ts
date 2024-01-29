@@ -13,7 +13,7 @@ import { Core } from "@google-labs/core-kit";
  */
 
 /**
- * Creates a breadboard that wires up a bunch of useful tools for ReAct recipe
+ * Creates a breadboard that wires up a bunch of useful tools for ReAct board
  * to use.
  * @returns a `tools` breadboard
  */
@@ -22,7 +22,7 @@ const tools = () => {
   const core = tools.addKit(Core);
 
   // Include a a `search-summarize` breadboard from a URL.
-  // The `$id` and `description` are important, because they help ReAct recipe
+  // The `$id` and `description` are important, because they help ReAct board
   // figure out the purpose of each tool.
   const search = core.include({
     path: "search-summarize.json",
@@ -41,7 +41,7 @@ const tools = () => {
 
   // Wire the board:
   // - Wire input to the `search` and `math` include nodes.
-  // - Additionally, wire input to `reflect` node, which allows the ReAct recipe
+  // - Additionally, wire input to `reflect` node, which allows the ReAct board
   // to introspect the graph (and get access to `description` and `$id`
   // properties above)
   // - Finally, wire the all of the nodes to outputs.
@@ -66,7 +66,7 @@ const core = board.addKit(Core);
 
 // Include the `react-with-slot` board from a URL, wiring input to it.
 // Slot the `tools` board into the `tools` slot.
-// This is how the ReAct recipe will consume the `tools` board we created
+// This is how the ReAct board will consume the `tools` board we created
 // above.
 board
   .input({

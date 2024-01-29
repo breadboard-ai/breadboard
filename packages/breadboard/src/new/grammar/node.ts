@@ -283,8 +283,8 @@ export class BuilderNode<
   // here), everything else is the same, but really just the first few lines
   // here.
   async serializeNode(): Promise<[NodeDescriptor, GraphDescriptor?]> {
-    // HACK: See recipe.getClosureNode() and
-    // recipe.getBoardCapabilityAsValue() for why this is needed. There we
+    // HACK: See board.getClosureNode() and
+    // board.getBoardCapabilityAsValue() for why this is needed. There we
     // create a node that has a board capability as input, but serializing the
     // graph is async, while node creation isn't. So we wait until here to
     // await the serialized BoardCapability. To fix: Make node factories a
@@ -500,8 +500,8 @@ export class BuilderNode<
   ): PromiseLike<TResult1 | TResult2> {
     if (this.#scope.serializing())
       throw new Error(
-        `Can't \`await\` on ${this.id} in recipe declaration. ` +
-          `Did you mean to use \`code\` instead of \`recipe\`?`
+        `Can't \`await\` on ${this.id} in board declaration. ` +
+          `Did you mean to use \`code\` instead of \`board\`?`
       );
     try {
       // It's ok to call this multiple times: If it already run it'll only do

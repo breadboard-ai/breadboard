@@ -37,11 +37,11 @@ const generateTextScheme = {
 
 export default await board(() => {
   // Either use the default embedding provider or use a custom one (specified by provider)
-  const generateTextFactory = code(({ provider, palmRecipe }) => {
+  const generateTextFactory = code(({ provider, palmBoard }) => {
     // The provider must return a "text_response"
     if (provider === undefined || provider == ".") {
       return {
-        graph: palmRecipe,
+        graph: palmBoard,
       };
     }
     return { path: provider };
@@ -49,8 +49,8 @@ export default await board(() => {
 
   const input = base.input({ $id: "input", schema: generateTextScheme });
 
-  // Because `code` can't return a recipe, we have to create it here and then pass it in.
-  const palmRecipe = board(({ prompt }) => {
+  // Because `code` can't return a board, we have to create it here and then pass it in.
+  const palmBoard = board(({ prompt }) => {
     const secrets = starter.secrets({
       keys: ["PALM_KEY"],
     });
@@ -58,7 +58,7 @@ export default await board(() => {
   }).serialize();
 
   const generateText = generateTextFactory({
-    palmRecipe,
+    palmBoard,
   });
 
   return input

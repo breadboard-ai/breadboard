@@ -93,9 +93,9 @@ export default {
           type: "object",
         },
         $board: {
-          title: "recipe",
+          title: "board",
           description:
-            "The recipe to invoke. Can be a BoardCapability, a graph or a URL",
+            "The board to invoke. Can be a BoardCapability, a graph or a URL",
           type: "string", // TODO: Make this a union type
         },
       })

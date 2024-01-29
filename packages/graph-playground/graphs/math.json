@@ -1,5 +1,5 @@
 {
-  "title": "The Calculator Recipe",
+  "title": "The Calculator Board",
   "description": "A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.",
   "version": "0.0.1",
   "edges": [
@@ -48,9 +48,7 @@
               "description": "Ask a math question"
             }
           },
-          "required": [
-            "text"
-          ]
+          "required": ["text"]
         }
       }
     },
@@ -85,9 +83,7 @@
               "description": "The answer to the math problem"
             }
           },
-          "required": [
-            "text"
-          ]
+          "required": ["text"]
         }
       }
     },
@@ -95,9 +91,7 @@
       "id": "secrets-1",
       "type": "secrets",
       "configuration": {
-        "keys": [
-          "PALM_KEY"
-        ]
+        "keys": ["PALM_KEY"]
       }
     }
   ],
