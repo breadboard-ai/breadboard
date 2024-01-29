@@ -39,4 +39,4 @@
 
 #### Defined in
 
-[server.ts:82](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard-server/src/server.ts#L82)
+[server.ts:78](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard-server/src/server.ts#L78)

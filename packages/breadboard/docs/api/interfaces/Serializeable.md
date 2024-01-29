@@ -30,4 +30,4 @@
 
 #### Defined in
 
-[packages/breadboard/src/new/runner/types.ts:51](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/new/runner/types.ts#L51)
+[packages/breadboard/src/new/runner/types.ts:51](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/runner/types.ts#L51)

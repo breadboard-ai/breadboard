@@ -69,7 +69,7 @@ Acts as bridge between Breadboard and the generic graph validation code.
 
 #### Defined in
 
-[validator.ts:78](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/validator.ts#L78)
+[validator.ts:78](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/validator.ts#L78)
 
 ## Properties
 
@@ -79,7 +79,7 @@ Acts as bridge between Breadboard and the generic graph validation code.
 
 #### Defined in
 
-[validator.ts:73](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/validator.ts#L73)
+[validator.ts:73](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/validator.ts#L73)
 
 ___
 
@@ -89,7 +89,7 @@ ___
 
 #### Defined in
 
-[validator.ts:75](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/validator.ts#L75)
+[validator.ts:75](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/validator.ts#L75)
 
 ___
 
@@ -99,7 +99,7 @@ ___
 
 #### Defined in
 
-[validator.ts:74](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/validator.ts#L74)
+[validator.ts:74](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/validator.ts#L74)
 
 ___
 
@@ -109,7 +109,7 @@ ___
 
 #### Defined in
 
-[validator.ts:76](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/validator.ts#L76)
+[validator.ts:76](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/validator.ts#L76)
 
 ___
 
@@ -119,7 +119,7 @@ ___
 
 #### Defined in
 
-[validator.ts:72](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/validator.ts#L72)
+[validator.ts:72](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/validator.ts#L72)
 
 ## Methods
 
@@ -149,7 +149,7 @@ BreadboardValidator.addGraph
 
 #### Defined in
 
-[validator.ts:109](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/validator.ts#L109)
+[validator.ts:109](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/validator.ts#L109)
 
 ___
 
@@ -171,7 +171,7 @@ Add a policy to validate graphs against.
 
 #### Defined in
 
-[validator.ts:99](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/validator.ts#L99)
+[validator.ts:99](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/validator.ts#L99)
 
 ___
 
@@ -191,7 +191,7 @@ ___
 
 #### Defined in
 
-[validator.ts:151](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/validator.ts#L151)
+[validator.ts:151](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/validator.ts#L151)
 
 ___
 
@@ -221,7 +221,7 @@ BreadboardValidator.getSubgraphValidator
 
 #### Defined in
 
-[validator.ts:141](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/validator.ts#L141)
+[validator.ts:141](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/validator.ts#L141)
 
 ___
 
@@ -251,7 +251,7 @@ BreadboardValidator.getValidatorMetadata
 
 #### Defined in
 
-[validator.ts:123](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/validator.ts#L123)
+[validator.ts:123](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/validator.ts#L123)
 
 ___
 
@@ -273,7 +273,7 @@ Insert a new graph into this graph.
 
 #### Defined in
 
-[validator.ts:163](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/validator.ts#L163)
+[validator.ts:163](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/validator.ts#L163)
 
 ___
 
@@ -287,4 +287,4 @@ ___
 
 #### Defined in
 
-[validator.ts:322](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/validator.ts#L322)
+[validator.ts:322](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/validator.ts#L322)
