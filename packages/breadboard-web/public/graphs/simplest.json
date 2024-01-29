@@ -1,6 +1,6 @@
 {
-  "title": "The simplest LLM-based recipe",
-  "description": "This recipe is as simple as it gets: takes text as input and invokes Gemini to generate a text response as output.",
+  "title": "The simplest LLM-based board",
+  "description": "This board is as simple as it gets: takes text as input and invokes Gemini to generate a text response as output.",
   "version": "0.0.3",
   "edges": [
     {
