@@ -22,13 +22,13 @@ This board requires the following secrets to be set to be exported as environmen
 ### From the CLI
 
 ```bash
-breadboard run recipes/use-case/generate-embedding/index.js --kit @google-labs/llm-starter --kit @google-labs/core-kit --kit @google-labs/palm-kit -i "{\"input\":\"Testing\"}"
+breadboard run boards/use-case/generate-embedding/index.js --kit @google-labs/llm-starter --kit @google-labs/core-kit --kit @google-labs/palm-kit -i "{\"input\":\"Testing\"}"
 ```
 
 ### From the UI
 
 ```bash
-breadboard debug recipes/use-case/generate-embedding/index.js
+breadboard debug boards/use-case/generate-embedding/index.js
 ```
 
 ## Code

@@ -4,7 +4,7 @@ This board demonstrates how to integrate RAG into a Breadboard application. It d
 
 ## Compiling the board
 
-`breadboard make recipes/llm-concepts/rag-query/index.js > recipes/llm-concepts/rag-query/index.json`
+`breadboard make boards/llm-concepts/rag-query/index.js > boards/llm-concepts/rag-query/index.json`
 
 ## Running the Board
 
@@ -28,13 +28,13 @@ This board may require secrets to be set for the APIs that the embedding, rag, a
 This board requires a lot of input boards, so it's easier to test from the repository.
 
 ```bash
-breadboard run recipes/llm-concepts/rag-query/index.js --kit @google-labs/llm-starter --kit @google-labs/core-kit -i "{\"query\":\"Testing\"}"
+breadboard run boards/llm-concepts/rag-query/index.js --kit @google-labs/llm-starter --kit @google-labs/core-kit -i "{\"query\":\"Testing\"}"
 ```
 
 ### From the UI
 
 ```bash
-breadboard debug recipes/use-case/rag-query/index.js
+breadboard debug boards/use-case/rag-query/index.js
 ```
 
 ### Testing from the CLI
@@ -42,13 +42,13 @@ breadboard debug recipes/use-case/rag-query/index.js
 Because this board requires a lot of input boards, you can test this directly from the repository by running the following commands (note you need to have absolute paths to the boards):
 
 ```bash
-breadboard run recipes/llm-concepts/rag-query/index.js --kit @google-labs/llm-starter --kit @google-labs/core-kit -i "{\"query\":\"Testing\", \"embeddingBoardPath\":\"./test-harness/embedding.json\",\"ragBoardPath\":\"./test-harness/retrieve.json\",\"generateTextBoardPath\":\"./test-harness/generate-text.json\"}"
+breadboard run boards/llm-concepts/rag-query/index.js --kit @google-labs/llm-starter --kit @google-labs/core-kit -i "{\"query\":\"Testing\", \"embeddingBoardPath\":\"./test-harness/embedding.json\",\"ragBoardPath\":\"./test-harness/retrieve.json\",\"generateTextBoardPath\":\"./test-harness/generate-text.json\"}"
 ```
 
 JSON board:
 
 ```bash
-breadboard run recipes/llm-concepts/rag-query/index.json --kit @google-labs/llm-starter --kit @google-labs/core-kit -i "{\"query\":\"Testing\", \"embeddingBoardPath\":\"./test-harness/embedding.json\",\"ragBoardPath\":\"./test-harness/retrieve.json\",\"generateTextBoardPath\":\"./test-harness/generate-text.json\"}"
+breadboard run boards/llm-concepts/rag-query/index.json --kit @google-labs/llm-starter --kit @google-labs/core-kit -i "{\"query\":\"Testing\", \"embeddingBoardPath\":\"./test-harness/embedding.json\",\"ragBoardPath\":\"./test-harness/retrieve.json\",\"generateTextBoardPath\":\"./test-harness/generate-text.json\"}"
 ```
 
 ## Code

@@ -16,13 +16,13 @@ This board demonstrates how to fetch an RSS feed return the items and metadata.
 ### From the CLI
 
 ```bash
-breadboard run recipes/components/fetch-rss/index.js --kit @google-labs/llm-starter -i {\"url\":\"https://paul.kinlan.me/index.xml\"}"
+breadboard run boards/components/fetch-rss/index.js --kit @google-labs/llm-starter -i {\"url\":\"https://paul.kinlan.me/index.xml\"}"
 ```
 
 ### From the UI
 
 ```bash
-breadboard debug recipes/components/fetch-rss/index.js
+breadboard debug boards/components/fetch-rss/index.js
 ```
 
 ## Code

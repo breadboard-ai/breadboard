@@ -3,7 +3,7 @@ import { base, board, code } from "@google-labs/breadboard";
 import { starter } from "@google-labs/llm-starter";
 import { core } from "@google-labs/core-kit";
 
-// To run this: npx breadboard run recipes/tools/openapi/tests/openai.js --kit @google-labs/llm-starter --kit @google-labs/core-kit -i "{\"url\":\"https://raw.githubusercontent.com/breadboard-ai/breadboard/c371c2cd5aca33673e30fc647c920228752e41ee/recipes/tools/openapi/tests/specs/openai.json\"}"
+// To run this: npx breadboard run boards/tools/openapi/tests/openai.js --kit @google-labs/llm-starter --kit @google-labs/core-kit -i "{\"url\":\"https://raw.githubusercontent.com/breadboard-ai/breadboard/c371c2cd5aca33673e30fc647c920228752e41ee/recipes/tools/openapi/tests/specs/openai.json\"}"
 
 // YAML Open AI - https://raw.githubusercontent.com/openai/openai-openapi/master/openapi.yaml => https://raw.githubusercontent.com/breadboard-ai/breadboard/c371c2cd5aca33673e30fc647c920228752e41ee/recipes/tools/openapi/tests/specs/openai.json
 

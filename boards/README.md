@@ -23,13 +23,13 @@ You need to install all the deps, then build the CLI, then install the deps agai
 To run a board, run the following command from the root of the repository:
 
 ```bash
-breadboard run recipes/<board-name>
+breadboard run boards/<board-name>
 ```
 
 To run from the UI:
 
 ```bash
-breadboard debug recipes/<board-name>
+breadboard debug boards/<board-name>
 ```
 
 ## Creating a new Board

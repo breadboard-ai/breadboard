@@ -20,7 +20,7 @@ If splat: true, the root properties of the JSON object will be available as outp
 ### From the CLI
 
 ```bash
-breadboard run recipes/components/convert-string-to-json/index.js -i "{\"string\":\"{\\\"a\\\": [1,2,3,4]}\"}" --kit @google-labs/llm-starter --kit @google-labs/core-kit
+breadboard run boards/components/convert-string-to-json/index.js -i "{\"string\":\"{\\\"a\\\": [1,2,3,4]}\"}" --kit @google-labs/llm-starter --kit @google-labs/core-kit
 ```
 
 The result will be on the `json` property of the output.
@@ -28,14 +28,14 @@ The result will be on the `json` property of the output.
 You can also splat the results to the output, so the root properties of the object can be accessed directly from a board.
 
 ```bash
-breadboard run recipes/components/convert-string-to-json/index.js -i "{\"string\":\"{\\\"a\\\": [1,2,3,4]}\",\"splat\":
+breadboard run boards/components/convert-string-to-json/index.js -i "{\"string\":\"{\\\"a\\\": [1,2,3,4]}\",\"splat\":
 true}" --kit @google-labs/llm-starter --kit @google-labs/core-kit
 ```
 
 ### From the UI
 
 ```bash
-breadboard debug recipes/components/convert-string-to-json/index.js
+breadboard debug boards/components/convert-string-to-json/index.js
 ```
 
 ## Code

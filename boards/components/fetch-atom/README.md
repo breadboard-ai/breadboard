@@ -16,13 +16,13 @@ This recipe demonstrates how to fetch an ATOM feed return the items and metadata
 ### From the CLI
 
 ```bash
-breadboard run recipes/components/fetch-atom/index.js --kit @google-labs/llm-starter -i {\"url\":\"https://blog.chromium.org/feeds/posts/default\"}"
+breadboard run boards/components/fetch-atom/index.js --kit @google-labs/llm-starter -i {\"url\":\"https://blog.chromium.org/feeds/posts/default\"}"
 ```
 
 ### From the UI
 
 ```bash
-breadboard debug recipes/components/fetch-atom/index.js
+breadboard debug boards/components/fetch-atom/index.js
 ```
 
 ## Code

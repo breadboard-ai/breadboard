@@ -1,7 +1,7 @@
 import { base, board, code } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 
-// To run this: npx breadboard run recipes/tools/openapi/tests/index.js --kit @google-labs/llm-starter --kit @google-labs/core-kit -i "{\"url\":\"https://api.apis.guru/v2/specs/apis.guru/2.2.0/openapi.json\"}"
+// To run this: npx breadboard run boards/tools/openapi/tests/index.js --kit @google-labs/llm-starter --kit @google-labs/core-kit -i "{\"url\":\"https://api.apis.guru/v2/specs/apis.guru/2.2.0/openapi.json\"}"
 
 const metaData = {
   title: "Create a board from an Open API spec",

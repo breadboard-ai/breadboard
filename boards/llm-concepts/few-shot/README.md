@@ -22,13 +22,13 @@ This board requires the following secrets to be set to be exported as environmen
 ### From the CLI
 
 ```bash
-breadboard run recipes/llm-concepts/few-shot/index.js --kit @google-labs/llm-starter --kit @google-labs/palm-kit -i "{\"few\": [\"Great product, 10/10: positive\", \"Didn't work very well: negative\", \"Super helpful, worth it: positive\"], \"promptText\": \"This is great:\" }" --kit @google-labs/llm-starter --kit @google-labs/core-kit --kit @google-labs/palm-kit
+breadboard run boards/llm-concepts/few-shot/index.js --kit @google-labs/llm-starter --kit @google-labs/palm-kit -i "{\"few\": [\"Great product, 10/10: positive\", \"Didn't work very well: negative\", \"Super helpful, worth it: positive\"], \"promptText\": \"This is great:\" }" --kit @google-labs/llm-starter --kit @google-labs/core-kit --kit @google-labs/palm-kit
 ```
 
 ### From the UI
 
 ```bash
-breadboard debug recipes/llm-concepts/few-shot/index.js
+breadboard debug boards/llm-concepts/few-shot/index.js
 ```
 
 ## Code

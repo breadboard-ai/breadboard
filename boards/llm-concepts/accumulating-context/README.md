@@ -20,7 +20,7 @@ Depending on the Text Generator you use, you may need to provide additional inpu
 An example using an external board to interact with PaLM
 
 ```bash
-breadboard run recipes/llm-concepts/accumulating-context/index.js --kit @google-labs/core-kit --kit @google-labs/llm-starter --kit @google-labs/palm-kit
+breadboard run boards/llm-concepts/accumulating-context/index.js --kit @google-labs/core-kit --kit @google-labs/llm-starter --kit @google-labs/palm-kit
 ```
 
 When prompted for the Text generator to use, enter `./packages/breadboard-web/dist/graphs/text-generator.json`. If you use this graph, you also have to set an environment variable `PALM_KEY` to the API key for PaLM.
@@ -32,7 +32,7 @@ The Text generator listed above will then ask "The model to use for generation",
 ### From the UI
 
 ```bash
-breadboard debug recipes/use-case/fetch-rss/index.js
+breadboard debug boards/use-case/fetch-rss/index.js
 ```
 
 ## Mermaid
