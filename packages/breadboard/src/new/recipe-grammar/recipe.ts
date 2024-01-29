@@ -56,6 +56,8 @@ export const recipe: RecipeFactory = (
   return lambdaFactory(options);
 };
 
+export const board = recipe;
+
 /**
  * Explicit implementations of the overloaded variants, also splitting
  * graph generation and code recipes.

@@ -29,7 +29,7 @@ export {
 
 // New Syntax:
 export { Runner } from "./new/runner/runner.js";
-export { recipe, code } from "./new/recipe-grammar/recipe.js";
+export { recipe, recipe as board, code } from "./new/recipe-grammar/recipe.js";
 export { addKit } from "./new/recipe-grammar/kits.js";
 export { base } from "./new/recipe-grammar/base.js";
 export type {
