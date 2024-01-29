@@ -5,6 +5,7 @@ If you're eager to start making boards with Breadboard as quickly as possible, h
 ## Getting started
 
 > [!WARNING]
+>
 > Neither onboarding via Replit nor installing locally are ready yet. While they are baking, follow these steps for an in-tree setup:
 >
 > - Check out and set up the monorepo following steps in [DEVELOPING.md](https://github.com/breadboard-ai/breadboard/blob/main/DEVELOPING.md#getting-started)
@@ -53,7 +54,7 @@ This will start the Breadboard debugger and give you a link to open it in the br
 
 ## Building a board
 
-Every board has a bit of a boilerplate, and the project we just set up contains a blank board that's basically just that. Let's begin with it.
+Every board has a bit of a boilerplate, and the project we just set up contains a blank board that's basically just that. We'll use it as our starting point.
 
 Open `src/boards/blank.ts` in your editor window and navigate to the "Blank board" board in the debugger.
 
@@ -71,7 +72,11 @@ export default await recipe(({ text }) => {
 });
 ```
 
-> [!NOTE] > **What's going on here?**
+(TODO: point at the visualizer in the debugger -- it shows input and output)
+
+> [!NOTE]
+>
+> **What's going on here?**
 >
 > It might be worth going over this code to orient ourselves a little bit:
 >
@@ -93,6 +98,16 @@ In the debugger window, we can see that the board asks for the `text` input. If 
 
 > [!TIP]
 > This "bags of named input and output ports" pattern is very common in Breadboard. Within a board, passing data means connecting output ports to input ports.
+
+> [!TIP]
+> If the `({ text })` stuff looks a little weird to you, it's a fairly recent feature of Javascript/Typescript called "[destructuring assignment](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment)". The `({text})` expression can also be written in this more familiar way:
+>
+> ```ts
+> export default await recipe((inputs) => {
+>   const text = inputs.text;
+>   return { text: text };
+> }
+> ```
 
 ### Making a new board
 
@@ -143,6 +158,8 @@ Let's connect it to the output by appending a property named `number` to the `ou
 
 Now, saving the file pops up a new input field! And when we enter the values, the result appears in the output. Wahoo!
 
+(TODO: Point out that visualizer also shows text and number)
+
 > [!TIP]
 > Please treat the immediacy of "hot reload" in the debugger as an invitation to play and experiment with the board. Change things, see what happens. It's easy to hit "undo" in the editor and get back to the previous state.
 
@@ -179,7 +196,7 @@ A handy trick is to use the `examples` method to provide an example value for th
 
 ### Adding nodes
 
-We have a working board, but it isn't exactly useful. Let's see if we can add a node to it and make it actually do something.
+We have a working board, but it isn't exactly useful. Let's see if we can add a node to it and make our board actually _do_ something.
 
 > [!NOTE]
 > "Nodes" are the key concept in Breadboard. Each node has a set of input and output ports, and it uses the input ports to produce the ouput ports. Typically, a node encapsulates a unit of functionality. In turn, a board is composed of one or more nodes, connecting input and output ports of these nodes to orchestrate whatever a board wants to do.
@@ -204,7 +221,9 @@ We will also need to update TypeScript imports in this file to include the `code
 +import { code, recipe } from "@google-labs/breadboard";
 ```
 
-> [!NOTE] > **What's going on here?**
+> [!NOTE]
+>
+> **What's going on here?**
 >
 > Just like before, we will go over this bit of code to orient ourselves:
 >
@@ -247,6 +266,8 @@ Now, let's run this recipe.
 
 Voila! We have a board that reverses a string.
 
+(TODO: Point out that the debugger shows a new node.)
+
 As an additional exercise, we'll create another node type: a repeater. A repeater takes in a `text` port and a `number` port and returns the value of the `text` port repeated the numbers of times specified in the `number` port.
 
 Try writing it yourself. Or just copy it from here:
@@ -280,17 +301,74 @@ Now, when we run the board in the debugger, we will see the output titled "Rever
 
 (TODO: screenshot of the debugger showing reveresed and repeated text)
 
+(TODO: Point out that the visualizer shows repeat and reverse nodes)
+
+For completeness, here's the full code of our board so far:
+
+```ts
+import { code, recipe } from "@google-labs/breadboard";
+
+const reverse = code(({ text }) => {
+  const reversed = (text as string).split("").reverse().join("");
+  return { reversed };
+});
+
+const repeat = code(({ text, number }) => {
+  const repeated = (text as string).repeat(number as number);
+  return { repeated };
+});
+
+export default await recipe(({ text, number }) => {
+  text
+    .title("Text")
+    .description("A description of the text")
+    .examples("Hello, world!");
+  number
+    .title("Number")
+    .description("A description of the number")
+    .examples("4");
+  const { reversed } = reverse({ text });
+  const { repeated } = repeat({ text: reversed, number });
+  return { text: repeated.title("Reversed and repeated text") };
+}).serialize({
+  title: "Blank board",
+  description: "A blank board. Use it to start a new board",
+  version: "0.0.1",
+});
+```
+
 (TODO: talk about isolation and inability to reference to other variables outside of `code`.)
 
-### Use kits
+### Using kits
 
-TODO: Introduce kits. Show how to import a kit and use it in a board.
+So far, we've been rolling nodes by hand. It's fun, but it's not the only way to add nodes in Breadboard. The other way is to use kits.
 
-TODO: Introduce the concept of a node as a thing that's part of a kit.
+Kits are collections of ready-made node factory functions for all types of nodes. Typically, kits are organized by purpose.
 
-Use [nodes and recipes](https://github.com/breadboard-ai/breadboard/blob/main/packages/breadboard/docs/grammar/2-nodes-and-recipes.md) to build out this chapter.
+For example, there's a [template kit](https://github.com/breadboard-ai/breadboard/tree/main/packages/template-kit), which contains node types that help with templating: `promptTemplate` and `urlTemplate`.
 
-TODO: Brief overview of useful kits and nodes:
+To import a kit, install the npm package that contains it and import it into your board:
+
+```ts
+import { templates } from "@google-labs/template-kit";
+```
+
+Then, use the various node factory functions in your board:
+
+```ts
+const { prompt } = templates.promptTemplate({
+  template: "Hello {{text}}!",
+  text,
+});
+```
+
+Each node type expects its own set of inputs and produces various outptus to serve its purpose. The `promptTemplate` above helps manipulating strings using a simple handlebar-style syntax.
+
+A required input port is `template`, which is expected to be a string that contains zero or more placeholders to be replaced with values from other input ports. Specify placeholders as `{{inputName}}` in the template. The placeholders in the template must match the input ports connceted to node. The node will replace all placeholders with values from the inputs and pass the result along as the `prompt` output property port.
+
+Here's a whistlestop tour of the kits and node types they provide:
+
+(TODO: Add descriptions for each node in the list)
 
 - `core` kit
   - `invoke` node
@@ -306,10 +384,7 @@ TODO: Brief overview of useful kits and nodes:
   - `jsonata` node
   - `xmlToJson` node
 
-TODO: Guide the reader to build a board that uses promptTemplate to embed reversed string into a template.
-
-Important pattern: treat inputs and outputs as property bags.
-Explain destructuring and spread of properties.
+(TODO: Guide the reader to build a board that uses promptTemplate to embed reversed string into a template.)
 
 ```ts
 // ...
@@ -320,7 +395,7 @@ const { prompt } = starter.promptTemplate({
 });
 ```
 
-TODO: Encourage using `$id` that describes the purpose of the node.
+(TODO: Encourage using `$id` that describes the purpose of the nod).
 
 ### Reuse boards
 
