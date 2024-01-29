@@ -16,7 +16,7 @@ import {
 import {
   InputValues,
   OutputValues,
-  RecipeFactory,
+  BoardFactory,
   NodeProxyHandlerFunction,
   InputsForGraphDeclaration,
   GraphDeclarationFunction,
@@ -37,7 +37,7 @@ import { BuilderScope } from "./scope.js";
 /**
  * Implementation of the overloaded recipe function.
  */
-export const recipe: RecipeFactory = (
+export const recipe: BoardFactory = (
   optionsOrFn:
     | ({
         input?: z.ZodType;
@@ -249,7 +249,7 @@ function lambdaFactory(
     else
       return new BuilderNode("invoke", getCurrentContextScope(), {
         ...config,
-        $recipe: lambdaNode.asProxy().board,
+        $board: lambdaNode.asProxy().board,
       });
   }) as Lambda;
 
@@ -325,7 +325,7 @@ function lambdaFactory(
         return await serialized;
 
       const invoke = new BuilderNode("invoke", getCurrentContextScope(), {
-        $recipe: lambdaNode?.asProxy().board,
+        $board: lambdaNode?.asProxy().board,
       });
 
       return invoke.serialize({ ...configMetadata, ...metadata });

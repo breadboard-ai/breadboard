@@ -126,7 +126,7 @@ export type Lambda<
   O extends OutputValues = OutputValues
 > = NodeFactory<I, O> & Serializeable & ClosureNodeInterface;
 
-export interface RecipeFactory {
+export interface BoardFactory {
   /**
    * Creates a node factory for a node type that invokes a handler function.
    * This version infers the types from the function.

@@ -185,7 +185,7 @@ export class Value<T extends NodeValue = NodeValue>
   invoke(config?: BuilderNodeConfig): NodeProxy {
     return new BuilderNode("invoke", this.#scope, {
       ...config,
-      $recipe: this,
+      $board: this,
     }).asProxy();
   }
 

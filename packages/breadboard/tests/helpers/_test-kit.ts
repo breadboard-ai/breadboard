@@ -62,23 +62,23 @@ export const TestKit = new KitBuilder({
    */
   invoke: {
     invoke: async (inputs: InvokeInputValues, context: NodeHandlerContext) => {
-      const { $recipe, ...args } = inputs;
+      const { $board, ...args } = inputs;
       const base = context.base || new URL(import.meta.url);
 
-      if ($recipe) {
+      if ($board) {
         const board =
-          ($recipe as BreadboardCapability).kind === "board"
+          ($board as BreadboardCapability).kind === "board"
             ? await Board.fromBreadboardCapability(
-                $recipe as BreadboardCapability
+                $board as BreadboardCapability
               )
-            : typeof $recipe === "string"
-            ? await Board.load($recipe, {
+            : typeof $board === "string"
+            ? await Board.load($board, {
                 base,
                 outerGraph: context.outerGraph,
               })
             : undefined;
 
-        if (!board) throw new Error("Must provide valid $recipe to invoke");
+        if (!board) throw new Error("Must provide valid $board to invoke");
 
         return await board.runOnce(args, context);
       } else {
@@ -104,10 +104,10 @@ export const TestKit = new KitBuilder({
       // nodes of inline supplied graphs (no loading), and use their schemas.
       let graph: GraphDescriptor | undefined = undefined;
       if (
-        inputs?.$recipe &&
-        (inputs?.$recipe as BreadboardCapability).kind === "board"
+        inputs?.$board &&
+        (inputs?.$board as BreadboardCapability).kind === "board"
       ) {
-        graph = (inputs?.$recipe as BreadboardCapability).board;
+        graph = (inputs?.$board as BreadboardCapability).board;
       } else if (
         inputs?.board &&
         (inputs.board as BreadboardCapability).kind === "board"
