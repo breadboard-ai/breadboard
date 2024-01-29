@@ -1,8 +1,17 @@
 # Breadboard Developer Happy Path
 
-If you're eager to start making boards with Breadboard as quickly as possible, here's a yellow brick road that will take you there. It's not quite a tutorial, but more like a step-by-step onboarding guide with the best practices baked in.
+If you're eager to start making boards with Breadboard as quickly as possible, here's a yellow brick road that will take you there. It's not quite a tutorial, but more like a step-by-step onboarding guide with some of the best practices baked in.
 
 ## Getting started
+
+> [!WARNING]
+> Neither onboarding via Replit nor installing locally are ready yet. While they are baking, follow these steps for an in-tree setup:
+>
+> - Check out and set up the monorepo following steps in [DEVELOPING.md](https://github.com/breadboard-ai/breadboard/blob/main/DEVELOPING.md#getting-started)
+>
+> - Navigate to `packages/breadboard-web` from the root of the repo
+>
+> - Pick back up at "Set up the environment".
 
 There are two ways to get started with Breadboard: fork a Replit project or install Breadboard locally.
 
@@ -18,9 +27,17 @@ Go to Breadboard Replit Project (TOOD: URL) and click "Fork". This will create r
 
 This will create a simple starter project that contains most of the bits you need to build AI recipes.
 
-### Set up the developer environment
+### Set up the environment
 
-To start developing, run:
+Breadboard relies on the "hot reload" developer experience pattern to ease rapid iteration and learning-by-playing. The best experience with "hot reload" is when we position our code editor window side-by-side with the Breadboard debugger window:
+
+![Breadboard debugger and editor side-by-side](./breadboard-hot-reload-diagram.png)
+
+When we save our board file in the code editor, the debugger will automatically reload and let us interact with the board.
+
+We recommend [VSCode](https://code.visualstudio.com/) for the code editor, but any code editor should work with "hot reload".
+
+To start the debugger, run:
 
 ```bash
 npm run dev
@@ -28,19 +45,17 @@ npm run dev
 
 This will start the Breadboard debugger and give you a link to open it in the browser.
 
-Breadboard relies on the "hot reload" developer experience pattern to make it easy to iterate and learn-by-playing. You are going to have the best experience with "hot reload" when you use position your editor window side-by-side with the Breadboard debugger window:
+(TODO: screenshot of the debugger tile view)
 
-![Breadboard debugger and editor side-by-side](./breadboard-hot-reload-diagram.png)
+(TOD: overview of the debugger)
 
-When you save your board file in the editor, the debugger will automatically reload and let you interact with the board.
-
-Once you have both windows situated side-by-side, we are ready to start building.
+![Debugger overview](./debugger-overview.png)
 
 ## Building a board
 
-Every board has a bit of a boilerplate, and your starter project contains a blank board that's basically just boilerplate. Let's start with that.
+Every board has a bit of a boilerplate, and the project we just set up contains a blank board that's basically just that. Let's begin with it.
 
-Open `src/boards/blank.ts` in your editor window and navigate to the "Blank" board in the debugger.
+Open `src/boards/blank.ts` in your editor window and navigate to the "Blank board" board in the debugger.
 
 The blank board will look something like this:
 
@@ -56,32 +71,59 @@ export default await recipe(({ text }) => {
 });
 ```
 
-### What's going on here?
-
-It might be worth going over this code to orient ourselves a little bit:
-
-- the `recipe` function is how we create a new board. It takes a function as an argument. This is where we describe the board -- let's call it a "board function".
-
-- The board function takes a single argument (let's call it "inputs") and returns a single argument ("outputs"). These arguments are objects that describe the inputs and outputs of the board.
-
-- Both input and output are of the same shape: they are property bags that contain named properties. For example, the blank board has a single input called `text` and a single output called `text` -- and that input is passed through to the output.
-
-- The `serialize` function is then called on the result of the `recipe`. This serializes the board into Breadboard Graph Language (BGL), which is the common format that Breadboard uses to represent boards.
-
-- The `serialize` function also takes as an argument an object that describes the board. This is where we can set the title, description, and version of the board. Since we'll be (here's hoping!) making many boards in the future, it's a good practice to give meaningful values to these properties.
-
-Behind the scenes, debugger scans for all the files in `src/boards`, looks for the `default` export in each file, serializes it as BGL, and renders the BGL in the debugger. This is why we see the "Blank" board in the debugger window.
+> [!NOTE] > **What's going on here?**
+>
+> It might be worth going over this code to orient ourselves a little bit:
+>
+> - The `recipe` call is how we tell Breadboard to create a new board. It takes a function as an argument. This function (let's call it a "board function") is where we describe the board.
+>
+> - The board function itself takes a single argument (let's call it "inputs") and returns a single argument, which we'll call "outputs". These arguments are the objects that describe the inputs and outputs of our new board.
+>
+> - Both input and output are of the same shape: they are property bags that contain named properties. Each property is a "port" -- one value that the board takes in as input or passes as output. For example, the blank board has a single input port called `text` and a single output port called `text` -- and that input port is passed right through to the output port.
+>
+> - The `serialize` function is then called on the result of the `recipe` invocation. This will serialize the board into Breadboard Graph Language (BGL). BGL is the [common format](./hourglass.md) that Breadboard uses to represent boards.
+>
+> - The `serialize` function also takes a single argument: some metadata that describes the board. This is where we can set the title, description, and version of the board. Since we'll be making many boards in the future, it's a good practice to give meaningful values to these properties.
+>
+> - Behind the scenes, debugger scans for all the files in `src/boards`, looks for the `default` export in each file, serializes it as BGL, and then renders the BGL in the debugger. This is why we see the "Blank" board in the debugger window.
 
 In the debugger window, we can see that the board asks for the `text` input. If we enter something there, and hit "Run", we'll see that what we entered gets passed through to the output.
 
-> [!TIP]
-> This "bags of named inputs and outputs" pattern is very common in Breadboard. Within a board, passing data means connecting named properties from outputs to the properties in inputs.
+(TODO: screenshot of the finished run)
 
-### Play with inputs and outputs
+> [!TIP]
+> This "bags of named input and output ports" pattern is very common in Breadboard. Within a board, passing data means connecting output ports to input ports.
+
+### Making a new board
 
 To get a better sense of how debugger and code editor interact, let's play with the board a little bit to get a feel for it.
 
-Let's add another input to the board by appending a property named `number` to the `inputs` object:
+First, we'll make a copy of a blank board to create a clean slate. Make a copy of the file named `src/boards/blank.ts` and give it a name that feels right to you, like `src/boards/fun.ts`.
+
+In debugger, when we navigate back to the list of boards, we will see two "Blank board" tiles.
+
+(TODO: screenshot of the debugger with two blank boards)
+
+To distinguish between the two, we can use the metadata passed to
+the `serialize` function. In our new board file, change the title and description to your liking:
+
+```diff
+}).serialize({
+-  title: "Blank board",
++  title: "My first board",
+-  description: "A blank board. Use it to start a new board",
++  description: "I am learning how to use Breadboard here",
+  version: "0.0.1",
+});
+```
+
+When we save the file in the code editor, the tile representing our new board will change to reflect our edits. Now, click on that tile to open the board in debuggger.
+
+(TODO: screenshot of new board open in debugger)
+
+### Adding inputs and outputs
+
+Next, let's add another input port to the board by appending a property named `number` to the arguments of the `recipe` function:
 
 ```diff
 - export default await recipe(({ text }) => {
@@ -101,9 +143,12 @@ Let's connect it to the output by appending a property named `number` to the `ou
 
 Now, saving the file pops up a new input field! And when we enter the values, the result appears in the output. Wahoo!
 
-Please treat the immediacy of "hot reload" in the debugger as an invitation to play and experiment with the board. Change things, see what happens. It's easy to hit "undo" in the editor and get back to the previous state.
+> [!TIP]
+> Please treat the immediacy of "hot reload" in the debugger as an invitation to play and experiment with the board. Change things, see what happens. It's easy to hit "undo" in the editor and get back to the previous state.
 
-Let's try one more thing: give the inputs and outputs nice names and descriptions. We can do that by adding a `title` and `description` property to each input and output:
+### Describing inputs
+
+Let's try one more thing: give our inputs nice names and descriptions. We can do that by adding a `title` and `description` property to each input and output:
 
 ```diff
 export default await recipe(({ text, number }) => {
@@ -113,64 +158,129 @@ export default await recipe(({ text, number }) => {
 
 When we save the file, we'll see that the debugger now shows our titles and descriptions for the input fields.
 
-We can do the same thing with the outputs:
-
-```diff
-+ text.title("Text Output");
-+ number.title("Number Output");
-return { text, number };
-```
+(TODO: screenshot of the inputs with titles/descriptions)
 
 A handy trick is to use the `examples` method to provide an example value for the input. This is especially useful for quick debugging of boards, since it fills in the input fields. No need to type, just hit "run".
 
 ```diff
 - text.title("Text").description("A description of the text");
-+ text.title("Text").description("A description of the text").examples("Hello, world!");
++ text
++   .title("Text")
++   .description("A description of the text")
++   .examples("Hello, world!");
++ number
++   .title("Number")
++   .description("A description of the number")
++   .examples("4");
 ```
 
 > [!TIP]
 > The `title`, `description`, and `example` methods are just a few ways to describe inputs and outputs. We'll see more of them later. The thing to know now is that when serialized to BGL, these descriptions are preserved as [JSON Schema](https://json-schema.org/).
 
-TODO: Show how to describe outputs using this pattern (adapt examples to the flow of this guide):
+### Adding nodes
 
-```ts
-// declare inputs in the recipe function
-export default await recipe(({ text, generator, context, stopSequences }) => {
-  // describe inputs like so:
-  text.title("Text").examples(`example goes here`).format("multiline");
-  generator.title("Generator").examples("gemini-generator.json");
-  context.title("Context").isArray().examples("[]");
-  stopSequences.title("Stop Sequences").isArray().optional().default("[]");
-  // rest of the board goes here
-  // ...
+We have a working board, but it isn't exactly useful. Let's see if we can add a node to it and make it actually do something.
+
+> [!NOTE]
+> "Nodes" are the key concept in Breadboard. Each node has a set of input and output ports, and it uses the input ports to produce the ouput ports. Typically, a node encapsulates a unit of functionality. In turn, a board is composed of one or more nodes, connecting input and output ports of these nodes to orchestrate whatever a board wants to do.
+
+Both boards and nodes follow the same inputs/outputs pattern. A good way to think of is as more atomic, indivisible units of functionality compared to boards.
+
+To make this more concrete, let's add this bit of code just before the `recipe` invocation:
+
+```diff
++const reverse = code(({ text }) => {
++  const reversed = (text as string).split("").reverse().join("");
++  return { reversed };
++});
+
+export default await recipe(({ text, number }) => {
 ```
 
-TODO: Show how to describe outputs using this pattern:
+We will also need to update TypeScript imports in this file to include the `code` function:
 
-```ts
-// ...
-// at the end of the board, describe outputs ...
-result
-  .title("Context")
-  .isObject()
-  .description("Agent context after generation");
-output.title("Output").isString().description("Agent's output");
-
-// ... and return them
-return { result, output };
+```diff
+-import { recipe } from "@google-labs/breadboard";
++import { code, recipe } from "@google-labs/breadboard";
 ```
 
-TODO: Throughout this chapter, show how input and output descriptions are reflected in the debugger.
+> [!NOTE] > **What's going on here?**
+>
+> Just like before, we will go over this bit of code to orient ourselves:
+>
+> - the `code` function is how we ask Breadboard to create a new type of node.
+>
+> - just like the `recipe` function, it takes a single input: the "node function" that describes what the node will do.
+>
+> - The node function takes in the inputs bag of ports and returns the output ports. In our node, there's one input port named `text` and one output port named `reversed`.
+>
+> - the one-liner that actually does the work reverses the value of the `text` port. Note that we need to typecast it as `string`. By default, the type ports are unknown.
+>
+> - finally, we return the `reversed` value as part of the outputs.
 
-### Make it do something useful
+It looks like creating new node types is pretty straightforward. Let's see if we can add it to the board.
 
-TODO: Introduce the `code` function. Lead with that, rather than nodes. Make a simple board that uses `code` to generate a random number or reverse a string.
+To do so, we will change our board to add the newly minted type of node. But how?
 
-Use [code as nodes](https://github.com/breadboard-ai/breadboard/blob/main/packages/breadboard/docs/grammar/4-code-as-nodes.md) to build out this chapter.
+The result of calling `code` is a special function -- let's call it a "node factory". A node factory can be used to create many instances of the node. We have this function assigned to the `reverse` constant. All we need to do is call it from inside of the board, passing it the right ports as inputs and grabbing the output ports.
 
-At the end of this chapter, we should have a running board that reverses a string.
+Like this:
 
-Victory dance.
+```diff
+export default await recipe(({ text, number }) => {
+  text
+    .title("Text")
+    .description("A description of the text")
+    .examples("Hello, world!");
+  number
+    .title("Number")
+    .description("A description of the number")
+    .examples("4");
++ const { reversed } = reverse({ text });
+- return { text, number };
++ return { reversed, number };
+```
+
+Now, let's run this recipe.
+
+(TODO: Screenshot of a debugger with results of a reversed string)
+
+Voila! We have a board that reverses a string.
+
+As an additional exercise, we'll create another node type: a repeater. A repeater takes in a `text` port and a `number` port and returns the value of the `text` port repeated the numbers of times specified in the `number` port.
+
+Try writing it yourself. Or just copy it from here:
+
+```ts
+const repeat = code(({ text, number }) => {
+  const repeated = (text as string).repeat(number as number);
+  return { repeated };
+});
+```
+
+To add an instance of the repeater node, call the node factory and connect it to the ports.
+
+Also, we will remove the `number` from outputs, since we now actually consume and use it by the `repeat` node instance.
+
+```diff
+  const { reversed } = reverse({ text });
++  const { repeated } = repeat({ text: reversed, number });
+-  return { reversed, number  };
++  return { repeated };
+```
+
+Just to add a bit of flourish, we can also decorate the output with a title, just like we did with the output:
+
+```diff
+- return { repeated }
++ return { text: repeated.title("Reversed and repeated text") };
+```
+
+Now, when we run the board in the debugger, we will see the output titled "Reveresed and repeated text", which contains our input reversed and repeated.
+
+(TODO: screenshot of the debugger showing reveresed and repeated text)
+
+(TODO: talk about isolation and inability to reference to other variables outside of `code`.)
 
 ### Use kits
 
