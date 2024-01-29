@@ -6,6 +6,6 @@ You can create and edit boards directly in the `boards/` folder and the changes 
 
 ## Running the boards from the command line
 
-You can also run the boards directly on the command line with `npm run recipe --recipe=<path-to-board>`.
+You can also run the boards directly on the command line with `npm run board --board=<path-to-board>`.
 
-By default the `npm run recipe` command will include a number of the default kits (e.g, `@google-labs/core-kit`), if you want to use some custom kits, then you can add them to the command line with `npm run recipe --recipe=<path-to-board> -- --kit <kit-name> --kit <kit-name>`.
+By default the `npm run board` command will include a number of the default kits (e.g, `@google-labs/core-kit`), if you want to use some custom kits, then you can add them to the command line with `npm run board --board=<path-to-board> -- --kit <kit-name> --kit <kit-name>`.

@@ -69,8 +69,8 @@ const run = async () => {
       // these will merge with scripts like `test` from `npm init`
       scripts: {
         debug: "npx breadboard debug boards/ -o boards/ --watch",
-        recipe:
-          "npx breadboard run $npm_config_recipe --kit @google-labs/template-kit --kit @google-labs/core-kit --kit @google-labs/json-kit --kit @google-labs/palm-kit",
+        board:
+          "npx breadboard run $npm_config_board --kit @google-labs/template-kit --kit @google-labs/core-kit --kit @google-labs/json-kit --kit @google-labs/palm-kit",
       },
       files: ["dist/src"],
     },
