@@ -108,7 +108,7 @@ export class BuilderNode<
     const nodes: [AbstractNode, KeyMap, boolean, Schema | undefined][] = [];
 
     Object.entries(values).forEach(([key, value]) => {
-      // This turns something returned by recipe() into a BoardCapability, which
+      // This turns something returned by board() into a BoardCapability, which
       // is going to be either a Promise for a BoardCapability (assigned to
       // constants below) or an AbstractValue to one.
       if (isLambda(value))
@@ -190,7 +190,7 @@ export class BuilderNode<
     if (out === "*" || out === "")
       throw new Error("Can't use * or empty wires from parent scopes");
 
-    // Save for recipe() to add to the graph later
+    // Save for board() to add to the graph later
     this.#scope.addClosureEdge({
       scope: fromScope,
       from: from as BuilderNode,

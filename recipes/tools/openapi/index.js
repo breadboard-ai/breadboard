@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { base, recipe, code } from "@google-labs/breadboard";
+import { base, board, code } from "@google-labs/breadboard";
 import { starter } from "@google-labs/llm-starter";
 import { core } from "@google-labs/core-kit";
 
@@ -202,12 +202,12 @@ const generateAPISpecs = code(({ json }) => {
 /*
   Returns a lambda that will make a request to the given API. This is used in the `core.map` to create a board of boards for each API exposed on the OpenAPI spec.
 */
-const createSpecRecipe = recipe((api) => {
+const createSpecRecipe = board((api) => {
   const output = base.output({});
   api.item.to(output);
   return api.item
     .to(
-      recipe(() => {
+      board(() => {
         const getItem = code((itemToSplat) => {
           const { api_inputs } = itemToSplat;
           const { method, parameters, secrets, requestBody } = itemToSplat.item;
@@ -342,7 +342,7 @@ const convertBoardListToObject = code(({ list }) => {
   return { ...operations };
 });
 
-export default await recipe(() => {
+export default await board(() => {
   const input = base.input({ $id: "input", schema: inputSchema });
 
   // Get the Open API spec from the given URL

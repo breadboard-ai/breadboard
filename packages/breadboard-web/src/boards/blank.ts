@@ -1,6 +1,6 @@
-import { recipe } from "@google-labs/breadboard";
+import { board } from "@google-labs/breadboard";
 
-export default await recipe(({ text }) => {
+export default await board(({ text }) => {
   return { text };
 }).serialize({
   title: "Blank board",

@@ -1,10 +1,10 @@
-import { base, recipe } from "@google-labs/breadboard";
+import { base, board } from "@google-labs/breadboard";
 
 import { core } from "@google-labs/core-kit";
 import { starter } from "@google-labs/llm-starter";
 
 /*
-To run this: 
+To run this:
 
 1. Create an environment variable called MISTRAL_API_KEY with your API key
 2. npx breadboard run createEmbedding.js --kit @google-labs/core-kit --kit @google-labs/llm-starter -i "{ \"api_inputs\": {
@@ -31,7 +31,7 @@ const metaData = {
 /*
  Note currently the tool to generate the OpenAPI spec does not support the security Scheme, therefore secrets will not work, you have to use an input called key.
 */
-export default await recipe(() => {
+export default await board(() => {
   const input = base.input({ $id: "input" });
 
   return core.invoke({

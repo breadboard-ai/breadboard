@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { base, recipe } from "@google-labs/breadboard";
+import { base, board } from "@google-labs/breadboard";
 import { starter } from "@google-labs/llm-starter";
 
 const metaData = {
@@ -26,7 +26,7 @@ const queryScheme = {
   required: ["text"],
 };
 
-export default await recipe(() => {
+export default await board(() => {
   const query = base.input({ $id: "input", schema: queryScheme });
 
   return starter

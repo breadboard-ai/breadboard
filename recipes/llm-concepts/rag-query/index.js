@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { base, recipe, code } from "@google-labs/breadboard";
+import { base, board, code } from "@google-labs/breadboard";
 import { starter } from "@google-labs/llm-starter";
 import { core } from "@google-labs/core-kit";
 
@@ -60,7 +60,7 @@ const outputSchema = {
   },
 };
 
-export default await recipe(() => {
+export default await board(() => {
   const input = base.input({ $id: "input", schema: inputSchema });
 
   const generateQueryEmbedding = core.invoke({
@@ -78,11 +78,11 @@ export default await recipe(() => {
 
   const prompt = starter.promptTemplate({
     template: `Answer the question as truthfully as possible using the provided context, and if don't have the answer, say "I don't know" and suggest looking for this information elsewhere.
-    
+
 Context: {{candidate}}
-  
+
 Question: {{query}}
-  
+
 Answer:`,
   });
 

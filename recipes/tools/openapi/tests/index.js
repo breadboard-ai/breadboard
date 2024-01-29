@@ -1,4 +1,4 @@
-import { base, recipe, code } from "@google-labs/breadboard";
+import { base, board, code } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 
 // To run this: npx breadboard run recipes/tools/openapi/tests/index.js --kit @google-labs/llm-starter --kit @google-labs/core-kit -i "{\"url\":\"https://api.apis.guru/v2/specs/apis.guru/2.2.0/openapi.json\"}"
@@ -9,7 +9,7 @@ const metaData = {
   version: "0.0.3",
 };
 
-export default await recipe(() => {
+export default await board(() => {
   const input = base.input({ $id: "input" });
 
   const apiBoard = core.invoke({ path: "../index.json", url: input.url });

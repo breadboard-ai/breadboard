@@ -7,7 +7,7 @@
 import { z } from "zod";
 import test from "ava";
 
-import { recipe, code } from "../../../src/new/recipe-grammar/recipe.js";
+import { board, code } from "../../../src/new/recipe-grammar/recipe.js";
 import { Serializeable } from "../../../src/new/runner/types.js";
 import {
   InputValues,
@@ -27,7 +27,7 @@ async function serializeAndRunGraph(
 }
 
 test("simplest graph", async (t) => {
-  const graph = recipe((inputs) => {
+  const graph = board((inputs) => {
     return testKit.noop(inputs);
   });
   const result = await serializeAndRunGraph(graph, { foo: "bar" });
@@ -35,7 +35,7 @@ test("simplest graph", async (t) => {
 });
 
 test("simplest graph, spread", async (t) => {
-  const graph = recipe((inputs) => {
+  const graph = board((inputs) => {
     return testKit.noop({ ...inputs });
   });
   const result = await serializeAndRunGraph(graph, { foo: "bar" });
@@ -43,7 +43,7 @@ test("simplest graph, spread", async (t) => {
 });
 
 test("simplest graph, pick input", async (t) => {
-  const graph = recipe((inputs) => {
+  const graph = board((inputs) => {
     return testKit.noop({ foo: inputs.foo });
   });
   const result = await serializeAndRunGraph(graph, { foo: "bar" });
@@ -51,7 +51,7 @@ test("simplest graph, pick input", async (t) => {
 });
 
 test("simplest graph, pick input and output", async (t) => {
-  const graph = recipe((inputs) => {
+  const graph = board((inputs) => {
     const { foo } = testKit.noop({ foo: inputs.foo });
     return { foo };
   });
@@ -60,7 +60,7 @@ test("simplest graph, pick input and output", async (t) => {
 });
 
 test("two nodes, spread", async (t) => {
-  const graph = recipe<{ [key: string]: string }>((inputs) => {
+  const graph = board<{ [key: string]: string }>((inputs) => {
     const reverser = testKit.reverser({ ...inputs });
     return testKit.noop({ ...reverser });
   });
@@ -69,7 +69,7 @@ test("two nodes, spread", async (t) => {
 });
 
 test("simple inline code", async (t) => {
-  const graph = recipe<{ a: number; b: number }, { result: number }>(
+  const graph = board<{ a: number; b: number }, { result: number }>(
     (inputs) => {
       return code<{ a: number; b: number }, { result: number }>(
         async (inputs) => {
@@ -85,7 +85,7 @@ test("simple inline code", async (t) => {
 });
 
 test("simple inline code, declare and cast types w/o contradiction", async (t) => {
-  const graph = recipe<{ a: number; b: number }, { result: number }>(
+  const graph = board<{ a: number; b: number }, { result: number }>(
     (inputs) => {
       return {
         result: code<{ a: number; b: number }, { result: number }>(
@@ -103,7 +103,7 @@ test("simple inline code, declare and cast types w/o contradiction", async (t) =
 });
 
 test("simple inline code, cast types and infer in TypeScript", async (t) => {
-  const graph = recipe((inputs) => {
+  const graph = board((inputs) => {
     return {
       result: code(({ a, b }) => {
         // TODO: Get rid of this extra cast, it shouldn't be necessary
@@ -118,7 +118,7 @@ test("simple inline code, cast types and infer in TypeScript", async (t) => {
 });
 
 test("simple inline code, single parameter", async (t) => {
-  const graph = recipe<{ number: number }, { result: number }>((inputs) => {
+  const graph = board<{ number: number }, { result: number }>((inputs) => {
     return code<{ number: number }>((inputs) => {
       return { result: -inputs.number };
     })(inputs);
@@ -129,7 +129,7 @@ test("simple inline code, single parameter", async (t) => {
 });
 
 test("simple inline code, single parameter, pick", async (t) => {
-  const graph = recipe<{ number: number }, { result: number }>(({ number }) => {
+  const graph = board<{ number: number }, { result: number }>(({ number }) => {
     return code<{ number: number }>((inputs) => {
       return { result: -inputs.number };
     })(number);
@@ -140,7 +140,7 @@ test("simple inline code, single parameter, pick", async (t) => {
 });
 
 test("simple inline code, explicit input and output, single parameter", async (t) => {
-  const graph = recipe((_, base) => {
+  const graph = board((_, base) => {
     const inputs = base.input({
       schema: {
         properties: { foo: { type: "string" } },
@@ -159,7 +159,7 @@ test("simple inline code, explicit input and output, single parameter", async (t
 });
 
 test("simple inline code, explicit input and output, single parameter, no schema", async (t) => {
-  const graph = recipe((_, base) => {
+  const graph = board((_, base) => {
     const inputs = base.input();
     const neg = code(({ foo }) => {
       return { result: `${foo}!!` };
@@ -173,7 +173,7 @@ test("simple inline code, explicit input and output, single parameter, no schema
 });
 
 test("simple inline code, explicit input and output, single parameter, pick", async (t) => {
-  const graph = recipe((_, base) => {
+  const graph = board((_, base) => {
     const inputs = base.input({
       schema: {
         properties: { foo: { type: "string" } },
@@ -197,7 +197,7 @@ test("code recipe called from another recipe", async (t) => {
     return { result: a + b };
   });
 
-  const graph = recipe<{ a: number; b: number }, { result: number }>(
+  const graph = board<{ a: number; b: number }, { result: number }>(
     (inputs) => {
       return add({ a: inputs.a, b: inputs.b });
     }
@@ -208,7 +208,7 @@ test("code recipe called from another recipe", async (t) => {
 });
 
 test("nested inline action, with schema", async (t) => {
-  const graph = recipe(
+  const graph = board(
     {
       input: z.object({
         a: z.number().describe("A: One Number"),

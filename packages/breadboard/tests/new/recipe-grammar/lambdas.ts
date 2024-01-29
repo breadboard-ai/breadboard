@@ -6,7 +6,7 @@
 
 import test from "ava";
 
-import { recipe, isLambda } from "../../../src/new/recipe-grammar/recipe.js";
+import { board, isLambda } from "../../../src/new/recipe-grammar/recipe.js";
 import { isValue } from "../../../src/new/recipe-grammar/value.js";
 import { Serializeable } from "../../../src/new/runner/types.js";
 import {
@@ -28,11 +28,11 @@ async function serializeAndRunGraph(
 }
 
 test("simplest lambda", async (t) => {
-  const graph = recipe(({ foo }) => {
-    const lambda = recipe((inputs) => testKit.noop(inputs));
+  const graph = board(({ foo }) => {
+    const lambda = board((inputs) => testKit.noop(inputs));
     t.true(isLambda(lambda));
     t.false(isLambda(testKit.noop({})));
-    const caller = recipe(({ lambda, foo }) => {
+    const caller = board(({ lambda, foo }) => {
       return lambda.invoke({ foo });
     });
     return caller({ lambda, foo });
@@ -43,10 +43,10 @@ test("simplest lambda", async (t) => {
 });
 
 test("simplest lambda, direct call, no invoke()", async (t) => {
-  const graph = recipe(({ foo }) => {
-    const lambda = recipe((inputs) => testKit.noop(inputs));
+  const graph = board(({ foo }) => {
+    const lambda = board((inputs) => testKit.noop(inputs));
     t.assert(isLambda(lambda));
-    const caller = recipe(({ lambda, foo }) => {
+    const caller = board(({ lambda, foo }) => {
       return lambda({ foo });
     });
     return caller({ lambda, foo });
@@ -57,10 +57,10 @@ test("simplest lambda, direct call, no invoke()", async (t) => {
 });
 
 test("simplest closure lambda, using to()", async (t) => {
-  const graph = recipe(({ foo, bar }) => {
-    const lambda = recipe((inputs) => testKit.noop(inputs));
+  const graph = board(({ foo, bar }) => {
+    const lambda = board((inputs) => testKit.noop(inputs));
     bar.to(lambda);
-    const caller = recipe(({ lambda, foo }) => {
+    const caller = board(({ lambda, foo }) => {
       return lambda({ foo });
     });
     return caller({ lambda, foo });
@@ -71,10 +71,10 @@ test("simplest closure lambda, using to()", async (t) => {
 });
 
 test("simplest closure lambda, using in()", async (t) => {
-  const graph = recipe(({ foo, bar }) => {
-    const lambda = recipe((inputs) => testKit.noop(inputs));
+  const graph = board(({ foo, bar }) => {
+    const lambda = board((inputs) => testKit.noop(inputs));
     t.true(isLambda(lambda.in(bar)));
-    const caller = recipe(({ lambda, foo }) => {
+    const caller = board(({ lambda, foo }) => {
       return lambda.invoke({ foo });
     });
     return caller({ lambda, foo });
@@ -86,7 +86,7 @@ test("simplest closure lambda, using in()", async (t) => {
 
 test("serialize simple lambda", async (t) => {
   // This is no closure, so there should be no lambda node
-  const lambda = recipe((inputs) => testKit.noop(inputs));
+  const lambda = board((inputs) => testKit.noop(inputs));
   t.assert(isLambda(lambda));
 
   // When wiring it, no lambda node is created
@@ -100,7 +100,7 @@ test("serialize simple lambda", async (t) => {
 });
 
 test("serialize closure lambda", async (t) => {
-  const lambda = recipe((inputs) => testKit.noop(inputs));
+  const lambda = board((inputs) => testKit.noop(inputs));
   t.assert(isLambda(lambda));
 
   // Wiring something into the lambda makes it a closure
@@ -115,7 +115,7 @@ test("serialize closure lambda", async (t) => {
   t.assert(serialized?.nodes?.some((node) => node.type === "lambda"));
 
   // Create another simple one to compare with the inner graph.
-  const lambda2 = recipe((inputs) => testKit.noop(inputs));
+  const lambda2 = board((inputs) => testKit.noop(inputs));
   const serialized2 = await lambda2.serialize();
 
   t.deepEqual(
@@ -128,9 +128,9 @@ test("serialize closure lambda", async (t) => {
 });
 
 test("one level auto-wired closure lambda", async (t) => {
-  const graph = recipe(({ foo, bar }) => {
-    const lambda = recipe(({ foo }) => testKit.noop({ foo, bar }));
-    const caller = recipe(({ lambda, foo }) => {
+  const graph = board(({ foo, bar }) => {
+    const lambda = board(({ foo }) => testKit.noop({ foo, bar }));
+    const caller = board(({ lambda, foo }) => {
       return lambda({ foo });
     });
     return caller({ lambda, foo });
@@ -141,9 +141,9 @@ test("one level auto-wired closure lambda", async (t) => {
 });
 
 test("two level auto-wired closure lambda", async (t) => {
-  const graph = recipe(({ foo, bar }) => {
-    const lambda = recipe(({ foo }) => {
-      const lambda2 = recipe(({ foo }) => testKit.noop({ foo, bar }));
+  const graph = board(({ foo, bar }) => {
+    const lambda = board(({ foo }) => {
+      const lambda2 = board(({ foo }) => testKit.noop({ foo, bar }));
       return lambda2({ foo });
     });
     return lambda({ foo });
@@ -154,13 +154,13 @@ test("two level auto-wired closure lambda", async (t) => {
 });
 
 test("two level nested calling auto-wired closure lambda", async (t) => {
-  const caller = recipe(({ lambda, foo }) => {
+  const caller = board(({ lambda, foo }) => {
     return lambda({ foo });
   });
 
-  const graph = recipe(({ foo, bar }) => {
-    const lambda = recipe(({ foo }) => {
-      const lambda = recipe(({ foo }) => testKit.noop({ foo, bar }));
+  const graph = board(({ foo, bar }) => {
+    const lambda = board(({ foo }) => {
+      const lambda = board(({ foo }) => testKit.noop({ foo, bar }));
       return caller({ lambda, foo });
     });
     return caller({ lambda, foo });

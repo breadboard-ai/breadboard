@@ -147,7 +147,7 @@ export interface RecipeFactory {
 
   /**
    * Disable for now, overloading is too confusing
-   * 
+   *
   <I extends InputValues = InputValues, O extends OutputValues = OutputValues>(
     options: { input?: z.Schema<I> } & GraphMetadata,
     fn: NodeProxyHandlerFunction<I, O>
@@ -336,7 +336,7 @@ export interface BuilderScopeInterface {
   serializing(): boolean;
 
   /**
-   * used by recipe() and node.addIncomingEdges() to auto-wire closures
+   * used by board() and node.addIncomingEdges() to auto-wire closures
    */
   addClosureEdge(edge: ClosureEdge): void;
   getClosureEdges(): ClosureEdge[];

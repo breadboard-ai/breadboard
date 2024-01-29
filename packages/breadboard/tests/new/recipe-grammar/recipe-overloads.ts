@@ -8,10 +8,10 @@ import test from "ava";
 
 import { z } from "zod";
 
-import { recipe, code } from "../../../src/new/recipe-grammar/recipe.js";
+import { board, code } from "../../../src/new/recipe-grammar/recipe.js";
 
-test("zod + graph, w/ nested code recipe", async (t) => {
-  const graph = recipe(
+test("zod + graph, w/ nested code board", async (t) => {
+  const graph = board(
     {
       input: z.object({ foo: z.string() }),
       output: z.object({ foo: z.string() }),
@@ -25,8 +25,8 @@ test("zod + graph, w/ nested code recipe", async (t) => {
   t.like(result, { foo: "bar!" });
 });
 
-test("recipe with its own inputs and outputs", async (t) => {
-  const graph = recipe((_, base) => {
+test("board with its own inputs and outputs", async (t) => {
+  const graph = board((_, base) => {
     base.input().foo.as("bar").to(base.output());
   });
 

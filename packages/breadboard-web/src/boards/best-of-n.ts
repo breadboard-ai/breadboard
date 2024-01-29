@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Schema, code, recipe } from "@google-labs/breadboard";
+import { Schema, code, board } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { templates } from "@google-labs/template-kit";
 import { json } from "@google-labs/json-kit";
@@ -21,7 +21,7 @@ const errorFilter = code<ErrorFilterInputs, ErrorFilterOutputs>(({ list }) => {
   return { list: filtered, n: filtered.length };
 });
 
-export default await recipe(({ agent, context, text, n }) => {
+export default await board(({ agent, context, text, n }) => {
   text
     .title("Task")
     .description("The task to perform")
@@ -42,7 +42,7 @@ export default await recipe(({ agent, context, text, n }) => {
 
   const generateN = core.map({
     $id: "generateN",
-    board: recipe(({ text, agent }) => {
+    board: board(({ text, agent }) => {
       const invokeAgent = core.invoke({
         $id: "invokeAgent",
         text,
@@ -70,13 +70,13 @@ export default await recipe(({ agent, context, text, n }) => {
     path: jsonAgent,
     text: templates.promptTemplate({
       template: `You are a ranking expert. Given {{n}} choices of the output, you are to rank these choices in the order (starting with the best) of matching the requirements of the task described below:
-        
+
         TASK:
-        
+
         {{text}}
-        
+
         CHOICES:
-        
+
         {{list}}`,
       text,
       n: filterErrors.n,

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { base, recipe, code } from "@google-labs/breadboard";
+import { base, board, code } from "@google-labs/breadboard";
 
 const metaData = {
   title: "Generate retrieve some text that would be aligned to an embedding",
@@ -24,7 +24,7 @@ const embeddingScheme = {
   required: ["embedding"],
 };
 
-export default await recipe(() => {
+export default await board(() => {
   const input = base.input({ $id: "input", schema: embeddingScheme });
 
   const textNode = code(({ embedding }) => {

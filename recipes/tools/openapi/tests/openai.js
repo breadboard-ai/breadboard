@@ -1,4 +1,4 @@
-import { base, recipe, code } from "@google-labs/breadboard";
+import { base, board, code } from "@google-labs/breadboard";
 
 import { starter } from "@google-labs/llm-starter";
 import { core } from "@google-labs/core-kit";
@@ -13,7 +13,7 @@ const metaData = {
   version: "0.0.3",
 };
 
-export default await recipe(() => {
+export default await board(() => {
   const input = base.input({ $id: "input" });
 
   const apiBoard = core.invoke({ path: "../index.json", url: input.url });

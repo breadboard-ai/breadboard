@@ -7,7 +7,7 @@
 import { z } from "zod";
 import test from "ava";
 
-import { recipe, code } from "../../../src/new/recipe-grammar/recipe.js";
+import { board, code } from "../../../src/new/recipe-grammar/recipe.js";
 import { V } from "../../../src/index.js";
 import { testKit } from "../../helpers/_test-kit.js";
 
@@ -26,24 +26,24 @@ test("directly await a value called 'to'", async (t) => {
   t.is(to, "foo");
 });
 
-test("directly await declarative recipe returning node, value assignment", async (t) => {
-  const graph = recipe((inputs) => {
+test("directly await declarative board returning node, value assignment", async (t) => {
+  const graph = board((inputs) => {
     return testKit.noop({ foo: inputs.foo });
   });
   const foo = await graph({ foo: "bar" }).foo;
   t.is(foo, "bar");
 });
 
-test("directly await declarative recipe returning node, deconstruct", async (t) => {
-  const graph = recipe<{ foo: string }>((inputs) => {
+test("directly await declarative board returning node, deconstruct", async (t) => {
+  const graph = board<{ foo: string }>((inputs) => {
     return testKit.noop({ foo: inputs.foo });
   });
   const { foo } = await graph({ foo: "bar" });
   t.is(foo, "bar");
 });
 
-test("directly await declarative recipe, value assignment", async (t) => {
-  const graph = recipe((inputs) => {
+test("directly await declarative board, value assignment", async (t) => {
+  const graph = board((inputs) => {
     const { foo } = testKit.noop({ foo: inputs.foo });
     return { foo };
   });
@@ -51,8 +51,8 @@ test("directly await declarative recipe, value assignment", async (t) => {
   t.is(foo, "bar");
 });
 
-test("directly await declarative recipe, values named 'in' and 'to'", async (t) => {
-  const graph = recipe<{ in: string }, { to: unknown }>((inputs) => {
+test("directly await declarative board, values named 'in' and 'to'", async (t) => {
+  const graph = board<{ in: string }, { to: unknown }>((inputs) => {
     const { to } = testKit.noop({ to: inputs.in });
     return { to: to as unknown as V<string> };
   });
@@ -60,8 +60,8 @@ test("directly await declarative recipe, values named 'in' and 'to'", async (t) 
   t.is(to, "bar");
 });
 
-test("directly await declarative recipe, deconstruct", async (t) => {
-  const graph = recipe((inputs) => {
+test("directly await declarative board, deconstruct", async (t) => {
+  const graph = board((inputs) => {
     const { foo } = testKit.noop({ foo: inputs.foo });
     return { foo };
   });
@@ -69,8 +69,8 @@ test("directly await declarative recipe, deconstruct", async (t) => {
   t.is(foo as unknown as string, "bar");
 });
 
-test("directly await declarative recipe, deconstruct, 'in' and 'to'", async (t) => {
-  const graph = recipe((inputs) => {
+test("directly await declarative board, deconstruct, 'in' and 'to'", async (t) => {
+  const graph = board((inputs) => {
     const { to } = testKit.noop({ to: inputs.in });
     return { to: to as unknown as V<string> };
   });
@@ -78,32 +78,32 @@ test("directly await declarative recipe, deconstruct, 'in' and 'to'", async (t) 
   t.is(to as unknown as string, "bar");
 });
 
-test("directly await declarative recipe, passing full inputs, value", async (t) => {
-  const graph = recipe((inputs) => {
+test("directly await declarative board, passing full inputs, value", async (t) => {
+  const graph = board((inputs) => {
     return testKit.noop(inputs);
   });
   const baz = await graph({ baz: "bar" }).baz;
   t.is(baz, "bar");
 });
 
-test("directly await declarative recipe, passing full inputs, deconstruct", async (t) => {
-  const graph = recipe<{ [key: string]: unknown }>((inputs) => {
+test("directly await declarative board, passing full inputs, deconstruct", async (t) => {
+  const graph = board<{ [key: string]: unknown }>((inputs) => {
     return testKit.noop(inputs);
   });
   const { baz } = await graph({ baz: "bar" });
   t.is(baz, "bar");
 });
 
-test("directly await declarative recipe, passing full inputs as spread", async (t) => {
-  const graph = recipe((inputs) => {
+test("directly await declarative board, passing full inputs as spread", async (t) => {
+  const graph = board((inputs) => {
     return testKit.noop({ ...inputs });
   });
   const baz = await graph({ baz: "bar" }).baz;
   t.is(baz, "bar");
 });
 
-test("directly await declarative recipe, passing full inputs as spread, twice", async (t) => {
-  const graph = recipe<{ [key: string]: string }>((inputs) => {
+test("directly await declarative board, passing full inputs as spread, twice", async (t) => {
+  const graph = board<{ [key: string]: string }>((inputs) => {
     const reverser = testKit.reverser({ ...inputs });
     return testKit.noop({ ...reverser });
   });
@@ -111,7 +111,7 @@ test("directly await declarative recipe, passing full inputs as spread, twice", 
   t.is(baz as unknown as string, "rab");
 });
 
-test("directly await imperative recipe, value assignment", async (t) => {
+test("directly await imperative board, value assignment", async (t) => {
   const graph = code(async (inputs) => {
     const { foo } = await testKit.noop({ foo: inputs.foo });
     return { foo };
@@ -120,7 +120,7 @@ test("directly await imperative recipe, value assignment", async (t) => {
   t.is(foo, "bar");
 });
 
-test("directly await imperative recipe, deconstruct", async (t) => {
+test("directly await imperative board, deconstruct", async (t) => {
   const graph = code(async (inputs) => {
     const { foo } = await testKit.noop({ foo: inputs.foo });
     return { foo };
@@ -137,7 +137,7 @@ test("if-else, imperative execution", async (t) => {
     return { text: "search result" };
   });
 
-  const graph = recipe({
+  const graph = board({
     input: z.object({
       question: z.string().describe("Query: A math or search question?"),
     }),
@@ -189,7 +189,7 @@ test.skip("if-else, serializable", async (t) => {
     return { text: "search result" };
   });
 
-  const graph = recipe(
+  const graph = board(
     {
       input: z.object({
         question: z.string().describe("Query: A math or search question?"),

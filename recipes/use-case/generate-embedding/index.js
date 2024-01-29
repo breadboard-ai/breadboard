@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { base, recipe, code } from "@google-labs/breadboard";
+import { base, board, code } from "@google-labs/breadboard";
 import { starter } from "@google-labs/llm-starter";
 import { core } from "@google-labs/core-kit";
 import { palm } from "@google-labs/palm-kit";
@@ -34,7 +34,7 @@ const embeddingScheme = {
   required: ["input"],
 };
 
-export default await recipe(() => {
+export default await board(() => {
   // Either use the default embedding provider or use a custom one (specified by provider)
   const embeddingApi = code(({ provider, palmRecipe }) => {
     // The provider must return a "embedding"
@@ -49,7 +49,7 @@ export default await recipe(() => {
   const input = base.input({ $id: "input", schema: embeddingScheme });
 
   // Because `code` can't return a recipe, we have to create it here and then pass it in.
-  const palmRecipe = recipe(({ input }) => {
+  const palmRecipe = board(({ input }) => {
     const secrets = starter.secrets({
       keys: ["PALM_KEY"],
     });

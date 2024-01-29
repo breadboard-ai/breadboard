@@ -1,4 +1,4 @@
-import { base, recipe } from "@google-labs/breadboard";
+import { base, board } from "@google-labs/breadboard";
 
 import { starter } from "@google-labs/llm-starter";
 import { core } from "@google-labs/core-kit";
@@ -19,7 +19,7 @@ const metaData = {
 /*
  Note currently the tool to generate the OpenAPI spec does not support the security Scheme, therefore secrets will not work, you have to use an input called key.
 */
-export default await recipe(() => {
+export default await board(() => {
   const input = base.input({ $id: "input" });
 
   return core.invoke({

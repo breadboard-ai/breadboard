@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { base, recipe, code } from "@google-labs/breadboard";
+import { base, board, code } from "@google-labs/breadboard";
 
 const metaData = {
   title: "Convert String to JSON",
@@ -30,7 +30,7 @@ const toJsonScheme = {
   required: ["text"],
 };
 
-export default await recipe(() => {
+export default await board(() => {
   const input = base.input({ $id: "input", schema: toJsonScheme });
 
   // Note: `code` means an implicit `invoke` which means you have to add core-kit

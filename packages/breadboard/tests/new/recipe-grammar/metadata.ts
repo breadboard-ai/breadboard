@@ -8,12 +8,12 @@ import test from "ava";
 
 import { z } from "zod";
 
-import { recipe } from "../../../src/new/recipe-grammar/recipe.js";
+import { board } from "../../../src/new/recipe-grammar/recipe.js";
 
 import { testKit } from "../../helpers/_test-kit.js";
 
 test("metadata in recipe constructor", async (t) => {
-  const graph = recipe(
+  const graph = board(
     {
       input: z.object({ foo: z.string() }),
       output: z.object({ foo: z.string() }),
@@ -36,7 +36,7 @@ test("metadata in recipe constructor", async (t) => {
 });
 
 test("metadata in serialize", async (t) => {
-  const graph = recipe((inputs) => testKit.noop(inputs));
+  const graph = board((inputs) => testKit.noop(inputs));
 
   const serialized = await graph.serialize({
     url: "data:",
@@ -54,7 +54,7 @@ test("metadata in serialize", async (t) => {
 });
 
 test("metadata in serialize overrides metadata in constructor", async (t) => {
-  const graph = recipe(
+  const graph = board(
     {
       input: z.object({ foo: z.string() }),
       output: z.object({ foo: z.string() }),
