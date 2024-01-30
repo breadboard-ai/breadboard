@@ -127,7 +127,7 @@ export class InputList extends LitElement {
     }
 
     return html` ${inputs.map(
-      ({ id, secret, remember, configuration, processedValues }, idx) => {
+      ({ id, secret, remember, configuration, processedValues }) => {
         if (!this.messages) {
           return nothing;
         }
