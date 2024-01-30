@@ -103,7 +103,7 @@ export class Main extends LitElement {
       grid-column: 1 / 3;
     }
 
-    #header-bar a {
+    #header-bar a#back {
       font-size: 0;
       display: block;
       width: 16px;
@@ -112,9 +112,29 @@ export class Main extends LitElement {
       margin: 0 calc(var(--bb-grid-size) * 5);
     }
 
+    #download {
+      font-size: var(--bb-text-pico);
+      padding: 4px 8px 4px 24px;
+      border-radius: 32px;
+      background: #fff var(--bb-icon-download) 4px 2px no-repeat;
+      background-size: 16px 16px;
+      color: #333;
+      margin-right: 8px;
+      cursor: default;
+      transition: opacity var(--bb-easing-duration-out) var(--bb-easing);
+      opacity: 0.8;
+      text-decoration: none;
+    }
+
+    #download:hover {
+      transition: opacity var(--bb-easing-duration-in) var(--bb-easing);
+      opacity: 1;
+    }
+
     #header-bar h1 {
       font-size: var(--bb-text-default);
       font-weight: normal;
+      flex: 1;
     }
 
     #title {
@@ -418,6 +438,68 @@ export class Main extends LitElement {
     this.#uiRef.value.unloadCurrentBoard();
   }
 
+  #downloadLog(evt: Event) {
+    if (!(evt.target instanceof HTMLAnchorElement && this.#uiRef.value)) {
+      return;
+    }
+
+    if (evt.target.href) {
+      URL.revokeObjectURL(evt.target.href);
+    }
+
+    const messages = this.#uiRef.value.messages;
+
+    const secrets = [];
+    const inputs = [];
+    const outputs = [];
+    const errors = [];
+    for (const message of messages) {
+      if (message.type === "error") {
+        errors.push(message);
+      }
+
+      if (message.type === "output") {
+        outputs.push(message);
+      }
+
+      if (message.type === "nodeend") {
+        switch (message.data.node.type) {
+          case "secrets": {
+            secrets.push(...Object.values(message.data.outputs));
+            break;
+          }
+
+          case "input": {
+            inputs.push(message);
+            break;
+          }
+
+          case "output": {
+            outputs.push(message);
+            break;
+          }
+        }
+      }
+    }
+
+    let data = JSON.stringify(
+      { board: this.loadInfo, inputs, outputs, errors, history: messages },
+      null,
+      2
+    );
+
+    // Attempt to find any secrets and then replace them in the JSON output.
+    for (const secret of secrets) {
+      const re = new RegExp(`\\b${secret}\\b`, "gim");
+      data = data.replaceAll(re, "SECRET");
+    }
+
+    evt.target.download = `${new Date().toISOString()}.json`;
+    evt.target.href = URL.createObjectURL(
+      new Blob([data], { type: "application/json" })
+    );
+  }
+
   render() {
     const toasts = html`${this.toasts.map(({ message, type }) => {
       return html`<bb-toast .message=${message} .type=${type}></bb-toast>`;
@@ -488,8 +570,11 @@ export class Main extends LitElement {
       }
 
       tmpl = html`<div id="header-bar">
-          <a href="/" @click=${this.#unloadCurrentBoard}>Back to list</a>
+          <a id="back" href="/" @click=${this.#unloadCurrentBoard}
+            >Back to list</a
+          >
           <h1>${this.loadInfo?.title || "Loading board"}</h1>
+          <a id="download" @click=${this.#downloadLog}>Download log</a>
         </div>
         <div id="side-bar">
           <button
