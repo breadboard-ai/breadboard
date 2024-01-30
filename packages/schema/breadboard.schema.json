@@ -18,10 +18,7 @@
   "properties": {
     "$schema": {
       "type": "string",
-      "format": [
-        "uri",
-        "uri-reference"
-      ]
+      "format": "uri-reference"
     },
     "title": {
       "description": "A human-readable title for the graph",
