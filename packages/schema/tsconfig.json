@@ -1,0 +1,6 @@
+{
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "extends": "@google-labs/tsconfig/base.json"
+}
