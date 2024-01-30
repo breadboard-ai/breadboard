@@ -1,6 +1,6 @@
 {
   "title": "Gemini Pro Generator",
-  "description": "The text generator recipe powered by the Gemini Pro model",
+  "description": "The text generator board powered by the Gemini Pro model",
   "version": "0.0.2",
   "edges": [
     {
@@ -214,7 +214,7 @@
               },
               "default": "[]",
               "examples": [
-                "[\n  {\n    \"name\": \"The_Calculator_Recipe\",\n    \"description\": \"A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.\",\n    \"parameters\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"text\": {\n          \"type\": \"string\",\n          \"description\": \"Ask a math question\"\n        }\n      },\n      \"required\": [\n        \"text\"\n      ]\n    }\n  },\n  {\n    \"name\": \"The_Search_Summarizer_Recipe\",\n    \"description\": \"A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.\",\n    \"parameters\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"text\": {\n          \"type\": \"string\",\n          \"description\": \"What would you like to search for?\"\n        }\n      },\n      \"required\": [\n        \"text\"\n      ]\n    }\n  }\n]"
+                "[\n  {\n    \"name\": \"The_Calculator_Board\",\n    \"description\": \"A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.\",\n    \"parameters\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"text\": {\n          \"type\": \"string\",\n          \"description\": \"Ask a math question\"\n        }\n      },\n      \"required\": [\n        \"text\"\n      ]\n    }\n  },\n  {\n    \"name\": \"The_Search_Summarizer_Board\",\n    \"description\": \"A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.\",\n    \"parameters\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"text\": {\n          \"type\": \"string\",\n          \"description\": \"What would you like to search for?\"\n        }\n      },\n      \"required\": [\n        \"text\"\n      ]\n    }\n  }\n]"
               ]
             },
             "context": {

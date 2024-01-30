@@ -6,7 +6,7 @@
 
 | Name | Type |
 | :------ | :------ |
-| `T` | extends `NodeValue` \| `unknown` = `NodeValue` |
+| `T` | extends `NodeValue` = `NodeValue` |
 
 ## Implements
 
@@ -22,10 +22,22 @@
 
 - [as](V.md#as)
 - [asNodeInput](V.md#asnodeinput)
+- [default](V.md#default)
+- [description](V.md#description)
+- [examples](V.md#examples)
+- [format](V.md#format)
 - [in](V.md#in)
 - [invoke](V.md#invoke)
+- [isArray](V.md#isarray)
+- [isBoolean](V.md#isboolean)
+- [isNumber](V.md#isnumber)
+- [isObject](V.md#isobject)
+- [isString](V.md#isstring)
+- [isUnknown](V.md#isunknown)
 - [memoize](V.md#memoize)
+- [optional](V.md#optional)
 - [then](V.md#then)
+- [title](V.md#title)
 - [to](V.md#to)
 
 ## Constructors
@@ -62,21 +74,101 @@
 
 #### Defined in
 
-[packages/breadboard/src/new/recipe-grammar/types.ts:273](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/new/recipe-grammar/types.ts#L273)
+[packages/breadboard/src/new/grammar/types.ts:282](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L282)
 
 ___
 
 ### asNodeInput
 
-▸ **asNodeInput**(): [[`AbstractNode`](AbstractNode.md)\<[`NewInputValues`](../modules.md#newinputvalues), [`NewOutputValues`](../modules.md#newoutputvalues)\>, \{ `[key: string]`: `string`;  }, `boolean`]
+▸ **asNodeInput**(): [[`AbstractNode`](AbstractNode.md)\<[`NewInputValues`](../modules.md#newinputvalues), [`NewOutputValues`](../modules.md#newoutputvalues)\>, \{ `[key: string]`: `string`;  }, `boolean`, [`Schema`](../modules.md#schema)]
 
 #### Returns
 
-[[`AbstractNode`](AbstractNode.md)\<[`NewInputValues`](../modules.md#newinputvalues), [`NewOutputValues`](../modules.md#newoutputvalues)\>, \{ `[key: string]`: `string`;  }, `boolean`]
+[[`AbstractNode`](AbstractNode.md)\<[`NewInputValues`](../modules.md#newinputvalues), [`NewOutputValues`](../modules.md#newoutputvalues)\>, \{ `[key: string]`: `string`;  }, `boolean`, [`Schema`](../modules.md#schema)]
 
 #### Defined in
 
-[packages/breadboard/src/new/recipe-grammar/types.ts:253](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/new/recipe-grammar/types.ts#L253)
+[packages/breadboard/src/new/grammar/types.ts:257](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L257)
+
+___
+
+### default
+
+▸ **default**(`value`): [`V`](V.md)\<`T`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `value` | `string` |
+
+#### Returns
+
+[`V`](V.md)\<`T`\>
+
+#### Defined in
+
+[packages/breadboard/src/new/grammar/types.ts:299](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L299)
+
+___
+
+### description
+
+▸ **description**(`description`): [`V`](V.md)\<`T`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `description` | `string` |
+
+#### Returns
+
+[`V`](V.md)\<`T`\>
+
+#### Defined in
+
+[packages/breadboard/src/new/grammar/types.ts:297](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L297)
+
+___
+
+### examples
+
+▸ **examples**(`...examples`): [`V`](V.md)\<`T`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `...examples` | `string`[] |
+
+#### Returns
+
+[`V`](V.md)\<`T`\>
+
+#### Defined in
+
+[packages/breadboard/src/new/grammar/types.ts:298](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L298)
+
+___
+
+### format
+
+▸ **format**(`format`): [`V`](V.md)\<`T`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `format` | `string` |
+
+#### Returns
+
+[`V`](V.md)\<`T`\>
+
+#### Defined in
+
+[packages/breadboard/src/new/grammar/types.ts:296](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L296)
 
 ___
 
@@ -96,7 +188,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/recipe-grammar/types.ts:266](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/new/recipe-grammar/types.ts#L266)
+[packages/breadboard/src/new/grammar/types.ts:275](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L275)
 
 ___
 
@@ -116,7 +208,91 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/recipe-grammar/types.ts:277](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/new/recipe-grammar/types.ts#L277)
+[packages/breadboard/src/new/grammar/types.ts:286](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L286)
+
+___
+
+### isArray
+
+▸ **isArray**(): [`V`](V.md)\<`unknown`[]\>
+
+#### Returns
+
+[`V`](V.md)\<`unknown`[]\>
+
+#### Defined in
+
+[packages/breadboard/src/new/grammar/types.ts:292](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L292)
+
+___
+
+### isBoolean
+
+▸ **isBoolean**(): [`V`](V.md)\<`boolean`\>
+
+#### Returns
+
+[`V`](V.md)\<`boolean`\>
+
+#### Defined in
+
+[packages/breadboard/src/new/grammar/types.ts:291](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L291)
+
+___
+
+### isNumber
+
+▸ **isNumber**(): [`V`](V.md)\<`number`\>
+
+#### Returns
+
+[`V`](V.md)\<`number`\>
+
+#### Defined in
+
+[packages/breadboard/src/new/grammar/types.ts:290](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L290)
+
+___
+
+### isObject
+
+▸ **isObject**(): [`V`](V.md)\<\{ `[key: string]`: `NodeValue`;  }\>
+
+#### Returns
+
+[`V`](V.md)\<\{ `[key: string]`: `NodeValue`;  }\>
+
+#### Defined in
+
+[packages/breadboard/src/new/grammar/types.ts:293](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L293)
+
+___
+
+### isString
+
+▸ **isString**(): [`V`](V.md)\<`string`\>
+
+#### Returns
+
+[`V`](V.md)\<`string`\>
+
+#### Defined in
+
+[packages/breadboard/src/new/grammar/types.ts:289](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L289)
+
+___
+
+### isUnknown
+
+▸ **isUnknown**(): [`V`](V.md)\<`unknown`\>
+
+#### Returns
+
+[`V`](V.md)\<`unknown`\>
+
+#### Defined in
+
+[packages/breadboard/src/new/grammar/types.ts:288](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L288)
 
 ___
 
@@ -130,7 +306,21 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/recipe-grammar/types.ts:275](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/new/recipe-grammar/types.ts#L275)
+[packages/breadboard/src/new/grammar/types.ts:284](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L284)
+
+___
+
+### optional
+
+▸ **optional**(): [`V`](V.md)\<`T`\>
+
+#### Returns
+
+[`V`](V.md)\<`T`\>
+
+#### Defined in
+
+[packages/breadboard/src/new/grammar/types.ts:300](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L300)
 
 ___
 
@@ -162,7 +352,27 @@ PromiseLike.then
 
 #### Defined in
 
-[packages/breadboard/src/new/recipe-grammar/types.ts:246](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/new/recipe-grammar/types.ts#L246)
+[packages/breadboard/src/new/grammar/types.ts:250](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L250)
+
+___
+
+### title
+
+▸ **title**(`title`): [`V`](V.md)\<`T`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `title` | `string` |
+
+#### Returns
+
+[`V`](V.md)\<`T`\>
+
+#### Defined in
+
+[packages/breadboard/src/new/grammar/types.ts:295](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L295)
 
 ___
 
@@ -190,4 +400,4 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/recipe-grammar/types.ts:255](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/new/recipe-grammar/types.ts#L255)
+[packages/breadboard/src/new/grammar/types.ts:264](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L264)

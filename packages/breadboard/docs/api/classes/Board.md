@@ -22,7 +22,7 @@ For more information on how to use Breadboard, start with [Chapter 1: Hello, wor
 
 ## Implements
 
-- `Breadboard`
+- [`Breadboard`](../interfaces/Breadboard.md)
 
 ## Table of contents
 
@@ -48,6 +48,10 @@ For more information on how to use Breadboard, start with [Chapter 1: Hello, wor
 - [url](Board.md#url)
 - [version](Board.md#version)
 - [runRemote](Board.md#runremote)
+
+### Accessors
+
+- [validators](Board.md#validators)
 
 ### Methods
 
@@ -90,7 +94,7 @@ For more information on how to use Breadboard, start with [Chapter 1: Hello, wor
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:80](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L80)
+[packages/breadboard/src/runner.ts:70](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L70)
 
 ## Properties
 
@@ -100,7 +104,7 @@ For more information on how to use Breadboard, start with [Chapter 1: Hello, wor
 
 #### Defined in
 
-[packages/breadboard/src/board.ts:46](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/board.ts#L46)
+[packages/breadboard/src/board.ts:46](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/board.ts#L46)
 
 ___
 
@@ -110,7 +114,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/board.ts:44](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/board.ts#L44)
+[packages/breadboard/src/board.ts:44](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/board.ts#L44)
 
 ___
 
@@ -126,7 +130,7 @@ The parent board, if this is board is a subgraph of a larger board.
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:73](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L73)
+[packages/breadboard/src/runner.ts:63](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L63)
 
 ___
 
@@ -140,7 +144,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:68](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L68)
+[packages/breadboard/src/runner.ts:58](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L58)
 
 ___
 
@@ -150,7 +154,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/board.ts:45](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/board.ts#L45)
+[packages/breadboard/src/board.ts:45](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/board.ts#L45)
 
 ___
 
@@ -164,7 +168,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:69](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L69)
+[packages/breadboard/src/runner.ts:59](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L59)
 
 ___
 
@@ -176,7 +180,7 @@ Arguments that are passed to the graph, useful to bind values to lambdas.
 
 #### Implementation of
 
-Breadboard.args
+[Breadboard](../interfaces/Breadboard.md).[args](../interfaces/Breadboard.md#args)
 
 #### Inherited from
 
@@ -184,7 +188,7 @@ Breadboard.args
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:66](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L66)
+[packages/breadboard/src/runner.ts:56](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L56)
 
 ___
 
@@ -196,7 +200,7 @@ The description of the graph.
 
 #### Implementation of
 
-Breadboard.description
+[Breadboard](../interfaces/Breadboard.md).[description](../interfaces/Breadboard.md#description)
 
 #### Inherited from
 
@@ -204,7 +208,7 @@ Breadboard.description
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:60](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L60)
+[packages/breadboard/src/runner.ts:50](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L50)
 
 ___
 
@@ -216,7 +220,7 @@ The collection of all edges in the graph.
 
 #### Implementation of
 
-Breadboard.edges
+[Breadboard](../interfaces/Breadboard.md).[edges](../interfaces/Breadboard.md#edges)
 
 #### Inherited from
 
@@ -224,7 +228,7 @@ Breadboard.edges
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:62](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L62)
+[packages/breadboard/src/runner.ts:52](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L52)
 
 ___
 
@@ -236,7 +240,7 @@ Sub-graphs that are also described by this graph representation.
 
 #### Implementation of
 
-Breadboard.graphs
+[Breadboard](../interfaces/Breadboard.md).[graphs](../interfaces/Breadboard.md#graphs)
 
 #### Inherited from
 
@@ -244,7 +248,7 @@ Breadboard.graphs
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:65](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L65)
+[packages/breadboard/src/runner.ts:55](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L55)
 
 ___
 
@@ -254,7 +258,7 @@ ___
 
 #### Implementation of
 
-Breadboard.kits
+[Breadboard](../interfaces/Breadboard.md).[kits](../interfaces/Breadboard.md#kits)
 
 #### Inherited from
 
@@ -262,7 +266,7 @@ Breadboard.kits
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:64](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L64)
+[packages/breadboard/src/runner.ts:54](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L54)
 
 ___
 
@@ -274,7 +278,7 @@ The collection of all nodes in the graph.
 
 #### Implementation of
 
-Breadboard.nodes
+[Breadboard](../interfaces/Breadboard.md).[nodes](../interfaces/Breadboard.md#nodes)
 
 #### Inherited from
 
@@ -282,7 +286,7 @@ Breadboard.nodes
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:63](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L63)
+[packages/breadboard/src/runner.ts:53](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L53)
 
 ___
 
@@ -294,7 +298,7 @@ The title of the graph.
 
 #### Implementation of
 
-Breadboard.title
+[Breadboard](../interfaces/Breadboard.md).[title](../interfaces/Breadboard.md#title)
 
 #### Inherited from
 
@@ -302,7 +306,7 @@ Breadboard.title
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:59](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L59)
+[packages/breadboard/src/runner.ts:49](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L49)
 
 ___
 
@@ -317,7 +321,7 @@ working directory.
 
 #### Implementation of
 
-Breadboard.url
+[Breadboard](../interfaces/Breadboard.md).[url](../interfaces/Breadboard.md#url)
 
 #### Inherited from
 
@@ -325,7 +329,7 @@ Breadboard.url
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:58](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L58)
+[packages/breadboard/src/runner.ts:48](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L48)
 
 ___
 
@@ -338,7 +342,7 @@ Version of the graph.
 
 #### Implementation of
 
-Breadboard.version
+[Breadboard](../interfaces/Breadboard.md).[version](../interfaces/Breadboard.md#version)
 
 #### Inherited from
 
@@ -346,7 +350,7 @@ Breadboard.version
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:61](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L61)
+[packages/breadboard/src/runner.ts:51](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L51)
 
 ___
 
@@ -374,7 +378,25 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:384](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L384)
+[packages/breadboard/src/runner.ts:413](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L413)
+
+## Accessors
+
+### validators
+
+• `get` **validators**(): [`BreadboardValidator`](../interfaces/BreadboardValidator.md)[]
+
+#### Returns
+
+[`BreadboardValidator`](../interfaces/BreadboardValidator.md)[]
+
+#### Inherited from
+
+BoardRunner.validators
+
+#### Defined in
+
+[packages/breadboard/src/runner.ts:233](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L233)
 
 ## Methods
 
@@ -394,11 +416,11 @@ ___
 
 #### Implementation of
 
-Breadboard.addEdge
+[Breadboard](../interfaces/Breadboard.md).[addEdge](../interfaces/Breadboard.md#addedge)
 
 #### Defined in
 
-[packages/breadboard/src/board.ts:176](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/board.ts#L176)
+[packages/breadboard/src/board.ts:176](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/board.ts#L176)
 
 ___
 
@@ -420,11 +442,11 @@ ___
 
 #### Implementation of
 
-Breadboard.addEdgeAcrossBoards
+[Breadboard](../interfaces/Breadboard.md).[addEdgeAcrossBoards](../interfaces/Breadboard.md#addedgeacrossboards)
 
 #### Defined in
 
-[packages/breadboard/src/board.ts:230](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/board.ts#L230)
+[packages/breadboard/src/board.ts:230](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/board.ts#L230)
 
 ___
 
@@ -435,18 +457,18 @@ ___
 Adds a new kit to the board.
 
 Kits are collections of nodes that are bundled together for a specific
-purpose. For example, the [LLM Starter Kit](https://github.com/breadboard-ai/breadboard/tree/main/packages/llm-starter) provides a few nodes that
-are useful for making generative AI applications.
+purpose. For example, the [Core Kit](https://github.com/breadboard-ai/breadboard/tree/main/packages/core) provides a nodes that
+are useful for making boards.
 
 Typically, kits are distributed as NPM packages. To add a kit to the board,
 simply install it using `npm` or `yarn`, and then add it to the board:
 
 ```js
 import { Board } from "@google-labs/breadboard";
-import { Starter } from "@google-labs/llm-starter";
+import { Core } from "@google-labs/core-kit";
 
 const board = new Board();
-const kit = board.addKit(Starter);
+const kit = board.addKit(Core);
 ```
 
 #### Type parameters
@@ -470,11 +492,11 @@ the board and can be used to place nodes on that board.
 
 #### Implementation of
 
-Breadboard.addKit
+[Breadboard](../interfaces/Breadboard.md).[addKit](../interfaces/Breadboard.md#addkit)
 
 #### Defined in
 
-[packages/breadboard/src/board.ts:206](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/board.ts#L206)
+[packages/breadboard/src/board.ts:206](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/board.ts#L206)
 
 ___
 
@@ -494,11 +516,11 @@ ___
 
 #### Implementation of
 
-Breadboard.addNode
+[Breadboard](../interfaces/Breadboard.md).[addNode](../interfaces/Breadboard.md#addnode)
 
 #### Defined in
 
-[packages/breadboard/src/board.ts:180](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/board.ts#L180)
+[packages/breadboard/src/board.ts:180](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/board.ts#L180)
 
 ___
 
@@ -521,7 +543,7 @@ Will call .addGraph() on the validator before executing a graph.
 
 #### Implementation of
 
-Breadboard.addValidator
+[Breadboard](../interfaces/Breadboard.md).[addValidator](../interfaces/Breadboard.md#addvalidator)
 
 #### Inherited from
 
@@ -529,13 +551,13 @@ Breadboard.addValidator
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:277](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L277)
+[packages/breadboard/src/runner.ts:313](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L313)
 
 ___
 
 ### currentBoardToAddTo
 
-▸ **currentBoardToAddTo**(): `Breadboard`
+▸ **currentBoardToAddTo**(): [`Breadboard`](../interfaces/Breadboard.md)
 
 Used in the context of board.lambda(): Returns the board that is currently
 being constructed, according to the nesting level of board.lambda() calls
@@ -545,15 +567,15 @@ Only called by Node constructor, when adding nodes.
 
 #### Returns
 
-`Breadboard`
+[`Breadboard`](../interfaces/Breadboard.md)
 
 #### Implementation of
 
-Breadboard.currentBoardToAddTo
+[Breadboard](../interfaces/Breadboard.md).[currentBoardToAddTo](../interfaces/Breadboard.md#currentboardtoaddto)
 
 #### Defined in
 
-[packages/breadboard/src/board.ts:219](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/board.ts#L219)
+[packages/breadboard/src/board.ts:219](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/board.ts#L219)
 
 ___
 
@@ -588,11 +610,11 @@ See [`input` node reference](https://github.com/breadboard-ai/breadboard/blob/ma
 
 #### Implementation of
 
-Breadboard.input
+[Breadboard](../interfaces/Breadboard.md).[input](../interfaces/Breadboard.md#input)
 
 #### Defined in
 
-[packages/breadboard/src/board.ts:63](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/board.ts#L63)
+[packages/breadboard/src/board.ts:63](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/board.ts#L63)
 
 ___
 
@@ -641,11 +663,11 @@ kit.someNode().wire( "value->value", output));
 
 #### Implementation of
 
-Breadboard.lambda
+[Breadboard](../interfaces/Breadboard.md).[lambda](../interfaces/Breadboard.md#lambda)
 
 #### Defined in
 
-[packages/breadboard/src/board.ts:110](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/board.ts#L110)
+[packages/breadboard/src/board.ts:110](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/board.ts#L110)
 
 ___
 
@@ -677,7 +699,7 @@ This is useful for visualizing the board.
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:289](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L289)
+[packages/breadboard/src/runner.ts:325](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L325)
 
 ___
 
@@ -712,11 +734,11 @@ See [`output` node reference](https://github.com/breadboard-ai/breadboard/blob/m
 
 #### Implementation of
 
-Breadboard.output
+[Breadboard](../interfaces/Breadboard.md).[output](../interfaces/Breadboard.md#output)
 
 #### Defined in
 
-[packages/breadboard/src/board.ts:80](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/board.ts#L80)
+[packages/breadboard/src/board.ts:80](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/board.ts#L80)
 
 ___
 
@@ -764,7 +786,7 @@ See [Chapter 8: Continuous runs](https://github.com/breadboard-ai/breadboard/tre
 
 #### Implementation of
 
-Breadboard.run
+[Breadboard](../interfaces/Breadboard.md).[run](../interfaces/Breadboard.md#run)
 
 #### Inherited from
 
@@ -772,7 +794,7 @@ Breadboard.run
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:120](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L120)
+[packages/breadboard/src/runner.ts:110](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L110)
 
 ___
 
@@ -801,7 +823,7 @@ or the the outputs are only expected to be visited once.
 
 #### Implementation of
 
-Breadboard.runOnce
+[Breadboard](../interfaces/Breadboard.md).[runOnce](../interfaces/Breadboard.md#runonce)
 
 #### Inherited from
 
@@ -809,7 +831,7 @@ Breadboard.runOnce
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:232](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L232)
+[packages/breadboard/src/runner.ts:251](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L251)
 
 ___
 
@@ -837,7 +859,7 @@ A runnable board.
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:343](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L343)
+[packages/breadboard/src/runner.ts:379](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L379)
 
 ___
 
@@ -866,7 +888,7 @@ use this method to turn it into into a new Board instance.
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:300](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L300)
+[packages/breadboard/src/runner.ts:336](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L336)
 
 ___
 
@@ -891,13 +913,13 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:367](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L367)
+[packages/breadboard/src/runner.ts:403](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L403)
 
 ___
 
 ### load
 
-▸ **load**(`url`, `options?`): `Promise`\<[`BoardRunner`](BoardRunner.md)\>
+▸ **load**(`url`, `options`): `Promise`\<[`BoardRunner`](BoardRunner.md)\>
 
 Loads a board from a URL or a file path.
 
@@ -906,8 +928,8 @@ Loads a board from a URL or a file path.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `url` | `string` | the URL or a file path to the board. |
-| `options?` | `Object` | - |
-| `options.base?` | `string` | - |
+| `options` | `Object` | - |
+| `options.base` | `URL` | - |
 | `options.outerGraph?` | [`GraphDescriptor`](../modules.md#graphdescriptor) | - |
 | `options.slotted?` | [`BreadboardSlotSpec`](../modules.md#breadboardslotspec) | - |
 
@@ -923,4 +945,4 @@ Loads a board from a URL or a file path.
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:318](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/runner.ts#L318)
+[packages/breadboard/src/runner.ts:354](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L354)

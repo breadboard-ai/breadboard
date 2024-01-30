@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { recipe } from "@google-labs/breadboard";
+import { board } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 
-export default await recipe(({ text, n }) => {
+export default await board(({ text, n }) => {
   text
     .title("Ad specs")
     .format("multiline")

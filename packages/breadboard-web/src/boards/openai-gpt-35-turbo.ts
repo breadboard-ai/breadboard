@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphMetadata, Schema, base, recipe } from "@google-labs/breadboard";
+import { GraphMetadata, Schema, base, board } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { json } from "@google-labs/json-kit";
 import { nursery } from "@google-labs/node-nursery-web";
@@ -19,7 +19,7 @@ const metadata = {
 
 const toolsExample = [
   {
-    name: "The_Calculator_Recipe",
+    name: "The_Calculator_Board",
     description:
       "A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.",
     parameters: {
@@ -34,7 +34,7 @@ const toolsExample = [
     },
   },
   {
-    name: "The_Search_Summarizer_Recipe",
+    name: "The_Search_Summarizer_Board",
     description:
       "A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.",
     parameters: {
@@ -140,7 +140,7 @@ const streamOutputSchema = {
   },
 } satisfies Schema;
 
-export default await recipe(() => {
+export default await board(() => {
   const input = base.input({ $id: "input", schema: inputSchema });
 
   const streamOutput = base.output({

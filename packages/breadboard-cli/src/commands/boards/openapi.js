@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { base, recipe, code } from "@google-labs/breadboard";
+import { base, board, code } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 
 const metaData = {
@@ -193,7 +193,7 @@ const generateAPISpecs = code(({ json }) => {
 /*
   Returns a lambda that will make a request to the given API. This is used in the `core.map` to create a board of boards for each API exposed on the OpenAPI spec.
 */
-const createSpecRecipe = recipe((apiSpec) => {
+const createSpecBoard = board((apiSpec) => {
   const output = base.output({});
 
   const createBoardInputs = code(({ item }) => {
@@ -331,7 +331,7 @@ const createSpecRecipe = recipe((apiSpec) => {
     })
   );
 
-  const APIEndpoint = recipe((input) => {
+  const APIEndpoint = board((input) => {
     const { item, graph } = input;
     const toAPIInputs = code((item) => {
       return { api_inputs: item };
@@ -477,10 +477,10 @@ const convertBoardListToObject = code(({ list }) => {
   return { ...operations };
 });
 
-export default await recipe(({ json }) => {
+export default await board(({ json }) => {
   // Get the Open API spec from the given URL.
   return validateIsOpenAPI({ $id: "isOpenAPI", json })
     .to(generateAPISpecs({ $id: "generateAPISpecs" }))
-    .to(core.map({ $id: "createFetchBoards", board: createSpecRecipe }))
+    .to(core.map({ $id: "createFetchBoards", board: createSpecBoard }))
     .to(convertBoardListToObject({ $id: "convertBoardListToObject" }));
 }).serialize(metaData);

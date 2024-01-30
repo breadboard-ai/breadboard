@@ -21,7 +21,7 @@
 
 - [[asyncIterator]](TraversalMachine.md#[asynciterator])
 - [start](TraversalMachine.md#start)
-- [prepareToSafe](TraversalMachine.md#preparetosafe)
+- [prepareToSave](TraversalMachine.md#preparetosave)
 
 ## Constructors
 
@@ -42,7 +42,7 @@
 
 #### Defined in
 
-[packages/breadboard/src/traversal/machine.ts:17](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/traversal/machine.ts#L17)
+[packages/breadboard/src/traversal/machine.ts:17](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/traversal/machine.ts#L17)
 
 ## Properties
 
@@ -52,7 +52,7 @@
 
 #### Defined in
 
-[packages/breadboard/src/traversal/machine.ts:14](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/traversal/machine.ts#L14)
+[packages/breadboard/src/traversal/machine.ts:14](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/traversal/machine.ts#L14)
 
 ___
 
@@ -62,7 +62,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/traversal/machine.ts:15](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/traversal/machine.ts#L15)
+[packages/breadboard/src/traversal/machine.ts:15](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/traversal/machine.ts#L15)
 
 ## Methods
 
@@ -80,7 +80,7 @@ AsyncIterable.[asyncIterator]
 
 #### Defined in
 
-[packages/breadboard/src/traversal/machine.ts:22](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/traversal/machine.ts#L22)
+[packages/breadboard/src/traversal/machine.ts:22](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/traversal/machine.ts#L22)
 
 ___
 
@@ -94,13 +94,13 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/traversal/machine.ts:26](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/traversal/machine.ts#L26)
+[packages/breadboard/src/traversal/machine.ts:26](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/traversal/machine.ts#L26)
 
 ___
 
-### prepareToSafe
+### prepareToSave
 
-▸ **prepareToSafe**(`result`): `Promise`\<[`TraversalResult`](../interfaces/TraversalResult.md)\>
+▸ **prepareToSave**(`result`): `Promise`\<[`TraversalResult`](../interfaces/TraversalResult.md)\>
 
 #### Parameters
 
@@ -114,4 +114,4 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/traversal/machine.ts:49](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/traversal/machine.ts#L49)
+[packages/breadboard/src/traversal/machine.ts:49](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/traversal/machine.ts#L49)

@@ -1,4 +1,4 @@
-import { Schema, base, code, recipe } from "@google-labs/breadboard";
+import { Schema, base, code, board } from "@google-labs/breadboard";
 
 type SchemaInputs = { title: string; description: string };
 type SchemaOutputs = { schema: unknown };
@@ -34,7 +34,7 @@ export const contextAppender = code<AppenderInputs, AppenderOutputs>(
   }
 );
 
-export default await recipe(({ context, title, description }) => {
+export default await board(({ context, title, description }) => {
   context
     .title("Context")
     .description("Incoming conversation context")

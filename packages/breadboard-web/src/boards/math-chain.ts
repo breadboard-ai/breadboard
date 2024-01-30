@@ -5,13 +5,13 @@
  */
 
 import { z } from "zod";
-import { recipe } from "@google-labs/breadboard";
+import { board } from "@google-labs/breadboard";
 
 import { templates } from "@google-labs/template-kit";
 import { palm } from "@google-labs/palm-kit";
 import { core } from "@google-labs/core-kit";
 
-export const graph = recipe(
+export const graph = board(
   {
     input: z.object({
       question: z.string().describe("Query: What is your math question?"),

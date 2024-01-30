@@ -47,7 +47,7 @@ Pipe in a file: `npx breadboard mermaid < packages/breadboard-cli/tests/echo.jso
 
 Pipe the output of a command: `cat packages/breadboard-cli/tests/echo.json | npx breadboard mermaid`
 
-Watching and piping the output of a command: `fswatch see/recipes/rss.ts | xargs -n1 -I {} sh -c "npx breadboard mermaid {} -o ./ | mmdc -o test.png -i -"`
+Watching and piping the output of a command: `fswatch see/boards/rss.ts | xargs -n1 -I {} sh -c "npx breadboard mermaid {} -o ./ | mmdc -o test.png -i -"`
 
 ### Make
 
@@ -55,7 +55,7 @@ Creates a graph json from a breadboard javascript file: `npx breadboard make pac
 
 Pipe it to mermaid: `npx breadboard make packages/breadboard-cli/boards/echo.js | npx breadboard mermaid`
 
-Watch a directory and make the files: `fswatch see/recipes/*.ts | xargs -n1 -I {} sh -c "npx breadboard make {} -o ./`
+Watch a directory and make the files: `fswatch see/boards/*.ts | xargs -n1 -I {} sh -c "npx breadboard make {} -o ./`
 
 ### Run
 

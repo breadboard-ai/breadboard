@@ -230,7 +230,7 @@
                 "id": "promptTemplate",
                 "type": "promptTemplate",
                 "configuration": {
-                  "template": "You are an expert in creating perfect system prompts for LLM agents from job descriptions. Create a prompt for the the following job description: {{item}}\n        \nReply in plain text that is ready to paste into the LLM prompt field.\n        \nPROMPT:"
+                  "template": "You are an expert in creating perfect system prompts for LLM agents from job descriptions. Create a prompt for the the following job description: {{item}}\n\nReply in plain text that is ready to paste into the LLM prompt field.\n\nPROMPT:"
                 }
               }
             ],
@@ -316,7 +316,7 @@
       "id": "jobDescriptionsPrompt",
       "type": "promptTemplate",
       "configuration": {
-        "template": "You are building a team of expert LLM-based agents for the following purpose:\n      \n{{purpose}}\n\nThese expert agents can only read text and produce text. The experts will work as a team, collaborating, creating, reviewing, critiquing, and iteratively improving the quality of the poems.\n\nPlease identify the necessary job descriptions of these experts."
+        "template": "You are building a team of expert LLM-based agents for the following purpose:\n\n{{purpose}}\n\nThese expert agents can only read text and produce text. The experts will work as a team, collaborating, creating, reviewing, critiquing, and iteratively improving the quality of the poems.\n\nPlease identify the necessary job descriptions of these experts."
       }
     }
   ],

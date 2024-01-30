@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { V, base, recipe } from "@google-labs/breadboard";
+import { V, base, board } from "@google-labs/breadboard";
 import { json } from "@google-labs/json-kit";
 
 /**
- * A recipe for chunking OpenaAI output streams into text chunks.
+ * A board for chunking OpenaAI output streams into text chunks.
  */
-export const chunkTransformer = recipe(() => {
+export const chunkTransformer = board(() => {
   const input = base.input({ $id: "chunk" });
   const transformCompletion = json.jsonata({
     $id: "transformCompletion",

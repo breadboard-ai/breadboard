@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Schema, recipe } from "@google-labs/breadboard";
+import { Schema, board } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { templates } from "@google-labs/template-kit";
 import { json } from "@google-labs/json-kit";
@@ -62,7 +62,7 @@ const workflowSchema = {
   },
 } satisfies Schema;
 
-export default await recipe(({ purpose, generator }) => {
+export default await board(({ purpose, generator }) => {
   purpose
     .title("Purpose")
     .examples(
@@ -80,7 +80,7 @@ export default await recipe(({ purpose, generator }) => {
     text: templates.promptTemplate({
       $id: "jobDescriptionsPrompt",
       template: `You are building a team of expert LLM-based agents for the following purpose:
-      
+
 {{purpose}}
 
 These expert agents can only read text and produce text. The experts will work as a team, collaborating, creating, reviewing, critiquing, and iteratively improving the quality of the poems.
@@ -111,13 +111,13 @@ Please identify the necessary job descriptions of these experts.`,
   const createPrompts = core.map({
     $id: "createPrompts",
     list: splitJobDescriptions.result.isArray(),
-    board: recipe(({ item, generator }) => {
+    board: board(({ item, generator }) => {
       const promptTemplate = templates.promptTemplate({
         $id: "promptTemplate",
         template: `You are an expert in creating perfect system prompts for LLM agents from job descriptions. Create a prompt for the the following job description: {{item}}
-        
+
 Reply in plain text that is ready to paste into the LLM prompt field.
-        
+
 PROMPT:`,
         item,
       });

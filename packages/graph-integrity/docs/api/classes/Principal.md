@@ -47,7 +47,7 @@ ed into the semi-lattice.
 
 #### Defined in
 
-[label.ts:20](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/label.ts#L20)
+[label.ts:20](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/label.ts#L20)
 
 ## Properties
 
@@ -57,7 +57,7 @@ ed into the semi-lattice.
 
 #### Defined in
 
-[label.ts:12](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/label.ts#L12)
+[label.ts:12](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/label.ts#L12)
 
 ___
 
@@ -67,7 +67,7 @@ ___
 
 #### Defined in
 
-[label.ts:11](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/label.ts#L11)
+[label.ts:11](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/label.ts#L11)
 
 ___
 
@@ -77,7 +77,7 @@ ___
 
 #### Defined in
 
-[label.ts:13](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/label.ts#L13)
+[label.ts:13](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/label.ts#L13)
 
 ## Methods
 
@@ -101,7 +101,7 @@ true if this label is above the other
 
 #### Defined in
 
-[label.ts:48](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/label.ts#L48)
+[label.ts:48](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/label.ts#L48)
 
 ___
 
@@ -125,7 +125,7 @@ true if this label is above the other
 
 #### Defined in
 
-[label.ts:32](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/label.ts#L32)
+[label.ts:32](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/label.ts#L32)
 
 ___
 
@@ -150,7 +150,7 @@ Returns undefined for an empty list.
 
 #### Defined in
 
-[label.ts:97](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/label.ts#L97)
+[label.ts:97](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/label.ts#L97)
 
 ___
 
@@ -175,4 +175,4 @@ Returns undefined for an empty list.
 
 #### Defined in
 
-[label.ts:64](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/label.ts#L64)
+[label.ts:64](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/label.ts#L64)

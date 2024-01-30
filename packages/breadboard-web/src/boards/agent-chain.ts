@@ -1,4 +1,4 @@
-import { Schema, code, recipe } from "@google-labs/breadboard";
+import { Schema, code, board } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 
 const JSON_AGENT = "json-agent.json";
@@ -14,7 +14,7 @@ const sampleChainSpec = JSON.stringify(
   [
     {
       prompt: `Given the following specs, extract requirements for writing an ad copy:
-    
+
     This ad is for my lawn care company that will fit into an inch of newspaper copy. It's called "Max's Lawn Care" and it should use the slogan "I care about your lawn." Emphasize the folksiness of it being a local, sole proprietorship that I started after graduating from high school.`,
       schema: {
         type: "object",
@@ -51,7 +51,7 @@ const argMaker = code(({ item }) => {
   return { text: prompt, schema };
 });
 
-const agentRunner = recipe(({ accumulator, item }) => {
+const agentRunner = board(({ accumulator, item }) => {
   const { text, schema } = argMaker({ $id: "makeAgentArgs", item });
 
   const agent = core.invoke({
@@ -64,7 +64,7 @@ const agentRunner = recipe(({ accumulator, item }) => {
   return { accumulator: agent.context };
 });
 
-export default await recipe(({ context, spec }) => {
+export default await board(({ context, spec }) => {
   context.title("Context").isArray().examples("[]");
   spec
     .title("Chain spec")

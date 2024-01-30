@@ -134,7 +134,7 @@
       "id": "promptTemplate-4",
       "type": "promptTemplate",
       "configuration": {
-        "template": "Write ad copy that conforms to the requirements below\n      \n      {{requirements}}"
+        "template": "Write ad copy that conforms to the requirements below\n\n      {{requirements}}"
       }
     },
     {
@@ -225,7 +225,7 @@
       "id": "promptTemplate-3",
       "type": "promptTemplate",
       "configuration": {
-        "template": "Given the following specs, extract requirements for writing an ad copy:\n      \n      {{text}}"
+        "template": "Given the following specs, extract requirements for writing an ad copy:\n\n      {{text}}"
       }
     },
     {
