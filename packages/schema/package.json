@@ -1,0 +1,12 @@
+{
+  "author": "Google Labs Team",
+  "files": [
+    "breadboard.schema.json"
+  ],
+  "license": "Apache-2.0",
+  "name": "@google-labs/breadboard-schema",
+  "scripts": {
+    "prepack": "ts-node ./prepack.ts"
+  },
+  "version": "1.0.0"
+}
