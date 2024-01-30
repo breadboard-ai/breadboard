@@ -29,7 +29,12 @@ export {
 
 // New Syntax:
 export { Runner } from "./new/runner/runner.js";
-export { recipe, recipe as board, code } from "./new/grammar/board.js";
+export {
+  board,
+  // TODO Alias for easier migration to the new name. Remove in a future breaking change.
+  board as recipe,
+  code,
+} from "./new/grammar/board.js";
 export { addKit } from "./new/grammar/kits.js";
 export { base } from "./new/grammar/base.js";
 export type {

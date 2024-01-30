@@ -37,7 +37,7 @@ import { BuilderScope } from "./scope.js";
 /**
  * Implementation of the overloaded board function.
  */
-export const recipe: BoardFactory = (
+export const board: BoardFactory = (
   optionsOrFn:
     | ({
         input?: z.ZodType;
@@ -55,8 +55,6 @@ export const recipe: BoardFactory = (
 
   return lambdaFactory(options);
 };
-
-export const board = recipe;
 
 /**
  * Explicit implementations of the overloaded variants, also splitting
