@@ -28,7 +28,7 @@
       "type": "string"
     },
     "description": {
-      "description": "",
+      "description": "Description of the graph",
       "type": "string"
     },
     "version": {
