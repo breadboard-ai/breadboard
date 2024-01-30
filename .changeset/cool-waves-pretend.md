@@ -1,5 +1,5 @@
 ---
-"@google-labs/breadboard": patch
+"@google-labs/breadboard": minor
 ---
 
 remove bradboard json schema
