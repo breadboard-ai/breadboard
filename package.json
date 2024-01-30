@@ -61,7 +61,8 @@
         "./packages/node-nursery:test",
         "./packages/node-nursery-web:test",
         "./packages/palm-kit:test",
-        "./packages/pinecone-kit:test"
+        "./packages/pinecone-kit:test",
+        "./packages/schema:validate"
       ]
     },
     "lint": {

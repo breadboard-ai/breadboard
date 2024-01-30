@@ -49,7 +49,7 @@ expected to provide an implementation for some portion of the graph themselves.
 
 Breadboard Graph Language (BGL) is a JSON file format format described by [this
 JSON
-schema](https://github.com/breadboard-ai/breadboard/blob/main/packages/breadboard/breadboard.schema.json).
+schema](../../../schema/breadboard.schema.json).
 
 ### Runtimes
 
