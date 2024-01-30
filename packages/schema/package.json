@@ -17,10 +17,10 @@
   "version": "1.0.0",
   "wireit": {
     "prepack": {
+      "command": "ts-node ./scripts/prepack.ts",
       "dependencies": [
         "validate"
-      ],
-      "command": "ts-node ./scripts/prepack.ts"
+      ]
     },
     "validate": {
       "command": "ts-node ./scripts/validate.ts"
