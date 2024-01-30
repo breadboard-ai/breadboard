@@ -2,4 +2,4 @@
 "@google-labs/breadboard": minor
 ---
 
-remove bradboard json schema
+remove breadboard json schema
