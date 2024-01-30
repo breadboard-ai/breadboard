@@ -79,7 +79,6 @@ const runCommand = (command: string) => {
 
   spawnSync(name, split, {
     stdio: "inherit",
-    cwd: relativeCwd,
   });
 };
 
