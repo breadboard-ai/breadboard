@@ -10,9 +10,9 @@ import { opendir, readFile, stat, writeFile } from "fs/promises";
 import { join } from "node:path";
 import { stdin as input } from "node:process";
 import * as readline from "node:readline/promises";
-import path, { extname } from "path";
+import path, { extname, resolve } from "path";
 import { relative } from "path/posix";
-import { pathToFileURL } from "url";
+import { URL, pathToFileURL } from "url";
 import { Options } from "./loader.js";
 import { Loaders } from "./loaders/index.js";
 
@@ -140,37 +140,55 @@ export const loadBoards = async (
   }
 
   if (fileStat && fileStat.isDirectory()) {
-    const dir = await opendir(fileUrl);
-    const boards: Array<BoardMetaData> = [];
-    for await (const dirent of dir) {
-      if (dirent.isFile() && dirent.name.endsWith(".json")) {
-        const data = await readFile(dirent.path, { encoding: "utf-8" });
-        const board = JSON.parse(data);
-        boards.push({
-          ...board,
-          title: board.title ?? join("/", path, dirent.name),
-          url: join("/", path, dirent.name),
-          version: board.version ?? "0.0.1",
-        });
-      }
-
-      if (
-        dirent.isFile() &&
-        (dirent.name.endsWith(".js") ||
-          dirent.name.endsWith(".ts") ||
-          dirent.name.endsWith(".yaml"))
-      ) {
-        const board = await loadBoard(dirent.path, options);
-        boards.push({
-          ...board,
-          title: board.title ?? join("/", path, dirent.name),
-          url: join("/", path, dirent.name),
-          version: board.version ?? "0.0.1",
-        });
-      }
-    }
-    return boards;
+    return await loadBoardsFromDirectory(fileUrl, path, options);
   }
 
   return [];
 };
+async function loadBoardsFromDirectory(
+  fileUrl: URL,
+  path: string,
+  options: Options
+) {
+  const dir = await opendir(fileUrl);
+  const boards: Array<BoardMetaData> = [];
+  for await (const dirent of dir) {
+    if (dirent.isFile() && dirent.name.endsWith(".json")) {
+      const data = await readFile(join(dirent.path, dirent.name), {
+        encoding: "utf-8",
+      });
+      const board = JSON.parse(data);
+      boards.push({
+        ...board,
+        title: board.title ?? join("/", path, dirent.name),
+        url: join("/", path, dirent.name),
+        version: board.version ?? "0.0.1",
+      });
+    }
+
+    if (
+      dirent.isFile() &&
+      (dirent.name.endsWith(".js") ||
+        dirent.name.endsWith(".ts") ||
+        dirent.name.endsWith(".yaml"))
+    ) {
+      const board = await loadBoard(resolve(dirent.path, dirent.name), options);
+      boards.push({
+        ...board,
+        title: board.title ?? join("/", path, dirent.name),
+        url: join("/", path, dirent.name),
+        version: board.version ?? "0.0.1",
+      });
+    }
+
+    if (dirent.isDirectory()) {
+      const boardsInDir = await loadBoardsFromDirectory(
+        new URL(dirent.name, fileUrl),
+        join(path, dirent.name),
+        options
+      );
+      boards.push(...boardsInDir);
+    }
+  }
+  return boards;
+}
