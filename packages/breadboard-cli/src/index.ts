@@ -100,12 +100,12 @@ program
   )
   .option("-k, --kit <kit...>", "The kit to use.")
   .option(
-    "-i, --input <input>",
-    "The JSON that represents the input to the graph."
+    "--input-file <input>",
+    "The path to a JSON file that represents the input to the graph."
   )
   .option(
-    "-if, --input-file <input>",
-    "The path to a JSON file that represents the input to the graph."
+    "-i, --input <input>",
+    "The JSON that represents the input to the graph."
   )
   .action(run);
 
