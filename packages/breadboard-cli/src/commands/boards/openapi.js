@@ -6,7 +6,6 @@
 
 import { base, board, code } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
-import { title } from "process";
 
 const metaData = {
   title: "Create a board from an Open API spec",
@@ -199,33 +198,58 @@ const createSpecBoard = board((apiSpec) => {
 
   const createBoardInputs = code(({ item }) => {
     const { parameters } = item;
+    const nodes = [];
 
-    const nodes = parameters.map((param) => {
-      const schema = { ...param.schema };
-      schema.title = param.name;
-      schema.description = param.description || param.schema.title;
-      schema.required = param.required;
+    const required = parameters
+      .filter((param) => {
+        return (param.in == "query" || param.in == "path") && param.required;
+      })
+      .map((param) => param.name);
 
-      return {
-        id: `input-${param.name}`,
-        type: "input",
-        configuration: {
-          schema: {
-            type: "object",
-            properties: { [param.name]: schema },
-          },
+    const inputNode = {
+      id: `input`,
+      type: `input`,
+      configuration: {
+        schema: {
+          type: "object",
+          properties: parameters.reduce((params, param) => {
+            const schema = { ...param.schema };
+            schema.title = param.name;
+            schema.description = param.description || param.schema.title;
+            //schema.required = param.required;
+
+            if (param.required) {
+              if ("default" in param == false) {
+                schema.default = undefined;
+              } else {
+                schema.default = param.default;
+              }
+            } else {
+              schema.default = param.default || null;
+            }
+
+            if (param.in == "query" || param.in == "path") {
+              params[param.name] = schema;
+            }
+
+            return params;
+          }, {}),
+          //required,
         },
-      };
-    });
+      },
+    };
+
+    nodes.push(inputNode);
 
     nodes.push({ id: "output", type: "output" });
 
     const edges = parameters.map((param) => {
       return {
-        from: `input-${param.name}`,
+        from: `input`,
         out: param.name,
         to: "output",
         in: param.name,
+        optional: !param.required,
       };
     });
 
@@ -307,14 +331,16 @@ const createSpecBoard = board((apiSpec) => {
     })
   );
 
-  const APIEndpoint = board(({ item, graph }) => {
+  const APIEndpoint = board((input) => {
+    const { item, graph } = input;
     const toAPIInputs = code((item) => {
       return { api_inputs: item };
     });
 
     const api_inputs = core
-      .invoke({ $id: "APIInput", graph: graph })
+      .invoke({ $id: "APIInput", ...input, graph: graph })
       .to(toAPIInputs({ $id: "toAPIInputs" }));
+
     const output = base.output({});
 
     const createFetchParameters = code(({ item, api_inputs }) => {
