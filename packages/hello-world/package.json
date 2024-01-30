@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "prepack": "npm run build",
-    "dev": "breadboard debug boards/ --watch"
+    "dev": "breadboard debug src/ --watch"
   },
   "keywords": [],
   "author": "Google Labs Team",
