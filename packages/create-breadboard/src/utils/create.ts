@@ -177,12 +177,12 @@ const createPackage = async (options: CreatePackageOptions) => {
 
   const cwd = process.cwd();
 
-  const packageDir = path.resolve(process.cwd(), process.argv[2]);
-
-  if (!packageDir) {
+  const rawPackageDir = process.argv.at(2);
+  if (!rawPackageDir) {
     console.error(chalk.red("Must provide directory as an argument."));
     process.exit(1);
   }
+  const packageDir = path.resolve(cwd, rawPackageDir);
 
   if (await fileExists(packageDir)) {
     console.error(
