@@ -16,7 +16,6 @@
     { "path": "packages/discovery-types" },
     { "path": "packages/graph-playground" },
     { "path": "packages/graph-integrity" },
-    { "path": "packages/hello-world" },
     { "path": "packages/llm-starter" },
     { "path": "packages/node-nursery" },
     { "path": "packages/node-nursery-web" },
