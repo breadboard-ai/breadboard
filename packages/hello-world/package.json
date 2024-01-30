@@ -5,16 +5,11 @@
   "description": "A template for creating a new Breadboard project",
   "type": "module",
   "scripts": {
-    "prepack": "npm run build",
     "dev": "breadboard debug src/ --watch"
   },
   "keywords": [],
   "author": "Google Labs Team",
   "license": "Apache-2.0",
-  "bugs": {
-    "url": "https://github.com/breadboard-ai/breadboard/issues"
-  },
-  "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
     "tsx": "^4.7.0",
     "typescript": "^5.0.4"
