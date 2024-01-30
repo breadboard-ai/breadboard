@@ -8,5 +8,8 @@
     },
     "resolveJsonModule": true
   },
-  "extends": "@google-labs/tsconfig/base.json"
+  "extends": "@google-labs/tsconfig/base.json",
+  "ts-node": {
+    "require": ["tsconfig-paths/register"]
+  }
 }
