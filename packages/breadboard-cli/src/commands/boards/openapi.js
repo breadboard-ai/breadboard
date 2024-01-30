@@ -337,12 +337,6 @@ const createSpecBoard = board((apiSpec) => {
       return { api_inputs: item };
     });
 
-    // const log = code((item) => {
-    //   debugger;
-    //   console.log(JSON.stringify(item));
-    //   return item;
-    // });
-
     const api_inputs = core
       .invoke({ $id: "APIInput", ...input, graph: graph })
       .to(toAPIInputs({ $id: "toAPIInputs" }));
@@ -351,7 +345,6 @@ const createSpecBoard = board((apiSpec) => {
 
     const createFetchParameters = code(({ item, api_inputs }) => {
       const { method, parameters, secrets, requestBody, info } = item;
-      console.log(api_inputs);
 
       let { url } = item;
 
