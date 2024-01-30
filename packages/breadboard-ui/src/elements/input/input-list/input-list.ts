@@ -8,6 +8,8 @@ import { NodeConfiguration, NodeValue } from "@google-labs/breadboard";
 import { HarnessRunResult } from "@google-labs/breadboard/harness";
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
+import { Input } from "../input.js";
+import { Ref, createRef, ref } from "lit/directives/ref.js";
 
 @customElement("bb-input-list")
 export class InputList extends LitElement {
@@ -19,6 +21,8 @@ export class InputList extends LitElement {
 
   @property()
   lastUpdate: number = Number.NaN;
+
+  #pendingInput: Ref<Input> = createRef();
 
   static styles = css`
     :host {
@@ -39,6 +43,14 @@ export class InputList extends LitElement {
     }
 
     return null;
+  }
+
+  captureNewestInput() {
+    if (!this.#pendingInput.value) {
+      return;
+    }
+
+    this.#pendingInput.value.processInput();
   }
 
   render() {
@@ -114,14 +126,15 @@ export class InputList extends LitElement {
       return html`There are no inputs yet.`;
     }
 
-    return html`${inputs.map(
-      ({ id, secret, remember, configuration, processedValues }) => {
+    return html` ${inputs.map(
+      ({ id, secret, remember, configuration, processedValues }, idx) => {
         if (!this.messages) {
           return nothing;
         }
 
         return html`<bb-input
           id="${id}"
+          ${ref(this.#pendingInput)}
           .secret=${secret}
           .remember=${remember}
           .configuration=${configuration}

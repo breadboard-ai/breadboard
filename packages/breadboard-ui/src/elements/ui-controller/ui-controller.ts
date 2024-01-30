@@ -32,6 +32,7 @@ import { classMap } from "lit/directives/class-map.js";
 import { styles as uiControllerStyles } from "./ui-controller.styles.js";
 import { until } from "lit/directives/until.js";
 import { guard } from "lit/directives/guard.js";
+import { type InputList } from "../input/input-list/input-list.js";
 
 type ExtendedNodeInformation = {
   id: string;
@@ -107,6 +108,7 @@ export class UI extends LitElement {
   #nodeInfo: Map<string, ExtendedNodeInformation> = new Map();
   #timelineRef: Ref<HTMLElement> = createRef();
   #inputRef: Ref<HTMLElement> = createRef();
+  #inputListRef: Ref<InputList> = createRef();
   #historyRef: Ref<HTMLElement> = createRef();
   #targetElementDivisions: number[] | null = null;
   #resizeTarget: string | null = null;
@@ -426,6 +428,16 @@ export class UI extends LitElement {
     }, DIAGRAM_DEBOUNCE_RENDER_TIMEOUT);
   }
 
+  #notifyInputList(evt: Event) {
+    if (!this.#inputListRef.value) {
+      return;
+    }
+
+    evt.preventDefault();
+    evt.stopImmediatePropagation();
+    this.#inputListRef.value.captureNewestInput();
+  }
+
   render() {
     if (!this.loadInfo) {
       return html`Loading board...`;
@@ -446,6 +458,20 @@ export class UI extends LitElement {
         ${ref(this.#diagram)}
       ></visual-breadboard>`;
     };
+
+    const disabled = this.messages[this.messages.length - 1]?.type !== "input";
+    const shouldShowContinueButton =
+      this.messages[this.#messagePosition]?.type === "input";
+
+    const continueButton = shouldShowContinueButton
+      ? html`<button
+          id="continue"
+          ?disabled=${disabled}
+          @click=${this.#notifyInputList}
+        >
+          Continue
+        </button>`
+      : nothing;
 
     return html`
       <div id="diagram">
@@ -530,9 +556,11 @@ export class UI extends LitElement {
         <section id="inputs" ${ref(this.#inputRef)}>
             <header>
               <h1>Inputs</h1>
+              ${continueButton}
             </header>
             <div id="inputs-list">
               <bb-input-list
+                ${ref(this.#inputListRef)}
                 .messages=${this.messages}
                 .messagePosition=${this.#messagePosition}
                 @breadboardinputenter=${(event: InputEnterEvent) => {

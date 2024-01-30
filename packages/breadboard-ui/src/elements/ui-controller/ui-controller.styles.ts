@@ -269,4 +269,13 @@ export const styles = css`
     font-size: var(--bb-text-pico);
     font-weight: normal;
   }
+
+  #continue {
+    background: rgb(209, 203, 255);
+    border-radius: calc(var(--bb-grid-size) * 3);
+    font-size: var(--bb-text-small);
+    font-weight: bold;
+    height: calc(var(--bb-grid-size) * 5);
+    border: none;
+  }
 `;
