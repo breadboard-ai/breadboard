@@ -54,17 +54,24 @@ async function runBoard(
       We will ask for the data if it's not present on the inputs. 
       However we can't ask for prompts if the graph has been piped in.
       */
-      if (pipedInput == false && schema != undefined) {
+      if (pipedInput == false) {
+        // if (schema == undefined) {
+        //   stop.inputs = newInputs;
+        //   continue;
+        // }
+
         const rl = readline.createInterface({ input, output });
 
-        if (schema.properties != undefined) {
+        if (schema != undefined && schema.properties != undefined) {
           const properties = Object.entries(schema.properties);
+          const required = schema.required || [];
 
           for (const [name, property] of properties) {
             if (name in newInputs == false) {
+              // There is no input being passed in already.
               let answer;
-              if ("default" in property == false) {
-                // The required argument is not on the input *and* there is no default. Ask for it.
+              if (required.indexOf(name) >= 0) {
+                // The argument is *required*, even if there is a default ask for it.
                 answer = await rl.question(
                   `(${name}) ${property.description}:`
                 );
@@ -97,12 +104,13 @@ const loadInputFile = async (filePath: string): Promise<InputValues> => {
 export const run = async (file: string, options: RunOptions) => {
   const kitDeclarations = options.kit as string[] | undefined;
   const verbose = "verbose" in options;
-  // Prefer an input from a file over a string
-  const input = options.inputFile
-    ? await loadInputFile(options.inputFile)
-    : options.input
+  const optionsInput = options.input
     ? (JSON.parse(options.input) as InputValues)
     : {};
+
+  const input = options.inputFile
+    ? { ...(await loadInputFile(options.inputFile)), ...optionsInput } // Allow merging of input file and CLI input
+    : optionsInput;
 
   if (file != undefined) {
     const filePath = resolveFilePath(file);

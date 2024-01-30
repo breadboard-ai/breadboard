@@ -39,6 +39,6 @@ true}" --kit @google-labs/llm-starter --kit @google-labs/core-kit
 breadboard debug boards/apis/llms/gemini/v1beta3/generativelanguage.models.embedText.js
 ```
 
-```
+## Recipe for standard implementation generate text and generate embedding
 
-```
+`npx breadboard run generateCompletion.js --kit=@google-labs/core-kit --input-file=tests/general-generateCompletionRequest.json --input="{\"key\":\"$GEMINI_API_KEY\"}"``
