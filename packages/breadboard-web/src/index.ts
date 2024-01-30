@@ -230,11 +230,9 @@ export class Main extends LitElement {
     super();
 
     // Remove boards that are still works-in-progress from production builds.
-    // These boards will have either no version or a version of "0.0.1".
+    // These boards will have no version.
     if (import.meta.env.MODE === "production") {
-      config.boards = config.boards.filter(
-        (board) => board.version && board.version !== "0.0.1"
-      );
+      config.boards = config.boards.filter((board) => board.version);
     }
 
     config.boards.sort((a, b) => a.title.localeCompare(b.title));

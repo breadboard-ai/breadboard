@@ -1,0 +1,54 @@
+{
+  "url": "file:///Users/dimitriglazkov/Documents/code/breadboard/packages/hello-world/blank.json",
+  "title": "Blank board",
+  "description": "A blank board. Use it to start a new board",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "input-1",
+      "to": "output-2",
+      "out": "text",
+      "in": "text"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "text"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
+    },
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "text"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
+    }
+  ],
+  "kits": [],
+  "graphs": {}
+}

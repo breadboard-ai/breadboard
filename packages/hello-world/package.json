@@ -1,107 +1,25 @@
 {
   "name": "@google-labs/hello-world",
-  "publishConfig": {
-    "registry": "https://wombat-dressing-room.appspot.com"
-  },
   "private": true,
   "version": "0.0.2",
-  "description": "A 'Hello, World' board",
-  "main": "./dist/src/index.js",
-  "exports": "./dist/src/index.js",
-  "types": "dist/src/index.d.ts",
+  "description": "A template for creating a new Breadboard project",
   "type": "module",
   "scripts": {
-    "prepack": "npm run build",
-    "build": "wireit",
-    "test": "wireit",
-    "lint": "wireit"
-  },
-  "wireit": {
-    "build": {
-      "dependencies": [
-        "../breadboard:build",
-        "build:tsc"
-      ]
-    },
-    "build:tsc": {
-      "command": "tsc -b",
-      "env": {
-        "FORCE_COLOR": "1"
-      },
-      "dependencies": [
-        "../breadboard:build:tsc"
-      ],
-      "files": [
-        "src/**/*.ts",
-        "tests/**/*.ts",
-        "tsconfig.json",
-        "../../core/tsconfig/base.json"
-      ],
-      "output": [
-        "dist/"
-      ],
-      "clean": "if-file-deleted"
-    },
-    "test": {
-      "command": "ava",
-      "env": {
-        "FORCE_COLOR": "1"
-      },
-      "dependencies": [
-        "build:tsc"
-      ],
-      "files": [],
-      "output": []
-    },
-    "lint": {
-      "command": "eslint . --ext .ts",
-      "env": {
-        "FORCE_COLOR": "1"
-      },
-      "files": [
-        "src/**/*.ts",
-        "tests/**/*.ts"
-      ],
-      "output": []
-    }
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/breadboard-ai/breadboard.git"
-  },
-  "files": [
-    "dist/src"
-  ],
-  "ava": {
-    "timeout": "30s",
-    "files": [
-      "tests/**/*.ts"
-    ],
-    "workerThreads": false,
-    "typescript": {
-      "rewritePaths": {
-        "./": "dist/"
-      },
-      "compile": false
-    }
+    "dev": "breadboard debug src/ --watch"
   },
   "keywords": [],
   "author": "Google Labs Team",
   "license": "Apache-2.0",
-  "bugs": {
-    "url": "https://github.com/breadboard-ai/breadboard/issues"
-  },
-  "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
-    "@ava/typescript": "^4.0.0",
-    "@typescript-eslint/eslint-plugin": "^5.56.0",
-    "@typescript-eslint/parser": "^5.56.0",
-    "@types/node": "^18.16.3",
-    "ava": "^5.2.0",
-    "typescript": "^5.0.4",
-    "@google-labs/tsconfig": "^0.0.1"
+    "tsx": "^4.7.0",
+    "typescript": "^5.0.4"
   },
   "dependencies": {
-    "@google-labs/breadboard": "^0.8.0"
+    "@google-labs/breadboard": "^0.8.0",
+    "@google-labs/breadboard-cli": "0.1.1",
+    "@google-labs/core-kit": "0.1.3",
+    "@google-labs/template-kit": "0.1.1",
+    "@google-labs/json-kit": "0.0.3",
+    "@google-labs/palm-kit": "0.0.2"
   }
 }
