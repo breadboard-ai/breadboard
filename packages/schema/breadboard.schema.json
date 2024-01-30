@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/breadboard/breadboard.schema.json",
+  "$id": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema/1.0.0/breadboard.schema.json",
   "title": "Breadboard",
   "description": "An executable program graph",
   "$defs": {
@@ -10,16 +10,39 @@
     }
   },
   "type": "object",
-  "required": ["nodes", "edges"],
+  "required": [
+    "nodes",
+    "edges"
+  ],
   "additionalProperties": false,
   "properties": {
+    "$schema": {
+      "type": "string",
+      "format": "uri-reference"
+    },
+    "title": {
+      "description": "A human-readable title for the graph",
+      "type": "string"
+    },
+    "description": {
+      "description": "Description of the graph",
+      "type": "string"
+    },
+    "version": {
+      "description": "Semantic version of the graph\nSee https://semver.org/",
+      "type": "string",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$"
+    },
     "nodes": {
       "description": "All of the nodes in the graph",
       "type": "array",
       "items": {
         "description": "A \"step\" or \"function\" in the program which performs computation",
         "type": "object",
-        "required": ["id", "type"],
+        "required": [
+          "id",
+          "type"
+        ],
         "additionalProperties": false,
         "properties": {
           "id": {
@@ -44,7 +67,10 @@
       "items": {
         "description": "A connection between two nodes through which data flows",
         "type": "object",
-        "required": ["from", "to"],
+        "required": [
+          "from",
+          "to"
+        ],
         "additionalProperties": false,
         "properties": {
           "from": {
@@ -85,7 +111,9 @@
             }
           },
           {
-            "required": ["out"],
+            "required": [
+              "out"
+            ],
             "properties": {
               "out": {
                 "const": "*"
@@ -96,7 +124,10 @@
             }
           },
           {
-            "required": ["out", "in"],
+            "required": [
+              "out",
+              "in"
+            ],
             "properties": {
               "out": {
                 "$ref": "#/$defs/identifier"
@@ -115,7 +146,9 @@
       "items": {
         "description": "A library that will be imported prior to execution for providing handlers for non built-in node types.",
         "type": "object",
-        "required": ["url"],
+        "required": [
+          "url"
+        ],
         "additionalProperties": false,
         "properties": {
           "url": {

@@ -1,0 +1,28 @@
+{
+  "author": "Google Labs Team",
+  "devDependencies": {
+    "ajv": "^8.12.0",
+    "ajv-formats": "^2.1.1"
+  },
+  "files": [
+    "breadboard.schema.json"
+  ],
+  "license": "Apache-2.0",
+  "name": "@google-labs/breadboard-schema",
+  "scripts": {
+    "prepack": "wireit",
+    "validate": "wireit"
+  },
+  "version": "1.0.0",
+  "wireit": {
+    "prepack": {
+      "command": "ts-node ./scripts/prepack.ts",
+      "dependencies": [
+        "validate"
+      ]
+    },
+    "validate": {
+      "command": "ts-node ./scripts/validate.ts"
+    }
+  }
+}
