@@ -4,13 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  GraphMetadata,
-  Schema,
-  V,
-  base,
-  recipe,
-} from "@google-labs/breadboard";
+import { GraphMetadata, Schema, V, base, board } from "@google-labs/breadboard";
 import { templates } from "@google-labs/template-kit";
 import { core } from "@google-labs/core-kit";
 import { json } from "@google-labs/json-kit";
@@ -65,13 +59,13 @@ type FunctionDeclaration = {
 
 const metadata = {
   title: "Gemini Pro Generator",
-  description: "The text generator recipe powered by the Gemini Pro model",
+  description: "The text generator board powered by the Gemini Pro model",
   version: "0.0.2",
 } as GraphMetadata;
 
 const toolsExample = [
   {
-    name: "The_Calculator_Recipe",
+    name: "The_Calculator_Board",
     description:
       "A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.",
     parameters: {
@@ -86,7 +80,7 @@ const toolsExample = [
     },
   },
   {
-    name: "The_Search_Summarizer_Recipe",
+    name: "The_Search_Summarizer_Board",
     description:
       "A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.",
     parameters: {
@@ -214,7 +208,7 @@ const streamOutputSchema = {
   },
 } satisfies Schema;
 
-export default await recipe(() => {
+export default await board(() => {
   const parameters = base.input({
     $id: "parameters",
     schema: parametersSchema,
@@ -293,7 +287,7 @@ export default await recipe(() => {
 
   const streamTransform = nursery.transformStream({
     $id: "streamTransform",
-    board: recipe(() => {
+    board: board(() => {
       const transformChunk = json.jsonata({
         $id: "transformChunk",
         expression:

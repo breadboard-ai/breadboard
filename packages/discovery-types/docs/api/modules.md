@@ -26,4 +26,4 @@
 
 #### Defined in
 
-[index.ts:11](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/discovery-types/src/index.ts#L11)
+[index.ts:11](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/discovery-types/src/index.ts#L11)

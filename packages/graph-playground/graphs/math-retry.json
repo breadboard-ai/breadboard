@@ -1,5 +1,5 @@
 {
-  "title": "The Calculator Recipe (with retries)",
+  "title": "The Calculator Board (with retries)",
   "description": "A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems. Retries 5 times.",
   "version": "0.0.1",
   "edges": [
@@ -42,9 +42,7 @@
               "description": "Ask a math question"
             }
           },
-          "required": [
-            "text"
-          ]
+          "required": ["text"]
         }
       }
     },
@@ -124,9 +122,7 @@
                 "id": "secrets-3",
                 "type": "secrets",
                 "configuration": {
-                  "keys": [
-                    "PALM_KEY"
-                  ]
+                  "keys": ["PALM_KEY"]
                 }
               },
               {
@@ -169,9 +165,7 @@
               "description": "The answer to the math problem"
             }
           },
-          "required": [
-            "text"
-          ]
+          "required": ["text"]
         }
       }
     }

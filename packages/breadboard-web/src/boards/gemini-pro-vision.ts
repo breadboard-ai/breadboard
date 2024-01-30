@@ -8,7 +8,7 @@ import {
   GraphMetadata,
   Schema,
   base,
-  recipe,
+  board,
   code,
 } from "@google-labs/breadboard";
 import { templates } from "@google-labs/template-kit";
@@ -91,7 +91,7 @@ const textOutputSchema = {
   },
 } satisfies Schema;
 
-export default await recipe(() => {
+export default await board(() => {
   const parameters = base.input({ $id: "parameters", schema: inputSchema });
 
   const makeBody = json.jsonata({
@@ -143,7 +143,7 @@ export default await recipe(() => {
 
   const chunkToText = nursery.transformStream({
     $id: "chunkToText",
-    board: recipe(() => {
+    board: board(() => {
       type Chunky = {
         chunk: {
           candidates: {

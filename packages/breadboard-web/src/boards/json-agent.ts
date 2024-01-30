@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Schema, base, recipe } from "@google-labs/breadboard";
+import { Schema, base, board } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { json } from "@google-labs/json-kit";
 import { templates } from "@google-labs/template-kit";
@@ -49,7 +49,7 @@ const sampleSchema = JSON.stringify(
   2
 );
 
-export default await recipe(({ text, schema, generator, context }) => {
+export default await board(({ text, schema, generator, context }) => {
   text.title("Text").examples(sampleText).format("multiline");
   schema
     .title("Schema")

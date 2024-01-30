@@ -9,7 +9,7 @@ import {
   Schema,
   V,
   base,
-  recipe,
+  board,
   code,
 } from "@google-labs/breadboard";
 import { nursery } from "@google-labs/node-nursery-web";
@@ -77,7 +77,7 @@ type MockGeneratorStreamOutput = {
 
 type MockGeneratorOutputs = MockGeneratorTextOutput | MockGeneratorStreamOutput;
 
-const mockGenerator = recipe<MockGeneratorInputs, MockGeneratorOutputs>(() => {
+const mockGenerator = board<MockGeneratorInputs, MockGeneratorOutputs>(() => {
   const inputs = base.input({ $id: "parameters", schema: inputSchema });
 
   type GeneratorOutputs = MockGeneratorTextOutput | { list: string[] };

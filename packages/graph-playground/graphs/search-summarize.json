@@ -1,5 +1,5 @@
 {
-  "title": "The Search Summarizer Recipe",
+  "title": "The Search Summarizer Board",
   "description": "A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.",
   "version": "0.0.1",
   "edges": [
@@ -82,9 +82,7 @@
               "description": "The answer to the query"
             }
           },
-          "required": [
-            "text"
-          ]
+          "required": ["text"]
         }
       }
     },
@@ -117,11 +115,7 @@
       "id": "secrets-6",
       "type": "secrets",
       "configuration": {
-        "keys": [
-          "PALM_KEY",
-          "API_KEY",
-          "GOOGLE_CSE_ID"
-        ]
+        "keys": ["PALM_KEY", "API_KEY", "GOOGLE_CSE_ID"]
       }
     },
     {
@@ -137,9 +131,7 @@
               "description": "What would you like to search for?"
             }
           },
-          "required": [
-            "text"
-          ]
+          "required": ["text"]
         }
       }
     }

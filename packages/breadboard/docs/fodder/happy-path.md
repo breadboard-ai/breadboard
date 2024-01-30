@@ -26,7 +26,7 @@ Go to Breadboard Replit Project (TOOD: URL) and click "Fork". This will create r
 
 2. Run `npm init @google-labs/breadboard` to set up the project. (TODO: make sure this works)
 
-This will create a simple starter project that contains most of the bits you need to build AI recipes.
+This will create a simple starter project that contains most of the bits you need to build AI boards.
 
 ### Set up the environment
 
@@ -61,9 +61,9 @@ Open `src/boards/blank.ts` in your editor window and navigate to the "Blank boar
 The blank board will look something like this:
 
 ```ts
-import { recipe } from "@google-labs/breadboard";
+import { board } from "@google-labs/breadboard";
 
-export default await recipe(({ text }) => {
+export default await board(({ text }) => {
   return { text };
 }).serialize({
   title: "Blank board",
@@ -80,13 +80,13 @@ export default await recipe(({ text }) => {
 >
 > It might be worth going over this code to orient ourselves a little bit:
 >
-> - The `recipe` call is how we tell Breadboard to create a new board. It takes a function as an argument. This function (let's call it a "board function") is where we describe the board.
+> - The `board` call is how we tell Breadboard to create a new board. It takes a function as an argument. This function (let's call it a "board function") is where we describe the board.
 >
 > - The board function itself takes a single argument (let's call it "inputs") and returns a single argument, which we'll call "outputs". These arguments are the objects that describe the inputs and outputs of our new board.
 >
 > - Both input and output are of the same shape: they are property bags that contain named properties. Each property is a "port" -- one value that the board takes in as input or passes as output. For example, the blank board has a single input port called `text` and a single output port called `text` -- and that input port is passed right through to the output port.
 >
-> - The `serialize` function is then called on the result of the `recipe` invocation. This will serialize the board into Breadboard Graph Language (BGL). BGL is the [common format](./hourglass.md) that Breadboard uses to represent boards.
+> - The `serialize` function is then called on the result of the `board` invocation. This will serialize the board into Breadboard Graph Language (BGL). BGL is the [common format](./hourglass.md) that Breadboard uses to represent boards.
 >
 > - The `serialize` function also takes a single argument: some metadata that describes the board. This is where we can set the title, description, and version of the board. Since we'll be making many boards in the future, it's a good practice to give meaningful values to these properties.
 >
@@ -103,7 +103,7 @@ In the debugger window, we can see that the board asks for the `text` input. If 
 > If the `({ text })` stuff looks a little weird to you, it's a fairly recent feature of Javascript/Typescript called "[destructuring assignment](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment)". The `({text})` expression can also be written in this more familiar way:
 >
 > ```ts
-> export default await recipe((inputs) => {
+> export default await board((inputs) => {
 >   const text = inputs.text;
 >   return { text: text };
 > }
@@ -138,11 +138,11 @@ When we save the file in the code editor, the tile representing our new board wi
 
 ### Adding inputs and outputs
 
-Next, let's add another input port to the board by appending a property named `number` to the arguments of the `recipe` function:
+Next, let's add another input port to the board by appending a property named `number` to the arguments of the `board` function:
 
 ```diff
-- export default await recipe(({ text }) => {
-+ export default await recipe(({ text, number }) => {
+- export default await board(({ text }) => {
++ export default await board(({ text, number }) => {
 ```
 
 When we save the file, we'll see that the debugger automatically reloads... yet there's no `number` input in the debugger. What gives?
@@ -168,7 +168,7 @@ Now, saving the file pops up a new input field! And when we enter the values, th
 Let's try one more thing: give our inputs nice names and descriptions. We can do that by adding a `title` and `description` property to each input and output:
 
 ```diff
-export default await recipe(({ text, number }) => {
+export default await board(({ text, number }) => {
 + text.title("Text").description("A description of the text");
 + number.title("Number").description("A description of the number");
 ```
@@ -203,7 +203,7 @@ We have a working board, but it isn't exactly useful. Let's see if we can add a 
 
 Both boards and nodes follow the same inputs/outputs pattern. A good way to think of is as more atomic, indivisible units of functionality compared to boards.
 
-To make this more concrete, let's add this bit of code just before the `recipe` invocation:
+To make this more concrete, let's add this bit of code just before the `board` invocation:
 
 ```diff
 +const reverse = code(({ text }) => {
@@ -211,14 +211,14 @@ To make this more concrete, let's add this bit of code just before the `recipe` 
 +  return { reversed };
 +});
 
-export default await recipe(({ text, number }) => {
+export default await board(({ text, number }) => {
 ```
 
 We will also need to update TypeScript imports in this file to include the `code` function:
 
 ```diff
--import { recipe } from "@google-labs/breadboard";
-+import { code, recipe } from "@google-labs/breadboard";
+-import { board } from "@google-labs/breadboard";
++import { code, board } from "@google-labs/breadboard";
 ```
 
 > [!NOTE]
@@ -229,7 +229,7 @@ We will also need to update TypeScript imports in this file to include the `code
 >
 > - the `code` function is how we ask Breadboard to create a new type of node.
 >
-> - just like the `recipe` function, it takes a single input: the "node function" that describes what the node will do.
+> - just like the `board` function, it takes a single input: the "node function" that describes what the node will do.
 >
 > - The node function takes in the inputs bag of ports and returns the output ports. In our node, there's one input port named `text` and one output port named `reversed`.
 >
@@ -246,7 +246,7 @@ The result of calling `code` is a special function -- let's call it a "node fact
 Like this:
 
 ```diff
-export default await recipe(({ text, number }) => {
+export default await board(({ text, number }) => {
   text
     .title("Text")
     .description("A description of the text")
@@ -260,7 +260,7 @@ export default await recipe(({ text, number }) => {
 + return { reversed, number };
 ```
 
-Now, let's run this recipe.
+Now, let's run this board.
 
 (TODO: Screenshot of a debugger with results of a reversed string)
 
@@ -306,7 +306,7 @@ Now, when we run the board in the debugger, we will see the output titled "Rever
 For completeness, here's the full code of our board so far:
 
 ```ts
-import { code, recipe } from "@google-labs/breadboard";
+import { code, board } from "@google-labs/breadboard";
 
 const reverse = code(({ text }) => {
   const reversed = (text as string).split("").reverse().join("");
@@ -318,7 +318,7 @@ const repeat = code(({ text, number }) => {
   return { repeated };
 });
 
-export default await recipe(({ text, number }) => {
+export default await board(({ text, number }) => {
   text
     .title("Text")
     .description("A description of the text")
@@ -399,7 +399,7 @@ const { prompt } = starter.promptTemplate({
 
 ### Reuse boards
 
-TODO: Use `gemini` board that is included (TODO: gemini board is added automatically to the initial setup) in the recipe.
+TODO: Use `gemini` board that is included (TODO: gemini board is added automatically to the initial setup) in the board.
 
 ## Remix boards
 

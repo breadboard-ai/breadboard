@@ -28,7 +28,7 @@
 
 #### Defined in
 
-[index.ts:61](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-playground/src/index.ts#L61)
+[index.ts:61](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-playground/src/index.ts#L61)
 
 ___
 
@@ -48,4 +48,4 @@ ___
 
 #### Defined in
 
-[index.ts:38](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-playground/src/index.ts#L38)
+[index.ts:38](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-playground/src/index.ts#L38)

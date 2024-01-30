@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Schema, V, base, recipe } from "@google-labs/breadboard";
+import { Schema, V, base, board } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { json } from "@google-labs/json-kit";
 
@@ -42,7 +42,7 @@ const outputSchema = {
   },
 } satisfies Schema;
 
-export default await recipe(() => {
+export default await board(() => {
   const input = base.input({ $id: "input", schema: inputSchema });
   const output = base.output({ $id: "output", schema: outputSchema });
 
@@ -53,8 +53,8 @@ export default await recipe(() => {
       $adjustType := function ($type) {
           $type = "object" or $type = "array" ? "string" : $type
       };
-  
-      { 
+
+      {
       "function": {
           "name": $replace(title, /\\W/, "_"),
           "description": description,
@@ -67,7 +67,7 @@ export default await recipe(() => {
               } }
               }) ~> $merge
           }
-      }, 
+      },
       "returns": nodes[type="output"][0].configuration.schema ~> | ** | {}, 'title' |
       }
   )`,

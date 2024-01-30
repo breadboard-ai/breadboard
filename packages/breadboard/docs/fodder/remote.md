@@ -1,12 +1,12 @@
 # Remote Breadboard
 
-Breadboard strives to be the basis for distributed systems, and already has several provisions for running recipes that span multiple computing environments or "remoting".
+Breadboard strives to be the basis for distributed systems, and already has several provisions for running boards that span multiple computing environments or "remoting".
 
 There are two main modes of remoting:
 
-- **Node Proxying** -- nodes in a recipe can run in a different environment from the one where the recipe is being run. For example, a recipe can run on main thread in a browser, while the recipe nodes are running in a web worker. Or they can run on a different server altogether.
+- **Node Proxying** -- nodes in a board can run in a different environment from the one where the board is being run. For example, a board can run on main thread in a browser, while the board nodes are running in a web worker. Or they can run on a different server altogether.
 
-- **Running** -- the recipe itself can run in a different environment from where it is invoked. For example, a Web app could request running a board, but the board itself would run in on a server (or a Web worker or an iframe).
+- **Running** -- the board itself can run in a different environment from where it is invoked. For example, a Web app could request running a board, but the board itself would run in on a server (or a Web worker or an iframe).
 
 ## Clients, Servers, and Transports
 
@@ -64,7 +64,7 @@ The Worker transport relies on the single instance of the `MessageChannel` to co
 
 ## Proxy kits
 
-To help integrate into the run of a recipe, proxy clients produce a special kind of kits: proxy kits. A proxy kit mimics the nodes that are being proxied: instead of running them locally, it proxies their inputs and outputs to the remote server.
+To help integrate into the run of a board, proxy clients produce a special kind of kits: proxy kits. A proxy kit mimics the nodes that are being proxied: instead of running them locally, it proxies their inputs and outputs to the remote server.
 
 For example, to proxy nodes `a` and `b` to a remote server, we can do this:
 

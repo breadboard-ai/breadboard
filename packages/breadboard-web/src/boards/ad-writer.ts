@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Schema, recipe } from "@google-labs/breadboard";
+import { Schema, board } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { templates } from "@google-labs/template-kit";
 import { json } from "@google-labs/json-kit";
@@ -34,7 +34,7 @@ const requirementsSchema = {
   },
 } satisfies Schema;
 
-export default await recipe(({ text }) => {
+export default await board(({ text }) => {
   text
     .title("Ad specs")
     .format("multiline")
@@ -47,7 +47,7 @@ export default await recipe(({ text }) => {
     path: jsonAgent,
     text: templates.promptTemplate({
       template: `Given the following specs, extract requirements for writing an ad copy:
-      
+
       {{text}}`,
       text,
     }).prompt,
@@ -103,7 +103,7 @@ export default await recipe(({ text }) => {
     context: [],
     text: templates.promptTemplate({
       template: `Write ad copy that conforms to the requirements below
-      
+
       {{requirements}}`,
       requirements: contextRestart.result,
     }),

@@ -4,13 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  GraphMetadata,
-  Schema,
-  V,
-  base,
-  recipe,
-} from "@google-labs/breadboard";
+import { GraphMetadata, Schema, V, base, board } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { json } from "@google-labs/json-kit";
 
@@ -81,7 +75,7 @@ const parametersSchema = {
   required: ["text", "boards"],
 } satisfies Schema;
 
-export default await recipe(() => {
+export default await board(() => {
   const parameters = base.input({
     $id: "parameters",
     schema: parametersSchema,
@@ -91,9 +85,9 @@ export default await recipe(() => {
    * Formats a list of boards as function declarations that can be supplied
    * to a generator.
    */
-  const formatFunctionDeclarations = recipe(({ boards }) => {
+  const formatFunctionDeclarations = board(({ boards }) => {
     const turnBoardsToFunctions = core.map({
-      board: recipe(({ item }) => {
+      board: board(({ item }) => {
         // for each URL, invoke board-as-function.
         const boardToFunction = core.invoke({
           $id: "boardToFunction",

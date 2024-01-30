@@ -15,7 +15,7 @@ class OutputSchema(SchemaObject):
   result: str = Field(title="Answer", description="The answer to the math problem")
 
 class Math(Board[InputSchema, OutputSchema]):
-  title = "The Calculator Recipe"
+  title = "The Calculator Board"
   description = "A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems."
   version = "0.0.2"
 
@@ -25,7 +25,7 @@ class Math(Board[InputSchema, OutputSchema]):
       question=input.question,
       template="""Translate the math problem below into a self-contained,
 zero-argument JavaScript function named \`compute\` that can be executed
-to provide the answer to the problem. 
+to provide the answer to the problem.
 
 Do not use any dependencies or libraries.
 

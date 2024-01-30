@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Schema, base, recipe } from "@google-labs/breadboard";
+import { Schema, base, board } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 
 const inputSchema = {
@@ -32,14 +32,14 @@ const outputSchema = {
   required: ["text"],
 } satisfies Schema;
 
-export default await recipe(() => {
+export default await board(() => {
   return base
     .input({ $id: "text", schema: inputSchema })
     .to(core.invoke({ $id: "gemini", path: "gemini-generator.json" }))
     .to(base.output({ $id: "response", schema: outputSchema }));
 }).serialize({
-  title: "The simplest LLM-based recipe",
+  title: "The simplest LLM-based board",
   description:
-    "This recipe is as simple as it gets: takes text as input and invokes Gemini to generate a text response as output.",
+    "This board is as simple as it gets: takes text as input and invokes Gemini to generate a text response as output.",
   version: "0.0.3",
 });

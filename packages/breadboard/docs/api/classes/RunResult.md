@@ -14,6 +14,8 @@
 
 ### Properties
 
+- [#invocationId](RunResult.md##invocationid)
+- [#runState](RunResult.md##runstate)
 - [#state](RunResult.md##state)
 - [#type](RunResult.md##type)
 
@@ -21,9 +23,12 @@
 
 - [inputArguments](RunResult.md#inputarguments)
 - [inputs](RunResult.md#inputs)
+- [invocationId](RunResult.md#invocationid)
 - [node](RunResult.md#node)
 - [outputs](RunResult.md#outputs)
+- [runState](RunResult.md#runstate)
 - [state](RunResult.md#state)
+- [timestamp](RunResult.md#timestamp)
 - [type](RunResult.md#type)
 
 ### Methods
@@ -36,7 +41,7 @@
 
 ### constructor
 
-• **new RunResult**(`state`, `type`): [`RunResult`](RunResult.md)
+• **new RunResult**(`state`, `type`, `runState`, `invocationId`): [`RunResult`](RunResult.md)
 
 #### Parameters
 
@@ -44,6 +49,8 @@
 | :------ | :------ |
 | `state` | [`TraversalResult`](../interfaces/TraversalResult.md) |
 | `type` | [`RunResultType`](../modules.md#runresulttype) |
+| `runState` | `undefined` \| [`RunState`](../modules.md#runstate) |
+| `invocationId` | `number` |
 
 #### Returns
 
@@ -51,9 +58,29 @@
 
 #### Defined in
 
-[packages/breadboard/src/run.ts:44](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/run.ts#L44)
+[packages/breadboard/src/run.ts:27](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/run.ts#L27)
 
 ## Properties
+
+### #invocationId
+
+• `Private` **#invocationId**: `number`
+
+#### Defined in
+
+[packages/breadboard/src/run.ts:25](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/run.ts#L25)
+
+___
+
+### #runState
+
+• `Private` **#runState**: `undefined` \| [`RunState`](../modules.md#runstate)
+
+#### Defined in
+
+[packages/breadboard/src/run.ts:23](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/run.ts#L23)
+
+___
 
 ### #state
 
@@ -61,7 +88,7 @@
 
 #### Defined in
 
-[packages/breadboard/src/run.ts:42](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/run.ts#L42)
+[packages/breadboard/src/run.ts:21](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/run.ts#L21)
 
 ___
 
@@ -71,7 +98,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/run.ts:41](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/run.ts#L41)
+[packages/breadboard/src/run.ts:20](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/run.ts#L20)
 
 ## Accessors
 
@@ -95,7 +122,7 @@ BreadboardRunResult.inputArguments
 
 #### Defined in
 
-[packages/breadboard/src/run.ts:57](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/run.ts#L57)
+[packages/breadboard/src/run.ts:51](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/run.ts#L51)
 
 ___
 
@@ -123,7 +150,28 @@ BreadboardRunResult.inputs
 
 #### Defined in
 
-[packages/breadboard/src/run.ts:61](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/run.ts#L61)
+[packages/breadboard/src/run.ts:55](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/run.ts#L55)
+
+___
+
+### invocationId
+
+• `get` **invocationId**(): `number`
+
+The invocation id of the current node. This is useful for tracking
+the node within the run, similar to an "index" property in map/forEach.
+
+#### Returns
+
+`number`
+
+#### Implementation of
+
+BreadboardRunResult.invocationId
+
+#### Defined in
+
+[packages/breadboard/src/run.ts:39](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/run.ts#L39)
 
 ___
 
@@ -145,7 +193,7 @@ configuration.
 
 #### Defined in
 
-[packages/breadboard/src/run.ts:53](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/run.ts#L53)
+[packages/breadboard/src/run.ts:47](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/run.ts#L47)
 
 ___
 
@@ -166,7 +214,21 @@ BreadboardRunResult.outputs
 
 #### Defined in
 
-[packages/breadboard/src/run.ts:65](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/run.ts#L65)
+[packages/breadboard/src/run.ts:59](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/run.ts#L59)
+
+___
+
+### runState
+
+• `get` **runState**(): `undefined` \| [`RunState`](../modules.md#runstate)
+
+#### Returns
+
+`undefined` \| [`RunState`](../modules.md#runstate)
+
+#### Defined in
+
+[packages/breadboard/src/run.ts:71](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/run.ts#L71)
 
 ___
 
@@ -188,7 +250,27 @@ BreadboardRunResult.state
 
 #### Defined in
 
-[packages/breadboard/src/run.ts:69](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/run.ts#L69)
+[packages/breadboard/src/run.ts:63](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/run.ts#L63)
+
+___
+
+### timestamp
+
+• `get` **timestamp**(): `number`
+
+The timestamp of when this result was issued.
+
+#### Returns
+
+`number`
+
+#### Implementation of
+
+BreadboardRunResult.timestamp
+
+#### Defined in
+
+[packages/breadboard/src/run.ts:75](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/run.ts#L75)
 
 ___
 
@@ -209,7 +291,7 @@ currently is in the `run` process.
 
 #### Defined in
 
-[packages/breadboard/src/run.ts:49](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/run.ts#L49)
+[packages/breadboard/src/run.ts:43](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/run.ts#L43)
 
 ## Methods
 
@@ -223,7 +305,7 @@ currently is in the `run` process.
 
 #### Defined in
 
-[packages/breadboard/src/run.ts:83](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/run.ts#L83)
+[packages/breadboard/src/run.ts:79](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/run.ts#L79)
 
 ___
 
@@ -237,7 +319,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/run.ts:73](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/run.ts#L73)
+[packages/breadboard/src/run.ts:67](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/run.ts#L67)
 
 ___
 
@@ -257,4 +339,4 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/run.ts:91](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/run.ts#L91)
+[packages/breadboard/src/run.ts:87](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/run.ts#L87)

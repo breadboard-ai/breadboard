@@ -32,4 +32,4 @@
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:398](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L398)
+[packages/breadboard/src/types.ts:407](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L407)

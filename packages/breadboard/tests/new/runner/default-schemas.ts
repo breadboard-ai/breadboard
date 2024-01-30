@@ -6,12 +6,12 @@
 
 import test from "ava";
 
-import { recipe } from "../../../src/new/recipe-grammar/recipe.js";
+import { board } from "../../../src/new/grammar/board.js";
 
 import { testKit } from "../../helpers/_test-kit.js";
 
 test("schema derived from reverser (has describe)", async (t) => {
-  const graph = recipe<{ foo: string }>(({ foo }) => ({
+  const graph = board<{ foo: string }>(({ foo }) => ({
     bar: testKit.reverser({ foo }).foo,
   }));
 
@@ -41,7 +41,7 @@ test("schema derived from reverser (has describe)", async (t) => {
 });
 
 test("schema derived from noop (no describe)", async (t) => {
-  const graph = recipe(({ foo }) => ({
+  const graph = board(({ foo }) => ({
     bar: testKit.noop({ foo }).foo,
   }));
 
@@ -70,7 +70,7 @@ test("schema derived from noop (no describe)", async (t) => {
 });
 
 test("schema derived from noop, with type casts", async (t) => {
-  const graph = recipe(({ foo }) => ({
+  const graph = board(({ foo }) => ({
     bar: testKit
       .noop({
         foo: foo.isNumber().title("The foo").description("A foo-lish number"),
@@ -108,7 +108,7 @@ test("schema derived from noop, with type casts", async (t) => {
 });
 
 test("schema derived from reverser, with type annotations", async (t) => {
-  const graph = recipe<{ foo: string }>(({ foo }) => ({
+  const graph = board<{ foo: string }>(({ foo }) => ({
     bar: testKit
       .reverser({ foo: foo.title("A foo") })
       .foo.description("Reversed bar"),

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Schema, V, base, recipe, code } from "@google-labs/breadboard";
+import { Schema, V, base, board, code } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { templates } from "@google-labs/template-kit";
 
@@ -45,7 +45,7 @@ const outputSchema = {
   },
 } satisfies Schema;
 
-const graph = recipe(() => {
+const graph = board(() => {
   const parameters = base.input({ $id: "parameters", schema: inputSchema });
 
   const output = base.output({ $id: "guide", schema: outputSchema });
@@ -63,7 +63,7 @@ const graph = recipe(() => {
   8) Learn about aviation history at the Museum of Flight
   9) Wander the art at the Seattle Art Museum
   10) See the baby gorilla at the Woodland Park Zoo
-  
+
   [Place] Madrid, Spain
   [Top ten place-based experiences with no duplicates]
   1) Stroll the Gran Via
@@ -76,9 +76,9 @@ const graph = recipe(() => {
   8) Take a selfie at the Puerta del Sol
   9) Shop at the El Corte Ingles
   10) Enjoy tapas and wine at La Latina
-  
+
   [Place] Chicago, IL
-  [Top ten place-based experiences with no duplicates] 
+  [Top ten place-based experiences with no duplicates]
   1) Attend a Chicago Bulls game
   2) Stroll the Magnificent Mile
   3) Go to a museum at the Museum of Science and Industry
@@ -89,7 +89,7 @@ const graph = recipe(() => {
   8) Eat deep dish pizza at Giordano's
   9) Shop at the Water Tower Place
   10) See the Chicago Theatre
-  
+
   [Place] {{location}}
   [Top ten place-based experiences with no duplicates]
   `,
@@ -119,21 +119,21 @@ const graph = recipe(() => {
 
   travelItinerary.prompt.as("text").to(travelItineraryGenerator);
 
-  const createGuide = recipe(({ location, generator }) => {
+  const createGuide = board(({ location, generator }) => {
     const guideTemplate = templates.promptTemplate({
       template: `[City] Paris, France
     [Activity] Have a picnic in the Luxembourg Gardens
     [Experiential story] Grab a baguette, some cheese and bottle of wine and head over to Luxembourg Gardens. You'll enjoy an even stroll, a great chance to people watch, and a charming free evening that is quintessentially Parisian.
-    
+
     [City] Madrid, Spain
     [Activity] See the Prado Museum
     [Experiential story] The Prado is an art lover's paradise. It is home to the largest collection of works by Goya, Velazquez, and El Greco. There are also works by Picasso, Monet, and Rembrandt. The Prado is a must-see for anyone visiting Madrid.
-    
+
     [City] Tatooine
     [Activity] Catch a pod race
     [Experiential story] A pod race is a race of flying engines called pods. Pod racing is a dangerous sport and was very popular in the Outer Rim Territories before the Empire was formed.
-    
-    
+
+
     [City] {{location}}
     [Activity] {{activity}}
     [Experiential story]

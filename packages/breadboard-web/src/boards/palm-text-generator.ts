@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Schema, V, base, recipe, code } from "@google-labs/breadboard";
+import { Schema, V, base, board, code } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { palm } from "@google-labs/palm-kit";
 
@@ -44,7 +44,7 @@ const textOutputSchema = {
   },
 } satisfies Schema;
 
-export default await recipe(() => {
+export default await board(() => {
   const parameters = base.input({ $id: "parameters", schema: inputSchema });
 
   code(({ useStreaming }) => {
