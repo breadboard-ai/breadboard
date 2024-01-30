@@ -42,7 +42,7 @@
 
 #### Defined in
 
-[packages/graph-runner/src/traversal/machine.ts:17](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/traversal/machine.ts#L17)
+[packages/graph-runner/src/traversal/machine.ts:17](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/graph-runner/src/traversal/machine.ts#L17)
 
 ## Properties
 
@@ -52,7 +52,7 @@
 
 #### Defined in
 
-[packages/graph-runner/src/traversal/machine.ts:14](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/traversal/machine.ts#L14)
+[packages/graph-runner/src/traversal/machine.ts:14](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/graph-runner/src/traversal/machine.ts#L14)
 
 ___
 
@@ -62,7 +62,7 @@ ___
 
 #### Defined in
 
-[packages/graph-runner/src/traversal/machine.ts:15](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/traversal/machine.ts#L15)
+[packages/graph-runner/src/traversal/machine.ts:15](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/graph-runner/src/traversal/machine.ts#L15)
 
 ## Methods
 
@@ -80,7 +80,7 @@ AsyncIterable.[asyncIterator]
 
 #### Defined in
 
-[packages/graph-runner/src/traversal/machine.ts:22](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/traversal/machine.ts#L22)
+[packages/graph-runner/src/traversal/machine.ts:22](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/graph-runner/src/traversal/machine.ts#L22)
 
 ___
 
@@ -94,7 +94,7 @@ ___
 
 #### Defined in
 
-[packages/graph-runner/src/traversal/machine.ts:26](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/traversal/machine.ts#L26)
+[packages/graph-runner/src/traversal/machine.ts:26](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/graph-runner/src/traversal/machine.ts#L26)
 
 ___
 
@@ -114,4 +114,4 @@ ___
 
 #### Defined in
 
-[packages/graph-runner/src/traversal/machine.ts:49](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/traversal/machine.ts#L49)
+[packages/graph-runner/src/traversal/machine.ts:49](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/graph-runner/src/traversal/machine.ts#L49)

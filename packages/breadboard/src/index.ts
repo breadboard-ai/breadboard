@@ -29,9 +29,14 @@ export {
 
 // New Syntax:
 export { Runner } from "./new/runner/runner.js";
-export { recipe, code } from "./new/recipe-grammar/recipe.js";
-export { addKit } from "./new/recipe-grammar/kits.js";
-export { base } from "./new/recipe-grammar/base.js";
+export {
+  board,
+  // TODO Alias for easier migration to the new name. Remove in a future breaking change.
+  board as recipe,
+  code,
+} from "./new/grammar/board.js";
+export { addKit } from "./new/grammar/kits.js";
+export { base } from "./new/grammar/base.js";
 export type {
   NodeValue as NewNodeValue,
   InputValues as NewInputValues,
@@ -52,5 +57,5 @@ export type {
   ProjectBackToOutputValues as __ProjectBackToOutputValues,
   InputValues as NewInputValuesWithNodeFactory,
   AbstractValue as V,
-} from "./new/recipe-grammar/types.js";
+} from "./new/grammar/types.js";
 export { asyncGen } from "./utils/async-gen.js";

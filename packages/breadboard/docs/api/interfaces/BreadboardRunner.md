@@ -8,9 +8,11 @@ Represents a graph.
 
 - [`GraphDescriptor`](../modules.md#graphdescriptor)
 
-- `RunnerLike`
+- [`RunnerLike`](RunnerLike.md)
 
   ↳ **`BreadboardRunner`**
+
+  ↳↳ [`Breadboard`](Breadboard.md)
 
 ## Implemented by
 
@@ -51,7 +53,7 @@ GraphDescriptor.args
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:228](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L228)
+[packages/breadboard/src/types.ts:228](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L228)
 
 ___
 
@@ -67,7 +69,7 @@ GraphDescriptor.description
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:181](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L181)
+[packages/breadboard/src/types.ts:181](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L181)
 
 ___
 
@@ -83,7 +85,7 @@ GraphDescriptor.edges
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:208](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L208)
+[packages/breadboard/src/types.ts:208](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L208)
 
 ___
 
@@ -99,7 +101,7 @@ GraphDescriptor.graphs
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:223](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L223)
+[packages/breadboard/src/types.ts:223](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L223)
 
 ___
 
@@ -113,7 +115,7 @@ GraphDescriptor.kits
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:502](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L502)
+[packages/breadboard/src/types.ts:644](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L644)
 
 ___
 
@@ -129,7 +131,7 @@ GraphDescriptor.nodes
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:213](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L213)
+[packages/breadboard/src/types.ts:213](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L213)
 
 ___
 
@@ -145,7 +147,7 @@ GraphDescriptor.title
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:177](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L177)
+[packages/breadboard/src/types.ts:177](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L177)
 
 ___
 
@@ -164,7 +166,7 @@ GraphDescriptor.url
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:173](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L173)
+[packages/breadboard/src/types.ts:173](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L173)
 
 ___
 
@@ -181,7 +183,7 @@ GraphDescriptor.version
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:186](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L186)
+[packages/breadboard/src/types.ts:186](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L186)
 
 ## Methods
 
@@ -201,7 +203,7 @@ GraphDescriptor.version
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:503](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L503)
+[packages/breadboard/src/types.ts:645](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L645)
 
 ___
 
@@ -222,11 +224,11 @@ ___
 
 #### Inherited from
 
-RunnerLike.run
+[RunnerLike](RunnerLike.md).[run](RunnerLike.md#run)
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:491](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L491)
+[packages/breadboard/src/types.ts:633](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L633)
 
 ___
 
@@ -247,8 +249,8 @@ ___
 
 #### Inherited from
 
-RunnerLike.runOnce
+[RunnerLike](RunnerLike.md).[runOnce](RunnerLike.md#runonce)
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:495](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L495)
+[packages/breadboard/src/types.ts:637](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L637)

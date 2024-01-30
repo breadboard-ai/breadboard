@@ -10,7 +10,7 @@ import { TemplateKit } from "@google-labs/template-kit";
 import { PaLMKit } from "@google-labs/palm-kit";
 
 const math = new Board({
-  title: "The Calculator Recipe",
+  title: "The Calculator Board",
   description:
     "A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.",
   version: "0.0.1",

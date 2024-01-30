@@ -15,7 +15,7 @@ import { BoardRunner } from "@google-labs/breadboard";
 import { SchemaBuilder } from "@google-labs/breadboard/kits";
 
 export type InvokeNodeInputs = InputValues & {
-  $recipe?: string | BreadboardCapability | GraphDescriptor;
+  $board?: string | BreadboardCapability | GraphDescriptor;
   path?: string;
   board?: BreadboardCapability;
   graph?: GraphDescriptor;
@@ -92,10 +92,10 @@ export default {
           description: "The graph descriptor of the board to invoke.",
           type: "object",
         },
-        $recipe: {
-          title: "recipe",
+        $board: {
+          title: "board",
           description:
-            "The recipe to invoke. Can be a BoardCapability, a graph or a URL",
+            "The board to invoke. Can be a BoardCapability, a graph or a URL",
           type: "string", // TODO: Make this a union type
         },
       })
@@ -106,17 +106,17 @@ export default {
     inputs: InputValues,
     context: NodeHandlerContext
   ): Promise<OutputValues> => {
-    const { $recipe, ...args } = inputs as InvokeNodeInputs;
+    const { $board, ...args } = inputs as InvokeNodeInputs;
 
-    if ($recipe) {
+    if ($board) {
       let board;
 
-      if (isBreadboardCapability($recipe))
-        board = await BoardRunner.fromBreadboardCapability($recipe);
-      if (isGraphDescriptor($recipe))
-        board = await BoardRunner.fromGraphDescriptor($recipe);
-      if (typeof $recipe === "string") {
-        board = await loadBoardFromPath($recipe, context);
+      if (isBreadboardCapability($board))
+        board = await BoardRunner.fromBreadboardCapability($board);
+      if (isGraphDescriptor($board))
+        board = await BoardRunner.fromGraphDescriptor($board);
+      if (typeof $board === "string") {
+        board = await loadBoardFromPath($board, context);
       } else {
         board = undefined;
       }

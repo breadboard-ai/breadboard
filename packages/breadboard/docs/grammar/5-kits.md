@@ -1,4 +1,4 @@
-# Kits - bundles of recipes
+# Kits - bundles of boards
 
 BIG TODO: The kit stuff isn’t implemented yet, this is just to explore the
 syntax:
@@ -6,11 +6,11 @@ syntax:
 You can also package these up in a kit:
 
 ```ts
-import { recipe, makeKit } from "breadboard-ai";
+import { board, makeKit } from "breadboard-ai";
 
-const reverse = recipe(...);
-const mirror = recipe(...);
-const hello = recipe(...)
+const reverse = board(...);
+const mirror = board(...);
+const hello = board(...)
 
 const myExamples = makeKit({ name: "myExamples" }, { reverse, mirror, hello });
 
@@ -39,7 +39,7 @@ either
 - add a URL to the kit, e.g. `makeKit({ name: “myExample”, url: “https://…”},
 {...})`
 - add a destination path, e.g. `await reverseHello.serialize({ baseURI:
-“recipes/” })`
+boards/” })`
 
 (TODO: should we also add `serializeAndWriteFile` that automatically figures out
 the paths?)
@@ -47,7 +47,7 @@ the paths?)
 Sadly, though, building kits in this way won’t retain type information, so you
 won’t get those nice hints in TypeScript, e.g. &lt;insert screenshot> or
 &lt;another screenshot> won’t work anymore. To fix this, we can add explicit
-type information to recipes:
+type information to boards:
 
 (insert Zod example)
 
@@ -55,5 +55,5 @@ And use a CLI tool to create a module for each kit
 
 (show CLI tool)
 
-(more metadata for both recipes and kits, e.g. title, description, version,
+(more metadata for both boards and kits, e.g. title, description, version,
 etc.)

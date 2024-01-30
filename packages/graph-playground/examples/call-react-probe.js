@@ -20,7 +20,7 @@ const REPO_URL =
   "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/graph-playground/graphs";
 
 /**
- * Creates a breadboard that wires up a bunch of useful tools for ReAct recipe
+ * Creates a breadboard that wires up a bunch of useful tools for ReAct board
  * to use.
  * @returns a `tools` breadboard
  */
@@ -29,7 +29,7 @@ const getTools = () => {
   tools.addKit(Starter);
 
   // Include a a `search-summarize` breadboard from a URL.
-  // The `$id` and `description` are important, because they help ReAct recipe
+  // The `$id` and `description` are important, because they help ReAct board
   // figure out the purpose of each tool.
   const search = tools.include(`${REPO_URL}/search-summarize.json`, {
     $id: "search",
@@ -46,7 +46,7 @@ const getTools = () => {
 
   // Wire the breadboard:
   // - Wire input to the `search` and `math` include nodes.
-  // - Additionally, wire input to `reflect` node, which allows the ReAct recipe
+  // - Additionally, wire input to `reflect` node, which allows the ReAct board
   // to introspect the graph (and get access to `description` and `$id`
   // properties above)
   // - Finally, wire the all of the nodes to outputs.
@@ -66,7 +66,7 @@ main.addKit(Starter);
 
 // Include the `react-with-slot` breadboard from a URL, wiring input to it.
 // Slot the `tools` breadboard into the `tools` slot.
-// This is how the ReAct recipe will consume the `tools` breadboard we created
+// This is how the ReAct board will consume the `tools` breadboard we created
 // above.
 main.input("Ask ReAct").wire(
   "text",

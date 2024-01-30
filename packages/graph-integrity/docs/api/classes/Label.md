@@ -43,7 +43,7 @@ Information flow control label.
 
 #### Defined in
 
-[label.ts:208](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/label.ts#L208)
+[label.ts:208](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/label.ts#L208)
 
 ## Properties
 
@@ -53,7 +53,7 @@ Information flow control label.
 
 #### Defined in
 
-[label.ts:201](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/label.ts#L201)
+[label.ts:201](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/label.ts#L201)
 
 ___
 
@@ -63,7 +63,7 @@ ___
 
 #### Defined in
 
-[label.ts:202](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/label.ts#L202)
+[label.ts:202](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/label.ts#L202)
 
 ## Methods
 
@@ -88,7 +88,7 @@ true if the label can flow to the destination label
 
 #### Defined in
 
-[label.ts:314](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/label.ts#L314)
+[label.ts:314](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/label.ts#L314)
 
 ___
 
@@ -112,7 +112,7 @@ true if the labels are equal
 
 #### Defined in
 
-[label.ts:283](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/label.ts#L283)
+[label.ts:283](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/label.ts#L283)
 
 ___
 
@@ -136,7 +136,7 @@ true if the labels are equal
 
 #### Defined in
 
-[label.ts:296](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/label.ts#L296)
+[label.ts:296](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/label.ts#L296)
 
 ___
 
@@ -154,7 +154,7 @@ human-readable string
 
 #### Defined in
 
-[label.ts:329](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/label.ts#L329)
+[label.ts:329](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/label.ts#L329)
 
 ___
 
@@ -179,7 +179,7 @@ the passed
 
 #### Defined in
 
-[label.ts:248](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/label.ts#L248)
+[label.ts:248](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/label.ts#L248)
 
 ___
 
@@ -204,7 +204,7 @@ the passed
 
 #### Defined in
 
-[label.ts:229](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/label.ts#L229)
+[label.ts:229](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/label.ts#L229)
 
 ___
 
@@ -232,4 +232,4 @@ Might return empty lists if there are no defined label components.
 
 #### Defined in
 
-[label.ts:262](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/label.ts#L262)
+[label.ts:262](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/label.ts#L262)

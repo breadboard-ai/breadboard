@@ -1,5 +1,5 @@
 {
-  "title": "The Calculator Recipe",
+  "title": "The Calculator Board",
   "description": "A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.",
   "version": "0.0.2",
   "edges": [
@@ -98,7 +98,7 @@
       "id": "math-function",
       "type": "promptTemplate",
       "configuration": {
-        "template": "Translate the math problem below into a self-contained,\nzero-argument JavaScript function named `compute` that can be executed\nto provide the answer to the problem. \n\nDo not use any dependencies or libraries.\n\nMath Problem: {{question}}\n\nSolution:"
+        "template": "Translate the math problem below into a self-contained,\nzero-argument JavaScript function named `compute` that can be executed\nto provide the answer to the problem.\n\nDo not use any dependencies or libraries.\n\nMath Problem: {{question}}\n\nSolution:"
       }
     }
   ],

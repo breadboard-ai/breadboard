@@ -11,7 +11,7 @@ import { TemplateKit } from "@google-labs/template-kit";
 import { PaLMKit } from "@google-labs/palm-kit";
 
 const searchSummarize = new Board({
-  title: "The Search Summarizer Recipe",
+  title: "The Search Summarizer Board",
   description:
     "A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.",
   version: "0.0.1",

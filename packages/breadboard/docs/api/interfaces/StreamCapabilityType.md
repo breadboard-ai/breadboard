@@ -37,7 +37,7 @@
 
 #### Defined in
 
-[packages/breadboard/src/stream.ts:12](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/stream.ts#L12)
+[packages/breadboard/src/stream.ts:12](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/stream.ts#L12)
 
 ___
 
@@ -47,4 +47,4 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/stream.ts:13](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/stream.ts#L13)
+[packages/breadboard/src/stream.ts:13](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/stream.ts#L13)

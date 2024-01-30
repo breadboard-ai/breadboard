@@ -9,9 +9,9 @@ import Core from "@google-labs/core-kit";
 import { PaLMKit } from "@google-labs/palm-kit";
 
 const simplest = new Board({
-  title: "The simplest LLM-based recipe",
+  title: "The simplest LLM-based board",
   description:
-    "This is as simple as it gets: the recipe takes a prompt as input and generates a response as output.",
+    "This is as simple as it gets: the board takes a prompt as input and generates a response as output.",
   version: "0.0.2",
 });
 const core = simplest.addKit(Core);

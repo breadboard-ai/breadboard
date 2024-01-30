@@ -29,10 +29,9 @@
 
 ### Methods
 
-- [getInputs](AbstractNode.md#getinputs)
+- [addIncomingEdge](AbstractNode.md#addincomingedge)
+- [describe](AbstractNode.md#describe)
 - [invoke](AbstractNode.md#invoke)
-- [missingInputs](AbstractNode.md#missinginputs)
-- [receiveInputs](AbstractNode.md#receiveinputs)
 - [serialize](AbstractNode.md#serialize)
 - [serializeNode](AbstractNode.md#serializenode)
 
@@ -61,7 +60,7 @@
 
 #### Defined in
 
-[packages/breadboard/src/new/runner/types.ts:83](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/new/runner/types.ts#L83)
+[packages/breadboard/src/new/runner/types.ts:84](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/runner/types.ts#L84)
 
 ___
 
@@ -71,7 +70,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/runner/types.ts:79](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/new/runner/types.ts#L79)
+[packages/breadboard/src/new/runner/types.ts:80](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/runner/types.ts#L80)
 
 ___
 
@@ -81,7 +80,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/runner/types.ts:82](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/new/runner/types.ts#L82)
+[packages/breadboard/src/new/runner/types.ts:83](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/runner/types.ts#L83)
 
 ___
 
@@ -91,7 +90,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/runner/types.ts:81](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/new/runner/types.ts#L81)
+[packages/breadboard/src/new/runner/types.ts:82](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/runner/types.ts#L82)
 
 ___
 
@@ -101,32 +100,66 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/runner/types.ts:80](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/new/runner/types.ts#L80)
+[packages/breadboard/src/new/runner/types.ts:81](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/runner/types.ts#L81)
 
 ## Methods
 
-### getInputs
+### addIncomingEdge
 
-▸ **getInputs**(): `I`
-
-#### Returns
-
-`I`
-
-#### Defined in
-
-[packages/breadboard/src/new/runner/types.ts:88](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/new/runner/types.ts#L88)
-
-___
-
-### invoke
-
-▸ **invoke**(`dynamicScope?`): `Promise`\<`O`\>
+▸ **addIncomingEdge**(`from`, `out`, `in_`, `constant?`, `schema?`): `void`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
+| `from` | [`AbstractNode`](AbstractNode.md)\<[`NewInputValues`](../modules.md#newinputvalues), [`NewOutputValues`](../modules.md#newoutputvalues)\> |
+| `out` | `string` |
+| `in_` | `string` |
+| `constant?` | `boolean` |
+| `schema?` | [`Schema`](../modules.md#schema) |
+
+#### Returns
+
+`void`
+
+#### Defined in
+
+[packages/breadboard/src/new/runner/types.ts:86](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/runner/types.ts#L86)
+
+___
+
+### describe
+
+▸ **describe**(`scope?`, `inputs?`, `inputSchema?`, `outputSchema?`): `Promise`\<`undefined` \| [`NodeDescriberResult`](../modules.md#nodedescriberresult)\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `scope?` | `ScopeInterface` |
+| `inputs?` | [`NewInputValues`](../modules.md#newinputvalues) |
+| `inputSchema?` | [`Schema`](../modules.md#schema) |
+| `outputSchema?` | [`Schema`](../modules.md#schema) |
+
+#### Returns
+
+`Promise`\<`undefined` \| [`NodeDescriberResult`](../modules.md#nodedescriberresult)\>
+
+#### Defined in
+
+[packages/breadboard/src/new/runner/types.ts:95](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/runner/types.ts#L95)
+
+___
+
+### invoke
+
+▸ **invoke**(`inputs`, `dynamicScope?`): `Promise`\<`O`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `inputs` | `I` |
 | `dynamicScope?` | `ScopeInterface` |
 
 #### Returns
@@ -135,42 +168,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/runner/types.ts:90](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/new/runner/types.ts#L90)
-
-___
-
-### missingInputs
-
-▸ **missingInputs**(): ``false`` \| `string`[]
-
-#### Returns
-
-``false`` \| `string`[]
-
-#### Defined in
-
-[packages/breadboard/src/new/runner/types.ts:86](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/new/runner/types.ts#L86)
-
-___
-
-### receiveInputs
-
-▸ **receiveInputs**(`edge`, `inputs`): `string`[]
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `edge` | `EdgeInterface`\<[`NewInputValues`](../modules.md#newinputvalues), [`NewOutputValues`](../modules.md#newoutputvalues), [`NewInputValues`](../modules.md#newinputvalues), [`NewOutputValues`](../modules.md#newoutputvalues)\> |
-| `inputs` | [`NewInputValues`](../modules.md#newinputvalues) |
-
-#### Returns
-
-`string`[]
-
-#### Defined in
-
-[packages/breadboard/src/new/runner/types.ts:85](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/new/runner/types.ts#L85)
+[packages/breadboard/src/new/runner/types.ts:94](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/runner/types.ts#L94)
 
 ___
 
@@ -194,7 +192,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/runner/types.ts:92](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/new/runner/types.ts#L92)
+[packages/breadboard/src/new/runner/types.ts:102](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/runner/types.ts#L102)
 
 ___
 
@@ -208,4 +206,4 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/runner/types.ts:94](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/new/runner/types.ts#L94)
+[packages/breadboard/src/new/runner/types.ts:104](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/runner/types.ts#L104)

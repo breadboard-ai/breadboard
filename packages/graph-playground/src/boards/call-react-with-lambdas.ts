@@ -46,7 +46,7 @@ const tools = json
 
 // Include the `react-with-slot` board from a URL, wiring input to it.
 // Slot the `tools` board into the `tools` slot.
-// This is how the ReAct recipe will consume the `tools` board we created
+// This is how the ReAct board will consume the `tools` board we created
 // above.
 board
   .input({

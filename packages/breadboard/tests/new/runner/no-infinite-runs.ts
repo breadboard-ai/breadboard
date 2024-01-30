@@ -6,12 +6,12 @@
 
 import test from "ava";
 
-import { recipe } from "../../../src/new/recipe-grammar/recipe.js";
+import { board } from "../../../src/new/grammar/board.js";
 
 import { testKit } from "../../helpers/_test-kit.js";
 
 test("broken graph should return an error", async (t) => {
-  const brokenGraph = recipe<{ foo: string }>(({ foo }) => ({
+  const brokenGraph = board<{ foo: string }>(({ foo }) => ({
     bar: testKit.reverser({ foo }).bar, // Note: should be .foo
   }));
 

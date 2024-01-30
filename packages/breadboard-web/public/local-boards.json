@@ -93,7 +93,7 @@
     "url": "/graphs/math-imperative.json"
   },
   {
-    "title": "The Calculator Recipe",
+    "title": "The Calculator Board",
     "url": "/graphs/math.json",
     "version": "0.0.2"
   },
@@ -123,12 +123,12 @@
     "version": "0.0.1"
   },
   {
-    "title": "The Search Summarizer Recipe",
+    "title": "The Search Summarizer Board",
     "url": "/graphs/search-summarize.json",
     "version": "0.1.1"
   },
   {
-    "title": "The simplest LLM-based recipe",
+    "title": "The simplest LLM-based board",
     "url": "/graphs/simplest.json",
     "version": "0.0.3"
   },

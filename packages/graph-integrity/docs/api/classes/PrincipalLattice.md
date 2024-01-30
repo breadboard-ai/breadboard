@@ -40,7 +40,7 @@ least restrictive values.
 
 #### Defined in
 
-[label.ts:154](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/label.ts#L154)
+[label.ts:154](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/label.ts#L154)
 
 ## Properties
 
@@ -50,7 +50,7 @@ least restrictive values.
 
 #### Defined in
 
-[label.ts:133](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/label.ts#L133)
+[label.ts:133](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/label.ts#L133)
 
 ___
 
@@ -60,7 +60,7 @@ ___
 
 #### Defined in
 
-[label.ts:135](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/label.ts#L135)
+[label.ts:135](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/label.ts#L135)
 
 ___
 
@@ -70,7 +70,7 @@ ___
 
 #### Defined in
 
-[label.ts:136](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/label.ts#L136)
+[label.ts:136](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/label.ts#L136)
 
 ___
 
@@ -80,7 +80,7 @@ ___
 
 #### Defined in
 
-[label.ts:132](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/label.ts#L132)
+[label.ts:132](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/label.ts#L132)
 
 ___
 
@@ -90,7 +90,7 @@ ___
 
 #### Defined in
 
-[label.ts:140](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/label.ts#L140)
+[label.ts:140](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/label.ts#L140)
 
 ___
 
@@ -100,7 +100,7 @@ ___
 
 #### Defined in
 
-[label.ts:139](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/label.ts#L139)
+[label.ts:139](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/label.ts#L139)
 
 ___
 
@@ -110,7 +110,7 @@ ___
 
 #### Defined in
 
-[label.ts:142](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/label.ts#L142)
+[label.ts:142](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/label.ts#L142)
 
 ## Methods
 
@@ -134,7 +134,7 @@ principal or undefined
 
 #### Defined in
 
-[label.ts:192](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/label.ts#L192)
+[label.ts:192](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/label.ts#L192)
 
 ___
 
@@ -158,4 +158,4 @@ Insert a new principal between two existing label values.
 
 #### Defined in
 
-[label.ts:166](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-integrity/src/label.ts#L166)
+[label.ts:166](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/graph-integrity/src/label.ts#L166)

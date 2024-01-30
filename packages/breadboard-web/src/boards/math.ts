@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Schema, V, base, recipe } from "@google-labs/breadboard";
+import { Schema, V, base, board } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { templates } from "@google-labs/template-kit";
 
 const metadata = {
-  title: "The Calculator Recipe",
+  title: "The Calculator Board",
   description:
     "A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.",
   version: "0.0.2",
@@ -46,12 +46,12 @@ const outputSchema = {
   required: ["text"],
 } satisfies Schema;
 
-export default await recipe(() => {
+export default await board(() => {
   const input = base.input({ $id: "math-question", schema: inputSchema });
   const template = templates.promptTemplate({
     template: `Translate the math problem below into a self-contained,
 zero-argument JavaScript function named \`compute\` that can be executed
-to provide the answer to the problem. 
+to provide the answer to the problem.
 
 Do not use any dependencies or libraries.
 

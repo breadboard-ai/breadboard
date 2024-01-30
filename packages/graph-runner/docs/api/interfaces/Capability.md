@@ -16,4 +16,4 @@
 
 #### Defined in
 
-[packages/graph-runner/src/types.ts:10](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L10)
+[packages/graph-runner/src/types.ts:10](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/graph-runner/src/types.ts#L10)

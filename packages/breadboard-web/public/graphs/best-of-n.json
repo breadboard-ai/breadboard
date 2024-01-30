@@ -189,7 +189,7 @@
       "id": "promptTemplate-5",
       "type": "promptTemplate",
       "configuration": {
-        "template": "You are a ranking expert. Given {{n}} choices of the output, you are to rank these choices in the order (starting with the best) of matching the requirements of the task described below:\n        \n        TASK:\n        \n        {{text}}\n        \n        CHOICES:\n        \n        {{list}}"
+        "template": "You are a ranking expert. Given {{n}} choices of the output, you are to rank these choices in the order (starting with the best) of matching the requirements of the task described below:\n\n        TASK:\n\n        {{text}}\n\n        CHOICES:\n\n        {{list}}"
       }
     },
     {

@@ -46,8 +46,8 @@
 | `missingInputs` | `string`[] |
 | `opportunities` | [`Edge`](../modules.md#edge)[] |
 | `newOpportunities` | [`Edge`](../modules.md#edge)[] |
-| `state` | `QueuedNodeValuesState` |
-| `pendingOutputs` | `Map`\<`symbol`, `Promise`\<`CompletedNodeOutput`\>\> |
+| `state` | [`QueuedNodeValuesState`](../interfaces/QueuedNodeValuesState.md) |
+| `pendingOutputs` | `Map`\<`symbol`, `Promise`\<[`CompletedNodeOutput`](../interfaces/CompletedNodeOutput.md)\>\> |
 
 #### Returns
 
@@ -55,7 +55,7 @@
 
 #### Defined in
 
-[packages/breadboard/src/traversal/result.ts:28](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/traversal/result.ts#L28)
+[packages/breadboard/src/traversal/result.ts:28](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/traversal/result.ts#L28)
 
 ## Properties
 
@@ -69,7 +69,7 @@
 
 #### Defined in
 
-[packages/breadboard/src/traversal/result.ts:19](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/traversal/result.ts#L19)
+[packages/breadboard/src/traversal/result.ts:19](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/traversal/result.ts#L19)
 
 ___
 
@@ -83,7 +83,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/traversal/result.ts:20](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/traversal/result.ts#L20)
+[packages/breadboard/src/traversal/result.ts:20](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/traversal/result.ts#L20)
 
 ___
 
@@ -97,7 +97,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/traversal/result.ts:21](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/traversal/result.ts#L21)
+[packages/breadboard/src/traversal/result.ts:21](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/traversal/result.ts#L21)
 
 ___
 
@@ -111,7 +111,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/traversal/result.ts:23](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/traversal/result.ts#L23)
+[packages/breadboard/src/traversal/result.ts:23](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/traversal/result.ts#L23)
 
 ___
 
@@ -125,7 +125,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/traversal/result.ts:22](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/traversal/result.ts#L22)
+[packages/breadboard/src/traversal/result.ts:22](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/traversal/result.ts#L22)
 
 ___
 
@@ -139,13 +139,13 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/traversal/result.ts:25](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/traversal/result.ts#L25)
+[packages/breadboard/src/traversal/result.ts:25](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/traversal/result.ts#L25)
 
 ___
 
 ### pendingOutputs
 
-• **pendingOutputs**: `Map`\<`symbol`, `Promise`\<`CompletedNodeOutput`\>\>
+• **pendingOutputs**: `Map`\<`symbol`, `Promise`\<[`CompletedNodeOutput`](../interfaces/CompletedNodeOutput.md)\>\>
 
 #### Implementation of
 
@@ -153,13 +153,13 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/traversal/result.ts:26](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/traversal/result.ts#L26)
+[packages/breadboard/src/traversal/result.ts:26](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/traversal/result.ts#L26)
 
 ___
 
 ### state
 
-• **state**: `QueuedNodeValuesState`
+• **state**: [`QueuedNodeValuesState`](../interfaces/QueuedNodeValuesState.md)
 
 #### Implementation of
 
@@ -167,7 +167,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/traversal/result.ts:24](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/traversal/result.ts#L24)
+[packages/breadboard/src/traversal/result.ts:24](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/traversal/result.ts#L24)
 
 ## Accessors
 
@@ -188,7 +188,7 @@ visited.
 
 #### Defined in
 
-[packages/breadboard/src/traversal/result.ts:50](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/traversal/result.ts#L50)
+[packages/breadboard/src/traversal/result.ts:50](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/traversal/result.ts#L50)
 
 ## Methods
 
@@ -208,4 +208,4 @@ visited.
 
 #### Defined in
 
-[packages/breadboard/src/traversal/result.ts:54](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/traversal/result.ts#L54)
+[packages/breadboard/src/traversal/result.ts:54](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/traversal/result.ts#L54)

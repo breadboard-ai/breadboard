@@ -42,7 +42,7 @@
 
 #### Defined in
 
-[packages/breadboard/src/schema.ts:31](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/schema.ts#L31)
+[packages/breadboard/src/schema.ts:31](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/schema.ts#L31)
 
 ___
 
@@ -52,7 +52,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/schema.ts:33](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/schema.ts#L33)
+[packages/breadboard/src/schema.ts:33](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/schema.ts#L33)
 
 ___
 
@@ -62,7 +62,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/schema.ts:32](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/schema.ts#L32)
+[packages/breadboard/src/schema.ts:32](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/schema.ts#L32)
 
 ## Methods
 
@@ -82,7 +82,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/schema.ts:54](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/schema.ts#L54)
+[packages/breadboard/src/schema.ts:54](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/schema.ts#L54)
 
 ___
 
@@ -102,7 +102,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/schema.ts:67](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/schema.ts#L67)
+[packages/breadboard/src/schema.ts:67](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/schema.ts#L67)
 
 ___
 
@@ -123,7 +123,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/schema.ts:62](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/schema.ts#L62)
+[packages/breadboard/src/schema.ts:62](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/schema.ts#L62)
 
 ___
 
@@ -143,7 +143,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/schema.ts:74](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/schema.ts#L74)
+[packages/breadboard/src/schema.ts:74](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/schema.ts#L74)
 
 ___
 
@@ -157,7 +157,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/schema.ts:35](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/schema.ts#L35)
+[packages/breadboard/src/schema.ts:35](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/schema.ts#L35)
 
 ___
 
@@ -177,7 +177,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/schema.ts:47](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/schema.ts#L47)
+[packages/breadboard/src/schema.ts:47](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/schema.ts#L47)
 
 ___
 
@@ -197,4 +197,4 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/schema.ts:85](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/schema.ts#L85)
+[packages/breadboard/src/schema.ts:85](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/schema.ts#L85)
