@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/breadboard/breadboard.schema.json",
+  "$id": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard@0.8.0/packages/breadboard/breadboard.schema.json",
   "title": "Breadboard",
   "description": "An executable program graph",
   "$defs": {
