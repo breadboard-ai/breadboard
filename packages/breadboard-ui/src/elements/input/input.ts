@@ -26,6 +26,7 @@ import { InputEnterEvent } from "../../events/events.js";
 import { WebcamInput } from "./webcam/webcam.js";
 import { DrawableInput } from "./drawable/drawable.js";
 import { InputArgs } from "../../types/types.js";
+import { Ref, createRef, ref } from "lit/directives/ref.js";
 
 export type InputData = Record<string, unknown>;
 
@@ -62,6 +63,7 @@ export class Input extends LitElement {
   processedValues: Record<string, NodeValue> | null = null;
 
   #memory = new ShortTermMemory();
+  #formRef: Ref<HTMLFormElement> = createRef();
 
   static styles = css`
     :host {
@@ -247,6 +249,14 @@ export class Input extends LitElement {
     localStorage.setItem(key, json);
   }
 
+  async processInput() {
+    if (!this.#formRef.value) {
+      return;
+    }
+
+    this.#formRef.value.dispatchEvent(new SubmitEvent("submit"));
+  }
+
   async #onSubmit(evt: SubmitEvent) {
     evt.preventDefault();
 
@@ -398,7 +408,7 @@ export class Input extends LitElement {
 
   #renderForm(properties: Record<string, Schema>, values: InputData) {
     return html`<div id="input">
-      <form @submit=${this.#onSubmit}>
+      <form ${ref(this.#formRef)} @submit=${this.#onSubmit}>
         <fieldset>
           <legend>${this.id}</legend>
           ${Object.entries(properties).map(([key, property]) => {
@@ -473,7 +483,6 @@ export class Input extends LitElement {
 
             return html`${label}${input}`;
           })}
-          <input type="submit" value="Continue" />
         </fieldset>
       </form>
     </div>`;
