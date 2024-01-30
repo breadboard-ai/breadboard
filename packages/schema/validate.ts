@@ -1,3 +1,9 @@
+/**
+ * @license
+ * Copyright 2023 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import addFormats from "ajv-formats";
 import Ajv2020 from "ajv/dist/2020";
 import fs from "fs";
