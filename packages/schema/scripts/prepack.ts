@@ -6,8 +6,8 @@
 
 import fs from "fs";
 import path from "path";
-import schema from "~/breadboard.schema.json";
-import packageJson from "~/package.json";
+import schema from "../breadboard.schema.json";
+import packageJson from "../package.json";
 
 console.log(`current schema id: ${schema.$id}`);
 console.log(`package.json version: ${packageJson.version}`);

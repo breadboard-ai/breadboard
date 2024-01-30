@@ -1,15 +1,8 @@
 {
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,
-    "baseUrl": "./",
     "noEmit": true,
-    "paths": {
-      "~/*": ["*"]
-    },
     "resolveJsonModule": true
   },
-  "extends": "@google-labs/tsconfig/base.json",
-  "ts-node": {
-    "require": ["tsconfig-paths/register"]
-  }
+  "extends": "@google-labs/tsconfig/base.json"
 }

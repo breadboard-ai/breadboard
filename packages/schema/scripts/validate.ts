@@ -6,12 +6,11 @@
 
 import addFormats from "ajv-formats";
 import Ajv2020 from "ajv/dist/2020";
-import testData from "~/scripts/data/board.json";
+import schema from "../breadboard.schema.json";
+import testData from "./data/board.json";
 
 const ajv = new Ajv2020({ allErrors: true });
 addFormats(ajv);
-
-import schema from "~/breadboard.schema.json";
 
 console.log("\x1b[32m", "Successfully read schema", "\x1b[0m");
 

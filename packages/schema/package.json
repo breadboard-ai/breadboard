@@ -2,8 +2,7 @@
   "author": "Google Labs Team",
   "devDependencies": {
     "ajv": "^8.12.0",
-    "ajv-formats": "^2.1.1",
-    "tsconfig-paths": "^4.2.0"
+    "ajv-formats": "^2.1.1"
   },
   "files": [
     "breadboard.schema.json"
