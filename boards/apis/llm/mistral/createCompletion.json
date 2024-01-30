@@ -1,5 +1,5 @@
 {
-  "url": "file:///Users/paulkinlan/Code/labs-prototypes/boards/apis/llm/mistral/createChatCompletion.json",
+  "url": "file:///Users/paulkinlan/Code/labs-prototypes/boards/apis/llm/mistral/createCompletion.json",
   "title": "Generate Completion with Mistral",
   "description": "Creates a completion from Mistral for use in generateCompletion standard board",
   "version": "0.0.3",
@@ -117,6 +117,7 @@
           },
           "required": [
             "prompt",
+            "model",
             "authentication"
           ]
         }

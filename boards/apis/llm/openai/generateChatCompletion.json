@@ -103,7 +103,10 @@
               "title": "model"
             }
           },
-          "required": ["prompt", "model"]
+          "required": [
+            "prompt",
+            "model"
+          ]
         }
       }
     }
