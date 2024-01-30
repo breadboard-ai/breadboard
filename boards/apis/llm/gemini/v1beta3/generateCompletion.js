@@ -2,7 +2,7 @@ import { recipe, code, base } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 
 const metaData = {
-  title: "Generate Completion",
+  title: "Generate Completion with Gemini",
   description:
     "Creates a completion from Gemini for use in generateCompletion standard recipe",
   version: "0.0.3",
@@ -49,8 +49,10 @@ export default await recipe(({ prompt, temperature, topP, topK }) => {
     return { requestBody: request };
   });
 
-  const convertResponse = code((api_response) => {
-    return { text_response: api_response.candidates[0].content.parts.text };
+  const convertResponse = code(({ api_json_response }) => {
+    return {
+      text_response: api_json_response.candidates[0].content.parts.text,
+    };
   });
 
   return core
