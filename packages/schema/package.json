@@ -23,10 +23,10 @@
       "dependencies": [
         "validate"
       ],
-      "command": "ts-node ./prepack.ts"
+      "command": "ts-node ./scripts/prepack.ts"
     },
     "validate": {
-      "command": "ts-node ./validate.ts"
+      "command": "ts-node ./scripts/validate.ts"
     }
   }
 }
