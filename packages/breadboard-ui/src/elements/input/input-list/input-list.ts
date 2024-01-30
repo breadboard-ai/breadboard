@@ -134,7 +134,7 @@ export class InputList extends LitElement {
 
         return html`<bb-input
           id="${id}"
-          ${ref(this.#pendingInput)}
+          ${processedValues ? nothing : ref(this.#pendingInput)}
           .secret=${secret}
           .remember=${remember}
           .configuration=${configuration}
