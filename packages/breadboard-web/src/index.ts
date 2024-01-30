@@ -18,7 +18,7 @@ export const getBoardInfo = async (url: string) => {
   const runner = await Board.load(url, { base: new URL(window.location.href) });
 
   const { title, description, version } = runner;
-  const diagram = runner.mermaid("TD", true);
+  const diagram = runner.mermaid("TD", true, true);
   const nodes = runner.nodes;
   const graphDescriptor: GraphDescriptor = runner;
 
