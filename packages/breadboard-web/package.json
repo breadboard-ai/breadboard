@@ -131,7 +131,8 @@
       "files": [],
       "output": [
         "public/local-boards.json",
-        "public/graphs/**/*.json"
+        "public/graphs/**/*.json",
+        "docs/graphs/**/*.md"
       ]
     },
     "generate:docs": {
