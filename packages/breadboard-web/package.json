@@ -3,7 +3,6 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "private": true,
   "version": "0.0.2",
   "description": "The Web runtime for Breadboard",
   "main": "./build/index.js",
