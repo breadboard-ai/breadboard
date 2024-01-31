@@ -1,5 +1,12 @@
 # @google-labs/breadboard-web
 
+## 1.0.1
+
+### Patch Changes
+
+- Updated dependencies [deb0d19]
+  - @google-labs/node-nursery-web@1.0.0
+
 ## 1.0.0
 
 ### Major Changes

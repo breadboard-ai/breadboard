@@ -1,5 +1,11 @@
 # @google-labs/node-nursery-web
 
+## 1.0.0
+
+### Major Changes
+
+- deb0d19: Initial publish of node-nursery-web
+
 ## 0.0.3
 
 ### Patch Changes
