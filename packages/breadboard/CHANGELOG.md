@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.1
+
+### Patch Changes
+
+- 81e2840: Teach Breadboard about transient bubbled inputs.
+
 ## 0.9.0
 
 ### Minor Changes
