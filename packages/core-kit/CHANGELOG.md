@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.2.0
+
+### Minor Changes
+
+- c89b67a: Introduce the `reduce` node.
+
+### Patch Changes
+
+- 931a95b: Introduce richer error reporting to the harness.
+- Updated dependencies [8eccdad]
+- Updated dependencies [6e8c08d]
+- Updated dependencies [780909c]
+- Updated dependencies [bba68fd]
+- Updated dependencies [b557794]
+- Updated dependencies [a9206fc]
+- Updated dependencies [931a95b]
+  - @google-labs/breadboard@0.9.0
+
 ## 0.1.3
 
 ### Patch Changes
