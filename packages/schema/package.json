@@ -9,11 +9,18 @@
   ],
   "license": "Apache-2.0",
   "name": "@google-labs/breadboard-schema",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
   "scripts": {
     "prepack": "wireit",
     "validate": "wireit"
   },
   "version": "1.0.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/breadboard-ai/breadboard.git"
+  },
   "wireit": {
     "prepack": {
       "command": "ts-node ./scripts/prepack.ts",

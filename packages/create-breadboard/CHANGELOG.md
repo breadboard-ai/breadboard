@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.0
+
+### Minor Changes
+
+- b557794: The "recipe" command has been renamed to "board"
+
 ## 0.0.9
 
 ### Patch Changes

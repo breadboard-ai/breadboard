@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "version": "0.0.9",
+  "version": "0.1.0",
   "description": "A starter kit for your Breadboard projects",
   "main": "dist/src/index.js",
   "bin": {

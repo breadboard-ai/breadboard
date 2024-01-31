@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.9.0
+
+### Minor Changes
+
+- 8eccdad: [breadboard-cli] Improvements to OpenAPI import to handle parameters as dynamic inputs and input config files
+- 6e8c08d: remove breadboard json schema
+
+### Patch Changes
+
+- 780909c: Stop displaying subgraphs in Breadboard Debugger.
+- bba68fd: Write the introduction in the "Happy Path" doc.
+- b557794: The "recipe" function is now called "board". A "recipe" alias is still exported to ease migration.
+- a9206fc: Firm up the error return type.
+- 931a95b: Introduce richer error reporting to the harness.
+
 ## 0.8.0
 
 ### Minor Changes
