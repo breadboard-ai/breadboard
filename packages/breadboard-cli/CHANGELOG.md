@@ -1,5 +1,15 @@
 # @google-labs/breadboard-cli
 
+## 0.3.0
+
+### Minor Changes
+
+- d1f5299: Updating the import board
+
+### Patch Changes
+
+- b997fe4: Fix errors releating to missing dist/debugger files
+
 ## 0.2.1
 
 ### Patch Changes
