@@ -4,9 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Breadboard</title>
-    <link rel="icon" type="image/x-icon" href="/static/icon.png" />
-    <link rel="stylesheet" href="/static/common.css" />
-    <link rel="stylesheet" href="/static/home.css" />
+    <link rel="icon" type="image/x-icon" href="./static/icon.png" />
+    <link rel="stylesheet" href="./static/common.css" />
+    <link rel="stylesheet" href="./static/home.css" />
+    <base href="/breadboard/" />
   </head>
   <body>
     {% include "navigation.njk", isHome: true %}
@@ -18,7 +19,7 @@
             <h1>Breadboard</h1>
             <h2>A Generative AI Prototype Framework</h2>
           </div>
-          <a id="get-started" href="/docs/getting-started/">Get started →</a>
+          <a id="get-started" href="./docs/getting-started/">Get started →</a>
         </header>
         <div id="post"></div>
       </section>
@@ -35,7 +36,7 @@
         <section>
           <img
             alt="A graphic denoting two connected nodes in a graph"
-            src="/static/images/debug-on-the-fly.jpg"
+            src="./static/images/debug-on-the-fly.jpg"
           />
           <h1>Debug On the Fly</h1>
           <p>Start making boards and see them visualized in real time.</p>
@@ -46,7 +47,7 @@
         <section>
           <img
             alt="A graphic denoting a collection of interconnected boxes"
-            src="/static/images/flexible-kits.jpg"
+            src="./static/images/flexible-kits.jpg"
           />
           <h1>Flexible Kits</h1>
           <p>
@@ -60,7 +61,7 @@
         <section>
           <img
             alt="Some Breadboard source code"
-            src="/static/images/open-source.jpg"
+            src="./static/images/open-source.jpg"
           />
           <h1>Open Source</h1>
           <p>
@@ -75,7 +76,7 @@
         <div id="happy-path-content">
           <h1>The Happy Path</h1>
           <img
-            src="/static/images/happy-path.jpg"
+            src="./static/images/happy-path.jpg"
             alt="A flow diagram showing how to work best with Breadboard"
           />
           <p>
@@ -84,7 +85,7 @@
             not quite a tutorial, but more like a step-by-step onboarding guide
             with some of the best practices baked in.
           </p>
-          <div><a href="/docs/happy-path/">Get going →</a></div>
+          <div><a href="./docs/happy-path/">Get going →</a></div>
         </div>
         <div id="happy-path-post"></div>
       </section>
@@ -98,7 +99,7 @@
 
         <img
           id="device-art"
-          src="/static/images/device-art.jpg"
+          src="./static/images/device-art.jpg"
           alt="A Pixel 5 and a Pixelbook Go showing a Breaboard-generated web app"
         />
       </section>

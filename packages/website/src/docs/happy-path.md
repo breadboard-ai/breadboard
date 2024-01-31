@@ -37,7 +37,7 @@ This will create a simple starter project that contains most of the bits you nee
 
 Breadboard relies on the "hot reload" developer experience pattern to ease rapid iteration and learning-by-playing. The best experience with "hot reload" is when we position our code editor window side-by-side with the Breadboard debugger window:
 
-![Breadboard debugger and editor side-by-side](/static/images/happy-path.jpg)
+![Breadboard debugger and editor side-by-side](/breadboard/static/images/happy-path.jpg)
 
 When we save our board file in the code editor, the debugger will automatically reload and let us interact with the board.
 
@@ -55,7 +55,7 @@ This will start the Breadboard debugger and give you a link to open it in the br
 
 (TOD: overview of the debugger)
 
-![Debugger overview](/static/images/debugger-overview.jpg)
+![Debugger overview](/breadboard/static/images/debugger-overview.jpg)
 
 ## Building a board
 

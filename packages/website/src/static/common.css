@@ -11,20 +11,19 @@
 @font-face {
   font-family: "FiraCode";
   font-weight: 100;
-  src: url("/static/third_party/firacode/FiraCode-Light.woff2") format("woff2");
+  src: url("./third_party/firacode/FiraCode-Light.woff2") format("woff2");
 }
 
 @font-face {
   font-family: "FiraCode";
   font-weight: normal;
-  src: url("/static/third_party/firacode/FiraCode-Regular.woff2")
-    format("woff2");
+  src: url("./third_party/firacode/FiraCode-Regular.woff2") format("woff2");
 }
 
 @font-face {
   font-family: "FiraCode";
   font-weight: bold;
-  src: url("/static/third_party/firacode/FiraCode-Bold.woff2") format("woff2");
+  src: url("./third_party/firacode/FiraCode-Bold.woff2") format("woff2");
 }
 
 html {
@@ -73,7 +72,7 @@ body {
   width: 16px;
   height: 16px;
   margin-right: 8px;
-  background: no-repeat center/16px url(/static/icon.png);
+  background: no-repeat center/16px url(./icon.png);
 }
 
 #navigation a {
@@ -95,8 +94,7 @@ body {
   width: 16px;
   height: 16px;
   font-size: 0;
-  background: no-repeat center/16px
-    url(/static/third_party/github/github-mark.svg);
+  background: no-repeat center/16px url(./third_party/github/github-mark.svg);
 }
 
 footer {

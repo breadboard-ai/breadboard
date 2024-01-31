@@ -29,7 +29,7 @@
   display: inline-block;
   width: calc(var(--bb-grid-size) * 20);
   height: calc(var(--bb-grid-size) * 20);
-  background: no-repeat center/cover url(/static/icon.png);
+  background: no-repeat center/cover url(./icon.png);
 }
 
 #masthead header h1,
@@ -75,7 +75,7 @@
 #masthead #post {
   flex: 1;
   display: none;
-  background: no-repeat calc(100% - 60px) 63% url(/static/images/wire.svg);
+  background: no-repeat calc(100% - 60px) 63% url(./images/wire.svg);
   mask-image: linear-gradient(
     to right,
     rgba(0, 0, 0, 0) 0,
@@ -193,14 +193,13 @@
 }
 
 #make-anything h1::before {
-  background: no-repeat center/contain
-    url(/static/third_party/emoji/party-bread.png);
+  background: no-repeat center/contain url(./third_party/emoji/party-bread.png);
   margin-right: calc(var(--bb-grid-size) * 9);
 }
 
 #make-anything h1::after {
   background: no-repeat center/contain
-    url(/static/third_party/emoji/disguise-bread.png);
+    url(./third_party/emoji/disguise-bread.png);
   margin-left: calc(var(--bb-grid-size) * 9);
 }
 
@@ -362,17 +361,17 @@
   }
 
   #features .connector .connector-inner div {
-    background: no-repeat center center url(/static/images/feature-wire.svg);
+    background: no-repeat center center url(./images/feature-wire.svg);
   }
 
   #features .connector .connector-inner::before {
     content: "";
-    background: no-repeat top center url(/static/images/feature-wire.svg);
+    background: no-repeat top center url(./images/feature-wire.svg);
   }
 
   #features .connector .connector-inner::after {
     content: "";
-    background: no-repeat bottom center url(/static/images/feature-wire.svg);
+    background: no-repeat bottom center url(./images/feature-wire.svg);
   }
 }
 
@@ -513,7 +512,7 @@
   #happy-path-pre,
   #happy-path-post {
     content: "";
-    background: no-repeat 100% 30% url(/static/images/happy-path-wire.svg);
+    background: no-repeat 100% 30% url(./images/happy-path-wire.svg);
     position: relative;
     mask-image: linear-gradient(
       to right,
