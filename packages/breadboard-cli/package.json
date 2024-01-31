@@ -100,7 +100,8 @@
   },
   "files": [
     "dist/src",
-    "dist/ui"
+    "dist/ui",
+    "dist/debugger"
   ],
   "ava": {
     "timeout": "30s",
