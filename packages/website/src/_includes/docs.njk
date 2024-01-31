@@ -1,16 +1,20 @@
 ---
 title: Breadboard | Docs
 ---
-
 <!DOCTYPE html>
-<title>{{title}} | Docs | Breadboard</title>
-<base href="/breadboard/" />
-<link
-  href="https://fonts.googleapis.com/css2?family=Roboto&display=swap"
-  rel="stylesheet"
-/>
-<link rel="stylesheet" href="static/common.css" />
-<script src="js/pages/docs.js" type="module"></script>
-<bb-site-docs>
-  {{content | safe}}
-</bb-site-docs>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{title}} | Docs | Breadboard</title>
+    <link rel="icon" type="image/x-icon" href="static/icon.png" />
+    <link rel="stylesheet" href="/static/common.css" />
+    <link rel="stylesheet" href="/static/docs.css" />
+  </head>
+  <body>
+{% include "navigation.njk" %}
+  <main>{{content | safe}}</main>
+{% include "footer.njk" %}
+  </body>
+</html>
+
