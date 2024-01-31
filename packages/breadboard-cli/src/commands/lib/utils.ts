@@ -10,7 +10,7 @@ import { opendir, readFile, stat, writeFile } from "fs/promises";
 import { join } from "node:path";
 import { stdin as input } from "node:process";
 import * as readline from "node:readline/promises";
-import path, { extname, resolve } from "path";
+import path, { extname } from "path";
 import { relative } from "path/posix";
 import { URL, pathToFileURL } from "url";
 import { Options } from "./loader.js";
@@ -18,7 +18,7 @@ import { Loaders } from "./loaders/index.js";
 
 export type BoardMetaData = {
   title: string;
-  url: string;
+  url?: string;
   version: string;
   edges: Array<unknown>;
   nodes: Array<unknown>;
@@ -81,7 +81,7 @@ export const loadBoard = async (
     const pathInfo = path.parse(file);
     const boardClone = JSON.parse(JSON.stringify(board));
     const outputFilePath = path.join(options.output, `${pathInfo.name}.json`);
-    boardClone.url = pathToFileURL(outputFilePath); // So that the base url is correct for subsequent invokes
+    delete boardClone.url; // Boards shouldn't have URLs serialized.
     const boardJson = JSON.stringify(boardClone, null, 2);
     await writeFile(outputFilePath, boardJson);
   }
@@ -172,11 +172,12 @@ async function loadBoardsFromDirectory(
         dirent.name.endsWith(".ts") ||
         dirent.name.endsWith(".yaml"))
     ) {
-      const board = await loadBoard(resolve(dirent.path, dirent.name), options);
+      const { path } = dirent;
+      const board = await loadBoard(path, options);
       boards.push({
         ...board,
-        title: board.title ?? join("/", path, dirent.name),
-        url: join("/", path, dirent.name),
+        title: board.title ?? join("/", path),
+        url: join("/", path),
         version: board.version ?? "0.0.1",
       });
     }
