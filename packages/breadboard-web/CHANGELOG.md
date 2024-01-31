@@ -1,5 +1,13 @@
 # @google-labs/breadboard-web
 
+## 1.0.3
+
+### Patch Changes
+
+- bbbd9f4: Fixes Continue button in debugger and preview
+- Updated dependencies [bbbd9f4]
+  - @google-labs/breadboard-ui@0.0.5
+
 ## 1.0.2
 
 ### Patch Changes

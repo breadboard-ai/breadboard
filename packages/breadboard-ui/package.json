@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "The UI components for @google-labs/breadboard",
   "main": "./dist/src/index.js",
   "exports": {

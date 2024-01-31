@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "The Web runtime for Breadboard",
   "main": "./build/index.js",
   "exports": {
@@ -198,7 +198,7 @@
   },
   "dependencies": {
     "@google-labs/breadboard": "^0.9.1",
-    "@google-labs/breadboard-ui": "^0.0.4",
+    "@google-labs/breadboard-ui": "^0.0.5",
     "@google-labs/core-kit": "^0.2.0",
     "@google-labs/json-kit": "^0.0.4",
     "@google-labs/node-nursery-web": "^1.0.0",

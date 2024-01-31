@@ -1,5 +1,13 @@
 # @google-labs/breadboard-cli
 
+## 0.2.1
+
+### Patch Changes
+
+- 1779e50: Add missing `vite` dependency.
+- Updated dependencies [bbbd9f4]
+  - @google-labs/breadboard-web@1.0.3
+
 ## 0.2.0
 
 ### Minor Changes

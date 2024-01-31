@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.5
+
+### Patch Changes
+
+- bbbd9f4: Fixes Continue button in debugger and preview
+
 ## 0.0.4
 
 ### Patch Changes

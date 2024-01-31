@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.0.0
+
+### Major Changes
+
+- 5d72c02: @google-labs/create-breadboard now uses @google-labs/breadboard-hello-world as template,
+  which includes an entirely different starting project.
+
+### Patch Changes
+
+- Updated dependencies [5d72c02]
+  - @google-labs/breadboard-hello-world@1.0.0
+
 ## 0.1.0
 
 ### Minor Changes
