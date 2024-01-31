@@ -53,7 +53,7 @@ body {
   justify-content: flex-end;
   font-size: 0.8125rem; /* 13px */
   border-bottom: 1px solid #bfbfbf;
-  flex: 1 0 auto;
+  flex: 0 0 auto;
 }
 
 #navigation > div {
