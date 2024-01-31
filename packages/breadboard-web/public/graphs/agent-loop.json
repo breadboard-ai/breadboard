@@ -1,0 +1,160 @@
+{
+  "title": "Agent Loop",
+  "description": "An experiment: a board that represents an iterative loop over an agent",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "counter",
+      "to": "invokeAgent",
+      "out": "continue",
+      "in": "context"
+    },
+    {
+      "from": "counter",
+      "to": "counter",
+      "out": "count",
+      "in": "count"
+    },
+    {
+      "from": "counter",
+      "to": "output-2",
+      "out": "stop",
+      "in": "context"
+    },
+    {
+      "from": "invokeAgent",
+      "to": "counter",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "input-1",
+      "to": "invokeAgent",
+      "out": "agent",
+      "in": "path",
+      "constant": true
+    },
+    {
+      "from": "input-1",
+      "to": "invokeAgent",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "input-1",
+      "to": "counter",
+      "out": "max",
+      "in": "count"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "type": "string",
+              "title": "context"
+            }
+          },
+          "required": [
+            "context"
+          ]
+        }
+      }
+    },
+    {
+      "id": "counter",
+      "type": "invoke",
+      "configuration": {
+        "path": "#counter"
+      }
+    },
+    {
+      "id": "invokeAgent",
+      "type": "invoke",
+      "configuration": {}
+    },
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "agent": {
+              "title": "Agent",
+              "description": "Agent to loop",
+              "type": "string",
+              "examples": [
+                "single-turn.json"
+              ]
+            },
+            "context": {
+              "title": "Context",
+              "type": "array",
+              "format": "multiline",
+              "examples": [
+                "[]"
+              ],
+              "description": "Initial conversation context"
+            },
+            "max": {
+              "title": "Max",
+              "description": "The maximum number of loops to make (set to -1 to go infinitely)",
+              "type": "number",
+              "examples": [
+                "3"
+              ]
+            }
+          },
+          "required": [
+            "agent",
+            "context",
+            "max"
+          ]
+        }
+      }
+    }
+  ],
+  "graphs": {
+    "counter": {
+      "edges": [
+        {
+          "from": "counter-input",
+          "to": "counter-run",
+          "out": "*"
+        },
+        {
+          "from": "counter-run",
+          "to": "counter-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "counter-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "counter-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function counter({context,count}) {const num=count-1;if(num!=0){return{continue:context,count:num}}return{stop:context}}",
+            "name": "counter",
+            "raw": true
+          }
+        },
+        {
+          "id": "counter-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    }
+  }
+}

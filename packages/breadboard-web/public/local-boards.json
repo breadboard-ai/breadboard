@@ -15,6 +15,11 @@
     "version": "0.0.2"
   },
   {
+    "title": "Agent Loop",
+    "url": "/graphs/agent-loop.json",
+    "version": "0.0.1"
+  },
+  {
     "title": "Agent",
     "url": "/graphs/agent.json",
     "version": "0.0.3"
@@ -131,6 +136,11 @@
     "title": "The simplest LLM-based board",
     "url": "/graphs/simplest.json",
     "version": "0.0.3"
+  },
+  {
+    "title": "Single turn",
+    "url": "/graphs/single-turn.json",
+    "version": "0.0.1"
   },
   {
     "title": "Team Builder",

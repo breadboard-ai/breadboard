@@ -140,7 +140,7 @@ export class RequestedInputsManager {
       if (value === undefined) {
         value = await this.#context.requestInput?.(name, schema, descriptor);
       }
-      this.#cache.set(name, value);
+      if (!schema.transient) this.#cache.set(name, value);
       return value;
     };
   }
