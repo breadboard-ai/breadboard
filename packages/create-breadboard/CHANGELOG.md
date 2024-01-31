@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.1
+
+### Patch Changes
+
+- 2dcedd8: Clear the repository field from user projects
+  - @google-labs/breadboard-hello-world@1.0.1
+
 ## 1.0.0
 
 ### Major Changes
