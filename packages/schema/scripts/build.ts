@@ -18,7 +18,7 @@ console.log(`package.json version: ${packageJson.version}`);
 
 const GITHUB_OWNER = "breadboard-ai";
 const GITHUB_REPO = "breadboard";
-const GITHUB_REF = `@google-labs/breadboard-schema/${packageJson.version}`;
+const GITHUB_REF = `@google-labs/breadboard-schema@${packageJson.version}`;
 
 const PACKAGE_PATH = "packages/schema"
 
