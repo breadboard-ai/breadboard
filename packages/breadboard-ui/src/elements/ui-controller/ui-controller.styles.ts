@@ -131,6 +131,9 @@ export const styles = css`
     top: 0;
     background: rgb(255, 255, 255);
     z-index: 1;
+    min-height: calc(var(--bb-grid-size) * 10);
+    display: flex;
+    align-items: center;
   }
 
   #inputs header {

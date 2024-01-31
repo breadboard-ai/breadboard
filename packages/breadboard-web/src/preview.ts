@@ -20,6 +20,7 @@ import {
 } from "@google-labs/breadboard";
 import { until } from "lit/directives/until.js";
 import { classMap } from "lit/directives/class-map.js";
+import { Ref, createRef, ref } from "lit-html/directives/ref.js";
 
 type ChunkOutputs = OutputValues & { chunk: string };
 
@@ -41,6 +42,9 @@ export class Preview extends LitElement {
   uiElement: HTMLTemplateResult | symbol = nothing;
 
   @state()
+  showContinueButton = false;
+
+  @state()
   boardInfo: Awaited<ReturnType<typeof getBoardInfo>> | null = null;
 
   #config: ReturnType<typeof createRunConfig> | null = null;
@@ -48,6 +52,7 @@ export class Preview extends LitElement {
   #hasOutputs = false;
   #outputs: HTMLTemplateResult[] = [];
   #nodesVisited: Array<{ data: NodeStartResponse }> = [];
+  #inputRef: Ref<BreadboardUI.Elements.Input> = createRef();
 
   static styles = css`
     :host {
@@ -73,6 +78,18 @@ export class Preview extends LitElement {
       flex: 1 0 auto;
       display: flex;
       flex-direction: column;
+    }
+
+    #continue {
+      border-radius: 32px;
+      background: var(--bb-accent-color);
+      border: none;
+      padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 4);
+      margin: 0 calc(var(--bb-grid-size) * 3) calc(var(--bb-grid-size) * 3) 0;
+      position: relative;
+      font-size: var(--bb-text-medium);
+      color: #fff;
+      align-self: flex-end;
     }
 
     h1 {
@@ -130,6 +147,8 @@ export class Preview extends LitElement {
       max-width: 960px;
       margin: 0 auto;
       width: 100%;
+      display: flex;
+      flex-direction: column;
     }
 
     .outputs {
@@ -322,6 +341,16 @@ export class Preview extends LitElement {
         transform: rotate(360deg);
       }
     }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
   `;
 
   constructor() {
@@ -399,8 +428,11 @@ export class Preview extends LitElement {
   async #handleStateChange(
     result: HarnessRunResult
   ): Promise<void | InputValues> {
+    this.showContinueButton = false;
     switch (result.type) {
       case "secret": {
+        this.showContinueButton = true;
+
         // Set up a placeholder for the secrets.
         const secrets: HTMLTemplateResult[] = [];
         this.uiElement = html`${secrets}`;
@@ -426,6 +458,7 @@ export class Preview extends LitElement {
 
               const secret = html`<bb-input
                 id=${id}
+                ${ref(this.#inputRef)}
                 .secret=${true}
                 .remember=${true}
                 .configuration=${configuration}
@@ -448,9 +481,12 @@ export class Preview extends LitElement {
       }
 
       case "input":
+        this.showContinueButton = true;
+
         return new Promise((resolve) => {
           this.uiElement = html`<bb-input
             id="${result.data.node.id}"
+            ${ref(this.#inputRef)}
             .configuration=${result.data.inputArguments}
             @breadboardinputenter=${(
               event: BreadboardUI.Events.InputEnterEvent
@@ -515,6 +551,7 @@ export class Preview extends LitElement {
 
     for await (const result of run(this.#config)) {
       const answer = await this.#handleStateChange(result);
+      this.showContinueButton = false;
 
       if (answer) {
         await result.reply({ inputs: answer });
@@ -522,14 +559,26 @@ export class Preview extends LitElement {
     }
   }
 
+  #continue() {
+    if (!this.#inputRef.value) {
+      return;
+    }
+
+    this.#inputRef.value.processInput();
+  }
+
   render() {
     if (!this.#url) {
       return nothing;
     }
 
+    const continueButton = this.showContinueButton
+      ? html`<button @click=${this.#continue} id="continue">Continue</button>`
+      : nothing;
+
     return html`<main>
         <h1>${this.boardInfo?.title}</h1>
-        <section class="ui">${this.uiElement}</section>
+        <section class="ui">${this.uiElement} ${continueButton}</section>
         <section class="outputs">${this.#outputs}</section>
       </main>
       <footer>Made with Breadboard</footer>`;

@@ -254,7 +254,9 @@ export class Input extends LitElement {
       return;
     }
 
-    this.#formRef.value.dispatchEvent(new SubmitEvent("submit"));
+    if (this.#formRef.value.reportValidity()) {
+      this.#formRef.value.dispatchEvent(new SubmitEvent("submit"));
+    }
   }
 
   async #onSubmit(evt: SubmitEvent) {
