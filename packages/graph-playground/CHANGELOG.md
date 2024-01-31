@@ -1,5 +1,14 @@
 # @google-labs/graph-playground
 
+## 0.0.4
+
+### Patch Changes
+
+- Updated dependencies [2f524ef]
+- Updated dependencies [81e2840]
+  - @google-labs/pinecone-kit@0.1.0
+  - @google-labs/breadboard@0.9.1
+
 ## 0.0.3
 
 ### Patch Changes
