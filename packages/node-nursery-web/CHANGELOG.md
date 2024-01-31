@@ -1,5 +1,11 @@
 # @google-labs/node-nursery-web
 
+## 1.0.1
+
+### Patch Changes
+
+- f32504b: Actual first publish of node-nursery-web
+
 ## 1.0.0
 
 ### Major Changes
