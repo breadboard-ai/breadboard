@@ -156,5 +156,10 @@
     "title": "Tour Guide Writer",
     "url": "/graphs/tour-guide-writer.json",
     "version": "0.0.3"
+  },
+  {
+    "title": "The Python Calculator Recipe",
+    "url": "/graphs/-python.json",
+    "version": "0.0.3"
   }
 ]
