@@ -192,7 +192,7 @@
           "id": "createSchema-run",
           "type": "runJavascript",
           "configuration": {
-            "code": "function createSchema({title,description}) {const schema2={type:\"object\",properties:{text:{title,description}}};return{schema:schema2}}",
+            "code": "function createSchema({title,description}) {const schema2={type:\"object\",properties:{text:{title,description,transient:true}}};return{schema:schema2}}",
             "name": "createSchema",
             "raw": true
           }

@@ -263,6 +263,11 @@ export class Value<T extends NodeValue = NodeValue>
     return this;
   }
 
+  transient(): AbstractValue<T> {
+    (this.#schema as Record<string, unknown>).$optional = true;
+    return this;
+  }
+
   #remapKeys(newKeys: KeyMap) {
     const newMap = { ...this.#keymap };
     Object.entries(newKeys).forEach(([fromKey, toKey]) => {
