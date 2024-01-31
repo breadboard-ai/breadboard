@@ -55,7 +55,9 @@
         "../breadboard:build:tsc",
         "../breadboard-web:build:tsc",
         "../template-kit:build:tsc",
-        "../core-kit:build:tsc"
+        "../core-kit:build:tsc",
+        "../graph-integrity:build:tsc",
+        "../node-nursery:build:tsc"
       ],
       "files": [
         "src/**/*.js",
