@@ -21,18 +21,25 @@
   },
   "scripts": {
     "prepack": "wireit",
-    "validate": "wireit"
+    "test": "wireit",
+    "build": "wireit"
   },
   "version": "1.0.0",
   "wireit": {
+    "build": {
+      "command": "ts-node ./scripts/build.ts"
+    },
     "prepack": {
-      "command": "ts-node ./scripts/prepack.ts",
       "dependencies": [
+        "build",
         "validate"
       ]
     },
-    "validate": {
-      "command": "ts-node ./scripts/validate.ts"
+    "test": {
+      "command": "ts-node ./scripts/validate.ts",
+      "dependencies": [
+        "build"
+      ]
     }
   }
 }

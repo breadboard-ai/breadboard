@@ -40,7 +40,8 @@
         "./packages/node-nursery-web:build",
         "./packages/palm-kit:build",
         "./packages/pinecone-kit:build",
-        "./packages/website:build"
+        "./packages/website:build",
+        "./packages/schema:build"
       ]
     },
     "test": {
@@ -62,7 +63,7 @@
         "./packages/node-nursery-web:test",
         "./packages/palm-kit:test",
         "./packages/pinecone-kit:test",
-        "./packages/schema:validate"
+        "./packages/schema:test"
       ]
     },
     "lint": {
