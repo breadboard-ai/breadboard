@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A suite of tools for interacting with the Breadboard.",
   "bin": {
     "breadboard": "dist/src/index.js"
@@ -133,7 +133,7 @@
   },
   "dependencies": {
     "@google-labs/breadboard": "^0.9.0",
-    "@google-labs/breadboard-web": "^1.0.0",
+    "@google-labs/breadboard-web": "^1.0.3",
     "@google-labs/core-kit": "^0.2.0",
     "@google-labs/template-kit": "^0.1.2",
     "commander": "^11.1.0",
