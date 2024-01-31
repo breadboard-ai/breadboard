@@ -4,32 +4,42 @@
     "ajv": "^8.12.0",
     "ajv-formats": "^2.1.1"
   },
-  "files": [
-    "breadboard.schema.json"
+  "exports": {
+    ".": "./breadboard.schema.json"
+  },
+  "file": [
+    "./breadboard.schema.json"
   ],
   "license": "Apache-2.0",
   "name": "@google-labs/breadboard-schema",
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "scripts": {
-    "prepack": "wireit",
-    "validate": "wireit"
-  },
-  "version": "1.0.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },
+  "scripts": {
+    "prepack": "wireit",
+    "test": "wireit",
+    "build": "wireit"
+  },
+  "version": "1.0.0",
   "wireit": {
+    "build": {
+      "command": "ts-node ./scripts/build.ts"
+    },
     "prepack": {
-      "command": "ts-node ./scripts/prepack.ts",
       "dependencies": [
+        "build",
         "validate"
       ]
     },
-    "validate": {
-      "command": "ts-node ./scripts/validate.ts"
+    "test": {
+      "command": "ts-node ./scripts/validate.ts",
+      "dependencies": [
+        "build"
+      ]
     }
   }
 }
