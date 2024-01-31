@@ -1,5 +1,5 @@
 {
-  "url": "file:///Users/paulkinlan/Code/labs-prototypes/boards/apis/llm/openai/generateCompletion.json",
+  "url": "file:///Users/paulkinlan/Code/labs-prototypes/boards/apis/llm/openai/createCompletion.js",
   "title": "Generate Completion with OpenAI",
   "description": "Creates a completion from OpenAI for use in generateCompletion standard recipe",
   "version": "0.0.3",
@@ -99,13 +99,14 @@
               "default": 1
             },
             "model": {
-              "type": "string",
-              "title": "model"
+              "title": "model",
+              "description": "The model to interact with",
+              "default": "gpt-3.5-turbo-instruct",
+              "type": "string"
             }
           },
           "required": [
-            "prompt",
-            "model"
+            "prompt"
           ]
         }
       }
@@ -171,7 +172,7 @@
           "id": "convertOpenAIcreateCompletionRequest-run",
           "type": "runJavascript",
           "configuration": {
-            "code": "function convertOpenAIcreateCompletionRequest({ model, prompt, temperature, topP }) {\n    const request = {\n      temperature: temperature,\n      model,\n      // maxOutputTokens: api_inputs.maxOutputTokens || undefined,\n      // candidateCount: undefined, // candidateCount is not well defined across LLMs as a concept yet.\n      top_p: topP,\n      prompt,\n      // stopSequences: api_inputs.stopSequences || undefined,\n      // safetySettings: undefined, // Safety Settings is not well defined across LLMs as a concept yet.\n    };\n\n    return { requestBody: request };\n  }",
+            "code": "function convertOpenAIcreateCompletionRequest({ model, prompt, temperature, topP }) {\n    const request = {\n      temperature: temperature,\n      model,\n      // maxOutputTokens: api_inputs.maxOutputTokens || undefined,\n      // candidateCount: undefined, // candidateCount is not well defined across LLMs as a concept yet.\n      top_p: topP,\n      prompt,\n      // stopSequences: api_inputs.stopSequences || undefined,\n      // safetySettings: undefined, // Safety Settings is not well defined across LLMs as a concept yet.\n    };\n\n    return { model, requestBody: request };\n  }",
             "name": "convertOpenAIcreateCompletionRequest",
             "raw": true
           }

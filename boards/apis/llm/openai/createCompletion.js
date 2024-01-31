@@ -12,6 +12,12 @@ const metaData = {
  Note currently the tool to generate the OpenAPI spec does not support the security Scheme, therefore secrets will not work, you have to use an input called key.
 */
 export default await recipe(({ model, prompt, temperature, topP }) => {
+  model
+    .title("model")
+    .description("The model to interact with")
+    .optional()
+    .default("gpt-3.5-turbo-instruct")
+    .isString();
   prompt.title("prompt").description("The prompt to complete");
   temperature
     .title("temperature")
@@ -38,7 +44,7 @@ export default await recipe(({ model, prompt, temperature, topP }) => {
       // safetySettings: undefined, // Safety Settings is not well defined across LLMs as a concept yet.
     };
 
-    return { requestBody: request };
+    return { model, requestBody: request };
   });
 
   const convertResponse = code(({ api_json_response }) => {
