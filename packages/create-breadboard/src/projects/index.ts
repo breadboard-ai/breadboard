@@ -55,7 +55,9 @@ const run = async () => {
     // We use the "hello-world" package (which is a published dependency of
     // "create-breadboard") as the template for the user's new project.
     files: await generateAssetList(
-      path.dirname(require.resolve("@google-labs/hello-world/package.json")),
+      path.dirname(
+        require.resolve("@google-labs/breadboard-hello-world/package.json")
+      ),
       undefined,
       // We don't want to copy these files.
       ["node_modules", "CHANGELOG.md"]

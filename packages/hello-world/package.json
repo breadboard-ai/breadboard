@@ -1,5 +1,5 @@
 {
-  "name": "@google-labs/hello-world",
+  "name": "@google-labs/breadboard-hello-world",
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
