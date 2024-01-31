@@ -1,4 +1,4 @@
-# @google-labs/hello-world
+# @google-labs/breadboard-hello-world
 
 ## 0.1.0
 

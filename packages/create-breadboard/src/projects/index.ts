@@ -9,26 +9,30 @@
 import { create } from "../utils/create.js";
 import { stat, readFile, readdir } from "fs/promises";
 import * as path from "path";
-import { fileURLToPath } from "url";
+import { createRequire } from "node:module";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const require = createRequire(import.meta.url);
 
 type Asset = { path: string; contents: string };
 
 const generateAssetList = async (
   dir: string,
-  root?: string
+  root?: string,
+  skip: string[] = []
 ): Promise<Asset[]> => {
   if (root == undefined) {
     // On the first iteration, set the base to the root dir.
     root = dir;
   }
 
+  const skipSet = new Set(skip);
   const files = await readdir(dir);
   const assetList: Asset[] = [];
   for (const file of files) {
     const filePath = path.join(dir, file);
+    if (skipSet.has(path.basename(filePath))) {
+      continue;
+    }
     const fileStat = await stat(filePath);
     // add file path to asset list if it is a file
     if (fileStat.isFile()) {
@@ -48,41 +52,29 @@ const generateAssetList = async (
 
 const run = async () => {
   const { name } = await create({
-    // optional deps to install
-    dependencies: [
-      "@google-labs/breadboard",
-      "@google-labs/breadboard-cli",
-      "@google-labs/template-kit",
-      "@google-labs/core-kit",
-      "@google-labs/json-kit",
-      "@google-labs/palm-kit",
-    ], // We can only include deps that have been published.
-    // optional dev deps to install
-    devDependencies: [
-      "@types/node",
-      "@typescript-eslint/eslint-plugin",
-      "@typescript-eslint/parser",
-    ],
-    package: {
-      main: "./dist/src/index.js",
-      type: "module",
-      // these will merge with scripts like `test` from `npm init`
-      scripts: {
-        debug: "npx breadboard debug boards/ -o boards/ --watch",
-        board:
-          "npx breadboard run $npm_config_board --kit @google-labs/template-kit --kit @google-labs/core-kit --kit @google-labs/json-kit --kit @google-labs/palm-kit",
-      },
-      files: ["dist/src"],
-    },
+    // We use the "hello-world" package (which is a published dependency of
+    // "create-breadboard") as the template for the user's new project.
     files: await generateAssetList(
-      path.resolve(__dirname, path.join("..", "..", "..", "assets"))
+      path.dirname(
+        require.resolve("@google-labs/breadboard-hello-world/package.json")
+      ),
+      undefined,
+      // We don't want to copy these files.
+      ["node_modules", "CHANGELOG.md"]
     ),
+    // Fields to override from the "hello-world" package.json.
+    package: {
+      version: "1.0.0",
+      author: "Your Name Here",
+      private: true,
+      publishConfig: undefined,
+    },
     skipGitignore: false,
     skipReadme: true,
   });
 
   console.log(
-    `Created ${name}!. Enter the project directory and run: \`npm run debug\``
+    `Created ${name}!. Enter the project directory and run: \`npm run dev\``
   );
 };
 

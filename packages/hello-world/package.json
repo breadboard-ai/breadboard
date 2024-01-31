@@ -1,6 +1,8 @@
 {
-  "name": "@google-labs/hello-world",
-  "private": true,
+  "name": "@google-labs/breadboard-hello-world",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
   "version": "0.1.0",
   "description": "A template for creating a new Breadboard project",
   "type": "module",

@@ -79,7 +79,6 @@ const runCommand = (command: string) => {
 
   spawnSync(name, split, {
     stdio: "inherit",
-    cwd: relativeCwd,
   });
 };
 
@@ -178,12 +177,12 @@ const createPackage = async (options: CreatePackageOptions) => {
 
   const cwd = process.cwd();
 
-  const packageDir = path.resolve(process.cwd(), process.argv[2]);
-
-  if (!packageDir) {
+  const rawPackageDir = process.argv.at(2);
+  if (!rawPackageDir) {
     console.error(chalk.red("Must provide directory as an argument."));
     process.exit(1);
   }
+  const packageDir = path.resolve(cwd, rawPackageDir);
 
   if (await fileExists(packageDir)) {
     console.error(
@@ -207,8 +206,9 @@ const createPackage = async (options: CreatePackageOptions) => {
   await mkdir(packageDir, { recursive: true });
 
   process.chdir(packageDir);
+  await createFiles(files, { options, params: createFileParams });
 
-  runCommand(`npm init -y`);
+  runCommand(`npm install`);
 
   const newPackage = (
     await import(`${packageDir}/package.json`, {
@@ -228,8 +228,6 @@ const createPackage = async (options: CreatePackageOptions) => {
   }
 
   newPackage.name = createFileParams.nameWithScope;
-
-  await createFiles(files, { options, params: createFileParams });
 
   await createFile(
     { path: "package.json", contents: newPackage },
