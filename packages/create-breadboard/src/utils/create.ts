@@ -206,8 +206,9 @@ const createPackage = async (options: CreatePackageOptions) => {
   await mkdir(packageDir, { recursive: true });
 
   process.chdir(packageDir);
+  await createFiles(files, { options, params: createFileParams });
 
-  runCommand(`npm init -y`);
+  runCommand(`npm install`);
 
   const newPackage = (
     await import(`${packageDir}/package.json`, {
@@ -227,8 +228,6 @@ const createPackage = async (options: CreatePackageOptions) => {
   }
 
   newPackage.name = createFileParams.nameWithScope;
-
-  await createFiles(files, { options, params: createFileParams });
 
   await createFile(
     { path: "package.json", contents: newPackage },
