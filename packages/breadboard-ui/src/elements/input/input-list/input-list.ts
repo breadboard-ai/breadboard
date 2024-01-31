@@ -127,14 +127,14 @@ export class InputList extends LitElement {
     }
 
     return html` ${inputs.map(
-      ({ id, secret, remember, configuration, processedValues }) => {
+      ({ id, secret, remember, configuration, processedValues }, idx) => {
         if (!this.messages) {
           return nothing;
         }
 
         return html`<bb-input
           id="${id}"
-          ${processedValues ? nothing : ref(this.#pendingInput)}
+          ${idx === 0 ? ref(this.#pendingInput) : void 0}
           .secret=${secret}
           .remember=${remember}
           .configuration=${configuration}

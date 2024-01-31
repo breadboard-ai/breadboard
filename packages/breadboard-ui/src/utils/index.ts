@@ -19,7 +19,7 @@ export function isBoolean(schema: Schema) {
 }
 
 export function isMultipartImage(schema: Schema) {
-  return schema.type === "object" && schema.format?.startsWith("image");
+  return typeof schema.type === "string" && schema.type.startsWith("image");
 }
 
 export function isMultipartText(schema: Schema) {

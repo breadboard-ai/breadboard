@@ -459,19 +459,18 @@ export class UI extends LitElement {
       ></visual-breadboard>`;
     };
 
-    const disabled = this.messages[this.messages.length - 1]?.type !== "input";
-    const shouldShowContinueButton =
-      this.messages[this.#messagePosition]?.type === "input";
+    const typeOfNewestMessage = this.messages[this.messages.length - 1]?.type;
+    const disabled =
+      this.#messagePosition < this.messages.length - 1 ||
+      (typeOfNewestMessage !== "input" && typeOfNewestMessage !== "secret");
 
-    const continueButton = shouldShowContinueButton
-      ? html`<button
-          id="continue"
-          ?disabled=${disabled}
-          @click=${this.#notifyInputList}
-        >
-          Continue
-        </button>`
-      : nothing;
+    const continueButton = html`<button
+      id="continue"
+      ?disabled=${disabled}
+      @click=${this.#notifyInputList}
+    >
+      Continue
+    </button>`;
 
     return html`
       <div id="diagram">
