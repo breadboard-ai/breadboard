@@ -29,7 +29,7 @@
   display: inline-block;
   width: calc(var(--bb-grid-size) * 20);
   height: calc(var(--bb-grid-size) * 20);
-  background: no-repeat center/cover url(./icon.png);
+  background: no-repeat center/cover url(/breadboard/static/icon.png);
 }
 
 #masthead header h1,
