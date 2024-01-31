@@ -1,0 +1,78 @@
+{
+  "url": "file:///Users/paulkinlan/Code/labs-prototypes/boards/use-case/generate-text/index.json",
+  "title": "Generate an text response from a prompt",
+  "description": "Generates an text response using  LLM provider ",
+  "version": "0.0.3",
+  "edges": [
+    {
+      "from": "invoke-3",
+      "to": "text_response",
+      "out": "text_response",
+      "in": "text_response"
+    },
+    {
+      "from": "input-1",
+      "to": "invoke-3",
+      "out": "prompt",
+      "in": "prompt"
+    },
+    {
+      "from": "input-1",
+      "to": "invoke-3",
+      "out": "provider",
+      "in": "path"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "text_response",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text_response": {
+              "type": "string",
+              "title": "text_response"
+            }
+          },
+          "required": [
+            "text_response"
+          ]
+        }
+      }
+    },
+    {
+      "id": "invoke-3",
+      "type": "invoke",
+      "configuration": {}
+    },
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "prompt": {
+              "title": "provider",
+              "description": "The provider to use",
+              "type": "string"
+            },
+            "provider": {
+              "title": "path",
+              "description": "The path to the board to invoke.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "prompt",
+            "provider"
+          ]
+        }
+      }
+    }
+  ],
+  "kits": [],
+  "graphs": {}
+}

@@ -1,19 +1,17 @@
 # Generate Text
 
-This board demonstrates how to generate a text based on a prompt. By default it will use the PaLM API, but you can use any API that takes a prompt and returns a response.
+This board demonstrates how to generate a text based on a prompt.
 
 ## Running the Board
 
 ### Inputs
 
 - `prompt` - The prompt that you want to generate text from
-- `provider` [optional] - if this is "." (default) it will use the PaLM API, otherwise it's a path to a graph that will take `input` and return `text`
+- `provider` - The path to the board that will provide access to the LLM API that will be used to generate the text.
 
 ### Secrets
 
-This board requires the following secrets to be set to be exported as environment variables:
-
-- `PALM_KEY` - The key for the PaLM API.
+This board requires will request the secrets based on the board that you are using to talk to the llm. For example, the OpenAI board will require the `OPENAI_API_KEY` secret.
 
 ### Outputs
 
@@ -22,7 +20,7 @@ This board requires the following secrets to be set to be exported as environmen
 ### From the CLI
 
 ```bash
-breadboard run boards/use-case/generate-text/index.js --kit @google-labs/llm-starter --kit @google-labs/core-kit --kit @google-labs/palm-kit -i "{\"prompt\":\"Testing\"}"
+breadboard run boards/use-case/generate-text/index.js --kit @google-labs/core-kit --kit --input-file generateTextReqeust.json"
 ```
 
 ### From the UI

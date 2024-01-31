@@ -4,69 +4,23 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { base, board, code } from "@google-labs/breadboard";
-import { starter } from "@google-labs/llm-starter";
+import { base, board } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
-import { palm } from "@google-labs/palm-kit";
 
 const metaData = {
   title: "Generate an text response from a prompt",
-  description:
-    "Generates an text response using PaLM, but can be used with any LLM provider (if the 'provider' is specified.)",
+  description: "Generates an text response using  LLM provider ",
   version: "0.0.3",
 };
 
-const generateTextScheme = {
-  type: "object",
-  properties: {
-    prompt: {
-      type: "string",
-      title: "input",
-      description: "What text is used to generate the embedding?",
-    },
-    provider: {
-      type: "string",
-      title: "provider",
-      description:
-        "The URL of the provider board that will generate Text prompt response?",
-      default: ".",
-    },
-  },
-  required: ["prompt"],
-};
+export default await board(({ prompt, provider }) => {
+  prompt.title("prompt").description("The prompt to complete").isString();
+  prompt.title("provider").description("The provider to use").isString();
 
-export default await board(() => {
-  // Either use the default embedding provider or use a custom one (specified by provider)
-  const generateTextFactory = code(({ provider, palmBoard }) => {
-    // The provider must return a "text_response"
-    if (provider === undefined || provider == ".") {
-      return {
-        graph: palmBoard,
-      };
-    }
-    return { path: provider };
-  });
-
-  const input = base.input({ $id: "input", schema: generateTextScheme });
-
-  // Because `code` can't return a board, we have to create it here and then pass it in.
-  const palmBoard = board(({ prompt }) => {
-    const secrets = starter.secrets({
-      keys: ["PALM_KEY"],
-    });
-    return prompt.as("text").to(palm.generateText({ PALM_KEY: secrets }));
-  }).serialize();
-
-  const generateText = generateTextFactory({
-    palmBoard,
-  });
-
-  return input
-    .to(generateText)
-    .to(
-      core.invoke({
-        prompt: input.prompt,
-      })
-    )
-    .text.to(base.output({ $id: "text_response" }));
+  return core
+    .invoke({
+      prompt,
+      path: provider,
+    })
+    .text_response.to(base.output({ $id: "text_response" }));
 }).serialize(metaData);

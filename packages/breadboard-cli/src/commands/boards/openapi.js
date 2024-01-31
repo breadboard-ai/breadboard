@@ -200,12 +200,6 @@ const createSpecBoard = board((apiSpec) => {
     const { parameters } = item;
     const nodes = [];
 
-    const required = parameters
-      .filter((param) => {
-        return (param.in == "query" || param.in == "path") && param.required;
-      })
-      .map((param) => param.name);
-
     const inputNode = {
       id: `input`,
       type: `input`,
@@ -216,7 +210,6 @@ const createSpecBoard = board((apiSpec) => {
             const schema = { ...param.schema };
             schema.title = param.name;
             schema.description = param.description || param.schema.title;
-            //schema.required = param.required;
 
             if (param.required) {
               if ("default" in param == false) {
@@ -234,7 +227,6 @@ const createSpecBoard = board((apiSpec) => {
 
             return params;
           }, {}),
-          //required,
         },
       },
     };
@@ -344,7 +336,7 @@ const createSpecBoard = board((apiSpec) => {
     const output = base.output({});
 
     const createFetchParameters = code(({ item, api_inputs }) => {
-      const { method, parameters, secrets, requestBody, info } = item;
+      const { method, parameters, secrets, requestBody } = item;
 
       let { url } = item;
 
@@ -384,7 +376,7 @@ const createSpecBoard = board((apiSpec) => {
         }
       }
 
-      // // If the method is POST or PUT, then we need to add the requestBody to the body.
+      // If the method is POST or PUT, then we need to add the requestBody to the body.
 
       // We are going to want to add in the secret somehow
       const headers = {};
@@ -400,7 +392,7 @@ const createSpecBoard = board((apiSpec) => {
         url = `${url}?${queryString}`;
       }
 
-      // Many APIs will require an authentication token but they don't define it in the Open API spec. If the user has provided a secret, we will use that.
+      // Many APIs will require an authentication token but they don't define it in the Open API spec.
       if (secrets != undefined && secrets[1].scheme == "bearer") {
         const envKey = `${item.info.title
           .replace(/[^a-zA-Z0-9]+/g, "_")
