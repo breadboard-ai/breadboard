@@ -1,5 +1,16 @@
 # @google-labs/pinecone-kit
 
+## 0.1.0
+
+### Minor Changes
+
+- 2f524ef: Initial release of pinecone-kit
+
+### Patch Changes
+
+- Updated dependencies [81e2840]
+  - @google-labs/breadboard@0.9.1
+
 ## 0.0.3
 
 ### Patch Changes

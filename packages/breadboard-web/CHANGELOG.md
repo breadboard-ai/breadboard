@@ -1,5 +1,15 @@
 # @google-labs/breadboard-web
 
+## 1.0.2
+
+### Patch Changes
+
+- 81e2840: Add "Agent Loop" board
+- Updated dependencies [2f524ef]
+- Updated dependencies [81e2840]
+  - @google-labs/pinecone-kit@0.1.0
+  - @google-labs/breadboard@0.9.1
+
 ## 1.0.1
 
 ### Patch Changes
