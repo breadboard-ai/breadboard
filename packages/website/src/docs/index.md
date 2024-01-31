@@ -3,4 +3,7 @@ layout: docs.njk
 title: Intro
 ---
 
-This is the intro.
+# Docs
+
+- [Concepts](./concepts/)
+- [Happy Path](./happy-path/)

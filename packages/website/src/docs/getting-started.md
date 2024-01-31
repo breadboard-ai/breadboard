@@ -3,6 +3,8 @@ layout: docs.njk
 title: Getting Started
 ---
 
+# Getting Started
+
 Breadboard supports authoring in JavaScript/TypeScript and Python (coming soon).
 
 ## Set up

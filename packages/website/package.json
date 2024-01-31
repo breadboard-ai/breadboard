@@ -108,7 +108,7 @@
       ]
     },
     "serve:dev": {
-      "command": "web-dev-server --root-dir dist/dev/ --node-resolve --watch --open /breadboard/",
+      "command": "web-dev-server --root-dir dist/dev/breadboard/ --node-resolve --watch --open /",
       "service": true,
       "dependencies": [
         {
@@ -119,7 +119,7 @@
       "files": []
     },
     "serve:prod": {
-      "command": "web-dev-server --root-dir dist/prod/ --watch --open /breadboard/",
+      "command": "web-dev-server --root-dir dist/prod/ --watch --open /",
       "service": true,
       "dependencies": [
         {

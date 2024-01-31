@@ -3,60 +3,62 @@ layout: docs.njk
 title: Concepts
 ---
 
-### Board
+# Concepts
+
+## Board
 
 A _board_ is a kind of executable program, expressed declaratively as a graph.
 
-### Nodes
+## Nodes
 
 A _node_ is a step in a board that performs some action. This might be calling
 an external API, or executing some local computation. Nodes are similar to
 functions in traditional programs.
 
-### Ports
+## Ports
 
 A _port_ is a named input or output of a node. Nodes can have any number of
 ports. Ports can be _source ports_ (data flows _out_), or _destination ports_
 (data flows _in_). Source ports are analogous to the parameters of a function.
 Destination ports are analogous to the results returned by a function.
 
-### Edges
+## Edges
 
 An _edge_ is a connection between two ports through which data flows.
 
-#### Optional edges
+### Optional edges
 
 Edges can be _optional_, which means that the execution of a node will not wait
 for data to be present before proceeding with execution.
 
-#### Constant edges
+### Constant edges
 
 Edges can be _constant_, which means the most recent object that flowed through
 the edge will remain available indefinitely, instead of being destructively
 consumed.
 
-### Kits
+## Kits
 
 A _kit_ is a library that provides graphs.
 
-### Slots
+## Slots
 
 Boards can have _slots_, which is Breadboard's way of expressing _inversion of
 control_. When a board exposes a slot, it means that users of that board are
 expected to provide an implementation for some portion of the graph themselves.
 
-### Breadboard Graph Language (BGL)
+## Breadboard Graph Language (BGL)
 
 Breadboard Graph Language (BGL) is a JSON file format format described by [this
 JSON
 schema](../../../schema/breadboard.schema.json).
 
-### Runtimes
+## Runtimes
 
 A _runtime_ is a system that executes boards. Current runtimes include: Node and
 Web.
 
-### Frontends
+## Frontends
 
 A _frontend_ is a system that generates boards. Current frontends include the
 `@google-labs/breadboard` API for Node, a Python library (coming soon!), and the

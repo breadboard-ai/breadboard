@@ -1,11 +1,109 @@
 <!DOCTYPE html>
-<title>Breadboard</title>
-<base href="/breadboard/" />
-<link
-  href="https://fonts.googleapis.com/css2?family=Roboto&display=swap"
-  rel="stylesheet"
-/>
-<link rel="icon" type="image/x-icon" href="static/breadboard.png" />
-<link rel="stylesheet" href="static/common.css" />
-<script src="js/pages/landing.js" type="module"></script>
-<bb-site-landing></bb-site-landing>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Breadboard</title>
+    <link rel="icon" type="image/x-icon" href="/static/icon.png" />
+    <link rel="stylesheet" href="/static/common.css" />
+    <link rel="stylesheet" href="/static/home.css" />
+  </head>
+  <body>
+    {% include "navigation.njk", isHome: true %}
+    <main>
+      <section id="masthead">
+        <div id="pre"></div>
+        <header>
+          <div>
+            <h1>Breadboard</h1>
+            <h2>A Generative AI Prototype Framework</h2>
+          </div>
+          <a id="get-started" href="/docs/getting-started/">Get started →</a>
+        </header>
+        <div id="post"></div>
+      </section>
+
+      <section id="make-anything">
+        <h1>Make Anything</h1>
+        <p>
+          Breadboard lets you design sophisticated Generative AI experiences.
+          Build complex workflows visually, free from API wrangling.
+        </p>
+      </section>
+
+      <section id="features">
+        <section>
+          <img
+            alt="A graphic denoting two connected nodes in a graph"
+            src="/static/images/debug-on-the-fly.jpg"
+          />
+          <h1>Debug On the Fly</h1>
+          <p>Start making boards and see them visualized in real time.</p>
+        </section>
+        <div class="connector">
+          <div class="connector-inner"><div></div></div>
+        </div>
+        <section>
+          <img
+            alt="A graphic denoting a collection of interconnected boxes"
+            src="/static/images/flexible-kits.jpg"
+          />
+          <h1>Flexible Kits</h1>
+          <p>
+            No need to reinvent the wheel. From AI to webcam capture, we’ve got
+            you covered.
+          </p>
+        </section>
+        <div class="connector">
+          <div class="connector-inner"><div></div></div>
+        </div>
+        <section>
+          <img
+            alt="Some Breadboard source code"
+            src="/static/images/open-source.jpg"
+          />
+          <h1>Open Source</h1>
+          <p>
+            Want to contribute? Feel free! Breadboard is completely open source
+            on GitHub.
+          </p>
+        </section>
+      </section>
+
+      <section id="happy-path">
+        <div id="happy-path-pre"></div>
+        <div id="happy-path-content">
+          <h1>The Happy Path</h1>
+          <img
+            src="/static/images/happy-path.jpg"
+            alt="A flow diagram showing how to work best with Breadboard"
+          />
+          <p>
+            If you're eager to start making boards with Breadboard as quickly as
+            possible, here's a yellow brick road that will take you there. It's
+            not quite a tutorial, but more like a step-by-step onboarding guide
+            with some of the best practices baked in.
+          </p>
+          <div><a href="/docs/happy-path/">Get going →</a></div>
+        </div>
+        <div id="happy-path-post"></div>
+      </section>
+
+      <section id="generate-web-apps">
+        <h1>Generate Web Apps</h1>
+        <p>
+          Made something awesome? Share it with others and let them play with it
+          immediately!
+        </p>
+
+        <img
+          id="device-art"
+          src="/static/images/device-art.jpg"
+          alt="A Pixel 5 and a Pixelbook Go showing a Breaboard-generated web app"
+        />
+      </section>
+    </main>
+
+    {% include "footer.njk" %}
+  </body>
+</html>
