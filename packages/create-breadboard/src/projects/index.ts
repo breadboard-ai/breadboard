@@ -68,6 +68,7 @@ const run = async () => {
       author: "Your Name Here",
       private: true,
       publishConfig: undefined,
+      repository: undefined,
     },
     skipGitignore: false,
     skipReadme: true,
