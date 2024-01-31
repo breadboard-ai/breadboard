@@ -6,6 +6,10 @@
   "version": "1.0.0",
   "description": "A template for creating a new Breadboard project",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/breadboard-ai/breadboard.git"
+  },
   "scripts": {
     "dev": "breadboard debug src/ --watch"
   },
