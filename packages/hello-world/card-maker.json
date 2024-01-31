@@ -1,0 +1,155 @@
+{
+  "title": "Card Maker",
+  "description": "Creates a D&D card for a drawn object",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "analyze",
+      "to": "output-2",
+      "out": "text",
+      "in": "card"
+    },
+    {
+      "from": "describe",
+      "to": "template",
+      "out": "result",
+      "in": "backstory"
+    },
+    {
+      "from": "describe",
+      "to": "output-2",
+      "out": "result",
+      "in": "story"
+    },
+    {
+      "from": "template",
+      "to": "analyze",
+      "out": "text",
+      "in": "text"
+    },
+    {
+      "from": "append",
+      "to": "describe",
+      "out": "parts",
+      "in": "parts"
+    },
+    {
+      "from": "draw",
+      "to": "append",
+      "out": "picture",
+      "in": "part"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "card": {
+              "type": "string",
+              "title": "card"
+            },
+            "story": {
+              "type": "string",
+              "title": "story"
+            }
+          },
+          "required": [
+            "card",
+            "story"
+          ]
+        }
+      }
+    },
+    {
+      "id": "analyze",
+      "type": "invoke",
+      "configuration": {
+        "path": "https://raw.githubusercontent.com/breadboard-ai/breadboard/3e9735ee557bf18deb87bc46663a6e3af7647e7d/packages/breadboard-web/public/graphs/gemini-generator.json"
+      }
+    },
+    {
+      "id": "describe",
+      "type": "invoke",
+      "configuration": {
+        "path": "https://raw.githubusercontent.com/breadboard-ai/breadboard/f4adabe69a5a9af73a29fcc72e7042404157717b/packages/breadboard-web/public/graphs/gemini-pro-vision.json"
+      }
+    },
+    {
+      "id": "template",
+      "type": "promptTemplate",
+      "configuration": {
+        "template": "You are an expert Dungeons and Dragons character developer. Analyze the following backstory of the mystical creature and reply a brief overview of the creature. Also provide the list of Dungeons and Dragons basic abilities (Strength, Dexterity, Constitution, Intelligence, Wisdom, Charisma) and their scores:\n    \n    ## BACKSTORY:\n    {{backstory}}\n    \n    ## RESPONSE:\n    "
+      }
+    },
+    {
+      "id": "append",
+      "type": "invoke",
+      "configuration": {
+        "path": "#append"
+      }
+    },
+    {
+      "id": "draw",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "picture": {
+              "type": "image/png",
+              "title": "Your picture",
+              "format": "drawable"
+            }
+          },
+          "required": [
+            "content"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  ],
+  "kits": [],
+  "graphs": {
+    "append": {
+      "edges": [
+        {
+          "from": "append-input",
+          "to": "append-run",
+          "out": "*"
+        },
+        {
+          "from": "append-run",
+          "to": "append-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "append-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "append-run",
+          "type": "runJavascript",
+          "configuration": {
+            "prompt": "describe the mystical creature above in great detail and flourish, and come up with a fun name for it, as well as the backstory for how it came to be",
+            "code": "function append({ part, prompt }) {\n  const parts = Array.isArray(part) ? part : [part];\n  return { parts: [...parts, { text: prompt }] };\n}",
+            "name": "append",
+            "raw": true
+          }
+        },
+        {
+          "id": "append-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    }
+  }
+}
