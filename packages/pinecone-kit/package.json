@@ -3,7 +3,6 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "private": true,
   "version": "0.0.3",
   "description": "A collection of Breadboard nodes for working with Pinecone",
   "main": "./dist/src/index.js",
