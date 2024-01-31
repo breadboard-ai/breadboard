@@ -11,6 +11,7 @@ export type Schema = {
   properties?: Record<string, Schema>;
   required?: string[];
   format?: string;
+  transient?: boolean;
   enum?: string[];
   /**
    * The default value of the schema. The UI can use this to pre-populate a

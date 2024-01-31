@@ -298,6 +298,11 @@ export abstract class AbstractValue<T extends NodeValue = NodeValue>
   abstract examples(...examples: string[]): AbstractValue<T>;
   abstract default(value: string): AbstractValue<T>;
   abstract optional(): AbstractValue<T>;
+  /**
+   * When true, Breadboard will continue asking for input even when the value
+   * has already been asked for.
+   */
+  abstract transient(): AbstractValue<T>;
 }
 
 /**
