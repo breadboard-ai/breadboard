@@ -5,9 +5,7 @@ import preset from "ts-jest/presets/index.js";
 
 const jestConfig: JestConfigWithTsJest = {
   ...preset.defaultsESM,
-  extensionsToTreatAsEsm: [
-    ".ts"
-  ],
+  extensionsToTreatAsEsm: [".ts"],
   moduleNameMapper: {
     "^(\\.{1,2}/.*)\\.js$": "$1",
   },
@@ -20,10 +18,7 @@ const jestConfig: JestConfigWithTsJest = {
       },
     ],
   },
-  testPathIgnorePatterns: [
-    ".*/node_modules/.*",
-    ".*/dist/.*",
-  ],
+  testPathIgnorePatterns: [".*/node_modules/.*", ".*/dist/.*"],
 };
 
 export default jestConfig;
