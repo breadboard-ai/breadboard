@@ -12,6 +12,7 @@ jobs:
     strategy:
       matrix:
         node-version: [20.x]
+        python-version: [3.11]
 
     steps:
       - uses: actions/checkout@v3
@@ -20,6 +21,12 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
+      - name: Use python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+      - run: pip install packages/breadboard-python
       - uses: google/wireit@setup-github-actions-caching/v1
 
       - name: Clean Installing dependencies
