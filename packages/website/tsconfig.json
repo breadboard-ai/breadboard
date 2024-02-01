@@ -5,6 +5,7 @@
     "rootDir": "src/js/",
     "experimentalDecorators": true,
     "useDefineForClassFields": false,
+    "allowJs": false,
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "tsBuildInfoFile": "dist/tsc/.tsbuildinfo"
   },

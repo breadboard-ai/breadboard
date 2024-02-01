@@ -77,7 +77,9 @@
       "files": [
         "src/",
         "!src/js/",
-        "!src/static/"
+        "!src/static/",
+        "eleventy.config.cjs",
+        "filter-toc.cjs"
       ],
       "output": [
         "dist/eleventy/"
@@ -133,6 +135,11 @@
   "dependencies": {
     "@11ty/eleventy": "^2.0.1",
     "@web/dev-server": "^0.4.1",
+    "jsdom": "^24.0.0",
     "lit": "^3.1.1"
+  },
+  "devDependencies": {
+    "markdown-it-github-alerts": "^0.3.0",
+    "markdown-it-github-headings": "^2.0.1"
   }
 }
