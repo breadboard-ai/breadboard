@@ -1,5 +1,13 @@
 # @google-labs/breadboard-hello-world
 
+## 1.0.2
+
+### Patch Changes
+
+- 60f8a7e: Add a "Card Maker" board.
+- Updated dependencies [3e9735e]
+  - @google-labs/breadboard-cli@0.3.1
+
 ## 1.0.1
 
 ### Patch Changes

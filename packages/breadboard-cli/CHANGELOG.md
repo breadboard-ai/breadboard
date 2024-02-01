@@ -1,5 +1,11 @@
 # @google-labs/breadboard-cli
 
+## 0.3.1
+
+### Patch Changes
+
+- 3e9735e: Fix path resolution and stop serializing board URLs.
+
 ## 0.3.0
 
 ### Minor Changes
