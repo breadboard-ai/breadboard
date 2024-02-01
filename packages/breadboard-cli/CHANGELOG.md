@@ -1,5 +1,11 @@
 # @google-labs/breadboard-cli
 
+## 0.3.2
+
+### Patch Changes
+
+- d0b9b19: Fix a bug with file paths across Node releases.
+
 ## 0.3.1
 
 ### Patch Changes
