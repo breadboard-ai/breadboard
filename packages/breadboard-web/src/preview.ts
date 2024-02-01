@@ -138,6 +138,14 @@ export class Preview extends LitElement {
       text-align: center;
     }
 
+    .error bb-json-tree {
+      text-align: left;
+    }
+
+    .error code {
+      text-align: left;
+    }
+
     .error {
       color: #cc0011;
     }
@@ -498,7 +506,17 @@ export class Preview extends LitElement {
         });
 
       case "error":
-        this.uiElement = html`<div class="error">😩 ${result.data.error}</div>`;
+        if (typeof result.data.error === "string") {
+          this.uiElement = html`<div class="error">
+            😩 ${result.data.error}
+          </div>`;
+        } else {
+          this.uiElement = html`<div class="error">
+            😩 Error
+            <bb-json-tree .json=${result.data.error.error}></bb-json-tree>
+            in "${result.data.error.descriptor.id}"
+          </div>`;
+        }
         return Promise.resolve(void 0);
 
       case "output":
