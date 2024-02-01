@@ -230,8 +230,9 @@ export class DrawableInput extends LitElement {
     ctx.lineCap = "round";
     ctx.lineWidth = 3;
 
-    const startX = evt.pageX - this.#bounds.x;
-    const startY = evt.pageY - this.#bounds.y;
+    const startX = evt.pageX - this.#bounds.x + window.scrollX;
+    const startY = evt.pageY - this.#bounds.y - window.scrollY;
+
     ctx.beginPath();
     ctx.moveTo(startX, startY);
 
@@ -276,8 +277,8 @@ export class DrawableInput extends LitElement {
 
     ctx.moveTo(this.#lastPosition.x, this.#lastPosition.y);
 
-    const x = evt.pageX - this.#bounds.x;
-    const y = evt.pageY - this.#bounds.y;
+    const x = evt.pageX - this.#bounds.x + window.scrollX;
+    const y = evt.pageY - this.#bounds.y - window.scrollY;
 
     ctx.lineTo(x, y);
     ctx.stroke();
