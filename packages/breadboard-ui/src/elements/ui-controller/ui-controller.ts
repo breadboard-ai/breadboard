@@ -33,6 +33,7 @@ import { styles as uiControllerStyles } from "./ui-controller.styles.js";
 import { until } from "lit/directives/until.js";
 import { guard } from "lit/directives/guard.js";
 import { type InputList } from "../input/input-list/input-list.js";
+import '../visual-breadboard/visual-breadboard.js';
 
 type ExtendedNodeInformation = {
   id: string;
@@ -58,15 +59,13 @@ type inputCallback = (data: Record<string, unknown>) => void;
 
 const CONFIG_MEMORY_KEY = "ui-config";
 const DIAGRAM_DEBOUNCE_RENDER_TIMEOUT = 60;
-const VISUALBLOCKS_URL =
-  "https://storage.googleapis.com/tfweb/visual-breadboard/visual_breadboard_20240118164814/visual_breadboard_bin.js";
 
 type UIConfig = {
   showNarrowTimeline: boolean;
 };
 
 type DiagramElement = HTMLElement & {
-  render: (diagram: LoadArgs, highlightedNode: string) => void;
+  draw: (diagram: LoadArgs, highlightedNode: string) => void;
   reset: () => void;
 };
 
@@ -154,11 +153,11 @@ export class UI extends LitElement {
       return;
     }
 
-    if (!("render" in this.#diagram.value)) {
+    if (!("draw" in this.#diagram.value)) {
       return;
     }
 
-    return this.#diagram.value.render(this.loadInfo, highlightedDiagramNode);
+    return this.#diagram.value.draw(this.loadInfo, highlightedDiagramNode);
   }
 
   unloadCurrentBoard() {
@@ -445,20 +444,6 @@ export class UI extends LitElement {
 
     this.#scheduleDiagramRender();
 
-    const loadVisualBreadboard = async () => {
-      if (
-        !this.#requestedVB &&
-        customElements.get("visual-breadboard") == null
-      ) {
-        this.#requestedVB = true;
-        await loadScript(VISUALBLOCKS_URL);
-        this.#scheduleDiagramRender();
-      }
-      return html`<visual-breadboard
-        ${ref(this.#diagram)}
-      ></visual-breadboard>`;
-    };
-
     const typeOfNewestMessage = this.messages[this.messages.length - 1]?.type;
     const disabled =
       this.#messagePosition < this.messages.length - 1 ||
@@ -483,7 +468,8 @@ export class UI extends LitElement {
                 }}
               ></bb-diagram>`
             : html`${guard([this.#requestedVB], () => {
-                return until(loadVisualBreadboard(), html`Loading...`);
+              return html`<visual-breadboard ${ref(this.#diagram)}
+                ></visual-breadboard>`;
               })}`
         }
         ${
@@ -616,16 +602,4 @@ export class UI extends LitElement {
         </section>
       </div>`;
   }
-}
-
-function loadScript(url: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const script = document.createElement("script");
-    script.src = url;
-    script.onload = () => {
-      resolve();
-    };
-    script.onerror = reject;
-    document.head.appendChild(script);
-  });
 }
