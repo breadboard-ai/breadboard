@@ -34,6 +34,7 @@ import { RequestedInputsManager, bubbleUpInputsIfNeeded } from "./bubble.js";
 import { asyncGen } from "./utils/async-gen.js";
 import { StackManager } from "./stack.js";
 import { timestamp } from "./timestamp.js";
+import breadboardSchema from "@google-labs/breadboard-schema/breadboard.schema.json" assert { type: "json" };
 
 /**
  * This class is the main entry point for running a board.
@@ -48,6 +49,7 @@ export class BoardRunner implements BreadboardRunner {
   url?: string;
   title?: string;
   description?: string;
+  $schema?: string;
   version?: string;
   edges: Edge[] = [];
   nodes: NodeDescriptor[] = [];
@@ -67,9 +69,18 @@ export class BoardRunner implements BreadboardRunner {
    * @param metadata - optional metadata for the board. Use this parameter
    * to provide title, description, version, and URL for the board.
    */
-  constructor(metadata?: GraphMetadata) {
-    const { url, title, description, version } = metadata || {};
-    Object.assign(this, { url, title, description, version });
+  constructor(
+    { url, title, description, version, $schema }: GraphMetadata = {
+      $schema: breadboardSchema.$id,
+    }
+  ) {
+    Object.assign(this, {
+      $schema: $schema ?? breadboardSchema.$id,
+      url,
+      title,
+      description,
+      version,
+    });
   }
 
   /**

@@ -5,10 +5,10 @@
  */
 
 import test from "ava";
-
 import { Board } from "../src/board.js";
 import type { BreadboardCapability, GraphDescriptor } from "../src/types.js";
 import { TestKit } from "./helpers/_test-kit.js";
+import breadboardSchema from "@google-labs/breadboard-schema/breadboard.schema.json" assert { type: "json" };
 
 test("correctly passes inputs and outputs to included boards", async (t) => {
   const nestedBoard = new Board();
@@ -129,6 +129,7 @@ test("lambda node from function with correctly assigned nodes", async (t) => {
         board: {
           kind: "board",
           board: {
+            $schema: breadboardSchema.$id,
             edges: [
               { from: "test-3", out: "*", to: "output-2" },
               {
@@ -280,4 +281,26 @@ test("when $error is set, all other outputs are ignored, with *", async (t) => {
   const result = await board.runOnce({});
   t.is(result.foo, undefined);
   t.like(result.$error, { kind: "error" });
+});
+
+test("expect schema to be valid URI", async (t) => {
+  const schemaId = breadboardSchema.$id;
+  t.truthy(schemaId);
+  t.regex(schemaId, /^https?:\/\//);
+});
+
+test("board contains a schema by default", async (t) => {
+  const board = new Board();
+  const serialized = JSON.parse(JSON.stringify(board));
+  t.is(serialized.$schema, breadboardSchema.$id);
+});
+
+test("can set a custom schema", async (t) => {
+  const customSchema =
+    "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/schema/breadboard.schema.json";
+  const board = new Board({
+    $schema: customSchema,
+  });
+  const serialized = JSON.parse(JSON.stringify(board));
+  t.is(serialized.$schema, customSchema);
 });

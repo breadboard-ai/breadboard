@@ -166,6 +166,11 @@ export type KitDescriptor = KitReference & {
  */
 export type GraphMetadata = {
   /**
+   * The schema of the graph.
+   */
+  $schema?: string;
+
+  /**
    * The URL pointing to the location of the graph.
    * This URL is used to resolve relative paths in the graph.
    * If not specified, the paths are assumed to be relative to the current
