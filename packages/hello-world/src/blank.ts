@@ -1,3 +1,9 @@
+/**
+ * @license
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { board } from "@google-labs/breadboard";
 
 export default await board(({ text }) => {

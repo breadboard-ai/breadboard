@@ -1,18 +1,31 @@
+/**
+ * @license
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { Schema, base, board, code } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { templates } from "@google-labs/template-kit";
 
+// A URL of the Gemini Pro Vision board. We will invoke this board to
+// describe the picture.
 const visionBoard =
   "https://raw.githubusercontent.com/breadboard-ai/breadboard/f4adabe69a5a9af73a29fcc72e7042404157717b/packages/breadboard-web/public/graphs/gemini-pro-vision.json";
+
+// A URL of the Gemini Pro board. We will invoke this board to act as the
+// Character Developer.
 const textBoard =
   "https://raw.githubusercontent.com/breadboard-ai/breadboard/3e9735ee557bf18deb87bc46663a6e3af7647e7d/packages/breadboard-web/public/graphs/gemini-generator.json";
 
+// A JSON Schema that tells Breadboard that the input will be a drawable
+// surface.
 const drawableSchema = {
   type: "object",
   properties: {
     picture: {
       type: "image/png",
-      title: "Your picture",
+      title: "Draw an object to transform into the mystical creature",
       format: "drawable",
     },
   },
@@ -20,49 +33,92 @@ const drawableSchema = {
   additionalProperties: false,
 } satisfies Schema;
 
+// A node that appends the prompt to the parts array that already contains
+// the picture.
+// Note, this one is a bit "in the weeds": it literally formats the Gemini Pro
+// API request to include the picture as part of the prompt.
 const appender = code(({ part, prompt }) => {
   const parts = Array.isArray(part) ? part : [part];
   return { parts: [...parts, { text: prompt }] };
 });
 
+// A node type that generates a random letter.
+const randomLetterMaker = code(() => {
+  const letter = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+  return { letter };
+});
+
+// The board we're building.
 export default await board(() => {
   // TODO: Teach new syntax to take in the full Schema (maybe a "schema" method?)
-  const draw = base.input({ $id: "draw", schema: drawableSchema });
+  // [Step 1]
+  // Add an input node to allow the user to draw a picture.
+  // Use JSON Schema to tell Breadboard that we want a drawable surface.
+  const draw = base.input({ $id: "userDrawing", schema: drawableSchema });
 
+  // [Added last]
+  // Gemini tends to overrotate on Wumpuses for some reason,
+  // so we need a way to give it some randomness to be more creative with names.
+  // Let's ask it to generate a name that starts with a random letter.
+  const { letter } = randomLetterMaker({ $id: "makeRandomLetter" });
+
+  // [Step 3]
+  // Append the picture to the prompt.
   const { parts } = appender({
-    $id: "append",
+    $id: "appendPictureToPrompt",
     part: draw.picture,
-    prompt:
-      "describe the mystical creature above in great detail and flourish, and come up with a fun name for it, as well as the backstory for how it came to be",
+    prompt: `Describe the pictured object or subject in the sketch above, provide a thorough list of details. No matter how simple the sketch is, try
+     to come up with as many details as possible. Improvise if necessary.`,
   });
 
-  const describe = core.invoke({
-    $id: "describe",
+  // [Step 2]
+  // Ask Gemini Pro Vision to describe the picture.
+  const describePicture = core.invoke({
+    $id: "describePicture",
     path: visionBoard,
     parts,
   });
 
-  const { text } = templates.promptTemplate({
-    $id: "template",
-    template: `You are an expert Dungeons and Dragons character developer. Analyze the following backstory of the mystical creature and reply a brief overview of the creature. Also provide the list of Dungeons and Dragons basic abilities (Strength, Dexterity, Constitution, Intelligence, Wisdom, Charisma) and their scores:
+  // [Step 3]
+  // Create a prompt for the Character Developer, who will transform the
+  // mundane description of the picture into a mystical creature.
+  const { prompt } = templates.promptTemplate({
+    $id: "characterDeveloperTemplate",
+    template: `You are an expert board game character developer.
+
+    Read the description below and transform it into a mystical creature with unique abilities.
+
+    Come up with a fun name for the creature and a backstory for how it came to be. The name must start with the letter "{{letter}}".
     
-    ## BACKSTORY:
-    {{backstory}}
+    Write a story of the creature and how it came to be. Describe its unique abilities. Provide the list of attributes (Strength, Dexterity, Constitution, Intelligence, Wisdom, Charisma) and their scores as a bulleted list.
+
+    Reply in valid Markdown format with the following headings: "NAME", "STORY", "ABILITIES", and "ATTRIBUTES".
+    
+    ## DESCRIPTION:
+    {{description}}
     
     ## RESPONSE:
     `,
-    backstory: describe.result,
+    description: describePicture.result,
+    letter,
   });
 
-  const analyze = core.invoke({
-    $id: "analyze",
+  // [Step 4]
+  // Ask Gemini Pro to act as the Character Developer.
+  const developCharacter = core.invoke({
+    $id: "developCharacter",
     path: textBoard,
-    text,
+    text: prompt,
   });
 
-  return { card: analyze.text, story: describe.result };
+  // Return the results: both the newly minted card, and the original
+  // picture description, so that we can marvel at the transformation.
+  return {
+    card: developCharacter.text.title("Game Card"),
+    description: describePicture.result.title("Picture description"),
+  };
 }).serialize({
   title: "Card Maker",
-  description: "Creates a D&D card for a drawn object",
+  description: "Creates a board game card of a mystical creature that you draw",
   version: "0.0.1",
 });

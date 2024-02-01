@@ -1,41 +1,47 @@
 {
   "title": "Card Maker",
-  "description": "Creates a D&D card for a drawn object",
+  "description": "Creates a board game card of a mystical creature that you draw",
   "version": "0.0.1",
   "edges": [
     {
-      "from": "analyze",
+      "from": "developCharacter",
       "to": "output-2",
       "out": "text",
       "in": "card"
     },
     {
-      "from": "describe",
-      "to": "template",
+      "from": "describePicture",
+      "to": "characterDeveloperTemplate",
       "out": "result",
-      "in": "backstory"
+      "in": "description"
     },
     {
-      "from": "describe",
+      "from": "describePicture",
       "to": "output-2",
       "out": "result",
-      "in": "story"
+      "in": "description"
     },
     {
-      "from": "template",
-      "to": "analyze",
-      "out": "text",
+      "from": "characterDeveloperTemplate",
+      "to": "developCharacter",
+      "out": "prompt",
       "in": "text"
     },
     {
-      "from": "append",
-      "to": "describe",
+      "from": "appendPictureToPrompt",
+      "to": "describePicture",
       "out": "parts",
       "in": "parts"
     },
     {
-      "from": "draw",
-      "to": "append",
+      "from": "makeRandomLetter",
+      "to": "characterDeveloperTemplate",
+      "out": "letter",
+      "in": "letter"
+    },
+    {
+      "from": "userDrawing",
+      "to": "appendPictureToPrompt",
       "out": "picture",
       "in": "part"
     }
@@ -49,51 +55,58 @@
           "type": "object",
           "properties": {
             "card": {
-              "type": "string",
-              "title": "card"
+              "title": "Game Card",
+              "type": "string"
             },
-            "story": {
-              "type": "string",
-              "title": "story"
+            "description": {
+              "title": "Picture description",
+              "type": "string"
             }
           },
           "required": [
             "card",
-            "story"
+            "description"
           ]
         }
       }
     },
     {
-      "id": "analyze",
+      "id": "developCharacter",
       "type": "invoke",
       "configuration": {
         "path": "https://raw.githubusercontent.com/breadboard-ai/breadboard/3e9735ee557bf18deb87bc46663a6e3af7647e7d/packages/breadboard-web/public/graphs/gemini-generator.json"
       }
     },
     {
-      "id": "describe",
+      "id": "describePicture",
       "type": "invoke",
       "configuration": {
         "path": "https://raw.githubusercontent.com/breadboard-ai/breadboard/f4adabe69a5a9af73a29fcc72e7042404157717b/packages/breadboard-web/public/graphs/gemini-pro-vision.json"
       }
     },
     {
-      "id": "template",
+      "id": "characterDeveloperTemplate",
       "type": "promptTemplate",
       "configuration": {
-        "template": "You are an expert Dungeons and Dragons character developer. Analyze the following backstory of the mystical creature and reply a brief overview of the creature. Also provide the list of Dungeons and Dragons basic abilities (Strength, Dexterity, Constitution, Intelligence, Wisdom, Charisma) and their scores:\n    \n    ## BACKSTORY:\n    {{backstory}}\n    \n    ## RESPONSE:\n    "
+        "template": "You are an expert board game character developer.\n\n    Read the description below and transform it into a mystical creature with unique abilities.\n\n    Come up with a fun name for the creature and a backstory for how it came to be. The name must start with the letter \"{{letter}}\".\n    \n    Write a story of the creature and how it came to be. Describe its unique abilities. Provide the list of attributes (Strength, Dexterity, Constitution, Intelligence, Wisdom, Charisma) and their scores as a bulleted list.\n\n    Reply in valid Markdown format with the following headings: \"NAME\", \"STORY\", \"ABILITIES\", and \"ATTRIBUTES\".\n    \n    ## DESCRIPTION:\n    {{description}}\n    \n    ## RESPONSE:\n    "
       }
     },
     {
-      "id": "append",
+      "id": "appendPictureToPrompt",
       "type": "invoke",
       "configuration": {
-        "path": "#append"
+        "path": "#appendPictureToPrompt"
       }
     },
     {
-      "id": "draw",
+      "id": "makeRandomLetter",
+      "type": "invoke",
+      "configuration": {
+        "path": "#makeRandomLetter"
+      }
+    },
+    {
+      "id": "userDrawing",
       "type": "input",
       "configuration": {
         "schema": {
@@ -101,7 +114,7 @@
           "properties": {
             "picture": {
               "type": "image/png",
-              "title": "Your picture",
+              "title": "Draw an object to transform into the mystical creature",
               "format": "drawable"
             }
           },
@@ -115,37 +128,72 @@
   ],
   "kits": [],
   "graphs": {
-    "append": {
+    "appendPictureToPrompt": {
       "edges": [
         {
-          "from": "append-input",
-          "to": "append-run",
+          "from": "appendPictureToPrompt-input",
+          "to": "appendPictureToPrompt-run",
           "out": "*"
         },
         {
-          "from": "append-run",
-          "to": "append-output",
+          "from": "appendPictureToPrompt-run",
+          "to": "appendPictureToPrompt-output",
           "out": "*"
         }
       ],
       "nodes": [
         {
-          "id": "append-input",
+          "id": "appendPictureToPrompt-input",
           "type": "input",
           "configuration": {}
         },
         {
-          "id": "append-run",
+          "id": "appendPictureToPrompt-run",
           "type": "runJavascript",
           "configuration": {
-            "prompt": "describe the mystical creature above in great detail and flourish, and come up with a fun name for it, as well as the backstory for how it came to be",
-            "code": "function append({ part, prompt }) {\n  const parts = Array.isArray(part) ? part : [part];\n  return { parts: [...parts, { text: prompt }] };\n}",
-            "name": "append",
+            "prompt": "Describe the pictured object or subject in the sketch above, provide a thorough list of details. No matter how simple the sketch is, try\n     to come up with as many details as possible. Improvise if necessary.",
+            "code": "function appendPictureToPrompt({ part, prompt }) {\n  const parts = Array.isArray(part) ? part : [part];\n  return { parts: [...parts, { text: prompt }] };\n}",
+            "name": "appendPictureToPrompt",
             "raw": true
           }
         },
         {
-          "id": "append-output",
+          "id": "appendPictureToPrompt-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    },
+    "makeRandomLetter": {
+      "edges": [
+        {
+          "from": "makeRandomLetter-input",
+          "to": "makeRandomLetter-run",
+          "out": "*"
+        },
+        {
+          "from": "makeRandomLetter-run",
+          "to": "makeRandomLetter-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "makeRandomLetter-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "makeRandomLetter-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function makeRandomLetter() {\n  const letter = String.fromCharCode(65 + Math.floor(Math.random() * 26));\n  return { letter };\n}",
+            "name": "makeRandomLetter",
+            "raw": true
+          }
+        },
+        {
+          "id": "makeRandomLetter-output",
           "type": "output",
           "configuration": {}
         }
