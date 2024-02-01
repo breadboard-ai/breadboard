@@ -5,5 +5,5 @@ title: Intro
 
 # Docs
 
-- [Concepts](./docs/concepts/)
-- [Happy Path](./docs/happy-path/)
+- [Concepts](./concepts/)
+- [Happy Path](./happy-path/)
