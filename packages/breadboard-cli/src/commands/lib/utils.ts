@@ -5,7 +5,7 @@
  */
 
 import { BoardRunner, GraphDescriptor } from "@google-labs/breadboard";
-import { watch as fsWatch } from "fs";
+import { Dirent, watch as fsWatch } from "fs";
 import { opendir, readFile, stat, writeFile } from "fs/promises";
 import { join } from "node:path";
 import { stdin as input } from "node:process";
@@ -145,6 +145,14 @@ export const loadBoards = async (
 
   return [];
 };
+
+const getFilename = (dirent: Dirent) => {
+  const { path: maybePath, name } = dirent;
+  // In Node v20.5.0 and earlier, the name is included in path
+  // In Node v20.6.0 and later, the name is not included in path
+  return maybePath.endsWith(name) ? maybePath : join(maybePath, name);
+};
+
 async function loadBoardsFromDirectory(
   fileUrl: URL,
   path: string,
@@ -154,14 +162,14 @@ async function loadBoardsFromDirectory(
   const boards: Array<BoardMetaData> = [];
   for await (const dirent of dir) {
     if (dirent.isFile() && dirent.name.endsWith(".json")) {
-      const data = await readFile(join(dirent.path, dirent.name), {
+      const data = await readFile(getFilename(dirent), {
         encoding: "utf-8",
       });
       const board = JSON.parse(data);
       boards.push({
         ...board,
-        title: board.title ?? join("/", path, dirent.name),
-        url: join("/", path, dirent.name),
+        title: board.title ?? join("/", getFilename(dirent)),
+        url: join("/", getFilename(dirent)),
         version: board.version ?? "0.0.1",
       });
     }
@@ -172,7 +180,7 @@ async function loadBoardsFromDirectory(
         dirent.name.endsWith(".ts") ||
         dirent.name.endsWith(".yaml"))
     ) {
-      const { path } = dirent;
+      const path = getFilename(dirent);
       const board = await loadBoard(path, options);
       boards.push({
         ...board,
