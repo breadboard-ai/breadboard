@@ -32,7 +32,7 @@
     "prepack": {
       "dependencies": [
         "build",
-        "validate"
+        "test"
       ]
     },
     "test": {
