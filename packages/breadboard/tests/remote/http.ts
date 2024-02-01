@@ -86,8 +86,8 @@ test("HTTPServerTransport does the basics", async (t) => {
   t.false(requestValue.done);
   const doneValue = await reader.read();
   t.true(doneValue.done);
-  writer.write(["input", { node: { type: "input" } }]);
-  writer.close();
+  await writer.write(["input", { node: { type: "input" } }]);
+  await writer.close();
 });
 
 test("RunServer can use HTTPServerTransport", async (t) => {
