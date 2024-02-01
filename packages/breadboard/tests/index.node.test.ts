@@ -7,7 +7,6 @@ test("some test", (t) => {
 });
 
 describe("can create a board", (t) => {
-  // test("can create a board", (t) => {
   const board: Board = new Board();
 
   test("board is defined", () => {
