@@ -8,11 +8,18 @@ import { Schema, base, board, code } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { templates } from "@google-labs/template-kit";
 
+// A URL of the Gemini Pro Vision board. We will invoke this board to
+// describe the picture.
 const visionBoard =
   "https://raw.githubusercontent.com/breadboard-ai/breadboard/f4adabe69a5a9af73a29fcc72e7042404157717b/packages/breadboard-web/public/graphs/gemini-pro-vision.json";
+
+// A URL of the Gemini Pro board. We will invoke this board to act as the
+// Character Developer.
 const textBoard =
   "https://raw.githubusercontent.com/breadboard-ai/breadboard/3e9735ee557bf18deb87bc46663a6e3af7647e7d/packages/breadboard-web/public/graphs/gemini-generator.json";
 
+// A JSON Schema that tells Breadboard that the input will be a drawable
+// surface.
 const drawableSchema = {
   type: "object",
   properties: {
