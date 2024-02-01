@@ -123,7 +123,8 @@
   "ava": {
     "timeout": "30s",
     "files": [
-      "tests/**/*.ts"
+      "tests/**/*.ts",
+      "!tests/**/*.node.test.ts"
     ],
     "workerThreads": false,
     "typescript": {
