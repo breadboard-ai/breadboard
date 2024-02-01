@@ -5,7 +5,11 @@
     "resolveJsonModule": true,
     "esModuleInterop": true
   },
-  "include": ["src/**/*", "tests/**/*"],
+  "include": [
+    "src/**/*",
+    "tests/**/*",
+    "__tests__/**/*"
+  ],
   "extends": "@google-labs/tsconfig/base.json",
   "typedocOptions": {
     "entryPoints": "./src/index.ts",
