@@ -1,3 +1,6 @@
+// export default Ajv;
+import { Schema, SchemaDraft, ValidationResult, Validator } from "@cfworker/json-schema";
+import breadboardSchema from "@google-labs/breadboard-schema/breadboard.schema.json" assert { type: "json" };
 import assert from "node:assert";
 import { describe, test } from "node:test";
 import { Board } from "../src/board.js";
@@ -65,5 +68,38 @@ test("board is created with correct title", (t) => {
     title,
   });
   assert.equal(board.title, title);
-})
+});
 
+const shortCircuit = false;
+const draft: SchemaDraft = "2020-12";
+const breadboardValidator = new Validator(breadboardSchema as Schema, draft, shortCircuit);
+
+describe("schema tests", async (t) => {
+  await test("board has something that looks like a schema", async (t) => {
+    const board = new Board();
+    const schema: string = board.$schema!;
+
+    await t.test("schema is defined", (t) => {
+      assert.ok(schema);
+    });
+
+    await t.test("schema is a valid uri", (t) => {
+      assert.match(schema, /^https?:\/\/.*/);
+    });
+    await t.test("schema can be resolved", (t) => {
+      assert.doesNotThrow(() => new URL(schema));
+    });
+    // assert that url can be fetched
+    await t.test("schema can be fetched", (t) => {
+      assert.doesNotThrow(() => fetch(schema));
+    });
+  });
+
+  await test("validator that the validator validates", async (t) => {
+    const board = new Board();
+    const boardJson = JSON.parse(JSON.stringify(board));
+    const result: ValidationResult = breadboardValidator.validate(boardJson);
+    assert.ok(result.valid);
+    assert.ok(result.errors.length === 0);
+  });
+});
