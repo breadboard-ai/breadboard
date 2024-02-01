@@ -21,7 +21,7 @@ main {
   flex: 1;
 }
 
-a {
+main a {
   color: var(--bb-font-color-accent);
   font-weight: bold;
 }
