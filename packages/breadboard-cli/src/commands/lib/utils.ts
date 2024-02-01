@@ -98,6 +98,11 @@ export const parseStdin = async (): Promise<string> => {
   return lines;
 };
 
+const showError = (e: unknown, path?: string) => {
+  const error = e as Error;
+  console.error(`Failed to load board at "${path}": ${error.message}`);
+};
+
 export const loadBoards = async (
   path: string,
   options: Options
@@ -106,19 +111,23 @@ export const loadBoards = async (
   const fileUrl = pathToFileURL(path);
 
   if (fileStat && fileStat.isFile() && path.endsWith(".json")) {
-    const data = await readFile(path, { encoding: "utf-8" });
-    const board = JSON.parse(data) as GraphDescriptor; // assume conversion would fail if it wasn't a graph descriptor.
+    try {
+      const data = await readFile(path, { encoding: "utf-8" });
+      const board = JSON.parse(data) as GraphDescriptor; // assume conversion would fail if it wasn't a graph descriptor.
 
-    return [
-      {
-        edges: board.edges ?? [],
-        nodes: board.nodes ?? [],
-        kits: board.kits ?? [],
-        title: board.title ?? path,
-        url: join("/", relative(process.cwd(), path)),
-        version: board.version ?? "0.0.1",
-      },
-    ];
+      return [
+        {
+          edges: board.edges ?? [],
+          nodes: board.nodes ?? [],
+          kits: board.kits ?? [],
+          title: board.title ?? path,
+          url: join("/", relative(process.cwd(), path)),
+          version: board.version ?? "0.0.1",
+        },
+      ];
+    } catch (e) {
+      showError(e, path);
+    }
   }
 
   if (
@@ -126,17 +135,21 @@ export const loadBoards = async (
     fileStat.isFile() &&
     (path.endsWith(".js") || path.endsWith(".ts") || path.endsWith(".yaml"))
   ) {
-    // Compile the JS, TS or YAML.
-    const board = await loadBoard(path, options);
+    try {
+      // Compile the JS, TS or YAML.
+      const board = await loadBoard(path, options);
 
-    return [
-      {
-        ...board,
-        title: board.title ?? path,
-        url: join("/", relative(process.cwd(), path)),
-        version: board.version ?? "0.0.1",
-      },
-    ];
+      return [
+        {
+          ...board,
+          title: board.title ?? path,
+          url: join("/", relative(process.cwd(), path)),
+          version: board.version ?? "0.0.1",
+        },
+      ];
+    } catch (e) {
+      showError(e, path);
+    }
   }
 
   if (fileStat && fileStat.isDirectory()) {
@@ -162,16 +175,21 @@ async function loadBoardsFromDirectory(
   const boards: Array<BoardMetaData> = [];
   for await (const dirent of dir) {
     if (dirent.isFile() && dirent.name.endsWith(".json")) {
-      const data = await readFile(getFilename(dirent), {
-        encoding: "utf-8",
-      });
-      const board = JSON.parse(data);
-      boards.push({
-        ...board,
-        title: board.title ?? join("/", getFilename(dirent)),
-        url: join("/", getFilename(dirent)),
-        version: board.version ?? "0.0.1",
-      });
+      const filename = getFilename(dirent);
+      try {
+        const data = await readFile(filename, {
+          encoding: "utf-8",
+        });
+        const board = JSON.parse(data);
+        boards.push({
+          ...board,
+          title: board.title ?? join("/", getFilename(dirent)),
+          url: join("/", getFilename(dirent)),
+          version: board.version ?? "0.0.1",
+        });
+      } catch (e) {
+        showError(e, filename);
+      }
     }
 
     if (
@@ -180,14 +198,18 @@ async function loadBoardsFromDirectory(
         dirent.name.endsWith(".ts") ||
         dirent.name.endsWith(".yaml"))
     ) {
-      const path = getFilename(dirent);
-      const board = await loadBoard(path, options);
-      boards.push({
-        ...board,
-        title: board.title ?? join("/", path),
-        url: join("/", path),
-        version: board.version ?? "0.0.1",
-      });
+      const filename = getFilename(dirent);
+      try {
+        const board = await loadBoard(filename, options);
+        boards.push({
+          ...board,
+          title: board.title ?? join("/", filename),
+          url: join("/", filename),
+          version: board.version ?? "0.0.1",
+        });
+      } catch (e) {
+        showError(e, filename);
+      }
     }
 
     if (dirent.isDirectory()) {
