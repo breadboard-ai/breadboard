@@ -129,7 +129,7 @@ test("lambda node from function with correctly assigned nodes", async (t) => {
         board: {
           kind: "board",
           board: {
-            "$schema": breadboardSchema.$id,
+            $schema: breadboardSchema.$id,
             edges: [
               { from: "test-3", out: "*", to: "output-2" },
               {
@@ -296,7 +296,8 @@ test("board contains a schema by default", async (t) => {
 });
 
 test("can set a custom schema", async (t) => {
-  const customSchema = "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/schema/breadboard.schema.json";
+  const customSchema =
+    "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/schema/breadboard.schema.json";
   const board = new Board({
     $schema: customSchema,
   });

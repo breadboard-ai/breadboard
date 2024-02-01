@@ -36,7 +36,12 @@ import { StackManager } from "./stack.js";
 import { timestamp } from "./timestamp.js";
 import fs from "fs";
 import path from "path";
-const breadboardSchema = JSON.parse(fs.readFileSync(path.join(process.cwd(), "../schema/breadboard.schema.json"), "utf8"));
+const breadboardSchema = JSON.parse(
+  fs.readFileSync(
+    path.join(process.cwd(), "../schema/breadboard.schema.json"),
+    "utf8"
+  )
+);
 
 /**
  * This class is the main entry point for running a board.
@@ -71,9 +76,11 @@ export class BoardRunner implements BreadboardRunner {
    * @param metadata - optional metadata for the board. Use this parameter
    * to provide title, description, version, and URL for the board.
    */
-  constructor( { url, title, description, version, $schema }: GraphMetadata = {
-    $schema: breadboardSchema.$id
-  }) {
+  constructor(
+    { url, title, description, version, $schema }: GraphMetadata = {
+      $schema: breadboardSchema.$id,
+    }
+  ) {
     Object.assign(this, {
       $schema: $schema ?? breadboardSchema.$id,
       url,
