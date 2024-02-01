@@ -34,14 +34,7 @@ import { RequestedInputsManager, bubbleUpInputsIfNeeded } from "./bubble.js";
 import { asyncGen } from "./utils/async-gen.js";
 import { StackManager } from "./stack.js";
 import { timestamp } from "./timestamp.js";
-import fs from "fs";
-import path from "path";
-const breadboardSchema = JSON.parse(
-  fs.readFileSync(
-    path.join(process.cwd(), "../schema/breadboard.schema.json"),
-    "utf8"
-  )
-);
+import breadboardSchema from "@google-labs/breadboard-schema/breadboard.schema.json" assert { type: "json" };
 
 /**
  * This class is the main entry point for running a board.
