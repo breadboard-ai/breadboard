@@ -237,7 +237,6 @@ def revert_back(obj):
     return obj
 
     
-import jsondiff
 from prettydiff import print_diff
 comparison_path = "/usr/local/google/home/kevxiao/breadboard/packages/breadboard-web/public/graphs/openai-gpt-35-turbo.json"
 with open(comparison_path) as f:
