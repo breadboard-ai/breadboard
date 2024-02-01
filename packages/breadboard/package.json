@@ -21,7 +21,9 @@
     "build:tsc": "wireit",
     "build:rollup": "wireit",
     "lint": "wireit",
-    "merm": "wireit"
+    "merm": "wireit",
+    "test:ava": "wireit",
+    "test:node": "node --test --loader ts-node/esm tests/**/*.node.test.ts"
   },
   "wireit": {
     "build": {
@@ -61,6 +63,12 @@
       ]
     },
     "test": {
+      "dependencies": [
+        "test:ava",
+        "test:node"
+      ]
+    },
+    "test:ava": {
       "command": "ava",
       "env": {
         "FORCE_COLOR": "1"
