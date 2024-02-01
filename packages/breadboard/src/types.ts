@@ -168,7 +168,7 @@ export type GraphMetadata = {
   /**
    * The schema of the graph.
    */
-  "$schema"?: string
+  $schema?: string;
 
   /**
    * The URL pointing to the location of the graph.
