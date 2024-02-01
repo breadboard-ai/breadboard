@@ -5,12 +5,10 @@
  */
 
 import test from "ava";
-import * as fs from "fs";
-import path from "path";
 import { Board } from "../src/board.js";
 import type { BreadboardCapability, GraphDescriptor } from "../src/types.js";
 import { TestKit } from "./helpers/_test-kit.js";
-const breadboardSchema = JSON.parse(fs.readFileSync(path.join(process.cwd(), "../schema/breadboard.schema.json"), "utf8"));
+import breadboardSchema from "@google-labs/breadboard-schema/breadboard.schema.json" assert { type: "json" };
 
 test("correctly passes inputs and outputs to included boards", async (t) => {
   const nestedBoard = new Board();
