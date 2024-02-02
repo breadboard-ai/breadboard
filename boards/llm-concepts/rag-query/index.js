@@ -6,7 +6,7 @@
 
 import { base, board, code } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
-import { template } from "@google-labs/template-kit";
+import { templates } from "@google-labs/template-kit";
 
 const metaData = {
   title: "Convert String to JSON",
@@ -76,7 +76,7 @@ export default await board(() => {
     embedding: generateQueryEmbedding.embedding,
   });
 
-  const prompt = template.promptTemplate({
+  const prompt = templates.promptTemplate({
     template: `Answer the question as truthfully as possible using the provided context, and if don't have the answer, say "I don't know" and suggest looking for this information elsewhere.
 
 Context: {{candidate}}

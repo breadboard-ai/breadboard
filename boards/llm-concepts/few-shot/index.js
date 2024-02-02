@@ -11,7 +11,7 @@
 import { base, board, code } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { palm } from "@google-labs/palm-kit";
-import { template } from "@google-labs/template-kit";
+import { templates } from "@google-labs/template-kit";
 
 const metaData = {
   title: "Generate a prompt response using a few-shot template",
@@ -51,7 +51,7 @@ export default await board(() => {
     })()
   );
 
-  const prompt = template.promptTemplate({
+  const prompt = templates.promptTemplate({
     template: "{{few}}\n{{promptText}}",
   });
 
