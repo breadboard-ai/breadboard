@@ -1,10 +1,19 @@
 {
+  "plugins": ["eslint-plugin-expect-type"],
+  "extends": ["plugin:expect-type/recommended"],
+  "parserOptions": {
+    "project": ["./tsconfig.json"]
+  },
+  "ignorePatterns": ["dist"],
   "rules": {
-    "@typescript-eslint/ban-types": ["warn", {
-      "types": {
-        "Function": false
-      },
-      "extendDefaults": true
-    }]
+    "@typescript-eslint/ban-types": [
+      "warn",
+      {
+        "types": {
+          "Function": false
+        },
+        "extendDefaults": true
+      }
+    ]
   }
 }
