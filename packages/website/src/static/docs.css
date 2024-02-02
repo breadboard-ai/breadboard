@@ -104,11 +104,24 @@ img {
 
 pre[class*="language-"] {
   position: relative;
-  padding: 1rem;
-  overflow: auto;
+  padding: 0;
+  overflow: hidden;
   border-radius: 8px;
   margin-bottom: 32px;
   font-size: 0.875rem;
+  padding-right: 46px;
+}
+
+code[class*="language-"] {
+  width: 100%;
+  overflow-x: auto;
+  display: block;
+  padding: 1rem;
+  mask-image: linear-gradient(
+    to left,
+    rgba(0, 0, 0, 0) 0,
+    rgba(0, 0, 0, 1) 20px
+  ) !important;
 }
 
 .markdown-alert pre[class*="language-"] {
