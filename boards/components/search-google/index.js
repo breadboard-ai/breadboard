@@ -6,6 +6,7 @@
 
 import { base, board } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
+import { template } from "@google-labs/template-kit";
 
 const metaData = {
   title: "Search Google",
@@ -29,7 +30,7 @@ const queryScheme = {
 export default await board(() => {
   const query = base.input({ $id: "input", schema: queryScheme });
 
-  return core
+  return template
     .urlTemplate({
       template:
         "https://www.googleapis.com/customsearch/v1?key={PALM_KEY}&cx={GOOGLE_CSE_ID}&q={query}",

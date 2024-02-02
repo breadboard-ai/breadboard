@@ -1,10 +1,8 @@
 import { base, board } from "@google-labs/breadboard";
-
-import { starter } from "@google-labs/llm-starter";
 import { core } from "@google-labs/core-kit";
 
 /*
-To run this: npx breadboard run .generativelanguage.models.embedText.js --kit @google-labs/core-kit --kit @google-labs/llm-starter -i "{ \"api_inputs\": {
+To run this: npx breadboard run .generativelanguage.models.embedText.js --kit @google-labs/core-kit -i "{ \"api_inputs\": {
       \"key\": \"${GEMINI_API_KEY}\",
       \"modelsId\": \"embedding-001\",
       \"application/json\": {
@@ -32,6 +30,6 @@ export default await board(() => {
     path: "./spec/generativelanguage.models.embedText.json",
     input: input.api_inputs,
     ...input,
-    ...starter.secrets({ keys: ["GEMINI_API_KEY"] }),
+    ...core.secrets({ keys: ["GEMINI_API_KEY"] }),
   });
 }).serialize(metaData);
