@@ -5,6 +5,7 @@ import { pathToFileURL } from "url";
 
 export type Options = {
   output: string;
+  root?: string;
   watch?: boolean;
   save?: boolean;
 };

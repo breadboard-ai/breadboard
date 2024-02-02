@@ -5,7 +5,7 @@
  */
 
 import http from "http";
-import { dirname, extname, join, relative } from "path";
+import path, { dirname, extname, join, relative } from "path";
 import handler from "serve-handler";
 import { fileURLToPath, pathToFileURL } from "url";
 import { BoardMetaData, loadBoards, watch } from "./lib/utils.js";
@@ -22,14 +22,42 @@ export const debug = async (file: string, options: DebugOptions) => {
   let boards: Array<BoardMetaData> = [];
 
   if (file == undefined) {
+    // If the user doesn't provide a file, we should use the current working directory (which will load all files)
     file = process.cwd();
   }
-
-  const isDirectory = (await stat(file)).isDirectory();
-
+  const fileStat = await stat(file);
+  const isDirectory = fileStat.isDirectory();
+  const outputDirectoryStat =
+    "output" in options ? await stat(options.output) : undefined;
   const fileUrl = pathToFileURL(file);
 
+  options.root = path.parse(path.resolve(file)).dir;
+
+  if (options.save && outputDirectoryStat?.isDirectory() == false) {
+    console.error(
+      `The defined output directory ${options.output} is not a directory.`
+    );
+    return process.exit(1);
+  }
+
+  if (options.save == false && outputDirectoryStat?.isDirectory()) {
+    console.warn(
+      `Files will not be output to defined output directory ${options.output} because the -n (no-save) flag was used.`
+    );
+  }
+
   if ("watch" in options) {
+    const relative = path.relative(file, options.output);
+    const isOutputDirectoryContainedWithin =
+      relative === "" ||
+      (relative && !relative.startsWith("..") && !path.isAbsolute(relative));
+    if (options.save && isOutputDirectoryContainedWithin) {
+      console.error(
+        `The output directory ${options.output} must be outside of the file or directory being watched. Specify a different output directory with the -o flag.`
+      );
+      return process.exit(1);
+    }
+
     watch(file, {
       onChange: async (filename: string) => {
         // Refresh the list of boards that are passed in at the start of the server.
