@@ -9,7 +9,7 @@ type LoaderTuple = typeof supportedFileTypes;
 type LoaderType = LoaderTuple[number];
 
 export class Loaders {
-  #loaderInstance: any;
+  #loaderInstance: { load: Loader["load"] };
 
   static get supportedFileTypes(): LoaderTuple {
     return supportedFileTypes;
