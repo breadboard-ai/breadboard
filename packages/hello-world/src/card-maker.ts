@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Schema, base, board, code } from "@google-labs/breadboard";
+import { board, code } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { templates } from "@google-labs/template-kit";
 
@@ -17,21 +17,6 @@ const visionBoard =
 // Character Developer.
 const textBoard =
   "https://raw.githubusercontent.com/breadboard-ai/breadboard/3e9735ee557bf18deb87bc46663a6e3af7647e7d/packages/breadboard-web/public/graphs/gemini-generator.json";
-
-// A JSON Schema that tells Breadboard that the input will be a drawable
-// surface.
-const drawableSchema = {
-  type: "object",
-  properties: {
-    picture: {
-      type: "image/png",
-      title: "Draw an object to transform into the mystical creature",
-      format: "drawable",
-    },
-  },
-  required: ["content"],
-  additionalProperties: false,
-} satisfies Schema;
 
 // A node that appends the prompt to the parts array that already contains
 // the picture.
@@ -49,12 +34,13 @@ const randomLetterMaker = code(() => {
 });
 
 // The board we're building.
-export default await board(() => {
-  // TODO: Teach new syntax to take in the full Schema (maybe a "schema" method?)
+export default await board(({ drawing }) => {
   // [Step 1]
-  // Add an input node to allow the user to draw a picture.
-  // Use JSON Schema to tell Breadboard that we want a drawable surface.
-  const draw = base.input({ $id: "userDrawing", schema: drawableSchema });
+  // Tell the input that it's drawable.
+  drawing
+    .isImage()
+    .title("Draw an object to transform into the mystical creature")
+    .format("drawable"); // can also be "webcam".
 
   // [Added last]
   // Gemini tends to overrotate on Wumpuses for some reason,
@@ -66,7 +52,7 @@ export default await board(() => {
   // Append the picture to the prompt.
   const { parts } = appender({
     $id: "appendPictureToPrompt",
-    part: draw.picture,
+    part: drawing,
     prompt: `Describe the pictured object or subject in the sketch above, provide a thorough list of details. No matter how simple the sketch is, try
      to come up with as many details as possible. Improvise if necessary.`,
   });
