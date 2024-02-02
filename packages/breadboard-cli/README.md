@@ -13,9 +13,11 @@ The CLI tools are designed to help you create and debug your breadboard files di
 `npx breadboard debug` - Brings up the web debug server
 `npx breadboard debug ./tests/echo.json` - Brings up the local board hosted in the UI
 
-`npx breadboard debug ./tests/` - Brings up the local board hosted in the UI and show all the boards in the folder.
+`npx breadboard debug ./tests/` - Brings up the local board hosted in the UI and show all the boards in the folder (and sub-folders).
 
-`npx breadboard debug ./tests/ --watch` - Brings up the local board hosted in the UI and show all the boards in the folder. If new boards added to the folder then they will be added to the UI. You still need to `F5` or `CMD+R` to refresh the UI
+`npx breadboard debug ./tests/ --watch` - Brings up the local board hosted in the UI and show all the boards in the folder. If new boards added to the folder then they will be added to the UI and the UI will be automatically refreshed.
+
+Note: By default this command will convert any `ts` or `js` board files to `json` and save them along side the original file (this differs from other commands which will use the `-o` flag). If you do not want the boards to be saved, use the `--no-save` flag.
 
 ### Import
 
