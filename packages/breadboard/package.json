@@ -124,7 +124,8 @@
   "ava": {
     "timeout": "30s",
     "files": [
-      "tests/**/*.ts"
+      "tests/**/*.ts",
+      "!tests/type-checks.ts"
     ],
     "workerThreads": false,
     "typescript": {
