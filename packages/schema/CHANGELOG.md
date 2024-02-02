@@ -1,5 +1,12 @@
 # @google-labs/breadboard-schema
 
+## 1.2.0
+
+### Minor Changes
+
+- e7be365: add json export to schema package
+- f6a7f43: Add schemas to serialised boards
+
 ## 1.1.0
 
 ### Minor Changes

@@ -1,5 +1,15 @@
 # @google-labs/pinecone-kit
 
+## 0.1.1
+
+### Patch Changes
+
+- 9bcd607: Implement `isImage` type annotation.
+- Updated dependencies [9bcd607]
+- Updated dependencies [f6a7f43]
+  - @google-labs/breadboard@0.10.0
+  - @google-labs/core-kit@0.2.1
+
 ## 0.1.0
 
 ### Minor Changes

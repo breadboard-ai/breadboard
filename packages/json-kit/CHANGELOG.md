@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.0.5
+
+### Patch Changes
+
+- Updated dependencies [9bcd607]
+- Updated dependencies [f6a7f43]
+  - @google-labs/breadboard@0.10.0
+
 ## 0.0.4
 
 ### Patch Changes
