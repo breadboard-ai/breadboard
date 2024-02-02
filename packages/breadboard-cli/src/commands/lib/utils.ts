@@ -72,7 +72,7 @@ export const loadBoard = async (
   file: string,
   options: Options
 ): Promise<BoardRunner> => {
-  const loaderType = extname(file).slice(1) as "js" | "ts" | "yaml" | "json";
+  const loaderType = extname(file).slice(1) as "js" | "ts" | "json";
   const save = "save" in options ? options["save"] : true;
 
   const loader = new Loaders(loaderType);
@@ -133,10 +133,10 @@ export const loadBoards = async (
   if (
     fileStat &&
     fileStat.isFile() &&
-    (path.endsWith(".js") || path.endsWith(".ts") || path.endsWith(".yaml"))
+    (path.endsWith(".js") || path.endsWith(".ts"))
   ) {
     try {
-      // Compile the JS, TS or YAML.
+      // Compile the JS or TS.
       const board = await loadBoard(path, options);
 
       return [
@@ -194,9 +194,7 @@ async function loadBoardsFromDirectory(
 
     if (
       dirent.isFile() &&
-      (dirent.name.endsWith(".js") ||
-        dirent.name.endsWith(".ts") ||
-        dirent.name.endsWith(".yaml"))
+      (dirent.name.endsWith(".js") || dirent.name.endsWith(".ts"))
     ) {
       const filename = getFilename(dirent);
       try {

@@ -15,16 +15,13 @@ export const makeGraph = async (file: string, options: MakeOptions) => {
   if (
     file != undefined &&
     path.extname(file) != ".js" &&
-    path.extname(file) != ".ts" &&
-    path.extname(file) != ".yaml"
+    path.extname(file) != ".ts"
   ) {
-    throw new Error(
-      `File ${file} must be JavaScript, TypeScript or YAML file.`
-    );
+    throw new Error(`File ${file} must be a JavaScript or TypeScript file.`);
   }
 
   if (file != undefined) {
-    const loaderType = extname(file).slice(1) as "js" | "ts" | "yaml" | "json";
+    const loaderType = extname(file).slice(1) as "js" | "ts" | "json";
     const loader = new Loaders(loaderType);
 
     let board = await loader.load(filePath, options);
