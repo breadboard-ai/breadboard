@@ -77,7 +77,8 @@
       },
       "files": [
         "src/**/*.ts",
-        "tests/**/*.ts"
+        "tests/**/*.ts",
+        "../../.eslintrc.json"
       ],
       "output": []
     }

@@ -95,7 +95,8 @@
       "files": [
         "src/**/*.ts",
         "wild/**/*.ts",
-        "tests/**/*.ts"
+        "tests/**/*.ts",
+        "../../.eslintrc.json"
       ],
       "output": []
     },
