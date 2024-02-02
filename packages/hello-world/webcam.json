@@ -1,0 +1,131 @@
+{
+  "title": "Webcam",
+  "description": "An example of using `gemini-pro-vision` board",
+  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.1.0/packages/schema/breadboard.schema.json",
+  "version": "0.0.2",
+  "edges": [
+    {
+      "from": "describePicture",
+      "to": "output-2",
+      "out": "result",
+      "in": "text"
+    },
+    {
+      "from": "fn-3",
+      "to": "describePicture",
+      "out": "parts",
+      "in": "parts"
+    },
+    {
+      "from": "input-1",
+      "to": "fn-3",
+      "out": "picture",
+      "in": "picture"
+    },
+    {
+      "from": "input-1",
+      "to": "fn-3",
+      "out": "prompt",
+      "in": "prompt"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "text"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
+    },
+    {
+      "id": "describePicture",
+      "type": "invoke",
+      "configuration": {
+        "path": "https://raw.githubusercontent.com/breadboard-ai/breadboard/f4adabe69a5a9af73a29fcc72e7042404157717b/packages/breadboard-web/public/graphs/gemini-pro-vision.json"
+      }
+    },
+    {
+      "id": "fn-3",
+      "type": "invoke",
+      "configuration": {
+        "path": "#fn-3"
+      }
+    },
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "picture": {
+              "type": "image/png",
+              "title": "Image",
+              "format": "webcam"
+            },
+            "prompt": {
+              "type": "string",
+              "title": "Prompt",
+              "examples": [
+                "Describe what you see in the picture"
+              ]
+            }
+          },
+          "required": [
+            "picture",
+            "prompt"
+          ]
+        }
+      }
+    }
+  ],
+  "kits": [],
+  "graphs": {
+    "fn-3": {
+      "edges": [
+        {
+          "from": "fn-3-input",
+          "to": "fn-3-run",
+          "out": "*"
+        },
+        {
+          "from": "fn-3-run",
+          "to": "fn-3-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "fn-3-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "fn-3-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function fn_3({ picture, prompt }) {\n  return { parts: [picture, { text: prompt }] };\n}",
+            "name": "fn_3",
+            "raw": true
+          }
+        },
+        {
+          "id": "fn-3-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    }
+  }
+}
