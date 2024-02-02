@@ -10,21 +10,11 @@ If you're eager to start making boards with Breadboard as quickly as possible, h
 
 ## Getting started
 
-> [!WARNING]
->
-> Neither onboarding via Replit nor installing locally are ready yet. While they are baking, follow these steps for an in-tree setup:
->
-> - Check out and set up the monorepo following steps in [DEVELOPING.md](https://github.com/breadboard-ai/breadboard/blob/main/DEVELOPING.md#getting-started)
->
-> - Navigate to `packages/breadboard-web` from the root of the repo
->
-> - Pick back up at "Set up the environment".
-
 There are two ways to get started with Breadboard: fork a Replit project or install Breadboard locally.
 
 ### Fork a Replit project
 
-Go to Breadboard Replit Project (TOOD: URL) and click "Fork". This will create roughly the setup that you'll have if you install Breadboard locally.
+Go to [Breadboard Starer Project](https://replit.com/@dglazkov/Breadboard-Starter-Project) and click "Fork". This will create roughly the setup that you'll have if you install Breadboard locally.
 
 ### Install locally
 
