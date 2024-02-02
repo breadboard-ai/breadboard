@@ -1,7 +1,5 @@
 from breadboard_python.main import Board, Field, SchemaObject, List, AttrDict
 import json
-from typing import Optional, Union
-
 from breadboard_python.import_node import require
 Core = require("@google-labs/core-kit")
 Templates = require("@google-labs/template-kit")
@@ -15,9 +13,9 @@ class OutputSchema(SchemaObject):
   result: str = Field(title="Answer", description="The answer to the math problem")
 
 class Math(Board[InputSchema, OutputSchema]):
-  title = "The Calculator Recipe"
-  description = "A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems."
-  version = "0.0.2"
+  title = "The Python Calculator Recipe"
+  description = "A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems. Defined in Python."
+  version = "0.0.3"
 
   def describe(self, input):
     self.template = Templates.promptTemplate(
@@ -33,6 +31,7 @@ Math Problem: {{question}}
 
 Solution:""",
     )
+
     self.generator = Core.invoke(
       id="generator",
       path=input.generator,
@@ -43,8 +42,12 @@ Solution:""",
       name="compute",
       code=self.generator.text,
     )
-    self.output = AttrDict(**{"*": self.compute})
+    self.output = AttrDict()
+    self.output.result = self.compute.result
     return self.output
 
-a = Math()
-print(json.dumps(a, indent=2))
+if __name__ == "__main__":
+  import sys
+  a = Math()
+  with open(sys.argv[1], "w") as f:
+    json.dump(a, f, indent=2)
