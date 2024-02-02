@@ -74,11 +74,18 @@ img {
   border-radius: 8px;
 }
 
-pre {
-  padding: 16px;
+pre[class*="language-"] {
+  position: relative;
+  padding: 1rem;
   overflow: auto;
-  background: #f5f5f5;
   border-radius: 8px;
+  margin-bottom: 32px;
+  font-size: 0.875rem;
+}
+
+.markdown-alert pre[class*="language-"] {
+  padding: 8px;
+  margin-top: 16px;
 }
 
 .toc {
@@ -89,7 +96,7 @@ pre {
   margin: 0 0 0 760px;
   width: 300px;
   --distance: 0;
-  animation: fadeAndSlideInFromLeft 1s cubic-bezier(0, 0, 0.3, 1) 1 forwards;
+  animation: fadeAndSlideInFromLeft 0.3s cubic-bezier(0, 0, 0.3, 1) 1 forwards;
 }
 
 .toc h1 {
@@ -139,10 +146,20 @@ pre {
 
 .markdown-alert {
   border-radius: 6px;
-  padding: 50px;
+  padding: 50px 50px 30px 50px;
   margin-bottom: 20px;
   background: #fafafa;
   border: 1px solid #eaeaea;
+}
+
+.markdown-alert-note {
+  background: #f6fdff;
+  border: 1px solid #bfe4ff;
+}
+
+.markdown-alert-tip {
+  background: #f3faf2;
+  border: 1px solid #c4ecbe;
 }
 
 .markdown-alert-warning {
@@ -164,6 +181,16 @@ pre {
   height: 32px;
   width: 32px;
   margin-right: 8px;
+}
+
+.markdown-alert-note .markdown-alert-title::before {
+  background: no-repeat center/cover
+    url(/breadboard/static/third_party/emoji/note.png);
+}
+
+.markdown-alert-tip .markdown-alert-title::before {
+  background: no-repeat center/cover
+    url(/breadboard/static/third_party/emoji/tip.png);
 }
 
 .markdown-alert-warning .markdown-alert-title::before {
