@@ -607,5 +607,3 @@ export class Preview extends LitElement {
       <footer>Made with Breadboard</footer>`;
   }
 }
-
-console.log("Hello 2!");
