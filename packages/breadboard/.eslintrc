@@ -4,7 +4,6 @@
   "parserOptions": {
     "project": ["./tsconfig.json"]
   },
-  "ignorePatterns": ["dist"],
   "rules": {
     "@typescript-eslint/ban-types": [
       "warn",
