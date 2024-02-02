@@ -142,7 +142,7 @@ evtSource.addEventListener("update", () => { window.location.reload(); });</scri
 
     return handler(request, response, {
       public: distDir,
-      //cleanUrls: ["/"],
+      cleanUrls: ["/"],
     });
   });
 
