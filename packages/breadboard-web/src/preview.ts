@@ -21,6 +21,8 @@ import {
 import { until } from "lit/directives/until.js";
 import { classMap } from "lit/directives/class-map.js";
 import { Ref, createRef, ref } from "lit-html/directives/ref.js";
+import { unsafeHTML } from "lit/directives/unsafe-html.js";
+import MarkdownIt from "markdown-it";
 
 type ChunkOutputs = OutputValues & { chunk: string };
 
@@ -53,6 +55,7 @@ export class Preview extends LitElement {
   #outputs: HTMLTemplateResult[] = [];
   #nodesVisited: Array<{ data: NodeStartResponse }> = [];
   #inputRef: Ref<BreadboardUI.Elements.Input> = createRef();
+  #markdownIt = new MarkdownIt();
 
   static styles = css`
     :host {
@@ -420,6 +423,8 @@ export class Preview extends LitElement {
                   .json=${value}
                   .autoExpand=${true}
                 ></bb-json-tree>`
+              : typeof value === "string"
+              ? html`${unsafeHTML(this.#markdownIt.render(value))}`
               : html`${value}`;
         }
 
@@ -602,3 +607,5 @@ export class Preview extends LitElement {
       <footer>Made with Breadboard</footer>`;
   }
 }
+
+console.log("Hello 2!");
