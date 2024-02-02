@@ -26,7 +26,7 @@ type Package = {
   peerDependencies?: Record<string, string>;
   publishConfig?: Record<string, string>;
   workspaces?: string[] | { packages: string[] };
-} & { [key: string]: any };
+} & { [key: string]: unknown };
 
 type CreatePackageOptions = {
   name?: string;
@@ -47,7 +47,10 @@ type tmp = {
   params: FileParams;
 };
 
-type Asset = { path: string; contents: string | ((...args: any[]) => string) };
+type Asset = {
+  path: string;
+  contents: string | ((...args: unknown[]) => string);
+};
 
 const startCwd = process.cwd();
 

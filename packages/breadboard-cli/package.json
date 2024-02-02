@@ -89,7 +89,8 @@
       },
       "files": [
         "src/**/*.ts",
-        "tests/**/*.ts"
+        "tests/**/*.ts",
+        "../../.eslintrc.json"
       ],
       "output": []
     }
@@ -129,8 +130,8 @@
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^18.16.3",
     "@types/serve-handler": "^6.1.4",
-    "@typescript-eslint/eslint-plugin": "^5.56.0",
-    "@typescript-eslint/parser": "^5.56.0",
+    "@typescript-eslint/eslint-plugin": "^6.20.0",
+    "@typescript-eslint/parser": "^6.20.0",
     "ava": "^5.2.0",
     "typescript": "^5.0.4"
   },

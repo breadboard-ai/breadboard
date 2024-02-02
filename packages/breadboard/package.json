@@ -79,7 +79,8 @@
       "files": [
         "src/**/*.ts",
         "tests/**/*.ts",
-        ".eslintrc"
+        ".eslintrc",
+        "../../.eslintrc.json"
       ],
       "output": []
     },
@@ -123,7 +124,8 @@
   "ava": {
     "timeout": "30s",
     "files": [
-      "tests/**/*.ts"
+      "tests/**/*.ts",
+      "!tests/type-checks.ts"
     ],
     "workerThreads": false,
     "typescript": {
@@ -142,13 +144,15 @@
   "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/breadboard#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
+    "@definitelytyped/dtslint": "^0.2.6",
     "@google-labs/tsconfig": "^0.0.1",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
     "@types/node": "^18.17.4",
-    "@typescript-eslint/eslint-plugin": "^5.56.0",
-    "@typescript-eslint/parser": "^5.56.0",
+    "@typescript-eslint/eslint-plugin": "^6.20.0",
+    "@typescript-eslint/parser": "^6.20.0",
     "ava": "^5.2.0",
+    "eslint-plugin-expect-type": "^0.3.0",
     "jsonschema": "^1.4.1",
     "rollup": "^4.1.4",
     "typedoc": "^0.25.1",

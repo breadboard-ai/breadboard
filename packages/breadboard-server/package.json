@@ -63,7 +63,8 @@
       },
       "files": [
         "src/**/*.ts",
-        "tests/**/*.ts"
+        "tests/**/*.ts",
+        "../../.eslintrc.json"
       ],
       "output": []
     },
@@ -115,8 +116,8 @@
     "@google-labs/tsconfig": "^0.0.1",
     "@types/express": "^4.17.17",
     "@types/node": "^18.16.3",
-    "@typescript-eslint/eslint-plugin": "^5.56.0",
-    "@typescript-eslint/parser": "^5.56.0",
+    "@typescript-eslint/eslint-plugin": "^6.20.0",
+    "@typescript-eslint/parser": "^6.20.0",
     "jsonschema": "^1.4.1",
     "ava": "^5.2.0",
     "typedoc": "^0.25.1",
