@@ -1,5 +1,23 @@
 # @google-labs/breadboard-cli
 
+## 0.4.0
+
+### Minor Changes
+
+- 9b55885: Fixing hosting directories in `breadboard debug`
+
+### Patch Changes
+
+- 7f9485b: Reenable cleanUrls for root
+- d24932d: Catch compile/load errors to keep `breadboard debug` running.
+- Updated dependencies [1b3f266]
+- Updated dependencies [9bcd607]
+- Updated dependencies [f6a7f43]
+  - @google-labs/breadboard-web@1.0.4
+  - @google-labs/breadboard@0.10.0
+  - @google-labs/core-kit@0.2.1
+  - @google-labs/template-kit@0.1.3
+
 ## 0.3.2
 
 ### Patch Changes
