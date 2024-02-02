@@ -5,7 +5,7 @@
  */
 
 import { base, board } from "@google-labs/breadboard";
-import { starter } from "@google-labs/llm-starter";
+import { core } from "@google-labs/core-kit";
 
 const metaData = {
   title: "Search Google",
@@ -29,14 +29,14 @@ const queryScheme = {
 export default await board(() => {
   const query = base.input({ $id: "input", schema: queryScheme });
 
-  return starter
+  return core
     .urlTemplate({
       template:
         "https://www.googleapis.com/customsearch/v1?key={PALM_KEY}&cx={GOOGLE_CSE_ID}&q={query}",
       query,
-      PALM_KEY: starter.secrets({ keys: ["PALM_KEY"] }).PALM_KEY,
-      GOOGLE_CSE_ID: starter.secrets({ keys: ["GOOGLE_CSE_ID"] }).GOOGLE_CSE_ID,
+      PALM_KEY: core.secrets({ keys: ["PALM_KEY"] }).PALM_KEY,
+      GOOGLE_CSE_ID: core.secrets({ keys: ["GOOGLE_CSE_ID"] }).GOOGLE_CSE_ID,
     })
-    .url.to(starter.fetch())
+    .url.to(core.fetch())
     .response.to(base.output({ $id: "search_results" }));
 }).serialize(metaData);
