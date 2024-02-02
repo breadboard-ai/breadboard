@@ -1,11 +1,10 @@
 ---
 layout: docs.njk
-title: Happy Path
+title: Breadboard Developer Happy Path
 tags:
   - general
+  - wip
 ---
-
-# Breadboard Developer Happy Path
 
 If you're eager to start making boards with Breadboard as quickly as possible, here's a yellow brick road that will take you there. It's not quite a tutorial, but more like a step-by-step onboarding guide with some of the best practices baked in.
 

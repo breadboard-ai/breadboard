@@ -15,20 +15,27 @@ title: Breadboard | Docs
   <body>
   {% include "navigation.njk" %}
   <main>
+  {%- for tag in tags -%}
+    {%- if tag == 'wip' -%}
+      <div class="wip">
+        <strong>Please note:</strong>&nbsp;this document is a work in progress.
+      </div>
+    {%- endif -%}
+  {%- endfor -%}
 
   <aside class="contents">
     <details open>
       <summary>General Documentation</summary>
       <ul>
-      {%- for post in collections.general -%}
+      {%- for item in collections.general -%}
         <li>
-          {% if page.url != post.url %}
-            <a href="/breadboard{{ post.url }}">
+          {% if page.url != item.url %}
+            <a href="/breadboard{{ item.url }}">
           {% endif %}
 
-            {{ post.data.title }}
+            {{ item.data.title }}
 
-          {% if page.url != post.url %}
+          {% if page.url != item.url %}
             </a>
           {% endif %}
           </li>
@@ -40,6 +47,8 @@ title: Breadboard | Docs
   {% if not hide_toc %}
   {{content | toc | safe }}
   {% endif %}
+
+  <h1>{{ title }}</h1>
 
   {{content | safe}}
   </main>

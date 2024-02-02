@@ -3,9 +3,8 @@ layout: docs.njk
 title: Concepts
 tags:
   - general
+  - wip
 ---
-
-# Concepts
 
 ## Board
 
