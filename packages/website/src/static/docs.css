@@ -31,6 +31,25 @@ main a {
   font-weight: bold;
 }
 
+.wip {
+  display: flex;
+  align-items: center;
+  background: #4d4c51;
+  padding: 20px;
+  margin: 16px 0 24px 0;
+  border-radius: 8px;
+  color: #fff;
+}
+
+.wip::before {
+  content: "";
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+  background: no-repeat center/cover
+    url(/breadboard/static/third_party/icons/warning.svg);
+}
+
 h1,
 h2,
 h3,
