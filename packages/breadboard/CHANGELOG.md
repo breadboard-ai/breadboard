@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.10.0
+
+### Minor Changes
+
+- 9bcd607: Implement `isImage` type annotation.
+
+### Patch Changes
+
+- f6a7f43: Add schemas to serialised boards
+- Updated dependencies [e7be365]
+- Updated dependencies [f6a7f43]
+  - @google-labs/breadboard-schema@1.2.0
+
 ## 0.9.1
 
 ### Patch Changes

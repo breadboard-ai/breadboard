@@ -1,5 +1,23 @@
 # @google-labs/breadboard-web
 
+## 1.0.4
+
+### Patch Changes
+
+- 1b3f266: Display structured errors in preview/debug views.
+- Updated dependencies [1b3f266]
+- Updated dependencies [9bcd607]
+- Updated dependencies [5b1913f]
+- Updated dependencies [f6a7f43]
+  - @google-labs/breadboard-ui@0.0.6
+  - @google-labs/breadboard@0.10.0
+  - @google-labs/pinecone-kit@0.1.1
+  - @google-labs/core-kit@0.2.1
+  - @google-labs/json-kit@0.0.5
+  - @google-labs/node-nursery-web@1.0.2
+  - @google-labs/palm-kit@0.0.4
+  - @google-labs/template-kit@0.1.3
+
 ## 1.0.3
 
 ### Patch Changes
