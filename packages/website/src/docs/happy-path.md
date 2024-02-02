@@ -55,9 +55,16 @@ This will start the Breadboard debugger and give you a link to open it in the br
 
 (TODO: screenshot of the debugger tile view)
 
-(TOD: overview of the debugger)
-
 ![Debugger overview](/breadboard/static/images/debugger-overview.jpg)
+
+### Debugger Overview
+
+The debugger has four main panels:
+
+1. **A visualizer.** This shows you a graphical representation of your board. This allows you to see which nodes are connected to each other, and what the [ports](/docs/concepts/#ports) (inputs and outputs) of each [node](/docs/concepts/#nodes) are called.
+1. **Event timeline.** This gives you a quick overview of what is being called and on which board. (Sometimes you might have boards that call into other boards.) This timeline is also draggable, so if you want to step back to a certain point in history, you can. The other panels will update to match that point in the board's history, too, allowing you to see what the state of the board was at any given point.
+1. **Inputs & Outputs.** There are two panels dedicated to the inputs & outputs of the board. Inputs is where you will be prompted for any values the board need to continue, and outputs will show you what the board has generated.
+1. **Run log.** This gives you much more detail about each node in the board. Here you can click on an entry and see the precise input and output values for each node.
 
 ## Building a board
 

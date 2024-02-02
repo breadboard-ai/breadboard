@@ -21,6 +21,11 @@ main {
   flex: 1;
 }
 
+main > ol li {
+  margin-bottom: 1em;
+  line-height: 160%;
+}
+
 main a {
   color: var(--bb-font-color);
   font-weight: bold;
@@ -66,7 +71,7 @@ p {
 img {
   display: block;
   max-width: 80%;
-  margin: 40px auto;
+  margin: 40px auto 80px auto;
   background: #ffffff;
   border: 1px solid #dcdcdc;
   box-shadow: 0px 25px 13.1px rgba(0, 0, 0, 0.05),

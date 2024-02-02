@@ -23,7 +23,7 @@ title: Breadboard | Docs
       {%- for post in collections.general -%}
         <li>
           {% if page.url != post.url %}
-            <a href="/breadboard/{{ post.url }}">
+            <a href="/breadboard{{ post.url }}">
           {% endif %}
 
             {{ post.data.title }}
