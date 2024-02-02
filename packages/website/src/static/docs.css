@@ -60,6 +60,10 @@ h5 {
   position: relative;
 }
 
+.anchor {
+  scroll-margin-top: 60px;
+}
+
 .anchor-icon {
   display: none;
   font-size: 0;
