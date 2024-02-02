@@ -1,9 +1,9 @@
 ---
 layout: docs.njk
 title: Intro
+hide_toc: true
 ---
 
 # Docs
 
-- [Concepts](./concepts/)
-- [Happy Path](./happy-path/)
+These are the docs for Breadboard.
