@@ -77,7 +77,7 @@ export const loadBoard = async (
 
   const loader = new Loaders(loaderType);
   const board = await loader.load(file, options);
-  if (save && loaderType !== "json") {
+  if (save) {
     const boardClone = JSON.parse(JSON.stringify(board));
     delete boardClone.url; // Boards shouldn't have URLs serialized.
     const boardJson = JSON.stringify(boardClone, null, 2);
@@ -134,7 +134,7 @@ export const loadBoards = async (
   if (
     fileStat &&
     fileStat.isFile() &&
-    (path.endsWith(".js") || path.endsWith(".ts"))
+    (path.endsWith(".js") || path.endsWith(".ts") || path.endsWith(".json"))
   ) {
     try {
       // Compile the JS or TS.
@@ -191,27 +191,11 @@ async function loadBoardsFromDirectory(
   const dir = await opendir(fileUrl);
   const boards: Array<BoardMetaData> = [];
   for await (const dirent of dir) {
-    if (dirent.isFile() && dirent.name.endsWith(".json")) {
-      const filename = getFilename(dirent);
-      try {
-        const data = await readFile(filename, {
-          encoding: "utf-8",
-        });
-        const board = JSON.parse(data);
-        boards.push({
-          ...board,
-          title: board.title ?? join("/", getFilename(dirent)),
-          url: join("/", getFilename(dirent)),
-          version: board.version ?? "0.0.1",
-        });
-      } catch (e) {
-        showError(e, filename);
-      }
-    }
-
     if (
       dirent.isFile() &&
-      (dirent.name.endsWith(".js") || dirent.name.endsWith(".ts"))
+      (dirent.name.endsWith(".js") ||
+        dirent.name.endsWith(".ts") ||
+        dirent.name.endsWith(".json"))
     ) {
       const filename = getFilename(dirent);
       try {

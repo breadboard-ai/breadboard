@@ -18,18 +18,13 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const clients: Record<string, http.ServerResponse> = {};
 
 export const debug = async (file: string, options: DebugOptions) => {
-  const distDir = join(__dirname, "..", "..", "debugger");
-  let boards: Array<BoardMetaData> = [];
-
   if (file == undefined) {
     // If the user doesn't provide a file, we should use the current working directory (which will load all files)
     file = process.cwd();
   }
-  const fileStat = await stat(file);
-  const isDirectory = fileStat.isDirectory();
+
   const outputDirectoryStat =
     "output" in options ? await stat(options.output) : undefined;
-  const fileUrl = pathToFileURL(file);
 
   options.root = path.parse(path.resolve(file)).dir;
 
@@ -60,9 +55,8 @@ export const debug = async (file: string, options: DebugOptions) => {
 
     watch(file, {
       onChange: async (filename: string) => {
-        // Refresh the list of boards that are passed in at the start of the server.
+        // Signal that the browser should reload - and it will refresh the boards
         console.log(`${filename} changed. Refreshing boards...`);
-        boards = await loadBoards(file, options);
 
         // Notify all the clients that the board has changed.
         Object.values(clients).forEach((clientResponse) => {
@@ -72,15 +66,29 @@ export const debug = async (file: string, options: DebugOptions) => {
       onRename: async () => {
         // Refresh the list of boards that are passed in at the start of the server.
         console.log(`Refreshing boards...`);
-        boards = await loadBoards(file, options);
+
+        // Notify all the clients that the board has changed.
+        Object.values(clients).forEach((clientResponse) => {
+          clientResponse.write(`event: update\ndata:na\nid:${Date.now()}\n\n`);
+        });
       },
     });
   }
 
+  startServer(file, options);
+};
+
+const startServer = async (file: string, options: DebugOptions) => {
+  const distDir = join(__dirname, "..", "..", "debugger");
+  const fileStat = await stat(file);
+  const fileUrl = pathToFileURL(file);
+  const isDirectory = fileStat.isDirectory();
+
+  let boards: Array<BoardMetaData> = []; // Boards are dynamically loaded based on the "/boards.js" request.
+
   const server = http.createServer(async (request, response) => {
     const requestURL = new URL(request.url ?? "", "http://localhost:3000");
 
-    // We should think about a simple router here.. Right now we share a lot of state.
     if (requestURL.pathname === "/boards.js") {
       // Generate a list of boards that are valid at runtime.
       // Cache until things change.
