@@ -116,7 +116,7 @@ async function savePythonBoard(
 
     return manifestEntry;
   } catch (e) {
-    throw new Error(`Error loading ${filePath}: ${e}`);
+    console.error(`Error loading ${filePath}: ${e}`);
   }
 }
 
