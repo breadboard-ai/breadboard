@@ -1,6 +1,7 @@
 {
   "title": "JSON Validator",
   "description": "A very simple example of a validator board: it validates JSON against a schema. All validators share the same shape: `text` in, `text` out (if valid) or `error` out (if invalid).",
+  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.1.0/packages/schema/breadboard.schema.json",
   "version": "0.0.1",
   "edges": [
     {
