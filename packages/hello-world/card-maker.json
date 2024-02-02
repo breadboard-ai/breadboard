@@ -1,6 +1,7 @@
 {
   "title": "Card Maker",
   "description": "Creates a board game card of a mystical creature that you draw",
+  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.1.0/packages/schema/breadboard.schema.json",
   "version": "0.0.1",
   "edges": [
     {
@@ -40,9 +41,9 @@
       "in": "letter"
     },
     {
-      "from": "userDrawing",
+      "from": "input-1",
       "to": "appendPictureToPrompt",
-      "out": "picture",
+      "out": "drawing",
       "in": "part"
     }
   ],
@@ -106,22 +107,21 @@
       }
     },
     {
-      "id": "userDrawing",
+      "id": "input-1",
       "type": "input",
       "configuration": {
         "schema": {
           "type": "object",
           "properties": {
-            "picture": {
+            "drawing": {
               "type": "image/png",
               "title": "Draw an object to transform into the mystical creature",
               "format": "drawable"
             }
           },
           "required": [
-            "content"
-          ],
-          "additionalProperties": false
+            "drawing"
+          ]
         }
       }
     }
