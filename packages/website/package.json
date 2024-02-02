@@ -100,7 +100,7 @@
       ]
     },
     "build:rollup": {
-      "command": "rollup --format=esm --chunkFileNames=shared/[hash].js --plugin=@rollup/plugin-node-resolve --plugin=@rollup/plugin-terser --dir=dist/rollup/pages/ dist/tsc/pages/*.js",
+      "command": "rollup --context 'globalThis' --format=esm --chunkFileNames=shared/[hash].js --plugin=@rollup/plugin-node-resolve --plugin=@rollup/plugin-terser --dir=dist/rollup/ dist/tsc/*.js",
       "dependencies": [
         "build:tsc"
       ],
@@ -139,6 +139,7 @@
     "lit": "^3.1.1"
   },
   "devDependencies": {
+    "@11ty/eleventy-plugin-syntaxhighlight": "^5.0.0",
     "markdown-it-github-alerts": "^0.3.0",
     "markdown-it-github-headings": "^2.0.1"
   }

@@ -9,9 +9,11 @@
 
 const markdownItGitHubAlerts = require("markdown-it-github-alerts");
 const markdownItGitHubHeadings = require("markdown-it-github-headings");
+const syntaxHighlight = require("@11ty/eleventy-plugin-syntaxhighlight");
 
 module.exports = function (eleventyConfig) {
   eleventyConfig.addFilter("toc", require("./filter-toc.cjs"));
+  eleventyConfig.addPlugin(syntaxHighlight);
 
   eleventyConfig.amendLibrary("md", (mdLib) => {
     mdLib.use(markdownItGitHubAlerts, { icons: "" });
