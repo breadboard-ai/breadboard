@@ -15,13 +15,6 @@ title: Breadboard | Docs
   <body>
   {% include "navigation.njk" %}
   <main>
-  {%- for tag in tags -%}
-    {%- if tag == 'wip' -%}
-      <div class="wip">
-        <strong>Please note:</strong>&nbsp;this document is a work in progress.
-      </div>
-    {%- endif -%}
-  {%- endfor -%}
 
   <aside class="contents">
     <details open>
@@ -47,6 +40,14 @@ title: Breadboard | Docs
   {% if not hide_toc %}
   {{content | toc | safe }}
   {% endif %}
+
+  {%- for tag in tags -%}
+    {%- if tag == 'wip' -%}
+      <div class="wip">
+        <strong>Please note:</strong>&nbsp;this document is a work in progress.
+      </div>
+    {%- endif -%}
+  {%- endfor -%}
 
   <h1>{{ title }}</h1>
 
