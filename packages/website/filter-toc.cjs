@@ -14,7 +14,10 @@ module.exports = function (content) {
   const dom = new JSDOM(content);
   const headers = dom.window.document.querySelectorAll("h1,h2,h3,h4,h5");
   const toID = (name) => {
-    return name.toLowerCase().replace(/\W/gim, "-");
+    return name
+      .toLowerCase()
+      .replace(/[^\w\s]/gim, "")
+      .replace(/\s/gim, "-");
   };
 
   let html = `<aside class="toc">
