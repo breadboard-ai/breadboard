@@ -285,6 +285,8 @@ test("can make a graph from a typescript file", async (t) => {
     "tsc",
     "--target ES2022",
     "--module NodeNext",
+    // TODO(aomarks) There's a glob typing mismatch error.
+    "--skipLibCheck",
     `--outDir "${path.dirname(typescriptBoardPath)}"`,
     `"${typescriptBoardPath}"`,
   ].join(" ");
