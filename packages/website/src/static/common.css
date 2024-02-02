@@ -37,6 +37,7 @@ html {
   --bb-font-color: rgb(23, 23, 23);
   --bb-font-color-faded: rgb(59, 59, 59);
   --bb-font-color-accent: rgb(99, 91, 153);
+  --bb-font-color-accent-alt: rgb(4, 152, 162);
 }
 
 html,
@@ -45,6 +46,10 @@ body {
   margin: 0;
   font-family: var(--bb-font-family);
   color: var(--bb-font-color);
+}
+
+body {
+  padding-top: calc(var(--bb-grid-size) * 10.5);
 }
 
 #navigation {
@@ -56,6 +61,11 @@ body {
   font-size: 0.8125rem; /* 13px */
   border-bottom: 1px solid #bfbfbf;
   flex: 0 0 auto;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 2;
+  background: #fff;
 }
 
 #navigation > div {
@@ -107,6 +117,8 @@ footer {
   color: var(--bb-font-color);
   font-size: 0.75rem; /* 12px */
   margin-top: 220px;
+  z-index: 2;
+  background: #fff;
 }
 
 footer a {

@@ -1,6 +1,8 @@
 ---
 layout: docs.njk
 title: Concepts
+tags:
+  - general
 ---
 
 # Concepts

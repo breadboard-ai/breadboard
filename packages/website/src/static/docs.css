@@ -22,7 +22,7 @@ main {
 }
 
 main a {
-  color: var(--bb-font-color-accent);
+  color: var(--bb-font-color);
   font-weight: bold;
 }
 
@@ -88,6 +88,69 @@ pre[class*="language-"] {
   margin-top: 16px;
 }
 
+.contents {
+  border-right: 1px solid #f0f0f0;
+  display: none;
+  position: fixed;
+  height: calc(100% - var(--bb-grid-size) * 10.5);
+  left: 0;
+  top: 42px;
+  margin: 0 0 0 0;
+  width: calc((100% - 820px) / 2);
+  overflow: auto;
+  padding: 16px 0 32px 0;
+  align-items: flex-end;
+}
+
+.contents details {
+  width: 300px;
+}
+
+.contents summary {
+  color: var(--bb-font-color-accent);
+  font-size: 0.875rem;
+  margin: 0 0 8px;
+  height: 40px;
+  padding: 20px 20px;
+  font-weight: bold;
+}
+
+.contents ul {
+  margin: 0;
+  list-style: none;
+  padding: 0 0 0 32px;
+  font-size: 0.875rem;
+}
+
+.contents li {
+  font-weight: bold;
+  margin: 0 0 8px 0;
+}
+
+.contents > ul {
+  padding: 20px;
+}
+
+.contents a {
+  color: var(--bb-font-color-accent);
+  text-decoration: none;
+  transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+  opacity: 0.8;
+  font-weight: normal;
+}
+
+.contents a:hover {
+  transition-duration: 0.1s;
+  opacity: 1;
+}
+
+@media (min-width: 1440px) {
+  .contents {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
 .toc {
   display: none;
   position: sticky;
@@ -95,8 +158,6 @@ pre[class*="language-"] {
   top: 75px;
   margin: 0 0 0 760px;
   width: 300px;
-  --distance: 0;
-  animation: fadeAndSlideInFromLeft 0.3s cubic-bezier(0, 0, 0.3, 1) 1 forwards;
 }
 
 .toc h1 {
@@ -126,10 +187,10 @@ pre[class*="language-"] {
 }
 
 .toc a {
-  color: var(--bb-font-color-accent);
+  color: var(--bb-font-color);
   text-decoration: none;
   transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
-  opacity: 0.8;
+  opacity: 0.6;
   font-weight: normal;
 }
 
