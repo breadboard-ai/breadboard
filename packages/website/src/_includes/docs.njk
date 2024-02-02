@@ -13,9 +13,37 @@ title: Breadboard | Docs
     <link rel="stylesheet" href="/breadboard/static/docs.css" />
   </head>
   <body>
-{% include "navigation.njk" %}
-  <main>{{content | toc | safe }} {{content | safe}}</main>
-{% include "footer.njk" %}
+  {% include "navigation.njk" %}
+  <main>
+
+  <aside class="contents">
+    <details open>
+      <summary>General Documentation</summary>
+      <ul>
+      {%- for post in collections.general -%}
+        <li>
+          {% if page.url != post.url %}
+            <a href="/breadboard/{{ post.url }}">
+          {% endif %}
+
+            {{ post.data.title }}
+
+          {% if page.url != post.url %}
+            </a>
+          {% endif %}
+          </li>
+      {%- endfor -%}
+      <ul>
+    </details>
+  </aside>
+
+  {% if not hide_toc %}
+  {{content | toc | safe }}
+  {% endif %}
+
+  {{content | safe}}
+  </main>
+  {% include "footer.njk" %}
 
   {% raw %}
   <script type="module">

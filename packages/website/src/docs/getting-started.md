@@ -1,6 +1,8 @@
 ---
 layout: docs.njk
 title: Getting Started
+tags:
+  - general
 ---
 
 # Getting Started
