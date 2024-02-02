@@ -5,7 +5,6 @@
  */
 
 import { base, board, code } from "@google-labs/breadboard";
-import { starter } from "@google-labs/llm-starter";
 import { core } from "@google-labs/core-kit";
 import { palm } from "@google-labs/palm-kit";
 
@@ -50,7 +49,7 @@ export default await board(() => {
 
   // Because `code` can't return a board, we have to create it here and then pass it in.
   const palmBoard = board(({ input }) => {
-    const secrets = starter.secrets({
+    const secrets = core.secrets({
       keys: ["PALM_KEY"],
     });
     return input.as("text").to(palm.embedText({ PALM_KEY: secrets }));

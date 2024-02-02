@@ -25,11 +25,6 @@ program
   .description(
     "Starts a simple HTTP server that serves the breadboard-web app, and outputs a URL that contains a link to a breadboard file that the user provided."
   )
-  .option(
-    "-o, --output <path>",
-    "If compiling a graph in Typescript (.ts), you can control the output directory of the compiled graph (current directory by default.)",
-    process.cwd()
-  )
   .option("-n, --no-save", "Do not save the compiled graph to disk.")
   .option("-w, --watch", "Watch the file for changes.")
   .action(debug);

@@ -1,40 +1,27 @@
 {
-  "title": "Generate text from a prompt",
-  "description": "",
+  "title": "Convert String to JSON",
+  "description": "Converts a string to JSON.",
   "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.1.0/packages/schema/breadboard.schema.json",
   "version": "0.0.3",
   "edges": [
     {
       "from": "fn-3",
-      "to": "text_result",
-      "out": "text",
-      "in": "text"
+      "to": "json",
+      "out": "*",
+      "in": ""
     },
     {
       "from": "input",
       "to": "fn-3",
-      "out": "text",
-      "in": "text"
+      "out": "*",
+      "in": ""
     }
   ],
   "nodes": [
     {
-      "id": "text_result",
+      "id": "json",
       "type": "output",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "text": {
-              "type": "string",
-              "title": "text"
-            }
-          },
-          "required": [
-            "text"
-          ]
-        }
-      }
+      "configuration": {}
     },
     {
       "id": "fn-3",
@@ -50,10 +37,16 @@
         "schema": {
           "type": "object",
           "properties": {
-            "text": {
+            "string": {
               "type": "string",
-              "title": "text",
-              "description": "What is the prompt"
+              "title": "string",
+              "description": "The string you will attempt to convert to JSON."
+            },
+            "splat": {
+              "type": "boolean",
+              "title": "splat",
+              "description": "If true, the output will be the properties of the object.",
+              "default": false
             }
           },
           "required": [
@@ -88,7 +81,7 @@
           "id": "fn-3-run",
           "type": "runJavascript",
           "configuration": {
-            "code": "function fn_3({ text }) {\n    console.log(\"generating-text\", text);\n    if (text === undefined || text == \".\") {\n      throw new Error(\"generate-text: text is undefined\");\n    }\n    return {\n      text: \"This is a test response against the following test input: \" + text,\n    };\n  }",
+            "code": "function fn_3({ string, splat }) {\n        const obj = JSON.parse(string);\n        if (splat) {\n          if (obj instanceof Array) {\n            throw new Error(\"Cannot splat an array.\");\n          }\n          return { ...obj };\n        }\n        return { json: obj };\n      }",
             "name": "fn_3",
             "raw": true
           }

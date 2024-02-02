@@ -1,7 +1,7 @@
 {
-  "url": "file:///Users/paulkinlan/Code/labs-prototypes/recipes/apis/llm/gemini/v1beta3/generateCompletion.json",
-  "title": "Generate Completion",
+  "title": "Generate Completion with Gemini",
   "description": "Creates a completion from Gemini for use in generateCompletion standard recipe",
+  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.1.0/packages/schema/breadboard.schema.json",
   "version": "0.0.3",
   "edges": [
     {
@@ -137,7 +137,7 @@
           "id": "convertGeminiGenerateTextResponse-run",
           "type": "runJavascript",
           "configuration": {
-            "code": "function convertGeminiGenerateTextResponse(api_response) {\n    return { text_response: api_response.candidates[0].content.parts.text };\n  }",
+            "code": "function convertGeminiGenerateTextResponse({ api_json_response }) {\n    return {\n      text_response: api_json_response.candidates[0].content.parts.text,\n    };\n  }",
             "name": "convertGeminiGenerateTextResponse",
             "raw": true
           }

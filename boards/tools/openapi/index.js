@@ -5,7 +5,6 @@
  */
 
 import { base, board, code } from "@google-labs/breadboard";
-import { starter } from "@google-labs/llm-starter";
 import { core } from "@google-labs/core-kit";
 
 const metaData = {
@@ -346,7 +345,7 @@ export default await board(() => {
   const input = base.input({ $id: "input", schema: inputSchema });
 
   // Get the Open API spec from the given URL
-  const fetchOpenAPISpec = input.url.to(starter.fetch()).response.as("json");
+  const fetchOpenAPISpec = input.url.to(core.fetch()).response.as("json");
 
   return fetchOpenAPISpec
     .to(validateIsOpenAPI({ $id: "isOpenAPI" }))

@@ -5,7 +5,8 @@
  */
 
 import { base, board } from "@google-labs/breadboard";
-import { starter } from "@google-labs/llm-starter";
+import { core } from "@google-labs/core-kit";
+import { json } from "@google-labs/json-kit";
 
 const metaData = {
   title: "Fetch an RSS feed",
@@ -30,15 +31,15 @@ export default await board(() => {
   const fetchFeed = base
     .input({ $id: "input", schema: urlSchema })
     .url.to(
-      starter.fetch({
+      core.fetch({
         $id: "fetch",
         raw: true,
       })
     )
     .response.as("xml")
-    .to(starter.xmlToJson({ $id: "xmlToJson" }));
+    .to(json.xmlToJson({ $id: "xmlToJson" }));
 
-  starter
+  json
     .jsonata({
       json: fetchFeed.json,
       expression:
@@ -47,7 +48,7 @@ export default await board(() => {
     .result.as("feed")
     .to(base.output({ $id: "feedMetaData" }));
 
-  return starter
+  return json
     .jsonata({
       json: fetchFeed.json,
       expression:

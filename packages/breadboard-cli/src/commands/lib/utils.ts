@@ -72,15 +72,18 @@ export const loadBoard = async (
   file: string,
   options: Options
 ): Promise<BoardRunner> => {
-  const loaderType = extname(file).slice(1) as "js" | "ts" | "yaml" | "json";
+  const loaderType = extname(file).slice(1) as "js" | "ts" | "json";
   const save = "save" in options ? options["save"] : true;
+  // Most commands will pass in the output directory, but if they don't, we'll use the directory of the file being loaded.
+  const outputRoot =
+    "output" in options ? options["output"] : path.dirname(file);
 
   const loader = new Loaders(loaderType);
   const board = await loader.load(file, options);
   if (save && loaderType !== "json") {
     const pathInfo = path.parse(file);
     const boardClone = JSON.parse(JSON.stringify(board));
-    const outputFilePath = path.join(options.output, `${pathInfo.name}.json`);
+    const outputFilePath = path.join(outputRoot, `${pathInfo.name}.json`);
     delete boardClone.url; // Boards shouldn't have URLs serialized.
     const boardJson = JSON.stringify(boardClone, null, 2);
     await writeFile(outputFilePath, boardJson);
@@ -133,10 +136,10 @@ export const loadBoards = async (
   if (
     fileStat &&
     fileStat.isFile() &&
-    (path.endsWith(".js") || path.endsWith(".ts") || path.endsWith(".yaml"))
+    (path.endsWith(".js") || path.endsWith(".ts"))
   ) {
     try {
-      // Compile the JS, TS or YAML.
+      // Compile the JS or TS.
       const board = await loadBoard(path, options);
 
       return [
@@ -194,9 +197,7 @@ async function loadBoardsFromDirectory(
 
     if (
       dirent.isFile() &&
-      (dirent.name.endsWith(".js") ||
-        dirent.name.endsWith(".ts") ||
-        dirent.name.endsWith(".yaml"))
+      (dirent.name.endsWith(".js") || dirent.name.endsWith(".ts"))
     ) {
       const filename = getFilename(dirent);
       try {
@@ -213,8 +214,11 @@ async function loadBoardsFromDirectory(
     }
 
     if (dirent.isDirectory()) {
+      const baseFolder = fileUrl.pathname.endsWith("/")
+        ? fileUrl.pathname
+        : `${fileUrl.pathname}/`;
       const boardsInDir = await loadBoardsFromDirectory(
-        new URL(dirent.name, fileUrl),
+        new URL(dirent.name, pathToFileURL(baseFolder)),
         join(path, dirent.name),
         options
       );
