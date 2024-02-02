@@ -11,7 +11,7 @@
     "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },
   "scripts": {
-    "dev": "breadboard debug src/ --watch"
+    "dev": "breadboard debug src/ --watch -n"
   },
   "keywords": [],
   "author": "Google Labs Team",
