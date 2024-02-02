@@ -213,8 +213,11 @@ async function loadBoardsFromDirectory(
     }
 
     if (dirent.isDirectory()) {
+      const baseFolder = fileUrl.pathname.endsWith("/")
+        ? fileUrl.pathname
+        : `${fileUrl.pathname}/`;
       const boardsInDir = await loadBoardsFromDirectory(
-        new URL(dirent.name, fileUrl),
+        new URL(dirent.name, pathToFileURL(baseFolder)),
         join(path, dirent.name),
         options
       );
