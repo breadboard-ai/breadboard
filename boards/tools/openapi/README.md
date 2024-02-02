@@ -3,7 +3,7 @@
 ## Running the Board
 
 ```bash
-breadboard run boards/tools/openapi/index.js --kit @google-labs/llm-starter --kit @google-labs/core-kit -i "{\"url\":\"https://api.apis.guru/v2/specs/apis.guru/2.2.0/openapi.json\"}"
+breadboard run boards/tools/openapi/openapi.js --kit @google-labs/core-kit -i "{\"url\":\"https://api.apis.guru/v2/specs/apis.guru/2.2.0/openapi.json\"}"
 ```
 
 ### Inputs
@@ -16,4 +16,4 @@ breadboard run boards/tools/openapi/index.js --kit @google-labs/llm-starter --ki
 
 ## Compiling the board
 
-`breadboard make boards/tools/openapi/index.js >  boards/tools/openapi/index.json`
+`breadboard make boards/tools/openapi/--kit @google-labs/core-kit.js > boards/tools/openapi/index.json`
