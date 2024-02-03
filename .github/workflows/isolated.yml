@@ -60,9 +60,35 @@ jobs:
               npm pkg get scripts || cat package.json
 
               npm install
-              npm run test
+              npm exec breadboard debug src/
+
+          - name: init board with prior install
+            script: |
+              set -ev
+              npm install -g @google-labs/create-breadboard
+
+              npm init @google-labs/breadboard test
+
+              cd test
+              npm pkg get scripts || cat package.json
+
+              npm install
+              npm exec breadboard debug src/
 
           - name: init kit
+            script: |
+              set -ev
+              npm install -g @google-labs/create-breadboard-kit
+
+              npm init @google-labs/breadboard-kit test
+
+              cd test
+              npm pkg get scripts || cat package.json
+
+              npm install
+              npm run build
+
+          - name: init kit with prior install
             script: |
               set -ev
               npm install -g @google-labs/breadboard
@@ -74,7 +100,7 @@ jobs:
               npm pkg get scripts || cat package.json
 
               npm install
-              npm run test
+              npm run build
 
     name: ${{ matrix.commands.name }} - Node ${{ matrix.node-version }} NPM ${{ matrix.npm-version }}
     steps:
