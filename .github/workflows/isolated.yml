@@ -8,7 +8,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  board_name: dl_board.json
+  BOARD: dl_board.json
 
 jobs:
   build:
@@ -36,22 +36,22 @@ jobs:
 
           - name: npx cli run
             script: |
-              npx @google-labs/breadboard-cli run ${{ env.board_name }} -i "{\"message\": \"Hello World\"}"
+              npx @google-labs/breadboard-cli run $BOARD -i "{\"message\": \"Hello World\"}"
 
           - name: install && npx cli run
             script: |
               npm install -g @google-labs/breadboard-cli
-              npx @google-labs/breadboard-cli run ${{ env.board_name }} -i "{\"message\": \"Hello World\"}"
+              npx @google-labs/breadboard-cli run $BOARD -i "{\"message\": \"Hello World\"}"
 
           - name: install x2 && npx cli run
             script: |
               npm install -g @google-labs/breadboard @google-labs/breadboard-cli
-              npx @google-labs/breadboard-cli run ${{ env.board_name }} -i "{\"message\": \"Hello World\"}"
+              npx @google-labs/breadboard-cli run $BOARD -i "{\"message\": \"Hello World\"}"
 
           - name: install && npx breadboard run
             script: |
               npm install -g @google-labs/breadboard-cli
-              npx breadboard run ${{ env.board_name }} -i "{\"message\": \"Hello World\"}"
+              npx breadboard run $BOARD -i "{\"message\": \"Hello World\"}"
 
           ##############################################################################################################
 
@@ -123,7 +123,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           # cache: "npm"
       - run: npm install -g npm@${{ matrix.npm-version }}
-      - run: wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/${{ env.board_name }} -O ${{ env.board_name }}
+      - run: wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/$BOARD -O $BOARD
       - name: Run command
         run: |
           set -ev
