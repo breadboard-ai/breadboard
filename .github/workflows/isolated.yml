@@ -63,7 +63,7 @@ jobs:
               npm pkg get scripts || cat package.json
               npm install
               npm run test
-    name: Node ${{ matrix.node-version }} NPM ${{ matrix.npm-version }} - ${{ matrix.commands.name }}
+    name: ${{ matrix.commands.name }} - Node ${{ matrix.node-version }} NPM ${{ matrix.npm-version }}
     steps:
       - uses: actions/checkout@main
       - name: Use Node.js ${{ matrix.node-version }}
