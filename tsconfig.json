@@ -14,16 +14,17 @@
     { "path": "packages/create-breadboard" },
     { "path": "packages/create-breadboard-kit" },
     { "path": "packages/discovery-types" },
-    { "path": "packages/graph-playground" },
+    { "path": "packages/gemini-kit" },
     { "path": "packages/graph-integrity" },
+    { "path": "packages/graph-playground" },
+    { "path": "packages/json-kit" },
     { "path": "packages/llm-starter" },
     { "path": "packages/node-nursery" },
     { "path": "packages/node-nursery-web" },
     { "path": "packages/node-proxy-server" },
     { "path": "packages/palm-kit" },
     { "path": "packages/pinecone-kit" },
-    { "path": "packages/json-kit" },
-    { "path": "packages/template-kit" },
-    { "path": "packages/schema" }
+    { "path": "packages/schema" },
+    { "path": "packages/template-kit" }
   ]
 }
