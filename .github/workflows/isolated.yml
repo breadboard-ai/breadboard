@@ -123,7 +123,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           # cache: "npm"
       - run: npm install -g npm@${{ matrix.npm-version }}
-      - run: wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/$BOARD -O $BOARD
+      - run: wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O $BOARD
       - name: Run command
         run: |
           set -ev
