@@ -1,7 +1,7 @@
 {
   "title": "JSON Generator",
   "description": "Tries its best to always generate valid JSON that adheres to a provided JSON schema. Use it when you want your LLM calls to return valid JSON.",
-  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.1.0/packages/schema/breadboard.schema.json",
+  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.2.0/packages/schema/breadboard.schema.json",
   "version": "0.0.1",
   "edges": [
     {

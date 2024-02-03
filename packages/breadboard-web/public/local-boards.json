@@ -65,6 +65,11 @@
     "version": "0.0.2"
   },
   {
+    "title": "Gemini Simple",
+    "url": "/graphs/gemini-simple.json",
+    "version": "0.0.1"
+  },
+  {
     "title": "Healer",
     "url": "/graphs/healer.json",
     "version": "0.0.1"

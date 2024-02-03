@@ -7,6 +7,7 @@
 import { board, code } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { templates } from "@google-labs/template-kit";
+import { gemini } from "@google-labs/gemini-kit";
 
 // A URL of the Gemini Pro Vision board. We will invoke this board to
 // describe the picture.
@@ -16,15 +17,6 @@ import { templates } from "@google-labs/template-kit";
 // -  `result`: Gemini Pro Vision's response
 const visionBoard =
   "https://raw.githubusercontent.com/breadboard-ai/breadboard/f4adabe69a5a9af73a29fcc72e7042404157717b/packages/breadboard-web/public/graphs/gemini-pro-vision.json";
-
-// A URL of the Gemini Pro board. We will invoke this board to act as the
-// Character Developer.
-// Has these inputs:
-// - `text`: the prompt to generate a response for
-// Has these outputs:
-// -  `text`: Gemini Pro's response
-const textBoard =
-  "https://raw.githubusercontent.com/breadboard-ai/breadboard/3e9735ee557bf18deb87bc46663a6e3af7647e7d/packages/breadboard-web/public/graphs/gemini-generator.json";
 
 // A node that appends the prompt to the parts array that already contains
 // the picture.
@@ -99,10 +91,14 @@ export default await board(({ drawing }) => {
 
   // [Step 4]
   // Ask Gemini Pro to act as the Character Developer.
-  const developCharacter = core.invoke({
+  const developCharacter = gemini.text({
     $id: "developCharacter",
-    path: textBoard,
-    text: prompt,
+    // While Breadboard TypeScript type system is under development,
+    // we occasionally need to remind it what type of port input we're
+    // expecting. That's what the `isString()` method does here.
+    // It's a temporary workaround, and will go away once we have tighter
+    // typing support.
+    text: prompt.isString(),
   });
 
   // Return the results: both the newly minted card, and the original
