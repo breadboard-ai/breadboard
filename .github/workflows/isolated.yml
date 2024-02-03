@@ -21,7 +21,6 @@ jobs:
         commands:
           - |
             # npx breadboard mermaid
-            npm install -g npm@${{ matrix.npm-version }}
             set -ev
             npm install -g @google-labs/breadboard-cli
             wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json
@@ -30,7 +29,6 @@ jobs:
 
           - |
             # npx breadboard run
-            npm install -g npm@${{ matrix.npm-version }}
             set -ev
             npm install -g @google-labs/breadboard-cli
             wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json
@@ -39,7 +37,6 @@ jobs:
 
           - |
             # npm init @google-labs/breadboard test
-            npm install -g npm@${{ matrix.npm-version }}
             set -ev
             npm init @google-labs/breadboard test
             cd test
@@ -47,7 +44,6 @@ jobs:
 
           - |
             # npm init @google-labs/breadboard-kit test
-            npm install -g npm@${{ matrix.npm-version }}
             set -ev
             npm init @google-labs/breadboard-kit test
             cd test
@@ -60,5 +56,6 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
+      - run: npm install -g npm@${{ matrix.npm-version }}
       - name: Run command
         run: ${{ matrix.commands }}
