@@ -207,7 +207,6 @@ test.after.always(() => {
 //////////////////////////////////////////////////
 test("all test files exist", (t) => {
   testFiles.forEach((p) => {
-    console.debug(["Confirming existence of ", p.path].join("\t"));
     t.true(fs.existsSync(p.path));
     t.true(fs.readFileSync(p.path).length > 0);
   });
