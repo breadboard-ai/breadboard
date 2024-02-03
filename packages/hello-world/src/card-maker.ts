@@ -10,11 +10,19 @@ import { templates } from "@google-labs/template-kit";
 
 // A URL of the Gemini Pro Vision board. We will invoke this board to
 // describe the picture.
+// Has these inputs:
+// - `parts`: the Gemini Pro API parts structure (JSON),
+// Has these outputs:
+// -  `result`: Gemini Pro Vision's response
 const visionBoard =
   "https://raw.githubusercontent.com/breadboard-ai/breadboard/f4adabe69a5a9af73a29fcc72e7042404157717b/packages/breadboard-web/public/graphs/gemini-pro-vision.json";
 
 // A URL of the Gemini Pro board. We will invoke this board to act as the
 // Character Developer.
+// Has these inputs:
+// - `text`: the prompt to generate a response for
+// Has these outputs:
+// -  `text`: Gemini Pro's response
 const textBoard =
   "https://raw.githubusercontent.com/breadboard-ai/breadboard/3e9735ee557bf18deb87bc46663a6e3af7647e7d/packages/breadboard-web/public/graphs/gemini-generator.json";
 
