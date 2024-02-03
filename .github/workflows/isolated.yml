@@ -31,7 +31,7 @@ jobs:
             npm-version: 10.x
         commands:
           - |
-            # npx breadboard mermaid
+            # cli mermaid
             set -ev
             npm install -g @google-labs/breadboard-cli
             wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json
@@ -39,7 +39,7 @@ jobs:
             npx breadboard mermaid board.json
 
           - |
-            # npx breadboard run
+            # cli run
             set -ev
             npm install -g @google-labs/breadboard-cli
             wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json
@@ -47,20 +47,22 @@ jobs:
             npx breadboard run board.json -i "{\"message\": \"Hello World\"}"
 
           - |
-            # npm init @google-labs/breadboard test
+            # init board
             set -ev
             npm init @google-labs/breadboard test
             cd test
             npm pkg get scripts || cat package.json
-            npm run dev
+            npm install
+            npm run test
 
           - |
-            # npm init @google-labs/breadboard-kit test
+            # init kit
             set -ev
             npm init @google-labs/breadboard-kit test
             cd test
             npm pkg get scripts || cat package.json
-            npm run build
+            npm install
+            npm run test
     steps:
       - uses: actions/checkout@main
       - name: Use Node.js ${{ matrix.node-version }}
