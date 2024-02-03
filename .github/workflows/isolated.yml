@@ -41,7 +41,7 @@ jobs:
             set -ev
             npm init @google-labs/breadboard test
             cd test
-            npm pkg get scripts
+            npm pkg get scripts || cat package.json
             npm run build
 
           - |
@@ -49,7 +49,7 @@ jobs:
             set -ev
             npm init @google-labs/breadboard-kit test
             cd test
-            npm pkg get scripts
+            npm pkg get scripts || cat package.json
             npm run build
 
     steps:
