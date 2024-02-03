@@ -17,6 +17,7 @@ import TemplateKit from "@google-labs/template-kit";
 import NodeNurseryWeb from "@google-labs/node-nursery-web";
 import PaLMKit from "@google-labs/palm-kit";
 import Pinecone from "@google-labs/pinecone-kit";
+import GeminiKit from "@google-labs/gemini-kit";
 
 const PROXY_NODES = [
   "palm-generateText",
@@ -47,6 +48,7 @@ const kits = [
   Core,
   Pinecone,
   PaLMKit,
+  GeminiKit,
   NodeNurseryWeb,
   JSONKit,
 ].map((kitConstructor) => asRuntimeKit(kitConstructor));
