@@ -30,39 +30,40 @@ jobs:
           - node-version: 19.x
             npm-version: 10.x
         commands:
-          - |
-            # cli mermaid
-            set -ev
-            npm install -g @google-labs/breadboard-cli
-            wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json
+          - name: cli mermaid
+            script: |
+              set -ev
+              npm install -g @google-labs/breadboard-cli
+              wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json
 
-            npx breadboard mermaid board.json
+              npx breadboard mermaid board.json
 
-          - |
-            # cli run
-            set -ev
-            npm install -g @google-labs/breadboard-cli
-            wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json
+          - name: cli run
+            script: |
+              set -ev
+              npm install -g @google-labs/breadboard-cli
+              wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json
 
-            npx breadboard run board.json -i "{\"message\": \"Hello World\"}"
+              npx breadboard run board.json -i "{\"message\": \"Hello World\"}"
 
-          - |
-            # init board
-            set -ev
-            npm init @google-labs/breadboard test
-            cd test
-            npm pkg get scripts || cat package.json
-            npm install
-            npm run test
+          - name: init board
+            script: |
+              set -ev
+              npm init @google-labs/breadboard test
+              cd test
+              npm pkg get scripts || cat package.json
+              npm install
+              npm run test
 
-          - |
-            # init kit
-            set -ev
-            npm init @google-labs/breadboard-kit test
-            cd test
-            npm pkg get scripts || cat package.json
-            npm install
-            npm run test
+          - name: init kit
+            script: |
+              set -ev
+              npm init @google-labs/breadboard-kit test
+              cd test
+              npm pkg get scripts || cat package.json
+              npm install
+              npm run test
+    name: Node ${{ matrix.node-version }} NPM ${{ matrix.npm-version }} - ${{ matrix.commands.name }}
     steps:
       - uses: actions/checkout@main
       - name: Use Node.js ${{ matrix.node-version }}
@@ -72,4 +73,4 @@ jobs:
           cache: "npm"
       - run: npm install -g npm@${{ matrix.npm-version }}
       - name: Run command
-        run: ${{ matrix.commands }}
+        run: ${{ matrix.commands.script }}
