@@ -59,7 +59,7 @@ jobs:
               npm install -g @google-labs/breadboard-cli
               npx @google-labs/breadboard-cli mermaid dl_board.json
 
-          - name: install + npx cli mermaid
+          - name: install + npx breadboard mermaid
             script: |
               npm install -g @google-labs/breadboard-cli
               npx breadboard mermaid dl_board.json
