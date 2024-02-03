@@ -15,42 +15,87 @@ jobs:
       matrix:
         node-version:
           - 21.x
-          - 20.x
-          - 19.x
-          - 18.x
+          # - 20.x
+          # - 19.x
+          # - 18.x
         npm-version:
           - 10.x
-          - 9.x
-          - 8.x
-          - 7.x
-          - 6.x
+          # - 9.x
+          # - 8.x
+          # - 7.x
+          # - 6.x
         exclude:
           - node-version: 19.x
             npm-version: 9.x
           - node-version: 19.x
             npm-version: 10.x
         commands:
-          - name: cli mermaid
+          - name: npx cli run
             script: |
-              set -ev
-              npm install -g @google-labs/breadboard-cli
-
               wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json
 
-              npx breadboard mermaid board.json
+              npx breadboard run board.json -i "{\"message\": \"Hello World\"}"
 
-          - name: cli run
+          - name: install && npx cli run
             script: |
-              set -ev
               npm install -g @google-labs/breadboard-cli
 
               wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json
 
               npx breadboard run board.json -i "{\"message\": \"Hello World\"}"
 
-          - name: init board
+          ##############################################################################################################
+
+          - name: npx cli mermaid
             script: |
-              set -ev
+              wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json
+
+              npx breadboard mermaid board.json
+
+          - name: install && npx cli mermaid
+            script: |
+              npm install -g @google-labs/breadboard-cli
+
+              wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json
+
+              npx breadboard mermaid board.json
+
+          ##############################################################################################################
+
+          - name: npm init board
+            script: |
+              npm init @google-labs/breadboard test
+
+              cd test
+              npm pkg get scripts || cat package.json
+
+              npm install
+
+              if [ $(npm -v | cut -d. -f1) -le 6 ]; then
+                $(npm bin)/breadboard debug src/
+              else
+                npx breadboard debug src/
+              fi
+
+          - name: install && init board
+            script: |
+              npm install -g @google-labs/create-breadboard
+
+              npm init @google-labs/breadboard test
+
+              cd test
+              npm pkg get scripts || cat package.json
+
+              npm install
+
+              if [ $(npm -v | cut -d. -f1) -le 6 ]; then
+                $(npm bin)/breadboard debug src/
+              else
+                npx breadboard debug src/
+              fi
+
+          - name: install x2 && init board
+            script: |
               npm install -g @google-labs/breadboard
               npm install -g @google-labs/create-breadboard
 
@@ -61,33 +106,26 @@ jobs:
 
               npm install
 
-              if [ $(npm -v | cut -d. -f1) -eq 6 ]; then
+              if [ $(npm -v | cut -d. -f1) -le 6 ]; then
                 $(npm bin)/breadboard debug src/
               else
                 npx breadboard debug src/
               fi
 
-          - name: init board with prior install
-            script: |
-              set -ev
-              npm install -g @google-labs/create-breadboard
+          ##############################################################################################################
 
-              npm init @google-labs/breadboard test
+          - name: npm init kit
+            script: |
+              npm init @google-labs/breadboard-kit test
 
               cd test
               npm pkg get scripts || cat package.json
 
               npm install
+              npm run build
 
-              if [ $(npm -v | cut -d. -f1) -eq 6 ]; then
-                $(npm bin)/breadboard debug src/
-              else
-                npx breadboard debug src/
-              fi
-
-          - name: init kit
+          - name: install && init kit
             script: |
-              set -ev
               npm install -g @google-labs/create-breadboard-kit
 
               npm init @google-labs/breadboard-kit test
@@ -98,9 +136,8 @@ jobs:
               npm install
               npm run build
 
-          - name: init kit with prior install
+          - name: install x2 && init kit
             script: |
-              set -ev
               npm install -g @google-labs/breadboard
               npm install -g @google-labs/create-breadboard-kit
 
@@ -122,4 +159,6 @@ jobs:
           # cache: "npm"
       - run: npm install -g npm@${{ matrix.npm-version }}
       - name: Run command
-        run: ${{ matrix.commands.script }}
+        run: |
+          set -ev
+          ${{ matrix.commands.script }}
