@@ -13,22 +13,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version:
-          - 18.x
-          - 19.x
-          - 20.x
-          - 21.x
-        npm-version:
-          - 6.x
-          - 7.x
-          - 8.x
-          - 9.x
-          - 10.x
-        exclude:
-          - node-version: 19.x
-            npm-version: 9.x
-          - node-version: 19.x
-            npm-version: 10.x
         commands:
           - |
             # npx breadboard mermaid
@@ -61,7 +45,22 @@ jobs:
             cd test
             npm pkg get scripts || cat package.json
             npm run build
-
+        node-version:
+          - 21.x
+          - 20.x
+          - 19.x
+          - 18.x
+        npm-version:
+          - 10.x
+          - 9.x
+          - 8.x
+          - 7.x
+          - 6.x
+        exclude:
+          - node-version: 19.x
+            npm-version: 9.x
+          - node-version: 19.x
+            npm-version: 10.x
     steps:
       - uses: actions/checkout@main
       - name: Use Node.js ${{ matrix.node-version }}
