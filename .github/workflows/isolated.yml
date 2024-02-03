@@ -41,14 +41,16 @@ jobs:
             set -ev
             npm init @google-labs/breadboard test
             cd test
-            npm run dev
+            npm pkg get scripts
+            npm run build
 
           - |
             # npm init @google-labs/breadboard-kit test
             set -ev
             npm init @google-labs/breadboard-kit test
             cd test
-            npm run dev
+            npm pkg get scripts
+            npm run build
 
     steps:
       - uses: actions/checkout@main
