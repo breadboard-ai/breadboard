@@ -6,17 +6,22 @@ jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
       matrix:
         node-version:
           - 18.x
           - 19.x
           - 20.x
           - 21.x
+        npm-version:
+          - 6.x
+          - 7.x
+          - 8.x
+          - 9.x
+          - latest
         commands:
           - |
             # npx breadboard mermaid
-            npm install -g npm@latest
+            npm install -g npm@${{ matrix.npm-version }}
             set -ev
             npm install -g @google-labs/breadboard-cli
             wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json
@@ -25,7 +30,7 @@ jobs:
 
           - |
             # npx breadboard run
-            npm install -g npm@latest
+            npm install -g npm@${{ matrix.npm-version }}
             set -ev
             npm install -g @google-labs/breadboard-cli
             wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json
@@ -34,18 +39,16 @@ jobs:
 
           - |
             # npm init @google-labs/breadboard test
-            npm install -g npm@latest
+            npm install -g npm@${{ matrix.npm-version }}
             set -ev
-            npm install -g @google-labs/breadboard
             npm init @google-labs/breadboard test
             cd test
             npm run dev
 
           - |
             # npm init @google-labs/breadboard-kit test
-            npm install -g npm@latest
+            npm install -g npm@${{ matrix.npm-version }}
             set -ev
-            npm install -g @google-labs/breadboard
             npm init @google-labs/breadboard-kit test
             cd test
             npm run dev
