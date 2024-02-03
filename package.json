@@ -15,7 +15,8 @@
     "ci:local": "wireit",
     "generate:docs": "wireit",
     "syncpack:check": "syncpack list-mismatches --config syncpack.config.ts",
-    "syncpack:fix": "syncpack fix-mismatches --config syncpack.config.ts"
+    "syncpack:fix": "syncpack fix-mismatches --config syncpack.config.ts",
+    "check": "wireit"
   },
   "wireit": {
     "build": {
@@ -98,9 +99,7 @@
     "ci:local": {
       "dependencies": [
         "build",
-        "check:format",
-        "lint",
-        "test"
+        "check"
       ]
     },
     "generate:docs": {
@@ -116,6 +115,14 @@
         "./packages/graph-runner:generate:docs",
         "./packages/template-kit:generate:docs",
         "./packages/node-nursery:generate:docs"
+      ]
+    },
+    "check": {
+      "dependencies": [
+        "syncpack:check",
+        "check:format",
+        "lint",
+        "test"
       ]
     }
   },
