@@ -34,7 +34,7 @@ jobs:
             script: |
               wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json
 
-              npx breadboard run board.json -i "{\"message\": \"Hello World\"}"
+              npx @google-labs/breadboard-cli run board.json -i "{\"message\": \"Hello World\"}"
 
           - name: install && npx cli run
             script: |
@@ -50,7 +50,7 @@ jobs:
             script: |
               wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json
 
-              npx breadboard mermaid board.json
+              npx @google-labs/breadboard-cli mermaid board.json
 
           - name: install && npx cli mermaid
             script: |
@@ -74,7 +74,7 @@ jobs:
               if [ $(npm -v | cut -d. -f1) -le 6 ]; then
                 $(npm bin)/breadboard debug src/
               else
-                npx breadboard debug src/
+                npx @google-labs/breadboard-cli debug src/
               fi
 
           - name: install && init board
@@ -91,7 +91,7 @@ jobs:
               if [ $(npm -v | cut -d. -f1) -le 6 ]; then
                 $(npm bin)/breadboard debug src/
               else
-                npx breadboard debug src/
+                npx @google-labs/breadboard-cli debug src/
               fi
 
           - name: install x2 && init board
@@ -109,7 +109,7 @@ jobs:
               if [ $(npm -v | cut -d. -f1) -le 6 ]; then
                 $(npm bin)/breadboard debug src/
               else
-                npx breadboard debug src/
+                npx @google-labs/breadboard-cli debug src/
               fi
 
           ##############################################################################################################
