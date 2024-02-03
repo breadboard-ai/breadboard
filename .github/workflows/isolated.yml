@@ -42,12 +42,28 @@ jobs:
 
               wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json
 
+              npx @google-labs/breadboard-cli run board.json -i "{\"message\": \"Hello World\"}"
+
+          - name: install && npx breadboard run
+            script: |
+              npm install -g @google-labs/breadboard-cli
+
+              wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json
+
               npx breadboard run board.json -i "{\"message\": \"Hello World\"}"
 
           ##############################################################################################################
 
           - name: npx cli mermaid
             script: |
+              wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json
+
+              npx @google-labs/breadboard-cli mermaid board.json
+
+          - name: install && npx cli mermaid
+            script: |
+              npm install -g @google-labs/breadboard-cli
+
               wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json
 
               npx @google-labs/breadboard-cli mermaid board.json
