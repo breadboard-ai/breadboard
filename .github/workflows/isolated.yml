@@ -119,7 +119,7 @@ jobs:
         uses: actions/setup-node@main
         with:
           node-version: ${{ matrix.node-version }}
-          cache: "npm"
+          # cache: "npm"
       - run: npm install -g npm@${{ matrix.npm-version }}
       - name: Run command
         run: ${{ matrix.commands.script }}
