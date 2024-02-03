@@ -78,7 +78,7 @@ jobs:
 
           - script: |
               npm init @google-labs/breadboard test
-            name: npm init kit
+            name: npm init
 
           - script: |
               npx @google-labs/create-breadboard test
