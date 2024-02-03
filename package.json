@@ -13,7 +13,9 @@
     "ci": "npm ci",
     "check:format": "prettier --check --config .prettierrc packages/**/*.ts",
     "ci:local": "wireit",
-    "generate:docs": "wireit"
+    "generate:docs": "wireit",
+    "syncpack:check": "syncpack list-mismatches --config syncpack.config.ts",
+    "syncpack:fix": "syncpack fix-mismatches --config syncpack.config.ts"
   },
   "wireit": {
     "build": {
