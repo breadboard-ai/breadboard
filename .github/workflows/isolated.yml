@@ -27,6 +27,8 @@ jobs:
         exclude:
           - node-version: 19.x
             npm-version: 9.x
+          - node-version: 19.x
+            npm-version: 10.x
         commands:
           - |
             # npx breadboard mermaid
