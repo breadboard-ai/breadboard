@@ -7,6 +7,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  board_name: dl_board.json
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -30,140 +33,86 @@ jobs:
           - node-version: 19.x
             npm-version: 10.x
         commands:
+
           - name: npx cli run
             script: |
-              wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json
-
-              npx @google-labs/breadboard-cli run board.json -i "{\"message\": \"Hello World\"}"
+              npx @google-labs/breadboard-cli run ${{ env.board_name }} -i "{\"message\": \"Hello World\"}"
 
           - name: install && npx cli run
             script: |
               npm install -g @google-labs/breadboard-cli
+              npx @google-labs/breadboard-cli run ${{ env.board_name }} -i "{\"message\": \"Hello World\"}"
 
-              wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json
-
-              npx @google-labs/breadboard-cli run board.json -i "{\"message\": \"Hello World\"}"
+          - name: install x2 && npx cli run
+            script: |
+              npm install -g @google-labs/breadboard @google-labs/breadboard-cli
+              npx @google-labs/breadboard-cli run ${{ env.board_name }} -i "{\"message\": \"Hello World\"}"
 
           - name: install && npx breadboard run
             script: |
               npm install -g @google-labs/breadboard-cli
-
-              wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json
-
-              npx breadboard run board.json -i "{\"message\": \"Hello World\"}"
+              npx breadboard run ${{ env.board_name }} -i "{\"message\": \"Hello World\"}"
 
           ##############################################################################################################
 
           - name: npx cli mermaid
             script: |
-              wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json
-
-              npx @google-labs/breadboard-cli mermaid board.json
+              npx @google-labs/breadboard-cli mermaid dl_board.json
 
           - name: install && npx cli mermaid
             script: |
               npm install -g @google-labs/breadboard-cli
+              npx @google-labs/breadboard-cli mermaid dl_board.json
 
-              wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json
-
-              npx @google-labs/breadboard-cli mermaid board.json
+          - name: install x2 && npx cli mermaid
+            script: |
+              npm install -g @google-labs/breadboard @google-labs/breadboard-cli
+              npx @google-labs/breadboard-cli mermaid dl_board.json
 
           - name: install && npx cli mermaid
             script: |
               npm install -g @google-labs/breadboard-cli
-
-              wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json
-
-              npx breadboard mermaid board.json
+              npx breadboard mermaid dl_board.json
 
           ##############################################################################################################
 
-          - name: npm init board
-            script: |
+          - script: |
               npm init @google-labs/breadboard test
+            name: npm init kit
 
-              cd test
-              npm pkg get scripts || cat package.json
+          - script: |
+              npx @google-labs/create-breadboard test
+            name: npx create
 
-              npm install
-
-              if [ $(npm -v | cut -d. -f1) -le 6 ]; then
-                $(npm bin)/breadboard debug src/
-              else
-                npx @google-labs/breadboard-cli debug src/
-              fi
-
-          - name: install && init board
-            script: |
+          - script: |
               npm install -g @google-labs/create-breadboard
+              npx @google-labs/create-breadboard test
+            name: install && npx create
 
-              npm init @google-labs/breadboard test
-
-              cd test
-              npm pkg get scripts || cat package.json
-
-              npm install
-
-              if [ $(npm -v | cut -d. -f1) -le 6 ]; then
-                $(npm bin)/breadboard debug src/
-              else
-                npx @google-labs/breadboard-cli debug src/
-              fi
-
-          - name: install x2 && init board
-            script: |
-              npm install -g @google-labs/breadboard
-              npm install -g @google-labs/create-breadboard
-
-              npm init @google-labs/breadboard test
-
-              cd test
-              npm pkg get scripts || cat package.json
-
-              npm install
-
-              if [ $(npm -v | cut -d. -f1) -le 6 ]; then
-                $(npm bin)/breadboard debug src/
-              else
-                npx @google-labs/breadboard-cli debug src/
-              fi
+          - script: |
+              npm install -g @google-labs/breadboard @google-labs/create-breadboard
+              npx @google-labs/create-breadboard test
+            name: install x2 && npx create
 
           ##############################################################################################################
 
-          - name: npm init kit
-            script: |
+          - script: |
               npm init @google-labs/breadboard-kit test
+            name: npm init kit
 
-              cd test
-              npm pkg get scripts || cat package.json
+          - script: |
+              npx @google-labs/create-breadboard-kit test
+            name: npx create-kit
 
-              npm install
-              npm run build
-
-          - name: install && init kit
-            script: |
+          - script: |
               npm install -g @google-labs/create-breadboard-kit
+              npx @google-labs/create-breadboard-kit test
+            name: install && npx create-kit
 
-              npm init @google-labs/breadboard-kit test
-
-              cd test
-              npm pkg get scripts || cat package.json
-
-              npm install
-              npm run build
-
-          - name: install x2 && init kit
-            script: |
-              npm install -g @google-labs/breadboard
-              npm install -g @google-labs/create-breadboard-kit
-
-              npm init @google-labs/breadboard-kit test
-
-              cd test
-              npm pkg get scripts || cat package.json
-
-              npm install
-              npm run build
+          - script: |
+              npm install -g @google-labs/breadboard @google-labs/create-breadboard-kit
+              npx @google-labs/create-breadboard-kit test
+            name: install x2 && npx create-kit
 
     name: ${{ matrix.commands.name }} - Node ${{ matrix.node-version }} NPM ${{ matrix.npm-version }}
     steps:
@@ -174,6 +123,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           # cache: "npm"
       - run: npm install -g npm@${{ matrix.npm-version }}
+      - run: wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/${{ env.board_name }} -O ${{ env.board_name }}
       - name: Run command
         run: |
           set -ev
