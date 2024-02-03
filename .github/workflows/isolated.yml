@@ -18,14 +18,14 @@ jobs:
       matrix:
         node-version:
           - 21.x
-          # - 20.x
-          # - 19.x
+          - 20.x
+          - 19.x
           # - 18.x
         npm-version:
           - 10.x
-          # - 9.x
-          # - 8.x
-          # - 7.x
+          - 9.x
+          - 8.x
+          - 7.x
           # - 6.x
         exclude:
           - node-version: 19.x
@@ -43,11 +43,6 @@ jobs:
               npm install -g @google-labs/breadboard-cli
               npx @google-labs/breadboard-cli run $BOARD -i "{\"message\": \"Hello World\"}"
 
-          - name: install x2 + npx cli run
-            script: |
-              npm install -g @google-labs/breadboard @google-labs/breadboard-cli
-              npx @google-labs/breadboard-cli run $BOARD -i "{\"message\": \"Hello World\"}"
-
           - name: install + npx breadboard run
             script: |
               npm install -g @google-labs/breadboard-cli
@@ -62,11 +57,6 @@ jobs:
           - name: install + npx cli mermaid
             script: |
               npm install -g @google-labs/breadboard-cli
-              npx @google-labs/breadboard-cli mermaid dl_board.json
-
-          - name: install x2 + npx cli mermaid
-            script: |
-              npm install -g @google-labs/breadboard @google-labs/breadboard-cli
               npx @google-labs/breadboard-cli mermaid dl_board.json
 
           - name: install + npx cli mermaid
@@ -89,11 +79,6 @@ jobs:
               npx @google-labs/create-breadboard test
             name: install + npx create
 
-          - script: |
-              npm install -g @google-labs/breadboard @google-labs/create-breadboard
-              npx @google-labs/create-breadboard test
-            name: install x2 + npx create
-
           ##############################################################################################################
 
           - script: |
@@ -108,11 +93,6 @@ jobs:
               npm install -g @google-labs/create-breadboard-kit
               npx @google-labs/create-breadboard-kit test
             name: install + npx create-kit
-
-          - script: |
-              npm install -g @google-labs/breadboard @google-labs/create-breadboard-kit
-              npx @google-labs/create-breadboard-kit test
-            name: install x2 + npx create-kit
 
     name: ${{ matrix.commands.name }} - Node ${{ matrix.node-version }} NPM ${{ matrix.npm-version }}
     steps:
