@@ -15,24 +15,36 @@ jobs:
           - 21.x
         commands:
           - |
+            # npx breadboard mermaid
+            npm install -g npm@latest
+            set -ev
             npm install -g @google-labs/breadboard-cli
             wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json
 
             npx breadboard mermaid board.json
 
           - |
+            # npx breadboard run
+            npm install -g npm@latest
+            set -ev
             npm install -g @google-labs/breadboard-cli
             wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json
 
             npx breadboard run board.json -i "{\"message\": \"Hello World\"}"
 
           - |
+            # npm init @google-labs/breadboard test
+            npm install -g npm@latest
+            set -ev
             npm install -g @google-labs/breadboard
             npm init @google-labs/breadboard test
             cd test
             npm run dev
 
           - |
+            # npm init @google-labs/breadboard-kit test
+            npm install -g npm@latest
+            set -ev
             npm install -g @google-labs/breadboard
             npm init @google-labs/breadboard-kit test
             cd test
