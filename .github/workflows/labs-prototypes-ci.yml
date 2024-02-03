@@ -40,6 +40,9 @@ jobs:
       - name: Checking the code quality
         run: npm run lint
 
+      - name: Check Syncpack
+        run: npm run syncpack:check
+
       - name: Checking the code formatting
         run: npm run check:format
 
