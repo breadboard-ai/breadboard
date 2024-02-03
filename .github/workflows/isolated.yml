@@ -34,6 +34,7 @@ jobs:
             script: |
               set -ev
               npm install -g @google-labs/breadboard-cli
+
               wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json
 
               npx breadboard mermaid board.json
@@ -42,6 +43,7 @@ jobs:
             script: |
               set -ev
               npm install -g @google-labs/breadboard-cli
+
               wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json
 
               npx breadboard run board.json -i "{\"message\": \"Hello World\"}"
@@ -49,20 +51,31 @@ jobs:
           - name: init board
             script: |
               set -ev
+              npm install -g @google-labs/breadboard
+              npm install -g @google-labs/create-breadboard
+
               npm init @google-labs/breadboard test
+
               cd test
               npm pkg get scripts || cat package.json
+
               npm install
               npm run test
 
           - name: init kit
             script: |
               set -ev
+              npm install -g @google-labs/breadboard
+              npm install -g @google-labs/create-breadboard-kit
+
               npm init @google-labs/breadboard-kit test
+
               cd test
               npm pkg get scripts || cat package.json
+
               npm install
               npm run test
+
     name: ${{ matrix.commands.name }} - Node ${{ matrix.node-version }} NPM ${{ matrix.npm-version }}
     steps:
       - uses: actions/checkout@main
