@@ -23,7 +23,7 @@ jobs:
           - 7.x
           - 8.x
           - 9.x
-          - latest
+          - 10.x
         exclude:
           - node-version: 19.x
             npm-version: 9.x
