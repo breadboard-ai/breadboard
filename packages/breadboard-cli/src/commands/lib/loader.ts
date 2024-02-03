@@ -19,6 +19,9 @@ const boardLike = (
 export abstract class Loader {
   async makeFromSource(filename: string, source: string, options?: Options) {
     const board = await this.loadBoardFromSource(filename, source, options);
+    if (board == undefined) {
+      throw new Error("Failed to load board from source");
+    }
     const boardJson = JSON.stringify(board, null, 2);
     return { boardJson, board };
   }
@@ -66,14 +69,14 @@ export abstract class Loader {
     const randomName = Buffer.from(
       crypto.getRandomValues(new Uint32Array(16))
     ).toString("hex");
-    const filePath = join(
+    const tmpFilePath = join(
       tmpDir,
       `~${basename(filename, "ts")}${randomName}tmp.mjs`
     );
 
     let tmpFileStat;
     try {
-      tmpFileStat = await stat(filePath);
+      tmpFileStat = await stat(tmpFilePath);
     } catch (e) {
       // Don't care if the file doesn't exist. It's fine. It's what we want.
       ("Nothing to see here. Just don't want to have to re-throw.");
@@ -82,36 +85,43 @@ export abstract class Loader {
     if (tmpFileStat && tmpFileStat.isFile()) {
       // Don't write to a file.
       throw new Error(
-        `The temporary file ${filePath} already exists. We can't write to it.`
+        `The temporary file ${tmpFilePath} already exists. We can't write to it.`
       );
     }
 
     if (tmpFileStat && tmpFileStat.isSymbolicLink()) {
       // Don't write to a symbolic link.
       throw new Error(
-        `The file ${filePath} is a symbolic link. We can't write to it.`
+        `The file ${tmpFilePath} is a symbolic link. We can't write to it.`
       );
     }
 
     if (tmpFileStat && tmpFileStat.isDirectory() == false) {
       // Don't write to a directory.
       throw new Error(
-        `The file ${filePath} is a directory. We can't write to it.`
+        `The file ${tmpFilePath} is a directory. We can't write to it.`
       );
     }
 
-    // I heard it might be possible to do a symlink hijack. double check.
-    await writeFile(filePath, source);
+    try {
+      // I heard it might be possible to do a symlink hijack. double check.
+      await writeFile(tmpFilePath, source);
 
-    // For the import to work it has to be relative to the current working directory.
-    const board = await this.loadBoardFromModule(
-      resolve(process.cwd(), filePath)
-    );
+      // For the import to work it has to be relative to the current working directory.
+      const board = await this.loadBoardFromModule(
+        resolve(process.cwd(), tmpFilePath)
+      );
 
-    // remove the file
-    await unlink(filePath);
-
-    return board;
+      return board;
+    } catch (e) {
+      console.error(e);
+      return undefined;
+    } finally {
+      // remove the file
+      if (tmpFileStat && tmpFileStat.isFile()) {
+        await unlink(tmpFilePath);
+      }
+    }
   }
 
   abstract load(filePath: string, options: Options): Promise<BoardRunner>;
