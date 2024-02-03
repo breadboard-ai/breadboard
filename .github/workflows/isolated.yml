@@ -47,7 +47,7 @@ jobs:
             npm init @google-labs/breadboard test
             cd test
             npm pkg get scripts || cat package.json
-            npm run build
+            npm run dev
 
           - |
             # npm init @google-labs/breadboard-kit test
