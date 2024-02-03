@@ -12,6 +12,7 @@ import readline from "readline/promises";
 
 export async function bundle(board: string, flags: { output: string }) {
   let breadboardWebPublic;
+  // @ts-expect-error - TSC will copmlain because it believes that import.meta.resolve will always be defined and will give you TS2774
   if (import.meta.resolve) {
     const publicPath = await import.meta.resolve(
       "@google-labs/breadboard-web/public"
