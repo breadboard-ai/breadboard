@@ -14,9 +14,21 @@ jobs:
           - 20.x
           - 21.x
         commands:
-          - npm install -g @google-labs/breadboard-cli && npx breadboard import https://raw.githubusercontent.com/breadboard-ai/breadboard/c371c2cd5aca33673e30fc647c920228752e41ee/recipes/tools/openapi/tests/specs/openai.json -a createEmbeddings | npx breadboard mermaid
-          - npm init @google-labs/breadboard test && cd test && npm run dev
-          - npm init @google-labs/breadboard-kit test && cd test && npm run dev
+          - >
+            npm install -g @google-labs/breadboard-cli
+            wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json
+            npx breadboard mermaid board.json
+            npx run board.json
+          - >
+            npm install -g @google-labs/create-breadboard
+            npm init @google-labs/breadboard test
+            cd test
+            npm run dev
+          - >
+            npm install -g @google-labs/create-breadboard-kit
+            npm init @google-labs/breadboard-kit test
+            cd test
+            npm run dev
 
     steps:
       - uses: actions/checkout@v3
