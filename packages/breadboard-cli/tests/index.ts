@@ -72,13 +72,13 @@ const testBoardData = {
 
 // language=typescript
 const typescriptTestBoardContent = `
-import { Board } from "@google-labs/breadboard";
+import { Board, BreadboardNode } from "@google-labs/breadboard";
 
 const board: Board = new Board();
-const input = board.input({
+const input: BreadboardNode<unknown, unknown> = board.input({
   message: "Hello World!",
 });
-const output = board.output();
+const output: BreadboardNode<unknown, unknown> = board.output();
 input.wire("message", output);
 export default board;
 `;
