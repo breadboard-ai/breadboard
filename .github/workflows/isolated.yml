@@ -60,7 +60,12 @@ jobs:
               npm pkg get scripts || cat package.json
 
               npm install
-              npm exec breadboard debug src/
+
+              if [ $(npm -v | cut -d. -f1) -eq 6 ]; then
+                $(npm bin)/breadboard debug src/
+              else
+                npx breadboard debug src/
+              fi
 
           - name: init board with prior install
             script: |
@@ -73,7 +78,12 @@ jobs:
               npm pkg get scripts || cat package.json
 
               npm install
-              npm exec breadboard debug src/
+
+              if [ $(npm -v | cut -d. -f1) -eq 6 ]; then
+                $(npm bin)/breadboard debug src/
+              else
+                npx breadboard debug src/
+              fi
 
           - name: init kit
             script: |
