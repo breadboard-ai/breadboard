@@ -1,5 +1,4 @@
 import { Board, BoardRunner, GraphDescriptor } from "@google-labs/breadboard";
-import { resolve } from "path";
 import { pathToFileURL } from "url";
 
 export type Options = {
@@ -16,14 +15,6 @@ const boardLike = (
 };
 
 export abstract class Loader {
-  async makeFromFile(filePath: string) {
-    const board = await this.loadBoardFromModule(
-      resolve(process.cwd(), filePath)
-    );
-    const boardJson = JSON.stringify(board, null, 2);
-    return { boardJson, board };
-  }
-
   async loadBoardFromModule(file: string) {
     // This will leak. Look for other hot reloading solutions.
     let board = (await import(`${file}?${Date.now()}`)).default;
