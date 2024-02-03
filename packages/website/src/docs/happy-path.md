@@ -14,13 +14,13 @@ There are two ways to get started with Breadboard: fork a Replit project or inst
 
 ### Fork a Replit project
 
-Go to [Breadboard Starer Project](https://replit.com/@dglazkov/Breadboard-Starter-Project) and click "Fork". This will create roughly the setup that you'll have if you install Breadboard locally.
+Go to the [Breadboard Starter Project](https://replit.com/@dglazkov/Breadboard-Starter-Project) and click "Fork". This will create roughly the setup that you'll have if you install Breadboard locally.
 
 ### Install locally
 
 1. Install [Node.js >=v19](https://nodejs.org/en). If you already have an earlier version of Node installed, you can use [nvm](https://github.com/nvm-sh/nvm) to get to the version that Breadboard needs.
 
-2. Run `npm init @google-labs/breadboard` to set up the project. (TODO: make sure this works)
+2. Run `npm init @google-labs/breadboard` to set up the project.
 
 This will create a simple starter project that contains most of the bits you need to build AI boards.
 
