@@ -1,0 +1,28 @@
+name: Tests for Breadboard in an isolated environment
+on:
+  push:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version:
+          - 18.x
+          - 19.x
+          - 20.x
+          - 21.x
+        commands:
+          - npm install -g @google-labs/breadboard-cli && npx breadboard import https://raw.githubusercontent.com/breadboard-ai/breadboard/c371c2cd5aca33673e30fc647c920228752e41ee/recipes/tools/openapi/tests/specs/openai.json -a createEmbeddings | npx breadboard mermaid
+          - npm init @google-labs/breadboard test && cd test && npm run dev
+          - npm init @google-labs/breadboard-kit test && cd test && npm run dev
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+      - name: Run command
+        run: ${{ matrix.commands }}
