@@ -138,7 +138,7 @@ export interface BoardFactory {
    * @param fn Handler or graph creation function
    */
   <I extends InputValues = InputValues, O extends OutputValues = OutputValues>(
-    fn: GraphDeclarationFunction<I, O>
+    fn?: GraphDeclarationFunction<I, O>
   ): Lambda<I, Required<O>>;
 
   /**
