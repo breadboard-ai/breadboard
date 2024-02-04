@@ -3,14 +3,15 @@ import { Schema, SchemaDraft, ValidationResult, Validator } from "@cfworker/json
 import breadboardSchema from "@google-labs/breadboard-schema/breadboard.schema.json" assert { type: "json" };
 import assert from "node:assert";
 import { describe, test } from "node:test";
-import { Board } from "../src/board.js";
+import { GraphDescriptor, board } from "../src/index.js";
 
 test("some test", (t) => {
   assert.equal(1 + 1, 2);
 });
 
-describe("can create a board", (t) => {
-  const board: Board = new Board();
+describe("can create a board", async (t) => {
+  // const board: Board = new Board();
+  const bb: GraphDescriptor = await board().serialize();
 
   test("board is defined", () => {
     assert.ok(board);
@@ -21,53 +22,55 @@ describe("can create a board", (t) => {
   });
 
   test("board has a nodes array", () => {
-    assert.ok(board.nodes);
+    assert.ok(bb.nodes);
   });
 
   test("board has a nodes property", () => {
-    assert.ok(board.nodes);
+    assert.ok(bb.nodes);
   });
 
   test("board has a nodes property that is an array", () => {
-    assert.ok(Array.isArray(board.nodes));
+    assert.ok(Array.isArray(bb.nodes));
   });
 
   test("board has a nodes property that is an array of length 0", () => {
-    assert.equal(board.nodes.length, 0);
+    assert.equal(bb.nodes.length, 0);
   });
 
   test("board has a edges property", () => {
-    assert.ok(board.edges);
+    assert.ok(bb.edges);
   });
 
   test("board has a edges property that is an array", () => {
-    assert.ok(Array.isArray(board.edges));
+    assert.ok(Array.isArray(bb.edges));
   });
 
   test("board has a edges property that is an array of length 0", () => {
-    assert.equal(board.edges.length, 0);
+    assert.equal(bb.edges.length, 0);
   });
 
 
   test("board has a kits property", () => {
-    assert.ok(board.kits);
+    assert.ok(bb.kits);
   });
 
   test("board has a kits property that is an array", () => {
-    assert.ok(Array.isArray(board.kits));
+    assert.ok(Array.isArray(bb.kits));
   });
 
   test("board has a kits property that is an array of length 0", () => {
-    assert.equal(board.kits.length, 0);
+    assert.ok(bb.kits);
+    assert.equal(bb.kits.length, 0);
   });
 });
 
-test("board is created with correct title", (t) => {
+test("board is created with correct title", async (t) => {
   const title = "My Board";
-  const board: Board = new Board({
-    title,
+
+  const bb: GraphDescriptor = await board().serialize({
+    title
   });
-  assert.equal(board.title, title);
+  assert.equal(bb.title, title);
 });
 
 const shortCircuit = false;
@@ -75,17 +78,20 @@ const draft: SchemaDraft = "2020-12";
 const breadboardValidator = new Validator(breadboardSchema as Schema, draft, shortCircuit);
 
 describe("schema tests", async (t) => {
+
   await test("board has something that looks like a schema", async (t) => {
-    const board = new Board();
-    const schema: string = board.$schema!;
+    const bb: GraphDescriptor = await board().serialize();
+    const schema = bb.$schema;
 
     await t.test("schema is defined", (t) => {
       assert.ok(schema);
     });
+    assert.ok(schema);
 
     await t.test("schema is a valid uri", (t) => {
       assert.match(schema, /^https?:\/\/.*/);
     });
+
     await t.test("schema can be resolved", (t) => {
       assert.doesNotThrow(() => new URL(schema));
     });
@@ -96,17 +102,17 @@ describe("schema tests", async (t) => {
   });
 
   await test("validator that the validator validates", async (t) => {
-    const board = new Board();
-    const boardJson = JSON.parse(JSON.stringify(board));
+    const bb: GraphDescriptor = await board().serialize();
+    const boardJson = JSON.parse(JSON.stringify(bb));
     const result: ValidationResult = breadboardValidator.validate(boardJson);
     assert.ok(result.valid);
     assert.ok(result.errors.length === 0);
   });
 
   await test("validate using the schema from a board", async (t) => {
-    const board = new Board();
+    const bb: GraphDescriptor = await board().serialize();
     const boardJson = JSON.parse(JSON.stringify(board));
-    const schemaId = board.$schema;
+    const schemaId = bb.$schema;
 
     // assert that schemaId is defined
     assert.ok(schemaId);
@@ -140,8 +146,8 @@ describe("schema tests", async (t) => {
     // assert that edges is missing
     assert.ok(!schema.properties[property]);
 
-    const board = new Board();
-    const boardJson = JSON.parse(JSON.stringify(board));
+    const bb: GraphDescriptor = await board().serialize();
+    const boardJson = JSON.parse(JSON.stringify(bb));
 
     const validator = new Validator(schema, draft, shortCircuit);
     const result: ValidationResult = validator.validate(boardJson);
@@ -157,8 +163,8 @@ describe("schema tests", async (t) => {
       maxProperties: 0,
     };
 
-    const board: Board = new Board();
-    const boardJson = JSON.parse(JSON.stringify(board));
+    const bb: GraphDescriptor = await board().serialize();
+    const boardJson = JSON.parse(JSON.stringify(bb));
 
     const validator: Validator = new Validator(schema, draft, shortCircuit);
     const result: ValidationResult = validator.validate(boardJson);
@@ -187,9 +193,8 @@ describe("schema tests", async (t) => {
     assert.ok(schema.properties[potatoes]);
 
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const board: any = new Board();
-    const boardJson = JSON.parse(JSON.stringify(board));
+    const bb: GraphDescriptor = await board().serialize();
+    const boardJson = JSON.parse(JSON.stringify(bb));
 
     const validator: Validator = new Validator(schema as Schema, draft, shortCircuit);
     const result: ValidationResult = validator.validate(boardJson);
@@ -201,7 +206,7 @@ describe("schema tests", async (t) => {
 
 
     const boardWithAdditionalProperty = {
-      ...board,
+      ...bb,
       [potatoes]: "yummy"
     };
 
