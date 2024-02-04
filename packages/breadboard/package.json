@@ -123,7 +123,9 @@
       "dependencies": [
         "build:tsc"
       ],
-      "command": "node --test dist/**/*.node.test.js"
+      "command": "node --test dist/**/*.node.test.js",
+      "files":[],
+      "output": []
     }
   },
   "repository": {
