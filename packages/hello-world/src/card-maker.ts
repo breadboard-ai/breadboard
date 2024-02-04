@@ -93,12 +93,7 @@ export default await board(({ drawing }) => {
   // Ask Gemini Pro to act as the Character Developer.
   const developCharacter = gemini.text({
     $id: "developCharacter",
-    // While Breadboard TypeScript type system is under development,
-    // we occasionally need to remind it what type of port input we're
-    // expecting. That's what the `isString()` method does here.
-    // It's a temporary workaround, and will go away once we have tighter
-    // typing support.
-    text: prompt.isString(),
+    text: prompt,
   });
 
   // Return the results: both the newly minted card, and the original

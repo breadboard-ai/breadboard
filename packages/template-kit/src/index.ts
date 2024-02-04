@@ -37,7 +37,7 @@ import {
   NewNodeFactory as NodeFactory,
 } from "@google-labs/breadboard";
 
-export const templates = addKit(TemplateKit) as unknown as {
+export type TemplateKitType = {
   /**
    * Use this node to populate simple handlebar-style templates. A required
    * input is `template`, which is a string that contains the template prompt
@@ -79,7 +79,33 @@ export const templates = addKit(TemplateKit) as unknown as {
    * double curly braces.
    */
   urlTemplate: NodeFactory<
-    { template: string; [key: string]: NodeValue },
-    { url: string }
+    {
+      /**
+       * The URL template to use for the URL.
+       */
+      template: string;
+      /**
+       * Values for the template placeholders.
+       */
+      [key: string]: NodeValue;
+    },
+    {
+      /**
+       * The result of the URL template with placeholders being replaced with
+       * values.
+       */
+      url: string;
+    }
   >;
 };
+
+/**
+ * The Template Kit. Use members of this object to create nodes for templating.
+ *
+ * There are currently two members: `promptTemplate` and `urlTemplate`.
+ *
+ * The `promptTemplate` creates nodes for simple handlebar-style templates and
+ * the `urlTemplate` creates nodes for safely constructing URLs.
+ *
+ */
+export const templates = addKit(TemplateKit) as unknown as TemplateKitType;
