@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { callHandler } from "../handler.js";
+import { callHandler, handlersFromKits } from "../handler.js";
 import { KitBuilderOptions } from "./builder.js";
 import { BoardRunner } from "../runner.js";
 import {
@@ -63,7 +63,11 @@ export class GraphToKitAdapter {
         if (configuration) {
           inputs = { ...configuration, ...inputs };
         }
-        const handler = this.handlers?.[node.type];
+        const handlers = {
+          ...this.handlers,
+          ...handlersFromKits(context?.kits || []),
+        };
+        const handler = handlers?.[node.type];
         if (!handler)
           throw new Error(`No handler found for node "${node.type}".`);
 
@@ -71,6 +75,8 @@ export class GraphToKitAdapter {
         const board = this.runner!;
 
         const base = board.url ? new URL(board.url) : new URL(import.meta.url);
+
+        console.log("KIT HANDLER", context);
 
         return callHandler(handler, inputs, {
           ...context,

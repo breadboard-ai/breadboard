@@ -9,3 +9,12 @@ authors = [
 ]
 keywords = ["breadboard"]
 license = {file = "LICENSE"}
+
+
+dependencies = [
+  "pydantic",
+  "javascript",
+  "jsonref",
+  "json_fix",
+  "prettydiff",
+]

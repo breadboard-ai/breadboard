@@ -65,6 +65,11 @@
     "version": "0.0.2"
   },
   {
+    "title": "Gemini Simple",
+    "url": "/graphs/gemini-simple.json",
+    "version": "0.0.1"
+  },
+  {
     "title": "Healer",
     "url": "/graphs/healer.json",
     "version": "0.0.1"
@@ -155,6 +160,11 @@
   {
     "title": "Tour Guide Writer",
     "url": "/graphs/tour-guide-writer.json",
+    "version": "0.0.3"
+  },
+  {
+    "title": "The Python Calculator Recipe",
+    "url": "/graphs/-python.json",
     "version": "0.0.3"
   }
 ]

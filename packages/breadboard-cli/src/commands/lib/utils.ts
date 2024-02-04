@@ -72,15 +72,18 @@ export const loadBoard = async (
   file: string,
   options: Options
 ): Promise<BoardRunner> => {
-  const loaderType = extname(file).slice(1) as "js" | "ts" | "yaml" | "json";
+  const loaderType = extname(file).slice(1) as "js" | "ts" | "json";
   const save = "save" in options ? options["save"] : true;
+  // Most commands will pass in the output directory, but if they don't, we'll use the directory of the file being loaded.
+  const outputRoot =
+    "output" in options ? options["output"] : path.dirname(file);
 
   const loader = new Loaders(loaderType);
   const board = await loader.load(file, options);
   if (save && loaderType !== "json") {
     const pathInfo = path.parse(file);
     const boardClone = JSON.parse(JSON.stringify(board));
-    const outputFilePath = path.join(options.output, `${pathInfo.name}.json`);
+    const outputFilePath = path.join(outputRoot, `${pathInfo.name}.json`);
     delete boardClone.url; // Boards shouldn't have URLs serialized.
     const boardJson = JSON.stringify(boardClone, null, 2);
     await writeFile(outputFilePath, boardJson);
@@ -98,6 +101,11 @@ export const parseStdin = async (): Promise<string> => {
   return lines;
 };
 
+const showError = (e: unknown, path?: string) => {
+  const error = e as Error;
+  console.error(`Failed to load board at "${path}": ${error.message}`);
+};
+
 export const loadBoards = async (
   path: string,
   options: Options
@@ -106,37 +114,45 @@ export const loadBoards = async (
   const fileUrl = pathToFileURL(path);
 
   if (fileStat && fileStat.isFile() && path.endsWith(".json")) {
-    const data = await readFile(path, { encoding: "utf-8" });
-    const board = JSON.parse(data) as GraphDescriptor; // assume conversion would fail if it wasn't a graph descriptor.
+    try {
+      const data = await readFile(path, { encoding: "utf-8" });
+      const board = JSON.parse(data) as GraphDescriptor; // assume conversion would fail if it wasn't a graph descriptor.
 
-    return [
-      {
-        edges: board.edges ?? [],
-        nodes: board.nodes ?? [],
-        kits: board.kits ?? [],
-        title: board.title ?? path,
-        url: join("/", relative(process.cwd(), path)),
-        version: board.version ?? "0.0.1",
-      },
-    ];
+      return [
+        {
+          edges: board.edges ?? [],
+          nodes: board.nodes ?? [],
+          kits: board.kits ?? [],
+          title: board.title ?? path,
+          url: join("/", relative(process.cwd(), path)),
+          version: board.version ?? "0.0.1",
+        },
+      ];
+    } catch (e) {
+      showError(e, path);
+    }
   }
 
   if (
     fileStat &&
     fileStat.isFile() &&
-    (path.endsWith(".js") || path.endsWith(".ts") || path.endsWith(".yaml"))
+    (path.endsWith(".js") || path.endsWith(".ts"))
   ) {
-    // Compile the JS, TS or YAML.
-    const board = await loadBoard(path, options);
+    try {
+      // Compile the JS or TS.
+      const board = await loadBoard(path, options);
 
-    return [
-      {
-        ...board,
-        title: board.title ?? path,
-        url: join("/", relative(process.cwd(), path)),
-        version: board.version ?? "0.0.1",
-      },
-    ];
+      return [
+        {
+          ...board,
+          title: board.title ?? path,
+          url: join("/", relative(process.cwd(), path)),
+          version: board.version ?? "0.0.1",
+        },
+      ];
+    } catch (e) {
+      showError(e, path);
+    }
   }
 
   if (fileStat && fileStat.isDirectory()) {
@@ -162,37 +178,47 @@ async function loadBoardsFromDirectory(
   const boards: Array<BoardMetaData> = [];
   for await (const dirent of dir) {
     if (dirent.isFile() && dirent.name.endsWith(".json")) {
-      const data = await readFile(getFilename(dirent), {
-        encoding: "utf-8",
-      });
-      const board = JSON.parse(data);
-      boards.push({
-        ...board,
-        title: board.title ?? join("/", getFilename(dirent)),
-        url: join("/", getFilename(dirent)),
-        version: board.version ?? "0.0.1",
-      });
+      const filename = getFilename(dirent);
+      try {
+        const data = await readFile(filename, {
+          encoding: "utf-8",
+        });
+        const board = JSON.parse(data);
+        boards.push({
+          ...board,
+          title: board.title ?? join("/", getFilename(dirent)),
+          url: join("/", getFilename(dirent)),
+          version: board.version ?? "0.0.1",
+        });
+      } catch (e) {
+        showError(e, filename);
+      }
     }
 
     if (
       dirent.isFile() &&
-      (dirent.name.endsWith(".js") ||
-        dirent.name.endsWith(".ts") ||
-        dirent.name.endsWith(".yaml"))
+      (dirent.name.endsWith(".js") || dirent.name.endsWith(".ts"))
     ) {
-      const path = getFilename(dirent);
-      const board = await loadBoard(path, options);
-      boards.push({
-        ...board,
-        title: board.title ?? join("/", path),
-        url: join("/", path),
-        version: board.version ?? "0.0.1",
-      });
+      const filename = getFilename(dirent);
+      try {
+        const board = await loadBoard(filename, options);
+        boards.push({
+          ...board,
+          title: board.title ?? join("/", filename),
+          url: join("/", filename),
+          version: board.version ?? "0.0.1",
+        });
+      } catch (e) {
+        showError(e, filename);
+      }
     }
 
     if (dirent.isDirectory()) {
+      const baseFolder = fileUrl.pathname.endsWith("/")
+        ? fileUrl.pathname
+        : `${fileUrl.pathname}/`;
       const boardsInDir = await loadBoardsFromDirectory(
-        new URL(dirent.name, fileUrl),
+        new URL(dirent.name, pathToFileURL(baseFolder)),
         join(path, dirent.name),
         options
       );

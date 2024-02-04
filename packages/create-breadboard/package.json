@@ -42,7 +42,8 @@
         "FORCE_COLOR": "1"
       },
       "files": [
-        "src/**/*.ts"
+        "src/**/*.ts",
+        "../../.eslintrc.json"
       ],
       "output": []
     }
@@ -65,8 +66,8 @@
     "@google-labs/tsconfig": "^0.0.1",
     "@types/node": "^18.18.8",
     "@types/semver": "^7.5.4",
-    "@typescript-eslint/eslint-plugin": "^5.56.0",
-    "@typescript-eslint/parser": "^5.56.0",
+    "@typescript-eslint/eslint-plugin": "^6.20.0",
+    "@typescript-eslint/parser": "^6.20.0",
     "typescript": "^5.0.4"
   },
   "types": "./dist/src/index.d.ts",

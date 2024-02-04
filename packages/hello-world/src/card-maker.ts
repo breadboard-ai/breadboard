@@ -4,34 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Schema, base, board, code } from "@google-labs/breadboard";
+import { board, code } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { templates } from "@google-labs/template-kit";
+import { gemini } from "@google-labs/gemini-kit";
 
 // A URL of the Gemini Pro Vision board. We will invoke this board to
 // describe the picture.
+// Has these inputs:
+// - `parts`: the Gemini Pro API parts structure (JSON),
+// Has these outputs:
+// -  `result`: Gemini Pro Vision's response
 const visionBoard =
   "https://raw.githubusercontent.com/breadboard-ai/breadboard/f4adabe69a5a9af73a29fcc72e7042404157717b/packages/breadboard-web/public/graphs/gemini-pro-vision.json";
-
-// A URL of the Gemini Pro board. We will invoke this board to act as the
-// Character Developer.
-const textBoard =
-  "https://raw.githubusercontent.com/breadboard-ai/breadboard/3e9735ee557bf18deb87bc46663a6e3af7647e7d/packages/breadboard-web/public/graphs/gemini-generator.json";
-
-// A JSON Schema that tells Breadboard that the input will be a drawable
-// surface.
-const drawableSchema = {
-  type: "object",
-  properties: {
-    picture: {
-      type: "image/png",
-      title: "Draw an object to transform into the mystical creature",
-      format: "drawable",
-    },
-  },
-  required: ["content"],
-  additionalProperties: false,
-} satisfies Schema;
 
 // A node that appends the prompt to the parts array that already contains
 // the picture.
@@ -49,12 +34,13 @@ const randomLetterMaker = code(() => {
 });
 
 // The board we're building.
-export default await board(() => {
-  // TODO: Teach new syntax to take in the full Schema (maybe a "schema" method?)
+export default await board(({ drawing }) => {
   // [Step 1]
-  // Add an input node to allow the user to draw a picture.
-  // Use JSON Schema to tell Breadboard that we want a drawable surface.
-  const draw = base.input({ $id: "userDrawing", schema: drawableSchema });
+  // Tell the input that it's drawable.
+  drawing
+    .isImage()
+    .title("Draw an object to transform into the mystical creature")
+    .format("drawable"); // can also be "webcam".
 
   // [Added last]
   // Gemini tends to overrotate on Wumpuses for some reason,
@@ -66,7 +52,7 @@ export default await board(() => {
   // Append the picture to the prompt.
   const { parts } = appender({
     $id: "appendPictureToPrompt",
-    part: draw.picture,
+    part: drawing,
     prompt: `Describe the pictured object or subject in the sketch above, provide a thorough list of details. No matter how simple the sketch is, try
      to come up with as many details as possible. Improvise if necessary.`,
   });
@@ -105,10 +91,14 @@ export default await board(() => {
 
   // [Step 4]
   // Ask Gemini Pro to act as the Character Developer.
-  const developCharacter = core.invoke({
+  const developCharacter = gemini.text({
     $id: "developCharacter",
-    path: textBoard,
-    text: prompt,
+    // While Breadboard TypeScript type system is under development,
+    // we occasionally need to remind it what type of port input we're
+    // expecting. That's what the `isString()` method does here.
+    // It's a temporary workaround, and will go away once we have tighter
+    // typing support.
+    text: prompt.isString(),
   });
 
   // Return the results: both the newly minted card, and the original

@@ -4,13 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { ErrorObject } from "@google-labs/breadboard";
 import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
 
 @customElement("bb-error")
 export class BoardError extends LitElement {
   @property()
-  message: string | null = null;
+  message: string | ErrorObject | null = null;
 
   static styles = css`
     :host {
@@ -23,6 +24,10 @@ export class BoardError extends LitElement {
   `;
 
   render() {
-    return html`${this.message}`;
+    if (typeof this.message === "string") return html`${this.message}`;
+    return html`<div id="error">
+        ${JSON.stringify(this.message?.error, null, 2)}
+      </div>
+      <div id="descriptor">in: "${this.message?.descriptor.id}"</div>`;
   }
 }

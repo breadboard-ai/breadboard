@@ -1,5 +1,13 @@
 # @google-labs/node-nursery-web
 
+## 1.0.2
+
+### Patch Changes
+
+- Updated dependencies [9bcd607]
+- Updated dependencies [f6a7f43]
+  - @google-labs/breadboard@0.10.0
+
 ## 1.0.1
 
 ### Patch Changes

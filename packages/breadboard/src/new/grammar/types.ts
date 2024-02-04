@@ -291,6 +291,7 @@ export abstract class AbstractValue<T extends NodeValue = NodeValue>
   abstract isBoolean(): AbstractValue<boolean>;
   abstract isArray(): AbstractValue<NodeValue[]>;
   abstract isObject(): AbstractValue<{ [key: string]: NodeValue }>;
+  abstract isImage(mimeType?: string): AbstractValue<unknown>;
 
   abstract title(title: string): AbstractValue<T>;
   abstract format(format: string): AbstractValue<T>;

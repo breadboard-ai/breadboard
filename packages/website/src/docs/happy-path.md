@@ -1,35 +1,26 @@
 ---
 layout: docs.njk
-title: Happy Path
+title: Breadboard Developer Happy Path
+tags:
+  - general
+  - wip
 ---
-
-# Breadboard Developer Happy Path
 
 If you're eager to start making boards with Breadboard as quickly as possible, here's a yellow brick road that will take you there. It's not quite a tutorial, but more like a step-by-step onboarding guide with some of the best practices baked in.
 
 ## Getting started
 
-> [!WARNING]
->
-> Neither onboarding via Replit nor installing locally are ready yet. While they are baking, follow these steps for an in-tree setup:
->
-> - Check out and set up the monorepo following steps in [DEVELOPING.md](https://github.com/breadboard-ai/breadboard/blob/main/DEVELOPING.md#getting-started)
->
-> - Navigate to `packages/breadboard-web` from the root of the repo
->
-> - Pick back up at "Set up the environment".
-
 There are two ways to get started with Breadboard: fork a Replit project or install Breadboard locally.
 
 ### Fork a Replit project
 
-Go to Breadboard Replit Project (TOOD: URL) and click "Fork". This will create roughly the setup that you'll have if you install Breadboard locally.
+Go to the [Breadboard Starter Project](https://replit.com/@dglazkov/Breadboard-Starter-Project) and click "Fork". This will create roughly the setup that you'll have if you install Breadboard locally.
 
 ### Install locally
 
 1. Install [Node.js >=v19](https://nodejs.org/en). If you already have an earlier version of Node installed, you can use [nvm](https://github.com/nvm-sh/nvm) to get to the version that Breadboard needs.
 
-2. Run `npm init @google-labs/breadboard` to set up the project. (TODO: make sure this works)
+2. Run `npm init @google-labs/breadboard` to set up the project.
 
 This will create a simple starter project that contains most of the bits you need to build AI boards.
 
@@ -53,9 +44,16 @@ This will start the Breadboard debugger and give you a link to open it in the br
 
 (TODO: screenshot of the debugger tile view)
 
-(TOD: overview of the debugger)
-
 ![Debugger overview](/breadboard/static/images/debugger-overview.jpg)
+
+### Debugger Overview
+
+The debugger has four main panels:
+
+1. **A visualizer.** This shows you a graphical representation of your board. This allows you to see which nodes are connected to each other, and what the [ports](/docs/concepts/#ports) (inputs and outputs) of each [node](/docs/concepts/#nodes) are called.
+1. **Event timeline.** This gives you a quick overview of what is being called and on which board. (Sometimes you might have boards that call into other boards.) This timeline is also draggable, so if you want to step back to a certain point in history, you can. The other panels will update to match that point in the board's history, too, allowing you to see what the state of the board was at any given point.
+1. **Inputs & Outputs.** There are two panels dedicated to the inputs & outputs of the board. Inputs is where you will be prompted for any values the board need to continue, and outputs will show you what the board has generated.
+1. **Run log.** This gives you much more detail about each node in the board. Here you can click on an entry and see the precise input and output values for each node.
 
 ## Building a board
 

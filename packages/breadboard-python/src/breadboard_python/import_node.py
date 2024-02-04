@@ -1,10 +1,28 @@
 from .main import AttrDict, Board, convert_from_json_to_pydantic
-from javascript import require as require_js
+#from javascript import require as require_js, eval_js
+
+#from javascript import init
 import javascript
 import json
+import time
+import os
+
+import importlib
+
+def restart_javascript_module():
+  javascript.config.event_loop.stop()
+  importlib.reload(javascript.events)
+  importlib.reload(javascript)
 
 def require(package_name):
-  kit_package = require_js(package_name)
+  try:
+    kit_package = javascript.require(package_name)
+  except javascript.errors.JavaScriptError:
+    # Sometimes, the javascript module's JS subprocess does not load an npm package properly.
+    # When restarted, it will load correctly.
+    restart_javascript_module()
+    kit_package = javascript.require(package_name)
+    
   a = kit_package()
   handlers = a.handlers
 

@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "version": "0.9.1",
+  "version": "0.10.0",
   "description": "A library for rapid generative AI application prototyping",
   "main": "./dist/src/index.js",
   "exports": {
@@ -87,7 +87,8 @@
       "files": [
         "src/**/*.ts",
         "tests/**/*.ts",
-        ".eslintrc"
+        ".eslintrc",
+        "../../.eslintrc.json"
       ],
       "output": []
     },
@@ -138,7 +139,8 @@
     "timeout": "30s",
     "files": [
       "tests/**/*.ts",
-      "!tests/**/*.node.test.ts"
+      "!tests/**/*.node.test.ts",
+      "!tests/type-checks.ts"
     ],
     "workerThreads": false,
     "typescript": {
@@ -158,13 +160,15 @@
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
     "@cfworker/json-schema": "^1.12.8",
+    "@definitelytyped/dtslint": "^0.2.6",
     "@google-labs/tsconfig": "^0.0.1",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
     "@types/node": "^18.17.4",
-    "@typescript-eslint/eslint-plugin": "^5.56.0",
-    "@typescript-eslint/parser": "^5.56.0",
+    "@typescript-eslint/eslint-plugin": "^6.20.0",
+    "@typescript-eslint/parser": "^6.20.0",
     "ava": "^5.2.0",
+    "eslint-plugin-expect-type": "^0.3.0",
     "jsonschema": "^1.4.1",
     "rollup": "^4.1.4",
     "typedoc": "^0.25.1",
@@ -175,7 +179,7 @@
     "node": ">=19.0.0"
   },
   "dependencies": {
-    "@google-labs/breadboard-schema": "^1.1.0",
+    "@google-labs/breadboard-schema": "^1.2.0",
     "zod": "^3.22.4",
     "zod-to-json-schema": "^3.22.1"
   }
