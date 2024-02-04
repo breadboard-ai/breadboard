@@ -32,8 +32,65 @@ const GeminiKit = builder.build({
 
 export type GeminiKit = InstanceType<typeof GeminiKit>;
 
-export default GeminiKit;
-export const gemini = addKit(GeminiKit) as unknown as {
-  text: NewNodeFactory<{ text: string }, { text: string }>;
-  vision: NewNodeFactory<{ parts: NewNodeValue[] }, { result: string }>;
+export type GeminiKitType = {
+  /**
+   * Creates a node that calls the `Gemini Pro` model to generate a response.
+   */
+  text: NewNodeFactory<
+    {
+      /**
+       * The input text that will be used to generate the response.
+       */
+      text: NewNodeValue;
+    },
+    {
+      /**
+       * The generated response from the `Gemini Pro` model.
+       */
+      text: NewNodeValue;
+    }
+  >;
+  /**
+   * Creates a node that calls the `Gemini Pro Vision` model to generate a
+   * response.
+   */
+  vision: NewNodeFactory<
+    {
+      /**
+       * The input parts that will be used to generate the response.
+       * The format of this object be an array the `Gemini Pro Vision` model's
+       * "[parts](https://ai.google.dev/api/rest/v1/Content#Part)" objects of REST request:
+       * ```ts
+       * parts: [
+       *  {
+       *   text: "The text to be processed by the model."
+       *  },
+       *  {
+       *    inline_data: {
+       *      mimeType: "image/png",
+       *      data: "base64-encoded-image-data"
+       *  }
+       * ]
+       * ```
+       */
+      parts: NewNodeValue[];
+    },
+    {
+      /**
+       * The generated response from the `Gemini Pro` model.
+       */
+      result: NewNodeValue;
+    }
+  >;
 };
+
+export default GeminiKit;
+
+/**
+ * The Gemini Kit. Use members of this object to create nodes to interact with
+ * the Gemin language model. Currently, the two members are `text` and `vision`.
+ * The `text` member is used to generate text from the Gemini Pro model, and the
+ * `vision` member is used to generate a response from the Gemini Pro Vision
+ * model.
+ */
+export const gemini = addKit(GeminiKit) as unknown as GeminiKitType;
