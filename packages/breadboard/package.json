@@ -23,7 +23,9 @@
     "lint": "wireit",
     "merm": "wireit",
     "test:ava": "wireit",
-    "test:node": "wireit"
+    "test:node": "wireit",
+    "test:node:js": "wireit",
+    "test:node:ts": "wireit"
   },
   "wireit": {
     "build": {
@@ -121,11 +123,20 @@
     },
     "test:node": {
       "dependencies": [
+        "test:node:js",
+        "test:node:ts"
+      ]
+    },
+    "test:node:js": {
+      "dependencies": [
         "build:tsc"
       ],
       "command": "node --test dist/**/*.node.test.js",
       "files":[],
       "output": []
+    },
+    "test:node:ts": {
+      "command": "node --test --loader ts-node/esm tests/**/*.node.test.ts"
     }
   },
   "repository": {
