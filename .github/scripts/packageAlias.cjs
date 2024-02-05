@@ -11,7 +11,7 @@ module.exports = async ({
   console.log({ inputs });
   const packageNames = inputs.package;
   const ref = inputs.ref;
-  const wofkflow = inputs.workflow;
+  const workflow = inputs.workflow;
 
   const existingScope = "@google-labs";
   if (!process.env.OWNER_LC) {
@@ -40,9 +40,7 @@ module.exports = async ({
     console.log({ name: currentName, newName });
     packageJson.name = newName;
 
-    const version = `${new Date().toISOString().replace(/[^0-9]/g, "")}.${
-      wofkflow.run_id
-    }.${wofkflow.run_number}`;
+    const version = [0, workflow.run_id, workflow.run_number].join(".");
     console.log({ version });
     packageJson.version = version;
 

@@ -72,9 +72,11 @@ jobs:
                     workflow: {
                       run_id: '${{ github.run_id }}',
                       run_number: '${{ github.run_number }}',
+                      run_attempt: '${{ github.run_attempt }}',
                     }
                   }
                 })
+      - run: npm install -g npm@latest
       - run: npm install
         env:
           CI: false
