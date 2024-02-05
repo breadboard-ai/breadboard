@@ -3,7 +3,6 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "private": true,
   "version": "0.1.0",
   "description": "A Breadboard kit for using Gemini API",
   "main": "./dist/src/index.js",
