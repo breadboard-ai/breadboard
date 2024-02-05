@@ -31,7 +31,7 @@ jobs:
       - run: echo "OWNER_LC=${OWNER,,}" >>${GITHUB_ENV}
         env:
           OWNER: '${{ github.repository_owner }}'
-      - run: npm pkg set name @$OWNER_LC/${{ matrix.package }}
+      - run: npm pkg set name=@$OWNER_LC/${{ matrix.package }}
       - run: npm version --no-git-tag-version prepatch --preid=$(date +'%Y%m%d%H%M%S') --force
       - run: npm run build
       - run: npm publish --@$OWNER_LC:registry=https://npm.pkg.github.com/
