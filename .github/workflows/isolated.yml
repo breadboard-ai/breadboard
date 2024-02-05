@@ -80,9 +80,9 @@ jobs:
                   const keys = Object.entries(dependencies);
                   for (const [key, value] of keys) {
                     if (packages.map((p) => `${prefix}/${p}`).includes(key)) {
-                      const alias = `npm:@${process.env.OWNER_LC}/${key.replace(prefix,"")}@*`;
+                      const value = `npm:@${process.env.OWNER_LC}${key.replace(prefix,"")}@*`;
                       console.log(`${depKey}: ${key} -> ${alias}`);
-                      dependencies[alias] = value;
+                      dependencies[key] = value;
                     }
                   }
                   packageJson[depKey] = dependencies;
