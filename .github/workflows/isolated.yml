@@ -89,7 +89,7 @@ jobs:
             name: npx create-kit
 
           - script: |
-              npm install -g @exadev-io/create-breadboard-kit
+              npm install -g @exadev-io/create-breadboard-kit --registry=https://npm.pkg.github.com/
               npx @exadev-io/create-breadboard-kit test
             name: install + npx create-kit
 
