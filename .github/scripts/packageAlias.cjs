@@ -33,6 +33,13 @@ module.exports = async ({
 
     console.log({ package: packageJsonPath, name: packageJson.name });
 
+    const currentName = packageJson.name;
+    if (currentName.startsWith(existingScope)) {
+      const newName = currentName.replace(existingScope, newScope);
+      console.log({ name: currentName, newName });
+      packageJson.name = newName;
+    }
+
     for (const dtype of depTypes) {
       const depsOfType = packageJson[dtype];
       if (depsOfType) {
