@@ -91,6 +91,14 @@ jobs:
               npm install -g @$OWNER_LC/breadboard-cli
               npx @$OWNER_LC/breadboard-cli run $BOARD -i "{\"message\": \"Hello World\"}"
 
+          - name: install x2 + npx cli run
+            script: |
+              OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
+              npx @$OWNER_LC/breadboard-cli --version
+              npm install -g @$OWNER_LC/breadboard
+              npm install -g @$OWNER_LC/breadboard-cli
+              npx @$OWNER_LC/breadboard-cli run $BOARD -i "{\"message\": \"Hello World\"}"
+
           - name: install + npx breadboard run
             script: |
               OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
