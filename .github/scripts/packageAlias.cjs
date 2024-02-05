@@ -10,6 +10,8 @@ module.exports = async ({
 }) => {
   console.log({ inputs });
   const packageNames = inputs.package;
+  const ref = inputs.ref;
+  const wofkflow = inputs.workflow;
 
   const existingScope = "@google-labs";
   if (!process.env.OWNER_LC) {
@@ -34,11 +36,15 @@ module.exports = async ({
     console.log({ package: packageJsonPath, name: packageJson.name });
 
     const currentName = packageJson.name;
-    if (currentName.startsWith(existingScope)) {
-      const newName = currentName.replace(existingScope, newScope);
-      console.log({ name: currentName, newName });
-      packageJson.name = newName;
-    }
+    const newName = currentName.replace(existingScope, newScope);
+    console.log({ name: currentName, newName });
+    packageJson.name = newName;
+
+    const version = `${new Date().toISOString().replace(/[^0-9]/g, "")}.${
+      wofkflow.run_id
+    }.${wofkflow.run_number}`;
+    console.log({ version });
+    packageJson.version = version;
 
     for (const dtype of depTypes) {
       const depsOfType = packageJson[dtype];

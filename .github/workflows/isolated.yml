@@ -66,7 +66,14 @@ jobs:
                   io,
                   exec,
                   require,
-                  inputs: ${{ needs.setup.outputs.matrix }}
+                  inputs: {
+                    ...${{ needs.setup.outputs.matrix }},
+                    ref: '${{ github.ref }}',
+                    wortkflow: {
+                      run_id: '${{ github.run_id }}',
+                      run_number: '${{ github.run_number }}',
+                    }
+                  }
                 })
       - run: npm install
         env:
@@ -75,11 +82,7 @@ jobs:
 
       - run: npm pkg set registry=https://npm.pkg.github.com/
 
-      - run: npm version --no-git-tag-version --preid ${{ github.ref }} --force
-
       - run: npm run build
-
-      - run: npm pkg set name=@$OWNER_LC/${{ matrix.package }}
 
       - run: npm publish --@$OWNER_LC:registry=https://npm.pkg.github.com/
         env:
