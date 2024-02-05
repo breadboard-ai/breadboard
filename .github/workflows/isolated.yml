@@ -11,7 +11,10 @@ env:
   BOARD: dl_board.json
 
 jobs:
-  build:
+  test:
+    permissions:
+      contents: read
+      packages: read
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
