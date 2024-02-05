@@ -24,12 +24,12 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '20.x'
-          registry-url: 'https://npm.pkg.github.com/$GITHUB_REPOSITORY_OWNER'
+          registry-url: 'https://npm.pkg.github.com/$GITHUB_REPOSITORY'
       - run: npm install
         working-directory:  ${{ github.workspace }}
       - run: npm version --no-git-tag-version prepatch --preid=$(date +'%Y%m%d%H%M%S') --force
       - run: npm run build
-      - run: npm publish --@google-labs:registry=https://npm.pkg.github.com/$GITHUB_REPOSITORY_OWNER
+      - run: npm publish --registry=https://npm.pkg.github.com/$GITHUB_REPOSITORY
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
