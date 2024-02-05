@@ -35,6 +35,7 @@ jobs:
           directories: "packages/*"
           version: '*'
           pre_publish_commands: |
+            npm install
             npm pkg set registry=https://npm.pkg.github.com/
             npm run build
           publish_flags: |
