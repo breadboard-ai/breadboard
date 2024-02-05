@@ -39,10 +39,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{fromJson(needs.setup.outputs.matrix)}}
+    env:
+      MATRIX: ${{fromJson(needs.setup.outputs.matrix).package}}
     defaults:
       run:
         working-directory: packages/${{ matrix.package }}
     steps:
+      - run: echo $MATRIX
       - uses: actions/checkout@main
       - uses: actions/setup-node@main
         with:
@@ -59,7 +62,7 @@ jobs:
         run: |
           # npm install <ALIAS_NAME>@npm:<REAL_PACKAGE>@<PACKAGE_VERSION>
 
-          MATRIX_PACKAGE_ARRAY=( $(echo ${{fromJson(needs.setup.outputs.matrix)}} | jq -r '.package[]') )
+          MATRIX_PACKAGE_ARRAY=(${MATRIX//,/ })
           echo "MATRIX_PACKAGE_ARRAY=${MATRIX_PACKAGE_ARRAY[@]}"
 
           for PACKAGE in "${MATRIX_PACKAGE_ARRAY[@]}"; do
@@ -84,7 +87,7 @@ jobs:
 
       - run: npm pkg set registry=https://npm.pkg.github.com/
 
-      - run: npm version --no-git-tag-version prepatch --preid=$(date +'%Y%m%d-%H%M%S') --force
+      - run: npm version --no-git-tag-version --preid ${{ github.ref }} --force
 
       - run: npm run build
 
