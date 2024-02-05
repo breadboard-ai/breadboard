@@ -39,17 +39,20 @@ jobs:
           - name: npx cli run
             script: |
               OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
+              npx @$OWNER_LC/breadboard-cli --version
               npx @$OWNER_LC/breadboard-cli run $BOARD -i "{\"message\": \"Hello World\"}"
 
           - name: install + npx cli run
             script: |
               OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
+              npx @$OWNER_LC/breadboard-cli --version
               npm install -g @$OWNER_LC/breadboard-cli
               npx @$OWNER_LC/breadboard-cli run $BOARD -i "{\"message\": \"Hello World\"}"
 
           - name: install + npx breadboard run
             script: |
               OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
+              npx @$OWNER_LC/breadboard-cli --version
               npm install -g @$OWNER_LC/breadboard-cli
               npx breadboard run $BOARD -i "{\"message\": \"Hello World\"}"
 
@@ -58,17 +61,20 @@ jobs:
           - name: npx cli mermaid
             script: |
               OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
+              npx @$OWNER_LC/breadboard-cli --version
               npx @$OWNER_LC/breadboard-cli mermaid dl_board.json
 
           - name: install + npx cli mermaid
             script: |
               OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
+              npx @$OWNER_LC/breadboard-cli --version
               npm install -g @$OWNER_LC/breadboard-cli
               npx @$OWNER_LC/breadboard-cli mermaid dl_board.json
 
           - name: install + npx breadboard mermaid
             script: |
               OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
+              npx @$OWNER_LC/breadboard-cli --version
               npm install -g @$OWNER_LC/breadboard-cli
               npx breadboard mermaid dl_board.json
 
@@ -76,16 +82,19 @@ jobs:
 
           - script: |
               OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
+              npx @$OWNER_LC/create-breadboard --version
               npm init @$OWNER_LC/breadboard test
             name: npm init
 
           - script: |
               OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
+              npx @$OWNER_LC/create-breadboard --version
               npx @$OWNER_LC/create-breadboard test
             name: npx create
 
           - script: |
               OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
+              npx @$OWNER_LC/create-breadboard --version
               npm install -g @$OWNER_LC/create-breadboard
               npx @$OWNER_LC/create-breadboard test
             name: install + npx create
@@ -94,16 +103,19 @@ jobs:
 
           - script: |
               OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
+              npx @$OWNER_LC/create-breadboard-kit --version
               npm init @$OWNER_LC/breadboard-kit test
             name: npm init kit
 
           - script: |
               OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
+              npx @$OWNER_LC/create-breadboard-kit --version
               npx @$OWNER_LC/create-breadboard-kit test
             name: npx create-kit
 
           - script: |
               OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
+              npx @$OWNER_LC/create-breadboard-kit --version
               npm install -g @$OWNER_LC/create-breadboard-kit
               npx @$OWNER_LC/create-breadboard-kit test
             name: install + npx create-kit
