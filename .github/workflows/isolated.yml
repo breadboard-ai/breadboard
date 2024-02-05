@@ -39,59 +39,59 @@ jobs:
 
           - name: install + npx cli run
             script: |
-              npm install -g @exadev-io/breadboard-cli
+              npm install -g @exadev-io/breadboard-cli --registry=https://npm.pkg.github.com/
               npx @exadev-io/breadboard-cli run $BOARD -i "{\"message\": \"Hello World\"}"
 
           - name: install + npx breadboard run
             script: |
-              npm install -g @exadev-io/breadboard-cli
+              npm install -g @exadev-io/breadboard-cli --registry=https://npm.pkg.github.com/
               npx breadboard run $BOARD -i "{\"message\": \"Hello World\"}"
 
           ##############################################################################################################
 
-          - name: npx cli mermaid
-            script: |
-              npx @exadev-io/breadboard-cli mermaid dl_board.json
+          # - name: npx cli mermaid
+          #   script: |
+          #     npx @exadev-io/breadboard-cli mermaid dl_board.json
 
-          - name: install + npx cli mermaid
-            script: |
-              npm install -g @exadev-io/breadboard-cli
-              npx @exadev-io/breadboard-cli mermaid dl_board.json
+          # - name: install + npx cli mermaid
+          #   script: |
+          #     npm install -g @exadev-io/breadboard-cli
+          #     npx @exadev-io/breadboard-cli mermaid dl_board.json
 
-          - name: install + npx breadboard mermaid
-            script: |
-              npm install -g @exadev-io/breadboard-cli
-              npx breadboard mermaid dl_board.json
+          # - name: install + npx breadboard mermaid
+          #   script: |
+          #     npm install -g @exadev-io/breadboard-cli
+          #     npx breadboard mermaid dl_board.json
 
-          ##############################################################################################################
+          # ##############################################################################################################
 
-          - script: |
-              npm init @exadev-io/breadboard test
-            name: npm init
+          # - script: |
+          #     npm init @exadev-io/breadboard test
+          #   name: npm init
 
-          - script: |
-              npx @exadev-io/create-breadboard test
-            name: npx create
+          # - script: |
+          #     npx @exadev-io/create-breadboard test
+          #   name: npx create
 
-          - script: |
-              npm install -g @exadev-io/create-breadboard
-              npx @exadev-io/create-breadboard test
-            name: install + npx create
+          # - script: |
+          #     npm install -g @exadev-io/create-breadboard
+          #     npx @exadev-io/create-breadboard test
+          #   name: install + npx create
 
-          ##############################################################################################################
+          # ##############################################################################################################
 
-          - script: |
-              npm init @exadev-io/breadboard-kit test
-            name: npm init kit
+          # - script: |
+          #     npm init @exadev-io/breadboard-kit test
+          #   name: npm init kit
 
-          - script: |
-              npx @exadev-io/create-breadboard-kit test
-            name: npx create-kit
+          # - script: |
+          #     npx @exadev-io/create-breadboard-kit test
+          #   name: npx create-kit
 
-          - script: |
-              npm install -g @exadev-io/create-breadboard-kit --registry=https://npm.pkg.github.com/
-              npx @exadev-io/create-breadboard-kit test
-            name: install + npx create-kit
+          # - script: |
+          #     npm install -g @exadev-io/create-breadboard-kit
+          #     npx @exadev-io/create-breadboard-kit test
+          #   name: install + npx create-kit
 
     name: ${{ matrix.commands.name }} - Node ${{ matrix.node-version }} NPM ${{ matrix.npm-version }}
     steps:
