@@ -101,7 +101,7 @@ jobs:
         uses: actions/setup-node@main
         with:
           node-version: ${{ matrix.node-version }}
-          # cache: "npm"
+          registry-url: 'https://npm.pkg.github.com/'
       - run: npm install -g npm@${{ matrix.npm-version }}
       - run: wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O $BOARD
       - name: Run command
