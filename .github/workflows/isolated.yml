@@ -41,7 +41,7 @@ jobs:
             npm run build
           directories_to_publish: "packages/*"
           publish_flags: |
-            --@$OWNER_LC:registry=https://npm.pkg.github.com/
+            --@${{ env.OWNER_LC }}:registry=https://npm.pkg.github.com/
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
