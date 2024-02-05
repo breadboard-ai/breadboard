@@ -94,7 +94,7 @@ jobs:
           - name: install x2 + npx cli run
             script: |
               OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
-              npm install -g @$OWNER_LC/breadboa @$OWNER_LC/breadboard-cli
+              npm install -g @$OWNER_LC/breadboard @$OWNER_LC/breadboard-cli
               npx @$OWNER_LC/breadboard-cli --version
               npx @$OWNER_LC/breadboard-cli run $BOARD -i "{\"message\": \"Hello World\"}"
 
