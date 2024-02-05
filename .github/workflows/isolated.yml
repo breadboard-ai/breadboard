@@ -11,7 +11,60 @@ env:
   BOARD: dl_board.json
 
 jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - id: matrix
+        env:
+          MATRIX: |
+            {
+              "package": [
+                "breadboard",
+                "breadboard-cli",
+                "create-breadboard",
+                "create-breadboard-kit"
+              ]
+            }
+        run: |
+          jq -rn 'env.MATRIX | fromjson | @json "matrix=\(.)"' > $GITHUB_OUTPUT
+  initial_publish:
+    needs: setup
+    strategy:
+      fail-fast: false
+      matrix: ${{fromJson(needs.setup.outputs.matrix)}}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@main
+      - uses: actions/setup-node@main
+        with:
+          node-version: "21.x"
+          registry-url: "https://npm.pkg.github.com/"
+          cache: "npm"
+      - run: set -ev
+      - run: echo "OWNER_LC=${OWNER,,}" >>${GITHUB_ENV}
+        env:
+          OWNER: "${{ github.repository_owner }}"
+      - uses: Mearman/npm-alias-publish@main
+        with:
+          from: "@google-labs"
+          to: "@${{ env.OWNER_LC }}"
+          fail_on_non_package_dir: false
+          directories: "packages/${{ matrix.package }}"
+          version: '*'
+          pre_publish_commands: |
+            npm run build
+            npm pkg set registry=https://npm.pkg.github.com/
+          publish_flags: |
+            --@${{ env.OWNER_LC }}:registry=https://npm.pkg.github.com/
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   publish:
+    needs: initial_publish
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -41,7 +94,6 @@ jobs:
             --@${{ env.OWNER_LC }}:registry=https://npm.pkg.github.com/
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   test:
     needs: publish
     permissions:
