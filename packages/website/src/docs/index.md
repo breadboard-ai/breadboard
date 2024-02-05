@@ -5,8 +5,7 @@ tags:
   - general
   - wip
 hide_toc: true
+date: 2012-01-01 # Done to place the index atop the list.
 ---
-
-# Docs
 
 These are the docs for Breadboard.
