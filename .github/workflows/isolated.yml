@@ -11,19 +11,34 @@ env:
   BOARD: dl_board.json
 
 jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - id: matrix
+        env:
+          MATRIX: |
+            {
+              "package": [
+                "breadboard",
+                "breadboard-cli",
+                "create-breadboard",
+                "create-breadboard-kit"
+              ]
+            }
+        run: |
+          jq -rn 'env.MATRIX | fromjson | @json "matrix=\(.)"' > $GITHUB_OUTPUT
+
   publish:
+    needs: setup
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
     strategy:
       fail-fast: false
-      matrix:
-        package:
-          - breadboard
-          - breadboard-cli
-          - create-breadboard
-          - create-breadboard-kit
+      matrix: ${{fromJson(needs.setup.outputs.matrix)}}
     defaults:
       run:
         working-directory: packages/${{ matrix.package }}
@@ -40,31 +55,31 @@ jobs:
           OWNER: "${{ github.repository_owner }}"
 
       - name: Update dependency namespaces
+        working-directory: ${{ github.workspace }}
         run: |
-          OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
-          for package in $(ls packages); do
-            cd packages/$package
-            for dep in $(jq -r '.dependencies | keys[]' package.json); do
-              if [[ $dep == "@google-labs/"* ]]; then
-                echo "Uninstalling $dep"
-                npm uninstall --save $dep
-                alias="$dep@$OWNER_LC:${dep/@google-labs/@$OWNER_LC}"
-                echo "Installing $alias"
-                npm install --save $alias
-              fi
-            done
-            for dep in $(jq -r '.devDependencies | keys[]' package.json); do
-              if [[ $dep == "@google-labs/"* ]]; then
-                echo "Uninstalling $dep"
-                npm uninstall --save-dev $dep
-                alias="dep@$OWNER_LC:${dep/@google-labs/@$OWNER_LC}"
-                echo "Installing $alias"
-                npm install --save-dev $alias
-              fi
-            done
-            cd ../..
+          # npm install <ALIAS_NAME>@npm:<REAL_PACKAGE>@<PACKAGE_VERSION>
+
+          MATRIX_PACKAGE_ARRAY=( $(echo ${{fromJson(needs.setup.outputs.matrix)}} | jq -r '.package[]') )
+          echo "MATRIX_PACKAGE_ARRAY=${MATRIX_PACKAGE_ARRAY[@]}"
+
+          for PACKAGE in "${MATRIX_PACKAGE_ARRAY[@]}"; do
+            echo "PACKAGE=${PACKAGE}"
+            cd packages/${PACKAGE}
+            for DEPENDENCY in "${MATRIX_PACKAGE_ARRAY[@]}"; do
+              for dep in $(jq -r '.dependencies | keys[]' package.json); do
+                if [[ $dep == "@google-labs/"* ]]; then
+                  echo "DEP=${dep}"
+                  ALIAS="@google-labs/${dep#*@google-labs/}@npm:@${OWNER_LC}/${dep#*@google-labs/}"
+                  echo "ALIAS=${ALIAS}"
+                  npm uninstall $dep
+                  npm install $ALIAS
+                fi
+              done
           done
+
       - run: npm install
+        env:
+          CI: false
         working-directory: ${{ github.workspace }}
 
       - run: npm pkg set registry=https://npm.pkg.github.com/
