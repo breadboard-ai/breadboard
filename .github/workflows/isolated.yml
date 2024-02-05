@@ -11,84 +11,37 @@ env:
   BOARD: dl_board.json
 
 jobs:
-  setup:
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.matrix.outputs.matrix }}
-    steps:
-      - id: matrix
-        env:
-          MATRIX: |
-            {
-              "package": [
-                "breadboard",
-                "breadboard-cli",
-                "create-breadboard",
-                "create-breadboard-kit"
-              ]
-            }
-        run: |
-          jq -rn 'env.MATRIX | fromjson | @json "matrix=\(.)"' > $GITHUB_OUTPUT
-
   publish:
-    needs: setup
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-    strategy:
-      fail-fast: false
-      matrix: ${{fromJson(needs.setup.outputs.matrix)}}
-    defaults:
-      run:
-        working-directory: packages/${{ matrix.package }}
     steps:
       - uses: actions/checkout@main
       - uses: actions/setup-node@main
         with:
-          node-version: "20.x"
+          node-version: "21.x"
           registry-url: "https://npm.pkg.github.com/"
           cache: "npm"
       - run: set -ev
       - run: echo "OWNER_LC=${OWNER,,}" >>${GITHUB_ENV}
         env:
           OWNER: "${{ github.repository_owner }}"
-      - uses: actions/github-script@main
+      - uses: Mearman/npm-alias-publish@main
         with:
-          retries: 3
-          script: |
-                const fn = require('${{ github.workspace }}/.github/scripts/packageAlias.cjs')
-                await fn({
-                  github,
-                  context,
-                  core,
-                  glob,
-                  io,
-                  exec,
-                  require,
-                  inputs: {
-                    ...${{ needs.setup.outputs.matrix }},
-                    ref: '${{ github.ref }}',
-                    workflow: {
-                      run_id: '${{ github.run_id }}',
-                      run_number: '${{ github.run_number }}',
-                      run_attempt: '${{ github.run_attempt }}',
-                    }
-                  }
-                })
-      - run: npm install -g npm@latest
-      - run: npm install
-        env:
-          CI: false
-        working-directory: ${{ github.workspace }}
-
-      - run: npm pkg set registry=https://npm.pkg.github.com/
-
-      - run: npm run build
-
-      - run: npm publish --@$OWNER_LC:registry=https://npm.pkg.github.com/
+          from: "@google-labs"
+          to: "@$OWNER_LC"
+          directories_to_rescope: "packages/*"
+          prePublishCommands: |
+            npm pkg set registry=https://npm.pkg.github.com/
+            npm install
+            npm run build
+          directories_to_publish: "packages/*"
+          publish_flags: |
+            --@$OWNER_LC:registry=https://npm.pkg.github.com/
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   test:
     needs: publish
     permissions:
