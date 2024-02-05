@@ -1,5 +1,12 @@
 # @google-labs/breadboard-hello-world
 
+## 1.2.2
+
+### Patch Changes
+
+- Updated dependencies [45654e1]
+  - @google-labs/breadboard-cli@0.4.1
+
 ## 1.2.1
 
 ### Patch Changes

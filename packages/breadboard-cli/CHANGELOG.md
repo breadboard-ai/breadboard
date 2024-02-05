@@ -1,5 +1,13 @@
 # @google-labs/breadboard-cli
 
+## 0.4.1
+
+### Patch Changes
+
+- 45654e1: update dependencies for running in a clean environment
+- Updated dependencies [7dbc32e]
+  - @google-labs/breadboard-web@1.1.1
+
 ## 0.4.0
 
 ### Minor Changes
