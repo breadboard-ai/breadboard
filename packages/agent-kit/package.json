@@ -12,11 +12,19 @@
   "type": "module",
   "scripts": {
     "prepack": "npm run build",
+    "dev": "wireit",
     "test": "wireit",
     "build": "wireit",
     "lint": "wireit"
   },
   "wireit": {
+    "dev": {
+      "command": "breadboard debug src/boards --watch -n",
+      "dependencies": [
+        "build",
+        "../breadboard-cli:build"
+      ]
+    },
     "build": {
       "dependencies": [
         "../breadboard:build",
