@@ -40,7 +40,7 @@ module.exports = async ({
         const keys = Object.entries(depsOfType);
         for (const [key, value] of keys) {
           if (key.startsWith(existingScope)) {
-            const alias = `npm:@${newScope}${key.replace(existingScope, "")}@*`;
+            const alias = `npm:${newScope}${key.replace(existingScope, "")}@*`;
             console.log(`${key} -> ${alias}`);
             depsOfType[alias] = value;
           }
