@@ -36,8 +36,8 @@ jobs:
           version: '*'
           pre_publish_commands: |
             npm install
-            npm pkg set registry=https://npm.pkg.github.com/
             npm run build
+            npm pkg set registry=https://npm.pkg.github.com/
           publish_flags: |
             --@${{ env.OWNER_LC }}:registry=https://npm.pkg.github.com/
         env:
