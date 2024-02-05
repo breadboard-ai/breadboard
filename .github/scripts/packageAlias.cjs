@@ -8,39 +8,39 @@ module.exports = async ({
   require,
   inputs,
 }) => {
-  console.log(inputs);
+  console.log({ inputs });
   const packageNames = inputs.package;
 
   const existingScope = "@google-labs";
-  const newScope = process.env.OWNER_LC;
-  console.log({ existingScope, newScope });
-  if (!newScope) {
+  if (!process.env.OWNER_LC) {
     throw new Error("OWNER_LC is not set");
   }
+  const newScope = `@${process.env.OWNER_LC}`;
+  console.log({ existingScope, newScope });
   const depTypes = ["dependencies", "devDependencies"];
 
   const fs = require("fs");
+  const path = require("path");
+
   console.log({ cwd: process.cwd() });
   const basePackageDir = "./packages";
 
   for (const p of packageNames) {
-    const packageDir = `${basePackageDir}/${p}`;
-    const packageJsonPath = `${packageDir}/package.json`;
+    console.log("=".repeat(80));
+    const packageDir = path.join(basePackageDir, p);
+    const packageJsonPath = path.join(packageDir, "package.json");
     const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
 
-    console.log({ "package.json": packageJsonPath, name: packageJson.name });
+    console.log({ package: packageJsonPath, name: packageJson.name });
 
     for (const dtype of depTypes) {
       const depsOfType = packageJson[dtype];
       if (depsOfType) {
-        console.log({ dtype, depsOfType });
+        console.log({ type: dtype });
         const keys = Object.entries(depsOfType);
         for (const [key, value] of keys) {
           if (key.startsWith(existingScope)) {
-            const alias = `npm:@${newScope}/${key.replace(
-              existingScope,
-              ""
-            )}@*`;
+            const alias = `npm:@${newScope}${key.replace(existingScope, "")}@*`;
             console.log(`${key} -> ${alias}`);
             depsOfType[alias] = value;
           }
@@ -48,6 +48,7 @@ module.exports = async ({
         packageJson[dtype] = depsOfType;
       }
     }
-    fs.writeFileSync(`${p}/package.json`, JSON.stringify(packageJson, null, 2));
+    fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
+    console.log("=".repeat(80));
   }
 };
