@@ -28,8 +28,8 @@ jobs:
       - run: npm install
         working-directory:  ${{ github.workspace }}
       - run: npm version --no-git-tag-version prepatch --preid=$(date +'%Y%m%d%H%M%S') --force
-      - run: npm run build --@google-labs:registry=https://npm.pkg.github.com/$GITHUB_REPOSITORY_OWNER
-      - run: npm publish
+      - run: npm run build
+      - run: npm publish --@google-labs:registry=https://npm.pkg.github.com/$GITHUB_REPOSITORY_OWNER
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
