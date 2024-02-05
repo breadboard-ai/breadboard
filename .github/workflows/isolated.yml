@@ -78,7 +78,7 @@ jobs:
                 if (dependencies) {
                   const keys = Object.entries(dependencies);
                   for (const [key, value] of keys) {
-                    if (packages.map((p) => `${prefix}/${p}`).includes(key)) {
+                    if (packages.map((p) => `@google-labs/${p}`).includes(key)) {
                       const alias = `npm:@${process.env.OWNER_LC}/${key}@*`;
                       console.log(`${depKey}: ${key} -> ${alias}`);
                       dependencies[alias] = value;
