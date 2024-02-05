@@ -44,7 +44,7 @@ jobs:
         working-directory: packages/${{ matrix.package }}
     steps:
       - run: |
-          echo "MATRIX_PACKAGES=${{fromJson(needs.setup.outputs.matrix).package[@]}}" >> $GITHUB_ENV
+          echo "MATRIX_PACKAGES=$(echo ${{ fromJson(needs.setup.outputs.matrix) }} | jq -r '.package[]' | tr '\n' ',')" >>${GITHUB_ENV
           echo $MATRIX_PACKAGES
       - uses: actions/checkout@main
       - uses: actions/setup-node@main
