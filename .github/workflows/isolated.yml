@@ -81,7 +81,7 @@ jobs:
                   for (const [key, value] of keys) {
                     if (packages.map((p) => `${prefix}/${p}`).includes(key)) {
                       const value = `npm:@${process.env.OWNER_LC}${key.replace(prefix,"")}@*`;
-                      console.log(`${depKey}: ${key} -> ${alias}`);
+                      console.log(`${depKey}: ${key} -> ${value}`);
                       dependencies[key] = value;
                     }
                   }
