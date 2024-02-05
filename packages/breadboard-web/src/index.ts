@@ -56,6 +56,7 @@ export class Main extends LitElement {
   #uiRef: Ref<BreadboardUI.Elements.UI> = createRef();
   #previewRef: Ref<HTMLIFrameElement> = createRef();
   #boardId = 0;
+  #lastBoardId = 0;
   #delay = 0;
   #status = BreadboardUI.Types.STATUS.STOPPED;
   #statusObservers: Array<(value: BreadboardUI.Types.STATUS) => void> = [];
@@ -312,6 +313,12 @@ export class Main extends LitElement {
       return;
     }
 
+    // Board has already started; don't restart.
+    if (this.#lastBoardId === this.#boardId) {
+      return;
+    }
+
+    this.#lastBoardId = this.#boardId;
     this.loadInfo = await getBoardInfo(this.url);
 
     if (this.mode === MODE.BUILD) {
@@ -329,7 +336,6 @@ export class Main extends LitElement {
     ui.load(this.loadInfo);
 
     const currentBoardId = this.#boardId;
-
     let lastEventTime = globalThis.performance.now();
     for await (const result of run(createRunConfig(this.url))) {
       const runDuration = result.data.timestamp - lastEventTime;
@@ -431,7 +437,6 @@ export class Main extends LitElement {
     this.#bootWithUrl = null;
     this.#setActiveBreadboard(null);
 
-    this.#boardId++;
     if (!this.#uiRef.value) {
       return;
     }
