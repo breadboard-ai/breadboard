@@ -39,13 +39,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{fromJson(needs.setup.outputs.matrix)}}
-    env:
-      MATRIX: ${{fromJson(needs.setup.outputs.matrix).package}}
     defaults:
       run:
         working-directory: packages/${{ matrix.package }}
     steps:
-      - run: echo $MATRIX
+      - run: |
+          echo "MATRIX_PACKAGES=${{fromJson(needs.setup.outputs.matrix).package[@]}}" >> $GITHUB_ENV
+          echo $MATRIX_PACKAGES
       - uses: actions/checkout@main
       - uses: actions/setup-node@main
         with:
