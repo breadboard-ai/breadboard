@@ -1,5 +1,12 @@
 # @google-labs/breadboard-hello-world
 
+## 1.2.1
+
+### Patch Changes
+
+- Updated dependencies [d22d998]
+  - @google-labs/gemini-kit@0.1.1
+
 ## 1.2.0
 
 ### Minor Changes

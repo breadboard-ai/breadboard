@@ -1,5 +1,11 @@
 # @google-labs/gemini-kit
 
+## 0.1.1
+
+### Patch Changes
+
+- d22d998: Make Gemini Kit public.
+
 ## 0.1.0
 
 ### Minor Changes
