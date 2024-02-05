@@ -3,8 +3,6 @@ on:
   push:
   workflow_dispatch:
 
-env:
-  NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   publish:
@@ -29,4 +27,7 @@ jobs:
       - run: npm version --no-git-tag-version prepatch --preid=$(date +'%Y%m%d%H%M%S') --force
       - run: npm run build
       - run: npm publish --@google-labs:registry=https://npm.pkg.github.com
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
