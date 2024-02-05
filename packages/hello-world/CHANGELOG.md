@@ -1,5 +1,22 @@
 # @google-labs/breadboard-hello-world
 
+## 1.2.0
+
+### Minor Changes
+
+- 9c7d1ca: Update to invoke the Webcam board.
+- fb1c768: Introduce Gemini Kit.
+
+### Patch Changes
+
+- 3e56a4f: Added a few TSDoc comments to kits for Intellisense.
+- Updated dependencies [3e56a4f]
+- Updated dependencies [fb1c768]
+  - @google-labs/template-kit@0.1.4
+  - @google-labs/gemini-kit@0.1.0
+  - @google-labs/core-kit@0.2.2
+  - @google-labs/breadboard@0.10.1
+
 ## 1.1.0
 
 ### Minor Changes

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.10.1
+
+### Patch Changes
+
+- fb1c768: Introduce Gemini Kit.
+
 ## 0.10.0
 
 ### Minor Changes

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.2
+
+### Patch Changes
+
+- 3e56a4f: Added a few TSDoc comments to kits for Intellisense.
+- Updated dependencies [fb1c768]
+  - @google-labs/breadboard@0.10.1
+
 ## 0.2.1
 
 ### Patch Changes
