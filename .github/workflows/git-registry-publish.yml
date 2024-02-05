@@ -16,6 +16,9 @@ jobs:
         package:
           - breadboard
           - breadboard-cli
+    defaults:
+      run:
+        working-directory: packages/${{ matrix.package }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v3
@@ -23,7 +26,7 @@ jobs:
           node-version: '20.x'
           registry-url: 'https://npm.pkg.github.com'
       - run: npm install
-      - run: cd packages/${{ matrix.package }}
+        working-directory:  ${{ github.workspace }}
       - run: npm version --no-git-tag-version prepatch --preid=$(date +'%Y%m%d%H%M%S') --force
       - run: npm run build
       - run: npm publish --@google-labs:registry=https://npm.pkg.github.com
