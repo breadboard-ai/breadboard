@@ -55,7 +55,11 @@ Watching and piping the output of a command: `fswatch see/boards/rss.ts | xargs 
 
 Creates a graph json from a breadboard javascript file: `npx breadboard make packages/breadboard-cli/boards/echo.js`
 
-Pipe it to mermaid: `npx breadboard make packages/breadboard-cli/boards/echo.js | npx breadboard mermaid`
+`breadboard make [DIR]` - makes all the boards in dir/\*_/_ and outputs to cwd or `-o DIR`
+`breadboard make [FILE]` - makes the file and outputs it to cwd or ` -o DIR``
+ `breadboard make [FILE] -n` - makes the file and outputs it to console.
+
+Pipe it to mermaid: `npx breadboard make packages/breadboard-cli/boards/echo.js -n | npx breadboard mermaid`
 
 Watch a directory and make the files: `fswatch see/boards/*.ts | xargs -n1 -I {} sh -c "npx breadboard make {} -o ./`
 
