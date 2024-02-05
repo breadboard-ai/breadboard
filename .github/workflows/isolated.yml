@@ -32,7 +32,8 @@ jobs:
           from: "@google-labs"
           to: "@$OWNER_LC"
           directories_to_rescope: "packages/*"
-          prePublishCommands: |
+          version:
+          pre_publish_commands: |
             npm pkg set registry=https://npm.pkg.github.com/
             npm install
             npm run build
