@@ -38,16 +38,16 @@ jobs:
         commands:
           - name: npx cli run
             script: |
-              npx @exadev-io/breadboard-cli --registry=https://npm.pkg.github.com/ run $BOARD -i "{\"message\": \"Hello World\"}"
+              npx @exadev-io/breadboard-cli run $BOARD -i "{\"message\": \"Hello World\"}"
 
           - name: install + npx cli run
             script: |
-              npm install -g @exadev-io/breadboard-cli --registry=https://npm.pkg.github.com/
-              npx @exadev-io/breadboard-cli --registry=https://npm.pkg.github.com/ run $BOARD -i "{\"message\": \"Hello World\"}"
+              npm install -g @exadev-io/breadboard-cli
+              npx @exadev-io/breadboard-cli run $BOARD -i "{\"message\": \"Hello World\"}"
 
           # - name: install + npx breadboard run
           #   script: |
-          #     npm install -g @exadev-io/breadboard-cli --registry=https://npm.pkg.github.com/
+          #     npm install -g @exadev-io/breadboard-cli
           #     npx breadboard run $BOARD -i "{\"message\": \"Hello World\"}"
 
           ##############################################################################################################
@@ -106,6 +106,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           registry-url: 'https://npm.pkg.github.com/'
           scope: $OWNER_LC
+      - run: npm config set registry https://npm.pkg.github.com/
       - run: npm install -g npm@${{ matrix.npm-version }}
       - run: wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O $BOARD
       - name: Run command
