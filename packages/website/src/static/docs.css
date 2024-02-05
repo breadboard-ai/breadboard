@@ -148,11 +148,11 @@ code[class*="language-"] {
   margin-top: 16px;
 }
 
-.contents {
+.documentation {
   border-right: 1px solid #f0f0f0;
   display: none;
   position: fixed;
-  height: calc(100% - var(--bb-grid-size) * 10.5);
+  height: calc(100% - var(--bb-grid-size) * 10.5 - var(--bb-grid-size) * 16);
   left: 0;
   top: 42px;
   margin: 0 0 0 0;
@@ -162,11 +162,11 @@ code[class*="language-"] {
   align-items: flex-end;
 }
 
-.contents details {
+.documentation details {
   width: 300px;
 }
 
-.contents summary {
+.documentation summary {
   color: var(--bb-font-color-accent);
   font-size: 0.875rem;
   margin: 0 0 8px;
@@ -175,23 +175,23 @@ code[class*="language-"] {
   font-weight: bold;
 }
 
-.contents ul {
+.documentation ul {
   margin: 0;
   list-style: none;
   padding: 0 0 0 32px;
   font-size: 0.875rem;
 }
 
-.contents li {
+.documentation li {
   font-weight: bold;
   margin: 0 0 8px 0;
 }
 
-.contents > ul {
+.documentation > ul {
   padding: 20px;
 }
 
-.contents a {
+.documentation a {
   color: var(--bb-font-color-accent);
   text-decoration: none;
   transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
@@ -199,13 +199,13 @@ code[class*="language-"] {
   font-weight: normal;
 }
 
-.contents a:hover {
+.documentation a:hover {
   transition-duration: 0.1s;
   opacity: 1;
 }
 
 @media (min-width: 1440px) {
-  .contents {
+  .documentation {
     display: flex;
     flex-direction: column;
   }

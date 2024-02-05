@@ -1,6 +1,9 @@
 ---
 layout: docs.njk
 title: Intro
+tags:
+  - general
+  - wip
 hide_toc: true
 ---
 

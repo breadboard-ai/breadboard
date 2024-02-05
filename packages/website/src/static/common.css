@@ -68,18 +68,18 @@ body {
   background: #fff;
 }
 
-#navigation > div {
+#navigation > .home {
   flex: 1;
   margin-left: calc(var(--bb-grid-size) * 5);
 }
 
-#navigation > div > a {
+#navigation > .home > a {
   display: inline-flex;
   align-items: center;
   justify-content: flex-start;
 }
 
-#navigation > div > a::before {
+#navigation > .home > a::before {
   content: "";
   display: inline-block;
   width: 16px;
@@ -88,7 +88,8 @@ body {
   background: no-repeat center/16px url(/breadboard/static/icon.png);
 }
 
-#navigation a {
+#navigation > .home > a,
+#navigation > .inline-list > a {
   transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
   opacity: 0.7;
   margin-right: calc(var(--bb-grid-size) * 5);
@@ -104,10 +105,100 @@ body {
 }
 
 #navigation #github {
+  display: block;
   width: 16px;
   height: 16px;
   font-size: 0;
   background: no-repeat center/16px url(./third_party/github/github-mark.svg);
+}
+
+#navigation .inline-list {
+  display: none;
+}
+
+#doc-list-toggle {
+  width: 0;
+  height: 0;
+}
+
+.toggle-list {
+  display: flex;
+  user-select: none;
+}
+
+.toggle-list > label {
+  font-size: 0;
+  background: no-repeat center/16px
+    url(/breadboard/static/third_party/icons/menu.svg);
+  margin-right: 16px;
+  height: 24px;
+  width: 24px;
+}
+
+.toggle-list .documentation-list {
+  position: fixed;
+  background: #fff;
+  width: 100%;
+  left: 0;
+  top: calc(var(--bb-grid-size) * 10.5);
+  height: calc(80% - var(--bb-grid-size) * 10.5);
+  box-shadow: 0px 25px 13.1px rgba(0, 0, 0, 0.05),
+    0px 45px 50px rgba(0, 0, 0, 0.15);
+  overflow: auto;
+  padding-bottom: 24px;
+  display: none;
+}
+
+#doc-list-toggle:checked ~ .documentation-list {
+  display: block;
+}
+
+.toggle-list .documentation-list summary {
+  color: var(--bb-font-color-accent);
+  font-size: 0.875rem;
+  margin: 0 0 8px;
+  height: 40px;
+  padding: 20px 20px;
+  font-weight: bold;
+}
+
+.toggle-list .documentation-list ul {
+  margin: 0;
+  list-style: none;
+  padding: 0 0 0 32px;
+  font-size: 0.875rem;
+}
+
+.toggle-list .documentation-list li {
+  font-weight: bold;
+  margin: 0 0 8px 0;
+}
+
+.toggle-list .documentation-list > ul {
+  padding: 20px;
+}
+
+.toggle-list .documentation-list a {
+  color: var(--bb-font-color-accent);
+  text-decoration: none;
+  transition: opacity 0.3s cubic-bezier(0, 0, 0.3, 1);
+  opacity: 0.8;
+  font-weight: normal;
+}
+
+.toggle-list .documentation-list a:hover {
+  transition-duration: 0.1s;
+  opacity: 1;
+}
+
+@media (min-width: 1440px) {
+  #navigation .toggle-list {
+    display: none;
+  }
+
+  #navigation .inline-list {
+    display: flex;
+  }
 }
 
 footer {
