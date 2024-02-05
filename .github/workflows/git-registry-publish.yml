@@ -28,7 +28,7 @@ jobs:
       - run: npm install
         working-directory:  ${{ github.workspace }}
       - run: npm version --no-git-tag-version prepatch --preid=$(date +'%Y%m%d%H%M%S') --force
-      - run: npm run build
+      - run: npm run build --registry=https://npm.pkg.github.com/
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
