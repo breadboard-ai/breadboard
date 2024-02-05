@@ -42,7 +42,7 @@ module.exports = async ({
           if (key.startsWith(existingScope)) {
             const alias = `npm:${newScope}${key.replace(existingScope, "")}@*`;
             console.log(`${key} -> ${alias}`);
-            depsOfType[alias] = value;
+            depsOfType[key] = value;
           }
         }
         packageJson[dtype] = depsOfType;
