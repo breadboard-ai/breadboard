@@ -65,7 +65,8 @@ jobs:
                   glob,
                   io,
                   exec,
-                  require
+                  require,
+                  inputs: ${{ needs.setup.outputs.matrix }}
                 })
       - run: npm install
         env:
