@@ -27,7 +27,7 @@ jobs:
           registry-url: 'https://npm.pkg.github.com/'
       - run: npm install
         working-directory:  ${{ github.workspace }}
-      - run: npm pkg set registry https://npm.pkg.github.com/
+      - run: npm pkg set registry=https://npm.pkg.github.com/
       - run: echo "OWNER_LC=${OWNER,,}" >>${GITHUB_ENV}
         env:
           OWNER: '${{ github.repository_owner }}'
