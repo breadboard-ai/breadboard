@@ -5,8 +5,8 @@
  */
 
 import { board } from "@google-labs/breadboard";
-import { core } from "@google-labs/core-kit";
 import { json } from "@google-labs/json-kit";
+import { gemini } from "@google-labs/gemini-kit";
 
 const sampleContext = JSON.stringify(
   [
@@ -36,12 +36,11 @@ export default await board(({ generator, context, stopSequences }) => {
     .examples(sampleContext);
   stopSequences.title("Stop Sequences").isArray().optional().default("[]");
 
-  const { context: generated, text: output } = core.invoke({
+  const { context: generated, text: output } = gemini.text({
     $id: "generate",
     context,
     stopSequences,
     text: "unused", // A gross hack (see TODO in gemini-generator.ts)
-    path: generator.isString(),
   });
 
   const { result } = json.jsonata({
