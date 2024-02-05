@@ -35,14 +35,31 @@ jobs:
           registry-url: "https://npm.pkg.github.com/"
           cache: "npm"
 
+      - run: echo "OWNER_LC=${OWNER,,}" >>${GITHUB_ENV}
+        env:
+          OWNER: "${{ github.repository_owner }}"
+
+      - name: Update dependency namespaces
+        run: |
+          OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
+          for package in $(ls packages); do
+            cd packages/$package
+            for dep in $(jq -r '.dependencies | keys[]' package.json); do
+              if [[ $dep == "@google-labs/"* ]]; then
+                npm install --save ${dep/@google-labs/@$OWNER_LC}
+              fi
+            done
+            for dep in $(jq -r '.devDependencies | keys[]' package.json); do
+              if [[ $dep == "@google-labs/"* ]]; then
+                npm install --save-dev ${dep/@google-labs/@$OWNER_LC}
+              fi
+            done
+            cd ../..
+          done
       - run: npm install
         working-directory: ${{ github.workspace }}
 
       - run: npm pkg set registry=https://npm.pkg.github.com/
-
-      - run: echo "OWNER_LC=${OWNER,,}" >>${GITHUB_ENV}
-        env:
-          OWNER: "${{ github.repository_owner }}"
 
       - run: npm version --no-git-tag-version prepatch --preid=$(date +'%Y%m%d-%H%M%S') --force
 
