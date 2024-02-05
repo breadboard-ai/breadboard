@@ -31,14 +31,12 @@ jobs:
         with:
           from: "@google-labs"
           to: "@${{ env.OWNER_LC }}"
-          packages_to_alias: ^@google-labs
           fail_on_non_package_dir: false
-          directories_to_rescope: "packages/*"
+          directories: "packages/*"
           version: '*'
           pre_publish_commands: |
             npm pkg set registry=https://npm.pkg.github.com/
             npm run build
-          directories_to_publish: "packages/*"
           publish_flags: |
             --@${{ env.OWNER_LC }}:registry=https://npm.pkg.github.com/
         env:
