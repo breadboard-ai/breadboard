@@ -6,13 +6,18 @@ import { until } from "lit/directives/until.js";
 import {breadboardToVisualBlocks} from "./breadboard-to-visualblocks.js";
 
 const VISUALBLOCKS_URL =
-  "https://storage.googleapis.com/tfweb/node-graph-editor/node_graph_editor_20240130001456/node_graph_editor_bin.js"
+  "https://storage.googleapis.com/tfweb/node-graph-editor/node_graph_editor_20240201160419/node_graph_editor_bin.js"
 
 @customElement("visual-breadboard")
 export class VisualBreadboard extends LitElement {
   // TODO: Make this 'implement DiagramElement'
   #requestedVB = false;
-  #visualBlocks: Ref<HTMLElement> = createRef();
+  #visualBlocks?: HTMLElement;
+
+  #resolveVisualBlocksLoaded = () => {}
+  #visualBlocksLoaded = new Promise<void>((resolve) => {
+    this.#resolveVisualBlocksLoaded = resolve;
+  });
 
   @property()
   serializedGraph: any;
@@ -21,24 +26,18 @@ export class VisualBreadboard extends LitElement {
 
   }
 
-  async draw(diagram: LoadArgs, highlightedNode: string) {
+  #updateGraph = async (diagram: LoadArgs) => {
     if (!diagram.graphDescriptor) {
       return;
     }
     this.serializedGraph = breadboardToVisualBlocks(diagram.graphDescriptor);
     await this.updateComplete;
+    await this.#visualBlocksLoaded;
+    (this.#visualBlocks as any)?.smartLayout(); // TODO: Types
+  }
 
-    // TODO: Don't do this setTimeout hackery.
-    // It's necessary now because the angular visualblocks component hasn't
-    // yet registered all its `@Input` handlers, so the `smartLayout` property
-    // isn't available yet.
-    //
-    // We probably need to pass the component a callback that it can call
-    // after it's set up. This seems like it will work, since it's able to render
-    // the `serializedGraph`.
-    setTimeout(() => {
-      (this.#visualBlocks.value as any)?.smartLayout(); // TODO: Types
-    }, 100);
+  async draw(diagram: LoadArgs, highlightedNode: string) {
+    valueDebounce(this.#updateGraph, 2000)(diagram);
   }
 
   render() {
@@ -52,12 +51,21 @@ export class VisualBreadboard extends LitElement {
         //this.#scheduleDiagramRender();
       }
       return html`<graph-editor
-        ${ref(this.#visualBlocks)}
+        ${ref(this.setVisualBlocks)}
         .serializedGraph=${this.serializedGraph}
         ></graph-editor>`;
     };
 
     return until(loadVisualBlocks(), html`Loading...`);
+  }
+
+  private setVisualBlocks(visualBlocks?: Element) {
+    this.#visualBlocks = visualBlocks as HTMLElement;
+    if (visualBlocks) {
+      visualBlocks.addEventListener('loaded', () => {
+        this.#resolveVisualBlocksLoaded();
+      });
+    }
   }
 }
 
@@ -71,4 +79,26 @@ function loadScript(url: string): Promise<void> {
     script.onerror = reject;
     document.head.appendChild(script);
   });
+}
+
+
+let callTimes = new Map<(val: any) => void, [Date, any /* val */]>();
+// Don't call the function if the value is the same and the last call was
+// within `ms`.
+function valueDebounce<T>(cb: (val: T) => void, ms: number) {
+  return (val: T) => {
+//    if (
+
+    const now = new Date();
+    const [lastExecutionTime, lastVal] =
+      callTimes.get(cb) ?? [now, null];
+
+    if (val === lastVal && now.getTime() - lastExecutionTime.getTime() < ms) {
+      return;
+    }
+
+    cb(val);
+    callTimes.set(cb, [now, val]);
+    console.log(callTimes);
+  }
 }
