@@ -102,10 +102,12 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           registry-url: 'https://npm.pkg.github.com/'
-          scope: '$OWNER_LC'
+          scope: $OWNER_LC
       - run: npm install -g npm@${{ matrix.npm-version }}
       - run: wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O $BOARD
       - name: Run command
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -ev
           ${{ matrix.commands.script }}
