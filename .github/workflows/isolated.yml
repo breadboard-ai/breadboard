@@ -68,33 +68,33 @@ jobs:
 
           # ##############################################################################################################
 
-          # - script: |
-          #     npm init @exadev-io/breadboard test
-          #   name: npm init
+          - script: |
+              npm init @exadev-io/breadboard test
+            name: npm init
 
-          # - script: |
-          #     npx @exadev-io/create-breadboard test
-          #   name: npx create
+          - script: |
+              npx @exadev-io/create-breadboard test
+            name: npx create
 
-          # - script: |
-          #     npm install -g @exadev-io/create-breadboard
-          #     npx @exadev-io/create-breadboard test
-          #   name: install + npx create
+          - script: |
+              npm install -g @exadev-io/create-breadboard
+              npx @exadev-io/create-breadboard test
+            name: install + npx create
 
-          # ##############################################################################################################
+          ##############################################################################################################
 
-          # - script: |
-          #     npm init @exadev-io/breadboard-kit test
-          #   name: npm init kit
+          - script: |
+              npm init @exadev-io/breadboard-kit test
+            name: npm init kit
 
-          # - script: |
-          #     npx @exadev-io/create-breadboard-kit test
-          #   name: npx create-kit
+          - script: |
+              npx @exadev-io/create-breadboard-kit test
+            name: npx create-kit
 
-          # - script: |
-          #     npm install -g @exadev-io/create-breadboard-kit
-          #     npx @exadev-io/create-breadboard-kit test
-          #   name: install + npx create-kit
+          - script: |
+              npm install -g @exadev-io/create-breadboard-kit
+              npx @exadev-io/create-breadboard-kit test
+            name: install + npx create-kit
 
     name: ${{ matrix.commands.name }} - Node ${{ matrix.node-version }} NPM ${{ matrix.npm-version }}
     steps:
