@@ -37,7 +37,6 @@ jobs:
           version: '${{ github.run_id }}.${{ github.run_number }}.${{ github.run_attempt }}'
           pre_publish_commands: |
             npm pkg set registry=https://npm.pkg.github.com/
-            npm install
             npm run build
           directories_to_publish: "packages/*"
           publish_flags: |
