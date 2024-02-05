@@ -32,6 +32,11 @@ export default defineConfig({
     ],
   },
   build: {
+    commonjsOptions: {
+      include: [
+        /node_modules/
+      ]
+    },
     lib: {
       entry: {
         // TODO: These are just variants of the breadboard-web entry points; we
