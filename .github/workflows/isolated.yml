@@ -106,9 +106,9 @@ jobs:
           node-version: ${{ matrix.node-version }}
           registry-url: 'https://npm.pkg.github.com/'
           scope: $OWNER_LC
-      - run: npm config set registry https://npm.pkg.github.com/
       - run: npm install -g npm@${{ matrix.npm-version }}
       - run: wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O $BOARD
+      - run: npm config set registry https://npm.pkg.github.com/
       - name: Run command
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
