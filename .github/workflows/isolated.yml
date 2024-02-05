@@ -39,18 +39,18 @@ jobs:
           - name: npx cli run
             script: |
               OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
-              npx $OWNER_LC/breadboard-cli run $BOARD -i "{\"message\": \"Hello World\"}"
+              npx @$OWNER_LC/breadboard-cli run $BOARD -i "{\"message\": \"Hello World\"}"
 
           - name: install + npx cli run
             script: |
               OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
-              npm install -g $OWNER_LC/breadboard-cli
-              npx $OWNER_LC/breadboard-cli run $BOARD -i "{\"message\": \"Hello World\"}"
+              npm install -g @$OWNER_LC/breadboard-cli
+              npx @$OWNER_LC/breadboard-cli run $BOARD -i "{\"message\": \"Hello World\"}"
 
           - name: install + npx breadboard run
             script: |
               OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
-              npm install -g $OWNER_LC/breadboard-cli
+              npm install -g @$OWNER_LC/breadboard-cli
               npx breadboard run $BOARD -i "{\"message\": \"Hello World\"}"
 
           ##############################################################################################################
@@ -58,54 +58,54 @@ jobs:
           - name: npx cli mermaid
             script: |
               OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
-              npx $OWNER_LC/breadboard-cli mermaid dl_board.json
+              npx @$OWNER_LC/breadboard-cli mermaid dl_board.json
 
           - name: install + npx cli mermaid
             script: |
               OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
-              npm install -g $OWNER_LC/breadboard-cli
-              npx $OWNER_LC/breadboard-cli mermaid dl_board.json
+              npm install -g @$OWNER_LC/breadboard-cli
+              npx @$OWNER_LC/breadboard-cli mermaid dl_board.json
 
           - name: install + npx breadboard mermaid
             script: |
               OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
-              npm install -g $OWNER_LC/breadboard-cli
+              npm install -g @$OWNER_LC/breadboard-cli
               npx breadboard mermaid dl_board.json
 
           # ##############################################################################################################
 
           - script: |
               OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
-              npm init $OWNER_LC/breadboard test
+              npm init @$OWNER_LC/breadboard test
             name: npm init
 
           - script: |
               OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
-              npx $OWNER_LC/create-breadboard test
+              npx @$OWNER_LC/create-breadboard test
             name: npx create
 
           - script: |
               OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
-              npm install -g $OWNER_LC/create-breadboard
-              npx $OWNER_LC/create-breadboard test
+              npm install -g @$OWNER_LC/create-breadboard
+              npx @$OWNER_LC/create-breadboard test
             name: install + npx create
 
           ##############################################################################################################
 
           - script: |
               OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
-              npm init $OWNER_LC/breadboard-kit test
+              npm init @$OWNER_LC/breadboard-kit test
             name: npm init kit
 
           - script: |
               OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
-              npx $OWNER_LC/create-breadboard-kit test
+              npx @$OWNER_LC/create-breadboard-kit test
             name: npx create-kit
 
           - script: |
               OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
-              npm install -g $OWNER_LC/create-breadboard-kit
-              npx $OWNER_LC/create-breadboard-kit test
+              npm install -g @$OWNER_LC/create-breadboard-kit
+              npx @$OWNER_LC/create-breadboard-kit test
             name: install + npx create-kit
 
     name: ${{ matrix.commands.name }} - Node ${{ matrix.node-version }} NPM ${{ matrix.npm-version }}
