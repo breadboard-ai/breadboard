@@ -45,10 +45,10 @@ jobs:
               npm install -g @exadev-io/breadboard-cli
               npx @exadev-io/breadboard-cli run $BOARD -i "{\"message\": \"Hello World\"}"
 
-          # - name: install + npx breadboard run
-          #   script: |
-          #     npm install -g @exadev-io/breadboard-cli
-          #     npx breadboard run $BOARD -i "{\"message\": \"Hello World\"}"
+          - name: install + npx breadboard run
+            script: |
+              npm install -g @exadev-io/breadboard-cli
+              npx breadboard run $BOARD -i "{\"message\": \"Hello World\"}"
 
           ##############################################################################################################
 
