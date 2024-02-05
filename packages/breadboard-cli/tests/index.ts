@@ -40,7 +40,9 @@ function getPackageDir(packageName: string) {
     packageDir = path.resolve(path.join(packageDir, ".."));
 
     if (packageDir === "/") {
-      throw new Error("Could not find package.json for @google-labs/breadboard-cli");
+      throw new Error(
+        "Could not find package.json for @google-labs/breadboard-cli"
+      );
     }
   }
   return packageDir;
@@ -74,46 +76,44 @@ function makeBoard(): Board {
           description: "What shall I say back to you?",
         },
       },
-    }
+    },
   });
   const output = board.output();
   input.wire("text", output);
   return board;
 }
 
-const testBoardData = JSON.parse(JSON.stringify(makeBoard()))
+const testBoardData = JSON.parse(JSON.stringify(makeBoard()));
 
 const typescriptTestBoardContent = [
-  "import { Board } from \"@google-labs/breadboard\";",
+  'import { Board } from "@google-labs/breadboard";',
   // it appears toString on a function ommits types
-  makeBoard.toString().replace(
-    `function ${makeBoard.name}() {`,
-    `function ${makeBoard.name}(): Board {`
-  ).replace(
-    `const board = new Board({`,
-    `const board: Board = new Board({`
-  ),
+  makeBoard
+    .toString()
+    .replace(
+      `function ${makeBoard.name}() {`,
+      `function ${makeBoard.name}(): Board {`
+    )
+    .replace(`const board = new Board({`, `const board: Board = new Board({`),
   `const board: Board = ${makeBoard.name}();`,
-  `export default board;`
+  `export default board;`,
 ].join("\n\n");
-console.debug([
-  `${"```"}typescript board.ts`,
-  typescriptTestBoardContent,
-  `${"```"}`
-].join("\n"));
+console.debug(
+  [`${"```"}typescript board.ts`, typescriptTestBoardContent, `${"```"}`].join(
+    "\n"
+  )
+);
 
 const jsTestBoardContent = [
-  "import { Board } from \"@google-labs/breadboard\";",
+  'import { Board } from "@google-labs/breadboard";',
   makeBoard.toString(),
   `const board = ${makeBoard.name}();`,
-  `export default board;`
+  `export default board;`,
 ].join("\n\n");
 
-console.debug([
-  `${"```"}javascript board.js`,
-  jsTestBoardContent,
-  `${"```"}`
-].join("\n"));
+console.debug(
+  [`${"```"}javascript board.js`, jsTestBoardContent, `${"```"}`].join("\n")
+);
 
 const tempDir = path.join(path.join(packageDir, "temp"));
 const testDataDir = path.resolve(path.join(tempDir, "data"));
@@ -142,36 +142,34 @@ const testFiles: {
   path: string;
   content: string;
 }[] = [
-    ...[
-      originalBoardPath,
-      filenameWithSpaces,
-      filenameWithURLencodingSpaces,
-      directoryWithSpaces,
-    ].map((p) => {
-      return {
-        path: p,
-        content: testBoardDataContent,
-      };
-    }),
-    {
-      path: path.resolve(typescriptBoardPath),
-      content: typescriptTestBoardContent,
-    },
-    {
-      path: path.resolve(jsBoardPath),
-      content: jsTestBoardContent,
-    },
-  ];
+  ...[
+    originalBoardPath,
+    filenameWithSpaces,
+    filenameWithURLencodingSpaces,
+    directoryWithSpaces,
+  ].map((p) => {
+    return {
+      path: p,
+      content: testBoardDataContent,
+    };
+  }),
+  {
+    path: path.resolve(typescriptBoardPath),
+    content: typescriptTestBoardContent,
+  },
+  {
+    path: path.resolve(jsBoardPath),
+    content: jsTestBoardContent,
+  },
+];
 
 //////////////////////////////////////////////////
 
 test.before(() => {
   testFiles.forEach((p) => {
-    console.debug([
-      "Writing",
-      `${p.content.length} characters to`,
-      p.path,
-    ].join("\t"));
+    console.debug(
+      ["Writing", `${p.content.length} characters to`, p.path].join("\t")
+    );
     fs.mkdirSync(path.dirname(p.path), { recursive: true });
     fs.writeFileSync(p.path, p.content);
   });
@@ -187,19 +185,20 @@ test.after.always(() => {
 
     console.debug([`Searching for`, p.path].join("\t"));
 
-    ([
-      "json",
-      "ts",
-      "js"
-    ].map((ext) => [
-      path.resolve(path.join(dirname, `${filenameWithoutExtension}.${ext}`)),
-      path.resolve(path.join(packageDir, `${filenameWithoutExtension}.${ext}`)),
-    ]).flat()).forEach((testDirPath) => {
-      if (fs.existsSync(testDirPath)) {
-        console.debug(["Removing", testDirPath].join("\t"));
-        fs.rmSync(testDirPath);
-      }
-    });
+    ["json", "ts", "js"]
+      .map((ext) => [
+        path.resolve(path.join(dirname, `${filenameWithoutExtension}.${ext}`)),
+        path.resolve(
+          path.join(packageDir, `${filenameWithoutExtension}.${ext}`)
+        ),
+      ])
+      .flat()
+      .forEach((testDirPath) => {
+        if (fs.existsSync(testDirPath)) {
+          console.debug(["Removing", testDirPath].join("\t"));
+          fs.rmSync(testDirPath);
+        }
+      });
   });
   fs.rmSync(testDataDir, { recursive: true });
 });
@@ -338,7 +337,7 @@ test("can make a graph from a typescript file", async (t) => {
   const jsPath = typescriptBoardPath.replace(".ts", ".js");
   t.true(fs.existsSync(jsPath));
 
-  const commandString = ["make", `"${jsPath}"`].join(" ");
+  const commandString = ["make", `"${jsPath}"`, "-n"].join(" ");
   const output = await execCli(commandString);
   t.true(output.stdout.length > 0);
 });
@@ -346,7 +345,7 @@ test("can make a graph from a typescript file", async (t) => {
 //////////////////////////////////////////////////
 
 test("can make a graph from a javascript file", async (t) => {
-  const commandString = ["make", `"${jsBoardPath}"`].join(" ");
+  const commandString = ["make", `"${jsBoardPath}"`, "-n"].join(" ");
   const output = await execCli(commandString);
   t.true(output.stdout.length > 0);
 });
