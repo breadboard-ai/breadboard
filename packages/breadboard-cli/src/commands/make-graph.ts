@@ -32,10 +32,10 @@ export const makeGraph = async (file: string, options: MakeOptions) => {
 
   if (file != undefined) {
     const filePath = resolveFilePath(file);
-    options.save = true;
 
     if (inputFileStat.isDirectory()) {
       // If the input is a directory, we should load all the boards in the directory and save them.
+      options.save = true;
       const relative = path.relative(file, options.output);
       const isOutputDirectoryContainedWithin =
         relative === "" ||
@@ -49,7 +49,10 @@ export const makeGraph = async (file: string, options: MakeOptions) => {
 
       await loadBoards(filePath, options);
     } else if (path.extname(file) == ".js" || path.extname(file) == ".ts") {
-      await loadBoard(filePath, options);
+      const board = await loadBoard(filePath, options);
+      if (options.save == false) {
+        console.log(JSON.stringify(board, null, 2));
+      }
     } else {
       throw new Error(`File ${file} must be a JavaScript or TypeScript file.`);
     }

@@ -71,6 +71,7 @@ program
     "The path where the boards will be output the board(s) to (current directory by default.)",
     process.cwd()
   )
+  .option("-n, --no-save", "Do not save the compiled graph to disk.")
   .option("-w, --watch", "Watch the file for changes.")
   .action(makeGraph);
 
