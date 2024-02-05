@@ -30,7 +30,7 @@ jobs:
       - uses: Mearman/npm-alias-publish@main
         with:
           from: "@google-labs"
-          to: "@$OWNER_LC"
+          to: "@${{ env.OWNER_LC }}"
           packages_to_alias: ^@google-labs
           fail_on_non_package_dir: false
           directories_to_rescope: "packages/*"
