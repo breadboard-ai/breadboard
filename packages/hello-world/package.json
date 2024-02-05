@@ -21,6 +21,7 @@
     "typescript": "^5.0.4"
   },
   "dependencies": {
+    "@google-labs/agent-kit": "0.0.1",
     "@google-labs/breadboard": "^0.10.1",
     "@google-labs/breadboard-cli": "0.4.1",
     "@google-labs/core-kit": "0.2.2",

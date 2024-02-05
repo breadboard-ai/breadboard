@@ -1,0 +1,121 @@
+{
+  "name": "@google-labs/agent-kit",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
+  "version": "0.0.1",
+  "description": "A Breadboard Kit for building agent-like experiences",
+  "main": "./dist/src/index.js",
+  "exports": "./dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "prepack": "npm run build",
+    "dev": "wireit",
+    "test": "wireit",
+    "build": "wireit",
+    "lint": "wireit"
+  },
+  "wireit": {
+    "dev": {
+      "command": "breadboard debug src/boards --watch -n",
+      "dependencies": [
+        "build",
+        "../breadboard-cli:build"
+      ]
+    },
+    "build": {
+      "dependencies": [
+        "../breadboard:build",
+        "../core-kit:build",
+        "../json-kit:build",
+        "../template-kit:build",
+        "../gemini-kit:build",
+        "build:tsc"
+      ]
+    },
+    "build:tsc": {
+      "command": "tsc -b",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "../breadboard:build:tsc",
+        "../core-kit:build:tsc",
+        "../json-kit:build:tsc",
+        "../template-kit:build:tsc",
+        "../gemini-kit:build:tsc"
+      ],
+      "files": [
+        "src/**/*.ts",
+        "tests/**/*.ts",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
+      ],
+      "output": [
+        "dist/",
+        "!dist/**/*.min.js{,.map}"
+      ],
+      "clean": "if-file-deleted"
+    },
+    "test": {
+      "command": "ava",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
+      "output": []
+    },
+    "lint": {
+      "command": "eslint . --ext .ts",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "files": [
+        "src/**/*.ts",
+        "tests/**/*.ts",
+        "../../.eslintrc.json"
+      ],
+      "output": []
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/breadboard-ai/breadboard"
+  },
+  "files": [
+    "dist/src"
+  ],
+  "ava": {
+    "timeout": "30s",
+    "files": [
+      "tests/**/*.ts"
+    ],
+    "workerThreads": false,
+    "typescript": {
+      "rewritePaths": {
+        "./": "dist/"
+      },
+      "compile": false
+    }
+  },
+  "keywords": [],
+  "author": "Google Labs Team",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/breadboard-ai/breadboard/issues"
+  },
+  "homepage": "https://github.com/breadboard-ai/breadboard#readme",
+  "devDependencies": {
+    "@ava/typescript": "^4.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.20.0",
+    "@typescript-eslint/parser": "^6.20.0",
+    "@types/node": "^18.16.3",
+    "ava": "^5.2.0",
+    "typescript": "^5.0.4",
+    "@google-labs/tsconfig": "^0.0.1"
+  }
+}

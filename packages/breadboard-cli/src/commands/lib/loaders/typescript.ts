@@ -65,6 +65,7 @@ export class TypeScriptLoader extends Loader {
       console.error(e);
       return undefined;
     } finally {
+      tmpFileStat = await stat(tmpFilePath);
       // remove the file
       if (tmpFileStat && tmpFileStat.isFile()) {
         await unlink(tmpFilePath);

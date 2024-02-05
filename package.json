@@ -18,6 +18,7 @@
   "wireit": {
     "build": {
       "dependencies": [
+        "./packages/agent-kit:build",
         "./packages/breadboard:build",
         "./packages/breadboard-cli:build",
         "./packages/breadboard-server:build",
