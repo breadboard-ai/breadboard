@@ -16,6 +16,8 @@ jobs:
         package:
           - breadboard
           - breadboard-cli
+          - create-breadboard
+          - create-breadboard-kit
     defaults:
       run:
         working-directory: packages/${{ matrix.package }}
