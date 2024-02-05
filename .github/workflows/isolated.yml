@@ -46,12 +46,20 @@ jobs:
             cd packages/$package
             for dep in $(jq -r '.dependencies | keys[]' package.json); do
               if [[ $dep == "@google-labs/"* ]]; then
-                npm install --save ${dep/@google-labs/@$OWNER_LC}
+                echo "Uninstalling $dep"
+                npm uninstall --save $dep
+                alias="$dep@$OWNER_LC:${dep/@google-labs/@$OWNER_LC}"
+                echo "Installing $alias"
+                npm install --save $alias
               fi
             done
             for dep in $(jq -r '.devDependencies | keys[]' package.json); do
               if [[ $dep == "@google-labs/"* ]]; then
-                npm install --save-dev ${dep/@google-labs/@$OWNER_LC}
+                echo "Uninstalling $dep"
+                npm uninstall --save-dev $dep
+                alias="dep@$OWNER_LC:${dep/@google-labs/@$OWNER_LC}"
+                echo "Installing $alias"
+                npm install --save-dev $alias
               fi
             done
             cd ../..
