@@ -69,7 +69,7 @@ jobs:
                   inputs: {
                     ...${{ needs.setup.outputs.matrix }},
                     ref: '${{ github.ref }}',
-                    wortkflow: {
+                    workflow: {
                       run_id: '${{ github.run_id }}',
                       run_number: '${{ github.run_number }}',
                     }
