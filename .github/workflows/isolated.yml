@@ -34,7 +34,7 @@ jobs:
           packages_to_alias: ^@google-labs
           fail_on_non_package_dir: false
           directories_to_rescope: "packages/*"
-          version: '${{ github.run_id }}.${{ github.run_number }}.${{ github.run_attempt }}'
+          version: '*'
           pre_publish_commands: |
             npm pkg set registry=https://npm.pkg.github.com/
             npm run build
