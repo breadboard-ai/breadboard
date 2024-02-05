@@ -3,7 +3,6 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "private": true,
   "version": "0.0.1",
   "description": "A Breadboard Kit for building agent-like experiences",
   "main": "./dist/src/index.js",
