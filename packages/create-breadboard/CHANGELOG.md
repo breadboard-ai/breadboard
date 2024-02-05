@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.2
+
+### Patch Changes
+
+- 45654e1: update dependencies for running in a clean environment
+  - @google-labs/breadboard-hello-world@1.2.2
+
 ## 1.0.1
 
 ### Patch Changes

@@ -117,7 +117,7 @@
     "ava": "^5.2.0",
     "typescript": "^5.0.4",
     "@google-labs/tsconfig": "^0.0.1",
-    "@google-labs/breadboard-cli": "0.4.0"
+    "@google-labs/breadboard-cli": "0.4.1"
   },
   "dependencies": {
     "@google-labs/breadboard": "0.10.1",

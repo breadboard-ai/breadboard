@@ -1,5 +1,11 @@
 # @google-labs/breadboard-web
 
+## 1.1.1
+
+### Patch Changes
+
+- 7dbc32e: Bump version of gemini-kit geps.
+
 ## 1.1.0
 
 ### Minor Changes
