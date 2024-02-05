@@ -1,5 +1,21 @@
 # @google-labs/breadboard-web
 
+## 1.1.0
+
+### Minor Changes
+
+- 5c3076a: Add `Webcam` board to demo gemini.vision node.
+- fb1c768: Introduce Gemini Kit.
+
+### Patch Changes
+
+- Updated dependencies [3e56a4f]
+- Updated dependencies [fb1c768]
+  - @google-labs/template-kit@0.1.4
+  - @google-labs/gemini-kit@0.1.0
+  - @google-labs/core-kit@0.2.2
+  - @google-labs/breadboard@0.10.1
+
 ## 1.0.4
 
 ### Patch Changes
