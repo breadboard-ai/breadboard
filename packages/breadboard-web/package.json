@@ -202,7 +202,7 @@
     "@google-labs/breadboard": "^0.10.1",
     "@google-labs/breadboard-ui": "^0.0.6",
     "@google-labs/core-kit": "^0.2.2",
-    "@google-labs/gemini-kit": "^0.1.0",
+    "@google-labs/gemini-kit": "^0.1.1",
     "@google-labs/json-kit": "^0.0.5",
     "@google-labs/node-nursery-web": "^1.0.2",
     "@google-labs/palm-kit": "^0.0.4",
