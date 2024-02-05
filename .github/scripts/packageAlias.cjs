@@ -46,6 +46,7 @@ module.exports = async ({
           }
         }
         packageJson[dtype] = depsOfType;
+        console.log({ [dtype]: packageJson[dtype] });
       }
     }
     fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
