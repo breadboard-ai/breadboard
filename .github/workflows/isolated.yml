@@ -95,10 +95,14 @@ jobs:
 
     name: ${{ matrix.commands.name }} - Node ${{ matrix.node-version }} NPM ${{ matrix.npm-version }}
     steps:
+      - run: echo "OWNER_LC=${OWNER,,}" >>${GITHUB_ENV}
+        env:
+          OWNER: '${{ github.repository_owner }}'
       - uses: actions/setup-node@main
         with:
           node-version: ${{ matrix.node-version }}
           registry-url: 'https://npm.pkg.github.com/'
+          scope: '$OWNER_LC'
       - run: npm install -g npm@${{ matrix.npm-version }}
       - run: wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O $BOARD
       - name: Run command
