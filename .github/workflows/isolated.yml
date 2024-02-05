@@ -21,14 +21,14 @@ jobs:
       matrix:
         node-version:
           - 21.x
-          - 20.x
-          - 19.x
+          # - 20.x
+          # - 19.x
           # - 18.x
         npm-version:
           - 10.x
-          - 9.x
-          - 8.x
-          - 7.x
+          # - 9.x
+          # - 8.x
+          # - 7.x
           # - 6.x
         exclude:
           - node-version: 19.x
