@@ -43,7 +43,7 @@ jobs:
         env:
           OWNER: "${{ github.repository_owner }}"
 
-      - run: npm version --no-git-tag-version prepatch --preid=$(date +'%Y_%m_%d-%H%M%S') --force
+      - run: npm version --no-git-tag-version prepatch --preid=$(date +'%Y%m%d-%H%M%S') --force
 
       - run: npm run build
 
