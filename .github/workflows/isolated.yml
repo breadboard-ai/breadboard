@@ -43,8 +43,17 @@ jobs:
       run:
         working-directory: packages/${{ matrix.package }}
     steps:
+      - run: set -ev
+      - uses: actions/github-script@main
+        id: my-script
+        with:
+          result-encoding: string
+          retries: 3
+          script: |
+            const matrix = JSON.parse(`${{ needs.setup.outputs.matrix }}`)
+            console.log(matrix)
       - run: |
-          echo "MATRIX_PACKAGES=$(echo ${{ fromJson(needs.setup.outputs.matrix) }} | jq -r '.package[]' | tr '\n' ',')" >>${GITHUB_ENV
+          echo "MATRIX_PACKAGES=$(echo ${{ fromJson(needs.setup.outputs.matrix) }} | jq -r '.package[]' | tr '\n' ',')" >>${GITHUB_ENV}}
           echo $MATRIX_PACKAGES
       - uses: actions/checkout@main
       - uses: actions/setup-node@main
