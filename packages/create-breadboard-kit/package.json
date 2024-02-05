@@ -19,7 +19,7 @@
   },
   "wireit": {
     "copy-assets": {
-      "command": "cp -r assets dist",
+      "command": "mkdir -p dist/ && cp -r assets/ dist/assets/",
       "files": [
         "assets/"
       ],
