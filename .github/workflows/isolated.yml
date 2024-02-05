@@ -57,39 +57,16 @@ jobs:
         with:
           retries: 3
           script: |
-            const fs = require("fs");
-
-            const matrix = JSON.parse(`${{ needs.setup.outputs.matrix }}`)
-            console.log(matrix)
-
-            const packages = matrix.package
-            console.log(packages)
-
-            const packageDirs = packages.map(pkg => `packages/${pkg}`)
-            const prefix = "@google-labs";
-
-            for (const dir of packageDirs) {
-              const packageJsonPath = `${dir}/package.json`
-              console.log(`reading ${packageJsonPath}`)
-
-              const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
-              const keysToSearch = ["dependencies", "devDependencies"];
-              for (const depKey of keysToSearch) {
-                const dependencies = packageJson[depKey];
-                if (dependencies) {
-                  const keys = Object.entries(dependencies);
-                  for (const [key, value] of keys) {
-                    if (packages.map((p) => `${prefix}/${p}`).includes(key)) {
-                      const value = `npm:@${process.env.OWNER_LC}${key.replace(prefix,"")}@*`;
-                      console.log(`${depKey}: ${key} -> ${value}`);
-                      dependencies[key] = value;
-                    }
-                  }
-                  packageJson[depKey] = dependencies;
-                }
-              }
-              fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
-            }
+                const fn = require('${{ github.workspace }}/.github/scripts/packageAlias.cjs')
+                await fn({
+                  github,
+                  context,
+                  core,
+                  glob,
+                  io,
+                  exec,
+                  require
+                })
       - run: npm install
         env:
           CI: false
