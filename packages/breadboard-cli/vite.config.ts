@@ -28,7 +28,7 @@ export default defineConfig({
       "esbuild",
       "serve",
       "vite",
-      "yaml"
+      "yaml",
     ],
   },
   build: {
