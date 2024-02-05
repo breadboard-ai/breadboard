@@ -44,51 +44,51 @@ jobs:
         working-directory: packages/${{ matrix.package }}
     steps:
       - uses: actions/checkout@main
-      - run: set -ev
-      - uses: actions/github-script@main
-        id: my-script
-        with:
-          result-encoding: string
-          retries: 3
-          script: |
-            const matrix = JSON.parse(`${{ needs.setup.outputs.matrix }}`)
-            console.log(matrix)
-      - run: |
-          echo "MATRIX_PACKAGES=$(echo ${{ fromJson(needs.setup.outputs.matrix) }} | jq -r '.package[]' | tr '\n' ',')" >>${GITHUB_ENV}}
-          echo $MATRIX_PACKAGES
       - uses: actions/setup-node@main
         with:
           node-version: "20.x"
           registry-url: "https://npm.pkg.github.com/"
           cache: "npm"
-
+      - run: set -ev
       - run: echo "OWNER_LC=${OWNER,,}" >>${GITHUB_ENV}
         env:
           OWNER: "${{ github.repository_owner }}"
+      - uses: actions/github-script@main
+        with:
+          retries: 3
+          script: |
+            const fs = require("fs");
 
-      - name: Update dependency namespaces
-        working-directory: ${{ github.workspace }}
-        run: |
-          # npm install <ALIAS_NAME>@npm:<REAL_PACKAGE>@<PACKAGE_VERSION>
+            const matrix = JSON.parse(`${{ needs.setup.outputs.matrix }}`)
+            console.log(matrix)
 
-          MATRIX_PACKAGE_ARRAY=(${MATRIX//,/ })
-          echo "MATRIX_PACKAGE_ARRAY=${MATRIX_PACKAGE_ARRAY[@]}"
+            const packages = matrix.package
+            console.log(packages)
 
-          for PACKAGE in "${MATRIX_PACKAGE_ARRAY[@]}"; do
-            echo "PACKAGE=${PACKAGE}"
-            cd packages/${PACKAGE}
-            for DEPENDENCY in "${MATRIX_PACKAGE_ARRAY[@]}"; do
-              for dep in $(jq -r '.dependencies | keys[]' package.json); do
-                if [[ $dep == "@google-labs/"* ]]; then
-                  echo "DEP=${dep}"
-                  ALIAS="@google-labs/${dep#*@google-labs/}@npm:@${OWNER_LC}/${dep#*@google-labs/}"
-                  echo "ALIAS=${ALIAS}"
-                  npm uninstall $dep
-                  npm install $ALIAS
-                fi
-              done
-          done
+            const packageDirs = packages.map(pkg => `packages/${pkg}`)
 
+            for (const dir of packageDirs) {
+              const packageJsonPath = `${dir}/package.json`
+              console.log(`reading ${packageJsonPath}`)
+
+              const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+              const keysToSearch = ["dependencies", "devDependencies"];
+              for (const depKey of keysToSearch) {
+                const dependencies = packageJson[depKey];
+                if (dependencies) {
+                  const keys = Object.entries(dependencies);
+                  for (const [key, value] of keys) {
+                    if (packages.map((p) => `${prefix}/${p}`).includes(key)) {
+                      const alias = `npm:@${process.env.OWNER_LC}/${key}@*`;
+                      console.log(`${depKey}: ${key} -> ${alias}`);
+                      dependencies[alias] = value;
+                    }
+                  }
+                  packageJson[depKey] = dependencies;
+                }
+              }
+              fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
+            }
       - run: npm install
         env:
           CI: false
