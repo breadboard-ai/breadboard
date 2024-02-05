@@ -35,17 +35,17 @@ jobs:
         commands:
           - name: npx cli run
             script: |
-              npx @exadev-io/breadboard-cli run $BOARD -i "{\"message\": \"Hello World\"}"
+              npx @exadev-io/breadboard-cli --registry=https://npm.pkg.github.com/ run $BOARD -i "{\"message\": \"Hello World\"}"
 
           - name: install + npx cli run
             script: |
               npm install -g @exadev-io/breadboard-cli --registry=https://npm.pkg.github.com/
-              npx @exadev-io/breadboard-cli run $BOARD -i "{\"message\": \"Hello World\"}"
+              npx @exadev-io/breadboard-cli --registry=https://npm.pkg.github.com/ run $BOARD -i "{\"message\": \"Hello World\"}"
 
-          - name: install + npx breadboard run
-            script: |
-              npm install -g @exadev-io/breadboard-cli --registry=https://npm.pkg.github.com/
-              npx breadboard run $BOARD -i "{\"message\": \"Hello World\"}"
+          # - name: install + npx breadboard run
+          #   script: |
+          #     npm install -g @exadev-io/breadboard-cli --registry=https://npm.pkg.github.com/
+          #     npx breadboard run $BOARD -i "{\"message\": \"Hello World\"}"
 
           ##############################################################################################################
 
