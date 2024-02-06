@@ -53,7 +53,13 @@ const runId: number = github.context.runId;
 
 function getVersion() {
   const now: Date = new Date();
-  return `0.0.0-${runId || 0}.${runNumber || getDate(now) + "." + getTime(now)}`;
+  const timestamp = now.getTime();
+
+  if (!runId || !runNumber) {
+    return `0.0.0-${getDate(now)}.${getTime(now)}`;
+  } else {
+    return `0.0.0-${runId}.${runNumber}.${timestamp}`;
+  }
 }
 
 async function main() {
