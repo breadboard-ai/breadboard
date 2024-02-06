@@ -16,6 +16,7 @@
     "typescript": "5.3.3"
   },
   "scripts": {
-    "build": "rm dist/index.cjs ; tsc --noEmit && ncc build src/index.ts -o dist"
+    "build": "rm dist/index.cjs ; tsc --noEmit && ncc build src/*.ts -o dist",
+    "watch": "npm run build -- --watch"
   }
 }
