@@ -25,9 +25,10 @@ module.exports = () => {
   console.log({ cwd });
   // list directories
   console.log({ files: fs.readdirSync(cwd).map((f) => path.resolve(cwd, f)) });
-  // console.log({ files: fs.readdirSync(cwd).filter((f) => fs.statSync(f).isDirectory()) });
 
   const packageDir = path.resolve(cwd, "packages");
+  console.log({ packages: fs.readdirSync(packageDir).map((f) => path.resolve(packageDir, f)) });
+
   const packages = [
     "breadoard",
     "breadboard-cli",
