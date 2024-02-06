@@ -1,6 +1,7 @@
 {
   "title": "Generate an embedding",
   "description": "Generates an embedding using PaLM, but can be used with any embedding provider (if the 'provider' is specified.)",
+  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.1.0/packages/schema/breadboard.schema.json",
   "version": "0.0.3",
   "edges": [
     {

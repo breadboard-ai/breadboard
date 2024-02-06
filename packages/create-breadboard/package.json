@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A starter kit for your Breadboard projects",
   "main": "dist/src/index.js",
   "bin": {
@@ -42,7 +42,8 @@
         "FORCE_COLOR": "1"
       },
       "files": [
-        "src/**/*.ts"
+        "src/**/*.ts",
+        "../../.eslintrc.json"
       ],
       "output": []
     }
@@ -65,13 +66,14 @@
     "@google-labs/tsconfig": "^0.0.1",
     "@types/node": "^18.18.8",
     "@types/semver": "^7.5.4",
-    "@typescript-eslint/eslint-plugin": "^5.56.0",
-    "@typescript-eslint/parser": "^5.56.0",
+    "@typescript-eslint/eslint-plugin": "^6.20.0",
+    "@typescript-eslint/parser": "^6.20.0",
     "typescript": "^5.0.4"
   },
   "types": "./dist/src/index.d.ts",
   "dependencies": {
-    "@google-labs/breadboard-hello-world": "^1.0.1",
+    "@google-labs/breadboard-hello-world": "^1.2.2",
+    "@google-labs/breadboard": "^0.10.0",
     "chalk": "^5.3.0"
   }
 }

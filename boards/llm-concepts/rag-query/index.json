@@ -1,7 +1,7 @@
 {
-  "url": "file:///Users/paulkinlan/Code/labs-prototypes/recipes/llm-concepts/rag-query/index.js",
   "title": "Convert String to JSON",
   "description": "Converts a string to JSON.",
+  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.1.0/packages/schema/breadboard.schema.json",
   "version": "0.0.3",
   "edges": [
     {
@@ -128,7 +128,7 @@
       "id": "promptTemplate-3",
       "type": "promptTemplate",
       "configuration": {
-        "template": "Answer the question as truthfully as possible using the provided context, and if don't have the answer, say \"I don't know\" and suggest looking for this information elsewhere.\n    \nContext: {{candidate}}\n  \nQuestion: {{query}}\n  \nAnswer:"
+        "template": "Answer the question as truthfully as possible using the provided context, and if don't have the answer, say \"I don't know\" and suggest looking for this information elsewhere.\n\nContext: {{candidate}}\n\nQuestion: {{query}}\n\nAnswer:"
       }
     },
     {

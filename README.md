@@ -1,6 +1,6 @@
 # Breadboard
 
-![Milestone](https://img.shields.io/badge/milestone-M3-red) ![Stability](https://img.shields.io/badge/stability-wip-green) [![Discord](https://img.shields.io/discord/1138546999872999556?logo=discord)](https://discord.gg/breadboard)
+![Milestone](https://img.shields.io/badge/milestone-M4-red) ![Stability](https://img.shields.io/badge/stability-wip-green) [![Discord](https://img.shields.io/discord/1138546999872999556?logo=discord)](https://discord.gg/breadboard)
 
 A library for prototyping generative AI applications.
 
@@ -16,7 +16,7 @@ This library's design emphasizes two key properties:
 
 ## Documentation
 
-The documentation is a bit of a work in progress. The best place to start is the [Getting started guide](https://github.com/breadboard-ai/breadboard/blob/main/packages/breadboard/docs/fodder/happy-path.md), although it is still incomplete. Please bear with us as we bring our words up to speed with our thoughts/actions.
+The documentation is a bit of a work in progress. The best place to start is the [this guide](https://breadboard-ai.github.io/breadboard/docs/happy-path/), although it is still incomplete. Please bear with us as we bring our words up to speed with our thoughts/actions.
 
 ## Monorepo
 

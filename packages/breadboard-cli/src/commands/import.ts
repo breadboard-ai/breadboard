@@ -5,14 +5,9 @@
  */
 
 import OpenAPI from "./boards/openapi.js";
-import {
-  Board,
-  asRuntimeKit,
-  GraphDescriptor,
-  BreadboardNode,
-} from "@google-labs/breadboard";
+import { Board, asRuntimeKit } from "@google-labs/breadboard";
 import yaml from "yaml";
-import CoreKit, { core } from "@google-labs/core-kit";
+import CoreKit from "@google-labs/core-kit";
 import templates from "@google-labs/template-kit";
 import { readFile, stat, writeFile } from "fs/promises";
 import path from "path";

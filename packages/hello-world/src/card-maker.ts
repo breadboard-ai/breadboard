@@ -4,43 +4,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Schema, base, board, code } from "@google-labs/breadboard";
+import { board, code } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { templates } from "@google-labs/template-kit";
+import { gemini } from "@google-labs/gemini-kit";
 
-// A URL of the Gemini Pro Vision board. We will invoke this board to
-// describe the picture.
-const visionBoard =
-  "https://raw.githubusercontent.com/breadboard-ai/breadboard/f4adabe69a5a9af73a29fcc72e7042404157717b/packages/breadboard-web/public/graphs/gemini-pro-vision.json";
-
-// A URL of the Gemini Pro board. We will invoke this board to act as the
-// Character Developer.
-const textBoard =
-  "https://raw.githubusercontent.com/breadboard-ai/breadboard/3e9735ee557bf18deb87bc46663a6e3af7647e7d/packages/breadboard-web/public/graphs/gemini-generator.json";
-
-// A JSON Schema that tells Breadboard that the input will be a drawable
-// surface.
-const drawableSchema = {
-  type: "object",
-  properties: {
-    picture: {
-      type: "image/png",
-      title: "Draw an object to transform into the mystical creature",
-      format: "drawable",
-    },
-  },
-  required: ["content"],
-  additionalProperties: false,
-} satisfies Schema;
-
-// A node that appends the prompt to the parts array that already contains
-// the picture.
-// Note, this one is a bit "in the weeds": it literally formats the Gemini Pro
-// API request to include the picture as part of the prompt.
-const appender = code(({ part, prompt }) => {
-  const parts = Array.isArray(part) ? part : [part];
-  return { parts: [...parts, { text: prompt }] };
-});
+// A URL of the Webcam board. We will invoke this board to get the picture to
+// describe. The board source is located here:
+// https://github.com/breadboard-ai/breadboard/blob/main/packages/breadboard-web/src/boards/webcam.ts
+// Has these inputs:
+// - `picture`: the picture from the webcam (image),
+// - `prompt`: the prompt to use with the picture (string).
+// Has these outputs:
+// - `text`: the description of the picture.
+const webcamBoard =
+  "https://raw.githubusercontent.com/breadboard-ai/breadboard/5c3076a500f692c60bd5cfd0b25e92190f17c12e/packages/breadboard-web/public/graphs/webcam.json";
 
 // A node type that generates a random letter.
 const randomLetterMaker = code(() => {
@@ -49,37 +27,27 @@ const randomLetterMaker = code(() => {
 });
 
 // The board we're building.
-export default await board(() => {
-  // TODO: Teach new syntax to take in the full Schema (maybe a "schema" method?)
-  // [Step 1]
-  // Add an input node to allow the user to draw a picture.
-  // Use JSON Schema to tell Breadboard that we want a drawable surface.
-  const draw = base.input({ $id: "userDrawing", schema: drawableSchema });
+export default await board(({ drawing }) => {
+  // Tell the input that it's drawable.
+  drawing
+    .isImage()
+    .title("Draw an object to transform into the mystical creature")
+    .format("drawable"); // can also be "webcam".
 
-  // [Added last]
   // Gemini tends to overrotate on Wumpuses for some reason,
   // so we need a way to give it some randomness to be more creative with names.
   // Let's ask it to generate a name that starts with a random letter.
   const { letter } = randomLetterMaker({ $id: "makeRandomLetter" });
 
-  // [Step 3]
-  // Append the picture to the prompt.
-  const { parts } = appender({
-    $id: "appendPictureToPrompt",
-    part: draw.picture,
-    prompt: `Describe the pictured object or subject in the sketch above, provide a thorough list of details. No matter how simple the sketch is, try
-     to come up with as many details as possible. Improvise if necessary.`,
-  });
-
-  // [Step 2]
   // Ask Gemini Pro Vision to describe the picture.
   const describePicture = core.invoke({
     $id: "describePicture",
-    path: visionBoard,
-    parts,
+    path: webcamBoard,
+    picture: drawing,
+    prompt:
+      "Describe the pictured object or subject in the sketch above, provide a thorough list of details. No matter how simple the sketch is, try to come up with as many details as possible. Improvise if necessary.",
   });
 
-  // [Step 3]
   // Create a prompt for the Character Developer, who will transform the
   // mundane description of the picture into a mystical creature.
   const { prompt } = templates.promptTemplate({
@@ -99,15 +67,13 @@ export default await board(() => {
     
     ## RESPONSE:
     `,
-    description: describePicture.result,
+    description: describePicture.text,
     letter,
   });
 
-  // [Step 4]
   // Ask Gemini Pro to act as the Character Developer.
-  const developCharacter = core.invoke({
+  const developCharacter = gemini.text({
     $id: "developCharacter",
-    path: textBoard,
     text: prompt,
   });
 
@@ -115,7 +81,7 @@ export default await board(() => {
   // picture description, so that we can marvel at the transformation.
   return {
     card: developCharacter.text.title("Game Card"),
-    description: describePicture.result.title("Picture description"),
+    description: describePicture.text.title("Picture description"),
   };
 }).serialize({
   title: "Card Maker",

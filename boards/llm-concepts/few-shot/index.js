@@ -9,8 +9,9 @@
  */
 
 import { base, board, code } from "@google-labs/breadboard";
-import { starter } from "@google-labs/llm-starter";
+import { core } from "@google-labs/core-kit";
 import { palm } from "@google-labs/palm-kit";
+import { templates } from "@google-labs/template-kit";
 
 const metaData = {
   title: "Generate a prompt response using a few-shot template",
@@ -40,7 +41,7 @@ const queryScheme = {
 
 export default await board(() => {
   const input = base.input({ $id: "input", schema: queryScheme });
-  const secrets = starter.secrets({
+  const secrets = core.secrets({
     keys: ["PALM_KEY"],
   });
 
@@ -50,7 +51,7 @@ export default await board(() => {
     })()
   );
 
-  const prompt = starter.promptTemplate({
+  const prompt = templates.promptTemplate({
     template: "{{few}}\n{{promptText}}",
   });
 
