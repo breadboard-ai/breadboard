@@ -27,7 +27,7 @@ program
   )
   .option(
     "-o, --output <path>",
-    "If compiling a graph in Typescript (.ts), you can control the output directory of the compiled graph (current directory by default.)",
+    "The path where the boards will be output the board(s) to.",
     process.cwd()
   )
   .option("-n, --no-save", "Do not save the compiled graph to disk.")
@@ -68,9 +68,10 @@ program
   )
   .option(
     "-o, --output <path>",
-    "If compiling a graph in Typescript (.ts), you can control the output directory of the compiled graph (current directory by default.)",
+    "The path where the boards will be output the board(s) to (current directory by default.)",
     process.cwd()
   )
+  .option("-n, --no-save", "Do not save the compiled graph to disk.")
   .option("-w, --watch", "Watch the file for changes.")
   .action(makeGraph);
 

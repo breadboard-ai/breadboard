@@ -19,6 +19,7 @@
   "wireit": {
     "build": {
       "dependencies": [
+        "./packages/agent-kit:build",
         "./packages/breadboard:build",
         "./packages/breadboard-cli:build",
         "./packages/breadboard-server:build",
@@ -32,6 +33,7 @@
         "./packages/create-breadboard:build",
         "./packages/create-breadboard-kit:build",
         "./packages/discovery-types:build",
+        "./packages/gemini-kit:build",
         "./packages/graph-integrity:build",
         "./packages/graph-playground:build",
         "./packages/graph-runner:build",
@@ -80,6 +82,7 @@
         "./packages/create-breadboard:lint",
         "./packages/create-breadboard-kit:lint",
         "./packages/discovery-types:lint",
+        "./packages/gemini-kit:lint",
         "./packages/graph-integrity:lint",
         "./packages/graph-playground:lint",
         "./packages/graph-runner:lint",
@@ -123,8 +126,8 @@
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
     "@types/node": "^18.15.5",
-    "@typescript-eslint/eslint-plugin": "^5.56.0",
-    "@typescript-eslint/parser": "^5.56.0",
+    "@typescript-eslint/eslint-plugin": "^6.20.0",
+    "@typescript-eslint/parser": "^6.20.0",
     "ava": "^5.2.0",
     "eslint": "^8.36.0",
     "npm-ci": "^0.0.2",

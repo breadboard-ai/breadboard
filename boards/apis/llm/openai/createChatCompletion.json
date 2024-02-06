@@ -1,7 +1,7 @@
 {
-  "url": "file:///Users/paulkinlan/Code/labs-prototypes/boards/apis/llm/openai/generateChatCompletion.json",
   "title": "Generate Completion with OpenAI",
   "description": "Creates a completion from OpenAI for use in generateCompletion standard recipe",
+  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.1.0/packages/schema/breadboard.schema.json",
   "version": "0.0.3",
   "edges": [
     {

@@ -1,7 +1,7 @@
 {
-  "url": "file:///Users/paulkinlan/Code/labs-prototypes/boards/apis/llm/mistral/createCompletion.json",
   "title": "Generate Completion with Mistral",
   "description": "Creates a completion from Mistral for use in generateCompletion standard board",
+  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.1.0/packages/schema/breadboard.schema.json",
   "version": "0.0.3",
   "edges": [
     {

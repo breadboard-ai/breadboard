@@ -5,11 +5,6 @@
  */
 
 import {
-  GraphDescriptor,
-  NodeDescriptor,
-  InputValues as OriginalInputValues,
-} from "@google-labs/breadboard";
-import {
   InputsMaybeAsValues,
   NodeProxy,
   NodeProxyMethods,
@@ -29,7 +24,7 @@ import {
   OptionalIdConfiguration,
   ScopeInterface,
 } from "../runner/types.js";
-import { Schema } from "../../types.js";
+import { GraphDescriptor, NodeDescriptor, Schema, InputValues as OriginalInputValues } from "../../types.js";
 
 import { BaseNode } from "../runner/node.js";
 import { BuilderScope } from "./scope.js";

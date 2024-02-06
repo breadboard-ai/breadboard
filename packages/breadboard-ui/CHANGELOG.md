@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.0.6
+
+### Patch Changes
+
+- 1b3f266: Display structured errors in preview/debug views.
+- 5b1913f: Account for scroll position in drawable code
+- Updated dependencies [9bcd607]
+- Updated dependencies [f6a7f43]
+  - @google-labs/breadboard@0.10.0
+
 ## 0.0.5
 
 ### Patch Changes
