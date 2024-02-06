@@ -32634,6 +32634,19 @@ Object.assign(global, globals);
     console.log("Hello world");
     core.setOutput("time", new Date().toTimeString());
 })();
+function main() {
+    __nccwpck_require__(4625);
+}
+// @ts-ignore
+return main();
+
+
+/***/ }),
+
+/***/ 4625:
+/***/ ((module) => {
+
+module.exports = eval("require")("./main");
 
 
 /***/ }),
