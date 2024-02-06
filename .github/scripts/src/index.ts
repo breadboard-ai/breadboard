@@ -52,13 +52,8 @@ const runNumber: number = github.context.runNumber;
 const runId: number = github.context.runId;
 
 function getVersion() {
-  // version as YYYY.MM.DD-HH.MM.SS
-  const now = new Date();
-  // return `${now.getFullYear()}.${now.getMonth() + 1}.${now.getDate()}-${now.getHours()}.${now.getMinutes()}.${now.getSeconds()}`;
-  // return `${now.getFullYear()}.${now.getMonth() + 1}.${now.getDate()}-${now.getHours()}${now.getMinutes()}${now.getSeconds()}`;
-
-  // set version number using runId and runNumber
-  return `0.0.0-${runId || 0}.${runNumber || getToday() + "." + getTime()}`;
+  const now: Date = new Date();
+  return `0.0.0-${runId || 0}.${runNumber || getDate(now) + "." + getTime(now)}`;
 }
 
 async function main() {
@@ -223,13 +218,11 @@ function setVersion(packagePath: string, version: string) {
 }
 
 module.exports = main;
-function getToday(): string {
-  const now = new Date();
+function getDate(now: Date): string {
   return `${now.getFullYear()}${now.getMonth() + 1}${now.getDate()}`;
 }
 
-function getTime(): string {
-  const now = new Date();
+function getTime(now: Date): string {
   return `${now.getHours()}${now.getMinutes()}${now.getSeconds()}`;
 }
 
