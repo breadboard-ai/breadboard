@@ -40,12 +40,16 @@ const packagesWithScope = packages.map((pkg) => `${fromScope}/${pkg}`);
 const registry = "https://npm.pkg.github.com";
 
 const workspace = process.cwd();
+console.log({ workspace });
 
 const runId = github.context.runId;
 const runNumber = github.context.runNumber;
 
 function getVersion() {
-  return `0.0.0-${runId}.${runNumber}.${Date.now()}`;
+  // version as YYYY.MM.DD-HH.MM.SS
+  const now = new Date();
+  // return `${now.getFullYear()}.${now.getMonth() + 1}.${now.getDate()}-${now.getHours()}.${now.getMinutes()}.${now.getSeconds()}`;
+  return `${now.getFullYear()}.${now.getMonth() + 1}.${now.getDate()}-${now.getHours()}${now.getMinutes()}${now.getSeconds()}`;
 }
 
 async function main() {
@@ -55,6 +59,7 @@ async function main() {
   console.log({ fromScope, toScope });
 
   await npmInstall();
+  await npmBuild();
 
   const scopedRegistryArg = `--@${toScope}:registry=${registry}`;
   const packagePaths = packages.map((pkg) => path.resolve(packageDir, pkg, "package.json"));
@@ -63,8 +68,9 @@ async function main() {
   console.log(`Initial version: ${initialVersion}`);
   for (const packagePath of packagePaths) {
     console.log(`Handling first publish of ${packagePath} v${initialVersion}`);
-    await renamePackage(packagePath, fromScope, toScope);
-    await setVersion(packagePath, initialVersion);
+    renamePackage(packagePath, fromScope, toScope);
+    setVersion(packagePath, initialVersion);
+    await npmInstall();
     await npmBuild(packagePath);
     await publishPackage(packagePath, registry, [scopedRegistryArg]);
     spacer({ count: 40 });
@@ -74,7 +80,7 @@ async function main() {
   const secondaryVersion = getVersion();
   for (const packagePath of packagePaths) {
     console.log(`Publishing secondary version of ${packagePath} v${secondaryVersion}`);
-    await setVersion(packagePath, secondaryVersion);
+    setVersion(packagePath, secondaryVersion);
     await aliasDependencies(packagePath, packagesWithScope, fromScope, toScope);
     await npmInstall();
     await npmBuild(packagePath);
@@ -86,8 +92,8 @@ async function main() {
   console.log(`Unpublishing initial versions`);
   for (const packagePath of packagePaths) {
     console.log(`Unpublishing ${packagePath}`);
-    await renamePackage(packagePath, fromScope, toScope);
-    await setVersion(packagePath, initialVersion);
+    renamePackage(packagePath, fromScope, toScope);
+    setVersion(packagePath, initialVersion);
     await npmBuild(packagePath);
     await publishPackage(packagePath, registry, [scopedRegistryArg]);
     spacer({ count: 40 });
@@ -96,17 +102,31 @@ async function main() {
 
 type Package = {
   name?: string;
+  version?: string;
   dependencies?: Record<string, string>;
   devDependencies?: Record<string, string>;
   peerDependencies?: Record<string, string>;
 };
 
 async function npmBuild(cwd = workspace) {
-  await exec.exec("npm", ["run", "build"], { cwd });
+  await execWrapper("npm", ["run", "build"], cwd);
+}
+
+async function execWrapper(command: string, args: string[], cwd: string) {
+  console.log(`${cwd} $ ${command} ${args.join(" ")}`);
+  const listeners = {
+    stdout: (data: Buffer) => {
+      console.log(data.toString());
+    },
+    stderr: (data: Buffer) => {
+      console.error(data.toString());
+    }
+  };
+  await exec.exec(command, args, { cwd, listeners });
 }
 
 async function npmInstall(cwd = workspace) {
-  await exec.exec("npm", ["install"], { cwd });
+  await execWrapper("npm", ["install"], cwd);
 }
 
 async function aliasDependencies(packagePath: string, packagesToRescope: string[], fromScope: string, toScope: string, dependencyVersion = "*") {
@@ -129,18 +149,19 @@ async function aliasDependencies(packagePath: string, packagesToRescope: string[
     }
     packageJson[depType] = deps;
   }
-  fs.writeFile(packagePath, JSON.stringify(packageJson, null, 2), () => { });
+  fs.writeFileSync(packagePath, JSON.stringify(packageJson, null, 2));
   return packageJson;
 }
 
-async function renamePackage(packagePath: string, fromScope: string, toScope: string) {
+function renamePackage(packagePath: string, fromScope: string, toScope: string) {
   const packageJson: Package = JSON.parse(fs.readFileSync(packagePath, "utf8"));
   const currentName = packageJson.name;
   const newName = currentName?.replace(fromScope, toScope);
 
   console.log(`name`, ` ${currentName} -> ${newName}`);
   packageJson.name = newName;
-  return fs.writeFile(packagePath, JSON.stringify(packageJson, null, 2), (err) => { });
+  fs.writeFileSync(packagePath, JSON.stringify(packageJson, null, 2));
+  return packageJson;
 }
 
 async function publishPackage(cwd: string, registry: string, flags: string[] = []) {
@@ -151,11 +172,12 @@ async function publishPackage(cwd: string, registry: string, flags: string[] = [
   await exec.exec("npm", ["publish", ...flags], { cwd });
 }
 
-module.exports = main;
-
-
-async function setVersion(cwd: string, version: string) {
-  console.log(`${cwd}: setting version to ${version}`);
-  await exec.exec("npm", ["pkg", "set", `version=${version}`], { cwd });
+function setVersion(packagePath: string, version: string) {
+  console.log(`Setting version of ${packagePath} to ${version}`);
+  const packageJson: Package = JSON.parse(fs.readFileSync(packagePath, "utf8"));
+  packageJson.version = version;
+  fs.writeFileSync(packagePath, JSON.stringify(packageJson, null, 2));
+  return packageJson;
 }
 
+module.exports = main;
