@@ -32585,7 +32585,7 @@ function wrappy (fn, cb) {
 /***/ }),
 
 /***/ 6144:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+/***/ (function(module, exports, __nccwpck_require__) {
 
 "use strict";
 
@@ -32630,12 +32630,9 @@ const globals = {
     fetch,
 };
 Object.assign(global, globals);
-function main() {
+module.exports = () => {
     console.log("Hello world");
-    core.setOutput("time", new Date().toTimeString());
-}
-// @ts-ignore
-return main();
+};
 
 
 /***/ }),
