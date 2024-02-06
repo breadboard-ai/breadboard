@@ -113,6 +113,9 @@ async function npmBuild(cwd = workspace) {
 }
 
 async function execWrapper(command: string, args: string[], cwd: string) {
+  if (fs.existsSync(cwd) && fs.lstatSync(cwd).isFile()) {
+    cwd = path.dirname(cwd);
+  }
   console.log(`${cwd} $ ${command} ${args.join(" ")}`);
   const listeners = {
     stdout: (data: Buffer) => {
