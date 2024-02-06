@@ -59,7 +59,7 @@ export async function main() {
     spacer({ count: 40 });
   }
 
-  gitClean({ cwd: workspace });
+  await gitClean({ cwd: workspace });
   await npmInstall(workspace);
 
   for (const packagePath of packagePaths) {

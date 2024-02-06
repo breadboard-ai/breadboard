@@ -28713,7 +28713,7 @@ async function main() {
         await (0, aliasDependencies_1.aliasDependencies)(packagePath, packagesWithScope, fromScope, toScope);
         spacer({ count: 40 });
     }
-    gitClean({ cwd: exports.workspace });
+    await gitClean({ cwd: exports.workspace });
     await (0, npmInstall_1.npmInstall)(exports.workspace);
     for (const packagePath of packagePaths) {
         console.log(`Publishing ephemeral version of ${packagePath} v${newVersion}`);
