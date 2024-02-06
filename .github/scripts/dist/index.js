@@ -28444,13 +28444,13 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.aliasDependencies = void 0;
 const fs = __importStar(__nccwpck_require__(7147));
-const src_1 = __nccwpck_require__(6144);
+const main_1 = __nccwpck_require__(399);
 const writePackage_1 = __nccwpck_require__(3230);
 async function aliasDependencies(packagePath, packagesToRescope, fromScope, toScope, dependencyVersion = "*") {
-    (0, src_1.spacer)({ count: 40 });
+    (0, main_1.spacer)({ count: 40 });
     console.log(`Renaming dependencies in ${packagePath}`);
     const packageJson = JSON.parse(fs.readFileSync(packagePath, "utf8"));
-    for (const depType of src_1.depTypes) {
+    for (const depType of main_1.depTypes) {
         const deps = packageJson[depType];
         if (deps) {
             for (const [dep, version] of Object.entries(deps)) {
@@ -28459,7 +28459,7 @@ async function aliasDependencies(packagePath, packagesToRescope, fromScope, toSc
                         const newVersion = `npm:${dep.replace(fromScope, toScope)}@${dependencyVersion}`;
                         console.log(`${depType}.${dep}: "${newVersion}"`);
                         deps[dep] = newVersion;
-                        (0, src_1.spacer)({ count: 10 });
+                        (0, main_1.spacer)({ count: 10 });
                     }
                 }
             }
@@ -28522,7 +28522,7 @@ async function execWrapper(command, args, options) {
         },
         stderr: (data) => {
             // console.error(data.toString());
-        }
+        },
     };
     await exec.exec(command, args, { cwd, listeners }).catch((err) => {
         console.error(err);
@@ -28535,23 +28535,54 @@ exports.execWrapper = execWrapper;
 /***/ }),
 
 /***/ 370:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
 
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.generationVersion = void 0;
-const src_1 = __nccwpck_require__(6144);
+exports.generationVersion = exports.runNumber = exports.runId = void 0;
+const github = __importStar(__nccwpck_require__(5438));
 const getDate_1 = __nccwpck_require__(2125);
 const getTime_1 = __nccwpck_require__(9967);
+/**
+ * A unique number for each workflow run within a repository. This number does not change if you re-run the workflow run.
+ */
+exports.runId = github.context.runId;
+/**
+ * A unique number for each run of a particular workflow in a repository. This number begins at 1 for the workflow's first run, and increments with each new run. This number does not change if you re-run the workflow run.
+ */
+exports.runNumber = github.context.runNumber;
 function generationVersion() {
     const now = new Date();
     const timestamp = now.getTime();
-    if (!src_1.runId || !src_1.runNumber) {
+    if (!exports.runId || !exports.runNumber) {
         return `0.0.0-${(0, getDate_1.getDate)(now)}.${(0, getTime_1.getTime)(now)}`;
     }
     else {
-        return `0.0.0-${src_1.runId}.${src_1.runNumber}.${timestamp}`;
+        return `0.0.0-${exports.runId}.${exports.runNumber}.${timestamp}`;
     }
 }
 exports.generationVersion = generationVersion;
@@ -28590,7 +28621,19 @@ exports.getTime = getTime;
 /***/ }),
 
 /***/ 6144:
-/***/ (function(module, exports, __nccwpck_require__) {
+/***/ ((module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const main_1 = __nccwpck_require__(399);
+module.exports = main_1.main;
+
+
+/***/ }),
+
+/***/ 399:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
 
@@ -28621,7 +28664,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.runId = exports.runNumber = exports.workspace = exports.depTypes = exports.spacer = void 0;
+exports.main = exports.workspace = exports.depTypes = exports.spacer = void 0;
 const github = __importStar(__nccwpck_require__(5438));
 const path_1 = __importDefault(__nccwpck_require__(1017));
 const aliasDependencies_1 = __nccwpck_require__(9089);
@@ -28631,11 +28674,15 @@ const npmInstall_1 = __nccwpck_require__(9410);
 const publishPackage_1 = __nccwpck_require__(2204);
 const renamePackage_1 = __nccwpck_require__(1086);
 const setVersion_1 = __nccwpck_require__(9556);
-function spacer({ char = '=', count = 80 } = {}) {
+function spacer({ char = "=", count = 80, } = {}) {
     console.log(char.repeat(count));
 }
 exports.spacer = spacer;
-exports.depTypes = ["dependencies", "devDependencies", "peerDependencies"];
+exports.depTypes = [
+    "dependencies",
+    "devDependencies",
+    "peerDependencies",
+];
 const fromScope = "@google-labs";
 const packages = [
     "breadboard",
@@ -28646,16 +28693,8 @@ const packages = [
 const packagesWithScope = packages.map((pkg) => `${fromScope}/${pkg}`);
 const registry = "https://npm.pkg.github.com";
 exports.workspace = process.cwd();
-console.log({ workspace: exports.workspace });
-/**
- * A unique number for each run of a particular workflow in a repository. This number begins at 1 for the workflow's first run, and increments with each new run. This number does not change if you re-run the workflow run.
- */
-exports.runNumber = github.context.runNumber;
-/**
- * A unique number for each workflow run within a repository. This number does not change if you re-run the workflow run.
- */
-exports.runId = github.context.runId;
 async function main() {
+    console.log({ workspace: exports.workspace });
     console.log({ cwd: exports.workspace });
     const packageDir = path_1.default.resolve(exports.workspace, "packages");
     const toScope = `@${github.context.repo.owner.toLowerCase()}`;
@@ -28680,7 +28719,7 @@ async function main() {
         spacer({ count: 40 });
     }
 }
-module.exports = main;
+exports.main = main;
 
 
 /***/ }),
@@ -28692,9 +28731,9 @@ module.exports = main;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.npmBuild = void 0;
-const src_1 = __nccwpck_require__(6144);
+const main_1 = __nccwpck_require__(399);
 const execWrapper_1 = __nccwpck_require__(2114);
-async function npmBuild(cwd = src_1.workspace) {
+async function npmBuild(cwd = main_1.workspace) {
     await (0, execWrapper_1.execWrapper)("npm", ["run", "build"], { cwd });
 }
 exports.npmBuild = npmBuild;
@@ -28709,9 +28748,9 @@ exports.npmBuild = npmBuild;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.npmInstall = void 0;
-const src_1 = __nccwpck_require__(6144);
+const main_1 = __nccwpck_require__(399);
 const execWrapper_1 = __nccwpck_require__(2114);
-async function npmInstall(cwd = src_1.workspace) {
+async function npmInstall(cwd = main_1.workspace) {
     await (0, execWrapper_1.execWrapper)("npm", ["install"], { cwd });
 }
 exports.npmInstall = npmInstall;
