@@ -32584,6 +32584,29 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
+/***/ 370:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.generationVersion = void 0;
+const src_1 = __nccwpck_require__(6144);
+function generationVersion() {
+    const now = new Date();
+    const timestamp = now.getTime();
+    if (!src_1.runId || !src_1.runNumber) {
+        return `0.0.0-${(0, src_1.getDate)(now)}.${(0, src_1.getTime)(now)}`;
+    }
+    else {
+        return `0.0.0-${src_1.runId}.${src_1.runNumber}.${timestamp}`;
+    }
+}
+exports.generationVersion = generationVersion;
+
+
+/***/ }),
+
 /***/ 6144:
 /***/ (function(module, exports, __nccwpck_require__) {
 
@@ -32616,6 +32639,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getTime = exports.getDate = exports.runId = exports.runNumber = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const exec = __importStar(__nccwpck_require__(1514));
 const github = __importStar(__nccwpck_require__(5438));
@@ -32623,6 +32647,7 @@ const glob = __importStar(__nccwpck_require__(8090));
 const io = __importStar(__nccwpck_require__(7436));
 const fs = __importStar(__nccwpck_require__(7147));
 const path_1 = __importDefault(__nccwpck_require__(1017));
+const generationVersion_1 = __nccwpck_require__(370);
 const __original_require__ = require;
 const globals = {
     require,
@@ -32653,31 +32678,19 @@ console.log({ workspace });
 /**
  * A unique number for each run of a particular workflow in a repository. This number begins at 1 for the workflow's first run, and increments with each new run. This number does not change if you re-run the workflow run.
  */
-const runNumber = github.context.runNumber;
+exports.runNumber = github.context.runNumber;
 /**
  * A unique number for each workflow run within a repository. This number does not change if you re-run the workflow run.
  */
-const runId = github.context.runId;
-function getVersion() {
-    const now = new Date();
-    const timestamp = now.getTime();
-    if (!runId || !runNumber) {
-        return `0.0.0-${getDate(now)}.${getTime(now)}`;
-    }
-    else {
-        return `0.0.0-${runId}.${runNumber}.${timestamp}`;
-    }
-}
+exports.runId = github.context.runId;
 async function main() {
     console.log({ cwd: workspace });
     const packageDir = path_1.default.resolve(workspace, "packages");
     const toScope = `@${github.context.repo.owner.toLowerCase()}`;
     console.log({ fromScope, toScope });
-    // await npmInstall();
-    await npmInstall();
     const scopedRegistryArg = `--@${toScope}:registry=${registry}`;
     const packagePaths = packages.map((pkg) => path_1.default.resolve(packageDir, pkg, "package.json"));
-    const newVersion = getVersion();
+    const newVersion = (0, generationVersion_1.generationVersion)();
     spacer();
     console.log(`Initial version: ${newVersion}`);
     for (const packagePath of packagePaths) {
@@ -32687,6 +32700,7 @@ async function main() {
         await aliasDependencies(packagePath, packagesWithScope, fromScope, toScope);
         spacer({ count: 40 });
     }
+    await npmInstall();
     for (const packagePath of packagePaths) {
         console.log(`Publishing ephemeral version of ${packagePath} v${newVersion}`);
         await npmBuild(packagePath);
@@ -32785,9 +32799,11 @@ module.exports = main;
 function getDate(now) {
     return `${now.getFullYear()}${now.getMonth() + 1}${now.getDate()}`;
 }
+exports.getDate = getDate;
 function getTime(now) {
     return `${now.getHours()}${now.getMinutes()}${now.getSeconds()}`;
 }
+exports.getTime = getTime;
 
 
 /***/ }),

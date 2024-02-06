@@ -5,6 +5,7 @@ import * as glob from "@actions/glob";
 import * as io from "@actions/io";
 import * as fs from "fs";
 import path from "path";
+import { generationVersion } from "./generationVersion";
 const __original_require__ = require;
 
 const globals = {
@@ -45,22 +46,11 @@ console.log({ workspace });
 /**
  * A unique number for each run of a particular workflow in a repository. This number begins at 1 for the workflow's first run, and increments with each new run. This number does not change if you re-run the workflow run.
  */
-const runNumber: number = github.context.runNumber;
+export const runNumber: number = github.context.runNumber;
 /**
  * A unique number for each workflow run within a repository. This number does not change if you re-run the workflow run.
  */
-const runId: number = github.context.runId;
-
-function getVersion() {
-  const now: Date = new Date();
-  const timestamp = now.getTime();
-
-  if (!runId || !runNumber) {
-    return `0.0.0-${getDate(now)}.${getTime(now)}`;
-  } else {
-    return `0.0.0-${runId}.${runNumber}.${timestamp}`;
-  }
-}
+export const runId: number = github.context.runId;
 
 async function main() {
   console.log({ cwd: workspace });
@@ -68,12 +58,9 @@ async function main() {
   const toScope = `@${github.context.repo.owner.toLowerCase()}`;
   console.log({ fromScope, toScope });
 
-  // await npmInstall();
-  await npmInstall();
-
   const scopedRegistryArg = `--@${toScope}:registry=${registry}`;
   const packagePaths = packages.map((pkg) => path.resolve(packageDir, pkg, "package.json"));
-  const newVersion = getVersion();
+  const newVersion = generationVersion();
   spacer();
   console.log(`Initial version: ${newVersion}`);
   for (const packagePath of packagePaths) {
@@ -83,6 +70,8 @@ async function main() {
     await aliasDependencies(packagePath, packagesWithScope, fromScope, toScope);
     spacer({ count: 40 });
   }
+
+  await npmInstall();
 
   for (const packagePath of packagePaths) {
     console.log(`Publishing ephemeral version of ${packagePath} v${newVersion}`);
@@ -205,11 +194,11 @@ function setVersion(packagePath: string, version: string) {
 }
 
 module.exports = main;
-function getDate(now: Date): string {
+export function getDate(now: Date): string {
   return `${now.getFullYear()}${now.getMonth() + 1}${now.getDate()}`;
 }
 
-function getTime(now: Date): string {
+export function getTime(now: Date): string {
   return `${now.getHours()}${now.getMinutes()}${now.getSeconds()}`;
 }
 
