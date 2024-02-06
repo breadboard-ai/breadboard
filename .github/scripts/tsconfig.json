@@ -16,16 +16,10 @@
     "skipLibCheck": true,
     "newLine": "lf",
     "types": [
-      "@actions/artifact",
-      "@actions/cache",
-      "@actions/core",
-      "@actions/exec",
-      "@actions/github",
-      "@actions/glob",
-      "@actions/http-client",
-      "@actions/io",
-      "@actions/tool-cache",
       "node"
+    ],
+    "typeRoots": [
+      "./node_modules/@types/"
     ]
   },
   "exclude": [
@@ -33,5 +27,5 @@
     "./node_modules",
     "./__tests__",
     "./coverage"
-  ]
+  ],
 }
