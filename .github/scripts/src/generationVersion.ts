@@ -1,6 +1,6 @@
 import * as github from "@actions/github";
-import { getDate } from "./getDate";
-import { getTime } from "./getTime";
+import { getYMD } from "./getDate";
+import { getHMS } from "./getHMS";
 
 /**
  * A unique number for each workflow run within a repository. This number does not change if you re-run the workflow run.
@@ -17,7 +17,7 @@ export function generationVersion() {
   const timestamp = now.getTime();
 
   if (!runId || !runNumber) {
-    return `0.0.0-${getDate(now)}.${getTime(now)}`;
+    return `0.0.0-${getYMD(now)}.${getHMS(now)}`;
   } else {
     return `0.0.0-${runId}.${runNumber}.${timestamp}`;
   }

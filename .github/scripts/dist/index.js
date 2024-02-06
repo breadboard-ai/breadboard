@@ -28587,7 +28587,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.generationVersion = exports.runNumber = exports.runId = void 0;
 const github = __importStar(__nccwpck_require__(5438));
 const getDate_1 = __nccwpck_require__(2125);
-const getTime_1 = __nccwpck_require__(9967);
+const getHMS_1 = __nccwpck_require__(644);
 /**
  * A unique number for each workflow run within a repository. This number does not change if you re-run the workflow run.
  */
@@ -28600,7 +28600,7 @@ function generationVersion() {
     const now = new Date();
     const timestamp = now.getTime();
     if (!exports.runId || !exports.runNumber) {
-        return `0.0.0-${(0, getDate_1.getDate)(now)}.${(0, getTime_1.getTime)(now)}`;
+        return `0.0.0-${(0, getDate_1.getYMD)(now)}.${(0, getHMS_1.getHMS)(now)}`;
     }
     else {
         return `0.0.0-${exports.runId}.${exports.runNumber}.${timestamp}`;
@@ -28617,28 +28617,28 @@ exports.generationVersion = generationVersion;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getDate = void 0;
-function getDate(now) {
+exports.getYMD = void 0;
+function getYMD(now) {
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const date = String(now.getDate()).padStart(2, '0');
     return `${now.getFullYear()}${month}${date}`;
 }
-exports.getDate = getDate;
+exports.getYMD = getYMD;
 
 
 /***/ }),
 
-/***/ 9967:
+/***/ 644:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getTime = void 0;
-function getTime(now) {
+exports.getHMS = void 0;
+function getHMS(now) {
     return `${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
 }
-exports.getTime = getTime;
+exports.getHMS = getHMS;
 
 
 /***/ }),
