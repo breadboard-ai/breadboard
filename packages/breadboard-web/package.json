@@ -211,8 +211,6 @@
     "@google-labs/palm-kit": "^0.0.4",
     "@google-labs/pinecone-kit": "^0.1.1",
     "@google-labs/template-kit": "^0.1.4",
-    "lit": "^3.1.1",
-    "zod": "^3.22.4",
-    "zod-to-json-schema": "^3.22.0"
+    "lit": "^3.1.1"
   }
 }
