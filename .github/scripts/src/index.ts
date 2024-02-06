@@ -58,7 +58,7 @@ async function main() {
   const toScope = `@${github.context.repo.owner.toLowerCase()}`;
   console.log({ fromScope, toScope });
 
-  await npmInstall();
+  // await npmInstall();
   await npmBuild();
 
   const scopedRegistryArg = `--@${toScope}:registry=${registry}`;
@@ -70,11 +70,12 @@ async function main() {
     console.log(`Handling first publish of ${packagePath} v${initialVersion}`);
     renamePackage(packagePath, fromScope, toScope);
     setVersion(packagePath, initialVersion);
-    await npmInstall();
+    // await npmInstall();
     await npmBuild(packagePath);
     await publishPackage(packagePath, registry, [scopedRegistryArg]);
     spacer({ count: 40 });
   }
+
   spacer();
   console.log("Proceeding with second stage publishing");
   const secondaryVersion = getVersion();
@@ -82,7 +83,7 @@ async function main() {
     console.log(`Publishing secondary version of ${packagePath} v${secondaryVersion}`);
     setVersion(packagePath, secondaryVersion);
     await aliasDependencies(packagePath, packagesWithScope, fromScope, toScope);
-    await npmInstall();
+    // await npmInstall();
     await npmBuild(packagePath);
     await publishPackage(packagePath, registry, [scopedRegistryArg]);
     spacer({ count: 40 });
@@ -109,27 +110,32 @@ type Package = {
 };
 
 async function npmBuild(cwd = workspace) {
-  await execWrapper("npm", ["run", "build"], cwd);
+  await execWrapper("npm", ["run", "build"], { cwd });
 }
 
-async function execWrapper(command: string, args: string[], cwd: string) {
+async function execWrapper(command: string, args: string[], options: { cwd: string; }) {
+  let cwd = options.cwd;
   if (fs.existsSync(cwd) && fs.lstatSync(cwd).isFile()) {
     cwd = path.dirname(cwd);
   }
+
   console.log(`${cwd} $ ${command} ${args.join(" ")}`);
   const listeners = {
     stdout: (data: Buffer) => {
-      console.log(data.toString());
+      // console.log(data.toString());
     },
     stderr: (data: Buffer) => {
-      console.error(data.toString());
+      // console.error(data.toString());
     }
   };
-  await exec.exec(command, args, { cwd, listeners });
+  await exec.exec(command, args, { cwd, listeners }).catch((err) => {
+    console.error(err);
+    throw err;
+  });
 }
 
 async function npmInstall(cwd = workspace) {
-  await execWrapper("npm", ["install"], cwd);
+  await execWrapper("npm", ["install"], { cwd });
 }
 
 async function aliasDependencies(packagePath: string, packagesToRescope: string[], fromScope: string, toScope: string, dependencyVersion = "*") {
@@ -171,8 +177,9 @@ async function publishPackage(cwd: string, registry: string, flags: string[] = [
   console.log(`Publishing`, { cwd, registry, flags });
   const packageDir = path.dirname(cwd);
   console.log({ packageDir });
-  await exec.exec("npm", ["pkg", "set", `registry=${registry}`], { cwd });
-  await exec.exec("npm", ["publish", ...flags], { cwd });
+
+  await execWrapper("npm", ["publish", ...flags], { cwd: packageDir });
+  await execWrapper("npm", ["pkg", "unset", "registry"], { cwd });
 }
 
 function setVersion(packagePath: string, version: string) {
