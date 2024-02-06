@@ -32673,31 +32673,22 @@ async function main() {
     const packageDir = path_1.default.resolve(workspace, "packages");
     const toScope = `@${github.context.repo.owner.toLowerCase()}`;
     console.log({ fromScope, toScope });
+    // await npmInstall();
     await npmInstall();
-    await npmBuild();
     const scopedRegistryArg = `--@${toScope}:registry=${registry}`;
     const packagePaths = packages.map((pkg) => path_1.default.resolve(packageDir, pkg, "package.json"));
-    const initialVersion = getVersion();
+    const newVersion = getVersion();
     spacer();
-    console.log(`Initial version: ${initialVersion}`);
+    console.log(`Initial version: ${newVersion}`);
     for (const packagePath of packagePaths) {
-        console.log(`Handling first publish of ${packagePath} v${initialVersion}`);
+        console.log(`Renaming package ${packagePath}`);
         renamePackage(packagePath, fromScope, toScope);
-        setVersion(packagePath, initialVersion);
-        // await npmInstall();
-        await npmBuild(packagePath);
-        await publishPackage(packagePath, registry, [scopedRegistryArg]);
+        setVersion(packagePath, newVersion);
+        await aliasDependencies(packagePath, packagesWithScope, fromScope, toScope);
         spacer({ count: 40 });
     }
-    spacer();
-    console.log("Proceeding with second stage publishing");
-    const secondaryVersion = getVersion();
     for (const packagePath of packagePaths) {
-        console.log(`Publishing secondary version of ${packagePath} v${secondaryVersion}`);
-        setVersion(packagePath, secondaryVersion);
-        await aliasDependencies(packagePath, packagesWithScope, fromScope, toScope);
-        // await npmInstall();
-        setVersion(packagePath, secondaryVersion);
+        console.log(`Publishing ephemeral version of ${packagePath} v${newVersion}`);
         await npmBuild(packagePath);
         await publishPackage(packagePath, registry, [scopedRegistryArg]);
         spacer({ count: 40 });
