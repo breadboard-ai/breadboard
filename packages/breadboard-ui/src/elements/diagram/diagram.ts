@@ -501,7 +501,7 @@ export class Diagram extends HTMLElement {
     this.#translation.y = 0;
   }
 
-  async render(diagram: string | LoadArgs, highlightedNode: string) {
+  async draw(diagram: string | LoadArgs, highlightedNode: string) {
     if (!(typeof diagram === 'string')) {
       if (!diagram.diagram) {
         throw new Error('No diagram string provided');
