@@ -101,15 +101,23 @@ async function main() {
   }
 
   spacer();
+
   console.log(`Unpublishing initial versions`);
   for (const packagePath of packagePaths) {
-    console.log(`Unpublishing ${packagePath}`);
-    renamePackage(packagePath, fromScope, toScope);
-    setVersion(packagePath, initialVersion);
-    await npmBuild(packagePath);
-    await publishPackage(packagePath, registry, [scopedRegistryArg]);
+    await unpublishPackage(packagePath, registry, initialVersion);
     spacer({ count: 40 });
   }
+}
+
+function unpublishPackage(cwd: string, registry: string, version: string) {
+  console.log(`Unpublishing ${cwd} v${version}`);
+  const packageDir = path.dirname(cwd);
+  console.log({ packageDir });
+
+  updatePackageRegistry(cwd, registry);
+
+  console.log(`Unpublishing ${packageDir}`);
+  return execWrapper("npm", ["unpublish", "--force", "--registry", registry, version], { cwd: packageDir });
 }
 
 type Package = {
@@ -142,7 +150,7 @@ async function execWrapper(command: string, args: string[], options: { cwd: stri
       // console.error(data.toString());
     }
   };
-  await exec.exec(command, args, { cwd, listeners }).catch((err) => {
+  await exec.exec(command, args, { cwd, listeners }).catch((err: any) => {
     console.error(err);
     throw err;
   });
@@ -172,7 +180,7 @@ async function aliasDependencies(packagePath: string, packagesToRescope: string[
     }
     packageJson[depType] = deps;
   }
-  fs.writeFileSync(packagePath, JSON.stringify(packageJson, null, 2));
+  writePackage(packagePath, packageJson);
   return packageJson;
 }
 
@@ -203,17 +211,17 @@ async function publishPackage(cwd: string, registry: string, flags: string[] = [
   const packageDir = path.dirname(cwd);
   console.log({ packageDir });
 
-  const packageJson = readPackage(cwd);
-  const currentRegistry = packageJson.publishConfig?.registry ?? "https://registry.npmjs.org";
-  packageJson.publishConfig = { registry };
-  console.log(`Setting publishConfig.registry to ${registry}`);
-  writePackage(cwd, packageJson);
+  updatePackageRegistry(cwd, registry);
 
   console.log(`Publishing ${packageDir}`);
   await execWrapper("npm", ["publish", ...flags], { cwd: packageDir });
+}
 
-  console.log(`Restoring publishConfig.registry to ${currentRegistry}`);
-  packageJson.publishConfig = { registry: currentRegistry };
+function updatePackageRegistry(cwd: string, registry: string) {
+  const packageJson = readPackage(cwd);
+  packageJson.publishConfig = { registry };
+  console.log(`Setting publishConfig.registry to ${registry}`);
+  writePackage(cwd, packageJson);
 }
 
 function setVersion(packagePath: string, version: string) {
