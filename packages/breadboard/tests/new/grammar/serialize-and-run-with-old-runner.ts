@@ -208,7 +208,7 @@ test("code board called from another board", async (t) => {
 });
 
 test("nested inline action, with schema", async (t) => {
-  const graph = board(
+  const graph = board<{ a: number; b: number }>(
     {
       input: z.object({
         a: z.number().describe("A: One Number"),
