@@ -20,12 +20,7 @@ const kit = new Board({
 });
 const core = kit.addKit(Core);
 
-kit.graphs = {
-  instruction,
-  worker,
-};
-
-core.invoke({ $id: "worker", path: "#worker" });
-core.invoke({ $id: "instruction", path: "#instruction" });
+core.invoke({ $id: "worker", graph: worker });
+core.invoke({ $id: "instruction", graph: instruction });
 
 export default kit;
