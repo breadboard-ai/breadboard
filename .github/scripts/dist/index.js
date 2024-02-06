@@ -32638,12 +32638,9 @@ Object.assign(global, globals);
 module.exports = () => {
     const cwd = process.cwd();
     console.log({ cwd });
-    // list directories
-    console.log({ files: fs.readdirSync(cwd).map((f) => path_1.default.resolve(cwd, f)) });
     const packageDir = path_1.default.resolve(cwd, "packages");
-    console.log({ packages: fs.readdirSync(packageDir).map((f) => path_1.default.resolve(packageDir, f)) });
     const packages = [
-        "breadoard",
+        "breadboard",
         "breadboard-cli",
         "create-breadboard",
         "create-breadboard-kit",
