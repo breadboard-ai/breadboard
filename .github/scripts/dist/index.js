@@ -32650,13 +32650,21 @@ const packagesWithScope = packages.map((pkg) => `${fromScope}/${pkg}`);
 const registry = "https://npm.pkg.github.com";
 const workspace = process.cwd();
 console.log({ workspace });
-const runId = github.context.runId;
+/**
+ * A unique number for each run of a particular workflow in a repository. This number begins at 1 for the workflow's first run, and increments with each new run. This number does not change if you re-run the workflow run.
+ */
 const runNumber = github.context.runNumber;
+/**
+ * A unique number for each workflow run within a repository. This number does not change if you re-run the workflow run.
+ */
+const runId = github.context.runId;
 function getVersion() {
     // version as YYYY.MM.DD-HH.MM.SS
     const now = new Date();
     // return `${now.getFullYear()}.${now.getMonth() + 1}.${now.getDate()}-${now.getHours()}.${now.getMinutes()}.${now.getSeconds()}`;
-    return `${now.getFullYear()}.${now.getMonth() + 1}.${now.getDate()}-${now.getHours()}${now.getMinutes()}${now.getSeconds()}`;
+    // return `${now.getFullYear()}.${now.getMonth() + 1}.${now.getDate()}-${now.getHours()}${now.getMinutes()}${now.getSeconds()}`;
+    // set version number using runId and runNumber
+    return `0.0.0-${runId || 0}.${runNumber || getToday() + "." + getTime()}`;
 }
 async function main() {
     console.log({ cwd: workspace });
@@ -32751,20 +32759,36 @@ async function aliasDependencies(packagePath, packagesToRescope, fromScope, toSc
     return packageJson;
 }
 function renamePackage(packagePath, fromScope, toScope) {
-    const packageJson = JSON.parse(fs.readFileSync(packagePath, "utf8"));
+    const packageJson = readPackage(packagePath);
     const currentName = packageJson.name;
     const newName = currentName?.replace(fromScope, toScope);
     console.log(`name`, ` ${currentName} -> ${newName}`);
     packageJson.name = newName;
-    fs.writeFileSync(packagePath, JSON.stringify(packageJson, null, 2));
+    writePackage(packagePath, packageJson);
     return packageJson;
+}
+function writePackage(packagePath, packageJson) {
+    if (fs.lstatSync(packagePath).isDirectory()) {
+        packagePath = path_1.default.resolve(packagePath, "package.json");
+    }
+    fs.writeFileSync(packagePath, JSON.stringify(packageJson, null, 2));
+}
+function readPackage(packagePath) {
+    return JSON.parse(fs.readFileSync(packagePath, "utf8"));
 }
 async function publishPackage(cwd, registry, flags = []) {
     console.log(`Publishing`, { cwd, registry, flags });
     const packageDir = path_1.default.dirname(cwd);
     console.log({ packageDir });
+    const packageJson = readPackage(cwd);
+    const currentRegistry = packageJson.publishConfig?.registry ?? "https://registry.npmjs.org";
+    packageJson.publishConfig = { registry };
+    console.log(`Setting publishConfig.registry to ${registry}`);
+    writePackage(cwd, packageJson);
+    console.log(`Publishing ${packageDir}`);
     await execWrapper("npm", ["publish", ...flags], { cwd: packageDir });
-    await execWrapper("npm", ["pkg", "unset", "registry"], { cwd });
+    console.log(`Restoring publishConfig.registry to ${currentRegistry}`);
+    packageJson.publishConfig = { registry: currentRegistry };
 }
 function setVersion(packagePath, version) {
     console.log(`Setting version of ${packagePath} to ${version}`);
@@ -32774,6 +32798,14 @@ function setVersion(packagePath, version) {
     return packageJson;
 }
 module.exports = main;
+function getToday() {
+    const now = new Date();
+    return `${now.getFullYear()}${now.getMonth() + 1}${now.getDate()}`;
+}
+function getTime() {
+    const now = new Date();
+    return `${now.getHours()}${now.getMinutes()}${now.getSeconds()}`;
+}
 
 
 /***/ }),

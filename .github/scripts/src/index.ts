@@ -42,14 +42,23 @@ const registry = "https://npm.pkg.github.com";
 const workspace = process.cwd();
 console.log({ workspace });
 
-const runId = github.context.runId;
-const runNumber = github.context.runNumber;
+/**
+ * A unique number for each run of a particular workflow in a repository. This number begins at 1 for the workflow's first run, and increments with each new run. This number does not change if you re-run the workflow run.
+ */
+const runNumber: number = github.context.runNumber;
+/**
+ * A unique number for each workflow run within a repository. This number does not change if you re-run the workflow run.
+ */
+const runId: number = github.context.runId;
 
 function getVersion() {
   // version as YYYY.MM.DD-HH.MM.SS
   const now = new Date();
   // return `${now.getFullYear()}.${now.getMonth() + 1}.${now.getDate()}-${now.getHours()}.${now.getMinutes()}.${now.getSeconds()}`;
-  return `${now.getFullYear()}.${now.getMonth() + 1}.${now.getDate()}-${now.getHours()}${now.getMinutes()}${now.getSeconds()}`;
+  // return `${now.getFullYear()}.${now.getMonth() + 1}.${now.getDate()}-${now.getHours()}${now.getMinutes()}${now.getSeconds()}`;
+
+  // set version number using runId and runNumber
+  return `0.0.0-${runId || 0}.${runNumber || getToday() + "." + getTime()}`;
 }
 
 async function main() {
@@ -107,6 +116,9 @@ type Package = {
   dependencies?: Record<string, string>;
   devDependencies?: Record<string, string>;
   peerDependencies?: Record<string, string>;
+  publishConfig?: {
+    registry?: string;
+  };
 };
 
 async function npmBuild(cwd = workspace) {
@@ -140,7 +152,7 @@ async function npmInstall(cwd = workspace) {
 
 async function aliasDependencies(packagePath: string, packagesToRescope: string[], fromScope: string, toScope: string, dependencyVersion = "*") {
   spacer({ count: 40 });
-  console.log(`Renaming dependencies in ${packagePath}`)
+  console.log(`Renaming dependencies in ${packagePath}`);
   const packageJson: Package = JSON.parse(fs.readFileSync(packagePath, "utf8"));
   for (const depType of depTypes) {
     const deps = packageJson[depType];
@@ -163,14 +175,25 @@ async function aliasDependencies(packagePath: string, packagesToRescope: string[
 }
 
 function renamePackage(packagePath: string, fromScope: string, toScope: string) {
-  const packageJson: Package = JSON.parse(fs.readFileSync(packagePath, "utf8"));
+  const packageJson: Package = readPackage(packagePath);
   const currentName = packageJson.name;
   const newName = currentName?.replace(fromScope, toScope);
 
   console.log(`name`, ` ${currentName} -> ${newName}`);
   packageJson.name = newName;
-  fs.writeFileSync(packagePath, JSON.stringify(packageJson, null, 2));
+  writePackage(packagePath, packageJson);
   return packageJson;
+}
+
+function writePackage(packagePath: string, packageJson: Package) {
+  if (fs.lstatSync(packagePath).isDirectory()) {
+    packagePath = path.resolve(packagePath, "package.json");
+  }
+  fs.writeFileSync(packagePath, JSON.stringify(packageJson, null, 2));
+}
+
+function readPackage(packagePath: string): Package {
+  return JSON.parse(fs.readFileSync(packagePath, "utf8"));
 }
 
 async function publishPackage(cwd: string, registry: string, flags: string[] = []) {
@@ -178,8 +201,17 @@ async function publishPackage(cwd: string, registry: string, flags: string[] = [
   const packageDir = path.dirname(cwd);
   console.log({ packageDir });
 
+  const packageJson = readPackage(cwd);
+  const currentRegistry = packageJson.publishConfig?.registry ?? "https://registry.npmjs.org";
+  packageJson.publishConfig = { registry };
+  console.log(`Setting publishConfig.registry to ${registry}`);
+  writePackage(cwd, packageJson);
+
+  console.log(`Publishing ${packageDir}`);
   await execWrapper("npm", ["publish", ...flags], { cwd: packageDir });
-  await execWrapper("npm", ["pkg", "unset", "registry"], { cwd });
+
+  console.log(`Restoring publishConfig.registry to ${currentRegistry}`);
+  packageJson.publishConfig = { registry: currentRegistry };
 }
 
 function setVersion(packagePath: string, version: string) {
@@ -191,3 +223,13 @@ function setVersion(packagePath: string, version: string) {
 }
 
 module.exports = main;
+function getToday(): string {
+  const now = new Date();
+  return `${now.getFullYear()}${now.getMonth() + 1}${now.getDate()}`;
+}
+
+function getTime(): string {
+  const now = new Date();
+  return `${now.getHours()}${now.getMinutes()}${now.getSeconds()}`;
+}
+
