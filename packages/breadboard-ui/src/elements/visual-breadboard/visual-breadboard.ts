@@ -22,22 +22,23 @@ export class VisualBreadboard extends LitElement {
   @property()
   serializedGraph: any;
 
-  reset() {
-
-  }
-
-  #updateGraph = async (diagram: LoadArgs) => {
-    if (!diagram.graphDescriptor) {
+  #updateGraph = valueDebounce(async (diagram: LoadArgs | null) => {
+    if (!diagram?.graphDescriptor) {
+      this.serializedGraph = null;
       return;
     }
     this.serializedGraph = breadboardToVisualBlocks(diagram.graphDescriptor);
     await this.updateComplete;
     await this.#visualBlocksLoaded;
     (this.#visualBlocks as any)?.smartLayout(); // TODO: Types
+  }, 2000);
+
+  reset() {
+    this.#updateGraph(null);
   }
 
   async draw(diagram: LoadArgs, highlightedNode: string) {
-    valueDebounce(this.#updateGraph, 2000)(diagram);
+    this.#updateGraph(diagram);
   }
 
   render() {
@@ -48,7 +49,6 @@ export class VisualBreadboard extends LitElement {
       ) {
         this.#requestedVB = true;
         await loadScript(VISUALBLOCKS_URL);
-        //this.#scheduleDiagramRender();
       }
       return html`<graph-editor
         ${ref(this.setVisualBlocks)}
@@ -81,24 +81,20 @@ function loadScript(url: string): Promise<void> {
   });
 }
 
-
-let callTimes = new Map<(val: any) => void, [Date, any /* val */]>();
 // Don't call the function if the value is the same and the last call was
 // within `ms`.
 function valueDebounce<T>(cb: (val: T) => void, ms: number) {
+  let lastExecutionTime = new Date(0);
+  let lastVal: unknown = null;
   return (val: T) => {
-//    if (
-
     const now = new Date();
-    const [lastExecutionTime, lastVal] =
-      callTimes.get(cb) ?? [now, null];
 
     if (val === lastVal && now.getTime() - lastExecutionTime.getTime() < ms) {
       return;
     }
 
     cb(val);
-    callTimes.set(cb, [now, val]);
-    console.log(callTimes);
+    lastExecutionTime = now;
+    lastVal = val;
   }
 }
