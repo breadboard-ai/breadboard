@@ -32635,16 +32635,21 @@ const globals = {
     fetch,
 };
 Object.assign(global, globals);
-module.exports = () => {
-    const cwd = process.cwd();
-    console.log({ cwd });
-    const packageDir = path_1.default.resolve(cwd, "packages");
+module.exports = async () => {
+    const workspace = process.cwd();
+    console.log({ cwd: workspace });
+    const packageDir = path_1.default.resolve(workspace, "packages");
     const packages = [
         "breadboard",
         "breadboard-cli",
         "create-breadboard",
         "create-breadboard-kit",
     ];
+    const depTypes = ["dependencies", "devDependencies", "peerDependencies"];
+    const fromScope = "@google-labs";
+    const toScope = `@${github.context.repo.owner.toLowerCase()}`;
+    console.log({ fromScope, toScope });
+    await exec.exec("npm", ["install"], { cwd: workspace });
     for (const pkg of packages) {
         const packagePath = path_1.default.resolve(packageDir, pkg, "package.json");
         console.log({ package: packagePath });

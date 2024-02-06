@@ -20,17 +20,25 @@ const globals = {
 
 Object.assign(global, globals);
 
-module.exports = () => {
-  const cwd = process.cwd();
-  console.log({ cwd });
+module.exports = async () => {
+  const workspace = process.cwd();
+  console.log({ cwd: workspace });
 
-  const packageDir = path.resolve(cwd, "packages");
+  const packageDir = path.resolve(workspace, "packages");
   const packages = [
     "breadboard",
     "breadboard-cli",
     "create-breadboard",
     "create-breadboard-kit",
-  ];
+  ] as const;
+
+  const depTypes = ["dependencies", "devDependencies", "peerDependencies"] as const;
+
+  const fromScope = "@google-labs";
+  const toScope = `@${github.context.repo.owner.toLowerCase()}`;
+  console.log({ fromScope, toScope });
+
+  await exec.exec("npm", ["install"], { cwd: workspace });
 
   for (const pkg of packages) {
     const packagePath = path.resolve(packageDir, pkg, "package.json");
@@ -38,8 +46,5 @@ module.exports = () => {
     const packageJson = JSON.parse(fs.readFileSync(packagePath, "utf8"));
     const packageName = packageJson.name;
     console.log({ name: packageName });
-
-
   }
-
 };
