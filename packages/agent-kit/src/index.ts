@@ -7,7 +7,9 @@
 import { GraphToKitAdapter, KitBuilder } from "@google-labs/breadboard/kits";
 
 import kit from "./kit.js";
-import { NewNodeFactory, NewNodeValue, addKit } from "@google-labs/breadboard";
+import { addKit } from "@google-labs/breadboard";
+import { WorkerType } from "./boards/worker.js";
+import { InstructionType } from "./boards/instruction.js";
 
 // TODO: Replace with the actual URL.
 const KIT_BASE_URL =
@@ -27,6 +29,7 @@ const builder = new KitBuilder(
 
 const AgentKit = builder.build({
   worker: adapter.handlerForNode("worker"),
+  instruction: adapter.handlerForNode("instruction"),
 });
 
 export type AgentKit = InstanceType<typeof AgentKit>;
@@ -35,32 +38,8 @@ export type AgentKitType = {
   /**
    * The essential building block of the Agent Kit.
    */
-  worker: NewNodeFactory<
-    {
-      /**
-       * The generator to use for the agent.
-       */
-      generator?: NewNodeValue;
-      /**
-       * The context to use for the agent.
-       */
-      context: NewNodeValue;
-      /**
-       * The stop sequences to use for the agent.
-       */
-      stopSequences: NewNodeValue;
-    },
-    {
-      /**
-       * The context after generation.
-       */
-      context: NewNodeValue;
-      /**
-       * The output from the agent.
-       */
-      text: NewNodeValue;
-    }
-  >;
+  worker: WorkerType;
+  instruction: InstructionType;
 };
 
 export default AgentKit;

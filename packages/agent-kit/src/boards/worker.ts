@@ -4,9 +4,36 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { board } from "@google-labs/breadboard";
+import { NewNodeFactory, NewNodeValue, board } from "@google-labs/breadboard";
 import { json } from "@google-labs/json-kit";
 import { gemini } from "@google-labs/gemini-kit";
+
+export type WorkerType = NewNodeFactory<
+  {
+    /**
+     * The generator to use for the agent.
+     */
+    generator?: NewNodeValue;
+    /**
+     * The context to use for the agent.
+     */
+    context: NewNodeValue;
+    /**
+     * The stop sequences to use for the agent.
+     */
+    stopSequences: NewNodeValue;
+  },
+  {
+    /**
+     * The context after generation.
+     */
+    context: NewNodeValue;
+    /**
+     * The output from the agent.
+     */
+    text: NewNodeValue;
+  }
+>;
 
 const sampleContext = JSON.stringify(
   [
