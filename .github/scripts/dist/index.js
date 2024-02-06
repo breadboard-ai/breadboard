@@ -32691,6 +32691,7 @@ async function main() {
         setVersion(packagePath, secondaryVersion);
         await aliasDependencies(packagePath, packagesWithScope, fromScope, toScope);
         // await npmInstall();
+        setVersion(packagePath, secondaryVersion);
         await npmBuild(packagePath);
         await publishPackage(packagePath, registry, [scopedRegistryArg]);
         spacer({ count: 40 });
