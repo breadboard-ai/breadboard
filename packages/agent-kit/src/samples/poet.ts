@@ -31,7 +31,7 @@ export default await board(({ topic }) => {
   topic.title("Poem topic").isString().examples("the universe within us");
   const { context } = agents.worker({
     $id: "writePoetry",
-    context: contextMaker({ $id: "makeContext", topic }),
+    context: contextMaker({ $id: "makeContext", topic }).context,
   });
   return { context };
 }).serialize({
