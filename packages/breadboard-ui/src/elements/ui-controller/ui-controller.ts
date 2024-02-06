@@ -76,9 +76,6 @@ export class UI extends LitElement {
   loadInfo: LoadArgs | null = null;
 
   @property({ reflect: true })
-  bootWithUrl: string | null = null;
-
-  @property({ reflect: true })
   url: string | null = "";
 
   @property({ reflect: true })
@@ -88,7 +85,7 @@ export class UI extends LitElement {
   boards: Board[] = [];
 
   @property()
-  visualizer: "mermaid" | "visualblocks" = "mermaid";
+  visualizer: "mermaid" | "visualblocks" | "editor" = "mermaid";
 
   @state()
   historyEntries: HistoryEntry[] = [];
@@ -163,7 +160,6 @@ export class UI extends LitElement {
 
   unloadCurrentBoard() {
     this.url = null;
-    this.bootWithUrl = null;
     this.loadInfo = null;
     this.messages.length = 0;
     this.#messagePosition = 0;
@@ -439,10 +435,6 @@ export class UI extends LitElement {
   }
 
   render() {
-    if (!this.loadInfo) {
-      return html`Loading board...`;
-    }
-
     this.#scheduleDiagramRender();
 
     const loadVisualBreadboard = async () => {
@@ -472,20 +464,34 @@ export class UI extends LitElement {
       Continue
     </button>`;
 
+    let diagram;
+    switch (this.visualizer) {
+      case "mermaid":
+        diagram = html`<bb-diagram
+          ${ref(this.#diagram)}
+          @breadboardnodeselect=${(evt: NodeSelectEvent) => {
+            this.selectedNode = this.#nodeInfo.get(evt.id) || null;
+          }}
+        ></bb-diagram>`;
+        break;
+
+      case "visualblocks":
+        diagram = html`${guard([this.#requestedVB], () => {
+          return until(loadVisualBreadboard(), html`Loading...`);
+        })}`;
+        break;
+
+      case "editor":
+        diagram = html`<bb-editor ${ref(this.#diagram)}></bb-editor>`;
+        break;
+
+      default:
+        diagram = nothing;
+    }
+
     return html`
       <div id="diagram">
-        ${
-          this.visualizer === "mermaid"
-            ? html`<bb-diagram
-                ${ref(this.#diagram)}
-                @breadboardnodeselect=${(evt: NodeSelectEvent) => {
-                  this.selectedNode = this.#nodeInfo.get(evt.id) || null;
-                }}
-              ></bb-diagram>`
-            : html`${guard([this.#requestedVB], () => {
-                return until(loadVisualBreadboard(), html`Loading...`);
-              })}`
-        }
+        ${diagram}
         ${
           this.selectedNode
             ? html`<div id="node-information">

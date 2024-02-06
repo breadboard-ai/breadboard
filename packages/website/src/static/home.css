@@ -416,6 +416,7 @@
   margin: 80px auto 0 auto;
   text-align: center;
   max-width: calc(var(--bb-grid-size) * 300);
+  overflow: hidden;
 }
 
 #happy-path h1 {
@@ -533,7 +534,7 @@
     position: absolute;
     top: 18%;
     left: 100%;
-    translate: -100% -3px;
+    translate: -100% 1px;
   }
 
   #happy-path-post {

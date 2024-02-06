@@ -4,16 +4,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Board } from "@google-labs/breadboard";
 import test from "ava";
 import { ExecException, exec } from "child_process";
-import path from "path";
-import { fileURLToPath } from "url";
 import * as fs from "fs";
+import path from "path";
 
-const packageDir = process.cwd();
+const packageDir = getPackageDir("@google-labs/breadboard-cli");
+console.debug("packageDir", packageDir);
 
-const __dirname = fileURLToPath(new URL(".", import.meta.url));
-const cliPath = path.resolve(path.join(__dirname, "../src/index.js"));
+const dist = path.resolve(path.join(packageDir, "dist"));
+
+const cliPathJs = path.resolve(path.join(dist, "src", "index.js"));
+console.log("cliPath", path.resolve(cliPathJs));
+console.assert(fs.existsSync(cliPathJs));
 
 type ChildProcessCallback = {
   error?: ExecException | null;
@@ -21,9 +25,32 @@ type ChildProcessCallback = {
   stderr: string;
 };
 
+function getPackageDir(packageName: string) {
+  let packageDir = "";
+  let found = false;
+  while (!found) {
+    const packagePath = path.join(packageDir, "package.json");
+    if (fs.existsSync(packagePath)) {
+      const packageData = JSON.parse(fs.readFileSync(packagePath, "utf-8"));
+      if (packageData.name === packageName) {
+        found = true;
+        break;
+      }
+    }
+    packageDir = path.resolve(path.join(packageDir, ".."));
+
+    if (packageDir === "/") {
+      throw new Error(
+        "Could not find package.json for @google-labs/breadboard-cli"
+      );
+    }
+  }
+  return packageDir;
+}
+
 function execCli(args = ""): Promise<ChildProcessCallback> {
   return new Promise((resolve, reject) => {
-    exec(`node "${cliPath}" ${args}`, (error, stdout, stderr) => {
+    exec(`node "${cliPathJs}" ${args}`, (error, stdout, stderr) => {
       if (error) {
         reject({ error, stdout, stderr });
       } else {
@@ -33,69 +60,63 @@ function execCli(args = ""): Promise<ChildProcessCallback> {
   });
 }
 
-const testBoardData = {
-  title: "Echo",
-  description: "Echo cho cho cho ho o",
-  version: "0.0.3",
-  edges: [
-    {
-      from: "input",
-      to: "output-1",
-      out: "text",
-      in: "text",
-    },
-  ],
-  nodes: [
-    {
-      id: "input",
-      type: "input",
-      configuration: {
-        schema: {
-          type: "object",
-          properties: {
-            text: {
-              type: "string",
-              title: "Echo",
-              description: "What shall I say back to you?",
-            },
-          },
+function makeBoard(): Board {
+  const board: Board = new Board({
+    title: "Echo",
+    description: "Echo cho cho cho ho o",
+    version: "0.0.3",
+  });
+  const input = board.input({
+    schema: {
+      type: "object",
+      properties: {
+        text: {
+          type: "string",
+          title: "Echo",
+          description: "What shall I say back to you?",
         },
       },
     },
-    {
-      id: "output-1",
-      type: "output",
-    },
-  ],
-  kits: [],
-};
+  });
+  const output = board.output();
+  input.wire("text", output);
+  return board;
+}
 
-// language=typescript
-const typescriptTestBoardContent = `
-import { Board, BreadboardNode } from "@google-labs/breadboard";
+const testBoardData = JSON.parse(JSON.stringify(makeBoard()));
 
-const board: Board = new Board();
-const input: BreadboardNode<unknown, unknown> = board.input({
-  message: "Hello World!",
-});
-const output: BreadboardNode<unknown, unknown> = board.output();
-input.wire("message", output);
-export default board;
-`;
+const typescriptTestBoardContent = [
+  'import { Board } from "@google-labs/breadboard";',
+  // it appears toString on a function ommits types
+  makeBoard
+    .toString()
+    .replace(
+      `function ${makeBoard.name}() {`,
+      `function ${makeBoard.name}(): Board {`
+    )
+    .replace(`const board = new Board({`, `const board: Board = new Board({`),
+  `const board: Board = ${makeBoard.name}();`,
+  `export default board;`,
+].join("\n\n");
+console.debug(
+  [`${"```"}typescript board.ts`, typescriptTestBoardContent, `${"```"}`].join(
+    "\n"
+  )
+);
 
-// language=javascript
-const jsTestBoardContent = `
-import { Board } from "@google-labs/breadboard";
-const board = new Board();
-const input = board.input({
-  message: "Hello World!",
-});
-const output = board.output();
-input.wire("message", output);
-export default board;
-`;
+const jsTestBoardContent = [
+  'import { Board } from "@google-labs/breadboard";',
+  makeBoard.toString(),
+  `const board = ${makeBoard.name}();`,
+  `export default board;`,
+].join("\n\n");
 
-const testDataDir = path.resolve(path.join(packageDir, "tests/data"));
+console.debug(
+  [`${"```"}javascript board.js`, jsTestBoardContent, `${"```"}`].join("\n")
+);
+
+const tempDir = path.join(path.join(packageDir, "temp"));
+const testDataDir = path.resolve(path.join(tempDir, "data"));
 const originalBoardPath = path.join(testDataDir, "echo.json");
 
 const relativeBoardPath = path.relative(process.cwd(), originalBoardPath);
@@ -113,32 +134,25 @@ const directoryWithSpaces = path.resolve(
   path.join(testDataDir, "test folder", "board.json")
 );
 
-const srcTemp = [process.cwd(), "src", "temp"];
-
-const typescriptBoardPath = path.resolve(path.join(...srcTemp, "ts_board.ts"));
-const dist = [process.cwd(), "dist"];
-const jsBoardPath = path.resolve(path.join(...dist, "js_board.js"));
+const typescriptBoardPath = path.resolve(path.join(testDataDir, "ts_board.ts"));
+const jsBoardPath = path.resolve(path.join(testDataDir, "js_board.js"));
+const testBoardDataContent = JSON.stringify(testBoardData, null, 2);
 
 const testFiles: {
   path: string;
   content: string;
 }[] = [
-  {
-    path: path.resolve(originalBoardPath),
-    content: JSON.stringify(testBoardData, null, 2),
-  },
-  {
-    path: path.resolve(filenameWithSpaces),
-    content: JSON.stringify(testBoardData, null, 2),
-  },
-  {
-    path: path.resolve(filenameWithURLencodingSpaces),
-    content: JSON.stringify(testBoardData, null, 2),
-  },
-  {
-    path: path.resolve(directoryWithSpaces),
-    content: JSON.stringify(testBoardData, null, 2),
-  },
+  ...[
+    originalBoardPath,
+    filenameWithSpaces,
+    filenameWithURLencodingSpaces,
+    directoryWithSpaces,
+  ].map((p) => {
+    return {
+      path: p,
+      content: testBoardDataContent,
+    };
+  }),
   {
     path: path.resolve(typescriptBoardPath),
     content: typescriptTestBoardContent,
@@ -153,19 +167,40 @@ const testFiles: {
 
 test.before(() => {
   testFiles.forEach((p) => {
+    console.debug(
+      ["Writing", `${p.content.length} characters to`, p.path].join("\t")
+    );
     fs.mkdirSync(path.dirname(p.path), { recursive: true });
     fs.writeFileSync(p.path, p.content);
-    console.debug(`Wrote ${p.content.length} characters to "${p.path}"`);
   });
 });
 
 test.after.always(() => {
+  console.debug("Cleaning up test files");
   testFiles.forEach((p) => {
-    fs.unlinkSync(p.path);
+    console.debug();
+    const filename = path.basename(p.path);
+    const dirname = path.dirname(p.path);
+    const filenameWithoutExtension = filename.split(".")[0];
+
+    console.debug([`Searching for`, p.path].join("\t"));
+
+    ["json", "ts", "js"]
+      .map((ext) => [
+        path.resolve(path.join(dirname, `${filenameWithoutExtension}.${ext}`)),
+        path.resolve(
+          path.join(packageDir, `${filenameWithoutExtension}.${ext}`)
+        ),
+      ])
+      .flat()
+      .forEach((testDirPath) => {
+        if (fs.existsSync(testDirPath)) {
+          console.debug(["Removing", testDirPath].join("\t"));
+          fs.rmSync(testDirPath);
+        }
+      });
   });
-  const jsBoardPath = typescriptBoardPath.replace(".ts", ".js");
-  fs.unlinkSync(jsBoardPath);
-  fs.rmdirSync(path.resolve(...srcTemp));
+  fs.rmSync(testDataDir, { recursive: true });
 });
 
 //////////////////////////////////////////////////
@@ -178,6 +213,7 @@ test("all test files exist", (t) => {
 
 //////////////////////////////////////////////////
 test("relative path is relative and valid", (t) => {
+  console.debug("relativeBoardPath", relativeBoardPath);
   t.false(relativeBoardPath == path.resolve(relativeBoardPath));
   t.true(fs.existsSync(relativeBoardPath));
 });
@@ -222,7 +258,7 @@ test("filename does contain spaces", (t) => {
 });
 
 test("can handle a relative file with spaces in the file name", async (t) => {
-  const relativePath = path.relative(packageDir, filenameWithSpaces);
+  const relativePath = path.relative(process.cwd(), filenameWithSpaces);
   t.true(relativePath.includes(" "));
   t.true(fs.existsSync(filenameWithSpaces));
 
@@ -259,7 +295,7 @@ test("board file exists in dictory with spaces in the name", (t) => {
 });
 
 test("can handle a relative path with spaces in the directory name", async (t) => {
-  const relativePath = path.relative(packageDir, directoryWithSpaces);
+  const relativePath = path.relative(process.cwd(), directoryWithSpaces);
   t.true(relativePath.includes(" "));
   t.true(fs.existsSync(directoryWithSpaces));
 
@@ -303,7 +339,7 @@ test("can make a graph from a typescript file", async (t) => {
   const jsPath = typescriptBoardPath.replace(".ts", ".js");
   t.true(fs.existsSync(jsPath));
 
-  const commandString = ["make", `"${jsPath}"`].join(" ");
+  const commandString = ["make", `"${jsPath}"`, "-n"].join(" ");
   const output = await execCli(commandString);
   t.true(output.stdout.length > 0);
 });
@@ -311,7 +347,7 @@ test("can make a graph from a typescript file", async (t) => {
 //////////////////////////////////////////////////
 
 test("can make a graph from a javascript file", async (t) => {
-  const commandString = ["make", `"${jsBoardPath}"`].join(" ");
+  const commandString = ["make", `"${jsBoardPath}"`, "-n"].join(" ");
   const output = await execCli(commandString);
   t.true(output.stdout.length > 0);
 });

@@ -4,36 +4,68 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import path, { extname } from "path";
-import { Loaders } from "./lib/loaders/index.js";
-import { resolveFilePath, watch } from "./lib/utils.js";
+import path from "path";
+import { stat } from "fs/promises";
+import { loadBoards, loadBoard, resolveFilePath, watch } from "./lib/utils.js";
 import { MakeOptions } from "./commandTypes.js";
+import { Stats } from "fs";
 
 export const makeGraph = async (file: string, options: MakeOptions) => {
-  const filePath = resolveFilePath(file);
+  if (file == undefined) {
+    // If the user doesn't provide a file, we should use the current working directory (which will load all files)
+    file = process.cwd();
+  }
 
-  if (
-    file != undefined &&
-    path.extname(file) != ".js" &&
-    path.extname(file) != ".ts"
-  ) {
-    throw new Error(`File ${file} must be a JavaScript or TypeScript file.`);
+  const inputFileStat = await stat(file);
+
+  const outputDirectoryStat =
+    "output" in options ? await stat(options.output) : undefined;
+
+  options.root = path.parse(path.resolve(file)).dir;
+
+  if (outputDirectoryStat?.isDirectory() == false) {
+    console.error(
+      `The defined output directory ${options.output} is not a directory.`
+    );
+    return process.exit(1);
   }
 
   if (file != undefined) {
-    const loaderType = extname(file).slice(1) as "js" | "ts" | "json";
-    const loader = new Loaders(loaderType);
+    const filePath = resolveFilePath(file);
 
-    let board = await loader.load(filePath, options);
+    if (inputFileStat.isDirectory()) {
+      // If the input is a directory, we should load all the boards in the directory and save them.
+      options.save = true;
+      const relative = path.relative(file, options.output);
+      const isOutputDirectoryContainedWithin =
+        relative === "" ||
+        (relative && !relative.startsWith("..") && !path.isAbsolute(relative));
+      if (options.save && isOutputDirectoryContainedWithin) {
+        console.error(
+          `The output directory ${options.output} must be outside of the file or directory being watched. Specify a different output directory with the -o flag.`
+        );
+        return process.exit(1);
+      }
 
-    console.log(JSON.stringify(board, null, 2));
+      await loadBoards(filePath, options);
+    } else if (path.extname(file) == ".js" || path.extname(file) == ".ts") {
+      const board = await loadBoard(filePath, options);
+      if (options.save == false) {
+        console.log(JSON.stringify(board, null, 2));
+      }
+    } else {
+      throw new Error(`File ${file} must be a JavaScript or TypeScript file.`);
+    }
 
     if ("watch" in options) {
       watch(file, {
         onChange: async () => {
-          board = await loader.load(filePath, options);
-
-          console.log(JSON.stringify(board, null, 2));
+          if (inputFileStat?.isDirectory()) {
+            options.save = true;
+            await loadBoards(filePath, options);
+          } else {
+            await loadBoard(filePath, options);
+          }
         },
       });
     }

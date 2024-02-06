@@ -2,6 +2,7 @@
   "extends": "@google-labs/tsconfig/base.json",
   "files": [],
   "references": [
+    { "path": "packages/agent-kit" },
     { "path": "packages/breadboard" },
     { "path": "packages/breadboard-cli" },
     { "path": "packages/breadboard-extension" },
