@@ -30,6 +30,7 @@
 - [invoke](V.md#invoke)
 - [isArray](V.md#isarray)
 - [isBoolean](V.md#isboolean)
+- [isImage](V.md#isimage)
 - [isNumber](V.md#isnumber)
 - [isObject](V.md#isobject)
 - [isString](V.md#isstring)
@@ -39,6 +40,7 @@
 - [then](V.md#then)
 - [title](V.md#title)
 - [to](V.md#to)
+- [transient](V.md#transient)
 
 ## Constructors
 
@@ -74,7 +76,7 @@
 
 #### Defined in
 
-[packages/breadboard/src/new/grammar/types.ts:282](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L282)
+[packages/breadboard/src/new/grammar/types.ts:258](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/grammar/types.ts#L258)
 
 ___
 
@@ -88,7 +90,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/grammar/types.ts:257](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L257)
+[packages/breadboard/src/new/grammar/types.ts:233](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/grammar/types.ts#L233)
 
 ___
 
@@ -108,7 +110,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/grammar/types.ts:299](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L299)
+[packages/breadboard/src/new/grammar/types.ts:276](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/grammar/types.ts#L276)
 
 ___
 
@@ -128,7 +130,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/grammar/types.ts:297](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L297)
+[packages/breadboard/src/new/grammar/types.ts:274](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/grammar/types.ts#L274)
 
 ___
 
@@ -148,7 +150,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/grammar/types.ts:298](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L298)
+[packages/breadboard/src/new/grammar/types.ts:275](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/grammar/types.ts#L275)
 
 ___
 
@@ -168,7 +170,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/grammar/types.ts:296](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L296)
+[packages/breadboard/src/new/grammar/types.ts:273](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/grammar/types.ts#L273)
 
 ___
 
@@ -188,7 +190,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/grammar/types.ts:275](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L275)
+[packages/breadboard/src/new/grammar/types.ts:251](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/grammar/types.ts#L251)
 
 ___
 
@@ -208,7 +210,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/grammar/types.ts:286](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L286)
+[packages/breadboard/src/new/grammar/types.ts:262](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/grammar/types.ts#L262)
 
 ___
 
@@ -222,7 +224,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/grammar/types.ts:292](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L292)
+[packages/breadboard/src/new/grammar/types.ts:268](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/grammar/types.ts#L268)
 
 ___
 
@@ -236,7 +238,27 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/grammar/types.ts:291](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L291)
+[packages/breadboard/src/new/grammar/types.ts:267](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/grammar/types.ts#L267)
+
+___
+
+### isImage
+
+▸ **isImage**(`mimeType?`): [`V`](V.md)\<`unknown`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `mimeType?` | `string` |
+
+#### Returns
+
+[`V`](V.md)\<`unknown`\>
+
+#### Defined in
+
+[packages/breadboard/src/new/grammar/types.ts:270](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/grammar/types.ts#L270)
 
 ___
 
@@ -250,7 +272,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/grammar/types.ts:290](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L290)
+[packages/breadboard/src/new/grammar/types.ts:266](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/grammar/types.ts#L266)
 
 ___
 
@@ -264,7 +286,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/grammar/types.ts:293](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L293)
+[packages/breadboard/src/new/grammar/types.ts:269](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/grammar/types.ts#L269)
 
 ___
 
@@ -278,7 +300,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/grammar/types.ts:289](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L289)
+[packages/breadboard/src/new/grammar/types.ts:265](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/grammar/types.ts#L265)
 
 ___
 
@@ -292,7 +314,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/grammar/types.ts:288](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L288)
+[packages/breadboard/src/new/grammar/types.ts:264](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/grammar/types.ts#L264)
 
 ___
 
@@ -306,7 +328,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/grammar/types.ts:284](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L284)
+[packages/breadboard/src/new/grammar/types.ts:260](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/grammar/types.ts#L260)
 
 ___
 
@@ -320,7 +342,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/grammar/types.ts:300](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L300)
+[packages/breadboard/src/new/grammar/types.ts:277](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/grammar/types.ts#L277)
 
 ___
 
@@ -352,7 +374,7 @@ PromiseLike.then
 
 #### Defined in
 
-[packages/breadboard/src/new/grammar/types.ts:250](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L250)
+[packages/breadboard/src/new/grammar/types.ts:226](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/grammar/types.ts#L226)
 
 ___
 
@@ -372,7 +394,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/grammar/types.ts:295](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L295)
+[packages/breadboard/src/new/grammar/types.ts:272](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/grammar/types.ts#L272)
 
 ___
 
@@ -400,4 +422,21 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/grammar/types.ts:264](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L264)
+[packages/breadboard/src/new/grammar/types.ts:240](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/grammar/types.ts#L240)
+
+___
+
+### transient
+
+▸ **transient**(): [`V`](V.md)\<`T`\>
+
+When true, Breadboard will continue asking for input even when the value
+has already been asked for.
+
+#### Returns
+
+[`V`](V.md)\<`T`\>
+
+#### Defined in
+
+[packages/breadboard/src/new/grammar/types.ts:282](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/grammar/types.ts#L282)

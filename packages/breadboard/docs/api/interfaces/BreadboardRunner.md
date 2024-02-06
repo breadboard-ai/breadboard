@@ -23,6 +23,7 @@ Represents a graph.
 
 ### Properties
 
+- [$schema](BreadboardRunner.md#$schema)
 - [args](BreadboardRunner.md#args)
 - [description](BreadboardRunner.md#description)
 - [edges](BreadboardRunner.md#edges)
@@ -41,6 +42,22 @@ Represents a graph.
 
 ## Properties
 
+### $schema
+
+• `Optional` **$schema**: `string`
+
+The schema of the graph.
+
+#### Inherited from
+
+GraphDescriptor.$schema
+
+#### Defined in
+
+[packages/breadboard/src/types.ts:171](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L171)
+
+___
+
 ### args
 
 • `Optional` **args**: [`InputValues`](../modules.md#inputvalues)
@@ -53,7 +70,7 @@ GraphDescriptor.args
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:228](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L228)
+[packages/breadboard/src/types.ts:234](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L234)
 
 ___
 
@@ -69,7 +86,7 @@ GraphDescriptor.description
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:181](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L181)
+[packages/breadboard/src/types.ts:187](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L187)
 
 ___
 
@@ -85,7 +102,7 @@ GraphDescriptor.edges
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:208](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L208)
+[packages/breadboard/src/types.ts:214](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L214)
 
 ___
 
@@ -101,7 +118,7 @@ GraphDescriptor.graphs
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:223](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L223)
+[packages/breadboard/src/types.ts:229](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L229)
 
 ___
 
@@ -115,7 +132,7 @@ GraphDescriptor.kits
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:644](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L644)
+[packages/breadboard/src/types.ts:650](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L650)
 
 ___
 
@@ -131,7 +148,7 @@ GraphDescriptor.nodes
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:213](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L213)
+[packages/breadboard/src/types.ts:219](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L219)
 
 ___
 
@@ -147,7 +164,7 @@ GraphDescriptor.title
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:177](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L177)
+[packages/breadboard/src/types.ts:183](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L183)
 
 ___
 
@@ -166,7 +183,7 @@ GraphDescriptor.url
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:173](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L173)
+[packages/breadboard/src/types.ts:179](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L179)
 
 ___
 
@@ -183,7 +200,7 @@ GraphDescriptor.version
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:186](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L186)
+[packages/breadboard/src/types.ts:192](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L192)
 
 ## Methods
 
@@ -203,7 +220,7 @@ GraphDescriptor.version
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:645](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L645)
+[packages/breadboard/src/types.ts:651](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L651)
 
 ___
 
@@ -228,7 +245,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:633](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L633)
+[packages/breadboard/src/types.ts:639](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L639)
 
 ___
 
@@ -253,4 +270,4 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:637](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L637)
+[packages/breadboard/src/types.ts:643](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L643)

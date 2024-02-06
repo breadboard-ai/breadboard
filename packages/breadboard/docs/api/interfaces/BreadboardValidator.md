@@ -37,7 +37,7 @@ Error if the graph is invalid.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:437](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L437)
+[packages/breadboard/src/types.ts:443](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L443)
 
 ___
 
@@ -63,7 +63,7 @@ A validator for the subgraph.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:455](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L455)
+[packages/breadboard/src/types.ts:461](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L461)
 
 ___
 
@@ -85,4 +85,4 @@ Gets the validation metadata for a node.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:444](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L444)
+[packages/breadboard/src/types.ts:450](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L450)
