@@ -15,7 +15,6 @@
     "strict": true,
     "skipLibCheck": true,
     "newLine": "lf",
-    "allowImportingTsExtensions": true,
     "types": [
       "@actions/artifact",
       "@actions/cache",
