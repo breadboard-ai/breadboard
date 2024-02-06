@@ -1,0 +1,21 @@
+on:
+  push:
+  workflow_dispatch:
+
+name: Test
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+      - uses: actions/setup-node@main
+        with:
+          node-version: "20.x"
+          registry-url: "https://npm.pkg.github.com/"
+          cache: "npm"
+      - uses: actions/github-script@main
+        with:
+          retries: 3
+          script: |
+                await require('${{ github.workspace }}/.github/scripts/dist/index.js')()
