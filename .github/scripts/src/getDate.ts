@@ -1,3 +1,5 @@
 export function getDate(now: Date): string {
-  return `${now.getFullYear()}${now.getMonth() + 1}${now.getDate()}`;
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const date = String(now.getDate()).padStart(2, '0');
+  return `${now.getFullYear()}${month}${date}`;
 }

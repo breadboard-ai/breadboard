@@ -28619,7 +28619,9 @@ exports.generationVersion = generationVersion;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getDate = void 0;
 function getDate(now) {
-    return `${now.getFullYear()}${now.getMonth() + 1}${now.getDate()}`;
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const date = String(now.getDate()).padStart(2, '0');
+    return `${now.getFullYear()}${month}${date}`;
 }
 exports.getDate = getDate;
 
@@ -28634,7 +28636,7 @@ exports.getDate = getDate;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getTime = void 0;
 function getTime(now) {
-    return `${now.getHours()}${now.getMinutes()}${now.getSeconds()}`;
+    return `${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
 }
 exports.getTime = getTime;
 
