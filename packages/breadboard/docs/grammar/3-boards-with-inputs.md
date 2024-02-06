@@ -47,8 +47,6 @@ const { completion } = await hello();
 TODO: Insert example of more advanced reuse of hello, maybe make the chain above
 more complex.
 
-TODO: Add Zod examples
-
 Next we’ll see how we can create boards that are just regular code:
 
 Next: [Code as Nodes](4-code-as-nodes.md)
