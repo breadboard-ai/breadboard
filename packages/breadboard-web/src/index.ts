@@ -26,6 +26,7 @@ export const getBoardInfo = async (url: string) => {
 };
 
 const enum MODE {
+  LIST = "list",
   BUILD = "build",
   PREVIEW = "preview",
 }
@@ -45,7 +46,7 @@ export class Main extends LitElement {
   loadInfo: BreadboardUI.Types.LoadArgs | null = null;
 
   @state()
-  mode = MODE.BUILD;
+  mode = MODE.LIST;
 
   @state()
   embed = false;
@@ -60,8 +61,7 @@ export class Main extends LitElement {
   #delay = 0;
   #status = BreadboardUI.Types.STATUS.STOPPED;
   #statusObservers: Array<(value: BreadboardUI.Types.STATUS) => void> = [];
-  #bootWithUrl: string | null = null;
-  #visualizer: "mermaid" | "visualblocks" = "mermaid";
+  #visualizer: "mermaid" | "visualblocks" | "editor" = "mermaid";
 
   static styles = css`
     :host {
@@ -80,6 +80,8 @@ export class Main extends LitElement {
     }
 
     :host > header {
+      display: grid;
+      grid-template-columns: auto min-content;
       padding: calc(var(--bb-grid-size) * 6) calc(var(--bb-grid-size) * 8)
         calc(var(--bb-grid-size) * 0) calc(var(--bb-grid-size) * 8);
       font-size: var(--bb-text-default);
@@ -88,6 +90,11 @@ export class Main extends LitElement {
 
     :host > header a {
       text-decoration: none;
+      white-space: nowrap;
+    }
+
+    #new-board {
+      font-size: var(--bb-text-nano);
     }
 
     #header-bar {
@@ -264,15 +271,24 @@ export class Main extends LitElement {
     const modeFromUrl = currentUrl.searchParams.get("mode");
     this.embed = currentUrl.searchParams.get("embed") !== null;
     if (boardFromUrl) {
-      this.#bootWithUrl = boardFromUrl;
+      this.#onStartBoard(new BreadboardUI.Events.StartEvent(boardFromUrl));
     }
+
     const visualizer = currentUrl.searchParams.get("visualizer");
-    if (visualizer === "mermaid" || visualizer === "visualblocks") {
+    if (
+      visualizer === "mermaid" ||
+      visualizer === "visualblocks" ||
+      visualizer === "editor"
+    ) {
       this.#visualizer = visualizer;
     }
 
     if (modeFromUrl) {
       switch (modeFromUrl) {
+        case "list":
+          this.mode = MODE.LIST;
+          break;
+
         case "build":
           this.mode = MODE.BUILD;
           break;
@@ -297,11 +313,12 @@ export class Main extends LitElement {
     this.#boardId++;
     this.#setActiveBreadboard(startEvent.url);
     this.url = startEvent.url;
+    this.mode = MODE.BUILD;
     this.status = BreadboardUI.Types.STATUS.RUNNING;
   }
 
   protected async updated(changedProperties: Map<PropertyKey, unknown>) {
-    if (!changedProperties.has("mode") && !changedProperties.has("url")) {
+    if (!changedProperties.has("mode")) {
       return;
     }
 
@@ -400,6 +417,16 @@ export class Main extends LitElement {
     window.history.replaceState(null, "", pageUrl);
   }
 
+  #setActiveVisualizer(visualizer: string | null) {
+    const pageUrl = new URL(window.location.href);
+    if (visualizer === null) {
+      pageUrl.searchParams.delete("visualizer");
+    } else {
+      pageUrl.searchParams.set("visualizer", visualizer);
+    }
+    window.history.replaceState(null, "", pageUrl);
+  }
+
   #setActiveMode(mode: string | null) {
     const pageUrl = new URL(window.location.href);
     if (mode === null) {
@@ -434,8 +461,15 @@ export class Main extends LitElement {
 
     this.url = null;
     this.loadInfo = null;
-    this.#bootWithUrl = null;
+    this.mode = MODE.LIST;
     this.#setActiveBreadboard(null);
+
+    // TODO: Don't switch off the editor here. It works this way for now so that
+    // we only use the editor for blank boards.
+    if (this.#visualizer === "editor") {
+      this.#visualizer = "mermaid";
+      this.#setActiveVisualizer(this.#visualizer);
+    }
 
     if (!this.#uiRef.value) {
       return;
@@ -506,123 +540,122 @@ export class Main extends LitElement {
   }
 
   render() {
+    if (this.mode === MODE.LIST) {
+      return html`<header>
+          <a href="/"><h1 id="title">Breadboard Playground</h1></a>
+          <a href="?mode=build&visualizer=editor" id="new-board">New board</a>
+        </header>
+        <bb-board-list
+          @breadboardstart=${this.#onStartBoard}
+          .boards=${this.config.boards}
+        ></bb-board-list>`;
+    }
+
     const toasts = html`${this.toasts.map(({ message, type }) => {
       return html`<bb-toast .message=${message} .type=${type}></bb-toast>`;
     })}`;
 
     let tmpl: HTMLTemplateResult | symbol = nothing;
-    if (this.url) {
-      let content: HTMLTemplateResult | symbol = nothing;
-      switch (this.mode) {
-        case MODE.BUILD: {
-          content = html`<bb-ui-controller
-            ${ref(this.#uiRef)}
-            .url=${this.url}
-            .loadInfo=${this.loadInfo}
-            .status=${this.status}
-            .bootWithUrl=${this.#bootWithUrl}
-            .visualizer=${this.#visualizer}
-            @breadboardmessagetraversal=${() => {
-              if (this.status !== BreadboardUI.Types.STATUS.RUNNING) {
-                return;
-              }
+    let content: HTMLTemplateResult | symbol = nothing;
+    switch (this.mode) {
+      case MODE.BUILD: {
+        content = html`<bb-ui-controller
+          ${ref(this.#uiRef)}
+          .url=${this.url}
+          .loadInfo=${this.loadInfo}
+          .status=${this.status}
+          .visualizer=${this.#visualizer}
+          @breadboardmessagetraversal=${() => {
+            if (this.status !== BreadboardUI.Types.STATUS.RUNNING) {
+              return;
+            }
 
-              this.status = BreadboardUI.Types.STATUS.PAUSED;
-              this.toast(
-                "Board paused",
-                "information" as BreadboardUI.Events.ToastType
-              );
-            }}
-            @breadboardtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
-              if (!this.#uiRef.value) {
-                return;
-              }
+            this.status = BreadboardUI.Types.STATUS.PAUSED;
+            this.toast(
+              "Board paused",
+              "information" as BreadboardUI.Events.ToastType
+            );
+          }}
+          @breadboardtoast=${(toastEvent: BreadboardUI.Events.ToastEvent) => {
+            if (!this.#uiRef.value) {
+              return;
+            }
 
-              this.toast(toastEvent.message, toastEvent.toastType);
-            }}
-            @breadboarddelay=${(delayEvent: BreadboardUI.Events.DelayEvent) => {
-              this.#delay = delayEvent.duration;
-            }}
-            .boards=${this.config.boards}
-          ></bb-ui-controller>`;
-          break;
-        }
-
-        case MODE.PREVIEW: {
-          // TODO: Do this with Service Workers.
-          content = html`<button
-              id="reload"
-              @click=${() => {
-                if (!this.#previewRef.value) {
-                  return;
-                }
-
-                this.#previewRef.value.src = `/preview.html?board=${this.url}`;
-              }}
-            >
-              Reload
-            </button>
-            <iframe
-              ${ref(this.#previewRef)}
-              src="/preview.html?board=${this.url}"
-            ></iframe>`;
-          break;
-        }
-
-        default: {
-          return html`Unknown mode`;
-        }
-      }
-
-      tmpl = html`<div id="header-bar">
-          <a id="back" href="/" @click=${this.#unloadCurrentBoard}
-            >Back to list</a
-          >
-          <h1>${this.loadInfo?.title || "Loading board"}</h1>
-          <a id="download" @click=${this.#downloadLog}>Download log</a>
-        </div>
-        <div id="side-bar">
-          <button
-            id="select-build"
-            ?active=${this.mode === MODE.BUILD}
-            @click=${() => (this.mode = MODE.BUILD)}
-          >
-            Build
-          </button>
-          <button
-            id="select-preview"
-            ?active=${this.mode === MODE.PREVIEW}
-            @click=${() => (this.mode = MODE.PREVIEW)}
-          >
-            Preview
-          </button>
-        </div>
-        <div id="content" class="${this.mode}">${cache(content)}</div>`;
-
-      if (this.embed) {
-        tmpl = html`<main id="embed">
-          <header>
-            <button
-              @click=${() => {
-                this.#setEmbed(null);
-                this.embed = false;
-              }}
-            >
-              View in Debugger
-            </button>
-          </header>
-          <iframe src="/preview.html?board=${this.url}&embed=true"></iframe>
-        </main>`;
-      }
-    } else {
-      tmpl = html`<header>
-          <a href="/"><h1 id="title">Breadboard Playground</h1></a>
-        </header>
-        <bb-board-list
-          @breadboardstart=${this.#onStartBoard}
+            this.toast(toastEvent.message, toastEvent.toastType);
+          }}
+          @breadboarddelay=${(delayEvent: BreadboardUI.Events.DelayEvent) => {
+            this.#delay = delayEvent.duration;
+          }}
           .boards=${this.config.boards}
-          .bootWithUrl=${this.#bootWithUrl}
-        ></bb-board-list>`;
+        ></bb-ui-controller>`;
+        break;
+      }
+
+      case MODE.PREVIEW: {
+        // TODO: Do this with Service Workers.
+        content = html`<button
+            id="reload"
+            @click=${() => {
+              if (!this.#previewRef.value) {
+                return;
+              }
+
+              this.#previewRef.value.src = `/preview.html?board=${this.url}`;
+            }}
+          >
+            Reload
+          </button>
+          <iframe
+            ${ref(this.#previewRef)}
+            src="/preview.html?board=${this.url}"
+          ></iframe>`;
+        break;
+      }
+
+      default: {
+        return html`Unknown mode`;
+      }
+    }
+
+    tmpl = html`<div id="header-bar">
+        <a id="back" href="/" @click=${this.#unloadCurrentBoard}
+          >Back to list</a
+        >
+        <h1>${this.loadInfo?.title || "Untitled board"}</h1>
+        <a id="download" @click=${this.#downloadLog}>Download log</a>
+      </div>
+      <div id="side-bar">
+        <button
+          id="select-build"
+          ?active=${this.mode === MODE.BUILD}
+          @click=${() => (this.mode = MODE.BUILD)}
+        >
+          Build
+        </button>
+        <button
+          id="select-preview"
+          ?active=${this.mode === MODE.PREVIEW}
+          @click=${() => (this.mode = MODE.PREVIEW)}
+        >
+          Preview
+        </button>
+      </div>
+      <div id="content" class="${this.mode}">${cache(content)}</div>`;
+
+    if (this.embed) {
+      tmpl = html`<main id="embed">
+        <header>
+          <button
+            @click=${() => {
+              this.#setEmbed(null);
+              this.embed = false;
+            }}
+          >
+            View in Debugger
+          </button>
+        </header>
+        <iframe src="/preview.html?board=${this.url}&embed=true"></iframe>
+      </main>`;
     }
 
     return html`${tmpl} ${toasts}`;
