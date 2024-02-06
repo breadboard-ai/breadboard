@@ -12,6 +12,8 @@
   "scripts": {
     "prepack": "npm run build",
     "dev": "wireit",
+    "dev:samples": "npm run samples --watch",
+    "samples": "wireit",
     "test": "wireit",
     "build": "wireit",
     "lint": "wireit"
@@ -19,6 +21,14 @@
   "wireit": {
     "dev": {
       "command": "breadboard debug src/boards --watch -n",
+      "dependencies": [
+        "build",
+        "../breadboard-cli:build"
+      ]
+    },
+    "samples": {
+      "command": "breadboard debug src/samples --watch -n",
+      "service": true,
       "dependencies": [
         "build",
         "../breadboard-cli:build"
@@ -48,6 +58,7 @@
       ],
       "files": [
         "src/**/*.ts",
+        "!src/samples/**/*.ts",
         "tests/**/*.ts",
         "tsconfig.json",
         "../../core/tsconfig/base.json"

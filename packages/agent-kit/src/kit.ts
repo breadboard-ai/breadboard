@@ -7,6 +7,7 @@
 import { Board } from "@google-labs/breadboard";
 
 import worker from "./boards/worker.js";
+import instruction from "./boards/instruction.js";
 
 import { Core } from "@google-labs/core-kit";
 
@@ -19,10 +20,7 @@ const kit = new Board({
 });
 const core = kit.addKit(Core);
 
-kit.graphs = {
-  worker,
-};
-
-core.invoke({ $id: "worker", path: "#worker" });
+core.invoke({ $id: "worker", graph: worker });
+core.invoke({ $id: "instruction", graph: instruction });
 
 export default kit;

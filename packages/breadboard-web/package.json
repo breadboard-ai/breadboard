@@ -40,6 +40,7 @@
   "wireit": {
     "build": {
       "dependencies": [
+        "../agent-kit:build",
         "../breadboard:build",
         "../breadboard-ui:build",
         "../core-kit:build",
@@ -56,6 +57,7 @@
     },
     "typescript-files-and-deps": {
       "dependencies": [
+        "../agent-kit:build:tsc",
         "../breadboard:build:tsc",
         "../breadboard-ui:build:tsc",
         "../core-kit:build:tsc",

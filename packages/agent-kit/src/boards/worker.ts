@@ -4,9 +4,36 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { board } from "@google-labs/breadboard";
+import { NewNodeFactory, NewNodeValue, board } from "@google-labs/breadboard";
 import { json } from "@google-labs/json-kit";
 import { gemini } from "@google-labs/gemini-kit";
+
+export type WorkerType = NewNodeFactory<
+  {
+    /**
+     * The generator to use for the agent.
+     */
+    generator?: NewNodeValue;
+    /**
+     * The context to use for the agent.
+     */
+    context: NewNodeValue;
+    /**
+     * The stop sequences to use for the agent.
+     */
+    stopSequences: NewNodeValue;
+  },
+  {
+    /**
+     * The context after generation.
+     */
+    context: NewNodeValue;
+    /**
+     * The output from the agent.
+     */
+    text: NewNodeValue;
+  }
+>;
 
 const sampleContext = JSON.stringify(
   [
@@ -14,7 +41,8 @@ const sampleContext = JSON.stringify(
       role: "user",
       parts: [
         {
-          text: `You are a brilliant poet who specializes in two-line rhyming poems.
+          text: `
+You are a brilliant poet who specializes in two-line rhyming poems.
 Given any topic, you can quickly whip up a two-line rhyming poem about it.
 Ready?
 
@@ -27,8 +55,7 @@ The topic is: the universe within us`,
   2
 );
 
-export default await board(({ generator, context, stopSequences }) => {
-  generator.title("Generator").optional().default("gemini-generator.json");
+export default await board(({ context, stopSequences }) => {
   context
     .title("Context")
     .isArray()
