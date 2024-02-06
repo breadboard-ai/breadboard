@@ -20,6 +20,13 @@ const globals = {
 
 Object.assign(global, globals);
 
+function spacer({
+  char = '=',
+  count = 80
+}: { char?: string; count?: number; } = {}) {
+  console.log(char.repeat(count));
+}
+
 module.exports = async () => {
   const workspace = process.cwd();
   console.log({ cwd: workspace });
@@ -35,13 +42,14 @@ module.exports = async () => {
   const depTypes = ["dependencies", "devDependencies", "peerDependencies"] as const;
 
   const fromScope = "@google-labs";
-  const packagesWithScope = packages.map((pkg) => `@${fromScope}/${pkg}`);
+  const packagesWithScope = packages.map((pkg) => `${fromScope}/${pkg}`);
   const toScope = `@${github.context.repo.owner.toLowerCase()}`;
   console.log({ fromScope, toScope });
 
   await exec.exec("npm", ["install"], { cwd: workspace });
 
   for (const pkg of packages) {
+    spacer();
     const packagePath = path.resolve(packageDir, pkg, "package.json");
     console.log({ package: packagePath });
     const packageJson: {
