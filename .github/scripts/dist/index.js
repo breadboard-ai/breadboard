@@ -32671,7 +32671,7 @@ async function main() {
     const packageDir = path_1.default.resolve(workspace, "packages");
     const toScope = `@${github.context.repo.owner.toLowerCase()}`;
     console.log({ fromScope, toScope });
-    // await npmInstall();
+    await npmInstall();
     await npmBuild();
     const scopedRegistryArg = `--@${toScope}:registry=${registry}`;
     const packagePaths = packages.map((pkg) => path_1.default.resolve(packageDir, pkg, "package.json"));

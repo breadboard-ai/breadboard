@@ -67,7 +67,7 @@ async function main() {
   const toScope = `@${github.context.repo.owner.toLowerCase()}`;
   console.log({ fromScope, toScope });
 
-  // await npmInstall();
+  await npmInstall();
   await npmBuild();
 
   const scopedRegistryArg = `--@${toScope}:registry=${registry}`;
