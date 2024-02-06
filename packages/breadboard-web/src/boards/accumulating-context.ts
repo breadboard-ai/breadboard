@@ -4,27 +4,40 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { z } from "zod";
-
 import { V, base } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { templates } from "@google-labs/template-kit";
 
 const parameters = base.input({
   $id: "parameters",
-  schema: z.object({
-    generator: z
-      .string()
-      .describe("Generator: Text generator to use")
-      .default("text-generator.json"),
-  }),
+  schema: {
+    type: "object",
+    properties: {
+      generator: {
+        type: "string",
+        description: "Text generator to use",
+        default: "text-generator.json",
+        title: "Generator",
+      },
+    },
+    additionalProperties: false,
+  },
 });
 
 const input = base.input({
   $id: "userRequest",
-  schema: z.object({
-    text: z.string().describe("User: Type here to chat with the assistant"),
-  }),
+  schema: {
+    type: "object",
+    properties: {
+      text: {
+        type: "string",
+        description: "Type here to chat with the assistant",
+        title: "User",
+      },
+    },
+    required: ["text"],
+    additionalProperties: false,
+  },
 });
 
 parameters.as({}).to(input);
@@ -57,13 +70,18 @@ conversationMemory.in({ assistant: generator.text });
 
 const output = base.output({
   text: generator.text as V<string>,
-  schema: z.object({
-    text: z
-      .string()
-      .describe(
-        "Assistant: Assistant's response in the conversation with the user"
-      ),
-  }),
+  schema: {
+    type: "object",
+    properties: {
+      text: {
+        type: "string",
+        description: "Assistant's response in the conversation with the user",
+        title: "Assistant",
+      },
+    },
+    required: ["text"],
+    additionalProperties: false,
+  },
 });
 
 output.as({}).to(input);
