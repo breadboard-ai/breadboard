@@ -32612,6 +32612,9 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const exec = __importStar(__nccwpck_require__(1514));
@@ -32619,6 +32622,7 @@ const github = __importStar(__nccwpck_require__(5438));
 const glob = __importStar(__nccwpck_require__(8090));
 const io = __importStar(__nccwpck_require__(7436));
 const fs = __importStar(__nccwpck_require__(7147));
+const path_1 = __importDefault(__nccwpck_require__(1017));
 const __original_require__ = require;
 const globals = {
     require,
@@ -32632,11 +32636,20 @@ const globals = {
 };
 Object.assign(global, globals);
 module.exports = () => {
-    console.log("Hello world");
-    // list files in current directory
-    fs.readdirSync(".").forEach((file) => {
-        console.log(file);
-    });
+    const packageDir = path_1.default.resolve(__dirname, "packages");
+    const packages = [
+        "breadoard",
+        "breadboard-cli",
+        "create-breadboard",
+        "create-breadboard-kit",
+    ];
+    for (const pkg of packages) {
+        const packagePath = path_1.default.resolve(packageDir, pkg, "package.json");
+        console.log({ package: packagePath });
+        const packageJson = JSON.parse(fs.readFileSync(packagePath, "utf8"));
+        const packageName = packageJson.name;
+        console.log({ name: packageName });
+    }
 };
 
 
