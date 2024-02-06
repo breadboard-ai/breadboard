@@ -45,6 +45,8 @@ async function main() {
   const toScope = `@${github.context.repo.owner.toLowerCase()}`;
   console.log({ fromScope, toScope });
 
+  await npmInstall();
+
   const scopedRegistryArg = `--@${toScope}:registry=${registry}`;
   const packagePaths = packages.map((pkg) => path.resolve(packageDir, pkg, "package.json"));
   const newVersion = generationVersion();
@@ -58,7 +60,7 @@ async function main() {
     spacer({ count: 40 });
   }
 
-  await npmInstall();
+
 
   for (const packagePath of packagePaths) {
     console.log(`Publishing ephemeral version of ${packagePath} v${newVersion}`);

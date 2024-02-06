@@ -150,7 +150,7 @@ const os = __importStar(__nccwpck_require__(2037));
 const events = __importStar(__nccwpck_require__(2361));
 const child = __importStar(__nccwpck_require__(2081));
 const path = __importStar(__nccwpck_require__(1017));
-const io = __importStar(__nccwpck_require__(7436));
+const io = __importStar(__nccwpck_require__(7351));
 const ioUtil = __importStar(__nccwpck_require__(1962));
 const timers_1 = __nccwpck_require__(9512);
 /* eslint-disable @typescript-eslint/unbound-method */
@@ -5460,7 +5460,7 @@ exports.getCmdPath = getCmdPath;
 
 /***/ }),
 
-/***/ 7436:
+/***/ 7351:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -13181,7 +13181,7 @@ class Request {
       }
 
       if (!extractBody) {
-        extractBody = (__nccwpck_require__(9990).extractBody)
+        extractBody = (__nccwpck_require__(1472).extractBody)
       }
 
       const [bodyStream, contentType] = extractBody(body)
@@ -14297,7 +14297,7 @@ module.exports = Dispatcher
 
 /***/ }),
 
-/***/ 9990:
+/***/ 1472:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 "use strict";
@@ -17023,7 +17023,7 @@ const {
 } = __nccwpck_require__(2538)
 const { kState, kHeaders, kGuard, kRealm } = __nccwpck_require__(5861)
 const assert = __nccwpck_require__(9491)
-const { safelyExtractBody } = __nccwpck_require__(9990)
+const { safelyExtractBody } = __nccwpck_require__(1472)
 const {
   redirectStatusSet,
   nullBodyStatus,
@@ -19137,7 +19137,7 @@ module.exports = {
 
 
 
-const { extractBody, mixinBody, cloneBody } = __nccwpck_require__(9990)
+const { extractBody, mixinBody, cloneBody } = __nccwpck_require__(1472)
 const { Headers, fill: fillHeaders, HeadersList } = __nccwpck_require__(554)
 const { FinalizationRegistry } = __nccwpck_require__(6436)()
 const util = __nccwpck_require__(3983)
@@ -20090,7 +20090,7 @@ module.exports = { Request, makeRequest }
 
 
 const { Headers, HeadersList, fill } = __nccwpck_require__(554)
-const { extractBody, cloneBody, mixinBody } = __nccwpck_require__(9990)
+const { extractBody, cloneBody, mixinBody } = __nccwpck_require__(1472)
 const util = __nccwpck_require__(3983)
 const { kEnumerableProperty } = util
 const {
@@ -28413,7 +28413,7 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
-/***/ 89:
+/***/ 9089:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -28445,7 +28445,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.aliasDependencies = void 0;
 const fs = __importStar(__nccwpck_require__(7147));
 const src_1 = __nccwpck_require__(6144);
-const writePackage_1 = __nccwpck_require__(230);
+const writePackage_1 = __nccwpck_require__(3230);
 async function aliasDependencies(packagePath, packagesToRescope, fromScope, toScope, dependencyVersion = "*") {
     (0, src_1.spacer)({ count: 40 });
     console.log(`Renaming dependencies in ${packagePath}`);
@@ -28474,7 +28474,7 @@ exports.aliasDependencies = aliasDependencies;
 
 /***/ }),
 
-/***/ 114:
+/***/ 2114:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -28542,8 +28542,8 @@ exports.execWrapper = execWrapper;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.generationVersion = void 0;
 const src_1 = __nccwpck_require__(6144);
-const getDate_1 = __nccwpck_require__(125);
-const getTime_1 = __nccwpck_require__(967);
+const getDate_1 = __nccwpck_require__(2125);
+const getTime_1 = __nccwpck_require__(9967);
 function generationVersion() {
     const now = new Date();
     const timestamp = now.getTime();
@@ -28559,7 +28559,7 @@ exports.generationVersion = generationVersion;
 
 /***/ }),
 
-/***/ 125:
+/***/ 2125:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -28574,7 +28574,7 @@ exports.getDate = getDate;
 
 /***/ }),
 
-/***/ 967:
+/***/ 9967:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -28624,13 +28624,13 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.runId = exports.runNumber = exports.workspace = exports.depTypes = exports.spacer = void 0;
 const github = __importStar(__nccwpck_require__(5438));
 const path_1 = __importDefault(__nccwpck_require__(1017));
-const aliasDependencies_1 = __nccwpck_require__(89);
+const aliasDependencies_1 = __nccwpck_require__(9089);
 const generationVersion_1 = __nccwpck_require__(370);
-const npmBuild_1 = __nccwpck_require__(902);
-const npmInstall_1 = __nccwpck_require__(759);
-const publishPackage_1 = __nccwpck_require__(204);
-const renamePackage_1 = __nccwpck_require__(86);
-const setVersion_1 = __nccwpck_require__(556);
+const npmBuild_1 = __nccwpck_require__(9902);
+const npmInstall_1 = __nccwpck_require__(9410);
+const publishPackage_1 = __nccwpck_require__(2204);
+const renamePackage_1 = __nccwpck_require__(1086);
+const setVersion_1 = __nccwpck_require__(9556);
 function spacer({ char = '=', count = 80 } = {}) {
     console.log(char.repeat(count));
 }
@@ -28660,6 +28660,7 @@ async function main() {
     const packageDir = path_1.default.resolve(exports.workspace, "packages");
     const toScope = `@${github.context.repo.owner.toLowerCase()}`;
     console.log({ fromScope, toScope });
+    await (0, npmInstall_1.npmInstall)();
     const scopedRegistryArg = `--@${toScope}:registry=${registry}`;
     const packagePaths = packages.map((pkg) => path_1.default.resolve(packageDir, pkg, "package.json"));
     const newVersion = (0, generationVersion_1.generationVersion)();
@@ -28672,7 +28673,6 @@ async function main() {
         await (0, aliasDependencies_1.aliasDependencies)(packagePath, packagesWithScope, fromScope, toScope);
         spacer({ count: 40 });
     }
-    await (0, npmInstall_1.npmInstall)();
     for (const packagePath of packagePaths) {
         console.log(`Publishing ephemeral version of ${packagePath} v${newVersion}`);
         await (0, npmBuild_1.npmBuild)(packagePath);
@@ -28685,7 +28685,7 @@ module.exports = main;
 
 /***/ }),
 
-/***/ 902:
+/***/ 9902:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -28693,7 +28693,7 @@ module.exports = main;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.npmBuild = void 0;
 const src_1 = __nccwpck_require__(6144);
-const execWrapper_1 = __nccwpck_require__(114);
+const execWrapper_1 = __nccwpck_require__(2114);
 async function npmBuild(cwd = src_1.workspace) {
     await (0, execWrapper_1.execWrapper)("npm", ["run", "build"], { cwd });
 }
@@ -28702,7 +28702,7 @@ exports.npmBuild = npmBuild;
 
 /***/ }),
 
-/***/ 759:
+/***/ 9410:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -28710,7 +28710,7 @@ exports.npmBuild = npmBuild;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.npmInstall = void 0;
 const src_1 = __nccwpck_require__(6144);
-const execWrapper_1 = __nccwpck_require__(114);
+const execWrapper_1 = __nccwpck_require__(2114);
 async function npmInstall(cwd = src_1.workspace) {
     await (0, execWrapper_1.execWrapper)("npm", ["install"], { cwd });
 }
@@ -28719,7 +28719,7 @@ exports.npmInstall = npmInstall;
 
 /***/ }),
 
-/***/ 204:
+/***/ 2204:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -28730,8 +28730,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.publishPackage = void 0;
 const path_1 = __importDefault(__nccwpck_require__(1017));
-const execWrapper_1 = __nccwpck_require__(114);
-const updatePackageRegistry_1 = __nccwpck_require__(509);
+const execWrapper_1 = __nccwpck_require__(2114);
+const updatePackageRegistry_1 = __nccwpck_require__(5509);
 async function publishPackage(cwd, registry, flags = []) {
     console.log(`Publishing`, { cwd, registry, flags });
     const packageDir = path_1.default.dirname(cwd);
@@ -28745,7 +28745,7 @@ exports.publishPackage = publishPackage;
 
 /***/ }),
 
-/***/ 432:
+/***/ 2432:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -28784,15 +28784,15 @@ exports.readPackage = readPackage;
 
 /***/ }),
 
-/***/ 86:
+/***/ 1086:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.renamePackage = void 0;
-const readPackage_1 = __nccwpck_require__(432);
-const writePackage_1 = __nccwpck_require__(230);
+const readPackage_1 = __nccwpck_require__(2432);
+const writePackage_1 = __nccwpck_require__(3230);
 function renamePackage(packagePath, fromScope, toScope) {
     const packageJson = (0, readPackage_1.readPackage)(packagePath);
     const currentName = packageJson.name;
@@ -28807,7 +28807,7 @@ exports.renamePackage = renamePackage;
 
 /***/ }),
 
-/***/ 556:
+/***/ 9556:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -28850,15 +28850,15 @@ exports.setVersion = setVersion;
 
 /***/ }),
 
-/***/ 509:
+/***/ 5509:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.updatePackageRegistry = void 0;
-const readPackage_1 = __nccwpck_require__(432);
-const writePackage_1 = __nccwpck_require__(230);
+const readPackage_1 = __nccwpck_require__(2432);
+const writePackage_1 = __nccwpck_require__(3230);
 function updatePackageRegistry(cwd, registry) {
     const packageJson = (0, readPackage_1.readPackage)(cwd);
     packageJson.publishConfig = { registry };
@@ -28870,7 +28870,7 @@ exports.updatePackageRegistry = updatePackageRegistry;
 
 /***/ }),
 
-/***/ 230:
+/***/ 3230:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
