@@ -1,8 +1,12 @@
-import { Package } from "src";
+import { Package } from "src/types/package";
 import { readPackage } from "./readPackage";
 import { writePackage } from "./writePackage";
 
-export function renamePackage(packagePath: string, fromScope: string, toScope: string) {
+export function renamePackage(
+  packagePath: string,
+  fromScope: string,
+  toScope: string
+) {
   const packageJson: Package = readPackage(packagePath);
   const currentName = packageJson.name;
   const newName = currentName?.replace(fromScope, toScope);

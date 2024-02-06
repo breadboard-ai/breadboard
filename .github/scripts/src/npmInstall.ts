@@ -1,4 +1,4 @@
-import { workspace } from "src";
+import { workspace } from "src/main";
 import { execWrapper } from "./execWrapper";
 
 export async function npmInstall(cwd = workspace) {

@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import path from "path";
-import { Package } from "src";
 
+import { Package } from "src/types/package";
 
 export function writePackage(packagePath: string, packageJson: Package) {
   if (fs.lstatSync(packagePath).isDirectory()) {

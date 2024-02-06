@@ -1,5 +1,6 @@
 import * as fs from "fs";
-import { Package } from "src";
+
+import { Package } from "src/types/package";
 
 export function setVersion(packagePath: string, version: string) {
   console.log(`Setting version of ${packagePath} to ${version}`);
