@@ -1,4 +1,6 @@
-import { getDate, getTime, runId, runNumber } from "src";
+import { runId, runNumber } from "src";
+import { getDate } from "./getDate";
+import { getTime } from "./getTime";
 
 export function generationVersion() {
   const now: Date = new Date();

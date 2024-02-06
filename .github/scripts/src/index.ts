@@ -1,34 +1,21 @@
-import * as core from "@actions/core";
-import * as exec from "@actions/exec";
 import * as github from "@actions/github";
-import * as glob from "@actions/glob";
-import * as io from "@actions/io";
-import * as fs from "fs";
 import path from "path";
+import { aliasDependencies } from "./aliasDependencies";
 import { generationVersion } from "./generationVersion";
-const __original_require__ = require;
+import { npmBuild } from "./npmBuild";
+import { npmInstall } from "./npmInstall";
+import { publishPackage } from "./publishPackage";
+import { renamePackage } from "./renamePackage";
+import { setVersion } from "./setVersion";
 
-const globals = {
-  require,
-  __original_require__,
-  github,
-  core,
-  exec,
-  glob,
-  io,
-  fetch,
-};
-
-Object.assign(global, globals);
-
-function spacer({
+export function spacer({
   char = '=',
   count = 80
 }: { char?: string; count?: number; } = {}) {
   console.log(char.repeat(count));
 }
 
-const depTypes = ["dependencies", "devDependencies", "peerDependencies"] as const;
+export const depTypes = ["dependencies", "devDependencies", "peerDependencies"] as const;
 const fromScope = "@google-labs";
 const packages = [
   "breadboard",
@@ -40,7 +27,7 @@ const packages = [
 const packagesWithScope = packages.map((pkg) => `${fromScope}/${pkg}`);
 const registry = "https://npm.pkg.github.com";
 
-const workspace = process.cwd();
+export const workspace = process.cwd();
 console.log({ workspace });
 
 /**
@@ -81,7 +68,7 @@ async function main() {
   }
 }
 
-type Package = {
+export type Package = {
   name?: string;
   version?: string;
   dependencies?: Record<string, string>;
@@ -92,113 +79,4 @@ type Package = {
   };
 };
 
-async function npmBuild(cwd = workspace) {
-  await execWrapper("npm", ["run", "build"], { cwd });
-}
-
-async function execWrapper(command: string, args: string[], options: { cwd: string; }) {
-  let cwd = options.cwd;
-  if (fs.existsSync(cwd) && fs.lstatSync(cwd).isFile()) {
-    cwd = path.dirname(cwd);
-  }
-
-  console.log(`${cwd} $ ${command} ${args.join(" ")}`);
-  const listeners = {
-    stdout: (data: Buffer) => {
-      // console.log(data.toString());
-    },
-    stderr: (data: Buffer) => {
-      // console.error(data.toString());
-    }
-  };
-  await exec.exec(command, args, { cwd, listeners }).catch((err: any) => {
-    console.error(err);
-    throw err;
-  });
-}
-
-async function npmInstall(cwd = workspace) {
-  await execWrapper("npm", ["install"], { cwd });
-}
-
-async function aliasDependencies(packagePath: string, packagesToRescope: string[], fromScope: string, toScope: string, dependencyVersion = "*") {
-  spacer({ count: 40 });
-  console.log(`Renaming dependencies in ${packagePath}`);
-  const packageJson: Package = JSON.parse(fs.readFileSync(packagePath, "utf8"));
-  for (const depType of depTypes) {
-    const deps = packageJson[depType];
-    if (deps) {
-      for (const [dep, version] of Object.entries(deps)) {
-        for (const pkg of packagesToRescope) {
-          if (dep === pkg) {
-            const newVersion = `npm:${dep.replace(fromScope, toScope)}@${dependencyVersion}`;
-            console.log(`${depType}.${dep}: "${newVersion}"`);
-            deps[dep] = newVersion;
-            spacer({ count: 10 });
-          }
-        }
-      }
-    }
-    packageJson[depType] = deps;
-  }
-  writePackage(packagePath, packageJson);
-  return packageJson;
-}
-
-function renamePackage(packagePath: string, fromScope: string, toScope: string) {
-  const packageJson: Package = readPackage(packagePath);
-  const currentName = packageJson.name;
-  const newName = currentName?.replace(fromScope, toScope);
-
-  console.log(`name`, ` ${currentName} -> ${newName}`);
-  packageJson.name = newName;
-  writePackage(packagePath, packageJson);
-  return packageJson;
-}
-
-function writePackage(packagePath: string, packageJson: Package) {
-  if (fs.lstatSync(packagePath).isDirectory()) {
-    packagePath = path.resolve(packagePath, "package.json");
-  }
-  fs.writeFileSync(packagePath, JSON.stringify(packageJson, null, 2));
-}
-
-function readPackage(packagePath: string): Package {
-  return JSON.parse(fs.readFileSync(packagePath, "utf8"));
-}
-
-async function publishPackage(cwd: string, registry: string, flags: string[] = []) {
-  console.log(`Publishing`, { cwd, registry, flags });
-  const packageDir = path.dirname(cwd);
-  console.log({ packageDir });
-
-  updatePackageRegistry(cwd, registry);
-
-  console.log(`Publishing ${packageDir}`);
-  await execWrapper("npm", ["publish", ...flags], { cwd: packageDir });
-}
-
-function updatePackageRegistry(cwd: string, registry: string) {
-  const packageJson = readPackage(cwd);
-  packageJson.publishConfig = { registry };
-  console.log(`Setting publishConfig.registry to ${registry}`);
-  writePackage(cwd, packageJson);
-}
-
-function setVersion(packagePath: string, version: string) {
-  console.log(`Setting version of ${packagePath} to ${version}`);
-  const packageJson: Package = JSON.parse(fs.readFileSync(packagePath, "utf8"));
-  packageJson.version = version;
-  fs.writeFileSync(packagePath, JSON.stringify(packageJson, null, 2));
-  return packageJson;
-}
-
 module.exports = main;
-export function getDate(now: Date): string {
-  return `${now.getFullYear()}${now.getMonth() + 1}${now.getDate()}`;
-}
-
-export function getTime(now: Date): string {
-  return `${now.getHours()}${now.getMinutes()}${now.getSeconds()}`;
-}
-
