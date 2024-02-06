@@ -32630,23 +32630,12 @@ const globals = {
     fetch,
 };
 Object.assign(global, globals);
-(async () => {
+function main() {
     console.log("Hello world");
     core.setOutput("time", new Date().toTimeString());
-})();
-function main() {
-    __nccwpck_require__(4625);
 }
 // @ts-ignore
 return main();
-
-
-/***/ }),
-
-/***/ 4625:
-/***/ ((module) => {
-
-module.exports = eval("require")("./main");
 
 
 /***/ }),
