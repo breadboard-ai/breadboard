@@ -141,6 +141,29 @@ export interface BoardFactory {
     fn: GraphDeclarationFunction<I, O>
   ): Lambda<I, Required<O>>;
 
+  <I extends InputValues = InputValues, O extends OutputValues = OutputValues>(
+    opts: {
+      input?: z.ZodType | Schema;
+      output?: z.ZodType | Schema;
+      graph?: GraphDeclarationFunction;
+      invoke?: NodeProxyHandlerFunction;
+      describe?: NodeDescriberFunction;
+      name?: string;
+    } & GraphMetadata
+  ): Lambda<I, Required<O>>;
+
+  <I extends InputValues = InputValues, O extends OutputValues = OutputValues>(
+    opts: {
+      input?: z.ZodType | Schema;
+      output?: z.ZodType | Schema;
+      graph?: GraphDeclarationFunction;
+      invoke?: NodeProxyHandlerFunction;
+      describe?: NodeDescriberFunction;
+      name?: string;
+    } & GraphMetadata,
+    fn: GraphDeclarationFunction<I, O>
+  ): Lambda<I, Required<O>>;
+
   /**
    * Same as above, but accepting GraphMetadata as
    */

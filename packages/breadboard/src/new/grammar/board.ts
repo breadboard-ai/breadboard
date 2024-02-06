@@ -40,8 +40,8 @@ import { BuilderScope } from "./scope.js";
 export const board: BoardFactory = (
   optionsOrFn:
     | ({
-        input?: z.ZodType;
-        output?: z.ZodType;
+        input?: z.ZodType | Schema;
+        output?: z.ZodType | Schema;
         graph?: GraphDeclarationFunction;
         invoke?: NodeProxyHandlerFunction;
         describe?: NodeDescriberFunction;
