@@ -7,7 +7,7 @@ import { npmInstall } from "src/npmInstall";
 import { publishPackage } from "src/publishPackage";
 import { renamePackage } from "src/renamePackage";
 import { setVersion } from "src/setVersion";
-import { execWrapper } from "./execWrapper";
+import { clean } from "./clean";
 
 export function spacer({
   char = "=",
@@ -71,15 +71,5 @@ export async function main() {
     await publishPackage(packagePath, registry, [scopedRegistryArg]);
     spacer({ count: 40 });
   }
-}
-async function clean() {
-  await gitClean({ cwd: workspace });
-  await execWrapper("rm", ["-rfv", "node_modules"], { cwd: workspace });
-  await execWrapper("rm", ["-rfv", "packages/*/node_modules"], { cwd: workspace });
-  await execWrapper("rm", ["-fv", "package-lock.json"], { cwd: workspace });
-}
-
-async function gitClean({ cwd = process.cwd() }: { cwd?: string; } = {}) {
-  await execWrapper("git", ["clean", "-dfx"], { cwd });
 }
 

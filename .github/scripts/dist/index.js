@@ -28474,6 +28474,27 @@ exports.aliasDependencies = aliasDependencies;
 
 /***/ }),
 
+/***/ 829:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.clean = void 0;
+const execWrapper_1 = __nccwpck_require__(2114);
+const gitClean_1 = __nccwpck_require__(740);
+const main_1 = __nccwpck_require__(399);
+async function clean({ cwd = main_1.workspace } = { cwd: main_1.workspace }) {
+    await (0, gitClean_1.gitClean)({ cwd: main_1.workspace });
+    await (0, execWrapper_1.execWrapper)("rm", ["-rfv", "node_modules"], { cwd });
+    await (0, execWrapper_1.execWrapper)("rm", ["-rfv", "packages/*/node_modules"], { cwd });
+    await (0, execWrapper_1.execWrapper)("rm", ["-fv", "package-lock.json"], { cwd });
+}
+exports.clean = clean;
+
+
+/***/ }),
+
 /***/ 2114:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -28620,6 +28641,22 @@ exports.getTime = getTime;
 
 /***/ }),
 
+/***/ 740:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.gitClean = void 0;
+const execWrapper_1 = __nccwpck_require__(2114);
+async function gitClean({ cwd = process.cwd() } = {}) {
+    await (0, execWrapper_1.execWrapper)("git", ["clean", "-dfx"], { cwd });
+}
+exports.gitClean = gitClean;
+
+
+/***/ }),
+
 /***/ 6144:
 /***/ ((module, exports, __nccwpck_require__) => {
 
@@ -28674,7 +28711,7 @@ const npmInstall_1 = __nccwpck_require__(9410);
 const publishPackage_1 = __nccwpck_require__(2204);
 const renamePackage_1 = __nccwpck_require__(1086);
 const setVersion_1 = __nccwpck_require__(9556);
-const execWrapper_1 = __nccwpck_require__(2114);
+const clean_1 = __nccwpck_require__(829);
 function spacer({ char = "=", count = 80, } = {}) {
     console.log(char.repeat(count));
 }
@@ -28713,7 +28750,7 @@ async function main() {
         await (0, aliasDependencies_1.aliasDependencies)(packagePath, packagesWithScope, fromScope, toScope);
         spacer({ count: 40 });
     }
-    await clean();
+    await (0, clean_1.clean)();
     await (0, npmInstall_1.npmInstall)(exports.workspace);
     for (const packagePath of packagePaths) {
         console.log(`Publishing ephemeral version of ${packagePath} v${newVersion}`);
@@ -28723,15 +28760,6 @@ async function main() {
     }
 }
 exports.main = main;
-async function clean() {
-    await gitClean({ cwd: exports.workspace });
-    await (0, execWrapper_1.execWrapper)("rm", ["-rfv", "node_modules"], { cwd: exports.workspace });
-    await (0, execWrapper_1.execWrapper)("rm", ["-rfv", "packages/*/node_modules"], { cwd: exports.workspace });
-    await (0, execWrapper_1.execWrapper)("rm", ["-fv", "package-lock.json"], { cwd: exports.workspace });
-}
-async function gitClean({ cwd = process.cwd() } = {}) {
-    await (0, execWrapper_1.execWrapper)("git", ["clean", "-dfx"], { cwd });
-}
 
 
 /***/ }),
