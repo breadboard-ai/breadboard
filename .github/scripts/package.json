@@ -17,7 +17,7 @@
     "typescript": "5.3.3"
   },
   "scripts": {
-    "build": "rm dist/index.cjs ; tsc && ncc build src/*.ts -o dist",
+    "build": "rm dist/index.cjs ; tsc && ncc build src/index.ts -o dist",
     "test:ts": "cd ../.. ; GITHUB_REPOSITORY=owner/repo tsx -e '(async () => { await require(\"./.github/scripts/src/index.ts\")()})()'",
     "test:js": "cd ../.. ; GITHUB_REPOSITORY=owner/repo node -e 'require(\"./.github/scripts/dist/index.js\")()'",
     "watch": "npm run build -- --watch"
