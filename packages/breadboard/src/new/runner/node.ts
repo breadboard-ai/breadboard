@@ -11,7 +11,7 @@ import {
   InputValues as OriginalInputValues,
   Schema,
   NodeDescriberResult,
-} from "@google-labs/breadboard";
+} from "../../types.js";
 import {
   InputValues,
   OutputValues,

@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor, GraphMetadata } from "@google-labs/breadboard";
 import {
   BuilderScopeInterface,
   BuilderNodeInterface,
@@ -15,6 +14,7 @@ import { AbstractNode, ScopeConfig } from "../runner/types.js";
 import { Scope } from "../runner/scope.js";
 import { swapCurrentContextScope } from "./default-scope.js";
 import { BuilderNode } from "./node.js";
+import { GraphMetadata, GraphDescriptor } from "../../types.js";
 
 /**
  * Adds syntactic sugar to support unproxying and serialization of nodes/graphs.

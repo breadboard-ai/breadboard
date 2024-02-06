@@ -4,11 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { asRuntimeKit, type OutputValues } from "@google-labs/breadboard";
 import { SecretResult } from "./types.js";
 import { KitBuilder } from "../kits/builder.js";
 import { ClientRunResult } from "../remote/run.js";
 import { timestamp } from "../timestamp.js";
+import { asRuntimeKit } from "../index.js";
+import { OutputValues } from "../types.js";
 
 export const createSecretAskingKit = (
   next: (result: ClientRunResult<SecretResult>) => Promise<void>
