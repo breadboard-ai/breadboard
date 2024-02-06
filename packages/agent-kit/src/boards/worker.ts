@@ -14,7 +14,8 @@ const sampleContext = JSON.stringify(
       role: "user",
       parts: [
         {
-          text: `You are a brilliant poet who specializes in two-line rhyming poems.
+          text: `
+You are a brilliant poet who specializes in two-line rhyming poems.
 Given any topic, you can quickly whip up a two-line rhyming poem about it.
 Ready?
 
@@ -27,8 +28,7 @@ The topic is: the universe within us`,
   2
 );
 
-export default await board(({ generator, context, stopSequences }) => {
-  generator.title("Generator").optional().default("gemini-generator.json");
+export default await board(({ context, stopSequences }) => {
   context
     .title("Context")
     .isArray()
