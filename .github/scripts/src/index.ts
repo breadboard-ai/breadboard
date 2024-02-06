@@ -35,6 +35,7 @@ module.exports = async () => {
   const depTypes = ["dependencies", "devDependencies", "peerDependencies"] as const;
 
   const fromScope = "@google-labs";
+  const packagesWithScope = packages.map((pkg) => `@${fromScope}/${pkg}`);
   const toScope = `@${github.context.repo.owner.toLowerCase()}`;
   console.log({ fromScope, toScope });
 
@@ -43,8 +44,36 @@ module.exports = async () => {
   for (const pkg of packages) {
     const packagePath = path.resolve(packageDir, pkg, "package.json");
     console.log({ package: packagePath });
-    const packageJson = JSON.parse(fs.readFileSync(packagePath, "utf8"));
-    const packageName = packageJson.name;
-    console.log({ name: packageName });
+    const packageJson: {
+      name?: string;
+      dependencies?: Record<string, string>;
+      devDependencies?: Record<string, string>;
+      peerDependencies?: Record<string, string>;
+    } = JSON.parse(fs.readFileSync(packagePath, "utf8"));
+    const currentName = packageJson.name;
+    console.log({ name: currentName });
+    const newName = currentName?.replace(fromScope, toScope);
+    console.log({
+      name: {
+        from: currentName,
+        to: newName,
+      }
+    });
+
+    // replace occurences in dependencies
+    for (const depType of depTypes) {
+      const deps = packageJson[depType];
+      if (deps) {
+        for (const [dep, version] of Object.entries(deps)) {
+          if (packagesWithScope.includes(dep)) {
+            const newVersion = `@npm:${dep.replace(fromScope, toScope)}:*`;
+            console.log(`${depType}.${dep}: "${newVersion}"`);
+            deps[dep] = newVersion;
+          }
+        }
+      }
+      packageJson[depType] = deps;
+    }
+    fs.writeFileSync(packagePath, JSON.stringify(packageJson, null, 2));
   }
 };
