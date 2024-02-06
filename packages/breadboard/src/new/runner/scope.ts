@@ -5,24 +5,19 @@
  */
 
 import {
-  GraphDescriptor,
-  GraphMetadata,
-  SubGraphs,
-} from "@google-labs/breadboard";
-import {
+  AbstractNode,
   InputValues,
-  OutputValues,
+  InvokeCallbacks,
   NodeHandler,
   NodeHandlers,
-  AbstractNode,
-  ScopeInterface,
-  InvokeCallbacks,
+  OutputValues,
   ScopeConfig,
+  ScopeInterface,
   StateInterface,
 } from "./types.js";
 
+import { GraphDescriptor, GraphMetadata, NodeDescriberResult, Schema, SubGraphs } from "../../types.js";
 import { State } from "./state.js";
-import { NodeDescriberResult, Schema } from "../../types.js";
 
 const buildRequiredPropertyList = (properties: Record<string, Schema>) => {
   return Object.entries(properties)

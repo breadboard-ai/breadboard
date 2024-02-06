@@ -17,7 +17,7 @@
  * https://github.com/JoshuaKGoldberg/eslint-plugin-expect-type.
  */
 
-import { board, base } from "@google-labs/breadboard";
+import { base, board } from "../src/index.js";
 import type { InputValues } from "../src/types.js";
 
 // Automatic input node ports should be typed as `unknown` by default.
