@@ -32667,7 +32667,7 @@ async function main() {
     console.log(`Initial version: ${initialVersion}`);
     for (const packagePath of packagePaths) {
         console.log(`Handling first publish of ${packagePath} v${initialVersion}`);
-        renamePackage(packagePath, fromScope, toScope);
+        await renamePackage(packagePath, fromScope, toScope);
         await setVersion(packagePath, initialVersion);
         await npmBuild(packagePath);
         await publishPackage(packagePath, registry, [scopedRegistryArg]);
@@ -32677,8 +32677,9 @@ async function main() {
     console.log("Proceeding with second stage publishing");
     const secondaryVersion = getVersion();
     for (const packagePath of packagePaths) {
-        setVersion(packagePath, secondaryVersion);
-        aliasDependencies(packagePath, packagesWithScope, fromScope, toScope);
+        console.log(`Publishing secondary version of ${packagePath} v${secondaryVersion}`);
+        await setVersion(packagePath, secondaryVersion);
+        await aliasDependencies(packagePath, packagesWithScope, fromScope, toScope);
         await npmInstall();
         await npmBuild(packagePath);
         await publishPackage(packagePath, registry, [scopedRegistryArg]);
@@ -32688,7 +32689,7 @@ async function main() {
     console.log(`Unpublishing initial versions`);
     for (const packagePath of packagePaths) {
         console.log(`Unpublishing ${packagePath}`);
-        renamePackage(packagePath, fromScope, toScope);
+        await renamePackage(packagePath, fromScope, toScope);
         await setVersion(packagePath, initialVersion);
         await npmBuild(packagePath);
         await publishPackage(packagePath, registry, [scopedRegistryArg]);
@@ -32701,7 +32702,7 @@ async function npmBuild(cwd = workspace) {
 async function npmInstall(cwd = workspace) {
     await exec.exec("npm", ["install"], { cwd });
 }
-function aliasDependencies(packagePath, packagesToRescope, fromScope, toScope, dependencyVersion = "*") {
+async function aliasDependencies(packagePath, packagesToRescope, fromScope, toScope, dependencyVersion = "*") {
     spacer({ count: 40 });
     console.log(`Renaming dependencies in ${packagePath}`);
     const packageJson = JSON.parse(fs.readFileSync(packagePath, "utf8"));
@@ -32721,17 +32722,16 @@ function aliasDependencies(packagePath, packagesToRescope, fromScope, toScope, d
         }
         packageJson[depType] = deps;
     }
-    fs.writeFileSync(packagePath, JSON.stringify(packageJson, null, 2));
+    fs.writeFile(packagePath, JSON.stringify(packageJson, null, 2), () => { });
     return packageJson;
 }
-function renamePackage(packagePath, fromScope, toScope) {
+async function renamePackage(packagePath, fromScope, toScope) {
     const packageJson = JSON.parse(fs.readFileSync(packagePath, "utf8"));
     const currentName = packageJson.name;
     const newName = currentName?.replace(fromScope, toScope);
     console.log(`name`, ` ${currentName} -> ${newName}`);
     packageJson.name = newName;
-    fs.writeFileSync(packagePath, JSON.stringify(packageJson, null, 2));
-    return packageJson;
+    return fs.writeFile(packagePath, JSON.stringify(packageJson, null, 2), (err) => { });
 }
 async function publishPackage(cwd, registry, flags = []) {
     console.log(`Publishing`, { cwd, registry, flags });
