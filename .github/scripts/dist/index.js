@@ -32636,7 +32636,9 @@ const globals = {
 };
 Object.assign(global, globals);
 module.exports = () => {
-    const packageDir = path_1.default.resolve(__dirname, "packages");
+    const cwd = process.cwd();
+    console.log({ cwd });
+    const packageDir = path_1.default.resolve(cwd, "packages");
     const packages = [
         "breadoard",
         "breadboard-cli",
