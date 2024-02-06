@@ -16,7 +16,6 @@
     "typescript": "5.3.3"
   },
   "scripts": {
-    "build": "tsc --noEmit && ncc build src/index.ts -o dist",
-    "esbuild": "npx esbuild src/index.ts --bundle --outdir=./dist --packages=external --format=esm --out-extension:.js=.mjs --platform=node"
+    "build": "rm dist/index.cjs ; tsc --noEmit && ncc build src/index.ts -o dist"
   }
 }
