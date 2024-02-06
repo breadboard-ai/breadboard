@@ -15,17 +15,8 @@
     "strict": true,
     "skipLibCheck": true,
     "newLine": "lf",
-    "types": [
-      "node"
-    ],
-    "typeRoots": [
-      "./node_modules/@types/"
-    ]
+    "types": ["node"],
+    "typeRoots": ["./node_modules/@types/"]
   },
-  "exclude": [
-    "./dist",
-    "./node_modules",
-    "./__tests__",
-    "./coverage"
-  ],
+  "exclude": ["./dist", "./node_modules", "./__tests__", "./coverage"]
 }
