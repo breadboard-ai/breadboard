@@ -99,25 +99,6 @@ async function main() {
     await publishPackage(packagePath, registry, [scopedRegistryArg]);
     spacer({ count: 40 });
   }
-
-  spacer();
-
-  console.log(`Unpublishing initial versions`);
-  for (const packagePath of packagePaths) {
-    await unpublishPackage(packagePath, registry, initialVersion);
-    spacer({ count: 40 });
-  }
-}
-
-function unpublishPackage(cwd: string, registry: string, version: string) {
-  console.log(`Unpublishing ${cwd} v${version}`);
-  const packageDir = path.dirname(cwd);
-  console.log({ packageDir });
-
-  updatePackageRegistry(cwd, registry);
-
-  console.log(`Unpublishing ${packageDir}`);
-  return execWrapper("npm", ["unpublish", "--force", "--registry", registry, version], { cwd: packageDir });
 }
 
 type Package = {
