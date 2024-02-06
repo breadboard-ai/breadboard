@@ -18,4 +18,4 @@ jobs:
         with:
           retries: 3
           script: |
-                await require('${{ github.workspace }}/.github/scripts/dist/index.js')()
+                await require('${{ github.workspace }}/.github/scripts/dist/index.mjs')()
