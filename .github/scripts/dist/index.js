@@ -32668,15 +32668,18 @@ module.exports = async () => {
                 to: newName,
             }
         });
+        packageJson.name = newName;
         // replace occurences in dependencies
         for (const depType of depTypes) {
             const deps = packageJson[depType];
             if (deps) {
                 for (const [dep, version] of Object.entries(deps)) {
-                    if (packagesWithScope.includes(dep)) {
-                        const newVersion = `npm:${dep.replace(fromScope, toScope)}@*`;
-                        console.log(`${depType}.${dep}: "${newVersion}"`);
-                        deps[dep] = newVersion;
+                    for (const pkg of packagesWithScope) {
+                        if (dep === pkg) {
+                            const newVersion = `npm:${dep.replace(fromScope, toScope)}@*`;
+                            console.log(`${depType}.${dep}: "${newVersion}"`);
+                            deps[dep] = newVersion;
+                        }
                     }
                 }
             }
