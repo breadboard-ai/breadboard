@@ -32638,19 +32638,20 @@ Object.assign(global, globals);
 function spacer({ char = '=', count = 80 } = {}) {
     console.log(char.repeat(count));
 }
-module.exports = async () => {
+const depTypes = ["dependencies", "devDependencies", "peerDependencies"];
+const fromScope = "@google-labs";
+const packages = [
+    "breadboard",
+    "breadboard-cli",
+    "create-breadboard",
+    "create-breadboard-kit",
+];
+const packagesWithScope = packages.map((pkg) => `${fromScope}/${pkg}`);
+module.exports = main;
+async function main() {
     const workspace = process.cwd();
     console.log({ cwd: workspace });
     const packageDir = path_1.default.resolve(workspace, "packages");
-    const packages = [
-        "breadboard",
-        "breadboard-cli",
-        "create-breadboard",
-        "create-breadboard-kit",
-    ];
-    const depTypes = ["dependencies", "devDependencies", "peerDependencies"];
-    const fromScope = "@google-labs";
-    const packagesWithScope = packages.map((pkg) => `${fromScope}/${pkg}`);
     const toScope = `@${github.context.repo.owner.toLowerCase()}`;
     console.log({ fromScope, toScope });
     await exec.exec("npm", ["install"], { cwd: workspace });
@@ -32658,36 +32659,44 @@ module.exports = async () => {
         spacer();
         const packagePath = path_1.default.resolve(packageDir, pkg, "package.json");
         console.log({ package: packagePath });
-        const packageJson = JSON.parse(fs.readFileSync(packagePath, "utf8"));
-        const currentName = packageJson.name;
-        console.log({ name: currentName });
-        const newName = currentName?.replace(fromScope, toScope);
-        console.log({
-            name: {
-                from: currentName,
-                to: newName,
-            }
-        });
-        packageJson.name = newName;
-        // replace occurences in dependencies
-        for (const depType of depTypes) {
-            const deps = packageJson[depType];
-            if (deps) {
-                for (const [dep, version] of Object.entries(deps)) {
-                    for (const pkg of packagesWithScope) {
-                        if (dep === pkg) {
-                            const newVersion = `npm:${dep.replace(fromScope, toScope)}@*`;
-                            console.log(`${depType}.${dep}: "${newVersion}"`);
-                            deps[dep] = newVersion;
-                        }
+        renamePackage(packagePath, fromScope, toScope);
+        renameDependencies(packagePath, fromScope, toScope);
+    }
+}
+function renameDependencies(packagePath, fromScope, toScope) {
+    const packageJson = JSON.parse(fs.readFileSync(packagePath, "utf8"));
+    for (const depType of depTypes) {
+        const deps = packageJson[depType];
+        if (deps) {
+            for (const [dep, version] of Object.entries(deps)) {
+                for (const pkg of packagesWithScope) {
+                    if (dep === pkg) {
+                        const newVersion = `npm:${dep.replace(fromScope, toScope)}@*`;
+                        console.log(`${depType}.${dep}: "${newVersion}"`);
+                        deps[dep] = newVersion;
                     }
                 }
             }
-            packageJson[depType] = deps;
         }
-        fs.writeFileSync(packagePath, JSON.stringify(packageJson, null, 2));
+        packageJson[depType] = deps;
     }
-};
+    fs.writeFileSync(packagePath, JSON.stringify(packageJson, null, 2));
+}
+function renamePackage(packagePath, fromScope, toScope) {
+    const packageJson = JSON.parse(fs.readFileSync(packagePath, "utf8"));
+    const currentName = packageJson.name;
+    console.log({ name: currentName });
+    const newName = currentName?.replace(fromScope, toScope);
+    console.log({
+        name: {
+            from: currentName,
+            to: newName,
+        }
+    });
+    packageJson.name = newName;
+    fs.writeFileSync(packagePath, JSON.stringify(packageJson, null, 2));
+    return packageJson;
+}
 
 
 /***/ }),
