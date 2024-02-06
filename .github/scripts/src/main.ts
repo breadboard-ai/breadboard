@@ -7,6 +7,7 @@ import { npmInstall } from "src/npmInstall";
 import { publishPackage } from "src/publishPackage";
 import { renamePackage } from "src/renamePackage";
 import { setVersion } from "src/setVersion";
+import { execWrapper } from "./execWrapper";
 
 export function spacer({
   char = "=",
@@ -58,6 +59,9 @@ export async function main() {
     spacer({ count: 40 });
   }
 
+  gitClean({ cwd: workspace });
+  await npmInstall(workspace);
+
   for (const packagePath of packagePaths) {
     console.log(
       `Publishing ephemeral version of ${packagePath} v${newVersion}`
@@ -67,3 +71,7 @@ export async function main() {
     spacer({ count: 40 });
   }
 }
+async function gitClean({ cwd = process.cwd() }: { cwd?: string; } = {}) {
+  await execWrapper("git", ["clean", "-dfx"], { cwd });
+}
+

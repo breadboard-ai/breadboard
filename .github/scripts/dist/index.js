@@ -28674,6 +28674,7 @@ const npmInstall_1 = __nccwpck_require__(9410);
 const publishPackage_1 = __nccwpck_require__(2204);
 const renamePackage_1 = __nccwpck_require__(1086);
 const setVersion_1 = __nccwpck_require__(9556);
+const execWrapper_1 = __nccwpck_require__(2114);
 function spacer({ char = "=", count = 80, } = {}) {
     console.log(char.repeat(count));
 }
@@ -28712,6 +28713,8 @@ async function main() {
         await (0, aliasDependencies_1.aliasDependencies)(packagePath, packagesWithScope, fromScope, toScope);
         spacer({ count: 40 });
     }
+    gitClean({ cwd: exports.workspace });
+    await (0, npmInstall_1.npmInstall)(exports.workspace);
     for (const packagePath of packagePaths) {
         console.log(`Publishing ephemeral version of ${packagePath} v${newVersion}`);
         await (0, npmBuild_1.npmBuild)(packagePath);
@@ -28720,6 +28723,9 @@ async function main() {
     }
 }
 exports.main = main;
+async function gitClean({ cwd = process.cwd() } = {}) {
+    await (0, execWrapper_1.execWrapper)("git", ["clean", "-dfx"], { cwd });
+}
 
 
 /***/ }),
