@@ -18,5 +18,5 @@ jobs:
         with:
           retries: 3
           script: |
-            const fn = require('${{ github.workspace }}/.github/scripts/dist/index.cjs')
+            const fn = require('${{ github.workspace }}/.github/scripts/dist/index.js')
             await fn()
