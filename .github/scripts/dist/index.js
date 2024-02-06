@@ -32618,6 +32618,7 @@ const exec = __importStar(__nccwpck_require__(1514));
 const github = __importStar(__nccwpck_require__(5438));
 const glob = __importStar(__nccwpck_require__(8090));
 const io = __importStar(__nccwpck_require__(7436));
+const fs = __importStar(__nccwpck_require__(7147));
 const __original_require__ = require;
 const globals = {
     require,
@@ -32632,6 +32633,10 @@ const globals = {
 Object.assign(global, globals);
 module.exports = () => {
     console.log("Hello world");
+    // list files in current directory
+    fs.readdirSync(".").forEach((file) => {
+        console.log(file);
+    });
 };
 
 
