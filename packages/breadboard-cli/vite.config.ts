@@ -18,19 +18,6 @@ if (import.meta.resolve) {
 }
 
 export default defineConfig({
-  optimizeDeps: {
-    include: [
-      "@google-labs/breadboard",
-      "@google-labs/breadboard-web",
-      "@google-labs/core-kit",
-      "@google-labs/template-kit",
-      "commander",
-      "esbuild",
-      "serve",
-      "vite",
-      "yaml",
-    ],
-  },
   build: {
     lib: {
       entry: {
