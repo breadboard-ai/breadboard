@@ -24,6 +24,7 @@ function breadboardNodeToVisualBlocks(
 export function breadboardToVisualBlocks(
   graph: GraphDescriptor,
 ) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const serializedGraphMap: any = {}; // TODO: VB Types
 
   for (const node of graph.nodes) {

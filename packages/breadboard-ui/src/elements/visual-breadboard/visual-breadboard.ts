@@ -1,9 +1,9 @@
-import { LitElement, html, nothing} from "lit";
-import {customElement, property} from "lit/decorators.js";
-import {LoadArgs} from "../../types/types.js";
-import { Ref, createRef, ref } from "lit/directives/ref.js";
+import { LitElement, html } from "lit";
+import { customElement, property } from "lit/decorators.js";
+import { LoadArgs } from "../../types/types.js";
+import { ref } from "lit/directives/ref.js";
 import { until } from "lit/directives/until.js";
-import {breadboardToVisualBlocks} from "./breadboard-to-visualblocks.js";
+import { breadboardToVisualBlocks } from "./breadboard-to-visualblocks.js";
 
 const VISUALBLOCKS_URL =
   "https://storage.googleapis.com/tfweb/node-graph-editor/node_graph_editor_20240201160419/node_graph_editor_bin.js"
@@ -20,7 +20,7 @@ export class VisualBreadboard extends LitElement {
   });
 
   @property()
-  serializedGraph: any;
+  serializedGraph: unknown;
 
   #updateGraph = valueDebounce(async (diagram: LoadArgs | null) => {
     if (!diagram?.graphDescriptor) {
@@ -30,6 +30,7 @@ export class VisualBreadboard extends LitElement {
     this.serializedGraph = breadboardToVisualBlocks(diagram.graphDescriptor);
     await this.updateComplete;
     await this.#visualBlocksLoaded;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (this.#visualBlocks as any)?.smartLayout(); // TODO: Types
   }, 2000);
 
@@ -37,7 +38,7 @@ export class VisualBreadboard extends LitElement {
     this.#updateGraph(null);
   }
 
-  async draw(diagram: LoadArgs, highlightedNode: string) {
+  async draw(diagram: LoadArgs, _highlightedNode: string) {
     this.#updateGraph(diagram);
   }
 
