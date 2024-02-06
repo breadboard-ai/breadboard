@@ -59,7 +59,8 @@ export async function main() {
     spacer({ count: 40 });
   }
 
-  await gitClean({ cwd: workspace });
+  await clean();
+
   await npmInstall(workspace);
 
   for (const packagePath of packagePaths) {
@@ -71,6 +72,13 @@ export async function main() {
     spacer({ count: 40 });
   }
 }
+async function clean() {
+  await gitClean({ cwd: workspace });
+  await execWrapper("rm", ["-rfv", "node_modules"], { cwd: workspace });
+  await execWrapper("rm", ["-rfv", "packages/*/node_modules"], { cwd: workspace });
+  await execWrapper("rm", ["-fv", "package-lock.json"], { cwd: workspace });
+}
+
 async function gitClean({ cwd = process.cwd() }: { cwd?: string; } = {}) {
   await execWrapper("git", ["clean", "-dfx"], { cwd });
 }
