@@ -23,6 +23,10 @@ Object.assign(global, globals);
 module.exports = () => {
   const cwd = process.cwd();
   console.log({ cwd });
+  // list directories
+  console.log({ files: fs.readdirSync(cwd).map((f) => path.resolve(cwd, f)) });
+  // console.log({ files: fs.readdirSync(cwd).filter((f) => fs.statSync(f).isDirectory()) });
+
   const packageDir = path.resolve(cwd, "packages");
   const packages = [
     "breadoard",

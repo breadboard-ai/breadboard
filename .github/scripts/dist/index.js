@@ -32638,6 +32638,9 @@ Object.assign(global, globals);
 module.exports = () => {
     const cwd = process.cwd();
     console.log({ cwd });
+    // list directories
+    console.log({ files: fs.readdirSync(cwd).map((f) => path_1.default.resolve(cwd, f)) });
+    // console.log({ files: fs.readdirSync(cwd).filter((f) => fs.statSync(f).isDirectory()) });
     const packageDir = path_1.default.resolve(cwd, "packages");
     const packages = [
         "breadoard",
