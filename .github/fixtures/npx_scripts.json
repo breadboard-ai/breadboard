@@ -20,11 +20,11 @@
       ]
     },
     {
+      "expect": "fail",
       "name": "npm init breadboard",
       "script": [
         "npm init breadboard foo"
-      ],
-      "expect": "fail"
+      ]
     },
     {
       "name": "npx init breadboard after install",
@@ -41,9 +41,9 @@
       ]
     },
     {
-      "name": "npx init breadboard after core and createinstall",
+      "name": "npx init breadboard after core and create install",
       "script": [
-        "npm install -g @google-labs/create-breadboard",
+        "npm install -g @google-labs/breadboard @google-labs/create-breadboard",
         "npm init breadboard foo"
       ]
     },
@@ -67,11 +67,18 @@
       ]
     },
     {
+      "name": "npm exec @google-labs/create-breadboard-kit after core amd create install",
+      "script": [
+        "npm install -g @google-labs/breadboard @google-labs/create-breadboard-kit",
+        "npm exec @google-labs/create-breadboard-kit bar"
+      ]
+    },
+    {
+      "expect": "fail",
       "name": "npm init breadboard-kit",
       "script": [
         "npm init breadboard-kit bar"
-      ],
-      "expect": "fail"
+      ]
     },
     {
       "name": "npx init breadboard-kit after install",
@@ -83,14 +90,14 @@
     {
       "name": "npx init breadboard-kit after core install",
       "script": [
-        "npm install -g @google-labs/breadboard-kit",
+        "npm install -g @google-labs/breadboard",
         "npm init breadboard-kit bar"
       ]
     },
     {
       "name": "npx init breadboard-kit after core and create install",
       "script": [
-        "npm install -g @google-labs/create-breadboard-kit",
+        "npm install -g @google-labs/breadboard @google-labs/create-breadboard-kit",
         "npm init breadboard-kit bar"
       ]
     },
@@ -102,12 +109,12 @@
       ]
     },
     {
-      "name": "npx breadboard-cli run",
+      "expect": "fail",
+      "name": "npx breadboard run",
       "script": [
         "wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O foo.json",
-        "npx breadboard-cli run foo.json"
-      ],
-      "expect": "fail"
+        "npx breadboard run foo.json"
+      ]
     },
     {
       "name": "npx @google-labs/breadboard-cli run after install",
@@ -126,6 +133,14 @@
       ]
     },
     {
+      "name": "npx breadboard run after install",
+      "script": [
+        "npm install -g @google-labs/breadboard-cli",
+        "wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O foo.json",
+        "npx breadboard run foo.json"
+      ]
+    },
+    {
       "name": "npx breadboard-cli run after core install",
       "script": [
         "npm install -g @google-labs/breadboard",
@@ -134,22 +149,27 @@
       ]
     },
     {
+      "name": "npx breadboard run after core install",
+      "script": [
+        "npm install -g @google-labs/breadboard",
+        "wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O foo.json",
+        "npx breadboard run foo.json"
+      ]
+    },
+    {
       "name": "npx breadboard-cli run after core and cli install",
       "script": [
-        "npm install -g @google-labs/breadboard-cli",
-        "npm install -g @google-labs/breadboard",
+        "npm install -g @google-labs/breadboard @google-labs/breadboard-cli",
         "wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O foo.json",
         "npx breadboard-cli run foo.json"
       ]
     },
     {
-      "name": "npx breadboard-cli run after core and cli and create install",
+      "name": "npx breadboard run after core and cli install",
       "script": [
-        "npm install -g @google-labs/breadboard-cli",
-        "npm install -g @google-labs/breadboard",
-        "npm install -g @google-labs/create-breadboard",
+        "npm install -g @google-labs/breadboard @google-labs/breadboard-cli",
         "wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O foo.json",
-        "npx breadboard-cli run foo.json"
+        "npx breadboard run foo.json"
       ]
     }
   ]
