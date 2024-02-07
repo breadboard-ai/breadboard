@@ -44,8 +44,10 @@ jobs:
 
       - name: Output YAML arary to temporary script file
         run: |
-          echo "set -xv" > script.sh
-          echo -e "${{ join(matrix.fixtures.script, '\n') }}" > script.sh
+          echo "#!/bin/bash" > script.sh
+          echo "set -xv" >> script.sh
+          echo -e "${{ join(matrix.fixtures.script, '\n') }}" >> script.sh
+          chmod +x script.sh
 
       - name: Show script content
         run: cat script.sh
@@ -53,7 +55,7 @@ jobs:
       - name: Execute the script
         id: execute_script
         continue-on-error: ${{ matrix.fixtures.expect == 'fail' }}
-        run: bash script.sh
+        run: ./script.sh
 
       - if: ${{ steps.execute_script.outcome == 'success' && matrix.fixtures.expect == 'fail' }}
         run: echo "Test unexpectedly passed" && exit 1
