@@ -79,6 +79,10 @@ export type InspectableGraph = {
    */
   outgoingForNode(id: NodeIdentifier): InspectableEdge[];
   /**
+   * Returns a list of entry nodes for the graph.
+   */
+  entries(): InspectableNode[];
+  /**
    * Returns the API of the graph. This function is designed to match the
    * output of the `NodeDescriberFunction`.
    */
