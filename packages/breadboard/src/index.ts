@@ -59,3 +59,9 @@ export type {
   AbstractValue as V,
 } from "./new/grammar/types.js";
 export { asyncGen } from "./utils/async-gen.js";
+
+/**
+ * The Inspector API.
+ */
+export type * from "./inspector/types.js";
+export { inspectableGraph } from "./inspector/index.js";
