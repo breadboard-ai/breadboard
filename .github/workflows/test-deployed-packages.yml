@@ -53,3 +53,7 @@ jobs:
       - name: execute the script
         continue-on-error: ${{ matrix.fixtures.expect == 'fail' }}
         run: bash script.sh
+
+      - if: ${{ matrix.fixtures.expect == 'fail' }}
+        run: echo "This is expected to fail"
+
