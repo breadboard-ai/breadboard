@@ -30,11 +30,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        expect-failure: [false]
+        expect: ["pass"]
         node-version:
           - 21.x
         fixtures: ${{ fromJson(needs.setup.outputs.matrix).fixtures }}
-    name: ${{ matrix.fixtures.name }} on Node ${{ matrix.node-version }}
+    name: ${{ matrix.fixtures.name }} - Should ${{ matrix.expect }} - Node ${{ matrix.node-version }}
     steps:
       - name: Setup node ${{ matrix.node-version }}
         uses: actions/setup-node@main
@@ -50,13 +50,13 @@ jobs:
       - name: execute the script
         run: |
           bash script.sh
-          EXPECT_FAILURE=${{ matrix.expect-failure }}
-          if [ "${EXPECT_FAILURE:-false}" == "true" ]; then
-              if [ $? -eq 0 ]; then
-                  echo "Expected failure but succeeded"
-                  exit 1
-              else
-                  echo "Expected failure and failed"
-                  exit 0
-              fi
+          expect=${{ matrix.expect }}
+          if [ "${expect:-'pass'}" = "fail" ]; then
+            if [ $? -eq 0 ]; then
+              echo "Test passed but expected to fail"
+              exit 1
+            else
+              echo "Test failed as expected"
+              exit 0
+            fi
           fi

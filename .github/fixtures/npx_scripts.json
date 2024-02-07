@@ -24,7 +24,7 @@
       "script": [
         "npm init breadboard foo"
       ],
-      "expect-failure": "true"
+      "expect": "fail"
     },
     {
       "name": "npx init breadboard after install",
@@ -71,7 +71,7 @@
       "script": [
         "npm init breadboard-kit bar"
       ],
-      "expect-failure": "true"
+      "expect": "fail"
     },
     {
       "name": "npx init breadboard-kit after install",
@@ -107,7 +107,7 @@
         "wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O foo.json",
         "npx breadboard-cli run foo.json"
       ],
-      "expect-failure": "true"
+      "expect": "fail"
     },
     {
       "name": "npx @google-labs/breadboard-cli run after install",
