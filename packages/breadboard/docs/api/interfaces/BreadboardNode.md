@@ -31,7 +31,7 @@
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:705](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L705)
+[packages/breadboard/src/types.ts:711](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L711)
 
 ## Methods
 
@@ -65,4 +65,4 @@ Use this method to wire nodes together.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:699](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L699)
+[packages/breadboard/src/types.ts:705](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L705)

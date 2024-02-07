@@ -135,4 +135,4 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:629](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L629)
+[packages/breadboard/src/types.ts:635](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L635)

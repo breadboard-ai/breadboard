@@ -34,7 +34,7 @@ configuration.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:357](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L357)
+[packages/breadboard/src/types.ts:363](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L363)
 
 ___
 
@@ -47,7 +47,7 @@ currently is in the `run` process.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:351](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L351)
+[packages/breadboard/src/types.ts:357](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L357)
 
 ## Accessors
 
@@ -67,7 +67,7 @@ This property is only available when `ResultRunType` is `input`.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:365](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L365)
+[packages/breadboard/src/types.ts:371](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L371)
 
 ___
 
@@ -91,7 +91,7 @@ This property is only available when `ResultRunType` is `input`.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:371](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L371)
+[packages/breadboard/src/types.ts:377](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L377)
 
 ___
 
@@ -108,7 +108,7 @@ the node within the run, similar to an "index" property in map/forEach.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:387](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L387)
+[packages/breadboard/src/types.ts:393](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L393)
 
 ___
 
@@ -125,7 +125,7 @@ This property is only available when `ResultRunType` is `output`.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:376](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L376)
+[packages/breadboard/src/types.ts:382](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L382)
 
 ___
 
@@ -143,7 +143,7 @@ graph traversal.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:382](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L382)
+[packages/breadboard/src/types.ts:388](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L388)
 
 ___
 
@@ -159,4 +159,4 @@ The timestamp of when this result was issued.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:391](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L391)
+[packages/breadboard/src/types.ts:397](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L397)

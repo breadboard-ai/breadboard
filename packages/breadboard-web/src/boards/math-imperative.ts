@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { z } from "zod";
 import { board, V } from "@google-labs/breadboard";
 
 import { templates } from "@google-labs/template-kit";
@@ -13,12 +12,26 @@ import { core } from "@google-labs/core-kit";
 
 export const graph = board(
   {
-    input: z.object({
-      question: z.string().describe("Query: What is your math question?"),
-    }),
-    output: z.object({
-      result: z.string().describe("Answer: The answer to the query"),
-    }),
+    input: {
+      type: "object",
+      required: ["question"],
+      properties: {
+        question: {
+          type: "string",
+          description: "Query: What is your math question?",
+        },
+      },
+    },
+    output: {
+      type: "object",
+      required: ["result"],
+      properties: {
+        result: {
+          type: "string",
+          description: "Answer: The answer to the query",
+        },
+      },
+    },
     title: "Math, imperative style graph",
   },
   ({ question }) => {

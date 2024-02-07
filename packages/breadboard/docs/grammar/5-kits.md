@@ -49,8 +49,6 @@ won’t get those nice hints in TypeScript, e.g. &lt;insert screenshot> or
 &lt;another screenshot> won’t work anymore. To fix this, we can add explicit
 type information to boards:
 
-(insert Zod example)
-
 And use a CLI tool to create a module for each kit
 
 (show CLI tool)

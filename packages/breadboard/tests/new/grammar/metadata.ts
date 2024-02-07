@@ -6,8 +6,6 @@
 
 import test from "ava";
 
-import { z } from "zod";
-
 import { board } from "../../../src/new/grammar/board.js";
 
 import { testKit } from "../../helpers/_test-kit.js";
@@ -15,8 +13,24 @@ import { testKit } from "../../helpers/_test-kit.js";
 test("metadata in board constructor", async (t) => {
   const graph = board(
     {
-      input: z.object({ foo: z.string() }),
-      output: z.object({ foo: z.string() }),
+      input: {
+        type: "object",
+        required: ["foo"],
+        properties: {
+          foo: {
+            type: "string",
+          },
+        },
+      },
+      output: {
+        type: "object",
+        required: ["foo"],
+        properties: {
+          foo: {
+            type: "string",
+          },
+        },
+      },
       url: "data:",
       title: "test",
       description: "test test",
@@ -56,8 +70,24 @@ test("metadata in serialize", async (t) => {
 test("metadata in serialize overrides metadata in constructor", async (t) => {
   const graph = board(
     {
-      input: z.object({ foo: z.string() }),
-      output: z.object({ foo: z.string() }),
+      input: {
+        type: "object",
+        required: ["foo"],
+        properties: {
+          foo: {
+            type: "string",
+          },
+        },
+      },
+      output: {
+        type: "object",
+        required: ["foo"],
+        properties: {
+          foo: {
+            type: "string",
+          },
+        },
+      },
       title: "constructor",
       description: "test test",
     },

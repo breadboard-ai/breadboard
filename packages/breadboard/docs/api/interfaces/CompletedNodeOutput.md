@@ -18,7 +18,7 @@
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:249](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L249)
+[packages/breadboard/src/types.ts:255](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L255)
 
 ___
 
@@ -28,7 +28,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:248](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L248)
+[packages/breadboard/src/types.ts:254](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L254)
 
 ___
 
@@ -38,4 +38,4 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:247](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L247)
+[packages/breadboard/src/types.ts:253](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L253)

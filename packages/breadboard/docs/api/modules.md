@@ -6,7 +6,7 @@
 
 ### References
 
-- [board](modules.md#board)
+- [recipe](modules.md#recipe)
 
 ### Classes
 
@@ -123,21 +123,21 @@
 - [addKit](modules.md#addkit)
 - [asRuntimeKit](modules.md#asruntimekit)
 - [asyncGen](modules.md#asyncgen)
+- [board](modules.md#board)
 - [callHandler](modules.md#callhandler)
 - [clone](modules.md#clone)
 - [code](modules.md#code)
 - [isStreamCapability](modules.md#isstreamcapability)
 - [patchReadableStream](modules.md#patchreadablestream)
-- [recipe](modules.md#recipe)
 - [streamFromAsyncGen](modules.md#streamfromasyncgen)
 - [toMermaid](modules.md#tomermaid)
 - [traversalResultFromStack](modules.md#traversalresultfromstack)
 
 ## References
 
-### board
+### recipe
 
-Renames and re-exports [recipe](modules.md#recipe)
+Renames and re-exports [board](modules.md#board)
 
 ## Type Aliases
 
@@ -147,7 +147,7 @@ Renames and re-exports [recipe](modules.md#recipe)
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:667](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L667)
+[packages/breadboard/src/types.ts:673](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L673)
 
 ___
 
@@ -157,7 +157,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:342](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L342)
+[packages/breadboard/src/types.ts:348](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L348)
 
 ___
 
@@ -184,7 +184,7 @@ use `getConfigWithLambda()` to turn this into a regular config.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:738](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L738)
+[packages/breadboard/src/types.ts:744](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L744)
 
 ___
 
@@ -207,7 +207,7 @@ Represents an edge in a graph.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:97](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L97)
+[packages/breadboard/src/types.ts:98](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L98)
 
 ___
 
@@ -217,7 +217,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:34](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L34)
+[packages/breadboard/src/types.ts:35](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L35)
 
 ___
 
@@ -235,7 +235,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:599](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L599)
+[packages/breadboard/src/types.ts:605](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L605)
 
 ___
 
@@ -255,7 +255,7 @@ Error response also indicates that the board is done running.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:618](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L618)
+[packages/breadboard/src/types.ts:624](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L624)
 
 ___
 
@@ -271,7 +271,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:414](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L414)
+[packages/breadboard/src/types.ts:420](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L420)
 
 ___
 
@@ -283,7 +283,7 @@ Represents a graph.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:204](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L204)
+[packages/breadboard/src/types.ts:210](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L210)
 
 ___
 
@@ -300,7 +300,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:506](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L506)
+[packages/breadboard/src/types.ts:512](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L512)
 
 ___
 
@@ -312,7 +312,7 @@ Unique identifier of a graph.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:192](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L192)
+[packages/breadboard/src/types.ts:198](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L198)
 
 ___
 
@@ -326,6 +326,7 @@ Represents graph metadata.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
+| `$schema?` | `string` | The schema of the graph. |
 | `description?` | `string` | The description of the graph. |
 | `title?` | `string` | The title of the graph. |
 | `url?` | `string` | The URL pointing to the location of the graph. This URL is used to resolve relative paths in the graph. If not specified, the paths are assumed to be relative to the current working directory. |
@@ -333,7 +334,7 @@ Represents graph metadata.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:166](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L166)
+[packages/breadboard/src/types.ts:167](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L167)
 
 ___
 
@@ -351,7 +352,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:495](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L495)
+[packages/breadboard/src/types.ts:501](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L501)
 
 ___
 
@@ -368,7 +369,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:501](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L501)
+[packages/breadboard/src/types.ts:507](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L507)
 
 ___
 
@@ -380,7 +381,7 @@ Unique identifier of a node's input.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:67](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L67)
+[packages/breadboard/src/types.ts:68](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L68)
 
 ___
 
@@ -400,7 +401,7 @@ Sent by the runner to request input.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:583](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L583)
+[packages/breadboard/src/types.ts:589](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L589)
 
 ___
 
@@ -412,7 +413,7 @@ Values that are supplied as inputs to the `NodeHandler`.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:267](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L267)
+[packages/breadboard/src/types.ts:273](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L273)
 
 ___
 
@@ -428,7 +429,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/grammar/types.ts:83](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L83)
+[packages/breadboard/src/new/grammar/types.ts:81](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/grammar/types.ts#L81)
 
 ___
 
@@ -444,7 +445,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/grammar/types.ts:75](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L75)
+[packages/breadboard/src/new/grammar/types.ts:73](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/grammar/types.ts#L73)
 
 ___
 
@@ -461,7 +462,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/grammar/types.ts:32](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L32)
+[packages/breadboard/src/new/grammar/types.ts:30](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/grammar/types.ts#L30)
 
 ___
 
@@ -475,7 +476,7 @@ given invocation of node within the run.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:466](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L466)
+[packages/breadboard/src/types.ts:472](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L472)
 
 ___
 
@@ -485,7 +486,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:147](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L147)
+[packages/breadboard/src/types.ts:148](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L148)
 
 ___
 
@@ -506,7 +507,7 @@ The `@google-labs/core-kit` package is an example of kit.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:140](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L140)
+[packages/breadboard/src/types.ts:141](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L141)
 
 ___
 
@@ -523,7 +524,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/grammar/types.ts:124](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L124)
+[packages/breadboard/src/new/grammar/types.ts:122](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/grammar/types.ts#L122)
 
 ___
 
@@ -556,7 +557,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:751](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L751)
+[packages/breadboard/src/types.ts:757](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L757)
 
 ___
 
@@ -566,7 +567,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:757](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L757)
+[packages/breadboard/src/types.ts:763](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L763)
 
 ___
 
@@ -576,7 +577,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:773](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L773)
+[packages/breadboard/src/types.ts:779](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L779)
 
 ___
 
@@ -590,7 +591,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/runner/types.ts:24](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/runner/types.ts#L24)
+[packages/breadboard/src/new/runner/types.ts:24](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/runner/types.ts#L24)
 
 ___
 
@@ -604,7 +605,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/grammar/types.ts:29](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L29)
+[packages/breadboard/src/new/grammar/types.ts:27](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/grammar/types.ts#L27)
 
 ___
 
@@ -635,7 +636,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/grammar/types.ts:65](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L65)
+[packages/breadboard/src/new/grammar/types.ts:63](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/grammar/types.ts#L63)
 
 ___
 
@@ -645,7 +646,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/runner/types.ts:21](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/runner/types.ts#L21)
+[packages/breadboard/src/new/runner/types.ts:21](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/runner/types.ts#L21)
 
 ___
 
@@ -659,7 +660,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/runner/types.ts:26](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/runner/types.ts#L26)
+[packages/breadboard/src/new/runner/types.ts:26](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/runner/types.ts#L26)
 
 ___
 
@@ -672,7 +673,7 @@ the `InputValues` and supplied as inputs to the `NodeHandler`.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:278](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L278)
+[packages/breadboard/src/types.ts:284](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L284)
 
 ___
 
@@ -685,7 +686,7 @@ constructor will remove those and turn them into wires into the node instead.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:722](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L722)
+[packages/breadboard/src/types.ts:728](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L728)
 
 ___
 
@@ -719,7 +720,7 @@ when they are not.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:319](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L319)
+[packages/breadboard/src/types.ts:325](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L325)
 
 ___
 
@@ -738,7 +739,7 @@ The result of running `NodeDescriptorFunction`
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:305](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L305)
+[packages/breadboard/src/types.ts:311](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L311)
 
 ___
 
@@ -758,7 +759,7 @@ Represents a node in a graph.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:77](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L77)
+[packages/breadboard/src/types.ts:78](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L78)
 
 ___
 
@@ -775,7 +776,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:528](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L528)
+[packages/breadboard/src/types.ts:534](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L534)
 
 ___
 
@@ -796,7 +797,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:571](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L571)
+[packages/breadboard/src/types.ts:577](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L577)
 
 ___
 
@@ -806,7 +807,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:325](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L325)
+[packages/breadboard/src/types.ts:331](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L331)
 
 ___
 
@@ -833,7 +834,7 @@ A function that represents a type of a node in the graph.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:283](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L283)
+[packages/breadboard/src/types.ts:289](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L289)
 
 ___
 
@@ -845,7 +846,7 @@ All known node handlers.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:335](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L335)
+[packages/breadboard/src/types.ts:341](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L341)
 
 ___
 
@@ -857,7 +858,7 @@ Unique identifier of a node in a graph.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:57](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L57)
+[packages/breadboard/src/types.ts:58](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L58)
 
 ___
 
@@ -875,7 +876,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:522](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L522)
+[packages/breadboard/src/types.ts:528](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L528)
 
 ___
 
@@ -896,7 +897,7 @@ Sent by the runner just before a node is about to run.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:560](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L560)
+[packages/breadboard/src/types.ts:566](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L566)
 
 ___
 
@@ -927,7 +928,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:410](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L410)
+[packages/breadboard/src/types.ts:416](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L416)
 
 ___
 
@@ -939,7 +940,7 @@ Unique identifier of a node's type.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:72](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L72)
+[packages/breadboard/src/types.ts:73](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L73)
 
 ___
 
@@ -951,7 +952,7 @@ A type representing a valid JSON value.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:44](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L44)
+[packages/breadboard/src/types.ts:45](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L45)
 
 ___
 
@@ -964,7 +965,7 @@ and a map of these for all nodes.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:235](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L235)
+[packages/breadboard/src/types.ts:241](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L241)
 
 ___
 
@@ -974,7 +975,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:236](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L236)
+[packages/breadboard/src/types.ts:242](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L242)
 
 ___
 
@@ -989,7 +990,7 @@ passed to the node itself.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:714](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L714)
+[packages/breadboard/src/types.ts:720](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L720)
 
 ___
 
@@ -1001,7 +1002,7 @@ Unique identifier of a node's output.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:62](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L62)
+[packages/breadboard/src/types.ts:63](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L63)
 
 ___
 
@@ -1021,7 +1022,7 @@ Sent by the runner to supply outputs.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:543](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L543)
+[packages/breadboard/src/types.ts:549](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L549)
 
 ___
 
@@ -1033,7 +1034,7 @@ Values that the `NodeHandler` outputs.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:272](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L272)
+[packages/breadboard/src/types.ts:278](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L278)
 
 ___
 
@@ -1047,7 +1048,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/grammar/types.ts:60](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L60)
+[packages/breadboard/src/new/grammar/types.ts:58](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/grammar/types.ts#L58)
 
 ___
 
@@ -1064,7 +1065,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/grammar/types.ts:90](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L90)
+[packages/breadboard/src/new/grammar/types.ts:88](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/grammar/types.ts#L88)
 
 ___
 
@@ -1081,7 +1082,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/grammar/types.ts:44](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L44)
+[packages/breadboard/src/new/grammar/types.ts:42](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/grammar/types.ts#L42)
 
 ___
 
@@ -1097,7 +1098,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/stream.ts:108](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/stream.ts#L108)
+[packages/breadboard/src/stream.ts:108](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/stream.ts#L108)
 
 ___
 
@@ -1107,7 +1108,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:533](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L533)
+[packages/breadboard/src/types.ts:539](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L539)
 
 ___
 
@@ -1120,7 +1121,7 @@ that describe a kit.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:298](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L298)
+[packages/breadboard/src/types.ts:304](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L304)
 
 ___
 
@@ -1130,7 +1131,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:344](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L344)
+[packages/breadboard/src/types.ts:350](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L350)
 
 ___
 
@@ -1151,7 +1152,7 @@ node within the graph.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:472](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L472)
+[packages/breadboard/src/types.ts:478](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L478)
 
 ___
 
@@ -1166,7 +1167,7 @@ Can be used to understand the current state of the run.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:493](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L493)
+[packages/breadboard/src/types.ts:499](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L499)
 
 ___
 
@@ -1194,11 +1195,12 @@ SPDX-License-Identifier: Apache-2.0
 | `properties?` | `Record`\<`string`, [`Schema`](modules.md#schema)\> | - |
 | `required?` | `string`[] | - |
 | `title?` | `string` | - |
+| `transient?` | `boolean` | - |
 | `type?` | `string` \| `string`[] | - |
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:7](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L7)
+[packages/breadboard/src/types.ts:7](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L7)
 
 ___
 
@@ -1220,7 +1222,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:511](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L511)
+[packages/breadboard/src/types.ts:517](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L517)
 
 ___
 
@@ -1234,7 +1236,7 @@ The value is the descriptor of the sub-graph.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:199](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L199)
+[packages/breadboard/src/types.ts:205](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L205)
 
 ___
 
@@ -1256,7 +1258,7 @@ Intersection between a Node and a Promise for its output:
 
 #### Defined in
 
-[packages/breadboard/src/new/grammar/types.ts:309](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L309)
+[packages/breadboard/src/new/grammar/types.ts:291](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/grammar/types.ts#L291)
 
 ___
 
@@ -1272,7 +1274,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/grammar/types.ts:61](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/types.ts#L61)
+[packages/breadboard/src/new/grammar/types.ts:59](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/grammar/types.ts#L59)
 
 ## Variables
 
@@ -1284,12 +1286,12 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `input` | \<T\>(`config`: \{ `$id?`: `string` ; `schema`: `T`  } & `Partial`\<\{ [K in string \| number \| symbol]: TypeOf\<T\>[K] \| V\<TypeOf\<T\>[K]\> \| \_\_NodeProxy\<NewInputValuesWithNodeFactory, Partial\<Object\>\> }\> & {}) => [`__NodeProxy`](modules.md#__nodeproxy)\<`Record`\<`string`, `never`\>, `TypeOf`\<`T`\>\> & (`config?`: \{ `$id?`: `string` ; `schema?`: [`Schema`](modules.md#schema)  } & `Partial`\<{}\> & {}) => [`__NodeProxy`](modules.md#__nodeproxy)\<[`NewInputValues`](modules.md#newinputvalues), [`NewOutputValues`](modules.md#newoutputvalues)\> |
-| `output` | \<T\>(`config`: \{ `$id?`: `string` ; `schema`: `T`  } & `Partial`\<\{ [K in string \| number \| symbol]: TypeOf\<T\>[K] \| V\<TypeOf\<T\>[K]\> \| \_\_NodeProxy\<NewInputValuesWithNodeFactory, Partial\<Object\>\> }\> & {}) => [`__NodeProxy`](modules.md#__nodeproxy)\<`TypeOf`\<`T`\>, `Record`\<`string`, `never`\>\> & (`config?`: \{ `$id?`: `string` ; `schema?`: [`Schema`](modules.md#schema)  } & `Partial`\<{}\> & {}) => [`__NodeProxy`](modules.md#__nodeproxy)\<[`NewInputValues`](modules.md#newinputvalues), `Record`\<`string`, `never`\>\> |
+| `input` | \<T\>(`config`: \{ `$id?`: `string` ; `schema`: `T`  } & `Partial`\<\{ [K in string \| number \| symbol]: T[K] \| V\<T[K]\> \| \_\_NodeProxy\<NewInputValuesWithNodeFactory, Partial\<Object\>\> }\> & {}) => [`__NodeProxy`](modules.md#__nodeproxy)\<`Record`\<`string`, `never`\>, `T`\> & (`config?`: \{ `$id?`: `string` ; `schema?`: [`Schema`](modules.md#schema)  } & `Partial`\<{}\> & {}) => [`__NodeProxy`](modules.md#__nodeproxy)\<[`NewInputValues`](modules.md#newinputvalues), [`NewOutputValues`](modules.md#newoutputvalues)\> |
+| `output` | \<T\>(`config`: \{ `$id?`: `string` ; `schema`: `T`  } & `Partial`\<\{ [K in string \| number \| symbol]: T[K] \| V\<T[K]\> \| \_\_NodeProxy\<NewInputValuesWithNodeFactory, Partial\<Object\>\> }\> & {}) => [`__NodeProxy`](modules.md#__nodeproxy)\<`T`, `Record`\<`string`, `never`\>\> & (`config?`: \{ `$id?`: `string` ; `schema?`: [`Schema`](modules.md#schema)  } & `Partial`\<{}\> & {}) => [`__NodeProxy`](modules.md#__nodeproxy)\<[`NewInputValues`](modules.md#newinputvalues), `Record`\<`string`, `never`\>\> |
 
 #### Defined in
 
-[packages/breadboard/src/new/grammar/base.ts:31](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/base.ts#L31)
+[packages/breadboard/src/new/grammar/base.ts:29](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/grammar/base.ts#L29)
 
 ## Functions
 
@@ -1316,7 +1318,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/new/grammar/kits.ts:38](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/kits.ts#L38)
+[packages/breadboard/src/new/grammar/kits.ts:38](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/grammar/kits.ts#L38)
 
 ___
 
@@ -1341,7 +1343,7 @@ A kit instance prepare for run-time use.
 
 #### Defined in
 
-[packages/breadboard/src/kits/ctors.ts:29](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/kits/ctors.ts#L29)
+[packages/breadboard/src/kits/ctors.ts:29](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/kits/ctors.ts#L29)
 
 ___
 
@@ -1402,7 +1404,87 @@ An async generator.
 
 #### Defined in
 
-[packages/breadboard/src/utils/async-gen.ts:196](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/utils/async-gen.ts#L196)
+[packages/breadboard/src/utils/async-gen.ts:196](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/utils/async-gen.ts#L196)
+
+___
+
+### board
+
+▸ **board**\<`I`, `O`\>(`fn`): [`Lambda`](modules.md#lambda)\<`I`, `Required`\<`O`\>\>
+
+Implementation of the overloaded board function.
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `I` | extends [`NewInputValuesWithNodeFactory`](modules.md#newinputvalueswithnodefactory) = [`NewInputValuesWithNodeFactory`](modules.md#newinputvalueswithnodefactory) |
+| `O` | extends `OutputValues` = `OutputValues` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `fn` | `GraphDeclarationFunction`\<`I`, `O`\> |
+
+#### Returns
+
+[`Lambda`](modules.md#lambda)\<`I`, `Required`\<`O`\>\>
+
+#### Defined in
+
+[packages/breadboard/src/new/grammar/board.ts:37](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/grammar/board.ts#L37)
+
+▸ **board**\<`I`, `O`\>(`opts`): [`Lambda`](modules.md#lambda)\<`I`, `Required`\<`O`\>\>
+
+Implementation of the overloaded board function.
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `I` | extends [`NewInputValuesWithNodeFactory`](modules.md#newinputvalueswithnodefactory) = [`NewInputValuesWithNodeFactory`](modules.md#newinputvalueswithnodefactory) |
+| `O` | extends `OutputValues` = `OutputValues` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `opts` | \{ `describe?`: [`NodeDescriberFunction`](modules.md#nodedescriberfunction) ; `graph?`: `GraphDeclarationFunction`\<[`NewInputValuesWithNodeFactory`](modules.md#newinputvalueswithnodefactory), [`OutputValuesOrUnknown`](modules.md#outputvaluesorunknown)\> ; `input?`: [`Schema`](modules.md#schema) ; `invoke?`: `NodeProxyHandlerFunction`\<[`NewInputValuesWithNodeFactory`](modules.md#newinputvalueswithnodefactory), [`OutputValuesOrUnknown`](modules.md#outputvaluesorunknown)\> ; `name?`: `string` ; `output?`: [`Schema`](modules.md#schema)  } & [`GraphMetadata`](modules.md#graphmetadata) |
+
+#### Returns
+
+[`Lambda`](modules.md#lambda)\<`I`, `Required`\<`O`\>\>
+
+#### Defined in
+
+[packages/breadboard/src/new/grammar/board.ts:37](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/grammar/board.ts#L37)
+
+▸ **board**\<`I`, `O`\>(`opts`, `fn`): [`Lambda`](modules.md#lambda)\<`I`, `Required`\<`O`\>\>
+
+Implementation of the overloaded board function.
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `I` | extends [`NewInputValuesWithNodeFactory`](modules.md#newinputvalueswithnodefactory) = [`NewInputValuesWithNodeFactory`](modules.md#newinputvalueswithnodefactory) |
+| `O` | extends `OutputValues` = `OutputValues` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `opts` | \{ `describe?`: [`NodeDescriberFunction`](modules.md#nodedescriberfunction) ; `graph?`: `GraphDeclarationFunction`\<[`NewInputValuesWithNodeFactory`](modules.md#newinputvalueswithnodefactory), [`OutputValuesOrUnknown`](modules.md#outputvaluesorunknown)\> ; `input?`: [`Schema`](modules.md#schema) ; `invoke?`: `NodeProxyHandlerFunction`\<[`NewInputValuesWithNodeFactory`](modules.md#newinputvalueswithnodefactory), [`OutputValuesOrUnknown`](modules.md#outputvaluesorunknown)\> ; `name?`: `string` ; `output?`: [`Schema`](modules.md#schema)  } & [`GraphMetadata`](modules.md#graphmetadata) |
+| `fn` | `GraphDeclarationFunction`\<`I`, `O`\> |
+
+#### Returns
+
+[`Lambda`](modules.md#lambda)\<`I`, `Required`\<`O`\>\>
+
+#### Defined in
+
+[packages/breadboard/src/new/grammar/board.ts:37](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/grammar/board.ts#L37)
 
 ___
 
@@ -1424,7 +1506,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/handler.ts:23](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/handler.ts#L23)
+[packages/breadboard/src/handler.ts:23](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/handler.ts#L23)
 
 ___
 
@@ -1444,7 +1526,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/stream.ts:27](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/stream.ts#L27)
+[packages/breadboard/src/stream.ts:27](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/stream.ts#L27)
 
 ___
 
@@ -1474,7 +1556,7 @@ graph generation and code boards.
 
 #### Defined in
 
-[packages/breadboard/src/new/grammar/board.ts:65](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/board.ts#L65)
+[packages/breadboard/src/new/grammar/board.ts:60](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/new/grammar/board.ts#L60)
 
 ___
 
@@ -1494,7 +1576,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/stream.ts:33](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/stream.ts#L33)
+[packages/breadboard/src/stream.ts:33](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/stream.ts#L33)
 
 ___
 
@@ -1508,87 +1590,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/stream.ts:287](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/stream.ts#L287)
-
-___
-
-### recipe
-
-▸ **recipe**\<`I`, `O`\>(`fn`): [`Lambda`](modules.md#lambda)\<`I`, `Required`\<`O`\>\>
-
-Implementation of the overloaded board function.
-
-#### Type parameters
-
-| Name | Type |
-| :------ | :------ |
-| `I` | extends [`NewInputValuesWithNodeFactory`](modules.md#newinputvalueswithnodefactory) = [`NewInputValuesWithNodeFactory`](modules.md#newinputvalueswithnodefactory) |
-| `O` | extends `OutputValues` = `OutputValues` |
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `fn` | `GraphDeclarationFunction`\<`I`, `O`\> |
-
-#### Returns
-
-[`Lambda`](modules.md#lambda)\<`I`, `Required`\<`O`\>\>
-
-#### Defined in
-
-[packages/breadboard/src/new/grammar/board.ts:40](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/board.ts#L40)
-
-▸ **recipe**\<`IT`, `OT`\>(`options`): [`Lambda`](modules.md#lambda)\<`TypeOf`\<`IT`\>, `Required`\<`TypeOf`\<`OT`\>\>\>
-
-Implementation of the overloaded board function.
-
-#### Type parameters
-
-| Name | Type |
-| :------ | :------ |
-| `IT` | extends `ZodType`\<`any`, `ZodTypeDef`, `any`\> |
-| `OT` | extends `ZodType`\<`any`, `ZodTypeDef`, `any`\> |
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `options` | \{ `describe?`: [`NodeDescriberFunction`](modules.md#nodedescriberfunction) ; `input`: `IT` ; `invoke`: (`inputs`: `TypeOf`\<`IT`\>) => `TypeOf`\<`OT`\> \| `PromiseLike`\<`TypeOf`\<`OT`\>\> ; `name?`: `string` ; `output`: `OT`  } & [`GraphMetadata`](modules.md#graphmetadata) |
-
-#### Returns
-
-[`Lambda`](modules.md#lambda)\<`TypeOf`\<`IT`\>, `Required`\<`TypeOf`\<`OT`\>\>\>
-
-#### Defined in
-
-[packages/breadboard/src/new/grammar/board.ts:40](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/board.ts#L40)
-
-▸ **recipe**\<`IT`, `OT`\>(`options`, `fn`): [`Lambda`](modules.md#lambda)\<`TypeOf`\<`IT`\>, `Required`\<`TypeOf`\<`OT`\>\>\>
-
-Implementation of the overloaded board function.
-
-#### Type parameters
-
-| Name | Type |
-| :------ | :------ |
-| `IT` | extends `ZodType`\<`any`, `ZodTypeDef`, `any`\> |
-| `OT` | extends `ZodType`\<`any`, `ZodTypeDef`, `any`\> |
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `options` | \{ `describe?`: [`NodeDescriberFunction`](modules.md#nodedescriberfunction) ; `input`: `IT` ; `name?`: `string` ; `output`: `OT`  } & [`GraphMetadata`](modules.md#graphmetadata) |
-| `fn` | `GraphDeclarationFunction`\<`TypeOf`\<`IT`\>, `TypeOf`\<`OT`\>\> |
-
-#### Returns
-
-[`Lambda`](modules.md#lambda)\<`TypeOf`\<`IT`\>, `Required`\<`TypeOf`\<`OT`\>\>\>
-
-#### Defined in
-
-[packages/breadboard/src/new/grammar/board.ts:40](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/new/grammar/board.ts#L40)
+[packages/breadboard/src/stream.ts:287](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/stream.ts#L287)
 
 ___
 
@@ -1614,13 +1616,13 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/stream.ts:310](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/stream.ts#L310)
+[packages/breadboard/src/stream.ts:310](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/stream.ts#L310)
 
 ___
 
 ### toMermaid
 
-▸ **toMermaid**(`graph`, `direction?`, `unstyled?`): `string`
+▸ **toMermaid**(`graph`, `direction?`, `unstyled?`, `ignoreSubgraphs?`): `string`
 
 #### Parameters
 
@@ -1629,6 +1631,7 @@ ___
 | `graph` | [`GraphDescriptor`](modules.md#graphdescriptor) | `undefined` |
 | `direction` | `string` | `"TD"` |
 | `unstyled` | `boolean` | `false` |
+| `ignoreSubgraphs` | `boolean` | `false` |
 
 #### Returns
 
@@ -1636,7 +1639,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/mermaid.ts:192](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/mermaid.ts#L192)
+[packages/breadboard/src/mermaid.ts:196](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/mermaid.ts#L196)
 
 ___
 
@@ -1656,4 +1659,4 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/stack.ts:52](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/stack.ts#L52)
+[packages/breadboard/src/stack.ts:52](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/stack.ts#L52)

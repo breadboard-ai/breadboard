@@ -19,4 +19,4 @@ Used e.g. in ProbeDetails.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:423](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L423)
+[packages/breadboard/src/types.ts:429](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L429)
