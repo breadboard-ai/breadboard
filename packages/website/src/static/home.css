@@ -192,17 +192,6 @@
   align-items: center;
 }
 
-#make-anything h1::before {
-  background: no-repeat center/contain url(./third_party/emoji/party-bread.png);
-  margin-right: calc(var(--bb-grid-size) * 9);
-}
-
-#make-anything h1::after {
-  background: no-repeat center/contain
-    url(./third_party/emoji/disguise-bread.png);
-  margin-left: calc(var(--bb-grid-size) * 9);
-}
-
 #make-anything h1 {
   margin: 0 auto;
   max-width: 80vw;

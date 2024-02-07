@@ -54,7 +54,7 @@ export class Toast extends LitElement {
       width: 24px;
       height: 24px;
       margin-right: 8px;
-      background: url(/breadboard/static/third_party/emoji/party-bread.png)
+      background: url(/breadboard/static/third_party/icons/check-circle.svg)
         center center no-repeat;
       background-size: 24px 24px;
     }

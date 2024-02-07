@@ -306,17 +306,17 @@ code[class*="language-"] {
 
 .markdown-alert-note .markdown-alert-title::before {
   background: no-repeat center/cover
-    url(/breadboard/static/third_party/emoji/note.png);
+    url(/breadboard/static/third_party/icons/note.svg);
 }
 
 .markdown-alert-tip .markdown-alert-title::before {
   background: no-repeat center/cover
-    url(/breadboard/static/third_party/emoji/tip.png);
+    url(/breadboard/static/third_party/icons/lightbulb.svg);
 }
 
 .markdown-alert-warning .markdown-alert-title::before {
   background: no-repeat center/cover
-    url(/breadboard/static/third_party/emoji/warning.png);
+    url(/breadboard/static/third_party/icons/warning.svg);
 }
 
 .markdown-alert p.markdown-alert-title {
