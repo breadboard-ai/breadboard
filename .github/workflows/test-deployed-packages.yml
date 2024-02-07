@@ -2,7 +2,6 @@ name: Test currently deployed packages
 on:
   release:
     types: [published]
-  push:
   workflow_dispatch:
 
 concurrency:
