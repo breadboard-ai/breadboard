@@ -1,0 +1,51 @@
+name: Test currently deployed packages
+on:
+  push:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  BOARD: dl_board.json
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout to repository
+        uses: actions/checkout@main
+      - name: Set matrix data
+        env:
+          FILE: .github/fixtures/npx_scripts.json
+        id: set-matrix
+        run: echo "matrix=$(jq -c . < $FILE)" >> $GITHUB_OUTPUT
+
+  test:
+    runs-on: ubuntu-latest
+    needs: setup
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version:
+          - 21.x
+        fixtures: ${{ fromJson(needs.setup.outputs.matrix).fixtures }}
+    name: ${{ matrix.fixtures.name }} on Node ${{ matrix.node-version }}
+    steps:
+      - name: Setup node ${{ matrix.node-version }}
+        uses: actions/setup-node@main
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Output YAML arary to temporary script file
+        run: echo -e "${{ join(matrix.fixtures.script, '\n') }}" > script.sh
+
+      - name: Show script content
+        run: cat script.sh
+
+      - name: execute the script
+        run: |
+          bash script.sh

@@ -1,0 +1,153 @@
+{
+  "fixtures": [
+    {
+      "name": "npm init @google-labs/breadboard",
+      "script": [
+        "npm init @google-labs/breadboard foo"
+      ]
+    },
+    {
+      "name": "npm exec @google-labs/create-breadboard",
+      "script": [
+        "npm exec @google-labs/create-breadboard foo"
+      ]
+    },
+    {
+      "name": "npm exec @google-labs/create-breadboard after install",
+      "script": [
+        "npm install -g @google-labs/create-breadboard",
+        "npm exec @google-labs/create-breadboard foo"
+      ]
+    },
+    {
+      "name": "npm init breadboard",
+      "script": [
+        "npm init breadboard foo"
+      ]
+    },
+    {
+      "name": "npx init breadboard after install",
+      "script": [
+        "npm install -g @google-labs/create-breadboard",
+        "npm init breadboard foo"
+      ]
+    },
+    {
+      "name": "npx init breadboard after core install",
+      "script": [
+        "npm install -g @google-labs/breadboard",
+        "npm init breadboard foo"
+      ]
+    },
+    {
+      "name": "npx init breadboard after core and createinstall",
+      "script": [
+        "npm install -g @google-labs/create-breadboard",
+        "npm init breadboard foo"
+      ]
+    },
+    {
+      "name": "npm init @google-labs/breadboard-kit",
+      "script": [
+        "npm init @google-labs/breadboard-kit bar"
+      ]
+    },
+    {
+      "name": "npm exec @google-labs/create-breadboard-kit",
+      "script": [
+        "npm exec @google-labs/create-breadboard-kit bar"
+      ]
+    },
+    {
+      "name": "npm exec @google-labs/create-breadboard-kit after install",
+      "script": [
+        "npm install -g @google-labs/create-breadboard-kit",
+        "npm exec @google-labs/create-breadboard-kit bar"
+      ]
+    },
+    {
+      "name": "npm init breadboard-kit",
+      "script": [
+        "npm init breadboard-kit bar"
+      ]
+    },
+    {
+      "name": "npx init breadboard-kit after install",
+      "script": [
+        "npm install -g @google-labs/create-breadboard-kit",
+        "npm init breadboard-kit bar"
+      ]
+    },
+    {
+      "name": "npx init breadboard-kit after core install",
+      "script": [
+        "npm install -g @google-labs/breadboard-kit",
+        "npm init breadboard-kit bar"
+      ]
+    },
+    {
+      "name": "npx init breadboard-kit after core and create install",
+      "script": [
+        "npm install -g @google-labs/create-breadboard-kit",
+        "npm init breadboard-kit bar"
+      ]
+    },
+    {
+      "name": "npx @google-labs/breadboard-cli run",
+      "script": [
+        "wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O foo.json",
+        "npx @google-labs/breadboard-cli run foo.json"
+      ]
+    },
+    {
+      "name": "npx breadboard-cli run",
+      "script": [
+        "wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O foo.json",
+        "npx breadboard-cli run foo.json"
+      ]
+    },
+    {
+      "name": "npx @google-labs/breadboard-cli run after install",
+      "script": [
+        "npm install -g @google-labs/breadboard-cli",
+        "wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O foo.json",
+        "npx @google-labs/breadboard-cli run foo.json"
+      ]
+    },
+    {
+      "name": "npx breadboard-cli run after install",
+      "script": [
+        "npm install -g @google-labs/breadboard-cli",
+        "wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O foo.json",
+        "npx breadboard-cli run foo.json"
+      ]
+    },
+    {
+      "name": "npx breadboard-cli run after core install",
+      "script": [
+        "npm install -g @google-labs/breadboard",
+        "wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O foo.json",
+        "npx breadboard-cli run foo.json"
+      ]
+    },
+    {
+      "name": "npx breadboard-cli run after core and cli install",
+      "script": [
+        "npm install -g @google-labs/breadboard-cli",
+        "npm install -g @google-labs/breadboard",
+        "wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O foo.json",
+        "npx breadboard-cli run foo.json"
+      ]
+    },
+    {
+      "name": "npx breadboard-cli run after core and cli and create install",
+      "script": [
+        "npm install -g @google-labs/breadboard-cli",
+        "npm install -g @google-labs/breadboard",
+        "npm install -g @google-labs/create-breadboard",
+        "wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O foo.json",
+        "npx breadboard-cli run foo.json"
+      ]
+    }
+  ]
+}
