@@ -46,20 +46,20 @@ test("inspectableGraph tailsForNode and headsForNode work as expected", (t) => {
   };
   const inspectable = inspectableGraph(graph);
   t.deepEqual(
-    inspectable.incomingForNode("b").map((n) => n.descriptor.id),
+    inspectable.incomingForNode("b").map((e) => e.from.descriptor.id),
     ["a"]
   );
   t.deepEqual(
-    inspectable.outgoingForNode("b").map((n) => n.descriptor.id),
+    inspectable.outgoingForNode("b").map((e) => e.to.descriptor.id),
     ["c"]
   );
   const b = inspectable.nodeById("b");
   t.deepEqual(
-    b?.incoming().map((n) => n.descriptor.id),
+    b?.incoming().map((e) => e.from.descriptor.id),
     ["a"]
   );
   t.deepEqual(
-    b?.outgoing().map((n) => n.descriptor.id),
+    b?.outgoing().map((e) => e.to.descriptor.id),
     ["c"]
   );
   t.deepEqual(inspectable.nodeById("a")?.isEntry(), true);

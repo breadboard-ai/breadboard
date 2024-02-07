@@ -5,6 +5,7 @@
  */
 
 import {
+  NodeDescriberResult,
   NodeDescriptor,
   NodeIdentifier,
   NodeTypeIdentifier,
@@ -18,11 +19,11 @@ export type InspectableNode = {
   /**
    * Returns the nodes that have an edge to this node.
    */
-  incoming(): InspectableNode[];
+  incoming(): InspectableEdge[];
   /**
    * Returns the nodes that have an edge from this node.
    */
-  outgoing(): InspectableNode[];
+  outgoing(): InspectableEdge[];
   /**
    * Return true if the node is an entry node (no incoming edges)
    */
@@ -31,6 +32,25 @@ export type InspectableNode = {
    * Return true if the node is an exit node (no outgoing edges)
    */
   isExit(): boolean;
+};
+
+export type InspectableEdge = {
+  /**
+   * The outgoing node of the edge.
+   */
+  from: InspectableNode;
+  /**
+   * The port of the outgoing edge.
+   */
+  out: string;
+  /**
+   * The incoming node of the edge.
+   */
+  to: InspectableNode;
+  /**
+   * The port of the incoming edge.
+   */
+  in: string;
 };
 
 export type InspectableGraph = {
@@ -52,10 +72,15 @@ export type InspectableGraph = {
    * Returns the nodes that have an edge to the node with the given id.
    * @param id id of the node to find incoming nodes for
    */
-  incomingForNode(id: NodeIdentifier): InspectableNode[];
+  incomingForNode(id: NodeIdentifier): InspectableEdge[];
   /**
    * Returns the nodes that have an edge from the node with the given id.
    * @param id id of the node to find outgoing nodes for
    */
-  outgoingForNode(id: NodeIdentifier): InspectableNode[];
+  outgoingForNode(id: NodeIdentifier): InspectableEdge[];
+  /**
+   * Returns the API of the graph. This function is designed to match the
+   * output of the `NodeDescriberFunction`.
+   */
+  describe(): Promise<NodeDescriberResult>;
 };

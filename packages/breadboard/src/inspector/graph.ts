@@ -4,13 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { SchemaBuilder } from "../schema.js";
 import {
   GraphDescriptor,
+  NodeDescriberResult,
   NodeIdentifier,
   NodeTypeIdentifier,
 } from "../types.js";
 import { inspectableNode } from "./node.js";
-import { InspectableGraph, InspectableNode } from "./types.js";
+import { InspectableEdge, InspectableGraph, InspectableNode } from "./types.js";
 
 export const inspectableGraph = (graph: GraphDescriptor): InspectableGraph => {
   return new Graph(graph);
@@ -51,17 +53,58 @@ class Graph implements InspectableGraph {
     return this.#nodes;
   }
 
-  incomingForNode(id: NodeIdentifier): InspectableNode[] {
+  incomingForNode(id: NodeIdentifier): InspectableEdge[] {
     return this.#graph.edges
       .filter((edge) => edge.to === id)
-      .map((edge) => this.nodeById(edge.from)!)
-      .filter((node) => node !== undefined);
+      .map((edge) => {
+        return {
+          from: this.nodeById(edge.from),
+          out: edge.out,
+          to: this.nodeById(edge.to),
+          in: edge.in,
+        };
+      })
+      .filter(
+        (edge) => edge.from !== undefined && edge.to !== undefined
+      ) as InspectableEdge[];
   }
 
-  outgoingForNode(id: NodeIdentifier): InspectableNode[] {
+  outgoingForNode(id: NodeIdentifier): InspectableEdge[] {
     return this.#graph.edges
       .filter((edge) => edge.from === id)
-      .map((edge) => this.nodeById(edge.to)!)
-      .filter((node) => node !== undefined);
+      .map((edge) => {
+        return {
+          from: this.nodeById(edge.from),
+          out: edge.out,
+          to: this.nodeById(edge.to),
+          in: edge.in,
+        };
+      })
+      .filter(
+        (edge) => edge.from !== undefined && edge.to !== undefined
+      ) as InspectableEdge[];
+  }
+
+  async describe(): Promise<NodeDescriberResult> {
+    // TODO: Handle explicitly defined input/output schemas.
+    const inputs = new SchemaBuilder();
+    this.nodesByType("input")
+      .filter((n) => n.isEntry())
+      .flatMap((n) => n.outgoing())
+      .forEach((edge) => {
+        inputs.addProperty(edge.out, { type: "string" }).addRequired(edge.out);
+      });
+    const outputs = new SchemaBuilder();
+    this.nodesByType("output")
+      .filter((n) => n.isExit())
+      .flatMap((n) => n.incoming())
+      .forEach((edge) => {
+        outputs.addProperty(edge.in, { type: "string" }).addRequired(edge.in);
+      });
+
+    return {
+      outputSchema: inputs.build(),
+      inputSchema: outputs.build(),
+    };
   }
 }

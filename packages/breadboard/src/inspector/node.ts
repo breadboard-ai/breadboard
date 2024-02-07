@@ -5,7 +5,7 @@
  */
 
 import { NodeDescriptor } from "../types.js";
-import { InspectableGraph, InspectableNode } from "./types.js";
+import { InspectableEdge, InspectableGraph, InspectableNode } from "./types.js";
 
 export const inspectableNode = (
   descriptor: NodeDescriptor,
@@ -17,19 +17,19 @@ export const inspectableNode = (
 class Node implements InspectableNode {
   descriptor: NodeDescriptor;
   #graph: InspectableGraph;
-  #incoming: InspectableNode[] | undefined;
-  #outgoing: InspectableNode[] | undefined;
+  #incoming: InspectableEdge[] | undefined;
+  #outgoing: InspectableEdge[] | undefined;
 
   constructor(descriptor: NodeDescriptor, graph: InspectableGraph) {
     this.descriptor = descriptor;
     this.#graph = graph;
   }
 
-  incoming(): InspectableNode[] {
+  incoming(): InspectableEdge[] {
     return (this.#incoming ??= this.#graph.incomingForNode(this.descriptor.id));
   }
 
-  outgoing(): InspectableNode[] {
+  outgoing(): InspectableEdge[] {
     return (this.#outgoing ??= this.#graph.outgoingForNode(this.descriptor.id));
   }
 
