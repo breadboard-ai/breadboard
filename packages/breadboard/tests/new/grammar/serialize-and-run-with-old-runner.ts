@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { z } from "zod";
 import test from "ava";
 
 import { board, code } from "../../../src/new/grammar/board.js";
@@ -208,15 +207,34 @@ test("code board called from another board", async (t) => {
 });
 
 test("nested inline action, with schema", async (t) => {
-  const graph = board(
+  const graph = board<{ a: number; b: number }>(
     {
-      input: z.object({
-        a: z.number().describe("A: One Number"),
-        b: z.number().describe("B: Another number"),
-      }),
-      output: z.object({
-        result: z.number().describe("Sum: The sum of two numbers"),
-      }),
+      input: {
+        type: "object",
+        required: ["a", "b"],
+        properties: {
+          a: {
+            type: "string",
+            description: "A: One Number",
+          },
+          b: {
+            type: "number",
+            description: "B: Another number",
+          },
+        },
+      },
+      output: {
+        type: "object",
+        required: ["result"],
+        properties: {
+          result: {
+            type: "number",
+            title: "Sum",
+            description: "The sum of two numbers",
+          },
+        },
+        additionalProperties: false,
+      },
     },
     (inputs) => {
       return code<{ a: number; b: number }, { result: number }>(

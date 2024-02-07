@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { z } from "zod";
 import test from "ava";
 
 import { board, code } from "../../../src/new/grammar/board.js";
@@ -138,12 +137,28 @@ test("if-else, imperative execution", async (t) => {
   });
 
   const graph = board({
-    input: z.object({
-      question: z.string().describe("Query: A math or search question?"),
-    }),
-    output: z.object({
-      result: z.string().describe("Answer: The answer to the query"),
-    }),
+    input: {
+      type: "object",
+      required: ["question"],
+      properties: {
+        question: {
+          type: "string",
+          title: "Query",
+          description: "A math or search question?",
+        },
+      },
+    },
+    output: {
+      type: "object",
+      required: ["result"],
+      properties: {
+        result: {
+          type: "string",
+          title: "Answer",
+          description: "The answer to the query",
+        },
+      },
+    },
     invoke: async (inputs) => {
       const { text } = (await testKit
         .noop({
@@ -191,12 +206,28 @@ test.skip("if-else, serializable", async (t) => {
 
   const graph = board(
     {
-      input: z.object({
-        question: z.string().describe("Query: A math or search question?"),
-      }),
-      output: z.object({
-        result: z.string().describe("Answer: The answer to the query"),
-      }),
+      input: {
+        type: "object",
+        required: ["question"],
+        properties: {
+          question: {
+            type: "string",
+            title: "Query",
+            description: "A math or search question?",
+          },
+        },
+      },
+      output: {
+        type: "object",
+        required: ["result"],
+        properties: {
+          result: {
+            type: "string",
+            title: "Answer",
+            description: "The answer to the query",
+          },
+        },
+      },
     },
     (inputs) =>
       testKit

@@ -22,4 +22,4 @@
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:31](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L31)
+[packages/breadboard/src/types.ts:32](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L32)

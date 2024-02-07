@@ -39,17 +39,15 @@
       "configuration": {
         "schema": {
           "type": "object",
-          "properties": {
-            "result": {
-              "type": "string",
-              "description": "The answer to the query",
-              "title": "Answer"
-            }
-          },
           "required": [
             "result"
           ],
-          "additionalProperties": false
+          "properties": {
+            "result": {
+              "type": "string",
+              "description": "Answer: The answer to the query"
+            }
+          }
         }
       }
     },
@@ -85,17 +83,15 @@
       "configuration": {
         "schema": {
           "type": "object",
-          "properties": {
-            "question": {
-              "type": "string",
-              "description": "What is your math question?",
-              "title": "Query"
-            }
-          },
           "required": [
             "question"
           ],
-          "additionalProperties": false
+          "properties": {
+            "question": {
+              "type": "string",
+              "description": "Query: What is your math question?"
+            }
+          }
         }
       }
     }

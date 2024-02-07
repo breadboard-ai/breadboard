@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { z } from "zod";
-
 import {
   BreadboardCapability,
   NodeDescriberFunction,
@@ -141,50 +139,28 @@ export interface BoardFactory {
     fn: GraphDeclarationFunction<I, O>
   ): Lambda<I, Required<O>>;
 
-  /**
-   * Same as above, but accepting GraphMetadata as
-   */
-
-  /**
-   * Disable for now, overloading is too confusing
-   *
   <I extends InputValues = InputValues, O extends OutputValues = OutputValues>(
-    options: { input?: z.Schema<I> } & GraphMetadata,
-    fn: NodeProxyHandlerFunction<I, O>
-  ): Lambda<I, Required<O>>;
-  */
-
-  /**
-   * Alternative version to above that infers the type of the passed in Zod type.
-   *
-   * @param options Object with at least `input`, `output` and `invoke` set
-   */
-  <IT extends z.ZodType, OT extends z.ZodType>(
-    options: {
-      input: IT;
-      output: OT;
-      invoke: (inputs: z.infer<IT>) => z.infer<OT> | PromiseLike<z.infer<OT>>;
+    opts: {
+      input?: Schema;
+      output?: Schema;
+      graph?: GraphDeclarationFunction;
+      invoke?: NodeProxyHandlerFunction;
       describe?: NodeDescriberFunction;
       name?: string;
     } & GraphMetadata
-  ): Lambda<z.infer<IT>, Required<z.infer<OT>>>;
+  ): Lambda<I, Required<O>>;
 
-  /**
-   * Same as above, but takes handler as a second parameter instead of as invoke
-   * option. This looks a bit nicer in the code (less indentation).
-   *
-   * @param options `input` and `output` schemas
-   * @param fn Handler function
-   */
-  <IT extends z.ZodType, OT extends z.ZodType>(
-    options: {
-      input: IT;
-      output: OT;
+  <I extends InputValues = InputValues, O extends OutputValues = OutputValues>(
+    opts: {
+      input?: Schema;
+      output?: Schema;
+      graph?: GraphDeclarationFunction;
+      invoke?: NodeProxyHandlerFunction;
       describe?: NodeDescriberFunction;
       name?: string;
     } & GraphMetadata,
-    fn: GraphDeclarationFunction<z.infer<IT>, z.infer<OT>>
-  ): Lambda<z.infer<IT>, Required<z.infer<OT>>>;
+    fn: GraphDeclarationFunction<I, O>
+  ): Lambda<I, Required<O>>;
 }
 
 export type NodeProxyMethods<I extends InputValues, O extends OutputValues> = {

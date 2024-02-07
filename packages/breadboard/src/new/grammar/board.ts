@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { z } from "zod";
-
 import {
   GraphDescriptor,
   Schema,
@@ -28,7 +26,6 @@ import {
 } from "./types.js";
 import { NodeHandler, NodeHandlerFunction } from "../runner/types.js";
 
-import { zodToSchema } from "./zod-utils.js";
 import { registerNodeType } from "./kits.js";
 import { getCurrentContextScope } from "./default-scope.js";
 import { BuilderNode } from "./node.js";
@@ -40,8 +37,8 @@ import { BuilderScope } from "./scope.js";
 export const board: BoardFactory = (
   optionsOrFn:
     | ({
-        input?: z.ZodType;
-        output?: z.ZodType;
+        input?: Schema;
+        output?: Schema;
         graph?: GraphDeclarationFunction;
         invoke?: NodeProxyHandlerFunction;
         describe?: NodeDescriberFunction;
@@ -76,8 +73,8 @@ export const code = <
  */
 function lambdaFactory(
   options: {
-    input?: z.ZodType | Schema;
-    output?: z.ZodType | Schema;
+    input?: Schema;
+    output?: Schema;
     graph?: GraphDeclarationFunction;
     invoke?: NodeProxyHandlerFunction;
     describe?: NodeDescriberFunction;
@@ -99,8 +96,8 @@ function lambdaFactory(
     ...(version ? { version } : {}),
   };
 
-  const inputSchema = options.input && zodToSchema(options.input);
-  const outputSchema = options.output && zodToSchema(options.output);
+  const inputSchema = options.input;
+  const outputSchema = options.output;
 
   const handler: NodeHandler = {};
 

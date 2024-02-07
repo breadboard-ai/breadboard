@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { z } from "zod";
 import { Schema } from "../../types.js";
 
 import { InputsMaybeAsValues, NodeProxy } from "./types.js";
@@ -15,7 +14,6 @@ import {
 } from "../runner/types.js";
 
 import { addNodeType } from "./kits.js";
-import { convertZodToSchemaInConfig } from "./zod-utils.js";
 
 const reservedWord: NodeHandlerFunction<
   InputValues,
@@ -29,29 +27,27 @@ const inputFactory = addNodeType("input", reservedWord);
 const outputFactory = addNodeType("output", reservedWord);
 
 export const base = {
-  input: (config: { schema?: z.ZodType | Schema; $id?: string }) =>
-    convertZodToSchemaInConfig(config, inputFactory),
-  output: (config: { schema?: z.ZodType | Schema; $id?: string }) =>
-    convertZodToSchemaInConfig(config, outputFactory),
+  input: (config: { schema?: Schema; $id?: string }) => inputFactory(config),
+  output: (config: { schema?: Schema; $id?: string }) => outputFactory(config),
 } as {
-  input: (<T extends z.ZodType>(
+  input: (<T extends Schema>(
     config: {
       schema: T;
       $id?: string;
-    } & InputsMaybeAsValues<z.infer<T>>
-  ) => NodeProxy<Record<string, never>, z.infer<T>>) &
+    } & InputsMaybeAsValues<T>
+  ) => NodeProxy<Record<string, never>, T>) &
     ((
       config?: {
         schema?: Schema;
         $id?: string;
       } & InputsMaybeAsValues<InputValues>
     ) => NodeProxy<InputValues, OutputValues>);
-  output: (<T extends z.ZodType>(
+  output: (<T extends Schema>(
     config: {
       schema: T;
       $id?: string;
-    } & InputsMaybeAsValues<z.infer<T>>
-  ) => NodeProxy<z.infer<T>, Record<string, never>>) &
+    } & InputsMaybeAsValues<T>
+  ) => NodeProxy<T, Record<string, never>>) &
     ((
       config?: {
         schema?: Schema;

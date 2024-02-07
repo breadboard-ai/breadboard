@@ -30,6 +30,7 @@ See the {Board} class for a way to build a board that can also be serialized.
 - [#outerGraph](BoardRunner.md##outergraph)
 - [#slots](BoardRunner.md##slots)
 - [#validators](BoardRunner.md##validators)
+- [$schema](BoardRunner.md#$schema)
 - [args](BoardRunner.md#args)
 - [description](BoardRunner.md#description)
 - [edges](BoardRunner.md#edges)
@@ -66,7 +67,7 @@ See the {Board} class for a way to build a board that can also be serialized.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `metadata?` | [`GraphMetadata`](../modules.md#graphmetadata) | optional metadata for the board. Use this parameter to provide title, description, version, and URL for the board. |
+| `metadata` | [`GraphMetadata`](../modules.md#graphmetadata) | optional metadata for the board. Use this parameter to provide title, description, version, and URL for the board. |
 
 #### Returns
 
@@ -74,7 +75,7 @@ See the {Board} class for a way to build a board that can also be serialized.
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:70](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L70)
+[packages/breadboard/src/runner.ts:72](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/runner.ts#L72)
 
 ## Properties
 
@@ -86,7 +87,7 @@ The parent board, if this is board is a subgraph of a larger board.
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:63](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L63)
+[packages/breadboard/src/runner.ts:65](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/runner.ts#L65)
 
 ___
 
@@ -96,7 +97,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:58](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L58)
+[packages/breadboard/src/runner.ts:60](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/runner.ts#L60)
 
 ___
 
@@ -106,7 +107,23 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:59](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L59)
+[packages/breadboard/src/runner.ts:61](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/runner.ts#L61)
+
+___
+
+### $schema
+
+• `Optional` **$schema**: `string`
+
+The schema of the graph.
+
+#### Implementation of
+
+[BreadboardRunner](../interfaces/BreadboardRunner.md).[$schema](../interfaces/BreadboardRunner.md#$schema)
+
+#### Defined in
+
+[packages/breadboard/src/runner.ts:52](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/runner.ts#L52)
 
 ___
 
@@ -122,7 +139,7 @@ Arguments that are passed to the graph, useful to bind values to lambdas.
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:56](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L56)
+[packages/breadboard/src/runner.ts:58](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/runner.ts#L58)
 
 ___
 
@@ -138,7 +155,7 @@ The description of the graph.
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:50](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L50)
+[packages/breadboard/src/runner.ts:51](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/runner.ts#L51)
 
 ___
 
@@ -154,7 +171,7 @@ The collection of all edges in the graph.
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:52](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L52)
+[packages/breadboard/src/runner.ts:54](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/runner.ts#L54)
 
 ___
 
@@ -170,7 +187,7 @@ Sub-graphs that are also described by this graph representation.
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:55](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L55)
+[packages/breadboard/src/runner.ts:57](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/runner.ts#L57)
 
 ___
 
@@ -184,7 +201,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:54](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L54)
+[packages/breadboard/src/runner.ts:56](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/runner.ts#L56)
 
 ___
 
@@ -200,7 +217,7 @@ The collection of all nodes in the graph.
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:53](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L53)
+[packages/breadboard/src/runner.ts:55](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/runner.ts#L55)
 
 ___
 
@@ -216,7 +233,7 @@ The title of the graph.
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:49](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L49)
+[packages/breadboard/src/runner.ts:50](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/runner.ts#L50)
 
 ___
 
@@ -235,7 +252,7 @@ working directory.
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:48](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L48)
+[packages/breadboard/src/runner.ts:49](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/runner.ts#L49)
 
 ___
 
@@ -252,7 +269,7 @@ Version of the graph.
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:51](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L51)
+[packages/breadboard/src/runner.ts:53](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/runner.ts#L53)
 
 ___
 
@@ -276,7 +293,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:413](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L413)
+[packages/breadboard/src/runner.ts:424](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/runner.ts#L424)
 
 ## Accessors
 
@@ -290,7 +307,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:233](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L233)
+[packages/breadboard/src/runner.ts:244](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/runner.ts#L244)
 
 ## Methods
 
@@ -317,13 +334,13 @@ Will call .addGraph() on the validator before executing a graph.
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:313](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L313)
+[packages/breadboard/src/runner.ts:324](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/runner.ts#L324)
 
 ___
 
 ### mermaid
 
-▸ **mermaid**(`direction?`, `unstyled?`): `string`
+▸ **mermaid**(`direction?`, `unstyled?`, `ignoreSubgraphs?`): `string`
 
 Returns a [Mermaid](https://mermaid-js.github.io/mermaid/#/) representation
 of the board.
@@ -336,6 +353,7 @@ This is useful for visualizing the board.
 | :------ | :------ | :------ |
 | `direction` | `string` | `"TD"` |
 | `unstyled` | `boolean` | `false` |
+| `ignoreSubgraphs` | `boolean` | `false` |
 
 #### Returns
 
@@ -345,7 +363,7 @@ This is useful for visualizing the board.
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:325](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L325)
+[packages/breadboard/src/runner.ts:336](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/runner.ts#L336)
 
 ___
 
@@ -397,7 +415,7 @@ See [Chapter 8: Continuous runs](https://github.com/breadboard-ai/breadboard/tre
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:110](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L110)
+[packages/breadboard/src/runner.ts:121](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/runner.ts#L121)
 
 ___
 
@@ -430,7 +448,7 @@ or the the outputs are only expected to be visited once.
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:251](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L251)
+[packages/breadboard/src/runner.ts:262](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/runner.ts#L262)
 
 ___
 
@@ -454,7 +472,7 @@ A runnable board.
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:379](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L379)
+[packages/breadboard/src/runner.ts:390](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/runner.ts#L390)
 
 ___
 
@@ -479,7 +497,7 @@ use this method to turn it into into a new Board instance.
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:336](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L336)
+[packages/breadboard/src/runner.ts:347](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/runner.ts#L347)
 
 ___
 
@@ -500,7 +518,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:403](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L403)
+[packages/breadboard/src/runner.ts:414](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/runner.ts#L414)
 
 ___
 
@@ -528,4 +546,4 @@ Loads a board from a URL or a file path.
 
 #### Defined in
 
-[packages/breadboard/src/runner.ts:354](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/runner.ts#L354)
+[packages/breadboard/src/runner.ts:365](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/runner.ts#L365)

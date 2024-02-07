@@ -61,7 +61,7 @@
 
 #### Defined in
 
-[packages/breadboard/src/node.ts:101](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/node.ts#L101)
+[packages/breadboard/src/node.ts:101](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/node.ts#L101)
 
 ## Properties
 
@@ -71,7 +71,7 @@
 
 #### Defined in
 
-[packages/breadboard/src/node.ts:99](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/node.ts#L99)
+[packages/breadboard/src/node.ts:99](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/node.ts#L99)
 
 ___
 
@@ -81,7 +81,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/node.ts:98](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/node.ts#L98)
+[packages/breadboard/src/node.ts:98](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/node.ts#L98)
 
 ## Accessors
 
@@ -99,7 +99,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/node.ts:167](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/node.ts#L167)
+[packages/breadboard/src/node.ts:167](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/node.ts#L167)
 
 ## Methods
 
@@ -137,4 +137,4 @@ Use this method to wire nodes together.
 
 #### Defined in
 
-[packages/breadboard/src/node.ts:136](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/node.ts#L136)
+[packages/breadboard/src/node.ts:136](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/node.ts#L136)

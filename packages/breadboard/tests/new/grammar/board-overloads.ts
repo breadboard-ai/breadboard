@@ -6,15 +6,27 @@
 
 import test from "ava";
 
-import { z } from "zod";
-
 import { board, code } from "../../../src/new/grammar/board.js";
 
-test("zod + graph, w/ nested code board", async (t) => {
+test("schema + graph, w/ nested code board", async (t) => {
   const graph = board(
     {
-      input: z.object({ foo: z.string() }),
-      output: z.object({ foo: z.string() }),
+      input: {
+        type: "object",
+        properties: {
+          foo: {
+            type: "string",
+          },
+        },
+      },
+      output: {
+        type: "object",
+        properties: {
+          foo: {
+            type: "string",
+          },
+        },
+      },
     },
     (inputs) => {
       return code(({ foo }) => ({ foo: `${foo}!` }))(inputs);

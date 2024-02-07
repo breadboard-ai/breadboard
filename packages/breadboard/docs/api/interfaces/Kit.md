@@ -35,7 +35,7 @@ KitDescriptor.description
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:155](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L155)
+[packages/breadboard/src/types.ts:156](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L156)
 
 ___
 
@@ -51,7 +51,7 @@ KitDescriptor.title
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:151](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L151)
+[packages/breadboard/src/types.ts:152](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L152)
 
 ___
 
@@ -67,7 +67,7 @@ KitDescriptor.url
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:144](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L144)
+[packages/breadboard/src/types.ts:145](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L145)
 
 ___
 
@@ -84,7 +84,7 @@ KitDescriptor.version
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:160](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L160)
+[packages/breadboard/src/types.ts:161](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L161)
 
 ## Accessors
 
@@ -98,4 +98,4 @@ KitDescriptor.version
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:339](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/breadboard/src/types.ts#L339)
+[packages/breadboard/src/types.ts:345](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L345)

@@ -33,8 +33,6 @@ const { completion } = generateWithPreProcessing({
 });
 ```
 
-(TODO: Add example with Zod types)
-
 You can also bind inputs to a board, analogous to currying a function (that is
 creating a new function with some parameters already defined):
 
