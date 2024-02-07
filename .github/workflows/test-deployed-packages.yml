@@ -49,7 +49,7 @@ jobs:
 
       - name: execute the script
         run: |
-          bash script.sh
+          set -xv  bash script.sh
           expect=${{ matrix.expect }}
           if [ "${expect:-'pass'}" = "fail" ]; then
             if [ $? -eq 0 ]; then
