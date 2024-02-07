@@ -30,6 +30,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        expect-failure: [false]
         node-version:
           - 21.x
         fixtures: ${{ fromJson(needs.setup.outputs.matrix).fixtures }}
@@ -47,4 +48,15 @@ jobs:
         run: cat script.sh
 
       - name: execute the script
-        run: bash script.sh
+        run: |
+          bash script.sh
+          EXPECT_FAILURE=${{ matrix.expect-failure }}
+          if [ "${EXPECT_FAILURE:-false}" == "true" ]; then
+              if [ $? -eq 0 ]; then
+                  echo "Expected failure but succeeded"
+                  exit 1
+              else
+                  echo "Expected failure and failed"
+                  exit 0
+              fi
+          fi
