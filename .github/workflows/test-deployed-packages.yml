@@ -1,5 +1,7 @@
 name: Test currently deployed packages
 on:
+  release:
+    types: [published]
   push:
   workflow_dispatch:
 
@@ -30,11 +32,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        expect: ["pass"]
         node-version:
           - 21.x
         fixtures: ${{ fromJson(needs.setup.outputs.matrix).fixtures }}
-    name: ${{ matrix.fixtures.name }} - Should ${{ matrix.expect }} - Node ${{ matrix.node-version }}
+    name: ${{ matrix.fixtures.name }} - Node ${{ matrix.node-version }}
     steps:
       - name: Setup node ${{ matrix.node-version }}
         uses: actions/setup-node@main
@@ -50,7 +51,7 @@ jobs:
       - name: execute the script
         run: |
           set -xv  bash script.sh
-          expect=${{ matrix.expect }}
+          expect=${{ matrix.fixtures.expect }}
           if [ "${expect:-'pass'}" = "fail" ]; then
             if [ $? -eq 0 ]; then
               echo "Test passed but expected to fail"
