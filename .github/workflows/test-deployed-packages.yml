@@ -35,7 +35,7 @@ jobs:
         node-version:
           - 21.x
         fixtures: ${{ fromJson(needs.setup.outputs.matrix).fixtures }}
-    name: "Can${{ matrix.fixtures.expect == 'fail' && 'not' || '' }} ${{ matrix.fixtures.name }}  - Node ${{ matrix.node-version }}"
+    name: "Should${{ matrix.fixtures.expect == 'fail' && ' not' || '' }} ${{ matrix.fixtures.name }}  - Node ${{ matrix.node-version }}"
     steps:
       - name: Setup node ${{ matrix.node-version }}
         uses: actions/setup-node@main
