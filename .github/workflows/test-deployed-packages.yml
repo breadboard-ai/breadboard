@@ -51,15 +51,5 @@ jobs:
         run: cat script.sh
 
       - name: execute the script
-        run: |
-          set +e bash script.sh
-          expect=${{ matrix.fixtures.expect }}
-          if [ "${expect:-'pass'}" = "fail" ]; then
-            if [ $? -eq 0 ]; then
-              echo "Test passed but expected to fail"
-              exit 1
-            else
-              echo "Test failed as expected"
-              exit 0
-            fi
-          fi
+        continue-on-error: ${{ matrix.fixtures.expect == 'fail' }}
+        run: bash script.sh
