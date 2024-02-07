@@ -50,10 +50,13 @@ jobs:
       - name: Show script content
         run: cat script.sh
 
-      - name: execute the script
+      - name: Execute the script
+        id: execute_script
         continue-on-error: ${{ matrix.fixtures.expect == 'fail' }}
         run: bash script.sh
 
-      - if: ${{ matrix.fixtures.expect == 'fail' }}
-        run: echo "This is expected to fail"
+      - if: ${{ steps.execute_script.outcome == 'success' && matrix.fixtures.expect == 'fail' }}
+        run: echo "Test unexpectedly passed" && exit 1
 
+      - if: ${{ steps.execute_script.outcome == 'failure' && matrix.fixtures.expect == 'fail' }}
+        run: echo "This is expected to fail"
