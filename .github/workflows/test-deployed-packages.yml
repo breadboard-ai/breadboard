@@ -47,5 +47,4 @@ jobs:
         run: cat script.sh
 
       - name: execute the script
-        run: |
-          bash script.sh
+        run: bash script.sh
