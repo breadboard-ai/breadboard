@@ -43,12 +43,11 @@ export type InspectableNode = {
    * otherwise
    *
    * @param loader - a loader that is called with the path to load when the
-   * subgraph needs to be loaded (over the network or filesystem). If not
-   * provided, `subgraph` will define `undefined` for all subgraphs that aren't
-   * directly embedded,
+   * subgraph needs to be loaded (over the network or filesystem). The subgraph
+   * could also be embedded directly in the graph.
    */
   subgraph(
-    loader?: InspectableGraphLoader
+    loader: InspectableGraphLoader
   ): Promise<InspectableGraph | undefined>;
   /**
    * Returns the API of the node.
@@ -100,11 +99,6 @@ export type InspectableGraph = {
    */
   raw(): GraphDescriptor;
   /**
-   * Returns the base URL of the graph. Used to resolve the relative URLs of
-   * subgraphs.
-   */
-  baseURL(): URL;
-  /**
    * Returns the node with the given id, or undefined if no such node exists.
    * @param id id of the node to find
    */
@@ -139,22 +133,15 @@ export type InspectableGraph = {
   describe(): Promise<NodeDescriberResult>;
 };
 
-export type InspectableGraphOptions = {
-  /**
-   * The base URL of the graph. Used to resolve the URLs of subgraphs.
-   */
-  baseURL?: URL;
-};
-
 export type InspectableGraphLoader = (
   /**
    * The `path` value of the `invoke`. It may be a relative or an absolute URL,
-   * or a file path.
+   * a file path, a `GraphDescriptor` or undefined.
    */
-  path: string,
+  graph: GraphDescriptor | string,
   /**
    * The full GraphDescriptor of the graph in whose context the loading happens.
    * This is the graph that contains the `invoke` node.
    */
   loadingGraph: GraphDescriptor
-) => Promise<InspectableGraph>;
+) => Promise<InspectableGraph | undefined>;

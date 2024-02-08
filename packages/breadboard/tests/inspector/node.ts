@@ -7,6 +7,7 @@
 import test from "ava";
 
 import { inspectableGraph } from "../../src/inspector/index.js";
+import { GraphDescriptor } from "../../src/types.js";
 
 test("inspectableNode detects a subgraph", (t) => {
   const graph = {
@@ -56,7 +57,7 @@ test("inspectableNode supports undefined subgraphs", async (t) => {
   const inspectable = inspectableGraph(graph);
   const b = inspectable.nodeById("b");
   t.true(b?.isSubgraph());
-  const subgraph = await b?.subgraph();
+  const subgraph = await b?.subgraph(async () => undefined);
   t.assert(subgraph === undefined);
 });
 
@@ -84,7 +85,13 @@ test("inspectableNode supports `graph` subgraphs", async (t) => {
   const inspectable = inspectableGraph(graph);
   const b = inspectable.nodeById("b");
   t.true(b?.isSubgraph());
-  const subgraph = await b?.subgraph();
+  const subgraph = await b?.subgraph(async (graph) => {
+    t.deepEqual(graph, {
+      nodes: [{ id: "d", type: "bar" }],
+      edges: [],
+    });
+    return inspectableGraph(graph as GraphDescriptor);
+  });
   t.truthy(subgraph);
   t.deepEqual(subgraph?.nodeById("d")?.descriptor.type, "bar");
 });
