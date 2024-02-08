@@ -108,12 +108,13 @@ class Graph implements InspectableGraph {
       .filter((n) => n.isExit())
       .flatMap((n) => n.incoming())
       .forEach((edge) => {
+        console.log("output edge", edge);
         outputs.addProperty(edge.in, { type: "string" }).addRequired(edge.in);
       });
 
     return {
-      outputSchema: inputs.build(),
-      inputSchema: outputs.build(),
+      inputSchema: inputs.build(),
+      outputSchema: outputs.build(),
     };
   }
 }

@@ -75,10 +75,11 @@ export class SchemaBuilder {
     if (!required) return this;
 
     if (typeof required === "string") {
-      this.required = [...this.required, required];
+      this.required = [...new Set([...this.required, required])];
     } else if (Array.isArray(required) && required.length > 0) {
-      this.required = [...this.required, ...required];
+      this.required = [...new Set([...this.required, ...required])];
     }
+    this.required.sort();
     return this;
   }
 
