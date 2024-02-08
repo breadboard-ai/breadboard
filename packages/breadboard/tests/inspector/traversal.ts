@@ -85,6 +85,64 @@ test("inspector API can describe the subgraph in simplest-no-schema.json", async
   });
 });
 
+test("inspector API can describe the input in simplest.json", async (t) => {
+  const simplest = await load("simplest.json");
+  if (!simplest) {
+    return t.fail("Graph is undefined");
+  }
+  const input = simplest.nodesByType("input")[0];
+
+  const api = await input.describe();
+
+  t.deepEqual(api, {
+    inputSchema: {
+      type: "object",
+      properties: {
+        text: {
+          description: "The prompt to generate a completion for",
+          examples: ["Tell me a fun story about playing with breadboards"],
+          title: "Prompt",
+          type: "string",
+        },
+      },
+      required: ["text"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        text: {
+          description: "The prompt to generate a completion for",
+          examples: ["Tell me a fun story about playing with breadboards"],
+          title: "Prompt",
+          type: "string",
+        },
+      },
+      required: ["text"],
+    },
+  });
+});
+
+test("inspector API can describe the input in simplest-no-schema.json", async (t) => {
+  const simplest = await load("simplest-no-schema.json");
+  if (!simplest) {
+    return t.fail("Graph is undefined");
+  }
+  const input = simplest.nodesByType("input")[0];
+
+  const api = await input.describe();
+
+  t.deepEqual(api, {
+    inputSchema: {
+      type: "object",
+      properties: {},
+    },
+    outputSchema: {
+      type: "object",
+      properties: {},
+    },
+  });
+});
+
 test("inspector API can describe the subgraph in simplest.json", async (t) => {
   const simplest = await load("simplest.json");
   if (!simplest) {

@@ -9,6 +9,7 @@ import {
   NodeConfiguration,
   NodeDescriberResult,
   NodeDescriptor,
+  Schema,
 } from "../types.js";
 import {
   InspectableEdge,
@@ -74,6 +75,34 @@ class Node implements InspectableNode {
   }
 
   async describe(): Promise<NodeDescriberResult> {
+    // The schema of an input or an output is defined by their
+    // configuration schema or their incoming/outgoing edges.
+    if (this.descriptor.type === "input") {
+      return this.#createInputSchema();
+    }
     throw new Error("Not yet implemented");
+  }
+
+  #createInputSchema(): NodeDescriberResult {
+    const schema = this.configuration()?.schema as Schema | undefined;
+    if (!schema) {
+      const properties: Record<string, Schema> = {};
+      this.incoming().forEach((edge) => {
+        properties[edge.out] = { type: "string" };
+      });
+      const required = Object.keys(properties);
+      let schema = { type: "object", properties } as Schema;
+      if (required.length > 0) {
+        schema = { ...schema, required };
+      }
+      return {
+        inputSchema: schema,
+        outputSchema: schema,
+      };
+    }
+    return {
+      inputSchema: schema,
+      outputSchema: schema,
+    };
   }
 }
