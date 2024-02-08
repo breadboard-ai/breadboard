@@ -106,7 +106,8 @@ export const combineSchemas = (schemas: Schema[]): Schema => {
       }
       if (schema.required) {
         result.required = [
-          ...new Set([...(result.required ?? []), ...(schema.required ?? [])]),
+          ...(result.required ?? []),
+          ...(schema.required ?? []),
         ];
       }
       if (schema.additionalProperties !== undefined) {
@@ -115,6 +116,9 @@ export const combineSchemas = (schemas: Schema[]): Schema => {
     }
   });
   result.type = "object";
-  result.required?.sort();
+  if (result.required) {
+    result.required = [...new Set(result.required)];
+    result.required?.sort();
+  }
   return result;
 };

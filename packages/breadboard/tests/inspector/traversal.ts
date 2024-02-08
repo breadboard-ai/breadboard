@@ -63,7 +63,6 @@ test("inspector API can describe the subgraph in simplest-no-schema.json", async
   const geminiGenerator = await invoke.subgraph(loadToInspect(BASE_URL));
 
   const api = await geminiGenerator?.describe();
-  console.log("API>>>", api?.inputSchema, api?.outputSchema);
 
   t.deepEqual(api, {
     inputSchema: {

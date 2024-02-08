@@ -102,6 +102,7 @@ class Graph implements InspectableGraph {
           .map((input) => input.describe())
       )
     ).map((result) => result.inputSchema);
+
     const outputSchemas = (
       await Promise.all(
         this.nodesByType("output")
@@ -109,23 +110,6 @@ class Graph implements InspectableGraph {
           .map((output) => output.describe())
       )
     ).map((result) => result.outputSchema);
-    // // TODO: Handle explicitly defined input/output schemas.
-    // const inputSchema = new SchemaBuilder();
-    // inputs
-    //   .flatMap((n) => n.outgoing())
-    //   .forEach((edge) => {
-    //     inputSchema
-    //       .addProperty(edge.out, { type: "string" })
-    //       .addRequired(edge.out);
-    //   });
-    // const outputSchema = new SchemaBuilder();
-    // outputs
-    //   .flatMap((n) => n.incoming())
-    //   .forEach((edge) => {
-    //     outputSchema
-    //       .addProperty(edge.in, { type: "string" })
-    //       .addRequired(edge.in);
-    //   });
 
     return {
       inputSchema: combineSchemas(inputSchemas),
