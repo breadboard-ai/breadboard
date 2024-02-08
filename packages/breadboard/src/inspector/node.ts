@@ -67,13 +67,6 @@ class Node implements InspectableNode {
     // TODO: Support subgraphs that are dynamically loaded from values.
     const { graph, path } = this.configuration() as InvokeInputs;
     return await loader(graph ? graph : path, this.#graph.raw());
-    // // TODO: Don't use `raw()` here.
-    // const graphs = this.#graph.raw().graphs;
-    // // This logic is lifted from `BoardRunner.load`.
-    // // TODO: Deduplicate.
-    // const loader = new BoardLoader({ base, graphs });
-    // const { graph } = await loader.load(path);
-    // return inspectableGraph(graph, { baseURL: new URL(path, base) });
   }
 
   configuration(): NodeConfiguration {
