@@ -12,7 +12,7 @@ const superDenseText =
 
 export default await board(({ paragraph }) => {
   paragraph
-    .title("Dense pagraph of text")
+    .title("Text to summarize")
     .isString()
     .examples(superDenseText)
     .format("multiline");
