@@ -1,0 +1,37 @@
+{
+  "title": "The simplest LLM-based board",
+  "description": "This board is as simple as it gets: takes text as input and invokes Gemini to generate a text response as output.",
+  "version": "0.0.3",
+  "edges": [
+    {
+      "from": "gemini",
+      "to": "response",
+      "out": "text",
+      "in": "text"
+    },
+    {
+      "from": "text",
+      "to": "gemini",
+      "out": "text",
+      "in": "text"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "response",
+      "type": "output"
+    },
+    {
+      "id": "gemini",
+      "type": "invoke",
+      "configuration": {
+        "path": "gemini-generator-no-schema.json"
+      }
+    },
+    {
+      "id": "text",
+      "type": "input"
+    }
+  ],
+  "graphs": {}
+}
