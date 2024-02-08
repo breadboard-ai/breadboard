@@ -12,20 +12,33 @@ import {
   NodeTypeIdentifier,
 } from "../types.js";
 import { inspectableNode } from "./node.js";
-import { InspectableEdge, InspectableGraph, InspectableNode } from "./types.js";
+import {
+  InspectableEdge,
+  InspectableGraph,
+  InspectableGraphOptions,
+  InspectableNode,
+} from "./types.js";
 
-export const inspectableGraph = (graph: GraphDescriptor): InspectableGraph => {
-  return new Graph(graph);
+export const inspectableGraph = (
+  graph: GraphDescriptor,
+  options?: InspectableGraphOptions
+): InspectableGraph => {
+  return new Graph(graph, options);
 };
 
 class Graph implements InspectableGraph {
+  #baseURL: URL;
   #graph: GraphDescriptor;
   #nodes: InspectableNode[];
   #nodeMap: Map<NodeIdentifier, InspectableNode>;
   #typeMap: Map<NodeTypeIdentifier, InspectableNode[]> = new Map();
   #entries?: InspectableNode[];
 
-  constructor(graph: GraphDescriptor) {
+  constructor(
+    graph: GraphDescriptor,
+    { baseURL }: InspectableGraphOptions = {}
+  ) {
+    this.#baseURL = baseURL || new URL(import.meta.url);
     this.#graph = graph;
     this.#nodes = this.#graph.nodes.map((node) => inspectableNode(node, this));
     this.#nodeMap = new Map(
@@ -40,6 +53,14 @@ class Graph implements InspectableGraph {
       }
       list.push(node);
     });
+  }
+
+  raw() {
+    return this.#graph;
+  }
+
+  baseURL(): URL {
+    return this.#baseURL;
   }
 
   nodesByType(type: NodeTypeIdentifier): InspectableNode[] {
