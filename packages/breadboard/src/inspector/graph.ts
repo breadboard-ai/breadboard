@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { SchemaBuilder } from "../schema.js";
+import { combineSchemas } from "../schema.js";
 import {
   GraphDescriptor,
   NodeDescriberResult,
@@ -95,25 +95,41 @@ class Graph implements InspectableGraph {
   }
 
   async describe(): Promise<NodeDescriberResult> {
-    // TODO: Handle explicitly defined input/output schemas.
-    const inputs = new SchemaBuilder();
-    this.nodesByType("input")
-      .filter((n) => n.isEntry())
-      .flatMap((n) => n.outgoing())
-      .forEach((edge) => {
-        inputs.addProperty(edge.out, { type: "string" }).addRequired(edge.out);
-      });
-    const outputs = new SchemaBuilder();
-    this.nodesByType("output")
-      .filter((n) => n.isExit())
-      .flatMap((n) => n.incoming())
-      .forEach((edge) => {
-        outputs.addProperty(edge.in, { type: "string" }).addRequired(edge.in);
-      });
+    const inputSchemas = (
+      await Promise.all(
+        this.nodesByType("input")
+          .filter((n) => n.isEntry())
+          .map((input) => input.describe())
+      )
+    ).map((result) => result.inputSchema);
+    const outputSchemas = (
+      await Promise.all(
+        this.nodesByType("output")
+          .filter((n) => n.isExit())
+          .map((output) => output.describe())
+      )
+    ).map((result) => result.outputSchema);
+    // // TODO: Handle explicitly defined input/output schemas.
+    // const inputSchema = new SchemaBuilder();
+    // inputs
+    //   .flatMap((n) => n.outgoing())
+    //   .forEach((edge) => {
+    //     inputSchema
+    //       .addProperty(edge.out, { type: "string" })
+    //       .addRequired(edge.out);
+    //   });
+    // const outputSchema = new SchemaBuilder();
+    // outputs
+    //   .flatMap((n) => n.incoming())
+    //   .forEach((edge) => {
+    //     outputSchema
+    //       .addProperty(edge.in, { type: "string" })
+    //       .addRequired(edge.in);
+    //   });
 
     return {
-      outputSchema: inputs.build(),
-      inputSchema: outputs.build(),
+      inputSchema: combineSchemas(inputSchemas),
+      outputSchema: combineSchemas(outputSchemas),
     };
   }
 }

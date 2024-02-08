@@ -134,7 +134,7 @@ test("SchemaBuilder can add properties", (t) => {
   });
 });
 
-test("SchemaBuilder can add required properties", (t) => {
+test("SchemaBuilder can add required properties in order", (t) => {
   const schema = new SchemaBuilder()
     .addRequired(["foo"])
     .addRequired("bar")
@@ -145,7 +145,22 @@ test("SchemaBuilder can add required properties", (t) => {
   t.deepEqual(schema, {
     type: "object",
     properties: {},
-    required: ["foo", "bar"],
+    required: ["bar", "foo"],
+    additionalProperties: false,
+  });
+});
+
+test("SchemaBuilder adds only unique required properties", (t) => {
+  const schema = new SchemaBuilder()
+    .addRequired(["foo", "bar"])
+    .addRequired("foo")
+    .addRequired(["bar", "baz"])
+    .addRequired("baz")
+    .build();
+  t.deepEqual(schema, {
+    type: "object",
+    properties: {},
+    required: ["bar", "baz", "foo"],
     additionalProperties: false,
   });
 });
