@@ -117,8 +117,8 @@ export class MockHTTPConnection<Request> {
           chunkMutator(response, writer);
           return true;
         },
-        end() {
-          writer.close();
+        async end() {
+          await writer.close();
         },
       };
       this.#handler(request, response);
