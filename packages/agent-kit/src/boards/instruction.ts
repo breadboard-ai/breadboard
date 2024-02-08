@@ -44,7 +44,10 @@ const contextBuilder = code(({ context, prompt }) => {
   if (list.length > 0) {
     const last = list[list.length - 1] as ContextItem;
     if (last.role === "user") {
-      last.parts.push({ text: prompt as string });
+      // A trick: the instruction typically sits in front of the actual task
+      // that the user requests. So do just that -- add it at the front of the
+      // user part list, rather than at the end.
+      last.parts.unshift({ text: prompt as string });
       return { context: list };
     }
   }

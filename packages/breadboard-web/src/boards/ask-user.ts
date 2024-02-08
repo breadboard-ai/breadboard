@@ -1,3 +1,9 @@
+/**
+ * @license
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { Schema, base, code, board } from "@google-labs/breadboard";
 
 type SchemaInputs = { title: string; description: string };
