@@ -53,6 +53,38 @@ test("inspector API can traverse simplest.json", async (t) => {
   t.assert(output.isExit(), "The output is an exit node");
 });
 
+test("inspector API can describe the subgraph in simplest-no-schema.json", async (t) => {
+  const simplest = await load("simplest-no-schema.json");
+  if (!simplest) {
+    return t.fail("Graph is undefined");
+  }
+  const invoke = simplest.nodesByType("invoke")[0];
+
+  const geminiGenerator = await invoke.subgraph(loadToInspect(BASE_URL));
+
+  const api = await geminiGenerator?.describe();
+
+  t.deepEqual(api, {
+    inputSchema: {
+      type: "object",
+      properties: { useStreaming: { type: "string" }, "*": { type: "string" } },
+      additionalProperties: false,
+      required: ["*", "useStreaming"],
+    },
+    outputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        stream: { type: "string" },
+        context: { type: "string" },
+        text: { type: "string" },
+        toolCalls: { type: "string" },
+      },
+      required: ["context", "stream", "text", "toolCalls"],
+    },
+  });
+});
+
 test("inspector API can describe the subgraph in simplest.json", async (t) => {
   const simplest = await load("simplest.json");
   if (!simplest) {

@@ -95,26 +95,29 @@ class Graph implements InspectableGraph {
   }
 
   async describe(): Promise<NodeDescriberResult> {
+    const inputs = this.nodesByType("input").filter((n) => n.isEntry());
+    const outputs = this.nodesByType("output").filter((n) => n.isExit());
     // TODO: Handle explicitly defined input/output schemas.
-    const inputs = new SchemaBuilder();
-    this.nodesByType("input")
-      .filter((n) => n.isEntry())
+    const inputSchema = new SchemaBuilder();
+    inputs
       .flatMap((n) => n.outgoing())
       .forEach((edge) => {
-        inputs.addProperty(edge.out, { type: "string" }).addRequired(edge.out);
+        inputSchema
+          .addProperty(edge.out, { type: "string" })
+          .addRequired(edge.out);
       });
-    const outputs = new SchemaBuilder();
-    this.nodesByType("output")
-      .filter((n) => n.isExit())
+    const outputSchema = new SchemaBuilder();
+    outputs
       .flatMap((n) => n.incoming())
       .forEach((edge) => {
-        console.log("output edge", edge);
-        outputs.addProperty(edge.in, { type: "string" }).addRequired(edge.in);
+        outputSchema
+          .addProperty(edge.in, { type: "string" })
+          .addRequired(edge.in);
       });
 
     return {
-      inputSchema: inputs.build(),
-      outputSchema: outputs.build(),
+      inputSchema: inputSchema.build(),
+      outputSchema: outputSchema.build(),
     };
   }
 }
