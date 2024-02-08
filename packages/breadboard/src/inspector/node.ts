@@ -25,6 +25,21 @@ export const inspectableNode = (
   return new Node(descriptor, inspectableGraph);
 };
 
+const describerResultFromProperties = (
+  properties: Record<string, Schema>,
+  additionalProperties: boolean
+): NodeDescriberResult => {
+  const required = Object.keys(properties);
+  let schema = { type: "object", additionalProperties } as Schema;
+  if (required.length > 0) {
+    schema = { ...schema, required, properties };
+  }
+  return {
+    inputSchema: schema,
+    outputSchema: schema,
+  };
+};
+
 class Node implements InspectableNode {
   descriptor: NodeDescriptor;
   #graph: InspectableGraph;
@@ -88,58 +103,35 @@ class Node implements InspectableNode {
 
   #createInputSchema(): NodeDescriberResult {
     const schema = this.configuration()?.schema as Schema | undefined;
-    if (!schema) {
-      let additionalProperties = false;
-      const properties: Record<string, Schema> = {};
-      this.outgoing().forEach((edge) => {
-        // Don't add a schema for the wildcard inputs
-        if (edge.out === "*") {
-          additionalProperties = true;
-          return;
-        }
-        properties[edge.out] = { type: "string" };
-      });
-      const required = Object.keys(properties);
-      let schema = { type: "object", additionalProperties } as Schema;
-      if (required.length > 0) {
-        schema = { ...schema, required, properties };
-      }
-      return {
-        inputSchema: schema,
-        outputSchema: schema,
-      };
+    if (schema) {
+      return { inputSchema: schema, outputSchema: schema };
     }
-    return {
-      inputSchema: schema,
-      outputSchema: schema,
-    };
+    let additionalProperties = false;
+    const properties: Record<string, Schema> = {};
+    this.outgoing().forEach((edge) => {
+      if (edge.out === "*") {
+        additionalProperties = true;
+        return;
+      }
+      properties[edge.out] = { type: "string" };
+    });
+    return describerResultFromProperties(properties, additionalProperties);
   }
 
   #createOutputSchema(): NodeDescriberResult {
     const schema = this.configuration()?.schema as Schema | undefined;
-    if (!schema) {
-      let additionalProperties = false;
-      const properties: Record<string, Schema> = {};
-      this.incoming().forEach((edge) => {
-        if (edge.out === "*") {
-          additionalProperties = true;
-          return;
-        }
-        properties[edge.in] = { type: "string" };
-      });
-      const required = Object.keys(properties);
-      let schema = { type: "object", additionalProperties } as Schema;
-      if (required.length > 0) {
-        schema = { ...schema, required, properties };
-      }
-      return {
-        inputSchema: schema,
-        outputSchema: schema,
-      };
+    if (schema) {
+      return { inputSchema: schema, outputSchema: schema };
     }
-    return {
-      inputSchema: schema,
-      outputSchema: schema,
-    };
+    let additionalProperties = false;
+    const properties: Record<string, Schema> = {};
+    this.incoming().forEach((edge) => {
+      if (edge.out === "*") {
+        additionalProperties = true;
+        return;
+      }
+      properties[edge.in] = { type: "string" };
+    });
+    return describerResultFromProperties(properties, additionalProperties);
   }
 }
