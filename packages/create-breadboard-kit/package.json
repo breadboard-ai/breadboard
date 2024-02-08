@@ -78,14 +78,14 @@
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
     "@google-labs/tsconfig": "^0.0.1",
-    "@types/node": "^18.18.8",
+    "@types/node": "^20.11.5",
     "@types/semver": "^7.5.4",
     "@typescript-eslint/eslint-plugin": "^6.20.0",
     "@typescript-eslint/parser": "^6.20.0",
-    "typescript": "^5.0.4"
+    "typescript": "^5.3.3"
   },
   "dependencies": {
-    "@google-labs/breadboard": "^0.10.0",
+    "@google-labs/breadboard": "^0.10.1",
     "base-create": "^3.0.8"
   }
 }
