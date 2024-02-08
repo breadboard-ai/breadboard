@@ -5,6 +5,8 @@
  */
 
 import {
+  GraphDescriptor,
+  NodeConfiguration,
   NodeDescriberResult,
   NodeDescriptor,
   NodeIdentifier,
@@ -32,6 +34,43 @@ export type InspectableNode = {
    * Return true if the node is an exit node (no outgoing edges)
    */
   isExit(): boolean;
+  /**
+   * Returns true if the node represents a subgraph
+   */
+  isSubgraph(): boolean;
+  /**
+   * Returns an inspectable subgraph, if one is present or `undefined`
+   * otherwise
+   *
+   * @param loader - a loader that is called with the path to load when the
+   * subgraph needs to be loaded (over the network or filesystem). The subgraph
+   * could also be embedded directly in the graph.
+   */
+  subgraph(
+    loader: InspectableGraphLoader
+  ): Promise<InspectableGraph | undefined>;
+  /**
+   * Returns the API of the node.
+   *
+   * A note about the relationship between `describe`, `subgraph.describe`,
+   * and `incoming`/`outgoing`:
+   * - the `describe` returns the API as the node itself expects it
+   * - the `incoming` and `outgoing` return the actual wires going in/out
+   * - the `subgraph.describe` returns the API of the subgraph that the node
+   *   contains (or represents). For instance, the `invoke` node has a `path`
+   *   required property. This property will show up in `describe` (since it
+   *   specifies the path of the graph), but not in `subgraph.describe` (since
+   *   the subgraph itself doesn't actually use it).
+   *
+   * This function is designed to match the output of the
+   * `NodeDescriberFunction`.
+   */
+  describe(): Promise<NodeDescriberResult>;
+  /**
+   * Returns configuration of the node.
+   * TODO: Use a friendlier to inspection return type.
+   */
+  configuration(): NodeConfiguration;
 };
 
 export type InspectableEdge = {
@@ -54,6 +93,11 @@ export type InspectableEdge = {
 };
 
 export type InspectableGraph = {
+  /**
+   * Returns the underlying `GraphDescriptor` object.
+   * TODO: Replace all uses of it with a proper inspector API.
+   */
+  raw(): GraphDescriptor;
   /**
    * Returns the node with the given id, or undefined if no such node exists.
    * @param id id of the node to find
@@ -79,8 +123,25 @@ export type InspectableGraph = {
    */
   outgoingForNode(id: NodeIdentifier): InspectableEdge[];
   /**
+   * Returns a list of entry nodes for the graph.
+   */
+  entries(): InspectableNode[];
+  /**
    * Returns the API of the graph. This function is designed to match the
    * output of the `NodeDescriberFunction`.
    */
   describe(): Promise<NodeDescriberResult>;
 };
+
+export type InspectableGraphLoader = (
+  /**
+   * The `path` value of the `invoke`. It may be a relative or an absolute URL,
+   * a file path, a `GraphDescriptor` or undefined.
+   */
+  graph: GraphDescriptor | string,
+  /**
+   * The full GraphDescriptor of the graph in whose context the loading happens.
+   * This is the graph that contains the `invoke` node.
+   */
+  loadingGraph: GraphDescriptor
+) => Promise<InspectableGraph | undefined>;

@@ -23,6 +23,7 @@ class Graph implements InspectableGraph {
   #nodes: InspectableNode[];
   #nodeMap: Map<NodeIdentifier, InspectableNode>;
   #typeMap: Map<NodeTypeIdentifier, InspectableNode[]> = new Map();
+  #entries?: InspectableNode[];
 
   constructor(graph: GraphDescriptor) {
     this.#graph = graph;
@@ -39,6 +40,10 @@ class Graph implements InspectableGraph {
       }
       list.push(node);
     });
+  }
+
+  raw() {
+    return this.#graph;
   }
 
   nodesByType(type: NodeTypeIdentifier): InspectableNode[] {
@@ -83,6 +88,10 @@ class Graph implements InspectableGraph {
       .filter(
         (edge) => edge.from !== undefined && edge.to !== undefined
       ) as InspectableEdge[];
+  }
+
+  entries(): InspectableNode[] {
+    return (this.#entries ??= this.#nodes.filter((node) => node.isEntry()));
   }
 
   async describe(): Promise<NodeDescriberResult> {

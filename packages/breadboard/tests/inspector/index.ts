@@ -67,3 +67,22 @@ test("inspectableGraph tailsForNode and headsForNode work as expected", (t) => {
   t.deepEqual(b?.isEntry(), false);
   t.deepEqual(b?.isExit(), false);
 });
+
+test("Graph correctly returns entry nodes for a graph", (t) => {
+  const graph = {
+    nodes: [
+      { id: "a", type: "foo" },
+      { id: "b", type: "bar" },
+      { id: "c", type: "foo" },
+    ],
+    edges: [
+      { from: "a", to: "b" },
+      { from: "b", to: "c" },
+    ],
+  };
+  const inspectable = inspectableGraph(graph);
+  t.deepEqual(
+    inspectable.entries().map((n) => n.descriptor.id),
+    ["a"]
+  );
+});

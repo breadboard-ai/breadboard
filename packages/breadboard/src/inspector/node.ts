@@ -4,8 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NodeDescriptor } from "../types.js";
-import { InspectableEdge, InspectableGraph, InspectableNode } from "./types.js";
+import {
+  GraphDescriptor,
+  NodeConfiguration,
+  NodeDescriberResult,
+  NodeDescriptor,
+} from "../types.js";
+import {
+  InspectableEdge,
+  InspectableGraph,
+  InspectableGraphLoader,
+  InspectableNode,
+} from "./types.js";
 
 export const inspectableNode = (
   descriptor: NodeDescriptor,
@@ -39,5 +49,31 @@ class Node implements InspectableNode {
 
   isExit(): boolean {
     return this.outgoing().length === 0;
+  }
+
+  isSubgraph(): boolean {
+    // This is likely too naive, since map also invokes subgraphs.
+    // TODO: Flesh this out some more.
+    return this.descriptor.type === "invoke";
+  }
+
+  async subgraph(
+    loader: InspectableGraphLoader
+  ): Promise<InspectableGraph | undefined> {
+    if (!this.isSubgraph()) return undefined;
+
+    // Find the subgraph
+    type InvokeInputs = { graph: GraphDescriptor; path: string };
+    // TODO: Support subgraphs that are dynamically loaded from values.
+    const { graph, path } = this.configuration() as InvokeInputs;
+    return await loader(graph ? graph : path, this.#graph.raw());
+  }
+
+  configuration(): NodeConfiguration {
+    return this.descriptor.configuration || {};
+  }
+
+  async describe(): Promise<NodeDescriberResult> {
+    throw new Error("Not yet implemented");
   }
 }
