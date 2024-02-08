@@ -46,27 +46,26 @@ const sampleInstruction = `You are a brilliant poet who specializes in two-line 
 Given any topic, you can quickly whip up a two-line rhyming poem about it.
 Look at the topic below and do your magic`;
 
-const sampleContext = JSON.stringify(
-  [
-    {
-      role: "user",
-      parts: [
-        {
-          text: `the universe within us`,
-        },
-      ],
-    },
-  ],
-  null,
-  2
-);
+const sampleContext = `the universe within us`;
 
 type ContextItem = {
   role: string;
   parts: { text: string }[];
 };
 
+const contextAssembler = code(({ context, generated }) => {
+  if (!context) throw new Error("Context is required");
+  return { context: [...(context as ContextItem[]), generated as ContextItem] };
+});
+
 const contextBuilder = code(({ context, instruction }) => {
+  if (typeof context === "string") {
+    // A clever trick. Let's see if this works
+    // A user can supply context as either ContextItem[] or as a string.
+    // When it's a string, let's just conjure up the proper ContextItem[]
+    // from that.
+    context = [{ role: "user", parts: [{ text: context }] }];
+  }
   const list = (context as unknown[]) || [];
   if (list.length > 0) {
     const last = list[list.length - 1] as ContextItem;
@@ -81,10 +80,6 @@ const contextBuilder = code(({ context, instruction }) => {
   return {
     context: [...list, { role: "user", parts: [{ text: instruction }] }],
   };
-});
-
-const contextAssembler = code(({ context, generated }) => {
-  return { context: [...(context as ContextItem[]), generated as ContextItem] };
 });
 
 export default await board(({ context, instruction, stopSequences }) => {
