@@ -487,6 +487,7 @@ export class UI extends LitElement {
 
       case "editor":
         diagram = html`<bb-editor
+          .editable=${this.url === null}
           .loadInfo=${this.loadInfo}
           .nodeCount=${this.loadInfo?.graphDescriptor?.nodes.length || 0}
           .edgeCount=${this.loadInfo?.graphDescriptor?.edges.length || 0}
