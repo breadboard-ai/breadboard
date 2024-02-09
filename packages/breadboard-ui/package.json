@@ -126,20 +126,20 @@
     "@google-labs/tsconfig": "^0.0.1",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
-    "@types/node": "^18.17.4",
+    "@types/node": "^20.11.5",
     "@typescript-eslint/eslint-plugin": "^6.20.0",
     "@typescript-eslint/parser": "^6.20.0",
-    "rollup": "^4.1.4",
+    "rollup": "^4.9.6",
     "typedoc": "^0.25.1",
     "typedoc-plugin-markdown": "^3.16.0",
-    "typescript": "^5.0.4"
+    "typescript": "^5.3.3"
   },
   "engines": {
     "node": ">=19.0.0"
   },
   "dependencies": {
-    "@google-labs/breadboard": "^0.10.0",
-    "lit": "^3.1.0",
-    "mermaid": "^10.6.1"
+    "@google-labs/breadboard": "^0.10.1",
+    "lit": "^3.1.1",
+    "mermaid": "^10.7.0"
   }
 }
