@@ -144,5 +144,8 @@
   "optionalDependencies": {
     "@rollup/rollup-darwin-arm64": "^4.8.0",
     "@rollup/rollup-linux-x64-gnu": "^4.8.0"
+  },
+  "dependencies": {
+    "litegraph.js": "^0.7.18"
   }
 }
