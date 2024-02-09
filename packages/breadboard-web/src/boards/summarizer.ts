@@ -26,13 +26,13 @@ export default await board(({ paragraph }) => {
     $id: "critique",
     context: summarize.context,
     instruction:
-      "Now, put your critiquing hat on. Compare the summary with the original text and identify three areas of improvement. What is missing? What could be better phrased? What could be removed?",
+      "You are a reviewer of summaries produced from patent applications. Compare the summary with the original text and identify three areas of improvement. What is missing? What could be better phrased? What could be removed? Is there any technical jargon that could be replaced with simpler terms?",
   });
   const improve = agents.worker({
     $id: "improve",
     context: critique.context,
     instruction:
-      "Use the identified areas of improvement to come up with an even better summary than the one before. Use your best elite skills as the writer.",
+      "Use the identified areas of improvement to come up with an even better summary than the one before.",
   });
   const abbreviate = agents.worker({
     $id: "abbreviate",
