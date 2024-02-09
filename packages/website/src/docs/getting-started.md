@@ -73,7 +73,7 @@ npx breadboard run hello.json --input '{"say":"Hello World!"}'
 You should see this printed to your terminal:
 
 ```json
-{ "hear": "Hello" }
+{ "hear": "Hello World!" }
 ```
 
 ### What's going on?
