@@ -22,7 +22,7 @@ test("broken graph should return an error", async (t) => {
   } catch (e) {
     t.is(
       (e as Error).message,
-      "Output node never reach. Last node was reverser-3.\n\n" +
+      "Output node never reached. Last node was reverser-3.\n\n" +
         "These nodes had inputs missing:\n" +
         "  output-2: bar"
     );
@@ -31,7 +31,7 @@ test("broken graph should return an error", async (t) => {
     $error: {
       type: "error",
       error: new Error(
-        "Output node never reach. Last node was reverser-3.\n\n" +
+        "Output node never reached. Last node was reverser-3.\n\n" +
           "These nodes had inputs missing:\n" +
           "  output-2: bar"
       ),

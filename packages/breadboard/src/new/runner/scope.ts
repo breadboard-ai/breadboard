@@ -226,7 +226,7 @@ export class Scope implements ScopeInterface {
           $error: {
             type: "error",
             error: new Error(
-              `Output node never reach. Last node was ${
+              `Output node never reached. Last node was ${
                 lastNode?.id
               }.\n\nThese nodes had inputs missing:\n${Array.from(
                 lastMissingInputs,
