@@ -68,7 +68,7 @@ export const createOutputSchema = (
   }
   let additionalProperties = false;
   const properties: Record<string, Schema> = {};
-  options.outgoing?.forEach((edge) => {
+  options.incoming?.forEach((edge) => {
     if (edge.out === "*") {
       additionalProperties = true;
       return;
