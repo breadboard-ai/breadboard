@@ -22,6 +22,7 @@ import {
   InspectableNode,
   NodeConfiguration,
   Edge,
+  Kit,
 } from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import * as LG from "litegraph.js";
@@ -65,6 +66,9 @@ const DATA_TYPE = "application/json";
 export class Editor extends LitElement {
   @property()
   loadInfo: LoadArgs | null = null;
+
+  @property()
+  kits: Kit[] = [];
 
   @property()
   nodeCount = 0;
@@ -398,7 +402,7 @@ export class Editor extends LitElement {
     let x = BASE_X;
     const y = this.#height / 2;
 
-    const breadboardGraph = inspectableGraph(descriptor);
+    const breadboardGraph = inspectableGraph(descriptor, { kits: this.kits });
     this.#nodes = breadboardGraph.nodes();
 
     // Create nodes first.
@@ -430,38 +434,14 @@ export class Editor extends LitElement {
         addIOtoNode(graphNode, "input", inputSchema.properties);
         addIOtoNode(graphNode, "output", outputSchema.properties);
       } else {
-        switch (node.descriptor.type) {
-          case "fetch": {
-            addIOtoNode(graphNode, "input", { url: { type: "string" } });
-            addIOtoNode(graphNode, "output", { response: { type: "string" } });
-            break;
-          }
-
-          case "jsonata": {
-            addIOtoNode(graphNode, "input", {
-              json: { type: "object" },
-              expression: { type: "string" },
-              raw: { type: "boolean" },
-            });
-            break;
-          }
-
-          case "output":
-          case "input": {
-            if (
-              !node.descriptor.configuration ||
-              !node.descriptor.configuration.schema
-            ) {
-              console.warn("Unable to render node with no configuration");
-              break;
-            }
-
-            const schema = node.descriptor.configuration.schema as Schema;
-            const schemaType =
-              node.descriptor.type === "input" ? "output" : "input";
-            addIOtoNode(graphNode, schemaType, schema.properties);
-            break;
-          }
+        const describerResult = await node.describe();
+        const inputs = describerResult.inputSchema.properties;
+        if (inputs) {
+          addIOtoNode(graphNode, "input", inputs);
+        }
+        const outputs = describerResult.outputSchema.properties;
+        if (outputs) {
+          addIOtoNode(graphNode, "output", outputs);
         }
       }
 

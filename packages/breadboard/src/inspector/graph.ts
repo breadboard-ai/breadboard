@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { handlersFromKits } from "../handler.js";
 import { combineSchemas } from "../schema.js";
 import {
   GraphDescriptor,
@@ -12,10 +13,25 @@ import {
   NodeTypeIdentifier,
 } from "../types.js";
 import { inspectableNode } from "./node.js";
-import { InspectableEdge, InspectableGraph, InspectableNode } from "./types.js";
+import {
+  createInputSchema,
+  createOutputSchema,
+  edgesToSchema,
+  emptyDescriberResult,
+} from "./schemas.js";
+import {
+  InspectableEdge,
+  InspectableGraph,
+  InspectableGraphOptions,
+  InspectableNode,
+  NodeTypeDescriberOptions,
+} from "./types.js";
 
-export const inspectableGraph = (graph: GraphDescriptor): InspectableGraph => {
-  return new Graph(graph);
+export const inspectableGraph = (
+  graph: GraphDescriptor,
+  options?: InspectableGraphOptions
+): InspectableGraph => {
+  return new Graph(graph, options);
 };
 
 class Graph implements InspectableGraph {
@@ -24,9 +40,11 @@ class Graph implements InspectableGraph {
   #nodeMap: Map<NodeIdentifier, InspectableNode>;
   #typeMap: Map<NodeTypeIdentifier, InspectableNode[]> = new Map();
   #entries?: InspectableNode[];
+  #options: InspectableGraphOptions;
 
-  constructor(graph: GraphDescriptor) {
+  constructor(graph: GraphDescriptor, options?: InspectableGraphOptions) {
     this.#graph = graph;
+    this.#options = options || {};
     this.#nodes = this.#graph.nodes.map((node) => inspectableNode(node, this));
     this.#nodeMap = new Map(
       this.#nodes.map((node) => [node.descriptor.id, node])
@@ -48,6 +66,31 @@ class Graph implements InspectableGraph {
 
   nodesByType(type: NodeTypeIdentifier): InspectableNode[] {
     return this.#typeMap.get(type) || [];
+  }
+
+  async describeType(
+    type: NodeTypeIdentifier,
+    options: NodeTypeDescriberOptions = {}
+  ): Promise<NodeDescriberResult> {
+    // The schema of an input or an output is defined by their
+    // configuration schema or their incoming/outgoing edges.
+    if (type === "input") {
+      return createInputSchema(options);
+    }
+    if (type === "output") {
+      return createOutputSchema(options);
+    }
+
+    const { kits } = this.#options;
+    const handler = handlersFromKits(kits || [])[type];
+    if (!handler || typeof handler === "function" || !handler.describe) {
+      return emptyDescriberResult();
+    }
+    return handler.describe(
+      options?.inputs || undefined,
+      edgesToSchema(options?.incoming),
+      edgesToSchema(options?.outgoing)
+    );
   }
 
   nodeById(id: NodeIdentifier) {
@@ -101,7 +144,7 @@ class Graph implements InspectableGraph {
           .filter((n) => n.isEntry())
           .map((input) => input.describe())
       )
-    ).map((result) => result.inputSchema);
+    ).map((result) => result.outputSchema);
 
     const outputSchemas = (
       await Promise.all(
@@ -109,7 +152,7 @@ class Graph implements InspectableGraph {
           .filter((n) => n.isExit())
           .map((output) => output.describe())
       )
-    ).map((result) => result.outputSchema);
+    ).map((result) => result.inputSchema);
 
     return {
       inputSchema: combineSchemas(inputSchemas),

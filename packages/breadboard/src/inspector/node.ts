@@ -6,10 +6,10 @@
 
 import {
   GraphDescriptor,
+  InputValues,
   NodeConfiguration,
   NodeDescriberResult,
   NodeDescriptor,
-  Schema,
 } from "../types.js";
 import {
   InspectableEdge,
@@ -23,21 +23,6 @@ export const inspectableNode = (
   inspectableGraph: InspectableGraph
 ): InspectableNode => {
   return new Node(descriptor, inspectableGraph);
-};
-
-const describerResultFromProperties = (
-  properties: Record<string, Schema>,
-  additionalProperties: boolean
-): NodeDescriberResult => {
-  const required = Object.keys(properties);
-  let schema = { type: "object", additionalProperties } as Schema;
-  if (required.length > 0) {
-    schema = { ...schema, required, properties };
-  }
-  return {
-    inputSchema: schema,
-    outputSchema: schema,
-  };
 };
 
 class Node implements InspectableNode {
@@ -89,49 +74,11 @@ class Node implements InspectableNode {
     return this.descriptor.configuration || {};
   }
 
-  async describe(): Promise<NodeDescriberResult> {
-    // The schema of an input or an output is defined by their
-    // configuration schema or their incoming/outgoing edges.
-    if (this.descriptor.type === "input") {
-      return this.#createInputSchema();
-    }
-    if (this.descriptor.type === "output") {
-      return this.#createOutputSchema();
-    }
-    throw new Error("Not yet implemented");
-  }
-
-  #createInputSchema(): NodeDescriberResult {
-    const schema = this.configuration()?.schema as Schema | undefined;
-    if (schema) {
-      return { inputSchema: schema, outputSchema: schema };
-    }
-    let additionalProperties = false;
-    const properties: Record<string, Schema> = {};
-    this.outgoing().forEach((edge) => {
-      if (edge.out === "*") {
-        additionalProperties = true;
-        return;
-      }
-      properties[edge.out] = { type: "string" };
+  async describe(inputs?: InputValues): Promise<NodeDescriberResult> {
+    return this.#graph.describeType(this.descriptor.type, {
+      inputs: { ...inputs, ...this.configuration() },
+      incoming: this.incoming(),
+      outgoing: this.outgoing(),
     });
-    return describerResultFromProperties(properties, additionalProperties);
-  }
-
-  #createOutputSchema(): NodeDescriberResult {
-    const schema = this.configuration()?.schema as Schema | undefined;
-    if (schema) {
-      return { inputSchema: schema, outputSchema: schema };
-    }
-    let additionalProperties = false;
-    const properties: Record<string, Schema> = {};
-    this.incoming().forEach((edge) => {
-      if (edge.out === "*") {
-        additionalProperties = true;
-        return;
-      }
-      properties[edge.in] = { type: "string" };
-    });
-    return describerResultFromProperties(properties, additionalProperties);
   }
 }

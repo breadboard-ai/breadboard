@@ -6,6 +6,8 @@
 
 import {
   GraphDescriptor,
+  InputValues,
+  Kit,
   NodeConfiguration,
   NodeDescriberResult,
   NodeDescriptor,
@@ -65,7 +67,7 @@ export type InspectableNode = {
    * This function is designed to match the output of the
    * `NodeDescriberFunction`.
    */
-  describe(): Promise<NodeDescriberResult>;
+  describe(inputs?: InputValues): Promise<NodeDescriberResult>;
   /**
    * Returns configuration of the node.
    * TODO: Use a friendlier to inspection return type.
@@ -113,6 +115,13 @@ export type InspectableGraph = {
    */
   nodesByType(type: NodeTypeIdentifier): InspectableNode[];
   /**
+   * Describe a given type of the node
+   */
+  describeType(
+    type: NodeTypeIdentifier,
+    options?: NodeTypeDescriberOptions
+  ): Promise<NodeDescriberResult>;
+  /**
    * Returns the nodes that have an edge to the node with the given id.
    * @param id id of the node to find incoming nodes for
    */
@@ -145,3 +154,32 @@ export type InspectableGraphLoader = (
    */
   loadingGraph: GraphDescriptor
 ) => Promise<InspectableGraph | undefined>;
+
+/**
+ * Options to supply to the `inspectableGraph` function.
+ */
+export type InspectableGraphOptions = {
+  /**
+   * Optional, a list of kits to use when inspecting the graph. If not
+   * supplied, the graph will be inspected without any kits.
+   */
+  kits?: Kit[];
+};
+
+/**
+ * Options to supply to the `describeType` function.
+ */
+export type NodeTypeDescriberOptions = {
+  /**
+   * Optional, the inputs to the node.
+   */
+  inputs?: InputValues;
+  /**
+   * Optional, the incoming edges to the node.
+   */
+  incoming?: InspectableEdge[];
+  /**
+   * Optional, the outgoing edges from the node.
+   */
+  outgoing?: InspectableEdge[];
+};

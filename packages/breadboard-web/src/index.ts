@@ -11,7 +11,12 @@ import { customElement, property, state } from "lit/decorators.js";
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import * as BreadboardUI from "@google-labs/breadboard-ui";
 import { InputResolveRequest } from "@google-labs/breadboard/remote";
-import { Board, BoardRunner, GraphDescriptor } from "@google-labs/breadboard";
+import {
+  Board,
+  BoardRunner,
+  GraphDescriptor,
+  Kit,
+} from "@google-labs/breadboard";
 import { cache } from "lit/directives/cache.js";
 
 export const getBoardInfo = async (
@@ -64,6 +69,7 @@ export class Main extends LitElement {
   #status = BreadboardUI.Types.STATUS.STOPPED;
   #statusObservers: Array<(value: BreadboardUI.Types.STATUS) => void> = [];
   #visualizer: "mermaid" | "visualblocks" | "editor" = "mermaid";
+  #kits: Kit[] = [];
 
   static styles = css`
     :host {
@@ -362,7 +368,11 @@ export class Main extends LitElement {
       return;
     }
 
-    const runner = run(createRunConfig(this.url));
+    const runConfig = createRunConfig(this.url);
+
+    this.#kits = runConfig.kits;
+
+    const runner = run(runConfig);
     await this.#runBoard(runner);
   }
 
@@ -595,6 +605,7 @@ export class Main extends LitElement {
           ${ref(this.#uiRef)}
           .url=${this.url}
           .loadInfo=${this.loadInfo}
+          .kits=${this.#kits}
           .status=${this.status}
           .visualizer=${this.#visualizer}
           @breadboardedgechange=${(
