@@ -158,11 +158,15 @@ export class UI extends LitElement {
     return this.#diagram.value.render(this.loadInfo, highlightedDiagramNode);
   }
 
+  clearMessages() {
+    this.messages.length = 0;
+    this.#messagePosition = 0;
+  }
+
   unloadCurrentBoard() {
     this.url = null;
     this.loadInfo = null;
-    this.messages.length = 0;
-    this.#messagePosition = 0;
+    this.clearMessages();
 
     this.#messageDurations.clear();
     this.#nodeInfo.clear();
@@ -484,6 +488,8 @@ export class UI extends LitElement {
       case "editor":
         diagram = html`<bb-editor
           .loadInfo=${this.loadInfo}
+          .nodeCount=${this.loadInfo?.graphDescriptor?.nodes.length || 0}
+          .edgeCount=${this.loadInfo?.graphDescriptor?.edges.length || 0}
           ${ref(this.#diagram)}
         ></bb-editor>`;
         break;

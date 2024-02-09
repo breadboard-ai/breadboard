@@ -4,17 +4,30 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css } from "lit";
-import { customElement, property } from "lit/decorators.js";
+import {
+  LitElement,
+  html,
+  css,
+  PropertyValueMap,
+  HTMLTemplateResult,
+  nothing,
+} from "lit";
+import { customElement, property, state } from "lit/decorators.js";
 import { LoadArgs } from "../../types/types.js";
 import {
   Schema,
   inspectableGraph,
   GraphDescriptor,
   loadToInspect,
+  InspectableNode,
+  NodeConfiguration,
+  Edge,
 } from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import * as LG from "litegraph.js";
+import { map } from "lit/directives/map.js";
+import { EdgeChangeEvent, NodeCreateEvent } from "../../events/events.js";
+import { classMap } from "lit/directives/class-map.js";
 
 // Not all the variables in LiteGraph are included as part of the types, so
 // this is a workaround to allow TypeScript to understand the extra stuff.
@@ -30,23 +43,53 @@ interface ExtendedLGraphCanvas extends LG.LGraphCanvas {
   release_link_on_empty_shows_menu: boolean;
 }
 
+interface ExtendedLGraph extends LG.LGraph {
+  onNodeConnectionChange(
+    changeType:
+      | (typeof LG.LiteGraph)["INPUT"]
+      | (typeof LG.LiteGraph)["OUTPUT"],
+    target: LG.LGraphNode,
+    targetSlot: number,
+    source?: LG.LGraphNode,
+    sourceSlot?: number
+  ): void;
+
+  on_change(): void;
+}
+
 // TODO: Use a graph layout library.
 const BASE_X = 50;
+const DATA_TYPE = "application/json";
 
 @customElement("bb-editor")
 export class Editor extends LitElement {
   @property()
   loadInfo: LoadArgs | null = null;
 
-  #graph: LG.LGraph | null = null;
+  @property()
+  nodeCount = 0;
+
+  @property()
+  edgeCount = 0;
+
+  @state()
+  activeNode: InspectableNode | null = null;
+
+  #graph: ExtendedLGraph | null = null;
   #graphCanvas: ExtendedLGraphCanvas | null = null;
   #container: Ref<HTMLDivElement> = createRef();
   #canvas = document.createElement("canvas");
   #onResizeBound = this.#onResize.bind(this);
+  #onDropBound = this.#onDrop.bind(this);
   #nodeIdToGraphIndex = new Map<string, number>();
+  #graphIndexToNodeIndex = new Map<number, number>();
   #processing = false;
   #width = 300;
   #height = 200;
+  #top = 0;
+  #left = 0;
+  #nodes: InspectableNode[] | null = null;
+  #nodeLocations: Map<string, { x: number; y: number }> = new Map();
 
   static styles = css`
     :host {
@@ -63,14 +106,72 @@ export class Editor extends LitElement {
       position: relative;
     }
 
+    #properties {
+      box-sizing: border-box;
+      width: 30%;
+      position: absolute;
+      height: 100%;
+      right: 0;
+      top: 0;
+      background: #fff;
+      padding: calc(var(--bb-grid-size) * 4);
+      box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.24);
+    }
+
     #nodes {
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      overflow: scroll;
       width: 100%;
       height: 100%;
       position: absolute;
+    }
+
+    #menu {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      display: flex;
+      background: #fff;
+      padding: calc(var(--bb-grid-size) * 2);
+      box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.24);
+      border-radius: 12px;
+    }
+
+    #menu ul {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      list-style: none;
+    }
+
+    #menu ul li {
+      margin-right: calc(var(--bb-grid-size) * 2);
+      border: 1px solid #ccc;
+      border-radius: 16px;
+      background: #fff2cc;
+      color: #222;
+      border: none;
+      padding: var(--bb-grid-size) calc(var(--bb-grid-size) * 2);
+      font-size: var(--bb-text-small);
+    }
+
+    #menu ul li.input {
+      background: #c9daf8;
+    }
+
+    #menu ul li.secret {
+      background: #f4cccc;
+    }
+
+    #menu ul li.output {
+      background: #b6d7a8;
+    }
+
+    #menu ul li.slot,
+    #menu ul li.passthrough {
+      background: #ead1dc;
+    }
+
+    #menu ul li:last-of-type {
+      margin-right: 0;
     }
 
     canvas {
@@ -82,7 +183,7 @@ export class Editor extends LitElement {
   `;
 
   reset() {
-    // To be implemented...
+    // To be implemented.
   }
 
   #configureLiteGraph() {
@@ -104,12 +205,36 @@ export class Editor extends LitElement {
     LG.LiteGraph.registerNodeType("bb/node", basicNode);
   }
 
+  #getInspectableNodeFromGraphNodeIndex(
+    node: LG.LGraphNode
+  ): InspectableNode | null {
+    const activeNodeIdx = this.#graphIndexToNodeIndex.get(node.id);
+    if (typeof activeNodeIdx === "undefined" || !this.#nodes) {
+      console.warn("Unable to find node", this.#graphIndexToNodeIndex, node.id);
+      return null;
+    }
+
+    const activeNode = this.#nodes[activeNodeIdx];
+    if (!activeNode) {
+      console.warn("Lookup failed - node index does not exist.");
+      return null;
+    }
+
+    const backRef = this.#nodeIdToGraphIndex.get(activeNode.descriptor.id);
+    if (backRef !== node.id) {
+      console.warn("Lookup failed - graph index does not match.");
+      return null;
+    }
+
+    return activeNode;
+  }
+
   #createGraph() {
     const graphCanvasConstructor =
       LG.LGraphCanvas as unknown as ExtendedLGraphCanvas;
     graphCanvasConstructor.DEFAULT_BACKGROUND_IMAGE = "/images/pattern.png";
 
-    const graph = new LG.LGraph();
+    const graph: ExtendedLGraph = new LG.LGraph() as ExtendedLGraph;
     const graphCanvas = new LG.LGraphCanvas(
       this.#canvas,
       graph
@@ -136,6 +261,28 @@ export class Editor extends LitElement {
 
     graphCanvas.onNodeSelected = () => {
       graphCanvas.highlighted_links = {};
+    };
+
+    graphCanvas.onShowNodePanel = (node) => {
+      const activeNode = this.#getInspectableNodeFromGraphNodeIndex(node);
+      if (!activeNode) {
+        return;
+      }
+
+      // TODO: Show Node info.
+      // this.activeNode = activeNode;
+    };
+
+    graphCanvas.onNodeMoved = (node) => {
+      const activeNode = this.#getInspectableNodeFromGraphNodeIndex(node);
+      if (!activeNode) {
+        return;
+      }
+
+      this.#nodeLocations.set(activeNode.descriptor.id, {
+        x: node.pos[0] + node.size[0] * 0.5,
+        y: node.pos[1] + node.size[1] * 0.5,
+      });
     };
 
     graph.start();
@@ -240,21 +387,26 @@ export class Editor extends LitElement {
     this.#processing = true;
     this.#graph.clear();
     this.#nodeIdToGraphIndex.clear();
+    this.#graphIndexToNodeIndex.clear();
+
+    // Ignore graph change events during construction
+    this.#graph.onNodeConnectionChange = () => void 0;
 
     let x = BASE_X;
     const y = this.#height / 2;
 
     const breadboardGraph = inspectableGraph(descriptor);
-    const nodes = breadboardGraph.nodes();
+    this.#nodes = breadboardGraph.nodes();
 
     // Create nodes first.
-    for (let i = nodes.length - 1; i >= 0; i--) {
-      const node = nodes[i];
+    for (let i = this.#nodes.length - 1; i >= 0; i--) {
+      const node = this.#nodes[i];
       const title = `${node.descriptor.type} (${node.descriptor.id})`;
       const graphNode = this.#createNode(node.descriptor.type, title, x, y);
       this.#graph.add(graphNode);
 
       this.#nodeIdToGraphIndex.set(node.descriptor.id, graphNode.id);
+      this.#graphIndexToNodeIndex.set(graphNode.id, i);
 
       if (node.isSubgraph()) {
         if (!descriptor.url) {
@@ -310,14 +462,26 @@ export class Editor extends LitElement {
         }
       }
 
-      // Vertical middle.
-      graphNode.pos[1] = (this.#height - graphNode.size[1]) * 0.5;
+      const nodeLocation = this.#nodeLocations.get(node.descriptor.id);
+      if (nodeLocation) {
+        graphNode.pos[0] = nodeLocation.x - graphNode.size[0] * 0.5;
+        graphNode.pos[1] = nodeLocation.y - graphNode.size[1] * 0.5;
+      } else {
+        // Default to vertical middle.
+        graphNode.pos[0] = x;
+        graphNode.pos[1] = (this.#height - graphNode.size[1]) * 0.5;
 
-      x += graphNode.size[0] + 80;
+        this.#nodeLocations.set(node.descriptor.id, {
+          x: graphNode.pos[0] + graphNode.size[0] * 0.5,
+          y: graphNode.pos[1] + graphNode.size[1] * 0.5,
+        });
+
+        x += graphNode.size[0] + 80;
+      }
     }
 
     // Then create connections.
-    for (const node of nodes) {
+    for (const node of this.#nodes) {
       for (const connection of node.outgoing()) {
         const source = this.#nodeIdToGraphIndex.get(
           connection.from.descriptor.id
@@ -370,6 +534,142 @@ export class Editor extends LitElement {
 
     this.#graphCanvas?.setDirty(true, true);
     this.#processing = false;
+
+    // Notify on all further changes.
+    const pendingEdgeChanges: Array<{
+      destination: LG.LGraphNode;
+      destinationSlot: number;
+      source?: LG.LGraphNode;
+      sourceSlot?: number;
+    }> = [];
+
+    this.#graph.onNodeConnectionChange = (
+      changeType:
+        | (typeof LG.LiteGraph)["INPUT"]
+        | (typeof LG.LiteGraph)["OUTPUT"],
+      destination: LG.LGraphNode,
+      destinationSlot: number,
+      source?: LG.LGraphNode,
+      sourceSlot?: number
+    ) => {
+      if (!this.#graph) {
+        return;
+      }
+
+      // Mouse clicks and the like will be caught by LiteGraph, which isn't
+      // ideal in this case since we want to know that the user has released
+      // their pointer. What we do, then, is capture a click event on the way
+      // down and use that to process any pending graph changes.
+      window.addEventListener(
+        "click",
+        () => {
+          if (
+            !pendingEdgeChanges.length ||
+            !this.loadInfo ||
+            !this.loadInfo.graphDescriptor
+          ) {
+            return;
+          }
+
+          for (const pendingEdgeChange of pendingEdgeChanges) {
+            const { source, sourceSlot, destination, destinationSlot } =
+              pendingEdgeChange;
+
+            const destinationNode =
+              this.#getInspectableNodeFromGraphNodeIndex(destination);
+
+            if (!destinationNode) {
+              console.warn(`Unable to find node for "${destination.title}"`);
+              continue;
+            }
+
+            if (source && typeof sourceSlot !== "undefined") {
+              // New connection.
+              const sourceNode =
+                this.#getInspectableNodeFromGraphNodeIndex(source);
+
+              if (!sourceNode) {
+                continue;
+              }
+
+              const from = sourceNode.descriptor.id;
+              const to = destinationNode.descriptor.id;
+              const outPort = source.outputs[sourceSlot].name;
+              const inPort = destination.inputs[destinationSlot].name;
+              this.dispatchEvent(
+                new EdgeChangeEvent("add", from, outPort, to, inPort)
+              );
+            } else {
+              // Remove existing connection.
+              const edge = this.#findEdge({
+                to: destinationNode.descriptor.id,
+                in: destination.inputs[destinationSlot].name,
+              });
+
+              if (!edge) {
+                console.warn(`Unable to find edge for "${destination.title}"`);
+                return;
+              }
+
+              this.dispatchEvent(
+                new EdgeChangeEvent(
+                  "remove",
+                  edge.from,
+                  edge.out || "",
+                  edge.to,
+                  edge.in || ""
+                )
+              );
+            }
+          }
+
+          pendingEdgeChanges.length = 0;
+        },
+        {
+          capture: true,
+          once: true,
+        }
+      );
+
+      if (changeType !== LG.LiteGraph.INPUT) {
+        return;
+      }
+
+      pendingEdgeChanges.push({
+        destination,
+        destinationSlot,
+        source,
+        sourceSlot,
+      });
+    };
+  }
+
+  #findEdge(shape: {
+    to: string;
+    in: string;
+    from?: string;
+    out?: string;
+  }): Edge | null {
+    if (!this.loadInfo || !this.loadInfo.graphDescriptor) {
+      return null;
+    }
+
+    for (const edge of this.loadInfo.graphDescriptor.edges) {
+      if (edge.to !== shape.to && edge.in !== shape.in) {
+        continue;
+      }
+
+      if (shape.from && edge.from !== shape.from) {
+        continue;
+      }
+
+      if (shape.out && edge.out !== shape.out) {
+        continue;
+      }
+      return edge;
+    }
+
+    return null;
   }
 
   #onResize() {
@@ -377,6 +677,8 @@ export class Editor extends LitElement {
     const bounds = this.getBoundingClientRect();
     this.#width = bounds.width;
     this.#height = bounds.height;
+    this.#top = bounds.top;
+    this.#left = bounds.left;
 
     this.#canvas.width = this.#width * dPR;
     this.#canvas.height = this.#height * dPR;
@@ -390,11 +692,13 @@ export class Editor extends LitElement {
   connectedCallback(): void {
     super.connectedCallback();
     window.addEventListener("resize", this.#onResizeBound);
+    this.addEventListener("drop", this.#onDropBound);
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
     window.removeEventListener("resize", this.#onResizeBound);
+    this.removeEventListener("drop", this.#onDropBound);
   }
 
   firstUpdated(): void {
@@ -409,11 +713,116 @@ export class Editor extends LitElement {
     this.#container.value?.appendChild(this.#canvas);
   }
 
-  render() {
-    if (this.loadInfo && this.loadInfo.graphDescriptor) {
+  protected willUpdate(
+    changedProperties:
+      | PropertyValueMap<{
+          loadInfo: LoadArgs;
+          nodeCount: number;
+          edgeCount: number;
+        }>
+      | Map<PropertyKey, unknown>
+  ): void {
+    const shouldProcessGraph =
+      changedProperties.has("loadInfo") ||
+      changedProperties.has("nodeCount") ||
+      changedProperties.has("edgeCount");
+    if (shouldProcessGraph && this.loadInfo && this.loadInfo.graphDescriptor) {
       this.#processGraph(this.loadInfo.graphDescriptor);
     }
+  }
 
-    return html`<div id="nodes" ${ref(this.#container)}></div>`;
+  #onDrop(evt: DragEvent) {
+    evt.preventDefault();
+
+    const data = evt.dataTransfer?.getData(DATA_TYPE);
+    if (!data) {
+      console.warn("No data in dropped node");
+      return;
+    }
+
+    const nextNodeId = this.loadInfo?.graphDescriptor?.nodes.length || 1_000;
+    const id = `node-${nextNodeId}`;
+    this.#nodeLocations.set(id, {
+      x: evt.pageX - this.#left + window.scrollX,
+      y: evt.pageY - this.#top - window.scrollY,
+    });
+
+    const nodeData: { type: string; configuration: NodeConfiguration } =
+      JSON.parse(data);
+    this.dispatchEvent(
+      new NodeCreateEvent(id, nodeData.type, nodeData.configuration)
+    );
+  }
+
+  // TODO: Find a better way of getting the defaults for any given node.
+  #getNodeMenu() {
+    const items = new Map<string, NodeConfiguration>();
+    items.set("invoke", { path: "gemini-generator.json" });
+    items.set("input", {
+      configuration: {
+        schema: {
+          type: "object",
+          properties: {
+            text: {
+              type: "string",
+              title: "Prompt",
+              description: "The prompt to generate a completion for",
+              examples: ["Tell me a fun story about playing with breadboards"],
+            },
+          },
+          required: ["text"],
+        },
+      },
+    });
+
+    items.set("output", {
+      configuration: {
+        schema: {
+          type: "object",
+          properties: {
+            text: {
+              type: "string",
+              title: "Response",
+              description: "The completion generated by the LLM",
+            },
+          },
+          required: ["text"],
+        },
+      },
+    });
+
+    return html`<div id="menu">
+      <ul>
+        ${map(items, ([name, configuration]) => {
+          return html`<li
+            class=${classMap({ [name]: true })}
+            draggable="true"
+            @dragstart=${(evt: DragEvent) => {
+              if (!evt.dataTransfer) {
+                return;
+              }
+              evt.dataTransfer.setData(
+                DATA_TYPE,
+                JSON.stringify({ type: name, configuration })
+              );
+            }}
+          >
+            ${name}
+          </li>`;
+        })}
+      </ul>
+    </div>`;
+  }
+
+  render() {
+    let properties: HTMLTemplateResult | symbol = nothing;
+    if (this.activeNode) {
+      properties = html`<div id="properties">
+        <textarea>${JSON.stringify(this.activeNode, null, 2)}</textarea>
+      </div>`;
+    }
+
+    return html`<div id="nodes" ${ref(this.#container)}></div>
+      ${properties} ${this.#getNodeMenu()}`;
   }
 }

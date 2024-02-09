@@ -122,23 +122,34 @@ export class Main extends LitElement {
       margin: 0 calc(var(--bb-grid-size) * 5);
     }
 
+    #run-board-locally,
     #download {
       font-size: var(--bb-text-pico);
       padding: 4px 8px 4px 24px;
       border-radius: 32px;
-      background: #fff var(--bb-icon-download) 4px 2px no-repeat;
-      background-size: 16px 16px;
+      background: #fff;
       color: #333;
       margin-right: 8px;
       cursor: default;
       transition: opacity var(--bb-easing-duration-out) var(--bb-easing);
       opacity: 0.8;
       text-decoration: none;
+      border: none;
     }
 
+    #run-board-locally:hover,
     #download:hover {
       transition: opacity var(--bb-easing-duration-in) var(--bb-easing);
       opacity: 1;
+    }
+
+    #run-board-locally {
+      padding: 4px 8px;
+    }
+
+    #download {
+      background: #fff var(--bb-icon-download) 4px 2px no-repeat;
+      background-size: 16px 16px;
     }
 
     #header-bar h1 {
@@ -318,7 +329,6 @@ export class Main extends LitElement {
     this.#setActiveBreadboard(startEvent.url);
     this.url = startEvent.url;
     this.mode = MODE.BUILD;
-    this.status = BreadboardUI.Types.STATUS.RUNNING;
   }
 
   protected async updated(changedProperties: Map<PropertyKey, unknown>) {
@@ -343,22 +353,34 @@ export class Main extends LitElement {
     this.loadInfo = await getBoardInfo(this.url);
 
     if (this.mode === MODE.BUILD) {
-      await this.#startHarnessIfNeeded();
+      await this.#createHarnessAndRunFromUrl();
     }
   }
 
-  async #startHarnessIfNeeded() {
-    if (!(this.url && this.#uiRef.value && this.loadInfo)) {
+  async #createHarnessAndRunFromUrl() {
+    if (!(this.url && this.loadInfo)) {
+      return;
+    }
+
+    const runner = run(createRunConfig(this.url));
+    await this.#runBoard(runner);
+  }
+
+  // TODO: Allow this to run boards directly.
+  async #runBoard(runner: ReturnType<typeof run>) {
+    if (!(this.#uiRef.value && this.loadInfo)) {
       return;
     }
 
     const ui = this.#uiRef.value;
-    ui.url = this.url;
     ui.load(this.loadInfo);
+    ui.clearMessages();
 
     const currentBoardId = this.#boardId;
+
+    this.status = BreadboardUI.Types.STATUS.RUNNING;
     let lastEventTime = globalThis.performance.now();
-    for await (const result of run(createRunConfig(this.url))) {
+    for await (const result of runner) {
       const runDuration = result.data.timestamp - lastEventTime;
       if (this.#delay !== 0) {
         await new Promise((r) => setTimeout(r, this.#delay));
@@ -378,7 +400,6 @@ export class Main extends LitElement {
         await result.reply({ inputs: answer } as InputResolveRequest);
       }
     }
-
     this.status = BreadboardUI.Types.STATUS.STOPPED;
   }
 
@@ -576,6 +597,54 @@ export class Main extends LitElement {
           .loadInfo=${this.loadInfo}
           .status=${this.status}
           .visualizer=${this.#visualizer}
+          @breadboardedgechange=${(
+            evt: BreadboardUI.Events.EdgeChangeEvent
+          ) => {
+            if (!this.loadInfo || !this.loadInfo.graphDescriptor) {
+              return;
+            }
+
+            if (evt.changeType === "add") {
+              this.loadInfo.graphDescriptor.edges.push({
+                from: evt.from,
+                to: evt.to,
+                out: evt.outPort,
+                in: evt.inPort,
+              });
+            } else {
+              const idx = this.loadInfo.graphDescriptor.edges.findIndex(
+                (edge) => {
+                  return (
+                    edge.from === evt.from &&
+                    edge.to === evt.to &&
+                    edge.in === evt.inPort &&
+                    edge.out === evt.outPort
+                  );
+                }
+              );
+
+              if (idx === -1) {
+                return;
+              }
+
+              this.loadInfo.graphDescriptor.edges.splice(idx, 1);
+            }
+
+            this.#uiRef.value?.requestUpdate();
+            return;
+          }}
+          @breadboardnodecreate=${(
+            evt: BreadboardUI.Events.NodeCreateEvent
+          ) => {
+            const { id, nodeType, configuration } = evt;
+            const newNode = {
+              id,
+              type: nodeType,
+              configuration,
+            };
+            this.loadInfo?.graphDescriptor?.nodes.push(newNode);
+            this.#uiRef.value?.requestUpdate();
+          }}
           @breadboardmessagetraversal=${() => {
             if (this.status !== BreadboardUI.Types.STATUS.RUNNING) {
               return;
@@ -628,11 +697,41 @@ export class Main extends LitElement {
       }
     }
 
+    // Only show the local run button when there is no URL set.
+    const localRunButton = this.url
+      ? nothing
+      : html`<button
+          id="run-board-locally"
+          @click=${async () => {
+            if (
+              !this.loadInfo?.graphDescriptor ||
+              !this.loadInfo.graphDescriptor.url
+            ) {
+              return;
+            }
+
+            const config = createRunConfig(this.loadInfo.graphDescriptor.url);
+            config.remote = false;
+            config.proxy = [];
+
+            // TODO: Allow pre-made runners in the config.
+            // const runner = await BoardRunner.fromGraphDescriptor(
+            //   this.loadInfo.graphDescriptor
+            // );
+            // config.runner = runner;
+
+            this.#runBoard(run(config));
+          }}
+        >
+          Run this board
+        </button>`;
+
     tmpl = html`<div id="header-bar">
         <a id="back" href="/" @click=${this.#unloadCurrentBoard}
           >Back to list</a
         >
         <h1>${this.loadInfo?.title || "Untitled board"}</h1>
+        ${localRunButton}
         <a id="download" @click=${this.#downloadLog}>Download log</a>
       </div>
       <div id="side-bar">

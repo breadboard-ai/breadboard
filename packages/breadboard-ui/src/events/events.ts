@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { type NodeConfiguration } from "@google-labs/breadboard";
+
 export class StartEvent extends Event {
   static eventName = "breadboardstart";
 
@@ -99,6 +101,40 @@ export class ResumeEvent extends Event {
 
   constructor() {
     super(ResumeEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+export class NodeCreateEvent extends Event {
+  static eventName = "breadboardnodecreate";
+
+  constructor(
+    public id: string,
+    public nodeType: string,
+    public configuration: NodeConfiguration
+  ) {
+    super(NodeCreateEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+export class EdgeChangeEvent extends Event {
+  static eventName = "breadboardedgechange";
+
+  constructor(
+    public changeType: "add" | "remove",
+    public from: string,
+    public outPort: string,
+    public to: string,
+    public inPort: string
+  ) {
+    super(EdgeChangeEvent.eventName, {
       bubbles: true,
       cancelable: true,
       composed: true,
