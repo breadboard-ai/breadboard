@@ -164,6 +164,39 @@ def convert_from_json_to_pydantic(name, schema):
       args[k] = v
   return (obj if obj else _parse_type(schema), Field(**args))
 
+class FieldContext(FieldInfo):
+  """Wraps FieldInfo and includes the original Board."""
+  _context: Optional["Board"]
+  inner: FieldInfo
+  def __init__(self, field_info: FieldInfo, context):
+    self.inner = field_info
+    self._context = context
+
+  @property
+  def _attributes_set(self):
+    return self.inner._attributes_set
+  
+  def __eq__(self, other):
+    if isinstance(other, FieldInfo) and not isinstance(other, FieldContext):
+      return self.inner == other
+    if isinstance(other, FieldContext):
+      return self.inner == other.inner
+    return super().__eq__(other)
+  
+  def __hash__(self):
+    key = (self.inner.__hash__, self._context.__hash__)
+    return hash(key)
+ 
+  def __getattr__(self, item):
+    if hasattr(self.inner, item):
+      return getattr(self.inner, item)
+    if item in self.inner._attributes_set:
+      return self.inner._attributes_set[item]
+    if "annotation" in self.inner._attributes_set.keys():
+      if isinstance(self.inner._attributes_set['annotation'], ModelMetaclass):
+        if item in self.inner._attributes_set['annotation'].model_fields.keys():
+          return FieldContext(self.inner._attributes_set['annotation'].model_fields[item], self._context)
+    raise AttributeError(item)
   
 """
 Contains a blob of things. Some can be initialized, some may not.
@@ -245,8 +278,13 @@ def get_field_name(field: FieldInfo, blob):
   for k, v in resolve_dict(blob).items():
     if type(v) == tuple and v[0] == field:
       return k
+    if isinstance(v, FieldContext) and v.inner == field:
+      return k
     if v == field:
       return k
+    if isinstance(v, FieldInfo) and "annotation" in v._attributes_set:
+      if isinstance(v._attributes_set["annotation"], ModelMetaclass):
+        return get_field_name(field, v._attributes_set["annotation"].model_fields)
   # TODO: FOr wildcard matching, just look for name in fieldinfo.
   if "name" in field._attributes_set:
     return field._attributes_set["name"]
@@ -325,15 +363,16 @@ class Board(Generic[T, S]):
 
   def __getattr__(self, name):
     if name == "_ImportedClass__package_name":
+      raise AttributeError(name)
       return super().__getattr__(name)
     if name in self.output:
       v = self.output[name]
     elif "*" in self.output: # when this Board outputs wildcard.
-      v = (FieldInfo(name=name), self)
+      v = FieldContext(FieldInfo(name=name), self)
     else:
-      raise AttributeError()
-    if isinstance(v, FieldInfo):
-      return (v, self)
+      raise AttributeError(f"Unable to find attribute `{name}` in {self}")
+    if isinstance(v, FieldInfo) and not isinstance(v, FieldContext):
+      return FieldContext(v, self)
     return v
 
   def __load__(self):
@@ -342,9 +381,12 @@ class Board(Generic[T, S]):
     self.loaded = True
     self.edges = []
     input_values = {}
+
     for k, v in self.input_schema.model_fields.items():
       if isinstance(v, FieldInfo):
-        v = (v, self)
+        v = FieldContext(v, self)
+      else:
+        raise Exception("Unexpected model_field. No FieldInfo")
       input_values[k] = v
     self.inputs = self.inputs | input_values
     inputs = AttrDict(self.inputs)
@@ -366,7 +408,7 @@ class Board(Generic[T, S]):
   def get_configuration(self):
     # Filter out anything that's not a reference to another Board, field, or AttrDict.
     # get resolved inputs
-    config = {k: v  for k, v in self._get_resolved_inputs().items() if not isinstance(v, Tuple) and not isinstance(v, Board) and not isinstance(v, dict)}
+    config = {k: v  for k, v in self._get_resolved_inputs().items() if not isinstance(v, FieldContext) and not isinstance(v, Board) and not isinstance(v, dict)}
     if self.input_schema:
       if "schema" in config:
         raise Exception(f"Already have 'schema' key populated in config. This is a reserved field name. Config: {config}")
@@ -456,9 +498,9 @@ class Board(Generic[T, S]):
 
       elif isinstance(component, AttrDict):
         inputs = component
-      elif isinstance(component, Tuple):
+      elif isinstance(component, FieldContext):
         #print("Encountered fieldinfo while iterating components.")
-        nodes.extend(iterate_component(component[1].id, component[1]))
+        nodes.extend(iterate_component(component._context.id, component._context))
         return nodes
       else:
         raise Exception("Unexpected component type.")
@@ -485,26 +527,26 @@ class Board(Generic[T, S]):
         inputs = component.inputs
       elif isinstance(component, AttrDict):
         inputs = component
-      elif isinstance(component, Tuple):
+      elif isinstance(component, FieldContext):
         #print("Encountered fieldinfo while iterating component edges")
-        if component[1] == self:
+        if component._context == self:
           edge = {
-            "from": component[1].get_or_assign_id(required=True),
+            "from": component._context.get_or_assign_id(required=True),
             # TODO: Check if this should actually ahppen
-            "to": get_field_name(component[0], {}),
-            "out": get_field_name(component[0], {}),
+            "to": get_field_name(component, {}),
+            "out": get_field_name(component, {}),
             "in": name,
           }
         else:
           edge = {
-            "from": component[1].get_or_assign_id(required=True),
+            "from": component._context.get_or_assign_id(required=True),
             # TODO: This seems wrong way to determine "to".
-            "to": get_field_name(component[0], component[1].output),
-            "out": get_field_name(component[0], component[1].output),
+            "to": get_field_name(component, component._context.output),
+            "out": get_field_name(component, component._context.output),
             "in": name,
           }
         edges.append(edge)
-        edges.extend(iterate_component_edges(component[1].id, component[1]))
+        edges.extend(iterate_component_edges(component._context.id, component._context))
         return edges
       else:
         raise Exception("Unexpected component type.")
@@ -518,21 +560,21 @@ class Board(Generic[T, S]):
           }
           edges.append(edge)
           edges.extend(iterate_component_edges(k, v, assign_name=False))
-        elif isinstance(v, Tuple):
+        elif isinstance(v, FieldContext):
           # TODO: Specifically for input, the "from" should be the input node, not from parent Board.
-          if v[1] == self:
+          if v._context == self:
             edge = {
-              "from": v[1].get_or_assign_id(required=True),
+              "from": v._context.get_or_assign_id(required=True),
               "to": component.get_or_assign_id(required=True),
-              "out": get_field_name(v[0], self.inputs),
+              "out": get_field_name(v, self.inputs),
               "in": k,
             }
           else:
             edge = {
-              "from": v[1].get_or_assign_id(required=True),
+              "from": v._context.get_or_assign_id(required=True),
               # TODO: This is a hacky way to determine node id. AttrDict should be assigned the id.
               "to": component.get_or_assign_id(required=True) if isinstance(component, Board) else name,
-              "out": get_field_name(v[0], v[1].output),
+              "out": get_field_name(v, v._context.output),
               "in": k,
             }
           edges.append(edge)
@@ -594,6 +636,5 @@ class Board(Generic[T, S]):
     pass
 
 
-FieldContext: TypeAlias = Tuple[FieldInfo, Optional[Board]]
 
 
