@@ -37,9 +37,9 @@ export type InspectableNode = {
    */
   isExit(): boolean;
   /**
-   * Returns true if the node represents a subgraph
+   * Returns true if the node contains a subgraph
    */
-  isSubgraph(): boolean;
+  containsGraph(): boolean;
   /**
    * Returns an inspectable subgraph, if one is present or `undefined`
    * otherwise

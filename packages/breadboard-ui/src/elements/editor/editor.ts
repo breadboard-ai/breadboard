@@ -415,7 +415,7 @@ export class Editor extends LitElement {
       this.#nodeIdToGraphIndex.set(node.descriptor.id, graphNode.id);
       this.#graphIndexToNodeIndex.set(graphNode.id, i);
 
-      if (node.isSubgraph()) {
+      if (node.containsGraph()) {
         if (!descriptor.url) {
           console.warn("Descriptor does not have a URL");
           break;
