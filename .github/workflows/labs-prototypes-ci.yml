@@ -10,8 +10,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        node-version: [20.x]
+        node-version:
+          - 18.x
+          - 19.x
+          - 20.x
+          - 21.x
         python-version: [3.11]
 
     steps:
@@ -37,6 +42,9 @@ jobs:
 
       - name: Checking the code quality
         run: npm run lint
+
+      - name: Check Syncpack
+        run: npm run syncpack:check
 
       - name: Checking the code formatting
         run: npm run check:format

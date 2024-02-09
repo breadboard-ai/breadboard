@@ -96,13 +96,13 @@
     "@ava/typescript": "^4.0.0",
     "@typescript-eslint/eslint-plugin": "^6.20.0",
     "@typescript-eslint/parser": "^6.20.0",
-    "@types/node": "^18.16.3",
+    "@types/node": "^20.11.5",
     "ava": "^5.2.0",
-    "typescript": "^5.0.4",
+    "typescript": "^5.3.3",
     "@google-labs/tsconfig": "^0.0.1"
   },
   "dependencies": {
-    "@google-labs/breadboard": "^0.10.0",
+    "@google-labs/breadboard": "^0.10.1",
     "@google-labs/palm-lite": "^0.0.3"
   }
 }
