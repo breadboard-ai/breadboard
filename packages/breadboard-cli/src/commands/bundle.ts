@@ -12,7 +12,7 @@ import readline from "readline/promises";
 
 export async function bundle(board: string, flags: { output: string }) {
   let breadboardWebPublic;
-  if (import.meta.resolve) {
+  if (typeof import.meta.resolve === 'function') {
     const publicPath = await import.meta.resolve(
       "@google-labs/breadboard-web/public"
     );
