@@ -482,7 +482,10 @@ export class UI extends LitElement {
         break;
 
       case "editor":
-        diagram = html`<bb-editor ${ref(this.#diagram)}></bb-editor>`;
+        diagram = html`<bb-editor
+          .loadInfo=${this.loadInfo}
+          ${ref(this.#diagram)}
+        ></bb-editor>`;
         break;
 
       default:

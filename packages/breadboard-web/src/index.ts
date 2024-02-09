@@ -14,7 +14,9 @@ import { InputResolveRequest } from "@google-labs/breadboard/remote";
 import { Board, GraphDescriptor } from "@google-labs/breadboard";
 import { cache } from "lit/directives/cache.js";
 
-export const getBoardInfo = async (url: string) => {
+export const getBoardInfo = async (
+  url: string
+): Promise<BreadboardUI.Types.LoadArgs> => {
   const runner = await Board.load(url, { base: new URL(window.location.href) });
 
   const { title, description, version } = runner;
@@ -272,6 +274,8 @@ export class Main extends LitElement {
     this.embed = currentUrl.searchParams.get("embed") !== null;
     if (boardFromUrl) {
       this.#onStartBoard(new BreadboardUI.Events.StartEvent(boardFromUrl));
+    } else if (modeFromUrl === MODE.BUILD) {
+      this.#createBlankBoard();
     }
 
     const visualizer = currentUrl.searchParams.get("visualizer");
@@ -539,11 +543,18 @@ export class Main extends LitElement {
     );
   }
 
+  async #createBlankBoard() {
+    this.loadInfo = await getBoardInfo("/graphs/blank.json");
+    this.loadInfo.title = "New board";
+    this.mode = MODE.BUILD;
+    this.#visualizer = "editor";
+    this.#setActiveVisualizer(this.#visualizer);
+  }
+
   render() {
     if (this.mode === MODE.LIST) {
       return html`<header>
           <a href="/"><h1 id="title">Breadboard Playground</h1></a>
-          <a href="?mode=build&visualizer=editor" id="new-board">New board</a>
         </header>
         <bb-board-list
           @breadboardstart=${this.#onStartBoard}
