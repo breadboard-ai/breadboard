@@ -72,6 +72,9 @@ export class Editor extends LitElement {
   @property()
   edgeCount = 0;
 
+  @property()
+  editable = false;
+
   @state()
   activeNode: InspectableNode | null = null;
 
@@ -756,6 +759,10 @@ export class Editor extends LitElement {
 
   // TODO: Find a better way of getting the defaults for any given node.
   #getNodeMenu() {
+    if (!this.editable) {
+      return nothing;
+    }
+
     const items = new Map<string, NodeConfiguration>();
     items.set("invoke", { path: "gemini-generator.json" });
     items.set("input", {
