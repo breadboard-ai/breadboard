@@ -38,7 +38,7 @@ export default await board(({ paragraph }) => {
     $id: "abbreviate",
     context: improve.context,
     instruction:
-      "Make the improved summary even shorter, while keeping the most important details.",
+      "Make the improved summary even shorter, while keeping the most important details. Remove any headings or other formatting that is not needed. Make it just a simple paragraph of text.",
   });
   return { context: abbreviate.context, text: abbreviate.text };
 }).serialize({

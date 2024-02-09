@@ -68,21 +68,21 @@
       "id": "abbreviate",
       "type": "worker",
       "configuration": {
-        "instruction": "Make the improved summary even shorter, while keeping the most important details."
+        "instruction": "Make the improved summary even shorter, while keeping the most important details. Remove any headings or other formatting that is not needed. Make it just a simple paragraph of text."
       }
     },
     {
       "id": "improve",
       "type": "worker",
       "configuration": {
-        "instruction": "Use the identified areas of improvement to come up with an even better summary than the one before. Use your best elite skills as the writer."
+        "instruction": "Use the identified areas of improvement to come up with an even better summary than the one before."
       }
     },
     {
       "id": "critique",
       "type": "worker",
       "configuration": {
-        "instruction": "Now, put your critiquing hat on. Compare the summary with the original text and identify three areas of improvement. What is missing? What could be better phrased? What could be removed?"
+        "instruction": "You are a reviewer of summaries produced from patent applications. Compare the summary with the original text and identify three areas of improvement. What is missing? What could be better phrased? What could be removed? Is there any technical jargon that could be replaced with simpler terms?"
       }
     },
     {
