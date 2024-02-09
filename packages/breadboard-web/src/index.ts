@@ -11,7 +11,7 @@ import { customElement, property, state } from "lit/decorators.js";
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import * as BreadboardUI from "@google-labs/breadboard-ui";
 import { InputResolveRequest } from "@google-labs/breadboard/remote";
-import { Board, BoardRunner, GraphDescriptor } from "@google-labs/breadboard";
+import { Board, GraphDescriptor } from "@google-labs/breadboard";
 import { cache } from "lit/directives/cache.js";
 
 export const getBoardInfo = async (
