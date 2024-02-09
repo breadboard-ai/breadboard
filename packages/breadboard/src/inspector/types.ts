@@ -114,6 +114,10 @@ export type InspectableGraph = {
    */
   nodesByType(type: NodeTypeIdentifier): InspectableNode[];
   /**
+   * Describe a given type of the node
+   */
+  describeType(type: NodeTypeIdentifier): Promise<NodeDescriberResult>;
+  /**
    * Returns the nodes that have an edge to the node with the given id.
    * @param id id of the node to find incoming nodes for
    */

@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { handlersFromKits } from "../handler.js";
 import { combineSchemas } from "../schema.js";
 import {
   GraphDescriptor,
@@ -24,6 +25,13 @@ export const inspectableGraph = (
   options?: InspectableGraphOptions
 ): InspectableGraph => {
   return new Graph(graph, options);
+};
+
+const emptyDescriberResult = async (): Promise<NodeDescriberResult> => {
+  return {
+    inputSchema: {},
+    outputSchema: {},
+  };
 };
 
 class Graph implements InspectableGraph {
@@ -58,6 +66,15 @@ class Graph implements InspectableGraph {
 
   nodesByType(type: NodeTypeIdentifier): InspectableNode[] {
     return this.#typeMap.get(type) || [];
+  }
+
+  async describeType(type: NodeTypeIdentifier): Promise<NodeDescriberResult> {
+    const { kits } = this.#options;
+    const handler = handlersFromKits(kits || [])[type];
+    if (!handler || typeof handler === "function" || !handler.describe) {
+      return emptyDescriberResult();
+    }
+    return handler.describe();
   }
 
   nodeById(id: NodeIdentifier) {

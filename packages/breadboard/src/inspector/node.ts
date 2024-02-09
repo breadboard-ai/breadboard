@@ -98,7 +98,7 @@ class Node implements InspectableNode {
     if (this.descriptor.type === "output") {
       return this.#createOutputSchema();
     }
-    throw new Error("Not yet implemented");
+    return this.#graph.describeType(this.descriptor.type);
   }
 
   #createInputSchema(): NodeDescriberResult {
