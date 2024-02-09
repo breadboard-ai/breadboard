@@ -22,6 +22,7 @@ import {
   InspectableNode,
   NodeConfiguration,
   Edge,
+  Kit,
 } from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import * as LG from "litegraph.js";
@@ -65,6 +66,9 @@ const DATA_TYPE = "application/json";
 export class Editor extends LitElement {
   @property()
   loadInfo: LoadArgs | null = null;
+
+  @property()
+  kits: Kit[] = [];
 
   @property()
   nodeCount = 0;
@@ -398,7 +402,7 @@ export class Editor extends LitElement {
     let x = BASE_X;
     const y = this.#height / 2;
 
-    const breadboardGraph = inspectableGraph(descriptor);
+    const breadboardGraph = inspectableGraph(descriptor, { kits: this.kits });
     this.#nodes = breadboardGraph.nodes();
 
     // Create nodes first.

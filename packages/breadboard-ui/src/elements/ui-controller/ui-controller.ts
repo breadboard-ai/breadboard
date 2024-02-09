@@ -21,6 +21,7 @@ import {
 } from "@google-labs/breadboard/harness";
 import { ClientRunResult } from "@google-labs/breadboard/remote";
 import {
+  Kit,
   NodeConfiguration,
   NodeDescriptor,
   NodeEndProbeMessage,
@@ -74,6 +75,9 @@ type DiagramElement = HTMLElement & {
 export class UI extends LitElement {
   @property()
   loadInfo: LoadArgs | null = null;
+
+  @property()
+  kits: Kit[] = [];
 
   @property({ reflect: true })
   url: string | null = "";
@@ -489,6 +493,7 @@ export class UI extends LitElement {
         diagram = html`<bb-editor
           .editable=${this.url === null}
           .loadInfo=${this.loadInfo}
+          .kits=${this.kits}
           .nodeCount=${this.loadInfo?.graphDescriptor?.nodes.length || 0}
           .edgeCount=${this.loadInfo?.graphDescriptor?.edges.length || 0}
           ${ref(this.#diagram)}

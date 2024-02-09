@@ -6,6 +6,7 @@
 
 import {
   GraphDescriptor,
+  Kit,
   NodeConfiguration,
   NodeDescriberResult,
   NodeDescriptor,
@@ -145,3 +146,14 @@ export type InspectableGraphLoader = (
    */
   loadingGraph: GraphDescriptor
 ) => Promise<InspectableGraph | undefined>;
+
+/**
+ * Options to supply to the `inspectableGraph` function.
+ */
+export type InspectableGraphOptions = {
+  /**
+   * Optional, a list of kits to use when inspecting the graph. If not
+   * supplied, the graph will be inspected without any kits.
+   */
+  kits?: Kit[];
+};

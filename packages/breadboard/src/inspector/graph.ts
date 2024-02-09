@@ -12,10 +12,18 @@ import {
   NodeTypeIdentifier,
 } from "../types.js";
 import { inspectableNode } from "./node.js";
-import { InspectableEdge, InspectableGraph, InspectableNode } from "./types.js";
+import {
+  InspectableEdge,
+  InspectableGraph,
+  InspectableGraphOptions,
+  InspectableNode,
+} from "./types.js";
 
-export const inspectableGraph = (graph: GraphDescriptor): InspectableGraph => {
-  return new Graph(graph);
+export const inspectableGraph = (
+  graph: GraphDescriptor,
+  options?: InspectableGraphOptions
+): InspectableGraph => {
+  return new Graph(graph, options);
 };
 
 class Graph implements InspectableGraph {
@@ -24,9 +32,11 @@ class Graph implements InspectableGraph {
   #nodeMap: Map<NodeIdentifier, InspectableNode>;
   #typeMap: Map<NodeTypeIdentifier, InspectableNode[]> = new Map();
   #entries?: InspectableNode[];
+  #options: InspectableGraphOptions;
 
-  constructor(graph: GraphDescriptor) {
+  constructor(graph: GraphDescriptor, options?: InspectableGraphOptions) {
     this.#graph = graph;
+    this.#options = options || {};
     this.#nodes = this.#graph.nodes.map((node) => inspectableNode(node, this));
     this.#nodeMap = new Map(
       this.#nodes.map((node) => [node.descriptor.id, node])
