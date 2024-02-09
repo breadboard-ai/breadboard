@@ -5,7 +5,7 @@
  */
 
 import { handlersFromKits } from "../handler.js";
-import { SchemaBuilder, combineSchemas } from "../schema.js";
+import { combineSchemas } from "../schema.js";
 import {
   GraphDescriptor,
   NodeDescriberResult,
@@ -89,9 +89,6 @@ class Graph implements InspectableGraph {
     const handler = handlersFromKits(kits || [])[type];
     if (!handler || typeof handler === "function" || !handler.describe) {
       return emptyDescriberResult();
-    }
-    if (type === "promptTemplate") {
-      console.log("promptTemplate", edgesToSchema(options?.incoming));
     }
     return handler.describe(
       options?.inputs || undefined,
