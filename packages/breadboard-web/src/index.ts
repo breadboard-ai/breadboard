@@ -11,7 +11,7 @@ import { customElement, property, state } from "lit/decorators.js";
 import { LitElement, html, css, HTMLTemplateResult, nothing } from "lit";
 import * as BreadboardUI from "@google-labs/breadboard-ui";
 import { InputResolveRequest } from "@google-labs/breadboard/remote";
-import { Board, GraphDescriptor } from "@google-labs/breadboard";
+import { Board, BoardRunner, GraphDescriptor } from "@google-labs/breadboard";
 import { cache } from "lit/directives/cache.js";
 
 export const getBoardInfo = async (
@@ -710,15 +710,14 @@ export class Main extends LitElement {
               return;
             }
 
+            const runner = await BoardRunner.fromGraphDescriptor(
+              this.loadInfo.graphDescriptor
+            );
+
             const config = createRunConfig(this.loadInfo.graphDescriptor.url);
             config.remote = false;
             config.proxy = [];
-
-            // TODO: Allow pre-made runners in the config.
-            // const runner = await BoardRunner.fromGraphDescriptor(
-            //   this.loadInfo.graphDescriptor
-            // );
-            // config.runner = runner;
+            config.runner = runner;
 
             this.#runBoard(run(config));
           }}

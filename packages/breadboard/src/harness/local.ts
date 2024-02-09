@@ -87,7 +87,7 @@ const errorResult = (error: string) => {
 export async function* runLocally(config: RunConfig, kits: Kit[]) {
   yield* asyncGen<HarnessRunResult>(async (next) => {
     const base = baseURL(config);
-    const runner = await Board.load(config.url, { base });
+    const runner = config.runner || (await Board.load(config.url, { base }));
 
     try {
       const probe = config.diagnostics

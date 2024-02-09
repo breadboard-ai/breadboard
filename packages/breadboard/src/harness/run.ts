@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Kit, asyncGen } from "../index.js";
+import { BreadboardRunner, Kit, asyncGen } from "../index.js";
 import { NodeProxyConfig } from "../remote/config.js";
 import { HTTPClientTransport } from "../remote/http.js";
 import { ProxyClient } from "../remote/proxy.js";
@@ -70,6 +70,11 @@ export type RunConfig = {
    * Defaults to `false`.
    */
   diagnostics?: boolean;
+  /**
+   * Specifies a runner to use. This can be used instead of loading a board
+   * from a URL.
+   */
+  runner?: BreadboardRunner;
 };
 
 const configureKits = (config: RunConfig) => {
