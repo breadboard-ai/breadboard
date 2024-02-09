@@ -11,9 +11,14 @@ import {
   NodeDescriberResult,
   NodeIdentifier,
   NodeTypeIdentifier,
-  Schema,
 } from "../types.js";
 import { inspectableNode } from "./node.js";
+import {
+  createInputSchema,
+  createOutputSchema,
+  edgesToSchema,
+  emptyDescriberResult,
+} from "./schemas.js";
 import {
   InspectableEdge,
   InspectableGraph,
@@ -27,24 +32,6 @@ export const inspectableGraph = (
   options?: InspectableGraphOptions
 ): InspectableGraph => {
   return new Graph(graph, options);
-};
-
-const emptyDescriberResult = async (): Promise<NodeDescriberResult> => {
-  return {
-    inputSchema: {},
-    outputSchema: {},
-  };
-};
-
-const edgesToSchema = (edges?: InspectableEdge[]): Schema => {
-  if (!edges) return {};
-  return {
-    type: "object",
-    properties: edges.reduce((acc, edge) => {
-      acc[edge.out] = { type: "string" };
-      return acc;
-    }, {} as Record<string, Schema>),
-  };
 };
 
 class Graph implements InspectableGraph {
@@ -85,6 +72,15 @@ class Graph implements InspectableGraph {
     type: NodeTypeIdentifier,
     options: NodeTypeDescriberOptions = {}
   ): Promise<NodeDescriberResult> {
+    // The schema of an input or an output is defined by their
+    // configuration schema or their incoming/outgoing edges.
+    if (type === "input") {
+      return createInputSchema(options);
+    }
+    if (type === "output") {
+      return createOutputSchema(options);
+    }
+
     const { kits } = this.#options;
     const handler = handlersFromKits(kits || [])[type];
     if (!handler || typeof handler === "function" || !handler.describe) {
@@ -148,7 +144,7 @@ class Graph implements InspectableGraph {
           .filter((n) => n.isEntry())
           .map((input) => input.describe())
       )
-    ).map((result) => result.inputSchema);
+    ).map((result) => result.outputSchema);
 
     const outputSchemas = (
       await Promise.all(
@@ -156,7 +152,7 @@ class Graph implements InspectableGraph {
           .filter((n) => n.isExit())
           .map((output) => output.describe())
       )
-    ).map((result) => result.outputSchema);
+    ).map((result) => result.inputSchema);
 
     return {
       inputSchema: combineSchemas(inputSchemas),

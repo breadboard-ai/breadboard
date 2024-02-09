@@ -434,40 +434,14 @@ export class Editor extends LitElement {
         addIOtoNode(graphNode, "input", inputSchema.properties);
         addIOtoNode(graphNode, "output", outputSchema.properties);
       } else {
-        // TODO: Eliminate this switch altogether and use "describe" for all
-        // nodes.
-        switch (node.descriptor.type) {
-          case "output":
-          case "input": {
-            if (
-              !node.descriptor.configuration ||
-              !node.descriptor.configuration.schema
-            ) {
-              console.warn("Unable to render node with no configuration");
-              break;
-            }
-
-            const schema = node.descriptor.configuration.schema as Schema;
-            const schemaType =
-              node.descriptor.type === "input" ? "output" : "input";
-            addIOtoNode(graphNode, schemaType, schema.properties);
-            break;
-          }
-
-          default: {
-            const describerResult = await node.describe(node.configuration());
-            addIOtoNode(
-              graphNode,
-              "input",
-              describerResult.inputSchema.properties
-            );
-            addIOtoNode(
-              graphNode,
-              "output",
-              describerResult.outputSchema.properties
-            );
-            break;
-          }
+        const describerResult = await node.describe();
+        const inputs = describerResult.inputSchema.properties;
+        if (inputs) {
+          addIOtoNode(graphNode, "input", inputs);
+        }
+        const outputs = describerResult.outputSchema.properties;
+        if (outputs) {
+          addIOtoNode(graphNode, "output", outputs);
         }
       }
 

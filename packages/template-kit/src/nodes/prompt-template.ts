@@ -100,8 +100,13 @@ export const promptTemplateDescriber: NodeDescriberFunction = async (
             "The resulting prompt that was produced by filling in the placeholders in the template.",
           type: "string",
         },
+        text: {
+          title: "text",
+          description:
+            "The resulting prompt that was produced by filling in the placeholders in the template.",
+          type: "string",
+        },
       },
-      required: ["prompt"],
     },
   };
 };
