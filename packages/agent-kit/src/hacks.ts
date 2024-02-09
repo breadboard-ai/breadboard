@@ -24,14 +24,36 @@ export const workerDescriber: NodeDescriberFunction = async (
     inputSchema: {
       type: "object",
       properties: {
-        foo: {
+        context: {
           type: "string",
-          title: "Foo",
-          description: "The foo input",
+          title: "Context",
+          description: "The context to use for the worker",
+        },
+        instruction: {
+          type: "string",
+          title: "Instruction",
+          description:
+            "The instruction we want to give to the worker so that shapes its character and orients it a bit toward the task we want to give it.",
         },
       },
     },
-    outputSchema: {},
+    outputSchema: {
+      type: "object",
+      properties: {
+        context: {
+          type: "string",
+          title: "Context",
+          description:
+            "The context after generation. Pass this to the next agent when chaining them together.",
+        },
+        text: {
+          type: "string",
+          title: "Text",
+          description:
+            "The output from the agent. Use this to just get the output without any previous context.",
+        },
+      },
+    },
   };
 };
 

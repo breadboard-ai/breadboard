@@ -450,6 +450,22 @@ export class Editor extends LitElement {
             break;
           }
 
+          // TODO: Make this generic for any type of node.
+          case "worker": {
+            const describerResult = await node.describe();
+            addIOtoNode(
+              graphNode,
+              "input",
+              describerResult.inputSchema.properties
+            );
+            addIOtoNode(
+              graphNode,
+              "output",
+              describerResult.outputSchema.properties
+            );
+            break;
+          }
+
           case "output":
           case "input": {
             if (
