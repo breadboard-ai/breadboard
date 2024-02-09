@@ -6,6 +6,7 @@
 
 import {
   GraphDescriptor,
+  InputValues,
   NodeConfiguration,
   NodeDescriberResult,
   NodeDescriptor,
@@ -89,7 +90,7 @@ class Node implements InspectableNode {
     return this.descriptor.configuration || {};
   }
 
-  async describe(): Promise<NodeDescriberResult> {
+  async describe(inputs?: InputValues): Promise<NodeDescriberResult> {
     // The schema of an input or an output is defined by their
     // configuration schema or their incoming/outgoing edges.
     if (this.descriptor.type === "input") {
@@ -98,7 +99,11 @@ class Node implements InspectableNode {
     if (this.descriptor.type === "output") {
       return this.#createOutputSchema();
     }
-    return this.#graph.describeType(this.descriptor.type);
+    return this.#graph.describeType(this.descriptor.type, {
+      inputs,
+      incoming: this.incoming(),
+      outgoing: this.outgoing(),
+    });
   }
 
   #createInputSchema(): NodeDescriberResult {

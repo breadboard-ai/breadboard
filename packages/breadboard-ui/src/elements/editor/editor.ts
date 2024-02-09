@@ -434,38 +434,9 @@ export class Editor extends LitElement {
         addIOtoNode(graphNode, "input", inputSchema.properties);
         addIOtoNode(graphNode, "output", outputSchema.properties);
       } else {
+        // TODO: Eliminate this switch altogether and use "describe" for all
+        // nodes.
         switch (node.descriptor.type) {
-          case "fetch": {
-            addIOtoNode(graphNode, "input", { url: { type: "string" } });
-            addIOtoNode(graphNode, "output", { response: { type: "string" } });
-            break;
-          }
-
-          case "jsonata": {
-            addIOtoNode(graphNode, "input", {
-              json: { type: "object" },
-              expression: { type: "string" },
-              raw: { type: "boolean" },
-            });
-            break;
-          }
-
-          // TODO: Make this generic for any type of node.
-          case "worker": {
-            const describerResult = await node.describe();
-            addIOtoNode(
-              graphNode,
-              "input",
-              describerResult.inputSchema.properties
-            );
-            addIOtoNode(
-              graphNode,
-              "output",
-              describerResult.outputSchema.properties
-            );
-            break;
-          }
-
           case "output":
           case "input": {
             if (
@@ -480,6 +451,21 @@ export class Editor extends LitElement {
             const schemaType =
               node.descriptor.type === "input" ? "output" : "input";
             addIOtoNode(graphNode, schemaType, schema.properties);
+            break;
+          }
+
+          default: {
+            const describerResult = await node.describe(node.configuration());
+            addIOtoNode(
+              graphNode,
+              "input",
+              describerResult.inputSchema.properties
+            );
+            addIOtoNode(
+              graphNode,
+              "output",
+              describerResult.outputSchema.properties
+            );
             break;
           }
         }

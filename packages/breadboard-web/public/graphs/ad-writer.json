@@ -24,7 +24,7 @@
     {
       "from": "promptTemplate-4",
       "to": "adWriter2",
-      "out": "text",
+      "out": "prompt",
       "in": "text"
     },
     {

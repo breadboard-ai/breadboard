@@ -106,7 +106,7 @@ export default await board(({ text }) => {
 
       {{requirements}}`,
       requirements: contextRestart.result,
-    }),
+    }).prompt,
     schema: adSchema,
   });
 

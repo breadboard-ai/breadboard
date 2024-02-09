@@ -5,12 +5,13 @@
  */
 
 import { handlersFromKits } from "../handler.js";
-import { combineSchemas } from "../schema.js";
+import { SchemaBuilder, combineSchemas } from "../schema.js";
 import {
   GraphDescriptor,
   NodeDescriberResult,
   NodeIdentifier,
   NodeTypeIdentifier,
+  Schema,
 } from "../types.js";
 import { inspectableNode } from "./node.js";
 import {
@@ -18,6 +19,7 @@ import {
   InspectableGraph,
   InspectableGraphOptions,
   InspectableNode,
+  NodeTypeDescriberOptions,
 } from "./types.js";
 
 export const inspectableGraph = (
@@ -31,6 +33,17 @@ const emptyDescriberResult = async (): Promise<NodeDescriberResult> => {
   return {
     inputSchema: {},
     outputSchema: {},
+  };
+};
+
+const edgesToSchema = (edges?: InspectableEdge[]): Schema => {
+  if (!edges) return {};
+  return {
+    type: "object",
+    properties: edges.reduce((acc, edge) => {
+      acc[edge.out] = { type: "string" };
+      return acc;
+    }, {} as Record<string, Schema>),
   };
 };
 
@@ -68,13 +81,23 @@ class Graph implements InspectableGraph {
     return this.#typeMap.get(type) || [];
   }
 
-  async describeType(type: NodeTypeIdentifier): Promise<NodeDescriberResult> {
+  async describeType(
+    type: NodeTypeIdentifier,
+    options: NodeTypeDescriberOptions = {}
+  ): Promise<NodeDescriberResult> {
     const { kits } = this.#options;
     const handler = handlersFromKits(kits || [])[type];
     if (!handler || typeof handler === "function" || !handler.describe) {
       return emptyDescriberResult();
     }
-    return handler.describe();
+    if (type === "promptTemplate") {
+      console.log("promptTemplate", edgesToSchema(options?.incoming));
+    }
+    return handler.describe(
+      options?.inputs || undefined,
+      edgesToSchema(options?.incoming),
+      edgesToSchema(options?.outgoing)
+    );
   }
 
   nodeById(id: NodeIdentifier) {

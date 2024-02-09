@@ -94,14 +94,14 @@ export const promptTemplateDescriber: NodeDescriberFunction = async (
     outputSchema: {
       type: "object",
       properties: {
-        text: {
+        prompt: {
           title: "prompt",
           description:
             "The resulting prompt that was produced by filling in the placeholders in the template.",
           type: "string",
         },
       },
-      required: ["text"],
+      required: ["prompt"],
     },
   };
 };
