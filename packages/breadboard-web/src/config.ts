@@ -10,6 +10,7 @@ import {
   HarnessRemoteConfig,
   KitConfig,
   defineServeConfig,
+  RunConfig,
 } from "@google-labs/breadboard/harness";
 import Core from "@google-labs/core-kit";
 import JSONKit from "@google-labs/json-kit";
@@ -55,7 +56,7 @@ const kits = [
   AgentKit,
 ].map((kitConstructor) => asRuntimeKit(kitConstructor));
 
-export const createRunConfig = (url: string) => {
+export const createRunConfig = (url: string): RunConfig => {
   const harness =
     globalThis.localStorage.getItem(HARNESS_SWITCH_KEY) ?? DEFAULT_HARNESS;
 
@@ -74,7 +75,7 @@ export const createRunConfig = (url: string) => {
     url: WORKER_URL,
   };
   const diagnostics = true;
-  return { url, kits, remote, proxy, diagnostics };
+  return { url, kits, remote, proxy, diagnostics, runner: undefined };
 };
 
 export const serveConfig = defineServeConfig({

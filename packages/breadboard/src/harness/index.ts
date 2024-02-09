@@ -11,6 +11,7 @@ export {
   run,
   type HarnessProxyConfig,
   type HarnessRemoteConfig,
+  type RunConfig,
 } from "./run.js";
 
 export type * from "./serve.js";
