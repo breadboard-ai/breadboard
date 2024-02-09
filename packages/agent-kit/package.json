@@ -20,7 +20,7 @@
   },
   "wireit": {
     "dev": {
-      "command": "breadboard debug src/boards --watch -n",
+      "command": "breadboard debug src/boards --watch",
       "dependencies": [
         "build",
         "../breadboard-cli:build"
