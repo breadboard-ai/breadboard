@@ -74,3 +74,24 @@ You can also pass in your own input with the `-i` flag: `npx breadboard run pack
 If your board has kits, then you can pass in the kit name with the `--kit` flag (specify --kit for each kit you want to use)
 
 `npx breadboard run boards/news.json -i "{\"topic\": \"Paul Kinlan\"}" --kit "@google-labs/core-kit"`
+
+### Proxy
+
+`npx breadboard proxy` - Starts a proxy server that will allow your boards to defer some of their execution to this proxy server. This is useful for when you want to run a board that requires a secret or a token that you don't want to expose in the board file, or if the processing is too complex for the current host.
+
+`npx breadboard proxy --kit @google-labs/core-kit --proxy-node fetch --port 3000` - Starts a proxy server that will allow your boards to the `fetch` (as defined in `core-kit`) to defer some of their execution to this server.
+
+You can then run the board with `npx breadboard run`. For example to run the RSS fetch board you can run `npx breadboard run boards/components/fetch-rss/index.js --proxy http://localhost:3000/ --proxy-node fetch --kit=@google-labs/core-kit --kit @google-labs/json-kit`. This will run the board and defer the `fetch` node to the proxy server.
+
+#### Config file
+
+You can also use a config file to define the proxy server. The config file is a JSON file that looks like this:
+
+```json
+{
+  "kit": ["@google-labs/core-kit"],
+  "proxy": ["fetch"]
+}
+```
+
+This also allows you to define more complex proxy nodes, such as Secrets tunnelling.

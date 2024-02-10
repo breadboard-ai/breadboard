@@ -24,7 +24,7 @@ const urlSchema = {
       description: "The URL of the RSS feed to fetch.",
     },
   },
-  required: ["text"],
+  required: ["url"],
 };
 
 export default await board(() => {

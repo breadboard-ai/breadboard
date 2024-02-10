@@ -24,7 +24,6 @@ const urlSchema = {
       description: "The URL of the ATOM feed to fetch.",
     },
   },
-  required: ["text"],
 };
 
 export default await board(() => {

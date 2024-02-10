@@ -14,6 +14,7 @@ import { makeGraph } from "./commands/make-graph.js";
 import { run } from "./commands/run.js";
 import { importGraph } from "./commands/import.js";
 import { bundle } from "./commands/bundle.js";
+import { proxy } from "./commands/proxy.js";
 
 import { program } from "commander";
 import path from "path";
@@ -89,6 +90,23 @@ program
   .action(mermaid);
 
 program
+  .command("proxy")
+  .description("Starts a proxy server.")
+  .option("-c, --config <config>", "The path to the proxy configuration file.")
+  .option(
+    "-d, --dist <dist>",
+    "The directory to serve for HTTP GET requests",
+    process.cwd()
+  )
+  .option("-k, --kit <kit...>", "The kit to use.")
+  .option("-p, --port <port>", "The port to serve on.", "8080")
+  .option(
+    "-x, --proxy-node <node...>",
+    "A node that will be passed to the breadboard proxy."
+  )
+  .action(proxy);
+
+program
   .command("run [file]")
   .description("Run a graph.")
   .option("-w, --watch", "Watch the file for changes.")
@@ -100,6 +118,11 @@ program
     process.cwd()
   )
   .option("-k, --kit <kit...>", "The kit to use.")
+  .option("-p, --proxy <proxy>", "The Breadboard proxy to use.")
+  .option(
+    "-x, --proxy-node <node...>",
+    "A node that will be passed to the breadboard proxy."
+  )
   .option(
     "--input-file <input>",
     "The path to a JSON file that represents the input to the graph."

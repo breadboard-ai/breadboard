@@ -18,24 +18,18 @@ import { VerboseLoggingProbe } from "./lib/verbose-logging-probe.js";
 import { RunOptions } from "./commandTypes.js";
 import { readFile } from "node:fs/promises";
 import { pathToFileURL } from "url";
+import {
+  HTTPClientTransport,
+  ProxyClient,
+} from "@google-labs/breadboard/remote";
 
 async function runBoard(
   board: BoardRunner,
   inputs: InputValues,
-  kitDeclarations: string[] | undefined,
+  kits: Kit[],
   verbose: boolean,
   pipedInput = false
 ) {
-  const kits: Kit[] = [];
-
-  if (kitDeclarations != undefined) {
-    // We should warn if we are importing code and the associated risks
-    for (const kitDetail of kitDeclarations) {
-      const kitImport = await import(kitDetail);
-      kits.push(asRuntimeKit(kitImport.default));
-    }
-  }
-
   const probe = verbose
     ? new VerboseLoggingProbe(async (data) => console.log(data))
     : undefined;
@@ -55,11 +49,6 @@ async function runBoard(
       However we can't ask for prompts if the graph has been piped in.
       */
       if (pipedInput == false) {
-        // if (schema == undefined) {
-        //   stop.inputs = newInputs;
-        //   continue;
-        // }
-
         const rl = readline.createInterface({ input, output });
 
         if (schema != undefined && schema.properties != undefined) {
@@ -102,7 +91,9 @@ const loadInputFile = async (filePath: string): Promise<InputValues> => {
 };
 
 export const run = async (file: string, options: RunOptions) => {
+  const proxy = options.proxy as string | undefined;
   const kitDeclarations = options.kit as string[] | undefined;
+  const proxyNodeDeclarations = options.proxyNode as string[] | undefined;
   const verbose = "verbose" in options;
   const optionsInput = options.input
     ? (JSON.parse(options.input) as InputValues)
@@ -112,13 +103,38 @@ export const run = async (file: string, options: RunOptions) => {
     ? { ...(await loadInputFile(options.inputFile)), ...optionsInput } // Allow merging of input file and CLI input
     : optionsInput;
 
+  const kits: Kit[] = [];
+
+  if (kitDeclarations != undefined) {
+    // We should warn if we are importing code and the associated risks
+    for (const kitDetail of kitDeclarations) {
+      const kitImport = await import(kitDetail);
+      kits.push(asRuntimeKit(kitImport.default));
+    }
+  }
+
+  if (
+    proxy != undefined &&
+    ("proxyNode" in options == false || options.proxyNode.length == 0)
+  ) {
+    throw new Error(
+      "You must specify at least one proxy node if you are using a proxy."
+    );
+  }
+
+  if (proxy != undefined && proxyNodeDeclarations != undefined) {
+    // We should warn if we are importing code and the associated risks
+    const client = new ProxyClient(new HTTPClientTransport(proxy));
+    kits.unshift(client.createProxyKit(proxyNodeDeclarations));
+  }
+
   if (file != undefined) {
     const filePath = resolveFilePath(file);
 
     let board = await loadBoard(filePath, options);
 
     // We always have to run the board once.
-    await runBoard(board, input, kitDeclarations, verbose);
+    await runBoard(board, input, kits, verbose);
 
     // If we are watching, we need to run the board again when the file changes.
     if ("watch" in options) {
@@ -127,7 +143,7 @@ export const run = async (file: string, options: RunOptions) => {
           // Now the board has changed, we need to reload it and run it again.
           board = await loadBoard(filePath, options);
           // We might want to clear the console here.
-          await runBoard(board, input, kitDeclarations, verbose);
+          await runBoard(board, input, kits, verbose);
         },
       });
     }
@@ -138,6 +154,6 @@ export const run = async (file: string, options: RunOptions) => {
     // We should validate it looks like a board...
     const board = await BoardRunner.fromGraphDescriptor(JSON.parse(stdin));
 
-    await runBoard(board, input, kitDeclarations, verbose, true);
+    await runBoard(board, input, kits, verbose, true);
   }
 };
