@@ -9,9 +9,7 @@ import { ProxyOptions } from "./commandTypes.js";
 import { startServer as startProxyServer } from "./lib/proxy-server.js";
 import { ProxyServerConfig } from "@google-labs/breadboard/remote";
 import { pathToFileURL } from "url";
-import path from "path";
 import { readFile } from "fs/promises";
-import { load } from "js-yaml";
 
 // The config file format. It's based on ProxyServerConfig, but the kits are strings.
 type SimpleProxyServerConfig = Omit<ProxyServerConfig, "kits"> & {
@@ -26,6 +24,11 @@ export const proxy = async (options: ProxyOptions) => {
   let config: ProxyServerConfig;
 
   if (options.config != undefined) {
+    if (kitDeclarations != undefined || proxyNodeDeclarations != undefined) {
+      console.warn(
+        "You are using a config file and specifying kits and proxy nodes. The config file will override the command line options."
+      );
+    }
     config = await loadConfig(options);
   } else {
     config = { kits: [], proxy: [] };
