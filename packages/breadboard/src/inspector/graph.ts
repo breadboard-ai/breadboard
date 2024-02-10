@@ -84,13 +84,17 @@ class Graph implements InspectableGraph {
 
     const { kits } = this.#options;
     const handler = handlersFromKits(kits || [])[type];
+    const asWired = {
+      inputSchema: edgesToSchema(EdgeType.In, options?.incoming),
+      outputSchema: edgesToSchema(EdgeType.Out, options?.outgoing),
+    } satisfies NodeDescriberResult;
     if (!handler || typeof handler === "function" || !handler.describe) {
-      return emptyDescriberResult();
+      return asWired;
     }
     return handler.describe(
       options?.inputs || undefined,
-      edgesToSchema(EdgeType.In, options?.incoming),
-      edgesToSchema(EdgeType.Out, options?.outgoing)
+      asWired.inputSchema,
+      asWired.outputSchema
     );
   }
 
