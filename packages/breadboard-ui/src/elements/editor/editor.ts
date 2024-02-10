@@ -429,6 +429,8 @@ export class Editor extends LitElement {
 
         if (subgraph) {
           const { inputSchema, outputSchema } = await subgraph.describe();
+          // Flat-out combining schemas is probably not exactly right.
+          // TODO: Figure out how to handle dangling wires.
           describerResult = {
             inputSchema: combineSchemas([
               describerResult.inputSchema,
