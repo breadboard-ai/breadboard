@@ -27,7 +27,8 @@ const schemaFromProperties = (properties: Record<string, Schema>): Schema => {
 
 export const edgesToSchema = (
   edgeType: EdgeType,
-  edges?: InspectableEdge[]
+  edges?: InspectableEdge[],
+  properties: Record<string, Schema> = {}
 ): Schema => {
   if (!edges) return {};
   return schemaFromProperties(
@@ -38,7 +39,7 @@ export const edgesToSchema = (
         acc[edgeType === EdgeType.In ? edge.in : edge.out] = { type: "string" };
       }
       return acc;
-    }, {} as Record<string, Schema>)
+    }, properties)
   );
 };
 
@@ -51,12 +52,13 @@ export const createSchemaForInput = (
   options: NodeTypeDescriberOptions
 ): NodeDescriberResult => {
   const schema = options.inputs?.schema as Schema | undefined;
-  if (schema) {
-    return { inputSchema: {}, outputSchema: schema };
-  }
   return {
     inputSchema: {},
-    outputSchema: edgesToSchema(EdgeType.Out, options.outgoing),
+    outputSchema: edgesToSchema(
+      EdgeType.Out,
+      options.outgoing,
+      schema?.properties
+    ),
   };
 };
 
@@ -69,11 +71,12 @@ export const createSchemaForOutput = (
   options: NodeTypeDescriberOptions
 ): NodeDescriberResult => {
   const schema = options.inputs?.schema as Schema | undefined;
-  if (schema) {
-    return { inputSchema: schema, outputSchema: {} };
-  }
   return {
-    inputSchema: edgesToSchema(EdgeType.In, options.incoming),
+    inputSchema: edgesToSchema(
+      EdgeType.In,
+      options.incoming,
+      schema?.properties
+    ),
     outputSchema: {},
   };
 };
