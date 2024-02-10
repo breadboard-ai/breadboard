@@ -1,4 +1,5 @@
 import { Options } from "./lib/loader.js";
+import { config } from "dotenv";
 
 export type RunOptions = Options & {
   kit?: string[];
@@ -16,6 +17,7 @@ export type ImportOptions = Options & {
 export type MakeOptions = Options;
 export type MermaidOptions = Options;
 export type ProxyOptions = Options & {
+  config?: string;
   kit?: string[];
   dist?: string;
   port: string;

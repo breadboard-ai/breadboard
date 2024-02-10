@@ -92,6 +92,7 @@ program
 program
   .command("proxy")
   .description("Starts a proxy server.")
+  .option("-c, --config <config>", "The path to the proxy configuration file.")
   .option(
     "-d, --dist <dist>",
     "The directory to serve for HTTP GET requests",
