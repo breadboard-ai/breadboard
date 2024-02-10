@@ -67,7 +67,7 @@ test("inspector API can describe the subgraph in simplest-no-schema.json", async
   t.deepEqual(api, {
     inputSchema: {
       type: "object",
-      properties: { useStreaming: { type: "string" } },
+      properties: { useStreaming: { type: "string" }, "*": { type: "string" } },
       required: ["useStreaming"],
       additionalProperties: true,
     },

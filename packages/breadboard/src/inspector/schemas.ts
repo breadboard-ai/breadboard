@@ -30,14 +30,23 @@ const schemaFromProperties = (
   properties: Record<string, Schema>,
   additionalProperties: boolean
 ): Schema => {
-  const required = Object.keys(properties);
+  const keys = Object.keys(properties);
+  const required = keys.filter((key) => key !== "*" && key !== "");
   let schema = { type: "object", additionalProperties } as Schema;
+  if (keys.length > 0) {
+    schema = { ...schema, properties };
+  }
   if (required.length > 0) {
-    schema = { ...schema, required, properties };
+    schema = { ...schema, required };
   }
   return schema;
 };
 
+/**
+ * Constructs a Schema for an input node.
+ * @param options
+ * @returns
+ */
 export const createInputSchema = (
   options: NodeTypeDescriberOptions
 ): NodeDescriberResult => {
@@ -50,7 +59,6 @@ export const createInputSchema = (
   options.outgoing?.forEach((edge) => {
     if (edge.out === "*") {
       additionalProperties = true;
-      return;
     }
     properties[edge.out] = { type: "string" };
   });
@@ -60,6 +68,11 @@ export const createInputSchema = (
   };
 };
 
+/**
+ * Constructs a Schema for an output node.
+ * @param options
+ * @returns
+ */
 export const createOutputSchema = (
   options: NodeTypeDescriberOptions
 ): NodeDescriberResult => {
@@ -72,6 +85,7 @@ export const createOutputSchema = (
   options.incoming?.forEach((edge) => {
     if (edge.out === "*") {
       additionalProperties = true;
+      properties[edge.in] = { type: "string", title: "*" };
       return;
     }
     properties[edge.in] = { type: "string" };
