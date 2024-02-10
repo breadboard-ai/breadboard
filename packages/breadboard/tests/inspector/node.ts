@@ -22,7 +22,7 @@ test("inspectableNode detects a subgraph", (t) => {
     ],
   };
   const inspectable = inspectableGraph(graph);
-  t.true(inspectable.nodeById("b")?.isSubgraph());
+  t.true(inspectable.nodeById("b")?.containsGraph());
 });
 
 test("inspectableNode correctly returns node configuration", (t) => {
@@ -56,7 +56,7 @@ test("inspectableNode supports undefined subgraphs", async (t) => {
   };
   const inspectable = inspectableGraph(graph);
   const b = inspectable.nodeById("b");
-  t.true(b?.isSubgraph());
+  t.true(b?.containsGraph());
   const subgraph = await b?.subgraph(async () => undefined);
   t.assert(subgraph === undefined);
 });
@@ -84,7 +84,7 @@ test("inspectableNode supports `graph` subgraphs", async (t) => {
   };
   const inspectable = inspectableGraph(graph);
   const b = inspectable.nodeById("b");
-  t.true(b?.isSubgraph());
+  t.true(b?.containsGraph());
   const subgraph = await b?.subgraph(async (graph) => {
     t.deepEqual(graph, {
       nodes: [{ id: "d", type: "bar" }],
@@ -116,7 +116,7 @@ test("inspectableNode supports `path` subgraphs", async (t) => {
   };
   const inspectable = inspectableGraph(graph);
   const b = inspectable.nodeById("b");
-  t.true(b?.isSubgraph());
+  t.true(b?.containsGraph());
   const subgraph = await b?.subgraph(async (path) => {
     t.is(path, "http://example.com/graphs/foo.json");
     return inspectableGraph({

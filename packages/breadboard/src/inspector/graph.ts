@@ -14,10 +14,10 @@ import {
 } from "../types.js";
 import { inspectableNode } from "./node.js";
 import {
+  EdgeType,
   createInputSchema,
   createOutputSchema,
   edgesToSchema,
-  emptyDescriberResult,
 } from "./schemas.js";
 import {
   InspectableEdge,
@@ -83,13 +83,17 @@ class Graph implements InspectableGraph {
 
     const { kits } = this.#options;
     const handler = handlersFromKits(kits || [])[type];
+    const asWired = {
+      inputSchema: edgesToSchema(EdgeType.In, options?.incoming),
+      outputSchema: edgesToSchema(EdgeType.Out, options?.outgoing),
+    } satisfies NodeDescriberResult;
     if (!handler || typeof handler === "function" || !handler.describe) {
-      return emptyDescriberResult();
+      return asWired;
     }
     return handler.describe(
       options?.inputs || undefined,
-      edgesToSchema(options?.incoming),
-      edgesToSchema(options?.outgoing)
+      asWired.inputSchema,
+      asWired.outputSchema
     );
   }
 

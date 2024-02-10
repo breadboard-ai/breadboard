@@ -52,7 +52,7 @@ class Node implements InspectableNode {
     return this.outgoing().length === 0;
   }
 
-  isSubgraph(): boolean {
+  containsGraph(): boolean {
     // This is likely too naive, since map also invokes subgraphs.
     // TODO: Flesh this out some more.
     return this.descriptor.type === "invoke";
@@ -61,7 +61,7 @@ class Node implements InspectableNode {
   async subgraph(
     loader: InspectableGraphLoader
   ): Promise<InspectableGraph | undefined> {
-    if (!this.isSubgraph()) return undefined;
+    if (!this.containsGraph()) return undefined;
 
     // Find the subgraph
     type InvokeInputs = { graph: GraphDescriptor; path: string };

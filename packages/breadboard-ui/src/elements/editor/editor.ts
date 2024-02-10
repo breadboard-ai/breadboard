@@ -23,6 +23,7 @@ import {
   NodeConfiguration,
   Edge,
   Kit,
+  combineSchemas,
 } from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import * as LG from "litegraph.js";
@@ -415,7 +416,8 @@ export class Editor extends LitElement {
       this.#nodeIdToGraphIndex.set(node.descriptor.id, graphNode.id);
       this.#graphIndexToNodeIndex.set(graphNode.id, i);
 
-      if (node.isSubgraph()) {
+      let describerResult = await node.describe();
+      if (node.containsGraph()) {
         if (!descriptor.url) {
           console.warn("Descriptor does not have a URL");
           break;
@@ -425,24 +427,29 @@ export class Editor extends LitElement {
           loadToInspect(new URL(descriptor.url))
         );
 
-        if (!subgraph) {
-          console.warn("Subgraph does not have any schema");
-          break;
+        if (subgraph) {
+          const { inputSchema, outputSchema } = await subgraph.describe();
+          // Flat-out combining schemas is probably not exactly right.
+          // TODO: Figure out how to handle dangling wires.
+          describerResult = {
+            inputSchema: combineSchemas([
+              describerResult.inputSchema,
+              inputSchema,
+            ]),
+            outputSchema: combineSchemas([
+              describerResult.outputSchema,
+              outputSchema,
+            ]),
+          };
         }
-
-        const { inputSchema, outputSchema } = await subgraph.describe();
-        addIOtoNode(graphNode, "input", inputSchema.properties);
-        addIOtoNode(graphNode, "output", outputSchema.properties);
-      } else {
-        const describerResult = await node.describe();
-        const inputs = describerResult.inputSchema.properties;
-        if (inputs) {
-          addIOtoNode(graphNode, "input", inputs);
-        }
-        const outputs = describerResult.outputSchema.properties;
-        if (outputs) {
-          addIOtoNode(graphNode, "output", outputs);
-        }
+      }
+      const inputs = describerResult.inputSchema.properties;
+      if (inputs) {
+        addIOtoNode(graphNode, "input", inputs);
+      }
+      const outputs = describerResult.outputSchema.properties;
+      if (outputs) {
+        addIOtoNode(graphNode, "output", outputs);
       }
 
       const nodeLocation = this.#nodeLocations.get(node.descriptor.id);

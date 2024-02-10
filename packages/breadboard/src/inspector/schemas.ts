@@ -7,19 +7,20 @@
 import { NodeDescriberResult, Schema } from "../types.js";
 import { InspectableEdge, NodeTypeDescriberOptions } from "./types.js";
 
-export const emptyDescriberResult = async (): Promise<NodeDescriberResult> => {
-  return {
-    inputSchema: {},
-    outputSchema: {},
-  };
-};
+export enum EdgeType {
+  In,
+  Out,
+}
 
-export const edgesToSchema = (edges?: InspectableEdge[]): Schema => {
+export const edgesToSchema = (
+  edgeType: EdgeType,
+  edges?: InspectableEdge[]
+): Schema => {
   if (!edges) return {};
   return {
     type: "object",
     properties: edges.reduce((acc, edge) => {
-      acc[edge.out] = { type: "string" };
+      acc[edgeType === EdgeType.In ? edge.in : edge.out] = { type: "string" };
       return acc;
     }, {} as Record<string, Schema>),
   };

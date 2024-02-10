@@ -33,12 +33,15 @@ export const loadToInspect = (base: URL): InspectableGraphLoader => {
     graph: string | GraphDescriptor,
     loadingGraph: GraphDescriptor
   ) => {
-    if (typeof graph === "string") {
+    if (graph === undefined) {
+      return undefined;
+    } else if (typeof graph === "string") {
       // This logic is lifted from `BoardRunner.load`.
       // TODO: Deduplicate.
       const graphs = loadingGraph.graphs;
       const loader = new BoardLoader({ base, graphs });
       const result = await loader.load(graph);
+      if (!result) return undefined;
       return inspectableGraph(result.graph);
     } else {
       // TODO: Check that this is a valid GraphDescriptor

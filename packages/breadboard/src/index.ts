@@ -9,7 +9,7 @@ export type * from "./types.js";
 export { Board } from "./board.js";
 export { BoardRunner } from "./runner.js";
 export { Node } from "./node.js";
-export { SchemaBuilder } from "./schema.js";
+export { SchemaBuilder, combineSchemas } from "./schema.js";
 export { RunResult } from "./run.js";
 export { TraversalMachine } from "./traversal/machine.js";
 export { MachineResult } from "./traversal/result.js";
