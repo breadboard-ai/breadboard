@@ -10,6 +10,7 @@ import type {
   NodeHandlerContext,
   BreadboardCapability,
   GraphDescriptor,
+  Schema,
 } from "@google-labs/breadboard";
 import { BoardRunner } from "@google-labs/breadboard";
 import { SchemaBuilder } from "@google-labs/breadboard/kits";
@@ -72,9 +73,14 @@ const isGraphDescriptor = (
 };
 
 export default {
-  describe: async (inputs?: InputValues) => ({
+  describe: async (
+    inputs?: InputValues,
+    inputSchema?: Schema,
+    outputSchema?: Schema
+  ) => ({
     inputSchema: new SchemaBuilder()
       .setAdditionalProperties(true)
+      .addProperties(inputSchema?.properties)
       .addInputs(inputs)
       .addProperties({
         path: {
@@ -100,7 +106,10 @@ export default {
         },
       })
       .build(),
-    outputSchema: new SchemaBuilder().setAdditionalProperties(true).build(),
+    outputSchema: new SchemaBuilder()
+      .setAdditionalProperties(true)
+      .addProperties(outputSchema?.properties)
+      .build(),
   }),
   invoke: async (
     inputs: InputValues,

@@ -22,6 +22,8 @@ import {
   InspectableNode,
   NodeConfiguration,
   Edge,
+  Kit,
+  combineSchemas,
 } from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import * as LG from "litegraph.js";
@@ -65,6 +67,9 @@ const DATA_TYPE = "application/json";
 export class Editor extends LitElement {
   @property()
   loadInfo: LoadArgs | null = null;
+
+  @property()
+  kits: Kit[] = [];
 
   @property()
   nodeCount = 0;
@@ -398,7 +403,7 @@ export class Editor extends LitElement {
     let x = BASE_X;
     const y = this.#height / 2;
 
-    const breadboardGraph = inspectableGraph(descriptor);
+    const breadboardGraph = inspectableGraph(descriptor, { kits: this.kits });
     this.#nodes = breadboardGraph.nodes();
 
     // Create nodes first.
@@ -411,7 +416,8 @@ export class Editor extends LitElement {
       this.#nodeIdToGraphIndex.set(node.descriptor.id, graphNode.id);
       this.#graphIndexToNodeIndex.set(graphNode.id, i);
 
-      if (node.isSubgraph()) {
+      let describerResult = await node.describe();
+      if (node.containsGraph()) {
         if (!descriptor.url) {
           console.warn("Descriptor does not have a URL");
           break;
@@ -421,48 +427,29 @@ export class Editor extends LitElement {
           loadToInspect(new URL(descriptor.url))
         );
 
-        if (!subgraph) {
-          console.warn("Subgraph does not have any schema");
-          break;
+        if (subgraph) {
+          const { inputSchema, outputSchema } = await subgraph.describe();
+          // Flat-out combining schemas is probably not exactly right.
+          // TODO: Figure out how to handle dangling wires.
+          describerResult = {
+            inputSchema: combineSchemas([
+              describerResult.inputSchema,
+              inputSchema,
+            ]),
+            outputSchema: combineSchemas([
+              describerResult.outputSchema,
+              outputSchema,
+            ]),
+          };
         }
-
-        const { inputSchema, outputSchema } = await subgraph.describe();
-        addIOtoNode(graphNode, "input", inputSchema.properties);
-        addIOtoNode(graphNode, "output", outputSchema.properties);
-      } else {
-        switch (node.descriptor.type) {
-          case "fetch": {
-            addIOtoNode(graphNode, "input", { url: { type: "string" } });
-            addIOtoNode(graphNode, "output", { response: { type: "string" } });
-            break;
-          }
-
-          case "jsonata": {
-            addIOtoNode(graphNode, "input", {
-              json: { type: "object" },
-              expression: { type: "string" },
-              raw: { type: "boolean" },
-            });
-            break;
-          }
-
-          case "output":
-          case "input": {
-            if (
-              !node.descriptor.configuration ||
-              !node.descriptor.configuration.schema
-            ) {
-              console.warn("Unable to render node with no configuration");
-              break;
-            }
-
-            const schema = node.descriptor.configuration.schema as Schema;
-            const schemaType =
-              node.descriptor.type === "input" ? "output" : "input";
-            addIOtoNode(graphNode, schemaType, schema.properties);
-            break;
-          }
-        }
+      }
+      const inputs = describerResult.inputSchema.properties;
+      if (inputs) {
+        addIOtoNode(graphNode, "input", inputs);
+      }
+      const outputs = describerResult.outputSchema.properties;
+      if (outputs) {
+        addIOtoNode(graphNode, "output", outputs);
       }
 
       const nodeLocation = this.#nodeLocations.get(node.descriptor.id);

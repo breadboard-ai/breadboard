@@ -64,7 +64,8 @@ export class SchemaBuilder {
     return this;
   }
 
-  addProperties(properties: SchemaProperties) {
+  addProperties(properties?: SchemaProperties) {
+    if (!properties) return this;
     Object.entries(properties).forEach(([name, schema]) => {
       this.addProperty(name, schema);
     });

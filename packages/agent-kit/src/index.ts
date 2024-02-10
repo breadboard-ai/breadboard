@@ -10,6 +10,7 @@ import kit from "./kit.js";
 import { addKit } from "@google-labs/breadboard";
 import { WorkerType } from "./boards/worker.js";
 import { InstructionType } from "./boards/instruction.js";
+import { addDescriber, workerDescriber } from "./hacks.js";
 
 // TODO: Replace with the actual URL.
 const KIT_BASE_URL =
@@ -28,7 +29,7 @@ const builder = new KitBuilder(
 );
 
 const AgentKit = builder.build({
-  worker: adapter.handlerForNode("worker"),
+  worker: addDescriber(adapter.handlerForNode("worker"), workerDescriber),
   instruction: adapter.handlerForNode("instruction"),
 });
 

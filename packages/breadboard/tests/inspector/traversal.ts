@@ -37,7 +37,7 @@ test("inspector API can traverse simplest.json", async (t) => {
 
   const invoke = fromInput[0].to;
   t.assert(invoke.descriptor.type == "invoke", "The next node is an invoke");
-  t.assert(invoke.isSubgraph(), "The invoke is a subgraph");
+  t.assert(invoke.containsGraph(), "The invoke is a subgraph");
 
   const geminiGenerator = await invoke.subgraph(loadToInspect(BASE_URL));
   if (!geminiGenerator) {
