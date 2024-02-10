@@ -36,7 +36,6 @@ test("simple graph description works as expected", async (t) => {
   t.deepEqual(api, {
     inputSchema: {
       type: "object",
-      additionalProperties: false,
       properties: {
         text: {
           type: "string",
@@ -46,7 +45,6 @@ test("simple graph description works as expected", async (t) => {
     },
     outputSchema: {
       type: "object",
-      additionalProperties: false,
       properties: {
         text: {
           type: "string",
@@ -99,7 +97,6 @@ test("inspector API can describe the input in simplest-no-schema.json", async (t
       properties: {
         "*": { type: "string" },
       },
-      additionalProperties: true,
     },
   });
 });
@@ -117,7 +114,6 @@ test("inspector API can describe the input in simplest-no-schema-strict.json", a
     inputSchema: {},
     outputSchema: {
       type: "object",
-      additionalProperties: false,
       properties: {
         text: {
           type: "string",
@@ -171,7 +167,6 @@ test("inspector API can describe the output in simplest-no-schema.json", async (
           title: "*",
         },
       },
-      additionalProperties: true,
     },
     outputSchema: {},
   });
@@ -189,7 +184,6 @@ test("inspector API can describe the output in simplest-no-schema-strict.json", 
   t.deepEqual(api, {
     inputSchema: {
       type: "object",
-      additionalProperties: false,
       properties: {
         text: {
           type: "string",

@@ -12,27 +12,10 @@ export enum EdgeType {
   Out,
 }
 
-export const edgesToSchema = (
-  edgeType: EdgeType,
-  edges?: InspectableEdge[]
-): Schema => {
-  if (!edges) return {};
-  return {
-    type: "object",
-    properties: edges.reduce((acc, edge) => {
-      acc[edgeType === EdgeType.In ? edge.in : edge.out] = { type: "string" };
-      return acc;
-    }, {} as Record<string, Schema>),
-  };
-};
-
-const schemaFromProperties = (
-  properties: Record<string, Schema>,
-  additionalProperties: boolean
-): Schema => {
+const schemaFromProperties = (properties: Record<string, Schema>): Schema => {
   const keys = Object.keys(properties);
   const required = keys.filter((key) => key !== "*" && key !== "");
-  let schema = { type: "object", additionalProperties } as Schema;
+  let schema = { type: "object" } as Schema;
   if (keys.length > 0) {
     schema = { ...schema, properties };
   }
@@ -40,6 +23,23 @@ const schemaFromProperties = (
     schema = { ...schema, required };
   }
   return schema;
+};
+
+export const edgesToSchema = (
+  edgeType: EdgeType,
+  edges?: InspectableEdge[]
+): Schema => {
+  if (!edges) return {};
+  return schemaFromProperties(
+    edges.reduce((acc, edge) => {
+      if (edge.out === "*" && edgeType === EdgeType.In) {
+        acc[edge.in] = { type: "string", title: "*" };
+      } else {
+        acc[edgeType === EdgeType.In ? edge.in : edge.out] = { type: "string" };
+      }
+      return acc;
+    }, {} as Record<string, Schema>)
+  );
 };
 
 /**
@@ -54,17 +54,9 @@ export const createInputSchema = (
   if (schema) {
     return { inputSchema: {}, outputSchema: schema };
   }
-  let additionalProperties = false;
-  const properties: Record<string, Schema> = {};
-  options.outgoing?.forEach((edge) => {
-    if (edge.out === "*") {
-      additionalProperties = true;
-    }
-    properties[edge.out] = { type: "string" };
-  });
   return {
     inputSchema: {},
-    outputSchema: schemaFromProperties(properties, additionalProperties),
+    outputSchema: edgesToSchema(EdgeType.Out, options.outgoing),
   };
 };
 
@@ -80,18 +72,8 @@ export const createOutputSchema = (
   if (schema) {
     return { inputSchema: schema, outputSchema: {} };
   }
-  let additionalProperties = false;
-  const properties: Record<string, Schema> = {};
-  options.incoming?.forEach((edge) => {
-    if (edge.out === "*") {
-      additionalProperties = true;
-      properties[edge.in] = { type: "string", title: "*" };
-      return;
-    }
-    properties[edge.in] = { type: "string" };
-  });
   return {
-    inputSchema: schemaFromProperties(properties, additionalProperties),
+    inputSchema: edgesToSchema(EdgeType.In, options.incoming),
     outputSchema: {},
   };
 };
