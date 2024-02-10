@@ -7,13 +7,6 @@
 import { NodeDescriberResult, Schema } from "../types.js";
 import { InspectableEdge, NodeTypeDescriberOptions } from "./types.js";
 
-export const emptyDescriberResult = async (): Promise<NodeDescriberResult> => {
-  return {
-    inputSchema: {},
-    outputSchema: {},
-  };
-};
-
 export enum EdgeType {
   In,
   Out,
