@@ -14,6 +14,7 @@ import {
 } from "../types.js";
 import { inspectableNode } from "./node.js";
 import {
+  EdgeType,
   createInputSchema,
   createOutputSchema,
   edgesToSchema,
@@ -88,8 +89,8 @@ class Graph implements InspectableGraph {
     }
     return handler.describe(
       options?.inputs || undefined,
-      edgesToSchema(options?.incoming),
-      edgesToSchema(options?.outgoing)
+      edgesToSchema(EdgeType.In, options?.incoming),
+      edgesToSchema(EdgeType.Out, options?.outgoing)
     );
   }
 

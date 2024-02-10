@@ -11,6 +11,7 @@ import {
   NodeHandlerContext,
   Schema,
   NodeHandler,
+  SchemaBuilder,
 } from "@google-labs/breadboard";
 
 import jsonata from "jsonata";
@@ -78,13 +79,13 @@ export const computeOutputSchema = async (
 };
 
 export const jsonataDescriber: NodeDescriberFunction = async (
-  inputs?: InputValues
+  inputs?: InputValues,
+  inputSchema?: Schema
 ) => {
   const outputSchema = await computeOutputSchema(inputs || {});
   return {
-    inputSchema: {
-      type: "object",
-      properties: {
+    inputSchema: new SchemaBuilder()
+      .addProperties({
         expression: {
           title: "expression",
           description: "The Jsonata expression to evaluate",
@@ -101,9 +102,10 @@ export const jsonataDescriber: NodeDescriberFunction = async (
           description: "The JSON object to evaluate",
           type: ["object", "string"],
         },
-      },
-      required: ["expression"],
-    },
+      })
+      .addRequired("expression")
+      .addProperties(inputSchema?.properties)
+      .build(),
     outputSchema,
   };
 };
