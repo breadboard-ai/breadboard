@@ -2,6 +2,8 @@ import { Options } from "./lib/loader.js";
 
 export type RunOptions = Options & {
   kit?: string[];
+  proxy?: string[];
+  proxyNode: string[];
   input?: string;
   inputFile?: string;
   verbose?: boolean;
@@ -13,3 +15,9 @@ export type ImportOptions = Options & {
 };
 export type MakeOptions = Options;
 export type MermaidOptions = Options;
+export type ProxyOptions = Options & {
+  kit?: string[];
+  dist?: string;
+  port: string;
+  proxyNode: string[];
+};
