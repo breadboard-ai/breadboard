@@ -13,6 +13,7 @@ import {
   NodeDescriptor,
   NodeIdentifier,
   NodeTypeIdentifier,
+  Schema,
 } from "../types.js";
 
 export type InspectableNode = {
@@ -73,6 +74,10 @@ export type InspectableNode = {
    * TODO: Use a friendlier to inspection return type.
    */
   configuration(): NodeConfiguration;
+  /**
+   * Returns the current state of node's ports
+   */
+  ports(inputs?: InputValues): Promise<InspectableNodePorts>;
 };
 
 export type InspectableEdge = {
@@ -182,4 +187,98 @@ export type NodeTypeDescriberOptions = {
    * Optional, the outgoing edges from the node.
    */
   outgoing?: InspectableEdge[];
+};
+
+/**
+ * Describes the current status of a node port.
+ */
+export enum PortStatus {
+  /**
+   * The port status impossible to determine. This only happens when the node
+   * has a star wire ("*") and the port is not connected.
+   */
+  Inteterminate = "indeterminate",
+  /**
+   * The port is correctly connected to another node or specified using node's
+   * configuration, according to this node's schema.
+   */
+  Connected = "connected",
+  /**
+   * The port is not connected to another node, and it is expected, but not
+   * required by the node's schema.
+   */
+  Ready = "ready",
+  /**
+   * The port is not connected to another node, but it is required by the node's
+   * schema. It is similar to "Ready", except that not having this port
+   * connected is an error.
+   */
+  Missing = "missing",
+  /**
+   * The port is connected to this node, but it is not expected by the node's
+   * schema. This is an error state.
+   */
+  Dangling = "dangling",
+}
+
+/**
+ * Describes a node port (input or output).
+ */
+export type InspectablePort = {
+  /**
+   * The name of the port.
+   */
+  name: string;
+  /**
+   * Returns current status of this port.
+   */
+  status: PortStatus;
+  /**
+   * Returns true if the port was specified in the node's configuration.
+   */
+  configured: boolean;
+  /**
+   * Returns true if this is the star port ("*").
+   */
+  star: boolean;
+  /**
+   * Port schema as defined by the node's configuration.
+   */
+  schema: Schema | undefined;
+};
+
+/**
+ * Represents one side (input or output) of ports of a node.
+ */
+export type InspectablePortList = {
+  /**
+   * Input ports of the node.
+   */
+  ports: InspectablePort[];
+  /**
+   * Returns true if the list of ports is fixed. Returns false if the node
+   * expects a dynamic number of ports.
+   *
+   * Fixed example: the `validateJson` node, which has two fixed input ports:
+   * `json` and `schema`.
+   *
+   * Conversely, the `core.invoke` node is an example of the dynamic number of
+   * ports, which can take any number of inputs and they are passed to the
+   * invoked graph as arguments.
+   */
+  fixed: boolean;
+};
+
+/**
+ * Represents the input and output ports of a node.
+ */
+export type InspectableNodePorts = {
+  /**
+   * Returns the input ports of the node.
+   */
+  inputs: InspectablePortList;
+  /**
+   * Returns the output ports of the node.
+   */
+  outputs: InspectablePortList;
 };
