@@ -47,7 +47,7 @@ export const edgesToSchema = (
  * @param options
  * @returns
  */
-export const createInputSchema = (
+export const createSchemaForInput = (
   options: NodeTypeDescriberOptions
 ): NodeDescriberResult => {
   const schema = options.inputs?.schema as Schema | undefined;
@@ -65,7 +65,7 @@ export const createInputSchema = (
  * @param options
  * @returns
  */
-export const createOutputSchema = (
+export const createSchemaForOutput = (
   options: NodeTypeDescriberOptions
 ): NodeDescriberResult => {
   const schema = options.inputs?.schema as Schema | undefined;
