@@ -18,7 +18,6 @@ import {
   createInputSchema,
   createOutputSchema,
   edgesToSchema,
-  emptyDescriberResult,
 } from "./schemas.js";
 import {
   InspectableEdge,
