@@ -320,7 +320,11 @@ export type NodeDescriberContext = {
   /**
    * The base URL of the graph.
    */
-  base: URL;
+  base?: URL;
+  /**
+   * The graph in which the node is described.
+   */
+  outerGraph: GraphDescriptor;
 };
 
 /**

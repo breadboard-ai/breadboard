@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { SchemaBuilder } from "../schema.js";
 import { NodeDescriberResult, Schema } from "../types.js";
 import { InspectableEdge, NodeTypeDescriberOptions } from "./types.js";
 
@@ -53,7 +54,10 @@ export const describeInput = (
   const schema = options.inputs?.schema as Schema | undefined;
   if (schema) return { inputSchema: {}, outputSchema: schema };
   return {
-    inputSchema: {},
+    inputSchema: new SchemaBuilder()
+      // TODO: Specify actual "schema" schema.
+      .addProperty("schema", { type: "object" })
+      .build(),
     outputSchema: edgesToSchema(EdgeType.Out, options.outgoing),
   };
 };
