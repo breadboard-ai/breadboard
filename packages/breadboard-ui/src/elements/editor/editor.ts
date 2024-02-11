@@ -18,12 +18,10 @@ import {
   Schema,
   inspect,
   GraphDescriptor,
-  loadToInspect,
   InspectableNode,
   NodeConfiguration,
   Edge,
   Kit,
-  combineSchemas,
   InspectablePortList,
 } from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
@@ -422,7 +420,7 @@ export class Editor extends LitElement {
       // HACK: Convert the output of ports to something that looks like
       // describer result for now.
       // TODO: Refactor addIOToNode to take the `InspectablePort`.
-      let describerResult = await (async () => {
+      const describerResult = await (async () => {
         const ports = await node.ports();
         const createSchema = (p: InspectablePortList): Schema => {
           return {
@@ -439,32 +437,6 @@ export class Editor extends LitElement {
         return { inputSchema, outputSchema };
       })();
 
-      if (node.containsGraph()) {
-        if (!descriptor.url) {
-          console.warn("Descriptor does not have a URL");
-          break;
-        }
-
-        const subgraph = await node.subgraph(
-          loadToInspect(new URL(descriptor.url))
-        );
-
-        if (subgraph) {
-          const { inputSchema, outputSchema } = await subgraph.describe();
-          // Flat-out combining schemas is probably not exactly right.
-          // TODO: Figure out how to handle dangling wires.
-          describerResult = {
-            inputSchema: combineSchemas([
-              describerResult.inputSchema,
-              inputSchema,
-            ]),
-            outputSchema: combineSchemas([
-              describerResult.outputSchema,
-              outputSchema,
-            ]),
-          };
-        }
-      }
       const inputs = describerResult.inputSchema.properties;
       if (inputs) {
         addIOtoNode(graphNode, "input", inputs);

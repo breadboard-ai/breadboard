@@ -314,6 +314,16 @@ export type NodeDescriberResult = {
 };
 
 /**
+ * Context that is supplied to the `NodeDescriberFunction`.
+ */
+export type NodeDescriberContext = {
+  /**
+   * The base URL of the graph.
+   */
+  base: URL;
+};
+
+/**
  * Asks to describe a node. Can be called in multiple ways:
  * - when called with no arguments, will produce the "default schema". That is,
  * the inputs/outputs that are always available.
@@ -325,7 +335,11 @@ export type NodeDescriberResult = {
 export type NodeDescriberFunction = (
   inputs?: InputValues,
   inputSchema?: Schema,
-  outputSchema?: Schema
+  outputSchema?: Schema,
+  /**
+   * The context in which the node is described.
+   */
+  context?: NodeDescriberContext
 ) => Promise<NodeDescriberResult>;
 
 export type NodeHandler =

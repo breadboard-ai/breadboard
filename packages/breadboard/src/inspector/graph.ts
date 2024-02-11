@@ -35,7 +35,13 @@ export const inspectableGraph = (
   return new Graph(graph, options);
 };
 
+const maybeURL = (url?: string): URL | undefined => {
+  url = url || "";
+  return URL.canParse(url) ? new URL(url) : undefined;
+};
+
 class Graph implements InspectableGraph {
+  #url?: URL;
   #graph: GraphDescriptor;
   #nodes: InspectableNode[];
   #nodeMap: Map<NodeIdentifier, InspectableNode>;
@@ -46,6 +52,7 @@ class Graph implements InspectableGraph {
 
   constructor(graph: GraphDescriptor, options?: InspectableGraphOptions) {
     this.#graph = graph;
+    this.#url = maybeURL(graph.url);
     this.#options = options || {};
     this.#nodes = this.#graph.nodes.map((node) => inspectableNode(node, this));
     this.#nodeMap = new Map(
@@ -92,10 +99,12 @@ class Graph implements InspectableGraph {
     if (!handler || typeof handler === "function" || !handler.describe) {
       return asWired;
     }
+    const maybeContext = this.#url ? { base: this.#url } : undefined;
     return handler.describe(
       options?.inputs || undefined,
       asWired.inputSchema,
-      asWired.outputSchema
+      asWired.outputSchema,
+      maybeContext
     );
   }
 
