@@ -5,7 +5,6 @@
  */
 
 import {
-  GraphDescriptor,
   InputValues,
   NodeConfiguration,
   NodeDescriberResult,
@@ -16,7 +15,6 @@ import { EdgeType } from "./schemas.js";
 import {
   InspectableEdge,
   InspectableGraph,
-  InspectableGraphLoader,
   InspectableNode,
   InspectableNodePorts,
   InspectablePortList,
@@ -54,24 +52,6 @@ class Node implements InspectableNode {
 
   isExit(): boolean {
     return this.outgoing().length === 0;
-  }
-
-  containsGraph(): boolean {
-    // This is likely too naive, since map also invokes subgraphs.
-    // TODO: Flesh this out some more.
-    return this.descriptor.type === "invoke";
-  }
-
-  async subgraph(
-    loader: InspectableGraphLoader
-  ): Promise<InspectableGraph | undefined> {
-    if (!this.containsGraph()) return undefined;
-
-    // Find the subgraph
-    type InvokeInputs = { graph: GraphDescriptor; path: string };
-    // TODO: Support subgraphs that are dynamically loaded from values.
-    const { graph, path } = this.configuration() as InvokeInputs;
-    return await loader(graph ? graph : path, this.#graph.raw());
   }
 
   configuration(): NodeConfiguration {

@@ -11,8 +11,9 @@ import type {
   BreadboardCapability,
   GraphDescriptor,
   Schema,
+  NodeDescriberContext,
 } from "@google-labs/breadboard";
-import { BoardRunner } from "@google-labs/breadboard";
+import { BoardRunner, inspect } from "@google-labs/breadboard";
 import { SchemaBuilder } from "@google-labs/breadboard/kits";
 
 export type InvokeNodeInputs = InputValues & {
@@ -38,16 +39,43 @@ export const loadBoardFromPath = async (
   return await BoardRunner.load(path, { base, outerGraph });
 };
 
+type RunnableBoardWithArgs = {
+  board: BoardRunner | undefined;
+  args: InputValues;
+};
+
 const getRunnableBoard = async (
   context: NodeHandlerContext,
-  path?: string,
-  board?: BreadboardCapability,
-  graph?: GraphDescriptor
-): Promise<BoardRunner | undefined> => {
-  if (board) return await BoardRunner.fromBreadboardCapability(board);
-  if (graph) return await BoardRunner.fromGraphDescriptor(graph);
-  if (path) return await loadBoardFromPath(path, context);
-  return undefined;
+  inputs: InvokeNodeInputs
+): Promise<RunnableBoardWithArgs> => {
+  const { $board, ...args } = inputs;
+  if ($board) {
+    let board;
+
+    if (isBreadboardCapability($board))
+      board = await BoardRunner.fromBreadboardCapability($board);
+    if (isGraphDescriptor($board))
+      board = await BoardRunner.fromGraphDescriptor($board);
+    if (typeof $board === "string") {
+      board = await loadBoardFromPath($board, context);
+    } else {
+      board = undefined;
+    }
+    return { board, args };
+  } else {
+    const { path, board, graph, ...args } = inputs as InvokeNodeInputs;
+
+    let runnableBoard;
+
+    if (board) {
+      runnableBoard = await BoardRunner.fromBreadboardCapability(board);
+    } else if (graph) {
+      runnableBoard = await BoardRunner.fromGraphDescriptor(graph);
+    } else if (path) {
+      runnableBoard = await loadBoardFromPath(path, context);
+    }
+    return { board: runnableBoard, args };
+  }
 };
 
 const isBreadboardCapability = (
@@ -72,74 +100,51 @@ const isGraphDescriptor = (
   );
 };
 
+const describe = async (
+  inputs?: InputValues,
+  _in?: Schema,
+  _out?: Schema,
+  context?: NodeDescriberContext
+) => {
+  const inputBuilder = new SchemaBuilder().addProperties({
+    path: {
+      title: "path",
+      description: "The path to the board to invoke.",
+      type: "string",
+    },
+    $board: {
+      title: "board",
+      description:
+        "The board to invoke. Can be a BoardCapability, a graph or a URL",
+      type: "string", // TODO: Make this a union type
+    },
+  });
+  const outputBuilder = new SchemaBuilder();
+  if (context?.base) {
+    const { board } = await getRunnableBoard(context, inputs || {});
+    if (board) {
+      const inspectableGraph = inspect(board);
+      const { inputSchema, outputSchema } = await inspectableGraph.describe();
+      inputBuilder.addProperties(inputSchema?.properties);
+      inputSchema?.required && inputBuilder.addRequired(inputSchema?.required);
+      outputBuilder.addProperties(outputSchema?.properties);
+    }
+  }
+  return {
+    inputSchema: inputBuilder.build(),
+    outputSchema: outputBuilder.build(),
+  };
+};
+
 export default {
-  describe: async (
-    inputs?: InputValues,
-    inputSchema?: Schema,
-    outputSchema?: Schema
-  ) => ({
-    inputSchema: new SchemaBuilder()
-      .setAdditionalProperties(true)
-      .addProperties(inputSchema?.properties)
-      .addInputs(inputs)
-      .addProperties({
-        path: {
-          title: "path",
-          description: "The path to the board to invoke.",
-          type: "string",
-        },
-        board: {
-          title: "board",
-          description: "The board to invoke, created by `lambda` or `import`",
-          type: "BoardCapability",
-        },
-        graph: {
-          title: "graph",
-          description: "The graph descriptor of the board to invoke.",
-          type: "object",
-        },
-        $board: {
-          title: "board",
-          description:
-            "The board to invoke. Can be a BoardCapability, a graph or a URL",
-          type: "string", // TODO: Make this a union type
-        },
-      })
-      .build(),
-    outputSchema: new SchemaBuilder()
-      .setAdditionalProperties(true)
-      .addProperties(outputSchema?.properties)
-      .build(),
-  }),
+  describe,
   invoke: async (
     inputs: InputValues,
     context: NodeHandlerContext
   ): Promise<OutputValues> => {
-    const { $board, ...args } = inputs as InvokeNodeInputs;
+    const { board, args } = await getRunnableBoard(context, inputs);
+    if (!board) throw new Error("No board provided");
 
-    if ($board) {
-      let board;
-
-      if (isBreadboardCapability($board))
-        board = await BoardRunner.fromBreadboardCapability($board);
-      if (isGraphDescriptor($board))
-        board = await BoardRunner.fromGraphDescriptor($board);
-      if (typeof $board === "string") {
-        board = await loadBoardFromPath($board, context);
-      } else {
-        board = undefined;
-      }
-
-      if (!board) throw new Error("No board provided");
-
-      return await board.runOnce(args, context);
-    } else {
-      const { path, board, graph, ...args } = inputs as InvokeNodeInputs;
-
-      const runnableBoard = await getRunnableBoard(context, path, board, graph);
-      if (!runnableBoard) throw new Error("No board provided");
-
-      return await runnableBoard.runOnce(args, context);
-    }
+    return await board.runOnce(args, context);
   },
 };
