@@ -493,40 +493,36 @@ export class Editor extends LitElement {
     }
 
     // Then create connections.
-    for (const node of this.#nodes) {
-      for (const connection of node.outgoing()) {
-        const source = this.#nodeIdToGraphIndex.get(
-          connection.from.descriptor.id
+    for (const edge of breadboardGraph.edges()) {
+      const from = this.#nodeIdToGraphIndex.get(edge.from.descriptor.id);
+      const to = this.#nodeIdToGraphIndex.get(edge.to.descriptor.id);
+
+      if (!from || !to) {
+        console.warn(
+          `Unable to find node for ${edge.from.descriptor.id} or ${edge.to.descriptor.id}`
         );
-        const dest = this.#nodeIdToGraphIndex.get(connection.to.descriptor.id);
+        continue;
+      }
 
-        if (!source || !dest) {
-          console.warn(
-            `Unable to find node for ${connection.from.descriptor.id} or ${connection.from.descriptor.id}`
-          );
+      const sourceNode = this.#graph.getNodeById(from);
+      const destNode = this.#graph.getNodeById(to);
+      if (!sourceNode || !destNode) {
+        console.warn("Unable to find source and destination nodes");
+        continue;
+      }
+
+      sourceLoop: for (let o = 0; o < sourceNode.outputs.length; o++) {
+        if (sourceNode.outputs[o].name !== edge.out) {
           continue;
         }
 
-        const sourceNode = this.#graph.getNodeById(source);
-        const destNode = this.#graph.getNodeById(dest);
-        if (!sourceNode || !destNode) {
-          console.warn("Unable to find source and destination nodes");
-          continue;
-        }
-
-        sourceLoop: for (let o = 0; o < sourceNode.outputs.length; o++) {
-          if (sourceNode.outputs[o].name !== connection.out) {
+        for (let i = 0; i < destNode.inputs.length; i++) {
+          if (edge.in !== destNode.inputs[i].name) {
             continue;
           }
 
-          for (let i = 0; i < destNode.inputs.length; i++) {
-            if (connection.in !== destNode.inputs[i].name) {
-              continue;
-            }
-
-            this.#connectNodes(sourceNode, destNode, o, i);
-            break sourceLoop;
-          }
+          this.#connectNodes(sourceNode, destNode, o, i);
+          break sourceLoop;
         }
       }
     }

@@ -115,6 +115,10 @@ export type InspectableGraph = {
    */
   nodes(): InspectableNode[];
   /**
+   * Returns all edges of the graph.
+   */
+  edges(): InspectableEdge[];
+  /**
    * Returns all nodes of the given type.
    * @param type type of the nodes to find
    */

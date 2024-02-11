@@ -7,6 +7,7 @@
 import { handlersFromKits } from "../handler.js";
 import { combineSchemas } from "../schema.js";
 import {
+  Edge,
   GraphDescriptor,
   NodeDescriberResult,
   NodeIdentifier,
@@ -40,6 +41,7 @@ class Graph implements InspectableGraph {
   #nodeMap: Map<NodeIdentifier, InspectableNode>;
   #typeMap: Map<NodeTypeIdentifier, InspectableNode[]> = new Map();
   #entries?: InspectableNode[];
+  #edges?: InspectableEdge[];
   #options: InspectableGraphOptions;
 
   constructor(graph: GraphDescriptor, options?: InspectableGraphOptions) {
@@ -105,18 +107,28 @@ class Graph implements InspectableGraph {
     return this.#nodes;
   }
 
+  #edgeToInspectableEdge = (edge: Edge): InspectableEdge => {
+    const from = this.nodeById(edge.from);
+    const to = this.nodeById(edge.to);
+    const edgein = edge.out === "*" ? "*" : edge.in;
+    return {
+      from,
+      out: edge.out,
+      to,
+      in: edgein,
+    } as InspectableEdge;
+  };
+
+  edges(): InspectableEdge[] {
+    return (this.#edges ??= this.#graph.edges.map((edge) =>
+      this.#edgeToInspectableEdge(edge)
+    ));
+  }
+
   incomingForNode(id: NodeIdentifier): InspectableEdge[] {
     return this.#graph.edges
       .filter((edge) => edge.to === id)
-      .map((edge) => {
-        const edgein = edge.out === "*" ? "*" : edge.in;
-        return {
-          from: this.nodeById(edge.from),
-          out: edge.out,
-          to: this.nodeById(edge.to),
-          in: edgein,
-        };
-      })
+      .map((edge) => this.#edgeToInspectableEdge(edge))
       .filter(
         (edge) => edge.from !== undefined && edge.to !== undefined
       ) as InspectableEdge[];
