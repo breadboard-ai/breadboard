@@ -16,8 +16,8 @@ import {
 import { inspectableNode } from "./node.js";
 import {
   EdgeType,
-  createSchemaForInput,
-  createSchemaForOutput,
+  describeInput,
+  describeOutput,
   edgesToSchema,
 } from "./schemas.js";
 import {
@@ -77,10 +77,10 @@ class Graph implements InspectableGraph {
     // The schema of an input or an output is defined by their
     // configuration schema or their incoming/outgoing edges.
     if (type === "input") {
-      return createSchemaForInput(options);
+      return describeInput(options);
     }
     if (type === "output") {
-      return createSchemaForOutput(options);
+      return describeOutput(options);
     }
 
     const { kits } = this.#options;
