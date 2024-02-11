@@ -24,6 +24,7 @@ import {
   Edge,
   Kit,
   combineSchemas,
+  InspectablePortList,
 } from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import * as LG from "litegraph.js";
@@ -418,7 +419,26 @@ export class Editor extends LitElement {
       this.#nodeIdToGraphIndex.set(node.descriptor.id, graphNode.id);
       this.#graphIndexToNodeIndex.set(graphNode.id, i);
 
-      let describerResult = await node.describe();
+      // HACK: Convert the output of ports to something that looks like
+      // describer result for now.
+      // TODO: Refactor addIOToNode to take the `InspectablePort`.
+      let describerResult = await (async () => {
+        const ports = await node.ports();
+        const createSchema = (p: InspectablePortList): Schema => {
+          return {
+            type: "object",
+            properties: p.ports.reduce((acc, port) => {
+              acc[port.name] = port.schema || { type: "string" };
+              return acc;
+            }, {} as Record<string, Schema>),
+          };
+        };
+
+        const inputSchema = createSchema(ports.inputs);
+        const outputSchema = createSchema(ports.outputs);
+        return { inputSchema, outputSchema };
+      })();
+
       if (node.containsGraph()) {
         if (!descriptor.url) {
           console.warn("Descriptor does not have a URL");

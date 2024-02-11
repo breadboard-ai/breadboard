@@ -129,6 +129,7 @@ const collectPorts = (
 ) => {
   // Get the list of all ports wired to this node.
   const wiredPortNames = edges.map((edge) => {
+    if (edge.out === "*") return "*";
     return type === EdgeType.In ? edge.in : edge.out;
   });
   const schemaPortNames = Object.keys(schema.properties || {});
