@@ -16,7 +16,7 @@ import { customElement, property, state } from "lit/decorators.js";
 import { LoadArgs } from "../../types/types.js";
 import {
   Schema,
-  inspectableGraph,
+  inspect,
   GraphDescriptor,
   loadToInspect,
   InspectableNode,
@@ -406,7 +406,7 @@ export class Editor extends LitElement {
     let x = BASE_X;
     const y = this.#height / 2;
 
-    const breadboardGraph = inspectableGraph(descriptor, { kits: this.kits });
+    const breadboardGraph = inspect(descriptor, { kits: this.kits });
     this.#nodes = breadboardGraph.nodes();
 
     // Create nodes first.
