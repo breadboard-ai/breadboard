@@ -41,6 +41,7 @@ export const collectPorts = (
       "*", // Always include the star port.
     ]),
   ];
+  portNames.sort();
   // TODO: Do something about the "schema" in the "output": it's a configured
   // value, but isn't an expected input. oops. Shows up as "Dangling".
   // TODO: When star is connected, all other ports are in a weird state: they
