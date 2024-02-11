@@ -64,7 +64,6 @@ test("`jsonataDescriber` correctly reacts to invalid input", async (t) => {
     outputSchema: {
       type: "object",
       properties: {},
-      additionalProperties: false,
     },
   });
 });

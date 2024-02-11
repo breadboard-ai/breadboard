@@ -69,7 +69,6 @@ test("inspector API can describe the subgraph in simplest-no-schema.json", async
       type: "object",
       properties: { useStreaming: { type: "string" } },
       required: ["useStreaming"],
-      additionalProperties: true,
     },
     outputSchema: {
       type: "object",
@@ -80,7 +79,6 @@ test("inspector API can describe the subgraph in simplest-no-schema.json", async
         toolCalls: { type: "string" },
       },
       required: ["context", "stream", "text", "toolCalls"],
-      additionalProperties: false,
     },
   });
 });

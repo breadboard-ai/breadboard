@@ -60,7 +60,6 @@ export const computeOutputSchema = async (
     const outputSchema = {
       type: "object",
       properties,
-      additionalProperties: false,
     };
     Object.entries(result).forEach(([key, value]) => {
       properties[key] = {
@@ -72,7 +71,6 @@ export const computeOutputSchema = async (
   } catch (e) {
     return {
       type: "object",
-      additionalProperties: false,
       properties: {},
     };
   }

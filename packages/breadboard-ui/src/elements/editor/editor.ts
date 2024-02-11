@@ -24,6 +24,7 @@ import {
   Edge,
   Kit,
   combineSchemas,
+  InspectablePortList,
 } from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import * as LG from "litegraph.js";
@@ -379,14 +380,16 @@ export class Editor extends LitElement {
             ? value.type
             : 0;
 
+        const extraInfo = value.title ? { label: value.title } : undefined;
+
         // We appease the types here, which don't currently match. They say that
         // a type must be a valid one or -1. However, the docs suggest a value
         // of 0 is also valid.
         if (schemaType === "input") {
-          const input = graphNode.addInput(name, type as -1);
+          const input = graphNode.addInput(name, type as -1, extraInfo);
           input.color_on = "#c9daf8";
         } else {
-          const output = graphNode.addOutput(name, type as -1);
+          const output = graphNode.addOutput(name, type as -1, extraInfo);
           output.color_on = "#b6d7a8";
         }
       }
@@ -416,7 +419,26 @@ export class Editor extends LitElement {
       this.#nodeIdToGraphIndex.set(node.descriptor.id, graphNode.id);
       this.#graphIndexToNodeIndex.set(graphNode.id, i);
 
-      let describerResult = await node.describe();
+      // HACK: Convert the output of ports to something that looks like
+      // describer result for now.
+      // TODO: Refactor addIOToNode to take the `InspectablePort`.
+      let describerResult = await (async () => {
+        const ports = await node.ports();
+        const createSchema = (p: InspectablePortList): Schema => {
+          return {
+            type: "object",
+            properties: p.ports.reduce((acc, port) => {
+              acc[port.name] = port.schema || { type: "string" };
+              return acc;
+            }, {} as Record<string, Schema>),
+          };
+        };
+
+        const inputSchema = createSchema(ports.inputs);
+        const outputSchema = createSchema(ports.outputs);
+        return { inputSchema, outputSchema };
+      })();
+
       if (node.containsGraph()) {
         if (!descriptor.url) {
           console.warn("Descriptor does not have a URL");
@@ -492,31 +514,18 @@ export class Editor extends LitElement {
           continue;
         }
 
-        // Locate the ports and connect them up. If there's a wildcard '*' then
-        // match outgoing and incoming ports by name. Otherwise locate the
-        // precise ports and connect those alone.
-        if (connection.out === "*") {
-          for (let o = 0; o < sourceNode.outputs.length; o++) {
-            for (let i = 0; i < destNode.inputs.length; i++) {
-              if (sourceNode.outputs[o].name === destNode.inputs[i].name) {
-                this.#connectNodes(sourceNode, destNode, o, i);
-              }
-            }
+        sourceLoop: for (let o = 0; o < sourceNode.outputs.length; o++) {
+          if (sourceNode.outputs[o].name !== connection.out) {
+            continue;
           }
-        } else {
-          sourceLoop: for (let o = 0; o < sourceNode.outputs.length; o++) {
-            if (sourceNode.outputs[o].name !== connection.out) {
+
+          for (let i = 0; i < destNode.inputs.length; i++) {
+            if (connection.in !== destNode.inputs[i].name) {
               continue;
             }
 
-            for (let i = 0; i < destNode.inputs.length; i++) {
-              if (connection.in !== destNode.inputs[i].name) {
-                continue;
-              }
-
-              this.#connectNodes(sourceNode, destNode, o, i);
-              break sourceLoop;
-            }
+            this.#connectNodes(sourceNode, destNode, o, i);
+            break sourceLoop;
           }
         }
       }
