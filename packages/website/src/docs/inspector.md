@@ -240,34 +240,14 @@ The port status can be one of the following values:
 
 ## Subgraphs
 
-> [!WARNING]
-> This part of the API is still in flux. Even more than the stuff above.
-
 Some nodes may represent entire subgraphs. For instance, `core.invoke` node takes a `board` as its argument, and invokes that graph, passing its own inputs to this subgaph and returning its results as own outputs.
 
-To find out if a node represents a subgraph, use the `containsGraph` method of the `InspectableNode` instance:
+> [!TIP]
+> Make sure that when calling `inspect`, the BGL document argument has the `url` property set to
+> a valid URL that represents the current location of this graph. It will enable nodes that do loading as part of describing themselves (such as `core.invoke`) to correctly resolve any relative paths that might be given as their inputs.
+>
+> This value will be automatically set when loading a BGL file using the `BoardRunner.load` method.
 
-```ts
-// Returns boolean.
-const containsGraph = node.containsGraph();
-```
+It is the responsibility of the respective nodes to provide an accurate description of their input and output ports.
 
-We can then load the subgraph using the `InspectableNode.subgraph` method. The loading logic is intentionally not part of the Inspector API. Instead, we must supply an loader function with the signature, specified by `InspectableGraphLoader`.
-
-For convenience, there's a `loadToInspect` helper function that creates a basic loader for just that purpose. This helper function takes a single argument of the base URL that will be used to resolve relative paths while loading:
-
-```ts
-import { inspect, loadToInspect } from "@google-labs/breadboard";
-
-// .. somewhere down in the code
-
-// Returns an `InspectableGraph` instance.
-const subgraph = await node.subgraph(loadToInspect(new URL(base)));
-```
-
-To help with understanding the expected inputs and outputs of a graph, the `InspectableGraph` has a `describe` method. It returns an object with two members: `inputSchema` and `outputSchema`. These objects represent what the graph expects as its inputs and its outputs.
-
-```ts
-// async, returns Promise<NodeDescriberResult>
-const { inputSchema, outputSchema } = await graph.describe();
-```
+For instance, when `core.invoke` is asked to describe itself -- and provided it has all the necessary information, and the BGL document has a valid `url` property, -- it will show the invoked graph's inputs and outputs as its own ports.
