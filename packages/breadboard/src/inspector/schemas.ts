@@ -27,17 +27,18 @@ const schemaFromProperties = (properties: Record<string, Schema>): Schema => {
 
 export const edgesToSchema = (
   edgeType: EdgeType,
-  edges?: InspectableEdge[],
-  properties: Record<string, Schema> = {}
+  edges?: InspectableEdge[]
 ): Schema => {
   if (!edges) return {};
   return schemaFromProperties(
     edges.reduce((acc, edge) => {
       // Remove star edges from the schema. These must be handled separately.
       if (edge.out === "*") return acc;
-      acc[edgeType === EdgeType.In ? edge.in : edge.out] = { type: "string" };
+      const key = edgeType === EdgeType.In ? edge.in : edge.out;
+      if (acc[key]) return acc;
+      acc[key] = { type: "string" };
       return acc;
-    }, properties)
+    }, {} as Record<string, Schema>)
   );
 };
 
@@ -50,13 +51,10 @@ export const createSchemaForInput = (
   options: NodeTypeDescriberOptions
 ): NodeDescriberResult => {
   const schema = options.inputs?.schema as Schema | undefined;
+  if (schema) return { inputSchema: {}, outputSchema: schema };
   return {
     inputSchema: {},
-    outputSchema: edgesToSchema(
-      EdgeType.Out,
-      options.outgoing,
-      schema?.properties
-    ),
+    outputSchema: edgesToSchema(EdgeType.Out, options.outgoing),
   };
 };
 
@@ -69,12 +67,9 @@ export const createSchemaForOutput = (
   options: NodeTypeDescriberOptions
 ): NodeDescriberResult => {
   const schema = options.inputs?.schema as Schema | undefined;
+  if (schema) return { inputSchema: schema, outputSchema: {} };
   return {
-    inputSchema: edgesToSchema(
-      EdgeType.In,
-      options.incoming,
-      schema?.properties
-    ),
+    inputSchema: edgesToSchema(EdgeType.In, options.incoming),
     outputSchema: {},
   };
 };

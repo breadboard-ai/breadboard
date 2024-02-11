@@ -94,9 +94,6 @@ test("inspector API can describe the input in simplest-no-schema.json", async (t
     inputSchema: {},
     outputSchema: {
       type: "object",
-      properties: {
-        "*": { type: "string" },
-      },
     },
   });
 });
@@ -161,12 +158,6 @@ test("inspector API can describe the output in simplest-no-schema.json", async (
   t.deepEqual(api, {
     inputSchema: {
       type: "object",
-      properties: {
-        "": {
-          type: "string",
-          title: "*",
-        },
-      },
     },
     outputSchema: {},
   });
