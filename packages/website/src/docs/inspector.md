@@ -125,8 +125,10 @@ const ports = await node.ports();
 This method also takes an optional `InputValues` argument that can be useful for some types of nodes that change their input/output port configuration based on the inputs.
 
 ```ts
+// Given this argument, the `promptTemplate` node will parse the template,
+// see that it needs a `name` value to correctly fill in the template,
+// and change its shape to expect `name` as an additional input port
 const promptTemplatePorts = await promptTemplate.ports({
-  // prettier-ignore
   template: "Hello {% raw %}{{name}}{% endraw %}!",
 });
 ```
@@ -195,7 +197,7 @@ always `false` for the output ports.
 const configured = firstInputPort.configured;
 ```
 
-We can get the JSON schema of the port:
+We can get the [JSON schema](https://json-schema.org/) of the port:
 
 ```ts
 // Returns `Schema`.
