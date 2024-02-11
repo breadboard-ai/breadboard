@@ -86,7 +86,7 @@ export type InspectableEdge = {
    */
   from: InspectableNode;
   /**
-   * The port of the outgoing edge.
+   * The name of the port of the outgoing edge.
    */
   out: string;
   /**
@@ -94,7 +94,7 @@ export type InspectableEdge = {
    */
   to: InspectableNode;
   /**
-   * The port of the incoming edge.
+   * The name of the port of the incoming edge.
    */
   in: string;
 };
