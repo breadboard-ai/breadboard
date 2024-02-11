@@ -109,11 +109,12 @@ class Graph implements InspectableGraph {
     return this.#graph.edges
       .filter((edge) => edge.to === id)
       .map((edge) => {
+        const edgein = edge.out === "*" ? "*" : edge.in;
         return {
           from: this.nodeById(edge.from),
           out: edge.out,
           to: this.nodeById(edge.to),
-          in: edge.in,
+          in: edgein,
         };
       })
       .filter(

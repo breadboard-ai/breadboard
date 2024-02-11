@@ -33,11 +33,9 @@ export const edgesToSchema = (
   if (!edges) return {};
   return schemaFromProperties(
     edges.reduce((acc, edge) => {
-      if (edge.out === "*" && edgeType === EdgeType.In) {
-        acc[edge.in] = { type: "string", title: "*" };
-      } else {
-        acc[edgeType === EdgeType.In ? edge.in : edge.out] = { type: "string" };
-      }
+      // Remove star edges from the schema. These must be handled separately.
+      if (edge.out === "*") return acc;
+      acc[edgeType === EdgeType.In ? edge.in : edge.out] = { type: "string" };
       return acc;
     }, properties)
   );
