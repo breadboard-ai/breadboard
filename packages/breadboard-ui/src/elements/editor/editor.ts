@@ -364,14 +364,11 @@ export class Editor extends LitElement {
     const addIOtoNode = (
       graphNode: LG.LGraphNode,
       schemaType: "input" | "output",
-      properties: Schema["properties"]
+      portList: InspectablePortList
     ) => {
-      if (!properties) {
-        console.warn("Subgraph does not have any schema:", graphNode.title);
-        return;
-      }
-
-      for (const [name, value] of Object.entries(properties)) {
+      for (const port of portList.ports) {
+        const name = port.name;
+        const value = port.schema || {};
         const type =
           typeof value.type === "string" &&
           LG.LGraph.supported_types.includes(value.type)
@@ -417,34 +414,9 @@ export class Editor extends LitElement {
       this.#nodeIdToGraphIndex.set(node.descriptor.id, graphNode.id);
       this.#graphIndexToNodeIndex.set(graphNode.id, i);
 
-      // HACK: Convert the output of ports to something that looks like
-      // describer result for now.
-      // TODO: Refactor addIOToNode to take the `InspectablePort`.
-      const describerResult = await (async () => {
-        const ports = await node.ports();
-        const createSchema = (p: InspectablePortList): Schema => {
-          return {
-            type: "object",
-            properties: p.ports.reduce((acc, port) => {
-              acc[port.name] = port.schema || { type: "string" };
-              return acc;
-            }, {} as Record<string, Schema>),
-          };
-        };
-
-        const inputSchema = createSchema(ports.inputs);
-        const outputSchema = createSchema(ports.outputs);
-        return { inputSchema, outputSchema };
-      })();
-
-      const inputs = describerResult.inputSchema.properties;
-      if (inputs) {
-        addIOtoNode(graphNode, "input", inputs);
-      }
-      const outputs = describerResult.outputSchema.properties;
-      if (outputs) {
-        addIOtoNode(graphNode, "output", outputs);
-      }
+      const { inputs, outputs } = await node.ports();
+      addIOtoNode(graphNode, "input", inputs);
+      addIOtoNode(graphNode, "output", outputs);
 
       const nodeLocation = this.#nodeLocations.get(node.descriptor.id);
       if (nodeLocation) {
