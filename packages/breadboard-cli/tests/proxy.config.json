@@ -1,0 +1,4 @@
+{
+  "kits": ["@google-labs/core-kit"],
+  "proxy": ["fetch"]
+}

@@ -17,3 +17,4 @@ export { InitServer, InitClient } from "./init.js";
 export { defineConfig, hasOrigin, type ProxyServerConfig } from "./config.js";
 export type * from "./protocol.js";
 export type * from "./config.js";
+export type * from "./http.js";
