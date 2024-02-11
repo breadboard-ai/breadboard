@@ -8,15 +8,16 @@ import test from "ava";
 
 import { inspectableGraph } from "../../src/inspector/index.js";
 import { GraphDescriptor } from "../../src/types.js";
-
-import { loadToInspect } from "../../src/inspector/index.js";
+import { BoardLoader } from "../../src/loader.js";
 
 const BASE_URL = new URL("../../../tests/inspector/data/", import.meta.url);
 
 const load = async (url: string) => {
   const base = BASE_URL;
-  const loader = loadToInspect(base);
-  return loader(url, { nodes: [], edges: [] });
+  const loader = new BoardLoader({ base });
+  const result = await loader.load(url);
+  if (!result) return undefined;
+  return inspectableGraph(result.graph);
 };
 
 test("simple graph description works as expected", async (t) => {

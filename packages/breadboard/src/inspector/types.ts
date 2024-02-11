@@ -37,21 +37,7 @@ export type InspectableNode = {
    * Return true if the node is an exit node (no outgoing edges)
    */
   isExit(): boolean;
-  /**
-   * Returns true if the node contains a subgraph
-   */
-  containsGraph(): boolean;
-  /**
-   * Returns an inspectable subgraph, if one is present or `undefined`
-   * otherwise
-   *
-   * @param loader - a loader that is called with the path to load when the
-   * subgraph needs to be loaded (over the network or filesystem). The subgraph
-   * could also be embedded directly in the graph.
-   */
-  subgraph(
-    loader: InspectableGraphLoader
-  ): Promise<InspectableGraph | undefined>;
+
   /**
    * Returns the API of the node.
    *
@@ -150,19 +136,6 @@ export type InspectableGraph = {
    */
   describe(): Promise<NodeDescriberResult>;
 };
-
-export type InspectableGraphLoader = (
-  /**
-   * The `path` value of the `invoke`. It may be a relative or an absolute URL,
-   * a file path, a `GraphDescriptor` or undefined.
-   */
-  graph: GraphDescriptor | string,
-  /**
-   * The full GraphDescriptor of the graph in whose context the loading happens.
-   * This is the graph that contains the `invoke` node.
-   */
-  loadingGraph: GraphDescriptor
-) => Promise<InspectableGraph | undefined>;
 
 /**
  * Options to supply to the `inspectableGraph` function.
