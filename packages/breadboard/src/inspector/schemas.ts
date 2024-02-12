@@ -41,6 +41,7 @@ export const edgesToSchema = (
   if (!edges) return {};
   return new SchemaBuilder()
     .addProperties(edgesToProperties(edgeType, edges, keepStar))
+    .setAdditionalProperties(true)
     .build();
 };
 
@@ -55,6 +56,7 @@ export const describeInput = (
   const schema = options.inputs?.schema as Schema | undefined;
   const inputSchema = new SchemaBuilder()
     .addProperty("schema", SCHEMA_SCHEMA)
+    .setAdditionalProperties(true)
     .build();
   if (schema) return { inputSchema, outputSchema: schema };
   return {
@@ -72,10 +74,9 @@ export const describeOutput = (
   options: NodeTypeDescriberOptions
 ): NodeDescriberResult => {
   const schema = options.inputs?.schema as Schema | undefined;
-  const inputSchemaBuilder = new SchemaBuilder().addProperty(
-    "schema",
-    SCHEMA_SCHEMA
-  );
+  const inputSchemaBuilder = new SchemaBuilder()
+    .addProperty("schema", SCHEMA_SCHEMA)
+    .setAdditionalProperties(true);
   if (schema)
     return {
       inputSchema: inputSchemaBuilder.addSchema(schema).build(),

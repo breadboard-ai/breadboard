@@ -37,8 +37,10 @@ export class SchemaBuilder {
     const result: Schema = {
       type: "object",
       properties: this.properties,
-      additionalProperties: this.additionalProperties,
     };
+    if (!this.additionalProperties) {
+      result.additionalProperties = false;
+    }
     if (this.required.length > 0) {
       result.required = this.required;
     }
