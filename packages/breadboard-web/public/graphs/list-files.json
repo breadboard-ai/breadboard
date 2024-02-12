@@ -143,9 +143,11 @@
       "url": "npm:@google-labs/node-nursery-web"
     },
     {
+      "title": "Core Kit",
       "url": "npm:@google-labs/core-kit"
     },
     {
+      "title": "JSON Kit",
       "url": "npm:@google-labs/json-kit"
     }
   ]

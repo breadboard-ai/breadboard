@@ -124,6 +124,18 @@ export class NodeCreateEvent extends Event {
   }
 }
 
+export class NodeUpdateEvent extends Event {
+  static eventName = "breadboardnodeupdate";
+
+  constructor(public id: string, public configuration: NodeConfiguration) {
+    super(NodeUpdateEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
 export class EdgeChangeEvent extends Event {
   static eventName = "breadboardedgechange";
 

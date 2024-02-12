@@ -264,12 +264,15 @@
   ],
   "kits": [
     {
+      "title": "Core Kit",
       "url": "npm:@google-labs/core-kit"
     },
     {
+      "title": "JSON Kit",
       "url": "npm:@google-labs/json-kit"
     },
     {
+      "title": "Template Kit",
       "url": "npm:@google-labs/template-kit"
     }
   ]

@@ -579,6 +579,12 @@ export class Main extends LitElement {
     this.loadInfo.title = "New board";
     this.mode = MODE.BUILD;
     this.#visualizer = "editor";
+
+    if (this.loadInfo.url) {
+      const config = createRunConfig(this.loadInfo.url);
+      this.#kits = config.kits;
+    }
+
     this.#setActiveVisualizer(this.#visualizer);
   }
 
@@ -656,6 +662,23 @@ export class Main extends LitElement {
             this.loadInfo?.graphDescriptor?.nodes.push(newNode);
             this.#uiRef.value?.requestUpdate();
           }}
+          @breadboardnodeupdate=${(
+            evt: BreadboardUI.Events.NodeUpdateEvent
+          ) => {
+            if (!this.loadInfo?.graphDescriptor?.nodes) {
+              return;
+            }
+
+            const node = this.loadInfo.graphDescriptor.nodes.find(
+              (node) => node.id === evt.id
+            );
+            if (!node) {
+              return;
+            }
+
+            node.configuration = evt.configuration;
+            this.#uiRef.value?.requestUpdate();
+          }}
           @breadboardmessagetraversal=${() => {
             if (this.status !== BreadboardUI.Types.STATUS.RUNNING) {
               return;
@@ -725,12 +748,15 @@ export class Main extends LitElement {
               this.loadInfo.graphDescriptor
             );
 
-            const config = createRunConfig(this.loadInfo.graphDescriptor.url);
-            config.remote = false;
-            config.proxy = [];
-            config.runner = runner;
+            const runConfig = createRunConfig(
+              this.loadInfo.graphDescriptor.url
+            );
+            runConfig.remote = false;
+            runConfig.proxy = [];
+            runConfig.runner = runner;
+            this.#kits = runConfig.kits;
 
-            this.#runBoard(run(config));
+            this.#runBoard(run(runConfig));
           }}
         >
           Run this board
