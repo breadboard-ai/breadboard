@@ -157,8 +157,7 @@ class OpenAiGpt_3_5_Turbo(Board[InputSchema, OutputSchema]):
   description = "This board is the simplest possible invocation of OpenAI's GPT-3.5 API to generate text."
   version = "0.0.2"
 
-  def __init__(self) -> None:
-    super().__init__()
+  def init(self) -> None:
     self.formatParameters = Starter.jsonata(
       id="formatParameters",
       expression=FORMAT_PARAMETERS_EXPRESSION,
@@ -186,6 +185,8 @@ class OpenAiGpt_3_5_Turbo(Board[InputSchema, OutputSchema]):
     )
 
   def describe(self, input: InputSchema) -> OutputSchema:
+    init()
+    
     formatParameters = self.formatParameters(input)
     self.fetch = self.fetch(formatParameters)
     self.getResponse = self.getResponse(json=self.fetch.response)

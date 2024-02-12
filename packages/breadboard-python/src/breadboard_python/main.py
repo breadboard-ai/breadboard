@@ -6,7 +6,7 @@ from pydantic._internal._model_construction import ModelMetaclass
 from typing import Any, Self, Tuple, TypeAlias
 
 from pydantic import BaseModel
-from typing import List, TypeVar, Generic, get_args, Optional, Union, Dict
+from typing import List, TypeVar, Generic, get_args, Optional, Union, Dict, ClassVar
 from jsonref import replace_refs
 
 import inspect
@@ -19,7 +19,6 @@ def update_json_schema(json_schema, handler: GetJsonSchemaHandler):
       json_schema.pop("required")
     if json_schema["allOf"] == [{"properties": [], "type": "object"}]:
       pass
-    print("hi")
     # TODO: This is hackily replacing allOf with object. Should check if it's an actual SchemaObject.
     json_schema.pop("allOf")
     json_schema["type"] = "object"
@@ -82,6 +81,7 @@ class SchemaObject(BaseModel):
 
 
 class ImportedSchemaObject(SchemaObject):
+  additionalProperties: ClassVar[bool] = False
   @classmethod
   def __get_pydantic_json_schema__(
     cls, core_schema: core_schema.JsonSchema, handler: GetJsonSchemaHandler
@@ -96,6 +96,7 @@ class ImportedSchemaObject(SchemaObject):
     json_schema.pop("title")
         
     return json_schema
+
   
 
 T = TypeVar('T', bound=SchemaObject)
@@ -140,11 +141,8 @@ def _parse_type(schema):
   if type == "any":
     return Any
   return Any
-  print(f"WARNING: unknown type: {schema}")
-  raise Exception(f"Unsupported type for schema: {schema}")
 
-def convert_from_json_to_pydantic(name, schema):
-  # 
+def convert_from_json_to_pydantic(name, schema) -> Tuple[Union[BaseModel, type], Field]:
   if "properties" in schema and "type" in schema and schema["type"] != "object":
     raise Exception(f"Expected type to be object. Got {schema['type']} instead.")
 
@@ -156,6 +154,8 @@ def convert_from_json_to_pydantic(name, schema):
     for k, v in schema["properties"].items():
       output[k] = convert_from_json_to_pydantic(k, v)
     obj = create_model(name, __base__=ImportedSchemaObject, **output)
+    if "additionalProperties" in schema:
+      obj.additionalProperties = schema["additionalProperties"]
   elif schema.get("type") == "object":
     obj = SchemaObject
   args = {}
@@ -204,7 +204,7 @@ Wildcard "*" means everything.
 Can be passed in dict (as part of inputs/outputs), Board, Tuple, and ModelMetaclass (representing schema field)
 """
 class AttrDict(dict):
-  __id = None
+  _id = None
   def __init__(self, *args, **kwargs):
     for arg in args:
       # TODO: Handle multiple wildcard matches.
@@ -212,27 +212,27 @@ class AttrDict(dict):
     for k, v in kwargs.items():
       if isinstance(v, FieldInfo):
         # instantiate a new AttrDict
-        #v = AttrDict()
-        # TODO: Populate the other field info into the AttrDict.
+        #v = FieldContext(v)
         pass
+        # TODO: Populate the other field info into the AttrDict.
       self[k] = v
   def __setattr__(self, key, value):
-    if key == "__id" or key == "_AttrDict__id":
+    if key == "_id":
       return super().__setattr__(key, value)
     self[key] = value
 
   def get_or_assign_id(self, default_name = None, required=False):
-    if self.__id is not None:
-      return self.__id
+    if self._id is not None:
+      return self._id
     if required:
       raise Exception(f"Id should be assigned but is not: {self}")
     if default_name is not None:
-      self.__id = default_name
+      self._id = default_name
     else:
       # TODO: Fix shared incrementer. It should be tracked based on context.
-      self.__id = f"{self.__type}-{__class__.SHARED_INDEX}"
+      self._id = f"{self.__type}-{__class__.SHARED_INDEX}"
       __class__.SHARED_INDEX += 1
-    return self.__id
+    return self._id
 
   def __contains__(self, item):
     if item == "*":
@@ -243,7 +243,7 @@ class AttrDict(dict):
       return item in self["*"]
 
   def __getattr__(self, item):
-    if item == "__id":
+    if item == "_id":
       return super().__getattr__(item)
     if item not in self:
       return UNINITIALIZED
@@ -253,9 +253,6 @@ class AttrDict(dict):
     if not super().__contains__(item):
       return super().__getitem__("*")[item]
     return super().__getitem__(item)
-
-  def get_inputs(self) -> Dict[str, "Board"]:
-    return self
   
   def __call__(self, **kwargs):
     for k, v in kwargs.items():
@@ -284,11 +281,15 @@ def get_field_name(field: FieldInfo, blob):
       return k
     if isinstance(v, FieldInfo) and "annotation" in v._attributes_set:
       if isinstance(v._attributes_set["annotation"], ModelMetaclass):
-        return get_field_name(field, v._attributes_set["annotation"].model_fields)
+        try:
+          return get_field_name(field, v._attributes_set["annotation"].model_fields)
+        except Exception:
+          pass
   # TODO: FOr wildcard matching, just look for name in fieldinfo.
   if "name" in field._attributes_set:
     return field._attributes_set["name"]
   raise Exception(f"Can't find {field}")
+  
 
 # input schema is either a modelmetaclass or dict
 SchemaType = Union[SchemaObject, Dict]
@@ -302,10 +303,11 @@ class Board(Generic[T, S]):
   description = ""
   version = ""
 
-  type = "openai-gpt-3.5-turbo"
+  type = "unknown-board"
 
   SHARED_INDEX = {}
   output = {}
+  components = {}
 
   # This is only used within the context of the parent of this Board, if there is one.
   # If there is no parent, this identifier is not used.
@@ -319,18 +321,28 @@ class Board(Generic[T, S]):
     # Get input/output schema from typing
     if type(self).__orig_bases__[0].__origin__ == Generic:
       # This means that the Board is still generic and has no input/output schema defined.
-      input_schema = {}
-      output_schema = {}
+      input_schema = Any
+      output_schema = Any
       #raise Exception("Board does not have input and output schemas defined.")
     else:
       input_schema, output_schema = get_args(type(self).__orig_bases__[0])
+
+    if not isinstance(input_schema, type) and not isinstance(input_schema, SchemaObject):
+      raise Exception(f"Invalid type for schema input: {type(input_schema)}")
+    if not isinstance(output_schema, type) and not isinstance(output_schema, SchemaObject):
+      raise Exception(f"Invalid type for schema output: {type(output_schema)}")
     return input_schema, output_schema
 
 
   def __init__(self, **kwargs) -> None:
     self.input_schema, self.output_schema = self._get_schema()
     self.components = {}
-    self.inputs = {}
+    # For the highest level Board, inputs will always just be the input schemas.
+    # For the second-level Boards, inputs will be replaced with values or other edges.
+    # Static values should be on init. Calling should be reserved for edges.
+    self.inputs: Dict[str, Tuple[Optional[Any], List[Union[FieldContext, Dict, Board]]]] = {}
+    self.input_fields = {}
+    self.set_inputs: Dict[str, Any] = {"*": []}
     self.id = None
     self.loaded = False
 
@@ -338,12 +350,32 @@ class Board(Generic[T, S]):
       if k == "id":
         self.id = v
         continue
-      if self.input_schema and k not in self.input_schema.model_fields:
-        pass
-        #print(f"Unknown keyword: {k} for {self.id}")
-      self.inputs[k] = v
+      if isinstance(v, FieldInfo) or isinstance(v, Board) or isinstance(v, AttrDict): # If it's not static
+        if k not in self.set_inputs:
+          self.set_inputs[k] = []
+        self.set_inputs[k].append(v)
+      else:
+        self.inputs[k] = v
 
-    self.output: AttrDict = AttrDict() if not self.output_schema or not self.output_schema.model_fields else AttrDict(self.output_schema.model_fields)
+    if self.input_schema and isinstance(self.input_schema, ModelMetaclass):
+      for k, v in self.input_schema.model_fields.items():
+        if isinstance(v, FieldInfo):
+          v = FieldContext(v, self)
+        else:
+          raise Exception("Unexpected model_field. No FieldInfo")
+        if k not in self.inputs:
+          self.inputs[k] = v
+          # If k is already populated in the input, no need to populate it now.
+
+    self.output = AttrDict()
+    if self.output_schema and isinstance(self.output_schema, ModelMetaclass):
+      for k, v in self.output_schema.model_fields.items():
+        if isinstance(v, FieldInfo):
+          v = FieldContext(v, self)
+        else:
+          raise Exception("Unexpected model_field. No FieldInfo")
+        self.output[k] = v
+      #self.output = AttrDict(self.output_schema.model_fields)
 
   def __setattr__(self, name, value):
     super().__setattr__(name, value)
@@ -380,36 +412,21 @@ class Board(Generic[T, S]):
       return
     self.loaded = True
     self.edges = []
-    input_values = {}
 
-    for k, v in self.input_schema.model_fields.items():
-      if isinstance(v, FieldInfo):
-        v = FieldContext(v, self)
-      else:
-        raise Exception("Unexpected model_field. No FieldInfo")
-      input_values[k] = v
-    self.inputs = self.inputs | input_values
     inputs = AttrDict(self.inputs)
     inputs.get_or_assign_id("input")
     self.output = self.describe(inputs)
+
+    # TODO: this should load all components, too.
   
   def finalize(self):
     raise Exception("Not implemented yet")
-    inputs = set(self.inputs.keys())
-    schema_inputs = set(self.input_schema.model_fields)
-    missing_required = []
-    for v in schema_inputs - inputs:
-      # check if required.
-      if v.required:
-        missing_required.append(v)
-    if missing_required:
-      raise Exception(f"Missing required fields: {missing_required}")
     
   def get_configuration(self):
     # Filter out anything that's not a reference to another Board, field, or AttrDict.
     # get resolved inputs
     config = {k: v  for k, v in self._get_resolved_inputs().items() if not isinstance(v, FieldContext) and not isinstance(v, Board) and not isinstance(v, dict)}
-    if self.input_schema:
+    if self.input_schema and isinstance(self.input_schema, SchemaObject):
       if "schema" in config:
         raise Exception(f"Already have 'schema' key populated in config. This is a reserved field name. Config: {config}")
       config["schema"] = self.input_schema.__json__()
@@ -436,9 +453,6 @@ class Board(Generic[T, S]):
       __class__.SHARED_INDEX[self.type] += 1
     return self.id
 
-  def get_inputs(self) -> Dict[str, Self]:
-    return self.inputs
-
   def __json__(self):
     self.__load__()
     output = {}
@@ -451,45 +465,64 @@ class Board(Generic[T, S]):
     # TODO: Find out what graphs are.
     output["graphs"] = {}
     output["nodes"] = []
-    
+
+    # When constructing the graph, two adhoc Boards are added, representing input and output.
+
     # Populate input node.
     # TODO: Handle nested and un-nested input/output schemas.
-    node = {"id": self.get_or_assign_id("input"), "type": "input", "configuration": {}}
+    all_nodes = []
+    class InputBoard(Board[Any, self.input_schema]):
+      type = "input"
+    
+    input_board = InputBoard()
+    input_board.get_or_assign_id("input")
+    class OutputBoard(Board[self.output_schema, Any]):
+      type = "output"
+
+    output_board = OutputBoard()
+    output_board.get_or_assign_id("output")
+
+    node = {"id": input_board.get_or_assign_id(required=True), "type": input_board.type, "configuration": {}}
     if self.input_schema:
       node["configuration"]["schema"] = self.input_schema.__json__()
     output["nodes"].append(node)
 
     # Populate output node.
     if self.output_schema:
-      node = {"id": self.get_or_assign_id("output")}
       for output_field_name, output_field_info in self.output_schema.model_fields.items():
         child_schema = output_field_info.annotation
         if isinstance(child_schema, ModelMetaclass):
           self.output[output_field_name].get_or_assign_id(output_field_name)
-          node = {"id": output_field_name, "type": "output", "configuration": {"schema": child_schema.__json__()}}
+          node = {"id": output_board.get_or_assign_id(required=True), "type": output_board.type, "configuration": {"schema": child_schema.__json__()}}
         else:
-          node = {"id": output_field_name, "type": "output", "configuration": {"schema": self.output_schema.__json__()}}
+          node = {"id": output_board.get_or_assign_id(required=True), "type": output_board.type, "configuration": {"schema": self.output_schema.__json__()}}
         output["nodes"].append(node)
 
-    all_components = [(k, v) for k, v in self.components.items()] + [(k, v) for k, v in self.output.items()]
-
     kits = set()
+
+    output_board(**self.describe(input_board.output))
+
+    all_components = [(k, v) for k, v in self.components.items()] + [(output_board.get_or_assign_id(required=True), output_board)]
 
     # Component can be a Board or an AttrDict.
     already_visited_nodes = set()
     def iterate_component(name, component, assign_name=True) -> List[Dict]:
       nodes = []
+      if component == self:
+        raise Exception("why")
       if isinstance(component, Board):
-        inputs = component.inputs
-        if component not in already_visited_nodes:
-          already_visited_nodes.add(component)
-          node = {
-            # Assign type if is dependency. Assign name if is the Board.
-            "id": component.get_or_assign_id(name) if name != "*" and assign_name else component.get_or_assign_id(),
-            "type": component.type,
-            "configuration": component.get_configuration(),
-          }
-          nodes.append(node)
+        if component in already_visited_nodes:
+          return nodes
+        already_visited_nodes.add(component)
+        inputs = component.set_inputs
+        node = {
+          # Assign type if is dependency. Assign name if is the Board.
+          "id": component.get_or_assign_id(name) if name != "*" and assign_name else component.get_or_assign_id(),
+          "type": component.type,
+          "configuration": component.get_configuration(),
+        }
+        nodes.append(node)
+        all_nodes.append(component)
 
         # check for kit
         package_name = getattr(component, "_ImportedClass__package_name", None)
@@ -499,100 +532,62 @@ class Board(Generic[T, S]):
       elif isinstance(component, AttrDict):
         inputs = component
       elif isinstance(component, FieldContext):
-        #print("Encountered fieldinfo while iterating components.")
         nodes.extend(iterate_component(component._context.id, component._context))
         return nodes
       else:
         raise Exception("Unexpected component type.")
-      for k, v in inputs.items():
-        if isinstance(v, Board):
-          nodes.extend(iterate_component(k, v, assign_name=False))
-        elif isinstance(v, AttrDict):
-          nodes.extend(iterate_component(k, v, assign_name=False))
+      for k, vs in inputs.items():
+        for v in vs:
+          if isinstance(v, Board):
+            nodes.extend(iterate_component(k, v, assign_name=False))
+          elif isinstance(v, AttrDict):
+            nodes.extend(iterate_component(k, v, assign_name=False))
+          elif isinstance(v, FieldContext):
+            nodes.extend(iterate_component(k, v._context, assign_name=False))
       return nodes
 
     for name, component in all_components:
       output["nodes"].extend(iterate_component(name, component))
 
+    # Populate Edges
     output["edges"] = []
 
-    already_visited_nodes = set()
-    def iterate_component_edges(name, component, assign_name=True) -> List[Dict]:
-      # TODO: Have this work for AttrDict by making AttrDict hashable.
-      if component in already_visited_nodes:
-        return []
-      already_visited_nodes.add(component)
-      edges = []
-      if isinstance(component, Board):
-        inputs = component.inputs
-      elif isinstance(component, AttrDict):
-        inputs = component
-      elif isinstance(component, FieldContext):
-        #print("Encountered fieldinfo while iterating component edges")
-        if component._context == self:
-          edge = {
-            "from": component._context.get_or_assign_id(required=True),
-            # TODO: Check if this should actually ahppen
-            "to": get_field_name(component, {}),
-            "out": get_field_name(component, {}),
-            "in": name,
-          }
-        else:
-          edge = {
-            "from": component._context.get_or_assign_id(required=True),
-            # TODO: This seems wrong way to determine "to".
-            "to": get_field_name(component, component._context.output),
-            "out": get_field_name(component, component._context.output),
-            "in": name,
-          }
-        edges.append(edge)
-        edges.extend(iterate_component_edges(component._context.id, component._context))
-        return edges
-      else:
-        raise Exception("Unexpected component type.")
-      for k, v in inputs.items():
-        if isinstance(v, Board):
-          edge = {
-            "from": v.get_or_assign_id(required=True),
-            "to": component.get_or_assign_id(required=True),
-            "out": k,
-            "in": "" if k == "*" else k,
-          }
-          edges.append(edge)
-          edges.extend(iterate_component_edges(k, v, assign_name=False))
-        elif isinstance(v, FieldContext):
-          # TODO: Specifically for input, the "from" should be the input node, not from parent Board.
-          if v._context == self:
+    all_edges = []
+    for n in all_nodes:
+      inputs = n.set_inputs
+      for k, vs in inputs.items():
+        for v in vs:
+          if isinstance(v, Board):
             edge = {
-              "from": v._context.get_or_assign_id(required=True),
-              "to": component.get_or_assign_id(required=True),
-              "out": get_field_name(v, self.inputs),
-              "in": k,
+              "from": v.get_or_assign_id(required=True),
+              "to": n.get_or_assign_id(required=True),
+              "out": k,
+              "in": "" if k == "*" else k,
             }
-          else:
+            all_edges.append(edge)
+          elif isinstance(v, FieldContext):
             edge = {
               "from": v._context.get_or_assign_id(required=True),
               # TODO: This is a hacky way to determine node id. AttrDict should be assigned the id.
-              "to": component.get_or_assign_id(required=True) if isinstance(component, Board) else name,
+              "to": n.get_or_assign_id(required=True),
               "out": get_field_name(v, v._context.output),
               "in": k,
+              }
+            all_edges.append(edge)
+          elif isinstance(v, AttrDict):
+            # When does an AttrDict happen? It's a nested thing... but sometimes it should be done
+            edge = {
+              "from": v.get_or_assign_id(required=True),
+              # TODO: This is a hacky way to determine node id. AttrDict should be assigned the id.
+              "to": n.get_or_assign_id(required=True),
+              "out": k,
+              "in": "" if k == "*" else k,
             }
-          edges.append(edge)
-        elif isinstance(v, AttrDict):
-          # When does an AttrDict happen? It's a nested thing... but sometimes it should be done
-          edge = {
-            "from": v.get_or_assign_id(required=True),
-            # TODO: This is a hacky way to determine node id. AttrDict should be assigned the id.
-            "to": component.get_or_assign_id(required=True),# if isinstance(component, Board) else name, # maybe doesn't need this.
-            "out": k,
-            "in": "" if k == "*" else k,
-          }
-          edges.append(edge)
-          edges.extend(iterate_component_edges(k, v, assign_name=False))
-      return edges
+            all_edges.append(edge)
+          else:
+            raise Exception("Unexpected type")
 
-    for name, component in all_components:
-      output["edges"].extend(iterate_component_edges(name, component))
+    # Populate Kits
     output["kits"] = [{"url": f"npm:{x}"} for x in kits]
     return output
   
@@ -608,24 +603,41 @@ class Board(Generic[T, S]):
     return resolved_inputs
   
   def __call__(self, *args, **kwargs) -> S:
-    all_inputs = kwargs
+    # TODO: For every input passed in, it's possible to have multiple sources of it.
+    # For instance, a Board can be initialized with a certain value for field1, then get it updated by another Board.
+    # In this case, we need to store every source of the value.
+    # One question is: why do I need to call describe here?
+    # Is it just to have the inputs percolate through? But we have no idea if it is used or not, unless it's defined in Python.
+    # We should just connect the edges right here.
+    # There should only be one static input per input field. That ends being in the config.,
+    # There can be many other types of inputs
+
+    # we can take in: Board, dict, or Schema. A Board has a Schema, that is populated
+
+    for k, v in kwargs.items():
+      if k in self.inputs and not isinstance(v, FieldContext):
+        raise Exception(f"Already got an input field")
+      if not isinstance(v, FieldContext) and not isinstance(v, Board):
+        raise Exception(f"Only edges can be passed into __call__: {v}")
+    
+    for k, v in kwargs.items():
+      if k not in self.set_inputs:
+        self.set_inputs[k] = []
+      self.set_inputs[k].append(v)
     # Arg should be treated as dicts
     # TODO: When passed in a whole arg, it should be wildcarded.
+        
+    # TODO: Support multiple wildcard edges.
     for arg in args:
       if isinstance(arg, dict):
-        #all_inputs = all_inputs | arg
-        all_inputs = all_inputs | {"*": arg}
+        self.set_inputs["*"].append(arg)
       elif isinstance(arg, SchemaObject):
-        all_inputs = all_inputs | {"*": arg.model_fields}
+        self.set_inputs["*"].append(arg.model_fields)
       elif isinstance(arg, Board):
-        all_inputs = all_inputs | {"*": arg}
+        self.set_inputs["*"].append(arg)
       else:
         raise Exception("Unexpected type for arg")
     
-    self.inputs = self.inputs | all_inputs
-    inputs = AttrDict(**self._get_resolved_inputs())
-    inputs.get_or_assign_id("input")
-    self.output = self.describe(inputs)
     self.loaded = False
     return self
 

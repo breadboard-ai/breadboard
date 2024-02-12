@@ -1,7 +1,5 @@
 from .main import AttrDict, Board, convert_from_json_to_pydantic
-#from javascript import require as require_js, eval_js
 
-#from javascript import init
 import javascript
 import json
 import time
@@ -28,25 +26,37 @@ def require(package_name):
 
   output = AttrDict()
   for handler_name in handlers:
+
+    input_schema = {}
+    output_schema = {}
     if handlers[handler_name].describe is None:
-      input_schema = {}
-      output_schema = {}
+      pass
     else:
       b = handlers[handler_name].describe()
       res = javascript.eval_js('''JSON.stringify(await b)''')
       schema = json.loads(res)
       input_schema = schema["inputSchema"]
       output_schema = schema["outputSchema"]
+      if handler_name == "invoke":
+        pass
       input_schema, input_field = convert_from_json_to_pydantic("Input" + handler_name, input_schema)
-      output_schema, output_field = convert_from_json_to_pydantic("Output" + handler_name, output_schema)
+      converted_output_schema, output_field = convert_from_json_to_pydantic("Output" + handler_name, output_schema)
 
-    class ImportedClass(Board[input_schema, output_schema]):
+    class ImportedClass(Board[input_schema, converted_output_schema]):
       type = handler_name
       title = f"Auto-imported {handler_name}"
       description = f"This board is auto-imported from {package_name}"
       version = "0.?"
+      # Need to convert SchemaOutput into something that has context.
+      output = AttrDict(converted_output_schema)
+      output_schema1 = converted_output_schema
+      def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        if hasattr(self.output_schema1, "additionalProperties") and self.output_schema1.additionalProperties:
+          self.output["*"] = self
       def describe(self, input):
-        self.output = AttrDict(output_schema)
+        self.output = AttrDict(converted_output_schema)
         return self.output
       def get_configuration(self):
         config = super().get_configuration()
@@ -55,13 +65,7 @@ def require(package_name):
         return config
       
       __package_name = package_name
-      
-      """
-      def __getattr__(self, name):
-        if name == "__package_name":
-          return super(Board, self).__getattr__(name)
-        return super().__getattr__(name)
-      """
+    
 
     output[handler_name] = ImportedClass
   return output
