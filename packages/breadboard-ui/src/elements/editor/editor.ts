@@ -96,6 +96,7 @@ export class Editor extends LitElement {
   #left = 0;
   #nodes: InspectableNode[] | null = null;
   #nodeLocations: Map<string, { x: number; y: number }> = new Map();
+  #lastGraphUrl: string | null = null;
 
   static styles = css`
     :host {
@@ -360,6 +361,11 @@ export class Editor extends LitElement {
       return;
     }
 
+    if (this.#lastGraphUrl !== descriptor.url) {
+      this.#nodeLocations.clear();
+    }
+    this.#lastGraphUrl = descriptor.url || null;
+
     const addIOtoNode = (
       graphNode: LG.LGraphNode,
       schemaType: "input" | "output",
@@ -593,7 +599,7 @@ export class Editor extends LitElement {
     }
 
     for (const edge of this.loadInfo.graphDescriptor.edges) {
-      if (edge.to !== shape.to && edge.in !== shape.in) {
+      if (edge.to !== shape.to || edge.in !== shape.in) {
         continue;
       }
 
