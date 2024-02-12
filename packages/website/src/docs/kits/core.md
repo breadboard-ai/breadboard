@@ -7,6 +7,8 @@ tags:
 date: 2012-01-01 # Done to place the index atop the list.
 ---
 
+{% assign src_url = "https://github.com/breadboard-ai/breadboard/tree/main/packages/core-kit/src/nodes/" %}
+
 This is the kit that provides the most fundamental building blocks for Breadboard and contains the following nodes:
 
 ## append
@@ -80,7 +82,7 @@ We'll get the output of:
 
 ### Implementation
 
-- [src/nodes/append.ts](src/nodes/append.ts)
+- [append.ts]({{src_url}}append.ts)
 
 ## fetch
 
@@ -116,7 +118,7 @@ And receive this output:
 
 ### Implementation
 
-- [src/nodes/fetch.ts](src/nodes/fetch.ts)
+- [fetch.ts]({{src_url}}fetch.ts)
 
 ## runJavascript
 
@@ -175,7 +177,7 @@ We will get:
 
 ### Implementation
 
-- [src/nodes/run-javascript.ts](src/nodes/run-javascript.ts)
+- [run-javascript.ts]({{src_url}}run-javascript.ts)
 
 ## secrets
 
@@ -209,7 +211,7 @@ Will produce this output:
 
 ### Implementation
 
-- [src/nodes/secrets.ts](src/nodes/secrets.ts)
+- [secrets.ts]({{src_url}}secrets.ts)
 
 ## passthrough
 
@@ -243,6 +245,10 @@ See [Chapter 9: Let's build a chatbot](https://github.com/breadboard-ai/breadboa
 
 - the properties that were passed as inputs
 
+### Implementation
+
+- [passthrough.ts]({{src_url}}passthrough.ts)
+
 ## invoke
 
 Use this node to invoke another board from this board.
@@ -264,6 +270,10 @@ The outputs of the invoked board will be passed along as outputs of the `invoke`
 
 - the outputs of the invoked board
 
+### Implementation
+
+- [invoke.ts]({{src_url}}invoke.ts)
+
 ## import
 
 Creates a lambda board from a pre-existing board, either loaded from `path` or passed as JSON via `graph`. All other inputs are bound to the board, which is returned as `board`.
@@ -277,6 +287,10 @@ Creates a lambda board from a pre-existing board, either loaded from `path` or p
 ### Outputs
 
 - `board`, a `BoardCapability`, which can be passed to `invoke` and other nodes that can invoke boards.
+
+### Implementation
+
+- [import.ts]({{src_url}}import.ts)
 
 ## reflect
 
@@ -314,3 +328,7 @@ result {
 ### Outputs
 
 - `graph` -- JSON representation of the board
+
+### Implementation
+
+- [reflect.ts]({{src_url}}reflect.ts)
