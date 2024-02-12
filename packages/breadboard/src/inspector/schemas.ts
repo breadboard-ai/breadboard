@@ -13,17 +13,24 @@ export enum EdgeType {
   Out,
 }
 
-const schemaFromProperties = (properties: Record<string, Schema>): Schema => {
-  const keys = Object.keys(properties);
-  const required = keys.filter((key) => key !== "*" && key !== "");
-  let schema = { type: "object" } as Schema;
-  if (keys.length > 0) {
-    schema = { ...schema, properties };
-  }
-  if (required.length > 0) {
-    schema = { ...schema, required };
-  }
-  return schema;
+// TODO: Specify actual "schema" schema.
+const SCHEMA_SCHEMA = { type: "object" };
+
+const DEFAULT_SCHEMA = { type: "string" };
+
+const edgesToProperties = (
+  edgeType: EdgeType,
+  edges?: InspectableEdge[]
+): Record<string, Schema> => {
+  if (!edges) return {};
+  return edges.reduce((acc, edge) => {
+    // Remove star edges from the schema. These must be handled separately.
+    if (edge.out === "*") return acc;
+    const key = edgeType === EdgeType.In ? edge.in : edge.out;
+    if (acc[key]) return acc;
+    acc[key] = DEFAULT_SCHEMA;
+    return acc;
+  }, {} as Record<string, Schema>);
 };
 
 export const edgesToSchema = (
@@ -31,16 +38,9 @@ export const edgesToSchema = (
   edges?: InspectableEdge[]
 ): Schema => {
   if (!edges) return {};
-  return schemaFromProperties(
-    edges.reduce((acc, edge) => {
-      // Remove star edges from the schema. These must be handled separately.
-      if (edge.out === "*") return acc;
-      const key = edgeType === EdgeType.In ? edge.in : edge.out;
-      if (acc[key]) return acc;
-      acc[key] = { type: "string" };
-      return acc;
-    }, {} as Record<string, Schema>)
-  );
+  return new SchemaBuilder()
+    .addProperties(edgesToProperties(edgeType, edges))
+    .build();
 };
 
 /**
@@ -55,8 +55,7 @@ export const describeInput = (
   if (schema) return { inputSchema: {}, outputSchema: schema };
   return {
     inputSchema: new SchemaBuilder()
-      // TODO: Specify actual "schema" schema.
-      .addProperty("schema", { type: "object" })
+      .addProperty("schema", SCHEMA_SCHEMA)
       .build(),
     outputSchema: edgesToSchema(EdgeType.Out, options.outgoing),
   };
@@ -73,7 +72,10 @@ export const describeOutput = (
   const schema = options.inputs?.schema as Schema | undefined;
   if (schema) return { inputSchema: schema, outputSchema: {} };
   return {
-    inputSchema: edgesToSchema(EdgeType.In, options.incoming),
+    inputSchema: new SchemaBuilder()
+      .addProperties(edgesToProperties(EdgeType.In, options.incoming))
+      .addProperty("schema", SCHEMA_SCHEMA)
+      .build(),
     outputSchema: {},
   };
 };

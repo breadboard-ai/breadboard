@@ -28,6 +28,7 @@ export const getSchemaType = (value: unknown): SchemaType => {
 };
 
 export class SchemaBuilder {
+  type = "object";
   additionalProperties = false;
   required: string[] = [];
   properties: SchemaProperties = {};
