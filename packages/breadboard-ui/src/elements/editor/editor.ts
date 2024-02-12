@@ -212,6 +212,13 @@ export class Editor extends LitElement {
     LG.LiteGraph.registerNodeType("bb/node", basicNode);
   }
 
+  /**
+   * Return an inspectable node based on a given graph node index.
+   * 
+   * @param {LG.LGraphNode} node - A litegraph node whose ID defines the currently active node.
+   * 
+   * @returns {InspectableNode} returns the active node identified by index `activeNodeIdx`
+   */
   #getInspectableNodeFromGraphNodeIndex(
     node: LG.LGraphNode
   ): InspectableNode | null {
@@ -296,6 +303,19 @@ export class Editor extends LitElement {
     return { graphCanvas, graph };
   }
 
+  /**
+   * Create node based on the provided values.
+   * 
+   * The function creates a new node with a specified type, title, and position, 
+   * and assigns styles based on the type.
+   * 
+   * @param {string} type - Specifies the type of the node. This can be "input", "secret", "output", "slot", or "passthrough".
+   * @param {string} title - The title of the node.
+   * @param {number} x - The x-coordinate of the node's position on the graph.
+   * @param {number} y - The y-coordinate of the node's position on the canvas.
+   * 
+   * @returns {LG.LGraphNode}
+   */
   #createNode(type: string, title: string, x: number, y: number) {
     const newNode = LG.LiteGraph.createNode("bb/node");
     newNode.title = title;
