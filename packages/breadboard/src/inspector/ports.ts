@@ -11,12 +11,17 @@ import { NodeConfiguration, Schema } from "../types.js";
 export const computePortStatus = (
   wired: boolean,
   expected: boolean,
-  required: boolean
+  required: boolean,
+  wiredContainsStar: boolean
 ): PortStatus => {
   if (wired) {
-    return expected ? PortStatus.Connected : PortStatus.Dangling;
+    if (expected) return PortStatus.Connected;
+    return wiredContainsStar ? PortStatus.Inteterminate : PortStatus.Dangling;
   }
-  return required ? PortStatus.Missing : PortStatus.Ready;
+  if (required) {
+    return wiredContainsStar ? PortStatus.Inteterminate : PortStatus.Missing;
+  }
+  return PortStatus.Ready;
 };
 
 export const collectPorts = (
@@ -25,12 +30,17 @@ export const collectPorts = (
   schema: Schema,
   configuration?: NodeConfiguration
 ) => {
+  let wiredContainsStar = false;
   // Get the list of all ports wired to this node.
   const wiredPortNames = edges.map((edge) => {
-    if (edge.out === "*") return "*";
+    if (edge.out === "*") {
+      wiredContainsStar = true;
+      return "*";
+    }
     return type === EdgeType.In ? edge.in : edge.out;
   });
   const schemaPortNames = Object.keys(schema.properties || {});
+  const schemaContainsStar = schemaPortNames.includes("*");
   const requiredPortNames = schema.required || [];
   const configuredPortNames = Object.keys(configuration || {});
   const portNames = [
@@ -42,10 +52,6 @@ export const collectPorts = (
     ]),
   ];
   portNames.sort();
-  // TODO: Do something about the "schema" in the "output": it's a configured
-  // value, but isn't an expected input. oops. Shows up as "Dangling".
-  // TODO: When star is connected, all other ports are in a weird state: they
-  // are "missing". They probably should be "wired" or "ready" instead?
   return portNames.map((port) => {
     const star = port === "*";
     const configured = configuredPortNames.includes(port);
@@ -56,7 +62,12 @@ export const collectPorts = (
       name: port,
       configured,
       star,
-      status: computePortStatus(wired || configured, expected, required),
+      status: computePortStatus(
+        wired || configured,
+        expected || schemaContainsStar,
+        required,
+        wiredContainsStar
+      ),
       schema: schema.properties?.[port],
     };
   });

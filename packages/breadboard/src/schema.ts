@@ -45,6 +45,15 @@ export class SchemaBuilder {
     return result;
   }
 
+  addSchema(schema: Schema) {
+    if (schema.type === "object") {
+      this.addProperties(schema.properties);
+      this.addRequired(schema.required);
+      this.setAdditionalProperties(schema.additionalProperties as boolean);
+    }
+    return this;
+  }
+
   setAdditionalProperties(additionalProperties?: boolean) {
     if (additionalProperties !== undefined) {
       this.additionalProperties = additionalProperties;
