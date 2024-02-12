@@ -9,6 +9,7 @@ import { combineSchemas } from "../schema.js";
 import {
   Edge,
   GraphDescriptor,
+  NodeDescriberContext,
   NodeDescriberResult,
   NodeIdentifier,
   NodeTypeIdentifier,
@@ -99,12 +100,17 @@ class Graph implements InspectableGraph {
     if (!handler || typeof handler === "function" || !handler.describe) {
       return asWired;
     }
-    const maybeContext = this.#url ? { base: this.#url } : undefined;
+    const context: NodeDescriberContext = {
+      outerGraph: this.#graph,
+    };
+    if (this.#url) {
+      context.base = this.#url;
+    }
     return handler.describe(
       options?.inputs || undefined,
       asWired.inputSchema,
       asWired.outputSchema,
-      maybeContext
+      context
     );
   }
 

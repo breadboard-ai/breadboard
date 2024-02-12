@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { SchemaBuilder } from "../schema.js";
 import { NodeDescriberResult, Schema } from "../types.js";
 import { InspectableEdge, NodeTypeDescriberOptions } from "./types.js";
 
@@ -12,34 +13,36 @@ export enum EdgeType {
   Out,
 }
 
-const schemaFromProperties = (properties: Record<string, Schema>): Schema => {
-  const keys = Object.keys(properties);
-  const required = keys.filter((key) => key !== "*" && key !== "");
-  let schema = { type: "object" } as Schema;
-  if (keys.length > 0) {
-    schema = { ...schema, properties };
-  }
-  if (required.length > 0) {
-    schema = { ...schema, required };
-  }
-  return schema;
+// TODO: Specify actual "schema" schema.
+const SCHEMA_SCHEMA = { type: "object" };
+
+const DEFAULT_SCHEMA = { type: "string" };
+
+const edgesToProperties = (
+  edgeType: EdgeType,
+  edges?: InspectableEdge[],
+  keepStar = false
+): Record<string, Schema> => {
+  if (!edges) return {};
+  return edges.reduce((acc, edge) => {
+    if (!keepStar && edge.out === "*") return acc;
+    const key = edgeType === EdgeType.In ? edge.in : edge.out;
+    if (acc[key]) return acc;
+    acc[key] = DEFAULT_SCHEMA;
+    return acc;
+  }, {} as Record<string, Schema>);
 };
 
 export const edgesToSchema = (
   edgeType: EdgeType,
-  edges?: InspectableEdge[]
+  edges?: InspectableEdge[],
+  keepStar = false
 ): Schema => {
   if (!edges) return {};
-  return schemaFromProperties(
-    edges.reduce((acc, edge) => {
-      // Remove star edges from the schema. These must be handled separately.
-      if (edge.out === "*") return acc;
-      const key = edgeType === EdgeType.In ? edge.in : edge.out;
-      if (acc[key]) return acc;
-      acc[key] = { type: "string" };
-      return acc;
-    }, {} as Record<string, Schema>)
-  );
+  return new SchemaBuilder()
+    .addProperties(edgesToProperties(edgeType, edges, keepStar))
+    .setAdditionalProperties(true)
+    .build();
 };
 
 /**
@@ -51,10 +54,14 @@ export const describeInput = (
   options: NodeTypeDescriberOptions
 ): NodeDescriberResult => {
   const schema = options.inputs?.schema as Schema | undefined;
-  if (schema) return { inputSchema: {}, outputSchema: schema };
+  const inputSchema = new SchemaBuilder()
+    .addProperty("schema", SCHEMA_SCHEMA)
+    .setAdditionalProperties(true)
+    .build();
+  if (schema) return { inputSchema, outputSchema: schema };
   return {
-    inputSchema: {},
-    outputSchema: edgesToSchema(EdgeType.Out, options.outgoing),
+    inputSchema,
+    outputSchema: edgesToSchema(EdgeType.Out, options.outgoing, true),
   };
 };
 
@@ -67,9 +74,18 @@ export const describeOutput = (
   options: NodeTypeDescriberOptions
 ): NodeDescriberResult => {
   const schema = options.inputs?.schema as Schema | undefined;
-  if (schema) return { inputSchema: schema, outputSchema: {} };
+  const inputSchemaBuilder = new SchemaBuilder()
+    .addProperty("schema", SCHEMA_SCHEMA)
+    .setAdditionalProperties(true);
+  if (schema)
+    return {
+      inputSchema: inputSchemaBuilder.addSchema(schema).build(),
+      outputSchema: {},
+    };
   return {
-    inputSchema: edgesToSchema(EdgeType.In, options.incoming),
+    inputSchema: inputSchemaBuilder
+      .addProperties(edgesToProperties(EdgeType.In, options.incoming, true))
+      .build(),
     outputSchema: {},
   };
 };

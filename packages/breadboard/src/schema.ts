@@ -28,6 +28,7 @@ export const getSchemaType = (value: unknown): SchemaType => {
 };
 
 export class SchemaBuilder {
+  type = "object";
   additionalProperties = false;
   required: string[] = [];
   properties: SchemaProperties = {};
@@ -36,12 +37,23 @@ export class SchemaBuilder {
     const result: Schema = {
       type: "object",
       properties: this.properties,
-      additionalProperties: this.additionalProperties,
     };
+    if (!this.additionalProperties) {
+      result.additionalProperties = false;
+    }
     if (this.required.length > 0) {
       result.required = this.required;
     }
     return result;
+  }
+
+  addSchema(schema: Schema) {
+    if (schema.type === "object") {
+      this.addProperties(schema.properties);
+      this.addRequired(schema.required);
+      this.setAdditionalProperties(schema.additionalProperties as boolean);
+    }
+    return this;
   }
 
   setAdditionalProperties(additionalProperties?: boolean) {

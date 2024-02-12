@@ -15,7 +15,6 @@ import {
 import { customElement, property, state } from "lit/decorators.js";
 import { LoadArgs } from "../../types/types.js";
 import {
-  Schema,
   inspect,
   GraphDescriptor,
   InspectableNode,

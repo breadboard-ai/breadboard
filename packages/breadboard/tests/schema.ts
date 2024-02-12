@@ -92,7 +92,6 @@ test("SchemaBuilder can set `additionalProperties`", (t) => {
     t.deepEqual(schema, {
       type: "object",
       properties: {},
-      additionalProperties: true,
     });
   }
   {

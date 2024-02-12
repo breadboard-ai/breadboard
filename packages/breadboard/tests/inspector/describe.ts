@@ -38,20 +38,15 @@ test("simple graph description works as expected", async (t) => {
     inputSchema: {
       type: "object",
       properties: {
-        text: {
-          type: "string",
-        },
+        text: { type: "string" },
       },
-      required: ["text"],
     },
     outputSchema: {
       type: "object",
       properties: {
-        text: {
-          type: "string",
-        },
+        schema: { type: "object" },
+        text: { type: "string" },
       },
-      required: ["text"],
     },
   });
 });
@@ -66,7 +61,14 @@ test("inspector API can describe the input in simplest.json", async (t) => {
   const api = await input.describe();
 
   t.deepEqual(api, {
-    inputSchema: {},
+    inputSchema: {
+      type: "object",
+      properties: {
+        schema: {
+          type: "object",
+        },
+      },
+    },
     outputSchema: {
       type: "object",
       properties: {
@@ -92,9 +94,17 @@ test("inspector API can describe the input in simplest-no-schema.json", async (t
   const api = await input.describe();
 
   t.deepEqual(api, {
-    inputSchema: {},
+    inputSchema: {
+      type: "object",
+      properties: {
+        schema: { type: "object" },
+      },
+    },
     outputSchema: {
       type: "object",
+      properties: {
+        "*": { type: "string" },
+      },
     },
   });
 });
@@ -109,15 +119,17 @@ test("inspector API can describe the input in simplest-no-schema-strict.json", a
   const api = await input.describe();
 
   t.deepEqual(api, {
-    inputSchema: {},
+    inputSchema: {
+      type: "object",
+      properties: {
+        schema: { type: "object" },
+      },
+    },
     outputSchema: {
       type: "object",
       properties: {
-        text: {
-          type: "string",
-        },
+        text: { type: "string" },
       },
-      required: ["text"],
     },
   });
 });
@@ -135,6 +147,7 @@ test("inspector API can describe the output in simplest.json", async (t) => {
     inputSchema: {
       type: "object",
       properties: {
+        schema: { type: "object" },
         text: {
           type: "string",
           title: "Response",
@@ -159,6 +172,10 @@ test("inspector API can describe the output in simplest-no-schema.json", async (
   t.deepEqual(api, {
     inputSchema: {
       type: "object",
+      properties: {
+        schema: { type: "object" },
+        "*": { type: "string" },
+      },
     },
     outputSchema: {},
   });
@@ -177,11 +194,9 @@ test("inspector API can describe the output in simplest-no-schema-strict.json", 
     inputSchema: {
       type: "object",
       properties: {
-        text: {
-          type: "string",
-        },
+        schema: { type: "object" },
+        text: { type: "string" },
       },
-      required: ["text"],
     },
     outputSchema: {},
   });
