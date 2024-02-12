@@ -14,5 +14,21 @@
       {% endif %}
       </li>
   {%- endfor -%}
+  </ul>
+  <summary>Kit Documentation</summary>
   <ul>
+  {%- for item in collections.kits -%}
+    <li>
+      {% if page.url != item.url %}
+        <a href="/breadboard{{ item.url }}">
+      {% endif %}
+
+        {{ item.data.title }}
+
+      {% if page.url != item.url %}
+        </a>
+      {% endif %}
+      </li>
+  {%- endfor -%}
+  </ul>
 </details>
