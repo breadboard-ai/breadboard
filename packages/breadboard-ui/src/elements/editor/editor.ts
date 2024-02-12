@@ -18,15 +18,21 @@ import {
   inspect,
   GraphDescriptor,
   InspectableNode,
-  NodeConfiguration,
   Edge,
   Kit,
   InspectablePortList,
+  NodeDescriberResult,
+  Schema,
+  NodeConfiguration,
 } from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import * as LG from "litegraph.js";
 import { map } from "lit/directives/map.js";
-import { EdgeChangeEvent, NodeCreateEvent } from "../../events/events.js";
+import {
+  EdgeChangeEvent,
+  NodeCreateEvent,
+  NodeUpdateEvent,
+} from "../../events/events.js";
 import { classMap } from "lit/directives/class-map.js";
 
 // Not all the variables in LiteGraph are included as part of the types, so
@@ -61,6 +67,15 @@ interface ExtendedLGraph extends LG.LGraph {
 const BASE_X = 50;
 const DATA_TYPE = "application/json";
 
+type ActiveNode = {
+  editAction: "add" | "update";
+  id: string;
+  type: string;
+  inputSchema: Schema;
+  graphNode: LG.LGraphNode;
+  configuration: NodeConfiguration;
+};
+
 @customElement("bb-editor")
 export class Editor extends LitElement {
   @property()
@@ -79,7 +94,7 @@ export class Editor extends LitElement {
   editable = false;
 
   @state()
-  activeNode: InspectableNode | null = null;
+  activeNode: ActiveNode | null = null;
 
   #graph: ExtendedLGraph | null = null;
   #graphCanvas: ExtendedLGraphCanvas | null = null;
@@ -113,18 +128,6 @@ export class Editor extends LitElement {
       position: relative;
     }
 
-    #properties {
-      box-sizing: border-box;
-      width: 30%;
-      position: absolute;
-      height: 100%;
-      right: 0;
-      top: 0;
-      background: #fff;
-      padding: calc(var(--bb-grid-size) * 4);
-      box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.24);
-    }
-
     #nodes {
       width: 100%;
       height: 100%;
@@ -135,50 +138,171 @@ export class Editor extends LitElement {
       position: absolute;
       top: 8px;
       left: 8px;
+    }
+
+    #menu ul {
+      margin: 0;
       display: flex;
+      flex-direction: column;
+      list-style: none;
+      font-size: var(--bb-text-small);
+      color: #222;
       background: #fff;
       padding: calc(var(--bb-grid-size) * 2);
       box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.24);
       border-radius: 12px;
     }
 
-    #menu ul {
-      margin: 0;
-      padding: 0;
-      display: flex;
-      list-style: none;
+    #menu li {
+      margin-bottom: var(--bb-grid-size);
+      white-space: nowrap;
     }
 
-    #menu ul li {
-      margin-right: calc(var(--bb-grid-size) * 2);
-      border: 1px solid #ccc;
-      border-radius: 16px;
-      background: #fff2cc;
-      color: #222;
-      border: none;
+    #menu input[type="radio"] {
+      display: none;
+    }
+
+    #menu li.kit-item,
+    #menu label {
       padding: var(--bb-grid-size) calc(var(--bb-grid-size) * 2);
+      display: block;
+      border-radius: 8px;
+      background: #fff;
+      border: 1px solid #bbb;
+      border-radius: 8px;
+    }
+
+    #menu ul li:hover label {
+      background: #dfdfdf;
+    }
+
+    #menu input[type="radio"]:checked ~ label {
+      background: #ececec;
+    }
+
+    #menu input[type="radio"] ~ ul {
+      display: none;
+    }
+
+    #menu input[type="radio"]:checked ~ ul {
+      display: flex;
+      flex-direction: column;
+      position: absolute;
+      left: calc(100% + var(--bb-grid-size));
+      top: 0;
+    }
+
+    #properties {
+      background: rgba(0, 0, 0, 0.05);
+      position: absolute;
+      height: 100%;
+      right: 0;
+      top: 0;
+      width: 100%;
+      z-index: 10;
+    }
+
+    #node-properties {
+      box-sizing: border-box;
+      width: max(400px, 30%);
+      position: absolute;
+      height: 100%;
+      right: 0;
+      top: 0;
+      background: #fff;
+      box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.24);
+      display: flex;
+      flex-direction: column;
+    }
+
+    #properties header {
+      display: flex;
+      align-items: center;
+      padding: calc(var(--bb-grid-size) * 2);
+      border-bottom: 1px solid rgb(227, 227, 227);
+    }
+
+    #properties h1 {
+      padding: calc(var(--bb-grid-size) * 2);
       font-size: var(--bb-text-small);
+      font-weight: bold;
+      margin: 0;
+      position: sticky;
+      top: 0;
+      background: rgb(255, 255, 255);
+      z-index: 1;
+      flex: 1;
     }
 
-    #menu ul li.input {
-      background: #c9daf8;
+    #properties form {
+      display: grid;
+      font-size: var(--bb-text-small);
+      overflow: auto;
     }
 
-    #menu ul li.secret {
-      background: #f4cccc;
+    #properties #fields {
+      overflow: auto;
+      scrollbar-gutter: stable;
     }
 
-    #menu ul li.output {
-      background: #b6d7a8;
+    #properties fieldset {
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      margin: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 2)
+        calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 10);
+      border: var(--bb-input-fieldset-border, 1px solid rgb(200, 200, 200));
+      border-radius: var(--bb-grid-size);
+      position: relative;
     }
 
-    #menu ul li.slot,
-    #menu ul li.passthrough {
-      background: #ead1dc;
+    #properties legend {
+      font-weight: bold;
+      display: var(--bb-input-legend-display, block);
+      padding: 0 calc(var(--bb-grid-size) * 2);
     }
 
-    #menu ul li:last-of-type {
-      margin-right: 0;
+    #properties label {
+      grid-column: 1/3;
+      font-family: var(--bb-font-family);
+      font-size: var(--bb-text-small);
+      padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 2) 0 0;
+    }
+
+    #properties div[contenteditable] {
+      border-radius: var(
+        --bb-input-border-radius,
+        calc(var(--bb-grid-size) * 3)
+      );
+      background: rgb(255, 255, 255);
+      padding: var(--bb-input-padding, calc(var(--bb-grid-size) * 2));
+      border: 1px solid rgb(209, 209, 209);
+    }
+
+    #properties .configuration-item {
+      margin-bottom: calc(var(--bb-grid-size) * 2);
+    }
+
+    #properties input[type="submit"] {
+      background: rgb(209, 203, 255);
+      border-radius: calc(var(--bb-grid-size) * 3);
+      font-size: var(--bb-text-small);
+      font-weight: bold;
+      height: calc(var(--bb-grid-size) * 5);
+      border: none;
+      padding: 0 var(--bb-input-padding, calc(var(--bb-grid-size) * 2));
+    }
+
+    #properties .cancel {
+      width: 24px;
+      height: 24px;
+      font-size: 0;
+      border: none;
+      background: no-repeat center center var(--bb-icon-close);
+    }
+
+    #form-controls {
+      display: grid;
+      column-gap: calc(var(--bb-grid-size) * 2);
     }
 
     canvas {
@@ -270,14 +394,21 @@ export class Editor extends LitElement {
       graphCanvas.highlighted_links = {};
     };
 
-    graphCanvas.onShowNodePanel = (node) => {
+    graphCanvas.onShowNodePanel = async (node) => {
       const activeNode = this.#getInspectableNodeFromGraphNodeIndex(node);
       if (!activeNode) {
         return;
       }
 
-      // TODO: Show Node info.
-      // this.activeNode = activeNode;
+      const { inputSchema } = await activeNode.describe();
+      this.activeNode = {
+        editAction: "update",
+        id: activeNode.descriptor.id,
+        type: activeNode.descriptor.type,
+        inputSchema,
+        graphNode: node,
+        configuration: activeNode.configuration(),
+      };
     };
 
     graphCanvas.onNodeMoved = (node) => {
@@ -679,23 +810,42 @@ export class Editor extends LitElement {
     evt.preventDefault();
 
     const data = evt.dataTransfer?.getData(DATA_TYPE);
-    if (!data) {
+    if (!data || !this.#graph) {
       console.warn("No data in dropped node");
       return;
     }
 
-    const nextNodeId = this.loadInfo?.graphDescriptor?.nodes.length || 1_000;
-    const id = `node-${nextNodeId}`;
-    this.#nodeLocations.set(id, {
-      x: evt.pageX - this.#left + window.scrollX,
-      y: evt.pageY - this.#top - window.scrollY,
-    });
+    const {
+      kitItemName,
+      inputSchema,
+    }: { kitItemName: string; inputSchema: Schema } = JSON.parse(data);
 
-    const nodeData: { type: string; configuration: NodeConfiguration } =
-      JSON.parse(data);
-    this.dispatchEvent(
-      new NodeCreateEvent(id, nodeData.type, nodeData.configuration)
-    );
+    const nextNodeId = this.loadInfo?.graphDescriptor?.nodes.length || 1_000;
+    const id = `${kitItemName}-${nextNodeId}`;
+    const x = evt.pageX - this.#left + window.scrollX;
+    const y = evt.pageY - this.#top - window.scrollY;
+
+    // Store the middle of the node for later.
+    this.#nodeLocations.set(id, { x, y });
+
+    const title = `${kitItemName} (${id})`;
+    const graphNode = this.#createNode(kitItemName, title, x, y);
+    this.#graph.add(graphNode);
+
+    graphNode.addInput("", "string");
+    graphNode.addOutput("", "string");
+
+    graphNode.pos[0] = x - graphNode.size[0] * 0.5;
+    graphNode.pos[1] = y - graphNode.size[1] * 0.5;
+
+    this.activeNode = {
+      editAction: "add",
+      id,
+      type: kitItemName,
+      inputSchema,
+      graphNode,
+      configuration: {},
+    };
   }
 
   // TODO: Find a better way of getting the defaults for any given node.
@@ -704,73 +854,245 @@ export class Editor extends LitElement {
       return nothing;
     }
 
-    const items = new Map<string, NodeConfiguration>();
-    items.set("invoke", { path: "gemini-generator.json" });
-    items.set("input", {
-      configuration: {
-        schema: {
-          type: "object",
-          properties: {
-            text: {
-              type: "string",
-              title: "Prompt",
-              description: "The prompt to generate a completion for",
-              examples: ["Tell me a fun story about playing with breadboards"],
-            },
-          },
-          required: ["text"],
-        },
-      },
-    });
+    const kitList = new Map<
+      string,
+      Map<string, Promise<NodeDescriberResult>>
+    >();
 
-    items.set("output", {
-      configuration: {
-        schema: {
-          type: "object",
-          properties: {
-            text: {
-              type: "string",
-              title: "Response",
-              description: "The completion generated by the LLM",
-            },
-          },
-          required: ["text"],
-        },
-      },
-    });
+    // Sort the kits by name.
+    this.kits.sort((kit1, kit2) =>
+      (kit1.title || "") > (kit2.title || "") ? 1 : -1
+    );
+
+    for (const kit of this.kits) {
+      if (!kit.title) {
+        continue;
+      }
+
+      const kitContents = new Map<string, Promise<NodeDescriberResult>>();
+      for (const [name, handler] of Object.entries(kit.handlers)) {
+        if (typeof handler === "object" && handler.describe) {
+          kitContents.set(name, handler.describe());
+        }
+      }
+      if (kitContents.size === 0) {
+        continue;
+      }
+
+      kitList.set(kit.title, kitContents);
+    }
 
     return html`<div id="menu">
-      <ul>
-        ${map(items, ([name, configuration]) => {
-          return html`<li
-            class=${classMap({ [name]: true })}
-            draggable="true"
-            @dragstart=${(evt: DragEvent) => {
-              if (!evt.dataTransfer) {
-                return;
-              }
-              evt.dataTransfer.setData(
-                DATA_TYPE,
-                JSON.stringify({ type: name, configuration })
-              );
-            }}
-          >
-            ${name}
-          </li>`;
-        })}
-      </ul>
+      <form>
+        <ul>
+          ${map(kitList, ([kitName, kitContents]) => {
+            const kitId = kitName.toLocaleLowerCase().replace(/\W/, "-");
+            return html`<li>
+              <input type="radio" name="selected-kit" id="${kitId}" /><label
+                for="${kitId}"
+                >${kitName}</label
+              >
+              <ul>
+                ${map(kitContents, ([kitItemName, kitItem]) => {
+                  const kitItemId = kitItemName
+                    .toLocaleLowerCase()
+                    .replace(/\W/, "-");
+                  return html`<li
+                    class=${classMap({
+                      [kitItemId]: true,
+                      ["kit-item"]: true,
+                    })}
+                    draggable="true"
+                    @dragstart=${async (evt: DragEvent) => {
+                      const { inputSchema } = await kitItem;
+                      if (!evt.dataTransfer) {
+                        return;
+                      }
+                      evt.dataTransfer.setData(
+                        DATA_TYPE,
+                        JSON.stringify({
+                          kitItemName,
+                          inputSchema,
+                        })
+                      );
+                    }}
+                  >
+                    ${kitItemName}
+                  </li>`;
+                })}
+              </ul>
+            </li>`;
+          })}
+        </ul>
+      </form>
     </div>`;
   }
 
+  #convertActiveNodeToForm(node: ActiveNode) {
+    if (!node.inputSchema.properties) {
+      return html`Unable to configure node - no schema provided.`;
+    }
+
+    return html`
+      <div id="fields">
+        <fieldset>
+          <legend>ID</legend>
+          <label for="$id">ID: <label>
+          <input id="$id" name="id" type="text" value="${node.id}" />
+        </fieldset>
+        <fieldset>
+          <legend>Configuration</legend>
+          ${map(
+            Object.entries(node.inputSchema.properties),
+            ([name, schema]) => {
+              let input;
+              switch (schema.type) {
+                case "object": {
+                  input = `Object types are not supported yet.`;
+                  break;
+                }
+
+                // TODO: Fill out more types.
+                default: {
+                  const value =
+                    node.configuration[name] ??
+                    schema.examples ??
+                    schema.default ??
+                    "";
+
+                  // prettier-ignore
+                  input = html`<div
+                    contenteditable="plaintext-only"
+                    data-id="${name}"
+                  >${value}</div>`;
+                  break;
+                }
+              }
+
+              return html`<div class="configuration-item">
+                <label title="${schema.description}" for="${name}"
+                  >${name}:
+                </label>
+                ${input}
+              </div>`;
+            }
+          )}
+        </fieldset>
+      </div>`;
+  }
+
+  #onFormSubmit(evt: SubmitEvent) {
+    evt.preventDefault();
+
+    if (!(evt.target instanceof HTMLFormElement) || !this.activeNode) {
+      return;
+    }
+
+    const data = new FormData(evt.target);
+    for (const field of evt.target.querySelectorAll("div[contenteditable]")) {
+      if (
+        !(
+          field instanceof HTMLDivElement &&
+          field.dataset.id &&
+          field.textContent
+        )
+      ) {
+        continue;
+      }
+
+      data.set(field.dataset.id, field.textContent);
+    }
+
+    const id = data.get("id") as string;
+    const nodeType = data.get("$type") as string;
+    if (!(id && nodeType)) {
+      console.warn("Unable to configure node - ID and type are missing");
+      return;
+    }
+
+    const configuration: NodeConfiguration = structuredClone(
+      this.activeNode.configuration
+    );
+    for (const [name, value] of data) {
+      if (typeof value !== "string") {
+        continue;
+      }
+
+      if (name === "id" || name === "$type") {
+        continue;
+      }
+
+      configuration[name] = value;
+    }
+
+    // If the node ID has been changed, update the node location info.
+    if (this.activeNode.id !== id) {
+      const location = this.#nodeLocations.get(this.activeNode.id);
+      if (location) {
+        this.#nodeLocations.set(id, location);
+        this.#nodeLocations.delete(this.activeNode.id);
+      }
+    }
+
+    if (this.activeNode.editAction === "add") {
+      this.dispatchEvent(new NodeCreateEvent(id, nodeType, configuration));
+    } else {
+      this.dispatchEvent(new NodeUpdateEvent(id, configuration));
+    }
+
+    // Close out the panel via removing the active node marker.
+    this.activeNode = null;
+  }
+
   render() {
-    let properties: HTMLTemplateResult | symbol = nothing;
+    let activeNode: HTMLTemplateResult | symbol = nothing;
     if (this.activeNode) {
-      properties = html`<div id="properties">
-        <textarea>${JSON.stringify(this.activeNode, null, 2)}</textarea>
+      activeNode = html`<div id="properties">
+        <div id="node-properties">
+          <form @submit=${this.#onFormSubmit}>
+            <header>
+              <button
+                type="button"
+                class="cancel"
+                @click=${() => {
+                  if (!(this.#graph && this.activeNode)) {
+                    return;
+                  }
+
+                  // Remove the temporary node.
+                  if (this.activeNode.editAction === "add") {
+                    this.#graph.remove(this.activeNode.graphNode);
+                  }
+
+                  this.activeNode = null;
+                }}
+              >
+                Cancel
+              </button>
+              <h1>
+                Properties: ${this.activeNode.editAction}
+                (${this.activeNode.id})
+              </h1>
+
+              <input
+                type="hidden"
+                name="$type"
+                value="${this.activeNode.type}"
+              />
+              <input
+                type="submit"
+                value="${this.activeNode.editAction === "add"
+                  ? "Add"
+                  : "Update"}"
+              />
+            </header>
+            ${this.#convertActiveNodeToForm(this.activeNode)}
+          </form>
+        </div>
       </div>`;
     }
 
     return html`<div id="nodes" ${ref(this.#container)}></div>
-      ${properties} ${this.#getNodeMenu()}`;
+      ${activeNode} ${this.#getNodeMenu()}`;
   }
 }

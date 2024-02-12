@@ -25,7 +25,9 @@ export type KitBuilderOptions = {
 };
 
 /* eslint-disable  @typescript-eslint/no-explicit-any */
-type FunctionsKeysOnly<T> = ({ [P in keyof T]: T[P] extends (...args: any[]) => void ? P : never })[keyof T];
+type FunctionsKeysOnly<T> = {
+  [P in keyof T]: T[P] extends (...args: any[]) => void ? P : never;
+}[keyof T];
 type FunctionsOnly<T> = Pick<T, FunctionsKeysOnly<T>>;
 
 export class KitBuilder {
@@ -81,7 +83,7 @@ export class KitBuilder {
       constructor(nodeFactory: NodeFactory) {
         const proxy = new Proxy(this, {
           get(target, prop: string) {
-            if (prop === "handlers" || prop === "url") {
+            if (prop === "handlers" || prop === "url" || prop === "title") {
               return target[prop];
             } else if (nodes.includes(prop as NodeNames[number])) {
               return (
@@ -104,9 +106,16 @@ export class KitBuilder {
     } as KitConstructor<GenericKit<Handlers>>;
   }
 
-  static wrap<F extends Record<string, Function>>(params: KitBuilderOptions, functions: F): KitConstructor<GenericKit<{ [x in keyof FunctionsOnly<F>]: NodeHandler }>> {
-
-    const createHandler = (previous: NodeHandlers, current: [string, Function]) => {
+  static wrap<F extends Record<string, Function>>(
+    params: KitBuilderOptions,
+    functions: F
+  ): KitConstructor<
+    GenericKit<{ [x in keyof FunctionsOnly<F>]: NodeHandler }>
+  > {
+    const createHandler = (
+      previous: NodeHandlers,
+      current: [string, Function]
+    ) => {
       const [name, fn] = current;
 
       previous[name] = {
@@ -115,9 +124,13 @@ export class KitBuilder {
 
           let argNames: string[] = [];
           if (fn && fn.length > 0) {
-            argNames = fn.toString().match(/\((.+?)\)/)?.[1].split(",") ?? [];
+            argNames =
+              fn
+                .toString()
+                .match(/\((.+?)\)/)?.[1]
+                .split(",") ?? [];
 
-            /*  
+            /*
             If fn.length is greater than 1 and argNames.length = 0, then we likely have a system function that accepts a splat of arguments..
 
             e.g Math.max([1,2,3,4])
@@ -125,7 +138,12 @@ export class KitBuilder {
             We need to special case this and pass the arguments as an array and expect `inputs` to have a key of `args` that is an array.
             */
 
-            if (fn.length > 1 && argNames.length === 0 && "___args" in inputs && Array.isArray(inputs["___args"])) {
+            if (
+              fn.length > 1 &&
+              argNames.length === 0 &&
+              "___args" in inputs &&
+              Array.isArray(inputs["___args"])
+            ) {
               argNames = ["___args"];
             }
           }
@@ -133,15 +151,18 @@ export class KitBuilder {
           // Validate the input names.
           for (const argName of argNames) {
             if (argName.trim() in inputs === false) {
-              throw new Error(`Missing input: ${argName.trim()}. Valid inputs are: ${Object.keys(inputs).join(", ")}`);
+              throw new Error(
+                `Missing input: ${argName.trim()}. Valid inputs are: ${Object.keys(
+                  inputs
+                ).join(", ")}`
+              );
             }
           }
 
           const args = argNames
-            .filter(argName => argName.startsWith("___") == false)
+            .filter((argName) => argName.startsWith("___") == false)
             .map((argName: string) => inputs[argName.trim()]);
 
-          
           const lastArgName = argNames[argNames.length - 1];
           if (lastArgName != undefined && lastArgName.startsWith("___")) {
             // Splat the rest of the arguments.
@@ -157,15 +178,20 @@ export class KitBuilder {
 
           // Objects will destructured into the output.
           return { ...results };
-        }
+        },
       };
       return previous;
-    }
+    };
 
-    const handlers = Object.entries(functions).reduce<NodeHandlers>(createHandler, {});
+    const handlers = Object.entries(functions).reduce<NodeHandlers>(
+      createHandler,
+      {}
+    );
 
     const builder = new KitBuilder(params);
 
-    return builder.build(handlers) as KitConstructor<GenericKit<{ [x in keyof FunctionsOnly<F>]: NodeHandler }>>;
+    return builder.build(handlers) as KitConstructor<
+      GenericKit<{ [x in keyof FunctionsOnly<F>]: NodeHandler }>
+    >;
   }
 }
