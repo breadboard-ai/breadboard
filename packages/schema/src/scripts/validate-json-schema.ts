@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import addFormats from "ajv-formats";
-import Ajv2020 from "ajv/dist/2020";
-import schema from "../breadboard.schema.json";
-import testData from "./data/board.json";
+import addFormats = require("ajv-formats");
+import Ajv2020 = require("ajv/dist/2020");
+import schema from "../../breadboard.schema.json" assert { type: "json" };
+import testData from "./data/board.json" assert { type: "json" };
 
-const ajv = new Ajv2020({ allErrors: true });
-addFormats(ajv);
+const ajv = new Ajv2020.default({ allErrors: true });
+addFormats.default(ajv);
 
 console.log("\x1b[32m", "Successfully read schema", "\x1b[0m");
 

@@ -1,8 +1,17 @@
 {
   "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
-    "noEmit": true,
-    "resolveJsonModule": true
+    "composite": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "resolveJsonModule": true,
+    "inlineSources": true,
+    "verbatimModuleSyntax": true
   },
+  "include": [
+    "src/**/*",
+    "src/**/*.json",
+    "package.json",
+    "breadboard.schema.json"
+  ],
   "extends": "@google-labs/tsconfig/base.json"
 }

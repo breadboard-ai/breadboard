@@ -1,34 +1,50 @@
 {
-  "author": "Google Labs Team",
-  "devDependencies": {
-    "ajv": "^8.12.0",
-    "ajv-formats": "^2.1.1"
-  },
-  "exports": {
-    ".": "./breadboard.schema.json",
-    "./breadboard.schema.json": "./breadboard.schema.json"
-  },
-  "file": [
-    "./breadboard.schema.json"
-  ],
-  "license": "Apache-2.0",
   "name": "@google-labs/breadboard-schema",
-  "publishConfig": {
-    "registry": "https://wombat-dressing-room.appspot.com"
-  },
+  "version": "1.2.0",
+  "license": "Apache-2.0",
+  "author": "Google Labs Team",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },
-  "scripts": {
-    "prepack": "wireit",
-    "test": "wireit",
-    "build": "wireit"
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "version": "1.2.0",
+  "files": [
+    "CHANGELOG.md",
+    "dist/graph.{js,js.map,d.ts,d.ts.map}",
+    "breadboard.schema.json"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./breadboard.schema.json",
+    "./breadboard.schema.json": "./breadboard.schema.json",
+    "./graph.js": {
+      "import": {
+        "types": "./dist/graph.d.ts",
+        "default": "./dist/graph.js"
+      }
+    }
+  },
+  "scripts": {
+    "build": "wireit",
+    "test": "wireit",
+    "prepack": "wireit",
+    "build:tsc": "wireit",
+    "build:update-json-schema": "wireit",
+    "test:validate-json-schema": "wireit"
+  },
   "wireit": {
     "build": {
-      "command": "ts-node ./scripts/build.ts"
+      "dependencies": [
+        "build:tsc",
+        "build:update-json-schema"
+      ]
+    },
+    "test": {
+      "dependencies": [
+        "test:validate-json-schema"
+      ]
     },
     "prepack": {
       "dependencies": [
@@ -36,11 +52,35 @@
         "test"
       ]
     },
-    "test": {
-      "command": "ts-node ./scripts/validate.ts",
-      "dependencies": [
-        "build"
+    "build:tsc": {
+      "command": "tsc --pretty",
+      "files": [
+        "src/",
+        "tsconfig.json",
+        "../../core/tsconfig/base.json"
+      ],
+      "output": [
+        "dist/",
+        "tsconfig.tsbuildinfo"
       ]
+    },
+    "build:update-json-schema": {
+      "command": "node dist/scripts/update-json-schema.js",
+      "dependencies": [
+        "build:tsc"
+      ]
+    },
+    "test:validate-json-schema": {
+      "command": "node dist/scripts/validate-json-schema.js",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "files": [],
+      "output": []
     }
+  },
+  "devDependencies": {
+    "ajv": "^8.12.0",
+    "ajv-formats": "^2.1.1"
   }
 }
