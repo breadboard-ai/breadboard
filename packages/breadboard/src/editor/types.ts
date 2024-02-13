@@ -8,6 +8,7 @@ import { InspectableGraph, InspectableGraphOptions } from "../index.js";
 import {
   Edge,
   GraphDescriptor,
+  NodeConfiguration,
   NodeDescriptor,
   NodeIdentifier,
 } from "../types.js";
@@ -24,6 +25,12 @@ export type EditableGraph = {
 
   canRemoveEdge(spec: EditableEdgeSpec): Promise<EditResult>;
   removeEdge(spec: EditableEdgeSpec): Promise<EditResult>;
+
+  canChangeConfiguration(id: NodeIdentifier): Promise<EditResult>;
+  changeConfiguration(
+    id: NodeIdentifier,
+    configuration: NodeConfiguration
+  ): Promise<EditResult>;
 
   raw(): GraphDescriptor;
 

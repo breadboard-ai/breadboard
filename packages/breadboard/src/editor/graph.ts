@@ -7,8 +7,14 @@
 import { handlersFromKits } from "../handler.js";
 import { inspectableGraph } from "../inspector/graph.js";
 import { InspectableGraph } from "../inspector/types.js";
-import { GraphDescriptor, NodeHandlers, NodeIdentifier } from "../types.js";
 import {
+  GraphDescriptor,
+  NodeConfiguration,
+  NodeHandlers,
+  NodeIdentifier,
+} from "../types.js";
+import {
+  EditResult,
   EditableEdgeSpec,
   EditableGraph,
   EditableGraphOptions,
@@ -183,6 +189,30 @@ class Graph implements EditableGraph {
       );
     });
     this.#inspector = undefined;
+    return { success: true };
+  }
+
+  async canChangeConfiguration(id: NodeIdentifier): Promise<EditResult> {
+    const node = this.inspect().nodeById(id);
+    if (!node) {
+      return {
+        success: false,
+        error: `Node with id "${id}" does not exist`,
+      };
+    }
+    return { success: true };
+  }
+
+  async changeConfiguration(
+    id: NodeIdentifier,
+    configuration: NodeConfiguration
+  ): Promise<EditResult> {
+    const can = await this.canChangeConfiguration(id);
+    if (!can.success) return can;
+    const node = this.inspect().nodeById(id);
+    if (node) {
+      node.descriptor.configuration = configuration;
+    }
     return { success: true };
   }
 
