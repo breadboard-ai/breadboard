@@ -17,6 +17,7 @@
     "registry": "https://wombat-dressing-room.appspot.com"
   },
   "repository": {
+    "directory": "packages/schema",
     "type": "git",
     "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },

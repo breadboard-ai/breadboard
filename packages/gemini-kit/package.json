@@ -83,6 +83,7 @@
     }
   },
   "repository": {
+    "directory": "packages/gemini-kit",
     "type": "git",
     "url": "https://github.com/breadboard-ai/breadboard"
   },

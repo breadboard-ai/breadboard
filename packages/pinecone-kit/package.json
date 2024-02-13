@@ -84,6 +84,7 @@
     }
   },
   "repository": {
+    "directory": "packages/pinecone-kit",
     "type": "git",
     "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },

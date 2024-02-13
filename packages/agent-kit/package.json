@@ -94,6 +94,7 @@
     }
   },
   "repository": {
+    "directory": "packages/agent-kit",
     "type": "git",
     "url": "https://github.com/breadboard-ai/breadboard"
   },

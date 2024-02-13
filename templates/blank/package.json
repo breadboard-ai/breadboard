@@ -18,6 +18,7 @@
     "lint": "FORCE_COLOR=1 eslint . --ext .ts"
   },
   "repository": {
+    "directory": "packages/blank",
     "type": "git",
     "url": "https://github.com/breadboard-ai/breadboard"
   },

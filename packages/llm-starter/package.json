@@ -82,6 +82,7 @@
     }
   },
   "repository": {
+    "directory": "packages/llm-starter",
     "type": "git",
     "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },

@@ -10,6 +10,7 @@
   "license": "Apache-2.0",
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "repository": {
+    "directory": "packages/website",
     "type": "git",
     "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },
