@@ -72,3 +72,23 @@ export const collectPorts = (
     };
   });
 };
+
+export const collectPortsForType = (schema: Schema) => {
+  const portNames = Object.keys(schema.properties || {});
+  const requiredPortNames = schema.required || [];
+  portNames.sort();
+  return portNames.map((port) => {
+    return {
+      name: port,
+      configured: false,
+      star: false,
+      status: computePortStatus(
+        false,
+        true,
+        requiredPortNames.includes(port),
+        false
+      ),
+      schema: schema.properties?.[port],
+    };
+  });
+};

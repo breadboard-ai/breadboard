@@ -8,6 +8,7 @@ import {
   GraphDescriptor,
   InputValues,
   Kit,
+  KitDescriptor,
   NodeConfiguration,
   NodeDescriberResult,
   NodeDescriptor,
@@ -104,6 +105,10 @@ export type InspectableGraph = {
    * Returns all edges of the graph.
    */
   edges(): InspectableEdge[];
+  /**
+   * Returns all kits in the graph.
+   */
+  kits(): InspectableKit[];
   /**
    * Returns all nodes of the given type.
    * @param type type of the nodes to find
@@ -258,4 +263,29 @@ export type InspectableNodePorts = {
    * Returns the output ports of the node.
    */
   outputs: InspectablePortList;
+};
+
+/**
+ * Represents a Breadboard Kit associated with the board.
+ */
+export type InspectableKit = {
+  /**
+   * Returns the descriptor of the kit.
+   */
+  descriptor: KitDescriptor;
+  /**
+   * Returns the node types of the kit.
+   */
+  nodeTypes: InspectableNodeType[];
+};
+
+export type InspectableNodeType = {
+  /**
+   * Returns the type of the node.
+   */
+  type(): NodeTypeIdentifier;
+  /**
+   * Returns the ports of the node.
+   */
+  ports(): Promise<InspectableNodePorts>;
 };

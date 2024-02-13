@@ -538,6 +538,19 @@ export class Editor extends LitElement {
     const y = this.#height / 2;
 
     const breadboardGraph = inspect(descriptor, { kits: this.kits });
+    // TODO: Remove once all the kit bits are settled.
+    // For now, this is a good way to inspect all the kits.
+    console.group("Kit inspection");
+    for (const kit of breadboardGraph.kits()) {
+      console.groupCollapsed(`Kit: ${kit.descriptor.title}`);
+      for (const nodeType of kit.nodeTypes) {
+        console.group("type", nodeType.type());
+        console.log("ports", await nodeType.ports());
+        console.groupEnd();
+      }
+      console.groupEnd();
+    }
+    console.groupEnd();
     this.#nodes = breadboardGraph.nodes();
 
     // Create nodes first.
