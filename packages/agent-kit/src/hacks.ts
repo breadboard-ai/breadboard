@@ -26,6 +26,7 @@ export const workerDescriber: NodeDescriberFunction = async () => {
             "The instruction we want to give to the worker so that shapes its character and orients it a bit toward the task we want to give it.",
         },
       },
+      additionalProperties: false,
     },
     outputSchema: {
       type: "object",
@@ -43,6 +44,7 @@ export const workerDescriber: NodeDescriberFunction = async () => {
             "The output from the agent. Use this to just get the output without any previous context.",
         },
       },
+      additionalProperties: false,
     },
   };
 };

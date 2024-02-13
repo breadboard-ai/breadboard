@@ -4,19 +4,52 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { KitDescriptor, Kit, NodeHandlers, NodeHandler } from "../types.js";
+import {
+  KitDescriptor,
+  Kit,
+  NodeHandlers,
+  NodeHandler,
+  NodeDescriberFunction,
+  NodeDescriberResult,
+} from "../types.js";
 import { collectPortsForType } from "./ports.js";
+import { describeInput, describeOutput } from "./schemas.js";
 import {
   InspectableKit,
   InspectableNodePorts,
   InspectableNodeType,
+  NodeTypeDescriberOptions,
 } from "./types.js";
 
+const createBuiltInKit = (): InspectableKit => {
+  return {
+    descriptor: {
+      title: "Built-in",
+      description: "Built-in Breadboard nodes",
+      url: "",
+    },
+    nodeTypes: [
+      new BuiltInNodeType("input", describeInput),
+      new BuiltInNodeType("output", describeOutput),
+    ],
+  };
+};
+
 export const collectKits = (kits: Kit[]): InspectableKit[] => {
-  return kits.map((kit) => ({
-    descriptor: kit as KitDescriptor,
-    nodeTypes: collectNodeTypes(kit.handlers),
-  }));
+  return [
+    createBuiltInKit(),
+    ...kits.map((kit) => {
+      const descriptor = {
+        title: kit.title,
+        description: kit.description,
+        url: kit.url,
+      };
+      return {
+        descriptor,
+        nodeTypes: collectNodeTypes(kit.handlers),
+      };
+    }),
+  ];
 };
 
 const collectNodeTypes = (handlers: NodeHandlers): InspectableNodeType[] => {
@@ -58,6 +91,20 @@ class NodeType implements InspectableNodeType {
       console.warn(`Error describing node type ${this.#type}:`, e);
       return emptyPorts();
     }
+  }
+}
+
+class BuiltInNodeType extends NodeType {
+  constructor(
+    type: string,
+    describer: (options: NodeTypeDescriberOptions) => NodeDescriberResult
+  ) {
+    super(type, {
+      invoke: async () => {},
+      describe: async () => {
+        return describer({});
+      },
+    });
   }
 }
 
