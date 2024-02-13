@@ -24,7 +24,6 @@ export const editGraph = (
 
 class Graph implements EditableGraph {
   #options: EditableGraphOptions;
-  #nodes?: Map<NodeIdentifier, EditableNodeSpec>;
   #inspector?: InspectableGraph;
   #handlers?: NodeHandlers;
   #graph: GraphDescriptor;
@@ -34,18 +33,12 @@ class Graph implements EditableGraph {
     this.#options = options;
   }
 
-  #getNodes() {
-    return (this.#nodes ??= new Map(
-      this.#graph.nodes.map((node) => [node.id, node])
-    ));
-  }
-
   #getHandlers() {
     return (this.#handlers ??= handlersFromKits(this.#options?.kits || []));
   }
 
   async canAddNode(spec: EditableNodeSpec) {
-    const duplicate = this.#getNodes().has(spec.id);
+    const duplicate = !!this.inspect().nodeById(spec.id);
     if (duplicate) {
       return {
         success: false,
@@ -69,11 +62,12 @@ class Graph implements EditableGraph {
     if (!can.success) return can;
 
     this.#graph.nodes.push(spec);
+    this.#inspector = undefined;
     return { success: true };
   }
 
   async canRemoveNode(id: NodeIdentifier) {
-    const exists = this.#getNodes().has(id);
+    const exists = !!this.inspect().nodeById(id);
     if (!exists) {
       return {
         success: false,
@@ -88,7 +82,7 @@ class Graph implements EditableGraph {
     if (!can.success) return can;
 
     this.#graph.nodes = this.#graph.nodes.filter((node) => node.id != id);
-    this.#nodes = undefined;
+    this.#inspector = undefined;
     return { success: true };
   }
 
