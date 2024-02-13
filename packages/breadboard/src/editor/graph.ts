@@ -87,6 +87,12 @@ class Graph implements EditableGraph {
   }
 
   async canAddEdge(spec: EditableEdgeSpec) {
+    if ((spec.out === "*" && spec.in !== "") || spec.in === "*") {
+      return {
+        success: false,
+        error: `The "*" output port cannot be connected to a specific input port`,
+      };
+    }
     const exists = !!this.#graph.edges.find((edge) => {
       return (
         edge.from === spec.from &&
@@ -159,7 +165,7 @@ class Graph implements EditableGraph {
     if (!exists) {
       return {
         success: false,
-        error: `Edge from "${spec.from}" to "${spec.to}" does not exist`,
+        error: `Edge from "${spec.from}:${spec.out}" to "${spec.to}${spec.in}" does not exist`,
       };
     }
     return { success: true };
