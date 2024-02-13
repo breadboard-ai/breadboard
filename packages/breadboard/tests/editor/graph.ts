@@ -238,3 +238,79 @@ test("editor API successfully adds an edge", async (t) => {
     t.false(result.success);
   }
 });
+
+test("editor API successfully tests for edge removal", async (t) => {
+  const graph = testEditGraph();
+
+  {
+    const result = await graph.canRemoveEdge({
+      from: "node0",
+      out: "out",
+      to: "node0",
+      in: "in",
+    });
+
+    t.true(result.success);
+  }
+  {
+    const result = await graph.canRemoveEdge({
+      from: "node0",
+      out: "out",
+      to: "node0",
+      in: "baz",
+    });
+
+    t.false(result.success);
+  }
+  {
+    const result = await graph.canRemoveEdge({
+      from: "unknown node",
+      out: "out",
+      to: "node0",
+      in: "in",
+    });
+
+    t.false(result.success);
+  }
+  {
+    const result = await graph.canRemoveEdge({
+      from: "node0",
+      out: "out",
+      to: "unknown node",
+      in: "in",
+    });
+
+    t.false(result.success);
+  }
+});
+
+test("editor API successfully removes an edge", async (t) => {
+  const graph = testEditGraph();
+
+  {
+    const result = await graph.removeEdge({
+      from: "node0",
+      out: "out",
+      to: "node0",
+      in: "in",
+    });
+
+    t.true(result.success);
+
+    const raw = graph.raw();
+    t.deepEqual(
+      raw.edges.map((e) => [e.from, e.to]),
+      []
+    );
+  }
+  {
+    const result = await graph.canRemoveEdge({
+      from: "node0",
+      out: "out",
+      to: "node0",
+      in: "in",
+    });
+
+    t.false(result.success);
+  }
+});

@@ -153,6 +153,39 @@ class Graph implements EditableGraph {
     return { success: true };
   }
 
+  async canRemoveEdge(spec: EditableEdgeSpec) {
+    const exists = !!this.#graph.edges.find((edge) => {
+      return (
+        edge.from === spec.from &&
+        edge.to === spec.to &&
+        edge.out === spec.out &&
+        edge.in === spec.in
+      );
+    });
+    if (!exists) {
+      return {
+        success: false,
+        error: `Edge from "${spec.from}" to "${spec.to}" does not exist`,
+      };
+    }
+    return { success: true };
+  }
+
+  async removeEdge(spec: EditableEdgeSpec) {
+    const can = await this.canRemoveEdge(spec);
+    if (!can.success) return can;
+    this.#graph.edges = this.#graph.edges.filter((edge) => {
+      return (
+        edge.from !== spec.from ||
+        edge.to !== spec.to ||
+        edge.out !== spec.out ||
+        edge.in !== spec.in
+      );
+    });
+    this.#inspector = undefined;
+    return { success: true };
+  }
+
   raw() {
     return this.#graph;
   }

@@ -21,6 +21,10 @@ export type EditableGraph = {
 
   canAddEdge(spec: EditableEdgeSpec): Promise<EditResult>;
   addEdge(spec: EditableEdgeSpec): Promise<EditResult>;
+
+  canRemoveEdge(spec: EditableEdgeSpec): Promise<EditResult>;
+  removeEdge(spec: EditableEdgeSpec): Promise<EditResult>;
+
   raw(): GraphDescriptor;
 
   inspect(): InspectableGraph;
