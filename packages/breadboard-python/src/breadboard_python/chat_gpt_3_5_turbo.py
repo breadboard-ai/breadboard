@@ -184,8 +184,8 @@ class OpenAiGpt_3_5_Turbo(Board[InputSchema, OutputSchema]):
       #messages=UNFILLED
     )
 
-  def describe(self, input: InputSchema) -> OutputSchema:
-    init()
+  def describe(self, input: InputSchema, output: OutputSchema) -> OutputSchema:
+    self.init()
     
     formatParameters = self.formatParameters(input)
     self.fetch = self.fetch(formatParameters)
@@ -193,11 +193,9 @@ class OpenAiGpt_3_5_Turbo(Board[InputSchema, OutputSchema]):
     self.getNewContext = self.getNewContext(messages=self.formatParameters.context)
     self.streamTransform = Nursery.transformStream(board=ChunkTransformer, stream=self.fetch)
 
-    self.output = AttrDict()
-    self.output.textOutput = AttrDict(text=self.getResponse.text, context=self.getNewContext.result)
-    self.output.toolCallsOutput = AttrDict(toolCalls=self.getResponse.tool_calls, context=self.getNewContext.result)
-    self.output.streamOutput = AttrDict(**{"*":self.streamTransform})
-    return self.output
+    output(textOutput=AttrDict(text=self.getResponse.text, context=self.getNewContext.result))
+    output(toolCallsOutput=AttrDict(toolCalls=self.getResponse.tool_calls, context=self.getNewContext.result))
+    output(streamOutput=AttrDict(**{"*":self.streamTransform}))
   
 print("Starting")
 

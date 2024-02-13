@@ -1,9 +1,9 @@
 
-from breadboard_python.main import Board, Field, SchemaObject
-from breadboard_python.import_node import require
+from breadboard_python.main import Board, Field, SchemaObject, List, AttrDict
 import json
 from typing import Optional, Union
 
+from breadboard_python.import_node import require
 Core = require("@google-labs/core-kit")
 Templates = require("@google-labs/template-kit")
 

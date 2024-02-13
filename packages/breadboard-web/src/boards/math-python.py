@@ -17,7 +17,7 @@ class Math(Board[InputSchema, OutputSchema]):
   description = "A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems. Defined in Python."
   version = "0.0.3"
 
-  def describe(self, input):
+  def describe(self, input, output):
     self.template = Templates.promptTemplate(
       id="math-function",
       question=input.question,
@@ -42,9 +42,7 @@ Solution:""",
       name="compute",
       code=self.generator.text,
     )
-    self.output = AttrDict()
-    self.output.result = self.compute.result
-    return self.output
+    output(result=self.compute.result)
 
 if __name__ == "__main__":
   import sys
