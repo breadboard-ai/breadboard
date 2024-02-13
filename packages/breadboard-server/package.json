@@ -84,6 +84,7 @@
     }
   },
   "repository": {
+    "directory": "packages/breadboard-server",
     "type": "git",
     "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },

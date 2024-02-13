@@ -58,6 +58,7 @@
     }
   },
   "repository": {
+    "directory": "packages/cloud-function",
     "type": "git",
     "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },

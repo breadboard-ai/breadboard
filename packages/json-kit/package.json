@@ -66,6 +66,7 @@
     }
   },
   "repository": {
+    "directory": "packages/json-kit",
     "type": "git",
     "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },

@@ -103,6 +103,7 @@
     }
   },
   "repository": {
+    "directory": "packages/coffee-bot-board",
     "type": "git",
     "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },
