@@ -140,6 +140,7 @@
   ],
   "kits": [
     {
+      "title": "Node Nursery (Web)",
       "url": "npm:@google-labs/node-nursery-web"
     },
     {

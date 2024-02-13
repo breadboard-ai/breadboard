@@ -22,8 +22,8 @@ import {
 const createBuiltInKit = (): InspectableKit => {
   return {
     descriptor: {
-      title: "Built-in",
-      description: "Built-in Breadboard nodes",
+      title: "Built-in Kit",
+      description: "A kit containing built-in Breadboard nodes",
       url: "",
     },
     nodeTypes: [
