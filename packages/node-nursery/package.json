@@ -83,6 +83,7 @@
     }
   },
   "repository": {
+    "directory": "packages/node-nursery",
     "type": "git",
     "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },

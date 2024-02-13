@@ -82,8 +82,9 @@
     }
   },
   "repository": {
+    "directory": "packages/template-kit",
     "type": "git",
-    "url": "https://github.com/breadboard-ai/breadboard"
+    "url": "https://github.com/breadboard-ai/breadboard.git"
   },
   "files": [
     "dist/src"

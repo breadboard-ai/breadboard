@@ -172,6 +172,7 @@
     }
   },
   "repository": {
+    "directory": "packages/breadboard-extension",
     "type": "git",
     "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },

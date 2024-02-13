@@ -4,6 +4,7 @@
   "license": "Apache-2.0",
   "author": "Google Labs Team",
   "repository": {
+    "directory": "packages/schema",
     "type": "git",
     "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },
