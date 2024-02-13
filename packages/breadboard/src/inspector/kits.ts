@@ -5,11 +5,9 @@
  */
 
 import {
-  KitDescriptor,
   Kit,
   NodeHandlers,
   NodeHandler,
-  NodeDescriberFunction,
   NodeDescriberResult,
 } from "../types.js";
 import { collectPortsForType } from "./ports.js";
