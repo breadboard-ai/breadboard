@@ -171,7 +171,7 @@ class Graph implements EditableGraph {
     if (!exists) {
       return {
         success: false,
-        error: `Edge from "${spec.from}:${spec.out}" to "${spec.to}${spec.in}" does not exist`,
+        error: `Edge from "${spec.from}:${spec.out}" to "${spec.to}:${spec.in}" does not exist`,
       };
     }
     return { success: true };
