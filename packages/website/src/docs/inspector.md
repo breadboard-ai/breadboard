@@ -101,21 +101,53 @@ const to = edge.from;
 const inPort = edge.in;
 ```
 
-## Ports
+## Kits
 
-At runtime, graphs invoke the nodes during traversal. Each node has a set of ports that it expects as inputs and a set of ports it expect as outputs.
-
-The Inspector API provides a way to examine the expected ports of any node within a graph. In order to do that, the API needs to know all Kits (collections of nodes) that will are used by supply the nodes for the graph. The second, optional `InspectableGraphOptions` argument to `inspect` has a member `kits` that gives us a way to specify the kits for the graph:
+At runtime, graphs invoke the nodes during traversal. The actual functions that are being invoked are stored in kits (collections of nodes). We can optionally supply kits to the inspector so that we can examine their contents. The second, optional `InspectableGraphOptions` argument to `inspect` has a member `kits` that gives us a way to specify the kits for the graph:
 
 ```ts
 import Core from "@google-labs/core-kit";
 import JSONKit from "@google-labs/json-kit";
 
-const kits = [asRuntime(Core), asRunTime(JSONKit)];
-const graph = inspect(bgl, { kits });
+const graph = inspect(bgl, { kits: [asRuntime(Core), asRunTime(JSONKit)] });
 ```
 
-Once the kits are supplied, calling `InspectableNode.ports` will give two lists of ports for a node:
+Once the kits are supplied, we can inspect them using the `kits` method, which returns a list of inspectable kits:
+
+```ts
+// Returns an array of `InspectableKit`.
+const kits = graph.kits();
+```
+
+Each item in the list of kits has properties to inspect the kit it represents, such as the data structure that contains the kit metadata (title, version, url, description) and the list of node types that the kit contains:
+
+```ts
+for (const kit of kits) {
+  const { title } = kit.descriptor;
+  // Prints the kit title.
+  console.log(`Kit: ${title}`);
+  for (const nodeType of kit.nodeTypes) {
+    // Do something with node types...
+  }
+}
+```
+
+The `nodeTypes` of the `InspectableKit` contains a list of items each representing a node type contined within a kit. An item has two methods: one to get the type of the node, and the other is an asynchronous method to query the ports that will be available on the node of this type when it has no edges.
+
+```ts
+// Returns string.
+const type = nodeType.type();
+// Async, returns `Promise<InspectablePorts>`.
+const ports = await nodeType.ports();
+```
+
+For a discussion on ports and how to use them, see the section below.
+
+## Ports
+
+Each node has a set of ports that it expects as inputs and a set of ports it expect as outputs.
+
+The Inspector API provides a way to examine the expected ports of any node within a graph with the `InspectableNode.ports` method. Calling this method will give two lists of ports for a node:
 
 ```ts
 // Async, returns Promise<InspectableNodePorts>.

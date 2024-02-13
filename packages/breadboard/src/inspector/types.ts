@@ -273,10 +273,19 @@ export type InspectableKit = {
    * Returns the descriptor of the kit.
    */
   descriptor: KitDescriptor;
+  /**
+   * Returns the node types of the kit.
+   */
   nodeTypes: InspectableNodeType[];
 };
 
 export type InspectableNodeType = {
+  /**
+   * Returns the type of the node.
+   */
   type(): NodeTypeIdentifier;
+  /**
+   * Returns the ports of the node.
+   */
   ports(): Promise<InspectableNodePorts>;
 };
