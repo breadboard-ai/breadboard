@@ -1,4 +1,5 @@
 {
+  "name": "breadboard-ai",
   "private": true,
   "version": "0.0.1",
   "description": "Google Labs repo for rapid prototyping",
