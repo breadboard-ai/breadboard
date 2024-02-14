@@ -49,14 +49,15 @@ const getRunnableBoard = async (
   inputs: InvokeNodeInputs
 ): Promise<RunnableBoardWithArgs> => {
   const { $board, ...args } = inputs;
+  console.log("inputs", inputs);
   if ($board) {
     let board;
 
-    if (isBreadboardCapability($board))
+    if (isBreadboardCapability($board)) {
       board = await BoardRunner.fromBreadboardCapability($board);
-    if (isGraphDescriptor($board))
+    } else if (isGraphDescriptor($board)) {
       board = await BoardRunner.fromGraphDescriptor($board);
-    if (typeof $board === "string") {
+    } else if (typeof $board === "string") {
       board = await loadBoardFromPath($board, context);
     } else {
       board = undefined;
