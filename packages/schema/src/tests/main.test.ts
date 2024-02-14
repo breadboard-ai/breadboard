@@ -1,4 +1,4 @@
-import { default as Ajv, type ValidateFunction } from "ajv";
+import Ajv, { type ValidateFunction } from "ajv";
 import * as fs from "fs";
 import * as assert from "node:assert";
 import test from "node:test";
@@ -6,7 +6,13 @@ import * as path from "path";
 import { ascendToPackageDir } from "./util/ascendToPackageDir.js";
 import { getBoardFiles } from "./util/getBoardFiles.js";
 
-const ajv = new Ajv();
+let ajv: Ajv.Ajv;
+try {
+  ajv = new Ajv();
+} catch (e) {
+  // @ts-ignore
+  ajv = new Ajv.default();
+}
 let validate: ValidateFunction;
 
 test.before(() => {
