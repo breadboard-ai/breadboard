@@ -70,6 +70,7 @@
         "package.json",
         "src/**/*.ts",
         "tsconfig.json",
+        "__tests__/**/*.ts",
         "../../core/tsconfig/base.json"
       ],
       "output": [
@@ -91,6 +92,7 @@
   "devDependencies": {
     "ajv": "^8.12.0",
     "ajv-formats": "^2.1.1",
-    "ts-json-schema-generator": "^1.5.0"
+    "ts-json-schema-generator": "^1.5.0",
+    "tsx": "^4.7.1"
   }
 }
