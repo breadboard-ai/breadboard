@@ -11,6 +11,7 @@ import { addKit } from "@google-labs/breadboard";
 import { WorkerType } from "./boards/worker.js";
 import { addDescriber, workerDescriber } from "./hacks.js";
 import { RepeaterType } from "./boards/repeater.js";
+import { StructuredWorkerType } from "./boards/structured-worker.js";
 
 // TODO: Replace with the actual URL.
 const KIT_BASE_URL =
@@ -31,6 +32,7 @@ const builder = new KitBuilder(
 const AgentKit = builder.build({
   worker: addDescriber(adapter.handlerForNode("worker"), workerDescriber),
   repeater: adapter.handlerForNode("repeater"),
+  structuredWorker: adapter.handlerForNode("structured-worker"),
 });
 
 export type AgentKit = InstanceType<typeof AgentKit>;
@@ -45,6 +47,11 @@ export type AgentKitType = {
    * until some condition is met or the max count of repetitions is reached.
    */
   repeater: RepeaterType;
+  /** A worker that reliably outputs structured data (JSON). Just give it
+   * a JSON schema along with an instruction, and it will stay within the bounds
+   * of the schema.
+   */
+  structuredWorker: StructuredWorkerType;
 };
 
 export default AgentKit;

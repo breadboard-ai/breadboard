@@ -17,7 +17,7 @@ import { gemini } from "@google-labs/gemini-kit";
 import { json } from "@google-labs/json-kit";
 import { templates } from "@google-labs/template-kit";
 
-export type SructuredWorkerType = NewNodeFactory<
+export type StructuredWorkerType = NewNodeFactory<
   {
     /**
      * The context to use for the worker.
@@ -95,12 +95,14 @@ const contextAssembler = code(({ context, json }) => {
 });
 
 const contextBuilder = code(({ context, format, instruction }) => {
-  if (typeof context === "string") {
+  if (!Array.isArray(context)) {
     // A clever trick. Let's see if this works
-    // A user can supply context as either ContextItem[] or as a string.
-    // When it's a string, let's just conjure up the proper ContextItem[]
+    // A user can supply context as either ContextItem[] or as non-array.
+    // When it's not an array, let's just conjure up the proper ContextItem[]
     // from that.
-    context = [{ role: "user", parts: [{ text: context }] }];
+    const text =
+      typeof context === "string" ? context : JSON.stringify(context);
+    context = [{ role: "user", parts: [{ text }] }];
   }
   const list = (context as unknown[]) || [];
   if (list.length > 0) {
