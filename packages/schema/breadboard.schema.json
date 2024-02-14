@@ -9,8 +9,7 @@
 			"properties": {
 				"inputs": {
 					"$ref": "#/definitions/Record%3CInputIdentifier%2Cany%3E",
-					"description": "The graph's configuration.",
-					"deprecated": true
+					"description": "Inputs to provide to the graph."
 				},
 				"outputs": {
 					"anyOf": [
@@ -24,25 +23,20 @@
 							}
 						}
 					],
-					"description": "The graph's outputs.",
-					"deprecated": true
+					"description": "Expected outputs from the graph."
 				},
 				"sequence": {
 					"type": "array",
 					"items": {
 						"$ref": "#/definitions/NodeIdentifier"
 					},
-					"description": "Sequence of nodes to execute.",
-					"deprecated": true
+					"description": "The sequence of nodes to traverse."
 				},
 				"throws": {
-					"type": "boolean",
-					"description": "Whether to throw an error if a node fails.",
-					"deprecated": true
+					"type": "boolean"
 				},
 				"safe": {
-					"type": "boolean",
-					"deprecated": true
+					"type": "boolean"
 				},
 				"expectedLabels": {
 					"type": "array",
@@ -51,12 +45,10 @@
 						"items": {
 							"type": "string"
 						}
-					},
-					"deprecated": true
+					}
 				},
 				"explanation": {
-					"type": "string",
-					"deprecated": true
+					"type": "string"
 				},
 				"edges": {
 					"type": "array",
