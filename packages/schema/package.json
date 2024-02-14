@@ -72,6 +72,10 @@
       "command": "node dist/scripts/update-json-schema.js",
       "dependencies": [
         "build:tsc"
+      ],
+      "files": [
+        "ist/scripts/update-json-schema.js",
+        "breadboard.schema.json"
       ]
     },
     "test:validate-json-schema": {
