@@ -7,14 +7,16 @@
 import { PatchedReadableStream } from "../stream.js";
 import {
   ErrorResponse,
-  GraphProbeData,
+  GraphEndProbeMessage,
+  GraphStartProbeMessage,
   InputResponse,
   InputValues,
   NodeDescriptor,
   NodeEndProbeMessage,
-  NodeStartResponse,
+  NodeStartProbeMessage,
   OutputResponse,
   OutputValues,
+  RunState,
   SkipProbeMessage,
 } from "../types.js";
 
@@ -61,7 +63,9 @@ export type LoadResponse = {
   nodes?: NodeDescriptor[];
 };
 
-export type RunState = string;
+type GenericResult = { type: string; data: unknown };
+
+type RemoteMessage<T extends GenericResult> = [T["type"], T["data"], RunState?];
 
 /**
  * A run request is an empty object.
@@ -69,31 +73,13 @@ export type RunState = string;
  */
 export type RunRequest = Record<string, never>;
 export type RunRequestMessage = ["run", RunRequest, RunState?];
-
 export type OutputResponseMessage = ["output", OutputResponse];
-
-export type NodeStartResponseMessage = [
-  "nodestart",
-  NodeStartResponse,
-  RunState
-];
-
-export type NodeEndResponseMessage = ["nodeend", NodeEndProbeMessage["data"]];
-
-export type GraphStartResponseMessage = ["graphstart", GraphProbeData];
-
-export type GraphEndResponseMessage = ["graphend", GraphProbeData];
-
-export type SkipResponseMessage = ["skip", SkipProbeMessage["data"]];
-
 export type InputResponseMessage = ["input", InputResponse, RunState];
 
 /**
  * Sent by the client to provide inputs, requested by the server.
  */
-export type InputResolveRequest = {
-  inputs: InputValues;
-};
+export type InputResolveRequest = { inputs: InputValues };
 export type InputResolveRequestMessage = [
   "input",
   InputResolveRequest,
@@ -101,10 +87,19 @@ export type InputResolveRequestMessage = [
 ];
 
 /**
- * Sent by the server to request to proxy a node.
+ * Indicates that the board is done running.
  * Can only be the last message in the response stream.
  */
-export type ProxyPromiseResponse = {
+export type End = { timestamp: number };
+export type EndResponseMessage = ["end", End];
+export type EndRequestMessage = ["end", End];
+
+export type ErrorResponseMessage = ["error", ErrorResponse];
+
+/**
+ * Sent by the client to request to proxy a node.
+ */
+export type ProxyRequest = {
   /**
    * The description of the node to be proxied.
    * @see [NodeDescriptor]
@@ -116,16 +111,11 @@ export type ProxyPromiseResponse = {
    */
   inputs: InputValues;
 };
-export type ProxyPromiseResponseMessage = [
-  "proxy",
-  ProxyPromiseResponse,
-  RunState
-];
 
 /**
- * Sent by the client to provide outputs of the proxied node.
+ * Sent by the server to respond to respond with the proxy results.
  */
-export type ProxyResolveRequest = {
+export type ProxyResponse = {
   /**
    * The output values that the host is providing to the board in lieu of
    * the proxied node.
@@ -133,49 +123,11 @@ export type ProxyResolveRequest = {
    */
   outputs: OutputValues;
 };
-export type ProxyResolveRequestMessage = [
-  "proxy",
-  ProxyResolveRequest,
-  RunState
-];
-
-/**
- * Indicates that the board is done running.
- * Can only be the last message in the response stream.
- */
-export type End = Record<string, never>;
-export type EndResponseMessage = ["end", End];
-export type EndRequestMessage = ["end", End];
-
-export type ErrorResponseMessage = ["error", ErrorResponse];
-
-/**
- * This is a bit redundant, but for consistency of the interface, this
- * marks a client message a proxy request.
- */
-export type ProxyRequestType = "proxy";
-/**
- * This is a bit redundant, but for consistency of the interface, this
- * marks a server message a proxy response.
- */
-export type ProxyResponseType = "proxy";
-
-/**
- * Sent by the client to request to proxy a node.
- */
-export type ProxyRequest = ProxyPromiseResponse;
-/**
- * Sent by the server to respond to respond with the proxy results.
- */
-export type ProxyResponse = ProxyResolveRequest;
 
 export type ProxyRequestMessage = ["proxy", ProxyRequest];
 export type ProxyResponseMessage = ["proxy", ProxyResponse];
 
-export type ProxyChunkResponse = {
-  chunk: unknown;
-};
-
+export type ProxyChunkResponse = { chunk: unknown };
 export type ProxyChunkResponseMessage = ["chunk", ProxyChunkResponse];
 
 export type AnyProxyRequestMessage = ProxyRequestMessage | EndRequestMessage;
@@ -187,20 +139,21 @@ export type AnyProxyResponseMessage =
 
 export type AnyRunRequestMessage =
   | RunRequestMessage
-  | InputResolveRequestMessage
-  | ProxyResolveRequestMessage;
+  | InputResolveRequestMessage;
+
+export type AnyProbeMessage =
+  | RemoteMessage<NodeStartProbeMessage>
+  | RemoteMessage<NodeEndProbeMessage>
+  | RemoteMessage<GraphStartProbeMessage>
+  | RemoteMessage<GraphEndProbeMessage>
+  | RemoteMessage<SkipProbeMessage>;
 
 export type AnyRunResponseMessage =
   | OutputResponseMessage
-  | NodeStartResponseMessage
-  | NodeEndResponseMessage
-  | GraphStartResponseMessage
-  | GraphEndResponseMessage
-  | SkipResponseMessage
   | InputResponseMessage
-  | ProxyPromiseResponseMessage
   | EndResponseMessage
-  | ErrorResponseMessage;
+  | ErrorResponseMessage
+  | AnyProbeMessage;
 
 export interface ClientBidirectionalStream<Request, Response> {
   writableRequests: WritableStream<Request>;

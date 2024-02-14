@@ -1,5 +1,8 @@
 {
   "name": "@google-labs/discovery-types",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
   "private": true,
   "version": "0.0.1",
   "description": "Simplest possible Discovery doc-to-TypeScript definitions converter",
@@ -8,6 +11,7 @@
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
+    "prepack": "npm run build",
     "generate:docs": "wireit",
     "test": "wireit",
     "build": "wireit",
@@ -55,7 +59,8 @@
       },
       "files": [
         "src/**/*.ts",
-        "tests/**/*.ts"
+        "tests/**/*.ts",
+        "../../.eslintrc.json"
       ],
       "output": []
     },
@@ -75,6 +80,7 @@
     }
   },
   "repository": {
+    "directory": "packages/discovery-types",
     "type": "git",
     "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },
@@ -103,11 +109,11 @@
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
-    "@google-labs/tsconfig": "*",
+    "@google-labs/tsconfig": "^0.0.1",
     "@types/node": "^18.16.3",
     "@types/prettier": "^2.7.3",
-    "@typescript-eslint/eslint-plugin": "^5.56.0",
-    "@typescript-eslint/parser": "^5.56.0",
+    "@typescript-eslint/eslint-plugin": "^6.20.0",
+    "@typescript-eslint/parser": "^6.20.0",
     "ava": "^5.2.0",
     "typedoc": "^0.25.1",
     "typescript": "^5.0.4"

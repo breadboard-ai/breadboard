@@ -6,7 +6,8 @@
 
 import { Board, Schema } from "@google-labs/breadboard";
 import Core from "@google-labs/core-kit";
-import { Starter } from "@google-labs/llm-starter";
+import JSONKit from "@google-labs/json-kit";
+import { TemplateKit } from "@google-labs/template-kit";
 
 const board = new Board({
   title: "Healer",
@@ -14,8 +15,9 @@ const board = new Board({
     "Try to heal broken text by generating new text that fixes the errors supplied by the validator",
   version: "0.0.1",
 });
-const starter = board.addKit(Starter);
+const templates = board.addKit(TemplateKit);
 const core = board.addKit(Core);
+const json = board.addKit(JSONKit);
 
 const brokenJSON = `{
   first_answer: "to live",
@@ -48,13 +50,13 @@ const parameters = board.input({
         type: "board",
         title: "Text Generator",
         description: "The text generator to use for healing.",
-        default: "/graphs/text-generator.json",
+        default: "text-generator.json",
       },
       validator: {
         type: "board",
         title: "Text Validator",
         description: "The text validator to use for healing.",
-        default: "/graphs/json-validator.json",
+        default: "json-validator.json",
       },
       tries: {
         type: "number",
@@ -92,7 +94,7 @@ const startCycle = core.passthrough({ $id: "startCycle" });
 validate.wire("error->", startCycle);
 
 // Reports whether or not the cycle is the first time through.
-const isFirstTime = starter.jsonata({
+const isFirstTime = json.jsonata({
   $id: "first",
   expression: `{
     "error": error,
@@ -121,7 +123,7 @@ const otherTimePremble = core.passthrough({
   preamble: `Nice job, validation error fixer bot! However, you didn't get it quite right `,
 });
 
-const tryTemplate = starter.promptTemplate({
+const tryTemplate = templates.promptTemplate({
   $id: "tryTemplate",
   template: `
 {{preamble}}

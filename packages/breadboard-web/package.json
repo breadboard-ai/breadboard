@@ -1,45 +1,69 @@
 {
   "name": "@google-labs/breadboard-web",
-  "private": true,
-  "version": "0.0.1",
-  "description": "The Web runtime for Breadboard",
-  "main": "./dist/src/index.js",
-  "exports": {
-    ".": "./dist/src/runtime.js",
-    "./worker": "./dist/src/worker.js"
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "types": "dist/src/index.d.ts",
+  "version": "1.1.1",
+  "description": "The Web runtime for Breadboard",
+  "main": "./build/index.js",
+  "exports": {
+    ".": {
+      "default": "./build/index.js",
+      "types": "./build.index.d.ts"
+    },
+    "./preview.js": {
+      "default": "./build/preview.js",
+      "types": "./build/preview.d.ts"
+    },
+    "./config.js": {
+      "default": "./build/config.js",
+      "types": "./build/config.d.ts"
+    },
+    "./public": "./public",
+    "./local-boards.json": "./public/local-boards.json",
+    "./index.html": "./index.html",
+    "./preview.html": "./preview.html"
+  },
+  "types": "build/index.d.ts",
   "type": "module",
   "scripts": {
-    "dev": "wireit",
+    "prepack": "npm run build",
+    "dev": "npm run serve --watch",
+    "serve": "wireit",
     "deploy": "npm run build:vite && firebase deploy",
     "build": "wireit",
     "build:vite": "wireit",
+    "build:tsc": "wireit",
     "generate:graphs": "wireit",
     "generate:docs": "wireit"
   },
   "wireit": {
     "build": {
       "dependencies": [
+        "../agent-kit:build",
         "../breadboard:build",
         "../breadboard-ui:build",
         "../core-kit:build",
+        "../gemini-kit:build",
         "../json-kit:build",
-        "../llm-starter:build",
+        "../template-kit:build",
         "../node-nursery-web:build",
         "../palm-kit:build",
         "../pinecone-kit:build",
         "build:vite",
+        "build:tsc",
         "generate:graphs"
       ]
     },
     "typescript-files-and-deps": {
       "dependencies": [
+        "../agent-kit:build:tsc",
         "../breadboard:build:tsc",
         "../breadboard-ui:build:tsc",
         "../core-kit:build:tsc",
+        "../gemini-kit:build:tsc",
         "../json-kit:build:tsc",
-        "../llm-starter:build:tsc",
+        "../template-kit:build:tsc",
         "../node-nursery-web:build:tsc",
         "../palm-kit:build:tsc",
         "../pinecone-kit:build:tsc"
@@ -50,6 +74,21 @@
         "tsconfig.json",
         "../../core/tsconfig/base.json"
       ]
+    },
+    "build:tsc": {
+      "command": "tsc -b",
+      "env": {
+        "FORCE_COLOR": "1"
+      },
+      "dependencies": [
+        "typescript-files-and-deps"
+      ],
+      "files": [],
+      "output": [
+        "build/",
+        "!build/**/*.min.js{,.map}"
+      ],
+      "clean": "if-file-deleted"
     },
     "build:vite": {
       "command": "vite build",
@@ -69,7 +108,7 @@
         "dist/"
       ]
     },
-    "dev": {
+    "serve": {
       "command": "vite",
       "service": true,
       "dependencies": [
@@ -95,7 +134,8 @@
       "files": [],
       "output": [
         "public/local-boards.json",
-        "public/graphs/**/*.json"
+        "public/graphs/**/*.json",
+        "docs/graphs/**/*.md"
       ]
     },
     "generate:docs": {
@@ -114,11 +154,14 @@
     }
   },
   "repository": {
+    "directory": "packages/breadboard-web",
     "type": "git",
     "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },
   "files": [
-    "dist/src"
+    "public",
+    "index.html",
+    "preview.html"
   ],
   "ava": {
     "timeout": "30s",
@@ -143,10 +186,10 @@
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
     "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
-    "@google-labs/tsconfig": "*",
+    "@google-labs/tsconfig": "^0.0.1",
     "@types/node": "^18.16.3",
-    "@typescript-eslint/eslint-plugin": "^5.56.0",
-    "@typescript-eslint/parser": "^5.56.0",
+    "@typescript-eslint/eslint-plugin": "^6.20.0",
+    "@typescript-eslint/parser": "^6.20.0",
     "ava": "^5.2.0",
     "dotenv": "^16.3.1",
     "tsx": "^3.14.0",
@@ -159,16 +202,16 @@
     "vitest": "^0.34.6"
   },
   "dependencies": {
-    "@google-labs/breadboard": "*",
-    "@google-labs/breadboard-ui": "*",
-    "@google-labs/core-kit": "*",
-    "@google-labs/json-kit": "*",
-    "@google-labs/llm-starter": "*",
-    "@google-labs/node-nursery-web": "*",
-    "@google-labs/palm-kit": "*",
-    "@google-labs/pinecone-kit": "*",
-    "lit": "^3.1.1",
-    "zod": "^3.22.4",
-    "zod-to-json-schema": "^3.22.0"
+    "@google-labs/agent-kit": "^0.0.1",
+    "@google-labs/breadboard": "^0.10.1",
+    "@google-labs/breadboard-ui": "^0.0.6",
+    "@google-labs/core-kit": "^0.2.2",
+    "@google-labs/gemini-kit": "^0.1.1",
+    "@google-labs/json-kit": "^0.0.5",
+    "@google-labs/node-nursery-web": "^1.0.2",
+    "@google-labs/palm-kit": "^0.0.4",
+    "@google-labs/pinecone-kit": "^0.1.1",
+    "@google-labs/template-kit": "^0.1.4",
+    "lit": "^3.1.1"
   }
 }

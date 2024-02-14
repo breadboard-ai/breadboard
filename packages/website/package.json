@@ -1,12 +1,16 @@
 {
   "name": "@google-labs/breadboard-website",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
   "private": true,
-  "version": "1.0.0",
+  "version": "2.0.1",
   "description": "The public documentation website for Breadboard",
   "author": "Google Labs Team",
   "license": "Apache-2.0",
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "repository": {
+    "directory": "packages/website",
     "type": "git",
     "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },
@@ -15,68 +19,114 @@
   },
   "type": "module",
   "scripts": {
+    "prepack": "npm run build",
     "build": "wireit",
+    "build:dev": "wireit",
+    "build:dev:prepare": "wireit",
+    "build:prod": "wireit",
     "build:eleventy": "wireit",
-    "serve": "wireit",
-    "dev": "npm run serve --watch"
+    "build:tsc": "wireit",
+    "build:rollup": "wireit",
+    "serve:dev": "wireit",
+    "serve:prod": "wireit",
+    "dev": "npm run serve:dev --watch"
   },
   "wireit": {
     "build": {
       "dependencies": [
-        "build:js",
-        "build:static",
-        "build:eleventy"
+        "build:dev",
+        "build:prod"
       ]
     },
-    "build:js": {
+    "build:dev": {
+      "command": "cp -R dist/eleventy/* dist/dev/breadboard/",
+      "dependencies": [
+        "build:dev:prepare",
+        "build:eleventy",
+        "build:tsc"
+      ],
+      "files": [],
+      "output": [
+        "dist/dev/",
+        "!dist/dev/breadboard/js",
+        "!dist/dev/breadboard/static"
+      ]
+    },
+    "build:dev:prepare": {
+      "command": "mkdir -p dist/dev/breadboard && ln -s ../../tsc dist/dev/breadboard/js && ln -s ../../../src/static dist/dev/breadboard/static",
+      "files": [],
+      "output": [
+        "dist/dev/breadboard/js",
+        "dist/dev/breadboard/static"
+      ]
+    },
+    "build:prod": {
+      "command": "mkdir -p dist/prod && cp -R dist/eleventy/ dist/prod/breadboard && cp -R src/static/ dist/prod/breadboard/static/ && cp -R dist/rollup/ dist/prod/breadboard/js",
+      "dependencies": [
+        "build:eleventy",
+        "build:rollup"
+      ],
+      "files": [
+        "src/static/"
+      ],
+      "output": [
+        "dist/prod/"
+      ]
+    },
+    "build:eleventy": {
+      "command": "eleventy --input=src/ --output=dist/eleventy/",
+      "files": [
+        "src/",
+        "!src/js/",
+        "!src/static/",
+        "eleventy.config.cjs",
+        "filter-toc.cjs"
+      ],
+      "output": [
+        "dist/eleventy/"
+      ]
+    },
+    "build:tsc": {
       "command": "tsc -b",
       "env": {
         "FORCE_COLOR": "1"
       },
-      "dependencies": [
-        "build:eleventy"
-      ],
       "files": [
         "src/js/",
         "tsconfig.json",
         "../../core/tsconfig/base.json"
       ],
       "output": [
-        "_site/js/",
-        "tsconfig.tsbuildinfo"
+        "dist/tsc/"
       ]
     },
-    "build:static": {
-      "command": "cp -R src/static _site",
+    "build:rollup": {
+      "command": "rollup --context 'globalThis' --format=esm --chunkFileNames=shared/[hash].js --plugin=@rollup/plugin-node-resolve --plugin=@rollup/plugin-terser --dir=dist/rollup/ dist/tsc/*.js",
       "dependencies": [
-        "build:eleventy"
+        "build:tsc"
       ],
-      "files": [
-        "src/static/"
-      ],
+      "files": [],
       "output": [
-        "_site/static/"
+        "dist/rollup/"
       ]
     },
-    "build:eleventy": {
-      "command": "eleventy --input=src/",
-      "files": [
-        "src/",
-        "!src/js/",
-        "!src/static/"
-      ],
-      "output": [
-        "_site/",
-        "!_site/js/",
-        "!_site/static/"
-      ]
-    },
-    "serve": {
-      "command": "web-dev-server --root-dir _site/ --node-resolve --watch",
+    "serve:dev": {
+      "command": "web-dev-server --root-dir dist/dev/ --node-resolve --watch --open /breadboard/",
       "service": true,
       "dependencies": [
         {
-          "script": "build",
+          "script": "build:dev",
+          "cascade": false
+        }
+      ],
+      "files": []
+    },
+    "serve:prod": {
+      "command": "web-dev-server --root-dir dist/prod/ --watch --open /breadboard/",
+      "service": true,
+      "dependencies": [
+        {
+          "script": "build:prod",
           "cascade": false
         }
       ],
@@ -85,9 +135,13 @@
   },
   "dependencies": {
     "@11ty/eleventy": "^2.0.1",
+    "@web/dev-server": "^0.4.1",
+    "jsdom": "^24.0.0",
     "lit": "^3.1.1"
   },
   "devDependencies": {
-    "@web/dev-server": "^0.4.1"
+    "@11ty/eleventy-plugin-syntaxhighlight": "^5.0.0",
+    "markdown-it-github-alerts": "^0.3.0",
+    "markdown-it-github-headings": "^2.0.1"
   }
 }

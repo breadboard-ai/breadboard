@@ -28,7 +28,7 @@
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:253](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L253)
+[packages/breadboard/src/types.ts:259](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L259)
 
 ___
 
@@ -38,7 +38,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:254](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L254)
+[packages/breadboard/src/types.ts:260](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L260)
 
 ___
 
@@ -48,7 +48,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:255](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L255)
+[packages/breadboard/src/types.ts:261](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L261)
 
 ___
 
@@ -58,7 +58,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:257](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L257)
+[packages/breadboard/src/types.ts:263](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L263)
 
 ___
 
@@ -68,7 +68,7 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:256](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L256)
+[packages/breadboard/src/types.ts:262](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L262)
 
 ___
 
@@ -78,17 +78,17 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:259](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L259)
+[packages/breadboard/src/types.ts:265](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L265)
 
 ___
 
 ### pendingOutputs
 
-• **pendingOutputs**: `Map`\<`symbol`, `Promise`\<`CompletedNodeOutput`\>\>
+• **pendingOutputs**: `Map`\<`symbol`, `Promise`\<[`CompletedNodeOutput`](CompletedNodeOutput.md)\>\>
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:260](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L260)
+[packages/breadboard/src/types.ts:266](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L266)
 
 ___
 
@@ -98,14 +98,14 @@ ___
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:261](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L261)
+[packages/breadboard/src/types.ts:267](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L267)
 
 ___
 
 ### state
 
-• **state**: `QueuedNodeValuesState`
+• **state**: [`QueuedNodeValuesState`](QueuedNodeValuesState.md)
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:258](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L258)
+[packages/breadboard/src/types.ts:264](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L264)

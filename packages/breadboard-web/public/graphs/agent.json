@@ -1,0 +1,124 @@
+{
+  "title": "Agent",
+  "description": "The essential building block for the emerging Agent Framework",
+  "version": "0.0.3",
+  "edges": [
+    {
+      "from": "assemble",
+      "to": "output-2",
+      "out": "result",
+      "in": "context"
+    },
+    {
+      "from": "generate",
+      "to": "assemble",
+      "out": "context",
+      "in": "generated"
+    },
+    {
+      "from": "generate",
+      "to": "output-2",
+      "out": "text",
+      "in": "text"
+    },
+    {
+      "from": "input-1",
+      "to": "generate",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "input-1",
+      "to": "generate",
+      "out": "stopSequences",
+      "in": "stopSequences"
+    },
+    {
+      "from": "input-1",
+      "to": "generate",
+      "out": "generator",
+      "in": "path"
+    },
+    {
+      "from": "input-1",
+      "to": "assemble",
+      "out": "context",
+      "in": "context"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "title": "Context",
+              "description": "Agent context after generation",
+              "type": "object"
+            },
+            "text": {
+              "title": "Output",
+              "type": "string",
+              "description": "Agent's output"
+            }
+          },
+          "required": [
+            "context",
+            "text"
+          ]
+        }
+      }
+    },
+    {
+      "id": "assemble",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "$append(context ? context, [generated])"
+      }
+    },
+    {
+      "id": "generate",
+      "type": "invoke",
+      "configuration": {
+        "text": "unused"
+      }
+    },
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "title": "Context",
+              "type": "array",
+              "format": "multiline",
+              "examples": [
+                "[\n  {\n    \"role\": \"user\",\n    \"parts\": [\n      {\n        \"text\": \"You are a brilliant poet who specializes in two-line rhyming poems.\\nGiven any topic, you can quickly whip up a two-line rhyming poem about it.\\nReady?\\n\\nThe topic is: the universe within us\"\n      }\n    ]\n  }\n]"
+              ]
+            },
+            "stopSequences": {
+              "title": "Stop Sequences",
+              "type": "array",
+              "default": "[]"
+            },
+            "generator": {
+              "title": "Generator",
+              "description": "The path to the board to invoke.",
+              "type": "string",
+              "default": "gemini-generator.json"
+            }
+          },
+          "required": [
+            "context"
+          ]
+        }
+      }
+    }
+  ],
+  "graphs": {}
+}

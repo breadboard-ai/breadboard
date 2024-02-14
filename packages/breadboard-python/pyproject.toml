@@ -1,0 +1,20 @@
+[project]
+name = "breadboard_python"
+requires-python = ">= 3.8"
+version = "0.0.2"
+
+description = "A Python library for defining Breadboards."
+authors = [
+  {name = "Kevin Xiao", email = "xiaok10003@gmail.com"},
+]
+keywords = ["breadboard"]
+license = {file = "LICENSE"}
+
+
+dependencies = [
+  "pydantic",
+  "javascript",
+  "jsonref",
+  "json_fix",
+  "prettydiff",
+]

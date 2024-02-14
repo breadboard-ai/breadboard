@@ -1,12 +1,16 @@
 {
   "name": "@google-labs/json-kit",
-  "version": "0.0.1",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
+  "version": "0.0.5",
   "description": "A Breadboard Kit containing nodes that facilitate wrangling JSON objects",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
+    "prepack": "npm run build",
     "build": "wireit",
     "test": "wireit",
     "lint": "wireit"
@@ -55,12 +59,14 @@
       },
       "files": [
         "src/**/*.ts",
-        "tests/**/*.ts"
+        "tests/**/*.ts",
+        "../../.eslintrc.json"
       ],
       "output": []
     }
   },
   "repository": {
+    "directory": "packages/json-kit",
     "type": "git",
     "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },
@@ -89,16 +95,18 @@
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
-    "@google-labs/tsconfig": "*",
+    "@google-labs/tsconfig": "^0.0.1",
     "@types/node": "^18.16.3",
-    "@typescript-eslint/eslint-plugin": "^5.56.0",
-    "@typescript-eslint/parser": "^5.56.0",
+    "@typescript-eslint/eslint-plugin": "^6.20.0",
+    "@typescript-eslint/parser": "^6.20.0",
     "ava": "^5.2.0",
     "typescript": "^5.0.4"
   },
   "dependencies": {
-    "@google-labs/breadboard": "^0.6.0",
+    "@google-labs/breadboard": "^0.10.0",
+    "@rgrove/parse-xml": "^4.1.0",
     "ajv": "^8.12.0",
+    "jsonata": "^2.0.3",
     "jsonschema": "^1.4.1"
   }
 }

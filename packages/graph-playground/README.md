@@ -1,3 +1,6 @@
+> [!WARNING]
+> This part of the repository is no longer maintained. Please bear with us as we're deprecating it.
+
 # Playing with graphs
 
 This is a prototyping ground for experimenting with representing generative AI applications as composable graphs.

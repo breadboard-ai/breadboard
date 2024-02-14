@@ -13,9 +13,11 @@ The CLI tools are designed to help you create and debug your breadboard files di
 `npx breadboard debug` - Brings up the web debug server
 `npx breadboard debug ./tests/echo.json` - Brings up the local board hosted in the UI
 
-`npx breadboard debug ./tests/` - Brings up the local board hosted in the UI and show all the boards in the folder.
+`npx breadboard debug ./tests/` - Brings up the local board hosted in the UI and show all the boards in the folder (and sub-folders).
 
-`npx breadboard debug ./tests/ --watch` - Brings up the local board hosted in the UI and show all the boards in the folder. If new boards added to the folder then they will be added to the UI. You still need to `F5` or `CMD+R` to refresh the UI
+`npx breadboard debug ./tests/ --watch` - Brings up the local board hosted in the UI and show all the boards in the folder. If new boards added to the folder then they will be added to the UI and the UI will be automatically refreshed.
+
+Note: By default this command will convert any `ts` or `js` board files to `json` and save them along side the original file (this differs from other commands which will use the `-o` flag). If you do not want the boards to be saved, use the `--no-save` flag.
 
 ### Import
 
@@ -47,15 +49,19 @@ Pipe in a file: `npx breadboard mermaid < packages/breadboard-cli/tests/echo.jso
 
 Pipe the output of a command: `cat packages/breadboard-cli/tests/echo.json | npx breadboard mermaid`
 
-Watching and piping the output of a command: `fswatch see/recipes/rss.ts | xargs -n1 -I {} sh -c "npx breadboard mermaid {} -o ./ | mmdc -o test.png -i -"`
+Watching and piping the output of a command: `fswatch see/boards/rss.ts | xargs -n1 -I {} sh -c "npx breadboard mermaid {} -o ./ | mmdc -o test.png -i -"`
 
 ### Make
 
 Creates a graph json from a breadboard javascript file: `npx breadboard make packages/breadboard-cli/boards/echo.js`
 
-Pipe it to mermaid: `npx breadboard make packages/breadboard-cli/boards/echo.js | npx breadboard mermaid`
+`breadboard make [DIR]` - makes all the boards in dir/\*_/_ and outputs to cwd or `-o DIR`
+`breadboard make [FILE]` - makes the file and outputs it to cwd or ` -o DIR``
+ `breadboard make [FILE] -n` - makes the file and outputs it to console.
 
-Watch a directory and make the files: `fswatch see/recipes/*.ts | xargs -n1 -I {} sh -c "npx breadboard make {} -o ./`
+Pipe it to mermaid: `npx breadboard make packages/breadboard-cli/boards/echo.js -n | npx breadboard mermaid`
+
+Watch a directory and make the files: `fswatch see/boards/*.ts | xargs -n1 -I {} sh -c "npx breadboard make {} -o ./`
 
 ### Run
 
@@ -67,4 +73,25 @@ You can also pass in your own input with the `-i` flag: `npx breadboard run pack
 
 If your board has kits, then you can pass in the kit name with the `--kit` flag (specify --kit for each kit you want to use)
 
-`npx breadboard run boards/news.json -i "{\"topic\": \"Paul Kinlan\"}" --kit "@google-labs/llm-starter"`
+`npx breadboard run boards/news.json -i "{\"topic\": \"Paul Kinlan\"}" --kit "@google-labs/core-kit"`
+
+### Proxy
+
+`npx breadboard proxy` - Starts a proxy server that will allow your boards to defer some of their execution to this proxy server. This is useful for when you want to run a board that requires a secret or a token that you don't want to expose in the board file, or if the processing is too complex for the current host.
+
+`npx breadboard proxy --kit @google-labs/core-kit --proxy-node fetch --port 3000` - Starts a proxy server that will allow your boards to the `fetch` (as defined in `core-kit`) to defer some of their execution to this server.
+
+You can then run the board with `npx breadboard run`. For example to run the RSS fetch board you can run `npx breadboard run boards/components/fetch-rss/index.js --proxy http://localhost:3000/ --proxy-node fetch --kit=@google-labs/core-kit --kit @google-labs/json-kit`. This will run the board and defer the `fetch` node to the proxy server.
+
+#### Config file
+
+You can also use a config file to define the proxy server. The config file is a JSON file that looks like this:
+
+```json
+{
+  "kit": ["@google-labs/core-kit"],
+  "proxy": ["fetch"]
+}
+```
+
+This also allows you to define more complex proxy nodes, such as Secrets tunnelling.

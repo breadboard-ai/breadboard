@@ -1,0 +1,211 @@
+{
+  "title": "Worker",
+  "description": "The essential Agent building block",
+  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.2.0/packages/schema/breadboard.schema.json",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "assembleContext",
+      "to": "output-2",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "generate",
+      "to": "assembleContext",
+      "out": "context",
+      "in": "generated"
+    },
+    {
+      "from": "generate",
+      "to": "output-2",
+      "out": "text",
+      "in": "text"
+    },
+    {
+      "from": "buildContext",
+      "to": "generate",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "buildContext",
+      "to": "assembleContext",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "input-1",
+      "to": "buildContext",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "input-1",
+      "to": "buildContext",
+      "out": "instruction",
+      "in": "instruction"
+    },
+    {
+      "from": "input-1",
+      "to": "generate",
+      "out": "stopSequences",
+      "in": "stopSequences"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "type": "string",
+              "title": "context"
+            },
+            "text": {
+              "title": "Output",
+              "type": "string",
+              "description": "Agent's output"
+            }
+          },
+          "required": [
+            "context",
+            "text"
+          ]
+        }
+      }
+    },
+    {
+      "id": "assembleContext",
+      "type": "invoke",
+      "configuration": {
+        "path": "#assembleContext"
+      }
+    },
+    {
+      "id": "generate",
+      "type": "text",
+      "configuration": {
+        "text": "unused"
+      }
+    },
+    {
+      "id": "buildContext",
+      "type": "invoke",
+      "configuration": {
+        "path": "#buildContext"
+      }
+    },
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "title": "Context",
+              "type": "array",
+              "examples": [
+                "the universe within us"
+              ]
+            },
+            "instruction": {
+              "title": "Instruction",
+              "format": "multiline",
+              "examples": [
+                "You are a brilliant poet who specializes in two-line rhyming poems.\nGiven any topic, you can quickly whip up a two-line rhyming poem about it.\nLook at the topic below and do your magic"
+              ],
+              "type": "string"
+            },
+            "stopSequences": {
+              "title": "Stop Sequences",
+              "type": "array",
+              "default": "[]"
+            }
+          },
+          "required": [
+            "context",
+            "instruction"
+          ]
+        }
+      }
+    }
+  ],
+  "kits": [],
+  "graphs": {
+    "assembleContext": {
+      "edges": [
+        {
+          "from": "assembleContext-input",
+          "to": "assembleContext-run",
+          "out": "*"
+        },
+        {
+          "from": "assembleContext-run",
+          "to": "assembleContext-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "assembleContext-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "assembleContext-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function assembleContext({ context, generated }) {\n  if (!context)\n    throw new Error(\"Context is required\");\n  return { context: [...context, generated] };\n}",
+            "name": "assembleContext",
+            "raw": true
+          }
+        },
+        {
+          "id": "assembleContext-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    },
+    "buildContext": {
+      "edges": [
+        {
+          "from": "buildContext-input",
+          "to": "buildContext-run",
+          "out": "*"
+        },
+        {
+          "from": "buildContext-run",
+          "to": "buildContext-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "buildContext-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "buildContext-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function buildContext({ context, instruction }) {\n  if (typeof context === \"string\") {\n    context = [{ role: \"user\", parts: [{ text: context }] }];\n  }\n  const list = context || [];\n  if (list.length > 0) {\n    const last = list[list.length - 1];\n    if (last.role === \"user\") {\n      last.parts.unshift({ text: instruction });\n      return { context: list };\n    }\n  }\n  return {\n    context: [...list, { role: \"user\", parts: [{ text: instruction }] }]\n  };\n}",
+            "name": "buildContext",
+            "raw": true
+          }
+        },
+        {
+          "id": "buildContext-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    }
+  }
+}

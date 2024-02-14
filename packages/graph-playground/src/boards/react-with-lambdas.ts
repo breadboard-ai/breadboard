@@ -6,13 +6,15 @@
 
 import { Board } from "@google-labs/breadboard";
 import { Core } from "@google-labs/core-kit";
-import { Starter } from "@google-labs/llm-starter";
+import JSONKit from "@google-labs/json-kit";
+import { TemplateKit } from "@google-labs/template-kit";
 import { PaLMKit } from "@google-labs/palm-kit";
 
 const board = new Board();
 const core = board.addKit(Core);
-const kit = board.addKit(Starter);
+const kit = board.addKit(TemplateKit);
 const palm = board.addKit(PaLMKit);
+const json = board.addKit(JSONKit);
 
 /**
  * This final form of the ReAct implementation.
@@ -66,15 +68,17 @@ const input = board.input({
 });
 
 // The single node where all the important keys come from.
-const secrets = kit.secrets({ keys: ["PALM_KEY", "GOOGLE_CSE_ID"] });
+const secrets = core.secrets({ keys: ["PALM_KEY", "GOOGLE_CSE_ID"] });
 
 // This is the jsonata node that extracts the tool names
 // from the reflected graph.
-const tools = kit.jsonata({ expression: "*.tool ~> $join(', ')" });
+const tools = json.jsonata({ expression: "*.tool ~> $join(', ')" });
 
 // This is the jsonata node that extracts the tool descriptions
 // from the reflected graph.
-const descriptions = kit.jsonata({ expression: "$join(*.($$.tool & ': ' & $$.description), '\n')" });
+const descriptions = json.jsonata({
+  expression: "$join(*.($$.tool & ': ' & $$.description), '\n')",
+});
 
 input.wire("tools->json", tools).wire("tools->json", descriptions);
 
@@ -158,15 +162,14 @@ const reActCompletion = palm
 //   Action Input: <action input> --> args
 // or
 //   Final Answer: <answer> --> answer
-const parser = kit.jsonata({
-    expression:
-      "{ " +
-      "'tool': $match($, /Action: (.+)$/m).groups[0], " +
-      "'args': $match($, /Action Input: (.+)$/m).groups[0], " +
-      "'answer': $match($, /Final Answer: (.+)$/m).groups[0] }",
-    raw: true,
-  },
-);
+const parser = json.jsonata({
+  expression:
+    "{ " +
+    "'tool': $match($, /Action: (.+)$/m).groups[0], " +
+    "'args': $match($, /Action Input: (.+)$/m).groups[0], " +
+    "'answer': $match($, /Final Answer: (.+)$/m).groups[0] }",
+  raw: true,
+});
 
 // Call the LLM, remember the thought and parse the response
 reActTemplate.wire(
@@ -184,7 +187,7 @@ core
   .invoke()
   .wire(
     "*<-",
-    kit
+    json
       .jsonata({ expression: "tools[tool = $$.tool]", raw: true })
       .wire("tool<-", parser)
       .wire("tools<-.", input)

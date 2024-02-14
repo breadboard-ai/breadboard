@@ -2,8 +2,10 @@
   "extends": "@google-labs/tsconfig/base.json",
   "files": [],
   "references": [
+    { "path": "packages/agent-kit" },
     { "path": "packages/breadboard" },
     { "path": "packages/breadboard-cli" },
+    { "path": "packages/breadboard-extension" },
     { "path": "packages/breadboard-server" },
     { "path": "packages/breadboard-web" },
     { "path": "packages/breadboard-ui" },
@@ -13,15 +15,17 @@
     { "path": "packages/create-breadboard" },
     { "path": "packages/create-breadboard-kit" },
     { "path": "packages/discovery-types" },
-    { "path": "packages/graph-playground" },
+    { "path": "packages/gemini-kit" },
     { "path": "packages/graph-integrity" },
-    { "path": "packages/hello-world" },
+    { "path": "packages/graph-playground" },
+    { "path": "packages/json-kit" },
     { "path": "packages/llm-starter" },
     { "path": "packages/node-nursery" },
     { "path": "packages/node-nursery-web" },
     { "path": "packages/node-proxy-server" },
     { "path": "packages/palm-kit" },
     { "path": "packages/pinecone-kit" },
-    { "path": "packages/json-kit" }
+    { "path": "packages/schema" },
+    { "path": "packages/template-kit" }
   ]
 }

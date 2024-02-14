@@ -1,0 +1,402 @@
+{
+  "title": "Best of N",
+  "description": "Apply the `agent` to `task` in parallel of `n` attempts, then return the best response that fits the task",
+  "version": "0.0.2",
+  "edges": [
+    {
+      "from": "pickFirst",
+      "to": "output-2",
+      "out": "result",
+      "in": "best"
+    },
+    {
+      "from": "filterErrors",
+      "to": "presentChoices",
+      "out": "list",
+      "in": "json"
+    },
+    {
+      "from": "filterErrors",
+      "to": "promptTemplate-5",
+      "out": "n",
+      "in": "n"
+    },
+    {
+      "from": "filterErrors",
+      "to": "pickFirst",
+      "out": "list",
+      "in": "list"
+    },
+    {
+      "from": "filterErrors",
+      "to": "output-2",
+      "out": "list",
+      "in": "list"
+    },
+    {
+      "from": "rank",
+      "to": "pickFirst",
+      "out": "json",
+      "in": "rank"
+    },
+    {
+      "from": "rank",
+      "to": "output-2",
+      "out": "json",
+      "in": "rank"
+    },
+    {
+      "from": "generateN",
+      "to": "filterErrors",
+      "out": "list",
+      "in": "list"
+    },
+    {
+      "from": "presentChoices",
+      "to": "promptTemplate-5",
+      "out": "result",
+      "in": "list"
+    },
+    {
+      "from": "promptTemplate-5",
+      "to": "rank",
+      "out": "text",
+      "in": "text"
+    },
+    {
+      "from": "lambda-4",
+      "to": "generateN",
+      "out": "board",
+      "in": "board"
+    },
+    {
+      "from": "createList",
+      "to": "generateN",
+      "out": "list",
+      "in": "list"
+    },
+    {
+      "from": "input-1",
+      "to": "createList",
+      "out": "n",
+      "in": "n"
+    },
+    {
+      "from": "input-1",
+      "to": "lambda-4",
+      "out": "agent",
+      "in": "agent"
+    },
+    {
+      "from": "input-1",
+      "to": "lambda-4",
+      "out": "text",
+      "in": "text"
+    },
+    {
+      "from": "input-1",
+      "to": "promptTemplate-5",
+      "out": "text",
+      "in": "text"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "best": {
+              "title": "result",
+              "description": "The result of the Jsonata expression",
+              "type": "string"
+            },
+            "list": {
+              "type": "string",
+              "title": "list"
+            },
+            "rank": {
+              "type": "string",
+              "title": "rank"
+            }
+          },
+          "required": [
+            "best",
+            "list",
+            "rank"
+          ]
+        }
+      }
+    },
+    {
+      "id": "pickFirst",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "($index := $split((**.choice)[0], ' ')[1];list[0][0][$index]).item"
+      }
+    },
+    {
+      "id": "filterErrors",
+      "type": "invoke",
+      "configuration": {
+        "path": "#filterErrors"
+      }
+    },
+    {
+      "id": "rank",
+      "type": "invoke",
+      "configuration": {
+        "path": "json-agent.json",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "ranking": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "choice": {
+                    "type": "string",
+                    "description": "Title of ranked choice"
+                  },
+                  "justification": {
+                    "type": "string",
+                    "description": "Detailed justification of why this is the right position within ranking"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "context": []
+      }
+    },
+    {
+      "id": "generateN",
+      "type": "map",
+      "configuration": {}
+    },
+    {
+      "id": "presentChoices",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "item ~> $map(function ($v, $i) { { \"title\": \"choice \" & $i, \"content\": $v } })"
+      }
+    },
+    {
+      "id": "promptTemplate-5",
+      "type": "promptTemplate",
+      "configuration": {
+        "template": "You are a ranking expert. Given {{n}} choices of the output, you are to rank these choices in the order (starting with the best) of matching the requirements of the task described below:\n\n        TASK:\n\n        {{text}}\n\n        CHOICES:\n\n        {{list}}"
+      }
+    },
+    {
+      "id": "lambda-4",
+      "type": "lambda",
+      "configuration": {
+        "board": {
+          "kind": "board",
+          "board": {
+            "kits": [],
+            "edges": [
+              {
+                "from": "invokeAgent",
+                "to": "output-2",
+                "out": "json",
+                "in": "item"
+              },
+              {
+                "from": "input-1",
+                "to": "invokeAgent",
+                "out": "text",
+                "in": "text"
+              },
+              {
+                "from": "input-1",
+                "to": "invokeAgent",
+                "out": "agent",
+                "in": "path"
+              }
+            ],
+            "nodes": [
+              {
+                "id": "output-2",
+                "type": "output",
+                "configuration": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "item": {
+                        "type": "string",
+                        "title": "item"
+                      }
+                    },
+                    "required": [
+                      "item"
+                    ]
+                  }
+                }
+              },
+              {
+                "id": "invokeAgent",
+                "type": "invoke",
+                "configuration": {
+                  "context": []
+                }
+              },
+              {
+                "id": "input-1",
+                "type": "input",
+                "configuration": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "text": {
+                        "type": "string",
+                        "title": "text"
+                      },
+                      "agent": {
+                        "title": "path",
+                        "description": "The path to the board to invoke.",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "text",
+                      "agent"
+                    ]
+                  }
+                }
+              }
+            ],
+            "graphs": {}
+          }
+        }
+      }
+    },
+    {
+      "id": "createList",
+      "type": "invoke",
+      "configuration": {
+        "path": "#createList"
+      }
+    },
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "n": {
+              "title": "Number of parallel attemps",
+              "type": "number",
+              "examples": [
+                "4"
+              ]
+            },
+            "agent": {
+              "title": "Agent",
+              "description": "Agent to apply to the task",
+              "examples": [
+                "ad-writer.json"
+              ],
+              "type": "string"
+            },
+            "text": {
+              "title": "Task",
+              "description": "The task to perform",
+              "type": [
+                "string",
+                "object"
+              ],
+              "format": "multiline",
+              "examples": [
+                "This ad is for my lawn care company that will fit into an inch of newspaper copy. It's called \"Max's Lawn Care\" and it should use the slogan \"I care about your lawn.\" Emphasize the folksiness of it being a local, sole proprietorship that I started after graduating from high school."
+              ]
+            }
+          },
+          "required": [
+            "n",
+            "agent",
+            "text"
+          ]
+        }
+      }
+    }
+  ],
+  "graphs": {
+    "filterErrors": {
+      "edges": [
+        {
+          "from": "filterErrors-input",
+          "to": "filterErrors-run",
+          "out": "*"
+        },
+        {
+          "from": "filterErrors-run",
+          "to": "filterErrors-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "filterErrors-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "filterErrors-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function filterErrors({list}) {const listWithErrors=list;const filtered=listWithErrors.filter(item=>!item.$error);return{list:filtered,n:filtered.length}}",
+            "name": "filterErrors",
+            "raw": true
+          }
+        },
+        {
+          "id": "filterErrors-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    },
+    "createList": {
+      "edges": [
+        {
+          "from": "createList-input",
+          "to": "createList-run",
+          "out": "*"
+        },
+        {
+          "from": "createList-run",
+          "to": "createList-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "createList-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "createList-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function createList({n:n2}) {return{list:[...Array(n2).keys()]}}",
+            "name": "createList",
+            "raw": true
+          }
+        },
+        {
+          "id": "createList-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    }
+  }
+}

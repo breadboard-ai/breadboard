@@ -1,11 +1,15 @@
 {
   "name": "@google-labs/cloud-function",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
   "private": true,
-  "version": "0.0.1",
+  "version": "0.0.4",
   "description": "Experimenting with Breadboard and Cloud Functions",
   "main": "./src/index.js",
   "type": "module",
   "scripts": {
+    "prepack": "npm run build",
     "build": "wireit",
     "deploy": "wireit",
     "dev": "wireit",
@@ -54,6 +58,7 @@
     }
   },
   "repository": {
+    "directory": "packages/cloud-function",
     "type": "git",
     "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },
@@ -79,9 +84,9 @@
     "ava": "^5.2.0"
   },
   "dependencies": {
-    "@google-labs/breadboard-server": "^0.1.3",
-    "@google-labs/breadboard": "^0.6.0",
-    "@google-labs/llm-starter": "^0.3.0",
+    "@google-labs/breadboard-server": "^0.1.6",
+    "@google-labs/breadboard": "^0.10.0",
+    "@google-labs/template-kit": "^0.1.3",
     "dotenv": "^16.3.1"
   }
 }

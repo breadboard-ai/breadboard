@@ -5,7 +5,9 @@
  */
 
 import { Board } from "@google-labs/breadboard";
-import { Starter } from "@google-labs/llm-starter";
+import Core from "@google-labs/core-kit";
+import JSONKit from "@google-labs/json-kit";
+import { TemplateKit } from "@google-labs/template-kit";
 
 const board = new Board({
   title: "Pinecone API vector call builder",
@@ -14,7 +16,9 @@ const board = new Board({
   version: "0.0.1",
 });
 
-const starter = board.addKit(Starter);
+const templates = board.addKit(TemplateKit);
+const core = board.addKit(Core);
+const json = board.addKit(JSONKit);
 
 const api = board.input({
   $id: "api",
@@ -70,7 +74,7 @@ const api = board.input({
   },
 });
 
-const config = starter
+const config = json
   .jsonata({
     expression: "config",
     $id: "config",
@@ -78,15 +82,15 @@ const config = starter
   })
   .wire("<-config", api);
 
-const headers = starter
+const headers = json
   .jsonata({
     expression:
-      "{ \"Api-Key\": $, \"Accept\": \"application/json\", \"Content-Type\": \"application/json\" }",
+      '{ "Api-Key": $, "Accept": "application/json", "Content-Type": "application/json" }',
     $id: "make-headers",
   })
   .wire("json<-PINECONE_API_KEY", config);
 
-starter
+core
   .fetch({
     $id: "pinecone-api-call",
     method: "POST",
@@ -94,10 +98,11 @@ starter
   .wire("headers<-result", headers)
   .wire(
     "<-url",
-    starter
+    templates
       .urlTemplate({
         $id: "make-pinecone-url",
-        template: "https://{PINECONE_INDEX}-{PINECONE_PROJECT_ID}.svc.{PINECONE_ENVIRONMENT}.pinecone.io/{+call}",
+        template:
+          "https://{PINECONE_INDEX}-{PINECONE_PROJECT_ID}.svc.{PINECONE_ENVIRONMENT}.pinecone.io/{+call}",
       })
       .wire("<-PINECONE_INDEX", config)
       .wire("<-PINECONE_PROJECT_ID", config)

@@ -1,5 +1,43 @@
 # Changelog
 
+## 1.0.2
+
+### Patch Changes
+
+- 45654e1: update dependencies for running in a clean environment
+  - @google-labs/breadboard-hello-world@1.2.2
+
+## 1.0.1
+
+### Patch Changes
+
+- 2dcedd8: Clear the repository field from user projects
+  - @google-labs/breadboard-hello-world@1.0.1
+
+## 1.0.0
+
+### Major Changes
+
+- 5d72c02: @google-labs/create-breadboard now uses @google-labs/breadboard-hello-world as template,
+  which includes an entirely different starting project.
+
+### Patch Changes
+
+- Updated dependencies [5d72c02]
+  - @google-labs/breadboard-hello-world@1.0.0
+
+## 0.1.0
+
+### Minor Changes
+
+- b557794: The "recipe" command has been renamed to "board"
+
+## 0.0.9
+
+### Patch Changes
+
+- af00e58: Add missing chalk dependency
+
 ## [0.0.7] - 2023-11-24
 
 - Fixing an asset folder location issue that was causing the `npm init` command to fail.

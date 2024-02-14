@@ -4,13 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { asRuntimeKit, type OutputValues } from "@google-labs/breadboard";
-import { HarnessRunResult } from "./types.js";
-import { LocalResult } from "./result.js";
+import { SecretResult } from "./types.js";
 import { KitBuilder } from "../kits/builder.js";
+import { ClientRunResult } from "../remote/run.js";
+import { timestamp } from "../timestamp.js";
+import { asRuntimeKit } from "../index.js";
+import { OutputValues } from "../types.js";
 
 export const createSecretAskingKit = (
-  next: (result: HarnessRunResult) => Promise<void>
+  next: (result: ClientRunResult<SecretResult>) => Promise<void>
 ) => {
   const secretAskingKit = new KitBuilder({
     url: "secret-asking-kit",
@@ -18,9 +20,15 @@ export const createSecretAskingKit = (
     secrets: async (inputs) => {
       const { keys } = inputs as { keys: string[] };
       if (!keys) return {};
-      const result = new LocalResult({ type: "secret", data: { keys } });
-      await next(result);
-      return result.response as OutputValues;
+      let outputs = {};
+      await next({
+        type: "secret",
+        data: { keys, timestamp: timestamp() },
+        reply: async (value) => {
+          outputs = value.inputs;
+        },
+      });
+      return outputs as OutputValues;
     },
   });
   return asRuntimeKit(secretAskingKit);

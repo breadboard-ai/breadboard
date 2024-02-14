@@ -1,6 +1,9 @@
 ---
 layout: docs.njk
 title: Getting Started
+tags:
+  - general
+  - wip
 ---
 
 Breadboard supports authoring in JavaScript/TypeScript and Python (coming soon).
@@ -70,7 +73,7 @@ npx breadboard run hello.json --input '{"say":"Hello World!"}'
 You should see this printed to your terminal:
 
 ```json
-{ "hear": "Hello" }
+{ "hear": "Hello World!" }
 ```
 
 ### What's going on?
@@ -115,9 +118,9 @@ are much easier to work with than writing JSON by hand.
 Here's how to generate an equivalent board using the Breadboard JavaScript API:
 
 ```js
-import { base, recipe } from "@google-labs/breadboard";
+import { base, board } from "@google-labs/breadboard";
 
-export default await recipe(() => {
+export default await board(() => {
   const input = base.input({});
   const output = base.output({});
   input.say.to(output.hear);
@@ -140,10 +143,10 @@ npx breadboard run hello.js --input '{"say":"Hello World!"}'
 
 ### What's going on?
 
-We call `recipe` to declare a new board:
+We call `board` to declare a new board:
 
 ```js
-recipe(() => {
+board(() => {
   // ...
 });
 ```
@@ -171,5 +174,5 @@ Finally, this line converts the board to the common JSON format and exports it
 from the JavaScript module, as expected by the Breadboard CLI:
 
 ```js
-await recipe(() => { ... }).serialize();
+await board(() => { ... }).serialize();
 ```

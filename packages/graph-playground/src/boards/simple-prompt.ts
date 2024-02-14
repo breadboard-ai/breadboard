@@ -5,7 +5,8 @@
  */
 
 import { Board } from "@google-labs/breadboard";
-import { Starter } from "@google-labs/llm-starter";
+import Core from "@google-labs/core-kit";
+import { TemplateKit } from "@google-labs/template-kit";
 import { PaLMKit } from "@google-labs/palm-kit";
 
 const simplePrompt = new Board({
@@ -14,11 +15,12 @@ const simplePrompt = new Board({
     "Possibly the simplest meta-reasoning prompt. When asked a question, it encourages the LLM to analyze the question instead of answering it and provide steps to arrive at the solution",
   version: "0.0.1",
 });
-const kit = simplePrompt.addKit(Starter);
+const kit = simplePrompt.addKit(TemplateKit);
+const core = simplePrompt.addKit(Core);
 const palm = simplePrompt.addKit(PaLMKit);
 
 const completion = palm.generateText();
-kit.secrets({ keys: ["PALM_KEY"] }).wire("PALM_KEY", completion);
+core.secrets({ keys: ["PALM_KEY"] }).wire("PALM_KEY", completion);
 simplePrompt
   .input({
     $id: "question",
@@ -38,10 +40,10 @@ simplePrompt
     "text->question",
     kit
       .promptTemplate({
-          template: "Analyze the following question and instead of answering, list out steps to take to answer the question: {{question}}",
-          $id: "analyze-this",
-        },
-      )
+        template:
+          "Analyze the following question and instead of answering, list out steps to take to answer the question: {{question}}",
+        $id: "analyze-this",
+      })
       .wire(
         "prompt->text",
         completion.wire(

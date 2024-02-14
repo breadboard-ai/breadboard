@@ -5,8 +5,8 @@
  */
 
 import { Board, Schema } from "@google-labs/breadboard";
-import { Starter } from "@google-labs/llm-starter";
 import { Core } from "@google-labs/core-kit";
+import JSONKit from "@google-labs/json-kit";
 
 /**
  * An example of a board that uses the `react-witih-lambdas.ts` board.
@@ -20,10 +20,10 @@ const board = new Board({
     "An implementation of the [ReAct](https://react-lm.github.io/) AI pattern that relies on Breadboard [lambdas](https://github.com/breadboard-ai/breadboard/blob/main/packages/breadboard/docs/nodes.md#the-lambda-node) to supply tools to ReAct. They are currently populated by two boards: `search-summarize` and `math`.",
   version: "0.0.1",
 });
-const kit = board.addKit(Starter);
+const json = board.addKit(JSONKit);
 const core = board.addKit(Core);
 
-const tools = kit
+const tools = json
   .jsonata({
     expression: `
   [
@@ -46,7 +46,7 @@ const tools = kit
 
 // Include the `react-with-slot` board from a URL, wiring input to it.
 // Slot the `tools` board into the `tools` slot.
-// This is how the ReAct recipe will consume the `tools` board we created
+// This is how the ReAct board will consume the `tools` board we created
 // above.
 board
   .input({

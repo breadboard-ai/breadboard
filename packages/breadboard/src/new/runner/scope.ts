@@ -5,24 +5,32 @@
  */
 
 import {
-  GraphDescriptor,
-  GraphMetadata,
-  SubGraphs,
-} from "@google-labs/breadboard";
-import {
+  AbstractNode,
   InputValues,
-  OutputValues,
+  InvokeCallbacks,
   NodeHandler,
   NodeHandlers,
-  AbstractNode,
-  ScopeInterface,
-  InvokeCallbacks,
+  OutputValues,
   ScopeConfig,
+  ScopeInterface,
   StateInterface,
 } from "./types.js";
 
+import { GraphDescriptor, GraphMetadata, NodeDescriberResult, Schema, SubGraphs } from "../../types.js";
 import { State } from "./state.js";
-import { NodeDescriberResult, Schema } from "../../types.js";
+
+const buildRequiredPropertyList = (properties: Record<string, Schema>) => {
+  return Object.entries(properties)
+    .map(([key, value]) => {
+      const mayHaveOptional = value as Record<string, unknown>;
+      if (mayHaveOptional.$optional) {
+        delete mayHaveOptional.$optional;
+        return undefined;
+      }
+      return key;
+    })
+    .filter(Boolean) as string[];
+};
 
 export class Scope implements ScopeInterface {
   parentLexicalScope?: Scope;
@@ -218,7 +226,7 @@ export class Scope implements ScopeInterface {
           $error: {
             type: "error",
             error: new Error(
-              `Output node never reach. Last node was ${
+              `Output node never reached. Last node was ${
                 lastNode?.id
               }.\n\nThese nodes had inputs missing:\n${Array.from(
                 lastMissingInputs,
@@ -392,10 +400,8 @@ export class Scope implements ScopeInterface {
       }
     }
 
-    return {
-      type: "object",
-      properties,
-      required: Object.keys(properties),
-    } satisfies Schema;
+    const required = buildRequiredPropertyList(properties);
+
+    return { type: "object", properties, required } satisfies Schema;
   }
 }

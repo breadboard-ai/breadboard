@@ -1,12 +1,16 @@
 {
   "name": "@google-labs/palm-kit",
-  "version": "0.0.1",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
+  "version": "0.0.4",
   "description": "A Breadboard Kit with nodes to access PaLM APIs.",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
+    "prepack": "npm run build",
     "build": "wireit",
     "test": "wireit",
     "lint": "wireit"
@@ -55,12 +59,14 @@
       },
       "files": [
         "src/**/*.ts",
-        "tests/**/*.ts"
+        "tests/**/*.ts",
+        "../../.eslintrc.json"
       ],
       "output": []
     }
   },
   "repository": {
+    "directory": "packages/palm-kit",
     "type": "git",
     "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },
@@ -89,15 +95,15 @@
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
-    "@typescript-eslint/eslint-plugin": "^5.56.0",
-    "@typescript-eslint/parser": "^5.56.0",
+    "@typescript-eslint/eslint-plugin": "^6.20.0",
+    "@typescript-eslint/parser": "^6.20.0",
     "@types/node": "^18.16.3",
     "ava": "^5.2.0",
     "typescript": "^5.0.4",
-    "@google-labs/tsconfig": "*"
+    "@google-labs/tsconfig": "^0.0.1"
   },
   "dependencies": {
-    "@google-labs/breadboard": "^0.6.0",
+    "@google-labs/breadboard": "^0.10.0",
     "@google-labs/palm-lite": "^0.0.3"
   }
 }

@@ -189,7 +189,7 @@ test("ProxyServer and ProxyClient correctly handle streams", async (t) => {
     }
     t.deepEqual(
       chunks.join(""),
-      "Breadboard is a project that helps you make AI recipes. "
+      "Breadboard is a project that helps you make AI boards. "
     );
   }
   {
@@ -222,7 +222,7 @@ test("ProxyServer and ProxyClient correctly handle streams", async (t) => {
     }
     t.deepEqual(
       chunks.join(""),
-      "Breadboard is a project that helps you make AI recipes. "
+      "Breadboard is a project that helps you make AI boards. "
     );
   }
 });

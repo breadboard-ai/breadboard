@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { MachineResult, TraversalMachine } from "./index.js";
+import { TraversalMachine } from "./traversal/machine.js";
+import { MachineResult } from "./traversal/result.js";
 import { TraversalResult } from "./types.js";
 
 export const replacer = (key: string, value: unknown) => {
@@ -29,12 +30,12 @@ export const saveRunnerState = async (
   type: string,
   result: TraversalResult
 ) => {
-  const state = await TraversalMachine.prepareToSafe(result);
+  const state = await TraversalMachine.prepareToSave(result);
   return JSON.stringify({ state, type }, replacer);
 };
 
-export const loadRunnerState = (stringifiedState: string) => {
-  const { state: o, type } = JSON.parse(stringifiedState, reviver);
+export const loadRunnerState = (s: string) => {
+  const { state: o, type } = JSON.parse(s, reviver);
   const state = MachineResult.fromObject(o);
   return { state, type };
 };

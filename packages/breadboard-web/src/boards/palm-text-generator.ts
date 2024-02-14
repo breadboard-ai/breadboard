@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Schema, V, base, recipe, code } from "@google-labs/breadboard";
-import { starter } from "@google-labs/llm-starter";
+import { Schema, V, base, board, code } from "@google-labs/breadboard";
+import { core } from "@google-labs/core-kit";
 import { palm } from "@google-labs/palm-kit";
 
 const metadata = {
@@ -44,7 +44,7 @@ const textOutputSchema = {
   },
 } satisfies Schema;
 
-export default await recipe(() => {
+export default await board(() => {
   const parameters = base.input({ $id: "parameters", schema: inputSchema });
 
   code(({ useStreaming }) => {
@@ -56,7 +56,7 @@ export default await recipe(() => {
   const generateText = palm.generateText({
     $id: "generateText",
     text: parameters.text as V<string>,
-    PALM_KEY: starter.secrets({ keys: ["PALM_KEY"] }),
+    PALM_KEY: core.secrets({ keys: ["PALM_KEY"] }),
   });
 
   const textOutput = base.output({

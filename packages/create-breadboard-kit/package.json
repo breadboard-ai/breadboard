@@ -1,6 +1,9 @@
 {
   "name": "@google-labs/create-breadboard-kit",
-  "version": "0.0.2",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
+  "version": "0.0.3",
   "description": "A starter kit for your breadboard kits",
   "main": "dist/src/index.js",
   "bin": {
@@ -8,6 +11,7 @@
   },
   "type": "module",
   "scripts": {
+    "prepack": "npm run build",
     "copy-assets": "wireit",
     "build": "wireit",
     "build:tsc": "wireit",
@@ -51,12 +55,14 @@
         "FORCE_COLOR": "1"
       },
       "files": [
-        "src/**/*.ts"
+        "src/**/*.ts",
+        "../../.eslintrc.json"
       ],
       "output": []
     }
   },
   "repository": {
+    "directory": "packages/create-breadboard-kit",
     "type": "git",
     "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },
@@ -72,14 +78,15 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
-    "@google-labs/tsconfig": "*",
+    "@google-labs/tsconfig": "^0.0.1",
     "@types/node": "^18.18.8",
     "@types/semver": "^7.5.4",
-    "@typescript-eslint/eslint-plugin": "^5.56.0",
-    "@typescript-eslint/parser": "^5.56.0",
+    "@typescript-eslint/eslint-plugin": "^6.20.0",
+    "@typescript-eslint/parser": "^6.20.0",
     "typescript": "^5.0.4"
   },
   "dependencies": {
+    "@google-labs/breadboard": "^0.10.0",
     "base-create": "^3.0.8"
   }
 }

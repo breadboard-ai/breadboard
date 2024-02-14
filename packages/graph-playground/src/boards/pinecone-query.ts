@@ -5,9 +5,11 @@
  */
 
 import { Board } from "@google-labs/breadboard";
-import { Starter } from "@google-labs/llm-starter";
+import { TemplateKit } from "@google-labs/template-kit";
 import { Pinecone } from "@google-labs/pinecone-kit";
 import { PaLMKit } from "@google-labs/palm-kit";
+import JSONKit from "@google-labs/json-kit";
+import Core from "@google-labs/core-kit";
 
 const board = new Board({
   title: "Retrieval-augmented generation with Pinecone",
@@ -15,11 +17,13 @@ const board = new Board({
     "This board implements the simplest possible retrieval-augmented generation (RAG) system using Pinecone store. The store was generated with [pinecone-load](https://github.com/breadboard-ai/breadboard/blob/main/packages/graph-playground/graphs/pinecone-load.json).",
   version: "0.0.1",
 });
-const starter = board.addKit(Starter);
+const templates = board.addKit(TemplateKit);
 const pinecone = board.addKit(Pinecone);
 const palm = board.addKit(PaLMKit);
+const json = board.addKit(JSONKit);
+const core = board.addKit(Core);
 
-const template = starter.promptTemplate({
+const template = templates.promptTemplate({
   template: `
 Analyze the question and the knowledge base, provided below.
 
@@ -56,14 +60,14 @@ board
     "text->",
     palm
       .embedText()
-      .wire("<-PALM_KEY", starter.secrets({ keys: ["PALM_KEY"] }))
+      .wire("<-PALM_KEY", core.secrets({ keys: ["PALM_KEY"] }))
       .wire(
         "embedding->",
         pinecone
           .query()
           .wire(
             "response->json",
-            starter
+            json
               .jsonata({ expression: "$join(matches.metadata.text, '\n\n')" })
               .wire("result->context", template)
           )
@@ -75,7 +79,7 @@ template.wire(
   "prompt->text",
   palm
     .generateText()
-    .wire("<-PALM_KEY", starter.secrets({ keys: ["PALM_KEY"] }))
+    .wire("<-PALM_KEY", core.secrets({ keys: ["PALM_KEY"] }))
     .wire("completion->text", board.output({ $id: "rag" }))
 );
 

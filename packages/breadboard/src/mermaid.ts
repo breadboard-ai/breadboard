@@ -153,7 +153,7 @@ class MermaidGenerator {
     edgeName?: string,
     fromNode?: NodeDescriptor,
     idPrefix?: string
-  ) {
+  ): string {
     const subgraphGenerator = new MermaidGenerator(subgraph, idPrefix);
     const edges = subgraphGenerator.describeGraph();
     const prefix = this.idPrefix ? `${properNodeId(this.idPrefix)}_` : "";
@@ -170,21 +170,25 @@ class MermaidGenerator {
     )} [${name}]\n${edges}\nend\n${subgraphEdge}`;
   }
 
-  describeGraph() {
+  describeGraph(ignoreSubgraphs = false) {
     const result = this.edges.map((edge) => {
       const mermEdge = describeEdge(edge, this.nodeMap, this.idPrefix);
-      const mermSubgraphs = this.describeSubgraphs(edge, this.idPrefix);
+      const mermSubgraphs = ignoreSubgraphs
+        ? ""
+        : this.describeSubgraphs(edge, this.idPrefix);
       return `${mermEdge}${mermSubgraphs}`;
     });
-    const subgraphs = Object.entries(this.subgraphs).map(([name, subgraph]) =>
-      this.describeSubgraph(
-        subgraph,
-        name,
-        undefined,
-        undefined,
-        `${name}${this.idPrefix}`
-      )
-    ) as string[];
+    const subgraphs = ignoreSubgraphs
+      ? ""
+      : Object.entries(this.subgraphs).map(([name, subgraph]) =>
+          this.describeSubgraph(
+            subgraph,
+            name,
+            undefined,
+            undefined,
+            `${name}${this.idPrefix}`
+          )
+        );
     return [...result, ...subgraphs].join("\n");
   }
 }
@@ -192,10 +196,11 @@ class MermaidGenerator {
 export const toMermaid = (
   graph: GraphDescriptor,
   direction = "TD",
-  unstyled = false
+  unstyled = false,
+  ignoreSubgraphs = false
 ) => {
   const generator = new MermaidGenerator(graph);
-  const edges = generator.describeGraph();
+  const edges = generator.describeGraph(ignoreSubgraphs);
   return unstyled
     ? unstyledTemplate(edges, direction)
     : template(edges, direction);

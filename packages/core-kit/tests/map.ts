@@ -8,7 +8,7 @@ import test from "ava";
 
 import map, { MapInputs } from "../src/nodes/map.js";
 import { Capability, InputValues, Board } from "@google-labs/breadboard";
-import Starter from "@google-labs/llm-starter";
+import TemplateKit from "@google-labs/template-kit";
 import { Core } from "../src/index.js";
 import { asRuntimeKit } from "@google-labs/breadboard";
 
@@ -164,8 +164,8 @@ test("using lambda with promptTemplate", async (t) => {
   const core = board.addKit(Core);
   const input = board.input();
   const map = core.map((board, input, output) => {
-    const llm = board.addKit(Starter);
-    const template = llm.promptTemplate({
+    const templates = board.addKit(TemplateKit);
+    const template = templates.promptTemplate({
       template: "item: {{item}}",
     });
     input.wire("item->", template.wire("prompt->", output));
@@ -175,7 +175,7 @@ test("using lambda with promptTemplate", async (t) => {
   const outputs = await board.runOnce(
     { list: [1, 2, 3] },
     {
-      kits: [asRuntimeKit(Starter)],
+      kits: [asRuntimeKit(TemplateKit)],
     }
   );
   t.deepEqual(outputs, {
@@ -186,12 +186,12 @@ test("using lambda with promptTemplate", async (t) => {
 test("using lambda with promptTemplate with input from outer board", async (t) => {
   const board = new Board();
   const core = board.addKit(Core);
-  const llm = board.addKit(Starter);
+  const templates = board.addKit(TemplateKit);
 
   const input = board.input();
   const label = core.passthrough({ label: "name" });
   const map = core.map((_, input, output) => {
-    const template = llm
+    const template = templates
       .promptTemplate({
         template: "{{label}}: {{item}}",
       })

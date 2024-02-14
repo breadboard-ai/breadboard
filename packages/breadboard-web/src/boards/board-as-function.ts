@@ -4,8 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Schema, V, base, recipe } from "@google-labs/breadboard";
-import { starter } from "@google-labs/llm-starter";
+import { Schema, V, base, board } from "@google-labs/breadboard";
+import { core } from "@google-labs/core-kit";
+import { json } from "@google-labs/json-kit";
 
 const metadata = {
   title: "Board as Function",
@@ -20,7 +21,7 @@ const inputSchema = {
       type: "string",
       title: "Board URL",
       description: "The URL of the board to convert to a function call",
-      default: "/graphs/board-as-function.json",
+      default: "board-as-function.json",
     },
   },
 } satisfies Schema;
@@ -41,19 +42,19 @@ const outputSchema = {
   },
 } satisfies Schema;
 
-export default await recipe(() => {
+export default await board(() => {
   const input = base.input({ $id: "input", schema: inputSchema });
   const output = base.output({ $id: "output", schema: outputSchema });
 
-  const getFunctionSignature = starter.jsonata({
+  const getFunctionSignature = json.jsonata({
     $id: "getFunctionSignature",
     expression: `
     (
       $adjustType := function ($type) {
           $type = "object" or $type = "array" ? "string" : $type
       };
-  
-      { 
+
+      {
       "function": {
           "name": $replace(title, /\\W/, "_"),
           "description": description,
@@ -66,14 +67,14 @@ export default await recipe(() => {
               } }
               }) ~> $merge
           }
-      }, 
+      },
       "returns": nodes[type="output"][0].configuration.schema ~> | ** | {}, 'title' |
       }
   )`,
     raw: true,
   });
 
-  starter
+  core
     .fetch({ $id: "getBoard", url: input.boardURL as V<string> })
     .response.as("json")
     .to(getFunctionSignature)

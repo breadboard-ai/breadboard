@@ -1,15 +1,15 @@
 {
+  "name": "breadboard-ai",
   "private": true,
   "version": "0.0.1",
   "description": "Google Labs repo for rapid prototyping",
   "type": "module",
   "scripts": {
-    "sync": "npm i && npm run clean:build && npm run build",
+    "clean": "git clean -Xdf -e .vscode/settings.json",
+    "update": "rimraf package-lock.json && npm i",
     "test": "wireit",
     "build": "wireit",
     "lint": "wireit",
-    "deep-clean:build": "rm -rf node_modules packages/*/node_modules package-lock.json && npm run sync",
-    "clean:build": "rimraf -g packages/*/dist packages/*/.wireit",
     "ci": "npm ci",
     "check:format": "prettier --check --config .prettierrc packages/**/*.ts",
     "ci:local": "wireit",
@@ -18,10 +18,12 @@
   "wireit": {
     "build": {
       "dependencies": [
+        "./packages/agent-kit:build",
         "./packages/breadboard:build",
         "./packages/breadboard-cli:build",
         "./packages/breadboard-server:build",
         "./packages/breadboard-ui:build",
+        "./packages/breadboard-extension:build",
         "./packages/breadboard-web:build",
         "./packages/breadbuddy:build",
         "./packages/cloud-function:build",
@@ -30,17 +32,18 @@
         "./packages/create-breadboard:build",
         "./packages/create-breadboard-kit:build",
         "./packages/discovery-types:build",
+        "./packages/gemini-kit:build",
         "./packages/graph-integrity:build",
         "./packages/graph-playground:build",
         "./packages/graph-runner:build",
-        "./packages/hello-world:build",
         "./packages/json-kit:build",
-        "./packages/llm-starter:build",
+        "./packages/template-kit:build",
         "./packages/node-nursery:build",
         "./packages/node-nursery-web:build",
         "./packages/palm-kit:build",
         "./packages/pinecone-kit:build",
-        "./packages/website:build"
+        "./packages/website:build",
+        "./packages/schema:build"
       ]
     },
     "test": {
@@ -56,13 +59,13 @@
         "./packages/graph-integrity:test",
         "./packages/graph-playground:test",
         "./packages/graph-runner:test",
-        "./packages/hello-world:test",
         "./packages/json-kit:test",
-        "./packages/llm-starter:test",
+        "./packages/template-kit:test",
         "./packages/node-nursery:test",
         "./packages/node-nursery-web:test",
         "./packages/palm-kit:test",
-        "./packages/pinecone-kit:test"
+        "./packages/pinecone-kit:test",
+        "./packages/schema:test"
       ]
     },
     "lint": {
@@ -70,6 +73,7 @@
         "./packages/breadboard:lint",
         "./packages/breadboard-cli:lint",
         "./packages/breadboard-server:lint",
+        "./packages/breadboard-extension:lint",
         "./packages/breadboard-ui:lint",
         "./packages/breadbuddy:lint",
         "./packages/coffee-bot-board:lint",
@@ -77,12 +81,12 @@
         "./packages/create-breadboard:lint",
         "./packages/create-breadboard-kit:lint",
         "./packages/discovery-types:lint",
+        "./packages/gemini-kit:lint",
         "./packages/graph-integrity:lint",
         "./packages/graph-playground:lint",
         "./packages/graph-runner:lint",
-        "./packages/hello-world:lint",
         "./packages/json-kit:lint",
-        "./packages/llm-starter:lint",
+        "./packages/template-kit:lint",
         "./packages/node-nursery:lint",
         "./packages/node-nursery-web:lint",
         "./packages/palm-kit:lint",
@@ -108,7 +112,7 @@
         "./packages/graph-integrity:generate:docs",
         "./packages/graph-playground:generate:docs",
         "./packages/graph-runner:generate:docs",
-        "./packages/llm-starter:generate:docs",
+        "./packages/template-kit:generate:docs",
         "./packages/node-nursery:generate:docs"
       ]
     }
@@ -117,15 +121,19 @@
   "author": "Google Labs Team",
   "license": "Apache-2.0",
   "devDependencies": {
+    "@changesets/cli": "^2.27.1",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-terser": "^0.4.4",
     "@types/node": "^18.15.5",
-    "@typescript-eslint/eslint-plugin": "^5.56.0",
-    "@typescript-eslint/parser": "^5.56.0",
+    "@typescript-eslint/eslint-plugin": "^6.20.0",
+    "@typescript-eslint/parser": "^6.20.0",
     "ava": "^5.2.0",
     "eslint": "^8.36.0",
     "npm-ci": "^0.0.2",
     "rimraf": "^5.0.1",
+    "rollup": "^4.9.6",
     "typescript": "^5.0.4",
-    "wireit": "^0.14.1"
+    "wireit": "^0.14.4"
   },
   "workspaces": [
     "./core/*",
@@ -135,5 +143,12 @@
   "optionalDependencies": {
     "@rollup/rollup-darwin-arm64": "^4.8.0",
     "@rollup/rollup-linux-x64-gnu": "^4.8.0"
+  },
+  "dependencies": {
+    "litegraph.js": "^0.7.18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/breadboard-ai/breadboard.git"
   }
 }

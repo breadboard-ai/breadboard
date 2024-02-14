@@ -1,6 +1,9 @@
 {
   "name": "@google-labs/create-breadboard",
-  "version": "0.0.7",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
+  "version": "1.0.2",
   "description": "A starter kit for your Breadboard projects",
   "main": "dist/src/index.js",
   "bin": {
@@ -8,28 +11,18 @@
   },
   "type": "module",
   "scripts": {
-    "copy-assets": "wireit",
+    "prepack": "npm run build",
     "build": "wireit",
     "lint": "wireit"
   },
   "wireit": {
-    "copy-assets": {
-      "command": "cp -r assets dist",
-      "files": [
-        "assets/"
-      ],
-      "output": [
-        "dist/assets/"
-      ]
-    },
     "build": {
       "dependencies": [
-        "build:tsc",
-        "copy-assets"
+        "build:tsc"
       ]
     },
     "build:tsc": {
-      "command": "tsc -b",
+      "command": "tsc -b && chmod +x dist/src/index.js",
       "env": {
         "FORCE_COLOR": "1"
       },
@@ -39,8 +32,7 @@
         "../../core/tsconfig/base.json"
       ],
       "output": [
-        "dist/",
-        "!dist/assets/"
+        "dist/"
       ],
       "clean": "if-file-deleted"
     },
@@ -50,17 +42,18 @@
         "FORCE_COLOR": "1"
       },
       "files": [
-        "src/**/*.ts"
+        "src/**/*.ts",
+        "../../.eslintrc.json"
       ],
       "output": []
     }
   },
   "repository": {
+    "directory": "packages/create-breadboard",
     "type": "git",
     "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },
   "files": [
-    "dist/assets",
     "dist/src"
   ],
   "keywords": [],
@@ -71,15 +64,17 @@
   },
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
-    "@google-labs/tsconfig": "*",
+    "@google-labs/tsconfig": "^0.0.1",
     "@types/node": "^18.18.8",
     "@types/semver": "^7.5.4",
-    "@typescript-eslint/eslint-plugin": "^5.56.0",
-    "@typescript-eslint/parser": "^5.56.0",
+    "@typescript-eslint/eslint-plugin": "^6.20.0",
+    "@typescript-eslint/parser": "^6.20.0",
     "typescript": "^5.0.4"
   },
+  "types": "./dist/src/index.d.ts",
   "dependencies": {
-    "base-create": "^3.0.8"
-  },
-  "types": "./dist/src/index.d.ts"
+    "@google-labs/breadboard-hello-world": "^1.2.2",
+    "@google-labs/breadboard": "^0.10.0",
+    "chalk": "^5.3.0"
+  }
 }

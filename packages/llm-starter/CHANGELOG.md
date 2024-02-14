@@ -1,5 +1,41 @@
 # Changelog
 
+## 0.3.5
+
+### Patch Changes
+
+- Updated dependencies [9bcd607]
+- Updated dependencies [f6a7f43]
+  - @google-labs/breadboard@0.10.0
+
+## 0.3.4
+
+### Patch Changes
+
+- Updated dependencies [8eccdad]
+- Updated dependencies [6e8c08d]
+- Updated dependencies [780909c]
+- Updated dependencies [bba68fd]
+- Updated dependencies [b557794]
+- Updated dependencies [a9206fc]
+- Updated dependencies [931a95b]
+  - @google-labs/breadboard@0.9.0
+
+## 0.3.3
+
+### Patch Changes
+
+- Updated dependencies [af00e58]
+  - @google-labs/breadboard@0.8.0
+
+## [0.3.2] - 2024-01-22
+
+- Deprecated. See [Issue 177](https://github.com/breadboard-ai/breadboard/issues/177) for details.
+
+## [0.3.1] - 2024-01-14
+
+- Update dependencies and type info for new syntax.
+
 ## [0.3.0] - 2023-12-06
 
 - The `generateText` and `embedText` moved to `palm-kit`.

@@ -4,18 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  GraphMetadata,
-  Schema,
-  V,
-  base,
-  recipe,
-} from "@google-labs/breadboard";
+import { GraphMetadata, Schema, V, base, board } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
-import { starter } from "@google-labs/llm-starter";
+import { templates } from "@google-labs/template-kit";
+import { json } from "@google-labs/json-kit";
 
 const metadata = {
-  title: "The Search Summarizer Recipe",
+  title: "The Search Summarizer Board",
   description:
     "A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.",
   version: "0.1.1",
@@ -33,7 +28,7 @@ const inputSchema = {
       type: "string",
       title: "Generator",
       description: "The URL of the generator to call",
-      default: "/graphs/text-generator.json",
+      default: "text-generator.json",
     },
   },
   required: ["text"],
@@ -51,30 +46,30 @@ const outputSchema = {
   required: ["text"],
 } satisfies Schema;
 
-export default await recipe(() => {
+export default await board(() => {
   const parameters = base.input({ $id: "parameters", schema: inputSchema });
 
-  return starter
+  return core
     .secrets({ keys: ["API_KEY", "GOOGLE_CSE_ID"] })
     .to(
-      starter.urlTemplate({
+      templates.urlTemplate({
         $id: "customSearchURL",
         template:
           "https://www.googleapis.com/customsearch/v1?key={API_KEY}&cx={GOOGLE_CSE_ID}&q={query}",
         query: parameters.text,
       })
     )
-    .url.to(starter.fetch({ $id: "search" }))
+    .url.to(core.fetch({ $id: "search" }))
     .response.as("json")
     .to(
-      starter.jsonata({
+      json.jsonata({
         $id: "getSnippets",
         expression: "$join(items.snippet, '\n')",
       })
     )
     .result.as("context")
     .to(
-      starter.promptTemplate({
+      templates.promptTemplate({
         template:
           "Use context below to answer this question:\n\n##Question:\n{{question}}\n\n## Context {{context}}\n\\n## Answer:\n",
         $id: "summarizing-template",

@@ -1,0 +1,20 @@
+<header id="navigation">
+  {% if not isHome %}
+  <div class="home">
+    <a href="/breadboard/">Breadboard</a>
+  </div>
+  {% endif %}
+
+  <div class="toggle-list">
+    <input type="checkbox" id="doc-list-toggle">
+    <label for="doc-list-toggle">Show documentation</label>
+    <div class="documentation-list">
+      {% include "documentation-list.njk" %}
+    </div>
+  </div>
+
+  <div class="inline-list">
+    <a href="/breadboard/docs/">Docs</a>
+    <a id="github" href="https://github.com/breadboard-ai/breadboard">GitHub</a>
+  </div>
+</header>

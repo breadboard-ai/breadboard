@@ -17,8 +17,10 @@
 
 - [inputArguments](BreadboardRunResult.md#inputarguments)
 - [inputs](BreadboardRunResult.md#inputs)
+- [invocationId](BreadboardRunResult.md#invocationid)
 - [outputs](BreadboardRunResult.md#outputs)
 - [state](BreadboardRunResult.md#state)
+- [timestamp](BreadboardRunResult.md#timestamp)
 
 ## Properties
 
@@ -32,7 +34,7 @@ configuration.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:357](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L357)
+[packages/breadboard/src/types.ts:363](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L363)
 
 ___
 
@@ -45,7 +47,7 @@ currently is in the `run` process.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:351](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L351)
+[packages/breadboard/src/types.ts:357](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L357)
 
 ## Accessors
 
@@ -65,7 +67,7 @@ This property is only available when `ResultRunType` is `input`.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:365](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L365)
+[packages/breadboard/src/types.ts:371](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L371)
 
 ___
 
@@ -89,7 +91,24 @@ This property is only available when `ResultRunType` is `input`.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:371](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L371)
+[packages/breadboard/src/types.ts:377](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L377)
+
+___
+
+### invocationId
+
+• `get` **invocationId**(): `number`
+
+The invocation id of the current node. This is useful for tracking
+the node within the run, similar to an "index" property in map/forEach.
+
+#### Returns
+
+`number`
+
+#### Defined in
+
+[packages/breadboard/src/types.ts:393](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L393)
 
 ___
 
@@ -106,7 +125,7 @@ This property is only available when `ResultRunType` is `output`.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:376](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L376)
+[packages/breadboard/src/types.ts:382](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L382)
 
 ___
 
@@ -124,4 +143,20 @@ graph traversal.
 
 #### Defined in
 
-[packages/breadboard/src/types.ts:382](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/breadboard/src/types.ts#L382)
+[packages/breadboard/src/types.ts:388](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L388)
+
+___
+
+### timestamp
+
+• `get` **timestamp**(): `number`
+
+The timestamp of when this result was issued.
+
+#### Returns
+
+`number`
+
+#### Defined in
+
+[packages/breadboard/src/types.ts:397](https://github.com/breadboard-ai/breadboard/blob/254400c2/packages/breadboard/src/types.ts#L397)

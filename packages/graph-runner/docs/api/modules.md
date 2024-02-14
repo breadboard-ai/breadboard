@@ -62,7 +62,7 @@ Represents an edge in a graph.
 
 #### Defined in
 
-[packages/graph-runner/src/types.ts:76](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L76)
+[packages/graph-runner/src/types.ts:76](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/graph-runner/src/types.ts#L76)
 
 ___
 
@@ -72,7 +72,7 @@ ___
 
 #### Defined in
 
-[packages/graph-runner/src/types.ts:13](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L13)
+[packages/graph-runner/src/types.ts:13](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/graph-runner/src/types.ts#L13)
 
 ___
 
@@ -84,7 +84,7 @@ Represents a graph.
 
 #### Defined in
 
-[packages/graph-runner/src/types.ts:183](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L183)
+[packages/graph-runner/src/types.ts:183](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/graph-runner/src/types.ts#L183)
 
 ___
 
@@ -105,7 +105,7 @@ Represents graph metadata.
 
 #### Defined in
 
-[packages/graph-runner/src/types.ts:145](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L145)
+[packages/graph-runner/src/types.ts:145](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/graph-runner/src/types.ts#L145)
 
 ___
 
@@ -117,7 +117,7 @@ Values that are supplied as inputs to the `NodeHandler`.
 
 #### Defined in
 
-[packages/graph-runner/src/types.ts:246](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L246)
+[packages/graph-runner/src/types.ts:246](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/graph-runner/src/types.ts#L246)
 
 ___
 
@@ -127,7 +127,7 @@ ___
 
 #### Defined in
 
-[packages/graph-runner/src/types.ts:126](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L126)
+[packages/graph-runner/src/types.ts:126](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/graph-runner/src/types.ts#L126)
 
 ___
 
@@ -148,7 +148,7 @@ The `@google-labs/llm-starter` package is an example of kit.
 
 #### Defined in
 
-[packages/graph-runner/src/types.ts:119](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L119)
+[packages/graph-runner/src/types.ts:119](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/graph-runner/src/types.ts#L119)
 
 ___
 
@@ -161,17 +161,13 @@ the `InputValues` and supplied as inputs to the `NodeHandler`.
 
 #### Defined in
 
-[packages/graph-runner/src/types.ts:257](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L257)
+[packages/graph-runner/src/types.ts:257](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/graph-runner/src/types.ts#L257)
 
 ___
 
 ### NodeDescriberFunction
 
 Ƭ **NodeDescriberFunction**: (`inputs?`: [`InputValues`](modules.md#inputvalues), `inputSchema?`: [`Schema`](interfaces/Schema.md), `outputSchema?`: [`Schema`](interfaces/Schema.md)) => `Promise`\<[`NodeDescriberResult`](modules.md#nodedescriberresult)\>
-
-#### Type declaration
-
-▸ (`inputs?`, `inputSchema?`, `outputSchema?`): `Promise`\<[`NodeDescriberResult`](modules.md#nodedescriberresult)\>
 
 Asks to describe a node. Can be called in multiple ways:
 - when called with no arguments, will produce the "default schema". That is,
@@ -180,6 +176,10 @@ the inputs/outputs that are always available.
 For example, when a node changes its schema based on the actual inputs,
 it will return different schemas when inputs/schemas are supplied than
 when they are not.
+
+#### Type declaration
+
+▸ (`inputs?`, `inputSchema?`, `outputSchema?`): `Promise`\<[`NodeDescriberResult`](modules.md#nodedescriberresult)\>
 
 ##### Parameters
 
@@ -195,7 +195,7 @@ when they are not.
 
 #### Defined in
 
-[packages/graph-runner/src/types.ts:298](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L298)
+[packages/graph-runner/src/types.ts:298](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/graph-runner/src/types.ts#L298)
 
 ___
 
@@ -214,7 +214,7 @@ The result of running `NodeDescriptorFunction`
 
 #### Defined in
 
-[packages/graph-runner/src/types.ts:284](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L284)
+[packages/graph-runner/src/types.ts:284](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/graph-runner/src/types.ts#L284)
 
 ___
 
@@ -234,7 +234,7 @@ Represents a node in a graph.
 
 #### Defined in
 
-[packages/graph-runner/src/types.ts:56](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L56)
+[packages/graph-runner/src/types.ts:56](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/graph-runner/src/types.ts#L56)
 
 ___
 
@@ -250,13 +250,15 @@ ___
 
 #### Defined in
 
-[packages/graph-runner/src/types.ts:304](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L304)
+[packages/graph-runner/src/types.ts:304](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/graph-runner/src/types.ts#L304)
 
 ___
 
 ### NodeHandlerFunction
 
 Ƭ **NodeHandlerFunction**\<`T`\>: (`inputs`: [`InputValues`](modules.md#inputvalues), `context`: `T`) => `Promise`\<[`OutputValues`](modules.md#outputvalues) \| `void`\>
+
+A function that represents a type of a node in the graph.
 
 #### Type parameters
 
@@ -267,8 +269,6 @@ ___
 #### Type declaration
 
 ▸ (`inputs`, `context`): `Promise`\<[`OutputValues`](modules.md#outputvalues) \| `void`\>
-
-A function that represents a type of a node in the graph.
 
 ##### Parameters
 
@@ -283,7 +283,7 @@ A function that represents a type of a node in the graph.
 
 #### Defined in
 
-[packages/graph-runner/src/types.ts:262](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L262)
+[packages/graph-runner/src/types.ts:262](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/graph-runner/src/types.ts#L262)
 
 ___
 
@@ -301,7 +301,7 @@ All known node handlers.
 
 #### Defined in
 
-[packages/graph-runner/src/types.ts:314](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L314)
+[packages/graph-runner/src/types.ts:314](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/graph-runner/src/types.ts#L314)
 
 ___
 
@@ -313,7 +313,7 @@ Unique identifier of a node in a graph.
 
 #### Defined in
 
-[packages/graph-runner/src/types.ts:36](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L36)
+[packages/graph-runner/src/types.ts:36](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/graph-runner/src/types.ts#L36)
 
 ___
 
@@ -325,7 +325,7 @@ Unique identifier of a node's type.
 
 #### Defined in
 
-[packages/graph-runner/src/types.ts:51](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L51)
+[packages/graph-runner/src/types.ts:51](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/graph-runner/src/types.ts#L51)
 
 ___
 
@@ -337,7 +337,7 @@ A type representing a valid JSON value.
 
 #### Defined in
 
-[packages/graph-runner/src/types.ts:23](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L23)
+[packages/graph-runner/src/types.ts:23](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/graph-runner/src/types.ts#L23)
 
 ___
 
@@ -349,7 +349,7 @@ Values that the `NodeHandler` outputs.
 
 #### Defined in
 
-[packages/graph-runner/src/types.ts:251](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L251)
+[packages/graph-runner/src/types.ts:251](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/graph-runner/src/types.ts#L251)
 
 ___
 
@@ -363,7 +363,7 @@ The value is the descriptor of the sub-graph.
 
 #### Defined in
 
-[packages/graph-runner/src/types.ts:178](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/types.ts#L178)
+[packages/graph-runner/src/types.ts:178](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/graph-runner/src/types.ts#L178)
 
 ## Functions
 
@@ -384,4 +384,4 @@ The value is the descriptor of the sub-graph.
 
 #### Defined in
 
-[packages/graph-runner/src/mermaid.ts:201](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/mermaid.ts#L201)
+[packages/graph-runner/src/mermaid.ts:201](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/graph-runner/src/mermaid.ts#L201)

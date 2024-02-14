@@ -4,15 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  GraphMetadata,
-  Schema,
-  V,
-  base,
-  recipe,
-} from "@google-labs/breadboard";
+import { GraphMetadata, Schema, V, base, board } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
-import { starter } from "@google-labs/llm-starter";
+import { json } from "@google-labs/json-kit";
 
 const metadata = {
   title: "Board Caller",
@@ -81,7 +75,7 @@ const parametersSchema = {
   required: ["text", "boards"],
 } satisfies Schema;
 
-export default await recipe(() => {
+export default await board(() => {
   const parameters = base.input({
     $id: "parameters",
     schema: parametersSchema,
@@ -91,13 +85,13 @@ export default await recipe(() => {
    * Formats a list of boards as function declarations that can be supplied
    * to a generator.
    */
-  const formatFunctionDeclarations = recipe(({ boards }) => {
+  const formatFunctionDeclarations = board(({ boards }) => {
     const turnBoardsToFunctions = core.map({
-      board: recipe(({ item }) => {
+      board: board(({ item }) => {
         // for each URL, invoke board-as-function.
         const boardToFunction = core.invoke({
           $id: "boardToFunction",
-          path: "/graphs/board-as-function.json",
+          path: "board-as-function.json",
           boardURL: item,
         });
         return {
@@ -108,7 +102,7 @@ export default await recipe(() => {
       list: boards as V<string[]>,
     });
 
-    return starter
+    return json
       .jsonata({
         $id: "formatResults",
         expression: `{
@@ -132,7 +126,7 @@ export default await recipe(() => {
     tools: formatFunctionDeclarations,
   });
 
-  const getBoardArgs = starter.jsonata({
+  const getBoardArgs = json.jsonata({
     $id: "getBoardArgs",
     expression: `$merge([{
         "path": $lookup(urlMap, toolCalls[0].name)
@@ -151,13 +145,13 @@ export default await recipe(() => {
     ...getBoardArgs,
   });
 
-  const hoistOutputs = starter.jsonata({
+  const hoistOutputs = json.jsonata({
     $id: "hoistOutputs",
     expression: `$ ~> | ** | {}, "schema" |`,
     ...callBoardAsTool,
   });
 
-  const formatOutput = starter.jsonata({
+  const formatOutput = json.jsonata({
     $id: "formatOutput",
     expression: `{
       "result": result,

@@ -1,5 +1,51 @@
 # Changelog
 
+## 0.10.1
+
+### Patch Changes
+
+- fb1c768: Introduce Gemini Kit.
+
+## 0.10.0
+
+### Minor Changes
+
+- 9bcd607: Implement `isImage` type annotation.
+
+### Patch Changes
+
+- f6a7f43: Add schemas to serialised boards
+- Updated dependencies [e7be365]
+- Updated dependencies [f6a7f43]
+  - @google-labs/breadboard-schema@1.2.0
+
+## 0.9.1
+
+### Patch Changes
+
+- 81e2840: Teach Breadboard about transient bubbled inputs.
+
+## 0.9.0
+
+### Minor Changes
+
+- 8eccdad: [breadboard-cli] Improvements to OpenAPI import to handle parameters as dynamic inputs and input config files
+- 6e8c08d: remove breadboard json schema
+
+### Patch Changes
+
+- 780909c: Stop displaying subgraphs in Breadboard Debugger.
+- bba68fd: Write the introduction in the "Happy Path" doc.
+- b557794: The "recipe" function is now called "board". A "recipe" alias is still exported to ease migration.
+- a9206fc: Firm up the error return type.
+- 931a95b: Introduce richer error reporting to the harness.
+
+## 0.8.0
+
+### Minor Changes
+
+- af00e58: Various changes. First release managed by Changesets.
+
 ## [0.6.0] - 2023-12-06
 
 - Bug fixes

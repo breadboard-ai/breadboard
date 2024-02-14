@@ -4,6 +4,40 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type {
+  Capability,
+  Edge,
+  GraphDescriptor,
+  GraphMetadata,
+  InputValues,
+  KitDescriptor,
+  NodeDescriptor,
+  NodeIdentifier,
+  NodeTypeIdentifier,
+  NodeValue,
+  OutputValues,
+} from "@google-labs/breadboard-schema/graph.js";
+
+export type {
+  Capability,
+  Edge,
+  GraphDescriptor,
+  GraphIdentifier,
+  GraphMetadata,
+  InputIdentifier,
+  InputValues,
+  KitDescriptor,
+  KitReference,
+  NodeConfiguration,
+  NodeDescriptor,
+  NodeIdentifier,
+  NodeTypeIdentifier,
+  NodeValue,
+  OutputIdentifier,
+  OutputValues,
+  SubGraphs,
+} from "@google-labs/breadboard-schema/graph.js";
+
 export type Schema = {
   title?: string;
   description?: string;
@@ -11,6 +45,7 @@ export type Schema = {
   properties?: Record<string, Schema>;
   required?: string[];
   format?: string;
+  transient?: boolean;
   enum?: string[];
   /**
    * The default value of the schema. The UI can use this to pre-populate a
@@ -27,205 +62,11 @@ export type Schema = {
   examples?: string[];
 };
 
-export interface Capability {
-  readonly kind: string;
-}
-
 export type ErrorCapability = Capability & {
   readonly kind: "error";
   readonly error?: Error;
   readonly inputs?: InputValues;
   readonly descriptor?: NodeDescriptor;
-};
-
-/**
- * A type representing a valid JSON value.
- */
-export type NodeValue =
-  | string
-  | number
-  | boolean
-  | null
-  | undefined
-  | NodeValue[]
-  | Capability
-  | { [key: string]: NodeValue };
-
-/**
- * Unique identifier of a node in a graph.
- */
-export type NodeIdentifier = string;
-
-/**
- * Unique identifier of a node's output.
- */
-export type OutputIdentifier = string;
-
-/**
- * Unique identifier of a node's input.
- */
-export type InputIdentifier = string;
-
-/**
- * Unique identifier of a node's type.
- */
-export type NodeTypeIdentifier = string;
-
-/**
- * Represents a node in a graph.
- */
-export type NodeDescriptor = {
-  /**
-   * Unique id of the node in graph.
-   */
-  id: NodeIdentifier;
-
-  /**
-   * Type of the node. Used to look up the handler for the node.
-   */
-  type: NodeTypeIdentifier;
-
-  /**
-   * Configuration of the node.
-   */
-  configuration?: NodeConfiguration;
-};
-
-/**
- * Represents an edge in a graph.
- */
-export type Edge = {
-  /**
-   * The node that the edge is coming from.
-   */
-  from: NodeIdentifier;
-
-  /**
-   * The node that the edge is going to.
-   */
-  to: NodeIdentifier;
-
-  /**
-   * The input of the `to` node. If this value is undefined, then
-   * the then no data is passed as output of the `from` node.
-   */
-  in?: InputIdentifier;
-
-  /**
-   * The output of the `from` node. If this value is "*", then all outputs
-   * of the `from` node are passed to the `to` node. If this value is undefined,
-   * then no data is passed to any inputs of the `to` node.
-   */
-  out?: OutputIdentifier;
-
-  /**
-   * If true, this edge is optional: the data that passes through it is not
-   * considered a required input to the node.
-   */
-  optional?: boolean;
-
-  /**
-   * If true, this edge acts as a constant: the data that passes through it
-   * remains available even after the node has consumed it.
-   */
-  constant?: boolean;
-};
-
-/**
- * Represents references to a "kit": a collection of `NodeHandlers`.
- * The basic permise here is that people can publish kits with interesting
- * handlers, and then graphs can specify which ones they use.
- * The `@google-labs/llm-starter` package is an example of kit.
- */
-export type KitReference = {
-  /**
-   * The URL pointing to the location of the kit.
-   */
-  url: string;
-};
-
-export type KitDescriptor = KitReference & {
-  /**
-   * The title of the kit.
-   */
-  title?: string;
-  /**
-   * The description of the kit.
-   */
-  description?: string;
-  /**
-   * Version of the kit.
-   * [semver](https://semver.org/) format is encouraged.
-   */
-  version?: string;
-};
-
-/**
- * Represents graph metadata.
- */
-export type GraphMetadata = {
-  /**
-   * The URL pointing to the location of the graph.
-   * This URL is used to resolve relative paths in the graph.
-   * If not specified, the paths are assumed to be relative to the current
-   * working directory.
-   */
-  url?: string;
-  /**
-   * The title of the graph.
-   */
-  title?: string;
-  /**
-   * The description of the graph.
-   */
-  description?: string;
-  /**
-   * Version of the graph.
-   * [semver](https://semver.org/) format is encouraged.
-   */
-  version?: string;
-};
-
-/**
- * Unique identifier of a graph.
- */
-export type GraphIdentifier = string;
-
-/**
- * Represents a collection of sub-graphs.
- * The key is the identifier of the sub-graph.
- * The value is the descriptor of the sub-graph.
- */
-export type SubGraphs = Record<GraphIdentifier, GraphDescriptor>;
-
-/**
- * Represents a graph.
- */
-export type GraphDescriptor = GraphMetadata & {
-  /**
-   * The collection of all edges in the graph.
-   */
-  edges: Edge[];
-
-  /**
-   * The collection of all nodes in the graph.
-   */
-  nodes: NodeDescriptor[];
-
-  /**
-   * All the kits (collections of node handlers) that are used by the graph.
-   */
-  kits?: KitReference[];
-
-  /**
-   * Sub-graphs that are also described by this graph representation.
-   */
-  graphs?: SubGraphs;
-
-  /**
-   * Arguments that are passed to the graph, useful to bind values to lambdas.
-   */
-  args?: InputValues;
 };
 
 /**
@@ -262,22 +103,6 @@ export interface TraversalResult {
 }
 
 /**
- * Values that are supplied as inputs to the `NodeHandler`.
- */
-export type InputValues = Record<InputIdentifier, NodeValue>;
-
-/**
- * Values that the `NodeHandler` outputs.
- */
-export type OutputValues = Partial<Record<OutputIdentifier, NodeValue>>;
-
-/**
- * Values that are supplied as part of the graph. These values are merged with
- * the `InputValues` and supplied as inputs to the `NodeHandler`.
- */
-export type NodeConfiguration = Record<string, NodeValue>;
-
-/**
  * A function that represents a type of a node in the graph.
  */
 export type NodeHandlerFunction = (
@@ -308,6 +133,20 @@ export type NodeDescriberResult = {
 };
 
 /**
+ * Context that is supplied to the `NodeDescriberFunction`.
+ */
+export type NodeDescriberContext = {
+  /**
+   * The base URL of the graph.
+   */
+  base?: URL;
+  /**
+   * The graph in which the node is described.
+   */
+  outerGraph: GraphDescriptor;
+};
+
+/**
  * Asks to describe a node. Can be called in multiple ways:
  * - when called with no arguments, will produce the "default schema". That is,
  * the inputs/outputs that are always available.
@@ -319,7 +158,11 @@ export type NodeDescriberResult = {
 export type NodeDescriberFunction = (
   inputs?: InputValues,
   inputSchema?: Schema,
-  outputSchema?: Schema
+  outputSchema?: Schema,
+  /**
+   * The context in which the node is described.
+   */
+  context?: NodeDescriberContext
 ) => Promise<NodeDescriberResult>;
 
 export type NodeHandler =
@@ -385,6 +228,10 @@ export interface BreadboardRunResult {
    * the node within the run, similar to an "index" property in map/forEach.
    */
   get invocationId(): number;
+  /**
+   * The timestamp of when this result was issued.
+   */
+  get timestamp(): number;
 }
 
 export interface NodeFactory {
@@ -454,9 +301,44 @@ export interface BreadboardValidator {
   ): BreadboardValidator;
 }
 
+/**
+ * Sequential number of the invocation of a node.
+ * Useful for understanding the relative position of a
+ * given invocation of node within the run.
+ */
+export type InvocationId = number;
+
+/**
+ * Information about a given invocation of a graph and
+ * node within the graph.
+ */
+export type RunStackEntry = {
+  /**
+   * The invocation id of the graph.
+   */
+  graph: InvocationId;
+  /**
+   * The invocation id of the node within that graph.
+   */
+  node: InvocationId;
+  /**
+   * The state of the graph traversal at the time of the invocation.
+   */
+  state?: string;
+};
+
+/**
+ * A stack of all invocations of graphs and nodes within the graphs.
+ * The stack is ordered from the outermost graph to the innermost graph
+ * that is currently being run.
+ * Can be used to understand the current state of the run.
+ */
+export type RunState = RunStackEntry[];
+
 export type GraphProbeData = {
   metadata: GraphMetadata;
   path: number[];
+  timestamp: number;
 };
 
 export type GraphStartProbeMessage = {
@@ -476,12 +358,14 @@ export type SkipProbeMessage = {
     inputs: InputValues;
     missingInputs: string[];
     path: number[];
+    timestamp: number;
   };
 };
 
 export type NodeStartProbeMessage = {
   type: "nodestart";
   data: NodeStartResponse;
+  state: RunState;
 };
 
 export type NodeEndProbeMessage = {
@@ -495,15 +379,6 @@ export type ProbeMessage =
   | SkipProbeMessage
   | NodeStartProbeMessage
   | NodeEndProbeMessage;
-
-export type NodeEndResponse = {
-  node: NodeDescriptor;
-  inputs: InputValues;
-  outputs: OutputValues;
-  validatorMetadata?: BreadboardValidatorMetadata[];
-  path: number[];
-  state?: TraversalResult;
-};
 
 /**
  * Sent by the runner to supply outputs.
@@ -519,6 +394,7 @@ export type OutputResponse = {
    * @see [OutputValues]
    */
   outputs: OutputValues;
+  timestamp: number;
 };
 
 /**
@@ -532,7 +408,16 @@ export type NodeStartResponse = {
   node: NodeDescriptor;
   inputs: InputValues;
   path: number[];
-  state?: string | TraversalResult;
+  timestamp: number;
+};
+
+export type NodeEndResponse = {
+  node: NodeDescriptor;
+  inputs: InputValues;
+  outputs: OutputValues;
+  validatorMetadata?: BreadboardValidatorMetadata[];
+  path: number[];
+  timestamp: number;
 };
 
 /**
@@ -551,17 +436,34 @@ export type InputResponse = {
    * @see [InputValues]
    */
   inputArguments: InputValues & { schema?: Schema };
+  timestamp: number;
 };
 
+export type ErrorObject = {
+  /**
+   * The error message. Can be a string or a more detailed object. For
+   * example, fetch errors may return a JSON response from the server.
+   */
+  error: string | object;
+  /**
+   * The node that threw the error.
+   */
+  descriptor: NodeDescriptor;
+  /**
+   * The inputs that were passed to the node that threw the error.
+   */
+  inputs: InputValues;
+};
 /**
  * Sent by the runner when an error occurs.
  * Error response also indicates that the board is done running.
  */
 export type ErrorResponse = {
   /**
-   * The error message.
+   * The error message string or a more detailed error object
    */
-  error: string;
+  error: string | ErrorObject;
+  timestamp: number;
 };
 
 // TODO: Remove extending EventTarget once new runner is converted to use
@@ -614,12 +516,17 @@ export interface NodeHandlerContext {
   readonly board?: BreadboardRunner;
   readonly descriptor?: NodeDescriptor;
   readonly kits?: Kit[];
-  readonly base?: string;
+  readonly base?: URL;
   readonly outerGraph?: GraphDescriptor;
   readonly slots?: BreadboardSlotSpec;
   readonly probe?: Probe;
-  readonly requestInput?: (name: string, schema: Schema) => Promise<NodeValue>;
+  readonly requestInput?: (
+    name: string,
+    schema: Schema,
+    node: NodeDescriptor
+  ) => Promise<NodeValue>;
   readonly invocationPath?: number[];
+  readonly state?: RunState;
 }
 
 export interface BreadboardNode<Inputs, Outputs> {

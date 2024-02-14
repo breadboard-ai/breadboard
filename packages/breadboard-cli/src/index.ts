@@ -13,8 +13,11 @@ import { mermaid } from "./commands/mermaid.js";
 import { makeGraph } from "./commands/make-graph.js";
 import { run } from "./commands/run.js";
 import { importGraph } from "./commands/import.js";
+import { bundle } from "./commands/bundle.js";
+import { proxy } from "./commands/proxy.js";
 
 import { program } from "commander";
+import path from "path";
 
 program.version("0.0.1");
 
@@ -25,10 +28,25 @@ program
   )
   .option(
     "-o, --output <path>",
-    "If compiling a graph in Typescript (.ts), you MUST specific a location to output the compiled graph."
+    "The path where the boards will be output the board(s) to.",
+    process.cwd()
   )
+  .option("-n, --no-save", "Do not save the compiled graph to disk.")
   .option("-w, --watch", "Watch the file for changes.")
   .action(debug);
+
+program
+  .command("bundle [file]")
+  .description("Generates a deployable bundle.")
+  .option(
+    "-o, --output <path>",
+    "Sets the output directory of the compiled graph (current directory by default.)",
+    path.join(
+      process.cwd(),
+      `build-${new Date().toISOString().replaceAll(/\W/gim, "-")}`
+    )
+  )
+  .action(bundle);
 
 program
   .command("import [url]")
@@ -39,7 +57,8 @@ program
   )
   .option(
     "-o, --output <path>",
-    "The path where the boards will be output the board(s) to"
+    "The path where the boards will be output the board(s) to (current directory by default.)",
+    process.cwd()
   )
   .action(importGraph);
 
@@ -50,8 +69,10 @@ program
   )
   .option(
     "-o, --output <path>",
-    "If compiling a graph in Typescript (.ts), you MUST specific a location to output the compiled graph."
+    "The path where the boards will be output the board(s) to (current directory by default.)",
+    process.cwd()
   )
+  .option("-n, --no-save", "Do not save the compiled graph to disk.")
   .option("-w, --watch", "Watch the file for changes.")
   .action(makeGraph);
 
@@ -62,21 +83,50 @@ program
   )
   .option(
     "-o, --output <path>",
-    "If compiling a graph in Typescript (.ts), you MUST specific a location to output the compiled graph."
+    "If compiling a graph in Typescript (.ts), you can control the output directory of the compiled graph (current directory by default.)",
+    process.cwd()
   )
   .option("-w, --watch", "Watch the file for changes.")
   .action(mermaid);
+
+program
+  .command("proxy")
+  .description("Starts a proxy server.")
+  .option("-c, --config <config>", "The path to the proxy configuration file.")
+  .option(
+    "-d, --dist <dist>",
+    "The directory to serve for HTTP GET requests",
+    process.cwd()
+  )
+  .option("-k, --kit <kit...>", "The kit to use.")
+  .option("-p, --port <port>", "The port to serve on.", "8080")
+  .option(
+    "-x, --proxy-node <node...>",
+    "A node that will be passed to the breadboard proxy."
+  )
+  .action(proxy);
 
 program
   .command("run [file]")
   .description("Run a graph.")
   .option("-w, --watch", "Watch the file for changes.")
   .option("-v, --verbose", "Output events and processing information.")
+  .option("-n, --no-save", "Do not write the compiled graph to disk.")
   .option(
     "-o, --output <path>",
-    "If compiling a graph in Typescript (.ts), you MUST specific a location to output the compiled graph."
+    "If compiling a graph in Typescript (.ts), you can control the output directory of the compiled graph (current directory by default.)",
+    process.cwd()
   )
   .option("-k, --kit <kit...>", "The kit to use.")
+  .option("-p, --proxy <proxy>", "The Breadboard proxy to use.")
+  .option(
+    "-x, --proxy-node <node...>",
+    "A node that will be passed to the breadboard proxy."
+  )
+  .option(
+    "--input-file <input>",
+    "The path to a JSON file that represents the input to the graph."
+  )
   .option(
     "-i, --input <input>",
     "The JSON that represents the input to the graph."

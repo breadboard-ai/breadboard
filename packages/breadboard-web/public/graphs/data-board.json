@@ -1,0 +1,107 @@
+{
+  "title": "Data Board",
+  "description": "An experiment combining \"Best of N\" and \"Ad Writer\".",
+  "version": "0.0.3",
+  "edges": [
+    {
+      "from": "bestOfN",
+      "to": "output-2",
+      "out": "best",
+      "in": "best"
+    },
+    {
+      "from": "bestOfN",
+      "to": "output-2",
+      "out": "list",
+      "in": "list"
+    },
+    {
+      "from": "bestOfN",
+      "to": "output-2",
+      "out": "rank",
+      "in": "rank"
+    },
+    {
+      "from": "input-1",
+      "to": "bestOfN",
+      "out": "n",
+      "in": "n"
+    },
+    {
+      "from": "input-1",
+      "to": "bestOfN",
+      "out": "text",
+      "in": "text"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "best": {
+              "title": "Best choice",
+              "type": "string"
+            },
+            "list": {
+              "title": "The list of choices",
+              "type": "string"
+            },
+            "rank": {
+              "title": "Rank and reasoning behind it",
+              "type": "string"
+            }
+          },
+          "required": [
+            "best",
+            "list",
+            "rank"
+          ]
+        }
+      }
+    },
+    {
+      "id": "bestOfN",
+      "type": "invoke",
+      "configuration": {
+        "path": "best-of-n.json",
+        "agent": "ad-writer.json",
+        "context": []
+      }
+    },
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "n": {
+              "title": "Number of parallel attemps",
+              "type": "number",
+              "examples": [
+                "4"
+              ]
+            },
+            "text": {
+              "title": "Ad specs",
+              "format": "multiline",
+              "examples": [
+                "This ad is for my lawn care company that will fit into an inch of newspaper copy. It's called \"Max's Lawn Care\" and it should use the slogan \"I care about your lawn.\" Emphasize the folksiness of it being a local, sole proprietorship that I started after graduating from high school."
+              ],
+              "type": "string"
+            }
+          },
+          "required": [
+            "n",
+            "text"
+          ]
+        }
+      }
+    }
+  ],
+  "graphs": {}
+}

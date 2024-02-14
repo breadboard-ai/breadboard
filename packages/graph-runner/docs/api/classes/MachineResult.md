@@ -55,7 +55,7 @@
 
 #### Defined in
 
-[packages/graph-runner/src/traversal/result.ts:28](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/traversal/result.ts#L28)
+[packages/graph-runner/src/traversal/result.ts:28](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/graph-runner/src/traversal/result.ts#L28)
 
 ## Properties
 
@@ -69,7 +69,7 @@
 
 #### Defined in
 
-[packages/graph-runner/src/traversal/result.ts:19](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/traversal/result.ts#L19)
+[packages/graph-runner/src/traversal/result.ts:19](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/graph-runner/src/traversal/result.ts#L19)
 
 ___
 
@@ -83,7 +83,7 @@ ___
 
 #### Defined in
 
-[packages/graph-runner/src/traversal/result.ts:20](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/traversal/result.ts#L20)
+[packages/graph-runner/src/traversal/result.ts:20](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/graph-runner/src/traversal/result.ts#L20)
 
 ___
 
@@ -97,7 +97,7 @@ ___
 
 #### Defined in
 
-[packages/graph-runner/src/traversal/result.ts:21](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/traversal/result.ts#L21)
+[packages/graph-runner/src/traversal/result.ts:21](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/graph-runner/src/traversal/result.ts#L21)
 
 ___
 
@@ -111,7 +111,7 @@ ___
 
 #### Defined in
 
-[packages/graph-runner/src/traversal/result.ts:23](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/traversal/result.ts#L23)
+[packages/graph-runner/src/traversal/result.ts:23](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/graph-runner/src/traversal/result.ts#L23)
 
 ___
 
@@ -125,7 +125,7 @@ ___
 
 #### Defined in
 
-[packages/graph-runner/src/traversal/result.ts:22](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/traversal/result.ts#L22)
+[packages/graph-runner/src/traversal/result.ts:22](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/graph-runner/src/traversal/result.ts#L22)
 
 ___
 
@@ -139,7 +139,7 @@ ___
 
 #### Defined in
 
-[packages/graph-runner/src/traversal/result.ts:25](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/traversal/result.ts#L25)
+[packages/graph-runner/src/traversal/result.ts:25](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/graph-runner/src/traversal/result.ts#L25)
 
 ___
 
@@ -153,7 +153,7 @@ ___
 
 #### Defined in
 
-[packages/graph-runner/src/traversal/result.ts:26](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/traversal/result.ts#L26)
+[packages/graph-runner/src/traversal/result.ts:26](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/graph-runner/src/traversal/result.ts#L26)
 
 ___
 
@@ -167,7 +167,7 @@ ___
 
 #### Defined in
 
-[packages/graph-runner/src/traversal/result.ts:24](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/traversal/result.ts#L24)
+[packages/graph-runner/src/traversal/result.ts:24](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/graph-runner/src/traversal/result.ts#L24)
 
 ## Accessors
 
@@ -188,7 +188,7 @@ visited.
 
 #### Defined in
 
-[packages/graph-runner/src/traversal/result.ts:50](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/traversal/result.ts#L50)
+[packages/graph-runner/src/traversal/result.ts:50](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/graph-runner/src/traversal/result.ts#L50)
 
 ## Methods
 
@@ -208,4 +208,4 @@ visited.
 
 #### Defined in
 
-[packages/graph-runner/src/traversal/result.ts:54](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/graph-runner/src/traversal/result.ts#L54)
+[packages/graph-runner/src/traversal/result.ts:54](https://github.com/breadboard-ai/breadboard/blob/e1b5dae9/packages/graph-runner/src/traversal/result.ts#L54)

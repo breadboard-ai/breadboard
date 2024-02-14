@@ -60,7 +60,7 @@ export class TraversalMachineIterator
         );
       } else {
         globalThis.console.warn(
-          "Error in node handler, passinng to the wired $error output.",
+          "Error in node handler, passing to the wired $error output.",
           outputs.$error,
           opportunities
         );

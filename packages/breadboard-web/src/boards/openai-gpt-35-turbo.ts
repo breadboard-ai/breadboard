@@ -4,8 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphMetadata, Schema, base, recipe } from "@google-labs/breadboard";
-import { starter } from "@google-labs/llm-starter";
+import { GraphMetadata, Schema, base, board } from "@google-labs/breadboard";
+import { core } from "@google-labs/core-kit";
+import { json } from "@google-labs/json-kit";
 import { nursery } from "@google-labs/node-nursery-web";
 import { chunkTransformer } from "./openai-chunk-transformer";
 
@@ -18,7 +19,7 @@ const metadata = {
 
 const toolsExample = [
   {
-    name: "The_Calculator_Recipe",
+    name: "The_Calculator_Board",
     description:
       "A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems.",
     parameters: {
@@ -33,7 +34,7 @@ const toolsExample = [
     },
   },
   {
-    name: "The_Search_Summarizer_Recipe",
+    name: "The_Search_Summarizer_Board",
     description:
       "A simple AI pattern that first uses Google Search to find relevant bits of information and then summarizes them using LLM.",
     parameters: {
@@ -139,7 +140,7 @@ const streamOutputSchema = {
   },
 } satisfies Schema;
 
-export default await recipe(() => {
+export default await board(() => {
   const input = base.input({ $id: "input", schema: inputSchema });
 
   const streamOutput = base.output({
@@ -148,7 +149,7 @@ export default await recipe(() => {
   });
 
   const formatParameters = input.to(
-    starter.jsonata({
+    json.jsonata({
       $id: "formatParameters",
       expression: `(
         $context := $append(
@@ -182,19 +183,19 @@ export default await recipe(() => {
         }
       )`,
       raw: true,
-      OPENAI_API_KEY: starter.secrets({ keys: ["OPENAI_API_KEY"] }),
+      OPENAI_API_KEY: core.secrets({ keys: ["OPENAI_API_KEY"] }),
     })
   );
 
   const fetch = formatParameters.to(
-    starter.fetch({
+    core.fetch({
       $id: "callOpenAI",
       url: "https://api.openai.com/v1/chat/completions",
       method: "POST",
     })
   );
 
-  const getResponse = starter.jsonata({
+  const getResponse = json.jsonata({
     $id: "getResponse",
     expression: `choices[0].message.{
       "text": $boolean(content) ? content,
@@ -204,7 +205,7 @@ export default await recipe(() => {
     json: fetch.response,
   });
 
-  const getNewContext = starter.jsonata({
+  const getNewContext = json.jsonata({
     $id: "getNewContext",
     expression: `$append(messages, response.choices[0].message)`,
     messages: formatParameters.context,

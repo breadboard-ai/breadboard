@@ -25,7 +25,7 @@ import {
 // import { ReActHelper } from "./react.js";
 import { pathToFileURL } from "url";
 import Core from "@google-labs/core-kit";
-import Starter from "@google-labs/llm-starter";
+import TemplateKit from "@google-labs/template-kit";
 import Nursery from "@google-labs/node-nursery";
 import Pinecone from "@google-labs/pinecone-kit";
 import { ProbeMessage } from "../../breadboard/dist/src/types.js";
@@ -64,7 +64,7 @@ async function main(args: string[], use_input_handler = false) {
   const graph = args[0];
   // Determine base URL for loading graphs, relative to the current working
   // directory.
-  const base = `${pathToFileURL(process.cwd()).href}/`;
+  const base = new URL(`${pathToFileURL(process.cwd()).href}/`);
   const validateIntegrity = args.includes("--validate-integrity");
   const logIntegrityLabels = args.includes("--log-integrity-labels");
 
@@ -230,7 +230,7 @@ async function main(args: string[], use_input_handler = false) {
   }
 
   const kits = [
-    asRuntimeKit(Starter),
+    asRuntimeKit(TemplateKit),
     asRuntimeKit(Core),
     asRuntimeKit(Nursery),
     asRuntimeKit(Pinecone),

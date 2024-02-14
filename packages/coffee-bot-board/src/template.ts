@@ -6,7 +6,7 @@
 
 import { Board, BreadboardNode } from "@google-labs/breadboard";
 import { Core } from "@google-labs/core-kit";
-import { Starter } from "@google-labs/llm-starter";
+import { TemplateKit } from "@google-labs/template-kit";
 import { readFile, readdir } from "fs/promises";
 
 type Example = {
@@ -68,7 +68,7 @@ export class Template {
   constructor(
     version: string,
     public board: Board,
-    public kit: Starter,
+    public kit: TemplateKit,
     public core: Core
   ) {
     this.path = `./prompts/${version}`;

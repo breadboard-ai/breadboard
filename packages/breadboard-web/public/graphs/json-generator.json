@@ -1,6 +1,7 @@
 {
   "title": "JSON Generator",
   "description": "Tries its best to always generate valid JSON that adheres to a provided JSON schema. Use it when you want your LLM calls to return valid JSON.",
+  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.2.0/packages/schema/breadboard.schema.json",
   "version": "0.0.1",
   "edges": [
     {
@@ -142,7 +143,7 @@
               "type": "board",
               "title": "Text Generator",
               "description": "The underlying text generator to use.",
-              "default": "/graphs/text-generator.json"
+              "default": "text-generator.json"
             },
             "template": {
               "type": "text",
@@ -263,13 +264,16 @@
   ],
   "kits": [
     {
+      "title": "Core Kit",
       "url": "npm:@google-labs/core-kit"
     },
     {
+      "title": "JSON Kit",
       "url": "npm:@google-labs/json-kit"
     },
     {
-      "url": "npm:@google-labs/llm-starter"
+      "title": "Template Kit",
+      "url": "npm:@google-labs/template-kit"
     }
   ]
 }

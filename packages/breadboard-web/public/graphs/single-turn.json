@@ -1,0 +1,83 @@
+{
+  "title": "Single turn",
+  "description": "A single conversation turn: a combination of a simple agent and a user input",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "assistant",
+      "to": "output-2",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "askUser",
+      "to": "assistant",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "input-1",
+      "to": "askUser",
+      "out": "context",
+      "in": "context"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "type": "string",
+              "title": "context"
+            }
+          },
+          "required": [
+            "context"
+          ]
+        }
+      }
+    },
+    {
+      "id": "assistant",
+      "type": "invoke",
+      "configuration": {
+        "path": "agent.json"
+      }
+    },
+    {
+      "id": "askUser",
+      "type": "invoke",
+      "configuration": {
+        "path": "ask-user.json",
+        "title": "User",
+        "description": "Type here to chat with the assistant"
+      }
+    },
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "title": "Context",
+              "type": "array",
+              "examples": [
+                "[]"
+              ]
+            }
+          },
+          "required": [
+            "context"
+          ]
+        }
+      }
+    }
+  ],
+  "graphs": {}
+}

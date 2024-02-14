@@ -1,5 +1,8 @@
 {
   "name": "@google-labs/graph-runner",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
   "version": "0.2.0",
   "description": "Reference implementation of generative app composition graph traversal",
   "main": "./dist/src/index.js",
@@ -7,6 +10,7 @@
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
+    "prepack": "npm run build",
     "generate:docs": "wireit",
     "test": "wireit",
     "build": "wireit",
@@ -55,7 +59,8 @@
       },
       "files": [
         "src/**/*.ts",
-        "tests/**/*.ts"
+        "tests/**/*.ts",
+        "../../.eslintrc.json"
       ],
       "output": []
     },
@@ -88,6 +93,7 @@
     }
   },
   "repository": {
+    "directory": "packages/graph-runner",
     "type": "git",
     "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },
@@ -116,10 +122,10 @@
   "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/graph-runner#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
-    "@google-labs/tsconfig": "*",
+    "@google-labs/tsconfig": "^0.0.1",
     "@types/node": "^18.16.3",
-    "@typescript-eslint/eslint-plugin": "^5.56.0",
-    "@typescript-eslint/parser": "^5.56.0",
+    "@typescript-eslint/eslint-plugin": "^6.20.0",
+    "@typescript-eslint/parser": "^6.20.0",
     "ava": "^5.2.0",
     "jsonschema": "^1.4.1",
     "typedoc": "^0.25.1",

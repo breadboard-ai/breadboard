@@ -1,6 +1,7 @@
 {
   "title": "List Google Drive files",
   "description": "First attempt at a Google Drive node",
+  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.2.0/packages/schema/breadboard.schema.json",
   "version": "0.0.1",
   "edges": [
     {
@@ -139,13 +140,16 @@
   ],
   "kits": [
     {
-      "url": "npm:@google-labs/llm-starter"
-    },
-    {
+      "title": "Node Nursery (Web)",
       "url": "npm:@google-labs/node-nursery-web"
     },
     {
+      "title": "Core Kit",
       "url": "npm:@google-labs/core-kit"
+    },
+    {
+      "title": "JSON Kit",
+      "url": "npm:@google-labs/json-kit"
     }
   ]
 }

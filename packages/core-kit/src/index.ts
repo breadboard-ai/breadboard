@@ -13,8 +13,12 @@ import passthrough from "./nodes/passthrough.js";
 import reflect from "./nodes/reflect.js";
 import slot from "./nodes/slot.js";
 import map from "./nodes/map.js";
+import reduce, { ReduceInputs, ReduceOutputs } from "./nodes/reduce.js";
 import batch from "./nodes/batch.js";
 import append from "./nodes/append.js";
+import fetch from "./nodes/fetch.js";
+import runJavascript from "./nodes/run-javascript.js";
+import secrets from "./nodes/secrets.js";
 
 const builder = new KitBuilder({
   title: "Core Kit",
@@ -155,7 +159,11 @@ export const Core = builder.build({
    * See #127 for more information.
    */
   map,
+  reduce,
   batch,
+  fetch,
+  runJavascript,
+  secrets,
 });
 
 export type Core = InstanceType<typeof Core>;
@@ -176,19 +184,75 @@ import {
   NewNodeFactory as NodeFactory,
 } from "@google-labs/breadboard";
 
-export const core = addKit(Core) as unknown as {
+export type CoreKitType = {
   passthrough: NodeFactory<InputValues, OutputValues>;
+  /**
+   * Creates the `append` node, which can be used to accumulate local state,
+   * like context in a prompt.
+   *
+   * The node looks for property called `accumulator` in its input. All other
+   * properties are appended to this property, and returned as `accumulator`
+   * output property.
+   *
+   * The way the properties are appended depends on the type of the
+   * `accumulator` input property.
+   *
+   * If the `accumulator` property is "string-ey" (that is, it's a `string`,
+   * `number`, `boolean`, `bigint`, `null` or `undefined`), the properties will
+   * be appended as strings, formatted as
+   * `{{property_name}}: {{proprety_value}}` and joined with "`\n`".
+   *
+   * If the `accumulator` property is an array, the properties will be appended
+   * as array items, formatted as `{{property_name}}: {{proprety_value}}`.
+   *
+   * Otherwise, the `accumulator` property will be treated as an object and
+   * the properties will be added as properties on this object.
+   *
+   * See [`append` node reference](https://github.com/breadboard-ai/breadboard/blob/main/packages/core-kit/README.md) for more information.
+   *
+   */
   append: NodeFactory<
     { accumulator: NodeValue; [key: string]: NodeValue },
     { accumulator: NodeValue }
   >;
+  /**
+   * Creates an `invoke` node, which can be used invoke other boards within
+   * the current board.
+   *
+   * See [`include` node
+   * reference](https://github.com/breadboard-ai/breadboard/blob/main/packages/breadboard/docs/nodes.md#include)
+   * for more information.
+   *
+   * Expects as input one of
+   *  - `path`: A board to be loaded
+   *  - `graph`: A graph (treated as JSON)
+   *  - `board`: A {BreadboardCapability}, e.g. from lambda or import
+   *
+   * All other inputs are passed to the invoked board,
+   * and the output are the invoked board's outputs.
+   */
   invoke: NodeFactory<
-    {
-      path?: string;
-      graph?: string;
-      board?: NodeValue;
-      [key: string]: NodeValue;
-    },
+    | {
+        /**
+         * The URL to the board to be invoked.
+         */
+        path: string;
+        [key: string]: NodeValue;
+      }
+    | {
+        /**
+         * A string of the serailized graph to be invoked.
+         */
+        graph: string;
+        [key: string]: NodeValue;
+      }
+    | {
+        /**
+         * A board to be invoked.
+         */
+        board: NodeValue;
+        [key: string]: NodeValue;
+      },
     { [key: string]: unknown }
   >;
   map: NodeFactory<
@@ -198,5 +262,26 @@ export const core = addKit(Core) as unknown as {
     },
     { list: NodeValue[] }
   >;
+  reduce: NodeFactory<ReduceInputs, ReduceOutputs>;
+  fetch: NodeFactory<{ url: string }, { response: string }>;
+  runJavascript: NodeFactory<
+    {
+      code: string;
+      name: string;
+      raw: boolean;
+      [key: string]: NodeValue;
+    },
+    { result: unknown; [k: string]: unknown }
+  >;
+  secrets: NodeFactory<{ keys: string[] }, { [k: string]: string }>;
   // TODO: Other Core nodes.
 };
+
+/**
+ * The Core Kit. Use members of this object to create nodes to enable
+ * composition and reuse of in Breadboard. The most useful node is `invoke`,
+ * which allows you to invoke other boards within the current board.
+ * Another useful one is `map`, which allows you to map over a list of items
+ * and invoke a board for each item.
+ */
+export const core = addKit(Core) as unknown as CoreKitType;

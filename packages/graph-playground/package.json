@@ -1,13 +1,17 @@
 {
   "name": "@google-labs/graph-playground",
+  "publishConfig": {
+    "registry": "https://wombat-dressing-room.appspot.com"
+  },
   "private": true,
-  "version": "0.0.1",
+  "version": "0.0.5",
   "description": "Playing with graph structures",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
+    "prepack": "npm run build",
     "generate:docs": "wireit",
     "test": "wireit",
     "prepare-graphs": "wireit",
@@ -24,7 +28,7 @@
         "../core-kit:build",
         "../graph-integrity:build",
         "../json-kit:build",
-        "../llm-starter:build",
+        "../template-kit:build",
         "../node-nursery:build",
         "../palm-kit:build",
         "../pinecone-kit:build",
@@ -41,7 +45,7 @@
         "../core-kit:build:tsc",
         "../graph-integrity:build:tsc",
         "../json-kit:build:tsc",
-        "../llm-starter:build:tsc",
+        "../template-kit:build:tsc",
         "../node-nursery:build:tsc",
         "../palm-kit:build:tsc",
         "../pinecone-kit:build:tsc"
@@ -91,7 +95,8 @@
       "files": [
         "src/**/*.ts",
         "wild/**/*.ts",
-        "tests/**/*.ts"
+        "tests/**/*.ts",
+        "../../.eslintrc.json"
       ],
       "output": []
     },
@@ -127,6 +132,7 @@
     }
   },
   "repository": {
+    "directory": "packages/graph-playground",
     "type": "git",
     "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },
@@ -155,24 +161,24 @@
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
-    "@google-labs/tsconfig": "*",
+    "@google-labs/tsconfig": "^0.0.1",
     "@types/node": "^18.16.3",
-    "@typescript-eslint/eslint-plugin": "^5.56.0",
-    "@typescript-eslint/parser": "^5.56.0",
+    "@typescript-eslint/eslint-plugin": "^6.20.0",
+    "@typescript-eslint/parser": "^6.20.0",
     "ava": "^5.2.0",
     "typedoc": "^0.25.1",
     "typescript": "^5.0.4"
   },
   "dependencies": {
     "@clack/prompts": "^0.6.3",
-    "@google-labs/breadboard": "*",
-    "@google-labs/core-kit": "*",
-    "@google-labs/palm-kit": "*",
-    "@google-labs/json-kit": "*",
-    "@google-labs/graph-integrity": "*",
-    "@google-labs/llm-starter": "*",
-    "@google-labs/pinecone-kit": "*",
-    "@google-labs/node-nursery": "*",
+    "@google-labs/breadboard": "^0.10.0",
+    "@google-labs/core-kit": "^0.2.1",
+    "@google-labs/graph-integrity": "^0.0.4",
+    "@google-labs/json-kit": "^0.0.5",
+    "@google-labs/node-nursery": "^0.0.4",
+    "@google-labs/palm-kit": "^0.0.4",
+    "@google-labs/pinecone-kit": "^0.1.1",
+    "@google-labs/template-kit": "^0.1.3",
     "dotenv": "^16.3.1"
   },
   "engines": {

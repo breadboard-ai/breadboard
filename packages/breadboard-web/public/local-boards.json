@@ -5,6 +5,36 @@
     "version": "0.0.2"
   },
   {
+    "title": "Ad Writer",
+    "url": "/graphs/ad-writer.json",
+    "version": "0.0.2"
+  },
+  {
+    "title": "Agent Chain",
+    "url": "/graphs/agent-chain.json",
+    "version": "0.0.2"
+  },
+  {
+    "title": "Agent",
+    "url": "/graphs/agent.json",
+    "version": "0.0.3"
+  },
+  {
+    "title": "Ask User",
+    "url": "/graphs/ask-user.json",
+    "version": "0.0.1"
+  },
+  {
+    "title": "Best of N",
+    "url": "/graphs/best-of-n.json",
+    "version": "0.0.2"
+  },
+  {
+    "title": "Blank board",
+    "url": "/graphs/blank.json",
+    "version": "0.0.1"
+  },
+  {
     "title": "Board as Function",
     "url": "/graphs/board-as-function.json",
     "version": "0.0.2"
@@ -13,6 +43,16 @@
     "title": "Board Caller",
     "url": "/graphs/board-caller.json",
     "version": "0.0.6"
+  },
+  {
+    "title": "Chat bot 2.0",
+    "url": "/graphs/chat-bot-2.json",
+    "version": "0.0.1"
+  },
+  {
+    "title": "Data Board",
+    "url": "/graphs/data-board.json",
+    "version": "0.0.3"
   },
   {
     "title": "Gemini Pro Generator",
@@ -25,9 +65,19 @@
     "version": "0.0.2"
   },
   {
+    "title": "Gemini Simple",
+    "url": "/graphs/gemini-simple.json",
+    "version": "0.0.1"
+  },
+  {
     "title": "Healer",
     "url": "/graphs/healer.json",
     "version": "0.0.1"
+  },
+  {
+    "title": "JSON Agent",
+    "url": "/graphs/json-agent.json",
+    "version": "0.0.3"
   },
   {
     "title": "JSON Generator",
@@ -53,7 +103,7 @@
     "url": "/graphs/math-imperative.json"
   },
   {
-    "title": "The Calculator Recipe",
+    "title": "The Calculator Board",
     "url": "/graphs/math.json",
     "version": "0.0.2"
   },
@@ -83,14 +133,29 @@
     "version": "0.0.1"
   },
   {
-    "title": "The Search Summarizer Recipe",
+    "title": "The Search Summarizer Board",
     "url": "/graphs/search-summarize.json",
     "version": "0.1.1"
   },
   {
-    "title": "The simplest LLM-based recipe",
+    "title": "The simplest LLM-based board",
     "url": "/graphs/simplest.json",
     "version": "0.0.3"
+  },
+  {
+    "title": "Single turn",
+    "url": "/graphs/single-turn.json",
+    "version": "0.0.1"
+  },
+  {
+    "title": "Dense text summarizer",
+    "url": "/graphs/summarizer.json",
+    "version": "0.0.1"
+  },
+  {
+    "title": "Team Builder",
+    "url": "/graphs/team-builder.json",
+    "version": "0.0.1"
   },
   {
     "title": "Text Generator",
@@ -101,5 +166,10 @@
     "title": "Tour Guide Writer",
     "url": "/graphs/tour-guide-writer.json",
     "version": "0.0.3"
+  },
+  {
+    "title": "Webcam",
+    "url": "/graphs/webcam.json",
+    "version": "0.0.2"
   }
 ]

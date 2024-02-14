@@ -30,9 +30,9 @@ Renames and re-exports [Nursery](modules.md#nursery-1)
 
 #### Defined in
 
-[index.ts:8](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/node-nursery/src/index.ts#L8)
+[index.ts:8](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/node-nursery/src/index.ts#L8)
 
-[index.ts:10](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/node-nursery/src/index.ts#L10)
+[index.ts:10](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/node-nursery/src/index.ts#L10)
 
 ## Variables
 
@@ -42,4 +42,4 @@ Renames and re-exports [Nursery](modules.md#nursery-1)
 
 #### Defined in
 
-[nursery.ts:20](https://github.com/breadboard-ai/breadboard/blob/5005f139/packages/node-nursery/src/nursery.ts#L20)
+[nursery.ts:20](https://github.com/breadboard-ai/breadboard/blob/4af8d5b0/packages/node-nursery/src/nursery.ts#L20)

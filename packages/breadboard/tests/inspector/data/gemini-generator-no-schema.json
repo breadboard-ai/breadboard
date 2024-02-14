@@ -1,0 +1,225 @@
+{
+  "title": "Gemini Pro Generator",
+  "description": "The text generator board powered by the Gemini Pro model",
+  "version": "0.0.2",
+  "edges": [
+    {
+      "from": "streamTransform",
+      "to": "streamOutput",
+      "out": "stream",
+      "in": "stream"
+    },
+    {
+      "from": "callGeminiAPI",
+      "to": "formatResponse",
+      "out": "response",
+      "in": "response"
+    },
+    {
+      "from": "callGeminiAPI",
+      "to": "streamTransform",
+      "out": "stream",
+      "in": "stream"
+    },
+    {
+      "from": "parameters",
+      "to": "chooseMethod",
+      "out": "useStreaming",
+      "in": "useStreaming"
+    },
+    {
+      "from": "parameters",
+      "to": "makeBody",
+      "out": "*",
+      "in": ""
+    },
+    {
+      "from": "parameters",
+      "to": "callGeminiAPI",
+      "out": "useStreaming",
+      "in": "stream"
+    },
+    {
+      "from": "makeURL",
+      "to": "callGeminiAPI",
+      "out": "url",
+      "in": "url"
+    },
+    {
+      "from": "makeBody",
+      "to": "callGeminiAPI",
+      "out": "result",
+      "in": "body"
+    },
+    {
+      "from": "formatResponse",
+      "to": "textOutput",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "formatResponse",
+      "to": "textOutput",
+      "out": "text",
+      "in": "text"
+    },
+    {
+      "from": "formatResponse",
+      "to": "toolCallsOutput",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "formatResponse",
+      "to": "toolCallsOutput",
+      "out": "toolCalls",
+      "in": "toolCalls"
+    },
+    {
+      "from": "chooseMethod",
+      "to": "makeURL",
+      "out": "*",
+      "in": ""
+    },
+    {
+      "from": "secrets-3",
+      "to": "makeURL",
+      "out": "GEMINI_KEY",
+      "in": "GEMINI_KEY"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "streamOutput",
+      "type": "output"
+    },
+    {
+      "id": "streamTransform",
+      "type": "transformStream",
+      "configuration": {
+        "board": {
+          "kind": "board",
+          "board": {
+            "kits": [],
+            "edges": [
+              {
+                "from": "transformChunk",
+                "to": "output-4",
+                "out": "result",
+                "in": "chunk"
+              },
+              {
+                "from": "input-3",
+                "to": "transformChunk",
+                "out": "chunk",
+                "in": "json"
+              }
+            ],
+            "nodes": [
+              {
+                "id": "output-4",
+                "type": "output",
+                "configuration": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "chunk": {
+                        "title": "result",
+                        "description": "The result of the Jsonata expression",
+                        "type": "string"
+                      }
+                    },
+                    "required": ["chunk"]
+                  }
+                }
+              },
+              {
+                "id": "transformChunk",
+                "type": "jsonata",
+                "configuration": {
+                  "expression": "candidates[0].content.parts.text ? $join(candidates[0].content.parts.text) : ''"
+                }
+              },
+              {
+                "id": "input-3",
+                "type": "input",
+                "configuration": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "chunk": {
+                        "title": "json",
+                        "description": "The JSON object to evaluate",
+                        "type": ["object", "string"]
+                      }
+                    },
+                    "required": ["chunk"]
+                  }
+                }
+              }
+            ],
+            "graphs": {}
+          }
+        }
+      }
+    },
+    {
+      "id": "callGeminiAPI",
+      "type": "fetch",
+      "configuration": {
+        "method": "POST"
+      }
+    },
+    {
+      "id": "parameters",
+      "type": "input"
+    },
+    {
+      "id": "makeURL",
+      "type": "urlTemplate",
+      "configuration": {
+        "template": "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:{method}?key={GEMINI_KEY}{+sseOption}"
+      }
+    },
+    {
+      "id": "makeBody",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "(\n      $context := $append(\n          context ? context, $not(context) or context[-1].role!=\"user\" ? [\n              {\n                  \"role\": \"user\",\n                  \"parts\": [\n                      {\n                          \"text\": text\n                      }\n                  ]\n              }\n          ]);\n      text ? {\n          \"contents\": $context,\n          \"generationConfig\": stopSequences ? {\n            \"stopSequences\": stopSequences\n          },\n          \"tools\": tools ? {\n            \"function_declarations\": tools\n          }\n      } : {\n          \"$error\": \"`text` input is required\"\n      }\n    )"
+      }
+    },
+    {
+      "id": "formatResponse",
+      "type": "jsonata",
+      "configuration": {
+        "expression": "\n  response.candidates[0].content.parts.{\n    \"text\": text ? text,\n    \"toolCalls\": functionCall ? [ functionCall ],\n    \"context\": $append($$.context, %.$)\n  }",
+        "raw": true
+      }
+    },
+    {
+      "id": "chooseMethod",
+      "type": "runJavascript",
+      "configuration": {
+        "name": "chooseMethodFunction",
+        "code": "function chooseMethodFunction({useStreaming}){const method=useStreaming?\"streamGenerateContent\":\"generateContent\";const sseOption=useStreaming?\"&alt=sse\":\"\";return{method,sseOption}}",
+        "raw": true
+      }
+    },
+    {
+      "id": "secrets-3",
+      "type": "secrets",
+      "configuration": {
+        "keys": ["GEMINI_KEY"]
+      }
+    },
+    {
+      "id": "textOutput",
+      "type": "output"
+    },
+    {
+      "id": "toolCallsOutput",
+      "type": "output"
+    }
+  ],
+  "graphs": {}
+}

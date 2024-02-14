@@ -28,6 +28,7 @@ export const getSchemaType = (value: unknown): SchemaType => {
 };
 
 export class SchemaBuilder {
+  type = "object";
   additionalProperties = false;
   required: string[] = [];
   properties: SchemaProperties = {};
@@ -36,12 +37,23 @@ export class SchemaBuilder {
     const result: Schema = {
       type: "object",
       properties: this.properties,
-      additionalProperties: this.additionalProperties,
     };
+    if (!this.additionalProperties) {
+      result.additionalProperties = false;
+    }
     if (this.required.length > 0) {
       result.required = this.required;
     }
     return result;
+  }
+
+  addSchema(schema: Schema) {
+    if (schema.type === "object") {
+      this.addProperties(schema.properties);
+      this.addRequired(schema.required);
+      this.setAdditionalProperties(schema.additionalProperties as boolean);
+    }
+    return this;
   }
 
   setAdditionalProperties(additionalProperties?: boolean) {
@@ -64,7 +76,8 @@ export class SchemaBuilder {
     return this;
   }
 
-  addProperties(properties: SchemaProperties) {
+  addProperties(properties?: SchemaProperties) {
+    if (!properties) return this;
     Object.entries(properties).forEach(([name, schema]) => {
       this.addProperty(name, schema);
     });
@@ -75,10 +88,11 @@ export class SchemaBuilder {
     if (!required) return this;
 
     if (typeof required === "string") {
-      this.required = [...this.required, required];
+      this.required = [...new Set([...this.required, required])];
     } else if (Array.isArray(required) && required.length > 0) {
-      this.required = [...this.required, ...required];
+      this.required = [...new Set([...this.required, ...required])];
     }
+    this.required.sort();
     return this;
   }
 
@@ -88,3 +102,36 @@ export class SchemaBuilder {
       .build();
   }
 }
+
+/**
+ * Combines multiple schemas into a single schema. This is lossy, since
+ * the same-named properties will be overriden (last one wins). However,
+ * it's good enough to communicate the overall shape of the combined schema.
+ * @param schemas - the schemas to combine
+ * @returns - the combined schema
+ */
+export const combineSchemas = (schemas: Schema[]): Schema => {
+  const result: Schema = {};
+  schemas.forEach((schema) => {
+    if (schema.type === "object") {
+      if (schema.properties) {
+        result.properties = { ...result.properties, ...schema.properties };
+      }
+      if (schema.required) {
+        result.required = [
+          ...(result.required ?? []),
+          ...(schema.required ?? []),
+        ];
+      }
+      if (schema.additionalProperties !== undefined) {
+        result.additionalProperties = schema.additionalProperties;
+      }
+    }
+  });
+  result.type = "object";
+  if (result.required) {
+    result.required = [...new Set(result.required)];
+    result.required?.sort();
+  }
+  return result;
+};
