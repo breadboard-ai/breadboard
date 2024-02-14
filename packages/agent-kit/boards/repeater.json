@@ -1,6 +1,6 @@
 {
   "title": "Repeater",
-  "description": "A worker whose job it is to repeat the same thing over and over, untilsome condition is met or the max count of repetitions is reached.",
+  "description": "A worker whose job it is to repeat the same thing over and over, until some condition is met or the max count of repetitions is reached.",
   "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.2.0/packages/schema/breadboard.schema.json",
   "version": "0.0.1",
   "edges": [
@@ -89,7 +89,7 @@
             "worker": {
               "title": "Worker",
               "description": "Worker to repeat",
-              "type": "string"
+              "type": "object"
             },
             "context": {
               "title": "Context",

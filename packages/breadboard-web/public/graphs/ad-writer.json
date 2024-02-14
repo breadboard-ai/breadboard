@@ -1,13 +1,25 @@
 {
   "title": "Ad Writer",
   "description": "An example of chain of agents working on writing an ad",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "edges": [
     {
-      "from": "improver",
+      "from": "improver2",
       "to": "output-2",
       "out": "*",
       "in": ""
+    },
+    {
+      "from": "assessor",
+      "to": "improver2",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "improver",
+      "to": "assessor",
+      "out": "context",
+      "in": "context"
     },
     {
       "from": "adExec",
@@ -22,22 +34,10 @@
       "in": "context"
     },
     {
-      "from": "promptTemplate-4",
-      "to": "adWriter2",
-      "out": "text",
-      "in": "text"
-    },
-    {
-      "from": "contextRestart",
-      "to": "promptTemplate-4",
-      "out": "result",
-      "in": "requirements"
-    },
-    {
       "from": "requirementsExtractor2",
-      "to": "contextRestart",
-      "out": "json",
-      "in": "json"
+      "to": "adWriter2",
+      "out": "context",
+      "in": "context"
     },
     {
       "from": "customer",
@@ -58,16 +58,10 @@
       "in": "context"
     },
     {
-      "from": "promptTemplate-3",
-      "to": "requiremenstExtractor",
-      "out": "prompt",
-      "in": "text"
-    },
-    {
       "from": "input-1",
-      "to": "promptTemplate-3",
-      "out": "text",
-      "in": "text"
+      "to": "requiremenstExtractor",
+      "out": "context",
+      "in": "context"
     }
   ],
   "nodes": [
@@ -77,11 +71,54 @@
       "configuration": {}
     },
     {
-      "id": "improver",
-      "type": "invoke",
+      "id": "improver2",
+      "type": "structuredWorker",
       "configuration": {
-        "path": "json-agent.json",
-        "text": "Given the 3 point critique try to generate a new response.",
+        "instruction": "You are a Google Ads Professional. Write the ad copy that satisfies the requirements and is improved based on the assessment",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "ad": {
+              "type": "string",
+              "description": "the ad copy"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "assessor",
+      "type": "structuredWorker",
+      "configuration": {
+        "instruction": "Given the list of requirements assess how well the newest response conforms to the requirements.",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "assessment": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "summary": {
+                    "type": "string",
+                    "description": "summary of an point in the assessment"
+                  },
+                  "details": {
+                    "type": "string",
+                    "description": "reasoning behind the point in an assessment"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "improver",
+      "type": "structuredWorker",
+      "configuration": {
+        "instruction": "Given the 3 point critique try to generate a new response.",
         "schema": {
           "type": "object",
           "properties": {
@@ -95,10 +132,9 @@
     },
     {
       "id": "adExec",
-      "type": "invoke",
+      "type": "structuredWorker",
       "configuration": {
-        "path": "json-agent.json",
-        "text": "You are a Google Ads Search Professional. Given the above prompt and response, generate 3 point constructive critique of the response that I can action to make the output even better and more effective given the prompt.",
+        "instruction": "You are a Google Ads Search Professional. Given the above prompt and response, generate 3 point constructive critique of the response that I can action to make the output even better and more effective given the prompt.",
         "schema": {
           "type": "object",
           "properties": {
@@ -115,10 +151,9 @@
     },
     {
       "id": "adWriter2",
-      "type": "invoke",
+      "type": "structuredWorker",
       "configuration": {
-        "path": "json-agent.json",
-        "context": [],
+        "instruction": "Write ad copy that conforms to the specified requirements",
         "schema": {
           "type": "object",
           "properties": {
@@ -131,25 +166,10 @@
       }
     },
     {
-      "id": "promptTemplate-4",
-      "type": "promptTemplate",
-      "configuration": {
-        "template": "Write ad copy that conforms to the requirements below\n\n      {{requirements}}"
-      }
-    },
-    {
-      "id": "contextRestart",
-      "type": "jsonata",
-      "configuration": {
-        "expression": "$"
-      }
-    },
-    {
       "id": "requirementsExtractor2",
-      "type": "invoke",
+      "type": "structuredWorker",
       "configuration": {
-        "path": "json-agent.json",
-        "text": "Incorporate all feedback above into new, improved requirements",
+        "instruction": "Incorporate all feedback above into new, improved requirements",
         "schema": {
           "type": "object",
           "properties": {
@@ -166,10 +186,9 @@
     },
     {
       "id": "customer",
-      "type": "invoke",
+      "type": "structuredWorker",
       "configuration": {
-        "path": "json-agent.json",
-        "text": "Imagine you are a customer. You are a middle-aged homeowner from rural Midwest. You are overrun with ads and are weary of being scammed. You just want to work with someone local and trustworty. Review this and offer three improvements that would increase the likelihood of you trusting the ad.",
+        "instruction": "Imagine you are a customer. You are a middle-aged homeowner from rural Midwest. You are overrun with ads and are weary of being scammed. You just want to work with someone local and trustworty. Review this and offer three improvements that would increase the likelihood of you trusting the ad.",
         "schema": {
           "type": "object",
           "properties": {
@@ -186,10 +205,9 @@
     },
     {
       "id": "adWriter",
-      "type": "invoke",
+      "type": "structuredWorker",
       "configuration": {
-        "path": "json-agent.json",
-        "text": "Write ad copy that conforms to the requirements above",
+        "instruction": "Write ad copy that conforms to the requirements above",
         "schema": {
           "type": "object",
           "properties": {
@@ -203,10 +221,9 @@
     },
     {
       "id": "requiremenstExtractor",
-      "type": "invoke",
+      "type": "structuredWorker",
       "configuration": {
-        "path": "json-agent.json",
-        "context": [],
+        "instruction": "Given the following specs, extract requirements for writing an ad copy",
         "schema": {
           "type": "object",
           "properties": {
@@ -222,34 +239,23 @@
       }
     },
     {
-      "id": "promptTemplate-3",
-      "type": "promptTemplate",
-      "configuration": {
-        "template": "Given the following specs, extract requirements for writing an ad copy:\n\n      {{text}}"
-      }
-    },
-    {
       "id": "input-1",
       "type": "input",
       "configuration": {
         "schema": {
           "type": "object",
           "properties": {
-            "text": {
+            "context": {
               "title": "Ad specs",
-              "description": "The value to substitute for the parameter \"text\"",
-              "type": [
-                "string",
-                "object"
-              ],
               "format": "multiline",
               "examples": [
                 "This ad is for my lawn care company that will fit into an inch of newspaper copy. It's called \"Max's Lawn Care\" and it should use the slogan \"I care about your lawn.\" Emphasize the folksiness of it being a local, sole proprietorship that I started after graduating from high school."
-              ]
+              ],
+              "type": "string"
             }
           },
           "required": [
-            "text"
+            "context"
           ]
         }
       }

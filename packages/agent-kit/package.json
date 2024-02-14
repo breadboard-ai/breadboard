@@ -128,6 +128,12 @@
     "@types/node": "^18.16.3",
     "ava": "^5.2.0",
     "typescript": "^5.0.4",
-    "@google-labs/tsconfig": "^0.0.1"
+    "@google-labs/tsconfig": "^0.0.1",
+    "@google-labs/agent-kit": "^0.0.1",
+    "@google-labs/breadboard": "^0.10.1",
+    "@google-labs/core-kit": "^0.2.2",
+    "@google-labs/gemini-kit": "^0.1.1",
+    "@google-labs/json-kit": "^0.0.5",
+    "@google-labs/template-kit": "^0.1.4"
   }
 }
