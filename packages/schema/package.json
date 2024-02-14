@@ -37,6 +37,9 @@
   },
   "wireit": {
     "build": {
+      "files": [
+        "package.json"
+      ],
       "dependencies": [
         "build:tsc",
         "build:update-json-schema"
@@ -76,8 +79,9 @@
       "dependencies": [
         "build:tsc"
       ],
-      "files": [],
-      "output": []
+      "files": [
+        "breadboard.schema.json"
+      ]
     }
   },
   "devDependencies": {
