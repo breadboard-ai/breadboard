@@ -242,6 +242,13 @@ export type GraphDescriptor = GraphMetadata & {
    * @deprecated
    */
   sequence?: NodeIdentifier[];
+
+  /**
+   * Whether to throw an error if a node fails.
+   * @deprecated
+   */
+  throws?: boolean;
+
 };
 
 /**

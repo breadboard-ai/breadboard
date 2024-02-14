@@ -64,6 +64,11 @@
 					"description": "Sequence of nodes to execute.",
 					"deprecated": true
 				},
+				"throws": {
+					"type": "boolean",
+					"description": "Whether to throw an error if a node fails.",
+					"deprecated": true
+				},
 				"$schema": {
 					"type": "string",
 					"description": "The schema of the graph."
