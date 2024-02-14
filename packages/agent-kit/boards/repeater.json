@@ -1,6 +1,7 @@
 {
-  "title": "Agent Loop",
-  "description": "An experiment: a board that represents an iterative loop over an agent",
+  "title": "Repeater",
+  "description": "A worker whose job it is to repeat the same thing over and over, untilsome condition is met or the max count of repetitions is reached.",
+  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.2.0/packages/schema/breadboard.schema.json",
   "version": "0.0.1",
   "edges": [
     {
@@ -30,8 +31,8 @@
     {
       "from": "input-1",
       "to": "invokeAgent",
-      "out": "agent",
-      "in": "path",
+      "out": "worker",
+      "in": "$board",
       "constant": true
     },
     {
@@ -85,13 +86,10 @@
         "schema": {
           "type": "object",
           "properties": {
-            "agent": {
-              "title": "Agent",
-              "description": "Agent to loop",
-              "type": "string",
-              "examples": [
-                "single-turn.json"
-              ]
+            "worker": {
+              "title": "Worker",
+              "description": "Worker to repeat",
+              "type": "string"
             },
             "context": {
               "title": "Context",
@@ -104,7 +102,7 @@
             },
             "max": {
               "title": "Max",
-              "description": "The maximum number of loops to make (set to -1 to go infinitely)",
+              "description": "The maximum number of repetitions to make (set to -1 to go infinitely)",
               "type": "number",
               "examples": [
                 "3"
@@ -112,7 +110,7 @@
             }
           },
           "required": [
-            "agent",
+            "worker",
             "context",
             "max"
           ]
@@ -120,6 +118,7 @@
       }
     }
   ],
+  "kits": [],
   "graphs": {
     "counter": {
       "edges": [
@@ -144,7 +143,7 @@
           "id": "counter-run",
           "type": "runJavascript",
           "configuration": {
-            "code": "function counter({context,count}) {const num=count-1;if(num!=0){return{continue:context,count:num}}return{stop:context}}",
+            "code": "function counter({ context, count }) {\n  const num = count - 1;\n  if (num != 0) {\n    return { continue: context, count: num };\n  }\n  return { stop: context };\n}",
             "name": "counter",
             "raw": true
           }

@@ -10,6 +10,7 @@ import kit from "./kit.js";
 import { addKit } from "@google-labs/breadboard";
 import { WorkerType } from "./boards/worker.js";
 import { addDescriber, workerDescriber } from "./hacks.js";
+import { RepeaterType } from "./boards/repeater.js";
 
 // TODO: Replace with the actual URL.
 const KIT_BASE_URL =
@@ -29,6 +30,7 @@ const builder = new KitBuilder(
 
 const AgentKit = builder.build({
   worker: addDescriber(adapter.handlerForNode("worker"), workerDescriber),
+  repeater: adapter.handlerForNode("repeater"),
 });
 
 export type AgentKit = InstanceType<typeof AgentKit>;
@@ -38,6 +40,11 @@ export type AgentKitType = {
    * The essential building block of the Agent Kit.
    */
   worker: WorkerType;
+  /**
+   * A worker whose job it is to repeat the same thing over and over,
+   * until some condition is met or the max count of repetitions is reached.
+   */
+  repeater: RepeaterType;
 };
 
 export default AgentKit;

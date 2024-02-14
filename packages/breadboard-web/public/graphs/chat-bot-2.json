@@ -1,0 +1,83 @@
+{
+  "title": "Chat bot 2.0",
+  "description": "A board that uses the Agent kit to create a simple chat bot",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "repeat",
+      "to": "output-2",
+      "out": "context",
+      "in": "context"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "type": "string",
+              "title": "context"
+            }
+          },
+          "required": [
+            "context"
+          ]
+        }
+      }
+    },
+    {
+      "id": "repeat",
+      "type": "repeater",
+      "configuration": {
+        "context": [
+          "You are a helpful chat bot. You are here to help the user."
+        ],
+        "worker": {
+          "kind": "board",
+          "board": {
+            "kits": [],
+            "edges": [
+              {
+                "from": "fn-16-input",
+                "to": "fn-16-run",
+                "out": "*"
+              },
+              {
+                "from": "fn-16-run",
+                "to": "fn-16-output",
+                "out": "*"
+              }
+            ],
+            "nodes": [
+              {
+                "id": "fn-16-input",
+                "type": "input",
+                "configuration": {}
+              },
+              {
+                "id": "fn-16-run",
+                "type": "runJavascript",
+                "configuration": {
+                  "code": "function fn_16({context}) {return{context:[...context,{hello:\"world\"}]}}",
+                  "name": "fn_16",
+                  "raw": true
+                }
+              },
+              {
+                "id": "fn-16-output",
+                "type": "output",
+                "configuration": {}
+              }
+            ]
+          }
+        },
+        "max": 3
+      }
+    }
+  ],
+  "graphs": {}
+}
