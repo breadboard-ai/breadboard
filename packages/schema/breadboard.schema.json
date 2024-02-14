@@ -4,9 +4,57 @@
   "title": "Breadboard",
   "description": "An executable program graph",
   "$defs": {
-    "identifier": {
+    "edgePort": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-zA-Z_][a-zA-Z0-9_-]*$"
+        },
+        {
+          "type": "string",
+          "const": "$error",
+          "description": "Special port that is used to pass errors"
+        }
+      ]
+    },
+    "nodeId": {
       "type": "string",
-      "pattern": "^(\\$error)|[a-zA-Z_][a-zA-Z0-9_-]*$"
+      "pattern": "^[a-zA-Z_][a-zA-Z0-9_-]*$"
+    },
+    "nodeType": {
+      "anyOf": [
+        {
+          "type": "string",
+          "const": "input",
+          "description": "A node that represents an input"
+        },
+        {
+          "type": "string",
+          "const": "output",
+          "description": "A node that represents an output"
+        },
+        {
+          "type": "string",
+          "const": "lambda",
+          "description": "A node that represents a lambda"
+        },
+        {
+          "pattern": "^[a-zA-Z_][a-zA-Z0-9_-]*$",
+          "description": "A custom node type"
+        }
+      ]
+    },
+    "nullish": {
+      "oneOf": [
+        {
+          "type": "string",
+          "const": ""
+        },
+        {
+          "type": null,
+          "const": null
+        }
+      ]
     }
   },
   "type": "object",
@@ -47,11 +95,13 @@
         "properties": {
           "id": {
             "description": "Identifier for this node that is unique to this graph",
-            "$ref": "#/$defs/identifier"
+            "$ref": "#/$defs/nodeId"
           },
           "type": {
-            "description": "The type of the node. Must be either a built-in type or a type provided by a kit.",
-            "$ref": "#/$defs/identifier"
+            "description": "The type of the node",
+            "type": "string",
+            "pattern": "^[a-zA-Z_][a-zA-Z0-9_-]*$",
+            "$ref": "#/$defs/nodeType"
           },
           "configuration": {
             "description": "Type-specific configuration of the node",
@@ -75,19 +125,17 @@
         "properties": {
           "from": {
             "description": "The ID of the source node",
-            "$ref": "#/$defs/identifier"
+            "$ref": "#/$defs/nodeId"
           },
           "to": {
             "description": "The ID of the destination node",
-            "$ref": "#/$defs/identifier"
+            "$ref": "#/$defs/nodeId"
           },
           "out": {
-            "description": "The output port of the `from` node.\nIf \"*\", then all outputs of the `from` node are passed to the `to` node. In this case `in` must be empty string or undefined.\nIf undefined or empty string, then no data is passed, and the nodes are instead connected purely for yielding control flow. In this case `in` must be empty string or undefined.",
-            "type": "string"
+            "description": "The output port of the `from` node.\nIf \"*\", then all outputs of the `from` node are passed to the `to` node. In this case `in` must be empty string or undefined.\nIf undefined or empty string, then no data is passed, and the nodes are instead connected purely for yielding control flow. In this case `in` must be empty string or undefined."
           },
           "in": {
-            "description": "The input port of the `to` node.\nMust be empty string or undefined if and only if `out` is either \"*\" or itself empty string or undefined.",
-            "type": "string"
+            "description": "The input port of the `to` node.\nMust be empty string or undefined if and only if `out` is either \"*\" or itself empty string or undefined."
           },
           "optional": {
             "description": "If true, nodes connected to this edge won't wait for data to appear before proceding with execution.",
@@ -103,10 +151,12 @@
             "required": [],
             "properties": {
               "out": {
-                "const": ""
+                "$ref": "#/$defs/nullish",
+                "description": "If undefined or empty string, then no data is passed, and the nodes are instead connected purely for yielding control flow."
               },
               "in": {
-                "const": ""
+                "$ref": "#/$defs/nullish",
+                "description": "Must be empty string or undefined if and only if `out` is either \"*\" or itself empty string or undefined."
               }
             }
           },
@@ -116,10 +166,12 @@
             ],
             "properties": {
               "out": {
-                "const": "*"
+                "const": "*",
+                "description": "If \"*\", then all outputs of the `from` node are passed to the `to` node."
               },
               "in": {
-                "const": ""
+                "$ref": "#/$defs/nullish",
+                "description": "Must be empty string or undefined if and only if `out` is either \"*\" or itself empty string or undefined."
               }
             }
           },
@@ -130,10 +182,12 @@
             ],
             "properties": {
               "out": {
-                "$ref": "#/$defs/identifier"
+                "$ref": "#/$defs/edgePort",
+                "description": "The output port of the `from` node."
               },
               "in": {
-                "$ref": "#/$defs/identifier"
+                "$ref": "#/$defs/edgePort",
+                "description": "The input port of the `to` node."
               }
             }
           }
