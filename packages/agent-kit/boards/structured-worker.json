@@ -1,0 +1,372 @@
+{
+  "title": "Structured Worker",
+  "description": "A worker who outputs structure data (JSON) provided a schema.",
+  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.2.0/packages/schema/breadboard.schema.json",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "assembleContext",
+      "to": "output-2",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "validate",
+      "to": "count",
+      "out": "$error",
+      "in": "error"
+    },
+    {
+      "from": "validate",
+      "to": "validationError",
+      "out": "$error",
+      "in": "$error"
+    },
+    {
+      "from": "validate",
+      "to": "assembleContext",
+      "out": "json",
+      "in": "json"
+    },
+    {
+      "from": "validate",
+      "to": "output-2",
+      "out": "json",
+      "in": "json"
+    },
+    {
+      "from": "buildContext",
+      "to": "count",
+      "out": "context",
+      "in": "context",
+      "constant": true
+    },
+    {
+      "from": "buildContext",
+      "to": "assembleContext",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "generate",
+      "to": "validate",
+      "out": "text",
+      "in": "json"
+    },
+    {
+      "from": "input-1",
+      "to": "schemish",
+      "out": "schema",
+      "in": "schema"
+    },
+    {
+      "from": "input-1",
+      "to": "buildContext",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "input-1",
+      "to": "buildContext",
+      "out": "instruction",
+      "in": "instruction"
+    },
+    {
+      "from": "input-1",
+      "to": "validate",
+      "out": "schema",
+      "in": "schema",
+      "constant": true
+    },
+    {
+      "from": "count",
+      "to": "count",
+      "out": "count",
+      "in": "count"
+    },
+    {
+      "from": "count",
+      "to": "generate",
+      "out": "continue",
+      "in": "context"
+    },
+    {
+      "from": "count",
+      "to": "validationError",
+      "out": "stop",
+      "in": "context"
+    },
+    {
+      "from": "format",
+      "to": "buildContext",
+      "out": "prompt",
+      "in": "format"
+    },
+    {
+      "from": "schemish",
+      "to": "format",
+      "out": "schemish",
+      "in": "schemish"
+    },
+    {
+      "from": "initialValues",
+      "to": "count",
+      "out": "count",
+      "in": "count"
+    },
+    {
+      "from": "initialValues",
+      "to": "count",
+      "out": "error",
+      "in": "error"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "type": "string",
+              "title": "context"
+            },
+            "json": {
+              "type": "string",
+              "title": "json"
+            }
+          },
+          "required": [
+            "context",
+            "json"
+          ]
+        }
+      }
+    },
+    {
+      "id": "assembleContext",
+      "type": "invoke",
+      "configuration": {
+        "path": "#assembleContext"
+      }
+    },
+    {
+      "id": "validate",
+      "type": "validateJson",
+      "configuration": {}
+    },
+    {
+      "id": "buildContext",
+      "type": "invoke",
+      "configuration": {
+        "path": "#buildContext"
+      }
+    },
+    {
+      "id": "generate",
+      "type": "text",
+      "configuration": {
+        "text": "unused"
+      }
+    },
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "schema": {
+              "title": "Schema",
+              "examples": [
+                "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"poems\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"inspiration\": {\n            \"type\": \"string\",\n            \"description\": \"The inspiration behind the poem\"\n          },\n          \"poem\": {\n            \"type\": \"string\",\n            \"description\": \"The poem itself\"\n          }\n        }\n      }\n    }\n  }\n}"
+              ],
+              "type": "object",
+              "format": "multiline",
+              "default": "{}"
+            },
+            "context": {
+              "title": "Context",
+              "type": "array",
+              "examples": [
+                "the universe within us"
+              ]
+            },
+            "instruction": {
+              "title": "Instruction",
+              "format": "multiline",
+              "examples": [
+                "You are a brilliant poet who specializes in two-line rhyming poems.\nGiven any topic, you can quickly whip up three two-line rhyming poems about it.\nLook at the topic below and do your magic"
+              ],
+              "type": "string"
+            }
+          },
+          "required": [
+            "context",
+            "instruction"
+          ]
+        }
+      }
+    },
+    {
+      "id": "count",
+      "type": "invoke",
+      "configuration": {
+        "path": "#count"
+      }
+    },
+    {
+      "id": "validationError",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "$error": {
+              "type": "string",
+              "title": "$error"
+            },
+            "context": {
+              "type": "string",
+              "title": "context"
+            }
+          },
+          "required": [
+            "$error",
+            "context"
+          ]
+        }
+      }
+    },
+    {
+      "id": "format",
+      "type": "promptTemplate",
+      "configuration": {
+        "template": "Reply as valid JSON of the following format:\n\n```json\n{{schemish}}\n```\n"
+      }
+    },
+    {
+      "id": "schemish",
+      "type": "schemish",
+      "configuration": {}
+    },
+    {
+      "id": "initialValues",
+      "type": "passthrough",
+      "configuration": {
+        "count": 5,
+        "error": "stub"
+      }
+    }
+  ],
+  "kits": [],
+  "graphs": {
+    "assembleContext": {
+      "edges": [
+        {
+          "from": "assembleContext-input",
+          "to": "assembleContext-run",
+          "out": "*"
+        },
+        {
+          "from": "assembleContext-run",
+          "to": "assembleContext-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "assembleContext-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "assembleContext-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function assembleContext({ context, json: json2 }) {\n  if (!context)\n    throw new Error(\"Context is required\");\n  return {\n    context: [\n      ...context,\n      { role: \"model\", parts: { text: JSON.stringify(json2) } }\n    ]\n  };\n}",
+            "name": "assembleContext",
+            "raw": true
+          }
+        },
+        {
+          "id": "assembleContext-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    },
+    "buildContext": {
+      "edges": [
+        {
+          "from": "buildContext-input",
+          "to": "buildContext-run",
+          "out": "*"
+        },
+        {
+          "from": "buildContext-run",
+          "to": "buildContext-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "buildContext-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "buildContext-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function buildContext({ context, format, instruction }) {\n  if (typeof context === \"string\") {\n    context = [{ role: \"user\", parts: [{ text: context }] }];\n  }\n  const list = context || [];\n  if (list.length > 0) {\n    const last = list[list.length - 1];\n    if (last.role === \"user\") {\n      last.parts.unshift(\n        { text: instruction },\n        { text: format }\n      );\n      return { context: list };\n    }\n  }\n  return {\n    context: [\n      ...list,\n      { role: \"user\", parts: [{ text: instruction }, { text: format }] }\n    ]\n  };\n}",
+            "name": "buildContext",
+            "raw": true
+          }
+        },
+        {
+          "id": "buildContext-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    },
+    "count": {
+      "edges": [
+        {
+          "from": "count-input",
+          "to": "count-run",
+          "out": "*"
+        },
+        {
+          "from": "count-run",
+          "to": "count-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "count-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "count-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function count({ context, error, count }) {\n  const num = count - 1;\n  if (num != 0) {\n    return { continue: context, count: num };\n  }\n  return { stop: error };\n}",
+            "name": "count",
+            "raw": true
+          }
+        },
+        {
+          "id": "count-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    }
+  }
+}
