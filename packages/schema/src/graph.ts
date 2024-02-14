@@ -196,6 +196,47 @@ export type GraphIdentifier = string;
  */
 export type SubGraphs = Record<GraphIdentifier, GraphDescriptor>;
 
+export type DeprecatedGraphProperties = {
+
+  /**
+   * The graph's configuration.
+   * @deprecated
+   */
+  inputs?: Record<InputIdentifier, any>;
+
+  /**
+   * The graph's outputs.
+   * @deprecated
+   */
+  outputs?: Record<InputIdentifier, any> | Record<InputIdentifier, any>[];
+
+  /**
+   * Sequence of nodes to execute.
+   * @deprecated
+   */
+  sequence?: NodeIdentifier[];
+
+  /**
+   * Whether to throw an error if a node fails.
+   * @deprecated
+   */
+  throws?: boolean;
+
+  /**
+   * @deprecated
+   */
+  safe?: boolean;
+
+  /**
+   * @deprecated
+   */
+  expectedLabels?: string[][];
+
+  /**
+   * @deprecated
+   */
+  explanation?: string;
+};
 /**
  * Represents a graph.
  */
@@ -224,32 +265,7 @@ export type GraphDescriptor = GraphMetadata & {
    * Arguments that are passed to the graph, useful to bind values to lambdas.
    */
   args?: InputValues;
-
-  /**
-   * The graph's configuration.
-   * @deprecated
-   */
-  inputs?: Record<InputIdentifier, any>;
-
-  /**
-   * The graph's outputs.
-   * @deprecated
-   */
-  outputs?: Record<InputIdentifier, any> | Record<InputIdentifier, any>[];
-
-  /**
-   * Sequence of nodes to execute.
-   * @deprecated
-   */
-  sequence?: NodeIdentifier[];
-
-  /**
-   * Whether to throw an error if a node fails.
-   * @deprecated
-   */
-  throws?: boolean;
-
-};
+} & DeprecatedGraphProperties;
 
 /**
  * Values that are supplied as inputs to the `NodeHandler`.

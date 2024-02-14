@@ -7,35 +7,6 @@
 			"type": "object",
 			"additionalProperties": false,
 			"properties": {
-				"edges": {
-					"type": "array",
-					"items": {
-						"$ref": "#/definitions/Edge"
-					},
-					"description": "The collection of all edges in the graph."
-				},
-				"nodes": {
-					"type": "array",
-					"items": {
-						"$ref": "#/definitions/NodeDescriptor"
-					},
-					"description": "The collection of all nodes in the graph."
-				},
-				"kits": {
-					"type": "array",
-					"items": {
-						"$ref": "#/definitions/KitDescriptor"
-					},
-					"description": "All the kits (collections of node handlers) that are used by the graph."
-				},
-				"graphs": {
-					"$ref": "#/definitions/SubGraphs",
-					"description": "Sub-graphs that are also described by this graph representation."
-				},
-				"args": {
-					"$ref": "#/definitions/InputValues",
-					"description": "Arguments that are passed to the graph, useful to bind values to lambdas."
-				},
 				"inputs": {
 					"$ref": "#/definitions/Record%3CInputIdentifier%2Cany%3E",
 					"description": "The graph's configuration.",
@@ -69,6 +40,53 @@
 					"description": "Whether to throw an error if a node fails.",
 					"deprecated": true
 				},
+				"safe": {
+					"type": "boolean",
+					"deprecated": true
+				},
+				"expectedLabels": {
+					"type": "array",
+					"items": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					},
+					"deprecated": true
+				},
+				"explanation": {
+					"type": "string",
+					"deprecated": true
+				},
+				"edges": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Edge"
+					},
+					"description": "The collection of all edges in the graph."
+				},
+				"nodes": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/NodeDescriptor"
+					},
+					"description": "The collection of all nodes in the graph."
+				},
+				"kits": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/KitDescriptor"
+					},
+					"description": "All the kits (collections of node handlers) that are used by the graph."
+				},
+				"graphs": {
+					"$ref": "#/definitions/SubGraphs",
+					"description": "Sub-graphs that are also described by this graph representation."
+				},
+				"args": {
+					"$ref": "#/definitions/InputValues",
+					"description": "Arguments that are passed to the graph, useful to bind values to lambdas."
+				},
 				"$schema": {
 					"type": "string",
 					"description": "The schema of the graph."
@@ -95,6 +113,16 @@
 				"nodes"
 			],
 			"description": "Represents a graph."
+		},
+		"Record<InputIdentifier,any>": {
+			"type": "object",
+			"propertyNames": {
+				"description": "Unique identifier of a node's input."
+			}
+		},
+		"NodeIdentifier": {
+			"type": "string",
+			"description": "Unique identifier of a node in a graph."
 		},
 		"Edge": {
 			"type": "object",
@@ -130,10 +158,6 @@
 			],
 			"additionalProperties": false,
 			"description": "Represents an edge in a graph."
-		},
-		"NodeIdentifier": {
-			"type": "string",
-			"description": "Unique identifier of a node in a graph."
 		},
 		"InputIdentifier": {
 			"type": "string",
@@ -275,12 +299,6 @@
 			"additionalProperties": {
 				"$ref": "#/definitions/NodeValue"
 			},
-			"propertyNames": {
-				"description": "Unique identifier of a node's input."
-			}
-		},
-		"Record<InputIdentifier,any>": {
-			"type": "object",
 			"propertyNames": {
 				"description": "Unique identifier of a node's input."
 			}
