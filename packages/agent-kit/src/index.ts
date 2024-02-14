@@ -9,7 +9,6 @@ import { GraphToKitAdapter, KitBuilder } from "@google-labs/breadboard/kits";
 import kit from "./kit.js";
 import { addKit } from "@google-labs/breadboard";
 import { WorkerType } from "./boards/worker.js";
-import { InstructionType } from "./boards/instruction.js";
 import { addDescriber, workerDescriber } from "./hacks.js";
 
 // TODO: Replace with the actual URL.
@@ -30,7 +29,6 @@ const builder = new KitBuilder(
 
 const AgentKit = builder.build({
   worker: addDescriber(adapter.handlerForNode("worker"), workerDescriber),
-  instruction: adapter.handlerForNode("instruction"),
 });
 
 export type AgentKit = InstanceType<typeof AgentKit>;
@@ -40,7 +38,6 @@ export type AgentKitType = {
    * The essential building block of the Agent Kit.
    */
   worker: WorkerType;
-  instruction: InstructionType;
 };
 
 export default AgentKit;
