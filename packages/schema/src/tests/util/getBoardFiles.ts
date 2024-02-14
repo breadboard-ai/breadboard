@@ -1,4 +1,4 @@
-import fs from "fs";
+import * as fs from "fs";
 import { getJsonFiles } from "./getJsonFiles.js";
 
 export function getBoardFiles(directory: string) {

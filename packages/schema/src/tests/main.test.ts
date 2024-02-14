@@ -1,8 +1,8 @@
-import Ajv, { ValidateFunction } from "ajv";
-import assert from "assert/strict";
-import fs from "fs";
+import Ajv, { type ValidateFunction } from "ajv";
+import * as fs from "fs";
+import * as assert from "node:assert";
 import test from "node:test";
-import path from "path";
+import * as path from "path";
 import { ascendToPackageDir } from "./util/ascendToPackageDir.js";
 import { getBoardFiles } from "./util/getBoardFiles.js";
 

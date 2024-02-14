@@ -1,4 +1,4 @@
-import path from "path";
+import * as path from "path";
 import packageJson from "../../package.json";
 
 export function generateSchemaId() {

@@ -1,7 +1,7 @@
 #!/usr/bin/env npx -y tsx
 
-import fs from "fs";
-import path from "path";
+import * as fs from "fs";
+import * as path from "path";
 
 const filePath = path.resolve("src/graph.ts");
 console.assert(fs.existsSync(filePath), `File not found: ${filePath}`);
