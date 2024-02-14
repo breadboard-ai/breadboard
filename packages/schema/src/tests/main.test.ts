@@ -1,4 +1,4 @@
-import Ajv, { type ValidateFunction } from "ajv";
+import { default as Ajv, type ValidateFunction } from "ajv";
 import * as fs from "fs";
 import * as assert from "node:assert";
 import test from "node:test";
