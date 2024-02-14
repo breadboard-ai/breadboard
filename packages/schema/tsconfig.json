@@ -1,15 +1,7 @@
 {
   "compilerOptions": {
-    "composite": true,
-    "esModuleInterop": true,
-    "inlineSources": true,
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "outDir": "./dist",
     "resolveJsonModule": true,
-    "rootDir": "./",
-    "target": "ESNext",
-    "verbatimModuleSyntax": true
+    "outDir": "dist",
   },
   "extends": "@google-labs/tsconfig/base.json",
   "include": [
