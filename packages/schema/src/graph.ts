@@ -213,7 +213,7 @@ export type GraphDescriptor = GraphMetadata & {
   /**
    * All the kits (collections of node handlers) that are used by the graph.
    */
-  kits?: KitReference[];
+  kits?: KitDescriptor[];
 
   /**
    * Sub-graphs that are also described by this graph representation.
