@@ -30,6 +30,8 @@
   "scripts": {
     "build": "wireit",
     "test": "wireit",
+    "test:js": "wireit",
+    "test:ts": "wireit",
     "test:watch": "wireit",
     "prepack": "wireit",
     "build:tsc": "wireit",
@@ -42,13 +44,27 @@
         "build:schema"
       ]
     },
-    "test": {
+    "test:js": {
       "command": "node --test-reporter=spec --test ./dist/__tests__/**/*.test.js",
       "dependencies": [
         "build"
       ],
       "files": [
+        "breadboard.schema.json",
         "package.json",
+        "dist/**/*",
+        "__tests__/**/*.ts"
+      ]
+    },
+    "test:ts": {
+      "command": "node --import=tsx --test-reporter=spec --test ./__tests__/**/*.test.ts",
+      "dependencies": [
+        "build:schema"
+      ],
+      "files": [
+        "breadboard.schema.json",
+        "package.json",
+        "src/**",
         "__tests__/**/*.ts"
       ]
     },
@@ -86,6 +102,12 @@
       ],
       "output": [
         "breadboard.schema.json"
+      ]
+    },
+    "test": {
+      "dependencies": [
+        "test:js",
+        "test:ts"
       ]
     }
   },
