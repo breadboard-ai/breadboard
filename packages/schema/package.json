@@ -30,7 +30,6 @@
   "scripts": {
     "build": "wireit",
     "test": "wireit",
-    "test:watch": "wireit",
     "prepack": "wireit",
     "build:tsc": "wireit",
     "build:schema": "wireit"
@@ -52,12 +51,6 @@
         "package.json",
         "dist/**/*",
         "src/tests/**/*.ts"
-      ]
-    },
-    "test:watch": {
-      "command": "npm run test --watch",
-      "dependencies": [
-        "build"
       ]
     },
     "prepack": {
