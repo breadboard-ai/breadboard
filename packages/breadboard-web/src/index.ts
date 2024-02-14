@@ -400,6 +400,10 @@ export class Main extends LitElement {
         return;
       }
 
+      if (result.type === "skip") {
+        console.log("Skipping", result);
+      }
+
       const answer = await ui.handleStateChange(result, runDuration);
       await this.#waitIfPaused(answer);
 
