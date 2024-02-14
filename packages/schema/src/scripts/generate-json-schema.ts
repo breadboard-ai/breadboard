@@ -15,7 +15,6 @@ import { generateSchemaId } from "./generate-schema-id.js";
 const config: Config = {
   additionalProperties: false,
   expose: "all",
-  markdownDescription: true,
   path: filePath,
   schemaId: generateSchemaId(),
   sortProps: true,
