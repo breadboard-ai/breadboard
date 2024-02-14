@@ -1,0 +1,134 @@
+{
+  "title": "Chat bot 2.0",
+  "description": "A board that uses the Agent kit to create a simple chat bot (work in progress, doesn't quite work yet)",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "repeat",
+      "to": "output-2",
+      "out": "context",
+      "in": "context"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "type": "string",
+              "title": "context"
+            }
+          },
+          "required": [
+            "context"
+          ]
+        }
+      }
+    },
+    {
+      "id": "repeat",
+      "type": "repeater",
+      "configuration": {
+        "context": [],
+        "worker": {
+          "kind": "board",
+          "board": {
+            "kits": [],
+            "edges": [
+              {
+                "from": "bot",
+                "to": "output-2",
+                "out": "context",
+                "in": "context"
+              },
+              {
+                "from": "bot",
+                "to": "output-2",
+                "out": "text",
+                "in": "text"
+              },
+              {
+                "from": "askUser",
+                "to": "bot",
+                "out": "context",
+                "in": "context"
+              },
+              {
+                "from": "input-1",
+                "to": "askUser",
+                "out": "context",
+                "in": "context"
+              }
+            ],
+            "nodes": [
+              {
+                "id": "output-2",
+                "type": "output",
+                "configuration": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "context": {
+                        "type": "string",
+                        "title": "Context",
+                        "description": "The context after generation. Pass this to the next agent when chaining them together."
+                      },
+                      "text": {
+                        "type": "string",
+                        "title": "Text",
+                        "description": "The output from the agent. Use this to just get the output without any previous context."
+                      }
+                    },
+                    "required": [
+                      "context",
+                      "text"
+                    ]
+                  }
+                }
+              },
+              {
+                "id": "bot",
+                "type": "worker",
+                "configuration": {
+                  "instruction": "As a friendlly assistant bot, reply in a friendly, helpful, and brief manner to assist the user as quickly as possible to the request below."
+                }
+              },
+              {
+                "id": "askUser",
+                "type": "invoke",
+                "configuration": {
+                  "$board": "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/breadboard-web/public/graphs/ask-user.json"
+                }
+              },
+              {
+                "id": "input-1",
+                "type": "input",
+                "configuration": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "context": {
+                        "type": "string",
+                        "title": "context"
+                      }
+                    },
+                    "required": [
+                      "context"
+                    ]
+                  }
+                }
+              }
+            ],
+            "graphs": {}
+          }
+        },
+        "max": 3
+      }
+    }
+  ],
+  "graphs": {}
+}
