@@ -6,7 +6,7 @@ import * as path from "path";
 import { ascendToPackageDir } from "./util/ascendToPackageDir.js";
 import { getBoardFiles } from "./util/getBoardFiles.js";
 
-let ajv: Ajv.Ajv;
+let ajv: any;
 try {
   ajv = new Ajv();
 } catch (e) {
