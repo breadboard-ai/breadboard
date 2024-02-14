@@ -1,10 +1,8 @@
 {
   "compilerOptions": {
-    "esModuleInterop": false,
     "outDir": "dist",
     "resolveJsonModule": true,
-    "rootDir": "src",
-    "verbatimModuleSyntax": true
+    "rootDir": "src"
   },
   "extends": "@google-labs/tsconfig/base.json",
   "include": [
