@@ -46,7 +46,7 @@
       ]
     },
     "test": {
-      "command": "node --import=tsx --test-reporter tap --test __tests__/**/*.test.ts",
+      "command": "node --import=tsx --test __tests__/**/*.test.ts",
       "dependencies": [
         "build"
       ]
