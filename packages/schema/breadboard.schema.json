@@ -36,6 +36,34 @@
 					"$ref": "#/definitions/InputValues",
 					"description": "Arguments that are passed to the graph, useful to bind values to lambdas."
 				},
+				"inputs": {
+					"$ref": "#/definitions/Record%3CInputIdentifier%2Cany%3E",
+					"description": "The graph's configuration.",
+					"deprecated": true
+				},
+				"outputs": {
+					"anyOf": [
+						{
+							"$ref": "#/definitions/Record%3CInputIdentifier%2Cany%3E"
+						},
+						{
+							"type": "array",
+							"items": {
+								"$ref": "#/definitions/Record%3CInputIdentifier%2Cany%3E"
+							}
+						}
+					],
+					"description": "The graph's outputs.",
+					"deprecated": true
+				},
+				"sequence": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/NodeIdentifier"
+					},
+					"description": "Sequence of nodes to execute.",
+					"deprecated": true
+				},
 				"$schema": {
 					"type": "string",
 					"description": "The schema of the graph."
@@ -242,6 +270,12 @@
 			"additionalProperties": {
 				"$ref": "#/definitions/NodeValue"
 			},
+			"propertyNames": {
+				"description": "Unique identifier of a node's input."
+			}
+		},
+		"Record<InputIdentifier,any>": {
+			"type": "object",
 			"propertyNames": {
 				"description": "Unique identifier of a node's input."
 			}

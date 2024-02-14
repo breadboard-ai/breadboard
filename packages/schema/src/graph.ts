@@ -224,6 +224,24 @@ export type GraphDescriptor = GraphMetadata & {
    * Arguments that are passed to the graph, useful to bind values to lambdas.
    */
   args?: InputValues;
+
+  /**
+   * The graph's configuration.
+   * @deprecated
+   */
+  inputs?: Record<InputIdentifier, any>;
+
+  /**
+   * The graph's outputs.
+   * @deprecated
+   */
+  outputs?: Record<InputIdentifier, any> | Record<InputIdentifier, any>[];
+
+  /**
+   * Sequence of nodes to execute.
+   * @deprecated
+   */
+  sequence?: NodeIdentifier[];
 };
 
 /**
