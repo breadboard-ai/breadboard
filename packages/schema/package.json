@@ -48,9 +48,9 @@
         "build"
       ],
       "files": [
-        "package.json"
-      ],
-      "output": []
+        "package.json",
+        "__tests__/**/*.ts"
+      ]
     },
     "test:watch": {
       "command": "npm run test --watch",
@@ -74,7 +74,7 @@
         "../../core/tsconfig/base.json"
       ],
       "output": [
-        "dist/",
+        "dist/**",
         "tsconfig.tsbuildinfo"
       ]
     },
