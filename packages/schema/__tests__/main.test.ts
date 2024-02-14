@@ -6,7 +6,7 @@ import path from "path";
 import { ascendToPackageDir } from "./util/ascendToPackageDir.js";
 import { getBoardFiles } from "./util/getBoardFiles.js";
 
-const ajv = new Ajv();
+const ajv = new Ajv.default();
 let validate: ValidateFunction;
 
 test.before(() => {
