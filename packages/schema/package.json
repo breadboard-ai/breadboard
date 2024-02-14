@@ -37,19 +37,20 @@
   },
   "wireit": {
     "build": {
-      "files": [
-        "package.json"
-      ],
       "dependencies": [
         "build:tsc",
         "build:schema"
       ]
     },
     "test": {
-      "command": "node --import=tsx --test __tests__/**/*.test.ts",
+      "command": "node --test-reporter=spec --test ./dist/__tests__/**/*.test.js",
       "dependencies": [
         "build"
-      ]
+      ],
+      "files": [
+        "package.json"
+      ],
+      "output": []
     },
     "test:watch": {
       "command": "npm run test --watch",
