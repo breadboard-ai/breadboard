@@ -2,11 +2,15 @@
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
+    "module": "ESNext",
+    "moduleResolution": "Node",
     "outDir": "dist",
     "resolveJsonModule": true,
-    "rootDir": "src"
+    "rootDir": "src",
+    "skipLibCheck": true,
+    "strict": false,
+    "target": "ESNext"
   },
-  "extends": "@google-labs/tsconfig/base.json",
   "include": [
     "src/**/*.ts",
     "src/**/*.json",
