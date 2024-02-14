@@ -24,9 +24,12 @@ test("Schema is valid.", async () => {
   assert.ok(validate);
 });
 
-const allBoardFiles = getBoardFiles(ascendToPackageDir());
+const packageRoot = ascendToPackageDir();
+const allBoardFiles = getBoardFiles(packageRoot);
+
 for (const file of allBoardFiles) {
-  test(`Validating ${file}`, async () => {
+  const relativePath = path.relative(packageRoot, file);
+  test(`Validating ${relativePath}`, async () => {
     const data = JSON.parse(fs.readFileSync(file, "utf-8"));
     const valid = validate(data);
     assert.ok(valid);
