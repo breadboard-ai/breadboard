@@ -6,13 +6,7 @@ import * as path from "path";
 import { ascendToPackageDir } from "./util/ascendToPackageDir.js";
 import { getBoardFiles } from "./util/getBoardFiles.js";
 
-let ajv: any;
-try {
-  ajv = new Ajv();
-} catch (e) {
-  // @ts-ignore
-  ajv = new Ajv.default();
-}
+let ajv = new Ajv();
 let validate: ValidateFunction;
 
 test.before(() => {
