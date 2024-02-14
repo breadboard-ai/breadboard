@@ -76,7 +76,7 @@
         "../../core/tsconfig/base.json"
       ],
       "output": [
-        "dist/**",
+        "dist/",
         "tsconfig.tsbuildinfo"
       ]
     },
