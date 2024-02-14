@@ -13,7 +13,7 @@
   },
   "files": [
     "CHANGELOG.md",
-    "dist/graph.{js,js.map,d.ts,d.ts.map}",
+    "dist/src/graph.{js,js.map,d.ts,d.ts.map}",
     "breadboard.schema.json"
   ],
   "type": "module",
@@ -22,8 +22,8 @@
     "./breadboard.schema.json": "./breadboard.schema.json",
     "./graph.js": {
       "import": {
-        "types": "./dist/graph.d.ts",
-        "default": "./dist/graph.js"
+        "types": "./dist/src/graph.d.ts",
+        "default": "./dist/src/graph.js"
       }
     }
   },
