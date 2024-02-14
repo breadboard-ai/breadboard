@@ -1,6 +1,6 @@
 {
   "title": "Chat bot 2.0",
-  "description": "A board that uses the Agent kit to create a simple chat bot",
+  "description": "A board that uses the Agent kit to create a simple chat bot (work in progress, doesn't quite work yet)",
   "version": "0.0.1",
   "edges": [
     {
@@ -33,46 +33,97 @@
       "id": "repeat",
       "type": "repeater",
       "configuration": {
-        "context": [
-          "You are a helpful chat bot. You are here to help the user."
-        ],
+        "context": [],
         "worker": {
           "kind": "board",
           "board": {
             "kits": [],
             "edges": [
               {
-                "from": "fn-16-input",
-                "to": "fn-16-run",
-                "out": "*"
+                "from": "bot",
+                "to": "output-2",
+                "out": "context",
+                "in": "context"
               },
               {
-                "from": "fn-16-run",
-                "to": "fn-16-output",
-                "out": "*"
+                "from": "bot",
+                "to": "output-2",
+                "out": "text",
+                "in": "text"
+              },
+              {
+                "from": "askUser",
+                "to": "bot",
+                "out": "context",
+                "in": "context"
+              },
+              {
+                "from": "input-1",
+                "to": "askUser",
+                "out": "context",
+                "in": "context"
               }
             ],
             "nodes": [
               {
-                "id": "fn-16-input",
-                "type": "input",
-                "configuration": {}
-              },
-              {
-                "id": "fn-16-run",
-                "type": "runJavascript",
+                "id": "output-2",
+                "type": "output",
                 "configuration": {
-                  "code": "function fn_16({context}) {return{context:[...context,{hello:\"world\"}]}}",
-                  "name": "fn_16",
-                  "raw": true
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "context": {
+                        "type": "string",
+                        "title": "Context",
+                        "description": "The context after generation. Pass this to the next agent when chaining them together."
+                      },
+                      "text": {
+                        "type": "string",
+                        "title": "Text",
+                        "description": "The output from the agent. Use this to just get the output without any previous context."
+                      }
+                    },
+                    "required": [
+                      "context",
+                      "text"
+                    ]
+                  }
                 }
               },
               {
-                "id": "fn-16-output",
-                "type": "output",
-                "configuration": {}
+                "id": "bot",
+                "type": "worker",
+                "configuration": {
+                  "instruction": "As a friendlly assistant bot, reply in a friendly, helpful, and brief manner to assist the user as quickly as possible to the request below."
+                }
+              },
+              {
+                "id": "askUser",
+                "type": "invoke",
+                "configuration": {
+                  "$board": "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/breadboard-web/public/graphs/ask-user.json"
+                }
+              },
+              {
+                "id": "input-1",
+                "type": "input",
+                "configuration": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "context": {
+                        "type": "string",
+                        "title": "context"
+                      }
+                    },
+                    "required": [
+                      "context"
+                    ]
+                  }
+                }
               }
-            ]
+            ],
+            "graphs": {}
           }
         },
         "max": 3
