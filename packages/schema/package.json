@@ -66,6 +66,7 @@
     "build:tsc": {
       "command": "tsc --pretty",
       "files": [
+        "package.json",
         "src/**/*.ts",
         "tsconfig.json",
         "../../core/tsconfig/base.json"
