@@ -1,14 +1,14 @@
 {
   "compilerOptions": {
-    "resolveJsonModule": true,
     "outDir": "dist",
+    "resolveJsonModule": true,
+    "rootDir": "src"
   },
   "extends": "@google-labs/tsconfig/base.json",
   "include": [
-    "src/**/*",
+    "src/**/*.ts",
     "src/**/*.json",
     "package.json",
-    "breadboard.schema.json",
-    "__tests__/**/*.ts",
+    "breadboard.schema.json"
   ]
 }

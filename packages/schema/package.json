@@ -13,7 +13,7 @@
   },
   "files": [
     "CHANGELOG.md",
-    "dist/src/graph.{js,js.map,d.ts,d.ts.map}",
+    "dist/graph.{js,js.map,d.ts,d.ts.map}",
     "breadboard.schema.json"
   ],
   "type": "module",
@@ -22,16 +22,14 @@
     "./breadboard.schema.json": "./breadboard.schema.json",
     "./graph.js": {
       "import": {
-        "types": "./dist/src/graph.d.ts",
-        "default": "./dist/src/graph.js"
+        "types": "./dist/graph.d.ts",
+        "default": "./dist/graph.js"
       }
     }
   },
   "scripts": {
     "build": "wireit",
     "test": "wireit",
-    "test:js": "wireit",
-    "test:ts": "wireit",
     "test:watch": "wireit",
     "prepack": "wireit",
     "build:tsc": "wireit",
@@ -44,8 +42,8 @@
         "build:schema"
       ]
     },
-    "test:js": {
-      "command": "node --test-reporter=spec --test ./dist/__tests__/**/*.test.js",
+    "test": {
+      "command": "node --test-reporter=spec --test ./dist/tests/**/*.test.js",
       "dependencies": [
         "build"
       ],
@@ -53,19 +51,7 @@
         "breadboard.schema.json",
         "package.json",
         "dist/**/*",
-        "__tests__/**/*.ts"
-      ]
-    },
-    "test:ts": {
-      "command": "node --import=tsx --test-reporter=spec --test ./__tests__/**/*.test.ts",
-      "dependencies": [
-        "build:schema"
-      ],
-      "files": [
-        "breadboard.schema.json",
-        "package.json",
-        "src/**",
-        "__tests__/**/*.ts"
+        "src/tests/**/*.ts"
       ]
     },
     "test:watch": {
@@ -86,7 +72,7 @@
         "package.json",
         "src/**/*.ts",
         "tsconfig.json",
-        "__tests__/**/*.ts",
+        "src/tests/**/*.ts",
         "../../core/tsconfig/base.json"
       ],
       "output": [
@@ -102,12 +88,6 @@
       ],
       "output": [
         "breadboard.schema.json"
-      ]
-    },
-    "test": {
-      "dependencies": [
-        "test:js",
-        "test:ts"
       ]
     }
   },
