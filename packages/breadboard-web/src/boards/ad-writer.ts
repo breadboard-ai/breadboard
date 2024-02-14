@@ -5,12 +5,7 @@
  */
 
 import { Schema, board } from "@google-labs/breadboard";
-import { core } from "@google-labs/core-kit";
-import { templates } from "@google-labs/template-kit";
-import { json } from "@google-labs/json-kit";
 import { agents } from "@google-labs/agent-kit";
-
-const jsonAgent = "json-agent.json";
 
 const adSchema = {
   type: "object",
@@ -35,8 +30,8 @@ const requirementsSchema = {
   },
 } satisfies Schema;
 
-export default await board(({ text }) => {
-  text
+export default await board(({ context }) => {
+  context
     .title("Ad specs")
     .format("multiline")
     .examples(
@@ -45,7 +40,7 @@ export default await board(({ text }) => {
 
   const requirementsExtractor = agents.structuredWorker({
     $id: "requiremenstExtractor",
-    context: text,
+    context,
     instruction: `Given the following specs, extract requirements for writing an ad copy`,
     schema: requirementsSchema,
   });
@@ -141,5 +136,5 @@ export default await board(({ text }) => {
 }).serialize({
   title: "Ad Writer",
   description: "An example of chain of agents working on writing an ad",
-  version: "0.0.2",
+  version: "0.0.3",
 });

@@ -1,7 +1,7 @@
 {
   "title": "Ad Writer",
   "description": "An example of chain of agents working on writing an ad",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "edges": [
     {
       "from": "improver2",
@@ -60,7 +60,7 @@
     {
       "from": "input-1",
       "to": "requiremenstExtractor",
-      "out": "text",
+      "out": "context",
       "in": "context"
     }
   ],
@@ -245,7 +245,7 @@
         "schema": {
           "type": "object",
           "properties": {
-            "text": {
+            "context": {
               "title": "Ad specs",
               "format": "multiline",
               "examples": [
@@ -255,7 +255,7 @@
             }
           },
           "required": [
-            "text"
+            "context"
           ]
         }
       }
