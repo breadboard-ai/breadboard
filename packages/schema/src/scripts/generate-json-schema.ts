@@ -21,7 +21,7 @@ if (!fs.existsSync(tsconfigPath)) {
 
 const config: Config = {
   additionalProperties: false,
-  expose: "all",
+  expose: "export",
   path: filePath,
   schemaId: generateSchemaId(),
   sortProps: true,

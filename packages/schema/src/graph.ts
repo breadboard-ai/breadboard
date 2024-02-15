@@ -19,7 +19,7 @@ export type NodeValue =
   | undefined
   | NodeValue[]
   | Capability
-  | { [key: string]: NodeValue };
+  | { [key: string]: NodeValue; };
 
 /**
  * Unique identifier of a node in a graph.
@@ -198,26 +198,50 @@ export type SubGraphs = Record<GraphIdentifier, GraphDescriptor>;
 
 /**
  * Properties used for testing the foundational traversal tests
+ * These properties are for internal testing only and should not be used.
+ * @deprecated These properties are for internal testing only and should not be used.
  */
-export type TestProperties = {
+type TestProperties = {
   /**
-   * Inputs to provide to the graph.
+   * For internal testing only. Do not use.
+   * @deprecated For internal testing only. Do not use.
    */
   inputs?: Record<InputIdentifier, any>;
 
   /**
-   * Expected outputs from the graph.
-   */
+   * For internal testing only. Do not use.
+   * @deprecated For internal testing only. Do not use.
+  */
   outputs?: Record<InputIdentifier, any> | Record<InputIdentifier, any>[];
 
   /**
-   * The sequence of nodes to traverse.
-   */
+  * For internal testing only. Do not use.
+  * @deprecated For internal testing only. Do not use.
+  */
   sequence?: NodeIdentifier[];
 
+  /**
+   * For internal testing only. Do not use.
+   * @deprecated For internal testing only. Do not use.
+   */
   throws?: boolean;
+
+  /**
+   * For internal testing only. Do not use.
+   * @deprecated For internal testing only. Do not use.
+   */
   safe?: boolean;
+
+  /**
+   * For internal testing only. Do not use.
+   * @deprecated For internal testing only. Do not use.
+   */
   expectedLabels?: string[][];
+
+  /**
+   * For internal testing only. Do not use.
+   * @deprecated For internal testing only. Do not use.
+   */
   explanation?: string;
 };
 

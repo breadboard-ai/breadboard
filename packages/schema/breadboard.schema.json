@@ -8,35 +8,51 @@
 			"additionalProperties": false,
 			"properties": {
 				"inputs": {
-					"$ref": "#/definitions/Record%3CInputIdentifier%2Cany%3E",
-					"description": "Inputs to provide to the graph."
+					"type": "object",
+					"propertyNames": {
+						"description": "Unique identifier of a node's input."
+					},
+					"description": "For internal testing only. Do not use.",
+					"deprecated": "For internal testing only. Do not use."
 				},
 				"outputs": {
 					"anyOf": [
 						{
-							"$ref": "#/definitions/Record%3CInputIdentifier%2Cany%3E"
+							"type": "object",
+							"propertyNames": {
+								"description": "Unique identifier of a node's input."
+							}
 						},
 						{
 							"type": "array",
 							"items": {
-								"$ref": "#/definitions/Record%3CInputIdentifier%2Cany%3E"
+								"type": "object",
+								"propertyNames": {
+									"description": "Unique identifier of a node's input."
+								}
 							}
 						}
 					],
-					"description": "Expected outputs from the graph."
+					"description": "For internal testing only. Do not use.",
+					"deprecated": "For internal testing only. Do not use."
 				},
 				"sequence": {
 					"type": "array",
 					"items": {
 						"$ref": "#/definitions/NodeIdentifier"
 					},
-					"description": "The sequence of nodes to traverse."
+					"description": "For internal testing only. Do not use.",
+					"deprecated": "For internal testing only. Do not use."
 				},
 				"throws": {
-					"type": "boolean"
+					"type": "boolean",
+					"description": "For internal testing only. Do not use.",
+					"deprecated": "For internal testing only. Do not use."
 				},
 				"safe": {
-					"type": "boolean"
+					"type": "boolean",
+					"description": "For internal testing only. Do not use.",
+					"deprecated": "For internal testing only. Do not use."
 				},
 				"expectedLabels": {
 					"type": "array",
@@ -45,10 +61,14 @@
 						"items": {
 							"type": "string"
 						}
-					}
+					},
+					"description": "For internal testing only. Do not use.",
+					"deprecated": "For internal testing only. Do not use."
 				},
 				"explanation": {
-					"type": "string"
+					"type": "string",
+					"description": "For internal testing only. Do not use.",
+					"deprecated": "For internal testing only. Do not use."
 				},
 				"edges": {
 					"type": "array",
@@ -105,12 +125,6 @@
 				"nodes"
 			],
 			"description": "Represents a graph."
-		},
-		"Record<InputIdentifier,any>": {
-			"type": "object",
-			"propertyNames": {
-				"description": "Unique identifier of a node's input."
-			}
 		},
 		"NodeIdentifier": {
 			"type": "string",
@@ -187,14 +201,11 @@
 			"description": "Unique identifier of a node's type."
 		},
 		"NodeConfiguration": {
-			"$ref": "#/definitions/Record%3Cstring%2CNodeValue%3E",
-			"description": "Values that are supplied as part of the graph. These values are merged with the `InputValues` and supplied as inputs to the `NodeHandler`."
-		},
-		"Record<string,NodeValue>": {
 			"type": "object",
 			"additionalProperties": {
 				"$ref": "#/definitions/NodeValue"
-			}
+			},
+			"description": "Values that are supplied as part of the graph. These values are merged with the `InputValues` and supplied as inputs to the `NodeHandler`."
 		},
 		"NodeValue": {
 			"anyOf": [
@@ -270,30 +281,24 @@
 			]
 		},
 		"SubGraphs": {
-			"$ref": "#/definitions/Record%3CGraphIdentifier%2CGraphDescriptor%3E",
-			"description": "Represents a collection of sub-graphs. The key is the identifier of the sub-graph. The value is the descriptor of the sub-graph."
-		},
-		"Record<GraphIdentifier,GraphDescriptor>": {
 			"type": "object",
 			"additionalProperties": {
 				"$ref": "#/definitions/GraphDescriptor"
 			},
 			"propertyNames": {
 				"description": "Unique identifier of a graph."
-			}
+			},
+			"description": "Represents a collection of sub-graphs. The key is the identifier of the sub-graph. The value is the descriptor of the sub-graph."
 		},
 		"InputValues": {
-			"$ref": "#/definitions/Record%3CInputIdentifier%2CNodeValue%3E",
-			"description": "Values that are supplied as inputs to the `NodeHandler`."
-		},
-		"Record<InputIdentifier,NodeValue>": {
 			"type": "object",
 			"additionalProperties": {
 				"$ref": "#/definitions/NodeValue"
 			},
 			"propertyNames": {
 				"description": "Unique identifier of a node's input."
-			}
+			},
+			"description": "Values that are supplied as inputs to the `NodeHandler`."
 		}
 	}
 }
