@@ -21,7 +21,11 @@
     "build:tsc": "wireit",
     "build:rollup": "wireit",
     "lint": "wireit",
-    "merm": "wireit"
+    "merm": "wireit",
+    "test:ava": "wireit",
+    "test:node": "wireit",
+    "test:node:js": "wireit",
+    "test:node:ts": "wireit"
   },
   "wireit": {
     "build": {
@@ -64,6 +68,12 @@
       ]
     },
     "test": {
+      "dependencies": [
+        "test:ava",
+        "test:node"
+      ]
+    },
+    "test:ava": {
       "command": "ava",
       "env": {
         "FORCE_COLOR": "1"
@@ -113,6 +123,23 @@
       "output": [
         "docs/api/"
       ]
+    },
+    "test:node": {
+      "dependencies": [
+        "test:node:js",
+        "test:node:ts"
+      ]
+    },
+    "test:node:js": {
+      "dependencies": [
+        "build:tsc"
+      ],
+      "command": "node --test dist/**/*.node.test.js",
+      "files":[],
+      "output": []
+    },
+    "test:node:ts": {
+      "command": "node --test --loader ts-node/esm tests/**/*.node.test.ts"
     }
   },
   "repository": {
@@ -129,6 +156,7 @@
     "timeout": "30s",
     "files": [
       "tests/**/*.ts",
+      "!tests/**/*.node.test.ts",
       "!tests/type-checks.ts"
     ],
     "workerThreads": false,
@@ -148,6 +176,7 @@
   "homepage": "https://github.com/breadboard-ai/breadboard/tree/main/packages/breadboard#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
+    "@cfworker/json-schema": "^1.12.8",
     "@definitelytyped/dtslint": "^0.2.6",
     "@google-labs/tsconfig": "^0.0.1",
     "@rollup/plugin-node-resolve": "^15.2.3",

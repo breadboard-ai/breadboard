@@ -35,7 +35,7 @@ import { BuilderScope } from "./scope.js";
  * Implementation of the overloaded board function.
  */
 export const board: BoardFactory = (
-  optionsOrFn:
+  optionsOrFn?:
     | ({
         input?: Schema;
         output?: Schema;
@@ -45,7 +45,7 @@ export const board: BoardFactory = (
         name?: string;
       } & GraphMetadata)
     | GraphDeclarationFunction,
-  maybeFn?: GraphDeclarationFunction
+  maybeFn: GraphDeclarationFunction = () => ({})
 ) => {
   const options = typeof optionsOrFn === "object" ? optionsOrFn : {};
   options.graph ??= typeof optionsOrFn === "function" ? optionsOrFn : maybeFn;
