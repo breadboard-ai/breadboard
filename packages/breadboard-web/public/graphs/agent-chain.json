@@ -98,10 +98,8 @@
               },
               {
                 "id": "agent",
-                "type": "invoke",
-                "configuration": {
-                  "path": "json-agent.json"
-                }
+                "type": "structuredWorker",
+                "configuration": {}
               },
               {
                 "id": "input-1",
