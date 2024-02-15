@@ -22,11 +22,32 @@ export default await board(({ paragraph }) => {
     instruction:
       "You are a genius legal expert. You specialize in carefully reading the dense paragraphs of patent application texts and summarizing them in a few simple sentences that most people can understand.",
   });
-  const critique = agents.worker({
+  const critique = agents.structuredWorker({
     $id: "critique",
     context: summarize.context,
     instruction:
       "You are a reviewer of summaries produced from patent applications. Compare the summary with the original text and identify three areas of improvement. What is missing? What could be better phrased? What could be removed? Is there any technical jargon that could be replaced with simpler terms?",
+    schema: {
+      type: "object",
+      properties: {
+        improvements: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              improvement: {
+                type: "string",
+                description: "a suggested improvement",
+              },
+              reasoning: {
+                type: "string",
+                description: "reasoning behind the improvement",
+              },
+            },
+          },
+        },
+      },
+    },
   });
   const improve = agents.worker({
     $id: "improve",

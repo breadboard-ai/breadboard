@@ -82,9 +82,30 @@
     },
     {
       "id": "critique",
-      "type": "worker",
+      "type": "structuredWorker",
       "configuration": {
-        "instruction": "You are a reviewer of summaries produced from patent applications. Compare the summary with the original text and identify three areas of improvement. What is missing? What could be better phrased? What could be removed? Is there any technical jargon that could be replaced with simpler terms?"
+        "instruction": "You are a reviewer of summaries produced from patent applications. Compare the summary with the original text and identify three areas of improvement. What is missing? What could be better phrased? What could be removed? Is there any technical jargon that could be replaced with simpler terms?",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "improvements": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "improvement": {
+                    "type": "string",
+                    "description": "a suggested improvement"
+                  },
+                  "reasoning": {
+                    "type": "string",
+                    "description": "reasoning behind the improvement"
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     {
