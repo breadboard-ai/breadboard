@@ -74,7 +74,10 @@
       ]
     },
     "build:schema": {
-      "command": "tsx src/scripts/generate-json-schema.ts",
+      "command": "node ./dist/scripts/generate-json-schema.js",
+      "dependencies": [
+        "build:tsc"
+      ],
       "files": [
         "package.json",
         "src/**/*.ts"
