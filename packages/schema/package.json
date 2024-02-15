@@ -42,7 +42,7 @@
       ]
     },
     "test": {
-      "command": "node --test-reporter=spec --test ./dist/tests/**/*.test.js",
+      "command": "find dist -name '*.test.js' | xargs node --test",
       "dependencies": [
         "build"
       ],
