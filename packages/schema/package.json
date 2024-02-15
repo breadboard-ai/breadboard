@@ -49,7 +49,7 @@
       "files": [
         "breadboard.schema.json",
         "package.json",
-        "dist/**/*",
+        "dist/",
         "src/tests/**/*.ts"
       ]
     },
