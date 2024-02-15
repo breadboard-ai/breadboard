@@ -6,7 +6,7 @@
 
 import * as path from "path";
 import packageJson from "../../package.json" assert { type: "json" };
-import { ascendToPackageDir } from "../tests/util/ascend-to-package-dir.js";
+import { ascendToPackageDir } from "./util/ascend-to-package-dir.js";
 
 export function generateSchemaId() {
   const PACKAGE_ROOT = ascendToPackageDir(packageJson.name)

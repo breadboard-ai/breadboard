@@ -9,7 +9,7 @@ import * as fs from "fs";
 import * as assert from "node:assert";
 import test from "node:test";
 import * as path from "path";
-import { ascendToPackageDir } from "./util/ascend-to-package-dir.js";
+import { ascendToPackageDir } from "../scripts/util/ascend-to-package-dir.js";
 import { getBoardFiles } from "./util/get-board-files.js";
 
 let ajv = new Ajv();
