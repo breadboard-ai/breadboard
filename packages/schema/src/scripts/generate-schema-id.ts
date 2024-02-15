@@ -1,3 +1,9 @@
+/**
+ * @license
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import * as path from "path";
 import packageJson from "../../package.json" assert { type: "json" };
 

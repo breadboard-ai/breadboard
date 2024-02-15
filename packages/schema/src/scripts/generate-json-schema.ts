@@ -1,4 +1,8 @@
-#!/usr/bin/env npx -y tsx
+/**
+ * @license
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 import * as fs from "fs";
 import * as path from "path";

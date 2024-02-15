@@ -1,3 +1,9 @@
+/**
+ * @license
+ * Copyright 2024 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import Ajv, { type ValidateFunction } from "ajv";
 import * as fs from "fs";
 import * as assert from "node:assert";
