@@ -492,7 +492,10 @@ export class Editor extends LitElement {
   #onFormSubmit(evt: SubmitEvent) {
     evt.preventDefault();
 
-    if (!(evt.target instanceof HTMLFormElement) || !this.nodeBeingEdited) {
+    if (
+      !(evt.target instanceof HTMLFormElement) ||
+      !this.nodeValueBeingEdited
+    ) {
       return;
     }
 
