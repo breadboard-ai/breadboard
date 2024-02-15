@@ -139,8 +139,10 @@
     "node": ">=19.0.0"
   },
   "dependencies": {
+    "@dagrejs/dagre": "^1.0.4",
     "@google-labs/breadboard": "^0.10.0",
     "lit": "^3.1.0",
-    "mermaid": "^10.6.1"
+    "mermaid": "^10.6.1",
+    "pixi.js": "^7.4.0"
   }
 }

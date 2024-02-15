@@ -16,6 +16,7 @@ export const styles = css`
     column-gap: 8px;
     height: 100%;
     margin: 8px;
+    overscroll-behavior: contain;
     --diagram-display: flex;
   }
 
