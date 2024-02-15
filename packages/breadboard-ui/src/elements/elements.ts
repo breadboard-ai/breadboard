@@ -7,6 +7,7 @@
 export { BoardList } from "./board-list/board-list.js";
 export { DrawableInput } from "./input/drawable/drawable.js";
 export { Editor } from "./editor/editor.js";
+export { GraphRenderer } from "./editor/graph-renderer.js";
 export { HistoryTree } from "./history-tree/history-tree.js";
 export { Input } from "./input/input.js";
 export { InputContainer } from "./input/input-container/input-container.js";

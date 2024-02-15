@@ -76,6 +76,7 @@ html {
 
 html,
 body {
+  overscroll-behavior: none;
   padding: 0;
   margin: 0;
   font-family: var(--bb-font-family);
