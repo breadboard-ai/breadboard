@@ -6,15 +6,18 @@
 
 import * as fs from "fs";
 import * as path from "path";
-
-const filePath = path.resolve("src/graph.ts");
-console.assert(fs.existsSync(filePath), `File not found: ${filePath}`);
-
-const tsconfigPath = path.resolve("tsconfig.json");
-console.assert(fs.existsSync(tsconfigPath), `File not found: ${tsconfigPath}`);
-
 import { createGenerator, type Config } from "ts-json-schema-generator";
 import { generateSchemaId } from "./generate-schema-id.js";
+
+const filePath = path.resolve("src/graph.ts");
+if (!fs.existsSync(filePath)) {
+  throw new Error(`File not found: ${filePath}`);
+}
+
+const tsconfigPath = path.resolve("tsconfig.json");
+if (!fs.existsSync(tsconfigPath)) {
+  throw new Error(`File not found: ${tsconfigPath}`);
+}
 
 const config: Config = {
   additionalProperties: false,
