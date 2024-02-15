@@ -24,7 +24,12 @@ import {
   OptionalIdConfiguration,
   ScopeInterface,
 } from "../runner/types.js";
-import { GraphDescriptor, NodeDescriptor, Schema, InputValues as OriginalInputValues } from "../../types.js";
+import {
+  GraphDescriptor,
+  NodeDescriptor,
+  Schema,
+  InputValues as OriginalInputValues,
+} from "../../types.js";
 
 import { BaseNode } from "../runner/node.js";
 import { BuilderScope } from "./scope.js";
@@ -366,7 +371,6 @@ export class BuilderNode<
           id: `${this.id}-run`,
           type: "runJavascript",
           configuration: {
-            ...(this.configuration as OriginalInputValues),
             code,
             name,
             raw: true,
@@ -385,7 +389,10 @@ export class BuilderNode<
     const node = {
       id: this.id,
       type: "invoke",
-      configuration: { path: "#" + this.id },
+      configuration: {
+        ...(this.configuration as OriginalInputValues),
+        $board: "#" + this.id,
+      },
     };
 
     return [node, invokeGraph];
