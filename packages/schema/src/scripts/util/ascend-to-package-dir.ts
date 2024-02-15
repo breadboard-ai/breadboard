@@ -10,7 +10,7 @@ import * as path from "path";
 export function ascendToPackageDir(packageName: string = "breadboard-ai") {
   let directory = process.cwd();
   while (directory !== "/") {
-    const packageJsonPath = `${directory}/package.json`;
+    const packageJsonPath = path.join(directory, "package.json");
     if (fs.existsSync(packageJsonPath)) {
       const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
       if (packageJson.name === packageName) {
