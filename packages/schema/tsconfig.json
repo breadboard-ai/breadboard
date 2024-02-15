@@ -4,7 +4,8 @@
     "composite": true,
     "esModuleInterop": true,
     "outDir": "dist",
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "rootDir": "src"
   },
   "extends": "@google-labs/tsconfig/base.json",
   "include": [
