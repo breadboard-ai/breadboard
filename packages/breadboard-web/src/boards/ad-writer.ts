@@ -83,8 +83,21 @@ export default await board(({ context }) => {
         critique: {
           type: "array",
           items: {
-            type: "string",
-            description: "constructive critique point",
+            type: "object",
+            properties: {
+              summary: {
+                type: "string",
+                description: "summary of a point in the critique",
+              },
+              details: {
+                type: "string",
+                description: "reasoning behind the point in a critique",
+              },
+              suggestions: {
+                type: "string",
+                description: "suggestions for improvement",
+              },
+            },
           },
         },
       },

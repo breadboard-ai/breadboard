@@ -8,9 +8,9 @@ import { Schema, code, board } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { templates } from "@google-labs/template-kit";
 import { json } from "@google-labs/json-kit";
+import { agents } from "@google-labs/agent-kit";
 
 const sampleAgent = "ad-writer.json";
-const jsonAgent = "json-agent.json";
 
 type ErrorFilterInputs = { list: unknown[] };
 type ErrorFilterOutputs = { list: unknown[]; n: number };
@@ -42,15 +42,14 @@ export default await board(({ agent, context, text, n }) => {
 
   const generateN = core.map({
     $id: "generateN",
-    board: board(({ text, agent }) => {
+    board: board(({ context, agent }) => {
       const invokeAgent = core.invoke({
         $id: "invokeAgent",
-        text,
-        context: [],
+        context,
         path: agent.isString(),
       });
       return { item: invokeAgent.json };
-    }).in({ agent, text }),
+    }).in({ agent, context: text }),
     list: createList.list,
   });
 
@@ -65,10 +64,9 @@ export default await board(({ agent, context, text, n }) => {
     json: filterErrors.list,
   });
 
-  const rank = core.invoke({
+  const rank = agents.structuredWorker({
     $id: "rank",
-    path: jsonAgent,
-    text: templates.promptTemplate({
+    instruction: templates.promptTemplate({
       template: `You are a ranking expert. Given {{n}} choices of the output, you are to rank these choices in the order (starting with the best) of matching the requirements of the task described below:
 
         TASK:
@@ -81,7 +79,7 @@ export default await board(({ agent, context, text, n }) => {
       text,
       n: filterErrors.n,
       list: makeNicerList.result,
-    }),
+    }).prompt,
     schema: {
       type: "object",
       properties: {

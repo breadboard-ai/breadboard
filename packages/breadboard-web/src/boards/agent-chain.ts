@@ -1,7 +1,6 @@
+import { agents } from "@google-labs/agent-kit";
 import { Schema, code, board } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
-
-const JSON_AGENT = "json-agent.json";
 
 type ChainDescription = {
   prompt: string;
@@ -54,11 +53,10 @@ const argMaker = code(({ item }) => {
 const agentRunner = board(({ accumulator, item }) => {
   const { text, schema } = argMaker({ $id: "makeAgentArgs", item });
 
-  const agent = core.invoke({
+  const agent = agents.structuredWorker({
     $id: "agent",
-    path: JSON_AGENT,
     context: accumulator,
-    text,
+    instruction: text,
     schema,
   });
   return { accumulator: agent.context };

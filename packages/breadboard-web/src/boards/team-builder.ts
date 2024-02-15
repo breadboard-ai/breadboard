@@ -6,8 +6,8 @@
 
 import { Schema, board } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
-import { templates } from "@google-labs/template-kit";
 import { json } from "@google-labs/json-kit";
+import { agents } from "@google-labs/agent-kit";
 
 const metadata = {
   title: "Team Builder",
@@ -62,44 +62,30 @@ const workflowSchema = {
   },
 } satisfies Schema;
 
-export default await board(({ purpose, generator }) => {
+export default await board(({ purpose }) => {
   purpose
     .title("Purpose")
     .examples(
       "Create high quality rhyming poems that will be used as lyrics for jingles in TV commercials. Creating melodies and producing music is not part of job."
     )
     .format("multiline");
-  generator.title("Generator").examples("gemini-generator.json");
 
-  const jobDescriptions = core.invoke({
+  const jobDescriptions = agents.structuredWorker({
     $id: "jobDescriptions",
-    path: "json-agent.json",
     schema: jobDescriptionsSchema,
-    context: [],
-    generator,
-    text: templates.promptTemplate({
-      $id: "jobDescriptionsPrompt",
-      template: `You are building a team of expert LLM-based agents for the following purpose:
-
-{{purpose}}
+    context: purpose,
+    instruction: `You are building a team of expert LLM-based agents a specific purpose.
 
 These expert agents can only read text and produce text. The experts will work as a team, collaborating, creating, reviewing, critiquing, and iteratively improving the quality of the poems.
 
 Please identify the necessary job descriptions of these experts.`,
-      purpose,
-    }).prompt,
   });
 
-  const workflow = core.invoke({
+  const workflow = agents.structuredWorker({
     $id: "workflow",
-    path: "json-agent.json",
     context: jobDescriptions.context,
     schema: workflowSchema,
-    generator,
-    text: templates.promptTemplate({
-      $id: "workflowPrompt",
-      template: `Now, describe how these agents interact in the form of a workflow. The workflow is defined as a list of pairs of agents. Each pair represents the flow of work from one agent to another.`,
-    }).prompt,
+    instruction: `Now, describe how these agents interact in the form of a workflow. The workflow is defined as a list of pairs of agents. Each pair represents the flow of work from one agent to another.`,
   });
 
   const splitJobDescriptions = json.jsonata({
@@ -111,23 +97,23 @@ Please identify the necessary job descriptions of these experts.`,
   const createPrompts = core.map({
     $id: "createPrompts",
     list: splitJobDescriptions.result.isArray(),
-    board: board(({ item, generator }) => {
-      const promptTemplate = templates.promptTemplate({
-        $id: "promptTemplate",
-        template: `You are an expert in creating perfect system prompts for LLM agents from job descriptions. Create a prompt for the the following job description: {{item}}
-
-Reply in plain text that is ready to paste into the LLM prompt field.
-
-PROMPT:`,
-        item,
-      });
-      const generatePrompt = core.invoke({
+    board: board(({ item }) => {
+      const generatePrompt = agents.structuredWorker({
         $id: "generatePrompt",
-        path: generator.isString(),
-        text: promptTemplate.prompt,
+        instruction: `You are an expert in creating perfect system prompts for LLM agents from job descriptions. Create a prompt for the the following job description`,
+        context: item,
+        schema: {
+          type: "object",
+          properties: {
+            prompt: {
+              type: "string",
+              description: "the prompt for the job description",
+            },
+          },
+        } satisfies Schema,
       });
-      return { item: generatePrompt.text };
-    }).in({ generator }),
+      return { item: generatePrompt.json };
+    }),
   });
 
   return { prompts: createPrompts.list, json: workflow.json };

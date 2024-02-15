@@ -135,7 +135,12 @@ const counter = code(({ context, error, count }) => {
 });
 
 export default await board(({ context, instruction, schema }) => {
-  context.title("Context").isArray().examples(sampleContext);
+  context
+    .title("Context")
+    .isArray()
+    .optional()
+    .default("[]")
+    .examples(sampleContext);
   instruction
     .title("Instruction")
     .format("multiline")

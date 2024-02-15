@@ -68,7 +68,7 @@
                 "from": "makeAgentArgs",
                 "to": "agent",
                 "out": "text",
-                "in": "text"
+                "in": "instruction"
               },
               {
                 "from": "makeAgentArgs",
@@ -98,10 +98,8 @@
               },
               {
                 "id": "agent",
-                "type": "invoke",
-                "configuration": {
-                  "path": "json-agent.json"
-                }
+                "type": "structuredWorker",
+                "configuration": {}
               },
               {
                 "id": "input-1",
