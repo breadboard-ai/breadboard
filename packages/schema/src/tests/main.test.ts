@@ -15,14 +15,9 @@ import { getBoardFiles } from "./util/getBoardFiles.js";
 let ajv = new Ajv();
 let validate: ValidateFunction;
 
-test.before(() => {
-  const packageDir = ascendToPackageDir();
-  process.chdir(packageDir);
+import schema from "../../breadboard.schema.json" assert { type: "json" };
 
-  const schemaPath = path.resolve(
-    path.join(packageDir, "packages", "schema", "breadboard.schema.json")
-  );
-  const schema = JSON.parse(fs.readFileSync(schemaPath, "utf-8"));
+test.before(() => {
   validate = ajv.compile(schema);
 });
 
