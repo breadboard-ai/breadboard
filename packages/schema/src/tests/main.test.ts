@@ -9,8 +9,8 @@ import * as fs from "fs";
 import * as assert from "node:assert";
 import test from "node:test";
 import * as path from "path";
-import { ascendToPackageDir } from "./util/ascendToPackageDir.js";
-import { getBoardFiles } from "./util/getBoardFiles.js";
+import { ascendToPackageDir } from "./util/ascend-to-package-dir.js";
+import { getBoardFiles } from "./util/get-board-files.js";
 
 let ajv = new Ajv();
 let validate: ValidateFunction;

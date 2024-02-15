@@ -5,7 +5,7 @@
  */
 
 import * as fs from "fs";
-import { getJsonFiles } from "./getJsonFiles.js";
+import { getJsonFiles } from "./get-json-files.js";
 
 export function getBoardFiles(directory: string) {
   return getJsonFiles(directory).filter((file: fs.PathOrFileDescriptor) => {
