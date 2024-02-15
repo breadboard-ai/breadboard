@@ -65,7 +65,6 @@
         "package.json",
         "src/**/*.ts",
         "tsconfig.json",
-        "src/tests/**/*.ts",
         "../../core/tsconfig/base.json"
       ],
       "output": [
