@@ -60,8 +60,8 @@
     {
       "from": "promptTemplate-5",
       "to": "rank",
-      "out": "text",
-      "in": "text"
+      "out": "prompt",
+      "in": "instruction"
     },
     {
       "from": "lambda-4",
@@ -91,7 +91,7 @@
       "from": "input-1",
       "to": "lambda-4",
       "out": "text",
-      "in": "text"
+      "in": "context"
     },
     {
       "from": "input-1",
@@ -146,9 +146,8 @@
     },
     {
       "id": "rank",
-      "type": "invoke",
+      "type": "structuredWorker",
       "configuration": {
-        "path": "json-agent.json",
         "schema": {
           "type": "object",
           "properties": {
@@ -210,8 +209,8 @@
               {
                 "from": "input-1",
                 "to": "invokeAgent",
-                "out": "text",
-                "in": "text"
+                "out": "context",
+                "in": "context"
               },
               {
                 "from": "input-1",
@@ -242,9 +241,7 @@
               {
                 "id": "invokeAgent",
                 "type": "invoke",
-                "configuration": {
-                  "context": []
-                }
+                "configuration": {}
               },
               {
                 "id": "input-1",
@@ -253,9 +250,9 @@
                   "schema": {
                     "type": "object",
                     "properties": {
-                      "text": {
+                      "context": {
                         "type": "string",
-                        "title": "text"
+                        "title": "context"
                       },
                       "agent": {
                         "title": "path",
@@ -264,7 +261,7 @@
                       }
                     },
                     "required": [
-                      "text",
+                      "context",
                       "agent"
                     ]
                   }

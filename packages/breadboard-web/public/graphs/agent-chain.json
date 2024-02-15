@@ -68,7 +68,7 @@
                 "from": "makeAgentArgs",
                 "to": "agent",
                 "out": "text",
-                "in": "text"
+                "in": "instruction"
               },
               {
                 "from": "makeAgentArgs",

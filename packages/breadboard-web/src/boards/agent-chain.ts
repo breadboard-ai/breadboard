@@ -58,7 +58,7 @@ const agentRunner = board(({ accumulator, item }) => {
     $id: "agent",
     path: JSON_AGENT,
     context: accumulator,
-    text,
+    instruction: text,
     schema,
   });
   return { accumulator: agent.context };
