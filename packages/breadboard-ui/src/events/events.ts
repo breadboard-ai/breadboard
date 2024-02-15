@@ -18,7 +18,7 @@ export class StartEvent extends Event {
   }
 }
 
-export const enum ToastType {
+export enum ToastType {
   INFORMATION = "information",
   WARNING = "warning",
   ERROR = "error",
@@ -111,11 +111,7 @@ export class ResumeEvent extends Event {
 export class NodeCreateEvent extends Event {
   static eventName = "breadboardnodecreate";
 
-  constructor(
-    public id: string,
-    public nodeType: string,
-    public configuration: NodeConfiguration
-  ) {
+  constructor(public id: string, public nodeType: string) {
     super(NodeCreateEvent.eventName, {
       bubbles: true,
       cancelable: true,

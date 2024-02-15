@@ -7,18 +7,13 @@
 import {
   InspectableEdge,
   InspectableNode,
-  Schema,
+  InspectableNodePorts,
+  InspectablePort,
 } from "@google-labs/breadboard";
 import { LitElement, html, css } from "lit";
 import { customElement } from "lit/decorators.js";
 import * as PIXI from "pixi.js";
 import * as Dagre from "@dagrejs/dagre";
-
-type Port = {
-  name: string;
-  type: Schema["type"];
-  active: boolean;
-};
 
 class InteractionTracker {
   static #instance: InteractionTracker;
@@ -258,8 +253,8 @@ export class GraphNode extends PIXI.Graphics {
   #portLabelHorizontalPadding = 20;
   #portPadding = 6;
   #portRadius = 3;
-  #inPorts: Map<Port, PIXI.Text | null> = new Map();
-  #outPorts: Map<Port, PIXI.Text | null> = new Map();
+  #inPorts: Map<InspectablePort, PIXI.Text | null> = new Map();
+  #outPorts: Map<InspectablePort, PIXI.Text | null> = new Map();
   #inPortLocations: Map<string, PIXI.ObservablePoint<unknown>> = new Map();
   #outPortLocations: Map<string, PIXI.ObservablePoint<unknown>> = new Map();
 
@@ -419,6 +414,10 @@ export class GraphNode extends PIXI.Graphics {
     return this.#portLabelVerticalPadding;
   }
 
+  get dimensions() {
+    return { width: this.#width, height: this.#height };
+  }
+
   render(renderer: PIXI.Renderer): void {
     if (this.#isDirty) {
       this.#isDirty = false;
@@ -430,18 +429,29 @@ export class GraphNode extends PIXI.Graphics {
     super.render(renderer);
   }
 
-  addInput(name: string, type?: string | string[] | undefined, active = false) {
-    this.#inPorts.set({ name, type, active }, null);
+  set inPorts(ports: InspectablePort[]) {
+    this.#inPorts.clear();
+    for (const port of ports) {
+      this.#inPorts.set(port, null);
+    }
+
     this.#isDirty = true;
   }
 
-  addOutput(
-    name: string,
-    type?: string | string[] | undefined,
-    active = false
-  ) {
-    this.#outPorts.set({ name, type, active }, null);
+  set outPorts(ports: InspectablePort[]) {
+    this.#outPorts.clear();
+    for (const port of ports) {
+      this.#outPorts.set(port, null);
+    }
+
     this.#isDirty = true;
+  }
+
+  forceUpdateDimensions() {
+    this.#createPortTextsIfNeeded();
+    this.#createTitleTextIfNeeded();
+    this.#updateDimensions();
+    this.#enforceEvenDimensions();
   }
 
   #createTitleTextIfNeeded() {
@@ -463,7 +473,7 @@ export class GraphNode extends PIXI.Graphics {
   }
 
   #createPortTextLabels(
-    ports: Map<Port, PIXI.Text | null>,
+    ports: Map<InspectablePort, PIXI.Text | null>,
     align: "left" | "right"
   ) {
     for (const [port, text] of ports) {
@@ -531,11 +541,8 @@ export class GraphNode extends PIXI.Graphics {
   }
 
   #draw() {
-    this.#createPortTextsIfNeeded();
-    this.#createTitleTextIfNeeded();
-    this.#updateDimensions();
-    this.#enforceEvenDimensions();
-
+    this.forceUpdateDimensions();
+    this.removeChildren();
     this.clear();
 
     this.#drawBackground();
@@ -602,7 +609,9 @@ export class GraphNode extends PIXI.Graphics {
       nodePort.radius = this.#portRadius;
       nodePort.x = this.#padding + this.#portRadius;
       nodePort.y = portY + label.height * 0.5;
-      nodePort.active = port.active;
+
+      // TODO: Display other port statuses.
+      nodePort.active = port.status === "connected";
       this.addChild(nodePort);
       this.#inPortLocations.set(port.name, nodePort.position);
 
@@ -629,7 +638,9 @@ export class GraphNode extends PIXI.Graphics {
       nodePort.radius = this.#portRadius;
       nodePort.x = this.#width - this.#padding - this.#portRadius;
       nodePort.y = portY + label.height * 0.5;
-      nodePort.active = port.active;
+      // TODO: Display other port statuses.
+      nodePort.active = port.status === "connected";
+
       this.addChild(nodePort);
       this.#outPortLocations.set(port.name, nodePort.position);
 
@@ -656,18 +667,23 @@ export class Graph extends PIXI.Container {
   #edgeGraphics = new Map<InspectableEdge, GraphEdge>();
   #edges: InspectableEdge[] | null = null;
   #nodes: InspectableNode[] | null = null;
+  #ports: Map<string, InspectableNodePorts> | null = null;
   #nodeById = new Map<string, GraphNode>();
-  #onChildMovedBound = this.#onChildMoved.bind(this);
+  #layout = new Map<string, { x: number; y: number; pendingSize?: boolean }>();
 
   constructor() {
     super();
 
-    // The alpha is set super low so that rendering and layout happen, albeit
-    // in a hard-to-perceive way. When the GraphRenderer receives the
-    // GRAPH_INITIAL_DRAW event it will bring up the alpha.
-    this.alpha = 0.0001;
     this.eventMode = "static";
     this.sortableChildren = true;
+  }
+
+  forceLayoutPosition(
+    node: string,
+    position: PIXI.IPointData,
+    pendingSize = true
+  ) {
+    this.#layout.set(node, { ...this.toLocal(position), pendingSize });
   }
 
   layout() {
@@ -685,7 +701,11 @@ export class Graph extends PIXI.Container {
         continue;
       }
 
-      g.setNode(node.id, { width: node.width, height: node.height });
+      // Skip any nodes where the layout has already been set by the user.
+      if (this.#layout.has(node.id)) {
+        continue;
+      }
+      g.setNode(node.id, node.dimensions);
     }
 
     for (const edge of this.#edges) {
@@ -693,35 +713,37 @@ export class Graph extends PIXI.Container {
     }
 
     Dagre.layout(g);
-    const nodes = g.nodes();
-    for (let i = 0; i < nodes.length; i++) {
-      const id = nodes[i];
+    for (const id of g.nodes()) {
+      const data = g.node(id);
+      if (!data) {
+        continue;
+      }
+
+      const { x, y } = g.node(id);
+      this.#layout.set(id, { x, y });
+    }
+
+    // Step through any Dagre-set and custom set locations.
+    for (const [id, position] of this.#layout) {
       const graphNode = this.#nodeById.get(id);
       if (!graphNode) {
         continue;
       }
 
-      graphNode.x = g.node(id).x;
-      graphNode.y = g.node(id).y;
-
-      // Have the last node take responsibility for notifying the graph so that
-      // the edges get redrawn.
-      if (i === nodes.length - 1) {
-        graphNode.emit(GRAPH_NODE_MOVED);
-      }
+      graphNode.position.set(position.x, position.y);
     }
+
+    this.#drawEdges();
   }
 
   render(renderer: PIXI.Renderer) {
     if (this.#isDirty) {
       this.#isDirty = false;
       this.#drawEdges();
-      this.#drawNodes().then(() => {
-        super.render(renderer);
-      });
-    } else {
-      super.render(renderer);
+      this.#drawNodes();
     }
+
+    super.render(renderer);
   }
 
   set edges(edges: InspectableEdge[] | null) {
@@ -742,79 +764,100 @@ export class Graph extends PIXI.Container {
     return this.#nodes;
   }
 
-  #onChildMoved() {
-    this.#drawEdges();
+  set ports(ports: Map<string, InspectableNodePorts> | null) {
+    this.#ports = ports;
+    this.#isDirty = true;
   }
 
-  async #drawNodes() {
-    if (!this.#nodes) {
+  get ports() {
+    return this.#ports;
+  }
+
+  #onChildMoved(this: { graph: Graph; id: string }, x: number, y: number) {
+    this.graph.forceLayoutPosition(
+      this.id,
+      this.graph.toGlobal({ x, y }),
+      false
+    );
+
+    this.graph.#drawEdges();
+  }
+
+  #drawNodes() {
+    if (!this.#nodes || !this.#ports) {
       return;
     }
 
-    const portIsActive = (
-      type: "in" | "out",
-      nodeId: string,
-      portName: string
-    ) => {
-      if (!this.#edges) {
-        return;
-      }
+    /**
+     * We only position the graph on the initial draw, and we need the graph to
+     * be drawn before we can query its dimensions. So we check the layout map,
+     * which should only be empty on the first render. We then track each node
+     * render, and when all have drawn we notify the graph itself that it can
+     * centralize the graph.
+     */
+    const isInitialDraw = this.#layout.size === 0;
+    let nodesLeftToDraw = this.#nodes.length;
+    const onDraw = function (this: GraphNode) {
+      this.off(GRAPH_NODE_DRAWN, onDraw, this);
+      nodesLeftToDraw--;
 
-      return (
-        this.#edges.findIndex((edge) => {
-          if (type === "in") {
-            return edge.to.descriptor.id === nodeId && edge.in === portName;
-          } else {
-            return edge.from.descriptor.id === nodeId && edge.out === portName;
-          }
-        }) !== -1
-      );
+      if (nodesLeftToDraw === 0) {
+        this.parent.emit(GRAPH_INITIAL_DRAW);
+      }
     };
 
-    // Wait for all nodes to render then do a layout pass.
-    await Promise.all(
-      this.#nodes.map(async (node) => {
-        const graphNode = new GraphNode(
-          node.descriptor.id,
-          node.descriptor.type
-        );
-        this.addChild(graphNode);
+    const adjustLayoutForDroppedNode = function (this: {
+      graphNode: GraphNode;
+      layout: { x: number; y: number; pendingSize?: boolean };
+    }) {
+      this.graphNode.off(GRAPH_NODE_DRAWN, adjustLayoutForDroppedNode, this);
+      this.layout.x -= this.graphNode.width / 2;
+      this.layout.y -= this.graphNode.height / 2;
+      this.layout.pendingSize = false;
 
-        const { inputs, outputs } = await node.ports();
-        for (const port of inputs.ports) {
-          const value = port.schema || {};
-          graphNode.addInput(
-            port.name,
-            value.type,
-            portIsActive("in", node.descriptor.id, port.name)
-          );
+      this.graphNode.position.set(this.layout.x, this.layout.y);
+    };
+
+    for (const node of this.#nodes) {
+      const { id } = node.descriptor;
+      let graphNode = this.#nodeById.get(id);
+      if (!graphNode) {
+        graphNode = new GraphNode(id, node.descriptor.type);
+        this.#nodeById.set(id, graphNode);
+
+        // This is a dropped node.
+        const layout = this.#layout.get(id);
+        if (layout && layout.pendingSize) {
+          graphNode.on(GRAPH_NODE_DRAWN, adjustLayoutForDroppedNode, {
+            graphNode,
+            layout,
+          });
         }
+      }
 
-        for (const port of outputs.ports) {
-          const value = port.schema || {};
-          graphNode.addOutput(
-            port.name,
-            value.type,
-            portIsActive("out", node.descriptor.id, port.name)
-          );
-        }
+      const portInfo = this.#ports.get(id);
+      if (!portInfo) {
+        console.warn(`Unable to locate port info for ${id}`);
+        continue;
+      }
 
-        this.#nodeById.set(node.descriptor.id, graphNode);
+      graphNode.inPorts = portInfo.inputs.ports;
+      graphNode.outPorts = portInfo.outputs.ports;
 
-        graphNode.on(GRAPH_NODE_MOVED, this.#onChildMovedBound);
+      graphNode.forceUpdateDimensions();
+      graphNode.on(GRAPH_NODE_MOVED, this.#onChildMoved, {
+        graph: this,
+        id,
+      });
 
-        return new Promise<void>((resolve) => {
-          const onDrawn = () => {
-            graphNode.off(GRAPH_NODE_DRAWN, onDrawn);
-            resolve();
-          };
-          graphNode.on(GRAPH_NODE_DRAWN, onDrawn);
-        });
-      })
-    );
+      if (isInitialDraw) {
+        graphNode.on(GRAPH_NODE_DRAWN, onDraw, graphNode);
+      }
+
+      this.addChild(graphNode);
+    }
 
     this.layout();
-    this.emit(GRAPH_INITIAL_DRAW);
   }
 
   #drawEdges() {
@@ -822,7 +865,6 @@ export class Graph extends PIXI.Container {
       return;
     }
 
-    // TODO: Move over to individual graphics for edges.
     for (const edge of this.#edges) {
       let edgeGraphic = this.#edgeGraphics.get(edge);
       if (!edgeGraphic) {
@@ -884,7 +926,6 @@ export class GraphRenderer extends LitElement {
       this.#background = new PIXI.TilingSprite(texture);
       this.#background.width = this.#app.renderer.width;
       this.#background.height = this.#app.renderer.height;
-      this.#background.visible = false;
 
       this.#app.stage.addChildAt(this.#background, 0);
     });
@@ -938,7 +979,7 @@ export class GraphRenderer extends LitElement {
               this.#background.tilePosition.x = tilePosition.x + dragDeltaX;
               this.#background.tilePosition.y = tilePosition.y + dragDeltaY;
             } else {
-              target.emit(GRAPH_NODE_MOVED);
+              target.emit(GRAPH_NODE_MOVED, target.x, target.y);
             }
           };
         }
@@ -998,35 +1039,29 @@ export class GraphRenderer extends LitElement {
 
   addGraph(graph: Graph) {
     graph.on(GRAPH_INITIAL_DRAW, () => {
+      const graphPosition = graph.getGlobalPosition();
       const graphBounds = graph.getBounds();
       const rendererBounds = this.getBoundingClientRect();
 
       // Dagre isn't guaranteed to start the layout at 0, 0, so we adjust things
       // back here so that the scaling calculations work out.
-      graph.position.set(-graphBounds.left, -graphBounds.top);
+      graphBounds.x -= graphPosition.x;
+      graphBounds.y -= graphPosition.y;
+      graph.position.set(-graphBounds.x, -graphBounds.y);
       this.#container.position.set(
         (rendererBounds.width - graphBounds.width) * 0.5,
         (rendererBounds.height - graphBounds.height) * 0.5
       );
-
       const delta = Math.min(
         (rendererBounds.width - 2 * this.#padding) / graphBounds.width,
         (rendererBounds.height - 2 * this.#padding) / graphBounds.height,
         1
       );
-
       const pivot = {
         x: rendererBounds.width / 2,
         y: rendererBounds.height / 2,
       };
-
       this.#scaleContainerAroundPoint(delta, pivot);
-
-      if (this.#background) {
-        this.#background.visible = true;
-      }
-
-      graph.alpha = 1;
     });
 
     this.#container.addChild(graph);
