@@ -1,6 +1,8 @@
 {
   "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
     "composite": true,
+    "esModuleInterop": true,
     "outDir": "dist",
     "resolveJsonModule": true
   },
