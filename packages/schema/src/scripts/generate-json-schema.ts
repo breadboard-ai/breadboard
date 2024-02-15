@@ -35,7 +35,4 @@ const outputPath = path.resolve("breadboard.schema.json");
 const schema = createGenerator(config).createSchema(config.type);
 
 const schemaString = JSON.stringify(schema, null, "\t");
-fs.writeFile(outputPath, schemaString, (err) => {
-  if (err) throw err;
-});
-
+fs.writeFileSync(outputPath, schemaString);
