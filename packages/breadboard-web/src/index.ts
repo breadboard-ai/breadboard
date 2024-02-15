@@ -14,6 +14,7 @@ import { InputResolveRequest } from "@google-labs/breadboard/remote";
 import {
   Board,
   BoardRunner,
+  edit,
   GraphDescriptor,
   Kit,
 } from "@google-labs/breadboard";
@@ -657,14 +658,37 @@ export class Main extends LitElement {
           @breadboardnodecreate=${(
             evt: BreadboardUI.Events.NodeCreateEvent
           ) => {
-            const { id, nodeType, configuration } = evt;
+            const { id, nodeType } = evt;
             const newNode = {
               id,
               type: nodeType,
-              configuration,
             };
-            this.loadInfo?.graphDescriptor?.nodes.push(newNode);
-            this.#uiRef.value?.requestUpdate();
+
+            if (!this.loadInfo) {
+              console.warn("Unable to create node; no active graph");
+              return;
+            }
+
+            const loadInfo = this.loadInfo;
+            if (!loadInfo.graphDescriptor) {
+              console.warn("Unable to create node; no graph descriptor");
+              return;
+            }
+
+            const editableGraph = edit(loadInfo.graphDescriptor, {
+              kits: this.#kits,
+            });
+            editableGraph.addNode(newNode).then((result) => {
+              if (result.success) {
+                loadInfo.graphDescriptor = editableGraph.raw();
+                this.#uiRef.value?.requestUpdate();
+              } else {
+                this.toast(
+                  "Unable to create node",
+                  BreadboardUI.Events.ToastType.ERROR
+                );
+              }
+            });
           }}
           @breadboardnodeupdate=${(
             evt: BreadboardUI.Events.NodeUpdateEvent
