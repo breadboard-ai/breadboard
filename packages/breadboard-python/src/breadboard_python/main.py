@@ -406,18 +406,6 @@ class Board(Generic[T, S]):
     if isinstance(v, FieldInfo) and not isinstance(v, FieldContext):
       return FieldContext(v, self)
     return v
-
-  def __load__(self):
-    if self.loaded:
-      return
-    self.loaded = True
-    self.edges = []
-
-    inputs = AttrDict(self.inputs)
-    inputs.get_or_assign_id("input")
-    self.output = self.describe(inputs)
-
-    # TODO: this should load all components, too.
   
   def finalize(self):
     raise Exception("Not implemented yet")
@@ -426,7 +414,7 @@ class Board(Generic[T, S]):
     # Filter out anything that's not a reference to another Board, field, or AttrDict.
     # get resolved inputs
     config = {k: v  for k, v in self._get_resolved_inputs().items() if not isinstance(v, FieldContext) and not isinstance(v, Board) and not isinstance(v, dict)}
-    if self.input_schema and isinstance(self.input_schema, SchemaObject):
+    if self.input_schema and isinstance(self.input_schema, ModelMetaclass):
       if "schema" in config:
         raise Exception(f"Already have 'schema' key populated in config. This is a reserved field name. Config: {config}")
       config["schema"] = self.input_schema.__json__()
@@ -454,7 +442,6 @@ class Board(Generic[T, S]):
     return self.id
 
   def __json__(self):
-    self.__load__()
     output = {}
     if self.title is not None:
       output["title"] = self.title
@@ -469,9 +456,8 @@ class Board(Generic[T, S]):
     # When constructing the graph, two adhoc Boards are added, representing input and output.
 
     # Populate input node.
-    # TODO: Handle nested and un-nested input/output schemas.
     all_nodes = []
-    class InputBoard(Board[Any, self.input_schema]):
+    class InputBoard(Board[self.input_schema, self.input_schema]):
       type = "input"
     
     input_board = InputBoard()
@@ -482,25 +468,9 @@ class Board(Generic[T, S]):
     output_board = OutputBoard()
     output_board.get_or_assign_id("output")
 
-    node = {"id": input_board.get_or_assign_id(required=True), "type": input_board.type, "configuration": {}}
-    if self.input_schema:
-      node["configuration"]["schema"] = self.input_schema.__json__()
-    output["nodes"].append(node)
-
-    # Populate output node.
-    if self.output_schema:
-      for output_field_name, output_field_info in self.output_schema.model_fields.items():
-        child_schema = output_field_info.annotation
-        if isinstance(child_schema, ModelMetaclass):
-          self.output[output_field_name].get_or_assign_id(output_field_name)
-          node = {"id": output_board.get_or_assign_id(required=True), "type": output_board.type, "configuration": {"schema": child_schema.__json__()}}
-        else:
-          node = {"id": output_board.get_or_assign_id(required=True), "type": output_board.type, "configuration": {"schema": self.output_schema.__json__()}}
-        output["nodes"].append(node)
-
     kits = set()
 
-    output_board(**self.describe(input_board.output))
+    self.describe(input_board, output_board)
 
     all_components = [(k, v) for k, v in self.components.items()] + [(output_board.get_or_assign_id(required=True), output_board)]
 
@@ -587,6 +557,8 @@ class Board(Generic[T, S]):
           else:
             raise Exception("Unexpected type")
 
+    output["edges"] = all_edges
+    
     # Populate Kits
     output["kits"] = [{"url": f"npm:{x}"} for x in kits]
     return output
@@ -644,7 +616,7 @@ class Board(Generic[T, S]):
   @staticmethod
   def load(data: str) -> S:
     pass
-  def describe(self, input: T) -> S:
+  def describe(self, input: T, output: S) -> S:
     pass
 
 
