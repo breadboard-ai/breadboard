@@ -1,26 +1,13 @@
 {
   "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
     "composite": true,
-    "declaration": true,
-    "declarationMap": true,
-    "esModuleInterop": true,
-    "inlineSourceMap": false,
-    "isolatedModules": true,
-    "module": "ESNext",
-    "moduleResolution": "Node",
     "outDir": "dist",
-    "resolveJsonModule": true,
-    "rootDir": "src",
-    "skipLibCheck": true,
-    "sourceMap": true,
-    "strict": false,
-    "target": "ESNext"
+    "resolveJsonModule": true
   },
+  "extends": "@google-labs/tsconfig/base.json",
   "include": [
-    "src/**/*.ts",
-    "src/**/*.json",
     "package.json",
-    "breadboard.schema.json"
+    "breadboard.schema.json",
+    "src/**/*.ts"
   ]
 }
