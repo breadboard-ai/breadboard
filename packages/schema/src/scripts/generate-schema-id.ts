@@ -1,5 +1,5 @@
 import * as path from "path";
-import packageJson from "../../package.json";
+import packageJson from "../../package.json" assert { type: "json" };
 
 export function generateSchemaId() {
   const PACKAGE_ROOT = process.cwd();
