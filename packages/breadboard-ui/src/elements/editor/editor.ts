@@ -51,6 +51,9 @@ export class Editor extends LitElement {
   @property()
   editable = false;
 
+  @property()
+  highlightedNodeId: string | null = null;
+
   @state()
   nodeValueBeingEdited: EditedNode | null = null;
 
@@ -596,6 +599,10 @@ export class Editor extends LitElement {
     //   </div>
     // </div>`;
     // }
+
+    if (this.#graph) {
+      this.#graph.highlightedNodeId = this.highlightedNodeId;
+    }
 
     return html`<div id="nodes">${this.#graphRenderer}</div>
       ${activeNode} ${this.#getNodeMenu()}`;

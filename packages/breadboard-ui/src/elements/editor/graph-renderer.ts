@@ -670,12 +670,17 @@ export class Graph extends PIXI.Container {
   #ports: Map<string, InspectableNodePorts> | null = null;
   #nodeById = new Map<string, GraphNode>();
   #layout = new Map<string, { x: number; y: number; pendingSize?: boolean }>();
+  #highlightedNodeId: string | null = null;
+  #highlightedNode = new PIXI.Graphics();
+  #highlightPadding = 10;
 
   constructor() {
     super();
 
     this.eventMode = "static";
     this.sortableChildren = true;
+
+    // TODO: Add layout reset option.
   }
 
   forceLayoutPosition(
@@ -693,7 +698,7 @@ export class Graph extends PIXI.Container {
 
     // TODO: Restore updates when the user has dragged.
     const g = new Dagre.graphlib.Graph();
-    g.setGraph({ marginx: 0, marginy: 0 });
+    g.setGraph({ marginx: 0, marginy: 0, nodesep: 20, rankdir: "LR" });
     g.setDefaultEdgeLabel(() => ({}));
 
     for (const node of this.children) {
@@ -741,6 +746,7 @@ export class Graph extends PIXI.Container {
       this.#isDirty = false;
       this.#drawEdges();
       this.#drawNodes();
+      this.#drawNodeHighlight();
     }
 
     super.render(renderer);
@@ -773,6 +779,15 @@ export class Graph extends PIXI.Container {
     return this.#ports;
   }
 
+  set highlightedNodeId(highlightedNodeId: string | null) {
+    this.#highlightedNodeId = highlightedNodeId;
+    this.#drawNodeHighlight();
+  }
+
+  get highlightedNodeId() {
+    return this.#highlightedNodeId;
+  }
+
   #onChildMoved(this: { graph: Graph; id: string }, x: number, y: number) {
     this.graph.forceLayoutPosition(
       this.id,
@@ -781,6 +796,35 @@ export class Graph extends PIXI.Container {
     );
 
     this.graph.#drawEdges();
+    this.graph.#drawNodeHighlight();
+  }
+
+  #drawNodeHighlight() {
+    if (!this.#nodeById) {
+      return;
+    }
+
+    if (!this.#highlightedNodeId) {
+      this.#highlightedNode.clear();
+      return;
+    }
+
+    const graphNode = this.#nodeById.get(this.#highlightedNodeId);
+    if (!graphNode) {
+      return;
+    }
+
+    this.#highlightedNode.clear();
+    this.#highlightedNode.lineStyle({ width: 5, color: 0xff04a4, alpha: 0.5 });
+    this.#highlightedNode.drawRoundedRect(
+      graphNode.x - this.#highlightPadding,
+      graphNode.y - this.#highlightPadding,
+      graphNode.width + (this.#highlightPadding - 1) * 2,
+      graphNode.height + (this.#highlightPadding - 1) * 2,
+      graphNode.borderRadius + this.#highlightPadding
+    );
+
+    this.addChild(this.#highlightedNode);
   }
 
   #drawNodes() {
@@ -916,8 +960,8 @@ export class GraphRenderer extends LitElement {
   `;
 
   constructor(
-    private minScale = 0.5,
-    private maxScale = 3,
+    private minScale = 0.1,
+    private maxScale = 4,
     private zoomFactor = 100
   ) {
     super();
@@ -1057,6 +1101,11 @@ export class GraphRenderer extends LitElement {
         (rendererBounds.height - 2 * this.#padding) / graphBounds.height,
         1
       );
+
+      if (delta < this.minScale) {
+        this.minScale = delta;
+      }
+
       const pivot = {
         x: rendererBounds.width / 2,
         y: rendererBounds.height / 2,

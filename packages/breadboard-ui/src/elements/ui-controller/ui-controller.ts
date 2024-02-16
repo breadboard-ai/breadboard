@@ -489,16 +489,21 @@ export class UI extends LitElement {
         })}`;
         break;
 
-      case "editor":
+      case "editor": {
+        const message = this.messages[this.#messagePosition];
+        const nodeId = hasNodeInfo(message) ? message.data.node.id : "";
+
         diagram = html`<bb-editor
           .editable=${this.url === null}
           .loadInfo=${this.loadInfo}
           .kits=${this.kits}
+          .highlightedNodeId=${nodeId}
           .nodeCount=${this.loadInfo?.graphDescriptor?.nodes.length || 0}
           .edgeCount=${this.loadInfo?.graphDescriptor?.edges.length || 0}
           ${ref(this.#diagram)}
         ></bb-editor>`;
         break;
+      }
 
       default:
         diagram = nothing;
