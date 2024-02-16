@@ -23,7 +23,11 @@ import {
 } from "@google-labs/breadboard";
 import { map } from "lit/directives/map.js";
 import {
+  EdgeChangeEvent,
   GraphNodeDblClickEvent,
+  GraphNodeEdgeAttach,
+  GraphNodeEdgeChange,
+  GraphNodeEdgeDetach,
   NodeCreateEvent,
   NodeUpdateEvent,
 } from "../../events/events.js";
@@ -69,6 +73,9 @@ export class Editor extends LitElement {
   #onDragOverBound = this.#onDragOver.bind(this);
   #onResizeBound = this.#onResize.bind(this);
   #onGraphNodeDblClickBound = this.#onGraphNodeDblClick.bind(this);
+  #onGraphEdgeAttachBound = this.#onGraphEdgeAttach.bind(this);
+  #onGraphEdgeDetachBound = this.#onGraphEdgeDetach.bind(this);
+  #onGraphEdgeChangeBound = this.#onGraphEdgeChange.bind(this);
   #top = 0;
   #left = 0;
 
@@ -316,6 +323,22 @@ export class Editor extends LitElement {
       GraphNodeDblClickEvent.eventName,
       this.#onGraphNodeDblClickBound
     );
+
+    this.#graphRenderer.addEventListener(
+      GraphNodeEdgeAttach.eventName,
+      this.#onGraphEdgeAttachBound
+    );
+
+    this.#graphRenderer.addEventListener(
+      GraphNodeEdgeDetach.eventName,
+      this.#onGraphEdgeDetachBound
+    );
+
+    this.#graphRenderer.addEventListener(
+      GraphNodeEdgeChange.eventName,
+      this.#onGraphEdgeChangeBound
+    );
+
     window.addEventListener("resize", this.#onResizeBound);
     this.addEventListener("dragover", this.#onDragOverBound);
     this.addEventListener("drop", this.#onDropBound);
@@ -328,6 +351,22 @@ export class Editor extends LitElement {
       GraphNodeDblClickEvent.eventName,
       this.#onGraphNodeDblClickBound
     );
+
+    this.#graphRenderer.removeEventListener(
+      GraphNodeEdgeAttach.eventName,
+      this.#onGraphEdgeAttachBound
+    );
+
+    this.#graphRenderer.removeEventListener(
+      GraphNodeEdgeDetach.eventName,
+      this.#onGraphEdgeDetachBound
+    );
+
+    this.#graphRenderer.removeEventListener(
+      GraphNodeEdgeChange.eventName,
+      this.#onGraphEdgeChangeBound
+    );
+
     window.removeEventListener("resize", this.#onResizeBound);
     this.removeEventListener("dragover", this.#onDragOverBound);
     this.removeEventListener("drop", this.#onDropBound);
@@ -359,6 +398,54 @@ export class Editor extends LitElement {
       editAction: "update",
       id,
     };
+  }
+
+  #onGraphEdgeAttach(evt: Event) {
+    const { edge } = evt as GraphNodeEdgeAttach;
+    this.edgeCount = -1;
+    this.dispatchEvent(
+      new EdgeChangeEvent("add", {
+        from: edge.from.descriptor.id,
+        to: edge.to.descriptor.id,
+        out: edge.out,
+        in: edge.in,
+      })
+    );
+  }
+
+  #onGraphEdgeDetach(evt: Event) {
+    const { edge } = evt as GraphNodeEdgeDetach;
+    this.edgeCount = -1;
+    this.dispatchEvent(
+      new EdgeChangeEvent("remove", {
+        from: edge.from.descriptor.id,
+        to: edge.to.descriptor.id,
+        out: edge.out,
+        in: edge.in,
+      })
+    );
+  }
+
+  #onGraphEdgeChange(evt: Event) {
+    const { fromEdge, toEdge } = evt as GraphNodeEdgeChange;
+    this.edgeCount = -1;
+    this.dispatchEvent(
+      new EdgeChangeEvent("remove", {
+        from: fromEdge.from.descriptor.id,
+        to: fromEdge.to.descriptor.id,
+        out: fromEdge.out,
+        in: fromEdge.in,
+      })
+    );
+
+    this.dispatchEvent(
+      new EdgeChangeEvent("add", {
+        from: toEdge.from.descriptor.id,
+        to: toEdge.to.descriptor.id,
+        out: toEdge.out,
+        in: toEdge.in,
+      })
+    );
   }
 
   #onDragOver(evt: DragEvent) {
@@ -470,8 +557,6 @@ export class Editor extends LitElement {
     const details = (async () => {
       const { inputSchema } = await node.describe();
 
-      console.log(inputSchema, await node.ports());
-
       if (!inputSchema.properties) {
         return html`<div id="properties">
           <div id="node-properties">
@@ -521,6 +606,9 @@ export class Editor extends LitElement {
               />
               <fieldset>
                 <legend>Configuration</legend>
+                ${Object.keys(inputSchema.properties).length === 0
+                  ? html`No configurable properties`
+                  : nothing}
                 ${map(
                   Object.entries(inputSchema.properties),
                   ([name, schema]) => {
@@ -644,6 +732,10 @@ export class Editor extends LitElement {
 
     if (this.#graph) {
       this.#graph.highlightedNodeId = this.highlightedNodeId;
+    }
+
+    if (this.#graphRenderer) {
+      this.#graphRenderer.editable = this.editable;
     }
 
     return html`${this.#graphRenderer} ${activeNode} ${this.#getNodeMenu()}`;
