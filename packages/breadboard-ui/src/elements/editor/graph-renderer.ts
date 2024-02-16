@@ -11,10 +11,15 @@ import {
   InspectablePort,
 } from "@google-labs/breadboard";
 import { LitElement, html, css } from "lit";
-import { customElement } from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
 import * as PIXI from "pixi.js";
 import * as Dagre from "@dagrejs/dagre";
-import { GraphNodeDblClickEvent } from "../../events/events.js";
+import {
+  GraphNodeDblClickEvent,
+  GraphNodeEdgeAttach,
+  GraphNodeEdgeChange,
+  GraphNodeEdgeDetach,
+} from "../../events/events.js";
 
 class InteractionTracker {
   static #instance: InteractionTracker;
@@ -30,12 +35,29 @@ class InteractionTracker {
     // Constructor only callable by Singleton function.
   }
 
-  public activeDisplayObject: PIXI.DisplayObject | null = null;
+  public hoveredGraphNodePort: GraphNodePort | null = null;
+  public hoveredGraphNode: GraphNode | null = null;
+  public activeGraphNodePort: GraphNodePort | null = null;
+  public activeGraphNode: GraphNode | null = null;
+  public activeGraph: Graph | null = null;
+
+  clear() {
+    this.hoveredGraphNodePort = null;
+    this.hoveredGraphNode = null;
+    this.activeGraphNodePort = null;
+    this.activeGraphNode = null;
+    this.activeGraph = null;
+  }
 }
 
 const GRAPH_NODE_DRAWN = "graphnodedrawn";
 const GRAPH_NODE_MOVED = "graphnodemoved";
 const GRAPH_INITIAL_DRAW = "graphinitialdraw";
+
+enum GraphNodePortType {
+  IN = "in",
+  OUT = "out",
+}
 
 class GraphNodePort extends PIXI.Graphics {
   #isDirty = true;
@@ -46,13 +68,24 @@ class GraphNodePort extends PIXI.Graphics {
   #inactiveColor = 0xdddddd;
   #active = false;
 
-  constructor() {
+  constructor(public type: GraphNodePortType) {
     super();
 
     this.eventMode = "static";
     this.cursor = "pointer";
     this.on("pointerdown", () => {
-      InteractionTracker.instance().activeDisplayObject = this;
+      InteractionTracker.instance().activeGraphNodePort = this;
+    });
+
+    let defaultActive: typeof this.active;
+    this.on("pointerover", () => {
+      defaultActive = this.active;
+      InteractionTracker.instance().hoveredGraphNodePort = this;
+    });
+
+    this.on("pointerout", () => {
+      InteractionTracker.instance().hoveredGraphNodePort = null;
+      this.active = defaultActive;
     });
   }
 
@@ -106,8 +139,14 @@ class GraphEdge extends PIXI.Graphics {
   #edge: InspectableEdge | null = null;
   #edgeColor = 0xaaaaaa;
   #padding = 25;
+  #overrideInLocation: PIXI.ObservablePoint<unknown> | null = null;
+  #overrideOutLocation: PIXI.ObservablePoint<unknown> | null = null;
 
-  constructor(private fromNode: GraphNode, private toNode: GraphNode) {
+  constructor(
+    public fromNode: GraphNode,
+    public toNode: GraphNode,
+    public readonly temporary = false
+  ) {
     super();
   }
 
@@ -120,11 +159,38 @@ class GraphEdge extends PIXI.Graphics {
     return this.#edge;
   }
 
+  set overrideInLocation(
+    overrideInLocation: PIXI.ObservablePoint<unknown> | null
+  ) {
+    this.#overrideInLocation = overrideInLocation;
+    this.#isDirty = true;
+  }
+
+  get overrideInLocation() {
+    return this.#overrideInLocation;
+  }
+
+  set overrideOutLocation(
+    overrideOutLocation: PIXI.ObservablePoint<unknown> | null
+  ) {
+    this.#overrideOutLocation = overrideOutLocation;
+    this.#isDirty = true;
+  }
+
+  get overrideOutLocation() {
+    return this.#overrideOutLocation;
+  }
+
   render(renderer: PIXI.Renderer) {
     if (this.#isDirty) {
       this.#draw();
+      this.#isDirty = false;
     }
     super.render(renderer);
+  }
+
+  forceRedraw() {
+    this.#isDirty = true;
   }
 
   #draw() {
@@ -132,13 +198,26 @@ class GraphEdge extends PIXI.Graphics {
       return;
     }
 
-    const outLocation = this.fromNode.outPortLocation(this.#edge.out)?.clone();
-    const inLocation = this.toNode.inPortLocation(this.#edge.in)?.clone();
+    this.clear();
+
+    let inLocation = this.toNode.inPortLocation(this.#edge.in);
+    let outLocation = this.fromNode.outPortLocation(this.#edge.out);
+
+    if (this.#overrideInLocation) {
+      inLocation = this.#overrideInLocation;
+    }
+
+    if (this.#overrideOutLocation) {
+      outLocation = this.#overrideOutLocation;
+    }
+
     if (!(outLocation && inLocation)) {
       return;
     }
 
-    this.clear();
+    // Take a copy rather than modifying the original values.
+    outLocation = outLocation.clone();
+    inLocation = inLocation.clone();
 
     // Convert to graph-centric values.
     outLocation.x += this.fromNode.position.x;
@@ -153,7 +232,11 @@ class GraphEdge extends PIXI.Graphics {
     this.lineStyle(2, this.#edgeColor);
     this.moveTo(outLocation.x, outLocation.y);
 
-    if (this.fromNode === this.toNode) {
+    if (
+      this.fromNode === this.toNode &&
+      !this.#overrideInLocation &&
+      !this.#overrideOutLocation
+    ) {
       // Loopback
       this.lineTo(outLocation.x + this.#padding, outLocation.y);
       this.lineTo(
@@ -298,14 +381,17 @@ export class GraphNode extends PIXI.Graphics {
 
     this.eventMode = "static";
     this.cursor = "pointer";
-    this.on("pointerdown", () => {
-      // Another active display object (likely a graph node port) is already
-      // active, so don't override it.
-      if (InteractionTracker.instance().activeDisplayObject) {
-        return;
-      }
 
-      InteractionTracker.instance().activeDisplayObject = this;
+    this.on("pointerdown", () => {
+      InteractionTracker.instance().activeGraphNode = this;
+    });
+
+    this.on("pointerover", () => {
+      InteractionTracker.instance().hoveredGraphNode = this;
+    });
+
+    this.on("pointerout", () => {
+      InteractionTracker.instance().hoveredGraphNode = null;
     });
   }
 
@@ -606,7 +692,8 @@ export class GraphNode extends PIXI.Graphics {
         continue;
       }
 
-      const nodePort = new GraphNodePort();
+      const nodePort = new GraphNodePort(GraphNodePortType.IN);
+      nodePort.name = port.name;
       nodePort.radius = this.#portRadius;
       nodePort.x = this.#padding + this.#portRadius;
       nodePort.y = portY + label.height * 0.5;
@@ -636,7 +723,8 @@ export class GraphNode extends PIXI.Graphics {
         continue;
       }
 
-      const nodePort = new GraphNodePort();
+      const nodePort = new GraphNodePort(GraphNodePortType.OUT);
+      nodePort.name = port.name;
       nodePort.radius = this.#portRadius;
       nodePort.x = this.#width - this.#padding - this.#portRadius;
       nodePort.y = portY + label.height * 0.5;
@@ -683,6 +771,10 @@ export class Graph extends PIXI.Container {
     this.eventMode = "static";
     this.sortableChildren = true;
 
+    this.on("pointerdown", () => {
+      InteractionTracker.instance().activeGraph = this;
+    });
+
     // TODO: Add layout reset option.
   }
 
@@ -699,11 +791,11 @@ export class Graph extends PIXI.Container {
       return;
     }
 
-    // TODO: Restore updates when the user has dragged.
     const g = new Dagre.graphlib.Graph();
     g.setGraph({ marginx: 0, marginy: 0, nodesep: 20, rankdir: "LR" });
     g.setDefaultEdgeLabel(() => ({}));
 
+    let nodesAdded = 0;
     for (const node of this.children) {
       if (!(node instanceof GraphNode)) {
         continue;
@@ -713,22 +805,30 @@ export class Graph extends PIXI.Container {
       if (this.#layout.has(node.id)) {
         continue;
       }
+      nodesAdded++;
       g.setNode(node.id, node.dimensions);
     }
 
+    let edgesAdded = 0;
     for (const edge of this.#edges) {
+      edgesAdded++;
       g.setEdge(edge.from.descriptor.id, edge.to.descriptor.id);
     }
 
-    Dagre.layout(g);
-    for (const id of g.nodes()) {
-      const data = g.node(id);
-      if (!data) {
-        continue;
-      }
+    // Only run Dagre if there are edges & children to account for. Otherwise
+    // it will throw an error.
+    if (nodesAdded > 0 && edgesAdded > 0) {
+      Dagre.layout(g);
 
-      const { x, y } = g.node(id);
-      this.#layout.set(id, { x, y });
+      for (const id of g.nodes()) {
+        const data = g.node(id);
+        if (!data) {
+          continue;
+        }
+
+        const { x, y } = g.node(id);
+        this.#layout.set(id, { x, y });
+      }
     }
 
     // Step through any Dagre-set and custom set locations.
@@ -789,6 +889,29 @@ export class Graph extends PIXI.Container {
 
   get highlightedNodeId() {
     return this.#highlightedNodeId;
+  }
+
+  findEdge(id: string, port: GraphNodePort): GraphEdge | null {
+    if (!this.#edges) {
+      return null;
+    }
+
+    const predicateForInputPorts = (edge: InspectableEdge) =>
+      edge.to.descriptor.id === id && edge.in === port.name;
+    const predicateForOutputPorts = (edge: InspectableEdge) =>
+      edge.from.descriptor.id === id && edge.out === port.name;
+
+    const edge = this.#edges.find(
+      port.type === GraphNodePortType.IN
+        ? predicateForInputPorts
+        : predicateForOutputPorts
+    );
+
+    if (!edge) {
+      return null;
+    }
+
+    return this.#edgeGraphics.get(edge) || null;
   }
 
   #onChildMoved(this: { graph: Graph; id: string }, x: number, y: number) {
@@ -888,6 +1011,7 @@ export class Graph extends PIXI.Container {
         continue;
       }
 
+      graphNode.name = id;
       graphNode.inPorts = portInfo.inputs.ports;
       graphNode.outPorts = portInfo.outputs.ports;
 
@@ -905,6 +1029,22 @@ export class Graph extends PIXI.Container {
     }
 
     this.layout();
+  }
+
+  // TODO: Merge this with below.
+  createTemporaryEdge(edge: InspectableEdge): GraphEdge | null {
+    const fromNode = this.#nodeById.get(edge.from.descriptor.id);
+    const toNode = this.#nodeById.get(edge.to.descriptor.id);
+
+    if (!(fromNode && toNode)) {
+      return null;
+    }
+
+    const edgeGraphic = new GraphEdge(fromNode, toNode, true);
+    edgeGraphic.edge = edge;
+    this.#edgeContainer.addChild(edgeGraphic);
+
+    return edgeGraphic;
   }
 
   #drawEdges() {
@@ -929,6 +1069,22 @@ export class Graph extends PIXI.Container {
       }
 
       edgeGraphic.edge = edge;
+    }
+
+    // If there's a mismatch of sizes it likely means an edge has been removed
+    // so find that edge and dispose of it.
+
+    if (this.#edgeGraphics.size !== this.#edges.length) {
+      for (const [edge, edgeGraphic] of this.#edgeGraphics) {
+        if (this.#edges.includes(edge)) {
+          continue;
+        }
+
+        edgeGraphic.clear();
+        edgeGraphic.removeFromParent();
+        edgeGraphic.destroy();
+        this.#edgeGraphics.delete(edge);
+      }
     }
 
     this.addChildAt(this.#edgeContainer, 0);
@@ -967,6 +1123,9 @@ export class GraphRenderer extends LitElement {
     }
   `;
 
+  @property({ reflect: true })
+  editable = false;
+
   constructor(
     private minScale = 0.1,
     private maxScale = 4,
@@ -981,8 +1140,12 @@ export class GraphRenderer extends LitElement {
     this.#app.stage.on(
       "pointerdown",
       function (this: GraphRenderer, evt) {
-        const pointerTarget = InteractionTracker.instance().activeDisplayObject;
-        const target = pointerTarget || this.#container;
+        const interactionTracker = InteractionTracker.instance();
+        const activeGraphNodePort = interactionTracker.activeGraphNodePort;
+        const activeGraphNode = interactionTracker.activeGraphNode;
+        const activeGraph = interactionTracker.activeGraph;
+        const target =
+          activeGraphNodePort || activeGraphNode || this.#container;
 
         const now = window.performance.now();
         const timeDelta = now - lastClickTime;
@@ -990,14 +1153,219 @@ export class GraphRenderer extends LitElement {
 
         // Double click - edit the node.
         if (timeDelta < 500 && target instanceof GraphNode) {
-          InteractionTracker.instance().activeDisplayObject = null;
+          interactionTracker.clear();
           this.dispatchEvent(new GraphNodeDblClickEvent(target.id));
           return;
         }
 
+        let onPointerUp: (evt: PointerEvent) => void;
         let onPointerMove: (evt: PointerEvent) => void;
-        if (target instanceof GraphNodePort) {
-          onPointerMove = () => {};
+        if (activeGraphNodePort && activeGraphNode && activeGraph) {
+          if (!this.editable) {
+            return;
+          }
+
+          if (!activeGraphNode.name) {
+            console.warn("Unnamed graph node.");
+            return;
+          }
+
+          let edgeGraphic = activeGraph.findEdge(
+            activeGraphNode.name,
+            activeGraphNodePort
+          );
+
+          let snapToPort = true;
+          let portType = activeGraphNodePort.type;
+          if (!edgeGraphic) {
+            edgeGraphic = activeGraph.createTemporaryEdge({
+              from: { descriptor: { id: activeGraphNode.name } },
+              to: { descriptor: { id: activeGraphNode.name } },
+              out: activeGraphNodePort.name,
+              in: activeGraphNodePort.name,
+            } as InspectableEdge);
+
+            // Swap the port type for temporary edges because if we're dragging
+            // from an OUT port we are inherently creating an IN port elsewhere.
+            portType =
+              portType === GraphNodePortType.IN
+                ? GraphNodePortType.OUT
+                : GraphNodePortType.IN;
+            snapToPort = false;
+          }
+
+          if (!edgeGraphic || !edgeGraphic.edge) {
+            console.warn("Unable to create graphic");
+            return;
+          }
+
+          // Hide a temporary edge until the user drags it away.
+          if (edgeGraphic.temporary) {
+            edgeGraphic.visible = false;
+          }
+
+          // Snapshot some values here so that we can use them whenever the
+          // user hovers and we need to start tracking again.
+          const overrideBaseLocation = activeGraphNodePort.position.clone();
+          const edgeIn = edgeGraphic.edge.in;
+          const edgeOut = edgeGraphic.edge.out;
+          const toNode = edgeGraphic.toNode;
+          const fromNode = edgeGraphic.fromNode;
+
+          onPointerMove = () => {
+            if (!edgeGraphic || !edgeGraphic.edge) {
+              return;
+            }
+
+            edgeGraphic.forceRedraw();
+
+            // If hovering over a port, snap to it.
+            if (
+              interactionTracker.hoveredGraphNode &&
+              interactionTracker.hoveredGraphNodePort &&
+              portType === interactionTracker.hoveredGraphNodePort.type &&
+              snapToPort
+            ) {
+              edgeGraphic.overrideInLocation = null;
+              edgeGraphic.overrideOutLocation = null;
+
+              const name = interactionTracker.hoveredGraphNodePort.name || "";
+              if (portType === GraphNodePortType.IN) {
+                edgeGraphic.edge.in = name;
+                edgeGraphic.toNode = interactionTracker.hoveredGraphNode;
+              } else {
+                edgeGraphic.edge.out = name;
+                edgeGraphic.fromNode = interactionTracker.hoveredGraphNode;
+              }
+
+              interactionTracker.hoveredGraphNodePort.active = true;
+              return;
+            }
+
+            // Otherwise track to the mouse.
+            if (
+              interactionTracker.hoveredGraphNodePort === null &&
+              !snapToPort
+            ) {
+              snapToPort = true;
+              edgeGraphic.visible = true;
+            }
+
+            if (portType === GraphNodePortType.IN) {
+              if (!edgeGraphic.overrideInLocation) {
+                edgeGraphic.overrideInLocation = overrideBaseLocation;
+                edgeGraphic.edge.in = edgeIn;
+                edgeGraphic.edge.out = edgeOut;
+                edgeGraphic.toNode = toNode;
+                edgeGraphic.fromNode = fromNode;
+              }
+
+              activeGraphNode.toLocal(
+                evt.global,
+                undefined,
+                edgeGraphic.overrideInLocation
+              );
+            } else {
+              if (!edgeGraphic.overrideOutLocation) {
+                edgeGraphic.overrideOutLocation = overrideBaseLocation;
+                edgeGraphic.edge.in = edgeIn;
+                edgeGraphic.edge.out = edgeOut;
+                edgeGraphic.toNode = toNode;
+                edgeGraphic.fromNode = fromNode;
+              }
+
+              activeGraphNode.toLocal(
+                evt.global,
+                undefined,
+                edgeGraphic.overrideOutLocation
+              );
+            }
+          };
+
+          onPointerUp = () => {
+            if (edgeGraphic && edgeGraphic.temporary) {
+              edgeGraphic.removeFromParent();
+              edgeGraphic.destroy();
+            }
+
+            // Snapshot everything we need, then clear it out. After that we
+            // do the value processing.
+            const hoveredGraphNode = interactionTracker.hoveredGraphNode;
+            const hoveredGraphNodePort =
+              interactionTracker.hoveredGraphNodePort;
+            const activeGraphNodePort = interactionTracker.activeGraphNodePort;
+            const hoveredGraphNodePortType =
+              interactionTracker.hoveredGraphNodePort?.type;
+
+            interactionTracker.clear();
+            document.removeEventListener("pointermove", onPointerMove);
+
+            if (
+              // The ports exist
+              hoveredGraphNodePort &&
+              activeGraphNodePort &&
+              // The port types match
+              hoveredGraphNodePortType === portType
+            ) {
+              // Update existing.
+              if (!edgeGraphic || !edgeGraphic.edge) {
+                console.warn("Unable to attach - no edge found");
+                return;
+              }
+              if (!hoveredGraphNode) {
+                console.warn("Unable to attach - no node found");
+                return;
+              }
+              const newTargetNodeName = hoveredGraphNode.name;
+              const newTargetNodePortName = hoveredGraphNodePort.name;
+              const newTargetNode = activeGraph.nodes?.find(
+                (node) => node.descriptor.id === newTargetNodeName
+              );
+              if (!newTargetNode || !newTargetNodePortName) {
+                console.warn("Unable to attach - no edge found");
+                return;
+              }
+
+              // Reset the original edge.
+              const from = edgeGraphic.edge;
+              from.in = edgeIn;
+              from.out = edgeOut;
+
+              // Create the new edge from the original.
+              let to: InspectableEdge;
+              if (portType === GraphNodePortType.IN) {
+                to = {
+                  ...edgeGraphic.edge,
+                  in: newTargetNodePortName,
+                  to: newTargetNode,
+                };
+              } else {
+                to = {
+                  ...edgeGraphic.edge,
+                  out: newTargetNodePortName,
+                  from: newTargetNode,
+                };
+              }
+
+              if (edgeGraphic.temporary) {
+                this.dispatchEvent(new GraphNodeEdgeAttach(to));
+              } else {
+                this.dispatchEvent(new GraphNodeEdgeChange(from, to));
+              }
+            } else {
+              if (!edgeGraphic || !edgeGraphic.edge) {
+                console.warn("Unable to update - no edge found");
+                return;
+              }
+
+              if (edgeGraphic.temporary) {
+                return;
+              }
+
+              // Detach.
+              this.dispatchEvent(new GraphNodeEdgeDetach(edgeGraphic.edge));
+            }
+          };
         } else {
           const zIndex = target.parent.children.length;
           const dragStart = this.#app.stage.toLocal(evt.global);
@@ -1038,16 +1406,16 @@ export class GraphRenderer extends LitElement {
               target.emit(GRAPH_NODE_MOVED, target.x, target.y);
             }
           };
+
+          onPointerUp = () => {
+            if (target.zIndex) {
+              target.zIndex = Math.max(0, target.parent.children.length - 1);
+            }
+
+            interactionTracker.clear();
+            document.removeEventListener("pointermove", onPointerMove);
+          };
         }
-
-        const onPointerUp = () => {
-          if (target.zIndex) {
-            target.zIndex = Math.max(0, target.parent.children.length - 1);
-          }
-
-          InteractionTracker.instance().activeDisplayObject = null;
-          document.removeEventListener("pointermove", onPointerMove);
-        };
 
         document.addEventListener("pointermove", onPointerMove);
         document.addEventListener("pointerup", onPointerUp, { once: true });
@@ -1123,6 +1491,8 @@ export class GraphRenderer extends LitElement {
         y: rendererBounds.height / 2,
       };
       this.#scaleContainerAroundPoint(delta, pivot);
+
+      graph.layout();
     });
 
     this.#container.addChild(graph);

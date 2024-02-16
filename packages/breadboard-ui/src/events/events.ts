@@ -4,7 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { type NodeConfiguration } from "@google-labs/breadboard";
+import {
+  type InspectableEdge,
+  type NodeConfiguration,
+} from "@google-labs/breadboard";
 
 export class StartEvent extends Event {
   static eventName = "breadboardstart";
@@ -137,10 +140,7 @@ export class EdgeChangeEvent extends Event {
 
   constructor(
     public changeType: "add" | "remove",
-    public from: string,
-    public outPort: string,
-    public to: string,
-    public inPort: string
+    public edge: { from: string; to: string; in: string; out: string }
   ) {
     super(EdgeChangeEvent.eventName, {
       bubbles: true,
@@ -155,6 +155,45 @@ export class GraphNodeDblClickEvent extends Event {
 
   constructor(public id: string) {
     super(GraphNodeDblClickEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+export class GraphNodeEdgeAttach extends Event {
+  static eventName = "breadboardgraphedgeattach";
+
+  constructor(public edge: InspectableEdge) {
+    super(GraphNodeEdgeAttach.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+export class GraphNodeEdgeDetach extends Event {
+  static eventName = "breadboardgraphedgedetach";
+
+  constructor(public edge: InspectableEdge) {
+    super(GraphNodeEdgeDetach.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+export class GraphNodeEdgeChange extends Event {
+  static eventName = "breadboardgraphedgechange";
+
+  constructor(
+    public fromEdge: InspectableEdge,
+    public toEdge: InspectableEdge
+  ) {
+    super(GraphNodeEdgeChange.eventName, {
       bubbles: true,
       cancelable: true,
       composed: true,
