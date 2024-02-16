@@ -119,7 +119,7 @@
             },
             "rank": {
               "type": "string",
-              "title": "rank"
+              "title": "json"
             }
           },
           "required": [

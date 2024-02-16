@@ -74,13 +74,12 @@
                     "properties": {
                       "context": {
                         "type": "string",
-                        "title": "Context",
-                        "description": "The context after generation. Pass this to the next agent when chaining them together."
+                        "title": "context"
                       },
                       "text": {
+                        "title": "Output",
                         "type": "string",
-                        "title": "Text",
-                        "description": "The output from the agent. Use this to just get the output without any previous context."
+                        "description": "Agent's output"
                       }
                     },
                     "required": [

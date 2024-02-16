@@ -96,7 +96,7 @@
                     "properties": {
                       "item": {
                         "type": "string",
-                        "title": "item"
+                        "title": "json"
                       }
                     },
                     "required": [
@@ -129,8 +129,12 @@
                     "type": "object",
                     "properties": {
                       "item": {
-                        "type": "string",
-                        "title": "item"
+                        "title": "Context",
+                        "type": "array",
+                        "default": "[]",
+                        "examples": [
+                          "the universe within us"
+                        ]
                       }
                     },
                     "required": [
@@ -220,11 +224,12 @@
           "properties": {
             "purpose": {
               "title": "Purpose",
+              "type": "array",
+              "default": "[]",
               "examples": [
                 "Create high quality rhyming poems that will be used as lyrics for jingles in TV commercials. Creating melodies and producing music is not part of job."
               ],
-              "format": "multiline",
-              "type": "string"
+              "format": "multiline"
             }
           },
           "required": [

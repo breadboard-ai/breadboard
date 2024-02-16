@@ -87,7 +87,7 @@
                     "properties": {
                       "accumulator": {
                         "type": "string",
-                        "title": "accumulator"
+                        "title": "context"
                       }
                     },
                     "required": [
@@ -113,8 +113,12 @@
                         "title": "item"
                       },
                       "accumulator": {
-                        "type": "string",
-                        "title": "accumulator"
+                        "title": "Context",
+                        "type": "array",
+                        "default": "[]",
+                        "examples": [
+                          "the universe within us"
+                        ]
                       }
                     },
                     "required": [
