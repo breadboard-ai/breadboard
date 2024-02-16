@@ -31,8 +31,6 @@ import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { longTermMemory } from "../../utils/long-term-memory.js";
 import { classMap } from "lit/directives/class-map.js";
 import { styles as uiControllerStyles } from "./ui-controller.styles.js";
-import { until } from "lit/directives/until.js";
-import { guard } from "lit/directives/guard.js";
 import { type InputList } from "../input/input-list/input-list.js";
 
 type ExtendedNodeInformation = {
@@ -59,8 +57,6 @@ type inputCallback = (data: Record<string, unknown>) => void;
 
 const CONFIG_MEMORY_KEY = "ui-config";
 const DIAGRAM_DEBOUNCE_RENDER_TIMEOUT = 60;
-const VISUALBLOCKS_URL =
-  "https://storage.googleapis.com/tfweb/visual-breadboard/visual_breadboard_20240118164814/visual_breadboard_bin.js";
 
 type UIConfig = {
   showNarrowTimeline: boolean;
@@ -89,7 +85,7 @@ export class UI extends LitElement {
   boards: Board[] = [];
 
   @property()
-  visualizer: "mermaid" | "visualblocks" | "editor" = "mermaid";
+  visualizer: "mermaid" | "editor" = "editor";
 
   @state()
   historyEntries: HistoryEntry[] = [];
@@ -121,7 +117,6 @@ export class UI extends LitElement {
   #messageDurations: Map<HarnessRunResult, number> = new Map();
   #renderTimeout = 0;
   #rendering = false;
-  #requestedVB = false;
 
   static styles = uiControllerStyles;
 
@@ -148,18 +143,6 @@ export class UI extends LitElement {
     this.#isUpdatingMemory = false;
 
     this.requestUpdate();
-  }
-
-  async renderDiagram(highlightedDiagramNode = "") {
-    if (!this.loadInfo || !this.loadInfo.diagram || !this.#diagram.value) {
-      return;
-    }
-
-    if (!("render" in this.#diagram.value)) {
-      return;
-    }
-
-    return this.#diagram.value.render(this.loadInfo, highlightedDiagramNode);
   }
 
   clearMessages() {
@@ -424,10 +407,18 @@ export class UI extends LitElement {
         return;
       }
 
+      if (!this.loadInfo || !this.loadInfo.diagram || !this.#diagram.value) {
+        return;
+      }
+
+      if (!("render" in this.#diagram.value)) {
+        return;
+      }
+
       const message = this.messages[this.#messagePosition];
       const nodeId = hasNodeInfo(message) ? message.data.node.id : "";
       this.#rendering = true;
-      await this.renderDiagram(nodeId);
+      this.#diagram.value.render(this.loadInfo, nodeId);
       this.#rendering = false;
     }, DIAGRAM_DEBOUNCE_RENDER_TIMEOUT);
   }
@@ -443,22 +434,6 @@ export class UI extends LitElement {
   }
 
   render() {
-    this.#scheduleDiagramRender();
-
-    const loadVisualBreadboard = async () => {
-      if (
-        !this.#requestedVB &&
-        customElements.get("visual-breadboard") == null
-      ) {
-        this.#requestedVB = true;
-        await loadScript(VISUALBLOCKS_URL);
-        this.#scheduleDiagramRender();
-      }
-      return html`<visual-breadboard
-        ${ref(this.#diagram)}
-      ></visual-breadboard>`;
-    };
-
     const typeOfNewestMessage = this.messages[this.messages.length - 1]?.type;
     const disabled =
       this.#messagePosition < this.messages.length - 1 ||
@@ -474,7 +449,8 @@ export class UI extends LitElement {
 
     let diagram;
     switch (this.visualizer) {
-      case "mermaid":
+      case "mermaid": {
+        this.#scheduleDiagramRender();
         diagram = html`<bb-diagram
           ${ref(this.#diagram)}
           @breadboardnodeselect=${(evt: NodeSelectEvent) => {
@@ -482,12 +458,7 @@ export class UI extends LitElement {
           }}
         ></bb-diagram>`;
         break;
-
-      case "visualblocks":
-        diagram = html`${guard([this.#requestedVB], () => {
-          return until(loadVisualBreadboard(), html`Loading...`);
-        })}`;
-        break;
+      }
 
       case "editor": {
         const message = this.messages[this.#messagePosition];
@@ -642,16 +613,4 @@ export class UI extends LitElement {
         </section>
       </div>`;
   }
-}
-
-function loadScript(url: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const script = document.createElement("script");
-    script.src = url;
-    script.onload = () => {
-      resolve();
-    };
-    script.onerror = reject;
-    document.head.appendChild(script);
-  });
 }

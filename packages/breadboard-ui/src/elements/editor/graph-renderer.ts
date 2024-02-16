@@ -618,6 +618,7 @@ export class GraphNode extends PIXI.Graphics {
 
       label.x = nodePort.x + this.#portRadius + this.#portPadding;
       label.y = portY;
+      label.interactive = false;
       this.addChild(label);
 
       portY += portRowHeight;
@@ -647,6 +648,7 @@ export class GraphNode extends PIXI.Graphics {
 
       label.x = nodePort.x - this.#portRadius - this.#portPadding - label.width;
       label.y = portY;
+      label.interactive = false;
       this.addChild(label);
 
       portY += portRowHeight;
@@ -972,14 +974,6 @@ export class GraphRenderer extends LitElement {
   ) {
     super();
 
-    PIXI.Texture.fromURL("/images/pattern.png").then((texture) => {
-      this.#background = new PIXI.TilingSprite(texture);
-      this.#background.width = this.#app.renderer.width;
-      this.#background.height = this.#app.renderer.height;
-
-      this.#app.stage.addChildAt(this.#background, 0);
-    });
-
     this.#app.stage.addChild(this.#container);
     this.#app.stage.eventMode = "static";
 
@@ -1151,6 +1145,20 @@ export class GraphRenderer extends LitElement {
       this.#background.width = this.#app.renderer.width;
       this.#background.height = this.#app.renderer.height;
     });
+
+    if (!this.#background) {
+      PIXI.Texture.fromURL("/images/pattern.png").then((texture) => {
+        console.log("Loaded texture");
+
+        this.#background = new PIXI.TilingSprite(texture);
+        this.#background.width = this.#app.renderer.width;
+        this.#background.height = this.#app.renderer.height;
+
+        this.#app.stage.addChildAt(this.#background, 0);
+      });
+    } else {
+      this.#app.stage.addChildAt(this.#background, 0);
+    }
   }
 
   render() {

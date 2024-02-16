@@ -69,7 +69,7 @@ export class Main extends LitElement {
   #delay = 0;
   #status = BreadboardUI.Types.STATUS.STOPPED;
   #statusObservers: Array<(value: BreadboardUI.Types.STATUS) => void> = [];
-  #visualizer: "mermaid" | "visualblocks" | "editor" = "mermaid";
+  #visualizer: "mermaid" | "editor" = "editor";
   #kits: Kit[] = [];
 
   static styles = css`
@@ -297,11 +297,7 @@ export class Main extends LitElement {
     }
 
     const visualizer = currentUrl.searchParams.get("visualizer");
-    if (
-      visualizer === "mermaid" ||
-      visualizer === "visualblocks" ||
-      visualizer === "editor"
-    ) {
+    if (visualizer === "mermaid" || visualizer === "editor") {
       this.#visualizer = visualizer;
     }
 
@@ -503,13 +499,6 @@ export class Main extends LitElement {
     this.loadInfo = null;
     this.mode = MODE.LIST;
     this.#setActiveBreadboard(null);
-
-    // TODO: Don't switch off the editor here. It works this way for now so that
-    // we only use the editor for blank boards.
-    if (this.#visualizer === "editor") {
-      this.#visualizer = "mermaid";
-      this.#setActiveVisualizer(this.#visualizer);
-    }
 
     if (!this.#uiRef.value) {
       return;

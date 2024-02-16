@@ -470,6 +470,8 @@ export class Editor extends LitElement {
     const details = (async () => {
       const { inputSchema } = await node.describe();
 
+      console.log(inputSchema, await node.ports());
+
       if (!inputSchema.properties) {
         return html`<div id="properties">
           <div id="node-properties">
@@ -489,10 +491,7 @@ export class Editor extends LitElement {
                   if (!this.#graph) {
                     return;
                   }
-                  // Remove the temporary node.
-                  if (activeNode.editAction === "add") {
-                    // TODO: Remove the temporary node
-                  }
+
                   this.nodeValueBeingEdited = null;
                 }}
               >
@@ -502,6 +501,7 @@ export class Editor extends LitElement {
                 Properties: ${node.descriptor.type} (${node.descriptor.id})
               </h1>
               <input
+                ?disabled=${!this.editable}
                 type="submit"
                 value="${activeNode.editAction === "add" ? "Add" : "Update"}"
               />
