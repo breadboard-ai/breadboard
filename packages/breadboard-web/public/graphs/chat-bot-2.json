@@ -20,7 +20,8 @@
           "properties": {
             "context": {
               "type": "string",
-              "title": "context"
+              "title": "Context",
+              "description": "The final context after the repetitions"
             }
           },
           "required": [

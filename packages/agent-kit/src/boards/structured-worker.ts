@@ -70,6 +70,7 @@ export const structuredWorkerDescriber = async () => {
           description: "The JSON schema to use for the worker",
         },
       },
+      required: ["instruction"],
       additionalProperties: false,
     } satisfies Schema,
     outputSchema: {

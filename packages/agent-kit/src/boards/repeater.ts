@@ -7,6 +7,7 @@
 import {
   NewNodeFactory,
   NewNodeValue,
+  Schema,
   board,
   code,
 } from "@google-labs/breadboard";
@@ -17,7 +18,7 @@ export type RepeaterType = NewNodeFactory<
     /**
      * The initial conversation context.
      */
-    context: NewNodeValue;
+    context?: NewNodeValue;
     /**
      * The worker to repeat.
      */
@@ -25,7 +26,7 @@ export type RepeaterType = NewNodeFactory<
     /**
      * The maximum number of repetitions to make (set to -1 to go infinitely).
      */
-    max: NewNodeValue;
+    max?: NewNodeValue;
   },
   {
     /**
@@ -34,6 +35,44 @@ export type RepeaterType = NewNodeFactory<
     context: NewNodeValue;
   }
 >;
+
+export const repeaterDescriber = async () => {
+  return {
+    inputSchema: {
+      type: "object",
+      properties: {
+        context: {
+          type: "string",
+          title: "Context",
+          description: "Initial conversation context",
+        },
+        worker: {
+          type: "string",
+          title: "Worker",
+          description: "Worker to repeat",
+        },
+        max: {
+          type: "string",
+          title: "Max",
+          description:
+            "The maximum number of repetitions to make (set to -1 to go infinitely)",
+        },
+      },
+      required: ["worker"],
+    },
+    outputSchema: {
+      type: "object",
+      properties: {
+        context: {
+          type: "string",
+          title: "Context",
+          description: "The final context after the repetitions",
+        },
+      },
+      additionalProperties: false,
+    } satisfies Schema,
+  };
+};
 
 const counter = code(({ context, count }) => {
   const num = (count as number) - 1;
@@ -48,7 +87,8 @@ export default await board(({ context, worker, max }) => {
     .title("Context")
     .isArray()
     .format("multiline")
-    .examples("[]")
+    .optional()
+    .default("[]")
     .description("Initial conversation context");
   max
     .title("Max")
@@ -56,6 +96,8 @@ export default await board(({ context, worker, max }) => {
       "The maximum number of repetitions to make (set to -1 to go infinitely)"
     )
     .isNumber()
+    .optional()
+    .default("-1")
     .examples("3");
 
   worker.title("Worker").description("Worker to repeat").isObject();

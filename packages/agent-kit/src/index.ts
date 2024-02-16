@@ -10,7 +10,7 @@ import kit from "./kit.js";
 import { addKit } from "@google-labs/breadboard";
 import { WorkerType, workerDescriber } from "./boards/worker.js";
 import { addDescriber } from "./hacks.js";
-import { RepeaterType } from "./boards/repeater.js";
+import { RepeaterType, repeaterDescriber } from "./boards/repeater.js";
 import {
   StructuredWorkerType,
   structuredWorkerDescriber,
@@ -34,7 +34,7 @@ const builder = new KitBuilder(
 
 const AgentKit = builder.build({
   worker: addDescriber(adapter.handlerForNode("worker"), workerDescriber),
-  repeater: adapter.handlerForNode("repeater"),
+  repeater: addDescriber(adapter.handlerForNode("repeater"), repeaterDescriber),
   structuredWorker: addDescriber(
     adapter.handlerForNode("structured-worker"),
     structuredWorkerDescriber
