@@ -119,7 +119,8 @@
             },
             "rank": {
               "type": "string",
-              "title": "rank"
+              "title": "Output",
+              "description": "The output from the agent. Use this to just get the output without any previous context."
             }
           },
           "required": [

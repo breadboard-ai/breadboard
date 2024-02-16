@@ -54,7 +54,8 @@
             },
             "json": {
               "type": "string",
-              "title": "json"
+              "title": "Output",
+              "description": "The output from the agent. Use this to just get the output without any previous context."
             }
           },
           "required": [
@@ -96,7 +97,8 @@
                     "properties": {
                       "item": {
                         "type": "string",
-                        "title": "item"
+                        "title": "Output",
+                        "description": "The output from the agent. Use this to just get the output without any previous context."
                       }
                     },
                     "required": [
@@ -130,7 +132,8 @@
                     "properties": {
                       "item": {
                         "type": "string",
-                        "title": "item"
+                        "title": "Context",
+                        "description": "The context to use for the worker"
                       }
                     },
                     "required": [
@@ -219,12 +222,13 @@
           "type": "object",
           "properties": {
             "purpose": {
+              "type": "string",
               "title": "Purpose",
+              "description": "The context to use for the worker",
               "examples": [
                 "Create high quality rhyming poems that will be used as lyrics for jingles in TV commercials. Creating melodies and producing music is not part of job."
               ],
-              "format": "multiline",
-              "type": "string"
+              "format": "multiline"
             }
           },
           "required": [
