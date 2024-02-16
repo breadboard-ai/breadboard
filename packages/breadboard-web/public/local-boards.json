@@ -148,6 +148,11 @@
     "version": "0.0.1"
   },
   {
+    "title": "Dense text summarizer (single iteration)",
+    "url": "/graphs/summarize-single-iteration.json",
+    "version": "0.0.1"
+  },
+  {
     "title": "Dense text summarizer",
     "url": "/graphs/summarizer.json",
     "version": "0.0.1"
