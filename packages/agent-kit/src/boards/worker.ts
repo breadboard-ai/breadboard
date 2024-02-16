@@ -7,8 +7,6 @@
 import {
   NewNodeFactory,
   NewNodeValue,
-  NodeDescriberFunction,
-  Schema,
   board,
   code,
 } from "@google-labs/breadboard";
@@ -43,46 +41,6 @@ export type WorkerType = NewNodeFactory<
     text: NewNodeValue;
   }
 >;
-
-export const workerDescriber: NodeDescriberFunction = async () => {
-  return {
-    inputSchema: {
-      type: "object",
-      properties: {
-        context: {
-          type: "string",
-          title: "Context",
-          description: "The context to use for the worker",
-        },
-        instruction: {
-          type: "string",
-          title: "Instruction",
-          description:
-            "The instruction we want to give to the worker so that shapes its character and orients it a bit toward the task we want to give it.",
-        },
-      },
-      additionalProperties: false,
-    } satisfies Schema,
-    outputSchema: {
-      type: "object",
-      properties: {
-        context: {
-          type: "string",
-          title: "Context",
-          description:
-            "The context after generation. Pass this to the next agent when chaining them together.",
-        },
-        text: {
-          type: "string",
-          title: "Text",
-          description:
-            "The output from the agent. Use this to just get the output without any previous context.",
-        },
-      },
-      additionalProperties: false,
-    } satisfies Schema,
-  };
-};
 
 const sampleInstruction = `You are a brilliant poet who specializes in two-line rhyming poems.
 Given any topic, you can quickly whip up a two-line rhyming poem about it.

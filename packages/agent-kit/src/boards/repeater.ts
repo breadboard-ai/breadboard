@@ -7,7 +7,6 @@
 import {
   NewNodeFactory,
   NewNodeValue,
-  Schema,
   board,
   code,
 } from "@google-labs/breadboard";
@@ -35,44 +34,6 @@ export type RepeaterType = NewNodeFactory<
     context: NewNodeValue;
   }
 >;
-
-export const repeaterDescriber = async () => {
-  return {
-    inputSchema: {
-      type: "object",
-      properties: {
-        context: {
-          type: "string",
-          title: "Context",
-          description: "Initial conversation context",
-        },
-        worker: {
-          type: "string",
-          title: "Worker",
-          description: "Worker to repeat",
-        },
-        max: {
-          type: "string",
-          title: "Max",
-          description:
-            "The maximum number of repetitions to make (set to -1 to go infinitely)",
-        },
-      },
-      required: ["worker"],
-    },
-    outputSchema: {
-      type: "object",
-      properties: {
-        context: {
-          type: "string",
-          title: "Context",
-          description: "The final context after the repetitions",
-        },
-      },
-      additionalProperties: false,
-    } satisfies Schema,
-  };
-};
 
 const counter = code(({ context, count }) => {
   const num = (count as number) - 1;

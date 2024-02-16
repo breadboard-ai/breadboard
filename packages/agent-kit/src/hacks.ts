@@ -4,17 +4,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NodeDescriberFunction, NodeHandler } from "@google-labs/breadboard";
+import { GraphDescriptor, NodeHandler, inspect } from "@google-labs/breadboard";
 
 // This is where we hack on making kit do the thing we want
 // TODO: Shape this and move it to the right place
 
-export const addDescriber = (
+export const addDescriber = async (
   handler: NodeHandler,
-  describer: NodeDescriberFunction
+  graph: GraphDescriptor
 ) => {
   if (typeof handler === "function") {
     handler = { invoke: handler };
   }
-  return { invoke: handler.invoke, describe: describer } as NodeHandler;
+  const describerResult = await inspect(graph).describe();
+  return {
+    invoke: handler.invoke,
+    describe: async () => describerResult,
+  } as NodeHandler;
 };

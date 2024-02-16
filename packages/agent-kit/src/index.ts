@@ -8,12 +8,11 @@ import { GraphToKitAdapter, KitBuilder } from "@google-labs/breadboard/kits";
 
 import kit from "./kit.js";
 import { addKit } from "@google-labs/breadboard";
-import { WorkerType, workerDescriber } from "./boards/worker.js";
+import worker, { WorkerType } from "./boards/worker.js";
 import { addDescriber } from "./hacks.js";
-import { RepeaterType, repeaterDescriber } from "./boards/repeater.js";
-import {
+import repeater, { RepeaterType } from "./boards/repeater.js";
+import structuredWorker, {
   StructuredWorkerType,
-  structuredWorkerDescriber,
 } from "./boards/structured-worker.js";
 
 // TODO: Replace with the actual URL.
@@ -33,11 +32,11 @@ const builder = new KitBuilder(
 );
 
 const AgentKit = builder.build({
-  worker: addDescriber(adapter.handlerForNode("worker"), workerDescriber),
-  repeater: addDescriber(adapter.handlerForNode("repeater"), repeaterDescriber),
-  structuredWorker: addDescriber(
+  worker: await addDescriber(adapter.handlerForNode("worker"), worker),
+  repeater: await addDescriber(adapter.handlerForNode("repeater"), repeater),
+  structuredWorker: await addDescriber(
     adapter.handlerForNode("structured-worker"),
-    structuredWorkerDescriber
+    structuredWorker
   ),
 });
 

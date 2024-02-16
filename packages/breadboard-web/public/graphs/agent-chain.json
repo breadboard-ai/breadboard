@@ -87,8 +87,7 @@
                     "properties": {
                       "accumulator": {
                         "type": "string",
-                        "title": "Context",
-                        "description": "The context after generation"
+                        "title": "context"
                       }
                     },
                     "required": [
@@ -114,9 +113,12 @@
                         "title": "item"
                       },
                       "accumulator": {
-                        "type": "string",
                         "title": "Context",
-                        "description": "The context to use for the worker"
+                        "type": "array",
+                        "default": "[]",
+                        "examples": [
+                          "the universe within us"
+                        ]
                       }
                     },
                     "required": [

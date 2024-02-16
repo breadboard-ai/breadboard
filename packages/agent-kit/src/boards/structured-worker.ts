@@ -47,52 +47,6 @@ export type StructuredWorkerType = NewNodeFactory<
   }
 >;
 
-export const structuredWorkerDescriber = async () => {
-  return {
-    inputSchema: {
-      type: "object",
-      properties: {
-        context: {
-          type: "string",
-          title: "Context",
-          description: "The context to use for the worker",
-        },
-        instruction: {
-          type: "string",
-          title: "Instruction",
-          description:
-            "The instruction we want to give to the worker so that shapes its character and orients it a bit toward the task we want to give it.",
-        },
-        schema: {
-          type: "string",
-          title: "Schema",
-          format: "multiline",
-          description: "The JSON schema to use for the worker",
-        },
-      },
-      required: ["instruction"],
-      additionalProperties: false,
-    } satisfies Schema,
-    outputSchema: {
-      type: "object",
-      properties: {
-        context: {
-          type: "string",
-          title: "Context",
-          description: "The context after generation",
-        },
-        json: {
-          type: "string",
-          title: "Output",
-          description:
-            "The output from the agent. Use this to just get the output without any previous context.",
-        },
-      },
-      additionalProperties: false,
-    } satisfies Schema,
-  };
-};
-
 const sampleSchema = JSON.stringify(
   {
     type: "object",
