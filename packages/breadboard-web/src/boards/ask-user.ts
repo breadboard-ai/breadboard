@@ -19,7 +19,7 @@ const schema = code<SchemaInputs, SchemaOutputs>(({ title, description }) => {
       text: {
         title,
         description,
-        transient: true,
+        hints: ["transient"],
       },
     },
   } satisfies Schema;

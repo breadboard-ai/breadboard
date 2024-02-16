@@ -140,8 +140,14 @@ export class RequestedInputsManager {
       if (value === undefined) {
         value = await this.#context.requestInput?.(name, schema, descriptor);
       }
-      if (!schema.transient) this.#cache.set(name, value);
+      if (!isTransient(schema)) {
+        this.#cache.set(name, value);
+      }
       return value;
     };
   }
 }
+
+const isTransient = (schema: Schema): boolean => {
+  return schema.hints?.includes("transient") ?? false;
+};

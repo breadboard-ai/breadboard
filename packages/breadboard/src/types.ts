@@ -38,6 +38,12 @@ export type {
   SubGraphs,
 } from "@google-labs/breadboard-schema/graph.js";
 
+export type SchemaHint =
+  /**
+   * Indicates that the property should not be cached.
+   */
+  "transient";
+
 export type Schema = {
   title?: string;
   description?: string;
@@ -45,6 +51,11 @@ export type Schema = {
   properties?: Record<string, Schema>;
   required?: string[];
   format?: string;
+  /**
+   * Can be used to provide additional hints to the UI or to other parts of the
+   * system.
+   */
+  hints?: SchemaHint[];
   transient?: boolean;
   enum?: string[];
   /**

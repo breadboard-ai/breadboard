@@ -2,6 +2,8 @@ import { board } from "@google-labs/breadboard";
 import { agents } from "@google-labs/agent-kit";
 import { core } from "@google-labs/core-kit";
 
+import askUserBoard from "./ask-user";
+
 const worker = board(({ context }) => {
   const askUser = core.invoke({
     $id: "askUser",
@@ -9,8 +11,7 @@ const worker = board(({ context }) => {
     // in the agent kit, so the paths are all wrong.
     // Use absolute paths as a workaround.
     // TODO: Fix the path resolution
-    $board:
-      "https://raw.githubusercontent.com/breadboard-ai/breadboard/main/packages/breadboard-web/public/graphs/ask-user.json",
+    $board: askUserBoard,
     context,
   });
   const bot = agents.worker({
