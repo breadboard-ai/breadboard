@@ -14,6 +14,7 @@ import { LitElement, html, css } from "lit";
 import { customElement } from "lit/decorators.js";
 import * as PIXI from "pixi.js";
 import * as Dagre from "@dagrejs/dagre";
+import { GraphNodeDblClickEvent } from "../../events/events.js";
 
 class InteractionTracker {
   static #instance: InteractionTracker;
@@ -683,7 +684,7 @@ export class Graph extends PIXI.Container {
     // TODO: Add layout reset option.
   }
 
-  forceLayoutPosition(
+  setNodeLayoutPosition(
     node: string,
     position: PIXI.IPointData,
     pendingSize = true
@@ -789,7 +790,7 @@ export class Graph extends PIXI.Container {
   }
 
   #onChildMoved(this: { graph: Graph; id: string }, x: number, y: number) {
-    this.graph.forceLayoutPosition(
+    this.graph.setNodeLayoutPosition(
       this.id,
       this.graph.toGlobal({ x, y }),
       false
@@ -955,7 +956,12 @@ export class GraphRenderer extends LitElement {
   static styles = css`
     :host {
       display: block;
+      position: relative;
       overflow: hidden;
+    }
+
+    canvas {
+      display: block;
     }
   `;
 
@@ -977,11 +983,23 @@ export class GraphRenderer extends LitElement {
     this.#app.stage.addChild(this.#container);
     this.#app.stage.eventMode = "static";
 
+    let lastClickTime = Number.NEGATIVE_INFINITY;
     this.#app.stage.on(
       "pointerdown",
       function (this: GraphRenderer, evt) {
         const pointerTarget = InteractionTracker.instance().activeDisplayObject;
         const target = pointerTarget || this.#container;
+
+        const now = window.performance.now();
+        const timeDelta = now - lastClickTime;
+        lastClickTime = now;
+
+        // Double click - edit the node.
+        if (timeDelta < 500 && target instanceof GraphNode) {
+          InteractionTracker.instance().activeDisplayObject = null;
+          this.dispatchEvent(new GraphNodeDblClickEvent(target.id));
+          return;
+        }
 
         let onPointerMove: (evt: PointerEvent) => void;
         if (target instanceof GraphNodePort) {

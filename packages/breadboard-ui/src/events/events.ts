@@ -149,3 +149,15 @@ export class EdgeChangeEvent extends Event {
     });
   }
 }
+
+export class GraphNodeDblClickEvent extends Event {
+  static eventName = "breadboardgraphnodedblclick";
+
+  constructor(public id: string) {
+    super(GraphNodeDblClickEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}

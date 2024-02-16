@@ -693,19 +693,38 @@ export class Main extends LitElement {
           @breadboardnodeupdate=${(
             evt: BreadboardUI.Events.NodeUpdateEvent
           ) => {
-            if (!this.loadInfo?.graphDescriptor?.nodes) {
+            if (!this.loadInfo) {
+              console.warn("Unable to create node; no active graph");
               return;
             }
 
-            const node = this.loadInfo.graphDescriptor.nodes.find(
-              (node) => node.id === evt.id
-            );
-            if (!node) {
+            const loadInfo = this.loadInfo;
+            if (!loadInfo.graphDescriptor) {
+              console.warn("Unable to create node; no graph descriptor");
               return;
             }
 
-            node.configuration = evt.configuration;
-            this.#uiRef.value?.requestUpdate();
+            const editableGraph = edit(loadInfo.graphDescriptor, {
+              kits: this.#kits,
+            });
+
+            editableGraph
+              .changeConfiguration(evt.id, evt.configuration)
+              .then((result) => {
+                if (result.success) {
+                  loadInfo.graphDescriptor = editableGraph.raw();
+                  this.#uiRef.value?.requestUpdate();
+                  this.toast(
+                    "Configuration updated",
+                    BreadboardUI.Events.ToastType.INFORMATION
+                  );
+                } else {
+                  this.toast(
+                    "Unable to update configuration",
+                    BreadboardUI.Events.ToastType.ERROR
+                  );
+                }
+              });
           }}
           @breadboardmessagetraversal=${() => {
             if (this.status !== BreadboardUI.Types.STATUS.RUNNING) {
