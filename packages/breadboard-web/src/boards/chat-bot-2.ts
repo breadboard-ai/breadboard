@@ -34,7 +34,6 @@ export default await board(() => {
   return { context: repeat.context };
 }).serialize({
   title: "Chat bot 2.0",
-  description:
-    "A board that uses the Agent kit to create a simple chat bot (work in progress, doesn't quite work yet)",
+  description: "A board that uses the Agent kit to create a simple chat bot",
   version: "0.0.1",
 });
