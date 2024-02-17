@@ -18,14 +18,22 @@ import {
   inspect,
   GraphDescriptor,
   Kit,
-  Schema,
   NodeConfiguration,
   InspectableNodePorts,
 } from "@google-labs/breadboard";
 import { map } from "lit/directives/map.js";
-import { NodeCreateEvent } from "../../events/events.js";
+import {
+  EdgeChangeEvent,
+  GraphNodeDblClickEvent,
+  GraphNodeEdgeAttach,
+  GraphNodeEdgeChange,
+  GraphNodeEdgeDetach,
+  NodeCreateEvent,
+  NodeUpdateEvent,
+} from "../../events/events.js";
 import { classMap } from "lit/directives/class-map.js";
 import { Graph, GraphRenderer } from "./graph-renderer.js";
+import { until } from "lit/directives/until.js";
 
 const DATA_TYPE = "text/plain";
 
@@ -51,6 +59,9 @@ export class Editor extends LitElement {
   @property()
   editable = false;
 
+  @property()
+  highlightedNodeId: string | null = null;
+
   @state()
   nodeValueBeingEdited: EditedNode | null = null;
 
@@ -61,6 +72,10 @@ export class Editor extends LitElement {
   #onDropBound = this.#onDrop.bind(this);
   #onDragOverBound = this.#onDragOver.bind(this);
   #onResizeBound = this.#onResize.bind(this);
+  #onGraphNodeDblClickBound = this.#onGraphNodeDblClick.bind(this);
+  #onGraphEdgeAttachBound = this.#onGraphEdgeAttach.bind(this);
+  #onGraphEdgeDetachBound = this.#onGraphEdgeDetach.bind(this);
+  #onGraphEdgeChangeBound = this.#onGraphEdgeChange.bind(this);
   #top = 0;
   #left = 0;
 
@@ -77,12 +92,6 @@ export class Editor extends LitElement {
       width: 100%;
       height: 100%;
       position: relative;
-    }
-
-    #nodes {
-      width: 100%;
-      height: 100%;
-      position: absolute;
     }
 
     #menu {
@@ -261,6 +270,7 @@ export class Editor extends LitElement {
       width: 100%;
       height: 100%;
       outline: none;
+      overflow: hidden;
     }
   `;
 
@@ -309,17 +319,59 @@ export class Editor extends LitElement {
   }
 
   connectedCallback(): void {
-    super.connectedCallback();
-    this.addEventListener("dragover", this.#onDragOverBound);
+    this.#graphRenderer.addEventListener(
+      GraphNodeDblClickEvent.eventName,
+      this.#onGraphNodeDblClickBound
+    );
+
+    this.#graphRenderer.addEventListener(
+      GraphNodeEdgeAttach.eventName,
+      this.#onGraphEdgeAttachBound
+    );
+
+    this.#graphRenderer.addEventListener(
+      GraphNodeEdgeDetach.eventName,
+      this.#onGraphEdgeDetachBound
+    );
+
+    this.#graphRenderer.addEventListener(
+      GraphNodeEdgeChange.eventName,
+      this.#onGraphEdgeChangeBound
+    );
+
     window.addEventListener("resize", this.#onResizeBound);
+    this.addEventListener("dragover", this.#onDragOverBound);
     this.addEventListener("drop", this.#onDropBound);
+
+    super.connectedCallback();
   }
 
   disconnectedCallback(): void {
-    super.disconnectedCallback();
-    this.removeEventListener("dragover", this.#onDragOverBound);
+    this.#graphRenderer.removeEventListener(
+      GraphNodeDblClickEvent.eventName,
+      this.#onGraphNodeDblClickBound
+    );
+
+    this.#graphRenderer.removeEventListener(
+      GraphNodeEdgeAttach.eventName,
+      this.#onGraphEdgeAttachBound
+    );
+
+    this.#graphRenderer.removeEventListener(
+      GraphNodeEdgeDetach.eventName,
+      this.#onGraphEdgeDetachBound
+    );
+
+    this.#graphRenderer.removeEventListener(
+      GraphNodeEdgeChange.eventName,
+      this.#onGraphEdgeChangeBound
+    );
+
     window.removeEventListener("resize", this.#onResizeBound);
+    this.removeEventListener("dragover", this.#onDragOverBound);
     this.removeEventListener("drop", this.#onDropBound);
+
+    super.disconnectedCallback();
   }
 
   protected willUpdate(
@@ -338,6 +390,62 @@ export class Editor extends LitElement {
     if (shouldProcessGraph && this.loadInfo && this.loadInfo.graphDescriptor) {
       this.#processGraph(this.loadInfo.graphDescriptor);
     }
+  }
+
+  #onGraphNodeDblClick(evt: Event) {
+    const { id } = evt as GraphNodeDblClickEvent;
+    this.nodeValueBeingEdited = {
+      editAction: "update",
+      id,
+    };
+  }
+
+  #onGraphEdgeAttach(evt: Event) {
+    const { edge } = evt as GraphNodeEdgeAttach;
+    this.edgeCount = -1;
+    this.dispatchEvent(
+      new EdgeChangeEvent("add", {
+        from: edge.from.descriptor.id,
+        to: edge.to.descriptor.id,
+        out: edge.out,
+        in: edge.in,
+      })
+    );
+  }
+
+  #onGraphEdgeDetach(evt: Event) {
+    const { edge } = evt as GraphNodeEdgeDetach;
+    this.edgeCount = -1;
+    this.dispatchEvent(
+      new EdgeChangeEvent("remove", {
+        from: edge.from.descriptor.id,
+        to: edge.to.descriptor.id,
+        out: edge.out,
+        in: edge.in,
+      })
+    );
+  }
+
+  #onGraphEdgeChange(evt: Event) {
+    const { fromEdge, toEdge } = evt as GraphNodeEdgeChange;
+    this.edgeCount = -1;
+    this.dispatchEvent(
+      new EdgeChangeEvent("remove", {
+        from: fromEdge.from.descriptor.id,
+        to: fromEdge.to.descriptor.id,
+        out: fromEdge.out,
+        in: fromEdge.in,
+      })
+    );
+
+    this.dispatchEvent(
+      new EdgeChangeEvent("add", {
+        from: toEdge.from.descriptor.id,
+        to: toEdge.to.descriptor.id,
+        out: toEdge.out,
+        in: toEdge.in,
+      })
+    );
   }
 
   #onDragOver(evt: DragEvent) {
@@ -359,7 +467,7 @@ export class Editor extends LitElement {
     const y = evt.pageY - this.#top - window.scrollY;
 
     // Store the middle of the node for later.
-    this.#graph.forceLayoutPosition(id, { x, y });
+    this.#graph.setNodeLayoutPosition(id, { x, y });
 
     this.dispatchEvent(new NodeCreateEvent(id, data));
 
@@ -433,60 +541,117 @@ export class Editor extends LitElement {
     </div>`;
   }
 
-  #convertActiveNodeToForm(activeNode: EditedNode) {
-    const node = this.loadInfo?.graphDescriptor?.nodes.find(
-      (node) => node.id == activeNode.id
-    );
-    if (!node || !node.configuration || !node.configuration.schema) {
-      return html`Unable to configure node - no schema provided.`;
+  #createNodePropertiesPanel(activeNode: EditedNode) {
+    if (!this.loadInfo || !this.loadInfo.graphDescriptor) {
+      return;
     }
 
-    const schema = node.configuration.schema as Schema;
-    if (!schema.properties) {
-      return html`Unable to configure node - no schema provided.`;
+    const descriptor = this.loadInfo.graphDescriptor;
+    const breadboardGraph = inspect(descriptor, { kits: this.kits });
+    const node = breadboardGraph.nodeById(activeNode.id);
+    if (!node) {
+      return;
     }
 
-    return html`
-      <div id="fields">
-        <fieldset>
-          <legend>ID</legend>
-          <label for="$id">ID: <label>
-          <input id="$id" name="id" type="text" value="${activeNode.id}" />
-        </fieldset>
-        <fieldset>
-          <legend>Configuration</legend>
-          ${map(Object.entries(schema.properties), ([name, schema]) => {
-            let input;
-            switch (schema.type) {
-              case "object": {
-                input = `Object types are not supported yet.`;
-                break;
-              }
+    const configuration = node.configuration() || {};
+    const details = (async () => {
+      const { inputSchema } = await node.describe();
 
-              // TODO: Fill out more types.
-              default: {
-                const value =
-                  // activeNode.configuration[name] ??
-                  schema.examples ?? schema.default ?? "";
+      if (!inputSchema.properties) {
+        return html`<div id="properties">
+          <div id="node-properties">
+            Unable to configure node - no schema properties provided.
+          </div>
+        </div>`;
+      }
 
-                // prettier-ignore
-                input = html`<div
-                    contenteditable="plaintext-only"
-                    data-id="${name}"
-                  >${value}</div>`;
-                break;
-              }
-            }
+      return html` <div id="properties">
+        <div id="node-properties">
+          <form @submit=${this.#onFormSubmit}>
+            <header>
+              <button
+                type="button"
+                class="cancel"
+                @click=${() => {
+                  if (!this.#graph) {
+                    return;
+                  }
 
-            return html`<div class="configuration-item">
-              <label title="${schema.description}" for="${name}"
-                >${name}:
-              </label>
-              ${input}
-            </div>`;
-          })}
-        </fieldset>
+                  this.nodeValueBeingEdited = null;
+                }}
+              >
+                Cancel
+              </button>
+              <h1>
+                Properties: ${node.descriptor.type} (${node.descriptor.id})
+              </h1>
+              <input
+                ?disabled=${!this.editable}
+                type="submit"
+                value="${activeNode.editAction === "add" ? "Add" : "Update"}"
+              />
+            </header>
+            <div id="fields">
+              <input
+                id="$id"
+                name="$id"
+                type="hidden"
+                value="${activeNode.id}"
+              />
+              <input
+                id="$type"
+                name="$type"
+                type="hidden"
+                value="${node.descriptor.type}"
+              />
+              <fieldset>
+                <legend>Configuration</legend>
+                ${Object.keys(inputSchema.properties).length === 0
+                  ? html`No configurable properties`
+                  : nothing}
+                ${map(
+                  Object.entries(inputSchema.properties),
+                  ([name, schema]) => {
+                    let input;
+                    switch (schema.type) {
+                      case "object": {
+                        input = `Object types are not supported yet.`;
+                        break;
+                      }
+
+                      // TODO: Fill out more types.
+                      default: {
+                        const value =
+                          configuration[name] ??
+                          schema.examples ??
+                          schema.default ??
+                          "";
+
+                        // prettier-ignore
+                        input = html`<div
+                            contenteditable="plaintext-only"
+                            data-id="${name}"
+                          >${value}</div>`;
+                        break;
+                      }
+                    }
+
+                    return html`<div class="configuration-item">
+                      <label title="${schema.description}" for="${name}"
+                        >${name}:
+                      </label>
+                      ${input}
+                    </div>`;
+                  }
+                )}
+              </fieldset>
+            </div>
+          </form>
+        </div>
       </div>`;
+    })();
+
+    return html`${until(details, html`Loading...`)}`;
   }
 
   #onFormSubmit(evt: SubmitEvent) {
@@ -514,37 +679,42 @@ export class Editor extends LitElement {
       data.set(field.dataset.id, field.textContent);
     }
 
-    const id = data.get("id") as string;
+    const id = data.get("$id") as string;
     const nodeType = data.get("$type") as string;
     if (!(id && nodeType)) {
       console.warn("Unable to configure node - ID and type are missing");
       return;
     }
 
-    const configuration: NodeConfiguration = {};
-    //  structuredClone(
-    //   this.activeNode.configuration
-    // );
+    if (!this.loadInfo || !this.loadInfo.graphDescriptor) {
+      return;
+    }
+
+    const descriptor = this.loadInfo.graphDescriptor;
+    const breadboardGraph = inspect(descriptor, { kits: this.kits });
+    const node = breadboardGraph.nodeById(id);
+    if (!node) {
+      return;
+    }
+
+    const configuration: NodeConfiguration =
+      structuredClone(node.configuration()) || {};
     for (const [name, value] of data) {
       if (typeof value !== "string") {
         continue;
       }
 
-      if (name === "id" || name === "$type") {
+      if (name === "$id" || name === "$type") {
         continue;
       }
 
       configuration[name] = value;
     }
 
-    // if (this.activeNode.editAction === "add") {
-    //   this.dispatchEvent(new NodeCreateEvent(id, nodeType, configuration));
-    // } else {
-    //   this.dispatchEvent(new NodeUpdateEvent(id, configuration));
-    // }
+    this.dispatchEvent(new NodeUpdateEvent(id, configuration));
 
     // Close out the panel via removing the active node marker.
-    // this.nodeBeingEdited = null;
+    this.nodeValueBeingEdited = null;
   }
 
   firstUpdated(): void {
@@ -553,51 +723,21 @@ export class Editor extends LitElement {
   }
 
   render() {
-    const activeNode: HTMLTemplateResult | symbol = nothing;
-    // if (this.nodeBeingEdited) {
-    // activeNode = html`<div id="properties">
-    //   <div id="node-properties">
-    //     <form @submit=${this.#onFormSubmit}>
-    //       <header>
-    //         <button
-    //           type="button"
-    //           class="cancel"
-    //           @click=${() => {
-    //             if (!(this.#graph && this.activeNode)) {
-    //               return;
-    //             }
-    //             // Remove the temporary node.
-    //             if (this.activeNode.editAction === "add") {
-    //               // TODO: Remove the temporary node
-    //             }
-    //             this.activeNode = null;
-    //           }}
-    //         >
-    //           Cancel
-    //         </button>
-    //         <h1>
-    //           Properties: ${this.activeNode.editAction}
-    //           (${this.activeNode.id})
-    //         </h1>
-    //         <input
-    //           type="hidden"
-    //           name="$type"
-    //           value="${this.activeNode.type}"
-    //         />
-    //         <input
-    //           type="submit"
-    //           value="${this.activeNode.editAction === "add"
-    //             ? "Add"
-    //             : "Update"}"
-    //         />
-    //       </header>
-    //       ${this.#convertActiveNodeToForm(this.activeNode)}
-    //     </form>
-    //   </div>
-    // </div>`;
-    // }
+    let activeNode: HTMLTemplateResult | symbol = nothing;
+    if (this.nodeValueBeingEdited) {
+      activeNode = html`${this.#createNodePropertiesPanel(
+        this.nodeValueBeingEdited
+      )}`;
+    }
 
-    return html`<div id="nodes">${this.#graphRenderer}</div>
-      ${activeNode} ${this.#getNodeMenu()}`;
+    if (this.#graph) {
+      this.#graph.highlightedNodeId = this.highlightedNodeId;
+    }
+
+    if (this.#graphRenderer) {
+      this.#graphRenderer.editable = this.editable;
+    }
+
+    return html`${this.#graphRenderer} ${activeNode} ${this.#getNodeMenu()}`;
   }
 }

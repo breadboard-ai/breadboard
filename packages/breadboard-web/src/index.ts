@@ -15,6 +15,7 @@ import {
   Board,
   BoardRunner,
   edit,
+  EditResult,
   GraphDescriptor,
   Kit,
 } from "@google-labs/breadboard";
@@ -69,7 +70,7 @@ export class Main extends LitElement {
   #delay = 0;
   #status = BreadboardUI.Types.STATUS.STOPPED;
   #statusObservers: Array<(value: BreadboardUI.Types.STATUS) => void> = [];
-  #visualizer: "mermaid" | "visualblocks" | "editor" = "mermaid";
+  #visualizer: "mermaid" | "editor" = "editor";
   #kits: Kit[] = [];
 
   static styles = css`
@@ -297,11 +298,7 @@ export class Main extends LitElement {
     }
 
     const visualizer = currentUrl.searchParams.get("visualizer");
-    if (
-      visualizer === "mermaid" ||
-      visualizer === "visualblocks" ||
-      visualizer === "editor"
-    ) {
+    if (visualizer === "mermaid" || visualizer === "editor") {
       this.#visualizer = visualizer;
     }
 
@@ -504,13 +501,6 @@ export class Main extends LitElement {
     this.mode = MODE.LIST;
     this.#setActiveBreadboard(null);
 
-    // TODO: Don't switch off the editor here. It works this way for now so that
-    // we only use the editor for blank boards.
-    if (this.#visualizer === "editor") {
-      this.#visualizer = "mermaid";
-      this.#setActiveVisualizer(this.#visualizer);
-    }
-
     if (!this.#uiRef.value) {
       return;
     }
@@ -622,38 +612,45 @@ export class Main extends LitElement {
           @breadboardedgechange=${(
             evt: BreadboardUI.Events.EdgeChangeEvent
           ) => {
-            if (!this.loadInfo || !this.loadInfo.graphDescriptor) {
+            if (!this.loadInfo) {
+              console.warn("Unable to create node; no active graph");
               return;
             }
 
-            if (evt.changeType === "add") {
-              this.loadInfo.graphDescriptor.edges.push({
-                from: evt.from,
-                to: evt.to,
-                out: evt.outPort,
-                in: evt.inPort,
-              });
-            } else {
-              const idx = this.loadInfo.graphDescriptor.edges.findIndex(
-                (edge) => {
-                  return (
-                    edge.from === evt.from &&
-                    edge.to === evt.to &&
-                    edge.in === evt.inPort &&
-                    edge.out === evt.outPort
-                  );
-                }
-              );
-
-              if (idx === -1) {
-                return;
-              }
-
-              this.loadInfo.graphDescriptor.edges.splice(idx, 1);
+            const loadInfo = this.loadInfo;
+            if (!loadInfo.graphDescriptor) {
+              console.warn("Unable to create node; no graph descriptor");
+              return;
             }
 
-            this.#uiRef.value?.requestUpdate();
-            return;
+            const editableGraph = edit(loadInfo.graphDescriptor, {
+              kits: this.#kits,
+            });
+
+            let editResult: Promise<EditResult>;
+            switch (evt.changeType) {
+              case "add": {
+                editResult = editableGraph.addEdge(evt.edge);
+                break;
+              }
+
+              case "remove": {
+                editResult = editableGraph.removeEdge(evt.edge);
+                break;
+              }
+            }
+
+            editResult.then((result) => {
+              if (!result.success) {
+                this.toast(
+                  "Unable to update edge",
+                  BreadboardUI.Events.ToastType.ERROR
+                );
+              }
+
+              loadInfo.graphDescriptor = editableGraph.raw();
+              this.#uiRef.value?.requestUpdate();
+            });
           }}
           @breadboardnodecreate=${(
             evt: BreadboardUI.Events.NodeCreateEvent
@@ -679,33 +676,53 @@ export class Main extends LitElement {
               kits: this.#kits,
             });
             editableGraph.addNode(newNode).then((result) => {
-              if (result.success) {
-                loadInfo.graphDescriptor = editableGraph.raw();
-                this.#uiRef.value?.requestUpdate();
-              } else {
+              if (!result.success) {
                 this.toast(
                   "Unable to create node",
                   BreadboardUI.Events.ToastType.ERROR
                 );
               }
+
+              loadInfo.graphDescriptor = editableGraph.raw();
+              this.#uiRef.value?.requestUpdate();
             });
           }}
           @breadboardnodeupdate=${(
             evt: BreadboardUI.Events.NodeUpdateEvent
           ) => {
-            if (!this.loadInfo?.graphDescriptor?.nodes) {
+            if (!this.loadInfo) {
+              console.warn("Unable to create node; no active graph");
               return;
             }
 
-            const node = this.loadInfo.graphDescriptor.nodes.find(
-              (node) => node.id === evt.id
-            );
-            if (!node) {
+            const loadInfo = this.loadInfo;
+            if (!loadInfo.graphDescriptor) {
+              console.warn("Unable to create node; no graph descriptor");
               return;
             }
 
-            node.configuration = evt.configuration;
-            this.#uiRef.value?.requestUpdate();
+            const editableGraph = edit(loadInfo.graphDescriptor, {
+              kits: this.#kits,
+            });
+
+            editableGraph
+              .changeConfiguration(evt.id, evt.configuration)
+              .then((result) => {
+                if (result.success) {
+                  this.toast(
+                    "Configuration updated",
+                    BreadboardUI.Events.ToastType.INFORMATION
+                  );
+                } else {
+                  this.toast(
+                    "Unable to update configuration",
+                    BreadboardUI.Events.ToastType.ERROR
+                  );
+                }
+
+                loadInfo.graphDescriptor = editableGraph.raw();
+                this.#uiRef.value?.requestUpdate();
+              });
           }}
           @breadboardmessagetraversal=${() => {
             if (this.status !== BreadboardUI.Types.STATUS.RUNNING) {

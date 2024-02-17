@@ -92,7 +92,7 @@
       "id": "appendContext",
       "type": "invoke",
       "configuration": {
-        "path": "#appendContext"
+        "$board": "#appendContext"
       }
     },
     {

@@ -149,7 +149,7 @@
       "id": "assembleContext",
       "type": "invoke",
       "configuration": {
-        "path": "#assembleContext"
+        "$board": "#assembleContext"
       }
     },
     {
@@ -161,7 +161,7 @@
       "id": "buildContext",
       "type": "invoke",
       "configuration": {
-        "path": "#buildContext"
+        "$board": "#buildContext"
       }
     },
     {
@@ -190,6 +190,7 @@
             "context": {
               "title": "Context",
               "type": "array",
+              "default": "[]",
               "examples": [
                 "the universe within us"
               ]
@@ -204,7 +205,6 @@
             }
           },
           "required": [
-            "context",
             "instruction"
           ]
         }
@@ -214,7 +214,7 @@
       "id": "count",
       "type": "invoke",
       "configuration": {
-        "path": "#count"
+        "$board": "#count"
       }
     },
     {
@@ -321,7 +321,7 @@
           "id": "buildContext-run",
           "type": "runJavascript",
           "configuration": {
-            "code": "function buildContext({ context, format, instruction }) {\n  if (typeof context === \"string\") {\n    context = [{ role: \"user\", parts: [{ text: context }] }];\n  }\n  const list = context || [];\n  if (list.length > 0) {\n    const last = list[list.length - 1];\n    if (last.role === \"user\") {\n      last.parts.unshift(\n        { text: instruction },\n        { text: format }\n      );\n      return { context: list };\n    }\n  }\n  return {\n    context: [\n      ...list,\n      { role: \"user\", parts: [{ text: instruction }, { text: format }] }\n    ]\n  };\n}",
+            "code": "function buildContext({ context, format, instruction }) {\n  if (!Array.isArray(context)) {\n    const text = typeof context === \"string\" ? context : JSON.stringify(context);\n    context = [{ role: \"user\", parts: [{ text }] }];\n  }\n  const list = context || [];\n  if (list.length > 0) {\n    const last = list[list.length - 1];\n    if (last.role === \"user\") {\n      last.parts.unshift(\n        { text: instruction },\n        { text: format }\n      );\n      return { context: list };\n    }\n  }\n  return {\n    context: [\n      ...list,\n      { role: \"user\", parts: [{ text: instruction }, { text: format }] }\n    ]\n  };\n}",
             "name": "buildContext",
             "raw": true
           }

@@ -217,7 +217,7 @@
                 "id": "fn-4",
                 "type": "invoke",
                 "configuration": {
-                  "path": "#fn-4"
+                  "$board": "#fn-4"
                 }
               },
               {

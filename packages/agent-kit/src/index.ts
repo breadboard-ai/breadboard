@@ -8,10 +8,12 @@ import { GraphToKitAdapter, KitBuilder } from "@google-labs/breadboard/kits";
 
 import kit from "./kit.js";
 import { addKit } from "@google-labs/breadboard";
-import { WorkerType } from "./boards/worker.js";
-import { addDescriber, workerDescriber } from "./hacks.js";
-import { RepeaterType } from "./boards/repeater.js";
-import { StructuredWorkerType } from "./boards/structured-worker.js";
+import worker, { WorkerType } from "./boards/worker.js";
+import { addDescriber } from "./hacks.js";
+import repeater, { RepeaterType } from "./boards/repeater.js";
+import structuredWorker, {
+  StructuredWorkerType,
+} from "./boards/structured-worker.js";
 
 // TODO: Replace with the actual URL.
 const KIT_BASE_URL =
@@ -30,9 +32,12 @@ const builder = new KitBuilder(
 );
 
 const AgentKit = builder.build({
-  worker: addDescriber(adapter.handlerForNode("worker"), workerDescriber),
-  repeater: adapter.handlerForNode("repeater"),
-  structuredWorker: adapter.handlerForNode("structured-worker"),
+  worker: await addDescriber(adapter.handlerForNode("worker"), worker),
+  repeater: await addDescriber(adapter.handlerForNode("repeater"), repeater),
+  structuredWorker: await addDescriber(
+    adapter.handlerForNode("structured-worker"),
+    structuredWorker
+  ),
 });
 
 export type AgentKit = InstanceType<typeof AgentKit>;
