@@ -60,7 +60,7 @@
       "id": "fn-3",
       "type": "invoke",
       "configuration": {
-        "path": "#fn-3"
+        "$board": "#fn-3"
       }
     },
     {

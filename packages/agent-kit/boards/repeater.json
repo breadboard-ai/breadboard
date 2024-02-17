@@ -71,7 +71,7 @@
       "id": "counter",
       "type": "invoke",
       "configuration": {
-        "path": "#counter"
+        "$board": "#counter"
       }
     },
     {
@@ -95,24 +95,21 @@
               "title": "Context",
               "type": "array",
               "format": "multiline",
-              "examples": [
-                "[]"
-              ],
+              "default": "[]",
               "description": "Initial conversation context"
             },
             "max": {
               "title": "Max",
               "description": "The maximum number of repetitions to make (set to -1 to go infinitely)",
               "type": "number",
+              "default": "-1",
               "examples": [
                 "3"
               ]
             }
           },
           "required": [
-            "worker",
-            "context",
-            "max"
+            "worker"
           ]
         }
       }

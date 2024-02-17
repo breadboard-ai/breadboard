@@ -113,7 +113,7 @@
       "id": "fn-6",
       "type": "invoke",
       "configuration": {
-        "path": "#fn-6"
+        "$board": "#fn-6"
       }
     },
     {
@@ -157,7 +157,7 @@
       "id": "fn-3",
       "type": "invoke",
       "configuration": {
-        "path": "#fn-3"
+        "$board": "#fn-3"
       }
     },
     {

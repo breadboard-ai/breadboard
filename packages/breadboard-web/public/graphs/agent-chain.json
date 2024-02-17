@@ -132,7 +132,7 @@
                 "id": "makeAgentArgs",
                 "type": "invoke",
                 "configuration": {
-                  "path": "#makeAgentArgs"
+                  "$board": "#makeAgentArgs"
                 }
               }
             ],

@@ -56,7 +56,7 @@
       "id": "combinePictureAndPrompt",
       "type": "invoke",
       "configuration": {
-        "path": "#combinePictureAndPrompt"
+        "$board": "#combinePictureAndPrompt"
       }
     },
     {
