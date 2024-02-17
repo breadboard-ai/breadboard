@@ -94,7 +94,7 @@
                 "id": "bot",
                 "type": "worker",
                 "configuration": {
-                  "instruction": "As a friendlly assistant bot, reply in a friendly, helpful, and brief manner to assist the user as quickly as possible to the request below."
+                  "instruction": "As a friendlly assistant bot, reply to the request below in a friendly, helpful, and brief manner to assist the user as quickly as possible. Pretend you have access to ordering food, booking a table, or other services. You can also ask for more information if needed. If you don't understand the request, ask for clarification. If you can't help, apologize and explain why you can't help"
                 }
               },
               {
@@ -125,6 +125,24 @@
                         "in": "text"
                       },
                       {
+                        "from": "maybeOutputRouter",
+                        "to": "output",
+                        "out": "output",
+                        "in": "output"
+                      },
+                      {
+                        "from": "maybeOutputRouter",
+                        "to": "appendContext",
+                        "out": "context",
+                        "in": "context"
+                      },
+                      {
+                        "from": "createSchema",
+                        "to": "input",
+                        "out": "schema",
+                        "in": "schema"
+                      },
+                      {
                         "from": "input-1",
                         "to": "createSchema",
                         "out": "title",
@@ -138,15 +156,9 @@
                       },
                       {
                         "from": "input-1",
-                        "to": "appendContext",
+                        "to": "maybeOutputRouter",
                         "out": "context",
                         "in": "context"
-                      },
-                      {
-                        "from": "createSchema",
-                        "to": "input",
-                        "out": "schema",
-                        "in": "schema"
                       }
                     ],
                     "nodes": [
@@ -199,6 +211,20 @@
                         }
                       },
                       {
+                        "id": "maybeOutputRouter",
+                        "type": "invoke",
+                        "configuration": {
+                          "path": "#maybeOutputRouter"
+                        }
+                      },
+                      {
+                        "id": "createSchema",
+                        "type": "invoke",
+                        "configuration": {
+                          "path": "#createSchema"
+                        }
+                      },
+                      {
                         "id": "input-1",
                         "type": "input",
                         "configuration": {
@@ -220,8 +246,11 @@
                               "context": {
                                 "title": "Context",
                                 "description": "Incoming conversation context",
-                                "default": "[]",
-                                "type": "array"
+                                "type": "object",
+                                "examples": [
+                                  "[{\"role\":\"model\",\"parts\":[{\"text\":\"Hello, user!\"}]}]"
+                                ],
+                                "default": "[]"
                               }
                             },
                             "required": []
@@ -229,10 +258,22 @@
                         }
                       },
                       {
-                        "id": "createSchema",
-                        "type": "invoke",
+                        "id": "output",
+                        "type": "output",
                         "configuration": {
-                          "path": "#createSchema"
+                          "schema": {
+                            "type": "object",
+                            "hints": [
+                              "bubbles"
+                            ],
+                            "properties": {
+                              "output": {
+                                "type": "string",
+                                "title": "Output",
+                                "description": "The output to display"
+                              }
+                            }
+                          }
                         }
                       }
                     ],
@@ -267,6 +308,41 @@
                           },
                           {
                             "id": "appendContext-output",
+                            "type": "output",
+                            "configuration": {}
+                          }
+                        ]
+                      },
+                      "maybeOutputRouter": {
+                        "edges": [
+                          {
+                            "from": "maybeOutputRouter-input",
+                            "to": "maybeOutputRouter-run",
+                            "out": "*"
+                          },
+                          {
+                            "from": "maybeOutputRouter-run",
+                            "to": "maybeOutputRouter-output",
+                            "out": "*"
+                          }
+                        ],
+                        "nodes": [
+                          {
+                            "id": "maybeOutputRouter-input",
+                            "type": "input",
+                            "configuration": {}
+                          },
+                          {
+                            "id": "maybeOutputRouter-run",
+                            "type": "runJavascript",
+                            "configuration": {
+                              "code": "function maybeOutputRouter({context}) {if(Array.isArray(context)&&context.length>0){const lastItem=context[context.length-1];if(lastItem.role===\"model\"){const output=lastItem.parts.map(item=>item.text).join(\"/n\");return{output,context}}}return{context}}",
+                              "name": "maybeOutputRouter",
+                              "raw": true
+                            }
+                          },
+                          {
+                            "id": "maybeOutputRouter-output",
                             "type": "output",
                             "configuration": {}
                           }

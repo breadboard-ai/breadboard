@@ -41,11 +41,35 @@ export const contextAppender = code<AppenderInputs, AppenderOutputs>(
   }
 );
 
+type ContextItem = { role: string; parts: { text: string }[] };
+
+const maybeOutput = code(({ context }) => {
+  if (Array.isArray(context) && context.length > 0) {
+    const lastItem = context[context.length - 1];
+    if (lastItem.role === "model") {
+      const output = lastItem.parts
+        .map((item: { text: string }) => item.text)
+        .join("/n");
+      return { output, context };
+    }
+  }
+  return { context };
+});
+
+const testOutput = [
+  {
+    role: "model",
+    parts: [{ text: "Hello, user!" }],
+  },
+] as ContextItem[];
+
 export default await board(({ context, title, description }) => {
   context
     .title("Context")
     .description("Incoming conversation context")
+    .isObject()
     .optional()
+    .examples(JSON.stringify(testOutput))
     .default("[]");
   title
     .title("Title")
@@ -63,6 +87,27 @@ export default await board(({ context, title, description }) => {
     description: description.isString(),
   });
 
+  const maybeOutputRouter = maybeOutput({
+    $id: "maybeOutputRouter",
+    context,
+  });
+
+  base.output({
+    $id: "output",
+    output: maybeOutputRouter.output,
+    schema: {
+      type: "object",
+      hints: ["bubbles"],
+      properties: {
+        output: {
+          type: "string",
+          title: "Output",
+          description: "The output to display",
+        },
+      },
+    },
+  });
+
   const input = base.input({
     $id: "input",
   });
@@ -71,7 +116,7 @@ export default await board(({ context, title, description }) => {
 
   const appendContext = contextAppender({
     $id: "appendContext",
-    context: context.isArray(),
+    context: maybeOutputRouter.context.isArray(),
     text: input.text.isString(),
   });
 

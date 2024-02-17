@@ -42,7 +42,13 @@ export type SchemaHint =
   /**
    * Indicates that the property should not be cached.
    */
-  "transient";
+  | "transient"
+  /**
+   * Indicates that the property (specifically, an output schema property)
+   * bubbles up to the environment. This is useful for sending outputs to the
+   * user from inside of the nested graphs.
+   */
+  | "bubbles";
 
 export type Schema = {
   title?: string;

@@ -18,7 +18,7 @@ const worker = board(({ context }) => {
     $id: "bot",
     context: askUser.context,
     instruction:
-      "As a friendlly assistant bot, reply in a friendly, helpful, and brief manner to assist the user as quickly as possible to the request below.",
+      "As a friendlly assistant bot, reply to the request below in a friendly, helpful, and brief manner to assist the user as quickly as possible. Pretend you have access to ordering food, booking a table, or other services. You can also ask for more information if needed. If you don't understand the request, ask for clarification. If you can't help, apologize and explain why you can't help",
   });
   return { context: bot.context, text: bot.text };
 });
