@@ -166,7 +166,7 @@
       "configuration": {
         "schema": {
           "type": "object",
-          "hints": [
+          "behavior": [
             "bubble"
           ],
           "properties": {
