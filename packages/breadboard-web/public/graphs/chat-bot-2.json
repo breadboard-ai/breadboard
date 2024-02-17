@@ -270,7 +270,7 @@
                           "schema": {
                             "type": "object",
                             "hints": [
-                              "hoist"
+                              "bubble"
                             ],
                             "properties": {
                               "output": {
@@ -342,7 +342,7 @@
                             "id": "createSchema-run",
                             "type": "runJavascript",
                             "configuration": {
-                              "code": "function createSchema({title,description,context}) {const schema2={type:\"object\",properties:{text:{title,description,hints:[\"transient\"]}}};return{schema:schema2,context}}",
+                              "code": "function createSchema({title,description,context}) {const schema2={type:\"object\",properties:{text:{title,description,behavior:[\"transient\"]}}};return{schema:schema2,context}}",
                               "name": "createSchema",
                               "raw": true
                             }

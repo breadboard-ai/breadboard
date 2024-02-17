@@ -270,8 +270,8 @@ export class Value<T extends NodeValue = NodeValue>
 
   transient(): AbstractValue<T> {
     const schema = this.#schema;
-    schema.hints ??= [];
-    schema.hints.push("transient");
+    schema.behavior ??= [];
+    schema.behavior.push("transient");
     return this;
   }
 

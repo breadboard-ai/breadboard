@@ -38,17 +38,21 @@ export type {
   SubGraphs,
 } from "@google-labs/breadboard-schema/graph.js";
 
-export type SchemaHint =
+export type BehaviorSchema =
   /**
-   * Indicates that the property should not be cached.
+   * Indicates that this particular input port value should not be cached by
+   * the input bubbling machinery.
+   * Use this when you'd like to continually ask the user for the same input,
+   * rather that re-using cached answer (default behavior).
    */
   | "transient"
   /**
-   * Indicates that the property (specifically, an output)
-   * is hoisted all the way up to the environment. This is useful for sending
-   * outputs to the user from inside of the nested graphs.
+   * Indicates that the output node should bubble up to the invoking runner,
+   * if any.
+   * This is useful for sending outputs to the user from inside of the nested
+   * graphs.
    */
-  | "hoist";
+  | "bubble";
 
 export type Schema = {
   title?: string;
@@ -58,10 +62,11 @@ export type Schema = {
   required?: string[];
   format?: string;
   /**
-   * Can be used to provide additional hints to the UI or to other parts of the
-   * system.
+   * Can be used to provide additional hints to the UI or to other parts of
+   * the system about behavior of this particular input/output or input/output
+   * port.
    */
-  hints?: SchemaHint[];
+  behavior?: BehaviorSchema[];
   transient?: boolean;
   enum?: string[];
   /**

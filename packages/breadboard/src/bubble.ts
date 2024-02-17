@@ -149,7 +149,7 @@ export class RequestedInputsManager {
 }
 
 const isTransient = (schema: Schema): boolean => {
-  return schema.hints?.includes("transient") ?? false;
+  return schema.behavior?.includes("transient") ?? false;
 };
 
 export const bubbleUpOutputsIfNeeded = async (
@@ -159,7 +159,7 @@ export const bubbleUpOutputsIfNeeded = async (
 ): Promise<boolean> => {
   if (!context.provideOutput) return false;
   const schema = descriptor.configuration?.schema as Schema;
-  const shouldBubble = schema?.hints?.includes("hoist");
+  const shouldBubble = schema?.behavior?.includes("bubble");
   if (!shouldBubble) return false;
 
   await context.provideOutput(outputs, descriptor);

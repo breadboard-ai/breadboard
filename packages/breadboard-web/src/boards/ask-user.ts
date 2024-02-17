@@ -20,7 +20,7 @@ const schema = code<SchemaInputs, SchemaOutputs>(
         text: {
           title,
           description,
-          hints: ["transient"],
+          behavior: ["transient"],
         },
       },
     } satisfies Schema;
@@ -101,7 +101,7 @@ export default await board(({ context, title, description }) => {
     output: maybeOutputRouter.output,
     schema: {
       type: "object",
-      hints: ["hoist"],
+      hints: ["bubble"],
       properties: {
         output: {
           type: "string",
