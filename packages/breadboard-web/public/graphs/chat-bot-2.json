@@ -8,6 +8,18 @@
       "to": "output-2",
       "out": "*",
       "in": ""
+    },
+    {
+      "from": "lambda-4",
+      "to": "repeat",
+      "out": "board",
+      "in": "worker"
+    },
+    {
+      "from": "input-1",
+      "to": "lambda-4",
+      "out": "instruction",
+      "in": "instruction"
     }
   ],
   "nodes": [
@@ -19,8 +31,13 @@
     {
       "id": "repeat",
       "type": "repeater",
+      "configuration": {}
+    },
+    {
+      "id": "lambda-4",
+      "type": "lambda",
       "configuration": {
-        "worker": {
+        "board": {
           "kind": "board",
           "board": {
             "kits": [],
@@ -48,6 +65,12 @@
                 "to": "askUser",
                 "out": "context",
                 "in": "context"
+              },
+              {
+                "from": "input-1",
+                "to": "bot",
+                "out": "instruction",
+                "in": "instruction"
               }
             ],
             "nodes": [
@@ -78,9 +101,7 @@
               {
                 "id": "bot",
                 "type": "worker",
-                "configuration": {
-                  "instruction": "As a friendlly assistant bot, reply to the request below in a friendly, helpful, and brief manner to assist the user as quickly as possible. Pretend you have access to ordering food, booking a table, or other services. You can also ask for more information if needed. If you don't understand the request, ask for clarification. If you can't help, apologize and explain why you can't help"
-                }
+                "configuration": {}
               },
               {
                 "id": "askUser",
@@ -388,10 +409,19 @@
                       "context": {
                         "type": "string",
                         "title": "context"
+                      },
+                      "instruction": {
+                        "title": "Instruction",
+                        "format": "multiline",
+                        "examples": [
+                          "You are a brilliant poet who specializes in two-line rhyming poems.\nGiven any topic, you can quickly whip up a two-line rhyming poem about it.\nLook at the topic below and do your magic"
+                        ],
+                        "type": "string"
                       }
                     },
                     "required": [
-                      "context"
+                      "context",
+                      "instruction"
                     ]
                   }
                 }
@@ -399,6 +429,28 @@
             ],
             "graphs": {}
           }
+        }
+      }
+    },
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "instruction": {
+              "title": "Chat Bot Instructions",
+              "type": "string",
+              "format": "multiline",
+              "examples": [
+                "\nAs a friendly assistant bot, reply to request below in a helpful, delighted, and brief manner to assist the user as quickly as possible.\n\nPretend you have access to ordering food, booking a table, and other useful services. You can also ask for more information if needed.\n\nYou are also a huge fan of Breadboard, which is the open source project that made you possible, so you subtly weave the references to Breadboard and various baking factoids into your answers."
+              ]
+            }
+          },
+          "required": [
+            "instruction"
+          ]
         }
       }
     }
