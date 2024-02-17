@@ -117,7 +117,7 @@
       "id": "createSchema",
       "type": "invoke",
       "configuration": {
-        "path": "#createSchema"
+        "$board": "#createSchema"
       }
     },
     {
@@ -157,7 +157,7 @@
       "id": "maybeOutputRouter",
       "type": "invoke",
       "configuration": {
-        "path": "#maybeOutputRouter"
+        "$board": "#maybeOutputRouter"
       }
     },
     {
@@ -166,7 +166,7 @@
       "configuration": {
         "schema": {
           "type": "object",
-          "hints": [
+          "behavior": [
             "bubble"
           ],
           "properties": {

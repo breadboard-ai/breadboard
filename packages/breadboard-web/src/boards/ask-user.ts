@@ -101,7 +101,7 @@ export default await board(({ context, title, description }) => {
     output: maybeOutputRouter.output,
     schema: {
       type: "object",
-      hints: ["bubble"],
+      behavior: ["bubble"],
       properties: {
         output: {
           type: "string",
@@ -109,7 +109,7 @@ export default await board(({ context, title, description }) => {
           description: "The output to display",
         },
       },
-    },
+    } satisfies Schema,
   });
 
   const input = base.input({

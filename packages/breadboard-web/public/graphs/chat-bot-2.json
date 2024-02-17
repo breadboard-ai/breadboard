@@ -1,39 +1,25 @@
 {
   "title": "Chat bot 2.0",
-  "description": "A board that uses the Agent kit to create a simple chat bot",
+  "description": "A board that uses the Agent kit to create a simple chat bot. This chat bot simulates an assistant, pretending to be able to order food, book tickets, and all those things that actual assistants do.",
   "version": "0.0.1",
   "edges": [
     {
       "from": "repeat",
       "to": "output-2",
-      "out": "context",
-      "in": "context"
+      "out": "*",
+      "in": ""
     }
   ],
   "nodes": [
     {
       "id": "output-2",
       "type": "output",
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "context": {
-              "type": "string",
-              "title": "context"
-            }
-          },
-          "required": [
-            "context"
-          ]
-        }
-      }
+      "configuration": {}
     },
     {
       "id": "repeat",
       "type": "repeater",
       "configuration": {
-        "context": [],
         "worker": {
           "kind": "board",
           "board": {
@@ -194,7 +180,7 @@
                         "id": "appendContext",
                         "type": "invoke",
                         "configuration": {
-                          "path": "#appendContext"
+                          "$board": "#appendContext"
                         }
                       },
                       {
@@ -219,7 +205,7 @@
                         "id": "createSchema",
                         "type": "invoke",
                         "configuration": {
-                          "path": "#createSchema"
+                          "$board": "#createSchema"
                         }
                       },
                       {
@@ -259,7 +245,7 @@
                         "id": "maybeOutputRouter",
                         "type": "invoke",
                         "configuration": {
-                          "path": "#maybeOutputRouter"
+                          "$board": "#maybeOutputRouter"
                         }
                       },
                       {
@@ -268,7 +254,7 @@
                         "configuration": {
                           "schema": {
                             "type": "object",
-                            "hints": [
+                            "behavior": [
                               "bubble"
                             ],
                             "properties": {
@@ -413,8 +399,7 @@
             ],
             "graphs": {}
           }
-        },
-        "max": 3
+        }
       }
     }
   ],
