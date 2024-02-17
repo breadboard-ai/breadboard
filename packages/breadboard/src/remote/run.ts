@@ -32,7 +32,6 @@ import {
 
 const resumeRun = (request: AnyRunRequestMessage) => {
   const [type, , state] = request;
-  console.log("resumeRun", type, state);
 
   // There may not be any state to resume from.
   if (!state) return undefined;

@@ -205,7 +205,7 @@ export class BoardRunner implements BreadboardRunner {
             slots,
             kits: [...(context.kits || []), ...this.kits],
             requestInput: requestedInputs.createHandler(next, result),
-            provideOutput: createOutputProvider(next, result),
+            provideOutput: createOutputProvider(next, result, context),
             invocationPath: path(),
             state: await stack.state(),
           };

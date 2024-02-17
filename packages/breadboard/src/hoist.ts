@@ -29,15 +29,18 @@ export const hoistOutputIfNeeded = async (
 
 export const createOutputProvider = (
   next: (result: RunResult) => Promise<void>,
-  result: TraversalResult
+  result: TraversalResult,
+  context: NodeHandlerContext
 ) => {
+  if (context.provideOutput) {
+    return context.provideOutput;
+  }
   return async (outputs: OutputValues, descriptor: NodeDescriptor) => {
     const provideOutputResult = {
       ...result,
       descriptor,
       inputs: outputs,
     };
-    console.log("hoisting", outputs, descriptor);
     await next(new OutputStageResult(provideOutputResult, -1));
   };
 };
