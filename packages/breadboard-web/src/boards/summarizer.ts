@@ -24,7 +24,7 @@ export default await board(({ paragraph, n }) => {
     .isString()
     .examples(superDenseText)
     .format("multiline");
-  n.title("How many time should workers iterate?").isNumber().examples("3");
+  n.title("How many times should workers iterate?").isNumber().examples("3");
 
   const iterate = agents.repeater({
     $id: "iterate",
