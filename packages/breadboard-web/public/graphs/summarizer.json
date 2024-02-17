@@ -224,7 +224,7 @@
               ]
             },
             "n": {
-              "title": "How many time should workers iterate?",
+              "title": "How many times should workers iterate?",
               "description": "The maximum number of repetitions to make (set to -1 to go infinitely)",
               "type": "number",
               "default": "-1",
