@@ -49,7 +49,6 @@ const getRunnableBoard = async (
   inputs: InvokeNodeInputs
 ): Promise<RunnableBoardWithArgs> => {
   const { $board, ...args } = inputs;
-  console.log("inputs", inputs);
   if ($board) {
     let board;
 
