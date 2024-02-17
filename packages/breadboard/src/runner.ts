@@ -30,12 +30,16 @@ import { runRemote } from "./remote.js";
 import { callHandler, handlersFromKits } from "./handler.js";
 import { toMermaid } from "./mermaid.js";
 import { SchemaBuilder } from "./schema.js";
-import { RequestedInputsManager, bubbleUpInputsIfNeeded } from "./bubble.js";
+import {
+  RequestedInputsManager,
+  bubbleUpInputsIfNeeded,
+  createOutputProvider,
+  bubbleUpOutputsIfNeeded,
+} from "./bubble.js";
 import { asyncGen } from "./utils/async-gen.js";
 import { StackManager } from "./stack.js";
 import { timestamp } from "./timestamp.js";
 import breadboardSchema from "@google-labs/breadboard-schema/breadboard.schema.json" assert { type: "json" };
-import { createOutputProvider, hoistOutputIfNeeded } from "./hoist.js";
 
 /**
  * This class is the main entry point for running a board.
@@ -187,7 +191,7 @@ export class BoardRunner implements BreadboardRunner {
           await bubbleUpInputsIfNeeded(this, context, descriptor, result);
           outputsPromise = result.outputsPromise;
         } else if (descriptor.type === "output") {
-          if (!(await hoistOutputIfNeeded(inputs, descriptor, context))) {
+          if (!(await bubbleUpOutputsIfNeeded(inputs, descriptor, context))) {
             await next(new OutputStageResult(result, invocationId));
           }
           outputsPromise = result.outputsPromise;

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { InputStageResult, RunResult } from "./run.js";
+import { InputStageResult, OutputStageResult, RunResult } from "./run.js";
 import {
   GraphMetadata,
   InputValues,
@@ -150,4 +150,36 @@ export class RequestedInputsManager {
 
 const isTransient = (schema: Schema): boolean => {
   return schema.hints?.includes("transient") ?? false;
+};
+
+export const bubbleUpOutputsIfNeeded = async (
+  outputs: OutputValues,
+  descriptor: NodeDescriptor,
+  context: NodeHandlerContext
+): Promise<boolean> => {
+  if (!context.provideOutput) return false;
+  const schema = descriptor.configuration?.schema as Schema;
+  const shouldBubble = schema?.hints?.includes("hoist");
+  if (!shouldBubble) return false;
+
+  await context.provideOutput(outputs, descriptor);
+  return true;
+};
+
+export const createOutputProvider = (
+  next: (result: RunResult) => Promise<void>,
+  result: TraversalResult,
+  context: NodeHandlerContext
+) => {
+  if (context.provideOutput) {
+    return context.provideOutput;
+  }
+  return async (outputs: OutputValues, descriptor: NodeDescriptor) => {
+    const provideOutputResult = {
+      ...result,
+      descriptor,
+      inputs: outputs,
+    };
+    await next(new OutputStageResult(provideOutputResult, -1));
+  };
 };
