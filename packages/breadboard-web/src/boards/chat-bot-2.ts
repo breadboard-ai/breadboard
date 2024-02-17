@@ -1,4 +1,4 @@
-import { base, board } from "@google-labs/breadboard";
+import { board } from "@google-labs/breadboard";
 import { agents } from "@google-labs/agent-kit";
 import { core } from "@google-labs/core-kit";
 
