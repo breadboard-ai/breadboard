@@ -82,7 +82,7 @@
       "id": "assembleContext",
       "type": "invoke",
       "configuration": {
-        "path": "#assembleContext"
+        "$board": "#assembleContext"
       }
     },
     {
@@ -96,7 +96,7 @@
       "id": "buildContext",
       "type": "invoke",
       "configuration": {
-        "path": "#buildContext"
+        "$board": "#buildContext"
       }
     },
     {

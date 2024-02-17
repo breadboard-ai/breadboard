@@ -141,7 +141,7 @@
       "id": "filterErrors",
       "type": "invoke",
       "configuration": {
-        "path": "#filterErrors"
+        "$board": "#filterErrors"
       }
     },
     {
@@ -277,7 +277,7 @@
       "id": "createList",
       "type": "invoke",
       "configuration": {
-        "path": "#createList"
+        "$board": "#createList"
       }
     },
     {

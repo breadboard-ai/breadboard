@@ -74,7 +74,7 @@
       "id": "appendContext",
       "type": "invoke",
       "configuration": {
-        "path": "#appendContext"
+        "$board": "#appendContext"
       }
     },
     {
@@ -129,7 +129,7 @@
       "id": "createSchema",
       "type": "invoke",
       "configuration": {
-        "path": "#createSchema"
+        "$board": "#createSchema"
       }
     }
   ],
