@@ -38,6 +38,22 @@ export type {
   SubGraphs,
 } from "@google-labs/breadboard-schema/graph.js";
 
+export type BehaviorSchema =
+  /**
+   * Indicates that this particular input port value should not be cached by
+   * the input bubbling machinery.
+   * Use this when you'd like to continually ask the user for the same input,
+   * rather that re-using cached answer (default behavior).
+   */
+  | "transient"
+  /**
+   * Indicates that the output node should bubble up to the invoking runner,
+   * if any.
+   * This is useful for sending outputs to the user from inside of the nested
+   * graphs.
+   */
+  | "bubble";
+
 export type Schema = {
   title?: string;
   description?: string;
@@ -45,6 +61,12 @@ export type Schema = {
   properties?: Record<string, Schema>;
   required?: string[];
   format?: string;
+  /**
+   * Can be used to provide additional hints to the UI or to other parts of
+   * the system about behavior of this particular input/output or input/output
+   * port.
+   */
+  behavior?: BehaviorSchema[];
   transient?: boolean;
   enum?: string[];
   /**
@@ -525,6 +547,17 @@ export interface NodeHandlerContext {
     schema: Schema,
     node: NodeDescriptor
   ) => Promise<NodeValue>;
+  /**
+   * Provide output directly to the user. This will bypass the normal output
+   * flow and will not be passed as outputs.
+   * @param output - The values to provide
+   * @param schema - The schema to use for the output
+   * @returns - Promise that resolves when the output is provided
+   */
+  readonly provideOutput?: (
+    outputs: OutputValues,
+    descriptor: NodeDescriptor
+  ) => Promise<void>;
   readonly invocationPath?: number[];
   readonly state?: RunState;
 }

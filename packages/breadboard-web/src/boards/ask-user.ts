@@ -6,26 +6,28 @@
 
 import { Schema, base, code, board } from "@google-labs/breadboard";
 
-type SchemaInputs = { title: string; description: string };
+type SchemaInputs = { title: string; description: string; context: unknown };
 type SchemaOutputs = { schema: unknown };
 
 /**
  * Creates custom input schema.
  */
-const schema = code<SchemaInputs, SchemaOutputs>(({ title, description }) => {
-  const schema = {
-    type: "object",
-    properties: {
-      text: {
-        title,
-        description,
-        transient: true,
+const schema = code<SchemaInputs, SchemaOutputs>(
+  ({ title, description, context }) => {
+    const schema = {
+      type: "object",
+      properties: {
+        text: {
+          title,
+          description,
+          behavior: ["transient"],
+        },
       },
-    },
-  } satisfies Schema;
+    } satisfies Schema;
 
-  return { schema };
-});
+    return { schema, context };
+  }
+);
 
 type AppenderInputs = { context: unknown[]; text: string };
 type AppenderOutputs = { context: unknown[] };
@@ -41,11 +43,35 @@ export const contextAppender = code<AppenderInputs, AppenderOutputs>(
   }
 );
 
+type ContextItem = { role: string; parts: { text: string }[] };
+
+const maybeOutput = code(({ context }) => {
+  if (Array.isArray(context) && context.length > 0) {
+    const lastItem = context[context.length - 1];
+    if (lastItem.role === "model") {
+      const output = lastItem.parts
+        .map((item: { text: string }) => item.text)
+        .join("/n");
+      return { output, context };
+    }
+  }
+  return { context };
+});
+
+const testOutput = [
+  {
+    role: "model",
+    parts: [{ text: "Hello, user!" }],
+  },
+] as ContextItem[];
+
 export default await board(({ context, title, description }) => {
   context
     .title("Context")
     .description("Incoming conversation context")
+    .isObject()
     .optional()
+    .examples(JSON.stringify(testOutput))
     .default("[]");
   title
     .title("Title")
@@ -57,10 +83,33 @@ export default await board(({ context, title, description }) => {
     .description("The description of what to ask")
     .optional()
     .default("User's question or request");
+
+  const maybeOutputRouter = maybeOutput({
+    $id: "maybeOutputRouter",
+    context,
+  });
+
   const createSchema = schema({
     $id: "createSchema",
     title: title.isString(),
     description: description.isString(),
+    context: maybeOutputRouter.context,
+  });
+
+  base.output({
+    $id: "output",
+    output: maybeOutputRouter.output,
+    schema: {
+      type: "object",
+      hints: ["bubble"],
+      properties: {
+        output: {
+          type: "string",
+          title: "Output",
+          description: "The output to display",
+        },
+      },
+    },
   });
 
   const input = base.input({
@@ -71,7 +120,7 @@ export default await board(({ context, title, description }) => {
 
   const appendContext = contextAppender({
     $id: "appendContext",
-    context: context.isArray(),
+    context: createSchema.context.isArray(),
     text: input.text.isString(),
   });
 
