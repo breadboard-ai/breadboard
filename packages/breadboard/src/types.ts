@@ -44,11 +44,11 @@ export type SchemaHint =
    */
   | "transient"
   /**
-   * Indicates that the property (specifically, an output schema property)
-   * bubbles up to the environment. This is useful for sending outputs to the
-   * user from inside of the nested graphs.
+   * Indicates that the property (specifically, an output)
+   * is hoisted all the way up to the environment. This is useful for sending
+   * outputs to the user from inside of the nested graphs.
    */
-  | "bubbles";
+  | "hoist";
 
 export type Schema = {
   title?: string;
@@ -542,6 +542,17 @@ export interface NodeHandlerContext {
     schema: Schema,
     node: NodeDescriptor
   ) => Promise<NodeValue>;
+  /**
+   * Provide output directly to the user. This will bypass the normal output
+   * flow and will not be passed as outputs.
+   * @param output - The values to provide
+   * @param schema - The schema to use for the output
+   * @returns - Promise that resolves when the output is provided
+   */
+  readonly provideOutput?: (
+    outputs: OutputValues,
+    descriptor: NodeDescriptor
+  ) => Promise<void>;
   readonly invocationPath?: number[];
   readonly state?: RunState;
 }

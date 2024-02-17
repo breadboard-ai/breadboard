@@ -125,22 +125,22 @@
                         "in": "text"
                       },
                       {
-                        "from": "maybeOutputRouter",
-                        "to": "output",
-                        "out": "output",
-                        "in": "output"
+                        "from": "createSchema",
+                        "to": "input",
+                        "out": "schema",
+                        "in": "schema"
                       },
                       {
-                        "from": "maybeOutputRouter",
+                        "from": "createSchema",
                         "to": "appendContext",
                         "out": "context",
                         "in": "context"
                       },
                       {
-                        "from": "createSchema",
-                        "to": "input",
-                        "out": "schema",
-                        "in": "schema"
+                        "from": "input-1",
+                        "to": "maybeOutputRouter",
+                        "out": "context",
+                        "in": "context"
                       },
                       {
                         "from": "input-1",
@@ -155,10 +155,16 @@
                         "in": "description"
                       },
                       {
-                        "from": "input-1",
-                        "to": "maybeOutputRouter",
+                        "from": "maybeOutputRouter",
+                        "to": "createSchema",
                         "out": "context",
                         "in": "context"
+                      },
+                      {
+                        "from": "maybeOutputRouter",
+                        "to": "output",
+                        "out": "output",
+                        "in": "output"
                       }
                     ],
                     "nodes": [
@@ -211,13 +217,6 @@
                         }
                       },
                       {
-                        "id": "maybeOutputRouter",
-                        "type": "invoke",
-                        "configuration": {
-                          "path": "#maybeOutputRouter"
-                        }
-                      },
-                      {
                         "id": "createSchema",
                         "type": "invoke",
                         "configuration": {
@@ -231,6 +230,15 @@
                           "schema": {
                             "type": "object",
                             "properties": {
+                              "context": {
+                                "title": "Context",
+                                "description": "Incoming conversation context",
+                                "type": "object",
+                                "examples": [
+                                  "[{\"role\":\"model\",\"parts\":[{\"text\":\"Hello, user!\"}]}]"
+                                ],
+                                "default": "[]"
+                              },
                               "title": {
                                 "title": "Title",
                                 "description": "The title to ask",
@@ -242,19 +250,17 @@
                                 "description": "The description of what to ask",
                                 "default": "User's question or request",
                                 "type": "string"
-                              },
-                              "context": {
-                                "title": "Context",
-                                "description": "Incoming conversation context",
-                                "type": "object",
-                                "examples": [
-                                  "[{\"role\":\"model\",\"parts\":[{\"text\":\"Hello, user!\"}]}]"
-                                ],
-                                "default": "[]"
                               }
                             },
                             "required": []
                           }
+                        }
+                      },
+                      {
+                        "id": "maybeOutputRouter",
+                        "type": "invoke",
+                        "configuration": {
+                          "path": "#maybeOutputRouter"
                         }
                       },
                       {
@@ -264,7 +270,7 @@
                           "schema": {
                             "type": "object",
                             "hints": [
-                              "bubbles"
+                              "hoist"
                             ],
                             "properties": {
                               "output": {
@@ -313,6 +319,41 @@
                           }
                         ]
                       },
+                      "createSchema": {
+                        "edges": [
+                          {
+                            "from": "createSchema-input",
+                            "to": "createSchema-run",
+                            "out": "*"
+                          },
+                          {
+                            "from": "createSchema-run",
+                            "to": "createSchema-output",
+                            "out": "*"
+                          }
+                        ],
+                        "nodes": [
+                          {
+                            "id": "createSchema-input",
+                            "type": "input",
+                            "configuration": {}
+                          },
+                          {
+                            "id": "createSchema-run",
+                            "type": "runJavascript",
+                            "configuration": {
+                              "code": "function createSchema({title,description,context}) {const schema2={type:\"object\",properties:{text:{title,description,hints:[\"transient\"]}}};return{schema:schema2,context}}",
+                              "name": "createSchema",
+                              "raw": true
+                            }
+                          },
+                          {
+                            "id": "createSchema-output",
+                            "type": "output",
+                            "configuration": {}
+                          }
+                        ]
+                      },
                       "maybeOutputRouter": {
                         "edges": [
                           {
@@ -343,41 +384,6 @@
                           },
                           {
                             "id": "maybeOutputRouter-output",
-                            "type": "output",
-                            "configuration": {}
-                          }
-                        ]
-                      },
-                      "createSchema": {
-                        "edges": [
-                          {
-                            "from": "createSchema-input",
-                            "to": "createSchema-run",
-                            "out": "*"
-                          },
-                          {
-                            "from": "createSchema-run",
-                            "to": "createSchema-output",
-                            "out": "*"
-                          }
-                        ],
-                        "nodes": [
-                          {
-                            "id": "createSchema-input",
-                            "type": "input",
-                            "configuration": {}
-                          },
-                          {
-                            "id": "createSchema-run",
-                            "type": "runJavascript",
-                            "configuration": {
-                              "code": "function createSchema({title,description}) {const schema2={type:\"object\",properties:{text:{title,description,hints:[\"transient\"]}}};return{schema:schema2}}",
-                              "name": "createSchema",
-                              "raw": true
-                            }
-                          },
-                          {
-                            "id": "createSchema-output",
                             "type": "output",
                             "configuration": {}
                           }

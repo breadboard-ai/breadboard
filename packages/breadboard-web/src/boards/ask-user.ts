@@ -6,26 +6,28 @@
 
 import { Schema, base, code, board } from "@google-labs/breadboard";
 
-type SchemaInputs = { title: string; description: string };
+type SchemaInputs = { title: string; description: string; context: unknown };
 type SchemaOutputs = { schema: unknown };
 
 /**
  * Creates custom input schema.
  */
-const schema = code<SchemaInputs, SchemaOutputs>(({ title, description }) => {
-  const schema = {
-    type: "object",
-    properties: {
-      text: {
-        title,
-        description,
-        hints: ["transient"],
+const schema = code<SchemaInputs, SchemaOutputs>(
+  ({ title, description, context }) => {
+    const schema = {
+      type: "object",
+      properties: {
+        text: {
+          title,
+          description,
+          hints: ["transient"],
+        },
       },
-    },
-  } satisfies Schema;
+    } satisfies Schema;
 
-  return { schema };
-});
+    return { schema, context };
+  }
+);
 
 type AppenderInputs = { context: unknown[]; text: string };
 type AppenderOutputs = { context: unknown[] };
@@ -81,15 +83,17 @@ export default await board(({ context, title, description }) => {
     .description("The description of what to ask")
     .optional()
     .default("User's question or request");
-  const createSchema = schema({
-    $id: "createSchema",
-    title: title.isString(),
-    description: description.isString(),
-  });
 
   const maybeOutputRouter = maybeOutput({
     $id: "maybeOutputRouter",
     context,
+  });
+
+  const createSchema = schema({
+    $id: "createSchema",
+    title: title.isString(),
+    description: description.isString(),
+    context: maybeOutputRouter.context,
   });
 
   base.output({
@@ -97,7 +101,7 @@ export default await board(({ context, title, description }) => {
     output: maybeOutputRouter.output,
     schema: {
       type: "object",
-      hints: ["bubbles"],
+      hints: ["hoist"],
       properties: {
         output: {
           type: "string",
@@ -116,7 +120,7 @@ export default await board(({ context, title, description }) => {
 
   const appendContext = contextAppender({
     $id: "appendContext",
-    context: maybeOutputRouter.context.isArray(),
+    context: createSchema.context.isArray(),
     text: input.text.isString(),
   });
 

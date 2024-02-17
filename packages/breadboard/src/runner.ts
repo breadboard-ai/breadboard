@@ -35,6 +35,7 @@ import { asyncGen } from "./utils/async-gen.js";
 import { StackManager } from "./stack.js";
 import { timestamp } from "./timestamp.js";
 import breadboardSchema from "@google-labs/breadboard-schema/breadboard.schema.json" assert { type: "json" };
+import { createOutputProvider, hoistOutputIfNeeded } from "./hoist.js";
 
 /**
  * This class is the main entry point for running a board.
@@ -186,7 +187,9 @@ export class BoardRunner implements BreadboardRunner {
           await bubbleUpInputsIfNeeded(this, context, descriptor, result);
           outputsPromise = result.outputsPromise;
         } else if (descriptor.type === "output") {
-          await next(new OutputStageResult(result, invocationId));
+          if (!(await hoistOutputIfNeeded(inputs, descriptor, context))) {
+            await next(new OutputStageResult(result, invocationId));
+          }
           outputsPromise = result.outputsPromise;
         } else {
           const handler = handlers[descriptor.type];
@@ -202,6 +205,7 @@ export class BoardRunner implements BreadboardRunner {
             slots,
             kits: [...(context.kits || []), ...this.kits],
             requestInput: requestedInputs.createHandler(next, result),
+            provideOutput: createOutputProvider(next, result),
             invocationPath: path(),
             state: await stack.state(),
           };
