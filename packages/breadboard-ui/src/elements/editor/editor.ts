@@ -582,9 +582,7 @@ export class Editor extends LitElement {
               >
                 Cancel
               </button>
-              <h1>
-                Properties: ${node.descriptor.type} (${node.descriptor.id})
-              </h1>
+              <h1>Properties: ${node.descriptor.type} (${node.title()})</h1>
               <input
                 ?disabled=${!this.editable}
                 type="submit"
