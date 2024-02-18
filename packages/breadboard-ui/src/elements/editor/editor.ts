@@ -292,19 +292,6 @@ export class Editor extends LitElement {
     this.#lastGraphUrl = descriptor.url || null;
 
     const breadboardGraph = inspect(descriptor, { kits: this.kits });
-    // TODO: Remove once all the kit bits are settled.
-    // For now, this is a good way to inspect all the kits.
-    console.group("Kit inspection");
-    for (const kit of breadboardGraph.kits()) {
-      console.groupCollapsed(`Kit: ${kit.descriptor.title}`);
-      for (const nodeType of kit.nodeTypes) {
-        console.group("type", nodeType.type());
-        console.log("ports", await nodeType.ports());
-        console.groupEnd();
-      }
-      console.groupEnd();
-    }
-    console.groupEnd();
 
     const ports = new Map<string, InspectableNodePorts>();
     for (const node of breadboardGraph.nodes()) {
