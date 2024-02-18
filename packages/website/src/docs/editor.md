@@ -77,6 +77,8 @@ There are five edit operations that we can perform on the graph:
 
 - `changeConfiguration` -- change configuration of a node (`canChangeConfiguration` to check only).
 
+- `changeMetadata` -- change metadata (title and description) of a node (`canChangeMetadata` to check only).
+
 ## Accesing the graph
 
 To access the resulting graph, use the `raw()` method on the `EditableGraph` instance.
