@@ -71,7 +71,11 @@ export default await board(({ context, spec }) => {
     .examples(sampleChainSpec);
 
   const reducer = core.reduce({
-    $id: "reducer",
+    $metadata: {
+      title: "Reducer",
+      description:
+        "Takes a chain spec and runs through it sequentially, accumulating outputs.",
+    },
     list: spec.isArray(),
     accumulator: [],
     board: agentRunner,

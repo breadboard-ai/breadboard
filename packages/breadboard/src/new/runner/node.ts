@@ -27,6 +27,7 @@ import {
 import { Scope } from "./scope.js";
 
 import { IdVendor } from "../../id.js";
+import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
 
 const nodeIdVendor = new IdVendor();
 
@@ -44,6 +45,7 @@ export class BaseNode<
   outgoing: EdgeInterface[] = [];
   incoming: EdgeInterface[] = [];
   configuration: Partial<I> = {};
+  metadata?: NodeMetadata;
 
   #handler?: NodeHandler<InputValues, OutputValues>;
 
@@ -68,9 +70,10 @@ export class BaseNode<
       >;
     }
 
-    const { $id, ...rest } = config;
+    const { $id, $metadata, ...rest } = config;
 
     this.id = $id ?? nodeIdVendor.vendId(scope, this.type);
+    if ($metadata) this.metadata = $metadata;
 
     this.configuration = rest as Partial<I>;
   }
@@ -154,11 +157,13 @@ export class BaseNode<
   }
 
   async serializeNode(): Promise<[NodeDescriptor, GraphDescriptor?]> {
-    const node = {
+    const node: NodeDescriptor = {
       id: this.id,
       type: this.type,
       configuration: this.configuration as OriginalInputValues,
     };
+
+    if (this.metadata) node.metadata = this.metadata;
 
     return [node];
   }
