@@ -94,7 +94,6 @@ class Graph implements EditableGraph {
 
   async canAddEdge(spec: EditableEdgeSpec): Promise<EditResult> {
     if (spec.out === "*" && !(spec.in === "" || spec.in === "*")) {
-      console.log("SPEC", spec);
       return {
         success: false,
         error: `The "*" output port cannot be connected to a specific input port`,
