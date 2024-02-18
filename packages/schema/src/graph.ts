@@ -59,6 +59,12 @@ export type NodeDescriptor = {
    * Configuration of the node.
    */
   configuration?: NodeConfiguration;
+
+  /**
+   * The metadata of the node.
+   * Use this provide additional information about the node.
+   */
+  metadata?: NodeMetadata;
 };
 
 /**
@@ -99,6 +105,22 @@ export type Edge = {
    * remains available even after the node has consumed it.
    */
   constant?: boolean;
+};
+
+/**
+ * Represents metadata of a node.
+ * This is an optional part of the `NodeDescriptor` that can be used to
+ * provide additional information about the node.
+ */
+export type NodeMetadata = {
+  /**
+   * The title of the node.
+   */
+  title?: string;
+  /**
+   * A more detailed description of the node.
+   */
+  description?: string;
 };
 
 /**
