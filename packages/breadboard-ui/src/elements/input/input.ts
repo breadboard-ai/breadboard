@@ -445,7 +445,7 @@ export class Input extends LitElement {
                 name="${key}"
                 id="${key}"
                 type="checkbox"
-                checked="${checked}"
+                ?checked=${checked}
               />`;
             } else if (isMultipart(property)) {
               // Multi-part input.

@@ -32,6 +32,7 @@ import { longTermMemory } from "../../utils/long-term-memory.js";
 import { classMap } from "lit/directives/class-map.js";
 import { styles as uiControllerStyles } from "./ui-controller.styles.js";
 import { type InputList } from "../input/input-list/input-list.js";
+import { NodeHighlightHelper } from "../../utils/highlights.js";
 
 type ExtendedNodeInformation = {
   id: string;
@@ -117,6 +118,7 @@ export class UI extends LitElement {
   #messageDurations: Map<HarnessRunResult, number> = new Map();
   #renderTimeout = 0;
   #rendering = false;
+  #highlightHelper = new NodeHighlightHelper();
 
   static styles = uiControllerStyles;
 
@@ -147,6 +149,7 @@ export class UI extends LitElement {
 
   clearMessages() {
     this.messages.length = 0;
+    this.#highlightHelper.clear();
     this.#messagePosition = 0;
   }
 
@@ -355,6 +358,7 @@ export class UI extends LitElement {
   ): Promise<Record<string, unknown> | void> {
     // Store it for later, render, then actually handle the work.
     this.messages.push(message);
+    this.#highlightHelper.add(message);
     if (this.status === STATUS.RUNNING) {
       this.#messagePosition = this.messages.length - 1;
     }
@@ -461,8 +465,7 @@ export class UI extends LitElement {
       }
 
       case "editor": {
-        const message = this.messages[this.#messagePosition];
-        const nodeId = hasNodeInfo(message) ? message.data.node.id : "";
+        const nodeId = this.#highlightHelper.currentNode(this.#messagePosition);
 
         diagram = html`<bb-editor
           .editable=${this.url === null}
