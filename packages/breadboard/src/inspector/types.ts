@@ -238,6 +238,10 @@ export type InspectablePort = {
    * Port schema as defined by the node's configuration.
    */
   schema: Schema | undefined;
+  /**
+   * Returns the edges connected to this port.
+   */
+  edges: InspectableEdge[];
 };
 
 /**
