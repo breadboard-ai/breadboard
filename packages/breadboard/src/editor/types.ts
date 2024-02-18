@@ -48,9 +48,13 @@ export type EditableGraphOptions = InspectableGraphOptions;
 
 export type EditableNodeSpec = NodeDescriptor;
 
-export type EditResult = {
-  success: boolean;
-  error?: string;
-};
+export type EditResult =
+  | {
+      success: false;
+      error: string;
+    }
+  | {
+      success: true;
+    };
 
 export type EditableEdgeSpec = Edge;

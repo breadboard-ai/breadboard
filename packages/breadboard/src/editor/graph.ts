@@ -5,7 +5,7 @@
  */
 
 import { handlersFromKits } from "../handler.js";
-import { inspectableGraph } from "../inspector/graph.js";
+import { fixUpStarEdge, inspectableGraph } from "../inspector/graph.js";
 import { InspectableGraph } from "../inspector/types.js";
 import {
   GraphDescriptor,
@@ -43,7 +43,7 @@ class Graph implements EditableGraph {
     return (this.#handlers ??= handlersFromKits(this.#options?.kits || []));
   }
 
-  async canAddNode(spec: EditableNodeSpec) {
+  async canAddNode(spec: EditableNodeSpec): Promise<EditResult> {
     const duplicate = !!this.inspect().nodeById(spec.id);
     if (duplicate) {
       return {
@@ -63,7 +63,7 @@ class Graph implements EditableGraph {
     return { success: true };
   }
 
-  async addNode(spec: EditableNodeSpec) {
+  async addNode(spec: EditableNodeSpec): Promise<EditResult> {
     const can = await this.canAddNode(spec);
     if (!can.success) return can;
 
@@ -72,7 +72,7 @@ class Graph implements EditableGraph {
     return { success: true };
   }
 
-  async canRemoveNode(id: NodeIdentifier) {
+  async canRemoveNode(id: NodeIdentifier): Promise<EditResult> {
     const exists = !!this.inspect().nodeById(id);
     if (!exists) {
       return {
@@ -83,7 +83,7 @@ class Graph implements EditableGraph {
     return { success: true };
   }
 
-  async removeNode(id: NodeIdentifier) {
+  async removeNode(id: NodeIdentifier): Promise<EditResult> {
     const can = await this.canRemoveNode(id);
     if (!can.success) return can;
 
@@ -92,28 +92,20 @@ class Graph implements EditableGraph {
     return { success: true };
   }
 
-  async canAddEdge(spec: EditableEdgeSpec) {
-    if ((spec.out === "*" && spec.in !== "") || spec.in === "*") {
+  async canAddEdge(spec: EditableEdgeSpec): Promise<EditResult> {
+    if (spec.out === "*" && !(spec.in === "" || spec.in === "*")) {
       return {
         success: false,
         error: `The "*" output port cannot be connected to a specific input port`,
       };
     }
-    const exists = !!this.#graph.edges.find((edge) => {
-      return (
-        edge.from === spec.from &&
-        edge.to === spec.to &&
-        edge.out === spec.out &&
-        edge.in === spec.in
-      );
-    });
-    if (exists) {
+    const inspector = this.inspect();
+    if (inspector.hasEdge(spec)) {
       return {
         success: false,
         error: `Edge from "${spec.from}" to "${spec.to}" already exists`,
       };
     }
-    const inspector = this.inspect();
     const from = inspector.nodeById(spec.from);
     if (!from) {
       return {
@@ -151,24 +143,18 @@ class Graph implements EditableGraph {
     return { success: true };
   }
 
-  async addEdge(spec: EditableEdgeSpec) {
+  async addEdge(spec: EditableEdgeSpec): Promise<EditResult> {
     const can = await this.canAddEdge(spec);
     if (!can.success) return can;
+    spec = fixUpStarEdge(spec);
     this.#graph.edges.push(spec);
     this.#inspector = undefined;
     return { success: true };
   }
 
-  async canRemoveEdge(spec: EditableEdgeSpec) {
-    const exists = !!this.#graph.edges.find((edge) => {
-      return (
-        edge.from === spec.from &&
-        edge.to === spec.to &&
-        edge.out === spec.out &&
-        edge.in === spec.in
-      );
-    });
-    if (!exists) {
+  async canRemoveEdge(spec: EditableEdgeSpec): Promise<EditResult> {
+    const inspector = this.inspect();
+    if (!inspector.hasEdge(spec)) {
       return {
         success: false,
         error: `Edge from "${spec.from}:${spec.out}" to "${spec.to}:${spec.in}" does not exist`,
@@ -177,9 +163,10 @@ class Graph implements EditableGraph {
     return { success: true };
   }
 
-  async removeEdge(spec: EditableEdgeSpec) {
+  async removeEdge(spec: EditableEdgeSpec): Promise<EditResult> {
     const can = await this.canRemoveEdge(spec);
     if (!can.success) return can;
+    spec = fixUpStarEdge(spec);
     this.#graph.edges = this.#graph.edges.filter((edge) => {
       return (
         edge.from !== spec.from ||

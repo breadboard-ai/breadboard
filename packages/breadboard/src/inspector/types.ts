@@ -5,6 +5,7 @@
  */
 
 import {
+  Edge,
   GraphDescriptor,
   InputValues,
   Kit,
@@ -111,6 +112,10 @@ export type InspectableGraph = {
    * Returns all edges of the graph.
    */
   edges(): InspectableEdge[];
+  /**
+   * Returns true if the edge exists in the graph.
+   */
+  hasEdge(edge: Edge): boolean;
   /**
    * Returns all kits in the graph.
    */

@@ -148,6 +148,18 @@ class Graph implements InspectableGraph {
     ));
   }
 
+  hasEdge(edge: Edge): boolean {
+    edge = fixUpStarEdge(edge);
+    return !!this.#graph.edges.find((e) => {
+      return (
+        e.from === edge.from &&
+        e.to === edge.to &&
+        e.out === edge.out &&
+        e.in === edge.in
+      );
+    });
+  }
+
   kits(): InspectableKit[] {
     return (this.#kits ??= collectKits(this.#options.kits || []));
   }
@@ -204,3 +216,17 @@ class Graph implements InspectableGraph {
     };
   }
 }
+
+/**
+ * This helper is necessary because both "*" and "" are valid representations
+ * of a wildcard edge tail. This function ensures that the edge is always
+ * consistent.
+ * @param edge -- the edge to fix up
+ * @returns
+ */
+export const fixUpStarEdge = (edge: Edge): Edge => {
+  if (edge.out === "*") {
+    return { ...edge, in: "" };
+  }
+  return edge;
+};

@@ -642,10 +642,7 @@ export class Main extends LitElement {
 
             editResult.then((result) => {
               if (!result.success) {
-                this.toast(
-                  "Unable to update edge",
-                  BreadboardUI.Events.ToastType.ERROR
-                );
+                this.toast(result.error, BreadboardUI.Events.ToastType.ERROR);
               }
 
               loadInfo.graphDescriptor = editableGraph.raw();
