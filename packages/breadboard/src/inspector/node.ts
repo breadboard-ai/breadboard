@@ -38,6 +38,10 @@ class Node implements InspectableNode {
     this.#graph = graph;
   }
 
+  title(): string {
+    return this.descriptor.metadata?.title || this.descriptor.id;
+  }
+
   incoming(): InspectableEdge[] {
     return (this.#incoming ??= this.#graph.incomingForNode(this.descriptor.id));
   }

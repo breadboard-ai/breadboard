@@ -39,42 +39,54 @@ export default await board(({ context }) => {
     );
 
   const requirementsExtractor = agents.structuredWorker({
-    $id: "requiremenstExtractor",
+    $metadata: {
+      title: "Requirements Extractor",
+    },
     context,
     instruction: `Given the following specs, extract requirements for writing an ad copy`,
     schema: requirementsSchema,
   });
 
   const adWriter = agents.structuredWorker({
-    $id: "adWriter",
+    $metadata: {
+      title: "Ad Writer",
+    },
     instruction: `Write ad copy that conforms to the requirements above`,
     context: requirementsExtractor,
     schema: adSchema,
   });
 
   const customer = agents.structuredWorker({
-    $id: "customer",
+    $metadata: {
+      title: "Customer",
+    },
     instruction: `Imagine you are a customer. You are a middle-aged homeowner from rural Midwest. You are overrun with ads and are weary of being scammed. You just want to work with someone local and trustworty. Review this and offer three improvements that would increase the likelihood of you trusting the ad.`,
     context: adWriter,
     schema: requirementsSchema,
   });
 
   const requirementsExtractor2 = agents.structuredWorker({
-    $id: "requirementsExtractor2",
+    $metadata: {
+      title: "Requirements Extractor",
+    },
     instruction: `Incorporate all feedback above into new, improved requirements`,
     context: customer,
     schema: requirementsSchema,
   });
 
   const adWriter2 = agents.structuredWorker({
-    $id: "adWriter2",
+    $metadata: {
+      title: "Ad Writer",
+    },
     context: requirementsExtractor2.context,
     instruction: `Write ad copy that conforms to the specified requirements`,
     schema: adSchema,
   });
 
   const adExec = agents.structuredWorker({
-    $id: "adExec",
+    $metadata: {
+      title: "Ad Writing Pro",
+    },
     instruction: `You are a Google Ads Search Professional. Given the above prompt and response, generate 3 point constructive critique of the response that I can action to make the output even better and more effective given the prompt.`,
     context: adWriter2,
     schema: {
@@ -105,14 +117,18 @@ export default await board(({ context }) => {
   });
 
   const improver = agents.structuredWorker({
-    $id: "improver",
+    $metadata: {
+      title: "Ad Editor",
+    },
     instruction: `Given the 3 point critique try to generate a new response.`,
     context: adExec,
     schema: adSchema,
   });
 
   const assessor = agents.structuredWorker({
-    $id: "assessor",
+    $metadata: {
+      title: "Ad Evaluator",
+    },
     instruction: `Given the list of requirements assess how well the newest response conforms to the requirements.`,
     context: improver.context,
     schema: {
@@ -139,7 +155,9 @@ export default await board(({ context }) => {
   });
 
   const improver2 = agents.structuredWorker({
-    $id: "improver2",
+    $metadata: {
+      title: "Ad Editor",
+    },
     instruction: `You are a Google Ads Professional. Write the ad copy that satisfies the requirements and is improved based on the assessment`,
     context: assessor.context,
     schema: adSchema,

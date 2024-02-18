@@ -69,6 +69,11 @@ const isEntry = node.isEntry();
 // See if the node is an exit node (no outgoing edges)
 // Returns true or false.
 const isExit = node.isExit();
+
+// Get a node title (or node id if node title wasn't specified
+// in `NodeMetadata`).
+// Returns string
+const title = node.title();
 ```
 
 ## Edges

@@ -324,6 +324,10 @@ export class GraphNode extends PIXI.Graphics {
   #isDirty = true;
   #id = "";
   #type = "";
+  // A title that is provided in the constructor, not
+  // the one that shows up in the graph.
+  #nodeTtitle = "";
+  // The title that shows up in the graph.
   #title = "";
   #titleText: PIXI.Text | null = null;
   #borderRadius = 3;
@@ -342,9 +346,10 @@ export class GraphNode extends PIXI.Graphics {
   #inPortLocations: Map<string, PIXI.ObservablePoint<unknown>> = new Map();
   #outPortLocations: Map<string, PIXI.ObservablePoint<unknown>> = new Map();
 
-  constructor(id: string, type: string) {
+  constructor(id: string, type: string, title: string) {
     super();
 
+    this.#nodeTtitle = title;
     this.id = id;
     this.type = type;
 
@@ -411,10 +416,6 @@ export class GraphNode extends PIXI.Graphics {
 
   set id(id: string) {
     this.#id = id;
-    this.#title = `${this.#type} (${id})`;
-    this.#clearOldTitle();
-
-    this.#isDirty = true;
   }
 
   get type() {
@@ -423,7 +424,7 @@ export class GraphNode extends PIXI.Graphics {
 
   set type(type: string) {
     this.#type = type;
-    this.#title = `${type} (${this.id})`;
+    this.#title = `${type} (${this.#nodeTtitle})`;
     this.#clearOldTitle();
 
     this.#isDirty = true;
@@ -992,7 +993,7 @@ export class Graph extends PIXI.Container {
       const { id } = node.descriptor;
       let graphNode = this.#nodeById.get(id);
       if (!graphNode) {
-        graphNode = new GraphNode(id, node.descriptor.type);
+        graphNode = new GraphNode(id, node.descriptor.type, node.title());
         this.#nodeById.set(id, graphNode);
 
         // This is a dropped node.

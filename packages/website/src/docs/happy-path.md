@@ -378,7 +378,7 @@ Here's a whistlestop tour of the kits and node types they provide:
   - `map` node
   - `fetch` node
   - `secrets` node
-- `starter` kit
+- `template` kit
   - `promptTemplate` node
   - `urlTemplate` node
 - `json` kit
@@ -398,7 +398,24 @@ const { prompt } = starter.promptTemplate({
 });
 ```
 
-(TODO: Encourage using `$id` that describes the purpose of the nod).
+#### Describing nodes
+
+It is often helpful to provide some metadata about the purpose of the node -- what it's meant to do within the board.
+
+To do that, use the special (and optional) `$metadata` property when creating a node instance. This property is an object with two optional keys: `title` and `description`.
+
+The `title` of the node will appear as its title in the visual representation of the board (or show the automaticaly generated identifier otherwise).
+
+```ts
+const requirementsExtractor = agents.worker({
+  $metadata: {
+    title: "Requirements Extractor",
+    description: "Extracts requirements from the user prompt",
+  },
+  instruction: `Given the following specs, extract requirements for writing an ad copy`,
+  context,
+});
+```
 
 ### Reuse boards
 

@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
 import {
   NodeDescriptor,
   GraphDescriptor,
@@ -70,7 +71,10 @@ export interface EdgeInterface<
   schema?: Schema;
 }
 
-export type OptionalIdConfiguration = { $id?: string };
+export type OptionalIdConfiguration = {
+  $id?: string;
+  $metadata?: NodeMetadata;
+};
 
 export abstract class AbstractNode<
   I extends InputValues = InputValues,

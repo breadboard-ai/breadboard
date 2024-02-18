@@ -87,8 +87,14 @@ export class BuilderNode<
     } else if (isValue(config)) {
       this.addInputsFromNode(...config.asNodeInput());
     } else {
-      if ((config as OptionalIdConfiguration).$id !== undefined)
+      if ((config as OptionalIdConfiguration).$id !== undefined) {
         delete (config as OptionalIdConfiguration)["$id"];
+      }
+      const metadata = (config as OptionalIdConfiguration).$metadata;
+      if (metadata !== undefined) {
+        this.metadata = metadata;
+        delete (config as OptionalIdConfiguration)["$metadata"];
+      }
       this.addInputsAsValues(config as InputsMaybeAsValues<I>);
     }
 

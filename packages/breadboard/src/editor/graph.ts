@@ -216,6 +216,30 @@ class Graph implements EditableGraph {
     return { success: true };
   }
 
+  async canChangeMetadata(id: NodeIdentifier): Promise<EditResult> {
+    const node = this.inspect().nodeById(id);
+    if (!node) {
+      return {
+        success: false,
+        error: `Node with id "${id}" does not exist`,
+      };
+    }
+    return { success: true };
+  }
+
+  async changeMetadata(
+    id: NodeIdentifier,
+    metadata: NodeConfiguration
+  ): Promise<EditResult> {
+    const can = await this.canChangeMetadata(id);
+    if (!can.success) return can;
+    const node = this.inspect().nodeById(id);
+    if (node) {
+      node.descriptor.metadata = metadata;
+    }
+    return { success: true };
+  }
+
   raw() {
     return this.#graph;
   }

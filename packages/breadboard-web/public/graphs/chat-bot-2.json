@@ -4,14 +4,14 @@
   "version": "0.0.1",
   "edges": [
     {
-      "from": "repeat",
+      "from": "repeater-5",
       "to": "output-2",
       "out": "*",
       "in": ""
     },
     {
       "from": "lambda-4",
-      "to": "repeat",
+      "to": "repeater-5",
       "out": "board",
       "in": "worker"
     },
@@ -29,9 +29,12 @@
       "configuration": {}
     },
     {
-      "id": "repeat",
+      "id": "repeater-5",
       "type": "repeater",
-      "configuration": {}
+      "configuration": {},
+      "metadata": {
+        "title": "Chat Bot"
+      }
     },
     {
       "id": "lambda-4",
@@ -43,32 +46,32 @@
             "kits": [],
             "edges": [
               {
-                "from": "bot",
+                "from": "worker-4",
                 "to": "output-2",
                 "out": "context",
                 "in": "context"
               },
               {
-                "from": "bot",
+                "from": "worker-4",
                 "to": "output-2",
                 "out": "text",
                 "in": "text"
               },
               {
-                "from": "askUser",
-                "to": "bot",
+                "from": "invoke-3",
+                "to": "worker-4",
                 "out": "context",
                 "in": "context"
               },
               {
                 "from": "input-1",
-                "to": "askUser",
+                "to": "invoke-3",
                 "out": "context",
                 "in": "context"
               },
               {
                 "from": "input-1",
-                "to": "bot",
+                "to": "worker-4",
                 "out": "instruction",
                 "in": "instruction"
               }
@@ -99,12 +102,12 @@
                 }
               },
               {
-                "id": "bot",
+                "id": "worker-4",
                 "type": "worker",
                 "configuration": {}
               },
               {
-                "id": "askUser",
+                "id": "invoke-3",
                 "type": "invoke",
                 "configuration": {
                   "$board": {

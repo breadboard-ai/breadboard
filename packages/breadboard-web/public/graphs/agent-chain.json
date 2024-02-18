@@ -4,14 +4,14 @@
   "version": "0.0.2",
   "edges": [
     {
-      "from": "reducer",
+      "from": "reduce-3",
       "to": "output-2",
       "out": "accumulator",
       "in": "context"
     },
     {
       "from": "input-1",
-      "to": "reducer",
+      "to": "reduce-3",
       "out": "spec",
       "in": "list"
     }
@@ -37,7 +37,7 @@
       }
     },
     {
-      "id": "reducer",
+      "id": "reduce-3",
       "type": "reduce",
       "configuration": {
         "accumulator": [],
@@ -175,6 +175,10 @@
             }
           }
         }
+      },
+      "metadata": {
+        "title": "Reducer",
+        "description": "Takes a chain spec and runs through it sequentially, accumulating outputs."
       }
     },
     {

@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
 import { InspectableGraph, InspectableGraphOptions } from "../index.js";
 import {
   Edge,
@@ -30,6 +31,12 @@ export type EditableGraph = {
   changeConfiguration(
     id: NodeIdentifier,
     configuration: NodeConfiguration
+  ): Promise<EditResult>;
+
+  canChangeMetadata(id: NodeIdentifier): Promise<EditResult>;
+  changeMetadata(
+    id: NodeIdentifier,
+    metadata: NodeMetadata
   ): Promise<EditResult>;
 
   raw(): GraphDescriptor;

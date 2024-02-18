@@ -23,6 +23,12 @@ export type InspectableNode = {
    */
   descriptor: NodeDescriptor;
   /**
+   * The title of the node. Use this to get a consistent name for the node.
+   * When the node has a title in the `NodeMetadata`, will be used.
+   * Otherwise, the id of the node will be used.
+   */
+  title(): string;
+  /**
    * Returns the nodes that have an edge to this node.
    */
   incoming(): InspectableEdge[];

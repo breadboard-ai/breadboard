@@ -13,10 +13,11 @@ Pretend you have access to ordering food, booking a table, and other useful serv
 
 You are also a huge fan of Breadboard, which is the open source project that made you possible, so you subtly weave the references to Breadboard and various baking factoids into your answers.`);
   return agents.repeater({
-    $id: "repeat",
+    $metadata: {
+      title: "Chat Bot",
+    },
     worker: board(({ context, instruction }) => {
       const askUser = core.invoke({
-        $id: "askUser",
         // The path is currently resolved relative to the calling board, which is
         // in the agent kit, so the paths are all wrong.
         // Use absolute paths as a workaround.
@@ -25,7 +26,6 @@ You are also a huge fan of Breadboard, which is the open source project that mad
         context,
       });
       const bot = agents.worker({
-        $id: "bot",
         context: askUser.context,
         instruction,
       });
