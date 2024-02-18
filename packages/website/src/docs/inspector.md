@@ -253,6 +253,15 @@ Every node will have a single star port as part of its input and output port lis
 > [!NOTE]
 > The star edge is special in that it communicates that all output port values of one node will be supplied as input port values of another node. Since it is not always possible to know what those values are without actually running the graph, using star edges means that we might not be able to determine whether or not the input ports are specified as expected.
 
+We can also get the edges that are connected to this port:
+
+```ts
+// Returns `InspectableEdge[]`.
+const edges = firstInputPort.edges;
+```
+
+This can be useful when there are more than one edges incoming or outgoing for this port.
+
 Most importantly, we can get the status of the port:
 
 ```ts

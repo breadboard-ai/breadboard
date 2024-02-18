@@ -62,6 +62,13 @@ export const collectPorts = (
       name: port,
       configured,
       star,
+      get edges() {
+        if (!wired) return [];
+        return edges.filter((edge) => {
+          if (edge.out === "*" && star) return true;
+          return type === EdgeType.In ? edge.in === port : edge.out === port;
+        });
+      },
       status: computePortStatus(
         wired || configured,
         expected || schemaContainsStar,
@@ -82,6 +89,7 @@ export const collectPortsForType = (schema: Schema) => {
       name: port,
       configured: false,
       star: false,
+      edges: [],
       status: computePortStatus(
         false,
         true,
