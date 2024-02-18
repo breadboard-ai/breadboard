@@ -4,62 +4,62 @@
   "version": "0.0.3",
   "edges": [
     {
-      "from": "improver2",
+      "from": "structuredWorker-11",
       "to": "output-2",
       "out": "*",
       "in": ""
     },
     {
-      "from": "assessor",
-      "to": "improver2",
+      "from": "structuredWorker-10",
+      "to": "structuredWorker-11",
       "out": "context",
       "in": "context"
     },
     {
-      "from": "improver",
-      "to": "assessor",
+      "from": "structuredWorker-9",
+      "to": "structuredWorker-10",
       "out": "context",
       "in": "context"
     },
     {
-      "from": "adExec",
-      "to": "improver",
+      "from": "structuredWorker-8",
+      "to": "structuredWorker-9",
       "out": "context",
       "in": "context"
     },
     {
-      "from": "adWriter2",
-      "to": "adExec",
+      "from": "structuredWorker-7",
+      "to": "structuredWorker-8",
       "out": "context",
       "in": "context"
     },
     {
-      "from": "requirementsExtractor2",
-      "to": "adWriter2",
+      "from": "structuredWorker-6",
+      "to": "structuredWorker-7",
       "out": "context",
       "in": "context"
     },
     {
-      "from": "customer",
-      "to": "requirementsExtractor2",
+      "from": "structuredWorker-5",
+      "to": "structuredWorker-6",
       "out": "context",
       "in": "context"
     },
     {
-      "from": "adWriter",
-      "to": "customer",
+      "from": "structuredWorker-4",
+      "to": "structuredWorker-5",
       "out": "context",
       "in": "context"
     },
     {
-      "from": "requiremenstExtractor",
-      "to": "adWriter",
+      "from": "structuredWorker-3",
+      "to": "structuredWorker-4",
       "out": "context",
       "in": "context"
     },
     {
       "from": "input-1",
-      "to": "requiremenstExtractor",
+      "to": "structuredWorker-3",
       "out": "context",
       "in": "context"
     }
@@ -71,7 +71,7 @@
       "configuration": {}
     },
     {
-      "id": "improver2",
+      "id": "structuredWorker-11",
       "type": "structuredWorker",
       "configuration": {
         "instruction": "You are a Google Ads Professional. Write the ad copy that satisfies the requirements and is improved based on the assessment",
@@ -84,10 +84,13 @@
             }
           }
         }
+      },
+      "metadata": {
+        "title": "Ad Editor"
       }
     },
     {
-      "id": "assessor",
+      "id": "structuredWorker-10",
       "type": "structuredWorker",
       "configuration": {
         "instruction": "Given the list of requirements assess how well the newest response conforms to the requirements.",
@@ -112,10 +115,13 @@
             }
           }
         }
+      },
+      "metadata": {
+        "title": "Ad Evaluator"
       }
     },
     {
-      "id": "improver",
+      "id": "structuredWorker-9",
       "type": "structuredWorker",
       "configuration": {
         "instruction": "Given the 3 point critique try to generate a new response.",
@@ -128,10 +134,13 @@
             }
           }
         }
+      },
+      "metadata": {
+        "title": "Ad Editor"
       }
     },
     {
-      "id": "adExec",
+      "id": "structuredWorker-8",
       "type": "structuredWorker",
       "configuration": {
         "instruction": "You are a Google Ads Search Professional. Given the above prompt and response, generate 3 point constructive critique of the response that I can action to make the output even better and more effective given the prompt.",
@@ -160,10 +169,13 @@
             }
           }
         }
+      },
+      "metadata": {
+        "title": "Ad Writing Pro"
       }
     },
     {
-      "id": "adWriter2",
+      "id": "structuredWorker-7",
       "type": "structuredWorker",
       "configuration": {
         "instruction": "Write ad copy that conforms to the specified requirements",
@@ -176,10 +188,13 @@
             }
           }
         }
+      },
+      "metadata": {
+        "title": "Ad Writer"
       }
     },
     {
-      "id": "requirementsExtractor2",
+      "id": "structuredWorker-6",
       "type": "structuredWorker",
       "configuration": {
         "instruction": "Incorporate all feedback above into new, improved requirements",
@@ -195,10 +210,13 @@
             }
           }
         }
+      },
+      "metadata": {
+        "title": "Requirements Extractor"
       }
     },
     {
-      "id": "customer",
+      "id": "structuredWorker-5",
       "type": "structuredWorker",
       "configuration": {
         "instruction": "Imagine you are a customer. You are a middle-aged homeowner from rural Midwest. You are overrun with ads and are weary of being scammed. You just want to work with someone local and trustworty. Review this and offer three improvements that would increase the likelihood of you trusting the ad.",
@@ -214,10 +232,13 @@
             }
           }
         }
+      },
+      "metadata": {
+        "title": "Customer"
       }
     },
     {
-      "id": "adWriter",
+      "id": "structuredWorker-4",
       "type": "structuredWorker",
       "configuration": {
         "instruction": "Write ad copy that conforms to the requirements above",
@@ -230,10 +251,13 @@
             }
           }
         }
+      },
+      "metadata": {
+        "title": "Ad Writer"
       }
     },
     {
-      "id": "requiremenstExtractor",
+      "id": "structuredWorker-3",
       "type": "structuredWorker",
       "configuration": {
         "instruction": "Given the following specs, extract requirements for writing an ad copy",
@@ -249,6 +273,9 @@
             }
           }
         }
+      },
+      "metadata": {
+        "title": "Requirements Extractor"
       }
     },
     {
