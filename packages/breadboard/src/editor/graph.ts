@@ -154,15 +154,8 @@ class Graph implements EditableGraph {
   }
 
   async canRemoveEdge(spec: EditableEdgeSpec): Promise<EditResult> {
-    const exists = !!this.#graph.edges.find((edge) => {
-      return (
-        edge.from === spec.from &&
-        edge.to === spec.to &&
-        edge.out === spec.out &&
-        edge.in === spec.in
-      );
-    });
-    if (!exists) {
+    const inspector = this.inspect();
+    if (!inspector.hasEdge(spec)) {
       return {
         success: false,
         error: `Edge from "${spec.from}:${spec.out}" to "${spec.to}:${spec.in}" does not exist`,
@@ -174,6 +167,7 @@ class Graph implements EditableGraph {
   async removeEdge(spec: EditableEdgeSpec): Promise<EditResult> {
     const can = await this.canRemoveEdge(spec);
     if (!can.success) return can;
+    spec = fixUpStarEdge(spec);
     this.#graph.edges = this.#graph.edges.filter((edge) => {
       return (
         edge.from !== spec.from ||
