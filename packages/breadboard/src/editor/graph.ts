@@ -5,7 +5,7 @@
  */
 
 import { handlersFromKits } from "../handler.js";
-import { inspectableGraph } from "../inspector/graph.js";
+import { fixUpStarEdge, inspectableGraph } from "../inspector/graph.js";
 import { InspectableGraph } from "../inspector/types.js";
 import {
   GraphDescriptor,
@@ -100,21 +100,13 @@ class Graph implements EditableGraph {
         error: `The "*" output port cannot be connected to a specific input port`,
       };
     }
-    const exists = !!this.#graph.edges.find((edge) => {
-      return (
-        edge.from === spec.from &&
-        edge.to === spec.to &&
-        edge.out === spec.out &&
-        edge.in === spec.in
-      );
-    });
-    if (exists) {
+    const inspector = this.inspect();
+    if (inspector.hasEdge(spec)) {
       return {
         success: false,
         error: `Edge from "${spec.from}" to "${spec.to}" already exists`,
       };
     }
-    const inspector = this.inspect();
     const from = inspector.nodeById(spec.from);
     if (!from) {
       return {
@@ -155,9 +147,7 @@ class Graph implements EditableGraph {
   async addEdge(spec: EditableEdgeSpec): Promise<EditResult> {
     const can = await this.canAddEdge(spec);
     if (!can.success) return can;
-    if (spec.out === "*") {
-      spec = { ...spec, in: "" };
-    }
+    spec = fixUpStarEdge(spec);
     this.#graph.edges.push(spec);
     this.#inspector = undefined;
     return { success: true };
