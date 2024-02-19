@@ -25,22 +25,13 @@ import { asRuntimeKit } from "@google-labs/breadboard";
 import Core from "@google-labs/core-kit";
 import JSONKit from "@google-labs/json-kit";
 import TemplateKit from "@google-labs/template-kit";
-import NodeNurseryWeb from "@google-labs/node-nursery-web";
 import PaLMKit from "@google-labs/palm-kit";
-import Pinecone from "@google-labs/pinecone-kit";
 import GeminiKit from "@google-labs/gemini-kit";
 import AgentKit from "@google-labs/agent-kit";
 
-const kits = [
-  TemplateKit,
-  Core,
-  Pinecone,
-  PaLMKit,
-  GeminiKit,
-  NodeNurseryWeb,
-  JSONKit,
-  AgentKit,
-].map((kitConstructor) => asRuntimeKit(kitConstructor));
+const kits = [TemplateKit, Core, PaLMKit, GeminiKit, JSONKit, AgentKit].map(
+  (kitConstructor) => asRuntimeKit(kitConstructor)
+);
 
 type ChunkOutputs = OutputValues & { chunk: string };
 
