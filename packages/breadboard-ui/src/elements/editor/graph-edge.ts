@@ -12,7 +12,7 @@ export class GraphEdge extends PIXI.Graphics {
   #isDirty = true;
   #edge: InspectableEdge | null = null;
   #edgeColor = 0xaaaaaa;
-  #activeColor = 0xff04a4;
+  #overrideColor: number | null = null;
   #padding = 25;
   #overrideInLocation: PIXI.ObservablePoint<unknown> | null = null;
   #overrideOutLocation: PIXI.ObservablePoint<unknown> | null = null;
@@ -32,6 +32,15 @@ export class GraphEdge extends PIXI.Graphics {
 
   get edge() {
     return this.#edge;
+  }
+
+  set overrideColor(overrideColor: number | null) {
+    this.#overrideColor = overrideColor;
+    this.#isDirty = true;
+  }
+
+  get overrideColor() {
+    return this.#overrideColor;
   }
 
   set overrideInLocation(
@@ -104,9 +113,7 @@ export class GraphEdge extends PIXI.Graphics {
     const midX = Math.round((inLocation.x - outLocation.x) / 2);
     const midY = Math.round((inLocation.y - outLocation.y) / 2);
     const color =
-      this.#overrideInLocation || this.#overrideOutLocation
-        ? this.#activeColor
-        : this.#edgeColor;
+      this.#overrideColor !== null ? this.#overrideColor : this.#edgeColor;
 
     this.lineStyle(2, color);
     this.moveTo(outLocation.x, outLocation.y);

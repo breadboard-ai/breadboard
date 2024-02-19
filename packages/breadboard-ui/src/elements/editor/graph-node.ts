@@ -209,6 +209,8 @@ export class GraphNode extends PIXI.Graphics {
   }
 
   render(renderer: PIXI.Renderer): void {
+    super.render(renderer);
+
     if (this.#isDirty) {
       this.#isDirty = false;
       this.#draw();
@@ -216,7 +218,6 @@ export class GraphNode extends PIXI.Graphics {
       // We use this to trigger the edge drawing.
       this.emit(GRAPH_NODE_DRAWN);
     }
-    super.render(renderer);
   }
 
   set inPorts(ports: InspectablePort[]) {
