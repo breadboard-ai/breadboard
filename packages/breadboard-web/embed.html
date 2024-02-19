@@ -7,9 +7,12 @@
     <style>
       html,
       body {
+        width: 100%;
         display: flex;
-        align-items: center;
-        justify-content: center;
+      }
+
+      body {
+        padding: 20px;
       }
 
       @font-face {
@@ -27,12 +30,35 @@
       }
 
       bb-embed {
+        width: 500px;
+      }
+
+      section {
         flex: 1;
+        padding-right: 20px;
       }
     </style>
   </head>
   <body>
-    <p><code>bb-embed</code> testing grounds.</p>
+    <section>
+      <h1>Text goes here</h1>
+      <p>
+        But I must explain to you how all this mistaken idea of denouncing
+        pleasure and praising pain was born and I will give you a complete
+        account of the system, and expound the actual teachings of the great
+        explorer of the truth, the master-builder of human happiness. No one
+        rejects, dislikes, or avoids pleasure itself, because it is pleasure,
+        but because those who do not know how to pursue pleasure rationally
+        encounter consequences that are extremely painful. Nor again is there
+        anyone who loves or pursues or desires to obtain pain of itself, because
+        it is pain, but because occasionally circumstances occur in which toil
+        and pain can procure him some great pleasure. To take a trivial example,
+        which of us ever undertakes laborious physical exercise, except to
+        obtain some advantage from it? But who has any right to find fault with
+        a man who chooses to enjoy a pleasure that has no annoying consequences,
+        or one who avoids a pain that produces no resultant pleasure?
+      </p>
+    </section>
     <bb-embed url="/graphs/math.json"></bb-embed>
     <script type="module" src="./src/embed.ts"></script>
   </body>

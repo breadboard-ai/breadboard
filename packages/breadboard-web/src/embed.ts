@@ -68,6 +68,7 @@ export class Embed extends LitElement {
 
   static styles = css`
     :host {
+      border-radius: 32px;
       --bb-grid-size: 4px;
       --bb-font-family-header: "FiraCode";
       --bb-font-family-mono: "FiraCode", "Courier New", Courier, monospace;
@@ -134,16 +135,12 @@ export class Embed extends LitElement {
       --bb-input-legend-display: none;
       --bb-input-fieldset-border: none;
 
-      display: block;
       margin: 0;
       padding: 0;
-      height: 100%;
-      width: 100%;
 
       font-family: var(--bb-font-family);
       color: var(--bb-font-color);
       width: 100%;
-      height: 100%;
       display: flex;
       flex-direction: column;
       background-color: rgb(244, 247, 252);
