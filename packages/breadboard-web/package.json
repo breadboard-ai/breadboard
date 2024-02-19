@@ -22,7 +22,8 @@
     "./public": "./public",
     "./local-boards.json": "./public/local-boards.json",
     "./index.html": "./index.html",
-    "./preview.html": "./preview.html"
+    "./preview.html": "./preview.html",
+    "./embed.js": "./build/embed.js"
   },
   "types": "build/index.d.ts",
   "type": "module",
@@ -159,6 +160,7 @@
     "url": "git+https://github.com/breadboard-ai/breadboard.git"
   },
   "files": [
+    "build/",
     "public",
     "index.html",
     "preview.html"
