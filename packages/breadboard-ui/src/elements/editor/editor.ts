@@ -32,7 +32,8 @@ import {
   NodeUpdateEvent,
 } from "../../events/events.js";
 import { classMap } from "lit/directives/class-map.js";
-import { Graph, GraphRenderer } from "./graph-renderer.js";
+import { GraphRenderer } from "./graph-renderer.js";
+import { Graph } from "./graph.js";
 import { until } from "lit/directives/until.js";
 
 const DATA_TYPE = "text/plain";
