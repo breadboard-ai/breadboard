@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.11.0
+
+### Minor Changes
+
+- c19513e: Introduce `InspectableGraph.edges()` and start using it.
+- 2237a4c: Added `subgraph` method to `InspectableNode`.
+- bd68ebd: Add a simple `describe` method to InspectableGraph.
+- ea652f3: Introduce the Editor API.
+- 0085ee2: Teach inspector API to correctly describe nodes.
+- ee00249: Introduce `NodeMetadata`.
+- c13513f: Introduce Inspector API (a little baby one)
+- c804ccc: Introduce the `InspectablePort.edges` property.
+- 53406ad: Zod Schema is no longer supported. JSON Schema should be used instead.
+- 4c5b853: Implement output bubbling.
+- 3f3f090: Teach `jsonata` and `invoke` nodes to better describe themselves.
+- d7a7903: Added support for describing inputs, outputs, and subgraphs in Inspector API.
+- f6e9b2c: Teach the Breadboard CLI how to use proxies
+
+### Patch Changes
+
+- 9a76a87: Various fixes to Editor API found while playing with the visual editor.
+- 56954c1: Introduce `InspectableNode.ports`, which enumerates ports of a node.
+- 0ef9ec5: Added documentation for Inspector API.
+- 56ccae5: Introduce a way to inspect kits.
+- 4920d90: Taught `core.invoke` to describe its own subgraphs.
+- 10a8129: Add docs for the Agent Kit
+- 5a65297: Add dependency on schema package for new graph types location
+- 4401a98: Fix various bugs in inspector API.
+- Updated dependencies [ee00249]
+- Updated dependencies [5a65297]
+  - @google-labs/breadboard-schema@1.3.0
+
 ## 0.10.1
 
 ### Patch Changes
