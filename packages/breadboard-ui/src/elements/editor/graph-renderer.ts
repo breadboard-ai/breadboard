@@ -161,6 +161,7 @@ export class GraphRenderer extends LitElement {
             ) {
               edgeGraphic.overrideInLocation = null;
               edgeGraphic.overrideOutLocation = null;
+              edgeGraphic.overrideColor = 0xffa500;
 
               const name = interactionTracker.hoveredGraphNodePort.name || "";
               if (portType === GraphNodePortType.IN) {
@@ -174,6 +175,8 @@ export class GraphRenderer extends LitElement {
               interactionTracker.hoveredGraphNodePort.active = true;
               return;
             }
+
+            edgeGraphic.overrideColor = 0xffcc00;
 
             // Otherwise track to the mouse.
             if (
@@ -216,9 +219,13 @@ export class GraphRenderer extends LitElement {
           };
 
           onPointerUp = () => {
-            if (edgeGraphic && edgeGraphic.temporary) {
-              edgeGraphic.removeFromParent();
-              edgeGraphic.destroy();
+            if (edgeGraphic) {
+              edgeGraphic.overrideColor = null;
+
+              if (edgeGraphic.temporary) {
+                edgeGraphic.removeFromParent();
+                edgeGraphic.destroy();
+              }
             }
 
             // Snapshot everything we need, then clear it out. After that we
