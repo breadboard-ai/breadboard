@@ -1,5 +1,77 @@
 # @google-labs/breadboard-web
 
+## 1.2.0
+
+### Minor Changes
+
+- a4146c4: Introduce "Agent Kit" to the Breadboard Kit family.
+- e6ed591: Change primary visualizer to editor
+- 0c2e494: Add 'Summarizer' board illustrating Agent Kit.
+- d378070: Introduce `bb-embed` element for easy Breadboard embedding.
+- 0085ee2: Teach inspector API to correctly describe nodes.
+- ee00249: Introduce `NodeMetadata`.
+- 57e68ba: Adds LiteGraph editor
+- 4c5b853: Implement output bubbling.
+- 3f3f090: Teach `jsonata` and `invoke` nodes to better describe themselves.
+
+### Patch Changes
+
+- cd4f6e2: Add support for creating, deleting, and moving edges
+- a9daeda: Introduce Repeater node in Agent Kit.
+- 5221586: Add "Structured Worker" node to Agent Kit.
+- 5cf1555: Make Chat Bot 2.0 work.
+- 9a76a87: Various fixes to Editor API found while playing with the visual editor.
+- b944657: Update existing boards to use Structured Worker.
+- f06f400: Introduce Agent Kit.
+- 56ccae5: Introduce a way to inspect kits.
+- 10a8129: Add docs for the Agent Kit
+- a4029de: Implement a Repeater-based summarizer
+- c3966d3: Add licensing headers
+- Updated dependencies [c19513e]
+- Updated dependencies [cd4f6e2]
+- Updated dependencies [a9daeda]
+- Updated dependencies [a4146c4]
+- Updated dependencies [5221586]
+- Updated dependencies [2237a4c]
+- Updated dependencies [e6ed591]
+- Updated dependencies [bd68ebd]
+- Updated dependencies [9a76a87]
+- Updated dependencies [0c2e494]
+- Updated dependencies [ea652f3]
+- Updated dependencies [56954c1]
+- Updated dependencies [b944657]
+- Updated dependencies [c3966d3]
+- Updated dependencies [0085ee2]
+- Updated dependencies [0ef9ec5]
+- Updated dependencies [ee00249]
+- Updated dependencies [c13513f]
+- Updated dependencies [57e68ba]
+- Updated dependencies [f06f400]
+- Updated dependencies [56ccae5]
+- Updated dependencies [4920d90]
+- Updated dependencies [10a8129]
+- Updated dependencies [c804ccc]
+- Updated dependencies [5a65297]
+- Updated dependencies [abe8819]
+- Updated dependencies [53406ad]
+- Updated dependencies [4c5b853]
+- Updated dependencies [e9696df]
+- Updated dependencies [3f3f090]
+- Updated dependencies [d7a7903]
+- Updated dependencies [4401a98]
+- Updated dependencies [b3ae9c7]
+- Updated dependencies [f6e9b2c]
+  - @google-labs/breadboard-ui@0.1.0
+  - @google-labs/breadboard@0.11.0
+  - @google-labs/agent-kit@0.1.0
+  - @google-labs/core-kit@0.3.0
+  - @google-labs/json-kit@0.1.0
+  - @google-labs/template-kit@0.2.0
+  - @google-labs/node-nursery-web@1.0.3
+  - @google-labs/gemini-kit@0.1.2
+  - @google-labs/palm-kit@0.0.5
+  - @google-labs/pinecone-kit@0.1.2
+
 ## 1.1.1
 
 ### Patch Changes
