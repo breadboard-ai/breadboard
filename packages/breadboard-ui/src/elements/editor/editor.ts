@@ -304,6 +304,17 @@ export class Editor extends LitElement {
       }
     }
 
+    // Check that the active node is available.
+    if (
+      this.nodeValueBeingEdited &&
+      !breadboardGraph.nodeById(this.nodeValueBeingEdited.id)
+    ) {
+      console.log("Not found");
+      this.nodeValueBeingEdited = null;
+    } else {
+      console.log("Found");
+    }
+
     this.#graph.ports = ports;
     this.#graph.edges = breadboardGraph.edges();
     this.#graph.nodes = breadboardGraph.nodes();
@@ -469,7 +480,8 @@ export class Editor extends LitElement {
       return;
     }
 
-    const nextNodeId = this.loadInfo?.graphDescriptor?.nodes.length || 1_000;
+    const nextNodeId =
+      (this.loadInfo?.graphDescriptor?.nodes.length || 1_000) + 1;
     const id = `${data}-${nextNodeId}`;
     const x = evt.pageX - this.#left + window.scrollX;
     const y = evt.pageY - this.#top - window.scrollY;
@@ -513,37 +525,78 @@ export class Editor extends LitElement {
     return html`<div id="menu">
       <form>
         <ul>
-          ${map(kitList, ([kitName, kitContents]) => {
-            const kitId = kitName.toLocaleLowerCase().replace(/\W/, "-");
-            return html`<li>
-              <input type="radio" name="selected-kit" id="${kitId}" /><label
-                for="${kitId}"
-                >${kitName}</label
-              >
-              <ul>
-                ${map(kitContents, (kitItemName) => {
-                  const kitItemId = kitItemName
-                    .toLocaleLowerCase()
-                    .replace(/\W/, "-");
-                  return html`<li
-                    class=${classMap({
-                      [kitItemId]: true,
-                      ["kit-item"]: true,
-                    })}
-                    draggable="true"
-                    @dragstart=${async (evt: DragEvent) => {
-                      if (!evt.dataTransfer) {
-                        return;
-                      }
-                      evt.dataTransfer.setData(DATA_TYPE, kitItemName);
-                    }}
-                  >
-                    ${kitItemName}
-                  </li>`;
+          <li>
+            <input type="radio" name="selected-kit" id="built-ins" /><label
+              for="built-ins"
+              >Basic</label
+            >
+            <ul>
+              <li
+                class=${classMap({
+                  ["input"]: true,
+                  ["kit-item"]: true,
                 })}
-              </ul>
-            </li>`;
-          })}
+                draggable="true"
+                @dragstart=${async (evt: DragEvent) => {
+                  if (!evt.dataTransfer) {
+                    return;
+                  }
+                  evt.dataTransfer.setData(DATA_TYPE, "input");
+                }}
+              >
+                Input
+              </li>
+
+              <li
+                class=${classMap({
+                  ["output"]: true,
+                  ["kit-item"]: true,
+                })}
+                draggable="true"
+                @dragstart=${async (evt: DragEvent) => {
+                  if (!evt.dataTransfer) {
+                    return;
+                  }
+                  evt.dataTransfer.setData(DATA_TYPE, "output");
+                }}
+              >
+                Output
+              </li>
+            </ul>
+          </li>
+
+            ${map(kitList, ([kitName, kitContents]) => {
+              const kitId = kitName.toLocaleLowerCase().replace(/\W/, "-");
+              return html`<li>
+                <input type="radio" name="selected-kit" id="${kitId}" /><label
+                  for="${kitId}"
+                  >${kitName}</label
+                >
+                <ul>
+                  ${map(kitContents, (kitItemName) => {
+                    const kitItemId = kitItemName
+                      .toLocaleLowerCase()
+                      .replace(/\W/, "-");
+                    return html`<li
+                      class=${classMap({
+                        [kitItemId]: true,
+                        ["kit-item"]: true,
+                      })}
+                      draggable="true"
+                      @dragstart=${async (evt: DragEvent) => {
+                        if (!evt.dataTransfer) {
+                          return;
+                        }
+                        evt.dataTransfer.setData(DATA_TYPE, kitItemName);
+                      }}
+                    >
+                      ${kitItemName}
+                    </li>`;
+                  })}
+                </ul>
+              </li>`;
+            })}
+          </li>
         </ul>
       </form>
     </div>`;
