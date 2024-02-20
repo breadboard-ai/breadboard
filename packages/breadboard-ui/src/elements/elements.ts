@@ -15,6 +15,7 @@ export { InputList } from "./input/input-list/input-list.js";
 export { JSONTree } from "./json-tree/json-tree.js";
 export { Output } from "./output/output.js";
 export { OutputList } from "./output/output-list/output-list.js";
+export { Splitter } from "./splitter/splitter.js";
 export { Toast } from "./toast/toast.js";
 export { TimelineControls } from "./timeline-controls/timeline-controls.js";
 export { UI } from "./ui-controller/ui-controller.js";

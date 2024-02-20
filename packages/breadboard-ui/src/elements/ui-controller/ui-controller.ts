@@ -33,6 +33,7 @@ import { classMap } from "lit/directives/class-map.js";
 import { styles as uiControllerStyles } from "./ui-controller.styles.js";
 import { type InputList } from "../input/input-list/input-list.js";
 import { NodeHighlightHelper } from "../../utils/highlights.js";
+import { Splitter, ORIENTATION } from "../splitter/splitter.js";
 
 type ExtendedNodeInformation = {
   id: string;
@@ -102,6 +103,7 @@ export class UI extends LitElement {
     showNarrowTimeline: false,
   };
 
+  #mainSplitter: Ref<Splitter> = createRef();
   #diagram: Ref<DiagramElement> = createRef();
   #nodeInfo: Map<string, ExtendedNodeInformation> = new Map();
   #timelineRef: Ref<HTMLElement> = createRef();
@@ -119,6 +121,21 @@ export class UI extends LitElement {
   #renderTimeout = 0;
   #rendering = false;
   #highlightHelper = new NodeHighlightHelper();
+  #resizeObserver = new ResizeObserver(() => {
+    if (!this.#mainSplitter.value) {
+      return;
+    }
+
+    if (window.matchMedia("(orientation: portrait)").matches) {
+      if (this.#mainSplitter.value.orientation === ORIENTATION.HORIZONTAL) {
+        this.#mainSplitter.value.orientation = ORIENTATION.VERTICAL;
+      }
+    } else {
+      if (this.#mainSplitter.value.orientation === ORIENTATION.VERTICAL) {
+        this.#mainSplitter.value.orientation = ORIENTATION.HORIZONTAL;
+      }
+    }
+  });
 
   static styles = uiControllerStyles;
 
@@ -132,6 +149,16 @@ export class UI extends LitElement {
 
       this.config = JSON.parse(value) as UIConfig;
     });
+  }
+
+  connectedCallback(): void {
+    super.connectedCallback();
+    this.#resizeObserver.observe(this);
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this.#resizeObserver.disconnect();
   }
 
   async #toggleConfigOption(key: keyof UIConfig) {
@@ -484,136 +511,140 @@ export class UI extends LitElement {
     }
 
     return html`
-      <div id="diagram">
-        ${diagram}
-        ${
-          this.selectedNode
-            ? html`<div id="node-information">
-                <h1>Node Information</h1>
-                <button id="close" @click=${() => (this.selectedNode = null)}>
-                  Close
-                </button>
-                <dl>
-                  <dd>ID</dd>
-                  <dt>${this.selectedNode.id}</dt>
-                  <dd>Type</dd>
-                  <dt>${this.selectedNode.type}</dt>
-                  <dd>Configuration</dd>
-                  <dt>
-                    <bb-json-tree
-                      .json=${this.selectedNode.configuration}
-                      autoExpand="true"
-                    ></bb-json-tree>
-                  </dt>
-                </dl>
-              </div>`
-            : nothing
-        }
-      </div>
-      <div id="rhs">
-        <section id="timeline" ${ref(this.#timelineRef)}>
-          <header>
-            <h1>Events</h1>
-            <label for="narrow">Narrow</label>
-            <input
-              name="narrow"
-              id="narrow"
-              type="checkbox"
-              ?checked=${this.config.showNarrowTimeline}
-              @input=${() => this.#toggleConfigOption("showNarrowTimeline")}/>
-            <div id="value">${Math.min(
-              this.messages.length,
-              this.#messagePosition + 1
-            )} /
-            <span id="max">&nbsp;${this.messages.length}</span></div>
-            <div id="run-status" class=${classMap({ [this.status]: true })}>
-              ${this.status}
-            </div>
-          </header>
-          <bb-timeline-controls
-            .messages=${this.messages}
-            .messagePosition=${this.#messagePosition}
-            .messageDurations=${this.#messageDurations}
-            .narrow=${this.config.showNarrowTimeline}
-            @breadboardmessagetraversal=${(evt: MessageTraversalEvent) => {
-              if (evt.index < 0 || evt.index > this.messages.length) {
-                return;
-              }
-
-              this.#messagePosition = evt.index;
-              this.requestUpdate();
-            }}
-          ></bb-timeline-controls>
-        </section>
-        <div
-          class="drag-handle"
-          data-control="upper"
-          @pointerdown=${this.#startVerticalResize}
-          @pointermove=${this.#onVerticalResize}
-          @pointerup=${this.#endVerticalResize}
-        ></div>
-        <section id="inputs" ${ref(this.#inputRef)}>
+      <bb-splitter orientation="horizontal" name="main" ${ref(
+        this.#mainSplitter
+      )}>
+        <div id="diagram" slot="a">
+          ${diagram}
+          ${
+            this.selectedNode
+              ? html`<div id="node-information">
+                  <h1>Node Information</h1>
+                  <button id="close" @click=${() => (this.selectedNode = null)}>
+                    Close
+                  </button>
+                  <dl>
+                    <dd>ID</dd>
+                    <dt>${this.selectedNode.id}</dt>
+                    <dd>Type</dd>
+                    <dt>${this.selectedNode.type}</dt>
+                    <dd>Configuration</dd>
+                    <dt>
+                      <bb-json-tree
+                        .json=${this.selectedNode.configuration}
+                        autoExpand="true"
+                      ></bb-json-tree>
+                    </dt>
+                  </dl>
+                </div>`
+              : nothing
+          }
+        </div>
+        <div id="rhs" slot="b">
+          <section id="timeline" ${ref(this.#timelineRef)}>
             <header>
-              <h1>Inputs</h1>
-              ${continueButton}
+              <h1>Events</h1>
+              <label for="narrow">Narrow</label>
+              <input
+                name="narrow"
+                id="narrow"
+                type="checkbox"
+                ?checked=${this.config.showNarrowTimeline}
+                @input=${() => this.#toggleConfigOption("showNarrowTimeline")}/>
+              <div id="value">${Math.min(
+                this.messages.length,
+                this.#messagePosition + 1
+              )} /
+              <span id="max">&nbsp;${this.messages.length}</span></div>
+              <div id="run-status" class=${classMap({ [this.status]: true })}>
+                ${this.status}
+              </div>
             </header>
-            <div id="inputs-list">
-              <bb-input-list
-                ${ref(this.#inputListRef)}
-                .messages=${this.messages}
-                .messagePosition=${this.#messagePosition}
-                @breadboardinputenter=${(event: InputEnterEvent) => {
-                  // Notify any pending handlers that the input has arrived.
-                  if (this.#messagePosition < this.messages.length - 1) {
-                    // The user has attempted to provide input for a stale
-                    // request.
-                    // TODO: Enable resuming from this point.
-                    this.dispatchEvent(
-                      new ToastEvent(
-                        "Unable to submit: board evaluation has already passed this point",
-                        ToastType.ERROR
-                      )
-                    );
-                    return;
-                  }
+            <bb-timeline-controls
+              .messages=${this.messages}
+              .messagePosition=${this.#messagePosition}
+              .messageDurations=${this.#messageDurations}
+              .narrow=${this.config.showNarrowTimeline}
+              @breadboardmessagetraversal=${(evt: MessageTraversalEvent) => {
+                if (evt.index < 0 || evt.index > this.messages.length) {
+                  return;
+                }
 
-                  const data = event.data;
-                  const handlers = this.#handlers.get(event.id) || [];
-                  if (handlers.length === 0) {
-                    console.warn(
-                      `Received event for input(id="${event.id}") but no handlers were found`
-                    );
-                  }
-                  for (const handler of handlers) {
-                    handler.call(null, data);
-                  }
-                }}
-              ></bb-input-list>
-            </div>
-          </section>
-          <section id="outputs">
-            <h1>Outputs</h1>
-            <div id="outputs-list">
-              <bb-output-list
-                .messages=${this.messages}
-                .messagePosition=${this.#messagePosition}
-              ></bb-output-list>
-            </div>
+                this.#messagePosition = evt.index;
+                this.requestUpdate();
+              }}
+            ></bb-timeline-controls>
           </section>
           <div
             class="drag-handle"
-            data-control="lower"
+            data-control="upper"
             @pointerdown=${this.#startVerticalResize}
             @pointermove=${this.#onVerticalResize}
             @pointerup=${this.#endVerticalResize}
           ></div>
-          <div id="history" ${ref(this.#historyRef)}>
-            <bb-history-tree
-              .messages=${this.messages}
-              .messagePosition=${this.#messagePosition}
-            ></bb-history-tree>
-          </div>
-        </section>
-      </div>`;
+          <section id="inputs" ${ref(this.#inputRef)}>
+              <header>
+                <h1>Inputs</h1>
+                ${continueButton}
+              </header>
+              <div id="inputs-list">
+                <bb-input-list
+                  ${ref(this.#inputListRef)}
+                  .messages=${this.messages}
+                  .messagePosition=${this.#messagePosition}
+                  @breadboardinputenter=${(event: InputEnterEvent) => {
+                    // Notify any pending handlers that the input has arrived.
+                    if (this.#messagePosition < this.messages.length - 1) {
+                      // The user has attempted to provide input for a stale
+                      // request.
+                      // TODO: Enable resuming from this point.
+                      this.dispatchEvent(
+                        new ToastEvent(
+                          "Unable to submit: board evaluation has already passed this point",
+                          ToastType.ERROR
+                        )
+                      );
+                      return;
+                    }
+
+                    const data = event.data;
+                    const handlers = this.#handlers.get(event.id) || [];
+                    if (handlers.length === 0) {
+                      console.warn(
+                        `Received event for input(id="${event.id}") but no handlers were found`
+                      );
+                    }
+                    for (const handler of handlers) {
+                      handler.call(null, data);
+                    }
+                  }}
+                ></bb-input-list>
+              </div>
+            </section>
+            <section id="outputs">
+              <h1>Outputs</h1>
+              <div id="outputs-list">
+                <bb-output-list
+                  .messages=${this.messages}
+                  .messagePosition=${this.#messagePosition}
+                ></bb-output-list>
+              </div>
+            </section>
+            <div
+              class="drag-handle"
+              data-control="lower"
+              @pointerdown=${this.#startVerticalResize}
+              @pointermove=${this.#onVerticalResize}
+              @pointerup=${this.#endVerticalResize}
+            ></div>
+            <div id="history" ${ref(this.#historyRef)}>
+              <bb-history-tree
+                .messages=${this.messages}
+                .messagePosition=${this.#messagePosition}
+              ></bb-history-tree>
+            </div>
+          </section>
+        </div>
+      </bb-splitter>`;
   }
 }

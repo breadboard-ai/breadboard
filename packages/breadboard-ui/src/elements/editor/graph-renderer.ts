@@ -74,6 +74,11 @@ export class GraphRenderer extends LitElement {
   ) {
     super();
 
+    const resizeObserver = new ResizeObserver(() => {
+      this.#app.resize();
+    });
+    resizeObserver.observe(this);
+
     this.#app.stage.addChild(this.#container);
     this.#app.stage.eventMode = "static";
 
