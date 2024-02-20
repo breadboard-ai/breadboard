@@ -27,16 +27,6 @@ export const styles = css`
     display: var(--diagram-display);
   }
 
-  #rhs {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: var(--rhs-top) 8px var(--rhs-mid) 8px var(
-        --rhs-bottom
-      );
-    column-gap: calc(var(--bb-grid-size) * 2);
-    overflow: auto;
-  }
-
   #controls {
     display: flex;
     align-items: center;
@@ -88,20 +78,6 @@ export const styles = css`
   #outputs {
     display: flex;
     flex-direction: column;
-  }
-
-  #timeline {
-    grid-column: 1 / 3;
-  }
-
-  #history {
-    display: grid;
-    grid-column: 1 / 3;
-  }
-
-  .drag-handle {
-    cursor: ns-resize;
-    grid-column: 1 / 3;
   }
 
   #timeline h1 {
@@ -175,78 +151,8 @@ export const styles = css`
     padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 4);
   }
 
-  #node-information {
-    display: flex;
-    flex-direction: column;
-    position: absolute;
-    bottom: 20px;
-    left: 20px;
-    max-width: calc(var(--bb-grid-size) * 90);
-    max-height: 40%;
-    border-radius: calc(var(--bb-grid-size) * 6);
-    background: rgb(255, 255, 255);
-    padding: calc(var(--bb-grid-size) * 4);
-    border: 1px solid rgb(204, 204, 204);
-    box-shadow: 0 2px 3px 0 rgba(0, 0, 0, 0.13),
-      0 7px 9px 0 rgba(0, 0, 0, 0.16);
-    overflow-y: auto;
-    scrollbar-gutter: stable;
-  }
-
-  #node-information h1 {
-    font-size: var(--bb-text-medium);
-    margin: 0;
-    font-weight: 400;
-    padding: 0 0 0 calc(var(--bb-grid-size) * 8);
-    line-height: calc(var(--bb-grid-size) * 6);
-    cursor: pointer;
-    background: var(--bb-icon-info) 0 0 no-repeat;
-  }
-
-  #node-information dl {
-    margin: calc(var(--bb-grid-size) * 2) 0;
-    padding-right: calc(var(--bb-grid-size) * 5);
-    display: grid;
-    grid-template-columns: fit-content(50px) 1fr;
-    column-gap: calc(var(--bb-grid-size) * 2);
-    row-gap: calc(var(--bb-grid-size) * 1);
-    font-size: var(--bb-text-nano);
-    width: 100%;
-    flex: 1;
-    overflow: auto;
-    scrollbar-gutter: stable;
-  }
-
-  #node-information dd {
-    margin: 0;
-    font-weight: bold;
-  }
-
-  #node-information pre {
-    font-size: var(--bb-text-nano);
-    white-space: pre-wrap;
-    margin: 0;
-  }
-
-  #node-information #close {
-    position: absolute;
-    right: calc(var(--bb-grid-size) * 3);
-    top: calc(var(--bb-grid-size) * 4);
-    width: 24px;
-    height: 24px;
-    background: var(--bb-icon-close) center center no-repeat;
-    border: none;
-    font-size: 0;
-    opacity: 0.5;
-    cursor: pointer;
-  }
-
-  #node-information #close:hover {
-    opacity: 1;
-  }
-
   #value {
-    min-width: 60px;
+    padding: 0 calc(var(--bb-grid-size) * 2);
     display: flex;
     background: #d1cbff;
     border-radius: calc(var(--bb-grid-size) * 3);

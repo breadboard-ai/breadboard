@@ -25,6 +25,9 @@ export class Splitter extends LitElement {
   @property({ reflect: true, attribute: true, type: "number" })
   minSize = 0.1;
 
+  @property({ reflect: true, attribute: true, type: "number" })
+  split = 0.5;
+
   #bounds: DOMRect | null = null;
   #onPointerMoveBound = this.#onPointerMove.bind(this);
   #onPointerUpBound = this.#onPointerUp.bind(this);
@@ -35,6 +38,7 @@ export class Splitter extends LitElement {
       --a-fr: 1fr;
       --b-fr: 1fr;
       --handle: 8px;
+      overflow: auto;
     }
 
     :host([orientation="horizontal"]) {
@@ -126,6 +130,8 @@ export class Splitter extends LitElement {
       }
 
       this.#set(numSplit);
+    } else {
+      this.#set(this.split);
     }
   }
 
