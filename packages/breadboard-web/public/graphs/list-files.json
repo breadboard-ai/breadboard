@@ -1,7 +1,7 @@
 {
   "title": "List Google Drive files",
   "description": "First attempt at a Google Drive node",
-  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.2.0/packages/schema/breadboard.schema.json",
+  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.3.0/packages/schema/breadboard.schema.json",
   "version": "0.0.1",
   "edges": [
     {
