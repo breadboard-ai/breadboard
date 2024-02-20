@@ -495,6 +495,7 @@ export class GraphRenderer extends LitElement {
       return;
     }
 
+    interactionTracker.clear();
     this.dispatchEvent(new GraphNodeDelete(activeGraphNode.name));
   }
 

@@ -675,7 +675,7 @@ export class Main extends LitElement {
             editableGraph.addNode(newNode).then((result) => {
               if (!result.success) {
                 this.toast(
-                  "Unable to create node",
+                  `Unable to create node: ${result.error}`,
                   BreadboardUI.Events.ToastType.ERROR
                 );
               }
@@ -741,7 +741,7 @@ export class Main extends LitElement {
             editableGraph.removeNode(evt.id).then((result) => {
               if (!result.success) {
                 this.toast(
-                  "Unable to remove node",
+                  `Unable to remove node: ${result.error}`,
                   BreadboardUI.Events.ToastType.ERROR
                 );
               }
