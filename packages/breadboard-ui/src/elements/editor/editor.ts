@@ -68,7 +68,9 @@ export class Editor extends LitElement {
 
   #graph = new Graph();
   #graphRenderer = new GraphRenderer();
-  #processing = false;
+  // Incremented each time a graph is updated, used to avoid extra work
+  // inspecting ports when the graph is updated.
+  #graphVersion = 0;
   #lastGraphUrl: string | null = null;
   #onDropBound = this.#onDrop.bind(this);
   #onDragOverBound = this.#onDragOver.bind(this);
@@ -280,12 +282,7 @@ export class Editor extends LitElement {
   }
 
   async #processGraph(descriptor: GraphDescriptor) {
-    if (this.#processing) {
-      this.requestUpdate();
-      return;
-    }
-
-    this.#processing = true;
+    this.#graphVersion++;
 
     if (this.#lastGraphUrl !== descriptor.url) {
       // TODO: Notify the Graph Renderer to forget node locations.
@@ -295,15 +292,18 @@ export class Editor extends LitElement {
     const breadboardGraph = inspect(descriptor, { kits: this.kits });
 
     const ports = new Map<string, InspectableNodePorts>();
+    const graphVersion = this.#graphVersion;
     for (const node of breadboardGraph.nodes()) {
       ports.set(node.descriptor.id, await node.ports());
+      if (this.#graphVersion !== graphVersion) {
+        // Another update has come in, bail out.
+        return;
+      }
     }
 
     this.#graph.ports = ports;
     this.#graph.edges = breadboardGraph.edges();
     this.#graph.nodes = breadboardGraph.nodes();
-
-    this.#processing = false;
   }
 
   connectedCallback(): void {
