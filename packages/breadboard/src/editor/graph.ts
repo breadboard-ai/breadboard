@@ -4,14 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { handlersFromKits } from "../handler.js";
 import { fixUpStarEdge, inspectableGraph } from "../inspector/graph.js";
 import { InspectableGraph } from "../inspector/types.js";
 import {
   GraphDescriptor,
   NodeConfiguration,
-  NodeHandlers,
   NodeIdentifier,
+  NodeTypeIdentifier,
 } from "../types.js";
 import {
   EditResult,
@@ -31,7 +30,7 @@ export const editGraph = (
 class Graph implements EditableGraph {
   #options: EditableGraphOptions;
   #inspector?: InspectableGraph;
-  #handlers?: NodeHandlers;
+  #validTypes?: Set<string>;
   #graph: GraphDescriptor;
 
   constructor(graph: GraphDescriptor, options: EditableGraphOptions) {
@@ -39,8 +38,16 @@ class Graph implements EditableGraph {
     this.#options = options;
   }
 
-  #getHandlers() {
-    return (this.#handlers ??= handlersFromKits(this.#options?.kits || []));
+  #isValidType(type: NodeTypeIdentifier) {
+    return (this.#validTypes ??= new Set(
+      this.inspect()
+        .kits()
+        .flatMap((kit) => {
+          return kit.nodeTypes.map((type) => {
+            return type.type();
+          });
+        })
+    )).has(type);
   }
 
   async canAddNode(spec: EditableNodeSpec): Promise<EditResult> {
@@ -52,7 +59,7 @@ class Graph implements EditableGraph {
       };
     }
 
-    const validType = !!this.#getHandlers()[spec.type];
+    const validType = this.#isValidType(spec.type);
     if (!validType) {
       return {
         success: false,
