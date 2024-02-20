@@ -304,6 +304,14 @@ export class Editor extends LitElement {
       }
     }
 
+    // Check that the active node is available.
+    if (
+      this.nodeValueBeingEdited &&
+      !breadboardGraph.nodeById(this.nodeValueBeingEdited.id)
+    ) {
+      this.nodeValueBeingEdited = null;
+    }
+
     this.#graph.ports = ports;
     this.#graph.edges = breadboardGraph.edges();
     this.#graph.nodes = breadboardGraph.nodes();
@@ -469,7 +477,8 @@ export class Editor extends LitElement {
       return;
     }
 
-    const nextNodeId = this.loadInfo?.graphDescriptor?.nodes.length || 1_000;
+    const nextNodeId =
+      (this.loadInfo?.graphDescriptor?.nodes.length || 1_000) + 1;
     const id = `${data}-${nextNodeId}`;
     const x = evt.pageX - this.#left + window.scrollX;
     const y = evt.pageY - this.#top - window.scrollY;
@@ -493,21 +502,29 @@ export class Editor extends LitElement {
 
   // TODO: Find a better way of getting the defaults for any given node.
   #getNodeMenu() {
-    if (!this.editable) {
+    if (!this.editable || !this.loadInfo || !this.loadInfo.graphDescriptor) {
       return nothing;
     }
 
+    const graph = inspect(this.loadInfo.graphDescriptor, {
+      kits: this.kits,
+    });
+
+    const kits = graph.kits() || [];
     const kitList = new Map<string, string[]>();
-    this.kits.sort((kit1, kit2) =>
-      (kit1.title || "") > (kit2.title || "") ? 1 : -1
+    kits.sort((kit1, kit2) =>
+      (kit1.descriptor.title || "") > (kit2.descriptor.title || "") ? 1 : -1
     );
 
-    for (const kit of this.kits) {
-      if (!kit.title) {
+    for (const kit of kits) {
+      if (!kit.descriptor.title) {
         continue;
       }
 
-      kitList.set(kit.title, [...Object.keys(kit.handlers)]);
+      kitList.set(
+        kit.descriptor.title,
+        kit.nodeTypes.map((node) => node.type())
+      );
     }
 
     return html`<div id="menu">

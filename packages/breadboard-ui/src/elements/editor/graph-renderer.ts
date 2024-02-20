@@ -515,8 +515,6 @@ export class GraphRenderer extends LitElement {
 
     if (!this.#background) {
       PIXI.Texture.fromURL("/images/pattern.png").then((texture) => {
-        console.log("Loaded texture");
-
         this.#background = new PIXI.TilingSprite(texture);
         this.#background.width = this.#app.renderer.width;
         this.#background.height = this.#app.renderer.height;
