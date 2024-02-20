@@ -318,3 +318,37 @@ test("editor API successfully removes an edge", async (t) => {
     t.false(result.success);
   }
 });
+
+test("editor API allows adding built-in nodes", async (t) => {
+  const graph = testEditGraph();
+
+  {
+    const result = await graph.addNode({
+      id: "node1",
+      type: "input",
+    });
+
+    t.true(result.success);
+
+    const raw = graph.raw();
+    t.deepEqual(
+      raw.nodes.map((n) => n.id),
+      ["node0", "node2", "node1"]
+    );
+  }
+
+  {
+    const result = await graph.addNode({
+      id: "node3",
+      type: "output",
+    });
+
+    t.true(result.success);
+
+    const raw = graph.raw();
+    t.deepEqual(
+      raw.nodes.map((n) => n.id),
+      ["node0", "node2", "node1", "node3"]
+    );
+  }
+});
