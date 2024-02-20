@@ -142,6 +142,10 @@ test("editor API successfully removes a node", async (t) => {
       raw.nodes.map((n) => n.id),
       ["node2"]
     );
+    t.deepEqual(
+      raw.edges.map((e) => [e.from, e.to]),
+      []
+    );
   }
 
   {

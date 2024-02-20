@@ -87,6 +87,11 @@ class Graph implements EditableGraph {
     const can = await this.canRemoveNode(id);
     if (!can.success) return can;
 
+    // Remove any edges that are connected to the removed node.
+    this.#graph.edges = this.#graph.edges.filter(
+      (edge) => edge.from !== id && edge.to !== id
+    );
+    // Remove the node from the graph.
     this.#graph.nodes = this.#graph.nodes.filter((node) => node.id != id);
     this.#inspector = undefined;
     return { success: true };
