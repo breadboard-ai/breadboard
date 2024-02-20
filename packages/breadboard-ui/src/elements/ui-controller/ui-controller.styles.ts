@@ -12,20 +12,10 @@ export const styles = css`
 
   :host {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    column-gap: 8px;
     height: 100%;
-    margin: 8px;
     overscroll-behavior: contain;
     --diagram-display: flex;
-  }
-
-  @media (orientation: portrait) {
-    :host {
-      grid-template-columns: initial;
-      grid-template-rows: 0.4fr 0.6fr;
-      row-gap: 8px;
-    }
+    margin: 8px;
   }
 
   #diagram {
