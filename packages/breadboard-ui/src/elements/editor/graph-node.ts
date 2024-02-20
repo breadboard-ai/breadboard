@@ -404,7 +404,7 @@ export class GraphNode extends PIXI.Graphics {
       nodePort.editable = this.editable;
 
       // TODO: Display other port statuses.
-      nodePort.active = port.status === "connected";
+      nodePort.active = port.status === "connected" && !port.configured;
       this.addChild(nodePort);
       this.#inPortLocations.set(port.name, nodePort.position);
 
