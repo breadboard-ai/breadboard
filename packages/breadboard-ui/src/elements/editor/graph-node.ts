@@ -39,6 +39,7 @@ export class GraphNode extends PIXI.Graphics {
   #inPortLocations: Map<string, PIXI.ObservablePoint<unknown>> = new Map();
   #outPortLocations: Map<string, PIXI.ObservablePoint<unknown>> = new Map();
   #editable = false;
+  #selected = false;
 
   constructor(id: string, type: string, title: string) {
     super();
@@ -110,6 +111,15 @@ export class GraphNode extends PIXI.Graphics {
 
   set id(id: string) {
     this.#id = id;
+  }
+
+  get selected() {
+    return this.#selected;
+  }
+
+  set selected(selected: boolean) {
+    this.#selected = selected;
+    this.#isDirty = true;
   }
 
   get type() {
@@ -343,13 +353,14 @@ export class GraphNode extends PIXI.Graphics {
   }
 
   #drawBackground() {
-    this.beginFill(0xbbbbbb);
+    const borderSize = this.#selected ? 2 : 1;
+    this.beginFill(this.#selected ? 0x999999 : 0xbbbbbb);
     this.drawRoundedRect(
-      -1,
-      -1,
-      this.#width + 2,
-      this.#height + 2,
-      this.#borderRadius + 1
+      -borderSize,
+      -borderSize,
+      this.#width + 2 * borderSize,
+      this.#height + 2 * borderSize,
+      this.#borderRadius + borderSize
     );
     this.endFill();
 

@@ -123,6 +123,18 @@ export class NodeCreateEvent extends Event {
   }
 }
 
+export class NodeDeleteEvent extends Event {
+  static eventName = "breadboardnodedelete";
+
+  constructor(public id: string) {
+    super(NodeDeleteEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
 export class NodeUpdateEvent extends Event {
   static eventName = "breadboardnodeupdate";
 
@@ -194,6 +206,18 @@ export class GraphNodeEdgeChange extends Event {
     public toEdge: InspectableEdge
   ) {
     super(GraphNodeEdgeChange.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}
+
+export class GraphNodeDelete extends Event {
+  static eventName = "breadboardgraphnodedelete";
+
+  constructor(public id: string) {
+    super(GraphNodeDelete.eventName, {
       bubbles: true,
       cancelable: true,
       composed: true,

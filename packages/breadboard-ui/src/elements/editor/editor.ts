@@ -25,10 +25,12 @@ import { map } from "lit/directives/map.js";
 import {
   EdgeChangeEvent,
   GraphNodeDblClickEvent,
+  GraphNodeDelete,
   GraphNodeEdgeAttach,
   GraphNodeEdgeChange,
   GraphNodeEdgeDetach,
   NodeCreateEvent,
+  NodeDeleteEvent,
   NodeUpdateEvent,
 } from "../../events/events.js";
 import { classMap } from "lit/directives/class-map.js";
@@ -79,6 +81,7 @@ export class Editor extends LitElement {
   #onGraphEdgeAttachBound = this.#onGraphEdgeAttach.bind(this);
   #onGraphEdgeDetachBound = this.#onGraphEdgeDetach.bind(this);
   #onGraphEdgeChangeBound = this.#onGraphEdgeChange.bind(this);
+  #onGraphNodeDeleteBound = this.#onGraphNodeDelete.bind(this);
   #top = 0;
   #left = 0;
 
@@ -327,6 +330,11 @@ export class Editor extends LitElement {
       this.#onGraphEdgeChangeBound
     );
 
+    this.#graphRenderer.addEventListener(
+      GraphNodeDelete.eventName,
+      this.#onGraphNodeDeleteBound
+    );
+
     window.addEventListener("resize", this.#onResizeBound);
     this.addEventListener("dragover", this.#onDragOverBound);
     this.addEventListener("drop", this.#onDropBound);
@@ -353,6 +361,11 @@ export class Editor extends LitElement {
     this.#graphRenderer.removeEventListener(
       GraphNodeEdgeChange.eventName,
       this.#onGraphEdgeChangeBound
+    );
+
+    this.#graphRenderer.removeEventListener(
+      GraphNodeDelete.eventName,
+      this.#onGraphNodeDeleteBound
     );
 
     window.removeEventListener("resize", this.#onResizeBound);
@@ -434,6 +447,13 @@ export class Editor extends LitElement {
         in: toEdge.in,
       })
     );
+  }
+
+  #onGraphNodeDelete(evt: Event) {
+    const { id } = evt as GraphNodeDelete;
+    this.edgeCount = -1;
+    this.nodeCount = -1;
+    this.dispatchEvent(new NodeDeleteEvent(id));
   }
 
   #onDragOver(evt: DragEvent) {
