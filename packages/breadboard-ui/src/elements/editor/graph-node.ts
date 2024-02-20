@@ -41,37 +41,45 @@ export class GraphNode extends PIXI.Graphics {
   #editable = false;
   #selected = false;
 
+  public edgeColor: number;
+
   constructor(id: string, type: string, title: string) {
     super();
 
     this.#nodeTtitle = title;
     this.id = id;
     this.type = type;
+    this.edgeColor = 0xcccccc;
 
     switch (type) {
       case "input":
         this.color = 0xc9daf8;
+        this.edgeColor = 0x7791bb;
         this.titleTextColor = 0x2c5598;
         break;
 
       case "secrets":
         this.color = 0xf4cccc;
+        this.edgeColor = 0xe88b8b;
         this.titleTextColor = 0xac342a;
         break;
 
       case "output":
         this.color = 0xb6d7a8;
+        this.edgeColor = 0x93c87b;
         this.titleTextColor = 0x2a5a15;
         break;
 
       case "slot":
       case "passthrough":
         this.color = 0xead1dc;
+        this.edgeColor = 0xe283b2;
         this.titleTextColor = 0x87365e;
         break;
 
       default:
         this.color = 0xfff2cc;
+        this.edgeColor = 0xe7ba7c;
         this.titleTextColor = 0xb3772c;
         break;
     }

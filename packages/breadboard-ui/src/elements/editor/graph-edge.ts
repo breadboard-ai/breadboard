@@ -113,7 +113,7 @@ export class GraphEdge extends PIXI.Graphics {
     const midX = Math.round((inLocation.x - outLocation.x) / 2);
     const midY = Math.round((inLocation.y - outLocation.y) / 2);
     const color =
-      this.#overrideColor !== null ? this.#overrideColor : this.#edgeColor;
+      this.#overrideColor ?? this.fromNode.edgeColor ?? this.#edgeColor;
 
     this.lineStyle(2, color);
     this.moveTo(outLocation.x, outLocation.y);
