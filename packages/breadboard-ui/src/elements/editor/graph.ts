@@ -37,6 +37,8 @@ export class Graph extends PIXI.Container {
   #highlightPadding = 10;
   #editable = false;
 
+  layoutRect: DOMRectReadOnly | null = null;
+
   constructor() {
     super();
 
@@ -64,7 +66,18 @@ export class Graph extends PIXI.Container {
     }
 
     const g = new Dagre.graphlib.Graph();
-    g.setGraph({ marginx: 0, marginy: 0, nodesep: 20, rankdir: "LR" });
+    const opts: Partial<Dagre.GraphLabel> = {
+      marginx: 0,
+      marginy: 0,
+      rankdir: "LR",
+      align: "UL",
+    };
+    if (this.layoutRect) {
+      opts.width = Math.floor(this.layoutRect.width);
+      opts.height = Math.floor(this.layoutRect.height);
+    }
+
+    g.setGraph(opts);
     g.setDefaultEdgeLabel(() => ({}));
 
     let nodesAdded = 0;

@@ -46,6 +46,23 @@ export class GraphRenderer extends LitElement {
   #padding = 50;
   #container = new PIXI.Container();
   #background: PIXI.TilingSprite | null = null;
+  #resizeObserver = new ResizeObserver((entries) => {
+    this.#app.resize();
+
+    if (entries.length < 1) {
+      return;
+    }
+
+    for (const child of this.#container.children) {
+      if (!(child instanceof Graph)) {
+        continue;
+      }
+
+      // Inform the graph about the content rect so that it can attempt to fit
+      // the graph inside of it.
+      child.layoutRect = entries[0].contentRect;
+    }
+  });
 
   #onKeyDownBound = this.#onKeyDown.bind(this);
 
@@ -73,11 +90,6 @@ export class GraphRenderer extends LitElement {
     private zoomFactor = 100
   ) {
     super();
-
-    const resizeObserver = new ResizeObserver(() => {
-      this.#app.resize();
-    });
-    resizeObserver.observe(this);
 
     this.#app.stage.addChild(this.#container);
     this.#app.stage.eventMode = "static";
@@ -519,6 +531,8 @@ export class GraphRenderer extends LitElement {
       this.#background.height = this.#app.renderer.height;
     });
 
+    this.#resizeObserver.observe(this);
+
     if (!this.#background) {
       PIXI.Texture.fromURL("/images/pattern.png").then((texture) => {
         this.#background = new PIXI.TilingSprite(texture);
@@ -535,6 +549,7 @@ export class GraphRenderer extends LitElement {
   disconnectedCallback(): void {
     super.disconnectedCallback();
 
+    this.#resizeObserver.disconnect();
     window.removeEventListener("keydown", this.#onKeyDownBound);
   }
 
