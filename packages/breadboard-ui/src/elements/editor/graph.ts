@@ -134,8 +134,6 @@ export class Graph extends PIXI.Container {
         continue;
       }
 
-      console.log();
-
       node.editable = editable;
     }
     this.#editable = editable;
