@@ -746,8 +746,6 @@ export class Main extends LitElement {
                 );
               }
 
-              console.log(editableGraph.raw());
-
               loadInfo.graphDescriptor = editableGraph.raw();
               this.#uiRef.value?.requestUpdate();
             });
