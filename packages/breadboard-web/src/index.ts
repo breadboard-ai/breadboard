@@ -448,16 +448,6 @@ export class Main extends LitElement {
     window.history.replaceState(null, "", pageUrl);
   }
 
-  #setActiveVisualizer(visualizer: string | null) {
-    const pageUrl = new URL(window.location.href);
-    if (visualizer === null) {
-      pageUrl.searchParams.delete("visualizer");
-    } else {
-      pageUrl.searchParams.set("visualizer", visualizer);
-    }
-    window.history.replaceState(null, "", pageUrl);
-  }
-
   #setActiveMode(mode: string | null) {
     const pageUrl = new URL(window.location.href);
     if (mode === null) {
