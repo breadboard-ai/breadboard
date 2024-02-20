@@ -10,10 +10,8 @@ import {
   MultipartInputImage,
   MultipartInputText,
 } from "./elements/input/input-multipart/input-multipart.js";
-import { Diagram } from "./elements/diagram/diagram.js";
 
 export const register = () => {
-  customElements.define("bb-diagram", Diagram);
   customElements.define("bb-multipart-input", MultipartInput);
   customElements.define("bb-multipart-input-image", MultipartInputImage);
   customElements.define("bb-multipart-input-text", MultipartInputText);

@@ -70,7 +70,6 @@ export class Main extends LitElement {
   #delay = 0;
   #status = BreadboardUI.Types.STATUS.STOPPED;
   #statusObservers: Array<(value: BreadboardUI.Types.STATUS) => void> = [];
-  #visualizer: "mermaid" | "editor" = "editor";
   #kits: Kit[] = [];
 
   static styles = css`
@@ -230,7 +229,7 @@ export class Main extends LitElement {
     }
 
     #content {
-      height: calc(100vh - var(--bb-grid-size) * 15);
+      height: calc(100vh - var(--bb-grid-size) * 12);
       display: flex;
       flex-direction: column;
     }
@@ -295,11 +294,6 @@ export class Main extends LitElement {
       this.#onStartBoard(new BreadboardUI.Events.StartEvent(boardFromUrl));
     } else if (modeFromUrl === MODE.BUILD) {
       this.#createBlankBoard();
-    }
-
-    const visualizer = currentUrl.searchParams.get("visualizer");
-    if (visualizer === "mermaid" || visualizer === "editor") {
-      this.#visualizer = visualizer;
     }
 
     if (modeFromUrl) {
@@ -573,14 +567,11 @@ export class Main extends LitElement {
     this.loadInfo = await getBoardInfo("/graphs/blank.json");
     this.loadInfo.title = "New board";
     this.mode = MODE.BUILD;
-    this.#visualizer = "editor";
 
     if (this.loadInfo.url) {
       const config = createRunConfig(this.loadInfo.url);
       this.#kits = config.kits;
     }
-
-    this.#setActiveVisualizer(this.#visualizer);
   }
 
   render() {
@@ -608,7 +599,6 @@ export class Main extends LitElement {
           .loadInfo=${this.loadInfo}
           .kits=${this.#kits}
           .status=${this.status}
-          .visualizer=${this.#visualizer}
           @breadboardedgechange=${(
             evt: BreadboardUI.Events.EdgeChangeEvent
           ) => {
