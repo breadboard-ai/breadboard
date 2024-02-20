@@ -146,7 +146,8 @@ export class Graph extends PIXI.Container {
   }
 
   set edges(edges: InspectableEdge[] | null) {
-    this.#edges = edges;
+    // Validate the edges.
+    this.#edges = edges?.filter((edge) => edge.to && edge.from) || null;
     this.#isDirty = true;
   }
 
@@ -321,6 +322,20 @@ export class Graph extends PIXI.Container {
       }
 
       this.addChild(graphNode);
+    }
+
+    // Node has been removed - clean it up.
+    if (this.#nodes.length < this.#nodeById.size) {
+      for (const [id, graphNode] of this.#nodeById) {
+        if (this.#nodes.find((node) => node.descriptor.id === id)) {
+          continue;
+        }
+
+        graphNode.removeFromParent();
+        graphNode.destroy();
+        this.#nodeById.delete(id);
+        this.#layout.delete(id);
+      }
     }
 
     this.layout();

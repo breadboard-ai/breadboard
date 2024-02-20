@@ -721,6 +721,37 @@ export class Main extends LitElement {
                 this.#uiRef.value?.requestUpdate();
               });
           }}
+          @breadboardnodedelete=${(
+            evt: BreadboardUI.Events.NodeDeleteEvent
+          ) => {
+            if (!this.loadInfo) {
+              console.warn("Unable to create node; no active graph");
+              return;
+            }
+
+            const loadInfo = this.loadInfo;
+            if (!loadInfo.graphDescriptor) {
+              console.warn("Unable to create node; no graph descriptor");
+              return;
+            }
+
+            const editableGraph = edit(loadInfo.graphDescriptor, {
+              kits: this.#kits,
+            });
+            editableGraph.removeNode(evt.id).then((result) => {
+              if (!result.success) {
+                this.toast(
+                  "Unable to remove node",
+                  BreadboardUI.Events.ToastType.ERROR
+                );
+              }
+
+              console.log(editableGraph.raw());
+
+              loadInfo.graphDescriptor = editableGraph.raw();
+              this.#uiRef.value?.requestUpdate();
+            });
+          }}
           @breadboardmessagetraversal=${() => {
             if (this.status !== BreadboardUI.Types.STATUS.RUNNING) {
               return;

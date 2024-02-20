@@ -10,6 +10,7 @@ import { customElement, property } from "lit/decorators.js";
 import * as PIXI from "pixi.js";
 import {
   GraphNodeDblClickEvent,
+  GraphNodeDelete,
   GraphNodeEdgeAttach,
   GraphNodeEdgeChange,
   GraphNodeEdgeDetach,
@@ -25,6 +26,9 @@ import { Graph } from "./graph.js";
 
 @customElement("bb-graph-renderer")
 export class GraphRenderer extends LitElement {
+  @property({ reflect: true })
+  editable = false;
+
   #app = new PIXI.Application({
     background: "rgb(244, 247, 252)",
     resizeTo: this,
@@ -43,6 +47,8 @@ export class GraphRenderer extends LitElement {
   #container = new PIXI.Container();
   #background: PIXI.TilingSprite | null = null;
 
+  #onKeyDownBound = this.#onKeyDown.bind(this);
+
   static styles = css`
     :host {
       display: block;
@@ -55,8 +61,11 @@ export class GraphRenderer extends LitElement {
     }
   `;
 
-  @property({ reflect: true })
-  editable = false;
+  #distanceSq(a: PIXI.Point, b: PIXI.Point) {
+    const x = a.x - b.x;
+    const y = a.y - b.y;
+    return x * x + y * y;
+  }
 
   constructor(
     private minScale = 0.1,
@@ -69,22 +78,39 @@ export class GraphRenderer extends LitElement {
     this.#app.stage.eventMode = "static";
 
     let lastClickTime = Number.NEGATIVE_INFINITY;
+    let lastClickPosition: PIXI.Point = new PIXI.Point(
+      Number.POSITIVE_INFINITY,
+      Number.POSITIVE_INFINITY
+    );
+
     this.#app.stage.on(
       "pointerdown",
       function (this: GraphRenderer, evt) {
         const interactionTracker = InteractionTracker.instance();
         const activeGraphNodePort = interactionTracker.activeGraphNodePort;
         const activeGraphNode = interactionTracker.activeGraphNode;
+        const hoveredGraphNode = interactionTracker.hoveredGraphNode;
+        const hoveredGraphNodePort = interactionTracker.hoveredGraphNodePort;
         const activeGraph = interactionTracker.activeGraph;
         const target =
-          activeGraphNodePort || activeGraphNode || this.#container;
+          hoveredGraphNodePort || hoveredGraphNode || this.#container;
 
         const now = window.performance.now();
+        const clickPosition = evt.global.clone();
         const timeDelta = now - lastClickTime;
+        const positionDelta = this.#distanceSq(
+          clickPosition,
+          lastClickPosition
+        );
         lastClickTime = now;
+        lastClickPosition = clickPosition;
 
         // Double click - edit the node.
-        if (timeDelta < 500 && target instanceof GraphNode) {
+        if (
+          positionDelta < 500 &&
+          timeDelta < 500 &&
+          target instanceof GraphNode
+        ) {
           interactionTracker.clear();
           this.dispatchEvent(new GraphNodeDblClickEvent(target.id));
           return;
@@ -362,7 +388,10 @@ export class GraphRenderer extends LitElement {
               target.zIndex = Math.max(0, target.parent.children.length - 1);
             }
 
-            interactionTracker.clear();
+            if (target === this.#container) {
+              interactionTracker.clear();
+            }
+
             document.removeEventListener("pointermove", onPointerMove);
           };
         }
@@ -455,8 +484,24 @@ export class GraphRenderer extends LitElement {
     graph.destroy();
   }
 
+  #onKeyDown(evt: KeyboardEvent) {
+    if (evt.code !== "Backspace") {
+      return;
+    }
+
+    const interactionTracker = InteractionTracker.instance();
+    const activeGraphNode = interactionTracker.activeGraphNode;
+    if (!activeGraphNode || !activeGraphNode.name) {
+      return;
+    }
+
+    this.dispatchEvent(new GraphNodeDelete(activeGraphNode.name));
+  }
+
   connectedCallback(): void {
     super.connectedCallback();
+
+    window.addEventListener("keydown", this.#onKeyDownBound);
 
     this.#app.resize();
     this.#app.renderer.addListener("resize", () => {
@@ -481,6 +526,12 @@ export class GraphRenderer extends LitElement {
     } else {
       this.#app.stage.addChildAt(this.#background, 0);
     }
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+
+    window.removeEventListener("keydown", this.#onKeyDownBound);
   }
 
   render() {
