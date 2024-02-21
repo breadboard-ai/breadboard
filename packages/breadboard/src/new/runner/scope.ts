@@ -16,7 +16,13 @@ import {
   StateInterface,
 } from "./types.js";
 
-import { GraphDescriptor, GraphMetadata, NodeDescriberResult, Schema, SubGraphs } from "../../types.js";
+import {
+  GraphDescriptor,
+  GraphMetadata,
+  NodeDescriberResult,
+  Schema,
+  SubGraphs,
+} from "../../types.js";
 import { State } from "./state.js";
 
 const buildRequiredPropertyList = (properties: Record<string, Schema>) => {
@@ -341,6 +347,8 @@ export class Scope implements ScopeInterface {
     const properties: Schema["properties"] = {};
     const ports = new Set<string>();
 
+    let required: string[] | undefined = undefined;
+
     if (node.type === "input") {
       const nodes = new Set<AbstractNode>();
 
@@ -364,6 +372,8 @@ export class Scope implements ScopeInterface {
                 ...properties[edge.out],
               };
       }
+
+      required = buildRequiredPropertyList(properties);
     } else if (node.type === "output") {
       const nodes = new Set<AbstractNode>();
 
@@ -400,8 +410,8 @@ export class Scope implements ScopeInterface {
       }
     }
 
-    const required = buildRequiredPropertyList(properties);
-
-    return { type: "object", properties, required } satisfies Schema;
+    const schema: Schema = { type: "object", properties };
+    if (required) schema.required = required;
+    return schema;
   }
 }

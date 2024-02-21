@@ -50,11 +50,7 @@
               "type": "string",
               "title": "json"
             }
-          },
-          "required": [
-            "context",
-            "json"
-          ]
+          }
         }
       }
     },

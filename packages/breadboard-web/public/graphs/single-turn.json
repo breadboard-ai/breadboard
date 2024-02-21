@@ -34,10 +34,7 @@
               "type": "string",
               "title": "context"
             }
-          },
-          "required": [
-            "context"
-          ]
+          }
         }
       }
     },

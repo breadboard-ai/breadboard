@@ -111,10 +111,7 @@
                         "description": "The result of the Jsonata expression",
                         "type": "string"
                       }
-                    },
-                    "required": [
-                      "chunk"
-                    ]
+                    }
                   }
                 }
               },

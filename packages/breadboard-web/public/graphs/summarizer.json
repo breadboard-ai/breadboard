@@ -46,10 +46,7 @@
               "type": "string",
               "title": "summary"
             }
-          },
-          "required": [
-            "summary"
-          ]
+          }
         }
       }
     },
@@ -126,11 +123,7 @@
                       "type": "string",
                       "title": "json"
                     }
-                  },
-                  "required": [
-                    "context",
-                    "json"
-                  ]
+                  }
                 }
               }
             },

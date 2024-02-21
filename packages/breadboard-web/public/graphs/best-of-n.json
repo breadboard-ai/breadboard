@@ -121,12 +121,7 @@
               "type": "string",
               "title": "json"
             }
-          },
-          "required": [
-            "best",
-            "list",
-            "rank"
-          ]
+          }
         }
       }
     },
@@ -231,10 +226,7 @@
                         "type": "string",
                         "title": "item"
                       }
-                    },
-                    "required": [
-                      "item"
-                    ]
+                    }
                   }
                 }
               },
