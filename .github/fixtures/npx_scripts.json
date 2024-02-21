@@ -68,6 +68,6 @@
 				"wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json",
 				"npm exec . mermaid board.json"
 			]
-				}
+		}
 	]
 }
