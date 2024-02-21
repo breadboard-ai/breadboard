@@ -10,7 +10,7 @@ date: 2023-02-20 # Done to place the index atop the list.
 
 Every node has inputs and outputs. A node consumes its inputs and produces outputs.
 
-The inputs and outputs of a node are each represented by a concept that we call `Ports`. These Ports are one of the fundamental building blocks of Breadboard, they are the thing that connects the nodes together.
+The inputs and outputs of a node are each represented by a concept that we call `Ports`. These Ports are one of the fundamental building blocks of Breadboard, they define the expectations a node has of what it needs to accept to be able to run (see [Port expectations](#port-expectations)), and the shape of the data it produces.
 
 ## Ports
 
@@ -47,7 +47,7 @@ const template = templates.promptTemplate({
 });
 ```
 
-## Port expectations
+## [Port expectations]
 
 Typically, a node expects some of its ports to be wired in (or configured) and wired out. Nodes may require some (or all) of their inputs ports to be wired in order to produce outputs.
 
