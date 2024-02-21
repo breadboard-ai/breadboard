@@ -110,8 +110,7 @@
       "command": "(cd ~ && npx --verbose @google-labs/breadboard-cli --help)",
       "dependencies": [
         "pack:install"
-      ],
-      "output": []
+      ]
     }
   },
   "repository": {
