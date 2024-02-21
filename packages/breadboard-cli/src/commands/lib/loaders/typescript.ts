@@ -1,7 +1,7 @@
 import { Board, BoardRunner } from "@google-labs/breadboard";
 import esbuild from "esbuild";
 import { readFile, stat, unlink, writeFile } from "fs/promises";
-import { basename, join, resolve } from "path";
+import { basename, join, resolve, dirname } from "path";
 import { Loader, Options } from "../loader.js";
 
 export class TypeScriptLoader extends Loader {
@@ -88,12 +88,23 @@ export class TypeScriptLoader extends Loader {
 
   async load(filePath: string, options: Options): Promise<BoardRunner> {
     const fileContents = await readFile(filePath, "utf-8");
-    const result = await esbuild.transform(fileContents, { loader: "ts" });
-    const { board } = await this.#makeFromSource(
-      filePath,
-      result.code,
-      options
-    );
+
+    const result = await esbuild.build({
+      stdin: {
+        contents: fileContents,
+        resolveDir: dirname(filePath),
+        loader: "ts",
+      },
+      format: "esm",
+      platform: "node",
+      bundle: true,
+      minify: false,
+      write: false,
+    });
+
+    const source = new TextDecoder().decode(result.outputFiles[0].contents);
+
+    const { board } = await this.#makeFromSource(filePath, source, options);
 
     return board;
   }
