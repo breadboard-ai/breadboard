@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { InspectablePort } from "@google-labs/breadboard";
+import { InspectablePort, PortStatus } from "@google-labs/breadboard";
 import * as PIXI from "pixi.js";
 import { InteractionTracker } from "./interaction-tracker.js";
 import { GRAPH_NODE_DRAWN, GraphNodePortType } from "./types.js";

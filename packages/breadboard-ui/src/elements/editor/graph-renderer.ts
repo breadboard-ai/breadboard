@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { InspectableEdge, PortStatus } from "@google-labs/breadboard";
+import { InspectableEdge } from "@google-labs/breadboard";
 import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import * as PIXI from "pixi.js";
@@ -215,10 +215,6 @@ export class GraphRenderer extends LitElement {
                 edgeGraphic.edge.out = name;
                 edgeGraphic.fromNode = interactionTracker.hoveredGraphNode;
               }
-
-              interactionTracker.hoveredGraphNodePort.status =
-                PortStatus.Connected;
-              return;
             }
 
             edgeGraphic.overrideColor = 0xffcc00;

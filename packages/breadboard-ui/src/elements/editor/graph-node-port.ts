@@ -6,7 +6,7 @@ import { PortStatus } from "@google-labs/breadboard";
 export class GraphNodePort extends PIXI.Graphics {
   #isDirty = true;
   #radius = 3;
-  #status: PortStatus = PortStatus.Connected;
+  #status: PortStatus = PortStatus.Inteterminate;
   #colors: { [K in PortStatus]: number } = {
     [PortStatus.Connected]: 0xaced8f,
     [PortStatus.Dangling]: 0xdf4646,
@@ -22,6 +22,7 @@ export class GraphNodePort extends PIXI.Graphics {
     [PortStatus.Ready]: 0xaaaaaa,
   };
   #editable = false;
+  #overrideStatus: PortStatus | null = null;
 
   constructor(public type: GraphNodePortType) {
     super();
@@ -36,13 +37,11 @@ export class GraphNodePort extends PIXI.Graphics {
       InteractionTracker.instance().activeGraphNodePort = this;
     });
 
-    let oldStatus: PortStatus;
     this.on("pointerover", () => {
       if (!this.editable) {
         return;
       }
 
-      oldStatus = this.#status;
       InteractionTracker.instance().hoveredGraphNodePort = this;
     });
 
@@ -52,7 +51,6 @@ export class GraphNodePort extends PIXI.Graphics {
       }
 
       InteractionTracker.instance().hoveredGraphNodePort = null;
-      this.status = oldStatus;
     });
   }
 
@@ -89,6 +87,15 @@ export class GraphNodePort extends PIXI.Graphics {
     return this.#radius;
   }
 
+  set overrideStatus(overrideStatus: PortStatus | null) {
+    this.#overrideStatus = overrideStatus;
+    this.#isDirty = true;
+  }
+
+  get overrideStatus() {
+    return this.#overrideStatus;
+  }
+
   set status(status: PortStatus) {
     this.#status = status;
     this.#isDirty = true;
@@ -115,11 +122,13 @@ export class GraphNodePort extends PIXI.Graphics {
       this.#radius * 4
     );
 
+    const status = this.#overrideStatus ?? this.#status;
+
     this.lineStyle({
-      color: this.#borderColors[this.status],
+      color: this.#borderColors[status],
       width: 1,
     });
-    this.beginFill(this.#colors[this.status]);
+    this.beginFill(this.#colors[status]);
     this.drawCircle(0, 0, this.#radius);
     this.endFill();
   }
