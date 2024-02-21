@@ -61,7 +61,7 @@ _Valid states:_
 
 _Error states:_
 
-- **Missing** -- the node has defined a port is required by the node _and_ is currently unconnected. It is similar to "Ready", except that not having this port connected is an error.
+- **Missing** -- the node has defined a port is _required_ by the node _and_ is currently unconnected.
 
 - **Dangling** -- the port is connected to this node, but it is not expected by the node. This is another error state.
 
