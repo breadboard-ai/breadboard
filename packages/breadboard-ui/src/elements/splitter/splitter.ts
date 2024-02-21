@@ -4,20 +4,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css } from "lit";
+import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 
-export enum ORIENTATION {
+export enum DIRECTION {
   HORIZONTAL = "horizontal",
   VERTICAL = "vertical",
 }
 
 const STORAGE_PREFIX = "bb-split";
+const HANDLE_SIZE = 8;
 
 @customElement("bb-splitter")
 export class Splitter extends LitElement {
   @property({ reflect: true, attribute: true })
-  orientation = ORIENTATION.HORIZONTAL;
+  direction = DIRECTION.HORIZONTAL;
 
   @property({ reflect: true, attribute: true })
   name = "";
@@ -25,62 +26,69 @@ export class Splitter extends LitElement {
   @property({ reflect: true, attribute: true, type: "number" })
   minSize = 0.1;
 
-  @property({ reflect: true, attribute: true, type: "number" })
-  split = 0.5;
+  @property({ reflect: true, attribute: true, type: Array })
+  split = [0.5, 0.5];
 
-  #bounds: DOMRect | null = null;
+  #handleIdx: number | null = null;
+  #bounds = new DOMRect(0, 0, 0, 0);
   #onPointerMoveBound = this.#onPointerMove.bind(this);
   #onPointerUpBound = this.#onPointerUp.bind(this);
 
   static styles = css`
     :host {
       display: grid;
-      --a-fr: 1fr;
-      --b-fr: 1fr;
-      --handle: 8px;
       overflow: auto;
     }
 
-    :host([orientation="horizontal"]) {
-      grid-template-columns: var(--a-fr) var(--handle) var(--b-fr);
-    }
-
-    :host([orientation="vertical"]) {
-      grid-template-rows: var(--a-fr) var(--handle) var(--b-fr);
-    }
-
-    :host([orientation="horizontal"]) #drag-handle {
+    :host([direction="horizontal"]) #drag-handle {
       cursor: ew-resize;
     }
 
-    :host([orientation="vertical"]) #drag-handle {
+    :host([direction="vertical"]) #drag-handle {
       cursor: ns-resize;
     }
   `;
 
-  #set(size: number) {
-    if (size < this.minSize) {
-      size = this.minSize;
-    } else if (size > 1 - this.minSize) {
-      size = 1 - this.minSize;
-    }
-
-    const a = size;
-    const b = 1 - size;
-
+  #setAndStore() {
     if (this.name) {
       globalThis.sessionStorage.setItem(
         `${STORAGE_PREFIX}-${this.name}`,
-        size.toString()
+        JSON.stringify(this.split)
       );
     }
 
-    this.style.setProperty("--a-fr", `${a}fr`);
-    this.style.setProperty("--b-fr", `${b}fr`);
+    this.#updateStyles();
   }
 
-  #onPointerDown() {
-    this.#bounds = this.getBoundingClientRect();
+  #onPointerDown(evt: PointerEvent) {
+    const [handle] = evt.composedPath();
+    if (!(handle instanceof HTMLElement)) {
+      console.log("g", handle);
+      return;
+    }
+
+    const idx = Number.parseInt(handle.dataset.idx || "");
+    if (Number.isNaN(idx)) {
+      console.log("a", idx);
+      return;
+    }
+
+    this.#handleIdx = idx;
+    const top = this.children[this.#handleIdx];
+    const bottom = this.children[this.#handleIdx + 1];
+
+    if (!top || !bottom) {
+      return;
+    }
+
+    const start = top.getBoundingClientRect();
+    const end = bottom.getBoundingClientRect();
+
+    this.#bounds.x = Math.min(start.x, end.x);
+    this.#bounds.y = Math.min(start.y, end.y);
+    this.#bounds.width = end.right - start.left;
+    this.#bounds.height = end.bottom - start.top;
+
     this.style.userSelect = "none";
 
     document.addEventListener("pointermove", this.#onPointerMoveBound);
@@ -88,29 +96,49 @@ export class Splitter extends LitElement {
   }
 
   #onPointerMove(evt: PointerEvent) {
-    if (!this.#bounds) {
+    if (this.#handleIdx === null) {
       return;
     }
 
-    const x = (evt.pageX - this.#bounds.left) / this.#bounds.width;
-    const y = (evt.pageY - this.#bounds.top) / this.#bounds.height;
+    let x = (evt.pageX - this.#bounds.x) / this.#bounds.width;
+    let y = (evt.pageY - this.#bounds.y) / this.#bounds.height;
 
-    switch (this.orientation) {
-      case ORIENTATION.HORIZONTAL: {
-        this.#set(x);
+    const total = this.split[this.#handleIdx] + this.split[this.#handleIdx + 1];
+    switch (this.direction) {
+      case DIRECTION.HORIZONTAL: {
+        x = this.#clamp(x, this.minSize, 1 - this.minSize);
+        this.split[this.#handleIdx] = x * total;
+        this.split[this.#handleIdx + 1] = (1 - x) * total;
         break;
       }
 
-      case ORIENTATION.VERTICAL: {
-        this.#set(y);
+      case DIRECTION.VERTICAL: {
+        y = this.#clamp(y, this.minSize, 1 - this.minSize);
+        this.split[this.#handleIdx] = y * total;
+        this.split[this.#handleIdx + 1] = (1 - y) * total;
         break;
       }
     }
+
+    this.#setAndStore();
   }
 
   #onPointerUp() {
+    this.#handleIdx = null;
     this.style.userSelect = "initial";
     document.removeEventListener("pointermove", this.#onPointerMoveBound);
+  }
+
+  #clamp(value: number, min: number, max: number) {
+    if (value < min) {
+      value = min;
+    }
+
+    if (value > max) {
+      value = max;
+    }
+
+    return value;
   }
 
   firstUpdated() {
@@ -124,20 +152,51 @@ export class Splitter extends LitElement {
       `${STORAGE_PREFIX}-${this.name}`
     );
     if (split) {
-      const numSplit = Number.parseFloat(split);
-      if (Number.isNaN(numSplit)) {
-        return;
+      const numSplit: number[] = JSON.parse(split) as number[];
+      if (Array.isArray(numSplit)) {
+        this.split = numSplit;
+      }
+    }
+
+    this.#setAndStore();
+  }
+
+  #updateStyles() {
+    const styles = this.split
+      .map((_, idx) => `var(--slot-${idx})`)
+      .join(` ${HANDLE_SIZE}px `);
+
+    switch (this.direction) {
+      case DIRECTION.VERTICAL: {
+        this.style.gridTemplateColumns = "";
+        this.style.gridTemplateRows = styles;
+        break;
       }
 
-      this.#set(numSplit);
-    } else {
-      this.#set(this.split);
+      case DIRECTION.HORIZONTAL: {
+        this.style.gridTemplateRows = "";
+        this.style.gridTemplateColumns = styles;
+        break;
+      }
+    }
+
+    for (let idx = 0; idx < this.split.length; idx++) {
+      const split = this.split[idx];
+      this.style.setProperty(`--slot-${idx}`, `${split}fr`);
     }
   }
 
   render() {
-    return html`<slot name="a"></slot>
-      <div @pointerdown=${this.#onPointerDown} id="drag-handle"></div>
-      <slot name="b"></slot>`;
+    return html`${this.split.map((_, idx) => {
+      const handle =
+        idx < this.split.length - 1
+          ? html`<div
+              @pointerdown=${this.#onPointerDown}
+              id="drag-handle"
+              data-idx="${idx}"
+            ></div>`
+          : nothing;
+      return html`<slot name="slot-${idx}"></slot>${handle}`;
+    })}`;
   }
 }
