@@ -47,7 +47,7 @@ const template = templates.promptTemplate({
 });
 ```
 
-## [Port expectations]
+## Port expectations
 
 Typically, a node expects some of its ports to be wired in (or configured) and wired out. Nodes may require some (or all) of their inputs ports to be wired in order to produce outputs.
 
