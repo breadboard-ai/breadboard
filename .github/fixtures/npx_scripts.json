@@ -3,18 +3,26 @@
 	"fixtures": [
 		{
 			"checkout": false,
-			"name": "npx cli mermaid",
+			"name": "cli help",
 			"script": [
-				"wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json",
-				"npm --verbose exec @google-labs/breadboard-cli mermaid board.json"
+				"npx --verbose @google-labs/breadboard-cli --help"
 			]
 		},
 		{
 			"checkout": false,
-			"name": "npx cli run",
+			"name": "cli run",
 			"script": [
 				"wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json",
-				"npm --verbose exec @google-labs/breadboard-cli run board.json"
+				"npx --verbose @google-labs/breadboard-cli run board.json"
+			]
+		},
+		{
+			"checkout": true,
+			"name": "npm run test:pack",
+			"script": [
+				"npm install",
+				"pushd packages/breadboard-cli",
+				"npm run test:pack"
 			]
 		},
 		{
@@ -24,10 +32,9 @@
 				"npm install",
 				"pushd packages/breadboard-cli",
 				"npm run pack:install",
-				"popd",
-				"rm -rf ./*",
+				"cd ~ # this cd is required so the workspace's node_modules aren't available",
 				"wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json",
-				"npm --verbose exec @google-labs/breadboard-cli run board.json"
+				"npx --verbose @google-labs/breadboard-cli run board.json"
 			]
 		},
 		{
@@ -35,12 +42,11 @@
 			"name": "pack && cli mermaid",
 			"script": [
 				"npm install",
-				"pushd packages/breadboard-cli",
+				"cd packages/breadboard-cli",
 				"npm run pack:install",
-				"popd",
-				"rm -rf ./*",
+				"cd ~ # this cd is required so the workspace's node_modules aren't available",
 				"wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json",
-				"npm --verbose exec @google-labs/breadboard-cli mermaid board.json"
+				"npx --verbose @google-labs/breadboard-cli mermaid board.json"
 			]
 		},
 		{
@@ -51,7 +57,7 @@
 				"cd packages/breadboard-cli",
 				"npm run build",
 				"wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json",
-				"npm exec . run board.json"
+				"npx . run board.json"
 			]
 		},
 		{
@@ -62,7 +68,7 @@
 				"cd packages/breadboard-cli",
 				"npm run build",
 				"wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json",
-				"npm exec . mermaid board.json"
+				"npx . mermaid board.json"
 			]
 		}
 	]
