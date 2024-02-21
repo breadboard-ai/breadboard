@@ -10,11 +10,13 @@ date: 2023-02-20 # Done to place the index atop the list.
 
 Every node has inputs and outputs. A node consumes its inputs and produces outputs.
 
+The inputs and outputs of a node are each represented by a concept that we call `Ports`. These Ports are one of the fundamental building blocks of Breadboard, they are the thing that connects the nodes together.
+
 ## Ports
 
-The inputs and outputs of a node represented by ports. The inputs of a node is a set of ports, and the outputs of a node is a set of ports.
-
 Each port has a name and a value that it consumes or produces. If a port consumes a value, it's an input port. If a port produces a value, it's an output port.
+
+Each port may have type information attached to it (via the node's configuration), which is a JSON Schema and describes the shape of the value that it consumes or produces.
 
 ## Wiring ports
 
