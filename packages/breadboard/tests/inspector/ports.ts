@@ -58,3 +58,23 @@ test("collectPorts correctly reports edges", async (t) => {
     [{ in: "text", out: "bar", from: "b", to: "c" }]
   );
 });
+
+test("collectPorts correctly recognizes dangling ports", async (t) => {
+  const graph = {
+    nodes: [{ id: "a", type: "input" }],
+    edges: [{ from: "a", to: "a", in: "foo", out: "text" }],
+  } satisfies GraphDescriptor;
+  const inspectable = inspectableGraph(graph);
+  const a = inspectable.nodeById("a");
+  const ports = await a?.ports();
+  t.assert(ports?.inputs?.fixed);
+  const inputs = ports?.inputs?.ports;
+  t.deepEqual(
+    inputs?.map((p) => ({ name: p.name, status: p.status })),
+    [
+      { name: "*", status: "ready" },
+      { name: "foo", status: "dangling" },
+      { name: "schema", status: "ready" },
+    ]
+  );
+});

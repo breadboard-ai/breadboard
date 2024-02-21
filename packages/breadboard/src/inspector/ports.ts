@@ -39,6 +39,7 @@ export const collectPorts = (
     }
     return type === EdgeType.In ? edge.in : edge.out;
   });
+  const fixed = schema.additionalProperties === false;
   const schemaPortNames = Object.keys(schema.properties || {});
   const schemaContainsStar = schemaPortNames.includes("*");
   const requiredPortNames = schema.required || [];
@@ -71,7 +72,7 @@ export const collectPorts = (
       },
       status: computePortStatus(
         wired || configured,
-        expected || schemaContainsStar,
+        !fixed || expected || schemaContainsStar,
         required,
         wiredContainsStar
       ),
