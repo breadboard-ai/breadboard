@@ -41,7 +41,7 @@ const template = templates.promptTemplate({
   // This port is configured: its value is specified directly as a string.
   template: "Hello, {% raw %}{{{% endraw %}person{% raw %}}}{% endraw %}!",
   // This port is wired, coming from the "inputs" node.
-  name: inputs.name,
+  person: inputs.name,
 });
 ```
 
@@ -51,11 +51,15 @@ Typically, a node expects some of its ports to be wired in (or configured) and w
 
 Based on these expectations, any given port can be in one of the four states:
 
+** Valid states **
+
 - **Connected** -- the port is correctly connected to another port or specified via configuration in accordance to node's expectations.
 
-- **Ready** -- the port is not connected to another node, and it is expected, but not required by the node.
+- **Ready** -- the node has defined a port that is optional, and it's not currently connected.
 
-- **Missing** -- the port is not connected to another node, but it is required by the node. It is similar to "Ready", except that not having this port connected is an error.
+** Error states **
+
+- **Missing** -- the node has defined a port is required by the node _and_ is currently unconnected. It is similar to "Ready", except that not having this port connected is an error.
 
 - **Dangling** -- the port is connected to this node, but it is not expected by the node. This is another error state.
 
