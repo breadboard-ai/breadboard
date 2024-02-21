@@ -242,21 +242,35 @@ export class Graph extends PIXI.Container {
       return;
     }
 
-    this.#highlightedNode.clear();
-    this.#highlightedNode.lineStyle({
-      width: 5,
-      color: this.#highlightedNodeColor,
-      alpha: 0.5,
-    });
-    this.#highlightedNode.drawRoundedRect(
-      graphNode.x - this.#highlightPadding,
-      graphNode.y - this.#highlightPadding,
-      graphNode.width + (this.#highlightPadding - 1) * 2,
-      graphNode.height + (this.#highlightPadding - 1) * 2,
-      graphNode.borderRadius + this.#highlightPadding
-    );
+    const renderNodeHighlight = () => {
+      if (graphNode.width === 0 || graphNode.height === 0) {
+        return;
+      }
 
-    this.addChild(this.#highlightedNode);
+      this.#highlightedNode.clear();
+      this.#highlightedNode.lineStyle({
+        width: 5,
+        color: this.#highlightedNodeColor,
+        alpha: 0.5,
+      });
+      this.#highlightedNode.drawRoundedRect(
+        graphNode.x - this.#highlightPadding,
+        graphNode.y - this.#highlightPadding,
+        graphNode.width + (this.#highlightPadding - 1) * 2,
+        graphNode.height + (this.#highlightPadding - 1) * 2,
+        graphNode.borderRadius + this.#highlightPadding
+      );
+
+      this.addChild(this.#highlightedNode);
+    };
+
+    // It's possible this will be called before the graph node has rendered, so
+    // if that happens wait for the draw event to fire then try again.
+    if (graphNode.width === 0 && graphNode.height === 0) {
+      graphNode.once(GRAPH_NODE_DRAWN, renderNodeHighlight);
+    } else {
+      renderNodeHighlight();
+    }
   }
 
   #drawNodes() {
