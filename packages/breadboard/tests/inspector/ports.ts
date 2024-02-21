@@ -78,3 +78,21 @@ test("collectPorts correctly recognizes dangling ports", async (t) => {
     ]
   );
 });
+
+test("collectPorts adds an $error port", async (t) => {
+  const graph = {
+    nodes: [{ id: "a", type: "bar" }],
+    edges: [],
+  } satisfies GraphDescriptor;
+  const inspectable = inspectableGraph(graph);
+  const a = inspectable.nodeById("a");
+  const ports = await a?.ports();
+  const outputs = ports?.outputs?.ports;
+  t.deepEqual(
+    outputs?.map((p) => ({ name: p.name, status: p.status })),
+    [
+      { name: "$error", status: "ready" },
+      { name: "*", status: "ready" },
+    ]
+  );
+});

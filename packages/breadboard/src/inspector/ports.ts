@@ -41,6 +41,11 @@ export const collectPorts = (
   });
   const fixed = schema.additionalProperties === false;
   const schemaPortNames = Object.keys(schema.properties || {});
+  if (type == EdgeType.Out) {
+    // Even if not specified in the schema, all non-built-in nodes always have
+    // an optional `$error` port.
+    schemaPortNames.push("$error");
+  }
   const schemaContainsStar = schemaPortNames.includes("*");
   const requiredPortNames = schema.required || [];
   const configuredPortNames = Object.keys(configuration || {});
