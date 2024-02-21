@@ -1,5 +1,5 @@
 {
-	"$id": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.2.0/packages/schema/breadboard.schema.json",
+	"$id": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.3.0/packages/schema/breadboard.schema.json",
 	"$schema": "http://json-schema.org/draft-07/schema#",
 	"$ref": "#/definitions/GraphDescriptor",
 	"definitions": {
@@ -187,6 +187,10 @@
 				"configuration": {
 					"$ref": "#/definitions/NodeConfiguration",
 					"description": "Configuration of the node."
+				},
+				"metadata": {
+					"$ref": "#/definitions/NodeMetadata",
+					"description": "The metadata of the node. Use this provide additional information about the node."
 				}
 			},
 			"required": [
@@ -253,6 +257,21 @@
 				"kind"
 			],
 			"additionalProperties": false
+		},
+		"NodeMetadata": {
+			"type": "object",
+			"properties": {
+				"title": {
+					"type": "string",
+					"description": "The title of the node."
+				},
+				"description": {
+					"type": "string",
+					"description": "A more detailed description of the node."
+				}
+			},
+			"additionalProperties": false,
+			"description": "Represents metadata of a node. This is an optional part of the `NodeDescriptor` that can be used to provide additional information about the node."
 		},
 		"KitDescriptor": {
 			"type": "object",
