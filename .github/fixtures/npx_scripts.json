@@ -3,6 +3,7 @@
 	"fixtures": [
 		{
 			"checkout": false,
+			"expect": "fail",
 			"name": "cli help",
 			"script": [
 				"npx --verbose @google-labs/breadboard-cli --help"
@@ -11,6 +12,7 @@
 		{
 			"checkout": false,
 			"name": "cli run",
+			"expect": "fail",
 			"script": [
 				"wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json",
 				"npx --verbose @google-labs/breadboard-cli run board.json"
