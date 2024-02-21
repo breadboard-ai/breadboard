@@ -49,6 +49,8 @@ const template = templates.promptTemplate({
 
 Typically, a node expects some of its ports to be wired in (or configured) and wired out. Nodes may require some (or all) of their inputs ports to be wired in order to produce outputs.
 
+Each port can be _required_ or _optional_. A required port must be wired in order for the node to produce outputs. An optional port may be wired, but it's not required.
+
 Based on these expectations, any given port can be in one of the four states:
 
 _Valid states:_
