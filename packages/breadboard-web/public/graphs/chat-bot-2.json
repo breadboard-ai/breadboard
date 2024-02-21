@@ -93,11 +93,7 @@
                         "type": "string",
                         "description": "Agent's output"
                       }
-                    },
-                    "required": [
-                      "context",
-                      "text"
-                    ]
+                    }
                   }
                 }
               },
@@ -192,11 +188,7 @@
                                 "title": "Text",
                                 "type": "string"
                               }
-                            },
-                            "required": [
-                              "context",
-                              "text"
-                            ]
+                            }
                           }
                         }
                       },

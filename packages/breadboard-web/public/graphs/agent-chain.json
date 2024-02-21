@@ -29,10 +29,7 @@
               "description": "The context that is the result of the agent chain run",
               "type": "string"
             }
-          },
-          "required": [
-            "context"
-          ]
+          }
         }
       }
     },
@@ -89,10 +86,7 @@
                         "type": "string",
                         "title": "context"
                       }
-                    },
-                    "required": [
-                      "accumulator"
-                    ]
+                    }
                   }
                 }
               },
