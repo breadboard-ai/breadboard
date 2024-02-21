@@ -10,11 +10,13 @@ date: 2023-02-20 # Done to place the index atop the list.
 
 Every node has inputs and outputs. A node consumes its inputs and produces outputs.
 
+The inputs and outputs of a node are each represented by a concept that we call `Ports`. These Ports are one of the fundamental building blocks of Breadboard, they define the expectations a node has of what it needs to accept to be able to run (see [Port expectations](#port-expectations)), and the shape of the data it produces.
+
 ## Ports
 
-The inputs and outputs of a node represented by ports. The inputs of a node is a set of ports, and the outputs of a node is a set of ports.
-
 Each port has a name and a value that it consumes or produces. If a port consumes a value, it's an input port. If a port produces a value, it's an output port.
+
+Each port may have type information attached to it (via the node's configuration), which is a JSON Schema and describes the shape of the value that it consumes or produces.
 
 ## Wiring ports
 
@@ -41,7 +43,7 @@ const template = templates.promptTemplate({
   // This port is configured: its value is specified directly as a string.
   template: "Hello, {% raw %}{{{% endraw %}person{% raw %}}}{% endraw %}!",
   // This port is wired, coming from the "inputs" node.
-  name: inputs.name,
+  person: inputs.name,
 });
 ```
 
@@ -49,13 +51,19 @@ const template = templates.promptTemplate({
 
 Typically, a node expects some of its ports to be wired in (or configured) and wired out. Nodes may require some (or all) of their inputs ports to be wired in order to produce outputs.
 
+Each port can be _required_ or _optional_. A required port must be wired in order for the node to produce outputs. An optional port may be wired, but it's not required.
+
 Based on these expectations, any given port can be in one of the four states:
+
+_Valid states:_
 
 - **Connected** -- the port is correctly connected to another port or specified via configuration in accordance to node's expectations.
 
-- **Ready** -- the port is not connected to another node, and it is expected, but not required by the node.
+- **Ready** -- the node has defined a port that is optional and it's not currently connected.
 
-- **Missing** -- the port is not connected to another node, but it is required by the node. It is similar to "Ready", except that not having this port connected is an error.
+_Error states:_
+
+- **Missing** -- the node has defined a port is _required_ by the node _and_ is currently unconnected.
 
 - **Dangling** -- the port is connected to this node, but it is not expected by the node. This is another error state.
 
@@ -122,11 +130,9 @@ const chooseMethod = core.runJavascript({
 
 ## Shape-shifting nodes
 
-The number of the input ports that a node expects can be thought of as a "shape" of a node. While many nodes have a fixed shape, some may change their mind about the input ports it expects based on the input ports that are wired into them.
+The number of the input ports that a node expects can be thought of as the "shape" of a node. While many nodes have a fixed shape with a well defined set of inputs, some nodes can change their inputs at runtime based on the value that comes in to other input ports.
 
-A good example of such a shape-shifting node is `promptTemplate`. It has one required input port named `template`. The value that comes into this port is expected to contain a string with simple handlebar-style placeholders.
-
-For each placeholder in this string, a required input is added to the expected input ports.
+A good example of such a shape-shifting node is `promptTemplate`. It has one required input port named `template`. The value that comes into this port is expected to contain a string with simple handlebar-style placeholders. For each placeholder in this string, a required input is added to the expected input ports.
 
 ```ts
 // No placeholders, single port expected.
@@ -163,7 +169,20 @@ There is a special pair of port that exists for every node: the star input and o
 
 ## Error-handling output port
 
-Speaking of special ports... every node has an `$error` port, which outputs a value when the node throws an error. This is a very useful way to catch errors.
+Every node has an `$error` port, which outputs a value when the node throws an error. This is a very useful way to catch errors and have your board to continue running.
+
+```ts
+const methodThatErrors = core.runJavascript({
+  name: "methodThatErrors",
+  code: `function methodThatErrors({ text }) {
+    console.log(text);
+    throw new Error("This is an error");
+  }`,
+  text,
+});
+
+return methodThatErrors.$error.to(base.output({ $id: "error" }));
+```
 
 ## Specifying node schema
 
