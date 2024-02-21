@@ -19,13 +19,11 @@
 		},
 		{
 			"checkout": true,
-			"name": "pack && npx cli run",
+			"name": "pack && cli run",
 			"script": [
 				"npm install",
 				"pushd packages/breadboard-cli",
-				"npm run build",
-				"npm pack",
-				"npm --verbose install -g $(npm pack)",
+				"npm run pack:install",
 				"popd",
 				"rm -rf ./*",
 				"wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json",
@@ -34,13 +32,11 @@
 		},
 		{
 			"checkout": true,
-			"name": "pack && npx cli mermaid",
+			"name": "pack && cli mermaid",
 			"script": [
 				"npm install",
 				"pushd packages/breadboard-cli",
-				"npm run build",
-				"npm pack",
-				"npm --verbose install -g $(npm pack)",
+				"npm run pack:install",
 				"popd",
 				"rm -rf ./*",
 				"wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json",
@@ -49,7 +45,7 @@
 		},
 		{
 			"checkout": true,
-			"name": "in-repo npx cli run",
+			"name": "in-repo cli run",
 			"script": [
 				"npm install",
 				"cd packages/breadboard-cli",
@@ -60,7 +56,7 @@
 		},
 		{
 			"checkout": true,
-			"name": "in-repo npx cli mermaid",
+			"name": "in-repo npx mermaid",
 			"script": [
 				"npm install",
 				"cd packages/breadboard-cli",

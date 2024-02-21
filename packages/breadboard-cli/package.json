@@ -18,7 +18,8 @@
     "build": "wireit",
     "build:tsc": "wireit",
     "build:debugger": "wireit",
-    "lint": "wireit"
+    "lint": "wireit",
+    "pack:install": "wireit"
   },
   "wireit": {
     "build": {
@@ -94,6 +95,15 @@
         "../../.eslintrc.json"
       ],
       "output": []
+    },
+    "pack:install": {
+      "command": "npm --verbose install -g $(npm pack)",
+      "dependencies": [
+        "build"
+      ],
+      "output": [
+        "google-labs-breadboard-cli-*.tgz"
+      ]
     }
   },
   "repository": {
