@@ -6,7 +6,6 @@ import { PortStatus } from "@google-labs/breadboard";
 export class GraphNodePort extends PIXI.Graphics {
   #isDirty = true;
   #radius = 3;
-  #borderColor = 0xbbbbbb;
   #status: PortStatus = PortStatus.Connected;
   #colors: { [K in PortStatus]: number } = {
     [PortStatus.Connected]: 0xaced8f,
@@ -16,7 +15,7 @@ export class GraphNodePort extends PIXI.Graphics {
     [PortStatus.Ready]: 0xeeeeee,
   };
   #borderColors: { [K in PortStatus]: number } = {
-    [PortStatus.Connected]: 0xaced8f,
+    [PortStatus.Connected]: 0x475d3f,
     [PortStatus.Dangling]: 0x990808,
     [PortStatus.Inteterminate]: 0xbbbbbb,
     [PortStatus.Missing]: 0x990808,

@@ -56,21 +56,21 @@ export class GraphNode extends PIXI.Graphics {
       case "input":
         this.color = 0xc9daf8;
         this.edgeColor = 0xb1c1dc;
-        this.portConnectedColor = 0xc9daf8;
+        this.portConnectedColor = 0xaced8f;
         this.titleTextColor = 0x2c5598;
         break;
 
       case "secrets":
         this.color = 0xf4cccc;
         this.edgeColor = 0xdeb5b5;
-        this.portConnectedColor = 0xf4cccc;
+        this.portConnectedColor = 0xaced8f;
         this.titleTextColor = 0xac342a;
         break;
 
       case "output":
         this.color = 0xb6d7a8;
         this.edgeColor = 0xbdd2b5;
-        this.portConnectedColor = 0xb6d7a8;
+        this.portConnectedColor = 0xaced8f;
         this.titleTextColor = 0x2a5a15;
         break;
 
@@ -78,21 +78,20 @@ export class GraphNode extends PIXI.Graphics {
       case "passthrough":
         this.color = 0xead1dc;
         this.edgeColor = 0xe3a7c5;
-        this.portConnectedColor = 0xead1dc;
+        this.portConnectedColor = 0xaced8f;
         this.titleTextColor = 0x87365e;
         break;
 
       default:
         this.color = 0xfff2cc;
         this.edgeColor = 0xe4d2b6;
-        this.portConnectedColor = 0xfff2cc;
+        this.portConnectedColor = 0xaced8f;
         this.titleTextColor = 0xb3772c;
         break;
     }
 
     this.backgroundColor = 0xffffff;
     this.portTextColor = 0x333333;
-    this.portConnectedColor = 0xaced8f;
 
     this.eventMode = "static";
     this.cursor = "pointer";
@@ -429,8 +428,7 @@ export class GraphNode extends PIXI.Graphics {
       nodePort.y = portY + label.height * 0.5;
       nodePort.editable = this.editable;
       nodePort.status = port.status;
-      nodePort.connectedColor = this.color;
-      nodePort.connectedBorderColor = this.titleTextColor;
+      nodePort.connectedColor = this.portConnectedColor;
 
       this.addChild(nodePort);
       this.#inPortLocations.set(port.name, nodePort.position);
@@ -462,8 +460,7 @@ export class GraphNode extends PIXI.Graphics {
       nodePort.y = portY + label.height * 0.5;
       nodePort.editable = this.editable;
       nodePort.status = port.status;
-      nodePort.connectedColor = this.color;
-      nodePort.connectedBorderColor = this.titleTextColor;
+      nodePort.connectedColor = this.portConnectedColor;
 
       this.addChild(nodePort);
       this.#outPortLocations.set(port.name, nodePort.position);
