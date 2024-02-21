@@ -51,13 +51,13 @@ Typically, a node expects some of its ports to be wired in (or configured) and w
 
 Based on these expectations, any given port can be in one of the four states:
 
-** Valid states **
+_Valid states:_
 
 - **Connected** -- the port is correctly connected to another port or specified via configuration in accordance to node's expectations.
 
-- **Ready** -- the node has defined a port that is optional, and it's not currently connected.
+- **Available** -- the node has defined a port that is optional and it's not currently connected.
 
-** Error states **
+_Error states:_
 
 - **Missing** -- the node has defined a port is required by the node _and_ is currently unconnected. It is similar to "Ready", except that not having this port connected is an error.
 
