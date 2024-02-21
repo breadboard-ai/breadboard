@@ -1,0 +1,73 @@
+{
+	"$schema": "./fixtures.schema.json",
+	"fixtures": [
+		{
+			"checkout": false,
+			"name": "npx cli mermaid",
+			"script": [
+				"wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json",
+				"npm --verbose exec @google-labs/breadboard-cli mermaid board.json"
+			]
+		},
+		{
+			"checkout": false,
+			"name": "npx cli run",
+			"script": [
+				"wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json",
+				"npm --verbose exec @google-labs/breadboard-cli run board.json"
+			]
+		},
+		{
+			"checkout": true,
+			"name": "pack && npx cli run",
+			"script": [
+				"npm install",
+				"pushd packages/breadboard-cli",
+				"npm run build",
+				"npm pack",
+				"npm --verbose install -g *.tgz",
+				"popd",
+				"rm -rf ./*",
+				"wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json",
+				"npm --verbose exec @google-labs/breadboard-cli run board.json"
+			]
+		},
+		{
+			"checkout": true,
+			"name": "pack && npx cli mermaid",
+			"script": [
+				"npm install",
+				"pushd packages/breadboard-cli",
+				"npm run build",
+				"npm pack",
+				"npm --verbose install -g *.tgz",
+				"popd",
+				"rm -rf ./*",
+				"wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json",
+				"npm --verbose exec @google-labs/breadboard-cli mermaid board.json"
+			]
+		},
+		{
+			"checkout": true,
+			"name": "in-repo npx cli run",
+			"script": [
+				"npm install",
+				"cd packages/breadboard-cli",
+				"npm run build",
+				"wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json",
+				"npm exec . run board.json"
+			]
+		},
+		{
+			"checkout": true,
+			"name": "in-repo npx cli mermaid",
+			"script": [
+				"npm install",
+				"cd packages/breadboard-cli",
+				"npm run build",
+				"wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json",
+				"npm exec . mermaid board.json"
+			]
+				}
+	]
+}
