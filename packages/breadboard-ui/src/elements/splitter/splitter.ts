@@ -147,18 +147,28 @@ export class Splitter extends LitElement {
       return;
     }
 
-    // TODO: Restore from session storage.
     const split = globalThis.sessionStorage.getItem(
       `${STORAGE_PREFIX}-${this.name}`
     );
     if (split) {
       const numSplit: number[] = JSON.parse(split) as number[];
       if (Array.isArray(numSplit)) {
-        this.split = numSplit;
+        if (numSplit.length === this.split.length) {
+          for (let i = 0; i < numSplit.length; i++) {
+            this.split[i] = numSplit[i];
+          }
+        } else {
+          console.warn(
+            "Stored splitter value differs from configured value - resetting"
+          );
+          globalThis.sessionStorage.removeItem(
+            `${STORAGE_PREFIX}-${this.name}`
+          );
+        }
       }
     }
 
-    this.#setAndStore();
+    this.#updateStyles();
   }
 
   #updateStyles() {

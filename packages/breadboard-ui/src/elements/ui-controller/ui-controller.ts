@@ -21,6 +21,7 @@ import { classMap } from "lit/directives/class-map.js";
 import { styles as uiControllerStyles } from "./ui-controller.styles.js";
 import { type InputList } from "../input/input-list/input-list.js";
 import { NodeHighlightHelper } from "../../utils/highlights.js";
+import { cache } from "lit/directives/cache.js";
 
 type inputCallback = (data: Record<string, unknown>) => void;
 
@@ -231,7 +232,7 @@ export class UI extends LitElement {
     /**
      * Create all the elements we need.
      */
-    const editor = html` <bb-editor
+    const editor = html`<bb-editor
       .editable=${this.url === null}
       .loadInfo=${this.loadInfo}
       .kits=${this.kits}
@@ -385,6 +386,8 @@ export class UI extends LitElement {
     /**
      * Choose based on the window orientation.
      */
-    return this.orientation === "portrait" ? portraitLayout : landscapeLayout;
+    return cache(
+      this.orientation === "portrait" ? portraitLayout : landscapeLayout
+    );
   }
 }

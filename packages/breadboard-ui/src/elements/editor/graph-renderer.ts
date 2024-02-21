@@ -93,6 +93,7 @@ export class GraphRenderer extends LitElement {
 
     this.#app.stage.addChild(this.#container);
     this.#app.stage.eventMode = "static";
+    this.#app.stop();
 
     let lastClickTime = Number.NEGATIVE_INFINITY;
     let lastClickPosition: PIXI.Point = new PIXI.Point(
@@ -521,6 +522,7 @@ export class GraphRenderer extends LitElement {
 
     window.addEventListener("keydown", this.#onKeyDownBound);
 
+    this.#app.start();
     this.#app.resize();
     this.#app.renderer.addListener("resize", () => {
       if (!this.#background) {
@@ -549,6 +551,7 @@ export class GraphRenderer extends LitElement {
   disconnectedCallback(): void {
     super.disconnectedCallback();
 
+    this.#app.stop();
     this.#resizeObserver.disconnect();
     window.removeEventListener("keydown", this.#onKeyDownBound);
   }
