@@ -128,11 +128,9 @@ const chooseMethod = core.runJavascript({
 
 ## Shape-shifting nodes
 
-The number of the input ports that a node expects can be thought of as a "shape" of a node. While many nodes have a fixed shape, some may change their mind about the input ports it expects based on the input ports that are wired into them.
+The number of the input ports that a node expects can be thought of as the "shape" of a node. While many nodes have a fixed shape with a well defined set of inputs, some nodes can change their inputs at runtime based on the value that comes in to other input ports.
 
-A good example of such a shape-shifting node is `promptTemplate`. It has one required input port named `template`. The value that comes into this port is expected to contain a string with simple handlebar-style placeholders.
-
-For each placeholder in this string, a required input is added to the expected input ports.
+A good example of such a shape-shifting node is `promptTemplate`. It has one required input port named `template`. The value that comes into this port is expected to contain a string with simple handlebar-style placeholders. For each placeholder in this string, a required input is added to the expected input ports.
 
 ```ts
 // No placeholders, single port expected.
@@ -169,7 +167,20 @@ There is a special pair of port that exists for every node: the star input and o
 
 ## Error-handling output port
 
-Speaking of special ports... every node has an `$error` port, which outputs a value when the node throws an error. This is a very useful way to catch errors.
+Every node has an `$error` port, which outputs a value when the node throws an error. This is a very useful way to catch errors and have your board to continue running.
+
+```ts
+const methodThatErrors = core.runJavascript({
+  name: "methodThatErrors",
+  code: `function methodThatErrors({ text }) {
+    console.log(text);
+    throw new Error("This is an error");
+  }`,
+  text,
+});
+
+return methodThatErrors.$error.to(base.output({ $id: "error" }));
+```
 
 ## Specifying node schema
 
