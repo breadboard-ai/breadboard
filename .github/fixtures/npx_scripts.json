@@ -62,7 +62,7 @@
 		},
 		{
 			"checkout": true,
-			"name": "in-repo npx mermaid",
+			"name": "in-repo cli mermaid",
 			"script": [
 				"npm install",
 				"cd packages/breadboard-cli",
