@@ -61,7 +61,7 @@ _Valid states:_
 
 _Error states:_
 
-- **Missing** -- the node has defined a port is required by the node _and_ is currently unconnected. It is similar to "Ready", except that not having this port connected is an error.
+- **Missing** -- the node has defined a port is required by the node _and_ is currently unconnected. It is similar to "Available", except that not having this port connected is an error.
 
 - **Dangling** -- the port is connected to this node, but it is not expected by the node. This is another error state.
 
@@ -72,7 +72,7 @@ If we don't wire anything into this node, the port status will be as follows:
 ```ts
 const validate = json.validateJson({
   // `json` -- Missing
-  // `schema` -- Ready
+  // `schema` -- Available
 });
 ```
 
