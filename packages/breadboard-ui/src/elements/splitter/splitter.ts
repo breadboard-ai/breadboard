@@ -26,7 +26,23 @@ export class Splitter extends LitElement {
   @property({ reflect: true, attribute: true, type: "number" })
   minSize = 0.1;
 
-  @property({ reflect: true, attribute: true, type: Array })
+  @property({
+    reflect: true,
+    attribute: true,
+    type: Array,
+    hasChanged(value) {
+      if (!Array.isArray(value) || value.length < 2) {
+        console.warn(
+          `A splitter needs two or more sections; ${JSON.stringify(
+            value
+          )} was provided`
+        );
+        return false;
+      }
+
+      return true;
+    },
+  })
   split = [0.5, 0.5];
 
   #handleIdx: number | null = null;
