@@ -14,20 +14,13 @@ import {
   ToastType,
 } from "../../events/events.js";
 import { HarnessRunResult } from "@google-labs/breadboard/harness";
-import { Kit, NodeConfiguration } from "@google-labs/breadboard";
+import { Kit } from "@google-labs/breadboard";
 import { Ref, createRef, ref } from "lit/directives/ref.js";
 import { longTermMemory } from "../../utils/long-term-memory.js";
 import { classMap } from "lit/directives/class-map.js";
 import { styles as uiControllerStyles } from "./ui-controller.styles.js";
 import { type InputList } from "../input/input-list/input-list.js";
 import { NodeHighlightHelper } from "../../utils/highlights.js";
-import { Splitter, ORIENTATION } from "../splitter/splitter.js";
-
-type ExtendedNodeInformation = {
-  id: string;
-  type: string;
-  configuration: NodeConfiguration | undefined;
-};
 
 type inputCallback = (data: Record<string, unknown>) => void;
 
@@ -35,11 +28,6 @@ const CONFIG_MEMORY_KEY = "ui-config";
 
 type UIConfig = {
   showNarrowTimeline: boolean;
-};
-
-type DiagramElement = HTMLElement & {
-  render: (diagram: LoadArgs, highlightedNode: string) => void;
-  reset: () => void;
 };
 
 @customElement("bb-ui-controller")
@@ -63,9 +51,6 @@ export class UI extends LitElement {
   historyEntries: HistoryEntry[] = [];
 
   @state()
-  selectedNode: ExtendedNodeInformation | null = null;
-
-  @state()
   messages: HarnessRunResult[] = [];
 
   @state()
@@ -73,11 +58,9 @@ export class UI extends LitElement {
     showNarrowTimeline: false,
   };
 
-  #mainSplitter: Ref<Splitter> = createRef();
-  #diagram: Ref<DiagramElement> = createRef();
-  #nodeInfo: Map<string, ExtendedNodeInformation> = new Map();
-  #timelineRef: Ref<HTMLElement> = createRef();
-  #inputRef: Ref<HTMLElement> = createRef();
+  @state()
+  orientation: "portrait" | "landscape" = "landscape";
+
   #inputListRef: Ref<InputList> = createRef();
   #handlers: Map<string, inputCallback[]> = new Map();
   #memory = longTermMemory;
@@ -86,18 +69,11 @@ export class UI extends LitElement {
   #messageDurations: Map<HarnessRunResult, number> = new Map();
   #highlightHelper = new NodeHighlightHelper();
   #resizeObserver = new ResizeObserver(() => {
-    if (!this.#mainSplitter.value) {
-      return;
-    }
-
-    if (window.matchMedia("(orientation: portrait)").matches) {
-      if (this.#mainSplitter.value.orientation === ORIENTATION.HORIZONTAL) {
-        this.#mainSplitter.value.orientation = ORIENTATION.VERTICAL;
-      }
-    } else {
-      if (this.#mainSplitter.value.orientation === ORIENTATION.VERTICAL) {
-        this.#mainSplitter.value.orientation = ORIENTATION.HORIZONTAL;
-      }
+    const isPortrait = window.matchMedia("(orientation: portrait)").matches;
+    if (isPortrait && this.orientation === "landscape") {
+      this.orientation = "portrait";
+    } else if (!isPortrait && this.orientation === "portrait") {
+      this.orientation = "landscape";
     }
   });
 
@@ -150,12 +126,6 @@ export class UI extends LitElement {
     this.clearMessages();
 
     this.#messageDurations.clear();
-    this.#nodeInfo.clear();
-
-    if (!this.#diagram.value) {
-      return;
-    }
-    this.#diagram.value.reset();
   }
 
   async load(loadInfo: LoadArgs) {
@@ -256,134 +226,165 @@ export class UI extends LitElement {
       this.#messagePosition < this.messages.length - 1 ||
       (typeOfNewestMessage !== "input" && typeOfNewestMessage !== "secret");
 
-    const continueButton = html`<button
-      id="continue"
-      ?disabled=${disabled}
-      @click=${this.#notifyInputList}
-    >
-      Continue
-    </button>`;
-
-    const mainIsVertical = window.matchMedia("(orientation: portrait)").matches;
     const nodeId = this.#highlightHelper.currentNode(this.#messagePosition);
 
-    return html` <bb-splitter
-      orientation="vertical"
-      name="main"
-      split=${mainIsVertical ? "0.45" : "0.66"}
-      ${ref(this.#mainSplitter)}
+    /**
+     * Create all the elements we need.
+     */
+    const editor = html` <bb-editor
+      .editable=${this.url === null}
+      .loadInfo=${this.loadInfo}
+      .kits=${this.kits}
+      .highlightedNodeId=${nodeId}
+      .nodeCount=${this.loadInfo?.graphDescriptor?.nodes.length || 0}
+      .edgeCount=${this.loadInfo?.graphDescriptor?.edges.length || 0}
+    ></bb-editor>`;
+
+    const timeline = html`<header>
+        <h1>Events</h1>
+        <label for="narrow">Narrow</label>
+        <input
+          name="narrow"
+          id="narrow"
+          type="checkbox"
+          ?checked=${this.config.showNarrowTimeline}
+          @input=${() => this.#toggleConfigOption("showNarrowTimeline")}
+        />
+        <div id="value">
+          ${Math.min(this.messages.length, this.#messagePosition + 1)} /
+          <span id="max">&nbsp;${this.messages.length}</span>
+        </div>
+        <div id="run-status" class=${classMap({ [this.status]: true })}>
+          ${this.status}
+        </div>
+      </header>
+      <bb-timeline-controls
+        .messages=${this.messages}
+        .messagePosition=${this.#messagePosition}
+        .messageDurations=${this.#messageDurations}
+        .narrow=${this.config.showNarrowTimeline}
+        @breadboardmessagetraversal=${(evt: MessageTraversalEvent) => {
+          if (evt.index < 0 || evt.index > this.messages.length) {
+            return;
+          }
+
+          this.#messagePosition = evt.index;
+          this.requestUpdate();
+        }}
+      ></bb-timeline-controls>`;
+
+    const inputs = html`<header>
+        <h1>Inputs</h1>
+        <button
+          id="continue"
+          ?disabled=${disabled}
+          @click=${this.#notifyInputList}
+        >
+          Continue
+        </button>
+      </header>
+      <div id="inputs-list">
+        <bb-input-list
+          ${ref(this.#inputListRef)}
+          .messages=${this.messages}
+          .messagePosition=${this.#messagePosition}
+          @breadboardinputenter=${(event: InputEnterEvent) => {
+            // Notify any pending handlers that the input has arrived.
+            if (this.#messagePosition < this.messages.length - 1) {
+              // The user has attempted to provide input for a stale
+              // request.
+              // TODO: Enable resuming from this point.
+              this.dispatchEvent(
+                new ToastEvent(
+                  "Unable to submit: board evaluation has already passed this point",
+                  ToastType.ERROR
+                )
+              );
+              return;
+            }
+
+            const data = event.data;
+            const handlers = this.#handlers.get(event.id) || [];
+            if (handlers.length === 0) {
+              console.warn(
+                `Received event for input(id="${event.id}") but no handlers were found`
+              );
+            }
+            for (const handler of handlers) {
+              handler.call(null, data);
+            }
+          }}
+        ></bb-input-list>
+      </div>`;
+
+    const outputs = html` <h1>Outputs</h1>
+      <div id="outputs-list">
+        <bb-output-list
+          .messages=${this.messages}
+          .messagePosition=${this.#messagePosition}
+        ></bb-output-list>
+      </div>`;
+
+    const history = html` <div id="history-list">
+      <bb-history-tree
+        .messages=${this.messages}
+        .messagePosition=${this.#messagePosition}
+      ></bb-history-tree>
+    </div>`;
+
+    /**
+     * Create both layouts.
+     */
+    const landscapeLayout = html`<bb-splitter
+      direction="horizontal"
+      name="landscape-main"
+      split="[0.66, 0.34]"
     >
       <bb-splitter
-        orientation="vertical"
-        name="diagram-timeline"
-        split=${mainIsVertical ? "0.7" : "0.9"}
-        slot="a"
+        direction="vertical"
+        name="landscape-diagram-timeline"
+        split="[0.85, 0.15]"
+        slot="slot-0"
       >
-        <div id="diagram" slot="a">
-          <bb-editor
-            .editable=${this.url === null}
-            .loadInfo=${this.loadInfo}
-            .kits=${this.kits}
-            .highlightedNodeId=${nodeId}
-            .nodeCount=${this.loadInfo?.graphDescriptor?.nodes.length || 0}
-            .edgeCount=${this.loadInfo?.graphDescriptor?.edges.length || 0}
-            ${ref(this.#diagram)}
-          ></bb-editor>
-        </div>
-        <section id="timeline" ${ref(this.#timelineRef)} slot="b">
-          <header>
-            <h1>Events</h1>
-            <label for="narrow">Narrow</label>
-            <input
-              name="narrow"
-              id="narrow"
-              type="checkbox"
-              ?checked=${this.config.showNarrowTimeline}
-              @input=${() => this.#toggleConfigOption("showNarrowTimeline")}
-            />
-            <div id="value">
-              ${Math.min(this.messages.length, this.#messagePosition + 1)} /
-              <span id="max">&nbsp;${this.messages.length}</span>
-            </div>
-            <div id="run-status" class=${classMap({ [this.status]: true })}>
-              ${this.status}
-            </div>
-          </header>
-          <bb-timeline-controls
-            .messages=${this.messages}
-            .messagePosition=${this.#messagePosition}
-            .messageDurations=${this.#messageDurations}
-            .narrow=${this.config.showNarrowTimeline}
-            @breadboardmessagetraversal=${(evt: MessageTraversalEvent) => {
-              if (evt.index < 0 || evt.index > this.messages.length) {
-                return;
-              }
-
-              this.#messagePosition = evt.index;
-              this.requestUpdate();
-            }}
-          ></bb-timeline-controls>
-        </section>
+        <section id="diagram" slot="slot-0">${editor}</section>
+        <section id="timeline" slot="slot-1">${timeline}</section>
       </bb-splitter>
 
-      <bb-splitter orientation="vertical" name="io-history" slot="b">
-        <bb-splitter orientation="horizontal" name="io" slot="a">
-          <section id="inputs" ${ref(this.#inputRef)} slot="a">
-            <header>
-              <h1>Inputs</h1>
-              ${continueButton}
-            </header>
-            <div id="inputs-list">
-              <bb-input-list
-                ${ref(this.#inputListRef)}
-                .messages=${this.messages}
-                .messagePosition=${this.#messagePosition}
-                @breadboardinputenter=${(event: InputEnterEvent) => {
-                  // Notify any pending handlers that the input has arrived.
-                  if (this.#messagePosition < this.messages.length - 1) {
-                    // The user has attempted to provide input for a stale
-                    // request.
-                    // TODO: Enable resuming from this point.
-                    this.dispatchEvent(
-                      new ToastEvent(
-                        "Unable to submit: board evaluation has already passed this point",
-                        ToastType.ERROR
-                      )
-                    );
-                    return;
-                  }
-
-                  const data = event.data;
-                  const handlers = this.#handlers.get(event.id) || [];
-                  if (handlers.length === 0) {
-                    console.warn(
-                      `Received event for input(id="${event.id}") but no handlers were found`
-                    );
-                  }
-                  for (const handler of handlers) {
-                    handler.call(null, data);
-                  }
-                }}
-              ></bb-input-list>
-            </div>
-          </section>
-          <section id="outputs" slot="b">
-            <h1>Outputs</h1>
-            <div id="outputs-list">
-              <bb-output-list
-                .messages=${this.messages}
-                .messagePosition=${this.#messagePosition}
-              ></bb-output-list>
-            </div>
-          </section>
-        </bb-splitter>
-        <div id="history" slot="b">
-          <bb-history-tree
-            .messages=${this.messages}
-            .messagePosition=${this.#messagePosition}
-          ></bb-history-tree>
-        </div>
+      <bb-splitter
+        split="[0.33, 0.33, 0.34]"
+        direction="vertical"
+        name="landscape-io-history"
+        slot="slot-1"
+      >
+        <section id="inputs" slot="slot-0">${inputs}</section>
+        <section id="outputs" slot="slot-1">${outputs}</section>
+        <section id="history" slot="slot-2">${history}</section>
       </bb-splitter>
     </bb-splitter>`;
+
+    const portraitLayout = html`<bb-splitter
+      direction="vertical"
+      name="portrait-main"
+      split="[0.4, 0.2, 0.2, 0.2]"
+    >
+        <section id="diagram" slot="slot-0">${editor}</section>
+        <section id="timeline" slot="slot-1">${timeline}</section>
+        <bb-splitter
+            split="[0.5, 0.5]"
+            direction="horizontal"
+            name="portrait-io"
+            slot="slot-2"
+          >
+          <section id="inputs" slot="slot-0">${inputs}</section>
+          <section id="outputs" slot="slot-1">${outputs}</section>
+        </bb-splitter>
+        <section id="history" slot="slot-3">${history}</section>
+      </bb-splitter>
+    </bb-splitter>`;
+
+    /**
+     * Choose based on the window orientation.
+     */
+    return this.orientation === "portrait" ? portraitLayout : landscapeLayout;
   }
 }

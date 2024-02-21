@@ -280,10 +280,6 @@ export class Editor extends LitElement {
     }
   `;
 
-  reset() {
-    // To be implemented.
-  }
-
   async #processGraph(descriptor: GraphDescriptor) {
     this.#graphVersion++;
 
