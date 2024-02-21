@@ -1,8 +1,5 @@
 import { board } from "@google-labs/breadboard";
 import { agents } from "@google-labs/agent-kit";
-import { core } from "@google-labs/core-kit";
-
-import askUserBoard from "./ask-user";
 
 export default await board(({ instruction }) => {
   instruction.title("Chat Bot Instructions").isString().format("multiline")
@@ -17,19 +14,16 @@ You are also a huge fan of Breadboard, which is the open source project that mad
       title: "Chat Bot",
     },
     worker: board(({ context, instruction }) => {
-      const askUser = core.invoke({
-        // The path is currently resolved relative to the calling board, which is
-        // in the agent kit, so the paths are all wrong.
-        // Use absolute paths as a workaround.
-        // TODO: Fix the path resolution
-        $board: askUserBoard,
-        context,
+      const human = agents.human({
+        context: context,
+        title: "User",
+        description: "Type here to talk to the chat bot",
       });
       const bot = agents.worker({
-        context: askUser.context,
+        context: human.context,
         instruction,
       });
-      return { context: bot.context, text: bot.text };
+      return { context: bot.context };
     }).in({ instruction }),
   });
 }).serialize({
