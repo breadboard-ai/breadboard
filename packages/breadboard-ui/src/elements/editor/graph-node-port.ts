@@ -1,16 +1,28 @@
 import * as PIXI from "pixi.js";
 import { GraphNodePortType } from "./types.js";
 import { InteractionTracker } from "./interaction-tracker.js";
+import { PortStatus } from "@google-labs/breadboard";
 
 export class GraphNodePort extends PIXI.Graphics {
   #isDirty = true;
   #radius = 3;
-  #borderInactiveColor = 0xbbbbbb;
-  #borderActiveColor = 0x475d3f;
-  #activeColor = 0xaced8f;
-  #inactiveColor = 0xdddddd;
-  #active = false;
+  #status: PortStatus = PortStatus.Inteterminate;
+  #colors: { [K in PortStatus]: number } = {
+    [PortStatus.Connected]: 0xaced8f,
+    [PortStatus.Dangling]: 0xdf4646,
+    [PortStatus.Inteterminate]: 0xcccccc,
+    [PortStatus.Missing]: 0xdf4646,
+    [PortStatus.Ready]: 0xeeeeee,
+  };
+  #borderColors: { [K in PortStatus]: number } = {
+    [PortStatus.Connected]: 0x475d3f,
+    [PortStatus.Dangling]: 0x990808,
+    [PortStatus.Inteterminate]: 0xbbbbbb,
+    [PortStatus.Missing]: 0x990808,
+    [PortStatus.Ready]: 0xaaaaaa,
+  };
   #editable = false;
+  #overrideStatus: PortStatus | null = null;
 
   constructor(public type: GraphNodePortType) {
     super();
@@ -25,13 +37,11 @@ export class GraphNodePort extends PIXI.Graphics {
       InteractionTracker.instance().activeGraphNodePort = this;
     });
 
-    let defaultActive: typeof this.active;
     this.on("pointerover", () => {
       if (!this.editable) {
         return;
       }
 
-      defaultActive = this.active;
       InteractionTracker.instance().hoveredGraphNodePort = this;
     });
 
@@ -41,8 +51,23 @@ export class GraphNodePort extends PIXI.Graphics {
       }
 
       InteractionTracker.instance().hoveredGraphNodePort = null;
-      this.active = defaultActive;
     });
+  }
+
+  set connectedColor(color: number) {
+    this.#colors.connected = color;
+  }
+
+  get connectedColor() {
+    return this.#colors.connected;
+  }
+
+  set connectedBorderColor(color: number) {
+    this.#borderColors.connected = color;
+  }
+
+  get connectedBorderColor() {
+    return this.#borderColors.connected;
   }
 
   set editable(editable: boolean) {
@@ -62,13 +87,22 @@ export class GraphNodePort extends PIXI.Graphics {
     return this.#radius;
   }
 
-  set active(active: boolean) {
-    this.#active = active;
+  set overrideStatus(overrideStatus: PortStatus | null) {
+    this.#overrideStatus = overrideStatus;
     this.#isDirty = true;
   }
 
-  get active() {
-    return this.#active;
+  get overrideStatus() {
+    return this.#overrideStatus;
+  }
+
+  set status(status: PortStatus) {
+    this.#status = status;
+    this.#isDirty = true;
+  }
+
+  get status() {
+    return this.#status;
   }
 
   render(renderer: PIXI.Renderer): void {
@@ -88,11 +122,13 @@ export class GraphNodePort extends PIXI.Graphics {
       this.#radius * 4
     );
 
+    const status = this.#overrideStatus ?? this.#status;
+
     this.lineStyle({
-      color: this.#active ? this.#borderActiveColor : this.#borderInactiveColor,
+      color: this.#borderColors[status],
       width: 1,
     });
-    this.beginFill(this.#active ? this.#activeColor : this.#inactiveColor);
+    this.beginFill(this.#colors[status]);
     this.drawCircle(0, 0, this.#radius);
     this.endFill();
   }

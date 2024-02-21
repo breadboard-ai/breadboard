@@ -34,7 +34,7 @@ export class Graph extends PIXI.Container {
   #highlightedNodeId: string | null = null;
   #highlightedNode = new PIXI.Graphics();
   #highlightedNodeColor = 0xff04a4;
-  #highlightPadding = 10;
+  #highlightPadding = 8;
   #editable = false;
 
   layoutRect: DOMRectReadOnly | null = null;
@@ -251,7 +251,7 @@ export class Graph extends PIXI.Container {
       this.#highlightedNode.lineStyle({
         width: 5,
         color: this.#highlightedNodeColor,
-        alpha: 0.5,
+        alpha: 0.4,
       });
       this.#highlightedNode.drawRoundedRect(
         graphNode.x - this.#highlightPadding,
