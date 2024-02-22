@@ -52,20 +52,14 @@
                 "in": "context"
               },
               {
-                "from": "worker-4",
-                "to": "output-2",
-                "out": "text",
-                "in": "text"
-              },
-              {
-                "from": "invoke-3",
+                "from": "human-3",
                 "to": "worker-4",
                 "out": "context",
                 "in": "context"
               },
               {
                 "from": "input-1",
-                "to": "invoke-3",
+                "to": "human-3",
                 "out": "context",
                 "in": "context"
               },
@@ -87,11 +81,6 @@
                       "context": {
                         "type": "string",
                         "title": "context"
-                      },
-                      "text": {
-                        "title": "Output",
-                        "type": "string",
-                        "description": "Agent's output"
                       }
                     }
                   }
@@ -103,295 +92,11 @@
                 "configuration": {}
               },
               {
-                "id": "invoke-3",
-                "type": "invoke",
+                "id": "human-3",
+                "type": "human",
                 "configuration": {
-                  "$board": {
-                    "title": "Ask User",
-                    "description": "A building block for the nascent agent framework",
-                    "version": "0.0.1",
-                    "edges": [
-                      {
-                        "from": "appendContext",
-                        "to": "output-2",
-                        "out": "context",
-                        "in": "context"
-                      },
-                      {
-                        "from": "input",
-                        "to": "appendContext",
-                        "out": "text",
-                        "in": "text"
-                      },
-                      {
-                        "from": "input",
-                        "to": "output-2",
-                        "out": "text",
-                        "in": "text"
-                      },
-                      {
-                        "from": "createSchema",
-                        "to": "input",
-                        "out": "schema",
-                        "in": "schema"
-                      },
-                      {
-                        "from": "createSchema",
-                        "to": "appendContext",
-                        "out": "context",
-                        "in": "context"
-                      },
-                      {
-                        "from": "input-1",
-                        "to": "maybeOutputRouter",
-                        "out": "context",
-                        "in": "context"
-                      },
-                      {
-                        "from": "input-1",
-                        "to": "createSchema",
-                        "out": "title",
-                        "in": "title"
-                      },
-                      {
-                        "from": "input-1",
-                        "to": "createSchema",
-                        "out": "description",
-                        "in": "description"
-                      },
-                      {
-                        "from": "maybeOutputRouter",
-                        "to": "createSchema",
-                        "out": "context",
-                        "in": "context"
-                      },
-                      {
-                        "from": "maybeOutputRouter",
-                        "to": "output",
-                        "out": "output",
-                        "in": "output"
-                      }
-                    ],
-                    "nodes": [
-                      {
-                        "id": "output-2",
-                        "type": "output",
-                        "configuration": {
-                          "schema": {
-                            "type": "object",
-                            "properties": {
-                              "context": {
-                                "type": "array",
-                                "title": "Context"
-                              },
-                              "text": {
-                                "title": "Text",
-                                "type": "string"
-                              }
-                            }
-                          }
-                        }
-                      },
-                      {
-                        "id": "appendContext",
-                        "type": "invoke",
-                        "configuration": {
-                          "$board": "#appendContext"
-                        }
-                      },
-                      {
-                        "id": "input",
-                        "type": "input",
-                        "configuration": {
-                          "schema": {
-                            "type": "object",
-                            "properties": {
-                              "text": {
-                                "title": "Text",
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "text"
-                            ]
-                          }
-                        }
-                      },
-                      {
-                        "id": "createSchema",
-                        "type": "invoke",
-                        "configuration": {
-                          "$board": "#createSchema"
-                        }
-                      },
-                      {
-                        "id": "input-1",
-                        "type": "input",
-                        "configuration": {
-                          "schema": {
-                            "type": "object",
-                            "properties": {
-                              "context": {
-                                "title": "Context",
-                                "description": "Incoming conversation context",
-                                "type": "object",
-                                "examples": [
-                                  "[{\"role\":\"model\",\"parts\":[{\"text\":\"Hello, user!\"}]}]"
-                                ],
-                                "default": "[]"
-                              },
-                              "title": {
-                                "title": "Title",
-                                "description": "The title to ask",
-                                "default": "User",
-                                "type": "string"
-                              },
-                              "description": {
-                                "title": "Description",
-                                "description": "The description of what to ask",
-                                "default": "User's question or request",
-                                "type": "string"
-                              }
-                            },
-                            "required": []
-                          }
-                        }
-                      },
-                      {
-                        "id": "maybeOutputRouter",
-                        "type": "invoke",
-                        "configuration": {
-                          "$board": "#maybeOutputRouter"
-                        }
-                      },
-                      {
-                        "id": "output",
-                        "type": "output",
-                        "configuration": {
-                          "schema": {
-                            "type": "object",
-                            "behavior": [
-                              "bubble"
-                            ],
-                            "properties": {
-                              "output": {
-                                "type": "string",
-                                "title": "Output",
-                                "description": "The output to display"
-                              }
-                            }
-                          }
-                        }
-                      }
-                    ],
-                    "graphs": {
-                      "appendContext": {
-                        "edges": [
-                          {
-                            "from": "appendContext-input",
-                            "to": "appendContext-run",
-                            "out": "*"
-                          },
-                          {
-                            "from": "appendContext-run",
-                            "to": "appendContext-output",
-                            "out": "*"
-                          }
-                        ],
-                        "nodes": [
-                          {
-                            "id": "appendContext-input",
-                            "type": "input",
-                            "configuration": {}
-                          },
-                          {
-                            "id": "appendContext-run",
-                            "type": "runJavascript",
-                            "configuration": {
-                              "code": "function appendContext({context,text}) {return{context:[...context||[],{role:\"user\",parts:[{text}]}]}}",
-                              "name": "appendContext",
-                              "raw": true
-                            }
-                          },
-                          {
-                            "id": "appendContext-output",
-                            "type": "output",
-                            "configuration": {}
-                          }
-                        ]
-                      },
-                      "createSchema": {
-                        "edges": [
-                          {
-                            "from": "createSchema-input",
-                            "to": "createSchema-run",
-                            "out": "*"
-                          },
-                          {
-                            "from": "createSchema-run",
-                            "to": "createSchema-output",
-                            "out": "*"
-                          }
-                        ],
-                        "nodes": [
-                          {
-                            "id": "createSchema-input",
-                            "type": "input",
-                            "configuration": {}
-                          },
-                          {
-                            "id": "createSchema-run",
-                            "type": "runJavascript",
-                            "configuration": {
-                              "code": "function createSchema({title,description,context}) {const schema2={type:\"object\",properties:{text:{title,description,behavior:[\"transient\"]}}};return{schema:schema2,context}}",
-                              "name": "createSchema",
-                              "raw": true
-                            }
-                          },
-                          {
-                            "id": "createSchema-output",
-                            "type": "output",
-                            "configuration": {}
-                          }
-                        ]
-                      },
-                      "maybeOutputRouter": {
-                        "edges": [
-                          {
-                            "from": "maybeOutputRouter-input",
-                            "to": "maybeOutputRouter-run",
-                            "out": "*"
-                          },
-                          {
-                            "from": "maybeOutputRouter-run",
-                            "to": "maybeOutputRouter-output",
-                            "out": "*"
-                          }
-                        ],
-                        "nodes": [
-                          {
-                            "id": "maybeOutputRouter-input",
-                            "type": "input",
-                            "configuration": {}
-                          },
-                          {
-                            "id": "maybeOutputRouter-run",
-                            "type": "runJavascript",
-                            "configuration": {
-                              "code": "function maybeOutputRouter({context}) {if(Array.isArray(context)&&context.length>0){const lastItem=context[context.length-1];if(lastItem.role===\"model\"){const output=lastItem.parts.map(item=>item.text).join(\"/n\");return{output,context}}}return{context}}",
-                              "name": "maybeOutputRouter",
-                              "raw": true
-                            }
-                          },
-                          {
-                            "id": "maybeOutputRouter-output",
-                            "type": "output",
-                            "configuration": {}
-                          }
-                        ]
-                      }
-                    }
-                  }
+                  "title": "User",
+                  "description": "Type here to talk to the chat bot"
                 }
               },
               {
@@ -402,8 +107,13 @@
                     "type": "object",
                     "properties": {
                       "context": {
-                        "type": "string",
-                        "title": "context"
+                        "title": "Context",
+                        "description": "Incoming conversation context",
+                        "type": "object",
+                        "examples": [
+                          "[]"
+                        ],
+                        "default": "[]"
                       },
                       "instruction": {
                         "title": "Instruction",
