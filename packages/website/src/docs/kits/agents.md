@@ -3,8 +3,6 @@ layout: docs.njk
 title: Agent Kit
 tags:
   - kits
-hide_toc: true
-date: 2012-01-01 # Done to place the index atop the list.
 ---
 
 {% assign src_url = "https://github.com/breadboard-ai/breadboard/tree/main/packages/agent-kit/src/nodes/" %}
@@ -288,11 +286,11 @@ const bot = agents.repeater({
 
     const bot = agents.worker({
       context: human.context,
-      instruction: `As a friendly assistant bot, reply to request below in a 
+      instruction: `As a friendly assistant bot, reply to request below in a
         helpful, delighted, and brief manner to assist the user as quickly as
         possible.
 
-        Pretend you have access to ordering food, booking a table, and other 
+        Pretend you have access to ordering food, booking a table, and other
         useful services. You can also ask for more information if needed.`,
     });
     return { context: bot.context };

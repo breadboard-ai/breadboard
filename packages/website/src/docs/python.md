@@ -4,8 +4,6 @@ title: Breadboard Python
 tags:
   - general
   - wip
-hide_toc: true
-date: 2012-01-01 # Done to place the index atop the list.
 ---
 
 Breadboard-python is a library that allows developers to define Breadboards with Python.

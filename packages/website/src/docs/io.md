@@ -4,8 +4,6 @@ title: Inputs and Outputs
 tags:
   - general
   - wip
-hide_toc: true
-date: 2023-02-20 # Done to place the index atop the list.
 ---
 
 Every node has inputs and outputs. A node consumes its inputs and produces outputs.
