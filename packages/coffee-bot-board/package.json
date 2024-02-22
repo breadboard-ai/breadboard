@@ -148,6 +148,6 @@
     "@google-labs/node-nursery": "^0.0.5",
     "@google-labs/palm-kit": "^0.0.5",
     "@google-labs/template-kit": "^0.2.0",
-    "dotenv": "^16.3.1"
+    "dotenv": "^16.4.5"
   }
 }

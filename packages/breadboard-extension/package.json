@@ -194,7 +194,7 @@
     "@types/vscode": "^1.85.0",
     "@vscode/debugadapter": "^1.64.0",
     "@vscode/vsce": "^2.22.0",
-    "dotenv": "^16.3.2",
+    "dotenv": "^16.4.5",
     "esbuild": "^0.19.11",
     "mermaid": "^10.7.0",
     "rimraf": "^5.0.5",
