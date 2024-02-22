@@ -379,7 +379,7 @@ export class Editor extends LitElement {
     super.disconnectedCallback();
   }
 
-  protected willUpdate(
+  protected updated(
     changedProperties:
       | PropertyValueMap<{
           loadInfo: LoadArgs;
@@ -757,6 +757,7 @@ export class Editor extends LitElement {
 
     // Force a refresh.
     this.nodeCount = -1;
+    this.edgeCount = -1;
     this.dispatchEvent(new NodeUpdateEvent(id, configuration));
 
     // Close out the panel via removing the active node marker.
