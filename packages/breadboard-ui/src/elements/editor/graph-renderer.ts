@@ -18,6 +18,7 @@ import {
 import { InteractionTracker } from "./interaction-tracker.js";
 import { GraphNode } from "./graph-node.js";
 import {
+  GRAPH_DRAW,
   GRAPH_INITIAL_DRAW,
   GRAPH_NODE_MOVED,
   GraphNodePortType,
@@ -491,7 +492,9 @@ export class GraphRenderer extends LitElement {
         y: rendererBounds.height / 2,
       };
       this.#scaleContainerAroundPoint(delta, pivot);
+    });
 
+    graph.on(GRAPH_DRAW, () => {
       graph.layout();
     });
 
