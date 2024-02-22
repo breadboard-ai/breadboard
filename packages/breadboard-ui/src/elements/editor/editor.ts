@@ -300,6 +300,8 @@ export class Editor extends LitElement {
       }
     }
 
+    console.log(ports);
+
     // Check that the active node is available.
     if (
       this.nodeValueBeingEdited &&
@@ -379,22 +381,12 @@ export class Editor extends LitElement {
     super.disconnectedCallback();
   }
 
-  protected willUpdate(
-    changedProperties:
-      | PropertyValueMap<{
-          loadInfo: LoadArgs;
-          nodeCount: number;
-          edgeCount: number;
-        }>
-      | Map<PropertyKey, unknown>
-  ): void {
-    const shouldProcessGraph =
-      changedProperties.has("loadInfo") ||
-      changedProperties.has("nodeCount") ||
-      changedProperties.has("edgeCount");
-    if (shouldProcessGraph && this.loadInfo && this.loadInfo.graphDescriptor) {
-      this.#processGraph(this.loadInfo.graphDescriptor);
+  protected willUpdate(): void {
+    if (!this.loadInfo || !this.loadInfo.graphDescriptor) {
+      return;
     }
+
+    this.#processGraph(this.loadInfo.graphDescriptor);
   }
 
   #onGraphNodeDblClick(evt: Event) {
