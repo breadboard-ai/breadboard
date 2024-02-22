@@ -381,12 +381,22 @@ export class Editor extends LitElement {
     super.disconnectedCallback();
   }
 
-  protected willUpdate(): void {
-    if (!this.loadInfo || !this.loadInfo.graphDescriptor) {
-      return;
+  protected updated(
+    changedProperties:
+      | PropertyValueMap<{
+          loadInfo: LoadArgs;
+          nodeCount: number;
+          edgeCount: number;
+        }>
+      | Map<PropertyKey, unknown>
+  ): void {
+    const shouldProcessGraph =
+      changedProperties.has("loadInfo") ||
+      changedProperties.has("nodeCount") ||
+      changedProperties.has("edgeCount");
+    if (shouldProcessGraph && this.loadInfo && this.loadInfo.graphDescriptor) {
+      this.#processGraph(this.loadInfo.graphDescriptor);
     }
-
-    this.#processGraph(this.loadInfo.graphDescriptor);
   }
 
   #onGraphNodeDblClick(evt: Event) {
@@ -749,6 +759,7 @@ export class Editor extends LitElement {
 
     // Force a refresh.
     this.nodeCount = -1;
+    this.edgeCount = -1;
     this.dispatchEvent(new NodeUpdateEvent(id, configuration));
 
     // Close out the panel via removing the active node marker.
@@ -761,6 +772,7 @@ export class Editor extends LitElement {
   }
 
   render() {
+    console.log("Editor render");
     let activeNode: HTMLTemplateResult | symbol = nothing;
     if (this.nodeValueBeingEdited) {
       activeNode = html`${this.#createNodePropertiesPanel(
