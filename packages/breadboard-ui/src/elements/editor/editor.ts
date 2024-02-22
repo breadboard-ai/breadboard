@@ -586,6 +586,23 @@ export class Editor extends LitElement {
         </div>`;
       }
 
+      const schemaAdder = this.editable
+        ? html`<div>
+            <textarea style="height: 200px" name="schema">
+{
+  "type": "object",
+  "properties": {
+    "magicNum": {
+      "type": "number",
+      "title": "magicNum"
+    }
+  }
+}
+      </textarea
+            >
+          </div>`
+        : nothing;
+
       return html` <div id="properties">
         <div id="node-properties">
           <form @submit=${this.#onFormSubmit}>
@@ -628,6 +645,7 @@ export class Editor extends LitElement {
                 ${Object.keys(inputSchema.properties).length === 0
                   ? html`No configurable properties`
                   : nothing}
+                ${schemaAdder}
                 ${map(
                   Object.entries(inputSchema.properties),
                   ([name, schema]) => {
@@ -727,9 +745,18 @@ export class Editor extends LitElement {
         continue;
       }
 
+      if (name === "schema") {
+        configuration[name] = JSON.parse(value);
+        continue;
+      }
+
       configuration[name] = value;
     }
 
+    console.log("New configuration", configuration);
+
+    // Force a refresh.
+    this.nodeCount = -1;
     this.dispatchEvent(new NodeUpdateEvent(id, configuration));
 
     // Close out the panel via removing the active node marker.
