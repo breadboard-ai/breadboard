@@ -300,8 +300,6 @@ export class Editor extends LitElement {
       }
     }
 
-    console.log(ports);
-
     // Check that the active node is available.
     if (
       this.nodeValueBeingEdited &&
