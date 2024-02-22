@@ -99,7 +99,7 @@ In this simple workflow, the two workers now collaborate, albeit in a very primi
 
 ## Structured Worker (agents.structuredWorker)
 
-The Structured Worker node is offers a different kind of worker: this one knows how to adhere to some structure in its output.
+The Structured Worker node offers a different kind of worker: this one knows how to adhere to some structure in its output.
 
 Structured Workers are a little bit more effortful to construct, but they are a lot more powerful. In addition to `instruction`, a Structured Worker has a `schema` input port, which expects a valid [JSON schema](https://json-schema.org/).
 
@@ -174,3 +174,128 @@ Asking for structured outputs can dramatically elevate the quality of worker's o
 Workers are very happy to take JSON output, so we can simply pass this work as context to another worker, whether it's a structured worker or not.
 
 Because it is given a task to adhere to a strict schema, the Structured Worker validates its own output and, if the output is invalid, will automatically try again, up to five times. Typically, this is enough to overcome any validation-related challenges, but in the worst case, the Structured Worker will throw an error and give up, halting the workflow.
+
+## Repeater
+
+The Repeater node creates a repeating loop of workers, enabling us to create cycles within our workflows.
+
+The repeater takes in a work `context` and, with each iteration, appends the work to it. This way, the workers inside of the iteration can build on the work they've done before.
+
+In addition to the the `context` input and output, it expects the following inputs:
+
+- `worker` -- required, a worker to repeat. Typically, here we supply another board that does some useful repeatable chunk of work.
+
+- `max` -- optional, maximum number of repetitions to make. Set it to `-1` to go infinitely (this is also the default value).
+
+If the repeater is configured to exit (the `max` value isn't `-1`), it will return the full context of work accumulated through all iterations.
+
+Let's suppose we have a small sub-team of Structured Workers that does one iteration of the task of summarizing dense documents:
+
+```ts
+const summarizerSubteam = board(({ context }) => {
+  context.title("Text to summarize").isString().format("multiline");
+
+  const summarizer = agents.structuredWorker({
+    $metadata: { title: "Summarizer" },
+    context,
+    instruction:
+      "You are a genius legal expert. You specialize in carefully reading the dense paragraphs of patent application texts and summarizing them in a few simple sentences that most people can understand. Incorporate all improvements, if they are suggested",
+    schema: {
+      type: "object",
+      properties: {
+        summary: {
+          type: "string",
+          description: "the summary",
+        },
+      },
+    } satisfies Schema,
+  });
+
+  const critic = agents.structuredWorker({
+    $metadata: { title: "Reviewer" },
+    context: summarizer.context,
+    instruction:
+      "You are a reviewer of summaries produced from patent applications, helping to make the summaries become more accessible and clear. Compare the latest summary with the original text and identify three areas of improvement. What is missing? What could be better phrased? What could be removed? Is there any technical jargon that could be replaced with simpler terms?",
+    schema: {
+      type: "object",
+      properties: {
+        improvements: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              improvement: {
+                type: "string",
+                description: "a suggested improvement",
+              },
+              reasoning: {
+                type: "string",
+                description: "reasoning behind the improvement",
+              },
+            },
+          },
+        },
+      },
+    } satisfies Schema,
+  });
+  return { context: critic.context };
+});
+```
+
+Now, with the Repeater node, we can make them iterate 5 times on the task we give them:
+
+```ts
+const denseParagraphOfText = "... <text goes here> ... ";
+
+const iterate = agents.repeater({
+  $metadata: { title: "Iterative Improvement" },
+  context: denseParagraphOfText,
+  worker: summarizerSubteam,
+  max: 5,
+});
+```
+
+What will happen here is that once the first worker (the "Summarizer") is done, it will hand off the work to the second worker (the "Reviewer"), who will suggest improvements, and then, thanks to the Repeater, will hand the work back to the first worker, who will incorporate improvements, handing the improved summary to the second worker, and so on.
+
+As a result, the team will deliver an iteratively improved summary of the text.
+
+## Human (agents.human)
+
+The Human node is a way to insert a real person into our team of synthetic workers. Such a person may steer the work with comments, accept or reject work, collaborating with the synthetic workers.
+
+When running the graph, the node manifests as showing intermediate output and asking for input in response to this output.
+
+Just like any node in the Agents Kit, the Human node receives and produces `context`. In addition, it takes two optional inputs:
+
+- `title` -- to give the user input field a helpful title. If not provided, the input field have the title of "User".
+
+- `description` -- to give the input field an additional hint. If not provided, the hint will have the value of "User's question or request".
+
+When the Human node receives context, it will check to see if the last bit of work was produced by synthetic workers. If so, it will helpfully output that work for the user to see.
+
+Combining the Repeater, Human, and Worker node, we can build a very simple chatbot. This Repeater creates the conversation loop with Human and Worker in it:
+
+```ts
+const bot = agents.repeater({
+  $metadata: { title: "Chat Bot" },
+
+  worker: board(({ context, instruction }) => {
+    const human = agents.human({
+      context: context,
+      title: "User",
+      description: "Type here to talk to the chat bot",
+    });
+
+    const bot = agents.worker({
+      context: human.context,
+      instruction: `As a friendly assistant bot, reply to request below in a 
+        helpful, delighted, and brief manner to assist the user as quickly as
+        possible.
+
+        Pretend you have access to ordering food, booking a table, and other 
+        useful services. You can also ask for more information if needed.`,
+    });
+    return { context: bot.context };
+  }),
+});
+```
