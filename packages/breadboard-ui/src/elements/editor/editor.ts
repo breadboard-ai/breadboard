@@ -770,7 +770,6 @@ export class Editor extends LitElement {
   }
 
   render() {
-    console.log("Editor render");
     let activeNode: HTMLTemplateResult | symbol = nothing;
     if (this.nodeValueBeingEdited) {
       activeNode = html`${this.#createNodePropertiesPanel(
