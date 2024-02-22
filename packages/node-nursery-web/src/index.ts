@@ -11,6 +11,9 @@ import transformStream from "./nodes/transform-stream.js";
 import listToStream from "./nodes/list-to-stream.js";
 
 const NodeNurseryWeb = new KitBuilder({
+  title: "Node Nursery (Web)",
+  description:
+    "A kit that holds nodes that run in a Web-based environment, and are still WIP",
   url: "npm:@google-labs/node-nursery-web",
 }).build({
   credentials,

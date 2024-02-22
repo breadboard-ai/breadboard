@@ -28,10 +28,7 @@
               "type": "string",
               "title": "text"
             }
-          },
-          "required": [
-            "text"
-          ]
+          }
         }
       }
     },

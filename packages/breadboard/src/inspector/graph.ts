@@ -14,6 +14,7 @@ import {
   NodeIdentifier,
   NodeTypeIdentifier,
 } from "../types.js";
+import { collectKits } from "./kits.js";
 import { inspectableNode } from "./node.js";
 import {
   EdgeType,
@@ -25,6 +26,7 @@ import {
   InspectableEdge,
   InspectableGraph,
   InspectableGraphOptions,
+  InspectableKit,
   InspectableNode,
   NodeTypeDescriberOptions,
 } from "./types.js";
@@ -49,6 +51,7 @@ class Graph implements InspectableGraph {
   #typeMap: Map<NodeTypeIdentifier, InspectableNode[]> = new Map();
   #entries?: InspectableNode[];
   #edges?: InspectableEdge[];
+  #kits?: InspectableKit[];
   #options: InspectableGraphOptions;
 
   constructor(graph: GraphDescriptor, options?: InspectableGraphOptions) {
@@ -106,12 +109,17 @@ class Graph implements InspectableGraph {
     if (this.#url) {
       context.base = this.#url;
     }
-    return handler.describe(
-      options?.inputs || undefined,
-      asWired.inputSchema,
-      asWired.outputSchema,
-      context
-    );
+    try {
+      return handler.describe(
+        options?.inputs || undefined,
+        asWired.inputSchema,
+        asWired.outputSchema,
+        context
+      );
+    } catch (e) {
+      console.warn(`Error describing node type ${type}`, e);
+      return asWired;
+    }
   }
 
   nodeById(id: NodeIdentifier) {
@@ -138,6 +146,22 @@ class Graph implements InspectableGraph {
     return (this.#edges ??= this.#graph.edges.map((edge) =>
       this.#edgeToInspectableEdge(edge)
     ));
+  }
+
+  hasEdge(edge: Edge): boolean {
+    edge = fixUpStarEdge(edge);
+    return !!this.#graph.edges.find((e) => {
+      return (
+        e.from === edge.from &&
+        e.to === edge.to &&
+        e.out === edge.out &&
+        e.in === edge.in
+      );
+    });
+  }
+
+  kits(): InspectableKit[] {
+    return (this.#kits ??= collectKits(this.#options.kits || []));
   }
 
   incomingForNode(id: NodeIdentifier): InspectableEdge[] {
@@ -192,3 +216,17 @@ class Graph implements InspectableGraph {
     };
   }
 }
+
+/**
+ * This helper is necessary because both "*" and "" are valid representations
+ * of a wildcard edge tail. This function ensures that the edge is always
+ * consistent.
+ * @param edge -- the edge to fix up
+ * @returns
+ */
+export const fixUpStarEdge = (edge: Edge): Edge => {
+  if (edge.out === "*") {
+    return { ...edge, in: "" };
+  }
+  return edge;
+};

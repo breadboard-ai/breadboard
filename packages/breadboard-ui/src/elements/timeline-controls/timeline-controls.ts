@@ -490,7 +490,7 @@ export class TimelineControls extends LitElement {
       style=${styleMap({ ["--count"]: column })}
     >
       ${guard([this.messages.length], timeline)}
-      ${guard([this.messagePosition], marker)};
+      ${guard([this.messagePosition], marker)}
     </div>`;
   }
 }

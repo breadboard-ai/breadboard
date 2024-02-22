@@ -76,8 +76,6 @@ export class GraphToKitAdapter {
 
         const base = board.url ? new URL(board.url) : new URL(import.meta.url);
 
-        console.log("KIT HANDLER", context);
-
         return callHandler(handler, inputs, {
           ...context,
           outerGraph: board,

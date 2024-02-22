@@ -39,7 +39,13 @@ export const collectPorts = (
     }
     return type === EdgeType.In ? edge.in : edge.out;
   });
+  const fixed = schema.additionalProperties === false;
   const schemaPortNames = Object.keys(schema.properties || {});
+  if (type == EdgeType.Out) {
+    // Even if not specified in the schema, all non-built-in nodes always have
+    // an optional `$error` port.
+    schemaPortNames.push("$error");
+  }
   const schemaContainsStar = schemaPortNames.includes("*");
   const requiredPortNames = schema.required || [];
   const configuredPortNames = Object.keys(configuration || {});
@@ -62,11 +68,39 @@ export const collectPorts = (
       name: port,
       configured,
       star,
+      get edges() {
+        if (!wired) return [];
+        return edges.filter((edge) => {
+          if (edge.out === "*" && star) return true;
+          return type === EdgeType.In ? edge.in === port : edge.out === port;
+        });
+      },
       status: computePortStatus(
         wired || configured,
-        expected || schemaContainsStar,
+        !fixed || expected || schemaContainsStar,
         required,
         wiredContainsStar
+      ),
+      schema: schema.properties?.[port],
+    };
+  });
+};
+
+export const collectPortsForType = (schema: Schema) => {
+  const portNames = Object.keys(schema.properties || {});
+  const requiredPortNames = schema.required || [];
+  portNames.sort();
+  return portNames.map((port) => {
+    return {
+      name: port,
+      configured: false,
+      star: false,
+      edges: [],
+      status: computePortStatus(
+        false,
+        true,
+        requiredPortNames.includes(port),
+        false
       ),
       schema: schema.properties?.[port],
     };

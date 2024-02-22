@@ -216,6 +216,8 @@ export class BoardItem extends LitElement {
    * @returns {(string | TemplateResult<1>)[]}
    */
   #replaceLinks(description: string): (string | TemplateResult<1>)[] {
+    // Safely extract markdown links and make them real HTML links. Any other
+    // HTML will remain safely escaped.
     const parts = [];
     let lastIndex = 0;
     for (const match of description.matchAll(/\[(.*?)\]\((.*?)\)/gim)) {

@@ -65,3 +65,10 @@ export { asyncGen } from "./utils/async-gen.js";
  */
 export type * from "./inspector/types.js";
 export { inspectableGraph as inspect } from "./inspector/index.js";
+export { PortStatus } from "./inspector/types.js";
+
+/**
+ * The Editor API.
+ */
+export type * from "./editor/types.js";
+export { editGraph as edit } from "./editor/graph.js";

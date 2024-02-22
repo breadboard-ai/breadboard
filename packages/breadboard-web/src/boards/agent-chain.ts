@@ -1,7 +1,6 @@
+import { agents } from "@google-labs/agent-kit";
 import { Schema, code, board } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
-
-const JSON_AGENT = "json-agent.json";
 
 type ChainDescription = {
   prompt: string;
@@ -54,11 +53,10 @@ const argMaker = code(({ item }) => {
 const agentRunner = board(({ accumulator, item }) => {
   const { text, schema } = argMaker({ $id: "makeAgentArgs", item });
 
-  const agent = core.invoke({
+  const agent = agents.structuredWorker({
     $id: "agent",
-    path: JSON_AGENT,
     context: accumulator,
-    text,
+    instruction: text,
     schema,
   });
   return { accumulator: agent.context };
@@ -73,7 +71,11 @@ export default await board(({ context, spec }) => {
     .examples(sampleChainSpec);
 
   const reducer = core.reduce({
-    $id: "reducer",
+    $metadata: {
+      title: "Reducer",
+      description:
+        "Takes a chain spec and runs through it sequentially, accumulating outputs.",
+    },
     list: spec.isArray(),
     accumulator: [],
     board: agentRunner,

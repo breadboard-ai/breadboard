@@ -1,5 +1,12 @@
 # @google-labs/breadboard-schema
 
+## 1.3.0
+
+### Minor Changes
+
+- ee00249: Introduce `NodeMetadata`.
+- 5a65297: Add TypeScript types for Breadboard graphs in schema package
+
 ## 1.2.0
 
 ### Minor Changes

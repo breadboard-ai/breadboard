@@ -30,7 +30,12 @@ import { runRemote } from "./remote.js";
 import { callHandler, handlersFromKits } from "./handler.js";
 import { toMermaid } from "./mermaid.js";
 import { SchemaBuilder } from "./schema.js";
-import { RequestedInputsManager, bubbleUpInputsIfNeeded } from "./bubble.js";
+import {
+  RequestedInputsManager,
+  bubbleUpInputsIfNeeded,
+  createOutputProvider,
+  bubbleUpOutputsIfNeeded,
+} from "./bubble.js";
 import { asyncGen } from "./utils/async-gen.js";
 import { StackManager } from "./stack.js";
 import { timestamp } from "./timestamp.js";
@@ -186,7 +191,9 @@ export class BoardRunner implements BreadboardRunner {
           await bubbleUpInputsIfNeeded(this, context, descriptor, result);
           outputsPromise = result.outputsPromise;
         } else if (descriptor.type === "output") {
-          await next(new OutputStageResult(result, invocationId));
+          if (!(await bubbleUpOutputsIfNeeded(inputs, descriptor, context))) {
+            await next(new OutputStageResult(result, invocationId));
+          }
           outputsPromise = result.outputsPromise;
         } else {
           const handler = handlers[descriptor.type];
@@ -202,6 +209,7 @@ export class BoardRunner implements BreadboardRunner {
             slots,
             kits: [...(context.kits || []), ...this.kits],
             requestInput: requestedInputs.createHandler(next, result),
+            provideOutput: createOutputProvider(next, result, context),
             invocationPath: path(),
             state: await stack.state(),
           };

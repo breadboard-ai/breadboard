@@ -24,7 +24,12 @@ import {
   OptionalIdConfiguration,
   ScopeInterface,
 } from "../runner/types.js";
-import { GraphDescriptor, NodeDescriptor, Schema, InputValues as OriginalInputValues } from "../../types.js";
+import {
+  GraphDescriptor,
+  NodeDescriptor,
+  Schema,
+  InputValues as OriginalInputValues,
+} from "../../types.js";
 
 import { BaseNode } from "../runner/node.js";
 import { BuilderScope } from "./scope.js";
@@ -82,8 +87,14 @@ export class BuilderNode<
     } else if (isValue(config)) {
       this.addInputsFromNode(...config.asNodeInput());
     } else {
-      if ((config as OptionalIdConfiguration).$id !== undefined)
+      if ((config as OptionalIdConfiguration).$id !== undefined) {
         delete (config as OptionalIdConfiguration)["$id"];
+      }
+      const metadata = (config as OptionalIdConfiguration).$metadata;
+      if (metadata !== undefined) {
+        this.metadata = metadata;
+        delete (config as OptionalIdConfiguration)["$metadata"];
+      }
       this.addInputsAsValues(config as InputsMaybeAsValues<I>);
     }
 
@@ -366,7 +377,6 @@ export class BuilderNode<
           id: `${this.id}-run`,
           type: "runJavascript",
           configuration: {
-            ...(this.configuration as OriginalInputValues),
             code,
             name,
             raw: true,
@@ -385,7 +395,10 @@ export class BuilderNode<
     const node = {
       id: this.id,
       type: "invoke",
-      configuration: { path: "#" + this.id },
+      configuration: {
+        ...(this.configuration as OriginalInputValues),
+        $board: "#" + this.id,
+      },
     };
 
     return [node, invokeGraph];

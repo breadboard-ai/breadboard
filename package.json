@@ -1,15 +1,15 @@
 {
+  "name": "breadboard-ai",
   "private": true,
   "version": "0.0.1",
   "description": "Google Labs repo for rapid prototyping",
   "type": "module",
   "scripts": {
-    "sync": "npm i && npm run clean:build && npm run build",
+    "clean": "git clean -Xdf -e .vscode/settings.json",
+    "update": "rimraf package-lock.json && npm i",
     "test": "wireit",
     "build": "wireit",
     "lint": "wireit",
-    "deep-clean:build": "rm -rf node_modules packages/*/node_modules package-lock.json && npm run sync",
-    "clean:build": "rimraf -g packages/*/dist packages/*/build packages/*/.wireit",
     "ci": "npm ci",
     "check:format": "prettier --check --config .prettierrc packages/**/*.ts",
     "ci:local": "wireit",
@@ -132,7 +132,6 @@
     "npm-ci": "^0.0.2",
     "rimraf": "^5.0.1",
     "rollup": "^4.9.6",
-    "ts-node": "^10.9.2",
     "typescript": "^5.0.4",
     "wireit": "^0.14.4"
   },
@@ -147,5 +146,9 @@
   },
   "dependencies": {
     "litegraph.js": "^0.7.18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/breadboard-ai/breadboard.git"
   }
 }

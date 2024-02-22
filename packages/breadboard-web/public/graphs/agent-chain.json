@@ -4,14 +4,14 @@
   "version": "0.0.2",
   "edges": [
     {
-      "from": "reducer",
+      "from": "reduce-3",
       "to": "output-2",
       "out": "accumulator",
       "in": "context"
     },
     {
       "from": "input-1",
-      "to": "reducer",
+      "to": "reduce-3",
       "out": "spec",
       "in": "list"
     }
@@ -29,15 +29,12 @@
               "description": "The context that is the result of the agent chain run",
               "type": "string"
             }
-          },
-          "required": [
-            "context"
-          ]
+          }
         }
       }
     },
     {
-      "id": "reducer",
+      "id": "reduce-3",
       "type": "reduce",
       "configuration": {
         "accumulator": [],
@@ -68,7 +65,7 @@
                 "from": "makeAgentArgs",
                 "to": "agent",
                 "out": "text",
-                "in": "text"
+                "in": "instruction"
               },
               {
                 "from": "makeAgentArgs",
@@ -87,21 +84,16 @@
                     "properties": {
                       "accumulator": {
                         "type": "string",
-                        "title": "accumulator"
+                        "title": "context"
                       }
-                    },
-                    "required": [
-                      "accumulator"
-                    ]
+                    }
                   }
                 }
               },
               {
                 "id": "agent",
-                "type": "invoke",
-                "configuration": {
-                  "path": "json-agent.json"
-                }
+                "type": "structuredWorker",
+                "configuration": {}
               },
               {
                 "id": "input-1",
@@ -115,8 +107,12 @@
                         "title": "item"
                       },
                       "accumulator": {
-                        "type": "string",
-                        "title": "accumulator"
+                        "title": "Context",
+                        "type": "array",
+                        "default": "[]",
+                        "examples": [
+                          "the universe within us"
+                        ]
                       }
                     },
                     "required": [
@@ -130,7 +126,7 @@
                 "id": "makeAgentArgs",
                 "type": "invoke",
                 "configuration": {
-                  "path": "#makeAgentArgs"
+                  "$board": "#makeAgentArgs"
                 }
               }
             ],
@@ -173,6 +169,10 @@
             }
           }
         }
+      },
+      "metadata": {
+        "title": "Reducer",
+        "description": "Takes a chain spec and runs through it sequentially, accumulating outputs."
       }
     },
     {

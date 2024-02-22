@@ -1,0 +1,292 @@
+{
+  "title": "Human",
+  "description": "A human in the loop. Use this node to insert a real person (user input) into your team of synthetic workers.",
+  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.3.0/packages/schema/breadboard.schema.json",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "appendContext",
+      "to": "output-2",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "input",
+      "to": "appendContext",
+      "out": "text",
+      "in": "text"
+    },
+    {
+      "from": "input",
+      "to": "output-2",
+      "out": "text",
+      "in": "text"
+    },
+    {
+      "from": "fn-4",
+      "to": "input",
+      "out": "schema",
+      "in": "schema"
+    },
+    {
+      "from": "fn-4",
+      "to": "appendContext",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "input-1",
+      "to": "fn-3",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "input-1",
+      "to": "fn-4",
+      "out": "title",
+      "in": "title"
+    },
+    {
+      "from": "input-1",
+      "to": "fn-4",
+      "out": "description",
+      "in": "description"
+    },
+    {
+      "from": "fn-3",
+      "to": "fn-4",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "fn-3",
+      "to": "output-5",
+      "out": "output",
+      "in": "output"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "type": "array",
+              "title": "Context"
+            },
+            "text": {
+              "title": "Text",
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "appendContext",
+      "type": "invoke",
+      "configuration": {
+        "$board": "#appendContext"
+      }
+    },
+    {
+      "id": "input",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "title": "Text",
+              "type": "string"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
+    },
+    {
+      "id": "fn-4",
+      "type": "invoke",
+      "configuration": {
+        "$board": "#fn-4"
+      }
+    },
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "title": "Context",
+              "description": "Incoming conversation context",
+              "type": "object",
+              "examples": [
+                "[]"
+              ],
+              "default": "[]"
+            },
+            "title": {
+              "title": "Title",
+              "description": "The title to ask",
+              "default": "User",
+              "type": "string"
+            },
+            "description": {
+              "title": "Description",
+              "description": "The description of what to ask",
+              "default": "User's question or request",
+              "type": "string"
+            }
+          },
+          "required": []
+        }
+      }
+    },
+    {
+      "id": "fn-3",
+      "type": "invoke",
+      "configuration": {
+        "$board": "#fn-3"
+      }
+    },
+    {
+      "id": "output-5",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "behavior": [
+            "bubble"
+          ],
+          "properties": {
+            "output": {
+              "type": "string",
+              "title": "Output",
+              "description": "The output to display"
+            }
+          }
+        }
+      },
+      "metadata": {
+        "title": "Output",
+        "description": "The output to display. This output will bubble up to the user."
+      }
+    }
+  ],
+  "kits": [],
+  "graphs": {
+    "appendContext": {
+      "edges": [
+        {
+          "from": "appendContext-input",
+          "to": "appendContext-run",
+          "out": "*"
+        },
+        {
+          "from": "appendContext-run",
+          "to": "appendContext-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "appendContext-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "appendContext-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function appendContext({ context, text }) {\n    return {\n      context: [...context || [], { role: \"user\", parts: [{ text }] }]\n    };\n  }",
+            "name": "appendContext",
+            "raw": true
+          }
+        },
+        {
+          "id": "appendContext-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    },
+    "fn-4": {
+      "edges": [
+        {
+          "from": "fn-4-input",
+          "to": "fn-4-run",
+          "out": "*"
+        },
+        {
+          "from": "fn-4-run",
+          "to": "fn-4-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "fn-4-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "fn-4-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function fn_4({ title, description, context }) {\n    const schema2 = {\n      type: \"object\",\n      properties: {\n        text: {\n          title,\n          description,\n          behavior: [\"transient\"]\n        }\n      }\n    };\n    return { schema: schema2, context };\n  }",
+            "name": "fn_4",
+            "raw": true
+          }
+        },
+        {
+          "id": "fn-4-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    },
+    "fn-3": {
+      "edges": [
+        {
+          "from": "fn-3-input",
+          "to": "fn-3-run",
+          "out": "*"
+        },
+        {
+          "from": "fn-3-run",
+          "to": "fn-3-output",
+          "out": "*"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "fn-3-input",
+          "type": "input",
+          "configuration": {}
+        },
+        {
+          "id": "fn-3-run",
+          "type": "runJavascript",
+          "configuration": {
+            "code": "function fn_3({ context }) {\n  if (Array.isArray(context) && context.length > 0) {\n    const lastItem = context[context.length - 1];\n    if (lastItem.role === \"model\") {\n      const output = lastItem.parts.map((item) => item.text).join(\"/n\");\n      return { output, context };\n    }\n  }\n  return { context };\n}",
+            "name": "fn_3",
+            "raw": true
+          }
+        },
+        {
+          "id": "fn-3-output",
+          "type": "output",
+          "configuration": {}
+        }
+      ]
+    }
+  }
+}

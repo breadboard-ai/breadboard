@@ -14,6 +14,8 @@ import { InputResolveRequest } from "@google-labs/breadboard/remote";
 import {
   Board,
   BoardRunner,
+  edit,
+  EditResult,
   GraphDescriptor,
   Kit,
 } from "@google-labs/breadboard";
@@ -68,7 +70,6 @@ export class Main extends LitElement {
   #delay = 0;
   #status = BreadboardUI.Types.STATUS.STOPPED;
   #statusObservers: Array<(value: BreadboardUI.Types.STATUS) => void> = [];
-  #visualizer: "mermaid" | "visualblocks" | "editor" = "mermaid";
   #kits: Kit[] = [];
 
   static styles = css`
@@ -228,7 +229,7 @@ export class Main extends LitElement {
     }
 
     #content {
-      height: calc(100vh - var(--bb-grid-size) * 15);
+      height: calc(100vh - var(--bb-grid-size) * 12);
       display: flex;
       flex-direction: column;
     }
@@ -293,15 +294,6 @@ export class Main extends LitElement {
       this.#onStartBoard(new BreadboardUI.Events.StartEvent(boardFromUrl));
     } else if (modeFromUrl === MODE.BUILD) {
       this.#createBlankBoard();
-    }
-
-    const visualizer = currentUrl.searchParams.get("visualizer");
-    if (
-      visualizer === "mermaid" ||
-      visualizer === "visualblocks" ||
-      visualizer === "editor"
-    ) {
-      this.#visualizer = visualizer;
     }
 
     if (modeFromUrl) {
@@ -400,6 +392,10 @@ export class Main extends LitElement {
         return;
       }
 
+      if (result.type === "skip") {
+        console.log("Skipping", result);
+      }
+
       const answer = await ui.handleStateChange(result, runDuration);
       await this.#waitIfPaused(answer);
 
@@ -452,16 +448,6 @@ export class Main extends LitElement {
     window.history.replaceState(null, "", pageUrl);
   }
 
-  #setActiveVisualizer(visualizer: string | null) {
-    const pageUrl = new URL(window.location.href);
-    if (visualizer === null) {
-      pageUrl.searchParams.delete("visualizer");
-    } else {
-      pageUrl.searchParams.set("visualizer", visualizer);
-    }
-    window.history.replaceState(null, "", pageUrl);
-  }
-
   #setActiveMode(mode: string | null) {
     const pageUrl = new URL(window.location.href);
     if (mode === null) {
@@ -498,13 +484,6 @@ export class Main extends LitElement {
     this.loadInfo = null;
     this.mode = MODE.LIST;
     this.#setActiveBreadboard(null);
-
-    // TODO: Don't switch off the editor here. It works this way for now so that
-    // we only use the editor for blank boards.
-    if (this.#visualizer === "editor") {
-      this.#visualizer = "mermaid";
-      this.#setActiveVisualizer(this.#visualizer);
-    }
 
     if (!this.#uiRef.value) {
       return;
@@ -578,8 +557,11 @@ export class Main extends LitElement {
     this.loadInfo = await getBoardInfo("/graphs/blank.json");
     this.loadInfo.title = "New board";
     this.mode = MODE.BUILD;
-    this.#visualizer = "editor";
-    this.#setActiveVisualizer(this.#visualizer);
+
+    if (this.loadInfo.url) {
+      const config = createRunConfig(this.loadInfo.url);
+      this.#kits = config.kits;
+    }
   }
 
   render() {
@@ -607,54 +589,146 @@ export class Main extends LitElement {
           .loadInfo=${this.loadInfo}
           .kits=${this.#kits}
           .status=${this.status}
-          .visualizer=${this.#visualizer}
           @breadboardedgechange=${(
             evt: BreadboardUI.Events.EdgeChangeEvent
           ) => {
-            if (!this.loadInfo || !this.loadInfo.graphDescriptor) {
+            if (!this.loadInfo) {
+              console.warn("Unable to create node; no active graph");
               return;
             }
 
-            if (evt.changeType === "add") {
-              this.loadInfo.graphDescriptor.edges.push({
-                from: evt.from,
-                to: evt.to,
-                out: evt.outPort,
-                in: evt.inPort,
-              });
-            } else {
-              const idx = this.loadInfo.graphDescriptor.edges.findIndex(
-                (edge) => {
-                  return (
-                    edge.from === evt.from &&
-                    edge.to === evt.to &&
-                    edge.in === evt.inPort &&
-                    edge.out === evt.outPort
-                  );
-                }
-              );
-
-              if (idx === -1) {
-                return;
-              }
-
-              this.loadInfo.graphDescriptor.edges.splice(idx, 1);
+            const loadInfo = this.loadInfo;
+            if (!loadInfo.graphDescriptor) {
+              console.warn("Unable to create node; no graph descriptor");
+              return;
             }
 
-            this.#uiRef.value?.requestUpdate();
-            return;
+            const editableGraph = edit(loadInfo.graphDescriptor, {
+              kits: this.#kits,
+            });
+
+            let editResult: Promise<EditResult>;
+            switch (evt.changeType) {
+              case "add": {
+                editResult = editableGraph.addEdge(evt.edge);
+                break;
+              }
+
+              case "remove": {
+                editResult = editableGraph.removeEdge(evt.edge);
+                break;
+              }
+            }
+
+            editResult.then((result) => {
+              if (!result.success) {
+                this.toast(result.error, BreadboardUI.Events.ToastType.ERROR);
+              }
+
+              loadInfo.graphDescriptor = editableGraph.raw();
+              this.#uiRef.value?.requestUpdate();
+            });
           }}
           @breadboardnodecreate=${(
             evt: BreadboardUI.Events.NodeCreateEvent
           ) => {
-            const { id, nodeType, configuration } = evt;
+            const { id, nodeType } = evt;
             const newNode = {
               id,
               type: nodeType,
-              configuration,
             };
-            this.loadInfo?.graphDescriptor?.nodes.push(newNode);
-            this.#uiRef.value?.requestUpdate();
+
+            if (!this.loadInfo) {
+              console.warn("Unable to create node; no active graph");
+              return;
+            }
+
+            const loadInfo = this.loadInfo;
+            if (!loadInfo.graphDescriptor) {
+              console.warn("Unable to create node; no graph descriptor");
+              return;
+            }
+
+            const editableGraph = edit(loadInfo.graphDescriptor, {
+              kits: this.#kits,
+            });
+            editableGraph.addNode(newNode).then((result) => {
+              if (!result.success) {
+                this.toast(
+                  `Unable to create node: ${result.error}`,
+                  BreadboardUI.Events.ToastType.ERROR
+                );
+              }
+
+              loadInfo.graphDescriptor = editableGraph.raw();
+              this.#uiRef.value?.requestUpdate();
+            });
+          }}
+          @breadboardnodeupdate=${(
+            evt: BreadboardUI.Events.NodeUpdateEvent
+          ) => {
+            if (!this.loadInfo) {
+              console.warn("Unable to create node; no active graph");
+              return;
+            }
+
+            const loadInfo = this.loadInfo;
+            if (!loadInfo.graphDescriptor) {
+              console.warn("Unable to create node; no graph descriptor");
+              return;
+            }
+
+            const editableGraph = edit(loadInfo.graphDescriptor, {
+              kits: this.#kits,
+            });
+
+            editableGraph
+              .changeConfiguration(evt.id, evt.configuration)
+              .then((result) => {
+                if (result.success) {
+                  this.toast(
+                    "Configuration updated",
+                    BreadboardUI.Events.ToastType.INFORMATION
+                  );
+                } else {
+                  this.toast(
+                    "Unable to update configuration",
+                    BreadboardUI.Events.ToastType.ERROR
+                  );
+                }
+
+                loadInfo.graphDescriptor = editableGraph.raw();
+                this.#uiRef.value?.requestUpdate();
+              });
+          }}
+          @breadboardnodedelete=${(
+            evt: BreadboardUI.Events.NodeDeleteEvent
+          ) => {
+            if (!this.loadInfo) {
+              console.warn("Unable to create node; no active graph");
+              return;
+            }
+
+            const loadInfo = this.loadInfo;
+            if (!loadInfo.graphDescriptor) {
+              console.warn("Unable to create node; no graph descriptor");
+              return;
+            }
+
+            const editableGraph = edit(loadInfo.graphDescriptor, {
+              kits: this.#kits,
+            });
+            editableGraph.removeNode(evt.id).then((result) => {
+              if (!result.success) {
+                this.toast(
+                  `Unable to remove node: ${result.error}`,
+                  BreadboardUI.Events.ToastType.ERROR
+                );
+              }
+
+              loadInfo.graphDescriptor = editableGraph.raw();
+              this.#uiRef.value?.requestUpdate();
+            });
           }}
           @breadboardmessagetraversal=${() => {
             if (this.status !== BreadboardUI.Types.STATUS.RUNNING) {
@@ -725,12 +799,15 @@ export class Main extends LitElement {
               this.loadInfo.graphDescriptor
             );
 
-            const config = createRunConfig(this.loadInfo.graphDescriptor.url);
-            config.remote = false;
-            config.proxy = [];
-            config.runner = runner;
+            const runConfig = createRunConfig(
+              this.loadInfo.graphDescriptor.url
+            );
+            runConfig.remote = false;
+            runConfig.proxy = [];
+            runConfig.runner = runner;
+            this.#kits = runConfig.kits;
 
-            this.#runBoard(run(config));
+            this.#runBoard(run(runConfig));
           }}
         >
           Run this board

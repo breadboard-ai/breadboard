@@ -5,9 +5,11 @@
  */
 
 import {
+  Edge,
   GraphDescriptor,
   InputValues,
   Kit,
+  KitDescriptor,
   NodeConfiguration,
   NodeDescriberResult,
   NodeDescriptor,
@@ -21,6 +23,12 @@ export type InspectableNode = {
    * The `NodeDescriptor` for the node.
    */
   descriptor: NodeDescriptor;
+  /**
+   * The title of the node. Use this to get a consistent name for the node.
+   * When the node has a title in the `NodeMetadata`, will be used.
+   * Otherwise, the id of the node will be used.
+   */
+  title(): string;
   /**
    * Returns the nodes that have an edge to this node.
    */
@@ -104,6 +112,14 @@ export type InspectableGraph = {
    * Returns all edges of the graph.
    */
   edges(): InspectableEdge[];
+  /**
+   * Returns true if the edge exists in the graph.
+   */
+  hasEdge(edge: Edge): boolean;
+  /**
+   * Returns all kits in the graph.
+   */
+  kits(): InspectableKit[];
   /**
    * Returns all nodes of the given type.
    * @param type type of the nodes to find
@@ -222,6 +238,10 @@ export type InspectablePort = {
    * Port schema as defined by the node's configuration.
    */
   schema: Schema | undefined;
+  /**
+   * Returns the edges connected to this port.
+   */
+  edges: InspectableEdge[];
 };
 
 /**
@@ -258,4 +278,29 @@ export type InspectableNodePorts = {
    * Returns the output ports of the node.
    */
   outputs: InspectablePortList;
+};
+
+/**
+ * Represents a Breadboard Kit associated with the board.
+ */
+export type InspectableKit = {
+  /**
+   * Returns the descriptor of the kit.
+   */
+  descriptor: KitDescriptor;
+  /**
+   * Returns the node types of the kit.
+   */
+  nodeTypes: InspectableNodeType[];
+};
+
+export type InspectableNodeType = {
+  /**
+   * Returns the type of the node.
+   */
+  type(): NodeTypeIdentifier;
+  /**
+   * Returns the ports of the node.
+   */
+  ports(): Promise<InspectableNodePorts>;
 };

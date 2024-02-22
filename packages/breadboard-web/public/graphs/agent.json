@@ -64,11 +64,7 @@
               "type": "string",
               "description": "Agent's output"
             }
-          },
-          "required": [
-            "context",
-            "text"
-          ]
+          }
         }
       }
     },

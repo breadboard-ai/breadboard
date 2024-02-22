@@ -135,6 +135,7 @@ async function saveAllBoards(): Promise<void> {
   for (const file of pyFiles) {
     const manifestEntry = await savePythonBoard(file);
     if (!manifestEntry) continue;
+    manifest.push(manifestEntry);
   }
   await writeFile(
     path.join(MANIFEST_PATH, "local-boards.json"),

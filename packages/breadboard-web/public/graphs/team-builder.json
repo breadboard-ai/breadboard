@@ -22,12 +22,6 @@
       "in": "list"
     },
     {
-      "from": "lambda-4",
-      "to": "createPrompts",
-      "out": "board",
-      "in": "board"
-    },
-    {
       "from": "jobDescriptions",
       "to": "workflow",
       "out": "context",
@@ -41,39 +35,9 @@
     },
     {
       "from": "input-1",
-      "to": "jobDescriptionsPrompt",
+      "to": "jobDescriptions",
       "out": "purpose",
-      "in": "purpose"
-    },
-    {
-      "from": "input-1",
-      "to": "jobDescriptions",
-      "out": "generator",
-      "in": "generator"
-    },
-    {
-      "from": "input-1",
-      "to": "workflow",
-      "out": "generator",
-      "in": "generator"
-    },
-    {
-      "from": "input-1",
-      "to": "lambda-4",
-      "out": "generator",
-      "in": "generator"
-    },
-    {
-      "from": "workflowPrompt",
-      "to": "workflow",
-      "out": "prompt",
-      "in": "text"
-    },
-    {
-      "from": "jobDescriptionsPrompt",
-      "to": "jobDescriptions",
-      "out": "prompt",
-      "in": "text"
+      "in": "context"
     }
   ],
   "nodes": [
@@ -92,24 +56,96 @@
               "type": "string",
               "title": "json"
             }
-          },
-          "required": [
-            "prompts",
-            "json"
-          ]
+          }
         }
       }
     },
     {
       "id": "createPrompts",
       "type": "map",
-      "configuration": {}
+      "configuration": {
+        "board": {
+          "kind": "board",
+          "board": {
+            "kits": [],
+            "edges": [
+              {
+                "from": "generatePrompt",
+                "to": "output-2",
+                "out": "json",
+                "in": "item"
+              },
+              {
+                "from": "input-1",
+                "to": "generatePrompt",
+                "out": "item",
+                "in": "context"
+              }
+            ],
+            "nodes": [
+              {
+                "id": "output-2",
+                "type": "output",
+                "configuration": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "item": {
+                        "type": "string",
+                        "title": "json"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "id": "generatePrompt",
+                "type": "structuredWorker",
+                "configuration": {
+                  "instruction": "You are an expert in creating perfect system prompts for LLM agents from job descriptions. Create a prompt for the the following job description",
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "prompt": {
+                        "type": "string",
+                        "description": "the prompt for the job description"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "id": "input-1",
+                "type": "input",
+                "configuration": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "item": {
+                        "title": "Context",
+                        "type": "array",
+                        "default": "[]",
+                        "examples": [
+                          "the universe within us"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "item"
+                    ]
+                  }
+                }
+              }
+            ],
+            "graphs": {}
+          }
+        }
+      }
     },
     {
       "id": "workflow",
-      "type": "invoke",
+      "type": "structuredWorker",
       "configuration": {
-        "path": "json-agent.json",
         "schema": {
           "type": "object",
           "properties": {
@@ -130,7 +166,8 @@
               }
             }
           }
-        }
+        },
+        "instruction": "Now, describe how these agents interact in the form of a workflow. The workflow is defined as a list of pairs of agents. Each pair represents the flow of work from one agent to another."
       }
     },
     {
@@ -141,109 +178,9 @@
       }
     },
     {
-      "id": "lambda-4",
-      "type": "lambda",
-      "configuration": {
-        "board": {
-          "kind": "board",
-          "board": {
-            "kits": [],
-            "edges": [
-              {
-                "from": "generatePrompt",
-                "to": "output-2",
-                "out": "text",
-                "in": "item"
-              },
-              {
-                "from": "input-1",
-                "to": "promptTemplate",
-                "out": "item",
-                "in": "item"
-              },
-              {
-                "from": "input-1",
-                "to": "generatePrompt",
-                "out": "generator",
-                "in": "path"
-              },
-              {
-                "from": "promptTemplate",
-                "to": "generatePrompt",
-                "out": "prompt",
-                "in": "text"
-              }
-            ],
-            "nodes": [
-              {
-                "id": "output-2",
-                "type": "output",
-                "configuration": {
-                  "schema": {
-                    "type": "object",
-                    "properties": {
-                      "item": {
-                        "type": "string",
-                        "title": "item"
-                      }
-                    },
-                    "required": [
-                      "item"
-                    ]
-                  }
-                }
-              },
-              {
-                "id": "generatePrompt",
-                "type": "invoke",
-                "configuration": {}
-              },
-              {
-                "id": "input-1",
-                "type": "input",
-                "configuration": {
-                  "schema": {
-                    "type": "object",
-                    "properties": {
-                      "item": {
-                        "title": "item",
-                        "description": "The value to substitute for the parameter \"item\"",
-                        "type": [
-                          "string",
-                          "object"
-                        ]
-                      },
-                      "generator": {
-                        "title": "path",
-                        "description": "The path to the board to invoke.",
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "item",
-                      "generator"
-                    ]
-                  }
-                }
-              },
-              {
-                "id": "promptTemplate",
-                "type": "promptTemplate",
-                "configuration": {
-                  "template": "You are an expert in creating perfect system prompts for LLM agents from job descriptions. Create a prompt for the the following job description: {{item}}\n\nReply in plain text that is ready to paste into the LLM prompt field.\n\nPROMPT:"
-                }
-              }
-            ],
-            "graphs": {}
-          }
-        }
-      }
-    },
-    {
       "id": "jobDescriptions",
-      "type": "invoke",
+      "type": "structuredWorker",
       "configuration": {
-        "path": "json-agent.json",
         "schema": {
           "type": "object",
           "properties": {
@@ -268,7 +205,7 @@
             }
           }
         },
-        "context": []
+        "instruction": "You are building a team of expert LLM-based agents a specific purpose.\n\nThese expert agents can only read text and produce text. The experts will work as a team, collaborating, creating, reviewing, critiquing, and iteratively improving the quality of the poems.\n\nPlease identify the necessary job descriptions of these experts."
       }
     },
     {
@@ -280,43 +217,18 @@
           "properties": {
             "purpose": {
               "title": "Purpose",
-              "description": "The value to substitute for the parameter \"purpose\"",
-              "type": [
-                "string",
-                "object"
-              ],
+              "type": "array",
+              "default": "[]",
               "examples": [
                 "Create high quality rhyming poems that will be used as lyrics for jingles in TV commercials. Creating melodies and producing music is not part of job."
               ],
               "format": "multiline"
-            },
-            "generator": {
-              "title": "Generator",
-              "examples": [
-                "gemini-generator.json"
-              ],
-              "type": "string"
             }
           },
           "required": [
-            "purpose",
-            "generator"
+            "purpose"
           ]
         }
-      }
-    },
-    {
-      "id": "workflowPrompt",
-      "type": "promptTemplate",
-      "configuration": {
-        "template": "Now, describe how these agents interact in the form of a workflow. The workflow is defined as a list of pairs of agents. Each pair represents the flow of work from one agent to another."
-      }
-    },
-    {
-      "id": "jobDescriptionsPrompt",
-      "type": "promptTemplate",
-      "configuration": {
-        "template": "You are building a team of expert LLM-based agents for the following purpose:\n\n{{purpose}}\n\nThese expert agents can only read text and produce text. The experts will work as a team, collaborating, creating, reviewing, critiquing, and iteratively improving the quality of the poems.\n\nPlease identify the necessary job descriptions of these experts."
       }
     }
   ],
