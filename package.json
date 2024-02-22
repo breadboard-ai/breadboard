@@ -14,7 +14,9 @@
     "check:format": "prettier --check --config .prettierrc packages/**/*.ts",
     "ci:local": "wireit",
     "generate:docs": "wireit",
-    "syncpack:check": "syncpack list-mismatches --config syncpack.config.ts",
+    "syncpack:check": "wireit",
+    "syncpack:check:dev": "wireit",
+    "syncpack:check:prod": "wireit",
     "syncpack:fix": "syncpack fix-mismatches --config syncpack.config.ts",
     "check": "wireit"
   },
@@ -123,6 +125,33 @@
         "check:format",
         "lint",
         "test"
+      ]
+    },
+    "syncpack:check": {
+      "command": "syncpack list-mismatches --config syncpack.config.ts",
+      "files": [
+        "package.json",
+        "package-lock.json",
+        "packages/*/package.json",
+        "packages/*/package-lock.json"
+      ]
+    },
+    "syncpack:check:prod": {
+      "command": "syncpack list-mismatches --config syncpack.config.ts --types prod",
+      "files": [
+        "package.json",
+        "package-lock.json",
+        "packages/*/package.json",
+        "packages/*/package-lock.json"
+      ]
+    },
+    "syncpack:check:dev": {
+      "command": "syncpack list-mismatches --config syncpack.config.ts --types dev",
+      "files": [
+        "package.json",
+        "package-lock.json",
+        "packages/*/package.json",
+        "packages/*/package-lock.json"
       ]
     }
   },
