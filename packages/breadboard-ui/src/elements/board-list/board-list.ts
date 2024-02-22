@@ -16,7 +16,7 @@ import { StartEvent, ToastEvent, ToastType } from "../../events/events.js";
  * @export
  * @class BoardList
  * @extends {LitElement}
- * 
+ *
  * @property {Board[]} boards - the array of boards to display as BoardItem elements.
  * @property {string | null} bootWithUrl
  **/
@@ -100,7 +100,7 @@ export class BoardList extends LitElement {
  * @export
  * @class BoardItem
  * @extends {LitElement}
- * 
+ *
  * @property {string | null} boardTitle - The title of the board.
  * @property {string | null} boardUrl - The URL of the board.
  * @property {string | null} boardVersion - The version of the board.
@@ -205,14 +205,13 @@ export class BoardItem extends LitElement {
     }
   `;
 
-
   /**
    * Replace links with HTML anchor tags in a given description.
-   * 
+   *
    * Safely extract markdown links and make them real HTML links. Any other HTML will remain safely escaped.
-   * 
+   *
    * @param {string} description - Text description to parse
-   * 
+   *
    * @returns {(string | TemplateResult<1>)[]}
    */
   #replaceLinks(description: string): (string | TemplateResult<1>)[] {
