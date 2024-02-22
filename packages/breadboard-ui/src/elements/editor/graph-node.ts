@@ -40,6 +40,8 @@ export class GraphNode extends PIXI.Graphics {
   #outPortLocations: Map<string, PIXI.ObservablePoint<unknown>> = new Map();
   #editable = false;
   #selected = false;
+  #background = new PIXI.Graphics();
+  #selectedBackground = new PIXI.Graphics();
 
   public edgeColor: number;
   public portConnectedColor: number;
@@ -94,7 +96,7 @@ export class GraphNode extends PIXI.Graphics {
     this.portTextColor = 0x333333;
 
     this.eventMode = "static";
-    this.cursor = "pointer";
+    this.#background.cursor = "pointer";
 
     this.on("pointerdown", () => {
       InteractionTracker.instance().activeGraphNode = this;
@@ -133,7 +135,11 @@ export class GraphNode extends PIXI.Graphics {
 
   set selected(selected: boolean) {
     this.#selected = selected;
-    this.#isDirty = true;
+    if (selected) {
+      this.addChildAt(this.#selectedBackground, 0);
+    } else {
+      this.#selectedBackground.removeFromParent();
+    }
   }
 
   get type() {
@@ -357,51 +363,87 @@ export class GraphNode extends PIXI.Graphics {
 
   #draw() {
     this.forceUpdateDimensions();
-    this.removeChildren();
     this.clear();
 
+    this.removeChildren();
+    this.addChildAt(this.#background, 0);
+    if (this.selected) {
+      this.addChildAt(this.#selectedBackground, 0);
+    }
+
+    this.#drawSelectedBackground();
     this.#drawBackground();
     const portStartY = this.#drawTitle();
     this.#drawInPorts(portStartY);
     this.#drawOutPorts(portStartY);
   }
 
-  #drawBackground() {
-    const borderSize = this.#selected ? 2 : 1;
-    this.beginFill(this.#selected ? 0x999999 : 0xbbbbbb);
-    this.drawRoundedRect(
+  #drawSelectedBackground() {
+    const borderSize = 2;
+    this.#selectedBackground.beginFill(0x999999);
+    this.#selectedBackground.drawRoundedRect(
       -borderSize,
       -borderSize,
       this.#width + 2 * borderSize,
       this.#height + 2 * borderSize,
       this.#borderRadius + borderSize
     );
-    this.endFill();
-
-    this.beginFill(this.#backgroundColor);
-    this.drawRoundedRect(0, 0, this.#width, this.#height, this.#borderRadius);
-    this.endFill();
+    this.#selectedBackground.endFill();
   }
 
-  #drawTitle() {
-    let portStartY = 0;
+  #drawBackground() {
+    const borderSize = 1;
+    this.#background.beginFill(0xbbbbbb);
+    this.#background.drawRoundedRect(
+      -borderSize,
+      -borderSize,
+      this.#width + 2 * borderSize,
+      this.#height + 2 * borderSize,
+      this.#borderRadius + borderSize
+    );
+    this.#background.endFill();
+
+    this.#background.beginFill(this.#backgroundColor);
+    this.#background.drawRoundedRect(
+      0,
+      0,
+      this.#width,
+      this.#height,
+      this.#borderRadius
+    );
+    this.#background.endFill();
+
     if (this.#titleText) {
       const titleHeight =
         this.#padding + this.#titleText.height + this.#padding;
-      this.beginFill(this.#color);
-      this.drawRoundedRect(0, 0, this.#width, titleHeight, this.#borderRadius);
-      this.drawRect(
+      this.#background.beginFill(this.#color);
+      this.#background.drawRoundedRect(
+        0,
+        0,
+        this.#width,
+        titleHeight,
+        this.#borderRadius
+      );
+      this.#background.drawRect(
         0,
         titleHeight - 2 * this.#borderRadius,
         this.#width,
         2 * this.#borderRadius
       );
-      this.endFill();
+      this.#background.endFill();
+    }
+  }
 
+  #drawTitle() {
+    let portStartY = 0;
+    if (this.#titleText) {
       this.#titleText.eventMode = "none";
       this.#titleText.x = this.#padding;
       this.#titleText.y = this.#padding;
       this.addChild(this.#titleText);
+
+      const titleHeight =
+        this.#padding + this.#titleText.height + this.#padding;
 
       // Move the labels a padding's distance from the bottom of the title.
       portStartY += titleHeight + this.#padding;

@@ -52,6 +52,14 @@ export class InteractionTracker {
   }
 
   clear() {
+    if (this.hoveredGraphNodePort) {
+      this.hoveredGraphNodePort.overrideStatus = null;
+    }
+
+    if (this.activeGraphNodePort) {
+      this.activeGraphNodePort.overrideStatus = null;
+    }
+
     this.hoveredGraphNodePort = null;
     this.hoveredGraphNode = null;
     this.activeGraphNodePort = null;
