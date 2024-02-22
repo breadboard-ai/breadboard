@@ -17,8 +17,8 @@ const config: RcFile = {
       packages: ["**"],
       // dependencies: ["@google-labs/**"], // it would also be possible to ignore all dependencies from a specific scope, but that would not catch any local dependencies that are not scoped
       isIgnored: true,
-      dependencyTypes: ["local"]
-    }
+      dependencyTypes: ["local"],
+    },
   ],
 };
 
