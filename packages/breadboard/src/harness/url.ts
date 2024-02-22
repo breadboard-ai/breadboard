@@ -9,6 +9,6 @@ import { ServeConfig } from "./serve.js";
 
 export const baseURL = (config: RunConfig | ServeConfig) => {
   if (config.base) return config.base;
-  if ("window" in self) return new URL(self.location.href);
+  if ("window" in globalThis) return new URL(self.location.href);
   return new URL(import.meta.url);
 };
