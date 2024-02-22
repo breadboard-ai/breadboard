@@ -179,7 +179,7 @@
     "@google-labs/palm-kit": "^0.0.5",
     "@google-labs/pinecone-kit": "^0.1.2",
     "@google-labs/template-kit": "^0.2.0",
-    "dotenv": "^16.3.1"
+    "dotenv": "^16.4.5"
   },
   "engines": {
     "node": ">=19.0.0"
