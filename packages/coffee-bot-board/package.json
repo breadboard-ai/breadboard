@@ -141,7 +141,7 @@
     "typescript": "^5.0.4"
   },
   "dependencies": {
-    "@clack/prompts": "^0.6.3",
+    "@clack/prompts": "^0.7.0",
     "@google-labs/breadboard": "^0.11.0",
     "@google-labs/core-kit": "^0.3.0",
     "@google-labs/json-kit": "^0.1.0",
