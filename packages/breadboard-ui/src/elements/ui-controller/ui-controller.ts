@@ -31,6 +31,20 @@ type UIConfig = {
   showNarrowTimeline: boolean;
 };
 
+/**
+ * Breadboard UI controller element.
+ *
+ * @export
+ * @class UI
+ * @extends {LitElement}
+ *
+ * @property {LoadArgs | null} loadInfo
+ * @property {Kit[]} kits - an array of kits to use by a board
+ * @property {string | null} url
+ * @property {STATUS}
+ * @property {Board[]}
+ * @property {"mermaid" | "visualblocks" | "editor"} - the type of visualizer to use
+ **/
 @customElement("bb-ui-controller")
 export class UI extends LitElement {
   @property()
@@ -133,6 +147,15 @@ export class UI extends LitElement {
     this.loadInfo = loadInfo;
   }
 
+  /**
+   * Handler method for registering input.
+   *
+   * Handle a specific input ID and return a promise that resolves with the data received by the handler.
+   *
+   * @param {string} id - Associates a specific input handler with a unique identifier.
+   *
+   * @returns {Promise<Record<string, unknown>>}
+   */
   async #registerInputHandler(id: string): Promise<Record<string, unknown>> {
     const handlers = this.#handlers.get(id);
     if (!handlers) {
@@ -146,6 +169,17 @@ export class UI extends LitElement {
     });
   }
 
+  /**
+   * Handler method for registering secret values.
+   *
+   * Asynchronously register handlers for a list of keys and
+   * return a promise that resolves to an object mapping each key to its corresponding secret value.
+   *
+   * @param {string[]} keys - The keys for which secrets need to be
+   * registered.
+   *
+   * @returns {Promise<Record<string, unknown>>}
+   */
   async #registerSecretsHandler(
     keys: string[]
   ): Promise<Record<string, unknown>> {
@@ -163,6 +197,17 @@ export class UI extends LitElement {
     return Object.fromEntries(values);
   }
 
+  /**
+   * Handle state changes.
+   *
+   * Handle different types of messages and perform corresponding
+   * actions based on the message type.
+   *
+   * @param {HarnessRunResult} message - Contains information about the state change with type and data property
+   * @param {number} duration - The duration of the state change.
+   *
+   * @returns {Promise<Record<string, unknown> | void>}
+   */
   async handleStateChange(
     message: HarnessRunResult,
     duration: number
