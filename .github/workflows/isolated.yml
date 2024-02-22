@@ -1,0 +1,176 @@
+name: Tests for Breadboard in an isolated environment
+on:
+  push:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  BOARD: dl_board.json
+
+jobs:
+  publish:
+    permissions:
+      contents: read
+      packages: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+      - uses: actions/setup-node@main
+        with:
+          node-version: "20.x"
+          registry-url: "https://npm.pkg.github.com/"
+          cache: "npm"
+      - uses: actions/github-script@main
+        with:
+          script: |
+            const fn = require('${{ github.workspace }}/.github/scripts/dist/index.js')
+            await fn()
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  test:
+    needs: publish
+    permissions:
+      contents: read
+      packages: read
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version:
+          - 21.x
+          # - 20.x
+          # - 19.x
+          # - 18.x
+        npm-version:
+          - 10.x
+          # - 9.x
+          # - 8.x
+          # - 7.x
+          # - 6.x
+        exclude:
+          - node-version: 19.x
+            npm-version: 9.x
+          - node-version: 19.x
+            npm-version: 10.x
+        commands:
+          - name: npx cli run
+            script: |
+              OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
+              npx @$OWNER_LC/breadboard-cli --version
+              npx @$OWNER_LC/breadboard-cli run $BOARD -i "{\"message\": \"Hello World\"}"
+
+          - name: install + npx cli run
+            script: |
+              OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
+              npm install -g @$OWNER_LC/breadboard-cli
+              npx @$OWNER_LC/breadboard-cli --version
+              npx @$OWNER_LC/breadboard-cli run $BOARD -i "{\"message\": \"Hello World\"}"
+
+          - name: install x2 + npx cli run
+            script: |
+              OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
+              npm install -g @$OWNER_LC/breadboard @$OWNER_LC/breadboard-cli
+              npx @$OWNER_LC/breadboard-cli --version
+              npx @$OWNER_LC/breadboard-cli run $BOARD -i "{\"message\": \"Hello World\"}"
+
+          - name: install + npx breadboard run
+            script: |
+              OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
+              npx @$OWNER_LC/breadboard-cli --version
+              npm install -g @$OWNER_LC/breadboard-cli
+              npx breadboard run $BOARD -i "{\"message\": \"Hello World\"}"
+
+          ##############################################################################################################
+
+          - name: npx cli mermaid
+            script: |
+              OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
+              npx @$OWNER_LC/breadboard-cli --version
+              npx @$OWNER_LC/breadboard-cli mermaid dl_board.json
+
+          - name: install + npx cli mermaid
+            script: |
+              OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
+              npm install -g @$OWNER_LC/breadboard-cli
+              npx @$OWNER_LC/breadboard-cli --version
+              npx @$OWNER_LC/breadboard-cli mermaid dl_board.json
+
+          - name: install x2 + npx cli mermaid
+            script: |
+              OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
+              npm install -g @$OWNER_LC/breadboard @$OWNER_LC/breadboard-cli
+              npx @$OWNER_LC/breadboard-cli --version
+              npx @$OWNER_LC/breadboard-cli mermaid dl_board.json
+
+          - name: install + npx breadboard mermaid
+            script: |
+              OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
+              npx @$OWNER_LC/breadboard-cli --version
+              npm install -g @$OWNER_LC/breadboard-cli
+              npx breadboard mermaid dl_board.json
+
+          # ##############################################################################################################
+
+          - script: |
+              OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
+              npx @$OWNER_LC/create-breadboard --version
+              npm init @$OWNER_LC/breadboard test
+            name: npm init
+
+          - script: |
+              OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
+              npx @$OWNER_LC/create-breadboard --version
+              npx @$OWNER_LC/create-breadboard test
+            name: npx create
+
+          - script: |
+              OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
+              npx @$OWNER_LC/create-breadboard --version
+              npm install -g @$OWNER_LC/create-breadboard
+              npx @$OWNER_LC/create-breadboard test
+            name: install + npx create
+
+          ##############################################################################################################
+
+          - script: |
+              OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
+              npx @$OWNER_LC/create-breadboard-kit --version
+              npm init @$OWNER_LC/breadboard-kit test
+            name: npm init kit
+
+          - script: |
+              OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
+              npx @$OWNER_LC/create-breadboard-kit --version
+              npx @$OWNER_LC/create-breadboard-kit test
+            name: npx create-kit
+
+          - script: |
+              OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}
+              npx @$OWNER_LC/create-breadboard-kit --version
+              npm install -g @$OWNER_LC/create-breadboard-kit
+              npx @$OWNER_LC/create-breadboard-kit test
+            name: install + npx create-kit
+
+    name: ${{ matrix.commands.name }} - Node ${{ matrix.node-version }} NPM ${{ matrix.npm-version }}
+    steps:
+      - run: set -ev
+      - run: echo "OWNER_LC=${OWNER,,}" >>${GITHUB_ENV}
+        env:
+          OWNER: "${{ github.repository_owner }}"
+      - uses: actions/setup-node@main
+        with:
+          node-version: ${{ matrix.node-version }}
+          registry-url: "https://npm.pkg.github.com/"
+          scope: $OWNER_LC
+      - run: npm install -g npm@${{ matrix.npm-version }}
+      - run: wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O $BOARD
+      - run: npm config set -g @$OWNER_LC:registry https://npm.pkg.github.com/
+      - name: Run command
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -ev
+          ${{ matrix.commands.script }}
