@@ -7,3 +7,27 @@ updates:
     reviewers:
       - dglazkov
       - aomarks
+
+  - package-ecosystem: "github-actions"
+    directory: ".github/workflows"
+    schedule:
+      interval: "daily"
+    reviewers:
+      - dglazkov
+      - aomarks
+
+  - package-ecosystem: "pip"
+    directory: "packages/breadboard-python"
+    schedule:
+      interval: "daily"
+    reviewers:
+      - dglazkov
+      - aomarks
+
+  - package-ecosystem: "devcontainers"
+    directory: ".devcontainer"
+    schedule:
+      interval: "daily"
+    reviewers:
+      - dglazkov
+      - aomarks
