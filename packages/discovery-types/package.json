@@ -111,7 +111,7 @@
     "@ava/typescript": "^4.0.0",
     "@google-labs/tsconfig": "^0.0.1",
     "@types/node": "^20.11.20",
-    "@types/prettier": "^2.7.3",
+    "@types/prettier": "^3.0.0",
     "@typescript-eslint/eslint-plugin": "^6.20.0",
     "@typescript-eslint/parser": "^6.20.0",
     "ava": "^5.2.0",
@@ -120,6 +120,6 @@
   },
   "dependencies": {
     "dotenv": "^16.4.5",
-    "prettier": "^2.8.8"
+    "prettier": "^3.2.5"
   }
 }
