@@ -282,8 +282,6 @@ export class UI extends LitElement {
       .loadInfo=${this.loadInfo}
       .kits=${this.kits}
       .highlightedNodeId=${nodeId}
-      .nodeCount=${this.loadInfo?.graphDescriptor?.nodes.length || 0}
-      .edgeCount=${this.loadInfo?.graphDescriptor?.edges.length || 0}
     ></bb-editor>`;
 
     const timeline = html`<header>

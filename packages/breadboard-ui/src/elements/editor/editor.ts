@@ -54,12 +54,6 @@ export class Editor extends LitElement {
   kits: Kit[] = [];
 
   @property()
-  nodeCount = 0;
-
-  @property()
-  edgeCount = 0;
-
-  @property()
   editable = false;
 
   @property()
@@ -84,6 +78,7 @@ export class Editor extends LitElement {
   #onGraphNodeDeleteBound = this.#onGraphNodeDelete.bind(this);
   #top = 0;
   #left = 0;
+  #expectingRefresh = false;
 
   static styles = css`
     :host {
@@ -389,10 +384,12 @@ export class Editor extends LitElement {
       | Map<PropertyKey, unknown>
   ): void {
     const shouldProcessGraph =
-      changedProperties.has("loadInfo") ||
-      changedProperties.has("nodeCount") ||
-      changedProperties.has("edgeCount");
+      changedProperties.has("loadInfo") || this.#expectingRefresh;
+
+    this.#expectingRefresh = false;
+
     if (shouldProcessGraph && this.loadInfo && this.loadInfo.graphDescriptor) {
+      console.log(this.loadInfo.graphDescriptor);
       this.#processGraph(this.loadInfo.graphDescriptor);
     }
   }
@@ -407,7 +404,7 @@ export class Editor extends LitElement {
 
   #onGraphEdgeAttach(evt: Event) {
     const { edge } = evt as GraphNodeEdgeAttach;
-    this.edgeCount = -1;
+    this.#expectingRefresh = true;
     this.dispatchEvent(
       new EdgeChangeEvent("add", {
         from: edge.from.descriptor.id,
@@ -420,7 +417,7 @@ export class Editor extends LitElement {
 
   #onGraphEdgeDetach(evt: Event) {
     const { edge } = evt as GraphNodeEdgeDetach;
-    this.edgeCount = -1;
+    this.#expectingRefresh = true;
     this.dispatchEvent(
       new EdgeChangeEvent("remove", {
         from: edge.from.descriptor.id,
@@ -433,7 +430,7 @@ export class Editor extends LitElement {
 
   #onGraphEdgeChange(evt: Event) {
     const { fromEdge, toEdge } = evt as GraphNodeEdgeChange;
-    this.edgeCount = -1;
+    this.#expectingRefresh = true;
     this.dispatchEvent(
       new EdgeChangeEvent("remove", {
         from: fromEdge.from.descriptor.id,
@@ -455,8 +452,7 @@ export class Editor extends LitElement {
 
   #onGraphNodeDelete(evt: Event) {
     const { id } = evt as GraphNodeDelete;
-    this.edgeCount = -1;
-    this.nodeCount = -1;
+    this.#expectingRefresh = true;
     this.dispatchEvent(new NodeDeleteEvent(id));
   }
 
@@ -482,6 +478,7 @@ export class Editor extends LitElement {
     // Store the middle of the node for later.
     this.#graph.setNodeLayoutPosition(id, { x, y });
 
+    this.#expectingRefresh = true;
     this.dispatchEvent(new NodeCreateEvent(id, data));
 
     this.nodeValueBeingEdited = {
@@ -616,51 +613,52 @@ export class Editor extends LitElement {
               />
               <fieldset>
                 <legend>Configuration</legend>
-                ${map(inputs.ports,
-                  (port) => {
-                    if (port.star) return;
-                    const schema = port.schema || {};
-                    const name = port.name;
-                    const value =
+                ${map(inputs.ports, (port) => {
+                  if (port.star) return;
+                  const schema = port.schema || {};
+                  const name = port.name;
+                  const value =
                     configuration[name] ??
                     schema.examples ??
                     schema.default ??
                     "";
 
-
-                    let input;
-                    const type = port.schema?.type || "string";
-                    switch (type) {
-                      case "object": {
-                        // TODO: Implement object editor.
-                        // Use "format" to distinguish what type of "object",
-                        // e.g. "format": "schema" for a JSON schema.
-                        input = html`<div>
-                        <textarea style="height: 200px; width: 100%" name="schema">${JSON.stringify(value, null, 2)}</textarea
+                  let input;
+                  const type = port.schema?.type || "string";
+                  switch (type) {
+                    case "object": {
+                      // TODO: Implement object editor.
+                      // Use "format" to distinguish what type of "object",
+                      // e.g. "format": "schema" for a JSON schema.
+                      input = html`<div>
+                        <textarea
+                          style="height: 200px; width: 100%"
+                          name="schema"
+                        >
+${JSON.stringify(value, null, 2)}</textarea
                         >
                       </div>`;
-                        break;
-                      }
+                      break;
+                    }
 
-                      // TODO: Fill out more types.
-                      default: {
-                        // prettier-ignore
-                        input = html`<div
+                    // TODO: Fill out more types.
+                    default: {
+                      // prettier-ignore
+                      input = html`<div
                             contenteditable="plaintext-only"
                             data-id="${name}"
                           >${value}</div>`;
-                        break;
-                      }
+                      break;
                     }
-
-                    return html`<div class="configuration-item">
-                      <label title="${schema.description}" for="${name}"
-                        >${name}:
-                      </label>
-                      ${input}
-                    </div>`;
                   }
-                )}
+
+                  return html`<div class="configuration-item">
+                    <label title="${schema.description}" for="${name}"
+                      >${name}:
+                    </label>
+                    ${input}
+                  </div>`;
+                })}
               </fieldset>
             </div>
           </form>
@@ -735,9 +733,7 @@ export class Editor extends LitElement {
 
     console.log("New configuration", configuration);
 
-    // Force a refresh.
-    this.nodeCount = -1;
-    this.edgeCount = -1;
+    this.#expectingRefresh = true;
     this.dispatchEvent(new NodeUpdateEvent(id, configuration));
 
     // Close out the panel via removing the active node marker.
