@@ -129,6 +129,6 @@
     "ava": "^5.2.0",
     "jsonschema": "^1.4.1",
     "typedoc": "^0.25.1",
-    "typescript": "^5.0.4"
+    "typescript": "^5.3.3"
   }
 }

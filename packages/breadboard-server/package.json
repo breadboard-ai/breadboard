@@ -122,7 +122,7 @@
     "jsonschema": "^1.4.1",
     "ava": "^5.2.0",
     "typedoc": "^0.25.1",
-    "typescript": "^5.0.4",
+    "typescript": "^5.3.3",
     "@google-labs/core-kit": "^0.3.0"
   },
   "dependencies": {
