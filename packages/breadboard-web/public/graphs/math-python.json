@@ -1,0 +1,117 @@
+{
+  "title": "The Python Calculator Recipe",
+  "description": "A simple AI pattern that leans on the power of the LLMs to generate language to solve math problems. Defined in Python.",
+  "version": "0.0.3",
+  "graphs": {},
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "question": {
+              "description": "Ask a math question",
+              "examples": [
+                "What is the square root of pi?"
+              ],
+              "title": "Math problem",
+              "type": "string"
+            },
+            "generator": {
+              "default": "/graphs/text-generator.json",
+              "description": "The URL of the generator to call",
+              "title": "Generator",
+              "type": "string"
+            }
+          },
+          "required": [
+            "question"
+          ],
+          "type": "object"
+        }
+      }
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "result": {
+              "description": "The answer to the math problem",
+              "title": "Answer",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      }
+    },
+    {
+      "id": "runJavascript-1",
+      "type": "runJavascript",
+      "configuration": {
+        "name": "compute"
+      }
+    },
+    {
+      "id": "generator",
+      "type": "invoke",
+      "configuration": {}
+    },
+    {
+      "id": "math-function",
+      "type": "promptTemplate",
+      "configuration": {
+        "template": "Translate the math problem below into a self-contained,\nzero-argument JavaScript function named \\`compute\\` that can be executed\nto provide the answer to the problem. \n\nDo not use any dependencies or libraries.\n\nMath Problem: {{question}}\n\nSolution:"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "runJavascript-1",
+      "to": "output",
+      "out": "result",
+      "in": "result"
+    },
+    {
+      "from": "generator",
+      "to": "runJavascript-1",
+      "out": "text",
+      "in": "code"
+    },
+    {
+      "from": "input",
+      "to": "generator",
+      "out": "generator",
+      "in": "path"
+    },
+    {
+      "from": "math-function",
+      "to": "generator",
+      "out": "prompt",
+      "in": "text"
+    },
+    {
+      "from": "input",
+      "to": "math-function",
+      "out": "question",
+      "in": "question"
+    }
+  ],
+  "kits": [
+    {
+      "url": "npm:@google-labs/core-kit"
+    },
+    {
+      "url": "npm:annotation=NoneType required=True"
+    },
+    {
+      "url": "npm:@google-labs/template-kit"
+    },
+    {
+      "url": "npm:annotation=NoneType required=True"
+    }
+  ]
+}
