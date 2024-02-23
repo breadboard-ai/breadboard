@@ -51,7 +51,9 @@
       "dependencies": [
         "build:tsc"
       ],
-      "files": [],
+      "files": [
+        "tests/**/*.json"
+      ],
       "output": []
     },
     "lint": {
