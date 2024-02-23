@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.2.0
+
+### Minor Changes
+
+- eaac69a: Editor is now the main visualizer; various other fixes
+
+### Patch Changes
+
+- 464c10e: Various fixes to UI
+- c1b6c94: Ensure the graph is changed when values differ
+- f17784a: Support a more flexible drag approach for panels; update location
+- Updated dependencies [05136f8]
+- Updated dependencies [ef305d1]
+- Updated dependencies [aea9178]
+- Updated dependencies [20a0e5c]
+  - @google-labs/breadboard@0.11.1
+
 ## 0.1.0
 
 ### Minor Changes

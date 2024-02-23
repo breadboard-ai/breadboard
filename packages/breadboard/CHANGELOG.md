@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.11.1
+
+### Patch Changes
+
+- 05136f8: Various fixes to the inspector API.
+- ef305d1: Enable adding input/output nodes with the Editor API.
+- aea9178: Delete affected edges when removing a node in editor API.
+- 20a0e5c: Fix self not defined error
+
 ## 0.11.0
 
 ### Minor Changes

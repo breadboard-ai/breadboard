@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.1
+
+### Patch Changes
+
+- 3ed66b9: Add a resolve node to core-kit which resolves relative URLs to absolute URLs.
+- Updated dependencies [05136f8]
+- Updated dependencies [ef305d1]
+- Updated dependencies [aea9178]
+- Updated dependencies [20a0e5c]
+  - @google-labs/breadboard@0.11.1
+
 ## 0.3.0
 
 ### Minor Changes
