@@ -143,7 +143,7 @@
     "@google-labs/core-kit": "^0.3.0",
     "@google-labs/template-kit": "^0.2.0",
     "commander": "^12.0.0",
-    "esbuild": "^0.19.9",
+    "esbuild": "^0.20.1",
     "serve": "^14.2.1",
     "vite": "^5.1.4",
     "yaml": "^2.3.4"
