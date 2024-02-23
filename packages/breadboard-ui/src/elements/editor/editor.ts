@@ -576,33 +576,7 @@ export class Editor extends LitElement {
 
     const configuration = node.configuration() || {};
     const details = (async () => {
-      const { inputSchema } = await node.describe();
-
-      if (!inputSchema.properties) {
-        return html`<div id="properties">
-          <div id="node-properties">
-            Unable to configure node - no schema properties provided.
-          </div>
-        </div>`;
-      }
-
-      const schemaAdder = this.editable
-        ? html`<div>
-            <textarea style="height: 200px" name="schema">
-{
-  "type": "object",
-  "properties": {
-    "magicNum": {
-      "type": "number",
-      "title": "magicNum"
-    }
-  }
-}
-      </textarea
-            >
-          </div>`
-        : nothing;
-
+      const { inputs } = await node.ports();
       return html` <div id="properties">
         <div id="node-properties">
           <form @submit=${this.#onFormSubmit}>
@@ -642,28 +616,34 @@ export class Editor extends LitElement {
               />
               <fieldset>
                 <legend>Configuration</legend>
-                ${Object.keys(inputSchema.properties).length === 0
-                  ? html`No configurable properties`
-                  : nothing}
-                ${schemaAdder}
-                ${map(
-                  Object.entries(inputSchema.properties),
-                  ([name, schema]) => {
+                ${map(inputs.ports,
+                  (port) => {
+                    if (port.star) return;
+                    const schema = port.schema || {};
+                    const name = port.name;
+                    const value =
+                    configuration[name] ??
+                    schema.examples ??
+                    schema.default ??
+                    "";
+
+
                     let input;
-                    switch (schema.type) {
+                    const type = port.schema?.type || "string";
+                    switch (type) {
                       case "object": {
-                        input = `Object types are not supported yet.`;
+                        // TODO: Implement object editor.
+                        // Use "format" to distinguish what type of "object",
+                        // e.g. "format": "schema" for a JSON schema.
+                        input = html`<div>
+                        <textarea style="height: 200px; width: 100%" name="schema">${JSON.stringify(value, null, 2)}</textarea
+                        >
+                      </div>`;
                         break;
                       }
 
                       // TODO: Fill out more types.
                       default: {
-                        const value =
-                          configuration[name] ??
-                          schema.examples ??
-                          schema.default ??
-                          "";
-
                         // prettier-ignore
                         input = html`<div
                             contenteditable="plaintext-only"
