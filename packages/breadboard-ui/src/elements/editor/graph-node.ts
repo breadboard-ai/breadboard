@@ -380,6 +380,7 @@ export class GraphNode extends PIXI.Graphics {
 
   #drawSelectedBackground() {
     const borderSize = 2;
+    this.#selectedBackground.clear();
     this.#selectedBackground.beginFill(0x999999);
     this.#selectedBackground.drawRoundedRect(
       -borderSize,
@@ -393,6 +394,7 @@ export class GraphNode extends PIXI.Graphics {
 
   #drawBackground() {
     const borderSize = 1;
+    this.#background.clear();
     this.#background.beginFill(0xbbbbbb);
     this.#background.drawRoundedRect(
       -borderSize,
