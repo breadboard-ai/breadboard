@@ -1,5 +1,26 @@
 # @google-labs/breadboard-web
 
+## 1.2.1
+
+### Patch Changes
+
+- 464c10e: Various fixes to UI
+- 73455ce: Implement "human" node in Agent Kit
+- Updated dependencies [464c10e]
+- Updated dependencies [c1b6c94]
+- Updated dependencies [3ed66b9]
+- Updated dependencies [73455ce]
+- Updated dependencies [05136f8]
+- Updated dependencies [ef305d1]
+- Updated dependencies [aea9178]
+- Updated dependencies [eaac69a]
+- Updated dependencies [f17784a]
+- Updated dependencies [20a0e5c]
+  - @google-labs/breadboard-ui@0.2.0
+  - @google-labs/core-kit@0.3.1
+  - @google-labs/agent-kit@0.2.0
+  - @google-labs/breadboard@0.11.1
+
 ## 1.2.0
 
 ### Minor Changes
