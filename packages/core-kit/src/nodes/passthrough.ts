@@ -8,7 +8,7 @@ import type { InputValues, OutputValues } from "@google-labs/breadboard";
 import { SchemaBuilder } from "@google-labs/breadboard/kits";
 
 export default {
-  desribe: async (inputs?: InputValues) => {
+  describe: async (inputs?: InputValues) => {
     if (!inputs) {
       return {
         inputSchema: SchemaBuilder.empty(true),
