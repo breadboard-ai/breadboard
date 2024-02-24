@@ -45,32 +45,62 @@ const maybeURL = (url?: string): URL | undefined => {
 
 class Graph implements InspectableGraph {
   #url?: URL;
-  #graph: GraphDescriptor;
-  #nodes: InspectableNode[];
-  #nodeMap: Map<NodeIdentifier, InspectableNode>;
-  #typeMap: Map<NodeTypeIdentifier, InspectableNode[]> = new Map();
-  #entries?: InspectableNode[];
-  #edges?: InspectableEdge[];
   #kits?: InspectableKit[];
   #options: InspectableGraphOptions;
+
+  // addNode: change the value
+  // removeNode: change the value
+  // addEdge: change the value
+  // removeEdge: change the value
+  // changeConfiguration: change the value
+  // changeMetadata: change the value
+  #graph: GraphDescriptor;
+
+  // addNode: adds a new item to the list
+  // removeNode: removes an item from the list
+  // addEdge: no change
+  // removeEdge: no change
+  // changeConfiguration: no change
+  // changeMetadata: no change
+  #nodes: InspectableNode[];
+
+  // addNode: no change
+  // removeNode: remove edges that are connected to the node
+  // addEdge: add the edge to the list
+  // removeEdge: remove the edge from the list
+  // changeConfiguration: no change
+  // changeMetadata: no change
+  #edges?: InspectableEdge[];
+
+  // addNode: reset to undefined
+  // removeNode: reset to undefined
+  // addEdge: no change
+  // removeEdge: no change
+  // changeConfiguration: no change
+  // changeMetadata: no change
+  #nodeMap?: Map<NodeIdentifier, InspectableNode>;
+
+  // addNode: reset to undefined
+  // removeNode: reset to undefined
+  // addEdge: no change
+  // removeEdge: no change
+  // changeConfiguration: no change
+  // changeMetadata: no change
+  #typeMap?: Map<NodeTypeIdentifier, InspectableNode[]>;
+
+  // addNode: reset to undefined
+  // removeNode: reset to undefined
+  // addEdge: no change
+  // removeEdge: reset to undefined
+  // changeConfiguration: no change
+  // changeMetadata: no change
+  #entries?: InspectableNode[];
 
   constructor(graph: GraphDescriptor, options?: InspectableGraphOptions) {
     this.#graph = graph;
     this.#url = maybeURL(graph.url);
     this.#options = options || {};
     this.#nodes = this.#graph.nodes.map((node) => inspectableNode(node, this));
-    this.#nodeMap = new Map(
-      this.#nodes.map((node) => [node.descriptor.id, node])
-    );
-    this.#nodes.forEach((node) => {
-      const type = node.descriptor.type;
-      let list = this.#typeMap.get(type);
-      if (!list) {
-        list = [];
-        this.#typeMap.set(type, list);
-      }
-      list.push(node);
-    });
   }
 
   raw() {
@@ -78,6 +108,18 @@ class Graph implements InspectableGraph {
   }
 
   nodesByType(type: NodeTypeIdentifier): InspectableNode[] {
+    if (!this.#typeMap) {
+      this.#typeMap = new Map();
+      this.#nodes.forEach((node) => {
+        const type = node.descriptor.type;
+        let list = this.#typeMap?.get(type);
+        if (!list) {
+          list = [];
+          this.#typeMap?.set(type, list);
+        }
+        list.push(node);
+      });
+    }
     return this.#typeMap.get(type) || [];
   }
 
@@ -123,7 +165,9 @@ class Graph implements InspectableGraph {
   }
 
   nodeById(id: NodeIdentifier) {
-    return this.#nodeMap.get(id);
+    return (this.#nodeMap ??= new Map(
+      this.#nodes.map((node) => [node.descriptor.id, node])
+    )).get(id);
   }
 
   nodes(): InspectableNode[] {
