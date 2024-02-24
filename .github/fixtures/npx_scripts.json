@@ -4,14 +4,14 @@
 		{
 			"checkout": false,
 			"expect": "fail",
-			"name": "cli help",
+      "name": "cli@0.5.0 help",
 			"script": [
 				"npx --verbose @google-labs/breadboard-cli@0.5.0 --help"
 			]
 		},
 		{
 			"checkout": false,
-			"name": "cli run",
+      "name": "cli@0.5.0 run",
 			"expect": "fail",
 			"script": [
 				"wget https://raw.githubusercontent.com/ExaDev-io/breadboard-samples/develop/samples/Breadboard%20Walkthrough/src/hello-world/board.json -O board.json",
