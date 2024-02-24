@@ -58,3 +58,12 @@ export type EditResult =
     };
 
 export type EditableEdgeSpec = Edge;
+
+export type GraphMutationReceiver = {
+  didAddNode(node: EditableNodeSpec): void;
+  didRemoveNode(node: EditableNodeSpec): void;
+  didAddEdge(edge: EditableEdgeSpec): void;
+  didRemoveEdge(edge: EditableEdgeSpec): void;
+  didChangeConfiguration(node: EditableNodeSpec): void;
+  didChangeMetadata(node: EditableNodeSpec): void;
+};
