@@ -164,16 +164,5 @@
     "serve": "^14.2.1",
     "vite": "^5.1.4",
     "yaml": "^2.3.4"
-  },
-  "bundleDependencies": [
-    "@google-labs/breadboard",
-    "@google-labs/breadboard-web",
-    "@google-labs/core-kit",
-    "@google-labs/template-kit",
-    "commander",
-    "esbuild",
-    "serve",
-    "vite",
-    "yaml"
-  ]
+  }
 }
