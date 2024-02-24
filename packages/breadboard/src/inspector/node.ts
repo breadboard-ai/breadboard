@@ -30,8 +30,6 @@ export const inspectableNode = (
 class Node implements InspectableNode {
   descriptor: NodeDescriptor;
   #graph: InspectableGraph;
-  #incoming: InspectableEdge[] | undefined;
-  #outgoing: InspectableEdge[] | undefined;
 
   constructor(descriptor: NodeDescriptor, graph: InspectableGraph) {
     this.descriptor = descriptor;
@@ -43,11 +41,11 @@ class Node implements InspectableNode {
   }
 
   incoming(): InspectableEdge[] {
-    return (this.#incoming ??= this.#graph.incomingForNode(this.descriptor.id));
+    return this.#graph.incomingForNode(this.descriptor.id);
   }
 
   outgoing(): InspectableEdge[] {
-    return (this.#outgoing ??= this.#graph.outgoingForNode(this.descriptor.id));
+    return this.#graph.outgoingForNode(this.descriptor.id);
   }
 
   isEntry(): boolean {
