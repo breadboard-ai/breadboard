@@ -28,6 +28,12 @@ export const inspectableNode = (
 };
 
 class Node implements InspectableNode {
+  // addNode: no change
+  // removeNode: no change
+  // addEdge: no change
+  // removeEdge: no change
+  // changeConfiguration: update value
+  // changeMetadata: update value
   descriptor: NodeDescriptor;
   #graph: InspectableGraph;
 
