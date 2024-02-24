@@ -14,6 +14,7 @@ import repeater, { RepeaterType } from "./boards/repeater.js";
 import structuredWorker, {
   StructuredWorkerType,
 } from "./boards/structured-worker.js";
+import human, { HumanType } from "./boards/human.js";
 
 // TODO: Replace with the actual URL.
 const KIT_BASE_URL =
@@ -38,6 +39,7 @@ const AgentKit = builder.build({
     adapter.handlerForNode("structured-worker"),
     structuredWorker
   ),
+  human: await addDescriber(adapter.handlerForNode("human"), human),
 });
 
 export type AgentKit = InstanceType<typeof AgentKit>;
@@ -57,6 +59,11 @@ export type AgentKitType = {
    * of the schema.
    */
   structuredWorker: StructuredWorkerType;
+  /**
+   * A human in the loop. Use this node to to insert a real person (user input)
+   * into your team of synthetic team.
+   */
+  human: HumanType;
 };
 
 export default AgentKit;

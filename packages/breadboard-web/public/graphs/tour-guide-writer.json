@@ -217,10 +217,7 @@
                         "type": "string",
                         "title": "guide"
                       }
-                    },
-                    "required": [
-                      "guide"
-                    ]
+                    }
                   }
                 }
               },

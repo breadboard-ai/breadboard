@@ -1,5 +1,11 @@
 # @google-labs/agent-kit
 
+## 0.2.0
+
+### Minor Changes
+
+- 73455ce: Implement "human" node in Agent Kit
+
 ## 0.1.0
 
 ### Minor Changes

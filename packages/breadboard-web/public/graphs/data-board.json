@@ -54,12 +54,7 @@
               "title": "Rank and reasoning behind it",
               "type": "string"
             }
-          },
-          "required": [
-            "best",
-            "list",
-            "rank"
-          ]
+          }
         }
       }
     },

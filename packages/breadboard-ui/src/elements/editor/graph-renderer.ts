@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { InspectableEdge } from "@google-labs/breadboard";
+import { InspectableEdge, PortStatus } from "@google-labs/breadboard";
 import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import * as PIXI from "pixi.js";
@@ -18,11 +18,13 @@ import {
 import { InteractionTracker } from "./interaction-tracker.js";
 import { GraphNode } from "./graph-node.js";
 import {
+  GRAPH_DRAW,
   GRAPH_INITIAL_DRAW,
   GRAPH_NODE_MOVED,
   GraphNodePortType,
 } from "./types.js";
 import { Graph } from "./graph.js";
+import { GraphNodePort } from "./graph-node-port.js";
 
 @customElement("bb-graph-renderer")
 export class GraphRenderer extends LitElement {
@@ -34,7 +36,7 @@ export class GraphRenderer extends LitElement {
     resizeTo: this,
     antialias: true,
     autoDensity: true,
-    resolution: window.devicePixelRatio,
+    resolution: Math.max(2, window.devicePixelRatio),
     eventMode: "static",
     eventFeatures: {
       globalMove: true,
@@ -147,6 +149,10 @@ export class GraphRenderer extends LitElement {
             return;
           }
 
+          // This is cleared by the InteractionTracker when the interaction is
+          // finished.
+          activeGraphNodePort.overrideStatus = PortStatus.Connected;
+
           let edgeGraphic = activeGraph.findEdge(
             activeGraphNode.name,
             activeGraphNodePort
@@ -216,7 +222,16 @@ export class GraphRenderer extends LitElement {
                 edgeGraphic.fromNode = interactionTracker.hoveredGraphNode;
               }
 
-              interactionTracker.hoveredGraphNodePort.active = true;
+              interactionTracker.hoveredGraphNodePort.overrideStatus =
+                PortStatus.Connected;
+
+              interactionTracker.hoveredGraphNodePort.once(
+                "pointerout",
+                function (this: GraphNodePort) {
+                  this.overrideStatus = PortStatus.Inteterminate;
+                },
+                interactionTracker.hoveredGraphNodePort
+              );
               return;
             }
 
@@ -384,8 +399,8 @@ export class GraphRenderer extends LitElement {
               dragDeltaY /= this.#container.scale.y;
             }
 
-            target.x = originalPosition.x + dragDeltaX;
-            target.y = originalPosition.y + dragDeltaY;
+            target.x = Math.round(originalPosition.x + dragDeltaX);
+            target.y = Math.round(originalPosition.y + dragDeltaY);
             target.zIndex = zIndex;
 
             // For container moves we update the background position.
@@ -453,6 +468,10 @@ export class GraphRenderer extends LitElement {
       .scale(delta, delta)
       .translate(pivot.x, pivot.y);
 
+    // Ensure that it is always on a square pixel.
+    m.tx = Math.round(m.tx);
+    m.ty = Math.round(m.ty);
+
     // Apply back to the container.
     this.#container.transform.setFromMatrix(m);
     return m;
@@ -490,7 +509,9 @@ export class GraphRenderer extends LitElement {
         y: rendererBounds.height / 2,
       };
       this.#scaleContainerAroundPoint(delta, pivot);
+    });
 
+    graph.on(GRAPH_DRAW, () => {
       graph.layout();
     });
 

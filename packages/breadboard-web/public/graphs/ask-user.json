@@ -80,11 +80,7 @@
               "title": "Text",
               "type": "string"
             }
-          },
-          "required": [
-            "context",
-            "text"
-          ]
+          }
         }
       }
     },

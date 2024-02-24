@@ -4,8 +4,6 @@ title: Editor API
 tags:
   - general
   - wip
-hide_toc: true
-date: 2012-01-01 # Done to place the index atop the list.
 ---
 
 The Editor API provides a way to edit a graph. It is designed to work in conjuction with the [Inspector API](../inspector) and helps ensure that the graph edits retain their structural integrity.

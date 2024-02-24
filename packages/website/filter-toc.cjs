@@ -22,6 +22,7 @@ module.exports = function (content) {
 
   let html = `<aside class="toc">
     <h1>Table of Contents</h1>
+    <div id="toc-container">
   `;
   let lastLevel = 0;
   for (const header of headers) {
@@ -52,6 +53,6 @@ module.exports = function (content) {
   }
 
   html += "</ol>\n".repeat(lastLevel);
-  html += `</aside>`;
+  html += `</div></aside>`;
   return html;
 };

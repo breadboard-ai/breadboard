@@ -4,7 +4,6 @@ title: Template Kit
 tags:
   - kits
   - wip
-date: 2012-01-01 # Done to place the index atop the list.
 ---
 
 {% assign src_url = "https://github.com/breadboard-ai/breadboard/tree/main/packages/template-kit/src/nodes/" %}

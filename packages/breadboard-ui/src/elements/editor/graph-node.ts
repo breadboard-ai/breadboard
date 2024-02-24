@@ -40,8 +40,11 @@ export class GraphNode extends PIXI.Graphics {
   #outPortLocations: Map<string, PIXI.ObservablePoint<unknown>> = new Map();
   #editable = false;
   #selected = false;
+  #background = new PIXI.Graphics();
+  #selectedBackground = new PIXI.Graphics();
 
   public edgeColor: number;
+  public portConnectedColor: number;
 
   constructor(id: string, type: string, title: string) {
     super();
@@ -55,18 +58,21 @@ export class GraphNode extends PIXI.Graphics {
       case "input":
         this.color = 0xc9daf8;
         this.edgeColor = 0xb1c1dc;
+        this.portConnectedColor = 0xaced8f;
         this.titleTextColor = 0x2c5598;
         break;
 
       case "secrets":
         this.color = 0xf4cccc;
         this.edgeColor = 0xdeb5b5;
+        this.portConnectedColor = 0xaced8f;
         this.titleTextColor = 0xac342a;
         break;
 
       case "output":
         this.color = 0xb6d7a8;
         this.edgeColor = 0xbdd2b5;
+        this.portConnectedColor = 0xaced8f;
         this.titleTextColor = 0x2a5a15;
         break;
 
@@ -74,12 +80,14 @@ export class GraphNode extends PIXI.Graphics {
       case "passthrough":
         this.color = 0xead1dc;
         this.edgeColor = 0xe3a7c5;
+        this.portConnectedColor = 0xaced8f;
         this.titleTextColor = 0x87365e;
         break;
 
       default:
         this.color = 0xfff2cc;
         this.edgeColor = 0xe4d2b6;
+        this.portConnectedColor = 0xaced8f;
         this.titleTextColor = 0xb3772c;
         break;
     }
@@ -88,7 +96,7 @@ export class GraphNode extends PIXI.Graphics {
     this.portTextColor = 0x333333;
 
     this.eventMode = "static";
-    this.cursor = "pointer";
+    this.#background.cursor = "pointer";
 
     this.on("pointerdown", () => {
       InteractionTracker.instance().activeGraphNode = this;
@@ -127,7 +135,11 @@ export class GraphNode extends PIXI.Graphics {
 
   set selected(selected: boolean) {
     this.#selected = selected;
-    this.#isDirty = true;
+    if (selected) {
+      this.addChildAt(this.#selectedBackground, 0);
+    } else {
+      this.#selectedBackground.removeFromParent();
+    }
   }
 
   get type() {
@@ -351,51 +363,89 @@ export class GraphNode extends PIXI.Graphics {
 
   #draw() {
     this.forceUpdateDimensions();
-    this.removeChildren();
     this.clear();
 
+    this.removeChildren();
+    this.addChildAt(this.#background, 0);
+    if (this.selected) {
+      this.addChildAt(this.#selectedBackground, 0);
+    }
+
+    this.#drawSelectedBackground();
     this.#drawBackground();
     const portStartY = this.#drawTitle();
     this.#drawInPorts(portStartY);
     this.#drawOutPorts(portStartY);
   }
 
-  #drawBackground() {
-    const borderSize = this.#selected ? 2 : 1;
-    this.beginFill(this.#selected ? 0x999999 : 0xbbbbbb);
-    this.drawRoundedRect(
+  #drawSelectedBackground() {
+    const borderSize = 2;
+    this.#selectedBackground.clear();
+    this.#selectedBackground.beginFill(0x999999);
+    this.#selectedBackground.drawRoundedRect(
       -borderSize,
       -borderSize,
       this.#width + 2 * borderSize,
       this.#height + 2 * borderSize,
       this.#borderRadius + borderSize
     );
-    this.endFill();
-
-    this.beginFill(this.#backgroundColor);
-    this.drawRoundedRect(0, 0, this.#width, this.#height, this.#borderRadius);
-    this.endFill();
+    this.#selectedBackground.endFill();
   }
 
-  #drawTitle() {
-    let portStartY = 0;
+  #drawBackground() {
+    const borderSize = 1;
+    this.#background.clear();
+    this.#background.beginFill(0xbbbbbb);
+    this.#background.drawRoundedRect(
+      -borderSize,
+      -borderSize,
+      this.#width + 2 * borderSize,
+      this.#height + 2 * borderSize,
+      this.#borderRadius + borderSize
+    );
+    this.#background.endFill();
+
+    this.#background.beginFill(this.#backgroundColor);
+    this.#background.drawRoundedRect(
+      0,
+      0,
+      this.#width,
+      this.#height,
+      this.#borderRadius
+    );
+    this.#background.endFill();
+
     if (this.#titleText) {
       const titleHeight =
         this.#padding + this.#titleText.height + this.#padding;
-      this.beginFill(this.#color);
-      this.drawRoundedRect(0, 0, this.#width, titleHeight, this.#borderRadius);
-      this.drawRect(
+      this.#background.beginFill(this.#color);
+      this.#background.drawRoundedRect(
+        0,
+        0,
+        this.#width,
+        titleHeight,
+        this.#borderRadius
+      );
+      this.#background.drawRect(
         0,
         titleHeight - 2 * this.#borderRadius,
         this.#width,
         2 * this.#borderRadius
       );
-      this.endFill();
+      this.#background.endFill();
+    }
+  }
 
+  #drawTitle() {
+    let portStartY = 0;
+    if (this.#titleText) {
       this.#titleText.eventMode = "none";
       this.#titleText.x = this.#padding;
       this.#titleText.y = this.#padding;
       this.addChild(this.#titleText);
+
+      const titleHeight =
+        this.#padding + this.#titleText.height + this.#padding;
 
       // Move the labels a padding's distance from the bottom of the title.
       portStartY += titleHeight + this.#padding;
@@ -421,9 +471,9 @@ export class GraphNode extends PIXI.Graphics {
       nodePort.x = this.#padding + this.#portRadius;
       nodePort.y = portY + label.height * 0.5;
       nodePort.editable = this.editable;
+      nodePort.status = port.status;
+      nodePort.connectedColor = this.portConnectedColor;
 
-      // TODO: Display other port statuses.
-      nodePort.active = port.status === "connected" && !port.configured;
       this.addChild(nodePort);
       this.#inPortLocations.set(port.name, nodePort.position);
 
@@ -453,9 +503,8 @@ export class GraphNode extends PIXI.Graphics {
       nodePort.x = this.#width - this.#padding - this.#portRadius;
       nodePort.y = portY + label.height * 0.5;
       nodePort.editable = this.editable;
-
-      // TODO: Display other port statuses.
-      nodePort.active = port.status === "connected";
+      nodePort.status = port.status;
+      nodePort.connectedColor = this.portConnectedColor;
 
       this.addChild(nodePort);
       this.#outPortLocations.set(port.name, nodePort.position);

@@ -36,7 +36,6 @@ test("schema derived from reverser (has describe)", async (t) => {
     properties: {
       bar: { type: "string", title: "foo", description: "Reversed: foo" },
     },
-    required: ["bar"],
   });
 });
 
@@ -65,7 +64,6 @@ test("schema derived from noop (no describe)", async (t) => {
     properties: {
       bar: { type: "string", title: "bar" },
     },
-    required: ["bar"],
   });
 });
 
@@ -103,7 +101,6 @@ test("schema derived from noop, with type casts", async (t) => {
     properties: {
       bar: { type: "number", title: "bar", description: "A bar-ish number" },
     },
-    required: ["bar"],
   });
 });
 
@@ -136,6 +133,5 @@ test("schema derived from reverser, with type annotations", async (t) => {
     properties: {
       bar: { type: "string", title: "A foo", description: "Reversed bar" },
     },
-    required: ["bar"],
   });
 });
