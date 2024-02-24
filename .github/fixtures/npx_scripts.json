@@ -14,7 +14,7 @@
       "name": "cli@0.5.0 run",
 			"expect": "fail",
 			"script": [
-				"wget https://raw.githubusercontent.com/breaboard-ai/breadboard/${{ github.ref_name }}/packages/schema/src/scripts/data/board.json -O board.json",
+        "wget https://raw.githubusercontent.com/breaboard-ai/breadboard/$GITHUB_REF_NAME/packages/schema/src/scripts/data/board.json -O board.json",
 				"npx --verbose @google-labs/breadboard-cli@0.5.0 run packages/schema/src/scripts/data/board.json"
 			]
 		},
@@ -35,7 +35,7 @@
 				"pushd packages/breadboard-cli",
 				"npm run pack:install",
 				"cd ~ # this cd is required so the workspace's node_modules aren't available",
-				"wget https://raw.githubusercontent.com/breaboard-ai/breadboard/${{ github.ref_name }}/packages/schema/src/scripts/data/board.json -O board.json",
+        "wget https://raw.githubusercontent.com/breaboard-ai/breadboard/$GITHUB_REF_NAME/packages/schema/src/scripts/data/board.json -O board.json",
 				"npx --verbose @google-labs/breadboard-cli run board.json"
 			]
 		},
@@ -47,7 +47,7 @@
 				"cd packages/breadboard-cli",
 				"npm run pack:install",
 				"cd ~ # this cd is required so the workspace's node_modules aren't available",
-				"wget https://raw.githubusercontent.com/breaboard-ai/breadboard/${{ github.ref_name }}/packages/schema/src/scripts/data/board.json -O board.json",
+        "wget https://raw.githubusercontent.com/breaboard-ai/breadboard/$GITHUB_REF_NAME/packages/schema/src/scripts/data/board.json -O board.json",
 				"npx --verbose @google-labs/breadboard-cli mermaid board.json"
 			]
 		},
@@ -58,7 +58,7 @@
 				"npm install",
 				"cd packages/breadboard-cli",
 				"npm run build",
-				"wget https://raw.githubusercontent.com/breaboard-ai/breadboard/${{ github.ref_name }}/packages/schema/src/scripts/data/board.json -O board.json",
+        "wget https://raw.githubusercontent.com/breaboard-ai/breadboard/$GITHUB_REF_NAME/packages/schema/src/scripts/data/board.json -O board.json",
 				"npx . run board.json"
 			]
 		},
@@ -69,7 +69,7 @@
 				"npm install",
 				"cd packages/breadboard-cli",
 				"npm run build",
-				"wget https://raw.githubusercontent.com/breaboard-ai/breadboard/${{ github.ref_name }}/packages/schema/src/scripts/data/board.json -O board.json",
+        "wget https://raw.githubusercontent.com/breaboard-ai/breadboard/$GITHUB_REF_NAME/packages/schema/src/scripts/data/board.json -O board.json",
 				"npx . mermaid board.json"
 			]
 		}
