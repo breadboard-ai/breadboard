@@ -1,5 +1,11 @@
 # @google-labs/breadboard-cli
 
+## 0.5.2
+
+### Patch Changes
+
+- ff274a2: remove bundleDependencies
+
 ## 0.5.1
 
 ### Patch Changes
