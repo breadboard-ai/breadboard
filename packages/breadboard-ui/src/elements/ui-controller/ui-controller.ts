@@ -76,6 +76,7 @@ export class UI extends LitElement {
   @state()
   orientation: "portrait" | "landscape" = "landscape";
 
+  #editorRenderCount = 0;
   #inputListRef: Ref<InputList> = createRef();
   #handlers: Map<string, inputCallback[]> = new Map();
   #memory = longTermMemory;
@@ -282,6 +283,7 @@ export class UI extends LitElement {
       .loadInfo=${this.loadInfo}
       .kits=${this.kits}
       .highlightedNodeId=${nodeId}
+      .renderCount=${this.#editorRenderCount++}
     ></bb-editor>`;
 
     const timeline = html`<header>
