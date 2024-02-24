@@ -4,12 +4,22 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LitElement, html, css } from "lit";
+import { LitElement, html, css, TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { until } from "lit/directives/until.js";
 import { Board } from "../../types/types.js";
 import { StartEvent, ToastEvent, ToastType } from "../../events/events.js";
 
+/**
+ * Breadboard BoardList element.
+ *
+ * @export
+ * @class BoardList
+ * @extends {LitElement}
+ *
+ * @property {Board[]} boards - the array of boards to display as BoardItem elements.
+ * @property {string | null} bootWithUrl
+ **/
 @customElement("bb-board-list")
 export class BoardList extends LitElement {
   @property()
@@ -84,6 +94,17 @@ export class BoardList extends LitElement {
   }
 }
 
+/**
+ * Breadboard BoardItem element.
+ *
+ * @export
+ * @class BoardItem
+ * @extends {LitElement}
+ *
+ * @property {string | null} boardTitle - The title of the board.
+ * @property {string | null} boardUrl - The URL of the board.
+ * @property {string | null} boardVersion - The version of the board.
+ **/
 @customElement("bb-board-item")
 export class BoardItem extends LitElement {
   @property()
@@ -184,7 +205,16 @@ export class BoardItem extends LitElement {
     }
   `;
 
-  #replaceLinks(description: string) {
+  /**
+   * Replace links with HTML anchor tags in a given description.
+   *
+   * Safely extract markdown links and make them real HTML links. Any other HTML will remain safely escaped.
+   *
+   * @param {string} description - Text description to parse
+   *
+   * @returns {(string | TemplateResult<1>)[]}
+   */
+  #replaceLinks(description: string): (string | TemplateResult<1>)[] {
     // Safely extract markdown links and make them real HTML links. Any other
     // HTML will remain safely escaped.
     const parts = [];

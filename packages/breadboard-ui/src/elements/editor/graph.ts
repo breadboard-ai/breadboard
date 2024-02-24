@@ -16,16 +16,21 @@ import { GraphNode } from "./graph-node.js";
 import { InteractionTracker } from "./interaction-tracker.js";
 import { GraphNodePort } from "./graph-node-port.js";
 import {
+  GRAPH_DRAW,
   GRAPH_INITIAL_DRAW,
   GRAPH_NODE_DRAWN,
   GRAPH_NODE_MOVED,
   GraphNodePortType,
 } from "./types.js";
 
+function edgeToString(edge: InspectableEdge): string {
+  return `${edge.from.descriptor.id}:${edge.out}->${edge.to.descriptor.id}:${edge.to}`;
+}
+
 export class Graph extends PIXI.Container {
   #isDirty = true;
   #edgeContainer = new PIXI.Container();
-  #edgeGraphics = new Map<InspectableEdge, GraphEdge>();
+  #edgeGraphics = new Map<string, GraphEdge>();
   #edges: InspectableEdge[] | null = null;
   #nodes: InspectableNode[] | null = null;
   #ports: Map<string, InspectableNodePorts> | null = null;
@@ -213,7 +218,7 @@ export class Graph extends PIXI.Container {
       return null;
     }
 
-    return this.#edgeGraphics.get(edge) || null;
+    return this.#edgeGraphics.get(edgeToString(edge)) || null;
   }
 
   #onChildMoved(this: { graph: Graph; id: string }, x: number, y: number) {
@@ -288,11 +293,14 @@ export class Graph extends PIXI.Container {
     const isInitialDraw = this.#layout.size === 0;
     let nodesLeftToDraw = this.#nodes.length;
     const onDraw = function (this: GraphNode) {
-      this.off(GRAPH_NODE_DRAWN, onDraw, this);
       nodesLeftToDraw--;
 
       if (nodesLeftToDraw === 0) {
-        this.parent.emit(GRAPH_INITIAL_DRAW);
+        if (isInitialDraw) {
+          this.parent.emit(GRAPH_INITIAL_DRAW);
+        }
+
+        this.parent.emit(GRAPH_DRAW);
       }
     };
 
@@ -300,7 +308,6 @@ export class Graph extends PIXI.Container {
       graphNode: GraphNode;
       layout: { x: number; y: number; pendingSize?: boolean };
     }) {
-      this.graphNode.off(GRAPH_NODE_DRAWN, adjustLayoutForDroppedNode, this);
       this.layout.x -= this.graphNode.width / 2;
       this.layout.y -= this.graphNode.height / 2;
       this.layout.pendingSize = false;
@@ -319,7 +326,7 @@ export class Graph extends PIXI.Container {
         // This is a dropped node.
         const layout = this.#layout.get(id);
         if (layout && layout.pendingSize) {
-          graphNode.on(GRAPH_NODE_DRAWN, adjustLayoutForDroppedNode, {
+          graphNode.once(GRAPH_NODE_DRAWN, adjustLayoutForDroppedNode, {
             graphNode,
             layout,
           });
@@ -342,10 +349,7 @@ export class Graph extends PIXI.Container {
         id,
       });
 
-      if (isInitialDraw) {
-        graphNode.on(GRAPH_NODE_DRAWN, onDraw, graphNode);
-      }
-
+      graphNode.once(GRAPH_NODE_DRAWN, onDraw, graphNode);
       this.addChild(graphNode);
     }
 
@@ -362,8 +366,6 @@ export class Graph extends PIXI.Container {
         this.#layout.delete(id);
       }
     }
-
-    this.layout();
   }
 
   // TODO: Merge this with below.
@@ -388,7 +390,7 @@ export class Graph extends PIXI.Container {
     }
 
     for (const edge of this.#edges) {
-      let edgeGraphic = this.#edgeGraphics.get(edge);
+      let edgeGraphic = this.#edgeGraphics.get(edgeToString(edge));
       if (!edgeGraphic) {
         const fromNode = this.#nodeById.get(edge.from.descriptor.id);
         const toNode = this.#nodeById.get(edge.to.descriptor.id);
@@ -399,7 +401,7 @@ export class Graph extends PIXI.Container {
         }
         edgeGraphic = new GraphEdge(fromNode, toNode);
 
-        this.#edgeGraphics.set(edge, edgeGraphic);
+        this.#edgeGraphics.set(edgeToString(edge), edgeGraphic);
         this.#edgeContainer.addChild(edgeGraphic);
       }
 
@@ -410,15 +412,17 @@ export class Graph extends PIXI.Container {
     // so find that edge and dispose of it.
 
     if (this.#edgeGraphics.size !== this.#edges.length) {
-      for (const [edge, edgeGraphic] of this.#edgeGraphics) {
-        if (this.#edges.includes(edge)) {
+      for (const [edgeDescription, edgeGraphic] of this.#edgeGraphics) {
+        if (
+          this.#edges.find((edge) => edgeToString(edge) === edgeDescription)
+        ) {
           continue;
         }
 
         edgeGraphic.clear();
         edgeGraphic.removeFromParent();
         edgeGraphic.destroy();
-        this.#edgeGraphics.delete(edge);
+        this.#edgeGraphics.delete(edgeDescription);
       }
     }
 

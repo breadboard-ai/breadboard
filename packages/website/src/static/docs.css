@@ -242,8 +242,15 @@ code[class*="language-"] {
   margin: 0 0 8px 0;
 }
 
-.toc > ol {
+.toc > #toc-container {
+  border-radius: 0 0 12px 12px;
+  overflow: auto;
+}
+
+.toc > #toc-container > ol {
   padding: 20px;
+  overflow-y: auto;
+  max-height: 50vh;
 }
 
 .toc a {

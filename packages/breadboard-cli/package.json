@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "version": "0.5.0",
+  "version": "0.5.2",
   "description": "A suite of tools for interacting with the Breadboard.",
   "bin": {
     "breadboard": "dist/src/index.js"
@@ -18,7 +18,9 @@
     "build": "wireit",
     "build:tsc": "wireit",
     "build:debugger": "wireit",
-    "lint": "wireit"
+    "lint": "wireit",
+    "pack:install": "wireit",
+    "test:pack": "wireit"
   },
   "wireit": {
     "build": {
@@ -94,6 +96,21 @@
         "../../.eslintrc.json"
       ],
       "output": []
+    },
+    "pack:install": {
+      "command": "npm --verbose install -g $(npm pack)",
+      "dependencies": [
+        "build"
+      ],
+      "output": [
+        "google-labs-breadboard-cli-*.tgz"
+      ]
+    },
+    "test:pack": {
+      "command": "(cd ~ && npx --verbose @google-labs/breadboard-cli --help)",
+      "dependencies": [
+        "pack:install"
+      ]
     }
   },
   "repository": {
@@ -130,33 +147,22 @@
     "@ava/typescript": "^4.0.0",
     "@google-labs/tsconfig": "^0.0.1",
     "@types/js-yaml": "^4.0.9",
-    "@types/node": "^18.16.3",
+    "@types/node": "^20.11.20",
     "@types/serve-handler": "^6.1.4",
     "@typescript-eslint/eslint-plugin": "^6.20.0",
     "@typescript-eslint/parser": "^6.20.0",
     "ava": "^5.2.0",
-    "typescript": "^5.0.4"
+    "typescript": "^5.3.3"
   },
   "dependencies": {
-    "@google-labs/breadboard": "^0.11.0",
-    "@google-labs/breadboard-web": "^1.2.0",
-    "@google-labs/core-kit": "^0.3.0",
+    "@google-labs/breadboard": "^0.11.2",
+    "@google-labs/breadboard-web": "^1.2.2",
+    "@google-labs/core-kit": "^0.4.0",
     "@google-labs/template-kit": "^0.2.0",
-    "commander": "^11.1.0",
-    "esbuild": "^0.19.9",
+    "commander": "^12.0.0",
+    "esbuild": "^0.20.1",
     "serve": "^14.2.1",
-    "vite": "^4.4.5",
+    "vite": "^5.1.4",
     "yaml": "^2.3.4"
-  },
-  "bundleDependencies": [
-    "@google-labs/breadboard",
-    "@google-labs/breadboard-web",
-    "@google-labs/core-kit",
-    "@google-labs/template-kit",
-    "commander",
-    "esbuild",
-    "serve",
-    "vite",
-    "yaml"
-  ]
+  }
 }

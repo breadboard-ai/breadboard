@@ -4,8 +4,6 @@ title: Inspector API
 tags:
   - general
   - wip
-hide_toc: true
-date: 2012-01-01 # Done to place the index atop the list.
 ---
 
 The Inspector API provides a way to inspect a graph to make sense of it. Because a serialized graph representation (also known as the [BGL document](../concepts/#breadboard-graph-language-bgl)) is basically just JSON containing arrays of nodes and edges, a the actual semantics of the graph need to be added separately. This is what the Inspector API does. Think of it as the DOM API for the graph.

@@ -7,6 +7,7 @@
 export const GRAPH_NODE_DRAWN = "graphnodedrawn";
 export const GRAPH_NODE_MOVED = "graphnodemoved";
 export const GRAPH_INITIAL_DRAW = "graphinitialdraw";
+export const GRAPH_DRAW = "graphdraw";
 
 export enum GraphNodePortType {
   IN = "in",

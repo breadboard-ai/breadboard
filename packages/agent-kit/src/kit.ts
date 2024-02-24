@@ -9,6 +9,7 @@ import { Board } from "@google-labs/breadboard";
 import worker from "./boards/worker.js";
 import repeater from "./boards/repeater.js";
 import structuredWorker from "./boards/structured-worker.js";
+import human from "./boards/human.js";
 
 import { Core } from "@google-labs/core-kit";
 
@@ -24,5 +25,6 @@ const core = kit.addKit(Core);
 core.invoke({ $id: "worker", $board: worker });
 core.invoke({ $id: "repeater", $board: repeater });
 core.invoke({ $id: "structured-worker", $board: structuredWorker });
+core.invoke({ $id: "human", $board: human });
 
 export default kit;

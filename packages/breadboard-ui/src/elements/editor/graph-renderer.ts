@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { InspectableEdge } from "@google-labs/breadboard";
+import { InspectableEdge, PortStatus } from "@google-labs/breadboard";
 import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import * as PIXI from "pixi.js";
@@ -18,11 +18,13 @@ import {
 import { InteractionTracker } from "./interaction-tracker.js";
 import { GraphNode } from "./graph-node.js";
 import {
+  GRAPH_DRAW,
   GRAPH_INITIAL_DRAW,
   GRAPH_NODE_MOVED,
   GraphNodePortType,
 } from "./types.js";
 import { Graph } from "./graph.js";
+import { GraphNodePort } from "./graph-node-port.js";
 
 @customElement("bb-graph-renderer")
 export class GraphRenderer extends LitElement {
@@ -147,6 +149,10 @@ export class GraphRenderer extends LitElement {
             return;
           }
 
+          // This is cleared by the InteractionTracker when the interaction is
+          // finished.
+          activeGraphNodePort.overrideStatus = PortStatus.Connected;
+
           let edgeGraphic = activeGraph.findEdge(
             activeGraphNode.name,
             activeGraphNodePort
@@ -215,6 +221,18 @@ export class GraphRenderer extends LitElement {
                 edgeGraphic.edge.out = name;
                 edgeGraphic.fromNode = interactionTracker.hoveredGraphNode;
               }
+
+              interactionTracker.hoveredGraphNodePort.overrideStatus =
+                PortStatus.Connected;
+
+              interactionTracker.hoveredGraphNodePort.once(
+                "pointerout",
+                function (this: GraphNodePort) {
+                  this.overrideStatus = PortStatus.Inteterminate;
+                },
+                interactionTracker.hoveredGraphNodePort
+              );
+              return;
             }
 
             edgeGraphic.overrideColor = 0xffcc00;
@@ -491,7 +509,9 @@ export class GraphRenderer extends LitElement {
         y: rendererBounds.height / 2,
       };
       this.#scaleContainerAroundPoint(delta, pivot);
+    });
 
+    graph.on(GRAPH_DRAW, () => {
       graph.layout();
     });
 

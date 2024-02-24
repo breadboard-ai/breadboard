@@ -17,7 +17,7 @@ const deepCopy = (graph: GraphDescriptor): GraphDescriptor => {
 };
 
 export default {
-  desribe: async () => {
+  describe: async () => {
     return {
       inputSchema: SchemaBuilder.empty(),
       outputSchema: new SchemaBuilder()
