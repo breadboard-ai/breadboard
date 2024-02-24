@@ -1,5 +1,15 @@
 # @google-labs/coffee-bot-board
 
+## 0.0.6
+
+### Patch Changes
+
+- Updated dependencies [07e66bf]
+- Updated dependencies [26367fe]
+  - @google-labs/breadboard@0.11.2
+  - @google-labs/core-kit@0.4.0
+  - @google-labs/node-nursery@0.0.6
+
 ## 0.0.5
 
 ### Patch Changes

@@ -1,5 +1,16 @@
 # @google-labs/graph-playground
 
+## 0.0.7
+
+### Patch Changes
+
+- Updated dependencies [07e66bf]
+- Updated dependencies [26367fe]
+  - @google-labs/breadboard@0.11.2
+  - @google-labs/core-kit@0.4.0
+  - @google-labs/node-nursery@0.0.6
+  - @google-labs/pinecone-kit@0.1.3
+
 ## 0.0.6
 
 ### Patch Changes

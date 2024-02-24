@@ -1,5 +1,15 @@
 # @google-labs/breadboard-cli
 
+## 0.5.1
+
+### Patch Changes
+
+- Updated dependencies [07e66bf]
+- Updated dependencies [26367fe]
+  - @google-labs/breadboard@0.11.2
+  - @google-labs/core-kit@0.4.0
+  - @google-labs/breadboard-web@1.2.2
+
 ## 0.5.0
 
 ### Minor Changes
