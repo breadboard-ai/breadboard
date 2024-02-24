@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.11.2
+
+### Patch Changes
+
+- 07e66bf: Updated README.md
+
 ## 0.11.1
 
 ### Patch Changes

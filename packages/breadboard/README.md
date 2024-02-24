@@ -20,7 +20,7 @@ Breadboard requires [Node](https://nodejs.org/) version >=v19.0.0.
 
 > [!WARNING]
 > The library is in active development, and we're transitioning to new syntax. Stuff below will likely be out of date.
-> Please bear with us.
+> Please bear with us as we bring our words up to speed with our thoughts/actions.
 
 ## Installing the library
 
