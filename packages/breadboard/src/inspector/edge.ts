@@ -69,8 +69,8 @@ export class InspectableEdgeCache {
     ));
   }
 
-  get(edge: EdgeDescriptor): InspectableEdge {
-    return this.#ensureEdgeMap().get(edge) as InspectableEdge;
+  get(edge: EdgeDescriptor): InspectableEdge | undefined {
+    return this.#ensureEdgeMap().get(edge);
   }
 
   add(edge: EdgeDescriptor) {

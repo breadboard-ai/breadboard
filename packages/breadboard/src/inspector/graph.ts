@@ -16,7 +16,7 @@ import {
 } from "../types.js";
 import { InspectableEdgeCache } from "./edge.js";
 import { collectKits } from "./kits.js";
-import { inspectableNode } from "./node.js";
+import { InspectableNodeCache } from "./node.js";
 import {
   EdgeType,
   describeInput,
@@ -63,7 +63,7 @@ class Graph implements InspectableGraph {
   // removeEdge: no change
   // changeConfiguration: no change
   // changeMetadata: no change
-  #nodes: InspectableNode[];
+  #nodes: InspectableNodeCache;
 
   // addNode: no change
   // removeNode: remove edges that are connected to the node
@@ -73,36 +73,12 @@ class Graph implements InspectableGraph {
   // changeMetadata: no change
   #edges: InspectableEdgeCache;
 
-  // addNode: reset to undefined
-  // removeNode: reset to undefined
-  // addEdge: no change
-  // removeEdge: no change
-  // changeConfiguration: no change
-  // changeMetadata: no change
-  #nodeMap?: Map<NodeIdentifier, InspectableNode>;
-
-  // addNode: reset to undefined
-  // removeNode: reset to undefined
-  // addEdge: no change
-  // removeEdge: no change
-  // changeConfiguration: no change
-  // changeMetadata: no change
-  #typeMap?: Map<NodeTypeIdentifier, InspectableNode[]>;
-
-  // addNode: reset to undefined
-  // removeNode: reset to undefined
-  // addEdge: no change
-  // removeEdge: reset to undefined
-  // changeConfiguration: no change
-  // changeMetadata: no change
-  #entries?: InspectableNode[];
-
   constructor(graph: GraphDescriptor, options?: InspectableGraphOptions) {
     this.#graph = graph;
     this.#url = maybeURL(graph.url);
     this.#options = options || {};
     this.#edges = new InspectableEdgeCache(this);
-    this.#nodes = this.#graph.nodes.map((node) => inspectableNode(node, this));
+    this.#nodes = new InspectableNodeCache(this);
   }
 
   raw() {
@@ -110,19 +86,7 @@ class Graph implements InspectableGraph {
   }
 
   nodesByType(type: NodeTypeIdentifier): InspectableNode[] {
-    if (!this.#typeMap) {
-      this.#typeMap = new Map();
-      this.#nodes.forEach((node) => {
-        const type = node.descriptor.type;
-        let list = this.#typeMap?.get(type);
-        if (!list) {
-          list = [];
-          this.#typeMap?.set(type, list);
-        }
-        list.push(node);
-      });
-    }
-    return this.#typeMap.get(type) || [];
+    return this.#nodes.byType(type);
   }
 
   async describeType(
@@ -167,13 +131,11 @@ class Graph implements InspectableGraph {
   }
 
   nodeById(id: NodeIdentifier) {
-    return (this.#nodeMap ??= new Map(
-      this.#nodes.map((node) => [node.descriptor.id, node])
-    )).get(id);
+    return this.#nodes.get(id);
   }
 
   nodes(): InspectableNode[] {
-    return this.#nodes;
+    return this.#nodes.nodes();
   }
 
   edges(): InspectableEdge[] {
@@ -191,17 +153,17 @@ class Graph implements InspectableGraph {
   incomingForNode(id: NodeIdentifier): InspectableEdge[] {
     return this.#graph.edges
       .filter((edge) => edge.to === id)
-      .map((edge) => this.#edges.get(edge));
+      .map((edge) => this.#edges.get(edge) as InspectableEdge);
   }
 
   outgoingForNode(id: NodeIdentifier): InspectableEdge[] {
     return this.#graph.edges
       .filter((edge) => edge.from === id)
-      .map((edge) => this.#edges.get(edge));
+      .map((edge) => this.#edges.get(edge) as InspectableEdge);
   }
 
   entries(): InspectableNode[] {
-    return (this.#entries ??= this.#nodes.filter((node) => node.isEntry()));
+    return this.#nodes.nodes().filter((node) => node.isEntry());
   }
 
   async describe(): Promise<NodeDescriberResult> {
