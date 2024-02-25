@@ -5,6 +5,7 @@
  */
 
 import { handlersFromKits } from "../handler.js";
+import { AnyEdit, GraphEditReceiver } from "../index.js";
 import { combineSchemas } from "../schema.js";
 import {
   Edge,
@@ -44,17 +45,11 @@ const maybeURL = (url?: string): URL | undefined => {
   return URL.canParse(url) ? new URL(url) : undefined;
 };
 
-class Graph implements InspectableGraph {
+class Graph implements InspectableGraph, GraphEditReceiver {
   #url?: URL;
   #kits?: InspectableKit[];
   #options: InspectableGraphOptions;
 
-  // addNode: change the value
-  // removeNode: change the value
-  // addEdge: change the value
-  // removeEdge: change the value
-  // changeConfiguration: change the value
-  // changeMetadata: change the value
   #graph: GraphDescriptor;
 
   // addNode: adds a new item to the list
@@ -187,5 +182,42 @@ class Graph implements InspectableGraph {
       inputSchema: combineSchemas(inputSchemas),
       outputSchema: combineSchemas(outputSchemas),
     };
+  }
+
+  editReceiver() {
+    return this;
+  }
+
+  onEdit(edits: AnyEdit[]): void {
+    edits.forEach((edit) => {
+      switch (edit.type) {
+        case "addNode":
+          this.#nodes.add(edit.node);
+          break;
+        case "removeNode":
+          this.#nodes.remove(edit.id);
+          break;
+        case "addEdge":
+          this.#edges.add(edit.edge);
+          break;
+        case "removeEdge":
+          this.#edges.remove(edit.edge);
+          break;
+        case "changeConfiguration": {
+          const node = this.#nodes.get(edit.id);
+          if (node) {
+            node.descriptor.configuration = edit.configuration;
+          }
+          break;
+        }
+        case "changeMetadata": {
+          const node = this.#nodes.get(edit.id);
+          if (node) {
+            node.descriptor.metadata = edit.metadata;
+          }
+          break;
+        }
+      }
+    });
   }
 }
