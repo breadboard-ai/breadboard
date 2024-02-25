@@ -74,6 +74,9 @@ const isExit = node.isExit();
 const title = node.title();
 ```
 
+> [!NOTE]
+> The `InspectableNode` instances are stable across the lifetime of a particular node within the graph. Any method or property that returns an `InspectableNode` in this API will return the same instance for the node of a given id.
+
 ## Edges
 
 In addition to `InspectableNode`, the API may return `InspectableEdge`, which
@@ -103,6 +106,9 @@ const to = edge.from;
 // Returns string.
 const inPort = edge.in;
 ```
+
+> [!NOTE]
+> The `InspectableEdge` instances are stable across the lifetime of a particular edge within the graph. Any method or property within this API will return the same instance of an `InspectableEdge` for a given eddge. This means that, for example, we can use `InspectableEdge` instances as keys in [`Map`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map).
 
 ## Kits
 
