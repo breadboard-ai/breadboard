@@ -14,8 +14,9 @@ import {
   NodeIdentifier,
   NodeTypeIdentifier,
 } from "../types.js";
+import { InspectableEdgeCache } from "./edge.js";
 import { collectKits } from "./kits.js";
-import { inspectableNode } from "./node.js";
+import { InspectableNodeCache } from "./node.js";
 import {
   EdgeType,
   describeInput,
@@ -24,8 +25,8 @@ import {
 } from "./schemas.js";
 import {
   InspectableEdge,
-  InspectableGraph,
   InspectableGraphOptions,
+  InspectableGraphWithStore,
   InspectableKit,
   InspectableNode,
   NodeTypeDescriberOptions,
@@ -34,7 +35,7 @@ import {
 export const inspectableGraph = (
   graph: GraphDescriptor,
   options?: InspectableGraphOptions
-): InspectableGraph => {
+): InspectableGraphWithStore => {
   return new Graph(graph, options);
 };
 
@@ -43,34 +44,21 @@ const maybeURL = (url?: string): URL | undefined => {
   return URL.canParse(url) ? new URL(url) : undefined;
 };
 
-class Graph implements InspectableGraph {
+class Graph implements InspectableGraphWithStore {
   #url?: URL;
-  #graph: GraphDescriptor;
-  #nodes: InspectableNode[];
-  #nodeMap: Map<NodeIdentifier, InspectableNode>;
-  #typeMap: Map<NodeTypeIdentifier, InspectableNode[]> = new Map();
-  #entries?: InspectableNode[];
-  #edges?: InspectableEdge[];
   #kits?: InspectableKit[];
   #options: InspectableGraphOptions;
+
+  #graph: GraphDescriptor;
+  #nodes: InspectableNodeCache;
+  #edges: InspectableEdgeCache;
 
   constructor(graph: GraphDescriptor, options?: InspectableGraphOptions) {
     this.#graph = graph;
     this.#url = maybeURL(graph.url);
     this.#options = options || {};
-    this.#nodes = this.#graph.nodes.map((node) => inspectableNode(node, this));
-    this.#nodeMap = new Map(
-      this.#nodes.map((node) => [node.descriptor.id, node])
-    );
-    this.#nodes.forEach((node) => {
-      const type = node.descriptor.type;
-      let list = this.#typeMap.get(type);
-      if (!list) {
-        list = [];
-        this.#typeMap.set(type, list);
-      }
-      list.push(node);
-    });
+    this.#edges = new InspectableEdgeCache(this);
+    this.#nodes = new InspectableNodeCache(this);
   }
 
   raw() {
@@ -78,7 +66,7 @@ class Graph implements InspectableGraph {
   }
 
   nodesByType(type: NodeTypeIdentifier): InspectableNode[] {
-    return this.#typeMap.get(type) || [];
+    return this.#nodes.byType(type);
   }
 
   async describeType(
@@ -123,41 +111,19 @@ class Graph implements InspectableGraph {
   }
 
   nodeById(id: NodeIdentifier) {
-    return this.#nodeMap.get(id);
+    return this.#nodes.get(id);
   }
 
   nodes(): InspectableNode[] {
-    return this.#nodes;
+    return this.#nodes.nodes();
   }
 
-  #edgeToInspectableEdge = (edge: Edge): InspectableEdge => {
-    const from = this.nodeById(edge.from);
-    const to = this.nodeById(edge.to);
-    const edgein = edge.out === "*" ? "*" : edge.in;
-    return {
-      from,
-      out: edge.out,
-      to,
-      in: edgein,
-    } as InspectableEdge;
-  };
-
   edges(): InspectableEdge[] {
-    return (this.#edges ??= this.#graph.edges.map((edge) =>
-      this.#edgeToInspectableEdge(edge)
-    ));
+    return this.#edges.edges();
   }
 
   hasEdge(edge: Edge): boolean {
-    edge = fixUpStarEdge(edge);
-    return !!this.#graph.edges.find((e) => {
-      return (
-        e.from === edge.from &&
-        e.to === edge.to &&
-        e.out === edge.out &&
-        e.in === edge.in
-      );
-    });
+    return this.#edges.hasByValue(edge);
   }
 
   kits(): InspectableKit[] {
@@ -167,30 +133,17 @@ class Graph implements InspectableGraph {
   incomingForNode(id: NodeIdentifier): InspectableEdge[] {
     return this.#graph.edges
       .filter((edge) => edge.to === id)
-      .map((edge) => this.#edgeToInspectableEdge(edge))
-      .filter(
-        (edge) => edge.from !== undefined && edge.to !== undefined
-      ) as InspectableEdge[];
+      .map((edge) => this.#edges.get(edge) as InspectableEdge);
   }
 
   outgoingForNode(id: NodeIdentifier): InspectableEdge[] {
     return this.#graph.edges
       .filter((edge) => edge.from === id)
-      .map((edge) => {
-        return {
-          from: this.nodeById(edge.from),
-          out: edge.out,
-          to: this.nodeById(edge.to),
-          in: edge.in,
-        };
-      })
-      .filter(
-        (edge) => edge.from !== undefined && edge.to !== undefined
-      ) as InspectableEdge[];
+      .map((edge) => this.#edges.get(edge) as InspectableEdge);
   }
 
   entries(): InspectableNode[] {
-    return (this.#entries ??= this.#nodes.filter((node) => node.isEntry()));
+    return this.#nodes.nodes().filter((node) => node.isEntry());
   }
 
   async describe(): Promise<NodeDescriberResult> {
@@ -215,18 +168,12 @@ class Graph implements InspectableGraph {
       outputSchema: combineSchemas(outputSchemas),
     };
   }
-}
 
-/**
- * This helper is necessary because both "*" and "" are valid representations
- * of a wildcard edge tail. This function ensures that the edge is always
- * consistent.
- * @param edge -- the edge to fix up
- * @returns
- */
-export const fixUpStarEdge = (edge: Edge): Edge => {
-  if (edge.out === "*") {
-    return { ...edge, in: "" };
+  get nodeStore() {
+    return this.#nodes;
   }
-  return edge;
-};
+
+  get edgeStore() {
+    return this.#edges;
+  }
+}

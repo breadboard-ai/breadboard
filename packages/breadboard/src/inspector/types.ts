@@ -304,3 +304,25 @@ export type InspectableNodeType = {
    */
   ports(): Promise<InspectableNodePorts>;
 };
+
+/**
+ * Represents a simple listener for edits to the graph.
+ * An instance of this type is returned by the `editReceiver` method of
+ * `InspectableGraph`.
+ */
+export type GraphStoreMutator = {
+  nodeStore: NodeStoreMutator;
+  edgeStore: EdgeStoreMutator;
+};
+
+export type NodeStoreMutator = {
+  add(node: NodeDescriptor): void;
+  remove(id: NodeIdentifier): void;
+};
+
+export type EdgeStoreMutator = {
+  add(edge: Edge): void;
+  remove(edge: Edge): void;
+};
+
+export type InspectableGraphWithStore = InspectableGraph & GraphStoreMutator;

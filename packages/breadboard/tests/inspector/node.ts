@@ -6,7 +6,7 @@
 
 import test from "ava";
 
-import { inspectableGraph } from "../../src/inspector/index.js";
+import { inspectableGraph } from "../../src/inspector/graph.js";
 
 test("inspectableNode correctly returns node configuration", (t) => {
   const graph = {
@@ -55,4 +55,25 @@ test("inspectableNode correctly returns node title", (t) => {
     const inspectable = inspectableGraph(graph);
     t.deepEqual(inspectable.nodeById("a")?.title(), "test");
   }
+});
+
+test("InspectableNode instances are stable within InspectableGraph", (t) => {
+  const graph = {
+    nodes: [
+      {
+        id: "a",
+        type: "foo",
+      },
+      {
+        id: "b",
+        type: "bar",
+      },
+    ],
+    edges: [{ from: "a", to: "b" }],
+  };
+  const inspectable = inspectableGraph(graph);
+  t.assert(inspectable.nodeById("a") === inspectable.nodeById("a"));
+  t.assert(inspectable.nodeById("b") === inspectable.nodeById("b"));
+  t.assert(inspectable.nodeById("a") === inspectable.entries()[0]);
+  t.assert(inspectable.nodesByType("foo")[0] === inspectable.nodeById("a"));
 });

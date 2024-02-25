@@ -4,4 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export { inspectableGraph } from "./graph.js";
+import { GraphDescriptor } from "../types.js";
+import { inspectableGraph } from "./graph.js";
+import { InspectableGraph, InspectableGraphOptions } from "./types.js";
+
+export const inspect = (
+  graph: GraphDescriptor,
+  options?: InspectableGraphOptions
+): InspectableGraph => {
+  return inspectableGraph(graph, options);
+};
