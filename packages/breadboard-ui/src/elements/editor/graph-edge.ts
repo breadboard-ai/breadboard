@@ -26,7 +26,11 @@ export class GraphEdge extends PIXI.Graphics {
   }
 
   set edge(edge: InspectableEdge | null) {
-    this.#edge = edge;
+    // Since the `edge` is a stable instance, make a copy of the edge to avoid
+    // modifying the original.
+    this.#edge = edge
+      ? { from: edge.from, to: edge.to, in: edge.in, out: edge.out }
+      : null;
     this.#isDirty = true;
   }
 
