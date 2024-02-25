@@ -56,3 +56,24 @@ test("inspectableNode correctly returns node title", (t) => {
     t.deepEqual(inspectable.nodeById("a")?.title(), "test");
   }
 });
+
+test("InspectableNode instances are stable within InspectableGraph", (t) => {
+  const graph = {
+    nodes: [
+      {
+        id: "a",
+        type: "foo",
+      },
+      {
+        id: "b",
+        type: "bar",
+      },
+    ],
+    edges: [{ from: "a", to: "b" }],
+  };
+  const inspectable = inspectableGraph(graph);
+  t.assert(inspectable.nodeById("a") === inspectable.nodeById("a"));
+  t.assert(inspectable.nodeById("b") === inspectable.nodeById("b"));
+  t.assert(inspectable.nodeById("a") === inspectable.entries()[0]);
+  t.assert(inspectable.nodesByType("foo")[0] === inspectable.nodeById("a"));
+});
