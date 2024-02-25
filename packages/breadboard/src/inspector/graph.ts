@@ -51,21 +51,7 @@ class Graph implements InspectableGraph, GraphEditReceiver {
   #options: InspectableGraphOptions;
 
   #graph: GraphDescriptor;
-
-  // addNode: adds a new item to the list
-  // removeNode: removes an item from the list
-  // addEdge: no change
-  // removeEdge: no change
-  // changeConfiguration: no change
-  // changeMetadata: no change
   #nodes: InspectableNodeCache;
-
-  // addNode: no change
-  // removeNode: remove edges that are connected to the node
-  // addEdge: add the edge to the list
-  // removeEdge: remove the edge from the list
-  // changeConfiguration: no change
-  // changeMetadata: no change
   #edges: InspectableEdgeCache;
 
   constructor(graph: GraphDescriptor, options?: InspectableGraphOptions) {

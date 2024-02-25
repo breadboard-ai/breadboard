@@ -23,20 +23,7 @@ import {
   NodeTypeDescriberOptions,
 } from "./types.js";
 
-export const inspectableNode = (
-  descriptor: NodeDescriptor,
-  inspectableGraph: InspectableGraph
-): InspectableNode => {
-  return new Node(descriptor, inspectableGraph);
-};
-
 class Node implements InspectableNode {
-  // addNode: no change
-  // removeNode: no change
-  // addEdge: no change
-  // removeEdge: no change
-  // changeConfiguration: update value
-  // changeMetadata: update value
   descriptor: NodeDescriptor;
   #graph: InspectableGraph;
 
