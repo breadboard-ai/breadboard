@@ -5,7 +5,6 @@
  */
 
 import { handlersFromKits } from "../handler.js";
-import { AnyEdit, GraphEditReceiver } from "../index.js";
 import { combineSchemas } from "../schema.js";
 import {
   Edge,
@@ -26,8 +25,8 @@ import {
 } from "./schemas.js";
 import {
   InspectableEdge,
-  InspectableGraph,
   InspectableGraphOptions,
+  InspectableGraphWithStore,
   InspectableKit,
   InspectableNode,
   NodeTypeDescriberOptions,
@@ -36,7 +35,7 @@ import {
 export const inspectableGraph = (
   graph: GraphDescriptor,
   options?: InspectableGraphOptions
-): InspectableGraph => {
+): InspectableGraphWithStore => {
   return new Graph(graph, options);
 };
 
@@ -45,7 +44,7 @@ const maybeURL = (url?: string): URL | undefined => {
   return URL.canParse(url) ? new URL(url) : undefined;
 };
 
-class Graph implements InspectableGraph, GraphEditReceiver {
+class Graph implements InspectableGraphWithStore {
   #url?: URL;
   #kits?: InspectableKit[];
   #options: InspectableGraphOptions;
@@ -170,26 +169,11 @@ class Graph implements InspectableGraph, GraphEditReceiver {
     };
   }
 
-  editReceiver() {
-    return this;
+  get nodeStore() {
+    return this.#nodes;
   }
 
-  onEdit(edits: AnyEdit[]): void {
-    edits.forEach((edit) => {
-      switch (edit.type) {
-        case "addNode":
-          this.#nodes.add(edit.node);
-          break;
-        case "removeNode":
-          this.#nodes.remove(edit.id);
-          break;
-        case "addEdge":
-          this.#edges.add(edit.edge);
-          break;
-        case "removeEdge":
-          this.#edges.remove(edit.edge);
-          break;
-      }
-    });
+  get edgeStore() {
+    return this.#edges;
   }
 }

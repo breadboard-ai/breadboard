@@ -6,9 +6,8 @@
 
 import { fixUpStarEdge } from "../inspector/edge.js";
 import { inspectableGraph } from "../inspector/graph.js";
-import { InspectableGraph, RemoveEdgeEdit } from "../inspector/types.js";
+import { InspectableGraphWithStore } from "../inspector/types.js";
 import {
-  Edge,
   GraphDescriptor,
   NodeConfiguration,
   NodeIdentifier,
@@ -31,7 +30,7 @@ export const editGraph = (
 
 class Graph implements EditableGraph {
   #options: EditableGraphOptions;
-  #inspector: InspectableGraph;
+  #inspector: InspectableGraphWithStore;
   #validTypes?: Set<string>;
   #graph: GraphDescriptor;
 
@@ -80,7 +79,7 @@ class Graph implements EditableGraph {
     if (!can.success) return can;
 
     this.#graph.nodes.push(spec);
-    this.#inspector.editReceiver().onEdit([{ type: "addNode", node: spec }]);
+    this.#inspector.nodeStore.add(spec);
     return { success: true };
   }
 
@@ -100,24 +99,16 @@ class Graph implements EditableGraph {
     if (!can.success) return can;
 
     // Remove any edges that are connected to the removed node.
-    const removedEdges: Edge[] = [];
     this.#graph.edges = this.#graph.edges.filter((edge) => {
       const shouldRemove = edge.from === id || edge.to === id;
       if (shouldRemove) {
-        removedEdges.push(edge);
+        this.#inspector.edgeStore.remove(edge);
       }
       return !shouldRemove;
     });
     // Remove the node from the graph.
     this.#graph.nodes = this.#graph.nodes.filter((node) => node.id != id);
-    this.#inspector
-      .editReceiver()
-      .onEdit([
-        { type: "removeNode", id },
-        ...removedEdges.map(
-          (edge) => ({ type: "removeEdge", edge }) as RemoveEdgeEdit
-        ),
-      ]);
+    this.#inspector.nodeStore.remove(id);
     return { success: true };
   }
 
@@ -177,7 +168,7 @@ class Graph implements EditableGraph {
     if (!can.success) return can;
     spec = fixUpStarEdge(spec);
     this.#graph.edges.push(spec);
-    this.#inspector.editReceiver().onEdit([{ type: "addEdge", edge: spec }]);
+    this.#inspector.edgeStore.add(spec);
     return { success: true };
   }
 
@@ -206,7 +197,7 @@ class Graph implements EditableGraph {
       );
     });
     const edge = edges.splice(index, 1)[0];
-    this.#inspector.editReceiver().onEdit([{ type: "removeEdge", edge }]);
+    this.#inspector.edgeStore.remove(edge);
     return { success: true };
   }
 

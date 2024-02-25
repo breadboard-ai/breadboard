@@ -6,7 +6,7 @@
 
 import test from "ava";
 
-import { inspectableGraph } from "../../src/inspector/index.js";
+import { inspectableGraph } from "../../src/inspector/graph.js";
 import { GraphDescriptor } from "../../src/types.js";
 import { BoardLoader } from "../../src/loader.js";
 

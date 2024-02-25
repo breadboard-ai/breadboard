@@ -6,7 +6,7 @@
 
 import test from "ava";
 
-import { inspectableGraph } from "../../src/inspector/index.js";
+import { inspectableGraph } from "../../src/inspector/graph.js";
 import { GraphDescriptor } from "@google-labs/breadboard-schema/graph.js";
 
 test("inspectableGraph correctly reacts to edits", (t) => {
@@ -19,12 +19,10 @@ test("inspectableGraph correctly reacts to edits", (t) => {
     inspectable.nodes().map((n) => n.descriptor.id),
     ["a"]
   );
-  const editReceiver = inspectable.editReceiver();
+  const editReceiver = inspectable;
   const edge = { from: "a", to: "b", out: "text", in: "text" };
-  editReceiver.onEdit([
-    { type: "addNode", node: { id: "b", type: "bar" } },
-    { type: "addEdge", edge },
-  ]);
+  editReceiver.nodeStore.add({ id: "b", type: "bar" });
+  editReceiver.edgeStore.add(edge);
   graph.nodes.push({ id: "b", type: "bar" });
   graph.edges.push(edge);
 
@@ -36,10 +34,8 @@ test("inspectableGraph correctly reacts to edits", (t) => {
   t.true(inspectable.hasEdge(edge));
   t.is(inspectable.incomingForNode("b")?.[0].from, inspectable.nodeById("a")!);
 
-  editReceiver.onEdit([
-    { type: "removeNode", id: "b" },
-    { type: "removeEdge", edge },
-  ]);
+  editReceiver.nodeStore.remove("b");
+  editReceiver.edgeStore.remove(edge);
   graph.nodes = graph.nodes.filter((n) => n.id !== "b");
   graph.edges = graph.edges.filter((e) => e !== edge);
 

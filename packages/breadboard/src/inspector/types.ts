@@ -151,11 +151,6 @@ export type InspectableGraph = {
    * output of the `NodeDescriberFunction`.
    */
   describe(): Promise<NodeDescriberResult>;
-  /**
-   * Returns an instance of `GraphEditReceiver` that can be used to apply
-   * changes to the inspected graph.
-   */
-  editReceiver(): GraphEditReceiver;
 };
 
 /**
@@ -315,58 +310,19 @@ export type InspectableNodeType = {
  * An instance of this type is returned by the `editReceiver` method of
  * `InspectableGraph`.
  */
-export type GraphEditReceiver = {
-  /**
-   * Inform the receiver that a set of edits has been applied to the graph.
-   * @param edits - A list of edits to apply to the graph.
-   */
-  onEdit(edits: AnyEdit[]): void;
+export type GraphStoreMutator = {
+  nodeStore: NodeStoreMutator;
+  edgeStore: EdgeStoreMutator;
 };
 
-export type AnyEdit =
-  /**
-   * Add a node to the graph.
-   */
-  | AddNodeEdit
-  /**
-   * Remove a node from the graph.
-   */
-  | RemoveNodeEdit
-  /**
-   * Add an edge to the graph.
-   */
-  | AddEdgeEdit
-  /**
-   * Remove an edge from the graph.
-   */
-  | RemoveEdgeEdit;
-
-export type AddNodeEdit = {
-  type: "addNode";
-  node: NodeDescriptor;
+export type NodeStoreMutator = {
+  add(node: NodeDescriptor): void;
+  remove(id: NodeIdentifier): void;
 };
 
-export type RemoveNodeEdit = {
-  type: "removeNode";
-  id: NodeIdentifier;
+export type EdgeStoreMutator = {
+  add(edge: Edge): void;
+  remove(edge: Edge): void;
 };
 
-export type AddEdgeEdit = {
-  type: "addEdge";
-  /**
-   * The edge to add.
-   * This must be the exact edge object to add.
-   * The comparison and lookup is done by reference.
-   */
-  edge: Edge;
-};
-
-export type RemoveEdgeEdit = {
-  type: "removeEdge";
-  /**
-   * The edge to remove.
-   * This must be the exact edge object to remove.
-   * The comparison and lookup is done by reference.
-   */
-  edge: Edge;
-};
+export type InspectableGraphWithStore = InspectableGraph & GraphStoreMutator;

@@ -64,7 +64,7 @@ export { asyncGen } from "./utils/async-gen.js";
  * The Inspector API.
  */
 export type * from "./inspector/types.js";
-export { inspectableGraph as inspect } from "./inspector/index.js";
+export { inspect } from "./inspector/index.js";
 export { PortStatus } from "./inspector/types.js";
 
 /**

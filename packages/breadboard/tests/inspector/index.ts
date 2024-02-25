@@ -6,7 +6,7 @@
 
 import test from "ava";
 
-import { inspectableGraph } from "../../src/inspector/index.js";
+import { inspectableGraph } from "../../src/inspector/graph.js";
 
 test("inspectableGraph nodes, nodeById, and nodesByType work as expected", (t) => {
   const graph = {
