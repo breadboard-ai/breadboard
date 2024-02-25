@@ -203,20 +203,6 @@ class Graph implements InspectableGraph, GraphEditReceiver {
         case "removeEdge":
           this.#edges.remove(edit.edge);
           break;
-        case "changeConfiguration": {
-          const node = this.#nodes.get(edit.id);
-          if (node) {
-            node.descriptor.configuration = edit.configuration;
-          }
-          break;
-        }
-        case "changeMetadata": {
-          const node = this.#nodes.get(edit.id);
-          if (node) {
-            node.descriptor.metadata = edit.metadata;
-          }
-          break;
-        }
       }
     });
   }

@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { NodeMetadata } from "@google-labs/breadboard-schema/graph.js";
 import {
   Edge,
   GraphDescriptor,
@@ -340,15 +339,7 @@ export type AnyEdit =
   /**
    * Remove an edge from the graph.
    */
-  | RemoveEdgeEdit
-  /*
-   * Change the configuration of a node.
-   */
-  | ChangeConfigurationEdit
-  /**
-   * Change the metadata of a node.
-   */
-  | ChangeMetadataEdit;
+  | RemoveEdgeEdit;
 
 export type AddNodeEdit = {
   type: "addNode";
@@ -378,16 +369,4 @@ export type RemoveEdgeEdit = {
    * The comparison and lookup is done by reference.
    */
   edge: Edge;
-};
-
-export type ChangeConfigurationEdit = {
-  type: "changeConfiguration";
-  id: NodeIdentifier;
-  configuration: NodeConfiguration;
-};
-
-export type ChangeMetadataEdit = {
-  type: "changeMetadata";
-  id: NodeIdentifier;
-  metadata: NodeMetadata;
 };

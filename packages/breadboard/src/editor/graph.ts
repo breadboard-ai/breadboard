@@ -6,8 +6,9 @@
 
 import { fixUpStarEdge } from "../inspector/edge.js";
 import { inspectableGraph } from "../inspector/graph.js";
-import { InspectableGraph } from "../inspector/types.js";
+import { InspectableGraph, RemoveEdgeEdit } from "../inspector/types.js";
 import {
+  Edge,
   GraphDescriptor,
   NodeConfiguration,
   NodeIdentifier,
@@ -30,13 +31,16 @@ export const editGraph = (
 
 class Graph implements EditableGraph {
   #options: EditableGraphOptions;
-  #inspector?: InspectableGraph;
+  #inspector: InspectableGraph;
   #validTypes?: Set<string>;
   #graph: GraphDescriptor;
 
   constructor(graph: GraphDescriptor, options: EditableGraphOptions) {
     this.#graph = graph;
     this.#options = options;
+    this.#inspector = inspectableGraph(this.#graph, {
+      kits: this.#options.kits,
+    });
   }
 
   #isValidType(type: NodeTypeIdentifier) {
@@ -76,7 +80,7 @@ class Graph implements EditableGraph {
     if (!can.success) return can;
 
     this.#graph.nodes.push(spec);
-    this.#inspector = undefined;
+    this.#inspector.editReceiver().onEdit([{ type: "addNode", node: spec }]);
     return { success: true };
   }
 
@@ -96,12 +100,24 @@ class Graph implements EditableGraph {
     if (!can.success) return can;
 
     // Remove any edges that are connected to the removed node.
-    this.#graph.edges = this.#graph.edges.filter(
-      (edge) => edge.from !== id && edge.to !== id
-    );
+    const removedEdges: Edge[] = [];
+    this.#graph.edges = this.#graph.edges.filter((edge) => {
+      const shouldRemove = edge.from === id || edge.to === id;
+      if (shouldRemove) {
+        removedEdges.push(edge);
+      }
+      return !shouldRemove;
+    });
     // Remove the node from the graph.
     this.#graph.nodes = this.#graph.nodes.filter((node) => node.id != id);
-    this.#inspector = undefined;
+    this.#inspector
+      .editReceiver()
+      .onEdit([
+        { type: "removeNode", id },
+        ...removedEdges.map(
+          (edge) => ({ type: "removeEdge", edge }) as RemoveEdgeEdit
+        ),
+      ]);
     return { success: true };
   }
 
@@ -161,7 +177,7 @@ class Graph implements EditableGraph {
     if (!can.success) return can;
     spec = fixUpStarEdge(spec);
     this.#graph.edges.push(spec);
-    this.#inspector = undefined;
+    this.#inspector.editReceiver().onEdit([{ type: "addEdge", edge: spec }]);
     return { success: true };
   }
 
@@ -180,15 +196,17 @@ class Graph implements EditableGraph {
     const can = await this.canRemoveEdge(spec);
     if (!can.success) return can;
     spec = fixUpStarEdge(spec);
-    this.#graph.edges = this.#graph.edges.filter((edge) => {
+    const edges = this.#graph.edges;
+    const index = edges.findIndex((edge) => {
       return (
-        edge.from !== spec.from ||
-        edge.to !== spec.to ||
-        edge.out !== spec.out ||
-        edge.in !== spec.in
+        edge.from === spec.from &&
+        edge.to === spec.to &&
+        edge.out === spec.out &&
+        edge.in === spec.in
       );
     });
-    this.#inspector = undefined;
+    const edge = edges.splice(index, 1)[0];
+    this.#inspector.editReceiver().onEdit([{ type: "removeEdge", edge }]);
     return { success: true };
   }
 
@@ -245,8 +263,6 @@ class Graph implements EditableGraph {
   }
 
   inspect() {
-    return (this.#inspector ??= inspectableGraph(this.#graph, {
-      kits: this.#options.kits,
-    }));
+    return this.#inspector;
   }
 }
