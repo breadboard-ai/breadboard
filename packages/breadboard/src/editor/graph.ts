@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { fixUpStarEdge, inspectableGraph } from "../inspector/graph.js";
+import { fixUpStarEdge } from "../inspector/edge.js";
+import { inspectableGraph } from "../inspector/graph.js";
 import { InspectableGraph } from "../inspector/types.js";
 import {
   GraphDescriptor,

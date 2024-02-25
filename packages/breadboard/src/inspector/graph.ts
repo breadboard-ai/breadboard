@@ -14,6 +14,7 @@ import {
   NodeIdentifier,
   NodeTypeIdentifier,
 } from "../types.js";
+import { InspectableEdgeCache } from "./edge.js";
 import { collectKits } from "./kits.js";
 import { inspectableNode } from "./node.js";
 import {
@@ -70,7 +71,7 @@ class Graph implements InspectableGraph {
   // removeEdge: remove the edge from the list
   // changeConfiguration: no change
   // changeMetadata: no change
-  #edges?: InspectableEdge[];
+  #edges: InspectableEdgeCache;
 
   // addNode: reset to undefined
   // removeNode: reset to undefined
@@ -100,6 +101,7 @@ class Graph implements InspectableGraph {
     this.#graph = graph;
     this.#url = maybeURL(graph.url);
     this.#options = options || {};
+    this.#edges = new InspectableEdgeCache(this);
     this.#nodes = this.#graph.nodes.map((node) => inspectableNode(node, this));
   }
 
@@ -174,34 +176,12 @@ class Graph implements InspectableGraph {
     return this.#nodes;
   }
 
-  #edgeToInspectableEdge = (edge: Edge): InspectableEdge => {
-    const from = this.nodeById(edge.from);
-    const to = this.nodeById(edge.to);
-    const edgein = edge.out === "*" ? "*" : edge.in;
-    return {
-      from,
-      out: edge.out,
-      to,
-      in: edgein,
-    } as InspectableEdge;
-  };
-
   edges(): InspectableEdge[] {
-    return (this.#edges ??= this.#graph.edges.map((edge) =>
-      this.#edgeToInspectableEdge(edge)
-    ));
+    return this.#edges.edges();
   }
 
   hasEdge(edge: Edge): boolean {
-    edge = fixUpStarEdge(edge);
-    return !!this.#graph.edges.find((e) => {
-      return (
-        e.from === edge.from &&
-        e.to === edge.to &&
-        e.out === edge.out &&
-        e.in === edge.in
-      );
-    });
+    return this.#edges.hasByValue(edge);
   }
 
   kits(): InspectableKit[] {
@@ -211,26 +191,13 @@ class Graph implements InspectableGraph {
   incomingForNode(id: NodeIdentifier): InspectableEdge[] {
     return this.#graph.edges
       .filter((edge) => edge.to === id)
-      .map((edge) => this.#edgeToInspectableEdge(edge))
-      .filter(
-        (edge) => edge.from !== undefined && edge.to !== undefined
-      ) as InspectableEdge[];
+      .map((edge) => this.#edges.get(edge));
   }
 
   outgoingForNode(id: NodeIdentifier): InspectableEdge[] {
     return this.#graph.edges
       .filter((edge) => edge.from === id)
-      .map((edge) => {
-        return {
-          from: this.nodeById(edge.from),
-          out: edge.out,
-          to: this.nodeById(edge.to),
-          in: edge.in,
-        };
-      })
-      .filter(
-        (edge) => edge.from !== undefined && edge.to !== undefined
-      ) as InspectableEdge[];
+      .map((edge) => this.#edges.get(edge));
   }
 
   entries(): InspectableNode[] {
@@ -260,17 +227,3 @@ class Graph implements InspectableGraph {
     };
   }
 }
-
-/**
- * This helper is necessary because both "*" and "" are valid representations
- * of a wildcard edge tail. This function ensures that the edge is always
- * consistent.
- * @param edge -- the edge to fix up
- * @returns
- */
-export const fixUpStarEdge = (edge: Edge): Edge => {
-  if (edge.out === "*") {
-    return { ...edge, in: "" };
-  }
-  return edge;
-};

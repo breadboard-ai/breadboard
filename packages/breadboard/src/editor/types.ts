@@ -59,11 +59,46 @@ export type EditResult =
 
 export type EditableEdgeSpec = Edge;
 
-export type GraphMutationReceiver = {
-  didAddNode(node: EditableNodeSpec): void;
-  didRemoveNode(node: EditableNodeSpec): void;
-  didAddEdge(edge: EditableEdgeSpec): void;
-  didRemoveEdge(edge: EditableEdgeSpec): void;
-  didChangeConfiguration(node: EditableNodeSpec): void;
-  didChangeMetadata(node: EditableNodeSpec): void;
+export type GraphEditReceiver = {
+  onEdit(graph: GraphDescriptor, edits: AnyEdit[]): void;
+};
+
+export type AnyEdit =
+  | AddNodeEdit
+  | RemoveNodeEdit
+  | AddEdgeEdit
+  | RemoveEdgeEdit
+  | ChangeConfigurationEdit
+  | ChangeMetadataEdit;
+
+export type AddNodeEdit = {
+  type: "addNode";
+  node: EditableNodeSpec;
+};
+
+export type RemoveNodeEdit = {
+  type: "removeNode";
+  id: NodeIdentifier;
+};
+
+export type AddEdgeEdit = {
+  type: "addEdge";
+  edge: EditableEdgeSpec;
+};
+
+export type RemoveEdgeEdit = {
+  type: "removeEdge";
+  edge: EditableEdgeSpec;
+};
+
+export type ChangeConfigurationEdit = {
+  type: "changeConfiguration";
+  id: NodeIdentifier;
+  configuration: NodeConfiguration;
+};
+
+export type ChangeMetadataEdit = {
+  type: "changeMetadata";
+  id: NodeIdentifier;
+  metadata: NodeMetadata;
 };
