@@ -44,18 +44,16 @@ class Graph implements EditableGraph {
 
   #isValidType(type: NodeTypeIdentifier) {
     return (this.#validTypes ??= new Set(
-      this.inspect()
-        .kits()
-        .flatMap((kit) => {
-          return kit.nodeTypes.map((type) => {
-            return type.type();
-          });
-        })
+      this.#inspector.kits().flatMap((kit) => {
+        return kit.nodeTypes.map((type) => {
+          return type.type();
+        });
+      })
     )).has(type);
   }
 
   async canAddNode(spec: EditableNodeSpec): Promise<EditResult> {
-    const duplicate = !!this.inspect().nodeById(spec.id);
+    const duplicate = !!this.#inspector.nodeById(spec.id);
     if (duplicate) {
       return {
         success: false,
@@ -84,7 +82,7 @@ class Graph implements EditableGraph {
   }
 
   async canRemoveNode(id: NodeIdentifier): Promise<EditResult> {
-    const exists = !!this.inspect().nodeById(id);
+    const exists = !!this.#inspector.nodeById(id);
     if (!exists) {
       return {
         success: false,
@@ -119,7 +117,7 @@ class Graph implements EditableGraph {
         error: `The "*" output port cannot be connected to a specific input port`,
       };
     }
-    const inspector = this.inspect();
+    const inspector = this.#inspector;
     if (inspector.hasEdge(spec)) {
       return {
         success: false,
@@ -173,8 +171,7 @@ class Graph implements EditableGraph {
   }
 
   async canRemoveEdge(spec: EditableEdgeSpec): Promise<EditResult> {
-    const inspector = this.inspect();
-    if (!inspector.hasEdge(spec)) {
+    if (!this.#inspector.hasEdge(spec)) {
       return {
         success: false,
         error: `Edge from "${spec.from}:${spec.out}" to "${spec.to}:${spec.in}" does not exist`,
@@ -202,7 +199,7 @@ class Graph implements EditableGraph {
   }
 
   async canChangeConfiguration(id: NodeIdentifier): Promise<EditResult> {
-    const node = this.inspect().nodeById(id);
+    const node = this.#inspector.nodeById(id);
     if (!node) {
       return {
         success: false,
@@ -218,7 +215,7 @@ class Graph implements EditableGraph {
   ): Promise<EditResult> {
     const can = await this.canChangeConfiguration(id);
     if (!can.success) return can;
-    const node = this.inspect().nodeById(id);
+    const node = this.#inspector.nodeById(id);
     if (node) {
       node.descriptor.configuration = configuration;
     }
@@ -226,7 +223,7 @@ class Graph implements EditableGraph {
   }
 
   async canChangeMetadata(id: NodeIdentifier): Promise<EditResult> {
-    const node = this.inspect().nodeById(id);
+    const node = this.#inspector.nodeById(id);
     if (!node) {
       return {
         success: false,
@@ -242,7 +239,7 @@ class Graph implements EditableGraph {
   ): Promise<EditResult> {
     const can = await this.canChangeMetadata(id);
     if (!can.success) return can;
-    const node = this.inspect().nodeById(id);
+    const node = this.#inspector.nodeById(id);
     if (node) {
       node.descriptor.metadata = metadata;
     }
