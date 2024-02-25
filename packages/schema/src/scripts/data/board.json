@@ -1,5 +1,21 @@
 {
-  "$schema": "./breadboard.schema.json",
-  "nodes": [],
-  "edges": []
+  "$schema": "../../../breadboard.schema.json",
+  "edges": [
+    {
+      "from": "input-1",
+      "out": "*",
+      "to": "output-2"
+    }
+  ],
+  "kits": [],
+  "nodes": [
+    {
+      "id": "input-1",
+      "type": "input"
+    },
+    {
+      "id": "output-2",
+      "type": "output"
+    }
+  ]
 }

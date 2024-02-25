@@ -1,5 +1,18 @@
 # @google-labs/breadboard-web
 
+## 1.2.2
+
+### Patch Changes
+
+- Updated dependencies [07e66bf]
+- Updated dependencies [26367fe]
+- Updated dependencies [0892658]
+  - @google-labs/breadboard@0.11.2
+  - @google-labs/core-kit@0.4.0
+  - @google-labs/breadboard-ui@0.2.1
+  - @google-labs/gemini-kit@0.1.3
+  - @google-labs/pinecone-kit@0.1.3
+
 ## 1.2.1
 
 ### Patch Changes

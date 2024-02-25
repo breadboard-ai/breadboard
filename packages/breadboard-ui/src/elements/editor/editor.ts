@@ -56,6 +56,13 @@ export class Editor extends LitElement {
   @property()
   editable = false;
 
+  /**
+   * Used to attempt a graph re-render. This isn't guaranteed to happen, though,
+   * as it depends on whether the editor was expecting the change.
+   */
+  @property()
+  renderCount = 0;
+
   @property()
   highlightedNodeId: string | null = null;
 
@@ -389,7 +396,6 @@ export class Editor extends LitElement {
     this.#expectingRefresh = false;
 
     if (shouldProcessGraph && this.loadInfo && this.loadInfo.graphDescriptor) {
-      console.log(this.loadInfo.graphDescriptor);
       this.#processGraph(this.loadInfo.graphDescriptor);
     }
   }

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.1
+
+### Patch Changes
+
+- 0892658: Ensure graph re-renders as expected
+- Updated dependencies [07e66bf]
+  - @google-labs/breadboard@0.11.2
+
 ## 0.2.0
 
 ### Minor Changes

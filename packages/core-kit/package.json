@@ -3,7 +3,7 @@
   "publishConfig": {
     "registry": "https://wombat-dressing-room.appspot.com"
   },
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "A Breadboard Kit containing nodes that enable composition and reuse of boards.",
   "main": "./dist/src/index.js",
   "exports": "./dist/src/index.js",
@@ -108,6 +108,6 @@
     "@google-labs/template-kit": "^0.2.0"
   },
   "dependencies": {
-    "@google-labs/breadboard": "^0.11.1"
+    "@google-labs/breadboard": "^0.11.2"
   }
 }
