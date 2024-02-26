@@ -17,6 +17,20 @@ import PaLMKit from "@google-labs/palm-kit";
 import GeminiKit from "@google-labs/gemini-kit";
 import AgentKit from "@google-labs/agent-kit";
 
+const fetchAndLoadKits = async () => {
+  const response = await fetch("/kits.json");
+  const kitList = await response.json();
+
+  const kits = await Promise.all(
+    kitList.map(async (kit: string) => {
+      const module = await import(`/${kit}`);
+      return module.default;
+    })
+  );
+
+  return kits;
+};
+
 const kits = [
   TemplateKit,
   Core,
@@ -25,6 +39,7 @@ const kits = [
   NodeNurseryWeb,
   JSONKit,
   AgentKit,
+  ...(await fetchAndLoadKits()),
 ].map((kitConstructor) => asRuntimeKit(kitConstructor));
 
 @customElement("bb-preview")
