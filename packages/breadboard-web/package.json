@@ -192,7 +192,7 @@
     "@types/node": "^20.11.20",
     "@typescript-eslint/eslint-plugin": "^6.20.0",
     "@typescript-eslint/parser": "^6.20.0",
-    "ava": "^5.2.0",
+    "ava": "^6.1.1",
     "dotenv": "^16.4.5",
     "tsx": "^4.7.1",
     "typedoc": "^0.25.1",

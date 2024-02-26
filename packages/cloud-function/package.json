@@ -81,7 +81,7 @@
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
     "@google-cloud/functions-framework": "^3.3.0",
-    "ava": "^5.2.0"
+    "ava": "^6.1.1"
   },
   "dependencies": {
     "@google-labs/breadboard-server": "^0.1.7",
