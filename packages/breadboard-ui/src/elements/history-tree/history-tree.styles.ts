@@ -10,6 +10,8 @@ export const styles = css`
     font-size: var(--bb-text-nano, 12px);
     position: relative;
     overflow: auto;
+    display: block;
+    min-height: 100%;
   }
 
   * {
