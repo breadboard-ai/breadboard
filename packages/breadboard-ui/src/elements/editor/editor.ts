@@ -702,7 +702,7 @@ export class Editor extends LitElement {
                         class="mono"
                         contenteditable="plaintext-only"
                         data-id="${name}"
-                      >${value}</div>`;
+                      >${JSON.stringify(value, null, 2)}</div>`;
                     }
                     break;
                   }
@@ -793,7 +793,9 @@ export class Editor extends LitElement {
         continue;
       }
 
-      schemaEditor.applyPendingChanges();
+      if (!schemaEditor.applyPendingChanges()) {
+        return;
+      }
       data.set(schemaEditor.id, JSON.stringify(schemaEditor.schema));
     }
 

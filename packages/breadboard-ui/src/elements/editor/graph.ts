@@ -244,6 +244,7 @@ export class Graph extends PIXI.Container {
 
     const graphNode = this.#nodeById.get(this.#highlightedNodeId);
     if (!graphNode) {
+      this.#highlightedNode.clear();
       return;
     }
 
@@ -261,8 +262,10 @@ export class Graph extends PIXI.Container {
       this.#highlightedNode.drawRoundedRect(
         graphNode.x - this.#highlightPadding,
         graphNode.y - this.#highlightPadding,
-        graphNode.width + (this.#highlightPadding - 1) * 2,
-        graphNode.height + (this.#highlightPadding - 1) * 2,
+        graphNode.width +
+          (this.#highlightPadding - (graphNode.selected ? 2 : 1)) * 2,
+        graphNode.height +
+          (this.#highlightPadding - (graphNode.selected ? 2 : 1)) * 2,
         graphNode.borderRadius + this.#highlightPadding
       );
 
