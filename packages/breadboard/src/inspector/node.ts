@@ -126,6 +126,7 @@ export class InspectableNodeCache {
   #ensureNodeMap() {
     if (this.#map) return this.#map;
     this.#graph.raw().nodes.forEach((node) => this.#addNodeInternal(node));
+    this.#map ??= new Map();
     return this.#map!;
   }
 

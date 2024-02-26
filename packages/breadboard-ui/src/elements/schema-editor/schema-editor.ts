@@ -44,6 +44,12 @@ export class SchemaEditor extends LitElement {
       font-weight: bold;
       border-radius: 4px 4px 0 0;
       background: #fafafa;
+      display: flex;
+      align-items: center;
+    }
+
+    summary span {
+      flex: 1;
     }
 
     details .schema-item {
@@ -75,6 +81,7 @@ export class SchemaEditor extends LitElement {
       justify-content: flex-end;
     }
 
+    .delete-schema-item,
     #controls button {
       background: #5e5e5e;
       color: #fff;
@@ -82,6 +89,14 @@ export class SchemaEditor extends LitElement {
       border: none;
       border-radius: 4px;
       padding: var(--bb-grid-size) calc(var(--bb-grid-size) * 2);
+    }
+
+    .delete-schema-item {
+      background: #666;
+    }
+
+    button[disabled] {
+      opacity: 0.5;
     }
   `;
 
@@ -146,14 +161,23 @@ export class SchemaEditor extends LitElement {
       }
 
       return html`<details open class=${classMap({ [valueType]: true })}>
-        <summary>${value.title ?? id}</summary>
+        <summary>
+          <span>${value.title ?? id}</span>
+          <button
+            class="delete-schema-item"
+            @click=${() => this.#deleteProperty(id)}
+            ?disabled=${!this.editable}
+          >
+            Delete
+          </button>
+        </summary>
         <div class="schema-item">
           <label for="${id}-id">ID</label>
           <input
             name="${id}-id"
             id="${id}-id"
             type="text"
-            pattern="^[0-9a-z\\-]+$"
+            pattern="^[\\$0-9A-Za-z\\-]+$"
             value="${id}"
             required="required"
             ?readonly=${!this.editable}
@@ -213,7 +237,7 @@ export class SchemaEditor extends LitElement {
       const form = this.#formRef.value;
       if (!form.checkValidity()) {
         form.reportValidity();
-        return;
+        return false;
       }
 
       const renamedProperties = new Map<string, string>();
@@ -258,11 +282,13 @@ export class SchemaEditor extends LitElement {
 
         if (inRequired) {
           schema.required = schema.required || [];
+          const required = new Set(schema.required);
           if (inRequired.checked) {
-            const required = new Set(schema.required);
             required.add(id);
-            schema.required = [...required];
+          } else {
+            required.delete(id);
           }
+          schema.required = [...required];
         }
       }
 
@@ -278,6 +304,23 @@ export class SchemaEditor extends LitElement {
     }
 
     this.schema = schema;
+    return true;
+  }
+
+  #deleteProperty(id: string) {
+    if (!confirm(`Are you sure you wish to delete ${id}?`)) {
+      return;
+    }
+
+    const schema: Schema = structuredClone(this.schema);
+    schema.properties =
+      typeof schema.properties === "object" ? schema.properties : {};
+
+    schema.properties = schema.properties || {};
+    delete schema.properties[id];
+
+    this.schema = schema;
+    this.dispatchEvent(new SchemaChangeEvent());
   }
 
   #createEmptyProperty() {
