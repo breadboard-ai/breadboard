@@ -20,6 +20,7 @@ import {
   Kit,
   NodeConfiguration,
   InspectableNodePorts,
+  Schema,
 } from "@google-labs/breadboard";
 import { map } from "lit/directives/map.js";
 import {
@@ -37,6 +38,8 @@ import { classMap } from "lit/directives/class-map.js";
 import { GraphRenderer } from "./graph-renderer.js";
 import { Graph } from "./graph.js";
 import { until } from "lit/directives/until.js";
+import { Ref, createRef, ref } from "lit/directives/ref.js";
+import { SchemaEditor } from "../schema-editor/schema-editor.js";
 
 const DATA_TYPE = "text/plain";
 
@@ -83,9 +86,12 @@ export class Editor extends LitElement {
   #onGraphEdgeDetachBound = this.#onGraphEdgeDetach.bind(this);
   #onGraphEdgeChangeBound = this.#onGraphEdgeChange.bind(this);
   #onGraphNodeDeleteBound = this.#onGraphNodeDelete.bind(this);
+  #onKeyDownBound = this.#onKeyDown.bind(this);
   #top = 0;
   #left = 0;
   #expectingRefresh = false;
+  #formRef: Ref<HTMLFormElement> = createRef();
+  #schemaVersion = 0;
 
   static styles = css`
     :host {
@@ -168,6 +174,7 @@ export class Editor extends LitElement {
       top: 0;
       width: 100%;
       z-index: 10;
+      overflow: hidden;
     }
 
     #node-properties {
@@ -211,22 +218,8 @@ export class Editor extends LitElement {
     #properties #fields {
       overflow: auto;
       scrollbar-gutter: stable;
-    }
-
-    #properties fieldset {
-      border-radius: 8px;
-      border: 1px solid #ddd;
-      margin: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 2)
-        calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 10);
-      border: var(--bb-input-fieldset-border, 1px solid rgb(200, 200, 200));
-      border-radius: var(--bb-grid-size);
-      position: relative;
-    }
-
-    #properties legend {
-      font-weight: bold;
-      display: var(--bb-input-legend-display, block);
-      padding: 0 calc(var(--bb-grid-size) * 2);
+      margin: calc(var(--bb-grid-size) * 2);
+      display: grid;
     }
 
     #properties label {
@@ -236,6 +229,7 @@ export class Editor extends LitElement {
       padding: calc(var(--bb-grid-size) * 2) calc(var(--bb-grid-size) * 2) 0 0;
     }
 
+    #properties input[type="number"],
     #properties div[contenteditable] {
       border-radius: var(
         --bb-input-border-radius,
@@ -246,8 +240,20 @@ export class Editor extends LitElement {
       border: 1px solid rgb(209, 209, 209);
     }
 
+    #properties div[contenteditable].mono {
+      font-family: var(--bb-font-family-mono);
+    }
+
     #properties .configuration-item {
-      margin-bottom: calc(var(--bb-grid-size) * 2);
+      margin: calc(var(--bb-grid-size) * 2);
+    }
+
+    #properties .configuration-item > label {
+      font-weight: bold;
+    }
+
+    #properties .configuration-item > div {
+      margin-top: calc(var(--bb-grid-size) * 2);
     }
 
     #properties input[type="submit"] {
@@ -302,12 +308,27 @@ export class Editor extends LitElement {
       }
     }
 
-    // Check that the active node is available.
-    if (
-      this.nodeValueBeingEdited &&
-      !breadboardGraph.nodeById(this.nodeValueBeingEdited.id)
-    ) {
-      this.nodeValueBeingEdited = null;
+    // Check that the active node is available and that it has ports.
+    if (this.nodeValueBeingEdited) {
+      const portInfo = ports.get(this.nodeValueBeingEdited.id);
+      if (!portInfo) {
+        this.nodeValueBeingEdited = null;
+      } else {
+        const inPortNames = new Set(
+          portInfo.inputs.ports.map((port) => port.name)
+        );
+        const outPortNames = new Set(
+          portInfo.outputs.ports.map((port) => port.name)
+        );
+
+        inPortNames.delete("*");
+        outPortNames.delete("*");
+        outPortNames.delete("$error");
+
+        if (inPortNames.size === 0 && outPortNames.size === 0) {
+          this.nodeValueBeingEdited = null;
+        }
+      }
     }
 
     this.#graph.ports = ports;
@@ -342,6 +363,7 @@ export class Editor extends LitElement {
     );
 
     window.addEventListener("resize", this.#onResizeBound);
+    window.addEventListener("keydown", this.#onKeyDownBound);
     this.addEventListener("dragover", this.#onDragOverBound);
     this.addEventListener("drop", this.#onDropBound);
 
@@ -375,6 +397,7 @@ export class Editor extends LitElement {
     );
 
     window.removeEventListener("resize", this.#onResizeBound);
+    window.addEventListener("keydown", this.#onKeyDownBound);
     this.removeEventListener("dragover", this.#onDragOverBound);
     this.removeEventListener("drop", this.#onDropBound);
 
@@ -385,8 +408,6 @@ export class Editor extends LitElement {
     changedProperties:
       | PropertyValueMap<{
           loadInfo: LoadArgs;
-          nodeCount: number;
-          edgeCount: number;
         }>
       | Map<PropertyKey, unknown>
   ): void {
@@ -499,6 +520,17 @@ export class Editor extends LitElement {
     this.#left = bounds.left;
   }
 
+  #onKeyDown(evt: KeyboardEvent) {
+    if (!this.nodeValueBeingEdited) {
+      return;
+    }
+
+    if (evt.key === "Escape") {
+      this.nodeValueBeingEdited = null;
+      return;
+    }
+  }
+
   // TODO: Find a better way of getting the defaults for any given node.
   #getNodeMenu() {
     if (!this.editable || !this.loadInfo || !this.loadInfo.graphDescriptor) {
@@ -580,9 +612,19 @@ export class Editor extends LitElement {
     const configuration = node.configuration() || {};
     const details = (async () => {
       const { inputs } = await node.ports();
-      return html` <div id="properties">
-        <div id="node-properties">
-          <form @submit=${this.#onFormSubmit}>
+      const ports = structuredClone(inputs.ports).sort((portA, portB) =>
+        portA.name === "schema" ? -1 : portA.name > portB.name ? 1 : -1
+      );
+
+      return html` <div
+        id="properties"
+        @click=${() => (this.nodeValueBeingEdited = null)}
+      >
+        <div
+          id="node-properties"
+          @click=${(evt: Event) => evt.stopPropagation()}
+        >
+          <form ${ref(this.#formRef)} @submit=${this.#onFormSubmit}>
             <header>
               <button
                 type="button"
@@ -598,11 +640,7 @@ export class Editor extends LitElement {
                 Cancel
               </button>
               <h1>Properties: ${node.descriptor.type} (${node.title()})</h1>
-              <input
-                ?disabled=${!this.editable}
-                type="submit"
-                value="${activeNode.editAction === "add" ? "Add" : "Update"}"
-              />
+              <input ?disabled=${!this.editable} type="submit" value="Update" />
             </header>
             <div id="fields">
               <input
@@ -617,55 +655,95 @@ export class Editor extends LitElement {
                 type="hidden"
                 value="${node.descriptor.type}"
               />
-              <fieldset>
-                <legend>Configuration</legend>
-                ${map(inputs.ports, (port) => {
-                  if (port.star) return;
-                  const schema = port.schema || {};
-                  const name = port.name;
-                  const value =
-                    configuration[name] ??
-                    schema.examples ??
-                    schema.default ??
-                    "";
+              ${map(ports, (port) => {
+                if (port.star) return;
+                const schema = port.schema || {};
+                const name = port.name;
+                const value =
+                  configuration[name] ??
+                  schema.examples ??
+                  schema.default ??
+                  "";
 
-                  let input;
-                  const type = port.schema?.type || "string";
-                  switch (type) {
-                    case "object": {
-                      // TODO: Implement object editor.
-                      // Use "format" to distinguish what type of "object",
-                      // e.g. "format": "schema" for a JSON schema.
-                      input = html`<div>
-                        <textarea
-                          style="height: 200px; width: 100%"
-                          name="schema"
-                        >
-${JSON.stringify(value, null, 2)}</textarea
-                        >
-                      </div>`;
-                      break;
-                    }
+                let input;
+                const type = port.schema?.type || "string";
+                switch (type) {
+                  case "object": {
+                    const schema = value as Schema;
+                    if (schema.type === "object") {
+                      input = html`<bb-schema-editor
+                        .editable=${this.editable}
+                        .schema=${schema}
+                        .schemaVersion=${this.#schemaVersion}
+                        @breadboardschemachange=${() => {
+                          if (!this.#formRef.value) {
+                            return;
+                          }
 
-                    // TODO: Fill out more types.
-                    default: {
+                          this.#schemaVersion++;
+                          this.#formRef.value.dispatchEvent(
+                            new SubmitEvent("submit")
+                          );
+                        }}
+                        id="${name}"
+                        name="${name}"
+                      ></bb-schema-editor>`;
+                    } else {
                       // prettier-ignore
                       input = html`<div
+                        class="mono"
+                        contenteditable="plaintext-only"
+                        data-id="${name}"
+                      >${value}</div>`;
+                    }
+                    break;
+                  }
+
+                  case "number": {
+                    input = html`<div>
+                      <input
+                        type="number"
+                        value="${value}"
+                        name="${name}"
+                        id=${name}
+                      />
+                    </div>`;
+                    break;
+                  }
+
+                  case "boolean": {
+                    input = html`<div>
+                      <input
+                        type="checkbox"
+                        name="${name}"
+                        id=${name}
+                        value="true"
+                        ?checked=${value === "true"}
+                      />
+                    </div>`;
+                    break;
+                  }
+
+                  default: {
+                    // prettier-ignore
+                    input = html`<div
                             contenteditable="plaintext-only"
                             data-id="${name}"
                           >${value}</div>`;
-                      break;
-                    }
+                    break;
                   }
+                }
 
-                  return html`<div class="configuration-item">
-                    <label title="${schema.description}" for="${name}"
-                      >${name}:
-                    </label>
-                    ${input}
-                  </div>`;
-                })}
-              </fieldset>
+                return html`<div class="configuration-item">
+                  <label title="${schema.description}" for="${name}"
+                    >${name}
+                    (${Array.isArray(schema.type)
+                      ? schema.type.join(", ")
+                      : schema.type || "No type"}):
+                  </label>
+                  ${input}
+                </div>`;
+              })}
             </div>
           </form>
         </div>
@@ -675,7 +753,7 @@ ${JSON.stringify(value, null, 2)}</textarea
     return html`${until(details, html`Loading...`)}`;
   }
 
-  #onFormSubmit(evt: SubmitEvent) {
+  async #onFormSubmit(evt: SubmitEvent) {
     evt.preventDefault();
 
     if (
@@ -700,6 +778,17 @@ ${JSON.stringify(value, null, 2)}</textarea
       data.set(field.dataset.id, field.textContent);
     }
 
+    for (const schemaEditor of evt.target.querySelectorAll(
+      "bb-schema-editor"
+    )) {
+      if (!(schemaEditor instanceof SchemaEditor && schemaEditor.id)) {
+        continue;
+      }
+
+      schemaEditor.applyPendingChanges();
+      data.set(schemaEditor.id, JSON.stringify(schemaEditor.schema));
+    }
+
     const id = data.get("$id") as string;
     const nodeType = data.get("$type") as string;
     if (!(id && nodeType)) {
@@ -718,8 +807,11 @@ ${JSON.stringify(value, null, 2)}</textarea
       return;
     }
 
-    const configuration: NodeConfiguration =
-      structuredClone(node.configuration()) || {};
+    const configuration: NodeConfiguration = structuredClone(
+      node.configuration()
+    );
+
+    // Copy data into the configuration.
     for (const [name, value] of data) {
       if (typeof value !== "string") {
         continue;
@@ -737,13 +829,23 @@ ${JSON.stringify(value, null, 2)}</textarea
       configuration[name] = value;
     }
 
-    console.log("New configuration", configuration);
+    // Check for any removed items.
+    for (const [name, value] of Object.entries(configuration)) {
+      if (data.get(name)) {
+        continue;
+      }
+
+      // Override boolean values rather than deleting them.
+      if (value === "true") {
+        configuration[name] = "false";
+        continue;
+      }
+
+      delete configuration[name];
+    }
 
     this.#expectingRefresh = true;
     this.dispatchEvent(new NodeUpdateEvent(id, configuration));
-
-    // Close out the panel via removing the active node marker.
-    this.nodeValueBeingEdited = null;
   }
 
   firstUpdated(): void {

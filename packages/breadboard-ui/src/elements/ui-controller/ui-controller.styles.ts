@@ -75,7 +75,8 @@ export const styles = css`
 
   #timeline,
   #inputs,
-  #outputs {
+  #outputs,
+  #history {
     display: flex;
     flex-direction: column;
   }
