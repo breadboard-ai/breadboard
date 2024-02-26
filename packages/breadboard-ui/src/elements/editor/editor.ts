@@ -669,8 +669,16 @@ export class Editor extends LitElement {
                 const type = port.schema?.type || "string";
                 switch (type) {
                   case "object": {
-                    const schema = value as Schema;
-                    if (schema.type === "object") {
+                    let schema = value as Schema;
+                    if (value === "") {
+                      schema = {
+                        type: "object",
+                        properties: {},
+                        required: [],
+                      };
+                    }
+
+                    if (schema.properties) {
                       input = html`<bb-schema-editor
                         .editable=${this.editable}
                         .schema=${schema}
