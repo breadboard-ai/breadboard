@@ -282,7 +282,8 @@ export class SchemaEditor extends LitElement {
 
   #createEmptyProperty() {
     const schema: Schema = structuredClone(this.schema);
-    schema.properties = schema.properties || {};
+    schema.properties =
+      typeof schema.properties === "object" ? schema.properties : {};
 
     const idx = Object.keys(schema.properties).length + 1;
     schema.properties = schema.properties || {};
@@ -296,17 +297,10 @@ export class SchemaEditor extends LitElement {
   }
 
   render() {
-    if (this.schema.type !== "object") {
-      return html`Only object schemas are supported`;
-    }
-
-    let properties: HTMLTemplateResult | symbol = nothing;
-    if (this.schema.properties) {
-      properties = this.#convertPropertiesToForms(
-        this.schema.properties,
-        this.schema.required || []
-      );
-    }
+    const properties = this.#convertPropertiesToForms(
+      this.schema.properties || {},
+      this.schema.required || []
+    );
 
     return html`<form ${ref(this.#formRef)}>${properties}</form>
       <div id="controls">
