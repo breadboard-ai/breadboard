@@ -325,7 +325,7 @@ export class Editor extends LitElement {
     if (this.nodeValueBeingEdited) {
       const portInfo = ports.get(this.nodeValueBeingEdited.id);
       if (!portInfo) {
-        this.nodeValueBeingEdited = null;
+        this.#resetNodeValueBeingEdited();
       } else {
         const inPortNames = new Set(
           portInfo.inputs.ports.map((port) => port.name)
@@ -339,7 +339,7 @@ export class Editor extends LitElement {
         outPortNames.delete("$error");
 
         if (inPortNames.size === 0 && outPortNames.size === 0) {
-          this.nodeValueBeingEdited = null;
+          this.#resetNodeValueBeingEdited();
         }
       }
     }
@@ -539,9 +539,14 @@ export class Editor extends LitElement {
     }
 
     if (evt.key === "Escape") {
-      this.nodeValueBeingEdited = null;
+      this.#resetNodeValueBeingEdited();
       return;
     }
+  }
+
+  #resetNodeValueBeingEdited() {
+    this.defaultConfiguration = null;
+    this.nodeValueBeingEdited = null;
   }
 
   // TODO: Find a better way of getting the defaults for any given node.
@@ -677,7 +682,7 @@ export class Editor extends LitElement {
                     return;
                   }
 
-                  this.nodeValueBeingEdited = null;
+                  this.#resetNodeValueBeingEdited();
                 }}
               >
                 Cancel
