@@ -77,3 +77,14 @@ test("InspectableNode instances are stable within InspectableGraph", (t) => {
   t.assert(inspectable.nodeById("a") === inspectable.entries()[0]);
   t.assert(inspectable.nodesByType("foo")[0] === inspectable.nodeById("a"));
 });
+
+test("A graph with no nodes doesn't cause errors", (t) => {
+  const graph = {
+    nodes: [],
+    edges: [],
+  };
+  const inspectable = inspectableGraph(graph);
+  t.deepEqual(inspectable.nodes(), []);
+  t.deepEqual(inspectable.nodeById("a"), undefined);
+  t.deepEqual(inspectable.nodesByType("foo"), []);
+});
