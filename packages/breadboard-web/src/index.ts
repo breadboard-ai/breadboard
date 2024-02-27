@@ -130,7 +130,8 @@ export class Main extends LitElement {
     }
 
     #run-board-locally,
-    #download {
+    #download-board,
+    #download-log {
       font-size: var(--bb-text-pico);
       padding: 4px 8px 4px 24px;
       border-radius: 32px;
@@ -145,7 +146,8 @@ export class Main extends LitElement {
     }
 
     #run-board-locally:hover,
-    #download:hover {
+    #download-board:hover,
+    #download-log:hover {
       transition: opacity var(--bb-easing-duration-in) var(--bb-easing);
       opacity: 1;
     }
@@ -154,7 +156,8 @@ export class Main extends LitElement {
       padding: 4px 8px;
     }
 
-    #download {
+    #download-board,
+    #download-log {
       background: #fff var(--bb-icon-download) 4px 2px no-repeat;
       background-size: 16px 16px;
     }
@@ -553,6 +556,30 @@ export class Main extends LitElement {
     );
   }
 
+  #downloadBoard(evt: Event) {
+    if (
+      !(evt.target instanceof HTMLAnchorElement) ||
+      !this.loadInfo ||
+      !this.loadInfo.graphDescriptor
+    ) {
+      return;
+    }
+
+    if (evt.target.href) {
+      URL.revokeObjectURL(evt.target.href);
+    }
+
+    // Remove the URL from the descriptor as its not part of BGL's schema.
+    const board = structuredClone(this.loadInfo.graphDescriptor);
+    delete board["url"];
+
+    const data = JSON.stringify(board, null, 2);
+    evt.target.download = `board-${new Date().toISOString()}.json`;
+    evt.target.href = URL.createObjectURL(
+      new Blob([data], { type: "application/json" })
+    );
+  }
+
   async #createBlankBoard() {
     this.loadInfo = await getBoardInfo("/graphs/blank.json");
     this.loadInfo.title = "New board";
@@ -819,7 +846,8 @@ export class Main extends LitElement {
         >
         <h1>${this.loadInfo?.title || "Untitled board"}</h1>
         ${localRunButton}
-        <a id="download" @click=${this.#downloadLog}>Download log</a>
+        <a id="download-board" @click=${this.#downloadBoard}>Download board</a>
+        <a id="download-log" @click=${this.#downloadLog}>Download log</a>
       </div>
       <div id="side-bar">
         <button

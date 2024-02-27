@@ -618,11 +618,11 @@ export class Editor extends LitElement {
 
       return html` <div
         id="properties"
-        @click=${() => (this.nodeValueBeingEdited = null)}
+        @pointerdown=${() => (this.nodeValueBeingEdited = null)}
       >
         <div
           id="node-properties"
-          @click=${(evt: Event) => evt.stopPropagation()}
+          @pointerdown=${(evt: Event) => evt.stopPropagation()}
         >
           <form ${ref(this.#formRef)} @submit=${this.#onFormSubmit}>
             <header>
