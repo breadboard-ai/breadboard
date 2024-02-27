@@ -224,3 +224,15 @@ export class GraphNodeDelete extends Event {
     });
   }
 }
+
+export class SchemaChangeEvent extends Event {
+  static eventName = "breadboardschemachange";
+
+  constructor() {
+    super(SchemaChangeEvent.eventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+  }
+}

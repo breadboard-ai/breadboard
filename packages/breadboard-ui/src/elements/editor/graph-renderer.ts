@@ -96,6 +96,7 @@ export class GraphRenderer extends LitElement {
     this.#app.stage.addChild(this.#container);
     this.#app.stage.eventMode = "static";
     this.#app.stop();
+    this.tabIndex = 0;
 
     let lastClickTime = Number.NEGATIVE_INFINITY;
     let lastClickPosition: PIXI.Point = new PIXI.Point(
@@ -525,6 +526,11 @@ export class GraphRenderer extends LitElement {
 
   #onKeyDown(evt: KeyboardEvent) {
     if (evt.code !== "Backspace") {
+      return;
+    }
+
+    const [target] = evt.composedPath();
+    if (target !== this) {
       return;
     }
 

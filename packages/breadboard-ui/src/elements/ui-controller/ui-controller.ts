@@ -371,12 +371,10 @@ export class UI extends LitElement {
         ></bb-output-list>
       </div>`;
 
-    const history = html` <div id="history-list">
-      <bb-history-tree
-        .messages=${this.messages}
-        .messagePosition=${this.#messagePosition}
-      ></bb-history-tree>
-    </div>`;
+    const history = html`<bb-history-tree
+      .messages=${this.messages}
+      .messagePosition=${this.#messagePosition}
+    ></bb-history-tree>`;
 
     /**
      * Create both layouts.
