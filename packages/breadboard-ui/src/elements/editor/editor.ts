@@ -72,6 +72,9 @@ export class Editor extends LitElement {
   @state()
   nodeValueBeingEdited: EditedNode | null = null;
 
+  @state()
+  defaultConfiguration: NodeConfiguration | null = null;
+
   #graph = new Graph();
   #graphRenderer = new GraphRenderer();
   // Incremented each time a graph is updated, used to avoid extra work
@@ -256,6 +259,7 @@ export class Editor extends LitElement {
       margin-top: calc(var(--bb-grid-size) * 2);
     }
 
+    #properties #reset-to-defaults,
     #properties input[type="submit"] {
       background: rgb(209, 203, 255);
       border-radius: calc(var(--bb-grid-size) * 3);
@@ -264,6 +268,11 @@ export class Editor extends LitElement {
       height: calc(var(--bb-grid-size) * 5);
       border: none;
       padding: 0 var(--bb-input-padding, calc(var(--bb-grid-size) * 2));
+    }
+
+    #properties #reset-to-defaults {
+      background: #eee;
+      margin-right: calc(var(--bb-grid-size) * 2);
     }
 
     #properties .cancel {
@@ -277,6 +286,10 @@ export class Editor extends LitElement {
     #form-controls {
       display: grid;
       column-gap: calc(var(--bb-grid-size) * 2);
+    }
+
+    #reset-to-defaults {
+      justify-self: end;
     }
 
     bb-graph-renderer {
@@ -597,7 +610,7 @@ export class Editor extends LitElement {
     </div>`;
   }
 
-  #createNodePropertiesPanel(activeNode: EditedNode) {
+  async #setDefaultConfiguration(activeNode: EditedNode) {
     if (!this.loadInfo || !this.loadInfo.graphDescriptor) {
       return;
     }
@@ -609,7 +622,37 @@ export class Editor extends LitElement {
       return;
     }
 
-    const configuration = node.configuration() || {};
+    // Setting this will trigger a re-render.
+    this.defaultConfiguration = {} satisfies NodeConfiguration;
+
+    const { inputs } = await node.ports();
+    for (const port of inputs.ports) {
+      if (!port.schema?.default && !port.schema?.examples) {
+        continue;
+      }
+
+      this.defaultConfiguration[port.name] =
+        port.schema?.examples ?? port.schema?.default;
+    }
+  }
+
+  #createNodePropertiesPanel(
+    activeNode: EditedNode,
+    configuration: NodeConfiguration | null
+  ) {
+    if (!this.loadInfo || !this.loadInfo.graphDescriptor) {
+      return;
+    }
+
+    const descriptor = this.loadInfo.graphDescriptor;
+    const breadboardGraph = inspect(descriptor, { kits: this.kits });
+    const node = breadboardGraph.nodeById(activeNode.id);
+    if (!node) {
+      return;
+    }
+
+    configuration = configuration || node.configuration() || {};
+
     const details = (async () => {
       const { inputs } = await node.ports();
       const ports = structuredClone(inputs.ports).sort((portA, portB) =>
@@ -639,7 +682,15 @@ export class Editor extends LitElement {
               >
                 Cancel
               </button>
-              <h1>Properties: ${node.descriptor.type} (${node.title()})</h1>
+              <h1>${node.descriptor.type} (${node.title()})</h1>
+              <button
+                ?disabled=${!this.editable}
+                @click=${() => this.#setDefaultConfiguration(activeNode)}
+                type="button"
+                id="reset-to-defaults"
+              >
+                Use defaults
+              </button>
               <input ?disabled=${!this.editable} type="submit" value="Update" />
             </header>
             <div id="fields">
@@ -656,14 +707,10 @@ export class Editor extends LitElement {
                 value="${node.descriptor.type}"
               />
               ${map(ports, (port) => {
-                if (port.star) return;
+                if (!configuration || port.star) return;
                 const schema = port.schema || {};
                 const name = port.name;
-                const value =
-                  configuration[name] ??
-                  schema.examples ??
-                  schema.default ??
-                  "";
+                const value = configuration[name] ?? "";
 
                 let input;
                 const type = port.schema?.type || "string";
@@ -855,6 +902,7 @@ export class Editor extends LitElement {
     }
 
     this.#expectingRefresh = true;
+    this.defaultConfiguration = null;
     this.dispatchEvent(new NodeUpdateEvent(id, configuration));
   }
 
@@ -867,7 +915,8 @@ export class Editor extends LitElement {
     let activeNode: HTMLTemplateResult | symbol = nothing;
     if (this.nodeValueBeingEdited) {
       activeNode = html`${this.#createNodePropertiesPanel(
-        this.nodeValueBeingEdited
+        this.nodeValueBeingEdited,
+        this.defaultConfiguration
       )}`;
     }
 
