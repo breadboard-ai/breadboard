@@ -299,11 +299,11 @@ export class Graph extends PIXI.Container {
       nodesLeftToDraw--;
 
       if (nodesLeftToDraw === 0) {
+        this.parent.emit(GRAPH_DRAW);
+
         if (isInitialDraw) {
           this.parent.emit(GRAPH_INITIAL_DRAW);
         }
-
-        this.parent.emit(GRAPH_DRAW);
       }
     };
 
