@@ -116,6 +116,15 @@ export class Main extends LitElement {
       z-index: 1;
     }
 
+    #new-board {
+      font-size: var(--bb-text-small);
+      text-decoration: underline;
+    }
+
+    #new-board:active {
+      color: rgb(90, 64, 119);
+    }
+
     bb-board-list {
       grid-column: 1 / 3;
     }
@@ -595,6 +604,7 @@ export class Main extends LitElement {
     if (this.mode === MODE.LIST) {
       return html`<header>
           <a href="/"><h1 id="title">Breadboard Playground</h1></a>
+          <a id="new-board" href="/?mode=build">Create new board</a>
         </header>
         <bb-board-list
           @breadboardstart=${this.#onStartBoard}
