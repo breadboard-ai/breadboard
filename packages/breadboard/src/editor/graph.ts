@@ -165,6 +165,7 @@ class Graph implements EditableGraph {
     const can = await this.canAddEdge(spec);
     if (!can.success) return can;
     spec = fixUpStarEdge(spec);
+    console.log("Adding edge", spec);
     this.#graph.edges.push(spec);
     this.#inspector.edgeStore.add(spec);
     return { success: true };

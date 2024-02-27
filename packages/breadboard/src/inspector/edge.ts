@@ -73,11 +73,13 @@ export class InspectableEdgeCache {
     return this.#ensureEdgeMap().get(edge);
   }
 
-  getOrThrow(edge: EdgeDescriptor): InspectableEdge {
-    const result = this.get(edge);
-    if (!result) {
-      throw new Error(`Edge ${JSON.stringify(edge)} not found in cache`);
+  getOrCreate(edge: EdgeDescriptor): InspectableEdge {
+    let result = this.get(edge);
+    if (result) {
+      return result;
     }
+    result = new Edge(this.#graph, edge);
+    this.add(edge);
     return result;
   }
 
