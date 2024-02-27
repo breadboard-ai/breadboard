@@ -79,6 +79,7 @@ export class InspectableEdgeCache {
       return result;
     }
     result = new Edge(this.#graph, edge);
+    console.assert(this.#map, "Edge map not initialized when adding.");
     this.add(edge);
     return result;
   }
