@@ -128,7 +128,7 @@
     "@typescript-eslint/eslint-plugin": "^6.20.0",
     "@typescript-eslint/parser": "^6.20.0",
     "ava": "^5.2.0",
-    "eslint": "^8.36.0",
+    "eslint": "^8.57.0",
     "npm-ci": "^0.0.2",
     "rimraf": "^5.0.1",
     "rollup": "^4.12.0",
