@@ -73,6 +73,14 @@ export class InspectableEdgeCache {
     return this.#ensureEdgeMap().get(edge);
   }
 
+  getOrThrow(edge: EdgeDescriptor): InspectableEdge {
+    const result = this.get(edge);
+    if (!result) {
+      throw new Error(`Edge ${JSON.stringify(edge)} not found in cache`);
+    }
+    return result;
+  }
+
   add(edge: EdgeDescriptor) {
     if (!this.#map) {
       // If the map is not yet initialized, we can exit early. since we presume
