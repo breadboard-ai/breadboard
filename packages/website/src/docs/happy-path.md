@@ -12,35 +12,47 @@ If you're eager to start making boards with Breadboard as quickly as possible, h
 
 There are two ways to get started with Breadboard: fork a Replit project or install Breadboard locally.
 
-### Fork a Replit project
+### Option 1: Fork a Replit project
 
-Go to the [Breadboard Starter Project](https://replit.com/@dglazkov/Breadboard-Starter-Project) and click "Fork". This will create roughly the setup that you'll have if you install Breadboard locally.
+[Replit](https://replit.com/) is a cloud-based coding platform.
 
-### Install locally
+Go to the [Breadboard Starter Project](https://replit.com/@dglazkov/Breadboard-Starter-Project) and click "Fork and Run". This will create roughly the setup that you'll have if you install Breadboard locally.
 
-1. Install [Node.js >=v19](https://nodejs.org/en). If you already have an earlier version of Node installed, you can use [nvm](https://github.com/nvm-sh/nvm) to get to the version that Breadboard needs.
+### Option 2: Install and run locally
+
+Alternatively, you can install Breadboard locally:
+
+1. Install [Node.js >=v19](https://nodejs.org/en) if needed. Type `node -v` in your CLI to find out which node version you're currently using. If you already have an earlier version of Node installed, you can use [nvm](https://github.com/nvm-sh/nvm) to get to the version that Breadboard needs.
 
 2. Run `npm init @google-labs/breadboard ./breadboard-starter` to set up the project. This will create it in a new directory called `breadboard-starter`, but feel free to choose a different name.
 
 This will create a simple starter project that contains most of the bits you need to build AI boards.
 
-### Set up the environment
+Open your project in a code editor. We recommend [VSCode](https://code.visualstudio.com/) for the code editor, but any code editor should work (including with "hot reload", see below).
 
-Breadboard relies on the "hot reload" developer experience pattern to ease rapid iteration and learning-by-playing. The best experience with "hot reload" is when we position our code editor window side-by-side with the Breadboard debugger window:
-
-![Breadboard debugger and editor side-by-side](/breadboard/static/images/happy-path.jpg)
-
-When we save our board file in the code editor, the debugger will automatically reload and let us interact with the board.
-
-We recommend [VSCode](https://code.visualstudio.com/) for the code editor, but any code editor should work with "hot reload".
-
-To start the debugger, run:
+Now, run:
 
 ```bash
 npm run dev
 ```
 
-This will start the Breadboard debugger and give you a link to open it in the browser.
+This will start the Breadboard debugger and give you a link to open it in the browser. What's the debugger for? Let's take a look.
+
+### Set up the debugger and environment
+
+Once your Replit project is forked and running, or once you've started Breadboard locally, you're ready to build a board.
+
+An important concept in Breadboard is the debugger. The debugger is a live in-browser view of your board code.
+
+Breadboard relies on the "hot reload" developer experience pattern to ease rapid iteration and learning-by-playing.
+
+To get the best experience with "hot reload", position your code editor window side-by-side with the Breadboard debugger window:
+
+![Breadboard debugger and editor side-by-side](/breadboard/static/images/happy-path.jpg)
+
+When we save our board file in the code editor, the debugger will automatically reload and let us interact with the board.
+
+If you're using Replit, you should get this setup out of the box. If you're running Breadboard locally, position your windows as recommended.
 
 (TODO: screenshot of the debugger tile view)
 
@@ -52,7 +64,7 @@ The debugger has four main panels:
 
 1. **A visualizer.** This shows you a graphical representation of your board. This allows you to see which nodes are connected to each other, and what the [ports](/docs/concepts/#ports) (inputs and outputs) of each [node](/docs/concepts/#nodes) are called.
 1. **Event timeline.** This gives you a quick overview of what is being called and on which board. (Sometimes you might have boards that call into other boards.) This timeline is also draggable, so if you want to step back to a certain point in history, you can. The other panels will update to match that point in the board's history, too, allowing you to see what the state of the board was at any given point.
-1. **Inputs & Outputs.** There are two panels dedicated to the inputs & outputs of the board. Inputs is where you will be prompted for any values the board need to continue, and outputs will show you what the board has generated.
+1. **Inputs & Outputs.** There are two panels dedicated to the inputs & outputs of the board. Inputs are where you will be prompted for any values the board needs to continue, and outputs will show you what the board has generated.
 1. **Run log.** This gives you much more detail about each node in the board. Here you can click on an entry and see the precise input and output values for each node.
 
 ## Building a board
@@ -61,7 +73,7 @@ Every board has a bit of a boilerplate, and the project we just set up contains 
 
 Open `src/boards/blank.ts` in your editor window and navigate to the "Blank board" board in the debugger.
 
-The blank board will look something like this:
+The blank board code will look something like this:
 
 ```ts
 import { board } from "@google-labs/breadboard";
@@ -83,17 +95,17 @@ export default await board(({ text }) => {
 >
 > It might be worth going over this code to orient ourselves a little bit:
 >
-> - The `board` call is how we tell Breadboard to create a new board. It takes a function as an argument. This function (let's call it a "board function") is where we describe the board.
+> - The `board` call is how we tell Breadboard to create a new board. It takes a function as an argument (`({ text }) => {...}`). This function (let's call it a "board function") is where we describe the board.
 >
 > - The board function itself takes a single argument (let's call it "inputs") and returns a single argument, which we'll call "outputs". These arguments are the objects that describe the inputs and outputs of our new board.
 >
 > - Both input and output are of the same shape: they are property bags that contain named properties. Each property is a "port" -- one value that the board takes in as input or passes as output. For example, the blank board has a single input port called `text` and a single output port called `text` -- and that input port is passed right through to the output port.
 >
-> - The `serialize` function is then called on the result of the `board` invocation. This will serialize the board into Breadboard Graph Language (BGL). BGL is the [common format](./hourglass.md) that Breadboard uses to represent boards.
+> - The `serialize` function is then called on the result of the `board` invocation. This will serialize the board into Breadboard Graph Language (BGL). BGL is the [common format](./hourglass.md) that Breadboard uses to represent boards. BGL is useful to have a unified language, so you can have boards that call into other boards.
 >
-> - The `serialize` function also takes a single argument: some metadata that describes the board. This is where we can set the title, description, and version of the board. Since we'll be making many boards in the future, it's a good practice to give meaningful values to these properties.
+> - The `serialize` function also takes a single argument: a metadata object that describes the board. This is where we can set the title, description, and version of the board. Since we'll be making many boards in the future, it's a good practice to give meaningful values to these properties.
 >
-> - Behind the scenes, debugger scans for all the files in `src/boards`, looks for the `default` export in each file, serializes it as BGL, and then renders the BGL in the debugger. This is why we see the "Blank" board in the debugger window.
+> - Behind the scenes, debugger scans for all the files in `src/boards`, looks for the `default` export in each file, serializes it as BGL, and then renders the BGL in the debugger. This is why we see the "Blank" board in the debugger window. It will also update on save, thanks to the hot reload mechanism. For example, try temporarily updating the two text instances to another string, save your changes, and observe how the debugger view updates accordingly.
 
 In the debugger window, we can see that the board asks for the `text` input. If we enter something there, and hit "Run", we'll see that what we entered gets passed through to the output.
 
@@ -103,7 +115,7 @@ In the debugger window, we can see that the board asks for the `text` input. If 
 > This "bags of named input and output ports" pattern is very common in Breadboard. Within a board, passing data means connecting output ports to input ports.
 
 > [!TIP]
-> If the `({ text })` stuff looks a little weird to you, it's a fairly recent feature of Javascript/Typescript called "[destructuring assignment](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment)". The `({text})` expression can also be written in this more familiar way:
+> If the `({ text })` stuff looks a little weird to you, it's a fairly recent feature of JavaScript/TypeScript called "[destructuring assignment](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment)". The `({text})` expression can also be written in this more familiar way:
 >
 > ```ts
 > export default await board((inputs) => {
@@ -114,7 +126,7 @@ In the debugger window, we can see that the board asks for the `text` input. If 
 
 ### Making a new board
 
-To get a better sense of how debugger and code editor interact, let's play with the board a little bit to get a feel for it.
+To get a better sense of how debugger and code editor interact, let's play with the board a little bit.
 
 First, we'll make a copy of a blank board to create a clean slate. Make a copy of the file named `src/boards/blank.ts` and give it a name that feels right to you, like `src/boards/fun.ts`.
 
@@ -135,7 +147,7 @@ the `serialize` function. In our new board file, change the title and descriptio
 });
 ```
 
-When we save the file in the code editor, the tile representing our new board will change to reflect our edits. Now, click on that tile to open the board in debuggger.
+When we save the file in the code editor, the tile representing our new board will change to reflect our edits. Now, click on that tile to open the board in debugger.
 
 (TODO: screenshot of new board open in debugger)
 
@@ -194,6 +206,8 @@ A handy trick is to use the `examples` method to provide an example value for th
 +   .examples("4");
 ```
 
+Note that `examples` takes a `string` as an argument, since it's only meant to be displayed in the input field.
+
 > [!TIP]
 > The `title`, `description`, and `example` methods are just a few ways to describe inputs and outputs. We'll see more of them later. The thing to know now is that when serialized to BGL, these descriptions are preserved as [JSON Schema](https://json-schema.org/).
 
@@ -202,9 +216,9 @@ A handy trick is to use the `examples` method to provide an example value for th
 We have a working board, but it isn't exactly useful. Let's see if we can add a node to it and make our board actually _do_ something.
 
 > [!NOTE]
-> "Nodes" are the key concept in Breadboard. Each node has a set of input and output ports, and it uses the input ports to produce the ouput ports. Typically, a node encapsulates a unit of functionality. In turn, a board is composed of one or more nodes, connecting input and output ports of these nodes to orchestrate whatever a board wants to do.
+> "Nodes" are the key concept in Breadboard. Each node has a set of input and output ports, and it uses the input ports to produce the output ports. Typically, a node encapsulates a unit of functionality. In turn, a board is composed of one or more nodes, connecting input and output ports of these nodes to orchestrate whatever a board wants to do.
 
-Both boards and nodes follow the same inputs/outputs pattern. A good way to think of is as more atomic, indivisible units of functionality compared to boards.
+Both boards and nodes follow the same inputs/outputs pattern. A good way to think of it is as more atomic, indivisible units of functionality compared to boards.
 
 To make this more concrete, let's add this bit of code just before the `board` invocation:
 
@@ -230,7 +244,7 @@ We will also need to update TypeScript imports in this file to include the `code
 >
 > Just like before, we will go over this bit of code to orient ourselves:
 >
-> - the `code` function is how we ask Breadboard to create a new type of node.
+> - the `code` function is how we ask Breadboard to create a new type of node, of type `code`.
 >
 > - just like the `board` function, it takes a single input: the "node function" that describes what the node will do.
 >
@@ -348,6 +362,8 @@ So far, we've been rolling nodes by hand. It's fun, but it's not the only way to
 
 Kits are collections of ready-made node factory functions for all types of nodes. Typically, kits are organized by purpose.
 
+Kits are an easy way to add functionality into your board without writing it yourself :) Think of kits as purpose-built third-party libraries you'd add into your web application.
+
 For example, there's a [template kit](https://github.com/breadboard-ai/breadboard/tree/main/packages/template-kit), which contains node types that help with templating: `promptTemplate` and `urlTemplate`.
 
 To import a kit, install the npm package that contains it and import it into your board:
@@ -356,6 +372,7 @@ To import a kit, install the npm package that contains it and import it into you
 import { templates } from "@google-labs/template-kit";
 ```
 
+(If you're usin the Replit boilerplate, this package is already installed.)
 Then, use the various node factory functions in your board:
 
 ```ts
@@ -365,9 +382,9 @@ const { prompt } = templates.promptTemplate({
 });
 ```
 
-Each node type expects its own set of inputs and produces various outptus to serve its purpose. The `promptTemplate` above helps manipulating strings using a simple handlebar-style syntax.
+Each node type expects its own set of inputs and produces various outputs to serve its purpose. The `promptTemplate` above helps manipulating strings using a simple handlebar-style syntax.
 
-A required input port is `template`, which is expected to be a string that contains zero or more placeholders to be replaced with values from other input ports. Specify placeholders as `{{inputName}}` in the template. The placeholders in the template must match the input ports connceted to node. The node will replace all placeholders with values from the inputs and pass the result along as the `prompt` output property port.
+A required input port is `template`, which is expected to be a string that contains zero or more placeholders to be replaced with values from other input ports. Specify placeholders as `{{inputName}}` in the template. The placeholders in the template must match the input ports connected to nodes. The node will replace all placeholders with values from the inputs and pass the result along as the `prompt` output property port.
 
 Here's a whistlestop tour of the kits and node types they provide:
 
@@ -404,7 +421,7 @@ It is often helpful to provide some metadata about the purpose of the node -- wh
 
 To do that, use the special (and optional) `$metadata` property when creating a node instance. This property is an object with two optional keys: `title` and `description`.
 
-The `title` of the node will appear as its title in the visual representation of the board (or show the automaticaly generated identifier otherwise).
+The `title` of the node will appear as its title in the visual representation of the board (or show the automatically generated identifier otherwise).
 
 ```ts
 const requirementsExtractor = agents.worker({
