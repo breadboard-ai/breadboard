@@ -73,6 +73,17 @@ export class InspectableEdgeCache {
     return this.#ensureEdgeMap().get(edge);
   }
 
+  getOrCreate(edge: EdgeDescriptor): InspectableEdge {
+    let result = this.get(edge);
+    if (result) {
+      return result;
+    }
+    result = new Edge(this.#graph, edge);
+    console.assert(this.#map, "Edge map not initialized when adding.");
+    this.add(edge);
+    return result;
+  }
+
   add(edge: EdgeDescriptor) {
     if (!this.#map) {
       // If the map is not yet initialized, we can exit early. since we presume
