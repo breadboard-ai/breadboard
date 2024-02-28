@@ -320,8 +320,9 @@
               "type": "object",
               "properties": {
                 "boards": {
-                  "type": "string",
-                  "title": "boards"
+                  "title": "List",
+                  "type": "array",
+                  "description": "The list to iterate over."
                 }
               },
               "required": [
