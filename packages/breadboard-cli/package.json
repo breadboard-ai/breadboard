@@ -149,7 +149,7 @@
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.11.20",
     "@types/serve-handler": "^6.1.4",
-    "@typescript-eslint/eslint-plugin": "^6.20.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^6.20.0",
     "ava": "^5.2.0",
     "typescript": "^5.3.3"
@@ -163,6 +163,6 @@
     "esbuild": "^0.20.1",
     "serve": "^14.2.1",
     "vite": "^5.1.4",
-    "yaml": "^2.3.4"
+    "yaml": "^2.4.0"
   }
 }

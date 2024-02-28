@@ -117,7 +117,7 @@
     "@google-labs/tsconfig": "^0.0.1",
     "@types/express": "^4.17.17",
     "@types/node": "^20.11.20",
-    "@typescript-eslint/eslint-plugin": "^6.20.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^6.20.0",
     "jsonschema": "^1.4.1",
     "ava": "^5.2.0",
