@@ -59,13 +59,6 @@ export class Editor extends LitElement {
   @property()
   editable = false;
 
-  /**
-   * Used to attempt a graph re-render. This isn't guaranteed to happen, though,
-   * as it depends on whether the editor was expecting the change.
-   */
-  @property()
-  renderCount = 0;
-
   @property()
   highlightedNodeId: string | null = null;
 
@@ -92,7 +85,6 @@ export class Editor extends LitElement {
   #onKeyDownBound = this.#onKeyDown.bind(this);
   #top = 0;
   #left = 0;
-  #expectingRefresh = false;
   #formRef: Ref<HTMLFormElement> = createRef();
   #schemaVersion = 0;
 
@@ -424,10 +416,7 @@ export class Editor extends LitElement {
         }>
       | Map<PropertyKey, unknown>
   ): void {
-    const shouldProcessGraph =
-      changedProperties.has("loadInfo") || this.#expectingRefresh;
-
-    this.#expectingRefresh = false;
+    const shouldProcessGraph = changedProperties.has("loadInfo");
 
     if (shouldProcessGraph && this.loadInfo && this.loadInfo.graphDescriptor) {
       this.#processGraph(this.loadInfo.graphDescriptor);
@@ -444,7 +433,6 @@ export class Editor extends LitElement {
 
   #onGraphEdgeAttach(evt: Event) {
     const { edge } = evt as GraphNodeEdgeAttach;
-    this.#expectingRefresh = true;
     this.dispatchEvent(
       new EdgeChangeEvent("add", {
         from: edge.from.descriptor.id,
@@ -457,7 +445,6 @@ export class Editor extends LitElement {
 
   #onGraphEdgeDetach(evt: Event) {
     const { edge } = evt as GraphNodeEdgeDetach;
-    this.#expectingRefresh = true;
     this.dispatchEvent(
       new EdgeChangeEvent("remove", {
         from: edge.from.descriptor.id,
@@ -470,7 +457,6 @@ export class Editor extends LitElement {
 
   #onGraphEdgeChange(evt: Event) {
     const { fromEdge, toEdge } = evt as GraphNodeEdgeChange;
-    this.#expectingRefresh = true;
     this.dispatchEvent(
       new EdgeChangeEvent("remove", {
         from: fromEdge.from.descriptor.id,
@@ -492,7 +478,6 @@ export class Editor extends LitElement {
 
   #onGraphNodeDelete(evt: Event) {
     const { id } = evt as GraphNodeDelete;
-    this.#expectingRefresh = true;
     this.dispatchEvent(new NodeDeleteEvent(id));
   }
 
@@ -518,7 +503,6 @@ export class Editor extends LitElement {
     // Store the middle of the node for later.
     this.#graph.setNodeLayoutPosition(id, { x, y });
 
-    this.#expectingRefresh = true;
     this.dispatchEvent(new NodeCreateEvent(id, data));
 
     this.nodeValueBeingEdited = {
@@ -906,7 +890,6 @@ export class Editor extends LitElement {
       delete configuration[name];
     }
 
-    this.#expectingRefresh = true;
     this.defaultConfiguration = null;
     this.dispatchEvent(new NodeUpdateEvent(id, configuration));
   }
