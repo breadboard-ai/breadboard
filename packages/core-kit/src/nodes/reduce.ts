@@ -11,6 +11,7 @@ import {
   NodeHandlerContext,
   NodeValue,
   OutputValues,
+  SchemaBuilder,
 } from "@google-labs/breadboard";
 
 export type ReduceInputs = {
@@ -49,7 +50,7 @@ export type ReduceFunctionInputs = {
   item: NodeValue;
 };
 
-export default async (
+const invoke = async (
   inputs: InputValues,
   context?: NodeHandlerContext
 ): Promise<OutputValues> => {
@@ -76,3 +77,33 @@ export default async (
   }
   return { accumulator: result };
 };
+
+const describe = async () => {
+  const inputSchema = new SchemaBuilder()
+    .addProperty("list", {
+      title: "List",
+      type: "array",
+      description: "The list to iterate over.",
+    })
+    .addProperty("board", {
+      title: "Board",
+      type: "object",
+      description: "The board to run for each element of the list.",
+    })
+    .addProperty("accumulator", {
+      title: "Accumulator",
+      type: "object",
+      description: "The initial value for the accumulator.",
+    })
+    .build();
+  const outputSchema = new SchemaBuilder()
+    .addProperty("accumulator", {
+      title: "Accumulator",
+      type: "object",
+      description: "The final value of the accumulator.",
+    })
+    .build();
+  return { inputSchema, outputSchema };
+};
+
+export default { invoke, describe };
