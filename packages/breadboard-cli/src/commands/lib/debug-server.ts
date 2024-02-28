@@ -25,6 +25,11 @@ const nodeResolve =
 const json = jsonDefault as unknown as typeof jsonDefault.default;
 const commonjs = commonjsDefault as unknown as typeof commonjsDefault.default;
 
+/*
+  This function compiles and bundles known 'node_module' into a single string.
+
+  If the compilation fails, it will throw an error and halt the entire application.
+*/
 const compile = async (file: string) => {
   console.log(`Compiling ${file}`);
   const bundle = await rollup({
@@ -109,9 +114,7 @@ export const startServer = async (file: string, options: DebugOptions) => {
     if (requestURL.pathname.startsWith("/kits/")) {
       const kitName = requestURL.pathname.replace("/kits/", "");
       const kit = options.kit?.find((kit) => kit === kitName);
-      console.log(kit);
       if (kit && kit in kits) {
-        console.log(kits[kit]);
         const kitCode = kits[kit].code;
         response.writeHead(200, {
           "Content-Type": "application/javascript",
