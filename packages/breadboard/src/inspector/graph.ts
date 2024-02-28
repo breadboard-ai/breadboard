@@ -133,13 +133,13 @@ class Graph implements InspectableGraphWithStore {
   incomingForNode(id: NodeIdentifier): InspectableEdge[] {
     return this.#graph.edges
       .filter((edge) => edge.to === id)
-      .map((edge) => this.#edges.get(edge) as InspectableEdge);
+      .map((edge) => this.#edges.getOrCreate(edge));
   }
 
   outgoingForNode(id: NodeIdentifier): InspectableEdge[] {
     return this.#graph.edges
       .filter((edge) => edge.from === id)
-      .map((edge) => this.#edges.get(edge) as InspectableEdge);
+      .map((edge) => this.#edges.getOrCreate(edge));
   }
 
   entries(): InspectableNode[] {
