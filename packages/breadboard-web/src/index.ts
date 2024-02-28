@@ -600,6 +600,13 @@ export class Main extends LitElement {
     }
   }
 
+  #updateLoadInfo(graphDescriptor: GraphDescriptor) {
+    this.loadInfo = {
+      ...this.loadInfo,
+      graphDescriptor,
+    };
+  }
+
   render() {
     if (this.mode === MODE.LIST) {
       return html`<header>
@@ -662,8 +669,7 @@ export class Main extends LitElement {
                 this.toast(result.error, BreadboardUI.Events.ToastType.ERROR);
               }
 
-              loadInfo.graphDescriptor = editableGraph.raw();
-              this.#uiRef.value?.requestUpdate();
+              this.#updateLoadInfo(editableGraph.raw());
             });
           }}
           @breadboardnodecreate=${(
@@ -697,8 +703,7 @@ export class Main extends LitElement {
                 );
               }
 
-              loadInfo.graphDescriptor = editableGraph.raw();
-              this.#uiRef.value?.requestUpdate();
+              this.#updateLoadInfo(editableGraph.raw());
             });
           }}
           @breadboardnodeupdate=${(
@@ -734,8 +739,7 @@ export class Main extends LitElement {
                   );
                 }
 
-                loadInfo.graphDescriptor = editableGraph.raw();
-                this.#uiRef.value?.requestUpdate();
+                this.#updateLoadInfo(editableGraph.raw());
               });
           }}
           @breadboardnodedelete=${(
@@ -763,8 +767,7 @@ export class Main extends LitElement {
                 );
               }
 
-              loadInfo.graphDescriptor = editableGraph.raw();
-              this.#uiRef.value?.requestUpdate();
+              this.#updateLoadInfo(editableGraph.raw());
             });
           }}
           @breadboardmessagetraversal=${() => {
