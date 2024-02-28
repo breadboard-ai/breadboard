@@ -71,3 +71,17 @@ test("tryParseJson correctly parses JSON with Markdown code block", (t) => {
   const result = tryParseJson(json);
   t.deepEqual(result, { foo: "bar" });
 });
+
+test("tryParseJson correctly strips stuff outside of the Markdown code block", (t) => {
+  {
+    const json = 'bar```json\n{"foo": "bar"}\n```\nfooo';
+    const result = tryParseJson(json);
+    t.deepEqual(result, { foo: "bar" });
+  }
+  {
+    const json =
+      'sure, here is the JSON you requested:\n\n```json\n{"foo": "bar"}\n```\n\nAdditionally, here is an alternative version of this JSON:\n\n```json\n{"bar": "baz"}\n```\n\nI hope this helps!';
+    const result = tryParseJson(json);
+    t.deepEqual(result, { bar: "baz" });
+  }
+});
