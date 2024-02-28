@@ -37,6 +37,10 @@ export default defineConfig(async (_) => {
           watch: path.resolve("src/boards/**/*.ts"),
           run: "npm run generate:graphs",
         },
+        {
+          watch: path.resolve("src/boards/*.py"),
+          run: "npm run generate:graphs",
+        },
       ]),
       fullReload(["public/*.json"]),
     ],
