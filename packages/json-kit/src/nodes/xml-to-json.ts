@@ -46,7 +46,9 @@ const toAltJson = (
 ): [string, NodeValue] => {
   if (node.type === "document") {
     const doc = node as XmlDocument;
-    const element = doc.children.find((child) => child.type === "element") as XmlElement;
+    const element = doc.children.find(
+      (child) => child.type === "element"
+    ) as XmlElement;
     const [name, value] = toAltJson(element);
     return ["$doc", element ? { [name]: value } : ""];
   }
@@ -75,6 +77,7 @@ export default {
         properties: {
           xml: {
             title: "XML",
+            type: "string",
             description: "Valid XML as a string",
           },
         },
@@ -83,6 +86,7 @@ export default {
         properties: {
           json: {
             title: "JSON",
+            type: "object",
             description:
               "JSON representation of the input XML. Represented as alt-json, described in https://developers.google.com/gdata/docs/json",
           },
