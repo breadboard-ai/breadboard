@@ -4,11 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  InputValues,
-  NodeValue,
-  OutputValues,
-  Schema,
+import {
+  SchemaBuilder,
+  type InputValues,
+  type NodeDescriberFunction,
+  type NodeValue,
+  type OutputValues,
+  type Schema,
 } from "@google-labs/breadboard";
 import Ajv from "ajv";
 
@@ -93,7 +95,7 @@ export const validateJson = (
   return result;
 };
 
-export default async (inputs: InputValues): Promise<OutputValues> => {
+const invoke = async (inputs: InputValues): Promise<OutputValues> => {
   const { json, schema } = inputs as ValidateJsonInputs;
   if (!json) throw new Error("The `json` input is required.");
 
@@ -114,4 +116,52 @@ export default async (inputs: InputValues): Promise<OutputValues> => {
 
   // Now, let's try to validate JSON.
   return validateJson(parsed, parsedSchema as Schema);
+};
+
+const describe: NodeDescriberFunction = async () => {
+  const inputSchema = new SchemaBuilder()
+    .addProperty("json", {
+      title: "json",
+      description: "The string to validate as JSON.",
+      type: "string",
+    })
+    .addProperty("schema", {
+      title: "schema",
+      description: "Optional schema to validate against.",
+      type: "object",
+    })
+    .addRequired(["json"])
+    .build();
+
+  const outputSchema = new SchemaBuilder()
+    .addProperty("json", {
+      title: "json",
+      description: "The validated JSON.",
+    })
+    .addProperty("$error", {
+      title: "$error",
+      description: "The error if the JSON is invalid.",
+      type: "object",
+      properties: {
+        kind: { type: "string", enum: ["error"] },
+        error: {
+          type: "object",
+          properties: {
+            type: { type: "string", enum: ["parsing", "validation"] },
+            message: { type: "string" },
+          },
+        },
+      },
+    })
+    .build();
+
+  return {
+    inputSchema,
+    outputSchema,
+  };
+};
+
+export default {
+  invoke,
+  describe,
 };

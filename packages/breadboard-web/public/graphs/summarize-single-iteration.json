@@ -41,8 +41,9 @@
               "title": "context"
             },
             "json": {
-              "type": "string",
-              "title": "json"
+              "title": "json",
+              "description": "The validated JSON.",
+              "type": "string"
             }
           }
         }
