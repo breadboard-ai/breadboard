@@ -13,7 +13,7 @@ export class GraphEdge extends PIXI.Graphics {
   #edge: InspectableEdge | null = null;
   #edgeColor = 0xaaaaaa;
   #overrideColor: number | null = null;
-  #padding = 25;
+  #loopBackPadding = 10;
   #overrideInLocation: PIXI.ObservablePoint<unknown> | null = null;
   #overrideOutLocation: PIXI.ObservablePoint<unknown> | null = null;
 
@@ -115,95 +115,112 @@ export class GraphEdge extends PIXI.Graphics {
     inLocation.x += this.toNode.position.x;
     inLocation.y += this.toNode.position.y;
 
-    const midX = Math.round((inLocation.x - outLocation.x) / 2);
-    const midY = Math.round((inLocation.y - outLocation.y) / 2);
+    const midY = Math.round((inLocation.y - outLocation.y) * 0.5);
     const color =
       this.#overrideColor ?? this.fromNode.edgeColor ?? this.#edgeColor;
 
     this.lineStyle(2, color);
     this.moveTo(outLocation.x, outLocation.y);
 
+    const ndx = outLocation.x - inLocation.x;
+    const ndy = outLocation.y - inLocation.y;
+    const nodeDistance = Math.sqrt(ndx * ndx + ndy * ndy);
+    const padding = Math.min(nodeDistance * 0.25, 50);
+
+    // Loopback.
     if (
       this.fromNode === this.toNode &&
       !this.#overrideInLocation &&
       !this.#overrideOutLocation
     ) {
-      // Loopback
-      this.lineTo(outLocation.x + this.#padding, outLocation.y);
+      this.lineTo(outLocation.x + padding, outLocation.y);
       this.lineTo(
-        outLocation.x + this.#padding,
-        outLocation.y + this.fromNode.height / 2 + this.#padding
+        outLocation.x + padding,
+        this.fromNode.y + this.fromNode.height + this.#loopBackPadding
       );
       this.lineTo(
-        inLocation.x - this.#padding,
-        outLocation.y + this.fromNode.height / 2 + this.#padding
+        inLocation.x - padding,
+        this.fromNode.y + this.fromNode.height + this.#loopBackPadding
       );
-      this.lineTo(inLocation.x - this.#padding, inLocation.y);
+      this.lineTo(inLocation.x - padding, inLocation.y);
       this.lineTo(inLocation.x, inLocation.y);
       return;
     }
 
-    const curve = 5;
-    let curveY = outLocation.y > inLocation.y ? -curve : curve;
-    let curveX = curve;
-    if (Math.abs(outLocation.y - inLocation.y) < 4 * curve) {
-      curveY = 0;
-    }
+    // All other cases.
+    // First calculate the line segments.
+    const pivotA = {
+      x:
+        outLocation.x +
+        Math.max(padding, (inLocation.x - outLocation.x) * 0.25),
+      y: outLocation.y + midY * 0.5,
+    };
 
-    if (midX > this.#padding) {
-      this.lineTo(outLocation.x + midX - curve, outLocation.y);
-      this.quadraticCurveTo(
-        outLocation.x + midX,
-        outLocation.y,
-        outLocation.x + midX,
-        outLocation.y + curveY
-      );
-      this.lineTo(outLocation.x + midX, inLocation.y - curveY);
-      this.quadraticCurveTo(
-        outLocation.x + midX,
-        inLocation.y,
-        outLocation.x + midX + curveX,
+    const midA = {
+      x: Math.max(
+        outLocation.x,
+        outLocation.x + (inLocation.x - outLocation.x) * 0.5
+      ),
+      y: outLocation.y + midY,
+    };
+
+    const midB = {
+      x: Math.min(
+        inLocation.x,
+        inLocation.x - (inLocation.x - outLocation.x) * 0.5
+      ),
+      y: outLocation.y + midY,
+    };
+
+    const pivotB = {
+      x:
+        inLocation.x - Math.max(padding, (inLocation.x - outLocation.x) * 0.25),
+      y: outLocation.y + midY + (inLocation.y - (outLocation.y + midY)) * 0.5,
+    };
+
+    // Next calculate the control points.
+    const angleA = Math.atan2(midA.y - outLocation.y, midA.x - outLocation.x);
+    const angleB = angleA + Math.PI;
+    const dx = Math.abs(pivotA.x - outLocation.x);
+    const dy = Math.abs(pivotA.y - outLocation.y);
+    const distance = Math.min(dy, Math.sqrt(dx * dx + dy * dy));
+
+    const cpA1 = {
+      x: pivotA.x - Math.cos(angleA) * distance,
+      y: pivotA.y - Math.sin(angleA) * distance,
+    };
+
+    const cpA2 = {
+      x: pivotA.x + Math.cos(angleA) * distance,
+      y: pivotA.y + Math.sin(angleA) * distance,
+    };
+
+    const cpB1 = {
+      x: pivotB.x + Math.cos(angleB) * distance,
+      y: pivotB.y + Math.sin(angleB) * distance,
+    };
+
+    const cpB2 = {
+      x: pivotB.x - Math.cos(angleB) * distance,
+      y: pivotB.y - Math.sin(angleB) * distance,
+    };
+
+    // Now draw the lines.
+    this.moveTo(outLocation.x, outLocation.y);
+    if (midA.x !== midB.x) {
+      this.bezierCurveTo(cpA1.x, cpA1.y, cpA2.x, cpA2.y, midA.x, midA.y);
+      this.lineTo(midB.x, midB.y);
+      this.bezierCurveTo(
+        cpB1.x,
+        cpB1.y,
+        cpB2.x,
+        cpB2.y,
+        inLocation.x,
         inLocation.y
       );
-      this.lineTo(inLocation.x, inLocation.y);
     } else {
-      // Ensure the edge won't come back on itself in the middle.
-      if (
-        inLocation.x - this.#padding + curveX >
-        outLocation.x + this.#padding - curveX
-      ) {
-        curveX = 0;
-      }
-
-      this.lineTo(outLocation.x + this.#padding - curveX, outLocation.y);
-      this.quadraticCurveTo(
-        outLocation.x + this.#padding,
-        outLocation.y,
-        outLocation.x + this.#padding,
-        outLocation.y + curveY
-      );
-      this.lineTo(outLocation.x + this.#padding, outLocation.y + midY - curveY);
-      this.quadraticCurveTo(
-        outLocation.x + this.#padding,
-        outLocation.y + midY,
-        outLocation.x + this.#padding - curveX,
-        outLocation.y + midY
-      );
-      this.lineTo(inLocation.x - this.#padding + curveX, outLocation.y + midY);
-      this.quadraticCurveTo(
-        inLocation.x - this.#padding,
-        outLocation.y + midY,
-        inLocation.x - this.#padding,
-        outLocation.y + midY + curveY
-      );
-      this.lineTo(inLocation.x - this.#padding, inLocation.y - curveY);
-      this.quadraticCurveTo(
-        inLocation.x - this.#padding,
-        inLocation.y,
-        inLocation.x - this.#padding + curveX,
-        inLocation.y
-      );
-      this.lineTo(inLocation.x, inLocation.y);
+      this.quadraticCurveTo(pivotA.x, outLocation.y, midA.x, midA.y);
+      this.quadraticCurveTo(pivotB.x, inLocation.y, inLocation.x, inLocation.y);
     }
 
     // Circles at the start & end.

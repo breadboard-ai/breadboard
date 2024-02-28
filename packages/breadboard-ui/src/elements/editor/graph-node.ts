@@ -19,7 +19,7 @@ export class GraphNode extends PIXI.Graphics {
   #type = "";
   // A title that is provided in the constructor, not
   // the one that shows up in the graph.
-  #nodeTtitle = "";
+  #nodeTitle = "";
   // The title that shows up in the graph.
   #title = "";
   #titleText: PIXI.Text | null = null;
@@ -49,7 +49,7 @@ export class GraphNode extends PIXI.Graphics {
   constructor(id: string, type: string, title: string) {
     super();
 
-    this.#nodeTtitle = title;
+    this.#nodeTitle = title;
     this.id = id;
     this.type = type;
     this.edgeColor = 0xcccccc;
@@ -148,7 +148,7 @@ export class GraphNode extends PIXI.Graphics {
 
   set type(type: string) {
     this.#type = type;
-    this.#title = `${type} (${this.#nodeTtitle})`;
+    this.#title = `${type} (${this.#nodeTitle})`;
     this.#clearOldTitle();
 
     this.#isDirty = true;
@@ -346,13 +346,11 @@ export class GraphNode extends PIXI.Graphics {
       width = Math.max(
         width,
         this.#padding + // Left hand side.
-          2 * this.#portRadius + // Left hand port diameter.
           this.#portPadding + // Left hand port padding on right.
           inPortWidth + // Left label at this row.
           2 * this.#portLabelHorizontalPadding + // Port label padding for both sides.
           outPortWidth + // Right label at this row.
           this.#portPadding + // Right hand port padding on right.
-          2 * this.#portRadius + // Right hand port diameter.
           this.#padding // Right hand side padding.
       );
     }
@@ -468,7 +466,7 @@ export class GraphNode extends PIXI.Graphics {
       const nodePort = new GraphNodePort(GraphNodePortType.IN);
       nodePort.name = port.name;
       nodePort.radius = this.#portRadius;
-      nodePort.x = this.#padding + this.#portRadius;
+      nodePort.x = 0;
       nodePort.y = portY + label.height * 0.5;
       nodePort.editable = this.editable;
       nodePort.status = port.status;
@@ -500,7 +498,7 @@ export class GraphNode extends PIXI.Graphics {
       const nodePort = new GraphNodePort(GraphNodePortType.OUT);
       nodePort.name = port.name;
       nodePort.radius = this.#portRadius;
-      nodePort.x = this.#width - this.#padding - this.#portRadius;
+      nodePort.x = this.#width;
       nodePort.y = portY + label.height * 0.5;
       nodePort.editable = this.editable;
       nodePort.status = port.status;
