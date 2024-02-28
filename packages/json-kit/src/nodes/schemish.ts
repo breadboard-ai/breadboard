@@ -4,11 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  InputValues,
-  NodeValue,
-  OutputValues,
-  Schema,
+import {
+  SchemaBuilder,
+  type InputValues,
+  type NodeValue,
+  type OutputValues,
+  type Schema,
 } from "@google-labs/breadboard";
 
 export const convert = (schema: Schema): NodeValue => {
@@ -60,7 +61,34 @@ export type SchemishOutputs = OutputValues & {
   schemish: NodeValue;
 };
 
-export default async (inputs: InputValues): Promise<OutputValues> => {
+const invoke = async (inputs: InputValues): Promise<OutputValues> => {
   const { schema } = inputs;
   return { schemish: convert(schema as Schema) };
+};
+
+const describe = async () => {
+  const inputSchema = new SchemaBuilder()
+    .addProperty("schema", {
+      title: "schema",
+      description: "The schema to convert to schemish.",
+      type: "object",
+    })
+    .addRequired("schema")
+    .build();
+
+  const outputSchema = new SchemaBuilder()
+    .addProperty("schemish", {
+      title: "schemish",
+      description: "The schemish object.",
+      type: "object",
+    })
+    .addRequired("schemish")
+    .build();
+
+  return { inputSchema, outputSchema };
+};
+
+export default {
+  invoke,
+  describe,
 };
