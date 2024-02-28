@@ -24,7 +24,7 @@ import {
 } from "./types.js";
 
 function edgeToString(edge: InspectableEdge): string {
-  return `${edge.from.descriptor.id}:${edge.out}->${edge.to.descriptor.id}:${edge.to}`;
+  return `${edge.from.descriptor.id}:${edge.out}->${edge.to.descriptor.id}:${edge.in}`;
 }
 
 export class Graph extends PIXI.Container {
@@ -253,6 +253,7 @@ export class Graph extends PIXI.Container {
         return;
       }
 
+      const { width, height } = graphNode.dimensions;
       this.#highlightedNode.clear();
       this.#highlightedNode.lineStyle({
         width: 5,
@@ -262,10 +263,8 @@ export class Graph extends PIXI.Container {
       this.#highlightedNode.drawRoundedRect(
         graphNode.x - this.#highlightPadding,
         graphNode.y - this.#highlightPadding,
-        graphNode.width +
-          (this.#highlightPadding - (graphNode.selected ? 2 : 1)) * 2,
-        graphNode.height +
-          (this.#highlightPadding - (graphNode.selected ? 2 : 1)) * 2,
+        width + this.#highlightPadding * 2,
+        height + this.#highlightPadding * 2,
         graphNode.borderRadius + this.#highlightPadding
       );
 

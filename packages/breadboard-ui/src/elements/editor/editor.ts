@@ -560,16 +560,31 @@ export class Editor extends LitElement {
       );
     }
 
+    let selectedKit: string | null = null;
     return html`<div id="menu">
       <form>
         <ul>
           ${map(kitList, ([kitName, kitContents]) => {
             const kitId = kitName.toLocaleLowerCase().replace(/\W/, "-");
             return html`<li>
-              <input type="radio" name="selected-kit" id="${kitId}" /><label
-                for="${kitId}"
-                >${kitName}</label
-              >
+              <input
+                type="radio"
+                name="selected-kit"
+                id="${kitId}"
+                @click=${(evt: Event) => {
+                  if (!(evt.target instanceof HTMLInputElement)) {
+                    return;
+                  }
+
+                  if (evt.target.id === selectedKit) {
+                    evt.target.checked = false;
+                    selectedKit = null;
+                    return;
+                  }
+
+                  selectedKit = evt.target.id;
+                }}
+              /><label for="${kitId}">${kitName}</label>
               <ul>
                 ${map(kitContents, (kitItemName) => {
                   const kitItemId = kitItemName

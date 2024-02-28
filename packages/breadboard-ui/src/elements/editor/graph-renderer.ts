@@ -161,7 +161,7 @@ export class GraphRenderer extends LitElement {
 
           let snapToPort = true;
           let portType = activeGraphNodePort.type;
-          if (!edgeGraphic) {
+          if (!edgeGraphic || evt.metaKey) {
             edgeGraphic = activeGraph.createTemporaryEdge({
               from: { descriptor: { id: activeGraphNode.name } },
               to: { descriptor: { id: activeGraphNode.name } },
