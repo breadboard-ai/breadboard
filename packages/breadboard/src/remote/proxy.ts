@@ -148,12 +148,18 @@ export class ProxyClient {
     writer.close();
 
     const result = await reader.read();
-    if (result.done)
+    console.log("KEX: Got a result back");
+    if (result.done) {
+      console.log("KEX: Got proxy failure mepty response");
+      console.log(result);
       throw new Error("Unexpected proxy failure: empty response.");
+    }
 
     const [type] = result.value;
     if (type === "proxy") {
       const [, { outputs }] = result.value;
+      console.log("KEX: Got outputs");
+      console.log(outputs);
       return outputs;
     } else if (type === "error") {
       const [, { error }] = result.value;
@@ -181,7 +187,10 @@ export class ProxyClient {
             ) => {
               // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
               const descriptor = context.descriptor!;
+              console.log("KEX: Hey!");
               const result = await this.proxy(descriptor, inputs);
+              console.log("KEX: Result:");
+              console.log(result);
               return result;
             },
           },

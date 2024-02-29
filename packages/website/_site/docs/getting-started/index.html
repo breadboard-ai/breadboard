@@ -1,0 +1,125 @@
+
+<!DOCTYPE html>
+<title>Getting Started | Docs | Breadboard</title>
+<link rel="stylesheet" href="/static/common.css" />
+<script src="/js/pages/docs.js" type="module"></script>
+<bb-site-docs>
+  <p>Breadboard supports authoring in JavaScript/TypeScript and Python (coming soon).</p>
+<h2>Set up</h2>
+<p>Ensure you have <a href="https://nodejs.org/">Node.js</a> version 18 or higher:</p>
+<pre><code class="language-sh">node -v
+v21.2.0
+</code></pre>
+<p>Create a new workspace:</p>
+<pre><code class="language-sh">mkdir my-breadboard
+cd my-breadboard
+git init # Optional
+npm init
+</code></pre>
+<p>Install the following packages from npm:</p>
+<pre><code class="language-sh">npm i @google-labs/breadboard @google-labs/core-kit @google-labs/breadboard-cli
+</code></pre>
+<p><code>@google-labs/breadboard</code> is the main library used for building and running
+boards. <code>@google-labs/core-kit</code> contains operations that almost every board
+needs. <code>@google-labs/breadboard-cli</code> lets you run and build breadboards
+directly from the command-line.</p>
+<h2>Run your first board</h2>
+<p>Make a new file called <code>hello.json</code>:</p>
+<pre><code class="language-json">{
+  &quot;nodes&quot;: [
+    {
+      &quot;id&quot;: &quot;input-1&quot;,
+      &quot;type&quot;: &quot;input&quot;
+    },
+    {
+      &quot;id&quot;: &quot;output-1&quot;,
+      &quot;type&quot;: &quot;output&quot;
+    }
+  ],
+  &quot;edges&quot;: [
+    {
+      &quot;from&quot;: &quot;input-1&quot;,
+      &quot;out&quot;: &quot;say&quot;,
+      &quot;to&quot;: &quot;output-1&quot;,
+      &quot;in&quot;: &quot;hear&quot;
+    }
+  ]
+}
+</code></pre>
+<p>Run it with the Breadboard CLI:</p>
+<pre><code class="language-sh">npx breadboard run hello.json --input '{&quot;say&quot;:&quot;Hello World!&quot;}'
+</code></pre>
+<p>You should see this printed to your terminal:</p>
+<pre><code class="language-json">{ &quot;hear&quot;: &quot;Hello&quot; }
+</code></pre>
+<h3>What's going on?</h3>
+<p>The JSON file you created above is an example of a <em>board</em>. Boards are programs
+which can be executed by Breadboard <em>runtimes</em>. The <code>breadboard run</code> command
+uses the Breadboard JavaScript runtime to execute the board.</p>
+<p>This example is a trivial board that just takes some text input and displays it.
+We do this by creating an <em>input node</em>, an <em>output node</em>, and wiring the two
+together with an <em>edge</em>.</p>
+<h3>What's a node? What's an edge?</h3>
+<p><em>Nodes</em> are the basic building blocks of a board. Nodes are the logical &quot;steps&quot;
+of the program. Nodes perform work, like calling an API, doing some computation,
+receiving some user input, or displaying some output. They are similar to
+functions in other programming environments.</p>
+<p>Nodes have <em>types</em> which determine how they behave. Breadboard comes with some
+basic node types (like <code>input</code> and <code>output</code>). You can easily make your own node
+types, and you can import them from libraries called <em>kits</em> (explained later).</p>
+<p><em>Edges</em> are the connections between nodes along which data can flow. However,
+because nodes often take multiple inputs and produce multiple outputs, edges are
+more precisely connections between node <em>ports</em>.</p>
+<p><em>Ports</em> are the named inputs and outputs of a node. When data flows <em>into</em> a
+node, the port is called a <em>destination</em> port, and is similar to the parameters
+of a function. When data flows <em>out</em> of a node, the port is called a <em>source</em>
+port, and is similar to function return values. Some nodes have predefined
+ports, others (like <code>input</code> and <code>output</code>), create their ports automatically when
+an edge is created.</p>
+<h2>Generating boards with JavaScript</h2>
+<p>Typically you won't be writing boards directly as JSON by hand like we did
+above, you'll instead write a program in JavaScript, TypeScript, or Python
+(coming soon!) which <em>generates</em> the board. This gives you access to APIs which
+are much easier to work with than writing JSON by hand.</p>
+<p>Here's how to generate an equivalent board using the Breadboard JavaScript API:</p>
+<pre><code class="language-js">import { base, recipe } from &quot;@google-labs/breadboard&quot;;
+
+export default await recipe(() =&gt; {
+  const input = base.input({});
+  const output = base.output({});
+  input.say.to(output.hear);
+  return output;
+}).serialize();
+</code></pre>
+<p>This JavaScript file can be compiled with the Breadboard CLI, producing a very
+similar JSON file to what we wrote above:</p>
+<pre><code class="language-sh">npx breadboard make hello.js
+</code></pre>
+<p>Or you can just run it directly:</p>
+<pre><code class="language-sh">npx breadboard run hello.js --input '{&quot;say&quot;:&quot;Hello World!&quot;}'
+</code></pre>
+<h3>What's going on?</h3>
+<p>We call <code>recipe</code> to declare a new board:</p>
+<pre><code class="language-js">recipe(() =&gt; {
+  // ...
+});
+</code></pre>
+<p>These lines create two nodes within that board:</p>
+<pre><code class="language-js">const input = base.input({});
+const output = base.output({});
+</code></pre>
+<p>This line creates an edge that connects the <code>input</code> node's <code>say</code> source port to
+the <code>output</code> node's <code>hear</code> destination port:</p>
+<pre><code class="language-js">// +----------------------- input node
+// |   +------------------- source port
+// |   |       +----------- output node
+// |   |       |     +----- destination port
+// |   |       |     |
+input.say.to(output.hear);
+</code></pre>
+<p>Finally, this line converts the board to the common JSON format and exports it
+from the JavaScript module, as expected by the Breadboard CLI:</p>
+<pre><code class="language-js">await recipe(() =&gt; { ... }).serialize();
+</code></pre>
+
+</bb-site-docs>

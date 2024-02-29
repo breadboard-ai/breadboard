@@ -17,4 +17,5 @@ dependencies = [
   "jsonref",
   "json_fix",
   "prettydiff",
+  "cloudpickle",
 ]

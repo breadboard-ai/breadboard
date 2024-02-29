@@ -14,7 +14,13 @@ import {
 import GeminiKit from "@google-labs/gemini-kit";
 import { loadKits } from "./utils/kit-loader";
 
-const PROXY_NODES = ["secrets", "fetch"];
+const PROXY_NODES = [
+  "secrets",
+  "fetch",
+  "runPython",
+  "testing",
+  "prompt-template-python",
+];
 
 const WORKER_URL =
   import.meta.env.MODE === "development" ? "/src/worker.ts" : "/worker.js";
@@ -26,7 +32,8 @@ const PROXY_SERVER_HARNESS_VALUE = "proxy-server";
 const WORKER_HARNESS_VALUE = "worker";
 const LOCAL_HARNESS_VALUE = "local";
 
-const PROXY_SERVER_URL = import.meta.env.VITE_PROXY_SERVER_URL;
+//const PROXY_SERVER_URL = import.meta.env.VITE_PROXY_SERVER_URL;
+const PROXY_SERVER_URL = "http://localhost:5174/";
 const DEFAULT_HARNESS = PROXY_SERVER_URL
   ? PROXY_SERVER_HARNESS_VALUE
   : LOCAL_HARNESS_VALUE;

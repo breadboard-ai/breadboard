@@ -25,6 +25,10 @@
       "path": "packages/core-kit"
     },
     {
+      "name": "python-kit",
+      "path": "packages/python-kit"
+    },
+    {
       "name": "json-kit",
       "path": "packages/json-kit"
     },

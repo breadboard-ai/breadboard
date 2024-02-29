@@ -1,0 +1,64 @@
+{
+  "title": "Testing Python adhoc boards",
+  "description": "Trying out making a board that uses a decorator.",
+  "version": "",
+  "graphs": {},
+  "nodes": [
+    {
+      "id": "node",
+      "type": "runPython",
+      "configuration": {
+        "key": "key11",
+        "code": "gAWVhAQAAAAAAACMF2Nsb3VkcGlja2xlLmNsb3VkcGlja2xllIwOX21ha2VfZnVuY3Rpb26Uk5QoaACMDV9idWlsdGluX3R5cGWUk5SMCENvZGVUeXBllIWUUpQoSwJLAEsASwRLBksDQ6SXAGQBfQJ8AXIRfAJ0AQAAAAAAAAAAAACmAAAAqwAAAAAAAAAAAHoNAAB9AnwCdAMAAAAAAAAAAAAAfACsAqYBAACrAQAAAAAAAAAAeg0AAH0CfAJ0AwAAAAAAAAAAAAB8AKYBAACrAQAAAAAAAAAAeg0AAH0CZAN8AGkBfQN8AnQDAAAAAAAAAAAAAGQFaQB8A6QBjgF6DQAAfQJkBHwCaQFTAJQoTksAjANrZXmUhZRoCYwGb3V0cHV0lCl0lIwPY2hpbGRfZnVuY3Rpb24xlIwPY2hpbGRfZnVuY3Rpb24ylIaUKGgJjAV2YWx1ZZRoC4wEYmxhcpR0lIxcL3Vzci9sb2NhbC9nb29nbGUvaG9tZS9rZXZ4aWFvL2JyZWFkYm9hcmQvcGFja2FnZXMvYnJlYWRib2FyZC13ZWIvc3JjL2JvYXJkcy9hZGhvYy1weXRob24ucHmUjA9tYXN0ZXJfZnVuY3Rpb26UaBRLVUNygADgCwyAJtgFCvAAAQMg2AQKjW/RDh/UDh/RBB+ARtgCCI1PoAPQDCTRDCTUDCTRAiSAJtgCCI1PmEPRDCDUDCDRAiCAJtgKD5ATiByAJNgCCI1P0Awj0AwjmGTQDCPQDCPRAiOAJtgKEpBG0Akb0AIblEMAlCkpdJRSlH2UKIwLX19wYWNrYWdlX1+UjACUjAhfX25hbWVfX5SMCF9fbWFpbl9flIwIX19maWxlX1+UaBN1Tk5OdJRSlGgAjBJfZnVuY3Rpb25fc2V0c3RhdGWUk5RoIH2UfZQoaBxoFIwMX19xdWFsbmFtZV9flGgUjA9fX2Fubm90YXRpb25zX1+UfZQoaAmMCGJ1aWx0aW5zlIwDc3RylJOUaBCMBnR5cGluZ5SMA0FueZSTlIwGcmV0dXJulGgojANpbnSUk5R1jA5fX2t3ZGVmYXVsdHNfX5ROjAxfX2RlZmF1bHRzX1+UTowKX19tb2R1bGVfX5RoHYwHX19kb2NfX5ROjAtfX2Nsb3N1cmVfX5ROjBdfY2xvdWRwaWNrbGVfc3VibW9kdWxlc5RdlIwLX19nbG9iYWxzX1+UfZQoaA1oAihoByhLAEsASwBLAEsBSwNDBpcAZAFTAJROSwOGlCkpaBNoDWgNS0xDB4AA2AkKiBGUaBYpKXSUUpRoGU5OTnSUUpRoImhAfZR9lChoHGgNaCVoDWgmfZRoMU5oMk5oM2gdaDROaDVOaDZdlGg4fZR1hpSGUjBoDmgCKGgHKEsBSwBLAEsBSwFLA0MGlwBkAVMAlGg7KWgJhZRoE2gOaA5LUGg8aBYpKXSUUpRoGU5OTnSUUpRoImhMfZR9lChoHGgOaCVoDmgmfZRoCWgqc2gxTmgyTmgzaB1oNE5oNU5oNl2UaDh9lHWGlIZSMHV1hpSGUjAu",
+        "python_version": "3.11.7"
+      }
+    },
+    {
+      "id": "input",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "field1": {
+              "default": "blaster",
+              "title": "Field1",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      }
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "output": {
+              "description": "All input smashed together.",
+              "title": "Output",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "input",
+      "to": "node",
+      "out": "field1",
+      "in": "value"
+    },
+    {
+      "from": "node",
+      "to": "output",
+      "out": "*",
+      "in": ""
+    }
+  ],
+  "kits": []
+}

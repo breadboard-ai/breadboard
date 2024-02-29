@@ -156,7 +156,6 @@ async function saveAllBoards(): Promise<void> {
   // for (const file of pyFiles) {
   //   const manifestEntry = await savePythonBoard(file);
   //   if (!manifestEntry) {
-  //     throw new RangeError();
   //     continue;
   //   }
   //   manifest.push(manifestEntry);

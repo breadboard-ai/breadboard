@@ -1,0 +1,154 @@
+{
+  "title": "CoffeBeBot (Python)",
+  "description": "A recreation of Coffeebot, which is a chatbot that takes in coffee orders and then sends them to a backend.",
+  "version": "0.0.3",
+  "graphs": {},
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "backend_url": {
+              "description": "Which backend url to send orders to",
+              "title": "Backend Url",
+              "type": "string"
+            },
+            "text": {
+              "default": "What you want to say?",
+              "title": "Text",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      }
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "properties": {
+            "text": {
+              "description": "Assistant: Assistant's response in the conversation with the user",
+              "title": "Assistant",
+              "type": "string"
+            }
+          },
+          "required": [
+            "text"
+          ],
+          "type": "object"
+        }
+      }
+    },
+    {
+      "id": "unknown-board-1",
+      "type": "unknown-board",
+      "configuration": {
+        "prompt": "H9",
+        "schema": {
+          "properties": {
+            "text": {
+              "title": "Text",
+              "type": "string"
+            },
+            "post_process": {
+              "title": "Post Process",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "prompt": {
+              "title": "Prompt",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      }
+    },
+    {
+      "id": "unknown-board-2",
+      "type": "unknown-board",
+      "configuration": {
+        "tools": [
+          "trivial-tool.json"
+        ],
+        "schema": {
+          "properties": {
+            "text": {
+              "title": "Text",
+              "type": "string"
+            },
+            "context": {
+              "title": "Context",
+              "type": "string"
+            },
+            "tools": {
+              "items": {
+                "properties": {
+                  "name": {
+                    "title": "Name",
+                    "type": "string"
+                  },
+                  "boardPath": {
+                    "title": "Boardpath",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "title": "Tools",
+              "type": "array"
+            }
+          },
+          "type": "object"
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "output",
+      "to": "input",
+      "out": "*",
+      "in": ""
+    },
+    {
+      "from": "unknown-board-1",
+      "to": "output",
+      "out": "*",
+      "in": ""
+    },
+    {
+      "from": "unknown-board-2",
+      "to": "unknown-board-1",
+      "out": "post_process",
+      "in": "post_process"
+    },
+    {
+      "from": "input",
+      "to": "unknown-board-2",
+      "out": "text",
+      "in": "text"
+    }
+  ],
+  "kits": [
+    {
+      "url": "npm:annotation=NoneType required=True"
+    },
+    {
+      "url": "npm:annotation=NoneType required=True"
+    },
+    {
+      "url": "npm:annotation=NoneType required=True"
+    },
+    {
+      "url": "npm:annotation=NoneType required=True"
+    }
+  ]
+}

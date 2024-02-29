@@ -22,7 +22,7 @@ class Math(Board[InputSchema, OutputSchema]):
       id="math-function",
       question=input.question,
       template="""Translate the math problem below into a self-contained,
-zero-argument JavaScript function named \`compute\` that can be executed
+zero-argument Python function named \`compute\` that can be executed
 to provide the answer to the problem. 
 
 Do not use any dependencies or libraries.
