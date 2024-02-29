@@ -6,7 +6,6 @@
 
 import { customElement, property } from "lit/decorators.js";
 import { LitElement, css, html, nothing } from "lit";
-import { asRuntimeKit } from "@google-labs/breadboard";
 export { PreviewRun } from "./preview-run.js";
 
 import Core from "@google-labs/core-kit";
@@ -16,37 +15,8 @@ import NodeNurseryWeb from "@google-labs/node-nursery-web";
 import PaLMKit from "@google-labs/palm-kit";
 import GeminiKit from "@google-labs/gemini-kit";
 import AgentKit from "@google-labs/agent-kit";
-
-const fetchAndLoadKits = async () => {
-  const response = await fetch(`${self.location.origin}/kits.json`);
-  const kitList = await response.json();
-
-  const kits = await Promise.all(
-    kitList.map(async (kit: string) => {
-      const module = await import(`${kit}`);
-
-      if (module.default == undefined) {
-        throw new Error(`Module ${kit} does not have a default export.`);
-      }
-
-      const moduleKeys = Object.getOwnPropertyNames(module.default.prototype);
-
-      if (
-        moduleKeys.includes("constructor") == false ||
-        moduleKeys.includes("handlers") == false
-      ) {
-        throw new Error(
-          `Module default export '${kit}' does not look like a Kit (either no constructor or no handler).`
-        );
-      }
-      return module.default;
-    })
-  );
-
-  return kits;
-};
-
-const kits = [
+import { loadKits } from "./utils/kit-loader.js";
+const kits = await loadKits([
   TemplateKit,
   Core,
   PaLMKit,
@@ -54,8 +24,7 @@ const kits = [
   NodeNurseryWeb,
   JSONKit,
   AgentKit,
-  ...(await fetchAndLoadKits()),
-].map((kitConstructor) => asRuntimeKit(kitConstructor));
+]);
 
 @customElement("bb-preview")
 export class Preview extends LitElement {

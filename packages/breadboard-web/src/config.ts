@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { asRuntimeKit } from "@google-labs/breadboard";
 import {
   HarnessProxyConfig,
   HarnessRemoteConfig,
@@ -17,9 +16,9 @@ import JSONKit from "@google-labs/json-kit";
 import TemplateKit from "@google-labs/template-kit";
 import NodeNurseryWeb from "@google-labs/node-nursery-web";
 import PaLMKit from "@google-labs/palm-kit";
-import Pinecone from "@google-labs/pinecone-kit";
 import GeminiKit from "@google-labs/gemini-kit";
 import AgentKit from "@google-labs/agent-kit";
+import { loadKits } from "./utils/kit-loader";
 
 const PROXY_NODES = [
   "palm-generateText",
@@ -45,46 +44,15 @@ const DEFAULT_HARNESS = PROXY_SERVER_URL
   ? PROXY_SERVER_HARNESS_VALUE
   : WORKER_HARNESS_VALUE;
 
-const fetchAndLoadKits = async () => {
-  const response = await fetch(`${self.location.origin}/kits.json`);
-  const kitList = await response.json();
-
-  const kits = await Promise.all(
-    kitList.map(async (kit: string) => {
-      const module = await import(`${kit}`);
-
-      if (module.default == undefined) {
-        throw new Error(`Module ${kit} does not have a default export.`);
-      }
-
-      const moduleKeys = Object.getOwnPropertyNames(module.default.prototype);
-
-      if (
-        moduleKeys.includes("constructor") == false ||
-        moduleKeys.includes("handlers") == false
-      ) {
-        throw new Error(
-          `Module default export '${kit}' does not look like a Kit (either no constructor or no handler).`
-        );
-      }
-      return module.default;
-    })
-  );
-
-  return kits;
-};
-
-const kits = [
+const kits = await loadKits([
   TemplateKit,
   Core,
-  Pinecone,
   PaLMKit,
   GeminiKit,
   NodeNurseryWeb,
   JSONKit,
   AgentKit,
-  ...(await fetchAndLoadKits()),
-].map((kitConstructor) => asRuntimeKit(kitConstructor));
+]);
 
 export const createRunConfig = (url: string): RunConfig => {
   const harness =
