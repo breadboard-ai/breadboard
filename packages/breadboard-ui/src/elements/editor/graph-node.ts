@@ -6,8 +6,7 @@
 
 import { InspectablePort } from "@google-labs/breadboard";
 import * as PIXI from "pixi.js";
-import { InteractionTracker } from "./interaction-tracker.js";
-import { GRAPH_NODE_DRAWN, GraphNodePortType } from "./types.js";
+import { GRAPH_OPERATIONS, GraphNodePortType } from "./types.js";
 import { GraphNodePort } from "./graph-node-port.js";
 
 export class GraphNode extends PIXI.Graphics {
@@ -40,8 +39,6 @@ export class GraphNode extends PIXI.Graphics {
   #outPortLocations: Map<string, PIXI.ObservablePoint<unknown>> = new Map();
   #editable = false;
   #selected = false;
-  #background = new PIXI.Graphics();
-  #selectedBackground = new PIXI.Graphics();
 
   public edgeColor: number;
   public portConnectedColor: number;
@@ -96,19 +93,58 @@ export class GraphNode extends PIXI.Graphics {
     this.portTextColor = 0x333333;
 
     this.eventMode = "static";
-    this.#background.cursor = "pointer";
+    this.cursor = "pointer";
+  }
 
-    this.on("pointerdown", () => {
-      InteractionTracker.instance().activeGraphNode = this;
+  addPointerEventListeners() {
+    let dragStart: PIXI.IPointData | null = null;
+    let originalPosition: PIXI.ObservablePoint<unknown> | null = null;
+    let lastClickTime = Number.NEGATIVE_INFINITY;
+
+    this.addEventListener("pointerdown", (evt: PIXI.FederatedPointerEvent) => {
+      if (!(evt.target instanceof GraphNode)) {
+        return;
+      }
+
+      const now = window.performance.now();
+      const timeDelta = now - lastClickTime;
+
+      lastClickTime = now;
+      if (timeDelta < 500) {
+        this.emit(GRAPH_OPERATIONS.GRAPH_NODE_DETAILS_REQUESTED, evt.target.id);
+        return;
+      }
+
+      dragStart = evt.global.clone();
+      originalPosition = this.position.clone();
     });
 
-    this.on("pointerover", () => {
-      InteractionTracker.instance().hoveredGraphNode = this;
-    });
+    this.addEventListener(
+      "globalpointermove",
+      (evt: PIXI.FederatedPointerEvent) => {
+        if (!dragStart || !originalPosition) {
+          return;
+        }
 
-    this.on("pointerout", () => {
-      InteractionTracker.instance().hoveredGraphNode = null;
-    });
+        const scale = this.worldTransform.a;
+        const dragPosition = evt.global;
+        const dragDeltaX = (dragPosition.x - dragStart.x) / scale;
+        const dragDeltaY = (dragPosition.y - dragStart.y) / scale;
+
+        this.x = Math.round(originalPosition.x + dragDeltaX);
+        this.y = Math.round(originalPosition.y + dragDeltaY);
+
+        this.emit(GRAPH_OPERATIONS.GRAPH_NODE_MOVED, this.x, this.y);
+      }
+    );
+
+    const onPointerUp = () => {
+      dragStart = null;
+      originalPosition = null;
+    };
+
+    this.addEventListener("pointerupoutside", onPointerUp);
+    this.addEventListener("pointerup", onPointerUp);
   }
 
   #clearOldTitle() {
@@ -135,11 +171,7 @@ export class GraphNode extends PIXI.Graphics {
 
   set selected(selected: boolean) {
     this.#selected = selected;
-    if (selected) {
-      this.addChildAt(this.#selectedBackground, 0);
-    } else {
-      this.#selectedBackground.removeFromParent();
-    }
+    this.#isDirty = true;
   }
 
   get type() {
@@ -245,8 +277,7 @@ export class GraphNode extends PIXI.Graphics {
       this.#isDirty = false;
       this.#draw();
 
-      // We use this to trigger the edge drawing.
-      this.emit(GRAPH_NODE_DRAWN);
+      this.emit(GRAPH_OPERATIONS.GRAPH_NODE_DRAWN);
     }
   }
 
@@ -362,75 +393,55 @@ export class GraphNode extends PIXI.Graphics {
   #draw() {
     this.forceUpdateDimensions();
     this.clear();
-
     this.removeChildren();
-    this.addChildAt(this.#background, 0);
-    if (this.selected) {
-      this.addChildAt(this.#selectedBackground, 0);
-    }
 
-    this.#drawSelectedBackground();
     this.#drawBackground();
     const portStartY = this.#drawTitle();
     this.#drawInPorts(portStartY);
     this.#drawOutPorts(portStartY);
   }
 
-  #drawSelectedBackground() {
-    const borderSize = 2;
-    this.#selectedBackground.clear();
-    this.#selectedBackground.beginFill(0x999999);
-    this.#selectedBackground.drawRoundedRect(
-      -borderSize,
-      -borderSize,
-      this.#width + 2 * borderSize,
-      this.#height + 2 * borderSize,
-      this.#borderRadius + borderSize
-    );
-    this.#selectedBackground.endFill();
-  }
-
   #drawBackground() {
+    if (this.selected) {
+      const borderSize = 2;
+      this.beginFill(0x999999);
+      this.drawRoundedRect(
+        -borderSize,
+        -borderSize,
+        this.#width + 2 * borderSize,
+        this.#height + 2 * borderSize,
+        this.#borderRadius + borderSize
+      );
+      this.endFill();
+    }
+
     const borderSize = 1;
-    this.#background.clear();
-    this.#background.beginFill(0xbbbbbb);
-    this.#background.drawRoundedRect(
+    this.beginFill(0xbbbbbb);
+    this.drawRoundedRect(
       -borderSize,
       -borderSize,
       this.#width + 2 * borderSize,
       this.#height + 2 * borderSize,
       this.#borderRadius + borderSize
     );
-    this.#background.endFill();
+    this.endFill();
 
-    this.#background.beginFill(this.#backgroundColor);
-    this.#background.drawRoundedRect(
-      0,
-      0,
-      this.#width,
-      this.#height,
-      this.#borderRadius
-    );
-    this.#background.endFill();
+    this.beginFill(this.#backgroundColor);
+    this.drawRoundedRect(0, 0, this.#width, this.#height, this.#borderRadius);
+    this.endFill();
 
     if (this.#titleText) {
       const titleHeight =
         this.#padding + this.#titleText.height + this.#padding;
-      this.#background.beginFill(this.#color);
-      this.#background.drawRoundedRect(
-        0,
-        0,
-        this.#width,
-        titleHeight,
-        this.#borderRadius
-      );
-      this.#background.drawRect(
+      this.beginFill(this.#color);
+      this.drawRoundedRect(0, 0, this.#width, titleHeight, this.#borderRadius);
+      this.drawRect(
         0,
         titleHeight - 2 * this.#borderRadius,
         this.#width,
         2 * this.#borderRadius
       );
-      this.#background.endFill();
+      this.endFill();
     }
   }
 

@@ -20,7 +20,7 @@ export class GraphEdge extends PIXI.Graphics {
   constructor(
     public fromNode: GraphNode,
     public toNode: GraphNode,
-    public readonly temporary = false
+    public temporary = false
   ) {
     super();
   }
@@ -73,6 +73,7 @@ export class GraphEdge extends PIXI.Graphics {
     super.render(renderer);
 
     if (this.#isDirty) {
+      this.clear();
       this.#draw();
       this.#isDirty = false;
     }
@@ -86,8 +87,6 @@ export class GraphEdge extends PIXI.Graphics {
     if (!this.#edge) {
       return;
     }
-
-    this.clear();
 
     let inLocation = this.toNode.inPortLocation(this.#edge.in);
     let outLocation = this.fromNode.outPortLocation(this.#edge.out);
