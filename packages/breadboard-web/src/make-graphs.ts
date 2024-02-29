@@ -131,16 +131,15 @@ async function saveAllBoards(): Promise<void> {
       manifest.push(manifestEntry);
     }
   }
-  // TODO: Reenable.
-  // const pyFiles = await findPyFiles(PATH);
-  // for (const file of pyFiles) {
-  //   const manifestEntry = await savePythonBoard(file);
-  //   if (!manifestEntry) {
-  //     throw new RangeError();
-  //     continue;
-  //   }
-  //   manifest.push(manifestEntry);
-  // }
+  const pyFiles = await findPyFiles(PATH);
+  for (const file of pyFiles) {
+    const manifestEntry = await savePythonBoard(file);
+    if (!manifestEntry) {
+      throw new RangeError();
+      continue;
+    }
+    manifest.push(manifestEntry);
+  }
   await writeFile(
     path.join(MANIFEST_PATH, "local-boards.json"),
     JSON.stringify(manifest, null, 2)
