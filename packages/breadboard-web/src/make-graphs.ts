@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GraphDescriptor } from "@google-labs/breadboard";
+// import { GraphDescriptor } from "@google-labs/breadboard";
 import { Dirent } from "fs";
-import { mkdir, readdir, writeFile, readFile } from "fs/promises";
+import { mkdir, readdir, writeFile } from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
-import { execSync } from "child_process";
+// import { execSync } from "child_process";
 
 const MODULE_DIR: string = path.dirname(fileURLToPath(import.meta.url));
 const PATH: string = path.join(MODULE_DIR, "boards");
