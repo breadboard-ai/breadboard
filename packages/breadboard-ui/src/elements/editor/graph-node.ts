@@ -111,6 +111,7 @@ export class GraphNode extends PIXI.Graphics {
 
       lastClickTime = now;
       if (timeDelta < 500) {
+        console.log("dbl click");
         this.parent.emit(
           GRAPH_OPERATIONS.GRAPH_NODE_DETAILS_REQUESTED,
           evt.target.id

@@ -176,5 +176,15 @@
     "title": "Webcam",
     "url": "/graphs/webcam.json",
     "version": "0.0.2"
+  },
+  {
+    "title": "Accumulating Context (Python)",
+    "url": "/graphs/accumulating-context-python.json",
+    "version": "0.0.2"
+  },
+  {
+    "title": "The Python Calculator Recipe",
+    "url": "/graphs/math-python.json",
+    "version": "0.0.3"
   }
 ]
