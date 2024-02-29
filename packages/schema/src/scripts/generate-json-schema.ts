@@ -6,10 +6,15 @@
 
 import * as fs from "fs";
 import * as path from "path";
+import { dirname } from "path";
 import { createGenerator, type Config } from "ts-json-schema-generator";
+import { fileURLToPath } from "url";
 import { generateSchemaId } from "./generate-schema-id.js";
 
-const filePath = path.resolve("src/graph.ts");
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const filePath = path.resolve(__dirname, "../../src/graph.ts");
 if (!fs.existsSync(filePath)) {
   throw new Error(`File not found: ${filePath}`);
 }
