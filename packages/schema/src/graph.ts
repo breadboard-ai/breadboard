@@ -126,7 +126,7 @@ export type NodeMetadata = {
    * visual editors to store information about the node's appearance, current
    * position, etc.
    */
-  visual?: Record<string, unknown>;
+  visual?: NodeValue;
 };
 
 /**
