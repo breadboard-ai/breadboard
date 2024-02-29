@@ -240,7 +240,7 @@ export default await board(() => {
     $id: "makeBody",
     expression: `(
       $context := $append(
-          context ? context, $not(context) or context[-1].role!="user" ? [
+          context ? context, $not(context) or (context[-1].role!="user" and context[-1].role!="function") ? [
               {
                   "role": "user",
                   "parts": [
