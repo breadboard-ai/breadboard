@@ -17,7 +17,7 @@
     "syncpack:check": "wireit",
     "syncpack:check:dev": "wireit",
     "syncpack:check:prod": "wireit",
-    "syncpack:fix": "syncpack fix-mismatches --config syncpack.config.ts --types all && npm install",
+    "syncpack:fix": "syncpack fix-mismatches --config syncpack.config.ts && npm install",
     "check": "wireit"
   },
   "wireit": {
