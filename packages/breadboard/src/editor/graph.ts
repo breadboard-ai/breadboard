@@ -198,6 +198,28 @@ class Graph implements EditableGraph {
     return { success: true };
   }
 
+  async canChangeEdge(
+    from: EditableEdgeSpec,
+    to: EditableEdgeSpec
+  ): Promise<EditResult> {
+    const canRemove = await this.canRemoveEdge(from);
+    if (!canRemove.success) return canRemove;
+    const canAdd = await this.canAddEdge(to);
+    if (!canAdd.success) return canAdd;
+    return { success: true };
+  }
+
+  async changeEdge(
+    from: EditableEdgeSpec,
+    to: EditableEdgeSpec
+  ): Promise<EditResult> {
+    const can = await this.canChangeEdge(from, to);
+    if (!can.success) return can;
+    const remove = await this.removeEdge(from);
+    if (!remove.success) return remove;
+    return this.addEdge(to);
+  }
+
   async canChangeConfiguration(id: NodeIdentifier): Promise<EditResult> {
     const node = this.#inspector.nodeById(id);
     if (!node) {
