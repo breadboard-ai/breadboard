@@ -15,6 +15,7 @@ import structuredWorker, {
   StructuredWorkerType,
 } from "./boards/structured-worker.js";
 import human, { HumanType } from "./boards/human.js";
+import toolWorker, { ToolWorkerType } from "./boards/tool-worker.js";
 
 // TODO: Replace with the actual URL.
 const KIT_BASE_URL =
@@ -39,6 +40,10 @@ const AgentKit = builder.build({
     adapter.handlerForNode("structured-worker"),
     structuredWorker
   ),
+  toolWorker: await addDescriber(
+    adapter.handlerForNode("tool-worker"),
+    toolWorker
+  ),
   human: await addDescriber(adapter.handlerForNode("human"), human),
 });
 
@@ -54,11 +59,17 @@ export type AgentKitType = {
    * until some condition is met or the max count of repetitions is reached.
    */
   repeater: RepeaterType;
-  /** A worker that reliably outputs structured data (JSON). Just give it
+  /**
+   * A worker that reliably outputs structured data (JSON). Just give it
    * a JSON schema along with an instruction, and it will stay within the bounds
    * of the schema.
    */
   structuredWorker: StructuredWorkerType;
+  /**
+   * A worker that can use multiple tools to accomplish a task.
+   * Give it a list of boards and an instruction, and watch it do its magic.
+   */
+  toolWorker: ToolWorkerType;
   /**
    * A human in the loop. Use this node to to insert a real person (user input)
    * into your team of synthetic team.

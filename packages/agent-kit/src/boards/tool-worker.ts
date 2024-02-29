@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { base, board, code } from "@google-labs/breadboard";
+import { NewNodeFactory, base, board, code } from "@google-labs/breadboard";
 import { core } from "@google-labs/core-kit";
 import { json } from "@google-labs/json-kit";
 
@@ -16,6 +16,36 @@ import {
   functionCallOrText,
   functionResponseFormatter,
 } from "../function-calling.js";
+
+export type ToolWorkerType = NewNodeFactory<
+  {
+    /**
+     * The context to use for the worker.
+     */
+    context?: unknown;
+    /**
+     * The instruction we want to give to the worker so that shapes its
+     * character and orients it a bit toward the task we want to give it.
+     */
+    instruction: unknown;
+    /**
+     * The array of board URLs to use as tools for the worker
+     */
+    tools?: unknown;
+  },
+  {
+    /**
+     * The context after generation. Pass this to the next agent when chaining
+     * them together.
+     */
+    context: unknown;
+    /**
+     * The output from the agent. Use this to just get the output without any
+     * previous context.
+     */
+    text: unknown;
+  }
+>;
 
 const sampleContext = "What is the square root of e?";
 
