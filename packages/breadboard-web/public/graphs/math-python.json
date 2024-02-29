@@ -102,6 +102,9 @@
   ],
   "kits": [
     {
+      "url": "npm:annotation=NoneType required=True"
+    },
+    {
       "url": "npm:@google-labs/template-kit"
     },
     {
@@ -109,9 +112,6 @@
     },
     {
       "url": "npm:@google-labs/core-kit"
-    },
-    {
-      "url": "npm:annotation=NoneType required=True"
     }
   ]
 }
