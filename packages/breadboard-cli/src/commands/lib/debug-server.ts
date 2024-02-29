@@ -101,7 +101,7 @@ export const startServer = async (file: string, options: DebugOptions) => {
 
     if (requestURL.pathname === "/kits.json") {
       const responseText = JSON.stringify(
-        options.kit?.map((kit) => `/kits/${kit}` || [])
+        options.kit?.map((kit) => `/kits/${kit}`) || []
       );
       response.writeHead(200, {
         "Content-Type": "application/javascript",
