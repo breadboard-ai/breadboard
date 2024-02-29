@@ -5,7 +5,7 @@
   "description": "Google Labs repo for rapid prototyping",
   "type": "module",
   "scripts": {
-    "clean": "git clean -Xdf -e .vscode/settings.json",
+    "clean": "git clean -Xdf -e !.vscode/settings.json",
     "update": "rimraf package-lock.json && npm i",
     "test": "wireit",
     "build": "wireit",
