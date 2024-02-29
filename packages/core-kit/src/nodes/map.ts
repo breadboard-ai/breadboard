@@ -46,8 +46,19 @@ const invoke = async (
   inputs: InputValues,
   context?: NodeHandlerContext
 ): Promise<OutputValues> => {
-  const { list, board } = inputs as MapInputs;
+  let { list } = inputs as MapInputs;
+  const { board } = inputs as MapInputs;
+  if (typeof list === "string") {
+    try {
+      list = JSON.parse(list);
+    } catch (e) {
+      throw new Error(
+        `List was a string, tried and failed parsing it: ${list}`
+      );
+    }
+  }
   if (!Array.isArray(list)) {
+    console.log("list", JSON.parse(list));
     throw new Error(`Expected list to be an array, but got ${list}`);
   }
   if (!board) return { list };
