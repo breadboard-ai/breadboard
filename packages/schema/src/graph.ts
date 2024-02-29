@@ -121,6 +121,12 @@ export type NodeMetadata = {
    * A more detailed description of the node.
    */
   description?: string;
+  /**
+   * Metadata that conveys visual informationa about the node. Can be used by
+   * visual editors to store information about the node's appearance, current
+   * position, etc.
+   */
+  visual?: NodeValue;
 };
 
 /**
