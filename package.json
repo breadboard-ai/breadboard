@@ -17,7 +17,7 @@
     "syncpack:check": "wireit",
     "syncpack:check:dev": "wireit",
     "syncpack:check:prod": "wireit",
-    "syncpack:fix": "syncpack fix-mismatches --config syncpack.config.ts && npm install",
+    "syncpack:fix": "syncpack fix-mismatches --config syncpack.config.ts --types all && npm install",
     "check": "wireit"
   },
   "wireit": {
@@ -128,7 +128,7 @@
       ]
     },
     "syncpack:check": {
-      "command": "syncpack list-mismatches --config syncpack.config.ts",
+      "command": "syncpack list-mismatches --config syncpack.config.ts --types all",
       "files": [
         "package.json",
         "package-lock.json",
