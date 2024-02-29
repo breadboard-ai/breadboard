@@ -1,0 +1,149 @@
+{
+  "title": "Tool Worker",
+  "description": "A worker that can use tools to accomplish tasks.",
+  "$schema": "https://raw.githubusercontent.com/breadboard-ai/breadboard/@google-labs/breadboard-schema@1.3.0/packages/schema/breadboard.schema.json",
+  "version": "0.0.1",
+  "edges": [
+    {
+      "from": "input-1",
+      "to": "map-3",
+      "out": "tools",
+      "in": "list"
+    },
+    {
+      "from": "input-1",
+      "to": "output-2",
+      "out": "context",
+      "in": "context"
+    },
+    {
+      "from": "map-3",
+      "to": "output-2",
+      "out": "list",
+      "in": "tools"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "output-2",
+      "type": "output",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "title": "Context",
+              "type": "array",
+              "default": "[]"
+            },
+            "tools": {
+              "title": "List",
+              "type": "array",
+              "description": "The list of outputs from the board."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "input-1",
+      "type": "input",
+      "configuration": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "tools": {
+              "title": "Tools",
+              "type": "array",
+              "description": "The list to iterate over.",
+              "examples": [
+                "[\"https://raw.githubusercontent.com/breadboard-ai/breadboard/b5577943bdd0956bed3874244b34ea80f1589eaa/packages/breadboard-web/public/graphs/search-summarize.json\",\"https://raw.githubusercontent.com/breadboard-ai/breadboard/b5577943bdd0956bed3874244b34ea80f1589eaa/packages/breadboard-web/public/graphs/math.json\"]"
+              ],
+              "default": "[]"
+            },
+            "context": {
+              "title": "Context",
+              "type": "array",
+              "default": "[]"
+            }
+          },
+          "required": []
+        }
+      }
+    },
+    {
+      "id": "map-3",
+      "type": "map",
+      "configuration": {
+        "board": {
+          "kind": "board",
+          "board": {
+            "kits": [],
+            "edges": [
+              {
+                "from": "fetch-3",
+                "to": "output-2",
+                "out": "response",
+                "in": "item"
+              },
+              {
+                "from": "input-1",
+                "to": "fetch-3",
+                "out": "item",
+                "in": "url"
+              }
+            ],
+            "nodes": [
+              {
+                "id": "output-2",
+                "type": "output",
+                "configuration": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "item": {
+                        "title": "response",
+                        "description": "The response from the fetch request",
+                        "type": [
+                          "string",
+                          "object"
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "id": "fetch-3",
+                "type": "fetch",
+                "configuration": {}
+              },
+              {
+                "id": "input-1",
+                "type": "input",
+                "configuration": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "item": {
+                        "title": "url",
+                        "description": "The URL to fetch",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "item"
+                    ]
+                  }
+                }
+              }
+            ],
+            "graphs": {}
+          }
+        }
+      }
+    }
+  ],
+  "kits": [],
+  "graphs": {}
+}
