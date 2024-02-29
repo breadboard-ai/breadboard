@@ -14,10 +14,8 @@ const config: RcFile = {
   versionGroups: [
     {
       label: "Ignore local dependencies as they are managed by changesets",
-      packages: ["**"],
-      // dependencies: ["@google-labs/**"], // it would also be possible to ignore all dependencies from a specific scope, but that would not catch any local dependencies that are not scoped
+      dependencies: ["@google-labs/**"],
       isIgnored: true,
-      dependencyTypes: ["local"],
     },
   ],
 };
