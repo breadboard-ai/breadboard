@@ -46,6 +46,7 @@ export class Graph extends PIXI.Container {
 
     let lastHoverPort: GraphNodePort | null = null;
     let nodePortBeingEdited: GraphNodePort | null = null;
+    let nodePortType: GraphNodePortType | null = null;
     let nodeBeingEdited: GraphNode | null = null;
     let edgeBeingEdited: GraphEdge | null = null;
     let originalEdgeDescriptor: InspectableEdge | null = null;
@@ -74,6 +75,7 @@ export class Graph extends PIXI.Container {
       if (evt.target instanceof GraphNodePort) {
         nodePortBeingEdited = evt.target;
         nodeBeingEdited = evt.target.parent as GraphNode;
+        nodePortBeingEdited.overrideStatus = PortStatus.Connected;
 
         switch (nodePortBeingEdited.type) {
           case GraphNodePortType.OUT: {
@@ -88,12 +90,7 @@ export class Graph extends PIXI.Container {
             if (!edgeBeingEdited) {
               return;
             }
-
-            // Hide the edge initially.
-            visibleOnNextMove = false;
-            edgeBeingEdited.visible = false;
-
-            nodePortBeingEdited.overrideStatus = PortStatus.Connected;
+            nodePortType = GraphNodePortType.IN;
             break;
           }
 
@@ -103,14 +100,39 @@ export class Graph extends PIXI.Container {
               nodePortBeingEdited
             );
 
+            nodePortType = GraphNodePortType.IN;
             if (!edgeBeingEdited) {
-              break;
+              originalEdgeDescriptor = {
+                from: { descriptor: { id: nodeBeingEdited.name } },
+                to: { descriptor: { id: nodeBeingEdited.name } },
+                out: "*",
+                in: nodePortBeingEdited.name,
+              } as InspectableEdge;
+
+              edgeBeingEdited = this.#createTemporaryEdge(
+                originalEdgeDescriptor
+              );
+              if (!edgeBeingEdited) {
+                nodePortType = null;
+                nodePortBeingEdited = null;
+                nodeBeingEdited = null;
+                break;
+              }
+              nodePortType = GraphNodePortType.OUT;
             }
 
             originalEdgeDescriptor = structuredClone(edgeBeingEdited.edge);
             break;
           }
         }
+
+        if (!edgeBeingEdited || !edgeBeingEdited.temporary) {
+          return;
+        }
+
+        // Hide the edge initially.
+        visibleOnNextMove = false;
+        edgeBeingEdited.visible = false;
       }
     });
 
@@ -119,10 +141,6 @@ export class Graph extends PIXI.Container {
       (evt: PIXI.FederatedPointerEvent) => {
         if (!edgeBeingEdited || !nodeBeingEdited || !originalEdgeDescriptor) {
           return;
-        }
-
-        if (!edgeBeingEdited.overrideInLocation) {
-          edgeBeingEdited.overrideInLocation = nodeBeingEdited.position.clone();
         }
 
         if (!edgeBeingEdited.edge) {
@@ -136,9 +154,10 @@ export class Graph extends PIXI.Container {
         }
 
         const topTarget = evt.path[evt.path.length - 1];
+
         if (
           topTarget instanceof GraphNodePort &&
-          topTarget.type === GraphNodePortType.IN &&
+          topTarget.type === nodePortType &&
           visibleOnNextMove
         ) {
           // Snap to nearest port.
@@ -146,30 +165,64 @@ export class Graph extends PIXI.Container {
           lastHoverPort = topTarget;
 
           const nodeBeingTargeted = topTarget.parent as GraphNode;
-          edgeBeingEdited.toNode = nodeBeingTargeted;
-          edgeBeingEdited.edge.in = topTarget.name || "";
-          edgeBeingEdited.edge.to = {
-            descriptor: { id: nodeBeingTargeted.name },
-          } as InspectableNode;
+
+          if (nodePortType === GraphNodePortType.IN) {
+            edgeBeingEdited.toNode = nodeBeingTargeted;
+            edgeBeingEdited.edge.in = topTarget.name || "";
+            edgeBeingEdited.edge.to = {
+              descriptor: { id: nodeBeingTargeted.name },
+            } as InspectableNode;
+          } else {
+            edgeBeingEdited.fromNode = nodeBeingTargeted;
+            edgeBeingEdited.edge.out = topTarget.name || "";
+            edgeBeingEdited.edge.from = {
+              descriptor: { id: nodeBeingTargeted.name },
+            } as InspectableNode;
+          }
+
           edgeBeingEdited.overrideColor = 0xffa500;
           edgeBeingEdited.overrideInLocation = null;
+          edgeBeingEdited.overrideOutLocation = null;
         } else {
           // Track mouse.
-          edgeBeingEdited.toNode = nodeBeingEdited;
-          edgeBeingEdited.edge.in = originalEdgeDescriptor.in;
-          edgeBeingEdited.edge.to = originalEdgeDescriptor.to;
+          if (nodePortType === GraphNodePortType.IN) {
+            edgeBeingEdited.toNode = nodeBeingEdited;
+            edgeBeingEdited.edge.in = originalEdgeDescriptor.in;
+            edgeBeingEdited.edge.to = originalEdgeDescriptor.to;
+
+            if (!edgeBeingEdited.overrideInLocation) {
+              edgeBeingEdited.overrideInLocation =
+                nodeBeingEdited.position.clone();
+            }
+
+            nodeBeingEdited.toLocal(
+              evt.global,
+              undefined,
+              edgeBeingEdited.overrideInLocation
+            );
+          } else {
+            edgeBeingEdited.fromNode = nodeBeingEdited;
+            edgeBeingEdited.edge.out = originalEdgeDescriptor.out;
+            edgeBeingEdited.edge.from = originalEdgeDescriptor.from;
+
+            if (!edgeBeingEdited.overrideOutLocation) {
+              edgeBeingEdited.overrideOutLocation =
+                nodeBeingEdited.position.clone();
+            }
+
+            nodeBeingEdited.toLocal(
+              evt.global,
+              undefined,
+              edgeBeingEdited.overrideOutLocation
+            );
+          }
+
           edgeBeingEdited.overrideColor = 0xffcc00;
 
           if (lastHoverPort) {
             lastHoverPort.overrideStatus = null;
             lastHoverPort = null;
           }
-
-          nodeBeingEdited.toLocal(
-            evt.global,
-            undefined,
-            edgeBeingEdited.overrideInLocation
-          );
 
           if (!visibleOnNextMove) {
             visibleOnNextMove = true;
@@ -204,7 +257,7 @@ export class Graph extends PIXI.Container {
       // Process the edge.
       if (
         !(topTarget instanceof GraphNodePort) ||
-        topTarget.type !== GraphNodePortType.IN
+        topTarget.type !== nodePortType
       ) {
         // Temporary edges don't need to be sent out to the Editor API.
         if (targetEdge.temporary) {
