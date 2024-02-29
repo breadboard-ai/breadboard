@@ -4,10 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export const GRAPH_NODE_DRAWN = "graphnodedrawn";
-export const GRAPH_NODE_MOVED = "graphnodemoved";
-export const GRAPH_INITIAL_DRAW = "graphinitialdraw";
-export const GRAPH_DRAW = "graphdraw";
+export enum GRAPH_OPERATIONS {
+  GRAPH_NODE_DRAWN = "graphnodedrawn",
+  GRAPH_NODE_MOVED = "graphnodemoved",
+  GRAPH_INITIAL_DRAW = "graphinitialdraw",
+  GRAPH_DRAW = "graphdraw",
+  GRAPH_NODE_DETAILS_REQUESTED = "graphnodedetailsrequested",
+  GRAPH_EDGE_ATTACH = "graphedgeattach",
+  GRAPH_EDGE_DETACH = "graphedgedetach",
+  GRAPH_EDGE_CHANGE = "graphedgechange",
+}
 
 export enum GraphNodePortType {
   IN = "in",
