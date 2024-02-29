@@ -1,6 +1,5 @@
 import * as PIXI from "pixi.js";
 import { GraphNodePortType } from "./types.js";
-import { InteractionTracker } from "./interaction-tracker.js";
 import { PortStatus } from "@google-labs/breadboard";
 
 export class GraphNodePort extends PIXI.Graphics {
@@ -29,29 +28,6 @@ export class GraphNodePort extends PIXI.Graphics {
 
     this.eventMode = "static";
     this.cursor = "pointer";
-    this.on("pointerdown", () => {
-      if (!this.editable) {
-        return;
-      }
-
-      InteractionTracker.instance().activeGraphNodePort = this;
-    });
-
-    this.on("pointerover", () => {
-      if (!this.editable) {
-        return;
-      }
-
-      InteractionTracker.instance().hoveredGraphNodePort = this;
-    });
-
-    this.on("pointerout", () => {
-      if (!this.editable) {
-        return;
-      }
-
-      InteractionTracker.instance().hoveredGraphNodePort = null;
-    });
   }
 
   set connectedColor(color: number) {
