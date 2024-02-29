@@ -111,7 +111,10 @@ export class GraphNode extends PIXI.Graphics {
 
       lastClickTime = now;
       if (timeDelta < 500) {
-        this.emit(GRAPH_OPERATIONS.GRAPH_NODE_DETAILS_REQUESTED, evt.target.id);
+        this.parent.emit(
+          GRAPH_OPERATIONS.GRAPH_NODE_DETAILS_REQUESTED,
+          evt.target.id
+        );
         return;
       }
 
