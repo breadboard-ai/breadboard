@@ -53,12 +53,12 @@ type ContextItem = {
   parts: { text: string }[];
 };
 
-const contextAssembler = code(({ context, generated }) => {
+export const contextAssembler = code(({ context, generated }) => {
   if (!context) throw new Error("Context is required");
   return { context: [...(context as ContextItem[]), generated as ContextItem] };
 });
 
-const contextBuilder = code(({ context, instruction }) => {
+export const contextBuilder = code(({ context, instruction }) => {
   if (typeof context === "string") {
     // A clever trick. Let's see if this works
     // A user can supply context as either ContextItem[] or as a string.
