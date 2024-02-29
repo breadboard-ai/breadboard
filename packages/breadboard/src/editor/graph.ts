@@ -52,6 +52,23 @@ class Graph implements EditableGraph {
     )).has(type);
   }
 
+  #findEdgeIndex(spec: EditableEdgeSpec) {
+    return this.#graph.edges.findIndex((edge) => {
+      return (
+        edge.from === spec.from &&
+        edge.to === spec.to &&
+        edge.out === spec.out &&
+        edge.in === spec.in
+      );
+    });
+  }
+
+  #edgesEqual(a: EditableEdgeSpec, b: EditableEdgeSpec) {
+    return (
+      a.from === b.from && a.to === b.to && a.out === b.out && a.in === b.in
+    );
+  }
+
   async canAddNode(spec: EditableNodeSpec): Promise<EditResult> {
     const duplicate = !!this.#inspector.nodeById(spec.id);
     if (duplicate) {
@@ -185,16 +202,43 @@ class Graph implements EditableGraph {
     if (!can.success) return can;
     spec = fixUpStarEdge(spec);
     const edges = this.#graph.edges;
-    const index = edges.findIndex((edge) => {
-      return (
-        edge.from === spec.from &&
-        edge.to === spec.to &&
-        edge.out === spec.out &&
-        edge.in === spec.in
-      );
-    });
+    const index = this.#findEdgeIndex(spec);
     const edge = edges.splice(index, 1)[0];
     this.#inspector.edgeStore.remove(edge);
+    return { success: true };
+  }
+
+  async canChangeEdge(
+    from: EditableEdgeSpec,
+    to: EditableEdgeSpec
+  ): Promise<EditResult> {
+    if (this.#edgesEqual(from, to)) {
+      return { success: true };
+    }
+    const canRemove = await this.canRemoveEdge(from);
+    if (!canRemove.success) return canRemove;
+    const canAdd = await this.canAddEdge(to);
+    if (!canAdd.success) return canAdd;
+    return { success: true };
+  }
+
+  async changeEdge(
+    from: EditableEdgeSpec,
+    to: EditableEdgeSpec
+  ): Promise<EditResult> {
+    const can = await this.canChangeEdge(from, to);
+    if (!can.success) return can;
+    if (this.#edgesEqual(from, to)) {
+      return { success: true };
+    }
+    const spec = fixUpStarEdge(from);
+    const edges = this.#graph.edges;
+    const index = this.#findEdgeIndex(spec);
+    const edge = edges[index];
+    edge.from = to.from;
+    edge.out = to.out;
+    edge.to = to.to;
+    edge.in = to.in;
     return { success: true };
   }
 

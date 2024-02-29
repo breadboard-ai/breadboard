@@ -352,3 +352,25 @@ test("editor API allows adding built-in nodes", async (t) => {
     );
   }
 });
+
+test("editor API allows changing edge", async (t) => {
+  const graph = testEditGraph();
+
+  const before = graph.inspect().edges()[0];
+
+  const result = await graph.changeEdge(
+    { from: "node0", out: "out", to: "node0", in: "in" },
+    { from: "node0", out: "out", to: "node2", in: "in" }
+  );
+
+  t.true(result.success);
+
+  const raw = graph.raw();
+  t.deepEqual(
+    raw.edges.map((e) => [e.from, e.to]),
+    [["node0", "node2"]]
+  );
+
+  const after = graph.inspect().edges()[0];
+  t.assert(before === after);
+});
