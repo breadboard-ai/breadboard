@@ -10,7 +10,9 @@ export type RunOptions = Options & {
   verbose?: boolean;
 };
 
-export type DebugOptions = Options;
+export type DebugOptions = Options & {
+  kit?: string[];
+};
 export type ImportOptions = Options & {
   api?: string; // API URL for import
 };

@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { asRuntimeKit } from "@google-labs/breadboard";
 import {
   HarnessProxyConfig,
   HarnessRemoteConfig,
@@ -17,9 +16,9 @@ import JSONKit from "@google-labs/json-kit";
 import TemplateKit from "@google-labs/template-kit";
 import NodeNurseryWeb from "@google-labs/node-nursery-web";
 import PaLMKit from "@google-labs/palm-kit";
-import Pinecone from "@google-labs/pinecone-kit";
 import GeminiKit from "@google-labs/gemini-kit";
 import AgentKit from "@google-labs/agent-kit";
+import { loadKits } from "./utils/kit-loader";
 
 const PROXY_NODES = [
   "palm-generateText",
@@ -45,16 +44,15 @@ const DEFAULT_HARNESS = PROXY_SERVER_URL
   ? PROXY_SERVER_HARNESS_VALUE
   : WORKER_HARNESS_VALUE;
 
-const kits = [
+const kits = await loadKits([
   TemplateKit,
   Core,
-  Pinecone,
   PaLMKit,
   GeminiKit,
   NodeNurseryWeb,
   JSONKit,
   AgentKit,
-].map((kitConstructor) => asRuntimeKit(kitConstructor));
+]);
 
 export const createRunConfig = (url: string): RunConfig => {
   const harness =
