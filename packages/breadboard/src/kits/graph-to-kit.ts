@@ -8,13 +8,17 @@ import { callHandler, handlersFromKits } from "../handler.js";
 import { KitBuilderOptions } from "./builder.js";
 import { BoardRunner } from "../runner.js";
 import {
+  BreadboardCapability,
   GraphDescriptor,
   InputValues,
   Kit,
+  NodeDescriberResult,
   NodeHandlerContext,
   NodeHandlers,
   NodeIdentifier,
+  Schema,
 } from "../types.js";
+import { inspect } from "../index.js";
 
 export class GraphToKitAdapter {
   graph: GraphDescriptor;
@@ -58,6 +62,34 @@ export class GraphToKitAdapter {
     if (!node) throw new Error(`Node ${id} not found in graph.`);
 
     return {
+      describe: async (inputs?: InputValues): Promise<NodeDescriberResult> => {
+        const emptyResult: NodeDescriberResult = {
+          inputSchema: {
+            type: "object",
+            additionalProperties: false,
+          },
+          outputSchema: {
+            type: "object",
+            additionalProperties: false,
+          },
+        };
+
+        if (inputs === undefined) {
+          return emptyResult;
+        }
+
+        if (
+          this.graph != undefined &&
+          this.graph.graphs != undefined &&
+          id in this.graph.graphs
+        ) {
+          const subGraph = this.graph.graphs[id] as GraphDescriptor;
+          if (subGraph == undefined) return emptyResult;
+          return await inspect(subGraph).describe();
+        }
+
+        return emptyResult;
+      },
       invoke: async (inputs: InputValues, context: NodeHandlerContext) => {
         const configuration = node.configuration;
         if (configuration) {
