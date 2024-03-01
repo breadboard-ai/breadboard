@@ -98,7 +98,7 @@
       "output": []
     },
     "pack:install": {
-      "command": "npm --verbose install -g $(npm pack)",
+      "command": "npm pack && npm --verbose install -g $(find . -name 'google-labs-breadboard-cli-*.tgz')",
       "dependencies": [
         "build"
       ],
