@@ -191,7 +191,7 @@
     "@google-labs/palm-kit": "^0.0.5",
     "@google-labs/template-kit": "^0.2.0",
     "@types/node": "^20.11.23",
-    "@types/vscode": "^1.85.0",
+    "@types/vscode": "^1.87.0",
     "@vscode/debugadapter": "^1.65.0",
     "@vscode/vsce": "^2.24.0",
     "dotenv": "^16.4.5",
