@@ -98,7 +98,7 @@
       "output": []
     },
     "pack:install": {
-      "command": "npm pack && npm --verbose install -g $(find . -name 'google-labs-breadboard-cli-*.tgz')",
+      "command": "npm pack && npm --verbose install -g $(find . -name \"$(npm pkg get name | tr -d '\"' | sed 's/@//;s/\\//-/g').tgz\")",
       "dependencies": [
         "build"
       ],
