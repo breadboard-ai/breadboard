@@ -62,9 +62,7 @@ export class GraphToKitAdapter {
     if (!node) throw new Error(`Node ${id} not found in graph.`);
 
     return {
-      describe: async (
-        inputs?: InputValues
-      ): Promise<NodeDescriberResult | undefined> => {
+      describe: async (inputs?: InputValues): Promise<NodeDescriberResult> => {
         const emptyResult: NodeDescriberResult = {
           inputSchema: {
             type: "object",
