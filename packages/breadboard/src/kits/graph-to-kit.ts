@@ -8,7 +8,6 @@ import { callHandler, handlersFromKits } from "../handler.js";
 import { KitBuilderOptions } from "./builder.js";
 import { BoardRunner } from "../runner.js";
 import {
-  BreadboardCapability,
   GraphDescriptor,
   InputValues,
   Kit,
@@ -16,7 +15,6 @@ import {
   NodeHandlerContext,
   NodeHandlers,
   NodeIdentifier,
-  Schema,
 } from "../types.js";
 import { inspect } from "../index.js";
 
@@ -62,30 +60,21 @@ export class GraphToKitAdapter {
     if (!node) throw new Error(`Node ${id} not found in graph.`);
 
     return {
-      describe: async (inputs?: InputValues): Promise<NodeDescriberResult> => {
+      describe: async (): Promise<NodeDescriberResult> => {
         const emptyResult: NodeDescriberResult = {
-          inputSchema: {
-            type: "object",
-            additionalProperties: false,
-          },
-          outputSchema: {
-            type: "object",
-            additionalProperties: false,
-          },
+          inputSchema: { type: "object" },
+          outputSchema: { type: "object" },
         };
 
-        if (inputs === undefined) {
-          return emptyResult;
-        }
-
-        if (
-          this.graph != undefined &&
-          this.graph.graphs != undefined &&
-          id in this.graph.graphs
-        ) {
+        if (this.graph.graphs != undefined && id in this.graph.graphs) {
           const subGraph = this.graph.graphs[id] as GraphDescriptor;
           if (subGraph == undefined) return emptyResult;
           return await inspect(subGraph).describe();
+        } else if (node.type === "invoke") {
+          const { $board } = node.configuration as { $board?: GraphDescriptor };
+          if ($board) {
+            return await inspect($board).describe();
+          }
         }
 
         return emptyResult;

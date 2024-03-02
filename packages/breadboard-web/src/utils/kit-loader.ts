@@ -1,46 +1,24 @@
 import { KitConstructor, Kit, asRuntimeKit } from "@google-labs/breadboard";
+import { load } from "@google-labs/breadboard/kits";
 
-const fetchAndImportKits = async () => {
-  const response = await fetch(`${self.location.origin}/kits.json`);
-  const kitList = await response.json();
-
-  const kits = await Promise.all(
-    kitList.map(async (kit: string) => {
-      const module = await import(/* @vite-ignore */ `${kit}`);
-
-      if (module.default == undefined) {
-        throw new Error(`Module ${kit} does not have a default export.`);
-      }
-
-      const moduleKeys = Object.getOwnPropertyNames(module.default.prototype);
-
-      if (
-        moduleKeys.includes("constructor") == false ||
-        moduleKeys.includes("handlers") == false
-      ) {
-        throw new Error(
-          `Module default export '${kit}' does not look like a Kit (either no constructor or no handler).`
-        );
-      }
-      return module.default;
-    })
-  );
-
-  return kits;
-};
-
-export const loadKits = async (kitsToLoad: KitConstructor<Kit>[]) => {
-  kitsToLoad.push(...(await fetchAndImportKits()));
-
-  const runtimeKits = kitsToLoad.map((kitConstructor) =>
+export const loadKits = async (kiConstructors: KitConstructor<Kit>[]) => {
+  const loadedKits = kiConstructors.map((kitConstructor) =>
     asRuntimeKit(kitConstructor)
   );
 
-  // Dedupe kits, last kit with same key wins
-  const kits: Kit[] = Array.from(
-    new Map(
-      runtimeKits.map((kit) => [`${kit.title}${kit.version}${kit.url}`, kit])
-    ).values()
+  const base = new URL(`${self.location.origin}/kits.json`);
+  const response = await fetch(base);
+  const kitList = await response.json();
+
+  const kits = await Promise.all(
+    kitList.map(async (kitURL: string) => {
+      // workaround for vite prod/dev mode difference
+      if (import.meta.env.DEV) {
+        kitURL = `/src/${kitURL.replace(/\.js$/, ".ts")}`;
+      }
+      return await load(new URL(kitURL, base));
+    })
   );
-  return kits;
+
+  return [...loadedKits, ...kits];
 };

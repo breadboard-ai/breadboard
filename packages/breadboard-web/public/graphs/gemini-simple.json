@@ -26,7 +26,8 @@
           "properties": {
             "text": {
               "type": "string",
-              "title": "text"
+              "title": "Text",
+              "description": "The generated text"
             }
           }
         }
@@ -47,6 +48,7 @@
             "text": {
               "type": "string",
               "title": "Prompt",
+              "description": "The text to generate",
               "examples": [
                 "Write a rhyming poem about breadboards."
               ]

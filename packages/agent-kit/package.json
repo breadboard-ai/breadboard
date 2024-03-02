@@ -6,7 +6,10 @@
   "version": "0.2.0",
   "description": "A Breadboard Kit for building agent-like experiences",
   "main": "./dist/src/index.js",
-  "exports": "./dist/src/index.js",
+  "exports": {
+    ".": "./dist/src/index.js",
+    "./agent.kit.json": "./agent.kit.json"
+  },
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
@@ -26,6 +29,15 @@
         "../breadboard-cli:build"
       ]
     },
+    "generate-kit-manifest": {
+      "command": "tsx src/generate-kit-manifest.ts",
+      "dependencies": [
+        "build:tsc"
+      ],
+      "output": [
+        "agent.kit.json"
+      ]
+    },
     "samples": {
       "command": "breadboard debug src/samples --watch -n",
       "service": true,
@@ -41,7 +53,8 @@
         "../json-kit:build",
         "../template-kit:build",
         "../gemini-kit:build",
-        "build:tsc"
+        "build:tsc",
+        "generate-kit-manifest"
       ]
     },
     "build:tsc": {
@@ -99,7 +112,8 @@
     "url": "https://github.com/breadboard-ai/breadboard.git"
   },
   "files": [
-    "dist/src"
+    "dist/src",
+    "agent.kit.json"
   ],
   "ava": {
     "timeout": "30s",
@@ -123,17 +137,18 @@
   "homepage": "https://github.com/breadboard-ai/breadboard#readme",
   "devDependencies": {
     "@ava/typescript": "^4.0.0",
-    "@typescript-eslint/eslint-plugin": "^7.0.0",
-    "@typescript-eslint/parser": "^6.20.0",
-    "@types/node": "^20.11.24",
-    "ava": "^5.2.0",
-    "typescript": "^5.3.3",
-    "@google-labs/tsconfig": "^0.0.1",
     "@google-labs/agent-kit": "^0.2.0",
     "@google-labs/breadboard": "^0.11.2",
     "@google-labs/core-kit": "^0.4.0",
     "@google-labs/gemini-kit": "^0.1.3",
     "@google-labs/json-kit": "^0.1.0",
-    "@google-labs/template-kit": "^0.2.0"
+    "@google-labs/template-kit": "^0.2.0",
+    "@google-labs/tsconfig": "^0.0.1",
+    "@types/node": "^20.11.24",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^6.20.0",
+    "ava": "^5.2.0",
+    "tsx": "^4.7.1",
+    "typescript": "^5.3.3"
   }
 }

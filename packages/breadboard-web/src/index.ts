@@ -55,6 +55,9 @@ export class Main extends LitElement {
   loadInfo: BreadboardUI.Types.LoadArgs | null = null;
 
   @state()
+  kits: Kit[] = [];
+
+  @state()
   mode = MODE.LIST;
 
   @state()
@@ -70,7 +73,6 @@ export class Main extends LitElement {
   #delay = 0;
   #status = BreadboardUI.Types.STATUS.STOPPED;
   #statusObservers: Array<(value: BreadboardUI.Types.STATUS) => void> = [];
-  #kits: Kit[] = [];
 
   static styles = css`
     :host {
@@ -374,7 +376,7 @@ export class Main extends LitElement {
 
     const runConfig = await createRunConfig(this.url);
 
-    this.#kits = runConfig.kits;
+    this.kits = runConfig.kits;
 
     const runner = run(runConfig);
     await this.#runBoard(runner);
@@ -596,7 +598,7 @@ export class Main extends LitElement {
 
     if (this.loadInfo.url) {
       const config = await createRunConfig(this.loadInfo.url);
-      this.#kits = config.kits;
+      this.kits = config.kits;
     }
   }
 
@@ -631,7 +633,7 @@ export class Main extends LitElement {
           ${ref(this.#uiRef)}
           .url=${this.url}
           .loadInfo=${this.loadInfo}
-          .kits=${this.#kits}
+          .kits=${this.kits}
           .status=${this.status}
           @breadboardedgechange=${(
             evt: BreadboardUI.Events.EdgeChangeEvent
@@ -648,7 +650,7 @@ export class Main extends LitElement {
             }
 
             const editableGraph = edit(loadInfo.graphDescriptor, {
-              kits: this.#kits,
+              kits: this.kits,
             });
 
             let editResult: Promise<EditResult>;
@@ -693,7 +695,7 @@ export class Main extends LitElement {
             }
 
             const editableGraph = edit(loadInfo.graphDescriptor, {
-              kits: this.#kits,
+              kits: this.kits,
             });
             editableGraph.addNode(newNode).then((result) => {
               if (!result.success) {
@@ -721,7 +723,7 @@ export class Main extends LitElement {
             }
 
             const editableGraph = edit(loadInfo.graphDescriptor, {
-              kits: this.#kits,
+              kits: this.kits,
             });
 
             editableGraph
@@ -757,7 +759,7 @@ export class Main extends LitElement {
             }
 
             const editableGraph = edit(loadInfo.graphDescriptor, {
-              kits: this.#kits,
+              kits: this.kits,
             });
             editableGraph.removeNode(evt.id).then((result) => {
               if (!result.success) {
@@ -845,7 +847,7 @@ export class Main extends LitElement {
             runConfig.remote = false;
             runConfig.proxy = [];
             runConfig.runner = runner;
-            this.#kits = runConfig.kits;
+            this.kits = runConfig.kits;
 
             this.#runBoard(run(runConfig));
           }}
