@@ -6,7 +6,10 @@
   "version": "0.2.0",
   "description": "A Breadboard Kit for building agent-like experiences",
   "main": "./dist/src/index.js",
-  "exports": "./dist/src/index.js",
+  "exports": {
+    ".": "./dist/src/index.js",
+    "./agent.kit.json": "./agent.kit.json"
+  },
   "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
@@ -27,7 +30,10 @@
       ]
     },
     "generate-kit-manifest": {
-      "command": "tsx src/generate-kit-manifest.ts"
+      "command": "tsx src/generate-kit-manifest.ts",
+      "output": [
+        "agent.kit.json"
+      ]
     },
     "samples": {
       "command": "breadboard debug src/samples --watch -n",
@@ -103,7 +109,8 @@
     "url": "https://github.com/breadboard-ai/breadboard.git"
   },
   "files": [
-    "dist/src"
+    "dist/src",
+    "agent.kit.json"
   ],
   "ava": {
     "timeout": "30s",
