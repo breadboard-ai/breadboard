@@ -6,7 +6,7 @@ const fetchAndImportKits = async () => {
 
   const kits = await Promise.all(
     kitList.map(async (kit: string) => {
-      const module = await import(`${kit}`);
+      const module = await import(/* @vite-ignore */ `${kit}`);
 
       if (module.default == undefined) {
         throw new Error(`Module ${kit} does not have a default export.`);
