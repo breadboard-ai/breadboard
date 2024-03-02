@@ -301,6 +301,7 @@ export class Editor extends LitElement {
     }
     this.#lastGraphUrl = descriptor.url || null;
 
+    console.log("Processing graph", this.kits);
     const breadboardGraph = inspect(descriptor, { kits: this.kits });
 
     const ports = new Map<string, InspectableNodePorts>();
