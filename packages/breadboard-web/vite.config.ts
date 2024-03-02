@@ -19,6 +19,7 @@ export default defineConfig(async (_) => {
           sample: "./index.html",
           preview: "./preview.html",
           embed: "src/embed.ts",
+          "palm-kit": "src/palm-kit.ts",
         },
         name: "Breadboard Web Runtime",
         formats: ["es"],

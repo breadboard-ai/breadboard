@@ -12,6 +12,10 @@ export const loadKits = async (kiConstructors: KitConstructor<Kit>[]) => {
 
   const kits = await Promise.all(
     kitList.map(async (kitURL: string) => {
+      // workaround for vite prod/dev mode difference
+      if (import.meta.env.DEV) {
+        kitURL = `/src/${kitURL.replace(/\.js$/, ".ts")}`;
+      }
       return await load(new URL(kitURL, base));
     })
   );

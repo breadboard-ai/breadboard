@@ -15,7 +15,6 @@ import Core from "@google-labs/core-kit";
 import JSONKit from "@google-labs/json-kit";
 import TemplateKit from "@google-labs/template-kit";
 import NodeNurseryWeb from "@google-labs/node-nursery-web";
-import PaLMKit from "@google-labs/palm-kit";
 import GeminiKit from "@google-labs/gemini-kit";
 import AgentKit from "@google-labs/agent-kit";
 import { loadKits } from "./utils/kit-loader";
@@ -47,7 +46,6 @@ const DEFAULT_HARNESS = PROXY_SERVER_URL
 const kitConstructors = [
   TemplateKit,
   Core,
-  PaLMKit,
   GeminiKit,
   NodeNurseryWeb,
   JSONKit,
