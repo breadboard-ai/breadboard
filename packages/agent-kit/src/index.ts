@@ -34,17 +34,11 @@ const builder = new KitBuilder(
 );
 
 const AgentKit = builder.build({
-  worker: await addDescriber(adapter.handlerForNode("worker"), worker),
-  repeater: await addDescriber(adapter.handlerForNode("repeater"), repeater),
-  structuredWorker: await addDescriber(
-    adapter.handlerForNode("structured-worker"),
-    structuredWorker
-  ),
-  toolWorker: await addDescriber(
-    adapter.handlerForNode("tool-worker"),
-    toolWorker
-  ),
-  human: await addDescriber(adapter.handlerForNode("human"), human),
+  worker: adapter.handlerForNode("worker"),
+  repeater: adapter.handlerForNode("repeater"),
+  structuredWorker: adapter.handlerForNode("structured-worker"),
+  toolWorker: adapter.handlerForNode("tool-worker"),
+  human: adapter.handlerForNode("human"),
 });
 
 export type AgentKit = InstanceType<typeof AgentKit>;
