@@ -1,4 +1,5 @@
 import { KitConstructor, Kit, asRuntimeKit } from "@google-labs/breadboard";
+import { fromManifest } from "@google-labs/breadboard/kits";
 
 const fetchAndImportKits = async () => {
   const response = await fetch(`${self.location.origin}/kits.json`);
@@ -29,12 +30,23 @@ const fetchAndImportKits = async () => {
   return kits;
 };
 
+export const loadAgentKit = async () => {
+  const agentKitJSON = await (
+    await fetch(
+      "https://gist.githubusercontent.com/dglazkov/2e7f237ae4a7a6602ffb76d9fde1cdc2/raw/f5175ac0355e1c3a017d6b75ebc2631753f4df11/agent.kit.json"
+    )
+  ).json();
+  return fromManifest(agentKitJSON);
+};
+
 export const loadKits = async (kitsToLoad: KitConstructor<Kit>[]) => {
   kitsToLoad.push(...(await fetchAndImportKits()));
 
   const runtimeKits = kitsToLoad.map((kitConstructor) =>
     asRuntimeKit(kitConstructor)
   );
+
+  //  runtimeKits.push(await loadAgentKit());
 
   // Dedupe kits, last kit with same key wins
   const kits: Kit[] = Array.from(
