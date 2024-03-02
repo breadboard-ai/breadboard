@@ -1,7 +1,7 @@
 import { KitConstructor, Kit, asRuntimeKit } from "@google-labs/breadboard";
 import { load } from "@google-labs/breadboard/kits";
 
-const fetchAndImportKits = async () => {
+const fetchAndImportKits = async (): Promise<Kit[]> => {
   const base = new URL(`${self.location.origin}/kits.json`);
   const response = await fetch(base);
   const kitList = await response.json();
@@ -15,8 +15,10 @@ const fetchAndImportKits = async () => {
   return kits;
 };
 
-export const loadKits = async (kitsToLoad: KitConstructor<Kit>[]) => {
-  kitsToLoad.push(...(await fetchAndImportKits()));
+export const loadKits = async (kiConstructors: KitConstructor<Kit>[]) => {
+  const loadedKits = kiConstructors.map((kitConstructor) =>
+    asRuntimeKit(kitConstructor)
+  );
 
-  return kitsToLoad.map((kitConstructor) => asRuntimeKit(kitConstructor));
+  return [...loadedKits, ...(await fetchAndImportKits())];
 };

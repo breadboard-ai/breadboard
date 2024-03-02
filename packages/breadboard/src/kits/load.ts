@@ -8,6 +8,7 @@ import { inspect } from "../inspector/index.js";
 import { BoardLoader, loadWithFetch } from "../loader.js";
 import { BoardRunner } from "../runner.js";
 import { GraphDescriptor, Kit, KitManifest, NodeHandler } from "../types.js";
+import { asRuntimeKit } from "./ctors.js";
 
 type ManifestEntry = string | GraphDescriptor;
 
@@ -100,7 +101,7 @@ export const load = async (url: URL): Promise<Kit> => {
           `Module default export '${url}' does not look like a Kit (either no constructor or no handler).`
         );
       }
-      return module.default;
+      return asRuntimeKit(module.default);
     }
   } else if (url.protocol === "file:") {
     throw new Error("File protocol is not yet supported");
