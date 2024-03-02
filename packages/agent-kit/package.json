@@ -31,6 +31,9 @@
     },
     "generate-kit-manifest": {
       "command": "tsx src/generate-kit-manifest.ts",
+      "dependencies": [
+        "build:tsc"
+      ],
       "output": [
         "agent.kit.json"
       ]
