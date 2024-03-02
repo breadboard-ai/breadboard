@@ -38,7 +38,7 @@
           "properties": {
             "text": {
               "type": "string",
-              "title": "text"
+              "title": "Result"
             }
           }
         }
