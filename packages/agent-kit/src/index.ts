@@ -8,14 +8,11 @@ import { GraphToKitAdapter, KitBuilder } from "@google-labs/breadboard/kits";
 
 import kit from "./kit.js";
 import { addKit } from "@google-labs/breadboard";
-import worker, { WorkerType } from "./boards/worker.js";
-import { addDescriber } from "./hacks.js";
-import repeater, { RepeaterType } from "./boards/repeater.js";
-import structuredWorker, {
-  StructuredWorkerType,
-} from "./boards/structured-worker.js";
-import human, { HumanType } from "./boards/human.js";
-import toolWorker, { ToolWorkerType } from "./boards/tool-worker.js";
+import { WorkerType } from "./boards/worker.js";
+import { RepeaterType } from "./boards/repeater.js";
+import { StructuredWorkerType } from "./boards/structured-worker.js";
+import { HumanType } from "./boards/human.js";
+import { ToolWorkerType } from "./boards/tool-worker.js";
 
 // TODO: Replace with the actual URL.
 const KIT_BASE_URL =

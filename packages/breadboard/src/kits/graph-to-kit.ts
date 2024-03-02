@@ -8,7 +8,6 @@ import { callHandler, handlersFromKits } from "../handler.js";
 import { KitBuilderOptions } from "./builder.js";
 import { BoardRunner } from "../runner.js";
 import {
-  BreadboardCapability,
   GraphDescriptor,
   InputValues,
   Kit,
@@ -16,7 +15,6 @@ import {
   NodeHandlerContext,
   NodeHandlers,
   NodeIdentifier,
-  Schema,
 } from "../types.js";
 import { inspect } from "../index.js";
 
