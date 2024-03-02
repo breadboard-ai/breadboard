@@ -5,7 +5,7 @@
  */
 
 import { inspect } from "../inspector/index.js";
-import { BoardLoader } from "../loader.js";
+import { BoardLoader, loadWithFetch } from "../loader.js";
 import { BoardRunner } from "../runner.js";
 import { GraphDescriptor, Kit, KitManifest, NodeHandler } from "../types.js";
 
@@ -57,4 +57,53 @@ export const fromManifest = (manifest: KitManifest): Kit => {
     url,
     handlers: createHandlersFromManifest(new URL(url), manifest.nodes),
   };
+};
+
+const isKitManifest = (obj: unknown): obj is KitManifest => {
+  if (typeof obj !== "object" || obj === null) return false;
+  const manifest = obj as KitManifest;
+  return (
+    typeof manifest.title === "string" &&
+    typeof manifest.description === "string" &&
+    typeof manifest.version === "string" &&
+    typeof manifest.url === "string" &&
+    typeof manifest.nodes === "object"
+  );
+};
+
+/**
+ * Loads a kit from a URL.
+ *
+ * @param url -- a URL to a kit manifest or an npm URL.
+ */
+export const load = async (url: URL): Promise<Kit> => {
+  if (url.protocol === "https:" || url.protocol === "http:") {
+    if (url.pathname.endsWith(".kit.json")) {
+      const maybeManifest = await loadWithFetch(url);
+      if (isKitManifest(maybeManifest)) {
+        return fromManifest(maybeManifest);
+      }
+    } else {
+      // Assume that this is a URL to a JS file.
+      const module = await import(/* @vite-ignore */ url.href);
+      if (module.default == undefined) {
+        throw new Error(`Module ${url} does not have a default export.`);
+      }
+
+      const moduleKeys = Object.getOwnPropertyNames(module.default.prototype);
+
+      if (
+        moduleKeys.includes("constructor") == false ||
+        moduleKeys.includes("handlers") == false
+      ) {
+        throw new Error(
+          `Module default export '${url}' does not look like a Kit (either no constructor or no handler).`
+        );
+      }
+      return module.default;
+    }
+  } else if (url.protocol === "file:") {
+    throw new Error("File protocol is not yet supported");
+  }
+  throw new Error(`Unable to load kit from "${url}"`);
 };
