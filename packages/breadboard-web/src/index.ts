@@ -372,7 +372,7 @@ export class Main extends LitElement {
       return;
     }
 
-    const runConfig = createRunConfig(this.url);
+    const runConfig = await createRunConfig(this.url);
 
     this.#kits = runConfig.kits;
 
@@ -595,7 +595,7 @@ export class Main extends LitElement {
     this.mode = MODE.BUILD;
 
     if (this.loadInfo.url) {
-      const config = createRunConfig(this.loadInfo.url);
+      const config = await createRunConfig(this.loadInfo.url);
       this.#kits = config.kits;
     }
   }
@@ -839,7 +839,7 @@ export class Main extends LitElement {
               this.loadInfo.graphDescriptor
             );
 
-            const runConfig = createRunConfig(
+            const runConfig = await createRunConfig(
               this.loadInfo.graphDescriptor.url
             );
             runConfig.remote = false;

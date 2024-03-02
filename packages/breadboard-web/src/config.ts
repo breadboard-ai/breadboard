@@ -44,7 +44,7 @@ const DEFAULT_HARNESS = PROXY_SERVER_URL
   ? PROXY_SERVER_HARNESS_VALUE
   : WORKER_HARNESS_VALUE;
 
-const kits = await loadKits([
+const kitConstructors = [
   TemplateKit,
   Core,
   PaLMKit,
@@ -52,9 +52,9 @@ const kits = await loadKits([
   NodeNurseryWeb,
   JSONKit,
   AgentKit,
-]);
+];
 
-export const createRunConfig = (url: string): RunConfig => {
+export const createRunConfig = async (url: string): Promise<RunConfig> => {
   const harness =
     globalThis.localStorage.getItem(HARNESS_SWITCH_KEY) ?? DEFAULT_HARNESS;
 
@@ -73,11 +73,15 @@ export const createRunConfig = (url: string): RunConfig => {
     url: WORKER_URL,
   };
   const diagnostics = true;
+  const kits = await loadKits(kitConstructors);
   return { url, kits, remote, proxy, diagnostics, runner: undefined };
 };
 
-export const serveConfig = defineServeConfig({
-  transport: "worker",
-  kits: [{ proxy: PROXY_NODES } as KitConfig, ...kits],
-  diagnostics: true,
-});
+export const createServeConfig = async () => {
+  const kits = await loadKits(kitConstructors);
+  return defineServeConfig({
+    transport: "worker",
+    kits: [{ proxy: PROXY_NODES } as KitConfig, ...kits],
+    diagnostics: true,
+  });
+};
