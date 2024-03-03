@@ -34,6 +34,8 @@ const compile = async (file: string) => {
   console.log(`Compiling ${file}`);
   const bundle = await rollup({
     input: "entry",
+    // Hide our sins like circular dependencies.
+    logLevel: "silent",
     plugins: [
       virtual({
         entry: `import * as kit from "${file}"; export default kit.default;`,
