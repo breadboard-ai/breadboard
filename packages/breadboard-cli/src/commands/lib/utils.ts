@@ -21,6 +21,7 @@ export const defaultKits = [
   "@google-labs/core-kit",
   "@google-labs/json-kit",
   "@google-labs/template-kit",
+  "@google-labs/node-nursery-web",
 ];
 
 export type BoardMetaData = {

@@ -23,6 +23,7 @@ export default defineConfig((_) => {
           "core-kit": "src/core-kit.ts",
           "json-kit": "src/json-kit.ts",
           "template-kit": "src/template-kit.ts",
+          "node-nursery-web-kit": "src/node-nursery-web-kit.ts",
         },
         name: "Breadboard Web Runtime",
         formats: ["es"],
