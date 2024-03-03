@@ -28,7 +28,7 @@ program
   )
   .option(
     "-k, --kit <kit...>",
-    "The kit to use can be an NPM package name or a URL to the bundled kit."
+    "The kit to use can be an NPM package name or a URL to the bundled kit (for heavy kits) or a kit manifest (for light kits)."
   )
   .option("-n, --no-save", "Do not save the compiled graph to disk.")
   .option(

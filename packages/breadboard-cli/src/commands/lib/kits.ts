@@ -29,9 +29,10 @@ const commonjs = commonjsDefault as unknown as typeof commonjsDefault.default;
 
 const createUniqueName = async (url: string) => {
   const a = await crypto.subtle.digest("SHA-1", new TextEncoder().encode(url));
-  return Array.from(new Uint8Array(a))
+  const uniqueName = Array.from(new Uint8Array(a))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
+  return url.endsWith(".kit.json") ? `${uniqueName}.kit.json` : uniqueName;
 };
 
 /*
