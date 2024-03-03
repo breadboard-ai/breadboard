@@ -411,7 +411,8 @@
             },
             "text": {
               "type": "string",
-              "title": "text"
+              "title": "Text",
+              "description": "The generated text"
             }
           }
         }
