@@ -9,7 +9,7 @@ export const buildCustomAllowList = (value?: string) => {
   return { fs: { allow: [value] } };
 };
 
-export default defineConfig(async (_) => {
+export default defineConfig((_) => {
   config();
   return {
     build: {

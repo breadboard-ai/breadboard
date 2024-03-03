@@ -27,9 +27,8 @@ import {
 import { NodeHandler, NodeHandlerFunction } from "../runner/types.js";
 
 import { registerNodeType } from "./kits.js";
-import { getCurrentContextScope } from "./default-scope.js";
 import { BuilderNode } from "./node.js";
-import { BuilderScope } from "./scope.js";
+import { BuilderScope, getCurrentContextScope } from "./scope.js";
 
 /**
  * Implementation of the overloaded board function.
@@ -59,7 +58,7 @@ export const board: BoardFactory = (
  */
 export const code = <
   I extends InputValues = InputValues,
-  O extends OutputValues = OutputValues
+  O extends OutputValues = OutputValues,
 >(
   fn: (inputs: I) => O | PromiseLike<O>
 ): Lambda<I, Required<O>> => {

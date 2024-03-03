@@ -2,7 +2,7 @@ import http from "http";
 import { extname, join, relative } from "path";
 import handler from "serve-handler";
 import { pathToFileURL } from "url";
-import { BoardMetaData, loadBoards } from "./utils.js";
+import { BoardMetaData, defaultKits, loadBoards } from "./utils.js";
 import { stat } from "fs/promises";
 import { createReadStream } from "fs";
 import { DebugOptions } from "../commandTypes.js";
@@ -34,6 +34,8 @@ const compile = async (file: string) => {
   console.log(`Compiling ${file}`);
   const bundle = await rollup({
     input: "entry",
+    // Hide our sins like circular dependencies.
+    logLevel: "silent",
     plugins: [
       virtual({
         entry: `import * as kit from "${file}"; export default kit.default;`,
@@ -54,10 +56,11 @@ export const startServer = async (file: string, options: DebugOptions) => {
   const fileStat = await stat(file);
   const fileUrl = pathToFileURL(file);
   const isDirectory = fileStat.isDirectory();
+  const kitNames = [...new Set([...(options.kit || []), ...defaultKits])];
 
   const kits: Record<string, KitData> = {};
 
-  for (const kit of options.kit || []) {
+  for (const kit of kitNames) {
     kits[kit] = {
       file: kit,
       code: await compile(kit),
@@ -101,7 +104,7 @@ export const startServer = async (file: string, options: DebugOptions) => {
 
     if (requestURL.pathname === "/kits.json") {
       const responseText = JSON.stringify(
-        options.kit?.map((kit) => `/kits/${kit}`) || []
+        kitNames?.map((kit) => `/kits/${kit}`) || []
       );
       response.writeHead(200, {
         "Content-Type": "application/javascript",
@@ -113,7 +116,7 @@ export const startServer = async (file: string, options: DebugOptions) => {
 
     if (requestURL.pathname.startsWith("/kits/")) {
       const kitName = requestURL.pathname.replace("/kits/", "");
-      const kit = options.kit?.find((kit) => kit === kitName);
+      const kit = kitNames?.find((kit) => kit === kitName);
       if (kit && kit in kits) {
         const kitCode = kits[kit].code;
         response.writeHead(200, {
