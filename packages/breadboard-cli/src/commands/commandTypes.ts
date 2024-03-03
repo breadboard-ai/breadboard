@@ -1,5 +1,4 @@
 import { Options } from "./lib/loader.js";
-import { config } from "dotenv";
 
 export type RunOptions = Options & {
   kit?: string[];
