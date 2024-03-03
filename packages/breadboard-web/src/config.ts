@@ -11,10 +11,6 @@ import {
   defineServeConfig,
   RunConfig,
 } from "@google-labs/breadboard/harness";
-import Core from "@google-labs/core-kit";
-import JSONKit from "@google-labs/json-kit";
-import TemplateKit from "@google-labs/template-kit";
-import NodeNurseryWeb from "@google-labs/node-nursery-web";
 import GeminiKit from "@google-labs/gemini-kit";
 import AgentKit from "@google-labs/agent-kit";
 import { loadKits } from "./utils/kit-loader";
@@ -43,14 +39,7 @@ const DEFAULT_HARNESS = PROXY_SERVER_URL
   ? PROXY_SERVER_HARNESS_VALUE
   : WORKER_HARNESS_VALUE;
 
-const kitConstructors = [
-  TemplateKit,
-  Core,
-  GeminiKit,
-  NodeNurseryWeb,
-  JSONKit,
-  AgentKit,
-];
+const kitConstructors = [GeminiKit, AgentKit];
 
 export const createRunConfig = async (url: string): Promise<RunConfig> => {
   const harness =
