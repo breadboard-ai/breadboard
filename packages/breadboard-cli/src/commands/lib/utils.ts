@@ -20,6 +20,7 @@ export const defaultKits = [
   "@google-labs/palm-kit",
   "@google-labs/core-kit",
   "@google-labs/json-kit",
+  "@google-labs/template-kit",
 ];
 
 export type BoardMetaData = {

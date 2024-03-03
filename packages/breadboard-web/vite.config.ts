@@ -22,6 +22,7 @@ export default defineConfig((_) => {
           "palm-kit": "src/palm-kit.ts",
           "core-kit": "src/core-kit.ts",
           "json-kit": "src/json-kit.ts",
+          "template-kit": "src/template-kit.ts",
         },
         name: "Breadboard Web Runtime",
         formats: ["es"],
