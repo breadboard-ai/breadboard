@@ -75,13 +75,12 @@ export const startServer = async (file: string, options: DebugOptions) => {
       const kitName = requestURL.pathname.replace("/kits/", "");
       const kit = kitNames?.find((kit) => kit === kitName);
       if (kit && kit in kits) {
-        const kitCode = kits[kit].code;
+        const data = kits[kit].data;
         response.writeHead(200, {
           "Content-Type": "application/javascript",
-          // "Content-Length": kitCode.length,
         });
 
-        return response.end(kitCode);
+        return response.end(data);
       }
     }
 

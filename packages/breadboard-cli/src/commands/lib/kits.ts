@@ -13,7 +13,7 @@ import jsonDefault from "@rollup/plugin-json";
 
 export type KitData = {
   file: string;
-  code: string;
+  data: string;
 };
 
 const virtual = virtualDefault as unknown as typeof virtualDefault.default;
@@ -56,7 +56,7 @@ export const getKits = async (
   for (const kit of kitNames) {
     kits[kit] = {
       file: kit,
-      code: await compile(kit),
+      data: await compile(kit),
     };
   }
 
