@@ -16,7 +16,11 @@ import { URL, pathToFileURL } from "url";
 import { Options } from "./loader.js";
 import { Loaders } from "./loaders/index.js";
 
-export const defaultKits = ["@google-labs/palm-kit", "@google-labs/core-kit"];
+export const defaultKits = [
+  "@google-labs/palm-kit",
+  "@google-labs/core-kit",
+  "@google-labs/json-kit",
+];
 
 export type BoardMetaData = {
   title: string;

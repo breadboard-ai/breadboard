@@ -21,6 +21,7 @@ export default defineConfig((_) => {
           embed: "src/embed.ts",
           "palm-kit": "src/palm-kit.ts",
           "core-kit": "src/core-kit.ts",
+          "json-kit": "src/json-kit.ts",
         },
         name: "Breadboard Web Runtime",
         formats: ["es"],
