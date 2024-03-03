@@ -49,15 +49,17 @@ export const compile = async (file: string) => {
 };
 
 export const getKits = async (
-  kitNames: string[]
-): Promise<Record<string, KitData>> => {
-  const kits: Record<string, KitData> = {};
+  defaultKits: string[],
+  specifiedKits: string[] = []
+): Promise<KitData[]> => {
+  const kitNames = [...new Set([...specifiedKits, ...defaultKits])];
+  const kits = [];
 
   for (const kit of kitNames) {
-    kits[kit] = {
+    kits.push({
       file: kit,
       data: await compile(kit),
-    };
+    });
   }
 
   return kits;

@@ -20,9 +20,8 @@ export const startServer = async (file: string, options: DebugOptions) => {
   const fileStat = await stat(file);
   const fileUrl = pathToFileURL(file);
   const isDirectory = fileStat.isDirectory();
-  const kitNames = [...new Set([...(options.kit || []), ...defaultKits])];
 
-  const kits = await getKits(kitNames);
+  const kits = await getKits(defaultKits, options.kit);
 
   let boards: Array<BoardMetaData> = []; // Boards are dynamically loaded based on the "/boards.js" request.
 
@@ -61,7 +60,7 @@ export const startServer = async (file: string, options: DebugOptions) => {
 
     if (requestURL.pathname === "/kits.json") {
       const responseText = JSON.stringify(
-        kitNames?.map((kit) => `/kits/${kit}`) || []
+        kits.map((kit) => `/kits/${kit.file}`) || []
       );
       response.writeHead(200, {
         "Content-Type": "application/javascript",
@@ -73,14 +72,13 @@ export const startServer = async (file: string, options: DebugOptions) => {
 
     if (requestURL.pathname.startsWith("/kits/")) {
       const kitName = requestURL.pathname.replace("/kits/", "");
-      const kit = kitNames?.find((kit) => kit === kitName);
-      if (kit && kit in kits) {
-        const data = kits[kit].data;
+      const kit = kits.find((kit) => kit.file === kitName);
+      if (kit) {
         response.writeHead(200, {
           "Content-Type": "application/javascript",
         });
 
-        return response.end(data);
+        return response.end(kit.data);
       }
     }
 
