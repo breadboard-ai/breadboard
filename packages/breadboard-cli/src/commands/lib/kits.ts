@@ -11,16 +11,28 @@ import commonjsDefault from "@rollup/plugin-commonjs";
 
 import jsonDefault from "@rollup/plugin-json";
 
-export type KitData = {
-  file: string;
-  data: string;
-};
+export type KitData =
+  | {
+      file: string;
+      data: string;
+    }
+  | {
+      file: string;
+      url: string;
+    };
 
 const virtual = virtualDefault as unknown as typeof virtualDefault.default;
 const nodeResolve =
   nodeResolveDefault as unknown as typeof nodeResolveDefault.default;
 const json = jsonDefault as unknown as typeof jsonDefault.default;
 const commonjs = commonjsDefault as unknown as typeof commonjsDefault.default;
+
+const createUniqueName = async (url: string) => {
+  const a = await crypto.subtle.digest("SHA-1", new TextEncoder().encode(url));
+  return Array.from(new Uint8Array(a))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+};
 
 /*
   This function compiles and bundles known 'node_module' into a single string.
@@ -56,10 +68,17 @@ export const getKits = async (
   const kits = [];
 
   for (const kit of kitNames) {
-    kits.push({
-      file: kit,
-      data: await compile(kit),
-    });
+    if (URL.canParse(kit)) {
+      kits.push({
+        file: await createUniqueName(kit),
+        url: kit,
+      });
+    } else {
+      kits.push({
+        file: kit,
+        data: await compile(kit),
+      });
+    }
   }
 
   return kits;

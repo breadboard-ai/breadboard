@@ -86,6 +86,7 @@ export const load = async (url: URL): Promise<Kit> => {
       }
     } else {
       // Assume that this is a URL to a JS file.
+      console.log("WILL TRY TO IMPORT", url.href);
       const module = await import(/* @vite-ignore */ url.href);
       if (module.default == undefined) {
         throw new Error(`Module ${url} does not have a default export.`);

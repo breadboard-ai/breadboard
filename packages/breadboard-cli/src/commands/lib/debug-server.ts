@@ -74,11 +74,18 @@ export const startServer = async (file: string, options: DebugOptions) => {
       const kitName = requestURL.pathname.replace("/kits/", "");
       const kit = kits.find((kit) => kit.file === kitName);
       if (kit) {
-        response.writeHead(200, {
-          "Content-Type": "application/javascript",
-        });
+        if ("data" in kit) {
+          response.writeHead(200, {
+            "Content-Type": "application/javascript",
+          });
 
-        return response.end(kit.data);
+          return response.end(kit.data);
+        } else {
+          response.writeHead(302, {
+            Location: kit.url,
+          });
+          return response.end();
+        }
       }
     }
 
